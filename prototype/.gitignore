@@ -1,0 +1,16 @@
+# Unity üretim çıktıları depoya girmez (kök .gitignore ile birlikte; bu dosya Unity proje köküne anchor'lı ikinci savunmadır).
+# Başlangıç commit'i (DEC-062, WP-000): planning + prototip kaynağı/.meta/ayarlar; Library/Build/Logs/UserSettings dışarıda.
+DeathsDemolition_PlayableConcept/[Ll]ibrary/
+DeathsDemolition_PlayableConcept/[Tt]emp/
+DeathsDemolition_PlayableConcept/[Oo]bj/
+DeathsDemolition_PlayableConcept/[Bb]uild/
+DeathsDemolition_PlayableConcept/[Bb]uilds/
+DeathsDemolition_PlayableConcept/[Ll]ogs/
+DeathsDemolition_PlayableConcept/[Uu]serSettings/
+DeathsDemolition_PlayableConcept/[Mm]emoryCaptures/
+DeathsDemolition_PlayableConcept/*.csproj
+DeathsDemolition_PlayableConcept/*.sln
+DeathsDemolition_PlayableConcept/*.user
+.DS_Store
+DeathsDemolition_PlayableConcept/Build/
+DeathsDemolition_PlayableConcept/*_BurstDebugInformation_DoNotShip/

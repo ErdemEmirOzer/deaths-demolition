@@ -1,0 +1,343 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
+using DD.Prototype.Core.Boot;
+using DD.Prototype.Core.Config;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+
+namespace DD.Prototype.Tests.EditMode
+{
+    /// <summary>
+    /// GT · bağımsız doğrulama · proje bütünlüğü.
+    ///
+    /// İki iş yapar:
+    ///   1. SEVKİYAT ASSET'İ denetimi — testler varsayılan alan değerlerini doğruluyor,
+    ///      ama oyun Resources/PrototypeConfig.asset ile koşuyor. Asset kaymışsa
+    ///      formül testleri yeşil kalır ve hiçbir şey kanıtlamaz. Bu boşluğu kapatır.
+    ///   2. KOPUK REFERANS TARAMASI (TS-105) — kapıya gömülü, elle bash'a bağlı değil.
+    ///      Yöntem: metin taraması + AssetDatabase ile GUID çözümü. Bash'taki
+    ///      comm-tabanlı taramadan güçlüdür çünkü paket GUID'lerini de çözer.
+    /// </summary>
+    [TestFixture]
+    public sealed class ProjectIntegrityTests
+    {
+        private const string AssetsRoot = "Assets";
+
+        // ------------------------------------------------------- sevkiyat asset denetimi
+
+        private static PrototypeConfig SevkiyatConfig()
+        {
+            var config = Resources.Load<PrototypeConfig>(PrototypeConfig.ResourcesPath);
+            Assert.IsNotNull(config,
+                "Resources/PrototypeConfig bulunamadı. Prototip bu asset olmadan koşamaz.");
+            return config;
+        }
+
+        [Test]
+        public void SevkiyatAsseti_HavuzFormuluVarsayilanlaAyni()
+        {
+            PrototypeConfig config = SevkiyatConfig();
+
+            int[] beklenen = { 12, 20, 29, 38, 48, 57, 67, 77, 87, 97, 107, 117, 127, 137, 147 };
+            for (int i = 0; i < beklenen.Length; i++)
+            {
+                int r = i + 1;
+                Assert.AreEqual(beklenen[i], config.TotalEnemyPool(r),
+                    "SEVKİYAT ASSET'İ R" + r + " havuzunda kaymış.");
+            }
+        }
+
+        [Test]
+        public void SevkiyatAsseti_HedefAktifVarsayilanlaAyni()
+        {
+            PrototypeConfig config = SevkiyatConfig();
+
+            int[] beklenen = { 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 32, 32, 32 };
+            for (int i = 0; i < beklenen.Length; i++)
+            {
+                int r = i + 1;
+                Assert.AreEqual(beklenen[i], config.TargetActiveEnemies(r),
+                    "SEVKİYAT ASSET'İ R" + r + " hedef aktif sayısında kaymış.");
+            }
+
+            Assert.AreEqual(40, config.AbsoluteSafetyCeiling, "Mutlak güvenlik tavanı 40 olmalı.");
+        }
+
+        [Test]
+        public void SevkiyatAsseti_IlerlemeVeSpecialEgrisiVarsayilanlaAyni()
+        {
+            PrototypeConfig config = SevkiyatConfig();
+
+            Assert.AreEqual(100, config.LevelRequirement(1));
+            Assert.AreEqual(175, config.LevelRequirement(2));
+            Assert.AreEqual(250, config.LevelRequirement(3));
+            Assert.AreEqual(325, config.LevelRequirement(4));
+
+            Assert.AreEqual(20, config.RoundCompletionXp(1));
+            Assert.AreEqual(55, config.RoundCompletionXp(8));
+
+            Assert.AreEqual(1, config.KillXp(EnemyTier.Standard));
+            Assert.AreEqual(9, config.KillXp(EnemyTier.Ultra));
+
+            Assert.AreEqual(0f, config.SpecialWeaponSpawnChance(3), 0.0005f);
+            Assert.AreEqual(0.35f, config.SpecialWeaponSpawnChance(4), 0.0005f);
+            Assert.AreEqual(0.65f, config.SpecialWeaponSpawnChance(14), 0.0005f);
+            Assert.AreEqual(0.65f, config.SpecialWeaponSpawnChance(99), 0.0005f);
+        }
+
+        [Test]
+        public void SevkiyatAsseti_HasarModeliSayilariVarsayilanlaAyni()
+        {
+            PrototypeConfig config = SevkiyatConfig();
+
+            Assert.AreEqual(34f, config.Enemies.StandardBaseHealth, 0.0001f);
+            Assert.AreEqual(22f, config.Enemies.Armor.HelmetDurability, 0.0001f);
+            Assert.AreEqual(38f, config.Enemies.Armor.BodyDurability, 0.0001f);
+            Assert.AreEqual(28f, config.Enemies.Armor.LegDurability, 0.0001f);
+            Assert.AreEqual(2f, config.Enemies.Armor.ExposedHeadMultiplier, 0.0001f);
+            Assert.AreEqual(1f, config.Enemies.Armor.ExposedUpperBodyMultiplier, 0.0001f);
+            Assert.AreEqual(0.8f, config.Enemies.Armor.ExposedLowerBodyMultiplier, 0.0001f);
+
+            Assert.AreEqual(0.25f, config.Enemies.Explosion.HeadShare, 0.0001f);
+            Assert.AreEqual(0.45f, config.Enemies.Explosion.UpperBodyShare, 0.0001f);
+            Assert.AreEqual(0.30f, config.Enemies.Explosion.LowerBodyShare, 0.0001f);
+
+            Assert.AreEqual(100f, config.Player.MaxHealth, 0.0001f);
+        }
+
+        [Test]
+        public void SevkiyatAsseti_Dec021ElleTanimliYariBosKalmis()
+        {
+            PrototypeConfig config = SevkiyatConfig();
+            Assert.AreEqual(0, config.RoundDifficultyOverrides.Count,
+                "SEVKİYAT ASSET'İNDE DEC-021 override listesi doldurulmuş. " +
+                "Kullanıcı kararı t-0002 gereği bu liste boş kalmalı.");
+        }
+
+        // -------------------------------------------------------------- sahne sıralaması
+
+        [Test]
+        public void BuildSettings_BesSahneDogruSiradaVeAcik()
+        {
+            string[] beklenen =
+            {
+                PrototypeScenes.Boot,
+                PrototypeScenes.MainMenu,
+                PrototypeScenes.Selection,
+                PrototypeScenes.Run,
+                PrototypeScenes.Results
+            };
+
+            EditorBuildSettingsScene[] sahneler = EditorBuildSettings.scenes;
+            Assert.AreEqual(beklenen.Length, sahneler.Length,
+                "Build Settings'te tam olarak beş sahne olmalı, " + sahneler.Length + " var.");
+
+            for (int i = 0; i < beklenen.Length; i++)
+            {
+                string ad = Path.GetFileNameWithoutExtension(sahneler[i].path);
+                Assert.AreEqual(beklenen[i], ad, i + ". sıradaki sahne yanlış.");
+                Assert.IsTrue(sahneler[i].enabled, ad + " sahnesi Build Settings'te kapalı.");
+                Assert.IsTrue(File.Exists(sahneler[i].path), ad + " sahnesi diskte yok: " + sahneler[i].path);
+            }
+
+            // NOT (GT · yöntem düzeltmesi): Application.CanStreamedLevelBeLoaded EditMode'da
+            // güvenilir değildir — oynatma dışında derlenmiş sahne listesi kurulmadığı için
+            // Boot dahil her sahne için false döner. Bu kontrol PlayMode duman testine
+            // taşındı; orada gerçek yüklenebilirlik ölçülüyor.
+        }
+
+        // ------------------------------------------------- TS-105 kopuk referans taraması
+
+        private static readonly string[] TarananUzantilar =
+        {
+            "*.unity", "*.prefab", "*.asset", "*.mat", "*.controller", "*.inputactions"
+        };
+
+        private static List<string> TaranacakDosyalar()
+        {
+            var sonuc = new List<string>();
+            for (int i = 0; i < TarananUzantilar.Length; i++)
+            {
+                sonuc.AddRange(Directory.GetFiles(AssetsRoot, TarananUzantilar[i], SearchOption.AllDirectories));
+            }
+
+            return sonuc;
+        }
+
+        [Test]
+        public void KopukReferans_ScriptFileIdSifirYok()
+        {
+            var bulgular = new List<string>();
+            List<string> dosyalar = TaranacakDosyalar();
+            Assert.Greater(dosyalar.Count, 0, "Tarama hiç dosya görmedi; yöntem yalanlanmıştır.");
+
+            foreach (string yol in dosyalar)
+            {
+                string[] satirlar = File.ReadAllLines(yol);
+                for (int i = 0; i < satirlar.Length; i++)
+                {
+                    if (satirlar[i].Contains("m_Script: {fileID: 0}"))
+                    {
+                        bulgular.Add(yol + ":" + (i + 1));
+                    }
+                }
+            }
+
+            Assert.IsEmpty(bulgular,
+                "Kopuk script referansı bulundu (" + bulgular.Count + "):\n" + string.Join("\n", bulgular));
+        }
+
+        [Test]
+        public void KopukReferans_CozulmeyenGuidYok()
+        {
+            var guidDeseni = new Regex(@"guid: ([0-9a-f]{32})", RegexOptions.Compiled);
+            var cozulmeyen = new Dictionary<string, string>();
+            var cozulen = new HashSet<string>();
+
+            List<string> dosyalar = TaranacakDosyalar();
+            Assert.Greater(dosyalar.Count, 0, "Tarama hiç dosya görmedi; yöntem yalanlanmıştır.");
+
+            int atifSayisi = 0;
+
+            foreach (string yol in dosyalar)
+            {
+                foreach (string satir in File.ReadAllLines(yol))
+                {
+                    Match m = guidDeseni.Match(satir);
+                    if (!m.Success)
+                    {
+                        continue;
+                    }
+
+                    string guid = m.Groups[1].Value;
+                    atifSayisi++;
+
+                    if (cozulen.Contains(guid) || cozulmeyen.ContainsKey(guid))
+                    {
+                        continue;
+                    }
+
+                    // Unity yerleşik asset'leri (0000000000000000...) AssetDatabase'e görünmez.
+                    if (guid.StartsWith("0000000000000000"))
+                    {
+                        cozulen.Add(guid);
+                        continue;
+                    }
+
+                    string cozum = AssetDatabase.GUIDToAssetPath(guid);
+                    if (string.IsNullOrEmpty(cozum))
+                    {
+                        cozulmeyen[guid] = yol;
+                    }
+                    else
+                    {
+                        cozulen.Add(guid);
+                    }
+                }
+            }
+
+            Assert.Greater(atifSayisi, 0, "Hiç GUID atfı görülmedi; tarama deseni yalanlanmıştır.");
+
+            if (cozulmeyen.Count > 0)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("Çözülmeyen GUID (" + cozulmeyen.Count + "), " + atifSayisi + " atıf tarandı:");
+                foreach (KeyValuePair<string, string> kv in cozulmeyen)
+                {
+                    sb.AppendLine("  " + kv.Key + "  <- " + kv.Value);
+                }
+
+                Assert.Fail(sb.ToString());
+            }
+        }
+
+        [Test]
+        public void EksikMetaDosyasiYok()
+        {
+            var eksik = new List<string>();
+            string[] hepsi = Directory.GetFiles(AssetsRoot, "*", SearchOption.AllDirectories);
+
+            foreach (string yol in hepsi)
+            {
+                if (yol.EndsWith(".meta") || yol.EndsWith(".DS_Store") || Path.GetFileName(yol).StartsWith("."))
+                {
+                    continue;
+                }
+
+                if (!File.Exists(yol + ".meta"))
+                {
+                    eksik.Add(yol);
+                }
+            }
+
+            Assert.IsEmpty(eksik, "Meta dosyası eksik (" + eksik.Count + "):\n" + string.Join("\n", eksik));
+        }
+
+        [Test]
+        public void SahnelerdeEksikScriptBileseniYok()
+        {
+            var bulgular = new List<string>();
+
+            foreach (EditorBuildSettingsScene sahne in EditorBuildSettings.scenes)
+            {
+                if (!sahne.enabled || !File.Exists(sahne.path))
+                {
+                    continue;
+                }
+
+                UnityEngine.SceneManagement.Scene acik =
+                    UnityEditor.SceneManagement.EditorSceneManager.OpenScene(
+                        sahne.path, UnityEditor.SceneManagement.OpenSceneMode.Single);
+
+                foreach (GameObject kok in acik.GetRootGameObjects())
+                {
+                    foreach (Component c in kok.GetComponentsInChildren<Component>(true))
+                    {
+                        if (c == null)
+                        {
+                            bulgular.Add(sahne.path + " içinde eksik script bileşeni var.");
+                        }
+                    }
+                }
+            }
+
+            Assert.IsEmpty(bulgular, string.Join("\n", bulgular));
+        }
+
+        // ------------------------------------------------------- çevrimdışılık (K6 kapısı)
+
+        [Test]
+        public void CevrimdisiKalir_AgApisiKullanilmiyor()
+        {
+            var yasakli = new Regex(
+                @"UnityWebRequest|System\.Net|HttpClient|TcpClient|UdpClient|WebSocket|Application\.OpenURL",
+                RegexOptions.Compiled);
+
+            var bulgular = new List<string>();
+            string kok = Path.Combine("Assets", "_Prototype");
+
+            foreach (string yol in Directory.GetFiles(kok, "*.cs", SearchOption.AllDirectories))
+            {
+                if (yol.Replace('\\', '/').Contains("/Tests/"))
+                {
+                    continue;
+                }
+
+                string[] satirlar = File.ReadAllLines(yol);
+                for (int i = 0; i < satirlar.Length; i++)
+                {
+                    if (yasakli.IsMatch(satirlar[i]))
+                    {
+                        bulgular.Add(yol + ":" + (i + 1) + "  " + satirlar[i].Trim());
+                    }
+                }
+            }
+
+            Assert.IsEmpty(bulgular,
+                "Prototip çevrimdışı olmalı, ağ API'si bulundu:\n" + string.Join("\n", bulgular));
+        }
+    }
+}

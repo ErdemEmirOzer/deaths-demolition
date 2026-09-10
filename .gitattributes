@@ -1,0 +1,67 @@
+# ===== Deaths Demolition · .gitattributes (WP-000 Production Baseline, 2026-09-10) =====
+# Proje Unix satır sonu kullanıyor (EditorSettings m_LineEndingsForNewScripts=1; CRLF=0 ölçüldü).
+* text=auto eol=lf
+
+# Kaynak / metin
+*.cs            text eol=lf diff=csharp
+*.md            text eol=lf
+*.json          text eol=lf
+*.txt           text eol=lf
+*.asmdef        text eol=lf
+*.asmref        text eol=lf
+*.inputactions  text eol=lf
+*.shader        text eol=lf
+*.hlsl          text eol=lf
+*.cginc         text eol=lf
+*.uxml          text eol=lf
+*.uss           text eol=lf
+
+# Unity YAML (Force Text) — UnityYAMLMerge ile birleştirilir
+# (merge.unityyamlmerge sürücüsü yerel git config'te tanımlanmalıdır; tanımsızsa git normal metin birleştirmesine düşer)
+*.unity         text eol=lf merge=unityyamlmerge diff
+*.prefab        text eol=lf merge=unityyamlmerge diff
+*.asset         text eol=lf merge=unityyamlmerge diff
+*.mat           text eol=lf merge=unityyamlmerge diff
+*.meta          text eol=lf merge=unityyamlmerge diff
+*.controller    text eol=lf merge=unityyamlmerge diff
+*.anim          text eol=lf merge=unityyamlmerge diff
+*.overrideController text eol=lf merge=unityyamlmerge diff
+*.physicMaterial text eol=lf merge=unityyamlmerge diff
+*.physicsMaterial2D text eol=lf merge=unityyamlmerge diff
+*.playable      text eol=lf merge=unityyamlmerge diff
+*.mask          text eol=lf merge=unityyamlmerge diff
+*.guiskin       text eol=lf merge=unityyamlmerge diff
+*.flare         text eol=lf merge=unityyamlmerge diff
+*.fontsettings  text eol=lf merge=unityyamlmerge diff
+*.spriteatlas   text eol=lf merge=unityyamlmerge diff
+*.terrainlayer  text eol=lf merge=unityyamlmerge diff
+*.mixer         text eol=lf merge=unityyamlmerge diff
+*.shadervariants text eol=lf merge=unityyamlmerge diff
+*.preset        text eol=lf merge=unityyamlmerge diff
+
+# İkili varlıklar (bugün depoda yok; ikili asset geldiğinde LFS ihtiyacı kanıtla yeniden değerlendirilir)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.tga  binary
+*.psd  binary
+*.exr  binary
+*.hdr  binary
+*.tif  binary
+*.tiff binary
+*.gif  binary
+*.fbx  binary
+*.obj  binary
+*.blend binary
+*.glb  binary
+*.wav  binary
+*.mp3  binary
+*.ogg  binary
+*.ttf  binary
+*.otf  binary
+*.dll  binary
+*.so   binary
+*.dylib binary
+*.a    binary
+*.bundle binary
+*.cubemap binary

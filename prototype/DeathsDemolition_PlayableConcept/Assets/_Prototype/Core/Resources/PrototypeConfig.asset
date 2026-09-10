@@ -1,0 +1,414 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca3cd02cf5114425b94a565ec637874b, type: 3}
+  m_Name: PrototypeConfig
+  m_EditorClassIdentifier: 
+  _player:
+    MaxHealth: 100
+    MoveSpeed: 6.2
+    Acceleration: 45
+    Deceleration: 60
+    CounterStrafeBraking: 90
+    RotationSpeed: 720
+    HealthRegenDelay: 4.5
+    HealthRegenRate: 12
+    HealthRegenCeilingFraction: 1
+    CollisionRadius: 0.45
+    CollisionHeight: 1.8
+    AimPlaneHeight: 1.15
+  _camera:
+    Height: 15
+    BackDistance: 13
+    FieldOfView: 42
+    FollowSmoothTime: 0.12
+    MaxAimLookAhead: 2.5
+    LookAheadSmoothTime: 0.18
+    ShakeIntensity: 1
+    OcclusionFadeTime: 0.15
+    OcclusionTargetAlpha: 0.22
+  _weapons:
+    ClassicWeapons:
+    - Id: 0
+      DisplayName: Assault Rifle
+      Damage: 11
+      FireRate: 8.5
+      MagazineSize: 30
+      ReloadTime: 1.5
+      PelletCount: 1
+      SpreadDegrees: 1.6
+      SpreadBloomPerShot: 0.35
+      SpreadBloomMax: 3.5
+      SpreadBloomDecay: 6
+      RecoilKick: 0.09
+      CameraShake: 0.35
+      StaggerImpulse: 0.15
+      Range: 45
+      UnlockProfileLevel: 1
+    - Id: 1
+      DisplayName: Auto SMG
+      Damage: 7
+      FireRate: 13
+      MagazineSize: 42
+      ReloadTime: 1.7
+      PelletCount: 1
+      SpreadDegrees: 2.6
+      SpreadBloomPerShot: 0.45
+      SpreadBloomMax: 5.5
+      SpreadBloomDecay: 7
+      RecoilKick: 0.06
+      CameraShake: 0.22
+      StaggerImpulse: 0.08
+      Range: 38
+      UnlockProfileLevel: 2
+    - Id: 2
+      DisplayName: Combat Shotgun
+      Damage: 7
+      FireRate: 1.2
+      MagazineSize: 7
+      ReloadTime: 2.2
+      PelletCount: 8
+      SpreadDegrees: 7.5
+      SpreadBloomPerShot: 0
+      SpreadBloomMax: 0
+      SpreadBloomDecay: 0
+      RecoilKick: 0.28
+      CameraShake: 0.9
+      StaggerImpulse: 0.85
+      Range: 22
+      UnlockProfileLevel: 3
+    Special:
+      ActiveDuration: 11
+      GroundLifetime: 22
+      FirstEligibleRound: 4
+      BaseSpawnChance: 0.35
+      SpawnChanceGrowthPerRound: 0.03
+      MaxSpawnChance: 0.65
+      SpawnWindowMin: 0.3
+      SpawnWindowMax: 0.7
+      SecondSpawnFromRound: 8
+      SecondSpawnChance: 0.1
+      FinalSecondsWarning: 3
+      MinDistanceFromPlayer: 22
+  _enemies:
+    StandardBaseHealth: 34
+    Tiers:
+    - Tier: 0
+      DisplayName: Standard
+      HealthMultiplier: 1
+      MoveSpeed: 2.7
+      AttackDamage: 10
+      TelegraphTime: 0.55
+      AttackActiveTime: 0.12
+      AttackRecoveryTime: 0.45
+      AttackRange: 1.7
+      AttackCooldown: 1.5
+      GoldReward: 2
+      BonusKillXp: 0
+      IntroductionRound: 1
+      SpawnWeight: 100
+      SpawnWeightGrowthPerRound: 0
+      SpawnWeightMax: 100
+      BodyRadius: 0.45
+      SeparationMass: 1
+      StaggerSusceptibility: 1
+      ArmorChances:
+        HelmetChance: 0.15
+        BodyChance: 0.12
+        LegChance: 0.08
+        ChanceGrowthPerRound: 0.025
+        MaxChance: 0.75
+    - Tier: 1
+      DisplayName: Runner
+      HealthMultiplier: 0.85
+      MoveSpeed: 4.6
+      AttackDamage: 9
+      TelegraphTime: 0.35
+      AttackActiveTime: 0.1
+      AttackRecoveryTime: 0.55
+      AttackRange: 2.6
+      AttackCooldown: 1.9
+      GoldReward: 5
+      BonusKillXp: 1
+      IntroductionRound: 3
+      SpawnWeight: 18
+      SpawnWeightGrowthPerRound: 3
+      SpawnWeightMax: 45
+      BodyRadius: 0.4
+      SeparationMass: 0.8
+      StaggerSusceptibility: 1
+      ArmorChances:
+        HelmetChance: 0.15
+        BodyChance: 0.12
+        LegChance: 0.08
+        ChanceGrowthPerRound: 0.025
+        MaxChance: 0.75
+    - Tier: 2
+      DisplayName: Guard
+      HealthMultiplier: 2.2
+      MoveSpeed: 2.2
+      AttackDamage: 18
+      TelegraphTime: 0.8
+      AttackActiveTime: 0.2
+      AttackRecoveryTime: 0.7
+      AttackRange: 2.4
+      AttackCooldown: 2.2
+      GoldReward: 10
+      BonusKillXp: 3
+      IntroductionRound: 5
+      SpawnWeight: 9
+      SpawnWeightGrowthPerRound: 1.6
+      SpawnWeightMax: 26
+      BodyRadius: 0.62
+      SeparationMass: 2.2
+      StaggerSusceptibility: 0.45
+      ArmorChances:
+        HelmetChance: 0.45
+        BodyChance: 0.5
+        LegChance: 0.35
+        ChanceGrowthPerRound: 0.03
+        MaxChance: 0.9
+    - Tier: 3
+      DisplayName: Executioner
+      HealthMultiplier: 5
+      MoveSpeed: 1.7
+      AttackDamage: 34
+      TelegraphTime: 1.15
+      AttackActiveTime: 0.25
+      AttackRecoveryTime: 1.1
+      AttackRange: 3.1
+      AttackCooldown: 3
+      GoldReward: 25
+      BonusKillXp: 8
+      IntroductionRound: 8
+      SpawnWeight: 3
+      SpawnWeightGrowthPerRound: 0.7
+      SpawnWeightMax: 12
+      BodyRadius: 0.9
+      SeparationMass: 5
+      StaggerSusceptibility: 0.12
+      ArmorChances:
+        HelmetChance: 0.6
+        BodyChance: 0.7
+        LegChance: 0.5
+        ChanceGrowthPerRound: 0.02
+        MaxChance: 0.95
+    Armor:
+      HelmetDurability: 22
+      BodyDurability: 38
+      LegDurability: 28
+      ExposedHeadMultiplier: 2
+      ExposedUpperBodyMultiplier: 1
+      ExposedLowerBodyMultiplier: 0.8
+    Explosion:
+      HeadShare: 0.25
+      UpperBodyShare: 0.45
+      LowerBodyShare: 0.3
+      Radius: 3.2
+      FalloffExponent: 1
+  _rounds:
+    PoolBase: 12
+    PoolPerRound: 6
+    PoolPowerScale: 2.5
+    PoolPowerExponent: 1.15
+    ActiveBase: 7
+    ActivePerRound: 2
+    ActiveCap: 32
+    AbsoluteSafetyCeiling: 40
+    HealthMultiplierPerRound: 0.12
+    DamageMultiplierPerRound: 0.08
+    SpawnRefillInterval: 0.45
+    RoundStartCountdown: 3
+    MaxSpawnsPerRefillTick: 2
+  _spawn:
+    MinSpawnDistance: 12
+    PreferredDistanceMin: 18
+    PreferredDistanceMax: 35
+    MaxUsefulDistance: 62
+    PointCooldown: 4
+    DesignerWeightScale: 1
+    PreferredBandBonus: 1.6
+    AheadOfPlayerBonus: 1.35
+    SameRegionBonus: 1.15
+    RecentUsePenalty: 0.25
+    PerPointOccupancyPenalty: 0.12
+    LocalDensityPenalty: 0.09
+    LocalDensityRadius: 9
+    MinimumUsableWeight: 0.01
+    RequireReachablePath: 1
+    OnScreenRejectDistance: 20
+  _economy:
+    GoldCollectionMode: 2
+    MagnetRadius: 3.5
+    MagnetSpeed: 14
+    MagnetAcceleration: 38
+    OrbLifetime: 22
+    ContactPickupRadius: 0.9
+    MaxActiveOrbs: 60
+    CardsPerRound: 3
+    AllowReroll: 0
+    CarryUnspentGold: 1
+    StartingCostMin: 15
+    StartingCostMax: 45
+    Branches:
+    - Branch: 0
+      DisplayName: Piercing
+      BaseCost: 30
+      CostGrowthPerTier: 1.55
+      MaxTier: 4
+      EffectPerTier: 1
+      OfferWeight: 1
+      UnlockProfileLevel: 1
+    - Branch: 1
+      DisplayName: Ricochet
+      BaseCost: 30
+      CostGrowthPerTier: 1.55
+      MaxTier: 4
+      EffectPerTier: 1
+      OfferWeight: 1
+      UnlockProfileLevel: 1
+    - Branch: 2
+      DisplayName: Explosion
+      BaseCost: 45
+      CostGrowthPerTier: 1.6
+      MaxTier: 3
+      EffectPerTier: 0.18
+      OfferWeight: 0.8
+      UnlockProfileLevel: 2
+    - Branch: 3
+      DisplayName: Chain
+      BaseCost: 40
+      CostGrowthPerTier: 1.6
+      MaxTier: 3
+      EffectPerTier: 1
+      OfferWeight: 0.8
+      UnlockProfileLevel: 3
+    - Branch: 4
+      DisplayName: Fire Rate
+      BaseCost: 18
+      CostGrowthPerTier: 1.5
+      MaxTier: 5
+      EffectPerTier: 0.08
+      OfferWeight: 1.2
+      UnlockProfileLevel: 1
+    - Branch: 5
+      DisplayName: Reload Speed
+      BaseCost: 15
+      CostGrowthPerTier: 1.5
+      MaxTier: 5
+      EffectPerTier: 0.1
+      OfferWeight: 1.2
+      UnlockProfileLevel: 1
+    - Branch: 6
+      DisplayName: Movement Speed
+      BaseCost: 22
+      CostGrowthPerTier: 1.5
+      MaxTier: 4
+      EffectPerTier: 0.06
+      OfferWeight: 1
+      UnlockProfileLevel: 1
+    - Branch: 7
+      DisplayName: Maximum Health
+      BaseCost: 25
+      CostGrowthPerTier: 1.5
+      MaxTier: 5
+      EffectPerTier: 15
+      OfferWeight: 1
+      UnlockProfileLevel: 1
+    - Branch: 8
+      DisplayName: Regeneration Delay
+      BaseCost: 18
+      CostGrowthPerTier: 1.5
+      MaxTier: 4
+      EffectPerTier: 0.5
+      OfferWeight: 0.9
+      UnlockProfileLevel: 1
+    - Branch: 9
+      DisplayName: Regeneration Rate
+      BaseCost: 18
+      CostGrowthPerTier: 1.5
+      MaxTier: 4
+      EffectPerTier: 3
+      OfferWeight: 0.9
+      UnlockProfileLevel: 1
+  _progression:
+    XpPerKill: 1
+    RoundXpBase: 15
+    RoundXpPerRound: 5
+    LevelRequirementBase: 100
+    LevelRequirementPerLevel: 75
+    GoldGrantsXp: 0
+    PlaytimeGrantsXp: 0
+    IncompleteRoundGrantsRoundXp: 0
+    Skins:
+    - Id: 0
+      DisplayName: Ivory / Crimson
+      PrimaryColor: {r: 0.93, g: 0.9, b: 0.83, a: 1}
+      SecondaryColor: {r: 0.6, g: 0.11, b: 0.13, a: 1}
+    - Id: 1
+      DisplayName: Indigo / Black
+      PrimaryColor: {r: 0.16, g: 0.19, b: 0.34, a: 1}
+      SecondaryColor: {r: 0.07, g: 0.07, b: 0.09, a: 1}
+    - Id: 2
+      DisplayName: Moss / Cream
+      PrimaryColor: {r: 0.33, g: 0.4, b: 0.25, a: 1}
+      SecondaryColor: {r: 0.9, g: 0.87, b: 0.76, a: 1}
+    DefaultSkin: 0
+    DefaultWeapon: 0
+    Achievements:
+    - Id: first_blood
+      DisplayName: First Blood
+      Description: Defeat your first enemy.
+      Trigger: 0
+      Threshold: 1
+      TargetTier: 0
+    - Id: armor_breaker
+      DisplayName: Armor Breaker
+      Description: Break an armour piece off an enemy.
+      Trigger: 1
+      Threshold: 1
+      TargetTier: 0
+    - Id: reach_round_5
+      DisplayName: Reach Round 5
+      Description: Survive until round 5.
+      Trigger: 2
+      Threshold: 5
+      TargetTier: 0
+    - Id: defeat_an_ultra
+      DisplayName: Defeat an Ultra
+      Description: Bring down an Executioner.
+      Trigger: 3
+      Threshold: 1
+      TargetTier: 3
+  _feedback:
+    HitStopArmorBreak: 0.045
+    HitStopHeavyImpact: 0.035
+    HitStopHeavyDeath: 0.07
+    HitStopMinInterval: 0.25
+    MaxImpactEffects: 40
+    MaxBloodEffects: 24
+    MaxArmorBreakEffects: 12
+    MaxDeathEffects: 12
+    MaxDamageNumbers: 30
+    MaxShakeAmplitude: 0.22
+    ShakeDecay: 6
+    DamageVignetteTime: 0.35
+    StaggerCooldown: 1.1
+    MaxStaggerDuration: 0.45
+    MaxCombatAudioVoices: 16
+    DuplicateAudioSuppression: 0.04
+  _system:
+    TargetFrameRate: 60
+    VSyncCount: 0
+    DirectToRun: 0
+    FixedDeltaTime: 0.02
+    DebugPanelEnabled: 1
+  _roundDifficultyOverrides: []

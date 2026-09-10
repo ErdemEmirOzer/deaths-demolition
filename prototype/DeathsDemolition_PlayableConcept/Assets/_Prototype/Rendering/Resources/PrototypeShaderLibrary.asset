@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b60d97d8d22d471f8411eb3d8372bc3, type: 3}
+  m_Name: PrototypeShaderLibrary
+  m_EditorClassIdentifier: 
+  _lit: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+  _simpleLit: {fileID: 4800000, guid: 8d2bb70cbf9db8d4da26e15b26e74248, type: 3}
+  _unlit: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  _particlesUnlit: {fileID: 4800000, guid: 0406db5a14f94604a8c57ccfbc9f3b46, type: 3}
+  _skybox: {fileID: 106, guid: 0000000000000000f000000000000000, type: 0}
+  _variantPins:
+  - {fileID: 2100000, guid: 5316f235dfaf74d858dcd86e980f607d, type: 2}
+  - {fileID: 2100000, guid: 2870161f0c01a47e78842c1d4e286854, type: 2}
+  - {fileID: 2100000, guid: 4b3d8d6b6561c40d19530df7e0f3faf9, type: 2}
+  - {fileID: 2100000, guid: 1dbec73fffe1a4791904c61cc218a949, type: 2}
+  - {fileID: 2100000, guid: 45ba6e2d7f6c44772876f0a0a4f427dd, type: 2}
+  - {fileID: 2100000, guid: 58fc26f7904d64c688bbe0ad94253aa5, type: 2}
+  - {fileID: 2100000, guid: 344dde0a91c844e359004f7456dd2dc8, type: 2}
+  - {fileID: 2100000, guid: d4c9872cc07764c5a90ea3d0819b8de3, type: 2}

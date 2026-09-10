@@ -1,0 +1,81 @@
+# ===== Deaths Demolition · kök .gitignore (WP-000 Production Baseline, 2026-09-10) =====
+# Unity proje kökleri: prototype/DeathsDemolition_PlayableConcept/ ve ileride game/<proje>/
+# Unity üretim klasörleri "**/" ile yakalanır; Assets/ altındaki aynı adlı KAYNAK klasörleri
+# (örn. Assets/_Prototype/Audio/Library/) açıkça geri alınır.
+
+# --- macOS / editör atıkları
+.DS_Store
+**/.DS_Store
+._*
+*.swp
+*~
+.vs/
+.vscode/
+.idea/
+*.suo
+*.userprefs
+
+# --- Unity üretim / önbellek klasörleri
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]serSettings/
+**/[Mm]emoryCaptures/
+**/[Rr]ecordings/
+**/*_BurstDebugInformation_DoNotShip/
+# Assets/ altındaki kaynak klasörlerini geri al (Audio/Library kaynak koddur)
+!**/[Aa]ssets/**/[Ll]ibrary/
+!**/[Aa]ssets/**/[Bb]uild/
+!**/[Aa]ssets/**/[Ll]ogs/
+
+# --- IDE / derleme çıktıları
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+ExportedObj/
+.consulo/
+
+# --- Paketlenmiş / yapı çıktıları
+*.apk
+*.aab
+*.unitypackage
+*.app
+crashlytics-build.properties
+**/[Aa]ssets/[Ss]treamingAssets/aa.meta
+**/[Aa]ssets/[Ss]treamingAssets/aa/*
+**/[Aa]ssets/AssetStoreTools*
+**/[Aa]ssets/Plugins/Editor/JetBrains*
+
+# --- Unity Test Framework'ün geçici PlayMode sahnesi (kesilen koşu kalıntısı)
+**/[Aa]ssets/InitTestScene*.unity
+**/[Aa]ssets/InitTestScene*.unity.meta
+
+# --- Araç yerel ayarları ve sırlar (asla depoya girmez)
+.claude/settings.local.json
+**/.claude/settings.local.json
+# Kadro ajan havuzu symlink'i (mutlak makine yolu; kullanıcı kararı 2026-09-10)
+/.claude/agents
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.ulf
+UnityLicense*
+.mcp.local.json

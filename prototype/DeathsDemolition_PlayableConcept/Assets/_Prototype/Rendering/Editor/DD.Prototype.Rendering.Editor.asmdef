@@ -1,0 +1,19 @@
+{
+    "name": "DD.Prototype.Rendering.Editor",
+    "rootNamespace": "",
+    "references": [
+        "DD.Prototype.Core",
+        "DD.Prototype.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [ "Editor" ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
