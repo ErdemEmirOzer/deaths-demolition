@@ -22,7 +22,8 @@
 *.prefab        text eol=lf merge=unityyamlmerge diff
 *.asset         text eol=lf merge=unityyamlmerge diff
 *.mat           text eol=lf merge=unityyamlmerge diff
-*.meta          text eol=lf merge=unityyamlmerge diff
+# .meta dosyaları %YAML başlığı taşımaz; UnityYAMLMerge bunları reddeder (exit 1) → normal metin merge (WP-001 ölçümü)
+*.meta          text eol=lf diff
 *.controller    text eol=lf merge=unityyamlmerge diff
 *.anim          text eol=lf merge=unityyamlmerge diff
 *.overrideController text eol=lf merge=unityyamlmerge diff

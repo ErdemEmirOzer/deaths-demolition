@@ -164,6 +164,11 @@ namespace DD.Prototype.Rounds
             RunFlowClock.ClearHolds();
             RunEvents.ClearState();
 
+            // The special-weapon HUD snapshot is static and outlives the scene. A pickup
+            // still lying on the ground when the previous run ended would otherwise show
+            // up as "on the field" in this run (WP-001 A2).
+            WeaponEvents.PublishSpecial(default, true);
+
             _stats.Reset();
 
             // REQ-018: gold lives inside one run only. Wiped on start as well as on end, so

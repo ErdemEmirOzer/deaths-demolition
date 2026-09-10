@@ -38,6 +38,12 @@ namespace DD.Prototype.UI
         /// <summary>PROTOTYPE-ONLY: how long the run scene holds after death before Results.</summary>
         private const float ResultsDelaySeconds = 1.6f;
 
+        // Counts scene transitions requested through this flow. A delayed hand-off
+        // captures the value when scheduled and gives up if another transition
+        // happened in between (WP-001 A1: quitting to the main menu during the death
+        // beat must not have Results loaded over the menu 1.6 s later).
+        private static int s_transition;
+
         private static bool s_installed;
         private static bool s_resultsScheduled;
 
@@ -136,6 +142,8 @@ namespace DD.Prototype.UI
 
         private static void Load(string sceneName)
         {
+            s_transition++;
+
             if (!Application.CanStreamedLevelBeLoaded(sceneName))
             {
                 // Deliberately a log, not an error: the scenes are created by
@@ -201,12 +209,20 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            UiFlowRunner.Instance.Run(GoToResultsAfterDelay());
+            UiFlowRunner.Instance.Run(GoToResultsAfterDelay(s_transition));
         }
 
-        private static IEnumerator GoToResultsAfterDelay()
+        private static IEnumerator GoToResultsAfterDelay(int scheduledAt)
         {
             yield return new WaitForSecondsRealtime(ResultsDelaySeconds);
+
+            if (scheduledAt != s_transition)
+            {
+                // The player already left the run (pause menu -> main menu) while the
+                // death beat was playing. The menu is where they asked to be.
+                yield break;
+            }
+
             GoToResults();
         }
 
@@ -215,6 +231,7 @@ namespace DD.Prototype.UI
         {
             s_installed = false;
             s_resultsScheduled = false;
+            s_transition = 0;
             SelectedSkin = PlayerSkins.Default;
         }
     }

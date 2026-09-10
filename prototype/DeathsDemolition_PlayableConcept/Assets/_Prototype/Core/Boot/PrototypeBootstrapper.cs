@@ -29,6 +29,12 @@ namespace DD.Prototype.Core.Boot
         private DebugPanelToggle _directToRunToggle;
         private DebugPanelReadout _poolReadout;
 
+        // The persistent (DontDestroyOnLoad) bootstrapper of this process. Boot is
+        // loaded once per launch, but the test runner (and any future "back to boot")
+        // can load it again; a second instance then stays scene-local and dies with
+        // the Boot scene instead of piling up as another persistent object (WP-001).
+        private static PrototypeBootstrapper s_persistent;
+
         private void Awake()
         {
             PrototypeConfig config = ConfigOverride != null
@@ -46,7 +52,15 @@ namespace DD.Prototype.Core.Boot
                 PrototypeConfig.SetActive(config);
             }
 
-            DontDestroyOnLoad(gameObject);
+            if (s_persistent == null)
+            {
+                s_persistent = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Debug.Log("[Boot] Boot scene loaded again; the persistent bootstrapper already exists, this instance stays scene-local.");
+            }
 
             // Touch the pool root so it exists (and is DontDestroyOnLoad) before any
             // gameplay scene tries to spawn into it.
@@ -81,6 +95,12 @@ namespace DD.Prototype.Core.Boot
             DebugPanelRegistry.Remove(_directToRunToggle);
             DebugPanelRegistry.Remove(_poolReadout);
             base.OnDisable();
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            s_persistent = null;
         }
 
         private IEnumerator Start()
