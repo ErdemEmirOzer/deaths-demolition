@@ -133,10 +133,11 @@ unreachable through natural play:
   (`Core/Config/EnemyConfigSection.cs:309`, `IntroductionRound = 8`) and the rounds 1-7
   pool is 271 enemies. **Spawn → `Skip to Round 8 (Executioner debut)`**
   (`Spawn/EnemySpawnDirector.cs:846`) exists for exactly this reason.
-* **The three gold collection modes cannot be compared any other way.** There is no
-  in-game surface that switches them. **Economy → `Mode: DirectCredit` /
-  `Mode: ContactPickup` / `Mode: ProximityMagnet (default)`**
-  (`Economy/GoldService.cs:411-421`).
+* **The packet economy has no other witness.** **Economy → `Wallet` / `Packets` /
+  `Reward ledger`** readouts show the run id, the per-source totals (pickup vs round-end
+  sweep), applied transactions, packets on the floor, and every refusal counter that
+  should read zero (`Economy/GoldService.cs`, WP-004). The three collection-mode buttons
+  are gone: the approved contract is one visible, magnet-collected packet per kill.
 
 `F1` toggles it. It never appears during normal play. Nine tabs
 (`Core/Debug/DebugPanelRegistry.cs:9-18`):
@@ -147,7 +148,7 @@ unreachable through natural play:
 | **Rounds** | Run/round/clock/XP readouts, start-restart run, end run, skip to next round, force-complete round, skip to round N, force the upgrade screen open or closed, live upgrade offer, gold grants. |
 | **Enemies** | Clear/kill all, spawn one of each tier, fill to safety ceiling, break all armour, `Verify Damage Model` (runs the regional-damage assertions and logs violations), crowd / tier-schedule / FX-budget / armour readouts. |
 | **Weapons** | Equip any classic weapon, trigger or end the Special Weapon, infinite ammo, live fire rate and damage, camera-shake intensity, `+1` on each upgrade branch, clear build, effect-pool and feel-budget readouts. |
-| **Economy** | Wallet and collection readouts, the three gold-mode buttons, gold grants, collect/destroy all orbs, live magnet radius. |
+| **Economy** | Wallet, packet and reward-ledger readouts, gold grants, sweep (credit) / destroy (no credit) all packets, live magnet radius. |
 | **Spawn** | Force spawn to 40, release forced target, clear enemies, spawning on/off, round-3 / round-5 / round-8 debut jumps, skip to round N, live spawn-point weight table. |
 | **Perf** | `Pools`, `Crowd`, `NavMesh` readouts, crowd layer on/off, reset crowd peak. **The `Crowd` row is the only measuring instrument for the crowd solver's frame cost.** (`Navigation/NavigationSystemBehaviour.cs:93`) |
 | **Candidates** | The candidate decision list. Flagging a value here changes nothing and writes nothing to `planning/`. |
@@ -174,7 +175,7 @@ Runtime code lives under `Assets/_Prototype/`; URP pipeline, renderer and volume
 | `World/` | The 90×90 m blockout: procedural mesh building, ground, structures, foliage, atmosphere, palette, landmarks, and the NavMesh bake — assembled at load by `WorldBootstrap`/`WorldBuilder`; the editor tool `RunSceneBuilder` is a one-time setup utility and is not run in normal work. |
 | `Rendering/` | The serialized shader library (`PrototypeShaderLibrary`, in `Resources/`), the eight variant-pin materials that keep URP keyword variants in the Player build, the `PrototypeShaders` accessor that replaced `Shader.Find`, and the build-time check that stops a build when the library is missing. |
 | `Rounds/` | The run director: round pools, round-end flow, the three-card upgrade shop, XP and stats tracking, the run flow clock that freezes everything on pause, and the debug registrations. |
-| `Economy/` | The gold wallet, the orb, its tuning, and the service that implements all three collection modes behind one interface. |
+| `Economy/` | The run wallet (transaction ledger with sources and ids), the reward-eligibility ledger, the value contract, the packet lifecycle and its pooled body, its tuning, and the service that drops one packet per kill, pulls it in with the magnet and sweeps the floor when a round completes. |
 | `UI/` | Every screen (main menu, selection, HUD, upgrade, pause, results) built on a shared kit — tokens, fonts, sprites, buttons, bars, motion, sound and a contrast auditor — plus the flow object that drives scene transitions. |
 | `Profile/` | The local, offline profile: persistent stats, level and unlocks, its file store, and the per-run reward report that Results reads. |
 | `Audio/` | Fully synthesised placeholder audio — no external assets. Recipes for weapons, impacts, ambience and meta, a clip library, a voice pool with a budget, buses, a mix plan and the ambience director. |
@@ -187,17 +188,19 @@ Runtime code lives under `Assets/_Prototype/`; URP pipeline, renderer and volume
 The full list is in **[`PROTOTYPE-ONLY.md`](PROTOTYPE-ONLY.md)**. Summary:
 
 * Every tunable value carries a `[PrototypeOnly(...)]` attribute naming the still-open
-  planning decision it temporarily occupies. **485 such declarations exist in the
-  code** (WP-003 re-count 2026-09-12, unchanged since WP-002's 485 of 2026-09-11 — the WP-003 round/spawn classes add no tunable of their own; 491 at the WP-000 count of 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
+  planning decision it temporarily occupies. **487 such declarations exist in the
+  code** (WP-004 re-count 2026-09-12: +2 invented presentation/sizing values on `GoldService`; 485 at WP-003/WP-002; 491 at the WP-000 count of 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
   number off the screen without also reading where it came from.
 * **237 of the original 337 (2026-08-18 scan) had no source in the request at all**; the invented split is re-issued after WP-000 Phase 4 — they were invented so a
   system could function. They are flagged `invented` and rendered in a different colour.
 * Six of the seven lines under *"Kararlaştırılması sonraya bırakılan alanlar"* in
   `planning/00-PROJECT-PLAN.md` are currently occupied by prototype numbers.
   `PROTOTYPE-ONLY.md` §1 maps which value occupies which line.
-* **Gold collection with `ProximityMagnet` is now an approved product decision.**
-  The other prototype comparison modes remain development-only until removed or retained
-  by a later implementation decision.
+* **Gold collection with `ProximityMagnet` is now an approved product decision**, and
+  WP-004 (2026-09-12) implements it as the only path: every enemy death drops one visible
+  packet that never expires, the magnet pulls it in, and the round-end sweep credits
+  whatever is left before the upgrade screen opens. The old comparison-mode switch is
+  retired; `EconomyConfigSection.GoldCollectionMode` / `OrbLifetime` are inert fields.
 * Weapon names, enemy names (`Runner`, `Guard`, `Executioner`), the upgrade branches and
   the achievements are placeholder content, not an approved roster.
 

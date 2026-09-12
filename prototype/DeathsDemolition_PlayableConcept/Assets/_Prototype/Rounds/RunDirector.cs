@@ -76,6 +76,7 @@ namespace DD.Prototype.Rounds
 
         private readonly RunStatsTracker _stats = new RunStatsTracker();
         private readonly RoundUpgradeShop _shop = new RoundUpgradeShop();
+        private readonly RunBuildState _build = new RunBuildState();
 
         private RunPhase _phase = RunPhase.None;
         private int _round = 1;
@@ -92,6 +93,9 @@ namespace DD.Prototype.Rounds
 
         private EnemySpawnDirector _spawn;
         private GoldWallet _boundWallet;
+        private WeaponModifierState _boundModifiers;
+        private int _runId;
+        private GoldAutoCollectReport _roundClearSweep;
 
         // ------------------------------------------------------------------ public API
 
@@ -106,6 +110,23 @@ namespace DD.Prototype.Rounds
 
         /// <summary>The run's counters. Read-only in practice; only this class writes.</summary>
         public RunStatsTracker Stats => _stats;
+
+        /// <summary>
+        /// The run's build: weapon, purchases, cached description (WP-004). Ranks stay in
+        /// the weapon's <see cref="WeaponModifierState"/>; this records what was bought.
+        /// </summary>
+        public RunBuildState Build => _build;
+
+        /// <summary>
+        /// Identity of the current run: a play-session-wide serial that rises by one on
+        /// every <see cref="StartRun"/>, across scene reloads. The wallet, the reward
+        /// ledger, the build and the shop session all carry it, so nothing from a previous
+        /// run can be mistaken for this one. 0 before the first run.
+        /// </summary>
+        public int RunId => _runId;
+
+        /// <summary>What the last round-end screen opened with (balance after the sweep, build). Default before any.</summary>
+        public RoundEndEconomySnapshot LastRoundEnd { get; private set; }
 
         /// <summary>Run wallet, or null before the gold service exists.</summary>
         public GoldWallet Wallet => GoldService.Instance != null ? GoldService.Instance.Wallet : null;
@@ -170,13 +191,16 @@ namespace DD.Prototype.Rounds
             WeaponEvents.PublishSpecial(default, true);
 
             _stats.Reset();
+            _runId = ++s_runSerial;
+            LastRoundEnd = default;
+            _roundClearSweep = default;
 
-            // REQ-018: gold lives inside one run only. Wiped on start as well as on end, so
-            // a run can never inherit the previous one's balance through a half-torn-down
-            // service.
+            // REQ-018: gold lives inside one run only. The service wipes packets, claims and
+            // the wallet, then opens them for THIS run id, so a run can never inherit the
+            // previous one's balance through a half-torn-down service.
             if (GoldService.Instance != null)
             {
-                GoldService.Instance.ResetForNewRun();
+                GoldService.Instance.InitializeForRun(_runId);
             }
 
             WeaponController controller = WeaponRegistry.ActiveController;
@@ -184,6 +208,9 @@ namespace DD.Prototype.Rounds
             {
                 controller.Modifiers.ResetForNewRun();
             }
+
+            BindBuild();
+            _build.BeginRun(_runId, WeaponRegistry.SelectedWeapon);
 
             PlayerRig rig = PlayerRegistry.Primary;
             if (rig != null && rig.Health != null)
@@ -223,6 +250,13 @@ namespace DD.Prototype.Rounds
             {
                 spawn.BeginRound(_round);
                 _poolTotal = spawn.RoundPoolTotal > 0 ? spawn.RoundPoolTotal : _poolTotal;
+            }
+
+            // Every enemy of this round gets its own packet: size the packet pool for the
+            // round before the first one can die (WP-004).
+            if (GoldService.Instance != null)
+            {
+                GoldService.Instance.PrepareForRound(_round, _poolTotal);
             }
 
             SetPhase(RunPhase.Fighting);
@@ -266,11 +300,16 @@ namespace DD.Prototype.Rounds
             RunAudioEvents.Raise(RunAudioEvent.RunEnded);
             RunEvents.PublishRunEnded(summary);
 
-            // Now the run's gold may go. Nothing carries out of a run.
+            // Now the run's gold may go. Nothing carries out of a run: packets on the floor
+            // are destroyed uncredited, the reward ledger closes (a late death event earns
+            // nothing), the wallet is wiped. The build record closes with it; the weapon's
+            // tiers are wiped by the next StartRun.
             if (GoldService.Instance != null)
             {
-                GoldService.Instance.ResetForNewRun();
+                GoldService.Instance.ResetForRunEnd();
             }
+
+            _build.EndRun();
         }
 
         /// <summary>The upgrade screen's CONTINUE / SKIP button. Starts the countdown.</summary>
@@ -317,7 +356,31 @@ namespace DD.Prototype.Rounds
                 RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
             }
 
-            _shop.Open(_round, Config, Wallet);
+            // Belt and braces: the sweep already ran from OnRoundCleared. If the screen is
+            // being forced open from the F1 panel mid-round, whatever is on the floor is
+            // taken now so the screen never opens on a balance that is about to change.
+            GoldService gold = GoldService.Instance;
+            GoldAutoCollectReport sweep = gold != null ? gold.CollectOutstanding(_round) : default;
+            if (sweep.Packets == 0 && _roundClearSweep.RunId == _runId && _roundClearSweep.Round == _round)
+            {
+                // The normal case: OnRoundCleared already swept this round; quote that report.
+                sweep = _roundClearSweep;
+            }
+
+            GoldWallet wallet = Wallet;
+            int balance = wallet != null ? wallet.Balance : 0;
+
+            _shop.Open(_round, Config, wallet, null, _runId);
+
+            LastRoundEnd = new RoundEndEconomySnapshot(
+                _runId, _round,
+                sweep.Round == _round ? sweep.BalanceBefore : balance,
+                sweep.Round == _round ? sweep.Packets : 0,
+                sweep.Round == _round ? sweep.Amount : 0,
+                balance,
+                _shop.SessionId,
+                _build.DescribeBuild());
+
             SetPhase(RunPhase.Upgrading);
         }
 
@@ -373,6 +436,7 @@ namespace DD.Prototype.Rounds
             UnbindSpawnDirector();
             UnbindSpecialWeaponBridge();
             UnbindWallet();
+            UnbindBuild();
             UnregisterDebugPanel();
 
             RunFlowClock.RemoveHold(RunFlowClock.RoundEndHold);
@@ -408,6 +472,7 @@ namespace DD.Prototype.Rounds
         {
             BindSpawnDirector();
             BindWallet();
+            BindBuild();
 
             if (!_runEverStarted)
             {
@@ -523,6 +588,15 @@ namespace DD.Prototype.Rounds
             // shop when it is released.
             RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
 
+            // REQ-076 (WP-004): every packet still on the floor - the last kill's included,
+            // it was dropped the frame before this event - is taken and credited NOW, in
+            // this frame, before anything downstream can read the balance. The director
+            // calls it directly rather than letting the service subscribe, so the order
+            // is fixed and not a matter of subscription luck.
+            _roundClearSweep = GoldService.Instance != null
+                ? GoldService.Instance.CollectOutstanding(round)
+                : default;
+
             RunEvents.PublishRoundCompleted(round);
             SpecialWeaponRoundBridge.NotifyRoundEnded(round);
             RunAudioEvents.Raise(RunAudioEvent.RoundComplete);
@@ -567,6 +641,7 @@ namespace DD.Prototype.Rounds
         private void OnCardPurchased(UpgradeCardOffer card)
         {
             _stats.RecordGoldSpent(card.Cost);
+            _build.RecordPurchase(card.Branch, card.Cost, _round);
         }
 
         private void OnPlayerDied(PlayerDeathInfo info)
@@ -643,7 +718,8 @@ namespace DD.Prototype.Rounds
                 HighestTierKilled = _stats.HighestTierKilled,
 
                 Weapon = WeaponRegistry.SelectedWeapon,
-                BuildDescription = controller != null ? controller.Modifiers.DescribeBuild() : "Stock",
+                BuildDescription = _build.HasState ? _build.DescribeBuild()
+                    : controller != null ? controller.Modifiers.DescribeBuild() : "Stock",
 
                 // The wallet is the ledger, so the summary quotes it rather than the
                 // tracker's mirror of it.
@@ -751,6 +827,31 @@ namespace DD.Prototype.Rounds
         }
 
         /// <summary>
+        /// Points the build record at the armed player's modifier state, and RE-points it
+        /// if the controller is swapped. Polled like the spawn director because the
+        /// weapon system may arm the rig after this director woke up.
+        /// </summary>
+        private void BindBuild()
+        {
+            WeaponController controller = WeaponRegistry.ActiveController;
+            WeaponModifierState modifiers = controller != null ? controller.Modifiers : null;
+
+            if (ReferenceEquals(modifiers, _boundModifiers))
+            {
+                return;
+            }
+
+            _boundModifiers = modifiers;
+            _build.Attach(modifiers);
+        }
+
+        private void UnbindBuild()
+        {
+            _boundModifiers = null;
+            _build.Detach();
+        }
+
+        /// <summary>
         /// The three lines <see cref="SpecialWeaponRoundBridge"/> asks for.
         ///
         /// WITHOUT THIS THE SPECIAL WEAPON NEVER APPEARS BY ITSELF and nothing complains:
@@ -791,12 +892,14 @@ namespace DD.Prototype.Rounds
         }
 
         private static bool s_unbackedReported;
+        private static int s_runSerial;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             Instance = null;
             s_unbackedReported = false;
+            s_runSerial = 0;
         }
     }
 }

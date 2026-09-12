@@ -201,7 +201,7 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 
 ## WP-003 — M1 Rounds & Dynamic Spawning Slice
 
-**Durum:** Yürütülüyor (S-03, 2026-09-12). İzole branch `wp-003-m1-rounds-spawning` (taban: `main` = `8fd858670e4f5a77e6f12811436e2c5a846a510b` = `wp-002-m1-combat`); tek yazma/commit sahibi S-03; S-01 entegrasyon sınırlarını salt okunur doğrular; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge ve push ayrı C-00/kullanıcı kararıdır. Başlangıç manifesti `b63ba343…` (669 yol) = WP-002 final manifesti; davranış değiştirilmeden baseline kapıları: import 0 hata, EditMode 192/192, PlayMode 48/48 (gerçek Metal).
+**Durum:** Tamamlandı ve `main`'e entegre (2026-09-12). Kanıt: package commit `507c217658aafce637262500e6fe8d03daff41d6` (izole branch `wp-003-m1-rounds-spawning`, taban `main` = `8fd85867` = `wp-002-m1-combat`, tek atomik commit, 26 dosya); S-01 koşulsuz PASS; S-10 bağımsız kabul PASS 14 · FAIL 0 · BLOCKED 0; final manifest `0b9707a5…` (686 yol); sıfırdan Library ile EditMode 233/233, PlayMode 56/56 (gerçek Metal), release Player build, Player smoke ve development-build RoundProbe 8/8 PASS; C-00 koordinasyonuyla `main`'e fast-forward (`8fd8586..507c217`, merge commit yok), hafif etiket `wp-003-m1-rounds`; push yok (remote yok). Nihai rapor: `S-03-WP-003-NIHAI-RAPOR.md` (Kadro çalışma alanı `context/projects/deaths-demolition/wp-003/reports/`). WP-003 worktree'si korunmaktadır.
 
 **Yürütme promptu:** `planning/work-packages/WP-003-M1-ROUNDS-SPAWNING.md`
 
@@ -225,3 +225,29 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 - Round 1 gerçek sahnede güvenilir başlar; havuz doğru yönetilir; spawnlar yalnız authoring noktalarından; yoğunluk oyuncu konumuna göre değişir ve çok uzak nokta sıfır alır; hedef aktif korunur; teknik tavan asla aşılmaz; havuz bitince spawn durur; son yaşayan düşman ölünce round yalnız bir kez tamamlanır; pause/ölüm/yeni koşu state'i bozmaz; WP-002 sözleşmeleri korunur.
 - Tam regresyon: import, EditMode, PlayMode (gerçek Metal), temiz Library release build, Player smoke; yeni ve mevcut tüm testler geçer.
 - S-01 koşulsuz kabul, S-10 bağımsız PASS; Git F0–F10 ve manifest temiz; kullanıcı onayı olmayan yeni ürün kararı yok; çalışma izole branch'te tek atomik commit; `main`'e merge ve push yapılmamıştır.
+
+## WP-004 — M1 Gold & Round Upgrade Loop
+
+**Durum:** Yürütülüyor (S-04, 2026-09-12). İzole branch `wp-004-m1-gold-upgrade-loop` (taban: `main` = `507c217658aafce637262500e6fe8d03daff41d6` = `wp-003-m1-rounds`); tek yazma/commit sahibi S-04; S-01 entegrasyon sınırlarını salt okunur doğrular; S-02/S-03/S-09 salt okunur danışman; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge ve push ayrı C-00/kullanıcı kararıdır. Başlangıç manifesti `0b9707a5…` (686 yol) = WP-003 final manifesti; davranış değiştirilmeden baseline kapıları: import 0 hata, EditMode 233/233, PlayMode 56/56 (gerçek Metal).
+
+**Yürütme promptu:** `planning/work-packages/WP-004-M1-GOLD-UPGRADE-LOOP.md`
+
+**Amaç:** Mevcut prototipteki gold ve round sonu geliştirme sistemini M1 dikey kesitinin uçtan uca çalışan, güvenilir üretim dilimine dönüştürmek: her geçerli düşman ölümünde tam bir fiziksel gold paketi, süreyle kaybolmayan paket, mıknatıs toplama ve tek kredi, round tamamlanınca kalan paketlerin ekran açılmadan önce otomatik toplanması, koşu cüzdanı, atomik geliştirme satın alma, koşu build state'i, roundlar arası koruma, ölümde ve yeni koşuda sıfırlama, profil XP izolasyonu. Yeni ürün, kapsam, denge, sanat veya teknoloji kararı verilmez; sayısal değerler PrototypeOnly kalır; yalnız Standard ve zırhsız zombi kullanılır.
+
+**Kapsam:**
+
+- Enemy death → reward sözleşmesi (`EnemyDeathInfo.LifeId`, `GoldRewardLedger`: koşu canlı / bayat yaşam / tekrar / değersiz reddi) ve genişletilebilir değer sözleşmesi (`GoldRewardValue`: temel + versiyon + zırh yuvaları; M1'de yalnız temel değer).
+- Gold paket yaşam döngüsü (`GoldPacketLifecycle`: Spawned / Waiting / Magnetizing / Collected / AutoCollected / Recycled; süreyle despawn yok; tek toplama), fiziksel paket (`GoldOrb`), round başına havuz boyutlandırma ve ısıtma.
+- Koşu cüzdanı (`GoldWallet`: koşu kimliği, kaynaklı ve kimlikli işlemler, tekrar/negatif/yetersiz bakiye reddi, snapshot olayı), round sonu otomatik toplama (`GoldService.CollectOutstanding`, `RunDirector.OnRoundCleared` içinden deterministik sırayla), `RoundEndEconomySnapshot`.
+- Atomik satın alma (`RoundUpgradeShop.TryPurchase(index, sessionId)`: kontroller harcamadan önce; refund dalı kaldırıldı; oturum kimliği ile bayat ekran reddi), koşu build state'i (`RunBuildState`, rank otoritesi `WeaponModifierState`'te), `DescribeBuild` önbelleği (kare başına 0 B), olay güdümlü `UpgradeScreen` (polling yok).
+- Koşu kimliği (`RunDirector.RunId`), koşu başlangıç/bitiş sırası (cüzdan/ledger/paket/build), ölüm ↔ RoundCleared yarışında mevcut öncelik (ölüm terminal) korunur.
+- EditMode/PlayMode sözleşme testleri, performans gözlemi, development-build `GoldProbe` (gerçek Player'da manuel kit kanıtı), planlama durum kayıtları.
+
+**Kapsam dışı:** profil XP hesaplaması ve level curve; kalıcı achievement/unlock; final Results/Profile/Statistics ekranları; final UI redesign/animasyon; armor, bölgesel hasar, patlama zırh sözleşmesi; Special/Elite/Ultra düşman; Special Weapon; yeni klasik silah; nihai geliştirme dalları, rarity, reroll/lock/ban, nihai ekonomi/upgrade/round dengesi; loot crate/chest; kalıcı para birimi; başlangıç gold bonusu; battle pass/daily reward; online ekonomi/cloud save/leaderboard/netcode; final harita/model/animasyon/VFX/ses; B3/B4/B5 ve sınıf-3 A–H kararları; REQ-068/REQ-071/DEC-021/REQ-123 değişiklikleri; remote/push/yayın.
+
+**Çıkış koşulları:**
+
+- Her geçerli düşman tam bir fiziksel gold paketi düşürür; duplicate ölüm duplicate gold üretmez; gold yalnız kill'den; paketler normal round sırasında kaybolmaz; magnet pickup güvenilir; manuel pickup bir kez öder; round sonunda bütün alınmamış gold (son kill dahil) otomatik toplanır ve upgrade ekranı bu bakiyeyle açılır; satın alma atomik; upgrade mevcut klasik silaha uygulanır; gold ve build roundlar arası korunur, ölüm ve yeni koşu sıfırlar; gold/upgrade profil XP'si üretmez; WP-002 ve WP-003 sözleşmeleri korunur.
+- Tam regresyon: import, EditMode, PlayMode (gerçek Metal), temiz Library release build, Player smoke, GoldProbe; yeni ve mevcut tüm testler geçer.
+- S-01 koşulsuz kabul, S-10 bağımsız PASS; Git F0–F10 ve manifest temiz; yeni ürün kararı yok; sayısal değerler PrototypeOnly; çalışma izole branch'te tek atomik commit; `main`'e merge ve push yapılmamıştır.
+

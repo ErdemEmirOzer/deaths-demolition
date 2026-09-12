@@ -1,4 +1,3 @@
-using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Pooling;
 using DD.Prototype.Feedback;
 using UnityEngine;
@@ -6,54 +5,65 @@ using UnityEngine;
 namespace DD.Prototype.Economy
 {
     /// <summary>
-    /// One gold pickup lying in the garden.
+    /// One gold packet lying in the garden: the visible, collectable body of a kill's
+    /// reward.
     ///
-    /// Two of the three collection modes use this object and one does not:
+    /// The packet's OWNERSHIP lives in <see cref="GoldPacketLifecycle"/> (<see cref="Packet"/>)
+    /// and is what the tests prove; this class is the presentation and the physics of
+    /// it: the landing hop, the idle bob, the magnet pull, the collection flash, and the
+    /// round-end sweep flight.
     ///
-    ///   DirectCredit    - no orb is ever created; the service credits on the death event.
-    ///   ContactPickup   - the orb waits and is taken when the player walks over it.
-    ///   ProximityMagnet - the orb waits until the player is inside the magnet radius,
-    ///                     then accelerates at him and is taken on contact.
+    ///   Spawned      the hop from the death point to the resting point (scaled time)
+    ///   Waiting      lying on the ground; NEVER expires (WP-004: gold does not vanish)
+    ///   Magnetizing  the player came within MagnetRadius: accelerate at him
+    ///   Collected    taken on contact - credited first, then a short flash, then the pool
+    ///   AutoCollected the round-end sweep took it - credited first, then a short flight to
+    ///                the player on UNSCALED time (the world is frozen), then the pool
     ///
-    /// The magnet radius, magnet speed, acceleration, lifetime and contact radius all
-    /// come from <c>PrototypeConfig.Economy</c> through the service, re-read every
-    /// frame, so switching mode or dragging the magnet radius in the F1 panel is felt by
-    /// orbs that are already on the ground.
-    ///
-    /// Everything is scaled delta time: a paused game must not burn an orb's lifetime,
-    /// and a frozen round-end must not let orbs drift toward the player.
+    /// Everything before collection is scaled delta time: a paused game must not move a
+    /// packet, and a frozen round end must not let packets drift toward the player. Only
+    /// the sweep flight runs on unscaled time, because it happens under the freeze and
+    /// the gold it shows is already in the wallet.
     ///
     /// Built from primitives at spawn, like every other visual in this prototype. No
     /// authored prefab means no missing reference.
     /// </summary>
     public sealed class GoldOrb : PooledBehaviour
     {
+        private readonly GoldPacketLifecycle _packet = new GoldPacketLifecycle();
+
         private GoldService _owner;
         private GoldOrbTuning _tuning;
 
         private Transform _visual;
+        private MeshRenderer _renderer;
         private Light _light;
         private bool _lightOwned;
+        private Color _visualColor;
 
-        private int _amount;
-        private float _age;
         private float _hopTime;
         private Vector3 _hopFrom;
         private Vector3 _hopTo;
 
-        private bool _attracted;
         private float _magnetSpeed;
 
-        private bool _collected;
         private float _flashTime;
+        private float _flightTime;
+        private Vector3 _flightFrom;
         private float _bobPhase;
         private float _baseScale = 0.28f;
 
-        /// <summary>Gold this orb is worth.</summary>
-        public int Amount => _amount;
+        /// <summary>Ownership state of this packet. The wallet-facing truth.</summary>
+        public GoldPacketLifecycle Packet => _packet;
+
+        /// <summary>Gold this packet is worth. 0 once recycled.</summary>
+        public int Amount => _packet.Amount;
 
         /// <summary>True once the magnet has grabbed it. F1 readout.</summary>
-        public bool IsAttracted => _attracted;
+        public bool IsAttracted => _packet.State == GoldPacketState.Magnetizing;
+
+        /// <summary>True while this packet holds one of the light budget's slots.</summary>
+        public bool HasLight => _lightOwned;
 
         // ------------------------------------------------------------------ lifecycle
 
@@ -70,19 +80,26 @@ namespace DD.Prototype.Economy
             return go.AddComponent<GoldOrb>();
         }
 
-        /// <summary>Place a freshly pooled orb and start its hop.</summary>
-        public void Begin(int amount, Vector3 deathPosition, GoldService owner, GoldOrbTuning tuning, bool withLight)
+        /// <summary>
+        /// Arms a freshly pooled packet with its gold and starts its hop. False, and the
+        /// body untouched, if the packet already holds a life (the pool handed out a body
+        /// that was not recycled) or the numbers are invalid.
+        /// </summary>
+        public bool Begin(int transactionId, int amount, int runId, int round, Vector3 deathPosition,
+            GoldService owner, GoldOrbTuning tuning, bool withLight)
         {
+            if (!_packet.Begin(transactionId, amount, runId, round))
+            {
+                return false;
+            }
+
             _owner = owner;
             _tuning = tuning ?? new GoldOrbTuning();
-            _amount = Mathf.Max(0, amount);
 
-            _age = 0f;
             _hopTime = 0f;
-            _attracted = false;
             _magnetSpeed = 0f;
-            _collected = false;
             _flashTime = 0f;
+            _flightTime = 0f;
             _bobPhase = Random.value * Mathf.PI * 2f;
 
             _hopFrom = deathPosition + Vector3.up * 0.6f;
@@ -93,29 +110,50 @@ namespace DD.Prototype.Economy
 
             transform.position = _hopFrom;
 
-            _baseScale = _tuning.ScaleForAmount(_amount);
+            _baseScale = _tuning.ScaleForAmount(_packet.Amount);
 
             EnsureVisual();
+            ApplyColor(_tuning.Color);
             ApplyLight(withLight);
 
             if (_visual != null)
             {
                 _visual.localScale = Vector3.one * _baseScale;
+                _visual.localPosition = Vector3.zero;
                 _visual.localRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// The sweep took this packet (already credited). Fly to the player on unscaled
+        /// time and return to the pool. Called by the service; the state is already
+        /// AutoCollected.
+        /// </summary>
+        internal void BeginSweepFlight()
+        {
+            _flightTime = 0f;
+            _flightFrom = transform.position;
+            if (_visual != null)
+            {
+                _visual.localPosition = Vector3.zero;
             }
         }
 
         protected override void OnSpawned()
         {
-            _collected = false;
+            // A pooled body always comes back recycled (OnDespawned), so Begin can arm it.
             EnsureVisual();
         }
 
         protected override void OnDespawned()
         {
+            bool lostGold = _packet.Recycle();
+
             if (_owner != null)
             {
-                _owner.NotifyOrbReleased(this, _lightOwned);
+                _owner.NotifyOrbReleased(this, _lightOwned, lostGold);
             }
 
             _lightOwned = false;
@@ -132,27 +170,34 @@ namespace DD.Prototype.Economy
 
         private void Update()
         {
-            if (!IsSpawned)
+            if (!IsSpawned || _tuning == null)
             {
                 return;
             }
 
-            // Scaled: pause and the round-end freeze stop the orb with everything else.
+            // The sweep flight runs under the round-end freeze, so it is the one thing
+            // here that must not wait for scaled time. The gold is already credited; if
+            // the flight never finished the wallet would still be right.
+            if (_packet.State == GoldPacketState.AutoCollected)
+            {
+                TickSweepFlight(Mathf.Min(Time.unscaledDeltaTime, 0.1f));
+                return;
+            }
+
+            // Scaled: pause and the round-end freeze stop the packet with everything else.
             float dt = Time.deltaTime;
-            if (dt <= 0f || _tuning == null)
+            if (dt <= 0f)
             {
                 return;
             }
 
-            if (_collected)
+            if (_packet.State == GoldPacketState.Collected)
             {
                 TickFlash(dt);
                 return;
             }
 
-            _age += dt;
-
-            if (_hopTime < _tuning.HopDuration)
+            if (_packet.State == GoldPacketState.Spawned)
             {
                 TickHop(dt);
             }
@@ -164,13 +209,6 @@ namespace DD.Prototype.Economy
             if (_visual != null && _tuning.SpinSpeed > 0f)
             {
                 _visual.Rotate(Vector3.up, _tuning.SpinSpeed * dt, Space.World);
-            }
-
-            if (_owner != null && _age >= _owner.OrbLifetime)
-            {
-                // Uncollected gold expires. Silently: a sound for gold the player never
-                // reached would be a punishment cue, and the request never asks for one.
-                Despawn();
             }
         }
 
@@ -186,6 +224,11 @@ namespace DD.Prototype.Economy
             flat.y += _tuning.HopHeight * 4f * t * (1f - t);
 
             transform.position = flat;
+
+            if (t >= 1f)
+            {
+                _packet.Land();
+            }
         }
 
         private void TickIdleAndMagnet(float dt)
@@ -195,10 +238,7 @@ namespace DD.Prototype.Economy
                 return;
             }
 
-            bool hasPlayer = _owner.TryGetPlayerPoint(out Vector3 player);
-            PrototypeGoldCollectionMode mode = _owner.Mode;
-
-            if (!hasPlayer)
+            if (!_owner.TryGetPlayerPoint(out Vector3 player))
             {
                 Bob(dt);
                 return;
@@ -214,28 +254,24 @@ namespace DD.Prototype.Economy
                 return;
             }
 
-            if (mode != PrototypeGoldCollectionMode.ProximityMagnet)
+            if (_packet.State == GoldPacketState.Waiting)
             {
-                // ContactPickup: no attraction at all, the player has to walk over it.
-                Bob(dt);
-                return;
+                float magnet = _owner.MagnetRadius;
+                if (distanceSqr <= magnet * magnet && _packet.Attract())
+                {
+                    _magnetSpeed = 0f;
+                }
             }
 
-            float magnet = _owner.MagnetRadius;
-            if (!_attracted && distanceSqr <= magnet * magnet)
-            {
-                _attracted = true;
-                _magnetSpeed = 0f;
-            }
-
-            if (!_attracted)
+            if (_packet.State != GoldPacketState.Magnetizing)
             {
                 Bob(dt);
                 return;
             }
 
             // "Pulled hard" (request): accelerate up to the magnet speed rather than
-            // teleporting, so the pull reads as a decision the orb made.
+            // teleporting, so the pull reads as a decision the packet made.
+            _packet.TickMagnet(dt);
             _magnetSpeed = Mathf.Min(_owner.MagnetSpeed, _magnetSpeed + _owner.MagnetAcceleration * dt);
             transform.position = Vector3.MoveTowards(transform.position, player, _magnetSpeed * dt);
         }
@@ -253,17 +289,16 @@ namespace DD.Prototype.Economy
 
         private void Collect()
         {
-            if (_collected)
+            if (!_packet.TryCollect(GoldCollectKind.Manual, out _))
             {
                 return;
             }
 
-            _collected = true;
             _flashTime = 0f;
 
             // Credit first, animate second. If anything below throws, the player still
             // has the gold.
-            _owner?.OnOrbCollected(_amount, transform.position);
+            _owner?.OnPacketCollected(this);
         }
 
         private void TickFlash(float dt)
@@ -285,6 +320,39 @@ namespace DD.Prototype.Economy
             }
 
             if (t >= 1f)
+            {
+                Despawn();
+            }
+        }
+
+        private void TickSweepFlight(float unscaledDt)
+        {
+            _flightTime += unscaledDt;
+
+            float duration = _owner != null ? _owner.SweepFlightDuration : 0.35f;
+            float t = Mathf.Clamp01(_flightTime / duration);
+
+            Vector3 target = _flightFrom;
+            if (_owner != null && _owner.TryGetPlayerPoint(out Vector3 player))
+            {
+                target = player;
+            }
+
+            // Ease-in: the packet hesitates, then darts. Reads as "taken", not "teleported".
+            float eased = t * t;
+            transform.position = Vector3.Lerp(_flightFrom, target, eased);
+
+            if (_visual != null)
+            {
+                _visual.localScale = Vector3.one * (_baseScale * Mathf.Lerp(1f, 0.35f, t));
+            }
+
+            if (_light != null && _light.enabled)
+            {
+                _light.intensity = _tuning.LightIntensity * (1f - t);
+            }
+
+            if (t >= 1f || _owner == null)
             {
                 Despawn();
             }
@@ -313,13 +381,15 @@ namespace DD.Prototype.Economy
             _visual.localPosition = Vector3.zero;
             _visual.localScale = Vector3.one * _baseScale;
 
-            var renderer = sphere.GetComponent<MeshRenderer>();
+            _renderer = sphere.GetComponent<MeshRenderer>();
+            _renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            _renderer.receiveShadows = false;
 
             // Additive so gold separates from wet stone and moss under the overcast
             // lighting without being a neon ball (request: clearly readable, not neon).
-            renderer.sharedMaterial = FeedbackMaterials.Additive(_tuning != null ? _tuning.Color : Color.yellow);
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
+            // The colour is (re)applied in Begin once the tuning is known; this default
+            // only covers a body warmed before its first life.
+            ApplyColor(_tuning != null ? _tuning.Color : Color.yellow);
 
             var lightObject = new GameObject("Glow");
             lightObject.transform.SetParent(transform, false);
@@ -329,6 +399,23 @@ namespace DD.Prototype.Economy
             _light.color = _tuning != null ? _tuning.Color : Color.yellow;
             _light.enabled = false;
             _light.shadows = LightShadows.None;
+        }
+
+        private void ApplyColor(Color color)
+        {
+            if (_renderer == null)
+            {
+                return;
+            }
+
+            if (_renderer.sharedMaterial != null && _visualColor == color)
+            {
+                return;
+            }
+
+            // Shared per colour by FeedbackMaterials: no material instance per packet.
+            _renderer.sharedMaterial = FeedbackMaterials.Additive(color);
+            _visualColor = color;
         }
 
         private void ApplyLight(bool withLight)

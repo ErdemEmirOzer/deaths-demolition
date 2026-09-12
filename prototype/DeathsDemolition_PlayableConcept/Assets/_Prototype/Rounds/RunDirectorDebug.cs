@@ -96,9 +96,6 @@ namespace DD.Prototype.Rounds
             entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Rounds,
                 "Give gold", () => GiveGold(_debugGoldGrant), -49));
 
-            entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Rounds,
-                "Cycle gold collection mode", CycleGoldMode, -48));
-
             _debugEntries = entries.ToArray();
         }
 
@@ -194,31 +191,6 @@ namespace DD.Prototype.Rounds
             {
                 wallet.Credit(amount);
             }
-        }
-
-        private static void CycleGoldMode()
-        {
-            GoldService gold = GoldService.Instance;
-            if (gold == null)
-            {
-                return;
-            }
-
-            PrototypeGoldCollectionMode next;
-            switch (gold.Mode)
-            {
-                case PrototypeGoldCollectionMode.DirectCredit:
-                    next = PrototypeGoldCollectionMode.ContactPickup;
-                    break;
-                case PrototypeGoldCollectionMode.ContactPickup:
-                    next = PrototypeGoldCollectionMode.ProximityMagnet;
-                    break;
-                default:
-                    next = PrototypeGoldCollectionMode.DirectCredit;
-                    break;
-            }
-
-            gold.SetMode(next);
         }
 
         // ------------------------------------------------------------------ readouts

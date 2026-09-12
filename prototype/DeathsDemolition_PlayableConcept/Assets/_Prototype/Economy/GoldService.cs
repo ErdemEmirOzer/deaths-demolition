@@ -10,63 +10,113 @@ using UnityEngine;
 
 namespace DD.Prototype.Economy
 {
+    /// <summary>What one round-end sweep did. Published by <see cref="GoldService.CollectOutstanding"/>.</summary>
+    public readonly struct GoldAutoCollectReport
+    {
+        public readonly int RunId;
+        public readonly int Round;
+
+        /// <summary>Packets taken by the sweep. 0 when the floor was already clear.</summary>
+        public readonly int Packets;
+
+        /// <summary>Gold those packets carried, all of it credited before this report existed.</summary>
+        public readonly int Amount;
+
+        public readonly int BalanceBefore;
+        public readonly int BalanceAfter;
+
+        public GoldAutoCollectReport(int runId, int round, int packets, int amount, int balanceBefore, int balanceAfter)
+        {
+            RunId = runId;
+            Round = round;
+            Packets = packets;
+            Amount = amount;
+            BalanceBefore = balanceBefore;
+            BalanceAfter = balanceAfter;
+        }
+    }
+
     /// <summary>
     /// Gold: who earns it, how it reaches the player, and nothing else.
     ///
-    /// THE COLLECTION METHOD IS AN OPEN PRODUCT DECISION. That is why this is a mode
-    /// switch and not an implementation. The three modes differ only in what happens
-    /// between "an enemy died" and "the wallet went up":
+    /// THE CHAIN (WP-004), in the order it runs, every link owned by one class:
     ///
-    ///   DirectCredit    - the wallet goes up on the death event. No object, no travel,
-    ///                     no reason to walk into the swarm. Fastest to read, weakest
-    ///                     pull on the player's route.
-    ///   ContactPickup   - an orb drops and stays. The player must physically stand on
-    ///                     it. Strongest route pressure: gold is a reason to step where
-    ///                     the zombies just were.
-    ///   ProximityMagnet - an orb drops and jumps to the player from ~3.5 m. The route
-    ///                     pressure survives (you still have to go near it) but the
-    ///                     fiddly last metre does not.
+    ///   EnemyDied ─► GoldRewardLedger.TryClaim   is THIS life, in THIS run, owed a packet?
+    ///            ─► GoldRewardValue.Resolve      how much (base value only in M1)
+    ///            ─► one GoldOrb from the pool     the physical packet, at the death point
+    ///   GoldOrb  ─► GoldPacketLifecycle          waits (never expires), magnetizes, is
+    ///                                            taken at most once
+    ///            ─► GoldWallet.Credit             one transaction, one id, one source
+    ///   RoundCleared ─► CollectOutstanding        every packet still on the floor is taken
+    ///                                            by the sweep, credited in the same frame,
+    ///                                            BEFORE the round-end screen opens
+    ///   Run end  ─► ResetForRunEnd               packets recycled uncredited, wallet wiped
     ///
-    /// The default is ProximityMagnet purely so the prototype is easy to observe. That
-    /// is stated in PROTOTYPE-ONLY.md and is NOT a product decision.
+    /// Every enemy death produces exactly one packet. The old orb ceiling that fell back
+    /// to a direct credit is gone: the pool is sized for the round before it starts, and
+    /// the fallback that remains is a counted safety net that is expected to read zero.
     ///
     /// GOLD AND XP NEVER TOUCH. This class raises no XP, holds no XP and has no
     /// reference to anything that awards XP (request: earning or spending gold grants no
     /// profile XP). Kill XP is counted by the run director off the same death event.
+    ///
+    /// The collection mode switch that lived here (DirectCredit / ContactPickup /
+    /// ProximityMagnet) is retired: the approved contract is a visible packet with a
+    /// magnet. <c>EconomyConfigSection.GoldCollectionMode</c> and <c>OrbLifetime</c> are
+    /// no longer read (kept in the config so the shipped asset does not change).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GoldService : PrototypeConfigBehaviour
     {
         public static GoldService Instance { get; private set; }
 
-        [Header("Orb presentation (PROTOTYPE-ONLY, all invented)")]
+        [Header("Packet presentation (PROTOTYPE-ONLY, all invented)")]
         [SerializeField] private GoldOrbTuning _orbTuning = new GoldOrbTuning();
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold,
+            "Seconds the round-end sweep's packets take to fly to the player, on UNSCALED time " +
+            "so it finishes under the round-end freeze. The wallet is credited before the flight " +
+            "starts; this is presentation only. INVENTED.", true)]
+        [SerializeField] private float _sweepFlightDuration = 0.35f;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold,
+            "Extra packets the pool is sized for beyond the round's enemy pool, so a debug spawn " +
+            "or a late corpse never pushes a kill into the counted fallback. INVENTED.", true)]
+        [SerializeField] private int _packetPoolMargin = 8;
 
         [Header("Diagnostics")]
         [Tooltip("Draw the magnet radius around the player in the editor.")]
         [SerializeField] private bool _drawGizmos = true;
 
         private readonly GoldWallet _wallet = new GoldWallet();
-        private readonly List<GoldOrb> _liveOrbs = new List<GoldOrb>(64);
+        private readonly GoldRewardLedger _ledger = new GoldRewardLedger();
+        private readonly List<GoldOrb> _liveOrbs = new List<GoldOrb>(128);
+        private readonly List<GoldOrb> _warmScratch = new List<GoldOrb>(128);
+
+        private static GoldOrb s_template;
 
         private PrototypePool<GoldOrb> _pool;
         private Transform _player;
 
+        private int _runId;
+        private int _round;
         private int _litOrbs;
         private int _streak;
         private float _streakTimer;
-        private int _directCredits;
-        private int _orbsSpawned;
-        private int _orbsCollected;
-        private int _orbsExpired;
+        private int _packetsSpawned;
+        private int _packetsCollected;
+        private int _packetsAutoCollected;
+        private int _packetsLost;
+        private int _fallbackCredits;
+        private int _creditRefusals;
+        private int _lastSweepRunId;
+        private int _lastSweepRound;
 
         // cached from config
-        private PrototypeGoldCollectionMode _mode = PrototypeGoldCollectionMode.ProximityMagnet;
         private float _magnetRadius = 3.5f;
         private float _magnetSpeed = 14f;
         private float _magnetAcceleration = 38f;
         private float _contactRadius = 0.9f;
-        private float _orbLifetime = 22f;
         private int _maxActiveOrbs = 60;
 
         private DebugPanelEntry[] _debugEntries = Array.Empty<DebugPanelEntry>();
@@ -76,8 +126,11 @@ namespace DD.Prototype.Economy
         /// <summary>The run wallet. The upgrade shop spends from this instance.</summary>
         public GoldWallet Wallet => _wallet;
 
-        /// <summary>Active collection mode, straight from config. F1 switches it live.</summary>
-        public PrototypeGoldCollectionMode Mode => _mode;
+        /// <summary>Reward eligibility ledger. Read-only outside this class in practice; tests read its counters.</summary>
+        public GoldRewardLedger Ledger => _ledger;
+
+        /// <summary>Run this service is paying out for. 0 between runs.</summary>
+        public int RunId => _runId;
 
         public float MagnetRadius => _magnetRadius;
 
@@ -85,12 +138,77 @@ namespace DD.Prototype.Economy
 
         public float MagnetAcceleration => _magnetAcceleration;
 
-        /// <summary>Distance at which an orb is taken. Also the magnet's capture distance.</summary>
+        /// <summary>Distance at which a packet is taken. Also the magnet's capture distance.</summary>
         public float ContactRadius => _contactRadius;
 
-        public float OrbLifetime => _orbLifetime;
+        /// <summary>Seconds a swept packet flies (unscaled). Presentation only.</summary>
+        public float SweepFlightDuration => Mathf.Max(0.01f, _sweepFlightDuration);
 
+        /// <summary>Packets currently checked out of the pool (outstanding or animating out).</summary>
         public int LiveOrbCount => _liveOrbs.Count;
+
+        /// <summary>Packets on the floor or in flight to the player that still hold gold.</summary>
+        public int OutstandingPacketCount
+        {
+            get
+            {
+                int n = 0;
+                for (int i = 0; i < _liveOrbs.Count; i++)
+                {
+                    GoldOrb orb = _liveOrbs[i];
+                    if (orb != null && orb.IsSpawned && orb.Packet.IsOutstanding)
+                    {
+                        n++;
+                    }
+                }
+
+                return n;
+            }
+        }
+
+        /// <summary>Gold still lying on the floor (sum over outstanding packets).</summary>
+        public int OutstandingGold
+        {
+            get
+            {
+                int total = 0;
+                for (int i = 0; i < _liveOrbs.Count; i++)
+                {
+                    GoldOrb orb = _liveOrbs[i];
+                    if (orb != null && orb.IsSpawned && orb.Packet.IsOutstanding)
+                    {
+                        total += orb.Packet.Amount;
+                    }
+                }
+
+                return total;
+            }
+        }
+
+        public int PacketsSpawned => _packetsSpawned;
+        public int PacketsCollected => _packetsCollected;
+        public int PacketsAutoCollected => _packetsAutoCollected;
+
+        /// <summary>Packets recycled while still holding gold (run reset). Diagnostics.</summary>
+        public int PacketsLost => _packetsLost;
+
+        /// <summary>
+        /// Kills that got a direct credit because the pool handed back null. The pool is
+        /// sized per round so this should read 0; a non-zero value is a bug report.
+        /// </summary>
+        public int FallbackCredits => _fallbackCredits;
+
+        /// <summary>Pickup credits the wallet refused. Expected 0; a non-zero value is a bug report.</summary>
+        public int CreditRefusals => _creditRefusals;
+
+        /// <summary>Why the last refused pickup credit was refused. Diagnostics.</summary>
+        public GoldTransactionResult LastCreditRefusal { get; private set; }
+
+        /// <summary>What the last round-end sweep did.</summary>
+        public GoldAutoCollectReport LastAutoCollect { get; private set; }
+
+        /// <summary>Raised after every round-end sweep, even an empty one.</summary>
+        public event Action<GoldAutoCollectReport> AutoCollected;
 
         /// <summary>Player point the magnet homes at: roughly chest height, never the feet.</summary>
         public bool TryGetPlayerPoint(out Vector3 point)
@@ -110,59 +228,125 @@ namespace DD.Prototype.Economy
             return true;
         }
 
-        /// <summary>Switch collection mode. Writes it back to config so the change is live and visible.</summary>
-        public void SetMode(PrototypeGoldCollectionMode mode)
+        // ------------------------------------------------------------------ run boundary
+
+        /// <summary>
+        /// A run opened. Wipes everything a previous run could have left (packets, wallet,
+        /// claims) and opens the wallet and the reward ledger for <paramref name="runId"/>.
+        /// Called by the run director from StartRun, before the first round begins.
+        /// </summary>
+        public void InitializeForRun(int runId)
         {
-            if (Config == null)
-            {
-                _mode = mode;
-                return;
-            }
+            ClearOrbs(false);
 
-            if (Config.Economy.GoldCollectionMode == mode)
-            {
-                return;
-            }
+            _runId = Mathf.Max(1, runId);
+            _round = 0;
+            _lastSweepRunId = 0;
+            _lastSweepRound = 0;
 
-            Config.Economy.GoldCollectionMode = mode;
-            Config.NotifyChanged();
+            _wallet.InitializeForRun(_runId);
+            _ledger.BeginRun(_runId, EnemyLifeIds.Last);
+
+            ResetCounters();
         }
 
-        /// <summary>Return every orb on the map. Called on run end and by the F1 panel.</summary>
+        /// <summary>
+        /// The run ended. Packets still on the floor are destroyed uncredited (gold does
+        /// not survive a run, REQ-018), the ledger closes so a late death event earns
+        /// nothing, and the wallet is wiped. Called by the run director from EndRun,
+        /// AFTER the summary was built.
+        /// </summary>
+        public void ResetForRunEnd()
+        {
+            ClearOrbs(false);
+            _ledger.EndRun();
+            _wallet.ResetForRunEnd();
+            _runId = 0;
+            _round = 0;
+        }
+
+        /// <summary>
+        /// A round is about to start. Any packet somehow still outstanding (only a debug
+        /// spawn can produce one after the sweep) is credited rather than destroyed, and
+        /// the pool is sized so every enemy of the round can drop its own packet.
+        /// </summary>
+        public void PrepareForRound(int round, int roundPoolTotal)
+        {
+            _round = Mathf.Max(1, round);
+
+            if (OutstandingPacketCount > 0)
+            {
+                SweepOutstanding(_round - 1, true);
+            }
+
+            EnsurePool();
+            if (_pool == null)
+            {
+                return;
+            }
+
+            int wanted = Mathf.Max(_maxActiveOrbs, Mathf.Max(0, roundPoolTotal) + Mathf.Max(0, _packetPoolMargin));
+            if (_pool.Capacity < wanted)
+            {
+                _pool.SetCapacity(wanted);
+            }
+
+            // Prewarm builds inactive bodies but not their visuals; a packet's first
+            // OnSpawned creates a primitive and a light. Paying that here, at the round
+            // boundary, keeps it out of the kill frame.
+            int warm = Mathf.Min(wanted, Mathf.Max(0, roundPoolTotal) + Mathf.Max(0, _packetPoolMargin));
+            WarmPackets(warm);
+        }
+
+        /// <summary>
+        /// The round-end sweep (REQ-076): every packet still holding gold is taken and
+        /// credited NOW, synchronously, under <see cref="GoldSource.RoundClearAutoCollect"/>,
+        /// so the balance the upgrade screen opens with already contains it. The player
+        /// does not walk anywhere; the packets fly to him on unscaled time as a courtesy.
+        /// Idempotent per (run, round): a second call for the same round takes nothing.
+        /// </summary>
+        public GoldAutoCollectReport CollectOutstanding(int round)
+        {
+            if (_runId > 0 && _lastSweepRunId == _runId && _lastSweepRound == round)
+            {
+                // Already swept for this round: nothing is taken and the real report stays.
+                return new GoldAutoCollectReport(_runId, round, 0, 0, _wallet.Balance, _wallet.Balance);
+            }
+
+            _lastSweepRunId = _runId;
+            _lastSweepRound = round;
+
+            GoldAutoCollectReport report = SweepOutstanding(round, false);
+            LastAutoCollect = report;
+            return report;
+        }
+
+        /// <summary>
+        /// Returns every packet on the map to the pool. With <paramref name="credit"/> the
+        /// gold is credited first (sweep); without it the gold is destroyed (run end, F1).
+        /// </summary>
         public void ClearOrbs(bool credit)
         {
+            if (credit)
+            {
+                SweepOutstanding(_round, true);
+            }
+
             for (int i = _liveOrbs.Count - 1; i >= 0; i--)
             {
                 GoldOrb orb = _liveOrbs[i];
                 if (orb == null || !orb.IsSpawned)
                 {
+                    _liveOrbs.RemoveAt(i);
                     continue;
                 }
 
-                if (credit)
-                {
-                    _wallet.Credit(orb.Amount, orb.transform.position);
-                }
-
+                // Despawn → OnDespawned → NotifyOrbReleased removes it from the list.
                 orb.Despawn();
             }
 
             _liveOrbs.Clear();
             _litOrbs = 0;
-        }
-
-        /// <summary>Wipes the run wallet and the map. Gold does not survive a run (REQ-018).</summary>
-        public void ResetForNewRun()
-        {
-            ClearOrbs(false);
-            _wallet.ResetForNewRun();
-
-            _streak = 0;
-            _streakTimer = 0f;
-            _directCredits = 0;
-            _orbsSpawned = 0;
-            _orbsCollected = 0;
-            _orbsExpired = 0;
         }
 
         // ------------------------------------------------------------------ unity
@@ -211,20 +395,18 @@ namespace DD.Prototype.Economy
         }
 
         /// <summary>
-        /// Live config contract. Mode, magnet geometry and the orb ceiling are all
-        /// re-read here, so dragging the magnet radius in the F1 panel mid-round is felt
-        /// by orbs that are already lying on the ground.
+        /// Live config contract. Magnet geometry and the packet floor are re-read here, so
+        /// dragging the magnet radius in the F1 panel mid-round is felt by packets that
+        /// are already lying on the ground.
         /// </summary>
         protected override void ApplyConfig(PrototypeConfig config)
         {
             EconomyConfigSection economy = config.Economy;
 
-            _mode = economy.GoldCollectionMode;
             _magnetRadius = Mathf.Max(0f, economy.MagnetRadius);
             _magnetSpeed = Mathf.Max(0.1f, economy.MagnetSpeed);
             _magnetAcceleration = Mathf.Max(0.1f, economy.MagnetAcceleration);
             _contactRadius = Mathf.Max(0.1f, economy.ContactPickupRadius);
-            _orbLifetime = Mathf.Max(0.5f, economy.OrbLifetime);
             _maxActiveOrbs = Mathf.Max(1, economy.MaxActiveOrbs);
 
             _orbTuning.Sanitize();
@@ -237,60 +419,46 @@ namespace DD.Prototype.Economy
 
         private void Update()
         {
-            float dt = Time.unscaledDeltaTime;
-
-            if (_streakTimer > 0f)
+            if (_streakTimer <= 0f)
             {
-                _streakTimer -= dt;
-                if (_streakTimer <= 0f)
-                {
-                    _streak = 0;
-                }
+                return;
             }
 
-            PruneOrbs();
+            _streakTimer -= Time.unscaledDeltaTime;
+            if (_streakTimer <= 0f)
+            {
+                _streak = 0;
+            }
         }
 
         // ------------------------------------------------------------------ earning
 
         /// <summary>
-        /// The single earning path. Every mode branches from here.
-        ///
-        /// The reward comes off the death event, which already carries the value read
-        /// from PrototypeConfig.GoldReward(tier) by the enemy. The config method is only
-        /// called as a fallback, so the reward is never derived twice and never derived
-        /// here.
+        /// The single earning path. Eligibility first (the ledger), value second (the
+        /// value contract), then exactly one packet. Every refusal is counted on the
+        /// ledger and produces nothing.
         /// </summary>
         private void OnEnemyDied(EnemyDeathInfo info)
         {
-            int reward = info.GoldReward;
-            if (reward <= 0 && Config != null)
-            {
-                reward = Config.GoldReward(info.Tier);
-            }
+            GoldRewardValue value = GoldRewardValue.Resolve(info.GoldReward, info.Tier, Config);
 
-            if (reward <= 0)
+            GoldRewardVerdict verdict = _ledger.TryClaim(info.LifeId, value.Total);
+            if (verdict != GoldRewardVerdict.Granted)
             {
                 return;
             }
 
-            if (_mode == PrototypeGoldCollectionMode.DirectCredit)
+            if (!TrySpawnPacket(value.Total, info.Position))
             {
-                _directCredits++;
-                CreditAndAnnounce(reward, info.Position);
-                return;
-            }
-
-            if (!TrySpawnOrb(reward, info.Position))
-            {
-                // The orb ceiling is a presentation limit, not an economy one: a kill
-                // that cannot get a visible orb still pays. Losing gold because sixty
-                // orbs were already on the floor would be an invisible economy bug.
-                CreditAndAnnounce(reward, info.Position);
+                // Counted safety net. The pool is sized per round, so this reads 0; if it
+                // ever does not, the kill still pays rather than vanishing, and the count
+                // says so.
+                _fallbackCredits++;
+                CreditPickup(value.Total, info.Position, _wallet.NextTransactionId());
             }
         }
 
-        private bool TrySpawnOrb(int amount, Vector3 position)
+        private bool TrySpawnPacket(int amount, Vector3 position)
         {
             EnsurePool();
 
@@ -302,34 +470,38 @@ namespace DD.Prototype.Economy
             GoldOrb orb = _pool.Get(position, Quaternion.identity);
             if (orb == null)
             {
-                // ReturnNull policy: the ceiling is reached. Not an error.
                 return false;
             }
 
-            bool withLight = _litOrbs < _orbTuning.LightBudget;
-            if (withLight)
+            int transactionId = _wallet.NextTransactionId();
+            if (!orb.Begin(transactionId, amount, _runId, _round, position, this, _orbTuning, _litOrbs < _orbTuning.LightBudget))
+            {
+                // A body that refused to begin a life is unusable; give it back untouched.
+                orb.Despawn();
+                return false;
+            }
+
+            if (orb.HasLight)
             {
                 _litOrbs++;
             }
 
-            orb.Begin(amount, position, this, _orbTuning, withLight);
-
             _liveOrbs.Add(orb);
-            _orbsSpawned++;
+            _packetsSpawned++;
 
             RunAudioEvents.Raise(RunAudioEvent.GoldSpawned, position, 0.5f);
             return true;
         }
 
-        /// <summary>Called by an orb the moment it is taken.</summary>
-        internal void OnOrbCollected(int amount, Vector3 position)
+        /// <summary>Called by a packet the moment the player takes it. One credit, under the packet's own id.</summary>
+        internal void OnPacketCollected(GoldOrb orb)
         {
-            _orbsCollected++;
-            CreditAndAnnounce(amount, position);
+            _packetsCollected++;
+            CreditPickup(orb.Packet.Amount, orb.transform.position, orb.Packet.TransactionId);
         }
 
-        /// <summary>Called by an orb as it returns to the pool, collected or expired.</summary>
-        internal void NotifyOrbReleased(GoldOrb orb, bool hadLight)
+        /// <summary>Called by a packet as it returns to the pool, taken or destroyed.</summary>
+        internal void NotifyOrbReleased(GoldOrb orb, bool hadLight, bool lostGold)
         {
             _liveOrbs.Remove(orb);
 
@@ -337,19 +509,95 @@ namespace DD.Prototype.Economy
             {
                 _litOrbs = Mathf.Max(0, _litOrbs - 1);
             }
+
+            if (lostGold)
+            {
+                _packetsLost++;
+            }
         }
 
-        private void CreditAndAnnounce(int amount, Vector3 position)
+        private void CreditPickup(int amount, Vector3 position, int transactionId)
         {
-            _wallet.Credit(amount, position);
+            GoldTransactionResult result = _wallet.Credit(amount, GoldSource.EnemyPickup, transactionId, position);
+            if (result != GoldTransactionResult.Applied)
+            {
+                // Unreachable in a consistent run: the packet reserved its id at spawn and
+                // the ledger granted the life once. Counted so a test or the F1 panel can
+                // see it rather than a silent zero.
+                _creditRefusals++;
+                LastCreditRefusal = result;
+                return;
+            }
 
             _streak++;
             _streakTimer = _orbTuning.StreakWindow;
 
-            // Short light and sound on collection (request). The light is the orb's own
-            // flash; this is the sound and the HUD counter kick, which the wallet has
+            // Short light and sound on collection (request). The light is the packet's
+            // own flash; this is the sound and the HUD counter kick, which the wallet has
             // already published through RunEvents.GoldChanged.
             RunAudioEvents.Raise(RunAudioEvent.GoldCollected, position, 1f, _streak - 1);
+        }
+
+        /// <summary>
+        /// Takes every outstanding packet. Each packet is credited under its own reserved
+        /// transaction id (so nothing can pay it twice), one sound plays for the batch,
+        /// and the packets fly out on unscaled time.
+        /// </summary>
+        private GoldAutoCollectReport SweepOutstanding(int round, bool silent)
+        {
+            int before = _wallet.Balance;
+            int packets = 0;
+            int amount = 0;
+            Vector3 lastPosition = Vector3.zero;
+
+            for (int i = _liveOrbs.Count - 1; i >= 0; i--)
+            {
+                GoldOrb orb = _liveOrbs[i];
+                if (orb == null || !orb.IsSpawned)
+                {
+                    _liveOrbs.RemoveAt(i);
+                    continue;
+                }
+
+                if (!orb.Packet.IsOutstanding)
+                {
+                    continue;
+                }
+
+                int transactionId = orb.Packet.TransactionId;
+                if (!orb.Packet.TryCollect(GoldCollectKind.RoundClearAuto, out int value))
+                {
+                    continue;
+                }
+
+                if (_wallet.Credit(value, GoldSource.RoundClearAutoCollect, transactionId, orb.transform.position) == GoldTransactionResult.Applied)
+                {
+                    packets++;
+                    amount += value;
+                }
+
+                _packetsAutoCollected++;
+                lastPosition = orb.transform.position;
+                orb.BeginSweepFlight();
+            }
+
+            // Only the round-clear path records the report (CollectOutstanding); the silent
+            // sweeps (round start leftovers, F1) must not overwrite what the screen quotes.
+            var report = new GoldAutoCollectReport(_runId, round, packets, amount, before, _wallet.Balance);
+
+            if (packets > 0 && !silent)
+            {
+                RunAudioEvents.Raise(RunAudioEvent.GoldCollected, lastPosition, 1f, Mathf.Min(packets - 1, 7));
+            }
+
+            Action<GoldAutoCollectReport> handler = AutoCollected;
+            if (handler != null)
+            {
+                try { handler.Invoke(report); }
+                catch (Exception e) { Debug.LogException(e, this); }
+            }
+
+            return report;
         }
 
         // ------------------------------------------------------------------ plumbing
@@ -361,25 +609,68 @@ namespace DD.Prototype.Economy
                 return;
             }
 
-            GoldOrb template = GoldOrb.CreateTemplate();
+            // One template for the whole play session: PoolService keys pools by prefab,
+            // so a template per service instance (per Run scene load) would leak a pool of
+            // packets under the DontDestroyOnLoad root on every run.
+            if (s_template == null)
+            {
+                s_template = GoldOrb.CreateTemplate();
+            }
 
             _pool = PoolService.GetOrCreate(
-                template,
+                s_template,
                 Mathf.Min(_maxActiveOrbs, 16),
                 _maxActiveOrbs,
                 PoolExhaustedPolicy.ReturnNull);
         }
 
-        private void PruneOrbs()
+        /// <summary>
+        /// Checks out <paramref name="count"/> packets at once and returns them, so that
+        /// this many bodies exist AND every one of them has built its visuals before the
+        /// first kill. Taking them all before releasing any is the point: the pool hands
+        /// out its free bodies first, so a partial take would never create a new one, and
+        /// a prewarmed body has no visuals until its first OnSpawned. Cheap (a few dozen
+        /// activations at a round boundary) and silent: no list entry, no sound.
+        /// </summary>
+        private void WarmPackets(int count)
         {
-            for (int i = _liveOrbs.Count - 1; i >= 0; i--)
+            if (_pool == null || count <= 0)
             {
-                GoldOrb orb = _liveOrbs[i];
-                if (orb == null || !orb.IsSpawned)
-                {
-                    _liveOrbs.RemoveAt(i);
-                }
+                return;
             }
+
+            _warmScratch.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                GoldOrb orb = _pool.Get(Vector3.down * 100f, Quaternion.identity);
+                if (orb == null)
+                {
+                    break;
+                }
+
+                _warmScratch.Add(orb);
+            }
+
+            for (int i = 0; i < _warmScratch.Count; i++)
+            {
+                _warmScratch[i].Despawn();
+            }
+
+            _warmScratch.Clear();
+        }
+
+        private void ResetCounters()
+        {
+            _streak = 0;
+            _streakTimer = 0f;
+            _packetsSpawned = 0;
+            _packetsCollected = 0;
+            _packetsAutoCollected = 0;
+            _packetsLost = 0;
+            _fallbackCredits = 0;
+            _creditRefusals = 0;
+            LastCreditRefusal = GoldTransactionResult.Applied;
+            LastAutoCollect = default;
         }
 
         private void OnRigRegistered(PlayerRig rig)
@@ -396,29 +687,27 @@ namespace DD.Prototype.Economy
             _player = rig != null ? rig.transform : null;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            Instance = null;
+            s_template = null;
+        }
+
         // ------------------------------------------------------------------ debug panel
 
         private void RegisterDebugPanel()
         {
-            var entries = new List<DebugPanelEntry>(12);
+            var entries = new List<DebugPanelEntry>(10);
 
             entries.Add(DebugPanelRegistry.AddReadout(DebugPanelTabs.Economy,
                 "Wallet", DescribeWallet, -100));
 
             entries.Add(DebugPanelRegistry.AddReadout(DebugPanelTabs.Economy,
-                "Collection", DescribeCollection, -99));
+                "Packets", DescribePackets, -99));
 
-            entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Economy,
-                "Mode: DirectCredit",
-                () => SetMode(PrototypeGoldCollectionMode.DirectCredit), -90));
-
-            entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Economy,
-                "Mode: ContactPickup",
-                () => SetMode(PrototypeGoldCollectionMode.ContactPickup), -89));
-
-            entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Economy,
-                "Mode: ProximityMagnet (default)",
-                () => SetMode(PrototypeGoldCollectionMode.ProximityMagnet), -88));
+            entries.Add(DebugPanelRegistry.AddReadout(DebugPanelTabs.Economy,
+                "Reward ledger", DescribeLedger, -98));
 
             entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Economy,
                 "Give 50 gold", () => _wallet.Credit(50), -80));
@@ -430,10 +719,10 @@ namespace DD.Prototype.Economy
                 "Clear wallet", () => _wallet.DebugSet(0), -78));
 
             entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Economy,
-                "Collect all orbs on the map", () => ClearOrbs(true), -70));
+                "Sweep all packets (credit, like a round end)", () => ClearOrbs(true), -70));
 
             entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Economy,
-                "Destroy all orbs (no credit)", () => ClearOrbs(false), -69));
+                "Destroy all packets (no credit)", () => ClearOrbs(false), -69));
 
             entries.Add(DebugPanelRegistry.AddSlider(DebugPanelTabs.Economy,
                 "Magnet radius (m)",
@@ -465,24 +754,39 @@ namespace DD.Prototype.Economy
 
         private string DescribeWallet()
         {
-            return string.Format("{0} gold | earned {1} | spent {2}",
-                _wallet.Balance, _wallet.TotalEarned, _wallet.TotalSpent);
+            return string.Format("run {0} | {1} gold | earned {2} (pickup {3}, sweep {4}) | spent {5} | tx {6}",
+                _wallet.RunId, _wallet.Balance, _wallet.TotalEarned, _wallet.EarnedByPickup,
+                _wallet.EarnedByAutoCollect, _wallet.TotalSpent, _wallet.AppliedTransactions);
         }
 
-        private string DescribeCollection()
+        private string DescribePackets()
         {
             return string.Format(
-                "{0} | orbs {1}/{2} live (lit {3}) | spawned {4} taken {5} expired {6} | direct {7} | magnet {8:0.0}m @ {9:0}m/s",
-                _mode,
+                "live {0} (outstanding {1} = {2}g, lit {3}) | spawned {4} taken {5} swept {6} lost {7} fallback {8} | pool {9}/{10} | magnet {11:0.0}m @ {12:0}m/s | last sweep R{13}: {14} pk {15}g",
                 _liveOrbs.Count,
-                _maxActiveOrbs,
+                OutstandingPacketCount,
+                OutstandingGold,
                 _litOrbs,
-                _orbsSpawned,
-                _orbsCollected,
-                _orbsExpired,
-                _directCredits,
+                _packetsSpawned,
+                _packetsCollected,
+                _packetsAutoCollected,
+                _packetsLost,
+                _fallbackCredits,
+                _pool != null ? _pool.CountTotal : 0,
+                _pool != null ? _pool.Capacity : 0,
                 _magnetRadius,
-                _magnetSpeed);
+                _magnetSpeed,
+                LastAutoCollect.Round,
+                LastAutoCollect.Packets,
+                LastAutoCollect.Amount);
+        }
+
+        private string DescribeLedger()
+        {
+            return string.Format("run {0} live={1} watermark {2} | granted {3} | refused: notLive {4} stale {5} dup {6} invalid {7} noValue {8}",
+                _ledger.RunId, _ledger.IsRunLive, _ledger.LifeWatermark, _ledger.Granted,
+                _ledger.RejectedRunNotLive, _ledger.RejectedStale, _ledger.RejectedDuplicate,
+                _ledger.RejectedInvalid, _ledger.RejectedNoValue);
         }
 
         private void OnDrawGizmosSelected()

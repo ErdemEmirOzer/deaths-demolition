@@ -54,6 +54,7 @@ namespace DD.Prototype.Enemies
 
         private EnemyTier _tier = EnemyTier.Standard;
         private int _spawnRound = 1;
+        private int _lifeId;
         private bool _alive;
         private bool _dying;
         private float _despawnCountdown;
@@ -144,6 +145,10 @@ namespace DD.Prototype.Enemies
 
         public EnemyTier Tier => _tier;
         public int SpawnRound => _spawnRound;
+
+        /// <summary>WP-004: identity of this body's current life (one per pool checkout). 0 before the first spawn.</summary>
+        public int LifeId => _lifeId;
+
         public bool IsAlive => _alive;
         public bool IsDying => _dying;
         public float Health => _body != null ? _body.Health : 0f;
@@ -270,6 +275,10 @@ namespace DD.Prototype.Enemies
 
         protected override void OnSpawned()
         {
+            // WP-004: a new life. The gold reward is granted against this id at most once,
+            // so a body recycled by the pool can never be paid for a previous life.
+            _lifeId = EnemyLifeIds.Next();
+
             _rig.ResetToRestPose();
 
             _knockbackVelocity = Vector3.zero;
@@ -786,7 +795,7 @@ namespace DD.Prototype.Enemies
             DamageEvents.RaiseEnemyDied(new EnemyDeathInfo(
                 transform, _tier, transform.position, direction, result.Region, hit.Source,
                 DamageRegions.IsCritical(in result, hit.Source), heavyTier, _spawnRound,
-                gold, xp, _body.LastOverkill, hitStop));
+                gold, xp, _body.LastOverkill, hitStop, _lifeId));
         }
 
         /// <summary>

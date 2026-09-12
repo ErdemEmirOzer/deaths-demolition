@@ -23,9 +23,16 @@ namespace DD.Prototype.Weapons
     /// </summary>
     public sealed class WeaponModifierState
     {
-        private const int BranchCount = 10;
+        /// <summary>Number of upgrade branches the state holds a tier for (one per <see cref="UpgradeBranch"/>).</summary>
+        public const int BranchCount = 10;
 
         private readonly int[] _tiers = new int[BranchCount];
+
+        // WP-004: the build readout is published by the weapon every frame; building the
+        // string each time cost ~160 B/frame (WP-002 CODE-08). It changes only when a
+        // tier changes, so it is built once per change and handed out until the next.
+        private string _describeCache;
+        private int _version;
 
         /// <summary>Raised whenever any tier changes. HUD and build readout only.</summary>
         public event Action<WeaponModifierState> Changed;
@@ -56,6 +63,7 @@ namespace DD.Prototype.Weapons
             }
 
             _tiers[index] = clamped;
+            Invalidate();
             Changed?.Invoke(this);
         }
 
@@ -86,8 +94,48 @@ namespace DD.Prototype.Weapons
 
             if (any)
             {
+                Invalidate();
                 Changed?.Invoke(this);
             }
+        }
+
+        /// <summary>Rises by one on every tier change. A snapshot that remembers an older value is stale.</summary>
+        public int Version => _version;
+
+        /// <summary>Sum of owned tiers over every branch. 0 for a stock build.</summary>
+        public int TotalTiers
+        {
+            get
+            {
+                int total = 0;
+                for (int i = 0; i < BranchCount; i++)
+                {
+                    total += _tiers[i];
+                }
+
+                return total;
+            }
+        }
+
+        /// <summary>Copies the owned tiers into <paramref name="destination"/> (length ≥ 10). Allocation-free snapshot.</summary>
+        public void CopyTiersTo(int[] destination)
+        {
+            if (destination == null)
+            {
+                return;
+            }
+
+            int count = Mathf.Min(BranchCount, destination.Length);
+            for (int i = 0; i < count; i++)
+            {
+                destination[i] = _tiers[i];
+            }
+        }
+
+        private void Invalidate()
+        {
+            _describeCache = null;
+            _version++;
         }
 
         private static int MaxTier(UpgradeBranch branch, PrototypeConfig config)
@@ -247,9 +295,18 @@ namespace DD.Prototype.Weapons
             }
         }
 
-        /// <summary>Short human-readable build identity, e.g. "P2 / C1 / FR3". For HUD and results.</summary>
+        /// <summary>
+        /// Short human-readable build identity, e.g. "P2 / C1 / FR3". For HUD and results.
+        /// Cached: the string is rebuilt only after a tier changes, so the per-frame HUD
+        /// publish costs no allocation.
+        /// </summary>
         public string DescribeBuild()
         {
+            if (_describeCache != null)
+            {
+                return _describeCache;
+            }
+
             var sb = new System.Text.StringBuilder(48);
             AppendIf(sb, "P", UpgradeBranch.Piercing);
             AppendIf(sb, "R", UpgradeBranch.Ricochet);
@@ -257,7 +314,8 @@ namespace DD.Prototype.Weapons
             AppendIf(sb, "C", UpgradeBranch.Chain);
             AppendIf(sb, "FR", UpgradeBranch.FireRate);
             AppendIf(sb, "RL", UpgradeBranch.ReloadSpeed);
-            return sb.Length == 0 ? "Stock" : sb.ToString();
+            _describeCache = sb.Length == 0 ? "Stock" : sb.ToString();
+            return _describeCache;
         }
 
         private void AppendIf(System.Text.StringBuilder sb, string prefix, UpgradeBranch branch)

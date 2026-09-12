@@ -26,7 +26,11 @@ field is the line immediately after, or two lines after where a `[Range]` interv
 
 Counted by static scan of every `.cs` file under `Assets/_Prototype` on 2026-08-18 (**historical**).
 Re-count as of WP-000 Phase 2 (2026-09-10): **491** `[PrototypeOnly(` declarations
-(`grep -rc "\[PrototypeOnly(" --include=*.cs`); **485 as of WP-003 (2026-09-12, unchanged)** — the WP-003
+(`grep -rc "\[PrototypeOnly(" --include=*.cs`); **487 as of WP-004 (2026-09-12)** — the WP-004 gold/upgrade
+slice adds exactly two invented presentation/sizing values on `GoldService` (`_sweepFlightDuration`,
+`_packetPoolMargin`, both `UpgradesAndGold`, both `invented`) and removes none: `OrbLifetime` and
+`GoldCollectionMode` stay declared (the shipped config asset is untouched) but are **no longer read**
+(see §1.4); **485 as of WP-003 (2026-09-12, unchanged)** — the WP-003
 round/spawn split (`RoundLedger`, `RoundPlan`, `SpawnPointSelector`, `SpawnRefillClock`, `RoundProbe`)
 adds no tunable of its own: every round/spawn number stays in `RoundConfigSection`,
 `SpawnConfigSection` and `SpawnWeightTuning`, and `SpawnSelectionContractTests` now asserts by
@@ -42,8 +46,8 @@ its first argument (the pending decision) and its third argument (`invented`).
 
 | Metric | Count |
 |---|---|
-| `[PrototypeOnly(...)]` declarations in code | **485** (2026-09-12, WP-003 re-count, unchanged; 485 at 2026-09-11, WP-002; 491 at 2026-09-10; 337 at 2026-08-18) |
-| Carrying an origin tag | 485 — the attribute *is* the tag |
+| `[PrototypeOnly(...)]` declarations in code | **487** (2026-09-12, WP-004 re-count: +2 invented on `GoldService`; 485 at WP-003/WP-002; 491 at 2026-09-10; 337 at 2026-08-18) |
+| Carrying an origin tag | 487 — the attribute *is* the tag |
 | Declarations with **no source in the request at all** (`invented: true`) | **237 as of 2026-08-18; re-count pending WP-000 Phase 4** |
 | Literal `PROTOTYPE-ONLY` string occurrences under `Assets/` | 163 (156 in `.cs`, 6 in `.md`, 1 line carries two) |
 
@@ -174,12 +178,12 @@ exhausted in a single run. See §4.
 ---
 
 ### 1.4 · `Geliştirme seçenekleri, paternleri ve gold ekonomisinin sayısal ayrıntıları`
-key `PendingDecisions.UpgradesAndGold` · **66 values · 55 invented**
+key `PendingDecisions.UpgradesAndGold` · **68 values · 57 invented** (WP-004: +2 invented on `GoldService`)
 
 | Occupied by | File · line | Source |
 |---|---|---|
 | Gold rewards `2` / `5` / `10` / `25` | `EnemyConfigSection.cs:79` | request |
-| Gold collection mode `ProximityMagnet` | `EconomyConfigSection.cs:53` | **approved product decision on 2026-09-10**; the other comparison modes are development-only |
+| Gold collection mode `ProximityMagnet` | `EconomyConfigSection.cs:53` | **approved product decision on 2026-09-10**; **WP-004 (2026-09-12): the mode switch is retired** — `GoldService` always drops a visible packet with the magnet and no longer reads this field; the F1 mode buttons are gone. The field stays declared so the shipped `PrototypeConfig.asset` does not change; removing it is a later cleanup |
 | Magnet radius `3.5 m` | `EconomyConfigSection.cs:57` | request |
 | `3` cards per round, unspent gold carries over | `EconomyConfigSection.cs:76,82` | request |
 | **No reroll** (`AllowReroll = false`) | `EconomyConfigSection.cs:79` | **contradicts DEC-050 / REQ-079** (one paid reroll per round); not implemented — tracked as an implementation gap for a later package, not a product decision |
@@ -187,7 +191,8 @@ key `PendingDecisions.UpgradesAndGold` · **66 values · 55 invented**
 | Ten branch identities, display names, base costs | `EconomyConfigSection.cs:14,17,20` (values at `:91-152`) | request names the branches; the individual costs are prototype picks inside the stated band |
 | **Cost growth per tier, max tier, effect per tier, offer weight** — for every branch | `EconomyConfigSection.cs:23,26,29,32` | **invented ×4** |
 | **Magnet speed and acceleration, contact pickup radius, orb ceiling** | `EconomyConfigSection.cs:60,63,69,72` | **invented ×4** |
-| **Orb lifetime** (`OrbLifetime = 22f`) | `EconomyConfigSection.cs:66` | **contradicts DEC-045 / REQ-076** (gold does not disappear within a round; auto-collected at round end) — product decision already made → implementation gap, not a tunable |
+| **Orb lifetime** (`OrbLifetime = 22f`) | `EconomyConfigSection.cs:66` | **gap closed in WP-004 (2026-09-12)**: packets never expire (`GoldPacketLifecycle` has no timer) and the round-end sweep takes what is left (REQ-076). The field is **inert** — declared, not read; kept so the shipped asset does not change; removal is a later cleanup |
+| **Sweep flight duration** (`_sweepFlightDuration = 0.35f`, unscaled) and **packet pool margin** (`_packetPoolMargin = 8`) | `Economy/GoldService.cs` (serialized on the runtime-created service, not in the asset) | **invented ×2** (WP-004) — presentation of the round-end sweep and the per-round packet pool sizing; the wallet never depends on either |
 | **Gold orb presentation and motion** — hop duration/height, scatter min/max, rest height, bob amplitude/frequency, spin speed, flash duration/scale, streak window, diameter, colour, light budget/range/intensity, high-value scale | `Economy/GoldOrbTuning.cs:25-81` | **invented ×17** |
 | **Piercing / Ricochet / Explosion / Chain effect magnitudes** — target counts, damage falloff, base and per-tier chances, radii, damage scales | `Weapons/WeaponUpgradeTuning.cs:53-119` | **invented ×17** |
 | **Fire Rate and Reload Speed bonuses and their clamps** | `Weapons/WeaponUpgradeTuning.cs:126-139` | **invented ×4** |

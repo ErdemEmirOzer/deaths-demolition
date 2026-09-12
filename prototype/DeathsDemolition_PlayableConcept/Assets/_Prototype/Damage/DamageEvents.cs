@@ -112,9 +112,25 @@ namespace DD.Prototype.Damage
         /// <summary>Suggested hit-stop seconds. Zero for ordinary Standard deaths. REQ-127.</summary>
         public readonly float SuggestedHitStop;
 
+        /// <summary>
+        /// Identity of the enemy LIFE that ended (WP-004): one <see cref="EnemyLifeIds"/>
+        /// value per pool checkout, so a body recycled ten times has ten distinct ids.
+        /// The gold reward is granted at most once per life; a producer that leaves this
+        /// at 0 earns nothing.
+        /// </summary>
+        public readonly int LifeId;
+
         public EnemyDeathInfo(Transform owner, EnemyTier tier, Vector3 position, Vector3 killDirection,
             BodyRegion killRegion, DamageSourceKind killSource, bool wasCritical, bool wasHeavyDeath,
             int spawnRound, int goldReward, int killXp, float overkill, float suggestedHitStop)
+            : this(owner, tier, position, killDirection, killRegion, killSource, wasCritical, wasHeavyDeath,
+                spawnRound, goldReward, killXp, overkill, suggestedHitStop, 0)
+        {
+        }
+
+        public EnemyDeathInfo(Transform owner, EnemyTier tier, Vector3 position, Vector3 killDirection,
+            BodyRegion killRegion, DamageSourceKind killSource, bool wasCritical, bool wasHeavyDeath,
+            int spawnRound, int goldReward, int killXp, float overkill, float suggestedHitStop, int lifeId)
         {
             Owner = owner;
             Tier = tier;
@@ -129,6 +145,32 @@ namespace DD.Prototype.Damage
             KillXp = killXp;
             Overkill = overkill;
             SuggestedHitStop = suggestedHitStop;
+            LifeId = lifeId;
+        }
+    }
+
+    /// <summary>
+    /// Issues one id per enemy life (pool checkout). Monotonic within a play session, so
+    /// "did this life begin before the run opened" is a single comparison against the
+    /// value read at run start. Reset with every other static on play-mode entry.
+    /// </summary>
+    public static class EnemyLifeIds
+    {
+        private static int s_last;
+
+        /// <summary>The most recently issued id. 0 before any enemy has lived.</summary>
+        public static int Last => s_last;
+
+        /// <summary>A fresh id. Never 0, never repeats within a session.</summary>
+        public static int Next()
+        {
+            return ++s_last;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            s_last = 0;
         }
     }
 

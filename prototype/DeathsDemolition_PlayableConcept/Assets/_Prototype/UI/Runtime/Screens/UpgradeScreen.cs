@@ -1,4 +1,5 @@
 using DD.Prototype.Core.Config;
+using DD.Prototype.Economy;
 using DD.Prototype.Rounds;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -171,7 +172,10 @@ namespace DD.Prototype.UI
         private PauseScreen _pause;
 
         private bool _panelVisible;
-        private int _signature = int.MinValue;
+        private bool _dirty = true;
+        private int _sessionId;
+        private RoundUpgradeShop _boundShop;
+        private GoldWallet _boundWallet;
         private string _notice;
         private float _fade;
 
@@ -210,9 +214,83 @@ namespace DD.Prototype.UI
             Canvas.gameObject.SetActive(false);
         }
 
-        // No OnDestroy: this screen holds no event subscription and no RunFlowClock hold.
-        // The round-end freeze is RunDirector's RoundEndHold, taken and released by the
-        // director, so there is nothing here that could outlive the scene.
+        // This screen holds no RunFlowClock hold: the round-end freeze is RunDirector's
+        // RoundEndHold, taken and released by the director. The only subscriptions are to
+        // the director's own shop and wallet INSTANCES (never to the static RunEvents),
+        // and they are dropped here so nothing outlives the scene.
+        private void OnDisable()
+        {
+            Unbind();
+        }
+
+        /// <summary>
+        /// Points the screen at the live shop and wallet, and re-points it if the director
+        /// is swapped. The screen redraws only when one of them says something changed -
+        /// no per-frame polling of the wallet (WP-004).
+        /// </summary>
+        private void Bind()
+        {
+            RunDirector director = RunDirector.Instance;
+            RoundUpgradeShop shop = director != null ? director.Shop : null;
+            GoldWallet wallet = director != null ? director.Wallet : null;
+
+            if (!ReferenceEquals(shop, _boundShop))
+            {
+                if (_boundShop != null)
+                {
+                    _boundShop.OfferChanged -= MarkDirty;
+                }
+
+                _boundShop = shop;
+                if (_boundShop != null)
+                {
+                    _boundShop.OfferChanged += MarkDirty;
+                }
+
+                _dirty = true;
+            }
+
+            if (!ReferenceEquals(wallet, _boundWallet))
+            {
+                if (_boundWallet != null)
+                {
+                    _boundWallet.Changed -= OnWalletChanged;
+                }
+
+                _boundWallet = wallet;
+                if (_boundWallet != null)
+                {
+                    _boundWallet.Changed += OnWalletChanged;
+                }
+
+                _dirty = true;
+            }
+        }
+
+        private void Unbind()
+        {
+            if (_boundShop != null)
+            {
+                _boundShop.OfferChanged -= MarkDirty;
+                _boundShop = null;
+            }
+
+            if (_boundWallet != null)
+            {
+                _boundWallet.Changed -= OnWalletChanged;
+                _boundWallet = null;
+            }
+        }
+
+        private void MarkDirty()
+        {
+            _dirty = true;
+        }
+
+        private void OnWalletChanged(int balance)
+        {
+            _dirty = true;
+        }
 
         // ============================================================== gold banner
 
@@ -592,6 +670,8 @@ namespace DD.Prototype.UI
 
         private void Update()
         {
+            Bind();
+
             RunDirector director = RunDirector.Instance;
             RunPhase phase = director != null ? director.Phase : RunPhase.None;
 
@@ -606,12 +686,12 @@ namespace DD.Prototype.UI
             TickFade();
             GateForPause();
 
-            // Cheap change detection instead of a per-frame rebuild. It also catches the
-            // F1 panel's own buy buttons, which drive the same shop this screen does.
-            int signature = BuildSignature();
-            if (signature != _signature)
+            // Redraw only when the shop or the wallet said something changed. The F1
+            // panel's own buy / give-gold buttons drive the same instances, so they land
+            // here too, without this screen ever polling a balance.
+            if (_dirty)
             {
-                _signature = signature;
+                _dirty = false;
                 Refresh();
             }
         }
@@ -635,8 +715,13 @@ namespace DD.Prototype.UI
             _fade = 0f;
             _panelGroup.alpha = 0f;
 
+            // The session this screen belongs to. Every purchase from here quotes it, so a
+            // button that somehow fires after the next round's screen opened is refused.
+            RoundUpgradeShop shop = Shop;
+            _sessionId = shop != null ? shop.SessionId : 0;
+
             Refresh();
-            _signature = BuildSignature();
+            _dirty = false;
 
             FocusFirstUsefulControl();
         }
@@ -695,32 +780,6 @@ namespace DD.Prototype.UI
 
             int seconds = Mathf.Max(0, Mathf.CeilToInt(RunEvents.Current.CountdownRemaining));
             _countdownValue.text = seconds.ToString();
-        }
-
-        private int BuildSignature()
-        {
-            RoundUpgradeShop shop = Shop;
-            if (shop == null)
-            {
-                return 0;
-            }
-
-            int signature = shop.IsOpen ? 17 : 19;
-            signature = signature * 31 + shop.Gold;
-            signature = signature * 31 + shop.Round;
-            signature = signature * 31 + shop.PurchasesThisRound;
-            signature = signature * 31 + shop.Cards.Count;
-
-            for (int i = 0; i < shop.Cards.Count; i++)
-            {
-                UpgradeCardOffer card = shop.Cards[i];
-                signature = signature * 31 + (int)card.Branch;
-                signature = signature * 31 + card.OwnedTier;
-                signature = signature * 31 + card.Cost;
-                signature = signature * 31 + (card.Purchased ? 1 : 0);
-            }
-
-            return signature;
         }
 
         // ================================================================== refresh
@@ -995,20 +1054,46 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            if (shop.TryPurchase(index))
+            if (shop.TryPurchase(index, _sessionId))
             {
                 _notice = null;
             }
             else
             {
-                // The only reachable refusal is "no armed player", which the shop refunds.
-                // Say so; a silent no-op reads as a dropped input.
-                _notice = "That upgrade could not be applied to your weapon, so no gold was spent.";
+                _notice = DescribeRefusal(shop.LastResult);
             }
 
-            _signature = BuildSignature();
+            // Synchronous redraw so the focus move below sees the card's new state.
+            _dirty = false;
             Refresh();
             MoveFocusOffDisabled(index);
+        }
+
+        /// <summary>
+        /// The footer line for a refused purchase. Every refusal leaves the gold where it
+        /// was, and every line says so; a silent no-op would read as a dropped input.
+        /// </summary>
+        private static string DescribeRefusal(UpgradePurchaseResult result)
+        {
+            switch (result)
+            {
+                case UpgradePurchaseResult.InsufficientGold:
+                    return "Not enough gold for that upgrade. Nothing was spent.";
+                case UpgradePurchaseResult.BranchMaxed:
+                    return "That upgrade is already at its maximum tier. Nothing was spent.";
+                case UpgradePurchaseResult.NoWeapon:
+                    return "That upgrade could not be applied to your weapon, so no gold was spent.";
+                case UpgradePurchaseResult.StaleOffer:
+                    return "The offer changed. Prices and tiers were refreshed; nothing was spent.";
+                case UpgradePurchaseResult.AlreadyPurchased:
+                    return "You already own that card. Nothing was spent.";
+                case UpgradePurchaseResult.ShopClosed:
+                case UpgradePurchaseResult.SessionMismatch:
+                case UpgradePurchaseResult.WalletRefused:
+                    return "This offer is no longer open. Nothing was spent.";
+                default:
+                    return "That purchase could not be completed. Nothing was spent.";
+            }
         }
 
         private void CloseScreen()

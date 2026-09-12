@@ -45,6 +45,8 @@ namespace DD.Prototype.Rounds
 
         private PrototypeConfig _config;
         private GoldWallet _wallet;
+        private WeaponModifierState _injectedModifiers;
+        private bool _purchasing;
 
         // ------------------------------------------------------------------ state
 
@@ -52,6 +54,20 @@ namespace DD.Prototype.Rounds
 
         /// <summary>The round that was just completed, i.e. the one this offer rewards.</summary>
         public int Round { get; private set; }
+
+        /// <summary>Run the current offer belongs to. 0 while closed.</summary>
+        public int RunId { get; private set; }
+
+        /// <summary>
+        /// Identity of the current screen session, raised on every <see cref="Open"/>.
+        /// A purchase quoting an older session is refused: a button from the previous
+        /// round's screen, or a callback that arrived after the screen closed, cannot buy
+        /// into this round's offer (WP-004).
+        /// </summary>
+        public int SessionId { get; private set; }
+
+        /// <summary>Why the last <see cref="TryPurchase"/> ended the way it did. F1 readout and the screen's footer.</summary>
+        public UpgradePurchaseResult LastResult { get; private set; } = UpgradePurchaseResult.None;
 
         /// <summary>The three cards. Read-only by construction; buying goes through this class.</summary>
         public IReadOnlyList<UpgradeCardOffer> Cards => _cards;
@@ -87,15 +103,31 @@ namespace DD.Prototype.Rounds
 
         // ------------------------------------------------------------------ open / close
 
-        /// <summary>Rolls a fresh offer and opens the screen.</summary>
+        /// <summary>Rolls a fresh offer and opens the screen. Reads tiers from the armed player's weapon.</summary>
         public void Open(int round, PrototypeConfig config, GoldWallet wallet)
+        {
+            Open(round, config, wallet, null, 0);
+        }
+
+        /// <summary>
+        /// Rolls a fresh offer and opens the screen. <paramref name="modifiers"/> is the
+        /// rank authority to read and write; null means the armed player's weapon
+        /// (<see cref="WeaponRegistry.ActiveController"/>), which is what the director
+        /// passes. A test hands in its own state so the whole purchase can run without a
+        /// scene.
+        /// </summary>
+        public void Open(int round, PrototypeConfig config, GoldWallet wallet, WeaponModifierState modifiers, int runId)
         {
             _config = config;
             _wallet = wallet;
+            _injectedModifiers = modifiers;
 
             Round = Mathf.Max(1, round);
+            RunId = Mathf.Max(0, runId);
+            SessionId++;
             PurchasesThisRound = 0;
             GoldSpentThisRound = 0;
+            LastResult = UpgradePurchaseResult.None;
             IsOpen = true;
 
             BuildOffer();
@@ -119,6 +151,8 @@ namespace DD.Prototype.Rounds
             }
 
             IsOpen = false;
+            RunId = 0;
+            _injectedModifiers = null;
             OfferChanged?.Invoke();
         }
 
@@ -140,59 +174,164 @@ namespace DD.Prototype.Rounds
             return IsPurchasable(index) && _wallet != null && _wallet.CanAfford(_cards[index].Cost);
         }
 
-        /// <summary>
-        /// Buys one card. The whole purchase is here: take the gold, add the tier, tell the
-        /// listeners. There is no apply step - the weapon re-reads its modifiers on the
-        /// very next shot.
-        /// </summary>
+        /// <summary>Buys one card of the CURRENT session. The F1 panel's path.</summary>
         public bool TryPurchase(int index)
         {
-            if (!IsPurchasable(index))
+            return TryPurchase(index, SessionId);
+        }
+
+        /// <summary>
+        /// Buys one card. The whole purchase is here, in this order, and every check
+        /// happens BEFORE the gold moves so no refusal can leave a half state:
+        ///
+        ///   1 the shop is open and the caller's session is this session (stale screen /
+        ///     late callback learns nothing)
+        ///   2 the card is real, unbought and not maxed
+        ///   3 there is a rank authority to apply the tier to (no armed player: refused,
+        ///     nothing spent - the old refund path is gone)
+        ///   4 the live tier still matches the card (a debug button moved it: refresh, refuse)
+        ///   5 the branch is below its ceiling on the live state (a clamped AddTier would
+        ///     silently change nothing)
+        ///   6 the wallet can afford it
+        ///   7 spend, exactly once, under its own transaction id
+        ///   8 apply the tier, exactly once, and verify it moved
+        ///   9 mark the card, re-price the rest, tell the listeners
+        /// </summary>
+        public bool TryPurchase(int index, int sessionId)
+        {
+            if (_purchasing)
             {
+                // Re-entrant call from a listener of our own events. Never legitimate.
                 return false;
+            }
+
+            _purchasing = true;
+            try
+            {
+                return PurchaseCore(index, sessionId);
+            }
+            finally
+            {
+                _purchasing = false;
+            }
+        }
+
+        private bool PurchaseCore(int index, int sessionId)
+        {
+            if (!IsOpen)
+            {
+                return Refuse(index, UpgradePurchaseResult.ShopClosed);
+            }
+
+            if (sessionId != SessionId)
+            {
+                // A stale screen learns nothing about this offer, not even a card's state.
+                return Refuse(index, UpgradePurchaseResult.SessionMismatch);
+            }
+
+            if (index < 0 || index >= _cards.Count || !_cards[index].IsValid)
+            {
+                return Refuse(index, UpgradePurchaseResult.InvalidCard);
             }
 
             UpgradeCardOffer card = _cards[index];
 
-            if (_wallet == null || !_wallet.TrySpend(card.Cost))
+            if (card.Purchased)
             {
-                PurchaseRefused?.Invoke(index);
-                RunAudioEvents.Raise(RunAudioEvent.UpgradeRefused);
-                return false;
+                return Refuse(index, UpgradePurchaseResult.AlreadyPurchased);
             }
 
-            WeaponController controller = WeaponRegistry.ActiveController;
-            if (controller != null)
+            WeaponModifierState modifiers = ModifierState();
+            if (modifiers == null)
             {
-                // The single line the whole card system exists to call (G-03).
-                controller.Modifiers.AddTier(card.Branch, 1, _config);
+                return Refuse(index, UpgradePurchaseResult.NoWeapon);
             }
-            else
+
+            int liveTier = modifiers.GetTier(card.Branch);
+            if (liveTier != card.OwnedTier)
             {
-                // Refund rather than charge for nothing. Only reachable if the screen is
-                // opened outside a run, which the director does not do.
-                _wallet.Credit(card.Cost);
-                PurchaseRefused?.Invoke(index);
-                Debug.LogWarning("[Run] Upgrade bought with no armed player. Refunded; nothing was applied.");
-                return false;
+                // Something outside this screen moved the rank (F1). The card's price and
+                // tier are stale; re-read everything and let the player look again.
+                RefreshCards();
+                OfferChanged?.Invoke();
+                return Refuse(index, UpgradePurchaseResult.StaleOffer);
+            }
+
+            if (card.IsMaxed || modifiers.IsMaxed(card.Branch, _config))
+            {
+                return Refuse(index, UpgradePurchaseResult.BranchMaxed);
+            }
+
+            if (_wallet == null || !_wallet.CanAfford(card.Cost))
+            {
+                return Refuse(index, UpgradePurchaseResult.InsufficientGold);
+            }
+
+            int transactionId = _wallet.NextTransactionId();
+            GoldTransactionResult spend = _wallet.TrySpend(card.Cost, GoldSource.UpgradePurchase, transactionId);
+            if (spend != GoldTransactionResult.Applied)
+            {
+                // CanAfford passed a moment ago, so only a closed wallet or a duplicate id
+                // can land here; say which rather than blaming the balance.
+                return Refuse(index, spend == GoldTransactionResult.InsufficientBalance
+                    ? UpgradePurchaseResult.InsufficientGold
+                    : UpgradePurchaseResult.WalletRefused);
+            }
+
+            // The single line the whole card system exists to call (G-03). The weapon
+            // re-reads its modifiers on the next shot; there is no apply step.
+            modifiers.AddTier(card.Branch, 1, _config);
+
+            int appliedTier = modifiers.GetTier(card.Branch);
+            if (appliedTier != liveTier + 1)
+            {
+                // Unreachable after check 5; kept as a loud assertion so a future ceiling
+                // rule cannot turn into a silent charge. The gold is NOT refunded through
+                // a credit (that would count as income) - the error is the signal.
+                Debug.LogError("[Run] Upgrade tier did not move after a successful spend (" + card.Branch +
+                               " live " + liveTier + " -> " + appliedTier + "). Transaction " + transactionId + ".");
+                RefreshCards();
+                OfferChanged?.Invoke();
+                return Refuse(index, UpgradePurchaseResult.TierDidNotChange);
             }
 
             card.Purchased = true;
-            card.OwnedTier = controller.Modifiers.GetTier(card.Branch);
+            card.OwnedTier = appliedTier;
+            card.TransactionId = transactionId;
             _cards[index] = card;
 
             PurchasesThisRound++;
             GoldSpentThisRound += card.Cost;
+            LastResult = UpgradePurchaseResult.Purchased;
 
-            // Re-price the remaining cards: buying Piercing I makes the OTHER Piercing card
-            // (there is never one, branches are drawn without replacement) and the build
-            // readout stale, and a maxed branch must grey out immediately.
+            // Re-price the remaining cards: the build readout is stale and a maxed branch
+            // must grey out immediately.
             RefreshCards();
 
             Purchased?.Invoke(card);
             RunAudioEvents.Raise(RunAudioEvent.UpgradePurchased);
             OfferChanged?.Invoke();
             return true;
+        }
+
+        private bool Refuse(int index, UpgradePurchaseResult result)
+        {
+            LastResult = result;
+
+            // Only a refusal the player caused by pressing a live button is worth a sound
+            // and a footer line; a stale or closed session is silently dropped input.
+            if (result == UpgradePurchaseResult.InsufficientGold ||
+                result == UpgradePurchaseResult.WalletRefused ||
+                result == UpgradePurchaseResult.NoWeapon ||
+                result == UpgradePurchaseResult.BranchMaxed ||
+                result == UpgradePurchaseResult.StaleOffer ||
+                result == UpgradePurchaseResult.TierDidNotChange)
+            {
+                PurchaseRefused?.Invoke(index);
+                RunAudioEvents.Raise(RunAudioEvent.UpgradeRefused);
+            }
+
+            return false;
         }
 
         // ------------------------------------------------------------------ offer
@@ -360,8 +499,13 @@ namespace DD.Prototype.Rounds
             }
         }
 
-        private static WeaponModifierState ModifierState()
+        private WeaponModifierState ModifierState()
         {
+            if (_injectedModifiers != null)
+            {
+                return _injectedModifiers;
+            }
+
             WeaponController controller = WeaponRegistry.ActiveController;
             return controller != null ? controller.Modifiers : null;
         }
@@ -377,7 +521,7 @@ namespace DD.Prototype.Rounds
             }
 
             var sb = new System.Text.StringBuilder(96);
-            sb.Append("R").Append(Round).Append(" | ").Append(Gold).Append("g | ");
+            sb.Append("R").Append(Round).Append(" s").Append(SessionId).Append(" | ").Append(Gold).Append("g | ");
 
             for (int i = 0; i < _cards.Count; i++)
             {

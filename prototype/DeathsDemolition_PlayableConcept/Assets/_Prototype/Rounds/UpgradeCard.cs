@@ -16,6 +16,47 @@ namespace DD.Prototype.Rounds
     }
 
     /// <summary>
+    /// How a <see cref="RoundUpgradeShop.TryPurchase(int,int)"/> call ended. Every value
+    /// but <see cref="Purchased"/> leaves the wallet and the build exactly as they were.
+    /// </summary>
+    public enum UpgradePurchaseResult
+    {
+        /// <summary>No purchase attempted on this session yet.</summary>
+        None = 0,
+
+        Purchased = 1,
+
+        /// <summary>The shop is closed. A callback that arrived after the screen went away.</summary>
+        ShopClosed = 2,
+
+        /// <summary>The caller quoted an older screen session (previous round's button).</summary>
+        SessionMismatch = 3,
+
+        /// <summary>Index out of range or a padding slot.</summary>
+        InvalidCard = 4,
+
+        /// <summary>The card was already bought on this screen (double click).</summary>
+        AlreadyPurchased = 5,
+
+        /// <summary>No armed player to apply the tier to. Nothing was spent.</summary>
+        NoWeapon = 6,
+
+        /// <summary>The live tier no longer matches the card; the offer was re-read.</summary>
+        StaleOffer = 7,
+
+        /// <summary>The branch is at its ceiling on the live state.</summary>
+        BranchMaxed = 8,
+
+        InsufficientGold = 9,
+
+        /// <summary>Assertion branch: the tier did not move after a spend. Logged as an error.</summary>
+        TierDidNotChange = 10,
+
+        /// <summary>The wallet refused the spend for a reason other than the balance (no run open, duplicate id). Nothing was spent.</summary>
+        WalletRefused = 11
+    }
+
+    /// <summary>
     /// One card on the round-end screen, fully resolved. G-08 draws exactly these fields
     /// and never asks the config a question of its own.
     ///
@@ -49,6 +90,9 @@ namespace DD.Prototype.Rounds
 
         /// <summary>False on a padding slot when fewer branches were eligible than CardsPerRound.</summary>
         public bool IsValid;
+
+        /// <summary>Wallet transaction id of the purchase once <see cref="Purchased"/>. 0 before.</summary>
+        public int TransactionId;
 
         public bool IsMaxed => OwnedTier >= MaxTier;
 
