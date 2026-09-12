@@ -302,6 +302,15 @@ namespace DD.Prototype.Weapons
 
         private void TickClassicFiring(bool fireHeld, bool firePressed, bool reloadPressed)
         {
+            // Dead player or frozen simulation: nothing below may run, not even the reload
+            // key or the dry-fire click. WP-002: the gate used to sit after those two, so a
+            // reload could start (and its start cue play) while the world stood still.
+            if (!CanFireNow())
+            {
+                _classic.ClampCooldown();
+                return;
+            }
+
             if (reloadPressed)
             {
                 _classic.TryBeginReload();
@@ -324,7 +333,7 @@ namespace DD.Prototype.Weapons
                 }
             }
 
-            if (!fireHeld || !CanFireNow())
+            if (!fireHeld)
             {
                 _classic.ClampCooldown();
                 return;

@@ -423,7 +423,16 @@ namespace DD.Prototype.Enemies
                     // land, and the only gate in this path is _connectedThisSwing, which
                     // is per swing of THIS enemy, never per player and never per second.
                     applied = EnemyPlayerDamageBridge.TryApply(
-                        hit, _damage, owner.transform.position, SourceId(tier));
+                        hit, _damage, owner.transform.position, SourceId(tier), out bool resolvedPlayer);
+
+                    if (resolvedPlayer && !applied)
+                    {
+                        // The swing connected with a player who refused the hit: dead (the run
+                        // is over, REQ-048) or under the diagnosis flag. The swing is still
+                        // spent, but there is no damage to publish - a listener must not be
+                        // told "applied" for a corpse, nor invited to apply it itself.
+                        return true;
+                    }
                 }
 
                 DamageEvents.RaisePlayerAttacked(new EnemyAttackLandedInfo(

@@ -33,18 +33,26 @@ namespace DD.Prototype.Enemies
 
         /// <summary>
         /// Apply an enemy attack to whatever player is behind this collider.
-        /// Returns false when the collider is not the player after all.
+        ///
+        /// Returns TRUE only when health actually changed. <paramref name="resolvedPlayer"/>
+        /// tells the two "false" cases apart: no player behind the collider at all (the
+        /// caller may fall back to the event listener), or a player that refused the hit -
+        /// dead, or under the F1 diagnosis flag. WP-002: the return value used to be a flat
+        /// "true" whenever a PlayerHealth was found, so every swing landing on a corpse
+        /// between death and the results screen was published as applied damage.
         /// </summary>
-        public static bool TryApply(Collider collider, float amount, Vector3 sourcePosition, string sourceId)
+        public static bool TryApply(
+            Collider collider, float amount, Vector3 sourcePosition, string sourceId, out bool resolvedPlayer)
         {
             PlayerHealth health = Resolve(collider);
             if (health == null)
             {
+                resolvedPlayer = false;
                 return false;
             }
 
-            health.ApplyDamage(amount, sourcePosition, sourceId);
-            return true;
+            resolvedPlayer = true;
+            return health.ApplyDamage(amount, sourcePosition, sourceId);
         }
 
         private static PlayerHealth Resolve(Collider collider)

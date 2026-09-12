@@ -72,8 +72,8 @@ namespace DD.Prototype.Enemies
 
         [PrototypeOnly(PendingDecisions.None,
             "Speed fraction above which the pose reads as Run. NOT cosmetic: " +
-            "EnemyHitReactionState scores a running enemy as harder to stagger, so this " +
-            "line decides when that bonus applies.", true)]
+            "EnemyHitReactionState scores a running enemy as EASIER to stagger (it has " +
+            "momentum to lose, RunningStaggerBonus), so this line decides when that bonus applies.", true)]
         private const float RunPoseSpeedThreshold = 0.72f;
 
         [PrototypeOnly(PendingDecisions.None,

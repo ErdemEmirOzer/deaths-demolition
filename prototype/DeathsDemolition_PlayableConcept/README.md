@@ -187,8 +187,8 @@ Runtime code lives under `Assets/_Prototype/`; URP pipeline, renderer and volume
 The full list is in **[`PROTOTYPE-ONLY.md`](PROTOTYPE-ONLY.md)**. Summary:
 
 * Every tunable value carries a `[PrototypeOnly(...)]` attribute naming the still-open
-  planning decision it temporarily occupies. **491 such declarations exist in the
-  code** (WP-000 count, 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
+  planning decision it temporarily occupies. **485 such declarations exist in the
+  code** (WP-002 count, 2026-09-11; 491 at the WP-000 count of 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
   number off the screen without also reading where it came from.
 * **237 of the original 337 (2026-08-18 scan) had no source in the request at all**; the invented split is re-issued after WP-000 Phase 4 — they were invented so a
   system could function. They are flagged `invented` and rendered in a different colour.

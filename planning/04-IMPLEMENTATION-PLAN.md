@@ -142,7 +142,7 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 
 ## WP-001 — Lifecycle & Repository Hardening
 
-**Durum:** Yürütülüyor (S-01, 2026-09-10). İzole branch `wp-001-lifecycle-repository-hardening` (taban: `wp-000-baseline` = `4b01b630…`); `main`'e merge yok, push yok.
+**Durum:** Tamamlandı (2026-09-10). Kanıt: package commit `e3d3a98e66230c2fd48abc9269a8e82d6bf30f73` (izole branch `wp-001-lifecycle-repository-hardening`, taban `wp-000-baseline` = `4b01b630…`, tek atomik commit, 24 dosya); kullanıcı kararıyla `main`'e fast-forward (merge commit yok), etiket `wp-001-lifecycle`; S-10 bağımsız kabul PASS 13 · FAIL 0 · BLOCKED 0; EditMode 175/175, PlayMode 28/28 (gerçek Metal GPU, 7 yeni lifecycle testi), release Player build ve smoke PASS, development build + lifecycle probe A/B PASS; kullanıcı verisi taban ile 4/4 eşleşti; push yok (remote yok). Nihai rapor: `S-01-WP-001-NIHAI-RAPOR.md` (Kadro çalışma alanı `context/projects/deaths-demolition/wp-001/reports/`). WP-001 worktree'si korunmaktadır.
 
 **Yürütme promptu:** `planning/work-packages/WP-001-LIFECYCLE-REPOSITORY-HARDENING.md`
 
@@ -168,3 +168,33 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 - Event/static durum sertleştirmesi test koruması altındadır.
 - Tam regresyon geçmiştir: EditMode, PlayMode (gerçek GPU), Player build, Player smoke, lifecycle kanıtı.
 - Çalışma izole branch'te kalmıştır; `main`'e merge ve push yapılmamıştır; kullanıcı dosyası silinmemiş veya resetlenmemiştir.
+
+## WP-002 — M1 Core Gameplay & Combat Production Slice
+
+**Durum:** Yürütülüyor (S-02, 2026-09-11). İzole branch `wp-002-m1-core-combat` (taban: `main` = `e3d3a98e66230c2fd48abc9269a8e82d6bf30f73` = `wp-001-lifecycle`); tek yazma sahibi S-02; S-01 mimari/entegrasyon sınırlarını salt okunur doğrular; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge yok, push yok.
+
+**Yürütme promptu:** `planning/work-packages/WP-002-M1-CORE-COMBAT.md`
+
+**Amaç:** M1 dikey kesitinin temel savaş çekirdeğini production standardında kurmak ve testle doğrulamak. Bu paket tüm M1'i tamamlamaz; round/spawn, gold/upgrade ve meta UI dilimleri sonraki paketlerde ayrı oturumlarda yürütülür. Yeni ürün, kapsam, denge, sanat veya teknoloji kararı verilmez; mevcut sayısal değerler PrototypeOnly kalır.
+
+**Kapsam:**
+
+- Oyuncu hareketi (kamera-relative WASD, hareket–nişan bağımsızlığı, dash/dodge yokluğu).
+- Fare ve gamepad nişan sözleşmesi (fiziksel gamepad testi M4'te; yalnız simüle sözleşme).
+- Kamera davranışı (sabit açı/yön, yumuşak takip, sınırlı aim look-ahead, sabit zoom, occlusion fade).
+- Mevcut prototip klasik silahıyla temel ateş döngüsü (hold-to-fire, pause/frozen kapısı, tek hedefe tek hit, pooling).
+- Standard zombi ile temel savaş etkileşimi (hedef takibi, saldırı telegrafı ve aktif hit penceresi, hit reaction, ölüm ve despawn).
+- Oyuncunun hasar alması, ölmesi ve otomatik can yenilenmesi (i-frame yok, kontrol kesintisi yok, tek can).
+- Oyuncu/zombi fiziksel engellemesi ve zombiler arası yumuşak ayrışma.
+- Temel hit reaction ve game-feel olay altyapısı (genişletilebilir, testli sözleşme; nihai VFX/animasyon/ses asset'i yok).
+- Planlama durum kayıtları (WP-001 tamamlandı; WP-002 kaydı; yürütme promptunun aynen kaydı).
+
+**Kapsam dışı:** round formülü ve havuzu; dinamik spawn yoğunluğu; gold, magnet ve round sonu toplama; upgrade kartları ve reroll; profil XP ve açılma ekonomisi; Run Results yeniden tasarımı; B3/B4/B5 açık kalemleri; sınıf-3 karar paketleri A–H; sayısal can/hasar/zırh/regen/silah dengesi; nihai klasik silah roster'ı; Special Weapon; Special/Elite/Ultra zombiler; bölgesel zırh ve patlama; nihai modeller, animasyonlar, VFX ve ses; PostProcessData ve render pipeline; `_Prototype → _Game` migration; paket veya Unity/URP sürüm değişikliği; remote, push, `main` merge; WP-001 worktree temizliği; fiziksel gamepad kabul testi.
+
+**Çıkış koşulları:**
+
+- Onaylı oynanış sözleşmesinin hareket, nişan, kamera, klasik silah, Standard zombi hasarı, sağlık/regen/ölüm, collision/ayrışma ve hit reaction maddeleri kod ve testle kanıtlıdır; yalnız kanıtlanmış uyumsuzluklar düzeltilmiştir.
+- Hiçbir PrototypeOnly sayı ürün kararı olarak kilitlenmemiş; yeni DEC/REQ eklenmemiştir.
+- Tam regresyon geçmiştir: import, EditMode, PlayMode (gerçek GPU), release Player build, klavye-fare combat smoke; Player loglarında yeni exception veya shader fallback yoktur.
+- Unity/URP, Packages ve ProjectSettings değişmemiştir; secret/generated/.meta/GUID denetimi temizdir; gerçek kullanıcı profili korunmuştur.
+- S-01 entegrasyon incelemesi ve S-10 bağımsız kabul PASS'tir; çalışma izole branch'te tek atomik commit olarak kalmıştır; `main`'e merge ve push yapılmamıştır.

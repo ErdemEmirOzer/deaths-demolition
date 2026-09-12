@@ -267,6 +267,15 @@ namespace DD.Prototype.Audio
                 ? 1f
                 : Mathf.Clamp(cue.Intensity <= 0f ? 1f : cue.Intensity, 0.25f, 1.4f);
 
+            // CombatAudioCue's own contract: Vector3.zero means "non-positional". The loop
+            // path honoured it (StartLoop), the one-shot path did not, so the reload start /
+            // end cues - raised without a position by ClassicWeaponRuntime - were played
+            // spatially from the world origin instead of on the player (WP-002, AUD-04).
+            if (cue.Position == Vector3.zero)
+            {
+                placement.Spatial = 0f;
+            }
+
             PlayResolved(placement, cue.Position, gain, cue.Priority);
         }
 

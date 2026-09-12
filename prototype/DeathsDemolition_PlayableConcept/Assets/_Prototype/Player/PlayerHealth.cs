@@ -411,6 +411,10 @@ namespace DD.Prototype.PlayerSystem
             _dead = true;
             _current = 0f;
 
+            // The snapshot raised by ApplyDamage a moment ago still said IsDead == false, so
+            // without this the HUD never receives a "dead" health state (WP-002).
+            RaiseHealthChanged();
+
             var info = new PlayerDeathInfo(
                 this, transform.position, hitDirection, Mathf.Max(0f, overkill), killedBy, Time.time);
 

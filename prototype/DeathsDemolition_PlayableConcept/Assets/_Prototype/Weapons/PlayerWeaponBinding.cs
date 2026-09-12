@@ -128,19 +128,32 @@ namespace DD.Prototype.Weapons
                     return transform.forward;
                 }
 
+                Vector3 direction = aim.AimDirection;
+                if (direction.sqrMagnitude <= 1e-6f)
+                {
+                    direction = transform.forward;
+                }
+
                 if (aim.HasAimPoint)
                 {
                     Vector3 toPoint = aim.AimWorldPoint - MuzzlePosition;
                     toPoint.y = 0f;
 
-                    if (toPoint.sqrMagnitude >= MinAimPointDistance * MinAimPointDistance)
+                    // WP-002: the point must also lie AHEAD of the muzzle along the facing.
+                    // The muzzle sits ~0.9 m in front of the character root, so a cursor
+                    // resting on the character (or anywhere between root and muzzle) is
+                    // still far enough from the muzzle to pass the distance check while
+                    // pointing backwards - the character keeps facing the cursor's last
+                    // direction and the shot left the muzzle towards the character's own
+                    // feet. Behind the muzzle, the facing is the honest answer.
+                    if (toPoint.sqrMagnitude >= MinAimPointDistance * MinAimPointDistance
+                        && Vector3.Dot(toPoint, direction) > 0f)
                     {
                         return toPoint;
                     }
                 }
 
-                Vector3 direction = aim.AimDirection;
-                return direction.sqrMagnitude > 1e-6f ? direction : transform.forward;
+                return direction;
             }
         }
 

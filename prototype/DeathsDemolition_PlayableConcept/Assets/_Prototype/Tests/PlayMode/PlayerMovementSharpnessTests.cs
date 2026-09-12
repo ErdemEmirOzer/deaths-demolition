@@ -67,8 +67,13 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>PlayerConfigSection.MoveSpeed. Teste sabit yazıldı.</summary>
         private const float V = 6.2f;
 
-        /// <summary>PlayerConfigSection.Acceleration.</summary>
-        private const float A = 28f;
+        /// <summary>
+        /// PlayerConfigSection.Acceleration. WP-002: 28 → 45. Config 45'e çıkarılmıştı (kullanıcı
+        /// oynayıp "daha ağır" dedi) ama bu sabit 28'de kalmıştı; eşikler gevşek yönde yanlış
+        /// türetildiğinden test yeşil kalıyor, "eşik formülden" iddiası ise bozuktu. Sabit tazelik
+        /// nöbetçisi <see cref="UcOranConfigtenGelirVeAsimetriKorunur"/> artık config'ten sapmayı yakalar.
+        /// </summary>
+        private const float A = 45f;
 
         /// <summary>PlayerConfigSection.Deceleration.</summary>
         private const float D = 60f;
@@ -91,18 +96,17 @@ namespace DD.Prototype.Tests.PlayMode
         // ------------------------------------------------------------------ eşikler
 
         /// <summary>
-        /// HIZLANMA SÜRESİ. v(t) = A·t, %99 V için t = 0.99·6.2/28 = 0.2192 s.
-        /// + bir örnekleme adımı (1/120 = 0.0083) + %5 = 0.2389 -> 0.24 s.
-        /// G-22'de bilerek DEĞİŞMEDİ: hızın yavaş kurulması ağırlık hissidir, keskinlik
-        /// hızın sökülmesinden gelir. Bu eşik o kararın nöbetçisidir.
+        /// HIZLANMA SÜRESİ. v(t) = A·t, %99 V için t = 0.99·6.2/45 = 0.1364 s.
+        /// + bir örnekleme adımı (1/120 = 0.0083) + %5 = 0.1520 -> 0.152 s.
+        /// (A = 28 iken 0.24 s idi; sabit 45'e çekilince WP-002'de yeniden türetildi.)
         /// </summary>
-        private const float HizlanmaSuresiEsigi = 0.24f;
+        private const float HizlanmaSuresiEsigi = 0.152f;
 
         /// <summary>
-        /// HIZLANMA MESAFESİ. x = ½·A·t², t = 0.2192 + 1/120 = 0.2275 -> 0.7245 m,
-        /// + %5 = 0.761 -> 0.77 m.
+        /// HIZLANMA MESAFESİ. x = ½·A·t², t = 0.1364 + 1/120 = 0.1447 -> 0.471 m,
+        /// + %5 = 0.495 -> 0.50 m.
         /// </summary>
-        private const float HizlanmaMesafesiEsigi = 0.77f;
+        private const float HizlanmaMesafesiEsigi = 0.50f;
 
         /// <summary>
         /// DURMA SÜRESİ. t = 0.99·V/D = 6.138/60 = 0.1023 s, + 1/120 + %5 = 0.1161
@@ -139,17 +143,17 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// YÖN DEĞİŞİMİ — TAM TERS HIZ. Fren (V/C = 0.0689) + yeniden hızlanma
-        /// (0.99·V/A = 0.2192) = 0.2881 s, + 1/120 + %5 = 0.3113 -> 0.32 s.
-        /// Eski hâlde 0.4406 s idi.
+        /// (0.99·V/A = 0.1364) = 0.2053 s, + 1/120 + %5 = 0.2243 -> 0.225 s.
+        /// (A = 28 ile 0.32 s idi.)
         /// </summary>
-        private const float TamTersEsigi = 0.32f;
+        private const float TamTersEsigi = 0.225f;
 
         /// <summary>
         /// 90° DÖNÜŞ. Hız vektörü (V,0) -> (0,V) doğrusunda ilerler; fren payı
-        /// V/√2 = 4.384 (t = 4.384/90 = 0.0487), kalan 4.384 ivmeyle (t = 0.1566).
-        /// Toplam 0.2053 s, + 1/120 + %5 = 0.2243 -> 0.23 s. Eski hâlde 0.3131 s idi.
+        /// V/√2 = 4.384 (t = 4.384/90 = 0.0487), kalan 4.384 ivmeyle (t = 4.384/45 = 0.0974).
+        /// Toplam 0.1461 s, + 1/120 + %5 = 0.1621 -> 0.162 s. (A = 28 ile 0.23 s idi.)
         /// </summary>
-        private const float DonusEsigi = 0.23f;
+        private const float DonusEsigi = 0.162f;
 
         /// <summary>Kare bağımsızlığı payı. Kabul ölçütü O2: sapma ≤ %2.</summary>
         private const float KareSapmaEsigi = 0.02f;

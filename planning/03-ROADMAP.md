@@ -2,7 +2,7 @@
 
 ## Güncel durum
 
-On ana yapısal karar alanının tamamı kararlaştırılmıştır. Implementasyon çalışma modeli, üretim aşamaları ve ilk çalışma paketi kullanıcı tarafından onaylanmıştır. Kesin süreler ve teslim tarihleri henüz belirlenmemiştir. Mevcut Unity prototipi doğrulanmış ve production baseline'a dönüştürülmüştür; aşamalı olarak nihai oyuna dönüştürülecektir. `M0 — Production baseline` aşaması 2026-09-10'da tamamlanmıştır (`WP-000`; baseline commit `4b01b630b9cadde94b646b7242192ab3d60a8e1e`, etiket `wp-000-baseline`). M1 hazırlığı `WP-001 — Lifecycle & Repository Hardening` ile başlamıştır.
+On ana yapısal karar alanının tamamı kararlaştırılmıştır. Implementasyon çalışma modeli, üretim aşamaları ve ilk çalışma paketi kullanıcı tarafından onaylanmıştır. Kesin süreler ve teslim tarihleri henüz belirlenmemiştir. Mevcut Unity prototipi doğrulanmış ve production baseline'a dönüştürülmüştür; aşamalı olarak nihai oyuna dönüştürülecektir. `M0 — Production baseline` aşaması 2026-09-10'da tamamlanmıştır (`WP-000`; baseline commit `4b01b630b9cadde94b646b7242192ab3d60a8e1e`, etiket `wp-000-baseline`). M1 hazırlığı `WP-001 — Lifecycle & Repository Hardening` ile başlamış ve 2026-09-10'da tamamlanmıştır (package commit `e3d3a98e66230c2fd48abc9269a8e82d6bf30f73`, kullanıcı kararıyla `main`'e fast-forward, etiket `wp-001-lifecycle`; S-10 PASS 13 · FAIL 0 · BLOCKED 0). M1 dikey kesitinin ilk üretim dilimi `WP-002 — M1 Core Gameplay & Combat Production Slice` 2026-09-11'de başlamıştır.
 
 ## Onaylanan planlama sırası
 
@@ -33,7 +33,7 @@ Oyunun büyük konuları tek tek ve ayrıntılı biçimde konuşulacaktır.
 
 İlk çalışma paketi `WP-000 — Production Baseline Audit & Stabilization` olarak `04-IMPLEMENTATION-PLAN.md` içinde tanımlanmış ve 2026-09-10'da tamamlanmıştır. Kanıt: baseline commit `4b01b630b9cadde94b646b7242192ab3d60a8e1e`, etiket `wp-000-baseline`; S-10 nihai kapı kararı PASS 11 · FAIL 0 · BLOCKED 0; EditMode 175/175, PlayMode 21/21 (gerçek Metal GPU), Player build PASS, Player smoke PASS; Unity `2022.3.22f1` ve URP `14.0.10` değişmedi. WP-000 manuel test kitinden M4 regresyon paketine devredilen kalemler: gamepad doğrulaması, manuel round bitişi (B11), pencere modları (C2–C4).
 
-M1 hazırlığı `WP-001 — Lifecycle & Repository Hardening` ile başlamıştır; paket `04-IMPLEMENTATION-PLAN.md` içinde tanımlıdır.
+M1 hazırlığı `WP-001 — Lifecycle & Repository Hardening` ile başlamış ve 2026-09-10'da tamamlanmıştır: package commit `e3d3a98e66230c2fd48abc9269a8e82d6bf30f73`, `main`'e fast-forward (etiket `wp-001-lifecycle`), S-10 kabul PASS 13 · FAIL 0 · BLOCKED 0; EditMode 175/175, PlayMode 28/28 (gerçek Metal GPU), release ve development Player build PASS, lifecycle probe PASS. M1'in ilk üretim dilimi `WP-002 — M1 Core Gameplay & Combat Production Slice` (hareket, nişan, kamera, klasik silah ateş döngüsü, Standard zombi savaşı, sağlık/regen/ölüm, collision/ayrışma, hit reaction sözleşmesi) 2026-09-11'de başlamıştır; paket `04-IMPLEMENTATION-PLAN.md` içinde tanımlıdır. Round/spawn, gold/upgrade ve meta UI dilimleri sonraki paketlerdedir.
 
 ## Ertelenen planlama alanları
 

@@ -125,27 +125,9 @@ namespace DD.Prototype.Enemies
         private const float Gravity = -22f;
 
         // -------------------------------------------------- feedback intensity (REQ-125)
-        // The request fixes the ORDER - flesh hit < armour hit < armour break < critical <
-        // death < Elite/Ultra death - but none of the magnitudes. These are the magnitudes.
-
-        [PrototypeOnly(PendingDecisions.None, "Burst scale of an armour-break shard puff.", true)]
-        private const float ArmorBreakEffectScale = 1.2f;
-
-        [PrototypeOnly(PendingDecisions.None, "Burst scale of an ordinary flesh hit.", true)]
-        private const float BloodEffectScale = 1f;
-
-        [PrototypeOnly(PendingDecisions.None, "Burst scale of an unarmoured head shot.", true)]
-        private const float CriticalBloodEffectScale = 1.5f;
-
-        [PrototypeOnly(PendingDecisions.None, "Burst scale of a bullet skating off an intact plate.", true)]
-        private const float ArmorSparkEffectScale = 0.9f;
-
-        [PrototypeOnly(PendingDecisions.None, "Burst scale of an ordinary death.", true)]
-        private const float DeathEffectScale = 1f;
-
-        [PrototypeOnly(PendingDecisions.None,
-            "Burst scale of an Elite / Ultra death - the top of the hierarchy.", true)]
-        private const float HeavyDeathEffectScale = 1.6f;
+        // The magnitudes of the flesh < armour < break < critical < death hierarchy live in
+        // HitFeedbackDirector (the single, budgeted owner of hit dressing since WP-002).
+        // This class only reports what happened; it no longer spawns bursts of its own.
 
         [PrototypeOnly(PendingDecisions.None,
             "Fallback for FeedbackConfigSection.HitStopArmorBreak (0.045 s), used when no " +
@@ -245,6 +227,23 @@ namespace DD.Prototype.Enemies
         }
 
         /// <summary>
+        /// Physical presence of the three region hitboxes. Off while the body is a corpse
+        /// so a bullet neither stops at it nor reports a hit on it; on again for a spawn.
+        /// The registry bindings are untouched - they live as long as the instance.
+        /// </summary>
+        private void SetHitboxesEnabled(bool value)
+        {
+            if (_rig == null)
+            {
+                return;
+            }
+
+            if (_rig.HeadHitbox != null) _rig.HeadHitbox.enabled = value;
+            if (_rig.UpperHitbox != null) _rig.UpperHitbox.enabled = value;
+            if (_rig.LowerHitbox != null) _rig.LowerHitbox.enabled = value;
+        }
+
+        /// <summary>
         /// Configure a fresh spawn. Called by EnemyFactory immediately after the pool hands
         /// the instance over, before the first Update.
         /// </summary>
@@ -282,8 +281,13 @@ namespace DD.Prototype.Enemies
 
             if (_controller != null)
             {
+                _controller.enabled = true;
                 _controller.detectCollisions = true;
             }
+
+            // A pooled body comes back from its last death with the region hitboxes off
+            // (see Die); a fresh spawn must be shootable again.
+            SetHitboxesEnabled(true);
 
             _body?.Reset(1f);
             _attack?.ResetForSpawn();
@@ -555,14 +559,24 @@ namespace DD.Prototype.Enemies
 
         private void TickDying(float dt)
         {
-            // Corpses still fall and still slide under knockback, but they no longer steer,
-            // attack, or register as damage targets.
+            // Corpses still slide under knockback, but they no longer steer, attack,
+            // register as damage targets or block anything: the controller is off (see
+            // Die), so the slide is a plain transform move on the ground plane.
             _knockbackVelocity = Vector3.Lerp(_knockbackVelocity, Vector3.zero, Mathf.Clamp01(KnockbackDamping * dt));
-            _verticalVelocity = _controller.isGrounded ? -2f : _verticalVelocity + Gravity * dt;
 
-            Vector3 motion = _knockbackVelocity;
-            motion.y = _verticalVelocity;
-            _controller.Move(motion * dt);
+            if (_controller != null && _controller.enabled)
+            {
+                _verticalVelocity = _controller.isGrounded ? -2f : _verticalVelocity + Gravity * dt;
+                Vector3 motion = _knockbackVelocity;
+                motion.y = _verticalVelocity;
+                _controller.Move(motion * dt);
+            }
+            else
+            {
+                Vector3 slide = _knockbackVelocity;
+                slide.y = 0f;
+                transform.position += slide * dt;
+            }
 
             _animator.Tick(dt);
 
@@ -649,8 +663,6 @@ namespace DD.Prototype.Enemies
                 ArmorSlot slot = _body.LastBreak(i);
                 _appearance.BreakArmor(slot);
 
-                EnemyEffects.Spawn(EnemyBurstKind.ArmorShards, point, direction, ArmorBreakEffectScale);
-
                 DamageEvents.RaiseArmorBroken(new ArmorBreakInfo(
                     transform, _tier, slot, DamageRegions.RegionFor(slot), point, direction, hit.Source,
                     _body.Armor.ProtectingCount,
@@ -684,17 +696,11 @@ namespace DD.Prototype.Enemies
             }
 
             // ------------------------------------------------------------------ effects
-            if (result.HealthDamage > 0f)
-            {
-                EnemyEffects.Spawn(EnemyBurstKind.Blood, point, direction,
-                    DamageRegions.IsCritical(in result, hit.Source)
-                        ? CriticalBloodEffectScale
-                        : BloodEffectScale);
-            }
-            else if (result.WasArmored && !result.ArmorBroke)
-            {
-                EnemyEffects.Spawn(EnemyBurstKind.ArmorSpark, point, direction, ArmorSparkEffectScale);
-            }
+            // WP-002: no enemy-side burst here. Every hit that reaches this method through
+            // HitscanEngine is dressed once by HitFeedbackDirector.ReportEnemyHit (blood,
+            // armour spark, armour shards, death), which is the only layer that applies the
+            // REQ-128 readability budget. A second, unbudgeted EnemyEffects burst on the same
+            // point doubled the visual noise of every hit and every death in a crowd.
 
             // ------------------------------------------------------------------- events
             DamageEvents.RaiseEnemyDamaged(new EnemyDamageInfo(
@@ -740,14 +746,24 @@ namespace DD.Prototype.Enemies
             if (_controller != null)
             {
                 // Stop blocking the player the instant it dies (DEC-032 applies to the
-                // living swarm, not to corpses on the floor).
+                // living swarm, not to corpses on the floor). detectCollisions alone is not
+                // enough: a CharacterController sweep (the player's Move) still collides
+                // with a controller that has detectCollisions off - measured in WP-002,
+                // five corpses let the player advance 0.02 m in 1.5 s. Disabling the
+                // component removes the capsule from every query; TickDying moves the
+                // corpse by transform while it is off.
                 _controller.detectCollisions = false;
+                _controller.enabled = false;
             }
 
-            _animator.BeginDeath(direction, hit.ImpactForce, result.Region, heavyTier, transform, ref _random);
+            // Same rule for bullets (WP-002): a corpse must not swallow a direct shot either.
+            // ApplyHit already refuses damage once _alive is false, but the region hitboxes
+            // stayed physically present, so a hitscan ray stopped at the corpse, spent its
+            // pierce budget on it and dressed a zero-result hit as a flesh hit. Turning the
+            // colliders off makes the ray pass through and removes the fake feedback.
+            SetHitboxesEnabled(false);
 
-            EnemyEffects.Spawn(EnemyBurstKind.Death, point, direction,
-                heavyTier ? HeavyDeathEffectScale : DeathEffectScale);
+            _animator.BeginDeath(direction, hit.ImpactForce, result.Region, heavyTier, transform, ref _random);
 
             PrototypeConfig config = PrototypeConfig.Active;
             int gold = config != null ? config.GoldReward(_tier) : 0;
@@ -807,7 +823,6 @@ namespace DD.Prototype.Enemies
             for (int i = 0; i < count; i++)
             {
                 _appearance.BreakArmor(broken[i]);
-                EnemyEffects.Spawn(EnemyBurstKind.ArmorShards, point, direction, ArmorBreakEffectScale);
 
                 DamageEvents.RaiseArmorBroken(new ArmorBreakInfo(
                     transform, _tier, broken[i], DamageRegions.RegionFor(broken[i]), point, direction,
