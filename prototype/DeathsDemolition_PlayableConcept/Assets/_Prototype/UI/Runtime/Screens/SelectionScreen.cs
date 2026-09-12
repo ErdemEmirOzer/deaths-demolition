@@ -51,6 +51,11 @@ namespace DD.Prototype.UI
 
         private ClassicWeaponId[] _weaponIds;
 
+        protected override UiContext BaseContext
+        {
+            get { return UiContext.Selection; }
+        }
+
         protected override void Build()
         {
             // Defensive: a profile edited between the menu and here must not be able to
@@ -61,7 +66,7 @@ namespace DD.Prototype.UI
             }
 
             float headerHeight = BuildHeader(
-                "STEP ONE OF ONE",
+                "BEFORE THE RUN",
                 "PREPARE YOUR RUN",
                 "The skin is cosmetic. The classic weapon is carried for the whole run and cannot be swapped.");
 
@@ -127,7 +132,9 @@ namespace DD.Prototype.UI
                 _skinButtons[i] = button;
                 _skinBadges[i] = BuildBadge(button, "SELECTED");
 
-                if (i == 0)
+                // Focus opens on the skin that is already selected - on a second run of
+                // the session that is the remembered one, not the first card.
+                if (skin == PrototypeUiFlow.SelectedSkin)
                 {
                     SetInitialFocus(button);
                 }
@@ -294,9 +301,9 @@ namespace DD.Prototype.UI
                 : "DMG " + settings.Damage.ToString("0.#");
 
             return damage
-                   + "     " + settings.FireRate.ToString("0.#") + " shots/s"
-                   + "     MAG " + settings.MagazineSize
-                   + "     RELOAD " + settings.ReloadTime.ToString("0.#") + "s";
+                   + "  ·  " + settings.FireRate.ToString("0.#") + " shots/s"
+                   + "  ·  MAG " + settings.MagazineSize
+                   + "  ·  RELOAD " + settings.ReloadTime.ToString("0.#") + "s";
         }
 
         // ================================================================== chrome

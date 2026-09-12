@@ -1,0 +1,402 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using DD.Prototype.Core.Config;
+using DD.Prototype.Profile;
+using DD.Prototype.Rounds;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
+
+namespace DD.Prototype.Tests.EditMode
+{
+    /// <summary>
+    /// WP-005 · Profil XP kuralları ve kalıcılık sınırı (EditMode, izole dosya).
+    ///
+    /// Gerçek profil dosyasına ASLA dokunulmaz: fixture başında ProfileStore yolu geçici
+    /// önbelleğe yönlendirilir ve ProfileService önbelleği reflection ile boşaltılır;
+    /// sonunda önbellek yine boşaltılır ve override kaldırılır (gerçek dosya hiç
+    /// yüklenmez, dolayısıyla hiç yazılmaz).
+    ///
+    /// Kilitlenen kurallar: tamamlanan round round XP'si verir; yarım round vermez ama
+    /// kill'leri kill XP'sine ve istatistiğe girer; gold kazanma/toplama/harcama, upgrade
+    /// ve süre XP vermez; aynı run iki kez uygulanmaz (çağıran sözleşmesi + ikinci
+    /// uygulamanın unlock/achievement üretmemesi); alan alan disk gidiş-dönüşü; run
+    /// gold/build dosyaya yazılmaz; eksik/bozuk kayıt güvenli; unlock otomatik, Claim yok.
+    /// </summary>
+    [TestFixture]
+    [Category("WP005")]
+    public sealed class ProfileXpRulesTests
+    {
+        private static readonly string TestPath =
+            Path.Combine(Application.temporaryCachePath, "dd-editmode-wp005-profile.json");
+
+        private static readonly string RealPath =
+            Path.Combine(Application.persistentDataPath, ProfileStore.FileName);
+
+        private string _realHashBefore;
+        private int _changed;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            _realHashBefore = HashOf(RealPath);
+            ProfileStore.SetPathOverride(TestPath);
+            OnbellegiBosalt();
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            OnbellegiBosalt();
+            ProfileStore.SetPathOverride(null);
+            TryDelete(TestPath);
+            foreach (string f in Directory.GetFiles(Path.GetDirectoryName(TestPath), Path.GetFileName(TestPath) + "*"))
+            {
+                TryDelete(f);
+            }
+
+            Assert.AreEqual(_realHashBefore, HashOf(RealPath), "gerçek profil dosyası değişmemeli");
+        }
+
+        [SetUp]
+        public void SetUp()
+        {
+            Assert.AreEqual(TestPath, ProfileStore.Path, "override kayboldu — gerçek profile yazılabilir");
+            ProfileService.ResetProfile();
+            _changed = 0;
+            ProfileService.Changed += Sayac;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            ProfileService.Changed -= Sayac;
+        }
+
+        private void Sayac()
+        {
+            _changed++;
+        }
+
+        // ------------------------------------------------------------------ yardımcılar
+
+        private static void OnbellegiBosalt()
+        {
+            typeof(ProfileService).GetField("s_data", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, null);
+            typeof(ProfileService).GetField("s_lastReport", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, null);
+        }
+
+        private static string HashOf(string path)
+        {
+            if (!File.Exists(path))
+            {
+                return "MISSING";
+            }
+
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path)));
+            }
+        }
+
+        private static void TryDelete(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch (Exception)
+            {
+                // best effort
+            }
+        }
+
+        private static RunSummary Ozet(int reached, int completed, int kills, int killXp, int roundXp)
+        {
+            return new RunSummary
+            {
+                ReachedRound = reached,
+                CompletedRounds = completed,
+                TotalKills = kills,
+                StandardKills = kills,
+                KillXp = killXp,
+                CompletedRoundXp = roundXp,
+                TotalXpEarned = killXp + roundXp,
+                Weapon = ClassicWeaponId.AssaultRifle,
+                BuildDescription = "P1",
+                EndReason = RunEndReason.PlayerDeath
+            };
+        }
+
+        // ------------------------------------------------------------------ XP kuralları
+
+        [Test]
+        public void TamamlananRound_RoundXpVerir()
+        {
+            RunRewardReport r = ProfileService.ApplyRun(Ozet(2, 1, 0, 0, 20));
+            Assert.AreEqual(20, r.CompletedRoundXp);
+            Assert.AreEqual(0, r.KillXp);
+            Assert.AreEqual(20, r.TotalXpEarned);
+            Assert.AreEqual(20, ProfileService.Current.XpIntoLevel);
+            Assert.AreEqual(1, ProfileService.Current.RoundsCompleted);
+            Assert.AreEqual(1, _changed, "ApplyRun tam bir Changed yayınlar");
+        }
+
+        [Test]
+        public void YarimRoundKilli_KillXpVeIstatistigeGirer_RoundXpVermez()
+        {
+            RunRewardReport r = ProfileService.ApplyRun(Ozet(1, 0, 4, 4, 0));
+            Assert.AreEqual(0, r.CompletedRoundXp, "ölüm gerçekleşen yarım round round XP'si vermez");
+            Assert.AreEqual(4, r.KillXp, "yarım rounddaki kill'ler kill XP'sine girer");
+            Assert.AreEqual(4, r.TotalXpEarned);
+
+            ProfileData p = ProfileService.Current;
+            Assert.AreEqual(4, p.TotalKills, "kill'ler kalıcı istatistiğe girer");
+            Assert.AreEqual(4, p.StandardKills);
+            Assert.AreEqual(0, p.RoundsCompleted);
+            Assert.AreEqual(1, p.HighestRound, "ulaşılan round kaydedilir");
+            Assert.AreEqual(1, p.RunsPlayed);
+        }
+
+        [Test]
+        public void GoldKazanmaToplamaHarcama_Upgrade_Sure_XpVermez()
+        {
+            var ozet = Ozet(3, 0, 0, 0, 0);
+            ozet.GoldEarned = 999;
+            ozet.GoldSpent = 500;
+            ozet.GoldUnspent = 499;
+            ozet.UpgradesPurchased = 9;
+            ozet.RunDuration = 3600f;
+
+            RunRewardReport r = ProfileService.ApplyRun(ozet);
+            Assert.AreEqual(0, r.TotalXpEarned, "gold, upgrade ve süre XP üretmez");
+            Assert.AreEqual(0, ProfileService.Current.XpIntoLevel);
+            Assert.AreEqual(0, ProfileService.Current.TotalXpEarned);
+            Assert.AreEqual(1, ProfileService.Current.ProfileLevel);
+
+            // Koşu sayacı da aynı kuralı taşır: gold ve süre TotalXp'e dokunmaz.
+            var stats = new RunStatsTracker();
+            stats.RecordKill(EnemyTier.Standard, 1);
+            int once = stats.TotalXp;
+            stats.RecordGoldEarned(1000);
+            stats.RecordGoldSpent(400);
+            stats.Tick(120f);
+            Assert.AreEqual(once, stats.TotalXp, "RunStatsTracker: gold/harcama/süre XP'yi değiştirmez");
+            Assert.AreEqual(1000, stats.GoldEarned);
+            Assert.AreEqual(1, stats.UpgradesPurchased);
+        }
+
+        [Test]
+        public void AyniOzet_IkinciKez_UnlockVeAchievementTekrarUretmez()
+        {
+            // L1→L2: 100 XP; SMG (L2) ve Explosion (L2) açılır, First Blood kazanılır.
+            RunSummary ozet = Ozet(2, 1, 5, 5, 95);
+            RunRewardReport r1 = ProfileService.ApplyRun(ozet);
+            Assert.AreEqual(2, r1.LevelAfter);
+            Assert.IsTrue(r1.LeveledUp);
+            Assert.AreEqual(2, r1.NewUnlocks.Count, "AutoSmg + Explosion");
+            Assert.AreEqual(1, r1.NewAchievements.Count, "First Blood");
+
+            int seviye = ProfileService.Current.ProfileLevel;
+            int silahlar = ProfileService.Current.UnlockedWeapons.Count;
+            int basarimlar = ProfileService.Current.Achievements.Count;
+
+            // Çağıran sözleşmesi ApplyRun'ı koşu başına bir kez çağırır (PrototypeUiFlow.s_resultsScheduled);
+            // yine de ikinci uygulama unlock/achievement'ı iki kez ÜRETEMEZ.
+            RunRewardReport r2 = ProfileService.ApplyRun(ozet);
+            Assert.AreEqual(0, r2.NewUnlocks.Count, "aynı unlock iki kez işlenmez");
+            Assert.AreEqual(0, r2.NewAchievements.Count, "aynı achievement iki kez açılmaz");
+            Assert.AreEqual(silahlar, ProfileService.Current.UnlockedWeapons.Count);
+            Assert.AreEqual(basarimlar, ProfileService.Current.Achievements.Count);
+            Assert.GreaterOrEqual(ProfileService.Current.ProfileLevel, seviye);
+        }
+
+        [Test]
+        public void UnlockOtomatik_ClaimApiYok()
+        {
+            RunRewardReport r = ProfileService.ApplyRun(Ozet(2, 1, 0, 0, 100));
+            Assert.AreEqual(2, r.LevelAfter);
+            Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg), "unlock ApplyRun içinde otomatik uygulanır");
+            Assert.IsTrue(ProfileService.Current.UnlockedWeapons.Contains("AutoSmg"));
+
+            MethodInfo[] metotlar = typeof(ProfileService).GetMethods(BindingFlags.Public | BindingFlags.Static);
+            for (int i = 0; i < metotlar.Length; i++)
+            {
+                Assert.IsFalse(metotlar[i].Name.ToLowerInvariant().Contains("claim"), "Claim API'si olmamalı: " + metotlar[i].Name);
+            }
+        }
+
+        [Test]
+        public void ProfilSeviyesi_CombatVeGoldUyesiYok()
+        {
+            var yasak = new[] { "damage", "health", "gold", "speed" };
+            var uyeler = new List<MemberInfo>();
+            uyeler.AddRange(typeof(ProfileService).GetMembers(BindingFlags.Public | BindingFlags.Static));
+            uyeler.AddRange(typeof(ProfileData).GetMembers(BindingFlags.Public | BindingFlags.Instance));
+
+            for (int i = 0; i < uyeler.Count; i++)
+            {
+                string ad = uyeler[i].Name.ToLowerInvariant();
+                for (int j = 0; j < yasak.Length; j++)
+                {
+                    Assert.IsFalse(ad.Contains(yasak[j]),
+                        "Profil yüzeyinde combat/gold üyesi: " + uyeler[i].DeclaringType.Name + "." + uyeler[i].Name);
+                }
+            }
+        }
+
+        // ------------------------------------------------------------------ kalıcılık
+
+        [Test]
+        public void AlanAlan_DiskGidisDonus()
+        {
+            var ozet = Ozet(6, 5, 40, 40, 200);
+            ozet.ArmorPiecesBroken = 3;
+            ozet.EliteKills = 2;
+            ozet.StandardKills = 38;
+            ProfileService.ApplyRun(ozet);
+
+            ProfileData bellek = ProfileService.Current;
+            ProfileData disk = ProfileStore.Load();
+
+            Assert.AreEqual(bellek.ProfileLevel, disk.ProfileLevel);
+            Assert.AreEqual(bellek.XpIntoLevel, disk.XpIntoLevel);
+            Assert.AreEqual(bellek.TotalXpEarned, disk.TotalXpEarned);
+            Assert.AreEqual(6, disk.HighestRound);
+            Assert.AreEqual(5, disk.RoundsCompleted);
+            Assert.AreEqual(40, disk.TotalKills);
+            Assert.AreEqual(38, disk.StandardKills);
+            Assert.AreEqual(2, disk.EliteKills);
+            Assert.AreEqual(0, disk.SpecialKills);
+            Assert.AreEqual(0, disk.UltraKills);
+            Assert.AreEqual(3, disk.ArmorPiecesBroken);
+            Assert.AreEqual(1, disk.RunsPlayed);
+            Assert.AreEqual(bellek.BestRunXp, disk.BestRunXp);
+            CollectionAssert.AreEqual(bellek.UnlockedWeapons, disk.UnlockedWeapons);
+            CollectionAssert.AreEqual(bellek.UnlockedBranches, disk.UnlockedBranches);
+            CollectionAssert.AreEqual(bellek.Achievements, disk.Achievements);
+            Assert.IsFalse(ProfileStore.LastLoadFellBack);
+        }
+
+        [Test]
+        public void JsonAnahtarlari_RunGoldVeBuildIcermez()
+        {
+            var ozet = Ozet(3, 2, 10, 10, 45);
+            ozet.GoldEarned = 77;
+            ozet.GoldSpent = 30;
+            ozet.BuildDescription = "P2 / FR1";
+            ozet.UpgradesPurchased = 2;
+            ProfileService.ApplyRun(ozet);
+
+            string json = File.ReadAllText(TestPath);
+            StringAssert.DoesNotContain("Gold", json, "profil dosyasında run gold anahtarı olmaz (REQ-018)");
+            StringAssert.DoesNotContain("Build", json, "run build dosyaya yazılmaz");
+            StringAssert.DoesNotContain("Tier", json, "silah rank'ları dosyaya yazılmaz");
+            StringAssert.DoesNotContain("P2 / FR1", json);
+            StringAssert.Contains("\"HighestRound\"", json);
+            StringAssert.Contains("\"ProfileLevel\"", json);
+
+            // Şema kilidi: ProfileData'nın public alan seti bilinen 17 alandır.
+            FieldInfo[] alanlar = typeof(ProfileData).GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var adlar = new List<string>();
+            for (int i = 0; i < alanlar.Length; i++)
+            {
+                adlar.Add(alanlar[i].Name);
+            }
+
+            CollectionAssert.AreEquivalent(new[]
+            {
+                "SaveVersion", "ProfileLevel", "XpIntoLevel", "TotalXpEarned", "HighestRound", "RunsPlayed",
+                "RoundsCompleted", "TotalKills", "StandardKills", "SpecialKills", "EliteKills", "UltraKills",
+                "ArmorPiecesBroken", "BestRunXp", "Achievements", "UnlockedWeapons", "UnlockedBranches", "LastSavedUtc"
+            }, adlar, "ProfileData şeması değişti; kalıcılık sınırı yeniden gözden geçirilmeli");
+        }
+
+        [Test]
+        public void DosyaYok_VarsayilanGuvenli()
+        {
+            TryDelete(TestPath);
+            OnbellegiBosalt();
+
+            ProfileData p = ProfileService.Current;
+            Assert.AreEqual(1, p.ProfileLevel);
+            Assert.AreEqual(0, p.XpIntoLevel);
+            Assert.AreEqual(0, p.TotalKills);
+            Assert.AreEqual(0, p.Achievements.Count);
+            Assert.IsFalse(ProfileService.RecoveredFromCorruptSave, "eksik dosya hata değil, ilk açılış");
+            Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AssaultRifle), "başlangıç silahı açık");
+            Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg));
+            Assert.IsNull(ProfileService.LastReport);
+        }
+
+        [Test]
+        public void BozukJson_UyariVeYedek_OyunSurer()
+        {
+            File.WriteAllText(TestPath, "{{{ not json");
+            OnbellegiBosalt();
+
+            LogAssert.Expect(LogType.Warning, new Regex("Profile"));
+            ProfileData p = ProfileService.Current;
+
+            Assert.AreEqual(1, p.ProfileLevel, "taze profil");
+            Assert.IsTrue(ProfileService.RecoveredFromCorruptSave);
+            Assert.IsTrue(File.Exists(TestPath + ".corrupt") || Directory.GetFiles(
+                Path.GetDirectoryName(TestPath), Path.GetFileName(TestPath) + "*.corrupt*").Length > 0,
+                "bozuk dosya yanına kaldırılır, silinmez");
+
+            // Sonraki koşu normal kaydeder.
+            RunRewardReport r = ProfileService.ApplyRun(Ozet(1, 0, 1, 1, 0));
+            Assert.IsFalse(r.SaveFailed);
+            Assert.AreEqual(1, ProfileStore.Load().TotalKills);
+        }
+
+        [Test]
+        public void AchievementTanimiYok_HataYok_BosListe()
+        {
+            PrototypeConfig orijinal = PrototypeConfig.Active;
+            Assert.IsNotNull(orijinal, "EditMode'da Resources config yüklenmeli");
+
+            PrototypeConfig klon = UnityEngine.Object.Instantiate(orijinal);
+            try
+            {
+                klon.Progression.Achievements.Clear();
+                PrototypeConfig.SetActive(klon);
+
+                Assert.AreEqual(0, ProfileService.AllAchievements.Count);
+                RunRewardReport r = ProfileService.ApplyRun(Ozet(5, 4, 30, 30, 100));
+                Assert.AreEqual(0, r.NewAchievements.Count);
+                Assert.AreEqual(0, ProfileService.Current.Achievements.Count);
+                Assert.IsFalse(r.SaveFailed);
+            }
+            finally
+            {
+                PrototypeConfig.SetActive(orijinal);
+                UnityEngine.Object.DestroyImmediate(klon);
+            }
+        }
+
+        [Test]
+        public void DalUnlockSeviyesi_TeklifKapisiDegil_YalnizGorunum()
+        {
+            // WP-004 devir notu: UpgradeBranchSettings.UnlockProfileLevel'ın teklif tarafında
+            // çağıranı yok. WP-005 bunu onaylanmamış bir içeriğe BAĞLAMAZ; yalnız Profile
+            // pane'inde görüntülenir. Bu test mevcut sınırı kilitler: teklif kapısı
+            // (RoundUpgradeShop) profil seviyesini okumaz.
+            string kaynak = File.ReadAllText(Path.Combine(
+                Application.dataPath, "_Prototype", "Rounds", "RoundUpgradeShop.cs"));
+            StringAssert.DoesNotContain("IsBranchUnlocked", kaynak, "teklif kapısı profil seviyesine bağlanmadı (karar bekliyor)");
+            StringAssert.DoesNotContain("UnlockProfileLevel", kaynak);
+
+            // Görünüm tarafı okur (Profile pane), ve seviye eşiği prototip config'inden gelir.
+            Assert.AreEqual(2, ProfileService.UnlockLevelFor(UpgradeBranch.Explosion));
+            Assert.AreEqual(3, ProfileService.UnlockLevelFor(UpgradeBranch.Chain));
+            Assert.IsFalse(ProfileService.IsBranchUnlocked(UpgradeBranch.Chain), "L1 profilde Chain kilitli görünür");
+        }
+    }
+}

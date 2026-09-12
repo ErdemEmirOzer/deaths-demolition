@@ -1,0 +1,380 @@
+using System;
+using DD.Prototype.PlayerSystem;
+using DD.Prototype.Rounds;
+using DD.Prototype.Weapons;
+using UnityEngine;
+
+namespace DD.Prototype.UI
+{
+    /// <summary>Which HUD readouts changed in the last Apply* call. Bit flags.</summary>
+    [Flags]
+    public enum RunHudField
+    {
+        None = 0,
+        Round = 1 << 0,
+        Enemies = 1 << 1,
+        Gold = 1 << 2,
+        Health = 1 << 3,
+        HealthState = 1 << 4,
+        WeaponName = 1 << 5,
+        Build = 1 << 6,
+        Ammo = 1 << 7,
+        Reload = 1 << 8,
+        Suspended = 1 << 9,
+
+        /// <summary>Bar fill or low-health colour only; the text did not change.</summary>
+        HealthBar = 1 << 10
+    }
+
+    /// <summary>The reload readout's three states, decided here so the view only styles them.</summary>
+    public enum RunHudReloadState
+    {
+        Ready = 0,
+        Reloading = 1,
+        MagazineEmpty = 2
+    }
+
+    /// <summary>Tone of the small status line under the health bar.</summary>
+    public enum RunHudTone
+    {
+        Neutral = 0,
+        Positive = 1,
+        Danger = 2
+    }
+
+    /// <summary>
+    /// The HUD's presenter (WP-005). Turns authoritative snapshots into the strings and
+    /// numbers the HUD draws, and remembers what it last produced so a value that did
+    /// not change costs nothing.
+    ///
+    /// WHY THIS EXISTS
+    /// The HUD used to format every readout every frame - Round.ToString(), the enemy
+    /// breakdown, the ammo line - which is an allocation per frame per label whether or
+    /// not anything moved. Snapshots are still polled (that is the contract RunEvents and
+    /// WeaponEvents ask for), but the formatting now happens only on the frame a number
+    /// changes, and the view applies only the fields flagged in the returned mask. On a
+    /// quiet frame every Apply* returns <see cref="RunHudField.None"/> and allocates 0 B.
+    ///
+    /// It has no Unity object in it, so every rule - what "—" means, when the health is
+    /// low, what the reload line says - is provable in EditMode.
+    /// </summary>
+    public sealed class RunHudViewModel
+    {
+        /// <summary>What a readout shows before the run has published anything.</summary>
+        public const string Placeholder = "—";
+
+        // ---- round / enemies
+        private int _round = int.MinValue;
+        private int _enemiesRemaining = int.MinValue;
+        private int _poolRemaining = int.MinValue;
+        private int _alive = int.MinValue;
+        private bool _poolExhausted;
+
+        public string RoundText { get; private set; } = Placeholder;
+        public string EnemiesText { get; private set; } = Placeholder;
+        public string EnemiesBreakdown { get; private set; } = "waiting for the round to start";
+
+        // ---- gold
+        private int _gold = int.MinValue;
+        public string GoldText { get; private set; } = "0";
+
+        // ---- health
+        private int _healthCurrent = int.MinValue;
+        private int _healthMax = int.MinValue;
+        private bool _healthKnown;
+        private int _regenTenths = int.MinValue;
+        private bool _dead;
+        private bool _regenerating;
+
+        public float HealthNormalized { get; private set; }
+        public bool HealthLow { get; private set; }
+        public bool HealthKnown { get { return _healthKnown; } }
+        public string HealthText { get; private set; } = Placeholder;
+        public string HealthStateText { get; private set; } = string.Empty;
+        public RunHudTone HealthStateTone { get; private set; } = RunHudTone.Neutral;
+
+        // ---- classic weapon
+        private string _weaponSource;
+        private string _buildSource;
+        private int _ammo = int.MinValue;
+        private int _magazine = int.MinValue;
+        private RunHudReloadState _reload = (RunHudReloadState)(-1);
+        private bool _suspended;
+
+        public string WeaponName { get; private set; } = Placeholder;
+        public string BuildText { get; private set; } = "no upgrades";
+        public string AmmoText { get; private set; } = Placeholder;
+        public RunHudReloadState ReloadState { get; private set; } = RunHudReloadState.Ready;
+        public float ReloadProgress01 { get; private set; } = 1f;
+        public bool Suspended { get { return _suspended; } }
+
+        /// <summary>Longest weapon name the block can hold before it is clipped.</summary>
+        public const int WeaponNameMaxCharacters = 26;
+
+        /// <summary>Longest build line the block can hold before it is clipped.</summary>
+        public const int BuildMaxCharacters = 34;
+
+        // ================================================================ round state
+
+        /// <summary>Round, enemies and gold from the director's per-frame snapshot.</summary>
+        public RunHudField ApplyRun(in RunHudState state)
+        {
+            RunHudField changed = RunHudField.None;
+
+            if (state.Round != _round)
+            {
+                _round = state.Round;
+                RoundText = _round > 0 ? _round.ToString() : Placeholder;
+                changed |= RunHudField.Round;
+            }
+
+            bool breakdownChanged = state.PoolRemaining != _poolRemaining ||
+                                    state.AliveEnemies != _alive ||
+                                    state.PoolExhausted != _poolExhausted ||
+                                    (changed & RunHudField.Round) != 0;
+
+            if (state.EnemiesRemaining != _enemiesRemaining || (changed & RunHudField.Round) != 0)
+            {
+                _enemiesRemaining = state.EnemiesRemaining;
+                EnemiesText = _round > 0 ? _enemiesRemaining.ToString() : Placeholder;
+                changed |= RunHudField.Enemies;
+            }
+
+            if (breakdownChanged)
+            {
+                _poolRemaining = state.PoolRemaining;
+                _alive = state.AliveEnemies;
+                _poolExhausted = state.PoolExhausted;
+
+                if (_round <= 0)
+                {
+                    // The run has not published a state yet: the HUD says so instead of
+                    // showing a confident zero.
+                    EnemiesBreakdown = "waiting for the round to start";
+                }
+                else if (_poolExhausted)
+                {
+                    EnemiesBreakdown = "pool empty  ·  " + _alive + " still on the map";
+                }
+                else
+                {
+                    EnemiesBreakdown = _poolRemaining + " left to arrive  ·  " + _alive + " on the map";
+                }
+
+                changed |= RunHudField.Enemies;
+            }
+
+            changed |= ApplyGold(state.Gold);
+            return changed;
+        }
+
+        /// <summary>
+        /// Gold on its own, so the wallet's change event can land between director
+        /// frames and the counter still moves on the frame the orb was taken.
+        /// </summary>
+        public RunHudField ApplyGold(int balance)
+        {
+            if (balance == _gold)
+            {
+                return RunHudField.None;
+            }
+
+            _gold = balance;
+            GoldText = balance.ToString();
+            return RunHudField.Gold;
+        }
+
+        // ==================================================================== health
+
+        /// <summary>
+        /// Health from the player's own snapshot. <paramref name="lowFraction"/> is the
+        /// ONE threshold the bar, the readout and the damage edge share.
+        /// </summary>
+        public RunHudField ApplyHealth(in PlayerHealthSnapshot snapshot, float lowFraction)
+        {
+            RunHudField changed = RunHudField.None;
+
+            int current = Mathf.CeilToInt(Mathf.Max(0f, snapshot.Current));
+            int max = Mathf.RoundToInt(snapshot.Max);
+
+            float normalized = snapshot.Normalized;
+            bool low = normalized <= lowFraction;
+
+            // The bar moves continuously while health regenerates; the text only moves
+            // when a whole point does. Two flags, so the regen tick never re-formats.
+            if (!_healthKnown || !Mathf.Approximately(normalized, HealthNormalized) || low != HealthLow)
+            {
+                HealthNormalized = normalized;
+                HealthLow = low;
+                changed |= RunHudField.HealthBar;
+            }
+
+            if (!_healthKnown || current != _healthCurrent || max != _healthMax)
+            {
+                _healthKnown = true;
+                _healthCurrent = current;
+                _healthMax = max;
+                HealthText = current + " / " + max;
+                changed |= RunHudField.Health;
+            }
+
+            // The status line changes far less often than the number, and its regen
+            // countdown is shown to a tenth, so it is compared at that resolution.
+            int regenTenths = snapshot.SecondsUntilRegen > 0f ? Mathf.CeilToInt(snapshot.SecondsUntilRegen * 10f) : 0;
+
+            if (snapshot.IsDead != _dead || snapshot.IsRegenerating != _regenerating || regenTenths != _regenTenths)
+            {
+                _dead = snapshot.IsDead;
+                _regenerating = snapshot.IsRegenerating;
+                _regenTenths = regenTenths;
+
+                if (_dead)
+                {
+                    HealthStateText = "DOWN";
+                    HealthStateTone = RunHudTone.Danger;
+                }
+                else if (_regenerating)
+                {
+                    HealthStateText = "RECOVERING";
+                    HealthStateTone = RunHudTone.Positive;
+                }
+                else if (regenTenths > 0)
+                {
+                    HealthStateText = "recovery in " + (regenTenths / 10f).ToString("0.0") + "s";
+                    HealthStateTone = RunHudTone.Neutral;
+                }
+                else
+                {
+                    HealthStateText = string.Empty;
+                    HealthStateTone = RunHudTone.Neutral;
+                }
+
+                changed |= RunHudField.HealthState;
+            }
+
+            return changed;
+        }
+
+        // ============================================================ classic weapon
+
+        /// <summary>Name, ammo and reload from the weapon surface's snapshot. Build is <see cref="ApplyBuild"/>.</summary>
+        public RunHudField ApplyWeapon(in ClassicWeaponHudState state)
+        {
+            RunHudField changed = RunHudField.None;
+
+            // Both strings are cached by their producers (WeaponModifierState.DescribeBuild
+            // caches; the display name is a config string), so on a quiet frame the
+            // string comparison below short-circuits on reference equality.
+            if (state.DisplayName != _weaponSource)
+            {
+                _weaponSource = state.DisplayName;
+                WeaponName = string.IsNullOrEmpty(_weaponSource)
+                    ? Placeholder
+                    : UiFactory.Clip(_weaponSource.ToUpperInvariant(), WeaponNameMaxCharacters);
+                changed |= RunHudField.WeaponName;
+            }
+
+            if (state.AmmoInMagazine != _ammo || state.MagazineSize != _magazine)
+            {
+                _ammo = state.AmmoInMagazine;
+                _magazine = state.MagazineSize;
+                AmmoText = _magazine > 0 ? _ammo + " / " + _magazine : Placeholder;
+                changed |= RunHudField.Ammo;
+            }
+
+            RunHudReloadState reload = state.IsReloading
+                ? RunHudReloadState.Reloading
+                : state.IsEmpty && state.MagazineSize > 0
+                    ? RunHudReloadState.MagazineEmpty
+                    : RunHudReloadState.Ready;
+
+            float progress = reload == RunHudReloadState.Reloading
+                ? Mathf.Clamp01(state.ReloadProgress01)
+                : reload == RunHudReloadState.MagazineEmpty ? 0f : 1f;
+
+            if (reload != _reload || !Mathf.Approximately(progress, ReloadProgress01))
+            {
+                _reload = reload;
+                ReloadState = reload;
+                ReloadProgress01 = progress;
+                changed |= RunHudField.Reload;
+            }
+
+            if (state.TemporarilyDisabled != _suspended)
+            {
+                _suspended = state.TemporarilyDisabled;
+                changed |= RunHudField.Suspended;
+            }
+
+            return changed;
+        }
+
+        // ====================================================================== build
+
+        /// <summary>
+        /// The run build line, from <c>RunBuildState.DescribeBuild()</c> - the same
+        /// producer the Results screen quotes, so the HUD and Results can never disagree
+        /// about what was bought. The producer caches the string; a quiet frame compares
+        /// one reference.
+        /// </summary>
+        public RunHudField ApplyBuild(string description)
+        {
+            if (description == _buildSource)
+            {
+                return RunHudField.None;
+            }
+
+            _buildSource = description;
+            BuildText = string.IsNullOrEmpty(_buildSource) || _buildSource == "Stock"
+                ? "no upgrades"
+                : UiFactory.Clip(_buildSource, BuildMaxCharacters);
+            return RunHudField.Build;
+        }
+
+        // ===================================================================== reset
+
+        /// <summary>
+        /// Forgets everything, so the next Apply* redraws every field. Called when a run
+        /// starts: a HUD that survived into a second run must not keep showing the first
+        /// run's last gold, build, round or weapon.
+        /// </summary>
+        public void Reset()
+        {
+            _round = int.MinValue;
+            _enemiesRemaining = int.MinValue;
+            _poolRemaining = int.MinValue;
+            _alive = int.MinValue;
+            _poolExhausted = false;
+            RoundText = Placeholder;
+            EnemiesText = Placeholder;
+            EnemiesBreakdown = "waiting for the round to start";
+
+            _gold = int.MinValue;
+            GoldText = "0";
+
+            _healthCurrent = int.MinValue;
+            _healthMax = int.MinValue;
+            _healthKnown = false;
+            _regenTenths = int.MinValue;
+            _dead = false;
+            _regenerating = false;
+            HealthNormalized = 0f;
+            HealthLow = false;
+            HealthText = Placeholder;
+            HealthStateText = string.Empty;
+            HealthStateTone = RunHudTone.Neutral;
+
+            _weaponSource = null;
+            _buildSource = null;
+            _ammo = int.MinValue;
+            _magazine = int.MinValue;
+            _reload = (RunHudReloadState)(-1);
+            _suspended = false;
+            WeaponName = Placeholder;
+            BuildText = "no upgrades";
+            AmmoText = Placeholder;
+            ReloadState = RunHudReloadState.Ready;
+            ReloadProgress01 = 1f;
+        }
+    }
+}

@@ -58,8 +58,24 @@ namespace DD.Prototype.UI
             get { return true; }
         }
 
+        /// <summary>
+        /// The navigation base this screen owns, or None for a layer screen (pause, the
+        /// round-end shop). Declared here so a screen serialised into a scene file - whose
+        /// Awake runs before the installer's sceneLoaded hook - names its base itself, and
+        /// a hand-made test scene needs no installer at all. Idempotent with the installer.
+        /// </summary>
+        protected virtual UiContext BaseContext
+        {
+            get { return UiContext.None; }
+        }
+
         private void Awake()
         {
+            if (BaseContext != UiContext.None)
+            {
+                UiNavigation.EnterBase(BaseContext);
+            }
+
             // A screen that owns the frame draws through its camera; the HUD, which sits
             // over gameplay someone else is rendering, stays an overlay.
             Camera uiCamera = WantsUiCamera ? UiFactory.EnsureUiCamera() : null;

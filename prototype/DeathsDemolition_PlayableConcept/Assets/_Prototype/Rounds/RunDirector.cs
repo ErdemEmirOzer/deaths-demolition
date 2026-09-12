@@ -397,6 +397,14 @@ namespace DD.Prototype.Rounds
 
             Instance = this;
 
+            // WP-005: the HUD snapshots are static and outlive the scene. Between this
+            // scene loading and StartRun (the auto-start delay) a HUD would otherwise show
+            // the previous run's round, gold, weapon and Special Weapon marker. StartRun
+            // clears them again; this is the same clear, one scene earlier.
+            RunEvents.ClearState();
+            WeaponEvents.PublishClassic(default, false);
+            WeaponEvents.PublishSpecial(default, false);
+
             // Gold is meaningless without a run and a run always wants a wallet, so the
             // director brings its own service rather than depending on scene authoring.
             if (GoldService.Instance == null && GetComponent<GoldService>() == null)

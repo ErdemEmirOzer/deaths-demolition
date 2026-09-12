@@ -67,6 +67,16 @@ namespace DD.Prototype.UI
     /// Health is the exception and uses the static event, because PlayerHealth publishes
     /// its first snapshot in OnEnable - possibly before this HUD exists - so the binding
     /// reads <c>Snapshot</c> once rather than waiting for an event that already fired.
+    ///
+    /// PRESENTER (WP-005). Every polled snapshot goes through a <see cref="RunHudViewModel"/>
+    /// which formats a readout only on the frame its value changes and tells the view
+    /// which labels to touch. A quiet frame therefore writes no string and allocates
+    /// nothing; the old per-frame ToString() on round, gold, enemies and ammo is gone.
+    /// Gold additionally lands through RunEvents.GoldChanged, so the counter moves on
+    /// the frame the orb was taken rather than on the director's next publish. On
+    /// RunStarted the model is reset, so a HUD that survived into a second run cannot
+    /// show the first run's last numbers. The player is found through PlayerRegistry,
+    /// never by searching the scene.
     /// </summary>
     public sealed class RunHudScreen : UiScreen
     {
@@ -86,6 +96,11 @@ namespace DD.Prototype.UI
         protected override int SortingOrder
         {
             get { return UiTokens.SortingHud; }
+        }
+
+        protected override UiContext BaseContext
+        {
+            get { return UiContext.GameplayHud; }
         }
 
         protected override bool WantsUiCamera
@@ -163,6 +178,14 @@ namespace DD.Prototype.UI
 
         private bool _healthBound;
 
+        private readonly RunHudViewModel _model = new RunHudViewModel();
+
+        /// <summary>The presenter this HUD draws from. Exposed so a test can read what is shown.</summary>
+        public RunHudViewModel Model
+        {
+            get { return _model; }
+        }
+
         protected override void Build()
         {
             // FIRST, and the order is the whole point. uGUI draws siblings back to front,
@@ -180,9 +203,11 @@ namespace DD.Prototype.UI
             BuildCentreChannel();
             BuildMarker();
 
+            RunEvents.RunStarted += OnRunStarted;
             RunEvents.RoundStarted += OnRoundStarted;
             RunEvents.RoundCompleted += OnRoundCompleted;
             RunEvents.RoundPoolExhausted += OnPoolExhausted;
+            RunEvents.GoldChanged += OnGoldChanged;
 
             WeaponEvents.SpecialWeaponSpawned += OnSpecialSpawned;
             WeaponEvents.SpecialWeaponPickedUp += OnSpecialPickedUp;
@@ -201,9 +226,11 @@ namespace DD.Prototype.UI
 
         private void OnDestroy()
         {
+            RunEvents.RunStarted -= OnRunStarted;
             RunEvents.RoundStarted -= OnRoundStarted;
             RunEvents.RoundCompleted -= OnRoundCompleted;
             RunEvents.RoundPoolExhausted -= OnPoolExhausted;
+            RunEvents.GoldChanged -= OnGoldChanged;
 
             WeaponEvents.SpecialWeaponSpawned -= OnSpecialSpawned;
             WeaponEvents.SpecialWeaponPickedUp -= OnSpecialPickedUp;
@@ -227,7 +254,10 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            PlayerHealth health = FindObjectOfType<PlayerHealth>();
+            // Through the registry, not a scene search: PlayerRegistry.Primary is a list
+            // read, and it is the same hand-off point every other system uses.
+            PlayerRig rig = PlayerRegistry.Primary;
+            PlayerHealth health = rig != null ? rig.Health : null;
             if (health == null)
             {
                 return;
@@ -568,6 +598,18 @@ namespace DD.Prototype.UI
             {
                 BindHealthSnapshot();
             }
+            else
+            {
+                // The regen countdown ("recovery in 2.4s") moves without a health event:
+                // PlayerHealth only publishes when the value changes. Polling the snapshot
+                // costs nothing on a quiet frame - the presenter compares tenths and
+                // integers before it formats anything.
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (rig != null && rig.Health != null)
+                {
+                    ApplyHealth(rig.Health.Snapshot);
+                }
+            }
 
             UpdateRun();
             UpdateClassicWeapon();
@@ -584,24 +626,63 @@ namespace DD.Prototype.UI
         {
             RunHudState state = RunEvents.Current;
 
-            _roundValue.text = state.Round > 0 ? state.Round.ToString() : "—";
-            _goldValue.text = state.Gold.ToString();
-            _enemiesValue.text = state.EnemiesRemaining.ToString();
+            // The run is over: the director wipes the wallet right after it publishes
+            // the summary, and the snapshot reads 0 gold for the death beat. The HUD
+            // keeps the last live numbers instead - the Results screen quotes the same
+            // summary the player was just looking at.
+            if (state.Phase == RunPhase.Dead)
+            {
+                return;
+            }
 
-            if (state.Round <= 0)
+            ApplyRunFields(_model.ApplyRun(state));
+        }
+
+        /// <summary>
+        /// Gold arrives through the economy's own event as well as through the polled
+        /// snapshot, so a collected orb and the counter move in the same frame.
+        /// </summary>
+        private void OnGoldChanged(int balance)
+        {
+            if (RunEvents.Current.Phase == RunPhase.Dead)
             {
-                // The run has not published a state yet: the HUD says so instead of
-                // showing a confident zero.
-                _enemiesBreakdown.text = "waiting for the round to start";
+                // The wallet wipe at run end. See UpdateRun.
+                return;
             }
-            else if (state.PoolExhausted)
+
+            ApplyRunFields(_model.ApplyGold(balance));
+        }
+
+        /// <summary>
+        /// A new run. The presenter forgets the previous run's numbers so the first
+        /// frame of this one shows placeholders, never last run's gold or build.
+        /// </summary>
+        private void OnRunStarted(int startRound)
+        {
+            _model.Reset();
+            _healthBound = false;
+            ApplyRunFields(_model.ApplyRun(RunEvents.Current));
+            ApplyWeaponFields(_model.ApplyWeapon(WeaponEvents.Classic));
+            ApplyWeaponFields(_model.ApplyBuild(CurrentBuildDescription()));
+            BindHealthSnapshot();
+        }
+
+        private void ApplyRunFields(RunHudField changed)
+        {
+            if ((changed & RunHudField.Round) != 0)
             {
-                _enemiesBreakdown.text = "pool empty  ·  " + state.AliveEnemies + " still on the map";
+                _roundValue.text = _model.RoundText;
             }
-            else
+
+            if ((changed & RunHudField.Gold) != 0)
             {
-                _enemiesBreakdown.text = state.PoolRemaining + " left to arrive  ·  " +
-                                         state.AliveEnemies + " on the map";
+                _goldValue.text = _model.GoldText;
+            }
+
+            if ((changed & RunHudField.Enemies) != 0)
+            {
+                _enemiesValue.text = _model.EnemiesText;
+                _enemiesBreakdown.text = _model.EnemiesBreakdown;
             }
         }
 
@@ -609,82 +690,114 @@ namespace DD.Prototype.UI
         {
             _healthBound = true;
 
-            float normalized = snapshot.Normalized;
-
             // One threshold, one constant. The bar, the readout and the damage edge all
             // read UiTokens.LowHealthFraction, so the HUD cannot go red on a different
             // frame from the screen edge that is telling the player why.
-            bool low = normalized <= UiTokens.LowHealthFraction;
+            RunHudField changed = _model.ApplyHealth(snapshot, UiTokens.LowHealthFraction);
 
-            _healthBar.SetValue(normalized);
-            _healthBar.SetColor(low ? UiColor.BarHealthLow : UiColor.BarHealth);
+            if ((changed & RunHudField.HealthBar) != 0)
+            {
+                _healthBar.SetValue(_model.HealthNormalized);
+                _healthBar.SetColor(_model.HealthLow ? UiColor.BarHealthLow : UiColor.BarHealth);
+                _healthValue.color = UiTokens.Get(_model.HealthLow ? UiColor.StateDanger : UiColor.TextPrimary);
+            }
 
-            _healthValue.text = Mathf.CeilToInt(Mathf.Max(0f, snapshot.Current)) + " / " +
-                                Mathf.RoundToInt(snapshot.Max);
-            _healthValue.color = UiTokens.Get(low ? UiColor.StateDanger : UiColor.TextPrimary);
+            if ((changed & RunHudField.Health) != 0)
+            {
+                _healthValue.text = _model.HealthText;
+            }
 
-            if (snapshot.IsDead)
+            if ((changed & RunHudField.HealthState) != 0)
             {
-                _healthState.text = "DOWN";
-                _healthState.color = UiTokens.Get(UiColor.StateDanger);
+                _healthState.text = _model.HealthStateText;
+                _healthState.color = UiTokens.Get(ToneColor(_model.HealthStateTone));
             }
-            else if (snapshot.IsRegenerating)
+        }
+
+        private static UiColor ToneColor(RunHudTone tone)
+        {
+            switch (tone)
             {
-                _healthState.text = "RECOVERING";
-                _healthState.color = UiTokens.Get(UiColor.StateSuccess);
-            }
-            else if (snapshot.SecondsUntilRegen > 0f)
-            {
-                _healthState.text = "recovery in " + snapshot.SecondsUntilRegen.ToString("0.0") + "s";
-                _healthState.color = UiTokens.Get(UiColor.TextSecondary);
-            }
-            else
-            {
-                _healthState.text = string.Empty;
+                case RunHudTone.Danger: return UiColor.StateDanger;
+                case RunHudTone.Positive: return UiColor.StateSuccess;
+                default: return UiColor.TextSecondary;
             }
         }
 
         private void UpdateClassicWeapon()
         {
-            ClassicWeaponHudState state = WeaponEvents.Classic;
+            ApplyWeaponFields(_model.ApplyWeapon(WeaponEvents.Classic));
+            ApplyWeaponFields(_model.ApplyBuild(CurrentBuildDescription()));
+        }
 
-            _classicName.text = string.IsNullOrEmpty(state.DisplayName)
-                ? "—"
-                : UiFactory.Clip(state.DisplayName.ToUpperInvariant(), 26);
-
-            _classicBuild.text = string.IsNullOrEmpty(state.BuildDescription)
-                ? "no upgrades"
-                : UiFactory.Clip(state.BuildDescription, 34);
-
-            _ammoValue.text = state.MagazineSize > 0
-                ? state.AmmoInMagazine + " / " + state.MagazineSize
-                : "—";
-
-            if (state.IsReloading)
+        /// <summary>
+        /// The build line comes from the director's RunBuildState - the producer the run
+        /// summary and Results quote - so the HUD shows every branch, not only the six
+        /// weapon branches the weapon's own describer knows. Cached by the producer.
+        /// </summary>
+        private static string CurrentBuildDescription()
+        {
+            RunDirector director = RunDirector.Instance;
+            if (director != null && director.Build != null && director.Build.IsRunLive)
             {
-                _reloadBar.SetValue(Mathf.Clamp01(state.ReloadProgress01), true);
-                _reloadCaption.text = "RELOADING";
-                _reloadCaption.color = UiTokens.Get(UiColor.BarReload);
-            }
-            else if (state.IsEmpty && state.MagazineSize > 0)
-            {
-                _reloadBar.SetValue(0f, true);
-                _reloadCaption.text = "MAGAZINE EMPTY  ·  PRESS R";
-                _reloadCaption.color = UiTokens.Get(UiColor.StateDanger);
-            }
-            else
-            {
-                _reloadBar.SetValue(1f, true);
-                _reloadCaption.text = string.Empty;
+                return director.Build.DescribeBuild();
             }
 
-            // REQ-057. Dimmed, labelled, and still showing every number.
-            bool suspended = state.TemporarilyDisabled;
-            _classicGroup.alpha = suspended ? UiTokens.OpacitySuspended : 1f;
+            return WeaponEvents.Classic.BuildDescription;
+        }
 
-            if (_suspendedChip.activeSelf != suspended)
+        private void ApplyWeaponFields(RunHudField changed)
+        {
+            if ((changed & RunHudField.WeaponName) != 0)
             {
-                _suspendedChip.SetActive(suspended);
+                _classicName.text = _model.WeaponName;
+            }
+
+            if ((changed & RunHudField.Build) != 0)
+            {
+                _classicBuild.text = _model.BuildText;
+            }
+
+            if ((changed & RunHudField.Ammo) != 0)
+            {
+                _ammoValue.text = _model.AmmoText;
+            }
+
+            if ((changed & RunHudField.Reload) != 0)
+            {
+                switch (_model.ReloadState)
+                {
+                    case RunHudReloadState.Reloading:
+                        _reloadBar.SetValue(_model.ReloadProgress01, true);
+                        _reloadCaption.text = "RELOADING";
+                        _reloadCaption.color = UiTokens.Get(UiColor.BarReload);
+                        break;
+
+                    case RunHudReloadState.MagazineEmpty:
+                        _reloadBar.SetValue(0f, true);
+                        // No key name: the reload binding differs between keyboard and
+                        // gamepad, and the HUD does not know which one is in hand.
+                        _reloadCaption.text = "MAGAZINE EMPTY  ·  RELOAD";
+                        _reloadCaption.color = UiTokens.Get(UiColor.StateDanger);
+                        break;
+
+                    default:
+                        _reloadBar.SetValue(1f, true);
+                        _reloadCaption.text = string.Empty;
+                        break;
+                }
+            }
+
+            if ((changed & RunHudField.Suspended) != 0)
+            {
+                // REQ-057. Dimmed, labelled, and still showing every number.
+                bool suspended = _model.Suspended;
+                _classicGroup.alpha = suspended ? UiTokens.OpacitySuspended : 1f;
+
+                if (_suspendedChip.activeSelf != suspended)
+                {
+                    _suspendedChip.SetActive(suspended);
+                }
             }
         }
 
@@ -955,7 +1068,10 @@ namespace DD.Prototype.UI
 
         private void OnSpecialPickedUp(float activeDuration)
         {
-            ShowBanner("HEAVY ROTARY CANNON ONLINE");
+            string name = WeaponEvents.Special.DisplayName;
+            ShowBanner(string.IsNullOrEmpty(name)
+                ? "SPECIAL WEAPON ONLINE"
+                : UiFactory.Clip(name.ToUpperInvariant(), 30) + " ONLINE");
         }
 
         private void OnSpecialFinalSeconds(float remaining)

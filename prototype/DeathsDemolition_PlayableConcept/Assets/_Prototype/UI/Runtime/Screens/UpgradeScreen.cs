@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace DD.Prototype.UI
 {
     /// <summary>
-    /// The round-end upgrade screen. Three cards, buy any number of them, then continue.
+    /// The round-end upgrade screen. Cards for the round just cleared, then continue.
     ///
     /// IT OWNS NO RULE OF ITS OWN
     /// --------------------------
@@ -24,12 +24,23 @@ namespace DD.Prototype.UI
     ///                                         sentence about what an upgrade does.
     ///     shop.Gold / shop.CanAfford(i)    -> the balance and the enabled state
     ///     shop.TryPurchase(i)              -> the whole purchase
-    ///     RunDirector.CloseUpgradeScreen() -> the SKIP / CONTINUE button
+    ///     RunDirector.CloseUpgradeScreen() -> the CONTINUE button
     ///
-    /// There is no reroll, because <see cref="RoundUpgradeShop"/> has no reroll. There is
-    /// no price arithmetic here, no timer here, and no countdown clock here - the 3 s
-    /// pre-round countdown is <see cref="RunDirector"/>'s, and this screen only PRINTS
-    /// <c>RunEvents.Current.CountdownRemaining</c> after it has closed.
+    /// There is no price arithmetic here, no timer here, and no countdown clock here -
+    /// the 3 s pre-round countdown is <see cref="RunDirector"/>'s, and this screen only
+    /// PRINTS <c>RunEvents.Current.CountdownRemaining</c> after it has closed. The
+    /// screen's copy is deliberately neutral about how many cards a round allows and
+    /// whether an offer can be re-rolled: both are open product decisions (DEC-048,
+    /// DEC-050) and the screen must not announce either as a rule.
+    ///
+    /// WHICH ROUND IT BELONGS TO (WP-005)
+    /// The panel opens only for the director's current <c>LastRoundEnd</c> snapshot:
+    /// same run id, same round, valid. Until that snapshot exists the phase may already
+    /// say Upgrading for a frame, and the screen shows its loading notice rather than a
+    /// balance that is about to change. Every purchase quotes the shop session captured
+    /// at open, so a stale button cannot buy into the next round's offer. The screen
+    /// reports itself to <see cref="UiNavigation"/> as the RoundUpgrade layer and reads
+    /// the pause overlay from there - no scene search per frame.
     ///
     /// OPENING AND CLOSING
     /// -------------------
@@ -128,7 +139,7 @@ namespace DD.Prototype.UI
         /// <summary>PROTOTYPE-ONLY: hero gold value box. Numeric shrinks to fit inside it.</summary>
         private const float HeroValueHeight = 48f;
 
-        /// <summary>PROTOTYPE-ONLY: SKIP / CONTINUE, same width as the Results screen's.</summary>
+        /// <summary>PROTOTYPE-ONLY: CONTINUE, same width as the Results screen's.</summary>
         private const float ContinueWidth = 320f;
 
         /// <summary>PROTOTYPE-ONLY: the countdown strip that survives the screen's close.</summary>
@@ -169,8 +180,6 @@ namespace DD.Prototype.UI
         private UiButton _continueButton;
         private Text _footerNote;
 
-        private PauseScreen _pause;
-
         private bool _panelVisible;
         private bool _dirty = true;
         private int _sessionId;
@@ -197,8 +206,7 @@ namespace DD.Prototype.UI
             _cardsTop = BuildHeader(
                 "ROUND COMPLETE",
                 "SPEND YOUR GOLD",
-                "Buy as many of these as you can afford. There is no reroll, and unspent gold carries " +
-                "into the next round.");
+                "Strengthen your weapon for the rounds ahead. Unspent gold carries into the next round.");
 
             _cardsTop += (int)UiSpace.XXL;
 
@@ -221,6 +229,12 @@ namespace DD.Prototype.UI
         private void OnDisable()
         {
             Unbind();
+
+            if (_panelVisible)
+            {
+                _panelVisible = false;
+                UiNavigation.ExitLayer(UiContext.RoundUpgrade);
+            }
         }
 
         /// <summary>
@@ -350,7 +364,7 @@ namespace DD.Prototype.UI
             RectTransform note = Zone(host, 0.64f, 1f);
             _goldNote = UiFactory.Label(
                 "Note", note,
-                "There is no reroll. Buy any number of these cards, then continue.",
+                "Choose what to strengthen, then continue.",
                 UiType.Caption, UiColor.TextMuted, TextAnchor.LowerLeft);
             UiFactory.Fill((RectTransform)_goldNote.transform);
         }
@@ -394,6 +408,11 @@ namespace DD.Prototype.UI
             public Image[] Pips;
             public GameObject Badge;
             public Image Coin;
+
+            /// <summary>Icon well in the body's top-left. Sprite when art registered one, monogram otherwise.</summary>
+            public Image IconWell;
+            public Image Icon;
+            public Text Monogram;
         }
 
         private void EnsureSlots(int count)
@@ -496,9 +515,17 @@ namespace DD.Prototype.UI
 
             var bodyStack = new UiStack(body);
 
+            // ---- icon well ---------------------------------------------------
+            // Top-left of the body, spanning the eyebrow + title band. A recessed
+            // chip that holds either art's sprite or the branch monogram; the same
+            // size in both cases, so the text beside it never moves (WP-005).
+            BuildIconWell(slot, body);
+
             slot.Eyebrow = UiFactory.Label(
                 "Kind", body, string.Empty, UiType.Label, UiColor.TextSecondary);
-            bodyStack.Add((RectTransform)slot.Eyebrow.transform, UiFactory.LineHeight(UiType.Label));
+            RectTransform eyebrowRect = bodyStack.Add(
+                (RectTransform)slot.Eyebrow.transform, UiFactory.LineHeight(UiType.Label));
+            eyebrowRect.offsetMin = new Vector2(IconWellSize + (int)UiSpace.M, eyebrowRect.offsetMin.y);
 
             bodyStack.Gap(UiSpace.XS);
 
@@ -509,7 +536,9 @@ namespace DD.Prototype.UI
             slot.Title = slot.Button.LabelText;
             slot.Title.alignment = TextAnchor.LowerLeft;
             slot.Title.fontSize = UiTokens.FontSize(UiType.H2);
-            bodyStack.Add((RectTransform)slot.Title.transform, UiFactory.LineHeight(UiType.H2));
+            RectTransform titleRect = bodyStack.Add(
+                (RectTransform)slot.Title.transform, UiFactory.LineHeight(UiType.H2));
+            titleRect.offsetMin = new Vector2(IconWellSize + (int)UiSpace.M, titleRect.offsetMin.y);
 
             bodyStack.Gap(UiSpace.S);
 
@@ -544,6 +573,62 @@ namespace DD.Prototype.UI
 
             slot.Button.gameObject.SetActive(false);
             return slot;
+        }
+
+        /// <summary>PROTOTYPE-ONLY: the icon well. Spans the eyebrow and title band (24 + 4 + 36 = 64).</summary>
+        private const float IconWellSize = 64f;
+
+        /// <summary>Icon drawn inside the well, inset so the chip's corner stays visible.</summary>
+        private const float IconSize = 40f;
+
+        private static void BuildIconWell(CardSlot slot, RectTransform body)
+        {
+            slot.IconWell = UiFactory.NewImage("IconWell", body, UiColor.SurfaceInset, UiSprites.Chip);
+            var wellRect = (RectTransform)slot.IconWell.transform;
+            wellRect.anchorMin = new Vector2(0f, 1f);
+            wellRect.anchorMax = new Vector2(0f, 1f);
+            wellRect.pivot = new Vector2(0f, 1f);
+            wellRect.sizeDelta = new Vector2(IconWellSize, IconWellSize);
+            wellRect.anchoredPosition = Vector2.zero;
+
+            slot.Icon = UiFactory.NewImage("Icon", wellRect, UiColor.TextPrimary);
+            var iconRect = (RectTransform)slot.Icon.transform;
+            iconRect.sizeDelta = new Vector2(IconSize, IconSize);
+            slot.Icon.preserveAspect = true;
+            slot.Icon.gameObject.SetActive(false);
+
+            // The fallback: the branch's build code, in the label weight, on the well.
+            // TextSecondary on SurfaceInset is an audited pair ("chip text in a well").
+            slot.Monogram = UiFactory.Label(
+                "Monogram", wellRect, string.Empty, UiType.H3, UiColor.TextSecondary, TextAnchor.MiddleCenter);
+            UiFactory.Fill((RectTransform)slot.Monogram.transform);
+        }
+
+        /// <summary>Sprite when one is registered for the branch, otherwise the monogram.</summary>
+        private static void ApplyIcon(CardSlot slot, UpgradeBranch branch)
+        {
+            Sprite sprite;
+            bool hasSprite = UpgradeIcons.TryGet(branch, out sprite);
+
+            if (hasSprite)
+            {
+                slot.Icon.sprite = sprite;
+            }
+
+            if (slot.Icon.gameObject.activeSelf != hasSprite)
+            {
+                slot.Icon.gameObject.SetActive(hasSprite);
+            }
+
+            if (slot.Monogram.gameObject.activeSelf == hasSprite)
+            {
+                slot.Monogram.gameObject.SetActive(!hasSprite);
+            }
+
+            if (!hasSprite)
+            {
+                slot.Monogram.text = UpgradeIcons.Monogram(branch);
+            }
         }
 
         /// <summary>
@@ -675,7 +760,16 @@ namespace DD.Prototype.UI
             RunDirector director = RunDirector.Instance;
             RunPhase phase = director != null ? director.Phase : RunPhase.None;
 
-            SetPanelVisible(phase == RunPhase.Upgrading);
+            // Open only for the snapshot of THIS round in THIS run. The director writes
+            // LastRoundEnd in the same call that sets the phase, so in normal play the two
+            // agree on the first frame; the check is what refuses a stale snapshot after
+            // an F1 skip or a director swap.
+            bool contextValid = director != null &&
+                                director.LastRoundEnd.IsValid &&
+                                director.LastRoundEnd.RunId == director.RunId &&
+                                director.LastRoundEnd.Round == director.Round;
+
+            SetPanelVisible(phase == RunPhase.Upgrading && contextValid);
             UpdateCountdown(phase);
 
             if (!_panelVisible)
@@ -708,8 +802,11 @@ namespace DD.Prototype.UI
 
             if (!visible)
             {
+                UiNavigation.ExitLayer(UiContext.RoundUpgrade);
                 return;
             }
+
+            UiNavigation.EnterLayer(UiContext.RoundUpgrade);
 
             _notice = null;
             _fade = 0f;
@@ -745,15 +842,14 @@ namespace DD.Prototype.UI
         /// The pause screen can be opened on top of this one - it sorts above at
         /// SortingPause. Dropping interactivity here keeps arrow-key focus from walking
         /// into cards the player can no longer see.
+        ///
+        /// Reads the pause state from <see cref="UiNavigation"/> - a field read - instead
+        /// of finding the PauseScreen in the scene (WP-004 hand-off: that search ran
+        /// every Upgrading frame and was the source of the idle-frame garbage).
         /// </summary>
         private void GateForPause()
         {
-            if (_pause == null)
-            {
-                _pause = FindObjectOfType<PauseScreen>();
-            }
-
-            bool blocked = _pause != null && _pause.IsPaused;
+            bool blocked = UiNavigation.IsPaused;
 
             if (_panelGroup.interactable == !blocked)
             {
@@ -762,6 +858,26 @@ namespace DD.Prototype.UI
 
             _panelGroup.interactable = !blocked;
             _panelGroup.blocksRaycasts = !blocked;
+
+            if (!blocked)
+            {
+                // Back from a pause. The pause screen hands focus back to the card that
+                // had it; if nothing usable got it, the screen picks its own again.
+                EnsureFocus();
+            }
+        }
+
+        private void EnsureFocus()
+        {
+            EventSystem system = EventSystem.current;
+            GameObject current = system != null ? system.currentSelectedGameObject : null;
+
+            if (current != null && current.activeInHierarchy && current.transform.IsChildOf(Canvas.transform))
+            {
+                return;
+            }
+
+            FocusFirstUsefulControl();
         }
 
         private void UpdateCountdown(RunPhase phase)
@@ -809,7 +925,7 @@ namespace DD.Prototype.UI
             {
                 ShowNotice(
                     PrototypeConfig.Active != null
-                        ? "Nothing left to sell you"
+                        ? "Every branch is at maximum tier"
                         : "No upgrade table is loaded",
                     PrototypeConfig.Active != null
                         ? "Every upgrade branch is already at its maximum tier, so this round has no card " +
@@ -879,7 +995,8 @@ namespace DD.Prototype.UI
             }
 
             slot.Eyebrow.text = card.Kind == UpgradeCardKind.WeaponCore ? "WEAPON CORE" : "UTILITY";
-            slot.Button.SetText(UiFactory.Clip(card.TitleWithTier, 26));
+            ApplyIcon(slot, card.Branch);
+            slot.Button.SetText(UiFactory.Clip(card.TitleWithTier, 22));
             slot.Tier.text = DescribeTierStep(card);
 
             // Verbatim from UpgradeCardCatalog.Describe(), clipped only so a surprise
@@ -983,8 +1100,8 @@ namespace DD.Prototype.UI
                 : "TIER " + UpgradeCardCatalog.Roman(card.OwnedTier);
 
             return owned +
-                   "   ->   TIER " + UpgradeCardCatalog.Roman(card.NextTier) +
-                   "     ·     MAX " + UpgradeCardCatalog.Roman(card.MaxTier);
+                   "  →  TIER " + UpgradeCardCatalog.Roman(card.NextTier) +
+                   "  ·  MAX " + UpgradeCardCatalog.Roman(card.MaxTier);
         }
 
         private void RefreshGoldStrip(RoundUpgradeShop shop, int affordable, int count)
@@ -997,20 +1114,22 @@ namespace DD.Prototype.UI
                 // The 0-gold opening, and every later round where the prices have outrun
                 // the wallet. Stated as a fact with a way forward, not as a failure.
                 _goldNote.text = shop.Gold <= 0
-                    ? "You collected no gold this round, so nothing here can be bought yet. Continue and the " +
-                      "offer will be re-rolled at the end of the next round."
+                    ? "You collected no gold this round, so nothing here can be bought yet. A new offer " +
+                      "appears at the end of the next round."
                     : "None of these is affordable yet. Unspent gold carries into the next round.";
                 _goldNote.color = UiTokens.Get(UiColor.StateWarning);
                 return;
             }
 
-            _goldNote.text = "There is no reroll. Buy any number of these cards, then continue.";
+            _goldNote.text = "Choose what to strengthen, then continue.";
             _goldNote.color = UiTokens.Get(UiColor.TextMuted);
         }
 
         private void RefreshFooter(int gold, int purchases)
         {
-            _continueButton.SetText(purchases > 0 ? "CONTINUE" : "SKIP");
+            // One fixed label. A button whose caption changes under the focus ring reads
+            // as a different control to a keyboard or gamepad player.
+            _continueButton.SetText("CONTINUE");
 
             if (!string.IsNullOrEmpty(_notice))
             {
@@ -1022,8 +1141,8 @@ namespace DD.Prototype.UI
             }
 
             _footerNote.text = purchases > 0
-                ? "Applied immediately - the next shot already uses it. " + gold + " gold carries into the next round."
-                : "Nothing bought. All " + gold + " gold carries into the next round.";
+                ? "Applied immediately. The next shot already uses it. " + gold + " gold carries into the next round."
+                : "Nothing bought yet. All " + gold + " gold carries into the next round.";
             _footerNote.color = UiTokens.Get(UiColor.TextMuted);
         }
 

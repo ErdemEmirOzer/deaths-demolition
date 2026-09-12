@@ -40,6 +40,9 @@ namespace DD.Prototype.UI
             s_hooked = true;
             SceneManager.sceneLoaded += OnSceneLoaded;
 
+            // Optional upgrade-card art (M3). Registers what exists; nothing in M1.
+            UpgradeIcons.LoadFromResources();
+
             // The first scene is already loaded by the time this runs.
             BuildForScene(SceneManager.GetActiveScene().name);
         }
@@ -65,20 +68,28 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            // The navigation base is set HERE, once per scene, before the screens exist
+            // (WP-005). Entering a base drops every layer and overlay of the previous
+            // scene, so a new run can never inherit the last run's shop or pause state,
+            // and the screens below only ever add layers to a base that is already right.
             if (sceneName == PrototypeScenes.MainMenu)
             {
+                UiNavigation.EnterBase(UiContext.MainMenu);
                 Ensure<MainMenuScreen>();
             }
             else if (sceneName == PrototypeScenes.Selection)
             {
+                UiNavigation.EnterBase(UiContext.Selection);
                 Ensure<SelectionScreen>();
             }
             else if (sceneName == PrototypeScenes.Results)
             {
+                UiNavigation.EnterBase(UiContext.RunResults);
                 Ensure<ResultsScreen>();
             }
             else if (sceneName == PrototypeScenes.Run)
             {
+                UiNavigation.EnterBase(UiContext.GameplayHud);
                 Ensure<RunHudScreen>();
 
                 // The round-end upgrade screen. It lives in the run scene and not in a

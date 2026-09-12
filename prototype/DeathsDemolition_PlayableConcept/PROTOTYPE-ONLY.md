@@ -26,7 +26,7 @@ field is the line immediately after, or two lines after where a `[Range]` interv
 
 Counted by static scan of every `.cs` file under `Assets/_Prototype` on 2026-08-18 (**historical**).
 Re-count as of WP-000 Phase 2 (2026-09-10): **491** `[PrototypeOnly(` declarations
-(`grep -rc "\[PrototypeOnly(" --include=*.cs`); **487 as of WP-004 (2026-09-12)** — the WP-004 gold/upgrade
+(`grep -rc "\[PrototypeOnly(" --include=*.cs`); **487 as of WP-005 (2026-09-12; unchanged from WP-004)** — the meta UI slice adds no attribute-tagged value: its layout constants (`UpgradeScreen.IconWellSize`/`IconSize`, `MainMenuScreen.MaxAchievementRows`, `ResultsViewModel.MaxRewardEntries`/`BuildMaxCharacters`, `RunHudViewModel.WeaponNameMaxCharacters`/`BuildMaxCharacters`) are PROTOTYPE-ONLY art-direction measures documented in code like the existing UI constants, and the optional upgrade icon slot reads `Resources/UI/UpgradeIcons/<Branch>` where nothing exists in M1; XP curve, unlock levels and the achievement list stay the WP-000 prototype values — **487 as of WP-004 (2026-09-12)** — the WP-004 gold/upgrade
 slice adds exactly two invented presentation/sizing values on `GoldService` (`_sweepFlightDuration`,
 `_packetPoolMargin`, both `UpgradesAndGold`, both `invented`) and removes none: `OrbLifetime` and
 `GoldCollectionMode` stay declared (the shipped config asset is untouched) but are **no longer read**

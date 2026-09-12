@@ -26,6 +26,15 @@ namespace DD.Prototype.UI
     /// what is NOT lost - profile progress already earned - because a warning that only
     /// lists the downside makes players hesitate over a safe action.
     ///
+    /// WHEN IT MAY OPEN (WP-005)
+    /// Only while a run is live and the navigation base is the HUD: never over Results,
+    /// never in a menu, and not during the death beat - a pause taken after the player
+    /// is dead would hold the clock the Results hand-off is about to release, and a
+    /// "PAUSED" panel over a corpse reads as a hang. The screen reports itself to
+    /// <see cref="UiNavigation"/> as the <see cref="UiContext.Paused"/> overlay, which
+    /// is how the upgrade screen knows to drop interactivity without searching the
+    /// scene for this component every frame.
+    ///
     /// FIVE STATES. Empty and loading do not exist here: the screen has no data source.
     /// Normal is the pause panel; the confirmation is the dense state; the error state
     /// is a missing camera rig, which greys out the shake slider rather than throwing.
@@ -59,6 +68,7 @@ namespace DD.Prototype.UI
         }
 
         private GameObject _pauseRoot;
+        private CanvasGroup _pauseGroup;
         private GameObject _confirmRoot;
 
         private UiButton _resumeButton;
@@ -69,6 +79,9 @@ namespace DD.Prototype.UI
 
         private bool _paused;
         private bool _confirming;
+
+        /// <summary>Whatever held focus when the pause opened - a shop card, CONTINUE - to hand it back on close.</summary>
+        private GameObject _focusBefore;
 
         public bool IsPaused
         {
@@ -90,6 +103,7 @@ namespace DD.Prototype.UI
             if (_paused)
             {
                 RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+                UiNavigation.ExitOverlay(UiContext.Paused);
             }
         }
 
@@ -106,7 +120,23 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            if (!_paused && !CanOpen())
+            {
+                return;
+            }
+
             SetPaused(!_paused);
+        }
+
+        /// <summary>
+        /// A pause needs a live run underneath it and the HUD as the navigation base.
+        /// The run check also refuses the death beat (RunPhase.Dead) and a Run scene
+        /// opened with no director.
+        /// </summary>
+        public static bool CanOpen()
+        {
+            RunDirector director = RunDirector.Instance;
+            return director != null && director.IsRunLive && UiNavigation.MayLayer(UiContext.Paused);
         }
 
         // ================================================================== state
@@ -118,12 +148,20 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            if (value && !CanOpen())
+            {
+                return;
+            }
+
             _paused = value;
             _pauseRoot.SetActive(value);
 
             if (value)
             {
+                _focusBefore = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+
                 RunFlowClock.AddHold(RunFlowClock.PauseHold);
+                UiNavigation.EnterLayer(UiContext.Paused);
 
                 RefreshShake();
                 UiSound.Play(UiSoundKind.Confirm);
@@ -133,8 +171,30 @@ namespace DD.Prototype.UI
             {
                 CloseConfirm();
                 RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+                UiNavigation.ExitOverlay(UiContext.Paused);
                 UiSound.Play(UiSoundKind.Back);
+                RestoreFocus();
             }
+        }
+
+        /// <summary>
+        /// Hands focus back to the control that had it before the pause, when it is
+        /// still on screen and usable - a keyboard player on the upgrade screen must not
+        /// come back from a pause with no focus ring anywhere.
+        /// </summary>
+        private void RestoreFocus()
+        {
+            GameObject target = _focusBefore;
+            _focusBefore = null;
+
+            if (target == null || !target.activeInHierarchy || EventSystem.current == null)
+            {
+                return;
+            }
+
+            // No IsInteractable() check: the upgrade screen re-enables its CanvasGroup on
+            // its next Update, one frame after this, and the selection survives that.
+            EventSystem.current.SetSelectedGameObject(target);
         }
 
         private void Resume()
@@ -146,6 +206,12 @@ namespace DD.Prototype.UI
         {
             _confirming = true;
             _confirmRoot.SetActive(true);
+
+            // Modal: the panel underneath stops taking focus and clicks, so an arrow key
+            // pressed on the dialog cannot walk the focus onto RESUME behind the scrim.
+            _pauseGroup.interactable = false;
+            _pauseGroup.blocksRaycasts = false;
+
             Focus(_cancelButton);
         }
 
@@ -158,6 +224,8 @@ namespace DD.Prototype.UI
 
             _confirming = false;
             _confirmRoot.SetActive(false);
+            _pauseGroup.interactable = true;
+            _pauseGroup.blocksRaycasts = true;
             UiSound.Play(UiSoundKind.Back);
             Focus(_resumeButton);
         }
@@ -166,6 +234,7 @@ namespace DD.Prototype.UI
         {
             _confirming = false;
             _paused = false;
+            UiNavigation.ExitOverlay(UiContext.Paused);
 
             // ReleaseSimulation inside the flow drops every hold, so the main menu can
             // never open at timeScale 0.
@@ -187,6 +256,7 @@ namespace DD.Prototype.UI
             RectTransform root = UiFactory.NewRect("PauseRoot", ScreenRect);
             UiFactory.Fill(root);
             _pauseRoot = root.gameObject;
+            _pauseGroup = UiFactory.Group(_pauseRoot);
 
             Image scrim = UiFactory.NewImage("Scrim", root, UiColor.ScrimOverlay);
             UiFactory.Fill((RectTransform)scrim.transform);
@@ -245,8 +315,7 @@ namespace DD.Prototype.UI
 
             Text shakeCaption = UiFactory.Label(
                 "ShakeCaption", host,
-                "Prototype-only. 0 disables shake completely; 1 is the tuned default. " +
-                "Shake never moves your aim at any setting.",
+                "0 disables shake completely; 1 is the default. Shake never moves your aim at any setting.",
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)shakeCaption.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
@@ -357,7 +426,7 @@ namespace DD.Prototype.UI
             _shakeSlider.interactable = available;
             if (!available)
             {
-                _shakeValue.text = "n/a";
+                _shakeValue.text = "—";
             }
         }
     }

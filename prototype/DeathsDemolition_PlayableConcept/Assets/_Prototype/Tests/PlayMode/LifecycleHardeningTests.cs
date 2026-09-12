@@ -170,10 +170,12 @@ namespace DD.Prototype.Tests.PlayMode
             AboneleriKarsilastir("run2 vs run1", run1, run2);
             // Run içi − MainMenu farkı: yalnız sahne-yerel aboneler (kaynak koddan çıkarılan tablo;
             // code-02 §B1 / test-02 §2.0). MainMenuScreen profil abonesi Run'da yoktur (−1).
+            // WP-005: RunHudScreen artık RunStarted (presenter sıfırlama) ve GoldChanged (aynı
+            // karede gold sayacı) olaylarına da abone — ikisi de sahne-yerel, OnDestroy'da çıkar.
             var beklenenFark = new Dictionary<string, int>
             {
-                { "RunEvents.RunStarted", 0 }, { "RunEvents.RoundStarted", 1 }, { "RunEvents.RoundCompleted", 1 },
-                { "RunEvents.RoundPoolExhausted", 1 }, { "RunEvents.GoldChanged", 0 }, { "RunEvents.PhaseChanged", 0 },
+                { "RunEvents.RunStarted", 1 }, { "RunEvents.RoundStarted", 1 }, { "RunEvents.RoundCompleted", 1 },
+                { "RunEvents.RoundPoolExhausted", 1 }, { "RunEvents.GoldChanged", 1 }, { "RunEvents.PhaseChanged", 0 },
                 { "RunEvents.CountdownTick", 0 }, { "RunEvents.RunEnded", 0 }, { "RunFlowClock.FrozenChanged", 0 },
                 { "ProfileService.Changed", -1 }, { "InputSourceRegistry.CurrentChanged", 0 },
                 { "WeaponRegistry.ActiveChanged", 2 }, { "PlayerHealth.AnyPlayerDied", 1 },

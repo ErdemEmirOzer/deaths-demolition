@@ -38,7 +38,13 @@ namespace DD.Prototype.Profile
         /// <summary>False when the screen was opened without a run behind it.</summary>
         public bool HasRun;
 
-        public RunSummary Summary;
+        /// <summary>
+        /// The run, as the director summarised it. A property, not a field: a struct
+        /// field can be edited in place (<c>report.Summary.TotalKills = 0</c>), a property
+        /// hands out a copy, so nothing downstream of ApplyRun can alter what the results
+        /// screen shows (WP-005).
+        /// </summary>
+        public RunSummary Summary { get; set; }
 
         // ------------------------------------------------------------------ xp
 

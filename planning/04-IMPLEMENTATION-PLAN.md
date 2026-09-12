@@ -228,7 +228,7 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 
 ## WP-004 — M1 Gold & Round Upgrade Loop
 
-**Durum:** Yürütülüyor (S-04, 2026-09-12). İzole branch `wp-004-m1-gold-upgrade-loop` (taban: `main` = `507c217658aafce637262500e6fe8d03daff41d6` = `wp-003-m1-rounds`); tek yazma/commit sahibi S-04; S-01 entegrasyon sınırlarını salt okunur doğrular; S-02/S-03/S-09 salt okunur danışman; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge ve push ayrı C-00/kullanıcı kararıdır. Başlangıç manifesti `0b9707a5…` (686 yol) = WP-003 final manifesti; davranış değiştirilmeden baseline kapıları: import 0 hata, EditMode 233/233, PlayMode 56/56 (gerçek Metal).
+**Durum:** Tamamlandı ve `main`'e entegre (2026-09-12). Kanıt: package commit `a284ffe2b3e9780b02d80e6812d3dd925e6cf656` (izole branch `wp-004-m1-gold-upgrade-loop`, taban `main` = `507c2176` = `wp-003-m1-rounds`, tek atomik commit, 44 dosya); S-01 koşulsuz PASS; S-10 bağımsız kabul PASS 16 · FAIL 0 · BLOCKED 0; final manifest Z `8e975f61…` (715 yol); sıfırdan Library ile EditMode 297/297, PlayMode 65/65 (gerçek Metal), release Player build, Player smoke, RoundProbe 8/8 ve GoldProbe 12/12 PASS; C-00 koordinasyonuyla `main`'e fast-forward (`507c217..a284ffe`, merge commit yok), hafif etiket `wp-004-m1-gold`; push yok (remote yok). DEC-048 (round başına tek satın alma) ve DEC-050 (ücretli reroll) kullanıcı kararıyla uygulanmadı; sonraki paket girdisi. Nihai rapor: `S-04-WP-004-NIHAI-RAPOR.md` (Kadro çalışma alanı `context/projects/deaths-demolition/wp-004/reports/`). WP-004 worktree'si korunmaktadır.
 
 **Yürütme promptu:** `planning/work-packages/WP-004-M1-GOLD-UPGRADE-LOOP.md`
 
@@ -251,3 +251,25 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 - Tam regresyon: import, EditMode, PlayMode (gerçek Metal), temiz Library release build, Player smoke, GoldProbe; yeni ve mevcut tüm testler geçer.
 - S-01 koşulsuz kabul, S-10 bağımsız PASS; Git F0–F10 ve manifest temiz; yeni ürün kararı yok; sayısal değerler PrototypeOnly; çalışma izole branch'te tek atomik commit; `main`'e merge ve push yapılmamıştır.
 
+
+## WP-005 — M1 Meta UI, Results & Profile Presentation
+
+**Durum:** Yürütülüyor (S-09, 2026-09-12). İzole branch `wp-005-m1-meta-ui-results-profile` (taban: `main` = `a284ffe2b3e9780b02d80e6812d3dd925e6cf656` = `wp-004-m1-gold`); tek yazma/commit sahibi S-09; S-01 entegrasyon sınırlarını salt okunur doğrular; S-02/S-03/S-04 salt okunur danışman; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge ve push ayrı C-00/kullanıcı kararıdır. Başlangıç manifesti `8e975f61…` (715 yol) = WP-004 final manifesti Z; davranış değiştirilmeden baseline kapıları: import 0 hata, EditMode 297/297, PlayMode 65/65 (gerçek Metal).
+
+**Yürütme promptu:** `planning/work-packages/WP-005-M1-META-UI-RESULTS-PROFILE.md`
+
+**Amaç:** M1 dikey kesitinin oyuncuya görünen meta akışını (Main Menu → Skin & Weapon Selection → Run/HUD → Round Cleared → Upgrade → Next Round → Death → Run Results → Main Menu; Main Menu'den Profile/Statistics/Achievements) authoritative snapshot'lardan beslenen, açık navigation state'li, presenter/view-model katmanlı, İngilizce, klavye/fare ile eksiksiz, erişilebilirlik temelli tek ve güvenilir kullanıcı akışına dönüştürmek. Yeni ürün, kapsam, denge, sanat veya teknoloji kararı verilmez; DEC-048/DEC-050 uygulanmaz; B5 (abort → profil) değiştirilmez; final art/ikon/font/animasyon M3'tedir.
+
+**Kapsam:**
+
+- UI navigation sözleşmesi (`UiNavigation`/`UiNavigationModel`: MainMenu · Selection · GameplayHud · RunResults tabanları; Profile · Statistics · Achievements · RoundUpgrade katmanları; Paused overlay; çelişen kombinasyonlar reddedilir, geçişler idempotent, yeni taban eski katman/overlay'i düşürür).
+- Sunum katmanı (`RunHudViewModel`: yalnız değişen alan biçimlenir, sessiz kare 0 B; `ResultsViewModel`: immutable `RunRewardReport`/`RunSummary`'den; `ProfileViewModel`/`StatisticsViewModel`/`AchievementsViewModel`: kalıcı `ProfileData`'dan, `IProfileLookup` ile).
+- HUD snapshot bağlantıları: `RunEvents.Current` + `RunEvents.GoldChanged` (aynı kare gold), `PlayerHealth` snapshot'ı `PlayerRegistry` üzerinden (sahne araması yok), `WeaponEvents.Classic`, build satırı `RunBuildState.DescribeBuild()` (Results ile aynı üretici); `RunStarted`'da presenter sıfırlama; Dead fazında son canlı değer korunur; `RunDirector.Awake` statik HUD snapshot'larını temizler.
+- Upgrade ekranı: `LastRoundEnd` bağlam doğrulaması (run id + round), `GateForPause` → `UiNavigation.IsPaused` (kare başına arama yok), ikon yuvası + monogram fallback (`UpgradeIcons`, `Resources/UI/UpgradeIcons/<Branch>` isteğe bağlı yükleyici; config'e Sprite eklenmedi), DEC-048/050'ye nötr metin, sabit CONTINUE etiketi, pause sonrası odak.
+- Pause: yalnız canlı koşuda ve HUD tabanında açılır (`PauseScreen.CanOpen`), onay diyaloğu modal (arkadaki panel etkileşimsiz), kapanınca odak iadesi; Results üstünde imkânsız.
+- Main Menu pane'leri view model'den; achievement empty state; Results: başlık = bitiş, tek XL sayı (Reached Round), görülmeyen tier satırı üretilmez, tek eylem MAIN MENU; Selection: seçili skin'e ilk odak.
+- EditMode/PlayMode sözleşme testleri, İngilizce metin taraması, performans gözlemi, planlama durum kayıtları.
+
+**Kapsam dışı:** yeni karakter/skin/silah, Special/Elite/Ultra düşman, armor, DEC-048/DEC-050, B3/B4/B5 kararları, abort profil davranışı, online/cloud/leaderboard/hesap/telemetri, çoklu Player kilidi, final gamepad kabulü, final UI art/ikon/font/ses/VFX, UI Toolkit migration, remote/push/yayın.
+
+**Çıkış koşulları:** paket promptundaki "Tamamlanma tanımı" maddeleri; tam regresyon (import, EditMode, PlayMode gerçek Metal, temiz Library release build, Player smoke, RoundProbe, GoldProbe); S-01 koşulsuz kabul, S-10 bağımsız PASS; Git F0–F10 ve manifest temiz; yeni ürün kararı yok; çalışma izole branch'te tek atomik commit; `main`'e merge ve push yapılmamıştır.
