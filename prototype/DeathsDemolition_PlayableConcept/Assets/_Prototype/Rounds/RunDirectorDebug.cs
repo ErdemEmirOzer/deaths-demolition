@@ -162,10 +162,14 @@ namespace DD.Prototype.Rounds
                 return;
             }
 
-            spawn.StopRound();
-            spawn.ClearAllEnemies();
-            OnRoundPoolExhausted(_round);
-            OnRoundCleared(_round);
+            // The director drains its pool, clears the map and completes through its own
+            // ledger; RoundPoolExhausted and RoundCleared arrive here through the normal
+            // binding. Only a director with no live round needs the direct path.
+            if (!spawn.DebugCompleteRound())
+            {
+                OnRoundPoolExhausted(_round);
+                OnRoundCleared(_round);
+            }
         }
 
         private void ForceUpgradeScreen()

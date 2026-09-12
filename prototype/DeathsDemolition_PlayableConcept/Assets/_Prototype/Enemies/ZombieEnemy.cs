@@ -312,6 +312,10 @@ namespace DD.Prototype.Enemies
             _alive = false;
             _dying = false;
 
+            // WP-003 lifecycle contract: the body is going back to the pool. Reported
+            // before Released so the round ledger is consistent when listeners read it.
+            NotifySpawnLifecycleDespawned();
+
             Action<ZombieEnemy> handler = Released;
             if (handler != null)
             {
@@ -736,6 +740,10 @@ namespace DD.Prototype.Enemies
             _alive = false;
             _dying = true;
             _despawnCountdown = CorpseLingerSeconds;
+
+            // WP-003 lifecycle contract: from here on this body is a corpse. The round
+            // ledger stops counting it as alive NOW, not when the corpse despawns (REQ-012).
+            NotifySpawnLifecycleDied();
 
             // Out of the target registry immediately: a corpse must not eat a chain arc, a
             // ricochet or a share of the next explosion.

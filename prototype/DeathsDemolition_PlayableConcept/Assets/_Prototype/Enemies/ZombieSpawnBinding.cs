@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Spawn;
@@ -8,9 +9,15 @@ namespace DD.Prototype.Enemies
     // ISOLATION BOUNDARY - the ONLY file in Enemies/ that touches DD.Prototype.Spawn.
     // -------------------------------------------------------------------------------------
     // G-06 owns the spawn director. It takes an instance out of its own pool, places it,
-    // and hands over an EnemySpawnContext. It never learns a type from the enemy task and
-    // never needs a death callback: it detects retirement from PooledBehaviour.IsSpawned
-    // going false, which happens when this enemy despawns itself after its death reaction.
+    // and hands over an EnemySpawnContext. It never learns a type from the enemy task.
+    //
+    // LIFECYCLE REPORTS (WP-003)
+    // The context carries a ledger ticket and an IEnemyLifecycleSink. This enemy reports
+    // its death (from Die, once) and its return to the pool (from OnDespawned, once)
+    // through that sink and nothing else; the director's round ledger counts a corpse as
+    // "not alive but still occupying a body" between the two reports (REQ-012). ZombieEnemy.cs
+    // calls the two Notify* methods below without knowing what they talk to, so the
+    // isolation boundary stays: Spawn types appear in this file only.
     //
     // WHO OWNS WHAT AT SPAWN TIME
     //   the director  : which tier, which point, which round, and the round-scaled numbers
@@ -31,10 +38,17 @@ namespace DD.Prototype.Enemies
         /// <summary>Spawn point index this enemy came from, or -1 for a debug spawn.</summary>
         public int SpawnPointIndex { get; private set; } = -1;
 
+        /// <summary>Round ledger ticket for this life, or 0 for a debug spawn.</summary>
+        public int SpawnTicket { get; private set; }
+
+        private IEnemyLifecycleSink _lifecycleSink;
+
         public void OnSpawnedFromPoint(in EnemySpawnContext context)
         {
             IsGuaranteedIntroduction = context.GuaranteedIntroduction;
             SpawnPointIndex = context.PointIndex;
+            SpawnTicket = context.Ticket;
+            _lifecycleSink = context.Lifecycle;
 
             // EnemyFactory.NextSeed is not reachable from here without coupling the two
             // spawn routes, so derive a deterministic seed from the context itself: the
@@ -63,6 +77,47 @@ namespace DD.Prototype.Enemies
         {
             IsGuaranteedIntroduction = false;
             SpawnPointIndex = -1;
+            SpawnTicket = 0;
+            _lifecycleSink = null;
+        }
+
+        /// <summary>Called from Die, once per life. A debug spawn has no sink and reports nothing.</summary>
+        private void NotifySpawnLifecycleDied()
+        {
+            IEnemyLifecycleSink sink = _lifecycleSink;
+            if (sink == null || SpawnTicket <= 0)
+            {
+                return;
+            }
+
+            // Same isolation as Released: a throwing sink must not cut Die's critical
+            // section short (target registry, controller, hitboxes, the death event).
+            try { sink.NotifyDied(SpawnTicket); }
+            catch (Exception e) { Debug.LogException(e, this); }
+        }
+
+        /// <summary>
+        /// Called from OnDespawned, once per life, BEFORE the binding is reset. The sink
+        /// reference is dropped here so a body recycled by a debug spawn cannot report
+        /// into a round it never belonged to.
+        /// </summary>
+        private void NotifySpawnLifecycleDespawned()
+        {
+            IEnemyLifecycleSink sink = _lifecycleSink;
+            int ticket = SpawnTicket;
+
+            _lifecycleSink = null;
+            SpawnTicket = 0;
+
+            if (sink == null || ticket <= 0)
+            {
+                return;
+            }
+
+            // Called from the pool's return path: an exception here would leave the body
+            // half-returned, so it is contained exactly like the Released handlers.
+            try { sink.NotifyDespawned(ticket); }
+            catch (Exception e) { Debug.LogException(e, this); }
         }
     }
 }

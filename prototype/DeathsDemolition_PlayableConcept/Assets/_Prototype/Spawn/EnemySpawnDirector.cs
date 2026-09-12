@@ -14,6 +14,8 @@ namespace DD.Prototype.Spawn
     ///
     /// REQUIREMENTS IT IMPLEMENTS
     /// --------------------------
+    ///   REQ-012  a round completes when the pool is empty AND no enemy is alive (corpses excluded);
+    ///   REQ-019  the pool flows continuously and stops when it is spent;
     ///   REQ-065  enemies only ever leave from designer-placed points;
     ///   REQ-066  point density is dynamic; a pointless point drops to zero weight;
     ///   REQ-067  the nine approved positional inputs (see <see cref="SpawnWeightCalculator"/>);
@@ -22,6 +24,16 @@ namespace DD.Prototype.Spawn
     ///   REQ-070  cooldown, recency, per-point occupancy and local density spread the load;
     ///   REQ-071  Runner R3 / Guard R5 / Executioner R8 debut guaranteed, then weighted;
     ///   REQ-072  keeps the round's target active count and NEVER exceeds the ceiling of 40.
+    ///
+    /// HOW IT IS SPLIT (WP-003)
+    /// ------------------------
+    ///   <see cref="RoundPlan"/>          the three numbers a round opens with, resolved once;
+    ///   <see cref="RoundLedger"/>        state machine + counters + the completion rule, pure;
+    ///   <see cref="SpawnRefillClock"/>   the refill metronome, pure, pause-safe;
+    ///   <see cref="SpawnPointSelector"/> weighted choice among registered points, pure;
+    ///   this class                       the scene: pool, points, NavMesh cache, camera flags,
+    ///                                    the enemy hand-off and the lifecycle sink.
+    /// Everything with a rule in it lives in the pure parts and is proven in EditMode.
     ///
     /// ARITHMETIC OWNERSHIP
     /// --------------------
@@ -35,20 +47,24 @@ namespace DD.Prototype.Spawn
     /// This director owns the enemy pool. Nothing else may call
     /// PoolService.GetOrCreate on the enemy prefab, or the second caller gets a typed-pool
     /// clash. Policy is ReturnNull: when the ceiling is reached, Get returns null and the
-    /// tick simply stops spawning - the 40 ceiling can never be crossed by construction.
+    /// tick simply stops spawning - the ceiling can never be crossed by construction. The
+    /// ledger's own occupancy test stops a spawn one step earlier, so a full map does not
+    /// even reach the pool.
     ///
-    /// DEATH DETECTION
-    /// ---------------
-    /// No event contract with the enemy: an enemy that dies calls Despawn(), the pooled
-    /// instance flips IsSpawned to false, and housekeeping notices on the next tick. That
-    /// is what keeps this task and the enemy task free of a hard type dependency.
+    /// LIFECYCLE CONTRACT
+    /// ------------------
+    /// The enemy reports its death and its despawn through <see cref="IEnemyLifecycleSink"/>
+    /// with the ticket it was given (see <see cref="ISpawnedEnemy"/>). No frame polls the
+    /// enemies for their state; housekeeping only reconciles a body that vanished without
+    /// reporting (scene teardown), and counts every such case.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class EnemySpawnDirector : PrototypeConfigBehaviour
+    public sealed class EnemySpawnDirector : PrototypeConfigBehaviour, IEnemyLifecycleSink
     {
         private struct ActiveEnemy
         {
             public PooledBehaviour Behaviour;
+            public int Ticket;
             public int PointIndex;
         }
 
@@ -78,40 +94,36 @@ namespace DD.Prototype.Spawn
         // ------------------------------------------------------------------ runtime state
 
         private readonly List<ActiveEnemy> _active = new List<ActiveEnemy>(64);
+        private readonly RoundLedger _ledger = new RoundLedger(64);
+        private readonly SpawnRefillClock _refillClock = new SpawnRefillClock();
+        private readonly SpawnPointSelector _selector = new SpawnPointSelector();
         private readonly SpawnTierSelector _tierSelector = new SpawnTierSelector();
-        private float[] _pointWeights = new float[16];
+        private readonly Func<float> _random01 = () => UnityEngine.Random.value;
+
         private string[] _debugRows = new string[16];
 
         private PrototypePool<PooledBehaviour> _pool;
         private Camera _camera;
         private float _cameraSearchTimer;
 
-        private float _refillTimer;
         private float _autoStartTimer;
         private int _pathCursor;
         private float _debugRefreshTimer;
         private int _debugRoundTarget = 3;
 
-        private bool _roundActive;
         private bool _everStarted;
-        private bool _poolExhaustedAnnounced;
-
         private int _round = 1;
-        private int _remainingInPool;
-        private int _spawnedThisRound;
         private int _cooldownRelaxCount;
         private int _pathRelaxCount;
+        private int _noPointTicks;
 
         // cached from config
         private SpawnConfigSection _spawnConfig;
         private float _refillInterval = 0.45f;
         private int _maxSpawnsPerTick = 2;
-        private int _ceiling = 40;
-        private int _targetActive = 9;
 
         // debug overrides
         private int _forcedTargetActive;
-        private bool _debugIgnorePoolLimit;
         private bool _spawningEnabled = true;
 
         private DebugPanelEntry[] _debugEntries = Array.Empty<DebugPanelEntry>();
@@ -120,28 +132,68 @@ namespace DD.Prototype.Spawn
 
         public static EnemySpawnDirector Instance { get; private set; }
 
-        /// <summary>Fired after an enemy left the pool and was configured.</summary>
+        /// <summary>Fired after an enemy left the pool, was configured and reported alive.</summary>
         public event Action<EnemySpawnContext> EnemySpawned;
 
-        /// <summary>Fired when a spawned enemy returned to the pool (death or cleanup).</summary>
+        /// <summary>Fired when a spawned enemy returned to the pool (death linger over, or cleanup).</summary>
         public event Action EnemyRetired;
 
         /// <summary>Fired once per round when the last enemy of the pool has been released.</summary>
         public event Action<int> RoundPoolExhausted;
 
-        /// <summary>Fired when the pool is empty AND the map is clear. The round is over.</summary>
+        /// <summary>Fired exactly once per round when the pool is empty AND no enemy is alive.</summary>
         public event Action<int> RoundCleared;
 
+        /// <summary>Fired on every round state change. The open lifecycle signal for later systems.</summary>
+        public event Action<RoundState> RoundStateChanged;
+
         public int Round => _round;
-        public int RemainingInPool => _remainingInPool;
-        public int ActiveCount => _active.Count;
-        public int TargetActive => EffectiveTarget();
-        public int SafetyCeiling => _ceiling;
-        public bool IsRoundActive => _roundActive;
+
+        /// <summary>Where the round is. See <see cref="RoundState"/>.</summary>
+        public RoundState State => _ledger.State;
+
+        /// <summary>The round's population, as one value.</summary>
+        public RoundPopulationSnapshot Population => _ledger.Snapshot();
+
+        /// <summary>Enemies of the pool not released yet.</summary>
+        public int RemainingInPool => _ledger.Unspawned;
+
+        /// <summary>Living enemies spawned by this director. Corpses are not counted (REQ-012).</summary>
+        public int ActiveCount => _ledger.Alive;
+
+        /// <summary>Bodies this director has checked out of the pool, corpses included. The ceiling applies to this.</summary>
+        public int OccupiedCount => _ledger.Occupied;
+
+        /// <summary>Enemies released this round.</summary>
+        public int SpawnedThisRound => _ledger.SpawnedTotal;
+
+        /// <summary>Deaths registered this round.</summary>
+        public int KilledThisRound => _ledger.Killed;
+
+        public int TargetActive => _ledger.TargetActive;
+        public int SafetyCeiling => _ledger.Ceiling;
+
+        /// <summary>True from BeginRound until the round completes or the run ends.</summary>
+        public bool IsRoundActive => _ledger.IsRoundLive;
+
         public bool IsForcedTarget => _forcedTargetActive > 0;
 
-        /// <summary>Total pool of the round, straight from config.TotalEnemyPool(round).</summary>
-        public int RoundPoolTotal { get; private set; }
+        /// <summary>Total pool of the round, straight from the round plan.</summary>
+        public int RoundPoolTotal => _ledger.PoolTotal;
+
+        /// <summary>Refill attempts that found no eligible point. Debug / test readout.</summary>
+        public int NoPointTicks => _noPointTicks;
+
+        /// <summary>Bounded scatter around a point, metres (SpawnWeightTuning). Test readout for the REQ-065 check.</summary>
+        public float SpawnScatterRadius => _weightTuning.SpawnScatterRadius;
+
+        /// <summary>
+        /// Population of the last round that completed through the ledger, captured at
+        /// the moment <see cref="RoundCleared"/> was published. The round-end hand-off
+        /// for the systems that follow (WP-004): round number plus the basic combat
+        /// numbers of that round, nothing about gold or upgrades.
+        /// </summary>
+        public RoundPopulationSnapshot LastCompletedRound { get; private set; }
 
         /// <summary>
         /// The pool template this director spawns from.
@@ -196,59 +248,75 @@ namespace DD.Prototype.Spawn
         }
 
         /// <summary>
-        /// Starts a round: resets point state, sizes the pool from config and begins the
-        /// uninterrupted refill. Safe to call at any time; it also acts as "skip to round N".
+        /// Starts a round: clears the previous round's bodies, resets point state, opens
+        /// the ledger from the round plan and arms the refill. Safe to call at any time;
+        /// it also acts as "skip to round N".
         /// </summary>
         public void BeginRound(int round)
         {
             _round = Mathf.Max(1, round);
             _everStarted = true;
-            _roundActive = true;
-            _poolExhaustedAnnounced = false;
 
+            // Bodies of the previous round go back first, so their despawn reports land
+            // on the OLD ledger (or nowhere), never on the round about to open.
             ClearAllEnemies();
+
             SpawnPointRegistry.EnsureBuilt(_layout);
             SpawnPointRegistry.ResetRuntimeState();
 
-            if (HasConfig)
-            {
-                RoundPoolTotal = Config.TotalEnemyPool(_round);
-                _targetActive = Config.TargetActiveEnemies(_round);
-            }
+            RoundPlan plan = RoundPlan.Resolve(HasConfig ? Config : null, _round);
+            _ledger.BeginRound(plan.Round, plan.PoolTotal, plan.TargetActive, plan.Ceiling);
 
-            _remainingInPool = RoundPoolTotal;
-            _spawnedThisRound = 0;
-            _refillTimer = 0f;
+            _refillClock.Reset();
             _pathCursor = 0;
             _cooldownRelaxCount = 0;
             _pathRelaxCount = 0;
+            _noPointTicks = 0;
 
-            _tierSelector.BeginRound(_round, Config, RoundPoolTotal, _weightTuning.GuaranteedIntroPoolFraction);
+            _tierSelector.BeginRound(_round, Config, plan.PoolTotal, _weightTuning.GuaranteedIntroPoolFraction);
 
             EnsurePool();
             if (_pool != null)
             {
-                _pool.Prewarm(Mathf.Min(_ceiling, EffectiveTarget() + 4));
+                _pool.Prewarm(Mathf.Min(plan.Ceiling, EffectiveTarget() + 4));
             }
 
             RefreshAllPoints(force: true);
+
+            _ledger.Activate();
         }
 
-        /// <summary>Stops spawning without touching the enemies already on the map.</summary>
+        /// <summary>
+        /// The run ended under this round (death, quit, debug). Spawning stops, the round
+        /// can never complete, and the bodies on the map are left where they are for the
+        /// results screen. Idempotent.
+        /// </summary>
         public void StopRound()
         {
-            _roundActive = false;
+            _ledger.Abort();
         }
 
-        /// <summary>Returns every living enemy to the pool. Used by the F1 panel and by BeginRound.</summary>
+        /// <summary>Returns every body this director owns to the pool. Used by the F1 panel and by BeginRound.</summary>
         public void ClearAllEnemies()
         {
-            for (int i = _active.Count - 1; i >= 0; i--)
+            // Despawn → OnDespawned → NotifyDespawned → RegisterDespawn(ticket) removes the
+            // entry re-entrantly, so the loop always works on the LAST entry and never
+            // assumes an index survives the call. A body that does not report (destroyed,
+            // foreign prefab) is reconciled and removed here instead.
+            int guard = _active.Count + 1;
+            while (_active.Count > 0 && guard-- > 0)
             {
-                PooledBehaviour behaviour = _active[i].Behaviour;
-                if (behaviour != null && behaviour.IsSpawned)
+                ActiveEnemy entry = _active[_active.Count - 1];
+
+                if (entry.Behaviour != null && entry.Behaviour.IsSpawned)
                 {
-                    behaviour.Despawn();
+                    entry.Behaviour.Despawn();
+                }
+
+                if (_active.Count > 0 && _active[_active.Count - 1].Ticket == entry.Ticket)
+                {
+                    _active.RemoveAt(_active.Count - 1);
+                    _ledger.Reconcile(entry.Ticket);
                 }
             }
 
@@ -262,13 +330,74 @@ namespace DD.Prototype.Spawn
         }
 
         /// <summary>
+        /// Debug only (F1 "Complete this round"): drains the pool and clears the map, then
+        /// lets the ledger complete the round exactly as it would in play, so the same
+        /// RoundPoolExhausted → RoundCleared pair reaches the run director. Returns false
+        /// when no round is live.
+        /// </summary>
+        public bool DebugCompleteRound()
+        {
+            if (!_ledger.IsRoundLive)
+            {
+                return false;
+            }
+
+            _forcedTargetActive = 0;
+            _ledger.DebugIgnorePool = false;
+            _ledger.DebugDrainPool();
+
+            ClearAllEnemies();
+
+            _ledger.Evaluate();
+            return _ledger.TryComplete();
+        }
+
+        /// <summary>
         /// Debug only: pin the active target (0 = back to the round's own target). Values
         /// above the safety ceiling are clamped to it, so "force 40" really means 40.
         /// </summary>
         public void ForceActiveTarget(int target, bool ignorePoolLimit)
         {
-            _forcedTargetActive = Mathf.Clamp(target, 0, _ceiling);
-            _debugIgnorePoolLimit = ignorePoolLimit && _forcedTargetActive > 0;
+            _forcedTargetActive = Mathf.Clamp(target, 0, _ledger.Ceiling);
+            _ledger.DebugIgnorePool = ignorePoolLimit && _forcedTargetActive > 0;
+
+            RoundPlan plan = RoundPlan.Resolve(HasConfig ? Config : null, _round);
+            _ledger.Retarget(_forcedTargetActive > 0 ? _forcedTargetActive : plan.TargetActive, _ledger.Ceiling);
+        }
+
+        // ------------------------------------------------------------------ lifecycle sink
+
+        void IEnemyLifecycleSink.NotifyDied(int ticket)
+        {
+            // Idempotent by construction: a second report for the same ticket is refused
+            // by the ledger. The state transition it may enable is evaluated in Update,
+            // never here - this is called from inside the enemy's damage path.
+            if (!_ledger.RegisterDeath(ticket))
+            {
+                return;
+            }
+
+            // Weighting input 7 counts LIVING enemies that came from a point; a corpse
+            // no longer presses on its gate.
+            DecrementPoint(PointIndexOf(ticket));
+        }
+
+        void IEnemyLifecycleSink.NotifyDespawned(int ticket)
+        {
+            // A body removed without dying (round cleanup) still owes its point the
+            // decrement a death would have made.
+            bool wasAlive = _ledger.IsAlive(ticket);
+
+            if (!_ledger.RegisterDespawn(ticket))
+            {
+                // A ticket from a previous round (cleanup order) or a repeat. The entry, if
+                // any, is dropped without touching the counters.
+                RemoveActiveEntry(ticket, decrementPoint: false);
+                return;
+            }
+
+            RemoveActiveEntry(ticket, decrementPoint: wasAlive);
+            RaiseRetired();
         }
 
         // ------------------------------------------------------------------ unity
@@ -286,6 +415,17 @@ namespace DD.Prototype.Spawn
 
             Instance = this;
             SpawnPointRegistry.EnsureBuilt(_layout);
+
+            _ledger.StateChanged += OnLedgerStateChanged;
+            _ledger.PoolDepleted += OnLedgerPoolDepleted;
+            _ledger.RoundCompleted += OnLedgerRoundCompleted;
+        }
+
+        private void OnDestroy()
+        {
+            _ledger.StateChanged -= OnLedgerStateChanged;
+            _ledger.PoolDepleted -= OnLedgerPoolDepleted;
+            _ledger.RoundCompleted -= OnLedgerRoundCompleted;
         }
 
         protected override void OnEnable()
@@ -317,24 +457,25 @@ namespace DD.Prototype.Spawn
         }
 
         /// <summary>
-        /// Live config contract. Everything derived from the round curve is recomputed
-        /// here, so raising the pool or the target in the F1 panel mid-round is felt on the
-        /// very next refill tick.
+        /// Live config contract. The refill cadence, the target and the ceiling are
+        /// re-read here, so changing them in the F1 panel mid-round is felt on the very
+        /// next refill tick. The round's pool total is fixed at BeginRound (the ledger
+        /// owns it); a new pool curve applies from the next round.
         /// </summary>
         protected override void ApplyConfig(PrototypeConfig config)
         {
             _spawnConfig = config.Spawn;
             _refillInterval = Mathf.Max(0.05f, config.Rounds.SpawnRefillInterval);
             _maxSpawnsPerTick = Mathf.Max(1, config.Rounds.MaxSpawnsPerRefillTick);
-            _ceiling = Mathf.Max(1, config.AbsoluteSafetyCeiling);
-            _targetActive = config.TargetActiveEnemies(_round);
-            RoundPoolTotal = config.TotalEnemyPool(_round);
 
             _weightTuning.Sanitize();
 
-            if (_pool != null && _pool.Capacity < _ceiling)
+            RoundPlan plan = RoundPlan.Resolve(config, _round);
+            _ledger.Retarget(_forcedTargetActive > 0 ? _forcedTargetActive : plan.TargetActive, plan.Ceiling);
+
+            if (_pool != null && _pool.Capacity < plan.Ceiling)
             {
-                _pool.SetCapacity(_ceiling);
+                _pool.SetCapacity(plan.Ceiling);
             }
         }
 
@@ -342,13 +483,19 @@ namespace DD.Prototype.Spawn
         {
             float dt = Time.deltaTime;
 
-            // Pause freezes the spawn flow with everything else.
+            // Pause freezes the spawn flow with everything else (REQ-006): nothing below
+            // this line advances on a frozen clock, including the refill metronome.
             if (dt <= 0f)
             {
                 return;
             }
 
-            if (!_roundActive)
+            // Runs in every state: a body that vanished after the run ended (results
+            // scene, teardown) must still leave the roster, or the next BeginRound's
+            // cleanup pass would try to despawn a destroyed object.
+            Housekeeping();
+
+            if (!_ledger.IsRoundLive)
             {
                 if (_autoStartFirstRound && !_everStarted)
                 {
@@ -362,20 +509,21 @@ namespace DD.Prototype.Spawn
                 return;
             }
 
-            Housekeeping();
-
-            _refillTimer -= dt;
-            if (_refillTimer <= 0f)
+            if (_ledger.State == RoundState.Active && _refillClock.Advance(dt, _refillInterval))
             {
-                _refillTimer = _refillInterval;
                 RefillTick();
             }
 
-            EvaluateRoundCompletion();
+            _ledger.Evaluate();
+            _ledger.TryComplete();
         }
 
         // ------------------------------------------------------------------ flow
 
+        /// <summary>
+        /// Safety net, not the contract: a body destroyed behind the pool's back (scene
+        /// teardown) never reports its despawn. Each such case is reconciled and counted.
+        /// </summary>
         private void Housekeeping()
         {
             for (int i = _active.Count - 1; i >= 0; i--)
@@ -388,14 +536,15 @@ namespace DD.Prototype.Spawn
 
                 _active.RemoveAt(i);
 
-                IReadOnlyList<SpawnPointRuntime> points = SpawnPointRegistry.Points;
-                if (entry.PointIndex >= 0 && entry.PointIndex < points.Count)
+                if (_ledger.IsAlive(entry.Ticket))
                 {
-                    points[entry.PointIndex].AliveFromHere =
-                        Mathf.Max(0, points[entry.PointIndex].AliveFromHere - 1);
+                    DecrementPoint(entry.PointIndex);
                 }
 
-                EnemyRetired?.Invoke();
+                if (_ledger.Reconcile(entry.Ticket))
+                {
+                    RaiseRetired();
+                }
             }
         }
 
@@ -408,17 +557,13 @@ namespace DD.Prototype.Spawn
 
             RefreshStalePoints(_weightTuning.PathQueriesPerTick);
 
-            int target = EffectiveTarget();
             int spawned = 0;
 
             // Debug only: the forced-40 measurement would take 9 s to fill at the normal
             // 2 per tick, which is most of a measurement window spent ramping.
             int perTick = _forcedTargetActive > 0 ? Mathf.Max(_maxSpawnsPerTick, 4) : _maxSpawnsPerTick;
 
-            while (spawned < perTick &&
-                   _active.Count < target &&
-                   _active.Count < _ceiling &&
-                   (_remainingInPool > 0 || _debugIgnorePoolLimit))
+            while (spawned < perTick && _ledger.CanSpawn(out _))
             {
                 if (!TrySpawnOne())
                 {
@@ -429,34 +574,35 @@ namespace DD.Prototype.Spawn
             }
         }
 
-        private void EvaluateRoundCompletion()
-        {
-            if (_remainingInPool > 0 || _debugIgnorePoolLimit)
-            {
-                return;
-            }
-
-            if (!_poolExhaustedAnnounced)
-            {
-                _poolExhaustedAnnounced = true;
-                RoundPoolExhausted?.Invoke(_round);
-            }
-
-            if (_active.Count == 0)
-            {
-                _roundActive = false;
-                RoundCleared?.Invoke(_round);
-            }
-        }
-
         private int EffectiveTarget()
         {
-            int target = _forcedTargetActive > 0 ? _forcedTargetActive : _targetActive;
-            return Mathf.Clamp(target, 0, _ceiling);
+            int target = _forcedTargetActive > 0 ? _forcedTargetActive : _ledger.TargetActive;
+            return Mathf.Clamp(target, 0, _ledger.Ceiling);
+        }
+
+        private void OnLedgerStateChanged(RoundState state)
+        {
+            RoundStateChanged?.Invoke(state);
+        }
+
+        private void OnLedgerPoolDepleted(int round)
+        {
+            RoundPoolExhausted?.Invoke(round);
+        }
+
+        private void OnLedgerRoundCompleted(int round)
+        {
+            LastCompletedRound = _ledger.Snapshot();
+            RoundCleared?.Invoke(round);
         }
 
         // ------------------------------------------------------------------ spawning
 
+        /// <summary>
+        /// One registration → activation attempt. Every failure path restores the ledger:
+        /// a full pool is "not now", a dead-on-arrival enemy is an activation failure that
+        /// is counted, reported and rolled back, never a silent loss from the pool.
+        /// </summary>
         private bool TrySpawnOne()
         {
             if (_pool == null)
@@ -475,6 +621,7 @@ namespace DD.Prototype.Spawn
             SpawnPointRuntime point = SelectPoint();
             if (point == null)
             {
+                _noPointTicks++;
                 NavigationDiagnostics.WarnThrottled(
                     "spawn.nopoint", 5f,
                     "[Spawn] No spawn point passed the weighting this tick (all too close, on screen, " +
@@ -482,51 +629,108 @@ namespace DD.Prototype.Spawn
                 return false;
             }
 
-            EnemyTier tier = _tierSelector.Next(_round, Config, _spawnedThisRound, _remainingInPool,
-                out bool guaranteed);
-
             Vector3 position = ScatterAround(point);
             Quaternion rotation = point.SpawnRotation();
 
             PooledBehaviour instance = _pool.Get(position, rotation);
             if (instance == null)
             {
-                // ReturnNull policy: the ceiling is reached. Not an error, just a full map.
+                // ReturnNull policy: the pool is full (debug bodies share it). Not an
+                // error, just a full map, and nothing was reserved yet.
                 return false;
             }
 
-            EnemySpawnContext context = BuildContext(tier, point, position, rotation, guaranteed);
-
-            if (instance is ISpawnedEnemy spawned)
+            if (!_ledger.TryReserveSpawn(out int ticket))
             {
-                spawned.OnSpawnedFromPoint(context);
+                // CanSpawn was true a moment ago; a re-entrant report may have changed it.
+                instance.Despawn();
+                return false;
             }
-            else
+
+            EnemyTier tier = _tierSelector.Next(_round, Config, _ledger.SpawnedTotal, _ledger.Unspawned,
+                out bool guaranteed);
+
+            EnemySpawnContext context = BuildContext(tier, point, position, rotation, guaranteed, ticket);
+
+            var spawned = instance as ISpawnedEnemy;
+            if (spawned == null)
             {
                 NavigationDiagnostics.WarnOnce(
                     "spawn.contract",
-                    "[Spawn] The enemy prefab does not implement ISpawnedEnemy, so tier, health and " +
-                    "damage could not be handed over. See ISpawnedEnemy for the contract.");
+                    "[Spawn] The enemy prefab does not implement ISpawnedEnemy, so tier, health, " +
+                    "damage and the lifecycle ticket could not be handed over. The body was " +
+                    "returned and the spawn rolled back. See ISpawnedEnemy for the contract.");
+                instance.Despawn();
+                _ledger.RollbackSpawn(ticket);
+                return false;
             }
 
-            _active.Add(new ActiveEnemy { Behaviour = instance, PointIndex = point.Index });
+            spawned.OnSpawnedFromPoint(in context);
+
+            if (!spawned.IsAlive)
+            {
+                NavigationDiagnostics.WarnThrottled(
+                    "spawn.activation", 5f,
+                    "[Spawn] An enemy came back from activation not alive (initialise failed). " +
+                    "The body was returned and the pool stock restored; see Population.ActivationFailures.");
+
+                // Roll back FIRST: the enemy already holds the sink, so Despawn() reports
+                // the ticket, and the ledger must not mistake that for a normal despawn.
+                // (The ledger also treats a despawn of an unconfirmed ticket as a rollback,
+                // so either order restores the stock; this order keeps the readout exact.)
+                _ledger.RollbackSpawn(ticket);
+                instance.Despawn();
+                return false;
+            }
+
+            _ledger.ConfirmActivation(ticket);
+            _active.Add(new ActiveEnemy { Behaviour = instance, Ticket = ticket, PointIndex = point.Index });
 
             point.AliveFromHere++;
             point.SpawnedThisRound++;
             point.LastUsedTime = Time.time;
 
-            _spawnedThisRound++;
-            if (!_debugIgnorePoolLimit)
+            Action<EnemySpawnContext> spawnedHandler = EnemySpawned;
+            if (spawnedHandler != null)
             {
-                _remainingInPool = Mathf.Max(0, _remainingInPool - 1);
+                try
+                {
+                    spawnedHandler.Invoke(context);
+                }
+                catch (Exception e)
+                {
+                    // A broken listener must not undo a spawn that already happened.
+                    Debug.LogException(e, this);
+                }
             }
 
-            EnemySpawned?.Invoke(context);
             return true;
         }
 
+        /// <summary>
+        /// EnemyRetired is raised from inside the pool's return path; a throwing listener
+        /// would leave the body half-returned, so it is isolated here.
+        /// </summary>
+        private void RaiseRetired()
+        {
+            Action handler = EnemyRetired;
+            if (handler == null)
+            {
+                return;
+            }
+
+            try
+            {
+                handler.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, this);
+            }
+        }
+
         private EnemySpawnContext BuildContext(EnemyTier tier, SpawnPointRuntime point,
-            Vector3 position, Quaternion rotation, bool guaranteed)
+            Vector3 position, Quaternion rotation, bool guaranteed, int ticket)
         {
             float health = 0f;
             float damage = 0f;
@@ -542,9 +746,15 @@ namespace DD.Prototype.Spawn
             }
 
             return new EnemySpawnContext(tier, _round, point.Index, point.Id, point.Region,
-                position, rotation, health, damage, speed, guaranteed);
+                position, rotation, health, damage, speed, guaranteed, ticket, this);
         }
 
+        /// <summary>
+        /// The only place a spawn position is computed: the chosen point's NavMesh
+        /// position plus a bounded scatter (SpawnScatterRadius, so two enemies never spawn
+        /// inside each other), re-projected onto the NavMesh. It is never a coordinate the
+        /// designer did not author a point for (REQ-065).
+        /// </summary>
         private Vector3 ScatterAround(SpawnPointRuntime point)
         {
             Vector2 offset = UnityEngine.Random.insideUnitCircle * _weightTuning.SpawnScatterRadius;
@@ -555,7 +765,52 @@ namespace DD.Prototype.Spawn
                 return onMesh;
             }
 
-            return candidate;
+            // The scattered candidate is off the mesh: fall back to the point itself, not
+            // to an unprojected coordinate.
+            return point.NavPosition;
+        }
+
+        private int PointIndexOf(int ticket)
+        {
+            for (int i = 0; i < _active.Count; i++)
+            {
+                if (_active[i].Ticket == ticket)
+                {
+                    return _active[i].PointIndex;
+                }
+            }
+
+            return -1;
+        }
+
+        private void RemoveActiveEntry(int ticket, bool decrementPoint)
+        {
+            for (int i = _active.Count - 1; i >= 0; i--)
+            {
+                if (_active[i].Ticket != ticket)
+                {
+                    continue;
+                }
+
+                int pointIndex = _active[i].PointIndex;
+                _active.RemoveAt(i);
+
+                if (decrementPoint)
+                {
+                    DecrementPoint(pointIndex);
+                }
+
+                return;
+            }
+        }
+
+        private static void DecrementPoint(int pointIndex)
+        {
+            IReadOnlyList<SpawnPointRuntime> points = SpawnPointRegistry.Points;
+            if (pointIndex >= 0 && pointIndex < points.Count)
+            {
+                points[pointIndex].AliveFromHere = Mathf.Max(0, points[pointIndex].AliveFromHere - 1);
+            }
         }
 
         // ------------------------------------------------------------------ selection
@@ -563,17 +818,10 @@ namespace DD.Prototype.Spawn
         private SpawnPointRuntime SelectPoint()
         {
             IReadOnlyList<SpawnPointRuntime> points = SpawnPointRegistry.Points;
-            int count = points.Count;
 
-            if (count == 0 || _spawnConfig == null)
+            if (points.Count == 0 || _spawnConfig == null)
             {
                 return null;
-            }
-
-            if (_pointWeights.Length < count)
-            {
-                _pointWeights = new float[Mathf.NextPowerOfTwo(count)];
-                _debugRows = new string[_pointWeights.Length];
             }
 
             CrowdPlayerState player = CrowdService.PlayerState;
@@ -601,32 +849,24 @@ namespace DD.Prototype.Spawn
             // Strict first, then drop one gate at a time. Anything past the first pass is
             // rare and is reported, because it means the map or the tuning is squeezing the
             // director into a corner.
-            SpawnPointRuntime chosen = TrySelect(points, count, inputs, SpawnRelaxation.None);
-            if (chosen != null)
+            SpawnPointRuntime chosen = _selector.SelectWithLadder(points, in inputs, _spawnConfig, _weightTuning,
+                _random01, out SpawnRelaxation used);
+
+            if (chosen == null)
             {
-                return chosen;
+                return null;
             }
 
-            chosen = TrySelect(points, count, inputs, SpawnRelaxation.Screen);
-            if (chosen != null)
+            if ((used & SpawnRelaxation.Cooldown) != 0)
             {
-                return chosen;
-            }
-
-            // Expected, not exceptional: 12 points with a 4 s cooldown serve 3 spawns/s,
-            // while a full refill tick wants up to 4.4/s. When the demand outruns the
-            // points, the cooldown becomes a preference instead of a gate and the COOLEST
-            // point wins through the recency factor. Counted, not logged.
-            chosen = TrySelect(points, count, inputs, SpawnRelaxation.Screen | SpawnRelaxation.Cooldown);
-            if (chosen != null)
-            {
+                // Expected, not exceptional: 12 points with a 4 s cooldown serve 3 spawns/s,
+                // while a full refill tick wants up to 4.4/s. When the demand outruns the
+                // points, the cooldown becomes a preference instead of a gate and the COOLEST
+                // point wins through the recency factor. Counted, not logged.
                 _cooldownRelaxCount++;
-                return chosen;
             }
 
-            chosen = TrySelect(points, count, inputs,
-                SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability);
-            if (chosen != null)
+            if ((used & SpawnRelaxation.Reachability) != 0)
             {
                 NavigationDiagnostics.WarnThrottled(
                     "spawn.relax.path", 15f,
@@ -636,38 +876,6 @@ namespace DD.Prototype.Spawn
             }
 
             return chosen;
-        }
-
-        private SpawnPointRuntime TrySelect(IReadOnlyList<SpawnPointRuntime> points, int count,
-            in SpawnWeightInputs inputs, SpawnRelaxation relaxation)
-        {
-            float total = 0f;
-
-            for (int i = 0; i < count; i++)
-            {
-                float weight = SpawnWeightCalculator.Evaluate(
-                    points[i], inputs, _spawnConfig, _weightTuning, relaxation, out _);
-
-                _pointWeights[i] = weight;
-                total += weight;
-            }
-
-            if (total <= 0f)
-            {
-                return null;
-            }
-
-            float roll = UnityEngine.Random.value * total;
-            for (int i = 0; i < count; i++)
-            {
-                roll -= _pointWeights[i];
-                if (roll <= 0f)
-                {
-                    return points[i];
-                }
-            }
-
-            return points[count - 1];
         }
 
         private void UpdatePointDensity(IReadOnlyList<SpawnPointRuntime> points)
@@ -689,6 +897,16 @@ namespace DD.Prototype.Spawn
             {
                 RefreshPoint(points[i], force);
             }
+        }
+
+        /// <summary>
+        /// Test / probe hook: re-query every point's path against the player right now,
+        /// so a teleported player is reflected in the weights without waiting for the
+        /// cache interval.
+        /// </summary>
+        public void RefreshPointsNow()
+        {
+            RefreshAllPoints(force: true);
         }
 
         /// <summary>
@@ -797,10 +1015,11 @@ namespace DD.Prototype.Spawn
                 return;
             }
 
+            int ceiling = _ledger.Ceiling;
             _pool = PoolService.GetOrCreate(
                 _enemyPrefab,
-                Mathf.Min(_ceiling, 12),
-                _ceiling,
+                Mathf.Min(ceiling, 12),
+                ceiling,
                 PoolExhaustedPolicy.ReturnNull);
         }
 
@@ -814,12 +1033,12 @@ namespace DD.Prototype.Spawn
                 "Force Spawn to 40 (perf measurement)",
                 () =>
                 {
-                    if (!_roundActive)
+                    if (!_ledger.IsRoundLive)
                     {
                         BeginRound(_round);
                     }
 
-                    ForceActiveTarget(_ceiling, true);
+                    ForceActiveTarget(_ledger.Ceiling, true);
                 }, -100));
 
             entries.Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Spawn,
@@ -879,20 +1098,28 @@ namespace DD.Prototype.Spawn
             _debugEntries = Array.Empty<DebugPanelEntry>();
         }
 
-        private string DescribeFlow()
+        /// <summary>One-line round readout. Only evaluated while the F1 panel draws it (or by a probe).</summary>
+        public string DescribeFlow()
         {
+            RoundPopulationSnapshot p = _ledger.Snapshot();
             return string.Format(
-                "R{0} | pool {1}/{2} left | active {3}/{4} (ceiling {5}){6} | spawned {7} | relax cd:{8} path:{9}",
-                _round,
-                _remainingInPool,
-                RoundPoolTotal,
-                _active.Count,
+                "R{0} {1} | pool {2}/{3} left | alive {4}/{5} bodies {6}/{7}{8} | spawned {9} killed {10} | fail {11} rec {12} | relax cd:{13} path:{14} nopoint:{15}",
+                p.Round,
+                p.State,
+                p.Unspawned,
+                p.PoolTotal,
+                p.Alive,
                 EffectiveTarget(),
-                _ceiling,
+                p.Occupied,
+                p.Ceiling,
                 _forcedTargetActive > 0 ? " FORCED" : "",
-                _spawnedThisRound,
+                p.SpawnedTotal,
+                p.Killed,
+                p.ActivationFailures,
+                p.Reconciled,
                 _cooldownRelaxCount,
-                _pathRelaxCount);
+                _pathRelaxCount,
+                _noPointTicks);
         }
 
         /// <summary>
@@ -953,6 +1180,12 @@ namespace DD.Prototype.Spawn
                                   (Time.time - p.LastUsedTime)),
                     p.LastWeight > 0f ? "" : "[" + p.LastRejectReason + "]");
             }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            Instance = null;
         }
 
         // ------------------------------------------------------------------ gizmos

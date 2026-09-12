@@ -170,7 +170,7 @@ Runtime code lives under `Assets/_Prototype/`; URP pipeline, renderer and volume
 | `Enemies/` | The single zombie family: factory, targeting, tier scheduler, attack state machine, hit-reaction state, procedurally built body and appearance layers, and the pseudo-animator. |
 | `Damage/` | The regional damage model: hitbox registry, the three-piece armour set, the damage contracts, and `RegionalDamageProof`, which asserts the approved armour and explosion rules against the live model. |
 | `Navigation/` | NavMesh path following plus the custom crowd layer — solver, spatial grid and tuning — that gives soft separation without a solid traffic lock, and the ring-region model of the map. |
-| `Spawn/` | The twelve hand-placed spawn points, the dynamic weight calculator that scores them per frame, the tier selector that owes each tier its guaranteed debut, and the director that maintains the round's target active count. |
+| `Spawn/` | The twelve hand-placed spawn points, the dynamic weight calculator that scores them, the pure `SpawnPointSelector` (weighted, deterministic with an injected RNG), the tier selector that owes each tier its guaranteed debut, the pure `RoundLedger` (round state machine, population counters, the REQ-012 completion rule: pool empty AND no living enemy, corpses excluded) with `RoundPlan` as the single place the round's pool/target/ceiling are resolved, the pause-safe `SpawnRefillClock`, and the director that owns the pool, the enemy lifecycle sink (`IEnemyLifecycleSink`, ticket per life) and keeps the target active count under the technical ceiling (WP-003). |
 | `World/` | The 90×90 m blockout: procedural mesh building, ground, structures, foliage, atmosphere, palette, landmarks, and the NavMesh bake — assembled at load by `WorldBootstrap`/`WorldBuilder`; the editor tool `RunSceneBuilder` is a one-time setup utility and is not run in normal work. |
 | `Rendering/` | The serialized shader library (`PrototypeShaderLibrary`, in `Resources/`), the eight variant-pin materials that keep URP keyword variants in the Player build, the `PrototypeShaders` accessor that replaced `Shader.Find`, and the build-time check that stops a build when the library is missing. |
 | `Rounds/` | The run director: round pools, round-end flow, the three-card upgrade shop, XP and stats tracking, the run flow clock that freezes everything on pause, and the debug registrations. |
@@ -178,7 +178,7 @@ Runtime code lives under `Assets/_Prototype/`; URP pipeline, renderer and volume
 | `UI/` | Every screen (main menu, selection, HUD, upgrade, pause, results) built on a shared kit — tokens, fonts, sprites, buttons, bars, motion, sound and a contrast auditor — plus the flow object that drives scene transitions. |
 | `Profile/` | The local, offline profile: persistent stats, level and unlocks, its file store, and the per-run reward report that Results reads. |
 | `Audio/` | Fully synthesised placeholder audio — no external assets. Recipes for weapons, impacts, ambience and meta, a clip library, a voice pool with a budget, buses, a mix plan and the ambience director. |
-| `Tests/` | Edit-mode tests for the formulas (round, progression, special-weapon chance, regional damage, mesh winding) and play-mode tests for the flow and scene integrity, plus `OTOMATIK-KAPI.md` (what the automated gate verifies) and `MANUEL-TEST-KITI.md` (what only a human can verify). |
+| `Tests/` | Edit-mode tests for the formulas (round, progression, special-weapon chance, regional damage, mesh winding), the combat contracts (WP-002) and the round ledger / spawn selection contracts (WP-003), and play-mode tests for the flow, scene integrity, the core combat slice (WP-002) and the round & dynamic spawning slice (WP-003), plus `OTOMATIK-KAPI.md` (what the automated gate verifies) and `MANUEL-TEST-KITI.md` (what only a human can verify). |
 
 ---
 
@@ -188,7 +188,7 @@ The full list is in **[`PROTOTYPE-ONLY.md`](PROTOTYPE-ONLY.md)**. Summary:
 
 * Every tunable value carries a `[PrototypeOnly(...)]` attribute naming the still-open
   planning decision it temporarily occupies. **485 such declarations exist in the
-  code** (WP-002 count, 2026-09-11; 491 at the WP-000 count of 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
+  code** (WP-003 re-count 2026-09-12, unchanged since WP-002's 485 of 2026-09-11 — the WP-003 round/spawn classes add no tunable of their own; 491 at the WP-000 count of 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
   number off the screen without also reading where it came from.
 * **237 of the original 337 (2026-08-18 scan) had no source in the request at all**; the invented split is re-issued after WP-000 Phase 4 — they were invented so a
   system could function. They are flagged `invented` and rendered in a different colour.

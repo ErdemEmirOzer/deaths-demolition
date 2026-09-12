@@ -171,7 +171,7 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 
 ## WP-002 — M1 Core Gameplay & Combat Production Slice
 
-**Durum:** Yürütülüyor (S-02, 2026-09-11). İzole branch `wp-002-m1-core-combat` (taban: `main` = `e3d3a98e66230c2fd48abc9269a8e82d6bf30f73` = `wp-001-lifecycle`); tek yazma sahibi S-02; S-01 mimari/entegrasyon sınırlarını salt okunur doğrular; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge yok, push yok.
+**Durum:** Tamamlandı ve `main`'e entegre (2026-09-12). Kanıt: package commit `8fd858670e4f5a77e6f12811436e2c5a846a510b` (izole branch `wp-002-m1-core-combat`, taban `main` = `e3d3a98…` = `wp-001-lifecycle`, tek atomik commit, 24 dosya); S-01 entegrasyon PASS; S-10 bağımsız kabul PASS 12 · FAIL 0 · BLOCKED 0; final manifest v2 `b63ba343…` (669 yol); sıfırdan Library ile EditMode 192/192, PlayMode 48/48 (gerçek Metal), release Player build ve smoke PASS; manuel klavye-fare smoke M1–M14 kullanıcı tarafından PASS; kullanıcı onayı ile `main`'e fast-forward (`e3d3a98..8fd8586`, merge commit yok), hafif etiket `wp-002-m1-combat`; push yok (remote yok). Nihai rapor: `S-02-WP-002-NIHAI-RAPOR.md` (Kadro çalışma alanı `context/projects/deaths-demolition/wp-002/reports/`). WP-002 worktree'si korunmaktadır.
 
 **Yürütme promptu:** `planning/work-packages/WP-002-M1-CORE-COMBAT.md`
 
@@ -198,3 +198,30 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 - Tam regresyon geçmiştir: import, EditMode, PlayMode (gerçek GPU), release Player build, klavye-fare combat smoke; Player loglarında yeni exception veya shader fallback yoktur.
 - Unity/URP, Packages ve ProjectSettings değişmemiştir; secret/generated/.meta/GUID denetimi temizdir; gerçek kullanıcı profili korunmuştur.
 - S-01 entegrasyon incelemesi ve S-10 bağımsız kabul PASS'tir; çalışma izole branch'te tek atomik commit olarak kalmıştır; `main`'e merge ve push yapılmamıştır.
+
+## WP-003 — M1 Rounds & Dynamic Spawning Slice
+
+**Durum:** Yürütülüyor (S-03, 2026-09-12). İzole branch `wp-003-m1-rounds-spawning` (taban: `main` = `8fd858670e4f5a77e6f12811436e2c5a846a510b` = `wp-002-m1-combat`); tek yazma/commit sahibi S-03; S-01 entegrasyon sınırlarını salt okunur doğrular; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge ve push ayrı C-00/kullanıcı kararıdır. Başlangıç manifesti `b63ba343…` (669 yol) = WP-002 final manifesti; davranış değiştirilmeden baseline kapıları: import 0 hata, EditMode 192/192, PlayMode 48/48 (gerçek Metal).
+
+**Yürütme promptu:** `planning/work-packages/WP-003-M1-ROUNDS-SPAWNING.md`
+
+**Amaç:** Mevcut `EnemySpawnDirector` üzerinden round ve dinamik spawn sistemini M1 dikey kesitinin test edilebilir, genişletilebilir üretim dilimine dönüştürmek. Yeni ürün, kapsam, denge, sanat veya teknoloji kararı verilmez; sayısal değerler PrototypeOnly kalır; yalnız Standard zombi kullanılır.
+
+**Kapsam:**
+
+- Round state makinesi (NotStarted / Starting / Active / PoolDepleted / Completing / Completed / Aborted) ve tek seferlik tamamlanma olayı.
+- Round nüfus defteri: havuz toplamı, spawn edilmemiş, spawn edilen, yaşayan (cesetler hariç, REQ-012), gövde (cesetler dahil, tavan bunu sınırlar), öldürülen, hedef aktif (tempo), teknik tavan (güvenlik, REQ-072) — iki ayrı sayı.
+- Düşman yaşam döngüsü sözleşmesi (bilet + `IEnemyLifecycleSink`: kayıt → aktivasyon → yaşam → ölüm → despawn → koşu sonu temizliği), aktivasyon başarısızlığının geri alınması ve raporlanması.
+- Tasarımcı spawn noktaları (yalnız kayıtlı noktalar; rastgele dünya koordinatı yok), oyuncu konumuna bağlı dinamik ağırlık, çok uzak noktanın sıfır ağırlığı, saf ve deterministik seçim (`SpawnPointSelector`).
+- Pause (REQ-006), oyuncu ölümü/abort, yeni round ve yeni koşu temizliği; sahne yeniden yüklemede tek director.
+- Hibrit round ölçekleme için tek çözümleme noktası (`RoundPlan`), placeholder eklemeden.
+- Development-build `RoundProbe` (gerçek Player'da deterministik round/spawn kanıtı), EditMode/PlayMode sözleşme testleri, performans/REQ-072 tempo gözlemi.
+- Planlama durum kayıtları (WP-002 tamamlandı + entegre; WP-003 kaydı; yürütme promptunun aynen kaydı).
+
+**Kapsam dışı:** gold/pickup/round sonu toplama; upgrade ekranı ve ekonomisi; profil XP, istatistik, achievement, unlock; armor, bölgesel hasar, patlama; Special/Elite/Ultra düşman ve Special Weapon; yeni klasik silah; nihai silah/round/spawn dengesi; nihai harita, model, animasyon, VFX, ses, UI; online/netcode/leaderboard/cloud; remote, push, yayın; B3/B4/B5 ve sınıf-3 A–H kararları; WP-002 temizlik adayları; ceset siper davranışı; pompa salvosu/knockback; stagger yeniden tasarımı; telegraph sesi; hit-reaction sözleşmesi genişletmesi; çoklu Player profil yazma politikası.
+
+**Çıkış koşulları:**
+
+- Round 1 gerçek sahnede güvenilir başlar; havuz doğru yönetilir; spawnlar yalnız authoring noktalarından; yoğunluk oyuncu konumuna göre değişir ve çok uzak nokta sıfır alır; hedef aktif korunur; teknik tavan asla aşılmaz; havuz bitince spawn durur; son yaşayan düşman ölünce round yalnız bir kez tamamlanır; pause/ölüm/yeni koşu state'i bozmaz; WP-002 sözleşmeleri korunur.
+- Tam regresyon: import, EditMode, PlayMode (gerçek Metal), temiz Library release build, Player smoke; yeni ve mevcut tüm testler geçer.
+- S-01 koşulsuz kabul, S-10 bağımsız PASS; Git F0–F10 ve manifest temiz; kullanıcı onayı olmayan yeni ürün kararı yok; çalışma izole branch'te tek atomik commit; `main`'e merge ve push yapılmamıştır.

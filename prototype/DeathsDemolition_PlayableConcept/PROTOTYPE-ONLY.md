@@ -26,7 +26,12 @@ field is the line immediately after, or two lines after where a `[Range]` interv
 
 Counted by static scan of every `.cs` file under `Assets/_Prototype` on 2026-08-18 (**historical**).
 Re-count as of WP-000 Phase 2 (2026-09-10): **491** `[PrototypeOnly(` declarations
-(`grep -rc "\[PrototypeOnly(" --include=*.cs`); **485 as of WP-002 (2026-09-11)** — six
+(`grep -rc "\[PrototypeOnly(" --include=*.cs`); **485 as of WP-003 (2026-09-12, unchanged)** — the WP-003
+round/spawn split (`RoundLedger`, `RoundPlan`, `SpawnPointSelector`, `SpawnRefillClock`, `RoundProbe`)
+adds no tunable of its own: every round/spawn number stays in `RoundConfigSection`,
+`SpawnConfigSection` and `SpawnWeightTuning`, and `SpawnSelectionContractTests` now asserts by
+reflection that every numeric field of those three types carries the attribute;
+**485 as of WP-002 (2026-09-11)** — six
 `ZombieEnemy` `*EffectScale` constants (class 2, enemy-side burst scales) were removed
 when `HitFeedbackDirector` became the single owner of hit dressing
 (`find Assets/_Prototype -name '*.cs' -exec grep -o "\[PrototypeOnly(" {} + | wc -l`; a scan
@@ -37,7 +42,7 @@ its first argument (the pending decision) and its third argument (`invented`).
 
 | Metric | Count |
 |---|---|
-| `[PrototypeOnly(...)]` declarations in code | **485** (2026-09-11, WP-002; 491 at 2026-09-10; 337 at 2026-08-18) |
+| `[PrototypeOnly(...)]` declarations in code | **485** (2026-09-12, WP-003 re-count, unchanged; 485 at 2026-09-11, WP-002; 491 at 2026-09-10; 337 at 2026-08-18) |
 | Carrying an origin tag | 485 — the attribute *is* the tag |
 | Declarations with **no source in the request at all** (`invented: true`) | **237 as of 2026-08-18; re-count pending WP-000 Phase 4** |
 | Literal `PROTOTYPE-ONLY` string occurrences under `Assets/` | 163 (156 in `.cs`, 6 in `.md`, 1 line carries two) |
@@ -450,7 +455,7 @@ Neither is a decision. Neither goes near `planning/` without your explicit appro
 ---
 
 *Section tables last recompiled 2026-08-18 (historical); headline count refreshed
-2026-09-10 by WP-000 (491) and 2026-09-11 by WP-002 (485). The runtime figure printed by
+2026-09-10 by WP-000 (491), 2026-09-11 by WP-002 (485) and 2026-09-12 by WP-003 (485, unchanged). The runtime figure printed by
 `Tools > Deaths Demolition > Validate Prototype Core` counts reflected leaf fields of
 `PrototypeConfig` only — list elements expand, and per-system tuning structs are
 invisible to it — so it will not match the counts above. **That validator was not
