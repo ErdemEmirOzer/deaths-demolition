@@ -254,7 +254,7 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 
 ## WP-005 — M1 Meta UI, Results & Profile Presentation
 
-**Durum:** Yürütülüyor (S-09, 2026-09-12). İzole branch `wp-005-m1-meta-ui-results-profile` (taban: `main` = `a284ffe2b3e9780b02d80e6812d3dd925e6cf656` = `wp-004-m1-gold`); tek yazma/commit sahibi S-09; S-01 entegrasyon sınırlarını salt okunur doğrular; S-02/S-03/S-04 salt okunur danışman; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge ve push ayrı C-00/kullanıcı kararıdır. Başlangıç manifesti `8e975f61…` (715 yol) = WP-004 final manifesti Z; davranış değiştirilmeden baseline kapıları: import 0 hata, EditMode 297/297, PlayMode 65/65 (gerçek Metal).
+**Durum:** Tamamlandı ve `main`'e entegre (2026-09-12): package commit `c3e9864` (branch `wp-005-m1-meta-ui-results-profile`, taban `a284ffe2`), fast-forward, etiket `wp-005-m1-meta-ui`; S-01 koşulsuz kabul, S-10 PASS 13 · FAIL 0 · BLOCKED 0 (manifest Y `d2292be2…`, 744 yol); EditMode 360/360, PlayMode 76/76 (gerçek Metal), temiz Library release build, Player smoke, RoundProbe 8/8, GoldProbe 12/12 PASS; manuel kit M11–M16 kullanıcı kararıyla beyan sınıfı (deterministik eşleri mevcut). Yürütme kaydı: tek yazma/commit sahibi S-09; S-01 entegrasyon sınırlarını salt okunur doğrular; S-02/S-03/S-04 salt okunur danışman; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge ve push ayrı C-00/kullanıcı kararıdır. Başlangıç manifesti `8e975f61…` (715 yol) = WP-004 final manifesti Z; davranış değiştirilmeden baseline kapıları: import 0 hata, EditMode 297/297, PlayMode 65/65 (gerçek Metal).
 
 **Yürütme promptu:** `planning/work-packages/WP-005-M1-META-UI-RESULTS-PROFILE.md`
 
@@ -273,3 +273,41 @@ Onaylı sınırlar içindeki kod organizasyonu, güvenli refactor, hata düzeltm
 **Kapsam dışı:** yeni karakter/skin/silah, Special/Elite/Ultra düşman, armor, DEC-048/DEC-050, B3/B4/B5 kararları, abort profil davranışı, online/cloud/leaderboard/hesap/telemetri, çoklu Player kilidi, final gamepad kabulü, final UI art/ikon/font/ses/VFX, UI Toolkit migration, remote/push/yayın.
 
 **Çıkış koşulları:** paket promptundaki "Tamamlanma tanımı" maddeleri; tam regresyon (import, EditMode, PlayMode gerçek Metal, temiz Library release build, Player smoke, RoundProbe, GoldProbe); S-01 koşulsuz kabul, S-10 bağımsız PASS; Git F0–F10 ve manifest temiz; yeni ürün kararı yok; çalışma izole branch'te tek atomik commit; `main`'e merge ve push yapılmamıştır.
+
+
+## M1 çıkış koşullarının durumu (2026-09-12, WP-005 sonrası)
+
+`03-ROADMAP.md` M1 çıkış koşulu: "Hareket, kamera, bir klasik silah, Standard zombi, round, gold, geliştirme, ölüm ve sonuç akışı birlikte çalışır."
+
+| Koşul | Kanıt (paket · kapı) | Durum |
+|---|---|---|
+| Hareket, kamera, bir klasik silah, Standard zombi savaşı, sağlık/regen/ölüm | WP-002 (`8fd85867`, `wp-002-m1-combat`): EditMode 192/192, PlayMode 48/48, manuel smoke M1–M14 | Karşılandı |
+| Round state, dinamik spawn, havuz tükenmesi ve tek seferlik tamamlanma | WP-003 (`507c2176`, `wp-003-m1-rounds`): EditMode 233/233, PlayMode 56/56, RoundProbe 8/8 | Karşılandı |
+| Gold paketi, cüzdan, round sonu otomatik toplama, atomik geliştirme, build koruma/sıfırlama | WP-004 (`a284ffe2`, `wp-004-m1-gold`): EditMode 297/297, PlayMode 65/65, GoldProbe 12/12 | Karşılandı |
+| Ölüm → Results → Main Menu; Main Menu → Selection → Run; Profile/Statistics/Achievements; pause | WP-005 (`c3e9864`, `wp-005-m1-meta-ui`): EditMode 360/360, PlayMode 76/76, MetaUiSliceTests 11, S-10 PASS 13/0/0 | Karşılandı |
+| Akışın baştan sona birlikte çalışması (tek koşu: menü → koşu → round → upgrade → ölüm → sonuç → menü) | GoldProbe 01–20 (gerçek Player, tek süreç), LifecycleProbe runA/runB (süreç sınırı), FlowSmoke PlayMode | Karşılandı |
+
+M4'e devredilen (M1 çıkışını engellemeyen) kalemler: gamepad doğrulaması, manuel round bitişi (B11), pencere modları (C2–C4), çoklu Player örneği son-yazan-kazanır, WP-005 M11–M16 fiziksel manuel koşu. Karar bekleyen (bu belgede karar yazılmaz): B3/B4/B5, sınıf-3 A–H, DEC-048/DEC-050 sapmaları, REQ-123 marjı. M2 ilk dilimi `WP-006` aşağıda tanımlıdır.
+
+
+## WP-006 — M2 Regional Armor & Explosion Damage Slice
+
+**Durum:** Yürütülüyor (S-03, 2026-09-12). İzole worktree/branch `wp-006-m2-regional-armor` (taban: `main` = `c3e9864` = `wp-005-m1-meta-ui`); tek yazma/commit sahibi S-03; S-01 entegrasyon sınırlarını salt okunur doğrular; S-02/S-04/S-06/S-07/S-08/S-09 salt okunur danışman/inceleyici; S-10 kabul kapılarını bağımsız doğrular; `main`'e merge ve push ayrı C-00/kullanıcı kararıdır. Başlangıç manifesti `d2292be2…` (744 yol) = WP-005 final manifesti Y; davranış değiştirilmeden baseline kapıları: import 0 hata, EditMode 360/360, PlayMode 76/76 (gerçek Metal). Paket promptunda "≥297/65" olarak verilen taban gerçek WP-005 tabanıyla (360/76) düzeltilmiştir.
+
+**Yürütme promptu:** `planning/work-packages/WP-006-M2-REGIONAL-ARMOR-EXPLOSION.md`
+
+**Amaç:** Standard zombiye yeni düşman türü eklemeden modüler bölgesel zırh (Helmet / Torso / Leg; 0/1/2/3 parça kombinasyonları) ve patlama hasar dağıtımı sözleşmesini üretim standardında, deterministik, tek kanonik hasar yoluyla ve olay verisi ayrımıyla tamamlamak. Yeni ürün, kapsam, denge, sanat veya teknoloji kararı verilmez; yeni DEC/REQ eklenmez; AP-001'e dokunulmaz; sayısal değerler PrototypeOnly'dir.
+
+**Kapsam:**
+
+- (A) Bölgesel isabet modeli: `HitboxRegistry` önce, collider adı, yükseklik oranı sırasıyla deterministik bölge çözümü (`DamageTargetResolver.ResolveRegion`); fallback uygulanır + sayılır (`RegionFallbackCount`, `LastResolution`) + ilk kez uyarılır; kayıtsız collider testi.
+- (B) Zırh durumu: `ArmorSet` slot başına dayanıklılık, idempotent kırılma, havuz dönüşünde `Armor.Clear()`; görsel durum sözleşmesi `IArmorVisual` (Absent/Present/Damaged/Broken) ve `ArmorAnchors` (kabuto · dō/kote · haidate/suneate); placeholder plaka görselleri PrototypeOnly.
+- (C) Hasar yönlendirme: doğrudan isabet yalnız vurulan bölgenin parçasına, taşma cana geçmez; patlama tek bütçe (25/45/30 PrototypeOnly paylar) üç bölgeye, korunan pay zırha / açık pay cana / taşma atılır, tam zırhlı beden can kaybetmez; ölü düşmana geç hasar boş sonuç (`DamageResults.IsEmpty`); tek kanonik patlama yolu (`HitscanEngine.Explode`; ölü `ExplosionUtility` kaldırıldı); `DamageTransaction` (atış/patlama/dış vuruş başına kimlik) ve alıcı tarafında aynı transaction'da ikinci uygulama reddi; `HitFeedbackDirector.ResolveTier` patlamada CriticalHit üretmez (REQ-089 hizalaması — iç tutarlılık, ürün kararı değil).
+- (C-olay) `DamageEventMeta` (yaşam/transaction/olay kimliği, tür, slot, zırh/can önce-sonra, bölge kırılımı) `EnemyDamaged`/`ArmorBroken`/`EnemyDied` yüklerine ek ctor'larla; `DamageEventClassifier` on sınıf; frozen imzalar değişmedi; tek feedback sahibi korunur.
+- (D) Round/spawn: 0/1/2/3 kompozisyon deterministik (`FitArmorComposition` test/probe harness'ı), DEC-021 hibrit iskeleti boş, `EnemySpawnDirector` tek spawn yolu.
+- (F) Vuruş yolunda kare başına arama/string/ayırma yok (kaynak taraması + GC ölçümü), abone sayıları ikinci koşuda sabit, pause güvenli.
+- EditMode/PlayMode sözleşme testleri (≥28 matris maddesi `[#n]` eşlemesiyle), development-build `ArmorProbe` (gerçek Player'da manuel kit kanıtı), planlama durum kayıtları.
+
+**Kapsam dışı:** Special/Elite/Ultra düşman implementasyonu; yeni düşman yetenekleri; final zombi modeli/kıyafet ve final Japon zırh assetleri; Higgsfield/Adobe/Blender üretimi; final animasyon/ses/VFX; dismemberment; yeni silah/Special Weapon; profil seviyesi veya kalıcı stat değişikliği; yeni UI ekranı / sonuç ekranı alanı; yeni armor kill kategorisi ve zırhlı gold eki (DEC-043 kancası açılmadı); final sayısal denge; B3/B4/B5; REQ-123 marjı; sınıf-3 A–H; remote/push.
+
+**Çıkış koşulları:** paket promptundaki "Tamamlanma tanımı" maddeleri (28 madde matris; olay verisi ayrımı; tek feedback; bütçe korunumu; ölü düşman; havuz temizliği); tam regresyon (import, EditMode, PlayMode gerçek Metal, temiz Library release build, Player smoke, RoundProbe, GoldProbe, ArmorProbe); S-01 koşulsuz kabul, S-10 bağımsız PASS; Git F0–F10 ve manifest temiz; yeni DEC/REQ yok; sayısal değerler PrototypeOnly; çalışma izole branch'te tek atomik commit; `main`'e merge ve push yapılmamıştır.

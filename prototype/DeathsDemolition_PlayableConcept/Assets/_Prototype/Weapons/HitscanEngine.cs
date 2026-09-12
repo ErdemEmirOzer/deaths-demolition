@@ -80,13 +80,29 @@ namespace DD.Prototype.Weapons
     public static class HitscanEngine
     {
         private const int RayBufferSize = 24;
-        private const int OverlapBufferSize = 64;
+
+        [DD.Prototype.Core.Config.PrototypeOnly(DD.Prototype.Core.Config.PendingDecisions.None,
+            "Colliders one blast query can see. WP-006: raised from 64 so a full crowd at the " +
+            "40 ceiling (3 hitboxes + 1 body each = 160) cannot overflow the buffer and drop " +
+            "enemies from a blast silently; overflow is counted (OverlapSaturationCount).", true)]
+        private const int OverlapBufferSize = 192;
+
+        [DD.Prototype.Core.Config.PrototypeOnly(DD.Prototype.Core.Config.PendingDecisions.None,
+            "Fraction of a blast's total damage a body at the very rim still takes (linear " +
+            "falloff from 1.0 at the centre). Was an unlabelled literal before WP-006; value " +
+            "unchanged, not a product decision.", true)]
+        private const float ExplosionRimDamageFraction = 0.45f;
+
+        private static int s_overlapSaturationCount;
+
+        /// <summary>Blast queries that filled the overlap buffer completely (possible drop). Should stay 0.</summary>
+        public static int OverlapSaturationCount => s_overlapSaturationCount;
 
         private static readonly RaycastHit[] s_rayBuffer = new RaycastHit[RayBufferSize];
         private static readonly Collider[] s_overlapBuffer = new Collider[OverlapBufferSize];
 
         /// <summary>Ids already damaged by the shot in flight. Cleared per shot, never reallocated.</summary>
-        private static readonly List<int> s_touched = new List<int>(24);
+        private static readonly List<int> s_touched = new List<int>(OverlapBufferSize);   // one blast can touch every body the buffer holds
 
         private static int s_enemyQueryMask;
         private static bool s_maskResolved;
@@ -108,6 +124,22 @@ namespace DD.Prototype.Weapons
 
         /// <summary>Fire one pellet. Everything downstream - pierce, ricochet, chain, blast - happens here.</summary>
         public static ShotResult Fire(in ShotRequest request)
+        {
+            // One transaction per pellet/bullet, covering its pierce, chain, ricochet and
+            // explosion branches. The enemy stamps it into its events and refuses a second
+            // application inside it (WP-006 event contract).
+            DamageTransaction.Begin();
+            try
+            {
+                return FireInTransaction(in request);
+            }
+            finally
+            {
+                DamageTransaction.End();
+            }
+        }
+
+        private static ShotResult FireInTransaction(in ShotRequest request)
         {
             var result = new ShotResult
             {
@@ -308,6 +340,13 @@ namespace DD.Prototype.Weapons
             int count = Physics.OverlapSphereNonAlloc(
                 origin, radius, s_overlapBuffer, EnemyQueryMask, QueryTriggerInteraction.Collide);
 
+            if (count >= OverlapBufferSize)
+            {
+                // The query may have seen more colliders than the buffer holds; a body
+                // could have been dropped from this blast. Counted so it is never silent.
+                s_overlapSaturationCount++;
+            }
+
             for (int i = 0; i < count; i++)
             {
                 if (!DamageTargetResolver.TryResolve(s_overlapBuffer[i], out DamageTarget target))
@@ -315,6 +354,8 @@ namespace DD.Prototype.Weapons
                     continue;
                 }
 
+                // ONE application per enemy per blast, whichever of its colliders (three
+                // hitboxes plus the body) the sphere saw first - REQ-085: one budget.
                 if (s_touched.Contains(target.Id))
                 {
                     continue;
@@ -333,9 +374,16 @@ namespace DD.Prototype.Weapons
                 // applied before the call rather than inside the damage system.
                 float distance = Vector3.Distance(origin, point);
                 float falloff = radius > 0.001f ? Mathf.Clamp01(1f - distance / radius) : 1f;
-                float amount = totalDamage * Mathf.Lerp(0.45f, 1f, falloff);
+                float amount = totalDamage * Mathf.Lerp(ExplosionRimDamageFraction, 1f, falloff);
 
                 DamageResult r = target.Explosive.ApplyExplosion(amount, origin);
+
+                if (DamageResults.IsEmpty(in r))
+                {
+                    // A corpse, or a receiver that refused the second application inside
+                    // this transaction: nothing happened, so nothing is dressed or counted.
+                    continue;
+                }
 
                 result.EnemiesHit++;
                 result.AnyKill |= r.Killed;
@@ -393,9 +441,18 @@ namespace DD.Prototype.Weapons
 
             Vector3 safeDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.forward;
 
-            return ApplyHit(
-                target, damage, BodyRegion.UpperBody, point, safeDirection,
-                impactForce, source, power, -safeDirection);
+            // One transaction per external hit (one target of one wave / pull tick).
+            DamageTransaction.Begin();
+            try
+            {
+                return ApplyHit(
+                    target, damage, BodyRegion.UpperBody, point, safeDirection,
+                    impactForce, source, power, -safeDirection);
+            }
+            finally
+            {
+                DamageTransaction.End();
+            }
         }
 
         /// <summary>
@@ -465,9 +522,17 @@ namespace DD.Prototype.Weapons
         /// <summary>Standalone blast for callers outside a shot (debug panel, future grenades).</summary>
         public static void Explode(Vector3 origin, float totalDamage, float radius)
         {
-            var result = new ShotResult();
-            s_touched.Clear();
-            Explode(origin, totalDamage, radius, ref result);
+            DamageTransaction.Begin();
+            try
+            {
+                var result = new ShotResult();
+                s_touched.Clear();
+                Explode(origin, totalDamage, radius, ref result);
+            }
+            finally
+            {
+                DamageTransaction.End();
+            }
         }
 
         // ------------------------------------------------------------------ shared
@@ -497,6 +562,14 @@ namespace DD.Prototype.Weapons
             };
 
             DamageResult result = target.Receiver.ApplyHit(hit);
+
+            if (DamageResults.IsEmpty(in result))
+            {
+                // Dead receiver (late damage on a corpse) or a refused second application:
+                // no feedback, no counters. The physical guard (hitboxes off at death) makes
+                // this rare; this is the logical guarantee behind it.
+                return result;
+            }
 
             var info = new EnemyHitFeedbackInfo
             {
@@ -601,6 +674,7 @@ namespace DD.Prototype.Weapons
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
+            s_overlapSaturationCount = 0;
             s_touched.Clear();
             s_maskResolved = false;
             s_enemyQueryMask = 0;

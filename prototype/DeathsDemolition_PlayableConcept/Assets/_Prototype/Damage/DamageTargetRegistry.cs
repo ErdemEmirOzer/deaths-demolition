@@ -193,67 +193,7 @@ namespace DD.Prototype.Damage
         }
     }
 
-    /// <summary>Blast application. The regional split itself lives inside each receiver.</summary>
-    public static class ExplosionUtility
-    {
-        private static readonly List<DamageTarget> s_buffer = new List<DamageTarget>(48);
-
-        /// <summary>
-        /// Detonate at a point. Every living body inside the radius receives
-        /// <paramref name="totalDamage"/> scaled by distance falloff, and splits it across
-        /// its own three regions per REQ-085..REQ-090.
-        ///
-        /// Falloff is 1 at the centre and 0 at the rim, raised to
-        /// <paramref name="falloffExponent"/> (1 = linear, from ExplosionConfigSection).
-        /// </summary>
-        /// <param name="results">Optional: filled with one result per affected body. May be null.</param>
-        /// <returns>Number of bodies affected.</returns>
-        public static int Detonate(Vector3 origin, float radius, float totalDamage, float falloffExponent,
-            List<DamageResult> results = null, Transform exclude = null)
-        {
-            results?.Clear();
-
-            if (radius <= 0f || totalDamage <= 0f)
-            {
-                return 0;
-            }
-
-            int count = DamageTargetRegistry.Query(origin, radius, s_buffer, exclude);
-            if (count == 0)
-            {
-                return 0;
-            }
-
-            int affected = 0;
-            for (int i = 0; i < s_buffer.Count; i++)
-            {
-                DamageTarget target = s_buffer[i];
-                if (target.Explosion == null)
-                {
-                    continue;
-                }
-
-                // Measure to the body surface, not the pivot, so a large enemy caught by
-                // the rim of a blast still takes a sensible fraction instead of zero.
-                float distance = Mathf.Max(0f, Vector3.Distance(origin, target.Position) - target.Radius);
-                float normalised = radius > 0f ? Mathf.Clamp01(1f - distance / radius) : 1f;
-                float falloff = falloffExponent <= 1.0001f && falloffExponent >= 0.9999f
-                    ? normalised
-                    : Mathf.Pow(normalised, Mathf.Max(0.01f, falloffExponent));
-
-                float damage = totalDamage * falloff;
-                if (damage <= 0f)
-                {
-                    continue;
-                }
-
-                DamageResult result = target.Explosion.ApplyExplosion(damage, origin);
-                results?.Add(result);
-                affected++;
-            }
-
-            s_buffer.Clear();
-            return affected;
-        }
-    }
+    // WP-006: the former ExplosionUtility.Detonate (a second, undressed blast path with
+    // no production caller) was removed. The single canonical blast entry point is
+    // Weapons/HitscanEngine.Explode - one application per enemy, one dressing, one budget.
 }

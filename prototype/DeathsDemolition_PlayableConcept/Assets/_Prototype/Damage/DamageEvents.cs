@@ -15,9 +15,18 @@ namespace DD.Prototype.Damage
     // Every payload is a readonly struct passed by value: subscribing costs one delegate,
     // raising costs zero allocations, which matters at 40 enemies under automatic fire.
     //
-    // ORDERING GUARANTEE
-    //   For a hit that both breaks a plate and kills: EnemyDamaged -> ArmorBroken -> EnemyDied.
-    //   ArmorBroken fires once per piece, so one explosion can raise it three times.
+    // ORDERING GUARANTEE (aligned with the producer in WP-006; the earlier text here said
+    // EnemyDamaged first, the code has always raised the breaks first)
+    //   For a hit that both breaks a plate and kills: ArmorBroken (once per piece, so one
+    //   explosion can raise it up to three times) -> EnemyDamaged -> EnemyDied.
+    //   No subscriber depends on the relative order of ArmorBroken and EnemyDamaged; the
+    //   kill/gold path only depends on EnemyDied being last and exactly once.
+    //
+    // WP-006 EXTENSIONS (backward compatible)
+    //   ArmorBreakInfo, EnemyDamageInfo and EnemyDeathInfo gained overloads that carry a
+    //   DamageEventMeta (life id, transaction id, event id, routing kind, armour
+    //   before/after, per-region breakdown). The original constructors still exist and
+    //   leave Meta at default; subscriber delegate types are unchanged.
     // =====================================================================================
 
     /// <summary>One armour piece went from protecting to broken. REQ-129.</summary>
@@ -52,9 +61,24 @@ namespace DD.Prototype.Damage
         /// </summary>
         public readonly float SuggestedHitStop;
 
+        /// <summary>
+        /// WP-006: life/transaction/event identity, routing kind and the durability the
+        /// plate had before this call (ArmorBefore(Slot); after is 0 by definition).
+        /// Default when raised through the original constructor.
+        /// </summary>
+        public readonly DamageEventMeta Meta;
+
         public ArmorBreakInfo(Transform owner, EnemyTier tier, ArmorSlot slot, BodyRegion region,
             Vector3 point, Vector3 direction, DamageSourceKind source, int remainingProtectingPieces,
             float suggestedHitStop)
+            : this(owner, tier, slot, region, point, direction, source, remainingProtectingPieces,
+                suggestedHitStop, default)
+        {
+        }
+
+        public ArmorBreakInfo(Transform owner, EnemyTier tier, ArmorSlot slot, BodyRegion region,
+            Vector3 point, Vector3 direction, DamageSourceKind source, int remainingProtectingPieces,
+            float suggestedHitStop, in DamageEventMeta meta)
         {
             Owner = owner;
             Tier = tier;
@@ -65,7 +89,14 @@ namespace DD.Prototype.Damage
             Source = source;
             RemainingProtectingPieces = remainingProtectingPieces;
             SuggestedHitStop = suggestedHitStop;
+            Meta = meta;
         }
+
+        /// <summary>Life id when a WP-006 producer raised this, else 0.</summary>
+        public int LifeId => Meta.LifeId;
+
+        /// <summary>Transaction id when a WP-006 producer raised this, else 0.</summary>
+        public int TransactionId => Meta.TransactionId;
     }
 
     /// <summary>An enemy died. This is the gold / kill-counter / XP hook. Fires exactly once per enemy life.</summary>
@@ -146,7 +177,36 @@ namespace DD.Prototype.Damage
             Overkill = overkill;
             SuggestedHitStop = suggestedHitStop;
             LifeId = lifeId;
+            Meta = default;
         }
+
+        /// <summary>WP-006: the full meta of the killing call (transaction id, routing kind, armour left at death).</summary>
+        public readonly DamageEventMeta Meta;
+
+        public EnemyDeathInfo(Transform owner, EnemyTier tier, Vector3 position, Vector3 killDirection,
+            BodyRegion killRegion, DamageSourceKind killSource, bool wasCritical, bool wasHeavyDeath,
+            int spawnRound, int goldReward, int killXp, float overkill, float suggestedHitStop, int lifeId,
+            in DamageEventMeta meta)
+        {
+            Owner = owner;
+            Tier = tier;
+            Position = position;
+            KillDirection = killDirection;
+            KillRegion = killRegion;
+            KillSource = killSource;
+            WasCritical = wasCritical;
+            WasHeavyDeath = wasHeavyDeath;
+            SpawnRound = spawnRound;
+            GoldReward = goldReward;
+            KillXp = killXp;
+            Overkill = overkill;
+            SuggestedHitStop = suggestedHitStop;
+            LifeId = lifeId;
+            Meta = meta;
+        }
+
+        /// <summary>Transaction id of the killing call when a WP-006 producer raised this, else 0.</summary>
+        public int TransactionId => Meta.TransactionId;
     }
 
     /// <summary>
@@ -174,7 +234,7 @@ namespace DD.Prototype.Damage
         }
     }
 
-    /// <summary>Any non-lethal damage landed on an enemy. Fires for every bullet, so keep handlers cheap.</summary>
+    /// <summary>Damage landed on an enemy, lethal or not (a killing call raises this and then EnemyDied). Fires for every bullet, so keep handlers cheap.</summary>
     public readonly struct EnemyDamageInfo
     {
         public readonly Transform Owner;
@@ -193,8 +253,23 @@ namespace DD.Prototype.Damage
         /// <summary>True when this hit produced a real stagger, not just a flinch. REQ-123.</summary>
         public readonly bool CausedStagger;
 
+        /// <summary>
+        /// WP-006 contract data: life/transaction/event identity, Direct vs Explosion
+        /// routing, struck slot, armour before/after per slot, health before/after and the
+        /// per-region breakdown of this call. Default when raised through the original
+        /// constructor. Classify it with <see cref="DamageEventClassifier"/>.
+        /// </summary>
+        public readonly DamageEventMeta Meta;
+
         public EnemyDamageInfo(Transform owner, EnemyTier tier, in DamageResult result, Vector3 point,
             Vector3 direction, DamageSourceKind source, float impactForce, float healthRatio, bool causedStagger)
+            : this(owner, tier, in result, point, direction, source, impactForce, healthRatio, causedStagger, default)
+        {
+        }
+
+        public EnemyDamageInfo(Transform owner, EnemyTier tier, in DamageResult result, Vector3 point,
+            Vector3 direction, DamageSourceKind source, float impactForce, float healthRatio, bool causedStagger,
+            in DamageEventMeta meta)
         {
             Owner = owner;
             Tier = tier;
@@ -205,7 +280,16 @@ namespace DD.Prototype.Damage
             ImpactForce = impactForce;
             HealthRatio = healthRatio;
             CausedStagger = causedStagger;
+            Meta = meta;
         }
+
+        /// <summary>Life id when a WP-006 producer raised this, else 0.</summary>
+        public int LifeId => Meta.LifeId;
+
+        /// <summary>Direct or Explosion routing (from Meta; falls back to Source when Meta is absent).</summary>
+        public DamageKind Kind => Meta.IsPresent
+            ? Meta.Kind
+            : (Source == DamageSourceKind.Explosion ? DamageKind.Explosion : DamageKind.Direct);
     }
 
     /// <summary>

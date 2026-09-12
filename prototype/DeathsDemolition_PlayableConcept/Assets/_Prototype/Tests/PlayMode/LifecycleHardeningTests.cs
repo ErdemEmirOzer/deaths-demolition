@@ -180,6 +180,11 @@ namespace DD.Prototype.Tests.PlayMode
                 { "ProfileService.Changed", -1 }, { "InputSourceRegistry.CurrentChanged", 0 },
                 { "WeaponRegistry.ActiveChanged", 2 }, { "PlayerHealth.AnyPlayerDied", 1 },
                 { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 1 },
+                // WP-006: hasar olay busu izlenir. Run-yerel aboneler: EnemyDied ← RunDirector (kill/gold
+                // istatistiği) + GoldService (paket); ArmorBroken ← RunDirector (kırılma sayacı). EnemyDamaged /
+                // PlayerAttacked / EnemyHitDressed'a Run'da kalıcı abone yok (feedback tek sahibi çekmez, iter).
+                { "DamageEvents.EnemyDied", 2 }, { "DamageEvents.ArmorBroken", 1 }, { "DamageEvents.EnemyDamaged", 0 },
+                { "DamageEvents.PlayerAttacked", 0 }, { "HitFeedbackDirector.EnemyHitDressed", 0 },
             };
             Dictionary<string, int> fark = Fark(run1, menu1);
             Yazdir("run-minus-menu", fark);

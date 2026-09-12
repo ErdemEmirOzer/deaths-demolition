@@ -17,7 +17,7 @@ namespace DD.Prototype.Enemies
     /// All state changes go through shared materials and SetActive. Nothing here allocates
     /// after the first call, and nothing instantiates a material.
     /// </summary>
-    public sealed class ZombieAppearance
+    public sealed class ZombieAppearance : IArmorVisual
     {
         // ----------------------------------------------------- per-tier silhouette
         // NOT cosmetic. Scale is written to rig.Visual, which is the PARENT of the three
@@ -226,11 +226,63 @@ namespace DD.Prototype.Enemies
 
         // -------------------------------------------------------------------- armour
 
+        // Indexed by (int)ArmorSlot; index 0 (None) unused. The contract's StateOf answers
+        // from here - what was last applied - never from the scene.
+        private readonly ArmorVisualState[] _armorState = new ArmorVisualState[4];
+
+        /// <summary>The rig's three attachment anchors (REQ-115 kabuto / dō / haidate).</summary>
+        public ArmorAnchors Anchors => new ArmorAnchors(
+            _rig.HelmetRoot != null ? _rig.HelmetRoot.transform : null,
+            _rig.BodyArmorRoot != null ? _rig.BodyArmorRoot.transform : null,
+            _rig.LegArmorRoot != null ? _rig.LegArmorRoot.transform : null);
+
+        /// <summary>IArmorVisual: the state machine over the four plate methods below. Idempotent, allocation-free.</summary>
+        public void Apply(ArmorSlot slot, ArmorVisualState state, float ratio01)
+        {
+            int i = (int)slot;
+            if (i <= 0 || i >= _armorState.Length)
+            {
+                return;
+            }
+
+            switch (state)
+            {
+                case ArmorVisualState.Absent:
+                    SetPieces(PiecesFor(slot), 0);
+                    break;
+                case ArmorVisualState.Present:
+                    EquipArmor(slot);
+                    break;
+                case ArmorVisualState.Damaged:
+                    RefreshArmorDamage(slot, ratio01);
+                    break;
+                case ArmorVisualState.Broken:
+                    if (_armorState[i] != ArmorVisualState.Broken)
+                    {
+                        BreakArmor(slot);
+                    }
+                    break;
+            }
+
+            _armorState[i] = state;
+        }
+
+        public ArmorVisualState StateOf(ArmorSlot slot)
+        {
+            int i = (int)slot;
+            return i > 0 && i < _armorState.Length ? _armorState[i] : ArmorVisualState.Absent;
+        }
+
         public void HideAllArmor()
         {
             SetPieces(_rig.HelmetPieces, 0);
             SetPieces(_rig.BodyArmorPieces, 0);
             SetPieces(_rig.LegArmorPieces, 0);
+
+            for (int i = 0; i < _armorState.Length; i++)
+            {
+                _armorState[i] = ArmorVisualState.Absent;
+            }
         }
 
         /// <summary>Show a full plate group. Called when a piece is equipped at spawn.</summary>

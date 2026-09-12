@@ -45,6 +45,13 @@ namespace DD.Prototype.Tests.PlayMode
             (typeof(PlayerHealth), "AnyPlayerDied"),
             (typeof(PlayerHealth), "AnyHealthChanged"),
             (typeof(PlayerHealth), "AnyDamaged"),
+            // WP-006: damage/armour event bus and the single feedback owner's hook, so a
+            // subscription that multiplies across runs is measured here too.
+            (typeof(DD.Prototype.Damage.DamageEvents), "ArmorBroken"),
+            (typeof(DD.Prototype.Damage.DamageEvents), "EnemyDamaged"),
+            (typeof(DD.Prototype.Damage.DamageEvents), "EnemyDied"),
+            (typeof(DD.Prototype.Damage.DamageEvents), "PlayerAttacked"),
+            (typeof(DD.Prototype.Feedback.HitFeedbackDirector), "EnemyHitDressed"),
         };
 
         public static int AboneSayisi(Type tip, string eventAdi)

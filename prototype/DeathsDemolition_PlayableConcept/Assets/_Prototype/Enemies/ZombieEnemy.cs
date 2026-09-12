@@ -59,6 +59,19 @@ namespace DD.Prototype.Enemies
         private bool _dying;
         private float _despawnCountdown;
 
+        // WP-006 event contract: the transaction this life last accepted damage in. A
+        // second application inside the same transaction is refused (see ApplyHit).
+        private int _lastTransactionId;
+        private DamageEventMeta _lastMeta;
+
+        private static int s_duplicateApplicationCount;
+
+        /// <summary>Applications refused because the same transaction already reached this enemy. Test/probe readout.</summary>
+        public static int DuplicateApplicationCount => s_duplicateApplicationCount;
+
+        /// <summary>WP-006 meta of the most recent accepted damage call (default before the first). Test/probe readout.</summary>
+        public DamageEventMeta LastDamageMeta => _lastMeta;
+
         private Vector3 _knockbackVelocity;
         private float _verticalVelocity;
         private Vector3 _plannedVelocity;
@@ -177,6 +190,7 @@ namespace DD.Prototype.Enemies
         private static void ResetLiveRoster()
         {
             s_live.Clear();
+            s_duplicateApplicationCount = 0;
         }
 
         // ==================================================================== lifecycle
@@ -287,6 +301,8 @@ namespace DD.Prototype.Enemies
             _currentSpeed = 0f;
             _alive = false;   // Initialise flips this on
             _dying = false;
+            _lastTransactionId = 0;
+            _lastMeta = default;
 
             if (_controller != null)
             {
@@ -320,6 +336,13 @@ namespace DD.Prototype.Enemies
 
             _alive = false;
             _dying = false;
+
+            // WP-006: strip the armour on the way OUT as well as on the way in (OnSpawned →
+            // Reset), so a pooled body never carries a previous life's plates, broken or
+            // not, for even one frame after it is handed out again.
+            _body?.Armor.Clear();
+            _lastTransactionId = 0;
+            _lastMeta = default;
 
             // WP-003 lifecycle contract: the body is going back to the pool. Reported
             // before Released so the round ledger is consistent when listeners read it.
@@ -423,15 +446,73 @@ namespace DD.Prototype.Enemies
                 return;
             }
 
-            float durability = armorConfig.DurabilityFor(slot);
+            Fit(armorConfig, slot);
+        }
+
+        private bool Fit(ArmorConfigSection armorConfig, ArmorSlot slot)
+        {
+            float durability = armorConfig != null ? armorConfig.DurabilityFor(slot) : 0f;
             if (durability <= 0f)
             {
-                return;
+                return false;
             }
 
             _body.Armor.Equip(slot, durability);
-            _appearance.EquipArmor(slot);
+            _appearance.Apply(slot, ArmorVisualState.Present, 1f);
+            return true;
         }
+
+        /// <summary>
+        /// WP-006 test / probe harness: replace whatever the spawn roll fitted with an
+        /// exact 0/1/2/3 composition, at full durability from the same PrototypeOnly
+        /// config the roll uses. Only on a living enemy; never called by production spawn
+        /// (RollArmor is untouched), so it cannot change the shipped odds. Returns the
+        /// number of pieces fitted.
+        /// </summary>
+        public int FitArmorComposition(bool helmet, bool body, bool leg)
+        {
+            if (!_alive || _body == null)
+            {
+                return 0;
+            }
+
+            PrototypeConfig config = PrototypeConfig.Active;
+            ArmorConfigSection armorConfig = config != null ? config.Enemies.Armor : null;
+
+            _body.Armor.Clear();
+            _appearance.HideAllArmor();
+
+            int fitted = 0;
+            if (helmet && Fit(armorConfig, ArmorSlot.Helmet)) fitted++;
+            if (body && Fit(armorConfig, ArmorSlot.Body)) fitted++;
+            if (leg && Fit(armorConfig, ArmorSlot.Leg)) fitted++;
+            return fitted;
+        }
+
+        /// <summary>Region hitbox collider (test/probe readout: aim points for the real weapon path). Null when the rig is incomplete.</summary>
+        public Collider HitboxFor(BodyRegion region)
+        {
+            if (_rig == null)
+            {
+                return null;
+            }
+
+            switch (region)
+            {
+                case BodyRegion.Head: return _rig.HeadHitbox;
+                case BodyRegion.LowerBody: return _rig.LowerHitbox;
+                default: return _rig.UpperHitbox;
+            }
+        }
+
+        /// <summary>The visual state last applied to a slot (IArmorVisual contract). Test/probe readout.</summary>
+        public ArmorVisualState ArmorVisualStateOf(ArmorSlot slot)
+        {
+            return _appearance != null ? _appearance.StateOf(slot) : ArmorVisualState.Absent;
+        }
+
+        /// <summary>Attachment anchors for the three armour pieces (REQ-115).</summary>
+        public ArmorAnchors ArmorAnchors => _appearance != null ? _appearance.Anchors : default;
 
         // ======================================================================== tick
 
@@ -616,10 +697,71 @@ namespace DD.Prototype.Enemies
                 return default;
             }
 
+            if (RefuseDuplicateTransaction())
+            {
+                return default;
+            }
+
             PrototypeConfig config = PrototypeConfig.Active;
+            SnapshotBefore(out float healthBefore, out float helmetBefore, out float bodyBefore, out float legBefore);
+
             DamageResult result = _body.ApplyDirectHit(in hit, config != null ? config.Enemies.Armor : null);
+
+            BuildMeta(DamageKind.Direct, DamageRegions.SlotFor(hit.Region),
+                healthBefore, helmetBefore, bodyBefore, legBefore);
             ProcessResult(in hit, in result, hit.Point, hit.Direction);
             return result;
+        }
+
+        /// <summary>
+        /// WP-006 event contract: the same weapon-side transaction (one shot / one blast /
+        /// one external hit) reaches one enemy at most once. HitscanEngine's per-shot
+        /// target list already guarantees this on its side; this is the receiver's own
+        /// guard, so a duplicate can never break, reward or dress twice. Outside a
+        /// transaction (id 0: debug Kill, tests calling ApplyHit directly) nothing is refused.
+        /// </summary>
+        private bool RefuseDuplicateTransaction()
+        {
+            int tx = DamageTransaction.Current;
+            if (tx == 0)
+            {
+                return false;
+            }
+
+            if (tx == _lastTransactionId)
+            {
+                s_duplicateApplicationCount++;
+                return true;
+            }
+
+            _lastTransactionId = tx;
+            return false;
+        }
+
+        private void SnapshotBefore(out float health, out float helmet, out float body, out float leg)
+        {
+            health = _body.Health;
+            helmet = _body.Armor.Current(ArmorSlot.Helmet);
+            body = _body.Armor.Current(ArmorSlot.Body);
+            leg = _body.Armor.Current(ArmorSlot.Leg);
+        }
+
+        private void BuildMeta(DamageKind kind, ArmorSlot slot,
+            float healthBefore, float helmetBefore, float bodyBefore, float legBefore)
+        {
+            ArmorSet armor = _body.Armor;
+            _lastMeta = new DamageEventMeta(
+                _lifeId, DamageTransaction.Current, DamageEventIds.Next(), kind, slot,
+                healthBefore, _body.Health,
+                helmetBefore, armor.Current(ArmorSlot.Helmet),
+                bodyBefore, armor.Current(ArmorSlot.Body),
+                legBefore, armor.Current(ArmorSlot.Leg),
+                _body.LastHealthDamageIn(BodyRegion.Head),
+                _body.LastHealthDamageIn(BodyRegion.UpperBody),
+                _body.LastHealthDamageIn(BodyRegion.LowerBody),
+                _body.LastArmorDamageIn(BodyRegion.Head),
+                _body.LastArmorDamageIn(BodyRegion.UpperBody),
+                _body.LastArmorDamageIn(BodyRegion.LowerBody));
         }
 
         /// <summary>
@@ -633,11 +775,20 @@ namespace DD.Prototype.Enemies
                 return default;
             }
 
+            if (RefuseDuplicateTransaction())
+            {
+                return default;
+            }
+
             PrototypeConfig config = PrototypeConfig.Active;
+            SnapshotBefore(out float healthBefore, out float helmetBefore, out float bodyBefore, out float legBefore);
+
             DamageResult result = _body.ApplyExplosion(
                 totalDamage,
                 config != null ? config.Enemies.Armor : null,
                 config != null ? config.Enemies.Explosion : null);
+
+            BuildMeta(DamageKind.Explosion, ArmorSlot.None, healthBefore, helmetBefore, bodyBefore, legBefore);
 
             Vector3 centre = transform.position + Vector3.up * (ZombieBodyBuilder.StandHeight * 0.5f);
             Vector3 direction = centre - origin;
@@ -674,14 +825,15 @@ namespace DD.Prototype.Enemies
             for (int i = 0; i < _body.LastBreakCount; i++)
             {
                 ArmorSlot slot = _body.LastBreak(i);
-                _appearance.BreakArmor(slot);
+                _appearance.Apply(slot, ArmorVisualState.Broken, 0f);
 
                 DamageEvents.RaiseArmorBroken(new ArmorBreakInfo(
                     transform, _tier, slot, DamageRegions.RegionFor(slot), point, direction, hit.Source,
                     _body.Armor.ProtectingCount,
                     PrototypeConfig.Active != null
                         ? PrototypeConfig.Active.Feedback.HitStopArmorBreak
-                        : FallbackHitStopArmorBreak));
+                        : FallbackHitStopArmorBreak,
+                    in _lastMeta));
             }
 
             // ------------------------------------------------------------ hit reaction
@@ -718,7 +870,7 @@ namespace DD.Prototype.Enemies
             // ------------------------------------------------------------------- events
             DamageEvents.RaiseEnemyDamaged(new EnemyDamageInfo(
                 transform, _tier, in result, point, direction, hit.Source, hit.ImpactForce,
-                _body.HealthRatio, reaction.Stagger));
+                _body.HealthRatio, reaction.Stagger, in _lastMeta));
 
             if (result.Killed)
             {
@@ -728,12 +880,16 @@ namespace DD.Prototype.Enemies
 
         private void RefreshArmorVisual(ArmorSlot slot)
         {
-            if (!_body.Armor.IsEquipped(slot) || _body.Armor.IsBroken(slot))
+            ArmorSet armor = _body.Armor;
+            if (!armor.IsEquipped(slot) || armor.IsBroken(slot))
             {
+                // Broken is applied by the break loop (once, with its event); Absent never
+                // needs refreshing.
                 return;
             }
 
-            _appearance.RefreshArmorDamage(slot, _body.Armor.Ratio(slot));
+            float ratio = armor.Ratio(slot);
+            _appearance.Apply(slot, ratio >= 1f ? ArmorVisualState.Present : ArmorVisualState.Damaged, ratio);
         }
 
         // ======================================================================= death
@@ -795,7 +951,7 @@ namespace DD.Prototype.Enemies
             DamageEvents.RaiseEnemyDied(new EnemyDeathInfo(
                 transform, _tier, transform.position, direction, result.Region, hit.Source,
                 DamageRegions.IsCritical(in result, hit.Source), heavyTier, _spawnRound,
-                gold, xp, _body.LastOverkill, hitStop, _lifeId));
+                gold, xp, _body.LastOverkill, hitStop, _lifeId, in _lastMeta));
         }
 
         /// <summary>
@@ -809,7 +965,9 @@ namespace DD.Prototype.Enemies
                 return;
             }
 
+            SnapshotBefore(out float healthBefore, out float helmetBefore, out float bodyBefore, out float legBefore);
             DamageResult result = _body.Execute(BodyRegion.UpperBody);
+            BuildMeta(DamageKind.Debug, ArmorSlot.None, healthBefore, helmetBefore, bodyBefore, legBefore);
             var syntheticHit = new DamageHit
             {
                 Amount = result.HealthDamage,
@@ -823,6 +981,8 @@ namespace DD.Prototype.Enemies
             ProcessResult(in syntheticHit, in result, syntheticHit.Point, syntheticHit.Direction);
         }
 
+        private static readonly ArmorSlot[] s_breakScratch = new ArmorSlot[3];
+
         /// <summary>Debug: shatter every remaining plate, raising one event per piece.</summary>
         public int BreakAllArmor()
         {
@@ -831,7 +991,7 @@ namespace DD.Prototype.Enemies
                 return 0;
             }
 
-            var broken = new ArmorSlot[3];
+            ArmorSlot[] broken = s_breakScratch;
             int count = _body.Armor.BreakAll(broken);
 
             Vector3 point = transform.position + Vector3.up * 1.1f;
@@ -839,7 +999,7 @@ namespace DD.Prototype.Enemies
 
             for (int i = 0; i < count; i++)
             {
-                _appearance.BreakArmor(broken[i]);
+                _appearance.Apply(broken[i], ArmorVisualState.Broken, 0f);
 
                 DamageEvents.RaiseArmorBroken(new ArmorBreakInfo(
                     transform, _tier, broken[i], DamageRegions.RegionFor(broken[i]), point, direction,

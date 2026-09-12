@@ -856,8 +856,11 @@ namespace DD.Prototype.Feedback
 
             // A head hit only counts as critical when it actually reached flesh. A helmet
             // taking a bullet is an armour hit, not a critical - that distinction is the
-            // whole point of the regional armour model.
-            if (r.Region == BodyRegion.Head && !r.WasArmored && r.HealthDamage > 0f)
+            // whole point of the regional armour model. A blast never is one (REQ-089):
+            // its "region" is only the loudest share, and the damage model applies no
+            // regional multiplier to it - so the feedback must not dress it as a critical
+            // either (WP-006; same rule as DamageRegions.IsCritical).
+            if (!info.FromExplosion && r.Region == BodyRegion.Head && !r.WasArmored && r.HealthDamage > 0f)
             {
                 tier = Louder(tier, HitFeedbackTier.CriticalHit);
             }

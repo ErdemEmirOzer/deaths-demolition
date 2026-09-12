@@ -26,7 +26,7 @@ field is the line immediately after, or two lines after where a `[Range]` interv
 
 Counted by static scan of every `.cs` file under `Assets/_Prototype` on 2026-08-18 (**historical**).
 Re-count as of WP-000 Phase 2 (2026-09-10): **491** `[PrototypeOnly(` declarations
-(`grep -rc "\[PrototypeOnly(" --include=*.cs`); **487 as of WP-005 (2026-09-12; unchanged from WP-004)** — the meta UI slice adds no attribute-tagged value: its layout constants (`UpgradeScreen.IconWellSize`/`IconSize`, `MainMenuScreen.MaxAchievementRows`, `ResultsViewModel.MaxRewardEntries`/`BuildMaxCharacters`, `RunHudViewModel.WeaponNameMaxCharacters`/`BuildMaxCharacters`) are PROTOTYPE-ONLY art-direction measures documented in code like the existing UI constants, and the optional upgrade icon slot reads `Resources/UI/UpgradeIcons/<Branch>` where nothing exists in M1; XP curve, unlock levels and the achievement list stay the WP-000 prototype values — **487 as of WP-004 (2026-09-12)** — the WP-004 gold/upgrade
+(`grep -rc "\[PrototypeOnly(" --include=*.cs`); **487 plain-form + 4 fully-qualified = 491 as of WP-006 (2026-09-12)** — the regional armour / explosion slice adds exactly four PROTOTYPE-ONLY measures, none a product number: `DamageTargetResolver.HeadThreshold` (0.80) and `UpperBodyThreshold` (0.45) are the height-ratio *fallback* used only when a collider is not in `HitboxRegistry` (counted in `RegionFallbackCount`, warned once), `HitscanEngine.OverlapBufferSize` (192, was a bare 64 — saturation now counted) and `ExplosionRimDamageFraction` (0.45, was a bare literal); armour durability 22/38/28, exposed multipliers 2/1/0.8 and explosion shares 25/45/30 were already tagged in WP-002 and are unchanged. **487 as of WP-005 (2026-09-12; unchanged from WP-004)** — the meta UI slice adds no attribute-tagged value: its layout constants (`UpgradeScreen.IconWellSize`/`IconSize`, `MainMenuScreen.MaxAchievementRows`, `ResultsViewModel.MaxRewardEntries`/`BuildMaxCharacters`, `RunHudViewModel.WeaponNameMaxCharacters`/`BuildMaxCharacters`) are PROTOTYPE-ONLY art-direction measures documented in code like the existing UI constants, and the optional upgrade icon slot reads `Resources/UI/UpgradeIcons/<Branch>` where nothing exists in M1; XP curve, unlock levels and the achievement list stay the WP-000 prototype values — **487 as of WP-004 (2026-09-12)** — the WP-004 gold/upgrade
 slice adds exactly two invented presentation/sizing values on `GoldService` (`_sweepFlightDuration`,
 `_packetPoolMargin`, both `UpgradesAndGold`, both `invented`) and removes none: `OrbLifetime` and
 `GoldCollectionMode` stay declared (the shipped config asset is untouched) but are **no longer read**
@@ -46,8 +46,8 @@ its first argument (the pending decision) and its third argument (`invented`).
 
 | Metric | Count |
 |---|---|
-| `[PrototypeOnly(...)]` declarations in code | **487** (2026-09-12, WP-004 re-count: +2 invented on `GoldService`; 485 at WP-003/WP-002; 491 at 2026-09-10; 337 at 2026-08-18) |
-| Carrying an origin tag | 487 — the attribute *is* the tag |
+| `[PrototypeOnly(...)]` declarations in code | **491** (2026-09-12, WP-006 re-count: +4 fully-qualified on `DamageTargetResolver`/`HitscanEngine`, plain-form grep still 487; 487 at WP-004/WP-005; 485 at WP-003/WP-002; 491 at 2026-09-10; 337 at 2026-08-18) |
+| Carrying an origin tag | 491 — the attribute *is* the tag |
 | Declarations with **no source in the request at all** (`invented: true`) | **237 as of 2026-08-18; re-count pending WP-000 Phase 4** |
 | Literal `PROTOTYPE-ONLY` string occurrences under `Assets/` | 163 (156 in `.cs`, 6 in `.md`, 1 line carries two) |
 
