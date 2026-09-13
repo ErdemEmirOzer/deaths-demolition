@@ -258,7 +258,13 @@ namespace DD.Prototype.Rounds
                 return;
             }
 
-            GUILayout.Label(string.Format("Round {0} offer - {1} gold - no reroll", _shop.Round, _shop.Gold));
+            GUILayout.Label(string.Format("Round {0} offer s{1} r{2} - {3} gold - purchase {4}, reroll {5} ({6}g)",
+                _shop.Round, _shop.SessionId, _shop.Revision, _shop.Gold, _shop.PurchaseEntitlement, _shop.RerollAvailability, _shop.RerollCost));
+
+            if (_shop.Status == UpgradeOfferStatus.ConfigurationError)
+            {
+                GUILayout.Label("CONFIGURATION ERROR: " + _shop.Fault + " - no cards, nothing charged, CONTINUE works.");
+            }
 
             IReadOnlyList<UpgradeCardOffer> cards = _shop.Cards;
             for (int i = 0; i < cards.Count; i++)
@@ -267,7 +273,7 @@ namespace DD.Prototype.Rounds
 
                 string label = string.Format("{0}  {1}g  ({2})",
                     card.TitleWithTier, card.Cost,
-                    card.Purchased ? "bought" : _shop.CanAfford(i) ? "buy" : "too expensive");
+                    card.Purchased ? "bought" : _shop.IsLocked ? "locked" : _shop.CanAfford(i) ? "buy" : "too expensive");
 
                 if (GUILayout.Button(label) && !card.Purchased)
                 {
@@ -275,6 +281,16 @@ namespace DD.Prototype.Rounds
                 }
 
                 GUILayout.Label("    " + card.Description);
+            }
+
+            if (GUILayout.Button("REROLL (" + _shop.RerollCost + "g, " + _shop.RerollAvailability + ")"))
+            {
+                _shop.TryReroll();
+            }
+
+            if (_shop.LastRerollResult != UpgradeRerollResult.None)
+            {
+                GUILayout.Label("    last reroll: " + _shop.LastRerollResult);
             }
 
             if (GUILayout.Button("CONTINUE (skip the rest)"))

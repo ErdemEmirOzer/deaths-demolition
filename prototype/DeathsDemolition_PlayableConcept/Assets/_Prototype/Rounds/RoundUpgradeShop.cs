@@ -2,51 +2,71 @@ using System;
 using System.Collections.Generic;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Economy;
+using DD.Prototype.Profile;
 using DD.Prototype.Weapons;
 using UnityEngine;
 
 namespace DD.Prototype.Rounds
 {
     /// <summary>
-    /// The round-end upgrade offer: three cards, buy or skip, no reroll.
+    /// The round-end upgrade SESSION (WP-004 shop, completed by WP-008): three cards, at
+    /// most one purchase, at most one paid reroll before it, or continue with nothing.
     ///
-    /// RULES FROM THE REQUEST, AND WHERE EACH ONE LIVES
-    ///   * three cards per round end ......... EconomyConfigSection.CardsPerRound
-    ///   * buy one, several, or none ......... <see cref="TryPurchase"/> may be called
-    ///                                         until the gold runs out; skipping is just
-    ///                                         closing the screen
-    ///   * NO REROLL ......................... there is no Reroll method on this class at
-    ///                                         all. EconomyConfigSection.AllowReroll is
-    ///                                         read only to assert it is false, so an
-    ///                                         accidental true is reported instead of
-    ///                                         silently doing nothing
-    ///   * unspent gold carries over ......... nothing here or in the round transition
-    ///                                         touches GoldWallet.Balance
-    ///   * cost starts at 15-45 and rises .... UpgradeBranchSettings.CostForTier, clamped
-    ///                                         into the StartingCostMin/Max band on the
-    ///                                         first tier only
+    /// RULES, AND WHERE EACH ONE LIVES
+    ///   * exactly three distinct valid cards ... UpgradeOfferPolicy.TryBuildOffer (DEC-047)
+    ///   * price never hides a card ............ eligibility ignores the wallet (decision 9);
+    ///                                           the screen disables the button instead
+    ///   * one purchase per round .............. PurchaseEntitlement (DEC-048 / REQ-078);
+    ///                                           a purchase LOCKS the offer
+    ///   * one paid reroll, before a purchase .. RerollEntitlement + TryReroll (DEC-050 /
+    ///                                           REQ-079); one or two cards change
+    ///   * rights survive reopen / pause /
+    ///     reconnect / replayed commands ....... the offer is keyed to (run, round) and
+    ///                                           kept across Close/Open of the same round;
+    ///                                           a command quotes session + revision
+    ///   * no valid offer -> no charge, no
+    ///     fake card, safe error, CONTINUE ..... Status = ConfigurationError (decision 17)
+    ///   * money moves last and once ........... every check precedes the spend; there is
+    ///                                           no refund path (decision 18)
+    ///   * unspent gold carries over ........... nothing here touches the balance except
+    ///                                           the two spends
     ///
     /// A plain class, not a MonoBehaviour: <see cref="RunDirector"/> owns one, and a test
-    /// can build its own with a throwaway wallet.
+    /// builds its own with a throwaway wallet, an injected rank authority, an injected
+    /// unlock predicate and a seeded <see cref="IUpgradeOfferRandom"/>.
     ///
     /// G-08 CONTRACT
-    ///     shop.IsOpen                      -> draw the screen
+    ///     shop.IsOpen / shop.Status        -> draw the screen, or the error notice
     ///     shop.Cards                       -> three UpgradeCardOffer, already priced
     ///     shop.CanAfford(i)                -> enable/disable the buy button
-    ///     shop.TryPurchase(i)              -> the entire purchase
+    ///     shop.TryPurchase(i, s, r)        -> the entire purchase
+    ///     shop.RerollAvailability          -> enable/disable/label the reroll button
+    ///     shop.TryReroll(s, r)             -> the entire reroll
     ///     RunDirector.Instance.CloseUpgradeScreen() -> the CONTINUE button
     /// Nothing else. The shop never draws and the screen never prices.
     /// </summary>
     public sealed class RoundUpgradeShop
     {
-        private readonly List<UpgradeCardOffer> _cards = new List<UpgradeCardOffer>(4);
+        private readonly List<UpgradeCardOffer> _cards = new List<UpgradeCardOffer>(UpgradeOfferPolicy.CardsPerOffer);
         private readonly List<UpgradeBranchSettings> _candidates = new List<UpgradeBranchSettings>(16);
         private readonly List<float> _weights = new List<float>(16);
+        private readonly List<UpgradeBranchSettings> _picks = new List<UpgradeBranchSettings>(UpgradeOfferPolicy.CardsPerOffer);
+        private readonly List<UpgradeBranchSettings> _current = new List<UpgradeBranchSettings>(UpgradeOfferPolicy.CardsPerOffer);
+        private readonly List<int> _replacedSlots = new List<int>(UpgradeOfferPolicy.CardsPerOffer);
 
         private PrototypeConfig _config;
         private GoldWallet _wallet;
         private WeaponModifierState _injectedModifiers;
+        private Func<UpgradeBranch, bool> _unlocked;
+        private IUpgradeOfferRandom _random;
         private bool _purchasing;
+        private bool _rerolling;
+
+        // The (run, round) the current offer was built for. Reopening the same pair
+        // restores the offer with its entitlements instead of rolling a free new one.
+        private bool _offerBuilt;
+        private int _offerRunId;
+        private int _offerRound;
 
         // ------------------------------------------------------------------ state
 
@@ -59,62 +79,123 @@ namespace DD.Prototype.Rounds
         public int RunId { get; private set; }
 
         /// <summary>
-        /// Identity of the current screen session, raised on every <see cref="Open"/>.
-        /// A purchase quoting an older session is refused: a button from the previous
-        /// round's screen, or a callback that arrived after the screen closed, cannot buy
-        /// into this round's offer (WP-004).
+        /// Identity of the current OFFER. Raised when an offer is built for a new (run,
+        /// round); kept when the same round's screen is reopened. A purchase quoting an
+        /// older session is refused: a button from the previous round's screen, or a
+        /// callback that arrived after the screen closed, cannot buy into this offer.
         /// </summary>
         public int SessionId { get; private set; }
 
-        /// <summary>Why the last <see cref="TryPurchase"/> ended the way it did. F1 readout and the screen's footer.</summary>
+        /// <summary>
+        /// WP-008: revision of the current offer's CARDS. Rises on every reroll and every
+        /// purchase. A command quoting an older revision was decided on cards that are no
+        /// longer on the table and is refused.
+        /// </summary>
+        public int Revision { get; private set; }
+
+        /// <summary>WP-008: ready, or the safe error state with no cards.</summary>
+        public UpgradeOfferStatus Status { get; private set; } = UpgradeOfferStatus.Closed;
+
+        /// <summary>WP-008: why <see cref="Status"/> is ConfigurationError. None when Ready.</summary>
+        public UpgradeOfferFault Fault { get; private set; } = UpgradeOfferFault.None;
+
+        /// <summary>WP-008 (DEC-048): the one purchase of this round.</summary>
+        public UpgradeEntitlement PurchaseEntitlement { get; private set; } = UpgradeEntitlement.Available;
+
+        /// <summary>WP-008 (DEC-050): the one paid reroll of this round. Locked once a purchase is made.</summary>
+        public UpgradeEntitlement RerollEntitlement { get; private set; } = UpgradeEntitlement.Available;
+
+        /// <summary>True once this round's purchase was made: no further purchase, no reroll. CONTINUE only.</summary>
+        public bool IsLocked => PurchaseEntitlement != UpgradeEntitlement.Available;
+
+        /// <summary>Why the last <see cref="TryPurchase(int,int,int)"/> ended the way it did. F1 readout and the screen's footer.</summary>
         public UpgradePurchaseResult LastResult { get; private set; } = UpgradePurchaseResult.None;
 
-        /// <summary>The three cards. Read-only by construction; buying goes through this class.</summary>
+        /// <summary>Why the last <see cref="TryReroll(int,int)"/> ended the way it did.</summary>
+        public UpgradeRerollResult LastRerollResult { get; private set; } = UpgradeRerollResult.None;
+
+        /// <summary>The three cards. Read-only by construction; buying goes through this class. Empty in the error state.</summary>
         public IReadOnlyList<UpgradeCardOffer> Cards => _cards;
 
         /// <summary>Spendable gold. Convenience so the screen does not need the wallet.</summary>
         public int Gold => _wallet != null ? _wallet.Balance : 0;
 
-        /// <summary>Cards bought on THIS screen. Resets on every open.</summary>
+        /// <summary>Cards bought on THIS offer. 0 or 1.</summary>
         public int PurchasesThisRound { get; private set; }
 
-        /// <summary>Gold spent on THIS screen.</summary>
+        /// <summary>Rerolls used on THIS offer. 0 or 1.</summary>
+        public int RerollsThisRound { get; private set; }
+
+        /// <summary>Gold spent on THIS offer: the purchase plus the reroll.</summary>
         public int GoldSpentThisRound { get; private set; }
+
+        /// <summary>Price of the reroll, from the config. 0 without a config.</summary>
+        public int RerollCost => _config != null ? Mathf.Max(0, _config.Economy.RerollCost) : 0;
+
+        /// <summary>Slots the last reroll replaced (indices into <see cref="Cards"/>). Test and probe readout.</summary>
+        public IReadOnlyList<int> LastRerollReplacedSlots => _replacedSlots;
 
         /// <summary>
         /// Debug only. Puts branches that no live system reads back into the draw, so the
         /// card layout can be tested with the full set. It changes NOTHING today: all ten
-        /// branches are backed since the four player-side ones were wired to PlayerMotor and
-        /// PlayerHealth. The switch stays because the next branch added to the enum will
-        /// need it. See <see cref="UpgradeCardCatalog"/>.
+        /// branches are backed. See <see cref="UpgradeCardCatalog"/>.
         /// </summary>
         public bool OfferUnbackedBranches { get; set; }
 
+        /// <summary>
+        /// Randomness of the draw. Production uses <see cref="UnityUpgradeOfferRandom"/>;
+        /// a test injects a <see cref="SeededUpgradeOfferRandom"/> so an offer and a reroll
+        /// replay exactly.
+        /// </summary>
+        public IUpgradeOfferRandom Random
+        {
+            get { return _random ?? UnityUpgradeOfferRandom.Shared; }
+            set { _random = value; }
+        }
+
+        /// <summary>
+        /// "Is this content unlocked?" (decision 9 / DEC-049). Null means the profile rule:
+        /// <see cref="ProfileService.IsBranchUnlocked"/> over UpgradeBranchSettings.UnlockProfileLevel.
+        /// A test injects its own so no profile file is read.
+        /// </summary>
+        public Func<UpgradeBranch, bool> UnlockedPredicate
+        {
+            get { return _unlocked; }
+            set { _unlocked = value; }
+        }
+
         // ------------------------------------------------------------------ events
 
-        /// <summary>The offer was rebuilt or a card changed. G-08 redraws.</summary>
+        /// <summary>The offer was built, rerolled, locked or a card changed. G-08 redraws.</summary>
         public event Action OfferChanged;
 
         /// <summary>A card was bought. The director records the spend against the run stats.</summary>
         public event Action<UpgradeCardOffer> Purchased;
 
-        /// <summary>Buy was pressed with too little gold. Argument is the card index.</summary>
+        /// <summary>Buy was pressed and refused for a reason the player caused. Argument is the card index.</summary>
         public event Action<int> PurchaseRefused;
+
+        /// <summary>The offer was rerolled. Argument is the gold paid. The director records it against the run stats.</summary>
+        public event Action<int> Rerolled;
+
+        /// <summary>Reroll was pressed and refused for a reason the player caused.</summary>
+        public event Action<UpgradeRerollResult> RerollRefused;
 
         // ------------------------------------------------------------------ open / close
 
-        /// <summary>Rolls a fresh offer and opens the screen. Reads tiers from the armed player's weapon.</summary>
+        /// <summary>Opens the screen for a round. Reads tiers from the armed player's weapon.</summary>
         public void Open(int round, PrototypeConfig config, GoldWallet wallet)
         {
             Open(round, config, wallet, null, 0);
         }
 
         /// <summary>
-        /// Rolls a fresh offer and opens the screen. <paramref name="modifiers"/> is the
-        /// rank authority to read and write; null means the armed player's weapon
-        /// (<see cref="WeaponRegistry.ActiveController"/>), which is what the director
-        /// passes. A test hands in its own state so the whole purchase can run without a
-        /// scene.
+        /// Opens the screen for a round. The FIRST open of a (run, round) builds the offer;
+        /// a later open of the same pair (the screen reconnecting, an F1 reopen) restores
+        /// that offer with its purchase and reroll rights exactly as they were - never a
+        /// free new offer (decision 12). <paramref name="modifiers"/> is the rank
+        /// authority; null means the armed player's weapon, which is what the director
+        /// passes. A run id of 0 (legacy callers) never retains an offer.
         /// </summary>
         public void Open(int round, PrototypeConfig config, GoldWallet wallet, WeaponModifierState modifiers, int runId)
         {
@@ -122,22 +203,41 @@ namespace DD.Prototype.Rounds
             _wallet = wallet;
             _injectedModifiers = modifiers;
 
-            Round = Mathf.Max(1, round);
-            RunId = Mathf.Max(0, runId);
-            SessionId++;
-            PurchasesThisRound = 0;
-            GoldSpentThisRound = 0;
-            LastResult = UpgradePurchaseResult.None;
+            int wantedRound = Mathf.Max(1, round);
+            int wantedRun = Mathf.Max(0, runId);
+
+            bool restore = _offerBuilt && wantedRun > 0 && _offerRunId == wantedRun && _offerRound == wantedRound;
+
+            Round = wantedRound;
+            RunId = wantedRun;
             IsOpen = true;
+            LastResult = UpgradePurchaseResult.None;
+            LastRerollResult = UpgradeRerollResult.None;
 
-            BuildOffer();
-
-            if (_config != null && _config.Economy.AllowReroll)
+            if (!restore)
             {
-                // Not implemented anywhere, on purpose. Saying so beats a dead button.
-                Debug.LogWarning(
-                    "[Run] EconomyConfigSection.AllowReroll is true, but the prototype has no reroll " +
-                    "(request: no reroll). The flag does nothing; set it back to false.");
+                SessionId++;
+                Revision = 1;
+                PurchasesThisRound = 0;
+                RerollsThisRound = 0;
+                GoldSpentThisRound = 0;
+                PurchaseEntitlement = UpgradeEntitlement.Available;
+                RerollEntitlement = UpgradeEntitlement.Available;
+                _replacedSlots.Clear();
+
+                BuildOffer();
+
+                _offerBuilt = true;
+                _offerRunId = wantedRun;
+                _offerRound = wantedRound;
+            }
+            else
+            {
+                // Same round, same run: restore the status the offer was built with; the
+                // cards may have been re-priced by an outside rank change while closed,
+                // so re-read them. Rights and revision are untouched.
+                Status = Fault == UpgradeOfferFault.None ? UpgradeOfferStatus.Ready : UpgradeOfferStatus.ConfigurationError;
+                RefreshCards();
             }
 
             OfferChanged?.Invoke();
@@ -151,16 +251,32 @@ namespace DD.Prototype.Rounds
             }
 
             IsOpen = false;
+            Status = UpgradeOfferStatus.Closed;
             RunId = 0;
             _injectedModifiers = null;
             OfferChanged?.Invoke();
         }
 
-        // ------------------------------------------------------------------ purchase
+        /// <summary>
+        /// Forgets the retained offer so the next <see cref="Open"/> builds a fresh one
+        /// even for the same (run, round). The director calls it at run boundaries; a
+        /// test uses it between scenarios. Never called by the screen.
+        /// </summary>
+        public void DiscardOffer()
+        {
+            Close();
+            _offerBuilt = false;
+            _offerRunId = 0;
+            _offerRound = 0;
+            _cards.Clear();
+            Fault = UpgradeOfferFault.None;
+        }
+
+        // ------------------------------------------------------------------ queries
 
         public bool IsPurchasable(int index)
         {
-            if (!IsOpen || index < 0 || index >= _cards.Count)
+            if (!IsOpen || Status != UpgradeOfferStatus.Ready || IsLocked || index < 0 || index >= _cards.Count)
             {
                 return false;
             }
@@ -174,32 +290,91 @@ namespace DD.Prototype.Rounds
             return IsPurchasable(index) && _wallet != null && _wallet.CanAfford(_cards[index].Cost);
         }
 
-        /// <summary>Buys one card of the CURRENT session. The F1 panel's path.</summary>
+        /// <summary>The screen's reroll button state, computed from the same checks <see cref="TryReroll(int,int)"/> makes.</summary>
+        public RerollAvailability RerollAvailability
+        {
+            get
+            {
+                if (!IsOpen || Status != UpgradeOfferStatus.Ready || RerollCost <= 0)
+                {
+                    return RerollAvailability.Unavailable;
+                }
+
+                if (PurchaseEntitlement != UpgradeEntitlement.Available)
+                {
+                    return RerollAvailability.LockedByPurchase;
+                }
+
+                if (RerollEntitlement != UpgradeEntitlement.Available)
+                {
+                    return RerollAvailability.Used;
+                }
+
+                // Same order as TryReroll (price before the pool), so the label and the
+                // refusal reason never disagree. The pool count overwrites the scratch
+                // lists; never read it between a reroll's compute and its commit.
+                if (_wallet == null || !_wallet.CanAfford(RerollCost))
+                {
+                    return RerollAvailability.TooExpensive;
+                }
+
+                if (CountReplacementCandidates() == 0)
+                {
+                    return RerollAvailability.NoAlternatives;
+                }
+
+                return RerollAvailability.Available;
+            }
+        }
+
+        public bool CanReroll => RerollAvailability == RerollAvailability.Available;
+
+        /// <summary>Why a branch is or is not in the draw right now. F1 readout and tests.</summary>
+        public UpgradeEligibility Eligibility(UpgradeBranch branch)
+        {
+            if (_config == null)
+            {
+                return UpgradeEligibility.InvalidSettings;
+            }
+
+            UpgradeBranchSettings settings = _config.Economy.Find(branch);
+            WeaponModifierState modifiers = ModifierState();
+            int owned = modifiers != null ? modifiers.GetTier(branch) : 0;
+            return UpgradeOfferPolicy.Classify(settings, owned, HasLiveConsumer(branch), IsUnlocked(branch));
+        }
+
+        // ------------------------------------------------------------------ purchase
+
+        /// <summary>Buys one card of the CURRENT session and revision. The F1 panel's path.</summary>
         public bool TryPurchase(int index)
         {
-            return TryPurchase(index, SessionId);
+            return TryPurchase(index, SessionId, Revision);
+        }
+
+        /// <summary>Buys one card of the given session at the CURRENT revision. WP-004 callers and tests that do not track revisions.</summary>
+        public bool TryPurchase(int index, int sessionId)
+        {
+            return TryPurchase(index, sessionId, Revision);
         }
 
         /// <summary>
         /// Buys one card. The whole purchase is here, in this order, and every check
         /// happens BEFORE the gold moves so no refusal can leave a half state:
         ///
-        ///   1 the shop is open and the caller's session is this session (stale screen /
-        ///     late callback learns nothing)
-        ///   2 the card is real, unbought and not maxed
-        ///   3 there is a rank authority to apply the tier to (no armed player: refused,
-        ///     nothing spent - the old refund path is gone)
-        ///   4 the live tier still matches the card (a debug button moved it: refresh, refuse)
-        ///   5 the branch is below its ceiling on the live state (a clamped AddTier would
-        ///     silently change nothing)
-        ///   6 the wallet can afford it
-        ///   7 spend, exactly once, under its own transaction id
-        ///   8 apply the tier, exactly once, and verify it moved
-        ///   9 mark the card, re-price the rest, tell the listeners
+        ///   1 session: the shop is open, the caller's session AND revision are the current
+        ///     ones, the offer is not in its error state
+        ///   2 entitlement: this round's one purchase is still available (DEC-048)
+        ///   3 card: real, unbought, a rank authority exists, the live tier still matches
+        ///     the card, the branch is below its ceiling
+        ///   4 balance: the wallet can afford it
+        ///   5 spend, exactly once, under its own transaction id
+        ///   6 apply the tier, exactly once, and verify it moved
+        ///   7 lock: mark the card, consume the entitlement, close the reroll, raise the
+        ///     revision, tell the listeners
         /// </summary>
-        public bool TryPurchase(int index, int sessionId)
+        public bool TryPurchase(int index, int sessionId, int revision)
         {
-            if (_purchasing)
+            if (_purchasing || _rerolling)
             {
                 // Re-entrant call from a listener of our own events. Never legitimate.
                 return false;
@@ -208,7 +383,7 @@ namespace DD.Prototype.Rounds
             _purchasing = true;
             try
             {
-                return PurchaseCore(index, sessionId);
+                return PurchaseCore(index, sessionId, revision);
             }
             finally
             {
@@ -216,8 +391,9 @@ namespace DD.Prototype.Rounds
             }
         }
 
-        private bool PurchaseCore(int index, int sessionId)
+        private bool PurchaseCore(int index, int sessionId, int revision)
         {
+            // ---- 1 session ---------------------------------------------------------
             if (!IsOpen)
             {
                 return Refuse(index, UpgradePurchaseResult.ShopClosed);
@@ -229,6 +405,23 @@ namespace DD.Prototype.Rounds
                 return Refuse(index, UpgradePurchaseResult.SessionMismatch);
             }
 
+            if (revision != Revision)
+            {
+                return Refuse(index, UpgradePurchaseResult.StaleRevision);
+            }
+
+            if (Status != UpgradeOfferStatus.Ready)
+            {
+                return Refuse(index, UpgradePurchaseResult.OfferUnavailable);
+            }
+
+            // ---- 2 entitlement -----------------------------------------------------
+            if (PurchaseEntitlement != UpgradeEntitlement.Available)
+            {
+                return Refuse(index, UpgradePurchaseResult.PurchaseLimitReached);
+            }
+
+            // ---- 3 card ------------------------------------------------------------
             if (index < 0 || index >= _cards.Count || !_cards[index].IsValid)
             {
                 return Refuse(index, UpgradePurchaseResult.InvalidCard);
@@ -251,8 +444,10 @@ namespace DD.Prototype.Rounds
             if (liveTier != card.OwnedTier)
             {
                 // Something outside this screen moved the rank (F1). The card's price and
-                // tier are stale; re-read everything and let the player look again.
+                // tier are stale; re-read everything, raise the revision (the cards changed)
+                // and let the player look again.
                 RefreshCards();
+                Revision++;
                 OfferChanged?.Invoke();
                 return Refuse(index, UpgradePurchaseResult.StaleOffer);
             }
@@ -262,11 +457,13 @@ namespace DD.Prototype.Rounds
                 return Refuse(index, UpgradePurchaseResult.BranchMaxed);
             }
 
+            // ---- 4 balance ---------------------------------------------------------
             if (_wallet == null || !_wallet.CanAfford(card.Cost))
             {
                 return Refuse(index, UpgradePurchaseResult.InsufficientGold);
             }
 
+            // ---- 5 spend -----------------------------------------------------------
             int transactionId = _wallet.NextTransactionId();
             GoldTransactionResult spend = _wallet.TrySpend(card.Cost, GoldSource.UpgradePurchase, transactionId);
             if (spend != GoldTransactionResult.Applied)
@@ -278,6 +475,7 @@ namespace DD.Prototype.Rounds
                     : UpgradePurchaseResult.WalletRefused);
             }
 
+            // ---- 6 apply -----------------------------------------------------------
             // The single line the whole card system exists to call (G-03). The weapon
             // re-reads its modifiers on the next shot; there is no apply step.
             modifiers.AddTier(card.Branch, 1, _config);
@@ -285,16 +483,18 @@ namespace DD.Prototype.Rounds
             int appliedTier = modifiers.GetTier(card.Branch);
             if (appliedTier != liveTier + 1)
             {
-                // Unreachable after check 5; kept as a loud assertion so a future ceiling
+                // Unreachable after step 3; kept as a loud assertion so a future ceiling
                 // rule cannot turn into a silent charge. The gold is NOT refunded through
                 // a credit (that would count as income) - the error is the signal.
                 Debug.LogError("[Run] Upgrade tier did not move after a successful spend (" + card.Branch +
                                " live " + liveTier + " -> " + appliedTier + "). Transaction " + transactionId + ".");
                 RefreshCards();
+                Revision++;
                 OfferChanged?.Invoke();
                 return Refuse(index, UpgradePurchaseResult.TierDidNotChange);
             }
 
+            // ---- 7 lock ------------------------------------------------------------
             card.Purchased = true;
             card.OwnedTier = appliedTier;
             card.TransactionId = transactionId;
@@ -302,10 +502,17 @@ namespace DD.Prototype.Rounds
 
             PurchasesThisRound++;
             GoldSpentThisRound += card.Cost;
+            PurchaseEntitlement = UpgradeEntitlement.Used;
+            if (RerollEntitlement == UpgradeEntitlement.Available)
+            {
+                RerollEntitlement = UpgradeEntitlement.Locked;
+            }
+
+            Revision++;
             LastResult = UpgradePurchaseResult.Purchased;
 
             // Re-price the remaining cards: the build readout is stale and a maxed branch
-            // must grey out immediately.
+            // must grey out immediately (they are locked anyway).
             RefreshCards();
 
             Purchased?.Invoke(card);
@@ -325,9 +532,174 @@ namespace DD.Prototype.Rounds
                 result == UpgradePurchaseResult.NoWeapon ||
                 result == UpgradePurchaseResult.BranchMaxed ||
                 result == UpgradePurchaseResult.StaleOffer ||
-                result == UpgradePurchaseResult.TierDidNotChange)
+                result == UpgradePurchaseResult.TierDidNotChange ||
+                result == UpgradePurchaseResult.PurchaseLimitReached)
             {
                 PurchaseRefused?.Invoke(index);
+                RunAudioEvents.Raise(RunAudioEvent.UpgradeRefused);
+            }
+
+            return false;
+        }
+
+        // ------------------------------------------------------------------ reroll
+
+        /// <summary>Rerolls the CURRENT session and revision. The F1 panel's path.</summary>
+        public bool TryReroll()
+        {
+            return TryReroll(SessionId, Revision);
+        }
+
+        /// <summary>
+        /// The one paid reroll of this round (DEC-050 / REQ-079). Every check precedes the
+        /// spend, and the new offer is computed and validated BEFORE the gold moves, so a
+        /// reroll that cannot be produced costs nothing and keeps the right:
+        ///
+        ///   1 session: open, current session and revision, offer ready
+        ///   2 entitlement: no purchase yet (a purchase locks the offer), reroll unused
+        ///   3 price: a positive configured cost, and the wallet can afford it
+        ///   4 compute: one or two replacements from the eligible branches not on the offer;
+        ///     validated as three distinct cards with one or two slots changed
+        ///   5 spend, exactly once, under its own transaction id
+        ///   6 commit: swap the cards, consume the right, raise the revision, tell the listeners
+        /// </summary>
+        public bool TryReroll(int sessionId, int revision)
+        {
+            if (_purchasing || _rerolling)
+            {
+                return false;
+            }
+
+            _rerolling = true;
+            try
+            {
+                return RerollCore(sessionId, revision);
+            }
+            finally
+            {
+                _rerolling = false;
+            }
+        }
+
+        private bool RerollCore(int sessionId, int revision)
+        {
+            // ---- 1 session ---------------------------------------------------------
+            if (!IsOpen)
+            {
+                return RefuseReroll(UpgradeRerollResult.ShopClosed);
+            }
+
+            if (sessionId != SessionId)
+            {
+                return RefuseReroll(UpgradeRerollResult.SessionMismatch);
+            }
+
+            if (revision != Revision)
+            {
+                return RefuseReroll(UpgradeRerollResult.StaleRevision);
+            }
+
+            if (Status != UpgradeOfferStatus.Ready || _config == null)
+            {
+                return RefuseReroll(UpgradeRerollResult.OfferUnavailable);
+            }
+
+            // ---- 2 entitlement -----------------------------------------------------
+            if (PurchaseEntitlement != UpgradeEntitlement.Available)
+            {
+                return RefuseReroll(UpgradeRerollResult.OfferLocked);
+            }
+
+            if (RerollEntitlement != UpgradeEntitlement.Available)
+            {
+                return RefuseReroll(UpgradeRerollResult.RerollUsed);
+            }
+
+            // ---- 3 price -----------------------------------------------------------
+            int cost = RerollCost;
+            if (cost <= 0)
+            {
+                Debug.LogError("[Run] Upgrade offer configuration error: EconomyConfigSection.RerollCost must be positive (is " +
+                               cost + "). The reroll is refused; nothing was charged.");
+                return RefuseReroll(UpgradeRerollResult.InvalidCost);
+            }
+
+            if (_wallet == null || !_wallet.CanAfford(cost))
+            {
+                return RefuseReroll(UpgradeRerollResult.InsufficientGold);
+            }
+
+            // ---- 4 compute ---------------------------------------------------------
+            _current.Clear();
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                _current.Add(_config.Economy.Find(_cards[i].Branch));
+            }
+
+            CollectReplacementCandidates();
+
+            UpgradeOfferFault fault = UpgradeOfferPolicy.TryReroll(_current, _candidates, _weights, Random, _picks, _replacedSlots);
+            if (fault == UpgradeOfferFault.NoReplacementAvailable)
+            {
+                Debug.LogWarning("[Run] Upgrade offer: no eligible branch outside the current offer to reroll in (round " + Round +
+                                 "). The reroll is refused; nothing was charged and the reroll right is kept.");
+                return RefuseReroll(UpgradeRerollResult.NoReplacementAvailable);
+            }
+
+            if (fault != UpgradeOfferFault.None)
+            {
+                Debug.LogError("[Run] Upgrade offer configuration error on reroll: " + fault +
+                               " (round " + Round + "). The reroll is refused; nothing was charged and the reroll right is kept.");
+                return RefuseReroll(UpgradeRerollResult.InvalidResult);
+            }
+
+            // ---- 5 spend -----------------------------------------------------------
+            int transactionId = _wallet.NextTransactionId();
+            GoldTransactionResult spend = _wallet.TrySpend(cost, GoldSource.OfferReroll, transactionId);
+            if (spend != GoldTransactionResult.Applied)
+            {
+                _replacedSlots.Clear();
+                return RefuseReroll(spend == GoldTransactionResult.InsufficientBalance
+                    ? UpgradeRerollResult.InsufficientGold
+                    : UpgradeRerollResult.WalletRefused);
+            }
+
+            // ---- 6 commit ----------------------------------------------------------
+            WeaponModifierState modifiers = ModifierState();
+            EconomyConfigSection economy = _config.Economy;
+            for (int i = 0; i < _replacedSlots.Count; i++)
+            {
+                int slot = _replacedSlots[i];
+                _cards[slot] = BuildCard(_picks[slot], modifiers, economy);
+            }
+
+            RerollsThisRound++;
+            GoldSpentThisRound += cost;
+            RerollEntitlement = UpgradeEntitlement.Used;
+            Revision++;
+            LastRerollResult = UpgradeRerollResult.Rerolled;
+
+            RefreshCards();
+
+            Rerolled?.Invoke(cost);
+            RunAudioEvents.Raise(RunAudioEvent.UpgradePurchased);
+            OfferChanged?.Invoke();
+            return true;
+        }
+
+        private bool RefuseReroll(UpgradeRerollResult result)
+        {
+            LastRerollResult = result;
+
+            if (result == UpgradeRerollResult.InsufficientGold ||
+                result == UpgradeRerollResult.OfferLocked ||
+                result == UpgradeRerollResult.RerollUsed ||
+                result == UpgradeRerollResult.NoReplacementAvailable ||
+                result == UpgradeRerollResult.InvalidResult ||
+                result == UpgradeRerollResult.InvalidCost ||
+                result == UpgradeRerollResult.WalletRefused)
+            {
+                RerollRefused?.Invoke(result);
                 RunAudioEvents.Raise(RunAudioEvent.UpgradeRefused);
             }
 
@@ -339,33 +711,118 @@ namespace DD.Prototype.Rounds
         private void BuildOffer()
         {
             _cards.Clear();
-            _candidates.Clear();
-            _weights.Clear();
+            _replacedSlots.Clear();
+            Fault = UpgradeOfferFault.None;
 
             if (_config == null)
             {
+                Fail(UpgradeOfferFault.NoConfig);
                 return;
             }
 
             EconomyConfigSection economy = _config.Economy;
-            WeaponModifierState modifiers = ModifierState();
-
-            for (int i = 0; i < economy.Branches.Count; i++)
+            if (economy == null || economy.Branches == null || economy.Branches.Count == 0)
             {
-                UpgradeBranchSettings settings = economy.Branches[i];
-                if (settings == null || settings.OfferWeight <= 0f || settings.MaxTier <= 0)
+                Fail(UpgradeOfferFault.NoUpgradeTable);
+                return;
+            }
+
+            WeaponModifierState modifiers = ModifierState();
+            CollectCandidates(modifiers, null);
+
+            // A table that COULD offer three cards but whose remaining branches are all at
+            // their ceiling on this build is the run outgrowing the table, not a broken
+            // table. Same safe state, softer report.
+            bool exhausted = _candidates.Count < UpgradeOfferPolicy.CardsPerOffer &&
+                             _candidates.Count + CountMaxed(modifiers) >= UpgradeOfferPolicy.CardsPerOffer;
+
+            UpgradeOfferFault fault = UpgradeOfferPolicy.TryBuildOffer(_candidates, _weights, Random, _picks);
+            if (fault != UpgradeOfferFault.None)
+            {
+                Fail(fault == UpgradeOfferFault.NotEnoughEligibleBranches && exhausted ? UpgradeOfferFault.PoolExhausted : fault);
+                return;
+            }
+
+            for (int i = 0; i < _picks.Count; i++)
+            {
+                _cards.Add(BuildCard(_picks[i], modifiers, economy));
+            }
+
+            Status = UpgradeOfferStatus.Ready;
+        }
+
+        /// <summary>
+        /// Decision 17: the safe error state. No card is invented, nothing is charged, the
+        /// screen shows a finished sentence and CONTINUE works. Reported as an error so a
+        /// misconfigured table is never silent.
+        /// </summary>
+        private void Fail(UpgradeOfferFault fault)
+        {
+            _cards.Clear();
+            Fault = fault;
+            Status = UpgradeOfferStatus.ConfigurationError;
+
+            if (fault == UpgradeOfferFault.PoolExhausted)
+            {
+                Debug.LogWarning("[Run] Upgrade offer: every remaining branch is at its ceiling (run " + RunId + ", round " + Round +
+                                 "). No card is offered this round; nothing was charged; CONTINUE proceeds normally.");
+                return;
+            }
+
+            Debug.LogError("[Run] Upgrade offer configuration error: " + fault + " (run " + RunId + ", round " + Round +
+                           "). No card is offered this round; nothing was charged; CONTINUE proceeds normally.");
+        }
+
+        /// <summary>Branches that would be eligible were they not at their ceiling on the live build.</summary>
+        private int CountMaxed(WeaponModifierState modifiers)
+        {
+            int maxed = 0;
+            List<UpgradeBranchSettings> branches = _config.Economy.Branches;
+            for (int i = 0; i < branches.Count; i++)
+            {
+                UpgradeBranchSettings settings = branches[i];
+                if (settings == null)
                 {
                     continue;
                 }
 
-                if (!OfferUnbackedBranches && !UpgradeCardCatalog.HasLiveConsumer(settings.Branch))
+                int owned = modifiers != null ? modifiers.GetTier(settings.Branch) : 0;
+                if (UpgradeOfferPolicy.Classify(settings, owned, HasLiveConsumer(settings.Branch), IsUnlocked(settings.Branch)) ==
+                    UpgradeEligibility.Maxed)
+                {
+                    maxed++;
+                }
+            }
+
+            return maxed;
+        }
+
+        /// <summary>
+        /// Fills the scratch candidate/weight lists with every eligible branch, skipping
+        /// the ones in <paramref name="exclude"/> (the current offer, for a reroll).
+        /// </summary>
+        private void CollectCandidates(WeaponModifierState modifiers, List<UpgradeBranchSettings> exclude)
+        {
+            _candidates.Clear();
+            _weights.Clear();
+
+            List<UpgradeBranchSettings> branches = _config.Economy.Branches;
+            for (int i = 0; i < branches.Count; i++)
+            {
+                UpgradeBranchSettings settings = branches[i];
+                if (settings == null)
                 {
                     continue;
                 }
 
-                // A maxed branch stops being offered; it would be a card that cannot be
-                // bought sitting in one of only three slots.
-                if (modifiers != null && modifiers.GetTier(settings.Branch) >= settings.MaxTier)
+                if (exclude != null && UpgradeOfferPolicy.IndexOfBranch(exclude, settings.Branch) >= 0)
+                {
+                    continue;
+                }
+
+                int owned = modifiers != null ? modifiers.GetTier(settings.Branch) : 0;
+                if (UpgradeOfferPolicy.Classify(settings, owned, HasLiveConsumer(settings.Branch), IsUnlocked(settings.Branch)) !=
+                    UpgradeEligibility.Eligible)
                 {
                     continue;
                 }
@@ -373,51 +830,38 @@ namespace DD.Prototype.Rounds
                 _candidates.Add(settings);
                 _weights.Add(Mathf.Max(0.0001f, settings.OfferWeight));
             }
-
-            int wanted = Mathf.Clamp(economy.CardsPerRound, 1, 8);
-
-            // Weighted draw WITHOUT replacement: three cards must be three different
-            // branches, or a round end can offer Piercing three times and the choice the
-            // screen exists to present disappears.
-            for (int slot = 0; slot < wanted && _candidates.Count > 0; slot++)
-            {
-                int pick = DrawWeightedIndex();
-                if (pick < 0)
-                {
-                    break;
-                }
-
-                _cards.Add(BuildCard(_candidates[pick], modifiers, economy));
-
-                _candidates.RemoveAt(pick);
-                _weights.RemoveAt(pick);
-            }
         }
 
-        private int DrawWeightedIndex()
+        private void CollectReplacementCandidates()
         {
-            float total = 0f;
-            for (int i = 0; i < _weights.Count; i++)
+            CollectCandidates(ModifierState(), _current);
+        }
+
+        private int CountReplacementCandidates()
+        {
+            if (_config == null)
             {
-                total += _weights[i];
+                return 0;
             }
 
-            if (total <= 0f)
+            _current.Clear();
+            for (int i = 0; i < _cards.Count; i++)
             {
-                return _weights.Count > 0 ? 0 : -1;
+                _current.Add(_config.Economy.Find(_cards[i].Branch));
             }
 
-            float roll = UnityEngine.Random.value * total;
-            for (int i = 0; i < _weights.Count; i++)
-            {
-                roll -= _weights[i];
-                if (roll <= 0f)
-                {
-                    return i;
-                }
-            }
+            CollectReplacementCandidates();
+            return _candidates.Count;
+        }
 
-            return _weights.Count - 1;
+        private bool HasLiveConsumer(UpgradeBranch branch)
+        {
+            return OfferUnbackedBranches || UpgradeCardCatalog.HasLiveConsumer(branch);
+        }
+
+        private bool IsUnlocked(UpgradeBranch branch)
+        {
+            return _unlocked != null ? _unlocked(branch) : ProfileService.IsBranchUnlocked(branch);
         }
 
         private UpgradeCardOffer BuildCard(UpgradeBranchSettings settings, WeaponModifierState modifiers,
@@ -463,7 +907,7 @@ namespace DD.Prototype.Rounds
             return Mathf.Max(1, cost);
         }
 
-        /// <summary>Re-reads owned tiers and prices after a purchase.</summary>
+        /// <summary>Re-reads owned tiers and prices after a purchase or a reroll.</summary>
         private void RefreshCards()
         {
             WeaponModifierState modifiers = ModifierState();
@@ -520,8 +964,15 @@ namespace DD.Prototype.Rounds
                 return "closed";
             }
 
-            var sb = new System.Text.StringBuilder(96);
-            sb.Append("R").Append(Round).Append(" s").Append(SessionId).Append(" | ").Append(Gold).Append("g | ");
+            var sb = new System.Text.StringBuilder(128);
+            sb.Append("R").Append(Round).Append(" s").Append(SessionId).Append(" r").Append(Revision)
+              .Append(" | ").Append(Gold).Append("g | ");
+
+            if (Status == UpgradeOfferStatus.ConfigurationError)
+            {
+                sb.Append("CONFIG ERROR ").Append(Fault);
+                return sb.ToString();
+            }
 
             for (int i = 0; i < _cards.Count; i++)
             {
@@ -538,6 +989,10 @@ namespace DD.Prototype.Rounds
                 {
                     sb.Append(" BOUGHT");
                 }
+                else if (IsLocked)
+                {
+                    sb.Append(" LOCKED");
+                }
                 else if (!CanAfford(i))
                 {
                     sb.Append(" SHORT");
@@ -546,6 +1001,7 @@ namespace DD.Prototype.Rounds
                 sb.Append(']');
             }
 
+            sb.Append(" | reroll ").Append(RerollCost).Append("g ").Append(RerollAvailability);
             return sb.ToString();
         }
     }

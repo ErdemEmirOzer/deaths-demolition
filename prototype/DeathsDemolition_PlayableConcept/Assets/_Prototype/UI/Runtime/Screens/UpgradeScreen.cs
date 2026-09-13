@@ -28,10 +28,10 @@ namespace DD.Prototype.UI
     ///
     /// There is no price arithmetic here, no timer here, and no countdown clock here -
     /// the 3 s pre-round countdown is <see cref="RunDirector"/>'s, and this screen only
-    /// PRINTS <c>RunEvents.Current.CountdownRemaining</c> after it has closed. The
-    /// screen's copy is deliberately neutral about how many cards a round allows and
-    /// whether an offer can be re-rolled: both are open product decisions (DEC-048,
-    /// DEC-050) and the screen must not announce either as a rule.
+    /// PRINTS <c>RunEvents.Current.CountdownRemaining</c> after it has closed. Since
+    /// WP-008 the screen states the two product rules it enforces (DEC-048: one purchase
+    /// per round, the offer locks; DEC-050: one paid reroll before the purchase) and
+    /// draws the reroll control in the gold strip; it still decides nothing itself.
     ///
     /// WHICH ROUND IT BELONGS TO (WP-005)
     /// The panel opens only for the director's current <c>LastRoundEnd</c> snapshot:
@@ -68,14 +68,16 @@ namespace DD.Prototype.UI
     ///
     /// FIVE STATES
     ///   normal    three cards, at least one affordable
-    ///   empty     no cards - every branch is at MaxTier. A finished sentence and a
-    ///             working CONTINUE, never a blank rectangle
+    ///   locked    one card PURCHASED, the other two OFFER LOCKED, reroll closed, focus on
+    ///             CONTINUE (WP-008, DEC-048)
+    ///   error     the shop could not build three valid cards (RoundUpgradeShop.Status ==
+    ///             ConfigurationError): a finished sentence saying no gold was taken, and
+    ///             a working CONTINUE, never a blank rectangle (WP-008, decision 17)
     ///   loading   phase says Upgrading but the offer is not built yet (one frame, or a
     ///             scene opened without PrototypeConfig). Named, not blank
     ///   error     a purchase the shop refused - stated in the footer, gold untouched
-    ///   dense     0 gold (every card disabled, CONTINUE still works and takes the
-    ///             initial focus), over-long card text, five-figure gold, and more cards
-    ///             than three if EconomyConfigSection.CardsPerRound is raised
+    ///   dense     0 gold (every card disabled, reroll disabled, CONTINUE still works and
+    ///             takes the initial focus), over-long card text, five-figure gold
     /// </summary>
     public sealed class UpgradeScreen : UiScreen
     {
@@ -180,9 +182,16 @@ namespace DD.Prototype.UI
         private UiButton _continueButton;
         private Text _footerNote;
 
+        private Text _rerollLabel;
+        private UiButton _rerollButton;
+
         private bool _panelVisible;
         private bool _dirty = true;
         private int _sessionId;
+        private int _revision;
+
+        /// <summary>Frame of the last successful reroll: no purchase is taken in that same frame (the new cards are unseen).</summary>
+        private int _rerollFrame = -1;
         private RoundUpgradeShop _boundShop;
         private GoldWallet _boundWallet;
         private string _notice;
@@ -206,7 +215,7 @@ namespace DD.Prototype.UI
             _cardsTop = BuildHeader(
                 "ROUND COMPLETE",
                 "SPEND YOUR GOLD",
-                "Strengthen your weapon for the rounds ahead. Unspent gold carries into the next round.");
+                "Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round.");
 
             _cardsTop += (int)UiSpace.XXL;
 
@@ -320,7 +329,7 @@ namespace DD.Prototype.UI
             RectTransform host = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.XL));
 
             // ---- available gold, the hero number of this screen ------------------
-            RectTransform available = Zone(host, 0f, 0.34f);
+            RectTransform available = Zone(host, 0f, 0.26f);
             var availableStack = new UiStack(available);
 
             Text label = UiFactory.Label(
@@ -346,7 +355,7 @@ namespace DD.Prototype.UI
             goldRect.offsetMin = new Vector2(HeroCoinSize + (int)UiSpace.M, 0f);
 
             // ---- spent this round ------------------------------------------------
-            RectTransform spent = Zone(host, 0.36f, 0.62f);
+            RectTransform spent = Zone(host, 0.28f, 0.46f);
             var spentStack = new UiStack(spent);
 
             Text spentLabel = UiFactory.Label(
@@ -361,12 +370,34 @@ namespace DD.Prototype.UI
             // ---- advisory line ---------------------------------------------------
             // Carries the 0-gold case. It is a finished sentence, not an error: a player
             // who cannot afford anything has still done nothing wrong.
-            RectTransform note = Zone(host, 0.64f, 1f);
+            RectTransform note = Zone(host, 0.48f, 0.72f);
             _goldNote = UiFactory.Label(
                 "Note", note,
                 "Choose what to strengthen, then continue.",
                 UiType.Caption, UiColor.TextMuted, TextAnchor.LowerLeft);
             UiFactory.Fill((RectTransform)_goldNote.transform);
+
+            // ---- reroll (WP-008, DEC-050) ----------------------------------------
+            // The one paid reroll of the round. The BUTTON caption is fixed ("REROLL");
+            // the price and the state (used / locked / too expensive) live in the label
+            // above it, so the control never changes its name under the focus ring.
+            // The strip clips its content (RectMask2D) and UiFactory.Button draws the
+            // focus ring OUTSIDE the control, so the zone is inset by one UiSpace.S on the
+            // right and the bottom and the stack (label 24 + button 48 = 72 of 80) leaves
+            // the ring its room. Label and button meet edge to edge; the label is the
+            // caption of the control.
+            RectTransform reroll = Zone(host, 0.74f, 1f);
+            reroll.offsetMin = new Vector2(0f, (int)UiSpace.S);
+            reroll.offsetMax = new Vector2(-(int)UiSpace.S, 0f);
+            var rerollStack = new UiStack(reroll);
+
+            _rerollLabel = UiFactory.Label(
+                "RerollLabel", reroll, "REROLL", UiType.Label, UiColor.TextMuted, TextAnchor.MiddleRight);
+            rerollStack.Add((RectTransform)_rerollLabel.transform, UiFactory.LineHeight(UiType.Label));
+
+            _rerollButton = UiFactory.Button(
+                "Reroll", reroll, "REROLL", UiButtonVariant.Secondary, OnRerollActivated);
+            rerollStack.Add((RectTransform)_rerollButton.transform, UiTokens.TargetPreferred);
         }
 
         /// <summary>A fractional-width zone of a row. Same responsive rule as UiScreen.Column.</summary>
@@ -396,7 +427,7 @@ namespace DD.Prototype.UI
             public Text Describe;
             public Text Price;
 
-            /// <summary>The pill on the shelf: BUY / TOO EXPENSIVE / PURCHASED / MAX TIER.</summary>
+            /// <summary>The pill on the shelf: BUY / TOO EXPENSIVE / PURCHASED / OFFER LOCKED / MAX TIER.</summary>
             public Text StateLabel;
 
             /// <summary>The pill's fill. Recoloured with the label so the pair stays audited.</summary>
@@ -787,6 +818,7 @@ namespace DD.Prototype.UI
             {
                 _dirty = false;
                 Refresh();
+                EnsureFocus();
             }
         }
 
@@ -816,6 +848,7 @@ namespace DD.Prototype.UI
             // button that somehow fires after the next round's screen opened is refused.
             RoundUpgradeShop shop = Shop;
             _sessionId = shop != null ? shop.SessionId : 0;
+            _revision = shop != null ? shop.Revision : 0;
 
             Refresh();
             _dirty = false;
@@ -874,7 +907,13 @@ namespace DD.Prototype.UI
 
             if (current != null && current.activeInHierarchy && current.transform.IsChildOf(Canvas.transform))
             {
-                return;
+                // Still ours - but a control that went dead under the ring (a card after the
+                // round's purchase, the reroll after its use) must not keep a hidden focus.
+                Selectable selectable = current.GetComponent<Selectable>();
+                if (selectable == null || selectable.IsInteractable())
+                {
+                    return;
+                }
             }
 
             FocusFirstUsefulControl();
@@ -913,7 +952,26 @@ namespace DD.Prototype.UI
                     "Preparing the offer",
                     "The round-end offer is still being built. It will appear in a moment; " +
                     "continuing now simply starts the next round.");
+                RefreshReroll(null);
                 RefreshFooter(0, 0);
+                return;
+            }
+
+            // Every command from this screen quotes the cards it was drawn with (WP-008).
+            _sessionId = shop.SessionId;
+            _revision = shop.Revision;
+
+            // CONFIGURATION ERROR (decision 17). Three valid cards could not be produced.
+            // Nothing was charged, no card is invented, CONTINUE works. Stated plainly.
+            if (shop.Status == UpgradeOfferStatus.ConfigurationError)
+            {
+                ShowNotice(
+                    shop.Fault == UpgradeOfferFault.PoolExhausted
+                        ? "Nothing left to upgrade"
+                        : "No valid upgrade offer this round",
+                    DescribeFault(shop.Fault) + " No gold was taken and nothing is for sale this round. Continue when ready.");
+                RefreshReroll(shop);
+                RefreshFooter(shop.Gold, shop.PurchasesThisRound);
                 return;
             }
 
@@ -932,6 +990,7 @@ namespace DD.Prototype.UI
                           "to offer. Your gold carries into the next round."
                         : "PrototypeConfig is not loaded, so there is no upgrade table to draw cards from. " +
                           "The run continues normally.");
+                RefreshReroll(shop);
                 RefreshFooter(shop.Gold, shop.PurchasesThisRound);
                 return;
             }
@@ -957,11 +1016,69 @@ namespace DD.Prototype.UI
                 }
 
                 PlaceCard((RectTransform)_slots[i].Button.transform, i, count);
-                ApplyCard(_slots[i], card, canAfford, shop.Gold);
+                ApplyCard(_slots[i], card, canAfford, shop.Gold, shop.IsLocked);
             }
 
             RefreshGoldStrip(shop, affordable, count);
+            RefreshReroll(shop);
             RefreshFooter(shop.Gold, shop.PurchasesThisRound);
+        }
+
+        /// <summary>The reroll block: price and state in the label, pressable only when the shop says so.</summary>
+        private void RefreshReroll(RoundUpgradeShop shop)
+        {
+            RerollAvailability state = shop != null ? shop.RerollAvailability : RerollAvailability.Unavailable;
+            int cost = shop != null ? shop.RerollCost : 0;
+
+            _rerollButton.SetInteractable(state == RerollAvailability.Available);
+
+            // One pattern, at most 24 characters so the label never truncates at 4:3.
+            switch (state)
+            {
+                case RerollAvailability.Available:
+                    _rerollLabel.text = "REROLL · " + cost + " GOLD · ONCE";
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextPrimary);
+                    break;
+                case RerollAvailability.Used:
+                    _rerollLabel.text = "REROLL · USED THIS ROUND";
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
+                    break;
+                case RerollAvailability.LockedByPurchase:
+                    _rerollLabel.text = "REROLL · LOCKED";
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
+                    break;
+                case RerollAvailability.NoAlternatives:
+                    _rerollLabel.text = "REROLL · NOTHING TO SWAP";
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
+                    break;
+                case RerollAvailability.TooExpensive:
+                    _rerollLabel.text = "REROLL · NEED " + cost + " GOLD";
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextSecondary);
+                    break;
+                default:
+                    _rerollLabel.text = "REROLL · UNAVAILABLE";
+                    _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
+                    break;
+            }
+        }
+
+        /// <summary>Player-facing sentence for an offer fault. English, finished, no jargon.</summary>
+        private static string DescribeFault(UpgradeOfferFault fault)
+        {
+            switch (fault)
+            {
+                case UpgradeOfferFault.NotEnoughEligibleBranches:
+                    return "Not enough upgrades are available for your weapon and build right now.";
+                case UpgradeOfferFault.PoolExhausted:
+                    return "Every upgrade you can still take is already at its maximum tier.";
+                case UpgradeOfferFault.NoUpgradeTable:
+                case UpgradeOfferFault.NoConfig:
+                    return "The upgrade table is not loaded.";
+                case UpgradeOfferFault.DuplicateBranch:
+                    return "The upgrade table lists the same upgrade twice.";
+                default:
+                    return "The upgrade offer could not be built.";
+            }
         }
 
         /// <summary>
@@ -986,7 +1103,7 @@ namespace DD.Prototype.UI
                 -_cardsTop);
         }
 
-        private void ApplyCard(CardSlot slot, UpgradeCardOffer card, bool canAfford, int gold)
+        private void ApplyCard(CardSlot slot, UpgradeCardOffer card, bool canAfford, int gold, bool offerLocked)
         {
             if (!card.IsValid)
             {
@@ -1020,6 +1137,17 @@ namespace DD.Prototype.UI
                 slot.Coin.color = UiTokens.Get(UiColor.TextMuted);
                 slot.Sentence.text = "Bought this round. It is already applied to your weapon.";
                 slot.Sentence.color = UiTokens.Get(UiColor.StateSuccess);
+                return;
+            }
+
+            if (offerLocked)
+            {
+                // WP-008 (DEC-048): the round's one purchase was made on another card.
+                SetChip(slot, "OFFER LOCKED", UiColor.SurfaceRaised, UiColor.TextSecondary);
+                slot.Price.color = UiTokens.Get(UiColor.TextMuted);
+                slot.Coin.color = UiTokens.Get(UiColor.TextMuted);
+                slot.Sentence.text = "One upgrade per round. Continue to the next round.";
+                slot.Sentence.color = UiTokens.Get(UiColor.TextSecondary);
                 return;
             }
 
@@ -1109,19 +1237,27 @@ namespace DD.Prototype.UI
             _goldValue.text = shop.Gold.ToString();
             _goldSpent.text = shop.GoldSpentThisRound.ToString();
 
+            if (shop.IsLocked)
+            {
+                // The round's purchase is made: every remaining card is locked, not
+                // "unaffordable" - say the true thing (probe screenshot 06 caught this).
+                _goldNote.text = "Upgrade applied. Continue when ready.";
+                _goldNote.color = UiTokens.Get(UiColor.TextMuted);
+                return;
+            }
+
             if (affordable <= 0 && count > 0)
             {
                 // The 0-gold opening, and every later round where the prices have outrun
                 // the wallet. Stated as a fact with a way forward, not as a failure.
                 _goldNote.text = shop.Gold <= 0
-                    ? "You collected no gold this round, so nothing here can be bought yet. A new offer " +
-                      "appears at the end of the next round."
+                    ? "No gold collected this round, so nothing can be bought yet. A new offer appears next round."
                     : "None of these is affordable yet. Unspent gold carries into the next round.";
                 _goldNote.color = UiTokens.Get(UiColor.StateWarning);
                 return;
             }
 
-            _goldNote.text = "Choose what to strengthen, then continue.";
+            _goldNote.text = "Choose one upgrade, or reroll once, then continue.";
             _goldNote.color = UiTokens.Get(UiColor.TextMuted);
         }
 
@@ -1141,7 +1277,7 @@ namespace DD.Prototype.UI
             }
 
             _footerNote.text = purchases > 0
-                ? "Applied immediately. The next shot already uses it. " + gold + " gold carries into the next round."
+                ? "Applied immediately. One upgrade per round, so the offer is now locked. " + gold + " gold carries into the next round."
                 : "Nothing bought yet. All " + gold + " gold carries into the next round.";
             _footerNote.color = UiTokens.Get(UiColor.TextMuted);
         }
@@ -1173,7 +1309,16 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            if (shop.TryPurchase(index, _sessionId))
+            if (Time.frameCount == _rerollFrame)
+            {
+                // The offer was rerolled THIS frame: the player has not seen the new cards,
+                // so a queued or double input must not buy one. Dropped, nothing spent; the
+                // next frame's redraw makes the cards live again.
+                UiSound.Play(UiSoundKind.Denied);
+                return;
+            }
+
+            if (shop.TryPurchase(index, _sessionId, _revision))
             {
                 _notice = null;
             }
@@ -1182,10 +1327,67 @@ namespace DD.Prototype.UI
                 _notice = DescribeRefusal(shop.LastResult);
             }
 
-            // Synchronous redraw so the focus move below sees the card's new state.
+            // Synchronous redraw so the focus move below sees the card's new state, and so
+            // a second click in the same frame meets a disabled button.
             _dirty = false;
             Refresh();
             MoveFocusOffDisabled(index);
+        }
+
+        /// <summary>The reroll button (WP-008). The shop does the whole reroll; this only redraws and reports.</summary>
+        private void OnRerollActivated()
+        {
+            RoundUpgradeShop shop = Shop;
+            if (shop == null)
+            {
+                return;
+            }
+
+            bool rerolled = shop.TryReroll(_sessionId, _revision);
+            _notice = rerolled ? null : DescribeRerollRefusal(shop.LastRerollResult);
+
+            _dirty = false;
+            Refresh();
+
+            if (rerolled)
+            {
+                // The new cards have not been SEEN yet: a second input queued in this same
+                // frame (a card click, a held submit) must not buy off cards the player never
+                // looked at. OnCardActivated drops input for the rest of this frame.
+                _rerollFrame = Time.frameCount;
+            }
+
+            if (!_rerollButton.IsInteractable())
+            {
+                FocusFirstUsefulControl();
+            }
+        }
+
+        /// <summary>The footer line for a refused reroll. Every line says the gold and the reroll were kept.</summary>
+        private static string DescribeRerollRefusal(UpgradeRerollResult result)
+        {
+            switch (result)
+            {
+                case UpgradeRerollResult.InsufficientGold:
+                    return "Not enough gold to reroll. Nothing was spent.";
+                case UpgradeRerollResult.RerollUsed:
+                    return "You already rerolled this round. Nothing was spent.";
+                case UpgradeRerollResult.OfferLocked:
+                    return "The offer is locked after a purchase. Nothing was spent.";
+                case UpgradeRerollResult.NoReplacementAvailable:
+                    return "There is no other upgrade to swap in. Nothing was spent and your reroll is kept.";
+                case UpgradeRerollResult.InvalidResult:
+                case UpgradeRerollResult.InvalidCost:
+                    return "The reroll could not be built. Nothing was spent and your reroll is kept.";
+                case UpgradeRerollResult.ShopClosed:
+                case UpgradeRerollResult.SessionMismatch:
+                case UpgradeRerollResult.StaleRevision:
+                case UpgradeRerollResult.OfferUnavailable:
+                case UpgradeRerollResult.WalletRefused:
+                    return "This offer is no longer open. Nothing was spent.";
+                default:
+                    return "That reroll could not be completed. Nothing was spent.";
+            }
         }
 
         /// <summary>
@@ -1206,8 +1408,13 @@ namespace DD.Prototype.UI
                     return "The offer changed. Prices and tiers were refreshed; nothing was spent.";
                 case UpgradePurchaseResult.AlreadyPurchased:
                     return "You already own that card. Nothing was spent.";
+                case UpgradePurchaseResult.PurchaseLimitReached:
+                    return "One upgrade per round. The offer is locked; nothing was spent.";
+                case UpgradePurchaseResult.OfferUnavailable:
+                    return "There is no valid offer this round. Nothing was spent.";
                 case UpgradePurchaseResult.ShopClosed:
                 case UpgradePurchaseResult.SessionMismatch:
+                case UpgradePurchaseResult.StaleRevision:
                 case UpgradePurchaseResult.WalletRefused:
                     return "This offer is no longer open. Nothing was spent.";
                 default:
@@ -1234,7 +1441,7 @@ namespace DD.Prototype.UI
         {
             RoundUpgradeShop shop = Shop;
 
-            if (shop != null)
+            if (shop != null && !shop.IsLocked)
             {
                 for (int i = 0; i < _slots.Length && i < shop.Cards.Count; i++)
                 {
@@ -1243,6 +1450,12 @@ namespace DD.Prototype.UI
                         Focus(_slots[i].Button);
                         return;
                     }
+                }
+
+                if (_rerollButton != null && _rerollButton.IsInteractable())
+                {
+                    Focus(_rerollButton);
+                    return;
                 }
             }
 

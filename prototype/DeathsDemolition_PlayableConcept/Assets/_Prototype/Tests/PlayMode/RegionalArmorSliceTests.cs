@@ -576,7 +576,14 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(z.LifeId, olum.LifeId);
                 Assert.AreEqual(DamageKind.Direct, olum.Meta.Kind);
                 Assert.Greater(olum.TransactionId, 0);
-                Assert.AreEqual(PrototypeConfig.Active.GoldReward(EnemyTier.Standard), olum.GoldReward, "Gold Standard'ın PrototypeOnly değeri; zırh eki yok (DEC-043 kancası açılmadı).");
+                // WP-008 (DEC-043/069): the DEC-043 hook is now open. A Standard fitted with H+B+L at
+                // spawn pays base + the three spawn-armour bonuses, and breaking the helmet before
+                // the kill changes nothing (the reward is the spawn snapshot).
+                int beklenenOdul = PrototypeConfig.Active.GoldReward(EnemyTier.Standard) +
+                                   DD.Prototype.Economy.GoldRewardCalculator.ArmorBonus(new DD.Prototype.Economy.SpawnArmorComposition(true, true, true), PrototypeConfig.Active);
+                Assert.AreEqual(beklenenOdul, olum.GoldReward, "Gold = Standard base + spawn zırh bonusu (H+B+L); kırılan kask ödülü azaltmaz (DEC-043/069).");
+                Assert.IsTrue(olum.Reward.IsValid);
+                Assert.AreEqual(3, olum.Reward.Armor.PieceCount, "Snapshot spawn'daki üç parçayı taşır (kırılma sonrası da).");
                 yield return null;
 
                 int dressedAtDeath = sayac.DressedTotal;

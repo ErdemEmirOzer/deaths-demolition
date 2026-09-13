@@ -183,14 +183,27 @@ namespace DD.Prototype.Rounds
         /// <summary>Gold picked up across the run. Informational; grants no XP.</summary>
         public int GoldEarned;
 
-        /// <summary>Gold spent on upgrade cards.</summary>
+        /// <summary>
+        /// Gold spent this run: upgrade cards PLUS paid offer rerolls (WP-008, product
+        /// decision 19). Results shows this one number; there is no separate reroll line
+        /// (decision 20). The split below exists for tests, probes and the F1 panel.
+        /// </summary>
         public int GoldSpent;
+
+        /// <summary>WP-008: the part of <see cref="GoldSpent"/> that went to upgrade cards.</summary>
+        public int GoldSpentOnUpgrades;
+
+        /// <summary>WP-008: the part of <see cref="GoldSpent"/> that went to paid rerolls.</summary>
+        public int GoldSpentOnRerolls;
 
         /// <summary>Gold still unspent when the run ended. It is destroyed with the run.</summary>
         public int GoldUnspent;
 
         /// <summary>Upgrade cards bought across the run.</summary>
         public int UpgradesPurchased;
+
+        /// <summary>WP-008: paid rerolls used across the run.</summary>
+        public int RerollsUsed;
 
         /// <summary>Seconds of run time, paused and frozen time excluded.</summary>
         public float RunDuration;

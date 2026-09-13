@@ -5,6 +5,7 @@ using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Pooling;
 using DD.Prototype.Damage;
+using DD.Prototype.Economy;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
 namespace DD.Prototype.Enemies
@@ -53,6 +54,7 @@ namespace DD.Prototype.Enemies
         private bool _initialised;
 
         private EnemyTier _tier = EnemyTier.Standard;
+        private EnemyRewardSnapshot _reward;
         private int _spawnRound = 1;
         private int _lifeId;
         private bool _alive;
@@ -161,6 +163,13 @@ namespace DD.Prototype.Enemies
 
         /// <summary>WP-004: identity of this body's current life (one per pool checkout). 0 before the first spawn.</summary>
         public int LifeId => _lifeId;
+
+        /// <summary>
+        /// WP-008: the reward record taken when this life spawned (version + armour
+        /// composition at spawn + resolved gold slots). Immutable for the life; the death
+        /// event carries it verbatim. Default (not valid) before the first spawn.
+        /// </summary>
+        public EnemyRewardSnapshot Reward => _reward;
 
         public bool IsAlive => _alive;
         public bool IsDying => _dying;
@@ -280,6 +289,11 @@ namespace DD.Prototype.Enemies
 
             RollArmor(config);
 
+            // WP-008 (DEC-043): the reward is decided HERE, once, from the version and the
+            // plates just fitted. Die() reads this record and nothing else, so what the
+            // fight does to the armour cannot move the number.
+            TakeRewardSnapshot(config);
+
             _alive = true;
             _dying = false;
             _despawnCountdown = 0f;
@@ -303,6 +317,7 @@ namespace DD.Prototype.Enemies
             _dying = false;
             _lastTransactionId = 0;
             _lastMeta = default;
+            _reward = default;   // WP-008: a recycled body never carries a previous life's reward
 
             if (_controller != null)
             {
@@ -486,7 +501,34 @@ namespace DD.Prototype.Enemies
             if (helmet && Fit(armorConfig, ArmorSlot.Helmet)) fitted++;
             if (body && Fit(armorConfig, ArmorSlot.Body)) fitted++;
             if (leg && Fit(armorConfig, ArmorSlot.Leg)) fitted++;
+
+            // WP-008: this harness REPLACES the spawn composition, so the spawn-time reward
+            // record is retaken from the new plates. It is the only path that retakes it,
+            // and it is not a production path; combat damage never reaches here.
+            TakeRewardSnapshot(config);
             return fitted;
+        }
+
+        /// <summary>
+        /// WP-008: freeze the reward for this life from the version and the plates currently
+        /// fitted (called right after the spawn roll). Deterministic; no randomness.
+        /// </summary>
+        private void TakeRewardSnapshot(PrototypeConfig config)
+        {
+            if (config == null)
+            {
+                // No table to price from: no snapshot, so Die() keeps the WP-004 fallback
+                // (a zero-valued "valid" snapshot would pay nothing and hide the fault).
+                _reward = default;
+                return;
+            }
+
+            ArmorSet armor = _body != null ? _body.Armor : null;
+            var composition = armor != null
+                ? new SpawnArmorComposition(armor.IsEquipped(ArmorSlot.Helmet), armor.IsEquipped(ArmorSlot.Body), armor.IsEquipped(ArmorSlot.Leg))
+                : SpawnArmorComposition.None;
+
+            _reward = GoldRewardCalculator.Snapshot(_tier, composition, config);
         }
 
         /// <summary>Region hitbox collider (test/probe readout: aim points for the real weapon path). Null when the rig is incomplete.</summary>
@@ -939,7 +981,11 @@ namespace DD.Prototype.Enemies
             _animator.BeginDeath(direction, hit.ImpactForce, result.Region, heavyTier, transform, ref _random);
 
             PrototypeConfig config = PrototypeConfig.Active;
-            int gold = config != null ? config.GoldReward(_tier) : 0;
+
+            // WP-008: the gold is the SPAWN snapshot's total, never a fresh read of the
+            // config or of the (possibly broken) armour. A life that somehow has no
+            // snapshot falls back to the WP-004 flat value.
+            int gold = _reward.IsValid ? _reward.Total : (config != null ? config.GoldReward(_tier) : 0);
             int xp = config != null ? config.KillXp(_tier) : 0;
 
             float hitStop = suggestedHitStop;
@@ -951,7 +997,7 @@ namespace DD.Prototype.Enemies
             DamageEvents.RaiseEnemyDied(new EnemyDeathInfo(
                 transform, _tier, transform.position, direction, result.Region, hit.Source,
                 DamageRegions.IsCritical(in result, hit.Source), heavyTier, _spawnRound,
-                gold, xp, _body.LastOverkill, hitStop, _lifeId, in _lastMeta));
+                gold, xp, _body.LastOverkill, hitStop, _lifeId, in _lastMeta, in _reward));
         }
 
         /// <summary>

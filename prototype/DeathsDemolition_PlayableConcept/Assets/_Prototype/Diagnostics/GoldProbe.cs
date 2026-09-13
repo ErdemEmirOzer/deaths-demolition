@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Damage;
 using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
@@ -199,6 +200,9 @@ namespace DD.Prototype.Diagnostics
                 Vector3 killPos = rig.transform.position + new Vector3(12f, 0f, 0f);
                 ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, run.Round, killPos, Quaternion.identity);
                 int lifeId = z != null ? z.LifeId : 0;
+                // WP-008: a Standard may roll armour and then pays base + armour bonus; this
+                // probe is about the packet mechanics, so it strips the roll (test seam).
+                if (z != null) z.FitArmorComposition(false, false, false);
                 if (z != null) z.Kill();
                 yield return null;
                 GoldOrb packet = OnlySpawnedPacket();
@@ -252,11 +256,16 @@ namespace DD.Prototype.Diagnostics
                 EnemyFactory.ClearAll();
                 gold.ClearOrbs(true);   // the six kit-4 packets are taken (credited) so the round below starts on a clean floor
                 yield return null;
+                // The taken packets fly (unscaled 0.35 s) before they credit; the round's own
+                // income is measured from AFTER they landed.
+                yield return WaitUntil(() => gold.LiveOrbCount == 0, "kit-4 packets landing");
 
                 // ---------------------------------------------------------------- kit 5-7: leave them, complete the round, sweep
                 SetSpawning(dir, true);
                 int spawnedBeforeRound = gold.PacketsSpawned;
                 int collectedBeforeRound = gold.PacketsCollected;
+                int earnedBeforeRound = gold.Wallet.TotalEarned;
+                int autoBeforeRound = gold.Wallet.EarnedByAutoCollect;
                 run.BeginRound(1);
                 yield return null;
                 int cleared = 0; float tsAtClear = -1f; int balAtClear = -1; int outstandingAtClear = -1;
@@ -266,6 +275,9 @@ namespace DD.Prototype.Diagnostics
                 int maxFloor = 0;
                 t0 = Time.realtimeSinceStartup;
                 int killed = 0;
+                int roundReward = 0;   // WP-008: director spawns may be armoured; income = sum of spawn snapshots
+                Action<EnemyDeathInfo> onDied = info => roundReward += info.GoldReward;
+                DamageEvents.EnemyDied += onDied;
                 while (cleared == 0 && Time.realtimeSinceStartup - t0 < 90f)
                 {
                     killed += KillAllLiving();
@@ -283,15 +295,17 @@ namespace DD.Prototype.Diagnostics
                 }
 
                 RunEvents.RoundCompleted -= onCleared;
+                DamageEvents.EnemyDied -= onDied;
                 GoldAutoCollectReport sweep = gold.LastAutoCollect;
                 Stage s6 = Capture("06-round-complete-sweep", run, gold, "6,7");
                 int roundPackets = gold.PacketsSpawned - spawnedBeforeRound;
                 int roundManual = gold.PacketsCollected - collectedBeforeRound;
                 s6.pass = cleared == 1 && killed == pool && roundPackets == pool && tsAtClear == 0f && outstandingAtClear == 0 &&
-                          sweep.Round == 1 && sweep.Packets == roundPackets - roundManual && sweep.Amount == sweep.Packets * standard &&
+                          sweep.Round == 1 && sweep.Packets == roundPackets - roundManual && sweep.Amount == gold.Wallet.EarnedByAutoCollect - autoBeforeRound &&
+                          roundReward >= pool * standard && gold.Wallet.TotalEarned - earnedBeforeRound == roundReward &&
                           balAtClear == gold.Wallet.Balance && gold.FallbackCredits == 0 && gold.CreditRefusals == 0;
                 s6.detail = "pool=" + pool + " killed=" + killed + " maxFloor=" + maxFloor + " sweep=" + sweep.Packets + "/" + sweep.Amount + "g balanceAtClear=" + balAtClear +
-                            " timeScaleAtClear=" + tsAtClear + " outstandingAtClear=" + outstandingAtClear;
+                            " roundReward=" + roundReward + " (>= " + pool * standard + ") timeScaleAtClear=" + tsAtClear + " outstandingAtClear=" + outstandingAtClear;
                 s6.note = "round completed once; every packet left on the floor (last kill included) swept and credited in the RoundCleared frame, world frozen";
                 Write(s6);
                 yield return WaitUntil(() => gold.LiveOrbCount == 0, "sweep flight");
@@ -355,6 +369,7 @@ namespace DD.Prototype.Diagnostics
                 yield return null;
                 Vector3 pPos = rig.transform.position + new Vector3(10f, 0f, 0f);
                 ZombieEnemy pz = EnemyFactory.Spawn(EnemyTier.Standard, run.Round, pPos, Quaternion.identity);
+                if (pz != null) pz.FitArmorComposition(false, false, false);   // WP-008: bare Standard = flat value
                 if (pz != null) pz.Kill();
                 yield return null;
                 GoldOrb pk = OnlySpawnedPacket();

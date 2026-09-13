@@ -4,8 +4,9 @@ namespace DD.Prototype.Economy
 {
     /// <summary>
     /// Why gold moved. Every wallet transaction carries exactly one of these, so the
-    /// ledger can be read back without guessing (WP-004). The five product sources are
-    /// the approved list; nothing else is added here without a product decision.
+    /// ledger can be read back without guessing (WP-004). The five WP-004 sources plus
+    /// the WP-008 reroll (DEC-050 / REQ-079) are the approved list; nothing else is
+    /// added here without a product decision.
     /// </summary>
     public enum GoldSource
     {
@@ -15,7 +16,7 @@ namespace DD.Prototype.Economy
         /// <summary>A packet still on the ground when the round completed (REQ-076).</summary>
         RoundClearAutoCollect = 1,
 
-        /// <summary>A round-end upgrade card. The only spend source.</summary>
+        /// <summary>A round-end upgrade card. One of the two spend sources.</summary>
         UpgradePurchase = 2,
 
         /// <summary>
@@ -28,7 +29,14 @@ namespace DD.Prototype.Economy
         /// The run ended. Reserved likewise; the boundary is <c>GoldWallet.ResetForRunEnd</c>
         /// (REQ-018) and writes no transaction.
         /// </summary>
-        RunReset = 4
+        RunReset = 4,
+
+        /// <summary>
+        /// The one paid reroll of a round-end offer (WP-008, DEC-050 / REQ-079). The other
+        /// spend source. Results report it INSIDE "Gold Spent" together with purchases
+        /// (product decision 19/20); the wallet keeps the split for tests and probes.
+        /// </summary>
+        OfferReroll = 5
     }
 
     /// <summary>
@@ -73,11 +81,23 @@ namespace DD.Prototype.Economy
         /// <summary>Gold that arrived through round-end auto-collection.</summary>
         public readonly int EarnedByAutoCollect;
 
+        /// <summary>Gold spent on upgrade cards (WP-008 split of <see cref="TotalSpent"/>).</summary>
+        public readonly int SpentOnUpgrades;
+
+        /// <summary>Gold spent on offer rerolls (WP-008 split of <see cref="TotalSpent"/>).</summary>
+        public readonly int SpentOnRerolls;
+
         /// <summary>Transactions applied this run. Rises by one per accepted transaction.</summary>
         public readonly int Version;
 
         public GoldWalletSnapshot(int runId, int balance, int totalEarned, int totalSpent,
             int earnedByPickup, int earnedByAutoCollect, int version)
+            : this(runId, balance, totalEarned, totalSpent, earnedByPickup, earnedByAutoCollect, totalSpent, 0, version)
+        {
+        }
+
+        public GoldWalletSnapshot(int runId, int balance, int totalEarned, int totalSpent,
+            int earnedByPickup, int earnedByAutoCollect, int spentOnUpgrades, int spentOnRerolls, int version)
         {
             RunId = runId;
             Balance = balance;
@@ -85,6 +105,8 @@ namespace DD.Prototype.Economy
             TotalSpent = totalSpent;
             EarnedByPickup = earnedByPickup;
             EarnedByAutoCollect = earnedByAutoCollect;
+            SpentOnUpgrades = spentOnUpgrades;
+            SpentOnRerolls = spentOnRerolls;
             Version = version;
         }
 
@@ -92,7 +114,8 @@ namespace DD.Prototype.Economy
         {
             return RunId == other.RunId && Balance == other.Balance && TotalEarned == other.TotalEarned &&
                    TotalSpent == other.TotalSpent && EarnedByPickup == other.EarnedByPickup &&
-                   EarnedByAutoCollect == other.EarnedByAutoCollect && Version == other.Version;
+                   EarnedByAutoCollect == other.EarnedByAutoCollect && SpentOnUpgrades == other.SpentOnUpgrades &&
+                   SpentOnRerolls == other.SpentOnRerolls && Version == other.Version;
         }
 
         public override bool Equals(object obj) => obj is GoldWalletSnapshot other && Equals(other);

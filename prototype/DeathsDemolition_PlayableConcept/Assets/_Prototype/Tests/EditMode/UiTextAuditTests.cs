@@ -12,10 +12,11 @@ namespace DD.Prototype.Tests.EditMode
     /// WP-005 · kullanıcıya görünen UI metni denetimi (kaynak taraması).
     ///
     /// UI modülünün runtime kaynaklarındaki her string literal taranır: Türkçe'ye özgü
-    /// karakter yok (oyun tamamen İngilizce); "claim" eylemi yok; karara bağlanmamış
-    /// DEC-048/DEC-050 davranışlarını kural gibi ilan eden ifade yok ("reroll", "buy as
-    /// many", "buy any number", "one purchase per round"); ASCII "->" oku yok (glyph
-    /// tutarlılığı). Yorumlar taranmaz — yalnız literal'ler.
+    /// karakter yok (oyun tamamen İngilizce); "claim" eylemi yok; karara AYKIRI davranış
+    /// ilan eden ifade yok ("buy as many", "buy any number" — DEC-048 round başına tek satın
+    /// alma ile çelişir); ASCII "->" oku yok (glyph tutarlılığı). Yorumlar taranmaz — yalnız
+    /// literal'ler. WP-008: DEC-048/DEC-050 uygulandı; "reroll" ve "one upgrade per round"
+    /// artık ürün kuralıdır ve UI metninde serbesttir (yasak listesinden çıkarıldı).
     /// </summary>
     [TestFixture]
     [Category("WP005")]
@@ -26,7 +27,7 @@ namespace DD.Prototype.Tests.EditMode
 
         private static readonly string[] YasakIfadeler =
         {
-            "reroll", "re-roll", "buy as many", "buy any number", "one purchase per round", "claim"
+            "buy as many", "buy any number", "claim"
         };
 
         private static IEnumerable<string> UiKaynaklari()

@@ -55,12 +55,19 @@ namespace DD.Prototype.Economy
         /// <summary>Gold that arrived through round-end auto-collection.</summary>
         public int EarnedByAutoCollect { get; private set; }
 
+        /// <summary>Gold spent on upgrade cards (WP-008). <see cref="TotalSpent"/> = this + <see cref="SpentOnRerolls"/> for the two product spend sources.</summary>
+        public int SpentOnUpgrades { get; private set; }
+
+        /// <summary>Gold spent on paid offer rerolls (WP-008, DEC-050).</summary>
+        public int SpentOnRerolls { get; private set; }
+
         /// <summary>Accepted transactions this run. F1 readout and test evidence.</summary>
         public int AppliedTransactions => _applied.Count;
 
         /// <summary>The wallet as one value. Equal to what the last <see cref="SnapshotChanged"/> carried.</summary>
         public GoldWalletSnapshot Snapshot =>
-            new GoldWalletSnapshot(RunId, Balance, TotalEarned, TotalSpent, EarnedByPickup, EarnedByAutoCollect, _version);
+            new GoldWalletSnapshot(RunId, Balance, TotalEarned, TotalSpent, EarnedByPickup, EarnedByAutoCollect,
+                SpentOnUpgrades, SpentOnRerolls, _version);
 
         /// <summary>Raised on any balance change. Argument is the new balance.</summary>
         public event Action<int> Changed;
@@ -132,10 +139,10 @@ namespace DD.Prototype.Economy
             switch (source)
             {
                 case GoldSource.EnemyPickup:
-                    EarnedByPickup += amount;
+                    EarnedByPickup = (int)Math.Min((long)EarnedByPickup + amount, int.MaxValue);
                     break;
                 case GoldSource.RoundClearAutoCollect:
-                    EarnedByAutoCollect += amount;
+                    EarnedByAutoCollect = (int)Math.Min((long)EarnedByAutoCollect + amount, int.MaxValue);
                     break;
             }
 
@@ -190,6 +197,16 @@ namespace DD.Prototype.Economy
             Balance -= cost;
             TotalSpent += cost;
 
+            switch (source)
+            {
+                case GoldSource.UpgradePurchase:
+                    SpentOnUpgrades += cost;
+                    break;
+                case GoldSource.OfferReroll:
+                    SpentOnRerolls += cost;
+                    break;
+            }
+
             _version++;
             RaiseChanged();
             return GoldTransactionResult.Applied;
@@ -233,8 +250,10 @@ namespace DD.Prototype.Economy
                 return GoldTransactionResult.Duplicate;
             }
 
-            Balance += amount;
-            TotalEarned += amount;
+            // Saturating, never wrapping: an absurd credit can cap the wallet but can never
+            // turn the balance negative (WP-008 overflow rule).
+            Balance = (int)Math.Min((long)Balance + amount, int.MaxValue);
+            TotalEarned = (int)Math.Min((long)TotalEarned + amount, int.MaxValue);
             _version++;
             return GoldTransactionResult.Applied;
         }
@@ -253,6 +272,8 @@ namespace DD.Prototype.Economy
             TotalSpent = 0;
             EarnedByPickup = 0;
             EarnedByAutoCollect = 0;
+            SpentOnUpgrades = 0;
+            SpentOnRerolls = 0;
             _version = 0;
             _nextTransactionId = 1;
             _applied.Clear();

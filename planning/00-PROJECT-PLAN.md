@@ -138,6 +138,13 @@ Hedef işletim sistemi, mağaza ve dağıtım ayrıntıları ürünün büyük b
 | DEC-066 | Haritanın kuzey, doğu, güney ve batı bölgeleri ortak atmosfer içinde kendi çevresel ses katmanlarına sahip olacak ve bölgeler arasında yumuşak geçiş yapılacaktır. |
 | DEC-067 | Zombi sesleri fiziksel ve gerçekçi temelde kalacak; doğaüstü/büyülü ses kimliği kullanılmayacak, güçlü versiyonlar ve saldırı hazırlıkları yön ve tehdit bilgisi verecektir. |
 | DEC-068 | Yağmur sonrası, hafif sisli ve kapalı hava koşulu korunacak; tam gün/gece veya büyük hava değişimi olmayacak, round gerilimi ses ve kontrollü çevresel hareketle yükselirken okunabilirlik korunacaktır. |
+| DEC-069 | Düşmanın gold ödülü deterministik olarak `Base Reward + Enemy Version Bonus + Spawn Armor Bonus` formülüyle hesaplanacak; "version" düşman ailesini (Standard/Special/Elite/Ultra) ifade eder, Special Weapon ile ilgisi yoktur. Zırh bonusu düşmanın DOĞDUĞU ANDA taşıdığı Helmet/Body/Leg parçalarına göre belirlenir ve değişmez bir spawn snapshot'ı olarak tutulur; dövüş sırasında zırhın hasar görmesi veya kırılması ödülü azaltmaz. (WP-008, 2026-09-13) |
+| DEC-070 | Round sonu geliştirme ekranında kartın fiyatının oyuncunun mevcut gold'undan yüksek olması kartı havuzdan çıkarmaz; kart gösterilir, satın alma düğmesi devre dışı olur. (WP-008, 2026-09-13) |
+| DEC-071 | Round başına tek satın alma hakkı; ekranın kapatılıp açılması, pause/resume, aynı round oturumunun yeniden bağlanması veya aynı komutun tekrar gönderilmesi hakkı yenilemez. Satın alma tamamlandığında teklif kilitlenir; yalnız Continue açık kalır. (WP-008, 2026-09-13; DEC-048'i tamamlar) |
+| DEC-072 | Ücretli yenileme yalnız satın alma öncesinde ve round başına bir kez kullanılabilir; sonuçta tam olarak bir veya iki kart değişir, üç kartın tamamı asla değişmez ve sonuç yine üç farklı geçerli karttır. (WP-008, 2026-09-13; DEC-050'yi tamamlar) |
+| DEC-073 | Üç kartlık geçerli bir teklif veya kurala uygun bir yenileme sonucu üretilemiyorsa oyuncudan gold kesilmez, duplicate/geçersiz kart uydurulmaz, sistem açık bir configuration error üretir, ekran güvenli hata durumuna geçer, Continue açık kalır ve oyun soft-lock/crash yaşamaz. (WP-008, 2026-09-13) |
+| DEC-074 | Yenileme ücreti ve geliştirme satın alma bedeli atomik işlemlerdir; işlem başarısızsa gold kaybedilmez. (WP-008, 2026-09-13) |
+| DEC-075 | Run Results ekranındaki `Gold Spent` geliştirme satın almalarına ve yenileme ücretlerine harcanan toplam gold'u birlikte gösterir; şimdilik ayrı bir yenileme harcaması satırı eklenmez. (WP-008, 2026-09-13) |
 
 ## Kararlaştırılması sonraya bırakılan alanlar
 

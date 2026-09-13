@@ -51,9 +51,19 @@ namespace DD.Prototype.Rounds
 
         public int GoldEarned { get; private set; }
 
+        /// <summary>Gold spent this run on upgrade cards AND paid rerolls (WP-008: one number, Results "Gold Spent").</summary>
         public int GoldSpent { get; private set; }
 
+        /// <summary>WP-008 split of <see cref="GoldSpent"/>: upgrade cards.</summary>
+        public int GoldSpentOnUpgrades { get; private set; }
+
+        /// <summary>WP-008 split of <see cref="GoldSpent"/>: paid offer rerolls.</summary>
+        public int GoldSpentOnRerolls { get; private set; }
+
         public int UpgradesPurchased { get; private set; }
+
+        /// <summary>WP-008: paid rerolls used this run.</summary>
+        public int RerollsUsed { get; private set; }
 
         /// <summary>Seconds of run time. Frozen and paused time never reaches this.</summary>
         public float RunTime { get; private set; }
@@ -118,7 +128,21 @@ namespace DD.Prototype.Rounds
             }
 
             GoldSpent += amount;
+            GoldSpentOnUpgrades += amount;
             UpgradesPurchased++;
+        }
+
+        /// <summary>WP-008: a paid reroll. Counts into <see cref="GoldSpent"/>, not into <see cref="UpgradesPurchased"/>.</summary>
+        public void RecordRerollSpent(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            GoldSpent += amount;
+            GoldSpentOnRerolls += amount;
+            RerollsUsed++;
         }
 
         /// <summary>Advance the run clock. The director feeds it scaled delta time only.</summary>
@@ -146,7 +170,10 @@ namespace DD.Prototype.Rounds
             ArmorPiecesBroken = 0;
             GoldEarned = 0;
             GoldSpent = 0;
+            GoldSpentOnUpgrades = 0;
+            GoldSpentOnRerolls = 0;
             UpgradesPurchased = 0;
+            RerollsUsed = 0;
             RunTime = 0f;
         }
     }

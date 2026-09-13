@@ -193,6 +193,10 @@ namespace DD.Prototype.Rounds
             _stats.Reset();
             _runId = ++s_runSerial;
 
+            // WP-008: an offer retained from the previous run's last round must never be
+            // restored into this run (the shop keys it on the run id, this is the belt).
+            _shop.DiscardOffer();
+
             // WP-007 (AP-10): the Special Weapon process is bounded by the run. A same-scene
             // restart must not inherit a scheduled drop, a pickup or an active runtime.
             SpecialWeaponRoundBridge.NotifyRunStarted(_runId);
@@ -290,7 +294,8 @@ namespace DD.Prototype.Rounds
                 spawn.StopRound();
             }
 
-            _shop.Close();
+            // WP-008: the run is over; its offer and rights die with it (REQ-018).
+            _shop.DiscardOffer();
 
             // The world must not stay frozen behind a results screen this class does not
             // own. G-08 takes RunFlowClock.ResultsHold if it wants the world still.
@@ -435,6 +440,7 @@ namespace DD.Prototype.Rounds
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
 
             _shop.Purchased += OnCardPurchased;
+            _shop.Rerolled += OnOfferRerolled;
 
             BindSpawnDirector();
             BindSpecialWeaponBridge();
@@ -448,6 +454,7 @@ namespace DD.Prototype.Rounds
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
 
             _shop.Purchased -= OnCardPurchased;
+            _shop.Rerolled -= OnOfferRerolled;
 
             UnbindSpawnDirector();
             UnbindSpecialWeaponBridge();
@@ -660,6 +667,12 @@ namespace DD.Prototype.Rounds
             _build.RecordPurchase(card.Branch, card.Cost, _round);
         }
 
+        /// <summary>WP-008: the paid reroll is run spending too (Results "Gold Spent" = purchases + rerolls).</summary>
+        private void OnOfferRerolled(int cost)
+        {
+            _stats.RecordRerollSpent(cost);
+        }
+
         private void OnPlayerDied(PlayerDeathInfo info)
         {
             EndRun(RunEndReason.PlayerDeath, info.KilledBy);
@@ -741,8 +754,11 @@ namespace DD.Prototype.Rounds
                 // tracker's mirror of it.
                 GoldEarned = wallet != null ? wallet.TotalEarned : _stats.GoldEarned,
                 GoldSpent = wallet != null ? wallet.TotalSpent : _stats.GoldSpent,
+                GoldSpentOnUpgrades = wallet != null ? wallet.SpentOnUpgrades : _stats.GoldSpentOnUpgrades,
+                GoldSpentOnRerolls = wallet != null ? wallet.SpentOnRerolls : _stats.GoldSpentOnRerolls,
                 GoldUnspent = wallet != null ? wallet.Balance : 0,
                 UpgradesPurchased = _stats.UpgradesPurchased,
+                RerollsUsed = _stats.RerollsUsed,
 
                 RunDuration = _stats.RunTime,
                 EndReason = reason,

@@ -37,7 +37,8 @@ namespace DD.Prototype.Tests.EditMode
             _cuzdan = new GoldWallet();
             _cuzdan.InitializeForRun(1);
             _rank = new WeaponModifierState();
-            _dukkan = new RoundUpgradeShop();
+            // WP-008: unlock yüklemi enjekte (profil dosyası okunmaz), RNG tohumlu (teklif tekrar üretilebilir).
+            _dukkan = new RoundUpgradeShop { UnlockedPredicate = _ => true, Random = new SeededUpgradeOfferRandom(404) };
             _satinAlinanlar = new List<UpgradeCardOffer>();
             _teklifDegisti = 0;
             _reddedildi = 0;
@@ -104,7 +105,9 @@ namespace DD.Prototype.Tests.EditMode
 
             Assert.IsTrue(_dukkan.TryPurchase(0, _dukkan.SessionId));
             Assert.IsFalse(_dukkan.TryPurchase(0, _dukkan.SessionId));
-            Assert.AreEqual(UpgradePurchaseResult.AlreadyPurchased, _dukkan.LastResult);
+            // WP-008 (DEC-048): hak kontrolü kart kontrolünden önce gelir; ikinci tıklama
+            // "round'un tek satın alması kullanıldı" ile reddedilir (AlreadyPurchased değil).
+            Assert.AreEqual(UpgradePurchaseResult.PurchaseLimitReached, _dukkan.LastResult);
 
             Assert.AreEqual(once - kart.Cost, _cuzdan.Balance, "İkinci tıklama gold düşürmedi.");
             Assert.AreEqual(1, _rank.GetTier(kart.Branch), "İkinci tıklama rank artırmadı.");
@@ -291,14 +294,20 @@ namespace DD.Prototype.Tests.EditMode
             Assert.GreaterOrEqual(_dukkan.Cards.Count, 2, "Test öncülü: en az iki kart.");
 
             // Ekranın yeniden kurulumu = OfferChanged sonrası teklifi yeniden okumak; UI
-            // hiçbir 'uygula' çağrısı yapmaz. Dükkânın kendi yeniden okuma yolu (bayat teklif
-            // yenilemesi) da rank'a dokunmaz: dış etkiyle tetiklenen RefreshCards + OfferChanged
-            // sonrasında satın alınan kartın etkisi ikinci kez uygulanmamış olmalı.
+            // hiçbir 'uygula' çağrısı yapmaz. Dükkânın kendi yeniden okuma yolu (aynı round'un
+            // yeniden açılışı: RefreshCards + OfferChanged) da rank'a dokunmaz: dış etkiyle
+            // değişen başka bir dal yeniden okunurken satın alınan kartın etkisi ikinci kez
+            // uygulanmamış olmalı. (WP-008: satın alma teklifi kilitler; ikinci kart denemesi
+            // hak kontrolünde durur ve ekranı yeniden çizmez — bu yüzden yeniden okuma yolu
+            // olarak aynı round'un Close/Open'ı kullanılır.)
             _rank.SetTier(_dukkan.Cards[1].Branch, 1, _config);        // başka bir dal dışarıdan değişti (F1)
             int versiyonDis = _rank.Version;
-            Assert.IsFalse(_dukkan.TryPurchase(1, _dukkan.SessionId));   // StaleOffer → RefreshCards + OfferChanged
-            Assert.AreEqual(UpgradePurchaseResult.StaleOffer, _dukkan.LastResult);
+            _dukkan.Close();
+            _dukkan.Open(1, _config, _cuzdan, _rank, runId: 1);         // aynı round: teklif korunur, kartlar yeniden okunur
             Assert.Greater(_teklifDegisti, olay, "Ekran yeniden çizim olayı yükseldi.");
+            Assert.AreEqual(1, _dukkan.Cards[1].OwnedTier, "Dış değişim yeniden okundu.");
+            Assert.IsFalse(_dukkan.TryPurchase(1, _dukkan.SessionId));   // kilitli teklif: hak yok
+            Assert.AreEqual(UpgradePurchaseResult.PurchaseLimitReached, _dukkan.LastResult);
 
             Assert.AreEqual(versiyonDis, _rank.Version, "Yeniden çizim/yenileme rank state'ine dokunmadı.");
             Assert.AreEqual(1, _rank.GetTier(kart.Branch), "Satın alınan kartın etkisi tek kaldı.");

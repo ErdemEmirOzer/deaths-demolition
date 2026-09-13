@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Economy;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
 namespace DD.Prototype.Damage
@@ -128,9 +129,10 @@ namespace DD.Prototype.Damage
         public readonly int SpawnRound;
 
         /// <summary>
-        /// Gold this kill is worth, already read from PrototypeConfig.GoldReward(tier).
-        /// Provided so G-07 does not have to re-derive it; G-07 remains free to ignore it
-        /// and read the config itself.
+        /// Gold this kill is worth. Since WP-008 a <c>ZombieEnemy</c> writes the TOTAL of
+        /// its spawn-time <see cref="Reward"/> snapshot here (base + version + spawn
+        /// armour); a producer without a snapshot writes PrototypeConfig.GoldReward(tier).
+        /// Provided so a reader does not have to re-derive it.
         /// </summary>
         public readonly int GoldReward;
 
@@ -178,6 +180,7 @@ namespace DD.Prototype.Damage
             SuggestedHitStop = suggestedHitStop;
             LifeId = lifeId;
             Meta = default;
+            Reward = default;
         }
 
         /// <summary>WP-006: the full meta of the killing call (transaction id, routing kind, armour left at death).</summary>
@@ -203,6 +206,25 @@ namespace DD.Prototype.Damage
             SuggestedHitStop = suggestedHitStop;
             LifeId = lifeId;
             Meta = meta;
+            Reward = default;
+        }
+
+        /// <summary>
+        /// WP-008: the immutable reward record taken when this life SPAWNED (version +
+        /// armour composition at spawn + the resolved base / version / armour slots).
+        /// <c>GoldService</c> pays exactly this; it never reads the live armour at death.
+        /// Default (<c>IsValid</c> false) when raised through an older constructor.
+        /// </summary>
+        public readonly EnemyRewardSnapshot Reward;
+
+        public EnemyDeathInfo(Transform owner, EnemyTier tier, Vector3 position, Vector3 killDirection,
+            BodyRegion killRegion, DamageSourceKind killSource, bool wasCritical, bool wasHeavyDeath,
+            int spawnRound, int goldReward, int killXp, float overkill, float suggestedHitStop, int lifeId,
+            in DamageEventMeta meta, in EnemyRewardSnapshot reward)
+            : this(owner, tier, position, killDirection, killRegion, killSource, wasCritical, wasHeavyDeath,
+                spawnRound, goldReward, killXp, overkill, suggestedHitStop, lifeId, in meta)
+        {
+            Reward = reward;
         }
 
         /// <summary>Transaction id of the killing call when a WP-006 producer raised this, else 0.</summary>

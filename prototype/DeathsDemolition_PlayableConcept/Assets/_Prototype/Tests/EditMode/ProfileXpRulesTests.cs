@@ -382,21 +382,46 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void DalUnlockSeviyesi_TeklifKapisiDegil_YalnizGorunum()
+        public void DalUnlockSeviyesi_TeklifKapisi_ProfilKuraliniOkur()
         {
-            // WP-004 devir notu: UpgradeBranchSettings.UnlockProfileLevel'ın teklif tarafında
-            // çağıranı yok. WP-005 bunu onaylanmamış bir içeriğe BAĞLAMAZ; yalnız Profile
-            // pane'inde görüntülenir. Bu test mevcut sınırı kilitler: teklif kapısı
-            // (RoundUpgradeShop) profil seviyesini okumaz.
+            // WP-004 devir notu → WP-005 "karar bekliyor" → WP-008 KARAR (ürün kararı 9 / DEC-049 /
+            // REQ-078): "ilgili içerik açıksa erişilebilir" — teklif kapısı (RoundUpgradeShop)
+            // dalın unlock kuralını okur; varsayılan yüklem ProfileService.IsBranchUnlocked
+            // (UpgradeBranchSettings.UnlockProfileLevel), testler kendi yüklemini enjekte eder.
+            // Profile pane aynı eşiği görüntülemeye devam eder; iki yüzey artık tutarlıdır.
             string kaynak = File.ReadAllText(Path.Combine(
                 Application.dataPath, "_Prototype", "Rounds", "RoundUpgradeShop.cs"));
-            StringAssert.DoesNotContain("IsBranchUnlocked", kaynak, "teklif kapısı profil seviyesine bağlanmadı (karar bekliyor)");
-            StringAssert.DoesNotContain("UnlockProfileLevel", kaynak);
+            StringAssert.Contains("ProfileService.IsBranchUnlocked", kaynak, "teklif kapısı profil unlock kuralına bağlı (WP-008 kararı 9)");
 
-            // Görünüm tarafı okur (Profile pane), ve seviye eşiği prototip config'inden gelir.
+            // Eşik prototip config'inden gelir; L1 profilde Chain kilitli görünür VE teklif edilmez.
             Assert.AreEqual(2, ProfileService.UnlockLevelFor(UpgradeBranch.Explosion));
             Assert.AreEqual(3, ProfileService.UnlockLevelFor(UpgradeBranch.Chain));
             Assert.IsFalse(ProfileService.IsBranchUnlocked(UpgradeBranch.Chain), "L1 profilde Chain kilitli görünür");
+
+            var wallet = new DD.Prototype.Economy.GoldWallet();
+            wallet.InitializeForRun(1);
+            var shop = new DD.Prototype.Rounds.RoundUpgradeShop { Random = new DD.Prototype.Rounds.SeededUpgradeOfferRandom(1) };
+            var config = ScriptableObject.CreateInstance<PrototypeConfig>();
+            try
+            {
+                for (int round = 1; round <= 30; round++)
+                {
+                    shop.Open(round, config, wallet, new DD.Prototype.Weapons.WeaponModifierState(), 1);
+                    for (int i = 0; i < shop.Cards.Count; i++)
+                    {
+                        Assert.AreNotEqual(UpgradeBranch.Chain, shop.Cards[i].Branch, "L1 profil: Chain teklif edilmez");
+                        Assert.AreNotEqual(UpgradeBranch.Explosion, shop.Cards[i].Branch, "L1 profil: Explosion teklif edilmez");
+                    }
+
+                    shop.Close();
+                }
+
+                Assert.AreEqual(DD.Prototype.Rounds.UpgradeEligibility.Locked, shop.Eligibility(UpgradeBranch.Chain));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(config);
+            }
         }
     }
 }

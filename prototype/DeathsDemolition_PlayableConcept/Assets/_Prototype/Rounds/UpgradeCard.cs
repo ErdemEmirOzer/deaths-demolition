@@ -53,7 +53,104 @@ namespace DD.Prototype.Rounds
         TierDidNotChange = 10,
 
         /// <summary>The wallet refused the spend for a reason other than the balance (no run open, duplicate id). Nothing was spent.</summary>
-        WalletRefused = 11
+        WalletRefused = 11,
+
+        /// <summary>WP-008 (DEC-048): this round's one purchase was already made; the offer is locked. Nothing was spent.</summary>
+        PurchaseLimitReached = 12,
+
+        /// <summary>WP-008: the caller quoted an older offer revision (a screen drawn before a reroll). Nothing was spent.</summary>
+        StaleRevision = 13,
+
+        /// <summary>WP-008: the offer is in its configuration-error state and has no cards. Nothing was spent.</summary>
+        OfferUnavailable = 14
+    }
+
+    /// <summary>WP-008: a per-round right on the upgrade session (one purchase, one reroll).</summary>
+    public enum UpgradeEntitlement
+    {
+        /// <summary>Not used yet on this round's offer.</summary>
+        Available = 0,
+
+        /// <summary>Consumed on this round's offer. Reopening, pausing or reconnecting does not restore it.</summary>
+        Used = 1,
+
+        /// <summary>Closed by another action (the reroll after a purchase). Never usable again this round.</summary>
+        Locked = 2
+    }
+
+    /// <summary>WP-008: the state of the round-end offer as a whole.</summary>
+    public enum UpgradeOfferStatus
+    {
+        Closed = 0,
+
+        /// <summary>Three distinct, eligible cards are on the table.</summary>
+        Ready = 1,
+
+        /// <summary>Three valid cards could not be produced. No card is shown, nothing was charged, CONTINUE works.</summary>
+        ConfigurationError = 2
+    }
+
+    /// <summary>
+    /// How a <see cref="RoundUpgradeShop.TryReroll(int,int)"/> call ended (WP-008, DEC-050).
+    /// Every value but <see cref="Rerolled"/> leaves the wallet, the cards and the reroll
+    /// right exactly as they were.
+    /// </summary>
+    public enum UpgradeRerollResult
+    {
+        None = 0,
+
+        Rerolled = 1,
+
+        ShopClosed = 2,
+
+        SessionMismatch = 3,
+
+        StaleRevision = 4,
+
+        /// <summary>The offer is in its configuration-error state.</summary>
+        OfferUnavailable = 5,
+
+        /// <summary>A purchase was already made this round; the offer is locked (decision 14).</summary>
+        OfferLocked = 6,
+
+        /// <summary>The one reroll of this round was already used (decision 13).</summary>
+        RerollUsed = 7,
+
+        /// <summary>RerollCost is not a positive number. A configuration problem, reported, never a free reroll.</summary>
+        InvalidCost = 8,
+
+        InsufficientGold = 9,
+
+        /// <summary>No eligible branch exists outside the current offer to swap in. Nothing charged, right kept.</summary>
+        NoReplacementAvailable = 10,
+
+        /// <summary>The computed offer failed validation (assertion branch). Nothing charged, right kept.</summary>
+        InvalidResult = 11,
+
+        /// <summary>The wallet refused the spend for a reason other than the balance. Nothing changed.</summary>
+        WalletRefused = 12
+    }
+
+    /// <summary>WP-008: why the reroll button is, or is not, pressable right now. The screen's label reads this.</summary>
+    public enum RerollAvailability
+    {
+        /// <summary>Pressable: one reroll left, no purchase yet, alternatives exist, gold suffices.</summary>
+        Available = 0,
+
+        /// <summary>The shop is closed or the offer is in its error state.</summary>
+        Unavailable = 1,
+
+        /// <summary>Used this round.</summary>
+        Used = 2,
+
+        /// <summary>A purchase locked the offer.</summary>
+        LockedByPurchase = 3,
+
+        /// <summary>No eligible branch outside the offer to swap in.</summary>
+        NoAlternatives = 4,
+
+        /// <summary>Everything else is fine, the wallet is short.</summary>
+        TooExpensive = 5
     }
 
     /// <summary>
@@ -85,10 +182,14 @@ namespace DD.Prototype.Rounds
         /// <summary>Price of this card, from UpgradeBranchSettings.CostForTier(OwnedTier).</summary>
         public int Cost;
 
-        /// <summary>True once bought. The card stays on screen, greyed out; there is no reroll.</summary>
+        /// <summary>True once bought. The card stays on screen, greyed out, and the offer is locked (DEC-048).</summary>
         public bool Purchased;
 
-        /// <summary>False on a padding slot when fewer branches were eligible than CardsPerRound.</summary>
+        /// <summary>
+        /// True for every card the shop hands out. Since WP-008 an offer is either three
+        /// valid cards or none (decision 17); the flag stays so a default-constructed
+        /// struct is never mistaken for a card.
+        /// </summary>
         public bool IsValid;
 
         /// <summary>Wallet transaction id of the purchase once <see cref="Purchased"/>. 0 before.</summary>

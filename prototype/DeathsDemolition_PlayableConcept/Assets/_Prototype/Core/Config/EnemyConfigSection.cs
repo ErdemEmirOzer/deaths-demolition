@@ -76,7 +76,10 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.None, "Cooldown between two attacks from the same enemy.", true)]
         public float AttackCooldown = 1.5f;
 
-        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Gold dropped on death. Request: 2 / 5 / 10 / 25.")]
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold,
+            "Unarmoured gold value of this version. Request: 2 / 5 / 10 / 25. WP-008 (DEC-043): the Standard value is the " +
+            "BASE reward of every enemy; a higher version's VERSION BONUS is its value minus the Standard value; spawn armour " +
+            "adds EconomyConfigSection.ArmorGoldBonus*. See GoldRewardCalculator.")]
         public int GoldReward = 2;
 
         [PrototypeOnly(PendingDecisions.ProfileXp, "XP on top of the flat 1 XP per kill. Request: +0 / +1 / +3 / +8.")]

@@ -163,11 +163,20 @@ namespace DD.Prototype.Tests.PlayMode
 
         private Vector3 OyuncuKonumu => _rig.transform.position;
 
+        /// <summary>
+        /// A BARE Standard zombie. WP-004's flat-value assertions ("one Standard kill = the
+        /// Standard value") are about the unarmoured zombie; since WP-008 an armoured
+        /// Standard (WP-006 spawn roll) pays base + spawn-armour bonus, so the harness strips
+        /// the roll (the test seam retakes the spawn snapshot) to keep these tests
+        /// deterministic. The armoured path is EconomyUpgradeRulesSliceTests' business.
+        /// </summary>
         private ZombieEnemy Dogur(Vector3 konum)
         {
             ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, _run.Round, konum, Quaternion.identity);
             Assert.IsNotNull(z, "Test zombisi doğmadı.");
             Assert.IsTrue(z.IsAlive);
+            z.FitArmorComposition(false, false, false);
+            Assert.AreEqual(_standardDeger, z.Reward.Total, "Zırhsız Standard: ödül = base.");
             return z;
         }
 
@@ -404,7 +413,21 @@ namespace DD.Prototype.Tests.PlayMode
 
             yield return null;
             Assert.AreEqual(10, AktifPaketSayisi());
-            Assert.AreEqual(10 * _standardDeger, _gold.OutstandingGold);
+
+            // WP-008 (DEC-043): a Standard zombie can spawn WITH armour (WP-006 roll), and its
+            // packet then carries base + spawn-armour bonus. The floor holds the sum of the
+            // ten spawn snapshots, never a flat 10 × base.
+            int beklenenToplam = 0;
+            for (int i = 0; i < zombiler.Count; i++)
+            {
+                Assert.IsTrue(zombiler[i].Reward.IsValid);
+                Assert.AreEqual(_standardDeger, zombiler[i].Reward.Base, "Base = Standard değeri.");
+                Assert.AreEqual(0, zombiler[i].Reward.VersionBonus, "Standard versiyon bonusu 0.");
+                beklenenToplam += zombiler[i].Reward.Total;
+            }
+
+            Assert.GreaterOrEqual(beklenenToplam, 10 * _standardDeger);
+            Assert.AreEqual(beklenenToplam, _gold.OutstandingGold, "Yerdeki gold = on spawn snapshot'ının toplamı.");
 
             // Aynı gövdenin ikinci ölüm çağrısı: Kill() _alive koruması + ledger → paket yok.
             zombiler[0].Kill();
@@ -432,9 +455,10 @@ namespace DD.Prototype.Tests.PlayMode
             yield return RunSahnesiniHazirla(spawnKapali: true);
 
             Vector3 yigin = OyuncuKonumu + new Vector3(8f, 0f, 0f);
+            int beklenenToplam = 0;   // WP-008: sum of the three spawn snapshots (armour may be rolled on a Standard)
             for (int i = 0; i < 3; i++)
             {
-                Dogur(yigin + new Vector3(i * 0.15f, 0f, 0f));
+                beklenenToplam += Dogur(yigin + new Vector3(i * 0.15f, 0f, 0f)).Reward.Total;
             }
 
             Assert.AreEqual(3, TumYasayanlariOldur());
@@ -458,7 +482,8 @@ namespace DD.Prototype.Tests.PlayMode
 
             yield return Bekle(() => kredi >= 3, 8f, "Cesetlerin üstündeki paketler toplanamadı.");
             Assert.AreEqual(3, kredi);
-            Assert.AreEqual(3 * _standardDeger, _gold.Wallet.Balance);
+            Assert.AreEqual(beklenenToplam, _gold.Wallet.Balance, "Bakiye = üç spawn snapshot'ının toplamı (WP-008).");
+            Assert.GreaterOrEqual(_gold.Wallet.Balance, 3 * _standardDeger);
             Assert.AreEqual(0, _gold.CreditRefusals);
             Assert.AreEqual(0, _gold.PacketsLost);
 
@@ -551,6 +576,12 @@ namespace DD.Prototype.Tests.PlayMode
             int sweepOlayi = 0;
             _gold.AutoCollected += r => sweepOlayi++;
 
+            // WP-008: every kill pays its spawn snapshot (Standard base + rolled armour bonus);
+            // the round's income is the sum of those, read off the death events.
+            int roundOdulToplami = 0;
+            Action<EnemyDeathInfo> odulTopla = info => { roundOdulToplami += info.GoldReward; Assert.IsTrue(info.Reward.IsValid); Assert.AreEqual(info.Reward.Total, info.GoldReward); };
+            DamageEvents.EnemyDied += odulTopla;
+
             // Havuzu tüket: her karede yaşayan her director zombisini öldür. Oyuncu merkezde;
             // spawn noktaları magnet dışında → paketler yerde birikir (P10).
             float t0 = Time.realtimeSinceStartup;
@@ -564,6 +595,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             RunEvents.RoundCompleted -= tamamlanma;
+            DamageEvents.EnemyDied -= odulTopla;
 
             Assert.AreEqual(1, tamamlanmaSayisi, "RoundCleared tam bir kez yayınlanmalı.");
             Assert.AreEqual(havuz, oldurulen, "Havuzun tamamı öldürüldü.");
@@ -575,12 +607,14 @@ namespace DD.Prototype.Tests.PlayMode
             // RoundCleared anı: dünya donuk, sweep BİTMİŞ, bakiye tam.
             Assert.AreEqual(0f, tamamlanmaTimeScale, 0.0001f, "RoundCleared anında timeScale 0 (RoundEndHold).");
             Assert.AreEqual(0, tamamlanmaOutstanding, "RoundCleared yayınlanırken yerde bekleyen paket kalmamış olmalı.");
-            Assert.AreEqual(havuz * _standardDeger, tamamlanmaBakiye, "Bakiye = havuz × Standard değer, RoundCleared anında.");
+            Assert.GreaterOrEqual(roundOdulToplami, havuz * _standardDeger, "Her kill en az base öder.");
+            Assert.AreEqual(roundOdulToplami, tamamlanmaBakiye, "Bakiye = round'un spawn snapshot ödüllerinin toplamı, RoundCleared anında (WP-008).");
             Assert.AreEqual(1, tamamlanmaSweep.Round);
             Assert.AreEqual(_run.RunId, tamamlanmaSweep.RunId);
             Assert.AreEqual(havuz - _gold.PacketsCollected, tamamlanmaSweep.Packets, "Sweep = elle alınmayan paketler (son kill dahil).");
-            Assert.AreEqual(tamamlanmaSweep.Packets * _standardDeger, tamamlanmaSweep.Amount);
+            Assert.AreEqual(_gold.Wallet.EarnedByAutoCollect, tamamlanmaSweep.Amount, "Sweep tutarı = auto-collect ile kredilenen gold.");
             Assert.AreEqual(_gold.Wallet.EarnedByPickup + _gold.Wallet.EarnedByAutoCollect, _gold.Wallet.TotalEarned);
+            Assert.AreEqual(roundOdulToplami, _gold.Wallet.TotalEarned);
             Assert.AreEqual(1, sweepOlayi, "Sweep olayı bir kez.");
 
             // Sweep görseli unscaled: 0.5 s içinde bütün paketler havuzda.
@@ -593,7 +627,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Bekle(() => _run.Phase == RunPhase.Upgrading, FazZamanAsimi, "Upgrade ekranı açılmadı.");
             Assert.IsTrue(_run.Shop.IsOpen);
             Assert.AreEqual(_gold.Wallet.Balance, _run.Shop.Gold, "Ekran bakiyesi cüzdanla aynı.");
-            Assert.AreEqual(havuz * _standardDeger, _run.LastRoundEnd.BalanceAtOpen, "Ekran auto-collect DAHİL bakiyeyle açıldı.");
+            Assert.AreEqual(roundOdulToplami, _run.LastRoundEnd.BalanceAtOpen, "Ekran auto-collect DAHİL bakiyeyle açıldı.");
             Assert.AreEqual(tamamlanmaSweep.Packets, _run.LastRoundEnd.SweptPackets);
             Assert.AreEqual(_run.Shop.SessionId, _run.LastRoundEnd.ShopSessionId);
             Assert.AreEqual(_gold.Wallet.Balance, RunEvents.Current.Gold);
@@ -620,31 +654,24 @@ namespace DD.Prototype.Tests.PlayMode
             komsu.Remove();
             _rig.Health.DiagnosisInvulnerable = true;
 
-            // TEK satın alma (DEC-048 "round başına en fazla bir geliştirme" ile uyumlu; bu test
-            // round başına satın alma sayısını ürün kuralı olarak KİLİTLEMEZ — yalnız işlem
-            // semantiğini ölçer). Kart klasik silahın doğrulanabilir bir PrototypeOnly özelliğini
-            // değiştirmeli: teklif rastgele olduğundan test, dükkânı SINIRLI sayıda yeniden açar
-            // (test dikişi — ürün reroll'u değil; her Open yeni bir ekran oturumudur) ve FireRate
-            // ya da ReloadSpeed kartı gelince onu alır. Gerçek gold yetmezse etiketsiz kredi ile
-            // tamamlanır (test dikişi; kaynak toplamlarına girmez).
+            // TEK satın alma (WP-008 / DEC-048: round başına en fazla bir geliştirme — artık ürün
+            // kuralı ve dükkân tarafından uygulanıyor). Kart klasik silahın ya da oyuncunun
+            // doğrulanabilir bir PrototypeOnly özelliğini değiştirmeli: teklif rastgeledir, test
+            // ilk geçerli kartı alır ve dalın ölçüm değerini (OlcumDegeri) önce/sonra karşılaştırır.
+            // (WP-004'teki "dükkânı 40 kez yeniden aç" dikişi kaldırıldı: WP-008'de aynı round'un
+            // yeniden açılışı aynı teklifi geri getirir — ücretsiz yeni teklif üretmek ürün
+            // kuralına aykırıdır.) Gerçek gold yetmezse etiketsiz kredi ile tamamlanır (test dikişi).
             WeaponController silah = WeaponRegistry.ActiveController;
             Assert.IsNotNull(silah);
             int kartIndeksi = -1;
-            for (int deneme = 0; deneme < 40 && kartIndeksi < 0; deneme++)
+            for (int i = 0; i < _run.Shop.Cards.Count; i++)
             {
-                for (int i = 0; i < _run.Shop.Cards.Count; i++)
-                {
-                    UpgradeCardOffer c = _run.Shop.Cards[i];
-                    if (c.IsValid && !c.Purchased && (c.Branch == UpgradeBranch.FireRate || c.Branch == UpgradeBranch.ReloadSpeed)) { kartIndeksi = i; break; }
-                }
-
-                if (kartIndeksi < 0)
-                {
-                    _run.Shop.Open(_run.Round, PrototypeConfig.Active, _gold.Wallet, null, _run.RunId);
-                }
+                UpgradeCardOffer c = _run.Shop.Cards[i];
+                if (c.IsValid && !c.Purchased) { kartIndeksi = i; break; }
             }
 
-            Assert.GreaterOrEqual(kartIndeksi, 0, "40 yeniden açılışta FireRate/ReloadSpeed kartı gelmedi (ağırlık 1.2 + 1.2 / 9.8).");
+            Assert.GreaterOrEqual(kartIndeksi, 0, "Teklifte geçerli kart yok.");
+            Assert.AreEqual(3, _run.Shop.Cards.Count, "WP-008: tam üç kart.");
             UpgradeCardOffer kart = _run.Shop.Cards[kartIndeksi];
             if (_gold.Wallet.Balance < kart.Cost)
             {
@@ -670,9 +697,14 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 Assert.Less(silah.Classic.ShotInterval, atesAraligiOnce, "Fire Rate kartı klasik silahın atış aralığını kısaltmalı.");
             }
-            else
+            else if (kart.Branch == UpgradeBranch.ReloadSpeed)
             {
                 Assert.Less(silah.Classic.EffectiveReloadTime, dolumOnce, "Reload Speed kartı klasik silahın dolum süresini kısaltmalı.");
+            }
+            else
+            {
+                Assert.AreEqual(atesAraligiOnce, silah.Classic.ShotInterval, "Silah dışı/başka dal atış aralığına dokunmaz.");
+                Assert.AreEqual(dolumOnce, silah.Classic.EffectiveReloadTime, "Silah dışı/başka dal dolum süresine dokunmaz.");
             }
 
             Assert.AreEqual(purchasesOnce + 1, _run.Stats.UpgradesPurchased);
@@ -682,10 +714,14 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(_gold.Wallet.Balance, _run.Shop.Gold, "Ekran anında yenilendi (authoritative snapshot).");
             Assert.IsTrue(_run.Shop.Cards[kartIndeksi].Purchased);
 
-            // Çift tıklama aynı kartta reddedilir.
+            // Çift tıklama aynı kartta reddedilir; WP-008: ikinci kart da reddedilir (round başına tek satın alma).
             int bakiyeCift = _gold.Wallet.Balance;
             Assert.IsFalse(_run.Shop.TryPurchase(kartIndeksi, _run.Shop.SessionId));
             Assert.AreEqual(bakiyeCift, _gold.Wallet.Balance);
+            Assert.IsFalse(_run.Shop.TryPurchase((kartIndeksi + 1) % 3, _run.Shop.SessionId));
+            Assert.AreEqual(UpgradePurchaseResult.PurchaseLimitReached, _run.Shop.LastResult);
+            Assert.AreEqual(bakiyeCift, _gold.Wallet.Balance);
+            Assert.IsTrue(_run.Shop.IsLocked);
             Debug.Log("[DD-TEST] wp004.p17 weaponCard=" + kart.Branch + " shotInterval " + atesAraligiOnce.ToString("0.####") + "->" +
                       silah.Classic.ShotInterval.ToString("0.####") + " reload " + dolumOnce.ToString("0.###") + "->" + silah.Classic.EffectiveReloadTime.ToString("0.###"));
 
@@ -854,6 +890,7 @@ namespace DD.Prototype.Tests.PlayMode
             EnemySpawnDirector.Instance.ClearAllEnemies();
             yield return null;
             ZombieEnemy z2 = EnemyFactory.Spawn(EnemyTier.Standard, 1, PlayerRegistry.Primary.transform.position + new Vector3(10f, 0f, 0f), Quaternion.identity);
+            z2.FitArmorComposition(false, false, false);   // WP-008: bare Standard = flat value (test seam)
             z2.Kill();
             Assert.AreEqual(1, gold2.PacketsSpawned, "Yeni koşuda kill yeni paket üretir.");
             Assert.AreEqual(1, gold2.Ledger.Granted);

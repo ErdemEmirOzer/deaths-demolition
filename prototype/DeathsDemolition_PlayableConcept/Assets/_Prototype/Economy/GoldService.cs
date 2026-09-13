@@ -403,6 +403,21 @@ namespace DD.Prototype.Economy
         {
             EconomyConfigSection economy = config.Economy;
 
+            // WP-008 (DEC-069): the version bonus is "family value minus Standard value",
+            // floored at zero. A family typed BELOW Standard would silently pay Standard;
+            // say so once rather than let the table lie.
+            int standard = GoldRewardCalculator.BaseReward(config);
+            for (int i = 0; i < config.Enemies.Tiers.Count; i++)
+            {
+                EnemyTierSettings tier = config.Enemies.Tiers[i];
+                if (tier != null && tier.GoldReward < standard && !_versionWarned)
+                {
+                    _versionWarned = true;
+                    Debug.LogWarning("[Gold] EnemyTierSettings." + tier.Tier + ".GoldReward (" + tier.GoldReward +
+                                     ") is below the Standard value (" + standard + "); its version bonus clamps to 0 and it pays " + standard + ".");
+                }
+            }
+
             _magnetRadius = Mathf.Max(0f, economy.MagnetRadius);
             _magnetSpeed = Mathf.Max(0.1f, economy.MagnetSpeed);
             _magnetAcceleration = Mathf.Max(0.1f, economy.MagnetAcceleration);
@@ -433,6 +448,12 @@ namespace DD.Prototype.Economy
 
         // ------------------------------------------------------------------ earning
 
+        private GoldRewardValue _lastRewardValue;
+        private bool _versionWarned;
+
+        /// <summary>The last kill's resolved value (base / version / armour slots). Probe and F1 readout; default before any kill.</summary>
+        public GoldRewardValue LastRewardValue => _lastRewardValue;
+
         /// <summary>
         /// The single earning path. Eligibility first (the ledger), value second (the
         /// value contract), then exactly one packet. Every refusal is counted on the
@@ -440,7 +461,10 @@ namespace DD.Prototype.Economy
         /// </summary>
         private void OnEnemyDied(EnemyDeathInfo info)
         {
-            GoldRewardValue value = GoldRewardValue.Resolve(info.GoldReward, info.Tier, Config);
+            // WP-008: the value is the enemy's SPAWN snapshot (base + version + spawn
+            // armour), carried on the event. Nothing here looks at the enemy or its armour.
+            GoldRewardValue value = GoldRewardValue.Resolve(in info.Reward, info.GoldReward, info.Tier, Config);
+            _lastRewardValue = value;
 
             GoldRewardVerdict verdict = _ledger.TryClaim(info.LifeId, value.Total);
             if (verdict != GoldRewardVerdict.Granted)

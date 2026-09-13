@@ -253,11 +253,13 @@ MonoBehaviour:
     OrbLifetime: 22
     ContactPickupRadius: 0.9
     MaxActiveOrbs: 60
-    CardsPerRound: 3
-    AllowReroll: 0
+    RerollCost: 10
     CarryUnspentGold: 1
     StartingCostMin: 15
     StartingCostMax: 45
+    ArmorGoldBonusHelmet: 1
+    ArmorGoldBonusBody: 2
+    ArmorGoldBonusLeg: 1
     Branches:
     - Branch: 0
       DisplayName: Piercing

@@ -73,11 +73,10 @@ namespace DD.Prototype.Core.Config
         public int MaxActiveOrbs = 60;
 
         [Header("Round-end shop")]
-        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Request value: three cards per round end.")]
-        public int CardsPerRound = 3;
-
-        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Request: no reroll in the prototype.")]
-        public bool AllowReroll = false;
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold,
+            "Price of the one paid reroll per round-end screen (DEC-050 / REQ-079). The RULE (one reroll, before a purchase, " +
+            "one or two cards replaced) is product; this NUMBER is a placeholder.")]
+        public int RerollCost = 10;
 
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Request: unspent gold carries into the next round.")]
         public bool CarryUnspentGold = true;
@@ -87,6 +86,30 @@ namespace DD.Prototype.Core.Config
 
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Upper bound of the request's 15-45 starting cost band; used as a sanity clamp.")]
         public int StartingCostMax = 45;
+
+        [Header("Gold reward - armour bonus (DEC-043 / REQ-074)")]
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold,
+            "Gold added for a HELMET the enemy was wearing when it SPAWNED. The rule (base + version + spawn armour, " +
+            "deterministic, never reduced by breaking the plate) is product; the number is a placeholder.")]
+        public int ArmorGoldBonusHelmet = 1;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Gold added for BODY ARMOUR present at spawn. Placeholder number, product rule.")]
+        public int ArmorGoldBonusBody = 2;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Gold added for LEG ARMOUR present at spawn. Placeholder number, product rule.")]
+        public int ArmorGoldBonusLeg = 1;
+
+        /// <summary>Spawn-armour gold bonus for one slot. 0 for <see cref="ArmorSlot.None"/> and for a negative config value.</summary>
+        public int ArmorGoldBonusFor(ArmorSlot slot)
+        {
+            switch (slot)
+            {
+                case ArmorSlot.Helmet: return Mathf.Max(0, ArmorGoldBonusHelmet);
+                case ArmorSlot.Body: return Mathf.Max(0, ArmorGoldBonusBody);
+                case ArmorSlot.Leg: return Mathf.Max(0, ArmorGoldBonusLeg);
+                default: return 0;
+            }
+        }
 
         public List<UpgradeBranchSettings> Branches = new List<UpgradeBranchSettings>
         {
