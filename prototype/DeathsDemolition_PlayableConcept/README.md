@@ -188,8 +188,8 @@ Runtime code lives under `Assets/_Prototype/`; URP pipeline, renderer and volume
 The full list is in **[`PROTOTYPE-ONLY.md`](PROTOTYPE-ONLY.md)**. Summary:
 
 * Every tunable value carries a `[PrototypeOnly(...)]` attribute naming the still-open
-  planning decision it temporarily occupies. **491 such declarations exist in the
-  code** (WP-006 re-count 2026-09-12: +4 on the regional-hit slice — `DamageTargetResolver.HeadThreshold`/`UpperBodyThreshold` height-ratio fallback and `HitscanEngine.OverlapBufferSize`/`ExplosionRimDamageFraction`, all four written fully qualified so the historical plain `grep "\[PrototypeOnly("` still reads 487; 487 at WP-004/WP-005; 485 at WP-003/WP-002; 491 at the WP-000 count of 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
+  planning decision it temporarily occupies. **496 such declarations exist in the
+  code** (WP-007 re-count 2026-09-13: +5 plain-form tags on `SpecialWeaponDirector` constants that existed untagged — `MaxSpawnsPerRoundDefault`, `SecondSpawnProgressOffset`, `LatestSpawnProgress`, `NavSampleRadius`, `OffRouteWeightMultiplier` — no value changed, plain `grep "\[PrototypeOnly("` now reads 492; WP-006 re-count 2026-09-12: +4 on the regional-hit slice — `DamageTargetResolver.HeadThreshold`/`UpperBodyThreshold` height-ratio fallback and `HitscanEngine.OverlapBufferSize`/`ExplosionRimDamageFraction`, all four written fully qualified so the historical plain `grep "\[PrototypeOnly("` still reads 487; 487 at WP-004/WP-005; 485 at WP-003/WP-002; 491 at the WP-000 count of 2026-09-10; 337 at the 2026-08-18 scan); the tag is visible in the Inspector and in the F1 panel, so nobody can read a
   number off the screen without also reading where it came from.
 * **237 of the original 337 (2026-08-18 scan) had no source in the request at all**; the invented split is re-issued after WP-000 Phase 4 — they were invented so a
   system could function. They are flagged `invented` and rendered in a different colour.

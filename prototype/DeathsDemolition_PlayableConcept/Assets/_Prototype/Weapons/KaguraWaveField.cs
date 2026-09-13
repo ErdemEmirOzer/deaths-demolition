@@ -174,49 +174,55 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            for (int i = 0; i < count; i++)
+            // WP-007 (DT-1/3): this frame's band of this wave is ONE attack - every body it
+            // crosses shares one transaction id. A body is crossed at most once per wave
+            // (Crossed), so the receiver's same-transaction guard never refuses a legitimate hit.
+            using (HitscanEngine.BeginExternalAttack())
             {
-                DamageTarget target = _scratch[i];
-                if (!target.IsValid)
+                for (int i = 0; i < count; i++)
                 {
-                    continue;
+                    DamageTarget target = _scratch[i];
+                    if (!target.IsValid)
+                    {
+                        continue;
+                    }
+
+                    if (wave.Crossed.Contains(target.Id))
+                    {
+                        continue;
+                    }
+
+                    Vector3 centre = HitscanEngine.CentreOf(target);
+
+                    Vector3 flat = centre - wave.Origin;
+                    flat.y = 0f;
+                    float distance = flat.magnitude;
+
+                    // Only the band the front swept this frame. A body already inside the
+                    // previous radius was crossed on an earlier frame or was never crossed at
+                    // all because it spawned inside the ring - either way, not this frame's.
+                    if (distance < innerRadius)
+                    {
+                        continue;
+                    }
+
+                    wave.Crossed.Add(target.Id);
+                    TotalCrossings++;
+
+                    float reach = Mathf.Max(0.001f, wave.Radius);
+                    float falloff = Mathf.Lerp(1f, wave.FalloffAtRim, Mathf.Clamp01(distance / reach));
+
+                    Vector3 direction = flat.sqrMagnitude > 0.0001f ? flat.normalized : Vector3.forward;
+
+                    HitscanEngine.ApplyExternalHit(
+                        target,
+                        wave.Damage * falloff,
+                        centre,
+                        direction,
+                        wave.ImpactForce,
+                        DamageSourceKind.Explosion,
+                        WeaponPower.Heavy);
                 }
-
-                if (wave.Crossed.Contains(target.Id))
-                {
-                    continue;
-                }
-
-                Vector3 centre = HitscanEngine.CentreOf(target);
-
-                Vector3 flat = centre - wave.Origin;
-                flat.y = 0f;
-                float distance = flat.magnitude;
-
-                // Only the band the front swept this frame. A body already inside the
-                // previous radius was crossed on an earlier frame or was never crossed at
-                // all because it spawned inside the ring - either way, not this frame's.
-                if (distance < innerRadius)
-                {
-                    continue;
-                }
-
-                wave.Crossed.Add(target.Id);
-                TotalCrossings++;
-
-                float reach = Mathf.Max(0.001f, wave.Radius);
-                float falloff = Mathf.Lerp(1f, wave.FalloffAtRim, Mathf.Clamp01(distance / reach));
-
-                Vector3 direction = flat.sqrMagnitude > 0.0001f ? flat.normalized : Vector3.forward;
-
-                HitscanEngine.ApplyExternalHit(
-                    target,
-                    wave.Damage * falloff,
-                    centre,
-                    direction,
-                    wave.ImpactForce,
-                    DamageSourceKind.Explosion,
-                    WeaponPower.Heavy);
             }
         }
 

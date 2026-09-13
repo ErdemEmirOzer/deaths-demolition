@@ -62,6 +62,11 @@ namespace DD.Prototype.Weapons
 
         private PrototypePool<TideWell> _wellPool;
 
+        // One well template for the whole play session: PoolService keys pools by prefab, so
+        // a template per runtime instance (per Run scene load) would leak a pool under the
+        // DontDestroyOnLoad root on every run (WP-007; same rule as GoldService).
+        private static TideWell s_wellTemplate;
+
         private float _cooldown;
         private bool _finalSecondsFired;
 
@@ -195,8 +200,29 @@ namespace DD.Prototype.Weapons
             WeaponEvents.PublishSpecialPickedUp(Duration);
         }
 
-        /// <summary>Force the activation to end now. Used by run teardown and the debug panel.</summary>
+        /// <summary>
+        /// The activation ran its course (or the debug panel ended it as if it had): the
+        /// player LOST the weapon, and the expiry news cue says so. Idempotent.
+        /// </summary>
         public void End()
+        {
+            Finish(false);
+        }
+
+        /// <summary>
+        /// WP-007 (AP-10, OS-2): the activation is stopped by something other than its own
+        /// timer - run end, death, new run, teardown. Same clean-up as <see cref="End"/>
+        /// (fields, loop, Ended event so the classic weapon comes back), but the "you lost
+        /// it" news cue is not played: there is nobody to tell, or the run is over. The
+        /// lifecycle owner (the director / controller) publishes the Cancelled transition.
+        /// Idempotent.
+        /// </summary>
+        public void Cancel()
+        {
+            Finish(true);
+        }
+
+        private void Finish(bool cancelled)
         {
             if (!IsActive)
             {
@@ -217,9 +243,14 @@ namespace DD.Prototype.Weapons
 
             // Two separate cues on purpose: the spin-down is the OBJECT winding to a halt,
             // the expiry is the NEWS that the player has lost it. The audio task can voice
-            // them completely differently per weapon.
+            // them completely differently per weapon. A cancel keeps the object's spin-down
+            // and drops the news.
             AudioEvents.RaiseCritical(CombatAudioEvent.HeavyWeaponSpinDown, Vector3.zero, 1f, 85);
-            AudioEvents.RaiseCritical(CombatAudioEvent.SpecialWeaponExpired, Vector3.zero, 1f, 90);
+            if (!cancelled)
+            {
+                AudioEvents.RaiseCritical(CombatAudioEvent.SpecialWeaponExpired, Vector3.zero, 1f, 90);
+            }
+
             WeaponEvents.PublishSpecialEnded();
         }
 
@@ -480,12 +511,21 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            TideWell template = TideWell.CreateTemplate();
+            if (s_wellTemplate == null)
+            {
+                s_wellTemplate = TideWell.CreateTemplate();
+            }
 
             // Capacity is the shipped MaxWells plus headroom: a well is released on the
             // frame it implodes, and the very next throw must not have to wait for the
             // free list.
-            _wellPool = PoolService.GetOrCreate(template, 2, 4, PoolExhaustedPolicy.RecycleOldest);
+            _wellPool = PoolService.GetOrCreate(s_wellTemplate, 2, 4, PoolExhaustedPolicy.RecycleOldest);
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            s_wellTemplate = null;
         }
     }
 }

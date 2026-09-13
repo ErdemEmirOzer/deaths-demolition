@@ -170,36 +170,47 @@ namespace DD.Prototype.Weapons
             Vector3 centre = transform.position;
 
             int count = HitscanEngine.OverlapEnemies(centre, _radius, s_scratch);
-            for (int i = 0; i < count; i++)
+            if (count == 0)
             {
-                DamageTarget target = s_scratch[i];
-                if (!target.IsValid)
+                return;
+            }
+
+            // WP-007 (DT-1/3): one pull tick is ONE attack - every body in the well shares
+            // one transaction id this tick; the next tick is a new attack, so a body pulled
+            // every tick is never refused by the receiver's same-transaction guard.
+            using (HitscanEngine.BeginExternalAttack())
+            {
+                for (int i = 0; i < count; i++)
                 {
-                    continue;
+                    DamageTarget target = s_scratch[i];
+                    if (!target.IsValid)
+                    {
+                        continue;
+                    }
+
+                    Vector3 point = HitscanEngine.CentreOf(target);
+
+                    Vector3 inward = centre - point;
+                    inward.y = 0f;
+
+                    if (inward.sqrMagnitude < 0.0001f)
+                    {
+                        // Already standing on the core. Nothing to pull; the implosion will
+                        // deal with it.
+                        continue;
+                    }
+
+                    TotalPullTicks++;
+
+                    HitscanEngine.ApplyExternalHit(
+                        target,
+                        _pullDamage,
+                        point,
+                        inward.normalized,
+                        _pullForce,
+                        DamageSourceKind.Explosion,
+                        WeaponPower.Heavy);
                 }
-
-                Vector3 point = HitscanEngine.CentreOf(target);
-
-                Vector3 inward = centre - point;
-                inward.y = 0f;
-
-                if (inward.sqrMagnitude < 0.0001f)
-                {
-                    // Already standing on the core. Nothing to pull; the implosion will
-                    // deal with it.
-                    continue;
-                }
-
-                TotalPullTicks++;
-
-                HitscanEngine.ApplyExternalHit(
-                    target,
-                    _pullDamage,
-                    point,
-                    inward.normalized,
-                    _pullForce,
-                    DamageSourceKind.Explosion,
-                    WeaponPower.Heavy);
             }
         }
 

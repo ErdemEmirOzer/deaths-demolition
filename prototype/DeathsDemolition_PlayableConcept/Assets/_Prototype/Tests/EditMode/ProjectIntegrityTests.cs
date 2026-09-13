@@ -66,7 +66,13 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(40, config.AbsoluteSafetyCeiling, "Mutlak güvenlik tavanı 40 olmalı.");
         }
 
+        /// <summary>
+        /// Sevkiyat asset'i ↔ kod varsayılanı PARİTESİ (K5 istisnası): buradaki sayılar ürün kararı
+        /// değil, asset'in koddan sapmadığının nöbetçisidir (WP-007: Special eğrisi değerleri
+        /// PrototypeOnly; sözleşme testleri config-relative fixture'dadır).
+        /// </summary>
         [Test]
+        [Category("PrototypeOnly")]
         public void SevkiyatAsseti_IlerlemeVeSpecialEgrisiVarsayilanlaAyni()
         {
             PrototypeConfig config = SevkiyatConfig();

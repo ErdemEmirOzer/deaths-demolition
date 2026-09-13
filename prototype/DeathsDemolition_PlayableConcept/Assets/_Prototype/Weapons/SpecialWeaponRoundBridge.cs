@@ -17,7 +17,8 @@ namespace DD.Prototype.Weapons
     ///
     ///     SpecialWeaponRoundBridge.CurrentRoundProvider = () =&gt; _round;
     ///     SpecialWeaponRoundBridge.RoundProgressProvider = () =&gt; _killedThisRound / (float)_poolTotal;
-    ///     ... and call NotifyRoundStarted / NotifyRoundEnded.
+    ///     ... and call NotifyRoundStarted / NotifyRoundEnded, plus (WP-007) NotifyRunStarted /
+    ///     NotifyRunEnded so the Special Weapon process is bounded by the run, not by the scene.
     ///
     /// "Progress" is deliberately defined as pool progress, not elapsed time: the request
     /// says the drop lands between 30% and 70% "of round progress", and a round ends when
@@ -36,6 +37,21 @@ namespace DD.Prototype.Weapons
 
         /// <summary>Raised by the round director when a round is cleared.</summary>
         public static event Action<int> RoundEnded;
+
+        /// <summary>
+        /// WP-007 (AP-10): raised by the run director when a run starts. Argument: run
+        /// serial. The Special Weapon director wipes every trace of a previous process here,
+        /// so a same-scene restart cannot inherit a pickup, a runtime, a timer or a schedule.
+        /// </summary>
+        public static event Action<int> RunStarted;
+
+        /// <summary>
+        /// WP-007 (AP-10): raised by the run director the moment a run ends (death or run
+        /// end), before the scene is torn down. The Special Weapon director cancels whatever
+        /// is scheduled, on the ground or in hand right here rather than waiting for the
+        /// scene load.
+        /// </summary>
+        public static event Action RunEnded;
 
         public static bool IsBound => CurrentRoundProvider != null && RoundProgressProvider != null;
 
@@ -61,6 +77,10 @@ namespace DD.Prototype.Weapons
 
         public static void NotifyRoundEnded(int round) => RoundEnded?.Invoke(round);
 
+        public static void NotifyRunStarted(int runId) => RunStarted?.Invoke(runId);
+
+        public static void NotifyRunEnded() => RunEnded?.Invoke();
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
@@ -68,6 +88,8 @@ namespace DD.Prototype.Weapons
             RoundProgressProvider = null;
             RoundStarted = null;
             RoundEnded = null;
+            RunStarted = null;
+            RunEnded = null;
         }
     }
 }

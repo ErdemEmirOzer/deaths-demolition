@@ -192,6 +192,10 @@ namespace DD.Prototype.Rounds
 
             _stats.Reset();
             _runId = ++s_runSerial;
+
+            // WP-007 (AP-10): the Special Weapon process is bounded by the run. A same-scene
+            // restart must not inherit a scheduled drop, a pickup or an active runtime.
+            SpecialWeaponRoundBridge.NotifyRunStarted(_runId);
             LastRoundEnd = default;
             _roundClearSweep = default;
 
@@ -296,6 +300,10 @@ namespace DD.Prototype.Rounds
 
             SetPhase(RunPhase.Dead);
             PublishState();
+
+            // WP-007 (AP-10): cancel the Special Weapon process (scheduled / on the ground /
+            // in hand) the moment the run ends, before the results hand-off, not at scene load.
+            SpecialWeaponRoundBridge.NotifyRunEnded();
 
             RunAudioEvents.Raise(RunAudioEvent.RunEnded);
             RunEvents.PublishRunEnded(summary);

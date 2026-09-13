@@ -172,34 +172,39 @@ namespace DD.Prototype.Weapons
 
             int hit = 0;
 
-            for (int i = 0; i < _seals.Count; i++)
+            // WP-007 (DT-1/3): the collapse is ONE attack - every sealed body shares one
+            // transaction id. Seals are unique per target, so no body is applied twice.
+            using (HitscanEngine.BeginExternalAttack())
             {
-                Seal seal = _seals[i];
-                ReleaseGlyph(seal);
-
-                if (!IsAlive(seal))
+                for (int i = 0; i < _seals.Count; i++)
                 {
-                    continue;
+                    Seal seal = _seals[i];
+                    ReleaseGlyph(seal);
+
+                    if (!IsAlive(seal))
+                    {
+                        continue;
+                    }
+
+                    Vector3 centre = HitscanEngine.CentreOf(seal.Target);
+
+                    // The reaction direction is away from the player-facing side of the body,
+                    // approximated as away from the web's own centre of mass. A collapse that
+                    // shoved everything the same way would read as a single explosion instead
+                    // of as many simultaneous ones.
+                    Vector3 direction = centre - WebCentre();
+                    direction.y = 0f;
+                    if (direction.sqrMagnitude < 0.0001f)
+                    {
+                        direction = Vector3.forward;
+                    }
+
+                    HitscanEngine.ApplyExternalHit(
+                        seal.Target, damage, centre, direction, impulse,
+                        DamageSourceKind.Chain, WeaponPower.Heavy);
+
+                    hit++;
                 }
-
-                Vector3 centre = HitscanEngine.CentreOf(seal.Target);
-
-                // The reaction direction is away from the player-facing side of the body,
-                // approximated as away from the web's own centre of mass. A collapse that
-                // shoved everything the same way would read as a single explosion instead
-                // of as many simultaneous ones.
-                Vector3 direction = centre - WebCentre();
-                direction.y = 0f;
-                if (direction.sqrMagnitude < 0.0001f)
-                {
-                    direction = Vector3.forward;
-                }
-
-                HitscanEngine.ApplyExternalHit(
-                    seal.Target, damage, centre, direction, impulse,
-                    DamageSourceKind.Chain, WeaponPower.Heavy);
-
-                hit++;
             }
 
             _seals.Clear();

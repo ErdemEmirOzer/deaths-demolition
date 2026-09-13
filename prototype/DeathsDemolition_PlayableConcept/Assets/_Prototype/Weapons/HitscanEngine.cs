@@ -410,6 +410,51 @@ namespace DD.Prototype.Weapons
         // ------------------------------------------------------------------ Special Weapon entry points
 
         /// <summary>
+        /// WP-007 (DT-1/3/4): one independent external attack - a wave front's sweep of one
+        /// frame, one web collapse, one well pull tick - is ONE damage transaction, and every
+        /// target it reaches carries the same transaction id. Open the scope around the
+        /// target loop; <see cref="ApplyExternalHit"/> calls inside it JOIN the open
+        /// transaction instead of opening their own, so no per-target or nested
+        /// transaction exists and <see cref="DamageTransaction.NestedBegins"/> stays 0.
+        ///
+        /// The scope owns the transaction only if none was open when it began; a scope
+        /// opened inside another transaction is a no-op that joins it. <c>Dispose</c> ends
+        /// only what it owns, always (use it in a <c>using</c>).
+        /// </summary>
+        public readonly struct ExternalAttackScope : System.IDisposable
+        {
+            private readonly bool _owner;
+
+            internal ExternalAttackScope(bool owner)
+            {
+                _owner = owner;
+            }
+
+            /// <summary>Transaction id of this attack (the open one when the scope did not own it).</summary>
+            public int TransactionId => DamageTransaction.Current;
+
+            public void Dispose()
+            {
+                if (_owner)
+                {
+                    DamageTransaction.End();
+                }
+            }
+        }
+
+        /// <summary>Begin one independent external attack (see <see cref="ExternalAttackScope"/>).</summary>
+        public static ExternalAttackScope BeginExternalAttack()
+        {
+            if (DamageTransaction.Current != 0)
+            {
+                return new ExternalAttackScope(false);
+            }
+
+            DamageTransaction.Begin();
+            return new ExternalAttackScope(true);
+        }
+
+        /// <summary>
         /// Apply one already-resolved hit, with the full twelve-step dressing, from
         /// something that is not a bullet.
         ///
@@ -441,8 +486,16 @@ namespace DD.Prototype.Weapons
 
             Vector3 safeDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.forward;
 
-            // One transaction per external hit (one target of one wave / pull tick).
-            DamageTransaction.Begin();
+            // WP-007: inside an ExternalAttackScope this JOINS the attack's transaction
+            // (one id for every target of the attack). Outside one - a single-target
+            // caller with no scope - it still gets a transaction of its own, so the
+            // receiver-side duplicate guard is never bypassed.
+            bool owner = DamageTransaction.Current == 0;
+            if (owner)
+            {
+                DamageTransaction.Begin();
+            }
+
             try
             {
                 return ApplyHit(
@@ -451,7 +504,10 @@ namespace DD.Prototype.Weapons
             }
             finally
             {
-                DamageTransaction.End();
+                if (owner)
+                {
+                    DamageTransaction.End();
+                }
             }
         }
 

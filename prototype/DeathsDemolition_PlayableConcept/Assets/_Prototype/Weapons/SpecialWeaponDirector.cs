@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Pooling;
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace DD.Prototype.Weapons
 {
@@ -17,14 +16,29 @@ namespace DD.Prototype.Weapons
     ///   "one at a time, on the ground OR in use"        -> the <see cref="SpecialWeaponState"/> machine
     ///   "no new spawn before the previous process ends" -> Idle is only re-entered from OnPickupFinished
     ///                                                      and from the end of the active duration
-    ///   "usually one per round"                         -> _spawnsThisRound, capped at 1 by default
+    ///   "usually one per round"                         -> _spawnsThisRound, capped at MaxSpawnsPerRound
     ///   "round 8+, 10% chance of a sequential second"   -> rolled only after the first completes
     ///   "not too close to the player"                   -> Special.MinDistanceFromPlayer
-    ///   "a validated, reachable point"                  -> NavMesh.SamplePosition on the candidate
+    ///   "a validated, reachable point"                  -> ISpecialDropValidator (NavMesh) on the candidate
     ///
     /// The state machine is the load-bearing part. "One at a time" is not a check
     /// performed at spawn time - it is the fact that there is exactly one field holding
     /// the live pickup and exactly one path back to Idle.
+    ///
+    /// WP-007 hardening (no product decision, every number PrototypeOnly and unchanged):
+    ///   * the process is bounded by the RUN, not the scene: RunStarted wipes it, RunEnded
+    ///     cancels it (AP-10) - a same-scene restart or the 1.6 s between death and the
+    ///     results screen cannot leave a pickup, a runtime or a schedule alive;
+    ///   * chance and placement go through injectable seams (<see cref="ISpecialWeaponRandom"/>,
+    ///     <see cref="ISpecialDropValidator"/>) with the shipped behaviour as default;
+    ///   * a drop with no valid, reachable position is NOT placed at a raw coordinate; the
+    ///     schedule survives and is retried when the round's progress moves, and it is
+    ///     abandoned (with a reason) when the round ends;
+    ///   * every transition is observable (<see cref="WeaponEvents.SpecialWeaponScheduled"/>,
+    ///     <see cref="WeaponEvents.SpecialWeaponCancelled"/>, <see cref="WeaponEvents.SpecialWeaponCleared"/>);
+    ///   * a second director is refused with a diagnostic instead of silently competing.
+    /// Which weapon a drop IS stays a payload of the process (rolled at spawn, KS-6); the
+    /// lifecycle never branches on it.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SpecialWeaponDirector : PrototypeConfigBehaviour
@@ -44,36 +58,66 @@ namespace DD.Prototype.Weapons
             InUse = 3
         }
 
-        /// <summary>PROTOTYPE-ONLY: how many Specials one round may produce in total.</summary>
-        private const int MaxSpawnsPerRoundDefault = 1;
+        /// <summary>PROTOTYPE-ONLY: how many first drops one round may produce; the sequential second is on top (see <see cref="MaxSpawnsPerRound"/>).</summary>
+        [PrototypeOnly(PendingDecisions.SpecialWeapon, "Usually one per round; the rare sequential second is rolled separately.", true)]
+        public const int MaxSpawnsPerRoundDefault = 1;
 
         /// <summary>
         /// PROTOTYPE-ONLY: progress mark for a sequential second drop is pushed this far
         /// past the current progress, so it cannot land in the same instant the first ended.
         /// </summary>
-        private const float SecondSpawnProgressOffset = 0.12f;
+        [PrototypeOnly(PendingDecisions.SpecialWeapon, "Progress offset for the sequential second drop.", true)]
+        public const float SecondSpawnProgressOffset = 0.12f;
 
         /// <summary>PROTOTYPE-ONLY: a scheduled drop never lands past this progress mark.</summary>
-        private const float LatestSpawnProgress = 0.85f;
+        [PrototypeOnly(PendingDecisions.SpecialWeapon, "Latest round progress a drop may still land at ('not near the end').", true)]
+        public const float LatestSpawnProgress = 0.85f;
 
         /// <summary>PROTOTYPE-ONLY: NavMesh sample tolerance when validating a drop point.</summary>
-        private const float NavSampleRadius = 2.5f;
+        [PrototypeOnly(PendingDecisions.None, "NavMesh sample tolerance for a drop point.", true)]
+        public const float NavSampleRadius = 2.5f;
+
+        /// <summary>PROTOTYPE-ONLY: off-route points are weighted this much more (REQ-054 pulls the player off the safe lap).</summary>
+        [PrototypeOnly(PendingDecisions.None, "Off-route drop point weight multiplier.", true)]
+        public const float OffRouteWeightMultiplier = 1.6f;
+
+        private const string DuplicateWarning =
+            "[SpecialWeapon] A second SpecialWeaponDirector was found. Only the first one runs; this one is disabled.";
+
+        private const string NoValidPositionLog =
+            "[SpecialWeapon] No valid, reachable drop position this round; the scheduled drop was abandoned (not placed at a raw coordinate).";
 
         [Header("PROTOTYPE-ONLY fallback when no spawn points are authored yet")]
         [PrototypeOnly(PendingDecisions.None,
             "Distance in front of the player used when the map has no SpecialWeaponSpawnPoint.", true)]
         [SerializeField] private float _fallbackDistance = 24f;
 
+        private static SpecialWeaponDirector s_instance;
+        private static int s_duplicateInstanceCount;
+
+        // One pickup template for the whole play session: PoolService keys pools by prefab,
+        // so a template per director (per Run scene load) would leak a pool under the
+        // DontDestroyOnLoad root on every run (WP-007; same rule as GoldService).
+        private static SpecialWeaponPickup s_pickupTemplate;
+
         private readonly List<SpecialWeaponSpawnPoint> _candidates = new List<SpecialWeaponSpawnPoint>(16);
 
         private PrototypePool<SpecialWeaponPickup> _pickupPool;
         private SpecialWeaponPickup _live;
 
+        private ISpecialWeaponRandom _random = UnityRandomSource.Instance;
+        private ISpecialDropValidator _validator = NavMeshDropValidator.Instance;
+
         private SpecialWeaponState _state = SpecialWeaponState.Idle;
         private float _scheduledProgress = -1f;
+        private float _lastPlacementAttemptProgress = -1f;
+        private bool _placementBlocked;
         private int _spawnsThisRound;
         private int _round;
+        private int _placementFailureCount;
         private bool _noSpawnPointsLogged;
+        private bool _noValidPositionLogged;
+        private bool _duplicate;
         private SpecialWeaponId _lastRolledWeapon = SpecialWeaponId.KaguraBell;
 
         /// <summary>Current phase. F1 readout and test hook.</summary>
@@ -87,22 +131,84 @@ namespace DD.Prototype.Weapons
         /// <summary>Which weapon the live or most recent drop is. F1 readout and test hook.</summary>
         public SpecialWeaponId LastRolledWeapon => _lastRolledWeapon;
 
+        /// <summary>
+        /// WP-007 (AP-3, TM-13): how many FIRST drops a round may produce; the sequential
+        /// second (SecondSpawnFromRound / SecondSpawnChance) is allowed on top, so the
+        /// total per round is this plus one. Defaults to the PrototypeOnly constant; a test
+        /// or an installer may configure it. Not a product decision.
+        /// </summary>
+        public int MaxSpawnsPerRound { get; set; } = MaxSpawnsPerRoundDefault;
+
+        /// <summary>How many times a due drop could not be placed (no valid, reachable position). Should stay 0 on an authored map.</summary>
+        public int PlacementFailureCount => _placementFailureCount;
+
+        /// <summary>The one director that runs. Null when none is enabled.</summary>
+        public static SpecialWeaponDirector Instance => s_instance;
+
+        /// <summary>How many directors were refused as duplicates this session. Diagnostic; should stay 0.</summary>
+        public static int DuplicateInstanceCount => s_duplicateInstanceCount;
+
+        /// <summary>Replace the source of chance (tests, probe). Null restores the shipped <see cref="UnityRandomSource"/>.</summary>
+        public void SetRandomSource(ISpecialWeaponRandom source)
+        {
+            _random = source ?? UnityRandomSource.Instance;
+        }
+
+        /// <summary>Replace the drop validator (tests). Null restores the shipped <see cref="NavMeshDropValidator"/>.</summary>
+        public void SetDropValidator(ISpecialDropValidator validator)
+        {
+            _validator = validator ?? NavMeshDropValidator.Instance;
+        }
+
         // ------------------------------------------------------------------ lifecycle
 
         protected override void OnEnable()
         {
+            if (s_instance != null && s_instance != this)
+            {
+                // PB-8/PB-9: a second director would be a second schedule, a second pickup
+                // pool and a second "one at a time". Refuse it loudly rather than let two
+                // of them compete for the same HUD snapshot.
+                _duplicate = true;
+                s_duplicateInstanceCount++;
+                Debug.LogWarning(DuplicateWarning, this);
+                enabled = false;
+                return;
+            }
+
+            s_instance = this;
+
             base.OnEnable();
 
             SpecialWeaponRoundBridge.RoundStarted += OnRoundStarted;
             SpecialWeaponRoundBridge.RoundEnded += OnRoundEnded;
+            SpecialWeaponRoundBridge.RunStarted += OnRunStarted;
+            SpecialWeaponRoundBridge.RunEnded += OnRunEnded;
 
             WeaponDebugHooks.EnsureExists();
         }
 
         protected override void OnDisable()
         {
+            if (_duplicate)
+            {
+                _duplicate = false;
+                return;
+            }
+
             SpecialWeaponRoundBridge.RoundStarted -= OnRoundStarted;
             SpecialWeaponRoundBridge.RoundEnded -= OnRoundEnded;
+            SpecialWeaponRoundBridge.RunStarted -= OnRunStarted;
+            SpecialWeaponRoundBridge.RunEnded -= OnRunEnded;
+
+            // AP-10: the director going away (scene unload, shutdown) takes its process with
+            // it - the pickup's loop, the snapshot and the runtime must not outlive it.
+            CancelAll(SpecialWeaponCancelReason.Teardown);
+
+            if (s_instance == this)
+            {
+                s_instance = null;
+            }
 
             base.OnDisable();
         }
@@ -114,12 +220,15 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            SpecialWeaponPickup template = SpecialWeaponPickup.CreateTemplate();
+            if (s_pickupTemplate == null)
+            {
+                s_pickupTemplate = SpecialWeaponPickup.CreateTemplate();
+            }
 
             // Capacity 2 rather than 1: the pool releases on the frame the pickup is
             // collected, and a debug-triggered spawn in that same frame must not have to
             // wait for the free list.
-            _pickupPool = PoolService.GetOrCreate(template, 1, 2, PoolExhaustedPolicy.RecycleOldest);
+            _pickupPool = PoolService.GetOrCreate(s_pickupTemplate, 1, 2, PoolExhaustedPolicy.RecycleOldest);
         }
 
         private void Update()
@@ -135,11 +244,20 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            if (SpecialWeaponRoundBridge.RoundProgress01 < _scheduledProgress)
+            float progress = SpecialWeaponRoundBridge.RoundProgress01;
+            if (progress < _scheduledProgress)
             {
                 return;
             }
 
+            // AP-4 / PB-4: a due drop that found no valid position is retried only when the
+            // round's progress has moved since the failed attempt, not every frame.
+            if (_placementBlocked && Mathf.Approximately(progress, _lastPlacementAttemptProgress))
+            {
+                return;
+            }
+
+            _lastPlacementAttemptProgress = progress;
             SpawnNow();
         }
 
@@ -161,8 +279,83 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            _state = SpecialWeaponState.Idle;
+            FinishProcess();
             TryScheduleSequentialSecond();
+        }
+
+        /// <summary>A process (ground or in hand) is over and everything of it is gone: Idle + Cleared.</summary>
+        private void FinishProcess()
+        {
+            _state = SpecialWeaponState.Idle;
+            _scheduledProgress = -1f;
+            _placementBlocked = false;
+            _live = null;
+            WeaponEvents.PublishSpecialCleared();
+        }
+
+        // ------------------------------------------------------------------ run hooks (WP-007, AP-10)
+
+        private void OnRunStarted(int runId)
+        {
+            CancelAll(SpecialWeaponCancelReason.RunStarted);
+            _round = 0;
+            _spawnsThisRound = 0;
+            _placementFailureCount = 0;
+            _noValidPositionLogged = false;
+        }
+
+        private void OnRunEnded()
+        {
+            CancelAll(SpecialWeaponCancelReason.RunEnded);
+        }
+
+        /// <summary>
+        /// Stop whatever the process is - scheduled, on the ground or in hand - and return to
+        /// Idle with nothing left behind: no pickup, no beacon, no loop, no runtime, no
+        /// timer, no callback, snapshot None. Publishes Cancelled (and Cleared when a drop
+        /// had actually existed). Idempotent.
+        /// </summary>
+        private void CancelAll(SpecialWeaponCancelReason reason)
+        {
+            switch (_state)
+            {
+                case SpecialWeaponState.Scheduled:
+                    _state = SpecialWeaponState.Idle;
+                    _scheduledProgress = -1f;
+                    _placementBlocked = false;
+                    WeaponEvents.PublishSpecialCancelled(reason, SpecialWeaponPhase.None);
+                    return;
+
+                case SpecialWeaponState.OnGround:
+                {
+                    SpecialWeaponPickup live = _live;
+                    _live = null;
+                    if (live != null)
+                    {
+                        live.Cancel();
+                    }
+
+                    WeaponEvents.PublishSpecialCancelled(reason, SpecialWeaponPhase.OnGround);
+                    FinishProcess();
+                    return;
+                }
+
+                case SpecialWeaponState.InUse:
+                {
+                    WeaponController controller = WeaponRegistry.ActiveController;
+                    if (controller != null)
+                    {
+                        controller.CancelSpecialWeapon();
+                    }
+
+                    WeaponEvents.PublishSpecialCancelled(reason, SpecialWeaponPhase.Active);
+                    FinishProcess();
+                    return;
+                }
+
+                default:
+                    return;
+            }
         }
 
         // ------------------------------------------------------------------ round hooks
@@ -175,7 +368,7 @@ namespace DD.Prototype.Weapons
             // A drop that is still on the ground or in use survives a round boundary
             // rather than being cancelled: the request never says a round end removes it,
             // and taking a weapon out of the player's hands at a round boundary would be
-            // worse than letting it run out.
+            // worse than letting it run out. (KS-3: characterised, not a product decision.)
             if (_state == SpecialWeaponState.OnGround || _state == SpecialWeaponState.InUse)
             {
                 return;
@@ -183,6 +376,7 @@ namespace DD.Prototype.Weapons
 
             _state = SpecialWeaponState.Idle;
             _scheduledProgress = -1f;
+            _placementBlocked = false;
 
             TryScheduleForRound(round, false);
         }
@@ -191,9 +385,12 @@ namespace DD.Prototype.Weapons
         {
             if (_state == SpecialWeaponState.Scheduled)
             {
-                // The round finished before the drop was due. It simply does not happen.
-                _state = SpecialWeaponState.Idle;
-                _scheduledProgress = -1f;
+                // The round finished before the drop was due (or before a valid position
+                // existed for it). It simply does not happen.
+                SpecialWeaponCancelReason reason = _placementBlocked
+                    ? SpecialWeaponCancelReason.NoValidPosition
+                    : SpecialWeaponCancelReason.RoundEnded;
+                CancelAll(reason);
             }
         }
 
@@ -204,7 +401,7 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            if (_spawnsThisRound >= MaxSpawnsPerRoundDefault && !isSecond)
+            if (_spawnsThisRound >= Mathf.Max(0, MaxSpawnsPerRound) && !isSecond)
             {
                 return;
             }
@@ -215,22 +412,12 @@ namespace DD.Prototype.Weapons
                 ? s.SecondSpawnChance
                 : Config.SpecialWeaponSpawnChance(round);
 
-            if (chance <= 0f || Random.value > chance)
+            if (!RollEligibility(chance, _random))
             {
                 return;
             }
 
-            float min = Mathf.Clamp01(Mathf.Min(s.SpawnWindowMin, s.SpawnWindowMax));
-            float max = Mathf.Clamp01(Mathf.Max(s.SpawnWindowMin, s.SpawnWindowMax));
-
-            float mark = Random.Range(min, max);
-
-            if (isSecond)
-            {
-                mark = Mathf.Max(mark, SpecialWeaponRoundBridge.RoundProgress01 + SecondSpawnProgressOffset);
-            }
-
-            if (mark > LatestSpawnProgress)
+            if (!TryComputeSpawnMark(s, isSecond, SpecialWeaponRoundBridge.RoundProgress01, _random, out float mark))
             {
                 // Too late to be worth chasing; the request explicitly does not want a
                 // drop appearing as the round is about to end.
@@ -238,7 +425,10 @@ namespace DD.Prototype.Weapons
             }
 
             _scheduledProgress = mark;
+            _lastPlacementAttemptProgress = -1f;
+            _placementBlocked = false;
             _state = SpecialWeaponState.Scheduled;
+            WeaponEvents.PublishSpecialScheduled(mark);
         }
 
         private void TryScheduleSequentialSecond()
@@ -255,12 +445,58 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            if (_spawnsThisRound >= MaxSpawnsPerRoundDefault + 1)
+            if (_spawnsThisRound >= Mathf.Max(0, MaxSpawnsPerRound) + 1)
             {
                 return;
             }
 
             TryScheduleForRound(_round, true);
+        }
+
+        // ------------------------------------------------------------------ pure policy (EditMode-testable)
+
+        /// <summary>The eligibility roll: a drop happens when the roll lands inside the chance. Chance 0 never, 1 always.</summary>
+        public static bool RollEligibility(float chance, ISpecialWeaponRandom random)
+        {
+            if (chance <= 0f || random == null)
+            {
+                return false;
+            }
+
+            return random.Value() <= chance;
+        }
+
+        /// <summary>
+        /// The scheduling policy: a uniform mark inside the config window, pushed past the
+        /// current progress by <see cref="SecondSpawnProgressOffset"/> for a sequential
+        /// second, and refused when it would land past <see cref="LatestSpawnProgress"/>.
+        /// </summary>
+        public static bool TryComputeSpawnMark(
+            SpecialWeaponConfigSection s, bool isSecond, float currentProgress, ISpecialWeaponRandom random, out float mark)
+        {
+            mark = -1f;
+            if (s == null || random == null)
+            {
+                return false;
+            }
+
+            float min = Mathf.Clamp01(Mathf.Min(s.SpawnWindowMin, s.SpawnWindowMax));
+            float max = Mathf.Clamp01(Mathf.Max(s.SpawnWindowMin, s.SpawnWindowMax));
+
+            float candidate = random.Range(min, max);
+
+            if (isSecond)
+            {
+                candidate = Mathf.Max(candidate, Mathf.Clamp01(currentProgress) + SecondSpawnProgressOffset);
+            }
+
+            if (candidate > LatestSpawnProgress)
+            {
+                return false;
+            }
+
+            mark = candidate;
+            return true;
         }
 
         // ------------------------------------------------------------------ spawning
@@ -276,8 +512,17 @@ namespace DD.Prototype.Weapons
                 return false;
             }
 
+            SpecialWeaponState previous = _state;
             _state = SpecialWeaponState.Scheduled;
-            return SpawnNow();
+            if (SpawnNow())
+            {
+                return true;
+            }
+
+            // Nowhere to put it: fall back to what we were rather than leaving a ghost
+            // schedule with no mark behind (debug path only).
+            _state = previous;
+            return false;
         }
 
         private bool SpawnNow()
@@ -289,8 +534,17 @@ namespace DD.Prototype.Weapons
 
             if (!TryPickDropPosition(out Vector3 position))
             {
-                // Nowhere valid to put it. Stay scheduled and try again next frame rather
-                // than dropping the round's chance on the floor.
+                // Nowhere valid to put it. Stay scheduled: Update retries when the round's
+                // progress moves, OnRoundEnded abandons it with a reason. Never a raw
+                // coordinate (AP-4). The counter and the lifecycle lock are untouched.
+                _placementBlocked = true;
+                _placementFailureCount++;
+                if (!_noValidPositionLogged)
+                {
+                    _noValidPositionLogged = true;
+                    Debug.Log(NoValidPositionLog);
+                }
+
                 return false;
             }
 
@@ -305,13 +559,15 @@ namespace DD.Prototype.Weapons
             _live = pickup;
             _state = SpecialWeaponState.OnGround;
             _scheduledProgress = -1f;
+            _placementBlocked = false;
             _spawnsThisRound++;
 
             // WHICH of the three drops is rolled HERE, at spawn time, not at pickup time:
             // the drop's silhouette and beacon colour have to name the weapon while it is
             // still on the ground, because that is the information the player uses to
-            // decide whether the run across the map is worth making (G-21).
-            SpecialWeaponId weapon = s.RollWeapon(Random.value);
+            // decide whether the run across the map is worth making (G-21). The lifecycle
+            // itself never reads the identity again (KS-6).
+            SpecialWeaponId weapon = s.RollWeapon(_random.Value());
             _lastRolledWeapon = weapon;
 
             pickup.Finished = OnPickupFinished;
@@ -333,7 +589,7 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            _state = SpecialWeaponState.Idle;
+            FinishProcess();
             TryScheduleSequentialSecond();
         }
 
@@ -356,17 +612,18 @@ namespace DD.Prototype.Weapons
 
             _candidates.Clear();
 
-            // Pass one: authored points that are far enough away AND on the NavMesh.
+            // Pass one: authored points that are far enough away AND reachable.
             CollectCandidates(points, player, hasPlayer, minDistance, true);
 
-            // Pass two: same points without the NavMesh check, for a map that has not been
-            // baked yet. Deliberately not an error - the world task may bake later.
+            // Pass two: same points without the reachability check, for a map that has not
+            // been baked yet. Deliberately not an error - the world task may bake later.
             if (_candidates.Count == 0)
             {
                 CollectCandidates(points, player, hasPlayer, minDistance, false);
             }
 
             // Pass three: ignore the distance rule rather than never spawning at all.
+            // (KS-8: the pass policy is the prototype's, characterised and unchanged.)
             if (_candidates.Count == 0)
             {
                 CollectCandidates(points, player, hasPlayer, 0f, false);
@@ -374,7 +631,7 @@ namespace DD.Prototype.Weapons
 
             if (_candidates.Count > 0)
             {
-                position = PickWeighted(_candidates);
+                position = PickWeighted(_candidates, _random);
                 return true;
             }
 
@@ -399,7 +656,7 @@ namespace DD.Prototype.Weapons
             Vector3 player,
             bool hasPlayer,
             float minDistance,
-            bool requireNavMesh)
+            bool requireReachable)
         {
             for (int i = 0; i < points.Count; i++)
             {
@@ -421,7 +678,7 @@ namespace DD.Prototype.Weapons
                     }
                 }
 
-                if (requireNavMesh && !IsReachable(drop))
+                if (requireReachable && !_validator.IsReachable(drop))
                 {
                     continue;
                 }
@@ -430,12 +687,8 @@ namespace DD.Prototype.Weapons
             }
         }
 
-        private static bool IsReachable(Vector3 position)
-        {
-            return NavMesh.SamplePosition(position, out _, NavSampleRadius, NavMesh.AllAreas);
-        }
-
-        private static Vector3 PickWeighted(List<SpecialWeaponSpawnPoint> candidates)
+        /// <summary>Weighted pick over the candidate list. Pure: same random sequence, same candidates, same point (TM-18).</summary>
+        public static Vector3 PickWeighted(List<SpecialWeaponSpawnPoint> candidates, ISpecialWeaponRandom random)
         {
             float total = 0f;
             for (int i = 0; i < candidates.Count; i++)
@@ -445,10 +698,10 @@ namespace DD.Prototype.Weapons
 
             if (total <= 0f)
             {
-                return candidates[Random.Range(0, candidates.Count)].DropPosition;
+                return candidates[random.Range(0, candidates.Count)].DropPosition;
             }
 
-            float roll = Random.value * total;
+            float roll = random.Value() * total;
             for (int i = 0; i < candidates.Count; i++)
             {
                 roll -= EffectiveWeight(candidates[i]);
@@ -462,28 +715,38 @@ namespace DD.Prototype.Weapons
         }
 
         /// <summary>
-        /// PROTOTYPE-ONLY: off-route points are weighted 1.6x, because REQ-054 wants the
+        /// PROTOTYPE-ONLY: off-route points are weighted up, because REQ-054 wants the
         /// drop to pull the player off their safe lap rather than sit on it.
         /// </summary>
-        private static float EffectiveWeight(SpecialWeaponSpawnPoint point)
+        public static float EffectiveWeight(SpecialWeaponSpawnPoint point)
         {
-            return point.Weight * (point.OffRoute ? 1.6f : 1f);
+            return point.Weight * (point.OffRoute ? OffRouteWeightMultiplier : 1f);
         }
 
         private bool TryFallbackPosition(Vector3 player, float distance, out Vector3 position)
         {
-            float angle = Random.Range(0f, 360f);
+            float angle = _random.Range(0f, 360f);
             Vector3 offset = Quaternion.Euler(0f, angle, 0f) * Vector3.forward * distance;
             Vector3 candidate = player + offset;
 
-            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, distance * 0.5f, NavMesh.AllAreas))
+            // AP-4: only reachable ground is a drop position. A raw candidate with no
+            // reachable ground under it is a cancelled drop, not a drop in the void.
+            if (_validator.TryProject(candidate, distance * 0.5f, out Vector3 projected))
             {
-                position = hit.position + Vector3.up * 0.8f;
+                position = projected + Vector3.up * 0.8f;
                 return true;
             }
 
-            position = candidate + Vector3.up * 0.8f;
-            return true;
+            position = Vector3.zero;
+            return false;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            s_instance = null;
+            s_duplicateInstanceCount = 0;
+            s_pickupTemplate = null;
         }
     }
 }

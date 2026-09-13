@@ -52,6 +52,28 @@ namespace DD.Prototype.Tests.PlayMode
             (typeof(DD.Prototype.Damage.DamageEvents), "EnemyDied"),
             (typeof(DD.Prototype.Damage.DamageEvents), "PlayerAttacked"),
             (typeof(DD.Prototype.Feedback.HitFeedbackDirector), "EnemyHitDressed"),
+            // WP-007: weapon / Special Weapon event bus and the round bridge, so a Special
+            // Weapon subscription that multiplies across runs (director, HUD) is measured too.
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "WeaponEquipped"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "AmmoChanged"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "ReloadStarted"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "ReloadCompleted"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "ReloadInterrupted"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "DryFire"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "ClassicChanged"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialWeaponSpawned"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialWeaponGroundExpired"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialWeaponPickedUp"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialWeaponFinalSeconds"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialWeaponEnded"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialChanged"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialWeaponScheduled"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialWeaponCancelled"),
+            (typeof(DD.Prototype.Weapons.WeaponEvents), "SpecialWeaponCleared"),
+            (typeof(DD.Prototype.Weapons.SpecialWeaponRoundBridge), "RoundStarted"),
+            (typeof(DD.Prototype.Weapons.SpecialWeaponRoundBridge), "RoundEnded"),
+            (typeof(DD.Prototype.Weapons.SpecialWeaponRoundBridge), "RunStarted"),
+            (typeof(DD.Prototype.Weapons.SpecialWeaponRoundBridge), "RunEnded"),
         };
 
         public static int AboneSayisi(Type tip, string eventAdi)

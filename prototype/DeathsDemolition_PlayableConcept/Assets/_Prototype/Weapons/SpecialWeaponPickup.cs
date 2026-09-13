@@ -46,6 +46,7 @@ namespace DD.Prototype.Weapons
         private float _duration;
         private float _blinkPhase;
         private bool _collected;
+        private bool _beaconLoopRunning;
         private SpecialWeaponId _weaponId = SpecialWeaponId.KaguraBell;
         private string _displayName = "Special Weapon";
 
@@ -91,9 +92,31 @@ namespace DD.Prototype.Weapons
             // event. All three, because the request lists all three.
             AudioEvents.RaiseCritical(CombatAudioEvent.SpecialWeaponSpawn, transform.position, 1f, 100);
             AudioEvents.RaiseLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, transform.position, 0.6f, 60);
+            _beaconLoopRunning = true;
 
             WeaponEvents.PublishSpecialSpawned(transform.position, _duration);
             PublishState(true);
+        }
+
+        /// <summary>
+        /// WP-007 (AP-10): the process is stopped from outside its own timer (run end, death,
+        /// new run, teardown). Ground visuals, the beacon loop and the OnGround snapshot are
+        /// torn down exactly as on expiry, but no "ground expired" news is raised and
+        /// <see cref="Finished"/> is NOT invoked - the director that cancelled already knows.
+        /// Safe to call on an already collected / despawned pickup.
+        /// </summary>
+        public void Cancel()
+        {
+            if (!IsSpawned || _collected)
+            {
+                return;
+            }
+
+            _collected = true;
+            ClearGroundState();
+            TearDownGroundVisuals();
+            Finished = null;
+            Despawn();
         }
 
         protected override void OnSpawned()
@@ -109,6 +132,17 @@ namespace DD.Prototype.Weapons
             // is only a safety net for a teardown that skipped the normal path.
             _beacon = null;
             Finished = null;
+
+            // WP-007 (AP-10 T7): a teardown that skipped the normal path (scene unload
+            // releasing every pooled instance - the abort-to-menu route) must not leave the
+            // beacon loop playing in the DontDestroyOnLoad audio director. Stopping a loop is
+            // an event, not a pool release, so it is allowed here; the normal paths have
+            // already stopped it and the flag keeps this from stopping it twice.
+            if (_beaconLoopRunning)
+            {
+                _beaconLoopRunning = false;
+                AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop);
+            }
         }
 
         /// <summary>
@@ -240,7 +274,12 @@ namespace DD.Prototype.Weapons
         private void TearDownGroundVisuals()
         {
             ReleaseBeacon();
-            AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop);
+
+            if (_beaconLoopRunning)
+            {
+                _beaconLoopRunning = false;
+                AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop);
+            }
         }
 
         private void ClearGroundState()

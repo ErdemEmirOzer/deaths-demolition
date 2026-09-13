@@ -160,7 +160,11 @@ namespace DD.Prototype.Weapons
 
             if (_special.IsActive)
             {
-                _special.End();
+                // WP-007 (AP-10 / OS-2): a controller going away with a Special Weapon in
+                // hand is a CANCEL (scene unload, teardown), not an expiry - no "you lost
+                // it" news, and the snapshot must not stay Active into the next scene.
+                _special.Cancel();
+                PublishSpecialState(true);
             }
 
             base.OnDisable();
@@ -234,7 +238,7 @@ namespace DD.Prototype.Weapons
             PublishClassicState(true);
         }
 
-        /// <summary>End the Special Weapon early. Run teardown and the debug panel only.</summary>
+        /// <summary>End the Special Weapon early, as if its timer had run out. Debug panel and tests.</summary>
         public void DeactivateSpecialWeapon()
         {
             if (!_special.IsActive)
@@ -244,6 +248,23 @@ namespace DD.Prototype.Weapons
 
             _special.End();
             HandleSpecialEnded();
+        }
+
+        /// <summary>
+        /// WP-007 (AP-10): stop the Special Weapon because the run is over (death, run end,
+        /// new run). Same hand-back of the classic weapon as an expiry, without the expiry
+        /// news cue. Returns true when there was something to cancel.
+        /// </summary>
+        public bool CancelSpecialWeapon()
+        {
+            if (!_special.IsActive)
+            {
+                return false;
+            }
+
+            _special.Cancel();
+            HandleSpecialEnded();
+            return true;
         }
 
         /// <summary>Wipe the build and refill the magazine. Called when a run starts.</summary>

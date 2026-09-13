@@ -144,6 +144,12 @@ namespace DD.Prototype.UI
         private GameObject _specialBlock;
         private Text _specialPhase;
         private Text _specialTimer;
+
+        // WP-007 (PB-2): the active timer is formatted only when its displayed tenth
+        // changes (at most ten times a second), the marker distance only when the displayed
+        // metre changes - never once per frame.
+        private int _specialTimerTenths = int.MinValue;
+        private int _markerMetres = int.MinValue;
         private Text _specialCaption;
         private UiBar _specialBar;
         private Image _specialPip;
@@ -848,7 +854,13 @@ namespace DD.Prototype.UI
             _specialPhase.color = UiTokens.Get(warning ? UiColor.StateDanger : UiColor.StateGold);
             _specialCaption.text = name;
             _specialCaption.color = UiTokens.Get(UiColor.TextPrimary);
-            _specialTimer.text = FormatSeconds(state.ActiveRemaining);
+            int tenths = Mathf.RoundToInt(Mathf.Max(0f, state.ActiveRemaining) * 10f);
+            if (tenths != _specialTimerTenths)
+            {
+                _specialTimerTenths = tenths;
+                _specialTimer.text = FormatSeconds(state.ActiveRemaining);
+            }
+
             _specialTimer.color = UiTokens.Get(warning ? UiColor.StateDanger : UiColor.StateGold);
             _specialBar.SetColor(warning ? UiColor.BarHealthLow : UiColor.BarSpecial);
             _specialBar.SetValue(state.ActiveProgress01, true);
@@ -1028,7 +1040,13 @@ namespace DD.Prototype.UI
             // The distance label stays. It is the answer to a DIFFERENT question - "how
             // far", not "how long" - and the request only removed the duration.
             float distance = Vector3.Distance(camera.transform.position, state.WorldPosition);
-            _markerLabel.text = Mathf.RoundToInt(distance) + " m";
+            int metres = Mathf.RoundToInt(distance);
+            if (metres != _markerMetres)
+            {
+                _markerMetres = metres;
+                _markerLabel.text = metres + " m";
+            }
+
             _markerLabel.color = markerColour;
         }
 
@@ -1082,6 +1100,16 @@ namespace DD.Prototype.UI
         private void OnSpecialEnded()
         {
             SetWarning(false);
+
+            // The death beat: the run director cancels the Special Weapon the moment the
+            // run ends (WP-007, AP-10), which publishes Ended while the HUD is still up.
+            // The HUD is frozen for the dead player (see UpdateRun) - there is no classic
+            // weapon coming back for anyone to read about.
+            if (RunEvents.Current.Phase == RunPhase.Dead)
+            {
+                return;
+            }
+
             ShowBanner("CLASSIC WEAPON RESTORED");
         }
 
@@ -1112,6 +1140,7 @@ namespace DD.Prototype.UI
             _bannerGroup.alpha = Mathf.MoveTowards(_bannerGroup.alpha, 1f, Time.unscaledDeltaTime * 6f);
         }
 
+        /// <summary>Formats to a tenth. Callers cache by the displayed tenth so this never runs once per frame (WP-007, PB-2).</summary>
         private static string FormatSeconds(float seconds)
         {
             return Mathf.Max(0f, seconds).ToString("0.0");

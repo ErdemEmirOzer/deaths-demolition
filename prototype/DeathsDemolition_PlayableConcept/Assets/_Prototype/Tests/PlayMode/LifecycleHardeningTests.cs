@@ -185,7 +185,24 @@ namespace DD.Prototype.Tests.PlayMode
                 // PlayerAttacked / EnemyHitDressed'a Run'da kalıcı abone yok (feedback tek sahibi çekmez, iter).
                 { "DamageEvents.EnemyDied", 2 }, { "DamageEvents.ArmorBroken", 1 }, { "DamageEvents.EnemyDamaged", 0 },
                 { "DamageEvents.PlayerAttacked", 0 }, { "HitFeedbackDirector.EnemyHitDressed", 0 },
+                // WP-007: silah/Special olay busu ve round köprüsü. Run-yerel aboneler: RunHudScreen'in 5
+                // Special olayı (spawn / pickup / final-seconds / ended / ground-expired) ve director'ın 4
+                // köprü aboneliği (round start/end + run start/end). Klasik 7 olay, SpecialChanged ve yeni
+                // üç yaşam döngüsü olayına (scheduled / cancelled / cleared) üretimde kalıcı abone yok.
+                { "WeaponEvents.WeaponEquipped", 0 }, { "WeaponEvents.AmmoChanged", 0 }, { "WeaponEvents.ReloadStarted", 0 },
+                { "WeaponEvents.ReloadCompleted", 0 }, { "WeaponEvents.ReloadInterrupted", 0 }, { "WeaponEvents.DryFire", 0 },
+                { "WeaponEvents.ClassicChanged", 0 },
+                { "WeaponEvents.SpecialWeaponSpawned", 1 }, { "WeaponEvents.SpecialWeaponGroundExpired", 1 },
+                { "WeaponEvents.SpecialWeaponPickedUp", 1 }, { "WeaponEvents.SpecialWeaponFinalSeconds", 1 },
+                { "WeaponEvents.SpecialWeaponEnded", 1 }, { "WeaponEvents.SpecialChanged", 0 },
+                { "WeaponEvents.SpecialWeaponScheduled", 0 }, { "WeaponEvents.SpecialWeaponCancelled", 0 },
+                { "WeaponEvents.SpecialWeaponCleared", 0 },
+                { "SpecialWeaponRoundBridge.RoundStarted", 1 }, { "SpecialWeaponRoundBridge.RoundEnded", 1 },
+                { "SpecialWeaponRoundBridge.RunStarted", 1 }, { "SpecialWeaponRoundBridge.RunEnded", 1 },
             };
+            // Tamlık nöbetçisi (WP-007): tabloya girmeyen izlenen olay sessizce geçemez.
+            Assert.AreEqual(IzlenenEventler.Length, beklenenFark.Count,
+                "beklenenFark tablosu IzlenenEventler ile aynı uzunlukta değil — eksik satır sessiz geçer.");
             Dictionary<string, int> fark = Fark(run1, menu1);
             Yazdir("run-minus-menu", fark);
             AboneleriKarsilastir("run1 − menu1 (sahne-yerel abone tablosu)", beklenenFark, fark);

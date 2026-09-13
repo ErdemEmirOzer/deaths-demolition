@@ -17,6 +17,47 @@ namespace DD.Prototype.Weapons
         Active = 2
     }
 
+    /// <summary>
+    /// WP-007: why a Special Weapon process stopped before its own timers did. Carried by
+    /// <see cref="WeaponEvents.SpecialWeaponCancelled"/> so a consumer can tell "cancelled"
+    /// from "expired" (they used to arrive as the same Ended event).
+    /// </summary>
+    public enum SpecialWeaponCancelReason
+    {
+        /// <summary>The run ended (player death, run end) while a process was scheduled, on the ground or in hand.</summary>
+        RunEnded = 1,
+
+        /// <summary>A new run started with a process still alive (same-scene restart).</summary>
+        RunStarted = 2,
+
+        /// <summary>The round ended while the drop was still scheduled; it simply never happens.</summary>
+        RoundEnded = 3,
+
+        /// <summary>No valid, reachable drop position existed for the whole round: the scheduled drop was abandoned.</summary>
+        NoValidPosition = 4,
+
+        /// <summary>The owning object was disabled / torn down (scene unload, director or controller shutdown).</summary>
+        Teardown = 5,
+
+        /// <summary>Ended by the debug panel or a diagnostic.</summary>
+        Debug = 6
+    }
+
+    /// <summary>Payload of <see cref="WeaponEvents.SpecialWeaponCancelled"/>.</summary>
+    public readonly struct SpecialWeaponCancelInfo
+    {
+        public readonly SpecialWeaponCancelReason Reason;
+
+        /// <summary>Where the process was when it was cancelled: OnGround, Active, or None for a merely scheduled drop.</summary>
+        public readonly SpecialWeaponPhase PhaseAtCancel;
+
+        public SpecialWeaponCancelInfo(SpecialWeaponCancelReason reason, SpecialWeaponPhase phaseAtCancel)
+        {
+            Reason = reason;
+            PhaseAtCancel = phaseAtCancel;
+        }
+    }
+
     /// <summary>Everything the HUD needs about the classic weapon. Poll it, or listen for changes.</summary>
     public struct ClassicWeaponHudState
     {
@@ -163,6 +204,27 @@ namespace DD.Prototype.Weapons
         /// <summary>Any phase transition of the Special Weapon.</summary>
         public static event Action<SpecialWeaponHudState> SpecialChanged;
 
+        // ------------------------------------------------------------------ WP-007 lifecycle transitions
+        // Added for observability only (OS-2); the six events above keep their payloads.
+
+        /// <summary>A drop was scheduled for this round. Argument: the round-progress mark it waits for (0..1).</summary>
+        public static event Action<float> SpecialWeaponScheduled;
+
+        /// <summary>
+        /// A scheduled, grounded or active Special Weapon was stopped by something other than
+        /// its own timers (run end, death, new run, round end before the drop, no valid
+        /// position, teardown, debug). For an active weapon <see cref="SpecialWeaponEnded"/>
+        /// still follows, so consumers of "the classic weapon is back" need no change.
+        /// </summary>
+        public static event Action<SpecialWeaponCancelInfo> SpecialWeaponCancelled;
+
+        /// <summary>
+        /// The director is fully back to Idle: no pickup, no runtime, no timer, no beacon, no
+        /// loop, snapshot None. Raised once per process (after expiry, after the active
+        /// duration, or after a cancel). A second drop may only be considered after this.
+        /// </summary>
+        public static event Action SpecialWeaponCleared;
+
         // ------------------------------------------------------------------ producers
 
         public static void PublishClassic(in ClassicWeaponHudState state, bool notify)
@@ -214,6 +276,13 @@ namespace DD.Prototype.Weapons
 
         public static void PublishSpecialEnded() => SpecialWeaponEnded?.Invoke();
 
+        public static void PublishSpecialScheduled(float progressMark) => SpecialWeaponScheduled?.Invoke(progressMark);
+
+        public static void PublishSpecialCancelled(SpecialWeaponCancelReason reason, SpecialWeaponPhase phaseAtCancel)
+            => SpecialWeaponCancelled?.Invoke(new SpecialWeaponCancelInfo(reason, phaseAtCancel));
+
+        public static void PublishSpecialCleared() => SpecialWeaponCleared?.Invoke();
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
@@ -234,6 +303,10 @@ namespace DD.Prototype.Weapons
             SpecialWeaponFinalSeconds = null;
             SpecialWeaponEnded = null;
             SpecialChanged = null;
+
+            SpecialWeaponScheduled = null;
+            SpecialWeaponCancelled = null;
+            SpecialWeaponCleared = null;
         }
     }
 }
