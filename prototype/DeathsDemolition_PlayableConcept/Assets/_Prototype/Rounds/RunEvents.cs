@@ -123,7 +123,9 @@ namespace DD.Prototype.Rounds
     ///   8  Kill XP ................. <see cref="KillXp"/>
     ///   9  Total XP Earned ......... <see cref="TotalXpEarned"/>
     ///  10  Profile Level Progress .. the profile system computes it from
-    ///                                <see cref="TotalXpEarned"/>; this struct is its input.
+    ///                                <see cref="CompletedRoundXp"/> + <see cref="KillXp"/>
+    ///                                (WP-009: <see cref="TotalXpEarned"/> is informational and
+    ///                                is never read as an XP source); this struct is its input.
     ///  11  Newly Unlocked Content .. same, from the level the XP produces.
     ///  12  Achievements Earned ..... same, from <see cref="ReachedRound"/>,
     ///                                <see cref="UltraKills"/>, <see cref="TotalKills"/> and
@@ -173,6 +175,16 @@ namespace DD.Prototype.Rounds
         public EnemyTier HighestTierKilled;
 
         // ---- run identity ----------------------------------------------------
+
+        /// <summary>
+        /// WP-009: opaque, durable identity of this run's completion. Minted by
+        /// <see cref="RunDirector"/> when the run starts (a fresh GUID, so it is unique
+        /// across process restarts, unlike the session-local <see cref="RunDirector.RunId"/>),
+        /// and the ONLY thing the profile uses to refuse a replayed summary. Null or
+        /// empty means "no identity": such a summary is never folded into the profile.
+        /// Shown nowhere; not a timestamp; not a run history.
+        /// </summary>
+        public string CompletionId;
 
         /// <summary>The classic weapon carried for the whole run.</summary>
         public ClassicWeaponId Weapon;
@@ -322,13 +334,39 @@ namespace DD.Prototype.Rounds
         public static void PublishRunEnded(in RunSummary summary)
         {
             LastRunSummary = summary;
-            Invoke(RunEnded, summary);
+            InvokeEachIsolated(RunEnded, summary);
         }
 
         /// <summary>Called by the director when a run starts, so a stale HUD cannot linger.</summary>
         public static void ClearState()
         {
             Current = default;
+        }
+
+        /// <summary>
+        /// RunEnded only (WP-009): every subscriber runs even if an earlier one throws, so
+        /// the profile commit (<c>ProfileRunCommitter</c>) cannot be skipped by a broken
+        /// screen listener. Once per run, so the invocation-list copy is not a hot-path cost.
+        /// </summary>
+        private static void InvokeEachIsolated(Action<RunSummary> handler, RunSummary argument)
+        {
+            if (handler == null)
+            {
+                return;
+            }
+
+            Delegate[] list = handler.GetInvocationList();
+            for (int i = 0; i < list.Length; i++)
+            {
+                try
+                {
+                    ((Action<RunSummary>)list[i]).Invoke(argument);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
         }
 
         private static void Invoke<T>(Action<T> handler, T argument)

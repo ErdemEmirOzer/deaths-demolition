@@ -90,7 +90,12 @@ namespace DD.Prototype.UI
         public bool Celebrate;
 
         // ---- footer
+        /// <summary>True when the run is NOT in the profile (save failed, duplicate, no identity). Drawn in the warning colour.</summary>
         public bool SaveFailed;
+
+        /// <summary>WP-009: false when the receipt says the profile was not changed by this run.</summary>
+        public bool Applied = true;
+
         public string FooterNote = string.Empty;
 
         // ---- empty state
@@ -169,6 +174,11 @@ namespace DD.Prototype.UI
             model.XpBreakdown.Add(new UiStatLine("Gold, Upgrades, Time", "+0", UiColor.TextMuted));
 
             model.TotalXp = "+" + report.TotalXpEarned;
+            model.Applied = report.Applied;
+
+            // The receipt is the only source (WP-009): when the transaction did not apply,
+            // its "after" values equal its "before" values, so the lines below already
+            // read as "unchanged". The model repeats nothing and recomputes nothing.
             model.LeveledUp = report.LeveledUp;
             model.LevelsGained = report.LevelsGained;
             model.ProgressAfter01 = report.ProgressAfter01;
@@ -184,22 +194,46 @@ namespace DD.Prototype.UI
                 ? report.LevelsGained > 1 ? "LEVEL UP  x" + report.LevelsGained : "LEVEL UP"
                 : string.Empty;
 
-            model.XpNote = "Profile progress unlocks content only. It never raises your starting damage, " +
-                           "health or gold.";
+            model.XpNote = report.Applied
+                ? "Profile progress unlocks content only. It never raises your starting damage, " +
+                  "health or gold."
+                : "This XP was not added to your profile. Profile progress unlocks content only; " +
+                  "it never raises your starting damage, health or gold.";
 
             // ---- rewards -----------------------------------------------------
             model.NewUnlocks.AddRange(report.NewUnlocks);
             model.NewAchievements.AddRange(report.NewAchievements);
 
-            model.Celebrate = report.LeveledUp || model.NewUnlocks.Count > 0 || model.NewAchievements.Count > 0;
+            model.Celebrate = report.Applied &&
+                              (report.LeveledUp || model.NewUnlocks.Count > 0 || model.NewAchievements.Count > 0);
 
             // ---- footer ------------------------------------------------------
-            model.SaveFailed = report.SaveFailed;
-            model.FooterNote = report.SaveFailed
-                ? "This run could not be written to the profile file. Progress from it will be lost on exit."
-                : "Everything above is already saved to your profile. There is nothing to claim.";
+            model.SaveFailed = !report.Applied;
+            model.FooterNote = DescribeOutcome(report);
 
             return model;
+        }
+
+        /// <summary>The footer sentence for each transaction outcome. English, one line.</summary>
+        public static string DescribeOutcome(RunRewardReport report)
+        {
+            switch (report.Outcome)
+            {
+                case ProfileCommitOutcome.Applied:
+                    return "Everything above is already saved to your profile. There is nothing to claim.";
+
+                case ProfileCommitOutcome.Duplicate:
+                    return "This run was already recorded in your profile. Nothing was added twice.";
+
+                case ProfileCommitOutcome.MissingIdentity:
+                    return "This run could not be recorded in your profile: it carried no run identity.";
+
+                case ProfileCommitOutcome.InvalidCandidate:
+                    return "This run could not be recorded in your profile. Your saved profile is unchanged.";
+
+                default:
+                    return "This run could not be written to your profile file. Your saved profile is unchanged.";
+            }
         }
 
         /// <summary>Entries beyond <see cref="MaxRewardEntries"/>, as the one-line summary.</summary>

@@ -21,96 +21,160 @@ namespace DD.Prototype.Profile
         }
     }
 
+    /// <summary>How a profile transaction ended (WP-009).</summary>
+    public enum ProfileCommitOutcome
+    {
+        /// <summary>The run was folded into the profile and the profile is on disk.</summary>
+        Applied = 0,
+
+        /// <summary>The summary carried no completion identity; nothing was changed.</summary>
+        MissingIdentity = 1,
+
+        /// <summary>This completion identity had already been applied; nothing was changed.</summary>
+        Duplicate = 2,
+
+        /// <summary>The candidate profile could not be written; the live profile is unchanged.</summary>
+        SaveFailed = 3,
+
+        /// <summary>The candidate failed validation before the write; the live profile is unchanged.</summary>
+        InvalidCandidate = 4
+    }
+
     /// <summary>
-    /// Everything the Run Results screen needs that the run itself could not know.
+    /// The receipt of one profile transaction: everything the Run Results screen needs
+    /// that the run itself could not know.
     ///
     /// <c>RunSummary</c> answers "what happened in the run"; this answers "what that did
     /// to the profile" - result lines 10, 11 and 12. The split is deliberate and comes
     /// from the run contract: a run summary that already knew the player's level would
     /// have made the profile system unfalsifiable.
     ///
-    /// The report is produced ONCE, when the run ends, and then only read. The results
-    /// screen must not recompute anything, because the profile has already been written
-    /// to disk by then and a second computation could disagree with it.
+    /// IMMUTABLE (WP-009): produced once by <see cref="ProfileService.ApplyRun"/> and
+    /// then only read. Every member is get-only, the lists are read-only views, and
+    /// the summary is a struct copy. The results screen cannot recompute anything,
+    /// because the profile has already been written to disk by then and a second
+    /// computation could disagree with it. When the transaction did NOT apply
+    /// (<see cref="Applied"/> false) the receipt still describes the run, but the
+    /// "after" values equal the "before" values and the reward lists are empty: the
+    /// screen says the run was not recorded rather than pretending it was.
     /// </summary>
     public sealed class RunRewardReport
     {
-        /// <summary>False when the screen was opened without a run behind it.</summary>
-        public bool HasRun;
+        /// <summary>The mutable working set a transaction fills in before sealing it.</summary>
+        public sealed class Draft
+        {
+            public bool HasRun;
+            public RunSummary Summary;
+            public string CompletionId = string.Empty;
+            public ProfileCommitOutcome Outcome = ProfileCommitOutcome.Applied;
+            public string FailureMessage = string.Empty;
 
-        /// <summary>
-        /// The run, as the director summarised it. A property, not a field: a struct
-        /// field can be edited in place (<c>report.Summary.TotalKills = 0</c>), a property
-        /// hands out a copy, so nothing downstream of ApplyRun can alter what the results
-        /// screen shows (WP-005).
-        /// </summary>
-        public RunSummary Summary { get; set; }
+            public int CompletedRoundXp;
+            public int KillXp;
+            public int TotalXpEarned;
+
+            public int LevelBefore = 1;
+            public int LevelAfter = 1;
+            public int XpIntoLevelBefore;
+            public int XpIntoLevelAfter;
+
+            [PrototypeOnly(PendingDecisions.ProfileXp,
+                "Level-1 requirement used as the empty-report default. " +
+                "Request value: level requirement = 100 + 75 * (Level - 1).")]
+            public int LevelRequirementAfter = 100;
+
+            public readonly List<ProfileUnlockEntry> NewUnlocks = new List<ProfileUnlockEntry>(4);
+            public readonly List<ProfileUnlockEntry> NewAchievements = new List<ProfileUnlockEntry>(4);
+
+            public RunRewardReport Seal()
+            {
+                return new RunRewardReport(this);
+            }
+        }
+
+        private readonly IReadOnlyList<ProfileUnlockEntry> _newUnlocks;
+        private readonly IReadOnlyList<ProfileUnlockEntry> _newAchievements;
+
+        private RunRewardReport(Draft draft)
+        {
+            HasRun = draft.HasRun;
+            Summary = draft.Summary;
+            CompletionId = draft.CompletionId ?? string.Empty;
+            Outcome = draft.Outcome;
+            FailureMessage = draft.FailureMessage ?? string.Empty;
+            CompletedRoundXp = draft.CompletedRoundXp;
+            KillXp = draft.KillXp;
+            TotalXpEarned = draft.TotalXpEarned;
+            LevelBefore = draft.LevelBefore;
+            LevelAfter = draft.LevelAfter;
+            XpIntoLevelBefore = draft.XpIntoLevelBefore;
+            XpIntoLevelAfter = draft.XpIntoLevelAfter;
+            LevelRequirementAfter = draft.LevelRequirementAfter;
+            _newUnlocks = new List<ProfileUnlockEntry>(draft.NewUnlocks).AsReadOnly();
+            _newAchievements = new List<ProfileUnlockEntry>(draft.NewAchievements).AsReadOnly();
+        }
+
+        /// <summary>False when the screen was opened without a run behind it.</summary>
+        public bool HasRun { get; }
+
+        /// <summary>The run, as the director summarised it. A struct copy; nothing downstream can alter it.</summary>
+        public RunSummary Summary { get; }
+
+        /// <summary>The durable completion identity this receipt belongs to.</summary>
+        public string CompletionId { get; }
+
+        public ProfileCommitOutcome Outcome { get; }
+
+        /// <summary>English reason when <see cref="Applied"/> is false.</summary>
+        public string FailureMessage { get; }
+
+        /// <summary>True only when the profile on disk now contains this run.</summary>
+        public bool Applied => Outcome == ProfileCommitOutcome.Applied;
 
         // ------------------------------------------------------------------ xp
 
         /// <summary>Result line 7.</summary>
-        public int CompletedRoundXp;
+        public int CompletedRoundXp { get; }
 
         /// <summary>Result line 8.</summary>
-        public int KillXp;
+        public int KillXp { get; }
 
         /// <summary>Result line 9. Round XP plus kill XP; gold and playtime contribute nothing.</summary>
-        public int TotalXpEarned;
+        public int TotalXpEarned { get; }
 
         // --------------------------------------------------------------- level
 
-        public int LevelBefore = 1;
-        public int LevelAfter = 1;
-
-        public int XpIntoLevelBefore;
-        public int XpIntoLevelAfter;
+        public int LevelBefore { get; }
+        public int LevelAfter { get; }
+        public int XpIntoLevelBefore { get; }
+        public int XpIntoLevelAfter { get; }
 
         /// <summary>XP the level AFTER the run requires to advance again.</summary>
-        /// <remarks>
-        /// The initialiser is the level-1 requirement, so an empty report shows a full,
-        /// honest progress bar instead of dividing by zero. It is overwritten by
-        /// ProfileService.ApplyRun for every real run.
-        /// </remarks>
-        [PrototypeOnly(PendingDecisions.ProfileXp,
-            "Level-1 requirement used as the empty-report default. " +
-            "Request value: level requirement = 100 + 75 * (Level - 1).")]
-        public int LevelRequirementAfter = 100;
+        public int LevelRequirementAfter { get; }
 
-        public bool LeveledUp
-        {
-            get { return LevelAfter > LevelBefore; }
-        }
+        public bool LeveledUp => LevelAfter > LevelBefore;
 
-        public int LevelsGained
-        {
-            get { return Mathf.Max(0, LevelAfter - LevelBefore); }
-        }
+        public int LevelsGained => Mathf.Max(0, LevelAfter - LevelBefore);
 
-        public float ProgressAfter01
-        {
-            get
-            {
-                return LevelRequirementAfter > 0
-                    ? Mathf.Clamp01(XpIntoLevelAfter / (float)LevelRequirementAfter)
-                    : 0f;
-            }
-        }
+        public float ProgressAfter01 => LevelRequirementAfter > 0
+            ? Mathf.Clamp01(XpIntoLevelAfter / (float)LevelRequirementAfter)
+            : 0f;
 
         // -------------------------------------------------------------- content
 
         /// <summary>Result line 11. Empty is a legitimate, common outcome - see the screen's empty state.</summary>
-        public readonly List<ProfileUnlockEntry> NewUnlocks = new List<ProfileUnlockEntry>(4);
+        public IReadOnlyList<ProfileUnlockEntry> NewUnlocks => _newUnlocks;
 
         /// <summary>Result line 12.</summary>
-        public readonly List<ProfileUnlockEntry> NewAchievements = new List<ProfileUnlockEntry>(4);
+        public IReadOnlyList<ProfileUnlockEntry> NewAchievements => _newAchievements;
 
         /// <summary>True when the profile could not be written. The screen says so rather than lying.</summary>
-        public bool SaveFailed;
+        public bool SaveFailed => Outcome == ProfileCommitOutcome.SaveFailed;
 
         /// <summary>An empty report, for a results screen opened with no run behind it.</summary>
         public static RunRewardReport Empty()
         {
-            return new RunRewardReport { HasRun = false };
+            return new Draft { HasRun = false }.Seal();
         }
     }
 }

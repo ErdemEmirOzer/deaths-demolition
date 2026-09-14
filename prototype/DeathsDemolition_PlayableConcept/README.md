@@ -31,7 +31,11 @@ placeholder numbers, names or content; those remain tracked in
   **WP-008 (2026-09-13) closed DEC-048, DEC-049 and DEC-050** (one purchase per round-end
   screen, locked/maxed branches never offered, one paid reroll before the purchase) and
   implemented the DEC-043 reward formula (base + version + spawn-armour bonus, frozen at
-  spawn); orb lifetime had already been closed by WP-004.
+  spawn); orb lifetime had already been closed by WP-004. **WP-009 (2026-09-14)** hardened
+  the profile without a new product decision: durable exactly-once profile commits, a
+  crash-safe save chain proven by fault injection, save schema v2 with a lossless v1
+  migration, earned-list entitlements, an immutable Results receipt; "aborted runs not
+  reaching the profile" is unchanged and now regression-locked (B5 stays an open decision).
 * Historical documents at the repository root (`PROTOTIP-INCELEME-RAPORU-2026-08-20.md`,
   `PROTOTIP-ONARIM-PROMPTU-2026-08-20.md`) are frozen evidence; do not run their commands.
 
@@ -181,7 +185,7 @@ Runtime code lives under `Assets/_Prototype/`; URP pipeline, renderer and volume
 | `Rounds/` | The run director: round pools, round-end flow, the round-end upgrade SESSION (`RoundUpgradeShop` + the pure `UpgradeOfferPolicy`: exactly three distinct eligible cards, one purchase per round that locks the offer, one paid reroll before it that swaps one or two cards, session/revision-quoted commands, a safe no-charge error state — WP-008), XP and stats tracking (gold spent = purchases + rerolls), the run flow clock that freezes everything on pause, and the debug registrations. |
 | `Economy/` | The run wallet (transaction ledger with sources and ids, spend split by upgrades/rerolls), the reward-eligibility ledger, the value contract and the pure `GoldRewardCalculator` (WP-008: `base + version bonus + spawn-armour bonus`, frozen per enemy life in an `EnemyRewardSnapshot` at spawn), the packet lifecycle and its pooled body, its tuning, and the service that drops one packet per kill carrying exactly that snapshot, pulls it in with the magnet and sweeps the floor when a round completes. |
 | `UI/` | Every screen (main menu, selection, HUD, upgrade, pause, results) built on a shared kit — tokens, fonts, sprites, buttons, bars, motion, sound and a contrast auditor — plus the flow object that drives scene transitions. WP-005 adds `Navigation/` (the `UiNavigation` state model: one base context, a layer, an overlay; conflicting states are refused, transitions are idempotent) and `Presentation/` (`RunHudViewModel`, `ResultsViewModel`, `ProfileViewModel`/`StatisticsViewModel`/`AchievementsViewModel`, `UpgradeIcons`): every screen draws from a view model built from an authoritative snapshot, never from a live gameplay object. |
-| `Profile/` | The local, offline profile: persistent stats, level and unlocks, its file store, and the per-run reward report that Results reads. |
+| `Profile/` | The local, offline profile: persistent stats, level and unlocks (the EARNED lists are the access authority — WP-009), the pure progression arithmetic (`ProfileProgression`: two XP sources, saturating counters, bounded level loop), the transaction (`ProfileService.ApplyRun`: exactly-once by a durable completion id, candidate → crash-safe save → publish → one `Changed`), the run-end commit authority (`ProfileRunCommitter`), the crash-safe file store (`ProfileStore`: fsync'd candidate, verified backup, single-rename replace, deterministic recovery, v1→v2 `ProfileMigration`, pid ownership lock) and the immutable per-run receipt that Results reads. |
 | `Audio/` | Fully synthesised placeholder audio — no external assets. Recipes for weapons, impacts, ambience and meta, a clip library, a voice pool with a budget, buses, a mix plan and the ambience director. |
 | `Tests/` | Edit-mode tests for the formulas (round, progression, special-weapon chance, regional damage, mesh winding), the combat contracts (WP-002) and the round ledger / spawn selection contracts (WP-003), and play-mode tests for the flow, scene integrity, the core combat slice (WP-002) and the round & dynamic spawning slice (WP-003), plus `OTOMATIK-KAPI.md` (what the automated gate verifies) and `MANUEL-TEST-KITI.md` (what only a human can verify). |
 

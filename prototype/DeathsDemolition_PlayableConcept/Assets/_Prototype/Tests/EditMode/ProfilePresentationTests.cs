@@ -29,6 +29,8 @@ namespace DD.Prototype.Tests.EditMode
             public int UnlockLevelFor(UpgradeBranch branch) => branch == UpgradeBranch.Explosion ? 2 : branch == UpgradeBranch.Chain ? 3 : 1;
             public IReadOnlyList<AchievementSettings> Achievements => Tanimlar;
             public bool RecoveredFromCorruptSave => Bozuk;
+            public string Bildirim = string.Empty;
+            public string PersistenceNotice => Bildirim;
         }
 
         private static AchievementSettings Tanim(string id, string ad)
@@ -44,6 +46,12 @@ namespace DD.Prototype.Tests.EditMode
                 RoundsCompleted = 6, TotalKills = 31, StandardKills = 31, ArmorPiecesBroken = 2, BestRunXp = 80
             };
             p.Achievements.Add("first_blood");
+
+            // WP-009: unlock satırları KAZANILMIŞ entitlement listesini okur (seviye karşılaştırması değil);
+            // L2 profilin merdivenden kazanmış olacağı içerik listede.
+            p.UnlockedWeapons.Add("AssaultRifle");
+            p.UnlockedWeapons.Add("AutoSmg");
+            p.UnlockedBranches.Add("Explosion");
             return p;
         }
 
@@ -86,6 +94,67 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(vm.Unlocks[3].Unlocked, "Explosion L2");
             Assert.IsFalse(vm.Unlocks[4].Unlocked, "Chain L3");
             StringAssert.EndsWith(" branch", vm.Unlocks[4].Title);
+        }
+
+        [Test]
+        public void Profil_UnlockSatirlari_EntitlementListesiOtoritedir_SeviyeDegil()
+        {
+            // WP-009: seviye yükselmiş ama liste kazanımı içermiyorsa satır KİLİTLİ; liste içeriyorsa
+            // seviye eşiğin altına düşse (config yükselse) bile AÇIK kalır.
+            ProfileData p = Profil();
+            p.ProfileLevel = 9;
+            ProfileViewModel vm = ProfileViewModel.From(p, new SahteLookup());
+            Assert.IsFalse(vm.Unlocks[2].Unlocked, "CombatShotgun listede yok → seviye 9 olsa da kilitli görünür");
+            Assert.IsFalse(vm.Unlocks[4].Unlocked, "Chain listede yok → kilitli");
+
+            p.ProfileLevel = 1;
+            p.UnlockedWeapons.Add("CombatShotgun");
+            p.UnlockedBranches.Add("Chain");
+            vm = ProfileViewModel.From(p, new SahteLookup());
+            Assert.IsTrue(vm.Unlocks[1].Unlocked, "AutoSmg listede → L1'de bile açık (kazanılmış entitlement geri alınmaz)");
+            Assert.IsTrue(vm.Unlocks[2].Unlocked, "CombatShotgun listede → açık");
+            Assert.IsTrue(vm.Unlocks[4].Unlocked, "Chain listede → açık");
+            Assert.AreEqual(3, vm.Unlocks[2].RequiredLevel, "merdiven değeri bilgi olarak kalır");
+        }
+
+        [Test]
+        public void Profil_KalicilikBildirimi_LookupTanOkunur()
+        {
+            var lookup = new SahteLookup { Bildirim = "Another copy of the game is already using this profile." };
+            ProfileViewModel vm = ProfileViewModel.From(Profil(), lookup);
+            Assert.AreEqual(lookup.Bildirim, vm.Notice);
+
+            lookup = new SahteLookup { Bozuk = true };
+            vm = ProfileViewModel.From(Profil(), lookup);
+            StringAssert.Contains("could not be read", vm.Notice, "bildirim yokken bozuk-kayıt metni korunur");
+        }
+
+        [Test]
+        public void Istatistik_AtanmamisKill_YalnizSifirdanBuyukseSatir()
+        {
+            ProfileData p = Profil();
+            StatisticsViewModel vm = StatisticsViewModel.From(p);
+            for (int i = 0; i < vm.Kills.Count; i++)
+            {
+                Assert.AreNotEqual("Recorded Before Tier Tracking", vm.Kills[i].Label, "0 iken satır yok");
+            }
+
+            p.TotalKills = 40; // legacy: toplam > tier toplamı → UnattributedKills 9
+            p.Sanitize();
+            Assert.AreEqual(9, p.UnattributedKills);
+            Assert.AreEqual(40, p.TotalKills);
+            vm = StatisticsViewModel.From(p);
+            bool bulundu = false;
+            for (int i = 0; i < vm.Kills.Count; i++)
+            {
+                if (vm.Kills[i].Label == "Recorded Before Tier Tracking")
+                {
+                    bulundu = true;
+                    Assert.AreEqual("9", vm.Kills[i].Value);
+                }
+            }
+
+            Assert.IsTrue(bulundu, "atanmamış kill satırı gösterilir, gizlenmez");
         }
 
         [Test]

@@ -22,13 +22,15 @@ namespace DD.Prototype.Tests.EditMode
             return "Weapon:" + id;
         }
 
-        private static RunRewardReport Rapor(RunSummary ozet, int roundXp, int killXp, int levelBefore = 1,
+        /// <summary>WP-009: rapor immutable; test taslağı (Draft) üzerinden mühürler.</summary>
+        private static RunRewardReport.Draft Taslak(RunSummary ozet, int roundXp, int killXp, int levelBefore = 1,
             int levelAfter = 1)
         {
-            var rapor = new RunRewardReport
+            return new RunRewardReport.Draft
             {
                 HasRun = true,
                 Summary = ozet,
+                CompletionId = "test-completion",
                 CompletedRoundXp = roundXp,
                 KillXp = killXp,
                 TotalXpEarned = roundXp + killXp,
@@ -37,7 +39,12 @@ namespace DD.Prototype.Tests.EditMode
                 XpIntoLevelAfter = 40,
                 LevelRequirementAfter = 175
             };
-            return rapor;
+        }
+
+        private static RunRewardReport Rapor(RunSummary ozet, int roundXp, int killXp, int levelBefore = 1,
+            int levelAfter = 1)
+        {
+            return Taslak(ozet, roundXp, killXp, levelBefore, levelAfter).Seal();
         }
 
         private static RunSummary Ozet()
@@ -146,9 +153,10 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void ViewModel_RaporuDegistirmez()
         {
-            RunRewardReport rapor = Rapor(Ozet(), 45, 17, 1, 2);
-            rapor.NewUnlocks.Add(new ProfileUnlockEntry("Auto SMG", "Classic weapon"));
-            rapor.NewAchievements.Add(new ProfileUnlockEntry("First Blood", "Defeat your first enemy."));
+            RunRewardReport.Draft taslak = Taslak(Ozet(), 45, 17, 1, 2);
+            taslak.NewUnlocks.Add(new ProfileUnlockEntry("Auto SMG", "Classic weapon"));
+            taslak.NewAchievements.Add(new ProfileUnlockEntry("First Blood", "Defeat your first enemy."));
+            RunRewardReport rapor = taslak.Seal();
 
             string once = Parmakizi(rapor);
             ResultsViewModel.From(rapor, SilahAdi);
@@ -203,11 +211,13 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void OdulListesi_KapakVeOzet()
         {
-            RunRewardReport rapor = Rapor(Ozet(), 45, 17);
+            RunRewardReport.Draft taslak = Taslak(Ozet(), 45, 17);
             for (int i = 0; i < 5; i++)
             {
-                rapor.NewUnlocks.Add(new ProfileUnlockEntry("Unlock " + i, "detail"));
+                taslak.NewUnlocks.Add(new ProfileUnlockEntry("Unlock " + i, "detail"));
             }
+
+            RunRewardReport rapor = taslak.Seal();
 
             ResultsViewModel vm = ResultsViewModel.From(rapor, SilahAdi);
             Assert.AreEqual(5, vm.NewUnlocks.Count, "model tam listeyi taşır; kapak görünüm kuralıdır");
@@ -224,11 +234,29 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(vm.SaveFailed);
             StringAssert.Contains("already saved", vm.FooterNote);
 
-            RunRewardReport basarisiz = Rapor(Ozet(), 45, 17);
-            basarisiz.SaveFailed = true;
-            vm = ResultsViewModel.From(basarisiz, SilahAdi);
+            RunRewardReport.Draft basarisiz = Taslak(Ozet(), 45, 17, 1, 1);
+            basarisiz.Outcome = ProfileCommitOutcome.SaveFailed;
+            basarisiz.FailureMessage = "disk full";
+            vm = ResultsViewModel.From(basarisiz.Seal(), SilahAdi);
             Assert.IsTrue(vm.SaveFailed);
+            Assert.IsFalse(vm.Applied);
+            Assert.IsFalse(vm.Celebrate, "uygulanmamış koşu kutlanmaz");
             StringAssert.Contains("could not be written", vm.FooterNote);
+            StringAssert.Contains("unchanged", vm.FooterNote, "profil değişmedi denir");
+            StringAssert.Contains("not added", vm.XpNote);
+
+            // WP-009: duplicate ve kimliksiz sonuçlar da dürüst dipnot taşır, "kaydedildi" demez.
+            RunRewardReport.Draft kopya = Taslak(Ozet(), 45, 17);
+            kopya.Outcome = ProfileCommitOutcome.Duplicate;
+            vm = ResultsViewModel.From(kopya.Seal(), SilahAdi);
+            Assert.IsTrue(vm.SaveFailed);
+            StringAssert.Contains("already recorded", vm.FooterNote);
+            StringAssert.DoesNotContain("already saved", vm.FooterNote);
+
+            RunRewardReport.Draft kimliksiz = Taslak(Ozet(), 45, 17);
+            kimliksiz.Outcome = ProfileCommitOutcome.MissingIdentity;
+            vm = ResultsViewModel.From(kimliksiz.Seal(), SilahAdi);
+            StringAssert.Contains("could not be recorded", vm.FooterNote);
 
             // Tek eylem: ana menü. Model bir "claim" eylemi taşımaz.
             FieldInfo[] alanlar = typeof(ResultsViewModel).GetFields(BindingFlags.Public | BindingFlags.Instance);

@@ -552,7 +552,7 @@ namespace DD.Prototype.Tests.EditMode
                 GoldSpentOnRerolls = _cuzdan.SpentOnRerolls, GoldUnspent = _cuzdan.Balance, UpgradesPurchased = stats.UpgradesPurchased,
                 RerollsUsed = stats.RerollsUsed, EndReason = RunEndReason.PlayerDeath
             };
-            var report = new DD.Prototype.Profile.RunRewardReport { HasRun = true, Summary = summary, LevelBefore = 1, LevelAfter = 1, LevelRequirementAfter = 100 };
+            var report = new DD.Prototype.Profile.RunRewardReport.Draft { HasRun = true, Summary = summary, LevelBefore = 1, LevelAfter = 1, LevelRequirementAfter = 100 }.Seal();
             ResultsViewModel vm = ResultsViewModel.From(report, id => id.ToString());
             int goldSpentLines = 0;
             for (int i = 0; i < vm.Economy.Count; i++)

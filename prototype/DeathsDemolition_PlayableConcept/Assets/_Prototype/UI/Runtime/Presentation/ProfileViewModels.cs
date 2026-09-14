@@ -21,6 +21,9 @@ namespace DD.Prototype.UI
         int UnlockLevelFor(UpgradeBranch branch);
         IReadOnlyList<AchievementSettings> Achievements { get; }
         bool RecoveredFromCorruptSave { get; }
+
+        /// <summary>WP-009: the one sentence about persistence to show, or empty (see ProfileService.PersistenceNotice).</summary>
+        string PersistenceNotice { get; }
     }
 
     /// <summary>The game's lookup: everything answered by <see cref="ProfileService"/>.</summary>
@@ -35,6 +38,7 @@ namespace DD.Prototype.UI
         public int UnlockLevelFor(UpgradeBranch branch) => ProfileService.UnlockLevelFor(branch);
         public IReadOnlyList<AchievementSettings> Achievements => ProfileService.AllAchievements;
         public bool RecoveredFromCorruptSave => ProfileService.RecoveredFromCorruptSave;
+        public string PersistenceNotice => ProfileService.PersistenceNotice;
     }
 
     /// <summary>One row of the unlocked-content list.</summary>
@@ -118,13 +122,16 @@ namespace DD.Prototype.UI
             model.Headline.Add(new UiStatLine("Rounds Completed", profile.RoundsCompleted.ToString()));
             model.Headline.Add(new UiStatLine("Total Kills", profile.TotalKills.ToString()));
 
+            // WP-009: "unlocked" is the EARNED entitlement in the profile, not a level
+            // comparison - the same authority the selection screen and the offer gate
+            // read. The ladder value is shown on a locked row only.
             var weapons = (ClassicWeaponId[])Enum.GetValues(typeof(ClassicWeaponId));
             for (int i = 0; i < weapons.Length; i++)
             {
                 int required = lookup.UnlockLevelFor(weapons[i]);
                 model.Unlocks.Add(new UiUnlockLine(
                     lookup.WeaponDisplayName(weapons[i]),
-                    profile.ProfileLevel >= required,
+                    ProfileProgression.IsWeaponEntitled(profile, weapons[i]),
                     required));
             }
 
@@ -165,7 +172,12 @@ namespace DD.Prototype.UI
                 ? "No achievements are defined in this build yet."
                 : earned + " of " + defined + " achievements earned";
 
-            if (lookup.RecoveredFromCorruptSave)
+            string notice = lookup.PersistenceNotice;
+            if (!string.IsNullOrEmpty(notice))
+            {
+                model.Notice = notice;
+            }
+            else if (lookup.RecoveredFromCorruptSave)
             {
                 model.Notice =
                     "The previous profile file could not be read, so this profile started fresh. " +
@@ -180,7 +192,7 @@ namespace DD.Prototype.UI
             int required = lookup.UnlockLevelFor(branch);
             model.Unlocks.Add(new UiUnlockLine(
                 lookup.BranchDisplayName(branch) + " branch",
-                profile.ProfileLevel >= required,
+                ProfileProgression.IsBranchEntitled(profile, branch),
                 required));
         }
     }
@@ -235,6 +247,12 @@ namespace DD.Prototype.UI
             AddTier(model, "Special", profile.SpecialKills, UiColor.AccentSakura);
             AddTier(model, "Elite", profile.EliteKills, UiColor.AccentWisteria);
             AddTier(model, "Ultra", profile.UltraKills, UiColor.StateGold);
+            if (profile.UnattributedKills > 0)
+            {
+                // Only a legacy file can carry these (WP-009 kill invariant); shown, never hidden.
+                model.Kills.Add(new UiStatLine("Recorded Before Tier Tracking", profile.UnattributedKills.ToString(), UiColor.TextMuted));
+            }
+
             model.Kills.Add(new UiStatLine("Armour Pieces Broken", profile.ArmorPiecesBroken.ToString(), UiColor.TextSecondary));
 
             bool anyUnseen = profile.SpecialKills <= 0 || profile.EliteKills <= 0 || profile.UltraKills <= 0;

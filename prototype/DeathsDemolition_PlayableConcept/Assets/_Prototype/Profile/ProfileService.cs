@@ -22,13 +22,28 @@ namespace DD.Prototype.Profile
     ///   completed round   config.RoundCompletionXp(r)  = 15 + 5r
     ///   level requirement config.LevelRequirement(L)   = 100 + 75(L-1)
     /// Gold and playtime appear nowhere in the arithmetic, which is the request's rule.
+    /// The arithmetic itself lives in <see cref="ProfileProgression"/>.
+    ///
+    /// THE TRANSACTION (WP-009) - <see cref="ApplyRun"/>
+    /// ---------------------------------------------------
+    ///   1 reduce the summary to <see cref="RunRewardInput"/> (clamped, two XP sources only);
+    ///   2 refuse a summary with no completion identity, or one already applied;
+    ///   3 compute XP, level, statistics, unlocks and achievements on a CANDIDATE copy;
+    ///   4 sanitise and validate the candidate;
+    ///   5 write it through the crash-safe store;
+    ///   6 only then publish the candidate as the live profile, seal the receipt, and
+    ///     raise <see cref="Changed"/> exactly once.
+    /// A failed write leaves the live profile exactly equal to the disk, records no
+    /// identity (so the same summary may be retried without a duplicate), and hands
+    /// the screen a receipt that says so.
+    ///
+    /// ENTITLEMENT (WP-009): the earned lists in the profile are the access authority.
+    /// The level and the config ladder decide only what is NEWLY granted; a ladder
+    /// that later rises never re-locks content already in the list.
     ///
     /// KNOWN AND INTENTIONAL: the unlock ladder is short enough to be exhausted inside
-    /// one long run. Level 4 sits at 525 cumulative XP and a round-8 run earns roughly
-    /// 545-600, so the second run of a session will usually find every weapon and branch
-    /// already unlocked and "Newly Unlocked Content" permanently empty. The numbers are
-    /// frozen by decision S6; what this code guarantees is that the EMPTY case is a
-    /// designed state everywhere it can appear, not a blank rectangle.
+    /// one long run. The numbers are PrototypeOnly placeholders; what this code
+    /// guarantees is that the EMPTY case is a designed state everywhere it can appear.
     /// </summary>
     public static class ProfileService
     {
@@ -71,8 +86,9 @@ namespace DD.Prototype.Profile
 
         private static ProfileData s_data;
         private static RunRewardReport s_lastReport;
+        private static readonly ConfigLadder s_ladder = new ConfigLadder();
 
-        /// <summary>Raised after any change that a screen might be showing.</summary>
+        /// <summary>Raised after any change that a screen might be showing. Once per committed transaction.</summary>
         public static event Action Changed;
 
         /// <summary>The live profile. Loaded on first touch; never null.</summary>
@@ -85,7 +101,7 @@ namespace DD.Prototype.Profile
             }
         }
 
-        /// <summary>What the last finished run did to the profile. Null before any run.</summary>
+        /// <summary>The receipt of the last transaction attempt. Null before any run.</summary>
         public static RunRewardReport LastReport
         {
             get { return s_lastReport; }
@@ -100,6 +116,50 @@ namespace DD.Prototype.Profile
                 return ProfileStore.LastLoadFellBack;
             }
         }
+
+        /// <summary>True while nothing can be written (newer save file, or another instance owns the profile).</summary>
+        public static bool SaveLocked
+        {
+            get
+            {
+                EnsureLoaded();
+                return ProfileStore.SaveLocked;
+            }
+        }
+
+        /// <summary>
+        /// The one English sentence the profile pane shows about persistence, or empty:
+        /// fresh after corruption, restored from backup, read-only (newer file / other
+        /// instance). Never a timestamp, never a number.
+        /// </summary>
+        public static string PersistenceNotice
+        {
+            get
+            {
+                EnsureLoaded();
+                if (ProfileStore.SaveLocked)
+                {
+                    return ProfileStore.SaveLockReason;
+                }
+
+                switch (ProfileStore.LastLoadRecovery)
+                {
+                    case ProfileLoadRecovery.FreshAfterCorruption:
+                        return "The previous profile file could not be read, so this profile started fresh. " +
+                               "The unreadable file was kept next to the save.";
+
+                    case ProfileLoadRecovery.RestoredBackup:
+                        return "The profile file could not be used, so the last verified backup was restored. " +
+                               "The most recent run may not be in it.";
+
+                    default:
+                        return string.Empty;
+                }
+            }
+        }
+
+        /// <summary>The ladder the transaction reads: PrototypeConfig through this class.</summary>
+        public static IUnlockLadder Ladder => s_ladder;
 
         // =============================================================== level curve
 
@@ -176,14 +236,16 @@ namespace DD.Prototype.Profile
             return 1;
         }
 
+        /// <summary>The access gate for weapons: reads the EARNED list, not the level (WP-009).</summary>
         public static bool IsWeaponUnlocked(ClassicWeaponId id)
         {
-            return Current.ProfileLevel >= UnlockLevelFor(id);
+            return ProfileProgression.IsWeaponEntitled(Current, id);
         }
 
+        /// <summary>The access gate for upgrade branches: reads the EARNED list, not the level (WP-009).</summary>
         public static bool IsBranchUnlocked(UpgradeBranch branch)
         {
-            return Current.ProfileLevel >= UnlockLevelFor(branch);
+            return ProfileProgression.IsBranchEntitled(Current, branch);
         }
 
         /// <summary>The first weapon the player is allowed to take. Never returns a locked one.</summary>
@@ -225,7 +287,8 @@ namespace DD.Prototype.Profile
 
         /// <summary>
         /// Used only when PrototypeConfig is missing, e.g. a menu scene opened directly
-        /// in the editor without going through Boot. The four names are the request's.
+        /// in the editor without going through Boot. The four names are the request's;
+        /// they are PrototypeOnly content, not a final list.
         /// </summary>
         private static readonly AchievementSettings[] s_fallbackAchievements =
         {
@@ -258,194 +321,126 @@ namespace DD.Prototype.Profile
         // ================================================================ apply a run
 
         /// <summary>
-        /// Folds a finished run into the profile and writes it to disk.
+        /// Folds a finished run into the profile as one transaction (see the class
+        /// summary) and returns the sealed receipt.
         ///
-        /// Called exactly once per run, by <c>PrototypeUiFlow</c> on RunEvents.RunEnded,
-        /// BEFORE the results scene loads - so the screen only ever reads a report that
-        /// has already been persisted, and quitting on the results screen cannot lose
-        /// the run.
+        /// Exactly-once: the summary's <see cref="RunSummary.CompletionId"/> is recorded in
+        /// the profile that is written, so the same completion can never be applied
+        /// twice - not in this process, not after a reload, not after a relaunch. A
+        /// second call with an already-applied id returns the original receipt when it
+        /// is still in memory (so a re-opened Results screen shows what actually
+        /// happened) and a <see cref="ProfileCommitOutcome.Duplicate"/> receipt otherwise;
+        /// neither changes anything or raises <see cref="Changed"/>.
         /// </summary>
         public static RunRewardReport ApplyRun(in RunSummary summary)
         {
             EnsureLoaded();
 
-            var report = new RunRewardReport
+            var input = new RunRewardInput(summary);
+            var draft = new RunRewardReport.Draft
             {
                 HasRun = true,
                 Summary = summary,
+                CompletionId = input.CompletionId ?? string.Empty,
+                CompletedRoundXp = input.CompletedRoundXp,
+                KillXp = input.KillXp,
+                TotalXpEarned = input.TotalXp,
                 LevelBefore = s_data.ProfileLevel,
-                XpIntoLevelBefore = s_data.XpIntoLevel
+                XpIntoLevelBefore = s_data.XpIntoLevel,
+                LevelAfter = s_data.ProfileLevel,
+                XpIntoLevelAfter = s_data.XpIntoLevel,
+                LevelRequirementAfter = LevelRequirement(s_data.ProfileLevel)
             };
 
-            // ---- xp, itemised ------------------------------------------------
-            // The itemised parts are authoritative when they are present: the results
-            // screen prints round XP and kill XP as separate lines, and a total that
-            // disagreed with the sum of the lines above it would be a bug the player
-            // can see. Gold and playtime never enter the arithmetic.
-            int roundXp = Mathf.Max(0, summary.CompletedRoundXp);
-            int killXp = Mathf.Max(0, summary.KillXp);
-            int parts = roundXp + killXp;
-            int gained = parts > 0 ? parts : Mathf.Max(0, summary.TotalXpEarned);
-
-            report.CompletedRoundXp = roundXp;
-            report.KillXp = killXp;
-            report.TotalXpEarned = gained;
-
-            // ---- statistics --------------------------------------------------
-            s_data.RunsPlayed += 1;
-            s_data.RoundsCompleted += Mathf.Max(0, summary.CompletedRounds);
-            s_data.HighestRound = Mathf.Max(s_data.HighestRound, Mathf.Max(0, summary.ReachedRound));
-
-            s_data.StandardKills += Mathf.Max(0, summary.StandardKills);
-            s_data.SpecialKills += Mathf.Max(0, summary.SpecialKills);
-            s_data.EliteKills += Mathf.Max(0, summary.EliteKills);
-            s_data.UltraKills += Mathf.Max(0, summary.UltraKills);
-            s_data.TotalKills += Mathf.Max(0, summary.TotalKills);
-
-            s_data.ArmorPiecesBroken += Mathf.Max(0, summary.ArmorPiecesBroken);
-            s_data.BestRunXp = Mathf.Max(s_data.BestRunXp, gained);
-            s_data.TotalXpEarned += gained;
-
-            // ---- level -------------------------------------------------------
-            s_data.XpIntoLevel += gained;
-
-            // Bounded: LevelRequirement() is clamped to at least 1, so this terminates,
-            // and the cap is a second belt against a pathological config.
-            const int maxLevelUpsPerRun = 512;
-            int levelUps = 0;
-            while (levelUps < maxLevelUpsPerRun)
+            // ---- 1/2 identity ------------------------------------------------
+            if (!input.HasIdentity)
             {
-                int required = LevelRequirement(s_data.ProfileLevel);
-                if (s_data.XpIntoLevel < required)
-                {
-                    break;
-                }
-
-                s_data.XpIntoLevel -= required;
-                s_data.ProfileLevel += 1;
-                levelUps++;
+                draft.Outcome = ProfileCommitOutcome.MissingIdentity;
+                draft.FailureMessage = "This run carried no completion identity, so it was not recorded.";
+                Debug.LogWarning("[Profile] " + draft.FailureMessage);
+                s_lastReport = draft.Seal();
+                return s_lastReport;
             }
 
-            report.LevelAfter = s_data.ProfileLevel;
-            report.XpIntoLevelAfter = s_data.XpIntoLevel;
-            report.LevelRequirementAfter = LevelRequirement(s_data.ProfileLevel);
+            if (s_data.HasAppliedCompletion(input.CompletionId))
+            {
+                if (s_lastReport != null && s_lastReport.HasRun &&
+                    string.Equals(s_lastReport.CompletionId, input.CompletionId, StringComparison.Ordinal))
+                {
+                    // The receipt of the transaction that applied it. Nothing changes.
+                    return s_lastReport;
+                }
 
-            // ---- achievements, then unlocks ----------------------------------
+                draft.Outcome = ProfileCommitOutcome.Duplicate;
+                draft.FailureMessage = "This run had already been recorded in the profile.";
+                RunRewardReport duplicate = draft.Seal();
+                if (s_lastReport == null)
+                {
+                    // After a relaunch there is no receipt in memory; the honest "already
+                    // recorded" one is better for a Results screen than the empty state.
+                    // A receipt of a different run is never displaced by a stale replay.
+                    s_lastReport = duplicate;
+                }
+
+                return duplicate;
+            }
+
+            // ---- 3 candidate -------------------------------------------------
+            ProfileData candidate = s_data.Clone();
+
+            ProfileProgression.ApplyStatistics(candidate, input);
+
+            LevelProgress progress = ProfileProgression.ApplyXp(
+                candidate.ProfileLevel, candidate.XpIntoLevel, input.TotalXp, LevelRequirement);
+            candidate.ProfileLevel = progress.Level;
+            candidate.XpIntoLevel = progress.XpIntoLevel;
+
             // Order matters: achievements read the merged statistics, and unlocks read
             // the level the XP just produced.
-            EvaluateAchievements(summary, report.NewAchievements);
-            SyncUnlocks(report.NewUnlocks);
+            ProfileProgression.EvaluateAchievements(candidate, input, AllAchievements, draft.NewAchievements);
+            ProfileProgression.GrantUnlocksForLevel(candidate, s_ladder, draft.NewUnlocks);
 
-            s_data.Sanitize();
-            report.SaveFailed = !ProfileStore.Save(s_data);
+            candidate.RecordAppliedCompletion(input.CompletionId);
 
-            s_lastReport = report;
+            // ---- 4 validate --------------------------------------------------
+            candidate.Sanitize();
+            if (!candidate.IsValid())
+            {
+                draft.NewUnlocks.Clear();
+                draft.NewAchievements.Clear();
+                draft.Outcome = ProfileCommitOutcome.InvalidCandidate;
+                draft.FailureMessage = "The updated profile failed validation, so this run was not recorded.";
+                Debug.LogWarning("[Profile] " + draft.FailureMessage);
+                s_lastReport = draft.Seal();
+                return s_lastReport;
+            }
+
+            // ---- 5 persist ---------------------------------------------------
+            ProfileSaveResult saved = ProfileStore.Save(candidate);
+            if (!saved.Success)
+            {
+                // The live profile stays exactly what is on disk; the id is not recorded,
+                // so a retry of the same summary is a fresh attempt, not a duplicate. The
+                // rewards computed on the discarded candidate were never granted, so the
+                // receipt does not list them.
+                draft.NewUnlocks.Clear();
+                draft.NewAchievements.Clear();
+                draft.Outcome = ProfileCommitOutcome.SaveFailed;
+                draft.FailureMessage = saved.Message;
+                s_lastReport = draft.Seal();
+                return s_lastReport;
+            }
+
+            // ---- 6 publish ---------------------------------------------------
+            s_data = candidate;
+            draft.LevelAfter = candidate.ProfileLevel;
+            draft.XpIntoLevelAfter = candidate.XpIntoLevel;
+            draft.LevelRequirementAfter = LevelRequirement(candidate.ProfileLevel);
+            draft.Outcome = ProfileCommitOutcome.Applied;
+
+            s_lastReport = draft.Seal();
             RaiseChanged();
-            return report;
-        }
-
-        /// <summary>
-        /// Grants everything the current level entitles the profile to.
-        ///
-        /// <paramref name="newlyUnlocked"/> collects only what was NOT already granted,
-        /// which is what makes "Newly Unlocked Content" honest. The lists are seeded
-        /// silently on first load, so the level-1 content a player has always had never
-        /// appears on a results screen as if it were a reward.
-        /// </summary>
-        private static void SyncUnlocks(List<ProfileUnlockEntry> newlyUnlocked)
-        {
-            int level = s_data.ProfileLevel;
-
-            var weapons = (ClassicWeaponId[])Enum.GetValues(typeof(ClassicWeaponId));
-            for (int i = 0; i < weapons.Length; i++)
-            {
-                ClassicWeaponId id = weapons[i];
-                if (level < UnlockLevelFor(id))
-                {
-                    continue;
-                }
-
-                if (s_data.Grant(s_data.UnlockedWeapons, id.ToString()) && newlyUnlocked != null)
-                {
-                    newlyUnlocked.Add(new ProfileUnlockEntry(
-                        WeaponDisplayName(id),
-                        "Classic weapon - selectable before your next run"));
-                }
-            }
-
-            var branches = (UpgradeBranch[])Enum.GetValues(typeof(UpgradeBranch));
-            for (int i = 0; i < branches.Length; i++)
-            {
-                UpgradeBranch branch = branches[i];
-                if (level < UnlockLevelFor(branch))
-                {
-                    continue;
-                }
-
-                if (s_data.Grant(s_data.UnlockedBranches, branch.ToString()) && newlyUnlocked != null)
-                {
-                    newlyUnlocked.Add(new ProfileUnlockEntry(
-                        BranchDisplayName(branch),
-                        "Upgrade branch - can now be offered at the end of a round"));
-                }
-            }
-        }
-
-        private static void EvaluateAchievements(in RunSummary summary, List<ProfileUnlockEntry> earned)
-        {
-            IReadOnlyList<AchievementSettings> definitions = AllAchievements;
-            for (int i = 0; i < definitions.Count; i++)
-            {
-                AchievementSettings definition = definitions[i];
-                if (definition == null || string.IsNullOrEmpty(definition.Id))
-                {
-                    continue;
-                }
-
-                if (s_data.Has(s_data.Achievements, definition.Id))
-                {
-                    continue;
-                }
-
-                if (!IsSatisfied(definition, summary))
-                {
-                    continue;
-                }
-
-                if (s_data.Grant(s_data.Achievements, definition.Id) && earned != null)
-                {
-                    earned.Add(new ProfileUnlockEntry(definition.DisplayName, definition.Description));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Thresholds are checked against the MERGED lifetime totals, not against the
-        /// run alone, so "Armor Breaker" is earned by the run that pushes the lifetime
-        /// count over the line rather than requiring one run to do it all.
-        /// </summary>
-        private static bool IsSatisfied(AchievementSettings definition, in RunSummary summary)
-        {
-            int threshold = Mathf.Max(1, definition.Threshold);
-
-            switch (definition.Trigger)
-            {
-                case AchievementTrigger.FirstKill:
-                    return s_data.TotalKills >= threshold;
-
-                case AchievementTrigger.ArmorPieceBroken:
-                    return s_data.ArmorPiecesBroken >= threshold;
-
-                case AchievementTrigger.ReachRound:
-                    return s_data.HighestRound >= threshold;
-
-                case AchievementTrigger.KillTier:
-                    return s_data.KillsForTierName(definition.TargetTier.ToString()) >= threshold
-                           || summary.KillsFor(definition.TargetTier) >= threshold;
-
-                default:
-                    return false;
-            }
+            return s_lastReport;
         }
 
         // ================================================================ display
@@ -489,6 +484,15 @@ namespace DD.Prototype.Profile
             return branch.ToString();
         }
 
+        /// <summary>The config-backed ladder handed to <see cref="ProfileProgression"/>.</summary>
+        private sealed class ConfigLadder : IUnlockLadder
+        {
+            public int UnlockLevelFor(ClassicWeaponId id) => ProfileService.UnlockLevelFor(id);
+            public int UnlockLevelFor(UpgradeBranch branch) => ProfileService.UnlockLevelFor(branch);
+            public string WeaponDisplayName(ClassicWeaponId id) => ProfileService.WeaponDisplayName(id);
+            public string BranchDisplayName(UpgradeBranch branch) => ProfileService.BranchDisplayName(branch);
+        }
+
         // ================================================================ lifetime
 
         /// <summary>Loads the profile if it has not been loaded yet. Safe to call anywhere.</summary>
@@ -504,15 +508,15 @@ namespace DD.Prototype.Profile
             // Establish the unlock baseline WITHOUT reporting it. Everything the current
             // level already entitles the profile to is recorded here, so the first
             // results screen of a fresh profile does not present the starting weapon as
-            // a reward the player just won.
-            SyncUnlocks(null);
+            // a reward the player just won. Additive only; persisted by the next save.
+            ProfileProgression.GrantUnlocksForLevel(s_data, s_ladder, null);
         }
 
-        /// <summary>Writes the profile now. Called on quit and after a debug edit.</summary>
+        /// <summary>Writes the live profile now. Called on quit and after a debug edit.</summary>
         public static bool Save()
         {
             EnsureLoaded();
-            return ProfileStore.Save(s_data);
+            return ProfileStore.Save(s_data).Success;
         }
 
         /// <summary>
@@ -521,7 +525,14 @@ namespace DD.Prototype.Profile
         /// </summary>
         public static void ResetProfile()
         {
-            ProfileStore.Delete();
+            EnsureLoaded();
+            if (!ProfileStore.Delete())
+            {
+                // Read-only session (newer save file / other instance): nothing is deleted
+                // and nothing changes.
+                return;
+            }
+
             s_data = null;
             s_lastReport = null;
             EnsureLoaded();

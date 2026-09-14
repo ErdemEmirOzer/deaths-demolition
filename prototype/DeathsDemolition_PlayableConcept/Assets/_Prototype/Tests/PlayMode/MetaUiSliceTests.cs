@@ -548,6 +548,7 @@ namespace DD.Prototype.Tests.PlayMode
             // İzole profili en az L4'e çıkar (100 + 175 + 250 = 525 XP).
             ProfileService.ApplyRun(new RunSummary
             {
+                CompletionId = System.Guid.NewGuid().ToString("N"),
                 ReachedRound = 9, CompletedRounds = 8, CompletedRoundXp = 600, TotalXpEarned = 600,
                 EndReason = RunEndReason.PlayerDeath, BuildDescription = "wp005-level-setup"
             });

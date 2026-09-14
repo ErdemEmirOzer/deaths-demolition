@@ -98,6 +98,7 @@ namespace DD.Prototype.Tests.EditMode
             // Profili L2'ye çıkar (AutoSmg açılır), sonra seçim yap.
             ProfileService.ApplyRun(new RunSummary
             {
+                CompletionId = System.Guid.NewGuid().ToString("N"),
                 ReachedRound = 2, CompletedRounds = 1, CompletedRoundXp = 100, TotalXpEarned = 100,
                 TotalKills = 3, StandardKills = 3, KillXp = 3, EndReason = RunEndReason.PlayerDeath
             });

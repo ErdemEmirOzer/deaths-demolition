@@ -59,6 +59,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 var ozet = new RunSummary
                 {
+                    CompletionId = System.Guid.NewGuid().ToString("N"),
                     ReachedRound = 1,
                     CompletedRounds = 1,
                     CompletedRoundXp = 100,

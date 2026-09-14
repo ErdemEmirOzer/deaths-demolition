@@ -1,3 +1,4 @@
+using System;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Damage;
 using DD.Prototype.Economy;
@@ -95,6 +96,7 @@ namespace DD.Prototype.Rounds
         private GoldWallet _boundWallet;
         private WeaponModifierState _boundModifiers;
         private int _runId;
+        private string _completionId;
         private GoldAutoCollectReport _roundClearSweep;
 
         // ------------------------------------------------------------------ public API
@@ -124,6 +126,13 @@ namespace DD.Prototype.Rounds
         /// run can be mistaken for this one. 0 before the first run.
         /// </summary>
         public int RunId => _runId;
+
+        /// <summary>
+        /// WP-009: the durable completion identity carried by this run's summary. A fresh
+        /// GUID per <see cref="StartRun"/>; null before the first run. See
+        /// <see cref="RunSummary.CompletionId"/>.
+        /// </summary>
+        public string CompletionId => _completionId;
 
         /// <summary>What the last round-end screen opened with (balance after the sweep, build). Default before any.</summary>
         public RoundEndEconomySnapshot LastRoundEnd { get; private set; }
@@ -192,6 +201,7 @@ namespace DD.Prototype.Rounds
 
             _stats.Reset();
             _runId = ++s_runSerial;
+            _completionId = Guid.NewGuid().ToString("N");
 
             // WP-008: an offer retained from the previous run's last round must never be
             // restored into this run (the shop keys it on the run id, this is the belt).
@@ -746,6 +756,7 @@ namespace DD.Prototype.Rounds
                 ArmorPiecesBroken = _stats.ArmorPiecesBroken,
                 HighestTierKilled = _stats.HighestTierKilled,
 
+                CompletionId = _completionId,
                 Weapon = WeaponRegistry.SelectedWeapon,
                 BuildDescription = _build.HasState ? _build.DescribeBuild()
                     : controller != null ? controller.Modifiers.DescribeBuild() : "Stock",

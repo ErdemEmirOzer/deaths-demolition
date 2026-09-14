@@ -121,6 +121,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             return new RunSummary
             {
+                CompletionId = Guid.NewGuid().ToString("N"),
                 ReachedRound = reached,
                 CompletedRounds = completed,
                 TotalKills = kills,
@@ -206,15 +207,22 @@ namespace DD.Prototype.Tests.EditMode
             int seviye = ProfileService.Current.ProfileLevel;
             int silahlar = ProfileService.Current.UnlockedWeapons.Count;
             int basarimlar = ProfileService.Current.Achievements.Count;
+            int xp = ProfileService.Current.TotalXpEarned;
+            int kosu = ProfileService.Current.RunsPlayed;
+            int kill = ProfileService.Current.TotalKills;
+            int changedOnce = _changed;
 
-            // Çağıran sözleşmesi ApplyRun'ı koşu başına bir kez çağırır (PrototypeUiFlow.s_resultsScheduled);
-            // yine de ikinci uygulama unlock/achievement'ı iki kez ÜRETEMEZ.
+            // WP-009: aynı completion identity ikinci kez UYGULANMAZ — orijinal makbuz geri döner,
+            // hiçbir sayaç artmaz, Changed tekrar yayınlanmaz (kalıcı exactly-once; UI bayrağı değil).
             RunRewardReport r2 = ProfileService.ApplyRun(ozet);
-            Assert.AreEqual(0, r2.NewUnlocks.Count, "aynı unlock iki kez işlenmez");
-            Assert.AreEqual(0, r2.NewAchievements.Count, "aynı achievement iki kez açılmaz");
+            Assert.AreSame(r1, r2, "aynı kimlik → transaction'ın orijinal makbuzu");
             Assert.AreEqual(silahlar, ProfileService.Current.UnlockedWeapons.Count);
             Assert.AreEqual(basarimlar, ProfileService.Current.Achievements.Count);
-            Assert.GreaterOrEqual(ProfileService.Current.ProfileLevel, seviye);
+            Assert.AreEqual(seviye, ProfileService.Current.ProfileLevel);
+            Assert.AreEqual(xp, ProfileService.Current.TotalXpEarned, "XP iki kez eklenmez");
+            Assert.AreEqual(kosu, ProfileService.Current.RunsPlayed, "RunsPlayed iki kez artmaz");
+            Assert.AreEqual(kill, ProfileService.Current.TotalKills, "kill iki kez sayılmaz");
+            Assert.AreEqual(changedOnce, _changed, "duplicate Changed yayınlamaz");
         }
 
         [Test]
@@ -310,12 +318,16 @@ namespace DD.Prototype.Tests.EditMode
                 adlar.Add(alanlar[i].Name);
             }
 
+            // WP-009 (şema v2): + UnattributedKills (kayıpsız kill invariantı), + AppliedCompletionIds
+            // (anti-replay meta verisi; koşu verisi değil, history değil).
             CollectionAssert.AreEquivalent(new[]
             {
                 "SaveVersion", "ProfileLevel", "XpIntoLevel", "TotalXpEarned", "HighestRound", "RunsPlayed",
                 "RoundsCompleted", "TotalKills", "StandardKills", "SpecialKills", "EliteKills", "UltraKills",
-                "ArmorPiecesBroken", "BestRunXp", "Achievements", "UnlockedWeapons", "UnlockedBranches", "LastSavedUtc"
+                "UnattributedKills", "ArmorPiecesBroken", "BestRunXp", "Achievements", "UnlockedWeapons",
+                "UnlockedBranches", "AppliedCompletionIds", "LastSavedUtc"
             }, adlar, "ProfileData şeması değişti; kalıcılık sınırı yeniden gözden geçirilmeli");
+            Assert.AreEqual(2, ProfileData.CurrentVersion);
         }
 
         [Test]

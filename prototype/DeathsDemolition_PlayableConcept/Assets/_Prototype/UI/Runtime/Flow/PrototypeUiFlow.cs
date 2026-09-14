@@ -20,8 +20,9 @@ namespace DD.Prototype.UI
     ///
     ///   * the simulation clock is released (a menu loaded while a pause hold is still
     ///     registered would open at timeScale 0 and look like a hang);
-    ///   * the finished run is folded into the profile and written to disk BEFORE the
-    ///     results screen exists, so the screen only reads persisted data;
+    ///   * the finished run has been folded into the profile and written to disk
+    ///     (ProfileRunCommitter, on the same RunEnded event) BEFORE the results screen
+    ///     exists, so the screen only reads the persisted receipt;
     ///   * a missing scene degrades to a log line rather than an exception, which is
     ///     what lets the module be built and compiled with the scenes not yet created;
     ///   * the session-scoped loadout survives scene loads and dies with the process.
@@ -186,11 +187,12 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// The single point where a run becomes profile progress.
-        ///
-        /// The profile is applied SYNCHRONOUSLY, before the delay: if the player alt-F4s
-        /// during the death beat, the run is already on disk. Only the navigation waits,
-        /// so the death has a moment to land before the screen changes.
+        /// Navigation only (WP-009). The run becomes profile progress in
+        /// <see cref="ProfileRunCommitter"/>, which listens to the same event and commits
+        /// synchronously through <see cref="ProfileService.ApplyRun"/>: by the time the
+        /// delayed hand-off below fires, the receipt is already on disk. The
+        /// <c>s_resultsScheduled</c> flag guards the trip to Results, not the profile;
+        /// the profile's exactly-once is the durable completion identity.
         /// </summary>
         private static void OnRunEnded(RunSummary summary)
         {
@@ -200,8 +202,6 @@ namespace DD.Prototype.UI
             }
 
             s_resultsScheduled = true;
-
-            ProfileService.ApplyRun(summary);
 
             if (summary.EndReason == RunEndReason.Aborted)
             {
@@ -306,7 +306,9 @@ namespace DD.Prototype.UI
             ProfileData profile = ProfileService.Current;
             return "L" + profile.ProfileLevel +
                    "  " + profile.XpIntoLevel + "/" + ProfileService.LevelRequirement(profile.ProfileLevel) +
-                   " XP  ·  " + profile.TotalKills + " kills  ·  best round " + profile.HighestRound;
+                   " XP  ·  " + profile.TotalKills + " kills  ·  best round " + profile.HighestRound +
+                   "  ·  v" + profile.SaveVersion + (ProfileStore.SaveLocked ? "  ·  READ-ONLY" : string.Empty) +
+                   "  ·  commits " + ProfileRunCommitter.Commits + "/" + ProfileRunCommitter.EventsSeen;
         }
 
         private static string DescribeContrast()
@@ -320,6 +322,7 @@ namespace DD.Prototype.UI
         private void OnApplicationQuit()
         {
             ProfileService.Save();
+            ProfileStore.ReleaseOwnership();
         }
 
         private void OnDestroy()
