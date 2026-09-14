@@ -37,7 +37,14 @@ namespace DD.Prototype.Profile
         SaveFailed = 3,
 
         /// <summary>The candidate failed validation before the write; the live profile is unchanged.</summary>
-        InvalidCandidate = 4
+        InvalidCandidate = 4,
+
+        /// <summary>
+        /// WP-009H: the completion identity was refused fail-closed (malformed, legacy
+        /// GUID, foreign lineage, out-of-sequence ordinal, or not the live capability -
+        /// stale, aborted, forged, or from a previous process); nothing was changed.
+        /// </summary>
+        InvalidIdentity = 5
     }
 
     /// <summary>

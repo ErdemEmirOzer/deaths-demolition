@@ -114,6 +114,11 @@ namespace DD.Prototype.UI
         public static void AbortRunToMainMenu()
         {
             s_resultsScheduled = true; // suppress the automatic hand-off to Results
+
+            // WP-009H: the aborted run's completion capability dies here; the profile
+            // (ordinal included) is untouched - the B5 behaviour is unchanged.
+            CompletionAuthority.InvalidateLive();
+
             ReleaseSimulation();
             Load(PrototypeScenes.MainMenu);
         }
@@ -308,7 +313,8 @@ namespace DD.Prototype.UI
                    "  " + profile.XpIntoLevel + "/" + ProfileService.LevelRequirement(profile.ProfileLevel) +
                    " XP  ·  " + profile.TotalKills + " kills  ·  best round " + profile.HighestRound +
                    "  ·  v" + profile.SaveVersion + (ProfileStore.SaveLocked ? "  ·  READ-ONLY" : string.Empty) +
-                   "  ·  commits " + ProfileRunCommitter.Commits + "/" + ProfileRunCommitter.EventsSeen;
+                   "  ·  ord " + profile.LastAppliedCompletionOrdinal + (CompletionAuthority.HasLiveCapability ? " live " + CompletionAuthority.LiveOrdinal : string.Empty) +
+                   "  ·  commits " + ProfileRunCommitter.Commits + "/" + ProfileRunCommitter.EventsSeen + "  ·  " + ProfileService.LastVerdict;
         }
 
         private static string DescribeContrast()

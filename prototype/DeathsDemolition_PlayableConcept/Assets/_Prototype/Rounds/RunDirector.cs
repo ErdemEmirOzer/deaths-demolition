@@ -1,8 +1,8 @@
-using System;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Damage;
 using DD.Prototype.Economy;
 using DD.Prototype.PlayerSystem;
+using DD.Prototype.Profile;
 using DD.Prototype.Spawn;
 using DD.Prototype.Weapons;
 using UnityEngine;
@@ -128,9 +128,9 @@ namespace DD.Prototype.Rounds
         public int RunId => _runId;
 
         /// <summary>
-        /// WP-009: the durable completion identity carried by this run's summary. A fresh
-        /// GUID per <see cref="StartRun"/>; null before the first run. See
-        /// <see cref="RunSummary.CompletionId"/>.
+        /// WP-009H: the completion capability carried by this run's summary, issued by
+        /// <see cref="CompletionAuthority"/> at <see cref="StartRun"/>; null before the first
+        /// run or when none could be issued. Opaque here. See <see cref="RunSummary.CompletionId"/>.
         /// </summary>
         public string CompletionId => _completionId;
 
@@ -201,7 +201,12 @@ namespace DD.Prototype.Rounds
 
             _stats.Reset();
             _runId = ++s_runSerial;
-            _completionId = Guid.NewGuid().ToString("N");
+
+            // WP-009H: the completion identity is ISSUED by the profile's identity
+            // authority (this profile's lineage, the next ordinal, a fresh nonce), not
+            // minted here. Null when no identity can exist (exhausted ordinal / no
+            // lineage): the run still plays, and its summary is refused by the profile.
+            _completionId = CompletionAuthority.IssueForNewRun();
 
             // WP-008: an offer retained from the previous run's last round must never be
             // restored into this run (the shop keys it on the run id, this is the belt).

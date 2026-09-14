@@ -176,9 +176,10 @@ namespace DD.Prototype.Tests.EditMode
             };
         }
 
+        /// <summary>WP-009H: kimlik yalnız yetkili authority'den (dev/Editor dikişi = üretim issue yolu).</summary>
         private static string Kimlik()
         {
-            return Guid.NewGuid().ToString("N");
+            return CompletionAuthority.TestSeam.IssueForNextRun();
         }
 
         // ------------------------------------------------------------------ exactly-once
@@ -214,7 +215,7 @@ namespace DD.Prototype.Tests.EditMode
             int changedOnce = _changed;
             Assert.IsNull(ProfileService.LastReport, "yeniden açılışta bellekte makbuz yok");
             Assert.AreEqual(runs, ProfileService.Current.RunsPlayed, "diskten aynı profil geldi");
-            Assert.IsTrue(ProfileService.Current.HasAppliedCompletion(o.CompletionId), "kimlik diske yazılmış");
+            Assert.AreEqual(1, ProfileService.Current.LastAppliedCompletionOrdinal, "ordinal diske yazılmış");
 
             RunRewardReport r = ProfileService.ApplyRun(o);
             Assert.AreEqual(ProfileCommitOutcome.Duplicate, r.Outcome);
@@ -238,10 +239,12 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void AyniVeri_FarkliKimlik_IkiAyriKosu()
         {
+            // Tek aktif koşu: ikinci yetki ancak birincisi uygulandıktan sonra verilir (aynı içerik).
             RunSummary a = Ozet(Kimlik(), 2, 1, 5, 5, 20);
+            Assert.IsTrue(ProfileService.ApplyRun(a).Applied);
             RunSummary b = a;
             b.CompletionId = Kimlik();
-            Assert.IsTrue(ProfileService.ApplyRun(a).Applied);
+            Assert.AreNotEqual(a.CompletionId, b.CompletionId);
             Assert.IsTrue(ProfileService.ApplyRun(b).Applied);
             Assert.AreEqual(2, ProfileService.Current.RunsPlayed);
             Assert.AreEqual(10, ProfileService.Current.TotalKills);
@@ -270,30 +273,66 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void KimlikHalkasi_EskiKimlikler_KapasiteKadarHatirlanir()
+        public void EskiKimlikler_SuresizReddedilir_HalkaYok()
         {
-            var kimlikler = new List<string>();
+            // WP-009'daki hâli ("KimlikHalkasi_EskiKimlikler_KapasiteKadarHatirlanir") yalnız 8 kimliğin
+            // hatırlanmasını ve en eskinin ATILMASINI beklenen davranış sayıyordu — bu, exactly-once
+            // sözleşmesiyle çelişen kusurun ta kendisiydi (WP-009H kırmızı kanıtı). Sözleşme: uygulanmış
+            // her completion, aradan kaç koşu geçerse geçsin reddedilir.
+            const int n = 20;
+            var ozetler = new List<RunSummary>();
             var makbuzlar = new List<RunRewardReport>();
-            for (int i = 0; i < ProfileData.AppliedCompletionIdCapacity; i++)
+            for (int i = 0; i < n; i++)
             {
-                string id = Kimlik();
-                kimlikler.Add(id);
-                RunRewardReport r = ProfileService.ApplyRun(Ozet(id, 1, 0, 1, 1, 0));
+                RunSummary o = Ozet(Kimlik(), 1, 0, 1, 1, 0);
+                RunRewardReport r = ProfileService.ApplyRun(o);
                 Assert.IsTrue(r.Applied);
+                ozetler.Add(o);
                 makbuzlar.Add(r);
             }
 
+            Assert.AreEqual(n, ProfileService.Current.LastAppliedCompletionOrdinal);
             int changedOnce = _changed;
-            for (int i = 0; i < kimlikler.Count; i++)
+            string disk = DiskParmakizi();
+            for (int i = 0; i < n; i++)
             {
-                RunRewardReport tekrar = ProfileService.ApplyRun(Ozet(kimlikler[i], 1, 0, 1, 1, 0));
+                RunRewardReport tekrar = ProfileService.ApplyRun(ozetler[i]);
                 // En son kimlik: bellekteki orijinal makbuz geri döner; eskiler: Duplicate makbuzu.
                 Assert.IsTrue(ReferenceEquals(tekrar, makbuzlar[i]) || tekrar.Outcome == ProfileCommitOutcome.Duplicate,
-                    "halka içindeki her kimlik reddedilir: " + i);
+                    "her uygulanmış kimlik reddedilir: " + i + " → " + tekrar.Outcome);
+                Assert.AreEqual(CompletionTokenVerdict.AlreadyApplied, ProfileService.LastVerdict);
             }
 
             Assert.AreEqual(changedOnce, _changed, "hiçbir replay Changed yayınlamaz");
-            Assert.AreEqual(ProfileData.AppliedCompletionIdCapacity, ProfileService.Current.RunsPlayed);
+            Assert.AreEqual(disk, DiskParmakizi(), "hiçbir replay diske dokunmaz");
+            Assert.AreEqual(n, ProfileService.Current.RunsPlayed);
+        }
+
+        [Test]
+        public void SaveBasarisiz_SonraYeniKosu_EskiTokenOlur_YeniUygulanir()
+        {
+            // K-4: başarısız save'den sonra yeni koşu aynı ordinal'i YENİ nonce ile alır; eski token
+            // artık canlı yetki değildir (NotIssued → InvalidIdentity), yeni koşu uygulanır.
+            RunSummary eski = Ozet(Kimlik(), 2, 1, 3, 3, 20);
+            ProfileStore.SaveStageHook = s => { if (s == ProfileSaveStage.Replace) throw new IOException("injected"); };
+            LogAssert.Expect(LogType.Warning, new Regex("injected"));
+            LogAssert.Expect(LogType.Warning, new Regex("Profile not saved"));
+            Assert.AreEqual(ProfileCommitOutcome.SaveFailed, ProfileService.ApplyRun(eski).Outcome);
+            ProfileStore.SaveStageHook = null;
+
+            RunSummary yeni = Ozet(Kimlik(), 1, 0, 1, 1, 0);
+            Assert.AreNotEqual(eski.CompletionId, yeni.CompletionId);
+            string disk = DiskParmakizi();
+            LogAssert.Expect(LogType.Warning, new Regex("not valid"));
+            RunRewardReport eskiSonuc = ProfileService.ApplyRun(eski);
+            Assert.AreEqual(ProfileCommitOutcome.InvalidIdentity, eskiSonuc.Outcome);
+            Assert.AreEqual(CompletionTokenVerdict.NotIssued, ProfileService.LastVerdict);
+            Assert.AreEqual(disk, DiskParmakizi(), "ölü token diske dokunmaz");
+            Assert.AreEqual(0, ProfileService.Current.RunsPlayed);
+
+            Assert.IsTrue(ProfileService.ApplyRun(yeni).Applied, "yeni koşu uygulanır");
+            Assert.AreEqual(1, ProfileService.Current.LastAppliedCompletionOrdinal);
+            Assert.AreEqual(1, ProfileService.Current.RunsPlayed);
         }
 
         // ------------------------------------------------------------------ transaction / save failure
@@ -338,12 +377,14 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(diskOnce, DiskParmakizi(), "disk eski tam profil (ya eski ya yeni; yarım asla)");
             Assert.AreEqual(changedOnce, _changed, "başarısız save Changed yayınlamaz");
             Assert.IsFalse(File.Exists(ProfileStore.CandidatePath), "aday dosyası artık yok");
-            Assert.IsFalse(ProfileService.Current.HasAppliedCompletion(o.CompletionId), "kimlik kaydedilmedi → retry mümkün");
+            Assert.AreEqual(1, ProfileService.Current.LastAppliedCompletionOrdinal, "ordinal ilerlemedi → retry mümkün");
+            Assert.IsTrue(CompletionAuthority.HasLiveCapability, "başarısız save yetkiyi tüketmez");
 
             // Retry (aynı kimlik, hata yok): TAM BİR KEZ uygulanır; sonra duplicate.
             RunRewardReport r2 = ProfileService.ApplyRun(o);
             Assert.IsTrue(r2.Applied, "retry uygular");
             Assert.AreEqual(2, ProfileService.Current.RunsPlayed, "duplicate ilerleme yok");
+            Assert.AreEqual(2, ProfileService.Current.LastAppliedCompletionOrdinal, "stats ve ordinal aynı transaction'da");
             Assert.AreEqual(changedOnce + 1, _changed);
             Assert.AreEqual(Parmakizi(ProfileService.Current), DiskParmakizi(), "canlı = disk");
             Assert.AreSame(r2, ProfileService.ApplyRun(o), "üçüncü çağrı duplicate");
@@ -381,7 +422,10 @@ namespace DD.Prototype.Tests.EditMode
                 "public ctor yok (yalnız Draft.Seal(); Draft testlerin makbuz kurabilmesi için public'tir — mühürlendikten sonra değişmez)");
             Assert.IsInstanceOf<IReadOnlyList<ProfileUnlockEntry>>(r.NewUnlocks);
             Assert.IsFalse(r.NewUnlocks is List<ProfileUnlockEntry>, "liste dışarıya List olarak sızmaz");
-            Assert.AreEqual(r.CompletionId, ProfileService.Current.AppliedCompletionIds[ProfileService.Current.AppliedCompletionIds.Count - 1]);
+            CompletionToken parsed;
+            Assert.AreEqual(CompletionTokenVerdict.Valid, CompletionAuthority.TryParse(r.CompletionId, out parsed));
+            Assert.AreEqual(parsed.Ordinal, ProfileService.Current.LastAppliedCompletionOrdinal, "makbuzun ordinal'i profilin yüksek su işaretidir");
+            Assert.IsFalse(CompletionAuthority.HasLiveCapability, "başarılı save yetkiyi tüketir");
         }
 
         // ------------------------------------------------------------------ entitlement

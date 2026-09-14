@@ -28,7 +28,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             return new RunSummary
             {
-                CompletionId = "c-" + Guid.NewGuid().ToString("N"),
+                CompletionId = "ddc1:" + Soy + ":1:" + Guid.NewGuid().ToString("N"),
                 ReachedRound = reached,
                 CompletedRounds = completed,
                 CompletedRoundXp = roundXp,
@@ -42,6 +42,9 @@ namespace DD.Prototype.Tests.EditMode
                 EndReason = RunEndReason.PlayerDeath
             };
         }
+
+        /// <summary>Sabit test soyu (IsValid lineage ister; v3).</summary>
+        private const string Soy = "0123456789abcdef0123456789abcdef";
 
         private static int Egri(int level)
         {
@@ -165,7 +168,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(4, g.KillsFor(tier));
             Assert.AreEqual(4, g.TotalKills);
 
-            var p = new ProfileData();
+            var p = new ProfileData { ProfileLineageId = Soy };
             ProfileProgression.ApplyStatistics(p, g);
             Assert.AreEqual(4, p.KillsForTierName(tier.ToString()));
             Assert.AreEqual(4, p.TotalKills);
@@ -184,7 +187,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(7, g.UnattributedKills);
             Assert.AreEqual(10, g.TotalKills);
 
-            var p = new ProfileData();
+            var p = new ProfileData { ProfileLineageId = Soy };
             ProfileProgression.ApplyStatistics(p, g);
             Assert.AreEqual(3, p.StandardKills, "eksik kill'ler tier'lara dağıtılmaz");
             Assert.AreEqual(7, p.UnattributedKills);
@@ -200,7 +203,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void SifirKosu_SifirKill_Guvenli()
         {
-            var p = new ProfileData();
+            var p = new ProfileData { ProfileLineageId = Soy };
             var g = new RunRewardInput(Ozet(0, 0, 0, 0));
             ProfileProgression.ApplyStatistics(p, g);
             LevelProgress lp = ProfileProgression.ApplyXp(p.ProfileLevel, p.XpIntoLevel, g.TotalXp, Egri);
@@ -296,6 +299,7 @@ namespace DD.Prototype.Tests.EditMode
 
             var p = new ProfileData
             {
+                ProfileLineageId = Soy,
                 TotalXpEarned = int.MaxValue - 1, BestRunXp = int.MaxValue, RunsPlayed = int.MaxValue,
                 RoundsCompleted = int.MaxValue, StandardKills = int.MaxValue, TotalKills = int.MaxValue,
                 ArmorPiecesBroken = int.MaxValue, HighestRound = int.MaxValue
@@ -324,24 +328,24 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Sanitize_KillInvarianti_KayipsizOnarim()
         {
-            var p = new ProfileData { TotalKills = 17, StandardKills = 17 };
+            var p = new ProfileData { ProfileLineageId = Soy, TotalKills = 17, StandardKills = 17 };
             p.Sanitize();
             Assert.AreEqual(0, p.UnattributedKills);
             Assert.AreEqual(17, p.TotalKills);
 
-            p = new ProfileData { TotalKills = 40, StandardKills = 31 }; // legacy: toplam > tier toplamı
+            p = new ProfileData { ProfileLineageId = Soy, TotalKills = 40, StandardKills = 31 }; // legacy: toplam > tier toplamı
             p.Sanitize();
             Assert.AreEqual(9, p.UnattributedKills, "fark atanmamış kovaya; tier'lara dağıtılmaz");
             Assert.AreEqual(31, p.StandardKills);
             Assert.AreEqual(40, p.TotalKills, "toplam korunur (kayıpsız)");
             Assert.IsTrue(p.IsValid());
 
-            p = new ProfileData { TotalKills = 3, StandardKills = 10, EliteKills = 2 }; // toplam < tier toplamı
+            p = new ProfileData { ProfileLineageId = Soy, TotalKills = 3, StandardKills = 10, EliteKills = 2 }; // toplam < tier toplamı
             p.Sanitize();
             Assert.AreEqual(12, p.TotalKills, "tanıklı kill'ler geri sayılmaz");
             Assert.AreEqual(0, p.UnattributedKills);
 
-            p = new ProfileData { TotalKills = 40, StandardKills = 31 };
+            p = new ProfileData { ProfileLineageId = Soy, TotalKills = 40, StandardKills = 31 };
             p.Sanitize();
             string once = UnityEngine.JsonUtility.ToJson(p);
             p.Sanitize();
@@ -351,7 +355,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void IsValid_BozukToplamVeKopyaIdReddedilir()
         {
-            var p = new ProfileData { TotalKills = 5, StandardKills = 2 };
+            var p = new ProfileData { ProfileLineageId = Soy, TotalKills = 5, StandardKills = 2 };
             Assert.IsFalse(p.IsValid(), "TotalKills ≠ tier + atanmamış");
             p.Sanitize();
             Assert.IsTrue(p.IsValid());
@@ -370,34 +374,48 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Clone_DerinKopya()
         {
-            var p = new ProfileData { ProfileLevel = 3, TotalKills = 4, StandardKills = 4 };
+            var p = new ProfileData { ProfileLineageId = Soy, ProfileLevel = 3, TotalKills = 4, StandardKills = 4, LastAppliedCompletionOrdinal = 7 };
             p.Achievements.Add("x");
-            p.AppliedCompletionIds.Add("id-1");
             ProfileData k = p.Clone();
             k.Achievements.Add("y");
-            k.AppliedCompletionIds.Add("id-2");
             k.ProfileLevel = 9;
+            k.LastAppliedCompletionOrdinal = 8;
+            k.ProfileLineageId = "ffffffffffffffffffffffffffffffff";
             Assert.AreEqual(1, p.Achievements.Count);
-            Assert.AreEqual(1, p.AppliedCompletionIds.Count);
             Assert.AreEqual(3, p.ProfileLevel);
+            Assert.AreEqual(7, p.LastAppliedCompletionOrdinal);
+            Assert.AreEqual(Soy, p.ProfileLineageId);
         }
 
         [Test]
-        public void CompletionIdHalkasi_KapasiteVeEnEskininAtilmasi()
+        public void ReplayDurumu_SabitBoyut_LineageVeOrdinal()
         {
-            var p = new ProfileData();
-            for (int i = 0; i < ProfileData.AppliedCompletionIdCapacity + 3; i++)
+            // WP-009H: anti-replay durumu iki sabit alandır; halka/liste yoktur (şema kilidi).
+            var alanlar = new List<string>();
+            foreach (var f in typeof(ProfileData).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
             {
-                p.RecordAppliedCompletion("id-" + i);
+                alanlar.Add(f.Name);
             }
 
-            Assert.AreEqual(ProfileData.AppliedCompletionIdCapacity, p.AppliedCompletionIds.Count);
-            Assert.IsFalse(p.HasAppliedCompletion("id-0"), "en eski atıldı");
-            Assert.IsTrue(p.HasAppliedCompletion("id-" + (ProfileData.AppliedCompletionIdCapacity + 2)));
-            Assert.IsFalse(p.HasAppliedCompletion(null));
-            Assert.IsFalse(p.HasAppliedCompletion(string.Empty));
-            p.RecordAppliedCompletion(string.Empty);
-            Assert.AreEqual(ProfileData.AppliedCompletionIdCapacity, p.AppliedCompletionIds.Count, "boş id kaydedilmez");
+            CollectionAssert.Contains(alanlar, "ProfileLineageId");
+            CollectionAssert.Contains(alanlar, "LastAppliedCompletionOrdinal");
+            CollectionAssert.DoesNotContain(alanlar, "AppliedCompletionIds");
+            Assert.IsNull(typeof(ProfileData).GetField("AppliedCompletionIdCapacity"), "kapasite sabiti kaldırıldı");
+
+            var p = new ProfileData { ProfileLineageId = Soy, LastAppliedCompletionOrdinal = -5 };
+            p.Sanitize();
+            Assert.AreEqual(-5, p.LastAppliedCompletionOrdinal, "replay durumu Sanitize ile ONARILMAZ (sessiz onarım replay'i yeniden açar)");
+            Assert.IsFalse(p.IsValid(), "negatif ordinal geçersiz belge → corrupt prosedürü");
+            p.LastAppliedCompletionOrdinal = 0;
+            Assert.IsTrue(p.IsValid());
+            Assert.IsTrue(ProfileData.IsLineageId(Soy));
+            Assert.IsFalse(ProfileData.IsLineageId(string.Empty));
+            Assert.IsFalse(ProfileData.IsLineageId("0123456789ABCDEF0123456789ABCDEF"), "büyük harf kabul edilmez");
+            Assert.IsFalse(ProfileData.IsLineageId("0123456789abcdef0123456789abcde"));
+            Assert.IsTrue(ProfileData.IsLineageId(ProfileData.NewLineageId()));
+            var soysuz = new ProfileData();
+            soysuz.Sanitize();
+            Assert.IsFalse(soysuz.IsValid(), "lineage'sız profil geçersizdir; Sanitize uydurmaz");
         }
 
         // ------------------------------------------------------------------ unlock
@@ -406,7 +424,7 @@ namespace DD.Prototype.Tests.EditMode
         public void Unlock_YalnizEklenir_MerdivenYukselinceGeriAlinmaz()
         {
             var merdiven = new SahteMerdiven();
-            var p = new ProfileData { ProfileLevel = 2 };
+            var p = new ProfileData { ProfileLineageId = Soy, ProfileLevel = 2 };
             var yeni = new List<ProfileUnlockEntry>();
             ProfileProgression.GrantUnlocksForLevel(p, merdiven, yeni);
             Assert.IsTrue(ProfileProgression.IsWeaponEntitled(p, ClassicWeaponId.AutoSmg));
@@ -426,7 +444,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(ProfileProgression.IsBranchEntitled(p, UpgradeBranch.Explosion));
 
             // Taze L2 profil aynı yükselmiş merdivende SMG'yi KAZANMAZ (merdiven yalnız yeni kazanımı belirler).
-            var taze = new ProfileData { ProfileLevel = 2 };
+            var taze = new ProfileData { ProfileLineageId = Soy, ProfileLevel = 2 };
             ProfileProgression.GrantUnlocksForLevel(taze, merdiven, null);
             Assert.IsFalse(ProfileProgression.IsWeaponEntitled(taze, ClassicWeaponId.AutoSmg));
             Assert.IsTrue(ProfileProgression.IsWeaponEntitled(taze, ClassicWeaponId.AssaultRifle));
@@ -435,7 +453,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void BilinmeyenId_IcerikAcmaz_AmaKorunur()
         {
-            var p = new ProfileData();
+            var p = new ProfileData { ProfileLineageId = Soy };
             p.UnlockedWeapons.Add("Bazooka");
             p.UnlockedBranches.Add("Laser");
             p.Achievements.Add("ghost_achievement");
@@ -460,7 +478,7 @@ namespace DD.Prototype.Tests.EditMode
         public void Unlock_KopyaEntitlementOlusmaz()
         {
             var merdiven = new SahteMerdiven();
-            var p = new ProfileData { ProfileLevel = 3 };
+            var p = new ProfileData { ProfileLineageId = Soy, ProfileLevel = 3 };
             ProfileProgression.GrantUnlocksForLevel(p, merdiven, null);
             ProfileProgression.GrantUnlocksForLevel(p, merdiven, null);
             ProfileProgression.GrantUnlocksForLevel(p, merdiven, null);
@@ -486,7 +504,7 @@ namespace DD.Prototype.Tests.EditMode
                 Tanim("syn_unknown", (AchievementTrigger)999, 1)
             };
 
-            var p = new ProfileData();
+            var p = new ProfileData { ProfileLineageId = Soy };
             RunSummary o = Ozet(4, 3, 60, 5, standard: 2, elite: 1);
             o.ArmorPiecesBroken = 2;
             var g = new RunRewardInput(o);
@@ -508,7 +526,7 @@ namespace DD.Prototype.Tests.EditMode
         public void Achievement_BirikimliEsik_KosuTekBasinaYetmeseDe()
         {
             var tanimlar = new List<AchievementSettings> { Tanim("syn_armor5", AchievementTrigger.ArmorPieceBroken, 5) };
-            var p = new ProfileData { ArmorPiecesBroken = 4 };
+            var p = new ProfileData { ProfileLineageId = Soy, ArmorPiecesBroken = 4 };
             RunSummary o = Ozet(1, 0, 0, 0);
             o.ArmorPiecesBroken = 1;
             var g = new RunRewardInput(o);
@@ -521,7 +539,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Achievement_TanimYok_VeyaNull_HataYok()
         {
-            var p = new ProfileData();
+            var p = new ProfileData { ProfileLineageId = Soy };
             var g = new RunRewardInput(Ozet(9, 8, 500, 50, standard: 50));
             ProfileProgression.EvaluateAchievements(p, g, null, null);
             ProfileProgression.EvaluateAchievements(p, g, new List<AchievementSettings>(), new List<ProfileUnlockEntry>());

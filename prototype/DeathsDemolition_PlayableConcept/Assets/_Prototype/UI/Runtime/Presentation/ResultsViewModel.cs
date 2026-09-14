@@ -228,6 +228,11 @@ namespace DD.Prototype.UI
                 case ProfileCommitOutcome.MissingIdentity:
                     return "This run could not be recorded in your profile: it carried no run identity.";
 
+                case ProfileCommitOutcome.InvalidIdentity:
+                    // Same honest sentence as an invalid candidate: no new player-facing copy
+                    // for a fail-closed internal refusal.
+                    return "This run could not be recorded in your profile. Your saved profile is unchanged.";
+
                 case ProfileCommitOutcome.InvalidCandidate:
                     return "This run could not be recorded in your profile. Your saved profile is unchanged.";
 

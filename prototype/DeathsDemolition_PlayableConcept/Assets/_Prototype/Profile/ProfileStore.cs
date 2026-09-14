@@ -112,7 +112,8 @@ namespace DD.Prototype.Profile
         public const string LockSuffix = ".lock";
 
         private static string s_pathOverride;
-        private static string s_ownedLockPath;
+        private static FileStream s_lease;
+        private static string s_leasePath;
 
         /// <summary>Absolute path of the save file.</summary>
         public static string Path
@@ -167,10 +168,10 @@ namespace DD.Prototype.Profile
         public static Action<ProfileSaveStage> SaveStageHook;
 
         /// <summary>
-        /// Liveness probe for the ownership lock (tests): (pid, processName) → alive.
-        /// Null uses <see cref="System.Diagnostics.Process"/>. Reset on domain reload.
+        /// Lease fault injection (tests): invoked while acquiring the write lease; throw to
+        /// simulate a lock that cannot be created/opened - the session must go read-only.
         /// </summary>
-        public static Func<int, string, bool> ProcessLivenessProbe;
+        public static Action LockAcquisitionFault;
 #endif
 
         /// <summary>Redirects the file, for tests and probes. Null restores the default. Releases the current lock.</summary>
@@ -352,6 +353,7 @@ namespace DD.Prototype.Profile
                 case ProfileLoadStatus.Malformed: return "The profile file is not valid JSON.";
                 case ProfileLoadStatus.NoVersion: return "The profile file does not carry a save version.";
                 case ProfileLoadStatus.Unreadable: return "The profile file could not be read.";
+                case ProfileLoadStatus.InvalidLineage: return "The profile file has no valid profile lineage.";
                 default: return "The profile file could not be used.";
             }
         }
@@ -377,6 +379,13 @@ namespace DD.Prototype.Profile
             }
 
             ProfileLoadStatus status = ProfileMigration.Parse(json, out data);
+            if (status == ProfileLoadStatus.Ok && ProfileMigration.CarriesLegacyRing(json))
+            {
+                // v2 → v3 quarantine policy: the retired ring is not carried into the new
+                // document; the raw-GUID namespace is refused fail-closed by the parser.
+                Debug.Log("[Profile] A version-2 completion-id ring was found in '" + path + "' and dropped (WP-009H: lineage + ordinal replace it).");
+            }
+
             if (status == ProfileLoadStatus.Ok && !data.IsValid())
             {
                 // Parse + Migrate sanitises, so this cannot happen for real data; a
@@ -680,163 +689,179 @@ namespace DD.Prototype.Profile
         // ================================================================= ownership
 
         /// <summary>
-        /// Write ownership of the profile file (WP-009 §13: several Player instances).
-        /// A lock file next to the profile names the owning process. Another LIVE process
-        /// of the same name holding it makes this one read-only for the session; a lock
-        /// left by a dead process is taken over. The same pid re-acquiring (domain
-        /// reload in the Editor) is always the owner.
+        /// Write ownership of the profile file (WP-009H): an OS lease, not a pid file.
+        ///
+        /// The lock file next to the profile is opened once and a byte-range lock is
+        /// taken on it with <see cref="FileStream.Lock"/> - on this runtime (Mono, Unix) an
+        /// <c>fcntl</c> POSIX record lock: owned by the process, refused to every other
+        /// process while held, released by the kernel when the process exits or crashes,
+        /// unaffected by pid reuse. The stream stays open for as long as this process
+        /// owns the profile; that open, locked stream IS the lease. The file's text
+        /// (pid, name) is diagnostics only and carries no authority.
+        ///
+        /// FAIL-CLOSED: if the lock cannot be taken - another live instance holds it, or
+        /// opening / locking / writing the file throws for any reason - this session is
+        /// read-only (<see cref="SaveLocked"/>): it plays, it never saves, resets or commits
+        /// a completion, and the profile pane says so. There is no "continue without the
+        /// lock" path.
+        ///
+        /// RULES that keep the lease honest: the lock file is opened exactly once per
+        /// process for a given path (a POSIX lock is dropped when ANY descriptor of the
+        /// file in the process is closed, so nothing else in the process may open it);
+        /// it is never deleted (unlinking would let a newcomer lock a different inode
+        /// than a third process still has open); release closes only this process's own
+        /// stream. Same process, same path, second load → still the owner. The Editor
+        /// releases the lease before a domain reload and re-acquires it afterwards (the
+        /// old stream would otherwise be closed by the finalizer at an arbitrary moment).
         /// </summary>
         private static void AcquireOwnership(string path)
         {
             string lockPath = path + LockSuffix;
-            if (string.Equals(s_ownedLockPath, lockPath, StringComparison.Ordinal))
+            if (s_lease != null && string.Equals(s_leasePath, lockPath, StringComparison.Ordinal))
             {
                 return;
             }
 
-            int ourPid;
-            string ourName;
+            ReleaseOwnership();
+
+            FileStream stream = null;
             try
             {
-                using (Process me = Process.GetCurrentProcess())
-                {
-                    ourPid = me.Id;
-                    ourName = me.ProcessName ?? string.Empty;
-                }
-            }
-            catch (Exception)
-            {
-                ourPid = 0;
-                ourName = string.Empty;
-            }
-
-            try
-            {
-                if (File.Exists(lockPath))
-                {
-                    int pid;
-                    string name;
-                    if (ParseLock(File.ReadAllText(lockPath), out pid, out name) && pid != ourPid && IsAlive(pid, name))
-                    {
-                        SaveLocked = true;
-                        SaveLockReason = "Another copy of the game is already using this profile. Progress made in this window will not be saved.";
-                        Debug.LogWarning("[Profile] " + SaveLockReason + " (lock held by pid " + pid + ")");
-                        return;
-                    }
-                }
-
                 string directory = System.IO.Path.GetDirectoryName(lockPath);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 {
                     Directory.CreateDirectory(directory);
                 }
 
-                // Written through an exclusive create so two instances starting at the same
-                // instant cannot both believe they own it; a stale file is removed first.
-                TryDelete(lockPath);
-                byte[] lockBytes = Encoding.UTF8.GetBytes("pid=" + ourPid + "\nname=" + ourName + "\n");
-                using (var stream = new FileStream(lockPath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                Action fault = LockAcquisitionFault;
+                if (fault != null)
                 {
-                    stream.Write(lockBytes, 0, lockBytes.Length);
+                    fault();
+                }
+#endif
+
+                stream = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                try
+                {
+                    stream.Lock(0, 1);
+                }
+                catch (IOException)
+                {
+                    // Held by another live process (an fcntl conflict). Read-only for this session.
+                    stream.Dispose();
+                    SaveLocked = true;
+                    SaveLockReason = OtherInstanceReason;
+                    Debug.LogWarning("[Profile] " + SaveLockReason + " (" + lockPath + ")");
+                    return;
                 }
 
-                s_ownedLockPath = lockPath;
+                // Diagnostics through the lease stream itself (never a second open).
+                byte[] text = Encoding.UTF8.GetBytes("pid=" + CurrentPid() + "\nname=" + CurrentProcessName() + "\n");
+                stream.SetLength(0);
+                stream.Write(text, 0, text.Length);
+                stream.Flush(true);
+
+                s_lease = stream;
+                s_leasePath = lockPath;
             }
             catch (Exception e)
             {
-                // A lock that cannot be written is not worth refusing saves over; the
-                // profile itself is still replaced atomically.
-                Debug.Log("[Profile] Ownership lock unavailable (" + e.GetType().Name + "); continuing without it.");
+                if (stream != null)
+                {
+                    try { stream.Dispose(); } catch (Exception) { }
+                }
+
+                s_lease = null;
+                s_leasePath = null;
+                SaveLocked = true;
+                SaveLockReason = LockUnavailableReason;
+                Debug.LogWarning("[Profile] " + SaveLockReason + " (" + e.GetType().Name + ": " + e.Message + ")");
             }
         }
 
-        /// <summary>Releases the lock this process holds, if any. Called on quit and on a path change.</summary>
+        private const string OtherInstanceReason =
+            "Another copy of the game is already using this profile. Progress made in this window will not be saved.";
+
+        private const string LockUnavailableReason =
+            "The profile could not be locked for writing, so this session is read-only. Progress made now will not be saved.";
+
+        /// <summary>Releases the lease this process holds, if any. The lock file is never deleted.</summary>
         public static void ReleaseOwnership()
         {
-            string lockPath = s_ownedLockPath;
-            s_ownedLockPath = null;
-            if (string.IsNullOrEmpty(lockPath))
+            FileStream stream = s_lease;
+            s_lease = null;
+            s_leasePath = null;
+            if (stream == null)
             {
                 return;
             }
 
-            TryDelete(lockPath);
-        }
-
-        /// <summary>True when this process holds the write lock for the current path.</summary>
-        public static bool OwnsProfile => string.Equals(s_ownedLockPath, LockPath, StringComparison.Ordinal);
-
-        /// <summary>Case-insensitive match on the first 15 characters (the macOS p_comm width).</summary>
-        public static bool SameProcessName(string a, string b)
-        {
-            if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b))
+            try
             {
-                return false;
+                stream.Unlock(0, 1);
             }
-
-            const int width = 15;
-            string x = a.Length > width ? a.Substring(0, width) : a;
-            string y = b.Length > width ? b.Substring(0, width) : b;
-            return string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
-        }
-
-        public static bool ParseLock(string text, out int pid, out string name)
-        {
-            pid = 0;
-            name = string.Empty;
-            if (string.IsNullOrEmpty(text))
+            catch (Exception)
             {
-                return false;
+                // Closing the stream releases the lock regardless.
             }
-
-            string[] lines = text.Split('\n');
-            for (int i = 0; i < lines.Length; i++)
-            {
-                string line = lines[i].Trim();
-                if (line.StartsWith("pid=", StringComparison.Ordinal))
-                {
-                    int.TryParse(line.Substring(4), out pid);
-                }
-                else if (line.StartsWith("name=", StringComparison.Ordinal))
-                {
-                    name = line.Substring(5);
-                }
-            }
-
-            return pid > 0;
-        }
-
-        private static bool IsAlive(int pid, string name)
-        {
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-            Func<int, string, bool> probe = ProcessLivenessProbe;
-            if (probe != null)
-            {
-                return probe(pid, name);
-            }
-#endif
 
             try
             {
-                using (Process other = Process.GetProcessById(pid))
-                {
-                    if (other == null || other.HasExited)
-                    {
-                        return false;
-                    }
+                stream.Dispose();
+            }
+            catch (Exception)
+            {
+                // Nothing depends on it.
+            }
+        }
 
-                    // The pid may have been reused by an unrelated process since the crash
-                    // that left the lock: only a process of the same name counts. macOS
-                    // reports other processes' names truncated (p_comm, 15 chars), so the
-                    // comparison uses that prefix.
-                    return SameProcessName(other.ProcessName, name);
+        /// <summary>True when this process holds the write lease for the current path.</summary>
+        public static bool OwnsProfile => s_lease != null && string.Equals(s_leasePath, LockPath, StringComparison.Ordinal);
+
+        private static int CurrentPid()
+        {
+            try
+            {
+                using (Process me = Process.GetCurrentProcess())
+                {
+                    return me.Id;
                 }
             }
             catch (Exception)
             {
-                return false;
+                return 0;
             }
         }
+
+        private static string CurrentProcessName()
+        {
+            try
+            {
+                using (Process me = Process.GetCurrentProcess())
+                {
+                    return me.ProcessName ?? string.Empty;
+                }
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+#if UNITY_EDITOR
+        // K-2: a domain reload would close the old lease stream in a finalizer at an
+        // arbitrary time; release deliberately before the reload and let the next load
+        // re-acquire (same process → succeeds).
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void InstallEditorLeaseHooks()
+        {
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= ReleaseOwnership;
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += ReleaseOwnership;
+            UnityEditor.EditorApplication.quitting -= ReleaseOwnership;
+            UnityEditor.EditorApplication.quitting += ReleaseOwnership;
+        }
+#endif
 
         // ================================================================== plumbing
 
@@ -861,9 +886,44 @@ namespace DD.Prototype.Profile
 
         private static ProfileData Fresh()
         {
-            var data = new ProfileData();
+            var data = new ProfileData { ProfileLineageId = ProfileData.NewLineageId(), LastAppliedCompletionOrdinal = 0 };
             data.Sanitize();
             return data;
+        }
+
+        /// <summary>
+        /// Debug reset (WP-009H): writes a FRESH profile (new lineage, ordinal 0) over the
+        /// primary through the normal chain and aligns the backup with it, so there is no
+        /// window without a complete profile and recovery cannot resurrect the old
+        /// lineage. Returns the fresh profile, or null when refused (read-only) or the
+        /// write failed (old profile untouched on disk).
+        /// </summary>
+        public static ProfileData Reset()
+        {
+            if (SaveLocked)
+            {
+                Debug.LogWarning("[Profile] Reset refused: " + SaveLockReason);
+                return null;
+            }
+
+            ProfileData fresh = Fresh();
+            ProfileSaveResult written = Save(fresh);
+            if (!written.Success)
+            {
+                Debug.LogWarning("[Profile] Reset did not happen: the fresh profile could not be written (" + written.FailedStage + ").");
+                return null;
+            }
+
+            try
+            {
+                CopyDurable(Path, BackupPath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Profile] Reset: the backup could not be aligned with the new profile (" + e.GetType().Name + ").");
+            }
+
+            return fresh;
         }
 
         /// <summary>
@@ -909,7 +969,7 @@ namespace DD.Prototype.Profile
         private static void ResetStatics()
         {
             s_pathOverride = null;
-            s_ownedLockPath = null;
+            ReleaseOwnership();
             LastLoadFellBack = false;
             LastLoadMessage = string.Empty;
             LastLoadStatus = ProfileLoadStatus.Missing;
@@ -919,7 +979,7 @@ namespace DD.Prototype.Profile
             LastSaveResult = ProfileSaveResult.Ok;
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             SaveStageHook = null;
-            ProcessLivenessProbe = null;
+            LockAcquisitionFault = null;
 #endif
         }
     }

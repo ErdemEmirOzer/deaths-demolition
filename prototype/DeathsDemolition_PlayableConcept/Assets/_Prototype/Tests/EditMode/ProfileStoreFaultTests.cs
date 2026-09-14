@@ -47,7 +47,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             ProfileStore.SetPathOverride(null);
             ProfileStore.SaveStageHook = null;
-            ProfileStore.ProcessLivenessProbe = null;
+            ProfileStore.LockAcquisitionFault = null;
             TryDeleteDir(Dir);
             Assert.AreEqual(_realHashBefore, HashOf(RealPath), "gerçek profil dosyası değişmemeli");
         }
@@ -56,7 +56,7 @@ namespace DD.Prototype.Tests.EditMode
         public void SetUp()
         {
             ProfileStore.SaveStageHook = null;
-            ProfileStore.ProcessLivenessProbe = null;
+            ProfileStore.LockAcquisitionFault = null;
             ProfileStore.SetPathOverride(null);
             TryDeleteDir(Dir);
             Directory.CreateDirectory(Dir);
@@ -68,18 +68,21 @@ namespace DD.Prototype.Tests.EditMode
         public void TearDown()
         {
             ProfileStore.SaveStageHook = null;
-            ProfileStore.ProcessLivenessProbe = null;
+            ProfileStore.LockAcquisitionFault = null;
             ProfileStore.SetPathOverride(null);
         }
 
         // ------------------------------------------------------------------ yardımcılar
+
+        private const string Soy = "0123456789abcdef0123456789abcdef";
 
         private static ProfileData Profil(int runs, int level = 1)
         {
             var p = new ProfileData { RunsPlayed = runs, ProfileLevel = level, TotalKills = runs * 3, StandardKills = runs * 3, TotalXpEarned = runs * 10 };
             p.UnlockedWeapons.Add("AssaultRifle");
             p.Achievements.Add("syn_" + runs);
-            p.AppliedCompletionIds.Add("id-" + runs);
+            p.ProfileLineageId = Soy;
+            p.LastAppliedCompletionOrdinal = runs;
             p.Sanitize();
             return p;
         }
@@ -316,19 +319,32 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void SaltOkunurOturum_YuklemeHicbirDosyayaDokunmaz()
         {
-            // Başka canlı örnek kilidi tutuyor: primary bozuk, .writing ve .bak var → hiçbiri taşınmaz/silinmez.
-            File.WriteAllText(Lock, "pid=424242\nname=Deaths Demolition - Playable Concept\n");
-            ProfileStore.ProcessLivenessProbe = (pid, name) => true;
+            // WP-009H: başka canlı süreç lease'i tutuyor (gerçek fcntl süreci): primary bozuk, .writing ve .bak
+            // var → salt-okunur yükleme hiçbirini taşımaz/silmez; doğrulanmış yedek yalnız bellekte kullanılır.
+            if (!File.Exists("/usr/bin/python3")) Assert.Ignore("python3 yok; çapraz süreç kanıtı probe L1/L2");
             File.WriteAllText(Primary, "{{{ not json");
             File.WriteAllText(Candidate, Json(Profil(9)));
             File.WriteAllText(Backup, Json(Profil(4)));
-            LogAssert.Expect(LogType.Warning, new Regex("Another copy"));
-            ProfileData y = ProfileStore.Load();
-            Assert.AreEqual(4, y.RunsPlayed, "salt-okunur: doğrulanmış yedek bellekte kullanılır");
-            Assert.AreEqual("{{{ not json", File.ReadAllText(Primary), "bozuk primary yana alınmadı");
-            Assert.IsTrue(File.Exists(Candidate), "diğer örneğin adayı silinmedi");
-            Assert.AreEqual(0, CorruptCount());
-            Assert.IsTrue(ProfileStore.SaveLocked);
+            ProfileStore.SetPathOverride(null); // henüz lease yok
+            string hata;
+            System.Diagnostics.Process diger = KilitTutanSurec(Lock, 20, out hata);
+            Assert.IsNotNull(diger, "yardımcı süreç kilidi alamadı: " + hata);
+            try
+            {
+                ProfileStore.SetPathOverride(Primary);
+                LogAssert.Expect(LogType.Warning, new Regex("Another copy"));
+                ProfileData y = ProfileStore.Load();
+                Assert.AreEqual(4, y.RunsPlayed, "salt-okunur: doğrulanmış yedek bellekte kullanılır");
+                Assert.AreEqual("{{{ not json", File.ReadAllText(Primary), "bozuk primary yana alınmadı");
+                Assert.IsTrue(File.Exists(Candidate), "diğer örneğin adayı silinmedi");
+                Assert.AreEqual(0, CorruptCount());
+                Assert.IsTrue(ProfileStore.SaveLocked);
+                Assert.IsTrue(File.Exists(Lock), "başkasının kilit dosyası silinmez");
+            }
+            finally
+            {
+                Bitir(diger);
+            }
         }
 
         // ------------------------------------------------------------------ el ile kurulmuş disk durumları
@@ -390,6 +406,8 @@ namespace DD.Prototype.Tests.EditMode
             ProfileData y = ProfileStore.Load();
             Assert.AreEqual(0, y.RunsPlayed);
             Assert.AreEqual(1, y.ProfileLevel);
+            Assert.IsTrue(ProfileData.IsLineageId(y.ProfileLineageId), "taze profil lineage taşır (v3)");
+            Assert.AreEqual(0, y.LastAppliedCompletionOrdinal);
             Assert.IsFalse(ProfileStore.LastLoadFellBack, "ilk açılış hata değildir");
             Assert.AreEqual(ProfileLoadStatus.Missing, ProfileStore.LastLoadStatus);
         }
@@ -399,7 +417,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             Assert.IsTrue(ProfileStore.Save(Profil(5)).Success);
             Assert.IsTrue(ProfileStore.Save(Profil(6)).Success); // bak = 5
-            File.WriteAllText(Primary, "{ \"SaveVersion\": 2, \"RunsPlayed\": 7, \"Profi"); // truncated
+            File.WriteAllText(Primary, "{ \"SaveVersion\": 3, \"RunsPlayed\": 7, \"Profi"); // truncated
             File.WriteAllText(Candidate, Json(Profil(8)));
             LogAssert.Expect(LogType.Warning, new Regex("cut off"));
             ProfileData y = ProfileStore.Load();
@@ -463,6 +481,16 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(ProfileLoadStatus.NoVersion, ProfileStore.ReadFile(Primary, out d), "anahtarsız/yabancı JSON geçerli profil sayılmaz");
             File.WriteAllText(Primary, "{\"foo\": 1, \"ProfileLevel\": 5}");
             Assert.AreEqual(ProfileLoadStatus.NoVersion, ProfileStore.ReadFile(Primary, out d));
+            File.WriteAllText(Primary, "{\"SaveVersion\": 3, \"ProfileLevel\": 2}");
+            Assert.AreEqual(ProfileLoadStatus.InvalidLineage, ProfileStore.ReadFile(Primary, out d), "v3 belgesinde lineage yok → geçersiz (sessiz onarım yok)");
+            File.WriteAllText(Primary, "{\"SaveVersion\": 3, \"ProfileLineageId\": \"ZZZ\"}");
+            Assert.AreEqual(ProfileLoadStatus.InvalidLineage, ProfileStore.ReadFile(Primary, out d));
+            File.WriteAllText(Primary, "{\"SaveVersion\": 3, \"ProfileLineageId\": \"" + Soy + "\", \"LastAppliedCompletionOrdinal\": -4}");
+            Assert.AreEqual(ProfileLoadStatus.Malformed, ProfileStore.ReadFile(Primary, out d), "negatif ordinal onarılmaz; geçersiz belge");
+            File.WriteAllText(Primary, "{\"SaveVersion\": 4, \"ProfileLineageId\": \"" + Soy + "\"}");
+            Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d));
+            File.WriteAllText(Primary, "{\"SaveVersion\": 4}");
+            Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d), "v4 lineage'sız da future: dokunulmaz");
             File.Delete(Primary);
             Assert.AreEqual(ProfileLoadStatus.Missing, ProfileStore.ReadFile(Primary, out d));
             Assert.IsNull(d);
@@ -490,7 +518,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void EksikAlanlar_VarsayilanGuvenli_V2yeTasinir()
+        public void EksikAlanlar_VarsayilanGuvenli_V3eTasinir()
         {
             File.WriteAllText(Primary, "{\"SaveVersion\": 1, \"ProfileLevel\": 3}");
             ProfileData y = ProfileStore.Load();
@@ -498,10 +526,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(3, y.ProfileLevel);
             Assert.AreEqual(0, y.RunsPlayed);
             Assert.IsNotNull(y.Achievements);
-            Assert.IsNotNull(y.AppliedCompletionIds);
-            Assert.AreEqual(0, y.AppliedCompletionIds.Count);
+            Assert.IsTrue(ProfileData.IsLineageId(y.ProfileLineageId), "v1 → v3: lineage üretildi");
+            Assert.AreEqual(0, y.LastAppliedCompletionOrdinal, "yeni soyda uygulanmış completion yok");
             Assert.AreEqual(0, y.UnattributedKills);
-            Assert.AreEqual(ProfileData.CurrentVersion, y.SaveVersion);
+            Assert.AreEqual(3, y.SaveVersion);
             Assert.AreEqual(string.Empty, y.LastSavedUtc);
         }
 
@@ -523,7 +551,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(20, y.TotalKills);
             CollectionAssert.AreEqual(new[] { "a", "b" }, y.Achievements);
             CollectionAssert.AreEqual(new[] { "AssaultRifle" }, y.UnlockedWeapons);
-            CollectionAssert.AreEqual(new[] { "x" }, y.AppliedCompletionIds);
+            Assert.IsTrue(ProfileData.IsLineageId(y.ProfileLineageId));
+            Assert.AreEqual(0, y.LastAppliedCompletionOrdinal);
             Assert.AreEqual(string.Empty, y.LastSavedUtc);
             Assert.IsTrue(y.IsValid());
         }
@@ -539,12 +568,12 @@ namespace DD.Prototype.Tests.EditMode
             "    \"UnlockedBranches\": [\"Piercing\", \"Explosion\"],\n    \"LastSavedUtc\": \"2026-09-12T15:03:27.0000000Z\"\n}";
 
         [Test]
-        public void V1_V2_KayipsizMigration_AlanAlan()
+        public void V1_V3_KayipsizMigration_AlanAlan()
         {
             File.WriteAllText(Primary, V1Document);
             ProfileData y = ProfileStore.Load();
             Assert.AreEqual(ProfileLoadStatus.Ok, ProfileStore.LastLoadStatus);
-            Assert.AreEqual(2, y.SaveVersion);
+            Assert.AreEqual(3, y.SaveVersion);
             Assert.AreEqual(3, y.ProfileLevel);
             Assert.AreEqual(40, y.XpIntoLevel);
             Assert.AreEqual(315, y.TotalXpEarned);
@@ -562,7 +591,9 @@ namespace DD.Prototype.Tests.EditMode
             CollectionAssert.AreEqual(new[] { "first_blood", "armor_breaker" }, y.Achievements);
             CollectionAssert.AreEqual(new[] { "AssaultRifle", "AutoSmg", "CombatShotgun" }, y.UnlockedWeapons);
             CollectionAssert.AreEqual(new[] { "Piercing", "Explosion" }, y.UnlockedBranches);
-            Assert.AreEqual(0, y.AppliedCompletionIds.Count, "v1 koşuları replay edilemez; kimlik listesi boş başlar");
+            Assert.IsTrue(ProfileData.IsLineageId(y.ProfileLineageId), "v1 → v3: tek seferlik lineage");
+            Assert.AreEqual(0, y.LastAppliedCompletionOrdinal, "v1 koşuları ordinal'e çevrilmez; 0'dan başlar");
+            Assert.AreEqual(3, y.SaveVersion);
             Assert.AreEqual("2026-09-12T15:03:27.0000000Z", y.LastSavedUtc);
             Assert.IsTrue(y.IsValid());
 
@@ -583,13 +614,13 @@ namespace DD.Prototype.Tests.EditMode
             ProfileMigration.Migrate(a);
             Assert.AreEqual(bir, Json(a), "aynı belgede tekrar migration hiçbir şeyi değiştirmez");
 
-            ProfileData v2 = Profil(4);
-            v2.UnattributedKills = 2;
-            v2.TotalKills += 2;
-            v2.Sanitize();
-            string once = Json(v2);
-            ProfileMigration.Migrate(v2);
-            Assert.AreEqual(once, Json(v2), "v2 belgesinde UnattributedKills sıfırlanmaz");
+            ProfileData v3 = Profil(4);
+            v3.UnattributedKills = 2;
+            v3.TotalKills += 2;
+            v3.Sanitize();
+            string once = Json(v3);
+            ProfileMigration.Migrate(v3);
+            Assert.AreEqual(once, Json(v3), "v3 belgesinde UnattributedKills, lineage ve ordinal değişmez");
         }
 
         [Test]
@@ -615,70 +646,157 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(File.Exists(Candidate));
         }
 
-        // ------------------------------------------------------------------ sahiplik
+        // ------------------------------------------------------------------ sahiplik (fcntl lease)
+
+        /// <summary>
+        /// Gerçek ikinci süreç: python3 aynı kilit dosyasına fcntl(F_SETLK, LOCK_EX|LOCK_NB) alır ve
+        /// verilen süre tutar (Mono'nun FileStream.Lock'u ile aynı kilit ailesi). python3 yoksa test
+        /// atlanır (Assert.Ignore) — bu makinede çapraz süreç kanıtı ayrıca ProfilePersistenceProbe
+        /// E/F fazlarıyla (iki gerçek Player) alınır.
+        /// </summary>
+        private static System.Diagnostics.Process KilitTutanSurec(string lockPath, double saniye, out string hata)
+        {
+            hata = null;
+            try
+            {
+                string script = "import fcntl,sys,time\n" +
+                                "f=open(sys.argv[1],'a+')\n" +
+                                "try:\n    fcntl.lockf(f, fcntl.LOCK_EX|fcntl.LOCK_NB)\nexcept OSError as e:\n    print('LOCKFAIL',e); sys.exit(3)\n" +
+                                "print('LOCKED',flush=True)\n" +
+                                "time.sleep(float(sys.argv[2]))\n";
+                string scriptPath = Path.Combine(Dir, "lock-helper.py");
+                File.WriteAllText(scriptPath, script);
+                var psi = new System.Diagnostics.ProcessStartInfo("/usr/bin/python3", "\"" + scriptPath + "\" \"" + lockPath + "\" " + saniye.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                {
+                    UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true
+                };
+                var proc = System.Diagnostics.Process.Start(psi);
+                string line = proc.StandardOutput.ReadLine();
+                if (line == null || !line.StartsWith("LOCKED"))
+                {
+                    hata = "helper: " + line + " " + proc.StandardError.ReadToEnd();
+                    try { proc.Kill(); } catch (Exception) { }
+                    return null;
+                }
+
+                return proc;
+            }
+            catch (Exception e)
+            {
+                hata = e.GetType().Name + ": " + e.Message;
+                return null;
+            }
+        }
+
+        private static void Bitir(System.Diagnostics.Process proc)
+        {
+            if (proc == null) return;
+            try { if (!proc.HasExited) proc.Kill(); proc.WaitForExit(5000); } catch (Exception) { }
+            proc.Dispose();
+        }
 
         [Test]
-        public void Sahiplik_CanliBaskaOrnek_SaltOkunur_SaveReddedilir()
+        public void Sahiplik_BaskaSurecKilidiTutuyor_SaltOkunur_SaveResetReddedilir()
         {
-            File.WriteAllText(Lock, "pid=424242\nname=Deaths Demolition - Playable Concept\n");
-            ProfileStore.ProcessLivenessProbe = (pid, name) => pid == 424242 && name.StartsWith("Deaths");
+            if (!File.Exists("/usr/bin/python3")) Assert.Ignore("python3 yok; çapraz süreç kanıtı probe E/F");
             File.WriteAllText(Primary, Json(Profil(2)));
-            LogAssert.Expect(LogType.Warning, new Regex("Another copy"));
-            ProfileData y = ProfileStore.Load();
-            Assert.AreEqual(2, y.RunsPlayed, "profil yine okunur");
-            Assert.IsTrue(ProfileStore.SaveLocked);
+            ProfileStore.SetPathOverride(null); // henüz lease yok
+            string hata;
+            System.Diagnostics.Process diger = KilitTutanSurec(Lock, 20, out hata);
+            Assert.IsNotNull(diger, "yardımcı süreç kilidi alamadı: " + hata);
+            try
+            {
+                ProfileStore.SetPathOverride(Primary);
+                LogAssert.Expect(LogType.Warning, new Regex("Another copy"));
+                ProfileData y = ProfileStore.Load();
+                Assert.AreEqual(2, y.RunsPlayed, "profil yine okunur");
+                Assert.IsTrue(ProfileStore.SaveLocked, "başka canlı süreç lease'i tutuyor → salt-okunur");
+                Assert.IsFalse(ProfileStore.OwnsProfile);
+                StringAssert.Contains("Another copy", ProfileStore.SaveLockReason);
+                LogAssert.Expect(LogType.Warning, new Regex("Profile not saved"));
+                Assert.IsFalse(ProfileStore.Save(Profil(3)).Success, "kaybeden save yapamaz");
+                LogAssert.Expect(LogType.Warning, new Regex("Reset refused"));
+                Assert.IsNull(ProfileStore.Reset(), "kaybeden reset yapamaz");
+                Assert.AreEqual(2, ProfileStore.Load().RunsPlayed, "dosya ezilmedi");
+                Assert.IsTrue(File.Exists(Lock), "başkasının kilit dosyası silinmez");
+            }
+            finally
+            {
+                Bitir(diger);
+            }
+
+            // Sahip çıkınca (crash/exit → çekirdek bırakır) sonraki yükleme lease'i alır.
+            ProfileStore.SetPathOverride(null);
+            ProfileStore.SetPathOverride(Primary);
+            Assert.AreEqual(2, ProfileStore.Load().RunsPlayed);
+            Assert.IsFalse(ProfileStore.SaveLocked, "ölü sahibin kilidi devralınır");
+            Assert.IsTrue(ProfileStore.OwnsProfile);
+            Assert.IsTrue(ProfileStore.Save(Profil(3)).Success);
+        }
+
+        [Test]
+        public void Sahiplik_BizTutarken_BaskaSurecAlamaz_CikistaBirakilir()
+        {
+            if (!File.Exists("/usr/bin/python3")) Assert.Ignore("python3 yok; çapraz süreç kanıtı probe E/F");
+            ProfileStore.Load();
+            Assert.IsTrue(ProfileStore.OwnsProfile);
+            string hata;
+            System.Diagnostics.Process diger = KilitTutanSurec(Lock, 5, out hata);
+            Assert.IsNull(diger, "biz tutarken başka süreç kilidi alamamalı (LOCKFAIL beklenir): " + hata);
+            Assert.IsTrue(hata != null && hata.Contains("LOCKFAIL"), "yardımcı LOCKFAIL demeli: " + hata);
+            Bitir(diger);
+
+            // Aynı süreçte ikinci Load aynı yol → hâlâ sahip (tek açılış; ikinci açılış yok).
+            ProfileStore.Load();
+            Assert.IsTrue(ProfileStore.OwnsProfile);
+            Assert.IsFalse(ProfileStore.SaveLocked);
+
+            // Release (çıkış / SetPathOverride) → başka süreç alabilir; kilit dosyası silinmez.
+            ProfileStore.ReleaseOwnership();
             Assert.IsFalse(ProfileStore.OwnsProfile);
-            StringAssert.Contains("Another copy", ProfileStore.SaveLockReason);
+            Assert.IsTrue(File.Exists(Lock), "release kilit dosyasını silmez");
+            diger = KilitTutanSurec(Lock, 5, out hata);
+            Assert.IsNotNull(diger, "release sonrası başka süreç kilidi alabilmeli: " + hata);
+            Bitir(diger);
+        }
+
+        [Test]
+        public void Sahiplik_KilitAlinamazsa_FailClosed_SaltOkunur()
+        {
+            ProfileStore.LockAcquisitionFault = () => { throw new UnauthorizedAccessException("injected lock fault"); };
+            File.WriteAllText(Primary, Json(Profil(2)));
+            LogAssert.Expect(LogType.Warning, new Regex("could not be locked"));
+            ProfileData y = ProfileStore.Load();
+            Assert.AreEqual(2, y.RunsPlayed, "profil okunur");
+            Assert.IsTrue(ProfileStore.SaveLocked, "kilit alınamadı → salt-okunur (continuing-without-lock yolu yok)");
+            Assert.IsFalse(ProfileStore.OwnsProfile);
             LogAssert.Expect(LogType.Warning, new Regex("Profile not saved"));
             Assert.IsFalse(ProfileStore.Save(Profil(3)).Success);
-            LogAssert.Expect(LogType.Warning, new Regex("Another copy"));
-            Assert.AreEqual(2, ProfileStore.Load().RunsPlayed, "başka örneğin dosyası ezilmedi");
-            Assert.AreEqual("pid=424242\nname=Deaths Demolition - Playable Concept\n", File.ReadAllText(Lock), "kilit ele geçirilmedi");
-        }
+            Assert.AreEqual(ProfileSaveStage.Refused, ProfileStore.LastSaveResult.FailedStage);
+            LogAssert.Expect(LogType.Warning, new Regex("Reset refused"));
+            Assert.IsNull(ProfileStore.Reset());
+            ProfileStore.LockAcquisitionFault = null;
 
-        [Test]
-        public void Sahiplik_OluSurecKilidi_DevralinirVeCikistaBirakilir()
-        {
-            File.WriteAllText(Lock, "pid=424242\nname=Deaths Demolition - Playable Concept\n");
-            ProfileStore.ProcessLivenessProbe = (pid, name) => false;
+            // Aynı süreçte sonraki edinme (path değişimi) başarılı: kalıcı bir kilitlenme değildir.
+            ProfileStore.SetPathOverride(null);
+            ProfileStore.SetPathOverride(Primary);
             ProfileStore.Load();
             Assert.IsFalse(ProfileStore.SaveLocked);
             Assert.IsTrue(ProfileStore.OwnsProfile);
-            int pid1;
-            string name1;
-            Assert.IsTrue(ProfileStore.ParseLock(File.ReadAllText(Lock), out pid1, out name1));
-            Assert.AreEqual(System.Diagnostics.Process.GetCurrentProcess().Id, pid1, "kilit bu sürecin pid'ini taşır");
+        }
+
+        [Test]
+        public void Sahiplik_KilitDosyasiMetniYetkiDegildir_DeleteVeResetDokunmaz()
+        {
+            ProfileStore.Load();
+            Assert.IsTrue(ProfileStore.OwnsProfile);
             Assert.IsTrue(ProfileStore.Save(Profil(1)).Success);
-
-            ProfileStore.ReleaseOwnership();
-            Assert.IsFalse(File.Exists(Lock), "çıkışta kilit bırakılır");
-            Assert.IsFalse(ProfileStore.OwnsProfile);
-        }
-
-        [Test]
-        public void Sahiplik_AyniPid_HerZamanSahip_ProbeCagrilmaz()
-        {
-            int me = System.Diagnostics.Process.GetCurrentProcess().Id;
-            File.WriteAllText(Lock, "pid=" + me + "\nname=whatever\n");
-            bool probeCagrildi = false;
-            ProfileStore.ProcessLivenessProbe = (pid, name) => { probeCagrildi = true; return true; };
-            ProfileStore.Load();
-            Assert.IsFalse(probeCagrildi, "aynı pid = biziz; canlılık sorgulanmaz");
-            Assert.IsTrue(ProfileStore.OwnsProfile);
-            Assert.IsFalse(ProfileStore.SaveLocked);
-        }
-
-        [Test]
-        public void ParseLock_BozukIcerik()
-        {
-            int pid;
-            string name;
-            Assert.IsFalse(ProfileStore.ParseLock(null, out pid, out name));
-            Assert.IsFalse(ProfileStore.ParseLock("nonsense", out pid, out name));
-            Assert.IsFalse(ProfileStore.ParseLock("pid=abc\n", out pid, out name));
-            Assert.IsTrue(ProfileStore.ParseLock("name=X\npid=17\n", out pid, out name));
-            Assert.AreEqual(17, pid);
-            Assert.AreEqual("X", name);
+            Assert.IsTrue(File.Exists(Lock));
+            ProfileStore.Delete();
+            Assert.IsTrue(File.Exists(Lock), "Delete kilit dosyasına dokunmaz");
+            Assert.IsNotNull(ProfileStore.Reset());
+            Assert.IsTrue(File.Exists(Lock), "Reset kilit dosyasına dokunmaz");
+            Assert.IsTrue(ProfileStore.OwnsProfile, "lease korunur");
         }
 
         [Test]

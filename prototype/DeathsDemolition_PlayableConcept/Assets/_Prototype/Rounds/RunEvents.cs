@@ -177,12 +177,14 @@ namespace DD.Prototype.Rounds
         // ---- run identity ----------------------------------------------------
 
         /// <summary>
-        /// WP-009: opaque, durable identity of this run's completion. Minted by
-        /// <see cref="RunDirector"/> when the run starts (a fresh GUID, so it is unique
-        /// across process restarts, unlike the session-local <see cref="RunDirector.RunId"/>),
-        /// and the ONLY thing the profile uses to refuse a replayed summary. Null or
-        /// empty means "no identity": such a summary is never folded into the profile.
-        /// Shown nowhere; not a timestamp; not a run history.
+        /// Opaque completion capability of this run, issued by the profile's identity
+        /// authority when the run starts (WP-009H: profile lineage + the next monotonic
+        /// ordinal + a one-time nonce; WP-009's random GUID is retired). The ONLY thing
+        /// the profile uses to accept a summary exactly once - in this process, after a
+        /// reload, after a relaunch, however many runs later; the session-local
+        /// <see cref="RunDirector.RunId"/> is not an identity. Null or empty means "no
+        /// identity": such a summary is never folded into the profile. Shown nowhere; not
+        /// a timestamp; not a run history.
         /// </summary>
         public string CompletionId;
 

@@ -230,7 +230,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(runsOnce + 1, ProfileService.Current.RunsPlayed);
             Assert.AreEqual(killsOnce + 3, ProfileService.Current.TotalKills);
             Assert.AreEqual(xpOnce + makbuz.TotalXpEarned, ProfileService.Current.TotalXpEarned);
-            Assert.IsTrue(ProfileService.Current.HasAppliedCompletion(makbuz.CompletionId));
+            Assert.AreEqual(CompletionTokenVerdict.Valid, ProfileService.LastVerdict);
+            Assert.Greater(ProfileService.Current.LastAppliedCompletionOrdinal, 0, "ordinal ilerledi");
             Assert.AreEqual(runsOnce + 1, Disk().RunsPlayed, "disk +1");
             string diskHash = DiskHash();
 
@@ -320,7 +321,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(once.UnlockedWeapons.Count, sonra.UnlockedWeapons.Count);
             Assert.AreEqual(once.UnlockedBranches.Count, sonra.UnlockedBranches.Count);
             Assert.AreEqual(once.Achievements.Count, sonra.Achievements.Count);
-            Assert.AreEqual(once.AppliedCompletionIds.Count, sonra.AppliedCompletionIds.Count);
+            Assert.AreEqual(once.LastAppliedCompletionOrdinal, sonra.LastAppliedCompletionOrdinal, "abort ordinal'i ilerletmez");
+            Assert.AreEqual(once.ProfileLineageId, sonra.ProfileLineageId);
+            Assert.IsFalse(CompletionAuthority.HasLiveCapability, "abort canlı yetkiyi geçersiz kılar");
             Debug.Log("[DD-TEST] wp009.P2=OK abort delta=0 ram=" + ramOnce.Substring(0, 12) + " disk=" + diskOnce.Substring(0, 12));
         }
 
@@ -350,7 +353,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
             RunRewardReport r = ProfileService.ApplyRun(new RunSummary
             {
-                CompletionId = Guid.NewGuid().ToString("N"), ReachedRound = 12, CompletedRounds = 11,
+                CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(), ReachedRound = 12, CompletedRounds = 11,
                 CompletedRoundXp = 3000, KillXp = 400, TotalKills = 200, StandardKills = 200, EndReason = RunEndReason.PlayerDeath
             });
             Assert.IsTrue(r.Applied);
@@ -387,6 +390,7 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = true;
             yield return KosuyaGir();
             int runsOnce = ProfileService.Current.RunsPlayed;
+            long ordOnce = ProfileService.Current.LastAppliedCompletionOrdinal;
             int runId1 = RunDirector.Instance.RunId;
             string kimlik1 = RunDirector.Instance.CompletionId;
             Assert.IsNotEmpty(kimlik1);
@@ -417,8 +421,7 @@ namespace DD.Prototype.Tests.PlayMode
             seri.SetValue(null, runId1 - 1);
             Assert.IsNull(ProfileService.LastReport, "bellek boşaltıldı; profil diskten yeniden yüklenecek");
             Assert.AreEqual(runsOnce + 2, ProfileService.Current.RunsPlayed, "diskten geri geldi");
-            Assert.IsTrue(ProfileService.Current.HasAppliedCompletion(kimlik1));
-            Assert.IsTrue(ProfileService.Current.HasAppliedCompletion(kimlik2));
+            Assert.AreEqual(ordOnce + 2, ProfileService.Current.LastAppliedCompletionOrdinal, "iki koşu → ordinal +2");
             yield return YeniKosu();
             int runId3 = RunDirector.Instance.RunId;
             string kimlik3 = RunDirector.Instance.CompletionId;
@@ -490,6 +493,85 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(runsOnce + 1, ProfileService.Current.RunsPlayed);
             Debug.Log("[DD-TEST] wp009.P5=OK outcome=" + makbuz.Outcome + " retryApplied=" + tekrar.Applied);
 
+            PrototypeUiFlow.GoToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+        }
+
+        // ================================================================== P6 (WP-009H)
+
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator P6_DokuzGercekKosu_IlkReplayReddi_AbortTokenOlur_ResetLineage()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return KosuyaGir();
+            int runsOnce = ProfileService.Current.RunsPlayed;
+            long ordOnce = ProfileService.Current.LastAppliedCompletionOrdinal;
+            string soy = ProfileService.Current.ProfileLineageId;
+            RunSummary ilk = default;
+            for (int k = 0; k < 9; k++)
+            {
+                if (k > 0) yield return YeniKosu();
+                string token = RunDirector.Instance.CompletionId;
+                Assert.IsNotNull(token);
+                yield return OyuncuyuOldurVeResultsBekle();
+                Assert.IsTrue(ProfileService.LastReport.Applied, "koşu " + k);
+                Assert.AreEqual(token, ProfileService.LastReport.CompletionId);
+                if (k == 0) ilk = RunEvents.LastRunSummary;
+                PrototypeUiFlow.GoToMainMenu();
+                yield return SahneyiBekle(PrototypeScenes.MainMenu);
+            }
+
+            Assert.AreEqual(runsOnce + 9, ProfileService.Current.RunsPlayed);
+            Assert.AreEqual(ordOnce + 9, ProfileService.Current.LastAppliedCompletionOrdinal);
+
+            // İlk koşu (9 koşu önce) aynı süreçte, sonra statikler boşaltılıp diskten yükleme sonrası: ret.
+            string ram = RamHash(); string disk = DiskHash(); _changed = 0;
+            RunRewardReport r = ProfileRunCommitter.Commit(ilk);
+            Assert.IsFalse(r.Applied);
+            Assert.AreEqual(ProfileCommitOutcome.Duplicate, r.Outcome);
+            Assert.AreEqual(CompletionTokenVerdict.AlreadyApplied, ProfileService.LastVerdict);
+            Assert.AreEqual(ram, RamHash()); Assert.AreEqual(disk, DiskHash()); Assert.AreEqual(0, _changed);
+            typeof(ProfileService).GetField("s_data", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, null);
+            typeof(ProfileService).GetField("s_lastReport", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, null);
+            Assert.AreEqual(runsOnce + 9, ProfileService.Current.RunsPlayed, "diskten");
+            r = ProfileRunCommitter.Commit(ilk);
+            Assert.AreEqual(ProfileCommitOutcome.Duplicate, r.Outcome, "reload sonrası da ret");
+            Assert.AreEqual(disk, DiskHash()); Assert.AreEqual(0, _changed);
+
+            // Abort: canlı yetki ölür; token sonradan uygulanamaz; profil delta 0.
+            yield return YeniKosu();
+            string abortToken = RunDirector.Instance.CompletionId;
+            PrototypeUiFlow.AbortRunToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+            Assert.IsFalse(CompletionAuthority.HasLiveCapability);
+            RunSummary abortSum = ilk; abortSum.CompletionId = abortToken;
+            r = ProfileRunCommitter.Commit(abortSum);
+            Assert.AreEqual(ProfileCommitOutcome.InvalidIdentity, r.Outcome);
+            Assert.AreEqual(CompletionTokenVerdict.NotIssued, ProfileService.LastVerdict);
+            Assert.AreEqual(disk, DiskHash()); Assert.AreEqual(0, _changed);
+
+            // Reset: yeni lineage; reset öncesi token yabancı.
+            yield return YeniKosu();
+            string preReset = RunDirector.Instance.CompletionId;
+            PrototypeUiFlow.AbortRunToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+            ProfileService.ResetProfile();
+            Assert.AreNotEqual(soy, ProfileService.Current.ProfileLineageId);
+            Assert.AreEqual(0, ProfileService.Current.LastAppliedCompletionOrdinal);
+            Assert.AreEqual(0, ProfileService.Current.RunsPlayed);
+            RunSummary preSum = ilk; preSum.CompletionId = preReset;
+            r = ProfileRunCommitter.Commit(preSum);
+            Assert.AreEqual(ProfileCommitOutcome.InvalidIdentity, r.Outcome);
+            Assert.AreEqual(CompletionTokenVerdict.ForeignLineage, ProfileService.LastVerdict);
+            Assert.AreEqual(0, ProfileService.Current.RunsPlayed);
+
+            // Sonraki koşu normal başlar ve uygulanır (ordinal 1).
+            yield return YeniKosu();
+            yield return OyuncuyuOldurVeResultsBekle();
+            Assert.IsTrue(ProfileService.LastReport.Applied);
+            Assert.AreEqual(1, ProfileService.Current.LastAppliedCompletionOrdinal);
+            Debug.Log("[DD-TEST] wp009h.P6=OK nineRuns replayRefused(sameProcess+reload) abortTokenNotIssued resetForeignLineage");
             PrototypeUiFlow.GoToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
         }

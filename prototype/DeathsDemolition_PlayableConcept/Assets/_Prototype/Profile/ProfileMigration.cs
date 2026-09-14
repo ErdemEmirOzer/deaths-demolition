@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace DD.Prototype.Profile
 {
     /// <summary>What a load attempt found. One value per distinguishable situation.</summary>
@@ -27,7 +25,14 @@ namespace DD.Prototype.Profile
         NoVersion = 6,
 
         /// <summary>The file could not be read at all (permissions, IO error).</summary>
-        Unreadable = 7
+        Unreadable = 7,
+
+        /// <summary>
+        /// WP-009H: a version-3 document whose replay lineage is missing or malformed. It
+        /// is NOT repaired with a fresh lineage (that would silently re-open replay); it
+        /// takes the corrupt-file procedure like any other unusable primary.
+        /// </summary>
+        InvalidLineage = 8
     }
 
     /// <summary>
@@ -35,11 +40,17 @@ namespace DD.Prototype.Profile
     /// each step is explicit, idempotent and provable in EditMode with a hand-written
     /// document of that version.
     ///
-    ///   1 → 2 (WP-009): the two new fields default to "no ids recorded" and "no
-    ///   unattributed kills", then <see cref="ProfileData.Sanitize"/> derives
-    ///   UnattributedKills from a legacy total that exceeded its tier sum (lossless;
-    ///   nothing is spread over tiers). A version-1 run can never be replayed anyway:
-    ///   no summary carries an id that a v1 file could have missed.
+    ///   1 → 2 (WP-009): UnattributedKills is derived by <see cref="ProfileData.Sanitize"/>
+    ///   from a legacy total that exceeded its tier sum (lossless; nothing is spread
+    ///   over tiers).
+    ///   2 → 3 (WP-009H): a fresh ProfileLineageId is minted once and
+    ///   LastAppliedCompletionOrdinal starts at 0 - the new lineage has applied no
+    ///   completion yet; every run the player plays from here is ordinal 1, 2, ... The
+    ///   v2 ring (AppliedCompletionIds, last 8 GUIDs) is DROPPED: evicted ids cannot be
+    ///   recovered, the ids are not converted to ordinals, and the raw-GUID namespace is
+    ///   retired - the token parser refuses every legacy id fail-closed, so nothing that
+    ///   was in (or fell out of) the ring can ever be applied again. Every progression
+    ///   field is carried unchanged. Idempotent: a v3 document is left as it is.
     ///
     /// A FUTURE version is refused, not downgraded: the caller keeps the file exactly
     /// as it is and runs read-only (<see cref="ProfileStore.SaveLocked"/>).
@@ -88,9 +99,20 @@ namespace DD.Prototype.Profile
                 return ProfileLoadStatus.FutureVersion;
             }
 
+            if (raw.SaveVersion >= 3 && !ProfileData.IsLineageId(raw.ProfileLineageId))
+            {
+                return ProfileLoadStatus.InvalidLineage;
+            }
+
             Migrate(raw);
             data = raw;
             return ProfileLoadStatus.Ok;
+        }
+
+        /// <summary>True when the text still carries the retired v2 ring (reported at migration, never used).</summary>
+        public static bool CarriesLegacyRing(string json)
+        {
+            return json != null && json.IndexOf("\"AppliedCompletionIds\"", System.StringComparison.Ordinal) >= 0;
         }
 
         /// <summary>
@@ -109,13 +131,16 @@ namespace DD.Prototype.Profile
             if (from < 2)
             {
                 // v1 → v2: fields absent from the file already hold their defaults after
-                // JsonUtility; a null list (older serialiser output) becomes empty.
-                if (data.AppliedCompletionIds == null)
-                {
-                    data.AppliedCompletionIds = new List<string>();
-                }
-
+                // JsonUtility (UnattributedKills is derived by Sanitize below).
                 data.UnattributedKills = 0;
+            }
+
+            if (from < 3)
+            {
+                // v2 → v3: one lineage for the rest of this profile's life; no completion
+                // applied under it yet. The legacy ring is not carried (see the class note).
+                data.ProfileLineageId = ProfileData.NewLineageId();
+                data.LastAppliedCompletionOrdinal = 0;
             }
 
             data.SaveVersion = ProfileData.CurrentVersion;

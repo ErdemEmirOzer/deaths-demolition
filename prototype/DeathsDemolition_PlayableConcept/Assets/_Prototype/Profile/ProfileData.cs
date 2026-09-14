@@ -28,25 +28,26 @@ namespace DD.Prototype.Profile
     ///
     /// SCHEMA HISTORY (see <see cref="ProfileMigration"/>)
     ///   1  WP-005: level, statistics, achievements, unlock lists, LastSavedUtc.
-    ///   2  WP-009: + AppliedCompletionIds (anti-replay metadata), + UnattributedKills
-    ///      (lossless legacy kill invariant). Version 1 files are read without loss.
+    ///   2  WP-009: + AppliedCompletionIds (a ring of the last 8 completion ids),
+    ///      + UnattributedKills (lossless legacy kill invariant).
+    ///   3  WP-009H: the ring is RETIRED - it only protected the last eight runs, which
+    ///      contradicted the exactly-once contract (a ninth run let the first summary
+    ///      apply again). Replay authority is now O(1): ProfileLineageId (fixed for the
+    ///      life of the profile) + LastAppliedCompletionOrdinal (a monotonic high-water
+    ///      mark). Legacy ids are dropped at migration; legacy raw GUIDs are refused by
+    ///      the token parser. Version 1 and 2 files are read without progression loss.
     /// </summary>
     [Serializable]
     public sealed class ProfileData
     {
         /// <summary>Bumped when the shape changes. 0 or negative means "not a real save".</summary>
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         /// <summary>The first version that ever existed on disk (WP-005).</summary>
         public const int OldestReadableVersion = 1;
 
-        /// <summary>
-        /// How many completion ids are remembered for replay protection. The single-run
-        /// model needs one; the ring absorbs a stale duplicate that arrives after a
-        /// later run has already been committed. It is anti-replay metadata, not a run
-        /// history: no run data is kept, only opaque ids, and nothing shows them.
-        /// </summary>
-        public const int AppliedCompletionIdCapacity = 8;
+        /// <summary>Length of <see cref="ProfileLineageId"/>: a 128-bit value as lower-case hex.</summary>
+        public const int LineageIdLength = 32;
 
         /// <summary>
         /// Current for an object created in memory. A DOCUMENT that lacks the key is
@@ -103,13 +104,24 @@ namespace DD.Prototype.Profile
         /// <summary>Names of <c>UpgradeBranch</c> values already granted.</summary>
         public List<string> UnlockedBranches = new List<string>();
 
+        // ---------------------------------------------------- replay authority (v3)
+
         /// <summary>
-        /// WP-009: opaque completion ids of the runs most recently folded into this
-        /// profile (newest last, at most <see cref="AppliedCompletionIdCapacity"/>). A
-        /// summary whose id is listed here is a replay and is refused. Not a history:
-        /// shown nowhere, carries no run data.
+        /// WP-009H: random 128-bit identity minted once per profile life (fresh profile,
+        /// reset, or the v1/v2 → v3 migration) and never changed afterwards. A completion
+        /// token names the lineage it was issued for; one from another lineage (an older
+        /// profile, a reset profile, a foreign file) is refused. Shown nowhere.
         /// </summary>
-        public List<string> AppliedCompletionIds = new List<string>();
+        public string ProfileLineageId = string.Empty;
+
+        /// <summary>
+        /// WP-009H: ordinal of the last transaction successfully folded into this profile
+        /// (0 = none). Monotonic and saturating. Together with the lineage this is the
+        /// whole anti-replay state - constant size, no list, no history: a completion is
+        /// either at most this ordinal (already applied → refused) or exactly the next
+        /// one (the single live run). Written in the same transaction as the rewards.
+        /// </summary>
+        public long LastAppliedCompletionOrdinal;
 
         /// <summary>Round-trip marker, shown nowhere. Never a transaction identity.</summary>
         public string LastSavedUtc = string.Empty;
@@ -167,11 +179,14 @@ namespace DD.Prototype.Profile
             Achievements = Clean(Achievements);
             UnlockedWeapons = Clean(UnlockedWeapons);
             UnlockedBranches = Clean(UnlockedBranches);
-            AppliedCompletionIds = Clean(AppliedCompletionIds);
-            while (AppliedCompletionIds.Count > AppliedCompletionIdCapacity)
+
+            // Replay authority is never "repaired" here: a missing or malformed lineage is
+            // an invalid document (ProfileMigration reports it), not something to invent.
+            if (ProfileLineageId == null)
             {
-                AppliedCompletionIds.RemoveAt(0);
+                ProfileLineageId = string.Empty;
             }
+
 
             if (LastSavedUtc == null)
             {
@@ -201,9 +216,35 @@ namespace DD.Prototype.Profile
             }
 
             return IsClean(Achievements) && IsClean(UnlockedWeapons) && IsClean(UnlockedBranches) &&
-                   IsClean(AppliedCompletionIds) &&
-                   AppliedCompletionIds.Count <= AppliedCompletionIdCapacity &&
+                   IsLineageId(ProfileLineageId) && LastAppliedCompletionOrdinal >= 0 &&
                    LastSavedUtc != null;
+        }
+
+        /// <summary>True for exactly 32 lower-case hex characters.</summary>
+        public static bool IsLineageId(string value)
+        {
+            if (value == null || value.Length != LineageIdLength)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                bool hex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+                if (!hex)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>Mints a new lineage id (random 128-bit, lower-case hex).</summary>
+        public static string NewLineageId()
+        {
+            return Guid.NewGuid().ToString("N");
         }
 
         /// <summary>
@@ -232,7 +273,8 @@ namespace DD.Prototype.Profile
                 Achievements = new List<string>(Achievements ?? new List<string>()),
                 UnlockedWeapons = new List<string>(UnlockedWeapons ?? new List<string>()),
                 UnlockedBranches = new List<string>(UnlockedBranches ?? new List<string>()),
-                AppliedCompletionIds = new List<string>(AppliedCompletionIds ?? new List<string>()),
+                ProfileLineageId = ProfileLineageId ?? string.Empty,
+                LastAppliedCompletionOrdinal = LastAppliedCompletionOrdinal,
                 LastSavedUtc = LastSavedUtc ?? string.Empty
             };
         }
@@ -300,26 +342,6 @@ namespace DD.Prototype.Profile
 
             list.Add(id);
             return true;
-        }
-
-        /// <summary>True when the run with this completion id has already been folded in.</summary>
-        public bool HasAppliedCompletion(string completionId)
-        {
-            return Has(AppliedCompletionIds, completionId);
-        }
-
-        /// <summary>Records a completion id, evicting the oldest beyond the capacity.</summary>
-        public void RecordAppliedCompletion(string completionId)
-        {
-            if (!Grant(AppliedCompletionIds, completionId))
-            {
-                return;
-            }
-
-            while (AppliedCompletionIds.Count > AppliedCompletionIdCapacity)
-            {
-                AppliedCompletionIds.RemoveAt(0);
-            }
         }
 
         public int KillsForTierName(string tierName)

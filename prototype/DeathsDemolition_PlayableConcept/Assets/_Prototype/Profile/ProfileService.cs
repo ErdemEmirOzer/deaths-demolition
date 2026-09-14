@@ -107,6 +107,9 @@ namespace DD.Prototype.Profile
             get { return s_lastReport; }
         }
 
+        /// <summary>How the last <see cref="ApplyRun"/> judged its token (F1 panel, tests).</summary>
+        public static CompletionTokenVerdict LastVerdict { get; private set; }
+
         /// <summary>True when the save on disk was unreadable and defaults were used.</summary>
         public static bool RecoveredFromCorruptSave
         {
@@ -324,13 +327,16 @@ namespace DD.Prototype.Profile
         /// Folds a finished run into the profile as one transaction (see the class
         /// summary) and returns the sealed receipt.
         ///
-        /// Exactly-once: the summary's <see cref="RunSummary.CompletionId"/> is recorded in
-        /// the profile that is written, so the same completion can never be applied
-        /// twice - not in this process, not after a reload, not after a relaunch. A
-        /// second call with an already-applied id returns the original receipt when it
-        /// is still in memory (so a re-opened Results screen shows what actually
-        /// happened) and a <see cref="ProfileCommitOutcome.Duplicate"/> receipt otherwise;
-        /// neither changes anything or raises <see cref="Changed"/>.
+        /// Exactly-once (WP-009H): the summary's <see cref="RunSummary.CompletionId"/> is a
+        /// token from <see cref="CompletionAuthority"/> - this profile's lineage, the next
+        /// ordinal after <see cref="ProfileData.LastAppliedCompletionOrdinal"/>, and the
+        /// capability this process issued for the run. The ordinal is written into the
+        /// same candidate as the rewards, so once the save is on disk every token at or
+        /// below it is refused as already applied - in this process, after a reload,
+        /// after a relaunch, and however many runs later. There is no list to fall out
+        /// of. A refused token changes nothing and raises no <see cref="Changed"/>; an
+        /// already-applied one returns the original receipt when it is still in memory
+        /// (a re-opened Results screen shows what actually happened).
         /// </summary>
         public static RunRewardReport ApplyRun(in RunSummary summary)
         {
@@ -352,37 +358,59 @@ namespace DD.Prototype.Profile
                 LevelRequirementAfter = LevelRequirement(s_data.ProfileLevel)
             };
 
-            // ---- 1/2 identity ------------------------------------------------
-            if (!input.HasIdentity)
-            {
-                draft.Outcome = ProfileCommitOutcome.MissingIdentity;
-                draft.FailureMessage = "This run carried no completion identity, so it was not recorded.";
-                Debug.LogWarning("[Profile] " + draft.FailureMessage);
-                s_lastReport = draft.Seal();
-                return s_lastReport;
-            }
+            // ---- 1/2 identity: format → schema → lineage → ordinal → mark → sequence → capability
+            CompletionToken token;
+            CompletionTokenVerdict verdict = CompletionAuthority.Validate(input.CompletionId, s_data, out token);
+            LastVerdict = verdict;
 
-            if (s_data.HasAppliedCompletion(input.CompletionId))
+            switch (verdict)
             {
-                if (s_lastReport != null && s_lastReport.HasRun &&
-                    string.Equals(s_lastReport.CompletionId, input.CompletionId, StringComparison.Ordinal))
-                {
-                    // The receipt of the transaction that applied it. Nothing changes.
+                case CompletionTokenVerdict.Valid:
+                    break;
+
+                case CompletionTokenVerdict.Missing:
+                    draft.Outcome = ProfileCommitOutcome.MissingIdentity;
+                    draft.FailureMessage = "This run carried no completion identity, so it was not recorded.";
+                    Debug.LogWarning("[Profile] " + draft.FailureMessage);
+                    s_lastReport = draft.Seal();
                     return s_lastReport;
-                }
 
-                draft.Outcome = ProfileCommitOutcome.Duplicate;
-                draft.FailureMessage = "This run had already been recorded in the profile.";
-                RunRewardReport duplicate = draft.Seal();
-                if (s_lastReport == null)
+                case CompletionTokenVerdict.AlreadyApplied:
                 {
-                    // After a relaunch there is no receipt in memory; the honest "already
-                    // recorded" one is better for a Results screen than the empty state.
-                    // A receipt of a different run is never displaced by a stale replay.
-                    s_lastReport = duplicate;
+                    if (s_lastReport != null && s_lastReport.HasRun &&
+                        string.Equals(s_lastReport.CompletionId, input.CompletionId, StringComparison.Ordinal))
+                    {
+                        // The receipt of the transaction that applied it. Nothing changes.
+                        return s_lastReport;
+                    }
+
+                    draft.Outcome = ProfileCommitOutcome.Duplicate;
+                    draft.FailureMessage = "This run had already been recorded in the profile.";
+                    RunRewardReport duplicate = draft.Seal();
+                    if (s_lastReport == null)
+                    {
+                        // After a relaunch there is no receipt in memory; the honest "already
+                        // recorded" one is better for a Results screen than the empty state.
+                        // A receipt of a different run is never displaced by a stale replay.
+                        s_lastReport = duplicate;
+                    }
+
+                    return duplicate;
                 }
 
-                return duplicate;
+                default:
+                    // Malformed / legacy GUID / unsupported schema / foreign lineage /
+                    // bad ordinal / gap / not the live capability: fail-closed, no mutation.
+                    draft.Outcome = ProfileCommitOutcome.InvalidIdentity;
+                    draft.FailureMessage = "This run's completion identity was not valid for this profile (" + verdict + "), so it was not recorded.";
+                    Debug.LogWarning("[Profile] " + draft.FailureMessage);
+                    if (s_lastReport == null)
+                    {
+                        s_lastReport = draft.Seal();
+                        return s_lastReport;
+                    }
+
+                    return draft.Seal();
             }
 
             // ---- 3 candidate -------------------------------------------------
@@ -400,7 +428,9 @@ namespace DD.Prototype.Profile
             ProfileProgression.EvaluateAchievements(candidate, input, AllAchievements, draft.NewAchievements);
             ProfileProgression.GrantUnlocksForLevel(candidate, s_ladder, draft.NewUnlocks);
 
-            candidate.RecordAppliedCompletion(input.CompletionId);
+            // The high-water mark advances in the SAME candidate as the rewards: they reach
+            // the disk together or not at all.
+            candidate.LastAppliedCompletionOrdinal = token.Ordinal;
 
             // ---- 4 validate --------------------------------------------------
             candidate.Sanitize();
@@ -433,6 +463,7 @@ namespace DD.Prototype.Profile
 
             // ---- 6 publish ---------------------------------------------------
             s_data = candidate;
+            CompletionAuthority.Consume(input.CompletionId);
             draft.LevelAfter = candidate.ProfileLevel;
             draft.XpIntoLevelAfter = candidate.XpIntoLevel;
             draft.LevelRequirementAfter = LevelRequirement(candidate.ProfileLevel);
@@ -522,21 +553,27 @@ namespace DD.Prototype.Profile
         /// <summary>
         /// Throws the profile away and starts again. Debug affordance; nothing in the
         /// normal flow reaches it.
+        ///
+        /// WP-009H: a fresh profile (new lineage, ordinal 0) is written OVER the primary
+        /// through the normal chain - there is no moment with the primary deleted and
+        /// the fresh file not yet written - and the backup is then aligned with the new
+        /// lineage so recovery cannot bring the old one back. Every token of the old
+        /// lineage is refused from here on. Refused in a read-only session; on a failed
+        /// write the old profile stays in memory and on disk.
         /// </summary>
         public static void ResetProfile()
         {
             EnsureLoaded();
-            if (!ProfileStore.Delete())
+            ProfileData fresh = ProfileStore.Reset();
+            if (fresh == null)
             {
-                // Read-only session (newer save file / other instance): nothing is deleted
-                // and nothing changes.
                 return;
             }
 
-            s_data = null;
+            s_data = fresh;
             s_lastReport = null;
-            EnsureLoaded();
-            ProfileStore.Save(s_data);
+            CompletionAuthority.InvalidateLive();
+            ProfileProgression.GrantUnlocksForLevel(s_data, s_ladder, null);
             RaiseChanged();
         }
 
@@ -569,6 +606,7 @@ namespace DD.Prototype.Profile
         {
             s_data = null;
             s_lastReport = null;
+            LastVerdict = CompletionTokenVerdict.Missing;
             Changed = null;
         }
     }

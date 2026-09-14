@@ -121,7 +121,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             return new RunSummary
             {
-                CompletionId = Guid.NewGuid().ToString("N"),
+                CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(),
                 ReachedRound = reached,
                 CompletedRounds = completed,
                 TotalKills = kills,
@@ -318,16 +318,18 @@ namespace DD.Prototype.Tests.EditMode
                 adlar.Add(alanlar[i].Name);
             }
 
-            // WP-009 (şema v2): + UnattributedKills (kayıpsız kill invariantı), + AppliedCompletionIds
-            // (anti-replay meta verisi; koşu verisi değil, history değil).
+            // WP-009 (şema v2): + UnattributedKills (kayıpsız kill invariantı). WP-009H (şema v3): 8'lik
+            // AppliedCompletionIds halkası KALDIRILDI (yalnız son 8 koşuyu koruyordu); yerine sabit boyutlu
+            // ProfileLineageId + LastAppliedCompletionOrdinal (koşu verisi değil, history değil).
             CollectionAssert.AreEquivalent(new[]
             {
                 "SaveVersion", "ProfileLevel", "XpIntoLevel", "TotalXpEarned", "HighestRound", "RunsPlayed",
                 "RoundsCompleted", "TotalKills", "StandardKills", "SpecialKills", "EliteKills", "UltraKills",
                 "UnattributedKills", "ArmorPiecesBroken", "BestRunXp", "Achievements", "UnlockedWeapons",
-                "UnlockedBranches", "AppliedCompletionIds", "LastSavedUtc"
+                "UnlockedBranches", "ProfileLineageId", "LastAppliedCompletionOrdinal", "LastSavedUtc"
             }, adlar, "ProfileData şeması değişti; kalıcılık sınırı yeniden gözden geçirilmeli");
-            Assert.AreEqual(2, ProfileData.CurrentVersion);
+            Assert.AreEqual(3, ProfileData.CurrentVersion);
+            StringAssert.DoesNotContain("AppliedCompletionIds", json, "halka diske yazılmaz (v3)");
         }
 
         [Test]
