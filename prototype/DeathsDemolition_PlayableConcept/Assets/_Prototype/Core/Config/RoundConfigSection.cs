@@ -84,14 +84,16 @@ namespace DD.Prototype.Core.Config
     }
 
     /// <summary>
-    /// DEC-021 SKELETON - INTENTIONALLY EMPTY.
+    /// DEC-021 OVERRIDE TABLE - SHIPS EMPTY.
     ///
     /// The approved decision DEC-021 requires round difficulty to scale through a
     /// HYBRID system: a formula baseline plus hand-authored armour ratios and
-    /// Special/Elite/Ultra distributions on specific rounds. This prototype run
-    /// implements the formula half only (user choice t-0002). The structure below
-    /// exists so the hand-authored half is not silently contradicted; the list
-    /// stays empty and every lookup falls through to the formula.
+    /// Special/Elite/Ultra distributions on specific rounds. Since WP-010 the mechanism
+    /// is implemented (PrototypeConfig.ArmorChance / TierSpawnWeight / ForcedTierCount,
+    /// RoundDifficultyOverrideRules, TierSelectionPolicy): an authored row beats the
+    /// formula for the fields it overrides, a field it does not override falls back to
+    /// the formula. The shipped list stays EMPTY, so every lookup falls through to the
+    /// formula bit-for-bit (the row VALUES are an undecided product question).
     ///
     /// DO NOT populate this list without an explicit instruction. A non-empty list
     /// means the prototype has started making authored-difficulty decisions.

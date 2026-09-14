@@ -10,7 +10,8 @@ namespace DD.Prototype.Core.EditorTools
     /// <summary>
     /// Headless sanity check for the core infrastructure. Proves the config asset
     /// loads, the request's formulas produce the request's numbers, the origin-tag
-    /// reflection index resolves and the DEC-021 skeleton is still empty.
+    /// reflection index resolves and the DEC-021 override rows validate (the shipped
+    /// table is empty; the check is "rows valid", not "table empty").
     ///
     /// Not a substitute for the play-mode smoke test; it is the compile-time gate.
     /// Run from the menu or headless:
@@ -78,10 +79,13 @@ namespace DD.Prototype.Core.EditorTools
             float shareSum = explosion.HeadShare + explosion.UpperBodyShare + explosion.LowerBodyShare;
             Check(failures, "Explosion shares sum to 1.0", Mathf.Abs(shareSum - 1f) < 1e-4f, shareSum);
 
-            // DEC-021 skeleton must still be empty.
-            Check(failures, "DEC-021 override table is empty", config.RoundDifficultyOverrides.Count == 0,
-                config.RoundDifficultyOverrides.Count);
-            Check(failures, "TryGetRoundOverride(5) is false", !config.TryGetRoundOverride(5, out _), "false");
+            // DEC-021 hybrid table (WP-010): rows, if any, must be valid. The shipped asset of
+            // this package carries no row (reported, not required - authoring rows is a
+            // product decision that has not been taken).
+            System.Collections.Generic.List<string> overrideFailures = RoundDifficultyOverrideRules.Validate(config);
+            Check(failures, "DEC-021 override rows (if any) are valid", overrideFailures.Count == 0,
+                overrideFailures.Count == 0 ? "ok" : string.Join("; ", overrideFailures));
+            Debug.Log("[Validation] DEC-021 override rows in the shipped asset: " + config.RoundDifficultyOverrides.Count + " (empty = formula only).");
 
             // Live contract: NotifyChanged must reach a subscriber and bump the revision.
             int received = 0;

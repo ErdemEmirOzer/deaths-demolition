@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core;
 using DD.Prototype.Core.DebugTools;
 
 namespace DD.Prototype.Enemies
@@ -35,21 +36,11 @@ namespace DD.Prototype.Enemies
         private const float DebugSpawnRadius = 7f;
 
         // ------------------------------------------------ debug crowd mix (F1 panel only)
-        // "Fill To Safety Ceiling" needs a plausible tier mix to measure ~40 enemies with.
-        // Nothing in normal play reads these; the real mix comes from EnemyTierScheduler
-        // and PrototypeConfig.TierSpawnWeight.
-
-        [PrototypeOnly(PendingDecisions.None,
-            "Debug fill: cumulative roll below which a Standard is spawned.", true)]
-        private const float DebugFillStandardCut = 0.7f;
-
-        [PrototypeOnly(PendingDecisions.None,
-            "Debug fill: cumulative roll below which a Runner is spawned.", true)]
-        private const float DebugFillSpecialCut = 0.88f;
-
-        [PrototypeOnly(PendingDecisions.None,
-            "Debug fill: cumulative roll below which a Guard is spawned; above it, an Executioner.", true)]
-        private const float DebugFillEliteCut = 0.97f;
+        // WP-010: "Fill To Safety Ceiling" draws its tiers from the run's single tier
+        // authority (the director's selector, current round, through
+        // EnemyTierAuthorityBridge) - the former private cut table was a second, unrelated
+        // tier chooser. At round 1 the authority yields Standard only; to measure a mixed
+        // ~40 crowd, skip to a later round first.
 
         public static EnemySystemHost Instance => s_instance;
 
@@ -140,7 +131,7 @@ namespace DD.Prototype.Enemies
                 () => DD.Prototype.Damage.RegionalDamageProof.VerifyAndDescribe(), 21));
 
             Add(DebugPanelRegistry.AddReadout(tab, "Crowd", EnemyFactory.DescribeCrowd, 30));
-            Add(DebugPanelRegistry.AddReadout(tab, "Tier schedule", EnemyFactory.Scheduler.Describe, 31));
+            Add(DebugPanelRegistry.AddReadout(tab, "Tier schedule", DescribeTierSchedule, 31));
             Add(DebugPanelRegistry.AddReadout(tab, "FX budget", EnemyEffects.DescribeBudget, 32));
             Add(DebugPanelRegistry.AddReadout(tab, "Armour detail", DescribeArmourDetail, 33));
         }
@@ -165,9 +156,14 @@ namespace DD.Prototype.Enemies
 
         // ------------------------------------------------------------------ debug acts
 
+        private static string DescribeTierSchedule()
+        {
+            return EnemyTierAuthorityBridge.Describe();
+        }
+
         private void DebugSpawn(EnemyTier tier)
         {
-            int round = Mathf.Max(1, EnemyFactory.Scheduler.Round);
+            int round = EnemyTierAuthorityBridge.CurrentRound();
             Vector3 origin = EnemyTargeting.PlayerPositionOr(Vector3.zero);
 
             float angle = Random.value * Mathf.PI * 2f;
@@ -210,11 +206,7 @@ namespace DD.Prototype.Enemies
 
         private static EnemyTier PickFillTier()
         {
-            float roll = Random.value;
-            if (roll < DebugFillStandardCut) return EnemyTier.Standard;
-            if (roll < DebugFillSpecialCut) return EnemyTier.Special;
-            if (roll < DebugFillEliteCut) return EnemyTier.Elite;
-            return EnemyTier.Ultra;
+            return EnemyTierAuthorityBridge.DrawWeighted(PrototypeConfig.Active);
         }
 
         private static string DescribeArmourDetail()

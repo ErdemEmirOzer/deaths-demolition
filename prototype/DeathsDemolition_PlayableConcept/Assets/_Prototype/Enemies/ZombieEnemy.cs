@@ -55,6 +55,7 @@ namespace DD.Prototype.Enemies
 
         private EnemyTier _tier = EnemyTier.Standard;
         private EnemyRewardSnapshot _reward;
+        private EnemyStatSnapshot _stats;
         private int _spawnRound = 1;
         private int _lifeId;
         private bool _alive;
@@ -171,6 +172,16 @@ namespace DD.Prototype.Enemies
         /// </summary>
         public EnemyRewardSnapshot Reward => _reward;
 
+        /// <summary>
+        /// WP-010: the stat profile this life was priced with at spawn (tier settings × the
+        /// SPAWN round's multipliers). Frozen for the life; a round boundary never changes
+        /// it. Re-resolved only by a live config edit, with the same spawn round.
+        /// </summary>
+        public EnemyStatSnapshot Stats => _stats;
+
+        /// <summary>WP-010: the version-look contract this body's appearance implements (readout for tests/probe; no scene search).</summary>
+        public IEnemyVersionVisual VersionVisual => _appearance;
+
         public bool IsAlive => _alive;
         public bool IsDying => _dying;
         public float Health => _body != null ? _body.Health : 0f;
@@ -282,8 +293,9 @@ namespace DD.Prototype.Enemies
             _random = new EnemyRandom(seed);
 
             // Order matters: the silhouette sets Visual.localScale, and ApplyConfig sizes
-            // the CharacterController from it.
-            _appearance.ApplyVariation(_tier, ref _random);
+            // the CharacterController from it. WP-010: the version look goes through the
+            // IEnemyVersionVisual contract (same placeholder behaviour as before).
+            _appearance.ApplyVersion(_tier, ref _random);
             ApplyConfig(config);
             _animator.ResetForSpawn(_tier, _appearance.BaseLeanDegrees, ref _random);
 
@@ -318,6 +330,7 @@ namespace DD.Prototype.Enemies
             _lastTransactionId = 0;
             _lastMeta = default;
             _reward = default;   // WP-008: a recycled body never carries a previous life's reward
+            _stats = default;    // WP-010: nor a previous life's tier profile
 
             if (_controller != null)
             {
@@ -358,6 +371,8 @@ namespace DD.Prototype.Enemies
             _body?.Armor.Clear();
             _lastTransactionId = 0;
             _lastMeta = default;
+            _stats = default;   // WP-010: a body in the pool carries no tier profile (readout truth, ADR-010-4)
+            _appearance?.ResetVersion();
 
             // WP-003 lifecycle contract: the body is going back to the pool. Reported
             // before Released so the round ledger is consistent when listeners read it.
@@ -383,7 +398,8 @@ namespace DD.Prototype.Enemies
         ///
         /// Scaling arithmetic is NOT re-derived locally: EnemyHealth, ArmorChance and
         /// TierSpawnWeight are asked of the config, because those methods consult the
-        /// DEC-021 override table first. That table is empty by design and must stay so.
+        /// DEC-021 override table first. That table ships empty in this package; an authored
+        /// row takes precedence there (WP-010) and nowhere else.
         /// </summary>
         public void ApplyConfig(PrototypeConfig config)
         {
@@ -392,12 +408,17 @@ namespace DD.Prototype.Enemies
                 return;
             }
 
+            // WP-010 (ADR-010-4): one resolution of the tier profile at the SPAWN round; the
+            // cached fields below read from it, so what this body runs with is the record
+            // it exposes (Stats) and nothing else.
+            _stats = EnemyStatSnapshot.Resolve(config, _tier, _spawnRound);
+
             EnemyTierSettings settings = config.Enemies.Find(_tier);
             if (settings != null)
             {
-                _moveSpeed = Mathf.Max(0.1f, settings.MoveSpeed);
-                _bodyRadius = Mathf.Max(0.1f, settings.BodyRadius);
-                _separationMass = Mathf.Max(0.1f, settings.SeparationMass);
+                _moveSpeed = _stats.MoveSpeed;
+                _bodyRadius = _stats.BodyRadius;
+                _separationMass = _stats.SeparationMass;
 
                 // PROTOTYPE-ONLY / INVENTED: turn rate is not in the request. Tied to move
                 // speed so a Runner can actually track a strafing player while an
@@ -416,8 +437,9 @@ namespace DD.Prototype.Enemies
                 _controller.skinWidth = 0.03f;
             }
 
-            // config.EnemyHealth already folds in the round health multiplier.
-            float maxHealth = config.EnemyHealth(_tier, _spawnRound);
+            // The snapshot's MaxHealth is config.EnemyHealth(tier, spawn round): the round
+            // health multiplier of the spawn round, already folded in.
+            float maxHealth = _stats.MaxHealth;
             if (_body != null)
             {
                 if (_body.MaxHealth <= 0f)

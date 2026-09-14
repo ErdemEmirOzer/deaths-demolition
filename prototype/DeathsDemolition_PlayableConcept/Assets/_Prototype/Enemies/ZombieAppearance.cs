@@ -17,8 +17,31 @@ namespace DD.Prototype.Enemies
     /// All state changes go through shared materials and SetActive. Nothing here allocates
     /// after the first call, and nothing instantiates a material.
     /// </summary>
-    public sealed class ZombieAppearance : IArmorVisual
+    public sealed class ZombieAppearance : IArmorVisual, IEnemyVersionVisual
     {
+        private EnemyTier _appliedVersion = EnemyTier.Standard;
+
+        /// <summary>IEnemyVersionVisual: the version last applied by <see cref="ApplyVersion"/>.</summary>
+        public EnemyTier AppliedVersion => _appliedVersion;
+
+        /// <summary>Back to "no version applied" (Standard) - called when the body returns to the pool, so a readout never sees a stale version.</summary>
+        public void ResetVersion()
+        {
+            _appliedVersion = EnemyTier.Standard;
+        }
+
+        /// <summary>
+        /// IEnemyVersionVisual (WP-010): the placeholder look of a version - cloth tones,
+        /// sash, per-tier silhouette (scale / lean), plates hidden. Exactly the WP-002
+        /// <see cref="ApplyVariation"/> behaviour (parity); the final art replaces the body
+        /// of this method, not its callers.
+        /// </summary>
+        public void ApplyVersion(EnemyTier tier, ref EnemyRandom random)
+        {
+            _appliedVersion = tier;
+            ApplyVariation(tier, ref random);
+        }
+
         // ----------------------------------------------------- per-tier silhouette
         // NOT cosmetic. Scale is written to rig.Visual, which is the PARENT of the three
         // region hitboxes, so every number here changes how large a target the tier is and

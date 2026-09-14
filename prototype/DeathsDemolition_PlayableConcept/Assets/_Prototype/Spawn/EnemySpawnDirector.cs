@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.DebugTools;
 using DD.Prototype.Core.Pooling;
@@ -98,6 +99,14 @@ namespace DD.Prototype.Spawn
         private readonly SpawnRefillClock _refillClock = new SpawnRefillClock();
         private readonly SpawnPointSelector _selector = new SpawnPointSelector();
         private readonly SpawnTierSelector _tierSelector = new SpawnTierSelector();
+
+        /// <summary>WP-010: THE tier authority of the run (readouts, probe and tests read it; nothing else decides a tier).</summary>
+        public SpawnTierSelector TierSelector => _tierSelector;
+
+        // The exact delegates this director bound on the bridge, so OnDisable unbinds only its own.
+        private Func<int> _bridgeRound;
+        private Func<PrototypeConfig, EnemyTier> _bridgeDraw;
+        private Func<string> _bridgeDescribe;
         private readonly Func<float> _random01 = () => UnityEngine.Random.value;
 
         private string[] _debugRows = new string[16];
@@ -186,6 +195,9 @@ namespace DD.Prototype.Spawn
 
         /// <summary>Bounded scatter around a point, metres (SpawnWeightTuning). Test readout for the REQ-065 check.</summary>
         public float SpawnScatterRadius => _weightTuning.SpawnScatterRadius;
+
+        /// <summary>Share of the round pool spent before an owed debut is released (SpawnWeightTuning). Test/probe readout for the REQ-071 pacing check.</summary>
+        public float GuaranteedIntroPoolFraction => _weightTuning.GuaranteedIntroPoolFraction;
 
         /// <summary>
         /// Population of the last round that completed through the ledger, captured at
@@ -294,6 +306,7 @@ namespace DD.Prototype.Spawn
         public void StopRound()
         {
             _ledger.Abort();
+            _tierSelector.Clear();   // WP-010: an owed debut / forced count never survives the round it belonged to
         }
 
         /// <summary>Returns every body this director owns to the pool. Used by the F1 panel and by BeginRound.</summary>
@@ -441,6 +454,16 @@ namespace DD.Prototype.Spawn
             // runtime, so it must exist even in a scene that has no enemies yet.
             NavigationSystemBehaviour.EnsureExists();
 
+            // WP-010: the enemy task's F1 tab reads the tier authority through this bridge
+            // (Enemies/ keeps its isolation boundary; the authority stays here).
+            if (Instance == this)
+            {
+                _bridgeRound = () => _round;
+                _bridgeDraw = config => _tierSelector.DrawWeighted(config);
+                _bridgeDescribe = () => _tierSelector.Describe();
+                EnemyTierAuthorityBridge.Bind(_bridgeRound, _bridgeDraw, _bridgeDescribe);
+            }
+
             RegisterDebugPanel();
         }
 
@@ -452,6 +475,8 @@ namespace DD.Prototype.Spawn
             {
                 Instance = null;
             }
+
+            EnemyTierAuthorityBridge.UnbindIf(_bridgeRound, _bridgeDraw, _bridgeDescribe);
 
             base.OnDisable();
         }
@@ -647,8 +672,13 @@ namespace DD.Prototype.Spawn
                 return false;
             }
 
-            EnemyTier tier = _tierSelector.Next(_round, Config, _ledger.SpawnedTotal, _ledger.Unspawned,
-                out bool guaranteed);
+            // WP-010: the ledger already counts this reservation (SpawnedTotal includes it,
+            // Unspawned excludes it); the policy wants "released before" and "slots left
+            // including this one". A pick whose activation fails below is handed back so an
+            // owed debut is never lost to a rollback (ADR-010-2).
+            TierPick pick = _tierSelector.Next(Config, _ledger.SpawnedTotal - 1, _ledger.Unspawned + 1);
+            EnemyTier tier = pick.Tier;
+            bool guaranteed = pick.Guaranteed;
 
             EnemySpawnContext context = BuildContext(tier, point, position, rotation, guaranteed, ticket);
 
@@ -662,6 +692,7 @@ namespace DD.Prototype.Spawn
                     "returned and the spawn rolled back. See ISpawnedEnemy for the contract.");
                 instance.Despawn();
                 _ledger.RollbackSpawn(ticket);
+                _tierSelector.Return(in pick);
                 return false;
             }
 
@@ -680,6 +711,7 @@ namespace DD.Prototype.Spawn
                 // so either order restores the stock; this order keeps the readout exact.)
                 _ledger.RollbackSpawn(ticket);
                 instance.Despawn();
+                _tierSelector.Return(in pick);
                 return false;
             }
 

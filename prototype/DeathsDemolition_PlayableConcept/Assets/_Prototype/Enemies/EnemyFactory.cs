@@ -25,9 +25,9 @@ namespace DD.Prototype.Enemies
     ///   * building the procedural body template exactly once (TemplatePrefab)
     ///   * fanning a live config edit into every enemy already on the map
     ///   * the F1 panel's spawn / clear / kill / break-armour actions
-    ///   * a standalone tier schedule for those debug spawns, so R3 / R5 / R8 debuts can
-    ///     be exercised without a spawn director in the scene
-    /// In a real run the director owns which tier spawns where; see SpawnTierSelector.
+    /// WHICH tier spawns is never decided here: the run's single tier authority is the
+    /// director's SpawnTierSelector / TierSelectionPolicy (WP-010, ADR-010-1); the debug
+    /// buttons name a tier explicitly and the debug fill draws from that same authority.
     ///
     /// THE 40 CEILING
     /// The director creates the pool with capacity = PrototypeConfig.AbsoluteSafetyCeiling
@@ -41,17 +41,9 @@ namespace DD.Prototype.Enemies
     /// </summary>
     public static class EnemyFactory
     {
-        [PrototypeOnly(PendingDecisions.CombatScaling,
-            "Round pool size assumed when no PrototypeConfig is active. Equals the request's " +
-            "own formula at round 1: 12 + 6*(R-1) + floor(2.5*(R-1)^1.15) = 12.")]
-        private const int FallbackRoundPoolSize = 12;
-
         private static ZombieEnemy s_template;
         private static PrototypePool<PooledBehaviour> s_pool;
         private static bool s_poolWarningLogged;
-
-        private static readonly EnemyTierScheduler s_scheduler = new EnemyTierScheduler();
-        private static EnemyRandom s_random = new EnemyRandom(0x5EED1234u);
 
         private static int s_capacity;
         private static uint s_seedCounter = 1u;
@@ -104,9 +96,6 @@ namespace DD.Prototype.Enemies
                 return count;
             }
         }
-
-        /// <summary>Tier selection, including the guaranteed R3 / R5 / R8 introductions.</summary>
-        public static EnemyTierScheduler Scheduler => s_scheduler;
 
         public static int Capacity => s_capacity;
 
@@ -209,31 +198,11 @@ namespace DD.Prototype.Enemies
             s_template.BuildProceduralBody();
         }
 
-        // ======================================================================= rounds
-
-        /// <summary>Start a round's tier schedule. Call once, before the first spawn of the round.</summary>
-        public static void BeginRound(int round)
-        {
-            PrototypeConfig config = PrototypeConfig.Active;
-            int poolSize = config != null ? config.TotalEnemyPool(round) : FallbackRoundPoolSize;
-            s_scheduler.BeginRound(round, poolSize, config, ref s_random);
-        }
-
         // ======================================================================= spawns
 
         /// <summary>
-        /// Spawn the next scheduled tier. This is the call the spawn system should use, so
-        /// the guaranteed introductions actually happen.
-        /// </summary>
-        public static ZombieEnemy SpawnNext(Vector3 position, Quaternion rotation)
-        {
-            PrototypeConfig config = PrototypeConfig.Active;
-            EnemyTier tier = s_scheduler.Next(config, ref s_random);
-            return Spawn(tier, s_scheduler.Round, position, rotation);
-        }
-
-        /// <summary>
-        /// Spawn a specific tier. Returns null when the safety ceiling is reached; the
+        /// Spawn a specific tier (test, probe and F1 path; the director spawns through its
+        /// own pool and ISpawnedEnemy). Returns null when the safety ceiling is reached; the
         /// caller must treat that as "not now", never as an error.
         /// </summary>
         public static ZombieEnemy Spawn(EnemyTier tier, int round, Vector3 position, Quaternion rotation)
@@ -393,7 +362,6 @@ namespace DD.Prototype.Enemies
             s_poolWarningLogged = false;
             s_capacity = 0;
             s_seedCounter = 1u;
-            s_random = new EnemyRandom(0x5EED1234u);
         }
     }
 }

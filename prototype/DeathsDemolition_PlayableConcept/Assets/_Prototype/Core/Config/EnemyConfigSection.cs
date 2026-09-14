@@ -85,7 +85,7 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.ProfileXp, "XP on top of the flat 1 XP per kill. Request: +0 / +1 / +3 / +8.")]
         public int BonusKillXp = 0;
 
-        [PrototypeOnly(PendingDecisions.None, "Round in which this tier is guaranteed to appear at least once.")]
+        [PrototypeOnly(PendingDecisions.CombatScaling, "Round in which this tier is guaranteed to appear at least once (REQ-071); the final introduction rounds are undecided.")]
         public int IntroductionRound = 1;
 
         [PrototypeOnly(PendingDecisions.CombatScaling, "Selection weight once the tier has joined the pool.", true)]

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.DebugTools;
 using DD.Prototype.Damage;
 using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
@@ -493,13 +494,21 @@ namespace DD.Prototype.Diagnostics
                 }
 
                 yield return null;
-                long gcA0 = GC.GetTotalMemory(false); long monoA0 = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
-                var yemA = new byte[64 * 1024];
-                long ctrlAgc = GC.GetTotalMemory(false) - gcA0; long ctrlAmono = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - monoA0;
-                long gcB0 = GC.GetTotalMemory(false); long monoB0 = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
-                var yemB = new object[300];
-                for (int i = 0; i < yemB.Length; i++) yemB[i] = new byte[80];
-                long ctrlBgc = GC.GetTotalMemory(false) - gcB0; long ctrlBmono = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - monoB0;
+
+                // WP-010 (D-1): the measurement must not depend on an idle machine. A full
+                // collection right before the windows empties the nursery so a gen0 that was
+                // already due does not land inside a window; a window that still sees a gen0
+                // is measured once more after another collection, and the verdict reads the
+                // heap delta (positive-controlled) together with the gen0 count.
+                HeapWindow.Prepare();
+                yield return null;
+                yield return null;
+                byte[] yemA = null;
+                HeapWindow.Result ctrlA = HeapWindow.Measure(() => { yemA = new byte[64 * 1024]; }, 0);
+                long ctrlAgc = ctrlA.GcDelta; long ctrlAmono = ctrlA.MonoDelta;
+                object[] yemB = new object[300];
+                HeapWindow.Result ctrlB = HeapWindow.Measure(() => { for (int i = 0; i < yemB.Length; i++) yemB[i] = new byte[80]; }, 0);
+                long ctrlBgc = ctrlB.GcDelta; long ctrlBmono = ctrlB.MonoDelta;
                 // Four windows: direct ×300, blast ×30, then the same two again. A first-pass
                 // cost that vanishes on the repeat is one-time warm-up (a pool growing to the
                 // burst size); a steady-state cost that repeats is a per-hit allocation.
@@ -509,24 +518,26 @@ namespace DD.Prototype.Diagnostics
                 // WP-006 damage path - and the Editor test runs where no number is rendered.
                 HitFeedbackDirector feedback = HitFeedbackDirector.Instance;
                 bool numbersWere = feedback != null && feedback.ShowDamageNumbers;
-                long[] winGc = new long[6]; long[] winMono = new long[6]; int[] winEvents = new int[6]; long[] winGen0 = new long[6];
+                long[] winGc = new long[6]; long[] winMono = new long[6]; int[] winEvents = new int[6]; long[] winGen0 = new long[6]; int[] winRetries = new int[6];
                 for (int w = 0; w < 6; w++)
                 {
                     if (w == 4 && feedback != null) feedback.ShowDamageNumbers = false;
-                    ResetCounters();
-                    long gen0Before = GC.CollectionCount(0);
-                    long gBefore = GC.GetTotalMemory(false); long mBefore = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
-                    if ((w & 1) == 0)
+                    bool direct = (w & 1) == 0;
+                    // A collection landing inside the window (machine load / a due nursery
+                    // sweep) re-measures the same window up to twice after a collection (HeapWindow).
+                    HeapWindow.Result r = HeapWindow.Measure(() =>
                     {
-                        for (int i = 0; i < 300; i++) Fire(four[i % 4], (BodyRegion)(i % 3), 1f);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < 30; i++) HitscanEngine.Explode(c + Vector3.up * 0.9f, 1f, 3f);
-                    }
-
-                    winGc[w] = GC.GetTotalMemory(false) - gBefore; winMono[w] = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - mBefore;
-                    winGen0[w] = GC.CollectionCount(0) - gen0Before; winEvents[w] = _damaged;
+                        ResetCounters();
+                        if (direct)
+                        {
+                            for (int i = 0; i < 300; i++) Fire(four[i % 4], (BodyRegion)(i % 3), 1f);
+                        }
+                        else
+                        {
+                            for (int i = 0; i < 30; i++) HitscanEngine.Explode(c + Vector3.up * 0.9f, 1f, 3f);
+                        }
+                    }, 2);
+                    winGc[w] = r.GcDelta; winMono[w] = r.MonoDelta; winGen0[w] = r.Gen0; winRetries[w] = r.Retries; winEvents[w] = _damaged;
                     yield return null;
                 }
 
@@ -536,15 +547,14 @@ namespace DD.Prototype.Diagnostics
                 // consumer that only runs with a real audio device - the Editor test runs in
                 // batch mode where it is silent. 300 bare audio cues, same counters.
                 ResetCounters();
-                long audioGen0Before = GC.CollectionCount(0);
-                long audioG = GC.GetTotalMemory(false); long audioM = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
-                for (int i = 0; i < 300; i++)
+                HeapWindow.Result audio = HeapWindow.Measure(() =>
                 {
-                    AudioEvents.Raise(CombatAudioEvent.ArmorHit, four[i % 4].transform.position + Vector3.up, 1f);
-                }
-
-                long audioGc = GC.GetTotalMemory(false) - audioG; long audioMono = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - audioM;
-                long audioGen0 = GC.CollectionCount(0) - audioGen0Before;
+                    for (int i = 0; i < 300; i++)
+                    {
+                        AudioEvents.Raise(CombatAudioEvent.ArmorHit, four[i % 4].transform.position + Vector3.up, 1f);
+                    }
+                }, 1);
+                long audioGc = audio.GcDelta; long audioMono = audio.MonoDelta; long audioGen0 = audio.Gen0;
                 yield return null;
 
                 bool smallSensitive = ctrlBgc > 0 || ctrlBmono > 0;
@@ -553,17 +563,24 @@ namespace DD.Prototype.Diagnostics
                 long pathDirect = ctrlBmono > 0 ? winMono[4] : winGc[4];    // damage path alone (numbers off)
                 long pathBlast = ctrlBmono > 0 ? winMono[5] : winGc[5];
                 long gen0Total = winGen0[0] + winGen0[1] + winGen0[2] + winGen0[3] + winGen0[4] + winGen0[5];
+                int retriesTotal = winRetries[0] + winRetries[1] + winRetries[2] + winRetries[3] + winRetries[4] + winRetries[5];
+                // WP-010 (D-1): the verdict is the positive-controlled heap delta of the windows
+                // that matter (steady state and numbers-off). A gen0 that still lands inside one
+                // of THOSE windows after two re-measurements makes the delta unreadable (a sweep
+                // can hide the window's own garbage), so it is inconclusive - reported, never
+                // green; a gen0 in the warm-up pair (windows 0/1) is reported only.
+                bool verdictWindowsClean = winGen0[2] == 0 && winGen0[3] == 0 && (!smallSensitive || (winGen0[4] == 0 && winGen0[5] == 0));
+                bool heapOk = verdictWindowsClean && winGc[2] <= 16 * 1024 && winGc[3] <= 16 * 1024 && (!smallSensitive || (pathDirect <= 4 * 1024 && pathBlast <= 4 * 1024));
                 Stage s9 = Capture("09-hit-path-allocation", run, gold, four[0], "26");
                 s9.pass = winEvents[0] == 300 && winEvents[1] == 30 * 4 && winEvents[2] == 300 && winEvents[3] == 30 * 4 && winEvents[4] == 300 && winEvents[5] == 30 * 4 &&
-                          (ctrlAgc + ctrlAmono) > 0 && gen0Total == 0 && winGc[2] <= 16 * 1024 && winGc[3] <= 16 * 1024 &&
-                          (!smallSensitive || (pathDirect <= 4 * 1024 && pathBlast <= 4 * 1024));
+                          (ctrlAgc + ctrlAmono) > 0 && heapOk;
                 s9.detail = "controlA(64KB) gc=" + ctrlAgc + " mono=" + ctrlAmono + " controlB(300x80B) gc=" + ctrlBgc + " mono=" + ctrlBmono +
                             " | pass1 direct(" + winEvents[0] + ") gc=" + winGc[0] + " mono=" + winMono[0] + " blast(" + winEvents[1] + ") gc=" + winGc[1] + " mono=" + winMono[1] +
                             " | pass2 direct(" + winEvents[2] + ") gc=" + winGc[2] + " mono=" + winMono[2] + " blast(" + winEvents[3] + ") gc=" + winGc[3] + " mono=" + winMono[3] +
                             " | numbersOff direct(" + winEvents[4] + ") gc=" + winGc[4] + " mono=" + winMono[4] + " blast(" + winEvents[5] + ") gc=" + winGc[5] + " mono=" + winMono[5] +
                             " | audioOnly(300 cues) gc=" + audioGc + " mono=" + audioMono + " gen0=" + audioGen0 +
                             " | steadyWithNumbers direct=" + steadyDirect + " blast=" + steadyBlast + " (HUD number text, WP-002 surface)" +
-                            " gen0=" + gen0Total + " class=" + (ctrlBmono > 0 ? "mono-small-sensitive" : ctrlBgc > 0 ? "gc-small-sensitive" : "large-class-only-OBSERVATION") + " yem=" + yemA.Length + "/" + yemB.Length;
+                            " gen0=" + gen0Total + " gen0Retries=" + retriesTotal + " verdictWindowsClean=" + verdictWindowsClean + (verdictWindowsClean ? "" : " INCONCLUSIVE(gen0 inside a verdict window after 2 retries)") + " heapOk=" + heapOk + " class=" + (ctrlBmono > 0 ? "mono-small-sensitive" : ctrlBgc > 0 ? "gc-small-sensitive" : "large-class-only-OBSERVATION") + " yem=" + yemA.Length + "/" + yemB.Length;
                 s9.note = "300 direct rays and 30 blasts over four fully armoured bodies, run twice in the real Player: the repeat pass is the steady-state hit path (no gen0, within threshold); a first-pass-only cost is one-time warm-up and is reported, not hidden; the numbers-off pair isolates the damage path from the HUD damage-number text (a pre-existing WP-002 presentation surface that builds one string per shown hit), and the audio-only window rules the audio director in or out";
                 Write(s9);
                 EnemyFactory.ClearAll();
