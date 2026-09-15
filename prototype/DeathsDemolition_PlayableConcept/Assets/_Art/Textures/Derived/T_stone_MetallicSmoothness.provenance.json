@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_stone_Packed.png",
+    "sourceSha256": "c104275c0ae1a9e2d78d990908405c8e8ad8efd16e74f66cae811c3d0fa6c67e",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-15T01:15:28.3905100Z",
+    "outputSha256": "631efb39a8e34028c3b9744e5fb9896d540d749511c873072e598d31a280d9ea"
+}

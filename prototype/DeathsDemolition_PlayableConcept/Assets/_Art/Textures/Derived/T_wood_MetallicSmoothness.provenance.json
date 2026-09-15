@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_wood_Packed.png",
+    "sourceSha256": "92bc60a14735405485dcdae54e61dbb51c0e7f68745bc6bd0e8b5e725a567317",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-15T01:15:29.1940210Z",
+    "outputSha256": "be9c00e270bb0860b1580e9cb5df5b371c49bccd17cbb2c674ccd2be83b95e34"
+}

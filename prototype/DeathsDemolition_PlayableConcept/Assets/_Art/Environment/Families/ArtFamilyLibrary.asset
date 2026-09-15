@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ee3135b27adb41518c7b20715e18550, type: 3}
+  m_Name: ArtFamilyLibrary
+  m_EditorClassIdentifier: 
+  items:
+  - family: courtyard_floor
+    prefab: {fileID: 5667346121029761681, guid: fbb198d37330a449b846bfedbaf2b16f, type: 3}
+  - family: creeping_groundcover
+    prefab: {fileID: 8047896639606065446, guid: 0433ff3289e30438a979f670d4f0d163, type: 3}
+  - family: curb
+    prefab: {fileID: 2963977543250848500, guid: 55b9a91e5e11f4aef9cf82d0ffd2b5a9, type: 3}
+  - family: gate_transition
+    prefab: {fileID: 1570153469397877190, guid: 2a0f20f6fa0154b999d213fe90161264, type: 3}
+  - family: greenery_cluster
+    prefab: {fileID: 9115851793872164696, guid: dab4d69aa3a314d1fb643f4acf62b9ee, type: 3}
+  - family: low_rise
+    prefab: {fileID: 9057996003396494077, guid: 6d9d4102320ea4e10b99047e2521a37f, type: 3}
+  - family: open_corridor
+    prefab: {fileID: 8278359804533142266, guid: 9dd71085d02cd40aab86d40d448360cc, type: 3}
+  - family: palace_roof_bay
+    prefab: {fileID: 8713537814611589132, guid: 642c81d0d9ef6480592115eed85b3e4a, type: 3}
+  - family: planter_boundary
+    prefab: {fileID: 5394023843896949938, guid: cc6a56689680f440ca48a3ee6522089b, type: 3}
+  - family: plaster_wall
+    prefab: {fileID: 3344658236241328455, guid: d617c5d3f0041474490d956848a6f8ac, type: 3}
+  - family: ring_transition
+    prefab: {fileID: 3451484829930319007, guid: b373ba3e148914f6381d098b6d1d3237, type: 3}
+  - family: rock_prop
+    prefab: {fileID: 1389662780587276335, guid: 2c2c9f2e49fd744f4a74be4985c53252, type: 3}
+  - family: roof_segment
+    prefab: {fileID: 1724153195071140852, guid: ba10345d3936849ed863d3741c4f58c4, type: 3}
+  - family: sakura_foliage
+    prefab: {fileID: 2307496885762164190, guid: 08fce72bdafe54607b7e36fa304b7c7d, type: 3}
+  - family: sakura_trunk
+    prefab: {fileID: 7317297059061630114, guid: 30f0bb5f3fc8548a290e8828525a11b7, type: 3}
+  - family: timber_beam
+    prefab: {fileID: 3806474598929385754, guid: 34da188e8860e4aa8ae5b1fcb683abfe, type: 3}
+  - family: timber_post
+    prefab: {fileID: 2193837818126663419, guid: c07182814cce048918b6ebf8ce7c3a47, type: 3}
+  - family: understory_shrub
+    prefab: {fileID: 7804034373985222076, guid: bb34f24372e9c41669c7ba0d7c348065, type: 3}

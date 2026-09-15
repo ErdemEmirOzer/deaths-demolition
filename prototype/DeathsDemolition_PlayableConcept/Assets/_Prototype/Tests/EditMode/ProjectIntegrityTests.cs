@@ -125,6 +125,12 @@ namespace DD.Prototype.Tests.EditMode
 
         // -------------------------------------------------------------- sahne sıralaması
 
+        /// <summary>
+        /// WP-011: the pilot art scene (Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity) is the
+        /// sixth and last entry so its assets are part of the release build and the build size
+        /// measurement. The first five stay exactly as they were — Boot is still the only
+        /// entry scene and the meta flow is untouched.
+        /// </summary>
         [Test]
         public void BuildSettings_BesSahneDogruSiradaVeAcik()
         {
@@ -134,12 +140,15 @@ namespace DD.Prototype.Tests.EditMode
                 PrototypeScenes.MainMenu,
                 PrototypeScenes.Selection,
                 PrototypeScenes.Run,
-                PrototypeScenes.Results
+                PrototypeScenes.Results,
+                "AP001_GoldenSlice"
             };
 
             EditorBuildSettingsScene[] sahneler = EditorBuildSettings.scenes;
             Assert.AreEqual(beklenen.Length, sahneler.Length,
-                "Build Settings'te tam olarak beş sahne olmalı, " + sahneler.Length + " var.");
+                "Build Settings'te tam olarak altı sahne olmalı (beş prototip sahnesi + WP-011 pilot sahnesi), " + sahneler.Length + " var.");
+            Assert.AreEqual("Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity", sahneler[5].path,
+                "Altıncı sahne WP-011 pilot sahnesi olmalı.");
 
             for (int i = 0; i < beklenen.Length; i++)
             {

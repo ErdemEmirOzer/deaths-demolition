@@ -1,0 +1,27 @@
+{
+    "name": "DD.Art.Tests.EditMode",
+    "rootNamespace": "DD.Art.Tests.EditMode",
+    "references": [
+        "DD.Prototype.Core",
+        "DD.Prototype.Runtime",
+        "DD.Art.Runtime",
+        "DD.Art.Pipeline.Editor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

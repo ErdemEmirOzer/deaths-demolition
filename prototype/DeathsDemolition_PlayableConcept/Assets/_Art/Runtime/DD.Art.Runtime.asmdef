@@ -1,0 +1,20 @@
+{
+    "name": "DD.Art.Runtime",
+    "rootNamespace": "DD.Art",
+    "references": [
+        "DD.Prototype.Core",
+        "DD.Prototype.Runtime",
+        "Unity.AI.Navigation",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

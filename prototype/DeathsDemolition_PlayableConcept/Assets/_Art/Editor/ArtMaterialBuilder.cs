@@ -1,0 +1,416 @@
+using System;
+using System.IO;
+using DD.Prototype.CameraSystem;
+using DD.Prototype.Rendering;
+using UnityEditor;
+using UnityEngine;
+
+namespace DD.Art.Pipeline.EditorTools
+{
+    /// <summary>
+    /// WP-011 · Authors the ten <c>M_&lt;role&gt;.mat</c> assets (ADR-011-1 §Material).
+    ///
+    /// Generated, never hand-edited: a material is a bag of floats and keywords that a
+    /// stray Inspector click can change without a diff anyone reads. Every property the
+    /// pipeline cares about is written explicitly on every build - including the ones
+    /// that must be OFF - so re-running the builder on an edited material restores the
+    /// contract instead of inheriting the edit. GUIDs are stable: an existing asset is
+    /// updated in place, so prefabs and scenes keep their references.
+    ///
+    /// All ten are URP/Lit, opaque, back-face culled (the glTF doubleSided flag is an
+    /// export artefact; AP-001 authors no double-sided surfaces), GPU instancing on
+    /// (informational under the SRP Batcher, which takes precedence).
+    ///
+    ///   stone / wood / bark / earth   BaseColor + Normal + derived MetallicSmoothness
+    ///                                 (metallic in R, smoothness in A, scalars 1 so
+    ///                                 the texture is authoritative)
+    ///   plaster / roof                BaseColor only; smoothness = 1 − AP roughness
+    ///   green / moss / sakura_pink /  flat linear albedo from the AP-001 material
+    ///   sakura_purple                 factors, no texture
+    ///
+    /// FLAT COLOURS AND COLOUR SPACE. The AP-001 factors are linear albedo (glTF
+    /// baseColorFactor, Blender's linear pickers). Unity states that "all material
+    /// color properties are supplied as sRGB colors, but are converted into linear
+    /// values when passed into shaders" (Manual, "Properties in shader programs"), so a
+    /// Color-typed property such as <c>_BaseColor</c> must be HANDED the sRGB encoding
+    /// for the shader to receive the linear value. <see cref="EncodeForColorProperty"/>
+    /// does that one conversion (<c>Color.gamma</c>); the linear numbers themselves are
+    /// in <see cref="FlatColour"/> unchanged. Reading <c>_BaseColor</c> back therefore
+    /// yields the sRGB encoding, and a test that wants the linear albedo should compare
+    /// <c>GetColor("_BaseColor").linear</c>.
+    /// </summary>
+    public static class ArtMaterialBuilder
+    {
+        public const string LitShaderName = "Universal Render Pipeline/Lit";
+
+        private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int BumpMapId = Shader.PropertyToID("_BumpMap");
+        private static readonly int BumpScaleId = Shader.PropertyToID("_BumpScale");
+        private static readonly int MetallicGlossMapId = Shader.PropertyToID("_MetallicGlossMap");
+        private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
+        private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
+        private static readonly int SmoothnessChannelId = Shader.PropertyToID("_SmoothnessTextureChannel");
+        private static readonly int CullId = Shader.PropertyToID("_Cull");
+
+        /// <summary>Keywords that must be off on every pipeline material regardless of role.</summary>
+        private static readonly string[] AlwaysOff =
+        {
+            "_SURFACE_TYPE_TRANSPARENT",
+            "_ALPHATEST_ON",
+            "_ALPHAPREMULTIPLY_ON",
+            "_ALPHAMODULATE_ON",
+            "_ALPHABLEND_ON",
+            "_SPECULAR_SETUP",
+            "_EMISSION",
+            "_OCCLUSIONMAP",
+            "_PARALLAXMAP",
+            "_DETAIL_MULX2",
+            "_DETAIL_SCALED",
+            "_CLEARCOAT",
+            "_CLEARCOATMAP",
+            "_SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A",
+            "_RECEIVE_SHADOWS_OFF",
+            "_SPECULARHIGHLIGHTS_OFF",
+            "_ENVIRONMENTREFLECTIONS_OFF"
+        };
+
+        public static void BuildAll()
+        {
+            string[] roles = ArtFamilies.MaterialRoles;
+            for (int i = 0; i < roles.Length; i++)
+            {
+                Build(roles[i]);
+            }
+
+            BuildVariantPins();
+            AssetDatabase.SaveAssets();
+            Debug.Log("[ArtPipeline] Materials: " + roles.Length + " in " + ArtPipelinePaths.Materials);
+        }
+
+        /// <summary>Folder whose materials exist only to keep shader variants in the Player build.</summary>
+        public const string VariantPinsFolder = "Assets/_Art/Resources/ArtVariantPins";
+
+        public const string TransparentTexturedPinPath = VariantPinsFolder + "/Pin_ArtLit_Transparent_Textured.mat";
+
+        /// <summary>
+        /// WHY A PIN. <see cref="OccluderFadeState"/> fades a wall by cloning its material and
+        /// switching the clone to the transparent surface at RUNTIME. A Player build only
+        /// ships the URP/Lit variants some material asset in the build actually uses;
+        /// nothing ships "transparent + _NORMALMAP + _METALLICSPECGLOSSMAP", because every
+        /// art material is opaque. The prototype's own pins (Rendering/Resources/VariantPins)
+        /// cover the untextured transparent case only. This material — a stone material put
+        /// through the very same <see cref="OccluderFadeState.MakeTransparent"/> — lives in
+        /// a Resources folder so the build keeps the variant the fade needs for the textured
+        /// occluder families (plaster_wall, gate_transition, open_corridor, roof pieces).
+        /// The PilotPerfProbe occluder stage is the Player-side proof (PRA K-12).
+        /// </summary>
+        public static Material BuildVariantPins()
+        {
+            EnsureFolder(VariantPinsFolder);
+            var stone = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material("stone"));
+            if (stone == null)
+            {
+                throw new InvalidOperationException("[ArtPipeline] M_stone.mat must exist before the variant pin is built.");
+            }
+
+            var pin = AssetDatabase.LoadAssetAtPath<Material>(TransparentTexturedPinPath);
+            bool created = pin == null;
+            if (created)
+            {
+                pin = new Material(stone);
+                AssetDatabase.CreateAsset(pin, TransparentTexturedPinPath);
+            }
+            else
+            {
+                pin.CopyPropertiesFromMaterial(stone);
+                pin.shader = stone.shader;
+                pin.shaderKeywords = stone.shaderKeywords;
+            }
+
+            pin.name = Path.GetFileNameWithoutExtension(TransparentTexturedPinPath);
+            OccluderFadeState.MakeTransparent(pin);
+            pin.enableInstancing = stone.enableInstancing;
+            EditorUtility.SetDirty(pin);
+            Debug.Log("[ArtPipeline] Variant pin " + (created ? "created" : "updated") + ": " + TransparentTexturedPinPath +
+                      " keywords=" + string.Join(" ", pin.shaderKeywords));
+            return pin;
+        }
+
+        /// <summary>Creates or updates <c>M_&lt;role&gt;.mat</c> and returns it. Throws on a missing input texture.</summary>
+        public static Material Build(string role)
+        {
+            if (Array.IndexOf(ArtFamilies.MaterialRoles, role) < 0)
+            {
+                throw new ArgumentException("[ArtPipeline] Unknown material role '" + role + "'", nameof(role));
+            }
+
+            Shader lit = ResolveLitShader();
+            string path = ArtPipelinePaths.Material(role);
+            EnsureFolder(ArtPipelinePaths.Materials);
+
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            bool created = material == null;
+            if (created)
+            {
+                material = new Material(lit) { name = "M_" + role };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            else if (material.shader != lit)
+            {
+                material.shader = lit;
+            }
+
+            ApplyCommon(material);
+
+            switch (role)
+            {
+                case "stone":
+                case "wood":
+                case "bark":
+                case "earth":
+                    ApplyTextured(material, role);
+                    break;
+
+                case "plaster":
+                    ApplyBaseColorOnly(material, role, 0.10f);
+                    break;
+
+                case "roof":
+                    ApplyBaseColorOnly(material, role, 0.22f);
+                    break;
+
+                default:
+                    ApplyFlat(material, FlatColour(role), FlatSmoothness(role));
+                    break;
+            }
+
+            EditorUtility.SetDirty(material);
+            Debug.Log("[ArtPipeline] Material " + (created ? "created" : "updated") + ": " + path);
+            return material;
+        }
+
+        /// <summary>The AP-001 linear albedo of a flat-coloured role (alpha 1).</summary>
+        public static Color FlatColour(string role)
+        {
+            switch (role)
+            {
+                case "green": return new Color(0.051269f, 0.104616f, 0.030713f, 1f);
+                case "moss": return new Color(0.049707f, 0.076185f, 0.027321f, 1f);
+                case "sakura_pink": return new Color(0.564712f, 0.278894f, 0.371238f, 1f);
+                case "sakura_purple": return new Color(0.230740f, 0.144128f, 0.318547f, 1f);
+                default:
+                    throw new ArgumentException("[ArtPipeline] '" + role + "' is not a flat-colour role", nameof(role));
+            }
+        }
+
+        public static float FlatSmoothness(string role)
+        {
+            switch (role)
+            {
+                case "green": return 0.14f;
+                case "moss": return 0.05f;
+                case "sakura_pink": return 0.22f;
+                case "sakura_purple": return 0.20f;
+                default:
+                    throw new ArgumentException("[ArtPipeline] '" + role + "' is not a flat-colour role", nameof(role));
+            }
+        }
+
+        /// <summary>
+        /// The value to store in a Color-typed shader property so the shader receives
+        /// <paramref name="linear"/> under the project's Linear colour space (see class
+        /// remarks). Inverse: <c>Color.linear</c>.
+        /// </summary>
+        public static Color EncodeForColorProperty(Color linear)
+        {
+            return linear.gamma;
+        }
+
+        /// <summary>
+        /// The prototype's shader library first (the same door WorldPalette goes through,
+        /// so the pilot cannot end up on a different Lit than the blockout), Shader.Find
+        /// only when the library is absent in a fresh checkout.
+        /// </summary>
+        public static Shader ResolveLitShader()
+        {
+            Shader shader = null;
+            if (PrototypeShaders.IsReady)
+            {
+                shader = PrototypeShaders.Lit;
+            }
+
+            if (shader == null)
+            {
+                shader = Shader.Find(LitShaderName);
+            }
+
+            if (shader == null)
+            {
+                throw new InvalidOperationException("[ArtPipeline] '" + LitShaderName + "' is not available; " +
+                                                    "is the Universal Render Pipeline package installed?");
+            }
+
+            return shader;
+        }
+
+        // ---------------------------------------------------------------- internals
+
+        private static void ApplyCommon(Material m)
+        {
+            // Opaque, metallic workflow, back faces culled. These mirror what URP's
+            // BaseShaderGUI writes for "Opaque / Render Face Front", which is the only
+            // supported way to put a Lit material into that state from code.
+            SetFloat(m, "_WorkflowMode", 1f);
+            SetFloat(m, "_Surface", 0f);
+            SetFloat(m, "_Blend", 0f);
+            SetFloat(m, "_AlphaClip", 0f);
+            SetFloat(m, "_SrcBlend", 1f);
+            SetFloat(m, "_DstBlend", 0f);
+            SetFloat(m, "_SrcBlendAlpha", 1f);
+            SetFloat(m, "_DstBlendAlpha", 0f);
+            SetFloat(m, "_ZWrite", 1f);
+            SetFloat(m, "_AlphaToMask", 0f);
+            SetFloat(m, "_ReceiveShadows", 1f);
+            SetFloat(m, "_SpecularHighlights", 1f);
+            SetFloat(m, "_EnvironmentReflections", 1f);
+            SetFloat(m, "_QueueOffset", 0f);
+            SetFloat(m, "_OcclusionStrength", 1f);
+            SetFloat(m, "_ClearCoatMask", 0f);
+            SetFloat(m, "_ClearCoatSmoothness", 0f);
+            m.SetFloat(CullId, 2f);
+
+            SetTexture(m, "_OcclusionMap", null);
+            SetTexture(m, "_EmissionMap", null);
+            SetTexture(m, "_ParallaxMap", null);
+            SetTexture(m, "_DetailMask", null);
+            SetTexture(m, "_DetailAlbedoMap", null);
+            SetTexture(m, "_DetailNormalMap", null);
+            SetTexture(m, "_SpecGlossMap", null);
+            SetColor(m, "_EmissionColor", Color.black);
+
+            // Tiling 1: repeat density is authored in the mesh UVs (PilotGround: one
+            // repeat per TileMetres), never in the material.
+            m.SetTextureScale(BaseMapId, Vector2.one);
+            m.SetTextureOffset(BaseMapId, Vector2.zero);
+
+            for (int i = 0; i < AlwaysOff.Length; i++)
+            {
+                m.DisableKeyword(AlwaysOff[i]);
+            }
+
+            m.SetOverrideTag("RenderType", "Opaque");
+            m.renderQueue = -1;
+            m.enableInstancing = true;
+            m.doubleSidedGI = false;
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+        }
+
+        private static void ApplyTextured(Material m, string role)
+        {
+            Texture2D baseMap = LoadTexture(ArtPipelinePaths.SourceTexture(role, "BaseColor"));
+            Texture2D normal = LoadTexture(ArtPipelinePaths.SourceTexture(role, "Normal"));
+            Texture2D mask = LoadTexture(ArtPipelinePaths.DerivedMask(role), "run ArtTextureRepack first");
+
+            m.SetTexture(BaseMapId, baseMap);
+            m.SetColor(BaseColorId, Color.white);
+            m.SetTexture(BumpMapId, normal);
+            m.SetFloat(BumpScaleId, 1f);
+            m.SetTexture(MetallicGlossMapId, mask);
+
+            // Scalars at 1: URP multiplies the map by them, so anything else would
+            // silently re-grade the AP bake.
+            m.SetFloat(MetallicId, 1f);
+            m.SetFloat(SmoothnessId, 1f);
+            m.SetFloat(SmoothnessChannelId, 0f); // 0 = Metallic Alpha
+
+            m.EnableKeyword("_NORMALMAP");
+            m.EnableKeyword("_METALLICSPECGLOSSMAP");
+        }
+
+        private static void ApplyBaseColorOnly(Material m, string role, float smoothness)
+        {
+            Texture2D baseMap = LoadTexture(ArtPipelinePaths.SourceTexture(role, "BaseColor"));
+
+            m.SetTexture(BaseMapId, baseMap);
+            m.SetColor(BaseColorId, Color.white);
+            m.SetTexture(BumpMapId, null);
+            m.SetFloat(BumpScaleId, 1f);
+            m.SetTexture(MetallicGlossMapId, null);
+            m.SetFloat(MetallicId, 0f);
+            m.SetFloat(SmoothnessId, smoothness);
+            m.SetFloat(SmoothnessChannelId, 0f);
+
+            m.DisableKeyword("_NORMALMAP");
+            m.DisableKeyword("_METALLICSPECGLOSSMAP");
+        }
+
+        private static void ApplyFlat(Material m, Color linearAlbedo, float smoothness)
+        {
+            m.SetTexture(BaseMapId, null);
+            m.SetColor(BaseColorId, EncodeForColorProperty(linearAlbedo));
+            m.SetTexture(BumpMapId, null);
+            m.SetFloat(BumpScaleId, 1f);
+            m.SetTexture(MetallicGlossMapId, null);
+            m.SetFloat(MetallicId, 0f);
+            m.SetFloat(SmoothnessId, smoothness);
+            m.SetFloat(SmoothnessChannelId, 0f);
+
+            m.DisableKeyword("_NORMALMAP");
+            m.DisableKeyword("_METALLICSPECGLOSSMAP");
+        }
+
+        private static Texture2D LoadTexture(string path, string hint = null)
+        {
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (texture == null)
+            {
+                throw new FileNotFoundException("[ArtPipeline] Texture is missing: " + path +
+                                                (hint != null ? " (" + hint + ")" : string.Empty), path);
+            }
+
+            return texture;
+        }
+
+        private static void SetFloat(Material m, string property, float value)
+        {
+            if (m.HasProperty(property))
+            {
+                m.SetFloat(property, value);
+            }
+        }
+
+        private static void SetTexture(Material m, string property, Texture value)
+        {
+            if (m.HasProperty(property))
+            {
+                m.SetTexture(property, value);
+            }
+        }
+
+        private static void SetColor(Material m, string property, Color value)
+        {
+            if (m.HasProperty(property))
+            {
+                m.SetColor(property, value);
+            }
+        }
+
+        private static void EnsureFolder(string assetFolder)
+        {
+            if (AssetDatabase.IsValidFolder(assetFolder))
+            {
+                return;
+            }
+
+            string parent = Path.GetDirectoryName(assetFolder)?.Replace('\\', '/');
+            string leaf = Path.GetFileName(assetFolder);
+            if (!string.IsNullOrEmpty(parent) && !AssetDatabase.IsValidFolder(parent))
+            {
+                EnsureFolder(parent);
+            }
+
+            AssetDatabase.CreateFolder(parent, leaf);
+        }
+    }
+}

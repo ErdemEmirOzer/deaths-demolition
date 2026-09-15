@@ -40,29 +40,41 @@
 *.shadervariants text eol=lf merge=unityyamlmerge diff
 *.preset        text eol=lf merge=unityyamlmerge diff
 
-# İkili varlıklar (bugün depoda yok; ikili asset geldiğinde LFS ihtiyacı kanıtla yeniden değerlendirilir)
-*.png  binary
-*.jpg  binary
-*.jpeg binary
-*.tga  binary
-*.psd  binary
-*.exr  binary
-*.hdr  binary
-*.tif  binary
-*.tiff binary
-*.gif  binary
-*.fbx  binary
-*.obj  binary
-*.blend binary
-*.glb  binary
-*.wav  binary
-*.mp3  binary
-*.ogg  binary
-*.ttf  binary
-*.otf  binary
+# İkili varlıklar — Git LFS (WP-011 M3 Content Pipeline Pilot, 2026-09-15; kullanıcı kararı §2)
+# Kural: ikili asset türleri LFS ile izlenir (filter=lfs diff=lfs merge=lfs -text). LFS yalnız bu pakette kuruldu
+# (git lfs install --local); remote yok, push yok. İzlenen dosyalar manifestte içerik hash'iyle listelenir (ADR-011-2).
+# Mesh / kaynak sahne
+*.fbx   filter=lfs diff=lfs merge=lfs -text
+*.glb   filter=lfs diff=lfs merge=lfs -text
+*.gltf  filter=lfs diff=lfs merge=lfs -text
+*.obj   filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.blend1 filter=lfs diff=lfs merge=lfs -text
+# Doku
+*.png   filter=lfs diff=lfs merge=lfs -text
+*.jpg   filter=lfs diff=lfs merge=lfs -text
+*.jpeg  filter=lfs diff=lfs merge=lfs -text
+*.tga   filter=lfs diff=lfs merge=lfs -text
+*.psd   filter=lfs diff=lfs merge=lfs -text
+*.exr   filter=lfs diff=lfs merge=lfs -text
+*.hdr   filter=lfs diff=lfs merge=lfs -text
+*.tif   filter=lfs diff=lfs merge=lfs -text
+*.tiff  filter=lfs diff=lfs merge=lfs -text
+*.gif   filter=lfs diff=lfs merge=lfs -text
+*.cubemap filter=lfs diff=lfs merge=lfs -text
+# Ses
+*.wav   filter=lfs diff=lfs merge=lfs -text
+*.mp3   filter=lfs diff=lfs merge=lfs -text
+*.ogg   filter=lfs diff=lfs merge=lfs -text
+*.aif   filter=lfs diff=lfs merge=lfs -text
+*.aiff  filter=lfs diff=lfs merge=lfs -text
+*.flac  filter=lfs diff=lfs merge=lfs -text
+# Yazı tipi
+*.ttf   filter=lfs diff=lfs merge=lfs -text
+*.otf   filter=lfs diff=lfs merge=lfs -text
+# Derlenmiş ikili (LFS dışı; yalnız binary — bugün depoda yok)
 *.dll  binary
 *.so   binary
 *.dylib binary
 *.a    binary
 *.bundle binary
-*.cubemap binary

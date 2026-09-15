@@ -20,4 +20,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Prototype/Scenes/Results.unity
     guid: 47577f61aff7147289b9a6d9df81631d
+  - enabled: 1
+    path: Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity
+    guid: eb051461970544542bf14347fa241352
   m_configObjects: {}

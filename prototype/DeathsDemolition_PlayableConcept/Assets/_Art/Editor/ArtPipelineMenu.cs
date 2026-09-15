@@ -1,0 +1,223 @@
+using System;
+using System.Diagnostics;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using Debug = UnityEngine.Debug;
+
+namespace DD.Art.Pipeline.EditorTools
+{
+    /// <summary>
+    /// WP-011 · The art pipeline as one menu: AP-001 export → Unity assets, in the only
+    /// order that works. Each step reads what the previous one wrote through the
+    /// AssetDatabase, so imports must have COMPLETED between steps:
+    ///
+    ///   1 repack     Source PNG (packed roughness/metallic) → Derived MetallicSmoothness PNG
+    ///   2 materials  need the derived PNG IMPORTED as a Texture2D
+    ///   3 prefabs    need the materials as assets and the FBX meshes imported
+    ///   4 library    needs the 18 prefab assets
+    ///   5 layout     JSON → ScriptableObject (independent, but the scene needs it)
+    ///   6 scenes     need layout, library, materials, ground mesh
+    ///   7 register   needs the pilot scene file on disk
+    ///
+    /// That is why there is no StartAssetEditing/StopAssetEditing bracket around the run:
+    /// batching would defer the very imports the next step depends on, and step 2 would
+    /// see a PNG file with no Texture2D behind it. Every step is followed by SaveAssets +
+    /// Refresh instead. Slower by a few seconds; correct.
+    ///
+    /// FAILURE IS AN EXCEPTION, NOT A LOG LINE
+    /// ---------------------------------------
+    /// The gate runs this headless
+    ///   Unity -batchmode -quit -projectPath &lt;project&gt; \
+    ///     -executeMethod DD.Art.Pipeline.EditorTools.ArtPipelineMenu.RunAll
+    /// and reads the process exit code. Unity only returns non-zero if the executed
+    /// method throws, so a step that merely logged an error and returned would produce a
+    /// green run with half the assets missing. Every step therefore rethrows, wrapped with
+    /// its step number so the log says WHICH step died, and the remaining steps are not
+    /// attempted on top of a broken foundation.
+    /// </summary>
+    public static class ArtPipelineMenu
+    {
+        private const string LogPrefix = "[ArtPipeline] ";
+        private const string MenuRoot = "Tools/Deaths Demolition/Art Pipeline/";
+
+        private const int StepCount = 8;
+
+        [MenuItem(MenuRoot + "Run All", priority = 300)]
+        public static void RunAll()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run All cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run All: start (" + (Application.isBatchMode ? "batch" : "interactive") + ", Unity " +
+                      Application.unityVersion + ")");
+
+            Step(1, "Repack textures", ArtTextureRepack.BuildAll);
+            Step(2, "Build materials", ArtMaterialBuilder.BuildAll);
+            Step(3, "Build family prefabs", ArtFamilyPrefabBuilder.BuildAll);
+            Step(4, "Build family library", BuildLibrary);
+            Step(5, "Build layout asset", BuildLayout);
+            Step(6, "Build pilot scene", PilotSceneBuilder.BuildPilotScene);
+            Step(7, "Build kit shelf", PilotSceneBuilder.BuildKitShelf);
+            Step(8, "Register pilot scene in build settings", PilotSceneBuilder.RegisterInBuildSettings);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            // The summary goes to the log on purpose: in a batch run the Editor.log is the
+            // only artefact, and this block is what the evidence folder keeps.
+            Debug.Log(ArtPipelineReport.Describe());
+            Debug.Log(LogPrefix + "Run All: done in " + Seconds(total) + " s.");
+        }
+
+        // ------------------------------------------------------------ single steps
+
+        [MenuItem(MenuRoot + "1. Repack Textures", priority = 320)]
+        public static void RepackTextures()
+        {
+            Single("Repack textures", ArtTextureRepack.BuildAll);
+        }
+
+        [MenuItem(MenuRoot + "2. Build Materials", priority = 321)]
+        public static void BuildMaterials()
+        {
+            Single("Build materials", ArtMaterialBuilder.BuildAll);
+        }
+
+        [MenuItem(MenuRoot + "3. Build Family Prefabs", priority = 322)]
+        public static void BuildFamilyPrefabs()
+        {
+            Single("Build family prefabs", ArtFamilyPrefabBuilder.BuildAll);
+            Single("Build family library", BuildLibrary);
+        }
+
+        [MenuItem(MenuRoot + "4. Build Layout Asset", priority = 323)]
+        public static void BuildLayoutAsset()
+        {
+            Single("Build layout asset", BuildLayout);
+        }
+
+        [MenuItem(MenuRoot + "5. Build Pilot Scene", priority = 324)]
+        public static void BuildPilotScene()
+        {
+            Single("Build pilot scene", PilotSceneBuilder.BuildPilotScene);
+        }
+
+        [MenuItem(MenuRoot + "6. Build Kit Shelf", priority = 325)]
+        public static void BuildKitShelf()
+        {
+            Single("Build kit shelf", PilotSceneBuilder.BuildKitShelf);
+        }
+
+        [MenuItem(MenuRoot + "7. Register Pilot Scene In Build Settings", priority = 326)]
+        public static void RegisterInBuildSettings()
+        {
+            Single("Register pilot scene in build settings", PilotSceneBuilder.RegisterInBuildSettings);
+        }
+
+        // ------------------------------------------------------------- utilities
+
+        [MenuItem(MenuRoot + "Print Report", priority = 340)]
+        public static void PrintReport()
+        {
+            Debug.Log(ArtPipelineReport.Describe());
+        }
+
+        [MenuItem(MenuRoot + "Open Pilot Scene", priority = 360)]
+        public static void OpenPilotScene()
+        {
+            OpenScene(ArtPipelinePaths.PilotScene);
+        }
+
+        [MenuItem(MenuRoot + "Open Kit Shelf", priority = 361)]
+        public static void OpenKitShelf()
+        {
+            OpenScene(ArtPipelinePaths.KitShelfScene);
+        }
+
+        // ------------------------------------------------------------- internals
+
+        private static void BuildLibrary()
+        {
+            ArtFamilyPrefabBuilder.BuildLibrary();
+        }
+
+        private static void BuildLayout()
+        {
+            GoldenSliceLayoutBuilder.Build();
+        }
+
+        /// <summary>One RunAll step: timed, logged, imports flushed, failure wrapped and rethrown.</summary>
+        private static void Step(int index, string name, Action action)
+        {
+            // index 0 = run from its own menu item, outside the numbered sequence.
+            string label = index > 0
+                ? "step " + index + "/" + StepCount + " '" + name + "'"
+                : "'" + name + "'";
+            Stopwatch watch = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + label + ": start");
+
+            try
+            {
+                action();
+
+                // Flush before the next step reads the AssetDatabase. See class remarks.
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
+            catch (OperationCanceledException)
+            {
+                // The user declined to save the open scene. Not a failure, so no error
+                // line; Single() turns it into a message and batch mode never raises it.
+                throw;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(LogPrefix + label + " FAILED after " + Seconds(watch) + " s: " + e.Message);
+                throw new InvalidOperationException(LogPrefix + label + " failed: " + e.Message, e);
+            }
+
+            Debug.Log(LogPrefix + label + ": done in " + Seconds(watch) + " s");
+        }
+
+        /// <summary>
+        /// A step run from its own menu item. Same flush as inside RunAll; a user
+        /// cancelling a "save the open scene?" dialog is a message, not an error.
+        /// </summary>
+        private static void Single(string name, Action action)
+        {
+            try
+            {
+                Step(0, name, action);
+            }
+            catch (OperationCanceledException e)
+            {
+                Debug.Log(e.Message);
+            }
+        }
+
+        private static void OpenScene(string path)
+        {
+            if (!System.IO.File.Exists(path))
+            {
+                Debug.LogWarning(LogPrefix + path + " does not exist yet. Run the pipeline first.");
+                return;
+            }
+
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                return;
+            }
+
+            EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+        }
+
+        private static string Seconds(Stopwatch watch)
+        {
+            return watch.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+}
