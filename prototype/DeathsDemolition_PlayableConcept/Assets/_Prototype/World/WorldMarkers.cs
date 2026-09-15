@@ -154,9 +154,54 @@ namespace DD.Prototype.World
         /// <summary>
         /// Creates the markers and returns the positions foliage must keep clear of.
         /// </summary>
+        /// <summary>
+        /// WP-014 · One marker set: the twelve spawns, the twelve weapon points and the
+        /// player start with explicit world positions. The procedural world fills it from
+        /// the tables above (heights from its own terrain); the AP-005 world fills it from
+        /// placement.json (ADR-014-1). Same ids either way, so the spawn director and the
+        /// weapon selector never learn which world they are in.
+        /// </summary>
+        public struct MarkerSet
+        {
+            public SpawnPlacement[] Spawns;
+            public Vector3[] SpawnPositions;
+            public WeaponPlacement[] Weapons;
+            public Vector3[] WeaponPositions;
+            public Vector3 PlayerStart;
+        }
+
+        public static MarkerSet ProceduralSet()
+        {
+            var set = new MarkerSet
+            {
+                Spawns = Spawns,
+                SpawnPositions = new Vector3[Spawns.Length],
+                Weapons = Weapons,
+                WeaponPositions = new Vector3[Weapons.Length],
+                PlayerStart = WorldLayout.PlayerStart
+            };
+
+            for (int i = 0; i < Spawns.Length; i++)
+            {
+                set.SpawnPositions[i] = Ground(Spawns[i].X, Spawns[i].Z);
+            }
+
+            for (int i = 0; i < Weapons.Length; i++)
+            {
+                set.WeaponPositions[i] = Ground(Weapons[i].X, Weapons[i].Z);
+            }
+
+            return set;
+        }
+
         public static List<Vector2> Build(Transform root)
         {
-            var keepOut = new List<Vector2>(Spawns.Length + Weapons.Length + 1);
+            return Build(root, ProceduralSet());
+        }
+
+        public static List<Vector2> Build(Transform root, MarkerSet set)
+        {
+            var keepOut = new List<Vector2>(set.Spawns.Length + set.Weapons.Length + 1);
 
             // The courtyard IS the origin, so the ring classifier needs no offset - but
             // say it out loud rather than relying on the default, because the default is
@@ -164,23 +209,23 @@ namespace DD.Prototype.World
             RingRegionMap.MapCenter = Vector3.zero;
             RingRegionMap.CenterRadius = WorldLayout.CenterRadius;
 
-            BuildSpawns(WorldPiece.Group(root, "Spawn Points"), keepOut);
-            BuildWeapons(WorldPiece.Group(root, "Special Weapon Points"), keepOut);
-            BuildPlayerStart(root, keepOut);
+            BuildSpawns(WorldPiece.Group(root, "Spawn Points"), set, keepOut);
+            BuildWeapons(WorldPiece.Group(root, "Special Weapon Points"), set, keepOut);
+            BuildPlayerStart(root, set.PlayerStart, keepOut);
 
             return keepOut;
         }
 
-        private static void BuildSpawns(Transform group, List<Vector2> keepOut)
+        private static void BuildSpawns(Transform group, MarkerSet set, List<Vector2> keepOut)
         {
-            for (int i = 0; i < Spawns.Length; i++)
+            for (int i = 0; i < set.Spawns.Length; i++)
             {
-                SpawnPlacement p = Spawns[i];
+                SpawnPlacement p = set.Spawns[i];
 
                 var go = new GameObject("Spawn_" + p.Id);
                 go.SetActive(false);
                 go.transform.SetParent(group, false);
-                go.transform.position = Ground(p.X, p.Z);
+                go.transform.position = set.SpawnPositions[i];
                 go.transform.rotation = FaceCentre(p.X, p.Z);
 
                 SpawnPointMarker marker = go.AddComponent<SpawnPointMarker>();
@@ -196,16 +241,16 @@ namespace DD.Prototype.World
             }
         }
 
-        private static void BuildWeapons(Transform group, List<Vector2> keepOut)
+        private static void BuildWeapons(Transform group, MarkerSet set, List<Vector2> keepOut)
         {
-            for (int i = 0; i < Weapons.Length; i++)
+            for (int i = 0; i < set.Weapons.Length; i++)
             {
-                WeaponPlacement p = Weapons[i];
+                WeaponPlacement p = set.Weapons[i];
 
                 var go = new GameObject(p.Name);
                 go.SetActive(false);
                 go.transform.SetParent(group, false);
-                go.transform.position = Ground(p.X, p.Z);
+                go.transform.position = set.WeaponPositions[i];
 
                 SpecialWeaponSpawnPoint point = go.AddComponent<SpecialWeaponSpawnPoint>();
                 JsonUtility.FromJsonOverwrite(
@@ -218,19 +263,19 @@ namespace DD.Prototype.World
             }
         }
 
-        private static void BuildPlayerStart(Transform root, List<Vector2> keepOut)
+        private static void BuildPlayerStart(Transform root, Vector3 playerStart, List<Vector2> keepOut)
         {
             var go = new GameObject("Player Start (Round 1)");
             go.SetActive(false);
             go.transform.SetParent(root, false);
-            go.transform.position = WorldLayout.PlayerStart;
+            go.transform.position = playerStart;
 
             // Facing 0 is the camera's forward, which is +Z: the player opens the run
             // looking up the palace road at the main gate and the palace roof behind it.
             go.AddComponent<PlayerSpawner>();
 
             go.SetActive(true);
-            keepOut.Add(new Vector2(WorldLayout.PlayerStart.x, WorldLayout.PlayerStart.z));
+            keepOut.Add(new Vector2(playerStart.x, playerStart.z));
         }
 
         /// <summary>

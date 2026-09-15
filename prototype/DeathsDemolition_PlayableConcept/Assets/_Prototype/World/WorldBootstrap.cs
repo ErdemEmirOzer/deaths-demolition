@@ -2,6 +2,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Rounds;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 namespace DD.Prototype.World
 {
@@ -52,8 +53,30 @@ namespace DD.Prototype.World
         /// <summary>The most recent build. Empty Root means nothing has been built yet.</summary>
         public static WorldBuilder.Result Last => s_last;
 
+        /// <summary>WP-014: the world the Run scene actually loaded (Procedural until Awake resolves it).</summary>
+        public static WorldSource ActiveSource { get; private set; } = WorldSource.Procedural;
+
         private void Awake()
         {
+            // WP-014: the authored world (ADR-014-1). Everything below — the procedural
+            // build, the run systems — belongs to the world scene's own bootstrap in that
+            // case; loading it additively keeps the active scene "Run" for the HUD, the flow
+            // and the probes, which all key on that name.
+            WorldSource source = WorldSourceSettings.Resolve(out string worldScene);
+            ActiveSource = source;
+            if (source == WorldSource.AP005 && _buildOnAwake)
+            {
+                if (Application.CanStreamedLevelBeLoaded(worldScene))
+                {
+                    WorldBuilder.Clear();
+                    SceneManager.LoadScene(worldScene, LoadSceneMode.Additive);
+                    return;
+                }
+
+                Debug.LogError("[World] WorldSource AP005 but scene '" + worldScene + "' is not in the build settings; falling back to the procedural world.", this);
+                ActiveSource = WorldSource.Procedural;
+            }
+
             if (_buildOnAwake)
             {
                 BuildNow();

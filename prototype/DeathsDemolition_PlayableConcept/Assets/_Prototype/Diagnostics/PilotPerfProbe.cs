@@ -351,6 +351,12 @@ namespace DD.Prototype.Diagnostics
             public long gcAllocatedInWindowTotal;
             public string unavailableCounters;
             public int gen0CollectionsInWindow;
+            /// <summary>WP-014: p99 over the frames at or under 33.33 ms (host presentation stalls excluded) and how many frames that excluded.</summary>
+            public float frameP99FilteredMs;
+            public int framesExcludedAsStalls;
+            /// <summary>WP-014: the world the Run scene loaded (WorldBootstrap.ActiveSource) — Procedural or AP005.</summary>
+            public string worldSource;
+
             /// <summary>WP-012: frames over 16.667 ms in the window, and how many of those coincided with a gen0 collection.</summary>
             public int spikeFrames;
             public int spikeFramesWithGen0;
@@ -783,6 +789,7 @@ namespace DD.Prototype.Diagnostics
 
                 Stage s4 = Capture("04-window");
                 s4.lodBiasEffective = QualitySettings.lodBias;
+                s4.worldSource = _scene == PrototypeScenes.Run ? WorldBootstrap.ActiveSource.ToString() : _scene;
                 s4.windowSeconds = windowSeconds;
                 s4.frameCount = frames;
                 s4.frameCountRequired = Mathf.CeilToInt(_windowSeconds * 20f);
@@ -818,9 +825,9 @@ namespace DD.Prototype.Diagnostics
                 // Integrity, not speed: enough frames to be a distribution, and the load the
                 // window was meant to measure actually present for (nearly) all of it.
                 s4.pass = frames >= s4.frameCountRequired && s4.loadIntegrityFraction >= LoadIntegrityRequired;
-                s4.note = frames + " frames / " + windowSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s uncapped (lodBias " + s4.lodBiasEffective.ToString("0.00", CultureInfo.InvariantCulture) + "): mean " + s4.frameMeanMs.ToString("F2", CultureInfo.InvariantCulture) +
+                s4.note = frames + " frames / " + windowSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s uncapped (lodBias " + s4.lodBiasEffective.ToString("0.00", CultureInfo.InvariantCulture) + ", world " + s4.worldSource + "): mean " + s4.frameMeanMs.ToString("F2", CultureInfo.InvariantCulture) +
                           " ms (" + s4.avgFps.ToString("F1", CultureInfo.InvariantCulture) + " fps) median " + s4.frameMedianMs.ToString("F2", CultureInfo.InvariantCulture) +
-                          " p99 " + s4.frameP99Ms.ToString("F2", CultureInfo.InvariantCulture) + " 1%low " + s4.frameWorst1PctMeanMs.ToString("F2", CultureInfo.InvariantCulture) +
+                          " p99 " + s4.frameP99Ms.ToString("F2", CultureInfo.InvariantCulture) + " p99filtered " + s4.frameP99FilteredMs.ToString("F2", CultureInfo.InvariantCulture) + " (stalls>33.3ms " + s4.framesExcludedAsStalls + ")" + " 1%low " + s4.frameWorst1PctMeanMs.ToString("F2", CultureInfo.InvariantCulture) +
                           " 0.1%low " + s4.frameWorst01PctMeanMs.ToString("F2", CultureInfo.InvariantCulture) + " max " + s4.frameMaxMs.ToString("F2", CultureInfo.InvariantCulture) +
                           " | >16.67ms " + s4.framesOver16_667Ms + " (" + (s4.fractionOver16_667Ms * 100f).ToString("F1", CultureInfo.InvariantCulture) + "%) >33.33ms " + s4.framesOver33_333Ms +
                           " | draw " + s4.drawCallsAvg.ToString("F0", CultureInfo.InvariantCulture) + " setPass " + s4.setPassCallsAvg.ToString("F0", CultureInfo.InvariantCulture) +
@@ -1145,6 +1152,13 @@ namespace DD.Prototype.Diagnostics
                 s.frameMedianMs = (n & 1) == 1 ? sorted[n / 2] : 0.5f * (sorted[n / 2 - 1] + sorted[n / 2]);
                 s.frameP99Ms = Percentile(sorted, 0.99f);
                 s.frameP999Ms = Percentile(sorted, 0.999f);
+                // WP-014: the stall-filtered p99 — frames above two 60 Hz intervals (33.33 ms)
+                // are presentation stalls of the host (another window, a batch job), not the
+                // scene; they are counted separately and excluded from this percentile.
+                int kept = 0;
+                for (int i = 0; i < n; i++) if (sorted[i] <= FrameBudget30Ms) kept++;
+                s.frameP99FilteredMs = kept > 0 ? Percentile(sorted, Mathf.Min(0.99f * kept / n, 1f)) : 0f;
+                s.framesExcludedAsStalls = n - kept;
                 s.frameWorst1PctMeanMs = WorstMean(sorted, 0.01f);
                 s.frameWorst01PctMeanMs = WorstMean(sorted, 0.001f);
                 s.frameMaxMs = sorted[n - 1];

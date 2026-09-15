@@ -212,7 +212,7 @@ namespace DD.Art.Tests.EditMode
         // ------------------------------------------------------------------ build settings
 
         [Test]
-        public void BuildSettings_AltiSahne_IlkBesDegismemis_AltinciPilot()
+        public void BuildSettings_YediSahne_IlkBesDegismemis_AltinciPilot_YedinciAp005()
         {
             string[] ilkBes =
             {
@@ -230,7 +230,7 @@ namespace DD.Art.Tests.EditMode
                 yollar.Add((s.enabled ? "" : "[kapalı] ") + s.path);
             }
 
-            Assert.AreEqual(6, sahneler.Length, "Build Settings'te tam 6 sahne olmalı (5 prototip + pilot); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
+            Assert.AreEqual(7, sahneler.Length, "Build Settings'te tam 7 sahne olmalı (5 prototip + pilot + WP-014 AP-005 dünyası); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
 
             for (int i = 0; i < ilkBes.Length; i++)
             {
@@ -243,6 +243,10 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(sahneler[5].enabled, "Pilot sahne kapalı.");
             Assert.IsTrue(File.Exists(sahneler[5].path), "Pilot sahne diskte yok: " + sahneler[5].path);
             Assert.AreEqual(ArtPipelinePaths.PilotSceneName, Path.GetFileNameWithoutExtension(sahneler[5].path), "Pilot sahne adı sözleşmeyle aynı olmalı.");
+            Assert.AreEqual(ArtLibraryPaths.Ap005WorldScene, sahneler[6].path, "7. sahne AP-005 dünyası olmalı (WP-014).");
+            Assert.IsTrue(sahneler[6].enabled, "AP-005 dünya sahnesi kapalı.");
+            Assert.IsTrue(File.Exists(sahneler[6].path), "AP-005 dünya sahnesi diskte yok: " + sahneler[6].path);
+            Assert.AreEqual(ArtLibraryPaths.Ap005WorldSceneName, Path.GetFileNameWithoutExtension(sahneler[6].path), "AP-005 sahne adı sözleşmeyle aynı olmalı.");
 
             foreach (EditorBuildSettingsScene s in sahneler)
             {

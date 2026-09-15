@@ -1,0 +1,1198 @@
+{
+ "ap": "AP-005",
+ "version": "AP005.export-manifest.v001 2026-09-15T19:17:56",
+ "sources": [
+  {
+   "path": "/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/asset-production/AP-005/exports/export-manifest.json",
+   "sha256": "451b2cff1f0e57fc7fc1290d76846842efb71b89a077c9702212b3dcc90a2f0a"
+  }
+ ],
+ "derived": "source FBX used directly (embed_textures False, path_mode STRIP); textures byte-identical to the WP-011 AP-001 set (roles earth/stone/wood/plaster)",
+ "families": [
+  {
+   "family": "ground",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_ground_V01",
+     "boundsMin": [
+      -29.0,
+      -28.0,
+      0.0
+     ],
+     "boundsMax": [
+      29.0,
+      28.0,
+      0.034
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_ground_V01.fbx",
+         "object": "AP005_ground_V01_LOD0",
+         "materials": [
+          "earth"
+         ],
+         "facesPerSlot": [
+          648
+         ],
+         "triangles": 648,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_ground_V01.fbx",
+         "object": "AP005_ground_V01_LOD1",
+         "materials": [
+          "earth"
+         ],
+         "facesPerSlot": [
+          236
+         ],
+         "triangles": 236,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_ground_V01.fbx",
+         "object": "AP005_ground_V01_LOD2",
+         "materials": [
+          "earth"
+         ],
+         "facesPerSlot": [
+          2
+         ],
+         "triangles": 2,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_ground_V01.fbx",
+       "object": "AP005_ground_V01_COL",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -29.0,
+          -28.0,
+          -0.066
+         ],
+         "max": [
+          29.0,
+          28.0,
+          0.034
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP005_ground_V01.fbx",
+       "object": "AP005_ground_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -29.0,
+          -28.0,
+          0.0
+         ],
+         "max": [
+          29.0,
+          28.0,
+          0.034
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "hero_earth",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_hero_earth_V01",
+     "boundsMin": [
+      -0.883877,
+      -0.846579,
+      0.0
+     ],
+     "boundsMax": [
+      0.883881,
+      0.846579,
+      0.049668
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_hero_earth_V01.fbx",
+         "object": "AP005_hero_earth_V01_LOD0",
+         "materials": [
+          "earth"
+         ],
+         "facesPerSlot": [
+          960
+         ],
+         "triangles": 960,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_hero_earth_V01.fbx",
+         "object": "AP005_hero_earth_V01_LOD1",
+         "materials": [
+          "earth"
+         ],
+         "facesPerSlot": [
+          376
+         ],
+         "triangles": 376,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_hero_earth_V01.fbx",
+         "object": "AP005_hero_earth_V01_LOD2",
+         "materials": [
+          "earth"
+         ],
+         "facesPerSlot": [
+          112
+         ],
+         "triangles": 112,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_hero_earth_V01.fbx",
+       "object": "AP005_hero_earth_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.88,
+          -0.84,
+          0.0
+         ],
+         "max": [
+          0.88,
+          0.84,
+          0.04
+         ],
+         "positions": 86
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "quiet_paving",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_quiet_paving_V01",
+     "boundsMin": [
+      -27.748001,
+      -25.493999,
+      0.0
+     ],
+     "boundsMax": [
+      27.747999,
+      25.493999,
+      0.025
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_quiet_paving_V01.fbx",
+         "object": "AP005_quiet_paving_V01_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          13940
+         ],
+         "triangles": 13940,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_quiet_paving_V01.fbx",
+         "object": "AP005_quiet_paving_V01_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          4518
+         ],
+         "triangles": 4518,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_quiet_paving_V01.fbx",
+         "object": "AP005_quiet_paving_V01_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          1358
+         ],
+         "triangles": 1358,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_quiet_paving_V01.fbx",
+       "object": "AP005_quiet_paving_V01_COL",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -27.748001,
+          -25.493999,
+          -0.075
+         ],
+         "max": [
+          27.748001,
+          25.493999,
+          0.025
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP005_quiet_paving_V01.fbx",
+       "object": "AP005_quiet_paving_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -27.748001,
+          -25.493999,
+          0.0
+         ],
+         "max": [
+          27.748001,
+          25.493999,
+          0.025
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "ring_transition",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_ring_transition_V01",
+     "boundsMin": [
+      -1.5,
+      -3.5,
+      0.0
+     ],
+     "boundsMax": [
+      1.5,
+      3.5,
+      0.08
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_ring_transition_V01.fbx",
+         "object": "AP005_ring_transition_V01_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_ring_transition_V01.fbx",
+         "object": "AP005_ring_transition_V01_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          22
+         ],
+         "triangles": 22,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_ring_transition_V01.fbx",
+         "object": "AP005_ring_transition_V01_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_ring_transition_V01.fbx",
+       "object": "AP005_ring_transition_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -3.5,
+          0.0
+         ],
+         "max": [
+          1.5,
+          3.5,
+          0.08
+         ],
+         "positions": 24
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_veranda",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_veranda_V01",
+     "boundsMin": [
+      -1.5,
+      -1.0,
+      0.0
+     ],
+     "boundsMax": [
+      1.5,
+      1.0,
+      0.35
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_palace_veranda_V01.fbx",
+         "object": "AP005_palace_veranda_V01_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_veranda_V01.fbx",
+         "object": "AP005_palace_veranda_V01_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          22
+         ],
+         "triangles": 22,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_veranda_V01.fbx",
+         "object": "AP005_palace_veranda_V01_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_palace_veranda_V01.fbx",
+       "object": "AP005_palace_veranda_V01_COL",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -1.0,
+          0.25
+         ],
+         "max": [
+          1.5,
+          1.0,
+          0.35
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP005_palace_veranda_V01.fbx",
+       "object": "AP005_palace_veranda_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -1.0,
+          0.0
+         ],
+         "max": [
+          1.5,
+          1.0,
+          0.35
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_screen",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_screen_V01",
+     "boundsMin": [
+      -1.36,
+      -0.083752,
+      0.0
+     ],
+     "boundsMax": [
+      1.36,
+      0.083752,
+      5.85
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_palace_screen_V01.fbx",
+         "object": "AP005_palace_screen_V01_LOD0",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          780
+         ],
+         "triangles": 780,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_screen_V01.fbx",
+         "object": "AP005_palace_screen_V01_LOD1",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          304
+         ],
+         "triangles": 304,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_screen_V01.fbx",
+         "object": "AP005_palace_screen_V01_LOD2",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          90
+         ],
+         "triangles": 90,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_palace_screen_V01.fbx",
+       "object": "AP005_palace_screen_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.36,
+          -0.083752,
+          0.0
+         ],
+         "max": [
+          1.36,
+          0.083752,
+          5.85
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_clerestory",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_clerestory_V01",
+     "boundsMin": [
+      -1.5,
+      -0.11375,
+      0.0
+     ],
+     "boundsMax": [
+      1.5,
+      0.11375,
+      0.91
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_palace_clerestory_V01.fbx",
+         "object": "AP005_palace_clerestory_V01_LOD0",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          600
+         ],
+         "triangles": 600,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_clerestory_V01.fbx",
+         "object": "AP005_palace_clerestory_V01_LOD1",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          234
+         ],
+         "triangles": 234,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_clerestory_V01.fbx",
+         "object": "AP005_palace_clerestory_V01_LOD2",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          70
+         ],
+         "triangles": 70,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_palace_clerestory_V01.fbx",
+       "object": "AP005_palace_clerestory_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -0.11375,
+          0.0
+         ],
+         "max": [
+          1.5,
+          0.11375,
+          0.91
+         ],
+         "positions": 36
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_rafters",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_rafters_V01",
+     "boundsMin": [
+      -1.31,
+      -1.096998,
+      0.0
+     ],
+     "boundsMax": [
+      1.31,
+      1.096996,
+      1.045875
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_palace_rafters_V01.fbx",
+         "object": "AP005_palace_rafters_V01_LOD0",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          264
+         ],
+         "triangles": 264,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_rafters_V01.fbx",
+         "object": "AP005_palace_rafters_V01_LOD1",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          102
+         ],
+         "triangles": 102,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_rafters_V01.fbx",
+         "object": "AP005_palace_rafters_V01_LOD2",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          29
+         ],
+         "triangles": 29,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_palace_rafters_V01.fbx",
+       "object": "AP005_palace_rafters_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.31,
+          -1.096998,
+          0.0
+         ],
+         "max": [
+          1.31,
+          1.096996,
+          1.045875
+         ],
+         "positions": 26
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_return",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_return_V01",
+     "boundsMin": [
+      -0.15,
+      -3.924999,
+      0.0
+     ],
+     "boundsMax": [
+      0.15,
+      3.924999,
+      6.5
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_palace_return_V01.fbx",
+         "object": "AP005_palace_return_V01_LOD0",
+         "materials": [
+          "plaster"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_return_V01.fbx",
+         "object": "AP005_palace_return_V01_LOD1",
+         "materials": [
+          "plaster"
+         ],
+         "facesPerSlot": [
+          22
+         ],
+         "triangles": 22,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_return_V01.fbx",
+         "object": "AP005_palace_return_V01_LOD2",
+         "materials": [
+          "plaster"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_palace_return_V01.fbx",
+       "object": "AP005_palace_return_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.15,
+          -3.924999,
+          0.0
+         ],
+         "max": [
+          0.15,
+          3.924999,
+          6.5
+         ],
+         "positions": 24
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_gable",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_gable_V01",
+     "boundsMin": [
+      -0.15,
+      -4.0,
+      0.0
+     ],
+     "boundsMax": [
+      0.15,
+      4.0,
+      3.54
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_palace_gable_V01.fbx",
+         "object": "AP005_palace_gable_V01_LOD0",
+         "materials": [
+          "plaster"
+         ],
+         "facesPerSlot": [
+          32
+         ],
+         "triangles": 32,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_gable_V01.fbx",
+         "object": "AP005_palace_gable_V01_LOD1",
+         "materials": [
+          "plaster"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_gable_V01.fbx",
+         "object": "AP005_palace_gable_V01_LOD2",
+         "materials": [
+          "plaster"
+         ],
+         "facesPerSlot": [
+          8
+         ],
+         "triangles": 8,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_palace_gable_V01.fbx",
+       "object": "AP005_palace_gable_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.15,
+          -4.0,
+          0.0
+         ],
+         "max": [
+          0.15,
+          4.0,
+          3.54
+         ],
+         "positions": 14
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_gable_timber",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_gable_timber_V01",
+     "boundsMin": [
+      -0.175001,
+      -3.055,
+      0.0
+     ],
+     "boundsMax": [
+      0.174999,
+      3.055,
+      3.64
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_palace_gable_timber_V01.fbx",
+         "object": "AP005_palace_gable_timber_V01_LOD0",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          300
+         ],
+         "triangles": 300,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_gable_timber_V01.fbx",
+         "object": "AP005_palace_gable_timber_V01_LOD1",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          116
+         ],
+         "triangles": 116,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_gable_timber_V01.fbx",
+         "object": "AP005_palace_gable_timber_V01_LOD2",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          34
+         ],
+         "triangles": 34,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_palace_gable_timber_V01.fbx",
+       "object": "AP005_palace_gable_timber_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.175001,
+          -3.055,
+          0.0
+         ],
+         "max": [
+          0.174999,
+          3.055,
+          3.64
+         ],
+         "positions": 40
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_east_timber",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_east_timber_V01",
+     "boundsMin": [
+      -0.190001,
+      -3.950001,
+      0.0
+     ],
+     "boundsMax": [
+      0.190001,
+      3.950001,
+      6.5
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005_palace_east_timber_V01.fbx",
+         "object": "AP005_palace_east_timber_V01_LOD0",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_east_timber_V01.fbx",
+         "object": "AP005_palace_east_timber_V01_LOD1",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          164
+         ],
+         "triangles": 164,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005_palace_east_timber_V01.fbx",
+         "object": "AP005_palace_east_timber_V01_LOD2",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005_palace_east_timber_V01.fbx",
+       "object": "AP005_palace_east_timber_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.190001,
+          -3.950001,
+          0.0
+         ],
+         "max": [
+          0.190001,
+          3.950001,
+          6.5
+         ],
+         "positions": 40
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

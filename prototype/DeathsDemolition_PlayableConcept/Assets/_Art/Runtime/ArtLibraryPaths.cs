@@ -19,8 +19,22 @@ namespace DD.Art
     /// </summary>
     public static class ArtLibraryPaths
     {
-        /// <summary>The three libraries this package imports, in production order.</summary>
-        public static readonly string[] Packages = { "AP-002", "AP-003", "AP-003B" };
+        /// <summary>The imported libraries, in production order (WP-012: AP-002/AP-003/AP-003B; WP-014: AP-005 modules).</summary>
+        public static readonly string[] Packages = { "AP-002", "AP-003", "AP-003B", "AP-005" };
+
+        // ------------------------------------------------------------ WP-014 world assembly
+
+        public const string WorldRoot = ArtPipelinePaths.ArtRoot + "/Environment/World";
+        /// <summary>The AP-005 placement source (dd-placement-v1), byte-identical copy of exports/placement.json.</summary>
+        public const string Ap005PlacementJson = WorldRoot + "/AP005_placement.json";
+        /// <summary>The imported placement (Unity space) the importer and the world bootstrap read.</summary>
+        public const string Ap005PlacementAsset = WorldRoot + "/AP005_Placement.asset";
+        /// <summary>The stand-in soil ground under the whole 90 m map (AP-005 ships only the NE golden-slice ground plate); holes at the koi basins.</summary>
+        public const string Ap005GroundMesh = WorldRoot + "/AP005_GroundStandIn.asset";
+        public const string Ap005WorldScene = ArtPipelinePaths.ArtRoot + "/Scenes/World_AP005.unity";
+        public const string Ap005WorldSceneName = "World_AP005";
+        public const string Ap005NavMeshData = ArtPipelinePaths.ArtRoot + "/Scenes/World_AP005/NavMesh-World_AP005.asset";
+        public const string WorldSourceAsset = ArtPipelinePaths.ArtRoot + "/Resources/DD_WorldSource.asset";
 
         public const string ShowcaseScene = ArtPipelinePaths.ArtRoot + "/Scenes/AP_LibraryShowcase.unity";
         public const string ShowcaseSceneName = "AP_LibraryShowcase";

@@ -141,14 +141,17 @@ namespace DD.Prototype.Tests.EditMode
                 PrototypeScenes.Selection,
                 PrototypeScenes.Run,
                 PrototypeScenes.Results,
-                "AP001_GoldenSlice"
+                "AP001_GoldenSlice",
+                "World_AP005"
             };
 
             EditorBuildSettingsScene[] sahneler = EditorBuildSettings.scenes;
             Assert.AreEqual(beklenen.Length, sahneler.Length,
-                "Build Settings'te tam olarak altı sahne olmalı (beş prototip sahnesi + WP-011 pilot sahnesi), " + sahneler.Length + " var.");
+                "Build Settings'te tam olarak yedi sahne olmalı (beş prototip sahnesi + WP-011 pilot sahnesi + WP-014 AP-005 dünya sahnesi), " + sahneler.Length + " var.");
             Assert.AreEqual("Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity", sahneler[5].path,
                 "Altıncı sahne WP-011 pilot sahnesi olmalı.");
+            Assert.AreEqual("Assets/_Art/Scenes/World_AP005.unity", sahneler[6].path,
+                "Yedinci sahne WP-014 AP-005 dünya sahnesi olmalı (Run'a additive yüklenir).");
 
             for (int i = 0; i < beklenen.Length; i++)
             {

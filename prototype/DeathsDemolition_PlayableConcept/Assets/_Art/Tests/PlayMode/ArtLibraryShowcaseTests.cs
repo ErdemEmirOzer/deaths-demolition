@@ -28,7 +28,7 @@ namespace DD.Art.Tests
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Vitrin_107Ornek_ReferansPozYakalama_SiyahVeMagentaDegil()
+        public IEnumerator Vitrin_119Ornek_ReferansPozYakalama_SiyahVeMagentaDegil()
         {
 #if UNITY_EDITOR
             var parameters = new LoadSceneParameters(LoadSceneMode.Single);
@@ -48,7 +48,7 @@ namespace DD.Art.Tests
                 }
             }
 
-            Assert.AreEqual(107, ornek, "12 + 42 + 53 varyasyon örneği");
+            Assert.AreEqual(119, ornek, "12 + 42 + 53 + 12 varyasyon örneği");
 
             for (int i = 0; i < 10; i++) yield return null;
 

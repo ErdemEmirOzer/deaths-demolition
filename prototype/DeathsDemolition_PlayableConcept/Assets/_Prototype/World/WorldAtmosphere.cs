@@ -188,6 +188,20 @@ namespace DD.Prototype.World
         }
 
         /// <summary>
+        /// WP-014 · The same lighting, environment, volume, wind and drift as
+        /// <see cref="Build"/>, for a world that brings its own regions (the AP-005 scene
+        /// derives them from placement.json) and no procedural palette.
+        /// </summary>
+        public static void BuildFor(Transform root, VolumeProfile profile, DriftRegion[] regions)
+        {
+            ApplyLighting(root);
+            ApplyEnvironment();
+            EnsureVolume(root, profile);
+            EnsureWind(root);
+            BuildDrift(WorldPiece.Group(root, "Atmosphere"), regions ?? DefaultRunRegions(), null);
+        }
+
+        /// <summary>
         /// The Run map's region table (PROTOTYPE-ONLY; WP-014 replaces it with region data):
         /// pollen everywhere, a thin petal drift everywhere, a dense one over the east garden.
         /// </summary>

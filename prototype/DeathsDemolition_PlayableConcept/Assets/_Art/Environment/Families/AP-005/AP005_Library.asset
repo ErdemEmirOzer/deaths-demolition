@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP005_Library
+  m_EditorClassIdentifier: 
+  ap: AP-005
+  items:
+  - family: ground
+    variation: V01
+    prefab: {fileID: 591243892071363739, guid: 8e1a98a08177b4f218b27db190be0aed, type: 3}
+  - family: hero_earth
+    variation: V01
+    prefab: {fileID: 1002417596136071800, guid: 54961fa94fcad41d6b3105d30d57db56, type: 3}
+  - family: quiet_paving
+    variation: V01
+    prefab: {fileID: 7454172576960221256, guid: d32a1fc3140c74651b5af4f486e7b11b, type: 3}
+  - family: ring_transition
+    variation: V01
+    prefab: {fileID: 3871805123896539852, guid: 26233b3b1678f4ebfa140b132e5e8b14, type: 3}
+  - family: palace_veranda
+    variation: V01
+    prefab: {fileID: 9132224292616690503, guid: 31721eebd54264c29ab6837d468d4e76, type: 3}
+  - family: palace_screen
+    variation: V01
+    prefab: {fileID: 5098595405217490049, guid: 85a313ca383404d5aa738fdd7ab32c76, type: 3}
+  - family: palace_clerestory
+    variation: V01
+    prefab: {fileID: 8440579052542847299, guid: d8d1e7c9769c24fa2adcc29de5147289, type: 3}
+  - family: palace_rafters
+    variation: V01
+    prefab: {fileID: 7087635165605844627, guid: 17baaca7a54b9427baa01c3b471f9bc1, type: 3}
+  - family: palace_return
+    variation: V01
+    prefab: {fileID: 8880524463606485986, guid: 05311473a4a4a468ab8d6691b4b30366, type: 3}
+  - family: palace_gable
+    variation: V01
+    prefab: {fileID: 324708989907721729, guid: 65f676ee6d18441cdacc7e69142605d2, type: 3}
+  - family: palace_gable_timber
+    variation: V01
+    prefab: {fileID: 1237054711396549526, guid: b9115c08c541140d796189c5ee8c34f6, type: 3}
+  - family: palace_east_timber
+    variation: V01
+    prefab: {fileID: 5976137118983582077, guid: 1a5739305e4eb4f6f94bc2d4e0d89e71, type: 3}

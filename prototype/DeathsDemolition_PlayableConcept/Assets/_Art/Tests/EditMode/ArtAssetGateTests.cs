@@ -234,7 +234,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(18, ArtFamilies.All.Length, "ArtFamilies.All 18 aile olmalı.");
             Assert.IsEmpty(eksik, "Beklenen FBX diskte yok (" + eksik.Count + "):\n" + string.Join("\n", eksik));
             Assert.IsEmpty(fazla, "Aile tablosunda karşılığı olmayan FBX (" + fazla.Count + "):\n" + string.Join("\n", fazla));
-            Assert.AreEqual(143, kutuphane, "WP-012 kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) = 143 olmalı.");
+            Assert.AreEqual(155, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) = 155 olmalı.");
             Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55 - kutuphane) + " collider + zemin + " + kutuphane + " kütüphane)");
         }
 

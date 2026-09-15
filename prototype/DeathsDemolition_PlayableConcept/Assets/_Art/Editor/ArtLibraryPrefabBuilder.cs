@@ -421,9 +421,20 @@ namespace DD.Art.Pipeline.EditorTools
             public bool IsBox => Positions <= 8;
         }
 
+        /// <summary>A hull shell at least this many times taller than wide, and no wider than <see cref="LeaningColumnMaxWidth"/>, is a culm: a capsule along its base→tip axis.</summary>
+        public const float LeaningColumnAspect = 2.5f;
+        public const float LeaningColumnMaxWidth = 0.6f;
+        public const float LeaningColumnMinRadius = 0.06f;
+        public const float LeaningColumnMaxRadius = 0.15f;
+
         private static void BuildCollider(Transform parent, int index, Shell shellInfo, bool trigger)
         {
             Bounds shell = shellInfo.Bounds;
+            if (TryBuildLeaningColumn(parent, index, shellInfo, trigger))
+            {
+                return;
+            }
+
             var go = new GameObject("COL_" + index);
             go.transform.SetParent(parent, false);
             go.transform.localPosition = Vector3.zero;
@@ -466,6 +477,63 @@ namespace DD.Art.Pipeline.EditorTools
                 box.size = shell.size;
                 box.isTrigger = trigger;
             }
+        }
+
+        /// <summary>
+        /// WP-014 · A leaning culm (bamboo stalk/cluster hulls) is not a box: its hull bounds are
+        /// a thin column whose footprint is the lean, and a box of those bounds blocks bullets,
+        /// aim and the readability rays across the whole lean (route 42 read 4/5 blocked by a
+        /// stalk 4 m away). The capsule runs from the base (the bounds corner nearest the
+        /// origin at ground level) to the tip corner, with the culm's own radius.
+        /// Mesh space: Blender up is mesh −Z (Import Contract).
+        /// </summary>
+        private static bool TryBuildLeaningColumn(Transform parent, int index, Shell shellInfo, bool trigger)
+        {
+            if (shellInfo.IsBox)
+            {
+                return false;
+            }
+
+            Bounds b = shellInfo.Bounds;
+            float height = b.size.z;
+            float width = Mathf.Max(b.size.x, b.size.y);
+            if (height < LeaningColumnAspect * Mathf.Max(width, 0.0001f) || width > LeaningColumnMaxWidth || height < 1.5f)
+            {
+                return false;
+            }
+
+            // Base: the ground-level end (mesh z nearest 0, i.e. max.z ≤ 0 side); tip: the far corner.
+            bool baseAtMax = Mathf.Abs(b.max.z) < Mathf.Abs(b.min.z);
+            float baseZ = baseAtMax ? b.max.z : b.min.z;
+            float tipZ = baseAtMax ? b.min.z : b.max.z;
+            float tipX = Mathf.Abs(b.min.x) > Mathf.Abs(b.max.x) ? b.min.x : b.max.x;
+            float tipY = Mathf.Abs(b.min.y) > Mathf.Abs(b.max.y) ? b.min.y : b.max.y;
+            float baseX = Mathf.Abs(b.min.x) > Mathf.Abs(b.max.x) ? b.max.x : b.min.x;
+            float baseY = Mathf.Abs(b.min.y) > Mathf.Abs(b.max.y) ? b.max.y : b.min.y;
+            var basePoint = new Vector3(baseX, baseY, baseZ);
+            var tipPoint = new Vector3(tipX, tipY, tipZ);
+            Vector3 axis = tipPoint - basePoint;
+            float length = axis.magnitude;
+            if (length < 0.5f)
+            {
+                return false;
+            }
+
+            float radius = Mathf.Clamp(0.5f * Mathf.Min(b.size.x, b.size.y), LeaningColumnMinRadius, LeaningColumnMaxRadius);
+
+            var go = new GameObject("COL_" + index);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = (basePoint + tipPoint) * 0.5f;
+            go.transform.localRotation = Quaternion.FromToRotation(Vector3.forward, axis / length);
+            go.transform.localScale = Vector3.one;
+
+            var capsule = go.AddComponent<CapsuleCollider>();
+            capsule.direction = 2;
+            capsule.center = Vector3.zero;
+            capsule.radius = radius;
+            capsule.height = length + 2f * radius;
+            capsule.isTrigger = trigger;
+            return true;
         }
 
         /// <summary>

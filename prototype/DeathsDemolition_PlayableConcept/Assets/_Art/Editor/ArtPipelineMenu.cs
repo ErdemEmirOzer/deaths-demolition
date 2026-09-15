@@ -147,6 +147,40 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run Libraries: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-014 world assembly
+
+        /// <summary>
+        /// WP-014 · AP-005 → Unity world: the AP-005 module prefabs, the placement asset,
+        /// World_AP005.unity (instances + baked NavMesh), the build-settings entry, the
+        /// Resources world-source asset, and the showcase rebuilt with the new library.
+        /// Batch: <c>-executeMethod …RunWorldAssembly [-ddWorldSourceDefault Procedural|AP005]</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run World Assembly (WP-014)", priority = 302)]
+        public static void RunWorldAssembly()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run World Assembly cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run World Assembly: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+
+            LibraryStep(1, "Build AP-005 module prefabs", () => ArtLibraryPrefabBuilder.BuildLibrary("AP-005"));
+            LibraryStep(2, "Import AP-005 placement (asset + World_AP005.unity + NavMesh + build settings)", () => PlacementImporter.ImportAll());
+            LibraryStep(3, "Rebuild library showcase (with AP-005)", ArtLibraryShowcaseBuilder.Build);
+
+            string source = Arg("-ddWorldSourceDefault");
+            if (!string.IsNullOrEmpty(source) && Enum.TryParse(source, true, out DD.Prototype.World.WorldSource parsed))
+            {
+                PlacementImporter.EnsureWorldSourceAsset(parsed);
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run World Assembly: done in " + Seconds(total) + " s.");
+        }
+
         /// <summary>
         /// Re-imports every contract texture whose importer no longer matches the contract
         /// (after a contract change the postprocessor only runs on the next import).
