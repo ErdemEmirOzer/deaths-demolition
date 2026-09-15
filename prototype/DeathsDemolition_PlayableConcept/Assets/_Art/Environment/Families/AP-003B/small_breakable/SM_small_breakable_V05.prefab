@@ -274,6 +274,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7529452222424022765}
   - component: {fileID: 4965780306683377428}
+  - component: {fileID: 3418138197402199518}
   m_Layer: 14
   m_Name: SM_small_breakable_V05
   m_TagString: Untagged
@@ -325,6 +326,21 @@ LODGroup:
     renderers:
     - renderer: {fileID: 6009512321767534132}
   m_Enabled: 1
+--- !u!114 &3418138197402199518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635793367128915686}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a62a8e15ab11f44fd82cbbd0ba01a404, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _geometry: {fileID: 1246134679140068169}
+  _broken: {fileID: 7348256010753822182}
+  _burstScale: 1
 --- !u!1 &3287801768175925738
 GameObject:
   m_ObjectHideFlags: 0

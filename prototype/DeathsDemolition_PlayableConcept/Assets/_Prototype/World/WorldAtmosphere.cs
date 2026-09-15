@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DD.Prototype.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -71,16 +72,26 @@ namespace DD.Prototype.World
         /// <summary>Post-processing. Kept in code so the .asset and the runtime fallback agree.</summary>
         public static class PostFx
         {
+            /// <summary>WP-013: the grade below is rendered on the gameplay camera (see ConfigureCamera).</summary>
+            public const bool Enabled = true;
+
             /// <summary>Neutral, NOT ACES. ACES desaturates and darkens exactly the loud,
             /// saturated colours that REQ-105 needs to stay loud.</summary>
             public const int TonemappingMode = 1;
 
             public const float Contrast = 8f;
-            public const float Saturation = -6f;
+
+            // WP-013: the grade is rendered for the first time (renderer PostProcessData was
+            // unassigned before). Measured on the gameplay pose: saturation −6 and white
+            // balance −8 together took 27 % off the gold band's separation from the earth
+            // (REQ-105 measurement, AtmosphereVfxTests); halved to the values below the
+            // separation stays within 10 % of the ungraded frame while the overcast cool
+            // cast (DEC-068) remains. Still PROTOTYPE-ONLY; the palette decision is open.
+            public const float Saturation = -2f;
             public const float PostExposure = 0f;
 
-            public const float WhiteBalanceTemperature = -8f;
-            public const float WhiteBalanceTint = 3f;
+            public const float WhiteBalanceTemperature = -3f;
+            public const float WhiteBalanceTint = 1f;
 
             public const float VignetteIntensity = 0.20f;
             public const float VignetteSmoothness = 0.45f;
@@ -96,6 +107,71 @@ namespace DD.Prototype.World
             public static readonly Color ColorFilter = new Color(1f, 0.99f, 0.96f);
         }
 
+        /// <summary>
+        /// WP-013 · ADR-013-1 wind contract. PROTOTYPE-ONLY numbers; the schema (what each
+        /// global means) is the contract, the values are a starting point for the art
+        /// director. Consumers: DD_Foliage_Wind (vertex sway/flutter), DD_Water_v1
+        /// (ripple direction), the drift particles (WindZone force).
+        /// </summary>
+        public static class Wind
+        {
+            /// <summary>Compass direction the wind blows TOWARDS, degrees from +X towards +Z (west → east-ish, over the garden).</summary>
+            public const float DirectionDegrees = 24f;
+
+            /// <summary>Wind strength 0..1 with no gust. A breeze, not a storm (REQ-104: leaves must not read as motion noise).</summary>
+            public const float BaseStrength = 0.35f;
+
+            /// <summary>Gust amplitude added on top of the base by slow Perlin noise.</summary>
+            public const float GustStrength = 0.4f;
+
+            public const float GustPeriodSeconds = 9f;
+
+            /// <summary>How far the direction wanders with the gusts.</summary>
+            public const float DirectionWanderDegrees = 22f;
+
+            /// <summary>Tip displacement in metres at strength 1 for a vertex with sway 1 (a 6 m crown leans ~0.28 m).</summary>
+            public const float SwayAmplitude = 0.28f;
+
+            public const float SwayFrequency = 0.45f;
+
+            /// <summary>Leaf-edge flutter along the normal, metres, at strength 1.</summary>
+            public const float FlutterAmplitude = 0.035f;
+
+            public const float FlutterFrequency = 2.6f;
+
+            /// <summary>WindZone.windMain at strength 1 (particle External Forces multiplier 1).</summary>
+            public const float ParticleForce = 0.9f;
+        }
+
+        /// <summary>Resources names of the WP-013 drift prefabs (Assets/_Art/VFX/Resources). Loaded by name: DD.Prototype must not reference DD.Art.</summary>
+        public const string PollenResourceName = "DD_Pollen";
+        public const string PetalsResourceName = "DD_SakuraPetals";
+
+        public enum DriftKind
+        {
+            Pollen = 0,
+            Petals = 1
+        }
+
+        /// <summary>One placed drift field. Densities are 0..1 of the prefab's own budget.</summary>
+        public struct DriftRegion
+        {
+            public DriftKind Kind;
+            public AtmosphereDrift.Region Region;
+            public Vector3 Centre;
+            public Vector3 Box;
+            public float Density;
+
+            public DriftRegion(DriftKind kind, AtmosphereDrift.Region region, Vector3 centre, Vector3 box, float density)
+            {
+                Kind = kind;
+                Region = region;
+                Centre = centre;
+                Box = box;
+                Density = density;
+            }
+        }
+
         // Particle budget. The comment above is only true if these stay small.
         private const int PetalsGlobalMax = 110;
         private const int PetalsGardenMax = 130;
@@ -107,7 +183,82 @@ namespace DD.Prototype.World
             ApplyLighting(root);
             ApplyEnvironment();
             EnsureVolume(root, profile);
-            BuildParticles(WorldPiece.Group(root, "Atmosphere"), palette);
+            EnsureWind(root);
+            BuildDrift(WorldPiece.Group(root, "Atmosphere"), DefaultRunRegions(), palette);
+        }
+
+        /// <summary>
+        /// The Run map's region table (PROTOTYPE-ONLY; WP-014 replaces it with region data):
+        /// pollen everywhere, a thin petal drift everywhere, a dense one over the east garden.
+        /// </summary>
+        public static DriftRegion[] DefaultRunRegions()
+        {
+            return new[]
+            {
+                new DriftRegion(DriftKind.Pollen, AtmosphereDrift.Region.Global, new Vector3(0f, 3.2f, 0f), new Vector3(86f, 5f, 86f), 1f),
+                new DriftRegion(DriftKind.Petals, AtmosphereDrift.Region.Global, new Vector3(0f, 12f, 0f), new Vector3(86f, 1f, 86f), 0.45f),
+                new DriftRegion(DriftKind.Petals, AtmosphereDrift.Region.EastGarden, new Vector3(31f, 10f, 0f), new Vector3(26f, 1f, 52f), 1f)
+            };
+        }
+
+        /// <summary>
+        /// Region table for an authored slice: pollen over the whole footprint, petals only
+        /// where <paramref name="sakura"/> (the crowns' bounds) is, none when there are no crowns.
+        /// </summary>
+        public static DriftRegion[] RegionsFor(Bounds footprint, Bounds? sakura)
+        {
+            var list = new List<DriftRegion>(2)
+            {
+                new DriftRegion(DriftKind.Pollen, AtmosphereDrift.Region.Global,
+                    new Vector3(footprint.center.x, footprint.min.y + 3.2f, footprint.center.z),
+                    new Vector3(footprint.size.x, 5f, footprint.size.z), 1f)
+            };
+
+            if (sakura.HasValue)
+            {
+                Bounds b = sakura.Value;
+                list.Add(new DriftRegion(DriftKind.Petals, AtmosphereDrift.Region.EastGarden,
+                    new Vector3(b.center.x, b.max.y + 2f, b.center.z),
+                    new Vector3(b.size.x + 8f, 1f, b.size.z + 8f), 1f));
+            }
+
+            return list.ToArray();
+        }
+
+        // ------------------------------------------------------------------ wind
+
+        /// <summary>The one wind driver of the scene (created under <paramref name="root"/> when missing).</summary>
+        public static WindDriver EnsureWind(Transform root)
+        {
+            WindDriver existing = Object.FindObjectOfType<WindDriver>();
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var go = new GameObject("Wind (ADR-013-1)");
+            go.transform.SetParent(root, false);
+            return go.AddComponent<WindDriver>();
+        }
+
+        // ------------------------------------------------------------------ camera
+
+        /// <summary>
+        /// WP-013: the gameplay camera renders the Global Volume's post-processing (it never
+        /// did before: URP's additional camera data defaults to off, which is why the
+        /// authored grade was "effectively off" in WP-011/012). MSAA stays the anti-aliasing;
+        /// no FXAA/SMAA on top.
+        /// </summary>
+        public static void ConfigureCamera(Camera camera)
+        {
+            if (camera == null)
+            {
+                return;
+            }
+
+            UniversalAdditionalCameraData data = camera.GetUniversalAdditionalCameraData();
+            data.renderPostProcessing = PostFx.Enabled;
+            data.antialiasing = AntialiasingMode.None;
         }
 
         // ------------------------------------------------------------------ lighting
@@ -268,26 +419,66 @@ namespace DD.Prototype.World
 
         // ------------------------------------------------------------------ particles
 
-        private static void BuildParticles(Transform group, WorldPalette palette)
+        /// <summary>
+        /// Places the drift fields. The WP-013 prefabs (Resources, authored by the art
+        /// pipeline) are the source; when a prefab is absent — a fresh checkout before the
+        /// pipeline ran — the field is built in code exactly as WP-002 built it, so the
+        /// map is never bare. Returns the number of fields placed.
+        /// </summary>
+        public static int BuildDrift(Transform group, IList<DriftRegion> regions, WorldPalette palette)
         {
-            Material petalMat = ParticleMaterial("World/PetalParticle", new Color(0.925f, 0.702f, 0.780f, 0.85f));
-            Material petalDeepMat = ParticleMaterial("World/PetalParticleDeep", new Color(0.741f, 0.596f, 0.757f, 0.8f));
-            Material pollenMat = ParticleMaterial("World/PollenParticle", new Color(0.949f, 0.925f, 0.804f, 0.55f));
+            if (regions == null || regions.Count == 0)
+            {
+                return 0;
+            }
 
-            // Thin drift over the whole map: enough to feel alive anywhere.
-            MakeDrift(group, "SakuraPetals_Global", petalMat,
-                new Vector3(0f, 12f, 0f), new Vector3(86f, 1f, 86f),
-                11f, 9.5f, PetalsGlobalMax, 0.09f, PetalSizeMax, 0.055f);
+            var pollenPrefab = Resources.Load<GameObject>(PollenResourceName);
+            var petalsPrefab = Resources.Load<GameObject>(PetalsResourceName);
 
-            // Denser over the east garden, because that is where the trees are.
-            MakeDrift(group, "SakuraPetals_EastGarden", petalDeepMat,
-                new Vector3(31f, 10f, 0f), new Vector3(26f, 1f, 52f),
-                15f, 8.5f, PetalsGardenMax, 0.08f, PetalSizeMax, 0.06f);
+            Material petalMat = null, petalDeepMat = null, pollenMat = null;
+            int placed = 0;
+            for (int i = 0; i < regions.Count; i++)
+            {
+                DriftRegion r = regions[i];
+                GameObject prefab = r.Kind == DriftKind.Pollen ? pollenPrefab : petalsPrefab;
+                if (prefab != null)
+                {
+                    GameObject go = Object.Instantiate(prefab, r.Centre, Quaternion.identity, group);
+                    go.name = prefab.name + "_" + r.Region;
+                    AtmosphereDrift drift = go.GetComponent<AtmosphereDrift>();
+                    if (drift != null)
+                    {
+                        drift.Configure(r.Region, r.Density, r.Box);
+                    }
 
-            // Pollen: near-invisible individually, reads as haze in motion.
-            MakeDrift(group, "Pollen", pollenMat,
-                new Vector3(0f, 3.2f, 0f), new Vector3(86f, 5f, 86f),
-                20f, 12f, PollenMax, 0.03f, 0.06f, 0.004f);
+                    placed++;
+                    continue;
+                }
+
+                // Legacy in-code field (WP-002 numbers), scaled by the region density.
+                if (r.Kind == DriftKind.Pollen)
+                {
+                    pollenMat = pollenMat ?? ParticleMaterial("World/PollenParticle", new Color(0.949f, 0.925f, 0.804f, 0.55f));
+                    MakeDrift(group, "Pollen_" + r.Region, pollenMat, r.Centre, r.Box,
+                        20f * r.Density, 12f, Mathf.Max(1, Mathf.RoundToInt(PollenMax * r.Density)), 0.03f, 0.06f, 0.004f);
+                }
+                else if (r.Region == AtmosphereDrift.Region.EastGarden)
+                {
+                    petalDeepMat = petalDeepMat ?? ParticleMaterial("World/PetalParticleDeep", new Color(0.741f, 0.596f, 0.757f, 0.8f));
+                    MakeDrift(group, "SakuraPetals_" + r.Region, petalDeepMat, r.Centre, r.Box,
+                        15f * r.Density, 8.5f, Mathf.Max(1, Mathf.RoundToInt(PetalsGardenMax * r.Density)), 0.08f, PetalSizeMax, 0.06f);
+                }
+                else
+                {
+                    petalMat = petalMat ?? ParticleMaterial("World/PetalParticle", new Color(0.925f, 0.702f, 0.780f, 0.85f));
+                    MakeDrift(group, "SakuraPetals_" + r.Region, petalMat, r.Centre, r.Box,
+                        11f / 0.45f * r.Density, 9.5f, Mathf.Max(1, Mathf.RoundToInt(PetalsGlobalMax / 0.45f * r.Density)), 0.09f, PetalSizeMax, 0.055f);
+                }
+
+                placed++;
+            }
+
+            return placed;
         }
 
         private static void MakeDrift(Transform parent, string name, Material material,

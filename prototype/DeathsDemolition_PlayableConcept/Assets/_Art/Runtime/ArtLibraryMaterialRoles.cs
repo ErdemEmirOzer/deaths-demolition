@@ -39,10 +39,23 @@ namespace DD.Art
             Cutout = 3
         }
 
+        /// <summary>WP-013 · which shader a role's material is authored on.</summary>
+        public enum ShaderKind
+        {
+            /// <summary>Universal Render Pipeline/Lit.</summary>
+            Lit = 0,
+            /// <summary>DD/Foliage Wind: Lit surface + AP-003 wind vertex colour, double-sided lighting, coverage fix.</summary>
+            FoliageWind = 1,
+            /// <summary>DD/Water v1: transparent ripple surface with depth fade.</summary>
+            Water = 2
+        }
+
         public sealed class Spec
         {
             public string Role;
             public Kind Kind;
+            /// <summary>WP-013: shader the material is built on (Lit unless the role moves in the wind or is water).</summary>
+            public ShaderKind Shader = ShaderKind.Lit;
             /// <summary>Role whose textures this role binds (itself unless it is a tinted or solid variant).</summary>
             public string TextureRole;
             /// <summary>Multiplier on <c>_BaseColor</c> (linear); white = the texture is authoritative.</summary>
@@ -83,6 +96,21 @@ namespace DD.Art
             }
 
             return false;
+        }
+
+        /// <summary>Roles authored on <paramref name="shader"/> (in row order).</summary>
+        public static string[] RolesOn(ShaderKind shader)
+        {
+            var list = new List<string>();
+            for (int i = 0; i < Rows.Count; i++)
+            {
+                if (Rows[i].Shader == shader)
+                {
+                    list.Add(Rows[i].Role);
+                }
+            }
+
+            return list.ToArray();
         }
 
         /// <summary>Texture roles that ship a Packed map and therefore need a derived mask (distinct, in row order).</summary>
@@ -131,18 +159,24 @@ namespace DD.Art
                 rows.Add(new Spec { Role = "bark_" + nn, Kind = Kind.Textured, TextureRole = "bark_" + nn });
                 rows.Add(new Spec { Role = "earth_" + nn, Kind = Kind.Textured, TextureRole = "earth_" + nn });
                 rows.Add(new Spec { Role = "moss_" + nn, Kind = Kind.Textured, TextureRole = "moss_" + nn });
-                rows.Add(new Spec { Role = "green_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "green_foliage_" + nn });
-                rows.Add(new Spec { Role = "green_foliage_" + nn + "_solid", Kind = Kind.Textured, TextureRole = "green_foliage_" + nn });
-                rows.Add(new Spec { Role = "sakura_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "sakura_foliage_" + nn });
+                // WP-013: the foliage roles ride the wind shader (their meshes carry `_AP003_WIND`;
+                // moss stays Lit because the moss maps also dress lanterns and benches, which carry no
+                // colour stream and must not move).
+                rows.Add(new Spec { Role = "green_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "green_foliage_" + nn, Shader = ShaderKind.FoliageWind });
+                rows.Add(new Spec { Role = "green_foliage_" + nn + "_solid", Kind = Kind.Textured, TextureRole = "green_foliage_" + nn, Shader = ShaderKind.FoliageWind });
+                rows.Add(new Spec { Role = "sakura_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "sakura_foliage_" + nn, Shader = ShaderKind.FoliageWind });
             }
 
             // AP-003B recipes: culm roughness ramp 0.35..0.65 → smoothness ≈ 0.5; gravel 0.60..0.95 → ≈ 0.22.
-            rows.Add(new Spec { Role = "bamboo_culm", Kind = Kind.BaseColorOnly, TextureRole = "bamboo_culm", Smoothness = 0.50f });
+            // Bamboo culms sway (stalk/cluster carry wind); the fence and the crates that share the
+            // material have no colour stream and read (1,1,1,1) → R·(1−A) = 0, no motion (DD_Wind.hlsl).
+            rows.Add(new Spec { Role = "bamboo_culm", Kind = Kind.BaseColorOnly, TextureRole = "bamboo_culm", Smoothness = 0.50f, Shader = ShaderKind.FoliageWind });
             rows.Add(new Spec { Role = "gravel", Kind = Kind.BaseColorOnly, TextureRole = "gravel", Smoothness = 0.22f });
             // Weathered stone = the stone maps with the authored Hue/Saturation Value 0.85 node.
             rows.Add(new Spec { Role = "stone_weathered", Kind = Kind.Textured, TextureRole = "stone", Tint = new Color(0.85f, 0.85f, 0.85f, 1f) });
             // Water placeholder: linear (0.03695, 0.05114, 0.05925), roughness 0.05 → smoothness 0.95.
-            rows.Add(new Spec { Role = "pond_water", Kind = Kind.Flat, TextureRole = null, FlatLinearAlbedo = new Color(0.03695f, 0.05114f, 0.05925f, 1f), Smoothness = 0.95f });
+            // WP-013: water v1 (DD/Water v1) on the same deep colour; AP-015 owns the full water.
+            rows.Add(new Spec { Role = "pond_water", Kind = Kind.Flat, TextureRole = null, FlatLinearAlbedo = new Color(0.03695f, 0.05114f, 0.05925f, 1f), Smoothness = 0.95f, Shader = ShaderKind.Water });
             return rows;
         }
 

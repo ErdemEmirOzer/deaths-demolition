@@ -211,6 +211,34 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log("[ArtPipeline] Library materials: " + rows.Count + " in " + ArtPipelinePaths.Materials);
         }
 
+        /// <summary>WP-013 shaders (Assets/_Art/Shaders). Same property names as URP/Lit, so the recipes below apply unchanged.</summary>
+        public const string FoliageWindShaderName = "DD/Foliage Wind";
+        public const string WaterShaderName = "DD/Water v1";
+
+        public static Shader ResolveShader(ArtLibraryMaterialRoles.ShaderKind kind)
+        {
+            switch (kind)
+            {
+                case ArtLibraryMaterialRoles.ShaderKind.FoliageWind:
+                    return ResolveNamed(FoliageWindShaderName);
+                case ArtLibraryMaterialRoles.ShaderKind.Water:
+                    return ResolveNamed(WaterShaderName);
+                default:
+                    return ResolveLitShader();
+            }
+        }
+
+        private static Shader ResolveNamed(string name)
+        {
+            Shader shader = Shader.Find(name);
+            if (shader == null)
+            {
+                throw new InvalidOperationException("[ArtPipeline] Shader '" + name + "' is not available (Assets/_Art/Shaders missing or failed to compile).");
+            }
+
+            return shader;
+        }
+
         public static Material BuildLibraryRole(ArtLibraryMaterialRoles.Spec spec)
         {
             if (spec == null)
@@ -218,7 +246,7 @@ namespace DD.Art.Pipeline.EditorTools
                 throw new ArgumentNullException(nameof(spec));
             }
 
-            Shader lit = ResolveLitShader();
+            Shader shader = ResolveShader(spec.Shader);
             string path = ArtPipelinePaths.Material(spec.Role);
             EnsureFolder(ArtPipelinePaths.Materials);
 
@@ -226,12 +254,20 @@ namespace DD.Art.Pipeline.EditorTools
             bool created = material == null;
             if (created)
             {
-                material = new Material(lit) { name = "M_" + spec.Role };
+                material = new Material(shader) { name = "M_" + spec.Role };
                 AssetDatabase.CreateAsset(material, path);
             }
-            else if (material.shader != lit)
+            else if (material.shader != shader)
             {
-                material.shader = lit;
+                material.shader = shader;
+            }
+
+            if (spec.Shader == ArtLibraryMaterialRoles.ShaderKind.Water)
+            {
+                ApplyWater(material, spec);
+                EditorUtility.SetDirty(material);
+                Debug.Log("[ArtPipeline] Library material " + (created ? "created" : "updated") + ": " + path + " (Water)");
+                return material;
             }
 
             ApplyCommon(material);
@@ -259,9 +295,58 @@ namespace DD.Art.Pipeline.EditorTools
                     break;
             }
 
+            if (spec.Shader == ArtLibraryMaterialRoles.ShaderKind.FoliageWind)
+            {
+                ApplyFoliageWind(material, spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout);
+            }
+
             EditorUtility.SetDirty(material);
-            Debug.Log("[ArtPipeline] Library material " + (created ? "created" : "updated") + ": " + path + " (" + spec.Kind + ")");
+            Debug.Log("[ArtPipeline] Library material " + (created ? "created" : "updated") + ": " + path + " (" + spec.Kind + "/" + spec.Shader + ")");
             return material;
+        }
+
+        /// <summary>
+        /// WP-013 wind/foliage recipe on top of the Lit recipe: wind at the global scale,
+        /// both faces lit, and for the cards alpha-to-coverage (MSAA 4× in the URP asset)
+        /// with the coverage fix, plus a little translucency. Solid variants keep back-face
+        /// culling: they are closed volumes and the extra fragments would buy nothing.
+        /// </summary>
+        private static void ApplyFoliageWind(Material m, bool cutout)
+        {
+            SetFloat(m, "_WindScale", 1f);
+            SetFloat(m, "_BackfaceLighting", 1f);
+            SetFloat(m, "_Translucency", cutout ? 0.25f : 0f);
+            SetFloat(m, "_AlphaToMask", cutout ? 1f : 0f);
+        }
+
+        /// <summary>
+        /// WP-013 water v1: transparent, no depth write, back faces culled, the AP-003B deep
+        /// colour as the deep tint. Bypasses <see cref="ApplyCommon"/> on purpose - that block
+        /// writes the opaque blend state.
+        /// </summary>
+        private static void ApplyWater(Material m, ArtLibraryMaterialRoles.Spec spec)
+        {
+            Color deep = spec.FlatLinearAlbedo;
+            deep.a = 0.92f;
+            m.SetColor(BaseColorId, EncodeForColorProperty(deep));
+            SetColor(m, "_ShallowColor", EncodeForColorProperty(new Color(0.20f, 0.30f, 0.28f, 0.35f)));
+            SetFloat(m, "_Smoothness", spec.Smoothness);
+            SetFloat(m, "_DepthFade", 0.6f);
+            SetFloat(m, "_RippleScale", 2.2f);
+            SetFloat(m, "_RippleStrength", 0.6f);
+            SetFloat(m, "_RippleSpeed", 0.35f);
+            SetFloat(m, "_WindRipple", 0.5f);
+            SetFloat(m, "_Surface", 1f);
+            SetFloat(m, "_Blend", 0f);
+            SetFloat(m, "_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            SetFloat(m, "_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            SetFloat(m, "_ZWrite", 0f);
+            SetFloat(m, "_QueueOffset", 0f);
+            m.SetFloat(CullId, 2f);
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            m.enableInstancing = true;
+            m.doubleSidedGI = false;
         }
 
         /// <summary>

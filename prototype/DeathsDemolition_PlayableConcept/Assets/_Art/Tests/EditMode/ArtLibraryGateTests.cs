@@ -255,7 +255,7 @@ namespace DD.Art.Tests.EditMode
                         {
                             if (mats[i] == null) { hatalar.Add(on + ": " + ad + " slot " + i + " null"); continue; }
                             if (mats[i].name != "M_" + beklenen[i]) hatalar.Add(on + ": " + ad + " slot " + i + " " + mats[i].name + " ≠ M_" + beklenen[i]);
-                            if (mats[i].shader == null || mats[i].shader.name != ArtMaterialBuilder.LitShaderName) hatalar.Add(on + ": " + ad + " shader " + (mats[i].shader != null ? mats[i].shader.name : "null"));
+                            if (mats[i].shader == null || mats[i].shader.name != BeklenenShaderAdi(beklenen[i])) hatalar.Add(on + ": " + ad + " shader " + (mats[i].shader != null ? mats[i].shader.name : "null") + " ≠ " + BeklenenShaderAdi(beklenen[i]));
                         }
 
                         ShadowCastingMode golge = lod == 2 ? ShadowCastingMode.Off : ShadowCastingMode.On;
@@ -383,6 +383,19 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(once, sonra, "İkinci üretim prefab dosyasını değiştirdi (idempotency kırık).");
         }
 
+        /// <summary>WP-013: a role's shader is the row's ShaderKind (Lit, or the wind/water shaders); AP-001 roles are Lit.</summary>
+        private static string BeklenenShaderAdi(string rol)
+        {
+            ArtLibraryMaterialRoles.Spec spec = ArtLibraryMaterialRoles.Get(rol);
+            if (spec == null) return ArtMaterialBuilder.LitShaderName;
+            switch (spec.Shader)
+            {
+                case ArtLibraryMaterialRoles.ShaderKind.FoliageWind: return ArtMaterialBuilder.FoliageWindShaderName;
+                case ArtLibraryMaterialRoles.ShaderKind.Water: return ArtMaterialBuilder.WaterShaderName;
+                default: return ArtMaterialBuilder.LitShaderName;
+            }
+        }
+
         // ================================================================== malzeme ve doku
 
         [Test]
@@ -394,7 +407,8 @@ namespace DD.Art.Tests.EditMode
                 string yol = ArtPipelinePaths.Material(spec.Role);
                 var mat = AssetDatabase.LoadAssetAtPath<Material>(yol);
                 if (mat == null) { hatalar.Add(yol + ": yok"); continue; }
-                if (mat.shader == null || mat.shader.name != ArtMaterialBuilder.LitShaderName) hatalar.Add(yol + ": shader " + (mat.shader != null ? mat.shader.name : "null"));
+                if (mat.shader == null || mat.shader.name != BeklenenShaderAdi(spec.Role)) hatalar.Add(yol + ": shader " + (mat.shader != null ? mat.shader.name : "null") + " ≠ " + BeklenenShaderAdi(spec.Role));
+                if (spec.Shader == ArtLibraryMaterialRoles.ShaderKind.Water) continue;   // WP-013: su v1 kapısı ArtVfxGateTests'te (saydam, ayrı sözleşme)
                 bool cutout = spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout;
                 if (mat.IsKeywordEnabled("_ALPHATEST_ON") != cutout) hatalar.Add(yol + ": _ALPHATEST_ON " + !cutout);
                 if (cutout && mat.GetFloat("_Cull") != 0f) hatalar.Add(yol + ": cutout çift taraflı olmalı (_Cull 0)");

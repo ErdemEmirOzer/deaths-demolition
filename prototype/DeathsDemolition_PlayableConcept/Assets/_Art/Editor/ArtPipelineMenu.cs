@@ -73,6 +73,34 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run All: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-013 atmosphere & VFX
+
+        /// <summary>
+        /// WP-013 · Re-authors the library materials on the wind/water shaders, builds the VFX
+        /// prefabs and binds the breakables. Materials and prefabs keep their GUIDs, so no
+        /// scene or prefab reference changes. Batch: <c>-executeMethod …RunAtmosphereVfx</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run Atmosphere VFX (WP-013)", priority = 302)]
+        public static void RunAtmosphereVfx()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run Atmosphere VFX cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run Atmosphere VFX: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+
+            Step(1, "Library materials on DD/Foliage Wind + DD/Water v1", ArtMaterialBuilder.BuildAllLibraryRoles);
+            Step(2, "VFX prefabs (pollen, petals, break burst)", ArtVfxBuilder.BuildAll);
+            Step(3, "Bind BreakableProp on small_breakable prefabs", () => ArtVfxBuilder.BindBreakables());
+            Step(4, "Renderer post-process data (URP default)", () => ArtVfxBuilder.EnablePostProcessData());
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run Atmosphere VFX: done in " + Seconds(total) + " s.");
+        }
+
         // ------------------------------------------------------------ WP-012 libraries
 
         private const int LibraryStepCount = 9;

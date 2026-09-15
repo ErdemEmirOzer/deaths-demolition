@@ -180,6 +180,9 @@ namespace DD.Prototype.Weapons
                     result.HitSomething = true;
                     result.EndPoint = hit.point;
 
+                    // WP-013 (REQ-113): a breakable prop takes the impact; no rule beyond "it breaks".
+                    DD.Prototype.Props.PropImpacts.Report(collider, hit.point, request.Direction);
+
                     HitFeedbackDirector.Instance.ReportSurfaceImpact(
                         hit.point,
                         hit.normal,

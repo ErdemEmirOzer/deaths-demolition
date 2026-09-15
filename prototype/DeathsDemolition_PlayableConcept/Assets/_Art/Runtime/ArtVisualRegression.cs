@@ -109,6 +109,16 @@ namespace DD.Art
         /// </summary>
         public static Texture2D Capture(CameraPose pose, int width, int height)
         {
+            return Capture(pose, width, height, false);
+        }
+
+        /// <summary>
+        /// WP-013: <paramref name="postProcessing"/> renders the Global Volume's grade the way
+        /// the gameplay camera now does (WorldAtmosphere.ConfigureCamera); the WP-011/012
+        /// references were taken with it off and stay comparable through the overload above.
+        /// </summary>
+        public static Texture2D Capture(CameraPose pose, int width, int height, bool postProcessing)
+        {
             if (pose == null)
             {
                 throw new ArgumentNullException(nameof(pose));
@@ -149,7 +159,7 @@ namespace DD.Art
                 // GetUniversalAdditionalCameraData adds the component when it is missing.
                 UniversalAdditionalCameraData urp = camera.GetUniversalAdditionalCameraData();
                 urp.renderType = CameraRenderType.Base;
-                urp.renderPostProcessing = false;
+                urp.renderPostProcessing = postProcessing;
                 urp.antialiasing = AntialiasingMode.None;
                 urp.renderShadows = true;
 
@@ -201,12 +211,17 @@ namespace DD.Art
         /// <summary>Captures and writes a PNG. Creates the directory; overwrites the file.</summary>
         public static void CaptureToPng(CameraPose pose, int width, int height, string path)
         {
+            CaptureToPng(pose, width, height, path, false);
+        }
+
+        public static void CaptureToPng(CameraPose pose, int width, int height, string path, bool postProcessing)
+        {
             if (string.IsNullOrEmpty(path))
             {
                 throw new ArgumentException("A file path is required.", nameof(path));
             }
 
-            Texture2D texture = Capture(pose, width, height);
+            Texture2D texture = Capture(pose, width, height, postProcessing);
             try
             {
                 byte[] png = texture.EncodeToPNG();

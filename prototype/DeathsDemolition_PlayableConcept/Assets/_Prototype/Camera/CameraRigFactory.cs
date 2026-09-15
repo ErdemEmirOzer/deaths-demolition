@@ -64,6 +64,10 @@ namespace DD.Prototype.CameraSystem
             camera.allowMSAA = true;
             camera.depth = 0f;
 
+            // WP-013: render the Global Volume's grade on the gameplay camera (post-processing
+            // was never switched on before; the atmosphere owns that decision).
+            DD.Prototype.World.WorldAtmosphere.ConfigureCamera(camera);
+
             if (Object.FindObjectOfType<AudioListener>() == null)
             {
                 cameraGo.AddComponent<AudioListener>();

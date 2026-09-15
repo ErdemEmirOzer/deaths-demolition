@@ -72,6 +72,9 @@ namespace DD.Art
         [Tooltip("Bake the NavMesh and verify every marker reaches the player start.")]
         [SerializeField] private bool _bakeNavMesh = true;
 
+        [Tooltip("WP-013: wind driver + pollen/petal drift over the slice (the Run scene has the same).")]
+        [SerializeField] private bool _buildAtmosphere = true;
+
         [Tooltip("Print the content and navigation report to the console.")]
         [SerializeField] private bool _logReport = true;
 
@@ -130,6 +133,18 @@ namespace DD.Art
                 .Append(stats.Colliders).Append(" colliders, ")
                 .Append(stats.Triangles).Append(" triangles (all LODs), ground collider ")
                 .Append(_groundColliderMesh != null ? "present" : "absent").Append(".\n");
+
+            // WP-013: the same wind and drift fields as the Run map, placed from the slice's
+            // own bounds (pollen over the footprint, petals over the sakura crowns only).
+            int driftFields = 0;
+            if (_buildAtmosphere)
+            {
+                WorldAtmosphere.EnsureWind(root);
+                driftFields = WorldAtmosphere.BuildDrift(WorldPiece.Group(root, "Atmosphere"),
+                    WorldAtmosphere.RegionsFor(SliceFootprint(root, out Bounds? sakura), sakura), null);
+            }
+
+            report.Append("[Pilot] Atmosphere: ").Append(_buildAtmosphere ? "wind + " + driftFields + " drift fields" : "off").Append(".\n");
 
             // Markers before navigation, because the bake's verification walks them; the
             // keep-out list they return is for procedural foliage and unused here.
@@ -222,6 +237,65 @@ namespace DD.Art
                 DestroyImmediate(existing);
                 existing = GameObject.Find(name);
             }
+        }
+
+        /// <summary>
+        /// Renderer bounds of the placed slice, and separately of its sakura crowns (layout
+        /// entries named after the sakura_foliage family) for the petal field. Null sakura
+        /// when the layout has no crowns.
+        /// </summary>
+        public static Bounds SliceFootprint(Transform root, out Bounds? sakura)
+        {
+            var footprint = new Bounds(root.position, Vector3.zero);
+            bool any = false, anySakura = false;
+            var crowns = new Bounds();
+            Transform slice = root.Find(GoldenSliceSpawner.RootName);
+            Renderer[] renderers = (slice != null ? slice : root).GetComponentsInChildren<Renderer>(false);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer r = renderers[i];
+                if (!any)
+                {
+                    footprint = r.bounds;
+                    any = true;
+                }
+                else
+                {
+                    footprint.Encapsulate(r.bounds);
+                }
+
+                if (IsSakuraCrown(r))
+                {
+                    if (!anySakura)
+                    {
+                        crowns = r.bounds;
+                        anySakura = true;
+                    }
+                    else
+                    {
+                        crowns.Encapsulate(r.bounds);
+                    }
+                }
+            }
+
+            sakura = anySakura ? crowns : (Bounds?)null;
+            return footprint;
+        }
+
+        private static bool IsSakuraCrown(Renderer r)
+        {
+            // A crown is whatever wears a sakura material (M_sakura_pink / _purple in AP-001,
+            // M_sakura_foliage_0n in AP-003) - the layout's instance names are export labels.
+            Material[] materials = r.sharedMaterials;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                if (materials[i] != null && materials[i].name.StartsWith("M_sakura", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static int ParseCount(string text, string pattern)

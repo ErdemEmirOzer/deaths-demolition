@@ -228,6 +228,8 @@ namespace DD.Art.Pipeline.EditorTools
                     AddLodGroup(broken.gameObject, brokenLods, root.transform);
                     SetLayerRecursively(broken.gameObject, envLayer);
                     broken.gameObject.SetActive(false);
+                    // WP-013 (REQ-113): the intact/broken switch lives on the prefab root.
+                    ArtVfxBuilder.Bind(root);
                 }
 
                 string path = ArtLibraryPaths.Prefab(ap, family.family, variation.prefab);

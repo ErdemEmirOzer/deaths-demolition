@@ -18,7 +18,9 @@ using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
 using DD.Prototype.UI;
 using DD.Prototype.Weapons;
+using DD.Prototype.World;
 using Unity.Profiling;
+using UnityEngine.Rendering.Universal;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -77,6 +79,16 @@ namespace DD.Prototype.Diagnostics
         /// is not touched; the value is recorded in stage 01 so the run is labelled.
         /// </summary>
         private const string LodBiasFlag = "-ddPilotLodBias";
+
+        /// <summary>
+        /// WP-013 · "-ddPilotAtmosphere off" (optional, evidence-only A/B): after the scene is
+        /// ready, freezes the wind (foliage shader + WindZone), stops the drift fields and
+        /// switches the camera's post-processing off, so one build measures both sides of
+        /// the WP-013 budget. The materials stay on the wind shader either way (a shader
+        /// swap would be a different build); the A/B therefore isolates the animated and
+        /// particle/post cost, and the WP-012 numbers are the pre-shader baseline.
+        /// </summary>
+        private const string AtmosphereFlag = "-ddPilotAtmosphere";
 
         /// <summary>
         /// WP-012 · "-ddPilotProfilerLog path.raw" (optional): writes the Unity Profiler's binary
@@ -168,6 +180,7 @@ namespace DD.Prototype.Diagnostics
             Driver driver = carrier.AddComponent<Driver>();
             driver.Configure(outDir, scene, window, warmup, resW, resH, lodBiasOverride);
             driver.ProfilerLogPath = Arg(ProfilerLogFlag);
+            driver.AtmosphereOff = string.Equals(Arg(AtmosphereFlag), "off", StringComparison.OrdinalIgnoreCase);
             Debug.Log("[PilotPerfProbe] armed scene=" + scene + " window=" + window.ToString("F0", CultureInfo.InvariantCulture) +
                       "s warmup=" + warmup.ToString("F0", CultureInfo.InvariantCulture) + "s out=" + outDir);
         }
@@ -224,6 +237,13 @@ namespace DD.Prototype.Diagnostics
             public float playerZ;
             public int targetFrameRate;
             public int vSyncCount;
+
+            // ---- WP-013 atmosphere (every stage)
+            public bool atmosphereOn;
+            public float windStrength;
+            public int driftFields;
+            public int driftParticlesAlive;
+            public bool postProcessing;
 
             // ---- 01 scene-ready
             public float sceneReadySeconds;
@@ -552,6 +572,14 @@ namespace DD.Prototype.Diagnostics
                 EnemySpawnDirector dir = EnemySpawnDirector.Instance;
                 PlayerRig rig = PlayerRegistry.Primary;
                 rig.Health.DiagnosisInvulnerable = true;   // the probe player stands still under 40 bodies; keep the window alive
+
+                // WP-013 A/B: the "off" side of the budget, applied before anything is counted.
+                if (AtmosphereOff)
+                {
+                    SetAtmosphere(false);
+                    Debug.Log("[PilotPerfProbe] atmosphere OFF (wind frozen, drift stopped, post-processing off)");
+                }
+
                 yield return null;                          // one rendered frame before counting what the scene contains
 
                 // ---------------------------------------------------------------- 01 scene-ready
@@ -1005,6 +1033,51 @@ namespace DD.Prototype.Diagnostics
             /// estimate and is labelled as one; the transition heights themselves are read
             /// from the groups, so a prefab authored differently is still counted right.
             /// </summary>
+            /// <summary>WP-013 A/B switch (see AtmosphereFlag).</summary>
+            public bool AtmosphereOff;
+
+            private static void SetAtmosphere(bool on)
+            {
+                foreach (WindDriver wind in FindObjectsOfType<WindDriver>())
+                {
+                    wind.EnabledScale = on ? 1f : 0f;
+                }
+
+                foreach (AtmosphereDrift drift in FindObjectsOfType<AtmosphereDrift>())
+                {
+                    drift.SetEnabledScale(on ? 1f : 0f);
+                    if (!on)
+                    {
+                        drift.System.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    }
+                }
+
+                Camera cam = ResolveCamera();
+                if (cam != null)
+                {
+                    cam.GetUniversalAdditionalCameraData().renderPostProcessing = on && WorldAtmosphere.PostFx.Enabled;
+                }
+            }
+
+            private static bool PostProcessingOn()
+            {
+                Camera cam = ResolveCamera();
+                return cam != null && cam.GetUniversalAdditionalCameraData().renderPostProcessing;
+            }
+
+            private static int CountDriftFields(out int alive)
+            {
+                int fields = 0;
+                alive = 0;
+                foreach (AtmosphereDrift drift in FindObjectsOfType<AtmosphereDrift>())
+                {
+                    fields++;
+                    alive += drift.System.particleCount;
+                }
+
+                return fields;
+            }
+
             private static void EstimateLods(LODGroup[] groups, Camera cam, Stage s)
             {
                 float halfTan = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
@@ -1292,6 +1365,7 @@ namespace DD.Prototype.Diagnostics
                 bool hasDirector = !ReferenceEquals(d, null);
                 bool hasRun = !ReferenceEquals(r, null);
                 Vector3 pos = rig != null ? rig.transform.position : Vector3.zero;
+                int driftFields = CountDriftFields(out int driftAlive);
 
                 return new Stage
                 {
@@ -1307,6 +1381,11 @@ namespace DD.Prototype.Diagnostics
                     crowdMembers = CrowdService.MemberCount,
                     playerX = pos.x,
                     playerZ = pos.z,
+                    atmosphereOn = !AtmosphereOff,
+                    windStrength = WorldWind.Strength,
+                    postProcessing = PostProcessingOn(),
+                    driftFields = driftFields,
+                    driftParticlesAlive = driftAlive,
                     targetFrameRate = Application.targetFrameRate,
                     vSyncCount = QualitySettings.vSyncCount,
                     flow = hasDirector ? d.DescribeFlow() : "no director"
