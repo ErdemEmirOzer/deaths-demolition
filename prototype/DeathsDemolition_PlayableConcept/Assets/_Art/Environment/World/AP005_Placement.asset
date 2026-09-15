@@ -18,6 +18,12 @@ MonoBehaviour:
   version: v002
   created: 2026-09-15T19:39:29
   sourceSha256: 9e47c9ad7c8c6d2522b01072eb92722f640079c40d57fbe94131c9c7f2df39de
+  overridesSha256: 6b823304cd3ff13de4c7de326f3596322f60fe256e98016fe1a2369eaf689cb1
+  overriddenIds:
+  - AP005_i1532
+  - AP005_i1535
+  - AP005_i1605
+  - AP005_i1549
   instances:
   - id: AP005_i0001
     ap: AP-005
@@ -21538,7 +21544,7 @@ MonoBehaviour:
     assembly:
     - culm
     - leaves
-    position: {x: -22.9609, y: 0, z: -4.4847}
+    position: {x: -23.3109, y: 0, z: -4.8347}
     yawDegrees: 320.613
     scale: {x: 1, y: 1, z: 1}
     region: west
@@ -21586,7 +21592,7 @@ MonoBehaviour:
     assembly:
     - culm
     - leaves
-    position: {x: -35.6616, y: 0, z: -14.9961}
+    position: {x: -35.1616, y: 0, z: -14.9961}
     yawDegrees: 229.918
     scale: {x: 1, y: 1, z: 1}
     region: west
@@ -21810,7 +21816,7 @@ MonoBehaviour:
     assembly:
     - culm
     - leaves
-    position: {x: -22.6085, y: 0, z: -4.0421}
+    position: {x: -22.2585, y: 0, z: -3.6921}
     yawDegrees: 358.531
     scale: {x: 1, y: 1, z: 1}
     region: west
@@ -22706,7 +22712,7 @@ MonoBehaviour:
     assembly:
     - culm
     - leaves
-    position: {x: -19.1345, y: 0, z: -3.9914}
+    position: {x: -18.6345, y: 0, z: -3.9914}
     yawDegrees: 316.489
     scale: {x: 1, y: 1, z: 1}
     region: west

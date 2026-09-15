@@ -158,8 +158,8 @@ Bu dosyada yalnızca kullanıcı tarafından verilen veya açıkça onaylanan ka
 | REQ-101 | Güncel kapsam tek haritadır. | İlk ürün kapsamına başka konsept harita eklenmez. |
 | REQ-102 | Harita eski Japon kalesi, sarayı ve bahçeleri temasında olacaktır. | Mimari ve çevre bu konsepte bağlıdır. |
 | REQ-103 | Atmosfer yumuşak fakat gergin olacaktır. | Pembe/mor sakura, yoğun yeşillik, seyrek polen/yaprak, hafif sis ve yağmur sonrası hissi birlikte kullanılabilir. |
-| REQ-104 | Atmosfer oynanış okunabilirliğini bozmamalıdır. | Sis, parçacık ve bitkiler düşmanları veya nişan yönünü kapatmaz. |
-| REQ-105 | Oyuncu için önemli öğeler çevreden ayrılacaktır. | Gold, Special Weapon ve savaş uyarıları çevre paletinde görünür kalır. |
+| REQ-104 | Atmosfer oynanış okunabilirliğini bozmamalıdır. | Sis, parçacık ve bitkiler düşmanları veya nişan yönünü kapatmaz. Ölçülebilir ölçüt (DEC-077, WP-015): rota örnek noktalarında (2 m aralık, 1,8 m kapsül, gameplay kamerasından 5 eksenel ışın) sabit çevreyle >%50 örtülen nokta sayısı 0; gameplay pozunda oyuncu vekili kapsülün çevreye Michelson kontrastı sis/parçacık/post-fx açıkken ≥ 0,06. |
+| REQ-105 | Oyuncu için önemli öğeler çevreden ayrılacaktır. | Gold, Special Weapon ve savaş uyarıları çevre paletinde görünür kalır. Ölçülebilir ölçüt (DEC-077, WP-015): oyuncu/çevre kontrastı ≥ 0,06 (WP-013 yöntemi); gold/Special/uyarı renkleri stil kılavuzu v1'in rezerv bantlarında kalır. |
 | REQ-106 | Harita merkez ve çevresindeki halka rotadan oluşacaktır. | Merkez saray avlusu, kesintisiz dış halka ve merkeze bağlanan radyal kestirmeler bulunur. |
 | REQ-107 | Harita Round 1'den itibaren tamamen açık olacaktır. | Büyük kapatma sistemi kullanılmaz; merkez sürekli geçilebilir ve halka iki yönde dolaşılabilir. |
 | REQ-108 | Kuzey bölgesi saray önü ve geniş taş yol olacaktır. | Bölge açık, geniş ve uzun görüşlüdür; doğal kapı noktaları bulunabilir. |

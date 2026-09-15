@@ -18,7 +18,8 @@ namespace DD.Art.Pipeline.EditorTools
         {
             // Bumping this re-imports every asset the postprocessor touches. It is tied to
             // the contract version so a contract change cannot leave stale artifacts.
-            return 1;
+            // 2: WP-015 texture class table (ADR-015-1).
+            return 2;
         }
 
         private void OnPreprocessModel()

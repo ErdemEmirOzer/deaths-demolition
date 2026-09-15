@@ -200,6 +200,98 @@ namespace DD.Art.Tests.EditMode
             }
         }
 
+        // ------------------------------------------------------------------ WP-015 · doku sınıf tablosu (ADR-015-1)
+
+        [TestCase("earth", ArtImportContract.TextureClass.Ground, 2048)]
+        [TestCase("gravel", ArtImportContract.TextureClass.Ground, 2048)]
+        [TestCase("stone", ArtImportContract.TextureClass.Ground, 2048)]
+        [TestCase("wood", ArtImportContract.TextureClass.Structure, 1024)]
+        [TestCase("plaster_hf003", ArtImportContract.TextureClass.Structure, 1024)]
+        [TestCase("earth_02", ArtImportContract.TextureClass.Structure, 1024)]
+        [TestCase("green_foliage_03", ArtImportContract.TextureClass.Foliage, 1024)]
+        [TestCase("bamboo_culm", ArtImportContract.TextureClass.Foliage, 1024)]
+        [TestCase("bark", ArtImportContract.TextureClass.Foliage, 1024)]
+        [TestCase("sky", ArtImportContract.TextureClass.Sky, 256)]
+        public void DokuSinifi_RolTablosu_VeBoyut(string rol, ArtImportContract.TextureClass beklenen, int boyut)
+        {
+            Assert.AreEqual(beklenen, ArtImportContract.ClassOfRole(rol), "ClassOfRole(" + rol + ")");
+            Assert.AreEqual(boyut, ArtImportContract.MaxSizeOf(beklenen));
+            Assert.AreEqual(boyut, ArtImportContract.MaxTextureSizeOf("Assets/_Art/Textures/Source/T_" + rol + "_BaseColor.png"));
+        }
+
+        [Test]
+        public void DokuSinifi_TablodaOlmayanRol_NullVeProp512()
+        {
+            Assert.IsNull(ArtImportContract.ClassOfRole("lantern_brass"), "tabloda olmayan rol null döner");
+            Assert.IsNull(ArtImportContract.ClassOfRole(null));
+            Assert.AreEqual(ArtImportContract.TextureClass.Prop, ArtImportContract.ClassOf("Assets/_Art/Textures/Source/T_lantern_brass_BaseColor.png"), "sınıfsız rol Prop boyutunda import edilir");
+            Assert.AreEqual(512, ArtImportContract.MaxTextureSizeOf("Assets/_Art/Textures/Source/T_lantern_brass_BaseColor.png"));
+            Assert.AreEqual(512, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Prop));
+            Assert.AreEqual(512, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Breakable));
+        }
+
+        [Test]
+        public void DokuSinifi_HerMalzemeRolununDokuRolu_Tabloda()
+        {
+            var eksik = new List<string>();
+            foreach (string rol in ArtLibraryMaterialRoles.TextureRoles())
+                if (ArtImportContract.ClassOfRole(rol) == null) eksik.Add(rol);
+            foreach (string rol in new[] { "stone", "wood", "bark", "earth", "plaster", "roof", "sky" })
+                if (ArtImportContract.ClassOfRole(rol) == null) eksik.Add(rol);
+            Assert.IsEmpty(eksik, "ADR-015-1 tablosunda sınıfı olmayan doku rolü: " + string.Join(", ", eksik));
+        }
+
+        [Test]
+        public void DokuSinifi_Streaming_GokHaric()
+        {
+            Assert.IsTrue(ArtImportContract.StreamsMipmaps(ArtImportContract.TextureClass.Ground));
+            Assert.IsTrue(ArtImportContract.StreamsMipmaps(ArtImportContract.TextureClass.Foliage));
+            Assert.IsTrue(ArtImportContract.StreamsMipmaps(ArtImportContract.TextureClass.Prop));
+            Assert.IsFalse(ArtImportContract.StreamsMipmaps(ArtImportContract.TextureClass.Sky), "skybox dokusunu hiçbir renderer örneklemez; streaming en alt mip'e düşürürdü");
+        }
+
+        [Test]
+        public void SevkBoyutuTahmini_BlokSikistirma_MipZinciri()
+        {
+            // 2048² BC7 + mips = 4 MiB × 4/3 (4×4 blok tabanı ile son mipler 16 B).
+            long tam = ArtImportContract.EstimatedShippedBytes(2048, 2048, ArtImportContract.TextureClass.Ground, true);
+            Assert.AreEqual(5592432L, tam, "2048 mip zinciri: 2048²+…+4² + (2² ve 1² seviyeleri 4×4 bloğa yuvarlanır) = 5 592 432");
+            Assert.AreEqual(4194304L, ArtImportContract.EstimatedShippedBytes(2048, 2048, ArtImportContract.TextureClass.Ground, false));
+            // Sınıf 1024: kaynak 2048 → 1024'e iner.
+            long yapi = ArtImportContract.EstimatedShippedBytes(2048, 2048, ArtImportContract.TextureClass.Structure, true);
+            Assert.Less(yapi, tam / 3);
+            Assert.AreEqual(1398128L, yapi);
+            // Kaynak sınıf tavanından küçükse büyütülmez.
+            Assert.AreEqual(ArtImportContract.EstimatedShippedBytes(4, 256, ArtImportContract.TextureClass.Sky, false), 4L * 256L);
+        }
+
+        [Test]
+        public void Doku_BellekteSaptirilanMaxSize_ValidateAdiylaYakalar_ApplyOnarir()
+        {
+            string yol = ArtPipelinePaths.SourceTexture("plaster", "BaseColor");   // Structure → 1024
+            TextureImporter importer = TextureImporterAl(yol);
+            ArtImportContract.TextureRole rol = ArtImportContract.RoleOf(yol);
+            Assume.That(ArtImportContract.ValidateTexture(importer, rol), Is.Empty, "Ön koşul: doku uyumlu değil; bu test anlamsız.");
+            Assert.AreEqual(1024, importer.maxTextureSize, "plaster Structure sınıfı 1024");
+            Assert.IsTrue(importer.streamingMipmaps, "Structure sınıfı streaming açık");
+
+            int asil = importer.maxTextureSize;
+            try
+            {
+                importer.maxTextureSize = 2048;
+                List<string> v = ArtImportContract.ValidateTexture(importer, rol);
+                Assert.AreEqual(1, v.Count, "Tek alan saptırıldı, tek ihlal beklenir: " + string.Join("; ", v));
+                StringAssert.StartsWith("maxTextureSize:", v[0]);
+                Assert.IsTrue(ArtImportContract.Apply(importer, rol), "Apply sapmayı onarmalı.");
+                Assert.AreEqual(1024, importer.maxTextureSize);
+                Assert.IsEmpty(ArtImportContract.ValidateTexture(importer, rol));
+            }
+            finally
+            {
+                importer.maxTextureSize = asil;
+            }
+        }
+
         // ------------------------------------------------------------------ sözleşme sabitleri
 
         [Test]

@@ -20,7 +20,10 @@ namespace DD.Prototype.Core.EditorTools
     ///
     /// <c>BuildOptions.Development</c> defines DEVELOPMENT_BUILD, which is the only gate that
     /// compiles <c>Diagnostics/LifecycleProbe.cs</c> into the Player. Scenes come from
-    /// EditorBuildSettings exactly as the release build uses them.
+    /// EditorBuildSettings: the enabled entries exactly as the release build uses them, in
+    /// order, followed by the DISABLED entries (WP-015, ADR-015-2: a disabled Build Settings
+    /// entry is a dev-only scene — the AP-001 pilot the perf probe measures and the library
+    /// showcase — that the release Player must not carry).
     /// </summary>
     public static class LifecycleProbeBuild
     {
@@ -34,14 +37,11 @@ namespace DD.Prototype.Core.EditorTools
                 throw new Exception("[ProbeBuild] " + OutFlag + " <path.app> is required.");
             }
 
-            string[] scenes = EditorBuildSettings.scenes
-                .Where(s => s.enabled)
-                .Select(s => s.path)
-                .ToArray();
+            string[] scenes = DevelopmentScenes(EditorBuildSettings.scenes);
 
-            if (scenes.Length == 0)
+            if (scenes.Length == 0 || !EditorBuildSettings.scenes[0].enabled)
             {
-                throw new Exception("[ProbeBuild] No enabled scenes in Build Settings.");
+                throw new Exception("[ProbeBuild] No enabled scenes in Build Settings (the entry scene must be enabled).");
             }
 
             string dir = Path.GetDirectoryName(target);
@@ -68,6 +68,14 @@ namespace DD.Prototype.Core.EditorTools
             {
                 throw new Exception("[ProbeBuild] FAILED: " + s.result);
             }
+        }
+
+        /// <summary>Release scenes (enabled, in order) then the dev-only scenes (disabled, in order). Pure; tested.</summary>
+        public static string[] DevelopmentScenes(EditorBuildSettingsScene[] entries)
+        {
+            return entries.Where(s => s.enabled).Select(s => s.path)
+                .Concat(entries.Where(s => !s.enabled).Select(s => s.path))
+                .ToArray();
         }
 
         private static string Arg(string name)

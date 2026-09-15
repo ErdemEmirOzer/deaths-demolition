@@ -134,31 +134,43 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void BuildSettings_BesSahneDogruSiradaVeAcik()
         {
-            string[] beklenen =
+            // WP-015 (ADR-015-2): enabled entries = the release scene list (five prototype scenes
+            // + the AP-005 world scene Run loads additively); disabled entries = dev-only scenes
+            // (WP-011 pilot, library showcase) that only the development build carries.
+            string[] beklenenRelease =
             {
                 PrototypeScenes.Boot,
                 PrototypeScenes.MainMenu,
                 PrototypeScenes.Selection,
                 PrototypeScenes.Run,
                 PrototypeScenes.Results,
-                "AP001_GoldenSlice",
                 "World_AP005"
             };
+            string[] beklenenDev = { "AP001_GoldenSlice", "AP_LibraryShowcase" };
 
             EditorBuildSettingsScene[] sahneler = EditorBuildSettings.scenes;
-            Assert.AreEqual(beklenen.Length, sahneler.Length,
-                "Build Settings'te tam olarak yedi sahne olmalı (beş prototip sahnesi + WP-011 pilot sahnesi + WP-014 AP-005 dünya sahnesi), " + sahneler.Length + " var.");
-            Assert.AreEqual("Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity", sahneler[5].path,
-                "Altıncı sahne WP-011 pilot sahnesi olmalı.");
-            Assert.AreEqual("Assets/_Art/Scenes/World_AP005.unity", sahneler[6].path,
-                "Yedinci sahne WP-014 AP-005 dünya sahnesi olmalı (Run'a additive yüklenir).");
+            Assert.AreEqual(beklenenRelease.Length + beklenenDev.Length, sahneler.Length,
+                "Build Settings'te tam olarak sekiz giriş olmalı (altı release sahnesi + iki dev-only sahne), " + sahneler.Length + " var.");
+            Assert.AreEqual("Assets/_Art/Scenes/World_AP005.unity", sahneler[5].path,
+                "Altıncı sahne WP-014 AP-005 dünya sahnesi olmalı (Run'a additive yüklenir).");
+            Assert.AreEqual("Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity", sahneler[6].path,
+                "Yedinci giriş WP-011 pilot sahnesi olmalı (dev-only, kapalı).");
 
-            for (int i = 0; i < beklenen.Length; i++)
+            for (int i = 0; i < beklenenRelease.Length; i++)
             {
                 string ad = Path.GetFileNameWithoutExtension(sahneler[i].path);
-                Assert.AreEqual(beklenen[i], ad, i + ". sıradaki sahne yanlış.");
-                Assert.IsTrue(sahneler[i].enabled, ad + " sahnesi Build Settings'te kapalı.");
+                Assert.AreEqual(beklenenRelease[i], ad, i + ". sıradaki sahne yanlış.");
+                Assert.IsTrue(sahneler[i].enabled, ad + " sahnesi Build Settings'te kapalı (release listesi).");
                 Assert.IsTrue(File.Exists(sahneler[i].path), ad + " sahnesi diskte yok: " + sahneler[i].path);
+            }
+
+            for (int i = 0; i < beklenenDev.Length; i++)
+            {
+                EditorBuildSettingsScene s = sahneler[beklenenRelease.Length + i];
+                string ad = Path.GetFileNameWithoutExtension(s.path);
+                Assert.AreEqual(beklenenDev[i], ad, (beklenenRelease.Length + i) + ". sıradaki dev-only sahne yanlış.");
+                Assert.IsFalse(s.enabled, ad + " release listesinde (etkin) olmamalı — yalnız dev build (ADR-015-2).");
+                Assert.IsTrue(File.Exists(s.path), ad + " sahnesi diskte yok: " + s.path);
             }
 
             // NOT (GT · yöntem düzeltmesi): Application.CanStreamedLevelBeLoaded EditMode'da
@@ -356,6 +368,64 @@ namespace DD.Prototype.Tests.EditMode
 
             Assert.IsEmpty(bulgular,
                 "Prototip çevrimdışı olmalı, ağ API'si bulundu:\n" + string.Join("\n", bulgular));
+        }
+
+        // ------------------------------------------------------- planning bütünlüğü (WP-015)
+
+        /// <summary>
+        /// WP-015 · The planning documents are the decision record the code answers to:
+        /// DEC ids in planning/00 are unique and contiguous from 001, REQ ids in planning/01
+        /// are unique (the table has authored gaps), and the WP-015 user decisions (DEC-076..080) and the DEC-077 readability
+        /// criteria on REQ-104/105 are present. The repo root is two levels above the Unity
+        /// project; skipped (inconclusive) only if the planning folder is absent.
+        /// </summary>
+        [Test]
+        public void Planning_DecVeReqNumaralari_TekilVeArdisik_Wp015KararlariKayitli()
+        {
+            string kok = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "..", "planning"));
+            if (!Directory.Exists(kok))
+            {
+                Assert.Inconclusive("planning klasörü yok: " + kok);
+            }
+
+            string dec = File.ReadAllText(Path.Combine(kok, "00-PROJECT-PLAN.md"));
+            string req = File.ReadAllText(Path.Combine(kok, "01-REQUIREMENTS.md"));
+
+            List<int> decIds = TabloKimlikleri(dec, "DEC");
+            List<int> reqIds = TabloKimlikleri(req, "REQ");
+            Assert.Greater(decIds.Count, 0);
+            Assert.Greater(reqIds.Count, 0);
+            for (int i = 0; i < decIds.Count; i++) Assert.AreEqual(i + 1, decIds[i], "DEC numaraları ardışık/tekil değil: " + decIds[i]);
+            // REQ ids are unique; the table has authored gaps (91–99, 116–119 were never issued).
+            for (int i = 1; i < reqIds.Count; i++) Assert.Greater(reqIds[i], reqIds[i - 1], "REQ numarası tekrar ediyor: " + reqIds[i]);
+            Assert.GreaterOrEqual(decIds.Count, 80, "DEC-076..080 (WP-015 kullanıcı kararları) kayıtlı olmalı.");
+            Assert.AreEqual(155, reqIds[reqIds.Count - 1], "son REQ numarası");
+
+            foreach (string id in new[] { "DEC-076", "DEC-077", "DEC-078", "DEC-079", "DEC-080" })
+            {
+                StringAssert.Contains("| " + id + " |", dec, id + " planning/00'da yok.");
+            }
+
+            Match r104 = Regex.Match(req, @"^\| REQ-104 \|.*$", RegexOptions.Multiline);
+            Match r105 = Regex.Match(req, @"^\| REQ-105 \|.*$", RegexOptions.Multiline);
+            Assert.IsTrue(r104.Success && r105.Success);
+            StringAssert.Contains("DEC-077", r104.Value, "REQ-104 ölçülebilir ölçütü (DEC-077) yok.");
+            StringAssert.Contains("0,06", r104.Value);
+            StringAssert.Contains("%50", r104.Value);
+            StringAssert.Contains("DEC-077", r105.Value, "REQ-105 ölçülebilir ölçütü (DEC-077) yok.");
+            Debug.Log("[DD-TEST] wp015.planning dec=" + decIds.Count + " req=" + reqIds.Count);
+        }
+
+        private static List<int> TabloKimlikleri(string metin, string onek)
+        {
+            var ids = new List<int>();
+            foreach (Match m in Regex.Matches(metin, @"^\| " + onek + @"-(\d{3}) \|", RegexOptions.Multiline))
+            {
+                ids.Add(int.Parse(m.Groups[1].Value));
+            }
+
+            ids.Sort();
+            return ids;
         }
     }
 }

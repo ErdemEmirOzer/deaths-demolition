@@ -147,6 +147,37 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run Libraries: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-015 asset budget
+
+        /// <summary>
+        /// WP-015 · Asset budget pass (ADR-015-1/2): re-import every contract texture at its
+        /// class size/streaming, rebuild the lighting base (the sky horizon follows the DEC-076
+        /// fog colour), refresh the scenes that store RenderSettings (pilot, Run alignment,
+        /// showcase) and re-import the AP-005 world (placement overrides, stand-in ground,
+        /// NavMesh, build settings). Prefabs and materials are untouched.
+        /// Batch: <c>-executeMethod …RunAssetBudget</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run Asset Budget (WP-015)", priority = 303)]
+        public static void RunAssetBudget()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run Asset Budget cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run Asset Budget: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Re-import contract textures (ADR-015-1 classes, streaming)", ReimportContractTextures);
+            LibraryStep(2, "Build lighting base (overcast profile + shared sky, DEC-076 horizon)", ArtLightingBuilder.BuildAll);
+            LibraryStep(3, "Rebuild pilot scene (RenderSettings)", PilotSceneBuilder.BuildPilotScene);
+            LibraryStep(4, "Align Run.unity (shared profile + sky)", ArtLightingBuilder.AlignRunScene);
+            LibraryStep(5, "Import AP-005 placement (overrides, stand-in ground, NavMesh, build settings)", () => PlacementImporter.ImportAll());
+            LibraryStep(6, "Rebuild library showcase (RenderSettings)", ArtLibraryShowcaseBuilder.Build);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run Asset Budget: done in " + Seconds(total) + " s.");
+        }
+
         // ------------------------------------------------------------ WP-014 world assembly
 
         /// <summary>

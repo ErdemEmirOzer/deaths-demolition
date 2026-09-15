@@ -208,6 +208,59 @@ namespace DD.Art
             return result;
         }
 
+        /// <summary>
+        /// WP-015 · Mipmap streaming (ADR-015-1) rates textures from the cameras that are alive
+        /// during the frame; the one-shot capture camera above is not one of them. Keep a real
+        /// camera at the pose (same size, so the mip calculation matches the capture) until the
+        /// streaming system has no pending loads or <paramref name="maxFrames"/> pass, then
+        /// capture. Yields the frame count spent through <paramref name="framesSpent"/>.
+        /// </summary>
+        public static System.Collections.IEnumerator WarmStreaming(CameraPose pose, int width, int height, int maxFrames, System.Action<int> framesSpent)
+        {
+            var go = new GameObject("ArtVisualRegression Warm-up Camera (" + pose.name + ")");
+            go.hideFlags = HideFlags.HideAndDontSave;
+            var rt = new RenderTexture(width, height, 24) { name = "ArtVisualRegression Warm-up RT", antiAliasing = 1 };
+            rt.Create();
+            int frames = 0;
+            try
+            {
+                Camera camera = go.AddComponent<Camera>();
+                camera.clearFlags = CameraClearFlags.Skybox;
+                camera.fieldOfView = pose.verticalFov;
+                camera.nearClipPlane = NearClip;
+                camera.farClipPlane = FarClip;
+                camera.transform.position = pose.position;
+                camera.transform.LookAt(pose.lookAt, Vector3.up);
+                camera.targetTexture = rt;
+                UniversalAdditionalCameraData urp = camera.GetUniversalAdditionalCameraData();
+                urp.renderType = CameraRenderType.Base;
+                urp.renderPostProcessing = false;
+                urp.antialiasing = AntialiasingMode.None;
+
+                // Two frames minimum: one for the streaming system to see the camera, one to
+                // issue the loads; then until nothing is pending.
+                for (frames = 0; frames < maxFrames; frames++)
+                {
+                    yield return null;
+                    if (frames >= 2 && Texture.streamingTexturePendingLoadCount == 0 && Texture.streamingTextureLoadingCount == 0)
+                    {
+                        frames++;
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                Camera warm = go.GetComponent<Camera>();
+                if (warm != null) warm.targetTexture = null;   // release only after the camera lets go
+                rt.Release();
+                UnityEngine.Object.DestroyImmediate(rt);
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+
+            framesSpent?.Invoke(frames);
+        }
+
         /// <summary>Captures and writes a PNG. Creates the directory; overwrites the file.</summary>
         public static void CaptureToPng(CameraPose pose, int width, int height, string path)
         {

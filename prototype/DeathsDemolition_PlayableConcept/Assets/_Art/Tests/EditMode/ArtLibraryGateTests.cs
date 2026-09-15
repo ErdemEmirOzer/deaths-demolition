@@ -486,8 +486,9 @@ namespace DD.Art.Tests.EditMode
         public void VitrinSahnesi_DiskteVar_BuildDisi_TumVaryasyonlarOrnek()
         {
             Assert.IsTrue(File.Exists(ArtLibraryPaths.ShowcaseScene), "Vitrin sahnesi yok: " + ArtLibraryPaths.ShowcaseScene);
+            // WP-015 (ADR-015-2): listed but DISABLED = dev-only; never an enabled (release) entry.
             foreach (EditorBuildSettingsScene s in EditorBuildSettings.scenes)
-                Assert.AreNotEqual(ArtLibraryPaths.ShowcaseScene, s.path, "Vitrin build listesine girmez.");
+                if (s.path == ArtLibraryPaths.ShowcaseScene) Assert.IsFalse(s.enabled, "Vitrin release listesine (etkin) girmez.");
 
             string metin = File.ReadAllText(ArtLibraryPaths.ShowcaseScene);
             int toplam = 0;

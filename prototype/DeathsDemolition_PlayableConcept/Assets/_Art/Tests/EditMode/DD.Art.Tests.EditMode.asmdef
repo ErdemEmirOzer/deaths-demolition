@@ -6,6 +6,7 @@
         "DD.Prototype.Runtime",
         "DD.Art.Runtime",
         "DD.Art.Pipeline.Editor",
+        "DD.Prototype.Core.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "Unity.RenderPipelines.Core.Runtime",

@@ -357,6 +357,28 @@ namespace DD.Prototype.Diagnostics
             /// <summary>WP-014: the world the Run scene loaded (WorldBootstrap.ActiveSource) — Procedural or AP005.</summary>
             public string worldSource;
 
+            // ---- WP-015 04b texture-inventory (ADR-015-1 measurement)
+            /// <summary>Resident bytes of the art textures (Texture2D named T_*, the Import Contract set).</summary>
+            public long artTextureBytes;
+            public int artTextureCount;
+            /// <summary>Every other Texture2D/Cubemap/2DArray/3D (UI, fonts, engine, sky).</summary>
+            public long otherTextureBytes;
+            public int otherTextureCount;
+            /// <summary>RenderTextures (camera targets, shadow maps, post-fx temporaries) — the counter's floor that no texture policy moves.</summary>
+            public long renderTextureBytes;
+            public int renderTextureCount;
+            public long textureCurrentBytes;
+            public long textureDesiredBytes;
+            public long textureTargetBytes;
+            public long textureNonStreamingBytes;
+            public int streamingTextureCount;
+            public int nonStreamingTextureCount;
+            public bool streamingMipmapsActive;
+            public float streamingMipmapsBudgetMb;
+            /// <summary>Art textures that are streamed and currently resident below their top mip (mipmapCount − loadedMipmapLevel < mipmapCount).</summary>
+            public int artTexturesReduced;
+            public string inventoryCsv;
+
             /// <summary>WP-012: frames over 16.667 ms in the window, and how many of those coincided with a gen0 collection.</summary>
             public int spikeFrames;
             public int spikeFramesWithGen0;
@@ -840,6 +862,19 @@ namespace DD.Prototype.Diagnostics
                           (string.IsNullOrEmpty(s4.unavailableCounters) ? "" : " | unavailable: " + s4.unavailableCounters);
                 Write(s4);
                 WriteFrameTimes();
+
+                // ---------------------------------------------------------------- 04b texture-inventory (WP-015)
+                // The Memory counter above is one number; ADR-015-1 budgets the ART set, so
+                // the resident textures are listed by object and summed by kind here.
+                Stage s4b = Capture("04b-texture-inventory");
+                MeasureTextureInventory(s4b);
+                s4b.pass = s4b.artTextureCount + s4b.otherTextureCount + s4b.renderTextureCount > 0;
+                s4b.note = "art T_* " + s4b.artTextureCount + " = " + Mb(s4b.artTextureBytes) + " (reduced " + s4b.artTexturesReduced + ") | other " + s4b.otherTextureCount + " = " + Mb(s4b.otherTextureBytes) +
+                           " | renderTextures " + s4b.renderTextureCount + " = " + Mb(s4b.renderTextureBytes) +
+                           " | Texture.current " + Mb(s4b.textureCurrentBytes) + " desired " + Mb(s4b.textureDesiredBytes) + " target " + Mb(s4b.textureTargetBytes) + " nonStreaming " + Mb(s4b.textureNonStreamingBytes) +
+                           " | streaming " + (s4b.streamingMipmapsActive ? "on" : "off") + " budget " + s4b.streamingMipmapsBudgetMb.ToString("F0", CultureInfo.InvariantCulture) + " MB textures " + s4b.streamingTextureCount + "/" + (s4b.streamingTextureCount + s4b.nonStreamingTextureCount) +
+                           " | csv " + s4b.inventoryCsv;
+                Write(s4b);
 
                 // ---------------------------------------------------------------- 05 gc-positive-control
                 // A measurement that cannot see a known 1 MB allocation is blind, and every
@@ -1362,6 +1397,76 @@ namespace DD.Prototype.Diagnostics
                 }
 
                 return Camera.main;
+            }
+
+            /// <summary>WP-015 · every loaded Texture by kind, with the resident size the profiler attributes to it; art = the Import Contract set (T_*).</summary>
+            private void MeasureTextureInventory(Stage s)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("name,kind,width,height,format,mipmapCount,streaming,requestedMip,loadedMip,bytes");
+                Texture[] all = Resources.FindObjectsOfTypeAll<Texture>();
+                for (int i = 0; i < all.Length; i++)
+                {
+                    Texture t = all[i];
+                    if (t == null) continue;
+                    long bytes = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(t);
+                    string kind;
+                    string format = string.Empty;
+                    int mips = 0, requested = -1, loaded = -1;
+                    bool streaming = false;
+                    if (t is RenderTexture rt)
+                    {
+                        kind = "RenderTexture";
+                        format = rt.graphicsFormat.ToString();
+                        s.renderTextureBytes += bytes;
+                        s.renderTextureCount++;
+                    }
+                    else if (t is Texture2D t2)
+                    {
+                        format = t2.format.ToString();
+                        mips = t2.mipmapCount;
+                        streaming = t2.streamingMipmaps;
+                        if (streaming)
+                        {
+                            requested = t2.requestedMipmapLevel;
+                            loaded = t2.loadedMipmapLevel;
+                        }
+
+                        bool art = t2.name.StartsWith("T_", StringComparison.Ordinal);
+                        kind = art ? "Art" : "Texture2D";
+                        if (art)
+                        {
+                            s.artTextureBytes += bytes;
+                            s.artTextureCount++;
+                            if (streaming && loaded > 0) s.artTexturesReduced++;
+                        }
+                        else
+                        {
+                            s.otherTextureBytes += bytes;
+                            s.otherTextureCount++;
+                        }
+                    }
+                    else
+                    {
+                        kind = t.GetType().Name;
+                        s.otherTextureBytes += bytes;
+                        s.otherTextureCount++;
+                    }
+
+                    sb.Append(t.name.Replace(',', ' ')).Append(',').Append(kind).Append(',').Append(t.width).Append(',').Append(t.height).Append(',').Append(format).Append(',')
+                      .Append(mips).Append(',').Append(streaming ? 1 : 0).Append(',').Append(requested).Append(',').Append(loaded).Append(',').Append(bytes).Append('\n');
+                }
+
+                s.textureCurrentBytes = (long)Texture.currentTextureMemory;
+                s.textureDesiredBytes = (long)Texture.desiredTextureMemory;
+                s.textureTargetBytes = (long)Texture.targetTextureMemory;
+                s.textureNonStreamingBytes = (long)Texture.nonStreamingTextureMemory;
+                s.streamingTextureCount = (int)Texture.streamingTextureCount;
+                s.nonStreamingTextureCount = (int)Texture.nonStreamingTextureCount;
+                s.streamingMipmapsActive = QualitySettings.streamingMipmapsActive;
+                s.streamingMipmapsBudgetMb = QualitySettings.streamingMipmapsMemoryBudget;
+                s.inventoryCsv = "texture-inventory.csv";
+                File.WriteAllText(Path.Combine(_outDir, s.inventoryCsv), sb.ToString());
             }
 
             private static string Mb(double bytes)

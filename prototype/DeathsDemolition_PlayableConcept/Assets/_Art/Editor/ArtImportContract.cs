@@ -38,7 +38,7 @@ namespace DD.Art.Pipeline.EditorTools
     /// </summary>
     public static class ArtImportContract
     {
-        public const string Version = "ADR-011-1 Import Contract v1 (2026-09-15; WP-012: cutout BaseColor alpha, ADR-012-2)";
+        public const string Version = "ADR-011-1 Import Contract v1 (2026-09-15; WP-012: cutout BaseColor alpha, ADR-012-2; WP-015: texture class table, ADR-015-1)";
 
         /// <summary>Every asset below this folder is under contract.</summary>
         public const string ArtRoot = "Assets/_Art";
@@ -93,9 +93,154 @@ namespace DD.Art.Pipeline.EditorTools
             MetallicSmoothness = 4
         }
 
+        /// <summary>
+        /// WP-015 · ADR-015-1 texture policy. Every contract texture belongs to a distance class
+        /// decided by the role's most demanding use in the AP-005 world (WP-014 placement: a
+        /// role shared by a paving plate and a prop takes the paving class). The class fixes the
+        /// shipped maximum size and whether the mips stream. The numbers are the gameplay
+        /// camera's: 19.9 m / −49° at 1080p resolves ~55–70 px per metre, so a 4 m tile is
+        /// sampled at mip ≥ 2 of a 2048 map even on the ground; 1024 on walls and foliage and
+        /// 512 on props lose nothing the fixed camera can show. Measured before the policy
+        /// (WP-014, all 63 shipped maps at 2048): 337 MB in the build, +315 MB resident.
+        /// </summary>
+        public enum TextureClass
+        {
+            /// <summary>Tiling ground and paving: 2048.</summary>
+            Ground = 0,
+            /// <summary>Walls, timber, roofs, module surfaces: 1024.</summary>
+            Structure = 1,
+            /// <summary>Foliage atlases, bark, moss, culms: 1024.</summary>
+            Foliage = 2,
+            /// <summary>Dressing props (lanterns, benches, crates): ≤ 512. Reserved for AP-015 prop sets; no role today.</summary>
+            Prop = 3,
+            /// <summary>Breakables: ≤ 512. Reserved; no role today.</summary>
+            Breakable = 4,
+            /// <summary>The 4×256 sky gradient (ArtSkyBuilder): 256, never streamed (a skybox has no renderer for the streaming system to rate).</summary>
+            Sky = 5
+        }
+
+        public static int MaxSizeOf(TextureClass c)
+        {
+            switch (c)
+            {
+                case TextureClass.Ground: return 2048;
+                case TextureClass.Structure: return 1024;
+                case TextureClass.Foliage: return 1024;
+                case TextureClass.Prop: return 512;
+                case TextureClass.Breakable: return 512;
+                case TextureClass.Sky: return 256;
+                default: throw new ArgumentOutOfRangeException(nameof(c));
+            }
+        }
+
+        /// <summary>Mipmap streaming is on for every class that a renderer samples; the sky is not one.</summary>
+        public static bool StreamsMipmaps(TextureClass c)
+        {
+            return c != TextureClass.Sky;
+        }
+
+        /// <summary>
+        /// Streaming budget written to QualitySettings (every level): the ADR-015-1 resident
+        /// ceiling for the art texture set. The AP-005 set fits under it fully resident
+        /// (116 MB at the class sizes), so the budget is a guard, not a squeeze.
+        /// </summary>
+        public const int StreamingMipmapsBudgetMb = 160;
+
+        /// <summary>ADR-015-1 resident ceiling for the art texture set (probe counter delta against the procedural Run), MB.</summary>
+        public const int ArtTextureMemoryBudgetMb = 160;
+
+        /// <summary>ADR-015-2 release build ceiling, MB (app bundle on disk).</summary>
+        public const int ReleaseBuildBudgetMb = 400;
+
+        /// <summary>
+        /// Role slug → class (ADR-015-1 table). Roles are the <c>&lt;role&gt;</c> of
+        /// <c>T_&lt;role&gt;_&lt;Map&gt;.png</c>; every map of a role shares the class.
+        /// A role missing here is a contract violation (the gate reports it) and imports at the
+        /// Prop size so an unclassified map can never ship at 2048 by accident.
+        /// </summary>
+        private static readonly Dictionary<string, TextureClass> ClassOfRoleTable = new Dictionary<string, TextureClass>(StringComparer.Ordinal)
+        {
+            // Ground / paving (AP-005 ground + hero_earth plates, courtyard paving, curbs, shore gravel).
+            { "earth", TextureClass.Ground },
+            { "gravel", TextureClass.Ground },
+            { "stone", TextureClass.Ground },
+            // Structure (palace timber/screens, plaster, roofs, shore-path and basin module surfaces).
+            { "wood", TextureClass.Structure },
+            { "plaster", TextureClass.Structure },
+            { "plaster_hf003", TextureClass.Structure },
+            { "roof", TextureClass.Structure },
+            { "earth_01", TextureClass.Structure },
+            { "earth_02", TextureClass.Structure },
+            { "earth_03", TextureClass.Structure },
+            // Foliage / atlas (AP-003 sets, AP-001 bark, AP-003B culm).
+            { "bark", TextureClass.Foliage },
+            { "bark_01", TextureClass.Foliage },
+            { "bark_02", TextureClass.Foliage },
+            { "bark_03", TextureClass.Foliage },
+            { "moss_01", TextureClass.Foliage },
+            { "moss_02", TextureClass.Foliage },
+            { "moss_03", TextureClass.Foliage },
+            { "green_foliage_01", TextureClass.Foliage },
+            { "green_foliage_02", TextureClass.Foliage },
+            { "green_foliage_03", TextureClass.Foliage },
+            { "sakura_foliage_01", TextureClass.Foliage },
+            { "sakura_foliage_02", TextureClass.Foliage },
+            { "sakura_foliage_03", TextureClass.Foliage },
+            { "bamboo_culm", TextureClass.Foliage },
+            // Sky gradient.
+            { "sky", TextureClass.Sky }
+        };
+
+        public static IEnumerable<KeyValuePair<string, TextureClass>> TextureClassTable => ClassOfRoleTable;
+
+        /// <summary>The class of a role slug, or null when the role is not in the ADR-015-1 table.</summary>
+        public static TextureClass? ClassOfRole(string roleSlug)
+        {
+            return roleSlug != null && ClassOfRoleTable.TryGetValue(roleSlug, out TextureClass c) ? c : (TextureClass?)null;
+        }
+
+        /// <summary>The class a texture imports with: its role's class, Prop for an unclassified role.</summary>
+        public static TextureClass ClassOf(string assetPath)
+        {
+            return ClassOfRole(RoleSlugOf(assetPath)) ?? TextureClass.Prop;
+        }
+
+        /// <summary>Shipped max size for a texture path (its class's size).</summary>
+        public static int MaxTextureSizeOf(string assetPath)
+        {
+            return MaxSizeOf(ClassOf(assetPath));
+        }
+
+        /// <summary>Estimated bytes a texture occupies in the build (BC7/BC5 = 1 byte per texel, full mip chain), capped at the source size.</summary>
+        public static long EstimatedShippedBytes(int sourceWidth, int sourceHeight, TextureClass c, bool mipmaps)
+        {
+            int cap = MaxSizeOf(c);
+            int w = sourceWidth, h = sourceHeight;
+            while (Mathf.Max(w, h) > cap)
+            {
+                w = Mathf.Max(1, w / 2);
+                h = Mathf.Max(1, h / 2);
+            }
+
+            long bytes = 0;
+            while (w >= 1 && h >= 1)
+            {
+                bytes += (long)Mathf.Max(4, w) * Mathf.Max(4, h);   // block formats pad to 4×4
+                if (!mipmaps)
+                {
+                    break;
+                }
+
+                w /= 2;
+                h /= 2;
+            }
+
+            return bytes;
+        }
+
+        /// <summary>WP-011 value; ADR-015-1 keeps it as the largest class size (Ground).</summary>
         public const int TextureMaxSize = 2048;
         public const bool TextureMipmaps = true;
-        public const bool TextureStreamingMipmaps = false;
         public const FilterMode TextureFilter = FilterMode.Trilinear;
         public const TextureWrapMode TextureWrap = TextureWrapMode.Repeat;
         public const int TextureAniso = 4;
@@ -218,9 +363,12 @@ namespace DD.Art.Pipeline.EditorTools
 
             changed |= Set(importer.textureType, type, v => importer.textureType = v);
             changed |= Set(importer.sRGBTexture, !linear, v => importer.sRGBTexture = v);
+            // WP-015 (ADR-015-1): size and streaming come from the role's distance class.
+            TextureClass textureClass = ClassOf(importer.assetPath);
+            int maxSize = MaxSizeOf(textureClass);
             changed |= Set(importer.mipmapEnabled, TextureMipmaps, v => importer.mipmapEnabled = v);
-            changed |= Set(importer.streamingMipmaps, TextureStreamingMipmaps, v => importer.streamingMipmaps = v);
-            changed |= Set(importer.maxTextureSize, TextureMaxSize, v => importer.maxTextureSize = v);
+            changed |= Set(importer.streamingMipmaps, StreamsMipmaps(textureClass), v => importer.streamingMipmaps = v);
+            changed |= Set(importer.maxTextureSize, maxSize, v => importer.maxTextureSize = v);
             changed |= Set(importer.textureCompression, TextureCompression, v => importer.textureCompression = v);
             changed |= Set(importer.crunchedCompression, TextureCrunched, v => importer.crunchedCompression = v);
             changed |= Set(importer.filterMode, TextureFilter, v => importer.filterMode = v);
@@ -241,12 +389,12 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             TextureImporterPlatformSettings standalone = importer.GetPlatformTextureSettings(StandalonePlatform);
-            if (!standalone.overridden || standalone.format != format || standalone.maxTextureSize != TextureMaxSize ||
+            if (!standalone.overridden || standalone.format != format || standalone.maxTextureSize != maxSize ||
                 standalone.textureCompression != TextureCompression || standalone.crunchedCompression != TextureCrunched)
             {
                 standalone.overridden = true;
                 standalone.format = format;
-                standalone.maxTextureSize = TextureMaxSize;
+                standalone.maxTextureSize = maxSize;
                 standalone.textureCompression = TextureCompression;
                 standalone.crunchedCompression = TextureCrunched;
                 importer.SetPlatformTextureSettings(standalone);
@@ -303,11 +451,20 @@ namespace DD.Art.Pipeline.EditorTools
             bool cutout = KeepsCutoutAlpha(importer.assetPath);
             TextureImporterAlphaSource alpha = role == TextureRole.MetallicSmoothness || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
 
+            TextureClass? roleClass = ClassOfRole(RoleSlugOf(importer.assetPath));
+            if (role != TextureRole.Unknown && roleClass == null)
+            {
+                v.Add("class: role '" + RoleSlugOf(importer.assetPath) + "' is not in the ADR-015-1 texture class table (imports at the Prop size)");
+            }
+
+            TextureClass textureClass = roleClass ?? TextureClass.Prop;
+            int maxSize = MaxSizeOf(textureClass);
+
             Check(v, "textureType", importer.textureType, type);
             Check(v, "sRGBTexture", importer.sRGBTexture, !linear);
             Check(v, "mipmapEnabled", importer.mipmapEnabled, TextureMipmaps);
-            Check(v, "streamingMipmaps", importer.streamingMipmaps, TextureStreamingMipmaps);
-            Check(v, "maxTextureSize", importer.maxTextureSize, TextureMaxSize);
+            Check(v, "streamingMipmaps", importer.streamingMipmaps, StreamsMipmaps(textureClass));
+            Check(v, "maxTextureSize", importer.maxTextureSize, maxSize);
             Check(v, "textureCompression", importer.textureCompression, TextureCompression);
             Check(v, "crunchedCompression", importer.crunchedCompression, TextureCrunched);
             Check(v, "filterMode", importer.filterMode, TextureFilter);
@@ -324,7 +481,7 @@ namespace DD.Art.Pipeline.EditorTools
             TextureImporterPlatformSettings standalone = importer.GetPlatformTextureSettings(StandalonePlatform);
             Check(v, "Standalone.overridden", standalone.overridden, true);
             Check(v, "Standalone.format", standalone.format, format);
-            Check(v, "Standalone.maxTextureSize", standalone.maxTextureSize, TextureMaxSize);
+            Check(v, "Standalone.maxTextureSize", standalone.maxTextureSize, maxSize);
             return v;
         }
 

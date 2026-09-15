@@ -167,10 +167,11 @@ namespace DD.Art.Tests.PlayMode
             yield return BootTanMainMenuye();
             Assert.AreEqual(ArtTestProfileIsolation.TestProfilePath, ProfileStore.Path, "Profil yolu izole değil; gerçek profil risk altında.");
 
-            SceneManager.LoadScene(PilotSahneAdi, LoadSceneMode.Single);
+            // WP-015 (ADR-015-2): the pilot is a dev-only (disabled) Build Settings entry → by path.
+            UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(ArtPipelinePaths.PilotScene, new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;
             yield return Bekle(() => SceneManager.GetActiveScene().name == PilotSahneAdi && SceneManager.GetActiveScene().isLoaded,
-                KurulumZamanAsimi, "Pilot sahne etkin olmadı (Build Settings'te 6. sırada mı?). Şu an: '" + SceneManager.GetActiveScene().name + "'");
+                KurulumZamanAsimi, "Pilot sahne etkin olmadı (Build Settings'te dev-only giriş var mı?). Şu an: '" + SceneManager.GetActiveScene().name + "'");
 
             // Statik Last önceki yüklemeden kalmış olabilir; yok edilmiş bir kök UnityEngine.Object
             // karşılaştırmasında null okunur, bu yüzden "Root != null" taze raporu bekler.

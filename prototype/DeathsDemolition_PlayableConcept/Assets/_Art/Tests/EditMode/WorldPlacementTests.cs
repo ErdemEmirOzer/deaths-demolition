@@ -101,6 +101,73 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp014.placement instances=2354 regions=" + string.Join(",", byRegion));
         }
 
+        // ================================================================== WP-015 · override'lar
+
+        /// <summary>
+        /// WP-015 · The overrides file moves exactly the listed instances by exactly its deltas
+        /// (Blender → Unity), every other instance is byte-for-byte the source, the asset carries
+        /// the overrides' sha256 and ids, no delta exceeds the nudge limit, and the three WP-014
+        /// camera-plane culms are the ones listed.
+        /// </summary>
+        [Test]
+        public void Overridelar_UcBambuGovdesi_YalnizListelenenlerKaynaktanSapar_DigestVeSha()
+        {
+            string path = ArtLibraryPaths.Ap005PlacementOverridesJson;
+            Assert.IsTrue(File.Exists(path), "override dosyası yok: " + path);
+            byte[] bytes = File.ReadAllBytes(path);
+            Dictionary<string, object> doc = ArtJson.AsObject(ArtJson.Parse(Encoding.UTF8.GetString(bytes)), "overrides");
+            Assert.AreEqual(WorldPlacementAsset.OverridesSchema, ArtJson.AsString(doc["schema"]));
+            Assert.AreEqual(Path.GetFileName(ArtLibraryPaths.Ap005PlacementJson), ArtJson.AsString(doc["source"]));
+
+            var delta = new Dictionary<string, Vector3>(StringComparer.Ordinal);
+            foreach (object o in ArtJson.AsList(doc["overrides"], "overrides"))
+            {
+                Dictionary<string, object> r = ArtJson.AsObject(o, "override");
+                List<object> d = ArtJson.AsList(r["position_delta"], "position_delta");
+                string id = ArtJson.AsString(r["id"]);
+                Assert.IsFalse(delta.ContainsKey(id), "çift override " + id);
+                delta[id] = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(d[0]), ArtJson.AsFloat(d[1]), ArtJson.AsFloat(d[2]));
+                Assert.LessOrEqual(delta[id].magnitude, PlacementImporter.MaxOverrideDeltaMetres, id + " override sınırı");
+                Assert.IsFalse(string.IsNullOrWhiteSpace(ArtJson.AsString(r["reason"])), id + " gerekçesiz");
+            }
+
+            CollectionAssert.AreEquivalent(new[] { "AP005_i1532", "AP005_i1535", "AP005_i1605", "AP005_i1549" }, delta.Keys, "WP-014 devri: üç bambu gövdesi + i1532 arkasındaki gövde (ilk isabet gizliyordu)");
+
+            WorldPlacementAsset p = Placement();
+            Assert.AreEqual(Sha256(bytes), p.overridesSha256, "asset override dosyasının sha256'sını taşımalı");
+            CollectionAssert.AreEqual(new List<string>(delta.Keys), p.overriddenIds, "asset override id listesi dosya sırasında");
+
+            var source = new Dictionary<string, Vector3>(StringComparer.Ordinal);
+            foreach (object o in ArtJson.AsList(SourceJson()["instances"], "instances"))
+            {
+                Dictionary<string, object> r = ArtJson.AsObject(o, "instance");
+                List<object> pos = ArtJson.AsList(r["position"], "position");
+                source[ArtJson.AsString(r["id"])] = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(pos[0]), ArtJson.AsFloat(pos[1]), ArtJson.AsFloat(pos[2]));
+            }
+
+            int moved = 0, same = 0;
+            foreach (WorldPlacementAsset.Instance i in p.instances)
+            {
+                Vector3 expected = source[i.id] + (delta.TryGetValue(i.id, out Vector3 d) ? d : Vector3.zero);
+                Assert.AreEqual(expected.ToString("F4"), i.position.ToString("F4"), i.id + (delta.ContainsKey(i.id) ? " (override)" : " (kaynak)"));
+                if (delta.ContainsKey(i.id)) moved++; else same++;
+            }
+
+            Assert.AreEqual(4, moved);
+            Assert.AreEqual(p.instances.Count - 4, same);
+
+            // The scene carries the moved transforms (the importer ran after the file was written).
+            Transform instances = Instances(OpenWorld());
+            foreach (KeyValuePair<string, Vector3> kv in delta)
+            {
+                Transform t = instances.Find(kv.Key);
+                Assert.IsNotNull(t, kv.Key + " sahnede yok");
+                Assert.AreEqual((source[kv.Key] + kv.Value).ToString("F3"), t.position.ToString("F3"), kv.Key + " sahne konumu = kaynak + override");
+            }
+
+            Debug.Log("[DD-TEST] wp015.overrides applied=" + moved + " sha=" + p.overridesSha256.Substring(0, 12));
+        }
+
         // ================================================================== koordinat sözleşmesi
 
         [Test]

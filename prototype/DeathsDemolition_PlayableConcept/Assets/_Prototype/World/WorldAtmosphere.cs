@@ -23,7 +23,8 @@ namespace DD.Prototype.World
     ///
     /// So LINEAR fog starting at <see cref="FogStart"/> = 52 m is mathematically incapable
     /// of tinting a single pixel of anything the player is fighting, while still veiling
-    /// the far side of a 90 m map (the far corner is ~90 m from the camera). Exponential
+    /// the far side of a 90 m map (the far corner is ~90 m from the camera; WP-015 lightened
+    /// the ramp to Presentation A's mist density, see <see cref="FogEnd"/>). Exponential
     /// fog cannot do this - it has density everywhere, including on the enemy two metres
     /// away - which is why the mode is Linear and is not a matter of taste.
     ///
@@ -46,9 +47,29 @@ namespace DD.Prototype.World
         /// <summary>Metres from the CAMERA at which fog starts. See the class summary.</summary>
         public const float FogStart = 52f;
 
-        public const float FogEnd = 138f;
+        /// <summary>
+        /// WP-015 (DEC-076 final palette = Presentation A + DEC-068 "hafif sisli"): the WP-013
+        /// art review found the 52→138 m ramp heavy at the ~90 m overview (44 % fog at 90 m,
+        /// 100 % at the map's far edge). Presentation A's mist is 0.003/m finite; a linear ramp
+        /// from 52 m that matches that density at 90 m (24 %) ends at ~210 m (54 % at 138 m,
+        /// where the old ramp was opaque). The start is unchanged: REQ-104's combat range
+        /// (≤ 45 m from the camera) still receives no fog at all. WP-013 values are kept
+        /// below for the A/B captures.
+        /// </summary>
+        public const float FogEnd = 210f;
 
-        public static readonly Color FogColor = new Color(0.694f, 0.714f, 0.706f);
+        /// <summary>
+        /// Presentation A mist colour, linear (0.63, 0.68, 0.73) → sRGB (0.815, 0.843, 0.870)
+        /// ≈ #D0D7DE (WP-011 style-guide draft candidate, decided by DEC-076). Script colours
+        /// are sRGB here; the shared sky horizon follows this value (ArtSkyBuilder).
+        /// </summary>
+        public static readonly Color FogColor = new Color(0.815f, 0.843f, 0.870f);
+
+        /// <summary>WP-013 fog end, reference for the WP-015 A/B captures only.</summary>
+        public const float FogEndWp013 = 138f;
+
+        /// <summary>WP-013 fog colour (Presentation A background × 0.65), reference for the WP-015 A/B captures only.</summary>
+        public static readonly Color FogColorWp013 = new Color(0.694f, 0.714f, 0.706f);
 
         /// <summary>
         /// Resources name of the shared overcast sky material

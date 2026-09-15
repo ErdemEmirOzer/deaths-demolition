@@ -39,7 +39,8 @@ namespace DD.Art.Tests.PlayMode
         private const float DolusZamanAsimi = 90f;
         private const float YatismaZamanAsimi = 30f;
         private const float RotaOrnekAralikMetre = 2f;
-        private const float OrtulmeEsigi = 0.5f;
+        /// <summary>WP-015: the official threshold (DEC-077), not a working value.</summary>
+        private const float OrtulmeEsigi = ReadabilityThresholds.OcclusionRatioMax;
 
         private EnemySpawnDirector _director;
 
@@ -203,6 +204,7 @@ namespace DD.Art.Tests.PlayMode
             int samples = 0, worstBlocked = 0, worstBlockedEnv = 0, overHalfEnv = 0, overHalfTotal = 0, overHalfThin = 0;
             Vector3 worstAt = Vector3.zero;
             var overHalfList = new List<string>();
+            var thinList = new List<string>();
             foreach (WorldPlacementAsset.Route rt in p.routes)
             {
                 Vector3 a = rt.a, b = rt.b;
@@ -219,7 +221,7 @@ namespace DD.Art.Tests.PlayMode
                     points[3] = feet + Vector3.up * (height * 0.75f) - Vector3.right * radius;
                     points[4] = feet + Vector3.up * (height * 0.75f) + Vector3.right * radius;
                     int blocked = 0, blockedEnv = 0, blockedThin = 0;
-                    string hits = string.Empty;
+                    string hits = string.Empty, thinHits = string.Empty;
                     for (int i = 0; i < 5; i++)
                     {
                         Vector3 d = points[i] - cam;
@@ -230,9 +232,12 @@ namespace DD.Art.Tests.PlayMode
                             // A culm-thin capsule (≤ 0.15 m) on the camera plane cuts every axial
                             // ray of the capsule but hides none of a 0.7 m body (REQ-104 is about
                             // plants OBSCURING enemies); it is counted, reported, and not a failure.
-                            if (h.collider is CapsuleCollider thin && thin.radius <= 0.15f)
+                            if (h.collider is CapsuleCollider thin && thin.radius <= ReadabilityThresholds.ThinCapsuleRadius)
                             {
                                 blockedThin++;
+                                Transform culm = h.collider.transform;
+                                while (culm.parent != null && culm.parent.name != Ap005WorldBootstrap.InstancesName && culm.parent.name != Ap005WorldBootstrap.RootName) culm = culm.parent;
+                                thinHits += (thinHits.Length > 0 ? ", " : "") + culm.name + "@" + h.point.ToString("F2");
                                 continue;
                             }
 
@@ -247,7 +252,7 @@ namespace DD.Art.Tests.PlayMode
                     }
 
                     samples++;
-                    if (blockedThin / 5f > OrtulmeEsigi) overHalfThin++;
+                    if (blockedThin / 5f > OrtulmeEsigi) { overHalfThin++; thinList.Add("route " + rt.index + " @" + feet.ToString("F2") + " culm " + blockedThin + "/5 [" + thinHits + "]"); }
                     if (blockedEnv > worstBlockedEnv) { worstBlockedEnv = blockedEnv; worstAt = feet; }
                     if (blocked > worstBlocked) worstBlocked = blocked;
                     if (blockedEnv / 5f > OrtulmeEsigi) { overHalfEnv++; overHalfList.Add("route " + rt.index + " @" + feet.ToString("F1") + " env " + blockedEnv + "/5 [" + hits + "]"); }
@@ -257,7 +262,10 @@ namespace DD.Art.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp014.readability samples=" + samples + " worstEnv=" + worstBlockedEnv + "/5 @" + worstAt.ToString("F1") + " worstTotal=" + worstBlocked + "/5 over50env=" + overHalfEnv + " over50thinCulm=" + overHalfThin + " over50total(fade+culm dahil)=" + overHalfTotal);
             Assert.Greater(samples, 49);
-            Assert.AreEqual(0, overHalfEnv, "Sabit çevreyle >%50 örtülen rota noktası (" + overHalfEnv + "):\n" + string.Join("\n", overHalfList));
+            Assert.AreEqual(0, overHalfEnv, "Sabit çevreyle >%50 örtülen rota noktası (DEC-077 eşiği; " + overHalfEnv + "):\n" + string.Join("\n", overHalfList));
+            // WP-015: the three WP-014 camera-plane culms are nudged by the placement overrides;
+            // culm-thin hits are still not failures, but with the overrides applied there are none.
+            Assert.AreEqual(0, overHalfThin, "İnce gövde (culm) ile >%50 kesilen rota noktası; WP-015 override'ları sonrası 0 beklenir:\n" + string.Join("\n", thinList));
         }
 
         // ================================================================== fade (REQ-111, koridor çatısı)
@@ -330,11 +338,17 @@ namespace DD.Art.Tests.PlayMode
                 new ArtVisualRegression.CameraPose("world-north", new Vector3(0f, 15f, 11.95f), new Vector3(0f, 0f, 25f), 42f),
                 new ArtVisualRegression.CameraPose("world-east", new Vector3(21.45f, 15f, 0.8f), new Vector3(34.5f, 0f, 0.8f), 42f),
                 new ArtVisualRegression.CameraPose("world-south", new Vector3(4f, 15f, -15.95f), new Vector3(4f, 0f, -29f), 42f),
-                new ArtVisualRegression.CameraPose("world-west", new Vector3(-36.95f, 15f, -13.05f), new Vector3(-36.95f, 0f, 0f), 42f)
+                new ArtVisualRegression.CameraPose("world-west", new Vector3(-36.95f, 15f, -13.05f), new Vector3(-36.95f, 0f, 0f), 42f),
+                // WP-015: the ~90 m overview the WP-013 art review judged the fog on (DEC-076), for the world.
+                new ArtVisualRegression.CameraPose("world-overview", new Vector3(-45f, 30f, -75f), new Vector3(5f, 0f, 0f), 42f)
             };
 
             foreach (ArtVisualRegression.CameraPose pose in poses)
             {
+                // WP-015: mipmap streaming (ADR-015-1) needs a live camera at the pose before
+                // the one-shot capture, or the frame shows whatever mips the world camera wanted.
+                int warm = 0;
+                yield return ArtVisualRegression.WarmStreaming(pose, 1920, 1080, 120, f => warm = f);
                 string yol = Path.Combine(dir, pose.name + "-1920x1080.png");
                 ArtVisualRegression.CaptureToPng(pose, 1920, 1080, yol);
                 yield return null;
@@ -346,9 +360,25 @@ namespace DD.Art.Tests.PlayMode
                 long sum = 0; int magenta = 0;
                 for (int i = 0; i < px.Length; i++) { sum += px[i].r + px[i].g + px[i].b; if (px[i].r > 200 && px[i].b > 200 && px[i].g < 60) magenta++; }
                 double mean = sum / (3.0 * px.Length);
-                Debug.Log("[DD-TEST] wp014.capture " + pose.name + " mean=" + mean.ToString("F1", CultureInfo.InvariantCulture) + " magenta=" + ((double)magenta / px.Length * 100.0).ToString("F3", CultureInfo.InvariantCulture) + "% -> " + yol);
+                Debug.Log("[DD-TEST] wp014.capture " + pose.name + " mean=" + mean.ToString("F1", CultureInfo.InvariantCulture) + " magenta=" + ((double)magenta / px.Length * 100.0).ToString("F3", CultureInfo.InvariantCulture) + "% warmFrames=" + warm +
+                          " streaming=" + Texture.streamingTextureCount + " pending=" + Texture.streamingTexturePendingLoadCount + " texMB current=" + (Texture.currentTextureMemory / 1048576.0).ToString("F1", CultureInfo.InvariantCulture) +
+                          " desired=" + (Texture.desiredTextureMemory / 1048576.0).ToString("F1", CultureInfo.InvariantCulture) + " nonStreaming=" + (Texture.nonStreamingTextureMemory / 1048576.0).ToString("F1", CultureInfo.InvariantCulture) + " -> " + yol);
                 Assert.Greater(mean, 1.0, pose.name + ": kare siyah");
                 Assert.Less((double)magenta / px.Length, 0.001, pose.name + ": magenta");
+
+                // WP-015 fog A/B for the art-director judgment (DEC-076): the same frame with the
+                // WP-013 ramp (52→138 m, background colour). The sky stays the WP-015 gradient.
+                float fogEnd = RenderSettings.fogEndDistance;
+                Color fogColor = RenderSettings.fogColor;
+                RenderSettings.fogEndDistance = WorldAtmosphere.FogEndWp013;
+                RenderSettings.fogColor = WorldAtmosphere.FogColorWp013;
+                yield return null;
+                string yolA = Path.Combine(dir, pose.name + "-fogWp013-1920x1080.png");
+                ArtVisualRegression.CaptureToPng(pose, 1920, 1080, yolA);
+                RenderSettings.fogEndDistance = fogEnd;
+                RenderSettings.fogColor = fogColor;
+                yield return null;
+                Assert.IsTrue(File.Exists(yolA), "A/B yakalaması yazılmadı: " + yolA);
             }
         }
 

@@ -359,6 +359,82 @@ namespace DD.Art.Tests.EditMode
             Assert.IsEmpty(bulgular, string.Join("\n", bulgular));
         }
 
+        // ============================================================== WP-015 · doku politikası (ADR-015-1)
+
+        /// <summary>
+        /// Every contract PNG has a class in the ADR-015-1 table, imports at its class size with
+        /// streaming per class, and the whole SHIPPED set (every map a material binds: BaseColor,
+        /// Normal, MetallicSmoothness, sky — the AP Packed maps are provenance and are never
+        /// referenced) estimates to at most the resident budget even fully resident, i.e. before
+        /// streaming reduces it. Sizes come from the PNG header, not from the importer, so a
+        /// wrong importer cannot make the sum look right.
+        /// </summary>
+        [Test]
+        public void DokuPolitikasi_HerDokuSinifli_BoyutVeStreamingSinifa_SevkToplamiButceAltinda()
+        {
+            List<string> pngler = DiskteUzanti(".png");
+            Assert.Greater(pngler.Count, 0);
+            var ihlaller = new List<string>();
+            var sinifToplam = new SortedDictionary<string, long>();
+            var sinifSayi = new SortedDictionary<string, int>();
+            long sevk = 0, tam2048 = 0;
+            int sevkSayi = 0;
+            foreach (string yol in pngler)
+            {
+                ArtImportContract.TextureRole rol = ArtImportContract.RoleOf(yol);
+                string slug = ArtImportContract.RoleSlugOf(yol);
+                ArtImportContract.TextureClass? sinif = ArtImportContract.ClassOfRole(slug);
+                if (sinif == null)
+                {
+                    ihlaller.Add(yol + ": rol '" + slug + "' ADR-015-1 sınıf tablosunda yok.");
+                    continue;
+                }
+
+                var importer = AssetImporter.GetAtPath(yol) as TextureImporter;
+                if (importer == null)
+                {
+                    ihlaller.Add(yol + ": TextureImporter yok.");
+                    continue;
+                }
+
+                int beklenenBoyut = ArtImportContract.MaxSizeOf(sinif.Value);
+                if (importer.maxTextureSize != beklenenBoyut) ihlaller.Add(yol + ": maxTextureSize " + importer.maxTextureSize + " != " + beklenenBoyut + " (" + sinif + ")");
+                TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(ArtImportContract.StandalonePlatform);
+                if (!st.overridden || st.maxTextureSize != beklenenBoyut) ihlaller.Add(yol + ": Standalone maxTextureSize " + st.maxTextureSize + " != " + beklenenBoyut);
+                if (importer.streamingMipmaps != ArtImportContract.StreamsMipmaps(sinif.Value)) ihlaller.Add(yol + ": streamingMipmaps " + importer.streamingMipmaps + " != " + ArtImportContract.StreamsMipmaps(sinif.Value) + " (" + sinif + ")");
+
+                PngBoyut(yol, out int w, out int h);
+                if (rol == ArtImportContract.TextureRole.Packed) continue;   // provenance only; no material binds it
+                long bytes = ArtImportContract.EstimatedShippedBytes(w, h, sinif.Value, importer.mipmapEnabled);
+                sevk += bytes;
+                sevkSayi++;
+                tam2048 += ArtImportContract.EstimatedShippedBytes(w, h, ArtImportContract.TextureClass.Ground, importer.mipmapEnabled);
+                string k = sinif.Value.ToString();
+                sinifToplam[k] = (sinifToplam.TryGetValue(k, out long t) ? t : 0) + bytes;
+                sinifSayi[k] = (sinifSayi.TryGetValue(k, out int n) ? n : 0) + 1;
+            }
+
+            Assert.IsEmpty(ihlaller, "Doku politikası ihlali (" + ihlaller.Count + "):\n" + string.Join("\n", ihlaller));
+            var satirlar = new List<string>();
+            foreach (KeyValuePair<string, long> kv in sinifToplam) satirlar.Add(kv.Key + " " + sinifSayi[kv.Key] + " doku " + (kv.Value / 1048576.0).ToString("F1") + " MB");
+            double sevkMb = sevk / 1048576.0;
+            Debug.Log("[DD-TEST] wp015.texturePolicy shipped=" + sevkSayi + " estMB=" + sevkMb.ToString("F1") + " (all-2048 would be " + (tam2048 / 1048576.0).ToString("F1") + " MB) budgetMB=" + ArtImportContract.ArtTextureMemoryBudgetMb + " | " + string.Join(" | ", satirlar));
+            Assert.LessOrEqual(sevkMb, ArtImportContract.ArtTextureMemoryBudgetMb, "Sevk edilen doku kümesi tam yerleşik hâlde bile bütçeyi aşıyor (ADR-015-1).");
+        }
+
+        private static void PngBoyut(string yol, out int w, out int h)
+        {
+            using (FileStream f = File.OpenRead(yol))
+            {
+                var head = new byte[24];
+                int read = f.Read(head, 0, 24);
+                Assert.AreEqual(24, read, yol + ": PNG başlığı okunamadı");
+                Assert.IsTrue(head[1] == (byte)'P' && head[2] == (byte)'N' && head[3] == (byte)'G', yol + ": PNG değil (LFS pointer?)");
+                w = (head[16] << 24) | (head[17] << 16) | (head[18] << 8) | head[19];
+                h = (head[20] << 24) | (head[21] << 16) | (head[22] << 8) | head[23];
+            }
+        }
+
         // ============================================================== LOD üçgen ve sınır paritesi
 
         [Test]

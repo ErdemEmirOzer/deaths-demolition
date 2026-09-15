@@ -179,6 +179,8 @@ namespace DD.Art.Pipeline.EditorTools
                 });
             }
 
+            ApplyOverrides(asset);
+
             asset.spawnPoints = Points(doc["spawn_points"], "spawn_points");
             asset.weaponPoints = Points(doc["weapon_points"], "weapon_points");
             List<object> ps = ArtJson.AsList(doc["player_start"], "player_start");
@@ -210,9 +212,83 @@ namespace DD.Art.Pipeline.EditorTools
             AssetDatabase.SaveAssets();
             Debug.Log(LogPrefix + "Placement asset " + (created ? "created" : "updated") + ": " + assetPath + " (" + asset.instances.Count +
                       " instances, " + asset.routes.Count + " routes, " + asset.markers.Count + " markers, " + asset.spawnPoints.Count + "+" +
-                      asset.weaponPoints.Count + " points, " + asset.regions.Count + " regions; source sha256 " + asset.sourceSha256.Substring(0, 12) + "…)");
+                      asset.weaponPoints.Count + " points, " + asset.regions.Count + " regions; source sha256 " + asset.sourceSha256.Substring(0, 12) + "…; overrides " +
+                      asset.overriddenIds.Count + ")");
             return asset;
         }
+
+        // ----------------------------------------------------------------- overrides
+
+        /// <summary>
+        /// WP-015 · Unity-side placement overrides (<see cref="ArtLibraryPaths.Ap005PlacementOverridesJson"/>,
+        /// schema dd-placement-overrides-v1): <c>{ schema, source, overrides[ { id, position_delta [bx,by,bz] (m, Blender
+        /// space), reason } ] }</c>. Each entry moves one instance of the already-parsed source by
+        /// its delta; the AP-005 source file is not touched (WP-014 handover: three bamboo culms
+        /// on the camera plane of route samples, reported to production). Missing file = no
+        /// overrides. Unknown ids and deltas over <see cref="MaxOverrideDeltaMetres"/> are errors.
+        /// </summary>
+        public static int ApplyOverrides(WorldPlacementAsset asset)
+        {
+            asset.overridesSha256 = string.Empty;
+            asset.overriddenIds = new List<string>();
+            string path = ArtLibraryPaths.Ap005PlacementOverridesJson;
+            if (!File.Exists(path))
+            {
+                return 0;
+            }
+
+            byte[] bytes = File.ReadAllBytes(path);
+            Dictionary<string, object> doc = ArtJson.AsObject(ArtJson.Parse(Encoding.UTF8.GetString(bytes)), "overrides");
+            string schema = ArtJson.AsString(ArtJson.Require(doc, "schema"), "schema");
+            if (schema != WorldPlacementAsset.OverridesSchema)
+            {
+                throw new FormatException(LogPrefix + "overrides schema '" + schema + "' != " + WorldPlacementAsset.OverridesSchema);
+            }
+
+            string source = ArtJson.AsString(ArtJson.Require(doc, "source"), "source");
+            if (source != Path.GetFileName(ArtLibraryPaths.Ap005PlacementJson))
+            {
+                throw new FormatException(LogPrefix + "overrides target '" + source + "' is not the AP-005 source");
+            }
+
+            var byId = new Dictionary<string, WorldPlacementAsset.Instance>(StringComparer.Ordinal);
+            foreach (WorldPlacementAsset.Instance inst in asset.instances) byId[inst.id] = inst;
+
+            int applied = 0;
+            foreach (object o in ArtJson.AsList(ArtJson.Require(doc, "overrides"), "overrides"))
+            {
+                Dictionary<string, object> r = ArtJson.AsObject(o, "override");
+                string id = ArtJson.AsString(ArtJson.Require(r, "id"), "id");
+                if (!byId.TryGetValue(id, out WorldPlacementAsset.Instance inst))
+                {
+                    throw new FormatException(LogPrefix + "override for unknown instance '" + id + "'");
+                }
+
+                if (asset.overriddenIds.Contains(id))
+                {
+                    throw new FormatException(LogPrefix + "instance '" + id + "' is overridden twice");
+                }
+
+                List<object> d = ArtJson.AsList(ArtJson.Require(r, "position_delta"), "position_delta");
+                Vector3 delta = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(d[0]), ArtJson.AsFloat(d[1]), ArtJson.AsFloat(d[2]));
+                if (delta.magnitude > MaxOverrideDeltaMetres)
+                {
+                    throw new FormatException(LogPrefix + "override for '" + id + "' moves " + delta.magnitude.ToString("F2") + " m (> " + MaxOverrideDeltaMetres + " m): that is a production change, not a Unity override");
+                }
+
+                ArtJson.AsString(ArtJson.Require(r, "reason"), "reason");
+                inst.position += delta;
+                asset.overriddenIds.Add(id);
+                applied++;
+            }
+
+            asset.overridesSha256 = Sha256(bytes);
+            Debug.Log(LogPrefix + "Applied " + applied + " placement override(s) from " + path + " (sha256 " + asset.overridesSha256.Substring(0, 12) + "…)");
+            return applied;
+        }
+
+        /// <summary>An override is a nudge; anything further belongs to the AP-005 source.</summary>
+        public const float MaxOverrideDeltaMetres = 1f;
 
         /// <summary>The dd-placement-v1 contract checks: schema/space ids, required arrays, per-record fields.</summary>
         public static void Validate(Dictionary<string, object> doc)
@@ -413,7 +489,15 @@ namespace DD.Art.Pipeline.EditorTools
         public const string GroundName = "Ground (stand-in)";
         /// <summary>±80 m: the 19.9 m / −49° rig at the arena edge (±45) still sees ground, not sky (art review, west/east framings).</summary>
         public const float GroundSize = 160f;
-        public const float GroundY = -0.05f;
+        /// <summary>
+        /// WP-015: −0.02 (was −0.05). The AP-005 ground plate (58×56 m, 3 cm slab at z −0.037)
+        /// tops out at −0.007 and hero_earth at −0.010; 1.3 cm below the plate keeps the ledge
+        /// along its edge to a pixel at the gameplay camera while staying clear of z-fighting.
+        /// Material and mapping already equal the plate's: M_earth (the hero_earth role) with
+        /// planar UV = world / 4 m (the plate's UVs fit u = 0.25·x − 0.005, v = 0.25·z, residual
+        /// ≤ 0.22 — WP-015 uvfit), so the seam is only the height step.
+        /// </summary>
+        public const float GroundY = -0.02f;
         /// <summary>A soil bed under each basin, seen through the ground hole below the water plane (−0.15).</summary>
         public const float PondBedY = -0.85f;
         private const float GroundTile = 4f;
@@ -654,6 +738,11 @@ namespace DD.Art.Pipeline.EditorTools
 
         // ---------------------------------------------------------------- settings
 
+        /// <summary>
+        /// The world scene is a RELEASE scene (enabled). WP-015 (ADR-015-2): disabled entries are
+        /// dev-only scenes (pilot, showcase) and keep their place; a missing world scene is
+        /// inserted after the last enabled entry so the release list stays contiguous.
+        /// </summary>
         public static void RegisterInBuildSettings()
         {
             string path = ArtLibraryPaths.Ap005WorldScene;
@@ -671,9 +760,15 @@ namespace DD.Art.Pipeline.EditorTools
                 return;
             }
 
-            scenes.Add(new EditorBuildSettingsScene(path, true));
+            int insertAt = 0;
+            for (int i = 0; i < scenes.Count; i++)
+            {
+                if (scenes[i].enabled) insertAt = i + 1;
+            }
+
+            scenes.Insert(insertAt, new EditorBuildSettingsScene(path, true));
             EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log(LogPrefix + "World scene appended to the build settings at index " + (scenes.Count - 1) + ".");
+            Debug.Log(LogPrefix + "World scene inserted into the build settings at index " + insertAt + " (after the last release scene).");
         }
 
         /// <summary>Creates the Resources world-source asset; sets the source when one is given, otherwise keeps the current value (Procedural on creation).</summary>

@@ -107,7 +107,9 @@ namespace DD.Art.Tests.PlayMode
             yield return Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu, SahneZamanAsimi, "MainMenu");
             yield return null;
             PrototypeUiFlow.ReleaseSimulation();
-            SceneManager.LoadScene(PilotSahneAdi, LoadSceneMode.Single);
+            // WP-015 (ADR-015-2): the pilot is a dev-only (disabled) Build Settings entry, so it
+            // is loaded by path, as the showcase already is; by name it would not resolve.
+            UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(ArtPipelinePaths.PilotScene, new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;
             yield return Bekle(() => SceneManager.GetActiveScene().name == PilotSahneAdi && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "pilot sahne");
             yield return Bekle(() => PilotSceneBootstrap.Last.Root != null, KurulumZamanAsimi, "PilotSceneBootstrap raporu gelmedi.");
@@ -191,9 +193,9 @@ namespace DD.Art.Tests.PlayMode
         /// <summary>
         /// REQ-104/105 ölçümü: sabit gameplay pozunda 1.8 m gri kapsül (düşman siluet vekili) ve
         /// altın bant. Sis + parçacık + post-fx açıkken kapsülün çevresine karşı Michelson
-        /// kontrastı, kapalıya göre ≥ %90 ve mutlak ≥ 0.05; altın bandın çevreden ayrışması ≥ %80.
-        /// Eşik çalışma eşiğidir (kullanıcı kararı §23 #4 açık), sayı burada kilitlenmez —
-        /// yalnız "sis/parçacık okunabilirliği bozmadı" cümlesi doğrulanır.
+        /// kontrastı, kapalıya göre ≥ %90 ve mutlak ≥ <see cref="ReadabilityThresholds.CapsuleContrastMin"/>
+        /// (0.06 — WP-015: kullanıcı kararı DEC-077, resmi eşik; WP-013'te 0.05 çalışma eşiğiydi);
+        /// altın bandın çevreden ayrışması ≥ %80.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -249,7 +251,7 @@ namespace DD.Art.Tests.PlayMode
 
             Assert.Greater(acik.KapsulPiksel, 200, "Kapsül ekranda görünmüyor (ölçüm geçersiz).");
             Assert.Greater(acik.AltinPiksel, 50, "Altın bant ekranda görünmüyor (ölçüm geçersiz).");
-            Assert.GreaterOrEqual(acik.Kontrast, 0.05f, "Siluet kontrastı mutlak eşiğin altında.");
+            Assert.GreaterOrEqual(acik.Kontrast, ReadabilityThresholds.CapsuleContrastMin, "Siluet kontrastı resmi eşiğin (DEC-077, " + ReadabilityThresholds.CapsuleContrastMin + ") altında.");
             Assert.GreaterOrEqual(acik.Kontrast, kapali.Kontrast * 0.9f, "Sis/parçacık/post-fx siluet kontrastını %10'dan fazla düşürdü.");
             // REQ-105 çevreden ayrışma (çalışma eşiği; kullanıcı kararı §23 #4 açık): altın bandın
             // doygunluğu çevresindeki halkadan mutlak ≥ 0.30 yüksek ve grade'siz karenin ≥ %80'i;

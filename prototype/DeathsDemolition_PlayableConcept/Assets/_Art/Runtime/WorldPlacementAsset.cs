@@ -76,6 +76,10 @@ namespace DD.Art
         public string version;
         public string created;
         public string sourceSha256;
+        /// <summary>WP-015 · SHA-256 of the overrides file applied on top of the source (empty when there is none).</summary>
+        public string overridesSha256;
+        /// <summary>WP-015 · ids whose transform differs from the source by an override (in file order).</summary>
+        public List<string> overriddenIds = new List<string>();
         public List<Instance> instances = new List<Instance>();
         public List<Route> routes = new List<Route>();
         public List<Marker> markers = new List<Marker>();
@@ -85,6 +89,7 @@ namespace DD.Art
         public List<Region> regions = new List<Region>();
 
         public const string Schema = "dd-placement-v1";
+        public const string OverridesSchema = "dd-placement-overrides-v1";
 
         /// <summary>Blender (x, y, z) → Unity (x, z, y).</summary>
         public static Vector3 ToUnity(float bx, float by, float bz)

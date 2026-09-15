@@ -1,0 +1,12 @@
+{
+  "schema": "dd-placement-overrides-v1",
+  "source": "AP005_placement.json",
+  "package": "WP-015",
+  "note": "Unity-side nudges applied by PlacementImporter on top of the untouched AP-005 source (dd-placement-v1, Blender metres: x east, y north, z up). WP-014 handover: three bamboo culms (plus the one directly behind i1532) stood on the camera plane of a route sample (rig 0/+15/-13, 5 axial rays) and cut 3/5 rays each; each is moved < 0.5 m off the ray plane, away from the route, keeping >= 0.6 m to the nearest neighbour. Reported to AP-005 production; a source fix supersedes this file.",
+  "overrides": [
+    { "id": "AP005_i1532", "position_delta": [-0.35, -0.35, 0.0], "reason": "bamboo_stalk V05 on route 42 sample (-22.44, 0.0): moved SW off the ray plane (0/5 rays after; nearest neighbour 0.64 m)" },
+    { "id": "AP005_i1535", "position_delta": [0.5, 0.0, 0.0], "reason": "bamboo_stalk V04 on route 14 sample (-35.80, -12.40): moved E off the ray plane (0/5 rays after; nearest neighbour 0.65 m)" },
+    { "id": "AP005_i1605", "position_delta": [0.5, 0.0, 0.0], "reason": "bamboo_stalk V05 on route 42 sample (-18.67, 0.0): moved E off the ray plane (0/5 rays after; nearest neighbour 0.69 m)" },
+    { "id": "AP005_i1549", "position_delta": [0.35, 0.35, 0.0], "reason": "bamboo_stalk V05 directly behind i1532 on the same route 42 rays (first-hit hid it in WP-014): moved NE off the ray plane (0/5 rays after; nearest neighbour 0.60 m)" }
+  ]
+}

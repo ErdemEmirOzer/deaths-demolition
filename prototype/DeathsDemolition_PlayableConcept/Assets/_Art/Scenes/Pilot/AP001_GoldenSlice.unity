@@ -15,11 +15,11 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 1
-  m_FogColor: {r: 0.694, g: 0.714, b: 0.706, a: 1}
+  m_FogColor: {r: 0.815, g: 0.843, b: 0.87, a: 1}
   m_FogMode: 1
   m_FogDensity: 0.01
   m_LinearFogStart: 52
-  m_LinearFogEnd: 138
+  m_LinearFogEnd: 210
   m_AmbientSkyColor: {r: 0.616, g: 0.655, b: 0.702, a: 1}
   m_AmbientEquatorColor: {r: 0.447, g: 0.47, b: 0.42, a: 1}
   m_AmbientGroundColor: {r: 0.216, g: 0.231, b: 0.192, a: 1}
@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 0.55
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 230235500}
+  m_Sun: {fileID: 462024038}
   m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 0.55}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
@@ -123,7 +123,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &117780532
+--- !u!1 &255377619
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -131,43 +131,39 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 117780534}
-  - component: {fileID: 117780533}
+  - component: {fileID: 255377621}
+  - component: {fileID: 255377620}
   m_Layer: 0
-  m_Name: Pilot Bootstrap
+  m_Name: Global Volume
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &117780533
+--- !u!114 &255377620
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 117780532}
+  m_GameObject: {fileID: 255377619}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc3f1234be7bb485eae60b8266ca89ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _layout: {fileID: 11400000, guid: a778eac36527d4323b869a05411f8147, type: 2}
-  _library: {fileID: 11400000, guid: 9e9cea31a6f52414caccb9a470692514, type: 2}
-  _earthMaterial: {fileID: 2100000, guid: 20fdce86e4c9649f1a08bc25404b6ed7, type: 2}
-  _sakuraPurpleMaterial: {fileID: 2100000, guid: 13f420e9d3ea9481284a3dbe870833b1, type: 2}
-  _groundColliderMesh: {fileID: 3076268382980133575, guid: ac07a9c34ffd4415a8559e17b6fd4fed, type: 3}
-  _installRunSystems: 1
-  _buildHud: 1
-  _bakeNavMesh: 1
-  _logReport: 1
---- !u!4 &117780534
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: e99c26b47c9984ab8adfa33bbddead21, type: 2}
+--- !u!4 &255377621
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 117780532}
+  m_GameObject: {fileID: 255377619}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -176,7 +172,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &230235499
+--- !u!1 &462024037
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -184,8 +180,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 230235501}
-  - component: {fileID: 230235500}
+  - component: {fileID: 462024039}
+  - component: {fileID: 462024038}
   m_Layer: 0
   m_Name: Sun (pilot)
   m_TagString: Untagged
@@ -193,13 +189,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!108 &230235500
+--- !u!108 &462024038
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 230235499}
+  m_GameObject: {fileID: 462024037}
   m_Enabled: 1
   serializedVersion: 10
   m_Type: 1
@@ -255,13 +251,13 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
---- !u!4 &230235501
+--- !u!4 &462024039
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 230235499}
+  m_GameObject: {fileID: 462024037}
   serializedVersion: 2
   m_LocalRotation: {x: 0.34987321, y: 0.2020638, z: -0.07756503, w: 0.91145086}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -270,7 +266,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &566816287
+--- !u!1 &1434330133
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -278,39 +274,44 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 566816289}
-  - component: {fileID: 566816288}
+  - component: {fileID: 1434330135}
+  - component: {fileID: 1434330134}
   m_Layer: 0
-  m_Name: Global Volume
+  m_Name: Pilot Bootstrap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &566816288
+--- !u!114 &1434330134
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 566816287}
+  m_GameObject: {fileID: 1434330133}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Script: {fileID: 11500000, guid: dc3f1234be7bb485eae60b8266ca89ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: e99c26b47c9984ab8adfa33bbddead21, type: 2}
---- !u!4 &566816289
+  _layout: {fileID: 11400000, guid: a778eac36527d4323b869a05411f8147, type: 2}
+  _library: {fileID: 11400000, guid: 9e9cea31a6f52414caccb9a470692514, type: 2}
+  _earthMaterial: {fileID: 2100000, guid: 20fdce86e4c9649f1a08bc25404b6ed7, type: 2}
+  _sakuraPurpleMaterial: {fileID: 2100000, guid: 13f420e9d3ea9481284a3dbe870833b1, type: 2}
+  _groundColliderMesh: {fileID: 3076268382980133575, guid: ac07a9c34ffd4415a8559e17b6fd4fed, type: 3}
+  _installRunSystems: 1
+  _buildHud: 1
+  _bakeNavMesh: 1
+  _buildAtmosphere: 1
+  _logReport: 1
+--- !u!4 &1434330135
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 566816287}
+  m_GameObject: {fileID: 1434330133}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -323,6 +324,6 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 230235501}
-  - {fileID: 566816289}
-  - {fileID: 117780534}
+  - {fileID: 462024039}
+  - {fileID: 255377621}
+  - {fileID: 1434330135}

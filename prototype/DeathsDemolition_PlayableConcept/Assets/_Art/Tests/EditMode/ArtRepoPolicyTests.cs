@@ -211,8 +211,14 @@ namespace DD.Art.Tests.EditMode
 
         // ------------------------------------------------------------------ build settings
 
+        /// <summary>
+        /// WP-015 (ADR-015-2) build list policy: the ENABLED entries are the release scenes
+        /// (five prototype scenes unchanged + the AP-005 world), contiguous and first; the
+        /// DISABLED entries that follow are dev-only (pilot, showcase) and ship only in the
+        /// development build (LifecycleProbeBuild.DevelopmentScenes).
+        /// </summary>
         [Test]
-        public void BuildSettings_YediSahne_IlkBesDegismemis_AltinciPilot_YedinciAp005()
+        public void BuildSettings_ReleaseAltiSahneEtkin_PilotVeVitrinDevOnlyKapali()
         {
             string[] ilkBes =
             {
@@ -230,7 +236,7 @@ namespace DD.Art.Tests.EditMode
                 yollar.Add((s.enabled ? "" : "[kapalı] ") + s.path);
             }
 
-            Assert.AreEqual(7, sahneler.Length, "Build Settings'te tam 7 sahne olmalı (5 prototip + pilot + WP-014 AP-005 dünyası); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
+            Assert.AreEqual(8, sahneler.Length, "Build Settings'te tam 8 giriş olmalı (5 prototip + AP-005 dünyası etkin; pilot + vitrin kapalı); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
 
             for (int i = 0; i < ilkBes.Length; i++)
             {
@@ -239,18 +245,59 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsTrue(File.Exists(sahneler[i].path), ilkBes[i] + " diskte yok.");
             }
 
-            Assert.AreEqual(ArtPipelinePaths.PilotScene, sahneler[5].path, "6. sahne pilot olmalı.");
-            Assert.IsTrue(sahneler[5].enabled, "Pilot sahne kapalı.");
-            Assert.IsTrue(File.Exists(sahneler[5].path), "Pilot sahne diskte yok: " + sahneler[5].path);
-            Assert.AreEqual(ArtPipelinePaths.PilotSceneName, Path.GetFileNameWithoutExtension(sahneler[5].path), "Pilot sahne adı sözleşmeyle aynı olmalı.");
-            Assert.AreEqual(ArtLibraryPaths.Ap005WorldScene, sahneler[6].path, "7. sahne AP-005 dünyası olmalı (WP-014).");
-            Assert.IsTrue(sahneler[6].enabled, "AP-005 dünya sahnesi kapalı.");
-            Assert.IsTrue(File.Exists(sahneler[6].path), "AP-005 dünya sahnesi diskte yok: " + sahneler[6].path);
-            Assert.AreEqual(ArtLibraryPaths.Ap005WorldSceneName, Path.GetFileNameWithoutExtension(sahneler[6].path), "AP-005 sahne adı sözleşmeyle aynı olmalı.");
+            Assert.AreEqual(ArtLibraryPaths.Ap005WorldScene, sahneler[5].path, "6. sahne AP-005 dünyası olmalı (WP-014).");
+            Assert.IsTrue(sahneler[5].enabled, "AP-005 dünya sahnesi release listesinde etkin olmalı.");
+            Assert.IsTrue(File.Exists(sahneler[5].path), "AP-005 dünya sahnesi diskte yok: " + sahneler[5].path);
+            Assert.AreEqual(ArtLibraryPaths.Ap005WorldSceneName, Path.GetFileNameWithoutExtension(sahneler[5].path), "AP-005 sahne adı sözleşmeyle aynı olmalı.");
 
+            Assert.AreEqual(ArtPipelinePaths.PilotScene, sahneler[6].path, "7. giriş pilot olmalı (dev-only).");
+            Assert.IsFalse(sahneler[6].enabled, "Pilot sahne release listesinde olmamalı (ADR-015-2: yalnız dev build).");
+            Assert.IsTrue(File.Exists(sahneler[6].path), "Pilot sahne diskte yok: " + sahneler[6].path);
+            Assert.AreEqual(ArtPipelinePaths.PilotSceneName, Path.GetFileNameWithoutExtension(sahneler[6].path), "Pilot sahne adı sözleşmeyle aynı olmalı.");
+
+            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, sahneler[7].path, "8. giriş vitrin olmalı (dev-only).");
+            Assert.IsFalse(sahneler[7].enabled, "Vitrin release listesinde olmamalı (ADR-015-2: yalnız dev build).");
+            Assert.IsTrue(File.Exists(sahneler[7].path), "Vitrin sahnesi diskte yok: " + sahneler[7].path);
+
+            // Release list contiguous: no enabled entry after a disabled one.
+            bool disabledSeen = false;
             foreach (EditorBuildSettingsScene s in sahneler)
             {
+                if (!s.enabled) disabledSeen = true;
+                else Assert.IsFalse(disabledSeen, "Etkin sahne kapalı bir girişten sonra geliyor: " + s.path);
                 Assert.AreNotEqual(ArtPipelinePaths.KitShelfScene, s.path, "Kit rafı sahnesi editor/test içindir; Build Settings'e girmez.");
+            }
+
+            // The development build carries release + dev-only, in that order (pure function).
+            string[] dev = DD.Prototype.Core.EditorTools.LifecycleProbeBuild.DevelopmentScenes(sahneler);
+            Assert.AreEqual(8, dev.Length);
+            Assert.AreEqual(ilkBes[0], dev[0], "dev build giriş sahnesi Boot");
+            Assert.AreEqual(ArtLibraryPaths.Ap005WorldScene, dev[5]);
+            Assert.AreEqual(ArtPipelinePaths.PilotScene, dev[6]);
+            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, dev[7]);
+            Debug.Log("[DD-TEST] wp015.buildlist release=6 devOnly=2");
+        }
+
+        /// <summary>WP-015 (ADR-015-1): mipmap streaming is on with the art budget on every quality level (Standalone default is Ultra).</summary>
+        [Test]
+        public void QualitySettings_MipmapStreaming_HerSeviyedeAcik_Butce()
+        {
+            int asil = QualitySettings.GetQualityLevel();
+            try
+            {
+                string[] names = QualitySettings.names;
+                Assert.Greater(names.Length, 0);
+                for (int i = 0; i < names.Length; i++)
+                {
+                    QualitySettings.SetQualityLevel(i, false);
+                    Assert.IsTrue(QualitySettings.streamingMipmapsActive, names[i] + ": streamingMipmapsActive kapalı (ADR-015-1).");
+                    Assert.AreEqual(ArtImportContract.StreamingMipmapsBudgetMb, QualitySettings.streamingMipmapsMemoryBudget, 0.01f, names[i] + ": streaming bütçesi");
+                    Assert.IsTrue(QualitySettings.streamingMipmapsAddAllCameras, names[i] + ": tüm kameralar streaming'e katılmalı");
+                }
+            }
+            finally
+            {
+                QualitySettings.SetQualityLevel(asil, false);
             }
         }
 
