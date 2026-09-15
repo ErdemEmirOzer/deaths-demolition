@@ -44,16 +44,35 @@ namespace DD.Art.Pipeline.EditorTools
     {
         public const string GeometryName = "Geometry";
 
-        // -------------------------------------------------- LOD distance contract
+        // -------------------------------------------------- LOD distance contract (ADR-012-1)
 
-        /// <summary>Metres at which LOD0 hands over to LOD1.</summary>
-        public const float Lod0MaxDistance = 32f;
+        /// <summary>
+        /// The Quality level the game ships with (Ultra) applies <c>lodBias</c> 2, which
+        /// doubles every LODGroup distance. WP-011 measured exactly that (LOD0 held to 64 m
+        /// for a 32 m threshold, evidence iter5). ADR-012-1 therefore authors the thresholds
+        /// for the INTENDED distances divided by the shipped bias, so the switches happen
+        /// where the camera/fog contract says: 32 m (LOD0→1), 52 m (LOD1→2, fog start),
+        /// 138 m (cull, fog end). The bias itself stays 2 (QualitySettings untouched).
+        /// </summary>
+        public const float ShippedLodBias = 2f;
 
-        /// <summary>Metres at which LOD1 hands over to LOD2 (fog start).</summary>
-        public const float Lod1MaxDistance = 52f;
+        /// <summary>Intended metres at which LOD0 hands over to LOD1 (at the shipped lodBias).</summary>
+        public const float IntendedLod0MaxDistance = 32f;
 
-        /// <summary>Metres at which the object is culled (fog end).</summary>
-        public const float CullDistance = 138f;
+        /// <summary>Intended metres at which LOD1 hands over to LOD2 (fog start).</summary>
+        public const float IntendedLod1MaxDistance = 52f;
+
+        /// <summary>Intended metres at which the object is culled (fog end).</summary>
+        public const float IntendedCullDistance = 138f;
+
+        /// <summary>Authored (lodBias 1) metres at which LOD0 hands over to LOD1: 16.</summary>
+        public const float Lod0MaxDistance = IntendedLod0MaxDistance / ShippedLodBias;
+
+        /// <summary>Authored metres at which LOD1 hands over to LOD2: 26.</summary>
+        public const float Lod1MaxDistance = IntendedLod1MaxDistance / ShippedLodBias;
+
+        /// <summary>Authored metres at which the object is culled: 69.</summary>
+        public const float CullDistance = IntendedCullDistance / ShippedLodBias;
 
         /// <summary>
         /// Visible world height per metre of distance for the prototype camera:
@@ -185,10 +204,11 @@ namespace DD.Art.Pipeline.EditorTools
         /// canonical bounds and the camera geometry of the prototype rig.
         ///
         /// The camera sees 0.768·d metres of height at distance d (vertical FOV 42°), so
-        /// an object h metres tall covers h / (0.768·d) of the screen there. The contract
+        /// an object h metres tall covers h / (0.768·d) of the screen there. The intended
         /// distances are 32 m (LOD0 → LOD1), 52 m (LOD1 → LOD2, fog start) and 138 m
-        /// (cull, fog end). Each threshold is clamped to [0.001, 0.95] and the three are
-        /// forced strictly decreasing, which LODGroup requires.
+        /// (cull, fog end); the authored distances are those divided by the shipped
+        /// lodBias (ADR-012-1). Each threshold is clamped to [0.001, 0.95] and the three
+        /// are forced strictly decreasing, which LODGroup requires.
         ///
         /// Measured caveat for the ADR: Unity evaluates a LODGroup against its largest
         /// bounds extent (<c>LODGroup.size</c>), not its height. For families wider than
@@ -287,9 +307,10 @@ namespace DD.Art.Pipeline.EditorTools
             renderer.sharedMaterial = material;
 
             // Same renderer contract as WorldPiece so the pilot and the blockout are
-            // measured under identical renderer settings. Every LOD casts: the shadow
-            // cost of LOD2 is part of what the probe is meant to see.
-            renderer.shadowCastingMode = ShadowCastingMode.On;
+            // measured under identical renderer settings. LOD0/1 cast; LOD2 does not
+            // (ADR-012-1): it lives past the 45 m shadow distance once the thresholds are
+            // authored for the shipped lodBias, so its shadow pass only cost draw calls.
+            renderer.shadowCastingMode = lod == 2 ? ShadowCastingMode.Off : ShadowCastingMode.On;
             renderer.receiveShadows = true;
             renderer.lightProbeUsage = LightProbeUsage.Off;
             renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;

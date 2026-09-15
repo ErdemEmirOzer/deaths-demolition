@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_sakura_foliage_02_Packed.png",
+    "sourceSha256": "a2dac74cf26050d7a60f4add644a04b80cfe9b4854d756f20cd5dc9cec572d58",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-15T15:01:46.7598230Z",
+    "outputSha256": "7d62b56072daf2cf15dd974490e95aeb3e68559d415c837b2b7dd6c961bd47fe"
+}

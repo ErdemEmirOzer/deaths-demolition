@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_earth_02_Packed.png",
+    "sourceSha256": "8d7f193cd844f3f98ac155d80c51ca148067d27328bafe7e2774ecc0c866224f",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-15T15:01:44.3480190Z",
+    "outputSha256": "92385d0a34414ee9382340dcf690bd625c9d95e8d9ad0908eac176535bf0d7f3"
+}

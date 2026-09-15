@@ -1,0 +1,142 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP003_Library
+  m_EditorClassIdentifier: 
+  ap: AP-003
+  items:
+  - family: sakura_trunk
+    variation: V01
+    prefab: {fileID: 9171771026065820892, guid: b4360d898ea2043d889549bec005c531, type: 3}
+  - family: sakura_trunk
+    variation: V02
+    prefab: {fileID: 750909555771206405, guid: 548ec938dd2d74e34b3f2656de9aebce, type: 3}
+  - family: sakura_trunk
+    variation: V03
+    prefab: {fileID: 1036124378715562525, guid: 50908289209524f12b4233b860012820, type: 3}
+  - family: sakura_trunk
+    variation: V04
+    prefab: {fileID: 6277714322825053648, guid: 2977c9a8ba92742a580e4690a988d842, type: 3}
+  - family: sakura_trunk
+    variation: V05
+    prefab: {fileID: 3523279385688287412, guid: 22f0bc3196ecd427286244f5c4103d37, type: 3}
+  - family: sakura_foliage
+    variation: V01
+    prefab: {fileID: 3897516711742042560, guid: 3318c38d23aae4ba5b125ec7c9b40d56, type: 3}
+  - family: sakura_foliage
+    variation: V02
+    prefab: {fileID: 6797139745566449330, guid: 651f98211a2a342f6be59c5116f9b924, type: 3}
+  - family: sakura_foliage
+    variation: V03
+    prefab: {fileID: 6808341160127494537, guid: 5469f40cb195442a58496be5e1ea20a7, type: 3}
+  - family: sakura_foliage
+    variation: V04
+    prefab: {fileID: 2565699916256768569, guid: 864e71962a2f5410e9e514b73a9ad2b4, type: 3}
+  - family: sakura_foliage
+    variation: V05
+    prefab: {fileID: 5927913606132428914, guid: c7072c9e25fad400bb7d0705b111b79a, type: 3}
+  - family: greenery_cluster
+    variation: V01
+    prefab: {fileID: 3519191544239276133, guid: fc7dc2eca153c4132bf73baafe9c94fb, type: 3}
+  - family: greenery_cluster
+    variation: V02
+    prefab: {fileID: 3251997468886462341, guid: e1c5fcce24d88422d9d7c2b8d65130ef, type: 3}
+  - family: greenery_cluster
+    variation: V03
+    prefab: {fileID: 1650302065819428841, guid: 4238ac35e66034a52913712a1fc96e67, type: 3}
+  - family: greenery_cluster
+    variation: V04
+    prefab: {fileID: 4124033090609330160, guid: c2d2c9dd7c4d84e42955bfef3c000bed, type: 3}
+  - family: greenery_cluster
+    variation: V05
+    prefab: {fileID: 2918485450988296950, guid: 6e609a2e8087d4dae994803a2024d004, type: 3}
+  - family: greenery_cluster
+    variation: V06
+    prefab: {fileID: 1436054819471259577, guid: 9a71d2ee3b46d4c158a459f4216b437f, type: 3}
+  - family: greenery_cluster
+    variation: V07
+    prefab: {fileID: 5201868324945251951, guid: 415fa34646c1a4a17ab25610c9e4d987, type: 3}
+  - family: greenery_cluster
+    variation: V08
+    prefab: {fileID: 7103360366743548734, guid: 2c45f323b9a9d45a2bfea5dd190c27d6, type: 3}
+  - family: understory_shrub
+    variation: V01
+    prefab: {fileID: 20732347897824511, guid: cda8f16cf4eeb448c921a401e54266f6, type: 3}
+  - family: understory_shrub
+    variation: V02
+    prefab: {fileID: 5990002667630580866, guid: b1dbbd53414e9434ba43295d5b60ac54, type: 3}
+  - family: understory_shrub
+    variation: V03
+    prefab: {fileID: 3018133343846822004, guid: 06cf706b71aa04dc08120e4a864d4956, type: 3}
+  - family: understory_shrub
+    variation: V04
+    prefab: {fileID: 184284264605886254, guid: d3cc52f6bd6a94493a37dee57f4eb5cb, type: 3}
+  - family: understory_shrub
+    variation: V05
+    prefab: {fileID: 1746776867822339767, guid: 3f6e46a465eeb4ee4a5c2010a84d4c00, type: 3}
+  - family: understory_shrub
+    variation: V06
+    prefab: {fileID: 3918903749776186700, guid: 6763614214a57428ea79fcd6626b599d, type: 3}
+  - family: understory_shrub
+    variation: V07
+    prefab: {fileID: 6136603309325947968, guid: a96a983385e99444f9d815e6d0350c29, type: 3}
+  - family: understory_shrub
+    variation: V08
+    prefab: {fileID: 363310464731433013, guid: 1c9475cc5a3c645db91f43f934bf666a, type: 3}
+  - family: creeping_groundcover
+    variation: V01
+    prefab: {fileID: 6774058705386868760, guid: efb6af1f637ed412caa8e1a8da210458, type: 3}
+  - family: creeping_groundcover
+    variation: V02
+    prefab: {fileID: 612469150068326551, guid: 134e72977c98142c0b41a8d71ad272c9, type: 3}
+  - family: creeping_groundcover
+    variation: V03
+    prefab: {fileID: 9119612159290852477, guid: efc9d975aa2474a3c82bc2c2fdc25401, type: 3}
+  - family: creeping_groundcover
+    variation: V04
+    prefab: {fileID: 4060288545464628897, guid: 5d70873dde80c420eb9e78108fb2d697, type: 3}
+  - family: creeping_groundcover
+    variation: V05
+    prefab: {fileID: 7918621909558190879, guid: ba0a5c4cd48d5473d9969843a43fc567, type: 3}
+  - family: creeping_groundcover
+    variation: V06
+    prefab: {fileID: 4573955861005981761, guid: 36d50204683874bb88c54ce8251c9752, type: 3}
+  - family: creeping_groundcover
+    variation: V07
+    prefab: {fileID: 5580097228599133285, guid: 8ca48248220eb47fc8ba896e7c3cb404, type: 3}
+  - family: creeping_groundcover
+    variation: V08
+    prefab: {fileID: 3916168283549599906, guid: 544e990fdc3e14afcb0416966142e50c, type: 3}
+  - family: rock_prop
+    variation: V01
+    prefab: {fileID: 4079319410300858172, guid: 9a34adddbdecb48c3a2b62917ed82ae8, type: 3}
+  - family: rock_prop
+    variation: V02
+    prefab: {fileID: 3445940186134692348, guid: d6c8d418314784787ac5c4f4748a7e81, type: 3}
+  - family: rock_prop
+    variation: V03
+    prefab: {fileID: 7593222922119378531, guid: 3c40a0fcae6d4450a8b2f36256fa0978, type: 3}
+  - family: rock_prop
+    variation: V04
+    prefab: {fileID: 4903234560868704243, guid: a11054abf61c14417a2ad8bd155bc11b, type: 3}
+  - family: rock_prop
+    variation: V05
+    prefab: {fileID: 4292343397092758198, guid: 35bd0a059f6234189a8a0a6384ce0834, type: 3}
+  - family: rock_prop
+    variation: V06
+    prefab: {fileID: 3969709724982618749, guid: 4b7dedbff2f834266acfca17dee9245a, type: 3}
+  - family: rock_prop
+    variation: V07
+    prefab: {fileID: 6337298731077986232, guid: f86b3718e773243daab1e12cef9470fc, type: 3}
+  - family: rock_prop
+    variation: V08
+    prefab: {fileID: 7067811942845788053, guid: d01a829c6bde44298915cb76f14b1a7c, type: 3}

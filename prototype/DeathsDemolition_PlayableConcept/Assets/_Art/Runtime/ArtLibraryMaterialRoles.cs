@@ -1,0 +1,160 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace DD.Art
+{
+    /// <summary>
+    /// WP-012 · The material roles the library import adds on top of the ten WP-011 roles
+    /// (ADR-012-2 §Material). One row per <c>M_&lt;role&gt;.mat</c>; the rows are what the
+    /// generated manifests reference in <c>materials[]</c> and what the material builder,
+    /// the texture repack and the asset gate agree on.
+    ///
+    /// Sources (all byte-identical copies, provenance wp-012/derived/stage-provenance.json):
+    ///   plaster_hf003            AP-002 selected HF003 plaster BaseColor (the AP-002 plaster;
+    ///                            AP-001's plaster map stays as role "plaster")
+    ///   bark/earth/moss_01..03   AP-003 material sets (BaseColor + Normal + Packed)
+    ///   green_foliage_01..03     AP-003 material sets, BaseColor alpha = opacity → alpha cutout
+    ///   green_foliage_0n_solid   same maps, opaque (the greenery/shrub solid variants)
+    ///   sakura_foliage_01..03    AP-003 material sets, alpha cutout
+    ///   bamboo_culm / gravel     AP-003B tiles, BaseColor only
+    ///   stone_weathered          AP-003B: the WP-011 stone maps with the authored V×0.85 tint
+    ///   pond_water               AP-003B flat placeholder (HSV 200°/0.22/0.27; shader is AP-015)
+    ///
+    /// The Packed maps follow the AP convention (G roughness, B metallic) and are repacked to
+    /// the URP mask (R metallic, A smoothness) by ArtTextureRepack, exactly as for AP-001.
+    /// AP-003's Height maps are not imported: URP/Lit uses none of them without parallax.
+    /// </summary>
+    public static class ArtLibraryMaterialRoles
+    {
+        public enum Kind
+        {
+            /// <summary>BaseColor + Normal + derived MetallicSmoothness, opaque.</summary>
+            Textured = 0,
+            /// <summary>BaseColor only, opaque, scalar smoothness.</summary>
+            BaseColorOnly = 1,
+            /// <summary>Flat linear albedo, no texture.</summary>
+            Flat = 2,
+            /// <summary>Like <see cref="Textured"/> plus alpha cutout from the BaseColor alpha, double-sided.</summary>
+            Cutout = 3
+        }
+
+        public sealed class Spec
+        {
+            public string Role;
+            public Kind Kind;
+            /// <summary>Role whose textures this role binds (itself unless it is a tinted or solid variant).</summary>
+            public string TextureRole;
+            /// <summary>Multiplier on <c>_BaseColor</c> (linear); white = the texture is authoritative.</summary>
+            public Color Tint = Color.white;
+            public float Smoothness = 1f;
+            public Color FlatLinearAlbedo = Color.black;
+            public float Cutoff = 0.5f;
+
+            public bool HasPackedMap => Kind == Kind.Textured || Kind == Kind.Cutout;
+            public bool HasNormalMap => Kind == Kind.Textured || Kind == Kind.Cutout;
+            public bool HasBaseColorMap => Kind != Kind.Flat;
+        }
+
+        private static readonly List<Spec> Rows = BuildRows();
+        private static readonly Dictionary<string, Spec> ByRole = Index(Rows);
+
+        public static IReadOnlyList<Spec> All => Rows;
+
+        public static Spec Get(string role)
+        {
+            return role != null && ByRole.TryGetValue(role, out Spec s) ? s : null;
+        }
+
+        public static bool IsKnown(string role)
+        {
+            return Get(role) != null;
+        }
+
+        /// <summary>Roles whose BaseColor alpha is a cutout mask (the importer keeps that alpha).</summary>
+        public static bool IsCutoutTextureRole(string textureRole)
+        {
+            for (int i = 0; i < Rows.Count; i++)
+            {
+                if (Rows[i].Kind == Kind.Cutout && string.Equals(Rows[i].TextureRole, textureRole, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Texture roles that ship a Packed map and therefore need a derived mask (distinct, in row order).</summary>
+        public static string[] PackedTextureRoles()
+        {
+            var list = new List<string>();
+            for (int i = 0; i < Rows.Count; i++)
+            {
+                Spec s = Rows[i];
+                if (s.HasPackedMap && !list.Contains(s.TextureRole))
+                {
+                    list.Add(s.TextureRole);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        /// <summary>Texture roles that ship at least a BaseColor map (distinct, in row order).</summary>
+        public static string[] TextureRoles()
+        {
+            var list = new List<string>();
+            for (int i = 0; i < Rows.Count; i++)
+            {
+                Spec s = Rows[i];
+                if (s.HasBaseColorMap && !list.Contains(s.TextureRole))
+                {
+                    list.Add(s.TextureRole);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        private static List<Spec> BuildRows()
+        {
+            var rows = new List<Spec>
+            {
+                // AP-002: the selected HF003 plaster. Smoothness as the WP-011 plaster (1 − AP roughness 0.90).
+                new Spec { Role = "plaster_hf003", Kind = Kind.BaseColorOnly, TextureRole = "plaster_hf003", Smoothness = 0.10f }
+            };
+
+            for (int n = 1; n <= 3; n++)
+            {
+                string nn = n.ToString("00");
+                rows.Add(new Spec { Role = "bark_" + nn, Kind = Kind.Textured, TextureRole = "bark_" + nn });
+                rows.Add(new Spec { Role = "earth_" + nn, Kind = Kind.Textured, TextureRole = "earth_" + nn });
+                rows.Add(new Spec { Role = "moss_" + nn, Kind = Kind.Textured, TextureRole = "moss_" + nn });
+                rows.Add(new Spec { Role = "green_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "green_foliage_" + nn });
+                rows.Add(new Spec { Role = "green_foliage_" + nn + "_solid", Kind = Kind.Textured, TextureRole = "green_foliage_" + nn });
+                rows.Add(new Spec { Role = "sakura_foliage_" + nn, Kind = Kind.Cutout, TextureRole = "sakura_foliage_" + nn });
+            }
+
+            // AP-003B recipes: culm roughness ramp 0.35..0.65 → smoothness ≈ 0.5; gravel 0.60..0.95 → ≈ 0.22.
+            rows.Add(new Spec { Role = "bamboo_culm", Kind = Kind.BaseColorOnly, TextureRole = "bamboo_culm", Smoothness = 0.50f });
+            rows.Add(new Spec { Role = "gravel", Kind = Kind.BaseColorOnly, TextureRole = "gravel", Smoothness = 0.22f });
+            // Weathered stone = the stone maps with the authored Hue/Saturation Value 0.85 node.
+            rows.Add(new Spec { Role = "stone_weathered", Kind = Kind.Textured, TextureRole = "stone", Tint = new Color(0.85f, 0.85f, 0.85f, 1f) });
+            // Water placeholder: linear (0.03695, 0.05114, 0.05925), roughness 0.05 → smoothness 0.95.
+            rows.Add(new Spec { Role = "pond_water", Kind = Kind.Flat, TextureRole = null, FlatLinearAlbedo = new Color(0.03695f, 0.05114f, 0.05925f, 1f), Smoothness = 0.95f });
+            return rows;
+        }
+
+        private static Dictionary<string, Spec> Index(List<Spec> rows)
+        {
+            var d = new Dictionary<string, Spec>(StringComparer.Ordinal);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                d.Add(rows[i].Role, rows[i]);
+            }
+
+            return d;
+        }
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_bark_01_Packed.png",
+    "sourceSha256": "958af6a4cb8798585e4adf00d4b0e6bfe88f21a272acfe9fdc9849aab368e4b4",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-15T15:01:39.5969550Z",
+    "outputSha256": "170cd0b6f0ac0123e331baf7e685d0abd2c8a650a3ab9a9c6666054a9cebb829"
+}

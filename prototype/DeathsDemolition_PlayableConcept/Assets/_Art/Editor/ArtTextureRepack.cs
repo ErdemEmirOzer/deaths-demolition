@@ -57,6 +57,19 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log("[ArtPipeline] Texture repack: " + roles.Length + " masks in " + ArtPipelinePaths.TexturesDerived);
         }
 
+        /// <summary>WP-012 · Repacks every library texture role that ships a Packed map (<see cref="ArtLibraryMaterialRoles.PackedTextureRoles"/>).</summary>
+        public static void BuildAllLibrary()
+        {
+            string[] roles = ArtLibraryMaterialRoles.PackedTextureRoles();
+            for (int i = 0; i < roles.Length; i++)
+            {
+                BuildMask(roles[i]);
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log("[ArtPipeline] Library masks: " + roles.Length + " in " + ArtPipelinePaths.TexturesDerived);
+        }
+
         /// <summary>
         /// Builds (or refreshes) the mask for one role and returns its asset path. Throws
         /// when the packed source is missing or cannot be decoded.

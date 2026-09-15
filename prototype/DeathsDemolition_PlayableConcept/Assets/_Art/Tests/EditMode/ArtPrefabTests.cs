@@ -197,8 +197,9 @@ namespace DD.Art.Tests.EditMode
         }
 
         /// <summary>
-        /// TransitionHeights'ın kamera geometrisiyle tutarlılığı: sözleşme h/(0.768·d), d = 32/52/138,
-        /// [0.001, 0.95] kırpma. Sayılar tasarım kararı değil, kamera FOV 42 ve sis 52→138'den türetilir.
+        /// TransitionHeights'ın kamera geometrisiyle tutarlılığı: sözleşme h/(0.768·d), d = 16/26/69
+        /// (ADR-012-1: hedef 32/52/138 m ÷ sevk edilen lodBias 2), [0.001, 0.95] kırpma. Sayılar tasarım
+        /// kararı değil, kamera FOV 42 ve sis 52→138'den türetilir.
         /// </summary>
         [Test]
         public void TransitionHeights_KameraGeometrisindenTuretilmis()
@@ -209,19 +210,19 @@ namespace DD.Art.Tests.EditMode
             var b = new Bounds(new Vector3(0f, 2f, 0f), new Vector3(3f, 4f, 3f));
             float[] h = ArtFamilyPrefabBuilder.TransitionHeights(b);
             Assert.AreEqual(3, h.Length);
-            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 32f), 0.001f, 0.95f), h[0], tol, "LOD0→1 eşiği (d = 32 m)");
-            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 52f), 0.001f, 0.95f), h[1], tol, "LOD1→2 eşiği (d = 52 m, sis başı)");
-            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 138f), 0.001f, 0.95f), h[2], tol, "cull eşiği (d = 138 m, sis sonu)");
+            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 16f), 0.001f, 0.95f), h[0], tol, "LOD0→1 eşiği (d = 16 m yazılı = 32 m etkin)");
+            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 26f), 0.001f, 0.95f), h[1], tol, "LOD1→2 eşiği (d = 26 m yazılı = 52 m sis başı)");
+            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 69f), 0.001f, 0.95f), h[2], tol, "cull eşiği (d = 69 m yazılı = 138 m sis sonu)");
 
             // Unity LODGroup.size = EN BÜYÜK kenar (yükseklik değil): 3 m uzun, 0.16 m yüksek bir
             // curb için ölçü 3 m'dir; 32 m'de geçiş bu ölçüyle hesaplanır (PRA K-10).
             float[] alcak = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(3f, 0.16f, 0.2f)));
-            Assert.AreEqual(Mathf.Clamp(3f / (0.768f * 32f), 0.001f, 0.95f), alcak[0], tol, "En büyük kenar (3 m) ölçü olmalı.");
+            Assert.AreEqual(Mathf.Clamp(3f / (0.768f * 16f), 0.001f, 0.95f), alcak[0], tol, "En büyük kenar (3 m) ölçü olmalı.");
             Assert.IsTrue(alcak[0] > alcak[1] && alcak[1] > alcak[2], "Eşikler kesin azalan olmalı.");
 
             // En az 0.5 m ölçü: her kenarı 0.5 m'den küçük bir parça eşiği 0'a çekmez.
             float[] minik = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(0.3f, 0.1f, 0.2f)));
-            Assert.AreEqual(Mathf.Clamp(0.5f / (0.768f * 32f), 0.001f, 0.95f), minik[0], tol, "0.5 m tabanı uygulanmalı.");
+            Assert.AreEqual(Mathf.Clamp(0.5f / (0.768f * 16f), 0.001f, 0.95f), minik[0], tol, "0.5 m tabanı uygulanmalı.");
 
             // Çok yüksek parça (kahraman ağaç 9 m): üst kırpma 0.95'i aşmaz.
             float[] yuksek = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(3f, 60f, 3f)));
@@ -291,7 +292,8 @@ namespace DD.Art.Tests.EditMode
                         hatalar.Add(aile + ": " + mYolu + " enableInstancing kapalı.");
                     }
 
-                    if (mr.shadowCastingMode != ShadowCastingMode.On) hatalar.Add(aile + ": LOD" + lod + " shadowCastingMode " + mr.shadowCastingMode + " (On beklenir; LOD2 dahil ölçüm).");
+                    ShadowCastingMode golge = lod == 2 ? ShadowCastingMode.Off : ShadowCastingMode.On;
+                    if (mr.shadowCastingMode != golge) hatalar.Add(aile + ": LOD" + lod + " shadowCastingMode " + mr.shadowCastingMode + " (" + golge + " beklenir; ADR-012-1 LOD2 gölge kapalı).");
                     if (!mr.receiveShadows) hatalar.Add(aile + ": LOD" + lod + " receiveShadows kapalı.");
                     if (mr.lightProbeUsage != LightProbeUsage.Off) hatalar.Add(aile + ": LOD" + lod + " lightProbeUsage " + mr.lightProbeUsage + " (Off beklenir).");
                     if (mr.reflectionProbeUsage != ReflectionProbeUsage.Off) hatalar.Add(aile + ": LOD" + lod + " reflectionProbeUsage " + mr.reflectionProbeUsage + " (Off beklenir).");

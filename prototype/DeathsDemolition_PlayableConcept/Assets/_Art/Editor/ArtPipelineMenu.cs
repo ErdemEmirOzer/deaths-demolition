@@ -73,6 +73,105 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run All: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-012 libraries
+
+        private const int LibraryStepCount = 9;
+
+        /// <summary>
+        /// WP-012 · Imports the production libraries on top of the AP-001 pipeline: masks and
+        /// materials for the new roles, the shared lighting base, the AP-001 prefabs rebuilt
+        /// under ADR-012-1, one prefab per library variation, the pilot/kit-shelf/showcase
+        /// scenes, and Run.unity aligned to DEC-068. Batch: <c>-executeMethod …RunLibraries
+        /// [-ddShowcaseCapture &lt;png&gt;]</c> writes the showcase reference image after the build.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run Libraries (WP-012)", priority = 301)]
+        public static void RunLibraries()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run Libraries cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run Libraries: start (" + (Application.isBatchMode ? "batch" : "interactive") + ", Unity " +
+                      Application.unityVersion + ")");
+
+            LibraryStep(1, "Repack textures (AP-001 + library roles)", () => { ArtTextureRepack.BuildAll(); ArtTextureRepack.BuildAllLibrary(); });
+            LibraryStep(2, "Build materials (AP-001 + library roles)", () => { ArtMaterialBuilder.BuildAll(); ArtMaterialBuilder.BuildAllLibraryRoles(); });
+            LibraryStep(3, "Build lighting base (overcast profile + shared sky)", ArtLightingBuilder.BuildAll);
+            LibraryStep(4, "Rebuild AP-001 family prefabs (ADR-012-1 thresholds, LOD2 shadows off)", ArtFamilyPrefabBuilder.BuildAll);
+            LibraryStep(5, "Build library prefabs (AP-002, AP-003, AP-003B)", ArtLibraryPrefabBuilder.BuildAll);
+            LibraryStep(6, "Rebuild pilot scene (shared profile)", PilotSceneBuilder.BuildPilotScene);
+            LibraryStep(7, "Rebuild kit shelf", PilotSceneBuilder.BuildKitShelf);
+            LibraryStep(8, "Align Run.unity (DEC-068 sky, shared profile)", ArtLightingBuilder.AlignRunScene);
+            LibraryStep(9, "Build library showcase", ArtLibraryShowcaseBuilder.Build);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            string capture = Arg("-ddShowcaseCapture");
+            if (!string.IsNullOrEmpty(capture))
+            {
+                ArtLibraryShowcaseBuilder.CaptureReference(capture, 1920, 1080);
+            }
+
+            Debug.Log(ArtPipelineReport.Describe());
+            Debug.Log(LogPrefix + "Run Libraries: done in " + Seconds(total) + " s.");
+        }
+
+        /// <summary>
+        /// Re-imports every contract texture whose importer no longer matches the contract
+        /// (after a contract change the postprocessor only runs on the next import).
+        /// </summary>
+        [MenuItem(MenuRoot + "Reimport Contract Textures", priority = 341)]
+        public static void ReimportContractTextures()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:Texture2D", new[] { ArtImportContract.ArtRoot });
+            int reimported = 0;
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                if (!ArtImportContract.IsContractTexture(path))
+                {
+                    continue;
+                }
+
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer == null || ArtImportContract.ValidateTexture(importer, ArtImportContract.RoleOf(path)).Count == 0)
+                {
+                    continue;
+                }
+
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                reimported++;
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log(LogPrefix + "Reimport contract textures: " + reimported + " of " + guids.Length + " re-imported.");
+        }
+
+        private static void LibraryStep(int index, string title, Action action)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "[" + index + "/" + LibraryStepCount + "] " + title);
+            action();
+            Debug.Log(LogPrefix + "[" + index + "/" + LibraryStepCount + "] " + title + " - " + Seconds(sw) + " s");
+        }
+
+        private static string Arg(string flag)
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i + 1 < args.Length; i++)
+            {
+                if (string.Equals(args[i], flag, StringComparison.Ordinal))
+                {
+                    return args[i + 1];
+                }
+            }
+
+            return null;
+        }
+
         // ------------------------------------------------------------ single steps
 
         [MenuItem(MenuRoot + "1. Repack Textures", priority = 320)]

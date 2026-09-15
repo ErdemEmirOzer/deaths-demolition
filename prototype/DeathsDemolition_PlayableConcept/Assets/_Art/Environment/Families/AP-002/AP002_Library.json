@@ -1,0 +1,1405 @@
+{
+ "ap": "AP-002",
+ "version": "v002",
+ "sources": [
+  {
+   "path": "/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/asset-production/AP-002/06-blender/exports/v002/export-manifest.json",
+   "sha256": "ca915b08e1246d4358c8aef3b6f06d0d5d8f8a4c9568ead067f861ecd61c0a5a"
+  }
+ ],
+ "derived": "wp-012/derived/AP-002 (embed stripped, tools/fbx-strip-embed.py)",
+ "families": [
+  {
+   "family": "courtyard_floor",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_courtyard_floor_V01",
+     "boundsMin": [
+      -0.5,
+      -0.5,
+      0.0
+     ],
+     "boundsMax": [
+      0.5,
+      0.5,
+      0.07999999821186066
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "courtyard_floor_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": []
+        },
+        {
+         "fbx": "courtyard_floor_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          44
+         ],
+         "triangles": 44,
+         "colourLayers": []
+        },
+        {
+         "fbx": "courtyard_floor_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "courtyard_floor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.5,
+          -0.5,
+          0.0
+         ],
+         "max": [
+          0.5,
+          0.5,
+          0.08
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "curb",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_curb_V01",
+     "boundsMin": [
+      -1.5,
+      -0.10000000149011612,
+      0.0
+     ],
+     "boundsMax": [
+      1.5,
+      0.10000000149011612,
+      0.1599999964237213
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "curb_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": []
+        },
+        {
+         "fbx": "curb_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          44
+         ],
+         "triangles": 44,
+         "colourLayers": []
+        },
+        {
+         "fbx": "curb_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "curb_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -0.1,
+          0.0
+         ],
+         "max": [
+          1.5,
+          0.1,
+          0.16
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "gate_transition",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_gate_transition_V01",
+     "boundsMin": [
+      -2.0,
+      -4.355000019073486,
+      0.0
+     ],
+     "boundsMax": [
+      2.0,
+      4.355000019073486,
+      1.190000057220459
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "gate_transition_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          240
+         ],
+         "triangles": 240,
+         "colourLayers": []
+        },
+        {
+         "fbx": "gate_transition_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          176
+         ],
+         "triangles": 176,
+         "colourLayers": []
+        },
+        {
+         "fbx": "gate_transition_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "gate_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -2.01,
+          -4.355,
+          0.0
+         ],
+         "max": [
+          -0.99,
+          -4.045,
+          1.19
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "gate_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_1_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.01,
+          -4.355,
+          0.0
+         ],
+         "max": [
+          0.01,
+          -4.045,
+          1.19
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "gate_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_2_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.01,
+          -4.355,
+          0.0
+         ],
+         "max": [
+          1.01,
+          -4.045,
+          1.19
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "gate_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_3_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.99,
+          -4.355,
+          0.0
+         ],
+         "max": [
+          2.01,
+          -4.045,
+          1.19
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "gate_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_4_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -2.01,
+          4.045,
+          0.0
+         ],
+         "max": [
+          -0.99,
+          4.355,
+          1.19
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "gate_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_5_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.01,
+          4.045,
+          0.0
+         ],
+         "max": [
+          0.01,
+          4.355,
+          1.19
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "gate_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_6_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.01,
+          4.045,
+          0.0
+         ],
+         "max": [
+          1.01,
+          4.355,
+          1.19
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "gate_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_7_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.99,
+          4.045,
+          0.0
+         ],
+         "max": [
+          2.01,
+          4.355,
+          1.19
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "low_rise",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_low_rise_V01",
+     "boundsMin": [
+      -1.5,
+      -0.6000000238418579,
+      0.0
+     ],
+     "boundsMax": [
+      1.5,
+      0.6000000238418579,
+      0.15000000596046448
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "low_rise_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": []
+        },
+        {
+         "fbx": "low_rise_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          44
+         ],
+         "triangles": 44,
+         "colourLayers": []
+        },
+        {
+         "fbx": "low_rise_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "low_rise_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -0.6,
+          0.0
+         ],
+         "max": [
+          1.5,
+          0.6,
+          0.15
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "open_corridor",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_open_corridor_V01",
+     "boundsMin": [
+      -1.659999966621399,
+      -4.010000228881836,
+      0.0
+     ],
+     "boundsMax": [
+      1.659999966621399,
+      4.010000228881836,
+      3.9700000286102295
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "open_corridor_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          480
+         ],
+         "triangles": 480,
+         "colourLayers": []
+        },
+        {
+         "fbx": "open_corridor_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          352
+         ],
+         "triangles": 352,
+         "colourLayers": []
+        },
+        {
+         "fbx": "open_corridor_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "open_corridor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.66,
+          -4.01,
+          0.0
+         ],
+         "max": [
+          -1.34,
+          -3.69,
+          3.65
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "open_corridor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_1_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.66,
+          3.69,
+          0.0
+         ],
+         "max": [
+          -1.34,
+          4.01,
+          3.65
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "open_corridor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_2_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.34,
+          -4.01,
+          0.0
+         ],
+         "max": [
+          1.66,
+          -3.69,
+          3.65
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "open_corridor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_3_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.34,
+          3.69,
+          0.0
+         ],
+         "max": [
+          1.66,
+          4.01,
+          3.65
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "open_corridor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_4_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.66,
+          -4.01,
+          3.65
+         ],
+         "max": [
+          1.66,
+          -3.69,
+          3.97
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "open_corridor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_5_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.66,
+          3.69,
+          3.65
+         ],
+         "max": [
+          1.66,
+          4.01,
+          3.97
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "open_corridor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_6_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.66,
+          -3.69,
+          3.65
+         ],
+         "max": [
+          -1.34,
+          3.69,
+          3.97
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "open_corridor_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_7_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.34,
+          -3.69,
+          3.65
+         ],
+         "max": [
+          1.66,
+          3.69,
+          3.97
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "palace_roof_bay",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_palace_roof_bay_V01",
+     "boundsMin": [
+      -1.5,
+      -6.5,
+      -0.05999999865889549
+     ],
+     "boundsMax": [
+      1.5,
+      4.0,
+      3.872999906539917
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "palace_roof_bay_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "roof"
+         ],
+         "facesPerSlot": [
+          21356
+         ],
+         "triangles": 21356,
+         "colourLayers": []
+        },
+        {
+         "fbx": "palace_roof_bay_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "roof"
+         ],
+         "facesPerSlot": [
+          16716
+         ],
+         "triangles": 16716,
+         "colourLayers": []
+        },
+        {
+         "fbx": "palace_roof_bay_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "roof"
+         ],
+         "facesPerSlot": [
+          12076
+         ],
+         "triangles": 12076,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "palace_roof_bay_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -6.5,
+          -0.06
+         ],
+         "max": [
+          1.5,
+          4.0,
+          3.873
+         ],
+         "positions": 44
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "planter_boundary",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_planter_boundary_V01",
+     "boundsMin": [
+      -1.5,
+      -0.10000000149011612,
+      0.0
+     ],
+     "boundsMax": [
+      1.5,
+      0.8999999761581421,
+      0.44999998807907104
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "planter_boundary_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          126
+         ],
+         "triangles": 126,
+         "colourLayers": []
+        },
+        {
+         "fbx": "planter_boundary_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          94
+         ],
+         "triangles": 94,
+         "colourLayers": []
+        },
+        {
+         "fbx": "planter_boundary_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "planter_boundary_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -0.1,
+          0.0
+         ],
+         "max": [
+          1.5,
+          0.1,
+          0.45
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "planter_boundary_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_1_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -0.1,
+          0.0
+         ],
+         "max": [
+          -1.3,
+          0.9,
+          0.45
+         ],
+         "positions": 8
+        }
+       ]
+      },
+      {
+       "fbx": "planter_boundary_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_2_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          1.3,
+          -0.1,
+          0.0
+         ],
+         "max": [
+          1.5,
+          0.9,
+          0.45
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "plaster_wall",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_plaster_wall_V01",
+     "boundsMin": [
+      -1.5,
+      -0.17999999225139618,
+      0.0
+     ],
+     "boundsMax": [
+      1.5,
+      0.17999999225139618,
+      3.6500000953674316
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "plaster_wall_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          172
+         ],
+         "triangles": 172,
+         "colourLayers": []
+        },
+        {
+         "fbx": "plaster_wall_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          124
+         ],
+         "triangles": 124,
+         "colourLayers": []
+        },
+        {
+         "fbx": "plaster_wall_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          124
+         ],
+         "triangles": 124,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "plaster_wall_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -0.18,
+          0.0
+         ],
+         "max": [
+          1.5,
+          0.18,
+          3.65
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "ring_transition",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_ring_transition_V01",
+     "boundsMin": [
+      -1.5,
+      -3.5,
+      0.0
+     ],
+     "boundsMax": [
+      1.5,
+      3.5,
+      0.07999999821186066
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "ring_transition_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": []
+        },
+        {
+         "fbx": "ring_transition_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          44
+         ],
+         "triangles": 44,
+         "colourLayers": []
+        },
+        {
+         "fbx": "ring_transition_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "ring_transition_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -3.5,
+          0.0
+         ],
+         "max": [
+          1.5,
+          3.5,
+          0.08
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "roof_segment",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_roof_segment_V01",
+     "boundsMin": [
+      -1.5,
+      -2.299999952316284,
+      -0.019999999552965164
+     ],
+     "boundsMax": [
+      1.5,
+      2.299999952316284,
+      1.0230000019073486
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "roof_segment_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "roof"
+         ],
+         "facesPerSlot": [
+          10860
+         ],
+         "triangles": 10860,
+         "colourLayers": []
+        },
+        {
+         "fbx": "roof_segment_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "roof"
+         ],
+         "facesPerSlot": [
+          8540
+         ],
+         "triangles": 8540,
+         "colourLayers": []
+        },
+        {
+         "fbx": "roof_segment_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "roof"
+         ],
+         "facesPerSlot": [
+          6220
+         ],
+         "triangles": 6220,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "roof_segment_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -2.3,
+          -0.02
+         ],
+         "max": [
+          1.5,
+          2.3,
+          1.023
+         ],
+         "positions": 28
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "timber_beam",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_timber_beam_V01",
+     "boundsMin": [
+      -1.5,
+      -0.20000000298023224,
+      -0.0949999988079071
+     ],
+     "boundsMax": [
+      1.5,
+      0.20000000298023224,
+      0.36000001430511475
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "timber_beam_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          180
+         ],
+         "triangles": 180,
+         "colourLayers": []
+        },
+        {
+         "fbx": "timber_beam_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": []
+        },
+        {
+         "fbx": "timber_beam_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "timber_beam_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -0.2,
+          -0.12
+         ],
+         "max": [
+          1.5,
+          0.2,
+          0.36
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "timber_post",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_timber_post_V01",
+     "boundsMin": [
+      -0.1899999976158142,
+      -0.1899999976158142,
+      0.0
+     ],
+     "boundsMax": [
+      0.1899999976158142,
+      0.1899999976158142,
+      3.6500000953674316
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "timber_post_LOD0.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          180
+         ],
+         "triangles": 180,
+         "colourLayers": []
+        },
+        {
+         "fbx": "timber_post_LOD1.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": []
+        },
+        {
+         "fbx": "timber_post_LOD2.fbx",
+         "object": "AP002_SourceInstance_0_Export",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": []
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "timber_post_COLLIDERS.fbx",
+       "object": "AP002_SourceInstance_0_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.19,
+          -0.19,
+          0.0
+         ],
+         "max": [
+          0.19,
+          0.19,
+          3.65
+         ],
+         "positions": 8
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

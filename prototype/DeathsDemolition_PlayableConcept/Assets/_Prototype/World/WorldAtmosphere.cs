@@ -49,6 +49,13 @@ namespace DD.Prototype.World
 
         public static readonly Color FogColor = new Color(0.694f, 0.714f, 0.706f);
 
+        /// <summary>
+        /// Resources name of the shared overcast sky material
+        /// (Assets/_Art/Resources/DD_Sky_Overcast_v1.mat, written by the art pipeline). Kept
+        /// as a string on purpose: DD.Prototype must not reference DD.Art.
+        /// </summary>
+        public const string SharedSkyResourceName = "DD_Sky_Overcast_v1";
+
         /// <summary>Overcast key: low contrast, slightly warm, from the south-west.</summary>
         public static readonly Vector3 SunEuler = new Vector3(42f, 25f, 0f);
 
@@ -145,6 +152,17 @@ namespace DD.Prototype.World
 
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
             RenderSettings.reflectionIntensity = 0.55f;
+
+            // WP-012 (DEC-068, ADR-011-4 closure): the shared overcast sky authored by the art
+            // pipeline (a latitude-longitude gradient: no sun disk, no horizon glow) is the
+            // sky of every scene. Loaded by name so this assembly stays independent of
+            // DD.Art; the procedural sky below is only the fallback when the asset is absent.
+            var shared = Resources.Load<Material>(SharedSkyResourceName);
+            if (shared != null)
+            {
+                RenderSettings.skybox = shared;
+                return;
+            }
 
             Shader skyShader = PrototypeShaders.Skybox;
             if (skyShader != null)

@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_moss_01_Packed.png",
+    "sourceSha256": "5d78defe69ec57d9fb8764179d9c81590338f5fb4e0038ade5c03b5328fe0743",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-15T15:01:41.6306820Z",
+    "outputSha256": "90279ddec2f1e9c97930527a0971091641f3ee0b54d0c0c78000ba64edc28d7b"
+}

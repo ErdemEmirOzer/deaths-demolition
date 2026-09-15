@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Rendering;
@@ -191,6 +192,95 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>The AP-001 linear albedo of a flat-coloured role (alpha 1).</summary>
+        // ------------------------------------------------------------ WP-012 libraries
+
+        /// <summary>
+        /// WP-012 · Authors every <see cref="ArtLibraryMaterialRoles"/> row the same way the
+        /// ten WP-011 roles are authored (same common block, same textured/base-colour/flat
+        /// recipes), plus the cutout recipe for the foliage cards. Idempotent; GUIDs stable.
+        /// </summary>
+        public static void BuildAllLibraryRoles()
+        {
+            IReadOnlyList<ArtLibraryMaterialRoles.Spec> rows = ArtLibraryMaterialRoles.All;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                BuildLibraryRole(rows[i]);
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log("[ArtPipeline] Library materials: " + rows.Count + " in " + ArtPipelinePaths.Materials);
+        }
+
+        public static Material BuildLibraryRole(ArtLibraryMaterialRoles.Spec spec)
+        {
+            if (spec == null)
+            {
+                throw new ArgumentNullException(nameof(spec));
+            }
+
+            Shader lit = ResolveLitShader();
+            string path = ArtPipelinePaths.Material(spec.Role);
+            EnsureFolder(ArtPipelinePaths.Materials);
+
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            bool created = material == null;
+            if (created)
+            {
+                material = new Material(lit) { name = "M_" + spec.Role };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            else if (material.shader != lit)
+            {
+                material.shader = lit;
+            }
+
+            ApplyCommon(material);
+
+            switch (spec.Kind)
+            {
+                case ArtLibraryMaterialRoles.Kind.Textured:
+                    ApplyTextured(material, spec.TextureRole);
+                    material.SetColor(BaseColorId, EncodeForColorProperty(spec.Tint));
+                    break;
+
+                case ArtLibraryMaterialRoles.Kind.Cutout:
+                    ApplyTextured(material, spec.TextureRole);
+                    material.SetColor(BaseColorId, EncodeForColorProperty(spec.Tint));
+                    ApplyCutout(material, spec.Cutoff);
+                    break;
+
+                case ArtLibraryMaterialRoles.Kind.BaseColorOnly:
+                    ApplyBaseColorOnly(material, spec.TextureRole, spec.Smoothness);
+                    material.SetColor(BaseColorId, EncodeForColorProperty(spec.Tint));
+                    break;
+
+                default:
+                    ApplyFlat(material, spec.FlatLinearAlbedo, spec.Smoothness);
+                    break;
+            }
+
+            EditorUtility.SetDirty(material);
+            Debug.Log("[ArtPipeline] Library material " + (created ? "created" : "updated") + ": " + path + " (" + spec.Kind + ")");
+            return material;
+        }
+
+        /// <summary>
+        /// Alpha cutout on URP/Lit: opaque surface, <c>_AlphaClip</c> with the AP-003 threshold
+        /// (0.5, the coverage the sets were dilated for), AlphaTest queue, and no culling —
+        /// the crown/leaf cards are single quads seen from both sides. Shadows clip through
+        /// the same keyword in the ShadowCaster pass.
+        /// </summary>
+        private static void ApplyCutout(Material m, float cutoff)
+        {
+            SetFloat(m, "_AlphaClip", 1f);
+            SetFloat(m, "_Cutoff", cutoff);
+            m.SetFloat(CullId, 0f);
+            m.EnableKeyword("_ALPHATEST_ON");
+            m.SetOverrideTag("RenderType", "TransparentCutout");
+            m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+            m.doubleSidedGI = true;
+        }
+
         public static Color FlatColour(string role)
         {
             switch (role)

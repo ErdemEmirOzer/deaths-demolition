@@ -42,7 +42,8 @@ namespace DD.Art.Pipeline.EditorTools
     public static class PilotSceneBuilder
     {
         private const string LogPrefix = "[ArtPipeline] ";
-        private const string VolumeProfilePath = "Assets/Settings/DD_GlobalVolumeProfile.asset";
+        /// <summary>WP-012: the shared overcast profile (ADR-011-4 closure); Run.unity references the same asset.</summary>
+        private const string VolumeProfilePath = ArtLibraryPaths.OvercastVolumeProfile;
         private const string BootstrapName = "Pilot Bootstrap";
         private const string SunName = "Sun (pilot)";
         private const string VolumeName = "Global Volume";
@@ -248,7 +249,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// own applier so the two files cannot drift; falls back to writing the same
         /// values by hand only if the prototype shader library is not loadable.
         /// </summary>
-        private static void ApplyEnvironment()
+        internal static void ApplyEnvironment()
         {
             ApplyRunEnvironment();
 
@@ -305,7 +306,7 @@ namespace DD.Art.Pipeline.EditorTools
             RenderSettings.skybox = sky;
         }
 
-        private static void CreateSun()
+        internal static void CreateSun()
         {
             var go = new GameObject(SunName);
             go.transform.rotation = Quaternion.Euler(
@@ -326,7 +327,7 @@ namespace DD.Art.Pipeline.EditorTools
             RenderSettings.sun = light;
         }
 
-        private static void CreateVolume(VolumeProfile profile)
+        internal static void CreateVolume(VolumeProfile profile)
         {
             var go = new GameObject(VolumeName);
             Volume volume = go.AddComponent<Volume>();
@@ -450,13 +451,13 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>Asset-database folder of an asset path. Always forward slashes, whatever the OS.</summary>
-        private static string AssetFolderOf(string assetPath)
+        internal static string AssetFolderOf(string assetPath)
         {
             int slash = assetPath.LastIndexOf('/');
             return slash < 0 ? string.Empty : assetPath.Substring(0, slash);
         }
 
-        private static void EnsureFolder(string folder)
+        internal static void EnsureFolder(string folder)
         {
             if (string.IsNullOrEmpty(folder) || AssetDatabase.IsValidFolder(folder))
             {
@@ -472,7 +473,7 @@ namespace DD.Art.Pipeline.EditorTools
             AssetDatabase.CreateFolder(parent, leaf);
         }
 
-        private static void Save(Scene scene, string path)
+        internal static void Save(Scene scene, string path)
         {
             EditorSceneManager.MarkSceneDirty(scene);
             if (!EditorSceneManager.SaveScene(scene, path))
@@ -483,7 +484,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         // ------------------------------------------------------------------ guards
 
-        private static void GuardEditMode(string what)
+        internal static void GuardEditMode(string what)
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
             {
@@ -495,7 +496,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// Interactive only: give the user the chance to save the open scene. Batch mode
         /// has nobody to ask and must never block on a dialog.
         /// </summary>
-        private static void ConfirmSceneChange()
+        internal static void ConfirmSceneChange()
         {
             if (Application.isBatchMode)
             {

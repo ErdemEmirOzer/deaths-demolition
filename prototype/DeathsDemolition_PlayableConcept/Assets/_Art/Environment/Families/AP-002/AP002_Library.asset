@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP002_Library
+  m_EditorClassIdentifier: 
+  ap: AP-002
+  items:
+  - family: courtyard_floor
+    variation: V01
+    prefab: {fileID: 5812028355032581230, guid: a6a2cddb878274ef9843135648887159, type: 3}
+  - family: curb
+    variation: V01
+    prefab: {fileID: 6349247686676471763, guid: b6a869bf44efb4f528acad208b3e0b0e, type: 3}
+  - family: gate_transition
+    variation: V01
+    prefab: {fileID: 955760576980492811, guid: c25a51e424d6a4456b87aa21f6fc5bdb, type: 3}
+  - family: low_rise
+    variation: V01
+    prefab: {fileID: 169701349586173823, guid: e8cdf266e106c41efbd16123e2ae01b1, type: 3}
+  - family: open_corridor
+    variation: V01
+    prefab: {fileID: 5426817515529544453, guid: 3e86d6c3acba444bcaeb3df117cbb76b, type: 3}
+  - family: palace_roof_bay
+    variation: V01
+    prefab: {fileID: 2166212305341900466, guid: f54f4b3d67caf488d935da6bdc7781de, type: 3}
+  - family: planter_boundary
+    variation: V01
+    prefab: {fileID: 6292046535500658668, guid: ea211e9227bc54b2b90011a9459f7ae5, type: 3}
+  - family: plaster_wall
+    variation: V01
+    prefab: {fileID: 7929140147179448593, guid: 4f3b4e94cbb5a49bfb0095d44adf5908, type: 3}
+  - family: ring_transition
+    variation: V01
+    prefab: {fileID: 2909015570782192298, guid: ecbf118b03f2b4b5e821168b64582546, type: 3}
+  - family: roof_segment
+    variation: V01
+    prefab: {fileID: 651269946582567655, guid: 4563496433f63473f8211dc3d74c0f5f, type: 3}
+  - family: timber_beam
+    variation: V01
+    prefab: {fileID: 7570127839598740029, guid: ef5a8dbc894584a97997184d614d4654, type: 3}
+  - family: timber_post
+    variation: V01
+    prefab: {fileID: 198130719479743043, guid: 78e4f0bd4512944029af24785035e104, type: 3}

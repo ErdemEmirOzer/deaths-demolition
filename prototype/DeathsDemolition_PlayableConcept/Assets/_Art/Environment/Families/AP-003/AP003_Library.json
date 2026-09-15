@@ -1,0 +1,3185 @@
+{
+ "ap": "AP-003",
+ "version": "export-manifest-v004",
+ "sources": [
+  {
+   "path": "/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/asset-production/AP-003/07-manifests/AP003-export-manifest-v004.json",
+   "sha256": "426958de0748679d87aa1f1006023f23a80dc748a34c90102538c3aaf36ff057"
+  }
+ ],
+ "derived": "wp-012/derived/AP-003 (embed stripped, tools/fbx-strip-embed.py)",
+ "families": [
+  {
+   "family": "sakura_trunk",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_sakura_trunk_V01",
+     "boundsMin": [
+      -2.452732801437378,
+      -1.98679518699646,
+      0.0
+     ],
+     "boundsMax": [
+      2.4861204624176025,
+      2.6610107421875,
+      6.145572185516357
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_trunk_V01.fbx",
+         "object": "AP003_sakura_trunk_V01_LOD0_Export",
+         "materials": [
+          "bark_01"
+         ],
+         "facesPerSlot": [
+          8648
+         ],
+         "triangles": 8648,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V01.fbx",
+         "object": "AP003_sakura_trunk_V01_LOD1_Export",
+         "materials": [
+          "bark_01"
+         ],
+         "facesPerSlot": [
+          3284
+         ],
+         "triangles": 3284,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V01.fbx",
+         "object": "AP003_sakura_trunk_V01_LOD2_Export",
+         "materials": [
+          "bark_01"
+         ],
+         "facesPerSlot": [
+          756
+         ],
+         "triangles": 756,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_sakura_trunk_V01.fbx",
+       "object": "AP003_sakura_trunk_V01_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.372575,
+          -0.486665,
+          0.0
+         ],
+         "max": [
+          0.536807,
+          0.382622,
+          2.449862
+         ],
+         "positions": 128
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_sakura_trunk_V02",
+     "boundsMin": [
+      -1.9328523874282837,
+      -2.376347303390503,
+      0.0
+     ],
+     "boundsMax": [
+      2.488128900527954,
+      2.457108974456787,
+      5.747720241546631
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_trunk_V02.fbx",
+         "object": "AP003_sakura_trunk_V02_LOD0_Export",
+         "materials": [
+          "bark_02"
+         ],
+         "facesPerSlot": [
+          8648
+         ],
+         "triangles": 8648,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V02.fbx",
+         "object": "AP003_sakura_trunk_V02_LOD1_Export",
+         "materials": [
+          "bark_02"
+         ],
+         "facesPerSlot": [
+          3284
+         ],
+         "triangles": 3284,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V02.fbx",
+         "object": "AP003_sakura_trunk_V02_LOD2_Export",
+         "materials": [
+          "bark_02"
+         ],
+         "facesPerSlot": [
+          756
+         ],
+         "triangles": 756,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_sakura_trunk_V02.fbx",
+       "object": "AP003_sakura_trunk_V02_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.347406,
+          -0.467402,
+          0.0
+         ],
+         "max": [
+          0.356603,
+          0.469057,
+          2.448071
+         ],
+         "positions": 108
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_sakura_trunk_V03",
+     "boundsMin": [
+      -2.770817279815674,
+      -1.7169930934906006,
+      0.0
+     ],
+     "boundsMax": [
+      2.3947911262512207,
+      2.7787601947784424,
+      6.4768242835998535
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_trunk_V03.fbx",
+         "object": "AP003_sakura_trunk_V03_LOD0_Export",
+         "materials": [
+          "bark_03"
+         ],
+         "facesPerSlot": [
+          8648
+         ],
+         "triangles": 8648,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V03.fbx",
+         "object": "AP003_sakura_trunk_V03_LOD1_Export",
+         "materials": [
+          "bark_03"
+         ],
+         "facesPerSlot": [
+          3284
+         ],
+         "triangles": 3284,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V03.fbx",
+         "object": "AP003_sakura_trunk_V03_LOD2_Export",
+         "materials": [
+          "bark_03"
+         ],
+         "facesPerSlot": [
+          756
+         ],
+         "triangles": 756,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_sakura_trunk_V03.fbx",
+       "object": "AP003_sakura_trunk_V03_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.348827,
+          -0.347772,
+          0.0
+         ],
+         "max": [
+          0.505019,
+          0.417591,
+          2.447755
+         ],
+         "positions": 128
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_sakura_trunk_V04",
+     "boundsMin": [
+      -2.751241445541382,
+      -2.436877489089966,
+      0.0
+     ],
+     "boundsMax": [
+      3.0278427600860596,
+      2.868318557739258,
+      5.481567859649658
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_trunk_V04.fbx",
+         "object": "AP003_sakura_trunk_V04_LOD0_Export",
+         "materials": [
+          "bark_01"
+         ],
+         "facesPerSlot": [
+          8648
+         ],
+         "triangles": 8648,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V04.fbx",
+         "object": "AP003_sakura_trunk_V04_LOD1_Export",
+         "materials": [
+          "bark_01"
+         ],
+         "facesPerSlot": [
+          3284
+         ],
+         "triangles": 3284,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V04.fbx",
+         "object": "AP003_sakura_trunk_V04_LOD2_Export",
+         "materials": [
+          "bark_01"
+         ],
+         "facesPerSlot": [
+          756
+         ],
+         "triangles": 756,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_sakura_trunk_V04.fbx",
+       "object": "AP003_sakura_trunk_V04_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.493361,
+          -0.512103,
+          0.0
+         ],
+         "max": [
+          0.549339,
+          0.503481,
+          2.448731
+         ],
+         "positions": 128
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_sakura_trunk_V05",
+     "boundsMin": [
+      -1.76103675365448,
+      -2.013812780380249,
+      0.0
+     ],
+     "boundsMax": [
+      2.9919376373291016,
+      3.5364737510681152,
+      6.379136085510254
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_trunk_V05.fbx",
+         "object": "AP003_sakura_trunk_V05_LOD0_Export",
+         "materials": [
+          "bark_02"
+         ],
+         "facesPerSlot": [
+          8648
+         ],
+         "triangles": 8648,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V05.fbx",
+         "object": "AP003_sakura_trunk_V05_LOD1_Export",
+         "materials": [
+          "bark_02"
+         ],
+         "facesPerSlot": [
+          3284
+         ],
+         "triangles": 3284,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_trunk_V05.fbx",
+         "object": "AP003_sakura_trunk_V05_LOD2_Export",
+         "materials": [
+          "bark_02"
+         ],
+         "facesPerSlot": [
+          756
+         ],
+         "triangles": 756,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_sakura_trunk_V05.fbx",
+       "object": "AP003_sakura_trunk_V05_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.368557,
+          -0.547216,
+          0.0
+         ],
+         "max": [
+          0.434866,
+          0.471227,
+          2.449272
+         ],
+         "positions": 107
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "sakura_foliage",
+   "occluder": true,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_sakura_foliage_V01",
+     "boundsMin": [
+      -2.645617961883545,
+      -2.1069045066833496,
+      3.4844841957092285
+     ],
+     "boundsMax": [
+      2.426161289215088,
+      2.9774298667907715,
+      6.424360752105713
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_foliage_V01.fbx",
+         "object": "AP003_sakura_foliage_V01_LOD0_Export",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          21868
+         ],
+         "triangles": 21868,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V01.fbx",
+         "object": "AP003_sakura_foliage_V01_LOD1_Export",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          7092
+         ],
+         "triangles": 7092,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V01.fbx",
+         "object": "AP003_sakura_foliage_V01_LOD2_Export",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          1864
+         ],
+         "triangles": 1864,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_sakura_foliage_V02",
+     "boundsMin": [
+      -1.9553049802780151,
+      -2.221007823944092,
+      3.143019914627075
+     ],
+     "boundsMax": [
+      2.717381000518799,
+      2.882658004760742,
+      6.663456916809082
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_foliage_V02.fbx",
+         "object": "AP003_sakura_foliage_V02_LOD0_Export",
+         "materials": [
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          22004
+         ],
+         "triangles": 22004,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V02.fbx",
+         "object": "AP003_sakura_foliage_V02_LOD1_Export",
+         "materials": [
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          7152
+         ],
+         "triangles": 7152,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V02.fbx",
+         "object": "AP003_sakura_foliage_V02_LOD2_Export",
+         "materials": [
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          1848
+         ],
+         "triangles": 1848,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_sakura_foliage_V03",
+     "boundsMin": [
+      -3.0135791301727295,
+      -1.917712688446045,
+      3.994654417037964
+     ],
+     "boundsMax": [
+      2.114769220352173,
+      2.91788911819458,
+      6.8141889572143555
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_foliage_V03.fbx",
+         "object": "AP003_sakura_foliage_V03_LOD0_Export",
+         "materials": [
+          "sakura_foliage_03"
+         ],
+         "facesPerSlot": [
+          22064
+         ],
+         "triangles": 22064,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V03.fbx",
+         "object": "AP003_sakura_foliage_V03_LOD1_Export",
+         "materials": [
+          "sakura_foliage_03"
+         ],
+         "facesPerSlot": [
+          7168
+         ],
+         "triangles": 7168,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V03.fbx",
+         "object": "AP003_sakura_foliage_V03_LOD2_Export",
+         "materials": [
+          "sakura_foliage_03"
+         ],
+         "facesPerSlot": [
+          1856
+         ],
+         "triangles": 1856,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_sakura_foliage_V04",
+     "boundsMin": [
+      -3.08953595161438,
+      -2.5934815406799316,
+      3.291898727416992
+     ],
+     "boundsMax": [
+      2.624467611312866,
+      3.0789341926574707,
+      5.787444591522217
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_foliage_V04.fbx",
+         "object": "AP003_sakura_foliage_V04_LOD0_Export",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          22064
+         ],
+         "triangles": 22064,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V04.fbx",
+         "object": "AP003_sakura_foliage_V04_LOD1_Export",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          7140
+         ],
+         "triangles": 7140,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V04.fbx",
+         "object": "AP003_sakura_foliage_V04_LOD2_Export",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          1844
+         ],
+         "triangles": 1844,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_sakura_foliage_V05",
+     "boundsMin": [
+      -2.0662522315979004,
+      -2.0643820762634277,
+      3.643787384033203
+     ],
+     "boundsMax": [
+      2.9490787982940674,
+      3.413022994995117,
+      6.3530592918396
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_sakura_foliage_V05.fbx",
+         "object": "AP003_sakura_foliage_V05_LOD0_Export",
+         "materials": [
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          21992
+         ],
+         "triangles": 21992,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V05.fbx",
+         "object": "AP003_sakura_foliage_V05_LOD1_Export",
+         "materials": [
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          7216
+         ],
+         "triangles": 7216,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_sakura_foliage_V05.fbx",
+         "object": "AP003_sakura_foliage_V05_LOD2_Export",
+         "materials": [
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          1844
+         ],
+         "triangles": 1844,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    }
+   ]
+  },
+  {
+   "family": "greenery_cluster",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_greenery_cluster_V01",
+     "boundsMin": [
+      -0.44692274928092957,
+      -0.5535956025123596,
+      0.0
+     ],
+     "boundsMax": [
+      0.5222716331481934,
+      0.5412083268165588,
+      0.6619375944137573
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_greenery_cluster_V01.fbx",
+         "object": "AP003_greenery_cluster_V01_LOD0_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          2810
+         ],
+         "triangles": 2810,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V01.fbx",
+         "object": "AP003_greenery_cluster_V01_LOD1_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V01.fbx",
+         "object": "AP003_greenery_cluster_V01_LOD2_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          368
+         ],
+         "triangles": 368,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_greenery_cluster_V02",
+     "boundsMin": [
+      -0.3792283535003662,
+      -0.603749692440033,
+      0.0
+     ],
+     "boundsMax": [
+      0.4938925504684448,
+      0.5039432048797607,
+      0.6203672289848328
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_greenery_cluster_V02.fbx",
+         "object": "AP003_greenery_cluster_V02_LOD0_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          2810
+         ],
+         "triangles": 2810,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V02.fbx",
+         "object": "AP003_greenery_cluster_V02_LOD1_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V02.fbx",
+         "object": "AP003_greenery_cluster_V02_LOD2_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          368
+         ],
+         "triangles": 368,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_greenery_cluster_V03",
+     "boundsMin": [
+      -0.5046335458755493,
+      -0.4698214530944824,
+      0.0
+     ],
+     "boundsMax": [
+      0.5064511895179749,
+      0.45887795090675354,
+      0.6839230060577393
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_greenery_cluster_V03.fbx",
+         "object": "AP003_greenery_cluster_V03_LOD0_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          2810
+         ],
+         "triangles": 2810,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V03.fbx",
+         "object": "AP003_greenery_cluster_V03_LOD1_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V03.fbx",
+         "object": "AP003_greenery_cluster_V03_LOD2_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          368
+         ],
+         "triangles": 368,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_greenery_cluster_V04",
+     "boundsMin": [
+      -0.5919610857963562,
+      -0.5556854605674744,
+      0.0
+     ],
+     "boundsMax": [
+      0.5383353233337402,
+      0.5135733485221863,
+      0.5681756138801575
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_greenery_cluster_V04.fbx",
+         "object": "AP003_greenery_cluster_V04_LOD0_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          2810
+         ],
+         "triangles": 2810,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V04.fbx",
+         "object": "AP003_greenery_cluster_V04_LOD1_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V04.fbx",
+         "object": "AP003_greenery_cluster_V04_LOD2_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          368
+         ],
+         "triangles": 368,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_greenery_cluster_V05",
+     "boundsMin": [
+      -0.4857179522514343,
+      -0.5425461530685425,
+      0.0
+     ],
+     "boundsMax": [
+      0.4514380097389221,
+      0.5509291291236877,
+      0.6607859134674072
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_greenery_cluster_V05.fbx",
+         "object": "AP003_greenery_cluster_V05_LOD0_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          2810
+         ],
+         "triangles": 2810,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V05.fbx",
+         "object": "AP003_greenery_cluster_V05_LOD1_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V05.fbx",
+         "object": "AP003_greenery_cluster_V05_LOD2_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          368
+         ],
+         "triangles": 368,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V06",
+     "prefab": "SM_greenery_cluster_V06",
+     "boundsMin": [
+      -0.6402222514152527,
+      -0.43640196323394775,
+      0.0
+     ],
+     "boundsMax": [
+      0.539631724357605,
+      0.4356893002986908,
+      0.6305899620056152
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_greenery_cluster_V06.fbx",
+         "object": "AP003_greenery_cluster_V06_LOD0_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          2810
+         ],
+         "triangles": 2810,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V06.fbx",
+         "object": "AP003_greenery_cluster_V06_LOD1_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V06.fbx",
+         "object": "AP003_greenery_cluster_V06_LOD2_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          368
+         ],
+         "triangles": 368,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V07",
+     "prefab": "SM_greenery_cluster_V07",
+     "boundsMin": [
+      -0.3860852122306824,
+      -0.5352471470832825,
+      0.0
+     ],
+     "boundsMax": [
+      0.3989892303943634,
+      0.4915982186794281,
+      0.724299430847168
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_greenery_cluster_V07.fbx",
+         "object": "AP003_greenery_cluster_V07_LOD0_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          2810
+         ],
+         "triangles": 2810,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V07.fbx",
+         "object": "AP003_greenery_cluster_V07_LOD1_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V07.fbx",
+         "object": "AP003_greenery_cluster_V07_LOD2_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          368
+         ],
+         "triangles": 368,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V08",
+     "prefab": "SM_greenery_cluster_V08",
+     "boundsMin": [
+      -0.5267792344093323,
+      -0.5006933212280273,
+      0.0
+     ],
+     "boundsMax": [
+      0.5319594740867615,
+      0.4524097144603729,
+      0.7123444080352783
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_greenery_cluster_V08.fbx",
+         "object": "AP003_greenery_cluster_V08_LOD0_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          2810
+         ],
+         "triangles": 2810,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V08.fbx",
+         "object": "AP003_greenery_cluster_V08_LOD1_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_greenery_cluster_V08.fbx",
+         "object": "AP003_greenery_cluster_V08_LOD2_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          368
+         ],
+         "triangles": 368,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    }
+   ]
+  },
+  {
+   "family": "understory_shrub",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_understory_shrub_V01",
+     "boundsMin": [
+      -0.6810261011123657,
+      -0.7649124264717102,
+      0.0
+     ],
+     "boundsMax": [
+      0.834895670413971,
+      0.7490831613540649,
+      1.4933419227600098
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_understory_shrub_V01.fbx",
+         "object": "AP003_understory_shrub_V01_LOD0_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          7356
+         ],
+         "triangles": 7356,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V01.fbx",
+         "object": "AP003_understory_shrub_V01_LOD1_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          2908
+         ],
+         "triangles": 2908,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V01.fbx",
+         "object": "AP003_understory_shrub_V01_LOD2_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_understory_shrub_V02",
+     "boundsMin": [
+      -0.5853958129882812,
+      -0.7797361612319946,
+      0.0
+     ],
+     "boundsMax": [
+      0.8115741610527039,
+      0.6458740830421448,
+      1.4579790830612183
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_understory_shrub_V02.fbx",
+         "object": "AP003_understory_shrub_V02_LOD0_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          7356
+         ],
+         "triangles": 7356,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V02.fbx",
+         "object": "AP003_understory_shrub_V02_LOD1_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          2908
+         ],
+         "triangles": 2908,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V02.fbx",
+         "object": "AP003_understory_shrub_V02_LOD2_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_understory_shrub_V03",
+     "boundsMin": [
+      -0.8256024122238159,
+      -0.6556878089904785,
+      0.0
+     ],
+     "boundsMax": [
+      0.7622678875923157,
+      0.5848719477653503,
+      1.6229863166809082
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_understory_shrub_V03.fbx",
+         "object": "AP003_understory_shrub_V03_LOD0_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          7356
+         ],
+         "triangles": 7356,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V03.fbx",
+         "object": "AP003_understory_shrub_V03_LOD1_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          2908
+         ],
+         "triangles": 2908,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V03.fbx",
+         "object": "AP003_understory_shrub_V03_LOD2_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_understory_shrub_V04",
+     "boundsMin": [
+      -0.9823659658432007,
+      -0.7768962383270264,
+      0.0
+     ],
+     "boundsMax": [
+      0.8422748446464539,
+      0.5353453159332275,
+      1.311367154121399
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_understory_shrub_V04.fbx",
+         "object": "AP003_understory_shrub_V04_LOD0_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          7356
+         ],
+         "triangles": 7356,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V04.fbx",
+         "object": "AP003_understory_shrub_V04_LOD1_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          2908
+         ],
+         "triangles": 2908,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V04.fbx",
+         "object": "AP003_understory_shrub_V04_LOD2_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_understory_shrub_V05",
+     "boundsMin": [
+      -0.7939269542694092,
+      -0.7930588126182556,
+      0.0
+     ],
+     "boundsMax": [
+      0.7656777501106262,
+      0.6241599917411804,
+      1.4643877744674683
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_understory_shrub_V05.fbx",
+         "object": "AP003_understory_shrub_V05_LOD0_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          7356
+         ],
+         "triangles": 7356,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V05.fbx",
+         "object": "AP003_understory_shrub_V05_LOD1_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          2908
+         ],
+         "triangles": 2908,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V05.fbx",
+         "object": "AP003_understory_shrub_V05_LOD2_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V06",
+     "prefab": "SM_understory_shrub_V06",
+     "boundsMin": [
+      -1.0607348680496216,
+      -0.6400679349899292,
+      0.0
+     ],
+     "boundsMax": [
+      0.9253232479095459,
+      0.5336311459541321,
+      1.4005194902420044
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_understory_shrub_V06.fbx",
+         "object": "AP003_understory_shrub_V06_LOD0_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          7356
+         ],
+         "triangles": 7356,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V06.fbx",
+         "object": "AP003_understory_shrub_V06_LOD1_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          2908
+         ],
+         "triangles": 2908,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V06.fbx",
+         "object": "AP003_understory_shrub_V06_LOD2_Export",
+         "materials": [
+          "green_foliage_03_solid"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V07",
+     "prefab": "SM_understory_shrub_V07",
+     "boundsMin": [
+      -0.5932393670082092,
+      -0.7701169848442078,
+      0.0
+     ],
+     "boundsMax": [
+      0.6682446002960205,
+      0.6080252528190613,
+      1.6257967948913574
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_understory_shrub_V07.fbx",
+         "object": "AP003_understory_shrub_V07_LOD0_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          7356
+         ],
+         "triangles": 7356,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V07.fbx",
+         "object": "AP003_understory_shrub_V07_LOD1_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          2908
+         ],
+         "triangles": 2908,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V07.fbx",
+         "object": "AP003_understory_shrub_V07_LOD2_Export",
+         "materials": [
+          "green_foliage_01_solid"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V08",
+     "prefab": "SM_understory_shrub_V08",
+     "boundsMin": [
+      -0.8118778467178345,
+      -0.6925451755523682,
+      0.0
+     ],
+     "boundsMax": [
+      0.8235591053962708,
+      0.6306228637695312,
+      1.6044392585754395
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_understory_shrub_V08.fbx",
+         "object": "AP003_understory_shrub_V08_LOD0_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          7356
+         ],
+         "triangles": 7356,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V08.fbx",
+         "object": "AP003_understory_shrub_V08_LOD1_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          2908
+         ],
+         "triangles": 2908,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_understory_shrub_V08.fbx",
+         "object": "AP003_understory_shrub_V08_LOD2_Export",
+         "materials": [
+          "green_foliage_02_solid"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    }
+   ]
+  },
+  {
+   "family": "creeping_groundcover",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_creeping_groundcover_V01",
+     "boundsMin": [
+      -0.656367301940918,
+      -0.6590133905410767,
+      0.0
+     ],
+     "boundsMax": [
+      0.8108640909194946,
+      0.582903265953064,
+      0.29006126523017883
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_creeping_groundcover_V01.fbx",
+         "object": "AP003_creeping_groundcover_V01_LOD0_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          2892
+         ],
+         "triangles": 2892,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V01.fbx",
+         "object": "AP003_creeping_groundcover_V01_LOD1_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          1120
+         ],
+         "triangles": 1120,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V01.fbx",
+         "object": "AP003_creeping_groundcover_V01_LOD2_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_creeping_groundcover_V02",
+     "boundsMin": [
+      -0.5754965543746948,
+      -0.6886265873908997,
+      0.0
+     ],
+     "boundsMax": [
+      0.7596089243888855,
+      0.561322808265686,
+      0.2750125229358673
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_creeping_groundcover_V02.fbx",
+         "object": "AP003_creeping_groundcover_V02_LOD0_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          2892
+         ],
+         "triangles": 2892,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V02.fbx",
+         "object": "AP003_creeping_groundcover_V02_LOD1_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          1120
+         ],
+         "triangles": 1120,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V02.fbx",
+         "object": "AP003_creeping_groundcover_V02_LOD2_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_creeping_groundcover_V03",
+     "boundsMin": [
+      -0.6938858032226562,
+      -0.5747073888778687,
+      0.0
+     ],
+     "boundsMax": [
+      0.7865162491798401,
+      0.4678512215614319,
+      0.3232010006904602
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_creeping_groundcover_V03.fbx",
+         "object": "AP003_creeping_groundcover_V03_LOD0_Export",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          2892
+         ],
+         "triangles": 2892,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V03.fbx",
+         "object": "AP003_creeping_groundcover_V03_LOD1_Export",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          1116
+         ],
+         "triangles": 1116,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V03.fbx",
+         "object": "AP003_creeping_groundcover_V03_LOD2_Export",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_creeping_groundcover_V04",
+     "boundsMin": [
+      -0.8256834745407104,
+      -0.6503906846046448,
+      0.0
+     ],
+     "boundsMax": [
+      0.7778918743133545,
+      0.5500402450561523,
+      0.27706006169319153
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_creeping_groundcover_V04.fbx",
+         "object": "AP003_creeping_groundcover_V04_LOD0_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          2900
+         ],
+         "triangles": 2900,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V04.fbx",
+         "object": "AP003_creeping_groundcover_V04_LOD1_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          1116
+         ],
+         "triangles": 1116,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V04.fbx",
+         "object": "AP003_creeping_groundcover_V04_LOD2_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_creeping_groundcover_V05",
+     "boundsMin": [
+      -0.71873539686203,
+      -0.6481656432151794,
+      0.0
+     ],
+     "boundsMax": [
+      0.599453330039978,
+      0.5801068544387817,
+      0.30687758326530457
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_creeping_groundcover_V05.fbx",
+         "object": "AP003_creeping_groundcover_V05_LOD0_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          2900
+         ],
+         "triangles": 2900,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V05.fbx",
+         "object": "AP003_creeping_groundcover_V05_LOD1_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          1120
+         ],
+         "triangles": 1120,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V05.fbx",
+         "object": "AP003_creeping_groundcover_V05_LOD2_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V06",
+     "prefab": "SM_creeping_groundcover_V06",
+     "boundsMin": [
+      -0.8459901809692383,
+      -0.5268914103507996,
+      0.0
+     ],
+     "boundsMax": [
+      0.6961037516593933,
+      0.46498849987983704,
+      0.28986525535583496
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_creeping_groundcover_V06.fbx",
+         "object": "AP003_creeping_groundcover_V06_LOD0_Export",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          2900
+         ],
+         "triangles": 2900,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V06.fbx",
+         "object": "AP003_creeping_groundcover_V06_LOD1_Export",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          1112
+         ],
+         "triangles": 1112,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V06.fbx",
+         "object": "AP003_creeping_groundcover_V06_LOD2_Export",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V07",
+     "prefab": "SM_creeping_groundcover_V07",
+     "boundsMin": [
+      -0.5817824006080627,
+      -0.6173022389411926,
+      0.0
+     ],
+     "boundsMax": [
+      0.5576832890510559,
+      0.5417588353157043,
+      0.32807058095932007
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_creeping_groundcover_V07.fbx",
+         "object": "AP003_creeping_groundcover_V07_LOD0_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          2892
+         ],
+         "triangles": 2892,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V07.fbx",
+         "object": "AP003_creeping_groundcover_V07_LOD1_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          1112
+         ],
+         "triangles": 1112,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V07.fbx",
+         "object": "AP003_creeping_groundcover_V07_LOD2_Export",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    },
+    {
+     "id": "V08",
+     "prefab": "SM_creeping_groundcover_V08",
+     "boundsMin": [
+      -0.7431972622871399,
+      -0.5809434056282043,
+      0.0
+     ],
+     "boundsMax": [
+      0.8232617974281311,
+      0.4947020411491394,
+      0.3038608133792877
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP003_creeping_groundcover_V08.fbx",
+         "object": "AP003_creeping_groundcover_V08_LOD0_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          2900
+         ],
+         "triangles": 2900,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V08.fbx",
+         "object": "AP003_creeping_groundcover_V08_LOD1_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          1120
+         ],
+         "triangles": 1120,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP003_creeping_groundcover_V08.fbx",
+         "object": "AP003_creeping_groundcover_V08_LOD2_Export",
+         "materials": [
+          "moss_02"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": []
+    }
+   ]
+  },
+  {
+   "family": "rock_prop",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_rock_prop_V01",
+     "boundsMin": [
+      -0.9685177803039551,
+      -0.5485420227050781,
+      0.0
+     ],
+     "boundsMax": [
+      0.8405163288116455,
+      0.4697600305080414,
+      0.8040953874588013
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP003_rock_prop_V01.fbx",
+         "object": "AP003_rock_prop_V01_LOD0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          764
+         ],
+         "triangles": 764,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V01.fbx",
+         "object": "AP003_rock_prop_V01_LOD1_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V01.fbx",
+         "object": "AP003_rock_prop_V01_LOD2_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_rock_prop_V01.fbx",
+       "object": "AP003_rock_prop_V01_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.968518,
+          -0.548542,
+          0.0
+         ],
+         "max": [
+          0.840516,
+          0.46976,
+          0.804095
+         ],
+         "positions": 128
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_rock_prop_V02",
+     "boundsMin": [
+      -0.4704974591732025,
+      -0.930985152721405,
+      0.0
+     ],
+     "boundsMax": [
+      0.6630565524101257,
+      0.6653726100921631,
+      0.5760654211044312
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP003_rock_prop_V02.fbx",
+         "object": "AP003_rock_prop_V02_LOD0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          764
+         ],
+         "triangles": 764,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V02.fbx",
+         "object": "AP003_rock_prop_V02_LOD1_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V02.fbx",
+         "object": "AP003_rock_prop_V02_LOD2_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_rock_prop_V02.fbx",
+       "object": "AP003_rock_prop_V02_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.470497,
+          -0.930985,
+          0.0
+         ],
+         "max": [
+          0.663057,
+          0.665373,
+          0.576065
+         ],
+         "positions": 111
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_rock_prop_V03",
+     "boundsMin": [
+      -0.4835704565048218,
+      -0.7368630766868591,
+      0.0
+     ],
+     "boundsMax": [
+      0.5517717003822327,
+      0.6185253858566284,
+      0.7929145097732544
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP003_rock_prop_V03.fbx",
+         "object": "AP003_rock_prop_V03_LOD0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          764
+         ],
+         "triangles": 764,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V03.fbx",
+         "object": "AP003_rock_prop_V03_LOD1_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V03.fbx",
+         "object": "AP003_rock_prop_V03_LOD2_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_rock_prop_V03.fbx",
+       "object": "AP003_rock_prop_V03_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.48357,
+          -0.736863,
+          0.0
+         ],
+         "max": [
+          0.551772,
+          0.618525,
+          0.792915
+         ],
+         "positions": 128
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_rock_prop_V04",
+     "boundsMin": [
+      -0.9022790193557739,
+      -0.9896518588066101,
+      0.0
+     ],
+     "boundsMax": [
+      0.6972600817680359,
+      0.7865107655525208,
+      0.49971887469291687
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP003_rock_prop_V04.fbx",
+         "object": "AP003_rock_prop_V04_LOD0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          764
+         ],
+         "triangles": 764,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V04.fbx",
+         "object": "AP003_rock_prop_V04_LOD1_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V04.fbx",
+         "object": "AP003_rock_prop_V04_LOD2_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_rock_prop_V04.fbx",
+       "object": "AP003_rock_prop_V04_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.902279,
+          -0.989652,
+          0.0
+         ],
+         "max": [
+          0.69726,
+          0.786511,
+          0.499719
+         ],
+         "positions": 109
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_rock_prop_V05",
+     "boundsMin": [
+      -0.6309235095977783,
+      -0.4935903549194336,
+      0.0
+     ],
+     "boundsMax": [
+      0.5401954054832458,
+      0.7469902634620667,
+      0.7332483530044556
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP003_rock_prop_V05.fbx",
+         "object": "AP003_rock_prop_V05_LOD0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          764
+         ],
+         "triangles": 764,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V05.fbx",
+         "object": "AP003_rock_prop_V05_LOD1_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V05.fbx",
+         "object": "AP003_rock_prop_V05_LOD2_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_rock_prop_V05.fbx",
+       "object": "AP003_rock_prop_V05_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.630924,
+          -0.49359,
+          0.0
+         ],
+         "max": [
+          0.540195,
+          0.74699,
+          0.733248
+         ],
+         "positions": 116
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V06",
+     "prefab": "SM_rock_prop_V06",
+     "boundsMin": [
+      -0.6666903495788574,
+      -0.7905815243721008,
+      0.0
+     ],
+     "boundsMax": [
+      0.7564138174057007,
+      0.8435637950897217,
+      0.5441535115242004
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP003_rock_prop_V06.fbx",
+         "object": "AP003_rock_prop_V06_LOD0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          764
+         ],
+         "triangles": 764,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V06.fbx",
+         "object": "AP003_rock_prop_V06_LOD1_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V06.fbx",
+         "object": "AP003_rock_prop_V06_LOD2_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_rock_prop_V06.fbx",
+       "object": "AP003_rock_prop_V06_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.66669,
+          -0.790582,
+          0.0
+         ],
+         "max": [
+          0.756414,
+          0.843564,
+          0.544154
+         ],
+         "positions": 107
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V07",
+     "prefab": "SM_rock_prop_V07",
+     "boundsMin": [
+      -0.8375547528266907,
+      -0.4863167107105255,
+      0.0
+     ],
+     "boundsMax": [
+      0.5345489978790283,
+      0.5809212327003479,
+      0.7458851337432861
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP003_rock_prop_V07.fbx",
+         "object": "AP003_rock_prop_V07_LOD0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          764
+         ],
+         "triangles": 764,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V07.fbx",
+         "object": "AP003_rock_prop_V07_LOD1_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V07.fbx",
+         "object": "AP003_rock_prop_V07_LOD2_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_rock_prop_V07.fbx",
+       "object": "AP003_rock_prop_V07_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.837555,
+          -0.486317,
+          0.0
+         ],
+         "max": [
+          0.534549,
+          0.580921,
+          0.745885
+         ],
+         "positions": 116
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "V08",
+     "prefab": "SM_rock_prop_V08",
+     "boundsMin": [
+      -0.5786950588226318,
+      -0.5438302755355835,
+      0.0
+     ],
+     "boundsMax": [
+      0.48185399174690247,
+      0.6450064182281494,
+      0.6103367805480957
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP003_rock_prop_V08.fbx",
+         "object": "AP003_rock_prop_V08_LOD0_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          764
+         ],
+         "triangles": 764,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V08.fbx",
+         "object": "AP003_rock_prop_V08_LOD1_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          420
+         ],
+         "triangles": 420,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP003_rock_prop_V08.fbx",
+         "object": "AP003_rock_prop_V08_LOD2_Export",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP003_rock_prop_V08.fbx",
+       "object": "AP003_rock_prop_V08_PROXY_Export",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.578695,
+          -0.54383,
+          0.0
+         ],
+         "max": [
+          0.481854,
+          0.645006,
+          0.610337
+         ],
+         "positions": 98
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

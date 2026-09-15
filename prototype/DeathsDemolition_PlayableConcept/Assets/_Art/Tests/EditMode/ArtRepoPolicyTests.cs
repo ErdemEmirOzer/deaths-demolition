@@ -188,7 +188,13 @@ namespace DD.Art.Tests.EditMode
                 ArtPipelinePaths.ArtRoot + "/Editor",
                 ArtPipelinePaths.ArtRoot + "/Scenes/Pilot",
                 ArtPipelinePaths.ArtRoot + "/Tests/EditMode",
-                ArtPipelinePaths.ArtRoot + "/Tests/PlayMode"
+                ArtPipelinePaths.ArtRoot + "/Tests/PlayMode",
+                // WP-012 (ADR-012-2): kütüphane kökleri, paylaşılan ışık tabanı, Resources gökyüzü
+                ArtLibraryPaths.LibraryRoot("AP-002"),
+                ArtLibraryPaths.LibraryRoot("AP-003"),
+                ArtLibraryPaths.LibraryRoot("AP-003B"),
+                ArtLibraryPaths.LightingFolder,
+                ArtPipelinePaths.ArtRoot + "/Resources"
             };
 
             var eksik = new List<string>();

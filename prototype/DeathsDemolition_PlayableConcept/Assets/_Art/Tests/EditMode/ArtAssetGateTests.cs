@@ -202,6 +202,27 @@ namespace DD.Art.Tests.EditMode
 
             beklenen.Add(ArtPipelinePaths.GroundColliderFbx);
 
+            // WP-012: every FBX the three library manifests reference (LOD chains + proxies).
+            int kutuphane = 0;
+            foreach (string ap in ArtLibraryPaths.Packages)
+            {
+                ArtLibraryManifest m = ArtLibraryManifest.FromJson(File.ReadAllText(ArtLibraryPaths.ManifestJson(ap)));
+                foreach (ArtLibraryManifest.Family f in m.families)
+                foreach (ArtLibraryManifest.Variation v in f.variations)
+                {
+                    foreach (ArtLibraryManifest.Part part in v.parts)
+                    foreach (ArtLibraryManifest.Lod lod in part.lods)
+                    {
+                        if (beklenen.Add(ArtLibraryPaths.Fbx(ap, f.family, lod.fbx))) kutuphane++;
+                    }
+
+                    foreach (ArtLibraryManifest.Collider c in v.colliders)
+                    {
+                        if (beklenen.Add(ArtLibraryPaths.Fbx(ap, f.family, c.fbx))) kutuphane++;
+                    }
+                }
+            }
+
             var diskte = new HashSet<string>(DiskteUzanti(".fbx"), StringComparer.Ordinal);
             var eksik = new List<string>();
             var fazla = new List<string>();
@@ -213,7 +234,8 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(18, ArtFamilies.All.Length, "ArtFamilies.All 18 aile olmalı.");
             Assert.IsEmpty(eksik, "Beklenen FBX diskte yok (" + eksik.Count + "):\n" + string.Join("\n", eksik));
             Assert.IsEmpty(fazla, "Aile tablosunda karşılığı olmayan FBX (" + fazla.Count + "):\n" + string.Join("\n", fazla));
-            Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55) + " collider + zemin)");
+            Assert.AreEqual(143, kutuphane, "WP-012 kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) = 143 olmalı.");
+            Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55 - kutuphane) + " collider + zemin + " + kutuphane + " kütüphane)");
         }
 
         // ============================================================== PNG importer sözleşmesi
@@ -257,7 +279,7 @@ namespace DD.Art.Tests.EditMode
         /// Maske eksikse hat koşmamıştır — kapı kırmızı.
         /// </summary>
         [Test]
-        public void PngKumesi_14KaynakArti4TuretilmisMaskeArti1Gokyuzu()
+        public void PngKumesi_14KaynakArti4TuretilmisMaskeArti1GokyuzuArti63Kutuphane()
         {
             var beklenen = new HashSet<string>(StringComparer.Ordinal);
             foreach (string rol in PbrRoller)
@@ -278,6 +300,24 @@ namespace DD.Art.Tests.EditMode
             beklenen.Add(ArtPipelinePaths.TexturesDerived + "/T_sky_BaseColor.png");
 
             Assert.AreEqual(19, beklenen.Count, "Beklenen doku kümesi 14 + 4 + 1 = 19 olmalı; yol üreticisi çakışan ad üretti.");
+
+            // WP-012 kütüphane rolleri (ADR-012-2): her doku rolü BaseColor; Packed taşıyanlar Normal + Packed +
+            // türetilmiş maske. 18 doku rolü → 18 + 15×3 = 63 kaynak/türetilmiş PNG; küme 19 + 63 = 82.
+            foreach (string rol in ArtLibraryMaterialRoles.TextureRoles())
+            {
+                if (Array.IndexOf(ArtFamilies.MaterialRoles, rol) >= 0) continue; // stone (weathered) WP-011 dokularını paylaşır
+                beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "BaseColor"));
+            }
+
+            foreach (string rol in ArtLibraryMaterialRoles.PackedTextureRoles())
+            {
+                if (Array.IndexOf(ArtFamilies.MaterialRoles, rol) >= 0) continue;
+                beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"));
+                beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Packed"));
+                beklenen.Add(ArtPipelinePaths.DerivedMask(rol));
+            }
+
+            Assert.AreEqual(82, beklenen.Count, "Beklenen doku kümesi 19 + 63 (WP-012) = 82 olmalı.");
 
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();

@@ -77,6 +77,15 @@ namespace DD.Prototype.Diagnostics
         /// is not touched; the value is recorded in stage 01 so the run is labelled.
         /// </summary>
         private const string LodBiasFlag = "-ddPilotLodBias";
+
+        /// <summary>
+        /// WP-012 · "-ddPilotProfilerLog path.raw" (optional): writes the Unity Profiler's binary
+        /// log for the measurement window only (Profiler.logFile + enableBinaryLog), so the
+        /// frames the CSV shows as spikes can be opened frame by frame in the Editor
+        /// (ProfilerDriver.LoadProfile / PilotProfilerAnalysisCli). Development build only,
+        /// like the rest of the probe.
+        /// </summary>
+        private const string ProfilerLogFlag = "-ddPilotProfilerLog";
         private const int DefaultResolutionWidth = 1920;
         private const int DefaultResolutionHeight = 1080;
         private const string ProfileFlag = "-ddProfilePath";
@@ -156,7 +165,9 @@ namespace DD.Prototype.Diagnostics
 
             var carrier = new GameObject("PilotPerfProbe");
             UnityEngine.Object.DontDestroyOnLoad(carrier);
-            carrier.AddComponent<Driver>().Configure(outDir, scene, window, warmup, resW, resH, lodBiasOverride);
+            Driver driver = carrier.AddComponent<Driver>();
+            driver.Configure(outDir, scene, window, warmup, resW, resH, lodBiasOverride);
+            driver.ProfilerLogPath = Arg(ProfilerLogFlag);
             Debug.Log("[PilotPerfProbe] armed scene=" + scene + " window=" + window.ToString("F0", CultureInfo.InvariantCulture) +
                       "s warmup=" + warmup.ToString("F0", CultureInfo.InvariantCulture) + "s out=" + outDir);
         }
@@ -320,6 +331,10 @@ namespace DD.Prototype.Diagnostics
             public long gcAllocatedInWindowTotal;
             public string unavailableCounters;
             public int gen0CollectionsInWindow;
+            /// <summary>WP-012: frames over 16.667 ms in the window, and how many of those coincided with a gen0 collection.</summary>
+            public int spikeFrames;
+            public int spikeFramesWithGen0;
+            public string profilerLog;
 
             // ---- 04 window: managed heap over one second of frames under load
             public long heapNoopGcDelta;
@@ -468,6 +483,9 @@ namespace DD.Prototype.Diagnostics
 
             private float _lodBiasOverride = -1f;
             private float _lodBiasBefore;
+
+            /// <summary>Binary Profiler log written during the window (null = off).</summary>
+            internal string ProfilerLogPath;
 
             internal void Configure(string outDir, string scene, float windowSeconds, float warmupSeconds, int resolutionWidth, int resolutionHeight, float lodBiasOverride)
             {
@@ -643,12 +661,35 @@ namespace DD.Prototype.Diagnostics
                 double solveSum = 0d;
                 float solveMax = 0f;
                 int gen0Before = GC.CollectionCount(0);
+                int gen0Last = gen0Before;
+                int spikeFrames = 0;
+                int spikeFramesWithGen0 = 0;
+                bool profilerLog = !string.IsNullOrEmpty(ProfilerLogPath);
+                if (profilerLog)
+                {
+                    UnityEngine.Profiling.Profiler.logFile = ProfilerLogPath;
+                    UnityEngine.Profiling.Profiler.enableBinaryLog = true;
+                    UnityEngine.Profiling.Profiler.enabled = true;
+                    Debug.Log("[PilotPerfProbe] profiler binary log -> " + ProfilerLogPath);
+                }
+
                 t0 = Time.realtimeSinceStartup;
                 while (true)
                 {
                     float ms = Time.unscaledDeltaTime * 1000f;
                     _frameMs.Add(ms);
                     frames++;
+
+                    // Spike ↔ GC correlation: a hitch frame that also saw a gen0 collection is
+                    // a GC hitch; one that did not is something else (the profiler log says what).
+                    int gen0Now = GC.CollectionCount(0);
+                    if (ms > 16.667f)
+                    {
+                        spikeFrames++;
+                        if (gen0Now != gen0Last) spikeFramesWithGen0++;
+                    }
+
+                    gen0Last = gen0Now;
 
                     int active = dir.ActiveCount;
                     activeSum += active;
@@ -681,6 +722,12 @@ namespace DD.Prototype.Diagnostics
                 float windowSeconds = Time.realtimeSinceStartup - t0;
                 int gen0InWindow = GC.CollectionCount(0) - gen0Before;
                 for (int i = 0; i < counters.Length; i++) counters[i].Stop();
+                if (profilerLog)
+                {
+                    UnityEngine.Profiling.Profiler.enabled = false;
+                    UnityEngine.Profiling.Profiler.enableBinaryLog = false;
+                    UnityEngine.Profiling.Profiler.logFile = "";
+                }
 
                 // Managed heap over one second of frames with the load still pinned: the
                 // HeapWindow counters read across frames by hand (Measure is synchronous),
@@ -728,6 +775,9 @@ namespace DD.Prototype.Diagnostics
                 s4.crowdSolverOwnPeakMs = solver.PeakSolveMilliseconds;
                 AssignCounters(counters, s4);
                 s4.gen0CollectionsInWindow = gen0InWindow;
+                s4.spikeFrames = spikeFrames;
+                s4.spikeFramesWithGen0 = spikeFramesWithGen0;
+                s4.profilerLog = profilerLog ? ProfilerLogPath : null;
                 s4.heapNoopGcDelta = noop.GcDelta;
                 s4.heapNoopMonoDelta = noop.MonoDelta;
                 s4.heapNoopGen0 = noop.Gen0;
@@ -751,6 +801,7 @@ namespace DD.Prototype.Diagnostics
                           " | crowd " + s4.crowdSolveAvgMs.ToString("F3", CultureInfo.InvariantCulture) + "/" + s4.crowdSolveMaxMs.ToString("F3", CultureInfo.InvariantCulture) + " ms" +
                           " | alive min/avg/max " + s4.activeMin + "/" + s4.activeAvg.ToString("F1", CultureInfo.InvariantCulture) + "/" + s4.activeMax + " load>=" + loadFloor + " for " + (s4.loadIntegrityFraction * 100f).ToString("F1", CultureInfo.InvariantCulture) + "%" +
                           " | gen0 " + gen0InWindow + " alloc/frame " + s4.gcAllocatedInFrameAvg.ToString("F0", CultureInfo.InvariantCulture) + " B heap/s " + s4.gcSubWindowBytesPerSecond + " B (gen0 " + subGen0 + ")" +
+                          " | spikes " + spikeFrames + " withGen0 " + spikeFramesWithGen0 + (profilerLog ? " profilerLog yes" : "") +
                           (string.IsNullOrEmpty(s4.unavailableCounters) ? "" : " | unavailable: " + s4.unavailableCounters);
                 Write(s4);
                 WriteFrameTimes();

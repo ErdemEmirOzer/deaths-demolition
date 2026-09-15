@@ -27,7 +27,12 @@ namespace DD.Art.Pipeline.EditorTools
     public static class ArtSkyBuilder
     {
         public const string SkyTexturePath = ArtPipelinePaths.TexturesDerived + "/T_sky_BaseColor.png";
-        public const string SkyMaterialPath = ArtPipelinePaths.Materials + "/M_sky_overcast.mat";
+        /// <summary>
+        /// WP-012 (ADR-011-4 closure): the ONE overcast sky material, shared by the pilot,
+        /// the showcase and Run.unity. Under Resources because WorldAtmosphere (DD.Prototype)
+        /// loads it by name at runtime; DD.Art references the asset directly.
+        /// </summary>
+        public const string SkyMaterialPath = ArtLibraryPaths.SkyMaterial;
         public const string SkyShaderName = "Skybox/Panoramic";
 
         /// <summary>Horizon colour = Run.unity fog colour, so the far fog dissolves into the sky.</summary>
@@ -45,7 +50,7 @@ namespace DD.Art.Pipeline.EditorTools
         public static Material Build()
         {
             EnsureFolder(ArtPipelinePaths.TexturesDerived);
-            EnsureFolder(ArtPipelinePaths.Materials);
+            EnsureFolder(System.IO.Path.GetDirectoryName(SkyMaterialPath).Replace('\\', '/'));
 
             // Rows run bottom (nadir) → top (zenith); the horizon sits in the middle row of the
             // latitude-longitude mapping. Colours are authored in sRGB (BaseColor role).

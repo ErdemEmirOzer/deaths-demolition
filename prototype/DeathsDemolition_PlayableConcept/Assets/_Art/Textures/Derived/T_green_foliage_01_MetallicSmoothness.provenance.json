@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_green_foliage_01_Packed.png",
+    "sourceSha256": "423658055f02a524d140e5d6a2a5e23b54e9f48f88dc5c4864c717300c8324a9",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-15T15:01:42.4946990Z",
+    "outputSha256": "60234f995dd943f7e155fbea3ac9c02cadda449882bee957ad11cdb28c8f2db5"
+}

@@ -1,0 +1,175 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP003B_Library
+  m_EditorClassIdentifier: 
+  ap: AP-003B
+  items:
+  - family: koi_pond_basin
+    variation: V01
+    prefab: {fileID: 2220561920655766087, guid: 86a4180910e1b4f6e9bb71d652d81264, type: 3}
+  - family: koi_pond_basin
+    variation: V02
+    prefab: {fileID: 7895527035445742776, guid: a937cd02657d14ffcad62e14f85d1b06, type: 3}
+  - family: koi_pond_basin
+    variation: V03
+    prefab: {fileID: 5369840226546277199, guid: ea9308edc24b24c9b9635f9bddbe2039, type: 3}
+  - family: pond_water_surface
+    variation: V01
+    prefab: {fileID: 9221484494687351052, guid: 8b6807adcfc754fe28a8d02aa89c0f09, type: 3}
+  - family: pond_water_surface
+    variation: V02
+    prefab: {fileID: 5297688123650641732, guid: 3c9d3a7759dd9440ca5f7837e0a0d05d, type: 3}
+  - family: pond_water_surface
+    variation: V03
+    prefab: {fileID: 7581640435004129924, guid: a82f2b15a3e104c04b6b0faddb9674e4, type: 3}
+  - family: pond_water_surface
+    variation: V04
+    prefab: {fileID: 1067288082278377586, guid: 333c76a78fdf245c383edc0c1b251c68, type: 3}
+  - family: pond_water_surface
+    variation: V05
+    prefab: {fileID: 8744168970009947609, guid: 18243c6d26a094592a54810af86aedd3, type: 3}
+  - family: bridge_segment
+    variation: V01
+    prefab: {fileID: 3806064544992939248, guid: dfab68433f40048569117ff876ca69cd, type: 3}
+  - family: bridge_segment
+    variation: V02
+    prefab: {fileID: 631448636144890674, guid: 8e1cf7601f5bd4d05a1c3a8498cff887, type: 3}
+  - family: bridge_segment
+    variation: V03
+    prefab: {fileID: 706233576280671059, guid: cff3bfff37607482f90fc421767c288d, type: 3}
+  - family: bridge_segment
+    variation: V04
+    prefab: {fileID: 8437389955555215872, guid: 82b999f09501a4fa598eea881722c694, type: 3}
+  - family: bridge_segment
+    variation: V05
+    prefab: {fileID: 8290365400636537233, guid: 34bf0cc1b56f34047acd855967506aca, type: 3}
+  - family: shore_path_module
+    variation: V01
+    prefab: {fileID: 5465347250831228184, guid: a3a001a37943e4c3ca545a46fb3135c2, type: 3}
+  - family: shore_path_module
+    variation: V02
+    prefab: {fileID: 5318494911103441048, guid: a0337db2280ce47a1b745df09e9cabe3, type: 3}
+  - family: shore_path_module
+    variation: V03
+    prefab: {fileID: 9099206650688388427, guid: 7607ede5b1c344987a1f5698ffb61551, type: 3}
+  - family: shore_path_module
+    variation: V04
+    prefab: {fileID: 8788093886482931174, guid: 354eeb65c4f174ad9859a3f600802903, type: 3}
+  - family: stone_lantern
+    variation: V01
+    prefab: {fileID: 5239637282138599534, guid: 4e987db9b8b5445fea601cf9f69e5707, type: 3}
+  - family: stone_lantern
+    variation: V02
+    prefab: {fileID: 4975362385420651743, guid: 7e9140ccfab694bf894fed297118daab, type: 3}
+  - family: stone_lantern
+    variation: V03
+    prefab: {fileID: 2313663909993699440, guid: e433ef93eed2140c59462977bfaf4dac, type: 3}
+  - family: stone_lantern
+    variation: V04
+    prefab: {fileID: 7872815572799497737, guid: d9cf98d6e320548feac570062cb94844, type: 3}
+  - family: garden_bench_low_wall_cap
+    variation: V01
+    prefab: {fileID: 8524961140439881402, guid: 7b485cf7ca5c7401f80038b53f41f598, type: 3}
+  - family: garden_bench_low_wall_cap
+    variation: V02
+    prefab: {fileID: 2084225306313947614, guid: 86dbb4edbd5ce402a86338c5ce205704, type: 3}
+  - family: garden_bench_low_wall_cap
+    variation: V03
+    prefab: {fileID: 1370258599449236288, guid: 971a727e66855432081720759ab2172e, type: 3}
+  - family: garden_bench_low_wall_cap
+    variation: V04
+    prefab: {fileID: 4393456191906796521, guid: f767262065b1b4e5188eeffe429fbe1b, type: 3}
+  - family: small_breakable
+    variation: V01
+    prefab: {fileID: 3998597476576511150, guid: a4ccee51194944083881b2149a553e63, type: 3}
+  - family: small_breakable
+    variation: V02
+    prefab: {fileID: 7748932284999693247, guid: 3cf045c084d0c47d3a5a1968bc90dd07, type: 3}
+  - family: small_breakable
+    variation: V03
+    prefab: {fileID: 8485692148713212685, guid: 78ebdf2405c174b7d8d56768836de559, type: 3}
+  - family: small_breakable
+    variation: V04
+    prefab: {fileID: 893474368581697446, guid: de2da5c3b138248c79524f00de12f493, type: 3}
+  - family: small_breakable
+    variation: V05
+    prefab: {fileID: 1635793367128915686, guid: 5e5968df7008742ac8a7e2c6954142b7, type: 3}
+  - family: small_breakable
+    variation: V06
+    prefab: {fileID: 6197800136568486753, guid: d056ef50ed9d54c818b42e51ff0ee745, type: 3}
+  - family: west_corridor_module
+    variation: V01
+    prefab: {fileID: 1894690092931181870, guid: 75341d24ed35d48a09de1c11cffd4cbd, type: 3}
+  - family: west_corridor_module
+    variation: V02
+    prefab: {fileID: 9019358839040101106, guid: fec2a073b0b1f4af097777898d563f4c, type: 3}
+  - family: west_corridor_module
+    variation: V03
+    prefab: {fileID: 3532129926439193258, guid: d4df7c60e238a43b58ef0fb2df1cda20, type: 3}
+  - family: west_corridor_module
+    variation: V04
+    prefab: {fileID: 1265653221716526762, guid: 15291dd4e5fd74cd09560e3c4525a893, type: 3}
+  - family: west_corridor_module
+    variation: V05
+    prefab: {fileID: 6909227282555782990, guid: d82b48f728d864b829695b33cc278286, type: 3}
+  - family: west_corridor_module
+    variation: V06
+    prefab: {fileID: 7606910378542665471, guid: c8d1ad358c46b400a9ca496bf9a5d998, type: 3}
+  - family: bamboo_stalk
+    variation: V01
+    prefab: {fileID: 1131562008069032568, guid: ff93659609edb4ef2b48cdca866182c7, type: 3}
+  - family: bamboo_stalk
+    variation: V02
+    prefab: {fileID: 8947614107944258582, guid: ea45e4b93b9d74e3d904d515e5cbdef2, type: 3}
+  - family: bamboo_stalk
+    variation: V03
+    prefab: {fileID: 3978546617659511016, guid: 1ceb7973d87554528a5188a64ad5f752, type: 3}
+  - family: bamboo_stalk
+    variation: V04
+    prefab: {fileID: 31467420889082549, guid: 7e09c470872614d6b959f2ee040aec8a, type: 3}
+  - family: bamboo_stalk
+    variation: V05
+    prefab: {fileID: 6824913395550255784, guid: ce7e0a93d884b4c5b8f46e1dd0b7525d, type: 3}
+  - family: bamboo_stalk
+    variation: V06
+    prefab: {fileID: 8887821275303765348, guid: e087f373b8d5a41dd86a211434bdb80b, type: 3}
+  - family: bamboo_cluster
+    variation: V01
+    prefab: {fileID: 3228703611784422234, guid: d5f038e5f1db94340a43299cd78e3c64, type: 3}
+  - family: bamboo_cluster
+    variation: V02
+    prefab: {fileID: 4786924890990795311, guid: 7a5e47920622d45e7bf3e1be2c753f96, type: 3}
+  - family: bamboo_cluster
+    variation: V03
+    prefab: {fileID: 1006391482364463402, guid: da9f8f8bb369a40409960440db41e971, type: 3}
+  - family: bamboo_cluster
+    variation: V04
+    prefab: {fileID: 4849443208433561934, guid: 3f587e6adc90b41148291160b6a1f7c8, type: 3}
+  - family: bamboo_cluster
+    variation: V05
+    prefab: {fileID: 3387200466752832881, guid: a6fc3b3cd3d3a463a83d4a0de01ac3f2, type: 3}
+  - family: bamboo_cluster
+    variation: V06
+    prefab: {fileID: 1293523229463910627, guid: 1414fc83f83944771a69530f09d4461e, type: 3}
+  - family: bamboo_fence
+    variation: V01
+    prefab: {fileID: 3703237319933576749, guid: eff3a125c1b314abdb5a8499fdac9b2a, type: 3}
+  - family: bamboo_fence
+    variation: V02
+    prefab: {fileID: 2565821942841893706, guid: 770d6f5d6fd974a379bcd4cbf296f9f1, type: 3}
+  - family: bamboo_fence
+    variation: V03
+    prefab: {fileID: 598815372861808348, guid: 28c7091c9dc4b4a619c39595a2d10b03, type: 3}
+  - family: bamboo_fence
+    variation: V04
+    prefab: {fileID: 7378574679097834276, guid: f2107abfb8cfc4b1291166f7d30d74d9, type: 3}

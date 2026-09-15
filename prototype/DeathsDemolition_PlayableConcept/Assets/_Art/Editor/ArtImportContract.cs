@@ -38,7 +38,7 @@ namespace DD.Art.Pipeline.EditorTools
     /// </summary>
     public static class ArtImportContract
     {
-        public const string Version = "ADR-011-1 Import Contract v1 (2026-09-15)";
+        public const string Version = "ADR-011-1 Import Contract v1 (2026-09-15; WP-012: cutout BaseColor alpha, ADR-012-2)";
 
         /// <summary>Every asset below this folder is under contract.</summary>
         public const string ArtRoot = "Assets/_Art";
@@ -105,6 +105,36 @@ namespace DD.Art.Pipeline.EditorTools
         public const TextureImporterFormat StandaloneColorFormat = TextureImporterFormat.BC7;
         public const TextureImporterFormat StandaloneNormalFormat = TextureImporterFormat.BC5;
         public const TextureImporterFormat StandaloneMaskFormat = TextureImporterFormat.BC7;
+
+        /// <summary>Alpha clip threshold the cutout materials use (AP-003 sets were dilated for 0.5); mips preserve coverage at this value.</summary>
+        public const float CutoutAlphaReference = 0.5f;
+
+        /// <summary>
+        /// WP-012 · The <c>&lt;role&gt;</c> part of <c>T_&lt;role&gt;_&lt;Map&gt;.png</c> (null when the name
+        /// is not a contract name). Roles may contain underscores (<c>green_foliage_01</c>).
+        /// </summary>
+        public static string RoleSlugOf(string assetPath)
+        {
+            string name = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+            if (RoleOf(assetPath) == TextureRole.Unknown || !name.StartsWith("T_", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            int last = name.LastIndexOf('_');
+            return name.Substring(2, last - 2);
+        }
+
+        /// <summary>
+        /// WP-012 · True for a BaseColor map whose alpha is an authored cutout mask (the AP-003
+        /// foliage sets, <see cref="ArtLibraryMaterialRoles.IsCutoutTextureRole"/>). Such a map
+        /// keeps its alpha (<c>alphaSource FromInput</c>, <c>alphaIsTransparency</c>); every
+        /// other BaseColor map drops it, as in WP-011.
+        /// </summary>
+        public static bool KeepsCutoutAlpha(string assetPath)
+        {
+            return RoleOf(assetPath) == TextureRole.BaseColor && ArtLibraryMaterialRoles.IsCutoutTextureRole(RoleSlugOf(assetPath));
+        }
 
         public static TextureRole RoleOf(string assetPath)
         {
@@ -196,10 +226,19 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.filterMode, TextureFilter, v => importer.filterMode = v);
             changed |= Set(importer.wrapMode, TextureWrap, v => importer.wrapMode = v);
             changed |= Set(importer.anisoLevel, TextureAniso, v => importer.anisoLevel = v);
-            changed |= Set(importer.alphaIsTransparency, false, v => importer.alphaIsTransparency = v);
-            // The mask keeps its alpha (smoothness); colour/normal/packed maps carry none worth keeping.
-            TextureImporterAlphaSource alpha = role == TextureRole.MetallicSmoothness ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+            bool cutout = KeepsCutoutAlpha(importer.assetPath);
+            changed |= Set(importer.alphaIsTransparency, cutout, v => importer.alphaIsTransparency = v);
+            // The mask keeps its alpha (smoothness) and a cutout BaseColor keeps its opacity;
+            // every other colour/normal/packed map carries none worth keeping.
+            TextureImporterAlphaSource alpha = role == TextureRole.MetallicSmoothness || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
             changed |= Set(importer.alphaSource, alpha, v => importer.alphaSource = v);
+            // Cutout mips keep their coverage at the clip threshold (WP-012 art review: leaf
+            // cards thinned to skeletons past ~30 m because box-filtered mip alpha shrinks).
+            changed |= Set(importer.mipMapsPreserveCoverage, cutout, v => importer.mipMapsPreserveCoverage = v);
+            if (cutout)
+            {
+                changed |= Set(importer.alphaTestReferenceValue, CutoutAlphaReference, v => importer.alphaTestReferenceValue = v);
+            }
 
             TextureImporterPlatformSettings standalone = importer.GetPlatformTextureSettings(StandalonePlatform);
             if (!standalone.overridden || standalone.format != format || standalone.maxTextureSize != TextureMaxSize ||
@@ -261,7 +300,8 @@ namespace DD.Art.Pipeline.EditorTools
             TextureImporterFormat format = role == TextureRole.Normal ? StandaloneNormalFormat
                 : role == TextureRole.MetallicSmoothness || role == TextureRole.Packed ? StandaloneMaskFormat
                 : StandaloneColorFormat;
-            TextureImporterAlphaSource alpha = role == TextureRole.MetallicSmoothness ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+            bool cutout = KeepsCutoutAlpha(importer.assetPath);
+            TextureImporterAlphaSource alpha = role == TextureRole.MetallicSmoothness || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
 
             Check(v, "textureType", importer.textureType, type);
             Check(v, "sRGBTexture", importer.sRGBTexture, !linear);
@@ -273,8 +313,13 @@ namespace DD.Art.Pipeline.EditorTools
             Check(v, "filterMode", importer.filterMode, TextureFilter);
             Check(v, "wrapMode", importer.wrapMode, TextureWrap);
             Check(v, "anisoLevel", importer.anisoLevel, TextureAniso);
-            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, false);
+            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, cutout);
             Check(v, "alphaSource", importer.alphaSource, alpha);
+            Check(v, "mipMapsPreserveCoverage", importer.mipMapsPreserveCoverage, cutout);
+            if (cutout)
+            {
+                Check(v, "alphaTestReferenceValue", importer.alphaTestReferenceValue, CutoutAlphaReference);
+            }
 
             TextureImporterPlatformSettings standalone = importer.GetPlatformTextureSettings(StandalonePlatform);
             Check(v, "Standalone.overridden", standalone.overridden, true);
