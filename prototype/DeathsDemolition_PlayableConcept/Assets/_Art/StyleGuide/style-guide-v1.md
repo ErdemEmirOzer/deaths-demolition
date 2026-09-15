@@ -115,6 +115,13 @@ Skinler yalnız kumaş rengini değiştirir; silüet değişmez (AP-006: 9 skin 
 **Sis rampası `[AD hesabı, (d−52)/(210−52)]`:** 52 m %0 · 90 m **%24** (Presentation A 0.003/m ile aynı: e^(−0.27) → %24) · 100 m %30 · 120 m %43 · 138 m **%54** · 210 m %100. WP-013 rampası: 90 m %44, 138 m %100. Not: `WorldAtmosphere.cs:54` yorumundaki "41 % at 138 m" değeri 86/210'dur; doğru lineer değer 86/158 = %54 — yalnız yorum düzeltmesi, sabit doğru.
 **Derinlik katmanları:** 0–20 m tam kontrast (oyuncu) · 20–45 m tam kontrast + gölge (savaş) · 45–52 m gölgesiz, sissiz geçiş · 52–210 m sis rampası; 90 m'de landmark (saray kafesi, çatı kulesi, torii, sakura tacı) okunur `[WP-015 A/B: world-overview]`. Stand-in zemin (±80 m `[DEC-078]`) kenarı 150–200 m'de %60–95 sislenir; kalan kenar çizgisi AP-015 tam harita zemin/yol plakalarıyla kapanır, sis parametresiyle değil.
 
+### 5.1 Referans kurulu (Higgsfield, kullanıcı direktifi 2026-09-15) `[Higgsfield üretimi; referans, teslim değil]`
+| Dosya (`~/Desktop/KADRO/context/projects/deaths-demolition/wp-015/higgsfield/selected/`) | Ne gösterir | Kullanım | Çekince |
+|---|---|---|---|
+| `DD_StyleRef_DEC076_overview_2k.png` (gpt_image_2_5 flare/medium/2k 16:9, 2688×1520, sha `c67264aa…`) | ~90 m genel bakış: yağmur sonrası kapalı düz gök, uzak üçte birde hafif pus (#D0D7DE), kuzey saray sıva+ahşap+çatı, doğu sakura, güney koi göleti+köprü, batı bambu+koridor | §5 ışık/sis dilinin ve S5 bölge kimliğinin görsel hedefi; §9 #2 sis kararının resim karşılığı | Koi balığı turuncusu (h ≈ 20°) çevre rezerv kuralı dışında — koi_fish (AP-005/AP-015) üretilirken altın bandına göre denetlenir; referanstır |
+| `DD_StyleRef_DEC076_gameplay_2k.png` (aynı model/ayar, sha `7f7d491e…`) | Oynanış kadrajı (20 m, −49°): ıslak taş döşeme, sıva+ahşap kafes duvar, toprak saksı+yosun+çalı, fener, yaprak; savaş menzilinde sis yok | §2.1 palet ve §7.1 nemli taş parlaması için ton/doku hedefi | Döşeme parlaması kılavuz kuralından daha parlak okunur (stone smoothness map ort. 0.43, ayna gibi asla — §2.5); sayı kılavuzundur |
+Kaynak/kredi kaydı: `wp-015/higgsfield/WP015-HF-ledger.json` (3,0 kredi; bakiye 608,14 → 605,14; 4K upscale oturum izniyle koşmadı; gök/bulut plakası ve stand-in zemin dokusu gerekmedi — gök düz gradyan, zemin üretim hero_earth materyali).
+
 ## 6 · Okunabilirlik kuralları (REQ-104 / REQ-105)
 ### 6.1 Resmi eşikler `[DEC-077]` `[kod Runtime/ReadabilityThresholds.cs:20–29]`
 | # | Ölçüt | Eşik | Yöntem | Test |
