@@ -100,6 +100,7 @@ namespace DD.Prototype.Enemies
 
         // Cached per-tier data, refreshed by ApplyConfig.
         private ZombieAttackStyle _style = ZombieAttackStyle.Swipe;
+        private float _versionTelegraphScale = 1f, _versionRecoveryScale = 1f;   // WP-028
         private float _telegraph = DefaultTelegraph;
         private float _active = DefaultActive;
         private float _recovery = DefaultRecovery;
@@ -150,6 +151,26 @@ namespace DD.Prototype.Enemies
         /// Re-read everything from the live config. Called from ZombieEnemy.ApplyConfig, so
         /// an F1 panel edit to a telegraph time lands on enemies already on the map.
         /// </summary>
+        /// <summary>
+        /// WP-028 (ADR-028-1): the version's wind-up / recovery emphasis on top of the tier timer
+        /// (Special B: shorter telegraph, longer recovery). Called right after <see cref="ApplyConfig"/>
+        /// on every config read; the active window (DEC-029 hitbox) is never scaled. Scales of 1
+        /// leave the WP-002 timers exactly as they were.
+        /// </summary>
+        public void ApplyVersionTiming(float telegraphScale, float recoveryScale)
+        {
+            float tScale = Mathf.Max(0.1f, telegraphScale), rScale = Mathf.Max(0.1f, recoveryScale);
+            // undo a previous scale (ApplyConfig resets to 1) then apply the new one, so repeated calls do not compound
+            _telegraph = Mathf.Max(0.02f, _telegraph / _versionTelegraphScale * tScale);
+            _recovery = Mathf.Max(0.02f, _recovery / _versionRecoveryScale * rScale);
+            _versionTelegraphScale = tScale;
+            _versionRecoveryScale = rScale;
+        }
+
+        public float TelegraphSeconds => _telegraph;
+        public float ActiveSeconds => _active;
+        public float RecoverySeconds => _recovery;
+
         public void ApplyConfig(PrototypeConfig config, EnemyTier tier, int round)
         {
             if (config == null)
@@ -166,6 +187,8 @@ namespace DD.Prototype.Enemies
             _telegraph = Mathf.Max(0.02f, settings.TelegraphTime);
             _active = Mathf.Max(0.02f, settings.AttackActiveTime);
             _recovery = Mathf.Max(0.02f, settings.AttackRecoveryTime);
+            _versionTelegraphScale = 1f;
+            _versionRecoveryScale = 1f;
             _range = Mathf.Max(0.2f, settings.AttackRange);
             _cooldown = Mathf.Max(0f, settings.AttackCooldown);
 

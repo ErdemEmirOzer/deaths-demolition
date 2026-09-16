@@ -61,6 +61,8 @@ namespace DD.Prototype.Enemies
         private EnemyTier _tier = EnemyTier.Standard;
         private EnemyRewardSnapshot _reward;
         private EnemyStatSnapshot _stats;
+        private TierBehaviourProfile _versionProfile;   // WP-028: the B/B/B layer of this life (null in the pool)
+        private TierSilhouetteSlot _silhouette;          // WP-028: placeholder piece object, pooled with the body
         private int _spawnRound = 1;
         private int _lifeId;
         private bool _alive;
@@ -186,6 +188,12 @@ namespace DD.Prototype.Enemies
 
         /// <summary>WP-010: the version-look contract this body's appearance implements (readout for tests/probe; no scene search).</summary>
         public IEnemyVersionVisual VersionVisual => _appearance;
+
+        /// <summary>WP-028: the version layer applied to this life (attack timer scales, armour tendency, fit, silhouette, attack clip placeholder). Read by the animator for playback rates.</summary>
+        public TierBehaviourProfile VersionProfile => _versionProfile;
+
+        /// <summary>WP-028: the silhouette piece slot (null when the version has none or the body was never shown one).</summary>
+        public TierSilhouetteSlot Silhouette => _silhouette;
 
         public bool IsAlive => _alive;
         public bool IsDying => _dying;
@@ -345,6 +353,7 @@ namespace DD.Prototype.Enemies
             _spawnRound = Mathf.Max(1, round);
             _random = new EnemyRandom(seed);
             _appearance.LookSeed = seed;   // WP-016: the look is a pure function of the spawn seed
+            _versionProfile = TierBehaviourProfileSet.Active.For(_tier);   // WP-028: resolved once per life, before the look (fit rule) and the roll (armour tendency)
 
             // Order matters: the silhouette sets Visual.localScale, and ApplyConfig sizes
             // the CharacterController from it. WP-010: the version look goes through the
@@ -354,6 +363,9 @@ namespace DD.Prototype.Enemies
             _animator.ResetForSpawn(_tier, _appearance.BaseLeanDegrees, ref _random);
 
             RollArmor(config);
+
+            // WP-028: the version's silhouette piece under its anchor (placeholder until AP-014).
+            _silhouette = EnemyVersionApplier.ApplySilhouette(_silhouette, _appearance.Anchors, _tier, _versionProfile, _rig != null ? _rig.Visual : transform);
 
             // WP-008 (DEC-043): the reward is decided HERE, once, from the version and the
             // plates just fitted. Die() reads this record and nothing else, so what the
@@ -427,6 +439,8 @@ namespace DD.Prototype.Enemies
             _lastMeta = default;
             _stats = default;   // WP-010: a body in the pool carries no tier profile (readout truth, ADR-010-4)
             _appearance?.ResetVersion();
+            _versionProfile = null;   // WP-028
+            _silhouette?.Hide();
 
             // WP-003 lifecycle contract: the body is going back to the pool. Reported
             // before Released so the round ledger is consistent when listeners read it.
@@ -465,7 +479,7 @@ namespace DD.Prototype.Enemies
             // WP-010 (ADR-010-4): one resolution of the tier profile at the SPAWN round; the
             // cached fields below read from it, so what this body runs with is the record
             // it exposes (Stats) and nothing else.
-            _stats = EnemyStatSnapshot.Resolve(config, _tier, _spawnRound);
+            _stats = EnemyStatSnapshot.Resolve(config, _tier, _spawnRound, _versionProfile);
 
             EnemyTierSettings settings = config.Enemies.Find(_tier);
             if (settings != null)
@@ -507,6 +521,7 @@ namespace DD.Prototype.Enemies
             }
 
             _attack?.ApplyConfig(config, _tier, _spawnRound);
+            if (_versionProfile != null) _attack?.ApplyVersionTiming(_versionProfile.TelegraphScale, _versionProfile.RecoveryScale);   // WP-028
             _reaction?.ApplyConfig(config, _tier);
         }
 
@@ -531,7 +546,8 @@ namespace DD.Prototype.Enemies
 
         private void TryFit(PrototypeConfig config, ArmorConfigSection armorConfig, ArmorSlot slot)
         {
-            float chance = config.ArmorChance(_tier, slot, _spawnRound);
+            // WP-028: the DEC-021 chance through the version's armour tendency (floor / multiplier); the table value is read, never written.
+            float chance = EnemyVersionApplier.ArmourChance(config, _versionProfile, _tier, slot, _spawnRound);
             if (!_random.Chance(chance))
             {
                 return;

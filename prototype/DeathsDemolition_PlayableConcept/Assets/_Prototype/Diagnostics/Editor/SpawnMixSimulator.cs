@@ -38,7 +38,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
     /// </summary>
     public static class SpawnMixSimulator
     {
-        public const string Schema = "dd-spawn-mix-v1";
+        public const string Schema = "dd-spawn-mix-v1";   // WP-028 added tierProfilesApplied / threeRegionByTier / forcedFitByTier (additive, ADR-027-1: no schema bump)
         public const int TierCount = 4;
 
         public sealed class Options
@@ -51,6 +51,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public int spawnsPerRound = 1000;            // minimum; rounded up to whole pools
             public uint seed = 1u;
             public float releaseFraction = new SpawnWeightTuning().GuaranteedIntroPoolFraction;   // production default (director tuning)
+            public bool useTierProfiles = true;          // WP-028: apply the B/B/B version layer (armour tendency, forced fit); false = the WP-010/017 roll
+            public TierBehaviourProfileSet profiles;     // null → TierBehaviourProfileSet.Active
         }
 
         [Serializable]
@@ -78,6 +80,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public int forcedPicks;
             public SlotCounts[] armour = new SlotCounts[3];
             public int fullyArmoured;                                 // helmet + body + leg
+            public int[] threeRegionByTier = new int[TierCount];      // WP-028: all three slots equipped, per tier
+            public int[] forcedFitByTier = new int[TierCount];        // WP-028: looks carrying the version's forced fit
             public int unarmoured;
             // garments (skinned crowd; zero when no module library)
             public int lookSamples;
@@ -102,6 +106,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public float releaseFraction;
             public int spawnsPerRound;
             public bool lookSimulated;
+            public bool tierProfilesApplied;                          // WP-028
             public bool armourVariantsSimulated;
             public string[] tierNames = { "Standard", "Special", "Elite", "Ultra" };
             public int[] introductionRound = new int[TierCount];
@@ -132,6 +137,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
 
             bool lookOn = modules != null && modules.modules != null && modules.modules.Length > 0 && modules.bodies != null && modules.bodies.Length > 0;
             bool armourVariantsOn = armorLib != null && armorLib.variants != null && armorLib.variants.Length > 0;
+            TierBehaviourProfileSet profiles = o.useTierProfiles ? (o.profiles != null ? o.profiles : TierBehaviourProfileSet.Active) : null;
 
             var report = new Report
             {
@@ -141,6 +147,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 spawnsPerRound = o.spawnsPerRound,
                 lookSimulated = lookOn,
                 armourVariantsSimulated = armourVariantsOn,
+                tierProfilesApplied = profiles != null,
             };
             for (int t = 0; t < TierCount; t++)
             {
@@ -162,7 +169,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 for (int s = 0; s < 3; s++)
                 {
                     r.armour[s] = new SlotCounts { slot = slotNames[s].ToString() };
-                    for (int t = 0; t < TierCount; t++) r.armour[s].expectedChanceByTier[t] = config.ArmorChance((EnemyTier)t, slotNames[s], round);
+                    for (int t = 0; t < TierCount; t++) r.armour[s].expectedChanceByTier[t] = EnemyVersionApplier.ArmourChance(config, profiles != null ? profiles.For((EnemyTier)t) : null, (EnemyTier)t, slotNames[s], round);
                 }
 
                 for (int t = 0; t < TierCount; t++) r.tierWeight[t] = config.TierSpawnWeight((EnemyTier)t, round);
@@ -185,19 +192,21 @@ namespace DD.Prototype.Diagnostics.EditorTools
 
                         uint spawnSeed = Mix(repSeed ^ ((uint)(i + 1) * 0xC2B2AE35u));
                         var body = new EnemyRandom(spawnSeed);
-                        bool h = Roll(config, ref body, pick.Tier, ArmorSlot.Helmet, round);   // Helmet, Body, Leg - ZombieEnemy.RollArmor order
-                        bool b = Roll(config, ref body, pick.Tier, ArmorSlot.Body, round);
-                        bool l = Roll(config, ref body, pick.Tier, ArmorSlot.Leg, round);
+                        TierBehaviourProfile profile = profiles != null ? profiles.For(pick.Tier) : null;
+                        bool h = Roll(config, profile, ref body, pick.Tier, ArmorSlot.Helmet, round);   // Helmet, Body, Leg - ZombieEnemy.RollArmor order
+                        bool b = Roll(config, profile, ref body, pick.Tier, ArmorSlot.Body, round);
+                        bool l = Roll(config, profile, ref body, pick.Tier, ArmorSlot.Leg, round);
                         if (h) r.armour[0].equippedByTier[t]++;
                         if (b) r.armour[1].equippedByTier[t]++;
                         if (l) r.armour[2].equippedByTier[t]++;
-                        if (h && b && l) r.fullyArmoured++;
+                        if (h && b && l) { r.fullyArmoured++; r.threeRegionByTier[t]++; }
                         if (!h && !b && !l) r.unarmoured++;
 
                         if (!lookOn) continue;
                         ArmorLook armorLook = armourVariantsOn ? ArmorLookSelector.Select(armorLib, spawnSeed) : default;
                         ZombieLookConstraints c = armourVariantsOn ? ZombieLookConstraints.Build(armorLib, armorLook, h, b, l) : ZombieLookConstraints.None;
                         ZombieLook look = ZombieLookSelector.Select(modules, spawnSeed, c);
+                        if (profile != null && profile.ForcesFit && HasFit(modules, profile.ForcedFit)) { look.fit = profile.ForcedFit; r.forcedFitByTier[t]++; }   // ZombieAppearance.WithVersionFit
                         r.lookSamples++;
                         if (!look.IsValid) { r.invalidLooks++; continue; }
                         ZombieLook free = c.IsEmpty ? look : ZombieLookSelector.Select(modules, spawnSeed, ZombieLookConstraints.None);
@@ -280,14 +289,16 @@ namespace DD.Prototype.Diagnostics.EditorTools
         {
             var sb = new StringBuilder();
             sb.Append("SpawnMix seed=").Append(report.seed).Append(" rounds=").Append(report.rounds.Length).Append(" spawns=").Append(report.totalSpawns)
-              .Append(" look=").Append(report.lookSimulated).Append(" armourVariants=").Append(report.armourVariantsSimulated).Append(" violations=").Append(report.violations.Length).Append('\n');
+              .Append(" tierProfiles=").Append(report.tierProfilesApplied).Append(" look=").Append(report.lookSimulated).Append(" armourVariants=").Append(report.armourVariantsSimulated).Append(" violations=").Append(report.violations.Length).Append('\n');
             for (int i = 0; i < report.rounds.Length; i++)
             {
                 RoundResult r = report.rounds[i];
                 sb.Append("R").Append(r.round).Append(" pool=").Append(r.pool).Append(" x").Append(r.repetitions).Append(" n=").Append(r.spawns)
                   .Append(" S/Sp/E/U=").Append(F(r.tierShare[0])).Append('/').Append(F(r.tierShare[1])).Append('/').Append(F(r.tierShare[2])).Append('/').Append(F(r.tierShare[3]))
                   .Append(" debutFlags=").Append(r.guaranteedFlags[1]).Append('/').Append(r.guaranteedFlags[2]).Append('/').Append(r.guaranteedFlags[3])
-                  .Append(" armour H/B/L=").Append(Share(r.armour[0], r.spawns)).Append('/').Append(Share(r.armour[1], r.spawns)).Append('/').Append(Share(r.armour[2], r.spawns));
+                  .Append(" armour H/B/L=").Append(Share(r.armour[0], r.spawns)).Append('/').Append(Share(r.armour[1], r.spawns)).Append('/').Append(Share(r.armour[2], r.spawns))
+                  .Append(" eliteBody=").Append(F(r.tierCounts[2] > 0 ? (float)r.armour[1].equippedByTier[2] / r.tierCounts[2] : 0f))
+                  .Append(" ultra3=").Append(F(r.tierCounts[3] > 0 ? (float)r.threeRegionByTier[3] / r.tierCounts[3] : 0f)).Append(" ultraFitC=").Append(r.forcedFitByTier[3]).Append('/').Append(r.tierCounts[3]);
                 if (r.lookSamples > 0)
                 {
                     sb.Append(" cw2=").Append(F(r.colourwayPicks > 0 ? (float)r.fadedPicks / r.colourwayPicks : 0f)).Append("(forced ").Append(r.fadedForcedByArmour).Append(')')
@@ -310,9 +321,15 @@ namespace DD.Prototype.Diagnostics.EditorTools
             Debug.Log("[SpawnMix] " + Path.GetFullPath(path) + "\n" + Summarize(report));
         }
 
-        private static bool Roll(PrototypeConfig config, ref EnemyRandom body, EnemyTier tier, ArmorSlot slot, int round)
+        private static bool HasFit(ZombieModuleLibrary modules, string fit)
         {
-            float chance = config.ArmorChance(tier, slot, round);
+            for (int i = 0; i < modules.bodies.Length; i++) if (modules.bodies[i] != null && modules.bodies[i].fit == fit) return true;
+            return false;
+        }
+
+        private static bool Roll(PrototypeConfig config, TierBehaviourProfile profile, ref EnemyRandom body, EnemyTier tier, ArmorSlot slot, int round)
+        {
+            float chance = EnemyVersionApplier.ArmourChance(config, profile, tier, slot, round);   // WP-028: same odds the spawn roll uses
             bool hit = body.Chance(chance);   // one draw per slot, the stream advances (ZombieEnemy.TryFit)
             return hit && config.Enemies.Armor != null && config.Enemies.Armor.DurabilityFor(slot) > 0f;
         }

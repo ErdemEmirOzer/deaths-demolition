@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Enemies;
 using UnityEngine;
 
 namespace DD.Prototype.Diagnostics.EditorTools
@@ -29,7 +30,11 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public EnemyTier tier;
             public string clip;
             public int fps, frames, windowStart, windowEnd;
-            public float timerTelegraph, timerActive, timerRecovery;    // seconds (config)
+            public float timerTelegraph, timerActive, timerRecovery;    // seconds (config, through the version's timer scales - WP-028)
+            public bool placeholder;                                       // WP-028: the clip is another tier's, played phase-wise at the rates below
+            public bool rateScaled;                                        // WP-028: the clip is played phase-wise at the rates below (placeholder, or the version scales a timer phase)
+            public float nativeTelegraph, nativeActive, nativeRecovery;    // the clip at playback rate 1
+            public float phaseRateTelegraph = 1f, phaseRateActive = 1f, phaseRateRecovery = 1f;   // playback rate per phase = clip phase / timer phase (1 = native)
             public float clipTelegraph, clipActive, clipRecovery, clipTotal;   // seconds (events; active = end - start frames, exclusive end)
             public float DevTelegraph => Dev(timerTelegraph, clipTelegraph);
             public float DevActive => Dev(timerActive, clipActive);
@@ -42,7 +47,16 @@ namespace DD.Prototype.Diagnostics.EditorTools
         }
 
         /// <summary>Build the table for the four tiers from the config and the manifest text; tiers with no attack clip in the manifest get a row with <c>HasClip == false</c>.</summary>
-        public static List<Row> Compare(PrototypeConfig config, string manifestJson)
+        public static List<Row> Compare(PrototypeConfig config, string manifestJson) => Compare(config, manifestJson, null);
+
+        /// <summary>
+        /// WP-028: with the version layer. The timer columns carry the profile's telegraph / recovery
+        /// scales (what the body runs); a tier without its own clip but with a profile placeholder
+        /// (Ultra B: the sweep clip) gets that clip played phase-wise - rate = clip phase / timer
+        /// phase - so the animated window lands on the timer window by construction (deviation 0);
+        /// the rates are what the animator (S-06) applies.
+        /// </summary>
+        public static List<Row> Compare(PrototypeConfig config, string manifestJson, TierBehaviourProfileSet profiles)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
             var rows = new List<Row>(4);
@@ -51,23 +65,44 @@ namespace DD.Prototype.Diagnostics.EditorTools
             {
                 var tier = (EnemyTier)t;
                 EnemyTierSettings s = config.Enemies.Find(tier);
+                TierBehaviourProfile p = profiles != null ? profiles.For(tier) : null;
                 var row = new Row { tier = tier };
                 if (s != null)
                 {
-                    row.timerTelegraph = s.TelegraphTime;
+                    row.timerTelegraph = s.TelegraphTime * (p != null ? Mathf.Max(0.1f, p.TelegraphScale) : 1f);
                     row.timerActive = s.AttackActiveTime;
-                    row.timerRecovery = s.AttackRecoveryTime;
+                    row.timerRecovery = s.AttackRecoveryTime * (p != null ? Mathf.Max(0.1f, p.RecoveryScale) : 1f);
                 }
 
                 Clip c = clips.Find(x => x.tier == tier);
+                if (c == null && p != null && p.HasAttackPlaceholder)
+                {
+                    c = clips.Find(x => x.name == p.AttackClipPlaceholder);
+                    row.placeholder = c != null;
+                }
+
                 if (c != null)
                 {
                     row.clip = c.name; row.fps = c.fps; row.frames = c.frames; row.windowStart = c.start; row.windowEnd = c.end;
                     float f = c.fps > 0 ? c.fps : 30f;
-                    row.clipTelegraph = c.start / f;
-                    row.clipActive = (c.end - c.start) / f;
-                    row.clipRecovery = (c.frames - c.end) / f;
-                    row.clipTotal = c.frames / f;
+                    float nativeT = c.start / f, nativeA = (c.end - c.start) / f, nativeR = (c.frames - c.end) / f;
+                    row.nativeTelegraph = nativeT; row.nativeActive = nativeA; row.nativeRecovery = nativeR;
+                    row.rateScaled = row.placeholder || (p != null && (!Mathf.Approximately(p.TelegraphScale, 1f) || !Mathf.Approximately(p.RecoveryScale, 1f)));
+                    if (row.rateScaled)
+                    {
+                        row.phaseRateTelegraph = row.timerTelegraph > 0f ? nativeT / row.timerTelegraph : 1f;
+                        row.phaseRateActive = row.timerActive > 0f ? nativeA / row.timerActive : 1f;
+                        row.phaseRateRecovery = row.timerRecovery > 0f ? nativeR / row.timerRecovery : 1f;
+                        row.clipTelegraph = nativeT / row.phaseRateTelegraph;
+                        row.clipActive = nativeA / row.phaseRateActive;
+                        row.clipRecovery = nativeR / row.phaseRateRecovery;
+                    }
+                    else
+                    {
+                        row.clipTelegraph = nativeT; row.clipActive = nativeA; row.clipRecovery = nativeR;
+                    }
+
+                    row.clipTotal = row.clipTelegraph + row.clipActive + row.clipRecovery;
                 }
 
                 rows.Add(row);
@@ -89,7 +124,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
                     continue;
                 }
 
-                sb.AppendLine("| " + r.tier + " | " + r.clip + " | " + r.fps + " | " + r.frames + " | " + r.windowStart + "–" + r.windowEnd + " | " +
+                sb.AppendLine("| " + r.tier + " | " + r.clip + (r.rateScaled ? (r.placeholder ? " (placeholder" : " (rate-scaled") + ", rates T/A/R " + F(r.phaseRateTelegraph) + "/" + F(r.phaseRateActive) + "/" + F(r.phaseRateRecovery) + "; native " + F(r.nativeTelegraph) + "/" + F(r.nativeActive) + "/" + F(r.nativeRecovery) + ")" : "") + " | " + r.fps + " | " + r.frames + " | " + r.windowStart + "–" + r.windowEnd + " | " +
                               F(r.timerTelegraph) + "/" + F(r.timerActive) + "/" + F(r.timerRecovery) + " | " +
                               F(r.clipTelegraph) + "/" + F(r.clipActive) + "/" + F(r.clipRecovery) + " | " +
                               P(r.DevTelegraph) + "/" + P(r.DevActive) + "/" + P(r.DevRecovery) + " | " +

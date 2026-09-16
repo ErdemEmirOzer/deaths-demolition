@@ -74,7 +74,14 @@ namespace DD.Prototype.Enemies
         public bool IsValid { get; }
 
         /// <summary>Resolve the profile of <paramref name="tier"/> priced at <paramref name="round"/>. Deterministic, allocation-free.</summary>
-        public static EnemyStatSnapshot Resolve(PrototypeConfig config, EnemyTier tier, int round)
+        public static EnemyStatSnapshot Resolve(PrototypeConfig config, EnemyTier tier, int round) => Resolve(config, tier, round, null);
+
+        /// <summary>
+        /// WP-028: the same record with the version layer folded in (<see cref="TierBehaviourProfile"/>:
+        /// telegraph / recovery / speed scales). A null or identity profile gives the WP-010 record
+        /// bit for bit; the DEC-021 values themselves are never changed.
+        /// </summary>
+        public static EnemyStatSnapshot Resolve(PrototypeConfig config, EnemyTier tier, int round, TierBehaviourProfile profile)
         {
             if (config == null)
             {
@@ -85,15 +92,18 @@ namespace DD.Prototype.Enemies
             EnemyTierSettings t = config.Enemies.Find(tier);
             float healthMul = config.EnemyHealthMultiplier(r);
             float damageMul = config.EnemyDamageMultiplier(r);
+            float tScale = profile != null ? Mathf.Max(0.1f, profile.TelegraphScale) : 1f;
+            float rScale = profile != null ? Mathf.Max(0.1f, profile.RecoveryScale) : 1f;
+            float sScale = profile != null ? Mathf.Max(0.1f, profile.SpeedScale) : 1f;
 
             return new EnemyStatSnapshot(
                 tier, r,
                 config.EnemyHealth(tier, r),
                 config.EnemyAttackDamage(tier, r),
-                t != null ? Mathf.Max(0.1f, t.MoveSpeed) : 0f,
-                t != null ? t.TelegraphTime : 0f,
+                t != null ? Mathf.Max(0.1f, t.MoveSpeed * sScale) : 0f,
+                t != null ? t.TelegraphTime * tScale : 0f,
                 t != null ? t.AttackActiveTime : 0f,
-                t != null ? t.AttackRecoveryTime : 0f,
+                t != null ? t.AttackRecoveryTime * rScale : 0f,
                 t != null ? t.AttackRange : 0f,
                 t != null ? t.AttackCooldown : 0f,
                 t != null ? Mathf.Max(0.1f, t.BodyRadius) : 0f,

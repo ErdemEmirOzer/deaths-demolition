@@ -186,7 +186,7 @@ namespace DD.Prototype.Enemies
                 // re-run under the equipped pieces' constraints as RollArmor fits them.
                 for (int i = 0; i < _equipped.Length; i++) _equipped[i] = false;
                 _armorLook = HasArmor ? ArmorLookSelector.Select(_armorLibrary, _lookSeed) : default;
-                _look = ZombieLookSelector.Select(_library, _lookSeed, CurrentConstraints);
+                _look = WithVersionFit(ZombieLookSelector.Select(_library, _lookSeed, CurrentConstraints), tier);
                 _skinned.Assemble(_library, _look);
                 _skinned.ApplyMaterial(_library, (int)tier);
                 ApplySilhouette(tier, ref random);
@@ -431,11 +431,33 @@ namespace DD.Prototype.Enemies
         private void RefreshLookForArmor()
         {
             if (!IsSkinned) return;
-            ZombieLook next = ZombieLookSelector.Select(_library, _lookSeed, CurrentConstraints);
+            ZombieLook next = WithVersionFit(ZombieLookSelector.Select(_library, _lookSeed, CurrentConstraints), _appliedVersion);
             if (next.Key == _look.Key) return;
             _look = next;
             _skinned.Assemble(_library, _look);
             _armor?.SetFit(_look.fit);
+        }
+
+        /// <summary>
+        /// WP-028 (ADR-028-1): the version's forced body fit (Ultra B = fit C) over the seed's draw;
+        /// everything else in the look (modules, colourways, head) stays the seed's. A profile
+        /// without a forced fit returns the draw unchanged (WP-016 parity). The fit must exist in
+        /// the library, else the draw's fit stays.
+        /// </summary>
+        private ZombieLook WithVersionFit(ZombieLook look, EnemyTier tier)
+        {
+            TierBehaviourProfile profile = TierBehaviourProfileSet.Active.For(tier);
+            if (profile == null || !profile.ForcesFit || _library == null || _library.bodies == null) return look;
+            for (int i = 0; i < _library.bodies.Length; i++)
+            {
+                if (_library.bodies[i] != null && _library.bodies[i].fit == profile.ForcedFit)
+                {
+                    look.fit = profile.ForcedFit;
+                    return look;
+                }
+            }
+
+            return look;
         }
 
         /// <summary>Show a full plate group. Called when a piece is equipped at spawn.</summary>
