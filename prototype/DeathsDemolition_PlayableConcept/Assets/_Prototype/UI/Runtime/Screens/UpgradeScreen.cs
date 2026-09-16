@@ -319,7 +319,7 @@ namespace DD.Prototype.UI
 
         private void BuildGoldStrip(float top)
         {
-            RectTransform card = UiFactory.Card("GoldStrip", Content, UiColor.BorderHairline, UiColor.SurfacePanel);
+            RectTransform card = UiFactory.FramedCard("GoldStrip", Content, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             card.anchorMin = new Vector2(0f, 1f);
             card.anchorMax = new Vector2(1f, 1f);
             card.pivot = new Vector2(0.5f, 1f);
@@ -688,7 +688,7 @@ namespace DD.Prototype.UI
 
         private void BuildEmptyPanel()
         {
-            RectTransform card = UiFactory.Card("EmptyCard", Content, UiColor.BorderHairline, UiColor.SurfacePanel);
+            RectTransform card = UiFactory.FramedCard("EmptyCard", Content, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             card.anchorMin = new Vector2(0.5f, 0.5f);
             card.anchorMax = new Vector2(0.5f, 0.5f);
             card.pivot = new Vector2(0.5f, 0.5f);
@@ -1022,6 +1022,50 @@ namespace DD.Prototype.UI
             RefreshGoldStrip(shop, affordable, count);
             RefreshReroll(shop);
             RefreshFooter(shop.Gold, shop.PurchasesThisRound);
+            LinkNavigation(count);
+        }
+
+        /// <summary>
+        /// Explicit gamepad map (WP-022, closes WP-008 note N3): cards form a horizontal
+        /// chain; Down from any card goes to REROLL when it is pressable, else CONTINUE;
+        /// Up from REROLL/CONTINUE returns to the first affordable card; REROLL and
+        /// CONTINUE are Left/Right neighbours. Disabled controls are never targets.
+        /// </summary>
+        private void LinkNavigation(int count)
+        {
+            var cards = new System.Collections.Generic.List<Selectable>(count);
+            for (int i = 0; i < _slots.Length && i < count; i++)
+            {
+                if (_slots[i].Button.gameObject.activeSelf && _slots[i].Button.IsInteractable())
+                {
+                    cards.Add(_slots[i].Button);
+                }
+            }
+
+            Selectable below = _rerollButton != null && _rerollButton.IsInteractable() ? _rerollButton : _continueButton;
+            Selectable above = cards.Count > 0 ? cards[0] : below;
+
+            if (cards.Count > 0)
+            {
+                UiInput.ChainHorizontal(cards.ToArray());
+                for (int i = 0; i < cards.Count; i++)
+                {
+                    UiInput.LinkVertical(cards[i], below, below);
+                }
+            }
+
+            if (_rerollButton != null)
+            {
+                UiInput.LinkVertical(_rerollButton, above, above);
+                UiInput.LinkHorizontal(_rerollButton, _continueButton, _continueButton);
+            }
+
+            if (_continueButton != null)
+            {
+                UiInput.LinkVertical(_continueButton, above, above);
+                Selectable side = _rerollButton != null && _rerollButton.IsInteractable() ? _rerollButton : _continueButton;
+                UiInput.LinkHorizontal(_continueButton, side, side);
+            }
         }
 
         /// <summary>The reroll block: price and state in the label, pressable only when the shop says so.</summary>

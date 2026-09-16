@@ -212,5 +212,21 @@ namespace DD.Prototype.Tests.EditMode
             _model.Clear();
             Assert.AreEqual(once, _changed, "boşken Clear olay üretmez");
         }
+
+        /// <summary>WP-022: the Settings pane is a MainMenu layer like the other three, and only there.</summary>
+        [Test]
+        public void AyarlarKatmani_YalnizAnaMenude()
+        {
+            Assert.IsTrue(UiNavigationModel.IsLayer(UiContext.Settings));
+            Assert.AreEqual(UiContext.MainMenu, UiNavigationModel.BaseOf(UiContext.Settings));
+
+            _model.EnterBase(UiContext.MainMenu);
+            Assert.AreEqual(UiNavigationResult.Changed, _model.EnterLayer(UiContext.Settings));
+            Assert.AreEqual(UiContext.Settings, _model.Layer);
+            Assert.AreEqual(UiNavigationResult.Changed, _model.EnterLayer(UiContext.Profile), "kardeş pane Settings'in yerine geçer");
+
+            _model.EnterBase(UiContext.GameplayHud);
+            Assert.AreEqual(UiNavigationResult.Refused, _model.EnterLayer(UiContext.Settings), "HUD tabanında Settings katmanı yok");
+        }
     }
 }

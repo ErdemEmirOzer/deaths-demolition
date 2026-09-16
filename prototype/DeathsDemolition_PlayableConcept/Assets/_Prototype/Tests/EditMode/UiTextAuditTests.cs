@@ -143,7 +143,11 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void UpgradeIkonlari_HerDalinMonogramiVar_VarsayilanSpriteYok()
         {
-            Assert.AreEqual(0, UpgradeIcons.LoadFromResources(), "M1: Resources/" + UpgradeIcons.ResourcesFolder + " altında ikon yok (final ikon M3)");
+            // WP-022 (M3): the AP-012 atlas supplies every branch icon; the monogram stays the
+            // fallback contract for a project without the art import.
+            int yuklenen = UpgradeIcons.LoadFromResources();
+            int dalSayisi = System.Enum.GetValues(typeof(UpgradeBranch)).Length;
+            Assert.AreEqual(dalSayisi, yuklenen, "M3: her upgrade dalının AP-012 ikonu yüklenmeli (Upgrade.<Branch>)");
 
             var goruldu = new HashSet<string>();
             foreach (UpgradeBranch dal in System.Enum.GetValues(typeof(UpgradeBranch)))
@@ -152,7 +156,7 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.IsTrue(mono.Length >= 1 && mono.Length <= 2, dal + " monogramı 1–2 harf olmalı: " + mono);
                 Assert.AreEqual(mono.ToUpperInvariant(), mono, "büyük harf");
                 Assert.IsTrue(goruldu.Add(mono), dal + " monogramı benzersiz değil: " + mono);
-                Assert.IsFalse(UpgradeIcons.Has(dal), "final ikon üretilmedi: " + dal + " için sprite kayıtlı olmamalı");
+                Assert.IsTrue(UpgradeIcons.Has(dal), "final ikon eksik: " + dal);
             }
 
             // Kayıt sözleşmesi: sprite verildiğinde bulunur, null ile silinir.
@@ -171,7 +175,11 @@ namespace DD.Prototype.Tests.EditMode
                 Object.DestroyImmediate(doku);
             }
 
-            Assert.IsFalse(UpgradeIcons.Has(UpgradeBranch.Piercing));
+            Assert.IsFalse(UpgradeIcons.Has(UpgradeBranch.Piercing), "null ile kayıt silinir");
+
+            // Put the atlas sprite back: the registry is static and later tests read it.
+            UpgradeIcons.Register(UpgradeBranch.Piercing, UiArt.UpgradeIcon(UpgradeBranch.Piercing));
+            Assert.IsTrue(UpgradeIcons.Has(UpgradeBranch.Piercing));
         }
     }
 }

@@ -1,0 +1,560 @@
+{
+ "schema": "AP012-ui-manifest-v1",
+ "package": "AP-012",
+ "pixelsPerUnit": 100,
+ "atlases": [
+  {
+   "file": "AP012_icons_1024x768.png",
+   "width": 1024,
+   "height": 768,
+   "tint": "runtime (white glyphs)",
+   "sprites": [
+    {
+     "name": "Upgrade.Piercing",
+     "x": 4,
+     "y": 636,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.Ricochet",
+     "x": 136,
+     "y": 636,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.Explosion",
+     "x": 268,
+     "y": 636,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.Chain",
+     "x": 400,
+     "y": 636,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.FireRate",
+     "x": 532,
+     "y": 636,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.ReloadSpeed",
+     "x": 664,
+     "y": 636,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.MovementSpeed",
+     "x": 796,
+     "y": 636,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.MaximumHealth",
+     "x": 4,
+     "y": 504,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.RegenerationDelay",
+     "x": 136,
+     "y": 504,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.RegenerationRate",
+     "x": 268,
+     "y": 504,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.AssaultRifle",
+     "x": 400,
+     "y": 504,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.AutoSmg",
+     "x": 532,
+     "y": 504,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.CombatShotgun",
+     "x": 664,
+     "y": 504,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.KaguraBell",
+     "x": 796,
+     "y": 504,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.OfudaLoom",
+     "x": 4,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.TideJewel",
+     "x": 136,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Gold",
+     "x": 268,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Special",
+     "x": 400,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Round",
+     "x": 532,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Health",
+     "x": 664,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Enemies",
+     "x": 796,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Timer",
+     "x": 4,
+     "y": 240,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Settings",
+     "x": 136,
+     "y": 240,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Audio",
+     "x": 268,
+     "y": 240,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Graphics",
+     "x": 400,
+     "y": 240,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Gamepad",
+     "x": 532,
+     "y": 240,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Keyboard",
+     "x": 664,
+     "y": 240,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Profile",
+     "x": 796,
+     "y": 240,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Statistics",
+     "x": 4,
+     "y": 108,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Achievements",
+     "x": 136,
+     "y": 108,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Back",
+     "x": 268,
+     "y": 108,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Confirm",
+     "x": 400,
+     "y": 108,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AP012_frames_1024.png",
+   "width": 1024,
+   "height": 1024,
+   "tint": "runtime (cream ink)",
+   "sprites": [
+    {
+     "name": "Frame.HudPanel",
+     "x": 4,
+     "y": 846,
+     "w": 256,
+     "h": 174,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      45,
+      45,
+      45,
+      45
+     ]
+    },
+    {
+     "name": "Frame.Button",
+     "x": 264,
+     "y": 860,
+     "w": 256,
+     "h": 160,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      26,
+      26,
+      26,
+      26
+     ]
+    },
+    {
+     "name": "Frame.Card",
+     "x": 524,
+     "y": 764,
+     "w": 245,
+     "h": 256,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      29,
+      29,
+      29,
+      29
+     ]
+    },
+    {
+     "name": "Frame.Chip",
+     "x": 4,
+     "y": 652,
+     "w": 256,
+     "h": 108,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      49,
+      49,
+      49,
+      49
+     ]
+    },
+    {
+     "name": "Medal.Common",
+     "x": 264,
+     "y": 504,
+     "w": 256,
+     "h": 256,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Medal.Rare",
+     "x": 524,
+     "y": 504,
+     "w": 256,
+     "h": 256,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Medal.Epic",
+     "x": 4,
+     "y": 244,
+     "w": 256,
+     "h": 256,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ornament.Divider",
+     "x": 264,
+     "y": 244,
+     "w": 256,
+     "h": 256,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Reticle.Ticks",
+     "x": 524,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Reticle.Ring",
+     "x": 656,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Cursor.Arrow",
+     "x": 788,
+     "y": 436,
+     "w": 64,
+     "h": 64,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Focus.Brackets",
+     "x": 856,
+     "y": 372,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    }
+   ]
+  }
+ ],
+ "plates": [
+  {
+   "file": "AP012_menu_plate_1024x576.png",
+   "width": 1024,
+   "height": 576,
+   "use": "MainMenu backdrop",
+   "note": "left third darkened x0.55 for text; DEC-076 overcast palette"
+  }
+ ],
+ "skins": [
+  {
+   "file": "skins/AP012_skin1_512.png",
+   "skin": 1,
+   "source": "AP-006/06-renders/turnaround/AP006-skin1-turnaround-v002.png (front view)",
+   "finish": "Adobe image_remove_background (select-subject cutout) on the 480x1080 front crop"
+  },
+  {
+   "file": "skins/AP012_skin2_512.png",
+   "skin": 2,
+   "source": "AP-006/06-renders/turnaround/AP006-skin2b-turnaround-v002.png (front view)",
+   "finish": "Adobe image_remove_background (select-subject cutout) on the 480x1080 front crop"
+  },
+  {
+   "file": "skins/AP012_skin3_512.png",
+   "skin": 3,
+   "source": "AP-006/06-renders/turnaround/AP006-skin3-turnaround-v002.png (front view)",
+   "finish": "Adobe image_remove_background (select-subject cutout) on the 480x1080 front crop"
+  }
+ ]
+}

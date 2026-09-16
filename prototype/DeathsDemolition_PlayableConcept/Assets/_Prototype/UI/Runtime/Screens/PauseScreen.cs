@@ -262,7 +262,7 @@ namespace DD.Prototype.UI
             UiFactory.Fill((RectTransform)scrim.transform);
             scrim.raycastTarget = true;
 
-            RectTransform card = UiFactory.Card("Panel", root, UiColor.BorderStrong, UiColor.SurfacePanel);
+            RectTransform card = UiFactory.FramedCard("Panel", root, UiColor.BorderStrong, UiColor.SurfacePanel, UiFrame.Card);
             card.anchorMin = new Vector2(0.5f, 0.5f);
             card.anchorMax = new Vector2(0.5f, 0.5f);
             card.pivot = new Vector2(0.5f, 0.5f);
@@ -357,7 +357,7 @@ namespace DD.Prototype.UI
             SetAlpha(scrim, UiTokens.OpacityScrimUnderDialog);
             scrim.raycastTarget = true;
 
-            RectTransform card = UiFactory.Card("Dialog", root, UiColor.AccentPrimary, UiColor.SurfacePanel);
+            RectTransform card = UiFactory.FramedCard("Dialog", root, UiColor.AccentPrimary, UiColor.SurfacePanel, UiFrame.Card);
             card.anchorMin = new Vector2(0.5f, 0.5f);
             card.anchorMax = new Vector2(0.5f, 0.5f);
             card.pivot = new Vector2(0.5f, 0.5f);

@@ -104,7 +104,7 @@ namespace DD.Prototype.UI
 
         private void BuildPerformanceColumn(RectTransform column)
         {
-            RectTransform card = UiFactory.Card("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel);
+            RectTransform card = UiFactory.FramedCard("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             UiFactory.Fill(card);
             RectTransform host = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.XXL));
 
@@ -151,7 +151,7 @@ namespace DD.Prototype.UI
 
         private void BuildExperienceColumn(RectTransform column)
         {
-            RectTransform card = UiFactory.Card("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel);
+            RectTransform card = UiFactory.FramedCard("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             UiFactory.Fill(card);
             RectTransform host = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.XXL));
 
@@ -231,7 +231,7 @@ namespace DD.Prototype.UI
 
         private void BuildRewardsColumn(RectTransform column)
         {
-            RectTransform card = UiFactory.Card("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel);
+            RectTransform card = UiFactory.FramedCard("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             UiFactory.Fill(card);
             // The rewards column carries the two lists that can grow, so it gets the
             // tighter padding: it is the column with the least vertical slack.
@@ -291,26 +291,32 @@ namespace DD.Prototype.UI
             RectTransform card = UiFactory.Card("Reward", host, accent, UiColor.SurfaceRaised);
             RectTransform content = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.M));
 
-            Image mark = UiFactory.NewImage("Mark", content, accent, UiSprites.Petal);
+            // WP-022: an AP-012 medallion carries the entry (unlocks: rare wreath,
+            // achievements: epic sakura ring); the petal mark stays the no-art fallback.
+            float markSize = RewardEntryHeight - (int)UiSpace.M * 2;
+            Image mark = UiFactory.NewImage(
+                "Mark", content, accent, UiArt.Medal(accent == UiColor.StateSuccess ? UiMedal.Epic : UiMedal.Rare));
+            mark.preserveAspect = true;
             var markRect = (RectTransform)mark.transform;
             markRect.anchorMin = new Vector2(0f, 0.5f);
             markRect.anchorMax = new Vector2(0f, 0.5f);
             markRect.pivot = new Vector2(0f, 0.5f);
-            markRect.sizeDelta = new Vector2(24f, 24f);
+            markRect.sizeDelta = new Vector2(markSize, markSize);
             markRect.anchoredPosition = Vector2.zero;
 
+            float textLeft = markSize + (int)UiSpace.M;
             Text title = UiFactory.Label(
                 "Title", content, UiFactory.Clip(entry.Title, 32), UiType.BodyStrong, accent,
                 TextAnchor.LowerLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
-            titleRect.offsetMin = new Vector2(24f + (int)UiSpace.M, RewardTitleBand);
+            titleRect.offsetMin = new Vector2(textLeft, RewardTitleBand);
             titleRect.offsetMax = new Vector2(-64f, 0f);
 
             Text detail = UiFactory.Label(
                 "Detail", content, UiFactory.Clip(entry.Detail, 60), UiType.Caption, UiColor.TextSecondary,
                 TextAnchor.UpperLeft);
             RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-            detailRect.offsetMin = new Vector2(24f + (int)UiSpace.M, 0f);
+            detailRect.offsetMin = new Vector2(textLeft, 0f);
             detailRect.offsetMax = new Vector2(-64f, -RewardTitleBand);
 
             Text badge = UiFactory.Chip("New", content, "NEW", accent, UiColor.SurfaceInset, 56f, 24f);
@@ -355,6 +361,21 @@ namespace DD.Prototype.UI
             rect.anchoredPosition = Vector2.zero;
 
             SetInitialFocus(continueButton);
+            _continueButton = continueButton;
+        }
+
+        private UiButton _continueButton;
+
+        /// <summary>Cancel = the one action on this screen (MAIN MENU); focus is reclaimed for the pad.</summary>
+        private void Update()
+        {
+            if (UiInput.CancelPressed())
+            {
+                PrototypeUiFlow.GoToMainMenu();
+                return;
+            }
+
+            UiInput.ReclaimFocus(_continueButton);
         }
 
         /// <summary>
@@ -365,7 +386,7 @@ namespace DD.Prototype.UI
         {
             BuildHeader(_model.Eyebrow, ResultsViewModel.Title);
 
-            RectTransform card = UiFactory.Card("EmptyCard", Content, UiColor.BorderHairline, UiColor.SurfacePanel);
+            RectTransform card = UiFactory.FramedCard("EmptyCard", Content, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             card.anchorMin = new Vector2(0.5f, 0.5f);
             card.anchorMax = new Vector2(0.5f, 0.5f);
             card.pivot = new Vector2(0.5f, 0.5f);

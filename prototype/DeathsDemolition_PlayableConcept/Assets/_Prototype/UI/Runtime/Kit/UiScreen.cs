@@ -170,14 +170,15 @@ namespace DD.Prototype.UI
 
             BuildPetals(backdrop);
 
-            Image rule = UiFactory.NewImage("FootRule", backdrop, UiColor.AccentPrimary);
+            // Cream hairline (WP-022): the foot rule is decoration, not a third vermilion.
+            Image rule = UiFactory.NewImage("FootRule", backdrop, UiColor.TextSecondary);
             RectTransform ruleRect = (RectTransform)rule.transform;
             ruleRect.anchorMin = new Vector2(0f, 0f);
             ruleRect.anchorMax = new Vector2(1f, 0f);
             ruleRect.pivot = new Vector2(0.5f, 0f);
             ruleRect.sizeDelta = new Vector2(0f, UiTokens.StrokeControl);
             ruleRect.anchoredPosition = Vector2.zero;
-            SetAlpha(rule, 0.75f);
+            SetAlpha(rule, 0.35f);
         }
 
         /// <summary>PROTOTYPE-ONLY: six petals is the entire atmosphere budget of a menu.</summary>
@@ -231,8 +232,10 @@ namespace DD.Prototype.UI
 
             if (!string.IsNullOrEmpty(eyebrow))
             {
+                // TextSecondary, not TextAccent (WP-022, AD MUST-2): vermilion is spent on
+                // the primary action and the heading tick only (REQ-105 budget).
                 Text eyebrowText = UiFactory.Label(
-                    "Eyebrow", Content, eyebrow, UiType.Label, UiColor.TextAccent, TextAnchor.LowerLeft);
+                    "Eyebrow", Content, eyebrow, UiType.Label, UiColor.TextSecondary, TextAnchor.LowerLeft);
                 stack.Add((RectTransform)eyebrowText.transform, UiFactory.LineHeight(UiType.Label));
                 stack.Gap(UiSpace.XS);
             }

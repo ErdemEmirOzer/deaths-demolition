@@ -151,7 +151,9 @@ namespace DD.Prototype.UI
 
             var scaler = go.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = UiTokens.ReferenceResolution;
+            // WP-022: the player's UI scale (0.9-1.2) shrinks or grows the reference
+            // frame; every layout below keeps its reference-pixel numbers.
+            scaler.referenceResolution = UiTokens.ReferenceResolution / UiSettings.UiScale;
 
             // Match on height. These layouts are height-critical - the results screen is
             // required to fit without scrolling - and width-tolerant, because a wider
@@ -290,6 +292,20 @@ namespace DD.Prototype.UI
             Image inner = NewImage("Fill", outer.transform, fill, UiSprites.Card);
             Fill((RectTransform)inner.transform, UiTokens.StrokeHairline);
             return (RectTransform)outer.transform;
+        }
+
+        /// <summary>
+        /// A card wearing an AP-012 ink frame (WP-022). The token fill stays underneath -
+        /// contrast is measured against it, not against the line work - and the frame is
+        /// added last so nothing built into the card can cover its corners.
+        /// </summary>
+        public static RectTransform FramedCard(
+            string name, Transform parent, UiColor border, UiColor fill, UiFrame frame,
+            UiColor frameColor = UiColor.TextSecondary)
+        {
+            RectTransform card = Card(name, parent, border, fill);
+            UiArt.FrameOverlay(card, frame, frameColor);
+            return card;
         }
 
         /// <summary>Padded content area of a <see cref="Card"/>.</summary>
@@ -519,6 +535,20 @@ namespace DD.Prototype.UI
 
             Image fill = NewImage("Fill", rt, UiColor.SurfaceBase, shape);
             Fill((RectTransform)fill.transform, UiTokens.StrokeControl);
+
+            // WP-022: with the AP-012 atlas present the border becomes the ink frame
+            // (line only, drawn over the fill); the colour logic in UiButton is untouched,
+            // it still tints the same "Border" graphic per state.
+            UiFrame frameKind = variant == UiButtonVariant.Card ? UiFrame.Card : UiFrame.Button;
+            if (UiArt.HasFrame(frameKind))
+            {
+                border.sprite = UiArt.Frame(frameKind);
+                border.type = Image.Type.Sliced;
+                border.fillCenter = false;
+                border.pixelsPerUnitMultiplier = UiArt.FramePixelsPerUnitMultiplier;
+                Fill((RectTransform)fill.transform, UiTokens.StrokeControl);
+                border.transform.SetSiblingIndex(fill.transform.GetSiblingIndex() + 1);
+            }
 
             TextAnchor anchor = variant == UiButtonVariant.Nav || variant == UiButtonVariant.Card
                 ? TextAnchor.MiddleLeft

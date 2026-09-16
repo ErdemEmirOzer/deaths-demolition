@@ -35,6 +35,9 @@ namespace DD.Prototype.UI
         Statistics = 11,
         Achievements = 12,
 
+        /// <summary>WP-022: the settings pane (UI scale, volume, quality). A MainMenu layer.</summary>
+        Settings = 13,
+
         // ---- layers on GameplayHud
         RoundUpgrade = 20,
         Paused = 21
@@ -144,6 +147,7 @@ namespace DD.Prototype.UI
             return context == UiContext.Profile ||
                    context == UiContext.Statistics ||
                    context == UiContext.Achievements ||
+                   context == UiContext.Settings ||
                    context == UiContext.RoundUpgrade;
         }
 
@@ -155,6 +159,7 @@ namespace DD.Prototype.UI
                 case UiContext.Profile:
                 case UiContext.Statistics:
                 case UiContext.Achievements:
+                case UiContext.Settings:
                     return UiContext.MainMenu;
 
                 case UiContext.RoundUpgrade:

@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f538dad7c5fac44b288f2f203d91a341, type: 3}
+  m_Name: UiTheme
+  m_EditorClassIdentifier: 
+  Icons:
+  - Name: Hud.Enemies
+    Sprite: {fileID: -3282825364574764330, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Hud.Gold
+    Sprite: {fileID: 1038824628869400148, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Hud.Health
+    Sprite: {fileID: -5507860616542234780, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Hud.Round
+    Sprite: {fileID: -300848175486118491, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Hud.Special
+    Sprite: {fileID: -559854760433156822, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Hud.Timer
+    Sprite: {fileID: 4926704839082185527, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Achievements
+    Sprite: {fileID: -708897340933979488, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Audio
+    Sprite: {fileID: -6068394660707993130, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Back
+    Sprite: {fileID: -5724424276071283644, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Confirm
+    Sprite: {fileID: 1221050695471490317, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Gamepad
+    Sprite: {fileID: -5672638532897503310, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Graphics
+    Sprite: {fileID: -7285087910145960454, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Keyboard
+    Sprite: {fileID: -6656520657755220864, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Profile
+    Sprite: {fileID: 9090467384928607536, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Settings
+    Sprite: {fileID: -3610623525845512526, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Menu.Statistics
+    Sprite: {fileID: 5405502815919382130, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Special.KaguraBell
+    Sprite: {fileID: 7999156302903063046, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Special.OfudaLoom
+    Sprite: {fileID: -1413035657167185548, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Special.TideJewel
+    Sprite: {fileID: -3679124154955928802, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.Chain
+    Sprite: {fileID: -5890304332254159341, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.Explosion
+    Sprite: {fileID: -5599430998560845798, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.FireRate
+    Sprite: {fileID: -3332788987730236652, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.MaximumHealth
+    Sprite: {fileID: 2034370419246375082, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.MovementSpeed
+    Sprite: {fileID: 6842129945428876180, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.Piercing
+    Sprite: {fileID: 5229749321178577944, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.RegenerationDelay
+    Sprite: {fileID: 5259536503224837384, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.RegenerationRate
+    Sprite: {fileID: 7732162901061201993, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.ReloadSpeed
+    Sprite: {fileID: -6812588442315847362, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Upgrade.Ricochet
+    Sprite: {fileID: -3237780129553355561, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Weapon.AssaultRifle
+    Sprite: {fileID: 4846149593698786846, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Weapon.AutoSmg
+    Sprite: {fileID: 5844087827914377564, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Weapon.CombatShotgun
+    Sprite: {fileID: 8056251770492120768, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  Frames:
+  - Name: Cursor.Arrow
+    Sprite: {fileID: 1009899790209449875, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Focus.Brackets
+    Sprite: {fileID: 253058669360981296, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Frame.Button
+    Sprite: {fileID: 1090875208304879016, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Frame.Card
+    Sprite: {fileID: -3638692840823404433, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Frame.Chip
+    Sprite: {fileID: -7947601868280656976, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Frame.HudPanel
+    Sprite: {fileID: 1973092896091007710, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Medal.Common
+    Sprite: {fileID: -3955001798909649383, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Medal.Epic
+    Sprite: {fileID: 7382135508641101586, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Medal.Rare
+    Sprite: {fileID: -8493518473079102609, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Ornament.Divider
+    Sprite: {fileID: 5036965792253432312, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Reticle.Ring
+    Sprite: {fileID: -6287795265612059793, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  - Name: Reticle.Ticks
+    Sprite: {fileID: -1121072304887303329, guid: 11c996ca452324ec9adcfac76409f108, type: 3}
+  MenuPlate: {fileID: 21300000, guid: 4ea35e4d6c71e4b439acc8a1e0cc99e7, type: 3}
+  HudMarker: {fileID: 21300000, guid: 3b384fff1349341c39cd9da5c6655a0f, type: 3}
+  SkinPreviews:
+  - {fileID: 21300000, guid: d570b1b82b73b4eab9a8341d00b487bd, type: 3}
+  - {fileID: 21300000, guid: 06bdbd2d6da544c3c865493a3ed1625d, type: 3}
+  - {fileID: 21300000, guid: 62a48cb79a2d843598b93987018041b8, type: 3}
+  DefaultUiScale: 1

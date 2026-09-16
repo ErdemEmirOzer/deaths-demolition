@@ -55,6 +55,13 @@ namespace DD.Prototype.UI
                 // A missing asset is the expected case in M1: Resources.Load returns null
                 // without logging, and the card draws its monogram.
                 Sprite sprite = Resources.Load<Sprite>(ResourcesFolder + branches[i]);
+                if (sprite == null)
+                {
+                    // WP-022: the AP-012 icon atlas ("Upgrade.<Branch>") is the M3 source;
+                    // the per-branch folder stays the override for a hand-placed sprite.
+                    sprite = UiArt.UpgradeIcon(branches[i]);
+                }
+
                 if (sprite != null)
                 {
                     Register(branches[i], sprite);

@@ -620,14 +620,21 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsTrue(MetinVar<UpgradeScreen>(run.Shop.Gold.ToString(), out _), "gold bakiyesi ekranda yazılı");
                 int goldR1 = run.Shop.Gold;
 
-                // Kartlarda ikon yuvası/fallback: her görünür kartta monogram var.
-                int monogram = 0;
+                // Kartlarda ikon yuvası: WP-022'den itibaren her görünür kart AP-012 dal ikonunu
+                // çizer (Upgrade.<Branch>); monogram yalnız sanat yokken görünür.
+                int ikon = 0, monogram = 0;
+                foreach (Image img in upgrade.GetComponentsInChildren<Image>(false))
+                {
+                    if (img.gameObject.name == "Icon" && img.sprite != null && img.sprite.name.StartsWith("Upgrade.")) ikon++;
+                }
+
                 foreach (Text t in upgrade.GetComponentsInChildren<Text>(false))
                 {
                     if (t.gameObject.name == "Monogram" && !string.IsNullOrEmpty(t.text)) monogram++;
                 }
 
-                Assert.AreEqual(run.Shop.Cards.Count, monogram, "her kartta bir monogram fallback (sprite kayıtlı değil)");
+                Assert.AreEqual(run.Shop.Cards.Count, ikon, "her kartta bir AP-012 dal ikonu");
+                Assert.AreEqual(0, monogram, "sanat varken monogram fallback görünmez");
 
                 // Devam → round 2: HUD yenilenir, gold korunur.
                 run.CloseUpgradeScreen();
@@ -744,7 +751,18 @@ namespace DD.Prototype.Tests.PlayMode
             Buton<MainMenuScreen>("Tab.Profile").OnSubmit(null);
             Buton<MainMenuScreen>("Tab.Achievements").OnSubmit(null);
             yield return null;
-            Assert.IsTrue(MetinVar<MainMenuScreen>(AchievementsViewModel.EmptyTitle, out _), "tanım yok → empty state");
+            if (ProfileService.AllAchievements.Count == 0)
+            {
+                Assert.IsTrue(MetinVar<MainMenuScreen>(AchievementsViewModel.EmptyTitle, out _), "tanım yok → empty state");
+            }
+            else
+            {
+                // WP-023: definitions come from AchievementCatalog, not PrototypeConfig, so an
+                // empty config no longer empties the pane; the pane must still draw every
+                // catalog entry without the empty state.
+                Assert.IsFalse(MetinVar<MainMenuScreen>(AchievementsViewModel.EmptyTitle, out _), "katalog tanımlıyken empty state yok");
+                Assert.IsTrue(MetinVar<MainMenuScreen>("0 of " + ProfileService.AllAchievements.Count + " earned", out _));
+            }
             PrototypeConfig.SetActive(_eskiConfig);
             UnityEngine.Object.Destroy(klon);
 

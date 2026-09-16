@@ -305,14 +305,18 @@ namespace DD.Prototype.UI
                         break;
 
                     case UiButtonVariant.Nav:
+                        // WP-022 (AD MUST-2, REQ-105 vermilion budget): the selected tab is
+                        // carried by the raised fill, the cream outline and the vermilion
+                        // marker tick - not by a second vermilion outline.
                         fill = _selectedChoice ? UiColor.SurfaceRaised : UiColor.SurfaceBase;
-                        border = _selectedChoice ? UiColor.AccentPrimary : UiColor.BorderStrong;
+                        border = _selectedChoice ? UiColor.TextPrimary : UiColor.BorderStrong;
                         label = _selectedChoice ? UiColor.TextPrimary : UiColor.TextSecondary;
                         break;
 
                     case UiButtonVariant.Card:
+                        // Same budget: a chosen card is raised + cream-outlined + badged.
                         fill = _selectedChoice ? UiColor.SurfaceRaised : UiColor.SurfacePanel;
-                        border = _selectedChoice ? UiColor.AccentPrimary : UiColor.BorderStrong;
+                        border = _selectedChoice ? UiColor.TextPrimary : UiColor.BorderStrong;
                         label = UiColor.TextPrimary;
                         break;
 

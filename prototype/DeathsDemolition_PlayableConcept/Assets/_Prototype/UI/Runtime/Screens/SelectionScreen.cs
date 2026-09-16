@@ -36,9 +36,12 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class SelectionScreen : UiScreen
     {
-        private const float SkinCardHeight = 120f;
+        // WP-022: the skin card grew to carry the AP-006 character preview (a 3:4 portrait
+        // slot at the leading edge); the palette bands survive as a thin strip beside it.
+        private const float SkinCardHeight = 168f;
         private const float WeaponCardHeight = 112f;
-        private const float SwatchWidth = 88f;
+        private const float SwatchWidth = 100f;
+        private const float WeaponIconSize = 56f;
         private const float BadgeWidth = 160f;
         private const float FooterHeight = 88f;
         private const float TitleBand = 40f;
@@ -50,6 +53,15 @@ namespace DD.Prototype.UI
         private GameObject[] _weaponBadges;
 
         private ClassicWeaponId[] _weaponIds;
+        private UiButton _backButton;
+        private UiButton _startButton;
+        private Image[] _skinPreviews;
+
+        /// <summary>The preview images the skin cards show, index = PlayerSkin (tests read the sprite).</summary>
+        public Image[] SkinPreviews
+        {
+            get { return _skinPreviews; }
+        }
 
         protected override UiContext BaseContext
         {
@@ -78,6 +90,63 @@ namespace DD.Prototype.UI
 
             RefreshSkins();
             RefreshWeapons();
+            LinkNavigation();
+        }
+
+        private void Update()
+        {
+            if (UiInput.CancelPressed())
+            {
+                GoBack();
+                return;
+            }
+
+            UiInput.ReclaimFocus(_skinButtons != null && _skinButtons.Length > 0
+                ? _skinButtons[(int)PrototypeUiFlow.SelectedSkin]
+                : _startButton);
+        }
+
+        /// <summary>
+        /// Gamepad / keyboard map (WP-022): skins and weapons are two vertical chains,
+        /// Left/Right hops between the columns at the same row, Down from the last card
+        /// lands on the footer, Up from the footer returns to the last card. Locked
+        /// weapons are not interactable, so the chain skips them by construction.
+        /// </summary>
+        private void LinkNavigation()
+        {
+            var skins = new System.Collections.Generic.List<Selectable>(_skinButtons);
+            var weapons = new System.Collections.Generic.List<Selectable>();
+            for (int i = 0; i < _weaponButtons.Length; i++)
+            {
+                if (_weaponButtons[i].IsInteractable())
+                {
+                    weapons.Add(_weaponButtons[i]);
+                }
+            }
+
+            skins.Add(_backButton);
+            weapons.Add(_startButton);
+            UiInput.ChainVertical(skins.ToArray());
+            UiInput.ChainVertical(weapons.ToArray());
+
+            // Cards pair by row (clamped to the shorter column); the footer pairs with the
+            // footer, so Left from START RUN is always BACK and never a skin card.
+            int skinCards = skins.Count - 1;
+            int weaponCards = weapons.Count - 1;
+            for (int i = 0; i < skinCards; i++)
+            {
+                Selectable right = weaponCards > 0 ? weapons[Mathf.Min(i, weaponCards - 1)] : _startButton;
+                UiInput.LinkHorizontal(skins[i], right, right);
+            }
+
+            for (int i = 0; i < weaponCards; i++)
+            {
+                Selectable left = skinCards > 0 ? skins[Mathf.Min(i, skinCards - 1)] : _backButton;
+                UiInput.LinkHorizontal(weapons[i], left, left);
+            }
+
+            UiInput.LinkHorizontal(_backButton, _startButton, _startButton);
+            UiInput.LinkHorizontal(_startButton, _backButton, _backButton);
         }
 
         // =================================================================== skins
@@ -100,6 +169,7 @@ namespace DD.Prototype.UI
             int count = PlayerSkins.Count;
             _skinButtons = new UiButton[count];
             _skinBadges = new GameObject[count];
+            _skinPreviews = new Image[count];
 
             for (int i = 0; i < count; i++)
             {
@@ -113,11 +183,12 @@ namespace DD.Prototype.UI
                 stack.Add((RectTransform)button.transform, SkinCardHeight);
                 stack.Gap(UiSpace.L);
 
+                _skinPreviews[i] = BuildPreview(button, i);
                 BuildSwatch(button, palette);
 
-                // Title moves right of the swatch and up into its own band.
+                // Title moves right of the preview + swatch and up into its own band.
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
-                labelRect.offsetMin = new Vector2(SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L, TitleBand);
+                labelRect.offsetMin = new Vector2(PreviewSlotWidth + SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L, TitleBand);
                 labelRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.L);
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
                 button.LabelText.alignment = TextAnchor.LowerLeft;
@@ -126,7 +197,7 @@ namespace DD.Prototype.UI
                     "Detail", button.transform, "Cosmetic only", UiType.Caption, UiColor.TextSecondary,
                     TextAnchor.UpperLeft);
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-                detailRect.offsetMin = new Vector2(SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L, (int)UiSpace.L);
+                detailRect.offsetMin = new Vector2(PreviewSlotWidth + SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L, (int)UiSpace.L);
                 detailRect.offsetMax = new Vector2(-BadgeWidth, -(TitleBand + (int)UiSpace.L));
 
                 _skinButtons[i] = button;
@@ -141,6 +212,40 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>Width the character preview takes at the card's leading edge (0 without art).</summary>
+        private static float PreviewSlotWidth
+        {
+            get { return UiArt.SkinPreview(0) != null ? SkinCardHeight - (int)UiSpace.L * 2 + (int)UiSpace.L : 0f; }
+        }
+
+        /// <summary>
+        /// The AP-006 front-view render of the skin (WP-022): the real character, not a
+        /// colour strip, is what a skin choice is about. Sits inside a recessed well so a
+        /// pale skin still has an edge on the card. Absent art leaves the slot at zero width.
+        /// </summary>
+        private static Image BuildPreview(UiButton button, int skinIndex)
+        {
+            Sprite sprite = UiArt.SkinPreview(skinIndex);
+            if (sprite == null)
+            {
+                return null;
+            }
+
+            float size = SkinCardHeight - (int)UiSpace.L * 2;
+            Image well = UiFactory.NewImage("PreviewWell", button.transform, UiColor.SurfaceInset, UiSprites.Chip);
+            var wellRect = (RectTransform)well.transform;
+            wellRect.anchorMin = new Vector2(0f, 0.5f);
+            wellRect.anchorMax = new Vector2(0f, 0.5f);
+            wellRect.pivot = new Vector2(0f, 0.5f);
+            wellRect.sizeDelta = new Vector2(size, size);
+            wellRect.anchoredPosition = new Vector2((int)UiSpace.L, 0f);
+
+            Image preview = UiFactory.NewImage("Preview", wellRect, UiColor.TextPrimary, sprite);
+            UiFactory.Fill((RectTransform)preview.transform, (int)UiSpace.XS);
+            preview.preserveAspect = true;
+            return preview;
+        }
+
         /// <summary>Three stacked bands of the skin's own palette. No text needed.</summary>
         private static void BuildSwatch(UiButton button, PlayerSkins.Palette palette)
         {
@@ -148,8 +253,9 @@ namespace DD.Prototype.UI
             swatch.anchorMin = new Vector2(0f, 0f);
             swatch.anchorMax = new Vector2(0f, 1f);
             swatch.pivot = new Vector2(0f, 0.5f);
-            swatch.sizeDelta = new Vector2(SwatchWidth, -((int)UiSpace.L * 2));
-            swatch.anchoredPosition = new Vector2((int)UiSpace.L, 0f);
+            float width = PreviewSlotWidth > 0f ? 24f : SwatchWidth;
+            swatch.sizeDelta = new Vector2(width, -((int)UiSpace.L * 2));
+            swatch.anchoredPosition = new Vector2((int)UiSpace.L + PreviewSlotWidth, 0f);
 
             Image frame = UiFactory.NewImage("Frame", swatch, UiColor.BorderStrong, UiSprites.Chip);
             UiFactory.Fill((RectTransform)frame.transform);
@@ -230,8 +336,19 @@ namespace DD.Prototype.UI
                 stack.Add((RectTransform)button.transform, WeaponCardHeight);
                 stack.Gap(UiSpace.L);
 
+                // AP-012 weapon glyph at the leading edge (WP-022); muted when locked.
+                Image glyph = UiArt.IconImage(
+                    "Icon", button.transform, "Weapon." + id,
+                    unlocked ? UiColor.TextPrimary : UiColor.TextMuted, WeaponIconSize);
+                RectTransform glyphRect = (RectTransform)glyph.transform;
+                glyphRect.anchorMin = new Vector2(0f, 0.5f);
+                glyphRect.anchorMax = new Vector2(0f, 0.5f);
+                glyphRect.pivot = new Vector2(0f, 0.5f);
+                glyphRect.anchoredPosition = new Vector2((int)UiSpace.XL, 0f);
+                float textLeft = (int)UiSpace.XL + (glyph.enabled ? WeaponIconSize + (int)UiSpace.L : 0f);
+
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
-                labelRect.offsetMin = new Vector2((int)UiSpace.XL, TitleBand);
+                labelRect.offsetMin = new Vector2(textLeft, TitleBand);
                 labelRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.L);
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
                 button.LabelText.alignment = TextAnchor.LowerLeft;
@@ -242,7 +359,7 @@ namespace DD.Prototype.UI
                                                     " to unlock this weapon.",
                     UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-                detailRect.offsetMin = new Vector2((int)UiSpace.XL, (int)UiSpace.L);
+                detailRect.offsetMin = new Vector2(textLeft, (int)UiSpace.L);
                 detailRect.offsetMax = new Vector2(-(int)UiSpace.XL, -(TitleBand + (int)UiSpace.L));
 
                 _weaponButtons[i] = button;
@@ -341,6 +458,8 @@ namespace DD.Prototype.UI
             footer.anchoredPosition = Vector2.zero;
 
             UiButton back = UiFactory.Button("Back", footer, "BACK", UiButtonVariant.Secondary, GoBack);
+            _backButton = back;
+            UiInput.LeadingIcon(back, "Menu.Back", UiColor.TextSecondary, 22f);
             RectTransform backRect = (RectTransform)back.transform;
             backRect.anchorMin = new Vector2(0f, 0.5f);
             backRect.anchorMax = new Vector2(0f, 0.5f);
@@ -350,6 +469,7 @@ namespace DD.Prototype.UI
 
             UiButton start = UiFactory.Button(
                 "Start", footer, "START RUN", UiButtonVariant.Primary, PrototypeUiFlow.StartRun);
+            _startButton = start;
             RectTransform startRect = (RectTransform)start.transform;
             startRect.anchorMin = new Vector2(1f, 0.5f);
             startRect.anchorMax = new Vector2(1f, 0.5f);
