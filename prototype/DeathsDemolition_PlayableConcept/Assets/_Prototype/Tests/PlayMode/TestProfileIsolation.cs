@@ -23,8 +23,14 @@ using UnityEngine;
 public sealed class TestProfileIsolation
 {
     /// <summary>Testlerin yazdığı geçici profil dosyası. Kalıcı klasörün dışındadır.</summary>
+    // WP-023: the path carries the Editor's process id. temporaryCachePath is shared by
+    // every worktree of this product, and since WP-009H the profile store holds a
+    // fail-closed fcntl lease on its file: two Play Mode sessions on one machine would
+    // otherwise fight over one file and the loser would run read-only ("Another copy…"),
+    // failing every profile assertion for an environmental reason.
     public static string TestProfilePath =>
-        Path.Combine(Application.temporaryCachePath, "dd-test-profile.json");
+        Path.Combine(Application.temporaryCachePath,
+            "dd-test-profile-" + System.Diagnostics.Process.GetCurrentProcess().Id + ".json");
 
     /// <summary>Gerçek oyuncu profili; testler bu dosyaya asla yazmamalı.</summary>
     public static string RealProfilePath =>
