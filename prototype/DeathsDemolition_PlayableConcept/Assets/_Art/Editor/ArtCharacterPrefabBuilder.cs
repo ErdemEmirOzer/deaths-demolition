@@ -190,6 +190,9 @@ namespace DD.Art.Pipeline.EditorTools
             return ZombieFolder + "/M_zombie_atlas" + TierSuffix[Mathf.Clamp(tier, 0, TierSuffix.Length - 1)] + ".mat";
         }
 
+        public static void ApplyCharacterMapsPublic(Material m, Texture2D baseMap, Texture2D normal, Texture2D mask) => ApplyCharacterMaps(m, baseMap, normal, mask);
+        public static Material LoadOrCreateMaterialPublic(string path, Shader shader, string name) => LoadOrCreateMaterial(path, shader, name);
+
         private static void ApplyCharacterMaps(Material m, Texture2D baseMap, Texture2D normal, Texture2D mask)
         {
             m.SetTexture("_BaseMap", baseMap);
@@ -502,8 +505,14 @@ namespace DD.Art.Pipeline.EditorTools
 
         private static Texture2D TintTexture(ZombieModuleLibrary library, string name, Color colour)
         {
+            return TintTexturePublic(library, ZombieLibrary, name, colour);
+        }
+
+        /// <summary>A 4×4 flat-colour sub-texture stored inside <paramref name="owner"/> (the library asset), reused by name across runs.</summary>
+        public static Texture2D TintTexturePublic(UnityEngine.Object owner, string ownerPath, string name, Color colour)
+        {
             Texture2D existing = null;
-            foreach (UnityEngine.Object o in AssetDatabase.LoadAllAssetsAtPath(ZombieLibrary))
+            foreach (UnityEngine.Object o in AssetDatabase.LoadAllAssetsAtPath(ownerPath))
             {
                 if (o is Texture2D t && t.name == name) existing = t;
             }
@@ -516,7 +525,7 @@ namespace DD.Art.Pipeline.EditorTools
             tex.wrapMode = TextureWrapMode.Repeat;
             tex.filterMode = FilterMode.Point;
             tex.Apply(false, false);
-            if (existing == null) AssetDatabase.AddObjectToAsset(tex, library);
+            if (existing == null) AssetDatabase.AddObjectToAsset(tex, owner);
             EditorUtility.SetDirty(tex);
             return tex;
         }
@@ -591,14 +600,43 @@ namespace DD.Art.Pipeline.EditorTools
                     }
                 }
 
+                // WP-017: three AP-008 armour slots per LOD (helmet / body / leg), two renderers each
+                // (main plate + kote / suneate sub-mesh), driven by ArmorVisualBinder (mesh swap per
+                // state). Material = the armour atlas (Standard) when the armour library exists;
+                // the binder sets the version variant.
+                var armorLibrary = AssetDatabase.LoadAssetAtPath<ZombieArmorLibrary>(ArtArmorBuilder.LibraryPath);
+                Material armorStandard = armorLibrary != null ? armorLibrary.MaterialFor(0) : standard;
+                string[] armorNames = { "Helmet", "BodyArmor", "LegArmor" };
+                string[] partNames = { "", "_Sub" };
+                var armorSlots = new SkinnedMeshRenderer[ZombieSkinnedVisual.ArmorRendererCount];
+                for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
+                {
+                    SkinnedMeshRenderer body = slots[lod * ZombieSkinnedVisual.SlotCount];
+                    for (int a = 0; a < ZombieSkinnedVisual.ArmorSlotCount; a++)
+                    for (int part = 0; part < ZombieSkinnedVisual.ArmorPartCount; part++)
+                    {
+                        var go = new GameObject("LOD" + lod + "_" + armorNames[a] + partNames[part]);
+                        go.transform.SetParent(instance.transform, false);
+                        var smr = go.AddComponent<SkinnedMeshRenderer>();
+                        smr.sharedMaterial = armorStandard;
+                        smr.rootBone = body.rootBone;
+                        smr.localBounds = body.localBounds;
+                        smr.enabled = false;
+                        ConfigureSkinnedRenderer(smr, lod >= 2);
+                        armorSlots[(lod * ZombieSkinnedVisual.ArmorSlotCount + a) * ZombieSkinnedVisual.ArmorPartCount + part] = smr;
+                    }
+                }
+
                 LODGroup group = instance.GetComponent<LODGroup>() ?? instance.AddComponent<LODGroup>();
                 var perLod = new SkinnedMeshRenderer[ZombieModuleLibrary.LodCount];
                 for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++) perLod[lod] = slots[lod * ZombieSkinnedVisual.SlotCount];
                 ApplyLods(group, perLod, ZombieIntendedDistances, r =>
                 {
                     int lod = Array.IndexOf(perLod, r);
-                    var list = new Renderer[ZombieSkinnedVisual.SlotCount];
+                    int perLodArmor = ZombieSkinnedVisual.ArmorSlotCount * ZombieSkinnedVisual.ArmorPartCount;
+                    var list = new Renderer[ZombieSkinnedVisual.SlotCount + perLodArmor];
                     for (int slot = 0; slot < ZombieSkinnedVisual.SlotCount; slot++) list[slot] = slots[lod * ZombieSkinnedVisual.SlotCount + slot];
+                    for (int a = 0; a < perLodArmor; a++) list[ZombieSkinnedVisual.SlotCount + a] = armorSlots[lod * perLodArmor + a];
                     return list;
                 });
 
@@ -612,10 +650,11 @@ namespace DD.Art.Pipeline.EditorTools
                 var bridge = root.AddComponent<ProceduralPoseBridge>();
                 var visual = root.AddComponent<ZombieSkinnedVisual>();
                 visual.Configure(animator, group, slots, armature != null ? armature : instance.transform, helmet, torso, legs, animationSet, bridge);
+                visual.ConfigureArmor(armorSlots);
 
                 EnsureFolder(Path.GetDirectoryName(ZombiePrefab).Replace('\\', '/'));
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, ZombiePrefab);
-                Debug.Log(LogPrefix + "zombie prefab written: " + ZombiePrefab + " (bones " + bones.Count + ", slots " + slots.Length + ")");
+                Debug.Log(LogPrefix + "zombie prefab written: " + ZombiePrefab + " (bones " + bones.Count + ", slots " + slots.Length + ", armour slots " + armorSlots.Length + (armorLibrary != null ? ", armour atlas" : ", no armour library") + ")");
                 return saved;
             }
             finally
@@ -649,6 +688,7 @@ namespace DD.Art.Pipeline.EditorTools
             so.FindProperty("_zombiePrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(ZombiePrefab);
             so.FindProperty("_zombieLibrary").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ZombieModuleLibrary>(ZombieLibrary);
             so.FindProperty("_zombieAnimation").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ZombieAnimationSet);
+            so.FindProperty("_zombieArmor").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ZombieArmorLibrary>(ArtArmorBuilder.LibraryPath);   // WP-017
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(set);
             AssetDatabase.SaveAssets();

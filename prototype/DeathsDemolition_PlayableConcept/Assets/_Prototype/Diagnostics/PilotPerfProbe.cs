@@ -89,6 +89,8 @@ namespace DD.Prototype.Diagnostics
         /// particle/post cost, and the WP-012 numbers are the pre-shader baseline.
         /// </summary>
         private const string AtmosphereFlag = "-ddPilotAtmosphere";
+        /// <summary>WP-017 · <c>-ddArmor all</c>: every forced zombie carries all three AP-008 pieces at full durability (worst-case crowd; the spawn roll is untouched).</summary>
+        private const string ArmorFlag = "-ddArmor";
 
         /// <summary>
         /// WP-012 · "-ddPilotProfilerLog path.raw" (optional): writes the Unity Profiler's binary
@@ -181,6 +183,7 @@ namespace DD.Prototype.Diagnostics
             driver.Configure(outDir, scene, window, warmup, resW, resH, lodBiasOverride);
             driver.ProfilerLogPath = Arg(ProfilerLogFlag);
             driver.AtmosphereOff = string.Equals(Arg(AtmosphereFlag), "off", StringComparison.OrdinalIgnoreCase);
+            driver.ArmorAll = string.Equals(Arg(ArmorFlag), "all", StringComparison.OrdinalIgnoreCase);
             Debug.Log("[PilotPerfProbe] armed scene=" + scene + " window=" + window.ToString("F0", CultureInfo.InvariantCulture) +
                       "s warmup=" + warmup.ToString("F0", CultureInfo.InvariantCulture) + "s out=" + outDir);
         }
@@ -378,6 +381,18 @@ namespace DD.Prototype.Diagnostics
             /// <summary>Art textures that are streamed and currently resident below their top mip (mipmapCount − loadedMipmapLevel < mipmapCount).</summary>
             public int artTexturesReduced;
             public string inventoryCsv;
+            // WP-017 · 04c mesh inventory: every loaded Mesh by group (zombie armour / zombie modules+bodies / player / world families / other).
+            public int meshCount;
+            public long meshBytes;
+            public long meshArmorBytes;
+            public int meshArmorCount;
+            public long meshZombieBytes;
+            public int meshZombieCount;
+            public long meshPlayerBytes;
+            public long meshWorldBytes;
+            public int meshWorldCount;
+            public long meshOtherBytes;
+            public string meshTop;
 
             /// <summary>WP-012: frames over 16.667 ms in the window, and how many of those coincided with a gen0 collection.</summary>
             public int spikeFrames;
@@ -654,13 +669,14 @@ namespace DD.Prototype.Diagnostics
                     yield return null;
                 }
 
+                int armorFitted = ArmorAll ? FitArmorOnCrowd() : 0;
                 Stage s2 = Capture("02-force-40");
                 s2.forcedTarget = ceiling;
                 s2.achievedCount = dir.ActiveCount;
                 s2.forceSeconds = Time.realtimeSinceStartup - t0;
                 s2.forceTimedOut = forceTimedOut;
                 s2.pass = !forceTimedOut && s2.achievedCount >= ceiling;
-                s2.note = "forced target " + ceiling + " (pool ignored): reached " + s2.achievedCount + " in " + s2.forceSeconds.ToString("F2", CultureInfo.InvariantCulture) + " s" + (forceTimedOut ? " TIMEOUT" : "");
+                s2.note = "forced target " + ceiling + " (pool ignored): reached " + s2.achievedCount + " in " + s2.forceSeconds.ToString("F2", CultureInfo.InvariantCulture) + " s" + (forceTimedOut ? " TIMEOUT" : "") + (ArmorAll ? " | armor all: " + armorFitted + " pieces fitted" : "");
                 Write(s2);
 
                 // ---------------------------------------------------------------- 03 warmup
@@ -876,6 +892,17 @@ namespace DD.Prototype.Diagnostics
                            " | csv " + s4b.inventoryCsv;
                 Write(s4b);
 
+                // ---------------------------------------------------------------- 04c mesh-inventory (WP-017)
+                // The Mesh Memory counter is one number; the AP-008 library references 312 FBX
+                // meshes and the world v2 keeps its heavy roofs unbatched, so the resident meshes
+                // are summed by group here (armour / zombie / player / world / other) + top 10.
+                Stage s4c = Capture("04c-mesh-inventory");
+                MeasureMeshInventory(s4c);
+                s4c.pass = s4c.meshCount > 0;
+                s4c.note = "meshes " + s4c.meshCount + " = " + Mb(s4c.meshBytes) + " | armour " + s4c.meshArmorCount + " = " + Mb(s4c.meshArmorBytes) + " | zombie " + s4c.meshZombieCount + " = " + Mb(s4c.meshZombieBytes) +
+                           " | player " + Mb(s4c.meshPlayerBytes) + " | world " + s4c.meshWorldCount + " = " + Mb(s4c.meshWorldBytes) + " | other " + Mb(s4c.meshOtherBytes) + " | top: " + s4c.meshTop;
+                Write(s4c);
+
                 // ---------------------------------------------------------------- 05 gc-positive-control
                 // A measurement that cannot see a known 1 MB allocation is blind, and every
                 // heap number above would be meaningless; the bait is kept referenced (its
@@ -1077,6 +1104,23 @@ namespace DD.Prototype.Diagnostics
             /// </summary>
             /// <summary>WP-013 A/B switch (see AtmosphereFlag).</summary>
             public bool AtmosphereOff;
+
+            /// <summary>WP-017 · Fit helmet + body + leg on every live zombie that is not fully equipped (see ArmorFlag). Returns pieces fitted.</summary>
+            public bool ArmorAll;
+
+            private int FitArmorOnCrowd()
+            {
+                int fitted = 0;
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; i < live.Count; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z == null || z.Armor == null || z.Armor.EquippedCount >= 3) continue;
+                    fitted += z.FitArmorComposition(true, true, true);
+                }
+
+                return fitted;
+            }
 
             private static void SetAtmosphere(bool on)
             {
@@ -1397,6 +1441,33 @@ namespace DD.Prototype.Diagnostics
                 }
 
                 return Camera.main;
+            }
+
+            /// <summary>WP-017 · every loaded Mesh grouped by name prefix, with the resident size the profiler attributes to it.</summary>
+            private void MeasureMeshInventory(Stage s)
+            {
+                Mesh[] all = Resources.FindObjectsOfTypeAll<Mesh>();
+                var top = new List<KeyValuePair<string, long>>();
+                for (int i = 0; i < all.Length; i++)
+                {
+                    Mesh m = all[i];
+                    if (m == null) continue;
+                    long bytes = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(m);
+                    string n = m.name ?? string.Empty;
+                    s.meshCount++;
+                    s.meshBytes += bytes;
+                    if (n.StartsWith("zombie_armor_", StringComparison.Ordinal)) { s.meshArmorCount++; s.meshArmorBytes += bytes; }
+                    else if (n.StartsWith("zombie_", StringComparison.Ordinal)) { s.meshZombieCount++; s.meshZombieBytes += bytes; }
+                    else if (n.StartsWith("Player_", StringComparison.Ordinal)) s.meshPlayerBytes += bytes;
+                    else if (n.StartsWith("AP0", StringComparison.Ordinal) || n.StartsWith("SM_", StringComparison.Ordinal) || n.Contains("_LOD") || n.StartsWith("Combined Mesh", StringComparison.Ordinal)) { s.meshWorldCount++; s.meshWorldBytes += bytes; }
+                    else s.meshOtherBytes += bytes;
+                    top.Add(new KeyValuePair<string, long>(n + "(" + (m.vertexCount) + "v)", bytes));
+                }
+
+                top.Sort((a, b) => b.Value.CompareTo(a.Value));
+                var sb = new StringBuilder();
+                for (int i = 0; i < Mathf.Min(10, top.Count); i++) sb.Append(i > 0 ? ", " : string.Empty).Append(top[i].Key).Append(' ').Append(Mb(top[i].Value));
+                s.meshTop = sb.ToString();
             }
 
             /// <summary>WP-015 · every loaded Texture by kind, with the resident size the profiler attributes to it; art = the Import Contract set (T_*).</summary>

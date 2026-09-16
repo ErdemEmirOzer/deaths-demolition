@@ -42,6 +42,8 @@ namespace DD.Prototype.Characters
         [SerializeField] private GameObject _zombiePrefab;
         [SerializeField] private ZombieModuleLibrary _zombieLibrary;
         [SerializeField] private CharacterAnimationSet _zombieAnimation;
+        [Tooltip("WP-017 · AP-008 armour library (variants × states × fits × LODs, atlas materials). Null = M1 plate placeholders.")]
+        [SerializeField] private ZombieArmorLibrary _zombieArmor;
 
         public CharacterVisualSource Source => _source;
         public GameObject PlayerPrefab => _playerPrefab;
@@ -50,6 +52,8 @@ namespace DD.Prototype.Characters
         public GameObject ZombiePrefab => _zombiePrefab;
         public ZombieModuleLibrary ZombieLibrary => _zombieLibrary;
         public CharacterAnimationSet ZombieAnimation => _zombieAnimation;
+        public ZombieArmorLibrary ZombieArmor => _zombieArmor;
+        public bool ArmorReady => _zombieArmor != null && _zombieArmor.IsReady;
 
         public bool PlayerReady => _playerPrefab != null && _playerSkinAlbedos != null && _playerSkinAlbedos.Length >= 3 && _playerAnimation != null;
         public bool ZombieReady => _zombiePrefab != null && _zombieLibrary != null && _zombieAnimation != null;

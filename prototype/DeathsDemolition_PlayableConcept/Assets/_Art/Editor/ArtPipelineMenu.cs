@@ -171,8 +171,12 @@ namespace DD.Art.Pipeline.EditorTools
             LibraryStep(5, "Player_AP006 prefab", () => ArtCharacterPrefabBuilder.BuildPlayerPrefab());
             DD.Prototype.Characters.ZombieModuleLibrary library = null;
             LibraryStep(6, "Zombie module library", () => library = ArtCharacterPrefabBuilder.BuildZombieLibrary());
-            LibraryStep(7, "Zombie_AP007 prefab", () => ArtCharacterPrefabBuilder.BuildZombiePrefab(library));
-            LibraryStep(8, "Resources/DD_Characters asset set", () => ArtCharacterPrefabBuilder.BuildAssetSet());
+            // WP-017 · AP-008 armour: derived maps, atlas materials, merged-mesh library (before the prefab, which carries the armour slots).
+            LibraryStep(7, "Armour derived textures (MetallicSmoothness+AO, lacquer DetailMask)", ArtArmorBuilder.BuildTextures);
+            LibraryStep(8, "Armour materials (M_zombie_armor ×4)", ArtArmorBuilder.BuildMaterials);
+            LibraryStep(9, "Armour library (6 variants × 3 fits × 3 states × 4 LODs, merged sub-meshes)", () => ArtArmorBuilder.BuildLibrary());
+            LibraryStep(10, "Zombie_AP007 prefab (+ armour slots)", () => ArtCharacterPrefabBuilder.BuildZombiePrefab(library));
+            LibraryStep(11, "Resources/DD_Characters asset set", () => ArtCharacterPrefabBuilder.BuildAssetSet());
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(LogPrefix + "Run Characters: done in " + Seconds(total) + " s.");
@@ -207,6 +211,34 @@ namespace DD.Art.Pipeline.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(LogPrefix + "Run Asset Budget: done in " + Seconds(total) + " s.");
+        }
+
+        // ------------------------------------------------------------ WP-017 world v2
+
+        /// <summary>
+        /// WP-017 · AP-005B → Unity world v2: prop textures/masks + roof-course normal, library
+        /// materials (prop roles, world-master copies), the AP-005B prop prefabs, then the
+        /// placement import with the delta (asset + World_AP005.unity + NavMesh + build settings)
+        /// and the showcase. Batch: <c>-executeMethod …RunWorldV2</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run World v2 (WP-017)", priority = 305)]
+        public static void RunWorldV2()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run World v2 cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run World v2: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Library masks (prop ORM → MetallicSmoothness) + roof-course normal", ArtTextureRepack.BuildAllLibrary);
+            LibraryStep(2, "Library materials (prop roles, plaster/roof world copies)", ArtMaterialBuilder.BuildAllLibraryRoles);
+            LibraryStep(3, "Build AP-005B prop prefabs", () => ArtLibraryPrefabBuilder.BuildLibrary("AP-005B"));
+            LibraryStep(4, "Import AP-005 placement + AP-005B delta (asset, World_AP005.unity, NavMesh, build settings)", () => PlacementImporter.ImportAll());
+            LibraryStep(5, "Rebuild library showcase (with AP-005B)", ArtLibraryShowcaseBuilder.Build);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run World v2: done in " + Seconds(total) + " s.");
         }
 
         // ------------------------------------------------------------ WP-014 world assembly

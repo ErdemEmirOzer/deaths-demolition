@@ -1,0 +1,1904 @@
+{
+  "schema": "AP008.armor-manifest.v001",
+  "package": "AP-008",
+  "skeleton": {
+    "armature": "ZombieRig",
+    "bones": 56,
+    "identical_to": "AP-006 PlayerRig / AP-007 ZombieRig (names, hierarchy, rest pose)"
+  },
+  "anchors": {
+    "file": "AP007-anchors.json (AP-007, unchanged)",
+    "empties": [
+      "anchor_helmet",
+      "anchor_torso",
+      "anchor_legs"
+    ],
+    "parents": [
+      "Head",
+      "Chest",
+      "Hips"
+    ],
+    "positions_m": {
+      "anchor_helmet": [
+        0,
+        0,
+        1.6
+      ],
+      "anchor_torso": [
+        0,
+        0,
+        1.17
+      ],
+      "anchor_legs": [
+        0,
+        0,
+        0.93
+      ]
+    },
+    "in_files": "every armour FBX / GLB"
+  },
+  "binding": {
+    "kabuto / jingasa": "single bone Head 100 % (rigid) — equivalent to parenting the mesh under anchor_helmet",
+    "do (plate + kusazuri + watagami straps)": "skinned: Hips/Spine/Chest/UpperChest/Neck/Shoulder weights transferred from the body (semi-flexible lamellar)",
+    "kote": "skinned: Shoulder/UpperArm/LowerArm/Hand (+Chest/UpperChest at the shoulder)",
+    "haidate": "skinned: Hips/Spine/LeftUpperLeg/RightUpperLeg",
+    "suneate": "skinned: LowerLeg/Foot/UpperLeg (tube follows the shin; ties included)",
+    "Broken remnants": "skinned like the piece they belong to (Head / torso groups / hips+legs)",
+    "unity": "import with the same Humanoid avatar or re-point SkinnedMeshRenderer.bones to the body prefab's ZombieRig transforms by name; rigid pieces may instead be parented to the anchor transform"
+  },
+  "states": {
+    "IArmorVisual": {
+      "Absent": "no armour mesh (head/top/bottom modules stay as spawned)",
+      "Present": "<variant>_Present FBX meshes (main + sub)",
+      "Damaged": "<variant>_Damaged FBX main mesh (cracked/flaked lacquer region + one panel/lame/tasset missing) + the same sub-meshes; shown when ratio01 < 1",
+      "Broken": "<family>_Broken remnants only (straps / cords / ties on the body, <= 400 tris); the region reads open"
+    },
+    "transition": "mesh swap per state (renderer enable/disable); one shared material; particles = S-07",
+    "ratio01": "Damaged threshold left to WP-017 (suggested: Damaged when ratio01 < 0.999, i.e. after the first hit)"
+  },
+  "families": [
+    {
+      "family": "Helmet",
+      "slot": "ArmorSlot.Helmet",
+      "variant": "K1_jingasa",
+      "state": "Present",
+      "fbx": "zombie_armor_K1_jingasa_Present.fbx",
+      "anchor": "anchor_helmet",
+      "anchor_bone": "Head",
+      "sub_meshes": [
+        "jingasa"
+      ],
+      "object_name_pattern": "zombie_armor_K1_jingasa_Present_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          1172,
+          1172,
+          499,
+          177
+        ],
+        "B": [
+          1172,
+          1172,
+          500,
+          180
+        ],
+        "C": [
+          1172,
+          1172,
+          500,
+          177
+        ]
+      },
+      "tris_by_sub_fit": {
+        "jingasa/A": [
+          1172,
+          1172,
+          499,
+          177
+        ],
+        "jingasa/B": [
+          1172,
+          1172,
+          500,
+          180
+        ],
+        "jingasa/C": [
+          1172,
+          1172,
+          500,
+          177
+        ]
+      },
+      "atlas_regions": [
+        "CLOTH",
+        "K1",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "jingasa": [
+          "Head"
+        ]
+      }
+    },
+    {
+      "family": "Helmet",
+      "slot": "ArmorSlot.Helmet",
+      "variant": "K1_jingasa",
+      "state": "Damaged",
+      "fbx": "zombie_armor_K1_jingasa_Damaged.fbx",
+      "anchor": "anchor_helmet",
+      "anchor_bone": "Head",
+      "sub_meshes": [
+        "jingasa"
+      ],
+      "object_name_pattern": "zombie_armor_K1_jingasa_Damaged_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          1172,
+          1172,
+          499,
+          179
+        ],
+        "B": [
+          1172,
+          1172,
+          500,
+          179
+        ],
+        "C": [
+          1172,
+          1172,
+          500,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "jingasa/A": [
+          1172,
+          1172,
+          499,
+          179
+        ],
+        "jingasa/B": [
+          1172,
+          1172,
+          500,
+          179
+        ],
+        "jingasa/C": [
+          1172,
+          1172,
+          500,
+          180
+        ]
+      },
+      "atlas_regions": [
+        "CLOTH",
+        "K1_dmg",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "jingasa": [
+          "Head"
+        ]
+      }
+    },
+    {
+      "family": "Helmet",
+      "slot": "ArmorSlot.Helmet",
+      "variant": "K1_jingasa",
+      "state": "Broken",
+      "fbx": "zombie_armor_K1_jingasa_Broken.fbx",
+      "anchor": "anchor_helmet",
+      "anchor_bone": "Head",
+      "sub_meshes": [
+        "remnants"
+      ],
+      "object_name_pattern": "zombie_armor_K_any_Broken_remnants_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          208,
+          208,
+          208,
+          180
+        ],
+        "B": [
+          208,
+          208,
+          208,
+          180
+        ],
+        "C": [
+          208,
+          208,
+          208,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "remnants/A": [
+          208,
+          208,
+          208,
+          180
+        ],
+        "remnants/B": [
+          208,
+          208,
+          208,
+          180
+        ],
+        "remnants/C": [
+          208,
+          208,
+          208,
+          180
+        ]
+      },
+      "atlas_regions": [
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "remnants": [
+          "Head"
+        ]
+      }
+    },
+    {
+      "family": "Helmet",
+      "slot": "ArmorSlot.Helmet",
+      "variant": "K2_kabuto",
+      "state": "Present",
+      "fbx": "zombie_armor_K2_kabuto_Present.fbx",
+      "anchor": "anchor_helmet",
+      "anchor_bone": "Head",
+      "sub_meshes": [
+        "kabuto"
+      ],
+      "object_name_pattern": "zombie_armor_K2_kabuto_Present_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          3749,
+          1499,
+          499,
+          179
+        ],
+        "B": [
+          3750,
+          1499,
+          500,
+          180
+        ],
+        "C": [
+          3749,
+          1499,
+          499,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "kabuto/A": [
+          3749,
+          1499,
+          499,
+          179
+        ],
+        "kabuto/B": [
+          3750,
+          1499,
+          500,
+          180
+        ],
+        "kabuto/C": [
+          3749,
+          1499,
+          499,
+          180
+        ]
+      },
+      "atlas_regions": [
+        "K2",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "kabuto": [
+          "Head"
+        ]
+      }
+    },
+    {
+      "family": "Helmet",
+      "slot": "ArmorSlot.Helmet",
+      "variant": "K2_kabuto",
+      "state": "Damaged",
+      "fbx": "zombie_armor_K2_kabuto_Damaged.fbx",
+      "anchor": "anchor_helmet",
+      "anchor_bone": "Head",
+      "sub_meshes": [
+        "kabuto"
+      ],
+      "object_name_pattern": "zombie_armor_K2_kabuto_Damaged_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          3750,
+          1499,
+          499,
+          179
+        ],
+        "B": [
+          3749,
+          1500,
+          500,
+          180
+        ],
+        "C": [
+          3750,
+          1500,
+          499,
+          179
+        ]
+      },
+      "tris_by_sub_fit": {
+        "kabuto/A": [
+          3750,
+          1499,
+          499,
+          179
+        ],
+        "kabuto/B": [
+          3749,
+          1500,
+          500,
+          180
+        ],
+        "kabuto/C": [
+          3750,
+          1500,
+          499,
+          179
+        ]
+      },
+      "atlas_regions": [
+        "K2_dmg",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "kabuto": [
+          "Head"
+        ]
+      }
+    },
+    {
+      "family": "Helmet",
+      "slot": "ArmorSlot.Helmet",
+      "variant": "K2_kabuto",
+      "state": "Broken",
+      "fbx": "zombie_armor_K2_kabuto_Broken.fbx",
+      "anchor": "anchor_helmet",
+      "anchor_bone": "Head",
+      "sub_meshes": [
+        "remnants"
+      ],
+      "object_name_pattern": "zombie_armor_K_any_Broken_remnants_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          208,
+          208,
+          208,
+          180
+        ],
+        "B": [
+          208,
+          208,
+          208,
+          180
+        ],
+        "C": [
+          208,
+          208,
+          208,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "remnants/A": [
+          208,
+          208,
+          208,
+          180
+        ],
+        "remnants/B": [
+          208,
+          208,
+          208,
+          180
+        ],
+        "remnants/C": [
+          208,
+          208,
+          208,
+          180
+        ]
+      },
+      "atlas_regions": [
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "remnants": [
+          "Head"
+        ]
+      }
+    },
+    {
+      "family": "Body",
+      "slot": "ArmorSlot.Body",
+      "variant": "D1_lamellar",
+      "state": "Present",
+      "fbx": "zombie_armor_D1_lamellar_Present.fbx",
+      "anchor": "anchor_torso",
+      "anchor_bone": "Chest",
+      "sub_meshes": [
+        "do",
+        "kote"
+      ],
+      "object_name_pattern": "zombie_armor_D1_lamellar_Present_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {
+        "kote": "zombie_armor_D_kote_<fit>_LOD<n> (same mesh in every Body variant/state FBX)"
+      },
+      "meshes": 24,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          4815,
+          1499,
+          500,
+          180
+        ],
+        "B": [
+          4933,
+          1499,
+          499,
+          179
+        ],
+        "C": [
+          4719,
+          1498,
+          499,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "do/A": [
+          3599,
+          1080,
+          360,
+          130
+        ],
+        "do/B": [
+          3599,
+          1079,
+          360,
+          129
+        ],
+        "do/C": [
+          3599,
+          1079,
+          360,
+          130
+        ],
+        "kote/A": [
+          1216,
+          419,
+          140,
+          50
+        ],
+        "kote/B": [
+          1334,
+          420,
+          139,
+          50
+        ],
+        "kote/C": [
+          1120,
+          419,
+          139,
+          50
+        ]
+      },
+      "atlas_regions": [
+        "CLOTH",
+        "D1",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "do": [
+          "Chest",
+          "Hips",
+          "LeftShoulder",
+          "RightShoulder",
+          "Spine",
+          "UpperChest"
+        ],
+        "kote": [
+          "Chest",
+          "LeftHand",
+          "LeftLowerArm",
+          "LeftShoulder",
+          "LeftUpperArm",
+          "RightHand",
+          "RightLowerArm",
+          "RightShoulder",
+          "RightUpperArm",
+          "UpperChest"
+        ]
+      }
+    },
+    {
+      "family": "Body",
+      "slot": "ArmorSlot.Body",
+      "variant": "D1_lamellar",
+      "state": "Damaged",
+      "fbx": "zombie_armor_D1_lamellar_Damaged.fbx",
+      "anchor": "anchor_torso",
+      "anchor_bone": "Chest",
+      "sub_meshes": [
+        "do",
+        "kote"
+      ],
+      "object_name_pattern": "zombie_armor_D1_lamellar_Damaged_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {
+        "kote": "zombie_armor_D_kote_<fit>_LOD<n> (same mesh in every Body variant/state FBX)"
+      },
+      "meshes": 24,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          4816,
+          1499,
+          499,
+          179
+        ],
+        "B": [
+          4934,
+          1499,
+          498,
+          180
+        ],
+        "C": [
+          4719,
+          1498,
+          499,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "do/A": [
+          3600,
+          1080,
+          359,
+          129
+        ],
+        "do/B": [
+          3600,
+          1079,
+          359,
+          130
+        ],
+        "do/C": [
+          3599,
+          1079,
+          360,
+          130
+        ],
+        "kote/A": [
+          1216,
+          419,
+          140,
+          50
+        ],
+        "kote/B": [
+          1334,
+          420,
+          139,
+          50
+        ],
+        "kote/C": [
+          1120,
+          419,
+          139,
+          50
+        ]
+      },
+      "atlas_regions": [
+        "CLOTH",
+        "D1_dmg",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "do": [
+          "Chest",
+          "Hips",
+          "LeftShoulder",
+          "RightShoulder",
+          "Spine",
+          "UpperChest"
+        ],
+        "kote": [
+          "Chest",
+          "LeftHand",
+          "LeftLowerArm",
+          "LeftShoulder",
+          "LeftUpperArm",
+          "RightHand",
+          "RightLowerArm",
+          "RightShoulder",
+          "RightUpperArm",
+          "UpperChest"
+        ]
+      }
+    },
+    {
+      "family": "Body",
+      "slot": "ArmorSlot.Body",
+      "variant": "D1_lamellar",
+      "state": "Broken",
+      "fbx": "zombie_armor_D1_lamellar_Broken.fbx",
+      "anchor": "anchor_torso",
+      "anchor_bone": "Chest",
+      "sub_meshes": [
+        "remnants"
+      ],
+      "object_name_pattern": "zombie_armor_D_any_Broken_remnants_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          256,
+          256,
+          256,
+          180
+        ],
+        "B": [
+          265,
+          265,
+          265,
+          180
+        ],
+        "C": [
+          274,
+          274,
+          274,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "remnants/A": [
+          256,
+          256,
+          256,
+          180
+        ],
+        "remnants/B": [
+          265,
+          265,
+          265,
+          180
+        ],
+        "remnants/C": [
+          274,
+          274,
+          274,
+          180
+        ]
+      },
+      "atlas_regions": [
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "remnants": [
+          "Chest",
+          "Hips",
+          "LeftShoulder",
+          "Neck",
+          "RightShoulder",
+          "Spine",
+          "UpperChest"
+        ]
+      }
+    },
+    {
+      "family": "Body",
+      "slot": "ArmorSlot.Body",
+      "variant": "D2_plate",
+      "state": "Present",
+      "fbx": "zombie_armor_D2_plate_Present.fbx",
+      "anchor": "anchor_torso",
+      "anchor_bone": "Chest",
+      "sub_meshes": [
+        "do",
+        "kote"
+      ],
+      "object_name_pattern": "zombie_armor_D2_plate_Present_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {
+        "kote": "zombie_armor_D_kote_<fit>_LOD<n> (same mesh in every Body variant/state FBX)"
+      },
+      "meshes": 24,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          4816,
+          1499,
+          500,
+          180
+        ],
+        "B": [
+          4933,
+          1500,
+          498,
+          179
+        ],
+        "C": [
+          4719,
+          1499,
+          499,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "do/A": [
+          3600,
+          1080,
+          360,
+          130
+        ],
+        "do/B": [
+          3599,
+          1080,
+          359,
+          129
+        ],
+        "do/C": [
+          3599,
+          1080,
+          360,
+          130
+        ],
+        "kote/A": [
+          1216,
+          419,
+          140,
+          50
+        ],
+        "kote/B": [
+          1334,
+          420,
+          139,
+          50
+        ],
+        "kote/C": [
+          1120,
+          419,
+          139,
+          50
+        ]
+      },
+      "atlas_regions": [
+        "CLOTH",
+        "D2",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "do": [
+          "Chest",
+          "Hips",
+          "LeftShoulder",
+          "Neck",
+          "RightShoulder",
+          "Spine",
+          "UpperChest"
+        ],
+        "kote": [
+          "Chest",
+          "LeftHand",
+          "LeftLowerArm",
+          "LeftShoulder",
+          "LeftUpperArm",
+          "RightHand",
+          "RightLowerArm",
+          "RightShoulder",
+          "RightUpperArm",
+          "UpperChest"
+        ]
+      }
+    },
+    {
+      "family": "Body",
+      "slot": "ArmorSlot.Body",
+      "variant": "D2_plate",
+      "state": "Damaged",
+      "fbx": "zombie_armor_D2_plate_Damaged.fbx",
+      "anchor": "anchor_torso",
+      "anchor_bone": "Chest",
+      "sub_meshes": [
+        "do",
+        "kote"
+      ],
+      "object_name_pattern": "zombie_armor_D2_plate_Damaged_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {
+        "kote": "zombie_armor_D_kote_<fit>_LOD<n> (same mesh in every Body variant/state FBX)"
+      },
+      "meshes": 24,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          4816,
+          1499,
+          500,
+          179
+        ],
+        "B": [
+          4933,
+          1499,
+          497,
+          180
+        ],
+        "C": [
+          4720,
+          1499,
+          498,
+          179
+        ]
+      },
+      "tris_by_sub_fit": {
+        "do/A": [
+          3600,
+          1080,
+          360,
+          129
+        ],
+        "do/B": [
+          3599,
+          1079,
+          358,
+          130
+        ],
+        "do/C": [
+          3600,
+          1080,
+          359,
+          129
+        ],
+        "kote/A": [
+          1216,
+          419,
+          140,
+          50
+        ],
+        "kote/B": [
+          1334,
+          420,
+          139,
+          50
+        ],
+        "kote/C": [
+          1120,
+          419,
+          139,
+          50
+        ]
+      },
+      "atlas_regions": [
+        "CLOTH",
+        "D2_dmg",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "do": [
+          "Chest",
+          "Hips",
+          "LeftShoulder",
+          "RightShoulder",
+          "Spine",
+          "UpperChest"
+        ],
+        "kote": [
+          "Chest",
+          "LeftHand",
+          "LeftLowerArm",
+          "LeftShoulder",
+          "LeftUpperArm",
+          "RightHand",
+          "RightLowerArm",
+          "RightShoulder",
+          "RightUpperArm",
+          "UpperChest"
+        ]
+      }
+    },
+    {
+      "family": "Body",
+      "slot": "ArmorSlot.Body",
+      "variant": "D2_plate",
+      "state": "Broken",
+      "fbx": "zombie_armor_D2_plate_Broken.fbx",
+      "anchor": "anchor_torso",
+      "anchor_bone": "Chest",
+      "sub_meshes": [
+        "remnants"
+      ],
+      "object_name_pattern": "zombie_armor_D_any_Broken_remnants_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          256,
+          256,
+          256,
+          180
+        ],
+        "B": [
+          265,
+          265,
+          265,
+          180
+        ],
+        "C": [
+          274,
+          274,
+          274,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "remnants/A": [
+          256,
+          256,
+          256,
+          180
+        ],
+        "remnants/B": [
+          265,
+          265,
+          265,
+          180
+        ],
+        "remnants/C": [
+          274,
+          274,
+          274,
+          180
+        ]
+      },
+      "atlas_regions": [
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "remnants": [
+          "Chest",
+          "Hips",
+          "LeftShoulder",
+          "Neck",
+          "RightShoulder",
+          "Spine",
+          "UpperChest"
+        ]
+      }
+    },
+    {
+      "family": "Leg",
+      "slot": "ArmorSlot.Leg",
+      "variant": "L1_haidate_heavy",
+      "state": "Present",
+      "fbx": "zombie_armor_L1_haidate_heavy_Present.fbx",
+      "anchor": "anchor_legs",
+      "anchor_bone": "Hips",
+      "sub_meshes": [
+        "haidate",
+        "suneate"
+      ],
+      "object_name_pattern": "zombie_armor_L1_haidate_heavy_Present_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {
+        "suneate": "zombie_armor_L1_haidate_heavy_suneate_<fit>_LOD<n> (same in Present and Damaged)"
+      },
+      "meshes": 24,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          3396,
+          1497,
+          497,
+          177
+        ],
+        "B": [
+          3395,
+          1500,
+          495,
+          178
+        ],
+        "C": [
+          3395,
+          1497,
+          494,
+          178
+        ]
+      },
+      "tris_by_sub_fit": {
+        "haidate/A": [
+          2500,
+          999,
+          325,
+          117
+        ],
+        "haidate/B": [
+          2499,
+          1000,
+          325,
+          118
+        ],
+        "haidate/C": [
+          2499,
+          999,
+          324,
+          118
+        ],
+        "suneate/A": [
+          896,
+          498,
+          172,
+          60
+        ],
+        "suneate/B": [
+          896,
+          500,
+          170,
+          60
+        ],
+        "suneate/C": [
+          896,
+          498,
+          170,
+          60
+        ]
+      },
+      "atlas_regions": [
+        "L1",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "haidate": [
+          "Hips",
+          "LeftUpperLeg",
+          "RightUpperLeg",
+          "Spine"
+        ],
+        "suneate": [
+          "LeftFoot",
+          "LeftLowerLeg",
+          "LeftUpperLeg",
+          "RightFoot",
+          "RightLowerLeg",
+          "RightUpperLeg"
+        ]
+      }
+    },
+    {
+      "family": "Leg",
+      "slot": "ArmorSlot.Leg",
+      "variant": "L1_haidate_heavy",
+      "state": "Damaged",
+      "fbx": "zombie_armor_L1_haidate_heavy_Damaged.fbx",
+      "anchor": "anchor_legs",
+      "anchor_bone": "Hips",
+      "sub_meshes": [
+        "haidate",
+        "suneate"
+      ],
+      "object_name_pattern": "zombie_armor_L1_haidate_heavy_Damaged_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {
+        "suneate": "zombie_armor_L1_haidate_heavy_suneate_<fit>_LOD<n> (same in Present and Damaged)"
+      },
+      "meshes": 24,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          3396,
+          1497,
+          496,
+          178
+        ],
+        "B": [
+          3395,
+          1500,
+          495,
+          177
+        ],
+        "C": [
+          3396,
+          1498,
+          495,
+          177
+        ]
+      },
+      "tris_by_sub_fit": {
+        "haidate/A": [
+          2500,
+          999,
+          324,
+          118
+        ],
+        "haidate/B": [
+          2499,
+          1000,
+          325,
+          117
+        ],
+        "haidate/C": [
+          2500,
+          1000,
+          325,
+          117
+        ],
+        "suneate/A": [
+          896,
+          498,
+          172,
+          60
+        ],
+        "suneate/B": [
+          896,
+          500,
+          170,
+          60
+        ],
+        "suneate/C": [
+          896,
+          498,
+          170,
+          60
+        ]
+      },
+      "atlas_regions": [
+        "L1_dmg",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "haidate": [
+          "Hips",
+          "LeftUpperLeg",
+          "RightUpperLeg",
+          "Spine"
+        ],
+        "suneate": [
+          "LeftFoot",
+          "LeftLowerLeg",
+          "LeftUpperLeg",
+          "RightFoot",
+          "RightLowerLeg",
+          "RightUpperLeg"
+        ]
+      }
+    },
+    {
+      "family": "Leg",
+      "slot": "ArmorSlot.Leg",
+      "variant": "L1_haidate_heavy",
+      "state": "Broken",
+      "fbx": "zombie_armor_L1_haidate_heavy_Broken.fbx",
+      "anchor": "anchor_legs",
+      "anchor_bone": "Hips",
+      "sub_meshes": [
+        "remnants"
+      ],
+      "object_name_pattern": "zombie_armor_L_any_Broken_remnants_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          336,
+          336,
+          336,
+          180
+        ],
+        "B": [
+          336,
+          336,
+          336,
+          180
+        ],
+        "C": [
+          336,
+          336,
+          336,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "remnants/A": [
+          336,
+          336,
+          336,
+          180
+        ],
+        "remnants/B": [
+          336,
+          336,
+          336,
+          180
+        ],
+        "remnants/C": [
+          336,
+          336,
+          336,
+          180
+        ]
+      },
+      "atlas_regions": [
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "remnants": [
+          "Hips",
+          "LeftLowerLeg",
+          "LeftUpperLeg",
+          "RightLowerLeg",
+          "RightUpperLeg",
+          "Spine"
+        ]
+      }
+    },
+    {
+      "family": "Leg",
+      "slot": "ArmorSlot.Leg",
+      "variant": "L2_suneate_heavy",
+      "state": "Present",
+      "fbx": "zombie_armor_L2_suneate_heavy_Present.fbx",
+      "anchor": "anchor_legs",
+      "anchor_bone": "Hips",
+      "sub_meshes": [
+        "haidate",
+        "suneate"
+      ],
+      "object_name_pattern": "zombie_armor_L2_suneate_heavy_Present_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {
+        "suneate": "zombie_armor_L2_suneate_heavy_suneate_<fit>_LOD<n> (same in Present and Damaged)"
+      },
+      "meshes": 24,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          3395,
+          1499,
+          495,
+          178
+        ],
+        "B": [
+          3395,
+          1499,
+          497,
+          178
+        ],
+        "C": [
+          3396,
+          1497,
+          495,
+          176
+        ]
+      },
+      "tris_by_sub_fit": {
+        "haidate/A": [
+          2499,
+          999,
+          325,
+          118
+        ],
+        "haidate/B": [
+          2499,
+          999,
+          325,
+          118
+        ],
+        "haidate/C": [
+          2500,
+          999,
+          325,
+          118
+        ],
+        "suneate/A": [
+          896,
+          500,
+          170,
+          60
+        ],
+        "suneate/B": [
+          896,
+          500,
+          172,
+          60
+        ],
+        "suneate/C": [
+          896,
+          498,
+          170,
+          58
+        ]
+      },
+      "atlas_regions": [
+        "L1",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "haidate": [
+          "Hips",
+          "LeftUpperLeg",
+          "RightUpperLeg",
+          "Spine"
+        ],
+        "suneate": [
+          "LeftFoot",
+          "LeftLowerLeg",
+          "LeftUpperLeg",
+          "RightFoot",
+          "RightLowerLeg",
+          "RightUpperLeg"
+        ]
+      }
+    },
+    {
+      "family": "Leg",
+      "slot": "ArmorSlot.Leg",
+      "variant": "L2_suneate_heavy",
+      "state": "Damaged",
+      "fbx": "zombie_armor_L2_suneate_heavy_Damaged.fbx",
+      "anchor": "anchor_legs",
+      "anchor_bone": "Hips",
+      "sub_meshes": [
+        "haidate",
+        "suneate"
+      ],
+      "object_name_pattern": "zombie_armor_L2_suneate_heavy_Damaged_<sub>_<fit>_LOD<n>",
+      "shared_sub_meshes": {
+        "suneate": "zombie_armor_L2_suneate_heavy_suneate_<fit>_LOD<n> (same in Present and Damaged)"
+      },
+      "meshes": 24,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          3395,
+          1500,
+          494,
+          178
+        ],
+        "B": [
+          3395,
+          1499,
+          497,
+          178
+        ],
+        "C": [
+          3396,
+          1498,
+          495,
+          176
+        ]
+      },
+      "tris_by_sub_fit": {
+        "haidate/A": [
+          2499,
+          1000,
+          324,
+          118
+        ],
+        "haidate/B": [
+          2499,
+          999,
+          325,
+          118
+        ],
+        "haidate/C": [
+          2500,
+          1000,
+          325,
+          118
+        ],
+        "suneate/A": [
+          896,
+          500,
+          170,
+          60
+        ],
+        "suneate/B": [
+          896,
+          500,
+          172,
+          60
+        ],
+        "suneate/C": [
+          896,
+          498,
+          170,
+          58
+        ]
+      },
+      "atlas_regions": [
+        "L1_dmg",
+        "LACQ",
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "haidate": [
+          "Hips",
+          "LeftUpperLeg",
+          "RightUpperLeg",
+          "Spine"
+        ],
+        "suneate": [
+          "LeftFoot",
+          "LeftLowerLeg",
+          "LeftUpperLeg",
+          "RightFoot",
+          "RightLowerLeg",
+          "RightUpperLeg"
+        ]
+      }
+    },
+    {
+      "family": "Leg",
+      "slot": "ArmorSlot.Leg",
+      "variant": "L2_suneate_heavy",
+      "state": "Broken",
+      "fbx": "zombie_armor_L2_suneate_heavy_Broken.fbx",
+      "anchor": "anchor_legs",
+      "anchor_bone": "Hips",
+      "sub_meshes": [
+        "remnants"
+      ],
+      "object_name_pattern": "zombie_armor_L_any_Broken_remnants_<fit>_LOD<n>",
+      "shared_sub_meshes": {},
+      "meshes": 12,
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          336,
+          336,
+          336,
+          180
+        ],
+        "B": [
+          336,
+          336,
+          336,
+          180
+        ],
+        "C": [
+          336,
+          336,
+          336,
+          180
+        ]
+      },
+      "tris_by_sub_fit": {
+        "remnants/A": [
+          336,
+          336,
+          336,
+          180
+        ],
+        "remnants/B": [
+          336,
+          336,
+          336,
+          180
+        ],
+        "remnants/C": [
+          336,
+          336,
+          336,
+          180
+        ]
+      },
+      "atlas_regions": [
+        "STRAP"
+      ],
+      "skin_bones_LOD0_A": {
+        "remnants": [
+          "Hips",
+          "LeftLowerLeg",
+          "LeftUpperLeg",
+          "RightLowerLeg",
+          "RightUpperLeg",
+          "Spine"
+        ]
+      }
+    }
+  ],
+  "budgets": {
+    "per_family_LOD0_3": {
+      "Helmet": [
+        3750,
+        1500,
+        500,
+        180
+      ],
+      "Body": [
+        5000,
+        1500,
+        500,
+        180
+      ],
+      "Leg": [
+        3750,
+        1500,
+        500,
+        180
+      ],
+      "Broken": [
+        400,
+        400,
+        400,
+        180
+      ]
+    },
+    "sub_split": {
+      "do": [
+        3600,
+        1080,
+        360,
+        130
+      ],
+      "kote": [
+        1400,
+        420,
+        140,
+        50
+      ],
+      "haidate": [
+        2500,
+        1000,
+        325,
+        118
+      ],
+      "suneate": [
+        1250,
+        500,
+        170,
+        60
+      ],
+      "kabuto": [
+        3750,
+        1500,
+        500,
+        180
+      ]
+    },
+    "note": "family = main + sub meshes at the same LOD index; Broken <= 400"
+  },
+  "rules": {
+    "excluded_modules_by_piece": {
+      "Helmet/K2_kabuto": [
+        "H2_hair_matted",
+        "H3_topknot_broken",
+        "H4_tenugui_wrap",
+        "H5_hachimaki_band"
+      ],
+      "Body/D1_lamellar": [
+        "T2_kosode_long",
+        "T6_bare_straps",
+        "T7_mino_cape"
+      ],
+      "Body/D2_plate": [
+        "T6_bare_straps",
+        "T7_mino_cape"
+      ],
+      "Leg/L1_haidate_heavy+L2_suneate_heavy": [
+        "B1_hakama_wide",
+        "B3_koshimaki_wrap",
+        "B4_tattsuke_hakama",
+        "B6_hakama_torn"
+      ]
+    },
+    "spawner": [
+      "Body Present/Damaged: never T7_mino_cape (AP-007 rule); T6_bare_straps only with D1 (D2 clips the chest knot by 3 mm)",
+      "Leg Present/Damaged: bottoms B2_momohiki_tight / B5_fundoshi / B7_momohiki_kyahan only (wide hakama B1/B6, koshimaki B3 and tattsuke B4 poke through the haidate wrap)",
+      "Helmet Present/Damaged (K2 kabuto): heads H0/H1/H2 only (H3 topknot, H4 tenugui knot, H5 hachimaki band poke through the shikoro); K1 jingasa: any head",
+      "readability (DEC-077 armour rule, measured in AP-008): Body/Leg Present/Damaged => the cloth module under it is cw2 (faded); helmets prefer H0/H1 heads",
+      "Broken keeps the remnants mesh on (never Absent) so the lost armour still reads"
+    ],
+    "tint": "IEnemyVersionVisual tint only where Mask.R = 1 (lacquer); cords/cloth (G) and iron (B) never; Mask.A = damage (shader may use it for extra wear)"
+  },
+  "measurements": {
+    "armour_pixels": {
+      "px": 49695,
+      "mean_V": 0.205,
+      "p95_V": 0.31,
+      "mean_S": 0.057,
+      "p95_S": 0.153
+    },
+    "player_mark_clash_pixels": 0,
+    "fidelity": {
+      "pairs": [
+        {
+          "variant": "K2_kabuto",
+          "hf_key": "K2",
+          "silhouette_iou_bbox_normalised": {
+            "front": 0.879,
+            "left": 0.86,
+            "back": 0.839,
+            "right": 0.859
+          }
+        },
+        {
+          "variant": "D1_lamellar",
+          "hf_key": "D1",
+          "silhouette_iou_bbox_normalised": {
+            "front": 0.584,
+            "left": 0.706,
+            "back": 0.582,
+            "right": 0.705
+          }
+        },
+        {
+          "variant": "D2_plate",
+          "hf_key": "D2",
+          "silhouette_iou_bbox_normalised": {
+            "front": 0.557,
+            "left": 0.647,
+            "back": 0.549,
+            "right": 0.631
+          }
+        },
+        {
+          "variant": "L1_haidate_heavy",
+          "hf_key": "L1",
+          "silhouette_iou_bbox_normalised": {
+            "front": 0.894,
+            "left": 0.888,
+            "back": 0.905,
+            "right": 0.895
+          }
+        }
+      ],
+      "note": "bbox-normalised silhouette IoU between the Higgsfield turnaround crop and the render (same view); shape fidelity only, texture judged by the art director on the sheets"
+    },
+    "rigtest": {
+      "max_pokes": 15,
+      "frames": 36,
+      "over_zero": [
+        "A/set1/RigTest_Idle/f0",
+        "A/set1/RigTest_Idle/f12",
+        "A/set1/RigTest_Walk/f0",
+        "A/set1/RigTest_Walk/f8",
+        "A/set1/RigTest_Walk/f16",
+        "A/set1/RigTest_Walk/f24",
+        "A/set2/RigTest_Idle/f0",
+        "A/set2/RigTest_Idle/f12",
+        "A/set2/RigTest_Walk/f0",
+        "A/set2/RigTest_Walk/f8",
+        "A/set2/RigTest_Walk/f16",
+        "A/set2/RigTest_Walk/f24",
+        "B/set1/RigTest_Idle/f0",
+        "B/set1/RigTest_Idle/f12",
+        "B/set1/RigTest_Walk/f0",
+        "B/set1/RigTest_Walk/f8",
+        "B/set1/RigTest_Walk/f16",
+        "B/set1/RigTest_Walk/f24",
+        "B/set2/RigTest_Idle/f0",
+        "B/set2/RigTest_Idle/f12",
+        "B/set2/RigTest_Walk/f0",
+        "B/set2/RigTest_Walk/f8",
+        "B/set2/RigTest_Walk/f16",
+        "B/set2/RigTest_Walk/f24",
+        "C/set1/RigTest_Idle/f0",
+        "C/set1/RigTest_Idle/f12",
+        "C/set1/RigTest_Walk/f0",
+        "C/set1/RigTest_Walk/f8",
+        "C/set1/RigTest_Walk/f24",
+        "C/set2/RigTest_Idle/f0",
+        "C/set2/RigTest_Idle/f12",
+        "C/set2/RigTest_Walk/f0",
+        "C/set2/RigTest_Walk/f8",
+        "C/set2/RigTest_Walk/f16",
+        "C/set2/RigTest_Walk/f24"
+      ],
+      "note": "body vertices whose inward-facing armour hit lies within 3 mm (skin poking through) per posed frame"
+    },
+    "crowd": {
+      "instances_total": 40,
+      "instances_visible": 40,
+      "armoured_regions_visible": 63,
+      "broken_regions_visible": 10,
+      "height_px": {
+        "min": 79,
+        "max": 141,
+        "mean": 101.8
+      },
+      "armour_deltaV_adjacent": {
+        "method": "per visible armoured region (Present/Damaged): |mean V armour pixels - mean V of the same figure's unarmoured pixels within a 6 px band|, composite over the AP-005 centre render, threshold 0.15",
+        "n": 63,
+        "min": 0.001,
+        "mean": 0.11,
+        "under_0.15": [
+          "0/Helmet",
+          "0/Leg",
+          "3/Helmet",
+          "3/Body",
+          "5/Helmet",
+          "5/Leg",
+          "6/Helmet",
+          "7/Helmet",
+          "7/Leg",
+          "8/Helmet",
+          "9/Helmet",
+          "9/Body",
+          "9/Leg",
+          "11/Leg",
+          "12/Helmet",
+          "12/Leg",
+          "13/Helmet",
+          "13/Leg",
+          "14/Helmet",
+          "15/Helmet",
+          "15/Leg",
+          "16/Helmet",
+          "18/Body",
+          "18/Leg",
+          "19/Leg",
+          "20/Helmet",
+          "20/Body",
+          "21/Helmet",
+          "21/Leg",
+          "22/Helmet",
+          "22/Leg",
+          "23/Helmet",
+          "23/Leg",
+          "25/Helmet",
+          "26/Helmet",
+          "26/Body",
+          "27/Helmet",
+          "27/Body",
+          "28/Helmet",
+          "28/Leg",
+          "31/Helmet",
+          "31/Body",
+          "31/Leg",
+          "33/Leg",
+          "34/Leg",
+          "36/Body",
+          "37/Helmet",
+          "39/Helmet",
+          "39/Leg"
+        ]
+      },
+      "armour_deltaV_rest_of_figure": {
+        "n": 63,
+        "min": 0.01,
+        "mean": 0.11,
+        "under_0.15": [
+          "0/Helmet",
+          "0/Body",
+          "0/Leg",
+          "3/Helmet",
+          "3/Body",
+          "5/Helmet",
+          "5/Body",
+          "6/Helmet",
+          "7/Helmet",
+          "7/Leg",
+          "8/Helmet",
+          "8/Body",
+          "9/Helmet",
+          "9/Body",
+          "9/Leg",
+          "11/Leg",
+          "12/Helmet",
+          "13/Helmet",
+          "13/Leg",
+          "14/Helmet",
+          "15/Helmet",
+          "16/Helmet",
+          "18/Body",
+          "18/Leg",
+          "20/Helmet",
+          "20/Body",
+          "20/Leg",
+          "21/Helmet",
+          "21/Leg",
+          "23/Helmet",
+          "25/Helmet",
+          "26/Helmet",
+          "26/Body",
+          "27/Helmet",
+          "27/Body",
+          "28/Helmet",
+          "28/Leg",
+          "31/Helmet",
+          "31/Body",
+          "31/Leg",
+          "34/Leg",
+          "36/Body",
+          "37/Helmet",
+          "39/Helmet",
+          "39/Leg"
+        ]
+      },
+      "armour_deltaV_ground": {
+        "n": 63,
+        "min": 0.073,
+        "mean": 0.158,
+        "under_0.15": [
+          "3/Helmet",
+          "5/Helmet",
+          "7/Helmet",
+          "8/Helmet",
+          "8/Body",
+          "9/Helmet",
+          "9/Body",
+          "11/Leg",
+          "12/Helmet",
+          "13/Helmet",
+          "14/Helmet",
+          "16/Helmet",
+          "18/Body",
+          "21/Helmet",
+          "22/Helmet",
+          "23/Helmet",
+          "26/Helmet",
+          "28/Helmet",
+          "28/Leg",
+          "31/Helmet",
+          "31/Body",
+          "37/Helmet",
+          "39/Helmet"
+        ]
+      },
+      "by_family_and_cloth_colourway": {
+        "Body/-": {
+          "n": 1,
+          "min": 0.123,
+          "mean": 0.123,
+          "under_0.15": 1
+        },
+        "Body/cw2": {
+          "n": 17,
+          "min": 0.075,
+          "mean": 0.147,
+          "under_0.15": 7
+        },
+        "Helmet/-": {
+          "n": 23,
+          "min": 0.001,
+          "mean": 0.08,
+          "under_0.15": 23
+        },
+        "Leg/-": {
+          "n": 6,
+          "min": 0.077,
+          "mean": 0.156,
+          "under_0.15": 2
+        },
+        "Leg/cw2": {
+          "n": 16,
+          "min": 0.034,
+          "mean": 0.095,
+          "under_0.15": 16
+        }
+      },
+      "reserve_hits": {
+        "px_s_over_0.45": 6,
+        "px_beacon_reserve": 0,
+        "px_gold_band_s_over_0.30": 7
+      }
+    }
+  }
+}

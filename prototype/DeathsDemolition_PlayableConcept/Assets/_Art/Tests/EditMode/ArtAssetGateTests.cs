@@ -241,6 +241,16 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(19, moduller, "AP-007 19 modül FBX");
 
+            // WP-017 (ADR-017-1): the 18 AP-008 armour files listed by the manifest (6 variants × 3 states).
+            int zirh = 0;
+            foreach (object o in ArtJson.AsList(ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtArmorBuilder.ManifestJson)), "manifest")["families"], "families"))
+            {
+                string fbx = ArtJson.AsString(ArtJson.AsObject(o, "piece")["fbx"]);
+                if (beklenen.Add(ArtArmorBuilder.ArmorFolder + "/" + Path.GetFileName(fbx))) zirh++;
+            }
+
+            Assert.AreEqual(ArtArmorBuilder.ExpectedFbxCount, zirh, "AP-008 18 zırh FBX");
+
             var diskte = new HashSet<string>(DiskteUzanti(".fbx"), StringComparer.Ordinal);
             var eksik = new List<string>();
             var fazla = new List<string>();
@@ -252,7 +262,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(18, ArtFamilies.All.Length, "ArtFamilies.All 18 aile olmalı.");
             Assert.IsEmpty(eksik, "Beklenen FBX diskte yok (" + eksik.Count + "):\n" + string.Join("\n", eksik));
             Assert.IsEmpty(fazla, "Aile tablosunda karşılığı olmayan FBX (" + fazla.Count + "):\n" + string.Join("\n", fazla));
-            Assert.AreEqual(155, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) = 155 olmalı.");
+            Assert.AreEqual(161, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) = 161 olmalı.");
             Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55 - kutuphane) + " collider + zemin + " + kutuphane + " kütüphane)");
         }
 
@@ -335,7 +345,9 @@ namespace DD.Art.Tests.EditMode
                 beklenen.Add(ArtPipelinePaths.DerivedMask(rol));
             }
 
-            Assert.AreEqual(82, beklenen.Count, "Beklenen doku kümesi 19 + 63 (WP-012) = 82 olmalı.");
+            // WP-017: + 6 AP-005B prop roles (BaseColor + Normal + Packed + derived mask = 24) + the generated roof-course normal → 82 + 25 = 107.
+            beklenen.Add(ArtPipelinePaths.DerivedTexture(ArtLibraryMaterialRoles.RoofCoursesTextureRole, "Normal"));
+            Assert.AreEqual(107, beklenen.Count, "Beklenen doku kümesi 19 + 63 (WP-012) + 24 (WP-017 prop) + 1 (roof_courses) = 107 olmalı.");
 
             // WP-016 karakter setleri (ADR-016-1): oyuncu 3 skin albedo + Normal + Packed(ORM) + türetilmiş
             // MetallicSmoothness(+AO); zombi atlas BaseColor + Normal + Packed + Mask + türetilmiş MS + DetailMask.
@@ -346,10 +358,13 @@ namespace DD.Art.Tests.EditMode
                 pt + "/T_player_skin1_BaseColor.png", pt + "/T_player_skin2a_BaseColor.png", pt + "/T_player_skin3_BaseColor.png",
                 pt + "/T_player_Normal.png", pt + "/T_player_Packed.png", pd + "/T_player_MetallicSmoothness.png",
                 zt + "/T_zombie_atlas_BaseColor.png", zt + "/T_zombie_atlas_Normal.png", zt + "/T_zombie_atlas_Packed.png", zt + "/T_zombie_atlas_Mask.png",
-                zd + "/T_zombie_atlas_MetallicSmoothness.png", zd + "/T_zombie_atlas_DetailMask.png"
+                zd + "/T_zombie_atlas_MetallicSmoothness.png", zd + "/T_zombie_atlas_DetailMask.png",
+                // WP-017 AP-008 armour atlas: BaseColor + Normal + Packed + Mask + derived MS + lacquer DetailMask.
+                ArtArmorBuilder.BaseColorMap, ArtArmorBuilder.NormalMap, ArtArmorBuilder.PackedMap, ArtArmorBuilder.MaskMap,
+                ArtArmorBuilder.MetallicSmoothnessMap, ArtArmorBuilder.DetailMaskMap
             }) beklenen.Add(f);
 
-            Assert.AreEqual(94, beklenen.Count, "Beklenen doku kümesi 82 + 12 (WP-016 karakterler) = 94 olmalı.");
+            Assert.AreEqual(125, beklenen.Count, "Beklenen doku kümesi 107 + 12 (WP-016 karakterler) + 6 (WP-017 zırh) = 125 olmalı.");
 
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();
@@ -409,7 +424,7 @@ namespace DD.Art.Tests.EditMode
             var ihlaller = new List<string>();
             var sinifToplam = new SortedDictionary<string, long>();
             var sinifSayi = new SortedDictionary<string, int>();
-            long sevk = 0, tam2048 = 0;
+            long sevk = 0, tam2048 = 0, sevkDunya = 0, sevkKarakter = 0;
             int sevkSayi = 0;
             foreach (string yol in pngler)
             {
@@ -439,6 +454,7 @@ namespace DD.Art.Tests.EditMode
                 if (rol == ArtImportContract.TextureRole.Packed || rol == ArtImportContract.TextureRole.Mask) continue;   // provenance only; no material binds them (WP-016: the AP-007 ID mask feeds the derived DetailMask)
                 long bytes = ArtImportContract.EstimatedShippedBytes(w, h, sinif.Value, importer.mipmapEnabled);
                 sevk += bytes;
+                if (ArtImportContract.IsCharacterClass(sinif.Value)) sevkKarakter += bytes; else sevkDunya += bytes;
                 sevkSayi++;
                 tam2048 += ArtImportContract.EstimatedShippedBytes(w, h, ArtImportContract.TextureClass.Ground, importer.mipmapEnabled);
                 string k = sinif.Value.ToString();
@@ -449,9 +465,12 @@ namespace DD.Art.Tests.EditMode
             Assert.IsEmpty(ihlaller, "Doku politikası ihlali (" + ihlaller.Count + "):\n" + string.Join("\n", ihlaller));
             var satirlar = new List<string>();
             foreach (KeyValuePair<string, long> kv in sinifToplam) satirlar.Add(kv.Key + " " + sinifSayi[kv.Key] + " doku " + (kv.Value / 1048576.0).ToString("F1") + " MB");
-            double sevkMb = sevk / 1048576.0;
-            Debug.Log("[DD-TEST] wp015.texturePolicy shipped=" + sevkSayi + " estMB=" + sevkMb.ToString("F1") + " (all-2048 would be " + (tam2048 / 1048576.0).ToString("F1") + " MB) budgetMB=" + ArtImportContract.ArtTextureMemoryBudgetMb + " | " + string.Join(" | ", satirlar));
-            Assert.LessOrEqual(sevkMb, ArtImportContract.ArtTextureMemoryBudgetMb, "Sevk edilen doku kümesi tam yerleşik hâlde bile bütçeyi aşıyor (ADR-015-1).");
+            double sevkMb = sevk / 1048576.0, dunyaMb = sevkDunya / 1048576.0, karakterMb = sevkKarakter / 1048576.0;
+            Debug.Log("[DD-TEST] wp015.texturePolicy shipped=" + sevkSayi + " estMB=" + sevkMb.ToString("F1") + " (all-2048 would be " + (tam2048 / 1048576.0).ToString("F1") + " MB) world=" + dunyaMb.ToString("F1") + "/" + ArtImportContract.ShippedWorldBudgetMb + " character=" + karakterMb.ToString("F1") + "/" + ArtImportContract.ShippedCharacterBudgetMb + " total/" + ArtImportContract.ShippedTotalBudgetMb + " | " + string.Join(" | ", satirlar));
+            // WP-017 · ADR-015-1 v2: world ≤ 120, character ≤ 80, total ≤ 200 MB (fully resident, before streaming).
+            Assert.LessOrEqual(dunyaMb, ArtImportContract.ShippedWorldBudgetMb, "Dünya doku kümesi (Ground/Structure/Foliage/Prop/Sky) sevk bütçesini aşıyor (ADR-015-1 v2).");
+            Assert.LessOrEqual(karakterMb, ArtImportContract.ShippedCharacterBudgetMb, "Karakter doku kümesi (oyuncu + zombi + zırh atlası) sevk bütçesini aşıyor (ADR-015-1 v2).");
+            Assert.LessOrEqual(sevkMb, ArtImportContract.ShippedTotalBudgetMb, "Sevk edilen doku kümesi toplam bütçeyi aşıyor (ADR-015-1 v2).");
         }
 
         private static void PngBoyut(string yol, out int w, out int h)

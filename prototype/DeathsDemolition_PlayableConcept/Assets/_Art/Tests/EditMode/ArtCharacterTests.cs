@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void HerKarakterFbx_V11Sozlesmesi_Avatar_HumanEslemesiKaynaklaAyni()
         {
             List<string> files = CharacterFbx();
-            Assert.AreEqual(27, files.Count, "27 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 19 modül + 2 klip):\n" + string.Join("\n", files));
+            Assert.AreEqual(45, files.Count, "45 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 19 modül + 2 klip; WP-017 zırh 18):\n" + string.Join("\n", files));
 
             List<string> playerMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.PlayerAvatarSource));
             List<string> zombieMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource));
@@ -166,7 +166,8 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual("Chest", visual.TorsoAnchor.parent.name);
             Assert.AreEqual("Hips", visual.LegsAnchor.parent.name);
             Assert.AreEqual(4, visual.LodGroup.GetLODs().Length);
-            Assert.AreEqual(4, visual.LodGroup.GetLODs()[0].renderers.Length, "LOD0 dört slot");
+            Assert.AreEqual(ZombieSkinnedVisual.SlotCount + ZombieSkinnedVisual.ArmorSlotCount * ZombieSkinnedVisual.ArmorPartCount, visual.LodGroup.GetLODs()[0].renderers.Length, "LOD0 dört giysi + altı zırh renderer'ı (WP-017)");
+            Assert.IsTrue(visual.HasArmorSlots, "WP-017 zırh yuvaları");
         }
 
         // ================================================================ kütüphane

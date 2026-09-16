@@ -77,7 +77,7 @@ namespace DD.Art.Tests.EditMode
         // ================================================================== şema ve sayılar
 
         [Test]
-        public void Placement_SemaGecerli_Sayilar_2354_49_24_12_12_5_KaynakShaAyni()
+        public void Placement_SemaGecerli_Sayilar_2387_49_24_12_12_5_KaynakShaAyni()
         {
             Dictionary<string, object> doc = SourceJson();
             Assert.DoesNotThrow(() => PlacementImporter.Validate(doc), "dd-placement-v1 şema doğrulaması");
@@ -85,20 +85,21 @@ namespace DD.Art.Tests.EditMode
             WorldPlacementAsset p = Placement();
             Assert.AreEqual(WorldPlacementAsset.Schema, p.schema);
             Assert.AreEqual("AP-005", p.package);
-            Assert.AreEqual(2354, p.instances.Count, "instances");
+            // WP-017: v001 source (2354) + AP-005B delta (+202 / ~9 / −169) = 2387.
+            Assert.AreEqual(2387, p.instances.Count, "instances");
             Assert.AreEqual(49, p.routes.Count, "routes");
             Assert.AreEqual(24, p.markers.Count, "markers");
             Assert.AreEqual(12, p.spawnPoints.Count, "spawn_points");
             Assert.AreEqual(12, p.weaponPoints.Count, "weapon_points");
             Assert.AreEqual(5, p.regions.Count, "regions");
-            Assert.AreEqual(ArtJson.AsList(doc["instances"]).Count, p.instances.Count, "asset ↔ json instance sayısı");
+            Assert.AreEqual(ArtJson.AsList(doc["instances"]).Count + p.deltaAdded - p.deltaRemoved, p.instances.Count, "asset ↔ json + delta instance sayısı");
             Assert.AreEqual(Sha256(File.ReadAllBytes(ArtLibraryPaths.Ap005PlacementJson)), p.sourceSha256, "asset kaynağın sha256'sını taşımalı");
 
             var ids = new HashSet<string>(StringComparer.Ordinal);
             foreach (WorldPlacementAsset.Instance i in p.instances) Assert.IsTrue(ids.Add(i.id), "çift id " + i.id);
             var byRegion = new Dictionary<string, int>();
             foreach (WorldPlacementAsset.Instance i in p.instances) byRegion[i.region] = (byRegion.TryGetValue(i.region, out int n) ? n : 0) + 1;
-            Debug.Log("[DD-TEST] wp014.placement instances=2354 regions=" + string.Join(",", byRegion));
+            Debug.Log("[DD-TEST] wp014.placement instances=" + p.instances.Count + " regions=" + string.Join(",", byRegion));
         }
 
         // ================================================================== WP-015 · override'lar
@@ -141,6 +142,16 @@ namespace DD.Art.Tests.EditMode
             foreach (object o in ArtJson.AsList(SourceJson()["instances"], "instances"))
             {
                 Dictionary<string, object> r = ArtJson.AsObject(o, "instance");
+                List<object> pos = ArtJson.AsList(r["position"], "position");
+                source[ArtJson.AsString(r["id"])] = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(pos[0]), ArtJson.AsFloat(pos[1]), ArtJson.AsFloat(pos[2]));
+            }
+
+            // WP-017: the AP-005B delta (added + changed records) is part of the "source" the overrides sit on.
+            Dictionary<string, object> deltaDoc = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtLibraryPaths.Ap005PlacementDeltaJson)), "delta");
+            foreach (string key in new[] { "added", "changed" })
+            foreach (object o in ArtJson.AsList(deltaDoc[key], key))
+            {
+                Dictionary<string, object> r = ArtJson.AsObject(o, key);
                 List<object> pos = ArtJson.AsList(r["position"], "position");
                 source[ArtJson.AsString(r["id"])] = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(pos[0]), ArtJson.AsFloat(pos[1]), ArtJson.AsFloat(pos[2]));
             }
@@ -225,15 +236,13 @@ namespace DD.Art.Tests.EditMode
                 // Expected: Blender local AABB corners → yaw about +Z → +position → AABB → Unity (x, z, y).
                 Vector3 bmin = new Vector3(v.boundsMin[0], v.boundsMin[1], v.boundsMin[2]);
                 Vector3 bmax = new Vector3(v.boundsMax[0], v.boundsMax[1], v.boundsMax[2]);
-                float yaw = inst.yawDegrees * Mathf.Deg2Rad;
-                float c = Mathf.Cos(yaw), s = Mathf.Sin(yaw);
                 Vector3 bpos = new Vector3(inst.position.x, inst.position.z, inst.position.y);
                 var emin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
                 var emax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
                 for (int k = 0; k < 8; k++)
                 {
                     var corner = new Vector3((k & 1) != 0 ? bmax.x : bmin.x, (k & 2) != 0 ? bmax.y : bmin.y, (k & 4) != 0 ? bmax.z : bmin.z);
-                    var r = new Vector3(corner.x * c - corner.y * s, corner.x * s + corner.y * c, corner.z) + bpos;
+                    Vector3 r = WorldPlacementAsset.RotateBlender(inst.rotationEuler, corner) + bpos;   // WP-017: full XYZ euler (tilted gable panels)
                     emin = Vector3.Min(emin, r);
                     emax = Vector3.Max(emax, r);
                 }
@@ -326,14 +335,14 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(242, assemblies, "assembly[] taşıyan kayıt");
+            Assert.AreEqual(213, assemblies, "assembly[] taşıyan kayıt (v001 242 − delta kaldırılan 29)");
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
         }
 
         // ================================================================== sahne atamaları
 
         [Test]
-        public void Sahne_2354Ornek_RegionNavmeshKatmanStatik_NavMeshVerisi()
+        public void Sahne_2387Ornek_RegionNavmeshKatmanStatik_NavMeshVerisi()
         {
             WorldPlacementAsset p = Placement();
             Scene scene = OpenWorld();
@@ -365,9 +374,14 @@ namespace DD.Art.Tests.EditMode
 
                 if (occluder) occluders++;
 
-                bool isStatic = (GameObjectUtility.GetStaticEditorFlags(t.gameObject) & StaticEditorFlags.BatchingStatic) != 0;
+                StaticEditorFlags flags = GameObjectUtility.GetStaticEditorFlags(t.gameObject);
+                bool isStatic = (flags & StaticEditorFlags.OccludeeStatic) != 0;
+                bool isBatched = (flags & StaticEditorFlags.BatchingStatic) != 0;
                 bool expectStatic = inst.role == "structure" || inst.role == "ground" || inst.role == "dressing";
+                // WP-017: heavy meshes (roof bays / slabs) are static but not batched (scene-file size).
+                bool expectBatched = expectStatic && !PlacementImporter.IsHeavyForStaticBatching(PrefabUtility.GetCorrespondingObjectFromSource(t.gameObject));
                 if (isStatic != expectStatic) hatalar.Add(inst.id + ": static " + isStatic + " (rol " + inst.role + ")");
+                if (isBatched != expectBatched) hatalar.Add(inst.id + ": batching " + isBatched + " (beklenen " + expectBatched + ")");
                 if (isStatic) statics++;
 
                 var modifier = t.GetComponent<NavMeshModifier>();
@@ -379,9 +393,10 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar.GetRange(0, Math.Min(40, hatalar.Count))));
-            Assert.AreEqual(21, regionCounts["center"]); Assert.AreEqual(310, regionCounts["north"]); Assert.AreEqual(641, regionCounts["east"]);
-            Assert.AreEqual(521, regionCounts["south"]); Assert.AreEqual(861, regionCounts["west"]);
-            Assert.AreEqual(109, occluders, "occluder_candidate 105 + fade_mesh 4");
+            // WP-017 (AP-005B v002): center 20, north 397, east 630, south 527, west 813; occluder 146 ∪ fade 27 = 150.
+            Assert.AreEqual(20, regionCounts["center"]); Assert.AreEqual(397, regionCounts["north"]); Assert.AreEqual(630, regionCounts["east"]);
+            Assert.AreEqual(527, regionCounts["south"]); Assert.AreEqual(813, regionCounts["west"]);
+            Assert.AreEqual(150, occluders, "occluder_candidate 146 ∪ fade_mesh 27 = 150 (AP-005B v002)");
 
             NavMeshSurface surface = null;
             foreach (GameObject root in scene.GetRootGameObjects())
@@ -403,7 +418,7 @@ namespace DD.Art.Tests.EditMode
             Scene scene = OpenWorld();
             string once = PlacementImporter.Digest(Instances(scene));
             PlacementImporter.ImportReport report = PlacementImporter.BuildScene(p);
-            Assert.AreEqual(2354, report.Instances);
+            Assert.AreEqual(2387, report.Instances);
             Assert.IsEmpty(report.Unmatched, "eşleşmeyen kayıt");
             Assert.AreEqual(once, report.Digest, "İkinci koşu farklı bir örnek kümesi üretti (idempotency kırık).");
             Scene again = OpenWorld();

@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Characters/Zombie/Textures/T_zombie_armor_Packed.png",
+    "sourceSha256": "45c45e8a025c08ef30fbb37200441ffb11cbf10cac0599bb50aa0936a83b6463",
+    "algorithm": "MetallicSmoothnessAO v1 (WP-016): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T09:40:27.6334880Z",
+    "outputSha256": "78e5e30972eb3ed0c645045b2d2cc06de3bda4c2675701188c51376badc51cf2"
+}

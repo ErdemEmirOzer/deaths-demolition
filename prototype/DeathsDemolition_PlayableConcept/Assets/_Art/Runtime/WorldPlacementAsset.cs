@@ -24,13 +24,23 @@ namespace DD.Art
             public string lodGroup;
             public string[] assembly;
             public Vector3 position;
+            /// <summary>Blender yaw about +Z (CCW, degrees) — the dd-placement-v1 rotation; equals <c>rotationEuler.z</c>.</summary>
             public float yawDegrees;
+            /// <summary>WP-017 · Full Blender XYZ euler (degrees, extrinsic X → Y → Z). AP-005B tilts eight gable panels about Y; every v001 record is (0, 0, yaw).</summary>
+            public Vector3 rotationEuler;
             public Vector3 scale = Vector3.one;
+
+            public bool IsTilted => Mathf.Abs(rotationEuler.x) > 1e-4f || Mathf.Abs(rotationEuler.y) > 1e-4f;
+            public Quaternion Rotation => ToUnityRotation(rotationEuler);
             public string region;
             public string role;
             public string navMesh;
             public bool occluder;
             public bool fade;
+            /// <summary>WP-017 · AP-005B world-master material name (<c>material_override</c>), empty = the prefab's own materials. Mapped by <c>PlacementImporter.MaterialOverrides</c>.</summary>
+            public string materialOverride;
+            /// <summary>WP-017 · "v002" for records added or changed by the AP-005B delta; empty for v001 records.</summary>
+            public string deltaVersion;
         }
 
         [Serializable]
@@ -80,6 +90,13 @@ namespace DD.Art
         public string overridesSha256;
         /// <summary>WP-015 · ids whose transform differs from the source by an override (in file order).</summary>
         public List<string> overriddenIds = new List<string>();
+        /// <summary>WP-017 · AP-005B delta (dd-placement-delta-v1) applied on top of the v001 source: sha256 of the delta file and its counts; empty sha = no delta.</summary>
+        public string deltaSha256;
+        public string deltaTarget;
+        public int deltaAdded;
+        public int deltaChanged;
+        public int deltaRemoved;
+        public List<string> deltaRemovedIds = new List<string>();
         public List<Instance> instances = new List<Instance>();
         public List<Route> routes = new List<Route>();
         public List<Marker> markers = new List<Marker>();
@@ -90,6 +107,8 @@ namespace DD.Art
 
         public const string Schema = "dd-placement-v1";
         public const string OverridesSchema = "dd-placement-overrides-v1";
+        public const string DeltaSchema = "dd-placement-delta-v1";
+        public const string DeltaVersionTag = "v002";
 
         /// <summary>Blender (x, y, z) → Unity (x, z, y).</summary>
         public static Vector3 ToUnity(float bx, float by, float bz)
@@ -101,6 +120,31 @@ namespace DD.Art
         public static Quaternion ToUnityYaw(float yawDegreesCcw)
         {
             return Quaternion.Euler(0f, -yawDegreesCcw, 0f);
+        }
+
+        /// <summary>
+        /// WP-017 · Blender XYZ euler (degrees; R = Rz·Ry·Rx, CCW positive, +Z up) → Unity. The
+        /// axis map (x, y, z) → (x, z, y) is a reflection, so every angle flips sign and Blender's
+        /// X / Y / Z axes become Unity's X / Z / Y; the application order (X first) is kept.
+        /// (0, 0, yaw) equals <see cref="ToUnityYaw"/>.
+        /// </summary>
+        public static Quaternion ToUnityRotation(Vector3 blenderEulerDegrees)
+        {
+            return Quaternion.AngleAxis(-blenderEulerDegrees.z, Vector3.up)
+                   * Quaternion.AngleAxis(-blenderEulerDegrees.y, Vector3.forward)
+                   * Quaternion.AngleAxis(-blenderEulerDegrees.x, Vector3.right);
+        }
+
+        /// <summary>Rotate a Blender-space vector by a Blender XYZ euler (R = Rz·Ry·Rx), for parity tests.</summary>
+        public static Vector3 RotateBlender(Vector3 blenderEulerDegrees, Vector3 v)
+        {
+            float a = blenderEulerDegrees.x * Mathf.Deg2Rad, b = blenderEulerDegrees.y * Mathf.Deg2Rad, g = blenderEulerDegrees.z * Mathf.Deg2Rad;
+            // Rx
+            v = new Vector3(v.x, v.y * Mathf.Cos(a) - v.z * Mathf.Sin(a), v.y * Mathf.Sin(a) + v.z * Mathf.Cos(a));
+            // Ry
+            v = new Vector3(v.x * Mathf.Cos(b) + v.z * Mathf.Sin(b), v.y, -v.x * Mathf.Sin(b) + v.z * Mathf.Cos(b));
+            // Rz
+            return new Vector3(v.x * Mathf.Cos(g) - v.y * Mathf.Sin(g), v.x * Mathf.Sin(g) + v.y * Mathf.Cos(g), v.z);
         }
 
         public Region FindRegion(string id)

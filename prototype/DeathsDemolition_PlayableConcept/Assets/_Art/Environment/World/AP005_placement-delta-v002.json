@@ -1,0 +1,8884 @@
+{
+ "schema": "dd-placement-delta-v1",
+ "package": "AP-005B",
+ "base": "AP-005/exports/placement-v001.json (2354 instances)",
+ "target": "AP-005/exports/placement.json version 2",
+ "created": "2026-09-16T06:40:03",
+ "coordinate_space": "Blender / AP-001 metres, +Z up; NO axis conversion (Unity applies bakeAxisConversion); Unity (X,Z) -> (x,y), Unity Y -> z; rotation_euler_deg about +z CCW from +x; scale baked",
+ "plan": "AP-005/02-plan/AP005B-architecture-plan-v002.json",
+ "counts": {
+  "added": 202,
+  "changed": 9,
+  "removed": 169,
+  "instances_v002": 2387
+ },
+ "added": [
+  {
+   "id": "AP005_i2357",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    -13.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-00",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2358",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    -10.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-01",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2359",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    -7.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-02",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2360",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    -4.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-03",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2361",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    -1.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-04",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2362",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    1.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-05",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2363",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    4.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-06",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2364",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    7.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-07",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2365",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    10.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-08",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2366",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    13.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-09",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2367",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    16.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-10",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2368",
+   "family": "AP002_palace_roof_bay",
+   "variation": "V01",
+   "lod_group": "AP002_palace_roof_bay_V01",
+   "assembly": [],
+   "position": [
+    19.5,
+    38.2,
+    7.3
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "ROOF-11",
+   "fade_mesh": true,
+   "plan_note": "eave overhang covers route 46 (y 28..34) and the palace front line; camera side is south",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2369",
+   "family": "AP005_palace_return",
+   "variation": "V01",
+   "lod_group": "AP005_palace_return_V01",
+   "assembly": [],
+   "position": [
+    -13.85,
+    38.075,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "WGABLE-return",
+   "material_override": "AP005_M_plaster_world_ap001"
+  },
+  {
+   "id": "AP005_i2370",
+   "family": "AP005_palace_east_timber",
+   "variation": "V01",
+   "lod_group": "AP005_palace_east_timber_V01",
+   "assembly": [],
+   "position": [
+    -13.9,
+    38.05,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "WGABLE-east_timber"
+  },
+  {
+   "id": "AP005_i2371",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    19.85,
+    35.65,
+    4.395
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-E-H1",
+   "plan_note": "gable fill row: y 34.15..37.15, top 8.05 under the roof (min underside 8.08)",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2372",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    19.88,
+    40.5,
+    4.634
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-E-H2",
+   "plan_note": "gable fill row: y 39.0..42.0, top 8.28 under the roof (min underside 8.31)",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2373",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    19.9,
+    37.5104,
+    5.949
+   ],
+   "rotation_euler_deg": [
+    0,
+    -36.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-E-T1",
+   "plan_note": "gable panel tilted -36.0 deg (rotation_euler [0,-36.0,90]), top edge y 34.15..36.58 fitted under the roof",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2374",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    19.8,
+    38.9386,
+    6.8406
+   ],
+   "rotation_euler_deg": [
+    0,
+    -28.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-E-T2",
+   "plan_note": "gable panel tilted -28.0 deg (rotation_euler [0,-28.0,90]), top edge y 35.9..38.55 fitted under the roof",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2375",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    19.93,
+    37.2551,
+    6.9182
+   ],
+   "rotation_euler_deg": [
+    0,
+    31.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-E-T3",
+   "plan_note": "gable panel tilted 31.0 deg (rotation_euler [0,31.0,90]), top edge y 37.85..40.42 fitted under the roof",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2376",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    19.77,
+    38.7764,
+    6.0243
+   ],
+   "rotation_euler_deg": [
+    0,
+    35.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-E-T4",
+   "plan_note": "gable panel tilted 35.0 deg (rotation_euler [0,35.0,90]), top edge y 39.64..42.1 fitted under the roof",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2377",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -13.85,
+    35.65,
+    4.395
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-W-H1",
+   "plan_note": "gable fill row: y 34.15..37.15, top 8.05 under the roof (min underside 8.08)",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2378",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -13.82,
+    40.5,
+    4.634
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-W-H2",
+   "plan_note": "gable fill row: y 39.0..42.0, top 8.28 under the roof (min underside 8.31)",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2379",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -13.8,
+    37.5104,
+    5.949
+   ],
+   "rotation_euler_deg": [
+    0,
+    -36.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-W-T1",
+   "plan_note": "gable panel tilted -36.0 deg (rotation_euler [0,-36.0,90]), top edge y 34.15..36.58 fitted under the roof",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2380",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -13.9,
+    38.9386,
+    6.8406
+   ],
+   "rotation_euler_deg": [
+    0,
+    -28.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-W-T2",
+   "plan_note": "gable panel tilted -28.0 deg (rotation_euler [0,-28.0,90]), top edge y 35.9..38.55 fitted under the roof",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2381",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -13.77,
+    37.2551,
+    6.9182
+   ],
+   "rotation_euler_deg": [
+    0,
+    31.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-W-T3",
+   "plan_note": "gable panel tilted 31.0 deg (rotation_euler [0,31.0,90]), top edge y 37.85..40.42 fitted under the roof",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2382",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -13.93,
+    38.7764,
+    6.0243
+   ],
+   "rotation_euler_deg": [
+    0,
+    35.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GABLE-W-T4",
+   "plan_note": "gable panel tilted 35.0 deg (rotation_euler [0,35.0,90]), top edge y 39.64..42.1 fitted under the roof",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2383",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -12.2,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k0",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2384",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -9.2,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k1",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2385",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -6.2,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k2",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2386",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -3.2,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k3",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2387",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -0.2,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k4",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2388",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    2.8,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k5",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2389",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    5.8,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k6",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2390",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    8.8,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k7",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2391",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    11.8,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k8",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2392",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    14.8,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k9",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2393",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    17.8,
+    42.0,
+    -2.798
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k10",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2394",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    18.2,
+    42.04,
+    -2.788
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r1-k11",
+   "plan_note": "PATCH: covers 16.7..19.7 to reach the east return; offset 4 cm in y and 1 cm in z so no face is coplanar with segment 10",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2395",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -12.2,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k0",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2396",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -9.2,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k1",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2397",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -6.2,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k2",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2398",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -3.2,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k3",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2399",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -0.2,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k4",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2400",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    2.8,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k5",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2401",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    5.8,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k6",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2402",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    8.8,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k7",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2403",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    11.8,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k8",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2404",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    14.8,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k9",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2405",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    17.8,
+    42.0,
+    0.852
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k10",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2406",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    18.2,
+    42.04,
+    0.862
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r2-k11",
+   "plan_note": "PATCH: covers 16.7..19.7 to reach the east return; offset 4 cm in y and 1 cm in z so no face is coplanar with segment 10",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2407",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -12.2,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k0",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2408",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -9.2,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k1",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2409",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -6.2,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k2",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2410",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -3.2,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k3",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2411",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -0.2,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k4",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2412",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    2.8,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k5",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2413",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    5.8,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k6",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2414",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    8.8,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k7",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2415",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    11.8,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k8",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2416",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    14.8,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k9",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2417",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    17.8,
+    42.0,
+    4.502
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k10",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2418",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    18.2,
+    42.04,
+    4.512
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "BACKWALL-r3-k11",
+   "plan_note": "PATCH: covers 16.7..19.7 to reach the east return; offset 4 cm in y and 1 cm in z so no face is coplanar with segment 10",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2419",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -7.5,
+    16.5,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-N-portal-beam"
+  },
+  {
+   "id": "AP005_i2420",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -4.5,
+    16.5,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-N-portal-beam"
+  },
+  {
+   "id": "AP005_i2421",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -1.5,
+    16.5,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-N-portal-beam"
+  },
+  {
+   "id": "AP005_i2422",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    1.5,
+    16.5,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-N-portal-beam"
+  },
+  {
+   "id": "AP005_i2423",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    4.5,
+    16.5,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-N-portal-beam"
+  },
+  {
+   "id": "AP005_i2424",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    7.5,
+    16.5,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-N-portal-beam"
+  },
+  {
+   "id": "AP005_i2425",
+   "family": "AP002_gate_transition",
+   "variation": "V01",
+   "lod_group": "AP002_gate_transition_V01",
+   "assembly": [],
+   "position": [
+    -30.4,
+    16.8,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    61.7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-NW-service-kerb",
+   "material_override": "AP002_M_stone_v009_build_v003",
+   "geometry_note": "world master shows untilted stone kerb boxes (AP005_gate_kerb_V01_LOD0) on the AP-002 footprint; Unity: AP-002 gate_transition mesh with the stone material override"
+  },
+  {
+   "id": "AP005_i2426",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -34.4,
+    18.96,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    61.7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-NW-service-post1"
+  },
+  {
+   "id": "AP005_i2427",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -26.4,
+    14.64,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    61.7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-NW-service-post2"
+  },
+  {
+   "id": "AP005_i2428",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -33.04,
+    18.22,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    151.7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-NW-service-beam1"
+  },
+  {
+   "id": "AP005_i2429",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -30.4,
+    16.8,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    151.7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-NW-service-beam2"
+  },
+  {
+   "id": "AP005_i2430",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -27.76,
+    15.38,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    151.7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-NW-service-beam3"
+  },
+  {
+   "id": "AP005_i2431",
+   "family": "AP002_gate_transition",
+   "variation": "V01",
+   "lod_group": "AP002_gate_transition_V01",
+   "assembly": [],
+   "position": [
+    24.6988,
+    0.6911,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    3.37
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-E-kerb",
+   "material_override": "AP002_M_stone_v009_build_v003",
+   "geometry_note": "world master shows untilted stone kerb boxes (AP005_gate_kerb_V01_LOD0) on the AP-002 footprint; Unity: AP-002 gate_transition mesh with the stone material override"
+  },
+  {
+   "id": "AP005_i2432",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    24.4288,
+    5.2311,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    3.37
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-E-post1"
+  },
+  {
+   "id": "AP005_i2433",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    24.9688,
+    -3.8489,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    3.37
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-E-post2"
+  },
+  {
+   "id": "AP005_i2434",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    24.5188,
+    3.6811,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    93.37
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-E-beam1"
+  },
+  {
+   "id": "AP005_i2435",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    24.6988,
+    0.6911,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    93.37
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-E-beam2"
+  },
+  {
+   "id": "AP005_i2436",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    24.8788,
+    -2.2989,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    93.37
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-E-beam3"
+  },
+  {
+   "id": "AP005_i2437",
+   "family": "AP002_gate_transition",
+   "variation": "V01",
+   "lod_group": "AP002_gate_transition_V01",
+   "assembly": [],
+   "position": [
+    4.0,
+    -23.4,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-S-kerb",
+   "plan_note": "panels at x -0.2 and 8.2, y -24.4..-20.4",
+   "material_override": "AP002_M_stone_v009_build_v003",
+   "geometry_note": "world master shows untilted stone kerb boxes (AP005_gate_kerb_V01_LOD0) on the AP-002 footprint; Unity: AP-002 gate_transition mesh with the stone material override"
+  },
+  {
+   "id": "AP005_i2438",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -0.55,
+    -23.4,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-S-post1"
+  },
+  {
+   "id": "AP005_i2439",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    8.55,
+    -23.4,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-S-post2"
+  },
+  {
+   "id": "AP005_i2440",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    1.0,
+    -23.4,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-S-beam1"
+  },
+  {
+   "id": "AP005_i2441",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    4.0,
+    -23.4,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-S-beam2"
+  },
+  {
+   "id": "AP005_i2442",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    7.0,
+    -23.4,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-S-beam3"
+  },
+  {
+   "id": "AP005_i2443",
+   "family": "AP002_gate_transition",
+   "variation": "V01",
+   "lod_group": "AP002_gate_transition_V01",
+   "assembly": [],
+   "position": [
+    -26.0,
+    0.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-W-kerb",
+   "material_override": "AP002_M_stone_v009_build_v003",
+   "geometry_note": "world master shows untilted stone kerb boxes (AP005_gate_kerb_V01_LOD0) on the AP-002 footprint; Unity: AP-002 gate_transition mesh with the stone material override"
+  },
+  {
+   "id": "AP005_i2444",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -26.0,
+    4.55,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-W-post1"
+  },
+  {
+   "id": "AP005_i2445",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -26.0,
+    -4.55,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "GATE-W-post2"
+  },
+  {
+   "id": "AP005_i2446",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -26.0,
+    3.0,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-W-beam1"
+  },
+  {
+   "id": "AP005_i2447",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -26.0,
+    0.0,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-W-beam2"
+  },
+  {
+   "id": "AP005_i2448",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -26.0,
+    -3.0,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "GATE-W-beam3"
+  },
+  {
+   "id": "AP005_i2449",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -42.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-01",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2450",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -39.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-02",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2451",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -36.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-03",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2452",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -33.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-04",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2453",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -30.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-05",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2454",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -27.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-06",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2455",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -24.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-07",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2456",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -21.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-08",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2457",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -18.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-09",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2458",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -15.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1-10",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2459",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    21.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2-01",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2460",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    24.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2-02",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2461",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    27.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2-03",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2462",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    30.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2-04",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2463",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    33.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2-05",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2464",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    36.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2-06",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2465",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    39.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2-07",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2466",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    42.5,
+    42.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2-08",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2467",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -44.0,
+    40.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W1r-01",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2468",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    44.0,
+    40.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "N-W2r-01",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2469",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -44.0,
+    37.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "W-W1-01",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2470",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -44.0,
+    34.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "W-W1-02",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2471",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -44.0,
+    31.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "W-W1-03",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2472",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -44.0,
+    -31.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "W-W2-01",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2473",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -44.0,
+    -34.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "W-W2-02",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2474",
+   "family": "AP002_plaster_wall",
+   "variation": "V01",
+   "lod_group": "AP002_plaster_wall_V01",
+   "assembly": [],
+   "position": [
+    -44.0,
+    -37.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "W-W2-03",
+   "material_override": "AP005_M_plaster_world"
+  },
+  {
+   "id": "AP005_i2475",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    37.5,
+    -17.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "E-LW2-1-plinth"
+  },
+  {
+   "id": "AP005_i2476",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "lod_group": "AP002_planter_boundary_V01",
+   "assembly": [],
+   "position": [
+    37.5,
+    -17.1,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW2-1-planter"
+  },
+  {
+   "id": "AP005_i2477",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "lod_group": "AP003B_garden_bench_low_wall_cap_V03",
+   "assembly": [],
+   "position": [
+    37.5,
+    -17.1,
+    0.6
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW2-1-cap"
+  },
+  {
+   "id": "AP005_i2478",
+   "family": "AP002_curb",
+   "variation": "V01",
+   "lod_group": "AP002_curb_V01",
+   "assembly": [],
+   "position": [
+    37.5,
+    -16.8,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "E-LW2-1-curb"
+  },
+  {
+   "id": "AP005_i2479",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    40.5,
+    -17.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "E-LW2-2-plinth"
+  },
+  {
+   "id": "AP005_i2480",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "lod_group": "AP002_planter_boundary_V01",
+   "assembly": [],
+   "position": [
+    40.5,
+    -17.1,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW2-2-planter"
+  },
+  {
+   "id": "AP005_i2481",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "lod_group": "AP003B_garden_bench_low_wall_cap_V03",
+   "assembly": [],
+   "position": [
+    40.5,
+    -17.1,
+    0.6
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW2-2-cap"
+  },
+  {
+   "id": "AP005_i2482",
+   "family": "AP002_curb",
+   "variation": "V01",
+   "lod_group": "AP002_curb_V01",
+   "assembly": [],
+   "position": [
+    40.5,
+    -16.8,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "E-LW2-2-curb"
+  },
+  {
+   "id": "AP005_i2483",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    44.2,
+    2.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "E-LW3-1-plinth"
+  },
+  {
+   "id": "AP005_i2484",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "lod_group": "AP002_planter_boundary_V01",
+   "assembly": [],
+   "position": [
+    43.8,
+    2.5,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW3-1-planter"
+  },
+  {
+   "id": "AP005_i2485",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "lod_group": "AP003B_garden_bench_low_wall_cap_V03",
+   "assembly": [],
+   "position": [
+    43.8,
+    2.5,
+    0.6
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW3-1-cap"
+  },
+  {
+   "id": "AP005_i2486",
+   "family": "AP002_curb",
+   "variation": "V01",
+   "lod_group": "AP002_curb_V01",
+   "assembly": [],
+   "position": [
+    43.5,
+    2.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "E-LW3-1-curb"
+  },
+  {
+   "id": "AP005_i2487",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    44.2,
+    -0.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "E-LW3-2-plinth"
+  },
+  {
+   "id": "AP005_i2488",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "lod_group": "AP002_planter_boundary_V01",
+   "assembly": [],
+   "position": [
+    43.8,
+    -0.5,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW3-2-planter"
+  },
+  {
+   "id": "AP005_i2489",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "lod_group": "AP003B_garden_bench_low_wall_cap_V03",
+   "assembly": [],
+   "position": [
+    43.8,
+    -0.5,
+    0.6
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW3-2-cap"
+  },
+  {
+   "id": "AP005_i2490",
+   "family": "AP002_curb",
+   "variation": "V01",
+   "lod_group": "AP002_curb_V01",
+   "assembly": [],
+   "position": [
+    43.5,
+    -0.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "E-LW3-2-curb"
+  },
+  {
+   "id": "AP005_i2491",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    44.2,
+    -3.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "E-LW3-3-plinth"
+  },
+  {
+   "id": "AP005_i2492",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "lod_group": "AP002_planter_boundary_V01",
+   "assembly": [],
+   "position": [
+    43.8,
+    -3.5,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW3-3-planter"
+  },
+  {
+   "id": "AP005_i2493",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "lod_group": "AP003B_garden_bench_low_wall_cap_V03",
+   "assembly": [],
+   "position": [
+    43.8,
+    -3.5,
+    0.6
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "E-LW3-3-cap"
+  },
+  {
+   "id": "AP005_i2494",
+   "family": "AP002_curb",
+   "variation": "V01",
+   "lod_group": "AP002_curb_V01",
+   "assembly": [],
+   "position": [
+    43.5,
+    -3.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "E-LW3-3-curb"
+  },
+  {
+   "id": "AP005_i2495",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    36.0,
+    35.3,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-low_rise0"
+  },
+  {
+   "id": "AP005_i2496",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    36.0,
+    36.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-low_rise1"
+  },
+  {
+   "id": "AP005_i2497",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    36.0,
+    37.7,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-low_rise2"
+  },
+  {
+   "id": "AP005_i2498",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    34.7,
+    35.0,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-timber_post3"
+  },
+  {
+   "id": "AP005_i2499",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    37.3,
+    35.0,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-timber_post4"
+  },
+  {
+   "id": "AP005_i2500",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    34.7,
+    38.0,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-timber_post5"
+  },
+  {
+   "id": "AP005_i2501",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    37.3,
+    38.0,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-timber_post6"
+  },
+  {
+   "id": "AP005_i2502",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    36.0,
+    35.0,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-timber_beam7"
+  },
+  {
+   "id": "AP005_i2503",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    36.0,
+    38.0,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-timber_beam8"
+  },
+  {
+   "id": "AP005_i2504",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    34.7,
+    36.5,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-timber_beam9"
+  },
+  {
+   "id": "AP005_i2505",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    37.3,
+    36.5,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-timber_beam10"
+  },
+  {
+   "id": "AP005_i2506",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    36.0,
+    36.5,
+    3.82
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N1-roof",
+   "fade_mesh": true,
+   "plan_note": "F3: AP002_roof_segment is a symmetric 24 deg gable slab (ridge along x at local y 0): placed untilted, ridge over the post centre, eave underside 3.80, ridge 4.84",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2507",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    -36.0,
+    35.3,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-low_rise0"
+  },
+  {
+   "id": "AP005_i2508",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    -36.0,
+    36.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-low_rise1"
+  },
+  {
+   "id": "AP005_i2509",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    -36.0,
+    37.7,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-low_rise2"
+  },
+  {
+   "id": "AP005_i2510",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -37.3,
+    35.0,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-timber_post3"
+  },
+  {
+   "id": "AP005_i2511",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -34.7,
+    35.0,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-timber_post4"
+  },
+  {
+   "id": "AP005_i2512",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -37.3,
+    38.0,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-timber_post5"
+  },
+  {
+   "id": "AP005_i2513",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -34.7,
+    38.0,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-timber_post6"
+  },
+  {
+   "id": "AP005_i2514",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -36.0,
+    35.0,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-timber_beam7"
+  },
+  {
+   "id": "AP005_i2515",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -36.0,
+    38.0,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-timber_beam8"
+  },
+  {
+   "id": "AP005_i2516",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -37.3,
+    36.5,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-timber_beam9"
+  },
+  {
+   "id": "AP005_i2517",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -34.7,
+    36.5,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-timber_beam10"
+  },
+  {
+   "id": "AP005_i2518",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    -36.0,
+    36.5,
+    3.82
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-N2-roof",
+   "fade_mesh": true,
+   "plan_note": "F3: AP002_roof_segment is a symmetric 24 deg gable slab (ridge along x at local y 0): placed untilted, ridge over the post centre, eave underside 3.80, ridge 4.84",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2519",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    38.0,
+    22.8,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-low_rise0"
+  },
+  {
+   "id": "AP005_i2520",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    38.0,
+    24.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-low_rise1"
+  },
+  {
+   "id": "AP005_i2521",
+   "family": "AP002_low_rise",
+   "variation": "V01",
+   "lod_group": "AP002_low_rise_V01",
+   "assembly": [],
+   "position": [
+    38.0,
+    25.2,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-low_rise2"
+  },
+  {
+   "id": "AP005_i2522",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    36.7,
+    22.5,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-timber_post3"
+  },
+  {
+   "id": "AP005_i2523",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    39.3,
+    22.5,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-timber_post4"
+  },
+  {
+   "id": "AP005_i2524",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    36.7,
+    25.5,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-timber_post5"
+  },
+  {
+   "id": "AP005_i2525",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    39.3,
+    25.5,
+    0.15
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-timber_post6"
+  },
+  {
+   "id": "AP005_i2526",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    38.0,
+    22.5,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-timber_beam7"
+  },
+  {
+   "id": "AP005_i2527",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    38.0,
+    25.5,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-timber_beam8"
+  },
+  {
+   "id": "AP005_i2528",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    36.7,
+    24.0,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-timber_beam9"
+  },
+  {
+   "id": "AP005_i2529",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    39.3,
+    24.0,
+    3.35
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-timber_beam10"
+  },
+  {
+   "id": "AP005_i2530",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    38.0,
+    24.0,
+    3.82
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "PAV-E1-roof",
+   "fade_mesh": true,
+   "plan_note": "F3: AP002_roof_segment is a symmetric 24 deg gable slab (ridge along x at local y 0): placed untilted, ridge over the post centre, eave underside 3.80, ridge 4.84",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2531",
+   "family": "AP002_open_corridor",
+   "variation": "V01",
+   "lod_group": "AP002_open_corridor_V01",
+   "assembly": [],
+   "position": [
+    36.1028,
+    19.2456,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    29.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "COL-33",
+   "fade_mesh": true,
+   "plan_note": "route 33 (26,25)->(31,16) hw 4, outer (NE) side, axis offset 6.06 m (= 4.0 + 0.4 + 1.66)"
+  },
+  {
+   "id": "AP005_i2532",
+   "family": "AP002_open_corridor",
+   "variation": "V01",
+   "lod_group": "AP002_open_corridor_V01",
+   "assembly": [],
+   "position": [
+    38.9514,
+    10.6438,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    20.6
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "COL-34",
+   "fade_mesh": true,
+   "plan_note": "route 34 (31,16)->(34,8) hw 3.5, outer (E) side, axis offset 5.56 m (= 3.5 + 0.4 + 1.66) from the route midpoint (32.5,12)"
+  },
+  {
+   "id": "AP005_i2533",
+   "family": "AP005_ring_transition",
+   "variation": "V01",
+   "lod_group": "AP005_ring_transition_V01",
+   "assembly": [],
+   "position": [
+    0.0,
+    16.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "ground",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "RT-N",
+   "plan_note": "flush on route; z = ground top 0.0 (AP005_quiet_paving)"
+  },
+  {
+   "id": "AP005_i2534",
+   "family": "AP005_ring_transition",
+   "variation": "V01",
+   "lod_group": "AP005_ring_transition_V01",
+   "assembly": [],
+   "position": [
+    28.5,
+    0.91,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    3.37
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "ground",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "RT-E",
+   "plan_note": "flush on route; z = ground top 0.0 (AP005_quiet_paving)"
+  },
+  {
+   "id": "AP005_i2535",
+   "family": "AP005_ring_transition",
+   "variation": "V01",
+   "lod_group": "AP005_ring_transition_V01",
+   "assembly": [],
+   "position": [
+    2.0,
+    -15.5,
+    -0.012
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "ground",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "RT-S",
+   "plan_note": "flush on route; z = ground top -0.012 (AP005_world_ground_plane)"
+  },
+  {
+   "id": "AP005_i2536",
+   "family": "AP005_ring_transition",
+   "variation": "V01",
+   "lod_group": "AP005_ring_transition_V01",
+   "assembly": [],
+   "position": [
+    -29.0,
+    0.0,
+    -0.012
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "ground",
+   "occluder_candidate": false,
+   "navmesh": "walkable",
+   "added_in": "v002",
+   "plan_id": "RT-W",
+   "plan_note": "flush on route; z = ground top -0.012 (AP005_world_ground_plane)"
+  },
+  {
+   "id": "AP005_i2537",
+   "family": "AP005B_shed",
+   "variation": "V01",
+   "lod_group": "AP005B_shed_V01",
+   "assembly": [],
+   "position": [
+    -41.0,
+    -34.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-shed-west-1",
+   "plan_note": "SW pocket in front of W-W2, doors (-Y) facing east"
+  },
+  {
+   "id": "AP005_i2538",
+   "family": "AP005B_tsukubai",
+   "variation": "V01",
+   "lod_group": "AP005B_tsukubai_V01",
+   "assembly": [],
+   "position": [
+    -38.0,
+    34.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    116.58
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-tsukubai-north-1",
+   "plan_note": "PAV-N2 plinth SW corner"
+  },
+  {
+   "id": "AP005_i2539",
+   "family": "AP005B_tsukubai",
+   "variation": "V01",
+   "lod_group": "AP005B_tsukubai_V01",
+   "assembly": [],
+   "position": [
+    40.0,
+    22.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    54.306
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-tsukubai-east-1",
+   "plan_note": "PAV-E1 plinth SE corner"
+  },
+  {
+   "id": "AP005_i2540",
+   "family": "AP005B_handcart",
+   "variation": "V01",
+   "lod_group": "AP005B_handcart_V01",
+   "assembly": [],
+   "position": [
+    -36.5,
+    21.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    151.7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-handcart-west-1",
+   "plan_note": "behind the NW service gate outer panel, parallel to route 32, shafts away from the gate (plan hint says north; the spot lies in the west polygon)"
+  },
+  {
+   "id": "AP005_i2541",
+   "family": "AP005B_handcart",
+   "variation": "V01",
+   "lod_group": "AP005B_handcart_V01",
+   "assembly": [],
+   "position": [
+    -29.0,
+    6.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-handcart-west-1",
+   "plan_note": "behind the GATE-W north panel, parallel to route 42, shafts away from the gate"
+  },
+  {
+   "id": "AP005_i2542",
+   "family": "AP005B_strawbales",
+   "variation": "V01",
+   "lod_group": "AP005B_strawbales_V01",
+   "assembly": [],
+   "position": [
+    -33.0,
+    36.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    234.336
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-strawbales-north-1",
+   "plan_note": "between PAV-N2 and the palace"
+  },
+  {
+   "id": "AP005_i2543",
+   "family": "AP005B_strawbales",
+   "variation": "V01",
+   "lod_group": "AP005B_strawbales_V01",
+   "assembly": [],
+   "position": [
+    -33.0,
+    30.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    257.758
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-strawbales-north-2",
+   "plan_note": "between PAV-N2 and the palace"
+  },
+  {
+   "id": "AP005_i2544",
+   "family": "AP005B_strawbales",
+   "variation": "V01",
+   "lod_group": "AP005B_strawbales_V01",
+   "assembly": [],
+   "position": [
+    -39.0,
+    -32.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    264.187
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-strawbales-west-1",
+   "plan_note": "at the shed"
+  },
+  {
+   "id": "AP005_i2545",
+   "family": "AP005B_strawbales",
+   "variation": "V01",
+   "lod_group": "AP005B_strawbales_V01",
+   "assembly": [],
+   "position": [
+    -39.0,
+    -38.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    69.489
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "west",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-strawbales-west-2",
+   "plan_note": "at the shed"
+  },
+  {
+   "id": "AP005_i2546",
+   "family": "AP005B_barrels",
+   "variation": "V01",
+   "lod_group": "AP005B_barrels_V01",
+   "assembly": [],
+   "position": [
+    9.0,
+    -24.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    302.714
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-barrels-south-1",
+   "plan_note": "behind the GATE-S east panel"
+  },
+  {
+   "id": "AP005_i2547",
+   "family": "AP005B_barrels",
+   "variation": "V01",
+   "lod_group": "AP005B_barrels_V01",
+   "assembly": [],
+   "position": [
+    10.0,
+    -29.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    52.166
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-barrels-south-2",
+   "plan_note": "behind the GATE-S east panel"
+  },
+  {
+   "id": "AP005_i2548",
+   "family": "AP005B_mossrock",
+   "variation": "V01",
+   "lod_group": "AP005B_mossrock_V01",
+   "assembly": [],
+   "position": [
+    42.8,
+    13.5,
+    -0.06
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    322.894
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-mossrock-east-1",
+   "plan_note": "along COL-34 outer side (plan strip 39.5..41.5 x 11..17; COL-34 slid SE, anchor moved 1.3 m east, >= 1.9 m from SW_SakuraDeepEast; 10 m family spacing spreads the other two)"
+  },
+  {
+   "id": "AP005_i2549",
+   "family": "AP005B_mossrock",
+   "variation": "V01",
+   "lod_group": "AP005B_mossrock_V01",
+   "assembly": [],
+   "position": [
+    40.3,
+    23.5,
+    -0.06
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    259.762
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-mossrock-east-2",
+   "plan_note": "along COL-34 outer side (plan strip 39.5..41.5 x 11..17; COL-34 slid SE, anchor moved 1.3 m east, >= 1.9 m from SW_SakuraDeepEast; 10 m family spacing spreads the other two)"
+  },
+  {
+   "id": "AP005_i2550",
+   "family": "AP005B_mossrock",
+   "variation": "V01",
+   "lod_group": "AP005B_mossrock_V01",
+   "assembly": [],
+   "position": [
+    26.3,
+    6.5,
+    -0.06
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    135.063
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-mossrock-east-3",
+   "plan_note": "along COL-34 outer side (plan strip 39.5..41.5 x 11..17; COL-34 slid SE, anchor moved 1.3 m east, >= 1.9 m from SW_SakuraDeepEast; 10 m family spacing spreads the other two)"
+  },
+  {
+   "id": "AP005_i2551",
+   "family": "AP005B_mossrock",
+   "variation": "V01",
+   "lod_group": "AP005B_mossrock_V01",
+   "assembly": [],
+   "position": [
+    -3.5,
+    -24.5,
+    -0.06
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    11.651
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-mossrock-south-1",
+   "plan_note": "west basin rim near the moved bench"
+  },
+  {
+   "id": "AP005_i2552",
+   "family": "AP005B_mossrock",
+   "variation": "V01",
+   "lod_group": "AP005B_mossrock_V01",
+   "assembly": [],
+   "position": [
+    -0.5,
+    -34.5,
+    -0.06
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    263.416
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v002",
+   "plan_id": "PROP-mossrock-south-2",
+   "plan_note": "west basin rim near the moved bench"
+  },
+  {
+   "id": "AP005_i2553",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    37.5572,
+    16.6217,
+    4.02
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    119.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "COL-33-roof1",
+   "fade_mesh": true,
+   "plan_note": "F4: untilted 24 deg gable slab over the open_corridor frame, rotated 90 deg so the ridge runs along the frame axis (4.6 m across the 3.32 m frame, 3 m along), eave underside 4.00 m",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2554",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    36.1028,
+    19.2456,
+    4.02
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    119.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "COL-33-roof2",
+   "fade_mesh": true,
+   "plan_note": "F4: untilted 24 deg gable slab over the open_corridor frame, rotated 90 deg so the ridge runs along the frame axis (4.6 m across the 3.32 m frame, 3 m along), eave underside 4.00 m",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2555",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    34.6484,
+    21.8695,
+    4.02
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    119.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "COL-33-roof3",
+   "fade_mesh": true,
+   "plan_note": "F4: untilted 24 deg gable slab over the open_corridor frame, rotated 90 deg so the ridge runs along the frame axis (4.6 m across the 3.32 m frame, 3 m along), eave underside 4.00 m",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2556",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    40.0069,
+    7.8356,
+    4.02
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    110.6
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "COL-34-roof1",
+   "fade_mesh": true,
+   "plan_note": "F4: untilted 24 deg gable slab over the open_corridor frame, rotated 90 deg so the ridge runs along the frame axis (4.6 m across the 3.32 m frame, 3 m along), eave underside 4.00 m",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2557",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    38.9514,
+    10.6438,
+    4.02
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    110.6
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "COL-34-roof2",
+   "fade_mesh": true,
+   "plan_note": "F4: untilted 24 deg gable slab over the open_corridor frame, rotated 90 deg so the ridge runs along the frame axis (4.6 m across the 3.32 m frame, 3 m along), eave underside 4.00 m",
+   "material_override": "AP005_M_roof_world"
+  },
+  {
+   "id": "AP005_i2558",
+   "family": "AP002_roof_segment",
+   "variation": "V01",
+   "lod_group": "AP002_roof_segment_V01",
+   "assembly": [],
+   "position": [
+    37.8959,
+    13.452,
+    4.02
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    110.6
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "occluder_candidate": true,
+   "navmesh": "ignore",
+   "added_in": "v002",
+   "plan_id": "COL-34-roof3",
+   "fade_mesh": true,
+   "plan_note": "F4: untilted 24 deg gable slab over the open_corridor frame, rotated 90 deg so the ridge runs along the frame axis (4.6 m across the 3.32 m frame, 3 m along), eave underside 4.00 m",
+   "material_override": "AP005_M_roof_world"
+  }
+ ],
+ "changed": [
+  {
+   "id": "AP005_i0169",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -12.3,
+    16.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "changed_in": "v002"
+  },
+  {
+   "id": "AP005_i0170",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    -9.0,
+    16.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "changed_in": "v002"
+  },
+  {
+   "id": "AP005_i0171",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    9.0,
+    16.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "changed_in": "v002"
+  },
+  {
+   "id": "AP005_i0172",
+   "family": "AP002_timber_post",
+   "variation": "V01",
+   "lod_group": "AP002_timber_post_V01",
+   "assembly": [],
+   "position": [
+    12.3,
+    16.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "changed_in": "v002"
+  },
+  {
+   "id": "AP005_i0181",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    -10.65,
+    16.5,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "changed_in": "v002"
+  },
+  {
+   "id": "AP005_i0183",
+   "family": "AP002_timber_beam",
+   "variation": "V01",
+   "lod_group": "AP002_timber_beam_V01",
+   "assembly": [],
+   "position": [
+    10.65,
+    16.5,
+    3.2
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "changed_in": "v002"
+  },
+  {
+   "id": "AP005_i0182",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "lod_group": "AP002_planter_boundary_V01",
+   "assembly": [],
+   "position": [
+    -10.65,
+    16.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "changed_in": "v002"
+  },
+  {
+   "id": "AP005_i0184",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "lod_group": "AP002_planter_boundary_V01",
+   "assembly": [],
+   "position": [
+    10.65,
+    16.5,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    180
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "structure",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "changed_in": "v002"
+  },
+  {
+   "id": "AP005_i0121",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V02",
+   "lod_group": "AP003B_garden_bench_low_wall_cap_V02",
+   "assembly": [],
+   "position": [
+    -2.6,
+    -23.4,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0,
+    0,
+    270.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "changed_in": "v002",
+   "change_note": "bench was under the west post; now 2.3 m west of the kerb panel facing the west basin"
+  }
+ ],
+ "removed_ids": [
+  "AP005_i0131",
+  "AP005_i0132",
+  "AP005_i0133",
+  "AP005_i0134",
+  "AP005_i0123",
+  "AP005_i0124",
+  "AP005_i0125",
+  "AP005_i0126",
+  "AP005_i0127",
+  "AP005_i0128",
+  "AP005_i0046",
+  "AP005_i0047",
+  "AP005_i0212",
+  "AP005_i0314",
+  "AP005_i0327",
+  "AP005_i0330",
+  "AP005_i0333",
+  "AP005_i0337",
+  "AP005_i0339",
+  "AP005_i0344",
+  "AP005_i0349",
+  "AP005_i0352",
+  "AP005_i0355",
+  "AP005_i0356",
+  "AP005_i0357",
+  "AP005_i0359",
+  "AP005_i0360",
+  "AP005_i0361",
+  "AP005_i0362",
+  "AP005_i0365",
+  "AP005_i0366",
+  "AP005_i0368",
+  "AP005_i0370",
+  "AP005_i0372",
+  "AP005_i0373",
+  "AP005_i0375",
+  "AP005_i0376",
+  "AP005_i0379",
+  "AP005_i0383",
+  "AP005_i0384",
+  "AP005_i0389",
+  "AP005_i0391",
+  "AP005_i0656",
+  "AP005_i0665",
+  "AP005_i0682",
+  "AP005_i0687",
+  "AP005_i0688",
+  "AP005_i0691",
+  "AP005_i0701",
+  "AP005_i0702",
+  "AP005_i0706",
+  "AP005_i0707",
+  "AP005_i0709",
+  "AP005_i0717",
+  "AP005_i0744",
+  "AP005_i0757",
+  "AP005_i0770",
+  "AP005_i0779",
+  "AP005_i0785",
+  "AP005_i0788",
+  "AP005_i0799",
+  "AP005_i0807",
+  "AP005_i0834",
+  "AP005_i0837",
+  "AP005_i0839",
+  "AP005_i0858",
+  "AP005_i0871",
+  "AP005_i0873",
+  "AP005_i0880",
+  "AP005_i0882",
+  "AP005_i0887",
+  "AP005_i0917",
+  "AP005_i0919",
+  "AP005_i0920",
+  "AP005_i0925",
+  "AP005_i0928",
+  "AP005_i0930",
+  "AP005_i0937",
+  "AP005_i0939",
+  "AP005_i0941",
+  "AP005_i0942",
+  "AP005_i0956",
+  "AP005_i0959",
+  "AP005_i0960",
+  "AP005_i0962",
+  "AP005_i0966",
+  "AP005_i0968",
+  "AP005_i0977",
+  "AP005_i0979",
+  "AP005_i0981",
+  "AP005_i0983",
+  "AP005_i0985",
+  "AP005_i0999",
+  "AP005_i1002",
+  "AP005_i1319",
+  "AP005_i1376",
+  "AP005_i1429",
+  "AP005_i1442",
+  "AP005_i1468",
+  "AP005_i1512",
+  "AP005_i1520",
+  "AP005_i1523",
+  "AP005_i1526",
+  "AP005_i1530",
+  "AP005_i1537",
+  "AP005_i1540",
+  "AP005_i1541",
+  "AP005_i1544",
+  "AP005_i1545",
+  "AP005_i1547",
+  "AP005_i1553",
+  "AP005_i1558",
+  "AP005_i1571",
+  "AP005_i1585",
+  "AP005_i1587",
+  "AP005_i1601",
+  "AP005_i1602",
+  "AP005_i1609",
+  "AP005_i1618",
+  "AP005_i1621",
+  "AP005_i1629",
+  "AP005_i1630",
+  "AP005_i1637",
+  "AP005_i1649",
+  "AP005_i1652",
+  "AP005_i1654",
+  "AP005_i1661",
+  "AP005_i1677",
+  "AP005_i2051",
+  "AP005_i2054",
+  "AP005_i2057",
+  "AP005_i2060",
+  "AP005_i2096",
+  "AP005_i2107",
+  "AP005_i2112",
+  "AP005_i2120",
+  "AP005_i2131",
+  "AP005_i2134",
+  "AP005_i2150",
+  "AP005_i2155",
+  "AP005_i2158",
+  "AP005_i2186",
+  "AP005_i2201",
+  "AP005_i2202",
+  "AP005_i2209",
+  "AP005_i2215",
+  "AP005_i2233",
+  "AP005_i2234",
+  "AP005_i2241",
+  "AP005_i2255",
+  "AP005_i2263",
+  "AP005_i2298",
+  "AP005_i2299",
+  "AP005_i2304",
+  "AP005_i2305",
+  "AP005_i2334",
+  "AP005_i2340",
+  "AP005_i2341",
+  "AP005_i2343",
+  "AP005_i2351",
+  "AP005_i2352",
+  "AP005_i2048",
+  "AP005_i2053",
+  "AP005_i2114",
+  "AP005_i2137",
+  "AP005_i2170",
+  "AP005_i2194",
+  "AP005_i2235",
+  "AP005_i2260"
+ ],
+ "removed": [
+  {
+   "id": "AP005_i0131",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "plan_id": "E-WL06",
+   "position": [
+    25.5,
+    6.3,
+    0.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "planter 1.1 m behind the north kerb panel - double kerb clutter"
+  },
+  {
+   "id": "AP005_i0132",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "plan_id": "E-WL06cap",
+   "position": [
+    25.5,
+    6.3,
+    0.45
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "GATE-E kerb frame replaces the planter pair"
+  },
+  {
+   "id": "AP005_i0133",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "plan_id": "E-WL07",
+   "position": [
+    25.5,
+    -4.5,
+    0.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "planter 0.9 m behind the south kerb panel"
+  },
+  {
+   "id": "AP005_i0134",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "plan_id": "E-WL07cap",
+   "position": [
+    25.5,
+    -4.5,
+    0.45
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "GATE-E kerb frame replaces the planter pair"
+  },
+  {
+   "id": "AP005_i0123",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "plan_id": "E-WL01",
+   "position": [
+    35.72,
+    16.15,
+    0.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "COL-34 colonnade replaces the E-WL01..03 low wall"
+  },
+  {
+   "id": "AP005_i0124",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "plan_id": "E-WL01cap",
+   "position": [
+    35.72,
+    16.15,
+    0.45
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "COL-34 colonnade replaces the E-WL01..03 low wall"
+  },
+  {
+   "id": "AP005_i0125",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "plan_id": "E-WL02",
+   "position": [
+    36.72,
+    13.34,
+    0.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "COL-34 colonnade replaces the E-WL01..03 low wall"
+  },
+  {
+   "id": "AP005_i0126",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "plan_id": "E-WL02cap",
+   "position": [
+    36.72,
+    13.34,
+    0.45
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "COL-34 colonnade replaces the E-WL01..03 low wall"
+  },
+  {
+   "id": "AP005_i0127",
+   "family": "AP002_planter_boundary",
+   "variation": "V01",
+   "plan_id": "E-WL03",
+   "position": [
+    37.82,
+    10.53,
+    0.0
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "COL-34 colonnade replaces the E-WL01..03 low wall"
+  },
+  {
+   "id": "AP005_i0128",
+   "family": "AP003B_garden_bench_low_wall_cap",
+   "variation": "V03",
+   "plan_id": "E-WL03cap",
+   "position": [
+    37.82,
+    10.53,
+    0.45
+   ],
+   "region": "east",
+   "role": "structure",
+   "reason": "COL-34 colonnade replaces the E-WL01..03 low wall"
+  },
+  {
+   "id": "AP005_i0046",
+   "family": "AP005_palace_gable_timber",
+   "variation": "V01",
+   "plan_id": "MOD:AP001_PalaceTrueEastGableTimber_v009",
+   "position": [
+    19.88,
+    38.0,
+    6.4
+   ],
+   "region": "north",
+   "role": "structure",
+   "reason": "east gable wedge (mono-pitch 6.5->10.04 rising to the back) contradicts the double-pitch roof bay: it would pierce the back slope by up to 1.7 m at y > 40.5 and leave a 2.5 m gap under the ridge; replaced by fitted plaster panels (see gables)"
+  },
+  {
+   "id": "AP005_i0047",
+   "family": "AP005_palace_gable",
+   "variation": "V01",
+   "plan_id": "MOD:AP001_PalaceTrueEastGable_v009",
+   "position": [
+    19.85,
+    38.0,
+    6.5
+   ],
+   "region": "north",
+   "role": "structure",
+   "reason": "east gable wedge (mono-pitch 6.5->10.04 rising to the back) contradicts the double-pitch roof bay: it would pierce the back slope by up to 1.7 m at y > 40.5 and leave a 2.5 m gap under the ridge; replaced by fitted plaster panels (see gables)"
+  },
+  {
+   "id": "AP005_i0212",
+   "family": "AP003_understory_shrub",
+   "variation": "V05",
+   "plan_id": "recipe:center:AP003_understory_shrub",
+   "position": [
+    10.5765,
+    14.683,
+    0.4
+   ],
+   "region": "center",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_planter_boundary AP005_i0184"
+  },
+  {
+   "id": "AP005_i0314",
+   "family": "AP003_greenery_cluster",
+   "variation": "V06",
+   "plan_id": "recipe:north:AP003_greenery_cluster",
+   "position": [
+    10.5723,
+    16.05,
+    0.4
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_planter_boundary AP005_i0184"
+  },
+  {
+   "id": "AP005_i0327",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:north:AP003_greenery_cluster",
+   "position": [
+    12.2244,
+    16.05,
+    0.4
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i0172"
+  },
+  {
+   "id": "AP005_i0330",
+   "family": "AP003_greenery_cluster",
+   "variation": "V06",
+   "plan_id": "recipe:north:AP003_greenery_cluster",
+   "position": [
+    11.3981,
+    16.05,
+    0.4
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i0172"
+  },
+  {
+   "id": "AP005_i0333",
+   "family": "AP003_greenery_cluster",
+   "variation": "V05",
+   "plan_id": "recipe:north:AP003_greenery_cluster",
+   "position": [
+    -10.7491,
+    16.05,
+    0.4
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_planter_boundary AP005_i0182"
+  },
+  {
+   "id": "AP005_i0337",
+   "family": "AP003_greenery_cluster",
+   "variation": "V08",
+   "plan_id": "recipe:north:AP003_greenery_cluster",
+   "position": [
+    -11.6613,
+    16.05,
+    0.4
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i0169"
+  },
+  {
+   "id": "AP005_i0339",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "recipe:north:AP003_greenery_cluster",
+   "position": [
+    -9.7938,
+    16.05,
+    0.4
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i0170"
+  },
+  {
+   "id": "AP005_i0344",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:north:AP003_greenery_cluster",
+   "position": [
+    9.751,
+    16.05,
+    0.4
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i0171"
+  },
+  {
+   "id": "AP005_i0349",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    40.9209,
+    41.1103,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2465"
+  },
+  {
+   "id": "AP005_i0352",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    41.3254,
+    43.0138,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2465"
+  },
+  {
+   "id": "AP005_i0355",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -21.8781,
+    42.3187,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2455"
+  },
+  {
+   "id": "AP005_i0356",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -33.636,
+    42.236,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2452"
+  },
+  {
+   "id": "AP005_i0357",
+   "family": "AP003_understory_shrub",
+   "variation": "V07",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -35.6461,
+    40.6964,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2451"
+  },
+  {
+   "id": "AP005_i0359",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    34.442,
+    39.1826,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2497"
+  },
+  {
+   "id": "AP005_i0360",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -42.6234,
+    42.5251,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2449"
+  },
+  {
+   "id": "AP005_i0361",
+   "family": "AP003_understory_shrub",
+   "variation": "V07",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -18.4833,
+    42.8178,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2457"
+  },
+  {
+   "id": "AP005_i0362",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -27.9522,
+    42.9445,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2453"
+  },
+  {
+   "id": "AP005_i0365",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -31.8751,
+    41.2276,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2452"
+  },
+  {
+   "id": "AP005_i0366",
+   "family": "AP003_understory_shrub",
+   "variation": "V07",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    33.6921,
+    42.0439,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2463"
+  },
+  {
+   "id": "AP005_i0368",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -39.857,
+    40.7199,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2450"
+  },
+  {
+   "id": "AP005_i0370",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -36.4061,
+    37.6355,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2508"
+  },
+  {
+   "id": "AP005_i0372",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    25.045,
+    42.8671,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2460"
+  },
+  {
+   "id": "AP005_i0373",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    29.0037,
+    41.3256,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2461"
+  },
+  {
+   "id": "AP005_i0375",
+   "family": "AP003_understory_shrub",
+   "variation": "V07",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    21.9545,
+    40.8389,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2459"
+  },
+  {
+   "id": "AP005_i0376",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -24.8944,
+    41.3788,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2455"
+  },
+  {
+   "id": "AP005_i0379",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -37.5707,
+    41.5971,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2450"
+  },
+  {
+   "id": "AP005_i0383",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    -43.3069,
+    39.8452,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2467"
+  },
+  {
+   "id": "AP005_i0384",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:north:AP003_understory_shrub",
+   "position": [
+    36.9439,
+    38.3244,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2497"
+  },
+  {
+   "id": "AP005_i0389",
+   "family": "AP003_rock_prop",
+   "variation": "V02",
+   "plan_id": "recipe:north:AP003_rock_prop",
+   "position": [
+    34.6444,
+    35.4284,
+    0.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2495"
+  },
+  {
+   "id": "AP005_i0391",
+   "family": "AP003_rock_prop",
+   "variation": "V02",
+   "plan_id": "recipe:north:AP003_rock_prop",
+   "position": [
+    -43.1363,
+    37.9128,
+    0.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2469"
+  },
+  {
+   "id": "AP005_i0656",
+   "family": "AP003_greenery_cluster",
+   "variation": "V07",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    36.7211,
+    -16.6316,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2475"
+  },
+  {
+   "id": "AP005_i0665",
+   "family": "AP003_greenery_cluster",
+   "variation": "V06",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    42.9786,
+    -18.186,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2479"
+  },
+  {
+   "id": "AP005_i0682",
+   "family": "AP003_greenery_cluster",
+   "variation": "V06",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    36.9983,
+    24.97,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2520"
+  },
+  {
+   "id": "AP005_i0687",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    39.5575,
+    -18.6703,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2475"
+  },
+  {
+   "id": "AP005_i0688",
+   "family": "AP003_greenery_cluster",
+   "variation": "V07",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    42.2306,
+    -16.9721,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2479"
+  },
+  {
+   "id": "AP005_i0691",
+   "family": "AP003_greenery_cluster",
+   "variation": "V05",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    39.113,
+    -17.4133,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2475"
+  },
+  {
+   "id": "AP005_i0701",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    41.5402,
+    -18.5252,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2479"
+  },
+  {
+   "id": "AP005_i0702",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    38.05,
+    25.8351,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2521"
+  },
+  {
+   "id": "AP005_i0706",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    36.8373,
+    23.4406,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0707",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    40.3482,
+    23.9807,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0709",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    38.3557,
+    14.367,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_open_corridor AP005_i2532"
+  },
+  {
+   "id": "AP005_i0717",
+   "family": "AP003_greenery_cluster",
+   "variation": "V05",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    37.1972,
+    -17.773,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2475"
+  },
+  {
+   "id": "AP005_i0744",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    24.7307,
+    5.3904,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2431"
+  },
+  {
+   "id": "AP005_i0757",
+   "family": "AP003_greenery_cluster",
+   "variation": "V01",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    35.123,
+    -18.5575,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2475"
+  },
+  {
+   "id": "AP005_i0770",
+   "family": "AP003_greenery_cluster",
+   "variation": "V05",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    37.8895,
+    23.6839,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0779",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    38.2979,
+    24.9635,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2520"
+  },
+  {
+   "id": "AP005_i0785",
+   "family": "AP003_greenery_cluster",
+   "variation": "V06",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    25.6691,
+    5.5611,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2431"
+  },
+  {
+   "id": "AP005_i0788",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    38.2786,
+    -15.885,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_curb AP005_i2478"
+  },
+  {
+   "id": "AP005_i0799",
+   "family": "AP003_greenery_cluster",
+   "variation": "V01",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    36.7587,
+    22.43,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0807",
+   "family": "AP003_greenery_cluster",
+   "variation": "V07",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    37.6741,
+    22.7962,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0834",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    40.2286,
+    -17.5537,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2479"
+  },
+  {
+   "id": "AP005_i0837",
+   "family": "AP003_greenery_cluster",
+   "variation": "V07",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    38.7915,
+    22.8891,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0839",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    38.0265,
+    21.952,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0858",
+   "family": "AP003_greenery_cluster",
+   "variation": "V07",
+   "plan_id": "recipe:east:AP003_greenery_cluster",
+   "position": [
+    36.3908,
+    24.2551,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0871",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    44.8349,
+    -4.3036,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2491"
+  },
+  {
+   "id": "AP005_i0873",
+   "family": "AP003_understory_shrub",
+   "variation": "V05",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    40.4242,
+    -16.9767,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2479"
+  },
+  {
+   "id": "AP005_i0880",
+   "family": "AP003_understory_shrub",
+   "variation": "V01",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    35.8881,
+    22.8221,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0882",
+   "family": "AP003_understory_shrub",
+   "variation": "V06",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    44.959,
+    4.7347,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2483"
+  },
+  {
+   "id": "AP005_i0887",
+   "family": "AP003_understory_shrub",
+   "variation": "V06",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    39.2345,
+    24.0659,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0917",
+   "family": "AP003_understory_shrub",
+   "variation": "V05",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    38.5243,
+    25.8599,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2520"
+  },
+  {
+   "id": "AP005_i0919",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    41.5121,
+    7.939,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_open_corridor AP005_i2532"
+  },
+  {
+   "id": "AP005_i0920",
+   "family": "AP003_understory_shrub",
+   "variation": "V05",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    37.7156,
+    15.868,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_open_corridor AP005_i2531"
+  },
+  {
+   "id": "AP005_i0925",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    35.6164,
+    26.1658,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2521"
+  },
+  {
+   "id": "AP005_i0928",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    44.6237,
+    1.7587,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2483"
+  },
+  {
+   "id": "AP005_i0930",
+   "family": "AP003_understory_shrub",
+   "variation": "V07",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    40.5663,
+    -19.0353,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2479"
+  },
+  {
+   "id": "AP005_i0937",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    42.9445,
+    4.0938,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2483"
+  },
+  {
+   "id": "AP005_i0939",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    40.3325,
+    22.2455,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0941",
+   "family": "AP003_understory_shrub",
+   "variation": "V01",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    42.7513,
+    -16.4244,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2479"
+  },
+  {
+   "id": "AP005_i0942",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    43.4797,
+    0.2344,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2483"
+  },
+  {
+   "id": "AP005_i0956",
+   "family": "AP003_understory_shrub",
+   "variation": "V03",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    38.2691,
+    -17.1169,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2475"
+  },
+  {
+   "id": "AP005_i0959",
+   "family": "AP003_understory_shrub",
+   "variation": "V08",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    37.7865,
+    22.8216,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2519"
+  },
+  {
+   "id": "AP005_i0960",
+   "family": "AP003_understory_shrub",
+   "variation": "V05",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    44.4129,
+    -1.3132,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2487"
+  },
+  {
+   "id": "AP005_i0962",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:east:AP003_understory_shrub",
+   "position": [
+    36.6702,
+    -18.902,
+    0.0
+   ],
+   "region": "east",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2475"
+  },
+  {
+   "id": "AP005_i0966",
+   "family": "AP003_rock_prop",
+   "variation": "V03",
+   "plan_id": "recipe:east:AP003_rock_prop",
+   "position": [
+    39.7726,
+    6.8085,
+    0.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_open_corridor AP005_i2532"
+  },
+  {
+   "id": "AP005_i0968",
+   "family": "AP003_rock_prop",
+   "variation": "V08",
+   "plan_id": "recipe:east:AP003_rock_prop",
+   "position": [
+    36.6451,
+    -16.373,
+    0.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2475"
+  },
+  {
+   "id": "AP005_i0977",
+   "family": "AP003_rock_prop",
+   "variation": "V03",
+   "plan_id": "recipe:east:AP003_rock_prop",
+   "position": [
+    38.3319,
+    14.4164,
+    0.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_open_corridor AP005_i2532"
+  },
+  {
+   "id": "AP005_i0979",
+   "family": "AP003_rock_prop",
+   "variation": "V03",
+   "plan_id": "recipe:east:AP003_rock_prop",
+   "position": [
+    27.63,
+    -4.2773,
+    0.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2431"
+  },
+  {
+   "id": "AP005_i0981",
+   "family": "AP003_rock_prop",
+   "variation": "V06",
+   "plan_id": "recipe:east:AP003_rock_prop",
+   "position": [
+    24.4847,
+    5.4163,
+    0.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2431"
+  },
+  {
+   "id": "AP005_i0983",
+   "family": "AP003_rock_prop",
+   "variation": "V01",
+   "plan_id": "recipe:east:AP003_rock_prop",
+   "position": [
+    42.7897,
+    -1.7655,
+    0.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_low_rise AP005_i2487"
+  },
+  {
+   "id": "AP005_i0985",
+   "family": "AP003_rock_prop",
+   "variation": "V03",
+   "plan_id": "recipe:east:AP003_rock_prop",
+   "position": [
+    23.3448,
+    -4.238,
+    0.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2431"
+  },
+  {
+   "id": "AP005_i0999",
+   "family": "AP003B_small_breakable",
+   "variation": "V01",
+   "plan_id": "recipe:east:AP003B_small_breakable",
+   "position": [
+    38.3714,
+    14.5949,
+    0.0
+   ],
+   "region": "east",
+   "role": "breakable",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_open_corridor AP005_i2532"
+  },
+  {
+   "id": "AP005_i1002",
+   "family": "AP003B_small_breakable",
+   "variation": "V06",
+   "plan_id": "recipe:east:AP003B_small_breakable",
+   "position": [
+    23.4166,
+    5.5961,
+    0.0
+   ],
+   "region": "east",
+   "role": "breakable",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2431"
+  },
+  {
+   "id": "AP005_i1319",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:south:AP003_greenery_cluster",
+   "position": [
+    9.367,
+    -25.0459,
+    0.0
+   ],
+   "region": "south",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2437"
+  },
+  {
+   "id": "AP005_i1376",
+   "family": "AP003_understory_shrub",
+   "variation": "V03",
+   "plan_id": "recipe:south:AP003_understory_shrub",
+   "position": [
+    -3.6846,
+    -22.204,
+    0.0
+   ],
+   "region": "south",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP003B_garden_bench_low_wall_cap AP005_i0121"
+  },
+  {
+   "id": "AP005_i1429",
+   "family": "AP003_rock_prop",
+   "variation": "V01",
+   "plan_id": "recipe:south:AP003_rock_prop",
+   "position": [
+    -2.7512,
+    -23.747,
+    0.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP003B_garden_bench_low_wall_cap AP005_i0121"
+  },
+  {
+   "id": "AP005_i1442",
+   "family": "AP003_rock_prop",
+   "variation": "V03",
+   "plan_id": "recipe:south:AP003_rock_prop",
+   "position": [
+    -0.0003,
+    -23.8224,
+    0.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2437"
+  },
+  {
+   "id": "AP005_i1468",
+   "family": "AP003_rock_prop",
+   "variation": "V01",
+   "plan_id": "recipe:south:AP003_rock_prop",
+   "position": [
+    8.7725,
+    -23.8031,
+    0.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2437"
+  },
+  {
+   "id": "AP005_i1512",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -23.9556,
+    -3.7536,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1520",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -26.137,
+    4.4637,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1523",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -27.0314,
+    4.2609,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1526",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -26.4446,
+    -3.5743,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1530",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -35.1194,
+    17.2393,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i1537",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -25.7247,
+    4.3597,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1540",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V05",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -27.9238,
+    4.0412,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1541",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V06",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -34.4272,
+    16.969,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i1544",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V05",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -27.1484,
+    -4.3714,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1545",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -24.8368,
+    4.6386,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1547",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -23.9272,
+    -4.1874,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1553",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -23.6103,
+    4.3408,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1558",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V01",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -26.6402,
+    4.6189,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1571",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V06",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -33.1074,
+    20.5855,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i1585",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V01",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -26.7181,
+    -4.5384,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1587",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V01",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -25.1412,
+    -4.3509,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1601",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -33.685,
+    19.7386,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i1602",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -24.4484,
+    -4.5816,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1609",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -24.6236,
+    -4.0118,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1618",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V06",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -34.3026,
+    17.9944,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i1621",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -33.5736,
+    18.7605,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i1629",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -26.1548,
+    -4.2535,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1630",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V05",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -33.3698,
+    20.3258,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i1637",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V01",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -25.5513,
+    -4.1973,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1649",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V01",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -25.433,
+    -4.5936,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1652",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -34.2612,
+    18.6749,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i1654",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V06",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -25.8063,
+    3.9588,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1661",
+   "family": "AP003B_bamboo_stalk",
+   "variation": "V05",
+   "plan_id": "recipe:west:AP003B_bamboo_stalk",
+   "position": [
+    -25.1213,
+    4.3818,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i1677",
+   "family": "AP003B_bamboo_cluster",
+   "variation": "V01",
+   "plan_id": "recipe:west:AP003B_bamboo_cluster",
+   "position": [
+    -24.9674,
+    -5.304,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2051",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -44.0945,
+    -37.2508,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2474"
+  },
+  {
+   "id": "AP005_i2054",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -34.1289,
+    19.7369,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i2057",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -24.5206,
+    -5.1108,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2060",
+   "family": "AP003_greenery_cluster",
+   "variation": "V01",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -43.2157,
+    -38.9202,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2474"
+  },
+  {
+   "id": "AP005_i2096",
+   "family": "AP003_greenery_cluster",
+   "variation": "V06",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -43.5432,
+    -36.2784,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2473"
+  },
+  {
+   "id": "AP005_i2107",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -43.25,
+    30.8333,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2471"
+  },
+  {
+   "id": "AP005_i2112",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -33.2211,
+    20.8984,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i2120",
+   "family": "AP003_greenery_cluster",
+   "variation": "V05",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -27.4424,
+    5.0669,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2131",
+   "family": "AP003_greenery_cluster",
+   "variation": "V08",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -44.9789,
+    37.3497,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2469"
+  },
+  {
+   "id": "AP005_i2134",
+   "family": "AP003_greenery_cluster",
+   "variation": "V05",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -24.2142,
+    4.3191,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2150",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -44.1212,
+    -30.9154,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2472"
+  },
+  {
+   "id": "AP005_i2155",
+   "family": "AP003_greenery_cluster",
+   "variation": "V01",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -43.1406,
+    31.8694,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2471"
+  },
+  {
+   "id": "AP005_i2158",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -44.6432,
+    32.3686,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2470"
+  },
+  {
+   "id": "AP005_i2186",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -44.4659,
+    31.3072,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2471"
+  },
+  {
+   "id": "AP005_i2201",
+   "family": "AP003_greenery_cluster",
+   "variation": "V06",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -26.0599,
+    15.9951,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2425"
+  },
+  {
+   "id": "AP005_i2202",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -43.2539,
+    -30.1898,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2472"
+  },
+  {
+   "id": "AP005_i2209",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -44.8182,
+    -36.5122,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2473"
+  },
+  {
+   "id": "AP005_i2215",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -25.2884,
+    5.3678,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i2444"
+  },
+  {
+   "id": "AP005_i2233",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_understory_shrub",
+   "position": [
+    -44.3919,
+    31.7714,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2471"
+  },
+  {
+   "id": "AP005_i2234",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003_understory_shrub",
+   "position": [
+    -44.0492,
+    -31.4379,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2472"
+  },
+  {
+   "id": "AP005_i2241",
+   "family": "AP003_understory_shrub",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003_understory_shrub",
+   "position": [
+    -44.52,
+    34.4965,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2470"
+  },
+  {
+   "id": "AP005_i2255",
+   "family": "AP003_understory_shrub",
+   "variation": "V06",
+   "plan_id": "recipe:west:AP003_understory_shrub",
+   "position": [
+    -43.4429,
+    -38.4819,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2474"
+  },
+  {
+   "id": "AP005_i2263",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_understory_shrub",
+   "position": [
+    -44.5214,
+    -35.8841,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_plaster_wall AP005_i2473"
+  },
+  {
+   "id": "AP005_i2298",
+   "family": "AP003B_stone_lantern",
+   "variation": "V04",
+   "plan_id": "F1-LN01",
+   "position": [
+    -13.13,
+    17.13,
+    0.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i0169"
+  },
+  {
+   "id": "AP005_i2299",
+   "family": "AP003B_stone_lantern",
+   "variation": "V04",
+   "plan_id": "F1-LN02",
+   "position": [
+    13.12,
+    17.13,
+    0.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i0172"
+  },
+  {
+   "id": "AP005_i2304",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "fix:F1-green-flanks",
+   "position": [
+    13.2157,
+    17.1746,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i0172"
+  },
+  {
+   "id": "AP005_i2305",
+   "family": "AP003_greenery_cluster",
+   "variation": "V06",
+   "plan_id": "fix:F1-green-flanks",
+   "position": [
+    -14.5667,
+    35.4671,
+    0.0
+   ],
+   "region": "north",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005_palace_return AP005_i2369"
+  },
+  {
+   "id": "AP005_i2334",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "fix:F3-green-band",
+   "position": [
+    -26.8339,
+    -4.6169,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2340",
+   "family": "AP003_greenery_cluster",
+   "variation": "V01",
+   "plan_id": "fix:F3-green-band",
+   "position": [
+    -26.2599,
+    -5.3108,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2341",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "fix:F3-green-band",
+   "position": [
+    -27.1281,
+    4.0882,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2343",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "fix:F3-green-band",
+   "position": [
+    -26.3652,
+    5.1512,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2351",
+   "family": "AP003_rock_prop",
+   "variation": "V07",
+   "plan_id": "fix:F3-rocks-band",
+   "position": [
+    -27.8959,
+    5.1,
+    0.0
+   ],
+   "region": "west",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_gate_transition AP005_i2443"
+  },
+  {
+   "id": "AP005_i2352",
+   "family": "AP003_rock_prop",
+   "variation": "V07",
+   "plan_id": "fix:F3-rocks-band",
+   "position": [
+    -26.069,
+    -5.7609,
+    0.0
+   ],
+   "region": "west",
+   "role": "dressing",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP002_timber_post AP005_i2445"
+  },
+  {
+   "id": "AP005_i2048",
+   "family": "AP003_greenery_cluster",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -42.1851,
+    -34.8362,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005B_shed AP005_i2537"
+  },
+  {
+   "id": "AP005_i2053",
+   "family": "AP003_greenery_cluster",
+   "variation": "V08",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -40.7672,
+    -35.759,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005B_shed AP005_i2537"
+  },
+  {
+   "id": "AP005_i2114",
+   "family": "AP003_greenery_cluster",
+   "variation": "V08",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -40.1736,
+    -34.5698,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005B_shed AP005_i2537"
+  },
+  {
+   "id": "AP005_i2137",
+   "family": "AP003_greenery_cluster",
+   "variation": "V03",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -39.3255,
+    -37.1303,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005B_shed AP005_i2537"
+  },
+  {
+   "id": "AP005_i2170",
+   "family": "AP003_greenery_cluster",
+   "variation": "V02",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -39.1688,
+    -32.3281,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005B_shed AP005_i2537"
+  },
+  {
+   "id": "AP005_i2194",
+   "family": "AP003_greenery_cluster",
+   "variation": "V08",
+   "plan_id": "recipe:west:AP003_greenery_cluster",
+   "position": [
+    -38.2528,
+    -35.2383,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005B_shed AP005_i2537"
+  },
+  {
+   "id": "AP005_i2235",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_understory_shrub",
+   "position": [
+    -42.401,
+    -34.305,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005B_shed AP005_i2537"
+  },
+  {
+   "id": "AP005_i2260",
+   "family": "AP003_understory_shrub",
+   "variation": "V04",
+   "plan_id": "recipe:west:AP003_understory_shrub",
+   "position": [
+    -39.6938,
+    -36.6777,
+    0.0
+   ],
+   "region": "west",
+   "role": "vegetation",
+   "reason": "R6 displacement: footprint (+0.3 m) intersects new AP005B_shed AP005_i2537"
+  }
+ ],
+ "new_families": [
+  {
+   "family": "AP005B_tsukubai",
+   "variation": "V01",
+   "label": "tsukubai stone water basin + bamboo ladle rest",
+   "fbx": "asset-production/AP-005/exports/families/AP005B_tsukubai_V01.fbx",
+   "glb": "asset-production/AP-005/exports/glb/AP005B_tsukubai_V01.glb",
+   "lod0_tris": 5815,
+   "navmesh": "obstacle",
+   "height_m": 0.9,
+   "materials": [
+    "AP005B_M_tsukubai_v001"
+   ],
+   "textures": {
+    "albedo": "AP005B_IMG_tsukubai_albedo_v001.png",
+    "normal": "AP005B_IMG_tsukubai_normal_v001.png",
+    "orm": "AP005B_IMG_tsukubai_orm_v001.png"
+   },
+   "instances_v002": 2
+  },
+  {
+   "family": "AP005B_handcart",
+   "variation": "V01",
+   "label": "wooden two-wheeled hand cart",
+   "fbx": "asset-production/AP-005/exports/families/AP005B_handcart_V01.fbx",
+   "glb": "asset-production/AP-005/exports/glb/AP005B_handcart_V01.glb",
+   "lod0_tris": 5819,
+   "navmesh": "obstacle",
+   "height_m": 0.865,
+   "materials": [
+    "AP005B_M_handcart_v001"
+   ],
+   "textures": {
+    "albedo": "AP005B_IMG_handcart_albedo_v001.png",
+    "normal": "AP005B_IMG_handcart_normal_v001.png",
+    "orm": "AP005B_IMG_handcart_orm_v001.png"
+   },
+   "instances_v002": 2
+  },
+  {
+   "family": "AP005B_strawbales",
+   "variation": "V01",
+   "label": "stacked rice-straw bundles group",
+   "fbx": "asset-production/AP-005/exports/families/AP005B_strawbales_V01.fbx",
+   "glb": "asset-production/AP-005/exports/glb/AP005B_strawbales_V01.glb",
+   "lod0_tris": 5819,
+   "navmesh": "obstacle",
+   "height_m": 1.2,
+   "materials": [
+    "AP005B_M_strawbales_v001"
+   ],
+   "textures": {
+    "albedo": "AP005B_IMG_strawbales_albedo_v001.png",
+    "normal": "AP005B_IMG_strawbales_normal_v001.png",
+    "orm": "AP005B_IMG_strawbales_orm_v001.png"
+   },
+   "instances_v002": 4
+  },
+  {
+   "family": "AP005B_barrels",
+   "variation": "V01",
+   "label": "stack of 3 wooden barrels",
+   "fbx": "asset-production/AP-005/exports/families/AP005B_barrels_V01.fbx",
+   "glb": "asset-production/AP-005/exports/glb/AP005B_barrels_V01.glb",
+   "lod0_tris": 5818,
+   "navmesh": "obstacle",
+   "height_m": 1.3,
+   "materials": [
+    "AP005B_M_barrels_v001"
+   ],
+   "textures": {
+    "albedo": "AP005B_IMG_barrels_albedo_v001.png",
+    "normal": "AP005B_IMG_barrels_normal_v001.png",
+    "orm": "AP005B_IMG_barrels_orm_v001.png"
+   },
+   "instances_v002": 2
+  },
+  {
+   "family": "AP005B_mossrock",
+   "variation": "V01",
+   "label": "large moss-covered ornamental garden rock",
+   "fbx": "asset-production/AP-005/exports/families/AP005B_mossrock_V01.fbx",
+   "glb": "asset-production/AP-005/exports/glb/AP005B_mossrock_V01.glb",
+   "lod0_tris": 5820,
+   "navmesh": "obstacle",
+   "height_m": 1.5262,
+   "materials": [
+    "AP005B_M_mossrock_v001"
+   ],
+   "textures": {
+    "albedo": "AP005B_IMG_mossrock_albedo_v001.png",
+    "normal": "AP005B_IMG_mossrock_normal_v001.png",
+    "orm": "AP005B_IMG_mossrock_orm_v001.png"
+   },
+   "instances_v002": 5
+  },
+  {
+   "family": "AP005B_shed",
+   "variation": "V01",
+   "label": "kura-style wooden storage shed (plaster walls, tile roof, closed doors)",
+   "fbx": "asset-production/AP-005/exports/families/AP005B_shed_V01.fbx",
+   "glb": "asset-production/AP-005/exports/glb/AP005B_shed_V01.glb",
+   "lod0_tris": 11639,
+   "navmesh": "obstacle",
+   "height_m": 3.7032,
+   "materials": [
+    "AP005B_M_shed_v001"
+   ],
+   "textures": {
+    "albedo": "AP005B_IMG_shed_albedo_v001.png",
+    "normal": "AP005B_IMG_shed_normal_v001.png",
+    "orm": "AP005B_IMG_shed_orm_v001.png"
+   },
+   "instances_v002": 1
+  }
+ ],
+ "fix_pass_v002": {
+  "F3": [
+   {
+    "pavilion": "PAV-N1",
+    "id": "AP005_i2506",
+    "ridge_xy_axis": "x",
+    "ridge_z": 4.843,
+    "eave_z": 3.8,
+    "eave_y": [
+     34.2,
+     38.8
+    ],
+    "x_span": [
+     34.5,
+     37.5
+    ],
+    "pitch_deg": 24.4
+   },
+   {
+    "pavilion": "PAV-N2",
+    "id": "AP005_i2518",
+    "ridge_xy_axis": "x",
+    "ridge_z": 4.843,
+    "eave_z": 3.8,
+    "eave_y": [
+     34.2,
+     38.8
+    ],
+    "x_span": [
+     -37.5,
+     -34.5
+    ],
+    "pitch_deg": 24.4
+   },
+   {
+    "pavilion": "PAV-E1",
+    "id": "AP005_i2530",
+    "ridge_xy_axis": "x",
+    "ridge_z": 4.843,
+    "eave_z": 3.8,
+    "eave_y": [
+     21.7,
+     26.3
+    ],
+    "x_span": [
+     36.5,
+     39.5
+    ],
+    "pitch_deg": 24.4
+   }
+  ],
+  "F4_east": [
+   {
+    "colonnade": "COL-33",
+    "roof_ids": [
+     "AP005_i2553",
+     "AP005_i2554",
+     "AP005_i2555"
+    ],
+    "ridge_z": 5.043,
+    "eave_z": 4.0,
+    "width_across_m": 4.6,
+    "length_m": 9.0,
+    "pitch_deg": 24.4
+   },
+   {
+    "colonnade": "COL-34",
+    "roof_ids": [
+     "AP005_i2556",
+     "AP005_i2557",
+     "AP005_i2558"
+    ],
+    "ridge_z": 5.043,
+    "eave_z": 4.0,
+    "width_across_m": 4.6,
+    "length_m": 9.0,
+    "pitch_deg": 24.4
+   }
+  ],
+  "F4_west": "UNCHANGED (recorded): no frozen route lane runs under the west roofed corridor module chain (x -38.45..-35.45, y -9.5..9.0); the line inside its footprint on the plan render is the v001 walkable connector along its own floor (corridor, hw 1.0, by design; roof part is fade class ADR-014-2 / AP005_fade). The only frozen-route contact is route 14 ((-33,-14)->(-40,-10), hw 1.5) whose round corridor edge grazes the SW corner of the end module W-C01 apron/roof by 0.30 m (a ~1 m sliver at one corner, pre-existing v001 geometry, measure v001..v003 corridor test 0 for this walkable-class family). Neither remedy applies cleanly: a 4 m west shift puts the chain onto route 15 (x -40, hw 1.5 -> clearance rule broken) and deleting the V04 end module roof for a 0.3 m corner graze opens the corridor end in the west gameplay frame. Coordinator call if the graze must be zero: trim = delete the roof PART of W-C01 only (AP005_i-part object *_roof), or nudge the whole chain +0.35 m north (y -7.15..7.85; route 16 clearance stays >= 1.7 m).",
+  "material_overrides": {
+   "AP005_M_plaster_world": {
+    "applies_to": "AP002_plaster_wall instances",
+    "source": "AP002_M_plaster_v009_build_v003",
+    "base_color_multiply_rgb": [
+     0.8234,
+     0.8113,
+     0.8138
+    ],
+    "texture_mean_before": "#DFDFD4",
+    "mean_after": "#CDCBC1"
+   },
+   "AP005_M_plaster_world_ap001": {
+    "applies_to": "AP005_palace_return instances",
+    "source": "AP001_M_plaster_v009",
+    "base_color_multiply_rgb": [
+     0.8496,
+     0.829,
+     0.8688
+    ],
+    "texture_mean_before": "#DCDDCD",
+    "mean_after": "#CDCBC1"
+   },
+   "AP002_M_stone_v009_build_v003": {
+    "applies_to": "AP002_gate_transition instances (kerb panels)",
+    "note": "stone instead of plaster; world master shows untilted kerb boxes on the same footprint"
+   },
+   "AP005_M_roof_world": {
+    "applies_to": "AP002_palace_roof_bay + AP002_roof_segment instances",
+    "source": "AP002_M_roof_v009_build_v003",
+    "courses": {
+     "source": "AP002_M_roof_v009_build_v003",
+     "course_pitch_vertical_m": 0.16,
+     "course_pitch_along_30deg_slope_m": 0.32,
+     "darken_at_step": 0.62,
+     "bump": [
+      0.35,
+      0.03
+     ]
+    }
+   }
+  },
+  "created": "2026-09-16T07:05:16"
+ }
+}

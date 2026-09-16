@@ -300,8 +300,13 @@ namespace DD.Art.Pipeline.EditorTools
                 ApplyFoliageWind(material, spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout);
             }
 
+            if (spec.HasDetailNormal)
+            {
+                ApplyDetailNormal(material, spec);
+            }
+
             EditorUtility.SetDirty(material);
-            Debug.Log("[ArtPipeline] Library material " + (created ? "created" : "updated") + ": " + path + " (" + spec.Kind + "/" + spec.Shader + ")");
+            Debug.Log("[ArtPipeline] Library material " + (created ? "created" : "updated") + ": " + path + " (" + spec.Kind + "/" + spec.Shader + (spec.HasDetailNormal ? "/detail-normal " + spec.DetailNormalTextureRole : string.Empty) + ")");
             return material;
         }
 
@@ -317,6 +322,31 @@ namespace DD.Art.Pipeline.EditorTools
             SetFloat(m, "_BackfaceLighting", 1f);
             SetFloat(m, "_Translucency", cutout ? 0.25f : 0f);
             SetFloat(m, "_AlphaToMask", cutout ? 1f : 0f);
+        }
+
+        /// <summary>
+        /// WP-017 · Tangent-space detail normal overlay on a Lit material (URP `_DetailNormalMap`
+        /// gated by `_DETAIL_MULX2`; the detail albedo stays null = URP's neutral linear grey, so
+        /// only the normal contributes). Used by roof_world for the AP-005B tile-course lines.
+        /// </summary>
+        private static void ApplyDetailNormal(Material m, ArtLibraryMaterialRoles.Spec spec)
+        {
+            string path = ArtPipelinePaths.DerivedTexture(spec.DetailNormalTextureRole, "Normal");
+            var normal = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (normal == null)
+            {
+                throw new InvalidOperationException("[ArtPipeline] Detail normal missing for role '" + spec.Role + "': " + path + " (run the texture repack first)");
+            }
+
+            SetTexture(m, "_DetailNormalMap", normal);
+            SetTexture(m, "_DetailAlbedoMap", null);
+            SetTexture(m, "_DetailMask", null);
+            SetFloat(m, "_DetailNormalMapScale", spec.DetailNormalScale);
+            SetFloat(m, "_DetailAlbedoMapScale", 1f);
+            m.SetTextureScale("_DetailAlbedoMap", new Vector2(spec.DetailTiling, spec.DetailTiling));
+            m.SetTextureOffset("_DetailAlbedoMap", Vector2.zero);
+            m.EnableKeyword("_DETAIL_MULX2");
+            m.DisableKeyword("_DETAIL_SCALED");
         }
 
         /// <summary>

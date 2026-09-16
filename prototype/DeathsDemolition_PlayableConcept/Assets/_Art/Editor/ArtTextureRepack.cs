@@ -66,6 +66,7 @@ namespace DD.Art.Pipeline.EditorTools
                 BuildMask(roles[i]);
             }
 
+            BuildRoofCourses();   // WP-017 · roof_world detail normal
             AssetDatabase.SaveAssets();
             Debug.Log("[ArtPipeline] Library masks: " + roles.Length + " in " + ArtPipelinePaths.TexturesDerived);
         }
@@ -124,6 +125,76 @@ namespace DD.Art.Pipeline.EditorTools
 
             Debug.Log("[ArtPipeline] Mask " + (current ? "current" : "written") + ": " + outputPath +
                       " (source sha256 " + sourceSha.Substring(0, 12) + "…)");
+            return outputPath;
+        }
+
+        /// <summary>
+        /// WP-017 · Generated tangent-space normal for the AP-005B roof copy (ADR-017-2): four
+        /// horizontal tile courses per tile, each course a rounded step (overlap ridge) with a
+        /// soft shadow lip, on a flat (128,128,255) base. 256² is enough — the overlay is read
+        /// at 30 cm per course from 20–100 m. Written once to Textures/Derived with provenance
+        /// (algorithm string = the source; no input file). Idempotent: same bytes every run.
+        /// </summary>
+        public const string RoofCoursesAlgorithm = "RoofCourses v1 (WP-017): 256² tangent normal, 4 courses/tile, ridge = cosine bump 14 px (dz 0.55), lip = 6 px shadow ramp; OpenGL +Y";
+        public const int RoofCoursesSize = 256;
+        public const int RoofCoursesPerTile = 4;
+
+        public static string BuildRoofCourses()
+        {
+            string role = ArtLibraryMaterialRoles.RoofCoursesTextureRole;
+            string outputPath = ArtPipelinePaths.DerivedTexture(role, "Normal");
+            string provenancePath = ArtPipelinePaths.DerivedTextureProvenance(role, "Normal");
+            EnsureFolder(ArtPipelinePaths.TexturesDerived);
+
+            int n = RoofCoursesSize;
+            var px = new Color32[n * n];
+            float period = (float)n / RoofCoursesPerTile;
+            for (int y = 0; y < n; y++)
+            {
+                // Height profile along v (one course): a rising cosine ridge over the first 14 px, then flat.
+                float t = y % period;
+                float ridge = 14f, lip = 6f;
+                float slope;   // dh/dy in texel units
+                if (t < ridge)
+                {
+                    slope = 0.55f * 0.5f * Mathf.PI / ridge * Mathf.Sin(Mathf.PI * t / ridge);
+                }
+                else if (t > period - lip)
+                {
+                    slope = -0.55f / lip;   // the lip drops back to the next course
+                }
+                else
+                {
+                    slope = 0f;
+                }
+
+                var nrm = new Vector3(0f, -slope * 4f, 1f).normalized;   // +Y up in OpenGL convention
+                var c = new Color32((byte)Mathf.RoundToInt((nrm.x * 0.5f + 0.5f) * 255f), (byte)Mathf.RoundToInt((nrm.y * 0.5f + 0.5f) * 255f), (byte)Mathf.RoundToInt((nrm.z * 0.5f + 0.5f) * 255f), 255);
+                for (int x = 0; x < n; x++) px[y * n + x] = c;
+            }
+
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false, true);
+            tex.SetPixels32(px);
+            tex.Apply(false, false);
+            byte[] png = tex.EncodeToPNG();
+            UnityEngine.Object.DestroyImmediate(tex);
+            string outputSha = Sha256Hex(png);
+
+            bool current = File.Exists(outputPath) && File.Exists(provenancePath) && Sha256Hex(File.ReadAllBytes(outputPath)) == outputSha;
+            if (!current)
+            {
+                File.WriteAllBytes(outputPath, png);
+                var provenance = new Provenance { source = "(generated)", sourceSha256 = string.Empty, algorithm = RoofCoursesAlgorithm, utc = DateTime.UtcNow.ToString("o"), outputSha256 = outputSha };
+                File.WriteAllText(provenancePath, JsonUtility.ToJson(provenance, true) + "\n", new UTF8Encoding(false));
+            }
+
+            if (!current || string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(outputPath)))
+            {
+                AssetDatabase.ImportAsset(outputPath, ImportAssetOptions.ForceUpdate);
+                AssetDatabase.ImportAsset(provenancePath, ImportAssetOptions.ForceUpdate);
+            }
+
+            Debug.Log("[ArtPipeline] Roof courses normal " + (current ? "current" : "written") + ": " + outputPath);
             return outputPath;
         }
 

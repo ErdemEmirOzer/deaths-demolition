@@ -29,7 +29,8 @@ namespace DD.Art.Pipeline.EditorTools
     ///     NavMesh Surface        the WorldNavigation settings, baked here; data saved as an asset
     ///
     /// Coordinates: Blender (x, y, z) → Unity (x, z, y); yaw about +Z (CCW) → −yaw about +Y;
-    /// scale baked (1). Assembly parts are one prefab (the WP-012 multi-part prefabs).
+    /// WP-017: full XYZ euler through <see cref="WorldPlacementAsset.ToUnityRotation"/> (the AP-005B
+    /// gable panels tilt about Y); scale baked (1). Assembly parts are one prefab (the WP-012 multi-part prefabs).
     /// Layer policy (ADR-014-2): the placement flag decides per instance — occluder_candidate
     /// or fade_mesh → the whole instance on CameraOccluder (fades for the camera AND blocks
     /// bullets/aim, exactly like the procedural walls); otherwise the whole instance on
@@ -49,7 +50,32 @@ namespace DD.Art.Pipeline.EditorTools
             { "AP002_", "AP-002" },
             { "AP003_", "AP-003" },
             { "AP003B_", "AP-003B" },
-            { "AP005_", "AP-005" }
+            { "AP005_", "AP-005" },
+            { "AP005B_", "AP-005B" }   // WP-017 · AP-005B prop families
+        };
+
+        /// <summary>
+        /// WP-017 · AP-005B <c>material_override</c> → Unity library material roles (ADR-017-2).
+        /// The world master carries three materials that exist only there: the plaster copies
+        /// (linear albedo × 0.82 → mean #CDCBC1, art verdict F1), the roof copy with tile-course
+        /// lines (F5) and the AP-002 stone on the gate kerbs (F2). Each entry lists which slot
+        /// roles it replaces (null = every slot) and the role that replaces them; the Unity
+        /// materials are library roles (<c>ArtLibraryMaterialRoles</c>: plaster_hf003_world,
+        /// plaster_world, roof_world; stone is the WP-011 role).
+        /// </summary>
+        public sealed class MaterialOverride
+        {
+            public string Name;
+            /// <summary>Slot role → replacement role; null key = any role.</summary>
+            public Dictionary<string, string> Map;
+        }
+
+        public static readonly Dictionary<string, MaterialOverride> MaterialOverrides = new Dictionary<string, MaterialOverride>(StringComparer.Ordinal)
+        {
+            { "AP005_M_plaster_world", new MaterialOverride { Name = "AP005_M_plaster_world", Map = new Dictionary<string, string> { { "plaster_hf003", "plaster_hf003_world" }, { "plaster", "plaster_world" } } } },
+            { "AP005_M_plaster_world_ap001", new MaterialOverride { Name = "AP005_M_plaster_world_ap001", Map = new Dictionary<string, string> { { "plaster_hf003", "plaster_hf003_world" }, { "plaster", "plaster_world" } } } },
+            { "AP005_M_roof_world", new MaterialOverride { Name = "AP005_M_roof_world", Map = new Dictionary<string, string> { { "roof", "roof_world" } } } },
+            { "AP002_M_stone_v009_build_v003", new MaterialOverride { Name = "AP002_M_stone_v009_build_v003", Map = new Dictionary<string, string> { { "*", "stone" } } } }
         };
 
         public sealed class ImportReport
@@ -65,6 +91,9 @@ namespace DD.Art.Pipeline.EditorTools
             public int StaticInstances;
             public int IgnoreModifiers;
             public int NavMeshTriangles;
+            public int MaterialOverrides;
+            public int MaterialSlotsReplaced;
+            public int HeavyUnbatched;
             public List<string> Unmatched = new List<string>();
             public string Digest;
         }
@@ -116,39 +145,10 @@ namespace DD.Art.Pipeline.EditorTools
             asset.instances = new List<WorldPlacementAsset.Instance>();
             foreach (object o in ArtJson.AsList(doc["instances"], "instances"))
             {
-                Dictionary<string, object> r = ArtJson.AsObject(o, "instance");
-                string lodGroup = ArtJson.AsString(r["lod_group"]);
-                Split(lodGroup, out string ap, out string family, out string variation);
-                List<object> pos = ArtJson.AsList(r["position"], "position");
-                List<object> rot = ArtJson.AsList(r["rotation_euler_deg"], "rotation");
-                List<object> scl = ArtJson.AsList(r["scale"], "scale");
-                float rx = ArtJson.AsFloat(rot[0]), ry = ArtJson.AsFloat(rot[1]), rz = ArtJson.AsFloat(rot[2]);
-                if (Mathf.Abs(rx) > 1e-4f || Mathf.Abs(ry) > 1e-4f)
-                {
-                    throw new FormatException(LogPrefix + ArtJson.AsString(r["id"]) + ": rotation about X/Y is not part of dd-placement-v1 (yaw only).");
-                }
-
-                var assembly = new List<string>();
-                foreach (object a in ArtJson.AsList(r["assembly"], "assembly")) assembly.Add(ArtJson.AsString(a));
-
-                asset.instances.Add(new WorldPlacementAsset.Instance
-                {
-                    id = ArtJson.AsString(r["id"]),
-                    ap = ap,
-                    family = family,
-                    variation = variation,
-                    lodGroup = lodGroup,
-                    assembly = assembly.ToArray(),
-                    position = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(pos[0]), ArtJson.AsFloat(pos[1]), ArtJson.AsFloat(pos[2])),
-                    yawDegrees = rz,
-                    scale = new Vector3(ArtJson.AsFloat(scl[0]), ArtJson.AsFloat(scl[2]), ArtJson.AsFloat(scl[1])),
-                    region = ArtJson.AsString(r["region"]),
-                    role = ArtJson.AsString(r["role"]),
-                    navMesh = ArtJson.AsString(r["navmesh"]),
-                    occluder = r.ContainsKey("occluder_candidate") && ArtJson.AsBool(r["occluder_candidate"]),
-                    fade = r.ContainsKey("fade_mesh") && ArtJson.AsBool(r["fade_mesh"])
-                });
+                asset.instances.Add(ParseInstance(ArtJson.AsObject(o, "instance"), string.Empty));
             }
+
+            ApplyDelta(asset);
 
             asset.routes = new List<WorldPlacementAsset.Route>();
             foreach (object o in ArtJson.AsList(doc["routes"], "routes"))
@@ -215,6 +215,133 @@ namespace DD.Art.Pipeline.EditorTools
                       asset.weaponPoints.Count + " points, " + asset.regions.Count + " regions; source sha256 " + asset.sourceSha256.Substring(0, 12) + "…; overrides " +
                       asset.overriddenIds.Count + ")");
             return asset;
+        }
+
+        /// <summary>One dd-placement-v1 instance record → Unity space (shared by the source and the delta).</summary>
+        public static WorldPlacementAsset.Instance ParseInstance(Dictionary<string, object> r, string deltaVersion)
+        {
+            string lodGroup = ArtJson.AsString(r["lod_group"]);
+            Split(lodGroup, out string ap, out string family, out string variation);
+            List<object> pos = ArtJson.AsList(r["position"], "position");
+            List<object> rot = ArtJson.AsList(r["rotation_euler_deg"], "rotation");
+            List<object> scl = ArtJson.AsList(r["scale"], "scale");
+            // WP-017: full XYZ euler (AP-005B tilts its gable panels about Y); v001 records are yaw-only and unaffected.
+            float rx = ArtJson.AsFloat(rot[0]), ry = ArtJson.AsFloat(rot[1]), rz = ArtJson.AsFloat(rot[2]);
+
+            var assembly = new List<string>();
+            foreach (object a in ArtJson.AsList(r["assembly"], "assembly")) assembly.Add(ArtJson.AsString(a));
+
+            string materialOverride = r.ContainsKey("material_override") ? ArtJson.AsString(r["material_override"]) : string.Empty;
+            if (!string.IsNullOrEmpty(materialOverride) && !MaterialOverrides.ContainsKey(materialOverride))
+            {
+                throw new FormatException(LogPrefix + ArtJson.AsString(r["id"]) + ": material_override '" + materialOverride + "' has no Unity mapping (PlacementImporter.MaterialOverrides)");
+            }
+
+            return new WorldPlacementAsset.Instance
+            {
+                id = ArtJson.AsString(r["id"]),
+                ap = ap,
+                family = family,
+                variation = variation,
+                lodGroup = lodGroup,
+                assembly = assembly.ToArray(),
+                position = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(pos[0]), ArtJson.AsFloat(pos[1]), ArtJson.AsFloat(pos[2])),
+                yawDegrees = rz,
+                rotationEuler = new Vector3(rx, ry, rz),
+                scale = new Vector3(ArtJson.AsFloat(scl[0]), ArtJson.AsFloat(scl[2]), ArtJson.AsFloat(scl[1])),
+                region = ArtJson.AsString(r["region"]),
+                role = ArtJson.AsString(r["role"]),
+                navMesh = ArtJson.AsString(r["navmesh"]),
+                occluder = r.ContainsKey("occluder_candidate") && ArtJson.AsBool(r["occluder_candidate"]),
+                fade = r.ContainsKey("fade_mesh") && ArtJson.AsBool(r["fade_mesh"]),
+                materialOverride = materialOverride,
+                deltaVersion = deltaVersion ?? string.Empty
+            };
+        }
+
+        // --------------------------------------------------------------------- delta
+
+        /// <summary>
+        /// WP-017 · AP-005B delta (<see cref="ArtLibraryPaths.Ap005PlacementDeltaJson"/>, schema
+        /// dd-placement-delta-v1) on top of the parsed v001 source, in this order: <c>removed_ids</c>
+        /// (every id must exist), <c>changed</c> (ids kept, full record replaces the v001 one),
+        /// <c>added</c> (ids must be new). The v001 file stays the source (WP-014 staged it);
+        /// re-running yields the same list (idempotent), and the asset records the delta's sha256
+        /// and counts. Missing file = v001 world. Returns the number of records touched.
+        /// </summary>
+        public static int ApplyDelta(WorldPlacementAsset asset)
+        {
+            asset.deltaSha256 = string.Empty;
+            asset.deltaTarget = string.Empty;
+            asset.deltaAdded = asset.deltaChanged = asset.deltaRemoved = 0;
+            asset.deltaRemovedIds = new List<string>();
+            string path = ArtLibraryPaths.Ap005PlacementDeltaJson;
+            if (!File.Exists(path))
+            {
+                return 0;
+            }
+
+            byte[] bytes = File.ReadAllBytes(path);
+            Dictionary<string, object> doc = ArtJson.AsObject(ArtJson.Parse(Encoding.UTF8.GetString(bytes)), "delta");
+            string schema = ArtJson.AsString(ArtJson.Require(doc, "schema"), "schema");
+            if (schema != WorldPlacementAsset.DeltaSchema)
+            {
+                throw new FormatException(LogPrefix + "delta schema '" + schema + "' != " + WorldPlacementAsset.DeltaSchema);
+            }
+
+            string basePath = ArtJson.AsString(ArtJson.Require(doc, "base"), "base");
+            if (!basePath.Contains(asset.instances.Count.ToString(CultureInfo.InvariantCulture) + " instances"))
+            {
+                throw new FormatException(LogPrefix + "delta base '" + basePath + "' does not describe the parsed source (" + asset.instances.Count + " instances)");
+            }
+
+            var byId = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int i = 0; i < asset.instances.Count; i++) byId[asset.instances[i].id] = i;
+
+            var removed = new HashSet<string>(StringComparer.Ordinal);
+            foreach (object o in ArtJson.AsList(ArtJson.Require(doc, "removed_ids"), "removed_ids"))
+            {
+                string id = ArtJson.AsString(o, "removed id");
+                if (!byId.ContainsKey(id)) throw new FormatException(LogPrefix + "delta removes unknown instance '" + id + "'");
+                if (!removed.Add(id)) throw new FormatException(LogPrefix + "delta removes '" + id + "' twice");
+            }
+
+            var changed = new Dictionary<string, WorldPlacementAsset.Instance>(StringComparer.Ordinal);
+            foreach (object o in ArtJson.AsList(ArtJson.Require(doc, "changed"), "changed"))
+            {
+                WorldPlacementAsset.Instance inst = ParseInstance(ArtJson.AsObject(o, "changed"), WorldPlacementAsset.DeltaVersionTag);
+                if (!byId.ContainsKey(inst.id)) throw new FormatException(LogPrefix + "delta changes unknown instance '" + inst.id + "'");
+                if (removed.Contains(inst.id)) throw new FormatException(LogPrefix + "delta both removes and changes '" + inst.id + "'");
+                changed[inst.id] = inst;
+            }
+
+            var added = new List<WorldPlacementAsset.Instance>();
+            foreach (object o in ArtJson.AsList(ArtJson.Require(doc, "added"), "added"))
+            {
+                WorldPlacementAsset.Instance inst = ParseInstance(ArtJson.AsObject(o, "added"), WorldPlacementAsset.DeltaVersionTag);
+                if (byId.ContainsKey(inst.id)) throw new FormatException(LogPrefix + "delta adds existing instance '" + inst.id + "'");
+                added.Add(inst);
+            }
+
+            var result = new List<WorldPlacementAsset.Instance>(asset.instances.Count - removed.Count + added.Count);
+            for (int i = 0; i < asset.instances.Count; i++)
+            {
+                WorldPlacementAsset.Instance inst = asset.instances[i];
+                if (removed.Contains(inst.id)) continue;
+                result.Add(changed.TryGetValue(inst.id, out WorldPlacementAsset.Instance c) ? c : inst);
+            }
+
+            result.AddRange(added);
+            asset.instances = result;
+            asset.deltaSha256 = Sha256(bytes);
+            asset.deltaTarget = ArtJson.AsString(ArtJson.Require(doc, "target"), "target");
+            asset.deltaAdded = added.Count;
+            asset.deltaChanged = changed.Count;
+            asset.deltaRemoved = removed.Count;
+            asset.deltaRemovedIds = new List<string>(removed);
+            asset.deltaRemovedIds.Sort(StringComparer.Ordinal);
+            Debug.Log(LogPrefix + "Applied delta " + path + ": +" + added.Count + " / ~" + changed.Count + " / -" + removed.Count + " → " + result.Count + " instances (sha256 " + asset.deltaSha256.Substring(0, 12) + "…)");
+            return added.Count + changed.Count + removed.Count;
         }
 
         // ----------------------------------------------------------------- overrides
@@ -427,7 +554,7 @@ namespace DD.Art.Pipeline.EditorTools
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[i], scene);
                 go.name = inst.id;
                 go.transform.SetParent(instances.transform, false);
-                go.transform.SetPositionAndRotation(inst.position, WorldPlacementAsset.ToUnityYaw(inst.yawDegrees));
+                go.transform.SetPositionAndRotation(inst.position, inst.Rotation);
                 go.transform.localScale = inst.scale;
 
                 go.AddComponent<RegionTag>().Set(inst.id, inst.region, inst.role, inst.navMesh);
@@ -439,9 +566,16 @@ namespace DD.Art.Pipeline.EditorTools
                 // Static for what never moves and never swaps state: structures, ground and
                 // dressing are batched; vegetation keeps its LOD cross-fade (GPU instancing on
                 // the materials) and breakables swap to their broken child at runtime.
+                // WP-017: static batching copies every LOD's vertices into the scene file — the
+                // 12 palace roof bays (21 k / 17 k / 12 k tris) and 9 roof slabs alone made
+                // World_AP005 142 MB in the build (release 373 → 507 MB). Heavy meshes stay
+                // individual renderers (SRP-batched); the flag is kept for everything else.
                 if (inst.role == "structure" || inst.role == "ground" || inst.role == "dressing")
                 {
-                    SetStaticRecursively(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
+                    bool heavy = IsHeavyForStaticBatching(prefabs[i]);
+                    StaticEditorFlags flags = StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic;
+                    if (!heavy) flags |= StaticEditorFlags.BatchingStatic; else report.HeavyUnbatched++;
+                    SetStaticRecursively(go, flags);
                     report.StaticInstances++;
                 }
 
@@ -450,6 +584,12 @@ namespace DD.Art.Pipeline.EditorTools
                     NavMeshModifier modifier = go.AddComponent<NavMeshModifier>();
                     modifier.ignoreFromBuild = true;
                     report.IgnoreModifiers++;
+                }
+
+                if (!string.IsNullOrEmpty(inst.materialOverride))
+                {
+                    report.MaterialSlotsReplaced += ApplyMaterialOverride(go, inst);
+                    report.MaterialOverrides++;
                 }
 
                 if (inst.assembly != null && inst.assembly.Length > 0) report.Assemblies++;
@@ -479,7 +619,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             Debug.Log(LogPrefix + "Wrote " + ArtLibraryPaths.Ap005WorldScene + ": " + report.Instances + " instances (" + report.Assemblies +
                       " assemblies, " + report.Occluders + " on CameraOccluder, " + report.StaticInstances + " static, " + report.IgnoreModifiers +
-                      " navmesh-ignore modifiers), NavMesh " + report.NavMeshTriangles + " triangles, digest " + report.Digest.Substring(0, 12) + "…");
+                      " navmesh-ignore modifiers, " + report.MaterialOverrides + " material overrides / " + report.MaterialSlotsReplaced + " slots, " + report.HeavyUnbatched + " heavy unbatched), NavMesh " + report.NavMeshTriangles + " triangles, digest " + report.Digest.Substring(0, 12) + "…");
             return report;
         }
 
@@ -655,6 +795,71 @@ namespace DD.Art.Pipeline.EditorTools
             return false;
         }
 
+        /// <summary>WP-017 · A prefab whose largest mesh exceeds this many triangles is not static-batched (ADR-017-2 note).</summary>
+        public const int StaticBatchTriangleLimit = 5000;
+
+        public static bool IsHeavyForStaticBatching(GameObject prefab)
+        {
+            if (prefab == null) return false;
+            foreach (MeshFilter mf in prefab.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Mesh m = mf.sharedMesh;
+                if (m == null) continue;
+                long tris = 0;
+                for (int i = 0; i < m.subMeshCount; i++) tris += m.GetIndexCount(i) / 3;
+                if (tris > StaticBatchTriangleLimit) return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// WP-017 · Replace the instance's material slots per <see cref="MaterialOverrides"/>
+        /// (prefab-instance overrides on the renderers' shared material arrays — no material is
+        /// instantiated; the library material of the target role is shared by every override).
+        /// Returns the number of slots replaced; zero is a contract mismatch and throws.
+        /// </summary>
+        public static int ApplyMaterialOverride(GameObject instance, WorldPlacementAsset.Instance inst)
+        {
+            if (!MaterialOverrides.TryGetValue(inst.materialOverride, out MaterialOverride over))
+            {
+                throw new InvalidOperationException(LogPrefix + inst.id + ": material_override '" + inst.materialOverride + "' has no Unity mapping");
+            }
+
+            int replaced = 0;
+            foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] slots = renderer.sharedMaterials;
+                bool touched = false;
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] == null) continue;
+                    string role = slots[i].name.StartsWith("M_", StringComparison.Ordinal) ? slots[i].name.Substring(2) : slots[i].name;
+                    string target;
+                    if (!over.Map.TryGetValue(role, out target) && !over.Map.TryGetValue("*", out target)) continue;
+                    if (role == target) continue;
+                    var material = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material(target));
+                    if (material == null)
+                    {
+                        throw new InvalidOperationException(LogPrefix + inst.id + ": override target material missing: " + ArtPipelinePaths.Material(target) + " (build the library materials first)");
+                    }
+
+                    slots[i] = material;
+                    touched = true;
+                    replaced++;
+                }
+
+                if (touched) renderer.sharedMaterials = slots;
+            }
+
+            if (replaced == 0)
+            {
+                throw new InvalidOperationException(LogPrefix + inst.id + " (" + inst.lodGroup + "): material_override '" + inst.materialOverride + "' matched no material slot");
+            }
+
+            return replaced;
+        }
+
         private static int BakeNavMesh(Transform root)
         {
             var go = new GameObject("NavMesh Surface");
@@ -728,12 +933,20 @@ namespace DD.Art.Pipeline.EditorTools
                 Vector3 e = t.rotation.eulerAngles;
                 sb.Append(t.name).Append('|').Append(guid).Append('|')
                   .Append(p.x.ToString("F4", CultureInfo.InvariantCulture)).Append(',').Append(p.y.ToString("F4", CultureInfo.InvariantCulture)).Append(',').Append(p.z.ToString("F4", CultureInfo.InvariantCulture)).Append('|')
-                  .Append(e.y.ToString("F3", CultureInfo.InvariantCulture)).Append('|')
+                  .Append(e.x.ToString("F3", CultureInfo.InvariantCulture)).Append(',').Append(e.y.ToString("F3", CultureInfo.InvariantCulture)).Append(',').Append(e.z.ToString("F3", CultureInfo.InvariantCulture)).Append('|')
                   .Append(t.gameObject.layer).Append('|').Append((int)GameObjectUtility.GetStaticEditorFlags(t.gameObject)).Append('|')
-                  .Append(tag != null ? tag.Region + "/" + tag.Role + "/" + tag.NavMesh : "-").Append('\n');
+                  .Append(tag != null ? tag.Region + "/" + tag.Role + "/" + tag.NavMesh : "-").Append('|')
+                  .Append(FirstMaterialName(t)).Append('\n');
             }
 
             return Sha256(Encoding.UTF8.GetBytes(sb.ToString()));
+        }
+
+        private static string FirstMaterialName(Transform t)
+        {
+            var r = t.GetComponentInChildren<Renderer>(true);
+            Material m = r != null ? r.sharedMaterial : null;
+            return m != null ? m.name : "-";
         }
 
         // ---------------------------------------------------------------- settings

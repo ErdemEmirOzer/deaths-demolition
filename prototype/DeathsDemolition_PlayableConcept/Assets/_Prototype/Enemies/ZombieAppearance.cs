@@ -110,6 +110,14 @@ namespace DD.Prototype.Enemies
         private ZombieLook _look;
         private uint _lookSeed;
 
+        // WP-017 (ADR-017-1): the AP-008 armour on the skinned body. Null = the M1 plate placeholders.
+        private ZombieArmorLibrary _armorLibrary;
+        private ArmorVisualBinder _armor;
+        private ArmorLook _armorLook;
+        // Slots equipped THIS life (Present or Damaged at some point): the garment constraints are
+        // computed from these and never relax within a life, so the look stays stable on a break.
+        private readonly bool[] _equipped = new bool[4];
+
         public ZombieAppearance(ZombieRig rig)
         {
             _rig = rig;
@@ -118,11 +126,32 @@ namespace DD.Prototype.Enemies
         /// <summary>WP-016: bind the AP-007 visual and its module library (template build); the look is chosen per spawn from <see cref="LookSeed"/>.</summary>
         public void SetSkinned(ZombieSkinnedVisual skinned, ZombieModuleLibrary library)
         {
+            SetSkinned(skinned, library, null);
+        }
+
+        /// <summary>WP-017: … plus the AP-008 armour library; with it the plate placeholders are never shown and <see cref="Apply"/> drives real meshes.</summary>
+        public void SetSkinned(ZombieSkinnedVisual skinned, ZombieModuleLibrary library, ZombieArmorLibrary armor)
+        {
             _skinned = skinned;
             _library = library;
+            _armorLibrary = armor;
+            _armor = armor != null && skinned != null && skinned.HasArmorSlots ? new ArmorVisualBinder(armor, skinned) : null;
         }
 
         public bool IsSkinned => _skinned != null && _library != null;
+
+        /// <summary>True when the AP-008 armour binder is live on this body (skinned + armour library + prefab slots).</summary>
+        public bool HasArmor => _armor != null && _armor.IsReady;
+
+        public ArmorVisualBinder ArmorBinder => _armor;
+
+        /// <summary>The armour variants of this spawn (skinned + armour only).</summary>
+        public ArmorLook ArmorLook => _armorLook;
+
+        /// <summary>The garment constraints the equipped armour imposes right now (tests).</summary>
+        public ZombieLookConstraints CurrentConstraints => HasArmor
+            ? ZombieLookConstraints.Build(_armorLibrary, _armorLook, _equipped[(int)ArmorSlot.Helmet], _equipped[(int)ArmorSlot.Body], _equipped[(int)ArmorSlot.Leg])
+            : ZombieLookConstraints.None;
 
         /// <summary>The spawn seed the look is derived from (set by ZombieEnemy.Initialise before ApplyVersion).</summary>
         public uint LookSeed
@@ -153,11 +182,21 @@ namespace DD.Prototype.Enemies
                 // WP-016: fit + top + bottom + head + colourways from the spawn seed
                 // (deterministic, ratio-ruled); the version picks the shared material variant
                 // (cloth-masked tint) — no per-instance material, no emissive (DEC-067).
-                _look = ZombieLookSelector.Select(_library, _lookSeed);
+                // WP-017: the armour variants come from the same seed; the garment draw is
+                // re-run under the equipped pieces' constraints as RollArmor fits them.
+                for (int i = 0; i < _equipped.Length; i++) _equipped[i] = false;
+                _armorLook = HasArmor ? ArmorLookSelector.Select(_armorLibrary, _lookSeed) : default;
+                _look = ZombieLookSelector.Select(_library, _lookSeed, CurrentConstraints);
                 _skinned.Assemble(_library, _look);
                 _skinned.ApplyMaterial(_library, (int)tier);
                 ApplySilhouette(tier, ref random);
                 HideAllArmor();
+                if (HasArmor)
+                {
+                    _armor.SetLook(_armorLook, _look.fit);
+                    _armor.ApplyMaterial((int)tier);
+                }
+
                 return;
             }
 
@@ -314,6 +353,29 @@ namespace DD.Prototype.Enemies
                 return;
             }
 
+            if (HasArmor)
+            {
+                // WP-017: real AP-008 meshes. Present / Damaged mark the slot equipped for this
+                // life and re-draw the garments under the armour rules (T7 never under a dō, only
+                // tight bottoms under a haidate, cw2 cloth beneath a plate, K2 only on H0/H1).
+                if (state == ArmorVisualState.Present || state == ArmorVisualState.Damaged)
+                {
+                    if (!_equipped[i])
+                    {
+                        _equipped[i] = true;
+                        RefreshLookForArmor();
+                    }
+                }
+                else if (state == ArmorVisualState.Absent)
+                {
+                    _equipped[i] = false;
+                }
+
+                _armor.Apply(slot, state);
+                _armorState[i] = state;
+                return;
+            }
+
             switch (state)
             {
                 case ArmorVisualState.Absent:
@@ -354,11 +416,26 @@ namespace DD.Prototype.Enemies
             SetPieces(_rig.HelmetPieces, 0);
             SetPieces(_rig.BodyArmorPieces, 0);
             SetPieces(_rig.LegArmorPieces, 0);
+            _armor?.Reset();
 
             for (int i = 0; i < _armorState.Length; i++)
             {
                 _armorState[i] = ArmorVisualState.Absent;
             }
+        }
+
+        /// <summary>
+        /// WP-017 · Re-draw the garments under the constraints of everything equipped this life;
+        /// re-assemble only when the look actually changed (each RollArmor fit may call this once).
+        /// </summary>
+        private void RefreshLookForArmor()
+        {
+            if (!IsSkinned) return;
+            ZombieLook next = ZombieLookSelector.Select(_library, _lookSeed, CurrentConstraints);
+            if (next.Key == _look.Key) return;
+            _look = next;
+            _skinned.Assemble(_library, _look);
+            _armor?.SetFit(_look.fit);
         }
 
         /// <summary>Show a full plate group. Called when a piece is equipped at spawn.</summary>

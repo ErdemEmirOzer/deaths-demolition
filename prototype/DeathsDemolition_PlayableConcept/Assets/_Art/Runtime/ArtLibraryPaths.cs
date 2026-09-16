@@ -20,7 +20,7 @@ namespace DD.Art
     public static class ArtLibraryPaths
     {
         /// <summary>The imported libraries, in production order (WP-012: AP-002/AP-003/AP-003B; WP-014: AP-005 modules).</summary>
-        public static readonly string[] Packages = { "AP-002", "AP-003", "AP-003B", "AP-005" };
+        public static readonly string[] Packages = { "AP-002", "AP-003", "AP-003B", "AP-005", "AP-005B" };
 
         // ------------------------------------------------------------ WP-014 world assembly
 
@@ -29,6 +29,8 @@ namespace DD.Art
         public const string Ap005PlacementJson = WorldRoot + "/AP005_placement.json";
         /// <summary>WP-015 · Unity-side per-instance overrides (dd-placement-overrides-v1) applied on top of the AP-005 source at import; the source file is never edited.</summary>
         public const string Ap005PlacementOverridesJson = WorldRoot + "/AP005_placement-overrides.json";
+        /// <summary>WP-017 · AP-005B delta (dd-placement-delta-v1) applied on top of the v001 source at import.</summary>
+        public const string Ap005PlacementDeltaJson = WorldRoot + "/AP005_placement-delta-v002.json";
         /// <summary>The imported placement (Unity space) the importer and the world bootstrap read.</summary>
         public const string Ap005PlacementAsset = WorldRoot + "/AP005_Placement.asset";
         /// <summary>The stand-in soil ground under the whole 90 m map (AP-005 ships only the NE golden-slice ground plate); holes at the koi basins.</summary>

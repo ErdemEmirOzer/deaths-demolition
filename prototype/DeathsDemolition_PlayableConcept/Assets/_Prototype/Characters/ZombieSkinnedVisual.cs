@@ -41,6 +41,8 @@ namespace DD.Prototype.Characters
         [SerializeField] private Transform _anchorLegs;
         [SerializeField] private CharacterAnimationSet _animation;
         [SerializeField] private ProceduralPoseBridge _bridge;
+        [Tooltip("WP-017 · AP-008 armour renderers, LOD-major: index = (lod * ArmorSlotCount + (helmet 0 | body 1 | leg 2)) * ArmorPartCount + (main 0 | sub 1). Empty until the armour pipeline ran.")]
+        [SerializeField] private SkinnedMeshRenderer[] _armorSlots = new SkinnedMeshRenderer[0];
 
         private Dictionary<string, Transform> _bones;
         // Animator.StringToHash may be negative: never use the id as a "not set" sentinel.
@@ -63,6 +65,44 @@ namespace DD.Prototype.Characters
         {
             int i = lod * SlotCount + slot;
             return i >= 0 && i < _slots.Length ? _slots[i] : null;
+        }
+
+        public const int ArmorSlotCount = ArmorVisualBinder.SlotCount;   // helmet, body, leg
+        public const int ArmorPartCount = ZombieArmorLibrary.PartCount;   // main plate, sub-mesh
+        public const int ArmorRendererCount = ZombieModuleLibrary.LodCount * ArmorSlotCount * ArmorPartCount;
+
+        /// <summary>WP-017 · True when the prefab carries the AP-008 armour renderers (two per slot per LOD).</summary>
+        public bool HasArmorSlots => _armorSlots != null && _armorSlots.Length == ArmorRendererCount;
+
+        public SkinnedMeshRenderer ArmorRenderer(int lod, int slot, int part)
+        {
+            int i = (lod * ArmorSlotCount + slot) * ArmorPartCount + part;
+            return _armorSlots != null && i >= 0 && i < _armorSlots.Length ? _armorSlots[i] : null;
+        }
+
+        /// <summary>Editor (prefab builder): the armour renderers, LOD-major.</summary>
+        public void ConfigureArmor(SkinnedMeshRenderer[] armorSlots)
+        {
+            _armorSlots = armorSlots ?? new SkinnedMeshRenderer[0];
+        }
+
+        /// <summary>Re-point one armour renderer to a library mesh by bone name (null = renderer off).</summary>
+        public void BindArmor(int lod, int slot, int part, ZombieModuleLibrary.MeshRef mesh)
+        {
+            SkinnedMeshRenderer r = ArmorRenderer(lod, slot, part);
+            if (r == null) return;
+            EnsureBones();
+            Bind(r, mesh);
+        }
+
+        /// <summary>The shared armour material on every armour renderer (no instance material).</summary>
+        public void ApplyArmorMaterial(Material m)
+        {
+            if (_armorSlots == null || m == null) return;
+            for (int i = 0; i < _armorSlots.Length; i++)
+            {
+                if (_armorSlots[i] != null && _armorSlots[i].sharedMaterial != m) _armorSlots[i].sharedMaterial = m;
+            }
         }
 
         /// <summary>Editor (prefab builder).</summary>

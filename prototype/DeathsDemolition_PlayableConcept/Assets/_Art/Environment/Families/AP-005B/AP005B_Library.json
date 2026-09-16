@@ -1,0 +1,571 @@
+{
+ "ap": "AP-005B",
+ "version": "AP005.export-manifest.v002-props 2026-09-16T05:25:55",
+ "sources": [
+  {
+   "path": "asset-production/AP-005/exports/export-manifest-v002-props.json",
+   "sha256": "7e89287fcf59a4ffdb531332a678015e162a9b0616a5be92987131cac4829122"
+  }
+ ],
+ "derived": "source FBX used directly (embed_textures False, path_mode STRIP); textures AP005B_IMG_<family>_{albedo,normal,orm}_v001 \u2192 T_prop_<family>_{BaseColor,Normal,Packed} (Prop class 512, ADR-015-1); Tripo ORM: metallic forced 0, no AO (R = 1)",
+ "families": [
+  {
+   "family": "tsukubai",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_tsukubai_V01",
+     "boundsMin": [
+      -0.398908,
+      -0.408864,
+      0.0
+     ],
+     "boundsMax": [
+      0.398908,
+      0.408864,
+      0.9
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005B_tsukubai_V01.fbx",
+         "object": "AP005B_tsukubai_V01_LOD0",
+         "materials": [
+          "prop_tsukubai"
+         ],
+         "facesPerSlot": [
+          5815
+         ],
+         "triangles": 5815,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_tsukubai_V01.fbx",
+         "object": "AP005B_tsukubai_V01_LOD1",
+         "materials": [
+          "prop_tsukubai"
+         ],
+         "facesPerSlot": [
+          1973
+         ],
+         "triangles": 1973,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_tsukubai_V01.fbx",
+         "object": "AP005B_tsukubai_V01_LOD2",
+         "materials": [
+          "prop_tsukubai"
+         ],
+         "facesPerSlot": [
+          676
+         ],
+         "triangles": 676,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005B_tsukubai_V01.fbx",
+       "object": "AP005B_tsukubai_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.398908,
+          -0.408864,
+          0.0
+         ],
+         "max": [
+          0.398908,
+          0.408864,
+          0.9
+         ],
+         "positions": 124
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "handcart",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_handcart_V01",
+     "boundsMin": [
+      -0.598895,
+      -1.1,
+      0.0
+     ],
+     "boundsMax": [
+      0.598895,
+      1.1,
+      0.865019
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005B_handcart_V01.fbx",
+         "object": "AP005B_handcart_V01_LOD0",
+         "materials": [
+          "prop_handcart"
+         ],
+         "facesPerSlot": [
+          5819
+         ],
+         "triangles": 5819,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_handcart_V01.fbx",
+         "object": "AP005B_handcart_V01_LOD1",
+         "materials": [
+          "prop_handcart"
+         ],
+         "facesPerSlot": [
+          1974
+         ],
+         "triangles": 1974,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_handcart_V01.fbx",
+         "object": "AP005B_handcart_V01_LOD2",
+         "materials": [
+          "prop_handcart"
+         ],
+         "facesPerSlot": [
+          677
+         ],
+         "triangles": 677,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005B_handcart_V01.fbx",
+       "object": "AP005B_handcart_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.598895,
+          -1.1,
+          0.0
+         ],
+         "max": [
+          0.598895,
+          1.1,
+          0.865019
+         ],
+         "positions": 124
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "strawbales",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_strawbales_V01",
+     "boundsMin": [
+      -0.512524,
+      -0.533829,
+      0.0
+     ],
+     "boundsMax": [
+      0.512524,
+      0.533829,
+      1.2
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005B_strawbales_V01.fbx",
+         "object": "AP005B_strawbales_V01_LOD0",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          5819
+         ],
+         "triangles": 5819,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_strawbales_V01.fbx",
+         "object": "AP005B_strawbales_V01_LOD1",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          1973
+         ],
+         "triangles": 1973,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_strawbales_V01.fbx",
+         "object": "AP005B_strawbales_V01_LOD2",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          676
+         ],
+         "triangles": 676,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005B_strawbales_V01.fbx",
+       "object": "AP005B_strawbales_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.512524,
+          -0.533829,
+          0.0
+         ],
+         "max": [
+          0.512524,
+          0.533829,
+          1.2
+         ],
+         "positions": 124
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "barrels",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_barrels_V01",
+     "boundsMin": [
+      -0.540894,
+      -0.48501,
+      0.0
+     ],
+     "boundsMax": [
+      0.540894,
+      0.48501,
+      1.3
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005B_barrels_V01.fbx",
+         "object": "AP005B_barrels_V01_LOD0",
+         "materials": [
+          "prop_barrels"
+         ],
+         "facesPerSlot": [
+          5818
+         ],
+         "triangles": 5818,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_barrels_V01.fbx",
+         "object": "AP005B_barrels_V01_LOD1",
+         "materials": [
+          "prop_barrels"
+         ],
+         "facesPerSlot": [
+          1974
+         ],
+         "triangles": 1974,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_barrels_V01.fbx",
+         "object": "AP005B_barrels_V01_LOD2",
+         "materials": [
+          "prop_barrels"
+         ],
+         "facesPerSlot": [
+          676
+         ],
+         "triangles": 676,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005B_barrels_V01.fbx",
+       "object": "AP005B_barrels_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.540894,
+          -0.48501,
+          0.0
+         ],
+         "max": [
+          0.540894,
+          0.48501,
+          1.3
+         ],
+         "positions": 124
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "mossrock",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_mossrock_V01",
+     "boundsMin": [
+      -0.8,
+      -0.757053,
+      0.0
+     ],
+     "boundsMax": [
+      0.8,
+      0.757053,
+      1.526226
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005B_mossrock_V01.fbx",
+         "object": "AP005B_mossrock_V01_LOD0",
+         "materials": [
+          "prop_mossrock"
+         ],
+         "facesPerSlot": [
+          5820
+         ],
+         "triangles": 5820,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_mossrock_V01.fbx",
+         "object": "AP005B_mossrock_V01_LOD1",
+         "materials": [
+          "prop_mossrock"
+         ],
+         "facesPerSlot": [
+          1974
+         ],
+         "triangles": 1974,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_mossrock_V01.fbx",
+         "object": "AP005B_mossrock_V01_LOD2",
+         "materials": [
+          "prop_mossrock"
+         ],
+         "facesPerSlot": [
+          676
+         ],
+         "triangles": 676,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005B_mossrock_V01.fbx",
+       "object": "AP005B_mossrock_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -0.757053,
+          0.0
+         ],
+         "max": [
+          0.8,
+          0.757053,
+          1.526226
+         ],
+         "positions": 124
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "shed",
+   "occluder": false,
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_shed_V01",
+     "boundsMin": [
+      -2.0,
+      -1.851407,
+      0.0
+     ],
+     "boundsMax": [
+      2.0,
+      1.851407,
+      3.703241
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP005B_shed_V01.fbx",
+         "object": "AP005B_shed_V01_LOD0",
+         "materials": [
+          "prop_shed"
+         ],
+         "facesPerSlot": [
+          11639
+         ],
+         "triangles": 11639,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_shed_V01.fbx",
+         "object": "AP005B_shed_V01_LOD1",
+         "materials": [
+          "prop_shed"
+         ],
+         "facesPerSlot": [
+          3950
+         ],
+         "triangles": 3950,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP005B_shed_V01.fbx",
+         "object": "AP005B_shed_V01_LOD2",
+         "materials": [
+          "prop_shed"
+         ],
+         "facesPerSlot": [
+          1353
+         ],
+         "triangles": 1353,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP005B_shed_V01.fbx",
+       "object": "AP005B_shed_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -2.0,
+          -1.851407,
+          0.0
+         ],
+         "max": [
+          2.0,
+          1.851407,
+          3.703241
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

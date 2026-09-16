@@ -110,7 +110,12 @@ namespace DD.Art.Pipeline.EditorTools
             return list.ToArray();
         }
 
-        /// <summary>Applies the template mapping when the importer's human description differs. Returns true if written.</summary>
+        /// <summary>
+        /// Applies the template mapping when the importer's human description differs. Returns true if written.
+        /// WP-017: the comparison is order-insensitive — Unity re-serialises the human list in its own
+        /// order on import, and an ordered compare rewrote every character .meta on each pipeline run
+        /// (measured: 27 WP-016 meta files flipping between the template and the canonical order).
+        /// </summary>
         public static bool ApplyHumanDescription(ModelImporter importer)
         {
             HumanBone[] template = TemplateHumanBones();
@@ -118,9 +123,11 @@ namespace DD.Art.Pipeline.EditorTools
             bool same = hd.human != null && hd.human.Length == template.Length;
             if (same)
             {
+                var current = new HashSet<string>(StringComparer.Ordinal);
+                for (int i = 0; i < hd.human.Length; i++) current.Add(hd.human[i].humanName + "=" + hd.human[i].boneName);
                 for (int i = 0; i < template.Length; i++)
                 {
-                    if (hd.human[i].humanName != template[i].humanName || hd.human[i].boneName != template[i].boneName) { same = false; break; }
+                    if (!current.Contains(template[i].humanName + "=" + template[i].boneName)) { same = false; break; }
                 }
             }
 

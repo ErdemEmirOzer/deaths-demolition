@@ -240,7 +240,9 @@ namespace DD.Prototype.Enemies
             {
                 _skinned.Attach(_rig, _animator);
                 CharacterAssetSet set = CharacterAssetSet.Load();
-                _appearance.SetSkinned(_skinned, set != null ? set.ZombieLibrary : null);
+                // WP-017: with the AP-008 library the plate placeholders are never shown; the
+                // appearance drives real armour meshes through ArmorVisualBinder.
+                _appearance.SetSkinned(_skinned, set != null ? set.ZombieLibrary : null, set != null ? set.ZombieArmor : null);
             }
 
             // Region colliders live as long as the instance, so bind them once, here.

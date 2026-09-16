@@ -70,6 +70,17 @@ namespace DD.Art
             return TexturesDerived + "/T_" + role + "_" + MaskMapName + ".png";
         }
 
+        /// <summary>WP-017 · A derived (generated) texture of any map name, e.g. the roof tile-course detail normal.</summary>
+        public static string DerivedTexture(string role, string map)
+        {
+            return TexturesDerived + "/T_" + role + "_" + map + ".png";
+        }
+
+        public static string DerivedTextureProvenance(string role, string map)
+        {
+            return TexturesDerived + "/T_" + role + "_" + map + ".provenance.json";
+        }
+
         /// <summary>The provenance sidecar written next to <see cref="DerivedMask"/> (source hash, algorithm).</summary>
         public static string DerivedMaskProvenance(string role)
         {

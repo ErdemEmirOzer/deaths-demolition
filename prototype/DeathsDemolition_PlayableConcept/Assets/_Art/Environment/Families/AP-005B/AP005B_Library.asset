@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP005B_Library
+  m_EditorClassIdentifier: 
+  ap: AP-005B
+  items:
+  - family: tsukubai
+    variation: V01
+    prefab: {fileID: 1136000684500682153, guid: 73717de1c3e37495795d6452e3e85b58, type: 3}
+  - family: handcart
+    variation: V01
+    prefab: {fileID: 4282272939399546282, guid: d662b7907be8d4472b686347a4c84551, type: 3}
+  - family: strawbales
+    variation: V01
+    prefab: {fileID: 8218647100594939032, guid: a04726916699f4040a781a6cd812283e, type: 3}
+  - family: barrels
+    variation: V01
+    prefab: {fileID: 972010997770882317, guid: 0bf5d2b947ad54792bb8bc18fcd3eba4, type: 3}
+  - family: mossrock
+    variation: V01
+    prefab: {fileID: 7988550575135145096, guid: 7369183dc90354179a8a56a9ca6c6aa1, type: 3}
+  - family: shed
+    variation: V01
+    prefab: {fileID: 7412750461629237744, guid: 2400283dab5c246f88ed2f32da431c05, type: 3}

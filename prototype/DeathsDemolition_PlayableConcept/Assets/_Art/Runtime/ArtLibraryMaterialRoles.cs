@@ -63,11 +63,25 @@ namespace DD.Art
             public float Smoothness = 1f;
             public Color FlatLinearAlbedo = Color.black;
             public float Cutoff = 0.5f;
+            /// <summary>WP-017 · Texture role of a tangent-space detail normal overlay (<c>T_&lt;role&gt;_Normal</c>, URP <c>_DetailNormalMap</c>); null = none.</summary>
+            public string DetailNormalTextureRole;
+            public float DetailNormalScale = 1f;
+            /// <summary>WP-017 · Detail UV tiling (URP <c>_DetailAlbedoMap_ST</c> drives both detail maps), repeats per base UV unit.</summary>
+            public float DetailTiling = 1f;
+
+            public bool HasDetailNormal => !string.IsNullOrEmpty(DetailNormalTextureRole);
 
             public bool HasPackedMap => Kind == Kind.Textured || Kind == Kind.Cutout;
             public bool HasNormalMap => Kind == Kind.Textured || Kind == Kind.Cutout;
             public bool HasBaseColorMap => Kind != Kind.Flat;
         }
+
+        /// <summary>WP-017 · Linear multiplier of the AP-005B world plaster (measured: × 0.82 on the hf003 mean gives sRGB (203, 202, 193) ≈ #CDCBC1).</summary>
+        public const float WorldPlasterTint = 0.82f;
+        /// <summary>WP-017 · Generated roof tile-course normal (ArtTextureRepack.BuildRoofCourses): T_roof_courses_Normal.png, 4 courses per tile.</summary>
+        public const string RoofCoursesTextureRole = "roof_courses";
+        /// <summary>Detail repeats per base UV unit on the AP-002 roof (its UVs run ≈ 1 unit per 1.2 m → 4 courses ≈ 0.30 m each).</summary>
+        public const float RoofCoursesTiling = 1f;
 
         private static readonly List<Spec> Rows = BuildRows();
         private static readonly Dictionary<string, Spec> ByRole = Index(Rows);
@@ -177,6 +191,21 @@ namespace DD.Art
             // Water placeholder: linear (0.03695, 0.05114, 0.05925), roughness 0.05 → smoothness 0.95.
             // WP-013: water v1 (DD/Water v1) on the same deep colour; AP-015 owns the full water.
             rows.Add(new Spec { Role = "pond_water", Kind = Kind.Flat, TextureRole = null, FlatLinearAlbedo = new Color(0.03695f, 0.05114f, 0.05925f, 1f), Smoothness = 0.95f, Shader = ShaderKind.Water });
+
+            // WP-017 · AP-005B prop families (Tripo H3.1, one PBR set each; Prop class 512). The
+            // Tripo ORM carries no AO (R = 1) and metallic is forced to 0 in production.
+            foreach (string prop in new[] { "tsukubai", "handcart", "strawbales", "barrels", "mossrock", "shed" })
+            {
+                rows.Add(new Spec { Role = "prop_" + prop, Kind = Kind.Textured, TextureRole = "prop_" + prop });
+            }
+
+            // WP-017 · AP-005B world-master material copies (ADR-017-2, `material_override`):
+            //   plaster copies = the same maps with the linear albedo × 0.82 (mean sRGB #CDCBC1, art verdict F1);
+            //   roof copy = the AP-002 roof (flat dark tiles) with a generated tile-course normal overlay (F5),
+            //   4 courses per detail tile, tiled so a course reads ≈ 0.30 m on the AP-002 roof UVs.
+            rows.Add(new Spec { Role = "plaster_hf003_world", Kind = Kind.BaseColorOnly, TextureRole = "plaster_hf003", Smoothness = 0.10f, Tint = new Color(WorldPlasterTint, WorldPlasterTint, WorldPlasterTint, 1f) });
+            rows.Add(new Spec { Role = "plaster_world", Kind = Kind.BaseColorOnly, TextureRole = "plaster", Smoothness = 0.10f, Tint = new Color(WorldPlasterTint, WorldPlasterTint, WorldPlasterTint, 1f) });
+            rows.Add(new Spec { Role = "roof_world", Kind = Kind.BaseColorOnly, TextureRole = "roof", Smoothness = 0.22f, DetailNormalTextureRole = RoofCoursesTextureRole, DetailNormalScale = 1f, DetailTiling = RoofCoursesTiling });
             return rows;
         }
 

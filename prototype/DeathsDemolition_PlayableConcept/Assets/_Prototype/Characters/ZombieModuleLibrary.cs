@@ -162,6 +162,17 @@ namespace DD.Prototype.Characters
 
         public static ZombieLook Select(ZombieModuleLibrary library, uint seed, bool allowMinoCape = true)
         {
+            return Select(library, seed, ZombieLookConstraints.None, allowMinoCape);
+        }
+
+        /// <summary>
+        /// WP-017 · The seed's look under armour constraints (ADR-017-1): excluded modules draw
+        /// with weight 0 and the cloth under a Body / Leg piece is forced to cw2. The random
+        /// sequence is the unconstrained one, so with empty constraints this is exactly the
+        /// WP-016 look, and a constrained look differs only where a rule bites.
+        /// </summary>
+        public static ZombieLook Select(ZombieModuleLibrary library, uint seed, in ZombieLookConstraints c, bool allowMinoCape = true)
+        {
             var look = new ZombieLook();
             if (library == null || library.modules == null || library.bodies == null || library.bodies.Length == 0)
             {
@@ -175,17 +186,18 @@ namespace DD.Prototype.Characters
             List<string> bottoms = library.Ids("bottom");
             List<string> heads = library.Ids("head");
 
-            look.top = Pick(tops, ref state, id => id == ZombieModuleLibrary.TopMinoCape ? (allowMinoCape ? MinoCapeWeight : 0f) : id == ZombieModuleLibrary.TopBareStraps ? BareStrapsWeight : 1f);
-            look.topColourway = Colourway(library.FindModule(look.top), ref state);
+            ZombieLookConstraints cc = c;
+            look.top = Pick(tops, ref state, id => cc.ExcludesTop(id) ? 0f : id == ZombieModuleLibrary.TopMinoCape ? (allowMinoCape ? MinoCapeWeight : 0f) : id == ZombieModuleLibrary.TopBareStraps ? BareStrapsWeight : 1f);
+            look.topColourway = Colourway(library.FindModule(look.top), ref state, cc.fadedTop);
 
             bool strapsTop = look.top == ZombieModuleLibrary.TopBareStraps;
-            look.bottom = Pick(bottoms, ref state, id => id == ZombieModuleLibrary.BottomFundoshi ? (strapsTop ? 0f : FundoshiWeight) : 1f);
-            look.bottomColourway = Colourway(library.FindModule(look.bottom), ref state);
+            look.bottom = Pick(bottoms, ref state, id => cc.ExcludesBottom(id) ? 0f : id == ZombieModuleLibrary.BottomFundoshi ? (strapsTop ? 0f : FundoshiWeight) : 1f);
+            look.bottomColourway = Colourway(library.FindModule(look.bottom), ref state, cc.fadedBottom);
 
             // H0 is "no head module"; it is an option alongside the five meshes.
             var headOptions = new List<string>(heads.Count + 1) { ZombieModuleLibrary.HeadNone };
             headOptions.AddRange(heads);
-            look.head = Pick(headOptions, ref state, id => id == ZombieModuleLibrary.HeadNone ? BaldWeight : 1f);
+            look.head = Pick(headOptions, ref state, id => cc.ExcludesHead(id) ? 0f : id == ZombieModuleLibrary.HeadNone ? BaldWeight : 1f);
             return look;
         }
 
@@ -205,10 +217,11 @@ namespace DD.Prototype.Characters
             return result;
         }
 
-        private static string Colourway(ZombieModuleLibrary.Module module, ref uint state)
+        private static string Colourway(ZombieModuleLibrary.Module module, ref uint state, bool forceFaded = false)
         {
             if (module == null || !module.HasColourways) return ZombieModuleLibrary.NoColourway;
-            return Next01(ref state) < FadedColourwayChance ? ZombieModuleLibrary.ColourwayFaded : ZombieModuleLibrary.ColourwayDark;
+            bool faded = Next01(ref state) < FadedColourwayChance;   // the draw is consumed either way (sequence parity)
+            return faded || forceFaded ? ZombieModuleLibrary.ColourwayFaded : ZombieModuleLibrary.ColourwayDark;
         }
 
         private static string Pick(List<string> ids, ref uint state, Func<string, float> weight)

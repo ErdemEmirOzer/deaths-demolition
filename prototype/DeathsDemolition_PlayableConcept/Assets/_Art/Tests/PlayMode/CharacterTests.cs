@@ -37,7 +37,7 @@ namespace DD.Art.Tests.PlayMode
     public sealed class CharacterTests
     {
         private const float SahneZamanAsimi = 60f, KurulumZamanAsimi = 60f, OyuncuZamanAsimi = 30f, DolusZamanAsimi = 90f, YatismaZamanAsimi = 30f;
-        private const int W = 1920, H = 1080;
+        internal const int W = 1920, H = 1080;
         private EnemySpawnDirector _director;
         private readonly List<GameObject> _spawned = new List<GameObject>();
 
@@ -77,7 +77,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ------------------------------------------------------------------ helpers
 
-        private static IEnumerator Bekle(Func<bool> kosul, float saniye, string aciklama)
+        internal static IEnumerator Bekle(Func<bool> kosul, float saniye, string aciklama)
         {
             float t0 = Time.realtimeSinceStartup;
             while (!kosul())
@@ -110,7 +110,7 @@ namespace DD.Art.Tests.PlayMode
             for (int i = 0; i < 5; i++) yield return null;
         }
 
-        private static PlayerSkinnedVisual PlayerVisual()
+        internal static PlayerSkinnedVisual PlayerVisual()
         {
             PlayerRig rig = PlayerRegistry.Primary;
             Assert.IsNotNull(rig, "oyuncu yok");
@@ -119,7 +119,7 @@ namespace DD.Art.Tests.PlayMode
             return visual;
         }
 
-        private static ArtVisualRegression.CameraPose GameplayPose(string name)
+        internal static ArtVisualRegression.CameraPose GameplayPose(string name)
         {
             Vector3 feet = PlayerRegistry.Primary.transform.position;
             return new ArtVisualRegression.CameraPose(name, feet + new Vector3(0f, 15f, -13f), feet + Vector3.up * 0.9f, 42f);
@@ -388,7 +388,7 @@ namespace DD.Art.Tests.PlayMode
 
         // ------------------------------------------------------------------ pixel helpers
 
-        private static Color32[] Capture(ArtVisualRegression.CameraPose pose, string png)
+        internal static Color32[] Capture(ArtVisualRegression.CameraPose pose, string png)
         {
             Texture2D tex = ArtVisualRegression.Capture(pose, W, H, true);
             try
@@ -402,12 +402,12 @@ namespace DD.Art.Tests.PlayMode
             }
         }
 
-        private static void SetEnabled(IEnumerable<SkinnedMeshRenderer> renderers, bool on)
+        internal static void SetEnabled(IEnumerable<SkinnedMeshRenderer> renderers, bool on)
         {
             foreach (SkinnedMeshRenderer r in renderers) if (r != null && r.sharedMesh != null) r.enabled = on;
         }
 
-        private static bool[] Diff(Color32[] a, Color32[] b)
+        internal static bool[] Diff(Color32[] a, Color32[] b)
         {
             var mask = new bool[a.Length];
             for (int i = 0; i < a.Length; i++)
@@ -418,7 +418,7 @@ namespace DD.Art.Tests.PlayMode
             return mask;
         }
 
-        private static int Count(bool[] mask)
+        internal static int Count(bool[] mask)
         {
             int n = 0;
             for (int i = 0; i < mask.Length; i++) if (mask[i]) n++;
@@ -426,7 +426,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         /// <summary>Pixels within [inner, outer] px of the mask (Chebyshev), outside it and outside the excluded mask.</summary>
-        private static bool[] Ring(bool[] mask, bool[] exclude, int inner, int outer)
+        internal static bool[] Ring(bool[] mask, bool[] exclude, int inner, int outer)
         {
             var near = new bool[mask.Length];
             var far = new bool[mask.Length];
@@ -438,7 +438,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         /// <summary>The part of a figure mask inside a band of its bounding box (fractions from the TOP for rows, from the left for columns).</summary>
-        private static bool[] Band(bool[] mask, float top, float bottom, float left, float right)
+        internal static bool[] Band(bool[] mask, float top, float bottom, float left, float right)
         {
             int minX = W, maxX = -1, minY = H, maxY = -1;
             for (int y = 0; y < H; y++)
@@ -460,7 +460,7 @@ namespace DD.Art.Tests.PlayMode
             return band;
         }
 
-        private static void Dilate(bool[] src, bool[] dst, int radius)
+        internal static void Dilate(bool[] src, bool[] dst, int radius)
         {
             // Separable box dilation.
             var tmp = new bool[src.Length];
@@ -481,14 +481,14 @@ namespace DD.Art.Tests.PlayMode
             }
         }
 
-        private static float MeanLuma(Color32[] px, bool[] mask)
+        internal static float MeanLuma(Color32[] px, bool[] mask)
         {
             double sum = 0; int n = 0;
             for (int i = 0; i < px.Length; i++) if (mask[i]) { sum += 0.2126 * px[i].r + 0.7152 * px[i].g + 0.0722 * px[i].b; n++; }
             return n > 0 ? (float)(sum / n / 255.0) : 0f;
         }
 
-        private static float MeanValue(Color32[] px, bool[] mask)
+        internal static float MeanValue(Color32[] px, bool[] mask)
         {
             double sum = 0; int n = 0;
             for (int i = 0; i < px.Length; i++) if (mask[i]) { sum += Mathf.Max(px[i].r, Mathf.Max(px[i].g, px[i].b)); n++; }

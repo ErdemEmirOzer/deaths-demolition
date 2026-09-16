@@ -118,7 +118,7 @@ namespace DD.Art.Pipeline.EditorTools
             Structure = 1,
             /// <summary>Foliage atlases, bark, moss, culms: 1024.</summary>
             Foliage = 2,
-            /// <summary>Dressing props (lanterns, benches, crates): ≤ 512. Reserved for AP-015 prop sets; no role today.</summary>
+            /// <summary>Dressing props (lanterns, benches, crates): ≤ 512. WP-017: the six AP-005B prop roles (prop_*).</summary>
             Prop = 3,
             /// <summary>Breakables: ≤ 512. Reserved; no role today.</summary>
             Breakable = 4,
@@ -159,8 +159,32 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>ADR-015-1 resident ceiling for the art texture set (probe counter delta against the procedural Run), MB.</summary>
         public const int ArtTextureMemoryBudgetMb = 160;
 
-        /// <summary>ADR-015-2 release build ceiling, MB (app bundle on disk).</summary>
-        public const int ReleaseBuildBudgetMb = 400;
+        /// <summary>
+        /// WP-017 · ADR-015-1 v2 shipped-bytes budgets (PNG-header estimate at the class sizes,
+        /// full mip chain, every map a material binds): the world set (Ground / Structure /
+        /// Foliage / Prop / Breakable / Sky) ≤ 120 MB, the character set (Character class:
+        /// player, zombie atlas, armour atlas) ≤ 80 MB, total ≤ 200 MB. WP-016 measured 158.7 MB
+        /// against the single 160 MB line with the character set at 48 MB; the armour atlas
+        /// (+22.4 MB at 2048) and the AP-005B props (+6.3 MB at 512) needed the split.
+        /// If the character set exceeds its line the armour atlas drops to 1024 (technical rule, reported).
+        /// </summary>
+        public const int ShippedWorldBudgetMb = 120;
+        public const int ShippedCharacterBudgetMb = 80;
+        public const int ShippedTotalBudgetMb = 200;
+
+        /// <summary>
+        /// ADR-015-2 release build ceiling, MB (Editor build report "Complete build size").
+        /// WP-017 (ADR-015-1 v2 note): 400 → 450. Measured 297 (WP-015) → 373 (WP-016 characters)
+        /// → 425.5 (WP-017 armour + props + world v2, after heavy roof meshes left static batching:
+        /// 507 with them batched). The texture budgets hold (world 116.8 / 120, character 69.3 / 80);
+        /// the growth is content (meshes + character atlases), not policy drift.
+        /// </summary>
+        public const int ReleaseBuildBudgetMb = 450;
+
+        public static bool IsCharacterClass(TextureClass c)
+        {
+            return c == TextureClass.Character;
+        }
 
         /// <summary>
         /// Role slug → class (ADR-015-1 table). Roles are the <c>&lt;role&gt;</c> of
@@ -204,7 +228,17 @@ namespace DD.Art.Pipeline.EditorTools
             { "player_skin1", TextureClass.Character },
             { "player_skin2a", TextureClass.Character },
             { "player_skin3", TextureClass.Character },
-            { "zombie_atlas", TextureClass.Character }
+            { "zombie_atlas", TextureClass.Character },
+            // WP-017 · AP-008 armour atlas (one 2K set for every family / variant / state).
+            { "zombie_armor", TextureClass.Character },
+            // WP-017 · AP-005B prop families (Tripo H3.1 sets; the first Prop-class roles) and the generated roof course overlay.
+            { "prop_tsukubai", TextureClass.Prop },
+            { "prop_handcart", TextureClass.Prop },
+            { "prop_strawbales", TextureClass.Prop },
+            { "prop_barrels", TextureClass.Prop },
+            { "prop_mossrock", TextureClass.Prop },
+            { "prop_shed", TextureClass.Prop },
+            { "roof_courses", TextureClass.Structure }
         };
 
         public static IEnumerable<KeyValuePair<string, TextureClass>> TextureClassTable => ClassOfRoleTable;

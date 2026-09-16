@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_tsukubai_Packed.png",
+    "sourceSha256": "95fb3bcfc8440a8090d9d3a7b03346270d86e0a1d2a1ed99f95ab971c74f1600",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T09:38:10.5068570Z",
+    "outputSha256": "48b939062f2e9240bfb8eee4db93cfa0c4f70503797299a116693539c68ddfbd"
+}

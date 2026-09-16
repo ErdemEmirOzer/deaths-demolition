@@ -22,3 +22,4 @@ MonoBehaviour:
   _zombiePrefab: {fileID: 4333227168273605463, guid: 386b3c3dd19214a14a6c48b3e6ce3be1, type: 3}
   _zombieLibrary: {fileID: 11400000, guid: d3dc7fce6f5874e3aac0d3e82aded028, type: 2}
   _zombieAnimation: {fileID: 11400000, guid: 420c8d813125f4fc6b8b81d7499c43ba, type: 2}
+  _zombieArmor: {fileID: 11400000, guid: 98b7a458bf0ff46a488188a245ff33fc, type: 2}
