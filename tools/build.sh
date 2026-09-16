@@ -47,6 +47,10 @@ ERRS=$(grep -c 'error CS' "$LOG" 2>/dev/null); ERRS=${ERRS:-0}
 dd_log "build exit=$X seconds=$((T1-T0)) appKB=$APPKB errorsCS=$ERRS"
 dd_slot_release   # the editor is gone; the smoke step takes its own slot
 BUILD_OK=0; [ "$X" -eq 0 ] && [ -d "$APP" ] && grep -q '"result": "Succeeded"' "$BREPORT" 2>/dev/null && BUILD_OK=1
+# WP-046: build footprint (categories, top assets, folder roll-up, cap check) from the Unity build log
+if [ "$BUILD_OK" -eq 1 ] && [ -x "$DD_TOOLS_DIR/build-report.sh" ]; then
+  "$DD_TOOLS_DIR/build-report.sh" "$OUT" --top 25 --cap "${DD_BUILD_CAP_MB:-450}" | head -1 | while IFS= read -r l; do dd_log "$l"; done
+fi
 
 SMOKE_STATUS="skipped"; SMOKE_EXIT=0
 if [ "$BUILD_OK" -eq 1 ] && [ "$SMOKE" -eq 1 ]; then
@@ -65,6 +69,7 @@ cat > "$REPORT" <<JSON
   "exitCode": $CODE,
   "build": { "ok": $([ "$BUILD_OK" -eq 1 ] && echo true || echo false), "unityExit": $X, "seconds": $((T1-T0)), "appKB": $APPKB, "errorsCS": $ERRS, "app": "$APP", "log": "$LOG", "report": "$BREPORT", "stamp": "$STAMP" },
   "smoke": { "status": "$SMOKE_STATUS", "exitCode": $SMOKE_EXIT, "report": "$OUT/smoke-report.json" },
+  "footprint": "$OUT/footprint.json",
   "head": "$(git -C "$DD_REPO" rev-parse HEAD 2>/dev/null)",
   "utc": "$(date -u +%FT%TZ)"
 }

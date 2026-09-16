@@ -83,6 +83,7 @@ if [ -n "$HITS" ]; then fail "secret-like content in added lines:"; echo "$HITS"
 
 # --- gate 5: tag
 [[ "$TAG" == */* ]] && fail "tag name must not contain '/': $TAG"
+"${G[@]}" rev-parse -q --verify "refs/heads/$TAG" >/dev/null 2>&1 && echo "WARN: a branch named '$TAG' exists — git will print 'refname is ambiguous'; prefer a tag name different from the branch"
 "${G[@]}" rev-parse -q --verify "refs/tags/$TAG" >/dev/null 2>&1 && fail "tag already exists: $TAG"
 
 # --- gate 6: main worktree clean
