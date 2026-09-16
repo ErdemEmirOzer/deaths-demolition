@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DD.Prototype.Profile;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -70,6 +71,9 @@ namespace DD.Prototype.UI
         protected override void Build()
         {
             _model = ResultsViewModel.From(ProfileService.LastReport);
+            // WP-022B: the WP-023 results record adds what the receipt cannot know - a new
+            // best round, what killed the player, achievement rarity (medallion ring).
+            _model.ApplyResultsData(ProfileService.ResultsSource != null ? ProfileService.ResultsSource.Current : null);
 
             if (!_model.HasRun)
             {
@@ -79,7 +83,11 @@ namespace DD.Prototype.UI
 
             // The ending is the title: it is the first thing the player reads, and the
             // largest text on the screen. "RUN RESULTS" becomes the eyebrow.
-            float headerHeight = BuildHeader(ResultsViewModel.Title, _model.Eyebrow, _model.Loadout);
+            // WP-023 data: the ending line names what ended the run when it is known.
+            string ending = string.IsNullOrEmpty(_model.KilledBy)
+                ? _model.Eyebrow
+                : _model.Eyebrow + "  ·  " + UiFactory.Clip(_model.KilledBy, 32);
+            float headerHeight = BuildHeader(ResultsViewModel.Title, ending, _model.Loadout);
 
             float top = headerHeight + (int)UiSpace.XXL;
 
@@ -97,6 +105,20 @@ namespace DD.Prototype.UI
             if (_model != null && _model.Celebrate)
             {
                 UiSound.Play(UiSoundKind.Reveal);
+                if (_model.LeveledUp)
+                {
+                    UiEvents.Raise(UiEvent.LevelUp);
+                }
+
+                if (_model.NewUnlocks.Count > 0)
+                {
+                    UiEvents.Raise(UiEvent.UnlockRevealed);
+                }
+
+                if (_model.NewAchievements.Count > 0)
+                {
+                    UiEvents.Raise(UiEvent.AchievementRevealed);
+                }
             }
         }
 
@@ -115,9 +137,22 @@ namespace DD.Prototype.UI
 
             AddHero(ref stack, host, _model.ReachedRoundLabel, _model.ReachedRound, UiColor.TextPrimary, UiType.NumericXL);
 
+            if (!string.IsNullOrEmpty(_model.BestRoundChip))
+            {
+                // WP-023 data: the profile's highest round moved. Pulsing pill, StateSuccess.
+                TMP_Text best = UiFactory.Chip("BestRound", host, _model.BestRoundChip, UiColor.StateSuccess, UiColor.SurfaceInset, 200f, 30f);
+                RectTransform bestRect = stack.Add((RectTransform)best.transform.parent, 30f);
+                bestRect.anchorMax = new Vector2(0f, 1f);
+                bestRect.sizeDelta = new Vector2(200f, 30f);
+                bestRect.gameObject.AddComponent<UiPulse>().Configure(
+                    new Graphic[] { bestRect.GetComponent<Graphic>() }, 0.80f, 1f, UiTokens.PulsePeriod);
+                UiEvents.Raise(UiEvent.NewBestRound);
+                stack.Gap(UiSpace.XS);
+            }
+
             stack.Gap(UiSpace.XS);
 
-            Text rounds = UiFactory.Label(
+            TMP_Text rounds = UiFactory.Label(
                 "RoundsCompleted", host, _model.RoundsCompletedCaption, UiType.Caption, UiColor.TextSecondary);
             stack.Add((RectTransform)rounds.transform, UiFactory.LineHeight(UiType.Caption));
 
@@ -143,7 +178,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.M);
 
-            Text note = UiFactory.Label("Note", host, _model.CombatNote, UiType.Caption, UiColor.TextMuted);
+            TMP_Text note = UiFactory.Label("Note", host, _model.CombatNote, UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
         }
 
@@ -177,13 +212,13 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)UiFactory.Divider("D2", host).transform, UiTokens.StrokeHairline);
             stack.Gap(UiSpace.L);
 
-            Text progressLabel = UiFactory.Label(
+            TMP_Text progressLabel = UiFactory.Label(
                 "ProgressLabel", host, "PROFILE LEVEL PROGRESS", UiType.Label, UiColor.TextMuted);
             stack.Add((RectTransform)progressLabel.transform, UiFactory.LineHeight(UiType.Label));
 
             stack.Gap(UiSpace.M);
 
-            Text level = UiFactory.Numeric(
+            TMP_Text level = UiFactory.Numeric(
                 "Level", host, _model.LevelLine, UiType.H2,
                 _model.LeveledUp ? UiColor.StateSuccess : UiColor.TextPrimary);
             stack.Add((RectTransform)level.transform, 32f);
@@ -197,7 +232,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.S);
 
-            Text barCaption = UiFactory.Label(
+            TMP_Text barCaption = UiFactory.Label(
                 "BarCaption", host, _model.ProgressCaption, UiType.Caption, UiColor.TextSecondary);
             stack.Add((RectTransform)barCaption.transform, UiFactory.LineHeight(UiType.Caption));
 
@@ -208,7 +243,7 @@ namespace DD.Prototype.UI
                 // StateSuccess, not AccentMoss: moss is dark enough that dark-on-moss
                 // measures 3.52:1 and light-on-moss 4.66:1, i.e. one of the two always
                 // sits near the floor. Jade clears both comfortably.
-                Text chip = UiFactory.Chip(
+                TMP_Text chip = UiFactory.Chip(
                     "LevelUp", host, _model.LevelUpChip, UiColor.StateSuccess, UiColor.SurfaceInset, 200f, 34f);
 
                 var chipRect = (RectTransform)chip.transform.parent;
@@ -223,7 +258,7 @@ namespace DD.Prototype.UI
                 stack.Gap(UiSpace.M);
             }
 
-            Text note = UiFactory.Label("Note", host, _model.XpNote, UiType.Caption, UiColor.TextMuted);
+            TMP_Text note = UiFactory.Label("Note", host, _model.XpNote, UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 3f);
         }
 
@@ -261,7 +296,7 @@ namespace DD.Prototype.UI
         {
             if (entries == null || entries.Count == 0)
             {
-                Text empty = UiFactory.Label("Empty", host, emptyMessage, UiType.Body, UiColor.TextMuted);
+                TMP_Text empty = UiFactory.Label("Empty", host, emptyMessage, UiType.Body, UiColor.TextMuted);
                 stack.Add((RectTransform)empty.transform, UiFactory.LineHeight(UiType.Body) * 2f);
                 return;
             }
@@ -275,7 +310,7 @@ namespace DD.Prototype.UI
 
             if (entries.Count > shown)
             {
-                Text more = UiFactory.Label(
+                TMP_Text more = UiFactory.Label(
                     "More", host, ResultsViewModel.Overflow(entries.Count), UiType.Caption, UiColor.TextSecondary);
                 stack.Add((RectTransform)more.transform, UiFactory.LineHeight(UiType.Caption));
             }
@@ -292,10 +327,11 @@ namespace DD.Prototype.UI
             RectTransform content = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.M));
 
             // WP-022: an AP-012 medallion carries the entry (unlocks: rare wreath,
-            // achievements: epic sakura ring); the petal mark stays the no-art fallback.
+            // achievements: ring by WP-023 rarity); the petal mark stays the no-art fallback.
             float markSize = RewardEntryHeight - (int)UiSpace.M * 2;
             Image mark = UiFactory.NewImage(
-                "Mark", content, accent, UiArt.Medal(accent == UiColor.StateSuccess ? UiMedal.Epic : UiMedal.Rare));
+                "Mark", content, accent,
+                UiArt.Medal(accent == UiColor.StateSuccess ? _model.MedalFor(entry.Title) : UiMedal.Rare));
             mark.preserveAspect = true;
             var markRect = (RectTransform)mark.transform;
             markRect.anchorMin = new Vector2(0f, 0.5f);
@@ -305,21 +341,21 @@ namespace DD.Prototype.UI
             markRect.anchoredPosition = Vector2.zero;
 
             float textLeft = markSize + (int)UiSpace.M;
-            Text title = UiFactory.Label(
+            TMP_Text title = UiFactory.Label(
                 "Title", content, UiFactory.Clip(entry.Title, 32), UiType.BodyStrong, accent,
                 TextAnchor.LowerLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
             titleRect.offsetMin = new Vector2(textLeft, RewardTitleBand);
             titleRect.offsetMax = new Vector2(-64f, 0f);
 
-            Text detail = UiFactory.Label(
+            TMP_Text detail = UiFactory.Label(
                 "Detail", content, UiFactory.Clip(entry.Detail, 60), UiType.Caption, UiColor.TextSecondary,
                 TextAnchor.UpperLeft);
             RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
             detailRect.offsetMin = new Vector2(textLeft, 0f);
             detailRect.offsetMax = new Vector2(-64f, -RewardTitleBand);
 
-            Text badge = UiFactory.Chip("New", content, "NEW", accent, UiColor.SurfaceInset, 56f, 24f);
+            TMP_Text badge = UiFactory.Chip("New", content, "NEW", accent, UiColor.SurfaceInset, 56f, 24f);
             var badgeRect = (RectTransform)badge.transform.parent;
             badgeRect.anchorMin = new Vector2(1f, 0.5f);
             badgeRect.anchorMax = new Vector2(1f, 0.5f);
@@ -344,7 +380,7 @@ namespace DD.Prototype.UI
             footer.sizeDelta = new Vector2(0f, UiTokens.TargetPreferred);
             footer.anchoredPosition = Vector2.zero;
 
-            Text note = UiFactory.Label(
+            TMP_Text note = UiFactory.Label(
                 "FooterNote", footer, _model.FooterNote, UiType.Caption,
                 _model.SaveFailed ? UiColor.StateWarning : UiColor.TextMuted, TextAnchor.MiddleLeft);
             RectTransform noteRect = UiFactory.Fill((RectTransform)note.transform);
@@ -396,12 +432,12 @@ namespace DD.Prototype.UI
             RectTransform host = UiFactory.CardContent(card, UiSpace.XXL);
             var stack = new UiStack(host);
 
-            Text title = UiFactory.Label("Title", host, _model.EmptyTitle, UiType.H3, UiColor.TextPrimary);
+            TMP_Text title = UiFactory.Label("Title", host, _model.EmptyTitle, UiType.H3, UiColor.TextPrimary);
             stack.Add((RectTransform)title.transform, UiFactory.LineHeight(UiType.H3));
 
             stack.Gap(UiSpace.M);
 
-            Text body = UiFactory.Label("Body", host, _model.EmptyBody, UiType.Body, UiColor.TextSecondary);
+            TMP_Text body = UiFactory.Label("Body", host, _model.EmptyBody, UiType.Body, UiColor.TextSecondary);
             stack.Add((RectTransform)body.transform, UiFactory.LineHeight(UiType.Body) * 2f);
 
             BuildFooter();
@@ -412,19 +448,19 @@ namespace DD.Prototype.UI
         private static void AddHero(
             ref UiStack stack, RectTransform host, string label, string value, UiColor valueColor, UiType type)
         {
-            Text labelText = UiFactory.Label("HeroLabel", host, label, UiType.Label, UiColor.TextMuted);
+            TMP_Text labelText = UiFactory.Label("HeroLabel", host, label, UiType.Label, UiColor.TextMuted);
             stack.Add((RectTransform)labelText.transform, UiFactory.LineHeight(UiType.Label));
 
             stack.Gap(UiSpace.XS);
 
-            Text valueText = UiFactory.Numeric("HeroValue", host, value, type, valueColor);
+            TMP_Text valueText = UiFactory.Numeric("HeroValue", host, value, type, valueColor);
             stack.Add((RectTransform)valueText.transform, type == UiType.NumericXL ? HeroValueHeight : 40f);
         }
 
         private static void AddRow(ref UiStack stack, RectTransform host, UiStatLine line, UiType? type = null)
         {
             UiType valueType = type ?? (line.Emphasis ? UiType.H3 : UiType.BodyStrong);
-            Text valueText = UiFactory.StatRow(line.Label, line.Value, host, line.Color, valueType, 140f);
+            TMP_Text valueText = UiFactory.StatRow(line.Label, line.Value, host, line.Color, valueType, 140f);
             stack.Add((RectTransform)valueText.transform.parent, RowHeight);
         }
     }

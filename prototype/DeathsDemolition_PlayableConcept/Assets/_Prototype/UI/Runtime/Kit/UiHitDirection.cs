@@ -316,6 +316,7 @@ namespace DD.Prototype.UI
             if (raised)
             {
                 HitCount++;
+                UiEvents.Raise(UiEvent.HudDamageEdge);
             }
         }
 

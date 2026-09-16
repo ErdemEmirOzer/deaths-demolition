@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
@@ -176,6 +177,19 @@ namespace DD.Prototype.Tests.PlayMode
                 "canlı koşuda reticle ekran içinde (park pozisyonunda değil): " + reticlePos);
             Assert.AreEqual("Reticle.Ticks", reticle.GetComponent<Image>().sprite.name);
 
+            // Threat chips (WP-022B / WP-033): built, hidden until the director says so.
+            Transform threatRow = hud.transform.Find(hud.GetType().Name + ".Canvas/ThreatRow");
+            Assert.IsNotNull(threatRow, "tehdit çipi satırı yok");
+            Assert.AreEqual(3, threatRow.childCount, "üç tehdit çipi");
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.IsFalse(hud.ThreatChipVisible(i), "tehdit yokken çip " + i + " gizli olmalı");
+            }
+
+            // Screen events (WP-022B): the HUD announced itself; the settings file, not
+            // PlayerPrefs, holds the UI scale.
+            Assert.IsTrue(File.Exists(UiSettings.FilePath) || UiSettings.UiScale == 1f, "ui-settings.json yolu: " + UiSettings.FilePath);
+
             // Marker layer and special block are nested canvases too (rebuild isolation).
             Assert.IsNotNull(hud.transform.Find(hud.GetType().Name + ".Canvas/MarkerLayer").GetComponent<Canvas>());
             Transform special = hud.transform.Find(hud.GetType().Name + ".Canvas/SpecialWeapon");
@@ -313,6 +327,17 @@ namespace DD.Prototype.Tests.PlayMode
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.GRAPHICS QUALITY");
             Hareket(MoveDirection.Down);
+            yield return SeciliBekle("ReducedMotion");
+            // Submit flips the toggle (WP-022B) and the label says so; flip it back.
+            int raisedBefore = UiEvents.RaisedCount;
+            Onayla();
+            yield return null;
+            Assert.IsTrue(UiSettings.ReducedMotion, "Submit reduced motion'ı açmalı");
+            Assert.Greater(UiEvents.RaisedCount, raisedBefore, "toggle bir UiEvent yükseltir");
+            Onayla();
+            yield return null;
+            Assert.IsFalse(UiSettings.ReducedMotion);
+            Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.UI SCALE");
 
             // Cancel (Escape / east button) returns to Profile with the tab focused.
@@ -367,6 +392,8 @@ namespace DD.Prototype.Tests.PlayMode
         {
             LogAssert.ignoreFailingMessages = true;
             float before = UiSettings.UiScale;
+            string path = Path.Combine(Path.GetTempPath(), "dd-wp022b-scale-" + System.Guid.NewGuid().ToString("N") + ".json");
+            UiSettings.SetPathOverride(path);
             try
             {
                 UiSettings.UiScale = 1.2f;
@@ -387,6 +414,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
+                UiSettings.SetPathOverride(null);
+                if (File.Exists(path)) File.Delete(path);
                 UiSettings.UiScale = before;
             }
 

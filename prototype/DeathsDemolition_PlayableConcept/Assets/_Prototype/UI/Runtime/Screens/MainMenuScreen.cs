@@ -1,4 +1,5 @@
 using DD.Prototype.Profile;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -89,8 +90,9 @@ namespace DD.Prototype.UI
             ProfileService.Changed += OnProfileChanged;
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             ProfileService.Changed -= OnProfileChanged;
         }
 
@@ -174,7 +176,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.S);
 
-            Text playHint = UiFactory.Label(
+            TMP_Text playHint = UiFactory.Label(
                 "PlayHint", column,
                 "Choose a skin and a classic weapon, then fight for the highest round you can reach.",
                 UiType.Caption, UiColor.TextMuted);
@@ -182,7 +184,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.XL);
 
-            Text sectionLabel = UiFactory.Label(
+            TMP_Text sectionLabel = UiFactory.Label(
                 "MenuLabel", column, "PROGRESS", UiType.Label, UiColor.TextMuted);
             stack.Add((RectTransform)sectionLabel.transform, UiFactory.LineHeight(UiType.Label));
 
@@ -212,9 +214,10 @@ namespace DD.Prototype.UI
             // pane's sliders from a tab, which is what the horizontal axis is for.
             UiInput.ChainVertical(false, play, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, quit);
 
-            Text build = UiFactory.Label(
+            TMP_Text build = UiFactory.Label(
                 "BuildNote", column,
-                "Prototype build.",
+                // WP-025 version stamp (WP-022B binding): "wp-022-…-g1234567 · release · 2026-09-16".
+                "Prototype build · " + DD.Prototype.Core.Build.BuildInfo.Read().Label,
                 UiType.Caption, UiColor.TextMuted);
             RectTransform buildRect = (RectTransform)build.transform;
             buildRect.anchorMin = new Vector2(0f, 0f);
@@ -268,6 +271,7 @@ namespace DD.Prototype.UI
             // tracking this screen.
             _pane = pane;
             RedrawPane();
+            UiEvents.Raise(UiEvent.PaneOpened, pane.ToString());
         }
 
         private void RedrawPane()
@@ -337,7 +341,7 @@ namespace DD.Prototype.UI
             stack.Add(UiFactory.Heading("SETTINGS", _paneHost), UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.S);
 
-            Text caption = UiFactory.Label(
+            TMP_Text caption = UiFactory.Label(
                 "Caption", _paneHost,
                 "Device preferences. They are saved on this machine and never touch your profile.",
                 UiType.Caption, UiColor.TextMuted);
@@ -367,15 +371,34 @@ namespace DD.Prototype.UI
                 v => UiSettings.Quality = Mathf.RoundToInt(v));
             quality.wholeNumbers = true;
 
+            // Reduced motion (WP-022B, accessibility): pulses hold, fades are instant,
+            // petals stand still. A toggle button, so the pad's Submit flips it.
+            stack.Gap(UiSpace.S);
+            UiButton reduced = UiFactory.Button(
+                "ReducedMotion", _paneHost, ReducedMotionLabel(), UiButtonVariant.Secondary, null);
+            reduced.SetOnClick(() =>
+            {
+                UiSettings.ReducedMotion = !UiSettings.ReducedMotion;
+                reduced.SetText(ReducedMotionLabel());
+                UiEvents.Raise(UiEvent.ToggleChanged, "ReducedMotion");
+            });
+            stack.Add((RectTransform)reduced.transform, UiTokens.TargetPreferred);
+            UiInput.LeadingIcon(reduced, "Menu.Gamepad", UiColor.TextSecondary, 22f);
+
             stack.Gap(UiSpace.L);
-            Text note = UiFactory.Label(
+            TMP_Text note = UiFactory.Label(
                 "Note", _paneHost,
                 "UI scale applies to the next screen you open. Use the arrow keys or the left stick on a slider.",
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
-            UiInput.ChainVertical(scale, volume, quality);
+            UiInput.ChainVertical(scale, volume, quality, reduced);
             UiInput.Focus(scale);
+        }
+
+        private static string ReducedMotionLabel()
+        {
+            return UiSettings.ReducedMotion ? "REDUCED MOTION · ON" : "REDUCED MOTION · OFF";
         }
 
         private Slider AddSettingSlider(
@@ -393,7 +416,7 @@ namespace DD.Prototype.UI
             glyphRect.pivot = new Vector2(0f, 1f);
             glyphRect.anchoredPosition = Vector2.zero;
 
-            Text title = UiFactory.Label("Label", row, label, UiType.Label, UiColor.TextMuted, TextAnchor.UpperLeft);
+            TMP_Text title = UiFactory.Label("Label", row, label, UiType.Label, UiColor.TextMuted, TextAnchor.UpperLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
             titleRect.anchorMin = new Vector2(0f, 1f);
             titleRect.pivot = new Vector2(0f, 1f);
@@ -401,7 +424,7 @@ namespace DD.Prototype.UI
             titleRect.anchoredPosition = Vector2.zero;
             titleRect.offsetMin = new Vector2(glyph.enabled ? 22f + (int)UiSpace.S : 0f, titleRect.offsetMin.y);
 
-            Text valueText = UiFactory.Label(
+            TMP_Text valueText = UiFactory.Label(
                 "Value", row, readout(value), UiType.Label, UiColor.TextPrimary, TextAnchor.UpperRight);
             RectTransform valueRect = UiFactory.Fill((RectTransform)valueText.transform);
             valueRect.anchorMin = new Vector2(0f, 1f);
@@ -420,6 +443,7 @@ namespace DD.Prototype.UI
             {
                 onChanged(v);
                 valueText.text = readout(v);
+                UiEvents.Raise(UiEvent.SliderChanged, label);
             });
             return slider;
         }
@@ -443,12 +467,12 @@ namespace DD.Prototype.UI
 
             // "PROFILE LEVEL", not "LEVEL": the eyebrow says at first glance that this
             // number is the profile's experience, not a character's power.
-            Text levelLabel = UiFactory.Label(
+            TMP_Text levelLabel = UiFactory.Label(
                 "LevelLabel", _paneHost, "PROFILE LEVEL", UiType.Label, UiColor.TextMuted);
             stack.Add((RectTransform)levelLabel.transform, UiFactory.LineHeight(UiType.Label));
             stack.Gap(UiSpace.XS);
 
-            Text level = UiFactory.Numeric(
+            TMP_Text level = UiFactory.Numeric(
                 "Level", _paneHost, model.LevelText, UiType.NumericXL, UiColor.TextPrimary);
             stack.Add((RectTransform)level.transform, UiFactory.LineHeight(UiType.NumericXL));
 
@@ -460,7 +484,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.S);
 
-            Text xpCaption = UiFactory.Label(
+            TMP_Text xpCaption = UiFactory.Label(
                 "XpCaption", _paneHost, model.ProgressCaption, UiType.Caption, UiColor.TextSecondary);
             stack.Add((RectTransform)xpCaption.transform, UiFactory.LineHeight(UiType.Caption));
 
@@ -477,7 +501,7 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)UiFactory.Divider("D2", _paneHost).transform, UiTokens.StrokeHairline);
             stack.Gap(UiSpace.L);
 
-            Text unlockLabel = UiFactory.Label(
+            TMP_Text unlockLabel = UiFactory.Label(
                 "UnlockLabel", _paneHost, "UNLOCKED CONTENT", UiType.Label, UiColor.TextMuted);
             stack.Add((RectTransform)unlockLabel.transform, UiFactory.LineHeight(UiType.Label));
             stack.Gap(UiSpace.M);
@@ -489,13 +513,13 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.M);
 
-            Text achievements = UiFactory.Label(
+            TMP_Text achievements = UiFactory.Label(
                 "AchievementSummary", _paneHost, model.AchievementSummary, UiType.Caption, UiColor.TextSecondary);
             stack.Add((RectTransform)achievements.transform, UiFactory.LineHeight(UiType.Caption));
 
             stack.Gap(UiSpace.M);
 
-            Text rule = UiFactory.Label(
+            TMP_Text rule = UiFactory.Label(
                 "Rule", _paneHost, ProfileViewModel.RuleNote, UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)rule.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
         }
@@ -534,7 +558,7 @@ namespace DD.Prototype.UI
 
             if (!string.IsNullOrEmpty(model.TierCaption))
             {
-                Text caption = UiFactory.Label(
+                TMP_Text caption = UiFactory.Label(
                     "TierCaption", _paneHost, model.TierCaption, UiType.Caption, UiColor.TextMuted);
                 stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption));
             }
@@ -550,7 +574,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.L);
 
-            Text note = UiFactory.Label(
+            TMP_Text note = UiFactory.Label(
                 "Note", _paneHost, StatisticsViewModel.Note, UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
         }
@@ -568,7 +592,7 @@ namespace DD.Prototype.UI
             {
                 // A build with no definitions is a legitimate state, not an error. It is
                 // written as a finished sentence, and the pane still works.
-                Text title = UiFactory.Label(
+                TMP_Text title = UiFactory.Label(
                     "EmptyTitle", _paneHost, AchievementsViewModel.EmptyTitle, UiType.H3, UiColor.TextPrimary);
                 stack.Add((RectTransform)title.transform, UiFactory.LineHeight(UiType.H3));
                 stack.Gap(UiSpace.S);
@@ -576,7 +600,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            Text progress = UiFactory.Label(
+            TMP_Text progress = UiFactory.Label(
                 "Progress", _paneHost, model.Progress, UiType.Body, UiColor.TextSecondary);
             stack.Add((RectTransform)progress.transform, UiFactory.LineHeight(UiType.Body));
 
@@ -591,7 +615,7 @@ namespace DD.Prototype.UI
 
             if (model.Lines.Count > shown)
             {
-                Text more = UiFactory.Label(
+                TMP_Text more = UiFactory.Label(
                     "More", _paneHost,
                     "and " + (model.Lines.Count - shown) + " more",
                     UiType.Caption, UiColor.TextSecondary);
@@ -599,7 +623,7 @@ namespace DD.Prototype.UI
                 stack.Gap(UiSpace.M);
             }
 
-            Text note = UiFactory.Label(
+            TMP_Text note = UiFactory.Label(
                 "Note", _paneHost, AchievementsViewModel.AutoNote, UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
         }
@@ -632,7 +656,7 @@ namespace DD.Prototype.UI
             medalRect.anchoredPosition = Vector2.zero;
             float textLeft = medalSize + (int)UiSpace.M;
 
-            Text title = UiFactory.Label(
+            TMP_Text title = UiFactory.Label(
                 "Title", content, line.Title, UiType.H3,
                 line.Earned ? UiColor.TextPrimary : UiColor.TextSecondary, TextAnchor.UpperLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
@@ -641,7 +665,7 @@ namespace DD.Prototype.UI
 
             // TextSecondary, not TextMuted: muted measures 4.27:1 on SurfaceRaised,
             // which is below the 4.5 floor, and an earned achievement's card IS raised.
-            Text description = UiFactory.Label(
+            TMP_Text description = UiFactory.Label(
                 "Description", content,
                 UiFactory.Clip(line.Description, 90),
                 UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
@@ -649,7 +673,7 @@ namespace DD.Prototype.UI
             descriptionRect.offsetMin = new Vector2(textLeft, 0f);
             descriptionRect.offsetMax = new Vector2(-ChipColumnWidth, -AchievementTitleBand);
 
-            Text chip = UiFactory.Chip(
+            TMP_Text chip = UiFactory.Chip(
                 "State", content,
                 line.Earned ? "EARNED" : "LOCKED",
                 line.Earned ? UiColor.StateSuccess : UiColor.SurfaceInset,
@@ -669,7 +693,7 @@ namespace DD.Prototype.UI
 
         private void AddRow(ref UiStack stack, UiStatLine line)
         {
-            Text valueText = UiFactory.StatRow(
+            TMP_Text valueText = UiFactory.StatRow(
                 line.Label, line.Value, _paneHost, line.Color,
                 line.Emphasis ? UiType.H3 : UiType.BodyStrong);
             stack.Add((RectTransform)valueText.transform.parent, RowHeight);
@@ -679,13 +703,13 @@ namespace DD.Prototype.UI
         {
             RectTransform row = UiFactory.NewRect("Unlock", _paneHost);
 
-            Text label = UiFactory.Label(
+            TMP_Text label = UiFactory.Label(
                 "Label", row, line.Title, UiType.Body,
                 line.Unlocked ? UiColor.TextPrimary : UiColor.TextMuted, TextAnchor.MiddleLeft);
             RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
             labelRect.offsetMax = new Vector2(-ValueColumnWidth, 0f);
 
-            Text chip = UiFactory.Chip(
+            TMP_Text chip = UiFactory.Chip(
                 "State", row,
                 line.Unlocked ? "UNLOCKED" : "LEVEL " + line.RequiredLevel,
                 UiColor.SurfaceInset,
@@ -713,7 +737,7 @@ namespace DD.Prototype.UI
             ruleRect.offsetMin = new Vector2(0f, 0f);
             ruleRect.offsetMax = new Vector2(UiTokens.HeadingTickWidth, 0f);
 
-            Text text = UiFactory.Label("Text", row, message, UiType.Body, accent, TextAnchor.UpperLeft);
+            TMP_Text text = UiFactory.Label("Text", row, message, UiType.Body, accent, TextAnchor.UpperLeft);
             RectTransform textRect = UiFactory.Fill((RectTransform)text.transform);
             textRect.offsetMin = new Vector2(UiTokens.HeadingTickWidth + (int)UiSpace.M, 0f);
 

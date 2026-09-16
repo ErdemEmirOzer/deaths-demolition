@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -38,7 +39,7 @@ namespace DD.Prototype.UI
         private Image _fill;
         private Image _wash;
         private Image _marker;
-        private Text _label;
+        private TMP_Text _label;
 
         private Action _onClick;
 
@@ -51,7 +52,7 @@ namespace DD.Prototype.UI
         private float _washTarget;
 
         /// <summary>The control's text. Screens re-label buttons rather than rebuilding them.</summary>
-        public Text LabelText
+        public TMP_Text LabelText
         {
             get { return _label; }
         }
@@ -69,7 +70,7 @@ namespace DD.Prototype.UI
             Image ring,
             Image border,
             Image fill,
-            Text label,
+            TMP_Text label,
             Action onClick)
         {
             _variant = variant;
@@ -90,7 +91,7 @@ namespace DD.Prototype.UI
             SetAlpha(_wash, 0f);
 
             // Left-edge marker for the navigation pane's current entry.
-            _marker = UiFactory.NewImage("Marker", transform, UiColor.AccentPrimary, UiSprites.Chip);
+            _marker = UiFactory.NewImage("Marker", transform, UiColor.TextPrimary, UiSprites.Chip); // WP-022B AD MUST-1: cream, not a third vermilion
             var markerRect = (RectTransform)_marker.transform;
             markerRect.anchorMin = new Vector2(0f, 0.5f);
             markerRect.anchorMax = new Vector2(0f, 0.5f);
@@ -173,6 +174,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            UiEvents.Raise(UiEvent.ButtonPress, name);
             UiSound.Play(UiSoundKind.Confirm);
 
             Action handler = _onClick;
@@ -194,6 +196,7 @@ namespace DD.Prototype.UI
 
         public override void OnPointerEnter(PointerEventData eventData)
         {
+            UiEvents.Raise(UiEvent.ButtonHover, name);
             base.OnPointerEnter(eventData);
 
             if (IsInteractable())

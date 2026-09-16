@@ -15,6 +15,7 @@ using DD.Prototype.Spawn;
 using DD.Prototype.UI;
 using DD.Prototype.Weapons;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -142,7 +143,7 @@ namespace DD.Prototype.Tests.PlayMode
                 return false;
             }
 
-            Text[] metinler = ekran.GetComponentsInChildren<Text>(true);
+            TMP_Text[] metinler = ekran.GetComponentsInChildren<TMP_Text>(true);
             for (int i = 0; i < metinler.Length; i++)
             {
                 if (metinler[i].text != null && metinler[i].text.Contains(parca))
@@ -155,9 +156,9 @@ namespace DD.Prototype.Tests.PlayMode
             return false;
         }
 
-        private static Text HudMetni(RunHudScreen hud, string blok, string ad)
+        private static TMP_Text HudMetni(RunHudScreen hud, string blok, string ad)
         {
-            Text[] metinler = hud.GetComponentsInChildren<Text>(true);
+            TMP_Text[] metinler = hud.GetComponentsInChildren<TMP_Text>(true);
             for (int i = 0; i < metinler.Length; i++)
             {
                 Transform t = metinler[i].transform;
@@ -488,7 +489,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual("no upgrades", vm.BuildText);
 
             Assert.AreEqual("0", vm.GoldText);
-            Text goldMetni = HudMetni(hud, "Gold", "Value");
+            TMP_Text goldMetni = HudMetni(hud, "Gold", "Value");
             Assert.AreEqual("0", goldMetni.text);
 
             // Gold: cüzdan kredisi aynı karede olayla HUD'a düşer (RunEvents.GoldChanged).
@@ -628,7 +629,7 @@ namespace DD.Prototype.Tests.PlayMode
                     if (img.gameObject.name == "Icon" && img.sprite != null && img.sprite.name.StartsWith("Upgrade.")) ikon++;
                 }
 
-                foreach (Text t in upgrade.GetComponentsInChildren<Text>(false))
+                foreach (TMP_Text t in upgrade.GetComponentsInChildren<TMP_Text>(false))
                 {
                     if (t.gameObject.name == "Monogram" && !string.IsNullOrEmpty(t.text)) monogram++;
                 }
@@ -831,7 +832,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>Bir StatRow'da anahtar/değer çifti var mı (Row/Key, Row/Value).</summary>
         private static bool SatirDegeri(MainMenuScreen menu, string anahtar, string deger)
         {
-            Text[] metinler = menu.GetComponentsInChildren<Text>(true);
+            TMP_Text[] metinler = menu.GetComponentsInChildren<TMP_Text>(true);
             for (int i = 0; i < metinler.Length; i++)
             {
                 if (metinler[i].gameObject.name != "Key" || metinler[i].text != anahtar)
@@ -840,12 +841,12 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 Transform satir = metinler[i].transform.parent;
-                Text valueText = null;
+                TMP_Text valueText = null;
                 for (int c = 0; c < satir.childCount; c++)
                 {
                     if (satir.GetChild(c).name == "Value")
                     {
-                        valueText = satir.GetChild(c).GetComponent<Text>();
+                        valueText = satir.GetChild(c).GetComponent<TMP_Text>();
                     }
                 }
 
@@ -1081,7 +1082,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             void Tara(string sahne)
             {
-                Text[] metinler = UnityEngine.Object.FindObjectsOfType<Text>(true);
+                TMP_Text[] metinler = UnityEngine.Object.FindObjectsOfType<TMP_Text>(true);
                 int n = 0;
                 for (int i = 0; i < metinler.Length; i++)
                 {

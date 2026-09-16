@@ -1,8 +1,10 @@
 using DD.Prototype.Core.Config;
+using DD.Prototype.Enemies;
 using DD.Prototype.Feedback;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Weapons;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -121,38 +123,38 @@ namespace DD.Prototype.UI
         }
 
         // ---- round / enemies
-        private Text _roundValue;
-        private Text _enemiesValue;
-        private Text _enemiesBreakdown;
+        private TMP_Text _roundValue;
+        private TMP_Text _enemiesValue;
+        private TMP_Text _enemiesBreakdown;
 
         // ---- gold
-        private Text _goldValue;
+        private TMP_Text _goldValue;
 
         // ---- health
         private UiBar _healthBar;
-        private Text _healthValue;
-        private Text _healthState;
+        private TMP_Text _healthValue;
+        private TMP_Text _healthState;
 
         // ---- classic weapon
         private CanvasGroup _classicGroup;
-        private Text _classicName;
-        private Text _classicBuild;
-        private Text _ammoValue;
+        private TMP_Text _classicName;
+        private TMP_Text _classicBuild;
+        private TMP_Text _ammoValue;
         private UiBar _reloadBar;
-        private Text _reloadCaption;
+        private TMP_Text _reloadCaption;
         private GameObject _suspendedChip;
 
         // ---- special weapon
         private GameObject _specialBlock;
-        private Text _specialPhase;
-        private Text _specialTimer;
+        private TMP_Text _specialPhase;
+        private TMP_Text _specialTimer;
 
         // WP-007 (PB-2): the active timer is formatted only when its displayed tenth
         // changes (at most ten times a second), the marker distance only when the displayed
         // metre changes - never once per frame.
         private int _specialTimerTenths = int.MinValue;
         private int _markerMetres = int.MinValue;
-        private Text _specialCaption;
+        private TMP_Text _specialCaption;
         private Image _specialRing;
         private Image _specialPip;
         private Image _weaponIcon;
@@ -177,19 +179,31 @@ namespace DD.Prototype.UI
         // ---- warnings and banners
         private GameObject _warningVignette;
         private GameObject _warningBanner;
-        private Text _bannerText;
+        private TMP_Text _bannerText;
         private CanvasGroup _bannerGroup;
         private float _bannerRemaining;
 
         // ---- world marker
         private RectTransform _marker;
         private RectTransform _markerArrow;
-        private Text _markerLabel;
+        private TMP_Text _markerLabel;
         private Image _markerCore;
         private Image _markerRing;
         private Image _markerHalo;
 
         private bool _healthBound;
+        private bool _lowHealthShown;
+
+        // ---- threat warnings (WP-022B, ThreatHudFeed / WP-033)
+        private GameObject _threatRow;
+        private GameObject _threatSurrounded;
+        private GameObject _threatRear;
+        private GameObject _threatStrong;
+        private TMP_Text _threatStrongText;
+        private bool _threatSurroundedShown;
+        private bool _threatRearShown;
+        private bool _threatStrongShown;
+        private int _threatWindupShown;
 
         private readonly RunHudViewModel _model = new RunHudViewModel();
 
@@ -216,6 +230,7 @@ namespace DD.Prototype.UI
             BuildCentreChannel();
             BuildMarker();
             BuildReticle();
+            BuildThreatChips();
 
             RunEvents.RunStarted += OnRunStarted;
             RunEvents.RoundStarted += OnRoundStarted;
@@ -238,8 +253,10 @@ namespace DD.Prototype.UI
             BindHealthSnapshot();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+            Cursor.visible = true;
             RunEvents.RunStarted -= OnRunStarted;
             RunEvents.RoundStarted -= OnRoundStarted;
             RunEvents.RoundCompleted -= OnRoundCompleted;
@@ -313,7 +330,7 @@ namespace DD.Prototype.UI
 
             var stack = new UiStack(host);
 
-            Text roundLabel = UiFactory.Label(
+            TMP_Text roundLabel = UiFactory.Label(
                 "RoundLabel", host, "ROUND", UiType.Label, UiColor.TextMuted, TextAnchor.UpperCenter);
             stack.Add((RectTransform)roundLabel.transform, UiFactory.LineHeight(UiType.Label));
 
@@ -340,7 +357,7 @@ namespace DD.Prototype.UI
             RectTransform enemiesValueRect = UiFactory.Fill((RectTransform)_enemiesValue.transform);
             enemiesValueRect.offsetMin = new Vector2(SmallBlockWidth * 0.5f - (int)UiSpace.L - 36f, 0f);
 
-            Text enemiesLabel = UiFactory.Label(
+            TMP_Text enemiesLabel = UiFactory.Label(
                 "EnemiesLabel", enemiesRow, "REMAINING", UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
             RectTransform enemiesLabelRect = UiFactory.Fill((RectTransform)enemiesLabel.transform);
             enemiesLabelRect.offsetMin = new Vector2(SmallBlockWidth * 0.5f - (int)UiSpace.L + 24f, 0f);
@@ -388,7 +405,7 @@ namespace DD.Prototype.UI
 
             float textLeft = heart.enabled ? PanelIconSize + (int)UiSpace.M : 0f;
 
-            Text label = UiFactory.Label("Label", host, "HEALTH", UiType.Label, UiColor.TextMuted);
+            TMP_Text label = UiFactory.Label("Label", host, "HEALTH", UiType.Label, UiColor.TextMuted);
             RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
             labelRect.anchorMin = new Vector2(0f, 1f);
             labelRect.pivot = new Vector2(0f, 1f);
@@ -538,7 +555,7 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)_reloadCaption.transform, UiFactory.LineHeight(UiType.Caption));
 
             // REQ-057 pill. Sits over the block, never instead of it.
-            Text chip = UiFactory.Chip(
+            TMP_Text chip = UiFactory.Chip(
                 "Suspended", classic, "SUSPENDED", UiColor.StateWarning, UiColor.SurfaceInset, 148f, 26f);
             _suspendedChip = chip.transform.parent.gameObject;
             var chipRect = (RectTransform)_suspendedChip.transform;
@@ -611,7 +628,7 @@ namespace DD.Prototype.UI
             _warningVignette.SetActive(false);
 
             // Final-seconds banner, directly under the round block.
-            Text warning = UiFactory.Chip(
+            TMP_Text warning = UiFactory.Chip(
                 "FinalSeconds", ScreenRect, "SPECIAL WEAPON ENDING",
                 UiColor.StateDanger, UiColor.SurfaceInset, 420f, 44f);
 
@@ -724,6 +741,124 @@ namespace DD.Prototype.UI
         /// </summary>
         public static readonly Rect HudSafeZone = new Rect(0.19f, 0.25f, 0.62f, 0.55f);
 
+        // ============================================================ threat chips
+
+        private const float ThreatChipWidth = 176f;
+        private const float ThreatChipHeight = 32f;
+
+        /// <summary>
+        /// Combat warnings from the threat director (WP-033 <see cref="ThreatHudFeed"/>):
+        /// three chips under the round block - SURROUNDED, BEHIND YOU, ELITE/ULTRA NEARBY.
+        /// Each carries a glyph AND a word (REQ-105 shape + colour; colour-blind safe),
+        /// sits in the top strip outside <see cref="HudSafeZone"/>, and is toggled only
+        /// on a state change (no per-frame rebuild). Low health already has its own
+        /// readout in the health panel; windup count is an event for the audio owner.
+        /// </summary>
+        private void BuildThreatChips()
+        {
+            RectTransform row = UiFactory.NewRect("ThreatRow", ScreenRect);
+            row.anchorMin = new Vector2(0.5f, 1f);
+            row.anchorMax = new Vector2(0.5f, 1f);
+            row.pivot = new Vector2(0.5f, 1f);
+            row.sizeDelta = new Vector2(ThreatChipWidth * 3f + (int)UiSpace.S * 2, ThreatChipHeight);
+            row.anchoredPosition = new Vector2(0f, -((int)UiTokens.SafeInset + RoundBlockHeight + (int)UiSpace.S));
+            _threatRow = row.gameObject;
+
+            _threatSurrounded = ThreatChip(row, 0, "SURROUNDED", "Hud.Enemies", UiColor.StateDanger, out _);
+            _threatRear = ThreatChip(row, 1, "BEHIND YOU", "Menu.Back", UiColor.StateDanger, out _);
+            _threatStrong = ThreatChip(row, 2, "ELITE NEARBY", "Hud.Special", UiColor.StateWarning, out _threatStrongText);
+        }
+
+        private static GameObject ThreatChip(RectTransform row, int index, string text, string icon, UiColor color, out TMP_Text label)
+        {
+            label = UiFactory.Chip("Threat." + index, row, text, UiColor.SurfaceInset, color, ThreatChipWidth, ThreatChipHeight);
+            var chip = (RectTransform)label.transform.parent;
+            chip.anchorMin = new Vector2(0f, 0.5f);
+            chip.anchorMax = new Vector2(0f, 0.5f);
+            chip.pivot = new Vector2(0f, 0.5f);
+            chip.anchoredPosition = new Vector2(index * (ThreatChipWidth + (int)UiSpace.S), 0f);
+
+            Image glyph = UiArt.IconImage("Icon", chip, icon, color, 20f);
+            var glyphRect = (RectTransform)glyph.transform;
+            glyphRect.anchorMin = new Vector2(0f, 0.5f);
+            glyphRect.anchorMax = new Vector2(0f, 0.5f);
+            glyphRect.pivot = new Vector2(0f, 0.5f);
+            glyphRect.anchoredPosition = new Vector2((int)UiSpace.S, 0f);
+            if (index == 1)
+            {
+                // The back chevron points the way the danger is: behind.
+                glyphRect.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            }
+
+            RectTransform labelRect = (RectTransform)label.transform;
+            labelRect.offsetMin = new Vector2(20f + (int)UiSpace.M, 0f);
+            label.alignment = TMPro.TextAlignmentOptions.Left;
+
+            chip.gameObject.SetActive(false);
+            return chip.gameObject;
+        }
+
+        private void UpdateThreat()
+        {
+            if (_threatRow == null)
+            {
+                return;
+            }
+
+            bool fighting = RunEvents.Current.Phase == RunPhase.Fighting && UiNavigation.GameplayInputAllowed;
+            ThreatSnapshot threat = ThreatDirector.Current;
+            bool surrounded = fighting && threat.Encircled;
+            bool rear = fighting && threat.RearAttack;
+            bool strong = fighting && threat.StrongVersionPresent;
+            int windup = fighting ? threat.WindingUp : 0;
+
+            if (surrounded != _threatSurroundedShown)
+            {
+                _threatSurroundedShown = surrounded;
+                _threatSurrounded.SetActive(surrounded);
+                if (surrounded)
+                {
+                    UiEvents.Raise(UiEvent.HudThreatEncircled);
+                }
+            }
+
+            if (rear != _threatRearShown)
+            {
+                _threatRearShown = rear;
+                _threatRear.SetActive(rear);
+                if (rear)
+                {
+                    UiEvents.Raise(UiEvent.HudThreatRearAttack);
+                }
+            }
+
+            if (strong != _threatStrongShown)
+            {
+                _threatStrongShown = strong;
+                if (strong)
+                {
+                    _threatStrongText.text = threat.StrongestTier == EnemyTier.Ultra ? "ULTRA NEARBY" : "ELITE NEARBY";
+                    UiEvents.Raise(UiEvent.HudThreatStrongVersion);
+                }
+
+                _threatStrong.SetActive(strong);
+            }
+
+            if (windup > _threatWindupShown)
+            {
+                UiEvents.Raise(UiEvent.HudThreatWindup);
+            }
+
+            _threatWindupShown = windup;
+        }
+
+        /// <summary>The threat chips, for tests (inactive unless the director says so).</summary>
+        public bool ThreatChipVisible(int index)
+        {
+            GameObject chip = index == 0 ? _threatSurrounded : index == 1 ? _threatRear : _threatStrong;
+            return chip != null && chip.activeSelf;
+        }
+
         // ================================================================== updates
 
         private void Update()
@@ -749,6 +884,7 @@ namespace DD.Prototype.UI
             UpdateClassicWeapon();
             UpdateSpecialWeapon();
             UpdateBanner();
+            UpdateThreat();
         }
 
         private void LateUpdate()
@@ -792,6 +928,13 @@ namespace DD.Prototype.UI
                         Mathf.Round((Mathf.Clamp01(viewport.x) - 0.5f) * canvasSize.x),
                         Mathf.Round((Mathf.Clamp01(viewport.y) - 0.5f) * canvasSize.y));
                 }
+            }
+
+            // The OS pointer hides while the reticle is the pointer (WP-022B); it returns
+            // for the shop, the pause screen and the results.
+            if (Cursor.visible == show)
+            {
+                Cursor.visible = !show;
             }
 
             // Hidden = parked off-screen, never SetActive: toggling a graphic's active state
@@ -897,6 +1040,12 @@ namespace DD.Prototype.UI
 
             if ((changed & RunHudField.HealthBar) != 0)
             {
+                if (_model.HealthLow != _lowHealthShown)
+                {
+                    _lowHealthShown = _model.HealthLow;
+                    UiEvents.Raise(_lowHealthShown ? UiEvent.HudLowHealthEntered : UiEvent.HudLowHealthLeft);
+                }
+
                 _healthBar.SetValue(_model.HealthNormalized);
                 _healthBar.SetColor(_model.HealthLow ? UiColor.BarHealthLow : UiColor.BarHealth);
                 _healthValue.color = UiTokens.Get(_model.HealthLow ? UiColor.StateDanger : UiColor.TextPrimary);
@@ -979,6 +1128,7 @@ namespace DD.Prototype.UI
                         break;
 
                     case RunHudReloadState.MagazineEmpty:
+                        UiEvents.Raise(UiEvent.HudMagazineEmpty);
                         _reloadBar.SetValue(0f, true);
                         // No key name: the reload binding differs between keyboard and
                         // gamepad, and the HUD does not know which one is in hand.
@@ -1265,26 +1415,31 @@ namespace DD.Prototype.UI
 
         private void OnRoundStarted(int round)
         {
+            UiEvents.Raise(UiEvent.HudRoundStarted);
             ShowBanner("ROUND " + round);
         }
 
         private void OnRoundCompleted(int round)
         {
+            UiEvents.Raise(UiEvent.HudRoundCompleted);
             ShowBanner("ROUND " + round + " COMPLETE");
         }
 
         private void OnPoolExhausted(int round)
         {
+            UiEvents.Raise(UiEvent.HudPoolExhausted);
             ShowBanner("CLEAR THE LAST OF THEM");
         }
 
         private void OnSpecialSpawned(Vector3 position, float groundLifetime)
         {
+            UiEvents.Raise(UiEvent.HudSpecialSpawned);
             ShowBanner("SPECIAL WEAPON ON THE FIELD");
         }
 
         private void OnSpecialPickedUp(float activeDuration)
         {
+            UiEvents.Raise(UiEvent.HudSpecialPickedUp);
             string name = WeaponEvents.Special.DisplayName;
             ShowBanner(string.IsNullOrEmpty(name)
                 ? "SPECIAL WEAPON ONLINE"
@@ -1293,11 +1448,13 @@ namespace DD.Prototype.UI
 
         private void OnSpecialFinalSeconds(float remaining)
         {
+            UiEvents.Raise(UiEvent.HudSpecialFinalSeconds);
             SetWarning(true);
         }
 
         private void OnSpecialEnded()
         {
+            UiEvents.Raise(UiEvent.HudSpecialEnded);
             SetWarning(false);
 
             // The death beat: the run director cancels the Special Weapon the moment the
@@ -1314,6 +1471,7 @@ namespace DD.Prototype.UI
 
         private void OnSpecialGroundExpired()
         {
+            UiEvents.Raise(UiEvent.HudSpecialExpired);
             SetWarning(false);
         }
 

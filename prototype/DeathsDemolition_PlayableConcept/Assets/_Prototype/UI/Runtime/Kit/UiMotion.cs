@@ -19,6 +19,7 @@ namespace DD.Prototype.UI
     public sealed class UiPulse : MonoBehaviour
     {
         private Graphic[] _targets;
+        private bool _held;
         private float _minAlpha = 0.55f;
         private float _maxAlpha = 1f;
         private float _period = UiTokens.PulsePeriod;
@@ -44,8 +45,18 @@ namespace DD.Prototype.UI
             }
 
             // Unscaled: the warning has to keep breathing while the world is frozen.
-            float wave = 0.5f - 0.5f * Mathf.Cos(Time.unscaledTime * (2f * Mathf.PI / _period));
+            // Reduced motion (WP-022B): the pulse holds at full alpha - the element stays
+            // visible, it just stops breathing.
+            float wave = UiSettings.ReducedMotion
+                ? 1f
+                : 0.5f - 0.5f * Mathf.Cos(Time.unscaledTime * (2f * Mathf.PI / _period));
             float alpha = Mathf.Lerp(_minAlpha, _maxAlpha, wave);
+            if (UiSettings.ReducedMotion && _held)
+            {
+                return;
+            }
+
+            _held = UiSettings.ReducedMotion;
 
             for (int i = 0; i < _targets.Length; i++)
             {
@@ -95,6 +106,11 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            if (UiSettings.ReducedMotion)
+            {
+                return; // petals stand still
+            }
+
             float dt = Time.unscaledDeltaTime;
             _rect.anchoredPosition += _velocity * dt;
             _rect.localRotation = Quaternion.Euler(0f, 0f, _rect.localEulerAngles.z + _spin * dt);
@@ -104,6 +120,46 @@ namespace DD.Prototype.UI
                 _rect.anchoredPosition = new Vector2(
                     Random.Range(-_spanX, _spanX),
                     _resetAbove);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Screen entrance (WP-022B micro-animation): the canvas fades from 0 to 1 over
+    /// UiTokens.MotionScreen on unscaled time, then removes itself. Instant when reduced
+    /// motion is on. One CanvasGroup alpha per frame - no layout, no vertex rebuild.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class UiScreenFade : MonoBehaviour
+    {
+        private CanvasGroup _group;
+        private float _start;
+
+        public void Configure(CanvasGroup group)
+        {
+            _group = group;
+            _start = Time.unscaledTime;
+            if (_group != null)
+            {
+                _group.alpha = UiSettings.ReducedMotion ? 1f : 0f;
+            }
+        }
+
+        private void Update()
+        {
+            if (_group == null)
+            {
+                Destroy(this);
+                return;
+            }
+
+            float t = UiSettings.ReducedMotion
+                ? 1f
+                : Mathf.Clamp01((Time.unscaledTime - _start) / UiTokens.MotionScreen);
+            _group.alpha = t;
+            if (t >= 1f)
+            {
+                Destroy(this);
             }
         }
     }

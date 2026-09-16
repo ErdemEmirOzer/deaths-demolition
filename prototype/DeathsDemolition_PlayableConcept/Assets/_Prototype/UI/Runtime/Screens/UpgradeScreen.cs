@@ -1,6 +1,7 @@
 using DD.Prototype.Core.Config;
 using DD.Prototype.Economy;
 using DD.Prototype.Rounds;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -165,24 +166,24 @@ namespace DD.Prototype.UI
         private CanvasGroup _panelGroup;
 
         private Canvas _countdownCanvas;
-        private Text _countdownValue;
+        private TMP_Text _countdownValue;
 
         private CardSlot[] _slots = new CardSlot[0];
         private RectTransform _cardsHost;
         private float _cardsTop;
 
         private GameObject _emptyPanel;
-        private Text _emptyTitle;
-        private Text _emptyBody;
+        private TMP_Text _emptyTitle;
+        private TMP_Text _emptyBody;
 
-        private Text _goldValue;
-        private Text _goldSpent;
-        private Text _goldNote;
+        private TMP_Text _goldValue;
+        private TMP_Text _goldSpent;
+        private TMP_Text _goldNote;
 
         private UiButton _continueButton;
-        private Text _footerNote;
+        private TMP_Text _footerNote;
 
-        private Text _rerollLabel;
+        private TMP_Text _rerollLabel;
         private UiButton _rerollButton;
 
         private bool _panelVisible;
@@ -332,7 +333,7 @@ namespace DD.Prototype.UI
             RectTransform available = Zone(host, 0f, 0.26f);
             var availableStack = new UiStack(available);
 
-            Text label = UiFactory.Label(
+            TMP_Text label = UiFactory.Label(
                 "AvailableLabel", available, "GOLD AVAILABLE", UiType.Label, UiColor.TextMuted);
             availableStack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
 
@@ -358,7 +359,7 @@ namespace DD.Prototype.UI
             RectTransform spent = Zone(host, 0.28f, 0.46f);
             var spentStack = new UiStack(spent);
 
-            Text spentLabel = UiFactory.Label(
+            TMP_Text spentLabel = UiFactory.Label(
                 "SpentLabel", spent, "SPENT THIS ROUND", UiType.Label, UiColor.TextMuted);
             spentStack.Add((RectTransform)spentLabel.transform, UiFactory.LineHeight(UiType.Label));
 
@@ -421,20 +422,20 @@ namespace DD.Prototype.UI
         private sealed class CardSlot
         {
             public UiButton Button;
-            public Text Eyebrow;
-            public Text Title;
-            public Text Tier;
-            public Text Describe;
-            public Text Price;
+            public TMP_Text Eyebrow;
+            public TMP_Text Title;
+            public TMP_Text Tier;
+            public TMP_Text Describe;
+            public TMP_Text Price;
 
             /// <summary>The pill on the shelf: BUY / TOO EXPENSIVE / PURCHASED / OFFER LOCKED / MAX TIER.</summary>
-            public Text StateLabel;
+            public TMP_Text StateLabel;
 
             /// <summary>The pill's fill. Recoloured with the label so the pair stays audited.</summary>
             public Image StateFill;
 
             /// <summary>The one-sentence explanation under the pill.</summary>
-            public Text Sentence;
+            public TMP_Text Sentence;
 
             public Image[] Pips;
             public GameObject Badge;
@@ -443,7 +444,7 @@ namespace DD.Prototype.UI
             /// <summary>Icon well in the body's top-left. Sprite when art registered one, monogram otherwise.</summary>
             public Image IconWell;
             public Image Icon;
-            public Text Monogram;
+            public TMP_Text Monogram;
         }
 
         private void EnsureSlots(int count)
@@ -565,7 +566,7 @@ namespace DD.Prototype.UI
             // driven by UiButton's state machine (TextPrimary enabled, TextSecondary
             // disabled - both audited on SurfacePanel and on SurfaceRaised).
             slot.Title = slot.Button.LabelText;
-            slot.Title.alignment = TextAnchor.LowerLeft;
+            slot.Title.alignment = TextAlignmentOptions.BottomLeft;
             slot.Title.fontSize = UiTokens.FontSize(UiType.H2);
             RectTransform titleRect = bodyStack.Add(
                 (RectTransform)slot.Title.transform, UiFactory.LineHeight(UiType.H2));
@@ -591,7 +592,7 @@ namespace DD.Prototype.UI
                 UiFactory.LineHeight(UiType.Body) * DescribeLines);
 
             // ---- purchased badge ---------------------------------------------------
-            Text badge = UiFactory.Chip(
+            TMP_Text badge = UiFactory.Chip(
                 "Badge", root, "PURCHASED", UiColor.StateSuccess, UiColor.SurfaceInset,
                 BadgeWidth, BadgeHeight);
             var badgeRect = (RectTransform)badge.transform.parent;
@@ -765,7 +766,7 @@ namespace DD.Prototype.UI
 
             RectTransform host = UiFactory.CardContent(card, UiSpace.L);
 
-            Text label = UiFactory.Label(
+            TMP_Text label = UiFactory.Label(
                 "Label", host, "NEXT ROUND IN", UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleLeft);
             RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
             labelRect.offsetMax = new Vector2(-100f, 0f);
@@ -1365,6 +1366,11 @@ namespace DD.Prototype.UI
             if (shop.TryPurchase(index, _sessionId, _revision))
             {
                 _notice = null;
+                UiEvents.Raise(UiEvent.UpgradePurchased);
+                if (shop.IsLocked)
+                {
+                    UiEvents.Raise(UiEvent.UpgradeOfferLocked);
+                }
             }
             else
             {
@@ -1389,6 +1395,10 @@ namespace DD.Prototype.UI
 
             bool rerolled = shop.TryReroll(_sessionId, _revision);
             _notice = rerolled ? null : DescribeRerollRefusal(shop.LastRerollResult);
+            if (rerolled)
+            {
+                UiEvents.Raise(UiEvent.UpgradeRerolled);
+            }
 
             _dirty = false;
             Refresh();

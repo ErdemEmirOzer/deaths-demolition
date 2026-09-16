@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Achievements;
 using DD.Prototype.Profile;
 using DD.Prototype.Rounds;
 using UnityEngine;
@@ -95,6 +96,57 @@ namespace DD.Prototype.UI
 
         /// <summary>WP-009: false when the receipt says the profile was not changed by this run.</summary>
         public bool Applied = true;
+
+        /// <summary>WP-022B (WP-023 data): chip text when this run set a new highest round, else empty.</summary>
+        public string BestRoundChip = string.Empty;
+
+        /// <summary>WP-022B: what ended the run, for the ending line; empty when unknown.</summary>
+        public string KilledBy = string.Empty;
+
+        /// <summary>
+        /// WP-022B: achievement rarity by title (WP-023 <c>RunResultsData.NewAchievements</c>),
+        /// drives the medallion ring. Missing = Common.
+        /// </summary>
+        public readonly Dictionary<string, AchievementRarity> AchievementRarities =
+            new Dictionary<string, AchievementRarity>(4, StringComparer.Ordinal);
+
+        /// <summary>Folds the WP-023 results record into the model. Null-safe; nothing recomputed.</summary>
+        public void ApplyResultsData(RunResultsData data)
+        {
+            if (data == null || !data.HasRun)
+            {
+                return;
+            }
+
+            BestRoundChip = data.IsNewHighestRound ? "NEW BEST ROUND" : string.Empty;
+            KilledBy = data.KilledBy ?? string.Empty;
+            AchievementRarities.Clear();
+            for (int i = 0; i < data.NewAchievements.Count; i++)
+            {
+                RunResultsAchievement a = data.NewAchievements[i];
+                if (!string.IsNullOrEmpty(a.Title))
+                {
+                    AchievementRarities[a.Title] = a.Rarity;
+                }
+            }
+        }
+
+        public UiMedal MedalFor(string achievementTitle)
+        {
+            AchievementRarity rarity;
+            if (achievementTitle != null && AchievementRarities.TryGetValue(achievementTitle, out rarity))
+            {
+                switch (rarity)
+                {
+                    case AchievementRarity.Epic: return UiMedal.Epic;
+                    case AchievementRarity.Rare:
+                    case AchievementRarity.Uncommon: return UiMedal.Rare;
+                    default: return UiMedal.Common;
+                }
+            }
+
+            return UiMedal.Epic;
+        }
 
         public string FooterNote = string.Empty;
 

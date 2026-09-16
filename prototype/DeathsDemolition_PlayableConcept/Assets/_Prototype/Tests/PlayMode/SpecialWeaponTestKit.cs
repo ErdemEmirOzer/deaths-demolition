@@ -338,7 +338,7 @@ namespace DD.Prototype.Tests.PlayMode
             System.Reflection.FieldInfo fr = typeof(RunHudScreen).GetField("_bannerRemaining", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             Assert.IsNotNull(ft, "RunHudScreen._bannerText alanı yok (test kancası eskidi).");
             Assert.IsNotNull(fr, "RunHudScreen._bannerRemaining alanı yok (test kancası eskidi).");
-            var text = (UnityEngine.UI.Text)ft.GetValue(hud);
+            var text = (TMPro.TMP_Text)ft.GetValue(hud);
             metin = text != null ? text.text : string.Empty;
             kalan = (float)fr.GetValue(hud);
         }

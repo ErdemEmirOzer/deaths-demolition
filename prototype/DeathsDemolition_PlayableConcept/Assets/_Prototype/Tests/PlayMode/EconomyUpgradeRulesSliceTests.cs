@@ -14,6 +14,7 @@ using DD.Prototype.Spawn;
 using DD.Prototype.UI;
 using DD.Prototype.Weapons;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -188,7 +189,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             UpgradeScreen ekran = UnityEngine.Object.FindObjectOfType<UpgradeScreen>();
             if (ekran == null) return false;
-            Text[] metinler = ekran.GetComponentsInChildren<Text>(false);
+            TMP_Text[] metinler = ekran.GetComponentsInChildren<TMP_Text>(false);
             for (int i = 0; i < metinler.Length; i++)
             {
                 if (metinler[i].text != null && metinler[i].text.Contains(parca)) return true;
@@ -591,7 +592,7 @@ namespace DD.Prototype.Tests.PlayMode
             ResultsScreen results = UnityEngine.Object.FindObjectOfType<ResultsScreen>();
             Assert.IsNotNull(results);
             bool goldSpentSatiri = false; bool rerollSatiri = false;
-            foreach (Text t in results.GetComponentsInChildren<Text>(true))
+            foreach (TMP_Text t in results.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t.text == "Gold Spent") goldSpentSatiri = true;
                 if (t.text != null && t.text.Contains("Reroll")) rerollSatiri = true;

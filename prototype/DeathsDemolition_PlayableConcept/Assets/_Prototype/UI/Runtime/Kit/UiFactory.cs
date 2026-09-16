@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -334,7 +335,12 @@ namespace DD.Prototype.UI
             return Mathf.Ceil(raw / 4f) * 4f;
         }
 
-        public static Text Label(
+        /// <summary>
+        /// A text block (WP-022B: TextMeshProUGUI on the project's TMP font asset). The
+        /// signature keeps uGUI's <see cref="TextAnchor"/> so twenty screens did not have
+        /// to learn a second alignment enum; <see cref="Align"/> translates it.
+        /// </summary>
+        public static TMP_Text Label(
             string name,
             Transform parent,
             string content,
@@ -342,7 +348,7 @@ namespace DD.Prototype.UI
             UiColor color,
             TextAnchor anchor = TextAnchor.UpperLeft)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+            var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
             var rt = (RectTransform)go.transform;
             rt.SetParent(parent, false);
             rt.anchorMin = new Vector2(0.5f, 0.5f);
@@ -351,31 +357,56 @@ namespace DD.Prototype.UI
             rt.sizeDelta = Vector2.zero;
             rt.anchoredPosition = Vector2.zero;
 
-            var text = go.GetComponent<Text>();
-            text.font = UiFonts.Primary;
+            var text = go.GetComponent<TextMeshProUGUI>();
+            TMP_FontAsset font = UiFonts.Primary;
+            if (font != null)
+            {
+                text.font = font;
+            }
+
             text.fontSize = UiTokens.FontSize(type);
-            text.fontStyle = UiTokens.Weight(type);
-            text.lineSpacing = UiTokens.LineSpacing(type);
+            text.fontStyle = UiTokens.Weight(type) == FontStyle.Bold ? FontStyles.Bold : FontStyles.Normal;
+            // TMP line spacing is an offset in font units, not a multiplier: the extra air
+            // long-form text gets is (multiplier - 1) of the em, expressed in TMP's units.
+            text.lineSpacing = (UiTokens.LineSpacing(type) - 1f) * 100f;
             text.color = UiTokens.Get(color);
-            text.alignment = anchor;
+            text.alignment = Align(anchor);
             text.raycastTarget = false;
-            text.supportRichText = false;
+            text.richText = false;
+            text.extraPadding = true;
 
             // O7 - overflow behaviour. Every text box here has a fixed height, so wrap
-            // plus vertical truncation means content longer than its box is clipped at a
-            // line boundary. Nothing in this module can push a neighbour out of place.
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
+            // plus truncation means content longer than its box is cut at a line
+            // boundary. Nothing in this module can push a neighbour out of place.
+            text.enableWordWrapping = true;
+            text.overflowMode = TextOverflowModes.Truncate;
 
             text.text = content ?? string.Empty;
             return text;
+        }
+
+        /// <summary>uGUI anchor to TMP alignment: the nine cells map one to one.</summary>
+        public static TextAlignmentOptions Align(TextAnchor anchor)
+        {
+            switch (anchor)
+            {
+                case TextAnchor.UpperLeft: return TextAlignmentOptions.TopLeft;
+                case TextAnchor.UpperCenter: return TextAlignmentOptions.Top;
+                case TextAnchor.UpperRight: return TextAlignmentOptions.TopRight;
+                case TextAnchor.MiddleLeft: return TextAlignmentOptions.Left;
+                case TextAnchor.MiddleCenter: return TextAlignmentOptions.Center;
+                case TextAnchor.MiddleRight: return TextAlignmentOptions.Right;
+                case TextAnchor.LowerLeft: return TextAlignmentOptions.BottomLeft;
+                case TextAnchor.LowerCenter: return TextAlignmentOptions.Bottom;
+                default: return TextAlignmentOptions.BottomRight;
+            }
         }
 
         /// <summary>
         /// A readout that must never wrap or clip: it shrinks to fit instead. Used where
         /// the value can grow beyond its design width - gold, kill counts, timers.
         /// </summary>
-        public static Text Numeric(
+        public static TMP_Text Numeric(
             string name,
             Transform parent,
             string content,
@@ -383,10 +414,11 @@ namespace DD.Prototype.UI
             UiColor color,
             TextAnchor anchor = TextAnchor.MiddleLeft)
         {
-            Text text = Label(name, parent, content, type, color, anchor);
-            text.resizeTextForBestFit = true;
-            text.resizeTextMaxSize = UiTokens.FontSize(type);
-            text.resizeTextMinSize = Mathf.Max(12, UiTokens.FontSize(type) / 2);
+            TMP_Text text = Label(name, parent, content, type, color, anchor);
+            text.enableWordWrapping = false;
+            text.enableAutoSizing = true;
+            text.fontSizeMax = UiTokens.FontSize(type);
+            text.fontSizeMin = Mathf.Max(12, UiTokens.FontSize(type) / 2);
             return text;
         }
 
@@ -407,7 +439,7 @@ namespace DD.Prototype.UI
             tickRect.sizeDelta = new Vector2(UiTokens.HeadingTickWidth, UiTokens.HeadingTickHeight);
             tickRect.anchoredPosition = Vector2.zero;
 
-            Text label = Label("Label", row, text, type, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+            TMP_Text label = Label("Label", row, text, type, UiColor.TextPrimary, TextAnchor.MiddleLeft);
             RectTransform labelRect = Fill((RectTransform)label.transform);
             labelRect.offsetMin = new Vector2(UiTokens.HeadingTickWidth + (int)UiSpace.M, 0f);
 
@@ -425,7 +457,7 @@ namespace DD.Prototype.UI
         /// makes the profile pane, the statistics pane and the results screen relatives
         /// rather than three separate designs.
         /// </summary>
-        public static Text StatRow(
+        public static TMP_Text StatRow(
             string key,
             string value,
             Transform parent,
@@ -435,18 +467,18 @@ namespace DD.Prototype.UI
         {
             RectTransform row = NewRect("Row", parent);
 
-            Text keyText = Label("Key", row, key, UiType.Body, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            TMP_Text keyText = Label("Key", row, key, UiType.Body, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             RectTransform keyRect = Fill((RectTransform)keyText.transform);
             keyRect.offsetMax = new Vector2(-valueWidth, 0f);
 
-            Text valueText = Label("Value", row, value, valueType, valueColor, TextAnchor.MiddleRight);
+            TMP_Text valueText = Label("Value", row, value, valueType, valueColor, TextAnchor.MiddleRight);
             Fill((RectTransform)valueText.transform);
 
             return valueText;
         }
 
         /// <summary>Small pill used for states: LOCKED, EARNED, NEW, SUSPENDED.</summary>
-        public static Text Chip(
+        public static TMP_Text Chip(
             string name,
             Transform parent,
             string content,
@@ -459,7 +491,7 @@ namespace DD.Prototype.UI
             var rt = (RectTransform)background.transform;
             rt.sizeDelta = new Vector2(width, height);
 
-            Text text = Label("Text", rt, content, UiType.Label, textColor, TextAnchor.MiddleCenter);
+            TMP_Text text = Label("Text", rt, content, UiType.Label, textColor, TextAnchor.MiddleCenter);
 
             // Horizontal inset only. A vertical inset on a 24 px pill would leave 16 px
             // for an 18 px line, and a truncating Text that cannot fit one line draws
@@ -554,7 +586,7 @@ namespace DD.Prototype.UI
                 ? TextAnchor.MiddleLeft
                 : TextAnchor.MiddleCenter;
 
-            Text label = Label("Label", rt, content, UiType.BodyStrong, UiColor.TextPrimary, anchor);
+            TMP_Text label = Label("Label", rt, content, UiType.BodyStrong, UiColor.TextPrimary, anchor);
             RectTransform labelRect = Fill((RectTransform)label.transform);
             labelRect.offsetMin = new Vector2((int)UiSpace.L, 0f);
             labelRect.offsetMax = new Vector2(-(int)UiSpace.L, 0f);

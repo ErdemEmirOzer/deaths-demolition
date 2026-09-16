@@ -2,6 +2,7 @@ using System;
 using DD.Prototype.Core.Config;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Profile;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -158,7 +159,7 @@ namespace DD.Prototype.UI
             stack.Add(UiFactory.Heading("CHARACTER SKIN", column), UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.S);
 
-            Text caption = UiFactory.Label(
+            TMP_Text caption = UiFactory.Label(
                 "SkinCaption", column,
                 "All three are available from the start and none of them changes a gameplay value.",
                 UiType.Caption, UiColor.TextMuted);
@@ -191,9 +192,9 @@ namespace DD.Prototype.UI
                 labelRect.offsetMin = new Vector2(PreviewSlotWidth + SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L, TitleBand);
                 labelRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.L);
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
-                button.LabelText.alignment = TextAnchor.LowerLeft;
+                button.LabelText.alignment = TextAlignmentOptions.BottomLeft;
 
-                Text detail = UiFactory.Label(
+                TMP_Text detail = UiFactory.Label(
                     "Detail", button.transform, "Cosmetic only", UiType.Caption, UiColor.TextSecondary,
                     TextAnchor.UpperLeft);
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
@@ -291,6 +292,7 @@ namespace DD.Prototype.UI
         {
             PrototypeUiFlow.SelectedSkin = skin;
             RefreshSkins();
+            UiEvents.Raise(UiEvent.ChoiceSelected, "Skin");
         }
 
         private void RefreshSkins()
@@ -312,7 +314,7 @@ namespace DD.Prototype.UI
             stack.Add(UiFactory.Heading("CLASSIC WEAPON", column), UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.S);
 
-            Text caption = UiFactory.Label(
+            TMP_Text caption = UiFactory.Label(
                 "WeaponCaption", column,
                 "Round-end upgrades transform the weapon you take in. You never pick up another one.",
                 UiType.Caption, UiColor.TextMuted);
@@ -351,9 +353,9 @@ namespace DD.Prototype.UI
                 labelRect.offsetMin = new Vector2(textLeft, TitleBand);
                 labelRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.L);
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
-                button.LabelText.alignment = TextAnchor.LowerLeft;
+                button.LabelText.alignment = TextAlignmentOptions.BottomLeft;
 
-                Text detail = UiFactory.Label(
+                TMP_Text detail = UiFactory.Label(
                     "Detail", button.transform,
                     unlocked ? DescribeWeapon(id) : "Reach profile level " + ProfileService.UnlockLevelFor(id) +
                                                     " to unlock this weapon.",
@@ -386,6 +388,7 @@ namespace DD.Prototype.UI
 
             PrototypeUiFlow.SelectedWeapon = id;
             RefreshWeapons();
+            UiEvents.Raise(UiEvent.ChoiceSelected, "Weapon");
         }
 
         private void RefreshWeapons()
@@ -428,7 +431,7 @@ namespace DD.Prototype.UI
         /// <summary>A pill in the top-right of a card. Hidden until the card is chosen.</summary>
         private static GameObject BuildBadge(UiButton button, string text, bool locked = false)
         {
-            Text chip = UiFactory.Chip(
+            TMP_Text chip = UiFactory.Chip(
                 "Badge",
                 button.transform,
                 text,

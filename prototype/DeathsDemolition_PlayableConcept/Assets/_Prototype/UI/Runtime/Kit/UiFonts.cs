@@ -1,72 +1,71 @@
+using TMPro;
 using UnityEngine;
 
 namespace DD.Prototype.UI
 {
     /// <summary>
-    /// Font resolution for the prototype UI.
+    /// Font resolution for the prototype UI (WP-022B: TextMesh Pro).
     ///
-    /// WHY uGUI Text AND NOT TextMeshPro
-    /// ---------------------------------
-    /// The TextMeshPro package is in the manifest, but its "Essential Resources" have
-    /// never been imported into this project - there is no Assets/TextMesh Pro folder and
-    /// therefore no TMP Settings asset and no default font asset. The first TMP_Text that
-    /// wakes up in that state logs to the console and, in a build, renders nothing.
-    /// Acceptance criterion 27 forbids console errors during normal use, and importing
-    /// the essentials would drop ~30 assets into the project root, which is outside this
-    /// task's file ownership.
+    /// WP-005 built the UI on uGUI Text because the TMP Essential Resources had never
+    /// been imported. WP-022B imported them (<c>Assets/TextMesh Pro/</c>, via
+    /// <c>UiTmpSetup</c>), so every label is a TextMeshProUGUI on one font asset:
     ///
-    /// So the whole UI is built on UnityEngine.UI.Text against Unity's built-in font,
-    /// which is guaranteed present, needs no import step and works offline. Every text
-    /// object is created through <see cref="UiFactory"/>, so switching the module to TMP
-    /// later is a change to one factory method, not to twenty screens.
+    ///   1. <c>Resources/UI/Fonts/UiPrimary SDF</c> - the project face, when art places one
+    ///      under <c>Assets/_Prototype/UI/Art/Resources/UI/Fonts/</c> (OFL licence file
+    ///      beside it; the display face is an open user decision, see planning/04);
+    ///   2. TMP's default font asset (LiberationSans SDF, OFL, from the essentials);
+    ///   3. null - TMP then falls back to its own default and warns once.
+    ///
+    /// Every text object is created through <see cref="UiFactory"/>, so a face change
+    /// is a change to this one lookup, not to twenty screens.
     /// </summary>
     public static class UiFonts
     {
-        private static Font s_font;
-        private static bool s_warned;
+        /// <summary>Resources path (without extension) of the project face, if any.</summary>
+        public const string ProjectFontResource = "UI/Fonts/UiPrimary SDF";
 
-        /// <summary>
-        /// The one typeface in the prototype UI. Never null: falls back to an OS font, and
-        /// warns exactly once if even that fails, rather than letting a null Font reach a
-        /// Text component.
-        /// </summary>
-        public static Font Primary
+        private static TMP_FontAsset s_font;
+        private static bool s_resolved;
+
+        /// <summary>The one typeface in the prototype UI. Null only when TMP has no default at all.</summary>
+        public static TMP_FontAsset Primary
         {
             get
             {
-                if (s_font != null)
+                if (s_resolved)
                 {
                     return s_font;
                 }
 
-                // Unity 2022+ renamed the built-in font resource. Only this name is asked
-                // for: requesting the old "Arial.ttf" would itself log an error.
-                s_font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                s_resolved = true;
+                s_font = Resources.Load<TMP_FontAsset>(ProjectFontResource);
+                if (s_font == null)
+                {
+                    s_font = TMP_Settings.defaultFontAsset;
+                }
 
                 if (s_font == null)
                 {
-                    s_font = Font.CreateDynamicFontFromOSFont(
-                        new[] { "Helvetica Neue", "Helvetica", "Arial", "Segoe UI", "Liberation Sans" },
-                        UiTokens.FontSize(UiType.Body));
-                }
-
-                if (s_font == null && !s_warned)
-                {
-                    s_warned = true;
                     Debug.LogWarning(
-                        "[UI] No usable font found. Text will not render. " +
-                        "This is a prototype environment problem, not a gameplay failure.");
+                        "[UI] No TMP font asset found (project face or TMP default). Text will use TMP's own fallback. " +
+                        "Import the TMP essentials (DD/UI/Import TextMesh Pro Essentials).");
                 }
 
                 return s_font;
             }
         }
 
+        /// <summary>True when the UI draws with a project-placed face rather than the TMP default.</summary>
+        public static bool UsesProjectFace
+        {
+            get { return Primary != null && Primary.name.StartsWith("UiPrimary", System.StringComparison.Ordinal); }
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             s_font = null;
-            s_warned = false;
+            s_resolved = false;
         }
     }
 }

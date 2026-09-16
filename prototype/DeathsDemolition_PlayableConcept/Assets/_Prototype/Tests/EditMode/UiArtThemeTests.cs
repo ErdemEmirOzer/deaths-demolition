@@ -211,9 +211,10 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Ayarlar_OlcekAraliginaKirpilir_VeReferansCozunurlukOlcekleUyar()
+        public void Ayarlar_OlcekAraliginaKirpilir_JsonDosyasi_PlayerPrefsYok()
         {
-            float before = UiSettings.UiScale;
+            string path = Path.Combine(Path.GetTempPath(), "dd-wp022b-ui-settings-" + Guid.NewGuid().ToString("N") + ".json");
+            UiSettings.SetPathOverride(path);
             try
             {
                 UiSettings.UiScale = 5f;
@@ -221,15 +222,40 @@ namespace DD.Prototype.Tests.EditMode
                 UiSettings.UiScale = 0.1f;
                 Assert.AreEqual(UiTheme.UiScaleMin, UiSettings.UiScale, 1e-4f);
                 UiSettings.UiScale = 1.1f;
-                Assert.AreEqual(1.1f, PlayerPrefs.GetFloat(UiSettings.UiScaleKey), 1e-4f, "PlayerPrefs'e yazılmadı");
+                UiSettings.ReducedMotion = true;
+                Assert.IsTrue(File.Exists(path), "ayarlar dosyaya yazılmalı: " + path);
+                string json = File.ReadAllText(path);
+                StringAssert.Contains("\"UiScale\": 1.1", json);
+                StringAssert.Contains("\"ReducedMotion\": true", json);
+
+                // Reload from disk: the same values come back, clamped.
+                UiSettings.SetPathOverride(path);
+                Assert.AreEqual(1.1f, UiSettings.UiScale, 1e-4f, "dosyadan geri okunmalı");
+                Assert.IsTrue(UiSettings.ReducedMotion);
 
                 Vector2 reference = UiTokens.ReferenceResolution / UiSettings.UiScale;
                 Assert.AreEqual(1920f / 1.1f, reference.x, 0.01f, "ölçek 1.1 referans çerçeveyi 1/1.1 küçültmeli (UI büyür)");
             }
             finally
             {
-                UiSettings.UiScale = before;
+                UiSettings.SetPathOverride(null);
+                if (File.Exists(path)) File.Delete(path);
             }
+
+            // WP-022B: PlayerPrefs is not a store for anything in the UI module (it lands in
+            // the Player plist and breaks other sessions' user-data restore checks).
+            string root = Path.Combine(Application.dataPath, "_Prototype", "UI", "Runtime");
+            var offenders = new System.Collections.Generic.List<string>();
+            foreach (string file in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
+            {
+                string code = System.Text.RegularExpressions.Regex.Replace(File.ReadAllText(file), @"//[^\n]*|/\*.*?\*/", " ", System.Text.RegularExpressions.RegexOptions.Singleline);
+                if (code.Contains("PlayerPrefs."))
+                {
+                    offenders.Add(Path.GetFileName(file));
+                }
+            }
+
+            Assert.IsEmpty(offenders, "UI/Runtime PlayerPrefs kullanmamalı: " + string.Join(", ", offenders));
         }
 
         private static Color Hex(int r, int g, int b)

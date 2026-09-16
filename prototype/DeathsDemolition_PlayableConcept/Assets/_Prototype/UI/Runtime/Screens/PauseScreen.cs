@@ -1,6 +1,7 @@
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Rounds;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -75,7 +76,7 @@ namespace DD.Prototype.UI
         private UiButton _cancelButton;
 
         private Slider _shakeSlider;
-        private Text _shakeValue;
+        private TMP_Text _shakeValue;
 
         private bool _paused;
         private bool _confirming;
@@ -97,8 +98,9 @@ namespace DD.Prototype.UI
             _confirmRoot.SetActive(false);
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             // A hold that outlived its screen would freeze the next scene.
             if (_paused)
             {
@@ -204,6 +206,7 @@ namespace DD.Prototype.UI
 
         private void OpenConfirm()
         {
+            UiEvents.Raise(UiEvent.DialogOpened, "AbortRun");
             _confirming = true;
             _confirmRoot.SetActive(true);
 
@@ -217,6 +220,7 @@ namespace DD.Prototype.UI
 
         private void CloseConfirm()
         {
+            UiEvents.Raise(UiEvent.DialogClosed, "AbortRun");
             if (!_confirming)
             {
                 return;
@@ -272,12 +276,12 @@ namespace DD.Prototype.UI
             RectTransform host = UiFactory.CardContent(card, UiSpace.XXXL);
             var stack = new UiStack(host);
 
-            Text title = UiFactory.Label("Title", host, "PAUSED", UiType.H1, UiColor.TextPrimary);
+            TMP_Text title = UiFactory.Label("Title", host, "PAUSED", UiType.H1, UiColor.TextPrimary);
             stack.Add((RectTransform)title.transform, UiFactory.LineHeight(UiType.H1));
 
             stack.Gap(UiSpace.S);
 
-            Text caption = UiFactory.Label(
+            TMP_Text caption = UiFactory.Label(
                 "Caption", host,
                 "The whole simulation is stopped: enemies, projectiles, timers and the round clock.",
                 UiType.Body, UiColor.TextSecondary);
@@ -287,7 +291,7 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)UiFactory.Divider("D1", host).transform, UiTokens.StrokeHairline);
             stack.Gap(UiSpace.XL);
 
-            Text shakeLabel = UiFactory.Label(
+            TMP_Text shakeLabel = UiFactory.Label(
                 "ShakeLabel", host, "CAMERA SHAKE INTENSITY", UiType.Label, UiColor.TextMuted);
             RectTransform shakeLabelRect = stack.Add(
                 (RectTransform)shakeLabel.transform, UiFactory.LineHeight(UiType.Label));
@@ -313,7 +317,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.S);
 
-            Text shakeCaption = UiFactory.Label(
+            TMP_Text shakeCaption = UiFactory.Label(
                 "ShakeCaption", host,
                 "0 disables shake completely; 1 is the default. Shake never moves your aim at any setting.",
                 UiType.Caption, UiColor.TextMuted);
@@ -367,12 +371,12 @@ namespace DD.Prototype.UI
             RectTransform host = UiFactory.CardContent(card, UiSpace.XXXL);
             var stack = new UiStack(host);
 
-            Text title = UiFactory.Label("Title", host, "END THIS RUN?", UiType.H2, UiColor.TextPrimary);
+            TMP_Text title = UiFactory.Label("Title", host, "END THIS RUN?", UiType.H2, UiColor.TextPrimary);
             stack.Add((RectTransform)title.transform, UiFactory.LineHeight(UiType.H2));
 
             stack.Gap(UiSpace.M);
 
-            Text body = UiFactory.Label(
+            TMP_Text body = UiFactory.Label(
                 "Body", host,
                 "Leaving now ends the run. The current round, all unspent gold and every weapon upgrade " +
                 "you bought are lost. Profile level, statistics and achievements you have already earned " +

@@ -72,8 +72,24 @@ namespace DD.Prototype.UI
         /// <summary>Turned off by the F1 panel or by a screen that wants silence.</summary>
         public static bool Enabled = true;
 
+        private static UiEvent EventFor(UiSoundKind kind)
+        {
+            switch (kind)
+            {
+                case UiSoundKind.Move: return UiEvent.FocusMoved;
+                case UiSoundKind.Confirm: return UiEvent.Confirm;
+                case UiSoundKind.Back: return UiEvent.Back;
+                case UiSoundKind.Denied: return UiEvent.Denied;
+                default: return UiEvent.ResultsRevealed;
+            }
+        }
+
         public static void Play(UiSoundKind kind)
         {
+            // WP-022B: every cue is also a named UI event for the audio/effect owners,
+            // raised before the retrigger window so a suppressed tone is still an event.
+            UiEvents.Raise(EventFor(kind));
+
             if (!Enabled || !Application.isPlaying)
             {
                 return;

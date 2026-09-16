@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -104,6 +105,18 @@ namespace DD.Prototype.UI
             }
 
             Build();
+
+            // WP-022B: entrance fade on the whole canvas (skipped by reduced motion); the
+            // screen-entered event is what the audio owner keys transitions off.
+            CanvasGroup fade = UiFactory.Group(Canvas.gameObject);
+            Canvas.gameObject.AddComponent<UiScreenFade>().Configure(fade);
+            UiEvents.Raise(UiEvent.ScreenEntered, GetType().Name);
+        }
+
+        /// <summary>Virtual for the same reason as Start: a derived private OnDestroy would hide it.</summary>
+        protected virtual void OnDestroy()
+        {
+            UiEvents.Raise(UiEvent.ScreenLeft, GetType().Name);
         }
 
         /// <summary>
@@ -234,20 +247,20 @@ namespace DD.Prototype.UI
             {
                 // TextSecondary, not TextAccent (WP-022, AD MUST-2): vermilion is spent on
                 // the primary action and the heading tick only (REQ-105 budget).
-                Text eyebrowText = UiFactory.Label(
+                TMP_Text eyebrowText = UiFactory.Label(
                     "Eyebrow", Content, eyebrow, UiType.Label, UiColor.TextSecondary, TextAnchor.LowerLeft);
                 stack.Add((RectTransform)eyebrowText.transform, UiFactory.LineHeight(UiType.Label));
                 stack.Gap(UiSpace.XS);
             }
 
-            Text titleText = UiFactory.Label(
+            TMP_Text titleText = UiFactory.Label(
                 "Title", Content, title, titleType, UiColor.TextPrimary, TextAnchor.LowerLeft);
             stack.Add((RectTransform)titleText.transform, UiFactory.LineHeight(titleType));
 
             if (!string.IsNullOrEmpty(subtitle))
             {
                 stack.Gap(UiSpace.S);
-                Text subtitleText = UiFactory.Label(
+                TMP_Text subtitleText = UiFactory.Label(
                     "Subtitle", Content, subtitle, UiType.Body, UiColor.TextSecondary, TextAnchor.UpperLeft);
                 stack.Add((RectTransform)subtitleText.transform, UiFactory.LineHeight(UiType.Body));
             }
@@ -256,6 +269,21 @@ namespace DD.Prototype.UI
 
             Image rule = UiFactory.Divider("HeaderRule", Content);
             stack.Add((RectTransform)rule.transform, UiTokens.StrokeHairline);
+
+            // AP-012 ornament (WP-022B): the lozenge divider sits on the hairline at the
+            // left edge, the one decorative mark a screen header carries.
+            Sprite ornament = UiArt.Divider();
+            if (ornament != null)
+            {
+                Image mark = UiFactory.NewImage("HeaderOrnament", Content, UiColor.TextSecondary, ornament);
+                mark.preserveAspect = true;
+                var markRect = (RectTransform)mark.transform;
+                markRect.anchorMin = new Vector2(0f, 1f);
+                markRect.anchorMax = new Vector2(0f, 1f);
+                markRect.pivot = new Vector2(0f, 0.5f);
+                markRect.sizeDelta = new Vector2(160f, 24f);
+                markRect.anchoredPosition = new Vector2(0f, -stack.Cursor + UiTokens.StrokeHairline * 0.5f);
+            }
 
             return stack.Cursor;
         }
