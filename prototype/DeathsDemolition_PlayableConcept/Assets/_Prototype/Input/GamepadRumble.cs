@@ -97,6 +97,17 @@ namespace DD.Prototype.Inputs
             }
 
             PulseCount++;
+
+            // No gamepad: nothing to drive. Checked FIRST so the hit / explosion path
+            // (this is called from the feedback bus) never touches the preferences store
+            // — its lazy first load allocates, and the damage path is allocation-free by
+            // contract (WP-006 test).
+            Gamepad pad = Gamepad.current;
+            if (pad == null)
+            {
+                return;
+            }
+
             InputPreferences prefs = InputPreferencesStore.Current;
             if (!prefs.RumbleEnabled)
             {
@@ -106,12 +117,6 @@ namespace DD.Prototype.Inputs
             float intensity = Mathf.Clamp(prefs.RumbleIntensity * Mathf.Clamp01(fraction), 0f, InputPreferences.MaxRumbleIntensity);
             int ms = Mathf.Clamp(milliseconds, 0, InputPreferences.MaxRumbleMilliseconds);
             if (intensity <= 0f || ms <= 0)
-            {
-                return;
-            }
-
-            Gamepad pad = Gamepad.current;
-            if (pad == null)
             {
                 return;
             }

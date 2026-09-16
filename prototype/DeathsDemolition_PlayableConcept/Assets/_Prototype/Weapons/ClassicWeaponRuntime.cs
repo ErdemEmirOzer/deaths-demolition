@@ -264,11 +264,24 @@ namespace DD.Prototype.Weapons
         /// <summary>
         /// Build one pellet's shot. Called <see cref="PelletCount"/> times per trigger
         /// pull; the spread roll differs each time, everything else is shared.
+        /// Single-pellet callers (and the pre-WP-034 signature) build pellet 0.
         /// </summary>
         public ShotRequest BuildShot(Vector3 origin, Vector3 aimDirection)
         {
+            return BuildShot(origin, aimDirection, 0);
+        }
+
+        /// <summary>
+        /// WP-034 (ADR-034-1) pellet contract on a multi-pellet weapon: Piercing rides
+        /// every pellet (the intended multiplier), Explosion is pellet-normalized (chance
+        /// divided by the pellet count, since WP-004), Chain and Ricochet fire once per
+        /// trigger pull — only pellet 0 carries them. A single-pellet weapon is unchanged.
+        /// </summary>
+        public ShotRequest BuildShot(Vector3 origin, Vector3 aimDirection, int pelletIndex)
+        {
             WeaponModifierState m = _modifiers;
             bool multiPellet = PelletCount > 1;
+            bool perShotCarrier = !multiPellet || pelletIndex == 0;
 
             var request = new ShotRequest
             {
@@ -291,12 +304,14 @@ namespace DD.Prototype.Weapons
                 request.PierceTargets = m.PierceTargets;
                 request.PierceDamageFalloff = m.PierceDamageFalloff;
 
-                request.RicochetChance = m.RicochetChance;
-                request.RicochetBounces = m.RicochetBounces;
+                // Per-shot branches: the first pellet of a trigger pull carries them, the
+                // rest of the spread does not (WeaponBranchContract.ResolutionOf == PerShot).
+                request.RicochetChance = perShotCarrier ? m.RicochetChance : 0f;
+                request.RicochetBounces = perShotCarrier ? m.RicochetBounces : 0;
                 request.RicochetRadius = m.RicochetRadius;
                 request.RicochetDamageScale = m.RicochetDamageScale;
 
-                request.ChainTargets = m.ChainTargets;
+                request.ChainTargets = perShotCarrier ? m.ChainTargets : 0;
                 request.ChainRadius = m.ChainRadius;
                 request.ChainDamageScale = m.ChainDamageScale;
                 request.ChainDamageFalloff = m.ChainDamageFalloff;

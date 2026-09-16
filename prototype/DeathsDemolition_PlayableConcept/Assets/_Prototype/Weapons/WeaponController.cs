@@ -394,7 +394,7 @@ namespace DD.Prototype.Weapons
             int pellets = _classic.PelletCount;
             for (int i = 0; i < pellets; i++)
             {
-                ShotRequest request = _classic.BuildShot(origin, aim);
+                ShotRequest request = _classic.BuildShot(origin, aim, i);
                 HitscanEngine.Fire(request);
             }
 

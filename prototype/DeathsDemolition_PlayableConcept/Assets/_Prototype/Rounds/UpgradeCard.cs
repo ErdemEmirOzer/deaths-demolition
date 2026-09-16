@@ -254,8 +254,15 @@ namespace DD.Prototype.Rounds
                 }
             }
 
-            return true;
+            // WP-034 (ADR-034-1): a branch the equipped weapon's roster entry does not carry
+            // has no live consumer on THIS weapon. Installed by WeaponRosterSource; null =
+            // pre-roster behaviour (every backed branch is offered).
+            System.Func<UpgradeBranch, bool> gate = WeaponBranchGate;
+            return gate == null || gate(branch);
         }
+
+        /// <summary>WP-034 seam: per-weapon branch gate (roster). Null keeps every backed branch live.</summary>
+        public static System.Func<UpgradeBranch, bool> WeaponBranchGate { get; set; }
 
         /// <summary>True while some branch is being held out of the draw. False today.</summary>
         public static bool HasUnbackedBranches => s_unbacked.Length > 0;

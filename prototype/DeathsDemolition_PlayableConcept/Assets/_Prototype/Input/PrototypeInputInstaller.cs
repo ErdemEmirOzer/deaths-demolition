@@ -124,6 +124,11 @@ namespace DD.Prototype.Inputs
             _remap.Load();
             InputRemapRegistry.SetCurrent(_remap);
 
+            // Preferences are loaded HERE, at install, so no gameplay path pays the lazy
+            // first read (file + JSON) inside a frame — the damage path is measured
+            // allocation-free.
+            InputPreferencesStore.Load();
+
             _rumble = new GamepadRumble();
             _rumble.Subscribe();
 

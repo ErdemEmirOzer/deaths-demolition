@@ -1,0 +1,8 @@
+{
+  "schema": "dd-unlock-catalog-entries-v1",
+  "note": "WP-034 roster unlock data for the S-04 unlock catalog (WP-023 UnlockDefinition shape). The WP-009 level ladder (ClassicWeaponSettings.UnlockProfileLevel: A=1, B=2, C=3) already grants these weapons; S-04 decides whether the catalog lists them for the Results 'Newly Unlocked Content' line. Branch entries are absent on purpose: branch entitlement stays the WP-009 ladder (UpgradeBranchSettings.UnlockProfileLevel). D has no runtime id until the user enables it.",
+  "entries": [
+    { "Id": "AutoSmg",       "Type": "Weapon", "DisplayName": "Carbine",  "Detail": "Carbine-type classic weapon unlocked (roster B).",  "Condition": "Level", "Key": "2", "NumericKey": 2 },
+    { "Id": "CombatShotgun", "Type": "Weapon", "DisplayName": "Shotgun",  "Detail": "Shotgun-type classic weapon unlocked (roster C).",  "Condition": "Level", "Key": "3", "NumericKey": 3 }
+  ]
+}

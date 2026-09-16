@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37d0c7c1ea40405b99ebec264fb21f46, type: 3}
+  m_Name: Weapon_B_Carbine
+  m_EditorClassIdentifier: 
+  RosterKey: B
+  HasRuntimeId: 1
+  Id: 1
+  Enabled: 1
+  SortOrder: 1
+  TypeClass: 1
+  Silhouette: 1
+  ShotModel: 0
+  CoreBranches: 
+  - 3
+  - 1
+  - 4
+  UnlockKind: 1
+  SocketRoot: socket_weapon_r
+  MuzzleSocket: Muzzle
+  EjectionSocket: Ejection
+  AttachmentSockets:
+  - attach_barrel
+  - attach_top
+  - attach_stock
+  MuzzleVfxFamily: muzzle
+  ImpactVfxFamily: impact
+  FireSfx: SmgFire
+  ReloadSfx: ReloadStart
+  HudIconId: weapon_carbine
