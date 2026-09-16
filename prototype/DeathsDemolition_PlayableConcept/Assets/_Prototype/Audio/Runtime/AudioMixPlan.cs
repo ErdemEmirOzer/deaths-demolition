@@ -82,6 +82,13 @@ namespace DD.Prototype.Audio
     ///    10  ambient one-shots
     ///        Furniture. First to go, always, and nobody notices.
     /// </summary>
+    /// <summary>Light = Standard/Special tier, Heavy = Elite/Ultra. Only the mix cares.</summary>
+    public enum EnemyTierWeight
+    {
+        Light = 0,
+        Heavy = 1
+    }
+
     public static class AudioMixPlan
     {
         // ---- classic weapon resolution ---------------------------------------
@@ -299,17 +306,22 @@ namespace DD.Prototype.Audio
             {
                 case RunAudioEvent.GoldCollected:
                 {
-                    AudioPlacement p = Interface(AudioSoundId.GoldPickup, 0.55f, 70f, 0.35f, 4, 0.015f);
+                    // WP-021 (AP-011): a magnet streak (index >= 2) speaks with the coin-slide
+                    // layer, the single pickup with the clink; both keep the hirajoshi transposition.
+                    AudioSoundId sound = cue.StreakIndex >= 2 ? AudioSoundId.GoldMagnet : AudioSoundId.GoldPickup;
+                    // Coin at 0.40 (sound-designer M3: -4 dB under the rest of the UI bus - it is
+                    // the most repeated sound of a run after the flesh hit).
+                    AudioPlacement p = Interface(sound, sound == AudioSoundId.GoldPickup ? 0.40f : 0.55f, 70f, 0.35f, 4, 0.015f);
                     p.Pitch = GoldStreakPitch(cue.StreakIndex);
                     return p;
                 }
 
                 case RunAudioEvent.GoldSpawned:
-                    // The same clip a fifth down and much quieter: obviously related to a
-                    // pickup, obviously not one. One clip, two meanings, no extra memory.
+                    // WP-021 (AP-011): its own clip now - the coin bag landing on stone.
+                    // Quieter and positional: obviously related to a pickup, obviously not one.
                     {
-                        AudioPlacement p = Interface(AudioSoundId.GoldPickup, 0.22f, 20f, 0.7f, 3, 0.03f);
-                        p.Pitch = 0.6674f;
+                        AudioPlacement p = Interface(AudioSoundId.GoldSpawn, 0.30f, 20f, 0.7f, 3, 0.03f);
+                        p.PitchJitter = 0.05f;
                         return p;
                     }
 
@@ -419,6 +431,55 @@ namespace DD.Prototype.Audio
                 default:
                     return Interface(sound, 0.6f, 50f, 0f, 2, 0.03f);
             }
+        }
+
+        // ---- WP-021 · zombie vocal set (DEC-067) ------------------------------
+
+        /// <summary>
+        /// Attack telegraph. Priority 75: above a flesh hit and an enemy death, below an
+        /// armour break, because "one is about to hit you" is the most useful thing the
+        /// target bus can say (REQ-104 audible readability). Fully positional; the ear
+        /// must be able to point at it.
+        /// </summary>
+        public static AudioPlacement ZombieWindup(AudioSoundId sound, EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.95f : 0.80f, 75f, 3, 0.05f);
+            p.Spatial = 1f;
+            p.PitchJitter = 0.04f;
+            return p;
+        }
+
+        /// <summary>The swing itself. Short, and cheap to lose in a crowd (the windup already warned).</summary>
+        public static AudioPlacement ZombieAttack(AudioSoundId sound, EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.85f : 0.70f, 55f, 3, 0.04f);
+            p.Spatial = 1f;
+            p.PitchJitter = 0.05f;
+            return p;
+        }
+
+        /// <summary>Pain grunt. Throttled per enemy by the router; here it is the second-cheapest target sound.</summary>
+        public static AudioPlacement ZombieHit(AudioSoundId sound, EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.70f : 0.55f, 32f, 4, 0.06f);
+            p.Spatial = 0.9f;
+            p.PitchJitter = 0.07f;
+            return p;
+        }
+
+        /// <summary>The death vocal, layered over the body/impact cue the feedback director already raises.</summary>
+        public static AudioPlacement ZombieDeath(AudioSoundId sound, EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.95f : 0.75f, weight == EnemyTierWeight.Heavy ? 80f : 68f, 3, 0.05f);
+            p.Spatial = 0.9f;
+            p.PitchJitter = 0.05f;
+            if (weight == EnemyTierWeight.Heavy)
+            {
+                p.DuckAmbience = 0.6f;
+                p.DuckSeconds = 0.5f;
+            }
+
+            return p;
         }
 
         /// <summary>An ambience scatter one-shot. The lowest priority in the game, by design.</summary>

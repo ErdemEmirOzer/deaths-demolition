@@ -1,0 +1,725 @@
+{
+ "version": "ap011-v002",
+ "package": "AP-011",
+ "standard": {
+  "sfxLufs": -18.0,
+  "musicLufs": -16.0,
+  "ambienceLufs": -20.0,
+  "truePeakMax": -1.5,
+  "toleranceLu": 1.5
+ },
+ "entries": [
+  {
+   "sound": "AmbCommon",
+   "event": "Region.common",
+   "files": [
+    "AmbCommon.wav"
+   ],
+   "loop": true,
+   "lufs": -27.89,
+   "truePeakDb": -1.5,
+   "bus": "Ambience",
+   "spatial": false,
+   "provenance": "seed_audio job d7d6ce58 (1.1 cr) · amb_common_after_rain"
+  },
+  {
+   "sound": "AmbRegionCenter",
+   "event": "Region.center",
+   "files": [
+    "AmbRegionCenter.wav"
+   ],
+   "loop": true,
+   "lufs": -24.8,
+   "truePeakDb": -1.5,
+   "bus": "Ambience",
+   "spatial": false,
+   "provenance": "seed_audio job e8624013 (1.1 cr) · amb_region_center"
+  },
+  {
+   "sound": "AmbRegionEast",
+   "event": "Region.east",
+   "files": [
+    "AmbRegionEast.wav"
+   ],
+   "loop": true,
+   "lufs": -23.27,
+   "truePeakDb": -1.5,
+   "bus": "Ambience",
+   "spatial": false,
+   "provenance": "seed_audio job a85a3b11 (1.1 cr) · amb_region_east"
+  },
+  {
+   "sound": "AmbRegionNorth",
+   "event": "Region.north",
+   "files": [
+    "AmbRegionNorth.wav"
+   ],
+   "loop": true,
+   "lufs": -23.41,
+   "truePeakDb": -1.5,
+   "bus": "Ambience",
+   "spatial": false,
+   "provenance": "seed_audio job b8043914 (1.1 cr) · amb_region_north"
+  },
+  {
+   "sound": "AmbRegionSouth",
+   "event": "Region.south",
+   "files": [
+    "AmbRegionSouth.wav"
+   ],
+   "loop": true,
+   "lufs": -26.19,
+   "truePeakDb": -1.5,
+   "bus": "Ambience",
+   "spatial": false,
+   "provenance": "seed_audio job 8811b02b (1.1 cr) · amb_region_south"
+  },
+  {
+   "sound": "AmbRegionWest",
+   "event": "Region.west",
+   "files": [
+    "AmbRegionWest.wav"
+   ],
+   "loop": true,
+   "lufs": -25.51,
+   "truePeakDb": -1.5,
+   "bus": "Ambience",
+   "spatial": false,
+   "provenance": "seed_audio job 122da4f7 (1.1 cr) · amb_region_west"
+  },
+  {
+   "sound": "ArmorBreak",
+   "event": "ArmorBreak",
+   "files": [
+    "ArmorBreak_01.wav",
+    "ArmorBreak_02.wav"
+   ],
+   "loop": false,
+   "lufs": -21.17,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 07e86d13 (1.1 cr) · armor_break"
+  },
+  {
+   "sound": "DryFire",
+   "event": "ClassicWeaponDryFire",
+   "files": [
+    "DryFire_01.wav"
+   ],
+   "loop": false,
+   "lufs": -28.8,
+   "truePeakDb": -1.5,
+   "bus": "SFX-Player",
+   "spatial": false,
+   "provenance": "seed_audio job 579f4aa8 (1.1 cr) · dry_fire"
+  },
+  {
+   "sound": "Explosion",
+   "event": "Explosion",
+   "files": [
+    "Explosion_01.wav",
+    "Explosion_02.wav"
+   ],
+   "loop": false,
+   "lufs": -20.72,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job ab26434a (1.1 cr) · explosion"
+  },
+  {
+   "sound": "GoldMagnet",
+   "event": "GoldCollected(streak)",
+   "files": [
+    "GoldMagnet_01.wav"
+   ],
+   "loop": false,
+   "lufs": -21.62,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job e83ace06 (1.1 cr) · gold_magnet"
+  },
+  {
+   "sound": "GoldPickup",
+   "event": "GoldCollected",
+   "files": [
+    "GoldPickup_01.wav",
+    "GoldPickup_02.wav",
+    "GoldPickup_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.21,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "procedural (numpy synth) — Seed Audio take rejected by sound-designer M3"
+  },
+  {
+   "sound": "GoldSpawn",
+   "event": "GoldSpawned",
+   "files": [
+    "GoldSpawn_01.wav",
+    "GoldSpawn_02.wav"
+   ],
+   "loop": false,
+   "lufs": -25.09,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": true,
+   "provenance": "seed_audio job eb31b2c9 (1.1 cr) · gold_spawn"
+  },
+  {
+   "sound": "HeavyFire",
+   "event": "HeavyWeaponFire",
+   "files": [
+    "HeavyFire_01.wav",
+    "HeavyFire_02.wav",
+    "HeavyFire_03.wav",
+    "HeavyFire_04.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.01,
+   "bus": "SFX-Player",
+   "spatial": true,
+   "provenance": "seed_audio job 69be70d9 (1.1 cr) · heavy_fire_burst"
+  },
+  {
+   "sound": "ImpactDirt",
+   "event": "SurfaceImpactDirt",
+   "files": [
+    "ImpactDirt_01.wav"
+   ],
+   "loop": false,
+   "lufs": -25.23,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 9297d35c (1.1 cr) · impact_dirt"
+  },
+  {
+   "sound": "ImpactMetal",
+   "event": "SurfaceImpactMetal",
+   "files": [
+    "ImpactMetal_01.wav"
+   ],
+   "loop": false,
+   "lufs": -23.09,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 21e47529 (1.1 cr) · impact_metal"
+  },
+  {
+   "sound": "ImpactStone",
+   "event": "SurfaceImpactStone",
+   "files": [
+    "ImpactStone_01.wav"
+   ],
+   "loop": false,
+   "lufs": -21.29,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 2bafd274 (1.1 cr) · impact_stone"
+  },
+  {
+   "sound": "ImpactWater",
+   "event": "SurfaceImpactWater",
+   "files": [
+    "ImpactWater_01.wav"
+   ],
+   "loop": false,
+   "lufs": -25.43,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 5b973c6e (1.1 cr) · impact_water"
+  },
+  {
+   "sound": "ImpactWood",
+   "event": "SurfaceImpactWood",
+   "files": [
+    "ImpactWood_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -3.85,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job c4782640 (1.1 cr) · impact_wood"
+  },
+  {
+   "sound": "MusicAccent",
+   "event": "Music.accent",
+   "files": [
+    "MusicAccent.wav"
+   ],
+   "loop": true,
+   "lufs": -18.87,
+   "truePeakDb": -1.5,
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "seed_audio job 067bfdf3 (1.1 cr) · music_accent"
+  },
+  {
+   "sound": "MusicBase",
+   "event": "Music.base",
+   "files": [
+    "MusicBase.wav"
+   ],
+   "loop": true,
+   "lufs": -17.49,
+   "truePeakDb": -1.5,
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "seed_audio job 7410c7d5 (1.1 cr) · music_base"
+  },
+  {
+   "sound": "MusicPercussion",
+   "event": "Music.percussion",
+   "files": [
+    "MusicPercussion.wav"
+   ],
+   "loop": true,
+   "lufs": -19.28,
+   "truePeakDb": -1.5,
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "seed_audio job a0266933 (1.1 cr) · music_percussion"
+  },
+  {
+   "sound": "MusicTension",
+   "event": "Music.tension",
+   "files": [
+    "MusicTension.wav"
+   ],
+   "loop": true,
+   "lufs": -16.0,
+   "truePeakDb": -3.49,
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "seed_audio job 074c5f9a (1.1 cr) · music_tension"
+  },
+  {
+   "sound": "PlayerDamage",
+   "event": "PlayerHealth.AnyDamaged",
+   "files": [
+    "PlayerDamage_01.wav",
+    "PlayerDamage_02.wav",
+    "PlayerDamage_03.wav"
+   ],
+   "loop": false,
+   "lufs": -25.32,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job caff083b (1.1 cr) · player_damage"
+  },
+  {
+   "sound": "PlayerDeath",
+   "event": "PlayerHealth.AnyPlayerDied",
+   "files": [
+    "PlayerDeath_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -5.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job 4901dd21 (1.1 cr) · player_death"
+  },
+  {
+   "sound": "ReloadEnd",
+   "event": "ReloadEnd",
+   "files": [
+    "ReloadEnd_01.wav",
+    "ReloadEnd_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.28,
+   "truePeakDb": -1.5,
+   "bus": "SFX-Player",
+   "spatial": false,
+   "provenance": "seed_audio job ea2473ba (1.1 cr) · reload"
+  },
+  {
+   "sound": "ReloadInsert",
+   "event": "ReloadInsert",
+   "files": [
+    "ReloadInsert_01.wav"
+   ],
+   "loop": false,
+   "lufs": -21.35,
+   "truePeakDb": -1.5,
+   "bus": "SFX-Player",
+   "spatial": false,
+   "provenance": "seed_audio job ea2473ba (1.1 cr) · reload"
+  },
+  {
+   "sound": "ReloadStart",
+   "event": "ReloadStart",
+   "files": [
+    "ReloadStart_01.wav",
+    "ReloadStart_02.wav"
+   ],
+   "loop": false,
+   "lufs": -21.95,
+   "truePeakDb": -1.5,
+   "bus": "SFX-Player",
+   "spatial": false,
+   "provenance": "seed_audio job ea2473ba (1.1 cr) · reload"
+  },
+  {
+   "sound": "RifleFire",
+   "event": "ClassicWeaponFire",
+   "files": [
+    "RifleFire_01.wav"
+   ],
+   "loop": false,
+   "lufs": -19.5,
+   "truePeakDb": -3.0,
+   "bus": "SFX-Player",
+   "spatial": true,
+   "provenance": "seed_audio job 0708ccea (1.1 cr) · rifle_fire"
+  },
+  {
+   "sound": "RoundComplete",
+   "event": "RoundComplete",
+   "files": [
+    "RoundComplete_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.82,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job 81cef8d4 (1.1 cr) · round_complete"
+  },
+  {
+   "sound": "RoundCountdownTick",
+   "event": "CountdownTick",
+   "files": [
+    "RoundCountdownTick_01.wav"
+   ],
+   "loop": false,
+   "lufs": -22.54,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job 0725d4de (1.1 cr) · countdown_tick"
+  },
+  {
+   "sound": "RoundStart",
+   "event": "RoundStart",
+   "files": [
+    "RoundStart_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.71,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job 66e178bf (1.1 cr) · round_start"
+  },
+  {
+   "sound": "ShotgunFire",
+   "event": "ClassicWeaponFire",
+   "files": [
+    "ShotgunFire_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.44,
+   "bus": "SFX-Player",
+   "spatial": true,
+   "provenance": "seed_audio job d6a9baae (1.1 cr) · shotgun_fire"
+  },
+  {
+   "sound": "SwFinalSeconds",
+   "event": "SpecialWeaponFinalSeconds",
+   "files": [
+    "SwFinalSeconds_01.wav"
+   ],
+   "loop": false,
+   "lufs": -19.79,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job 64140f17 (1.1 cr) · sw_final_seconds"
+  },
+  {
+   "sound": "SwPickup",
+   "event": "SpecialWeaponPickup",
+   "files": [
+    "SwPickup_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.81,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job 6203b0a6 (1.1 cr) · sw_pickup"
+  },
+  {
+   "sound": "SwSpawnGong",
+   "event": "SpecialWeaponSpawn",
+   "files": [
+    "SwSpawnGong_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.66,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": true,
+   "provenance": "seed_audio job 76dc4186 (1.1 cr) · sw_spawn_gong"
+  },
+  {
+   "sound": "UiBack",
+   "event": "PrototypeAudio.Back",
+   "files": [
+    "UiBack_01.wav",
+    "UiBack_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.95,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job ef9d9d26 (1.1 cr) · ui_back"
+  },
+  {
+   "sound": "UiConfirm",
+   "event": "PrototypeAudio.Confirm",
+   "files": [
+    "UiConfirm_01.wav"
+   ],
+   "loop": false,
+   "lufs": -23.15,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job 328dd1e5 (1.1 cr) · ui_confirm"
+  },
+  {
+   "sound": "UiDenied",
+   "event": "PrototypeAudio.Denied",
+   "files": [
+    "UiDenied_01.wav",
+    "UiDenied_02.wav"
+   ],
+   "loop": false,
+   "lufs": -21.6,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job f4d6be7a (1.1 cr) · ui_denied"
+  },
+  {
+   "sound": "UiNavigate",
+   "event": "PrototypeAudio.Navigate",
+   "files": [
+    "UiNavigate_01.wav"
+   ],
+   "loop": false,
+   "lufs": -25.74,
+   "truePeakDb": -1.5,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job 62653442 (1.1 cr) · ui_navigate"
+  },
+  {
+   "sound": "UpgradePurchase",
+   "event": "UpgradePurchased",
+   "files": [
+    "UpgradePurchase_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -2.47,
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job cebddf68 (1.1 cr) · upgrade_purchase"
+  },
+  {
+   "sound": "ZombieAttackElite",
+   "event": "ZombieEnemy.AttackPhase→Active",
+   "files": [
+    "ZombieAttackElite_01.wav",
+    "ZombieAttackElite_02.wav",
+    "ZombieAttackElite_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -5.78,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 84c7d7ad (1.1 cr) · zombie_elite_attack_v2"
+  },
+  {
+   "sound": "ZombieAttackStandard",
+   "event": "ZombieEnemy.AttackPhase→Active",
+   "files": [
+    "ZombieAttackStandard_01.wav",
+    "ZombieAttackStandard_02.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.84,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 5cf0fd0e (1.1 cr) · zombie_std_attack"
+  },
+  {
+   "sound": "ZombieAttackUltra",
+   "event": "ZombieEnemy.AttackPhase→Active",
+   "files": [
+    "ZombieAttackUltra_01.wav",
+    "ZombieAttackUltra_02.wav",
+    "ZombieAttackUltra_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.27,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 08094651 (1.1 cr) · zombie_ultra_attack"
+  },
+  {
+   "sound": "ZombieDeathElite",
+   "event": "DamageEvents.EnemyDied",
+   "files": [
+    "ZombieDeathElite_01.wav",
+    "ZombieDeathElite_02.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 1d6aa31b (1.1 cr) · zombie_elite_death"
+  },
+  {
+   "sound": "ZombieDeathStandard",
+   "event": "DamageEvents.EnemyDied",
+   "files": [
+    "ZombieDeathStandard_01.wav",
+    "ZombieDeathStandard_02.wav",
+    "ZombieDeathStandard_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 09af45d1 (1.1 cr) · zombie_std_death"
+  },
+  {
+   "sound": "ZombieDeathUltra",
+   "event": "DamageEvents.EnemyDied",
+   "files": [
+    "ZombieDeathUltra_01.wav",
+    "ZombieDeathUltra_02.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -7.02,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 367300ab (1.1 cr) · zombie_ultra_death"
+  },
+  {
+   "sound": "ZombieHitElite",
+   "event": "DamageEvents.EnemyDamaged",
+   "files": [
+    "ZombieHitElite_01.wav",
+    "ZombieHitElite_02.wav",
+    "ZombieHitElite_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -1.5,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 964135d9 (1.1 cr) · zombie_elite_hit"
+  },
+  {
+   "sound": "ZombieHitStandard",
+   "event": "DamageEvents.EnemyDamaged",
+   "files": [
+    "ZombieHitStandard_01.wav",
+    "ZombieHitStandard_02.wav",
+    "ZombieHitStandard_03.wav",
+    "ZombieHitStandard_04.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -2.1,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 856d3ae9 (1.1 cr) · zombie_std_hit"
+  },
+  {
+   "sound": "ZombieHitUltra",
+   "event": "DamageEvents.EnemyDamaged",
+   "files": [
+    "ZombieHitUltra_01.wav",
+    "ZombieHitUltra_02.wav",
+    "ZombieHitUltra_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -3.92,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 7bad0868 (1.1 cr) · zombie_ultra_hit"
+  },
+  {
+   "sound": "ZombieWindupElite",
+   "event": "ZombieEnemy.AttackPhase→Windup",
+   "files": [
+    "ZombieWindupElite_01.wav",
+    "ZombieWindupElite_02.wav",
+    "ZombieWindupElite_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -1.88,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 5ec941e7 (1.1 cr) · zombie_elite_windup_v2"
+  },
+  {
+   "sound": "ZombieWindupStandard",
+   "event": "ZombieEnemy.AttackPhase→Windup",
+   "files": [
+    "ZombieWindupStandard_01.wav",
+    "ZombieWindupStandard_02.wav",
+    "ZombieWindupStandard_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -2.21,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 3e15a675 (1.1 cr) · zombie_std_windup"
+  },
+  {
+   "sound": "ZombieWindupUltra",
+   "event": "ZombieEnemy.AttackPhase→Windup",
+   "files": [
+    "ZombieWindupUltra_01.wav",
+    "ZombieWindupUltra_02.wav",
+    "ZombieWindupUltra_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.13,
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 23caf807 (1.1 cr) · zombie_ultra_windup"
+  }
+ ]
+}

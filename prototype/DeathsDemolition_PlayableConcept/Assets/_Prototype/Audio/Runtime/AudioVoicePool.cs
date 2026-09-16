@@ -45,10 +45,14 @@ namespace DD.Prototype.Audio
             public float Remaining;
             public float Age;
             public bool Active;
+            public bool Routed;
         }
 
         private readonly Voice[] _voices;
         private readonly AudioBusMixer _mixer;
+
+        /// <summary>WP-021: mixer group routing per bus. Null = default output (pre-WP-021).</summary>
+        private readonly AudioMixerBridge _bridge;
         private readonly Dictionary<AudioSoundId, float> _lastPlayed = new Dictionary<AudioSoundId, float>(48);
 
         private SynthRandom _jitter = new SynthRandom(0x1234ABCD);
@@ -109,9 +113,15 @@ namespace DD.Prototype.Audio
         }
 
         public AudioVoicePool(string name, Transform parent, int hardCapacity, AudioBusMixer mixer)
+            : this(name, parent, hardCapacity, mixer, null)
+        {
+        }
+
+        public AudioVoicePool(string name, Transform parent, int hardCapacity, AudioBusMixer mixer, AudioMixerBridge bridge)
         {
             Name = name;
             _mixer = mixer;
+            _bridge = bridge;
             _voices = new Voice[Mathf.Max(1, hardCapacity)];
             _softCapacity = _voices.Length;
 
@@ -193,6 +203,14 @@ namespace DD.Prototype.Audio
             source.pitch = pitch;
             source.spatialBlend = placement.Spatial;
             source.transform.position = position;
+
+            // WP-021: a voice is re-routed only when its bus changes; the assignment is a
+            // native call and the pools mix buses freely.
+            if (_bridge != null && (voice.Bus != placement.Bus || !voice.Routed))
+            {
+                _bridge.Route(source, placement.Bus);
+                voice.Routed = true;
+            }
 
             voice.Sound = placement.Sound;
             voice.Bus = placement.Bus;

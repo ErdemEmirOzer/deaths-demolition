@@ -105,6 +105,40 @@ namespace DD.Prototype.Audio
         AmbWoodCreak = 150,
         AmbMetalRing = 151,
         AmbBambooKnock = 152,
-        AmbStoneSettle = 153
+        AmbStoneSettle = 153,
+
+        // ---- WP-021 · zombie vocal set (DEC-067: physical, no supernatural) ---------
+        // Windup = attack telegraph (>= 0.3 s before the swing, positional, REQ-104 audible
+        // readability); Attack = the swing itself; Hit = pain grunt; Death = the collapse.
+        ZombieWindupStandard = 160,
+        ZombieAttackStandard = 161,
+        ZombieHitStandard = 162,
+        ZombieDeathStandard = 163,
+        ZombieWindupElite = 164,
+        ZombieAttackElite = 165,
+        ZombieHitElite = 166,
+        ZombieDeathElite = 167,
+        ZombieWindupUltra = 168,
+        ZombieAttackUltra = 169,
+        ZombieHitUltra = 170,
+        ZombieDeathUltra = 171,
+
+        // ---- WP-021 · gold (three moments of one loop) ---------------------------
+        GoldSpawn = 175,
+        GoldMagnet = 176,
+
+        // ---- WP-021 · regional ambience beds (DEC-066: K/D/G/B + centre) + common -
+        AmbCommon = 180,
+        AmbRegionCenter = 181,
+        AmbRegionNorth = 182,
+        AmbRegionEast = 183,
+        AmbRegionSouth = 184,
+        AmbRegionWest = 185,
+
+        // ---- WP-021 · hybrid music layers (DEC-064/065) -------------------------
+        MusicBase = 190,
+        MusicPercussion = 191,
+        MusicTension = 192,
+        MusicAccent = 193
     }
 }

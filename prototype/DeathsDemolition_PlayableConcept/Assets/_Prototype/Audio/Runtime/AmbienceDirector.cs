@@ -1,54 +1,48 @@
+using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using UnityEngine;
 
 namespace DD.Prototype.Audio
 {
     /// <summary>
-    /// The six ambience beds, their balance per run phase, and the scatter of one-shots
-    /// over the top.
+    /// The ambience beds, their balance per run phase and per REGION, and the scatter of
+    /// one-shots over the top.
     ///
-    /// WHAT THE REQUEST ASKS FOR, AND HOW EACH SENTENCE IS ANSWERED
-    ///   "hafif rüzgâr, yaprak hareketi, uzak su"      three beds, always running, at
-    ///                                                 volumes that move with the phase.
-    ///   "seyrek metal/ahşap sesleri"                  the scatterer below: one one-shot
-    ///                                                 every 9-24 seconds, never twice the
-    ///                                                 same in a row, placed in the world
-    ///                                                 8-22 m from the listener.
-    ///   "sessiz ve boş saray hissi"                   the palace tone bed, which is the
-    ///                                                 quietest thing in the game and the
-    ///                                                 only one that gets LOUDER when
-    ///                                                 everything else stops.
-    ///   "round başlangıcında gerilim katmanı yükselsin"
-    ///                                                 two tension beds cross-fading on a
-    ///                                                 single 0-1 intensity, plus a surge
-    ///                                                 fired by RoundStarted so the rise
-    ///                                                 happens at the start rather than
-    ///                                                 waiting for the kill count.
-    ///   "round sonunda upgrade ekranında atmosfer sakinleşsin"
-    ///                                                 the Upgrading preset: tension to
-    ///                                                 zero, wind down a third, water and
-    ///                                                 palace UP. The calm is not a new bed,
-    ///                                                 it is the absence of the tension ones
-    ///                                                 and it fades in slowly on purpose.
+    /// WP-021 (DEC-066, DEC-068): six beds, vertically layered -
+    ///   COMMON     the after-rain atmosphere the whole map shares (drip, wind, bamboo,
+    ///              distant water). Always running; only its level moves with the phase.
+    ///   CENTER / NORTH / EAST / SOUTH / WEST
+    ///              one bed per AP-005 region. Exactly one is the target at a time,
+    ///              chosen from the player's position through <see cref="AudioRegionMap"/>;
+    ///              the others fade out. The cross-fade is <see cref="CrossfadeSeconds"/>
+    ///              (≥ 2 s per DEC-066) and it is a level ramp, so a player pacing on a
+    ///              boundary hears a slow blend and never a switch.
+    ///
+    /// Tension no longer lives here: DEC-064/065 make that the music's job
+    /// (<see cref="MusicDirector"/>), and a bed that duplicated it would fight the layers.
+    /// The phase shaping that remains is the WP-002 brief - louder and more present on
+    /// the upgrade screen, ducked and darker in a fight, quiet after death.
     ///
     /// WHY VERTICAL LAYERING AND NOT A SECOND TRACK
-    /// Six loops running continuously at independent volumes cost six voices and no CPU,
-    /// and any transition between any two states is a volume ramp that cannot click, cannot
-    /// arrive late and cannot be interrupted half way. A horizontal re-sequencer would need
-    /// transition points, and this game changes state on a kill count nobody can predict.
+    /// Six loops at independent volumes cost six voices and no CPU, and any transition
+    /// between any two states is a ramp that cannot click, arrive late or be interrupted.
     /// </summary>
     public sealed class AmbienceDirector
     {
-        private const int BedCount = 6;
+        public const int BedCount = 6;
+        public const int Common = 0;
+
+        /// <summary>DEC-066: region cross-fade. PROTOTYPE-ONLY value above the 2 s floor.</summary>
+        public const float CrossfadeSeconds = 2.5f;
 
         private static readonly AudioSoundId[] s_beds =
         {
-            AudioSoundId.AmbWind,
-            AudioSoundId.AmbLeaves,
-            AudioSoundId.AmbWater,
-            AudioSoundId.AmbPalaceTone,
-            AudioSoundId.AmbTensionLow,
-            AudioSoundId.AmbTensionHigh
+            AudioSoundId.AmbCommon,
+            AudioSoundId.AmbRegionCenter,
+            AudioSoundId.AmbRegionNorth,
+            AudioSoundId.AmbRegionEast,
+            AudioSoundId.AmbRegionSouth,
+            AudioSoundId.AmbRegionWest
         };
 
         private static readonly AudioSoundId[] s_scatter =
@@ -59,13 +53,6 @@ namespace DD.Prototype.Audio
             AudioSoundId.AmbStoneSettle
         };
 
-        private const int Wind = 0;
-        private const int Leaves = 1;
-        private const int Water = 2;
-        private const int Palace = 3;
-        private const int TensionLow = 4;
-        private const int TensionHigh = 5;
-
         private readonly AudioSource[] _sources = new AudioSource[BedCount];
         private readonly AudioLowPassFilter[] _filters = new AudioLowPassFilter[BedCount];
         private readonly float[] _current = new float[BedCount];
@@ -75,49 +62,47 @@ namespace DD.Prototype.Audio
         private readonly AudioBusMixer _mixer;
         private readonly AudioVoicePool _worldPool;
         private readonly Transform _root;
+        private readonly AudioRegionMap _map;
 
         private SynthRandom _rng = new SynthRandom(0x0A1B2C3D);
-
         private RunPhase _phase = RunPhase.None;
         private float _scatterCountdown;
         private int _lastScatter = -1;
+        private float _regionPoll;
+        private float _regionLevel = 0.4f;
 
-        /// <summary>0-1 intensity the two tension beds are cross-faded on. F1 readout.</summary>
-        public float Tension { get; private set; }
+        /// <summary>Seconds between player-position polls. Regions are tens of metres wide; four times a second is plenty.</summary>
+        private const float RegionPollSeconds = 0.25f;
 
-        /// <summary>Extra tension injected by a round start, decaying to zero. F1 readout.</summary>
-        public float Surge { get; private set; }
+        // ---- PROTOTYPE-ONLY / INVENTED tuning --------------------------------
+        private const float ScatterMin = 9f;
+        private const float ScatterMax = 24f;
+
+        /// <summary>Common bed level change per second. Slower down than up: calm arrives, it does not cut.</summary>
+        private const float RiseRate = 0.45f;
+        private const float FallRate = 0.30f;
+
+        /// <summary>The region the beds are fading towards. F1 readout and test seam.</summary>
+        public AudioRegion CurrentRegion { get; private set; } = AudioRegion.None;
+
+        /// <summary>Region changes seen since start. Test readout.</summary>
+        public int RegionChanges { get; private set; }
 
         /// <summary>Ambient one-shots fired since the last reset. F1 readout.</summary>
         public int ScatterCount { get; private set; }
 
         public bool Started { get; private set; }
 
-        // ---- PROTOTYPE-ONLY / INVENTED tuning --------------------------------
+        /// <summary>Test seam: forces the region instead of polling the player.</summary>
+        public AudioRegion? RegionOverride { get; set; }
 
-        /// <summary>Seconds between ambient one-shots, before the phase multiplier.</summary>
-        private const float ScatterMin = 9f;
-        private const float ScatterMax = 24f;
-
-        /// <summary>Bed volume change per second, up and down. Down is slower: calm arrives, it does not cut.</summary>
-        private const float RiseRate = 0.45f;
-        private const float FallRate = 0.30f;
-
-        /// <summary>Tension release is the one fast ramp. A round that is over is over.</summary>
-        private const float TensionFallRate = 0.85f;
-
-        /// <summary>Enemies alive that count as maximum pressure.</summary>
-        private const float PressureEnemies = 14f;
-
-        /// <summary>Seconds the round-start surge takes to decay away.</summary>
-        private const float SurgeSeconds = 7f;
-
-        public AmbienceDirector(Transform root, AudioClipLibrary library, AudioBusMixer mixer, AudioVoicePool worldPool)
+        public AmbienceDirector(Transform root, AudioClipLibrary library, AudioBusMixer mixer, AudioVoicePool worldPool, AudioMixerBridge bridge, AudioRegionMap map)
         {
             _root = root;
             _library = library;
             _mixer = mixer;
             _worldPool = worldPool;
+            _map = map;
 
             for (int i = 0; i < BedCount; i++)
             {
@@ -132,12 +117,12 @@ namespace DD.Prototype.Audio
                 source.dopplerLevel = 0f;
                 source.bypassReverbZones = true;
                 source.priority = 0;         // never virtualised by Unity, whatever else happens
+                bridge?.Route(source, AudioBus.Ambience);
                 _sources[i] = source;
 
                 // The duck is a filter sweep as well as a level drop. A bed that only gets
                 // quieter still occupies its band; a bed that also gets darker genuinely
-                // leaves room, and the recovery reads as the world coming back rather than
-                // as a fader moving.
+                // leaves room, and the recovery reads as the world coming back.
                 AudioLowPassFilter filter = go.AddComponent<AudioLowPassFilter>();
                 filter.cutoffFrequency = 22000f;
                 filter.lowpassResonanceQ = 1f;
@@ -165,10 +150,8 @@ namespace DD.Prototype.Audio
 
                 _sources[i].clip = clip;
 
-                // Each bed starts at a different point in its own loop. Six beds all
-                // starting at sample zero would put every modulation cycle in phase, and
-                // the composite would then repeat exactly every six seconds - the one thing
-                // the whole bed design exists to prevent.
+                // Each bed starts at a different point in its own loop, so the composite
+                // never repeats on one period.
                 _sources[i].time = _rng.Range(0f, Mathf.Max(0.01f, clip.length - 0.05f));
                 _sources[i].Play();
             }
@@ -179,26 +162,17 @@ namespace DD.Prototype.Audio
         public void SetPhase(RunPhase phase)
         {
             _phase = phase;
-
-            if (phase == RunPhase.Countdown)
-            {
-                // The countdown is the wind-up. Half a surge here means the tension is
-                // already climbing when the round-start bell lands on top of it.
-                Surge = Mathf.Max(Surge, 0.5f);
-            }
         }
 
-        /// <summary>The round actually started. This is the request's tension rise, at its loudest.</summary>
-        public void OnRoundStarted()
+        /// <summary>Current level of one bed, 0-1 before bus gain. Test readout.</summary>
+        public float Level(int bed)
         {
-            Surge = 1f;
+            return bed >= 0 && bed < BedCount ? _current[bed] : 0f;
         }
 
-        /// <summary>The round ended. Tension is released fast; the calm beds take over.</summary>
-        public void OnRoundCompleted()
+        public static int BedIndex(AudioRegion region)
         {
-            Surge = 0f;
-            Tension = 0f;
+            return region == AudioRegion.None ? -1 : 1 + (int)region;
         }
 
         public void Tick(float unscaledDeltaTime, bool paused)
@@ -208,143 +182,121 @@ namespace DD.Prototype.Audio
                 return;
             }
 
-            Surge = Mathf.Max(0f, Surge - unscaledDeltaTime / SurgeSeconds);
+            _regionPoll -= unscaledDeltaTime;
+            if (_regionPoll <= 0f)
+            {
+                _regionPoll = RegionPollSeconds;
+                ResolveRegion();
+            }
 
             ResolveTargets();
 
+            float busGain = _mixer.Gain(AudioBus.Ambience);
+            float duck = _mixer.DuckLevel(AudioBus.Ambience);
+            float cutoff = Mathf.Lerp(600f, 22000f, duck * duck);
+
             for (int i = 0; i < BedCount; i++)
             {
-                bool tension = i >= TensionLow;
-                float rate = _target[i] > _current[i]
-                    ? RiseRate
-                    : (tension ? TensionFallRate : FallRate);
+                float rate;
+                if (i == Common)
+                {
+                    rate = _target[i] > _current[i] ? RiseRate : FallRate;
+                }
+                else
+                {
+                    // The cross-fade is measured bed-to-bed: the full swing between the
+                    // phase's region level and silence takes CrossfadeSeconds, whatever
+                    // that level is (DEC-066 ≥ 2 s holds at every phase level).
+                    rate = Mathf.Max(0.05f, _regionLevel) / CrossfadeSeconds;
+                }
 
                 _current[i] = Mathf.MoveTowards(_current[i], _target[i], rate * unscaledDeltaTime);
-
-                float busGain = _mixer.Gain(AudioBus.Ambience);
                 _sources[i].volume = _current[i] * busGain;
-
-                float duck = _mixer.DuckLevel(AudioBus.Ambience);
-                _filters[i].cutoffFrequency = Mathf.Lerp(600f, 22000f, duck * duck);
+                _filters[i].cutoffFrequency = cutoff;
             }
 
             TickScatter(unscaledDeltaTime);
         }
 
-        /// <summary>
-        /// The per-phase bed balance. Every number here is PROTOTYPE-ONLY / INVENTED; what
-        /// is not invented is the SHAPE - wind and leaves lead while fighting, water and
-        /// palace lead while not, and the palace tone is the only bed that rises as the
-        /// game gets quieter.
-        /// </summary>
-        private void ResolveTargets()
+        private void ResolveRegion()
         {
-            switch (_phase)
+            AudioRegion region;
+            if (RegionOverride.HasValue)
             {
-                case RunPhase.Fighting:
-                    _target[Wind] = 0.62f;
-                    _target[Leaves] = 0.34f;
-                    _target[Water] = 0.18f;
-                    _target[Palace] = 0.42f;
-                    ResolveTension();
-                    break;
+                region = RegionOverride.Value;
+            }
+            else if (_map == null)
+            {
+                region = AudioRegion.None;
+            }
+            else
+            {
+                PlayerRig rig = PlayerRegistry.Primary;
+                region = rig != null ? _map.Resolve(rig.transform.position) : AudioRegion.None;
+            }
 
-                case RunPhase.Countdown:
-                    _target[Wind] = 0.58f;
-                    _target[Leaves] = 0.30f;
-                    _target[Water] = 0.20f;
-                    _target[Palace] = 0.50f;
-                    ResolveTension();
-                    break;
-
-                case RunPhase.RoundComplete:
-                    _target[Wind] = 0.48f;
-                    _target[Leaves] = 0.32f;
-                    _target[Water] = 0.30f;
-                    _target[Palace] = 0.58f;
-                    _target[TensionLow] = 0f;
-                    _target[TensionHigh] = 0f;
-                    Tension = 0f;
-                    break;
-
-                case RunPhase.Upgrading:
-                    // The calm. Wind down a third, water and palace up, no tension at all.
-                    // Read against the Fighting row: only two numbers went UP, and both of
-                    // them are the ones with no transient in them anywhere.
-                    _target[Wind] = 0.36f;
-                    _target[Leaves] = 0.26f;
-                    _target[Water] = 0.34f;
-                    _target[Palace] = 0.72f;
-                    _target[TensionLow] = 0f;
-                    _target[TensionHigh] = 0f;
-                    Tension = 0f;
-                    break;
-
-                case RunPhase.Dead:
-                    _target[Wind] = 0.20f;
-                    _target[Leaves] = 0.10f;
-                    _target[Water] = 0.12f;
-                    _target[Palace] = 0.85f;
-                    _target[TensionLow] = 0f;
-                    _target[TensionHigh] = 0f;
-                    Tension = 0f;
-                    break;
-
-                default: // None - menus, selection, results
-                    _target[Wind] = 0.55f;
-                    _target[Leaves] = 0.30f;
-                    _target[Water] = 0.24f;
-                    _target[Palace] = 0.60f;
-                    _target[TensionLow] = 0f;
-                    _target[TensionHigh] = 0f;
-                    Tension = 0f;
-                    break;
+            if (region != CurrentRegion)
+            {
+                CurrentRegion = region;
+                RegionChanges++;
             }
         }
 
         /// <summary>
-        /// The single 0-1 number both tension beds hang off.
-        ///
-        /// It is built from three things, and the mix of the three is the point:
-        ///   progress   how much of the round's pool is dead. Slow, monotonic, and the
-        ///              reason a round feels like it is going somewhere.
-        ///   pressure   how many enemies are alive right now. Fast, and the reason being
-        ///              surrounded feels different from mopping up.
-        ///   surge      the round-start kick, decaying over seven seconds.
-        ///
-        /// Progress alone would make the first minute of every round identical; pressure
-        /// alone would make a cleared round silent even at 95% completion. Taking the
-        /// maximum of the two rather than the sum keeps the bed from ever pinning.
+        /// The per-phase bed balance. Numbers are PROTOTYPE-ONLY / INVENTED; the SHAPE is
+        /// the brief: the world is quieter and darker in a fight, fuller between rounds,
+        /// nearly alone after death.
         /// </summary>
-        private void ResolveTension()
+        private void ResolveTargets()
         {
-            RunHudState state = RunEvents.Current;
+            float common, region;
+            switch (_phase)
+            {
+                case RunPhase.Fighting:
+                    common = 0.55f;
+                    region = 0.42f;
+                    break;
 
-            float progress = Mathf.Clamp01(state.RoundProgress01);
-            float pressure = Mathf.Clamp01(state.AliveEnemies / PressureEnemies);
+                case RunPhase.Countdown:
+                    common = 0.60f;
+                    region = 0.48f;
+                    break;
 
-            float target = Mathf.Max(0.25f + 0.55f * progress, pressure * 0.9f);
-            target = Mathf.Clamp01(target + Surge * 0.35f);
+                case RunPhase.RoundComplete:
+                    common = 0.66f;
+                    region = 0.56f;
+                    break;
 
-            // Tension moves slowly by itself - the ramps above do the rest - so that a
-            // single enemy wandering off does not audibly change the music.
-            Tension = Mathf.MoveTowards(Tension, target, 0.5f * Time.unscaledDeltaTime);
+                case RunPhase.Upgrading:
+                    // The calm: the fullest the beds ever get (WP-002 brief).
+                    common = 0.74f;
+                    region = 0.62f;
+                    break;
 
-            // Cross-fade: LOW owns the bottom half of the range, HIGH the top. They
-            // overlap through the middle because HIGH contains LOW's drone, so the sum
-            // never dips.
-            _target[TensionLow] = Mathf.Clamp01(Tension * 2f) * 0.55f;
-            _target[TensionHigh] = Mathf.Clamp01((Tension - 0.45f) * 1.9f) * 0.65f;
+                case RunPhase.Dead:
+                    common = 0.35f;
+                    region = 0.20f;
+                    break;
+
+                default: // None - menus, selection, results
+                    common = 0.62f;
+                    region = 0.40f;
+                    break;
+            }
+
+            _target[Common] = common;
+            _regionLevel = region;
+            int active = BedIndex(CurrentRegion);
+            for (int i = 1; i < BedCount; i++)
+            {
+                _target[i] = i == active ? region : 0f;
+            }
         }
 
         /// <summary>
-        /// The one-shot scatterer.
-        ///
-        /// Two rules keep it from becoming noticeable in the wrong way: it never plays the
-        /// same one-shot twice running, and it slows DOWN during a fight. A creak in the
-        /// middle of a firefight is either masked (wasted) or heard as a gameplay event
-        /// (worse than wasted); the same creak thirty seconds into an upgrade screen is the
-        /// entire "empty palace" brief in one sound.
+        /// The one-shot scatterer: never the same one-shot twice running, slower during a
+        /// fight (a creak in a firefight is masked or misread), placed in a ring around the
+        /// listener so it is ambience and not an event.
         /// </summary>
         private void TickScatter(float unscaledDeltaTime)
         {
@@ -375,15 +327,10 @@ namespace DD.Prototype.Audio
                 return;
             }
 
-            // Somewhere out there. A ring rather than a disc, because a one-shot at the
-            // listener's own position is not ambience, it is an event.
             float angle = _rng.Range(0f, Mathf.PI * 2f);
             float distance = _rng.Range(9f, 22f);
             Vector3 origin = _root != null ? _root.position : Vector3.zero;
 
-            // The AudioListener rides the gameplay camera (CameraRigFactory puts it there),
-            // so the scatter ring has to be centred on the camera and not on the player, or
-            // half of it would land behind the listener's own back at zero distance.
             if (DD.Prototype.Feedback.FeedbackCameraRef.TryGetPosition(out Vector3 listener))
             {
                 origin = listener;
@@ -394,8 +341,6 @@ namespace DD.Prototype.Audio
                 _rng.Range(-1f, 5f),
                 Mathf.Sin(angle) * distance);
 
-            // Quieter during a fight even after the slower rate, because the whole point of
-            // the bed family is that it never competes.
             float gain = _phase == RunPhase.Fighting ? 0.35f : 0.62f;
 
             AudioPlacement placement = AudioMixPlan.AmbientOneShot(sound, gain);
@@ -415,18 +360,15 @@ namespace DD.Prototype.Audio
             }
 
             Started = false;
-            Tension = 0f;
-            Surge = 0f;
         }
 
         /// <summary>One line for the F1 panel.</summary>
         public string Describe()
         {
             return string.Format(
-                "{0} · tension {1:0.00} (surge {2:0.00}) · wind {3:0.00} leaf {4:0.00} water {5:0.00} palace {6:0.00} · lo {7:0.00} hi {8:0.00} · scatter {9}",
-                _phase, Tension, Surge,
-                _current[Wind], _current[Leaves], _current[Water], _current[Palace],
-                _current[TensionLow], _current[TensionHigh], ScatterCount);
+                "{0} · region {1} ({2} changes) · common {3:0.00} · C {4:0.00} N {5:0.00} E {6:0.00} S {7:0.00} W {8:0.00} · scatter {9}",
+                _phase, CurrentRegion, RegionChanges, _current[0],
+                _current[1], _current[2], _current[3], _current[4], _current[5], ScatterCount);
         }
     }
 }

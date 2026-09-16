@@ -180,6 +180,35 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.AmbBambooKnock: return BuildBambooKnock(ref rng);
                 case AudioSoundId.AmbStoneSettle: return BuildStoneSettle(ref rng);
 
+                // ---- WP-021 · produced sounds (AP-011). These ids are meant to come
+                // from the AudioCatalog; the recipes below are the FALLBACK when the
+                // catalog has no clip for them (a fresh checkout without LFS, a test
+                // project) so the game is never silent and never plays the wrong family.
+                case AudioSoundId.ZombieWindupStandard:
+                case AudioSoundId.ZombieWindupElite:
+                case AudioSoundId.ZombieWindupUltra: return BuildTensionBed(false, ref rng);
+                case AudioSoundId.ZombieAttackStandard:
+                case AudioSoundId.ZombieHitStandard: return BuildFleshHit(false, ref rng);
+                case AudioSoundId.ZombieAttackElite:
+                case AudioSoundId.ZombieAttackUltra:
+                case AudioSoundId.ZombieHitElite:
+                case AudioSoundId.ZombieHitUltra: return BuildFleshHit(true, ref rng);
+                case AudioSoundId.ZombieDeathStandard: return BuildEnemyDeath(false, ref rng);
+                case AudioSoundId.ZombieDeathElite:
+                case AudioSoundId.ZombieDeathUltra: return BuildEnemyDeath(true, ref rng);
+                case AudioSoundId.GoldSpawn:
+                case AudioSoundId.GoldMagnet: return BuildGoldPickup(ref rng);
+                case AudioSoundId.AmbCommon: return BuildWaterBed(ref rng);
+                case AudioSoundId.AmbRegionCenter: return BuildPalaceTone(ref rng);
+                case AudioSoundId.AmbRegionNorth: return BuildWindBed(ref rng);
+                case AudioSoundId.AmbRegionEast: return BuildLeafBed(ref rng);
+                case AudioSoundId.AmbRegionSouth: return BuildWaterBed(ref rng);
+                case AudioSoundId.AmbRegionWest: return BuildWindBed(ref rng);
+                case AudioSoundId.MusicBase: return BuildPalaceTone(ref rng);
+                case AudioSoundId.MusicPercussion: return BuildTensionBed(false, ref rng);
+                case AudioSoundId.MusicTension: return BuildTensionBed(true, ref rng);
+                case AudioSoundId.MusicAccent: return BuildTensionBed(true, ref rng);
+
                 default:
                     return BuildImpactDefault(ref rng);
             }
@@ -198,6 +227,16 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.AmbTensionHigh:
                 case AudioSoundId.SwBeaconLoop:
                 case AudioSoundId.HeavyMotorLoop:
+                case AudioSoundId.AmbCommon:
+                case AudioSoundId.AmbRegionCenter:
+                case AudioSoundId.AmbRegionNorth:
+                case AudioSoundId.AmbRegionEast:
+                case AudioSoundId.AmbRegionSouth:
+                case AudioSoundId.AmbRegionWest:
+                case AudioSoundId.MusicBase:
+                case AudioSoundId.MusicPercussion:
+                case AudioSoundId.MusicTension:
+                case AudioSoundId.MusicAccent:
                     return true;
                 default:
                     return false;

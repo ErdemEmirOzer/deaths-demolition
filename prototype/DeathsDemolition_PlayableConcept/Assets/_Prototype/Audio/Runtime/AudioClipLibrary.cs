@@ -69,6 +69,27 @@ namespace DD.Prototype.Audio
         private readonly Dictionary<AudioSoundId, Entry> _entries = new Dictionary<AudioSoundId, Entry>(48);
         private SynthRandom _shuffleRng = new SynthRandom(0x5EED1234);
 
+        /// <summary>WP-021: the produced set. Null = every sound is a recipe (pre-WP-021 behaviour).</summary>
+        private readonly AudioCatalog _catalog;
+
+        /// <summary>Sounds served from the catalog rather than baked. F1 readout.</summary>
+        public int CatalogCount { get; private set; }
+
+        public AudioClipLibrary() : this(AudioCatalog.Load())
+        {
+        }
+
+        public AudioClipLibrary(AudioCatalog catalog)
+        {
+            _catalog = catalog;
+        }
+
+        /// <summary>True when this sound will play produced clips rather than a recipe.</summary>
+        public bool IsProduced(AudioSoundId id)
+        {
+            return _catalog != null && _catalog.TryGet(id, out AudioCatalog.Entry _);
+        }
+
         /// <summary>Clips baked so far.</summary>
         public int ClipCount { get; private set; }
 
@@ -190,6 +211,12 @@ namespace DD.Prototype.Audio
         {
             foreach (KeyValuePair<AudioSoundId, Entry> pair in _entries)
             {
+                // Catalog clips are assets, not bakes: they are never destroyed here.
+                if (_catalog != null && _catalog.TryGet(pair.Key, out AudioCatalog.Entry _))
+                {
+                    continue;
+                }
+
                 AudioClip[] clips = pair.Value.Clips;
                 for (int i = 0; i < clips.Length; i++)
                 {
@@ -202,6 +229,7 @@ namespace DD.Prototype.Audio
 
             _entries.Clear();
             ClipCount = 0;
+            CatalogCount = 0;
             MemoryBytes = 0;
             PrewarmComplete = false;
         }
@@ -210,9 +238,9 @@ namespace DD.Prototype.Audio
         public string DescribeMemory()
         {
             return string.Format(
-                "{0} clips, {1:0.0} MB, baked in {2:0} ms{3}",
+                "{0} clips ({4} produced), {1:0.0} MB, baked in {2:0} ms{3}",
                 ClipCount, MemoryBytes / (1024.0 * 1024.0), BakeMilliseconds,
-                PrewarmComplete ? "" : " (prewarming)");
+                PrewarmComplete ? "" : " (prewarming)", CatalogCount);
         }
 
         private Entry EnsureBaked(AudioSoundId id)
@@ -220,6 +248,41 @@ namespace DD.Prototype.Audio
             if (_entries.TryGetValue(id, out Entry existing))
             {
                 return existing;
+            }
+
+            // WP-021: produced clips win. Nothing is baked for a sound the catalog owns,
+            // and the memory line counts the clip's own PCM so the F1 panel stays honest.
+            if (_catalog != null && _catalog.TryGet(id, out AudioCatalog.Entry produced))
+            {
+                AudioClip[] owned = new AudioClip[produced.Clips.Length];
+                int n = 0;
+                for (int i = 0; i < produced.Clips.Length; i++)
+                {
+                    if (produced.Clips[i] != null)
+                    {
+                        owned[n++] = produced.Clips[i];
+                        MemoryBytes += (long)produced.Clips[i].samples * produced.Clips[i].channels * 4L;
+                        ClipCount++;
+                    }
+                }
+
+                if (n > 0)
+                {
+                    if (n != owned.Length)
+                    {
+                        System.Array.Resize(ref owned, n);
+                    }
+
+                    CatalogCount++;
+                    Entry fromCatalog = new Entry { Clips = owned, Deck = new int[n], DeckIndex = n };
+                    for (int i = 0; i < n; i++)
+                    {
+                        fromCatalog.Deck[i] = i;
+                    }
+
+                    _entries.Add(id, fromCatalog);
+                    return fromCatalog;
+                }
             }
 
             Stopwatch watch = Stopwatch.StartNew();

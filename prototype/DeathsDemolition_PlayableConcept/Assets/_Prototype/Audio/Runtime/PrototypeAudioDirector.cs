@@ -17,8 +17,14 @@ namespace DD.Prototype.Audio
     ///   AudioEvents.Cue            33 combat events   (weapons, damage, special weapon)
     ///   AudioEvents.LoopStopped    2 loops            (beacon, rotary motor)
     ///   RunAudioEvents.Cue         10 run-flow events (gold, rounds, upgrades)
-    ///   RunEvents.*                phase, round start / complete - drives the ambience
+    ///   RunEvents.*                phase, round start / complete - drives ambience, music, snapshots
     ///   PlayerHealth.Any*          damage and death
+    ///   DamageEvents.*  (WP-021)   zombie vocal set, through AudioEventRouter
+    ///
+    /// WP-021 added the Unity AudioMixer (AudioMixerBridge: six groups, four snapshots),
+    /// the produced sound set (AudioCatalog over the procedural library), regional
+    /// ambience (AmbienceDirector + AudioRegionMap) and the four-layer score
+    /// (MusicDirector). The event map is ADR-021-1 (AudioEventMap).
     ///
     /// Nothing else in the project touches an AudioSource, and nothing in this folder is
     /// referenced by anything outside it. Deleting the whole Audio directory would leave a
@@ -64,12 +70,22 @@ namespace DD.Prototype.Audio
         private static PrototypeAudioDirector s_instance;
 
         private readonly AudioBusMixer _mixer = new AudioBusMixer();
-        private readonly AudioClipLibrary _library = new AudioClipLibrary();
         private readonly ArmorFatigueTracker _armour = new ArmorFatigueTracker();
+
+        // WP-021: created in Awake, not as a field initializer - the catalog is a
+        // Resources.Load and Unity forbids that from a MonoBehaviour constructor.
+        private AudioClipLibrary _library;
 
         private AudioVoicePool _world;
         private AudioVoicePool _signal;
         private AmbienceDirector _ambience;
+
+        // WP-021
+        private AudioMixerBridge _bridge;
+        private MusicDirector _music;
+        private AudioEventRouter _router;
+        private AudioListenerAnchor _listener;
+        private AudioSnapshot _snapshotBeforePause = AudioSnapshot.Run;
 
         private readonly List<DebugPanelEntry> _debugEntries = new List<DebugPanelEntry>(16);
         private readonly Dictionary<CombatAudioEvent, LoopVoice> _loops =
@@ -82,6 +98,24 @@ namespace DD.Prototype.Audio
         private int _suppressedSeen;
 
         public static PrototypeAudioDirector Instance => s_instance;
+
+        /// <summary>WP-021 seams for tests and the F1 panel.</summary>
+        public AmbienceDirector Ambience => _ambience;
+        public MusicDirector Music => _music;
+        public AudioEventRouter Router => _router;
+        public AudioMixerBridge Bridge => _bridge;
+        public AudioListenerAnchor Listener => _listener;
+        public AudioClipLibrary Library => _library;
+        public AudioBusMixer Mixer => _mixer;
+        public AudioVoicePool WorldPool => _world;
+        public AudioVoicePool SignalPool => _signal;
+        public bool IsPaused => _paused;
+
+        /// <summary>Sounds actually handed to a voice since start (both pools). Test readout.</summary>
+        public int PlayedCount { get; private set; }
+
+        /// <summary>The last sound that got a voice. Test readout.</summary>
+        public AudioSoundId LastPlayed { get; private set; }
 
         /// <summary>Total cues refused by the voice budget across both pools. F1 readout, and the O3 measurement.</summary>
         public int DroppedCues => (_world != null ? _world.DroppedCount : 0) + (_signal != null ? _signal.DroppedCount : 0);
@@ -113,11 +147,18 @@ namespace DD.Prototype.Audio
             _loopRoot = new GameObject("Loops").transform;
             _loopRoot.SetParent(transform, false);
 
-            _world = new AudioVoicePool("World", transform, WorldHardCapacity, _mixer);
-            _signal = new AudioVoicePool("Signal", transform, SignalCapacity, _mixer);
-            _ambience = new AmbienceDirector(transform, _library, _mixer, _world);
+            _library = new AudioClipLibrary(AudioCatalog.Load());
+            _bridge = new AudioMixerBridge();
+
+            _world = new AudioVoicePool("World", transform, WorldHardCapacity, _mixer, _bridge);
+            _signal = new AudioVoicePool("Signal", transform, SignalCapacity, _mixer, _bridge);
+            _ambience = new AmbienceDirector(transform, _library, _mixer, _world, _bridge, AudioRegionMap.Load());
+            _music = new MusicDirector(transform, _library, _mixer, _bridge);
+            _router = new AudioEventRouter(PlayResolved);
+            _listener = new AudioListenerAnchor(transform);
 
             _world.Capacity = _configuredBudget;
+            _bridge.Transition(AudioSnapshot.Menu, 0f);
         }
 
         private IEnumerator Start()
@@ -128,6 +169,13 @@ namespace DD.Prototype.Audio
             yield return StartCoroutine(_library.Prewarm());
 
             _ambience.Start();
+            _music.Start();
+
+            // One line per boot for the Player log (WP-021 smoke evidence): what is wired.
+            Debug.Log("[Audio] ready · " + _bridge.Describe() + " · " + _library.DescribeMemory()
+                      + " · beds " + AmbienceDirector.BedCount + " (" + (_ambience.Started ? "playing" : "silent") + ")"
+                      + " · music " + MusicDirector.LayerCount + " (" + (_music.Started ? "playing" : "silent") + ")"
+                      + " · region map " + (AudioRegionMap.Load() != null ? AudioRegionMap.Load().Polygons.Count + " polygons" : "none"));
         }
 
         protected override void OnEnable()
@@ -147,6 +195,9 @@ namespace DD.Prototype.Audio
             PlayerHealth.AnyDamaged += OnPlayerDamaged;
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
 
+            _router?.Subscribe();
+            _listener?.Subscribe();
+
             RegisterDebugPanel();
         }
 
@@ -164,6 +215,9 @@ namespace DD.Prototype.Audio
             PlayerHealth.AnyDamaged -= OnPlayerDamaged;
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
 
+            _router?.Unsubscribe();
+            _listener?.Unsubscribe();
+
             UnregisterDebugPanel();
             base.OnDisable();
 
@@ -176,7 +230,7 @@ namespace DD.Prototype.Audio
         private void OnDestroy()
         {
             AudioListener.pause = false;
-            _library.Dispose();
+            _library?.Dispose();
         }
 
         protected override void ApplyConfig(PrototypeConfig config)
@@ -204,8 +258,20 @@ namespace DD.Prototype.Audio
             _world.Tick(dt, _paused);
             _signal.Tick(dt, _paused);
             _ambience.Tick(dt, _paused);
+            _music.Tick(dt, _paused);
+
+            if (!_paused)
+            {
+                _router.Tick();
+            }
 
             TickLoops(dt);
+        }
+
+        private void LateUpdate()
+        {
+            // After the player moved and the camera followed (ADR-021-2).
+            _listener.LateTick();
         }
 
         /// <summary>
@@ -227,6 +293,35 @@ namespace DD.Prototype.Audio
             _paused = paused;
             AudioListener.pause = paused;
             _mixer.Muted = paused;
+
+            // WP-021: the Pause snapshot on top of the listener pause, so a UI cue raised
+            // from the pause menu (which the listener pause does not stop) sits in a quiet
+            // room, and the world comes back over a short ramp on resume.
+            if (paused)
+            {
+                _snapshotBeforePause = _bridge.Current;
+                _bridge.Transition(AudioSnapshot.Pause, 0.15f);
+            }
+            else
+            {
+                _bridge.Transition(_snapshotBeforePause, 0.6f);
+            }
+        }
+
+        /// <summary>Phase → mixer snapshot (WP-021 §2). The pause hold overrides it while held.</summary>
+        private static AudioSnapshot SnapshotFor(RunPhase phase)
+        {
+            switch (phase)
+            {
+                case RunPhase.Fighting:
+                case RunPhase.Countdown:
+                    return AudioSnapshot.Run;
+                case RunPhase.RoundComplete:
+                case RunPhase.Upgrading:
+                    return AudioSnapshot.RoundBreak;
+                default:
+                    return AudioSnapshot.Menu;
+            }
         }
 
         // ================================================================== combat
@@ -308,23 +403,35 @@ namespace DD.Prototype.Audio
         private void OnPhaseChanged(RunPhase phase)
         {
             _ambience.SetPhase(phase);
+            _music.SetPhase(phase);
+
+            AudioSnapshot snapshot = SnapshotFor(phase);
+            if (_paused)
+            {
+                _snapshotBeforePause = snapshot;
+            }
+            else
+            {
+                _bridge.Transition(snapshot, phase == RunPhase.Fighting ? 0.8f : 2.0f);
+            }
 
             if (phase == RunPhase.Dead || phase == RunPhase.None)
             {
                 StopAllLoops();
                 _armour.Clear();
+                _router.Clear();
             }
         }
 
         private void OnRoundStarted(int round)
         {
-            _ambience.OnRoundStarted();
+            _music.OnRoundStarted();
             _armour.Clear();
         }
 
         private void OnRoundCompleted(int round)
         {
-            _ambience.OnRoundCompleted();
+            _music.OnRoundCompleted();
             StopAllLoops();
         }
 
@@ -379,6 +486,8 @@ namespace DD.Prototype.Audio
             if (played)
             {
                 ApplyDuck(placement);
+                PlayedCount++;
+                LastPlayed = placement.Sound;
             }
 
             return played;
@@ -474,6 +583,7 @@ namespace DD.Prototype.Audio
             source.dopplerLevel = 0f;
             source.bypassReverbZones = true;
             source.priority = 40;
+            _bridge.Route(source, BusForLoop(placement.Sound));
 
             bool spinUp = placement.Sound == AudioSoundId.HeavyMotorLoop;
 
@@ -588,6 +698,9 @@ namespace DD.Prototype.Audio
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Dropped", DescribeDropped, -99));
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Cues", DescribeCues, -98));
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Ambience", () => _ambience.Describe(), -97));
+            _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Music", () => _music.Describe(), -97));
+            _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Zombie vocals", () => _router.Describe(), -97));
+            _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Mixer", () => _bridge.Describe() + " · " + _listener.Describe(), -96));
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Library", () => _library.DescribeMemory(), -96));
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Buses", DescribeBuses, -95));
 
@@ -638,6 +751,11 @@ namespace DD.Prototype.Audio
             AddTestButton("13 Round complete", AudioSoundId.RoundComplete, 36);
             AddTestButton("14 UI navigate", AudioSoundId.UiNavigate, 37);
             AddTestButton("15 Explosion", AudioSoundId.Explosion, 38);
+            AddTestButton("16 Zombie windup (Std)", AudioSoundId.ZombieWindupStandard, 39);
+            AddTestButton("16b Zombie windup (Ultra)", AudioSoundId.ZombieWindupUltra, 40);
+            AddTestButton("17 Zombie death (Std)", AudioSoundId.ZombieDeathStandard, 41);
+            AddTestButton("18 Gold spawn", AudioSoundId.GoldSpawn, 42);
+            AddTestButton("19 Armor break", AudioSoundId.ArmorBreak, 43);
         }
 
         private void AddBusSlider(AudioBus bus, string label, int order)
@@ -671,7 +789,7 @@ namespace DD.Prototype.Audio
         private string DescribeVoices()
         {
             return _world.Describe() + "\n" + _signal.Describe() + "\n"
-                   + string.Format("Loops: {0}/{1} · beds 6 · {2}", _loops.Count, LoopCapacity,
+                   + string.Format("Loops: {0}/{1} · beds 6 · music 4 · {2}", _loops.Count, LoopCapacity,
                        _paused ? "PAUSED" : "running");
         }
 
