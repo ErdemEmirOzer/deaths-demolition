@@ -82,7 +82,8 @@ its first argument (the pending decision) and its third argument (`invented`).
 | `Navigation` | 15 | 15 | `CrowdTuning` 15 |
 | `Camera` | 9 | 9 | `PrototypeCameraRig` 5 · `CameraOcclusionFader` 4 |
 | `World` | 4 | 4 | `WorldBootstrap` 4 |
-| `Input` | 2 | 2 | `PrototypeInputSource` 2 |
+| `Input` | 7 | 7 | `PrototypeInputSource` 3 · `GamepadRumble` 4 (WP-024) |
+| `Core/Input` | 4 | 4 | `InputPreferences` 4 (WP-024: deadzone, rumble intensity, aim-assist angle and distance — player preferences behind the request's ceilings, not balance) |
 | `Rounds` | 2 | 2 | `RunDirector` 2 |
 | **Total** | **337** | **237** | |
 
@@ -345,7 +346,9 @@ Listed per file, because the file is what a reviewer has to open. Counts are exa
 | `Camera/CameraOcclusionFader.cs` | 4 | probe height above the follow target, probe interval, faded target alpha, fade time |
 | `World/WorldBootstrap.cs` | 4 | build-on-awake, bake-NavMesh-after-build, print-self-check-report, install-run-systems-after-build — build-order switches, not visuals |
 | `Player/PlayerDamageFeedback.cs` | 4 | bump amplitude and duration, the damage fraction that triggers a full reaction, death shake amplitude |
-| `Input/PrototypeInputSource.cs` | 2 | pointer intent threshold in pixels, stick intent threshold — the two numbers that arbitrate which device owns aim |
+| `Input/PrototypeInputSource.cs` | 3 | pointer intent threshold in pixels, stick intent threshold — the two numbers that arbitrate which device owns aim; WP-024: `StickSaturation` 0.95 (radial deadzone outer edge; the inner edge is the player preference, default 0.15 from the request) |
+| `Input/GamepadRumble.cs` | 4 | WP-024 pulse table as fractions of the preference ceiling (fire 0.5/60 ms, heavy fire 0.7/80 ms, hit taken 1.0/120 ms, explosion 0.8/100 ms); the ceiling itself (0.3, 120 ms) is the request's |
+| `Core/Input/InputPreferences.cs` | 4 | WP-024 player preferences: stick deadzone 0.15, rumble intensity 0.3, aim-assist angle 6°, aim-assist distance 15 m — defaults equal the request's limits; preferences narrow, never widen |
 | `Rounds/RunDirector.cs` | 2 | auto-start delay after scene load (`0.35 s`), the frozen "ROUND COMPLETE" beat before the upgrade screen opens (`1.1 s` — the request asks for the beat and states no duration) |
 | `Spawn/SpawnPointDefinition.cs` | 2 | the authored position of each spawn point, and the designer base weight — the first of the nine weighting inputs |
 | `Player/PlayerAim.cs` | 2 | stick aim distance, minimum aim distance |

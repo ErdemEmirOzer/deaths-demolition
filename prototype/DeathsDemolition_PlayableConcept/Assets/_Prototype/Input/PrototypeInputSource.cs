@@ -37,7 +37,7 @@ namespace DD.Prototype.Inputs
     /// * The asset is instantiated, not used in place, so enabling maps at runtime
     ///   never leaves the imported asset in an enabled state between play sessions.
     /// </summary>
-    public sealed class PrototypeInputSource : IInputSource, IDisposable
+    public sealed class PrototypeInputSource : IExtendedInputSource, IDisposable
     {
         // ------------------------------------------------------------ tuning values
         // PROTOTYPE-ONLY, invented for this adapter. They are behaviour thresholds of
@@ -59,8 +59,17 @@ namespace DD.Prototype.Inputs
         /// deliberately tiny guard against a value that squeaks past the deadzone.
         /// </summary>
         [PrototypeOnly(PendingDecisions.None,
-            "Right-stick magnitude that counts as aim intent, on top of the binding deadzone.", true)]
+            "Right-stick magnitude that counts as aim intent, on top of the software deadzone.", true)]
         public const float StickIntentThreshold = 0.06f;
+
+        /// <summary>
+        /// WP-024: outer edge of the radial deadzone. Stick magnitude at or above this
+        /// reads as 1; the inner edge comes from <see cref="InputPreferences.StickDeadzone"/>
+        /// (default 0.15). The binding-level StickDeadzone processors were removed so a
+        /// single, player-adjustable rule applies to both sticks.
+        /// </summary>
+        [PrototypeOnly(PendingDecisions.None, "Radial deadzone outer edge (saturation).", true)]
+        public const float StickSaturation = 0.95f;
 
         // ---------------------------------------------------------------- plumbing
 
@@ -75,6 +84,8 @@ namespace DD.Prototype.Inputs
         private readonly InputAction _reload;
         private readonly InputAction _pause;
         private readonly InputAction _debugPanel;
+        private readonly InputAction _special;
+        private readonly InputAction _interact;
 
         private bool _enabled;
         private bool _disposed;
@@ -92,8 +103,13 @@ namespace DD.Prototype.Inputs
         private bool _reloadPressed;
         private bool _pausePressed;
         private bool _debugPanelPressed;
+        private bool _specialHeld;
+        private bool _specialPressed;
+        private bool _interactPressed;
+        private float _deadzone = 0.15f;
 
         private AimSourceKind _aimKind = AimSourceKind.Pointer;
+        private InputSchemeKind _scheme = InputSchemeKind.KeyboardMouse;
         private float _lastPointerIntentTime = float.NegativeInfinity;
         private float _lastStickIntentTime = float.NegativeInfinity;
         private Vector2 _previousPointerSample;
@@ -146,6 +162,26 @@ namespace DD.Prototype.Inputs
             _reload = Find(PrototypeInputNames.ActionReload);
             _pause = Find(PrototypeInputNames.ActionPause);
             _debugPanel = Find(PrototypeInputNames.ActionDebugPanel);
+            _special = Find(PrototypeInputNames.ActionSpecial);
+            _interact = Find(PrototypeInputNames.ActionInteract);
+        }
+
+        /// <summary>The runtime (cloned) asset. The remap service works on this instance so overrides apply live.</summary>
+        public InputActionAsset Asset => _asset;
+
+        /// <summary>WP-024: apply a radial deadzone with the outer edge at <see cref="StickSaturation"/>. Pure; tests call it.</summary>
+        public static Vector2 ApplyRadialDeadzone(Vector2 raw, float deadzone)
+        {
+            deadzone = Mathf.Clamp(deadzone, 0f, InputPreferences.MaxStickDeadzone);
+            float magnitude = raw.magnitude;
+            if (magnitude <= deadzone || magnitude <= 1e-6f)
+            {
+                return Vector2.zero;
+            }
+
+            float range = Mathf.Max(0.01f, StickSaturation - deadzone);
+            float scaled = Mathf.Clamp01((magnitude - deadzone) / range);
+            return raw / magnitude * scaled;
         }
 
         private InputAction Find(string actionName)
@@ -218,6 +254,34 @@ namespace DD.Prototype.Inputs
             get { EnsureFresh(); return _debugPanelPressed; }
         }
 
+        public bool SpecialHeld
+        {
+            get { EnsureFresh(); return _specialHeld; }
+        }
+
+        public bool SpecialPressed
+        {
+            get { EnsureFresh(); return _specialPressed; }
+        }
+
+        public bool InteractPressed
+        {
+            get { EnsureFresh(); return _interactPressed; }
+        }
+
+        public InputSchemeKind ActiveScheme
+        {
+            get { EnsureFresh(); return _scheme; }
+        }
+
+        public float StickDeadzone
+        {
+            get { return _deadzone; }
+        }
+
+        /// <summary>WP-024: raised when the active control scheme flips (button presses count, unlike AimKindChanged).</summary>
+        public event Action<InputSchemeKind> SchemeChanged;
+
         public event Action<AimSourceKind> AimKindChanged;
 
         public void Enable()
@@ -266,6 +330,7 @@ namespace DD.Prototype.Inputs
             Disable();
             _disposed = true;
             AimKindChanged = null;
+            SchemeChanged = null;
 
             if (_ownsAsset && _asset != null)
             {
@@ -310,9 +375,15 @@ namespace DD.Prototype.Inputs
             }
 
             float now = Time.unscaledTime;
+            _deadzone = InputPreferencesStore.Current.StickDeadzone;
 
-            _move01 = _move != null ? Vector2.ClampMagnitude(_move.ReadValue<Vector2>(), 1f) : Vector2.zero;
-            _aimStick01 = _aimStick != null ? Vector2.ClampMagnitude(_aimStick.ReadValue<Vector2>(), 1f) : Vector2.zero;
+            Vector2 moveRaw = _move != null ? _move.ReadValue<Vector2>() : Vector2.zero;
+            Vector2 stickRaw = _aimStick != null ? _aimStick.ReadValue<Vector2>() : Vector2.zero;
+
+            // The keyboard composite already yields unit steps; the deadzone only matters
+            // for an analogue stick, and a WASD vector never falls inside it.
+            _move01 = Vector2.ClampMagnitude(IsFromGamepad(_move) ? ApplyRadialDeadzone(moveRaw, _deadzone) : moveRaw, 1f);
+            _aimStick01 = Vector2.ClampMagnitude(ApplyRadialDeadzone(stickRaw, _deadzone), 1f);
 
             Vector2 pointer = _aim != null ? _aim.ReadValue<Vector2>() : Vector2.zero;
             if (pointer == Vector2.zero && Mouse.current != null)
@@ -328,8 +399,62 @@ namespace DD.Prototype.Inputs
             _reloadPressed = _reload != null && _reload.WasPressedThisFrame();
             _pausePressed = _pause != null && _pause.WasPressedThisFrame();
             _debugPanelPressed = _debugPanel != null && _debugPanel.WasPressedThisFrame();
+            _specialHeld = _special != null && _special.IsPressed();
+            _specialPressed = _special != null && _special.WasPressedThisFrame();
+            _interactPressed = _interact != null && _interact.WasPressedThisFrame();
 
             ResolveAimKind(now);
+            ResolveScheme();
+        }
+
+        private static bool IsFromGamepad(InputAction action)
+        {
+            if (action == null || !action.enabled)
+            {
+                return false;
+            }
+
+            InputControl control = action.activeControl;
+            return control != null && control.device is Gamepad;
+        }
+
+        /// <summary>
+        /// WP-024: the scheme follows the same intent stamps as the aim kind. Any
+        /// gamepad actuation (stick, trigger, button) makes Gamepad current; any mouse
+        /// or keyboard actuation makes KeyboardMouse current; a tie keeps the incumbent.
+        /// </summary>
+        private void ResolveScheme()
+        {
+            InputSchemeKind resolved = _scheme;
+            if (_lastStickIntentTime > _lastPointerIntentTime)
+            {
+                resolved = InputSchemeKind.Gamepad;
+            }
+            else if (_lastPointerIntentTime > _lastStickIntentTime)
+            {
+                resolved = InputSchemeKind.KeyboardMouse;
+            }
+
+            if (resolved == _scheme)
+            {
+                return;
+            }
+
+            _scheme = resolved;
+            Action<InputSchemeKind> handler = SchemeChanged;
+            if (handler == null)
+            {
+                return;
+            }
+
+            try
+            {
+                handler.Invoke(resolved);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
 
         /// <summary>
@@ -383,6 +508,8 @@ namespace DD.Prototype.Inputs
             NoteActionIntent(_fire, now);
             NoteActionIntent(_reload, now);
             NoteActionIntent(_pause, now);
+            NoteActionIntent(_special, now);
+            NoteActionIntent(_interact, now);
 
             AimSourceKind resolved = _aimKind;
             if (_lastStickIntentTime > _lastPointerIntentTime)
@@ -465,6 +592,9 @@ namespace DD.Prototype.Inputs
             _reloadPressed = false;
             _pausePressed = false;
             _debugPanelPressed = false;
+            _specialHeld = false;
+            _specialPressed = false;
+            _interactPressed = false;
         }
     }
 }

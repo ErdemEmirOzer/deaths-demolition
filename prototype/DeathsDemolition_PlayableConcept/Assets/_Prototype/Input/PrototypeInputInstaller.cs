@@ -1,7 +1,9 @@
 using DD.Prototype.Core.DebugTools;
 using DD.Prototype.Core.InputAbstraction;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
 
 namespace DD.Prototype.Inputs
 {
@@ -37,10 +39,24 @@ namespace DD.Prototype.Inputs
         [SerializeField] private bool _enableOnAwake = true;
 
         private PrototypeInputSource _source;
+        private InputRemapService _remap;
+        private GamepadRumble _rumble;
+        private EventSystem _bridgedEventSystem;
         private bool _installed;
+        private int _rebindSuspendDepth;
 
         private DebugPanelReadout _stateReadout;
         private DebugPanelReadout _deviceReadout;
+        private DebugPanelReadout _prefsReadout;
+
+        /// <summary>WP-024: the live remap service (null before installation).</summary>
+        public IInputRemapService Remap => _remap;
+
+        /// <summary>WP-024: the rumble service (null before installation).</summary>
+        public GamepadRumble Rumble => _rumble;
+
+        /// <summary>WP-024: true once the EventSystem runs on the Input System UI module (UI map).</summary>
+        public bool UiModuleBridged => _bridgedEventSystem != null;
 
         /// <summary>The live source, or null before installation.</summary>
         public IInputSource Source
@@ -101,10 +117,105 @@ namespace DD.Prototype.Inputs
             InputSourceRegistry.SetCurrent(_source);
             _installed = true;
 
+            // WP-024: overrides are loaded before the map is enabled so the first frame
+            // already runs on the player's bindings; preferences (deadzone etc.) load
+            // lazily on first read.
+            _remap = new InputRemapService(_source.Asset, SuspendGameplayForRebind);
+            _remap.Load();
+            InputRemapRegistry.SetCurrent(_remap);
+
+            _rumble = new GamepadRumble();
+            _rumble.Subscribe();
+
             if (_enableOnAwake)
             {
                 _source.Enable();
             }
+        }
+
+        /// <summary>WP-024: gameplay input is suspended while a rebind listens (nested-safe).</summary>
+        private void SuspendGameplayForRebind(bool suspend)
+        {
+            if (_source == null)
+            {
+                return;
+            }
+
+            _rebindSuspendDepth = Mathf.Max(0, _rebindSuspendDepth + (suspend ? 1 : -1));
+            if (_rebindSuspendDepth > 0)
+            {
+                _source.Disable();
+                _rumble?.StopMotors();
+            }
+            else
+            {
+                _source.Enable();
+            }
+        }
+
+        /// <summary>
+        /// WP-024: the UI screens are built on a StandaloneInputModule (UiFactory keeps the
+        /// UI assembly free of Input System types). This swaps the EventSystem onto the
+        /// Input System UI module bound to the UI map — Navigate / Submit / Cancel /
+        /// Point / Click / ScrollWheel — so keyboard, mouse and gamepad all drive menus
+        /// through one path. Idempotent; re-checked when the EventSystem instance changes.
+        /// </summary>
+        private void EnsureUiInputModule()
+        {
+            EventSystem current = EventSystem.current;
+            if (current == null || ReferenceEquals(current, _bridgedEventSystem) || _source == null)
+            {
+                return;
+            }
+
+            InputActionMap ui = _source.Asset.FindActionMap(PrototypeInputNames.MapUI, false);
+            if (ui == null)
+            {
+                _bridgedEventSystem = current;
+                return;
+            }
+
+            InputSystemUIInputModule module = current.GetComponent<InputSystemUIInputModule>();
+            if (module == null)
+            {
+                module = current.gameObject.AddComponent<InputSystemUIInputModule>();
+            }
+
+            module.actionsAsset = _source.Asset;
+            module.point = Reference(ui, PrototypeInputNames.UiPoint);
+            module.leftClick = Reference(ui, PrototypeInputNames.UiClick);
+            module.move = Reference(ui, PrototypeInputNames.UiNavigate);
+            module.submit = Reference(ui, PrototypeInputNames.UiSubmit);
+            module.cancel = Reference(ui, PrototypeInputNames.UiCancel);
+            module.scrollWheel = Reference(ui, PrototypeInputNames.UiScrollWheel);
+            module.middleClick = null;
+            module.rightClick = null;
+
+            StandaloneInputModule legacy = current.GetComponent<StandaloneInputModule>();
+            if (legacy != null)
+            {
+                Destroy(legacy);
+            }
+
+            if (!ui.enabled)
+            {
+                ui.Enable();
+            }
+
+            _bridgedEventSystem = current;
+        }
+
+        private static InputActionReference Reference(InputActionMap map, string actionName)
+        {
+            InputAction action = map.FindAction(actionName, false);
+            if (action == null)
+            {
+                return null;
+            }
+
+            InputActionReference reference = InputActionReference.Create(action);
+            reference.hideFlags = HideFlags.HideAndDontSave;
+            return reference;
         }
 
         private void OnEnable()
@@ -119,14 +230,19 @@ namespace DD.Prototype.Inputs
 
             _deviceReadout = DebugPanelRegistry.AddReadout(
                 DebugPanelTabs.Misc, "Aim device", DescribeDevice, -59);
+
+            _prefsReadout = DebugPanelRegistry.AddReadout(
+                DebugPanelTabs.Misc, "Input prefs", DescribePreferences, -58);
         }
 
         private void OnDisable()
         {
             DebugPanelRegistry.Remove(_stateReadout);
             DebugPanelRegistry.Remove(_deviceReadout);
+            DebugPanelRegistry.Remove(_prefsReadout);
             _stateReadout = null;
             _deviceReadout = null;
+            _prefsReadout = null;
         }
 
         private void Update()
@@ -137,6 +253,9 @@ namespace DD.Prototype.Inputs
             {
                 _source.PumpFrame();
             }
+
+            EnsureUiInputModule();
+            _rumble?.Tick();
         }
 
         private void OnDestroy()
@@ -157,6 +276,16 @@ namespace DD.Prototype.Inputs
             {
                 InputSourceRegistry.Clear();
             }
+
+            if (ReferenceEquals(InputRemapRegistry.Current, _remap))
+            {
+                InputRemapRegistry.SetCurrent(null);
+            }
+
+            _rumble?.Dispose();
+            _rumble = null;
+            _remap?.Dispose();
+            _remap = null;
 
             if (_source != null)
             {
@@ -206,7 +335,26 @@ namespace DD.Prototype.Inputs
             }
 
             string gamepad = Gamepad.current != null ? Gamepad.current.displayName : "none connected";
-            return string.Format("{0}   |  gamepad: {1}", _source.LastAimDeviceName, gamepad);
+            return string.Format("{0}   |  gamepad: {1}  |  scheme: {2}", _source.LastAimDeviceName, gamepad, _source.ActiveScheme);
+        }
+
+        private string DescribePreferences()
+        {
+            InputPreferences p = InputPreferencesStore.Current;
+            int overrides = 0;
+            if (_remap != null)
+            {
+                for (int i = 0; i < _remap.Entries.Count; i++)
+                {
+                    if (_remap.Entries[i].IsOverridden) overrides++;
+                }
+            }
+
+            return string.Format(
+                "deadzone {0:0.00}  rumble {1} x{2:0.00} (pulses {3})  assist {4} {5:0}deg/{6:0}m  overrides {7}  ui-module {8}",
+                p.StickDeadzone, p.RumbleEnabled ? "on" : "off", p.RumbleIntensity, _rumble != null ? _rumble.PulseCount : 0,
+                p.AimAssistEnabled ? "on" : "off", p.AimAssistAngleDegrees, p.AimAssistDistance, overrides,
+                UiModuleBridged ? "InputSystem" : "legacy");
         }
     }
 }

@@ -21,6 +21,20 @@ namespace DD.Prototype.Core.InputAbstraction
         public const string ActionPause = "Pause";
         public const string ActionDebugPanel = "DebugPanel";
 
+        // WP-024: gamepad parity. Special = use / fire the Special Weapon path on a
+        // dedicated control (today the Special Weapon fires with Fire; the action is the
+        // remappable slot the design may bind later). Interact = context action.
+        public const string ActionSpecial = "Special";
+        public const string ActionInteract = "Interact";
+
+        // WP-024: UI map actions consumed by the Input System UI module (S-09 screens).
+        public const string UiNavigate = "Navigate";
+        public const string UiSubmit = "Submit";
+        public const string UiCancel = "Cancel";
+        public const string UiPoint = "Point";
+        public const string UiClick = "Click";
+        public const string UiScrollWheel = "ScrollWheel";
+
         public const string SchemeKeyboardMouse = "KeyboardMouse";
         public const string SchemeGamepad = "Gamepad";
     }

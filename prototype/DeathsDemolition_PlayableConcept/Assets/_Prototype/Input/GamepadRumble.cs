@@ -1,0 +1,183 @@
+using System;
+using DD.Prototype.Core.Config;
+using DD.Prototype.Core.InputAbstraction;
+using DD.Prototype.Damage;
+using DD.Prototype.Feedback;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+namespace DD.Prototype.Inputs
+{
+    /// <summary>
+    /// WP-024: low-intensity gamepad rumble for fire / hit taken / explosion. Listens
+    /// to the existing feedback bus (<see cref="AudioEvents.Cue"/>) and the damage bus
+    /// (<see cref="DamageEvents.PlayerAttacked"/>) — no new event path. Every pulse is
+    /// capped at <see cref="InputPreferences.MaxRumbleIntensity"/> (0.3) and
+    /// <see cref="InputPreferences.MaxRumbleMilliseconds"/> (120 ms); the player scales
+    /// it further or switches it off in <see cref="InputPreferences"/>. Pause / scene
+    /// change / disable stop the motors. Owned by the installer; nothing else creates one.
+    /// </summary>
+    public sealed class GamepadRumble : IDisposable
+    {
+        // PROTOTYPE-ONLY pulse table (fractions of the preference ceiling; durations in ms).
+        [PrototypeOnly(PendingDecisions.None, "Classic weapon shot pulse: 0.5 x intensity ceiling, 60 ms.", true)]
+        public const float FireFraction = 0.5f;
+        public const int FireMilliseconds = 60;
+
+        [PrototypeOnly(PendingDecisions.None, "Heavy (Special) weapon shot pulse: 0.7 x ceiling, 80 ms.", true)]
+        public const float HeavyFireFraction = 0.7f;
+        public const int HeavyFireMilliseconds = 80;
+
+        [PrototypeOnly(PendingDecisions.None, "Hit taken pulse: 1.0 x ceiling, 120 ms.", true)]
+        public const float HitTakenFraction = 1f;
+        public const int HitTakenMilliseconds = 120;
+
+        [PrototypeOnly(PendingDecisions.None, "Explosion pulse: 0.8 x ceiling, 100 ms.", true)]
+        public const float ExplosionFraction = 0.8f;
+        public const int ExplosionMilliseconds = 100;
+
+        private bool _subscribed;
+        private bool _disposed;
+        private float _stopAt = float.NegativeInfinity;
+        private float _activeLow;
+        private float _activeHigh;
+        private bool _motorsOn;
+
+        /// <summary>Number of pulses requested since creation (F1 readout / tests). Counts even without a gamepad.</summary>
+        public int PulseCount { get; private set; }
+
+        /// <summary>Last pulse actually sent to a motor (0 when no gamepad / rumble off).</summary>
+        public float LastIntensity { get; private set; }
+
+        public void Subscribe()
+        {
+            if (_subscribed || _disposed)
+            {
+                return;
+            }
+
+            AudioEvents.Cue += OnCue;
+            DamageEvents.PlayerAttacked += OnPlayerAttacked;
+            _subscribed = true;
+        }
+
+        public void Unsubscribe()
+        {
+            if (!_subscribed)
+            {
+                return;
+            }
+
+            AudioEvents.Cue -= OnCue;
+            DamageEvents.PlayerAttacked -= OnPlayerAttacked;
+            _subscribed = false;
+            StopMotors();
+        }
+
+        /// <summary>Called once per frame by the installer (unscaled time; pause stops the motors).</summary>
+        public void Tick()
+        {
+            if (!_motorsOn)
+            {
+                return;
+            }
+
+            if (Time.unscaledTime >= _stopAt || Mathf.Approximately(Time.timeScale, 0f))
+            {
+                StopMotors();
+            }
+        }
+
+        /// <summary>Request a pulse. Fraction is of the preference ceiling; clamped to the request limits.</summary>
+        public void Pulse(float fraction, int milliseconds)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            PulseCount++;
+            InputPreferences prefs = InputPreferencesStore.Current;
+            if (!prefs.RumbleEnabled)
+            {
+                return;
+            }
+
+            float intensity = Mathf.Clamp(prefs.RumbleIntensity * Mathf.Clamp01(fraction), 0f, InputPreferences.MaxRumbleIntensity);
+            int ms = Mathf.Clamp(milliseconds, 0, InputPreferences.MaxRumbleMilliseconds);
+            if (intensity <= 0f || ms <= 0)
+            {
+                return;
+            }
+
+            Gamepad pad = Gamepad.current;
+            if (pad == null)
+            {
+                return;
+            }
+
+            // A stronger pulse replaces a weaker one; a weaker one never cuts a stronger one short.
+            float low = Mathf.Max(_motorsOn ? _activeLow : 0f, intensity);
+            float high = Mathf.Max(_motorsOn ? _activeHigh : 0f, intensity * 0.6f);
+            float until = Time.unscaledTime + ms / 1000f;
+
+            pad.SetMotorSpeeds(low, high);
+            _activeLow = low;
+            _activeHigh = high;
+            _stopAt = Mathf.Max(_stopAt, until);
+            _motorsOn = true;
+            LastIntensity = intensity;
+        }
+
+        public void StopMotors()
+        {
+            if (!_motorsOn)
+            {
+                return;
+            }
+
+            _motorsOn = false;
+            _activeLow = 0f;
+            _activeHigh = 0f;
+            _stopAt = float.NegativeInfinity;
+
+            Gamepad pad = Gamepad.current;
+            if (pad != null)
+            {
+                pad.SetMotorSpeeds(0f, 0f);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            Unsubscribe();
+            _disposed = true;
+        }
+
+        private void OnCue(CombatAudioCue cue)
+        {
+            switch (cue.Event)
+            {
+                case CombatAudioEvent.ClassicWeaponFire:
+                    Pulse(FireFraction, FireMilliseconds);
+                    break;
+                case CombatAudioEvent.HeavyWeaponFire:
+                    Pulse(HeavyFireFraction, HeavyFireMilliseconds);
+                    break;
+                case CombatAudioEvent.Explosion:
+                    Pulse(ExplosionFraction, ExplosionMilliseconds);
+                    break;
+            }
+        }
+
+        private void OnPlayerAttacked(EnemyAttackLandedInfo info)
+        {
+            Pulse(HitTakenFraction, HitTakenMilliseconds);
+        }
+    }
+}

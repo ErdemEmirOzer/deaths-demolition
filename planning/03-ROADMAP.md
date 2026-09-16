@@ -47,3 +47,4 @@ M1 hazırlığı `WP-001 — Lifecycle & Repository Hardening` ile başlamış v
 - Kritik kapsam, teknoloji, maliyet ve ürün kararları yalnızca kullanıcı tarafından verildiğinde veya açıkça onaylandığında eklenir.
 - Onaylı aşamalar içindeki rutin teknik görevler çalışma paketlerinde ayrıntılandırılabilir ve raporlanır.
 - Onaylanmamış kritik üretim sırası veya tarih bu dosyaya yazılmaz.
+- WP-024 (Gamepad & Input) — Tamamlandı (S-02, 2026-09-16, hızlı hat): gamepad paritesi, yeniden eşleme + kalıcılık, sınırlı nişan yardımı, titreşim/ölü bölge; klasik silah listesi öneri notu kullanıcı kararı bekliyor (AP-013 girdisi).

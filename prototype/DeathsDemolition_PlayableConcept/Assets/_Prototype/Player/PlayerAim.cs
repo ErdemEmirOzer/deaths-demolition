@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
+using DD.Prototype.Enemies;
 using UnityEngine;
 
 namespace DD.Prototype.PlayerSystem
@@ -28,8 +30,17 @@ namespace DD.Prototype.PlayerSystem
     /// STICK AIM
     /// ---------
     /// The right stick is a direction, not a point, so it is resolved against the same
-    /// fixed camera basis WASD uses. Written but NOT verified: there is no gamepad on
-    /// the build machine.
+    /// fixed camera basis WASD uses. Releasing the stick keeps the last direction.
+    /// Verified with a virtual gamepad in PlayMode (WP-024).
+    ///
+    /// AIM ASSIST (WP-024, ADR-024-1)
+    /// ------------------------------
+    /// Stick aim only. After the raw stick direction is resolved, <see cref="AimAssist"/>
+    /// may bend it onto the nearest living enemy inside a cone of at most 6 degrees and
+    /// 15 metres (player-narrowable, never widenable). Only the DIRECTION changes:
+    /// damage, range, fire rate, ammunition and target count are untouched by
+    /// construction (the function receives and returns a direction). Pointer aim is
+    /// never assisted.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerAim : PrototypeConfigBehaviour, ICameraLookAheadProvider
@@ -47,6 +58,8 @@ namespace DD.Prototype.PlayerSystem
         private float _aimPlaneHeight;
 
         private IInputSource _inputOverride;
+        private readonly List<Vector3> _assistCandidates = new List<Vector3>(48);
+        private AimAssist.Result _lastAssist;
         private Vector3 _aimDirection = Vector3.forward;
         private Vector3 _aimWorldPoint;
         private bool _hasAimPoint;
@@ -82,6 +95,15 @@ namespace DD.Prototype.PlayerSystem
         {
             get { return _aimKind; }
         }
+
+        /// <summary>WP-024: what the aim assist did on the last stick frame (readout for F1 / tests). Not assisted for pointer aim.</summary>
+        public AimAssist.Result LastAssist
+        {
+            get { return _lastAssist; }
+        }
+
+        /// <summary>WP-024: the raw stick direction before assist (readout).</summary>
+        public Vector3 RawStickDirection { get; private set; } = Vector3.forward;
 
         /// <summary>Height of the aim plane above the character's feet.</summary>
         public float AimPlaneHeight
@@ -204,12 +226,44 @@ namespace DD.Prototype.PlayerSystem
 
             if (direction.sqrMagnitude > 1e-6f)
             {
-                _aimDirection = direction.normalized;
+                RawStickDirection = direction.normalized;
+                _aimDirection = ApplyAimAssist(RawStickDirection);
             }
 
             _aimWorldPoint = transform.position + Vector3.up * _aimPlaneHeight
                              + _aimDirection * _stickAimDistance;
             _hasAimPoint = true;
+        }
+
+        /// <summary>
+        /// WP-024 (ADR-024-1). Candidates are the living enemies' aim-plane points; the
+        /// pure <see cref="AimAssist.Resolve"/> picks at most one inside the cone.
+        /// </summary>
+        private Vector3 ApplyAimAssist(Vector3 rawDirection)
+        {
+            InputPreferences prefs = InputPreferencesStore.Current;
+            if (!prefs.AimAssistEnabled)
+            {
+                _lastAssist = new AimAssist.Result(rawDirection, -1, 0f, 0f);
+                return rawDirection;
+            }
+
+            _assistCandidates.Clear();
+            IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+            for (int i = 0; i < live.Count; i++)
+            {
+                ZombieEnemy z = live[i];
+                if (z == null || !z.IsAlive || z.IsDying)
+                {
+                    continue;
+                }
+
+                _assistCandidates.Add(z.transform.position + Vector3.up * _aimPlaneHeight);
+            }
+
+            _lastAssist = AimAssist.Resolve(transform.position, rawDirection, _assistCandidates,
+                prefs.AimAssistAngleDegrees, prefs.AimAssistDistance);
+            return _lastAssist.Direction;
         }
 
         /// <summary>
