@@ -1,0 +1,20 @@
+{
+    "name": "DD.Prototype.Qa",
+    "rootNamespace": "DD.Prototype.Qa",
+    "references": [
+        "DD.Prototype.Core",
+        "DD.Prototype.Runtime",
+        "DD.Art.Runtime",
+        "Unity.InputSystem",
+        "Unity.AI.Navigation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

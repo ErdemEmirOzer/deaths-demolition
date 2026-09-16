@@ -1,0 +1,29 @@
+{
+    "name": "DD.Prototype.Qa.Tests.EditMode",
+    "rootNamespace": "DD.Prototype.Qa.Tests.EditMode",
+    "references": [
+        "DD.Prototype.Core",
+        "DD.Prototype.Runtime",
+        "DD.Prototype.Qa",
+        "Unity.InputSystem",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "DD.Prototype.Qa.Editor",
+        "DD.Prototype.Diagnostics.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
