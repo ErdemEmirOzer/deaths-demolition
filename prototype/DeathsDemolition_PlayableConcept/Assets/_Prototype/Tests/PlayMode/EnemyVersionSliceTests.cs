@@ -60,7 +60,7 @@ namespace DD.Prototype.Tests.PlayMode
             _director = EnemySpawnDirector.Instance;
             _rig = PlayerRegistry.Primary;
             _rig.Health.DiagnosisInvulnerable = true;   // ölçümler oyuncu ölümüyle kesilmesin (tanı)
-            _sevkConfig = PrototypeConfig.Active;
+            if (_sevkConfig == null) _sevkConfig = PrototypeConfig.Active;   // WP-027: aynı test içinde ikinci sahne kurulumu (klon aktifken) sevk referansını ezmez
             Assert.IsNotNull(_sevkConfig);
             Assert.AreEqual(0, _sevkConfig.RoundDifficultyOverrides.Count, "Sevk edilen config'in DEC-021 tablosu boş olmalı (öncül).");
             Assert.AreEqual(HizliAdim, _sevkConfig.Rounds.SpawnRefillInterval, 0.0001f, "Refill aralığı sabiti saptı; HizliAdim'i yenile.");
@@ -89,6 +89,8 @@ namespace DD.Prototype.Tests.PlayMode
                 PrototypeConfig.SetActive(_sevkConfig);
             }
 
+            _sevkConfig = null;   // WP-027: bir sonraki test sevk config'ini yeniden yakalar
+
             if (_klon != null)
             {
                 UnityEngine.Object.Destroy(_klon);
@@ -114,6 +116,27 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>EnemyVersionProbe 02 ile aynı sabit seed'ler (Special 21, Elite 22, Ultra 23): deterministik; tanıtım tier'ı ilk düşman değil.</summary>
         private static uint IntroSeed(EnemyTier tier) => tier == EnemyTier.Special ? 21u : tier == EnemyTier.Elite ? 22u : 23u;
+
+        /// <summary>
+        /// WP-027 (WP-011 devri): "tanıtım roundu başında borç 1" okuması üretim çekilişiyle şansa bağlıydı — ağırlıklı
+        /// çekiliş tanıtım tier'ını ilk spawn'larda verirse borç erken ödenir (R5 Elite ≈ %7, R8 Ultra ≈ %2 / spawn;
+        /// ADR-010-2 şansla ödeme) ve <c>PendingGuaranteed</c> 0 okunur. Çözüm testte: klon config'e o round için tier
+        /// ağırlığı 0 satırı konur (DEC-021 kısmi satır; sevk asset'i değişmez) → tier yalnız garantiyle doğar, borç pacing
+        /// salıvermesine (havuzun %25'i) kadar 1 kalır. Politika davranışı değişmedi.
+        /// </summary>
+        private void TanitimTieriSanslaCekilmesin(EnemyTier tier, int round)
+        {
+            _klon = UnityEngine.Object.Instantiate(_sevkConfig);
+            var satir = new RoundDifficultyOverride
+            {
+                Round = round,
+                OverrideTierWeights = true,
+                TierWeights = new List<TierWeightOverride> { new TierWeightOverride { Tier = tier, Weight = 0f } }
+            };
+            Assert.IsTrue(_klon.ReplaceRoundDifficultyOverrides(new[] { satir }, out List<string> hatalar), string.Join("; ", hatalar));
+            PrototypeConfig.SetActive(_klon);
+            Assert.AreEqual(0, _sevkConfig.RoundDifficultyOverrides.Count, "Sevk edilen asset'e satır sızdı.");
+        }
 
         private sealed class SpawnKaydi : IDisposable
         {
@@ -299,6 +322,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return RunSahnesiniHazirla();
             Dictionary<string, int> kosu1 = LifecycleTestKit.AboneAnlikGoruntu();
             int intro = Intro(EnemyTier.Ultra);
+            TanitimTieriSanslaCekilmesin(EnemyTier.Ultra, intro);   // WP-027: borç şansla erken ödenmesin (deterministik)
             _director.ForceActiveTarget(0, false);
             _run.BeginRound(intro);
             yield return null;
@@ -325,6 +349,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             // İkinci koşu: ölüm akışı (Results) yatıştıktan sonra temiz başlar; round 1'de borç 0; Ultra yok.
             yield return AkisiYatistir();
+            PrototypeConfig.SetActive(_sevkConfig);   // WP-027: klon satırı yalnız tanıtım roundu içindi; ikinci koşu sevk config'iyle
             yield return RunSahnesiniHazirla();
             Assert.AreEqual(0, _director.TierSelector.PendingObligations);
             Assert.AreEqual(1, _director.Round);
@@ -534,6 +559,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             yield return RunSahnesiniHazirla();
             int r = Intro(EnemyTier.Elite);
+            TanitimTieriSanslaCekilmesin(EnemyTier.Elite, r);   // WP-027: borç şansla erken ödenmesin (deterministik)
             _director.ForceActiveTarget(0, false);
             _run.BeginRound(r);
             yield return null;

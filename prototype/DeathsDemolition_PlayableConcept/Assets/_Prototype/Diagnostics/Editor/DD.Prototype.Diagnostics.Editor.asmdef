@@ -1,0 +1,19 @@
+{
+    "name": "DD.Prototype.Diagnostics.Editor",
+    "rootNamespace": "DD.Prototype.Diagnostics.EditorTools",
+    "references": [
+        "DD.Prototype.Core",
+        "DD.Prototype.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,50 @@
+{
+  "schema": "AP009.clips-manifest.v001",
+  "package": "AP-009",
+  "fps": 30,
+  "snapshot": "WP-027 frozen copy of asset-production/AP-009/exports/AP009-clips-manifest.json (attack clips only); WP-018 imports the full manifest",
+  "clips": [
+    {
+      "clip": "AP009_zombie_attack_lunge",
+      "fbx": "AP009_zombie_attack_lunge_v001.fbx",
+      "target": "zombie",
+      "frames": 30,
+      "fps": 30,
+      "seconds": 0.967,
+      "tier": "Runner",
+      "anticipation_frames": 10,
+      "events": {
+        "hit_window_start": 10,
+        "hit_window_end": 13
+      }
+    },
+    {
+      "clip": "AP009_zombie_attack_sweep",
+      "fbx": "AP009_zombie_attack_sweep_v001.fbx",
+      "target": "zombie",
+      "frames": 51,
+      "fps": 30,
+      "seconds": 1.667,
+      "tier": "Guard",
+      "anticipation_frames": 24,
+      "events": {
+        "hit_window_start": 24,
+        "hit_window_end": 30
+      }
+    },
+    {
+      "clip": "AP009_zombie_attack_swipe",
+      "fbx": "AP009_zombie_attack_swipe_v001.fbx",
+      "target": "zombie",
+      "frames": 34,
+      "fps": 30,
+      "seconds": 1.1,
+      "tier": "Standard",
+      "anticipation_frames": 16,
+      "events": {
+        "hit_window_start": 16,
+        "hit_window_end": 20
+      }
+    }
+  ]
+}
