@@ -50,8 +50,33 @@ namespace DD.Prototype.Audio
             AudioSoundId.AmbWoodCreak,
             AudioSoundId.AmbMetalRing,
             AudioSoundId.AmbBambooKnock,
-            AudioSoundId.AmbStoneSettle
+            AudioSoundId.AmbStoneSettle,
+            AudioSoundId.AmbDrip,      // v003: after-rain drips, the most frequent scatter
+            AudioSoundId.AmbDrip
         };
+
+        /// <summary>
+        /// v003 (ADR-021-2 spatial depth): one <see cref="AudioReverbZone"/> per region,
+        /// centred on the polygon, sized to its extent. World SFX voices join these
+        /// (bypass off); the player's hands, UI, beds and music stay dry.
+        /// Presets are Unity's, chosen for the region's material: courtyard stone → Stoneroom
+        /// (short, hard), wooden corridor → Hallway, bamboo grove → Forest (dense, damped),
+        /// pond → Plain (open), cliff terrace → Mountains (sparse, distant).
+        /// </summary>
+        private static readonly AudioReverbPreset[] s_regionReverb =
+        {
+            AudioReverbPreset.Stoneroom, AudioReverbPreset.Hallway, AudioReverbPreset.Forest, AudioReverbPreset.Plain, AudioReverbPreset.Mountains
+        };
+
+        private readonly AudioReverbZone[] _reverb = new AudioReverbZone[5];
+
+        /// <summary>Reverb zones built (0 without a region map). Test readout.</summary>
+        public int ReverbZoneCount { get; private set; }
+
+        public AudioReverbZone ReverbZone(AudioRegion region)
+        {
+            return region == AudioRegion.None ? null : _reverb[(int)region];
+        }
 
         private readonly AudioSource[] _sources = new AudioSource[BedCount];
         private readonly AudioLowPassFilter[] _filters = new AudioLowPassFilter[BedCount];
@@ -130,6 +155,45 @@ namespace DD.Prototype.Audio
             }
 
             _scatterCountdown = ScatterMin;
+            BuildReverbZones();
+        }
+
+        private void BuildReverbZones()
+        {
+            if (_map == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _map.Polygons.Count; i++)
+            {
+                AudioRegionMap.Polygon p = _map.Polygons[i];
+                if (p.Region == AudioRegion.None || _reverb[(int)p.Region] != null)
+                {
+                    continue;
+                }
+
+                // Extent from the polygon's bounding box: the zone's full-reverb radius is
+                // the inscribed half-size, its fade radius the circumscribed one, so a
+                // player on the boundary hears a blend and never a step.
+                float minX = float.MaxValue, maxX = float.MinValue, minZ = float.MaxValue, maxZ = float.MinValue;
+                for (int k = 0; k < p.XZ.Length; k += 2)
+                {
+                    minX = Mathf.Min(minX, p.XZ[k]); maxX = Mathf.Max(maxX, p.XZ[k]);
+                    minZ = Mathf.Min(minZ, p.XZ[k + 1]); maxZ = Mathf.Max(maxZ, p.XZ[k + 1]);
+                }
+
+                float halfW = (maxX - minX) * 0.5f, halfD = (maxZ - minZ) * 0.5f;
+                var go = new GameObject("Reverb " + p.Region);
+                go.transform.SetParent(_root, false);
+                go.transform.position = new Vector3(p.Centroid.x, 1.5f, p.Centroid.y);
+                AudioReverbZone zone = go.AddComponent<AudioReverbZone>();
+                zone.reverbPreset = s_regionReverb[(int)p.Region];
+                zone.minDistance = Mathf.Max(4f, Mathf.Min(halfW, halfD));
+                zone.maxDistance = Mathf.Max(zone.minDistance + 6f, Mathf.Sqrt(halfW * halfW + halfD * halfD) + 4f);
+                _reverb[(int)p.Region] = zone;
+                ReverbZoneCount++;
+            }
         }
 
         /// <summary>Starts every bed. Safe to call twice; the beds are only ever started once.</summary>

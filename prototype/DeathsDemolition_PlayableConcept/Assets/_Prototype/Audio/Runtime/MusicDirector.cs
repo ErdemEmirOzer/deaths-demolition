@@ -217,7 +217,7 @@ namespace DD.Prototype.Audio
                 }
             }
 
-            _tierPresent = tier;
+            _tierPresent = tier || ThreatMusicFeed.Accent;   // WP-033: strong version present per the threat director
             _specialActive = WeaponEvents.Special.Phase == SpecialWeaponPhase.Active;
         }
 
@@ -234,6 +234,9 @@ namespace DD.Prototype.Audio
                 float progress = Mathf.Clamp01(state.RoundProgress01);
                 float pressure = Mathf.Clamp01(state.AliveEnemies / PressureEnemies);
                 target = Mathf.Max(0.20f + 0.55f * progress, pressure * 0.9f);
+                // WP-033 threat director (WP-021B binding): encirclement / attack pressure /
+                // low health raise the score; the feed is the loudest voice, never the only one.
+                target = Mathf.Max(target, Mathf.Clamp01(ThreatMusicFeed.Intensity));
                 target = Mathf.Clamp01(target + _surge * 0.35f);
             }
             else

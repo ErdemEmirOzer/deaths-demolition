@@ -236,7 +236,23 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(_d.Listener.Anchored, "Oyuncu varken dinleyici oyuncuya bağlı olmalı.");
             float uzaklik = Vector3.Distance(aktif.transform.position, _s.Rig.transform.position);
             Assert.Less(uzaklik, 2.5f, "Dinleyici oyuncunun başında değil: " + uzaklik.ToString("0.0") + " m");
-            Debug.Log("[DD-TEST] wp021.mixer " + k.Describe() + " · " + _d.Listener.Describe() + " · listener-player " + uzaklik.ToString("0.00") + " m");
+            // v003 (ADR-021-2 mekânsal derinlik): bölge reverb zone'ları ve dünya seslerinde mesafe low-pass.
+            if (AudioRegionMap.Load() != null)
+            {
+                Assert.GreaterOrEqual(_d.Ambience.ReverbZoneCount, 3, "Bölge reverb zone'ları kurulmadı.");
+                Assert.IsNotNull(_d.Ambience.ReverbZone(AudioRegion.Center));
+            }
+
+            AudioEvents.RaiseCritical(CombatAudioEvent.SurfaceImpactStone, _s.Rig.transform.position + new Vector3(45f, 1f, 0f), 1f, 20);
+            yield return null;
+            AudioLowPassFilter[] filtreler = _d.WorldPool != null ? UnityEngine.Object.FindObjectsOfType<AudioLowPassFilter>() : null;
+            int kapali = 0;
+            foreach (AudioLowPassFilter f in filtreler) { if (f.enabled && f.cutoffFrequency < 15000f) kapali++; }
+            Assert.GreaterOrEqual(kapali, 1, "45 m'deki dünya sesi için mesafe low-pass'ı kapanmadı (beklenen ≈ 12 kHz).");
+            Assert.Less(AudioVoicePool.CutoffFor(30f), AudioVoicePool.CutoffFor(10f), "Uzak ses daha karanlık olmalı.");
+            Assert.AreEqual(AudioVoicePool.LowPassOpen, AudioVoicePool.CutoffFor(4f), "Yakın ses tam bant.");
+
+            Debug.Log("[DD-TEST] wp021.mixer " + k.Describe() + " · " + _d.Listener.Describe() + " · listener-player " + uzaklik.ToString("0.00") + " m · reverb zones " + _d.Ambience.ReverbZoneCount + " · lpf closed " + kapali);
         }
 
         // ================================================================== zombi hazırlık sesi
@@ -265,7 +281,34 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SpecialWeaponSahne.Bekle(() => r.AttackCount > attackOnce, 10f, "Saldırı (active) sesi üretilmedi.");
             float aralik = Time.realtimeSinceStartup - windupAt;
             Assert.GreaterOrEqual(aralik, 0.3f, "DEC-067: hazırlık sesi saldırıdan ≥ 0,3 s önce olmalı (" + aralik.ToString("0.00") + " s).");
+            Assert.GreaterOrEqual(r.RiseCount, 1, "Spawn/doğrulma sesi üretilmedi (v003).");
             Debug.Log("[DD-TEST] wp021.zombie windup→attack=" + aralik.ToString("0.00") + "s " + r.Describe());
+        }
+
+        // ================================================================== WP-021B · ADR-018-1 ayak sesi
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator AyakSesi_AnimasyonOlayi_YuzeyeGoreKlip()
+        {
+            AudioEventRouter r = _d.Router;
+            int once = r.FootstepCount;
+            var events = _s.Rig.GetComponentInChildren<DD.Prototype.Characters.CharacterAnimationEvents>(true);
+            if (events == null)
+            {
+                Assert.Ignore("Oyuncu rig'inde CharacterAnimationEvents yok (prosedürel karakter modu).");
+            }
+
+            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootLeft);
+            Assert.AreEqual(once + 1, r.FootstepCount, "foot_l ayak sesi üretmedi.");
+            AudioSoundId beklenen = AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Default);
+            Assert.AreEqual(beklenen, _d.LastPlayed, "Etiketsiz zemin taş ayak sesi çalmalı.");
+            yield return new WaitForSecondsRealtime(0.2f);   // PlayerFootstep MinRetrigger 0.08 s
+            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootRight);
+            Assert.AreEqual(once + 2, r.FootstepCount, "foot_r ayak sesi üretmedi.");
+            Assert.AreEqual(AudioSoundId.FootstepWood, AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Wood));
+            Assert.AreEqual(AudioSoundId.FootstepWater, AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Water));
+            Debug.Log("[DD-TEST] wp021b.footstep " + r.Describe());
         }
 
         // ================================================================== GC 0

@@ -157,6 +157,12 @@ namespace DD.Prototype.Audio
             _router = new AudioEventRouter(PlayResolved);
             _listener = new AudioListenerAnchor(transform);
 
+            // v003 (ADR-021-2): distance darkening and the idle range are measured from the
+            // player-anchored listener, not the camera.
+            System.Func<Vector3> listenerPosition = () => _listener.Transform.position;
+            _world.SetListener(listenerPosition);
+            _router.SetListener(listenerPosition);
+
             _world.Capacity = _configuredBudget;
             _bridge.Transition(AudioSnapshot.Menu, 0f);
         }
@@ -189,6 +195,7 @@ namespace DD.Prototype.Audio
 
             RunAudioEvents.Cue += OnRunCue;
             RunEvents.PhaseChanged += OnPhaseChanged;
+            RunEvents.RunStarted += OnRunStarted;
             RunEvents.RoundStarted += OnRoundStarted;
             RunEvents.RoundCompleted += OnRoundCompleted;
 
@@ -209,6 +216,7 @@ namespace DD.Prototype.Audio
 
             RunAudioEvents.Cue -= OnRunCue;
             RunEvents.PhaseChanged -= OnPhaseChanged;
+            RunEvents.RunStarted -= OnRunStarted;
             RunEvents.RoundStarted -= OnRoundStarted;
             RunEvents.RoundCompleted -= OnRoundCompleted;
 
@@ -421,6 +429,19 @@ namespace DD.Prototype.Audio
                 _armour.Clear();
                 _router.Clear();
             }
+
+            // v003: the screen transition (menu ↔ run ↔ results) has its own cue, on the same
+            // frame as the snapshot change (matrix §8).
+            if (phase == RunPhase.None)
+            {
+                PlayResolved(AudioMixPlan.UiTransition(), Vector3.zero, 1f, 80);
+            }
+        }
+
+        private void OnRunStarted(int runId)
+        {
+            // v003: entering the run is a screen transition (matrix §8).
+            PlayResolved(AudioMixPlan.UiTransition(), Vector3.zero, 1f, 80);
         }
 
         private void OnRoundStarted(int round)

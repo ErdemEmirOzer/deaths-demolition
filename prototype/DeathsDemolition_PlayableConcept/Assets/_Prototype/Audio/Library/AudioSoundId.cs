@@ -139,6 +139,23 @@ namespace DD.Prototype.Audio
         MusicBase = 190,
         MusicPercussion = 191,
         MusicTension = 192,
-        MusicAccent = 193
+        MusicAccent = 193,
+
+        // ---- WP-021 v003 · coverage matrix (EVENT-COVERAGE-MATRIX.md) ------------
+        FootstepStone = 200,
+        FootstepWood = 201,
+        FootstepDirt = 202,
+        FootstepFoliage = 203,
+        FootstepWater = 204,
+        ZombieStepLight = 205,
+        ZombieStepHeavy = 206,
+        ZombieIdle = 207,
+        AttackImpactBody = 208,
+        ZombieStagger = 209,
+        ZombieRise = 210,
+        ArmorPieceDrop = 211,
+        BreakCeramic = 212,
+        AmbDrip = 213,
+        UiTransition = 214
     }
 }

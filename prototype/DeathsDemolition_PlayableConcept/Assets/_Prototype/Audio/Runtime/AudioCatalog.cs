@@ -35,6 +35,13 @@ namespace DD.Prototype.Audio
 
             /// <summary>Origin note: model + job, or "procedural" for a recipe bake shipped as a file.</summary>
             public string Provenance = string.Empty;
+
+            // v003 quality standard stamps (from the manifest; the EditMode gate re-measures).
+            public float NoiseFloorDb;
+            public float DcDb;
+            public int Clipped;
+            public int BitDepth;
+            public string Layers = string.Empty;
         }
 
         [SerializeField] private string _manifestVersion = string.Empty;

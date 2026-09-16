@@ -12,23 +12,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v002
-  _sourceHash: b48248b13b8250cf64cd943c51b9e958eb1532ae141dd159770bb4edee892607
+  _manifestVersion: ap011-v004
+  _sourceHash: c1413c44ed422fc5752a83e665d0ad6dbab37914afd4a05c278ed18029babe55
   _entries:
   - Sound: 10
     Clips:
     - {fileID: 8300000, guid: 5eb175071558b4d7bb40f059605cdaa1, type: 3}
+    - {fileID: 8300000, guid: d9eb6b91e4962452f947ceb0867d0439, type: 3}
     Loop: 0
-    Lufs: -19.5
-    TruePeakDb: -3
+    Lufs: -23.52
+    TruePeakDb: -2
     Provenance: "seed_audio job 0708ccea (1.1 cr) \xB7 rifle_fire"
+    NoiseFloorDb: -62.6
+    DcDb: -160.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: body:rifle_fire.wav + rifle_mech.wav@0.0s -9dB + rifle_tail.wav@0.015s
+      -18dB
   - Sound: 12
     Clips:
     - {fileID: 8300000, guid: 5e08402501225476584576eaf6578708, type: 3}
+    - {fileID: 8300000, guid: 4dcafc4909fbb41ebaff1618dd285661, type: 3}
     Loop: 0
-    Lufs: -18
-    TruePeakDb: -4.44
+    Lufs: -19.54
+    TruePeakDb: -2
     Provenance: "seed_audio job d6a9baae (1.1 cr) \xB7 shotgun_fire"
+    NoiseFloorDb: -66.4
+    DcDb: -103.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: body:shotgun_fire.wav + rifle_mech.wav@0.0s -12dB + shotgun_tail.wav@0.025s
+      -16dB
   - Sound: 13
     Clips:
     - {fileID: 8300000, guid: 46768e1b5739541aa9ce6324dd5fef70, type: 3}
@@ -37,103 +51,173 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 406a3370ed7ca484a8140795d381f9ee, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.01
+    TruePeakDb: -3.59
     Provenance: "seed_audio job 69be70d9 (1.1 cr) \xB7 heavy_fire_burst"
+    NoiseFloorDb: -50.2
+    DcDb: -75.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 14
     Clips:
     - {fileID: 8300000, guid: fdb65137dadc043cb96c3a2d7c534588, type: 3}
     Loop: 0
-    Lufs: -28.8
+    Lufs: -28.69
     TruePeakDb: -1.5
     Provenance: "seed_audio job 579f4aa8 (1.1 cr) \xB7 dry_fire"
+    NoiseFloorDb: -64.4
+    DcDb: -123.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 15
     Clips:
     - {fileID: 8300000, guid: 33113d5d6245e49318563620311c2a8b, type: 3}
     - {fileID: 8300000, guid: 8d14e7b434aea47a2b8fb16cb4885940, type: 3}
     Loop: 0
-    Lufs: -21.95
+    Lufs: -21.96
     TruePeakDb: -1.5
     Provenance: "seed_audio job ea2473ba (1.1 cr) \xB7 reload"
+    NoiseFloorDb: -77.7
+    DcDb: -129.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 16
     Clips:
     - {fileID: 8300000, guid: a1825a360b773485f872d5c9bf48b1c6, type: 3}
     Loop: 0
-    Lufs: -21.35
+    Lufs: -21.38
     TruePeakDb: -1.5
     Provenance: "seed_audio job ea2473ba (1.1 cr) \xB7 reload"
+    NoiseFloorDb: -77.7
+    DcDb: -135.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 17
     Clips:
     - {fileID: 8300000, guid: c6d4d41fbefb24a8ea4c5932373e14e8, type: 3}
     - {fileID: 8300000, guid: 2f50ddbddfd4244b2a068c91bf4e7151, type: 3}
     Loop: 0
-    Lufs: -22.28
+    Lufs: -22.32
     TruePeakDb: -1.5
     Provenance: "seed_audio job ea2473ba (1.1 cr) \xB7 reload"
+    NoiseFloorDb: -77.7
+    DcDb: -124
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 31
     Clips:
     - {fileID: 8300000, guid: 7a37d6d2adf9a4895b928a9d0499e743, type: 3}
     Loop: 0
-    Lufs: -21.29
+    Lufs: -21.11
     TruePeakDb: -1.5
     Provenance: "seed_audio job 2bafd274 (1.1 cr) \xB7 impact_stone"
+    NoiseFloorDb: -81.8
+    DcDb: -158.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 32
     Clips:
     - {fileID: 8300000, guid: e733badb6b16348ee98964e1e95ca453, type: 3}
     Loop: 0
-    Lufs: -18
-    TruePeakDb: -3.85
+    Lufs: -18.11
+    TruePeakDb: -1.5
     Provenance: "seed_audio job c4782640 (1.1 cr) \xB7 impact_wood"
+    NoiseFloorDb: -69
+    DcDb: -91.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 34
     Clips:
     - {fileID: 8300000, guid: 318f132c2d2914d1b9778a3a65a4e77d, type: 3}
     Loop: 0
-    Lufs: -25.43
+    Lufs: -25.63
     TruePeakDb: -1.5
     Provenance: "seed_audio job 5b973c6e (1.1 cr) \xB7 impact_water"
+    NoiseFloorDb: -80.9
+    DcDb: -147.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 35
     Clips:
     - {fileID: 8300000, guid: 8105a90e3bdbd41c8beec763bb53fc6e, type: 3}
     Loop: 0
-    Lufs: -23.09
+    Lufs: -25.01
     TruePeakDb: -1.5
     Provenance: "seed_audio job 21e47529 (1.1 cr) \xB7 impact_metal"
+    NoiseFloorDb: -91.7
+    DcDb: -163.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 36
     Clips:
     - {fileID: 8300000, guid: e752ba6d66f6a45bf846f58282290118, type: 3}
     Loop: 0
-    Lufs: -25.23
+    Lufs: -25.24
     TruePeakDb: -1.5
     Provenance: "seed_audio job 9297d35c (1.1 cr) \xB7 impact_dirt"
+    NoiseFloorDb: -97.3
+    DcDb: -115.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 54
     Clips:
     - {fileID: 8300000, guid: e347cf4d4d9f243689f4c0a995ef7a3d, type: 3}
     - {fileID: 8300000, guid: f9ec214db87054c15af469c1b499d563, type: 3}
     Loop: 0
-    Lufs: -21.17
+    Lufs: -22.3
     TruePeakDb: -1.5
     Provenance: "seed_audio job 07e86d13 (1.1 cr) \xB7 armor_break"
+    NoiseFloorDb: -76.8
+    DcDb: -163.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 72
     Clips:
     - {fileID: 8300000, guid: 36411720c6f7a4cc0bcc6ba59e441f4b, type: 3}
     - {fileID: 8300000, guid: b7d949d8f74ef41be90ec8155e8b1345, type: 3}
     Loop: 0
-    Lufs: -20.72
-    TruePeakDb: -1.5
+    Lufs: -23.27
+    TruePeakDb: -2
     Provenance: "seed_audio job ab26434a (1.1 cr) \xB7 explosion"
+    NoiseFloorDb: -90.9
+    DcDb: -141.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: body:explosion.wav + explosion_tail.wav@0.04s -7dB
   - Sound: 80
     Clips:
     - {fileID: 8300000, guid: ae4028cf7536f463fa78d589afe6a2b6, type: 3}
     Loop: 0
-    Lufs: -18.66
+    Lufs: -18.74
     TruePeakDb: -1.5
     Provenance: "seed_audio job 76dc4186 (1.1 cr) \xB7 sw_spawn_gong"
+    NoiseFloorDb: -68
+    DcDb: -189.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 82
     Clips:
     - {fileID: 8300000, guid: e55806e84680b4793bc2f667f2c9c44c, type: 3}
     Loop: 0
-    Lufs: -18.81
+    Lufs: -18.65
     TruePeakDb: -1.5
     Provenance: "seed_audio job 6203b0a6 (1.1 cr) \xB7 sw_pickup"
+    NoiseFloorDb: -70.2
+    DcDb: -129.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 83
     Clips:
     - {fileID: 8300000, guid: 1dc6c151eb4cb4132ac951fa4810a582, type: 3}
@@ -141,22 +225,37 @@ MonoBehaviour:
     Lufs: -19.79
     TruePeakDb: -1.5
     Provenance: "seed_audio job 64140f17 (1.1 cr) \xB7 sw_final_seconds"
+    NoiseFloorDb: -66.4
+    DcDb: -174.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 110
     Clips:
     - {fileID: 8300000, guid: 50f1d56f310dc4c3fb1139960d5e75ba, type: 3}
     - {fileID: 8300000, guid: 7479816995d20431aa8869d5ac5e8483, type: 3}
     - {fileID: 8300000, guid: 7253334c4efaf41869e1619498df26aa, type: 3}
     Loop: 0
-    Lufs: -25.32
+    Lufs: -24.43
     TruePeakDb: -1.5
     Provenance: "seed_audio job caff083b (1.1 cr) \xB7 player_damage"
+    NoiseFloorDb: -76.2
+    DcDb: -130.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 111
     Clips:
     - {fileID: 8300000, guid: dc5f9e0e3010e4ec59eb3aec7fd6430d, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -5.5
+    TruePeakDb: -5.56
     Provenance: "seed_audio job 4901dd21 (1.1 cr) \xB7 player_death"
+    NoiseFloorDb: -89.3
+    DcDb: -161.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 112
     Clips:
     - {fileID: 8300000, guid: 6a22e68ea0e3f4e04a0dbe0e185d2e69, type: 3}
@@ -167,64 +266,109 @@ MonoBehaviour:
     TruePeakDb: -1.5
     Provenance: "procedural (numpy synth) \u2014 Seed Audio take rejected by sound-designer
       M3"
+    NoiseFloorDb: -120
+    DcDb: -215.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'synth: inharmonic partials + click'
   - Sound: 113
     Clips:
     - {fileID: 8300000, guid: 7b08bfd8839d74e3e90165976b4d172e, type: 3}
     Loop: 0
-    Lufs: -22.54
+    Lufs: -22.6
     TruePeakDb: -1.5
     Provenance: "seed_audio job 0725d4de (1.1 cr) \xB7 countdown_tick"
+    NoiseFloorDb: -94.2
+    DcDb: -134.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 114
     Clips:
     - {fileID: 8300000, guid: 892974551581b42fdb5e43f0dd71509e, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.71
+    TruePeakDb: -3.99
     Provenance: "seed_audio job 66e178bf (1.1 cr) \xB7 round_start"
+    NoiseFloorDb: -72.4
+    DcDb: -158.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 115
     Clips:
     - {fileID: 8300000, guid: 94e081d571581426a935de523dcab96c, type: 3}
     Loop: 0
-    Lufs: -18.82
+    Lufs: -18.88
     TruePeakDb: -1.5
     Provenance: "seed_audio job 81cef8d4 (1.1 cr) \xB7 round_complete"
+    NoiseFloorDb: -84.4
+    DcDb: -144
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 116
     Clips:
     - {fileID: 8300000, guid: 7eb347e337c5d4e82bf9470bce6bd9d5, type: 3}
     Loop: 0
-    Lufs: -25.74
+    Lufs: -25.66
     TruePeakDb: -1.5
     Provenance: "seed_audio job 62653442 (1.1 cr) \xB7 ui_navigate"
+    NoiseFloorDb: -71.1
+    DcDb: -102.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 117
     Clips:
     - {fileID: 8300000, guid: b7ab16f6f49794c3f8e324e0ffd12dac, type: 3}
     Loop: 0
-    Lufs: -23.15
+    Lufs: -23.04
     TruePeakDb: -1.5
     Provenance: "seed_audio job 328dd1e5 (1.1 cr) \xB7 ui_confirm"
+    NoiseFloorDb: -87.4
+    DcDb: -124.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 118
     Clips:
     - {fileID: 8300000, guid: ff1ff6e4985094586a158f91248fa3cd, type: 3}
     - {fileID: 8300000, guid: 580bbfc4dab964befb70143c72d4fc4f, type: 3}
     Loop: 0
-    Lufs: -22.95
+    Lufs: -22.35
     TruePeakDb: -1.5
     Provenance: "seed_audio job ef9d9d26 (1.1 cr) \xB7 ui_back"
+    NoiseFloorDb: -95.2
+    DcDb: -103.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 119
     Clips:
     - {fileID: 8300000, guid: 2f56edda125804d469fbcb5be1b65959, type: 3}
     - {fileID: 8300000, guid: 02341e22f54f64289bf1c4bdd25d2ba5, type: 3}
     Loop: 0
-    Lufs: -21.6
+    Lufs: -21.91
     TruePeakDb: -1.5
     Provenance: "seed_audio job f4d6be7a (1.1 cr) \xB7 ui_denied"
+    NoiseFloorDb: -96.8
+    DcDb: -130.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 120
     Clips:
     - {fileID: 8300000, guid: 8e55a7eee42514ac98ca6ab5c8889038, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -2.47
+    TruePeakDb: -2.49
     Provenance: "seed_audio job cebddf68 (1.1 cr) \xB7 upgrade_purchase"
+    NoiseFloorDb: -87
+    DcDb: -152.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 160
     Clips:
     - {fileID: 8300000, guid: 91fb94290c1dd404cbcc26101fc08ab6, type: 3}
@@ -232,16 +376,26 @@ MonoBehaviour:
     - {fileID: 8300000, guid: ca358293439f642e0b92b681d633a531, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -2.21
+    TruePeakDb: -2.16
     Provenance: "seed_audio job 3e15a675 (1.1 cr) \xB7 zombie_std_windup"
+    NoiseFloorDb: -68.9
+    DcDb: -117
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 161
     Clips:
     - {fileID: 8300000, guid: 069f887d75df748bcb975b5e95b5a069, type: 3}
     - {fileID: 8300000, guid: 51327aea46de7450b8fdc86d951d188b, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.84
+    TruePeakDb: -4.87
     Provenance: "seed_audio job 5cf0fd0e (1.1 cr) \xB7 zombie_std_attack"
+    NoiseFloorDb: -84.4
+    DcDb: -152.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 162
     Clips:
     - {fileID: 8300000, guid: 06bd1bedbb7ab462cabec0a0ae971e5b, type: 3}
@@ -250,8 +404,13 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 63a4d188418dd4e7280e1b71fb97df41, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -2.1
+    TruePeakDb: -2.16
     Provenance: "seed_audio job 856d3ae9 (1.1 cr) \xB7 zombie_std_hit"
+    NoiseFloorDb: -85.8
+    DcDb: -110.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 163
     Clips:
     - {fileID: 8300000, guid: 02be123ad3d6b4d78ae182a3eb2327b1, type: 3}
@@ -261,6 +420,11 @@ MonoBehaviour:
     Lufs: -18
     TruePeakDb: -1.5
     Provenance: "seed_audio job 09af45d1 (1.1 cr) \xB7 zombie_std_death"
+    NoiseFloorDb: -95
+    DcDb: -130.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 164
     Clips:
     - {fileID: 8300000, guid: e21b2443e6e954431a619f7c869fa98a, type: 3}
@@ -268,8 +432,13 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 8166cb79660b34e05b406a9e2a9bb7fe, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -1.88
+    TruePeakDb: -2.45
     Provenance: "seed_audio job 5ec941e7 (1.1 cr) \xB7 zombie_elite_windup_v2"
+    NoiseFloorDb: -72.3
+    DcDb: -100.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 165
     Clips:
     - {fileID: 8300000, guid: e5f9310df7c224b91b531667cf9c11ba, type: 3}
@@ -277,8 +446,13 @@ MonoBehaviour:
     - {fileID: 8300000, guid: fcc9c9e21706641d7839151aca7395da, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -5.78
+    TruePeakDb: -5.88
     Provenance: "seed_audio job 84c7d7ad (1.1 cr) \xB7 zombie_elite_attack_v2"
+    NoiseFloorDb: -75.2
+    DcDb: -137.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 166
     Clips:
     - {fileID: 8300000, guid: 38554823f946941eba09506904cf47f0, type: 3}
@@ -288,6 +462,11 @@ MonoBehaviour:
     Lufs: -18
     TruePeakDb: -1.5
     Provenance: "seed_audio job 964135d9 (1.1 cr) \xB7 zombie_elite_hit"
+    NoiseFloorDb: -76
+    DcDb: -111.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 167
     Clips:
     - {fileID: 8300000, guid: 04d7cdab5434a4d7abb0f3e49a929498, type: 3}
@@ -296,6 +475,11 @@ MonoBehaviour:
     Lufs: -18
     TruePeakDb: -1.5
     Provenance: "seed_audio job 1d6aa31b (1.1 cr) \xB7 zombie_elite_death"
+    NoiseFloorDb: -79.1
+    DcDb: -131.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 168
     Clips:
     - {fileID: 8300000, guid: 9785f0f44fd60499e9c0b4dde661ebbd, type: 3}
@@ -303,8 +487,13 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 3a3fc2ca8bbed4855ae2db2bb50f6867, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.13
+    TruePeakDb: -3.58
     Provenance: "seed_audio job 23caf807 (1.1 cr) \xB7 zombie_ultra_windup"
+    NoiseFloorDb: -84.4
+    DcDb: -102.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 169
     Clips:
     - {fileID: 8300000, guid: 5f1629aa4177d4639be788ac67fecf17, type: 3}
@@ -312,8 +501,13 @@ MonoBehaviour:
     - {fileID: 8300000, guid: d6bcd91a92198499fb6c4b5b47f4eeed, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.27
+    TruePeakDb: -3.52
     Provenance: "seed_audio job 08094651 (1.1 cr) \xB7 zombie_ultra_attack"
+    NoiseFloorDb: -57.2
+    DcDb: -85.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 170
     Clips:
     - {fileID: 8300000, guid: 57ee829f56f754f8a9dad6f8c6119998, type: 3}
@@ -321,31 +515,51 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 4ac117412eb094b4b8e997053994d1bd, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -3.92
+    TruePeakDb: -3.83
     Provenance: "seed_audio job 7bad0868 (1.1 cr) \xB7 zombie_ultra_hit"
+    NoiseFloorDb: -70.5
+    DcDb: -101.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 171
     Clips:
     - {fileID: 8300000, guid: 48f246a5e084d4597ac2cd2c173d986e, type: 3}
     - {fileID: 8300000, guid: 39cfe76aa160b4460a886d4fb56299f2, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -7.02
+    TruePeakDb: -4.99
     Provenance: "seed_audio job 367300ab (1.1 cr) \xB7 zombie_ultra_death"
+    NoiseFloorDb: -70.4
+    DcDb: -138.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 175
     Clips:
     - {fileID: 8300000, guid: 5daa3854ee4874d1c82e602ceadda4d9, type: 3}
     - {fileID: 8300000, guid: d7ed5eab32e1e4051889f18a46f3af81, type: 3}
     Loop: 0
-    Lufs: -25.09
+    Lufs: -25.08
     TruePeakDb: -1.5
     Provenance: "seed_audio job eb31b2c9 (1.1 cr) \xB7 gold_spawn"
+    NoiseFloorDb: -97.4
+    DcDb: -129.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 176
     Clips:
     - {fileID: 8300000, guid: 534608de68c664db28e829a8d3080960, type: 3}
     Loop: 0
-    Lufs: -21.62
+    Lufs: -21.61
     TruePeakDb: -1.5
     Provenance: "seed_audio job e83ace06 (1.1 cr) \xB7 gold_magnet"
+    NoiseFloorDb: -86.8
+    DcDb: -144.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 180
     Clips:
     - {fileID: 8300000, guid: d90072f5f7d674d7a967e1d2fcdaf8d5, type: 3}
@@ -353,6 +567,11 @@ MonoBehaviour:
     Lufs: -27.89
     TruePeakDb: -1.5
     Provenance: "seed_audio job d7d6ce58 (1.1 cr) \xB7 amb_common_after_rain"
+    NoiseFloorDb: -90.1
+    DcDb: -108.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 181
     Clips:
     - {fileID: 8300000, guid: abc3c43b15aeb47f2a015fd5db3b1b66, type: 3}
@@ -360,6 +579,11 @@ MonoBehaviour:
     Lufs: -24.8
     TruePeakDb: -1.5
     Provenance: "seed_audio job e8624013 (1.1 cr) \xB7 amb_region_center"
+    NoiseFloorDb: -83
+    DcDb: -86.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 182
     Clips:
     - {fileID: 8300000, guid: 36596d2802fa34567952d78321249bce, type: 3}
@@ -367,6 +591,11 @@ MonoBehaviour:
     Lufs: -23.41
     TruePeakDb: -1.5
     Provenance: "seed_audio job b8043914 (1.1 cr) \xB7 amb_region_north"
+    NoiseFloorDb: -95.3
+    DcDb: -103.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 183
     Clips:
     - {fileID: 8300000, guid: 4b427ba5495be4e23abf3d69f7df1ebf, type: 3}
@@ -374,6 +603,11 @@ MonoBehaviour:
     Lufs: -23.27
     TruePeakDb: -1.5
     Provenance: "seed_audio job a85a3b11 (1.1 cr) \xB7 amb_region_east"
+    NoiseFloorDb: -88.2
+    DcDb: -112.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 184
     Clips:
     - {fileID: 8300000, guid: 665c7b0d2a4d149d9aeafde6154bbab7, type: 3}
@@ -381,6 +615,11 @@ MonoBehaviour:
     Lufs: -26.19
     TruePeakDb: -1.5
     Provenance: "seed_audio job 8811b02b (1.1 cr) \xB7 amb_region_south"
+    NoiseFloorDb: -90.2
+    DcDb: -101.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 185
     Clips:
     - {fileID: 8300000, guid: 57ce3e911e8094415835bf06eeee2f8c, type: 3}
@@ -388,31 +627,270 @@ MonoBehaviour:
     Lufs: -25.51
     TruePeakDb: -1.5
     Provenance: "seed_audio job 122da4f7 (1.1 cr) \xB7 amb_region_west"
+    NoiseFloorDb: -83.8
+    DcDb: -91.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 190
     Clips:
     - {fileID: 8300000, guid: 3cdd628bc65f44decbada28f7a8874a0, type: 3}
     Loop: 1
-    Lufs: -17.49
+    Lufs: -17.67
     TruePeakDb: -1.5
     Provenance: "seed_audio job 7410c7d5 (1.1 cr) \xB7 music_base"
+    NoiseFloorDb: -76.5
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 191
     Clips:
     - {fileID: 8300000, guid: c17e82de8e5194e55bb67a80805a5965, type: 3}
     Loop: 1
-    Lufs: -19.28
+    Lufs: -19.3
     TruePeakDb: -1.5
     Provenance: "seed_audio job a0266933 (1.1 cr) \xB7 music_percussion"
+    NoiseFloorDb: -47.5
+    DcDb: -194
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 192
     Clips:
     - {fileID: 8300000, guid: 72b3ba29c5f1a42d28ca13d250d0cdfd, type: 3}
     Loop: 1
     Lufs: -16
-    TruePeakDb: -3.49
+    TruePeakDb: -3.34
     Provenance: "seed_audio job 074c5f9a (1.1 cr) \xB7 music_tension"
+    NoiseFloorDb: -85.5
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
   - Sound: 193
     Clips:
     - {fileID: 8300000, guid: 753fc1a7e805d4861a22a0b3c3cfc0b2, type: 3}
     Loop: 1
-    Lufs: -18.87
+    Lufs: -19.66
     TruePeakDb: -1.5
     Provenance: "seed_audio job 067bfdf3 (1.1 cr) \xB7 music_accent"
+    NoiseFloorDb: -57
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 200
+    Clips:
+    - {fileID: 8300000, guid: d593e15c276b64238bd53a6bf965dec6, type: 3}
+    - {fileID: 8300000, guid: 3bfe2901af534428996af54dcb7b2e10, type: 3}
+    - {fileID: 8300000, guid: 67d4064a46aa74053a4176d105586859, type: 3}
+    - {fileID: 8300000, guid: cc5457da6bfe54f028740bd0bc67b7e3, type: 3}
+    Loop: 0
+    Lufs: -24.54
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job d45c80e6 (1.1 cr) \xB7 footstep_stone"
+    NoiseFloorDb: -95.8
+    DcDb: -105.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 201
+    Clips:
+    - {fileID: 8300000, guid: cf870efd87c8e4ee5899f678330a19a2, type: 3}
+    - {fileID: 8300000, guid: c3d842ec3422e4ad5b48a4fe82b91771, type: 3}
+    - {fileID: 8300000, guid: a0b5d695c5faa43b1966f3005b8cc6b8, type: 3}
+    Loop: 0
+    Lufs: -24.65
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job b4f1e853 (1.1 cr) \xB7 footstep_wood"
+    NoiseFloorDb: -78.8
+    DcDb: -112.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 202
+    Clips:
+    - {fileID: 8300000, guid: 11878cdc69bf242cd91dd0b89affedb8, type: 3}
+    - {fileID: 8300000, guid: eaeeed790def54ea68512a41ddd98e43, type: 3}
+    - {fileID: 8300000, guid: 5d46229179f8746dea88ba867a9797cf, type: 3}
+    - {fileID: 8300000, guid: 81cca2a2cbe0d4ed88e09177d9384c5f, type: 3}
+    Loop: 0
+    Lufs: -23.7
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job ba2956e9 (1.1 cr) \xB7 footstep_dirt"
+    NoiseFloorDb: -97.4
+    DcDb: -114.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 203
+    Clips:
+    - {fileID: 8300000, guid: 78803d66f480c44f8a81fcd4e3b99421, type: 3}
+    - {fileID: 8300000, guid: d5bdb804fb4f3472daa6f1fca1528ad2, type: 3}
+    - {fileID: 8300000, guid: 3fdd9bad05bd74117b6928250002ff2f, type: 3}
+    - {fileID: 8300000, guid: 4c8e16d29b3f4402cae0919402efdf86, type: 3}
+    Loop: 0
+    Lufs: -22.28
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job 32924bcc (1.1 cr) \xB7 footstep_foliage"
+    NoiseFloorDb: -93
+    DcDb: -105.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 204
+    Clips:
+    - {fileID: 8300000, guid: b954084da028141bfbc55e517206ef79, type: 3}
+    - {fileID: 8300000, guid: 33bd5c79b3b4e4d0fbe830f5501d5031, type: 3}
+    - {fileID: 8300000, guid: 0fe839361d2454c75aacb392cf039266, type: 3}
+    - {fileID: 8300000, guid: fe63f71df7c604593ae0a5784973ceab, type: 3}
+    Loop: 0
+    Lufs: -20.32
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job 4ed923f8 (1.1 cr) \xB7 footstep_water"
+    NoiseFloorDb: -91
+    DcDb: -112.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 205
+    Clips:
+    - {fileID: 8300000, guid: 278de78d8042b4323a0a471ca5ee9a35, type: 3}
+    - {fileID: 8300000, guid: 5425f53807b9342c0a00a94e46e8658e, type: 3}
+    - {fileID: 8300000, guid: e2d5607b9bda243c2aec1928bf3cdee5, type: 3}
+    - {fileID: 8300000, guid: e955cce78178141b2ad069edd755ef78, type: 3}
+    - {fileID: 8300000, guid: fe4a7337afe9b4498a73c07a9b75a398, type: 3}
+    Loop: 0
+    Lufs: -23.92
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job 7cf6f8df (1.1 cr) \xB7 zombie_step_light"
+    NoiseFloorDb: -97
+    DcDb: -110.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 206
+    Clips:
+    - {fileID: 8300000, guid: 6819c8d6ff9e2486c8d88803fe291a6d, type: 3}
+    - {fileID: 8300000, guid: fa2662267c83e40198be239014a50b67, type: 3}
+    - {fileID: 8300000, guid: 14419478196fa4a57b2d62851979a420, type: 3}
+    - {fileID: 8300000, guid: 153e5324e382d4ecc93d78146ebf1d7b, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job ba702fcf (1.1 cr) \xB7 zombie_step_heavy"
+    NoiseFloorDb: -93.4
+    DcDb: -106.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: body:zombie_step_heavy.wav + impact_dirt.wav@0.0s -14dB
+  - Sound: 207
+    Clips:
+    - {fileID: 8300000, guid: a0351155430d04961aa7a21f30706ac9, type: 3}
+    - {fileID: 8300000, guid: dc6492df00533472c838d5ed1cc7c2a6, type: 3}
+    - {fileID: 8300000, guid: 7881142c45ef84e24ac3984501fef2c2, type: 3}
+    - {fileID: 8300000, guid: bbf343f22c8ac4dac9969d3bde2e9c28, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -4.23
+    Provenance: "seed_audio job 543678fc (1.1 cr) \xB7 zombie_idle"
+    NoiseFloorDb: -94.8
+    DcDb: -141.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 208
+    Clips:
+    - {fileID: 8300000, guid: bdfe2c895d91548d6bcc29a948d4e605, type: 3}
+    - {fileID: 8300000, guid: d593c8e8c9549451e8e50a65598dd64a, type: 3}
+    - {fileID: 8300000, guid: 3eabef86f86f6441da9c8322d082f946, type: 3}
+    Loop: 0
+    Lufs: -21.66
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job d053c855 (1.1 cr) \xB7 attack_impact_body"
+    NoiseFloorDb: -83.7
+    DcDb: -139
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 209
+    Clips:
+    - {fileID: 8300000, guid: 23cead3ce0a0d4c458d293cad8686ffb, type: 3}
+    - {fileID: 8300000, guid: d6045f2b5f9a04e708a2870a59a88eca, type: 3}
+    - {fileID: 8300000, guid: ae496b4fa3bb74cd9950a77e3bd57283, type: 3}
+    Loop: 0
+    Lufs: -18.65
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job eab23b6f (1.1 cr) \xB7 zombie_stagger"
+    NoiseFloorDb: -94.2
+    DcDb: -125.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 210
+    Clips:
+    - {fileID: 8300000, guid: c5075c3333fae4a5ba5ce1fb085c8e61, type: 3}
+    - {fileID: 8300000, guid: 332a97474301744c486b8ba4ddb680b5, type: 3}
+    - {fileID: 8300000, guid: c18c7f54546d5461abce2590fbd93e8b, type: 3}
+    Loop: 0
+    Lufs: -18.34
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job 390c312f (1.1 cr) \xB7 zombie_rise"
+    NoiseFloorDb: -96.4
+    DcDb: -134.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: body:zombie_rise.wav + impact_dirt.wav@0.0s -8dB
+  - Sound: 211
+    Clips:
+    - {fileID: 8300000, guid: bff1c2e3c87394e188c87adf1a6e1db3, type: 3}
+    - {fileID: 8300000, guid: abdd5f5e228774954a91c47ff414df75, type: 3}
+    Loop: 0
+    Lufs: -22.71
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job 3b7303a4 (1.1 cr) \xB7 armor_piece_drop"
+    NoiseFloorDb: -86.5
+    DcDb: -154.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: body:armor_piece_drop.wav + impact_wood.wav@0.0s -9dB
+  - Sound: 212
+    Clips:
+    - {fileID: 8300000, guid: e96841018586c4c8390d880bd74fb64d, type: 3}
+    - {fileID: 8300000, guid: c7c7a6801c59b4510997b6cb73d54861, type: 3}
+    Loop: 0
+    Lufs: -24.8
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job 7c68611a (1.1 cr) \xB7 break_ceramic"
+    NoiseFloorDb: -72.8
+    DcDb: -150.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: body:break_ceramic.wav + impact_stone.wav@0.0s -6dB
+  - Sound: 213
+    Clips:
+    - {fileID: 8300000, guid: ea0e4728d4b6b4326b97b497a6343148, type: 3}
+    - {fileID: 8300000, guid: e128e361a525f4d288c1fa492fe09f9a, type: 3}
+    Loop: 0
+    Lufs: -22.5
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job a763a10c (1.1 cr) \xB7 amb_drip"
+    NoiseFloorDb: -97.2
+    DcDb: -123.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 214
+    Clips:
+    - {fileID: 8300000, guid: e59861aa079a740dda5aa561f37af7d3, type: 3}
+    - {fileID: 8300000, guid: 868ba15e1eb4b4300bbabb7c0803a860, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job 64db0f36 (1.1 cr) \xB7 ui_transition"
+    NoiseFloorDb: -77.6
+    DcDb: -121
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take

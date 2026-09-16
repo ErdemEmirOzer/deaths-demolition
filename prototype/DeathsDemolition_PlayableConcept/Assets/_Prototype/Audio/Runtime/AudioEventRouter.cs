@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
+using DD.Prototype.Characters;
+using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Feedback;
+using DD.Prototype.PlayerSystem;
 using DD.Prototype.Damage;
 using DD.Prototype.Enemies;
 using UnityEngine;
@@ -41,7 +45,27 @@ namespace DD.Prototype.Audio
         {
             public ZombieAttackPhase Phase;
             public float LastHit;
+            public float NextIdle;
+            public bool Seen;
         }
+
+        /// <summary>Idle breath cadence per enemy (seconds), only inside <see cref="IdleRange"/> of the listener. PROTOTYPE-ONLY / INVENTED.</summary>
+        public const float IdleMinSeconds = 6f;
+        public const float IdleMaxSeconds = 14f;
+        public const float IdleRange = 9f;
+
+        /// <summary>Delay between the break cue and the plate landing. PROTOTYPE-ONLY / INVENTED.</summary>
+        public const float PieceDropDelay = 0.42f;
+
+        private struct PendingDrop
+        {
+            public float At;
+            public Vector3 Point;
+        }
+
+        private readonly List<PendingDrop> _drops = new List<PendingDrop>(8);
+        private SynthRandom _rng = new SynthRandom(0x51D3);
+        private System.Func<Vector3> _listenerPosition;
 
         private readonly AudioPlayFunc _play;
         private readonly Dictionary<ZombieEnemy, Tracked> _tracked = new Dictionary<ZombieEnemy, Tracked>(48);
@@ -56,6 +80,26 @@ namespace DD.Prototype.Audio
 
         /// <summary>Hits swallowed by the per-enemy throttle. Test readout.</summary>
         public int HitThrottled { get; private set; }
+        public int IdleCount { get; private set; }
+        public int StaggerCount { get; private set; }
+        public int RiseCount { get; private set; }
+        public int ImpactCount { get; private set; }
+        public int PieceDropCount { get; private set; }
+        public int BreakCount { get; private set; }
+        public int FootstepCount { get; private set; }
+        public int SettleCount { get; private set; }
+
+        /// <summary>WP-021B: foot → surface lookup (down ray from the character root). PROTOTYPE-ONLY / INVENTED.</summary>
+        private const float FootRayUp = 0.4f;
+        private const float FootRayDown = 1.2f;
+        private readonly Dictionary<CharacterAnimationEvents, ZombieEnemy> _animOwner = new Dictionary<CharacterAnimationEvents, ZombieEnemy>(48);
+        private readonly RaycastHit[] _footHits = new RaycastHit[4];
+
+        /// <summary>Where the listener is, for the idle range. Null = origin.</summary>
+        public void SetListener(System.Func<Vector3> position)
+        {
+            _listenerPosition = position;
+        }
 
         public bool Subscribed { get; private set; }
 
@@ -73,6 +117,10 @@ namespace DD.Prototype.Audio
 
             DamageEvents.EnemyDamaged += OnEnemyDamaged;
             DamageEvents.EnemyDied += OnEnemyDied;
+            DamageEvents.PlayerAttacked += OnPlayerAttacked;
+            DamageEvents.ArmorBroken += OnArmorBroken;
+            Props.BreakableProp.Broke += OnPropBroke;
+            CharacterAnimationEvents.Any += OnAnimationEvent;
             Subscribed = true;
         }
 
@@ -85,12 +133,176 @@ namespace DD.Prototype.Audio
 
             DamageEvents.EnemyDamaged -= OnEnemyDamaged;
             DamageEvents.EnemyDied -= OnEnemyDied;
+            DamageEvents.PlayerAttacked -= OnPlayerAttacked;
+            DamageEvents.ArmorBroken -= OnArmorBroken;
+            Props.BreakableProp.Broke -= OnPropBroke;
+            CharacterAnimationEvents.Any -= OnAnimationEvent;
             Subscribed = false;
         }
 
         public void Clear()
         {
             _tracked.Clear();
+            _drops.Clear();
+            _animOwner.Clear();
+        }
+
+        // ------------------------------------------------------------------ WP-021B · ADR-018-1 animation events
+
+        /// <summary>
+        /// The WP-018 contract (foot_l / foot_r / breath / death_end) — the reserved rows of
+        /// the event map. Footsteps take the surface under the character (down ray →
+        /// <see cref="SurfaceResolver"/>; Default reads as stone: the AP-005 paving carries no
+        /// SurfaceTag yet). A zombie's breath uses the idle clip and re-arms the polled idle
+        /// timer so the two paths never double; hit_window/fire/pickup are already covered by
+        /// the polled windup edge and the weapon/Special cues.
+        /// </summary>
+        private void OnAnimationEvent(CharacterAnimationEvents source, CharacterAnimationEvent e)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            switch (e)
+            {
+                case CharacterAnimationEvent.FootLeft:
+                case CharacterAnimationEvent.FootRight:
+                    OnFootstep(source);
+                    break;
+
+                case CharacterAnimationEvent.Breath:
+                {
+                    ZombieEnemy z = OwnerOf(source);
+                    if (z != null && z.IsAlive)
+                    {
+                        _tracked.TryGetValue(z, out Tracked t);
+                        t.NextIdle = Time.unscaledTime + _rng.Range(IdleMinSeconds, IdleMaxSeconds);
+                        _tracked[z] = t;
+                        Vector3 at = z.transform.position + Vector3.up * 1.4f;
+                        if (_play(AudioMixPlan.ZombieIdle(WeightOf(z.Tier)), at, 1f, 10))
+                        {
+                            IdleCount++;
+                        }
+                    }
+
+                    break;
+                }
+
+                case CharacterAnimationEvent.DeathEnd:
+                {
+                    ZombieEnemy z = OwnerOf(source);
+                    EnemyTierWeight w = z != null ? WeightOf(z.Tier) : EnemyTierWeight.Light;
+                    if (_play(AudioMixPlan.BodySettle(w), source.transform.position, 1f, 25))
+                    {
+                        SettleCount++;
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        private ZombieEnemy OwnerOf(CharacterAnimationEvents source)
+        {
+            if (!_animOwner.TryGetValue(source, out ZombieEnemy z))
+            {
+                z = source.GetComponentInParent<ZombieEnemy>();
+                _animOwner[source] = z;
+            }
+
+            return z;
+        }
+
+        private void OnFootstep(CharacterAnimationEvents source)
+        {
+            Vector3 root = source.transform.position;
+            SurfaceKind surface = SurfaceUnder(root);
+            ZombieEnemy z = OwnerOf(source);
+
+            if (z != null)
+            {
+                if (!z.IsAlive)
+                {
+                    return;
+                }
+
+                EnemyTierWeight w = WeightOf(z.Tier);
+                AudioSoundId sound = w == EnemyTierWeight.Heavy ? AudioSoundId.ZombieStepHeavy : AudioSoundId.ZombieStepLight;
+                if (_play(AudioMixPlan.ZombieFootstep(sound, w), root, 1f, 10))
+                {
+                    FootstepCount++;
+                }
+
+                return;
+            }
+
+            PlayerRig rig = PlayerRegistry.Primary;
+            bool player = rig != null && source.transform.IsChildOf(rig.transform);
+            if (!player)
+            {
+                return;
+            }
+
+            bool running = rig.Motor != null && rig.Motor.Speed01 > 0.7f;
+            if (_play(AudioMixPlan.PlayerFootstep(FootstepFor(surface), running), root, 1f, 20))
+            {
+                FootstepCount++;
+            }
+        }
+
+        private SurfaceKind SurfaceUnder(Vector3 root)
+        {
+            int mask = (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
+            int n = Physics.RaycastNonAlloc(root + Vector3.up * FootRayUp, Vector3.down, _footHits, FootRayDown, mask, QueryTriggerInteraction.Ignore);
+            float best = float.MaxValue; SurfaceKind kind = SurfaceKind.Default;
+            for (int i = 0; i < n; i++)
+            {
+                if (_footHits[i].distance < best)
+                {
+                    best = _footHits[i].distance;
+                    kind = SurfaceResolver.Resolve(_footHits[i].collider);
+                }
+            }
+
+            return kind;
+        }
+
+        /// <summary>Surface → player footstep clip. Untagged ground is the courtyard's paving (stone).</summary>
+        public static AudioSoundId FootstepFor(SurfaceKind surface)
+        {
+            switch (surface)
+            {
+                case SurfaceKind.Wood: return AudioSoundId.FootstepWood;
+                case SurfaceKind.Dirt: return AudioSoundId.FootstepDirt;
+                case SurfaceKind.Foliage: return AudioSoundId.FootstepFoliage;
+                case SurfaceKind.Water: return AudioSoundId.FootstepWater;
+                default: return AudioSoundId.FootstepStone;
+            }
+        }
+
+        // ------------------------------------------------------------------ v003 rows
+
+        private void OnPlayerAttacked(EnemyAttackLandedInfo info)
+        {
+            if (_play(AudioMixPlan.AttackImpactBody(), info.Point, 1f, 90))
+            {
+                ImpactCount++;
+            }
+        }
+
+        private void OnArmorBroken(ArmorBreakInfo info)
+        {
+            // The break itself is the tier cue (WP-006 N1); this is only the plate landing.
+            _drops.Add(new PendingDrop { At = Time.unscaledTime + PieceDropDelay, Point = info.Point });
+        }
+
+        private void OnPropBroke(Props.BreakableProp prop, Vector3 point, Vector3 direction)
+        {
+            if (_play(AudioMixPlan.BreakCeramic(), point, 1f, 60))
+            {
+                BreakCount++;
+            }
         }
 
         // ------------------------------------------------------------------ events
@@ -121,6 +333,11 @@ namespace DD.Prototype.Audio
             {
                 HitCount++;
             }
+
+            if (info.CausedStagger && _play(AudioMixPlan.ZombieStagger(weight), info.Point, 1f, 45))
+            {
+                StaggerCount++;
+            }
         }
 
         private void OnEnemyDied(EnemyDeathInfo info)
@@ -143,6 +360,23 @@ namespace DD.Prototype.Audio
         /// <summary>Once per frame from the director. Detects attack-phase edges on the live list.</summary>
         public void Tick()
         {
+            float now = Time.unscaledTime;
+            Vector3 listener = _listenerPosition != null ? _listenerPosition() : Vector3.zero;
+
+            // Plates landing after their break.
+            for (int i = _drops.Count - 1; i >= 0; i--)
+            {
+                if (_drops[i].At <= now)
+                {
+                    if (_play(AudioMixPlan.ArmorPieceDrop(), _drops[i].Point, 1f, 20))
+                    {
+                        PieceDropCount++;
+                    }
+
+                    _drops.RemoveAt(i);
+                }
+            }
+
             IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
             for (int i = 0; i < live.Count; i++)
             {
@@ -152,10 +386,36 @@ namespace DD.Prototype.Audio
                     continue;
                 }
 
-                ZombieAttackPhase phase = z.AttackPhase;
                 _tracked.TryGetValue(z, out Tracked t);
+
+                if (!t.Seen)
+                {
+                    // First frame alive in this life: the rise from the ground.
+                    t.Seen = true;
+                    t.NextIdle = now + _rng.Range(IdleMinSeconds, IdleMaxSeconds);
+                    EnemyTierWeight w = WeightOf(z.Tier);
+                    if (_play(AudioMixPlan.ZombieRise(w), z.transform.position, 1f, 55))
+                    {
+                        RiseCount++;
+                    }
+                }
+                else if (now >= t.NextIdle)
+                {
+                    t.NextIdle = now + _rng.Range(IdleMinSeconds, IdleMaxSeconds);
+                    Vector3 at = z.transform.position + Vector3.up * 1.4f;
+                    if (z.AttackPhase == ZombieAttackPhase.None && (at - listener).sqrMagnitude <= IdleRange * IdleRange)
+                    {
+                        if (_play(AudioMixPlan.ZombieIdle(WeightOf(z.Tier)), at, 1f, 10))
+                        {
+                            IdleCount++;
+                        }
+                    }
+                }
+
+                ZombieAttackPhase phase = z.AttackPhase;
                 if (phase == t.Phase)
                 {
+                    _tracked[z] = t;
                     continue;
                 }
 
@@ -207,8 +467,8 @@ namespace DD.Prototype.Audio
 
         public string Describe()
         {
-            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · tracked {5}",
-                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, _tracked.Count);
+            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · tracked {13}",
+                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count);
         }
     }
 }

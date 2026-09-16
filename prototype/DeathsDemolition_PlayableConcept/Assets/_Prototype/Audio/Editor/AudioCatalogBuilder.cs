@@ -30,6 +30,10 @@ namespace DD.Prototype.Audio.EditorTools
         public const string RegionMapPath = "Assets/_Prototype/Audio/Resources/DD_AudioRegionMap.asset";
         public const string PlacementPath = "Assets/_Art/Environment/World/AP005_Placement.asset";
 
+        /// <summary>Vorbis quality (Unity 0–1 ≈ ogg q0–q10 / 10): v003 standard q8 SFX, q7 loops.</summary>
+        public const float SfxQuality = 0.8f;
+        public const float MusicQuality = 0.7f;
+
         [Serializable]
         public sealed class ManifestEntry
         {
@@ -39,6 +43,19 @@ namespace DD.Prototype.Audio.EditorTools
             public bool loop;
             public float lufs;
             public float truePeakDb;
+
+            /// <summary>v003: quietest 100 ms window of file 1 (dBFS), DC offset (dBFS), clipped samples over all files, source bit depth.</summary>
+            public float noiseFloorDb;
+            public float dcDb;
+            public int clipped;
+            public int bitDepth;
+            public bool continuous;
+            public float endSilenceDb;
+
+            /// <summary>v003: the entry's own loudness target and true-peak ceiling (design level / codec headroom).</summary>
+            public float targetLufs;
+            public float ceilingDbtp;
+            public string layers;
             public string bus;
             public bool spatial;
             public string provenance;
@@ -52,6 +69,8 @@ namespace DD.Prototype.Audio.EditorTools
             public float ambienceLufs = -20f;
             public float truePeakMax = -1f;
             public float toleranceLu = 1.5f;
+            public float noiseFloorMaxDb = -60f;
+            public int bitDepth = 24;
         }
 
         [Serializable]
@@ -159,6 +178,11 @@ namespace DD.Prototype.Audio.EditorTools
                     Loop = m.loop,
                     Lufs = m.lufs,
                     TruePeakDb = m.truePeakDb,
+                    NoiseFloorDb = m.noiseFloorDb,
+                    DcDb = m.dcDb,
+                    Clipped = m.clipped,
+                    BitDepth = m.bitDepth,
+                    Layers = m.layers ?? string.Empty,
                     Provenance = m.provenance ?? string.Empty
                 });
             }
@@ -191,10 +215,11 @@ namespace DD.Prototype.Audio.EditorTools
             AudioClip probe = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
             bool longClip = probe != null && probe.length >= 8f;
 
+            // v003 quality standard (user directive 2026-09-16): OGG q8 for SFX, q7 for music/ambience loops.
             var wanted = new AudioImporterSampleSettings
             {
                 compressionFormat = AudioCompressionFormat.Vorbis,
-                quality = loop || longClip ? 0.7f : 0.6f,
+                quality = loop || longClip ? MusicQuality : SfxQuality,
                 loadType = longClip ? AudioClipLoadType.Streaming : AudioClipLoadType.DecompressOnLoad,
                 sampleRateSetting = AudioSampleRateSetting.PreserveSampleRate,
                 preloadAudioData = !longClip

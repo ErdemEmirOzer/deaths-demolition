@@ -67,7 +67,7 @@ namespace DD.Prototype.Audio
             _scanDirty = true;
         }
 
-        /// <summary>Call from LateUpdate: after the player moved and the camera followed.</summary>
+        /// <summary>Driven by the director's LateUpdate, after the player moved and the camera followed.</summary>
         public void LateTick()
         {
             if (_scanDirty)

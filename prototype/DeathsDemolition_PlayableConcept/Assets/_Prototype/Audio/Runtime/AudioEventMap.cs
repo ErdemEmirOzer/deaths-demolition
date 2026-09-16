@@ -170,10 +170,28 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Music, "Music.tension", AudioSoundId.MusicTension, A, false, "MusicIntensity ≥ 0.45"),
             B(AudioEventSource.Music, "Music.accent", AudioSoundId.MusicAccent, A, false, "Elite/Ultra alive or Special Weapon active"),
 
-            // ---- reserved for WP-018 (ADR-018-1) -------------------------------------
-            B(AudioEventSource.Animation, "anim.footstep", AudioSoundId.None, I, true, "WP-018: bind to surface set when the event lands", true),
-            B(AudioEventSource.Animation, "anim.hit_window", AudioSoundId.None, T, true, "WP-018: replaces the polled windup/active edge", true),
-            B(AudioEventSource.Animation, "anim.death_end", AudioSoundId.None, T, true, "WP-018: body-settle layer", true)
+            // ---- v003 · coverage matrix rows (EVENT-COVERAGE-MATRIX.md) --------------
+            B(AudioEventSource.Damage, "DamageEvents.PlayerAttacked→claw", AudioSoundId.AttackImpactBody, T, true, "the claw landing (3D, from the zombie); PlayerDamage is the 2D grunt"),
+            B(AudioEventSource.Damage, "DamageEvents.EnemyDamaged.CausedStagger", AudioSoundId.ZombieStagger, T, true, "heavy stagger grunt + stumble"),
+            B(AudioEventSource.Damage, "DamageEvents.ArmorBroken+0.42s", AudioSoundId.ArmorPieceDrop, I, true, "plate landing after the break cue"),
+            B(AudioEventSource.Polled, "ZombieEnemy.Live→first frame", AudioSoundId.ZombieRise, T, true, "spawn / rise from the ground"),
+            B(AudioEventSource.Polled, "ZombieEnemy idle 6–14 s ≤ 9 m", AudioSoundId.ZombieIdle, T, true, "near-range breath/growl, AttackPhase None only"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke", AudioSoundId.BreakCeramic, I, true, "AP-003B small_breakable (ceramic)"),
+            B(AudioEventSource.Ambience, "scatter.drip", AudioSoundId.AmbDrip, A, true, "after-rain single drops in the scatter ring"),
+            B(AudioEventSource.Run, "RunEvents.RunStarted / Phase→None", AudioSoundId.UiTransition, U, false, "screen transition, same frame as the mixer snapshot"),
+
+            // ---- WP-018 (ADR-018-1) animation events — bound in WP-021B via CharacterAnimationEvents.Any
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, surface stone", AudioSoundId.FootstepStone, W, true, "down ray → SurfaceResolver; untagged (AP-005 paving) reads as stone"),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, surface wood", AudioSoundId.FootstepWood, W, true, "veranda / bridge planks"),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, surface dirt", AudioSoundId.FootstepDirt, W, true, "earth / gravel"),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, surface foliage", AudioSoundId.FootstepFoliage, W, true, "grass / shrubs"),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, surface water", AudioSoundId.FootstepWater, W, true, "shore / shallow water"),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → zombie, Standard/Special", AudioSoundId.ZombieStepLight, I, true, "fit A/light tiers"),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → zombie, Elite/Ultra", AudioSoundId.ZombieStepHeavy, I, true, "heavy tiers (−1 st)"),
+            B(AudioEventSource.Animation, "anim.breath", AudioSoundId.ZombieIdle, T, true, "re-arms the polled idle timer (no double)"),
+            B(AudioEventSource.Animation, "anim.death_end", AudioSoundId.ZombieStepHeavy, I, true, "body settle layer (pitch 0.8)"),
+            B(AudioEventSource.Animation, "anim.hit_window_start", AudioSoundId.ZombieAttackStandard, T, true, "covered by the polled AttackPhase→Active edge (same frame); no second cue", true),
+            B(AudioEventSource.Animation, "anim.fire / anim.pickup / anim.rise_end / anim.stagger_end", AudioSoundId.None, T, false, "covered by weapon / Special / rise / stagger cues from their own events", true)
         };
 
         private static AudioEventBinding B(AudioEventSource s, string e, AudioSoundId id, AudioBus bus, bool spatial, string note, bool reserved = false)

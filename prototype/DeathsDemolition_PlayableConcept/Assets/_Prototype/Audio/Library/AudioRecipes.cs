@@ -209,6 +209,23 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.MusicTension: return BuildTensionBed(true, ref rng);
                 case AudioSoundId.MusicAccent: return BuildTensionBed(true, ref rng);
 
+                // v003 matrix ids - fallbacks by family (same rule as above).
+                case AudioSoundId.FootstepStone: return BuildImpactStone(ref rng);
+                case AudioSoundId.FootstepWood: return BuildImpactWood(ref rng);
+                case AudioSoundId.FootstepDirt: return BuildImpactDirt(ref rng);
+                case AudioSoundId.FootstepFoliage: return BuildImpactFoliage(ref rng);
+                case AudioSoundId.FootstepWater: return BuildImpactWater(ref rng);
+                case AudioSoundId.ZombieStepLight:
+                case AudioSoundId.ZombieStepHeavy: return BuildImpactDirt(ref rng);
+                case AudioSoundId.ZombieIdle: return BuildTensionBed(false, ref rng);
+                case AudioSoundId.AttackImpactBody: return BuildFleshHit(false, ref rng);
+                case AudioSoundId.ZombieStagger: return BuildFleshHit(false, ref rng);
+                case AudioSoundId.ZombieRise: return BuildStoneSettle(ref rng);
+                case AudioSoundId.ArmorPieceDrop: return BuildWoodCreak(ref rng);
+                case AudioSoundId.BreakCeramic: return BuildImpactStone(ref rng);
+                case AudioSoundId.AmbDrip: return BuildImpactWater(ref rng);
+                case AudioSoundId.UiTransition: return BuildUiTone(true, ref rng);
+
                 default:
                     return BuildImpactDefault(ref rng);
             }

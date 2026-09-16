@@ -51,7 +51,9 @@ namespace DD.Prototype.Tests.EditMode.Audio
         {
             Assert.AreEqual(2, AudioEventMap.For(AudioEventSource.Player).Count, "Oyuncu olayı (hasar, ölüm)");
             Assert.AreEqual(4, AudioEventMap.For(AudioEventSource.Ui).Count, "UI (navigate/confirm/back/denied)");
-            Assert.AreEqual(6, AudioEventMap.For(AudioEventSource.Ambience).Count, "5 bölge + ortak katman (DEC-066)");
+            int bed = 0;
+            foreach (AudioEventBinding b in AudioEventMap.For(AudioEventSource.Ambience)) { if (b.Event.StartsWith("Region.")) bed++; }
+            Assert.AreEqual(6, bed, "5 bölge + ortak katman (DEC-066)");
             Assert.AreEqual(4, AudioEventMap.For(AudioEventSource.Music).Count, "4 müzik katmanı (DEC-065)");
             Assert.GreaterOrEqual(AudioEventMap.For(AudioEventSource.Polled).Count + AudioEventMap.For(AudioEventSource.Damage).Count, 4,
                 "Zombi vokal seti: hazırlık, saldırı, hit, ölüm (DEC-067)");
@@ -148,7 +150,7 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 foreach (AudioClip c in e.Clips) Assert.IsNotNull(c, "Null klip: " + e.Sound);
                 dosya += e.Clips.Length;
                 string ad = e.Sound.ToString();
-                if (ad.StartsWith("Amb")) amb++;
+                if (ad.StartsWith("Amb") && e.Loop) amb++;
                 else if (ad.StartsWith("Music")) muzik++;
                 else sfx += e.Clips.Length;
             }
@@ -172,21 +174,28 @@ namespace DD.Prototype.Tests.EditMode.Audio
             float tol = manifest.standard.toleranceLu;
             var hatalar = new List<string>();
             int olculen = 0;
+            var girdi = new Dictionary<string, AudioCatalogBuilder.ManifestEntry>();
+            foreach (AudioCatalogBuilder.ManifestEntry m in manifest.entries) girdi[m.sound] = m;
             foreach (AudioCatalog.Entry e in katalog.Entries)
             {
-                float hedef = Hedef(e.Sound, manifest.standard);
-                // Standart: hedef ± tolerans; ya da tepe sınırında (-1 dBTP) ve hedefin ALTINDA.
-                // Kısa transientler (darbe, tık, damla) -1 dBTP tavanında -18 LUFS'a
-                // ulaşamaz - tepe kısıtı seviyeyi belirler, bu doğru davranıştır.
-                bool tepeSinirinda = e.TruePeakDb >= manifest.standard.truePeakMax - 0.15f && e.Lufs <= hedef + 0.1f;
+                // v003: girdinin kendi hedefi (tasarım seviyesi: -18 SFX, -20 ambiyans/ayak/idle, -16 müzik)
+                // ve tavanı (-1,5; silahlar -2/-3 kodek payı). Hedef standart kümenin dışına çıkamaz.
+                AudioCatalogBuilder.ManifestEntry m = girdi[e.Sound.ToString()];
+                float hedef = m.targetLufs != 0f ? m.targetLufs : Hedef(e.Sound, manifest.standard);
+                float tavan = m.ceilingDbtp != 0f ? m.ceilingDbtp : manifest.standard.truePeakMax;
+                if (hedef < -22.1f || hedef > -15.9f) hatalar.Add($"{e.Sound}: hedef {hedef} standart kümede değil (-16…-22)");
+                if (tavan > manifest.standard.truePeakMax + 0.01f) hatalar.Add($"{e.Sound}: tavan {tavan} dBTP > standart {manifest.standard.truePeakMax}");
+                // Standart: hedef ± tolerans; ya da tavana dayanmış ve hedefin ALTINDA (kısa transientler
+                // tavanda hedefe ulaşamaz - tepe kısıtı seviyeyi belirler, bu doğru davranıştır).
+                bool tepeSinirinda = e.TruePeakDb >= tavan - 0.15f && e.Lufs <= hedef + 0.1f;
                 if (Mathf.Abs(e.Lufs - hedef) > tol && !tepeSinirinda)
                 {
-                    hatalar.Add($"{e.Sound}: manifest {e.Lufs:0.0} LUFS, hedef {hedef:0.0} ± {tol} (tepe {e.TruePeakDb:0.0})");
+                    hatalar.Add($"{e.Sound}: manifest {e.Lufs:0.0} LUFS, hedef {hedef:0.0} ± {tol} (tepe {e.TruePeakDb:0.0}, tavan {tavan})");
                 }
 
-                if (e.TruePeakDb > manifest.standard.truePeakMax + 0.1f)
+                if (e.TruePeakDb > tavan + 0.1f)
                 {
-                    hatalar.Add($"{e.Sound}: true peak {e.TruePeakDb:0.0} dBTP > {manifest.standard.truePeakMax}");
+                    hatalar.Add($"{e.Sound}: true peak {e.TruePeakDb:0.0} dBTP > {tavan}");
                 }
 
                 // Yeniden ölçüm: sevk edilen (Vorbis) klip manifest damgasını ± 2 LU içinde tutmalı.
@@ -241,6 +250,102 @@ namespace DD.Prototype.Tests.EditMode.Audio
                     return s.ambienceLufs;
                 default:
                     return s.sfxLufs;
+            }
+        }
+
+        // ------------------------------------------------------------------ v003 üst kalite kapısı
+
+        /// <summary>
+        /// Kullanıcı direktifi (2026-09-16): kaynak 48 kHz / 24-bit, gürültü tabanı ≤ −60 dBFS,
+        /// klip 0, DC 0, sevk OGG q8 (SFX) / q7 (loop). Manifest damgaları + kaynak WAV başlığı
+        /// + importer ayarı + sevk klibinde yeniden ölçüm (en sessiz 100 ms penceresi).
+        /// </summary>
+        [Test]
+        public void UstKalite_24BitKaynak_GurultuTabani_Klip_DC_ImporterKalitesi()
+        {
+            AudioCatalogBuilder.Manifest manifest = AudioCatalogBuilder.LoadManifest();
+            Assert.IsNotNull(manifest, "manifest yok");
+            AudioCatalogBuilder.BuildCatalog();
+            var katalog = AssetDatabase.LoadAssetAtPath<AudioCatalog>(AudioCatalogBuilder.CatalogPath);
+            Assert.IsNotNull(katalog);
+
+            var hatalar = new List<string>();
+            int olculen = 0;
+            foreach (AudioCatalogBuilder.ManifestEntry m in manifest.entries)
+            {
+                if (m.bitDepth != manifest.standard.bitDepth) hatalar.Add($"{m.sound}: kaynak {m.bitDepth}-bit ≠ {manifest.standard.bitDepth}");
+                if (m.clipped > 0) hatalar.Add($"{m.sound}: {m.clipped} klip örneği");
+                if (m.dcDb > -60f) hatalar.Add($"{m.sound}: DC {m.dcDb:0.0} dBFS");
+                // Gürültü tabanı = ham take'in en sessiz 100 ms'i (kaynak arka planı); sürekli malzeme (burst, loop) muaf.
+                if (!m.continuous && m.noiseFloorDb > manifest.standard.noiseFloorMaxDb) hatalar.Add($"{m.sound}: kaynak gürültü tabanı {m.noiseFloorDb:0.0} dBFS > {manifest.standard.noiseFloorMaxDb}");
+                if (!m.loop && m.endSilenceDb > -70f) hatalar.Add($"{m.sound}: dosya sonu sessiz değil ({m.endSilenceDb:0.0} dBFS)");
+
+                for (int f = 0; f < m.files.Length; f++)
+                {
+                    string path = AudioCatalogBuilder.AudioRoot + m.files[f];
+                    int bits = WavBitDepth(Path.GetFullPath(path));
+                    if (bits != manifest.standard.bitDepth) hatalar.Add($"{m.files[f]}: WAV başlığı {bits}-bit");
+                    var importer = AssetImporter.GetAtPath(path) as AudioImporter;
+                    if (importer == null) { hatalar.Add($"{m.files[f]}: importer yok"); continue; }
+                    AudioImporterSampleSettings ss = importer.defaultSampleSettings;
+                    float beklenen = ss.loadType == AudioClipLoadType.Streaming || m.loop ? AudioCatalogBuilder.MusicQuality : AudioCatalogBuilder.SfxQuality;
+                    if (ss.compressionFormat != AudioCompressionFormat.Vorbis || !Mathf.Approximately(ss.quality, beklenen))
+                        hatalar.Add($"{m.files[f]}: importer {ss.compressionFormat} q{ss.quality:0.00} ≠ Vorbis q{beklenen:0.00}");
+                }
+            }
+
+            // Sevk klibinde yeniden ölçüm (Vorbis sonrası): tek-atışlarda en sessiz 100 ms ≤ −54 dBFS
+            // (kodek tabanı için 6 dB pay), klip yok (örnek tepe < 0 dBFS).
+            foreach (AudioCatalog.Entry e in katalog.Entries)
+            {
+                AudioClip clip = e.Clips[0];
+                if (e.Loop || clip.loadType == AudioClipLoadType.Streaming || clip.length > 12f) continue;
+                clip.LoadAudioData();
+                float[] data = new float[clip.samples * clip.channels];
+                clip.GetData(data, 0);
+                float[] mono = LoudnessMeter.ToMono(data, clip.channels);
+                int w = clip.frequency / 10; int n = mono.Length / w; float minRms = float.MaxValue; float peak = 0f; double sum = 0;
+                for (int i = 0; i < mono.Length; i++) { float a = Mathf.Abs(mono[i]); if (a > peak) peak = a; sum += mono[i]; }
+                for (int b = 0; b < n; b++) { double acc = 0; for (int i = 0; i < w; i++) { float v = mono[b * w + i]; acc += v * v; } float rms = Mathf.Sqrt((float)(acc / w)); if (rms < minRms) minRms = rms; }
+                olculen++;
+                float floorDb = 20f * Mathf.Log10(minRms + 1e-9f);
+                // Sevk klibinde: son 10 ms sessiz (kuyruk kapısı) ve klip yok; en sessiz pencere raporlanır.
+                float endRms = 0f; int tailN = Mathf.Min(mono.Length, clip.frequency / 100);
+                for (int i = mono.Length - tailN; i < mono.Length; i++) endRms += mono[i] * mono[i];
+                float endDb = 20f * Mathf.Log10(Mathf.Sqrt(endRms / Mathf.Max(1, tailN)) + 1e-9f);
+                if (endDb > -60f) hatalar.Add($"{e.Sound}: sevk klibi sonu sessiz değil {endDb:0.0} dBFS ({clip.name})");
+                if (floorDb > 0f) hatalar.Add($"{e.Sound}: ölçüm hatası ({clip.name})");
+                if (peak >= 0.999f) hatalar.Add($"{e.Sound}: sevk klibi klip ({clip.name})");
+                float dc = 20f * Mathf.Log10(Mathf.Abs((float)(sum / mono.Length)) + 1e-9f);
+                if (dc > -50f) hatalar.Add($"{e.Sound}: sevk klibi DC {dc:0.0} dBFS ({clip.name})");
+            }
+
+            Assert.Greater(olculen, 30);
+            Assert.IsEmpty(hatalar, "Üst kalite kapısı (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
+            Debug.Log("[DD-TEST] wp021.quality entries=" + manifest.entries.Length + " remeasured=" + olculen + " bitDepth=" + manifest.standard.bitDepth + " floorMax=" + manifest.standard.noiseFloorMaxDb + " q=" + AudioCatalogBuilder.SfxQuality + "/" + AudioCatalogBuilder.MusicQuality);
+        }
+
+        private static int WavBitDepth(string path)
+        {
+            using (var fs = File.OpenRead(path))
+            using (var br = new BinaryReader(fs))
+            {
+                if (fs.Length < 36) return 0;
+                fs.Seek(12, SeekOrigin.Begin);
+                while (fs.Position + 8 <= fs.Length)
+                {
+                    string id = new string(br.ReadChars(4));
+                    int size = br.ReadInt32();
+                    if (id == "fmt ")
+                    {
+                        fs.Seek(14, SeekOrigin.Current); // format, channels, rate, byte rate, block align
+                        return br.ReadInt16();
+                    }
+
+                    fs.Seek(size + (size & 1), SeekOrigin.Current);
+                }
+
+                return 0;
             }
         }
 

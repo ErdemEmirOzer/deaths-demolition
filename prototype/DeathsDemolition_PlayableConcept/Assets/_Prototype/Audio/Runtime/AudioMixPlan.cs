@@ -482,6 +482,98 @@ namespace DD.Prototype.Audio
             return p;
         }
 
+        // ---- WP-021 v003 · coverage matrix rows -------------------------------
+
+        /// <summary>Near-range idle breath/growl. Ambience-priced: never competes with combat.</summary>
+        public static AudioPlacement ZombieIdle(EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(AudioSoundId.ZombieIdle, weight == EnemyTierWeight.Heavy ? 0.55f : 0.42f, 18f, 3, 0.4f);
+            p.Spatial = 1f;
+            p.PitchJitter = 0.08f;
+            p.Pitch = weight == EnemyTierWeight.Heavy ? 0.86f : 1f;
+            return p;
+        }
+
+        /// <summary>The claw landing on the player. Heard from the player's side: near, not fully positional.</summary>
+        public static AudioPlacement AttackImpactBody()
+        {
+            AudioPlacement p = Target(AudioSoundId.AttackImpactBody, 0.85f, 90f, 2, 0.05f);
+            p.Spatial = 0.4f;
+            p.PitchJitter = 0.06f;
+            return p;
+        }
+
+        public static AudioPlacement ZombieStagger(EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(AudioSoundId.ZombieStagger, weight == EnemyTierWeight.Heavy ? 0.75f : 0.6f, 45f, 3, 0.08f);
+            p.Spatial = 0.9f;
+            p.PitchJitter = 0.06f;
+            p.Pitch = weight == EnemyTierWeight.Heavy ? 0.9f : 1f;
+            return p;
+        }
+
+        /// <summary>Spawn / rise from the ground. World information, priced like a death.</summary>
+        public static AudioPlacement ZombieRise(EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(AudioSoundId.ZombieRise, weight == EnemyTierWeight.Heavy ? 0.8f : 0.65f, 62f, 4, 0.1f);
+            p.Spatial = 1f;
+            p.PitchJitter = 0.07f;
+            p.Pitch = weight == EnemyTierWeight.Heavy ? 0.88f : 1f;
+            return p;
+        }
+
+        /// <summary>The broken plate landing, ~0.4 s after the break cue.</summary>
+        public static AudioPlacement ArmorPieceDrop()
+        {
+            AudioPlacement p = Impact(AudioSoundId.ArmorPieceDrop, 0.6f, 28f, 3);
+            p.Spatial = 1f;
+            return p;
+        }
+
+        public static AudioPlacement BreakCeramic()
+        {
+            AudioPlacement p = Impact(AudioSoundId.BreakCeramic, 0.85f, 58f, 3);
+            p.Spatial = 1f;
+            p.MinRetrigger = 0.05f;
+            return p;
+        }
+
+        /// <summary>Screen transition (menu ↔ run ↔ results).</summary>
+        public static AudioPlacement UiTransition()
+        {
+            return Interface(AudioSoundId.UiTransition, 0.55f, 85f, 0f, 1, 0.3f);
+        }
+
+        /// <summary>WP-021B (ADR-018-1 foot_l/foot_r): the player's own step - near, mostly dry, the cheapest player sound.</summary>
+        public static AudioPlacement PlayerFootstep(AudioSoundId sound, bool running)
+        {
+            AudioPlacement p = Weapon(sound, running ? 0.42f : 0.32f, 24f, 2, 0.08f);
+            p.Spatial = 0.3f;
+            p.PitchJitter = 0.06f;
+            return p;
+        }
+
+        /// <summary>WP-021B: a zombie's step - world, positional, priced under a flesh hit.</summary>
+        public static AudioPlacement ZombieFootstep(AudioSoundId sound, EnemyTierWeight weight)
+        {
+            AudioPlacement p = Impact(sound, weight == EnemyTierWeight.Heavy ? 0.5f : 0.36f, 16f, 6);
+            p.Spatial = 1f;
+            p.MinRetrigger = 0.04f;
+            p.PitchJitter = 0.07f;
+            p.Pitch = weight == EnemyTierWeight.Heavy ? 0.92f : 1f;
+            return p;
+        }
+
+        /// <summary>WP-021B (death_end): the body settling on the ground - the heavy step clip, low and quiet.</summary>
+        public static AudioPlacement BodySettle(EnemyTierWeight weight)
+        {
+            AudioPlacement p = Impact(AudioSoundId.ZombieStepHeavy, weight == EnemyTierWeight.Heavy ? 0.6f : 0.45f, 30f, 3);
+            p.Spatial = 1f;
+            p.Pitch = 0.8f;
+            p.PitchJitter = 0.05f;
+            return p;
+        }
+
         /// <summary>An ambience scatter one-shot. The lowest priority in the game, by design.</summary>
         public static AudioPlacement AmbientOneShot(AudioSoundId sound, float gain)
         {

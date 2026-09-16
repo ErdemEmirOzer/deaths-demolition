@@ -46,6 +46,7 @@ namespace DD.Prototype.Audio
             public float Age;
             public bool Active;
             public bool Routed;
+            public AudioLowPassFilter LowPass;
         }
 
         private readonly Voice[] _voices;
@@ -53,6 +54,28 @@ namespace DD.Prototype.Audio
 
         /// <summary>WP-021: mixer group routing per bus. Null = default output (pre-WP-021).</summary>
         private readonly AudioMixerBridge _bridge;
+
+        /// <summary>WP-021 v003 (ADR-021-2 spatial depth): where the listener is, for the distance low-pass. Null = no filtering.</summary>
+        private System.Func<Vector3> _listener;
+
+        /// <summary>Distance low-pass: full band inside <see cref="LowPassNear"/>, down to <see cref="LowPassFarCutoff"/> at <see cref="LowPassFar"/>. PROTOTYPE-ONLY / INVENTED.</summary>
+        public const float LowPassNear = 8f;
+        public const float LowPassFar = 60f;
+        public const float LowPassFarCutoff = 2200f;
+        public const float LowPassOpen = 22000f;
+
+        public void SetListener(System.Func<Vector3> listener)
+        {
+            _listener = listener;
+        }
+
+        /// <summary>Cutoff for a positional voice at this distance. Air absorption + distance darkening, one curve.</summary>
+        public static float CutoffFor(float distance)
+        {
+            float t = Mathf.Clamp01((distance - LowPassNear) / (LowPassFar - LowPassNear));
+            // Perceptually: the top octaves go first; a quadratic keeps 12 m almost open and 40 m clearly distant.
+            return Mathf.Lerp(LowPassOpen, LowPassFarCutoff, t * t);
+        }
         private readonly Dictionary<AudioSoundId, float> _lastPlayed = new Dictionary<AudioSoundId, float>(48);
 
         private SynthRandom _jitter = new SynthRandom(0x1234ABCD);
@@ -133,7 +156,15 @@ namespace DD.Prototype.Audio
                 AudioSource source = go.AddComponent<AudioSource>();
                 ConfigureSource(source);
 
-                _voices[i] = new Voice { Source = source };
+                // v003: one low-pass per voice, opened for near/non-positional sounds and
+                // closed with distance in Tick. Cheaper than a mixer send per voice and
+                // exact per source.
+                AudioLowPassFilter lowPass = go.AddComponent<AudioLowPassFilter>();
+                lowPass.cutoffFrequency = LowPassOpen;
+                lowPass.lowpassResonanceQ = 1f;
+                lowPass.enabled = false;
+
+                _voices[i] = new Voice { Source = source, LowPass = lowPass };
             }
         }
 
@@ -157,7 +188,7 @@ namespace DD.Prototype.Audio
             source.minDistance = 8f;
             source.maxDistance = 60f;
             source.dopplerLevel = 0f;      // a top-down shooter with Doppler sounds seasick
-            source.bypassReverbZones = true;
+            source.bypassReverbZones = true;   // per-play: world buses join the region reverb (v003)
             source.priority = 128;
         }
 
@@ -212,6 +243,23 @@ namespace DD.Prototype.Audio
                 voice.Routed = true;
             }
 
+            // v003 (ADR-021-2): world buses sit in the region's reverb zone and darken with
+            // distance; the player's own hands (Weapon) and the interface stay dry and open.
+            bool world = placement.Spatial > 0.01f && (placement.Bus == AudioBus.Impact || placement.Bus == AudioBus.Target || placement.Bus == AudioBus.Ambience);
+            source.bypassReverbZones = !world;
+            if (voice.LowPass != null)
+            {
+                voice.LowPass.enabled = world && _listener != null;
+                if (voice.LowPass.enabled)
+                {
+                    voice.LowPass.cutoffFrequency = CutoffFor(Vector3.Distance(position, _listener()));
+                }
+                else
+                {
+                    voice.LowPass.cutoffFrequency = LowPassOpen;
+                }
+            }
+
             voice.Sound = placement.Sound;
             voice.Bus = placement.Bus;
             voice.Priority = priority;
@@ -259,6 +307,11 @@ namespace DD.Prototype.Audio
                     v.Source.Stop();
                     v.Source.clip = null;
                     v.Active = false;
+                    if (v.LowPass != null)
+                    {
+                        v.LowPass.enabled = false;
+                    }
+
                     continue;
                 }
 
@@ -267,6 +320,13 @@ namespace DD.Prototype.Audio
                 // sounds that start after the event would be inaudible in a busy frame,
                 // which is the only frame that needs it.
                 v.Source.volume = v.BaseVolume * _mixer.Gain(v.Bus);
+
+                // v003: the listener moves (it rides the player); a ringing tail must keep
+                // darkening/opening with it. Static sources, so only the listener side moves.
+                if (v.LowPass != null && v.LowPass.enabled && _listener != null)
+                {
+                    v.LowPass.cutoffFrequency = CutoffFor(Vector3.Distance(v.Source.transform.position, _listener()));
+                }
             }
         }
 
