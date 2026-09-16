@@ -8,7 +8,8 @@
 # Default <dest> = ~/Backups/deaths-demolition. Only new directories are written; nothing of the
 # user's is touched or deleted except older backups of this tool beyond --keep (default 3).
 # Restore: git clone <bundle> <dir> && rsync -a <backup>/lfs/objects/ <dir>/.git/lfs/objects/ && git -C <dir> lfs checkout
-# Exit: 0 ok · 10 bundle failed · 11 verify failed · 12 LFS mismatch · 13 no space · 64 usage
+# Exit: 0 ok · 10 bundle failed · 11 verify failed · 12 LFS mismatch (partial backup kept) · 13 no space · 64 usage
+# LFS copy is two-pass (WP-031): re-run rsync until source/backup object counts agree (≤ 3 passes).
 set -u
 source "${0:A:h}/dd-env.sh"
 DEST="$HOME/Backups/deaths-demolition"; KEEP=3; VERIFY_ONLY=""
@@ -47,7 +48,18 @@ echo "$(date -u +%FT%TZ) backup start dest=$DIR needKB=$NEED_KB freeKB=$FREE_KB"
 T0=$(date +%s)
 git -C "$DD_REPO" bundle create "$DIR/repo.bundle" --all >> "$DIR/log.txt" 2>&1 || { echo "bundle failed" | tee -a "$DIR/log.txt"; exit 10; }
 mkdir -p "$DIR/lfs/objects"
-[ -d "$LFSOBJ" ] && rsync -a "$LFSOBJ/" "$DIR/lfs/objects/" >> "$DIR/log.txt" 2>&1
+# WP-031: two-pass rsync. Parallel sessions add LFS objects while the first pass copies; repeat
+# (at most 2 extra passes) until the source and backup counts agree. A remaining mismatch keeps
+# the partial backup on disk and is reported through verify (exit 12).
+PASSES=0
+while [ -d "$LFSOBJ" ]; do
+  PASSES=$((PASSES+1))
+  rsync -a "$LFSOBJ/" "$DIR/lfs/objects/" >> "$DIR/log.txt" 2>&1
+  SRC=$(lfs_count "$LFSOBJ"); DST=$(lfs_count "$DIR/lfs/objects")
+  echo "$(date -u +%FT%TZ) lfs pass $PASSES source=$SRC backup=$DST" | tee -a "$DIR/log.txt"
+  [ "$SRC" = "$DST" ] && break
+  [ "$PASSES" -ge 3 ] && break
+done
 git -C "$DD_REPO" for-each-ref --format='%(refname) %(objectname)' > "$DIR/refs.txt"
 verify "$DIR"; V=$?
 T1=$(date +%s)
@@ -61,12 +73,13 @@ cat > "$DIR/BACKUP.json" <<JSON
   "lfsObjects": $(lfs_count "$DIR/lfs/objects"),
   "lfsBytes": $(lfs_bytes "$DIR/lfs/objects"),
   "lfsObjectsSource": $(lfs_count "$LFSOBJ"),
+  "lfsPasses": ${PASSES:-0},
   "verified": $([ "$V" -eq 0 ] && echo true || echo false),
   "seconds": $((T1-T0))
 }
 JSON
 echo "$(date -u +%FT%TZ) backup done verify=$V seconds=$((T1-T0)) bundle=$(stat -f %z "$DIR/repo.bundle")B lfsObjects=$(lfs_count "$DIR/lfs/objects")" | tee -a "$DIR/log.txt"
-# retention: keep the newest $KEEP backups made by this tool (directories named <utc>)
-ls -1d "$DEST"/[0-9]*T[0-9]*Z 2>/dev/null | sort | awk -v k="$KEEP" '{a[NR]=$0} END{for(i=1;i<=NR-k;i++)print a[i]}' | while read -r old; do [ -f "$old/BACKUP.json" ] && rm -rf "$old" && echo "pruned $old" | tee -a "$DIR/log.txt"; done
+# retention: keep the newest $KEEP backups made by this tool (directories named <utc>); skipped when this run is not verified
+[ "$V" -eq 0 ] && ls -1d "$DEST"/[0-9]*T[0-9]*Z 2>/dev/null | sort | awk -v k="$KEEP" '{a[NR]=$0} END{for(i=1;i<=NR-k;i++)print a[i]}' | while read -r old; do [ -f "$old/BACKUP.json" ] && rm -rf "$old" && echo "pruned $old" | tee -a "$DIR/log.txt"; done
 cat "$DIR/BACKUP.json"
 exit $V

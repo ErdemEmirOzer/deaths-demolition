@@ -197,6 +197,141 @@ namespace DD.Prototype.Tests.EditMode
             return sonuc;
         }
 
+        // ------------------------------------------------------------------ WP-031 · repo hygiene
+
+        /// <summary>
+        /// WP-031: PlayerPrefs is not a save surface in this project (WP-009 profile + WP-024
+        /// InputPreferencesStore are the file-backed stores; PlayerPrefs plists cannot be sandboxed
+        /// by tests or smoke runs). Allow-list until the owners migrate: UiSettings (S-09, WP-022B)
+        /// and PrototypeBootFlags.DirectToRun (debug flag used by tools/smoke.sh e4).
+        /// </summary>
+        [Test]
+        public void PlayerPrefs_YalnizIzinListesindeKullanilir()
+        {
+            string[] allow =
+            {
+                "UI/Runtime/Kit/UiSettings.cs",          // S-09 · WP-022B ile InputPreferencesStore kalıbına taşınır
+                "Core/Boot/PrototypeBootFlags.cs",        // DirectToRun debug bayrağı · smoke e4 kullanır
+            };
+            var offenders = new List<string>();
+            foreach (string file in Directory.GetFiles(PrototypeRoot, "*.cs", SearchOption.AllDirectories))
+            {
+                string rel = file.Substring(PrototypeRoot.Length + 1).Replace('\\', '/');
+                if (rel.StartsWith("Tests/") || rel.EndsWith("ProjectIntegrityTests.cs"))
+                {
+                    continue;
+                }
+
+                bool uses = false;
+                foreach (string line in File.ReadLines(file))
+                {
+                    string t = line.TrimStart();
+                    if (t.StartsWith("//") || t.StartsWith("///") || t.StartsWith("*"))
+                    {
+                        continue;
+                    }
+
+                    if (t.Contains("PlayerPrefs."))
+                    {
+                        uses = true;
+                        break;
+                    }
+                }
+
+                if (uses && System.Array.IndexOf(allow, rel) < 0)
+                {
+                    offenders.Add(rel);
+                }
+            }
+
+            Assert.IsEmpty(offenders, "PlayerPrefs yasak (dosya tabanlı ayar deposu kullan): " + string.Join(", ", offenders));
+        }
+
+        /// <summary>
+        /// WP-031: every PlayMode test runs under the namespace-less [SetUpFixture]
+        /// TestProfileIsolation (profile path → temporaryCachePath/&lt;pid&gt;), so no PlayMode test
+        /// may re-point the profile store at the real path.
+        /// </summary>
+        [Test]
+        public void PlayModeTestleri_TestProfileIsolationAltinda()
+        {
+            string playMode = Path.Combine(PrototypeRoot, "Tests", "PlayMode");
+            string fixture = Path.Combine(playMode, "TestProfileIsolation.cs");
+            Assert.IsTrue(File.Exists(fixture), "Tests/PlayMode/TestProfileIsolation.cs yok");
+            string text = File.ReadAllText(fixture);
+            StringAssert.Contains("[SetUpFixture]", text);
+            Assert.IsFalse(Regex.IsMatch(text, @"^\s*namespace\s", RegexOptions.Multiline),
+                "TestProfileIsolation namespace'siz olmalı (tüm PlayMode assembly'sini kapsar)");
+            StringAssert.Contains("ProfileStore.SetPathOverride(TestProfilePath)", text);
+            StringAssert.Contains("temporaryCachePath", text);
+
+            var offenders = new List<string>();
+            foreach (string file in Directory.GetFiles(playMode, "*.cs", SearchOption.AllDirectories))
+            {
+                if (file == fixture)
+                {
+                    continue;
+                }
+
+                foreach (string line in File.ReadLines(file))
+                {
+                    string t = line.TrimStart();
+                    if (t.StartsWith("//"))
+                    {
+                        continue;
+                    }
+
+                    if (t.Contains("ProfileStore.SetPathOverride(null)") ||
+                        (t.Contains("ProfileStore.SetPathOverride(") && t.Contains("persistentDataPath")))
+                    {
+                        offenders.Add(Path.GetFileName(file) + ": " + t.Trim());
+                    }
+                }
+            }
+
+            Assert.IsEmpty(offenders, "PlayMode testi profili gerçek yola çeviriyor: " + string.Join(" | ", offenders));
+        }
+
+        /// <summary>WP-031: the committed version stamp is the placeholder (a build stamps and restores it).</summary>
+        [Test]
+        public void BuildInfo_DepodaYerTutucu()
+        {
+            string path = Path.Combine(PrototypeRoot, "Core", "Resources", "build-info.json");
+            Assert.IsTrue(File.Exists(path), path);
+            var info = DD.Prototype.Core.Build.BuildInfo.Parse(File.ReadAllText(path));
+            Assert.IsNotNull(info);
+            Assert.IsFalse(info.stamped, "build-info.json depoda stamped=false olmalı (yarım kalmış build?)");
+        }
+
+        /// <summary>
+        /// WP-031: Unity/URP/package versions change only by user decision. The package manifest and
+        /// lock are pinned by hash; a deliberate change updates the two constants here in the same commit.
+        /// </summary>
+        [Test]
+        public void Packages_ManifestVeLockSabit()
+        {
+            string packages = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Packages");
+            Assert.AreEqual("148c69c6995c2713dbf3d0b0863297834e6db75aed6c9257f7aa37501ff2b395", Sha256(Path.Combine(packages, "manifest.json")), "Packages/manifest.json değişti — Unity/URP/paket sürümü kullanıcı kararıdır");
+            Assert.AreEqual("80af9aab2b2abd5fedd42e02afca37f83643c8ad2b8ae77c74f0afb665b92947", Sha256(Path.Combine(packages, "packages-lock.json")), "Packages/packages-lock.json değişti — kullanıcı kararı");
+        }
+
+        private static string PrototypeRoot => Path.Combine(Application.dataPath, "_Prototype");
+
+        private static string Sha256(string path)
+        {
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                byte[] hash = sha.ComputeHash(File.ReadAllBytes(path));
+                var sb = new StringBuilder(64);
+                foreach (byte b in hash)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+
+                return sb.ToString();
+            }
+        }
+
         [Test]
         public void BuildPipeline_VersiyonDamgasiVeBetiklerYerinde()
         {
