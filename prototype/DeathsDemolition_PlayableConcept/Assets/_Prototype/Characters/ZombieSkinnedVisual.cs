@@ -48,6 +48,9 @@ namespace DD.Prototype.Characters
         [SerializeField] private Transform _anchorLegs;
         [SerializeField] private CharacterAnimationSet _animation;
         [SerializeField] private CharacterAnimationEvents _events;
+        [SerializeField] private CharacterLookAt _lookAt;      // WP-032
+        [SerializeField] private FootIkAdapter _footIk;        // WP-032
+        [SerializeField] private CharacterAnimatorLod _lod;    // WP-032 (near gate for IK)
         [Tooltip("WP-017 · AP-008 armour renderers, LOD-major: index = (lod * ArmorSlotCount + (helmet 0 | body 1 | leg 2)) * ArmorPartCount + (main 0 | sub 1). Empty until the armour pipeline ran.")]
         [SerializeField] private SkinnedMeshRenderer[] _armorSlots = new SkinnedMeshRenderer[0];
 
@@ -64,6 +67,8 @@ namespace DD.Prototype.Characters
         public Transform TorsoAnchor => _anchorTorso;
         public Transform LegsAnchor => _anchorLegs;
         public CharacterAnimationEvents Events => _events;
+        public CharacterLookAt LookAt => _lookAt;
+        public FootIkAdapter FootIk => _footIk;
         public ZombieLook Look => _look;
         public int MaterialTier => _materialTier;
         public CharacterAnimationSet AnimationSet => _animation;
@@ -114,8 +119,12 @@ namespace DD.Prototype.Characters
 
         /// <summary>Editor (prefab builder).</summary>
         public void Configure(Animator animator, LODGroup lodGroup, SkinnedMeshRenderer[] slots, Transform skeletonRoot,
-            Transform anchorHelmet, Transform anchorTorso, Transform anchorLegs, CharacterAnimationSet animation, CharacterAnimationEvents events)
+            Transform anchorHelmet, Transform anchorTorso, Transform anchorLegs, CharacterAnimationSet animation, CharacterAnimationEvents events,
+            CharacterLookAt lookAt = null, FootIkAdapter footIk = null, CharacterAnimatorLod lod = null)
         {
+            _lookAt = lookAt;
+            _footIk = footIk;
+            _lod = lod;
             _animator = animator;
             _lodGroup = lodGroup;
             _slots = slots;
@@ -241,10 +250,12 @@ namespace DD.Prototype.Characters
 
             if (_animator != null)
             {
-                // ADR-018-2: culled zombies keep their state machine and events (death_end,
-                // hit windows) but skip the transform write. AlwaysAnimate is not needed any
-                // more — nothing accumulates on the bones.
-                _animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+                // ADR-018-2 → ADR-032-1: the hitboxes and the attack socket hang from the bones, so a
+                // culled body (CullUpdateTransforms) froze them in its LAST written pose — a pooled body
+                // spawned off screen attacked with a socket left behind its back from a previous life
+                // (measured, WP-032). The bones must follow the state machine whenever the body is
+                // alive; the crowd budget is the far-body step (CharacterAnimatorLod), not culling.
+                _animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 _animator.applyRootMotion = false;
                 if (_animation != null && _animation.Controller != null && _animator.runtimeAnimatorController == null)
                 {
@@ -266,7 +277,34 @@ namespace DD.Prototype.Characters
                 animator.Driver = _authored ? this : null;
             }
 
+            BindIk();
             Attached = true;
+        }
+
+        /// <summary>WP-032: LookAt at the threat (EnemyTargeting.Player head) and foot IK on near, living bodies.</summary>
+        private void BindIk()
+        {
+            if (_animator == null) return;
+            if (_lookAt == null) _lookAt = _animator.GetComponent<CharacterLookAt>();
+            if (_footIk == null) _footIk = _animator.GetComponent<FootIkAdapter>();
+            if (_lod == null) _lod = GetComponent<CharacterAnimatorLod>();
+            _telegraphLayer = -1;
+            for (int i = 0; i < _animator.layerCount; i++)
+            {
+                if (_animator.GetLayerName(i) == CharacterAnimatorContract.TelegraphLayer) _telegraphLayer = i;
+            }
+
+            if (_lookAt != null)
+            {
+                _lookAt.Bind(
+                    () => EnemyTargeting.HasPlayer ? EnemyTargeting.Player.position + Vector3.up * ThreatLookHeight : Vector3.zero,
+                    () => _authored && !_dying && !_rising && !_waiting && (_lod == null || !_lod.Far));
+            }
+
+            if (_footIk != null)
+            {
+                _footIk.Bind(() => _authored && !_dying && !_rising, () => _lod == null || !_lod.Far);
+            }
         }
 
         private void Awake()
@@ -280,6 +318,7 @@ namespace DD.Prototype.Characters
             }
 
             _authored = _animation != null && _animation.IsAuthored && _animator != null && _animator.runtimeAnimatorController != null;
+            BindIk();   // WP-032: standalone actors get the threat look-at / foot IK too
         }
 
         private void OnDestroy()
@@ -326,6 +365,23 @@ namespace DD.Prototype.Characters
         private static readonly int DeathStyleId = Animator.StringToHash(CharacterAnimatorContract.DeathStyle);
         private static readonly int RiseId = Animator.StringToHash(CharacterAnimatorContract.Rise);
         private static readonly int AliveId = Animator.StringToHash(CharacterAnimatorContract.Alive);
+        private static readonly int TelegraphId = Animator.StringToHash(CharacterAnimatorContract.Telegraph);
+        private static readonly int TelegraphStyleId = Animator.StringToHash(CharacterAnimatorContract.TelegraphStyle);
+        private static readonly int TelegraphRateId = Animator.StringToHash(CharacterAnimatorContract.TelegraphRate);
+
+        [PrototypeOnly(PendingDecisions.None,
+            "Height above the threat's feet the zombie looks at (the player's head), metres. Invented.", true)]
+        private const float ThreatLookHeight = 1.5f;
+
+        [PrototypeOnly(PendingDecisions.None, "Attack overlap origin on the Visual node: chest height (AP-007 chest 1.17 m − M1 drop 0.05). Invented.", true)]
+        private const float AttackSocketHeight = 1.12f;
+
+        [PrototypeOnly(PendingDecisions.None, "Attack overlap origin ahead of the root, metres (= M1 ZombieBodyBuilder.AttackSocketForward). Invented.", true)]
+        private const float AttackSocketForward = 0.55f;
+
+        private int _telegraphLayer = -1;
+        private float _telegraphEmphasis = 1f;
+        private bool _waiting;
 
         [PrototypeOnly(PendingDecisions.None,
             "Speed fraction (of the version's top speed) at which the gait blend is fully on. The " +
@@ -335,11 +391,11 @@ namespace DD.Prototype.Characters
 
         [PrototypeOnly(PendingDecisions.None,
             "Lowest playback rate of the gait clip (a crawl below this rate reads as a freeze frame). Invented.", true)]
-        private const float MinGaitRate = 0.35f;
+        public const float MinGaitRate = 0.35f;
 
         [PrototypeOnly(PendingDecisions.None,
             "Highest playback rate of a gait clip. The Standard's 2.7 m/s over shamble_A 1.46 m/s is ×1.85 (AP-009 README). Invented cap.", true)]
-        private const float MaxGaitRate = 2.6f;
+        public const float MaxGaitRate = 2.6f;
 
         private ZombieRig _rig;
         private bool _authored;
@@ -367,6 +423,12 @@ namespace DD.Prototype.Characters
 
         /// <summary>Attack-window sink: EnemyAttackState of the owner (set by ZombieEnemy through ZombieAnimator).</summary>
         public IAttackWindowSink WindowSink { get; set; }
+
+        /// <summary>WP-032: additive wind-up emphasis weight this life runs with (0..1; tier telegraph scale).</summary>
+        public float TelegraphEmphasis => _telegraphEmphasis;
+        /// <summary>WP-032: idle-in-crowd / queue wait (WP-030 hands this in; the body idles with the twitch variant).</summary>
+        public bool Waiting => _waiting;
+        public int TelegraphLayerIndex => _telegraphLayer;
 
         private void OnAnimationEvent(CharacterAnimationEvent e)
         {
@@ -415,13 +477,19 @@ namespace DD.Prototype.Characters
             _animator.ResetTrigger(FlinchLegId);
             _animator.ResetTrigger(DieId);
             _animator.ResetTrigger(RiseId);
+            _animator.ResetTrigger(TelegraphId);
+            _waiting = false;
+            if (_telegraphLayer >= 0) _animator.SetLayerWeight(_telegraphLayer, _telegraphEmphasis);
+            if (_lookAt != null) _lookAt.ResetWeight();
             _animator.SetBool(AliveId, true);
             _animator.SetFloat(GaitId, _gait);
             _animator.SetFloat(IdleVariantId, idleVariant & 1);
             _animator.SetFloat(Speed01Id, 0f);
             _animator.SetFloat(GaitRateId, 1f);
-            // A pooled body comes back with whatever state it died in: restart the base layer.
+            // A pooled body comes back with whatever state it died in: restart the base layer and
+            // write the pose NOW, so the bone-mounted gameplay nodes are valid on the spawn frame.
             _animator.Play(CharacterAnimatorContract.LocomotionState, CharacterAnimatorContract.BaseLayer, 0f);
+            _animator.Update(0f);
             if (rise)
             {
                 _rising = true;
@@ -465,6 +533,14 @@ namespace DD.Prototype.Characters
             _animator.SetInteger(AttackStyleId, index);
             _animator.SetFloat(AttackRateId, rate);
             _animator.SetTrigger(AttackId);
+            // WP-032: the additive wind-up emphasis spans the wind-up (1 s clip at 1 / telegraph) and is gone by hit_window_start.
+            if (_telegraphLayer >= 0 && _telegraphEmphasis > 0.001f && telegraphSeconds > 0.05f)
+            {
+                _animator.SetInteger(TelegraphStyleId, index);
+                _animator.SetFloat(TelegraphRateId, 1f / telegraphSeconds);
+                _animator.SetTrigger(TelegraphId);
+            }
+
             return rate;
         }
 
@@ -519,6 +595,22 @@ namespace DD.Prototype.Characters
             if (!_authored || _dying) return;
             _windowOpen = false;
             _animator.ResetTrigger(AttackId);
+            _animator.ResetTrigger(TelegraphId);
+        }
+
+        /// <summary>WP-032: wind-up emphasis (0..1) from the version's telegraph scale (shorter wind-up → full emphasis).</summary>
+        public void SetTelegraphEmphasis(float emphasis01)
+        {
+            _telegraphEmphasis = Mathf.Clamp01(emphasis01);
+            if (_authored && _telegraphLayer >= 0) _animator.SetLayerWeight(_telegraphLayer, _telegraphEmphasis);
+        }
+
+        /// <summary>WP-032: idle-in-crowd / queue wait (WP-030): the body holds the twitch idle and stops tracking the threat.</summary>
+        public void SetWaiting(bool waiting)
+        {
+            if (!_authored) return;
+            _waiting = waiting;
+            _animator.SetFloat(IdleVariantId, waiting ? 1f : 0f);
         }
 
         /// <summary>Light directional hit: override_upper L/R by the bullet's lateral side + the regional additive flinch.</summary>
@@ -586,10 +678,17 @@ namespace DD.Prototype.Characters
             Rehome(rig.HeadHitbox != null ? rig.HeadHitbox.transform : null, head, new Vector3(0f, 0.10f, 0f));
             Rehome(rig.UpperHitbox != null ? rig.UpperHitbox.transform : null, chest, new Vector3(0f, 0.02f, 0f));
             Rehome(rig.LowerHitbox != null ? rig.LowerHitbox.transform : null, hips, new Vector3(0f, -0.40f, 0f));
-            // WP-018: the attack overlap origin follows the animated chest (the block chest no longer moves).
-            if (rig.AttackSocket != null)
+            // WP-018 hung the attack overlap origin on the animated Chest bone; WP-032 measured that the
+            // AP-007 bind pose faces the model's −Z while the (corrected) AP-009 clips face +Z, so a
+            // bone-baked forward offset ends up BEHIND the animated body (and froze with a culled
+            // pose). The socket therefore lives on the Visual node at the M1 chest height, 0.55 m ahead
+            // of the root — the same deterministic geometry the M1 block chest gave (minus its lean);
+            // DEC-029 is a timing contract (the clip's hit window), not a hand-tracking one.
+            if (rig.AttackSocket != null && rig.Visual != null)
             {
-                Rehome(rig.AttackSocket, chest, (rig.Visual != null ? rig.Visual.forward : transform.forward) * 0.55f + new Vector3(0f, -0.05f, 0f));
+                rig.AttackSocket.SetParent(rig.Visual, false);
+                rig.AttackSocket.localPosition = new Vector3(0f, AttackSocketHeight, AttackSocketForward);
+                rig.AttackSocket.localRotation = Quaternion.identity;
             }
 
             if (rig.HeadHitbox is SphereCollider sphere) sphere.center = Vector3.zero;

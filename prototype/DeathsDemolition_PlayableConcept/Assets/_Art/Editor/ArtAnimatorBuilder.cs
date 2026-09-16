@@ -33,6 +33,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string UpperBodyMask = MasksFolder + "/UpperBody.mask";
         public const string AimMask = MasksFolder + "/Aim.mask";
         public const string PlayerController = ArtCharacterContract.PlayerFolder + "/DD_Player.controller";
+        public const string GeneratedFolder = ArtCharacterContract.ZombieFolder + "/Generated";   // WP-032 telegraph emphasis clips
         public const string ZombieController = ArtCharacterContract.ZombieFolder + "/DD_Zombie.controller";
         public const string PlayerSource = "AP-009 v001 (30 clips, AP009-clips-manifest.json) — WP-018 generated controller";
         public const string ZombieSource = "AP-009 v001 (30 clips, AP009-clips-manifest.json) — WP-018 generated controller";
@@ -72,12 +73,14 @@ namespace DD.Art.Pipeline.EditorTools
             AvatarMask aim = BuildMask(AimMask, body: true, head: false, arms: false, legs: false, root: false);
 
             var report = new Report { clips = clips.Count };
-            AnimatorController player = BuildPlayer(clips, manifest, upper, aim, playerReferenceSpeed, out report.playerStates, out report.playerLayers);
+            // WP-032 (ADR-032-1): the no-slip speeds measured on the Unity rig, used by the 2-D blend time scales and the sets.
+            Dictionary<string, float> unitySpeeds = Calibrate(manifest, clips);
+            AnimatorController player = BuildPlayer(clips, manifest, unitySpeeds, upper, aim, playerReferenceSpeed, out report.playerStates, out report.playerLayers);
             AnimatorController zombie = BuildZombie(clips, manifest, upper, out report.zombieStates, out report.zombieLayers);
 
-            WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, manifest, clips, "player", PlayerSource, playerReferenceSpeed,
+            WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, manifest, clips, unitySpeeds, "player", PlayerSource, playerReferenceSpeed,
                 clips[C.PlayerIdle], clips[C.PlayerWalkFwd], manifest[C.PlayerWalkFwd].speedMps);
-            WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
+            WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
                 clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps);
 
             AssetDatabase.SaveAssets();
@@ -214,7 +217,39 @@ namespace DD.Art.Pipeline.EditorTools
 
         // ------------------------------------------------------------------ player
 
-        private static AnimatorController BuildPlayer(Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> m,
+        private static float SpeedOf(Dictionary<string, ArtAnimationClipContract.ClipSpec> m, Dictionary<string, float> unity, string clip)
+        {
+            return unity != null && unity.TryGetValue(clip, out float u) && u > 0.01f ? u : m[clip].speedMps;
+        }
+
+        /// <summary>WP-032: measure every locomotion clip on the character's avatar (StrideCalibrator); keyed by clip name.</summary>
+        public static Dictionary<string, float> Calibrate(Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest, Dictionary<string, AnimationClip> clips)
+        {
+            var result = new Dictionary<string, float>(StringComparer.Ordinal);
+            foreach (string target in new[] { "player", "zombie" })
+            {
+                GameObject rig = InstantiateCalibrationRig(target);
+                if (rig == null) continue;
+                try
+                {
+                    foreach (ArtAnimationClipContract.ClipSpec s in manifest.Values)
+                    {
+                        if (s.target != target || s.speedMps <= 0.01f) continue;
+                        StrideCalibrator.Result r = StrideCalibrator.Measure(rig, rig.GetComponent<Animator>(), clips[s.name], s.frames, ArtAnimationClipContract.Fps, s.EventsText());
+                        if (r.windows > 0) result[s.name] = r.speedMps;
+                        Debug.Log(LogPrefix + "stride " + s.name + ": manifest " + s.speedMps.ToString("F3") + " m/s → Unity " + r.speedMps.ToString("F3") + " m/s (" + r.windows + " windows: " + r.report + ")");
+                    }
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(rig);
+                }
+            }
+
+            return result;
+        }
+
+        private static AnimatorController BuildPlayer(Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> m, Dictionary<string, float> unitySpeeds,
             AvatarMask upper, AvatarMask aim, float reference, out int states, out int layers)
         {
             AnimatorController c = Fresh(PlayerController,
@@ -235,10 +270,10 @@ namespace DD.Art.Pipeline.EditorTools
             tree.children = new[]
             {
                 Child2D(clips[C.PlayerIdle], 0f, 0f, 1f),
-                Child2D(clips[C.PlayerWalkFwd], 0f, 1f, PlayerSkinnedVisual.ChildTimeScale(reference, m[C.PlayerWalkFwd].speedMps)),
-                Child2D(clips[C.PlayerWalkBack], 0f, -1f, PlayerSkinnedVisual.ChildTimeScale(reference, m[C.PlayerWalkBack].speedMps)),
-                Child2D(clips[C.PlayerStrafeLeft], -1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, m[C.PlayerStrafeLeft].speedMps)),
-                Child2D(clips[C.PlayerStrafeRight], 1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, m[C.PlayerStrafeRight].speedMps))
+                Child2D(clips[C.PlayerWalkFwd], 0f, 1f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerWalkFwd))),
+                Child2D(clips[C.PlayerWalkBack], 0f, -1f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerWalkBack))),
+                Child2D(clips[C.PlayerStrafeLeft], -1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerStrafeLeft))),
+                Child2D(clips[C.PlayerStrafeRight], 1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerStrafeRight)))
             };
             loco.speedParameterActive = true;
             loco.speedParameter = C.LocoRate;
@@ -293,9 +328,11 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.HitLeft, AnimatorControllerParameterType.Trigger), (C.HitRight, AnimatorControllerParameterType.Trigger),
                 (C.FlinchHead, AnimatorControllerParameterType.Trigger), (C.FlinchTorso, AnimatorControllerParameterType.Trigger), (C.FlinchLeg, AnimatorControllerParameterType.Trigger),
                 (C.Die, AnimatorControllerParameterType.Trigger), (C.DeathStyle, AnimatorControllerParameterType.Int),
-                (C.Rise, AnimatorControllerParameterType.Trigger), (C.Alive, AnimatorControllerParameterType.Bool));
+                (C.Rise, AnimatorControllerParameterType.Trigger), (C.Alive, AnimatorControllerParameterType.Bool),
+                (C.Telegraph, AnimatorControllerParameterType.Trigger), (C.TelegraphStyle, AnimatorControllerParameterType.Int), (C.TelegraphRate, AnimatorControllerParameterType.Float));
             SetDefault(c, C.GaitRate, 1f);
             SetDefault(c, C.AttackRate, 1f);
+            SetDefault(c, C.TelegraphRate, 1f);
             SetDefault(c, C.Alive, true);
 
             // ---- base: Locomotion = Speed01 blend of (idle by IdleVariant) and (gait by Gait)
@@ -366,13 +403,114 @@ namespace DD.Art.Pipeline.EditorTools
             FromAny(add.stateMachine, fTorso, 0f, (AnimatorConditionMode.If, 0f, C.FlinchTorso), (AnimatorConditionMode.If, 0f, C.Alive));
             FromAny(add.stateMachine, fLeg, 0f, (AnimatorConditionMode.If, 0f, C.FlinchLeg), (AnimatorConditionMode.If, 0f, C.Alive));
 
+            // ---- telegraph (WP-032): additive upper-body emphasis over the wind-up, generated clips, weight = tier emphasis at runtime
+            AnimationClip[] telegraph = BuildTelegraphClips();
+            AnimatorControllerLayer tele = AddLayer(c, C.TelegraphLayer, upper, AnimatorLayerBlendingMode.Additive, false);
+            AnimatorState teleEmpty = tele.stateMachine.AddState(C.EmptyState);
+            tele.stateMachine.defaultState = teleEmpty;
+            for (int i = 0; i < telegraph.Length; i++)
+            {
+                AnimatorState t = OneShot(tele.stateMachine, C.TelegraphState + "_" + i, telegraph[i], teleEmpty, 0.98f, 0.08f);
+                t.speedParameterActive = true;
+                t.speedParameter = C.TelegraphRate;
+                FromAny(tele.stateMachine, t, 0f, (AnimatorConditionMode.If, 0f, C.Telegraph), (AnimatorConditionMode.Equals, (float)i, C.TelegraphStyle), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
+
+            ApplyLayer(c, 0, l => { l.iKPass = true; });   // WP-032: LookAt + foot IK
+            // WP-032 (ADR-032-1): Humanoid retargeting shortened the authored stride (shamble_A 0.78 → 0.51 m measured);
+            // the built-in foot IK on the base states restores the authored foot placement, so the manifest
+            // speed_mps stays the honest rate reference.
+            foreach (ChildAnimatorState cs in c.layers[0].stateMachine.states) cs.state.iKOnFeet = true;
             ApplyLayer(c, 1, l => { l.avatarMask = upper; l.blendingMode = AnimatorLayerBlendingMode.Override; l.defaultWeight = 1f; });
             ApplyLayer(c, 2, l => { l.avatarMask = null; l.blendingMode = AnimatorLayerBlendingMode.Additive; l.defaultWeight = 1f; });
+            ApplyLayer(c, 3, l => { l.avatarMask = upper; l.blendingMode = AnimatorLayerBlendingMode.Additive; l.defaultWeight = 1f; });
 
             states = CountStates(c);
             layers = c.layers.Length;
             EditorUtility.SetDirty(c);
             return c;
+        }
+
+        // ------------------------------------------------------ WP-032 telegraph clips
+
+        /// <summary>
+        /// Three 1 s additive Humanoid clips (muscle curves, reference pose = frame 0 = zero) that
+        /// exaggerate the wind-up silhouette the AD could not read at 19.9 m / −49°: swipe = the
+        /// striking arm rises above the helmet line with a back-lean; lunge = crouch (body down,
+        /// arms back/out); sweep = both arms wide with a chest twist. Played on the additive
+        /// telegraph layer at TelegraphRate = 1 / wind-up seconds, so the emphasis peaks just
+        /// before hit_window_start and is gone by it. Bridge until AP-009B re-cuts the clips.
+        /// </summary>
+        public static AnimationClip[] BuildTelegraphClips()
+        {
+            EnsureFolder(GeneratedFolder);
+            var clips = new AnimationClip[C.TelegraphClips.Length];
+            for (int i = 0; i < clips.Length; i++)
+            {
+                string path = GeneratedFolder + "/" + C.TelegraphClips[i] + ".anim";
+                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                bool created = clip == null;
+                if (created)
+                {
+                    clip = new AnimationClip { name = C.TelegraphClips[i] };
+                    AssetDatabase.CreateAsset(clip, path);
+                }
+
+                clip.ClearCurves();
+                clip.frameRate = 30f;
+                switch (i)
+                {
+                    case 0:   // swipe: right arm up over the helmet line, forearm folds, spine leans back then releases
+                        Muscle(clip, "Right Arm Down-Up", 0f, 0.6f, 0.9f, 0.95f, 0f);
+                        Muscle(clip, "Right Arm Front-Back", 0f, 0.3f, 0.45f, 0.45f, 0f);
+                        Muscle(clip, "Right Forearm Stretch", 0f, -0.35f, -0.55f, -0.55f, 0f);
+                        Muscle(clip, "Spine Front-Back", 0f, -0.25f, -0.4f, -0.4f, 0f);
+                        Muscle(clip, "Chest Twist Left-Right", 0f, 0.2f, 0.35f, 0.35f, 0f);
+                        break;
+                    case 1:   // lunge (AD S1): deep crouch with head/chest forward, arms abducted wide and back (hands outside the hips)
+                        Muscle(clip, "Spine Front-Back", 0f, 0.4f, 0.65f, 0.65f, 0f);
+                        Muscle(clip, "Chest Front-Back", 0f, 0.3f, 0.5f, 0.5f, 0f);
+                        Muscle(clip, "Head Nod Down-Up", 0f, -0.25f, -0.4f, -0.4f, 0f);
+                        Muscle(clip, "Left Arm Down-Up", 0f, 0.45f, 0.7f, 0.7f, 0f);
+                        Muscle(clip, "Right Arm Down-Up", 0f, 0.45f, 0.7f, 0.7f, 0f);
+                        Muscle(clip, "Left Arm Front-Back", 0f, -0.35f, -0.6f, -0.6f, 0f);
+                        Muscle(clip, "Right Arm Front-Back", 0f, -0.35f, -0.6f, -0.6f, 0f);
+                        Muscle(clip, "Left Forearm Stretch", 0f, 0.3f, 0.5f, 0.5f, 0f);
+                        Muscle(clip, "Right Forearm Stretch", 0f, 0.3f, 0.5f, 0.5f, 0f);
+                        Muscle(clip, "RootT.y", 0f, -0.1f, -0.18f, -0.18f, 0f);
+                        break;
+                    default:  // sweep (AD S1): both arms wide and high with OPEN elbows (hands outside the shoulder line), chest wound to the side
+                        Muscle(clip, "Left Arm Down-Up", 0f, 0.55f, 0.9f, 0.9f, 0f);
+                        Muscle(clip, "Right Arm Down-Up", 0f, 0.55f, 0.9f, 0.9f, 0f);
+                        Muscle(clip, "Left Arm Front-Back", 0f, -0.15f, -0.25f, -0.25f, 0f);
+                        Muscle(clip, "Right Arm Front-Back", 0f, -0.15f, -0.25f, -0.25f, 0f);
+                        Muscle(clip, "Left Forearm Stretch", 0f, 0.4f, 0.7f, 0.7f, 0f);
+                        Muscle(clip, "Right Forearm Stretch", 0f, 0.4f, 0.7f, 0.7f, 0f);
+                        Muscle(clip, "Chest Twist Left-Right", 0f, -0.3f, -0.5f, -0.5f, 0f);
+                        Muscle(clip, "Spine Twist Left-Right", 0f, -0.15f, -0.3f, -0.3f, 0f);
+                        break;
+                }
+
+                AnimationUtility.SetAdditiveReferencePose(clip, clip, 0f);
+                AnimationClipSettings settings = AnimationUtility.GetAnimationClipSettings(clip);
+                settings.loopTime = false;
+                settings.keepOriginalPositionY = true;
+                settings.keepOriginalOrientation = true;
+                settings.keepOriginalPositionXZ = true;
+                AnimationUtility.SetAnimationClipSettings(clip, settings);
+                EditorUtility.SetDirty(clip);
+                clips[i] = clip;
+            }
+
+            return clips;
+        }
+
+        /// <summary>Muscle curve over the 1 s clip: keys at 0 / 0.25 / 0.6 / 0.9 / 1.0 s (AD S2: ≥ half the peak by 40 % of the wind-up; hold; release before the strike frame).</summary>
+        private static void Muscle(AnimationClip clip, string muscle, float k0, float k1, float k2, float k3, float k4)
+        {
+            var curve = new AnimationCurve(new Keyframe(0f, k0), new Keyframe(0.25f, k1), new Keyframe(0.6f, k2), new Keyframe(0.9f, k3), new Keyframe(1f, k4));
+            for (int i = 0; i < curve.length; i++) curve.SmoothTangents(i, 0f);
+            clip.SetCurve("", typeof(Animator), muscle, curve);
         }
 
         // ------------------------------------------------------------------ helpers
@@ -437,7 +575,7 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         private static void WriteSet(string setPath, AnimatorController controller, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest,
-            Dictionary<string, AnimationClip> clips, string target, string source, float referenceSpeed, AnimationClip idle, AnimationClip walk, float walkSpeed)
+            Dictionary<string, AnimationClip> clips, Dictionary<string, float> unitySpeeds, string target, string source, float referenceSpeed, AnimationClip idle, AnimationClip walk, float walkSpeed)
         {
             var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(setPath);
             bool created = set == null;
@@ -457,6 +595,7 @@ namespace DD.Art.Pipeline.EditorTools
                 table.Add(new CharacterAnimationSet.Entry
                 {
                     name = s.name, clip = clips[s.name], loop = s.loop, seconds = s.seconds, speedMps = s.speedMps,
+                    unitySpeedMps = unitySpeeds != null && unitySpeeds.TryGetValue(s.name, out float u) ? u : 0f,
                     layer = s.layer, additive = s.additive, frames = s.frames, events = s.EventsText()
                 });
             }
@@ -464,6 +603,20 @@ namespace DD.Art.Pipeline.EditorTools
             set.Configure(idle, walk, walkSpeed, controller, source, table, ArtAnimationClipContract.ManifestSchema, referenceSpeed);
             EditorUtility.SetDirty(set);
             Debug.Log(LogPrefix + "animation set " + (created ? "created" : "updated") + ": " + setPath + " (" + table.Count + " clips, controller " + controller.name + ")");
+        }
+
+        /// <summary>The avatar source model with an Animator (avatar set), for clip sampling in the editor.</summary>
+        private static GameObject InstantiateCalibrationRig(string target)
+        {
+            string source = target == "player" ? ArtCharacterContract.PlayerAvatarSource : ArtCharacterContract.ZombieAvatarSource;
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(source);
+            if (model == null) return null;
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            go.hideFlags = HideFlags.HideAndDontSave;
+            Animator animator = go.GetComponent<Animator>() ?? go.AddComponent<Animator>();
+            animator.avatar = ArtCharacterContract.AvatarOf(source);
+            animator.applyRootMotion = false;
+            return go;
         }
 
         private static void EnsureFolder(string folder)

@@ -467,8 +467,30 @@ namespace DD.Prototype.Enemies
         /// <summary>WP-018: the tier's telegraph + top speed, so the driven clips are rate-scaled to the code timings.</summary>
         public void SetTiming(float telegraphSeconds, float topSpeedMetersPerSecond)
         {
+            SetTiming(telegraphSeconds, topSpeedMetersPerSecond, 1f);
+        }
+
+        /// <summary>
+        /// WP-032: + the version's telegraph scale (WP-028 TierBehaviourProfile): a shorter wind-up gets the
+        /// full additive emphasis, a longer one proportionally less (emphasis = 1 / scale, clamped 0..1).
+        /// </summary>
+        public void SetTiming(float telegraphSeconds, float topSpeedMetersPerSecond, float telegraphScale)
+        {
             _telegraphSeconds = telegraphSeconds;
             _topSpeedMps = Mathf.Max(0.1f, topSpeedMetersPerSecond);
+            if (Driven)
+            {
+                Driver.SetTelegraphEmphasis(telegraphScale > 0.01f ? 1f / telegraphScale : 1f);
+            }
+        }
+
+        /// <summary>WP-032: idle-in-crowd / queue wait for the driven body (WP-030 / S-03 calls this; the block rig ignores it).</summary>
+        public void SetWaiting(bool waiting)
+        {
+            if (Driven)
+            {
+                Driver.SetWaiting(waiting);
+            }
         }
 
         /// <summary>WP-018: (re)bind the driven body after the look / version is known. Rise plays when asked.</summary>

@@ -42,6 +42,10 @@ namespace DD.Prototype.Characters
         public const string MoveX = "MoveX";             // player: local strafe velocity / reference speed
         public const string MoveY = "MoveY";             // player: local forward velocity / reference speed
         public const string LocoRate = "LocoRate";       // player: |v| / reference speed (state speed multiplier)
+        // WP-032 telegraph exaggeration bridge (additive upper-body emphasis over the wind-up; DEC-029 events untouched)
+        public const string Telegraph = "Telegraph";         // trigger
+        public const string TelegraphStyle = "TelegraphStyle"; // int: 0 swipe, 1 lunge, 2 sweep
+        public const string TelegraphRate = "TelegraphRate";   // float: 1 / wind-up seconds (the 1 s clip spans the wind-up)
 
         // ----------------------------------------------------------------- states
         public const string LocomotionState = "Locomotion";
@@ -64,6 +68,9 @@ namespace DD.Prototype.Characters
         public const string OverrideUpperLayer = "override_upper";
         public const string AdditiveLayer = "additive";
         public const string AimLayer = "aim_layer";
+        public const string TelegraphLayer = "telegraph";   // WP-032
+        public const string TelegraphState = "Telegraph";
+        public static readonly string[] TelegraphClips = { "DD_Telegraph_Swipe", "DD_Telegraph_Lunge", "DD_Telegraph_Sweep" };   // generated (ArtAnimatorBuilder)
 
         // -------------------------------------------------------- AP-009 clip names
         public const string PlayerIdle = "AP009_player_idle";
@@ -144,6 +151,8 @@ namespace DD.Prototype.Characters
             public float seconds;
             /// <summary>Manifest speed_mps: ground speed at playback rate 1 with no foot slide (0 = not locomotion).</summary>
             public float speedMps;
+            /// <summary>WP-032: the same speed measured on the Unity rig (StrideCalibrator; 0 = not calibrated → manifest value).</summary>
+            public float unitySpeedMps;
             public string layer;
             public bool additive;
             public int frames;
@@ -200,8 +209,16 @@ namespace DD.Prototype.Characters
             return e != null ? e.clip : null;
         }
 
-        /// <summary>Manifest no-slide ground speed of a locomotion clip (0 when unknown).</summary>
+        /// <summary>No-slide ground speed of a locomotion clip on the Unity rig (WP-032 calibration; manifest value when uncalibrated; 0 when unknown).</summary>
         public float SpeedOf(string clipName)
+        {
+            Entry e = Find(clipName);
+            if (e == null) return 0f;
+            return e.unitySpeedMps > 0.01f ? e.unitySpeedMps : Mathf.Max(0f, e.speedMps);
+        }
+
+        /// <summary>The manifest (Blender) speed, for the calibration report.</summary>
+        public float ManifestSpeedOf(string clipName)
         {
             Entry e = Find(clipName);
             return e != null ? Mathf.Max(0f, e.speedMps) : 0f;

@@ -418,7 +418,8 @@ namespace DD.Prototype.Enemies
             // WP-018: the driven body needs the version timings (attack clip rate, gait rate) and the fit.
             // The telegraph is the attack state's own (WP-028 version scale applied), so the clip's
             // hit_window_start lands on the timer this life actually runs with.
-            _animator.SetTiming(_attack != null ? _attack.TelegraphSeconds : _stats.TelegraphTime, _moveSpeed);
+            _animator.SetTiming(_attack != null ? _attack.TelegraphSeconds : _stats.TelegraphTime, _moveSpeed,
+                _versionProfile != null ? _versionProfile.TelegraphScale : 1f);   // WP-032: wind-up emphasis from the version
             _animator.ResetDriven(_tier, _skinned != null && _skinned.Look.IsValid ? _skinned.Look.fit : "A", RiseOnSpawn, ref _random);
 
             // WP-008 (DEC-043): the reward is decided HERE, once, from the version and the

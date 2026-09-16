@@ -145,6 +145,11 @@ namespace DD.Prototype.Enemies
         /// <summary>Time.frameCount of the last frame the active window connected (tests; -1 = never).</summary>
         public int LastConnectFrame { get; private set; } = -1;
 
+        /// <summary>WP-032 probe readouts: overlap tests run / overlaps that found a collider (all enemies, since ResetStatics).</summary>
+        public static int OverlapTests { get; private set; }
+        public static int OverlapHits { get; private set; }
+
+
         /// <summary>Frames on which the overlap test ran this swing (tests).</summary>
         public int ActiveFramesThisSwing { get; private set; }
 
@@ -152,6 +157,8 @@ namespace DD.Prototype.Enemies
         {
             s_windowFallbackCount = 0;
             s_windowEventCount = 0;
+            OverlapTests = 0;
+            OverlapHits = 0;
         }
 
         /// <summary>WP-018: hand the window to the clip (true) or back to the timers (false, block rig).</summary>
@@ -163,6 +170,7 @@ namespace DD.Prototype.Enemies
         void IAttackWindowSink.OnHitWindowStart()
         {
             s_windowEventCount++;
+
             if (!_animationDriven || _phase != ZombieAttackPhase.Windup)
             {
                 return;
@@ -500,6 +508,8 @@ namespace DD.Prototype.Enemies
                 origin, _hitRadius, s_overlapBuffer,
                 PrototypeLayers.EnemyAttackMask,
                 QueryTriggerInteraction.Collide);
+            OverlapTests++;
+            if (count > 0) OverlapHits++;
 
             if (count <= 0)
             {

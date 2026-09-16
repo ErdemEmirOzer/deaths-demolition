@@ -28,6 +28,15 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ManifestSchema = "AP009.clips-manifest.v001";
         public const int Fps = CharacterAnimatorContract.Fps;
 
+        /// <summary>
+        /// WP-032: the AP-009 armature-only export faces the opposite way from the AP-006/007 body
+        /// files once both are on the v1 axis conversion — measured: the retargeted body's forward
+        /// · the model's forward = −0.96 (the crowd walked and struck facing away from its own
+        /// transform through WP-018). The clip's root rotation is offset by 180° at import so the
+        /// animated body faces the model's +Z like the rig-test clips did.
+        /// </summary>
+        public const float RootRotationOffsetDegrees = 180f;
+
         public sealed class ClipSpec
         {
             public string name;
@@ -188,6 +197,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (c.loopPose) return "loopPose";
             if (!c.lockRootRotation || !c.lockRootHeightY || !c.lockRootPositionXZ) return "lock";
             if (!c.keepOriginalOrientation || !c.keepOriginalPositionY || !c.keepOriginalPositionXZ) return "keepOriginal";
+            if (Math.Abs(c.rotationOffset - RootRotationOffsetDegrees) > 0.01f) return "rotationOffset " + c.rotationOffset;
             if (c.hasAdditiveReferencePose != spec.additive) return "additive";
             if (spec.additive && Math.Abs(c.additiveReferencePoseFrame) > 0.001f) return "additiveFrame " + c.additiveReferencePoseFrame;
             if (!SameEvents(c.events, EventsOf(spec, c.firstFrame, c.lastFrame))) return "events " + Describe(c.events);
@@ -204,6 +214,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (!c.lockRootHeightY) { c.lockRootHeightY = true; changed = true; }
             if (!c.lockRootPositionXZ) { c.lockRootPositionXZ = true; changed = true; }
             if (!c.keepOriginalOrientation) { c.keepOriginalOrientation = true; changed = true; }
+            if (Math.Abs(c.rotationOffset - RootRotationOffsetDegrees) > 0.01f) { c.rotationOffset = RootRotationOffsetDegrees; changed = true; }
             if (!c.keepOriginalPositionY) { c.keepOriginalPositionY = true; changed = true; }
             if (!c.keepOriginalPositionXZ) { c.keepOriginalPositionXZ = true; changed = true; }
             if (c.hasAdditiveReferencePose != spec.additive) { c.hasAdditiveReferencePose = spec.additive; changed = true; }
@@ -265,6 +276,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (c.loopTime != spec.loop) v.Add("clip.loopTime: " + c.loopTime + " != " + spec.loop);
             if (c.loopPose) v.Add("clip.loopPose: true != false");
             if (!c.lockRootRotation || !c.lockRootHeightY || !c.lockRootPositionXZ) v.Add("clip: root not locked (no root motion)");
+            if (Math.Abs(c.rotationOffset - RootRotationOffsetDegrees) > 0.01f) v.Add("clip.rotationOffset: " + c.rotationOffset + " != " + RootRotationOffsetDegrees);
             if (c.hasAdditiveReferencePose != spec.additive) v.Add("clip.hasAdditiveReferencePose: " + c.hasAdditiveReferencePose + " != " + spec.additive);
             if (!SameEvents(c.events, EventsOf(spec, c.firstFrame, c.lastFrame))) v.Add("clip.events: " + Describe(c.events) + " != " + spec.EventsText());
             if (Mathf.Abs(c.lastFrame - c.firstFrame - (spec.frames - 1)) > 0.5f) v.Add("clip.frames: " + c.firstFrame + ".." + c.lastFrame + " != " + (spec.frames - 1));

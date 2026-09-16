@@ -224,7 +224,8 @@ namespace DD.Prototype.PlayerSystem
             Transform socket = skinned.Attach(visual,
                 () => motor != null ? motor.PlanarVelocity : Vector3.zero,
                 () => motor != null && motor.MaxSpeed > 0.01f ? motor.MaxSpeed : 1f,
-                () => aim != null ? aim.AimDirection : visual.forward);
+                () => aim != null ? aim.AimDirection : visual.forward,
+                locked => { if (motor != null) motor.ControlEnabled = !locked; });   // WP-032: pickup lock (flag-gated)
             if (animator != null) animator.Skinned = skinned;
             if (socket != null && weaponMount != null)
             {

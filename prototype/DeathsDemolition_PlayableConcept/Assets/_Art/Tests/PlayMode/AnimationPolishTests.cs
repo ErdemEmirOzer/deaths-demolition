@@ -1,0 +1,434 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using DD.Prototype.Characters;
+using DD.Prototype.Core;
+using DD.Prototype.Core.Boot;
+using DD.Prototype.Core.Config;
+using DD.Prototype.Enemies;
+using DD.Prototype.PlayerSystem;
+using DD.Prototype.Rounds;
+using DD.Prototype.Spawn;
+using DD.Prototype.UI;
+using DD.Prototype.Weapons;
+using DD.Prototype.World;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.Profiling;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+using C = DD.Prototype.Characters.CharacterAnimatorContract;
+
+namespace DD.Art.Tests.PlayMode
+{
+    /// <summary>
+    /// WP-032 · Look-at (threat / aim), foot IK on real ground, stride ↔ speed (measured foot
+    /// slip), the telegraph emphasis bridge (DEC-029 window untouched), the crowd-wait state,
+    /// the Rise / pickup flags and the IK cost + allocation on a 40-body crowd.
+    /// </summary>
+    [TestFixture]
+    [Category("WP032")]
+    public sealed class AnimationPolishTests
+    {
+        private const float SahneZamanAsimi = 60f;
+        private readonly List<GameObject> _temp = new List<GameObject>();
+        private EnemySpawnDirector _director;
+
+        [SetUp]
+        public void SetUp()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            RunFlowClock.ClearHolds();
+            EnemyAttackState.ResetStatics();
+            CharacterAnimatorLod.ResetStatics();
+            FootIkAdapter.ResetStatics();
+            ZombieEnemy.RiseOnSpawn = false;
+            PlayerSkinnedVisual.PickupLocksMovement = false;
+        }
+
+        [UnityTearDown]
+        public IEnumerator UnityTearDown()
+        {
+            Time.captureDeltaTime = 0f;
+            ZombieEnemy.RiseOnSpawn = false;
+            PlayerSkinnedVisual.PickupLocksMovement = false;
+            CharacterAnimatorLod.ForceFar = -1;
+            FootIkAdapter.Force = -1;
+            foreach (GameObject go in _temp) if (go != null) UnityEngine.Object.Destroy(go);
+            _temp.Clear();
+            if (_director != null) _director.ForceActiveTarget(0, false);
+            RunFlowClock.ClearHolds();
+            Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
+            CharacterAssetSet.ResetCache();
+            if (PlayerRegistry.Primary != null && PlayerRegistry.Primary.Health != null) PlayerRegistry.Primary.Health.DiagnosisInvulnerable = false;
+            if (SceneManager.GetActiveScene().name != PrototypeScenes.MainMenu)
+            {
+                PrototypeUiFlow.GoToMainMenu();
+                float t0 = Time.realtimeSinceStartup;
+                while (SceneManager.GetActiveScene().name != PrototypeScenes.MainMenu && Time.realtimeSinceStartup - t0 < 30f) yield return null;
+            }
+
+            _director = null;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            LogAssert.ignoreFailingMessages = false;
+        }
+
+        private IEnumerator MainMenu()
+        {
+            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+            yield return null;
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "MainMenu");
+            yield return null;
+        }
+
+        private IEnumerator RunAP005()
+        {
+            Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, "AP005");
+            CharacterAssetSet.ResetCache();
+            yield return MainMenu();
+            PrototypeUiFlow.GoToSelection();
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.Selection, SahneZamanAsimi, "Selection");
+            PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.AssaultRifle;
+            PrototypeUiFlow.StartRun();
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.Run && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "Run");
+            yield return CharacterTests.Bekle(() => SceneManager.GetSceneByName(ArtLibraryPaths.Ap005WorldSceneName).isLoaded, SahneZamanAsimi, "World_AP005");
+            yield return CharacterTests.Bekle(() => PlayerRegistry.Primary != null && EnemySpawnDirector.Instance != null && RunDirector.Instance != null, SahneZamanAsimi, "run sistemleri");
+            yield return CharacterTests.Bekle(() => RunDirector.Instance.Phase == RunPhase.Fighting, SahneZamanAsimi, "Fighting");
+            _director = EnemySpawnDirector.Instance;
+            PlayerRegistry.Primary.Health.DiagnosisInvulnerable = true;
+            for (int i = 0; i < 5; i++) yield return null;
+        }
+
+        private ZombieSkinnedVisual ZombieOnStage(Vector3 at, Quaternion rot, uint seed)
+        {
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            var root = new GameObject("WP032_Zombie");
+            _temp.Add(root);
+            root.transform.SetPositionAndRotation(at, rot);
+            GameObject go = UnityEngine.Object.Instantiate(set.ZombiePrefab, root.transform, false);
+            var v = go.GetComponent<ZombieSkinnedVisual>();
+            v.Assemble(set.ZombieLibrary, ZombieLookSelector.Select(set.ZombieLibrary, seed));
+            v.ApplyMaterial(set.ZombieLibrary, 0);
+            v.ResetForSpawn(EnemyTier.Standard, 2.7f, "A", 0, false);
+            // Stage actors are off-camera in the menu scene: CullUpdateTransforms would skip the IK pass and the bone
+            // write (that is the production rule); the measurement needs the pass, so animate always here.
+            v.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            return v;
+        }
+
+        // ============================================================ look-at (zombie → threat)
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator LookAt_Zombi_OyuncuyaBakar_ArkadaBakmaz_BeklemedeKapanir()
+        {
+            yield return RunAP005();
+            Vector3 p = PlayerRegistry.Primary.transform.position;
+            // In view of the gameplay camera (an off-screen body is culled: no IK pass — by design).
+            ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 1, p + PlayerRegistry.Primary.transform.forward * 3.5f, Quaternion.LookRotation(-PlayerRegistry.Primary.transform.forward));
+            Assert.IsNotNull(z); Assert.IsTrue(z.Skinned.Authored);
+            CharacterLookAt look = z.Skinned.LookAt;
+            z.Skinned.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            Assert.IsNotNull(look, "zombi LookAt");
+            yield return CharacterTests.Bekle(() => look.Weight > 0.8f, 3f, "önündeki oyuncuya bakmadı");
+            Assert.Greater(Vector3.Distance(look.Point, p), 0.5f);
+            Assert.AreEqual(1.5f, look.Point.y - p.y, 0.2f, "bakış noktası oyuncu başı");
+            // Waiting (crowd queue) turns the tracking off and the idle to twitch.
+            z.Skinned.SetWaiting(true);
+            yield return CharacterTests.Bekle(() => look.Weight < 0.05f, 3f, "beklemede bakış sönmedi");
+            Assert.AreEqual(1f, z.Skinned.Animator.GetFloat(C.IdleVariant), 1e-3f, "bekleme idle varyantı twitch");
+            z.Skinned.SetWaiting(false);
+            yield return CharacterTests.Bekle(() => look.Weight > 0.8f, 3f, "bekleme bitince bakış dönmedi");
+            // A body facing away from the player (stage actor, no steering): the look stays 0 (angle > 80°).
+            ZombieSkinnedVisual away = ZombieOnStage(p + PlayerRegistry.Primary.transform.forward * 3f + PlayerRegistry.Primary.transform.right * 2f, Quaternion.LookRotation(PlayerRegistry.Primary.transform.forward), 9u);
+            for (int i = 0; i < 30; i++) yield return null;
+            Assert.Less(away.LookAt.Weight, 0.05f, "arkadaki oyuncuya baktı");
+            Debug.Log("[DD-TEST] wp032.lookat weight=" + look.Weight.ToString("F2", CultureInfo.InvariantCulture) + " active=" + CharacterLookAt.ActiveCount);
+        }
+
+        // ============================================================ foot IK on a step
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator FootIk_BasamakUstundeAyakKalkar_PelvisIner_ButceVeLodKapisi()
+        {
+            yield return MainMenu();
+            // Ground + a 12 cm step under the right foot, on the Environment layer (the IK ray mask).
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _temp.Add(ground);
+            ground.transform.localScale = new Vector3(20f, 0.2f, 20f);
+            ground.transform.position = new Vector3(0f, -0.1f, 0f);
+            ground.layer = PrototypeLayers.Environment;
+            var step = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _temp.Add(step);
+            step.transform.localScale = new Vector3(0.6f, 0.12f, 1.2f);
+            step.transform.position = new Vector3(0.25f, 0.06f, 0f);   // right side of the body (+x)
+            step.layer = PrototypeLayers.Environment;
+            yield return new WaitForFixedUpdate();
+
+            ZombieSkinnedVisual v = ZombieOnStage(Vector3.zero, Quaternion.identity, 3u);
+            FootIkAdapter feet = v.FootIk;
+            Assert.IsNotNull(feet);
+            CharacterAnimatorLod.ForceFar = 0;
+            Transform rightFoot = v.Animator.GetBoneTransform(HumanBodyBones.RightFoot);
+            Transform leftFoot = v.Animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+            Transform hips = v.Animator.GetBoneTransform(HumanBodyBones.Hips);
+            FootIkAdapter.Force = 0;
+            for (int i = 0; i < 20; i++) yield return null;
+            float rightOff = rightFoot.position.y, leftOff = leftFoot.position.y, hipsOff = hips.position.y;
+            FootIkAdapter.Force = -1;
+            yield return CharacterTests.Bekle(() => feet.Weight > 0.95f, 3f, "ayak IK ağırlığı yükselmedi");
+            for (int i = 0; i < 10; i++) yield return null;
+            float rightOn = rightFoot.position.y, leftOn = leftFoot.position.y, hipsOn = hips.position.y;
+            Debug.Log("[DD-TEST] wp032.footik right " + rightOff.ToString("F3", CultureInfo.InvariantCulture) + "→" + rightOn.ToString("F3", CultureInfo.InvariantCulture)
+                      + " left " + leftOff.ToString("F3", CultureInfo.InvariantCulture) + "→" + leftOn.ToString("F3", CultureInfo.InvariantCulture)
+                      + " hips " + hipsOff.ToString("F3", CultureInfo.InvariantCulture) + "→" + hipsOn.ToString("F3", CultureInfo.InvariantCulture)
+                      + " lifts L/R=" + feet.LeftLift.ToString("F3", CultureInfo.InvariantCulture) + "/" + feet.RightLift.ToString("F3", CultureInfo.InvariantCulture)
+                      + " pelvis=" + feet.PelvisOffset.ToString("F3", CultureInfo.InvariantCulture) + " served=" + FootIkAdapter.ServedThisFrame + " rays=" + FootIkAdapter.RaycastsThisFrame);
+            float lifted = Mathf.Max(rightOn - rightOff, leftOn - leftOff), stayed = Mathf.Min(Mathf.Abs(rightOn - rightOff), Mathf.Abs(leftOn - leftOff));
+            Assert.Greater(lifted, 0.06f, "basamak üstündeki ayak kalkmadı");
+            Assert.Less(stayed, 0.04f, "yerdeki ayak yerinde kalmalı");
+            Assert.AreEqual(2, FootIkAdapter.RaycastsThisFrame, "gövde başına 2 ışın");
+            // Far body → the adapter fades out (LOD gate).
+            CharacterAnimatorLod.ForceFar = 1;
+            yield return CharacterTests.Bekle(() => feet.Weight < 0.05f, 3f, "uzak gövdede IK kapanmadı");
+            CharacterAnimatorLod.ForceFar = 0;
+        }
+
+        // ============================================================ stride ↔ speed (measured slip)
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Stride_YuruyenZombi_AyakKaymasi_2cmAlti()
+        {
+            yield return MainMenu();
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _temp.Add(ground);
+            ground.transform.localScale = new Vector3(60f, 0.2f, 60f);
+            ground.transform.position = new Vector3(0f, -0.1f, 0f);
+            ground.layer = PrototypeLayers.Environment;
+            ZombieSkinnedVisual v = ZombieOnStage(new Vector3(-15f, 0f, 0f), Quaternion.LookRotation(Vector3.right), 5u);
+            FootIkAdapter.Force = 0;   // measure the clip's own contact, not the IK's
+            Transform root = v.transform.parent;
+            Transform lf = v.Animator.GetBoneTransform(HumanBodyBones.LeftFoot), rf = v.Animator.GetBoneTransform(HumanBodyBones.RightFoot);
+            const float speed = 2.7f;   // Standard tier speed over shamble_A → rate ≈ 1.74 with the Unity calibration (inside the band)
+            Time.captureDeltaTime = 1f / 60f;   // fixed step: the measurement must not depend on the machine's frame jitter
+            for (int i = 0; i < 30; i++) { v.SetSpeed(speed, Time.deltaTime); yield return null; }
+
+            // Stance = the contact phase (ankle at its ground height; the AP-009 ankle sits at 0.08–0.10 m in
+            // Blender, ~0.11–0.13 m on the Unity rig). The shuffle moves the planted foot back in a burst, not
+            // uniformly, so the honest measure is the NET world displacement of the foot over one contact
+            // phase — zero when the mean stance speed matches the body speed (the manifest speed_mps).
+            // Stance = from the clip's own contact event (foot_l / foot_r, AP-009 manifest) to the other foot's
+            // contact: the authored definition of "planted", independent of ankle heights. Skating = how far
+            // the planted foot travelled in the world over that window along the travel axis.
+            var slips = new List<float>();
+            var slipsPerFoot = new[] { new List<float>(), new List<float>() };
+            Transform[] feet = { lf, rf };
+            // At every contact event both feet are sampled; at the next contact the foot that travelled least in the
+            // world over the window is the planted one (its travel = skating). The manifest names the landing foot
+            // (foot_r at frame 0) but the Unity rig lands the LEFT foot at frame 0 — noted for P-06 (marker naming);
+            // the measurement does not depend on the name.
+            float[] sampleX = { float.NaN, float.NaN };
+            float sampleTime = -1f;
+            int[] landedFoot = { 0 };
+            Action<CharacterAnimationEvent> onEvent = e =>
+            {
+                if (e != CharacterAnimationEvent.FootLeft && e != CharacterAnimationEvent.FootRight) return;
+                if (!float.IsNaN(sampleX[0]) && Time.time - sampleTime > 0.05f)
+                {
+                    float dl = Mathf.Abs(feet[0].position.x - sampleX[0]), dr = Mathf.Abs(feet[1].position.x - sampleX[1]);
+                    int planted = dl <= dr ? 0 : 1;
+                    slips.Add(Mathf.Min(dl, dr));
+                    slipsPerFoot[planted].Add(Mathf.Min(dl, dr));
+                }
+
+                sampleX[0] = feet[0].position.x;
+                sampleX[1] = feet[1].position.x;
+                sampleTime = Time.time;
+            };
+            v.Events.Raised += onEvent;
+            float t0 = Time.time;
+            try
+            {
+                while (Time.time - t0 < 5f)
+                {
+                    root.position += Vector3.right * speed * Time.deltaTime;
+                    v.SetSpeed(speed, Time.deltaTime);
+                    yield return null;
+                }
+            }
+            finally
+            {
+                v.Events.Raised -= onEvent;
+            }
+
+            Time.captureDeltaTime = 0f;
+            slips.Sort();
+            float median = slips.Count > 0 ? slips[slips.Count / 2] : 0f;
+            float[] footMedian = new float[2];
+            for (int i = 0; i < 2; i++) { slipsPerFoot[i].Sort(); footMedian[i] = slipsPerFoot[i].Count > 0 ? slipsPerFoot[i][slipsPerFoot[i].Count / 2] : 0f; }
+            float planted = median;
+            Assert.GreaterOrEqual(slips.Count, 6, "yeterli adım ölçülmedi");
+            float sum = 0f, max = 0f;
+            foreach (float s in slips) { sum += s; max = Mathf.Max(max, s); }
+            float mean = sum / slips.Count;
+            Debug.Log("[DD-TEST] wp032.slip steps=" + slips.Count + " median=" + (median * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm mean=" + (mean * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm max=" + (max * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm rate=" + v.Animator.GetFloat(C.GaitRate).ToString("F2", CultureInfo.InvariantCulture));
+            Debug.Log("[DD-TEST] wp032.slip.feet plantedL=" + slipsPerFoot[0].Count + " (" + (footMedian[0] * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm) plantedR=" + slipsPerFoot[1].Count + " (" + (footMedian[1] * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm)");
+            Assert.LessOrEqual(planted, 0.02f, "basan ayağın medyan kayması > 2 cm/adım");
+        }
+
+
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Yonelim_AP009Govdesi_ModelIleAyniYone_SagKolSwipe()
+        {
+            // WP-018 shipped the AP-009 clips 180° off the model (measured −0.96): the crowd walked and struck
+            // facing away from its own transform. ArtAnimationClipContract.RootRotationOffsetDegrees fixes it.
+            yield return MainMenu();
+            ZombieSkinnedVisual v = ZombieOnStage(Vector3.zero, Quaternion.identity, 5u);
+            FootIkAdapter.Force = 0;
+            Animator an = v.Animator;
+            an.SetFloat(C.Speed01, 1f); an.SetFloat(C.GaitRate, 1f); an.SetFloat(C.Gait, 0f);
+            for (int i = 0; i < 20; i++) yield return null;
+            Transform lf = an.GetBoneTransform(HumanBodyBones.LeftFoot);
+            float bodyDot = Vector3.Dot(an.bodyRotation * Vector3.forward, v.transform.forward);
+            float toes = v.transform.InverseTransformPoint(an.GetBoneTransform(HumanBodyBones.LeftToes).position).z - v.transform.InverseTransformPoint(lf.position).z;
+            an.enabled = false; an.Play(C.AttackSwipeState, 0, 0.55f); an.Update(0f); yield return null;
+            Transform lh = an.GetBoneTransform(HumanBodyBones.LeftHand), rh = an.GetBoneTransform(HumanBodyBones.RightHand);
+            float rightHandLocalX = v.transform.InverseTransformPoint(rh.position).x;
+            Debug.Log("[DD-TEST] wp032.orient bodyFwd·rootFwd=" + bodyDot.ToString("F2", CultureInfo.InvariantCulture) + " toesAhead=" + toes.ToString("F3", CultureInfo.InvariantCulture) + " swipe rightHandY=" + rh.position.y.ToString("F2", CultureInfo.InvariantCulture) + " leftHandY=" + lh.position.y.ToString("F2", CultureInfo.InvariantCulture) + " rightHandLocalX=" + rightHandLocalX.ToString("F2", CultureInfo.InvariantCulture));
+            an.enabled = true;
+            Assert.Greater(bodyDot, 0.9f, "klip gövdesi modelin ileri yönüne bakmalı (180° kaydırma)");
+            Assert.Greater(toes, 0.05f, "ayak parmakları topuğun önünde");
+            Assert.Greater(rh.position.y, lh.position.y + 0.1f, "swipe sağ kolla (ayna yok)");
+            Assert.Greater(rightHandLocalX, 0f, "sağ el modelin sağında (+X)");
+        }
+
+
+
+
+
+        // ============================================================ telegraph bridge (DEC-029 untouched)
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Telegraf_AdditiveVurgu_WindupIcinde_PencereOlaylariAynen()
+        {
+            yield return RunAP005();
+            Transform player = PlayerRegistry.Primary.transform;
+            Vector3 p = player.position;
+            ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 1, p + player.forward * 1.3f, Quaternion.LookRotation(-player.forward));
+            Assert.IsNotNull(z); Assert.IsTrue(z.Skinned.Authored);
+            Animator an = z.Skinned.Animator;
+            int tele = z.Skinned.TelegraphLayerIndex;
+            Assert.GreaterOrEqual(tele, 0, "telegraph katmanı");
+            Assert.AreEqual(1f, z.Skinned.TelegraphEmphasis, 1e-3f, "Standard vurgu 1 (telegraf ölçeği 1)");
+            Assert.AreEqual(1f, an.GetLayerWeight(tele), 1e-3f);
+            int windupWithTelegraph = 0, windupFrames = 0, activeOutside = 0, swings = 0;
+            ZombieAttackPhase prev = ZombieAttackPhase.None;
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < 8f && swings < 2)
+            {
+                ZombieAttackPhase phase = z.AttackPhase;
+                if (phase == ZombieAttackPhase.Windup)
+                {
+                    windupFrames++;
+                    AnimatorStateInfo s = an.GetCurrentAnimatorStateInfo(tele);
+                    if (s.IsName(C.TelegraphState + "_0") || an.GetNextAnimatorStateInfo(tele).IsName(C.TelegraphState + "_0")) windupWithTelegraph++;
+                }
+
+                if (phase == ZombieAttackPhase.Active && !z.Skinned.HitWindowOpen) activeOutside++;
+                if (prev == ZombieAttackPhase.Active && phase != ZombieAttackPhase.Active) swings++;
+                prev = phase;
+                yield return null;
+            }
+
+            Debug.Log("[DD-TEST] wp032.telegraph swings=" + swings + " windupFrames=" + windupFrames + " withEmphasis=" + windupWithTelegraph + " activeOutside=" + activeOutside + " fallback=" + EnemyAttackState.WindowFallbackCount);
+            Assert.GreaterOrEqual(swings, 1);
+            Assert.Greater(windupWithTelegraph, windupFrames / 2, "wind-up karelerinin çoğunda vurgu klibi oynamalı");
+            Assert.AreEqual(0, activeOutside, "vurgu köprüsü pencereyi kaydırdı");
+            Assert.AreEqual(0, EnemyAttackState.WindowFallbackCount);
+        }
+
+        // ============================================================ rise / pickup flags
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Bayraklar_PickupKilidi_Motoru_KlipSuresinceKapatir_VarsayilanKapali()
+        {
+            yield return RunAP005();
+            PlayerRig rig = PlayerRegistry.Primary;
+            var pv = rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsNotNull(pv); Assert.IsTrue(pv.Authored);
+            Assert.IsFalse(PlayerSkinnedVisual.PickupLocksMovement, "varsayılan kapalı (kullanıcı kararı)");
+            WeaponEvents.PublishSpecialPickedUp(10f);
+            yield return null; yield return null;
+            Assert.IsTrue(rig.Motor.ControlEnabled, "bayrak kapalıyken motor kilitlenmemeli");
+            Assert.IsFalse(pv.PickupLockActive);
+            PlayerSkinnedVisual.PickupLocksMovement = true;
+            WeaponEvents.PublishSpecialPickedUp(10f);
+            yield return null;
+            Assert.IsFalse(rig.Motor.ControlEnabled, "bayrak açıkken motor kilitlenmeli");
+            Assert.IsTrue(pv.PickupLockActive);
+            yield return CharacterTests.Bekle(() => rig.Motor.ControlEnabled, 2f, "kilit klip süresinde açılmadı");
+            Assert.IsFalse(pv.PickupLockActive);
+            Assert.IsFalse(ZombieEnemy.RiseOnSpawn, "RiseOnSpawn varsayılan kapalı (kullanıcı kararı)");
+        }
+
+        // ============================================================ crowd: IK cost + GC
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Kalabalik40_IkAcik_GcSifir_Butce12Govde_Sure()
+        {
+            yield return MainMenu();
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _temp.Add(ground);
+            ground.transform.localScale = new Vector3(60f, 0.2f, 60f);
+            ground.transform.position = new Vector3(0f, -0.1f, 0f);
+            ground.layer = PrototypeLayers.Environment;
+            var target = new GameObject("WP032_Threat");
+            _temp.Add(target);
+            target.transform.position = new Vector3(6f, 0f, 20f);
+            EnemyTargeting.SetPlayer(target.transform);
+            var visuals = new List<ZombieSkinnedVisual>();
+            for (int i = 0; i < 40; i++) visuals.Add(ZombieOnStage(new Vector3(i % 8 * 1.5f, 0f, i / 8 * 1.5f), Quaternion.identity, (uint)(i + 1)));
+            CharacterAnimatorLod.ForceFar = 0;
+            for (int f = 0; f < 90; f++) { foreach (var v in visuals) v.SetSpeed(2.7f * ((f / 30 + visuals.IndexOf(v)) % 2), Time.deltaTime); yield return null; }
+            Assert.AreEqual(FootIkAdapter.MaxBodiesPerFrame, FootIkAdapter.ServedThisFrame, "kare başına 12 gövde bütçesi");
+            Assert.AreEqual(FootIkAdapter.MaxBodiesPerFrame * 2, FootIkAdapter.RaycastsThisFrame);
+            Assert.GreaterOrEqual(CharacterLookAt.ActiveCount, 30, "tehdide bakan gövdeler");
+
+            GC.Collect();
+            yield return null; yield return null;
+            long monoBefore = Profiler.GetMonoUsedSizeLong();
+            int gen0Before = GC.CollectionCount(0);
+            int frames = 0;
+            for (int f = 0; f < 240; f++)
+            {
+                for (int i = 0; i < visuals.Count; i++)
+                {
+                    ZombieSkinnedVisual v = visuals[i];
+                    v.SetSpeed(2.7f * ((f / 30 + i) % 2), Time.deltaTime);
+                    if ((f + i) % 120 == 0) v.PlayAttack(ZombieAttackStyle.Swipe, 0.55f);
+                }
+
+                yield return null;
+                frames++;
+            }
+
+            long delta = Profiler.GetMonoUsedSizeLong() - monoBefore;
+            int gen0 = GC.CollectionCount(0) - gen0Before;
+            Debug.Log("[DD-TEST] wp032.crowd frames=" + frames + " monoDelta=" + delta + " gen0=" + gen0 + " served=" + FootIkAdapter.ServedThisFrame + " rays=" + FootIkAdapter.RaycastsThisFrame + " lookActive=" + CharacterLookAt.ActiveCount);
+            Assert.AreEqual(0, gen0, "IK yolu gen0 tetikledi");
+            Assert.LessOrEqual(delta, 4096, "IK/look-at yolu kare başına ayırıyor: " + delta);
+            EnemyTargeting.Clear();
+        }
+    }
+}

@@ -2172,6 +2172,8 @@ GameObject:
   - component: {fileID: 5961344268432430775}
   - component: {fileID: 1009895606916985318}
   - component: {fileID: 2912409582191967908}
+  - component: {fileID: 1003514040264163067}
+  - component: {fileID: 8088980724663634285}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -2246,7 +2248,7 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
   m_Controller: {fileID: 9100000, guid: 2de824c60c07e47ab9f7ab8e4e406741, type: 2}
-  m_CullingMode: 1
+  m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
@@ -2335,6 +2337,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 491a966293ef8429f9a76745fd51b1b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1003514040264163067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3587759363136340374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa243c3a16ab2412082436a2cdf753a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _animator: {fileID: 5961344268432430775}
+  _headWeight: 0.8
+  _bodyWeight: 0.15
+  _eyesWeight: 0
+  _clampWeight: 0.5
+--- !u!114 &8088980724663634285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3587759363136340374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 067da41e36f454bf8b52206873c7b00c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _animator: {fileID: 5961344268432430775}
+  _rotationWeight: 0.6
 --- !u!1 &3669374517448985362
 GameObject:
   m_ObjectHideFlags: 0
@@ -3060,6 +3093,9 @@ MonoBehaviour:
   _anchorLegs: {fileID: 8917163970484890184}
   _animation: {fileID: 11400000, guid: 420c8d813125f4fc6b8b81d7499c43ba, type: 2}
   _events: {fileID: 2912409582191967908}
+  _lookAt: {fileID: 1003514040264163067}
+  _footIk: {fileID: 8088980724663634285}
+  _lod: {fileID: 5731644544021260917}
   _armorSlots:
   - {fileID: 7138363884949205321}
   - {fileID: 5388029953266763129}

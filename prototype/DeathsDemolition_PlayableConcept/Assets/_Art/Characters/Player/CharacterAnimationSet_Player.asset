@@ -24,6 +24,7 @@ MonoBehaviour:
     loop: 0
     seconds: 1.167
     speedMps: 0
+    unitySpeedMps: 0
     layer: base
     additive: 0
     frames: 36
@@ -33,6 +34,7 @@ MonoBehaviour:
     loop: 0
     seconds: 1.167
     speedMps: 0
+    unitySpeedMps: 0
     layer: base
     additive: 0
     frames: 36
@@ -42,6 +44,7 @@ MonoBehaviour:
     loop: 0
     seconds: 0.3
     speedMps: 0
+    unitySpeedMps: 0
     layer: additive
     additive: 1
     frames: 10
@@ -51,6 +54,7 @@ MonoBehaviour:
     loop: 0
     seconds: 0.367
     speedMps: 0
+    unitySpeedMps: 0
     layer: override_upper
     additive: 0
     frames: 12
@@ -60,6 +64,7 @@ MonoBehaviour:
     loop: 1
     seconds: 2
     speedMps: 0
+    unitySpeedMps: 0
     layer: base
     additive: 0
     frames: 61
@@ -69,6 +74,7 @@ MonoBehaviour:
     loop: 0
     seconds: 0.767
     speedMps: 0
+    unitySpeedMps: 0
     layer: base
     additive: 0
     frames: 24
@@ -78,6 +84,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.4
     speedMps: 1.939
+    unitySpeedMps: 2.089645
     layer: base
     additive: 0
     frames: 13
@@ -87,6 +94,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.4
     speedMps: 1.939
+    unitySpeedMps: 2.1011138
     layer: base
     additive: 0
     frames: 13
@@ -96,6 +104,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.4
     speedMps: 2.426
+    unitySpeedMps: 2.6570563
     layer: base
     additive: 0
     frames: 13
@@ -105,6 +114,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.4
     speedMps: 2.92
+    unitySpeedMps: 3.2661102
     layer: base
     additive: 0
     frames: 13

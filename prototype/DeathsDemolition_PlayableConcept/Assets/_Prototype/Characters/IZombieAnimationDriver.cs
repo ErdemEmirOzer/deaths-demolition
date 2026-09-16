@@ -21,6 +21,10 @@ namespace DD.Prototype.Characters
         void PlayHeavyStagger();
         void PlayDeath(int deathStyle);
         IAttackWindowSink WindowSink { get; set; }
+        /// <summary>WP-032: additive wind-up emphasis weight (0..1).</summary>
+        void SetTelegraphEmphasis(float emphasis01);
+        /// <summary>WP-032: idle-in-crowd / queue wait (WP-030 hands the flag in through ZombieAnimator.SetWaiting).</summary>
+        void SetWaiting(bool waiting);
     }
 
     /// <summary>

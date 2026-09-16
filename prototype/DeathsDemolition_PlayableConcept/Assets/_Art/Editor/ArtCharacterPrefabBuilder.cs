@@ -374,6 +374,11 @@ namespace DD.Art.Pipeline.EditorTools
                 // WP-018 (ADR-018-1/2): the event receiver and the aim layer live with the Animator.
                 CharacterAnimationEvents events = instance.GetComponent<CharacterAnimationEvents>() ?? instance.AddComponent<CharacterAnimationEvents>();
                 PlayerAimLayer aimLayer = instance.GetComponent<PlayerAimLayer>() ?? instance.AddComponent<PlayerAimLayer>();
+                // WP-032: head look-at along the aim + foot IK (ADR-032-1).
+                CharacterLookAt playerLook = instance.GetComponent<CharacterLookAt>() ?? instance.AddComponent<CharacterLookAt>();
+                playerLook.Configure(animator, 0.6f, 0.05f);
+                FootIkAdapter playerFeet = instance.GetComponent<FootIkAdapter>() ?? instance.AddComponent<FootIkAdapter>();
+                playerFeet.Configure(animator);
 
                 var renderers = new SkinnedMeshRenderer[3];
                 for (int lod = 0; lod < 3; lod++)
@@ -395,7 +400,7 @@ namespace DD.Art.Pipeline.EditorTools
                 if (weaponSocket == null) throw new InvalidOperationException(LogPrefix + "player model has no " + PlayerSkinnedVisual.WeaponSocketName);
 
                 var visual = root.AddComponent<PlayerSkinnedVisual>();
-                visual.Configure(animator, group, renderers, weaponSocket, backSocket, animationSet, events, aimLayer);
+                visual.Configure(animator, group, renderers, weaponSocket, backSocket, animationSet, events, aimLayer, playerLook, playerFeet);
 
                 EnsureFolder(Path.GetDirectoryName(PlayerPrefab).Replace('\\', '/'));
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefab);
@@ -590,9 +595,14 @@ namespace DD.Art.Pipeline.EditorTools
                 animator.avatar = ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource);
                 animator.runtimeAnimatorController = animationSet.Controller;
                 animator.applyRootMotion = false;
-                animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;   // WP-018: state machine + events keep running off screen
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;   // WP-032: bone-mounted hitboxes / attack socket must follow the pose even off screen
                 // WP-018 (ADR-018-1/2): the event receiver with the Animator; the far-body step throttle on the root.
                 CharacterAnimationEvents events = instance.GetComponent<CharacterAnimationEvents>() ?? instance.AddComponent<CharacterAnimationEvents>();
+                // WP-032: threat look-at + foot IK (ADR-032-1), gated by the LOD step component on the root.
+                CharacterLookAt zombieLook = instance.GetComponent<CharacterLookAt>() ?? instance.AddComponent<CharacterLookAt>();
+                zombieLook.Configure(animator, 0.8f, 0.15f);
+                FootIkAdapter zombieFeet = instance.GetComponent<FootIkAdapter>() ?? instance.AddComponent<FootIkAdapter>();
+                zombieFeet.Configure(animator);
 
                 // Slots: the imported body renderers become the body slots; top/bottom/head slots are new.
                 var slots = new SkinnedMeshRenderer[ZombieModuleLibrary.LodCount * ZombieSkinnedVisual.SlotCount];
@@ -669,10 +679,10 @@ namespace DD.Art.Pipeline.EditorTools
                 if (helmet == null || torso == null || legs == null) throw new InvalidOperationException(LogPrefix + "zombie body A is missing an armour anchor");
 
                 var visual = root.AddComponent<ZombieSkinnedVisual>();
-                visual.Configure(animator, group, slots, armature != null ? armature : instance.transform, helmet, torso, legs, animationSet, events);
-                visual.ConfigureArmor(armorSlots);
                 CharacterAnimatorLod lodStep = root.GetComponent<CharacterAnimatorLod>() ?? root.AddComponent<CharacterAnimatorLod>();
                 lodStep.Configure(animator, group);
+                visual.Configure(animator, group, slots, armature != null ? armature : instance.transform, helmet, torso, legs, animationSet, events, zombieLook, zombieFeet, lodStep);
+                visual.ConfigureArmor(armorSlots);
 
                 EnsureFolder(Path.GetDirectoryName(ZombiePrefab).Replace('\\', '/'));
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, ZombiePrefab);

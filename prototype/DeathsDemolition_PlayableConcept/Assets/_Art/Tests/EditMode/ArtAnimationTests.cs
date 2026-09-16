@@ -148,8 +148,8 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(c);
             Params(c, C.Speed01, C.GaitRate, C.Gait, C.IdleVariant, C.Attack, C.AttackStyle, C.AttackRate, C.Stagger, C.HitLeft, C.HitRight,
                 C.FlinchHead, C.FlinchTorso, C.FlinchLeg, C.Die, C.DeathStyle, C.Rise, C.Alive);
-            Assert.AreEqual(3, c.layers.Length);
-            Assert.AreEqual(C.OverrideUpperLayer, c.layers[1].name); Assert.AreEqual(C.AdditiveLayer, c.layers[2].name);
+            Assert.AreEqual(4, c.layers.Length);   // WP-032: + telegraph
+            Assert.AreEqual(C.OverrideUpperLayer, c.layers[1].name); Assert.AreEqual(C.AdditiveLayer, c.layers[2].name); Assert.AreEqual(C.TelegraphLayer, c.layers[3].name);
             Assert.IsNotNull(c.layers[1].avatarMask); Assert.AreEqual(AnimatorLayerBlendingMode.Additive, c.layers[2].blendingMode);
 
             AnimatorState loco = c.layers[0].stateMachine.defaultState;
@@ -199,10 +199,17 @@ namespace DD.Art.Tests.EditMode
         {
             var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
             var m = Manifest();
-            foreach (string gait in C.ZombieGaitClips) Assert.AreEqual(m[gait].speedMps, set.SpeedOf(gait), 1e-4f, gait);
-            // AP-009 README speed table: Standard 2.7 over shamble_A 1.464 → ×1.845; Runner 4.6 over run 5.31 → ×0.866.
-            Assert.AreEqual(2.7f / m[C.ZombieShambleA].speedMps, set.RateFor(C.ZombieShambleA, 2.7f), 1e-3f);
-            Assert.AreEqual(4.6f / m[C.ZombieRun].speedMps, set.RateFor(C.ZombieRun, 4.6f), 1e-3f);
+            // WP-032: SpeedOf is the Unity-rig calibration (StrideCalibrator), within ±15 % of the manifest; ManifestSpeedOf is the Blender value.
+            foreach (string gait in C.ZombieGaitClips)
+            {
+                Assert.AreEqual(m[gait].speedMps, set.ManifestSpeedOf(gait), 1e-4f, gait);
+                Assert.AreEqual(m[gait].speedMps, set.SpeedOf(gait), m[gait].speedMps * 0.15f, gait + " kalibrasyon manifestin ±%15'i içinde");
+                Assert.AreNotEqual(m[gait].speedMps, set.SpeedOf(gait), gait + " kalibre edilmemiş");
+            }
+
+            // AP-009 README speed table: Standard 2.7 over shamble_A → ×1.845 (manifest); the shipped rate uses the calibrated speed.
+            Assert.AreEqual(2.7f / set.SpeedOf(C.ZombieShambleA), set.RateFor(C.ZombieShambleA, 2.7f), 1e-3f);
+            Assert.AreEqual(4.6f / set.SpeedOf(C.ZombieRun), set.RateFor(C.ZombieRun, 4.6f), 1e-3f);
             Assert.AreEqual(1f, set.RateFor(C.ZombieIdleSway, 2.7f), 1e-4f, "hız verisi olmayan klip oran 1");
 
             // Attack rate: hit_window_start lands on the tier telegraph (config table: swipe 0.55 / lunge 0.35 / sweep 0.8).

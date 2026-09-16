@@ -37,6 +37,8 @@ namespace DD.Prototype.Characters
         [SerializeField] private CharacterAnimationSet _animation;
         [SerializeField] private CharacterAnimationEvents _events;
         [SerializeField] private PlayerAimLayer _aimLayer;
+        [SerializeField] private CharacterLookAt _lookAt;   // WP-032
+        [SerializeField] private FootIkAdapter _footIk;     // WP-032
 
         private MaterialPropertyBlock _block;
         // Animator.StringToHash may be negative: never use the id as a "not set" sentinel.
@@ -70,7 +72,7 @@ namespace DD.Prototype.Characters
         [PrototypeOnly(PendingDecisions.None,
             "Highest playback rate of the walk clips: the 6.2 m/s Run speed over walk_fwd 2.92 m/s is " +
             "×2.12 (AP-009 README known issue 1 — a run cycle is the follow-up if this reads as skating). Cap, invented.", true)]
-        private const float MaxLocoRate = 2.4f;
+        public const float MaxLocoRate = 2.4f;
 
         public Animator Animator => _animator;
         public LODGroup LodGroup => _lodGroup;
@@ -80,6 +82,23 @@ namespace DD.Prototype.Characters
         public CharacterAnimationSet AnimationSet => _animation;
         public CharacterAnimationEvents Events => _events;
         public PlayerAimLayer AimLayer => _aimLayer;
+        public CharacterLookAt LookAt => _lookAt;
+        public FootIkAdapter FootIk => _footIk;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-032: the Special Weapon pickup clip locks the motor for its grab (0.767 s). Off until the user decides " +
+            "(pickup was never a movement lock in WP-007); probe / test switch.", true)]
+        public static bool PickupLocksMovement;
+
+        [PrototypeOnly(PendingDecisions.None, "Seconds the pickup lock holds when PickupLocksMovement is on (= AP-009 pickup_special length). Invented.", true)]
+        public const float PickupLockSeconds = 0.767f;
+
+        [PrototypeOnly(PendingDecisions.None, "Distance ahead along the aim the head looks at, metres. Invented.", true)]
+        private const float AimLookDistance = 8f;
+
+        private Action<bool> _movementLock;
+        private float _pickupLockUntil = -1f;
+        public bool PickupLockActive => _pickupLockUntil > Time.time;
         public int AppliedSkinIndex => _appliedSkin;
         /// <summary>True when the AP-009 controller drives this body (false on the rig-test set).</summary>
         public bool Authored => _authored;
@@ -92,8 +111,10 @@ namespace DD.Prototype.Characters
 
         /// <summary>Editor (prefab builder): wire the serialized references once.</summary>
         public void Configure(Animator animator, LODGroup lodGroup, SkinnedMeshRenderer[] renderers, Transform weaponSocket, Transform backSocket,
-            CharacterAnimationSet animation, CharacterAnimationEvents events, PlayerAimLayer aimLayer)
+            CharacterAnimationSet animation, CharacterAnimationEvents events, PlayerAimLayer aimLayer, CharacterLookAt lookAt = null, FootIkAdapter footIk = null)
         {
+            _lookAt = lookAt;
+            _footIk = footIk;
             _animator = animator;
             _lodGroup = lodGroup;
             _renderers = renderers ?? new SkinnedMeshRenderer[0];
@@ -112,6 +133,13 @@ namespace DD.Prototype.Characters
         /// </summary>
         public Transform Attach(Transform visual, Func<Vector3> planarVelocity, Func<float> referenceSpeed, Func<Vector3> aimDirection)
         {
+            return Attach(visual, planarVelocity, referenceSpeed, aimDirection, null);
+        }
+
+        /// <summary>WP-032 overload: + the motor lock the pickup clip may hold (PickupLocksMovement).</summary>
+        public Transform Attach(Transform visual, Func<Vector3> planarVelocity, Func<float> referenceSpeed, Func<Vector3> aimDirection, Action<bool> movementLock)
+        {
+            _movementLock = movementLock;
             transform.SetParent(visual, false);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
@@ -136,6 +164,17 @@ namespace DD.Prototype.Characters
             if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
             if (_aimLayer == null && _animator != null) _aimLayer = _animator.GetComponent<PlayerAimLayer>();
             if (_aimLayer != null) _aimLayer.Bind(_animator, aimDirection, _authored);
+            // WP-032: the head looks along the SAME aim the aim layer turns to (single source, S-02); feet on the real ground.
+            if (_lookAt == null && _animator != null) _lookAt = _animator.GetComponent<CharacterLookAt>();
+            if (_footIk == null && _animator != null) _footIk = _animator.GetComponent<FootIkAdapter>();
+            if (_lookAt != null)
+            {
+                _lookAt.Bind(
+                    () => { Vector3 a = aimDirection != null ? aimDirection() : Vector3.zero; return a.sqrMagnitude > 1e-6f ? transform.position + Vector3.up * 1.4f + a.normalized * AimLookDistance : Vector3.zero; },
+                    () => _authored && !_dying);
+            }
+
+            if (_footIk != null) _footIk.Bind(() => _authored && !_dying, () => true);
             if (!_subscribed)
             {
                 if (_events != null) _events.Raised += OnAnimationEvent;
@@ -194,6 +233,7 @@ namespace DD.Prototype.Characters
         public void PlayDeath(Vector3 localHitDirection, bool coin)
         {
             if (!_authored || _dying) return;
+            if (_pickupLockUntil > 0f) { _pickupLockUntil = -1f; _movementLock?.Invoke(false); }
             _dying = true;
             _deathEnded = false;
             int style = localHitDirection.z > 0.2f ? 0 : localHitDirection.z < -0.2f ? 1 : coin ? 0 : 1;
@@ -207,6 +247,11 @@ namespace DD.Prototype.Characters
         {
             if (!_authored || _dying) return;
             _animator.SetTrigger(PickupId);
+            if (PickupLocksMovement && _movementLock != null)
+            {
+                _pickupLockUntil = Time.time + PickupLockSeconds;
+                _movementLock(true);
+            }
         }
 
         /// <summary>Albedo swap for a skin (index = PlayerSkin). Same material asset for every skin; one property block per renderer.</summary>
@@ -250,6 +295,12 @@ namespace DD.Prototype.Characters
                 _speed = dt > 0f ? Mathf.MoveTowards(_speed, target, dt / MoveSmoothing) : target;
                 _animator.SetFloat(SpeedId, _speed);
                 return;
+            }
+
+            if (_pickupLockUntil > 0f && Time.time >= _pickupLockUntil)
+            {
+                _pickupLockUntil = -1f;
+                _movementLock?.Invoke(false);
             }
 
             if (_dying) return;

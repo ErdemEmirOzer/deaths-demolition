@@ -75,6 +75,8 @@ GameObject:
   - component: {fileID: 5308812560598155680}
   - component: {fileID: 5333598959435697198}
   - component: {fileID: 7237112142795619584}
+  - component: {fileID: 3674804287266935573}
+  - component: {fileID: 2200887656984289105}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -173,6 +175,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33d99c05e13384f6999afaa99828090e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3674804287266935573
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 183625161630607693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa243c3a16ab2412082436a2cdf753a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _animator: {fileID: 6900253727677849600}
+  _headWeight: 0.6
+  _bodyWeight: 0.05
+  _eyesWeight: 0
+  _clampWeight: 0.5
+--- !u!114 &2200887656984289105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 183625161630607693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 067da41e36f454bf8b52206873c7b00c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _animator: {fileID: 6900253727677849600}
+  _rotationWeight: 0.6
 --- !u!1 &250221999315306739
 GameObject:
   m_ObjectHideFlags: 0
@@ -514,6 +547,8 @@ MonoBehaviour:
   _animation: {fileID: 11400000, guid: 94d74f682f9ea4f399ef758aa27f6ada, type: 2}
   _events: {fileID: 5333598959435697198}
   _aimLayer: {fileID: 7237112142795619584}
+  _lookAt: {fileID: 3674804287266935573}
+  _footIk: {fileID: 2200887656984289105}
 --- !u!1 &1568149896284543566
 GameObject:
   m_ObjectHideFlags: 0
