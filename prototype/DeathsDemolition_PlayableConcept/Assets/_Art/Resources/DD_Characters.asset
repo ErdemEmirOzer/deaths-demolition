@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 526b9f56e9e5e4febaa8cdff420b71d7, type: 3}
+  m_Name: DD_Characters
+  m_EditorClassIdentifier: 
+  _source: 1
+  _playerPrefab: {fileID: 1433642530149019701, guid: 279de0d8c2cb8494a8cb88318eac0997, type: 3}
+  _playerSkinAlbedos:
+  - {fileID: 2800000, guid: fdfa0a21a3ec645c6aec4bf0e1872b2e, type: 3}
+  - {fileID: 2800000, guid: c65ee64c239524f36a0fc53515c30b08, type: 3}
+  - {fileID: 2800000, guid: fbbbfb817522d4dc2b3987cdd4ebedc6, type: 3}
+  _playerAnimation: {fileID: 11400000, guid: 94d74f682f9ea4f399ef758aa27f6ada, type: 2}
+  _zombiePrefab: {fileID: 4333227168273605463, guid: 386b3c3dd19214a14a6c48b3e6ce3be1, type: 3}
+  _zombieLibrary: {fileID: 11400000, guid: d3dc7fce6f5874e3aac0d3e82aded028, type: 2}
+  _zombieAnimation: {fileID: 11400000, guid: 420c8d813125f4fc6b8b81d7499c43ba, type: 2}

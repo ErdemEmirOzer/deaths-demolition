@@ -139,6 +139,13 @@ namespace DD.Prototype.Enemies
         /// <summary>0..1 progress through the death reaction. Feeds the sink-and-fade.</summary>
         public float DeathProgress => _dying ? Mathf.Clamp01(_deathTime / _deathDuration) : 0f;
 
+        /// <summary>
+        /// WP-016: a skinned visual's Animator owns the walk cycle (legs, hips bob) and the
+        /// bridge carries the rest; the procedural arm SWING is switched off so the clip's
+        /// swing is not doubled, while the carriage (arms forward) and everything else stays.
+        /// </summary>
+        public bool SkinnedLocomotion { get; set; }
+
         public ZombieAnimator(ZombieRig rig)
         {
             _rig = rig;
@@ -503,7 +510,7 @@ namespace DD.Prototype.Enemies
 
             // Arms. Carriage decides how far forward they hang; they swing against the legs.
             float carriage = Mathf.Lerp(-8f, -78f, _armCarriage);
-            float armSwing = (running ? 26f : 15f) * _amplitudeScale * drive;
+            float armSwing = SkinnedLocomotion ? 0f : (running ? 26f : 15f) * _amplitudeScale * drive;
             float elbow = Mathf.Lerp(-14f, -52f, _armCarriage) - Mathf.Abs(sinL) * 8f;
 
             SetLocal(_rig.UpperArmL, ZombieRig.JointUpperArmL,

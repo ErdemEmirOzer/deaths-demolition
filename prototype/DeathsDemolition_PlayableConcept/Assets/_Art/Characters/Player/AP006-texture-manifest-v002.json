@@ -1,0 +1,181 @@
+{
+ "package": "AP-006",
+ "version": "v002",
+ "convention": "AP-003B texture manifest: separate PNGs, FBX path_mode STRIP; albedo sRGB, normal/ORM Non-Color; normal OpenGL +Y; ORM R occlusion / G roughness / B metallic",
+ "status": "skin1/skin3 = v002 (verdict fixes 2/3 + mask v003 bands); skin2a = Indigo/Black v001 palette with v003 bands (comparison); skin2b = inverted Steel/Indigo (verdict c) - USER DECISION 2a/2b pending; v001 albedos kept for reference (superseded)",
+ "textures": [
+  {
+   "file": "AP006_player_albedo_skin1_v002_2k.png",
+   "role": "albedo",
+   "colorspace": "sRGB",
+   "size": [
+    2048,
+    2048
+   ],
+   "sha256": "ab9365260fb36556a0234320db1ea847b57bd9b004da767d91598cfc2f9329e2",
+   "bytes": 5497170,
+   "skin": "skin1",
+   "material": "M_Player_Skin1",
+   "palette": {
+    "primary": "#E6E0CF",
+    "secondary": "#C2BAA9",
+    "accent": "#A33B3E"
+   },
+   "source_image": "AP006_player_albedo_skin1_v002_2k"
+  },
+  {
+   "file": "AP006_player_albedo_skin2a_2k.png",
+   "role": "albedo",
+   "colorspace": "sRGB",
+   "size": [
+    2048,
+    2048
+   ],
+   "sha256": "0545198c93dd0cda4e8759d0d43ae323b4a4aa56246a30b2cc1fecf86bd1136c",
+   "bytes": 5225862,
+   "skin": "skin2a",
+   "material": "M_Player_Skin2",
+   "palette": {
+    "primary": "#4E5A94",
+    "secondary": "#1C1C26",
+    "accent": "#8FA0DB"
+   },
+   "source_image": "AP006_player_albedo_skin2a_2k"
+  },
+  {
+   "file": "AP006_player_albedo_skin2b_2k.png",
+   "role": "albedo",
+   "colorspace": "sRGB",
+   "size": [
+    2048,
+    2048
+   ],
+   "sha256": "5e8c01272cc12b66b051ccbc62d435f427c020b031cf19507a3c8f851dc3917f",
+   "bytes": 5425626,
+   "skin": "skin2b",
+   "material": "M_Player_Skin2b",
+   "palette": {
+    "primary": "#BCC3E6",
+    "secondary": "#4B4F61",
+    "accent": "#515D99"
+   },
+   "source_image": "AP006_player_albedo_skin2b_2k"
+  },
+  {
+   "file": "AP006_player_albedo_skin3_v002_2k.png",
+   "role": "albedo",
+   "colorspace": "sRGB",
+   "size": [
+    2048,
+    2048
+   ],
+   "sha256": "9c5b873a99e66f3b18004b369fa587e8776a2effe8c03564350474dae186d62e",
+   "bytes": 5402468,
+   "skin": "skin3",
+   "material": "M_Player_Skin3",
+   "palette": {
+    "primary": "#E0D9BD",
+    "secondary": "#545F47",
+    "accent": "#8C7D62"
+   },
+   "source_image": "AP006_player_albedo_skin3_v002_2k"
+  },
+  {
+   "file": "AP006_player_normal_2k.png",
+   "role": "normal (tangent, OpenGL +Y)",
+   "colorspace": "Non-Color",
+   "size": [
+    2048,
+    2048
+   ],
+   "sha256": "5b0d4fea923948dd3834e62f4dc719ccae06b6a4973b0983e233d2e0c98fdaea",
+   "bytes": 4365004,
+   "skin": "shared",
+   "material": "all",
+   "source_image": "AP006_player_normal_base_2k"
+  },
+  {
+   "file": "AP006_player_orm_2k.png",
+   "role": "orm (R occlusion, G roughness, B metallic)",
+   "colorspace": "Non-Color",
+   "size": [
+    2048,
+    2048
+   ],
+   "sha256": "1a6236d2822305286042dffaa0770d87aa267b87e6d38aceaf905f1ece6ec8a4",
+   "bytes": 4917819,
+   "skin": "shared",
+   "material": "all",
+   "source_image": "AP006_player_orm_base_2k"
+  }
+ ],
+ "superseded_v001": [
+  {
+   "file": "AP006_player_albedo_skin1_2k.png",
+   "sha256": "231ed8de41c4433b081ce1f7d33ffe17dff4af1bf018a911d3ce0d64debb9048",
+   "bytes": 5579823
+  },
+  {
+   "file": "AP006_player_albedo_skin2_2k.png",
+   "sha256": "ebef2ca094a39572554e1e8379e0b432017043e6e8c6bc63291363caa757873b",
+   "bytes": 5286621
+  },
+  {
+   "file": "AP006_player_albedo_skin3_2k.png",
+   "sha256": "dcc8f81be08da9144b7a73f3c062f3ad9c5030080753713d50e548b21548bbcb",
+   "bytes": 5492981
+  }
+ ],
+ "bytes_per_skin": {
+  "skin1": 14779993,
+  "skin2a": 14508685,
+  "skin2b": 14708449,
+  "skin3": 14685291
+ },
+ "materials": {
+  "M_Player_Skin1": {
+   "albedo": "AP006_player_albedo_skin1_v002_2k.png",
+   "normal": "AP006_player_normal_2k.png",
+   "orm": "AP006_player_orm_2k.png",
+   "palette": {
+    "primary": "#E6E0CF",
+    "secondary": "#C2BAA9",
+    "accent": "#A33B3E"
+   }
+  },
+  "M_Player_Skin2": {
+   "albedo": "AP006_player_albedo_skin2a_2k.png",
+   "normal": "AP006_player_normal_2k.png",
+   "orm": "AP006_player_orm_2k.png",
+   "palette": {
+    "primary": "#4E5A94",
+    "secondary": "#1C1C26",
+    "accent": "#8FA0DB"
+   }
+  },
+  "M_Player_Skin2b": {
+   "albedo": "AP006_player_albedo_skin2b_2k.png",
+   "normal": "AP006_player_normal_2k.png",
+   "orm": "AP006_player_orm_2k.png",
+   "palette": {
+    "primary": "#BCC3E6",
+    "secondary": "#4B4F61",
+    "accent": "#515D99"
+   }
+  },
+  "M_Player_Skin3": {
+   "albedo": "AP006_player_albedo_skin3_v002_2k.png",
+   "normal": "AP006_player_normal_2k.png",
+   "orm": "AP006_player_orm_2k.png",
+   "palette": {
+    "primary": "#E0D9BD",
+    "secondary": "#545F47",
+    "accent": "#8C7D62"
+   }
+  }
+ },
+ "mask": {
+  "v003": "05-blender/textures/AP006_player_regionmask_v003_2k.png",
+  "bands": "mantle border 14 cm, obi 16 cm (grown upward), no accent on lower legs (cords -> shin-wrap grey)"
+ }
+}

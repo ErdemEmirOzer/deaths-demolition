@@ -38,7 +38,10 @@ namespace DD.Art.Pipeline.EditorTools
     /// </summary>
     public static class ArtImportContract
     {
-        public const string Version = "ADR-011-1 Import Contract v1 (2026-09-15; WP-012: cutout BaseColor alpha, ADR-012-2; WP-015: texture class table, ADR-015-1)";
+        public const string Version = "ADR-011-1 Import Contract v1 (2026-09-15; WP-012: cutout BaseColor alpha, ADR-012-2; WP-015: texture class table, ADR-015-1; WP-016: v1.1 skinned characters, ADR-016-1)";
+
+        /// <summary>WP-016 · Skinned character assets live here (ADR-016-1): <c>Characters/Player</c>, <c>Characters/Zombie</c>.</summary>
+        public const string CharactersRoot = ArtRoot + "/Characters";
 
         /// <summary>Every asset below this folder is under contract.</summary>
         public const string ArtRoot = "Assets/_Art";
@@ -89,8 +92,12 @@ namespace DD.Art.Pipeline.EditorTools
             Normal = 2,
             /// <summary>AP packed map (R unused, G roughness, B metallic). Linear. Kept for provenance; not bound to a material.</summary>
             Packed = 3,
-            /// <summary>Derived URP mask: R metallic, A smoothness. Linear.</summary>
-            MetallicSmoothness = 4
+            /// <summary>Derived URP mask: R metallic, A smoothness. Linear. WP-016 character sets also carry AO in G (URP occlusion channel).</summary>
+            MetallicSmoothness = 4,
+            /// <summary>WP-016 · AP-007 ID/tint mask (R skin, G cloth, B accessory, A emissive-permitted). Linear, alpha kept; provenance + DetailMask source.</summary>
+            Mask = 5,
+            /// <summary>WP-016 · Derived URP detail mask: A = cloth (Mask.G) so a version tint reaches cloth only. Linear, alpha kept.</summary>
+            DetailMask = 6
         }
 
         /// <summary>
@@ -116,7 +123,9 @@ namespace DD.Art.Pipeline.EditorTools
             /// <summary>Breakables: ≤ 512. Reserved; no role today.</summary>
             Breakable = 4,
             /// <summary>The 4×256 sky gradient (ArtSkyBuilder): 256, never streamed (a skybox has no renderer for the streaming system to rate).</summary>
-            Sky = 5
+            Sky = 5,
+            /// <summary>WP-016 · Skinned characters (player, zombie atlas): 2048 — the one thing the fixed camera frames at 100 px and the player stares at (ADR-016-1).</summary>
+            Character = 6
         }
 
         public static int MaxSizeOf(TextureClass c)
@@ -129,6 +138,7 @@ namespace DD.Art.Pipeline.EditorTools
                 case TextureClass.Prop: return 512;
                 case TextureClass.Breakable: return 512;
                 case TextureClass.Sky: return 256;
+                case TextureClass.Character: return 2048;
                 default: throw new ArgumentOutOfRangeException(nameof(c));
             }
         }
@@ -188,7 +198,13 @@ namespace DD.Art.Pipeline.EditorTools
             { "sakura_foliage_03", TextureClass.Foliage },
             { "bamboo_culm", TextureClass.Foliage },
             // Sky gradient.
-            { "sky", TextureClass.Sky }
+            { "sky", TextureClass.Sky },
+            // WP-016 characters (ADR-016-1): the AP-006 player set (three skin albedos + shared normal/ORM) and the AP-007 zombie atlas.
+            { "player", TextureClass.Character },
+            { "player_skin1", TextureClass.Character },
+            { "player_skin2a", TextureClass.Character },
+            { "player_skin3", TextureClass.Character },
+            { "zombie_atlas", TextureClass.Character }
         };
 
         public static IEnumerable<KeyValuePair<string, TextureClass>> TextureClassTable => ClassOfRoleTable;
@@ -301,8 +317,30 @@ namespace DD.Art.Pipeline.EditorTools
                 case "Normal": return TextureRole.Normal;
                 case "Packed": return TextureRole.Packed;
                 case "MetallicSmoothness": return TextureRole.MetallicSmoothness;
+                case "Mask": return TextureRole.Mask;
+                case "DetailMask": return TextureRole.DetailMask;
                 default: return TextureRole.Unknown;
             }
+        }
+
+        /// <summary>Every non-colour map is linear data: normals, packed/derived masks, the AP-007 ID mask and its detail mask.</summary>
+        public static bool IsLinearRole(TextureRole role)
+        {
+            return role == TextureRole.Normal || role == TextureRole.Packed || role == TextureRole.MetallicSmoothness ||
+                   role == TextureRole.Mask || role == TextureRole.DetailMask;
+        }
+
+        /// <summary>Roles whose alpha channel carries data (smoothness; the ID mask's emissive flag; the detail mask's cloth gate).</summary>
+        public static bool KeepsAlpha(TextureRole role)
+        {
+            return role == TextureRole.MetallicSmoothness || role == TextureRole.Mask || role == TextureRole.DetailMask;
+        }
+
+        public static TextureImporterFormat FormatOf(TextureRole role)
+        {
+            return role == TextureRole.Normal ? StandaloneNormalFormat
+                : role == TextureRole.BaseColor || role == TextureRole.Unknown ? StandaloneColorFormat
+                : StandaloneMaskFormat;
         }
 
         public static bool IsUnderContract(string assetPath)
@@ -355,11 +393,9 @@ namespace DD.Art.Pipeline.EditorTools
         public static bool Apply(TextureImporter importer, TextureRole role)
         {
             bool changed = false;
-            bool linear = role == TextureRole.Normal || role == TextureRole.Packed || role == TextureRole.MetallicSmoothness;
+            bool linear = IsLinearRole(role);
             TextureImporterType type = role == TextureRole.Normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-            TextureImporterFormat format = role == TextureRole.Normal ? StandaloneNormalFormat
-                : role == TextureRole.MetallicSmoothness || role == TextureRole.Packed ? StandaloneMaskFormat
-                : StandaloneColorFormat;
+            TextureImporterFormat format = FormatOf(role);
 
             changed |= Set(importer.textureType, type, v => importer.textureType = v);
             changed |= Set(importer.sRGBTexture, !linear, v => importer.sRGBTexture = v);
@@ -378,7 +414,7 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.alphaIsTransparency, cutout, v => importer.alphaIsTransparency = v);
             // The mask keeps its alpha (smoothness) and a cutout BaseColor keeps its opacity;
             // every other colour/normal/packed map carries none worth keeping.
-            TextureImporterAlphaSource alpha = role == TextureRole.MetallicSmoothness || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+            TextureImporterAlphaSource alpha = KeepsAlpha(role) || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
             changed |= Set(importer.alphaSource, alpha, v => importer.alphaSource = v);
             // Cutout mips keep their coverage at the clip threshold (WP-012 art review: leaf
             // cards thinned to skeletons past ~30 m because box-filtered mip alpha shrinks).
@@ -440,16 +476,14 @@ namespace DD.Art.Pipeline.EditorTools
             var v = new List<string>();
             if (role == TextureRole.Unknown)
             {
-                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness>.png)");
+                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask>.png)");
             }
 
-            bool linear = role == TextureRole.Normal || role == TextureRole.Packed || role == TextureRole.MetallicSmoothness;
+            bool linear = IsLinearRole(role);
             TextureImporterType type = role == TextureRole.Normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-            TextureImporterFormat format = role == TextureRole.Normal ? StandaloneNormalFormat
-                : role == TextureRole.MetallicSmoothness || role == TextureRole.Packed ? StandaloneMaskFormat
-                : StandaloneColorFormat;
+            TextureImporterFormat format = FormatOf(role);
             bool cutout = KeepsCutoutAlpha(importer.assetPath);
-            TextureImporterAlphaSource alpha = role == TextureRole.MetallicSmoothness || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+            TextureImporterAlphaSource alpha = KeepsAlpha(role) || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
 
             TextureClass? roleClass = ClassOfRole(RoleSlugOf(importer.assetPath));
             if (role != TextureRole.Unknown && roleClass == null)

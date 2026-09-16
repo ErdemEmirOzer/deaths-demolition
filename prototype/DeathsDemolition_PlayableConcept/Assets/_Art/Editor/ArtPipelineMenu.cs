@@ -147,6 +147,37 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run Libraries: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-016 characters
+
+        /// <summary>
+        /// WP-016 · AP-006 player + AP-007 zombie → Unity (Import Contract v1.1, prefabs,
+        /// module library, animation sets, Resources/DD_Characters). Batch:
+        /// <c>-executeMethod …RunCharacters</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run Characters (WP-016)", priority = 304)]
+        public static void RunCharacters()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run Characters cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run Characters: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Character avatars (v1.1 re-import of dependents)", () => ArtCharacterPrefabBuilder.EnsureAvatars());
+            LibraryStep(2, "Character derived textures (MetallicSmoothness+AO, DetailMask)", ArtCharacterPrefabBuilder.BuildTextures);
+            LibraryStep(3, "Character materials (M_player, M_zombie_atlas ×4)", ArtCharacterPrefabBuilder.BuildMaterials);
+            LibraryStep(4, "Animation sets + locomotion controllers", ArtCharacterPrefabBuilder.BuildAnimation);
+            LibraryStep(5, "Player_AP006 prefab", () => ArtCharacterPrefabBuilder.BuildPlayerPrefab());
+            DD.Prototype.Characters.ZombieModuleLibrary library = null;
+            LibraryStep(6, "Zombie module library", () => library = ArtCharacterPrefabBuilder.BuildZombieLibrary());
+            LibraryStep(7, "Zombie_AP007 prefab", () => ArtCharacterPrefabBuilder.BuildZombiePrefab(library));
+            LibraryStep(8, "Resources/DD_Characters asset set", () => ArtCharacterPrefabBuilder.BuildAssetSet());
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run Characters: done in " + Seconds(total) + " s.");
+        }
+
         // ------------------------------------------------------------ WP-015 asset budget
 
         /// <summary>

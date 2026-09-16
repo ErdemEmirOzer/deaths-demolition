@@ -28,7 +28,7 @@ namespace DD.Art.Tests.EditMode
         private static readonly HashSet<string> MetinUzantilar = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             ".cs", ".asmdef", ".asmref", ".json", ".md", ".txt", ".meta",
-            ".asset", ".mat", ".prefab", ".unity", ".shader", ".hlsl", ".cginc"
+            ".asset", ".mat", ".prefab", ".unity", ".shader", ".hlsl", ".cginc", ".controller"
         };
 
         private static readonly Regex HexSha256 = new Regex("^[0-9a-f]{64}$", RegexOptions.Compiled);
@@ -194,7 +194,13 @@ namespace DD.Art.Tests.EditMode
                 ArtLibraryPaths.LibraryRoot("AP-003"),
                 ArtLibraryPaths.LibraryRoot("AP-003B"),
                 ArtLibraryPaths.LightingFolder,
-                ArtPipelinePaths.ArtRoot + "/Resources"
+                ArtPipelinePaths.ArtRoot + "/Resources",
+                // WP-016 (ADR-016-1): skinned characters
+                ArtCharacterContract.PlayerFolder,
+                ArtCharacterContract.ZombieFolder,
+                ArtCharacterContract.ZombieFolder + "/Modules",
+                ArtCharacterPrefabBuilder.PlayerTextures,
+                ArtCharacterPrefabBuilder.ZombieTextures
             };
 
             var eksik = new List<string>();

@@ -18,8 +18,8 @@ namespace DD.Art.Pipeline.EditorTools
         {
             // Bumping this re-imports every asset the postprocessor touches. It is tied to
             // the contract version so a contract change cannot leave stale artifacts.
-            // 2: WP-015 texture class table (ADR-015-1).
-            return 2;
+            // 2: WP-015 texture class table (ADR-015-1). 3: WP-016 skinned characters (ADR-016-1).
+            return 3;
         }
 
         private void OnPreprocessModel()
@@ -30,9 +30,32 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             var importer = (ModelImporter)assetImporter;
-            if (ArtImportContract.Apply(importer))
+            // WP-016: skinned characters take the v1.1 extension (Humanoid avatar, clips, no optimisation).
+            bool changed = ArtCharacterContract.IsCharacterModel(assetPath)
+                ? ArtCharacterContract.Apply(importer)
+                : ArtImportContract.Apply(importer);
+            if (changed)
             {
                 Debug.Log("[ArtImportContract] applied to " + assetPath);
+            }
+        }
+
+        /// <summary>
+        /// WP-016: the takes of a character Clips/ file exist only once the model is parsed, so
+        /// the loop / root-lock flags are written here (defaultClipAnimations is empty in
+        /// OnPreprocessModel on a first import).
+        /// </summary>
+        private void OnPreprocessAnimation()
+        {
+            if (!ArtCharacterContract.IsClip(assetPath))
+            {
+                return;
+            }
+
+            var importer = (ModelImporter)assetImporter;
+            if (ArtCharacterContract.ApplyClips(importer))
+            {
+                Debug.Log("[ArtImportContract] clips applied to " + assetPath);
             }
         }
 

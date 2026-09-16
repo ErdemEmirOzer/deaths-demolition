@@ -1,4 +1,5 @@
 using UnityEngine;
+using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
 
 namespace DD.Prototype.Enemies
@@ -103,10 +104,35 @@ namespace DD.Prototype.Enemies
 
         private readonly ZombieRig _rig;
 
+        // WP-016 (ADR-016-2): the AP-007 skinned look. Null = the M1 block body.
+        private ZombieSkinnedVisual _skinned;
+        private ZombieModuleLibrary _library;
+        private ZombieLook _look;
+        private uint _lookSeed;
+
         public ZombieAppearance(ZombieRig rig)
         {
             _rig = rig;
         }
+
+        /// <summary>WP-016: bind the AP-007 visual and its module library (template build); the look is chosen per spawn from <see cref="LookSeed"/>.</summary>
+        public void SetSkinned(ZombieSkinnedVisual skinned, ZombieModuleLibrary library)
+        {
+            _skinned = skinned;
+            _library = library;
+        }
+
+        public bool IsSkinned => _skinned != null && _library != null;
+
+        /// <summary>The spawn seed the look is derived from (set by ZombieEnemy.Initialise before ApplyVersion).</summary>
+        public uint LookSeed
+        {
+            get => _lookSeed;
+            set => _lookSeed = value;
+        }
+
+        /// <summary>The assembled look (skinned only).</summary>
+        public ZombieLook Look => _look;
 
         /// <summary>
         /// Apply a fresh look. Called from OnSpawned, before the first frame is drawn.
@@ -119,6 +145,19 @@ namespace DD.Prototype.Enemies
         {
             if (_rig == null || _rig.Visual == null)
             {
+                return;
+            }
+
+            if (IsSkinned)
+            {
+                // WP-016: fit + top + bottom + head + colourways from the spawn seed
+                // (deterministic, ratio-ruled); the version picks the shared material variant
+                // (cloth-masked tint) — no per-instance material, no emissive (DEC-067).
+                _look = ZombieLookSelector.Select(_library, _lookSeed);
+                _skinned.Assemble(_library, _look);
+                _skinned.ApplyMaterial(_library, (int)tier);
+                ApplySilhouette(tier, ref random);
+                HideAllArmor();
                 return;
             }
 
@@ -253,11 +292,18 @@ namespace DD.Prototype.Enemies
         // from here - what was last applied - never from the scene.
         private readonly ArmorVisualState[] _armorState = new ArmorVisualState[4];
 
-        /// <summary>The rig's three attachment anchors (REQ-115 kabuto / dō / haidate).</summary>
-        public ArmorAnchors Anchors => new ArmorAnchors(
-            _rig.HelmetRoot != null ? _rig.HelmetRoot.transform : null,
-            _rig.BodyArmorRoot != null ? _rig.BodyArmorRoot.transform : null,
-            _rig.LegArmorRoot != null ? _rig.LegArmorRoot.transform : null);
+        /// <summary>
+        /// The rig's three attachment anchors (REQ-115 kabuto / dō / haidate). WP-016: with the
+        /// AP-007 body these are the model's <c>anchor_helmet / anchor_torso / anchor_legs</c>
+        /// empties (Head / Chest / Hips bone children, identity orientation) — the AP-008
+        /// armour parents there (WP-017); the M1 placeholder roots already hang under them.
+        /// </summary>
+        public ArmorAnchors Anchors => IsSkinned && _skinned.HelmetAnchor != null
+            ? new ArmorAnchors(_skinned.HelmetAnchor, _skinned.TorsoAnchor, _skinned.LegsAnchor)
+            : new ArmorAnchors(
+                _rig.HelmetRoot != null ? _rig.HelmetRoot.transform : null,
+                _rig.BodyArmorRoot != null ? _rig.BodyArmorRoot.transform : null,
+                _rig.LegArmorRoot != null ? _rig.LegArmorRoot.transform : null);
 
         /// <summary>IArmorVisual: the state machine over the four plate methods below. Idempotent, allocation-free.</summary>
         public void Apply(ArmorSlot slot, ArmorVisualState state, float ratio01)
@@ -274,6 +320,13 @@ namespace DD.Prototype.Enemies
                     SetPieces(PiecesFor(slot), 0);
                     break;
                 case ArmorVisualState.Present:
+                    // AP-007 rule: the mino cape never sits under a dō — swap the top first.
+                    if (slot == ArmorSlot.Body && IsSkinned && _look.top == ZombieModuleLibrary.TopMinoCape)
+                    {
+                        _look = ZombieLookSelector.WithoutMinoCape(_library, _look, _lookSeed);
+                        _skinned.Assemble(_library, _look);
+                    }
+
                     EquipArmor(slot);
                     break;
                 case ArmorVisualState.Damaged:

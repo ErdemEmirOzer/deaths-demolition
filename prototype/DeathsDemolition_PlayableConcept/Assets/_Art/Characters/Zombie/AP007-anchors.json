@@ -1,0 +1,67 @@
+{
+  "package": "AP-007",
+  "skeleton": "AP-006 PlayerRig (56 bones, identical names/hierarchy/rest positions), armature object 'ZombieRig'",
+  "space": "Blender metres, +Z up, character faces -Y (FBX -Z fwd / Y up -> Unity faces +Z after import)",
+  "anchors": {
+    "anchor_helmet": {
+      "bone": "Head",
+      "position_m": [
+        0.0,
+        0.0,
+        1.6
+      ],
+      "orientation": "identity (world-aligned, Z up)",
+      "armor_slot": "Helmet",
+      "contract": "ArmorAnchors.Helmet (kabuto / mask)",
+      "note": "kabuto / mask - Head joint origin"
+    },
+    "anchor_torso": {
+      "bone": "Chest",
+      "position_m": [
+        0.0,
+        0.0,
+        1.17
+      ],
+      "orientation": "identity (world-aligned, Z up)",
+      "armor_slot": "Body",
+      "contract": "ArmorAnchors.Body (do + kote)",
+      "note": "do + kote - Chest joint origin"
+    },
+    "anchor_legs": {
+      "bone": "Hips",
+      "position_m": [
+        0.0,
+        0.0,
+        0.93
+      ],
+      "orientation": "identity (world-aligned, Z up)",
+      "armor_slot": "Leg",
+      "contract": "ArmorAnchors.Leg (haidate / suneate)",
+      "note": "haidate / suneate - Hips joint origin"
+    }
+  },
+  "clearance_body_radius_m": {
+    "A": {
+      "head_r_m": 0.118,
+      "chest_r_m": 0.26,
+      "shoulder_half_width_m": 0.299,
+      "hips_r_m": 0.166,
+      "thigh_r_m": 0.181
+    },
+    "B": {
+      "head_r_m": 0.155,
+      "chest_r_m": 0.269,
+      "shoulder_half_width_m": 0.295,
+      "hips_r_m": 0.231,
+      "thigh_r_m": 0.199
+    },
+    "C": {
+      "head_r_m": 0.12,
+      "chest_r_m": 0.261,
+      "shoulder_half_width_m": 0.299,
+      "hips_r_m": 0.152,
+      "thigh_r_m": 0.168
+    }
+  },
+  "clearance_rule": "armour inner surface >= body radius + 0.025 m at the listed heights; garments under armour add: kosode/haori torso +0.022..0.030, hanten +0.036, hakama thigh radial x1.95 (haidate is worn over hakama), mino cape (T7) conflicts with the do -> assembler rule: Body slot Present => do not spawn T7, hair H2 (matted) reaches z 1.40 -> kabuto shikoro clears it by design (hair is under)"
+}

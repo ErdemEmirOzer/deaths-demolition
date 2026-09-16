@@ -5,6 +5,7 @@ using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Inputs;
 using UnityEngine;
+using DD.Prototype.Characters;
 
 namespace DD.Prototype.PlayerSystem
 {
@@ -171,6 +172,10 @@ namespace DD.Prototype.PlayerSystem
             root.AddComponent<PlayerDamageFeedback>();
             root.AddComponent<PlayerDebugHooks>();
 
+            // WP-016: the AP-006 skinned body under Visual. The primitives stay as the hidden
+            // driver rig of the pseudo-animator; the weapon moves to socket_weapon_r.
+            AttachSkinned(root, visual.transform, torso, head, armRight, weaponMount.transform, motor, skin);
+
             // Input must exist before the first Update, whatever scene we are in.
             PrototypeInputInstaller.EnsureExists();
 
@@ -187,6 +192,62 @@ namespace DD.Prototype.PlayerSystem
             }
 
             return rig;
+        }
+
+        /// <summary>
+        /// WP-016: instantiate <c>Player_AP006</c> (CharacterAssetSet, Resources) under the
+        /// rig's Visual node, hide the primitive parts, bridge torso/head/weapon arm, re-parent
+        /// the weapon mount to <c>socket_weapon_r</c> and apply the skin albedo. No-op with the
+        /// asset absent or the source Procedural (the M1 primitive body then stays visible).
+        /// </summary>
+        private static void AttachSkinned(GameObject root, Transform visual, Transform torso, Transform head, Transform armRight,
+            Transform weaponMount, PlayerMotor motor, PlayerSkin skin)
+        {
+            if (!CharacterAssetSet.UseSkinnedPlayer())
+            {
+                return;
+            }
+
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            GameObject go = Object.Instantiate(set.PlayerPrefab, visual, false);
+            go.name = PlayerSkinnedVisual.PrefabName;
+            var skinned = go.GetComponent<PlayerSkinnedVisual>();
+            if (skinned == null)
+            {
+                Debug.LogError("[Player] " + PlayerSkinnedVisual.PrefabName + " prefab has no PlayerSkinnedVisual; keeping the primitive body.");
+                DestroySafely(go);
+                return;
+            }
+
+            PlayerSkinnedVisual.HidePrimitiveParts(visual, null);
+            Transform armRightMesh = armRight != null ? armRight.Find("Mesh") : null;
+            Transform socket = skinned.Attach(visual, torso, head, armRight, armRightMesh,
+                () => motor != null ? motor.PlanarVelocity.magnitude : 0f);
+            if (socket != null && weaponMount != null)
+            {
+                weaponMount.SetParent(socket, false);
+                weaponMount.localPosition = Vector3.zero;
+                weaponMount.localRotation = Quaternion.identity;
+            }
+
+            ApplySkinAlbedo(skinned, skin);
+        }
+
+        private static void ApplySkinAlbedo(PlayerSkinnedVisual skinned, PlayerSkin skin)
+        {
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            if (skinned == null || set == null || set.PlayerSkinAlbedos == null)
+            {
+                return;
+            }
+
+            int index = (int)skin;
+            if (index < 0 || index >= set.PlayerSkinAlbedos.Length)
+            {
+                index = (int)PlayerSkins.Default;
+            }
+
+            skinned.ApplySkin(index, set.PlayerSkinAlbedos[index]);
         }
 
         /// <summary>Creates a player with the default skin, facing world forward.</summary>
@@ -213,6 +274,10 @@ namespace DD.Prototype.PlayerSystem
             {
                 return;
             }
+
+            // WP-016: the skinned body takes the skin as an albedo swap; the primitives are
+            // repainted too (hidden, but a Procedural A/B run shows them).
+            ApplySkinAlbedo(root.GetComponentInChildren<PlayerSkinnedVisual>(true), skin);
 
             Paint(visual, "Hips/Torso", palette.Primary);
             Paint(visual, "Hips/Torso/Head", palette.Secondary);

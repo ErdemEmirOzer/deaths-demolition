@@ -127,6 +127,84 @@ namespace DD.Art.Pipeline.EditorTools
             return outputPath;
         }
 
+        /// <summary>
+        /// WP-016 · Generic derived map: decodes <paramref name="sourcePath"/>, maps every pixel
+        /// through <paramref name="map"/> and writes <paramref name="outputPath"/> + provenance
+        /// (same idempotence and import rules as <see cref="BuildMask"/>). Character sets use it
+        /// for the ORM → MetallicSmoothness(+AO in G) mask and the AP-007 detail mask.
+        /// </summary>
+        public static string BuildDerived(string sourcePath, string outputPath, string provenancePath, Func<Color32, Color32> map, string algorithm)
+        {
+            if (!File.Exists(sourcePath))
+            {
+                throw new FileNotFoundException("[ArtPipeline] Derived-map source is missing", sourcePath);
+            }
+
+            byte[] sourceBytes = File.ReadAllBytes(sourcePath);
+            string sourceSha = Sha256Hex(sourceBytes);
+            byte[] png = Transform(sourceBytes, sourcePath, map);
+            string outputSha = Sha256Hex(png);
+            EnsureFolder(Path.GetDirectoryName(outputPath).Replace('\\', '/'));
+
+            bool current = File.Exists(outputPath) && File.Exists(provenancePath) &&
+                           Sha256Hex(File.ReadAllBytes(outputPath)) == outputSha &&
+                           ReadProvenanceSourceSha(provenancePath) == sourceSha;
+            if (!current)
+            {
+                File.WriteAllBytes(outputPath, png);
+                var provenance = new Provenance
+                {
+                    source = sourcePath, sourceSha256 = sourceSha, algorithm = algorithm,
+                    utc = DateTime.UtcNow.ToString("o"), outputSha256 = outputSha
+                };
+                File.WriteAllText(provenancePath, JsonUtility.ToJson(provenance, true) + "\n", new UTF8Encoding(false));
+            }
+
+            if (!current || string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(outputPath)))
+            {
+                AssetDatabase.ImportAsset(outputPath, ImportAssetOptions.ForceUpdate);
+                AssetDatabase.ImportAsset(provenancePath, ImportAssetOptions.ForceUpdate);
+            }
+
+            Debug.Log("[ArtPipeline] Derived map " + (current ? "current" : "written") + ": " + outputPath + " (source sha256 " + sourceSha.Substring(0, 12) + "…)");
+            return outputPath;
+        }
+
+        /// <summary>ORM (R occlusion, G roughness, B metallic) → URP mask R metallic, G occlusion, B 0, A smoothness.</summary>
+        public static readonly Func<Color32, Color32> OrmToMetallicSmoothnessAo = p => new Color32(p.b, p.r, 0, (byte)(255 - p.g));
+        public const string OrmAlgorithm = "MetallicSmoothnessAO v1 (WP-016): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling";
+
+        /// <summary>AP-007 ID mask (R skin, G cloth, B accessory, A emissive) → URP detail mask: RGB = source, A = cloth (G).</summary>
+        public static readonly Func<Color32, Color32> IdMaskToDetailMask = p => new Color32(p.r, p.g, p.b, p.g);
+        public const string DetailMaskAlgorithm = "DetailMask v1 (WP-016): out.RGB = src.RGB, out.A = src.G (cloth) — URP _DetailMask gates the detail albedo (version tint) by alpha; 8-bit RGBA PNG";
+
+        private static byte[] Transform(byte[] sourceBytes, string sourcePath, Func<Color32, Color32> map)
+        {
+            var source = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
+            Texture2D output = null;
+            try
+            {
+                if (!ImageConversion.LoadImage(source, sourceBytes, false))
+                {
+                    throw new InvalidOperationException("[ArtPipeline] Could not decode " + sourcePath);
+                }
+
+                Color32[] pixels = ReadPixels(source);
+                for (int i = 0; i < pixels.Length; i++) pixels[i] = map(pixels[i]);
+                output = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false, true);
+                output.SetPixels32(pixels);
+                output.Apply(false, false);
+                byte[] png = ImageConversion.EncodeToPNG(output);
+                if (png == null || png.Length == 0) throw new InvalidOperationException("[ArtPipeline] PNG encode failed for " + sourcePath);
+                return png;
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(source);
+                if (output != null) UnityEngine.Object.DestroyImmediate(output);
+            }
+        }
+
         /// <summary>Lower-case hex SHA-256, the same encoding the manifests use.</summary>
         public static string Sha256Hex(byte[] bytes)
         {

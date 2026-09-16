@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12a645b13c760498a9cf5d8b4292b682, type: 3}
+  m_Name: CharacterAnimationSet_Zombie
+  m_EditorClassIdentifier: 
+  _idle: {fileID: -5594245918150407122, guid: 1d8eaa14e951345b0a68d055a1773a40, type: 3}
+  _walk: {fileID: 2144639763177769228, guid: 846e6ab4e6d304a57add7c58bb5b9931, type: 3}
+  _walkSpeedMetersPerSecond: 1.4
+  _controller: {fileID: 9100000, guid: 74e023a43866e453faeebcc0624db7f2, type: 2}
+  _source: AP-007 rig tests (AP-006 RigTest_Idle / RigTest_Walk on ZombieRig); AP-009
+    replaces

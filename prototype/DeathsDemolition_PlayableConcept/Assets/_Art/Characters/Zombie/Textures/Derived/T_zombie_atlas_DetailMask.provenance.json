@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Characters/Zombie/Textures/T_zombie_atlas_Mask.png",
+    "sourceSha256": "c14c9c680ba376a599d641ecdb1b7947551899bf49c65d3b0aa2dce54b403024",
+    "algorithm": "DetailMask v1 (WP-016): out.RGB = src.RGB, out.A = src.G (cloth) — URP _DetailMask gates the detail albedo (version tint) by alpha; 8-bit RGBA PNG",
+    "utc": "2026-09-16T02:31:27.7859600Z",
+    "outputSha256": "bd538d991a8e820147bc009edb4ea88283409dbf860780ca87cd2b51495e9ed0"
+}

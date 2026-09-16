@@ -431,6 +431,12 @@ namespace DD.Art.Pipeline.EditorTools
 
         // ---------------------------------------------------------------- internals
 
+        /// <summary>WP-016: the common opaque/Lit block for character materials (same values as every environment role).</summary>
+        public static void ApplyCommonPublic(Material m)
+        {
+            ApplyCommon(m);
+        }
+
         private static void ApplyCommon(Material m)
         {
             // Opaque, metallic workflow, back faces culled. These mirror what URP's

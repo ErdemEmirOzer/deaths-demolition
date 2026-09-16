@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Characters/Zombie/Textures/T_zombie_atlas_Packed.png",
+    "sourceSha256": "12fdbf194f4a0e5f3eb7326e888f553b54ea68a7243451351178b4ffc4323f3d",
+    "algorithm": "MetallicSmoothnessAO v1 (WP-016): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T02:31:26.8736330Z",
+    "outputSha256": "b8327c34fbc8a9e9fb45c431576f824418238ddc5d0c39703feea073ae3acf37"
+}

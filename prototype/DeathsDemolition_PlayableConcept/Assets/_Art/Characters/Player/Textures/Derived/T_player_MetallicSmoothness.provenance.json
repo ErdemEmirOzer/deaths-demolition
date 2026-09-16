@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Characters/Player/Textures/T_player_Packed.png",
+    "sourceSha256": "1a6236d2822305286042dffaa0770d87aa267b87e6d38aceaf905f1ece6ec8a4",
+    "algorithm": "MetallicSmoothnessAO v1 (WP-016): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T02:31:25.5352160Z",
+    "outputSha256": "53c4d3f3a8841d007495056f058d5a639f9d67b0363abb865c6a352f2e6270d7"
+}

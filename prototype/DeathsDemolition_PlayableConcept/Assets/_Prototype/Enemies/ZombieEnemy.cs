@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using DD.Prototype.Characters;
 using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Pooling;
@@ -39,6 +40,10 @@ namespace DD.Prototype.Enemies
     public sealed partial class ZombieEnemy : PooledBehaviour, IDamageReceiver, IExplosionReceiver
     {
         [SerializeField] private ZombieRig _rig = new ZombieRig();
+
+        // WP-016: the AP-007 skinned body, instantiated once on the pool template under
+        // rig.Visual (clones inherit the reference like the rig); null = M1 block body.
+        [SerializeField] private ZombieSkinnedVisual _skinned;
 
         // ------------------------------------------------------------------ sub-systems
         private RegionalDamageBody _body;
@@ -229,6 +234,15 @@ namespace DD.Prototype.Enemies
             // hierarchy; capture ITS transforms as the rest pose, not the template's.
             _rig.CaptureRestPose();
 
+            // WP-016: bind the skinned body of THIS clone (bridge rest = block rest + bind pose,
+            // captured before the Animator's first update) and hand it to the appearance.
+            if (_skinned != null)
+            {
+                _skinned.Attach(_rig, _animator);
+                CharacterAssetSet set = CharacterAssetSet.Load();
+                _appearance.SetSkinned(_skinned, set != null ? set.ZombieLibrary : null);
+            }
+
             // Region colliders live as long as the instance, so bind them once, here.
             // This is what makes a bullet hit a single dictionary lookup.
             RegisterHitboxes();
@@ -249,7 +263,44 @@ namespace DD.Prototype.Enemies
         internal void BuildProceduralBody()
         {
             ZombieBodyBuilder.Build(gameObject, _rig);
+
+            // WP-016: the AP-007 skinned body on top of the block rig (which stays as the
+            // hidden driver skeleton). Template only; the pool's clones inherit hierarchy,
+            // re-homed hitboxes/armour roots and the serialized reference.
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            if (CharacterAssetSet.UseSkinnedZombie() && _rig.Visual != null)
+            {
+                GameObject visual = Instantiate(set.ZombiePrefab, _rig.Visual, false);
+                visual.name = ZombieSkinnedVisual.PrefabName;
+                _skinned = visual.GetComponent<ZombieSkinnedVisual>();
+                if (_skinned == null)
+                {
+                    Debug.LogError("[Enemies] " + ZombieSkinnedVisual.PrefabName + " prefab has no ZombieSkinnedVisual; keeping the block body.");
+                    Destroy(visual);
+                }
+                else
+                {
+                    SetLayerRecursively(visual, PrototypeLayers.Enemy);
+                    ZombieSkinnedVisual.HideBlockRenderers(_rig);
+                    _skinned.RehomeGameplayNodes(_rig);
+                }
+            }
         }
+
+        private static void SetLayerRecursively(GameObject go, int layer)
+        {
+            go.layer = layer;
+            foreach (Transform child in go.transform)
+            {
+                SetLayerRecursively(child.gameObject, layer);
+            }
+        }
+
+        /// <summary>WP-016: the skinned visual (null with the M1 block body).</summary>
+        public ZombieSkinnedVisual Skinned => _skinned;
+
+        /// <summary>WP-016: the M1 rig (the hidden driver skeleton when skinned) — tests/probe.</summary>
+        public ZombieRig Rig => _rig;
 
         private void RegisterHitboxes()
         {
@@ -291,6 +342,7 @@ namespace DD.Prototype.Enemies
             _tier = tier;
             _spawnRound = Mathf.Max(1, round);
             _random = new EnemyRandom(seed);
+            _appearance.LookSeed = seed;   // WP-016: the look is a pure function of the spawn seed
 
             // Order matters: the silhouette sets Visual.localScale, and ApplyConfig sizes
             // the CharacterController from it. WP-010: the version look goes through the
@@ -713,6 +765,10 @@ namespace DD.Prototype.Enemies
             planar.y = 0f;
             _currentSpeed = planar.magnitude;
             _animator.SetLocomotion(_moveSpeed > 0f ? _currentSpeed / _moveSpeed : 0f, _currentSpeed);
+            if (_skinned != null)
+            {
+                _skinned.SetSpeed(_currentSpeed, dt);
+            }
         }
 
         private void TickDying(float dt)
@@ -737,6 +793,10 @@ namespace DD.Prototype.Enemies
             }
 
             _animator.Tick(dt);
+            if (_skinned != null)
+            {
+                _skinned.SetSpeed(0f, dt);
+            }
 
             if (_animator.DeathFinished)
             {

@@ -128,14 +128,15 @@ namespace DD.Art.Tests.EditMode
                     continue;
                 }
 
-                List<string> v = ArtImportContract.ValidateModel(importer);
+                // WP-016: skinned characters validate against the v1.1 extension (ADR-016-1).
+                List<string> v = ArtCharacterContract.IsCharacterModel(yol) ? ArtCharacterContract.Validate(importer) : ArtImportContract.ValidateModel(importer);
                 if (v.Count > 0)
                 {
                     ihlaller.Add(yol + ": " + string.Join("; ", v));
                 }
             }
 
-            Assert.IsEmpty(ihlaller, "Import Contract v1 ihlali (" + ihlaller.Count + "/" + fbxler.Count + "):\n" + string.Join("\n", ihlaller));
+            Assert.IsEmpty(ihlaller, "Import Contract v1/v1.1 ihlali (" + ihlaller.Count + "/" + fbxler.Count + "):\n" + string.Join("\n", ihlaller));
             Debug.Log("[DD-TEST] wp011.gate.fbx contract=ok count=" + fbxler.Count);
         }
 
@@ -222,6 +223,23 @@ namespace DD.Art.Tests.EditMode
                     }
                 }
             }
+
+            // WP-016 (ADR-016-1): the character files — player base + 2 clips, zombie 3 bodies + 19 modules
+            // (AP007-modules.json) + 2 clips; the library test checks their contents.
+            beklenen.Add(ArtCharacterContract.PlayerAvatarSource);
+            beklenen.Add(ArtCharacterPrefabBuilder.PlayerIdleClipFile);
+            beklenen.Add(ArtCharacterPrefabBuilder.PlayerWalkClipFile);
+            foreach (string b in ArtCharacterPrefabBuilder.ZombieBodyModels) beklenen.Add(b);
+            beklenen.Add(ArtCharacterPrefabBuilder.ZombieIdleClipFile);
+            beklenen.Add(ArtCharacterPrefabBuilder.ZombieWalkClipFile);
+            int moduller = 0;
+            foreach (object o in ArtJson.AsList(ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtCharacterPrefabBuilder.ModulesJson)), "modules")["modules"], "modules"))
+            {
+                string fbx = ArtJson.AsString(ArtJson.AsObject(o, "module")["fbx"]);
+                if (beklenen.Add(ArtCharacterContract.ZombieFolder + "/Modules/" + Path.GetFileName(fbx))) moduller++;
+            }
+
+            Assert.AreEqual(19, moduller, "AP-007 19 modül FBX");
 
             var diskte = new HashSet<string>(DiskteUzanti(".fbx"), StringComparer.Ordinal);
             var eksik = new List<string>();
@@ -319,6 +337,20 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(82, beklenen.Count, "Beklenen doku kümesi 19 + 63 (WP-012) = 82 olmalı.");
 
+            // WP-016 karakter setleri (ADR-016-1): oyuncu 3 skin albedo + Normal + Packed(ORM) + türetilmiş
+            // MetallicSmoothness(+AO); zombi atlas BaseColor + Normal + Packed + Mask + türetilmiş MS + DetailMask.
+            string pt = ArtCharacterPrefabBuilder.PlayerTextures, pd = ArtCharacterPrefabBuilder.PlayerDerived;
+            string zt = ArtCharacterPrefabBuilder.ZombieTextures, zd = ArtCharacterPrefabBuilder.ZombieDerived;
+            foreach (string f in new[]
+            {
+                pt + "/T_player_skin1_BaseColor.png", pt + "/T_player_skin2a_BaseColor.png", pt + "/T_player_skin3_BaseColor.png",
+                pt + "/T_player_Normal.png", pt + "/T_player_Packed.png", pd + "/T_player_MetallicSmoothness.png",
+                zt + "/T_zombie_atlas_BaseColor.png", zt + "/T_zombie_atlas_Normal.png", zt + "/T_zombie_atlas_Packed.png", zt + "/T_zombie_atlas_Mask.png",
+                zd + "/T_zombie_atlas_MetallicSmoothness.png", zd + "/T_zombie_atlas_DetailMask.png"
+            }) beklenen.Add(f);
+
+            Assert.AreEqual(94, beklenen.Count, "Beklenen doku kümesi 82 + 12 (WP-016 karakterler) = 94 olmalı.");
+
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();
             var fazla = new List<string>();
@@ -404,7 +436,7 @@ namespace DD.Art.Tests.EditMode
                 if (importer.streamingMipmaps != ArtImportContract.StreamsMipmaps(sinif.Value)) ihlaller.Add(yol + ": streamingMipmaps " + importer.streamingMipmaps + " != " + ArtImportContract.StreamsMipmaps(sinif.Value) + " (" + sinif + ")");
 
                 PngBoyut(yol, out int w, out int h);
-                if (rol == ArtImportContract.TextureRole.Packed) continue;   // provenance only; no material binds it
+                if (rol == ArtImportContract.TextureRole.Packed || rol == ArtImportContract.TextureRole.Mask) continue;   // provenance only; no material binds them (WP-016: the AP-007 ID mask feeds the derived DetailMask)
                 long bytes = ArtImportContract.EstimatedShippedBytes(w, h, sinif.Value, importer.mipmapEnabled);
                 sevk += bytes;
                 sevkSayi++;
