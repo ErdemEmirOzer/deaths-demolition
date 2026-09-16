@@ -201,7 +201,7 @@ namespace DD.Prototype.Tests.EditMode
             RunRewardReport r1 = ProfileService.ApplyRun(ozet);
             Assert.AreEqual(2, r1.LevelAfter);
             Assert.IsTrue(r1.LeveledUp);
-            Assert.AreEqual(2, r1.NewUnlocks.Count, "AutoSmg + Explosion");
+            Assert.AreEqual(3, r1.NewUnlocks.Count, "AutoSmg + Explosion (merdiven) + Title: Blooded (WP-023 kataloğu, first_blood'a bağlı)");
             Assert.AreEqual(1, r1.NewAchievements.Count, "First Blood");
 
             int seviye = ProfileService.Current.ProfileLevel;
@@ -326,9 +326,12 @@ namespace DD.Prototype.Tests.EditMode
                 "SaveVersion", "ProfileLevel", "XpIntoLevel", "TotalXpEarned", "HighestRound", "RunsPlayed",
                 "RoundsCompleted", "TotalKills", "StandardKills", "SpecialKills", "EliteKills", "UltraKills",
                 "UnattributedKills", "ArmorPiecesBroken", "BestRunXp", "Achievements", "UnlockedWeapons",
-                "UnlockedBranches", "ProfileLineageId", "LastAppliedCompletionOrdinal", "LastSavedUtc"
+                "UnlockedBranches", "ProfileLineageId", "LastAppliedCompletionOrdinal", "LastSavedUtc",
+                // WP-023 (şema v4): iki ömür boyu feat istatistiği (başarım kuralları okur; DEC-007 istatistik, modifier değil)
+                // + katalog içerik listesi (DEC-038). Gold/harcama dosyaya girmez (REQ-018); koşu geçmişi yok, tunable yok.
+                "SpecialWeaponPickups", "FlawlessRounds", "UnlockedContent"
             }, adlar, "ProfileData şeması değişti; kalıcılık sınırı yeniden gözden geçirilmeli");
-            Assert.AreEqual(3, ProfileData.CurrentVersion);
+            Assert.AreEqual(4, ProfileData.CurrentVersion);
             StringAssert.DoesNotContain("AppliedCompletionIds", json, "halka diske yazılmaz (v3)");
         }
 
@@ -373,15 +376,11 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void AchievementTanimiYok_HataYok_BosListe()
         {
-            PrototypeConfig orijinal = PrototypeConfig.Active;
-            Assert.IsNotNull(orijinal, "EditMode'da Resources config yüklenmeli");
-
-            PrototypeConfig klon = UnityEngine.Object.Instantiate(orijinal);
+            // WP-023: tanımlar artık katalog JSON'undan gelir (config listesi kaynak değil);
+            // boş katalog → hata yok, boş liste, transaction normal kaydeder.
+            DD.Prototype.Achievements.AchievementCatalog.TestSeam.Override(new List<DD.Prototype.Achievements.AchievementDefinition>());
             try
             {
-                klon.Progression.Achievements.Clear();
-                PrototypeConfig.SetActive(klon);
-
                 Assert.AreEqual(0, ProfileService.AllAchievements.Count);
                 RunRewardReport r = ProfileService.ApplyRun(Ozet(5, 4, 30, 30, 100));
                 Assert.AreEqual(0, r.NewAchievements.Count);
@@ -390,8 +389,7 @@ namespace DD.Prototype.Tests.EditMode
             }
             finally
             {
-                PrototypeConfig.SetActive(orijinal);
-                UnityEngine.Object.DestroyImmediate(klon);
+                DD.Prototype.Achievements.AchievementCatalog.TestSeam.Override(null);
             }
         }
 

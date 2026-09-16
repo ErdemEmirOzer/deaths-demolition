@@ -143,6 +143,20 @@ namespace DD.Prototype.Profile
                 data.LastAppliedCompletionOrdinal = 0;
             }
 
+            if (from < 4)
+            {
+                // v3 → v4 (WP-023): the two lifetime feat statistics and the content list are
+                // absent from the file and already at their zero / empty defaults after
+                // JsonUtility. Lineage and ordinal are carried as they are: a migrated
+                // profile keeps refusing every completion it has already applied.
+                data.SpecialWeaponPickups = 0;
+                data.FlawlessRounds = 0;
+                if (data.UnlockedContent == null)
+                {
+                    data.UnlockedContent = new System.Collections.Generic.List<string>();
+                }
+            }
+
             data.SaveVersion = ProfileData.CurrentVersion;
 
             // Sanitize is part of every step: it is what turns "TotalKills > tier sum"

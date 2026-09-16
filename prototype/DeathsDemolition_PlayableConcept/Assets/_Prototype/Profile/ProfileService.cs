@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DD.Prototype.Achievements;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Rounds;
 using UnityEngine;
@@ -109,6 +110,24 @@ namespace DD.Prototype.Profile
 
         /// <summary>How the last <see cref="ApplyRun"/> judged its token (F1 panel, tests).</summary>
         public static CompletionTokenVerdict LastVerdict { get; private set; }
+
+        /// <summary>
+        /// WP-023 (ADR-023-1): the Run Results data model of the last transaction attempt;
+        /// an empty model (HasRun false) before any run or after <see cref="ClearLastReport"/>.
+        /// </summary>
+        public static RunResultsData LastResults => s_lastResults ?? s_emptyResults;
+
+        /// <summary>The <see cref="IRunResultsSource"/> the Results screen binds to.</summary>
+        public static IRunResultsSource ResultsSource => s_resultsSource;
+
+        private static readonly RunResultsData s_emptyResults = RunResultsData.Empty();
+        private static RunResultsData s_lastResults;
+        private static readonly IRunResultsSource s_resultsSource = new ServiceResultsSource();
+
+        private sealed class ServiceResultsSource : IRunResultsSource
+        {
+            public RunResultsData Current => LastResults;
+        }
 
         /// <summary>True when the save on disk was unreadable and defaults were used.</summary>
         public static bool RecoveredFromCorruptSave
@@ -273,55 +292,33 @@ namespace DD.Prototype.Profile
             return Current.Has(Current.Achievements, id);
         }
 
-        /// <summary>Every achievement the build defines, earned or not. Order is stable.</summary>
-        public static IReadOnlyList<AchievementSettings> AllAchievements
-        {
-            get
-            {
-                PrototypeConfig config = PrototypeConfig.Active;
-                if (config != null && config.Progression.Achievements != null)
-                {
-                    return config.Progression.Achievements;
-                }
+        /// <summary>
+        /// Every achievement the build defines, earned or not, in catalog order (WP-023:
+        /// read from Resources/Achievements/achievement-catalog.json; the legacy config
+        /// list is no longer the source). The WP-005 presentation shape is kept.
+        /// </summary>
+        public static IReadOnlyList<AchievementSettings> AllAchievements => AchievementCatalog.Settings;
 
-                return s_fallbackAchievements;
-            }
+        /// <summary>WP-023: every catalog unlock entry, opened or not.</summary>
+        public static IReadOnlyList<UnlockDefinition> AllContent => UnlockCatalog.Entries;
+
+        /// <summary>WP-023: the entitlement gate for catalog content (cosmetic / indicator ids). The earned list decides.</summary>
+        public static bool IsContentUnlocked(string id)
+        {
+            EnsureLoaded();
+            return UnlockCatalog.IsUnlocked(s_data, id);
         }
 
-        /// <summary>
-        /// Used only when PrototypeConfig is missing, e.g. a menu scene opened directly
-        /// in the editor without going through Boot. The four names are the request's;
-        /// they are PrototypeOnly content, not a final list.
-        /// </summary>
-        private static readonly AchievementSettings[] s_fallbackAchievements =
+        /// <summary>WP-023: current / threshold of an achievement for a progress readout (0 when unknown).</summary>
+        public static long AchievementProgress(string id, out int threshold)
         {
-            new AchievementSettings
-            {
-                Id = "first_blood", DisplayName = "First Blood",
-                Description = "Defeat your first enemy.",
-                Trigger = AchievementTrigger.FirstKill, Threshold = 1
-            },
-            new AchievementSettings
-            {
-                Id = "armor_breaker", DisplayName = "Armor Breaker",
-                Description = "Break an armour piece off an enemy.",
-                Trigger = AchievementTrigger.ArmorPieceBroken, Threshold = 1
-            },
-            new AchievementSettings
-            {
-                Id = "reach_round_5", DisplayName = "Reach Round 5",
-                Description = "Survive until round 5.",
-                Trigger = AchievementTrigger.ReachRound, Threshold = 5
-            },
-            new AchievementSettings
-            {
-                Id = "defeat_an_ultra", DisplayName = "Defeat an Ultra",
-                Description = "Bring down an Executioner.",
-                Trigger = AchievementTrigger.KillTier, Threshold = 1, TargetTier = EnemyTier.Ultra
-            }
-        };
-
-        // ================================================================ apply a run
+            EnsureLoaded();
+            AchievementDefinition definition = AchievementCatalog.Find(id);
+            threshold = definition != null ? Math.Max(1, definition.Threshold) : 0;
+            return definition != null && definition.Scope == AchievementScope.Lifetime
+                ? Math.Min(AchievementEngine.LifetimeValue(s_data, definition), threshold)
+                : (definition != null && s_data.Has(s_data.Achievements, id) ? threshold : 0);
+        }
 
         /// <summary>
         /// Folds a finished run into the profile as one transaction (see the class
@@ -340,6 +337,17 @@ namespace DD.Prototype.Profile
         /// </summary>
         public static RunRewardReport ApplyRun(in RunSummary summary)
         {
+            // The feats belong to the run whose token this is; any other summary gets none.
+            return ApplyRun(summary, AchievementRunTracker.CountersFor(summary.CompletionId));
+        }
+
+        /// <summary>
+        /// WP-023: the transaction with explicit feat counters (tests, probes). The
+        /// counters ride the same candidate as the statistics, XP, achievements and
+        /// unlocks: one write, exactly once.
+        /// </summary>
+        public static RunRewardReport ApplyRun(in RunSummary summary, in RunFeatCounters feats)
+        {
             EnsureLoaded();
 
             var input = new RunRewardInput(summary);
@@ -355,7 +363,10 @@ namespace DD.Prototype.Profile
                 XpIntoLevelBefore = s_data.XpIntoLevel,
                 LevelAfter = s_data.ProfileLevel,
                 XpIntoLevelAfter = s_data.XpIntoLevel,
-                LevelRequirementAfter = LevelRequirement(s_data.ProfileLevel)
+                LevelRequirementAfter = LevelRequirement(s_data.ProfileLevel),
+                Feats = WithRunEconomy(feats, summary),
+                HighestRoundBefore = s_data.HighestRound,
+                BestRunXpBefore = s_data.BestRunXp
             };
 
             // ---- 1/2 identity: format → schema → lineage → ordinal → mark → sequence → capability
@@ -372,8 +383,7 @@ namespace DD.Prototype.Profile
                     draft.Outcome = ProfileCommitOutcome.MissingIdentity;
                     draft.FailureMessage = "This run carried no completion identity, so it was not recorded.";
                     Debug.LogWarning("[Profile] " + draft.FailureMessage);
-                    s_lastReport = draft.Seal();
-                    return s_lastReport;
+                    return Publish(draft.Seal());
 
                 case CompletionTokenVerdict.AlreadyApplied:
                 {
@@ -392,7 +402,7 @@ namespace DD.Prototype.Profile
                         // After a relaunch there is no receipt in memory; the honest "already
                         // recorded" one is better for a Results screen than the empty state.
                         // A receipt of a different run is never displaced by a stale replay.
-                        s_lastReport = duplicate;
+                        Publish(duplicate);
                     }
 
                     return duplicate;
@@ -406,8 +416,7 @@ namespace DD.Prototype.Profile
                     Debug.LogWarning("[Profile] " + draft.FailureMessage);
                     if (s_lastReport == null)
                     {
-                        s_lastReport = draft.Seal();
-                        return s_lastReport;
+                        return Publish(draft.Seal());
                     }
 
                     return draft.Seal();
@@ -417,16 +426,30 @@ namespace DD.Prototype.Profile
             ProfileData candidate = s_data.Clone();
 
             ProfileProgression.ApplyStatistics(candidate, input);
+            ProfileProgression.ApplyFeats(candidate, draft.Feats);
 
             LevelProgress progress = ProfileProgression.ApplyXp(
                 candidate.ProfileLevel, candidate.XpIntoLevel, input.TotalXp, LevelRequirement);
             candidate.ProfileLevel = progress.Level;
             candidate.XpIntoLevel = progress.XpIntoLevel;
 
-            // Order matters: achievements read the merged statistics, and unlocks read
-            // the level the XP just produced.
-            ProfileProgression.EvaluateAchievements(candidate, input, AllAchievements, draft.NewAchievements);
+            // Order matters: achievements read the merged statistics, level unlocks read
+            // the level the XP just produced, and the content catalog reads both (an entry
+            // keyed on an achievement earned by this very run opens in this transaction).
+            AchievementEngine.Evaluate(candidate, input, draft.Feats, AchievementCatalog.Definitions, draft.EarnedDefinitions);
+            for (int i = 0; i < draft.EarnedDefinitions.Count; i++)
+            {
+                AchievementDefinition d = draft.EarnedDefinitions[i];
+                draft.NewAchievements.Add(new ProfileUnlockEntry(d.DisplayName, d.Description));
+            }
+
             ProfileProgression.GrantUnlocksForLevel(candidate, s_ladder, draft.NewUnlocks);
+            UnlockCatalog.Grant(candidate, UnlockCatalog.Entries, draft.OpenedContent);
+            for (int i = 0; i < draft.OpenedContent.Count; i++)
+            {
+                UnlockDefinition u = draft.OpenedContent[i];
+                draft.NewUnlocks.Add(new ProfileUnlockEntry(u.DisplayName, u.Detail));
+            }
 
             // The high-water mark advances in the SAME candidate as the rewards: they reach
             // the disk together or not at all.
@@ -436,13 +459,11 @@ namespace DD.Prototype.Profile
             candidate.Sanitize();
             if (!candidate.IsValid())
             {
-                draft.NewUnlocks.Clear();
-                draft.NewAchievements.Clear();
+                ClearRewards(draft);
                 draft.Outcome = ProfileCommitOutcome.InvalidCandidate;
                 draft.FailureMessage = "The updated profile failed validation, so this run was not recorded.";
                 Debug.LogWarning("[Profile] " + draft.FailureMessage);
-                s_lastReport = draft.Seal();
-                return s_lastReport;
+                return Publish(draft.Seal());
             }
 
             // ---- 5 persist ---------------------------------------------------
@@ -453,12 +474,10 @@ namespace DD.Prototype.Profile
                 // so a retry of the same summary is a fresh attempt, not a duplicate. The
                 // rewards computed on the discarded candidate were never granted, so the
                 // receipt does not list them.
-                draft.NewUnlocks.Clear();
-                draft.NewAchievements.Clear();
+                ClearRewards(draft);
                 draft.Outcome = ProfileCommitOutcome.SaveFailed;
                 draft.FailureMessage = saved.Message;
-                s_lastReport = draft.Seal();
-                return s_lastReport;
+                return Publish(draft.Seal());
             }
 
             // ---- 6 publish ---------------------------------------------------
@@ -469,9 +488,34 @@ namespace DD.Prototype.Profile
             draft.LevelRequirementAfter = LevelRequirement(candidate.ProfileLevel);
             draft.Outcome = ProfileCommitOutcome.Applied;
 
-            s_lastReport = draft.Seal();
+            Publish(draft.Seal());
             RaiseChanged();
             return s_lastReport;
+        }
+
+        /// <summary>Single-run gold / purchase counters come from the summary; they are read by rules and Results only, never persisted.</summary>
+        private static RunFeatCounters WithRunEconomy(in RunFeatCounters feats, in RunSummary summary)
+        {
+            RunFeatCounters f = feats.Clamped();
+            f.GoldEarned = Math.Max(0, summary.GoldEarned);
+            f.UpgradesPurchased = Math.Max(0, summary.UpgradesPurchased);
+            return f;
+        }
+
+        private static void ClearRewards(RunRewardReport.Draft draft)
+        {
+            draft.NewUnlocks.Clear();
+            draft.NewAchievements.Clear();
+            draft.EarnedDefinitions.Clear();
+            draft.OpenedContent.Clear();
+        }
+
+        /// <summary>Stores the receipt and builds its Run Results model from the profile as it now stands.</summary>
+        private static RunRewardReport Publish(RunRewardReport report)
+        {
+            s_lastReport = report;
+            s_lastResults = RunResultsData.From(report, s_data);
+            return report;
         }
 
         // ================================================================ display
@@ -572,6 +616,7 @@ namespace DD.Prototype.Profile
 
             s_data = fresh;
             s_lastReport = null;
+            s_lastResults = null;
             CompletionAuthority.InvalidateLive();
             ProfileProgression.GrantUnlocksForLevel(s_data, s_ladder, null);
             RaiseChanged();
@@ -581,6 +626,7 @@ namespace DD.Prototype.Profile
         public static void ClearLastReport()
         {
             s_lastReport = null;
+            s_lastResults = null;
         }
 
         private static void RaiseChanged()
@@ -606,6 +652,7 @@ namespace DD.Prototype.Profile
         {
             s_data = null;
             s_lastReport = null;
+            s_lastResults = null;
             LastVerdict = CompletionTokenVerdict.Missing;
             Changed = null;
         }

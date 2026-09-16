@@ -245,16 +245,28 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void B_ProfilDosyasi_KosuSayisiylaBuyumez()
         {
-            Seri(8);
-            long b8 = new FileInfo(TestPath).Length;
-            for (int i = 8; i < 40; i++)
+            // WP-023: başarım/içerik listeleri KAZANILAN içerikle büyür (katalog boyutuyla sınırlı), koşu
+            // sayısıyla değil; anti-replay durumunun O(1) olduğunu ölçmek için kataloglar boş verilir.
+            DD.Prototype.Achievements.AchievementCatalog.TestSeam.Override(new List<DD.Prototype.Achievements.AchievementDefinition>());
+            DD.Prototype.Achievements.UnlockCatalog.TestSeam.Override(new List<DD.Prototype.Achievements.UnlockDefinition>());
+            try
             {
-                Assert.IsTrue(ProfileService.ApplyRun(Ozet(i)).Applied);
-            }
+                Seri(8);
+                long b8 = new FileInfo(TestPath).Length;
+                for (int i = 8; i < 40; i++)
+                {
+                    Assert.IsTrue(ProfileService.ApplyRun(Ozet(i)).Applied);
+                }
 
-            long b40 = new FileInfo(TestPath).Length;
-            Debug.Log("[DD-TEST] wp009h.size 8runs=" + b8 + "B 40runs=" + b40 + "B");
-            Assert.LessOrEqual(b40, b8 + 64, "anti-replay durumu koşu sayısıyla büyümemeli (O(1)); yalnız sayısal alan genişliği kadar fark olabilir");
+                long b40 = new FileInfo(TestPath).Length;
+                Debug.Log("[DD-TEST] wp009h.size 8runs=" + b8 + "B 40runs=" + b40 + "B");
+                Assert.LessOrEqual(b40, b8 + 64, "anti-replay durumu koşu sayısıyla büyümemeli (O(1)); yalnız sayısal alan genişliği kadar fark olabilir");
+            }
+            finally
+            {
+                DD.Prototype.Achievements.AchievementCatalog.TestSeam.Override(null);
+                DD.Prototype.Achievements.UnlockCatalog.TestSeam.Override(null);
+            }
         }
 
         // ------------------------------------------------------------------ C. reload / relaunch
@@ -331,7 +343,7 @@ namespace DD.Prototype.Tests.EditMode
             File.WriteAllText(TestPath, V2Belge(kosu, halka));
             YenidenYukle();
             ProfileData p = ProfileService.Current;
-            Assert.AreEqual(3, p.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, p.SaveVersion);
             Assert.IsTrue(ProfileData.IsLineageId(p.ProfileLineageId));
             Assert.AreEqual(0, p.LastAppliedCompletionOrdinal, "halka ordinal'e çevrilmez, tahmin yok");
             Assert.AreEqual(kosu, p.RunsPlayed, "progression korunur");
@@ -377,7 +389,7 @@ namespace DD.Prototype.Tests.EditMode
             File.WriteAllText(TestPath, "{\"SaveVersion\":1,\"ProfileLevel\":1,\"XpIntoLevel\":37,\"TotalXpEarned\":37,\"HighestRound\":2,\"RunsPlayed\":12,\"RoundsCompleted\":1,\"TotalKills\":17,\"StandardKills\":17,\"SpecialKills\":0,\"EliteKills\":0,\"UltraKills\":0,\"ArmorPiecesBroken\":3,\"BestRunXp\":32,\"Achievements\":[\"first_blood\",\"armor_breaker\"],\"UnlockedWeapons\":[\"AssaultRifle\"],\"UnlockedBranches\":[\"Piercing\",\"Ricochet\"],\"LastSavedUtc\":\"2026-09-12T15:03:27.0000000Z\"}");
             YenidenYukle();
             ProfileData p = ProfileService.Current;
-            Assert.AreEqual(3, p.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, p.SaveVersion);
             Assert.AreEqual(12, p.RunsPlayed);
             Assert.AreEqual(37, p.TotalXpEarned);
             Assert.AreEqual(17, p.TotalKills);

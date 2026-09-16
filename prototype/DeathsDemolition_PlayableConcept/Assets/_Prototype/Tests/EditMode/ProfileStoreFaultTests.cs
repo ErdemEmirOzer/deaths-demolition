@@ -487,10 +487,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(ProfileLoadStatus.InvalidLineage, ProfileStore.ReadFile(Primary, out d));
             File.WriteAllText(Primary, "{\"SaveVersion\": 3, \"ProfileLineageId\": \"" + Soy + "\", \"LastAppliedCompletionOrdinal\": -4}");
             Assert.AreEqual(ProfileLoadStatus.Malformed, ProfileStore.ReadFile(Primary, out d), "negatif ordinal onarılmaz; geçersiz belge");
-            File.WriteAllText(Primary, "{\"SaveVersion\": 4, \"ProfileLineageId\": \"" + Soy + "\"}");
+            File.WriteAllText(Primary, "{\"SaveVersion\": 5, \"ProfileLineageId\": \"" + Soy + "\"}");
             Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d));
-            File.WriteAllText(Primary, "{\"SaveVersion\": 4}");
-            Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d), "v4 lineage'sız da future: dokunulmaz");
+            File.WriteAllText(Primary, "{\"SaveVersion\": 5}");
+            Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d), "v5 lineage'sız da future: dokunulmaz (WP-023: v4 artık güncel)");
             File.Delete(Primary);
             Assert.AreEqual(ProfileLoadStatus.Missing, ProfileStore.ReadFile(Primary, out d));
             Assert.IsNull(d);
@@ -529,7 +529,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(ProfileData.IsLineageId(y.ProfileLineageId), "v1 → v3: lineage üretildi");
             Assert.AreEqual(0, y.LastAppliedCompletionOrdinal, "yeni soyda uygulanmış completion yok");
             Assert.AreEqual(0, y.UnattributedKills);
-            Assert.AreEqual(3, y.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, y.SaveVersion);
             Assert.AreEqual(string.Empty, y.LastSavedUtc);
         }
 
@@ -573,7 +573,7 @@ namespace DD.Prototype.Tests.EditMode
             File.WriteAllText(Primary, V1Document);
             ProfileData y = ProfileStore.Load();
             Assert.AreEqual(ProfileLoadStatus.Ok, ProfileStore.LastLoadStatus);
-            Assert.AreEqual(3, y.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, y.SaveVersion);
             Assert.AreEqual(3, y.ProfileLevel);
             Assert.AreEqual(40, y.XpIntoLevel);
             Assert.AreEqual(315, y.TotalXpEarned);
@@ -593,7 +593,7 @@ namespace DD.Prototype.Tests.EditMode
             CollectionAssert.AreEqual(new[] { "Piercing", "Explosion" }, y.UnlockedBranches);
             Assert.IsTrue(ProfileData.IsLineageId(y.ProfileLineageId), "v1 → v3: tek seferlik lineage");
             Assert.AreEqual(0, y.LastAppliedCompletionOrdinal, "v1 koşuları ordinal'e çevrilmez; 0'dan başlar");
-            Assert.AreEqual(3, y.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, y.SaveVersion);
             Assert.AreEqual("2026-09-12T15:03:27.0000000Z", y.LastSavedUtc);
             Assert.IsTrue(y.IsValid());
 

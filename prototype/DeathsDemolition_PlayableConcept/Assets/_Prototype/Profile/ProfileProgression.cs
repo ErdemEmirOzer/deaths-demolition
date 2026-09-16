@@ -27,7 +27,8 @@ namespace DD.Prototype.Profile
     /// fields, and <c>RunSummary.TotalXpEarned</c> is never read: the awarded total is
     /// recomputed as completed-round XP + kill XP (DEC-008, REQ-021..024). Gold,
     /// spending, purchases, rerolls and playtime do not appear here at all, so they
-    /// cannot leak into the arithmetic by accident.
+    /// cannot leak into the arithmetic by accident (WP-023: single-run gold / purchase
+    /// achievements read the summary through <c>RunFeatCounters</c>, never through this).
     /// </summary>
     public readonly struct RunRewardInput
     {
@@ -186,6 +187,18 @@ namespace DD.Prototype.Profile
         }
 
         // ------------------------------------------------------------- statistics
+
+        /// <summary>WP-023: folds the tracked feats (special pickups, flawless rounds) into the candidate. Saturating.</summary>
+        public static void ApplyFeats(ProfileData candidate, in DD.Prototype.Achievements.RunFeatCounters feats)
+        {
+            if (candidate == null)
+            {
+                return;
+            }
+
+            candidate.SpecialWeaponPickups = SaturatingAdd(candidate.SpecialWeaponPickups, Math.Max(0, feats.SpecialWeaponPickups));
+            candidate.FlawlessRounds = SaturatingAdd(candidate.FlawlessRounds, Math.Max(0, feats.FlawlessRounds));
+        }
 
         /// <summary>Folds the run's counters into the candidate. Saturating everywhere.</summary>
         public static void ApplyStatistics(ProfileData candidate, in RunRewardInput input)

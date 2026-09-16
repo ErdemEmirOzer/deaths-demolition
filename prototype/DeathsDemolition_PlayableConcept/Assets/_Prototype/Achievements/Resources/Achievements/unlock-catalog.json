@@ -1,0 +1,77 @@
+{
+  "Version": 1,
+  "Entries": [
+    {
+      "Id": "title_first_blood",
+      "Type": "Cosmetic",
+      "DisplayName": "Title: Blooded",
+      "Detail": "Profile title - shown next to your name once the profile pane supports titles",
+      "Condition": "Achievement",
+      "Key": "first_blood"
+    },
+    {
+      "Id": "title_survivor",
+      "Type": "Cosmetic",
+      "DisplayName": "Title: Survivor",
+      "Detail": "Profile title for reaching round 10",
+      "Condition": "Round",
+      "Key": "10"
+    },
+    {
+      "Id": "title_veteran",
+      "Type": "Cosmetic",
+      "DisplayName": "Title: Veteran",
+      "Detail": "Profile title for reaching level 5",
+      "Condition": "Level",
+      "Key": "5"
+    },
+    {
+      "Id": "title_executioner",
+      "Type": "Cosmetic",
+      "DisplayName": "Title: Executioner",
+      "Detail": "Profile title for defeating an Executioner",
+      "Condition": "Achievement",
+      "Key": "defeat_an_ultra"
+    },
+    {
+      "Id": "title_ironclad",
+      "Type": "Cosmetic",
+      "DisplayName": "Title: Ironclad",
+      "Detail": "Profile title for breaking 100 armour pieces",
+      "Condition": "Achievement",
+      "Key": "armor_breaker_100"
+    },
+    {
+      "Id": "badge_ghost",
+      "Type": "Cosmetic",
+      "DisplayName": "Badge: Ghost",
+      "Detail": "Profile badge for ten flawless rounds",
+      "Condition": "Achievement",
+      "Key": "flawless_rounds_10"
+    },
+    {
+      "Id": "indicator_kill_streak",
+      "Type": "Indicator",
+      "DisplayName": "Kill streak counter",
+      "Detail": "HUD indicator variant - available once 50 enemies are defeated",
+      "Condition": "Achievement",
+      "Key": "kills_50"
+    },
+    {
+      "Id": "indicator_round_timer",
+      "Type": "Indicator",
+      "DisplayName": "Round timer",
+      "Detail": "HUD indicator variant - available from round 5",
+      "Condition": "Round",
+      "Key": "5"
+    },
+    {
+      "Id": "indicator_gold_ticker",
+      "Type": "Indicator",
+      "DisplayName": "Gold ticker",
+      "Detail": "HUD indicator variant - available after a 150-gold run",
+      "Condition": "Achievement",
+      "Key": "run_gold_150"
+    }
+  ]
+}

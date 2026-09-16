@@ -1,0 +1,252 @@
+{
+  "Version": 1,
+  "Definitions": [
+    {
+      "Id": "first_blood",
+      "DisplayName": "First Blood",
+      "Description": "Defeat your first enemy.",
+      "Condition": "TotalKills",
+      "Threshold": 1,
+      "Scope": "Lifetime",
+      "Rarity": "Common"
+    },
+    {
+      "Id": "armor_breaker",
+      "DisplayName": "Armor Breaker",
+      "Description": "Break an armour piece off an enemy.",
+      "Condition": "ArmorPiecesBroken",
+      "Threshold": 1,
+      "Scope": "Lifetime",
+      "Rarity": "Common"
+    },
+    {
+      "Id": "reach_round_5",
+      "DisplayName": "Reach Round 5",
+      "Description": "Survive until round 5.",
+      "Condition": "ReachRound",
+      "Threshold": 5,
+      "Scope": "Lifetime",
+      "Rarity": "Common"
+    },
+    {
+      "Id": "defeat_an_ultra",
+      "DisplayName": "Defeat an Ultra",
+      "Description": "Bring down an Executioner.",
+      "Condition": "TierKills",
+      "Threshold": 1,
+      "TargetTier": "Ultra",
+      "Scope": "Lifetime",
+      "Rarity": "Rare"
+    },
+    {
+      "Id": "reach_round_10",
+      "DisplayName": "Reach Round 10",
+      "Description": "Survive until round 10.",
+      "Condition": "ReachRound",
+      "Threshold": 10,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "reach_round_15",
+      "DisplayName": "Reach Round 15",
+      "Description": "Survive until round 15.",
+      "Condition": "ReachRound",
+      "Threshold": 15,
+      "Scope": "Lifetime",
+      "Rarity": "Rare"
+    },
+    {
+      "Id": "reach_round_20",
+      "DisplayName": "Reach Round 20",
+      "Description": "Survive until round 20.",
+      "Condition": "ReachRound",
+      "Threshold": 20,
+      "Scope": "Lifetime",
+      "Rarity": "Epic"
+    },
+    {
+      "Id": "rounds_completed_50",
+      "DisplayName": "Fifty Rounds",
+      "Description": "Complete 50 rounds in total.",
+      "Condition": "RoundsCompleted",
+      "Threshold": 50,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "kills_50",
+      "DisplayName": "Fifty Down",
+      "Description": "Defeat 50 enemies in total.",
+      "Condition": "TotalKills",
+      "Threshold": 50,
+      "Scope": "Lifetime",
+      "Rarity": "Common"
+    },
+    {
+      "Id": "kills_250",
+      "DisplayName": "Body Count",
+      "Description": "Defeat 250 enemies in total.",
+      "Condition": "TotalKills",
+      "Threshold": 250,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "kills_1000",
+      "DisplayName": "Demolisher",
+      "Description": "Defeat 1,000 enemies in total.",
+      "Condition": "TotalKills",
+      "Threshold": 1000,
+      "Scope": "Lifetime",
+      "Rarity": "Epic"
+    },
+    {
+      "Id": "special_hunter",
+      "DisplayName": "Runner Hunter",
+      "Description": "Defeat 25 Runners in total.",
+      "Condition": "TierKills",
+      "Threshold": 25,
+      "TargetTier": "Special",
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "elite_hunter",
+      "DisplayName": "Guard Hunter",
+      "Description": "Defeat 25 Guards in total.",
+      "Condition": "TierKills",
+      "Threshold": 25,
+      "TargetTier": "Elite",
+      "Scope": "Lifetime",
+      "Rarity": "Rare"
+    },
+    {
+      "Id": "ultra_hunter",
+      "DisplayName": "Executioner Hunter",
+      "Description": "Defeat 10 Executioners in total.",
+      "Condition": "TierKills",
+      "Threshold": 10,
+      "TargetTier": "Ultra",
+      "Scope": "Lifetime",
+      "Rarity": "Epic"
+    },
+    {
+      "Id": "armor_breaker_100",
+      "DisplayName": "Plate Wrecker",
+      "Description": "Break 100 armour pieces in total.",
+      "Condition": "ArmorPiecesBroken",
+      "Threshold": 100,
+      "Scope": "Lifetime",
+      "Rarity": "Rare"
+    },
+    {
+      "Id": "special_pickup_first",
+      "DisplayName": "Special Delivery",
+      "Description": "Pick up a special weapon.",
+      "Condition": "SpecialWeaponPickups",
+      "Threshold": 1,
+      "Scope": "Lifetime",
+      "Rarity": "Common"
+    },
+    {
+      "Id": "special_pickup_10",
+      "DisplayName": "Regular Customer",
+      "Description": "Pick up 10 special weapons in total.",
+      "Condition": "SpecialWeaponPickups",
+      "Threshold": 10,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "run_gold_150",
+      "DisplayName": "Pocket Change",
+      "Description": "Pick up 150 gold in a single run.",
+      "Condition": "GoldEarned",
+      "Threshold": 150,
+      "Scope": "SingleRun",
+      "Rarity": "Common"
+    },
+    {
+      "Id": "run_gold_400",
+      "DisplayName": "Treasure Hunter",
+      "Description": "Pick up 400 gold in a single run.",
+      "Condition": "GoldEarned",
+      "Threshold": 400,
+      "Scope": "SingleRun",
+      "Rarity": "Rare"
+    },
+    {
+      "Id": "run_upgrades_5",
+      "DisplayName": "Well Equipped",
+      "Description": "Buy 5 upgrade cards in a single run.",
+      "Condition": "UpgradesPurchased",
+      "Threshold": 5,
+      "Scope": "SingleRun",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "flawless_round",
+      "DisplayName": "Untouched",
+      "Description": "Complete a round without taking a hit.",
+      "Condition": "FlawlessRounds",
+      "Threshold": 1,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "flawless_rounds_10",
+      "DisplayName": "Ghost",
+      "Description": "Complete 10 rounds without taking a hit, in total.",
+      "Condition": "FlawlessRounds",
+      "Threshold": 10,
+      "Scope": "Lifetime",
+      "Rarity": "Epic"
+    },
+    {
+      "Id": "runs_played_10",
+      "DisplayName": "Regular",
+      "Description": "Finish 10 runs.",
+      "Condition": "RunsPlayed",
+      "Threshold": 10,
+      "Scope": "Lifetime",
+      "Rarity": "Common"
+    },
+    {
+      "Id": "runs_played_50",
+      "DisplayName": "Veteran",
+      "Description": "Finish 50 runs.",
+      "Condition": "RunsPlayed",
+      "Threshold": 50,
+      "Scope": "Lifetime",
+      "Rarity": "Rare"
+    },
+    {
+      "Id": "level_5",
+      "DisplayName": "Level 5",
+      "Description": "Reach profile level 5.",
+      "Condition": "ProfileLevel",
+      "Threshold": 5,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon"
+    },
+    {
+      "Id": "level_10",
+      "DisplayName": "Level 10",
+      "Description": "Reach profile level 10.",
+      "Condition": "ProfileLevel",
+      "Threshold": 10,
+      "Scope": "Lifetime",
+      "Rarity": "Rare"
+    },
+    {
+      "Id": "run_kills_40",
+      "DisplayName": "Rampage",
+      "Description": "Defeat 40 enemies in a single run.",
+      "Condition": "TotalKills",
+      "Threshold": 40,
+      "Scope": "SingleRun",
+      "Rarity": "Rare"
+    }
+  ]
+}

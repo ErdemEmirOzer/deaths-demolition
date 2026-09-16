@@ -753,11 +753,11 @@ namespace DD.Prototype.Diagnostics
                 ProfileData p = ProfileService.Current;
                 string fixturePath = Path.Combine(_outDir, "v2-fixture-ids.txt");
                 string[] ids = File.Exists(fixturePath) ? File.ReadAllLines(fixturePath) : new string[0];
-                bool migrated = ProfileStore.LastLoadStatus == ProfileLoadStatus.Ok && p.SaveVersion == 3 && ProfileData.IsLineageId(p.ProfileLineageId) &&
+                bool migrated = ProfileStore.LastLoadStatus == ProfileLoadStatus.Ok && p.SaveVersion == ProfileData.CurrentVersion && ProfileData.IsLineageId(p.ProfileLineageId) &&
                                 p.LastAppliedCompletionOrdinal == 0 && p.RunsPlayed == 11 && p.ProfileLevel == 2 && p.TotalXpEarned == 140 && p.TotalKills == 31;
                 Assert(ProfileService.Save(), "v3 write");
                 string json = File.ReadAllText(ProfileStore.Path);
-                bool ringGone = json.IndexOf("AppliedCompletionIds", StringComparison.Ordinal) < 0 && json.IndexOf("\"SaveVersion\": 3", StringComparison.Ordinal) >= 0;
+                bool ringGone = json.IndexOf("AppliedCompletionIds", StringComparison.Ordinal) < 0 && json.IndexOf("\"SaveVersion\": " + ProfileData.CurrentVersion, StringComparison.Ordinal) >= 0;
                 string ram = RamHash(); string disk = DiskHash(); _changed = 0;
                 bool allRefused = ids.Length == 8;
                 for (int i = 0; i < ids.Length; i++)

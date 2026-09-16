@@ -36,12 +36,18 @@ namespace DD.Prototype.Profile
     ///      life of the profile) + LastAppliedCompletionOrdinal (a monotonic high-water
     ///      mark). Legacy ids are dropped at migration; legacy raw GUIDs are refused by
     ///      the token parser. Version 1 and 2 files are read without progression loss.
+    ///   4  WP-023: + SpecialWeaponPickups, FlawlessRounds (lifetime feat statistics the
+    ///      achievement rules read; DEC-007 statistics, never modifiers) + UnlockedContent
+    ///      (catalog cosmetic / indicator ids, DEC-038). Gold and purchases stay OUT of the
+    ///      file (REQ-018: run economy dies with the run; gold achievements are single-run).
+    ///      A v3 file gains the new fields at their zero / empty defaults and keeps its
+    ///      lineage and ordinal untouched, so nothing already recorded can replay.
     /// </summary>
     [Serializable]
     public sealed class ProfileData
     {
         /// <summary>Bumped when the shape changes. 0 or negative means "not a real save".</summary>
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
 
         /// <summary>The first version that ever existed on disk (WP-005).</summary>
         public const int OldestReadableVersion = 1;
@@ -93,6 +99,14 @@ namespace DD.Prototype.Profile
         /// <summary>Best single-run XP. The statistics pane's one "personal best" line.</summary>
         public int BestRunXp;
 
+        // -------------------------------------------------------- statistics (v4)
+
+        /// <summary>WP-023: special weapons picked up over the profile's life.</summary>
+        public int SpecialWeaponPickups;
+
+        /// <summary>WP-023: rounds completed without an enemy attack landing on the player.</summary>
+        public int FlawlessRounds;
+
         // ----------------------------------------------------------------- content
 
         /// <summary>Achievement ids, matching <c>AchievementSettings.Id</c>.</summary>
@@ -103,6 +117,9 @@ namespace DD.Prototype.Profile
 
         /// <summary>Names of <c>UpgradeBranch</c> values already granted.</summary>
         public List<string> UnlockedBranches = new List<string>();
+
+        /// <summary>WP-023: catalog content ids (cosmetic / indicator) already opened, matching <c>UnlockDefinition.Id</c>.</summary>
+        public List<string> UnlockedContent = new List<string>();
 
         // ---------------------------------------------------- replay authority (v3)
 
@@ -175,10 +192,13 @@ namespace DD.Prototype.Profile
 
             ArmorPiecesBroken = Math.Max(0, ArmorPiecesBroken);
             BestRunXp = Math.Max(0, BestRunXp);
+            SpecialWeaponPickups = Math.Max(0, SpecialWeaponPickups);
+            FlawlessRounds = Math.Max(0, FlawlessRounds);
 
             Achievements = Clean(Achievements);
             UnlockedWeapons = Clean(UnlockedWeapons);
             UnlockedBranches = Clean(UnlockedBranches);
+            UnlockedContent = Clean(UnlockedContent);
 
             // Replay authority is never "repaired" here: a missing or malformed lineage is
             // an invalid document (ProfileMigration reports it), not something to invent.
@@ -204,7 +224,8 @@ namespace DD.Prototype.Profile
             if (SaveVersion != CurrentVersion || ProfileLevel < 1 || XpIntoLevel < 0 || TotalXpEarned < 0 ||
                 HighestRound < 0 || RunsPlayed < 0 || RoundsCompleted < 0 ||
                 StandardKills < 0 || SpecialKills < 0 || EliteKills < 0 || UltraKills < 0 ||
-                UnattributedKills < 0 || TotalKills < 0 || ArmorPiecesBroken < 0 || BestRunXp < 0)
+                UnattributedKills < 0 || TotalKills < 0 || ArmorPiecesBroken < 0 || BestRunXp < 0 ||
+                SpecialWeaponPickups < 0 || FlawlessRounds < 0)
             {
                 return false;
             }
@@ -215,7 +236,7 @@ namespace DD.Prototype.Profile
                 return false;
             }
 
-            return IsClean(Achievements) && IsClean(UnlockedWeapons) && IsClean(UnlockedBranches) &&
+            return IsClean(Achievements) && IsClean(UnlockedWeapons) && IsClean(UnlockedBranches) && IsClean(UnlockedContent) &&
                    IsLineageId(ProfileLineageId) && LastAppliedCompletionOrdinal >= 0 &&
                    LastSavedUtc != null;
         }
@@ -270,9 +291,12 @@ namespace DD.Prototype.Profile
                 UnattributedKills = UnattributedKills,
                 ArmorPiecesBroken = ArmorPiecesBroken,
                 BestRunXp = BestRunXp,
+                SpecialWeaponPickups = SpecialWeaponPickups,
+                FlawlessRounds = FlawlessRounds,
                 Achievements = new List<string>(Achievements ?? new List<string>()),
                 UnlockedWeapons = new List<string>(UnlockedWeapons ?? new List<string>()),
                 UnlockedBranches = new List<string>(UnlockedBranches ?? new List<string>()),
+                UnlockedContent = new List<string>(UnlockedContent ?? new List<string>()),
                 ProfileLineageId = ProfileLineageId ?? string.Empty,
                 LastAppliedCompletionOrdinal = LastAppliedCompletionOrdinal,
                 LastSavedUtc = LastSavedUtc ?? string.Empty

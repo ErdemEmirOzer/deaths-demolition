@@ -93,6 +93,19 @@ namespace DD.Prototype.Profile
             public readonly List<ProfileUnlockEntry> NewUnlocks = new List<ProfileUnlockEntry>(4);
             public readonly List<ProfileUnlockEntry> NewAchievements = new List<ProfileUnlockEntry>(4);
 
+            /// <summary>WP-023: the definitions behind <see cref="NewAchievements"/> (id, rarity), same order.</summary>
+            public readonly List<DD.Prototype.Achievements.AchievementDefinition> EarnedDefinitions = new List<DD.Prototype.Achievements.AchievementDefinition>(4);
+
+            /// <summary>WP-023: catalog entries opened by this transaction (also listed in <see cref="NewUnlocks"/>).</summary>
+            public readonly List<DD.Prototype.Achievements.UnlockDefinition> OpenedContent = new List<DD.Prototype.Achievements.UnlockDefinition>(4);
+
+            /// <summary>WP-023: the feat counters this transaction folded in.</summary>
+            public DD.Prototype.Achievements.RunFeatCounters Feats;
+
+            /// <summary>WP-023: lifetime bests BEFORE this transaction, so Results can say "new best" honestly.</summary>
+            public int HighestRoundBefore;
+            public int BestRunXpBefore;
+
             public RunRewardReport Seal()
             {
                 return new RunRewardReport(this);
@@ -101,6 +114,8 @@ namespace DD.Prototype.Profile
 
         private readonly IReadOnlyList<ProfileUnlockEntry> _newUnlocks;
         private readonly IReadOnlyList<ProfileUnlockEntry> _newAchievements;
+        private readonly IReadOnlyList<DD.Prototype.Achievements.AchievementDefinition> _earnedDefinitions;
+        private readonly IReadOnlyList<DD.Prototype.Achievements.UnlockDefinition> _openedContent;
 
         private RunRewardReport(Draft draft)
         {
@@ -119,6 +134,11 @@ namespace DD.Prototype.Profile
             LevelRequirementAfter = draft.LevelRequirementAfter;
             _newUnlocks = new List<ProfileUnlockEntry>(draft.NewUnlocks).AsReadOnly();
             _newAchievements = new List<ProfileUnlockEntry>(draft.NewAchievements).AsReadOnly();
+            _earnedDefinitions = new List<DD.Prototype.Achievements.AchievementDefinition>(draft.EarnedDefinitions).AsReadOnly();
+            _openedContent = new List<DD.Prototype.Achievements.UnlockDefinition>(draft.OpenedContent).AsReadOnly();
+            Feats = draft.Feats;
+            HighestRoundBefore = draft.HighestRoundBefore;
+            BestRunXpBefore = draft.BestRunXpBefore;
         }
 
         /// <summary>False when the screen was opened without a run behind it.</summary>
@@ -174,6 +194,21 @@ namespace DD.Prototype.Profile
 
         /// <summary>Result line 12.</summary>
         public IReadOnlyList<ProfileUnlockEntry> NewAchievements => _newAchievements;
+
+        /// <summary>WP-023: the achievement definitions earned by this transaction (id / rarity for Results).</summary>
+        public IReadOnlyList<DD.Prototype.Achievements.AchievementDefinition> EarnedDefinitions => _earnedDefinitions;
+
+        /// <summary>WP-023: catalog content opened by this transaction.</summary>
+        public IReadOnlyList<DD.Prototype.Achievements.UnlockDefinition> OpenedContent => _openedContent;
+
+        /// <summary>WP-023: the feat counters folded in (zero when the run was not recorded).</summary>
+        public DD.Prototype.Achievements.RunFeatCounters Feats { get; }
+
+        /// <summary>WP-023: the profile's highest round before this transaction.</summary>
+        public int HighestRoundBefore { get; }
+
+        /// <summary>WP-023: the profile's best run XP before this transaction.</summary>
+        public int BestRunXpBefore { get; }
 
         /// <summary>True when the profile could not be written. The screen says so rather than lying.</summary>
         public bool SaveFailed => Outcome == ProfileCommitOutcome.SaveFailed;
