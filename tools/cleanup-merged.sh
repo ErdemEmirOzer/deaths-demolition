@@ -3,9 +3,11 @@
 #
 # Reclaims disk from finished packages. DEFAULT IS DRY-RUN (a report only). --apply deletes and is
 # run by C-00 with the user's approval; never from a package session.
-#   1. Worktrees whose branch is integrated into main (branch tip is an ancestor of main AND has
-#      its own commits, i.e. tip != main HEAD), are clean (porcelain 0) and are not the main
+#   1. Worktrees whose branch is integrated into main (branch tip is an ancestor of main AND the tip
+#      is the branch's own package commit: a tag named after the branch's wp-number points at it or
+#      the commit subject starts with "WP-NNN"), are clean (porcelain 0) and are not the main
 #      worktree or the one running this script → `git worktree remove` + `git worktree prune`.
+#      A fresh worktree whose branch still equals an older main is kept (WP-039 fix).
 #      Branches and tags are NEVER deleted.
 #   2. Build products and Library-less verification copies under the KADRO package folders:
 #      <root>/wp-*/verify-build*, <root>/wp-*/build-*, <root>/wp-*/verify, <root>/wp-*/verify-final,
@@ -45,7 +47,16 @@ done; [ -n "$wt" ] && [ -n "$br" ] && printf '%s\t%s\n' "$wt" "$br"; } | while I
   b="${br#refs/heads/}"; tip=$(git -C "$MAIN_WT" rev-parse "$b" 2>/dev/null)
   if [ "$wt" = "$SELF_WT" ]; then printf "%-8s %-6s %-46s %s\n" "$size" "keep" "$short" "this script's worktree ($b)"; continue; fi
   if ! git -C "$MAIN_WT" merge-base --is-ancestor "$tip" "$MAIN_HEAD"; then printf "%-8s %-6s %-46s %s\n" "$size" "keep" "$short" "not integrated ($b)"; continue; fi
-  if [ "$tip" = "$MAIN_HEAD" ]; then printf "%-8s %-6s %-46s %s\n" "$size" "keep" "$short" "no package commit yet ($b = main)"; continue; fi
+  # WP-039 fix: a branch whose tip is an OLD main (fresh worktree, no package commit yet) is also an
+  # ancestor of main. "Integrated" means the tip is the branch's own package commit: a tag named after
+  # the branch's wp-number points at the tip, or the tip's subject starts with that "WP-NNN".
+  wp=$(printf '%s' "$b" | grep -oE '^wp-[0-9]+[a-z]*' || true)
+  own=0
+  if [ -n "$wp" ]; then
+    git -C "$MAIN_WT" tag --points-at "$tip" | grep -qiE "^${wp}(-|$)" && own=1
+    git -C "$MAIN_WT" log -1 --format=%s "$tip" | grep -qiE "^${wp}([^0-9a-z]|$)" && own=1
+  fi
+  if [ "$own" -eq 0 ]; then printf "%-8s %-6s %-46s %s\n" "$size" "keep" "$short" "no package commit of its own yet ($b, tip $(git -C "$MAIN_WT" rev-parse --short=8 "$tip"))"; continue; fi
   dirty=$(git -C "$wt" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
   if [ "$dirty" != "0" ]; then printf "%-8s %-6s %-46s %s\n" "$size" "keep" "$short" "dirty ($dirty paths, $b)"; continue; fi
   printf "%-8s %-6s %-46s %s\n" "$size" "REMOVE" "$short" "integrated $b ($(git -C "$MAIN_WT" rev-parse --short=8 "$tip"))"

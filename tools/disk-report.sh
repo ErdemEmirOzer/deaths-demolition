@@ -3,6 +3,7 @@
 # Disk breakdown of the KADRO project workspace: worktrees (Library vs rest), build products,
 # evidence, reports, backups, asset-production, the repository's .git (+LFS) and free space.
 set -u
+setopt nullglob
 source "${0:A:h}/dd-env.sh"
 ROOT="$HOME/Desktop/KADRO/context/projects/deaths-demolition"; JSON=""
 while [ $# -gt 0 ]; do case "$1" in --root) ROOT="$2"; shift ;; --json) JSON="$2"; shift ;; *) echo "usage: disk-report.sh [--root DIR] [--json FILE]" >&2; exit 64 ;; esac; shift; done
