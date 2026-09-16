@@ -413,7 +413,7 @@ namespace DD.Prototype.Enemies
             ApplyNavProfileForLife(seed);   // WP-030: fit-scaled separation radius + route roll (after the look, before the first tick)
 
             // WP-028: the version's silhouette piece under its anchor (placeholder until AP-014).
-            _silhouette = EnemyVersionApplier.ApplySilhouette(_silhouette, _appearance.Anchors, _tier, _versionProfile, _rig != null ? _rig.Visual : transform);
+            _silhouette = EnemyVersionApplier.ApplySilhouette(_silhouette, _appearance.Anchors, _tier, _versionProfile, _rig != null ? _rig.Visual : transform, _appearance);   // WP-036: real AP-014 parts when the library is built
 
             // WP-018: the driven body needs the version timings (attack clip rate, gait rate) and the fit.
             // The telegraph is the attack state's own (WP-028 version scale applied), so the clip's

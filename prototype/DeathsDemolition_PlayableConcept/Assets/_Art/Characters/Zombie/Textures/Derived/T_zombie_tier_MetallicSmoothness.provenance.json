@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Characters/Zombie/Textures/T_zombie_tier_Packed.png",
+    "sourceSha256": "7f508d8feedc4423d38aab700cccc03789b154f539b139a9dafdcf5ca0d0647f",
+    "algorithm": "MetallicSmoothnessAO v1 (WP-016): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T21:35:43.0609510Z",
+    "outputSha256": "1336f6feb17c185f9f1cfa4cd793dda42ac91ea221dde33e4fb8c67da698fd25"
+}

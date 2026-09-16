@@ -231,6 +231,8 @@ namespace DD.Art.Pipeline.EditorTools
             { "zombie_atlas", TextureClass.Character },
             // WP-017 · AP-008 armour atlas (one 2K set for every family / variant / state).
             { "zombie_armor", TextureClass.Character },
+            // WP-036 · AP-014 tier silhouette parts atlas (1K set; S-03, one-line handshake with S-05).
+            { "zombie_tier", TextureClass.Character },
             // WP-017 · AP-005B prop families (Tripo H3.1 sets; the first Prop-class roles) and the generated roof course overlay.
             { "prop_tsukubai", TextureClass.Prop },
             { "prop_handcart", TextureClass.Prop },

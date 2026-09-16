@@ -32,8 +32,28 @@ namespace DD.Prototype.Enemies
         }
 
         /// <summary>Show / hide the body's silhouette slot for the tier. Returns the slot (null when the body has no usable anchor).</summary>
-        public static TierSilhouetteSlot ApplySilhouette(TierSilhouetteSlot slot, in ArmorAnchors anchors, EnemyTier tier, TierBehaviourProfile profile, Transform fallbackParent)
+        public static TierSilhouetteSlot ApplySilhouette(TierSilhouetteSlot slot, in ArmorAnchors anchors, EnemyTier tier, TierBehaviourProfile profile, Transform fallbackParent) =>
+            ApplySilhouette(slot, in anchors, tier, profile, fallbackParent, null);
+
+        /// <summary>
+        /// WP-036: with a skinned body and the AP-014 library, the tier's real parts are bound (skinned to the
+        /// body's bones, LODGroup-registered) and the WP-028 placeholder never shows; otherwise the placeholder rule.
+        /// </summary>
+        public static TierSilhouetteSlot ApplySilhouette(TierSilhouetteSlot slot, in ArmorAnchors anchors, EnemyTier tier, TierBehaviourProfile profile, Transform fallbackParent, ZombieAppearance appearance)
         {
+            ZombieTierLibrary library = ZombieTierLibrary.Active;
+            if (library != null && library.IsReady && appearance != null && appearance.IsSkinned && appearance.Skinned != null)
+            {
+                Transform skinnedAnchor = AnchorFor(anchors, profile != null ? profile.SilhouetteAnchor : TierSilhouetteAnchor.None);
+                Transform slotParent = skinnedAnchor != null ? skinnedAnchor : fallbackParent;
+                if (slot == null && slotParent != null) slot = TierSilhouetteSlot.Ensure(slotParent);
+                if (slot != null)
+                {
+                    int bound = slot.ApplySkinned(tier, library, appearance.Skinned, appearance.Look.fit);
+                    if (bound > 0 || tier == EnemyTier.Standard) return slot;   // parts bound, or a version without a part (Standard) - no placeholder either way
+                }
+            }
+
             if (profile == null || !profile.HasSilhouette)
             {
                 slot?.Hide();

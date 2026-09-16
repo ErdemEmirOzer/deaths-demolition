@@ -1,5 +1,6 @@
 using System.Collections;
 using DD.Prototype.Core.Boot;
+using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
@@ -86,19 +87,35 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(s.AttackRecoveryTime * set.For(EnemyTier.Special).RecoveryScale, sp.Stats.AttackRecoveryTime, 1e-4f);
             Assert.AreEqual(s.AttackActiveTime, sp.Stats.AttackActiveTime, 0f);
             Assert.AreEqual(s.MoveSpeed, sp.Stats.MoveSpeed, 1e-4f, "hız katmanı 1 → değişmez");
-            Assert.IsNotNull(sp.Silhouette); Assert.IsTrue(sp.Silhouette.IsShown); Assert.AreEqual(set.For(EnemyTier.Special).SilhouetteAnchor, sp.Silhouette.Anchor);
+            Assert.IsNotNull(sp.Silhouette); Assert.IsTrue(sp.Silhouette.IsShown);
             Assert.IsNull(sp.Silhouette.GetComponent<Collider>(), "siluet parçası hitbox değil (DEC-029)");
+            // WP-036: with the AP-014 library the real skinned parts replace the placeholder (anchor None, parts > 0); without it the WP-028 placeholder rule holds
+            bool realParts = ZombieTierLibrary.Active != null && ZombieTierLibrary.Active.IsReady && ((ZombieAppearance)sp.VersionVisual).IsSkinned;
+            if (realParts) Assert.AreEqual(1, sp.Silhouette.SkinnedPartCount, "Special: hemp collar"); else Assert.AreEqual(set.For(EnemyTier.Special).SilhouetteAnchor, sp.Silhouette.Anchor);
 
-            // Elite: siluet omuz; zamanlayıcı değişmez
-            Assert.IsNotNull(el.Silhouette); Assert.IsTrue(el.Silhouette.IsShown); Assert.AreEqual(TierSilhouetteAnchor.Shoulder, el.Silhouette.Anchor);
+            // Elite: siluet omuz (placeholder) / sode + sırt çerçevesi (AP-014); zamanlayıcı değişmez
+            Assert.IsNotNull(el.Silhouette); Assert.IsTrue(el.Silhouette.IsShown);
+            if (realParts) Assert.AreEqual(2, el.Silhouette.SkinnedPartCount, "Elite: sode + backframe"); else Assert.AreEqual(TierSilhouetteAnchor.Shoulder, el.Silhouette.Anchor);
             Assert.AreEqual(_config.Enemies.Find(EnemyTier.Elite).TelegraphTime, el.Stats.TelegraphTime, 1e-5f);
 
-            // Ultra: siluet baş; skinned gövdede fit C
-            Assert.IsNotNull(ul.Silhouette); Assert.IsTrue(ul.Silhouette.IsShown); Assert.AreEqual(TierSilhouetteAnchor.Head, ul.Silhouette.Anchor);
+            // Ultra: siluet baş (placeholder) / boyunduruk (AP-014); skinned gövdede fit C
+            Assert.IsNotNull(ul.Silhouette); Assert.IsTrue(ul.Silhouette.IsShown);
+            if (realParts) Assert.AreEqual(1, ul.Silhouette.SkinnedPartCount, "Ultra: yoke"); else Assert.AreEqual(TierSilhouetteAnchor.Head, ul.Silhouette.Anchor);
             var ulLook = (ZombieAppearance)ul.VersionVisual;
             if (ulLook.IsSkinned) Assert.AreEqual("C", ulLook.Look.fit, "Ultra B: fit C");
-            Debug.Log("[DD-TEST] wp028.bodies skinned=" + ulLook.IsSkinned + " ultraFit=" + ulLook.Look.fit + " spTelegraph=" + sp.Stats.TelegraphTime + " spRecovery=" + sp.Stats.AttackRecoveryTime +
-                      " silhouettes=" + sp.Silhouette.Anchor + "/" + el.Silhouette.Anchor + "/" + ul.Silhouette.Anchor + " ultraParent=" + ul.Silhouette.transform.parent.name);
+            if (realParts)
+            {
+                ZombieTierLibrary lib = ZombieTierLibrary.Active;
+                Assert.AreEqual("C", ul.Silhouette.Fit); Assert.AreEqual(lib.PartMaterial(EnemyTier.Ultra, 0), ul.Silhouette.PartRenderer(0, 0).sharedMaterial, "Ultra parça materyali");
+                Assert.IsTrue(ul.Silhouette.PartRenderer(0, 0).sharedMesh != null && ul.Silhouette.PartRenderer(0, 3).sharedMesh != null, "Ultra LOD0/LOD3 mesh bağlı");
+                Assert.AreEqual(lib.BodyMaterial(EnemyTier.Ultra), ulLook.Skinned.Slot(0, 0).sharedMaterial, "Ultra gövde tint materyali (Tier Lit)");
+                Assert.AreEqual(lib.BodyMaterial(EnemyTier.Standard), ((ZombieAppearance)std.VersionVisual).Skinned.Slot(0, 0).sharedMaterial, "Standard tint'siz materyal");
+                Assert.AreEqual("DD/Character/Tier Lit", lib.BodyMaterial(EnemyTier.Elite).shader.name);
+                Assert.IsTrue(lib.BodyMaterial(EnemyTier.Elite).IsKeywordEnabled("_TIER_TINT") && !lib.BodyMaterial(EnemyTier.Standard).IsKeywordEnabled("_TIER_TINT"));
+            }
+
+            Debug.Log("[DD-TEST] wp028.bodies skinned=" + ulLook.IsSkinned + " realParts=" + realParts + " ultraFit=" + ulLook.Look.fit + " spTelegraph=" + sp.Stats.TelegraphTime + " spRecovery=" + sp.Stats.AttackRecoveryTime +
+                      " parts=" + sp.Silhouette.SkinnedPartCount + "/" + el.Silhouette.SkinnedPartCount + "/" + ul.Silhouette.SkinnedPartCount + " anchors=" + sp.Silhouette.Anchor + "/" + el.Silhouette.Anchor + "/" + ul.Silhouette.Anchor);
 
             // İkinci yaşam: Ultra → havuz → Standard: profil null'dan kimliğe, siluet gizli, fit seed'in
             ul.Remove();

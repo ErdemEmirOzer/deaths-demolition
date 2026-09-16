@@ -1,0 +1,1801 @@
+{
+  "schema": "AP014.manifest.v001",
+  "package": "AP-014",
+  "decision": "WP-027 B / B / B (user 2026-09-16)",
+  "skeleton": {
+    "armature": "ZombieRig",
+    "bones": 56,
+    "identical_to": "AP-006 PlayerRig / AP-007 ZombieRig; tier parts are skinned meshes on the same bones (rigid where noted)"
+  },
+  "anchors": {
+    "convention": "AP-007 anchors (anchor_helmet Head / anchor_torso Chest / anchor_legs Hips) + socket_back (UpperChest, (0, 0.135, 1.40)); WP-028 TierSilhouetteSlot maps head -> anchor_helmet, shoulder -> anchor_torso, back -> socket_back",
+    "slots": {
+      "Special": "shoulder (anchor_torso): special_collar, weights Neck/UpperChest/Chest/LeftShoulder/LeftUpperArm/Head (swings with the run)",
+      "Elite": "shoulder (anchor_torso): elite_sode rigid to LeftShoulder/RightShoulder; back (socket_back): elite_backframe rigid to UpperChest",
+      "Ultra": "back (socket_back): ultra_yoke rigid to UpperChest; fit C + three-region armour verified"
+    }
+  },
+  "tier_parts": [
+    {
+      "part": "elite_backframe",
+      "tier": "Elite",
+      "fbx": "tier/zombie_tier_elite_backframe.fbx",
+      "anchor": "socket_back",
+      "skin_bones": [
+        "UpperChest"
+      ],
+      "fits": [
+        "A",
+        "B",
+        "C"
+      ],
+      "object_name_pattern": "zombie_tier_elite_backframe_<fit>_LOD<n>",
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          421,
+          421,
+          200,
+          80
+        ],
+        "B": [
+          421,
+          421,
+          200,
+          80
+        ],
+        "C": [
+          421,
+          421,
+          200,
+          80
+        ]
+      },
+      "material": "M_Tier_Atlas",
+      "uv_regions": "WOOD,ROPE,BANNER,IRON",
+      "clash": {
+        "A": {
+          "vs_body_do_kabuto": {
+            "body": {
+              "min_signed_m": 0.1147,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.05
+            },
+            "kabuto": {
+              "under_piece": 0,
+              "nearest_m": 0.042
+            }
+          }
+        },
+        "B": {
+          "vs_body_do_kabuto": {
+            "body": {
+              "min_signed_m": 0.1127,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.0552
+            },
+            "kabuto": {
+              "under_piece": 0,
+              "nearest_m": 0.1422
+            }
+          }
+        },
+        "C": {
+          "vs_body_do_kabuto": {
+            "body": {
+              "min_signed_m": 0.1158,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.0526
+            },
+            "kabuto": {
+              "under_piece": 0,
+              "nearest_m": 0.044
+            }
+          }
+        }
+      }
+    },
+    {
+      "part": "elite_sode",
+      "tier": "Elite",
+      "fbx": "tier/zombie_tier_elite_sode.fbx",
+      "anchor": "anchor_torso",
+      "skin_bones": [
+        "LeftShoulder",
+        "RightShoulder"
+      ],
+      "fits": [
+        "A",
+        "B",
+        "C"
+      ],
+      "object_name_pattern": "zombie_tier_elite_sode_<fit>_LOD<n>",
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          200,
+          200,
+          200,
+          80
+        ],
+        "B": [
+          200,
+          200,
+          200,
+          80
+        ],
+        "C": [
+          200,
+          200,
+          200,
+          80
+        ]
+      },
+      "material": "M_Armor_Atlas",
+      "uv_regions": "D1",
+      "clash": {
+        "A": {
+          "vs_body_do": {
+            "body": {
+              "min_signed_m": 0.0724,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.1801
+            }
+          },
+          "vs_body_do2_kote": {
+            "body": {
+              "min_signed_m": 0.0724,
+              "inside": 0
+            },
+            "do2": {
+              "under_piece": 0,
+              "nearest_m": 0.1783
+            },
+            "kote": {
+              "under_piece": 0,
+              "nearest_m": 0.0467
+            }
+          }
+        },
+        "B": {
+          "vs_body_do": {
+            "body": {
+              "min_signed_m": 0.0661,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.1762
+            }
+          },
+          "vs_body_do2_kote": {
+            "body": {
+              "min_signed_m": 0.0661,
+              "inside": 0
+            },
+            "do2": {
+              "under_piece": 0,
+              "nearest_m": 0.182
+            },
+            "kote": {
+              "under_piece": 0,
+              "nearest_m": 0.0402
+            }
+          }
+        },
+        "C": {
+          "vs_body_do": {
+            "body": {
+              "min_signed_m": 0.08,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.1938
+            }
+          },
+          "vs_body_do2_kote": {
+            "body": {
+              "min_signed_m": 0.08,
+              "inside": 0
+            },
+            "do2": {
+              "under_piece": 0,
+              "nearest_m": 0.1789
+            },
+            "kote": {
+              "under_piece": 0,
+              "nearest_m": 0.0546
+            }
+          }
+        }
+      }
+    },
+    {
+      "part": "special_collar",
+      "tier": "Special",
+      "fbx": "tier/zombie_tier_special_collar.fbx",
+      "anchor": "anchor_torso",
+      "skin_bones": [
+        "Chest",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "Neck",
+        "RightShoulder",
+        "UpperChest"
+      ],
+      "fits": [
+        "A",
+        "B",
+        "C"
+      ],
+      "object_name_pattern": "zombie_tier_special_collar_<fit>_LOD<n>",
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          1498,
+          598,
+          449,
+          449
+        ],
+        "B": [
+          1499,
+          598,
+          442,
+          442
+        ],
+        "C": [
+          1499,
+          598,
+          430,
+          430
+        ]
+      },
+      "material": "M_Tier_Atlas",
+      "uv_regions": "COLLAR",
+      "clash": {
+        "A": {
+          "vs_body": {
+            "body": {
+              "min_signed_m": 0.0138,
+              "inside": 0
+            }
+          },
+          "vs_body_do": {
+            "body": {
+              "min_signed_m": 0.0138,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.0026
+            }
+          }
+        },
+        "B": {
+          "vs_body": {
+            "body": {
+              "min_signed_m": -0.002,
+              "inside": 0
+            }
+          },
+          "vs_body_do": {
+            "body": {
+              "min_signed_m": -0.002,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 2,
+              "nearest_m": 0.0001
+            }
+          }
+        },
+        "C": {
+          "vs_body": {
+            "body": {
+              "min_signed_m": 0.0129,
+              "inside": 0
+            }
+          },
+          "vs_body_do": {
+            "body": {
+              "min_signed_m": 0.0129,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.0023
+            }
+          }
+        }
+      }
+    },
+    {
+      "part": "ultra_yoke",
+      "tier": "Ultra",
+      "fbx": "tier/zombie_tier_ultra_yoke.fbx",
+      "anchor": "socket_back",
+      "skin_bones": [
+        "UpperChest"
+      ],
+      "fits": [
+        "A",
+        "B",
+        "C"
+      ],
+      "object_name_pattern": "zombie_tier_ultra_yoke_<fit>_LOD<n>",
+      "tris_LOD0_3_by_fit": {
+        "A": [
+          1499,
+          599,
+          579,
+          579
+        ],
+        "B": [
+          1499,
+          599,
+          579,
+          579
+        ],
+        "C": [
+          1499,
+          599,
+          579,
+          579
+        ]
+      },
+      "material": "M_Tier_Atlas",
+      "uv_regions": "YOKE",
+      "clash": {
+        "A": {
+          "vs_body_do_kabuto_haidate": {
+            "body": {
+              "min_signed_m": 0.1023,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.0598
+            },
+            "kabuto": {
+              "under_piece": 0,
+              "nearest_m": 0.0546
+            },
+            "haidate": {
+              "under_piece": 0,
+              "nearest_m": 0.2124
+            }
+          }
+        },
+        "B": {
+          "vs_body_do_kabuto_haidate": {
+            "body": {
+              "min_signed_m": 0.1478,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.0934
+            },
+            "kabuto": {
+              "under_piece": 0,
+              "nearest_m": 0.1498
+            },
+            "haidate": {
+              "under_piece": 0,
+              "nearest_m": 0.2171
+            }
+          }
+        },
+        "C": {
+          "vs_body_do_kabuto_haidate": {
+            "body": {
+              "min_signed_m": 0.1274,
+              "inside": 0
+            },
+            "do": {
+              "under_piece": 0,
+              "nearest_m": 0.0642
+            },
+            "kabuto": {
+              "under_piece": 0,
+              "nearest_m": 0.0561
+            },
+            "haidate": {
+              "under_piece": 0,
+              "nearest_m": 0.224
+            }
+          }
+        }
+      }
+    }
+  ],
+  "tint": {
+    "mechanism": "lerp(BaseColor, tint, Mask.<R lacquer | G cloth> * k) — measured in the crowd; a purely multiplicative detail albedo (URP Lit _DetailAlbedoMap) cannot lift the v 0.12 black lacquer to plum/rust and would only darken the cw2 cloth, so the tier tint needs the lerp path in the shader (WP-028 / AP-015)",
+    "table": {
+      "Standard": {
+        "cloth": null,
+        "lacquer": null,
+        "band": "no mark (WP-027 Std A)"
+      },
+      "Special": {
+        "cloth": [
+          "#585F64",
+          0.42
+        ],
+        "lacquer": null,
+        "band": "ash: h ~205, s <= 0.12, v ~0.40 (AD v001 MUST 1: v <= 0.42); TOP garment only, paired with the cw2 pale base"
+      },
+      "Elite": {
+        "cloth": [
+          "#3E3344",
+          0.25
+        ],
+        "lacquer": [
+          "#4A3448",
+          0.7
+        ],
+        "band": "plum lacquer: h ~300, s <= 0.40, v ~0.30; cloth same hue, faint"
+      },
+      "Ultra": {
+        "cloth": [
+          "#4E3E30",
+          0.25
+        ],
+        "lacquer": [
+          "#6B5140",
+          0.72
+        ],
+        "band": "rust lacquer: h ~24, s ~0.40, v ~0.40; cloth toward faded brown"
+      }
+    },
+    "constraints": "new zombie colour s <= 0.45, v <= 0.60; gold band (h 35-65 & s > 0.30) and beacon (s > 0.55 & v > 0.80) untouched; player accent band avoided",
+    "measured": {
+      "Standard": {
+        "figure_px": 77504,
+        "hue_median": 228.0,
+        "s_p90": 0.28,
+        "v_mean": 0.284,
+        "v_p90": 0.424,
+        "constraint_s_le_0.45": true,
+        "constraint_v_le_0.60": true
+      },
+      "Special": {
+        "figure_px": 86337,
+        "hue_median": 92.3,
+        "s_p90": 0.265,
+        "v_mean": 0.317,
+        "v_p90": 0.439,
+        "constraint_s_le_0.45": true,
+        "constraint_v_le_0.60": true
+      },
+      "Elite": {
+        "figure_px": 97437,
+        "hue_median": 90.0,
+        "s_p90": 0.163,
+        "v_mean": 0.318,
+        "v_p90": 0.427,
+        "constraint_s_le_0.45": true,
+        "constraint_v_le_0.60": true
+      },
+      "Ultra": {
+        "figure_px": 93139,
+        "hue_median": 22.5,
+        "s_p90": 0.28,
+        "v_mean": 0.329,
+        "v_p90": 0.424,
+        "constraint_s_le_0.45": true,
+        "constraint_v_le_0.60": true
+      }
+    }
+  },
+  "special_weapons": {
+    "meshes": [
+      {
+        "weapon": "kagura_bell",
+        "pose": "pickup",
+        "fbx": "sw/sw_kagura_bell_pickup.fbx",
+        "objects": [
+          "sw_kagura_bell_pickup_LOD0",
+          "sw_kagura_bell_pickup_LOD1",
+          "sw_kagura_bell_pickup_LOD2"
+        ],
+        "tris_LOD": [
+          1499,
+          1005,
+          1005
+        ],
+        "socket": "ground",
+        "frame": "lying on the ground (hand frame rolled 25 deg about Y), z min 0.005; long axis along Y",
+        "material": "M_SW_Atlas"
+      },
+      {
+        "weapon": "kagura_bell",
+        "pose": "hand",
+        "fbx": "sw/sw_kagura_bell_hand.fbx",
+        "objects": [
+          "sw_kagura_bell_hand_LOD0",
+          "sw_kagura_bell_hand_LOD1",
+          "sw_kagura_bell_hand_LOD2"
+        ],
+        "tris_LOD": [
+          2024,
+          999,
+          935
+        ],
+        "socket": "socket_weapon_r",
+        "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end continues along +Y, +Z = up; the socket's +Z 'barrel' axis is unused by the sweep weapon (omnidirectional) and is the throw direction for the loom (tip at +Y, cards hang -Z)",
+        "material": "M_SW_Atlas"
+      },
+      {
+        "weapon": "ofuda_loom",
+        "pose": "pickup",
+        "fbx": "sw/sw_ofuda_loom_pickup.fbx",
+        "objects": [
+          "sw_ofuda_loom_pickup_LOD0",
+          "sw_ofuda_loom_pickup_LOD1",
+          "sw_ofuda_loom_pickup_LOD2"
+        ],
+        "tris_LOD": [
+          322,
+          322,
+          200
+        ],
+        "socket": "ground",
+        "frame": "lying on the ground (hand frame rolled 25 deg about Y), z min 0.005; long axis along Y",
+        "material": "M_SW_Atlas"
+      },
+      {
+        "weapon": "ofuda_loom",
+        "pose": "hand",
+        "fbx": "sw/sw_ofuda_loom_hand.fbx",
+        "objects": [
+          "sw_ofuda_loom_hand_LOD0",
+          "sw_ofuda_loom_hand_LOD1",
+          "sw_ofuda_loom_hand_LOD2"
+        ],
+        "tris_LOD": [
+          322,
+          322,
+          300
+        ],
+        "socket": "socket_weapon_r",
+        "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end continues along +Y, +Z = up; the socket's +Z 'barrel' axis is unused by the sweep weapon (omnidirectional) and is the throw direction for the loom (tip at +Y, cards hang -Z)",
+        "material": "M_SW_Atlas"
+      }
+    ],
+    "effects": [
+      {
+        "family": "special_weapon",
+        "file": "AP014_fx_kagura_ring_4x4_1024.png",
+        "kind": "flipbook",
+        "grid": [
+          4,
+          4
+        ],
+        "frames_used": 16,
+        "fps": 16,
+        "duration_s": 1.0,
+        "loop": false,
+        "size_px": [
+          1024,
+          1024
+        ],
+        "world_size_m": 19.0,
+        "colour_reserve": "beacon (runtime tint Special (1.00,0.82,0.35), additive)",
+        "emissive_file": null,
+        "usage_note": "Kagura Bell sweep: pressure front ring; play once per fired wave, quad scale follows KaguraWaveField.FrontRadius (0.34 s travel to 9.5 m); greyscale + alpha",
+        "runtime_tint": true,
+        "readability_limit_s": 0.5,
+        "bytes": 404184,
+        "sha256": "c543f96b52a349faa1ee44613df0dc92f4a1a3c7563dc2cf0d4e0767e694a314",
+        "reserve_check": {
+          "px": 308272,
+          "gold_band_pct": 0.0,
+          "beacon_band_pct": 0.0,
+          "s_p99": 0.0,
+          "v_min": 0.549,
+          "v_max": 1.0
+        },
+        "status": "v001 (procedural; Higgsfield balance under the floor)"
+      },
+      {
+        "family": "special_weapon",
+        "file": "AP014_fx_ofuda_card_1x2_512x256.png",
+        "kind": "flipbook",
+        "grid": [
+          2,
+          1
+        ],
+        "frames_used": 2,
+        "fps": 0,
+        "duration_s": 0.0,
+        "loop": false,
+        "size_px": [
+          512,
+          256
+        ],
+        "world_size_m": 0.22,
+        "colour_reserve": "none",
+        "emissive_file": null,
+        "usage_note": "Ofuda Loom talisman: frame 0 flying (billboard along the shot), frame 1 sealed on the body (attach to the Chest bone, SealArmSeconds); paper #D9D2C0 + red seal #9E2A22 (no tint)",
+        "runtime_tint": false,
+        "readability_limit_s": 0.5,
+        "bytes": 1535,
+        "sha256": "8a5719a32555b8b7dc22d2b9c9a913cb24d1918336060584e620d32af62faf7a",
+        "reserve_check": {
+          "px": 23107,
+          "gold_band_pct": 0.0,
+          "beacon_band_pct": 0.0,
+          "s_p99": 0.785,
+          "v_min": 0.275,
+          "v_max": 0.851
+        },
+        "status": "v001 (procedural; Higgsfield balance under the floor)"
+      },
+      {
+        "family": "special_weapon",
+        "file": "AP014_fx_ofuda_thread_tile_256.png",
+        "kind": "static",
+        "grid": [
+          1,
+          1
+        ],
+        "frames_used": 1,
+        "fps": 0,
+        "duration_s": 0.0,
+        "loop": false,
+        "size_px": [
+          256,
+          256
+        ],
+        "world_size_m": 0.12,
+        "colour_reserve": "none",
+        "emissive_file": null,
+        "usage_note": "Ofuda web thread between sealed bodies: tileable along U (repeat per metre of thread), line renderer strip 12 cm wide, hemp + paper knots",
+        "runtime_tint": false,
+        "readability_limit_s": 0.5,
+        "bytes": 10503,
+        "sha256": "2528d24e7c9ab354253bd852ec6b3afc1a54dae570f606abda113e17c53eb6d1",
+        "reserve_check": {
+          "px": 4858,
+          "gold_band_pct": 0.0,
+          "beacon_band_pct": 0.0,
+          "s_p99": 0.206,
+          "v_min": 0.549,
+          "v_max": 0.898
+        },
+        "status": "v001 (procedural; Higgsfield balance under the floor)"
+      },
+      {
+        "family": "special_weapon",
+        "file": "AP014_fx_ofuda_collapse_4x4_1024.png",
+        "kind": "flipbook",
+        "grid": [
+          4,
+          4
+        ],
+        "frames_used": 16,
+        "fps": 32,
+        "duration_s": 0.5,
+        "loop": false,
+        "size_px": [
+          1024,
+          1024
+        ],
+        "world_size_m": 3.0,
+        "colour_reserve": "beacon (runtime tint Ofuda (0.96,0.93,0.84) additive on the flash; flakes stay grey)",
+        "emissive_file": null,
+        "usage_note": "Ofuda web collapse: flash core 0.2 s + paper flakes; one burst per collapsed seal position; greyscale + alpha",
+        "runtime_tint": true,
+        "readability_limit_s": 0.5,
+        "bytes": 265354,
+        "sha256": "6c1e01dfc936635044b0927b852e846e4543a2189d6d0ad95ac22e8f31f7cd48",
+        "reserve_check": {
+          "px": 246953,
+          "gold_band_pct": 0.0,
+          "beacon_band_pct": 0.0,
+          "s_p99": 0.0,
+          "v_min": 0.6,
+          "v_max": 1.0
+        },
+        "status": "v001 (procedural; Higgsfield balance under the floor)"
+      }
+    ],
+    "beacon": "code defaults unchanged (SpecialWeaponPickup: Special (1.00,0.82,0.35) a 0.3; Ofuda (0.96,0.93,0.84)); AP-010 beacon ring/column textures reused",
+    "lifecycle": "WP-007: pickup mesh on the ground for GroundLifetime 22 s with the beacon; on pickup swap to the hand mesh on socket_weapon_r; timed use, no ammo/reload (REQ-055/056)"
+  },
+  "event_coverage_rows": [
+    {
+      "asset": "tier Special",
+      "events": [
+        "attack telegraph (Lunge, 0.35 s) — collar swing + short breath",
+        "death — collar/straw flap settles",
+        "highlight — none (no emissive, DEC-067)"
+      ]
+    },
+    {
+      "asset": "tier Elite",
+      "events": [
+        "attack telegraph (Sweep, 0.8 s) — sode plates lift with the shoulders + lacquer rattle",
+        "death — back frame shafts clatter",
+        "highlight — none"
+      ]
+    },
+    {
+      "asset": "tier Ultra",
+      "events": [
+        "attack telegraph (Overhead, 1.15 s) — yoke chains swing + deep breath",
+        "death — yoke logs thud",
+        "highlight — none"
+      ]
+    },
+    {
+      "asset": "SW Kagura Bell",
+      "events": [
+        "pickup spawn — beacon column + ring (AP-010) + bell shimmer",
+        "pickup taken — bell chime",
+        "use — ring wave sheet per wave (16 f, 1.0 s) + bell strike",
+        "expire — beacon fade"
+      ]
+    },
+    {
+      "asset": "SW Ofuda Loom",
+      "events": [
+        "pickup spawn — beacon (Ofuda tint)",
+        "pickup taken — paper rustle",
+        "use — talisman card flying/sealed + web thread between seals",
+        "collapse — burst sheet (16 f, 0.5 s) per seal + paper tear",
+        "expire — beacon fade"
+      ]
+    }
+  ],
+  "measurements": {
+    "crowd": {
+      "instances": 40,
+      "visible": 40,
+      "by_tier": {
+        "Standard": {
+          "n": 22,
+          "deltaV_min": 0.082,
+          "deltaV_mean": 0.137,
+          "mean_V": 0.31,
+          "hue_median": 150.0,
+          "s_p90_mean": 0.217,
+          "v_p90_mean": 0.42,
+          "part_share_mean": 0.0,
+          "height_px": [
+            78,
+            113
+          ]
+        },
+        "Special": {
+          "n": 8,
+          "deltaV_min": 0.064,
+          "deltaV_mean": 0.13,
+          "mean_V": 0.328,
+          "hue_median": 67.5,
+          "s_p90_mean": 0.19,
+          "v_p90_mean": 0.425,
+          "part_share_mean": 0.397,
+          "height_px": [
+            90,
+            135
+          ]
+        },
+        "Elite": {
+          "n": 6,
+          "deltaV_min": 0.09,
+          "deltaV_mean": 0.127,
+          "mean_V": 0.298,
+          "hue_median": 236.1,
+          "s_p90_mean": 0.171,
+          "v_p90_mean": 0.383,
+          "part_share_mean": 0.172,
+          "height_px": [
+            83,
+            131
+          ]
+        },
+        "Ultra": {
+          "n": 4,
+          "deltaV_min": 0.089,
+          "deltaV_mean": 0.124,
+          "mean_V": 0.336,
+          "hue_median": 24.6,
+          "s_p90_mean": 0.258,
+          "v_p90_mean": 0.405,
+          "part_share_mean": 0.098,
+          "height_px": [
+            85,
+            127
+          ]
+        }
+      },
+      "reserve_hits": {
+        "px_s_over_0.45": 12,
+        "px_beacon": 0,
+        "px_gold_band": 0
+      },
+      "deltaV_vs_ground_all": {
+        "min": 0.064,
+        "mean": 0.133,
+        "under_0.08": [
+          13,
+          28
+        ]
+      },
+      "per_instance": [
+        {
+          "index": 0,
+          "tier": "Ultra",
+          "pixels": 3189,
+          "height_px": 121,
+          "mean_V": 0.318,
+          "bg_ring_V": 0.4,
+          "deltaV": 0.168,
+          "V_dark": 0.232,
+          "V_light": 0.358,
+          "hue_median": 24.0,
+          "s_p90": 0.266,
+          "v_p90": 0.396,
+          "part_pixels": 340,
+          "part_share": 0.107,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 1,
+          "tier": "Special",
+          "pixels": 6052,
+          "height_px": 135,
+          "mean_V": 0.334,
+          "bg_ring_V": 0.417,
+          "deltaV": 0.145,
+          "V_dark": 0.271,
+          "V_light": 0.407,
+          "hue_median": 75.0,
+          "s_p90": 0.255,
+          "v_p90": 0.439,
+          "part_pixels": 1678,
+          "part_share": 0.277,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 2,
+          "tier": "Special",
+          "pixels": 3707,
+          "height_px": 90,
+          "mean_V": 0.281,
+          "bg_ring_V": 0.407,
+          "deltaV": 0.203,
+          "V_dark": 0.203,
+          "V_light": 0.348,
+          "hue_median": 100.0,
+          "s_p90": 0.136,
+          "v_p90": 0.388,
+          "part_pixels": 1894,
+          "part_share": 0.511,
+          "px_s_over_0.45": 5,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 3,
+          "tier": "Ultra",
+          "pixels": 2475,
+          "height_px": 85,
+          "mean_V": 0.331,
+          "bg_ring_V": 0.362,
+          "deltaV": 0.115,
+          "V_dark": 0.247,
+          "V_light": 0.367,
+          "hue_median": 24.5,
+          "s_p90": 0.26,
+          "v_p90": 0.4,
+          "part_pixels": 179,
+          "part_share": 0.072,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 4,
+          "tier": "Standard",
+          "pixels": 1751,
+          "height_px": 79,
+          "mean_V": 0.301,
+          "bg_ring_V": 0.419,
+          "deltaV": 0.146,
+          "V_dark": 0.273,
+          "V_light": 0.377,
+          "hue_median": 101.2,
+          "s_p90": 0.25,
+          "v_p90": 0.38,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 5,
+          "tier": "Special",
+          "pixels": 2903,
+          "height_px": 112,
+          "mean_V": 0.327,
+          "bg_ring_V": 0.382,
+          "deltaV": 0.138,
+          "V_dark": 0.244,
+          "V_light": 0.395,
+          "hue_median": 60.0,
+          "s_p90": 0.137,
+          "v_p90": 0.427,
+          "part_pixels": 575,
+          "part_share": 0.198,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 6,
+          "tier": "Elite",
+          "pixels": 2618,
+          "height_px": 99,
+          "mean_V": 0.285,
+          "bg_ring_V": 0.424,
+          "deltaV": 0.207,
+          "V_dark": 0.218,
+          "V_light": 0.319,
+          "hue_median": 236.2,
+          "s_p90": 0.211,
+          "v_p90": 0.361,
+          "part_pixels": 497,
+          "part_share": 0.19,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 7,
+          "tier": "Elite",
+          "pixels": 3944,
+          "height_px": 112,
+          "mean_V": 0.304,
+          "bg_ring_V": 0.371,
+          "deltaV": 0.106,
+          "V_dark": 0.265,
+          "V_light": 0.332,
+          "hue_median": 140.0,
+          "s_p90": 0.159,
+          "v_p90": 0.353,
+          "part_pixels": 582,
+          "part_share": 0.148,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 8,
+          "tier": "Standard",
+          "pixels": 2601,
+          "height_px": 110,
+          "mean_V": 0.303,
+          "bg_ring_V": 0.39,
+          "deltaV": 0.116,
+          "V_dark": 0.274,
+          "V_light": 0.351,
+          "hue_median": 216.0,
+          "s_p90": 0.27,
+          "v_p90": 0.357,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 9,
+          "tier": "Standard",
+          "pixels": 2690,
+          "height_px": 98,
+          "mean_V": 0.286,
+          "bg_ring_V": 0.378,
+          "deltaV": 0.14,
+          "V_dark": 0.238,
+          "V_light": 0.372,
+          "hue_median": 185.0,
+          "s_p90": 0.25,
+          "v_p90": 0.382,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 10,
+          "tier": "Standard",
+          "pixels": 3483,
+          "height_px": 109,
+          "mean_V": 0.321,
+          "bg_ring_V": 0.378,
+          "deltaV": 0.082,
+          "V_dark": 0.295,
+          "V_light": 0.387,
+          "hue_median": 214.3,
+          "s_p90": 0.267,
+          "v_p90": 0.38,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 11,
+          "tier": "Ultra",
+          "pixels": 4152,
+          "height_px": 127,
+          "mean_V": 0.366,
+          "bg_ring_V": 0.379,
+          "deltaV": 0.089,
+          "V_dark": 0.29,
+          "V_light": 0.394,
+          "hue_median": 24.7,
+          "s_p90": 0.255,
+          "v_p90": 0.431,
+          "part_pixels": 461,
+          "part_share": 0.111,
+          "px_s_over_0.45": 1,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 12,
+          "tier": "Standard",
+          "pixels": 1234,
+          "height_px": 83,
+          "mean_V": 0.331,
+          "bg_ring_V": 0.427,
+          "deltaV": 0.165,
+          "V_dark": 0.262,
+          "V_light": 0.432,
+          "hue_median": 204.0,
+          "s_p90": 0.263,
+          "v_p90": 0.478,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 13,
+          "tier": "Special",
+          "pixels": 3025,
+          "height_px": 102,
+          "mean_V": 0.349,
+          "bg_ring_V": 0.374,
+          "deltaV": 0.079,
+          "V_dark": 0.294,
+          "V_light": 0.41,
+          "hue_median": 80.0,
+          "s_p90": 0.243,
+          "v_p90": 0.438,
+          "part_pixels": 1484,
+          "part_share": 0.491,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 14,
+          "tier": "Elite",
+          "pixels": 3255,
+          "height_px": 98,
+          "mean_V": 0.308,
+          "bg_ring_V": 0.365,
+          "deltaV": 0.094,
+          "V_dark": 0.272,
+          "V_light": 0.378,
+          "hue_median": 240.0,
+          "s_p90": 0.15,
+          "v_p90": 0.4,
+          "part_pixels": 608,
+          "part_share": 0.187,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 15,
+          "tier": "Standard",
+          "pixels": 1868,
+          "height_px": 78,
+          "mean_V": 0.347,
+          "bg_ring_V": 0.341,
+          "deltaV": 0.125,
+          "V_dark": 0.276,
+          "V_light": 0.466,
+          "hue_median": 200.0,
+          "s_p90": 0.253,
+          "v_p90": 0.51,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 16,
+          "tier": "Ultra",
+          "pixels": 4068,
+          "height_px": 96,
+          "mean_V": 0.329,
+          "bg_ring_V": 0.371,
+          "deltaV": 0.124,
+          "V_dark": 0.248,
+          "V_light": 0.357,
+          "hue_median": 26.8,
+          "s_p90": 0.252,
+          "v_p90": 0.392,
+          "part_pixels": 405,
+          "part_share": 0.1,
+          "px_s_over_0.45": 2,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 17,
+          "tier": "Elite",
+          "pixels": 2138,
+          "height_px": 83,
+          "mean_V": 0.281,
+          "bg_ring_V": 0.384,
+          "deltaV": 0.147,
+          "V_dark": 0.237,
+          "V_light": 0.366,
+          "hue_median": 240.0,
+          "s_p90": 0.139,
+          "v_p90": 0.385,
+          "part_pixels": 393,
+          "part_share": 0.184,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 18,
+          "tier": "Standard",
+          "pixels": 2474,
+          "height_px": 86,
+          "mean_V": 0.306,
+          "bg_ring_V": 0.366,
+          "deltaV": 0.107,
+          "V_dark": 0.259,
+          "V_light": 0.352,
+          "hue_median": 120.0,
+          "s_p90": 0.26,
+          "v_p90": 0.365,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 19,
+          "tier": "Special",
+          "pixels": 3172,
+          "height_px": 114,
+          "mean_V": 0.304,
+          "bg_ring_V": 0.403,
+          "deltaV": 0.174,
+          "V_dark": 0.229,
+          "V_light": 0.371,
+          "hue_median": 60.0,
+          "s_p90": 0.134,
+          "v_p90": 0.41,
+          "part_pixels": 1605,
+          "part_share": 0.506,
+          "px_s_over_0.45": 3,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 20,
+          "tier": "Standard",
+          "pixels": 3060,
+          "height_px": 92,
+          "mean_V": 0.321,
+          "bg_ring_V": 0.379,
+          "deltaV": 0.113,
+          "V_dark": 0.265,
+          "V_light": 0.384,
+          "hue_median": 31.8,
+          "s_p90": 0.231,
+          "v_p90": 0.407,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 21,
+          "tier": "Standard",
+          "pixels": 1657,
+          "height_px": 93,
+          "mean_V": 0.371,
+          "bg_ring_V": 0.437,
+          "deltaV": 0.197,
+          "V_dark": 0.24,
+          "V_light": 0.447,
+          "hue_median": 109.5,
+          "s_p90": 0.134,
+          "v_p90": 0.525,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 22,
+          "tier": "Standard",
+          "pixels": 3385,
+          "height_px": 97,
+          "mean_V": 0.318,
+          "bg_ring_V": 0.392,
+          "deltaV": 0.111,
+          "V_dark": 0.281,
+          "V_light": 0.462,
+          "hue_median": 190.0,
+          "s_p90": 0.244,
+          "v_p90": 0.435,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 23,
+          "tier": "Standard",
+          "pixels": 1971,
+          "height_px": 100,
+          "mean_V": 0.299,
+          "bg_ring_V": 0.41,
+          "deltaV": 0.168,
+          "V_dark": 0.242,
+          "V_light": 0.445,
+          "hue_median": 180.0,
+          "s_p90": 0.144,
+          "v_p90": 0.463,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 24,
+          "tier": "Standard",
+          "pixels": 2155,
+          "height_px": 103,
+          "mean_V": 0.257,
+          "bg_ring_V": 0.415,
+          "deltaV": 0.175,
+          "V_dark": 0.24,
+          "V_light": 0.366,
+          "hue_median": 217.5,
+          "s_p90": 0.25,
+          "v_p90": 0.314,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 25,
+          "tier": "Special",
+          "pixels": 3239,
+          "height_px": 110,
+          "mean_V": 0.308,
+          "bg_ring_V": 0.358,
+          "deltaV": 0.118,
+          "V_dark": 0.24,
+          "V_light": 0.373,
+          "hue_median": 97.5,
+          "s_p90": 0.257,
+          "v_p90": 0.408,
+          "part_pixels": 1178,
+          "part_share": 0.364,
+          "px_s_over_0.45": 1,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 26,
+          "tier": "Elite",
+          "pixels": 5528,
+          "height_px": 131,
+          "mean_V": 0.297,
+          "bg_ring_V": 0.355,
+          "deltaV": 0.119,
+          "V_dark": 0.236,
+          "V_light": 0.329,
+          "hue_median": 236.0,
+          "s_p90": 0.203,
+          "v_p90": 0.369,
+          "part_pixels": 820,
+          "part_share": 0.148,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 27,
+          "tier": "Standard",
+          "pixels": 1903,
+          "height_px": 107,
+          "mean_V": 0.241,
+          "bg_ring_V": 0.392,
+          "deltaV": 0.167,
+          "V_dark": 0.225,
+          "V_light": 0.37,
+          "hue_median": 217.5,
+          "s_p90": 0.159,
+          "v_p90": 0.298,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 28,
+          "tier": "Special",
+          "pixels": 4378,
+          "height_px": 126,
+          "mean_V": 0.371,
+          "bg_ring_V": 0.368,
+          "deltaV": 0.064,
+          "V_dark": 0.305,
+          "V_light": 0.42,
+          "hue_median": 60.0,
+          "s_p90": 0.225,
+          "v_p90": 0.451,
+          "part_pixels": 2366,
+          "part_share": 0.54,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 29,
+          "tier": "Standard",
+          "pixels": 2377,
+          "height_px": 101,
+          "mean_V": 0.352,
+          "bg_ring_V": 0.393,
+          "deltaV": 0.132,
+          "V_dark": 0.261,
+          "V_light": 0.444,
+          "hue_median": 45.0,
+          "s_p90": 0.159,
+          "v_p90": 0.49,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 30,
+          "tier": "Standard",
+          "pixels": 1976,
+          "height_px": 101,
+          "mean_V": 0.329,
+          "bg_ring_V": 0.39,
+          "deltaV": 0.144,
+          "V_dark": 0.246,
+          "V_light": 0.434,
+          "hue_median": 42.0,
+          "s_p90": 0.164,
+          "v_p90": 0.475,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 31,
+          "tier": "Standard",
+          "pixels": 2710,
+          "height_px": 113,
+          "mean_V": 0.301,
+          "bg_ring_V": 0.405,
+          "deltaV": 0.15,
+          "V_dark": 0.255,
+          "V_light": 0.365,
+          "hue_median": 31.8,
+          "s_p90": 0.204,
+          "v_p90": 0.384,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 32,
+          "tier": "Special",
+          "pixels": 2918,
+          "height_px": 96,
+          "mean_V": 0.346,
+          "bg_ring_V": 0.38,
+          "deltaV": 0.122,
+          "V_dark": 0.258,
+          "V_light": 0.402,
+          "hue_median": 60.0,
+          "s_p90": 0.129,
+          "v_p90": 0.438,
+          "part_pixels": 835,
+          "part_share": 0.286,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 33,
+          "tier": "Standard",
+          "pixels": 2609,
+          "height_px": 93,
+          "mean_V": 0.348,
+          "bg_ring_V": 0.375,
+          "deltaV": 0.106,
+          "V_dark": 0.31,
+          "V_light": 0.481,
+          "hue_median": 31.8,
+          "s_p90": 0.202,
+          "v_p90": 0.486,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 34,
+          "tier": "Standard",
+          "pixels": 3299,
+          "height_px": 99,
+          "mean_V": 0.322,
+          "bg_ring_V": 0.364,
+          "deltaV": 0.125,
+          "V_dark": 0.239,
+          "V_light": 0.386,
+          "hue_median": 34.3,
+          "s_p90": 0.207,
+          "v_p90": 0.427,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 35,
+          "tier": "Standard",
+          "pixels": 2917,
+          "height_px": 86,
+          "mean_V": 0.314,
+          "bg_ring_V": 0.393,
+          "deltaV": 0.153,
+          "V_dark": 0.24,
+          "V_light": 0.425,
+          "hue_median": 60.0,
+          "s_p90": 0.162,
+          "v_p90": 0.467,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 36,
+          "tier": "Standard",
+          "pixels": 3049,
+          "height_px": 93,
+          "mean_V": 0.299,
+          "bg_ring_V": 0.376,
+          "deltaV": 0.114,
+          "V_dark": 0.262,
+          "V_light": 0.468,
+          "hue_median": 216.9,
+          "s_p90": 0.264,
+          "v_p90": 0.44,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 37,
+          "tier": "Standard",
+          "pixels": 2289,
+          "height_px": 85,
+          "mean_V": 0.264,
+          "bg_ring_V": 0.361,
+          "deltaV": 0.136,
+          "V_dark": 0.225,
+          "V_light": 0.37,
+          "hue_median": 60.0,
+          "s_p90": 0.174,
+          "v_p90": 0.384,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 38,
+          "tier": "Elite",
+          "pixels": 2222,
+          "height_px": 96,
+          "mean_V": 0.314,
+          "bg_ring_V": 0.353,
+          "deltaV": 0.09,
+          "V_dark": 0.275,
+          "V_light": 0.443,
+          "hue_median": 225.0,
+          "s_p90": 0.162,
+          "v_p90": 0.431,
+          "part_pixels": 395,
+          "part_share": 0.178,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        },
+        {
+          "index": 39,
+          "tier": "Standard",
+          "pixels": 2169,
+          "height_px": 85,
+          "mean_V": 0.28,
+          "bg_ring_V": 0.396,
+          "deltaV": 0.145,
+          "V_dark": 0.251,
+          "V_light": 0.391,
+          "hue_median": 216.8,
+          "s_p90": 0.264,
+          "v_p90": 0.388,
+          "part_pixels": 0,
+          "part_share": 0.0,
+          "px_s_over_0.45": 0,
+          "px_beacon": 0,
+          "px_gold_band": 0
+        }
+      ]
+    },
+    "tier_separation_crowd": {
+      "Special": {
+        "michelson_V_vs_Standard": 0.028,
+        "deltaV_mean_vs_Standard": 0.018,
+        "hue_delta_deg": 82.5,
+        "part_share_mean": 0.397
+      },
+      "Elite": {
+        "michelson_V_vs_Standard": 0.02,
+        "deltaV_mean_vs_Standard": 0.012,
+        "hue_delta_deg": 86.1,
+        "part_share_mean": 0.172
+      },
+      "Ultra": {
+        "michelson_V_vs_Standard": 0.04,
+        "deltaV_mean_vs_Standard": 0.026,
+        "hue_delta_deg": 125.4,
+        "part_share_mean": 0.098
+      }
+    },
+    "silhouette_88px": {
+      "method": "gameplay-angle silhouette (19.9 m, -49 deg), same idle+shamble pose, bbox height normalised to 88 px, centred; IoU vs the Standard reference look — lower = more distinct outline",
+      "pairs": {
+        "Special": {
+          "iou_vs_Standard_88px": 0.484,
+          "width_px": 72,
+          "standard_width_px": 62,
+          "area_ratio": 1.104,
+          "shoulder_width_px": 69,
+          "standard_shoulder_width_px": 58,
+          "shoulder_ratio": 1.19
+        },
+        "Elite": {
+          "iou_vs_Standard_88px": 0.502,
+          "width_px": 65,
+          "standard_width_px": 62,
+          "area_ratio": 0.841,
+          "shoulder_width_px": 65,
+          "standard_shoulder_width_px": 58,
+          "shoulder_ratio": 1.121
+        },
+        "Ultra": {
+          "iou_vs_Standard_88px": 0.609,
+          "width_px": 52,
+          "standard_width_px": 62,
+          "area_ratio": 0.945,
+          "shoulder_width_px": 48,
+          "standard_shoulder_width_px": 58,
+          "shoulder_ratio": 0.828
+        }
+      }
+    },
+    "pickup_readability": {
+      "kagura_bell": {
+        "mesh_px_at_19.9m": 144,
+        "mesh_height_px": 34,
+        "mesh": {
+          "px": 144,
+          "V_mean": 0.379,
+          "s_p90": 0.43,
+          "gold_band_pct": 16.7,
+          "beacon_pct": 0.0
+        },
+        "ground_ring": {
+          "px": 1610,
+          "V_mean": 0.62,
+          "s_p90": 0.056,
+          "gold_band_pct": 0.0,
+          "beacon_pct": 0.0
+        },
+        "deltaV_mesh_vs_ground": 0.241,
+        "with_beacon_ring": {
+          "beacon_band_px_total": 0,
+          "beacon_band_px_on_mesh": 0
+        },
+        "rule": "gold band only on the pickup body (style guide reserve) / beacon band only in the VFX ring"
+      },
+      "ofuda_loom": {
+        "mesh_px_at_19.9m": 132,
+        "mesh_height_px": 38,
+        "mesh": {
+          "px": 132,
+          "V_mean": 0.393,
+          "s_p90": 0.121,
+          "gold_band_pct": 0.0,
+          "beacon_pct": 0.0
+        },
+        "ground_ring": {
+          "px": 1507,
+          "V_mean": 0.626,
+          "s_p90": 0.057,
+          "gold_band_pct": 0.0,
+          "beacon_pct": 0.0
+        },
+        "deltaV_mesh_vs_ground": 0.233,
+        "with_beacon_ring": {
+          "beacon_band_px_total": 0,
+          "beacon_band_px_on_mesh": 0
+        },
+        "rule": "gold band only on the pickup body (style guide reserve) / beacon band only in the VFX ring"
+      }
+    },
+    "fidelity": {
+      "pairs": [
+        {
+          "part": "ultra-yoke",
+          "concept": "AP014-in-ultra-yoke.png",
+          "method": "Tripo H3.1 -> retopo 1499 tris",
+          "silhouette_iou_bbox_normalised_threeq": 0.645
+        },
+        {
+          "part": "special-collar",
+          "concept": "AP014-in-special-collar.png",
+          "method": "Tripo H3.1 -> retopo 1499 tris, flap mirrored to the left shoulder",
+          "silhouette_iou_bbox_normalised_threeq": 0.537
+        },
+        {
+          "part": "elite-sode",
+          "concept": "AP014-in-elite-sode.png",
+          "method": "procedural (SAM 3 lift failed, balance under the floor): curved plates, AP-008 lamellar texture",
+          "silhouette_iou_bbox_normalised_threeq": 0.207
+        },
+        {
+          "part": "elite-backframe",
+          "concept": "AP014-in-elite-backframe.png",
+          "method": "procedural: rope frame + 2 broken shafts + banner stub (shafts shortened under the crown)",
+          "silhouette_iou_bbox_normalised_threeq": 0.333
+        },
+        {
+          "part": "sw-kagura_bell",
+          "concept": "AP014-in-kagura-bell-held.png",
+          "method": "procedural: bell tiers, lacquer handle, silk tassel, mallet",
+          "silhouette_iou_bbox_normalised_threeq": 0.203
+        },
+        {
+          "part": "sw-ofuda_loom",
+          "concept": "AP014-in-ofuda-loom-held.png",
+          "method": "procedural: lacquer shuttle, 7 talisman cards, hemp threads",
+          "silhouette_iou_bbox_normalised_threeq": 0.245
+        }
+      ],
+      "note": "bbox-normalised silhouette IoU concept crop vs render (three-quarter view, different camera angles between the concept sheet and the render -> a floor); the concept angle is not reproduced exactly"
+    },
+    "tint_measured": {
+      "Standard": {
+        "figure_px": 77504,
+        "hue_median": 228.0,
+        "s_p90": 0.28,
+        "v_mean": 0.284,
+        "v_p90": 0.424,
+        "constraint_s_le_0.45": true,
+        "constraint_v_le_0.60": true
+      },
+      "Special": {
+        "figure_px": 86337,
+        "hue_median": 92.3,
+        "s_p90": 0.265,
+        "v_mean": 0.317,
+        "v_p90": 0.439,
+        "constraint_s_le_0.45": true,
+        "constraint_v_le_0.60": true
+      },
+      "Elite": {
+        "figure_px": 97437,
+        "hue_median": 90.0,
+        "s_p90": 0.163,
+        "v_mean": 0.318,
+        "v_p90": 0.427,
+        "constraint_s_le_0.45": true,
+        "constraint_v_le_0.60": true
+      },
+      "Ultra": {
+        "figure_px": 93139,
+        "hue_median": 22.5,
+        "s_p90": 0.28,
+        "v_mean": 0.329,
+        "v_p90": 0.424,
+        "constraint_s_le_0.45": true,
+        "constraint_v_le_0.60": true
+      }
+    }
+  },
+  "budgets": {
+    "tier_part_LOD0_3": [
+      1500,
+      600,
+      200,
+      80
+    ],
+    "sw_pickup_LOD0_2": [
+      1500,
+      600,
+      200
+    ],
+    "sw_hand_LOD0_2": [
+      3000,
+      1000,
+      300
+    ],
+    "ok": false
+  }
+}

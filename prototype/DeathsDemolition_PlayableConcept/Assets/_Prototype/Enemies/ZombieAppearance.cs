@@ -163,6 +163,9 @@ namespace DD.Prototype.Enemies
         /// <summary>The assembled look (skinned only).</summary>
         public ZombieLook Look => _look;
 
+        /// <summary>WP-036: the skinned visual (bone lookup, LODGroup) for the tier-part binder; null on the block body.</summary>
+        public ZombieSkinnedVisual Skinned => _skinned;
+
         /// <summary>
         /// Apply a fresh look. Called from OnSpawned, before the first frame is drawn.
         ///
@@ -197,6 +200,7 @@ namespace DD.Prototype.Enemies
                     _armor.ApplyMaterial((int)tier);
                 }
 
+                ApplyTierTint(tier);   // WP-036: lerp-mask version tint on the body atlas and the armour atlas (ADR-036-1)
                 return;
             }
 
@@ -458,6 +462,33 @@ namespace DD.Prototype.Enemies
             }
 
             return look;
+        }
+
+        /// <summary>
+        /// WP-036 (ADR-036-1): the version's tint materials (DD/Character/Tier Lit: lerp(base, tint, Mask·k) on cloth
+        /// and lacquer with the lacquer floor) replace the WP-016/017 multiplicative variants on the body slots and the
+        /// armour renderers when the AP-014 library is built; Standard carries the untinted materials. Shared materials,
+        /// one per version - SRP batching unchanged.
+        /// </summary>
+        private void ApplyTierTint(EnemyTier tier)
+        {
+            ZombieTierLibrary lib = ZombieTierLibrary.Active;
+            if (lib == null || !lib.IsReady || !IsSkinned) return;
+            Material body = lib.BodyMaterial(tier);
+            if (body != null)
+            {
+                for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
+                {
+                    for (int s = 0; s < ZombieSkinnedVisual.SlotCount; s++)
+                    {
+                        SkinnedMeshRenderer r = _skinned.Slot(lod, s);
+                        if (r != null && r.sharedMaterial != body) r.sharedMaterial = body;
+                    }
+                }
+            }
+
+            Material armor = lib.ArmorMaterial(tier);
+            if (armor != null && HasArmor) _skinned.ApplyArmorMaterial(armor);
         }
 
         /// <summary>Show a full plate group. Called when a piece is equipped at spawn.</summary>

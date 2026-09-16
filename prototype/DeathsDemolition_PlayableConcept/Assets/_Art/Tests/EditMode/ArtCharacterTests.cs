@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void HerKarakterFbx_V11Sozlesmesi_Avatar_HumanEslemesiKaynaklaAyni()
         {
             List<string> files = CharacterFbx();
-            Assert.AreEqual(75, files.Count, "75 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 19 modül + 2 klip; WP-017 zırh 18; WP-018 AP-009 30 klip):\n" + string.Join("\n", files));
+            Assert.AreEqual(79, files.Count, "79 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 19 modül + 2 klip; WP-017 zırh 18; WP-018 AP-009 30 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
 
             List<string> playerMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.PlayerAvatarSource));
             List<string> zombieMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource));
