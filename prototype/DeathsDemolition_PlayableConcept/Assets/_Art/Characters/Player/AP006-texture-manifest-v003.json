@@ -1,8 +1,8 @@
 {
  "package": "AP-006",
- "version": "v002",
+ "version": "v003",
+ "decision": "2026-09-16 07:50 (user via C-00): skin 2 = 2b Steel/Indigo",
  "convention": "AP-003B texture manifest: separate PNGs, FBX path_mode STRIP; albedo sRGB, normal/ORM Non-Color; normal OpenGL +Y; ORM R occlusion / G roughness / B metallic",
- "status": "skin1/skin3 = v002 (verdict fixes 2/3 + mask v003 bands); skin2a = Indigo/Black v001 palette with v003 bands (comparison); skin2b = inverted Steel/Indigo (verdict c) - USER DECISION 2a/2b pending; v001 albedos kept for reference (superseded)",
  "textures": [
   {
    "file": "AP006_player_albedo_skin1_v002_2k.png",
@@ -21,7 +21,8 @@
     "secondary": "#C2BAA9",
     "accent": "#A33B3E"
    },
-   "source_image": "AP006_player_albedo_skin1_v002_2k"
+   "source_image": "AP006_player_albedo_skin1_v002_2k",
+   "status": "final"
   },
   {
    "file": "AP006_player_albedo_skin2a_2k.png",
@@ -34,16 +35,17 @@
    "sha256": "0545198c93dd0cda4e8759d0d43ae323b4a4aa56246a30b2cc1fecf86bd1136c",
    "bytes": 5225862,
    "skin": "skin2a",
-   "material": "M_Player_Skin2",
+   "material": "none",
    "palette": {
     "primary": "#4E5A94",
     "secondary": "#1C1C26",
     "accent": "#8FA0DB"
    },
-   "source_image": "AP006_player_albedo_skin2a_2k"
+   "source_image": "AP006_player_albedo_skin2a_2k",
+   "status": "reference/rejected (user decision 2026-09-16 07:50: skin 2 = 2b)"
   },
   {
-   "file": "AP006_player_albedo_skin2b_2k.png",
+   "file": "AP006_player_albedo_skin2_v003_2k.png",
    "role": "albedo",
    "colorspace": "sRGB",
    "size": [
@@ -52,14 +54,15 @@
    ],
    "sha256": "5e8c01272cc12b66b051ccbc62d435f427c020b031cf19507a3c8f851dc3917f",
    "bytes": 5425626,
-   "skin": "skin2b",
-   "material": "M_Player_Skin2b",
+   "skin": "skin2",
+   "material": "M_Player_Skin2",
    "palette": {
     "primary": "#BCC3E6",
     "secondary": "#4B4F61",
     "accent": "#515D99"
    },
-   "source_image": "AP006_player_albedo_skin2b_2k"
+   "source_image": "AP006_player_albedo_skin2b_2k",
+   "status": "final (= 2b pixels; skin2b file kept as the same bytes)"
   },
   {
    "file": "AP006_player_albedo_skin3_v002_2k.png",
@@ -78,7 +81,8 @@
     "secondary": "#545F47",
     "accent": "#8C7D62"
    },
-   "source_image": "AP006_player_albedo_skin3_v002_2k"
+   "source_image": "AP006_player_albedo_skin3_v002_2k",
+   "status": "final"
   },
   {
    "file": "AP006_player_normal_2k.png",
@@ -92,7 +96,8 @@
    "bytes": 4365004,
    "skin": "shared",
    "material": "all",
-   "source_image": "AP006_player_normal_base_2k"
+   "source_image": "AP006_player_normal_base_2k",
+   "status": "shared"
   },
   {
    "file": "AP006_player_orm_2k.png",
@@ -106,7 +111,8 @@
    "bytes": 4917819,
    "skin": "shared",
    "material": "all",
-   "source_image": "AP006_player_orm_base_2k"
+   "source_image": "AP006_player_orm_base_2k",
+   "status": "shared"
   }
  ],
  "superseded_v001": [
@@ -128,8 +134,7 @@
  ],
  "bytes_per_skin": {
   "skin1": 14779993,
-  "skin2a": 14508685,
-  "skin2b": 14708449,
+  "skin2": 14708449,
   "skin3": 14685291
  },
  "materials": {
@@ -144,17 +149,7 @@
    }
   },
   "M_Player_Skin2": {
-   "albedo": "AP006_player_albedo_skin2a_2k.png",
-   "normal": "AP006_player_normal_2k.png",
-   "orm": "AP006_player_orm_2k.png",
-   "palette": {
-    "primary": "#4E5A94",
-    "secondary": "#1C1C26",
-    "accent": "#8FA0DB"
-   }
-  },
-  "M_Player_Skin2b": {
-   "albedo": "AP006_player_albedo_skin2b_2k.png",
+   "albedo": "AP006_player_albedo_skin2_v003_2k.png",
    "normal": "AP006_player_normal_2k.png",
    "orm": "AP006_player_orm_2k.png",
    "palette": {

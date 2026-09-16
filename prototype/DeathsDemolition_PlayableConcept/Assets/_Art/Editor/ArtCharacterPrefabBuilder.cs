@@ -682,7 +682,7 @@ namespace DD.Art.Pipeline.EditorTools
             SerializedProperty skins = so.FindProperty("_playerSkinAlbedos");
             skins.arraySize = 3;
             skins.GetArrayElementAtIndex(0).objectReferenceValue = Load<Texture2D>(PlayerTextures + "/T_player_skin1_BaseColor.png");
-            skins.GetArrayElementAtIndex(1).objectReferenceValue = Load<Texture2D>(PlayerTextures + "/T_player_skin2a_BaseColor.png");
+            skins.GetArrayElementAtIndex(1).objectReferenceValue = Load<Texture2D>(PlayerTextures + "/T_player_skin2b_BaseColor.png");   // WP-017: skin 2 = 2b (user decision 2026-09-16 07:50)
             skins.GetArrayElementAtIndex(2).objectReferenceValue = Load<Texture2D>(PlayerTextures + "/T_player_skin3_BaseColor.png");
             so.FindProperty("_playerAnimation").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(PlayerAnimationSet);
             so.FindProperty("_zombiePrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(ZombiePrefab);

@@ -8,7 +8,7 @@ The AP-006 player and the AP-007 zombie in Unity, on Import Contract **v1.1** (A
 |---|---|
 | `Player/player_base.fbx` | AP-006 PlayerRig (56 transforms: Root + 52 Humanoid + `socket_weapon_r/l`, `socket_back`) + `Player_LOD0/1/2` (23 978 / 9 590 / 3 390 tris). Avatar source. |
 | `Player/Clips/player_rigtest_{idle,walk}.fbx` | Rig-test takes (`RigTest_Idle` 2.5 s, `RigTest_Walk` 1.33 s), Humanoid, looping, root locked — AP-009 replaces them. |
-| `Player/Textures/T_player_skin{1,2a,3}_BaseColor.png`, `T_player_Normal.png`, `T_player_Packed.png` | v002 albedos (skin 2 = **2a**, user decision), OpenGL normal, ORM (R occlusion, G roughness, B metallic). `Textures/Derived/T_player_MetallicSmoothness.png` = R metallic, **G occlusion**, A smoothness (+ provenance). |
+| `Player/Textures/T_player_skin{1,2b,3}_BaseColor.png`, `T_player_Normal.png`, `T_player_Packed.png` | albedos skin 1 / 3 v002, skin 2 = **2b Steel/Indigo** v003 (user decision 2026-09-16 07:50; 2a retired; manifest `AP006-texture-manifest-v003.json`), OpenGL normal, ORM (R occlusion, G roughness, B metallic). `Textures/Derived/T_player_MetallicSmoothness.png` = R metallic, **G occlusion**, A smoothness (+ provenance). |
 | `Player/M_player.mat` | URP/Lit: skin-1 albedo, normal, mask as `_MetallicGlossMap` and `_OcclusionMap` (G). Skins swap `_BaseMap` through a property block — one material asset, no instances. |
 | `Player/Player_AP006.prefab` | `PlayerSkinnedVisual` + `ProceduralPoseBridge` root → `Model` (Animator: player avatar, `DD_Locomotion_Player.controller`; LODGroup 3 levels, cross-fade; LOD2 casts no shadow). |
 | `Player/CharacterAnimationSet_Player.asset` | idle + walk clips, walk reference speed 1.4 m/s, controller. |

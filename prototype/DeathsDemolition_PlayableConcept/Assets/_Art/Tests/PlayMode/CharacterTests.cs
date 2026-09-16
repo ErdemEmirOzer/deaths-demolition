@@ -354,8 +354,8 @@ namespace DD.Art.Tests.PlayMode
                 float zombieDeltaV = Mathf.Abs(MeanValue(full, zombieMask) - MeanValue(full, Ring(zombieMask, playerMask, 4, 10)));
 
                 Debug.Log("[DD-TEST] wp016.readability warm=" + warm + " playerPx=" + playerPx + " bodyPx=" + Count(bodyMask) + " zombiePx=" + zombiePx +
-                          " figure skin1=" + skinContrast[0].ToString("F3", CultureInfo.InvariantCulture) + " skin2a=" + skinContrast[1].ToString("F3", CultureInfo.InvariantCulture) + " skin3=" + skinContrast[2].ToString("F3", CultureInfo.InvariantCulture) +
-                          " | body skin1=" + skinContrastBody[0].ToString("F3", CultureInfo.InvariantCulture) + " skin2a=" + skinContrastBody[1].ToString("F3", CultureInfo.InvariantCulture) + " skin3=" + skinContrastBody[2].ToString("F3", CultureInfo.InvariantCulture) +
+                          " figure skin1=" + skinContrast[0].ToString("F3", CultureInfo.InvariantCulture) + " skin2b=" + skinContrast[1].ToString("F3", CultureInfo.InvariantCulture) + " skin3=" + skinContrast[2].ToString("F3", CultureInfo.InvariantCulture) +
+                          " | body skin1=" + skinContrastBody[0].ToString("F3", CultureInfo.InvariantCulture) + " skin2b=" + skinContrastBody[1].ToString("F3", CultureInfo.InvariantCulture) + " skin3=" + skinContrastBody[2].ToString("F3", CultureInfo.InvariantCulture) +
                           " zombieCrowd=" + zombieContrast.ToString("F3", CultureInfo.InvariantCulture) + " zombieDeltaV=" + zombieDeltaV.ToString("F3", CultureInfo.InvariantCulture) +
                           " playerVsZombieLuma=" + (playerLuma[0] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) + "/" + (playerLuma[1] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) + "/" + (playerLuma[2] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) +
                           " surround=" + surroundLuma.ToString("F3", CultureInfo.InvariantCulture) + " -> " + dir);
@@ -365,11 +365,18 @@ namespace DD.Art.Tests.PlayMode
                 // mantle and the pack dominate the silhouette and the ivory/cream haori barely shows, so the
                 // luminance reading differs from AP-006's front-view R2 (0.125 / 0.005 / 0.089) — measured
                 // here 0.048 / 0.078 / 0.038 on courtyard paving: art-director judgment + AP-006 handover
-                // (WP-016 note). Player/zombie separation is asserted for skins 1 and 3 (skin 2a = indigo,
-                // user decision, known exception).
+                // (WP-016 note). Player/zombie separation is asserted for skins 1 and 3; skin 2b is reported (WP-017).
                 Assert.GreaterOrEqual(zombieContrast, ReadabilityThresholds.CapsuleContrastMin, "zombi kalabalığı/çevre kontrastı (DEC-077)");
                 Assert.Greater(Mathf.Abs(playerLuma[0] - zombieLuma), 0.08f, "skin 1 oyuncu gövdesi/zombi ayrımı");
                 Assert.Greater(Mathf.Abs(playerLuma[2] - zombieLuma), 0.08f, "skin 3 oyuncu gövdesi/zombi ayrımı");
+                // WP-017: skin 2 = 2b Steel/Indigo (user 2026-09-16 07:50). The light steel body separates from the
+                // zombie cloth 2–3× better than 2a (measured 0.102 and 0.074 in two runs vs 0.031), but the reading
+                // straddles 0.08 because the body band follows the idle frame the capture froze on (A-pose arms widen
+                // the box) — reported, not asserted, until AP-009 clips fix the pose.
+                if (Mathf.Abs(playerLuma[1] - zombieLuma) < 0.08f)
+                {
+                    Debug.LogWarning("[DD-TEST] wp016.readability REPORTED: skin 2b oyuncu gövdesi/zombi luma ayrımı " + Mathf.Abs(playerLuma[1] - zombieLuma).ToString("F3", CultureInfo.InvariantCulture) + " < 0.08 (poz bağımlı bant; 2a 0.031)");
+                }
                 for (int s = 0; s < 3; s++)
                 {
                     if (skinContrastBody[s] < ReadabilityThresholds.CapsuleContrastMin)

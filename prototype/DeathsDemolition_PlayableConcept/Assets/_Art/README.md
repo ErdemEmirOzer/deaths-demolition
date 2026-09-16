@@ -14,7 +14,7 @@ Every contract PNG (`Textures/Source|Derived/T_<role>_<Map>.png`) belongs to a d
 | Prop | 512 | on | `prop_tsukubai`, `prop_handcart`, `prop_strawbales`, `prop_barrels`, `prop_mossrock`, `prop_shed` (AP-005B, WP-017; Tripo ORM: no AO, metallic 0) | Dressing props ≤ 4 m: 512 on a 4 m shed is 128 px/m, above what the camera resolves |
 | Breakable | 512 | on | — (reserved) | `small_breakable` shares `bamboo_culm`/`roof`/`wood` |
 | Sky | 256 | off | `sky` (the 4×256 gradient `ArtSkyBuilder` writes) | A skybox has no renderer for the streaming system to rate |
-| Character | 2048 | on | `player`, `player_skin1/2a/3`, `zombie_atlas` (WP-016), `zombie_armor` (AP-008, WP-017) | The one thing the camera frames at ~100 px; ADR-016-1 |
+| Character | 2048 | on | `player`, `player_skin1/2b/3` (skin 2 = 2b Steel/Indigo, user 2026-09-16), `zombie_atlas` (WP-016), `zombie_armor` (AP-008, WP-017) | The one thing the camera frames at ~100 px; ADR-016-1 |
 
 `roof_courses` (Structure) is the generated 256² tile-course detail normal for the AP-005B roof copy (`ArtTextureRepack.BuildRoofCourses`).
 

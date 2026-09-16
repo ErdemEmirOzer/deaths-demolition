@@ -226,7 +226,7 @@ namespace DD.Art.Pipeline.EditorTools
             // WP-016 characters (ADR-016-1): the AP-006 player set (three skin albedos + shared normal/ORM) and the AP-007 zombie atlas.
             { "player", TextureClass.Character },
             { "player_skin1", TextureClass.Character },
-            { "player_skin2a", TextureClass.Character },
+            { "player_skin2b", TextureClass.Character },   // WP-017: skin 2 = 2b Steel/Indigo (user 2026-09-16); 2a retired
             { "player_skin3", TextureClass.Character },
             { "zombie_atlas", TextureClass.Character },
             // WP-017 · AP-008 armour atlas (one 2K set for every family / variant / state).

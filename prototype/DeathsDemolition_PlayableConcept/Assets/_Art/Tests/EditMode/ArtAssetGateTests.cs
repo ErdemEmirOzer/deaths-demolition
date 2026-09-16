@@ -355,7 +355,7 @@ namespace DD.Art.Tests.EditMode
             string zt = ArtCharacterPrefabBuilder.ZombieTextures, zd = ArtCharacterPrefabBuilder.ZombieDerived;
             foreach (string f in new[]
             {
-                pt + "/T_player_skin1_BaseColor.png", pt + "/T_player_skin2a_BaseColor.png", pt + "/T_player_skin3_BaseColor.png",
+                pt + "/T_player_skin1_BaseColor.png", pt + "/T_player_skin2b_BaseColor.png", pt + "/T_player_skin3_BaseColor.png",
                 pt + "/T_player_Normal.png", pt + "/T_player_Packed.png", pd + "/T_player_MetallicSmoothness.png",
                 zt + "/T_zombie_atlas_BaseColor.png", zt + "/T_zombie_atlas_Normal.png", zt + "/T_zombie_atlas_Packed.png", zt + "/T_zombie_atlas_Mask.png",
                 zd + "/T_zombie_atlas_MetallicSmoothness.png", zd + "/T_zombie_atlas_DetailMask.png",

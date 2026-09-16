@@ -16,7 +16,7 @@ MonoBehaviour:
   _playerPrefab: {fileID: 1433642530149019701, guid: 279de0d8c2cb8494a8cb88318eac0997, type: 3}
   _playerSkinAlbedos:
   - {fileID: 2800000, guid: fdfa0a21a3ec645c6aec4bf0e1872b2e, type: 3}
-  - {fileID: 2800000, guid: c65ee64c239524f36a0fc53515c30b08, type: 3}
+  - {fileID: 2800000, guid: e1154539f18c44cb5911fb11103bb3cf, type: 3}
   - {fileID: 2800000, guid: fbbbfb817522d4dc2b3987cdd4ebedc6, type: 3}
   _playerAnimation: {fileID: 11400000, guid: 94d74f682f9ea4f399ef758aa27f6ada, type: 2}
   _zombiePrefab: {fileID: 4333227168273605463, guid: 386b3c3dd19214a14a6c48b3e6ce3be1, type: 3}

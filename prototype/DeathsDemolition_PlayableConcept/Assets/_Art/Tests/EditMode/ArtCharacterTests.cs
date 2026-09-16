@@ -313,7 +313,7 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(set.PlayerReady && set.ZombieReady, "referanslar eksik");
             Assert.AreEqual(3, set.PlayerSkinAlbedos.Length);
             Assert.AreEqual("T_player_skin1_BaseColor", set.PlayerSkinAlbedos[0].name);
-            Assert.AreEqual("T_player_skin2a_BaseColor", set.PlayerSkinAlbedos[1].name, "skin 2 = 2a (kullanıcı kararı; 2b gelirse tek doku takası)");
+            Assert.AreEqual("T_player_skin2b_BaseColor", set.PlayerSkinAlbedos[1].name, "skin 2 = 2b Steel/Indigo (kullanıcı kararı 2026-09-16 07:50; WP-017 doku takası)");
             Assert.AreEqual("T_player_skin3_BaseColor", set.PlayerSkinAlbedos[2].name);
             CharacterAssetSet.ResetCache();
             Assert.AreSame(set, CharacterAssetSet.Load(), "Resources.Load aynı varlığı bulmalı");
