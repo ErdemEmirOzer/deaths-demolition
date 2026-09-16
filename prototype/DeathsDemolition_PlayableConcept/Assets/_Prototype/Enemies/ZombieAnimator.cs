@@ -157,7 +157,8 @@ namespace DD.Prototype.Enemies
         /// </summary>
         public IZombieAnimationDriver Driver { get; set; }
 
-        private bool Driven => Driver != null && Driver.Authored;
+        /// <summary>True when the AP-009 driven body (WP-018) is authored on this rig — the clip events drive the windows.</summary>
+        public bool Driven => Driver != null && Driver.Authored;
 
         [PrototypeOnly(PendingDecisions.None,
             "Seconds after BeginDeath at which a driven body is declared finished even if the clip's " +

@@ -206,6 +206,10 @@ namespace DD.Prototype.Enemies
         /// caller must treat that as "not now", never as an error.
         /// </summary>
         public static ZombieEnemy Spawn(EnemyTier tier, int round, Vector3 position, Quaternion rotation)
+            => Spawn(tier, round, position, rotation, SpawnVisibility.Unknown);
+
+        /// <summary>WP-040 (DEC-081): a debug / test spawn with an explicit visibility class for the rise policy (Unknown = never rises).</summary>
+        public static ZombieEnemy Spawn(EnemyTier tier, int round, Vector3 position, Quaternion rotation, SpawnVisibility visibility)
         {
             PrototypeConfig config = PrototypeConfig.Active;
 
@@ -240,7 +244,7 @@ namespace DD.Prototype.Enemies
                 return null;
             }
 
-            enemy.Initialise(tier, round, NextSeed(), config);
+            enemy.Initialise(tier, round, NextSeed(), config, visibility);
             return enemy;
         }
 

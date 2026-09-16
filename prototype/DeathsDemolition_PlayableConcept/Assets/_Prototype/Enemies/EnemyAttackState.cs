@@ -249,9 +249,22 @@ namespace DD.Prototype.Enemies
             _versionRecoveryScale = rScale;
         }
 
+        /// <summary>
+        /// WP-040: the version's cooldown floor (Special B: the ≥ 1.9 s Lunge band) on top of the
+        /// DEC-021 cooldown. Like the timing scales it is re-applied after every ApplyConfig
+        /// (which resets to the table value), and it can only lengthen.
+        /// </summary>
+        public void ApplyVersionCooldownFloor(float floorSeconds)
+        {
+            _cooldown = Mathf.Max(_cooldown, Mathf.Max(0f, floorSeconds));
+        }
+
         public float TelegraphSeconds => _telegraph;
         public float ActiveSeconds => _active;
         public float RecoverySeconds => _recovery;
+        public float CooldownSeconds => _cooldown;
+        /// <summary>WP-040: true once this swing's active window connected (the beat layer tells a hit from a miss with it).</summary>
+        public bool ConnectedThisSwing => _connectedThisSwing;
 
         public void ApplyConfig(PrototypeConfig config, EnemyTier tier, int round)
         {

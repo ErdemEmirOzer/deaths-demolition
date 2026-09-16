@@ -1,3 +1,4 @@
+using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Navigation;
 using UnityEngine;
@@ -19,8 +20,9 @@ namespace DD.Prototype.Spawn
         public EnemySpawnContext(EnemyTier tier, int round, int pointIndex, string pointId,
             RingRegion region, Vector3 position, Quaternion rotation,
             float health, float attackDamage, float moveSpeed, bool guaranteedIntroduction,
-            int ticket, IEnemyLifecycleSink lifecycle)
+            int ticket, IEnemyLifecycleSink lifecycle, SpawnVisibility visibility = SpawnVisibility.Unknown)
         {
+            Visibility = visibility;
             Tier = tier;
             Round = round;
             PointIndex = pointIndex;
@@ -71,7 +73,16 @@ namespace DD.Prototype.Spawn
 
         /// <summary>Where the enemy reports its death and its despawn. Null for a debug spawn.</summary>
         public IEnemyLifecycleSink Lifecycle { get; }
+
+        /// <summary>
+        /// WP-040 (DEC-081): whether the final spawn position was inside the camera's view at the
+        /// moment of the spawn — the enemy's rise policy reads this (rise only off camera).
+        /// Evaluated fresh by the director with a margin band (see EnemySpawnDirector.RiseViewMargin);
+        /// Unknown when there is no camera (headless test, debug spawn) = no rise.
+        /// </summary>
+        public SpawnVisibility Visibility { get; }
     }
+
 
     /// <summary>
     /// CROSS-TASK CONTRACT - implemented by the pooled enemy behaviour (task G-04) on the

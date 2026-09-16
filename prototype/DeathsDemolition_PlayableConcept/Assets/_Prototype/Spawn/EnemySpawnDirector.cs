@@ -197,6 +197,35 @@ namespace DD.Prototype.Spawn
         public int SpawnsThisRun => _spawnsThisRun;
         public int OnScreenSpawnsThisRun => _onScreenSpawnsThisRun;
 
+        // ---------------------------------------------------------------- WP-040 · DEC-081 rise visibility
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-040 (DEC-081): viewport margin for the RISE decision, wider than the spawn-weight band (0.05) so a body " +
+            "just outside the frame edge counts as visible and does not rise into a pan (hysteresis band, technical default).", true)]
+        public const float RiseViewMargin = 0.12f;
+
+        private int _offScreenSpawnsJudged, _riseEligibleSpawnsThisRun;
+
+        /// <summary>WP-040: spawns this run whose fresh visibility check said OffScreen (rise-eligible under DEC-081).</summary>
+        public int RiseEligibleSpawnsThisRun => _riseEligibleSpawnsThisRun;
+        /// <summary>WP-040: spawns this run that had a camera to judge by (Unknown excluded).</summary>
+        public int VisibilityJudgedSpawnsThisRun => _offScreenSpawnsJudged;
+
+        /// <summary>
+        /// WP-040 (DEC-081): the visibility class of a spawn position RIGHT NOW (not the point's cached
+        /// flag): behind the camera or outside the margin band = OffScreen; inside = OnScreen; no camera = Unknown.
+        /// </summary>
+        public SpawnVisibility JudgeVisibility(Vector3 worldPosition)
+        {
+            Camera cam = ResolveCamera();
+            if (cam == null) return SpawnVisibility.Unknown;
+
+            Vector3 viewport = cam.WorldToViewportPoint(worldPosition + Vector3.up * 0.9f);   // chest height: the part of the body a rise would show
+            if (viewport.z <= 0f) return SpawnVisibility.OffScreen;
+            bool inside = viewport.x >= -RiseViewMargin && viewport.x <= 1f + RiseViewMargin &&
+                          viewport.y >= -RiseViewMargin && viewport.y <= 1f + RiseViewMargin;
+            return inside ? SpawnVisibility.OnScreen : SpawnVisibility.OffScreen;
+        }
+
         /// <summary>Refill attempts that found no eligible point. Debug / test readout.</summary>
         public int NoPointTicks => _noPointTicks;
 
@@ -731,6 +760,9 @@ namespace DD.Prototype.Spawn
             // WP-030 spawn visibility readout (DEC-023 counting is unchanged: the body is active from activation, rise included).
             _spawnsThisRun++;
             if (point.IsOnScreen) _onScreenSpawnsThisRun++;
+            // WP-040 (DEC-081) rise readout: counted on the confirmed activation only.
+            if (context.Visibility != SpawnVisibility.Unknown) _offScreenSpawnsJudged++;
+            if (context.Visibility == SpawnVisibility.OffScreen) _riseEligibleSpawnsThisRun++;
 
             Action<EnemySpawnContext> spawnedHandler = EnemySpawned;
             if (spawnedHandler != null)
@@ -787,8 +819,10 @@ namespace DD.Prototype.Spawn
                 speed = settings != null ? settings.MoveSpeed : 0f;
             }
 
+            SpawnVisibility visibility = JudgeVisibility(position);   // WP-040 (DEC-081): fresh, at the final position
+
             return new EnemySpawnContext(tier, _round, point.Index, point.Id, point.Region,
-                position, rotation, health, damage, speed, guaranteed, ticket, this);
+                position, rotation, health, damage, speed, guaranteed, ticket, this, visibility);
         }
 
         /// <summary>

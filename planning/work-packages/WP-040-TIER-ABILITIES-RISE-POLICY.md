@@ -1,0 +1,11 @@
+# WP-040 — Enemy Tier Abilities v1, Attack Event Surface & Rise Policy
+
+Paket promptu (C-00, 2026-09-17, HIZLI HAT; S-03 sahip; Opus 5 teknik). Kısaltılmış kayıt — tam metin C-00 mesajındadır.
+
+- **Başlangıç:** main `7ff05a4d` (WP-036 entegre) → gerçek taban `059096c` (slot.sh v2, aynı gün). Branch `wp-040-tier-abilities-rise`, worktree `wp-040/`.
+- **Kullanıcı kararı (2026-09-17):** spawn'da yerden kalkma = **melez** — Rise yalnız kamera dışı spawn'larda açık, kamera içi spawn'lar kalkışsız (WP-030 görünürlük sinyali) → DEC-081.
+- **Kapsam:** A rise politikası (`RiseOnSpawn` melez, histerezis, WP-030 el sıkışması korunur) + DEC-081 planning/00 + REQ satırı + S-06 animasyon kapısı notu · B tier saldırı olay yüzeyi (ADR-040-1) tek `EnemyCombatEvents` kaynağı (`telegraph_start/attack_commit/attack_hit/attack_miss/stagger/armor_break_<region>/death_<tier>/spawn_rise/spawn_land`, tier+konum+yön; DEC-029 pencereleri animasyon olaylarından, yer tutucuda zaman tabanlı yedek) + `EVENT-COVERAGE-MATRIX.md` düşman satırları (boş satır = FAIL) · C B·B·B davranış tamamlama (Special-B Lunge 2.6 / cooldown ≥ 1.9 / HP ×0.85; Elite-B gövde zırhı garanti, SeparationMass 2.2, stagger 0.45, koridor kapatma; Ultra-B overhead telegraph 1.15, üç bölge 1.0, SeparationMass 5, stagger 0.12; Ultra overhead klibi WP-032 gelince `AttackClipPlaceholder`→overhead, gelmezse yer tutucu + README notu; tier hit reaction/stagger animasyon olaylarına bağlı) · D doğrulama (SpawnMixSimulator R3/R5/R8, Threat Director A/B, 40 zombi perf S-10'a devredilebilir, değişen modül testleri).
+- **Teslim:** tek commit, ≤15 satır not, rebase yok (C-00 cherry-pick); planning/04 yalnız kendi bölüm + DEC-081. Silahlar/Special Weapon'lar/tier tasarımı proje sonunda ortak revizyona girer — şimdi tam uygula.
+- **Slot:** `tools/slot.sh acquire unity wp-040` (FIFO), swap > 12 GB ise Unity açma.
+- **Ek (C-00, 2026-09-17, main `3a9b08c`):** WP-039 main sanity devri E2 — `RegionNavRouter` EditMode'da 6 düğüm (WP-020 pişmiş NavMesh varken "NavMesh yok" varsayımı) → WP-040 kapsamı: NavMesh varlığına göre doğru yol + EditMode testi pişmiş NavMesh olmadan da deterministik.
+- **Ek (C-00, 2026-09-17):** DEC-081 satırını planning/00'a S-03 yazmaz (ProjectIntegrityTests ardışık numara) — S-02 WP-042 DEC-081/082/083'ü tek seferde yazar; WP-040'ta REQ satırı + ADR-040-1 + planning/04 referansı yeter.

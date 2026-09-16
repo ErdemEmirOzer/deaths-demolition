@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Spawn;
 
@@ -49,6 +50,7 @@ namespace DD.Prototype.Enemies
             SpawnPointIndex = context.PointIndex;
             SpawnTicket = context.Ticket;
             _lifecycleSink = context.Lifecycle;
+            SpawnVisibilityClass = context.Visibility;   // WP-040 (DEC-081): read by Initialise's rise decision
 
             // EnemyFactory.NextSeed is not reachable from here without coupling the two
             // spawn routes, so derive a deterministic seed from the context itself: the
@@ -79,6 +81,7 @@ namespace DD.Prototype.Enemies
             SpawnPointIndex = -1;
             SpawnTicket = 0;
             _lifecycleSink = null;
+            SpawnVisibilityClass = SpawnVisibility.Unknown;   // WP-040
         }
 
         /// <summary>Called from Die, once per life. A debug spawn has no sink and reports nothing.</summary>

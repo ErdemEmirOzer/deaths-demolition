@@ -64,6 +64,13 @@ namespace DD.Prototype.Navigation
         /// <summary>Speed factor the owner applies this tick: 1, or the profile's QueueSpeedFactor while queued at a full chokepoint.</summary>
         public float SpeedFactor { get; private set; } = 1f;
         public bool IsQueued => _queueVolume != null;
+
+        /// <summary>
+        /// WP-040 (Elite B corridor closing): this member takes the direct route (no WP-030
+        /// alternative) and never queues at a chokepoint mouth — it walks into the throat and
+        /// occupies it, so the lighter bodies behind it are the ones that queue (occupancy counts it).
+        /// </summary>
+        public bool HoldsChokepoints { get; set; }
         public bool IsRerouted => _rerouted;
         public NavRegionVolume QueueVolume => _queueVolume;
         public float QueuedSeconds => _queuedSeconds;
@@ -116,6 +123,15 @@ namespace DD.Prototype.Navigation
                 steeringTarget = _corners[_cornerIndex];
                 // WP-030: chokepoint queue - hold at the mouth (slow, not stopped) while the throat is full, for a bounded time.
                 RegionNavProfile profile = RegionNavProfile.Active;
+                if (HoldsChokepoints)
+                {
+                    // WP-040: a corridor closer never yields at the mouth.
+                    _queueVolume = null;
+                    _queuedSeconds = 0f;
+                    SpeedFactor = 1f;
+                    return true;
+                }
+
                 if (RegionNavRouter.ShouldQueue(profile, position, steeringTarget, _queuedSeconds, out NavRegionVolume volume))
                 {
                     _queueVolume = volume;
@@ -175,7 +191,9 @@ namespace DD.Prototype.Navigation
             if (_hasPath)
             {
                 // WP-030: regional route comparison (alternative around a costly volume when it is cheap enough for this member's roll).
-                _cornerCount = RegionNavRouter.ChooseRoute(RegionNavProfile.Active, position, goal, _corners, _cornerCount, _routeRoll, out _rerouted);
+                // WP-040: a corridor closer keeps the direct corners (it goes THROUGH the throat by design).
+                if (HoldsChokepoints) _rerouted = false;
+                else _cornerCount = RegionNavRouter.ChooseRoute(RegionNavProfile.Active, position, goal, _corners, _cornerCount, _routeRoll, out _rerouted);
                 // Corner 0 is the agent's own position; start steering at the next one.
                 _cornerIndex = 1;
             }

@@ -409,6 +409,7 @@ namespace DD.Prototype.Characters
         private bool _deathEnded;
         private bool _dying;
         private bool _rising;
+        private float _heavyStaggerUntil = -1f;   // WP-040: the hit_heavy_stagger clip holds the body until stagger_end (capped)
         private bool _windowOpen;
         private int _lastWindowStartFrame = -1;
         private int _lastWindowEndFrame = -1;
@@ -418,6 +419,11 @@ namespace DD.Prototype.Characters
         public int Gait => _gait;
         public bool DeathFinished => _deathEnded;
         public bool IsRising => _rising;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-040: cap on the heavy stagger hold when the clip's stagger_end never arrives (clip 0.9 s + grace).", true)]
+        public const float HeavyStaggerCapSeconds = 1.4f;
+        /// <summary>WP-040: the armour-break heavy stagger clip is playing (from PlayHeavyStagger until the clip's stagger_end, capped). The enemy neither walks nor swings meanwhile.</summary>
+        public bool IsHeavyStaggering => _heavyStaggerUntil > 0f && Time.time < _heavyStaggerUntil;
         /// <summary>True between hit_window_start and hit_window_end of the current attack clip (DEC-029 readout).</summary>
         public bool HitWindowOpen => _windowOpen;
         public int LastWindowStartFrame => _lastWindowStartFrame;
@@ -452,6 +458,9 @@ namespace DD.Prototype.Characters
                 case CharacterAnimationEvent.RiseEnd:
                     _rising = false;
                     break;
+                case CharacterAnimationEvent.StaggerEnd:
+                    _heavyStaggerUntil = -1f;   // WP-040
+                    break;
             }
         }
 
@@ -469,6 +478,7 @@ namespace DD.Prototype.Characters
             _deathEnded = false;
             _windowOpen = false;
             _rising = false;
+            _heavyStaggerUntil = -1f;   // WP-040
 
             _animator.ResetTrigger(AttackId);
             _animator.ResetTrigger(StaggerId);
@@ -642,6 +652,7 @@ namespace DD.Prototype.Characters
         {
             if (!_authored || _dying) return;
             _windowOpen = false;
+            _heavyStaggerUntil = Time.time + HeavyStaggerCapSeconds;   // WP-040: held until stagger_end (or the cap)
             _animator.ResetTrigger(AttackId);
             _animator.SetTrigger(StaggerId);
         }

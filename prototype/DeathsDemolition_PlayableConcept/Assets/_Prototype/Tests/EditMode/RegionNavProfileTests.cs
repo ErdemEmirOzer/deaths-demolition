@@ -92,15 +92,47 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void RotaSecimi_NavMeshYokken_DirektKalir_BosProfilKimlik()
+        public void RotaSecimi_AlternatifKaynagaGore_Deterministik_BosProfilKimlik()
         {
-            var direct = new[] { new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -20f), new Vector3(4f, 0f, -38f), new Vector3(4f, 0f, -44f), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
+            // WP-040 (WP-039 sanity E2): the choice must not depend on which scene the editor holds — with a baked
+            // NavMesh loaded (WP-020 world) the live query legitimately finds the shore alternative (6 corners), without
+            // one it cannot. The test installs the query itself: "no NavMesh" → direct; a synthetic alternative → the
+            // acceptance rule (alt < direct × (1 + roll × spread)) decides, both ways.
+            Vector3[] Direkt() => new[] { new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -20f), new Vector3(4f, 0f, -38f), new Vector3(4f, 0f, -44f), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
+            var direct = Direkt();
+            float directCost = RegionNavRouter.EffectiveCost(_profile, direct, 4, out NavRegionVolume costly);
+            Assert.IsNotNull(costly, "direkt rota köprüden geçer (maliyetli hacim)");
+
+            // 1. no NavMesh (or no alternative reachable) → direct, no reroute
+            RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile p, NavRegionVolume v, Vector3 a, Vector3 b, Vector3[] buf, out float c) => { c = -1f; return 0; };
             int n = RegionNavRouter.ChooseRoute(_profile, direct[0], direct[3], direct, 4, 1f, out bool rerouted);
-            Assert.AreEqual(4, n); Assert.IsFalse(rerouted, "EditMode'da NavMesh yok → alternatif hesaplanamaz → direkt rota");
-            var empty = ScriptableObject.CreateInstance<RegionNavProfile>();
-            Assert.AreEqual(4, RegionNavRouter.ChooseRoute(empty, direct[0], direct[3], direct, 4, 1f, out rerouted)); Assert.IsFalse(rerouted);
+            Assert.AreEqual(4, n); Assert.IsFalse(rerouted, "alternatif yok → direkt rota");
             Assert.AreEqual(0, RegionNavRouter.RerouteCount);
+
+            // 2. a synthetic shore alternative (6 corners) cheaper than the acceptance → rerouted, buffer rewritten
+            Vector3[] kiyi = { new Vector3(4f, 0f, -10f), new Vector3(18f, 0f, -18f), new Vector3(20f, 0f, -30f), new Vector3(16f, 0f, -40f), new Vector3(8f, 0f, -44f), new Vector3(4f, 0f, -44f) };
+            float sentetik = directCost * 0.9f;
+            RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile p, NavRegionVolume v, Vector3 a, Vector3 b, Vector3[] buf, out float c) => { for (int i = 0; i < kiyi.Length; i++) buf[i] = kiyi[i]; c = sentetik; return kiyi.Length; };
+            direct = Direkt();
+            n = RegionNavRouter.ChooseRoute(_profile, direct[0], direct[3], direct, 4, 0f, out rerouted);
+            Assert.AreEqual(6, n); Assert.IsTrue(rerouted, "ucuz alternatif kabul edilir (roll 0 → alt < direkt)");
+            Assert.AreEqual(kiyi[2], direct[2], "tampon alternatifle yeniden yazılır");
+            Assert.AreEqual(1, RegionNavRouter.RerouteCount);
+
+            // 3. the same alternative priced above the acceptance band → direct (roll 1 → alt must be < direkt × (1 + spread))
+            sentetik = directCost * (1f + _profile.RouteBiasSpread) + 0.01f;
+            direct = Direkt();
+            n = RegionNavRouter.ChooseRoute(_profile, direct[0], direct[3], direct, 4, 1f, out rerouted);
+            Assert.AreEqual(4, n); Assert.IsFalse(rerouted, "pahalı alternatif reddedilir");
+            Assert.AreEqual(1, RegionNavRouter.RerouteCount);
+
+            // 4. empty profile = identity whatever the query says
+            RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile p, NavRegionVolume v, Vector3 a, Vector3 b, Vector3[] buf, out float c) => { c = 0f; return 6; };
+            var empty = ScriptableObject.CreateInstance<RegionNavProfile>();
+            direct = Direkt();
+            Assert.AreEqual(4, RegionNavRouter.ChooseRoute(empty, direct[0], direct[3], direct, 4, 1f, out rerouted)); Assert.IsFalse(rerouted, "boş profil: maliyetli hacim yok → sorgu hiç çağrılmaz");
             Object.DestroyImmediate(empty);
+            RegionNavRouter.AlternativeQueryOverride = null;
         }
 
         [Test]

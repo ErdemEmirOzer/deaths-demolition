@@ -45,11 +45,54 @@ namespace DD.Prototype.Enemies
         // rig.Visual (clones inherit the reference like the rig); null = M1 block body.
         [SerializeField] private ZombieSkinnedVisual _skinned;
 
-        [PrototypeOnly(PendingDecisions.None,
-            "WP-018: play the AP-009 rise clip on spawn (the body neither walks nor attacks for its " +
-            "1.57 s; DEC-023 counts it as active). Off by default — turning it on changes time-to-engage, " +
-            "which is a pacing call (probe / test switch: -ddRise on).", true)]
-        public static bool RiseOnSpawn;
+        /// <summary>WP-040 · DEC-081 (user decision 2026-09-17): when a spawn plays the AP-009 rise clip.</summary>
+        public enum RisePolicy
+        {
+            /// <summary>Never (WP-003 behaviour: the body walks at once).</summary>
+            Off = 0,
+            /// <summary>Every spawn (the WP-018 probe / test switch).</summary>
+            Always = 1,
+            /// <summary>HYBRID (DEC-081, shipped): only a spawn the director judged OffScreen rises; an on-screen or unjudged spawn walks at once.</summary>
+            OffScreenOnly = 2,
+        }
+
+        /// <summary>
+        /// WP-040 · DEC-081: the rise policy. Hybrid by default — the rise reads as "the dead get up"
+        /// only where the camera cannot see the pop-in it hides (off-screen spawns, WP-030 visibility
+        /// signal); an on-screen spawn skips the 1.57 s stand-still so time-to-engage in view is unchanged.
+        /// Probe / test switch: <see cref="RiseOnSpawn"/> (true = Always, false = Off).
+        /// </summary>
+        public static RisePolicy Rise = RisePolicy.OffScreenOnly;
+
+        /// <summary>
+        /// WP-018: play the AP-009 rise clip on spawn (the body neither walks nor attacks for its
+        /// 1.57 s; DEC-023 counts it as active). WP-040: a VIEW on <see cref="Rise"/> — true = Always,
+        /// false = Off; the shipped default is the DEC-081 hybrid (probe / test switch: -ddRise on).
+        /// </summary>
+        public static bool RiseOnSpawn
+        {
+            get => Rise == RisePolicy.Always;
+            set => Rise = value ? RisePolicy.Always : RisePolicy.Off;
+        }
+
+        /// <summary>Reset the policy to the DEC-081 default (tests).</summary>
+        public static void ResetRisePolicy() => Rise = RisePolicy.OffScreenOnly;
+
+        /// <summary>WP-040: the visibility class of this life's spawn (director-judged; Unknown for a debug spawn).</summary>
+        public SpawnVisibility SpawnVisibilityClass { get; private set; }
+        /// <summary>WP-040: true when the policy × visibility asked this life's spawn to rise (the clip plays on a driven body; a block body records the decision only).</summary>
+        public bool RoseOnSpawn { get; private set; }
+
+        /// <summary>WP-040 · DEC-081: does a spawn of <paramref name="visibility"/> rise under <paramref name="policy"/>? Pure.</summary>
+        public static bool ShouldRise(RisePolicy policy, SpawnVisibility visibility)
+        {
+            switch (policy)
+            {
+                case RisePolicy.Always: return true;
+                case RisePolicy.OffScreenOnly: return visibility == SpawnVisibility.OffScreen;
+                default: return false;
+            }
+        }
 
         // ------------------------------------------------------------------ sub-systems
         private RegionalDamageBody _body;
@@ -245,6 +288,8 @@ namespace DD.Prototype.Enemies
         public ZombieAttackPhase AttackPhase => _attack != null ? _attack.Phase : ZombieAttackPhase.None;
         /// <summary>WP-018: the hit window is opened / closed by the AP-009 clip events (DEC-029 through ADR-018-1).</summary>
         public bool AttackAnimationDriven => _attack != null && _attack.AnimationDriven;
+        /// <summary>WP-040: the live cooldown after the version floor (readout / tests).</summary>
+        public float AttackCooldownSeconds => _attack != null ? _attack.CooldownSeconds : 0f;
         /// <summary>WP-018: Time.frameCount of the last connecting swing (tests; -1 = never).</summary>
         public int LastAttackConnectFrame => _attack != null ? _attack.LastConnectFrame : -1;
 
@@ -393,6 +438,13 @@ namespace DD.Prototype.Enemies
         /// Configure a fresh spawn. Called by EnemyFactory immediately after the pool hands
         /// the instance over, before the first Update.
         /// </summary>
+        /// <summary>WP-040: the debug / test spawn route with an explicit visibility class (the director route sets it through the spawn binding).</summary>
+        public void Initialise(EnemyTier tier, int round, uint seed, PrototypeConfig config, SpawnVisibility visibility)
+        {
+            SpawnVisibilityClass = visibility;
+            Initialise(tier, round, seed, config);
+        }
+
         public void Initialise(EnemyTier tier, int round, uint seed, PrototypeConfig config)
         {
             _tier = tier;
@@ -420,7 +472,9 @@ namespace DD.Prototype.Enemies
             // hit_window_start lands on the timer this life actually runs with.
             _animator.SetTiming(_attack != null ? _attack.TelegraphSeconds : _stats.TelegraphTime, _moveSpeed,
                 _versionProfile != null ? _versionProfile.TelegraphScale : 1f);   // WP-032: wind-up emphasis from the version
-            _animator.ResetDriven(_tier, _skinned != null && _skinned.Look.IsValid ? _skinned.Look.fit : "A", RiseOnSpawn, ref _random);
+            bool rise = ShouldRise(Rise, SpawnVisibilityClass);   // WP-040 (DEC-081): hybrid — only an off-screen spawn rises
+            RoseOnSpawn = rise;
+            _animator.ResetDriven(_tier, _skinned != null && _skinned.Look.IsValid ? _skinned.Look.fit : "A", rise, ref _random);
 
             // WP-008 (DEC-043): the reward is decided HERE, once, from the version and the
             // plates just fitted. Die() reads this record and nothing else, so what the
@@ -433,6 +487,76 @@ namespace DD.Prototype.Enemies
             _riseRemaining = 0f;   // WP-030: the animator (WP-018) calls BeginRise when a rise clip plays; without one the body walks at once (WP-003 behaviour)
 
             DamageTargetRegistry.Register(transform, this, this, _bodyRadius, ZombieBodyBuilder.StandHeight * 0.5f);
+
+            // WP-040 (ADR-040-1) spawn beats: rise (the clip plays) or land (up and walking at once).
+            _lastAttackPhase = ZombieAttackPhase.None;
+            _wasRising = IsRising;
+            _landRaised = false;
+            if (_wasRising)
+            {
+                RaiseBeat(EnemyCombatEventKind.SpawnRise, transform.position, transform.forward, ArmorSlot.None, _skinned != null && _skinned.IsRising, RiseClipSeconds);
+            }
+            else
+            {
+                RaiseLand(false);
+            }
+        }
+
+        // ------------------------------------------------------------ WP-040 · ADR-040-1 beat layer
+        [PrototypeOnly(PendingDecisions.None, "AP-009 rise clip length (README: 1.57 s) reported on the spawn_rise beat; the clip's rise_end is the real end.", true)]
+        private const float RiseClipSeconds = 1.57f;
+
+        private ZombieAttackPhase _lastAttackPhase;
+        private bool _wasRising, _landRaised;
+
+        private void RaiseBeat(EnemyCombatEventKind kind, Vector3 position, Vector3 direction, ArmorSlot region, bool animationDriven, float seconds)
+        {
+            EnemyCombatEvents.Raise(new EnemyCombatEventInfo(kind, transform, _tier, _lifeId, position, direction, region, animationDriven, seconds));
+        }
+
+        private void RaiseLand(bool fromClip)
+        {
+            if (_landRaised) return;
+            _landRaised = true;
+            RaiseBeat(EnemyCombatEventKind.SpawnLand, transform.position, transform.forward, ArmorSlot.None, fromClip, 0f);
+        }
+
+        /// <summary>The swing's origin for the attack beats: the attack socket when the rig has one, else chest height.</summary>
+        private Vector3 SwingOrigin => _rig != null && _rig.AttackSocket != null ? _rig.AttackSocket.position : transform.position + Vector3.up * 1.1f;
+
+        /// <summary>
+        /// Phase edges of the attack machine → beats. Runs right after the attack tick every frame;
+        /// the edges are the machine's own transitions, so a clip-driven window (hit_window_start /
+        /// hit_window_end) and the timer fallback raise the same beats (AnimationDriven tells them apart).
+        /// </summary>
+        private void RaiseAttackBeats(bool connected)
+        {
+            ZombieAttackPhase phase = _attack.Phase;
+            ZombieAttackPhase last = _lastAttackPhase;
+            _lastAttackPhase = phase;
+            if (phase == last)
+            {
+                if (connected) RaiseBeat(EnemyCombatEventKind.AttackHit, SwingOrigin, transform.forward, ArmorSlot.None, _attack.AnimationDriven, 0f);
+                return;
+            }
+
+            bool driven = _attack.AnimationDriven;
+            Vector3 origin = SwingOrigin;
+            if (phase == ZombieAttackPhase.Windup)
+            {
+                RaiseBeat(EnemyCombatEventKind.TelegraphStart, origin, transform.forward, ArmorSlot.None, driven, _attack.TelegraphSeconds);
+            }
+            else if (phase == ZombieAttackPhase.Active && last == ZombieAttackPhase.Windup)
+            {
+                RaiseBeat(EnemyCombatEventKind.AttackCommit, origin, transform.forward, ArmorSlot.None, driven, _attack.ActiveSeconds);
+                if (connected) RaiseBeat(EnemyCombatEventKind.AttackHit, origin, transform.forward, ArmorSlot.None, driven, 0f);
+            }
+            else if (phase == ZombieAttackPhase.Recovery && last == ZombieAttackPhase.Active)
+            {
+                if (connected) RaiseBeat(EnemyCombatEventKind.AttackHit, origin, transform.forward, ArmorSlot.None, driven, 0f);
+                else if (!_attack.ConnectedThisSwing) RaiseBeat(EnemyCombatEventKind.AttackMiss, origin, transform.forward, ArmorSlot.None, driven, _attack.RecoverySeconds);
+            }
+            // Active → None (stagger / death cancel) raises nothing here: the stagger / death beat covers it.
         }
 
         protected override void OnSpawned()
@@ -577,7 +701,11 @@ namespace DD.Prototype.Enemies
             }
 
             _attack?.ApplyConfig(config, _tier, _spawnRound);
-            if (_versionProfile != null) _attack?.ApplyVersionTiming(_versionProfile.TelegraphScale, _versionProfile.RecoveryScale);   // WP-028
+            if (_versionProfile != null)
+            {
+                _attack?.ApplyVersionTiming(_versionProfile.TelegraphScale, _versionProfile.RecoveryScale);   // WP-028
+                _attack?.ApplyVersionCooldownFloor(_versionProfile.CooldownFloor);                            // WP-040: the Lunge band floor
+            }
             _reaction?.ApplyConfig(config, _tier);
         }
 
@@ -759,6 +887,11 @@ namespace DD.Prototype.Enemies
             }
 
             // ------------------------------------------------------------------ rise (WP-030)
+            // WP-040: the rise → walk edge (rise_end on the clip, or the timer) is the spawn_land beat.
+            bool risingNow = IsRising;
+            if (_wasRising && !risingNow) RaiseLand(_skinned != null);
+            _wasRising = risingNow;
+
             if (_riseRemaining > 0f)
             {
                 _riseRemaining -= dt;
@@ -771,14 +904,16 @@ namespace DD.Prototype.Enemies
 
             // ------------------------------------------------------------------ attack
             // WP-018: a body still rising from its spawn (AP-009 rise clip) neither walks nor swings.
-            bool staggering = _animator.IsStaggering || (_skinned != null && _skinned.IsRising);
+            // WP-040: the armour-break heavy stagger holds the body until the clip's stagger_end (timer cap inside).
+            bool staggering = _animator.IsStaggering || (_skinned != null && (_skinned.IsRising || _skinned.IsHeavyStaggering));
 
             if (!staggering && target != null && _attack.CanStartAttack(distance))
             {
                 _attack.Begin();
             }
 
-            _attack.Tick(dt, this, _tier, _animator);
+            bool connected = _attack.Tick(dt, this, _tier, _animator);
+            RaiseAttackBeats(connected);   // WP-040 (ADR-040-1)
 
             // ---------------------------------------------------------------- steering
             // OWN locomotion first: follow the NavMesh path towards the target. The crowd
@@ -1044,6 +1179,9 @@ namespace DD.Prototype.Enemies
                         ? PrototypeConfig.Active.Feedback.HitStopArmorBreak
                         : FallbackHitStopArmorBreak,
                     in _lastMeta));
+                RaiseBeat(EnemyCombatEventKind.ArmorBreak, point, direction, slot, _skinned != null, 0f);   // WP-040
+                // WP-040: the break's heavy stagger (ArmorVisualBinder → hit_heavy_stagger clip) is a beat of its own.
+                if (_skinned != null && _appearance.HasArmor && !result.Killed) RaiseBeat(EnemyCombatEventKind.Stagger, point, direction, ArmorSlot.None, true, ZombieSkinnedVisual.HeavyStaggerCapSeconds);
             }
 
             // ------------------------------------------------------------ hit reaction
@@ -1062,6 +1200,7 @@ namespace DD.Prototype.Enemies
                 {
                     _animator.BeginStagger(direction, reaction.StaggerIntensity, reaction.StaggerDuration, transform);
                     _attack.Cancel();
+                    RaiseBeat(EnemyCombatEventKind.Stagger, point, direction, ArmorSlot.None, _animator.Driven, reaction.StaggerDuration);   // WP-040
                 }
 
                 if (reaction.KnockbackVelocity != Vector3.zero)
@@ -1166,6 +1305,7 @@ namespace DD.Prototype.Enemies
                 transform, _tier, transform.position, direction, result.Region, hit.Source,
                 DamageRegions.IsCritical(in result, hit.Source), heavyTier, _spawnRound,
                 gold, xp, _body.LastOverkill, hitStop, _lifeId, in _lastMeta, in _reward));
+            RaiseBeat(EnemyCombatEventKind.Death, transform.position, direction, ArmorSlot.None, _skinned != null, 0f);   // WP-040
         }
 
         /// <summary>
@@ -1221,6 +1361,8 @@ namespace DD.Prototype.Enemies
                     PrototypeConfig.Active != null
                         ? PrototypeConfig.Active.Feedback.HitStopArmorBreak
                         : FallbackHitStopArmorBreak));
+                RaiseBeat(EnemyCombatEventKind.ArmorBreak, point, direction, broken[i], _skinned != null, 0f);   // WP-040
+                if (_skinned != null && _appearance.HasArmor) RaiseBeat(EnemyCombatEventKind.Stagger, point, direction, ArmorSlot.None, true, ZombieSkinnedVisual.HeavyStaggerCapSeconds);   // WP-040: the binder plays the heavy stagger here too
             }
 
             return count;

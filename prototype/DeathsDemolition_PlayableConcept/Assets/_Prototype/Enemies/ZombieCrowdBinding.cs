@@ -56,6 +56,7 @@ namespace DD.Prototype.Enemies
             _fitRadiusScale = RegionNavProfile.Active.FitRadiusScale(fit);
             if (_pathFollower == null) _pathFollower = new NavPathFollower();
             _pathFollower.SetRouteSeed(seed);
+            _pathFollower.HoldsChokepoints = _versionProfile != null && _versionProfile.HoldsChokepoints;   // WP-040: Elite B corridor closing
             RegionNavRouter.EnsureAreaCosts();
         }
 

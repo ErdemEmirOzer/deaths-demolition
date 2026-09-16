@@ -23,6 +23,18 @@ namespace DD.Prototype.Navigation
         private static readonly Stopwatch s_watch = new Stopwatch();
 
         public static int RerouteCount { get; private set; }
+
+        /// <summary>The alternative-route query shape (see <see cref="TryAlternative"/>).</summary>
+        public delegate int AlternativeQuery(RegionNavProfile profile, NavRegionVolume volume, Vector3 position, Vector3 goal, Vector3[] buffer, out float altCost);
+
+        /// <summary>
+        /// WP-040 (WP-039 sanity E2): the alternative query <see cref="ChooseRoute"/> uses. Null = the live
+        /// NavMesh query (<see cref="TryAlternative"/>), which legitimately finds an alternative whenever a
+        /// baked NavMesh is loaded — in the Player, in PlayMode, AND in EditMode with a baked world scene open
+        /// (WP-020). Tests that must not depend on what scene the editor holds install a deterministic query
+        /// here (no NavMesh → 0; a synthetic alternative → its corners); <see cref="ResetStatics"/> clears it.
+        /// </summary>
+        public static AlternativeQuery AlternativeQueryOverride { get; set; }
         public static int QueueEvents { get; private set; }
         public static int AreaCostsApplied { get; private set; }
         public static bool AreaCostsAppliedOnce { get; private set; }
@@ -30,6 +42,7 @@ namespace DD.Prototype.Navigation
 
         public static void ResetStatics()
         {
+            AlternativeQueryOverride = null;
             RerouteCount = 0;
             QueueEvents = 0;
             AreaCostsApplied = 0;
@@ -102,7 +115,8 @@ namespace DD.Prototype.Navigation
             }
 
             Vector3[] alt = s_altScratch;
-            int altCount = TryAlternative(profile, costly, position, goal, alt, out float altCost);
+            AlternativeQuery query = AlternativeQueryOverride ?? TryAlternative;
+            int altCount = query(profile, costly, position, goal, alt, out float altCost);
             s_watch.Stop(); LastCompareMilliseconds = s_watch.Elapsed.TotalMilliseconds;
             if (altCount < 2 || altCount > buffer.Length) return directCount;
             float acceptance = direct * (1f + Mathf.Clamp01(routeRoll) * profile.RouteBiasSpread);

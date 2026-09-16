@@ -29,8 +29,10 @@ namespace DD.Prototype.Enemies
     ///   written), plus 1-2 silhouette pieces.
     /// * Ultra (B): body fit C forced, all three armour regions tend to be present, one
     ///   silhouette piece; the attack animation is the sweep clip played phase-wise at the
-    ///   Ultra timer's rates until AP-014 delivers an overhead clip (DEC-029 windows are the
-    ///   timer's, unchanged).
+    ///   Ultra timer's rates until the AP-009B overhead clip is in the controller (WP-032;
+    ///   DEC-029 windows are the timer's, unchanged).
+    /// * WP-040 completes the B shapes: Special cooldown floor (Lunge band), Elite dō guaranteed +
+    ///   corridor closing, Ultra three-region tendency 1.0 + its own clip name (data switch-over).
     /// </summary>
     [Serializable]
     public sealed class TierBehaviourProfile
@@ -70,9 +72,35 @@ namespace DD.Prototype.Enemies
         [PrototypeOnly(PendingDecisions.None, "Attack clip used until the version's own clip exists (Ultra B: the sweep clip, phase-scaled to the Ultra timer).")]
         public string AttackClipPlaceholder = "";
 
+        [PrototypeOnly(PendingDecisions.None, "WP-040: the version's OWN attack clip once the animation set carries it (Ultra B: AP-009B overhead). '' = the style's default clip. " +
+            "Switch-over is data: when WP-032 (S-06) regenerates the controller with the v002 set, ResolvedAttackClip returns this and the placeholder retires.")]
+        public string AttackClip = "";
+
+        [PrototypeOnly(PendingDecisions.CombatScaling, "WP-040: attack cooldown floor in seconds (Special B: the ≥ 1.9 s band). 0 = the DEC-021 value as is; the floor can only lengthen.", true)]
+        [Range(0f, 6f)] public float CooldownFloor = 0f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-040 · Elite B corridor closing: the body takes the direct route (no WP-030 alternative) and never queues at a " +
+            "chokepoint mouth, so it plugs the throat while lighter bodies queue behind it (RegionNavRouter occupancy counts it).", true)]
+        public bool HoldsChokepoints = false;
+
         public bool HasSilhouette => SilhouetteAnchor != TierSilhouetteAnchor.None;
         public bool ForcesFit => !string.IsNullOrEmpty(ForcedFit);
         public bool HasAttackPlaceholder => !string.IsNullOrEmpty(AttackClipPlaceholder);
+        public bool HasOwnAttackClip => !string.IsNullOrEmpty(AttackClip);
+
+        /// <summary>
+        /// WP-040: the clip this version's attack plays given what the animation set carries:
+        /// the version's own clip when <paramref name="setHasClip"/> says it exists, else the
+        /// placeholder, else "" (the style's default). Pure; the caller supplies the lookup.
+        /// </summary>
+        public string ResolvedAttackClip(Func<string, bool> setHasClip)
+        {
+            if (HasOwnAttackClip && setHasClip != null && setHasClip(AttackClip)) return AttackClip;
+            return AttackClipPlaceholder ?? "";
+        }
+
+        /// <summary>The cooldown after the version floor: max(DEC-021 value, floor).</summary>
+        public float Cooldown(float baseCooldown) => Mathf.Max(Mathf.Max(0f, baseCooldown), Mathf.Max(0f, CooldownFloor));
 
         /// <summary>The tier's equip chance for <paramref name="slot"/> after the tendency: max(base × multiplier, floor), clamped to [0, 1]. Base = the DEC-021 value, unchanged.</summary>
         public float ArmourChance(ArmorSlot slot, float baseChance)
@@ -92,7 +120,8 @@ namespace DD.Prototype.Enemies
 
         public bool IsIdentity => Mathf.Approximately(TelegraphScale, 1f) && Mathf.Approximately(RecoveryScale, 1f) && Mathf.Approximately(SpeedScale, 1f) &&
                                   Mathf.Approximately(HelmetChanceMultiplier, 1f) && Mathf.Approximately(BodyChanceMultiplier, 1f) && Mathf.Approximately(LegChanceMultiplier, 1f) &&
-                                  HelmetChanceFloor <= 0f && BodyChanceFloor <= 0f && LegChanceFloor <= 0f && !ForcesFit && !HasSilhouette && !HasAttackPlaceholder;
+                                  HelmetChanceFloor <= 0f && BodyChanceFloor <= 0f && LegChanceFloor <= 0f && !ForcesFit && !HasSilhouette && !HasAttackPlaceholder &&
+                                  !HasOwnAttackClip && CooldownFloor <= 0f && !HoldsChokepoints;
 
         public TierBehaviourProfile Clone() => (TierBehaviourProfile)MemberwiseClone();
     }
@@ -157,13 +186,15 @@ namespace DD.Prototype.Enemies
                 {
                     Tier = EnemyTier.Special,
                     TelegraphScale = 0.85f, RecoveryScale = 1.25f,                       // short wind-up / long recovery emphasis (B)
+                    CooldownFloor = 1.9f,                                                 // WP-040: the Lunge band (range 2.6 / cooldown ≥ 1.9 / HP ×0.85 are DEC-021 values; the floor guards the band)
                     SilhouetteAnchor = TierSilhouetteAnchor.Back, SilhouetteSize = new Vector3(0.12f, 0.34f, 0.08f), SilhouetteOffset = new Vector3(0f, 0.05f, -0.16f),
                     Tint = new Color(0.72f, 0.75f, 0.78f),                                // ash band (concept note: ~200°, s ≤ 0.12)
                 },
                 new TierBehaviourProfile
                 {
                     Tier = EnemyTier.Elite,
-                    BodyChanceFloor = 0.85f, BodyChanceMultiplier = 1.5f,               // dō tends to be present (B)
+                    BodyChanceFloor = 1f, BodyChanceMultiplier = 1.5f,                  // WP-040: dō GUARANTEED (B, "gövde zırhı garanti"; WP-028 had 0.85)
+                    HoldsChokepoints = true,                                              // WP-040: corridor closing (B) — direct route, no queue yield
                     SilhouetteAnchor = TierSilhouetteAnchor.Shoulder, SilhouetteSize = new Vector3(0.22f, 0.10f, 0.20f), SilhouetteOffset = new Vector3(0.24f, 0.18f, 0f),
                     Tint = new Color(0.46f, 0.22f, 0.40f),                                // plum lacquer (concept note: ~300°)
                 },
@@ -171,10 +202,11 @@ namespace DD.Prototype.Enemies
                 {
                     Tier = EnemyTier.Ultra,
                     ForcedFit = "C",
-                    HelmetChanceFloor = 0.97f, BodyChanceFloor = 0.97f, LegChanceFloor = 0.97f,   // three regions tend to be present (≈ 91 % all three)
+                    HelmetChanceFloor = 1f, BodyChanceFloor = 1f, LegChanceFloor = 1f,   // WP-040: all three regions (B, tendency 1.0; WP-028 had 0.97 ≈ 91 %)
                     SilhouetteAnchor = TierSilhouetteAnchor.Head, SilhouetteSize = new Vector3(0.30f, 0.14f, 0.30f), SilhouetteOffset = new Vector3(0f, 0.12f, 0f),
                     Tint = new Color(0.16f, 0.13f, 0.12f),                                // soot, darkest band (concept note) + rust lacquer
                     AttackClipPlaceholder = "AP009_zombie_attack_sweep",
+                    AttackClip = "AP009_zombie_attack_overhead",                          // WP-040: AP-009B v002 overhead; live once WP-032 (S-06) ships the v002 controller
                 },
             };
             return set;

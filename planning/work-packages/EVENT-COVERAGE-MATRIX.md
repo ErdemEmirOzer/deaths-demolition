@@ -55,6 +55,22 @@
 | Spawn / yerden doğrulma | `ZombieEnemy.Live` giriş kenarı (`AudioEventRouter`) | ZombieRise (×3, toprak katmanı) | 3D | SFX-World | Ü | |
 | Special / Elite / Ultra farkı | tier → vokal seti + `HeavyEnemyDeath`; WP-033 `ThreatMusicFeed.Accent` → müzik vurgu katmanı | tier'lı kökler (yukarıda) + MusicAccent | — | — | Ü | |
 
+## 2b. Düşman olay yüzeyi — `EnemyCombatEvents` (WP-040, ADR-040-1)
+
+> Tek kaynak: `DD.Prototype.Enemies.EnemyCombatEvents.Raised` (`EnemyCombatEventInfo`: kind, tier, beden, konum, yön, bölge, `AnimationDriven`, süre, `LifeId`). Satır adı = `info.RowName`. Ses sütunu bugün `AudioEventRouter`'ın yoklama/olay kaynaklarıyla aynı anlara düşer (WP-021); S-08 isterse bu yüzeye taşır (WP-021C). **VFX sütunu S-07 devri (WP-019 → WP-019C): boş satır = FAIL — her satır ya bir efekt kimliği ya da adlı devir taşır.** Vuruş anları DEC-029 pencerelerinden gelir (WP-018 klip olayları; yer tutucu/blok gövdede zamanlayıcı yedeği, `AnimationDriven=false`).
+
+| Olay (satır) | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
+|---|---|---|---|---|---|---|
+| `telegraph_start` | `EnemyCombatEvents` · saldırı Windup başlangıcı (Seconds = telegraph) | paylaşımlı:ZombieWindup{Standard,Elite,Ultra} (tier) | 3D | SFX-World | Ü | S-07 devir: `telegraph_glint` (göz/el parıltısı, tier rengi; Ultra 1,15 s uzun) — WP-019C |
+| `attack_commit` | `EnemyCombatEvents` · Windup→Active (klip `hit_window_start`; yer tutucuda zamanlayıcı) | paylaşımlı:ZombieAttack{Standard,Elite,Ultra} | 3D | SFX-World | Ü | S-07 devir: `claw_swipe` (pençe izi yayı; Lunge/Sweep/Overhead şekli `Style`'a göre) — WP-019C |
+| `attack_hit` | `EnemyCombatEvents` · bağlantı karesi (= `DamageEvents.PlayerAttacked`) | paylaşımlı:AttackImpactBody | 3D | SFX-World | Ü | WP-019 mevcut: oyuncu hasar vinyeti + kan sıçraması (`PlayerHitFeedback`) |
+| `attack_miss` | `EnemyCombatEvents` · Active→Recovery, bağlantı yok (ceza penceresi) | paylaşımlı:ZombieAttack* kuyruğu (whoosh katmanı; WP-021C aday) | 3D | SFX-World | Ü | S-07 devir: `claw_swipe_miss` (aynı yay, toz/ iz sonu) — WP-019C |
+| `stagger` | `EnemyCombatEvents` · REQ-124 sendeleme (`Seconds` = süre) / zırh kırılması ağır sendeleme klibi (`Seconds` = 1,4 tavan, `stagger_end`'e kadar; kırılma vuruşunda ikisi birden gelebilir) | ZombieStagger (×3) | 3D | SFX-World | Ü | WP-019 mevcut: hit reaction kan/toz (`HitFeedbackDirector`); ağır sendelemede S-07 devir: `stagger_dust` — WP-019C |
+| `armor_break_head` / `_torso` / `_leg` | `EnemyCombatEvents` · `Region` (= `DamageEvents.ArmorBroken` anı) | ArmorBreak (×2) + ArmorPieceDrop | 3D | SFX-World | Ü | WP-019 mevcut: zırh kıymığı patlaması; S-07 devir: `armor_crack_dust` (bölge ankrajında lake tozu) — WP-019C |
+| `death_standard` / `_special` / `_elite` / `_ultra` | `EnemyCombatEvents` · `Tier` (= `DamageEvents.EnemyDied` anı) | ZombieDeath{Standard,Elite,Ultra} (Special → Standard seti, WP-021C ayrı vokal) | 3D | SFX-World | Ü | WP-019 mevcut: ölüm kanı; S-07 devir: `death_special` (hızlı çökme tozu), `death_ultra` (ağır çarpma halkası) — WP-019C |
+| `spawn_rise` | `EnemyCombatEvents` · DEC-081 kamera dışı doğuş, klip başlangıcı (`Seconds` 1,57) | ZombieRise (×3, toprak katmanı) | 3D | SFX-World | Ü | S-07 devir: `spawn_dust` (yerden kalkış toprak/toz) — WP-019C |
+| `spawn_land` | `EnemyCombatEvents` · `rise_end` / kalkışsız doğuşta hemen | paylaşımlı:ZombieStepHeavy (pitch 0,8; yalnız kalkış sonrası) | 3D | SFX-World | Ü | S-07 devir: `spawn_dust` kuyruğu (ayak toz pufu) — WP-019C |
+
 ## 3. Zırh (bölge başına: kask / gövde / bacak)
 
 | Olay | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
