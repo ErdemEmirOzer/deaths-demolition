@@ -37,13 +37,19 @@ namespace DD.Prototype.Enemies
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CharacterController))]
-    public sealed partial class ZombieEnemy : PooledBehaviour, IDamageReceiver, IExplosionReceiver
+    public sealed partial class ZombieEnemy : PooledBehaviour, IDamageReceiver, IExplosionReceiver, DD.Prototype.Feedback.IFeedbackWeightSource
     {
         [SerializeField] private ZombieRig _rig = new ZombieRig();
 
         // WP-016: the AP-007 skinned body, instantiated once on the pool template under
         // rig.Visual (clones inherit the reference like the rig); null = M1 block body.
         [SerializeField] private ZombieSkinnedVisual _skinned;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-018: play the AP-009 rise clip on spawn (the body neither walks nor attacks for its " +
+            "1.57 s; DEC-023 counts it as active). Off by default — turning it on changes time-to-engage, " +
+            "which is a pacing call (probe / test switch: -ddRise on).", true)]
+        public static bool RiseOnSpawn;
 
         // ------------------------------------------------------------------ sub-systems
         private RegionalDamageBody _body;
@@ -167,6 +173,26 @@ namespace DD.Prototype.Enemies
         // ------------------------------------------------------------------- accessors
 
         public EnemyTier Tier => _tier;
+
+        /// <summary>
+        /// WP-018 · G-04 opt-in: the feedback weight is the version, verbatim. The bounds-height
+        /// fallback read the union of every renderer under the root; with the AP-009 clips the
+        /// skinned bounds turn with the hips and a Standard shamble measured ≥ 2.05 m → an Elite
+        /// "heavy death" on a Standard (measured in CoreCombatSliceTests). The tier is the truth.
+        /// </summary>
+        public DD.Prototype.Feedback.FeedbackWeight Weight
+        {
+            get
+            {
+                switch (_tier)
+                {
+                    case EnemyTier.Special: return DD.Prototype.Feedback.FeedbackWeight.Special;
+                    case EnemyTier.Elite: return DD.Prototype.Feedback.FeedbackWeight.Elite;
+                    case EnemyTier.Ultra: return DD.Prototype.Feedback.FeedbackWeight.Ultra;
+                    default: return DD.Prototype.Feedback.FeedbackWeight.Standard;
+                }
+            }
+        }
         public int SpawnRound => _spawnRound;
 
         /// <summary>WP-004: identity of this body's current life (one per pool checkout). 0 before the first spawn.</summary>
@@ -204,6 +230,10 @@ namespace DD.Prototype.Enemies
         public float BodyRadius => _bodyRadius;
         public ZombiePose Pose => _animator != null ? _animator.Pose : ZombiePose.Idle;
         public ZombieAttackPhase AttackPhase => _attack != null ? _attack.Phase : ZombieAttackPhase.None;
+        /// <summary>WP-018: the hit window is opened / closed by the AP-009 clip events (DEC-029 through ADR-018-1).</summary>
+        public bool AttackAnimationDriven => _attack != null && _attack.AnimationDriven;
+        /// <summary>WP-018: Time.frameCount of the last connecting swing (tests; -1 = never).</summary>
+        public int LastAttackConnectFrame => _attack != null ? _attack.LastConnectFrame : -1;
 
         /// <summary>Raised when this instance is returned to the pool. Spawners use it to keep counts.</summary>
         public event Action<ZombieEnemy> Released;
@@ -247,6 +277,9 @@ namespace DD.Prototype.Enemies
             if (_skinned != null)
             {
                 _skinned.Attach(_rig, _animator);
+                // WP-018 (ADR-018-1 / DEC-029): the AP-009 clip's hit window drives the attack state.
+                _skinned.WindowSink = _attack;
+                _attack.SetAnimationDriven(_skinned.Authored);
                 CharacterAssetSet set = CharacterAssetSet.Load();
                 // WP-017: with the AP-008 library the plate placeholders are never shown; the
                 // appearance drives real armour meshes through ArmorVisualBinder.
@@ -366,6 +399,12 @@ namespace DD.Prototype.Enemies
 
             // WP-028: the version's silhouette piece under its anchor (placeholder until AP-014).
             _silhouette = EnemyVersionApplier.ApplySilhouette(_silhouette, _appearance.Anchors, _tier, _versionProfile, _rig != null ? _rig.Visual : transform);
+
+            // WP-018: the driven body needs the version timings (attack clip rate, gait rate) and the fit.
+            // The telegraph is the attack state's own (WP-028 version scale applied), so the clip's
+            // hit_window_start lands on the timer this life actually runs with.
+            _animator.SetTiming(_attack != null ? _attack.TelegraphSeconds : _stats.TelegraphTime, _moveSpeed);
+            _animator.ResetDriven(_tier, _skinned != null && _skinned.Look.IsValid ? _skinned.Look.fit : "A", RiseOnSpawn, ref _random);
 
             // WP-008 (DEC-043): the reward is decided HERE, once, from the version and the
             // plates just fitted. Die() reads this record and nothing else, so what the
@@ -703,7 +742,8 @@ namespace DD.Prototype.Enemies
             }
 
             // ------------------------------------------------------------------ attack
-            bool staggering = _animator.IsStaggering;
+            // WP-018: a body still rising from its spawn (AP-009 rise clip) neither walks nor swings.
+            bool staggering = _animator.IsStaggering || (_skinned != null && _skinned.IsRising);
 
             if (!staggering && target != null && _attack.CanStartAttack(distance))
             {

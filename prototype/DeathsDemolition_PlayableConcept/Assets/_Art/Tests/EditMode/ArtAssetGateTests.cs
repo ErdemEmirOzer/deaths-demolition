@@ -171,9 +171,15 @@ namespace DD.Art.Tests.EditMode
                     }
                 }
 
-                if (mesh == 0)
+                // WP-018: the AP-009 Animations/ files are armature + animation only (no mesh by contract).
+                bool animationOnly = ArtAnimationClipContract.IsAnimationClip(yol);
+                if (mesh == 0 && !animationOnly)
                 {
                     bulgular.Add(yol + ": hiç Mesh alt varlığı yok.");
+                }
+                else if (mesh > 0 && animationOnly)
+                {
+                    bulgular.Add(yol + ": animasyon dosyasına Mesh sızmış (" + mesh + ").");
                 }
             }
 
@@ -227,6 +233,11 @@ namespace DD.Art.Tests.EditMode
             // WP-016 (ADR-016-1): the character files — player base + 2 clips, zombie 3 bodies + 19 modules
             // (AP007-modules.json) + 2 clips; the library test checks their contents.
             beklenen.Add(ArtCharacterContract.PlayerAvatarSource);
+            // WP-018: the 30 AP-009 clip files listed by the manifest.
+            int klip = 0;
+            var manifest = ArtAnimationClipContract.Manifest();
+            if (manifest != null) foreach (var spec in manifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) klip++;
+            Assert.AreEqual(30, klip, "AP-009 30 klip FBX");
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerIdleClipFile);
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerWalkClipFile);
             foreach (string b in ArtCharacterPrefabBuilder.ZombieBodyModels) beklenen.Add(b);

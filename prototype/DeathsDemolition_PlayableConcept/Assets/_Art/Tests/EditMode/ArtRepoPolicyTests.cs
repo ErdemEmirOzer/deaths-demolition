@@ -28,7 +28,7 @@ namespace DD.Art.Tests.EditMode
         private static readonly HashSet<string> MetinUzantilar = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             ".cs", ".asmdef", ".asmref", ".json", ".md", ".txt", ".meta",
-            ".asset", ".mat", ".prefab", ".unity", ".shader", ".hlsl", ".cginc", ".controller"
+            ".asset", ".mat", ".prefab", ".unity", ".shader", ".hlsl", ".cginc", ".controller", ".mask"
         };
 
         private static readonly Regex HexSha256 = new Regex("^[0-9a-f]{64}$", RegexOptions.Compiled);

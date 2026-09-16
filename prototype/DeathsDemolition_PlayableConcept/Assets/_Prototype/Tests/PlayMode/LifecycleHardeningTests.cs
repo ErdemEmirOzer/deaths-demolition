@@ -193,7 +193,8 @@ namespace DD.Prototype.Tests.PlayMode
                 { "WeaponEvents.ReloadCompleted", 0 }, { "WeaponEvents.ReloadInterrupted", 0 }, { "WeaponEvents.DryFire", 0 },
                 { "WeaponEvents.ClassicChanged", 0 },
                 { "WeaponEvents.SpecialWeaponSpawned", 1 }, { "WeaponEvents.SpecialWeaponGroundExpired", 1 },
-                { "WeaponEvents.SpecialWeaponPickedUp", 1 }, { "WeaponEvents.SpecialWeaponFinalSeconds", 1 },
+                // WP-018: + PlayerSkinnedVisual (pickup clip) on SpecialWeaponPickedUp, one per player life, unsubscribed with the rig.
+                { "WeaponEvents.SpecialWeaponPickedUp", 2 }, { "WeaponEvents.SpecialWeaponFinalSeconds", 1 },
                 { "WeaponEvents.SpecialWeaponEnded", 1 }, { "WeaponEvents.SpecialChanged", 0 },
                 { "WeaponEvents.SpecialWeaponScheduled", 0 }, { "WeaponEvents.SpecialWeaponCancelled", 0 },
                 { "WeaponEvents.SpecialWeaponCleared", 0 },

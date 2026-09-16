@@ -1,4 +1,5 @@
 using UnityEngine;
+using DD.Prototype.Characters;
 using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Damage;
@@ -22,10 +23,17 @@ namespace DD.Prototype.Enemies
     ///   Active    AttackActiveTime     pose strikes,  hitbox ON    - one overlap test
     ///   Recovery  AttackRecoveryTime   pose settles,  hitbox OFF   - punish window
     ///
+    /// WP-018 (ADR-018-1): with an AP-009 clip driving the attack the Windup→Active and
+    /// Active→Recovery edges come from the clip's own <c>hit_window_start</c> /
+    /// <c>hit_window_end</c> AnimationEvents (<see cref="IAttackWindowSink"/>), not from the
+    /// timers — the hitbox is live exactly when the strike is drawn. The clip is rate-scaled so
+    /// its window start lands on TelegraphTime, so the numbers below stay the source of truth;
+    /// the timers remain as the safety net (event never arrives) and on the block rig.
+    ///
     /// A stagger during Windup cancels the whole attack, which is what makes shotgunning a
     /// winding-up Guard feel like an answer rather than a coincidence.
     /// </summary>
-    public sealed class EnemyAttackState
+    public sealed class EnemyAttackState : IAttackWindowSink
     {
         // Shared across all enemies: the overlap test is synchronous and never re-entrant.
         private static readonly Collider[] s_overlapBuffer = new Collider[8];
@@ -109,6 +117,72 @@ namespace DD.Prototype.Enemies
         private float _damage = DefaultDamage;
         private float _hitRadius = DefaultHitRadius;
         private float _lungeSpeed;
+
+        // ---------------------------------------------------- WP-018 animation window
+        [PrototypeOnly(PendingDecisions.None,
+            "Seconds past the tier telegraph after which a clip-driven Windup opens the window " +
+            "by timer because hit_window_start never arrived (clip missing, Animator off). Safety net.", true)]
+        private const float WindowStartGraceSeconds = 0.5f;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "Seconds past the tier active time after which a clip-driven Active closes by timer " +
+            "because hit_window_end never arrived. Safety net.", true)]
+        private const float WindowEndGraceSeconds = 0.5f;
+
+        private bool _animationDriven;
+        private static int s_windowFallbackCount;
+        private static int s_windowEventCount;
+
+        /// <summary>True while an AP-009 clip owns the hit window (DEC-029 through AnimationEvents).</summary>
+        public bool AnimationDriven => _animationDriven;
+
+        /// <summary>Windows opened/closed by the timer safety net instead of the clip (tests / probe; expected 0).</summary>
+        public static int WindowFallbackCount => s_windowFallbackCount;
+
+        /// <summary>hit_window_* events consumed (tests / probe).</summary>
+        public static int WindowEventCount => s_windowEventCount;
+
+        /// <summary>Time.frameCount of the last frame the active window connected (tests; -1 = never).</summary>
+        public int LastConnectFrame { get; private set; } = -1;
+
+        /// <summary>Frames on which the overlap test ran this swing (tests).</summary>
+        public int ActiveFramesThisSwing { get; private set; }
+
+        public static void ResetStatics()
+        {
+            s_windowFallbackCount = 0;
+            s_windowEventCount = 0;
+        }
+
+        /// <summary>WP-018: hand the window to the clip (true) or back to the timers (false, block rig).</summary>
+        public void SetAnimationDriven(bool driven)
+        {
+            _animationDriven = driven;
+        }
+
+        void IAttackWindowSink.OnHitWindowStart()
+        {
+            s_windowEventCount++;
+            if (!_animationDriven || _phase != ZombieAttackPhase.Windup)
+            {
+                return;
+            }
+
+            _phase = ZombieAttackPhase.Active;
+            _phaseTime = 0f;
+        }
+
+        void IAttackWindowSink.OnHitWindowEnd()
+        {
+            s_windowEventCount++;
+            if (!_animationDriven || _phase != ZombieAttackPhase.Active)
+            {
+                return;
+            }
+
+            _phase = ZombieAttackPhase.Recovery;
+            _phaseTime = 0f;
+        }
 
         public EnemyAttackState(ZombieRig rig)
         {
@@ -263,6 +337,7 @@ namespace DD.Prototype.Enemies
             _phaseTime = 0f;
             _connectedThisSwing = false;
             ForwardImpulse = 0f;
+            ActiveFramesThisSwing = 0;
         }
 
         // ====================================================================== tick
@@ -291,7 +366,17 @@ namespace DD.Prototype.Enemies
             switch (_phase)
             {
                 case ZombieAttackPhase.Windup:
-                    if (_phaseTime >= _telegraph)
+                    if (_animationDriven)
+                    {
+                        // The clip opens the window (OnHitWindowStart). Timer = safety net only.
+                        if (_phaseTime >= _telegraph + WindowStartGraceSeconds)
+                        {
+                            s_windowFallbackCount++;
+                            _phaseTime = 0f;
+                            _phase = ZombieAttackPhase.Active;
+                        }
+                    }
+                    else if (_phaseTime >= _telegraph)
                     {
                         _phaseTime -= _telegraph;
                         _phase = ZombieAttackPhase.Active;
@@ -303,13 +388,28 @@ namespace DD.Prototype.Enemies
                     // The lunge carries the body forward for exactly as long as the hitbox
                     // is live, so the visible dash and the damage window are the same thing.
                     ForwardImpulse = _lungeSpeed;
+                    ActiveFramesThisSwing++;
 
                     if (!_connectedThisSwing)
                     {
                         connected = TryConnect(owner, tier);
+                        if (connected)
+                        {
+                            LastConnectFrame = Time.frameCount;
+                        }
                     }
 
-                    if (_phaseTime >= _active)
+                    if (_animationDriven)
+                    {
+                        // The clip closes the window (OnHitWindowEnd). Timer = safety net only.
+                        if (_phaseTime >= _active + WindowEndGraceSeconds)
+                        {
+                            s_windowFallbackCount++;
+                            _phaseTime = 0f;
+                            _phase = ZombieAttackPhase.Recovery;
+                        }
+                    }
+                    else if (_phaseTime >= _active)
                     {
                         _phaseTime -= _active;
                         _phase = ZombieAttackPhase.Recovery;

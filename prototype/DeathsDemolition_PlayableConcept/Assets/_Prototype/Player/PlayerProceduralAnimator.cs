@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Characters;
 using UnityEngine;
 
 namespace DD.Prototype.PlayerSystem
@@ -286,6 +287,13 @@ namespace DD.Prototype.PlayerSystem
                 return;
             }
 
+            if (_skinned != null)
+            {
+                // WP-018: the additive fire_recoil clip + WeaponVisualRig's own kick; no spring on the hidden rig.
+                _skinned.PlayFire();
+                return;
+            }
+
             float strength = Mathf.Clamp(strength01, 0f, 3f);
             _recoilVelocity += strength * 9f;
             _recoil = Mathf.Min(_recoil + strength * 0.25f, 2.5f);
@@ -311,8 +319,9 @@ namespace DD.Prototype.PlayerSystem
         /// <summary>Starts the reload pose for the given number of seconds.</summary>
         public void PlayReload(float duration)
         {
-            if (_dying || duration <= 0f)
+            if (_dying || duration <= 0f || _skinned != null)
             {
+                // WP-018: no reload clip in AP-009; WeaponVisualRig tips the weapon (PlayReloadMotion) on its own.
                 return;
             }
 
@@ -339,6 +348,10 @@ namespace DD.Prototype.PlayerSystem
             }
 
             _flinch = Mathf.Clamp01(Mathf.Max(_flinch, strength01));
+            if (_skinned != null)
+            {
+                _skinned.PlayHit();
+            }
 
             if (fromDirection.sqrMagnitude > 1e-6f)
             {
@@ -363,7 +376,22 @@ namespace DD.Prototype.PlayerSystem
             _dying = true;
             _deathTimer = 0f;
             CancelReload();
+
+            if (_skinned != null)
+            {
+                // WP-018: death_fwd / death_back from where the last hit pushed the body; a coin for a side hit.
+                _skinned.PlayDeath(_flinchDirectionLocal, (Time.frameCount & 1) == 0);
+            }
         }
+
+        /// <summary>WP-018: the AP-009 skinned body. When set, this class writes nothing to the block rig and forwards its hooks.</summary>
+        public PlayerSkinnedVisual Skinned
+        {
+            get { return _skinned; }
+            set { _skinned = value; }
+        }
+
+        private PlayerSkinnedVisual _skinned;
 
         // ------------------------------------------------------------------- update
 
@@ -374,6 +402,13 @@ namespace DD.Prototype.PlayerSystem
             float dt = Time.deltaTime;
             if (dt <= 0f)
             {
+                return;
+            }
+
+            if (_skinned != null)
+            {
+                // WP-018: the Animator owns the pose; only the death clock survives here (IsDead readout).
+                if (_dying) _deathTimer += dt;
                 return;
             }
 

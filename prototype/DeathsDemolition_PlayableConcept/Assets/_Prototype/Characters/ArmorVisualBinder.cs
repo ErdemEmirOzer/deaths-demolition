@@ -129,6 +129,8 @@ namespace DD.Prototype.Characters
 
             if (state == ArmorVisualState.Broken)
             {
+                // WP-018 (ADR-018-2): the break is the heavy stagger's only trigger on the driven body.
+                _visual?.NotifyArmorBroken();
                 var e = new BrokenEvent(this, slot, DamageRegions.RegionFor(slot), AnchorOf(slot), variant != null ? variant.id : null);
                 Broken?.Invoke(e);
                 AnyBroken?.Invoke(e);

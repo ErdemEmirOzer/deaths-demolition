@@ -167,7 +167,7 @@ namespace DD.Art.Pipeline.EditorTools
             LibraryStep(1, "Character avatars (v1.1 re-import of dependents)", () => ArtCharacterPrefabBuilder.EnsureAvatars());
             LibraryStep(2, "Character derived textures (MetallicSmoothness+AO, DetailMask)", ArtCharacterPrefabBuilder.BuildTextures);
             LibraryStep(3, "Character materials (M_player, M_zombie_atlas ×4)", ArtCharacterPrefabBuilder.BuildMaterials);
-            LibraryStep(4, "Animation sets + locomotion controllers", ArtCharacterPrefabBuilder.BuildAnimation);
+            LibraryStep(4, "Animation sets + controllers (WP-018: AP-009 blend trees / layers / events)", ArtCharacterPrefabBuilder.BuildAnimation);
             LibraryStep(5, "Player_AP006 prefab", () => ArtCharacterPrefabBuilder.BuildPlayerPrefab());
             DD.Prototype.Characters.ZombieModuleLibrary library = null;
             LibraryStep(6, "Zombie module library", () => library = ArtCharacterPrefabBuilder.BuildZombieLibrary());

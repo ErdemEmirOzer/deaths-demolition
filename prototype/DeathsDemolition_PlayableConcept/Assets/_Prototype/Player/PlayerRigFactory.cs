@@ -172,9 +172,9 @@ namespace DD.Prototype.PlayerSystem
             root.AddComponent<PlayerDamageFeedback>();
             root.AddComponent<PlayerDebugHooks>();
 
-            // WP-016: the AP-006 skinned body under Visual. The primitives stay as the hidden
-            // driver rig of the pseudo-animator; the weapon moves to socket_weapon_r.
-            AttachSkinned(root, visual.transform, torso, head, armRight, weaponMount.transform, motor, skin);
+            // WP-016/018: the AP-006 skinned body under Visual, animated by the AP-009 Animator;
+            // the primitives stay hidden; the weapon moves to socket_weapon_r.
+            AttachSkinned(root, visual.transform, weaponMount.transform, motor, aim, animator, skin);
 
             // Input must exist before the first Update, whatever scene we are in.
             PrototypeInputInstaller.EnsureExists();
@@ -196,12 +196,12 @@ namespace DD.Prototype.PlayerSystem
 
         /// <summary>
         /// WP-016: instantiate <c>Player_AP006</c> (CharacterAssetSet, Resources) under the
-        /// rig's Visual node, hide the primitive parts, bridge torso/head/weapon arm, re-parent
+        /// rig's Visual node, hide the primitive parts, hand the motor / aim to the Animator, re-parent
         /// the weapon mount to <c>socket_weapon_r</c> and apply the skin albedo. No-op with the
         /// asset absent or the source Procedural (the M1 primitive body then stays visible).
         /// </summary>
-        private static void AttachSkinned(GameObject root, Transform visual, Transform torso, Transform head, Transform armRight,
-            Transform weaponMount, PlayerMotor motor, PlayerSkin skin)
+        private static void AttachSkinned(GameObject root, Transform visual, Transform weaponMount, PlayerMotor motor, PlayerAim aim,
+            PlayerProceduralAnimator animator, PlayerSkin skin)
         {
             if (!CharacterAssetSet.UseSkinnedPlayer())
             {
@@ -220,9 +220,12 @@ namespace DD.Prototype.PlayerSystem
             }
 
             PlayerSkinnedVisual.HidePrimitiveParts(visual, null);
-            Transform armRightMesh = armRight != null ? armRight.Find("Mesh") : null;
-            Transform socket = skinned.Attach(visual, torso, head, armRight, armRightMesh,
-                () => motor != null ? motor.PlanarVelocity.magnitude : 0f);
+            // WP-018: the Animator owns the pose; the motor / aim feed the blend through delegates.
+            Transform socket = skinned.Attach(visual,
+                () => motor != null ? motor.PlanarVelocity : Vector3.zero,
+                () => motor != null && motor.MaxSpeed > 0.01f ? motor.MaxSpeed : 1f,
+                () => aim != null ? aim.AimDirection : visual.forward);
+            if (animator != null) animator.Skinned = skinned;
             if (socket != null && weaponMount != null)
             {
                 weaponMount.SetParent(socket, false);

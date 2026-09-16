@@ -1,0 +1,35 @@
+using DD.Prototype.Core.Config;
+using DD.Prototype.Enemies;
+using BodyRegion = DD.Prototype.Damage.BodyRegion;
+
+namespace DD.Prototype.Characters
+{
+    /// <summary>
+    /// WP-018 · What the M1 <c>ZombieAnimator</c> forwards to when a skinned body with the
+    /// AP-009 controller is attached. The gameplay calls (ZombieEnemy → ZombieAnimator) stay
+    /// exactly as they were; only the pose owner changes.
+    /// </summary>
+    public interface IZombieAnimationDriver
+    {
+        bool Authored { get; }
+        /// <summary>death_end arrived (the clip holds its last frame; the pool may take the body).</summary>
+        bool DeathFinished { get; }
+        void ResetForSpawn(EnemyTier tier, float topSpeedMetersPerSecond, string fit, int idleVariant, bool rise);
+        float PlayAttack(ZombieAttackStyle style, float telegraphSeconds);
+        void CancelAttack();
+        void PlayFlinch(float lateral, BodyRegion region, bool upperBody);
+        void PlayHeavyStagger();
+        void PlayDeath(int deathStyle);
+        IAttackWindowSink WindowSink { get; set; }
+    }
+
+    /// <summary>
+    /// WP-018 · DEC-029 · Receives the clip's hit window. Implemented by <c>EnemyAttackState</c>:
+    /// the window is the ONLY thing that opens the attack hitbox once a clip drives the attack.
+    /// </summary>
+    public interface IAttackWindowSink
+    {
+        void OnHitWindowStart();
+        void OnHitWindowEnd();
+    }
+}

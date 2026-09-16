@@ -234,8 +234,23 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static void BuildAnimation()
         {
+            // WP-018: with the AP-009 set staged the generated controllers replace the rig-test blend
+            // (ArtAnimatorBuilder); the rig-test path stays for a project without the clips.
+            if (ArtAnimatorBuilder.HasAp009())
+            {
+                ArtAnimatorBuilder.BuildAll(PlayerLocomotionReferenceSpeed());
+                return;
+            }
+
             BuildAnimationSet(PlayerAnimationSet, PlayerController, PlayerIdleClipFile, PlayerWalkClipFile, "AP-006 rig tests (RigTest_Idle / RigTest_Walk); AP-009 replaces");
             BuildAnimationSet(ZombieAnimationSet, ZombieController, ZombieIdleClipFile, ZombieWalkClipFile, "AP-007 rig tests (AP-006 RigTest_Idle / RigTest_Walk on ZombieRig); AP-009 replaces");
+        }
+
+        /// <summary>The config player MoveSpeed the 2-D locomotion blend is normalised to (the shipped default when no config asset is found).</summary>
+        public static float PlayerLocomotionReferenceSpeed()
+        {
+            var config = DD.Prototype.Core.Config.PrototypeConfig.Active;
+            return config != null && config.Player != null && config.Player.MoveSpeed > 0.5f ? config.Player.MoveSpeed : new DD.Prototype.Core.Config.PlayerConfigSection().MoveSpeed;
         }
 
         private static CharacterAnimationSet BuildAnimationSet(string setPath, string controllerPath, string idleFile, string walkFile, string source)
@@ -258,6 +273,8 @@ namespace DD.Art.Pipeline.EditorTools
             so.FindProperty("_walkSpeedMetersPerSecond").floatValue = 1.4f;
             so.FindProperty("_controller").objectReferenceValue = controller;
             so.FindProperty("_source").stringValue = source;
+            so.FindProperty("_clips").ClearArray();
+            so.FindProperty("_manifestSchema").stringValue = "";
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(set);
             Debug.Log(LogPrefix + "animation set " + (created ? "created" : "updated") + ": " + setPath + " (idle " + idle.name + " " + idle.length.ToString("F2") + " s, walk " + walk.name + " " + walk.length.ToString("F2") + " s)");
@@ -354,6 +371,9 @@ namespace DD.Art.Pipeline.EditorTools
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 animator.updateMode = AnimatorUpdateMode.Normal;
+                // WP-018 (ADR-018-1/2): the event receiver and the aim layer live with the Animator.
+                CharacterAnimationEvents events = instance.GetComponent<CharacterAnimationEvents>() ?? instance.AddComponent<CharacterAnimationEvents>();
+                PlayerAimLayer aimLayer = instance.GetComponent<PlayerAimLayer>() ?? instance.AddComponent<PlayerAimLayer>();
 
                 var renderers = new SkinnedMeshRenderer[3];
                 for (int lod = 0; lod < 3; lod++)
@@ -374,9 +394,8 @@ namespace DD.Art.Pipeline.EditorTools
                 bones.TryGetValue(PlayerSkinnedVisual.BackSocketName, out Transform backSocket);
                 if (weaponSocket == null) throw new InvalidOperationException(LogPrefix + "player model has no " + PlayerSkinnedVisual.WeaponSocketName);
 
-                var bridge = root.AddComponent<ProceduralPoseBridge>();
                 var visual = root.AddComponent<PlayerSkinnedVisual>();
-                visual.Configure(animator, group, renderers, weaponSocket, backSocket, animationSet, bridge);
+                visual.Configure(animator, group, renderers, weaponSocket, backSocket, animationSet, events, aimLayer);
 
                 EnsureFolder(Path.GetDirectoryName(PlayerPrefab).Replace('\\', '/'));
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefab);
@@ -571,7 +590,9 @@ namespace DD.Art.Pipeline.EditorTools
                 animator.avatar = ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource);
                 animator.runtimeAnimatorController = animationSet.Controller;
                 animator.applyRootMotion = false;
-                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;   // WP-018: state machine + events keep running off screen
+                // WP-018 (ADR-018-1/2): the event receiver with the Animator; the far-body step throttle on the root.
+                CharacterAnimationEvents events = instance.GetComponent<CharacterAnimationEvents>() ?? instance.AddComponent<CharacterAnimationEvents>();
 
                 // Slots: the imported body renderers become the body slots; top/bottom/head slots are new.
                 var slots = new SkinnedMeshRenderer[ZombieModuleLibrary.LodCount * ZombieSkinnedVisual.SlotCount];
@@ -647,10 +668,11 @@ namespace DD.Art.Pipeline.EditorTools
                 bones.TryGetValue(ZombieSkinnedVisual.AnchorLegs, out Transform legs);
                 if (helmet == null || torso == null || legs == null) throw new InvalidOperationException(LogPrefix + "zombie body A is missing an armour anchor");
 
-                var bridge = root.AddComponent<ProceduralPoseBridge>();
                 var visual = root.AddComponent<ZombieSkinnedVisual>();
-                visual.Configure(animator, group, slots, armature != null ? armature : instance.transform, helmet, torso, legs, animationSet, bridge);
+                visual.Configure(animator, group, slots, armature != null ? armature : instance.transform, helmet, torso, legs, animationSet, events);
                 visual.ConfigureArmor(armorSlots);
+                CharacterAnimatorLod lodStep = root.GetComponent<CharacterAnimatorLod>() ?? root.AddComponent<CharacterAnimatorLod>();
+                lodStep.Configure(animator, group);
 
                 EnsureFolder(Path.GetDirectoryName(ZombiePrefab).Replace('\\', '/'));
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, ZombiePrefab);

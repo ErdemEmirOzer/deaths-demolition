@@ -1,4 +1,5 @@
 using UnityEngine;
+using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
@@ -134,7 +135,9 @@ namespace DD.Prototype.Enemies
         public ZombiePose Pose { get; private set; } = ZombiePose.Idle;
 
         /// <summary>True once the death reaction has settled and the body can be despawned.</summary>
-        public bool DeathFinished => _dying && _deathTime >= _deathDuration;
+        public bool DeathFinished => _dying && (Driven
+            ? Driver.DeathFinished || _deathTime >= DrivenDeathFallbackSeconds
+            : _deathTime >= _deathDuration);
 
         /// <summary>0..1 progress through the death reaction. Feeds the sink-and-fade.</summary>
         public float DeathProgress => _dying ? Mathf.Clamp01(_deathTime / _deathDuration) : 0f;
@@ -145,6 +148,34 @@ namespace DD.Prototype.Enemies
         /// swing is not doubled, while the carriage (arms forward) and everything else stays.
         /// </summary>
         public bool SkinnedLocomotion { get; set; }
+
+        /// <summary>
+        /// WP-018: the AP-009 skinned body. When set (and authored), every pose is the
+        /// driver's — attack / flinch / stagger / death clips on the Animator — and this class
+        /// keeps only the gameplay clocks (stagger window, death fallback) and the Pose /
+        /// IsStaggering / DeathFinished contract ZombieEnemy reads. Null on the block rig.
+        /// </summary>
+        public IZombieAnimationDriver Driver { get; set; }
+
+        private bool Driven => Driver != null && Driver.Authored;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "Seconds after BeginDeath at which a driven body is declared finished even if the clip's " +
+            "death_end never arrived (clip missing, Animator disabled). Longer than the longest AP-009 " +
+            "death (1.433 s). Safety net, invented.", true)]
+        private const float DrivenDeathFallbackSeconds = 2.0f;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "Flinch intensity (DamageForce units) from which the driven body also plays the " +
+            "upper-body hit_light L/R clip on top of the regional additive flinch. Below it only the " +
+            "region twitches, so an SMG stream does not re-trigger the override every bullet. Invented.", true)]
+        private const float DrivenUpperBodyFlinchIntensity = 0.9f;
+
+        /// <summary>Tier attack telegraph the driven attack clip is rate-scaled to (set by SetAttackTiming).</summary>
+        private float _telegraphSeconds;
+        /// <summary>The zombie's version top speed (driven gait rate).</summary>
+        private float _topSpeedMps = 1f;
+        private ZombieAttackPhase _drivenPhase = ZombieAttackPhase.None;
 
         public ZombieAnimator(ZombieRig rig)
         {
@@ -162,6 +193,7 @@ namespace DD.Prototype.Enemies
             _phase = random.Range(0f, Mathf.PI * 2f);
             _speed01 = 0f;
             _speedMps = 0f;
+            _drivenPhase = ZombieAttackPhase.None;
 
             _gaitVariant = random.Range(0, 4);
             _baseLean = baseLeanDegrees;
@@ -245,12 +277,29 @@ namespace DD.Prototype.Enemies
             _attackStyle = style;
             _attackPhase = phase;
             _attackT = Mathf.Clamp01(normalisedTime);
+
+            if (Driven && phase != _drivenPhase)
+            {
+                if (phase == ZombieAttackPhase.Windup)
+                {
+                    Driver.PlayAttack(style, _telegraphSeconds);
+                }
+
+                _drivenPhase = phase;
+            }
         }
 
         public void ClearAttack()
         {
+            bool wasLive = _attackPhase == ZombieAttackPhase.Windup || _attackPhase == ZombieAttackPhase.Active;
             _attackPhase = ZombieAttackPhase.None;
             _attackT = 0f;
+            if (Driven && wasLive)
+            {
+                Driver.CancelAttack();
+            }
+
+            _drivenPhase = ZombieAttackPhase.None;
         }
 
         /// <summary>
@@ -303,6 +352,11 @@ namespace DD.Prototype.Enemies
 
             // Cap so a shotgun's eight pellets in one frame cannot spin the torso.
             _flinchVelocity = Vector3.ClampMagnitude(_flinchVelocity, 900f);
+
+            if (Driven)
+            {
+                Driver.PlayFlinch(local.x, region, magnitude >= DrivenUpperBodyFlinchIntensity);
+            }
         }
 
         /// <summary>
@@ -331,6 +385,14 @@ namespace DD.Prototype.Enemies
             _staggerDuration = Mathf.Max(0.08f, duration);
             _staggerTime = 0f;
             ClearAttack();
+
+            if (Driven)
+            {
+                // ADR-018-2: a gameplay stagger (REQ-124 window, 0.16–0.5 s) shows as the upper-body
+                // hit clip while the legs stop (locomotion is suppressed by the enemy); the full-body
+                // hit_heavy_stagger clip is reserved for an armour break (ArmorVisualBinder).
+                Driver.PlayFlinch(local.x, BodyRegion.UpperBody, true);
+            }
         }
 
         public bool IsStaggering => _staggerTime < _staggerDuration && _staggerDuration > 0f;
@@ -389,12 +451,65 @@ namespace DD.Prototype.Enemies
             _dying = true;
             ClearAttack();
             _staggerDuration = 0f;
+
+            if (Driven)
+            {
+                // AP-009 has four deaths; the five M1 styles fold onto them (HeadshotDrop → kneel,
+                // Crumple → kneel, SpinFall → side).
+                int style = _deathStyle == ZombieDeathStyle.FallForward ? 0
+                    : _deathStyle == ZombieDeathStyle.FallBackward ? 1
+                    : _deathStyle == ZombieDeathStyle.SpinFall ? 2
+                    : 3;
+                Driver.PlayDeath(style);
+            }
+        }
+
+        /// <summary>WP-018: the tier's telegraph + top speed, so the driven clips are rate-scaled to the code timings.</summary>
+        public void SetTiming(float telegraphSeconds, float topSpeedMetersPerSecond)
+        {
+            _telegraphSeconds = telegraphSeconds;
+            _topSpeedMps = Mathf.Max(0.1f, topSpeedMetersPerSecond);
+        }
+
+        /// <summary>WP-018: (re)bind the driven body after the look / version is known. Rise plays when asked.</summary>
+        public void ResetDriven(EnemyTier tier, string fit, bool rise, ref EnemyRandom random)
+        {
+            if (!Driven)
+            {
+                return;
+            }
+
+            Driver.ResetForSpawn(tier, _topSpeedMps, fit, random.Range(0, 2), rise);
         }
 
         // ======================================================================== tick
 
         public void Tick(float dt)
         {
+            if (Driven)
+            {
+                // The Animator owns the pose; keep the gameplay clocks only (same arithmetic as the procedural tick).
+                if (_dying)
+                {
+                    _deathTime += dt;
+                    return;
+                }
+
+                if (_staggerDuration > 0f)
+                {
+                    _staggerTime += dt;
+                    if (_staggerTime >= _staggerDuration)
+                    {
+                        _staggerDuration = 0f;
+                        _staggerTime = 0f;
+                    }
+                }
+
+                _flinchVelocity = Vector3.zero;
+                _flinch = Vector3.zero;
+                return;
+            }
+
             if (_rig == null || !_rig.IsComplete)
             {
                 return;

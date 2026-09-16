@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Enemies;
 
 namespace DD.Prototype.Characters
@@ -16,13 +17,19 @@ namespace DD.Prototype.Characters
     /// One material for the whole crowd; the enemy version selects one of four shared
     /// variants (cloth-masked tint), never an instance material.
     ///
-    /// Attached under the M1 rig's <c>Visual</c> node by <see cref="Attach"/>: the block rig
-    /// keeps driving attack / stagger / flinch / death / tier lean through
-    /// <see cref="ProceduralPoseBridge"/>, the hitboxes and the armour anchors move onto the
-    /// bones so a bullet lands where the body is drawn.
+    /// Attached under the M1 rig's <c>Visual</c> node by <see cref="Attach"/>; the hitboxes,
+    /// the attack socket and the armour anchors move onto the bones so a bullet lands where
+    /// the body is drawn and the attack overlap follows the animated chest.
+    ///
+    /// WP-018 · this component is the zombie's <see cref="IZombieAnimationDriver"/>: the
+    /// AP-009 Animator (ADR-018-2 layers: base gait / attacks / stagger / deaths / rise,
+    /// override_upper hit L/R, additive regional flinches) replaces the M1 procedural pose
+    /// and the ProceduralPoseBridge. <c>ZombieAnimator</c> keeps its gameplay API and
+    /// forwards to this driver; the DEC-029 hit window comes back from the clip through
+    /// <see cref="CharacterAnimationEvents"/> into <c>EnemyAttackState</c>.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ZombieSkinnedVisual : MonoBehaviour
+    public sealed class ZombieSkinnedVisual : MonoBehaviour, IZombieAnimationDriver
     {
         public const string PrefabName = "Zombie_AP007";
         public const string AnchorHelmet = "anchor_helmet";
@@ -40,7 +47,7 @@ namespace DD.Prototype.Characters
         [SerializeField] private Transform _anchorTorso;
         [SerializeField] private Transform _anchorLegs;
         [SerializeField] private CharacterAnimationSet _animation;
-        [SerializeField] private ProceduralPoseBridge _bridge;
+        [SerializeField] private CharacterAnimationEvents _events;
         [Tooltip("WP-017 · AP-008 armour renderers, LOD-major: index = (lod * ArmorSlotCount + (helmet 0 | body 1 | leg 2)) * ArmorPartCount + (main 0 | sub 1). Empty until the armour pipeline ran.")]
         [SerializeField] private SkinnedMeshRenderer[] _armorSlots = new SkinnedMeshRenderer[0];
 
@@ -56,7 +63,7 @@ namespace DD.Prototype.Characters
         public Transform HelmetAnchor => _anchorHelmet;
         public Transform TorsoAnchor => _anchorTorso;
         public Transform LegsAnchor => _anchorLegs;
-        public ProceduralPoseBridge Bridge => _bridge;
+        public CharacterAnimationEvents Events => _events;
         public ZombieLook Look => _look;
         public int MaterialTier => _materialTier;
         public CharacterAnimationSet AnimationSet => _animation;
@@ -107,7 +114,7 @@ namespace DD.Prototype.Characters
 
         /// <summary>Editor (prefab builder).</summary>
         public void Configure(Animator animator, LODGroup lodGroup, SkinnedMeshRenderer[] slots, Transform skeletonRoot,
-            Transform anchorHelmet, Transform anchorTorso, Transform anchorLegs, CharacterAnimationSet animation, ProceduralPoseBridge bridge)
+            Transform anchorHelmet, Transform anchorTorso, Transform anchorLegs, CharacterAnimationSet animation, CharacterAnimationEvents events)
         {
             _animator = animator;
             _lodGroup = lodGroup;
@@ -117,7 +124,7 @@ namespace DD.Prototype.Characters
             _anchorTorso = anchorTorso;
             _anchorLegs = anchorLegs;
             _animation = animation;
-            _bridge = bridge;
+            _events = events;
         }
 
         public Transform Bone(string name)
@@ -219,11 +226,9 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>
-        /// Parent under the rig's Visual node and wire the bridge: block Hips/Spine/Chest/Head
-        /// and both arms (upper + forearm) drive the bones; hips also carry the bob/sink
-        /// position delta. Legs stay with the clip. Rest is captured now — the block rig must
-        /// be at its rest pose (spawn resets it) and the Animator must not have run yet or be
-        /// in its bind pose.
+        /// Parent under the rig's Visual node and become the enemy's animation driver: the
+        /// Animator (AP-009 controller when the set is authored, the WP-016 rig-test blend
+        /// otherwise) owns every pose; the M1 block rig only keeps its gameplay nodes.
         /// </summary>
         public void Attach(ZombieRig rig, ZombieAnimator animator)
         {
@@ -232,52 +237,68 @@ namespace DD.Prototype.Characters
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
             transform.localScale = Vector3.one;
-            if (animator != null) animator.SkinnedLocomotion = true;
+            _rig = rig;
 
             if (_animator != null)
             {
-                _animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                // ADR-018-2: culled zombies keep their state machine and events (death_end,
+                // hit windows) but skip the transform write. AlwaysAnimate is not needed any
+                // more — nothing accumulates on the bones.
+                _animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
                 _animator.applyRootMotion = false;
                 if (_animation != null && _animation.Controller != null && _animator.runtimeAnimatorController == null)
                 {
                     _animator.runtimeAnimatorController = _animation.Controller;
                 }
-
             }
 
-            if (_bridge != null)
+            _authored = _animation != null && _animation.IsAuthored && _animator != null && _animator.runtimeAnimatorController != null;
+            if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
+            if (_events != null && !_subscribed)
             {
-                _bridge.Configure(rig.Visual);
-                Transform hips = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.Hips);
-                Transform spine = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.Spine);
-                Transform chest = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.Chest);
-                Transform head = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.Head);
-                Transform uaL = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.LeftUpperArm);
-                Transform uaR = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.RightUpperArm);
-                Transform laL = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.LeftLowerArm);
-                Transform laR = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.RightLowerArm);
-                Transform handL = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.LeftHand);
-                Transform handR = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.RightHand);
-                _bridge.Add("hips", rig.Hips, hips, positionDelta: true);
-                _bridge.Add("spine", rig.Spine, spine);
-                _bridge.Add("chest", rig.Chest, chest);
-                _bridge.Add("head", rig.Head, head);
-                _bridge.Add("upperArmL", rig.UpperArmL, uaL, rig.ForearmL, laL, conjugateLimb: true);
-                _bridge.Add("upperArmR", rig.UpperArmR, uaR, rig.ForearmR, laR, conjugateLimb: true);
-                _bridge.Add("forearmL", rig.ForearmL, laL, null, handL, conjugateLimb: true);
-                _bridge.Add("forearmR", rig.ForearmR, laR, null, handR, conjugateLimb: true);
-                _bridge.CaptureRest();
-                _bridge.Active = true;
+                _events.Raised += OnAnimationEvent;
+                _subscribed = true;
+            }
+
+            if (animator != null)
+            {
+                animator.SkinnedLocomotion = true;
+                animator.Driver = _authored ? this : null;
             }
 
             Attached = true;
+        }
+
+        private void Awake()
+        {
+            // Standalone use (tests, showcase): the driver works without a rig; Attach re-evaluates.
+            if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
+            if (_events != null && !_subscribed)
+            {
+                _events.Raised += OnAnimationEvent;
+                _subscribed = true;
+            }
+
+            _authored = _animation != null && _animation.IsAuthored && _animator != null && _animator.runtimeAnimatorController != null;
+        }
+
+        private void OnDestroy()
+        {
+            if (_events != null && _subscribed) _events.Raised -= OnAnimationEvent;
+            _subscribed = false;
         }
 
         /// <summary>Drive the locomotion blend from the enemy's ground speed (called by ZombieEnemy each tick).</summary>
         public void SetSpeed(float metersPerSecond, float dt)
         {
             if (_animator == null || _animation == null) return;
-            // Own smoothing (the damped SetFloat overload measured as a no-op on these animators).
+            if (_authored)
+            {
+                SetLocomotion(metersPerSecond, dt);
+                return;
+            }
+
+            // WP-016 rig-test blend. Own smoothing (the damped SetFloat overload measured as a no-op on these animators).
             float target = _animation.SpeedParameterFor(metersPerSecond);
             _speed = dt > 0f ? Mathf.MoveTowards(_speed, target, dt / SpeedSmoothing) : target;
             _animator.SetFloat(SpeedId, _speed);
@@ -285,6 +306,269 @@ namespace DD.Prototype.Characters
 
         private const float SpeedSmoothing = 0.12f;   // seconds per unit of Speed
         private float _speed;
+
+        // ==================================================================== WP-018 driver
+
+        private static readonly int Speed01Id = Animator.StringToHash(CharacterAnimatorContract.Speed01);
+        private static readonly int GaitRateId = Animator.StringToHash(CharacterAnimatorContract.GaitRate);
+        private static readonly int GaitId = Animator.StringToHash(CharacterAnimatorContract.Gait);
+        private static readonly int IdleVariantId = Animator.StringToHash(CharacterAnimatorContract.IdleVariant);
+        private static readonly int AttackId = Animator.StringToHash(CharacterAnimatorContract.Attack);
+        private static readonly int AttackStyleId = Animator.StringToHash(CharacterAnimatorContract.AttackStyle);
+        private static readonly int AttackRateId = Animator.StringToHash(CharacterAnimatorContract.AttackRate);
+        private static readonly int StaggerId = Animator.StringToHash(CharacterAnimatorContract.Stagger);
+        private static readonly int HitLeftId = Animator.StringToHash(CharacterAnimatorContract.HitLeft);
+        private static readonly int HitRightId = Animator.StringToHash(CharacterAnimatorContract.HitRight);
+        private static readonly int FlinchHeadId = Animator.StringToHash(CharacterAnimatorContract.FlinchHead);
+        private static readonly int FlinchTorsoId = Animator.StringToHash(CharacterAnimatorContract.FlinchTorso);
+        private static readonly int FlinchLegId = Animator.StringToHash(CharacterAnimatorContract.FlinchLeg);
+        private static readonly int DieId = Animator.StringToHash(CharacterAnimatorContract.Die);
+        private static readonly int DeathStyleId = Animator.StringToHash(CharacterAnimatorContract.DeathStyle);
+        private static readonly int RiseId = Animator.StringToHash(CharacterAnimatorContract.Rise);
+        private static readonly int AliveId = Animator.StringToHash(CharacterAnimatorContract.Alive);
+
+        [PrototypeOnly(PendingDecisions.None,
+            "Speed fraction (of the version's top speed) at which the gait blend is fully on. The " +
+            "idle↔gait crossfade starts at ZombieAnimator.IdlePoseSpeedThreshold; this is where the " +
+            "walk cycle owns the pose. Invented.", true)]
+        private const float GaitFullSpeed01 = 0.35f;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "Lowest playback rate of the gait clip (a crawl below this rate reads as a freeze frame). Invented.", true)]
+        private const float MinGaitRate = 0.35f;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "Highest playback rate of a gait clip. The Standard's 2.7 m/s over shamble_A 1.46 m/s is ×1.85 (AP-009 README). Invented cap.", true)]
+        private const float MaxGaitRate = 2.6f;
+
+        private ZombieRig _rig;
+        private bool _authored;
+        private bool _subscribed;
+        private int _gait;
+        private float _gaitClipSpeed = 1f;
+        private float _topSpeed = 1f;
+        private float _speed01;
+        private bool _deathEnded;
+        private bool _dying;
+        private bool _rising;
+        private bool _windowOpen;
+        private int _lastWindowStartFrame = -1;
+        private int _lastWindowEndFrame = -1;
+
+        /// <summary>True when the AP-009 controller drives this body (false on the rig-test set).</summary>
+        public bool Authored => _authored;
+        public int Gait => _gait;
+        public bool DeathFinished => _deathEnded;
+        public bool IsRising => _rising;
+        /// <summary>True between hit_window_start and hit_window_end of the current attack clip (DEC-029 readout).</summary>
+        public bool HitWindowOpen => _windowOpen;
+        public int LastWindowStartFrame => _lastWindowStartFrame;
+        public int LastWindowEndFrame => _lastWindowEndFrame;
+
+        /// <summary>Attack-window sink: EnemyAttackState of the owner (set by ZombieEnemy through ZombieAnimator).</summary>
+        public IAttackWindowSink WindowSink { get; set; }
+
+        private void OnAnimationEvent(CharacterAnimationEvent e)
+        {
+            switch (e)
+            {
+                case CharacterAnimationEvent.HitWindowStart:
+                    _windowOpen = true;
+                    _lastWindowStartFrame = Time.frameCount;
+                    WindowSink?.OnHitWindowStart();
+                    break;
+                case CharacterAnimationEvent.HitWindowEnd:
+                    _windowOpen = false;
+                    _lastWindowEndFrame = Time.frameCount;
+                    WindowSink?.OnHitWindowEnd();
+                    break;
+                case CharacterAnimationEvent.DeathEnd:
+                    if (_dying) _deathEnded = true;
+                    break;
+                case CharacterAnimationEvent.RiseEnd:
+                    _rising = false;
+                    break;
+            }
+        }
+
+        // ---------------------------------------------------- IZombieAnimationDriver
+
+        /// <summary>Spawn: version gait, fit, top speed; every trigger cleared, Alive on. Rise plays when asked (spawn points).</summary>
+        public void ResetForSpawn(EnemyTier tier, float topSpeedMetersPerSecond, string fit, int idleVariant, bool rise)
+        {
+            if (!_authored) return;
+            _topSpeed = Mathf.Max(0.1f, topSpeedMetersPerSecond);
+            _gait = tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
+            _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
+            _speed01 = 0f;
+            _dying = false;
+            _deathEnded = false;
+            _windowOpen = false;
+            _rising = false;
+
+            _animator.ResetTrigger(AttackId);
+            _animator.ResetTrigger(StaggerId);
+            _animator.ResetTrigger(HitLeftId);
+            _animator.ResetTrigger(HitRightId);
+            _animator.ResetTrigger(FlinchHeadId);
+            _animator.ResetTrigger(FlinchTorsoId);
+            _animator.ResetTrigger(FlinchLegId);
+            _animator.ResetTrigger(DieId);
+            _animator.ResetTrigger(RiseId);
+            _animator.SetBool(AliveId, true);
+            _animator.SetFloat(GaitId, _gait);
+            _animator.SetFloat(IdleVariantId, idleVariant & 1);
+            _animator.SetFloat(Speed01Id, 0f);
+            _animator.SetFloat(GaitRateId, 1f);
+            // A pooled body comes back with whatever state it died in: restart the base layer.
+            _animator.Play(CharacterAnimatorContract.LocomotionState, CharacterAnimatorContract.BaseLayer, 0f);
+            if (rise)
+            {
+                _rising = true;
+                _animator.SetTrigger(RiseId);
+            }
+        }
+
+        /// <summary>Re-read the gait after the look changed (fit A/B/C decides the shamble).</summary>
+        public void SetFit(string fit, EnemyTier tier)
+        {
+            if (!_authored) return;
+            _gait = tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
+            _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
+            _animator.SetFloat(GaitId, _gait);
+        }
+
+        private void SetLocomotion(float metersPerSecond, float dt)
+        {
+            float target = Mathf.Clamp01(metersPerSecond / _topSpeed / GaitFullSpeed01);
+            _speed01 = dt > 0f ? Mathf.MoveTowards(_speed01, target, dt / SpeedSmoothing) : target;
+            _animator.SetFloat(Speed01Id, _speed01);
+            // The rate multiplies the whole Locomotion tree (idle included): ease it back to 1 as
+            // the body stops so the idle sway does not crawl at MinGaitRate.
+            float rate = Mathf.Clamp(metersPerSecond / _gaitClipSpeed, MinGaitRate, MaxGaitRate);
+            _animator.SetFloat(GaitRateId, Mathf.Lerp(1f, rate, _speed01));
+        }
+
+        /// <summary>
+        /// Start an attack clip. <paramref name="telegraphSeconds"/> is the tier's TelegraphTime:
+        /// the clip is rate-scaled so its hit_window_start lands on it (the code timings stay the
+        /// source of truth — AP-009 README §event contract). Returns the playback rate.
+        /// </summary>
+        public float PlayAttack(ZombieAttackStyle style, float telegraphSeconds)
+        {
+            if (!_authored || _dying) return 1f;
+            int index = style == ZombieAttackStyle.Lunge ? 1 : style == ZombieAttackStyle.Swipe ? 0 : 2;   // Sweep and Overhead share the two-armed sweep
+            float windowStart = WindowStartSeconds(CharacterAnimatorContract.ZombieAttackClips[index]);
+            float rate = telegraphSeconds > 0.01f && windowStart > 0.01f ? windowStart / telegraphSeconds : 1f;
+            rate = Mathf.Clamp(rate, 0.25f, 4f);
+            _windowOpen = false;
+            _animator.SetInteger(AttackStyleId, index);
+            _animator.SetFloat(AttackRateId, rate);
+            _animator.SetTrigger(AttackId);
+            return rate;
+        }
+
+        /// <summary>The manifest hit_window_start of an attack clip, in seconds at rate 1.</summary>
+        public float WindowStartSeconds(string clipName)
+        {
+            CharacterAnimationSet.Entry e = _animation != null ? _animation.Find(clipName) : null;
+            if (e == null || string.IsNullOrEmpty(e.events)) return 0f;
+            int frame = FrameOf(e.events, "hit_window_start");
+            return frame >= 0 ? frame / (float)CharacterAnimatorContract.Fps : 0f;
+        }
+
+        /// <summary>The manifest hit_window_end of an attack clip, in seconds at rate 1.</summary>
+        public float WindowEndSeconds(string clipName)
+        {
+            CharacterAnimationSet.Entry e = _animation != null ? _animation.Find(clipName) : null;
+            if (e == null || string.IsNullOrEmpty(e.events)) return 0f;
+            int frame = FrameOf(e.events, "hit_window_end");
+            return frame >= 0 ? frame / (float)CharacterAnimatorContract.Fps : 0f;
+        }
+
+        /// <summary>"name=frame;…" lookup, allocation-free (called on every attack start).</summary>
+        public static int FrameOf(string events, string name)
+        {
+            int at = events.IndexOf(name, System.StringComparison.Ordinal);
+            while (at >= 0)
+            {
+                int eq = at + name.Length;
+                bool boundary = (at == 0 || events[at - 1] == ';') && eq < events.Length && events[eq] == '=';
+                if (boundary)
+                {
+                    int value = 0, i = eq + 1;
+                    if (i >= events.Length || events[i] < '0' || events[i] > '9') return -1;
+                    while (i < events.Length && events[i] >= '0' && events[i] <= '9')
+                    {
+                        value = value * 10 + (events[i] - '0');
+                        i++;
+                    }
+
+                    return value;
+                }
+
+                at = events.IndexOf(name, at + 1, System.StringComparison.Ordinal);
+            }
+
+            return -1;
+        }
+
+        /// <summary>A stagger cancelled the attack: back to locomotion (the attack clip stops where it is).</summary>
+        public void CancelAttack()
+        {
+            if (!_authored || _dying) return;
+            _windowOpen = false;
+            _animator.ResetTrigger(AttackId);
+        }
+
+        /// <summary>Light directional hit: override_upper L/R by the bullet's lateral side + the regional additive flinch.</summary>
+        public void PlayFlinch(float lateral, DD.Prototype.Damage.BodyRegion region, bool upperBody)
+        {
+            if (!_authored || _dying) return;
+            switch (region)
+            {
+                case DD.Prototype.Damage.BodyRegion.Head: _animator.SetTrigger(FlinchHeadId); break;
+                case DD.Prototype.Damage.BodyRegion.LowerBody: _animator.SetTrigger(FlinchLegId); break;
+                default: _animator.SetTrigger(FlinchTorsoId); break;
+            }
+
+            if (upperBody)
+            {
+                _animator.SetTrigger(lateral < 0f ? HitLeftId : HitRightId);
+            }
+        }
+
+        /// <summary>Full-body heavy stagger (armour break, ADR-018-2). Cancels the attack clip.</summary>
+        public void PlayHeavyStagger()
+        {
+            if (!_authored || _dying) return;
+            _windowOpen = false;
+            _animator.ResetTrigger(AttackId);
+            _animator.SetTrigger(StaggerId);
+        }
+
+        /// <summary>One of the four death clips; the body holds the last frame until death_end and the pool takes it.</summary>
+        public void PlayDeath(int deathStyle)
+        {
+            if (!_authored) return;
+            _dying = true;
+            _deathEnded = false;
+            _windowOpen = false;
+            _rising = false;
+            _animator.ResetTrigger(AttackId);
+            _animator.ResetTrigger(StaggerId);
+            _animator.ResetTrigger(HitLeftId);
+            _animator.ResetTrigger(HitRightId);
+            _animator.SetBool(AliveId, false);
+            _animator.SetInteger(DeathStyleId, Mathf.Clamp(deathStyle, 0, 3));
+            _animator.SetTrigger(DieId);
+        }
+
+        /// <summary>Armour binder hook (ArmorVisualBinder): a broken plate is the heavy stagger's only trigger.</summary>
+        public void NotifyArmorBroken()
+        {
+            PlayHeavyStagger();
+        }
 
         /// <summary>
         /// Move the rig's three hitboxes and the armour placeholder roots onto the bones /
@@ -294,14 +578,20 @@ namespace DD.Prototype.Characters
         public void RehomeGameplayNodes(ZombieRig rig)
         {
             EnsureBones();
-            Transform head = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.Head);
-            Transform chest = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.Chest);
-            Transform hips = ProceduralPoseBridge.Bone(_animator, HumanBodyBones.Hips);
+            Transform head = HumanoidBones.Bone(_animator, HumanBodyBones.Head);
+            Transform chest = HumanoidBones.Bone(_animator, HumanBodyBones.Chest);
+            Transform hips = HumanoidBones.Bone(_animator, HumanBodyBones.Hips);
             if (head == null || chest == null || hips == null) return;
 
             Rehome(rig.HeadHitbox != null ? rig.HeadHitbox.transform : null, head, new Vector3(0f, 0.10f, 0f));
             Rehome(rig.UpperHitbox != null ? rig.UpperHitbox.transform : null, chest, new Vector3(0f, 0.02f, 0f));
             Rehome(rig.LowerHitbox != null ? rig.LowerHitbox.transform : null, hips, new Vector3(0f, -0.40f, 0f));
+            // WP-018: the attack overlap origin follows the animated chest (the block chest no longer moves).
+            if (rig.AttackSocket != null)
+            {
+                Rehome(rig.AttackSocket, chest, (rig.Visual != null ? rig.Visual.forward : transform.forward) * 0.55f + new Vector3(0f, -0.05f, 0f));
+            }
+
             if (rig.HeadHitbox is SphereCollider sphere) sphere.center = Vector3.zero;
             if (rig.UpperHitbox is CapsuleCollider upper) upper.center = Vector3.zero;
             if (rig.LowerHitbox is CapsuleCollider lower) lower.center = Vector3.zero;
@@ -338,8 +628,8 @@ namespace DD.Prototype.Characters
         private void RehomeLimbPiece(ZombieRig rig, string pieceName, HumanBodyBones bone, HumanBodyBones child)
         {
             GameObject piece = FindPiece(rig, pieceName);
-            Transform b = ProceduralPoseBridge.Bone(_animator, bone);
-            Transform c = ProceduralPoseBridge.Bone(_animator, child);
+            Transform b = HumanoidBones.Bone(_animator, bone);
+            Transform c = HumanoidBones.Bone(_animator, child);
             if (piece == null || b == null || c == null) return;
             Vector3 dir = c.position - b.position;
             float length = dir.magnitude;

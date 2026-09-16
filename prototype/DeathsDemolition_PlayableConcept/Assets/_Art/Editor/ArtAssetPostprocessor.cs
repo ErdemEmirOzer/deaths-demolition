@@ -18,8 +18,8 @@ namespace DD.Art.Pipeline.EditorTools
         {
             // Bumping this re-imports every asset the postprocessor touches. It is tied to
             // the contract version so a contract change cannot leave stale artifacts.
-            // 2: WP-015 texture class table (ADR-015-1). 3: WP-016 skinned characters (ADR-016-1).
-            return 3;
+            // 2: WP-015 texture class table (ADR-015-1). 3: WP-016 skinned characters (ADR-016-1). 4: WP-018 AP-009 clip events (ADR-018-1).
+            return 4;
         }
 
         private void OnPreprocessModel()
@@ -53,7 +53,7 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             var importer = (ModelImporter)assetImporter;
-            if (ArtCharacterContract.ApplyClips(importer))
+            if (ArtCharacterContract.ApplyClipsFor(importer))
             {
                 Debug.Log("[ArtImportContract] clips applied to " + assetPath);
             }

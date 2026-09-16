@@ -60,7 +60,8 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool IsClip(string assetPath)
         {
-            return IsCharacterModel(assetPath) && assetPath.Replace('\\', '/').Contains("/" + ClipsFolderName + "/");
+            string p = assetPath.Replace('\\', '/');
+            return IsCharacterModel(assetPath) && (p.Contains("/" + ClipsFolderName + "/") || ArtAnimationClipContract.IsAnimationClip(assetPath));
         }
 
         public static bool IsAvatarSource(string assetPath)
@@ -161,10 +162,18 @@ namespace DD.Art.Pipeline.EditorTools
 
             if (clip)
             {
-                changed |= ApplyClips(importer);
+                changed |= ApplyClipsFor(importer);
             }
 
             return changed;
+        }
+
+        /// <summary>WP-018: the AP-009 Animations/ files take their loop / events / additive flags from the manifest.</summary>
+        public static bool ApplyClipsFor(ModelImporter importer)
+        {
+            return ArtAnimationClipContract.IsAnimationClip(importer.assetPath)
+                ? ArtAnimationClipContract.ApplyClips(importer)
+                : ApplyClips(importer);
         }
 
         /// <summary>
@@ -238,7 +247,11 @@ namespace DD.Art.Pipeline.EditorTools
                 if (mapped != HumanoidBoneCount) v.Add("avatar.humanBones: " + mapped + " != " + HumanoidBoneCount);
             }
 
-            if (clip)
+            if (clip && ArtAnimationClipContract.IsAnimationClip(path))
+            {
+                v.AddRange(ArtAnimationClipContract.Validate(importer));
+            }
+            else if (clip)
             {
                 ModelImporterClipAnimation[] clips = importer.clipAnimations;
                 if (clips == null || clips.Length == 0)

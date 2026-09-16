@@ -836,6 +836,11 @@ namespace DD.Prototype.Tests.PlayMode
             Vector3 merkez = _rig.transform.position;
             ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, 7f), merkez);
             Assert.IsNotNull(hedef);
+            // WP-018: the AP-009 shamble carries the head forward and low, so the 1.15 m aim line now crosses
+            // the head hitbox on the way in; a rolled helmet turned three of these "flesh" hits into armour
+            // hits (measured 7 hits, 3 ArmorHit). This test is about the flesh-hit / death / player-damage
+            // signals, not the roll — the target is bare.
+            hedef.FitArmorComposition(false, false, false);
 
             var hasar = new List<EnemyDamageInfo>(16);
             var olum = new List<EnemyDeathInfo>(4);
@@ -917,6 +922,7 @@ namespace DD.Prototype.Tests.PlayMode
                                  " ates-bastirilan=" + atesBastirilan + " unscaled+=" + (Time.unscaledTime - unscaledOnce).ToString("F2") +
                                  " hitstop " + hitStopOnce + "->" + HitStopService.Count);
                 Debug.Log(rapor.ToString());
+                for (int i = 0; i < hasar.Count; i++) Debug.Log("[DD-TEST] gamefeel.hit " + i + " region=" + hasar[i].Result.Region + " hp=" + hasar[i].Result.HealthDamage + " killed=" + hasar[i].Result.Killed + " armored=" + hasar[i].Result.WasArmored + " tier=" + (i < tierler.Count ? tierler[i].ToString() : "-"));
 
                 int beklenenMinIsabet = Mathf.CeilToInt(ZombiCani / TufekHasari);   // 4
                 Assert.GreaterOrEqual(hasar.Count, beklenenMinIsabet, "İsabet sayısı formülün altında.\n" + rapor);

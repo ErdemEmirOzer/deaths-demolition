@@ -178,7 +178,7 @@ namespace DD.Art.Tests.PlayMode
                 if (v.Animator == null || !v.Animator.GetCurrentAnimatorStateInfo(0).IsName(CharacterAnimationSet.LocomotionState)) hatalar.Add(z.name + ": Animator Locomotion'da değil");
                 if (v.HelmetAnchor == null || v.HelmetAnchor.parent.name != "Head") hatalar.Add(z.name + ": ankraj_helmet Head altında değil");
                 Collider head = z.GetComponentInChildren<SphereCollider>(true);
-                if (head == null || head.transform.parent != ProceduralPoseBridge.Bone(v.Animator, HumanBodyBones.Head)) hatalar.Add(z.name + ": kafa hitbox'ı Head kemiğinde değil");
+                if (head == null || head.transform.parent != HumanoidBones.Bone(v.Animator, HumanBodyBones.Head)) hatalar.Add(z.name + ": kafa hitbox'ı Head kemiğinde değil");
                 if (z.ArmorAnchors.Helmet != v.HelmetAnchor) hatalar.Add(z.name + ": ArmorAnchors.Helmet ankraja bağlı değil");
             }
 
@@ -234,9 +234,12 @@ namespace DD.Art.Tests.PlayMode
         {
             yield return RunAP005();
             PlayerSkinnedVisual pv = PlayerVisual();
-            int speedId = Animator.StringToHash(CharacterAnimationSet.SpeedParameter);
             for (int i = 0; i < 10; i++) yield return null;
-            Assert.Less(pv.Animator.GetFloat(speedId), 0.05f, "duran oyuncu Speed ≈ 0");
+            // WP-018: the authored set drives MoveX/MoveY/LocoRate; the rig-test set drives Speed.
+            int speedId = Animator.StringToHash(CharacterAnimationSet.SpeedParameter);
+            int speed01Id = Animator.StringToHash(CharacterAnimatorContract.Speed01);
+            if (pv.Authored) Assert.Less(pv.Move.magnitude, 0.05f, "duran oyuncu Move ≈ 0");
+            else Assert.Less(pv.Animator.GetFloat(speedId), 0.05f, "duran oyuncu Speed ≈ 0");
 
             Vector3 p = PlayerRegistry.Primary.transform.position;
             ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 1, p + new Vector3(0f, 0f, 12f), Quaternion.identity);
@@ -248,24 +251,14 @@ namespace DD.Art.Tests.PlayMode
             float moved = 0f;
             while (Time.realtimeSinceStartup - t0 < 5f)
             {
-                maxSpeed = Mathf.Max(maxSpeed, z.Skinned.Animator.GetFloat(speedId));
+                maxSpeed = Mathf.Max(maxSpeed, z.Skinned.Animator.GetFloat(z.Skinned.Authored ? speed01Id : speedId));
                 moved = Mathf.Max(moved, Vector3.Distance(start, z.transform.position));
                 yield return null;
             }
 
-            Debug.Log("[DD-TEST] wp016.animator attached=" + z.Skinned.Attached + " bridgeActive=" + (z.Skinned.Bridge != null && z.Skinned.Bridge.Active) + " bridgeEntries=" + (z.Skinned.Bridge != null ? z.Skinned.Bridge.Entries.Count : -1) + " zombieSpeedMax=" + maxSpeed.ToString("F2", CultureInfo.InvariantCulture) + " moved=" + moved.ToString("F2", CultureInfo.InvariantCulture) + " m alive=" + z.IsAlive + " state=" + z.Skinned.Animator.GetCurrentAnimatorStateInfo(0).IsName(CharacterAnimationSet.LocomotionState) + " controller=" + (z.Skinned.Animator.runtimeAnimatorController != null) + " enabled=" + z.Skinned.Animator.enabled);
+            Debug.Log("[DD-TEST] wp016.animator attached=" + z.Skinned.Attached + " authored=" + z.Skinned.Authored + " gait=" + z.Skinned.Gait + " zombieSpeedMax=" + maxSpeed.ToString("F2", CultureInfo.InvariantCulture) + " moved=" + moved.ToString("F2", CultureInfo.InvariantCulture) + " m alive=" + z.IsAlive + " state=" + z.Skinned.Animator.GetCurrentAnimatorStateInfo(0).IsName(CharacterAnimationSet.LocomotionState) + " controller=" + (z.Skinned.Animator.runtimeAnimatorController != null) + " enabled=" + z.Skinned.Animator.enabled);
             Assert.Greater(moved, 1f, "zombi oyuncuya doğru yürümedi (" + moved.ToString("F2") + " m)");
-            Assert.Greater(maxSpeed, 0.2f, "oyuncuya yürüyen zombinin Speed parametresi yükselmeli");
-
-            // Bridge parity: the bone arm should point where the block arm points (carriage forward).
-            ZombieRig rigB = z.Rig;
-            Animator an = z.Skinned.Animator;
-            Transform ua = an.GetBoneTransform(HumanBodyBones.RightUpperArm), la = an.GetBoneTransform(HumanBodyBones.RightLowerArm);
-            Vector3 boneDir = (la.position - ua.position).normalized;
-            Vector3 blockDir = (rigB.ForearmR.position - rigB.UpperArmR.position).normalized;
-            Vector3 fwd = z.transform.forward;
-            Debug.Log("[DD-TEST] wp016.bridge boneArm·fwd=" + Vector3.Dot(boneDir, fwd).ToString("F2", CultureInfo.InvariantCulture) + " blockArm·fwd=" + Vector3.Dot(blockDir, fwd).ToString("F2", CultureInfo.InvariantCulture) + " bone·block=" + Vector3.Dot(boneDir, blockDir).ToString("F2", CultureInfo.InvariantCulture) + " boneDir=" + boneDir.ToString("F2") + " blockDir=" + blockDir.ToString("F2"));
-            Assert.Greater(Vector3.Dot(boneDir, blockDir), 0.6f, "köprü: kemik kolu blok kolunun yönünü izlemeli (carriage)");
+            Assert.Greater(maxSpeed, 0.2f, "oyuncuya yürüyen zombinin hız parametresi yükselmeli");
 
             z.Kill();
             yield return Bekle(() => z.IsDying || !z.IsAlive, 5f, "ölüm başlamadı");

@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void HerKarakterFbx_V11Sozlesmesi_Avatar_HumanEslemesiKaynaklaAyni()
         {
             List<string> files = CharacterFbx();
-            Assert.AreEqual(45, files.Count, "45 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 19 modül + 2 klip; WP-017 zırh 18):\n" + string.Join("\n", files));
+            Assert.AreEqual(75, files.Count, "75 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 19 modül + 2 klip; WP-017 zırh 18; WP-018 AP-009 30 klip):\n" + string.Join("\n", files));
 
             List<string> playerMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.PlayerAvatarSource));
             List<string> zombieMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource));
@@ -122,7 +122,8 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(prefab, "Player_AP006 prefabı yok (Run Characters koşmalı)");
             var visual = prefab.GetComponent<PlayerSkinnedVisual>();
             Assert.IsNotNull(visual);
-            Assert.IsNotNull(visual.Bridge);
+            Assert.IsNotNull(visual.Events, "WP-018: CharacterAnimationEvents");
+            Assert.IsNotNull(visual.AimLayer, "WP-018: PlayerAimLayer");
             Assert.IsNotNull(visual.Animator);
             Assert.IsTrue(visual.Animator.avatar != null && visual.Animator.avatar.isHuman, "Humanoid avatar");
             Assert.IsNotNull(visual.Animator.runtimeAnimatorController, "controller");
@@ -154,7 +155,8 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(prefab, "Zombie_AP007 prefabı yok");
             var visual = prefab.GetComponent<ZombieSkinnedVisual>();
             Assert.IsNotNull(visual);
-            Assert.IsNotNull(visual.Bridge);
+            Assert.IsNotNull(visual.Events, "WP-018: CharacterAnimationEvents");
+            Assert.IsNotNull(prefab.GetComponent<CharacterAnimatorLod>(), "WP-018: CharacterAnimatorLod");
             Assert.IsTrue(visual.Animator != null && visual.Animator.avatar != null && visual.Animator.avatar.isHuman);
             Assert.IsNotNull(visual.Animator.runtimeAnimatorController);
             for (int lod = 0; lod < 4; lod++)
@@ -291,17 +293,37 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsTrue(set.Idle.humanMotion && set.Walk.humanMotion, "klipler Humanoid");
                 var controller = set.Controller as AnimatorController;
                 Assert.IsNotNull(controller);
-                bool speed = false;
-                foreach (AnimatorControllerParameter p in controller.parameters) if (p.name == CharacterAnimationSet.SpeedParameter && p.type == AnimatorControllerParameterType.Float) speed = true;
-                Assert.IsTrue(speed, "Speed parametresi");
                 AnimatorState state = controller.layers[0].stateMachine.defaultState;
                 Assert.AreEqual(CharacterAnimationSet.LocomotionState, state.name);
                 var tree = state.motion as BlendTree;
                 Assert.IsNotNull(tree);
-                Assert.AreEqual(2, tree.children.Length);
-                Assert.AreEqual(set.Idle, tree.children[0].motion); Assert.AreEqual(set.Walk, tree.children[1].motion);
-                Assert.AreEqual(0.5f, set.SpeedParameterFor(set.WalkSpeedMetersPerSecond * 0.5f), 1e-4f);
+                if (set.IsAuthored)
+                {
+                    // WP-018: AP-009 set — the locomotion tree carries the idle and the walk (player 2-D corners; zombie nested idle/gait trees).
+                    Assert.IsTrue(ContainsMotion(tree, set.Idle) && ContainsMotion(tree, set.Walk), "locomotion ağacı idle + walk içermeli");
+                    Assert.AreEqual(0.5f, set.RateFor(set.Walk.name, set.SpeedOf(set.Walk.name) * 0.5f), 1e-4f);
+                }
+                else
+                {
+                    bool speed = false;
+                    foreach (AnimatorControllerParameter p in controller.parameters) if (p.name == CharacterAnimationSet.SpeedParameter && p.type == AnimatorControllerParameterType.Float) speed = true;
+                    Assert.IsTrue(speed, "Speed parametresi");
+                    Assert.AreEqual(2, tree.children.Length);
+                    Assert.AreEqual(set.Idle, tree.children[0].motion); Assert.AreEqual(set.Walk, tree.children[1].motion);
+                    Assert.AreEqual(0.5f, set.SpeedParameterFor(set.WalkSpeedMetersPerSecond * 0.5f), 1e-4f);
+                }
             }
+        }
+
+        private static bool ContainsMotion(BlendTree tree, Motion motion)
+        {
+            foreach (ChildMotion c in tree.children)
+            {
+                if (c.motion == motion) return true;
+                if (c.motion is BlendTree sub && ContainsMotion(sub, motion)) return true;
+            }
+
+            return false;
         }
 
         [Test]

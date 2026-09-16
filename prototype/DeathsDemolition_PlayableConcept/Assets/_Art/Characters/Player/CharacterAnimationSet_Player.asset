@@ -12,8 +12,102 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12a645b13c760498a9cf5d8b4292b682, type: 3}
   m_Name: CharacterAnimationSet_Player
   m_EditorClassIdentifier: 
-  _idle: {fileID: -5594245918150407122, guid: 66d8344939c974fe8848ddc50e96fbc7, type: 3}
-  _walk: {fileID: 2144639763177769228, guid: abe2e7a0ab7d446f5a6a9845bab26bc2, type: 3}
-  _walkSpeedMetersPerSecond: 1.4
-  _controller: {fileID: 9100000, guid: ea119d1a897ca48709a0d61fb26bbf5d, type: 2}
-  _source: AP-006 rig tests (RigTest_Idle / RigTest_Walk); AP-009 replaces
+  _idle: {fileID: -623603649343465320, guid: aed148aa6a0c6495a8db423e00b8ba4d, type: 3}
+  _walk: {fileID: -623603649343465320, guid: f1f4360e2772149a18850848dcefbf29, type: 3}
+  _walkSpeedMetersPerSecond: 2.92
+  _controller: {fileID: 9100000, guid: b245a12937d084f689f339a22d4e41f8, type: 2}
+  _source: "AP-009 v001 (30 clips, AP009-clips-manifest.json) \u2014 WP-018 generated
+    controller"
+  _clips:
+  - name: AP009_player_death_back
+    clip: {fileID: -623603649343465320, guid: 949eaa954bc2b416db84616d11288fa3, type: 3}
+    loop: 0
+    seconds: 1.167
+    speedMps: 0
+    layer: base
+    additive: 0
+    frames: 36
+    events: death_end=35
+  - name: AP009_player_death_fwd
+    clip: {fileID: -623603649343465320, guid: a546f60057d964013bee806eecdd565e, type: 3}
+    loop: 0
+    seconds: 1.167
+    speedMps: 0
+    layer: base
+    additive: 0
+    frames: 36
+    events: death_end=35
+  - name: AP009_player_fire_recoil
+    clip: {fileID: -623603649343465320, guid: b57564765dc1142789d5a0a6a28b6045, type: 3}
+    loop: 0
+    seconds: 0.3
+    speedMps: 0
+    layer: additive
+    additive: 1
+    frames: 10
+    events: fire=0
+  - name: AP009_player_hit_light
+    clip: {fileID: -623603649343465320, guid: eede924627e6d455c89c1d3d70374820, type: 3}
+    loop: 0
+    seconds: 0.367
+    speedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 12
+    events: hit=0
+  - name: AP009_player_idle
+    clip: {fileID: -623603649343465320, guid: aed148aa6a0c6495a8db423e00b8ba4d, type: 3}
+    loop: 1
+    seconds: 2
+    speedMps: 0
+    layer: base
+    additive: 0
+    frames: 61
+    events: breath=0
+  - name: AP009_player_pickup_special
+    clip: {fileID: -623603649343465320, guid: f106b32e410f34109b45a0c7af08ee18, type: 3}
+    loop: 0
+    seconds: 0.767
+    speedMps: 0
+    layer: base
+    additive: 0
+    frames: 24
+    events: pickup=11
+  - name: AP009_player_strafe_left
+    clip: {fileID: -623603649343465320, guid: 1ef133dde25294af8ab79268cd661c64, type: 3}
+    loop: 1
+    seconds: 0.4
+    speedMps: 1.939
+    layer: base
+    additive: 0
+    frames: 13
+    events: foot_r=0;foot_l=6
+  - name: AP009_player_strafe_right
+    clip: {fileID: -623603649343465320, guid: ef6b9e71499ad43d5ae0638c690762a7, type: 3}
+    loop: 1
+    seconds: 0.4
+    speedMps: 1.939
+    layer: base
+    additive: 0
+    frames: 13
+    events: foot_r=0;foot_l=6
+  - name: AP009_player_walk_back
+    clip: {fileID: -623603649343465320, guid: 3669accecb8f646b997cf5b260b351e3, type: 3}
+    loop: 1
+    seconds: 0.4
+    speedMps: 2.426
+    layer: base
+    additive: 0
+    frames: 13
+    events: foot_r=0;foot_l=6
+  - name: AP009_player_walk_fwd
+    clip: {fileID: -623603649343465320, guid: f1f4360e2772149a18850848dcefbf29, type: 3}
+    loop: 1
+    seconds: 0.4
+    speedMps: 2.92
+    layer: base
+    additive: 0
+    frames: 13
+    events: foot_r=0;foot_l=6
+  _manifestSchema: AP009.clips-manifest.v001
+  _locomotionReferenceSpeed: 6.2
