@@ -93,6 +93,10 @@ namespace DD.Prototype.Profile
 
         public int GoldEarned { get; private set; }
         public int GoldSpent { get; private set; }
+
+        /// <summary>WP-035: the parts of <see cref="GoldSpent"/> (WP-008: cards + paid rerolls).</summary>
+        public int GoldSpentOnUpgrades { get; private set; }
+        public int GoldSpentOnRerolls { get; private set; }
         public int GoldUnspent { get; private set; }
         public int UpgradesPurchased { get; private set; }
         public int RerollsUsed { get; private set; }
@@ -176,6 +180,8 @@ namespace DD.Prototype.Profile
 
             data.GoldEarned = Mathf.Max(0, s.GoldEarned);
             data.GoldSpent = Mathf.Max(0, s.GoldSpent);
+            data.GoldSpentOnUpgrades = Mathf.Max(0, s.GoldSpentOnUpgrades);
+            data.GoldSpentOnRerolls = Mathf.Max(0, s.GoldSpentOnRerolls);
             data.GoldUnspent = Mathf.Max(0, s.GoldUnspent);
             data.UpgradesPurchased = Mathf.Max(0, s.UpgradesPurchased);
             data.RerollsUsed = Mathf.Max(0, s.RerollsUsed);

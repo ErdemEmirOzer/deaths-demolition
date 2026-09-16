@@ -42,6 +42,9 @@ namespace DD.Prototype.Profile
     ///      file (REQ-018: run economy dies with the run; gold achievements are single-run).
     ///      A v3 file gains the new fields at their zero / empty defaults and keeps its
     ///      lineage and ordinal untouched, so nothing already recorded can replay.
+    ///      WP-035 adds SelectedTitle / SelectedBadge / AchievementsSeen / ContentSeen to
+    ///      the SAME version: absent keys read as defaults, an older v4 build ignores them,
+    ///      and none of them changes what the profile has earned.
     /// </summary>
     [Serializable]
     public sealed class ProfileData
@@ -120,6 +123,20 @@ namespace DD.Prototype.Profile
 
         /// <summary>WP-023: catalog content ids (cosmetic / indicator) already opened, matching <c>UnlockDefinition.Id</c>.</summary>
         public List<string> UnlockedContent = new List<string>();
+
+        // ------------------------------------------------------- cosmetics (WP-035)
+
+        /// <summary>WP-035: the selected profile title (an <c>UnlockedContent</c> id of type Title), or empty for none. Skins are NOT here (DEC-039: session-only).</summary>
+        public string SelectedTitle = string.Empty;
+
+        /// <summary>WP-035: the selected profile badge (an <c>UnlockedContent</c> id of type Badge), or empty for none.</summary>
+        public string SelectedBadge = string.Empty;
+
+        /// <summary>WP-035: how many earned achievements the player has seen in the Achievements pane ("new" = earned beyond this).</summary>
+        public int AchievementsSeen;
+
+        /// <summary>WP-035: how many opened content ids the player has seen ("new" = opened beyond this).</summary>
+        public int ContentSeen;
 
         // ---------------------------------------------------- replay authority (v3)
 
@@ -200,6 +217,21 @@ namespace DD.Prototype.Profile
             UnlockedBranches = Clean(UnlockedBranches);
             UnlockedContent = Clean(UnlockedContent);
 
+            // WP-035: a selection must name opened content; anything else is cleared, never
+            // invented. Seen counters cannot exceed what exists.
+            if (SelectedTitle == null || !UnlockedContent.Contains(SelectedTitle))
+            {
+                SelectedTitle = string.Empty;
+            }
+
+            if (SelectedBadge == null || !UnlockedContent.Contains(SelectedBadge))
+            {
+                SelectedBadge = string.Empty;
+            }
+
+            AchievementsSeen = Math.Min(Math.Max(0, AchievementsSeen), Achievements.Count);
+            ContentSeen = Math.Min(Math.Max(0, ContentSeen), UnlockedContent.Count);
+
             // Replay authority is never "repaired" here: a missing or malformed lineage is
             // an invalid document (ProfileMigration reports it), not something to invent.
             if (ProfileLineageId == null)
@@ -232,6 +264,15 @@ namespace DD.Prototype.Profile
 
             int attributed = ProfileProgression.SaturatingSum(StandardKills, SpecialKills, EliteKills, UltraKills);
             if (TotalKills != ProfileProgression.SaturatingAdd(attributed, UnattributedKills))
+            {
+                return false;
+            }
+
+            if (SelectedTitle == null || SelectedBadge == null ||
+                (SelectedTitle.Length > 0 && !Has(UnlockedContent, SelectedTitle)) ||
+                (SelectedBadge.Length > 0 && !Has(UnlockedContent, SelectedBadge)) ||
+                AchievementsSeen < 0 || AchievementsSeen > (Achievements != null ? Achievements.Count : 0) ||
+                ContentSeen < 0 || ContentSeen > (UnlockedContent != null ? UnlockedContent.Count : 0))
             {
                 return false;
             }
@@ -297,6 +338,10 @@ namespace DD.Prototype.Profile
                 UnlockedWeapons = new List<string>(UnlockedWeapons ?? new List<string>()),
                 UnlockedBranches = new List<string>(UnlockedBranches ?? new List<string>()),
                 UnlockedContent = new List<string>(UnlockedContent ?? new List<string>()),
+                SelectedTitle = SelectedTitle ?? string.Empty,
+                SelectedBadge = SelectedBadge ?? string.Empty,
+                AchievementsSeen = AchievementsSeen,
+                ContentSeen = ContentSeen,
                 ProfileLineageId = ProfileLineageId ?? string.Empty,
                 LastAppliedCompletionOrdinal = LastAppliedCompletionOrdinal,
                 LastSavedUtc = LastSavedUtc ?? string.Empty

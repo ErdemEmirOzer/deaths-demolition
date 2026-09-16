@@ -413,12 +413,23 @@ namespace DD.Prototype.Tests.EditMode
         {
             IReadOnlyList<UnlockDefinition> entries = UnlockCatalog.Entries;
             Assert.GreaterOrEqual(entries.Count, 6);
+            int cosmetics = 0;
+            foreach (UnlockDefinition e in entries) { if (e.Type == UnlockContentType.Title || e.Type == UnlockContentType.Badge) cosmetics++; }
+            Assert.GreaterOrEqual(cosmetics, 6, "unvan/rozet girdileri");
             var ids = new HashSet<string>(StringComparer.Ordinal);
             foreach (UnlockDefinition e in entries)
             {
                 Assert.IsTrue(ids.Add(e.Id), e.Id);
-                Assert.IsTrue(e.Type == UnlockContentType.Cosmetic || e.Type == UnlockContentType.Indicator,
-                    "silah/dal girdileri WP-024 listesine kadar boş: " + e.Id);
+                // WP-035: JSON yalnız unvan/rozet/gösterge taşır; silah girdileri roster'dan türetilir (Weapon), dal girdisi yok.
+                Assert.IsTrue(e.Type == UnlockContentType.Title || e.Type == UnlockContentType.Badge ||
+                              e.Type == UnlockContentType.Indicator || e.Type == UnlockContentType.Weapon, "beklenmeyen tür: " + e.Id);
+                Assert.AreNotEqual(UnlockContentType.Branch, e.Type, "dal girdisi yok: " + e.Id);
+                if (e.Type == UnlockContentType.Weapon)
+                {
+                    Assert.AreEqual(UnlockCondition.Level, e.Condition, "roster silahı seviye koşullu: " + e.Id);
+                    Assert.IsTrue(Enum.IsDefined(typeof(ClassicWeaponId), e.Id), e.Id);
+                }
+
                 if (e.Condition == UnlockCondition.Achievement)
                 {
                     Assert.IsNotNull(AchievementCatalog.Find(e.Key), e.Id + " → tanımsız başarım " + e.Key);

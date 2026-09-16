@@ -19,7 +19,13 @@ namespace DD.Prototype.Achievements
         Weapon = 2,
 
         /// <summary>An upgrade branch (<c>UpgradeBranch</c> name). Stored in <c>ProfileData.UnlockedBranches</c>. Empty until the WP-024 weapon list.</summary>
-        Branch = 3
+        Branch = 3,
+
+        /// <summary>WP-035: a profile title (cosmetic text shown next to the player's name). Stored in <c>ProfileData.UnlockedContent</c>; selectable via <c>ProfileService.SelectTitle</c>.</summary>
+        Title = 4,
+
+        /// <summary>WP-035: a profile badge (cosmetic icon id). Stored in <c>ProfileData.UnlockedContent</c>; selectable via <c>ProfileService.SelectBadge</c>.</summary>
+        Badge = 5
     }
 
     /// <summary>What opens an unlock entry.</summary>
@@ -66,6 +72,12 @@ namespace DD.Prototype.Achievements
     /// weapon / branch unlocks (WP-009 entitlement, DEC-069..075) are a separate,
     /// unchanged mechanism; this catalog can ADD weapon / branch grants by name once the
     /// weapon list exists, and ships none until then.
+    ///
+    /// WP-035: the weapon roster (WP-034, <c>WeaponRoster</c>) is REFERENCED, not copied:
+    /// every enabled profile-level weapon appears as a derived Weapon entry whose level is
+    /// read from the roster's own <c>ClassicWeaponSettings.UnlockProfileLevel</c> at load, so
+    /// the catalog can never disagree with the ladder (<c>ProfileService.UnlockLevelFor</c>)
+    /// or change a roster value. The JSON file carries only cosmetic / indicator content.
     /// </summary>
     public static class UnlockCatalog
     {
@@ -192,6 +204,8 @@ namespace DD.Prototype.Achievements
             {
                 case UnlockContentType.Cosmetic:
                 case UnlockContentType.Indicator:
+                case UnlockContentType.Title:
+                case UnlockContentType.Badge:
                     return profile.UnlockedContent;
                 case UnlockContentType.Weapon:
                     return profile.UnlockedWeapons;
@@ -336,7 +350,73 @@ namespace DD.Prototype.Achievements
                 loaded = Parse(asset.text, out dropped);
             }
 
+            AppendRosterWeapons(loaded);
             s_entries = loaded.AsReadOnly();
+        }
+
+        /// <summary>
+        /// WP-035: one derived Weapon entry per enabled, runtime-backed, profile-level roster
+        /// weapon. Level and display name come from the roster / config at load; an id the
+        /// JSON already names is not duplicated. Default-kind weapons are open from the first
+        /// run (DEC-037/039) and need no entry.
+        /// </summary>
+        public static void AppendRosterWeapons(List<UnlockDefinition> into)
+        {
+            if (into == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<DD.Prototype.Core.Weapons.ClassicWeaponDefinition> roster;
+            try
+            {
+                roster = DD.Prototype.Core.Weapons.WeaponRoster.Enabled;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Unlocks] Weapon roster unavailable; no weapon entries derived. " + e.Message);
+                return;
+            }
+
+            PrototypeConfig config = PrototypeConfig.Active;
+            for (int i = 0; i < roster.Count; i++)
+            {
+                DD.Prototype.Core.Weapons.ClassicWeaponDefinition d = roster[i];
+                if (d == null || !d.HasRuntimeId || d.UnlockKind != DD.Prototype.Core.Weapons.WeaponUnlockKind.ProfileLevel)
+                {
+                    continue;
+                }
+
+                string id = d.Id.ToString();
+                bool present = false;
+                for (int j = 0; j < into.Count; j++)
+                {
+                    if (into[j] != null && string.Equals(into[j].Id, id, StringComparison.Ordinal))
+                    {
+                        present = true;
+                        break;
+                    }
+                }
+
+                if (present)
+                {
+                    continue;
+                }
+
+                int level = Math.Max(1, d.UnlockLevel(config));
+                ClassicWeaponSettings settings = d.Settings(config);
+                string name = settings != null && !string.IsNullOrEmpty(settings.DisplayName) ? settings.DisplayName : id;
+                into.Add(new UnlockDefinition
+                {
+                    Id = id,
+                    Type = UnlockContentType.Weapon,
+                    DisplayName = name,
+                    Detail = "Classic weapon - opens at profile level " + level.ToString(System.Globalization.CultureInfo.InvariantCulture) + " (weapon roster)",
+                    Condition = UnlockCondition.Level,
+                    Key = level.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    NumericKey = level
+                });
+            }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

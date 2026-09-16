@@ -3,7 +3,7 @@
   "Entries": [
     {
       "Id": "title_first_blood",
-      "Type": "Cosmetic",
+      "Type": "Title",
       "DisplayName": "Title: Blooded",
       "Detail": "Profile title - shown next to your name once the profile pane supports titles",
       "Condition": "Achievement",
@@ -11,7 +11,7 @@
     },
     {
       "Id": "title_survivor",
-      "Type": "Cosmetic",
+      "Type": "Title",
       "DisplayName": "Title: Survivor",
       "Detail": "Profile title for reaching round 10",
       "Condition": "Round",
@@ -19,7 +19,7 @@
     },
     {
       "Id": "title_veteran",
-      "Type": "Cosmetic",
+      "Type": "Title",
       "DisplayName": "Title: Veteran",
       "Detail": "Profile title for reaching level 5",
       "Condition": "Level",
@@ -27,7 +27,7 @@
     },
     {
       "Id": "title_executioner",
-      "Type": "Cosmetic",
+      "Type": "Title",
       "DisplayName": "Title: Executioner",
       "Detail": "Profile title for defeating an Executioner",
       "Condition": "Achievement",
@@ -35,7 +35,7 @@
     },
     {
       "Id": "title_ironclad",
-      "Type": "Cosmetic",
+      "Type": "Title",
       "DisplayName": "Title: Ironclad",
       "Detail": "Profile title for breaking 100 armour pieces",
       "Condition": "Achievement",
@@ -43,7 +43,7 @@
     },
     {
       "Id": "badge_ghost",
-      "Type": "Cosmetic",
+      "Type": "Badge",
       "DisplayName": "Badge: Ghost",
       "Detail": "Profile badge for ten flawless rounds",
       "Condition": "Achievement",

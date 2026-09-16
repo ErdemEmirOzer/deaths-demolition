@@ -129,6 +129,189 @@ namespace DD.Prototype.Profile
             public RunResultsData Current => LastResults;
         }
 
+        // ---------------------------------------------------------- WP-035 sources
+
+        /// <summary>ADR-035-1: achievement progress for the Achievements pane / Results.</summary>
+        public static IAchievementProgressSource AchievementProgressSource => s_progressSource;
+
+        /// <summary>ADR-035-1: titles / badges / skins with selection state for the profile and selection screens.</summary>
+        public static ICosmeticsSource CosmeticsSource => s_cosmeticsSource;
+
+        /// <summary>
+        /// The session's skin choice (DEC-039: not persisted). The UI flow installs its
+        /// getter; without one the default palette is reported as selected.
+        /// </summary>
+        public static Func<DD.Prototype.PlayerSystem.PlayerSkin> SessionSkinProvider;
+
+        private static readonly IAchievementProgressSource s_progressSource = new ServiceProgressSource();
+        private static readonly ICosmeticsSource s_cosmeticsSource = new ServiceCosmeticsSource();
+
+        private sealed class ServiceProgressSource : IAchievementProgressSource
+        {
+            public IReadOnlyList<AchievementProgressEntry> Entries
+            {
+                get { EnsureLoaded(); return ProfileCosmetics.BuildProgress(s_data).AsReadOnly(); }
+            }
+
+            public int EarnedCount
+            {
+                get { EnsureLoaded(); return s_data.Achievements.Count; }
+            }
+
+            public int TotalCount => AchievementCatalog.Definitions.Count;
+
+            public int NewCount
+            {
+                get { EnsureLoaded(); return Math.Max(0, s_data.Achievements.Count - Math.Min(s_data.AchievementsSeen, s_data.Achievements.Count)); }
+            }
+
+            public string LastEarnedId
+            {
+                get { EnsureLoaded(); return s_data.Achievements.Count > 0 ? s_data.Achievements[s_data.Achievements.Count - 1] : string.Empty; }
+            }
+
+            public void MarkAchievementsSeen()
+            {
+                EnsureLoaded();
+                if (s_data.AchievementsSeen == s_data.Achievements.Count)
+                {
+                    return;
+                }
+
+                s_data.AchievementsSeen = s_data.Achievements.Count;
+                PersistCosmeticState();
+            }
+        }
+
+        private sealed class ServiceCosmeticsSource : ICosmeticsSource
+        {
+            public IReadOnlyList<CosmeticEntry> Titles
+            {
+                get { EnsureLoaded(); return ProfileCosmetics.Build(s_data, UnlockContentType.Title, s_data.SelectedTitle, SessionSkin()).AsReadOnly(); }
+            }
+
+            public IReadOnlyList<CosmeticEntry> Badges
+            {
+                get { EnsureLoaded(); return ProfileCosmetics.Build(s_data, UnlockContentType.Badge, s_data.SelectedBadge, SessionSkin()).AsReadOnly(); }
+            }
+
+            public IReadOnlyList<CosmeticEntry> Skins
+            {
+                get { EnsureLoaded(); return ProfileCosmetics.Build(s_data, UnlockContentType.Cosmetic, string.Empty, SessionSkin()).AsReadOnly(); }
+            }
+
+            public string SelectedTitle
+            {
+                get { EnsureLoaded(); return s_data.SelectedTitle ?? string.Empty; }
+            }
+
+            public string SelectedBadge
+            {
+                get { EnsureLoaded(); return s_data.SelectedBadge ?? string.Empty; }
+            }
+
+            public int NewCount
+            {
+                get { EnsureLoaded(); return Math.Max(0, s_data.UnlockedContent.Count - Math.Min(s_data.ContentSeen, s_data.UnlockedContent.Count)); }
+            }
+
+            public bool SelectTitle(string id)
+            {
+                return SelectCosmetic(UnlockContentType.Title, id);
+            }
+
+            public bool SelectBadge(string id)
+            {
+                return SelectCosmetic(UnlockContentType.Badge, id);
+            }
+
+            public void MarkContentSeen()
+            {
+                EnsureLoaded();
+                if (s_data.ContentSeen == s_data.UnlockedContent.Count)
+                {
+                    return;
+                }
+
+                s_data.ContentSeen = s_data.UnlockedContent.Count;
+                PersistCosmeticState();
+            }
+
+            private static DD.Prototype.PlayerSystem.PlayerSkin SessionSkin()
+            {
+                Func<DD.Prototype.PlayerSystem.PlayerSkin> provider = SessionSkinProvider;
+                return provider != null ? provider() : DD.Prototype.PlayerSystem.PlayerSkins.Default;
+            }
+        }
+
+        /// <summary>
+        /// WP-035: selects an opened title / badge (empty clears) and saves. Cosmetic state
+        /// is written OUTSIDE the run transaction (no completion identity involved): it
+        /// changes nothing the profile has earned, and a refused write (read-only session)
+        /// leaves the in-memory choice untouched and reports false.
+        /// </summary>
+        public static bool SelectCosmetic(UnlockContentType type, string id)
+        {
+            EnsureLoaded();
+            if (type != UnlockContentType.Title && type != UnlockContentType.Badge)
+            {
+                return false;
+            }
+
+            string value = id ?? string.Empty;
+            if (value.Length > 0 && !ProfileCosmetics.CanSelect(s_data, type, value))
+            {
+                return false;
+            }
+
+            if (ProfileStore.SaveLocked)
+            {
+                return false;
+            }
+
+            string before = type == UnlockContentType.Title ? s_data.SelectedTitle : s_data.SelectedBadge;
+            if (string.Equals(before, value, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (type == UnlockContentType.Title)
+            {
+                s_data.SelectedTitle = value;
+            }
+            else
+            {
+                s_data.SelectedBadge = value;
+            }
+
+            if (!PersistCosmeticState())
+            {
+                if (type == UnlockContentType.Title)
+                {
+                    s_data.SelectedTitle = before;
+                }
+                else
+                {
+                    s_data.SelectedBadge = before;
+                }
+
+                return false;
+            }
+
+            RaiseChanged();
+            return true;
+        }
+
+        private static bool PersistCosmeticState()
+        {
+            if (ProfileStore.SaveLocked)
+            {
+                return false;
+            }
+
+            return ProfileStore.Save(s_data).Success;
+        }
+
         /// <summary>True when the save on disk was unreadable and defaults were used.</summary>
         public static bool RecoveredFromCorruptSave
         {

@@ -626,9 +626,21 @@ namespace DD.Prototype.Tests.EditMode
                 foreach (string f in Directory.GetFiles(dir, "*.cs", SearchOption.AllDirectories))
                 {
                     string kaynak = File.ReadAllText(f);
+                    string goreli = f.Substring(kok.Length).Replace('\\', '/');
+
+                    // WP-034/035 istisnası: silah roster KAYNAĞI seçim katmanıdır (UI'nin okuduğu
+                    // entitlement kapısı); yalnız IsWeaponUnlocked okur, seviye/istatistik/veri okumaz.
+                    if (goreli.EndsWith("/Weapons/WeaponRosterSource.cs", StringComparison.Ordinal))
+                    {
+                        Assert.IsFalse(kaynak.Contains("ProfileData") || kaynak.Contains("ProfileLevel") || kaynak.Contains("XpIntoLevel") || kaynak.Contains("ProfileService.Current"),
+                            "roster kaynağı yalnız entitlement kapısını okur: " + goreli);
+                        StringAssert.Contains("ProfileService.IsWeaponUnlocked", kaynak);
+                        continue;
+                    }
+
                     if (kaynak.Contains("ProfileService") || kaynak.Contains("ProfileData") || kaynak.Contains("ProfileLevel"))
                     {
-                        ihlaller.Add(f.Substring(kok.Length));
+                        ihlaller.Add(goreli);
                     }
                 }
             }

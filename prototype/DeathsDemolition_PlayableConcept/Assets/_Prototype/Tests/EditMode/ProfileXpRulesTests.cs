@@ -329,7 +329,9 @@ namespace DD.Prototype.Tests.EditMode
                 "UnlockedBranches", "ProfileLineageId", "LastAppliedCompletionOrdinal", "LastSavedUtc",
                 // WP-023 (şema v4): iki ömür boyu feat istatistiği (başarım kuralları okur; DEC-007 istatistik, modifier değil)
                 // + katalog içerik listesi (DEC-038). Gold/harcama dosyaya girmez (REQ-018); koşu geçmişi yok, tunable yok.
-                "SpecialWeaponPickups", "FlawlessRounds", "UnlockedContent"
+                "SpecialWeaponPickups", "FlawlessRounds", "UnlockedContent",
+                // WP-035 (aynı v4): seçili unvan/rozet (açılmış içerik id'si) + "görüldü" sayaçları; kazanım değil, tercih.
+                "SelectedTitle", "SelectedBadge", "AchievementsSeen", "ContentSeen"
             }, adlar, "ProfileData şeması değişti; kalıcılık sınırı yeniden gözden geçirilmeli");
             Assert.AreEqual(4, ProfileData.CurrentVersion);
             StringAssert.DoesNotContain("AppliedCompletionIds", json, "halka diske yazılmaz (v3)");
