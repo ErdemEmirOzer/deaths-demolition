@@ -198,6 +198,29 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void BuildPipeline_VersiyonDamgasiVeBetiklerYerinde()
+        {
+            // WP-025: the stamp resource is loadable by name and the shared scripts exist at
+            // the repository root (tools/), so build.sh / smoke.sh / backup-repo.sh are part of
+            // the tree every session and S-10 can rely on them.
+            var text = Resources.Load<TextAsset>(DD.Prototype.Core.Build.BuildInfo.ResourceName);
+            Assert.IsNotNull(text, "Resources/build-info.json yüklenebilir olmalı");
+            Assert.IsNotNull(DD.Prototype.Core.Build.BuildInfo.Parse(text.text));
+
+            string root = Path.GetDirectoryName(Application.dataPath);
+            for (int i = 0; i < 6 && root != null && !Directory.Exists(Path.Combine(root, ".git")) && !File.Exists(Path.Combine(root, ".git")); i++)
+            {
+                root = Path.GetDirectoryName(root);
+            }
+
+            Assert.IsNotNull(root, "depo kökü (.git) bulunmalı");
+            foreach (string script in new[] { "tools/build.sh", "tools/smoke.sh", "tools/backup-repo.sh", "tools/README.md" })
+            {
+                Assert.IsTrue(File.Exists(Path.Combine(root, script)), script + " yok");
+            }
+        }
+
+        [Test]
         public void KopukReferans_ScriptFileIdSifirYok()
         {
             var bulgular = new List<string>();
