@@ -8,7 +8,7 @@
 #          --allow-paths) · ProjectIntegrityTests.cs only with --s01 · secret/credential grep on added lines
 #          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers.
 #   Apply: parent == main HEAD → git merge --ff-only; otherwise git cherry-pick --no-commit + automatic
-#          planning resolution (03-ROADMAP: both appended sentences kept after the common base line;
+#          planning resolution (03-ROADMAP: character-level — both sides' insertions into the same base line are applied in base-offset order, WP-043B;
 #          04-IMPLEMENTATION-PLAN: conflict blocks → HEAD then THEIRS, blank line between) → any other
 #          conflict → cherry-pick --abort and stop · index blobs (non-planning) must equal the source
 #          commit's blobs → else abort and stop · git commit -C <source> (author, message, Co-Authored-By
@@ -109,18 +109,33 @@ else
       planning/03-ROADMAP.md)
         "${G[@]}" show ":1:$f" > "/tmp/dd-int-base.$$"; "${G[@]}" show ":2:$f" > "/tmp/dd-int-ours.$$"; "${G[@]}" show ":3:$f" > "/tmp/dd-int-theirs.$$"
         python3 - "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$" "$DD_REPO/$f" <<'PY' || { echo "03-ROADMAP: automatic merge failed"; abort_pick; exit 4; }
-import sys
+import sys, difflib
 base,ours,theirs=[open(p,encoding='utf-8').read().split('\n') for p in sys.argv[1:4]]
-if len(base)!=len(ours) or len(base)!=len(theirs): sys.exit(1)   # only same-line appends are merged automatically
+if len(base)!=len(ours) or len(base)!=len(theirs): sys.exit(1)   # line count must agree; only in-line inserts are merged
+def inserts(b, v):
+    # character-level: every 'insert' opcode of v against b, as (base offset, text); anything else → not auto-mergeable
+    sm = difflib.SequenceMatcher(None, b, v, autojunk=False)
+    out = []
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag == 'equal': continue
+        if tag != 'insert': raise ValueError(tag)
+        out.append((i1, v[j1:j2]))
+    return out
 out=[]
-for b,o,t in zip(base,ours,theirs):
-    if o==t or t==b: out.append(o)
-    elif o==b: out.append(t)
-    elif o.startswith(b) and t.startswith(b): out.append(o+t[len(b):])
-    else: sys.exit(1)
+try:
+    for b,o,t in zip(base,ours,theirs):
+        if o==t or t==b: out.append(o); continue
+        if o==b: out.append(t); continue
+        ins = sorted(inserts(b,o) + inserts(b,t), key=lambda x: x[0])   # stable: HEAD inserts first at equal offsets
+        merged = ''; pos = 0
+        for off, text in ins:
+            merged += b[pos:off] + text; pos = off
+        out.append(merged + b[pos:])
+except ValueError:
+    sys.exit(1)
 open(sys.argv[4],'w',encoding='utf-8').write('\n'.join(out))
 PY
-        rm -f "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$"; "${G[@]}" add "$f"; echo "resolved $f (both appended sentences kept)" ;;
+        rm -f "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$"; "${G[@]}" add "$f"; echo "resolved $f (both sides' insertions applied on the base line)" ;;
       planning/04-IMPLEMENTATION-PLAN.md)
         python3 - "$DD_REPO/$f" <<'PY' || { echo "04: automatic resolution failed"; abort_pick; exit 4; }
 import sys,re
