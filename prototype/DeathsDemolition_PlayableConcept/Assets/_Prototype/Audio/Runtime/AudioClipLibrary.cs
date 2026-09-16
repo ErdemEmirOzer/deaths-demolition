@@ -134,10 +134,9 @@ namespace DD.Prototype.Audio
             AudioSoundId.UiNavigate, AudioSoundId.UiConfirm, AudioSoundId.UiBack,
             AudioSoundId.UiDenied, AudioSoundId.UpgradePurchase,
 
-            // Beds last. They are the biggest buffers and the ambience director fades them
-            // in over a second anyway, so a frame or two of delay is free.
-            AudioSoundId.AmbWind, AudioSoundId.AmbLeaves, AudioSoundId.AmbWater,
-            AudioSoundId.AmbPalaceTone, AudioSoundId.AmbTensionLow, AudioSoundId.AmbTensionHigh,
+            // Scatter one-shots last (small). The WP-002 ambience BEDS (AmbWind … AmbTensionHigh)
+            // left the prewarm list in WP-021C: nothing plays them since the WP-021 region beds,
+            // and baking six 10 s recipe buffers at boot was ~5 MB and ~150 ms for nothing.
             AudioSoundId.AmbWoodCreak, AudioSoundId.AmbMetalRing,
             AudioSoundId.AmbBambooKnock, AudioSoundId.AmbStoneSettle
         };

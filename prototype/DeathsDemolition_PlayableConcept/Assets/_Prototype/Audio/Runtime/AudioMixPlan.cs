@@ -428,6 +428,8 @@ namespace DD.Prototype.Audio
                     return Interface(AudioSoundId.UiBack, 0.55f, 55f, 0f, 2, 0.04f);
                 case AudioSoundId.UiDenied:
                     return Interface(AudioSoundId.UiDenied, 0.70f, 60f, 0f, 2, 0.06f);
+                case AudioSoundId.UiReveal:
+                    return UiEvent(AudioSoundId.UiReveal);
                 default:
                     return Interface(sound, 0.6f, 50f, 0f, 2, 0.03f);
             }
@@ -485,13 +487,84 @@ namespace DD.Prototype.Audio
         // ---- WP-021 v003 · coverage matrix rows -------------------------------
 
         /// <summary>Near-range idle breath/growl. Ambience-priced: never competes with combat.</summary>
-        public static AudioPlacement ZombieIdle(EnemyTierWeight weight)
+        public static AudioPlacement ZombieIdle(AudioSoundId sound, EnemyTierWeight weight)
         {
-            AudioPlacement p = Target(AudioSoundId.ZombieIdle, weight == EnemyTierWeight.Heavy ? 0.55f : 0.42f, 18f, 3, 0.4f);
+            AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.55f : 0.42f, 18f, 3, 0.4f);
             p.Spatial = 1f;
             p.PitchJitter = 0.08f;
-            p.Pitch = weight == EnemyTierWeight.Heavy ? 0.86f : 1f;
+            // WP-021C: the tier clips carry their own register; only the shared Standard clip is bent for a heavy body.
+            p.Pitch = sound == AudioSoundId.ZombieIdle && weight == EnemyTierWeight.Heavy ? 0.86f : 1f;
             return p;
+        }
+
+        /// <summary>WP-021C (anim.rise_end): the aggro growl - the voice that follows the rise's earth. Positional, priced like a windup minus a step.</summary>
+        public static AudioPlacement ZombieAggro(AudioSoundId sound, EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.9f : 0.72f, 64f, 4, 0.12f);
+            p.Spatial = 1f;
+            p.PitchJitter = 0.05f;
+            return p;
+        }
+
+        /// <summary>
+        /// WP-021C · WP-022B UI events (EVENT-COVERAGE-MATRIX §UI). Every bound row has its own
+        /// gain / priority / retrigger so a slider drag never floods and a threat chip is never lost.
+        /// </summary>
+        public static AudioPlacement UiEvent(AudioSoundId sound)
+        {
+            switch (sound)
+            {
+                case AudioSoundId.UiHover: return Interface(sound, 0.30f, 35f, 0f, 2, 0.05f);
+                case AudioSoundId.UiSliderTick: return Interface(sound, 0.32f, 35f, 0f, 2, 0.03f);
+                case AudioSoundId.UiToggle: return Interface(sound, 0.45f, 45f, 0f, 1, 0.05f);
+                case AudioSoundId.UiPaneOpen: return Interface(sound, 0.45f, 50f, 0f, 1, 0.12f);
+                case AudioSoundId.UiSelect: return Interface(sound, 0.55f, 55f, 0f, 2, 0.05f);
+                case AudioSoundId.UiDialogOpen: return Interface(sound, 0.55f, 60f, 0f, 1, 0.2f);
+                // Threat / danger chips (v005 gate M10): −20 LUFS under a full stack is 6–8 LU
+                // down, so they duck the world buses ≈ −4 dB and the beds ≈ −3 dB for 0.3 s -
+                // the sidechain the software mixer already owns, no snapshot churn.
+                case AudioSoundId.HudLowHealth:
+                {
+                    AudioPlacement p = Interface(sound, 0.75f, 78f, 0f, 1, 1.0f);
+                    p.DuckAmbience = 0.7f;
+                    p.DuckCombat = 0.63f;
+                    p.DuckSeconds = 0.35f;
+                    return p;
+                }
+                case AudioSoundId.HudMagazineEmpty: return Interface(sound, 0.5f, 52f, 0f, 1, 0.5f);
+                case AudioSoundId.HudThreatEncircled:
+                {
+                    AudioPlacement p = Interface(sound, 0.8f, 82f, 0f, 1, 1.5f);
+                    p.DuckAmbience = 0.7f;
+                    p.DuckCombat = 0.63f;
+                    p.DuckSeconds = 0.35f;
+                    return p;
+                }
+                case AudioSoundId.HudThreatRear:
+                {
+                    AudioPlacement p = Interface(sound, 0.75f, 80f, 0f, 1, 0.8f);
+                    p.DuckAmbience = 0.7f;
+                    p.DuckCombat = 0.63f;
+                    p.DuckSeconds = 0.3f;
+                    return p;
+                }
+                case AudioSoundId.HudThreatStrong:
+                {
+                    AudioPlacement p = Interface(sound, 0.7f, 76f, 0f, 1, 2.0f);
+                    p.DuckAmbience = 0.7f;
+                    p.DuckCombat = 0.63f;
+                    p.DuckSeconds = 0.35f;
+                    return p;
+                }
+                case AudioSoundId.UiReroll: return Interface(sound, 0.5f, 55f, 0f, 1, 0.2f);
+                case AudioSoundId.UiLock: return Interface(sound, 0.55f, 55f, 0f, 1, 0.2f);
+                case AudioSoundId.UiLevelUp: return Interface(sound, 0.7f, 70f, 0f, 1, 0.5f);
+                case AudioSoundId.UiUnlock: return Interface(sound, 0.65f, 68f, 0f, 2, 0.25f);
+                case AudioSoundId.UiAchievement: return Interface(sound, 0.65f, 66f, 0f, 2, 0.25f);
+                case AudioSoundId.UiNewBest: return Interface(sound, 0.75f, 72f, 0f, 1, 0.5f);
+                case AudioSoundId.UiReveal: return Interface(sound, 0.55f, 58f, 0f, 2, 0.08f);
+                default: return Interface(sound, 0.5f, 50f, 0f, 2, 0.05f);
+            }
         }
 
         /// <summary>The claw landing on the player. Heard from the player's side: near, not fully positional.</summary>

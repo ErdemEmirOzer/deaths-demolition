@@ -226,6 +226,37 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.AmbDrip: return BuildImpactWater(ref rng);
                 case AudioSoundId.UiTransition: return BuildUiTone(true, ref rng);
 
+                // WP-021C ids - fallbacks by family (the catalog owns the shipped clips; AP-011 v005).
+                case AudioSoundId.ZombieWindupSpecial: return BuildTensionBed(true, ref rng);
+                case AudioSoundId.ZombieAttackSpecial:
+                case AudioSoundId.ZombieHitSpecial: return BuildFleshHit(false, ref rng);
+                case AudioSoundId.ZombieDeathSpecial: return BuildEnemyDeath(false, ref rng);
+                case AudioSoundId.ZombieIdleSpecial:
+                case AudioSoundId.ZombieIdleElite:
+                case AudioSoundId.ZombieIdleUltra: return BuildTensionBed(false, ref rng);
+                case AudioSoundId.ZombieAggroStandard:
+                case AudioSoundId.ZombieAggroSpecial: return BuildTensionBed(true, ref rng);
+                case AudioSoundId.ZombieAggroElite:
+                case AudioSoundId.ZombieAggroUltra: return BuildEnemyDeath(true, ref rng);
+                case AudioSoundId.UiHover:
+                case AudioSoundId.UiSliderTick: return BuildUiNavigate(ref rng);
+                case AudioSoundId.UiPaneOpen: return BuildImpactPaper(ref rng);
+                case AudioSoundId.UiSelect:
+                case AudioSoundId.UiToggle:
+                case AudioSoundId.UiDialogOpen: return BuildUiTone(true, ref rng);
+                case AudioSoundId.UiReveal:
+                case AudioSoundId.UiUnlock: return BuildSwPickup(ref rng);
+                case AudioSoundId.HudLowHealth: return BuildPlayerDamage(ref rng);
+                case AudioSoundId.HudMagazineEmpty: return BuildUiDenied(ref rng);
+                case AudioSoundId.HudThreatEncircled:
+                case AudioSoundId.HudThreatRear: return BuildTensionBed(true, ref rng);
+                case AudioSoundId.HudThreatStrong: return BuildSpawnGong(ref rng);
+                case AudioSoundId.UiReroll: return BuildImpactPaper(ref rng);
+                case AudioSoundId.UiLock: return BuildImpactMetal(ref rng);
+                case AudioSoundId.UiLevelUp: return BuildUpgradePurchase(ref rng);
+                case AudioSoundId.UiAchievement:
+                case AudioSoundId.UiNewBest: return BuildRoundComplete(ref rng);
+
                 default:
                     return BuildImpactDefault(ref rng);
             }

@@ -23,7 +23,7 @@ namespace DD.Prototype.Audio
         /// <summary>Polled by <see cref="AudioEventRouter"/> (no event exists: zombie attack windup).</summary>
         Polled = 4,
 
-        /// <summary><c>PrototypeAudio.*</c> static calls from the UI kit.</summary>
+        /// <summary><c>PrototypeAudio.*</c> static calls from the UI kit and, since WP-021C, the WP-022B <c>UiEvents.Raised</c> contract (<c>UiEvent.&lt;name&gt;</c> rows).</summary>
         Ui = 5,
 
         /// <summary>Continuous: ambience beds driven by region + phase.</summary>
@@ -32,7 +32,7 @@ namespace DD.Prototype.Audio
         /// <summary>Continuous: music layers driven by intensity + tier + phase.</summary>
         Music = 7,
 
-        /// <summary>Reserved for WP-018 (ADR-018-1 animation events) — bound when it lands on main.</summary>
+        /// <summary>WP-018 (ADR-018-1) animation events, bound since WP-021B via <c>CharacterAnimationEvents.Any</c>.</summary>
         Animation = 8
     }
 
@@ -122,6 +122,11 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.SpecialWeaponExpired), AudioSoundId.SwExpired, U, false, "not on cancel (WP-007 K-7)"),
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.SpecialWeaponGroundExpired), AudioSoundId.SwGroundExpired, U, true, ""),
 
+            // ---- Special Weapon USE per weapon (WP-037 SpecialWeaponUsage table → these rows; data-only mapping)
+            B(AudioEventSource.Combat, "SpecialWeaponUsage.KaguraBell.FireCue/ActiveLoop", AudioSoundId.HeavyFire, W, true, "→ HeavyWeaponFire / HeavyWeaponSpinUp rows (WP-037 table; per-weapon voice = AP-011 v4 queue)"),
+            B(AudioEventSource.Combat, "SpecialWeaponUsage.OfudaLoom.FireCue/ActiveLoop", AudioSoundId.HeavyFire, W, true, "→ HeavyWeaponFire / HeavyWeaponSpinUp rows"),
+            B(AudioEventSource.Combat, "SpecialWeaponUsage.TideJewel.FireCue/ActiveLoop", AudioSoundId.HeavyFire, W, true, "→ HeavyWeaponFire / HeavyWeaponSpinUp rows"),
+
             // ---- confirmation (Combat) -------------------------------------------
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.HitMarker), AudioSoundId.HitMarker, U, false, ""),
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.KillMarker), AudioSoundId.KillMarker, U, false, ""),
@@ -143,10 +148,10 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Player, "PlayerHealth.AnyPlayerDied", AudioSoundId.PlayerDeath, U, false, ""),
 
             // ---- zombie vocal set (Damage + Polled) — DEC-067 -----------------------
-            B(AudioEventSource.Polled, "ZombieEnemy.AttackPhase→Windup", AudioSoundId.ZombieWindupStandard, T, true, "DEC-067: ≥ 0.3 s before the swing, positional (telegraph 0.55 s); Elite/Ultra ids by tier"),
-            B(AudioEventSource.Polled, "ZombieEnemy.AttackPhase→Active", AudioSoundId.ZombieAttackStandard, T, true, "the swing; Elite/Ultra ids by tier"),
-            B(AudioEventSource.Damage, "DamageEvents.EnemyDamaged", AudioSoundId.ZombieHitStandard, T, true, "pain grunt, throttled per enemy; Elite/Ultra ids by tier"),
-            B(AudioEventSource.Damage, "DamageEvents.EnemyDied", AudioSoundId.ZombieDeathStandard, T, true, "vocal layer over CombatAudioEvent.EnemyDeath; Elite/Ultra ids by tier"),
+            B(AudioEventSource.Polled, "ZombieEnemy.AttackPhase→Windup", AudioSoundId.ZombieWindupStandard, T, true, "DEC-067: ≥ 0.3 s before the swing, positional (telegraph 0.55 s); Special/Elite/Ultra ids by tier (WP-021C: Special added)"),
+            B(AudioEventSource.Polled, "ZombieEnemy.AttackPhase→Active", AudioSoundId.ZombieAttackStandard, T, true, "the swing; Special/Elite/Ultra ids by tier"),
+            B(AudioEventSource.Damage, "DamageEvents.EnemyDamaged", AudioSoundId.ZombieHitStandard, T, true, "pain grunt, throttled per enemy; Special/Elite/Ultra ids by tier"),
+            B(AudioEventSource.Damage, "DamageEvents.EnemyDied", AudioSoundId.ZombieDeathStandard, T, true, "vocal layer over CombatAudioEvent.EnemyDeath; Special/Elite/Ultra ids by tier"),
             B(AudioEventSource.Damage, "DamageEvents.PlayerAttacked", AudioSoundId.PlayerDamage, U, false, "same cue as AnyDamaged (single owner: PlayerHealth); listed for completeness"),
             B(AudioEventSource.Damage, "DamageEvents.ArmorBroken", AudioSoundId.ArmorBreak, T, true, "no second cue: the tier cue in ReportEnemyHit owns it (WP-006 N1)"),
 
@@ -155,6 +160,7 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ui, "PrototypeAudio.Confirm", AudioSoundId.UiConfirm, U, false, "AP-011"),
             B(AudioEventSource.Ui, "PrototypeAudio.Back", AudioSoundId.UiBack, U, false, "AP-011"),
             B(AudioEventSource.Ui, "PrototypeAudio.Denied", AudioSoundId.UiDenied, U, false, "AP-011"),
+            B(AudioEventSource.Ui, "PrototypeAudio.Reveal", AudioSoundId.UiReveal, U, false, "WP-021C: UiSound.Reveal now reaches the library (was a local synth)"),
 
             // ---- ambience (continuous) — DEC-066 / DEC-068 ---------------------------
             B(AudioEventSource.Ambience, "Region.common", AudioSoundId.AmbCommon, A, false, "after-rain drip, wind, bamboo, water — always on"),
@@ -175,7 +181,7 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Damage, "DamageEvents.EnemyDamaged.CausedStagger", AudioSoundId.ZombieStagger, T, true, "heavy stagger grunt + stumble"),
             B(AudioEventSource.Damage, "DamageEvents.ArmorBroken+0.42s", AudioSoundId.ArmorPieceDrop, I, true, "plate landing after the break cue"),
             B(AudioEventSource.Polled, "ZombieEnemy.Live→first frame", AudioSoundId.ZombieRise, T, true, "spawn / rise from the ground"),
-            B(AudioEventSource.Polled, "ZombieEnemy idle 6–14 s ≤ 9 m", AudioSoundId.ZombieIdle, T, true, "near-range breath/growl, AttackPhase None only"),
+            B(AudioEventSource.Polled, "ZombieEnemy idle 6–14 s ≤ 9 m", AudioSoundId.ZombieIdle, T, true, "near-range breath/growl, AttackPhase None only; Special/Elite/Ultra idle ids by tier (WP-021C)"),
             B(AudioEventSource.Combat, "BreakableProp.Broke", AudioSoundId.BreakCeramic, I, true, "AP-003B small_breakable (ceramic)"),
             B(AudioEventSource.Ambience, "scatter.drip", AudioSoundId.AmbDrip, A, true, "after-rain single drops in the scatter ring"),
             B(AudioEventSource.Run, "RunEvents.RunStarted / Phase→None", AudioSoundId.UiTransition, U, false, "screen transition, same frame as the mixer snapshot"),
@@ -191,7 +197,50 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Animation, "anim.breath", AudioSoundId.ZombieIdle, T, true, "re-arms the polled idle timer (no double)"),
             B(AudioEventSource.Animation, "anim.death_end", AudioSoundId.ZombieStepHeavy, I, true, "body settle layer (pitch 0.8)"),
             B(AudioEventSource.Animation, "anim.hit_window_start", AudioSoundId.ZombieAttackStandard, T, true, "covered by the polled AttackPhase→Active edge (same frame); no second cue", true),
-            B(AudioEventSource.Animation, "anim.fire / anim.pickup / anim.rise_end / anim.stagger_end", AudioSoundId.None, T, false, "covered by weapon / Special / rise / stagger cues from their own events", true)
+            B(AudioEventSource.Animation, "anim.rise_end", AudioSoundId.ZombieAggroStandard, T, true, "WP-021C: the body is up and has seen you - the aggro growl, ids by tier (ZombieRise is the earth, this is the voice)"),
+            B(AudioEventSource.Animation, "anim.fire / anim.pickup / anim.stagger_end", AudioSoundId.None, T, false, "covered by weapon / Special / stagger cues from their own events", true),
+
+            // ---- WP-021C · WP-022B UI events (EVENT-COVERAGE-MATRIX §UI) — one row per UiEvent member;
+            // reserved = the same frame already plays the sound through another row (single owner, no double).
+            B(AudioEventSource.Ui, "UiEvent.FocusMoved", AudioSoundId.UiNavigate, U, false, "same frame as UiSound.Move → PrototypeAudio.Navigate (owner)", true),
+            B(AudioEventSource.Ui, "UiEvent.ButtonHover", AudioSoundId.UiHover, U, false, "pointer over a control; lighter and shorter than Navigate (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.ButtonPress", AudioSoundId.UiConfirm, U, false, "same frame as Confirm (owner: UiSound.Confirm)", true),
+            B(AudioEventSource.Ui, "UiEvent.Confirm", AudioSoundId.UiConfirm, U, false, "owner: UiSound.Confirm → PrototypeAudio.Confirm", true),
+            B(AudioEventSource.Ui, "UiEvent.Back", AudioSoundId.UiBack, U, false, "owner: UiSound.Back → PrototypeAudio.Back", true),
+            B(AudioEventSource.Ui, "UiEvent.Denied", AudioSoundId.UiDenied, U, false, "owner: UiSound.Denied → PrototypeAudio.Denied", true),
+            B(AudioEventSource.Ui, "UiEvent.ScreenEntered", AudioSoundId.UiTransition, U, false, "screen transition (detail = screen); the RunStarted / Phase→None cue is the same id and MinRetrigger 0.3 s folds a same-frame double"),
+            B(AudioEventSource.Ui, "UiEvent.ScreenLeft", AudioSoundId.None, U, false, "silent by design: the next ScreenEntered carries the transition", true),
+            B(AudioEventSource.Ui, "UiEvent.PaneOpened", AudioSoundId.UiPaneOpen, U, false, "main-menu pane: paper slide (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.ChoiceSelected", AudioSoundId.UiSelect, U, false, "skin / weapon card: wood 'tok' (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.SliderChanged", AudioSoundId.UiSliderTick, U, false, "one tick per step (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.ToggleChanged", AudioSoundId.UiToggle, U, false, "two-tone mechanical (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.DialogOpened", AudioSoundId.UiDialogOpen, U, false, "quit-run confirm: short low accent (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.DialogClosed", AudioSoundId.UiBack, U, false, "owner: UiSound.Back (PauseScreen.CloseConfirm)", true),
+            B(AudioEventSource.Ui, "UiEvent.HudRoundStarted", AudioSoundId.RoundStart, U, false, "owner: RunAudioEvent.RoundStart (same frame)", true),
+            B(AudioEventSource.Ui, "UiEvent.HudRoundCompleted", AudioSoundId.RoundComplete, U, false, "owner: RunAudioEvent.RoundComplete", true),
+            B(AudioEventSource.Ui, "UiEvent.HudPoolExhausted", AudioSoundId.RoundComplete, U, false, "owner: RunAudioEvent.RoundPoolExhausted (soft variant)", true),
+            B(AudioEventSource.Ui, "UiEvent.HudLowHealthEntered", AudioSoundId.HudLowHealth, U, false, "muffled double heartbeat when the bar turns danger (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.HudLowHealthLeft", AudioSoundId.None, U, false, "silent by design (S-09 row): the colour returning is enough", true),
+            B(AudioEventSource.Ui, "UiEvent.HudMagazineEmpty", AudioSoundId.HudMagazineEmpty, U, false, "HUD chip, not the trigger: DryFire stays the pull on an empty magazine (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.HudSpecialSpawned", AudioSoundId.None, U, false, "owner: CombatAudioEvent.SpecialWeaponSpawn → SwSpawnGong (REQ-053: the gong is bound to that one row only)", true),
+            B(AudioEventSource.Ui, "UiEvent.HudSpecialPickedUp", AudioSoundId.SwPickup, U, false, "owner: CombatAudioEvent.SpecialWeaponPickup", true),
+            B(AudioEventSource.Ui, "UiEvent.HudSpecialFinalSeconds", AudioSoundId.SwFinalSeconds, U, false, "owner: CombatAudioEvent.SpecialWeaponFinalSeconds (REQ-058 audible warning)", true),
+            B(AudioEventSource.Ui, "UiEvent.HudSpecialEnded", AudioSoundId.SwExpired, U, false, "owner: CombatAudioEvent.SpecialWeaponExpired", true),
+            B(AudioEventSource.Ui, "UiEvent.HudSpecialExpired", AudioSoundId.SwGroundExpired, U, false, "owner: CombatAudioEvent.SpecialWeaponGroundExpired", true),
+            B(AudioEventSource.Ui, "UiEvent.HudThreatEncircled", AudioSoundId.HudThreatEncircled, U, false, "SURROUNDED chip: low tension hit (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.HudThreatRearAttack", AudioSoundId.HudThreatRear, U, false, "BEHIND YOU chip: sharp reverse whoosh (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.HudThreatStrongVersion", AudioSoundId.HudThreatStrong, U, false, "ELITE/ULTRA NEARBY chip: dark short bell, distinct from the reserved gong (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.HudThreatWindup", AudioSoundId.None, U, false, "covered by the positional windup vocal (DEC-067); a 2D double would blur direction", true),
+            B(AudioEventSource.Ui, "UiEvent.HudDamageEdge", AudioSoundId.PlayerDamage, U, false, "owner: PlayerHealth.AnyDamaged", true),
+            B(AudioEventSource.Ui, "UiEvent.UpgradePurchased", AudioSoundId.UpgradePurchase, U, false, "owner: RunAudioEvent.UpgradePurchased", true),
+            B(AudioEventSource.Ui, "UiEvent.UpgradeRerolled", AudioSoundId.UiReroll, U, false, "three quick card rustles (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.UpgradeOfferLocked", AudioSoundId.UiLock, U, false, "metal latch (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.ResultsRevealed", AudioSoundId.UiReveal, U, false, "owner: UiSound.Reveal → PrototypeAudio.Reveal (same frame)", true),
+            B(AudioEventSource.Ui, "UiEvent.LevelUp", AudioSoundId.UiLevelUp, U, false, "rising three-note (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.UnlockRevealed", AudioSoundId.UiUnlock, U, false, "pickup + magnet sparkle (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.AchievementRevealed", AudioSoundId.UiAchievement, U, false, "short round-complete + bell (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.NewBestRound", AudioSoundId.UiNewBest, U, false, "the brightest one (AP-011 v005)"),
+            B(AudioEventSource.Ui, "UiEvent.SettingsChanged", AudioSoundId.None, U, false, "silent by design: SliderChanged / ToggleChanged carry it", true)
         };
 
         private static AudioEventBinding B(AudioEventSource s, string e, AudioSoundId id, AudioBus bus, bool spatial, string note, bool reserved = false)
@@ -234,6 +283,7 @@ namespace DD.Prototype.Audio
         {
             switch (tier)
             {
+                case DD.Prototype.Core.Config.EnemyTier.Special: return AudioSoundId.ZombieWindupSpecial;
                 case DD.Prototype.Core.Config.EnemyTier.Elite: return AudioSoundId.ZombieWindupElite;
                 case DD.Prototype.Core.Config.EnemyTier.Ultra: return AudioSoundId.ZombieWindupUltra;
                 default: return AudioSoundId.ZombieWindupStandard;
@@ -244,6 +294,7 @@ namespace DD.Prototype.Audio
         {
             switch (tier)
             {
+                case DD.Prototype.Core.Config.EnemyTier.Special: return AudioSoundId.ZombieAttackSpecial;
                 case DD.Prototype.Core.Config.EnemyTier.Elite: return AudioSoundId.ZombieAttackElite;
                 case DD.Prototype.Core.Config.EnemyTier.Ultra: return AudioSoundId.ZombieAttackUltra;
                 default: return AudioSoundId.ZombieAttackStandard;
@@ -254,6 +305,7 @@ namespace DD.Prototype.Audio
         {
             switch (tier)
             {
+                case DD.Prototype.Core.Config.EnemyTier.Special: return AudioSoundId.ZombieHitSpecial;
                 case DD.Prototype.Core.Config.EnemyTier.Elite: return AudioSoundId.ZombieHitElite;
                 case DD.Prototype.Core.Config.EnemyTier.Ultra: return AudioSoundId.ZombieHitUltra;
                 default: return AudioSoundId.ZombieHitStandard;
@@ -264,9 +316,34 @@ namespace DD.Prototype.Audio
         {
             switch (tier)
             {
+                case DD.Prototype.Core.Config.EnemyTier.Special: return AudioSoundId.ZombieDeathSpecial;
                 case DD.Prototype.Core.Config.EnemyTier.Elite: return AudioSoundId.ZombieDeathElite;
                 case DD.Prototype.Core.Config.EnemyTier.Ultra: return AudioSoundId.ZombieDeathUltra;
                 default: return AudioSoundId.ZombieDeathStandard;
+            }
+        }
+
+        /// <summary>WP-021C: near-range idle breath per tier (Standard keeps the v003 clip).</summary>
+        public static AudioSoundId ZombieIdle(DD.Prototype.Core.Config.EnemyTier tier)
+        {
+            switch (tier)
+            {
+                case DD.Prototype.Core.Config.EnemyTier.Special: return AudioSoundId.ZombieIdleSpecial;
+                case DD.Prototype.Core.Config.EnemyTier.Elite: return AudioSoundId.ZombieIdleElite;
+                case DD.Prototype.Core.Config.EnemyTier.Ultra: return AudioSoundId.ZombieIdleUltra;
+                default: return AudioSoundId.ZombieIdle;
+            }
+        }
+
+        /// <summary>WP-021C: the aggro growl at anim.rise_end, per tier.</summary>
+        public static AudioSoundId ZombieAggro(DD.Prototype.Core.Config.EnemyTier tier)
+        {
+            switch (tier)
+            {
+                case DD.Prototype.Core.Config.EnemyTier.Special: return AudioSoundId.ZombieAggroSpecial;
+                case DD.Prototype.Core.Config.EnemyTier.Elite: return AudioSoundId.ZombieAggroElite;
+                case DD.Prototype.Core.Config.EnemyTier.Ultra: return AudioSoundId.ZombieAggroUltra;
+                default: return AudioSoundId.ZombieAggroStandard;
             }
         }
     }

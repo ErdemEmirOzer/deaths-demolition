@@ -301,14 +301,175 @@ namespace DD.Prototype.Tests.PlayMode
 
             events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootLeft);
             Assert.AreEqual(once + 1, r.FootstepCount, "foot_l ayak sesi üretmedi.");
-            AudioSoundId beklenen = AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Default);
-            Assert.AreEqual(beklenen, _d.LastPlayed, "Etiketsiz zemin taş ayak sesi çalmalı.");
+            // WP-021C: the surface under the rig is whatever the world's tags + routes say (Default still reads as stone).
+            SurfaceKind altta = YuzeyAltinda(_s.Rig.transform.position);
+            AudioSoundId beklenen = AudioEventRouter.FootstepFor(altta);
+            Assert.AreEqual(beklenen, _d.LastPlayed, "Ayak sesi altındaki yüzeye göre çalmalı (" + altta + ").");
             yield return new WaitForSecondsRealtime(0.2f);   // PlayerFootstep MinRetrigger 0.08 s
             events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootRight);
             Assert.AreEqual(once + 2, r.FootstepCount, "foot_r ayak sesi üretmedi.");
             Assert.AreEqual(AudioSoundId.FootstepWood, AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Wood));
             Assert.AreEqual(AudioSoundId.FootstepWater, AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Water));
             Debug.Log("[DD-TEST] wp021b.footstep " + r.Describe());
+        }
+
+        private static SurfaceKind YuzeyAltinda(Vector3 root)
+        {
+            int mask = (1 << DD.Prototype.Core.PrototypeLayers.Environment) | (1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder);
+            return Physics.Raycast(root + Vector3.up * 0.4f, Vector3.down, out RaycastHit hit, 1.2f, mask, QueryTriggerInteraction.Ignore)
+                ? AudioSurfaceHints.Resolve(hit.collider, hit.point)
+                : SurfaceKind.Default;
+        }
+
+        // ================================================================== WP-021C · UI olayları (WP-022B)
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator UiOlaylari_BagliSatirCalar_RezerveSatirCiftCalmaz()
+        {
+            AudioEventRouter r = _d.Router;
+            int once = _d.PlayedCount, ui = r.UiCount;
+
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.ButtonHover);
+            Assert.AreEqual(once + 1, _d.PlayedCount, "ButtonHover ses üretmedi.");
+            Assert.AreEqual(AudioSoundId.UiHover, _d.LastPlayed);
+            Assert.AreEqual(ui + 1, r.UiCount);
+
+            // Reserved row: the same frame's owner (UiSound.Move → PrototypeAudio.Navigate) plays; the UiEvent path stays silent.
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.FocusMoved);
+            Assert.AreEqual(once + 1, _d.PlayedCount, "FocusMoved rezerve satır: UiEvent yolu çalmamalı (çift ses).");
+
+            yield return null;
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.HudThreatEncircled, "SURROUNDED");
+            Assert.AreEqual(AudioSoundId.HudThreatEncircled, _d.LastPlayed, "SURROUNDED çipi kendi sesini çalmalı.");
+            yield return null;
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.NewBestRound);
+            Assert.AreEqual(AudioSoundId.UiNewBest, _d.LastPlayed);
+
+            // Reveal now reaches the library through UiSound (one voice, no local synth).
+            yield return new WaitForSecondsRealtime(0.25f);   // UiSound retrigger window + UiReveal MinRetrigger
+            int reveal = _d.PlayedCount, dropped = _d.DroppedCues;
+            DD.Prototype.UI.UiSound.Play(DD.Prototype.UI.UiSoundKind.Reveal);
+            Assert.AreEqual(reveal + 1, _d.PlayedCount, "UiSound.Reveal director'a ulaşmadı (dropped " + dropped + "→" + _d.DroppedCues + ", enabled " + DD.Prototype.UI.UiSound.Enabled + ").");
+            Assert.AreEqual(AudioSoundId.UiReveal, _d.LastPlayed);
+            Debug.Log("[DD-TEST] wp021c.ui " + r.Describe());
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator AnaSes_UiSettingsSozlesmesi_MixerParametresiniRampaIleTakipEder()
+        {
+            Assert.IsTrue(_d.MixerOwnsMaster, "Mixer varlığı yok: ana ses AudioListener'da kalır.");
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            try
+            {
+                DD.Prototype.UI.UiSettings.MasterVolume = 0.5f;   // S-09 contract: property → PrototypeAudio.MasterVolume + MasterVolumeChanged
+                Assert.AreEqual(0.5f, PrototypeAudio.MasterVolume, 1e-4f);
+                Assert.AreEqual(1f, AudioListener.volume, 1e-4f, "Mixer sahipken listener 1 kalmalı (çift zayıflatma yok).");
+                yield return new WaitForSecondsRealtime(0.3f);
+                Assert.IsTrue(mixer.GetFloat(AudioMixerBridge.VolumeParams[0], out float db));
+                Assert.AreEqual(-6.02f, db, 0.1f, "MasterVolume parametresi −6 dB olmalı.");
+
+                DD.Prototype.UI.UiSettings.MasterVolume = 1f;
+                yield return new WaitForSecondsRealtime(0.3f);
+                Assert.IsTrue(mixer.GetFloat(AudioMixerBridge.VolumeParams[0], out db));
+                Assert.AreEqual(0f, db, 0.1f);
+            }
+            finally
+            {
+                DD.Prototype.UI.UiSettings.MasterVolume = 1f;
+                PrototypeAudio.MasterVolume = 1f;
+            }
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Aggro_RiseEnd_TierVokali()
+        {
+            AudioEventRouter r = _d.Router;
+            ZombieEnemy z = _s.Dogur(_s.Zemin(0f, 4f));
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            yield return null;
+            var events = z.GetComponentInChildren<DD.Prototype.Characters.CharacterAnimationEvents>(true);
+            if (events == null)
+            {
+                Assert.Ignore("Zombide CharacterAnimationEvents yok (prosedürel karakter modu).");
+            }
+
+            int once = r.AggroCount;
+            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.RiseEnd);
+            Assert.AreEqual(once + 1, r.AggroCount, "rise_end aggro vokali üretmedi.");
+            Assert.AreEqual(AudioEventMap.ZombieAggro(z.Tier), _d.LastPlayed, "Tier'ın kendi aggro kimliği.");
+            Assert.AreNotEqual(AudioEventMap.ZombieAggro(DD.Prototype.Core.Config.EnemyTier.Ultra), AudioEventMap.ZombieAggro(DD.Prototype.Core.Config.EnemyTier.Special));
+            Debug.Log("[DD-TEST] wp021c.aggro tier=" + z.Tier + " " + r.Describe());
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator YuzeyEtiketleri_DunyaYuklenince_Uygulanir_ZeminCozulur()
+        {
+            // The test assembly does not reference DD.Art; the world root and the tags it adds are observable without it.
+            GameObject world = GameObject.Find("[AP005 World]");
+            if (world == null)
+            {
+                Assert.Ignore("Run sahnesi AP005 dünyasını yüklemedi (prosedürel dünya): etiketleme uygulanmaz.");
+            }
+
+            int tagged = world.GetComponentsInChildren<SurfaceTag>(true).Length;
+            Assert.GreaterOrEqual(tagged, 2000, "Placement örnekleri etiketlenmedi (Ap005SurfaceTags).");
+            SurfaceKind altta = YuzeyAltinda(_s.Rig.transform.position);
+            Assert.AreNotEqual(SurfaceKind.Default, altta, "Oyuncu başlangıcındaki zemin etiketli olmalı.");
+            Assert.IsNotNull(AudioSurfaceHints.Refine, "Rota iyileştirmesi kayıtlı değil.");
+            Debug.Log("[DD-TEST] wp021c.surface tagged=" + tagged + " underPlayer=" + altta + " refined=" + AudioSurfaceHints.RefinedCount);
+            yield return null;
+        }
+
+        // ================================================================== WP-021C · master limiter ölçümü
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Limiter_EnYuksekYigin_CikisTepesi_TavaninAltinda()
+        {
+            // The loudest stack the game can produce in one frame, at its loudest gains.
+            var buffer = new float[2048];
+            float peak = 0f; double sumSq = 0; long count = 0; int silentFrames = 0;
+            for (int rep = 0; rep < 3; rep++)
+            {
+                AudioEvents.RaiseCritical(CombatAudioEvent.ClassicWeaponFire, Vector3.zero, 1.4f, 50);
+                AudioEvents.RaiseCritical(CombatAudioEvent.Explosion, Konum(0.5f), 1.4f, 90);
+                AudioEvents.RaiseCritical(CombatAudioEvent.SpecialWeaponSpawn, Konum(0.5f), 1.4f, 100);
+                AudioEvents.RaiseCritical(CombatAudioEvent.HeavyWeaponFire, Konum(0.5f), 1.4f, 60);
+                AudioEvents.RaiseCritical(CombatAudioEvent.ArmorBreak, Konum(0.5f), 1.4f, 80);
+                RunAudioEvents.Raise(RunAudioEvent.RoundStart, default, 1.4f, 0);
+                DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.HudThreatEncircled);
+                RunAudioEvents.Raise(RunAudioEvent.GoldCollected, Konum(0.2f), 1.4f, 5);
+                for (int f = 0; f < 20; f++)
+                {
+                    yield return null;
+                    AudioListener.GetOutputData(buffer, 0);
+                    float frameMax = 0f;
+                    for (int i = 0; i < buffer.Length; i++)
+                    {
+                        float a = Mathf.Abs(buffer[i]);
+                        if (a > frameMax) frameMax = a;
+                        sumSq += buffer[i] * buffer[i];
+                    }
+
+                    count += buffer.Length;
+                    if (frameMax < 1e-6f) silentFrames++;
+                    if (frameMax > peak) peak = frameMax;
+                }
+            }
+
+            if (peak < 1e-5f)
+            {
+                Assert.Inconclusive("Ses çıkışı sessiz (batch/aygıt yok): limiter ölçümü bu ortamda yapılamıyor.");
+            }
+
+            float peakDb = 20f * Mathf.Log10(peak);
+            float rmsDb = 20f * Mathf.Log10((float)Math.Sqrt(sumSq / Math.Max(1, count)) + 1e-9f);
+            Debug.Log("[DD-TEST] wp021c.limiter stack peak=" + peakDb.ToString("0.00") + " dBFS rms=" + rmsDb.ToString("0.0") + " dBFS silentFrames=" + silentFrames + "/60");
+            Assert.LessOrEqual(peakDb, -1.0f, "Master çıkış tepesi −1 dBFS tavanını aştı: " + peakDb.ToString("0.00"));
         }
 
         // ================================================================== GC 0

@@ -43,9 +43,9 @@ namespace DD.Prototype.UI
     /// a button called both.
     ///
     /// The local synthesiser below stays as the fallback. The Main Menu and Selection
-    /// scenes can boot without an audio director, and <see cref="UiSoundKind.Reveal"/> has
-    /// no counterpart in the library at all, so a silent menu would otherwise be one missing
-    /// component away. Clips are generated from arithmetic at first use, there is no
+    /// scenes can boot without an audio director (since WP-021C <see cref="UiSoundKind.Reveal"/>
+    /// also has a library counterpart, so every kind forwards), so a silent menu would
+    /// otherwise be one missing component away. Clips are generated from arithmetic at first use, there is no
     /// imported asset, and the fallback never enters the combat audio budget.
     ///
     /// One AudioSource, unpooled, 2D, on a DontDestroyOnLoad object. Interface sounds
@@ -157,8 +157,9 @@ namespace DD.Prototype.UI
                     return true;
 
                 default:
-                    // Reveal. The library has no equivalent; the local voice keeps it.
-                    return false;
+                    // Reveal. WP-021C: the library has it now (AP-011 v005 UiReveal); the local voice is the no-director fallback.
+                    PrototypeAudio.Reveal();
+                    return true;
             }
         }
 

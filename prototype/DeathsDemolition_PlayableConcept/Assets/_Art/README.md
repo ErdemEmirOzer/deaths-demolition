@@ -43,3 +43,7 @@ Measured (WP-014 → WP-015, M1 Pro 1080p, Run + AP-005 world, 40 enemies): ship
 ## Fog (DEC-076)
 
 `WorldAtmosphere`: linear fog from 52 m (unchanged — nothing inside the 45 m combat range from the camera receives fog, REQ-104) to 210 m in the Presentation A mist colour sRGB (0.815, 0.843, 0.870); the shared sky's horizon (`ArtSkyBuilder`) follows the fog colour. WP-013's 138 m / background-colour ramp is kept as `FogEndWp013` / `FogColorWp013` for the A/B captures only.
+
+## Surface tags (ADR-021-1 v2, WP-021C)
+
+World_AP005 instances get their `SurfaceTag` at scene load, from data: `Runtime/Ap005SurfaceTags.cs` maps the placement **family** to a `SurfaceKind` (Dirt / Stone / Wood / Water / Foliage) and tags each `Instances` child plus the ground stand-in (Dirt; Stone inside the placement's stone routes via `AudioSurfaceHints.Refine`). Rule for new content (AP-015P, any family): add the family to `Ap005SurfaceTags.FamilySurface` — no scene file or prefab edit; an unknown family falls back by role and fails the EditMode audio gate. If the importer ever writes tags itself, use the same table so the two never disagree.

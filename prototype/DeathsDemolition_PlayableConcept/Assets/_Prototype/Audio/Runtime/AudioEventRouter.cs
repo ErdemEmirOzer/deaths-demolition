@@ -88,6 +88,9 @@ namespace DD.Prototype.Audio
         public int BreakCount { get; private set; }
         public int FootstepCount { get; private set; }
         public int SettleCount { get; private set; }
+        /// <summary>WP-021C: aggro growls (anim.rise_end) and UI event cues actually played.</summary>
+        public int AggroCount { get; private set; }
+        public int UiCount { get; private set; }
 
         /// <summary>WP-021B: foot → surface lookup (down ray from the character root). PROTOTYPE-ONLY / INVENTED.</summary>
         private const float FootRayUp = 0.4f;
@@ -121,6 +124,7 @@ namespace DD.Prototype.Audio
             DamageEvents.ArmorBroken += OnArmorBroken;
             Props.BreakableProp.Broke += OnPropBroke;
             CharacterAnimationEvents.Any += OnAnimationEvent;
+            DD.Prototype.UI.UiEvents.Raised += OnUiEvent;
             Subscribed = true;
         }
 
@@ -137,6 +141,7 @@ namespace DD.Prototype.Audio
             DamageEvents.ArmorBroken -= OnArmorBroken;
             Props.BreakableProp.Broke -= OnPropBroke;
             CharacterAnimationEvents.Any -= OnAnimationEvent;
+            DD.Prototype.UI.UiEvents.Raised -= OnUiEvent;
             Subscribed = false;
         }
 
@@ -152,8 +157,9 @@ namespace DD.Prototype.Audio
         /// <summary>
         /// The WP-018 contract (foot_l / foot_r / breath / death_end) — the reserved rows of
         /// the event map. Footsteps take the surface under the character (down ray →
-        /// <see cref="SurfaceResolver"/>; Default reads as stone: the AP-005 paving carries no
-        /// SurfaceTag yet). A zombie's breath uses the idle clip and re-arms the polled idle
+        /// <see cref="AudioSurfaceHints"/> → <see cref="SurfaceResolver"/>; since WP-021C the AP-005
+        /// instances carry SurfaceTags from their placement family and the courtyard ground is
+        /// refined by the stone routes; Default still reads as stone). A zombie's breath uses the idle clip and re-arms the polled idle
         /// timer so the two paths never double; hit_window/fire/pickup are already covered by
         /// the polled windup edge and the weapon/Special cues.
         /// </summary>
@@ -180,7 +186,7 @@ namespace DD.Prototype.Audio
                         t.NextIdle = Time.unscaledTime + _rng.Range(IdleMinSeconds, IdleMaxSeconds);
                         _tracked[z] = t;
                         Vector3 at = z.transform.position + Vector3.up * 1.4f;
-                        if (_play(AudioMixPlan.ZombieIdle(WeightOf(z.Tier)), at, 1f, 10))
+                        if (_play(AudioMixPlan.ZombieIdle(AudioEventMap.ZombieIdle(z.Tier), WeightOf(z.Tier)), at, 1f, 10))
                         {
                             IdleCount++;
                         }
@@ -200,6 +206,70 @@ namespace DD.Prototype.Audio
 
                     break;
                 }
+
+                case CharacterAnimationEvent.RiseEnd:
+                {
+                    // WP-021C: the earth was ZombieRise (first live frame); this is the voice - up, and looking at you.
+                    ZombieEnemy z = OwnerOf(source);
+                    if (z != null && z.IsAlive)
+                    {
+                        Vector3 at = z.transform.position + Vector3.up * 1.4f;
+                        if (_play(AudioMixPlan.ZombieAggro(AudioEventMap.ZombieAggro(z.Tier), WeightOf(z.Tier)), at, 1f, 55))
+                        {
+                            AggroCount++;
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        // ------------------------------------------------------------------ WP-021C · WP-022B UI events
+
+        /// <summary>
+        /// The bound rows of the map's UI section. Everything not listed here is a reserved row:
+        /// the same frame already plays that sound through its owner (UiSound → PrototypeAudio,
+        /// the Run / Combat / Player sources) and a second voice would only blur it.
+        /// </summary>
+        private void OnUiEvent(DD.Prototype.UI.UiEvent e, string detail)
+        {
+            AudioSoundId sound = UiSoundFor(e);
+            if (sound == AudioSoundId.None)
+            {
+                return;
+            }
+
+            if (_play(AudioMixPlan.UiEvent(sound), Vector3.zero, 1f, 45))
+            {
+                UiCount++;
+            }
+        }
+
+        /// <summary>UiEvent → sound for the bound rows; None for the reserved ones. Mirrors the map (the EditMode test keeps the two equal).</summary>
+        public static AudioSoundId UiSoundFor(DD.Prototype.UI.UiEvent e)
+        {
+            switch (e)
+            {
+                case DD.Prototype.UI.UiEvent.ButtonHover: return AudioSoundId.UiHover;
+                case DD.Prototype.UI.UiEvent.ScreenEntered: return AudioSoundId.UiTransition;
+                case DD.Prototype.UI.UiEvent.PaneOpened: return AudioSoundId.UiPaneOpen;
+                case DD.Prototype.UI.UiEvent.ChoiceSelected: return AudioSoundId.UiSelect;
+                case DD.Prototype.UI.UiEvent.SliderChanged: return AudioSoundId.UiSliderTick;
+                case DD.Prototype.UI.UiEvent.ToggleChanged: return AudioSoundId.UiToggle;
+                case DD.Prototype.UI.UiEvent.DialogOpened: return AudioSoundId.UiDialogOpen;
+                case DD.Prototype.UI.UiEvent.HudLowHealthEntered: return AudioSoundId.HudLowHealth;
+                case DD.Prototype.UI.UiEvent.HudMagazineEmpty: return AudioSoundId.HudMagazineEmpty;
+                case DD.Prototype.UI.UiEvent.HudThreatEncircled: return AudioSoundId.HudThreatEncircled;
+                case DD.Prototype.UI.UiEvent.HudThreatRearAttack: return AudioSoundId.HudThreatRear;
+                case DD.Prototype.UI.UiEvent.HudThreatStrongVersion: return AudioSoundId.HudThreatStrong;
+                case DD.Prototype.UI.UiEvent.UpgradeRerolled: return AudioSoundId.UiReroll;
+                case DD.Prototype.UI.UiEvent.UpgradeOfferLocked: return AudioSoundId.UiLock;
+                case DD.Prototype.UI.UiEvent.LevelUp: return AudioSoundId.UiLevelUp;
+                case DD.Prototype.UI.UiEvent.UnlockRevealed: return AudioSoundId.UiUnlock;
+                case DD.Prototype.UI.UiEvent.AchievementRevealed: return AudioSoundId.UiAchievement;
+                case DD.Prototype.UI.UiEvent.NewBestRound: return AudioSoundId.UiNewBest;
+                default: return AudioSoundId.None;
             }
         }
 
@@ -261,7 +331,7 @@ namespace DD.Prototype.Audio
                 if (_footHits[i].distance < best)
                 {
                     best = _footHits[i].distance;
-                    kind = SurfaceResolver.Resolve(_footHits[i].collider);
+                    kind = AudioSurfaceHints.Resolve(_footHits[i].collider, _footHits[i].point);   // WP-021C: tag + route refinement
                 }
             }
 
@@ -405,7 +475,7 @@ namespace DD.Prototype.Audio
                     Vector3 at = z.transform.position + Vector3.up * 1.4f;
                     if (z.AttackPhase == ZombieAttackPhase.None && (at - listener).sqrMagnitude <= IdleRange * IdleRange)
                     {
-                        if (_play(AudioMixPlan.ZombieIdle(WeightOf(z.Tier)), at, 1f, 10))
+                        if (_play(AudioMixPlan.ZombieIdle(AudioEventMap.ZombieIdle(z.Tier), WeightOf(z.Tier)), at, 1f, 10))
                         {
                             IdleCount++;
                         }
@@ -467,8 +537,8 @@ namespace DD.Prototype.Audio
 
         public string Describe()
         {
-            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · tracked {13}",
-                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count);
+            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · tracked {13}",
+                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount);
         }
     }
 }

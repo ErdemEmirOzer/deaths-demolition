@@ -60,9 +60,11 @@ namespace DD.Prototype.Audio
         /// from the world pool rather than carved out of it: hit markers, gold, round
         /// countdown and player damage are the game TALKING to the player, and a crowd of
         /// zombies must never be able to make the game stop talking. Six is enough for a
-        /// magnet streak of six orbs, which is the worst case that exists.
+        /// magnet streak of six orbs, which was the worst case that existed; WP-021C adds the
+        /// threat / low-health chips and the UI event set on the same pool, so eight: a streak
+        /// plus a SURROUNDED chip plus a hover never steal from each other.
         /// </summary>
-        private const int SignalCapacity = 6;
+        private const int SignalCapacity = 8;
 
         /// <summary>Simultaneous looping sounds. There are two in the game; four is slack.</summary>
         private const int LoopCapacity = 4;
@@ -93,11 +95,29 @@ namespace DD.Prototype.Audio
 
         private Transform _loopRoot;
         private bool _paused;
+
+        // WP-021C: the user master volume on the mixer's exposed parameter, ramped in linear
+        // gain so a settings slider (20 steps) never lands as a click on the master bus.
+        private const float MasterRampSeconds = 0.06f;
+        private float _masterTarget = 1f;
+        private float _masterApplied = -1f;
         private int _configuredBudget = 16;
         private int _budgetOverride;
         private int _suppressedSeen;
 
         public static PrototypeAudioDirector Instance => s_instance;
+
+        /// <summary>True when the mixer asset is present: the exposed "MasterVolume" is the master, not AudioListener.volume.</summary>
+        public bool MixerOwnsMaster => _bridge != null && _bridge.Available;
+
+        /// <summary>The master volume the mixer is ramping towards (0-1). Test seam.</summary>
+        public float MasterVolumeTarget => _masterTarget;
+
+        /// <summary>WP-021C: from <see cref="PrototypeAudio.MasterVolume"/> / <c>UiSettings.MasterVolumeChanged</c>. Applied over <see cref="MasterRampSeconds"/> in Update.</summary>
+        public void RequestMasterVolume(float linear01)
+        {
+            _masterTarget = Mathf.Clamp01(linear01);
+        }
 
         /// <summary>WP-021 seams for tests and the F1 panel.</summary>
         public AmbienceDirector Ambience => _ambience;
@@ -165,6 +185,16 @@ namespace DD.Prototype.Audio
 
             _world.Capacity = _configuredBudget;
             _bridge.Transition(AudioSnapshot.Menu, 0f);
+
+            // WP-021C: adopt whatever master volume the settings owner already set (the menu
+            // scene can boot before this director exists) and take it off the listener.
+            _masterTarget = PrototypeAudio.MasterVolume;
+            if (_bridge.Available)
+            {
+                AudioListener.volume = 1f;
+                _bridge.SetVolume(AudioMixerBridge.GroupMaster, _masterTarget);
+                _masterApplied = _masterTarget;
+            }
         }
 
         private IEnumerator Start()
@@ -202,6 +232,8 @@ namespace DD.Prototype.Audio
             PlayerHealth.AnyDamaged += OnPlayerDamaged;
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
 
+            DD.Prototype.UI.UiSettings.MasterVolumeChanged += RequestMasterVolume;   // WP-021C (S-09 contract)
+
             _router?.Subscribe();
             _listener?.Subscribe();
 
@@ -222,6 +254,8 @@ namespace DD.Prototype.Audio
 
             PlayerHealth.AnyDamaged -= OnPlayerDamaged;
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
+
+            DD.Prototype.UI.UiSettings.MasterVolumeChanged -= RequestMasterVolume;
 
             _router?.Unsubscribe();
             _listener?.Unsubscribe();
@@ -261,6 +295,7 @@ namespace DD.Prototype.Audio
             float dt = Time.unscaledDeltaTime;
 
             UpdatePause();
+            TickMasterVolume(dt);
 
             _mixer.Tick(dt);
             _world.Tick(dt, _paused);
@@ -280,6 +315,21 @@ namespace DD.Prototype.Audio
         {
             // After the player moved and the camera followed (ADR-021-2).
             _listener.LateTick();
+        }
+
+        /// <summary>WP-021C: ramp the exposed master parameter towards the requested value (linear domain, then dB).</summary>
+        private void TickMasterVolume(float dt)
+        {
+            if (!MixerOwnsMaster || Mathf.Approximately(_masterApplied, _masterTarget))
+            {
+                return;
+            }
+
+            float next = _masterApplied < 0f
+                ? _masterTarget
+                : Mathf.MoveTowards(_masterApplied, _masterTarget, dt / MasterRampSeconds);
+            _bridge.SetVolume(AudioMixerBridge.GroupMaster, next);
+            _masterApplied = next;
         }
 
         /// <summary>
@@ -726,7 +776,7 @@ namespace DD.Prototype.Audio
             _debugEntries.Add(DebugPanelRegistry.AddReadout(AudioTab, "Buses", DescribeBuses, -95));
 
             _debugEntries.Add(DebugPanelRegistry.AddSlider(AudioTab, "Master volume",
-                () => _mixer.MasterVolume, v => _mixer.MasterVolume = v, 0f, 1f, false, 0));
+                () => PrototypeAudio.MasterVolume, v => PrototypeAudio.MasterVolume = v, 0f, 1f, false, 0));
 
             AddBusSlider(AudioBus.Weapon, "Weapon bus", 1);
             AddBusSlider(AudioBus.Impact, "Impact bus", 2);

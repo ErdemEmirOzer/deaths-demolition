@@ -82,6 +82,9 @@ namespace DD.Prototype.Audio
         private readonly AudioLowPassFilter[] _filters = new AudioLowPassFilter[BedCount];
         private readonly float[] _current = new float[BedCount];
         private readonly float[] _target = new float[BedCount];
+        private readonly float[] _fadeFrom = new float[BedCount];   // WP-021C: last target a bed was given
+
+        private readonly float[] _fadeRate = new float[BedCount];   // WP-021C: per-bed rate fixed at that change
 
         private readonly AudioClipLibrary _library;
         private readonly AudioBusMixer _mixer;
@@ -268,10 +271,17 @@ namespace DD.Prototype.Audio
                 }
                 else
                 {
-                    // The cross-fade is measured bed-to-bed: the full swing between the
-                    // phase's region level and silence takes CrossfadeSeconds, whatever
-                    // that level is (DEC-066 ≥ 2 s holds at every phase level).
-                    rate = Mathf.Max(0.05f, _regionLevel) / CrossfadeSeconds;
+                    // The cross-fade is measured bed-to-bed and takes CrossfadeSeconds from
+                    // WHATEVER level the bed is at when its target changes (WP-021C, WP-039 P1:
+                    // a bed switched while still rising at 0.3 faded out in 1.84 s under the old
+                    // "phase level / seconds" rate; DEC-066 ≥ 2 s must hold for every swing).
+                    if (!Mathf.Approximately(_target[i], _fadeFrom[i]) || (_fadeRate[i] <= 0f && !Mathf.Approximately(_target[i], _current[i])))
+                    {
+                        _fadeFrom[i] = _target[i];
+                        _fadeRate[i] = Mathf.Max(0.05f, Mathf.Abs(_target[i] - _current[i])) / CrossfadeSeconds;
+                    }
+
+                    rate = _fadeRate[i];
                 }
 
                 _current[i] = Mathf.MoveTowards(_current[i], _target[i], rate * unscaledDeltaTime);

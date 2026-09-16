@@ -49,6 +49,12 @@ namespace DD.Prototype.Audio
             Play(AudioSoundId.UiDenied);
         }
 
+        /// <summary>WP-021C: the results screen's NEW badge (UiSound.Reveal). Was a local synth; now the AP-011 clip.</summary>
+        public static void Reveal()
+        {
+            Play(AudioSoundId.UiReveal);
+        }
+
         /// <summary>Plays any library sound directly. Prefer an event where one exists.</summary>
         public static void Play(AudioSoundId sound, float gain = 1f)
         {
@@ -73,11 +79,32 @@ namespace DD.Prototype.Audio
             director.PlayDirect(sound, position, gain);
         }
 
-        /// <summary>Master volume, 0-1. Also on the F1 panel's Audio tab.</summary>
+        private static float s_masterVolume = 1f;
+
+        /// <summary>
+        /// Master volume, 0-1. Single owner (WP-021C, S-09 contract): <c>UiSettings.MasterVolume</c>
+        /// writes here and raises <c>MasterVolumeChanged</c>; the director mirrors the value onto the
+        /// mixer's exposed "MasterVolume" (dB, ramped over ~60 ms so a slider never clicks). Without a
+        /// director or mixer the value lands on <see cref="AudioListener.volume"/> exactly as before.
+        /// Also on the F1 panel's Audio tab.
+        /// </summary>
         public static float MasterVolume
         {
-            get => AudioListener.volume;
-            set => AudioListener.volume = Mathf.Clamp01(value);
+            get => s_masterVolume;
+            set
+            {
+                s_masterVolume = Mathf.Clamp01(value);
+                PrototypeAudioDirector director = PrototypeAudioDirector.Instance;
+                if (director != null && director.MixerOwnsMaster)
+                {
+                    AudioListener.volume = 1f;
+                    director.RequestMasterVolume(s_masterVolume);
+                }
+                else
+                {
+                    AudioListener.volume = s_masterVolume;
+                }
+            }
         }
     }
 }

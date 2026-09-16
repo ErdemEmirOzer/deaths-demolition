@@ -156,6 +156,40 @@ namespace DD.Prototype.Audio
         ArmorPieceDrop = 211,
         BreakCeramic = 212,
         AmbDrip = 213,
-        UiTransition = 214
+        UiTransition = 214,
+
+        // ---- WP-021C · tier vocal set completion (B·B·B; AP-011 v005, derived, no credits)
+        ZombieWindupSpecial = 220,
+        ZombieAttackSpecial = 221,
+        ZombieHitSpecial = 222,
+        ZombieDeathSpecial = 223,
+        ZombieIdleSpecial = 224,
+        ZombieIdleElite = 225,
+        ZombieIdleUltra = 226,
+        /// <summary>anim.rise_end: the body is up and has seen you (per tier).</summary>
+        ZombieAggroStandard = 227,
+        ZombieAggroSpecial = 228,
+        ZombieAggroElite = 229,
+        ZombieAggroUltra = 230,
+
+        // ---- WP-021C · UI event set (WP-022B UiEvents; EVENT-COVERAGE-MATRIX §UI) ---
+        UiHover = 240,
+        UiPaneOpen = 241,
+        UiSelect = 242,
+        UiSliderTick = 243,
+        UiToggle = 244,
+        UiDialogOpen = 245,
+        UiReveal = 246,
+        HudLowHealth = 247,
+        HudMagazineEmpty = 248,
+        HudThreatEncircled = 249,
+        HudThreatRear = 250,
+        HudThreatStrong = 251,
+        UiReroll = 252,
+        UiLock = 253,
+        UiLevelUp = 254,
+        UiUnlock = 255,
+        UiAchievement = 256,
+        UiNewBest = 257
     }
 }

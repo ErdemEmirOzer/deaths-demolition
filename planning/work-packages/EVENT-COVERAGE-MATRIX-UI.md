@@ -2,6 +2,8 @@
 
 Direktif §12 tamlık kuralı: her UI etkileşiminin sesi ve efekti. Bu dosya `EVENT-COVERAGE-MATRIX.md`'nin (S-08/S-07) **UI bölümüdür**; S-08 matrisi main'e geldiğinde satırlar oraya taşınır, olay adları değişmez. Yayın sözleşmesi: `UiEvents.Raise(UiEvent, detail)` (`Assets/_Prototype/UI/Runtime/Kit/UiEvents.cs`); S-08 `UiEvents.Raised` olayına abone olur ve `AudioEventSource.Ui` bağlamalarını `UiEvent.<ad>` anahtarıyla ekler (mevcut dört `PrototypeAudio.*` bağlaması `UiSound` üzerinden aynen sürer). `UiEventsTests` bu tablo ile `UiEvent` enum'unu birebir tutar (eksik/fazla satır = FAIL).
 
+> **WP-021C (S-08):** ses sütunu `EVENT-COVERAGE-MATRIX.md` §8'e taşındı ve orada nihaidir (bağlı satırlar AP-011 v005 türetilmiş kimlikler, sahibi-başka satırlar tek ses); bu tablo `UiEvent` enum sözleşmesi olarak (`UiEventsTests`) aynen kalır.
+
 Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, "n/a" gerekçeli) · VFX / mikro-animasyon (UI tarafı, mevcut) · kaynak.
 
 | UiEvent | Ne zaman | SFX (AudioEventSource.Ui anahtarı) | VFX / mikro-animasyon | Kaynak |

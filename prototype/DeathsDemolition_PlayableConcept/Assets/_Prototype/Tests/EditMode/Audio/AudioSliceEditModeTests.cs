@@ -50,7 +50,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
         public void OlayHaritasi_OyuncuUiAmbiyansMuzikSatirlari_TamVeTekil()
         {
             Assert.AreEqual(2, AudioEventMap.For(AudioEventSource.Player).Count, "Oyuncu olayı (hasar, ölüm)");
-            Assert.AreEqual(4, AudioEventMap.For(AudioEventSource.Ui).Count, "UI (navigate/confirm/back/denied)");
+            // WP-021C: 5 PrototypeAudio calls (navigate/confirm/back/denied/reveal) + one row per UiEvent member (WP-022B).
+            Assert.AreEqual(5 + Enum.GetValues(typeof(DD.Prototype.UI.UiEvent)).Length, AudioEventMap.For(AudioEventSource.Ui).Count, "UI satırları");
             int bed = 0;
             foreach (AudioEventBinding b in AudioEventMap.For(AudioEventSource.Ambience)) { if (b.Event.StartsWith("Region.")) bed++; }
             Assert.AreEqual(6, bed, "5 bölge + ortak katman (DEC-066)");
@@ -77,6 +78,66 @@ namespace DD.Prototype.Tests.EditMode.Audio
             }
 
             Assert.AreEqual(1, gong, "SwSpawnGong yalnız SpecialWeaponSpawn olayına bağlı olmalı (REQ-053).");
+        }
+
+        /// <summary>WP-021C · §12: every WP-022B UiEvent member has exactly one map row; the router's table equals the map (bound ↔ reserved).</summary>
+        [Test]
+        public void UiOlaylari_HerUiEventUyesininSatiriVar_RouterHaritayaEsit()
+        {
+            int bagli = 0, rezerve = 0;
+            foreach (DD.Prototype.UI.UiEvent e in Enum.GetValues(typeof(DD.Prototype.UI.UiEvent)))
+            {
+                string anahtar = "UiEvent." + e;
+                Assert.IsTrue(AudioEventMap.TryFind(AudioEventSource.Ui, anahtar, out AudioEventBinding b), "Matris satırı yok: " + anahtar);
+                Assert.AreEqual(AudioBus.Interface, b.Bus, anahtar + " UI bus'ta olmalı");
+                AudioSoundId router = AudioEventRouter.UiSoundFor(e);
+                if (b.Reserved)
+                {
+                    Assert.AreEqual(AudioSoundId.None, router, anahtar + " rezerve (sahibi başka satır) ama router çalıyor → çift ses");
+                    Assert.IsFalse(string.IsNullOrEmpty(b.Note), anahtar + " rezerve satırın gerekçesi yok");
+                    rezerve++;
+                }
+                else
+                {
+                    Assert.AreEqual(b.Sound, router, anahtar + " router sesi haritayla aynı olmalı");
+                    Assert.AreNotEqual(AudioSoundId.None, b.Sound, anahtar);
+                    AudioPlacement p = AudioMixPlan.UiEvent(b.Sound);
+                    Assert.AreEqual(b.Sound, p.Sound);
+                    Assert.AreEqual(AudioBus.Interface, p.Bus);
+                    bagli++;
+                }
+            }
+
+            Assert.GreaterOrEqual(bagli, 18, "Bağlı UI satırı sayısı");
+            // Own identity: no two bound UI rows share a sound (§12 "her şeyin kendi sesi").
+            var sesler = new HashSet<AudioSoundId>();
+            foreach (AudioEventBinding b in AudioEventMap.For(AudioEventSource.Ui))
+            {
+                if (!b.Reserved && b.Event.StartsWith("UiEvent."))
+                {
+                    Assert.IsTrue(sesler.Add(b.Sound), "İki bağlı UI olayı aynı sesi paylaşıyor: " + b.Sound);
+                }
+            }
+
+            Debug.Log("[DD-TEST] wp021c.ui rows bound=" + bagli + " reserved=" + rezerve);
+        }
+
+        /// <summary>WP-021C · tier vocal set: every tier has its own windup/attack/hit/death/idle/aggro id (B·B·B).</summary>
+        [Test]
+        public void TierVokalSeti_HerTierKendiKimligi()
+        {
+            var tiers = (DD.Prototype.Core.Config.EnemyTier[])Enum.GetValues(typeof(DD.Prototype.Core.Config.EnemyTier));
+            var gorulen = new HashSet<AudioSoundId>();
+            foreach (DD.Prototype.Core.Config.EnemyTier t in tiers)
+            {
+                foreach (AudioSoundId id in new[] { AudioEventMap.ZombieWindup(t), AudioEventMap.ZombieAttack(t), AudioEventMap.ZombieHit(t), AudioEventMap.ZombieDeath(t), AudioEventMap.ZombieIdle(t), AudioEventMap.ZombieAggro(t) })
+                {
+                    Assert.AreNotEqual(AudioSoundId.None, id);
+                    Assert.IsTrue(gorulen.Add(id), "Tier vokal kimliği paylaşılıyor: " + id + " (" + t + ")");
+                }
+            }
+
+            Assert.AreEqual(tiers.Length * 6, gorulen.Count);
         }
 
         [Test]
@@ -183,7 +244,10 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 AudioCatalogBuilder.ManifestEntry m = girdi[e.Sound.ToString()];
                 float hedef = m.targetLufs != 0f ? m.targetLufs : Hedef(e.Sound, manifest.standard);
                 float tavan = m.ceilingDbtp != 0f ? m.ceilingDbtp : manifest.standard.truePeakMax;
-                if (hedef < -22.1f || hedef > -15.9f) hatalar.Add($"{e.Sound}: hedef {hedef} standart kümede değil (-16…-22)");
+                // WP-021C: the UI palette sits lower by design (hover / tick / pane -26…-23; chips -22…-20).
+                // Ambience scatter one-shots (v006: creak / ring / knock / settle) sit at −24 under the −20 beds.
+                float altSinir = m.bus == "UI" ? -26.1f : m.bus == "Ambience" ? -24.1f : -22.1f;
+                if (hedef < altSinir || hedef > -15.9f) hatalar.Add($"{e.Sound}: hedef {hedef} standart kümede değil ({(m.bus == "UI" ? "-16…-26 UI" : m.bus == "Ambience" ? "-16…-24 ambiyans" : "-16…-22")})");
                 if (tavan > manifest.standard.truePeakMax + 0.01f) hatalar.Add($"{e.Sound}: tavan {tavan} dBTP > standart {manifest.standard.truePeakMax}");
                 // Standart: hedef ± tolerans; ya da tavana dayanmış ve hedefin ALTINDA (kısa transientler
                 // tavanda hedefe ulaşamaz - tepe kısıtı seviyeyi belirler, bu doğru davranıştır).
@@ -304,7 +368,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 float[] data = new float[clip.samples * clip.channels];
                 clip.GetData(data, 0);
                 float[] mono = LoudnessMeter.ToMono(data, clip.channels);
-                int w = clip.frequency / 10; int n = mono.Length / w; float minRms = float.MaxValue; float peak = 0f; double sum = 0;
+                // WP-021C: a UI tick can be shorter than the 100 ms window - it is then its own (single) window.
+                int w = Mathf.Min(clip.frequency / 10, mono.Length); int n = mono.Length / w; float minRms = float.MaxValue; float peak = 0f; double sum = 0;
                 for (int i = 0; i < mono.Length; i++) { float a = Mathf.Abs(mono[i]); if (a > peak) peak = a; sum += mono[i]; }
                 for (int b = 0; b < n; b++) { double acc = 0; for (int i = 0; i < w; i++) { float v = mono[b * w + i]; acc += v * v; } float rms = Mathf.Sqrt((float)(acc / w)); if (rms < minRms) minRms = rms; }
                 olculen++;
@@ -372,6 +437,42 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(-80f, AudioMixerBridge.LinearToDb(0f));
             Assert.AreEqual(0f, AudioMixerBridge.LinearToDb(1f), 0.001f);
             Assert.AreEqual(-6.02f, AudioMixerBridge.LinearToDb(0.5f), 0.05f);
+
+            // WP-021C: master limiter (Compressor on Master), parameters exposed and at the engineer's values.
+            Assert.IsTrue(AudioMixerBuilder.HasMasterLimiter(out string limiter), "Master limiter: " + limiter);
+            Assert.IsTrue(mixer.GetFloat(AudioMixerBuilder.LimiterThresholdParam, out float esik));
+            Assert.IsTrue(mixer.GetFloat(AudioMixerBuilder.LimiterAttackParam, out float atak));
+            Assert.IsTrue(mixer.GetFloat(AudioMixerBuilder.LimiterReleaseParam, out float birakma));
+            Assert.AreEqual(AudioMixerBuilder.LimiterThresholdDb, esik, 0.01f, "limiter threshold");
+            Assert.AreEqual(AudioMixerBuilder.LimiterAttackMs, atak, 0.01f, "limiter attack");
+            Assert.AreEqual(AudioMixerBuilder.LimiterReleaseMs, birakma, 0.01f, "limiter release");
+        }
+
+        // ------------------------------------------------------------------ WP-021C · yüzey etiketleri
+
+        /// <summary>WP-021C · ADR-021-1 v2: every placement family in the shipped world has a surface rule (no family falls back by role).</summary>
+        [Test]
+        public void YuzeyEtiketleri_HerPlacementAilesininKuraliVar()
+        {
+            var placement = AssetDatabase.LoadAssetAtPath<DD.Art.WorldPlacementAsset>("Assets/_Art/Environment/World/AP005_Placement.asset");
+            Assert.IsNotNull(placement, "AP005_Placement.asset yok");
+            var aileler = new SortedDictionary<string, int>();
+            var eksik = new List<string>();
+            foreach (DD.Art.WorldPlacementAsset.Instance inst in placement.instances)
+            {
+                string key = DD.Art.Ap005SurfaceTags.Key(inst.family);
+                aileler.TryGetValue(key, out int n); aileler[key] = n + 1;
+                if (!DD.Art.Ap005SurfaceTags.FamilySurface.ContainsKey(key) && !eksik.Contains(key)) eksik.Add(key);
+            }
+
+            Assert.AreEqual(0, eksik.Count, "Kuralsız aile(ler): " + string.Join(", ", eksik));
+            Assert.AreEqual(SurfaceKind.Wood, DD.Art.Ap005SurfaceTags.FamilySurface["bridge_segment"]);
+            Assert.AreEqual(SurfaceKind.Water, DD.Art.Ap005SurfaceTags.FamilySurface["pond_water_surface"]);
+            Assert.AreEqual(SurfaceKind.Dirt, DD.Art.Ap005SurfaceTags.FamilySurface["ground"]);
+            int stone = 0;
+            foreach (DD.Art.WorldPlacementAsset.Route r in placement.routes) if (r.surface == "Stone") stone++;
+            Assert.Greater(stone, 0, "Taş rota yok: zemin iyileştirmesi çalışamaz");
+            Debug.Log("[DD-TEST] wp021c.surface families=" + aileler.Count + " instances=" + placement.instances.Count + " stoneRoutes=" + stone);
         }
 
         // ------------------------------------------------------------------ bölge haritası

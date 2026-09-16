@@ -62,6 +62,14 @@ namespace DD.Prototype.Audio.EditorTools
                 return "up to date: " + AssetPath;
             }
 
+            // WP-021C: an asset whose tree is right but which predates the master limiter is
+            // upgraded in place (same GUID), not rebuilt.
+            if (VerifyTree(out string _) && !HasMasterLimiter(out string _))
+            {
+                string limiter = EnsureMasterLimiter();
+                return Verify(out string why0) ? "upgraded (master limiter): " + AssetPath + " · " + limiter : "upgrade with gaps: " + why0 + " · " + limiter;
+            }
+
             Type controllerType = FindType("UnityEditor.Audio.AudioMixerController");
             Type groupType = FindType("UnityEditor.Audio.AudioMixerGroupController");
             Type snapshotType = FindType("UnityEditor.Audio.AudioMixerSnapshotController");
@@ -168,11 +176,202 @@ namespace DD.Prototype.Audio.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.ImportAsset(AssetPath, ImportAssetOptions.ForceUpdate);
 
-            return Verify(out string why) ? "built: " + AssetPath : "built with gaps: " + why;
+            string limiterReport = EnsureMasterLimiter();
+            return Verify(out string why) ? "built: " + AssetPath + " · " + limiterReport : "built with gaps: " + why + " · " + limiterReport;
         }
 
-        /// <summary>True when the asset exists with every expected group and snapshot.</summary>
+        // ---- WP-021C · master limiter ---------------------------------------------------
+
+        /// <summary>Unity's built-in "Compressor" effect (the closest thing to a limiter the mixer ships: fixed hard knee, ~10 ms attack floor).</summary>
+        public const string LimiterEffectName = "Compressor";
+
+        /// <summary>Exposed parameter names for the master limiter; Verify requires them.</summary>
+        public const string LimiterThresholdParam = "MasterLimiterThreshold";
+        public const string LimiterAttackParam = "MasterLimiterAttack";
+        public const string LimiterReleaseParam = "MasterLimiterRelease";
+
+        /// <summary>
+        /// Limiter settings (PROTOTYPE-ONLY / INVENTED; sound-engineer, WP-021C): threshold −8 dB
+        /// so a shotgun + explosion + gong sum is caught, fastest attack the effect offers,
+        /// 90 ms release (short enough that a taiko hit does not pump the bed), no make-up gain -
+        /// the clips already sit at their LUFS targets and a limiter that adds gain is a compressor.
+        /// </summary>
+        public const float LimiterThresholdDb = -8f;
+        public const float LimiterAttackMs = 10f;
+        public const float LimiterReleaseMs = 90f;
+
+        /// <summary>Inserts the Compressor on Master (idempotent), sets its parameters in every snapshot and exposes them.</summary>
+        public static string EnsureMasterLimiter()
+        {
+            var mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(AssetPath);
+            if (mixer == null)
+            {
+                return "limiter: asset missing";
+            }
+
+            if (HasMasterLimiter(out string _))
+            {
+                return "limiter: present";
+            }
+
+            Type controllerType = FindType("UnityEditor.Audio.AudioMixerController");
+            Type groupType = FindType("UnityEditor.Audio.AudioMixerGroupController");
+            Type effectType = FindType("UnityEditor.Audio.AudioMixerEffectController");
+            Type snapshotType = FindType("UnityEditor.Audio.AudioMixerSnapshotController");
+            Type exposedType = FindType("UnityEditor.Audio.ExposedAudioParameter");
+            if (controllerType == null || groupType == null || effectType == null || snapshotType == null || exposedType == null)
+            {
+                throw new InvalidOperationException("Internal AudioMixer effect API not found in this Unity version.");
+            }
+
+            object controller = mixer;
+            object master = Get(controllerType, controller, "masterGroup");
+
+            object effect = Activator.CreateInstance(effectType, new object[] { LimiterEffectName });
+            MethodInfo prealloc = effectType.GetMethod("PreallocateGUIDs", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            prealloc?.Invoke(effect, null);
+
+            // Insert after Attenuation (index = current count) so the fader stays pre-limiter.
+            Array effects = (Array)Get(groupType, master, "effects");
+            MethodInfo insert = groupType.GetMethod("InsertEffect", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (insert == null)
+            {
+                throw new InvalidOperationException("AudioMixerGroupController.InsertEffect missing.");
+            }
+
+            insert.Invoke(master, new[] { effect, (object)effects.Length });
+            AssetDatabase.AddObjectToAsset((UnityEngine.Object)effect, (UnityEngine.Object)controller);
+
+            // Parameter GUIDs by the effect's own parameter names (Threshold / Attack / Release / Make up gain).
+            MethodInfo guidFor = effectType.GetMethod("GetGUIDForParameter", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            MethodInfo setValue = snapshotType.GetMethod("SetValue", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Array snapshots = (Array)Get(controllerType, controller, "snapshots");
+            string[] names = LimiterParameterNames(effect, effectType);
+            var values = new Dictionary<string, float>
+            {
+                { "Threshold", LimiterThresholdDb }, { "Attack", LimiterAttackMs }, { "Release", LimiterReleaseMs }, { "Make up gain", 0f }
+            };
+            var exposedNames = new Dictionary<string, string>
+            {
+                { "Threshold", LimiterThresholdParam }, { "Attack", LimiterAttackParam }, { "Release", LimiterReleaseParam }
+            };
+
+            var report = new System.Text.StringBuilder("limiter: " + LimiterEffectName + " on Master · params [" + string.Join(", ", names) + "]");
+            Array exposed = (Array)Get(controllerType, controller, "exposedParameters");
+            var exposedList = new List<object>();
+            foreach (object e in exposed) exposedList.Add(e);
+            FieldInfo exposedGuid = exposedType.GetField("guid");
+            FieldInfo exposedName = exposedType.GetField("name");
+
+            foreach (KeyValuePair<string, float> kv in values)
+            {
+                object guid = guidFor.Invoke(effect, new object[] { kv.Key });
+                if (guid == null)
+                {
+                    report.Append(" · no guid for '" + kv.Key + "'");
+                    continue;
+                }
+
+                foreach (object snap in snapshots)
+                {
+                    setValue.Invoke(snap, new[] { guid, (object)kv.Value });
+                }
+
+                if (exposedNames.TryGetValue(kv.Key, out string exposeAs))
+                {
+                    object param = Activator.CreateInstance(exposedType);
+                    exposedGuid.SetValue(param, guid);
+                    exposedName.SetValue(param, exposeAs);
+                    exposedList.Add(param);
+                }
+
+                report.Append(" · " + kv.Key + " = " + kv.Value);
+            }
+
+            Array exposedNow = Array.CreateInstance(exposedType, exposedList.Count);
+            for (int i = 0; i < exposedList.Count; i++) exposedNow.SetValue(exposedList[i], i);
+            SetProp(controllerType, controller, "exposedParameters", exposedNow);
+
+            EditorUtility.SetDirty(mixer);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(AssetPath, ImportAssetOptions.ForceUpdate);
+            return report.ToString();
+        }
+
+        private static string[] LimiterParameterNames(object effect, Type effectType)
+        {
+            // MixerEffectDefinitions.GetEffectParameters(effectName) → MixerParameterDefinition[] { name, ... }
+            Type defs = FindType("UnityEditor.Audio.MixerEffectDefinitions");
+            MethodInfo get = defs?.GetMethod("GetEffectParameters", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (get == null)
+            {
+                return new[] { "?" };
+            }
+
+            Array parameters = get.Invoke(null, new object[] { LimiterEffectName }) as Array;
+            if (parameters == null)
+            {
+                return new[] { "?" };
+            }
+
+            var names = new List<string>();
+            foreach (object p in parameters)
+            {
+                FieldInfo f = p.GetType().GetField("name", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                names.Add(f != null ? (string)f.GetValue(p) : p.ToString());
+            }
+
+            return names.ToArray();
+        }
+
+        /// <summary>True when Master carries the Compressor and its threshold/attack/release are exposed.</summary>
+        public static bool HasMasterLimiter(out string why)
+        {
+            var mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(AssetPath);
+            if (mixer == null)
+            {
+                why = "asset missing";
+                return false;
+            }
+
+            Type controllerType = FindType("UnityEditor.Audio.AudioMixerController");
+            Type groupType = FindType("UnityEditor.Audio.AudioMixerGroupController");
+            object master = Get(controllerType, mixer, "masterGroup");
+            Array effects = (Array)Get(groupType, master, "effects");
+            bool found = false;
+            foreach (object e in effects)
+            {
+                object name = Get(e.GetType(), e, "effectName");
+                if ((string)name == LimiterEffectName) { found = true; break; }
+            }
+
+            if (!found)
+            {
+                why = "Master has no " + LimiterEffectName;
+                return false;
+            }
+
+            foreach (string p in new[] { LimiterThresholdParam, LimiterAttackParam, LimiterReleaseParam })
+            {
+                if (!mixer.GetFloat(p, out float _))
+                {
+                    why = "exposed parameter missing: " + p;
+                    return false;
+                }
+            }
+
+            why = string.Empty;
+            return true;
+        }
+
+        /// <summary>True when the asset exists with every expected group, snapshot, exposed volume AND the master limiter (WP-021C).</summary>
         public static bool Verify(out string why)
+        {
+            return VerifyTree(out why) && HasMasterLimiter(out why);
+        }
+
+        /// <summary>The WP-021 tree check: groups, snapshots, exposed volumes.</summary>
+        public static bool VerifyTree(out string why)
         {
             var mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(AssetPath);
             if (mixer == null)

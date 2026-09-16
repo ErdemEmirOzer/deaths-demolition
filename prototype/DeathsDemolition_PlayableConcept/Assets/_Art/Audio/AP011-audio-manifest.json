@@ -1,5 +1,5 @@
 {
- "version": "ap011-v004",
+ "version": "ap011-v006",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -11,6 +11,30 @@
   "bitDepth": 24
  },
  "entries": [
+  {
+   "sound": "AmbBambooKnock",
+   "event": "scatter.bamboo",
+   "files": [
+    "AmbBambooKnock_01.wav",
+    "AmbBambooKnock_02.wav",
+    "AmbBambooKnock_03.wav"
+   ],
+   "loop": false,
+   "lufs": -24.0,
+   "truePeakDb": -3.56,
+   "noiseFloorDb": -69.0,
+   "dcDb": -129.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -24.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -176.4,
+   "layers": "derived (v006, no credits): ImpactWood_01.wav@0ms -4dB +5st + tone:800,1600@0.15@0ms -12dB + ImpactWood_01.wav@190ms -9dB +7st",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ImpactWood_01.wav, tone:800,1600@0.15"
+  },
   {
    "sound": "AmbCommon",
    "event": "Region.common",
@@ -55,6 +79,30 @@
    "bus": "Ambience",
    "spatial": true,
    "provenance": "seed_audio job a763a10c (1.1 cr) · amb_drip"
+  },
+  {
+   "sound": "AmbMetalRing",
+   "event": "scatter.metal",
+   "files": [
+    "AmbMetalRing_01.wav",
+    "AmbMetalRing_02.wav",
+    "AmbMetalRing_03.wav"
+   ],
+   "loop": false,
+   "lufs": -24.0,
+   "truePeakDb": -6.18,
+   "noiseFloorDb": -91.7,
+   "dcDb": -194.3,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -24.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -222.5,
+   "layers": "derived (v006, no credits): ImpactMetal_01.wav@0ms -6dB -2st + tone:2100,3300@0.35@0ms -10dB + tone:1050,1575@0.2@0ms -16dB",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ImpactMetal_01.wav, tone:1050,1575@0.2, tone:2100,3300@0.35"
   },
   {
    "sound": "AmbRegionCenter",
@@ -167,6 +215,55 @@
    "provenance": "seed_audio job 122da4f7 (1.1 cr) · amb_region_west"
   },
   {
+   "sound": "AmbStoneSettle",
+   "event": "scatter.stone",
+   "files": [
+    "AmbStoneSettle_01.wav",
+    "AmbStoneSettle_02.wav",
+    "AmbStoneSettle_03.wav"
+   ],
+   "loop": false,
+   "lufs": -24.0,
+   "truePeakDb": -3.77,
+   "noiseFloorDb": -81.8,
+   "dcDb": -157.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -24.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -190.3,
+   "layers": "derived (v006, no credits): ImpactStone_01.wav@0ms -4dB -6st + FootstepDirt_01.wav@60ms -9dB -3st + ArmorPieceDrop_02.wav@120ms -10dB -4st + ImpactDirt_01.wav@260ms -11dB -4st",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav, exports/FootstepDirt_01.wav, exports/ImpactDirt_01.wav, exports/ImpactStone_01.wav"
+  },
+  {
+   "sound": "AmbWoodCreak",
+   "event": "scatter.creak",
+   "files": [
+    "AmbWoodCreak_01.wav",
+    "AmbWoodCreak_02.wav",
+    "AmbWoodCreak_03.wav",
+    "AmbWoodCreak_04.wav"
+   ],
+   "loop": false,
+   "lufs": -24.0,
+   "truePeakDb": -2.96,
+   "noiseFloorDb": -75.9,
+   "dcDb": -101.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -24.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -140.8,
+   "layers": "single take",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "seed_audio job fa37b900 (2.4 cr) · amb_wood_creak"
+  },
+  {
    "sound": "ArmorBreak",
    "event": "ArmorBreak",
    "files": [
@@ -188,6 +285,54 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job 07e86d13 (1.1 cr) · armor_break"
+  },
+  {
+   "sound": "ArmorCrack",
+   "event": "ArmorHit (armourIsFailing)",
+   "files": [
+    "ArmorCrack_01.wav",
+    "ArmorCrack_02.wav",
+    "ArmorCrack_03.wav"
+   ],
+   "loop": false,
+   "lufs": -19.01,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -72.8,
+   "dcDb": -151.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -194.4,
+   "layers": "derived (v006, no credits): armor_impact_c2.wav@0ms -3dB -1st + ArmorBreak_01.wav@25ms -6dB +2st + BreakCeramic_01.wav@40ms -13dB +4st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ArmorBreak_01.wav, exports/BreakCeramic_01.wav, raw/armor_impact_c2.wav"
+  },
+  {
+   "sound": "ArmorImpact",
+   "event": "ArmorHit",
+   "files": [
+    "ArmorImpact_01.wav",
+    "ArmorImpact_02.wav",
+    "ArmorImpact_03.wav"
+   ],
+   "loop": false,
+   "lufs": -21.97,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -92.6,
+   "dcDb": -123.7,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -169.9,
+   "layers": "single take",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 913c647c (2.6 cr) · armor_impact_c2"
   },
   {
    "sound": "ArmorPieceDrop",
@@ -260,6 +405,55 @@
    "provenance": "seed_audio job 7c68611a (1.1 cr) · break_ceramic"
   },
   {
+   "sound": "ChainArc",
+   "event": "ChainArc",
+   "files": [
+    "ChainArc_01.wav",
+    "ChainArc_02.wav",
+    "ChainArc_03.wav",
+    "ChainArc_04.wav"
+   ],
+   "loop": false,
+   "lufs": -27.81,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -73.0,
+   "dcDb": -132.3,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -162.9,
+   "layers": "single take",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 460c7359 (2.3 cr) · chain_arc"
+  },
+  {
+   "sound": "CriticalHit",
+   "event": "CriticalHit",
+   "files": [
+    "CriticalHit_01.wav",
+    "CriticalHit_02.wav",
+    "CriticalHit_03.wav"
+   ],
+   "loop": false,
+   "lufs": -20.83,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -72.8,
+   "dcDb": -158.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -197.8,
+   "layers": "derived (v006, no credits): flesh_hit.wav@0ms -2dB -2st + ZombieHitStandard_03.wav@20ms -8dB +2st + BreakCeramic_02.wav@0ms -9dB +6st + noise:white@0ms -14dB",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/BreakCeramic_02.wav, exports/ZombieHitStandard_03.wav, noise:white, raw/flesh_hit.wav"
+  },
+  {
    "sound": "DryFire",
    "event": "ClassicWeaponDryFire",
    "files": [
@@ -280,6 +474,30 @@
    "bus": "SFX-Player",
    "spatial": false,
    "provenance": "seed_audio job 579f4aa8 (1.1 cr) · dry_fire"
+  },
+  {
+   "sound": "EnemyDeath",
+   "event": "EnemyDeath",
+   "files": [
+    "EnemyDeath_01.wav",
+    "EnemyDeath_02.wav",
+    "EnemyDeath_03.wav"
+   ],
+   "loop": false,
+   "lufs": -19.25,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -83.7,
+   "dcDb": -188.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -200.1,
+   "layers": "derived (v006, no credits): AttackImpactBody_02.wav@0ms -4dB -3st + ZombieStepHeavy_01.wav@120ms -6dB -2st + ZombieDeathStandard_02.wav@180ms -9dB -1st + FootstepDirt_03.wav@320ms -10dB -4st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/AttackImpactBody_02.wav, exports/FootstepDirt_03.wav, exports/ZombieDeathStandard_02.wav, exports/ZombieStepHeavy_01.wav"
   },
   {
    "sound": "Explosion",
@@ -303,6 +521,32 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job ab26434a (1.1 cr) · explosion"
+  },
+  {
+   "sound": "FleshHit",
+   "event": "FleshHit",
+   "files": [
+    "FleshHit_01.wav",
+    "FleshHit_02.wav",
+    "FleshHit_03.wav",
+    "FleshHit_04.wav",
+    "FleshHit_05.wav"
+   ],
+   "loop": false,
+   "lufs": -23.94,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -80.9,
+   "dcDb": -111.9,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -147.5,
+   "layers": "single take",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 1cc434eb (2.6 cr) · flesh_hit"
   },
   {
    "sound": "FootstepDirt",
@@ -498,6 +742,29 @@
    "provenance": "seed_audio job eb31b2c9 (1.1 cr) · gold_spawn"
   },
   {
+   "sound": "HeavyEnemyDeath",
+   "event": "HeavyEnemyDeath",
+   "files": [
+    "HeavyEnemyDeath_01.wav",
+    "HeavyEnemyDeath_02.wav"
+   ],
+   "loop": false,
+   "lufs": -18.68,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -83.7,
+   "dcDb": -177.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -193.0,
+   "layers": "derived (v006, no credits): AttackImpactBody_02.wav@0ms -4dB -7st + ZombieStepHeavy_01.wav@140ms -6dB -6st + ZombieDeathStandard_02.wav@220ms -10dB -5st + ArmorPieceDrop_01.wav@250ms -7dB -2st + ArmorPieceDrop_02.wav@520ms -10dB -5st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ArmorPieceDrop_01.wav, exports/ArmorPieceDrop_02.wav, exports/AttackImpactBody_02.wav, exports/ZombieDeathStandard_02.wav, exports/ZombieStepHeavy_01.wav"
+  },
+  {
    "sound": "HeavyFire",
    "event": "HeavyWeaponFire",
    "files": [
@@ -523,6 +790,216 @@
    "provenance": "seed_audio job 69be70d9 (1.1 cr) · heavy_fire_burst"
   },
   {
+   "sound": "HeavyMotorLoop",
+   "event": "HeavyWeaponSpinUp (loop)",
+   "files": [
+    "HeavyMotorLoop.wav"
+   ],
+   "loop": true,
+   "lufs": -18.0,
+   "truePeakDb": -4.31,
+   "noiseFloorDb": -88.8,
+   "dcDb": -102.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -21.4,
+   "layers": "single take",
+   "bus": "SFX-Player",
+   "spatial": false,
+   "provenance": "seed_audio job e20bceaa (2.3 cr) · heavy_motor_loop"
+  },
+  {
+   "sound": "HeavySpinDown",
+   "event": "HeavyWeaponSpinDown",
+   "files": [
+    "HeavySpinDown_01.wav"
+   ],
+   "loop": false,
+   "lufs": -22.03,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -90.8,
+   "dcDb": -124.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -167.8,
+   "layers": "single take",
+   "bus": "SFX-Player",
+   "spatial": false,
+   "provenance": "seed_audio job 4e686e92 (2.3 cr) · heavy_spin_down"
+  },
+  {
+   "sound": "HitMarker",
+   "event": "HitMarker",
+   "files": [
+    "HitMarker_01.wav",
+    "HitMarker_02.wav",
+    "HitMarker_03.wav",
+    "HitMarker_04.wav",
+    "HitMarker_05.wav",
+    "HitMarker_06.wav"
+   ],
+   "loop": false,
+   "lufs": -23.82,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -91.6,
+   "dcDb": -117.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -158.7,
+   "layers": "single take",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job e06977b2 (2.0 cr) · hit_marker"
+  },
+  {
+   "sound": "HudLowHealth",
+   "event": "UiEvent.HudLowHealthEntered",
+   "files": [
+    "HudLowHealth_01.wav",
+    "HudLowHealth_02.wav"
+   ],
+   "loop": false,
+   "lufs": -20.0,
+   "truePeakDb": -2.95,
+   "noiseFloorDb": -76.2,
+   "dcDb": -159.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -20.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -199.3,
+   "layers": "derived (v005, no credits): PlayerDamage_02.wav@0ms -3dB -9st + PlayerDamage_02.wav@240ms -5dB -10st + MusicPercussion.wav@0ms -8dB -6st + MusicPercussion.wav@240ms -10dB -6st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicPercussion.wav, exports/PlayerDamage_02.wav"
+  },
+  {
+   "sound": "HudMagazineEmpty",
+   "event": "UiEvent.HudMagazineEmpty",
+   "files": [
+    "HudMagazineEmpty_01.wav",
+    "HudMagazineEmpty_02.wav"
+   ],
+   "loop": false,
+   "lufs": -24.45,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -77.7,
+   "dcDb": -124.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -182.6,
+   "layers": "derived (v005, no credits): ReloadStart_01.wav@0ms -1dB -2st + tone:110,220,335@1.2@20ms -17dB + UiDenied_02.wav@10ms -11dB -7st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadStart_01.wav, exports/UiDenied_02.wav, tone:110,220,335@1.2"
+  },
+  {
+   "sound": "HudThreatEncircled",
+   "event": "UiEvent.HudThreatEncircled",
+   "files": [
+    "HudThreatEncircled_01.wav",
+    "HudThreatEncircled_02.wav"
+   ],
+   "loop": false,
+   "lufs": -20.0,
+   "truePeakDb": -6.48,
+   "noiseFloorDb": -83.7,
+   "dcDb": -153.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -20.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -195.8,
+   "layers": "derived (v005, no credits): MusicTension.wav@0ms -6dB -3st + ZombieIdle_02.wav@0ms -7dB -7st + AttackImpactBody_01.wav@0ms -8dB -6st + noise:pink@0ms -18dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AttackImpactBody_01.wav, exports/MusicTension.wav, exports/ZombieIdle_02.wav, noise:pink"
+  },
+  {
+   "sound": "HudThreatRear",
+   "event": "UiEvent.HudThreatRearAttack",
+   "files": [
+    "HudThreatRear_01.wav",
+    "HudThreatRear_02.wav"
+   ],
+   "loop": false,
+   "lufs": -20.0,
+   "truePeakDb": -2.38,
+   "noiseFloorDb": -77.6,
+   "dcDb": -121.3,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -20.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -176.0,
+   "layers": "derived (v005, no credits): UiTransition_01.wav@0ms -5dB +4st + noise:white@0ms -16dB + ImpactStone_01.wav@300ms -7dB +2st + ZombieStagger_03.wav@0ms -12dB -2st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactStone_01.wav, exports/UiTransition_01.wav, exports/ZombieStagger_03.wav, noise:white"
+  },
+  {
+   "sound": "HudThreatStrong",
+   "event": "UiEvent.HudThreatStrongVersion",
+   "files": [
+    "HudThreatStrong_01.wav",
+    "HudThreatStrong_02.wav"
+   ],
+   "loop": false,
+   "lufs": -20.0,
+   "truePeakDb": -4.36,
+   "noiseFloorDb": -68.0,
+   "dcDb": -193.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -20.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -191.9,
+   "layers": "derived (v005, no credits): SwSpawnGong_01.wav@0ms -4dB -7st + tone:98,147,233@0.9@0ms -40dB + ImpactWood_01.wav@0ms 0dB -8st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWood_01.wav, exports/SwSpawnGong_01.wav, tone:98,147,233@0.9"
+  },
+  {
+   "sound": "ImpactDefault",
+   "event": "SurfaceImpactDefault",
+   "files": [
+    "ImpactDefault_01.wav",
+    "ImpactDefault_02.wav",
+    "ImpactDefault_03.wav"
+   ],
+   "loop": false,
+   "lufs": -20.66,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -81.8,
+   "dcDb": -154.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -185.7,
+   "layers": "derived (v006, no credits): ImpactStone_01.wav@0ms -5dB -1st + ImpactDirt_01.wav@8ms -5dB +1st + noise:pink@0ms -16dB",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ImpactDirt_01.wav, exports/ImpactStone_01.wav, noise:pink"
+  },
+  {
    "sound": "ImpactDirt",
    "event": "SurfaceImpactDirt",
    "files": [
@@ -545,6 +1022,30 @@
    "provenance": "seed_audio job 9297d35c (1.1 cr) · impact_dirt"
   },
   {
+   "sound": "ImpactFoliage",
+   "event": "SurfaceImpactFoliage",
+   "files": [
+    "ImpactFoliage_01.wav",
+    "ImpactFoliage_02.wav",
+    "ImpactFoliage_03.wav"
+   ],
+   "loop": false,
+   "lufs": -19.55,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -93.0,
+   "dcDb": -170.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -211.5,
+   "layers": "derived (v006, no credits): FootstepFoliage_02.wav@0ms -4dB +3st + ImpactDirt_01.wav@0ms -11dB +2st + FootstepFoliage_04.wav@90ms -10dB +1st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/FootstepFoliage_02.wav, exports/FootstepFoliage_04.wav, exports/ImpactDirt_01.wav"
+  },
+  {
    "sound": "ImpactMetal",
    "event": "SurfaceImpactMetal",
    "files": [
@@ -565,6 +1066,30 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job 21e47529 (1.1 cr) · impact_metal"
+  },
+  {
+   "sound": "ImpactPaper",
+   "event": "SurfaceImpactPaper",
+   "files": [
+    "ImpactPaper_01.wav",
+    "ImpactPaper_02.wav",
+    "ImpactPaper_03.wav"
+   ],
+   "loop": false,
+   "lufs": -23.09,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -97.3,
+   "dcDb": -118.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -165.9,
+   "layers": "single take",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 4b9599cd (2.2 cr) · impact_paper"
   },
   {
    "sound": "ImpactStone",
@@ -631,6 +1156,30 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job c4782640 (1.1 cr) · impact_wood"
+  },
+  {
+   "sound": "KillMarker",
+   "event": "KillMarker",
+   "files": [
+    "KillMarker_01.wav",
+    "KillMarker_02.wav",
+    "KillMarker_03.wav"
+   ],
+   "loop": false,
+   "lufs": -23.07,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -69.0,
+   "dcDb": -112.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -161.9,
+   "layers": "derived (v006, no credits): hit_marker.wav@0ms -3dB -3st + hit_marker.wav@55ms -4dB -5st + ImpactWood_01.wav@55ms -12dB -4st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ImpactWood_01.wav, raw/hit_marker.wav"
   },
   {
    "sound": "MusicAccent",
@@ -835,6 +1384,32 @@
    "provenance": "seed_audio job ea2473ba (1.1 cr) · reload"
   },
   {
+   "sound": "Ricochet",
+   "event": "Ricochet",
+   "files": [
+    "Ricochet_01.wav",
+    "Ricochet_02.wav",
+    "Ricochet_03.wav",
+    "Ricochet_04.wav",
+    "Ricochet_05.wav"
+   ],
+   "loop": false,
+   "lufs": -22.64,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -80.2,
+   "dcDb": -139.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -173.7,
+   "layers": "single take",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 000281ac (2.8 cr) · ricochet_c2"
+  },
+  {
    "sound": "RifleFire",
    "event": "ClassicWeaponFire",
    "files": [
@@ -947,6 +1522,78 @@
    "provenance": "seed_audio job d6a9baae (1.1 cr) · shotgun_fire"
   },
   {
+   "sound": "SmgFire",
+   "event": "ClassicWeaponFire (B Carbine)",
+   "files": [
+    "SmgFire_01.wav",
+    "SmgFire_02.wav",
+    "SmgFire_03.wav",
+    "SmgFire_04.wav",
+    "SmgFire_05.wav"
+   ],
+   "loop": false,
+   "lufs": -22.48,
+   "truePeakDb": -2.0,
+   "noiseFloorDb": -62.4,
+   "dcDb": -130.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -2.0,
+   "continuous": false,
+   "endSilenceDb": -166.1,
+   "layers": "single take",
+   "bus": "SFX-Player",
+   "spatial": true,
+   "provenance": "seed_audio job d0d389ec (2.4 cr) · carbine_fire_c1"
+  },
+  {
+   "sound": "SwBeaconLoop",
+   "event": "SpecialWeaponBeaconLoop (loop)",
+   "files": [
+    "SwBeaconLoop.wav"
+   ],
+   "loop": true,
+   "lufs": -20.0,
+   "truePeakDb": -4.94,
+   "noiseFloorDb": -70.6,
+   "dcDb": -84.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -20.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -26.9,
+   "layers": "single take",
+   "bus": "UI",
+   "spatial": true,
+   "provenance": "seed_audio job 92b0eb30 (2.5 cr) · sw_beacon_loop"
+  },
+  {
+   "sound": "SwExpired",
+   "event": "SpecialWeaponExpired",
+   "files": [
+    "SwExpired_01.wav",
+    "SwExpired_02.wav",
+    "SwExpired_03.wav"
+   ],
+   "loop": false,
+   "lufs": -21.78,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -97.0,
+   "dcDb": -135.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -176.6,
+   "layers": "single take",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "seed_audio job c2abf02b (2.5 cr) · sw_expired"
+  },
+  {
    "sound": "SwFinalSeconds",
    "event": "SpecialWeaponFinalSeconds",
    "files": [
@@ -967,6 +1614,29 @@
    "bus": "UI",
    "spatial": false,
    "provenance": "seed_audio job 64140f17 (1.1 cr) · sw_final_seconds"
+  },
+  {
+   "sound": "SwGroundExpired",
+   "event": "SpecialWeaponGroundExpired",
+   "files": [
+    "SwGroundExpired_01.wav",
+    "SwGroundExpired_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -4.42,
+   "noiseFloorDb": -96.4,
+   "dcDb": -177.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -194.8,
+   "layers": "derived (v006, no credits): sw_expired.wav@0ms -3dB -3st + ZombieRise_01.wav@150ms -9dB -1st + ImpactDirt_01.wav@500ms -12dB -2st",
+   "bus": "UI",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ImpactDirt_01.wav, exports/ZombieRise_01.wav, raw/sw_expired.wav"
   },
   {
    "sound": "SwPickup",
@@ -1011,6 +1681,29 @@
    "bus": "UI",
    "spatial": true,
    "provenance": "seed_audio job 76dc4186 (1.1 cr) · sw_spawn_gong"
+  },
+  {
+   "sound": "UiAchievement",
+   "event": "UiEvent.AchievementRevealed",
+   "files": [
+    "UiAchievement_01.wav",
+    "UiAchievement_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -5.86,
+   "noiseFloorDb": -69.0,
+   "dcDb": -172.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -214.4,
+   "layers": "derived (v005, no credits): RoundComplete_01.wav@0ms -9dB + tone:1319,1978,3300@1.2@20ms -8dB + ImpactWood_01.wav@40ms -7dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWood_01.wav, exports/RoundComplete_01.wav, tone:1319,1978,3300@1.2"
   },
   {
    "sound": "UiBack",
@@ -1081,6 +1774,99 @@
    "provenance": "seed_audio job f4d6be7a (1.1 cr) · ui_denied"
   },
   {
+   "sound": "UiDialogOpen",
+   "event": "UiEvent.DialogOpened",
+   "files": [
+    "UiDialogOpen_01.wav",
+    "UiDialogOpen_02.wav"
+   ],
+   "loop": false,
+   "lufs": -23.0,
+   "truePeakDb": -2.84,
+   "noiseFloorDb": -95.2,
+   "dcDb": -137.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -23.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -177.8,
+   "layers": "derived (v005, no credits): UiBack_01.wav@0ms -8dB -7st + FootstepStone_04.wav@0ms -2dB -3st + tone:196,392@0.1@0ms -12dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepStone_04.wav, exports/UiBack_01.wav, tone:196,392@0.1"
+  },
+  {
+   "sound": "UiHover",
+   "event": "UiEvent.ButtonHover",
+   "files": [
+    "UiHover_01.wav",
+    "UiHover_02.wav",
+    "UiHover_03.wav"
+   ],
+   "loop": false,
+   "lufs": -27.73,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -71.1,
+   "dcDb": -163.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -26.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005, no credits): UiNavigate_01.wav@0ms -6dB +4st + noise:pink@0ms -18dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/UiNavigate_01.wav, noise:pink"
+  },
+  {
+   "sound": "UiLevelUp",
+   "event": "UiEvent.LevelUp",
+   "files": [
+    "UiLevelUp_01.wav",
+    "UiLevelUp_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -6.95,
+   "noiseFloorDb": -87.0,
+   "dcDb": -172.7,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -209.7,
+   "layers": "derived (v005, no credits): GoldPickup_01.wav@0ms -7dB + GoldPickup_02.wav@170ms -7dB +4st + GoldPickup_03.wav@340ms -5dB +7st + UpgradePurchase_01.wav@0ms -11dB +2st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/GoldPickup_01.wav, exports/GoldPickup_02.wav, exports/GoldPickup_03.wav, exports/UpgradePurchase_01.wav"
+  },
+  {
+   "sound": "UiLock",
+   "event": "UiEvent.UpgradeOfferLocked",
+   "files": [
+    "UiLock_01.wav",
+    "UiLock_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.03,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -86.5,
+   "dcDb": -144.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -200.2,
+   "layers": "derived (v005, no credits): ArmorPieceDrop_02.wav@0ms -5dB +2st + ImpactMetal_01.wav@15ms -8dB -3st + tone:1480,2220@0.6@10ms -18dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav, exports/ImpactMetal_01.wav, tone:1480,2220@0.6"
+  },
+  {
    "sound": "UiNavigate",
    "event": "PrototypeAudio.Navigate",
    "files": [
@@ -1101,6 +1887,169 @@
    "bus": "UI",
    "spatial": false,
    "provenance": "seed_audio job 62653442 (1.1 cr) · ui_navigate"
+  },
+  {
+   "sound": "UiNewBest",
+   "event": "UiEvent.NewBestRound",
+   "files": [
+    "UiNewBest_01.wav",
+    "UiNewBest_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -7.71,
+   "noiseFloorDb": -84.4,
+   "dcDb": -181.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -209.7,
+   "layers": "derived (v005, no credits): RoundComplete_01.wav@0ms -10dB +2st + GoldMagnet_01.wav@100ms -4dB +9st + GoldPickup_03.wav@250ms -5dB +11st + tone:2637,3951,5274@1.4@150ms -9dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/GoldMagnet_01.wav, exports/GoldPickup_03.wav, exports/RoundComplete_01.wav, tone:2637,3951,5274@1.4"
+  },
+  {
+   "sound": "UiPaneOpen",
+   "event": "UiEvent.PaneOpened",
+   "files": [
+    "UiPaneOpen_01.wav",
+    "UiPaneOpen_02.wav"
+   ],
+   "loop": false,
+   "lufs": -24.0,
+   "truePeakDb": -7.97,
+   "noiseFloorDb": -77.6,
+   "dcDb": -134.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -24.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -199.6,
+   "layers": "derived (v005, no credits): FootstepFoliage_02.wav@0ms -4dB + UiTransition_01.wav@40ms -9dB +2st + FootstepWood_02.wav@220ms -10dB -2st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepFoliage_02.wav, exports/FootstepWood_02.wav, exports/UiTransition_01.wav"
+  },
+  {
+   "sound": "UiReroll",
+   "event": "UiEvent.UpgradeRerolled",
+   "files": [
+    "UiReroll_01.wav",
+    "UiReroll_02.wav"
+   ],
+   "loop": false,
+   "lufs": -23.0,
+   "truePeakDb": -4.81,
+   "noiseFloorDb": -77.6,
+   "dcDb": -129.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -23.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -167.4,
+   "layers": "derived (v005, no credits): UiTransition_01.wav@0ms -6dB +3st + FootstepFoliage_01.wav@110ms -7dB +5st + UiTransition_01.wav@220ms -6dB +7st + FootstepWood_02.wav@300ms -12dB +4st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepFoliage_01.wav, exports/FootstepWood_02.wav, exports/UiTransition_01.wav"
+  },
+  {
+   "sound": "UiReveal",
+   "event": "PrototypeAudio.Reveal",
+   "files": [
+    "UiReveal_01.wav",
+    "UiReveal_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -5.43,
+   "noiseFloorDb": -120.0,
+   "dcDb": -196.3,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -195.4,
+   "layers": "derived (v005, no credits): GoldPickup_01.wav@0ms -5dB +5st + tone:2093,3136,5274@1.8@30ms -14dB + GoldPickup_02.wav@90ms -12dB +9st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/GoldPickup_01.wav, exports/GoldPickup_02.wav, tone:2093,3136,5274@1.8"
+  },
+  {
+   "sound": "UiSelect",
+   "event": "UiEvent.ChoiceSelected",
+   "files": [
+    "UiSelect_01.wav",
+    "UiSelect_02.wav",
+    "UiSelect_03.wav"
+   ],
+   "loop": false,
+   "lufs": -23.58,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -69.0,
+   "dcDb": -181.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -23.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -191.3,
+   "layers": "derived (v005, no credits): ImpactWood_01.wav@0ms -6dB +5st + UiConfirm_01.wav@5ms -8dB -2st + tone:660,990@0.4@0ms -16dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWood_01.wav, exports/UiConfirm_01.wav, tone:660,990@0.4"
+  },
+  {
+   "sound": "UiSliderTick",
+   "event": "UiEvent.SliderChanged",
+   "files": [
+    "UiSliderTick_01.wav",
+    "UiSliderTick_02.wav",
+    "UiSliderTick_03.wav"
+   ],
+   "loop": false,
+   "lufs": -26.35,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -94.2,
+   "dcDb": -138.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -26.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005, no credits): RoundCountdownTick_01.wav@0ms -4dB +7st + noise:white@0ms -20dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/RoundCountdownTick_01.wav, noise:white"
+  },
+  {
+   "sound": "UiToggle",
+   "event": "UiEvent.ToggleChanged",
+   "files": [
+    "UiToggle_01.wav",
+    "UiToggle_02.wav"
+   ],
+   "loop": false,
+   "lufs": -25.9,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -77.7,
+   "dcDb": -145.3,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -24.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -187.6,
+   "layers": "derived (v005, no credits): ReloadEnd_02.wav@0ms -6dB +3st + ReloadEnd_02.wav@70ms -7dB -4st + FootstepWood_01.wav@0ms -12dB +2st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepWood_01.wav, exports/ReloadEnd_02.wav"
   },
   {
    "sound": "UiTransition",
@@ -1126,6 +2075,29 @@
    "provenance": "seed_audio job 64db0f36 (1.1 cr) · ui_transition"
   },
   {
+   "sound": "UiUnlock",
+   "event": "UiEvent.UnlockRevealed",
+   "files": [
+    "UiUnlock_01.wav",
+    "UiUnlock_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -5.9,
+   "noiseFloorDb": -70.2,
+   "dcDb": -161.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -194.0,
+   "layers": "derived (v005, no credits): SwPickup_01.wav@0ms -5dB +3st + GoldMagnet_01.wav@120ms -10dB +6st + tone:1760,2640,4400@1.5@200ms -16dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/GoldMagnet_01.wav, exports/SwPickup_01.wav, tone:1760,2640,4400@1.5"
+  },
+  {
    "sound": "UpgradePurchase",
    "event": "UpgradePurchased",
    "files": [
@@ -1146,6 +2118,102 @@
    "bus": "UI",
    "spatial": false,
    "provenance": "seed_audio job cebddf68 (1.1 cr) · upgrade_purchase"
+  },
+  {
+   "sound": "ZombieAggroElite",
+   "event": "anim.rise_end",
+   "files": [
+    "ZombieAggroElite_01.wav",
+    "ZombieAggroElite_02.wav",
+    "ZombieAggroElite_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -7.45,
+   "noiseFloorDb": -75.2,
+   "dcDb": -131.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -174.7,
+   "layers": "derived (v005, no credits): ZombieAttackElite_03.wav@0ms -4dB -1st + ZombieHitElite_02.wav@0ms -7dB -4st + tone:55,82@0.5@0ms -20dB",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieAttackElite_03.wav, exports/ZombieHitElite_02.wav, tone:55,82@0.5"
+  },
+  {
+   "sound": "ZombieAggroSpecial",
+   "event": "anim.rise_end",
+   "files": [
+    "ZombieAggroSpecial_01.wav",
+    "ZombieAggroSpecial_02.wav",
+    "ZombieAggroSpecial_03.wav"
+   ],
+   "loop": false,
+   "lufs": -19.18,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -68.9,
+   "dcDb": -192.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -230.3,
+   "layers": "derived (v005, no credits): ZombieWindupStandard_03.wav@0ms -4dB +4st + noise:white@0ms -14dB + ZombieHitStandard_03.wav@0ms -13dB +6st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieHitStandard_03.wav, exports/ZombieWindupStandard_03.wav, noise:white"
+  },
+  {
+   "sound": "ZombieAggroStandard",
+   "event": "anim.rise_end",
+   "files": [
+    "ZombieAggroStandard_01.wav",
+    "ZombieAggroStandard_02.wav",
+    "ZombieAggroStandard_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.18,
+   "noiseFloorDb": -68.9,
+   "dcDb": -181.9,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -217.5,
+   "layers": "derived (v005, no credits): ZombieWindupStandard_02.wav@0ms -4dB +2st + ZombieHitStandard_03.wav@0ms -5dB -2st + noise:pink@200ms -9dB",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieHitStandard_03.wav, exports/ZombieWindupStandard_02.wav, noise:pink"
+  },
+  {
+   "sound": "ZombieAggroUltra",
+   "event": "anim.rise_end",
+   "files": [
+    "ZombieAggroUltra_01.wav",
+    "ZombieAggroUltra_02.wav",
+    "ZombieAggroUltra_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.13,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -72.3,
+   "dcDb": -97.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -151.0,
+   "layers": "single take",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 5a9b4bb7 (2.2 cr) · zombie_ultra_aggro"
   },
   {
    "sound": "ZombieAttackElite",
@@ -1170,6 +2238,30 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job 84c7d7ad (1.1 cr) · zombie_elite_attack_v2"
+  },
+  {
+   "sound": "ZombieAttackSpecial",
+   "event": "ZombieEnemy.AttackPhase→Active",
+   "files": [
+    "ZombieAttackSpecial_01.wav",
+    "ZombieAttackSpecial_02.wav",
+    "ZombieAttackSpecial_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -6.23,
+   "noiseFloorDb": -84.4,
+   "dcDb": -153.9,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -191.4,
+   "layers": "derived (v005, no credits): ZombieAttackStandard_01.wav@0ms -4dB +3st + noise:white@0ms -15dB + noise:pink@0ms -14dB",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieAttackStandard_01.wav, noise:pink, noise:white"
   },
   {
    "sound": "ZombieAttackStandard",
@@ -1242,6 +2334,30 @@
    "provenance": "seed_audio job 1d6aa31b (1.1 cr) · zombie_elite_death"
   },
   {
+   "sound": "ZombieDeathSpecial",
+   "event": "DamageEvents.EnemyDied",
+   "files": [
+    "ZombieDeathSpecial_01.wav",
+    "ZombieDeathSpecial_02.wav",
+    "ZombieDeathSpecial_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -3.45,
+   "noiseFloorDb": -94.8,
+   "dcDb": -191.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -202.3,
+   "layers": "derived (v005, no credits): ZombieDeathStandard_02.wav@0ms -4dB +3st + noise:pink@250ms -15dB + ZombieIdle_01.wav@400ms -11dB +5st + ZombieStepLight_02.wav@800ms -9dB -3st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieDeathStandard_02.wav, exports/ZombieIdle_01.wav, exports/ZombieStepLight_02.wav, noise:pink"
+  },
+  {
    "sound": "ZombieDeathStandard",
    "event": "DamageEvents.EnemyDied",
    "files": [
@@ -1311,6 +2427,30 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job 964135d9 (1.1 cr) · zombie_elite_hit"
+  },
+  {
+   "sound": "ZombieHitSpecial",
+   "event": "DamageEvents.EnemyDamaged",
+   "files": [
+    "ZombieHitSpecial_01.wav",
+    "ZombieHitSpecial_02.wav",
+    "ZombieHitSpecial_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.28,
+   "noiseFloorDb": -69.7,
+   "dcDb": -134.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -164.5,
+   "layers": "single take",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "seed_audio job 488ac407 (2.6 cr) · zombie_special_hit"
   },
   {
    "sound": "ZombieHitStandard",
@@ -1385,6 +2525,78 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job 543678fc (1.1 cr) · zombie_idle"
+  },
+  {
+   "sound": "ZombieIdleElite",
+   "event": "ZombieEnemy idle poll",
+   "files": [
+    "ZombieIdleElite_01.wav",
+    "ZombieIdleElite_02.wav",
+    "ZombieIdleElite_03.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -7.28,
+   "noiseFloorDb": -94.8,
+   "dcDb": -189.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -192.7,
+   "layers": "derived (v005, no credits): ZombieIdle_04.wav@0ms -4dB -4st + tone:62,93,131@0.8@0ms -16dB + ZombieIdle_01.wav@600ms -10dB -6st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieIdle_01.wav, exports/ZombieIdle_04.wav, tone:62,93,131@0.8"
+  },
+  {
+   "sound": "ZombieIdleSpecial",
+   "event": "ZombieEnemy idle poll",
+   "files": [
+    "ZombieIdleSpecial_01.wav",
+    "ZombieIdleSpecial_02.wav",
+    "ZombieIdleSpecial_03.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -8.63,
+   "noiseFloorDb": -94.8,
+   "dcDb": -187.3,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -219.0,
+   "layers": "derived (v005, no credits): ZombieIdle_03.wav@0ms -5dB +3st + noise:pink@0ms -16dB + ZombieIdle_02.wav@500ms -12dB +6st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieIdle_02.wav, exports/ZombieIdle_03.wav, noise:pink"
+  },
+  {
+   "sound": "ZombieIdleUltra",
+   "event": "ZombieEnemy idle poll",
+   "files": [
+    "ZombieIdleUltra_01.wav",
+    "ZombieIdleUltra_02.wav",
+    "ZombieIdleUltra_03.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -6.09,
+   "noiseFloorDb": -91.7,
+   "dcDb": -187.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -190.8,
+   "layers": "derived (v005, no credits): ZombieIdle_02.wav@0ms -4dB -8st + tone:41,62,87@1.1@0ms -15dB + ImpactMetal_01.wav@500ms -16dB -9st + ZombieStepHeavy_01.wav@900ms -14dB -5st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactMetal_01.wav, exports/ZombieIdle_02.wav, exports/ZombieStepHeavy_01.wav, tone:41,62,87@1.1"
   },
   {
    "sound": "ZombieRise",
@@ -1508,6 +2720,30 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job 5ec941e7 (1.1 cr) · zombie_elite_windup_v2"
+  },
+  {
+   "sound": "ZombieWindupSpecial",
+   "event": "ZombieEnemy.AttackPhase→Windup",
+   "files": [
+    "ZombieWindupSpecial_01.wav",
+    "ZombieWindupSpecial_02.wav",
+    "ZombieWindupSpecial_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -4.36,
+   "noiseFloorDb": -68.9,
+   "dcDb": -181.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -218.0,
+   "layers": "derived (v005, no credits): ZombieWindupStandard_01.wav@0ms -4dB +3st + noise:pink@0ms -14dB + ZombieIdle_03.wav@50ms -10dB +4st",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieIdle_03.wav, exports/ZombieWindupStandard_01.wav, noise:pink"
   },
   {
    "sound": "ZombieWindupStandard",
