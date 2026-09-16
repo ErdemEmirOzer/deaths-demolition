@@ -15,8 +15,9 @@ Every contract PNG (`Textures/Source|Derived/T_<role>_<Map>.png`) belongs to a d
 | Breakable | 512 | on | — (reserved) | `small_breakable` shares `bamboo_culm`/`roof`/`wood` |
 | Sky | 256 | off | `sky` (the 4×256 gradient `ArtSkyBuilder` writes) | A skybox has no renderer for the streaming system to rate |
 | Character | 2048 | on | `player`, `player_skin1/2b/3` (skin 2 = 2b Steel/Indigo, user 2026-09-16), `zombie_atlas` (WP-016), `zombie_armor` (AP-008, WP-017) | The one thing the camera frames at ~100 px; ADR-016-1 |
+| Vfx | 1024 | off | every `T_<name>_Sheet.png` (WP-037 · AP-014 `T_vfx_sw_*_Sheet`: flipbook / card / tile, sRGB + alpha coverage, `alphaIsTransparency`) — no table row needed | An effect shows on its first frame; streaming would show the lowest mip first |
 
-`roof_courses` (Structure) is the generated 256² tile-course detail normal for the AP-005B roof copy (`ArtTextureRepack.BuildRoofCourses`).
+`sw_atlas` (Character, WP-037) is the AP-014 special-weapon 1K atlas, held at character distance. `roof_courses` (Structure) is the generated 256² tile-course detail normal for the AP-005B roof copy (`ArtTextureRepack.BuildRoofCourses`).
 
 **Budgets v2 (ADR-015-1 v2, WP-017):** shipped-bytes estimate at the class sizes — world set (every class but Character) ≤ 120 MB, character set (player + zombie atlas + armour atlas) ≤ 80 MB, total ≤ 200 MB (`ArtImportContract.Shipped*BudgetMb`; measured 116.8 / 69.3 / 186.1 MB). Resident streaming budget stays 160 MB. If the character set ever exceeds its line the armour atlas drops to 1024 (technical rule).
 

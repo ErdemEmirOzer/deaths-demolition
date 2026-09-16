@@ -110,6 +110,47 @@ namespace DD.Prototype.Weapons
         }
 
         /// <summary>Show or hide the whole rig, for the temporary classic-weapon swap (REQ-057).</summary>
+        /// <summary>
+        /// WP-037 (AP-014): replace the placeholder body with an authored model. The model
+        /// root is parented to the body transform at identity (the meshes are authored in
+        /// the socket frame), so the kick / spin animation keeps driving it. Null restores
+        /// nothing — the placeholder is gone for good on this rig (rebuild = new rig).
+        /// </summary>
+        public void SetModel(GameObject modelRoot)
+        {
+            EnsureModel();
+            if (modelRoot == null)
+            {
+                return;
+            }
+
+            for (int i = _body.childCount - 1; i >= 0; i--)
+            {
+                Transform child = _body.GetChild(i);
+                if (child == _muzzle)
+                {
+                    continue;   // the muzzle marker is an empty transform the flash / tracer origin reads
+                }
+
+                Destroy(child.gameObject);
+            }
+
+            // The authored model has no spinning action part; the spin ramp becomes a no-op.
+            _action = null;
+            modelRoot.transform.SetParent(_body, false);
+            modelRoot.transform.localPosition = Vector3.zero;
+            modelRoot.transform.localRotation = Quaternion.identity;
+            modelRoot.transform.localScale = Vector3.one;
+            _body.localPosition = Vector3.zero;
+            _body.localScale = Vector3.one;
+            _bodyRestPosition = _body.localPosition;
+            _bodyRestRotation = _body.localRotation;
+            HasAuthoredModel = true;
+        }
+
+        /// <summary>WP-037: true once <see cref="SetModel"/> installed an authored model.</summary>
+        public bool HasAuthoredModel { get; private set; }
+
         public void SetVisible(bool visible)
         {
             if (_body != null && _body.gameObject.activeSelf != visible)

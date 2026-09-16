@@ -28,6 +28,7 @@ namespace DD.Art.Tests.EditMode
         [TestCase("Assets/_Art/Textures/Derived/T_earth_MetallicSmoothness.png", ArtImportContract.TextureRole.MetallicSmoothness)]
         [TestCase("T_sakura_pink_BaseColor.png", ArtImportContract.TextureRole.BaseColor)]
         [TestCase("T_wood_Normal.PNG", ArtImportContract.TextureRole.Normal)]
+        [TestCase("Assets/_Art/VFX/Textures/T_vfx_sw_kagura_ring_4x4_Sheet.png", ArtImportContract.TextureRole.Sheet)]
         [TestCase("stone_BaseColor.png", ArtImportContract.TextureRole.Unknown)]
         [TestCase("T_BaseColor.png", ArtImportContract.TextureRole.Unknown)]
         [TestCase("T_stone_Roughness.png", ArtImportContract.TextureRole.Unknown)]
@@ -212,6 +213,7 @@ namespace DD.Art.Tests.EditMode
         [TestCase("bamboo_culm", ArtImportContract.TextureClass.Foliage, 1024)]
         [TestCase("bark", ArtImportContract.TextureClass.Foliage, 1024)]
         [TestCase("sky", ArtImportContract.TextureClass.Sky, 256)]
+        [TestCase("sw_atlas", ArtImportContract.TextureClass.Character, 2048)]
         public void DokuSinifi_RolTablosu_VeBoyut(string rol, ArtImportContract.TextureClass beklenen, int boyut)
         {
             Assert.AreEqual(beklenen, ArtImportContract.ClassOfRole(rol), "ClassOfRole(" + rol + ")");
@@ -228,6 +230,20 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(512, ArtImportContract.MaxTextureSizeOf("Assets/_Art/Textures/Source/T_lantern_brass_BaseColor.png"));
             Assert.AreEqual(512, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Prop));
             Assert.AreEqual(512, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Breakable));
+        }
+
+        [Test]
+        public void DokuSinifi_Sheet_VfxSinifi_1024_StreamYok_AlfaKorunur()
+        {
+            // WP-037 (AP-014): a T_*_Sheet.png is the Vfx class without a table row — 1024, never streamed, colour with alpha.
+            const string yol = "Assets/_Art/VFX/Textures/T_vfx_sw_ofuda_card_1x2_Sheet.png";
+            Assert.IsNull(ArtImportContract.ClassOfRole(ArtImportContract.RoleSlugOf(yol)), "sheet'in tablo satırı yoktur");
+            Assert.AreEqual(ArtImportContract.TextureClass.Vfx, ArtImportContract.ClassifiedClassOf(yol));
+            Assert.AreEqual(1024, ArtImportContract.MaxTextureSizeOf(yol));
+            Assert.IsFalse(ArtImportContract.StreamsMipmaps(ArtImportContract.TextureClass.Vfx));
+            Assert.IsFalse(ArtImportContract.IsLinearRole(ArtImportContract.TextureRole.Sheet), "sheet renk (sRGB)");
+            Assert.IsTrue(ArtImportContract.KeepsAlpha(ArtImportContract.TextureRole.Sheet));
+            Assert.AreEqual(ArtImportContract.FormatOf(ArtImportContract.TextureRole.BaseColor), ArtImportContract.FormatOf(ArtImportContract.TextureRole.Sheet));
         }
 
         [Test]

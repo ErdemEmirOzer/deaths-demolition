@@ -45,6 +45,7 @@ Bu dosyada yalnızca kullanıcı tarafından verilen veya açıkça onaylanan ka
 | REQ-153 | Geçersiz teklif güvenli hata durumuna geçecektir. | Üç geçerli kart veya kurala uygun yenileme üretilemezse gold kesilmez, kart uydurulmaz, açık bir configuration error üretilir, ekran güvenli hata mesajı gösterir, Continue çalışır; soft-lock veya crash olmaz. |
 | REQ-154 | Gold işlemleri atomik ve tekrar-güvenli olacaktır. | Satın alma ve yenileme tek atomik işlemdir; başarısız işlem gold kaybettirmez; negatif bakiye oluşamaz; aynı işlem kimliği ikinci kez uygulanmaz. |
 | REQ-155 | Run Results `Gold Spent` birleşik toplamdır. | Geliştirme satın almaları ve yenileme ücretleri tek `Gold Spent` satırında toplanır; ayrı yenileme satırı yoktur; replay veya UI yeniden bağlanması toplamı iki kez artırmaz; gold kazanmak/harcamak profil XP'si vermez. |
+| REQ-156 | Koşu başında seçilebilir klasik silahlar roster verisinden gelecektir. | Skin & Weapon Selection üç klasik silahı (A tüfek / B karabina / C pompalı, DEC-083) roster sırasıyla ve profil açılış durumuyla listeler; dükkân takılı silahın çekirdek dalları + ortak oyuncu dallarını teklif eder (ADR-034-1). (WP-034/WP-037, 2026-09-17) |
 
 ## Kalıcı profil, istatistik ve XP
 

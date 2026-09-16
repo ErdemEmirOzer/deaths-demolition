@@ -1,0 +1,142 @@
+{
+ "schema": "AP014-vfx-manifest v1 (AP-010 sheet contract)",
+ "rule": "PNG RGBA straight alpha, row-major, frame = sheet/grid, 8 px transparent cell border; tinted sheets are greyscale + alpha (RGB = luminance), sample additive with the reserved beacon colour",
+ "assets": [
+  {
+   "family": "special_weapon",
+   "file": "AP014_fx_kagura_ring_4x4_1024.png",
+   "kind": "flipbook",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 16,
+   "duration_s": 1.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 19.0,
+   "colour_reserve": "beacon (runtime tint Special (1.00,0.82,0.35), additive)",
+   "emissive_file": null,
+   "usage_note": "Kagura Bell sweep: pressure front ring; play once per fired wave, quad scale follows KaguraWaveField.FrontRadius (0.34 s travel to 9.5 m); greyscale + alpha",
+   "runtime_tint": true,
+   "readability_limit_s": 0.5,
+   "bytes": 404184,
+   "sha256": "c543f96b52a349faa1ee44613df0dc92f4a1a3c7563dc2cf0d4e0767e694a314",
+   "reserve_check": {
+    "px": 308272,
+    "gold_band_pct": 0.0,
+    "beacon_band_pct": 0.0,
+    "s_p99": 0.0,
+    "v_min": 0.549,
+    "v_max": 1.0
+   },
+   "status": "v001 (procedural; Higgsfield balance under the floor)"
+  },
+  {
+   "family": "special_weapon",
+   "file": "AP014_fx_ofuda_card_1x2_512x256.png",
+   "kind": "flipbook",
+   "grid": [
+    2,
+    1
+   ],
+   "frames_used": 2,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    512,
+    256
+   ],
+   "world_size_m": 0.22,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "usage_note": "Ofuda Loom talisman: frame 0 flying (billboard along the shot), frame 1 sealed on the body (attach to the Chest bone, SealArmSeconds); paper #D9D2C0 + red seal #9E2A22 (no tint)",
+   "runtime_tint": false,
+   "readability_limit_s": 0.5,
+   "bytes": 1535,
+   "sha256": "8a5719a32555b8b7dc22d2b9c9a913cb24d1918336060584e620d32af62faf7a",
+   "reserve_check": {
+    "px": 23107,
+    "gold_band_pct": 0.0,
+    "beacon_band_pct": 0.0,
+    "s_p99": 0.785,
+    "v_min": 0.275,
+    "v_max": 0.851
+   },
+   "status": "v001 (procedural; Higgsfield balance under the floor)"
+  },
+  {
+   "family": "special_weapon",
+   "file": "AP014_fx_ofuda_thread_tile_256.png",
+   "kind": "static",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    256,
+    256
+   ],
+   "world_size_m": 0.12,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "usage_note": "Ofuda web thread between sealed bodies: tileable along U (repeat per metre of thread), line renderer strip 12 cm wide, hemp + paper knots",
+   "runtime_tint": false,
+   "readability_limit_s": 0.5,
+   "bytes": 10503,
+   "sha256": "2528d24e7c9ab354253bd852ec6b3afc1a54dae570f606abda113e17c53eb6d1",
+   "reserve_check": {
+    "px": 4858,
+    "gold_band_pct": 0.0,
+    "beacon_band_pct": 0.0,
+    "s_p99": 0.206,
+    "v_min": 0.549,
+    "v_max": 0.898
+   },
+   "status": "v001 (procedural; Higgsfield balance under the floor)"
+  },
+  {
+   "family": "special_weapon",
+   "file": "AP014_fx_ofuda_collapse_4x4_1024.png",
+   "kind": "flipbook",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 32,
+   "duration_s": 0.5,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 3.0,
+   "colour_reserve": "beacon (runtime tint Ofuda (0.96,0.93,0.84) additive on the flash; flakes stay grey)",
+   "emissive_file": null,
+   "usage_note": "Ofuda web collapse: flash core 0.2 s + paper flakes; one burst per collapsed seal position; greyscale + alpha",
+   "runtime_tint": true,
+   "readability_limit_s": 0.5,
+   "bytes": 265354,
+   "sha256": "6c1e01dfc936635044b0927b852e846e4543a2189d6d0ad95ac22e8f31f7cd48",
+   "reserve_check": {
+    "px": 246953,
+    "gold_band_pct": 0.0,
+    "beacon_band_pct": 0.0,
+    "s_p99": 0.0,
+    "v_min": 0.6,
+    "v_max": 1.0
+   },
+   "status": "v001 (procedural; Higgsfield balance under the floor)"
+  }
+ ]
+}

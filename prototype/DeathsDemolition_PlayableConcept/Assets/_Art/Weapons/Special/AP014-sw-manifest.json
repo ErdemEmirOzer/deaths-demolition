@@ -1,0 +1,254 @@
+{
+  "schema": "AP014.sw.v001",
+  "package": "AP-014",
+  "source": "AP014-manifest.json (special_weapons + budgets.sw_*)",
+  "special_weapons": {
+    "meshes": [
+      {
+        "weapon": "kagura_bell",
+        "pose": "pickup",
+        "fbx": "sw/sw_kagura_bell_pickup.fbx",
+        "objects": [
+          "sw_kagura_bell_pickup_LOD0",
+          "sw_kagura_bell_pickup_LOD1",
+          "sw_kagura_bell_pickup_LOD2"
+        ],
+        "tris_LOD": [
+          1499,
+          1005,
+          1005
+        ],
+        "socket": "ground",
+        "frame": "lying on the ground (hand frame rolled 25 deg about Y), z min 0.005; long axis along Y",
+        "material": "M_SW_Atlas"
+      },
+      {
+        "weapon": "kagura_bell",
+        "pose": "hand",
+        "fbx": "sw/sw_kagura_bell_hand.fbx",
+        "objects": [
+          "sw_kagura_bell_hand_LOD0",
+          "sw_kagura_bell_hand_LOD1",
+          "sw_kagura_bell_hand_LOD2"
+        ],
+        "tris_LOD": [
+          2024,
+          999,
+          935
+        ],
+        "socket": "socket_weapon_r",
+        "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end continues along +Y, +Z = up; the socket's +Z 'barrel' axis is unused by the sweep weapon (omnidirectional) and is the throw direction for the loom (tip at +Y, cards hang -Z)",
+        "material": "M_SW_Atlas"
+      },
+      {
+        "weapon": "ofuda_loom",
+        "pose": "pickup",
+        "fbx": "sw/sw_ofuda_loom_pickup.fbx",
+        "objects": [
+          "sw_ofuda_loom_pickup_LOD0",
+          "sw_ofuda_loom_pickup_LOD1",
+          "sw_ofuda_loom_pickup_LOD2"
+        ],
+        "tris_LOD": [
+          322,
+          322,
+          200
+        ],
+        "socket": "ground",
+        "frame": "lying on the ground (hand frame rolled 25 deg about Y), z min 0.005; long axis along Y",
+        "material": "M_SW_Atlas"
+      },
+      {
+        "weapon": "ofuda_loom",
+        "pose": "hand",
+        "fbx": "sw/sw_ofuda_loom_hand.fbx",
+        "objects": [
+          "sw_ofuda_loom_hand_LOD0",
+          "sw_ofuda_loom_hand_LOD1",
+          "sw_ofuda_loom_hand_LOD2"
+        ],
+        "tris_LOD": [
+          322,
+          322,
+          300
+        ],
+        "socket": "socket_weapon_r",
+        "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end continues along +Y, +Z = up; the socket's +Z 'barrel' axis is unused by the sweep weapon (omnidirectional) and is the throw direction for the loom (tip at +Y, cards hang -Z)",
+        "material": "M_SW_Atlas"
+      }
+    ],
+    "effects": [
+      {
+        "family": "special_weapon",
+        "file": "AP014_fx_kagura_ring_4x4_1024.png",
+        "kind": "flipbook",
+        "grid": [
+          4,
+          4
+        ],
+        "frames_used": 16,
+        "fps": 16,
+        "duration_s": 1.0,
+        "loop": false,
+        "size_px": [
+          1024,
+          1024
+        ],
+        "world_size_m": 19.0,
+        "colour_reserve": "beacon (runtime tint Special (1.00,0.82,0.35), additive)",
+        "emissive_file": null,
+        "usage_note": "Kagura Bell sweep: pressure front ring; play once per fired wave, quad scale follows KaguraWaveField.FrontRadius (0.34 s travel to 9.5 m); greyscale + alpha",
+        "runtime_tint": true,
+        "readability_limit_s": 0.5,
+        "bytes": 404184,
+        "sha256": "c543f96b52a349faa1ee44613df0dc92f4a1a3c7563dc2cf0d4e0767e694a314",
+        "reserve_check": {
+          "px": 308272,
+          "gold_band_pct": 0.0,
+          "beacon_band_pct": 0.0,
+          "s_p99": 0.0,
+          "v_min": 0.549,
+          "v_max": 1.0
+        },
+        "status": "v001 (procedural; Higgsfield balance under the floor)"
+      },
+      {
+        "family": "special_weapon",
+        "file": "AP014_fx_ofuda_card_1x2_512x256.png",
+        "kind": "flipbook",
+        "grid": [
+          2,
+          1
+        ],
+        "frames_used": 2,
+        "fps": 0,
+        "duration_s": 0.0,
+        "loop": false,
+        "size_px": [
+          512,
+          256
+        ],
+        "world_size_m": 0.22,
+        "colour_reserve": "none",
+        "emissive_file": null,
+        "usage_note": "Ofuda Loom talisman: frame 0 flying (billboard along the shot), frame 1 sealed on the body (attach to the Chest bone, SealArmSeconds); paper #D9D2C0 + red seal #9E2A22 (no tint)",
+        "runtime_tint": false,
+        "readability_limit_s": 0.5,
+        "bytes": 1535,
+        "sha256": "8a5719a32555b8b7dc22d2b9c9a913cb24d1918336060584e620d32af62faf7a",
+        "reserve_check": {
+          "px": 23107,
+          "gold_band_pct": 0.0,
+          "beacon_band_pct": 0.0,
+          "s_p99": 0.785,
+          "v_min": 0.275,
+          "v_max": 0.851
+        },
+        "status": "v001 (procedural; Higgsfield balance under the floor)"
+      },
+      {
+        "family": "special_weapon",
+        "file": "AP014_fx_ofuda_thread_tile_256.png",
+        "kind": "static",
+        "grid": [
+          1,
+          1
+        ],
+        "frames_used": 1,
+        "fps": 0,
+        "duration_s": 0.0,
+        "loop": false,
+        "size_px": [
+          256,
+          256
+        ],
+        "world_size_m": 0.12,
+        "colour_reserve": "none",
+        "emissive_file": null,
+        "usage_note": "Ofuda web thread between sealed bodies: tileable along U (repeat per metre of thread), line renderer strip 12 cm wide, hemp + paper knots",
+        "runtime_tint": false,
+        "readability_limit_s": 0.5,
+        "bytes": 10503,
+        "sha256": "2528d24e7c9ab354253bd852ec6b3afc1a54dae570f606abda113e17c53eb6d1",
+        "reserve_check": {
+          "px": 4858,
+          "gold_band_pct": 0.0,
+          "beacon_band_pct": 0.0,
+          "s_p99": 0.206,
+          "v_min": 0.549,
+          "v_max": 0.898
+        },
+        "status": "v001 (procedural; Higgsfield balance under the floor)"
+      },
+      {
+        "family": "special_weapon",
+        "file": "AP014_fx_ofuda_collapse_4x4_1024.png",
+        "kind": "flipbook",
+        "grid": [
+          4,
+          4
+        ],
+        "frames_used": 16,
+        "fps": 32,
+        "duration_s": 0.5,
+        "loop": false,
+        "size_px": [
+          1024,
+          1024
+        ],
+        "world_size_m": 3.0,
+        "colour_reserve": "beacon (runtime tint Ofuda (0.96,0.93,0.84) additive on the flash; flakes stay grey)",
+        "emissive_file": null,
+        "usage_note": "Ofuda web collapse: flash core 0.2 s + paper flakes; one burst per collapsed seal position; greyscale + alpha",
+        "runtime_tint": true,
+        "readability_limit_s": 0.5,
+        "bytes": 265354,
+        "sha256": "6c1e01dfc936635044b0927b852e846e4543a2189d6d0ad95ac22e8f31f7cd48",
+        "reserve_check": {
+          "px": 246953,
+          "gold_band_pct": 0.0,
+          "beacon_band_pct": 0.0,
+          "s_p99": 0.0,
+          "v_min": 0.6,
+          "v_max": 1.0
+        },
+        "status": "v001 (procedural; Higgsfield balance under the floor)"
+      }
+    ],
+    "beacon": "code defaults unchanged (SpecialWeaponPickup: Special (1.00,0.82,0.35) a 0.3; Ofuda (0.96,0.93,0.84)); AP-010 beacon ring/column textures reused",
+    "lifecycle": "WP-007: pickup mesh on the ground for GroundLifetime 22 s with the beacon; on pickup swap to the hand mesh on socket_weapon_r; timed use, no ammo/reload (REQ-055/056)"
+  },
+  "budgets": {
+    "sw_pickup_LOD0_2": [
+      1500,
+      600,
+      200
+    ],
+    "sw_hand_LOD0_2": [
+      3000,
+      1000,
+      300
+    ]
+  },
+  "event_coverage_rows": [
+    {
+      "asset": "SW Kagura Bell",
+      "events": [
+        "pickup spawn — beacon column + ring (AP-010) + bell shimmer",
+        "pickup taken — bell chime",
+        "use — ring wave sheet per wave (16 f, 1.0 s) + bell strike",
+        "expire — beacon fade"
+      ]
+    },
+    {
+      "asset": "SW Ofuda Loom",
+      "events": [
+        "pickup spawn — beacon (Ofuda tint)",
+        "pickup taken — paper rustle",
+        "use — talisman card flying/sealed + web thread between seals",
+        "collapse — burst sheet (16 f, 0.5 s) per seal + paper tear",
+        "expire — beacon fade"
+      ]
+    }
+  ]
+}

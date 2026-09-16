@@ -747,9 +747,52 @@ namespace DD.Prototype.Weapons
             }
         }
 
+        /// <summary>
+        /// WP-037 (AP-014): put the authored hand model of the active Special Weapon on the
+        /// special rig (once per weapon id; the placeholder primitives stay for a weapon
+        /// without a model — Tide Jewel — or without the library).
+        /// </summary>
+        private SpecialWeaponId _specialModelId = (SpecialWeaponId)(-1);
+
+        private void EnsureSpecialModel()
+        {
+            if (_specialRig == null || !_special.IsActive || _specialModelId == _special.Id)
+            {
+                return;
+            }
+
+            SpecialWeaponVisualLibrary library = SpecialWeaponVisualLibrary.Current;
+            SpecialWeaponVisualLibrary.Entry entry = library != null ? library.Find(_special.Id) : null;
+            if (entry == null || !entry.HasHand || library.material == null)
+            {
+                return;
+            }
+
+            GameObject model = SpecialWeaponVisualLibrary.Instantiate("Model", entry.handLods, library.material, null, s_handLodHeights);
+            if (model == null)
+            {
+                return;
+            }
+
+            _specialRig.SetModel(model);
+            _specialModelId = _special.Id;
+        }
+
+        private static readonly float[] s_handLodHeights = { 0.15f, 0.06f, 0.01f };
+
+        /// <summary>WP-037 readout: the special rig carries the AP-014 hand model (tests / probe).</summary>
+        public bool SpecialRigHasAuthoredModel => _specialRig != null && _specialRig.HasAuthoredModel;
+
+        /// <summary>WP-037 readout: the special rig body is visible (tests).</summary>
+        public bool SpecialRigVisible => _specialRig != null && _specialRig.Body != null && _specialRig.Body.gameObject.activeSelf;
+
         private void SetRigVisibility()
         {
             bool special = _special.IsActive;
+            if (special)
+            {
+                EnsureSpecialModel();
+            }
 
             if (_classicRig != null)
             {

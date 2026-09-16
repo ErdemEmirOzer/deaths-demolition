@@ -37,6 +37,12 @@ namespace DD.Prototype.Weapons
 
         private static PrototypePool<BeaconEffect> s_beaconPool;
 
+        /// <summary>WP-037: LODGroup screen heights for the authored pickup model (LOD0 near, LOD2 far).</summary>
+        private static readonly float[] s_pickupLodHeights = { 0.12f, 0.05f, 0.01f };
+
+        /// <summary>WP-037: true when the visual is the AP-014 model rather than the WP-007 primitives (readout for tests/probe).</summary>
+        public bool UsesAuthoredModel { get; private set; }
+
         private Transform _visual;
         private BeaconEffect _beacon;
         private SpecialWeaponId _builtId = SpecialWeaponId.KaguraBell;
@@ -355,6 +361,22 @@ namespace DD.Prototype.Weapons
             _builtId = _weaponId;
             _visualBuilt = true;
 
+            // WP-037 (AP-014): the authored pickup model when the art package is imported;
+            // the WP-007 primitives stay for a weapon without one (Tide Jewel) or a project
+            // without the library.
+            SpecialWeaponVisualLibrary library = SpecialWeaponVisualLibrary.Current;
+            SpecialWeaponVisualLibrary.Entry authored = library != null ? library.Find(_weaponId) : null;
+            if (authored != null && authored.HasPickup && library.material != null)
+            {
+                GameObject model = SpecialWeaponVisualLibrary.Instantiate("Model", authored.pickupLods, library.material, _visual, s_pickupLodHeights);
+                if (model != null)
+                {
+                    UsesAuthoredModel = true;
+                    return;
+                }
+            }
+
+            UsesAuthoredModel = false;
             switch (_weaponId)
             {
                 case SpecialWeaponId.OfudaLoom:

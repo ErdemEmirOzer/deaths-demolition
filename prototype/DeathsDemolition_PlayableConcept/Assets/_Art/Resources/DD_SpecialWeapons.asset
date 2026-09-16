@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b3bcf9f1aa84e2e925d66389578a35a, type: 3}
+  m_Name: DD_SpecialWeapons
+  m_EditorClassIdentifier: 
+  schema: dd-special-weapon-visuals-v1
+  package: AP-014
+  material: {fileID: 2100000, guid: 395556107bdd74aada8286f81140ec54, type: 2}
+  entries:
+  - id: 0
+    pickupLods:
+    - {fileID: 4355385346944042988, guid: 0577e4ced8ced4cd59d73c57cd8bbfa6, type: 3}
+    - {fileID: 6177688540885699578, guid: 0577e4ced8ced4cd59d73c57cd8bbfa6, type: 3}
+    - {fileID: 4535144432183273232, guid: 0577e4ced8ced4cd59d73c57cd8bbfa6, type: 3}
+    handLods:
+    - {fileID: 9106013116827018600, guid: c7673999339704e148bd8ac641f69c6a, type: 3}
+    - {fileID: 4783995307923534670, guid: c7673999339704e148bd8ac641f69c6a, type: 3}
+    - {fileID: -7331926105172707340, guid: c7673999339704e148bd8ac641f69c6a, type: 3}
+    pickupTriangles: cb040000dd020000dd020000
+    handTriangles: e8060000e7020000a7020000
+  - id: 1
+    pickupLods:
+    - {fileID: -9195562310179135791, guid: 54aaab822f2284a26b85c6a20a8daf4e, type: 3}
+    - {fileID: 2938507873793565532, guid: 54aaab822f2284a26b85c6a20a8daf4e, type: 3}
+    - {fileID: 8311929818224758318, guid: 54aaab822f2284a26b85c6a20a8daf4e, type: 3}
+    handLods:
+    - {fileID: 1859929086564948833, guid: 1cb43e32159f146c195ca0c4c86b7d11, type: 3}
+    - {fileID: -2739203755982370382, guid: 1cb43e32159f146c195ca0c4c86b7d11, type: 3}
+    - {fileID: -5039990785528823828, guid: 1cb43e32159f146c195ca0c4c86b7d11, type: 3}
+    pickupTriangles: 4201000042010000c8000000
+    handTriangles: 42010000420100002c010000
+  sheets:
+  - usage: sw_kagura_wave
+    texture: {fileID: 2800000, guid: d9c47e5b383cd4e058050736d213840f, type: 3}
+    columns: 4
+    rows: 4
+    fps: 16
+    durationSeconds: 1
+    loop: 0
+    worldSizeMetres: 19
+  - usage: sw_ofuda_dart
+    texture: {fileID: 2800000, guid: 3ea2b1aed94c64083a2dbdf992d7052e, type: 3}
+    columns: 1
+    rows: 2
+    fps: 0
+    durationSeconds: 0
+    loop: 0
+    worldSizeMetres: 0.32
+  - usage: sw_ofuda_collapse
+    texture: {fileID: 2800000, guid: 69d743c6e828c480cb1c881dd82a8d90, type: 3}
+    columns: 4
+    rows: 4
+    fps: 32
+    durationSeconds: 0.5
+    loop: 0
+    worldSizeMetres: 3.2
+  - usage: sw_ofuda_web
+    texture: {fileID: 2800000, guid: 03f562da5d351454f827ef9138893b79, type: 3}
+    columns: 1
+    rows: 1
+    fps: 0
+    durationSeconds: 0
+    loop: 1
+    worldSizeMetres: 1

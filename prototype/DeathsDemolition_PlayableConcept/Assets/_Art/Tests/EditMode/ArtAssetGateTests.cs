@@ -262,6 +262,20 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(ArtArmorBuilder.ExpectedFbxCount, zirh, "AP-008 18 zırh FBX");
 
+            // WP-036 (ADR-036-1): the AP-014 tier silhouette parts listed by the tier manifest (inventory; S-03 builder).
+            int tierParca = 0;
+            foreach (ArtTierBuilder.ManifestPart part in ArtTierBuilder.ReadParts(out _, out _))
+            {
+                if (beklenen.Add(ArtTierBuilder.TierFolder + "/" + Path.GetFileName(part.fbx))) tierParca++;
+            }
+
+            Assert.AreEqual(4, tierParca, "AP-014 4 tier parça FBX");
+
+            // WP-037B: the AP-014 Special Weapon pickup + hand models (S-02 builder).
+            int sw = 0;
+            foreach (string f in ArtSpecialWeaponBuilder.ModelFiles()) if (beklenen.Add(f)) sw++;
+            Assert.AreEqual(4, sw, "AP-014 2 Special Weapon × pickup/hand FBX");
+
             var diskte = new HashSet<string>(DiskteUzanti(".fbx"), StringComparer.Ordinal);
             var eksik = new List<string>();
             var fazla = new List<string>();
@@ -377,6 +391,12 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(125, beklenen.Count, "Beklenen doku kümesi 107 + 12 (WP-016 karakterler) + 6 (WP-017 zırh) = 125 olmalı.");
 
+            // WP-036 tier parts atlas (BaseColor + Normal + Packed + Mask + derived MS = 5) and WP-037B Special Weapon
+            // atlas (4 + derived MS) + 4 VFX use sheets (Sheet role) = 9 → 125 + 5 + 9 = 139.
+            foreach (string f in new[] { ArtTierBuilder.BaseColorMap, ArtTierBuilder.NormalMap, ArtTierBuilder.PackedMap, ArtTierBuilder.MaskMap, ArtTierBuilder.MetallicSmoothnessMap }) beklenen.Add(f);
+            foreach (string f in ArtSpecialWeaponBuilder.TextureFiles()) beklenen.Add(f);
+            Assert.AreEqual(139, beklenen.Count, "Beklenen doku kümesi 125 + 5 (WP-036 tier) + 9 (WP-037B SW atlas + sheet) = 139 olmalı.");
+
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();
             var fazla = new List<string>();
@@ -441,7 +461,7 @@ namespace DD.Art.Tests.EditMode
             {
                 ArtImportContract.TextureRole rol = ArtImportContract.RoleOf(yol);
                 string slug = ArtImportContract.RoleSlugOf(yol);
-                ArtImportContract.TextureClass? sinif = ArtImportContract.ClassOfRole(slug);
+                ArtImportContract.TextureClass? sinif = ArtImportContract.ClassifiedClassOf(yol);   // WP-037: a Sheet is the Vfx class without a table row
                 if (sinif == null)
                 {
                     ihlaller.Add(yol + ": rol '" + slug + "' ADR-015-1 sınıf tablosunda yok.");

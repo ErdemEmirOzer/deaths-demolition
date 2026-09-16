@@ -97,7 +97,9 @@ namespace DD.Art.Pipeline.EditorTools
             /// <summary>WP-016 · AP-007 ID/tint mask (R skin, G cloth, B accessory, A emissive-permitted). Linear, alpha kept; provenance + DetailMask source.</summary>
             Mask = 5,
             /// <summary>WP-016 · Derived URP detail mask: A = cloth (Mask.G) so a version tint reaches cloth only. Linear, alpha kept.</summary>
-            DetailMask = 6
+            DetailMask = 6,
+            /// <summary>WP-037 · AP-014 VFX sheet (flipbook / card / tile): sRGB colour with its alpha kept (<c>alphaIsTransparency</c>). Always the Vfx class.</summary>
+            Sheet = 7
         }
 
         /// <summary>
@@ -122,6 +124,8 @@ namespace DD.Art.Pipeline.EditorTools
             Prop = 3,
             /// <summary>Breakables: ≤ 512. Reserved; no role today.</summary>
             Breakable = 4,
+            /// <summary>WP-037 · VFX sheets (<see cref="TextureRole.Sheet"/>): 1024, never streamed (an effect shows on its first frame; streaming would show the lowest mip first).</summary>
+            Vfx = 7,
             /// <summary>The 4×256 sky gradient (ArtSkyBuilder): 256, never streamed (a skybox has no renderer for the streaming system to rate).</summary>
             Sky = 5,
             /// <summary>WP-016 · Skinned characters (player, zombie atlas): 2048 — the one thing the fixed camera frames at 100 px and the player stares at (ADR-016-1).</summary>
@@ -139,6 +143,7 @@ namespace DD.Art.Pipeline.EditorTools
                 case TextureClass.Breakable: return 512;
                 case TextureClass.Sky: return 256;
                 case TextureClass.Character: return 2048;
+                case TextureClass.Vfx: return 1024;
                 default: throw new ArgumentOutOfRangeException(nameof(c));
             }
         }
@@ -146,7 +151,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Mipmap streaming is on for every class that a renderer samples; the sky is not one.</summary>
         public static bool StreamsMipmaps(TextureClass c)
         {
-            return c != TextureClass.Sky;
+            return c != TextureClass.Sky && c != TextureClass.Vfx;
         }
 
         /// <summary>
@@ -233,6 +238,8 @@ namespace DD.Art.Pipeline.EditorTools
             { "zombie_armor", TextureClass.Character },
             // WP-036 · AP-014 tier silhouette parts atlas (1K set; S-03, one-line handshake with S-05).
             { "zombie_tier", TextureClass.Character },
+            // WP-037 · AP-014 special weapon atlas (1K set, held at character distance; S-02, one-line handshake with S-05).
+            { "sw_atlas", TextureClass.Character },
             // WP-017 · AP-005B prop families (Tripo H3.1 sets; the first Prop-class roles) and the generated roof course overlay.
             { "prop_tsukubai", TextureClass.Prop },
             { "prop_handcart", TextureClass.Prop },
@@ -251,10 +258,16 @@ namespace DD.Art.Pipeline.EditorTools
             return roleSlug != null && ClassOfRoleTable.TryGetValue(roleSlug, out TextureClass c) ? c : (TextureClass?)null;
         }
 
-        /// <summary>The class a texture imports with: its role's class, Prop for an unclassified role.</summary>
+        /// <summary>The class the contract assigns a texture path: Vfx for a <see cref="TextureRole.Sheet"/>, else its role's table class; null when the role is unclassified.</summary>
+        public static TextureClass? ClassifiedClassOf(string assetPath)
+        {
+            return RoleOf(assetPath) == TextureRole.Sheet ? TextureClass.Vfx : ClassOfRole(RoleSlugOf(assetPath));
+        }
+
+        /// <summary>The class a texture imports with: its classified class, Prop for an unclassified role.</summary>
         public static TextureClass ClassOf(string assetPath)
         {
-            return ClassOfRole(RoleSlugOf(assetPath)) ?? TextureClass.Prop;
+            return ClassifiedClassOf(assetPath) ?? TextureClass.Prop;
         }
 
         /// <summary>Shipped max size for a texture path (its class's size).</summary>
@@ -355,6 +368,7 @@ namespace DD.Art.Pipeline.EditorTools
                 case "MetallicSmoothness": return TextureRole.MetallicSmoothness;
                 case "Mask": return TextureRole.Mask;
                 case "DetailMask": return TextureRole.DetailMask;
+                case "Sheet": return TextureRole.Sheet;
                 default: return TextureRole.Unknown;
             }
         }
@@ -366,16 +380,16 @@ namespace DD.Art.Pipeline.EditorTools
                    role == TextureRole.Mask || role == TextureRole.DetailMask;
         }
 
-        /// <summary>Roles whose alpha channel carries data (smoothness; the ID mask's emissive flag; the detail mask's cloth gate).</summary>
+        /// <summary>Roles whose alpha channel carries data (smoothness; the ID mask's emissive flag; the detail mask's cloth gate; a sheet's coverage).</summary>
         public static bool KeepsAlpha(TextureRole role)
         {
-            return role == TextureRole.MetallicSmoothness || role == TextureRole.Mask || role == TextureRole.DetailMask;
+            return role == TextureRole.MetallicSmoothness || role == TextureRole.Mask || role == TextureRole.DetailMask || role == TextureRole.Sheet;
         }
 
         public static TextureImporterFormat FormatOf(TextureRole role)
         {
             return role == TextureRole.Normal ? StandaloneNormalFormat
-                : role == TextureRole.BaseColor || role == TextureRole.Unknown ? StandaloneColorFormat
+                : role == TextureRole.BaseColor || role == TextureRole.Unknown || role == TextureRole.Sheet ? StandaloneColorFormat
                 : StandaloneMaskFormat;
         }
 
@@ -447,7 +461,9 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.wrapMode, TextureWrap, v => importer.wrapMode = v);
             changed |= Set(importer.anisoLevel, TextureAniso, v => importer.anisoLevel = v);
             bool cutout = KeepsCutoutAlpha(importer.assetPath);
-            changed |= Set(importer.alphaIsTransparency, cutout, v => importer.alphaIsTransparency = v);
+            // A VFX sheet's alpha is its coverage (blended, not clipped): transparency dilation, no coverage-preserving mips.
+            bool sheet = role == TextureRole.Sheet;
+            changed |= Set(importer.alphaIsTransparency, cutout || sheet, v => importer.alphaIsTransparency = v);
             // The mask keeps its alpha (smoothness) and a cutout BaseColor keeps its opacity;
             // every other colour/normal/packed map carries none worth keeping.
             TextureImporterAlphaSource alpha = KeepsAlpha(role) || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
@@ -512,16 +528,17 @@ namespace DD.Art.Pipeline.EditorTools
             var v = new List<string>();
             if (role == TextureRole.Unknown)
             {
-                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask>.png)");
+                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask|Sheet>.png)");
             }
 
             bool linear = IsLinearRole(role);
             TextureImporterType type = role == TextureRole.Normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
             TextureImporterFormat format = FormatOf(role);
             bool cutout = KeepsCutoutAlpha(importer.assetPath);
+            bool sheet = role == TextureRole.Sheet;
             TextureImporterAlphaSource alpha = KeepsAlpha(role) || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
 
-            TextureClass? roleClass = ClassOfRole(RoleSlugOf(importer.assetPath));
+            TextureClass? roleClass = ClassifiedClassOf(importer.assetPath);
             if (role != TextureRole.Unknown && roleClass == null)
             {
                 v.Add("class: role '" + RoleSlugOf(importer.assetPath) + "' is not in the ADR-015-1 texture class table (imports at the Prop size)");
@@ -540,7 +557,7 @@ namespace DD.Art.Pipeline.EditorTools
             Check(v, "filterMode", importer.filterMode, TextureFilter);
             Check(v, "wrapMode", importer.wrapMode, TextureWrap);
             Check(v, "anisoLevel", importer.anisoLevel, TextureAniso);
-            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, cutout);
+            Check(v, "alphaIsTransparency", importer.alphaIsTransparency, cutout || sheet);
             Check(v, "alphaSource", importer.alphaSource, alpha);
             Check(v, "mipMapsPreserveCoverage", importer.mipMapsPreserveCoverage, cutout);
             if (cutout)
