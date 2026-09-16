@@ -56,6 +56,39 @@ namespace DD.Prototype.Navigation
         private int _budgetFrame = -1;
         private int _budgetUsed;
 
+        // WP-030: query timing (Stopwatch around NavMesh.CalculatePath; per frame and running average over frames that queried).
+        private readonly System.Diagnostics.Stopwatch _queryWatch = new System.Diagnostics.Stopwatch();
+        private int _timingFrame = -1;
+        private double _frameQueryMs;
+        private double _avgQueryMs;
+        private int _avgFrames;
+
+        /// <summary>Milliseconds spent in NavMesh.CalculatePath during the current frame.</summary>
+        public float FrameQueryMilliseconds => (float)_frameQueryMs;
+
+        /// <summary>Running average of per-frame query milliseconds over frames that issued at least one query.</summary>
+        public float AverageQueryMilliseconds => (float)_avgQueryMs;
+
+        public void ResetTiming() { _avgQueryMs = 0; _avgFrames = 0; _frameQueryMs = 0; }
+
+        private void AccountQueryTime()
+        {
+            int frame = Time.frameCount;
+            if (frame != _timingFrame)
+            {
+                if (_timingFrame >= 0 && _frameQueryMs > 0)
+                {
+                    _avgFrames++;
+                    _avgQueryMs += (_frameQueryMs - _avgQueryMs) / _avgFrames;
+                }
+
+                _timingFrame = frame;
+                _frameQueryMs = 0;
+            }
+
+            _frameQueryMs += _queryWatch.Elapsed.TotalMilliseconds;
+        }
+
         // ------------------------------------------------------------------ tunables
         // PROTOTYPE-ONLY, all invented: the request says nothing about query geometry.
 
@@ -208,7 +241,11 @@ namespace DD.Prototype.Navigation
 
             TotalQueries++;
 
-            if (!NavMesh.CalculatePath(a, b, AreaMask, _path))
+            _queryWatch.Restart();
+            bool ok = NavMesh.CalculatePath(a, b, AreaMask, _path);
+            _queryWatch.Stop();
+            AccountQueryTime();
+            if (!ok)
             {
                 return 0;
             }

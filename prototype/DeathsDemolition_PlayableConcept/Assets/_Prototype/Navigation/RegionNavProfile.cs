@@ -1,0 +1,169 @@
+using System;
+using DD.Prototype.Core.Config;
+using UnityEngine;
+using UnityEngine.AI;
+
+namespace DD.Prototype.Navigation
+{
+    public enum NavRegionKind
+    {
+        Open = 0,
+        Bridge = 1,     // narrow single-file crossing (REQ-046/047: the koi pond bridge, shore path as the alternative)
+        Corridor = 2,   // roofed bamboo corridor with two exits (REQ-111: ≥ 2 connections)
+        Gate = 3,       // palace / service gate throat (AP-005C GATE-N 5.2 m; west service gate)
+    }
+
+    /// <summary>
+    /// WP-030 (ADR-030-1) · One regional navigation volume: a world-space XZ box the NavMesh
+    /// crosses (bridge, corridor, gate throat), its route preference and its throughput.
+    /// * <see cref="costMultiplier"/> ≥ 1 scales the path length of segments inside the volume
+    ///   when routes are compared - it diversifies routes (REQ-112), it never closes one.
+    /// * <see cref="capacity"/> > 0 turns the volume into a chokepoint: a member about to enter
+    ///   while that many members are already inside queues at the mouth for a bounded time
+    ///   (DEC-032: the pressure stays, the pile-up does not).
+    /// * <see cref="alternative"/> (optional) is a waypoint that routes around the volume - the
+    ///   shore path beside the bridge, the other palace gate - offered to a member whose
+    ///   direct route crosses the volume.
+    /// * <see cref="areaName"/> (optional) names a NavMesh area; when the bake carries it the
+    ///   cost is ALSO set on the NavMesh itself (NavMesh.SetAreaCost, post-bake assignment).
+    ///   The World_AP005 bake is single-area today, so the router's route comparison is what
+    ///   runs; S-05 can add NavMeshModifierVolumes with these names without touching this code.
+    /// </summary>
+    [Serializable]
+    public sealed class NavRegionVolume
+    {
+        public string id = "";
+        public NavRegionKind kind = NavRegionKind.Open;
+        public Vector3 center = Vector3.zero;
+        public Vector3 size = new Vector3(4f, 6f, 4f);
+        [PrototypeOnly(PendingDecisions.None, "Route-preference multiplier for path segments inside the volume (1 = neutral; > 1 avoided when an alternative is cheaper).", true)]
+        [Range(1f, 4f)] public float costMultiplier = 1f;
+        [PrototypeOnly(PendingDecisions.None, "Members inside before newcomers queue at the mouth (0 = never queue).", true)]
+        [Range(0, 40)] public int capacity = 0;
+        public bool hasAlternative = false;
+        public Vector3 alternative = Vector3.zero;
+        public string areaName = "";
+
+        public bool Contains(Vector3 p)
+        {
+            float hx = size.x * 0.5f, hz = size.z * 0.5f;
+            return p.x >= center.x - hx && p.x <= center.x + hx && p.z >= center.z - hz && p.z <= center.z + hz;
+        }
+
+        public bool IsChokepoint => capacity > 0;
+        public bool IsCostly => costMultiplier > 1.0001f;
+    }
+
+    /// <summary>The regional navigation profile of the ring map. <see cref="Active"/> = Resources asset when present, else the code defaults.</summary>
+    public sealed class RegionNavProfile : ScriptableObject
+    {
+        public const string ResourcesPath = "DD_RegionNav";
+
+        [SerializeField] private NavRegionVolume[] _volumes = new NavRegionVolume[0];
+
+        [PrototypeOnly(PendingDecisions.None, "Seconds a member queues at a full chokepoint before it pushes in anyway (never a deadlock).", true)]
+        [Range(0f, 10f)] public float MaxQueueSeconds = 2.5f;
+
+        [PrototypeOnly(PendingDecisions.None, "Speed factor while queued at a chokepoint mouth (0 = stop, keeps the DEC-032 threat visible).", true)]
+        [Range(0f, 1f)] public float QueueSpeedFactor = 0.15f;
+
+        [PrototypeOnly(PendingDecisions.None, "Route diversification: the member's route roll (0..1 from its spawn seed) widens the alternative's acceptance by this fraction of the direct cost.", true)]
+        [Range(0f, 1f)] public float RouteBiasSpread = 0.25f;
+
+        [PrototypeOnly(PendingDecisions.None, "Crowd separation radius scale per AP-007 body fit (A slim / B / C broad); the collision capsule is not scaled.", true)]
+        public float FitRadiusScaleA = 0.92f, FitRadiusScaleB = 1f, FitRadiusScaleC = 1.12f;
+
+        private static RegionNavProfile s_active;
+
+        public static RegionNavProfile Active
+        {
+            get
+            {
+                if (s_active == null)
+                {
+                    s_active = Resources.Load<RegionNavProfile>(ResourcesPath);
+                    if (s_active == null)
+                    {
+                        s_active = CreateDefault();
+                        s_active.hideFlags = HideFlags.HideAndDontSave;
+                    }
+                }
+
+                return s_active;
+            }
+        }
+
+        public static void SetActive(RegionNavProfile profile) => s_active = profile;
+        public static void ResetStatics() => s_active = null;
+
+        public NavRegionVolume[] Volumes => _volumes;
+        public void Set(NavRegionVolume[] volumes) => _volumes = volumes ?? new NavRegionVolume[0];
+
+        public float FitRadiusScale(string fit)
+        {
+            switch (fit)
+            {
+                case "A": return FitRadiusScaleA;
+                case "C": return FitRadiusScaleC;
+                default: return FitRadiusScaleB;
+            }
+        }
+
+        /// <summary>The volume containing <paramref name="p"/>, or null. Allocation-free.</summary>
+        public NavRegionVolume Find(Vector3 p)
+        {
+            for (int i = 0; i < _volumes.Length; i++)
+            {
+                if (_volumes[i] != null && _volumes[i].Contains(p)) return _volumes[i];
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Post-bake assignment: set NavMesh area costs for volumes whose <c>areaName</c> exists in
+        /// the project's NavMesh areas (not Walkable / Not Walkable). Returns how many were set.
+        /// With a single-area bake this is 0 and the router's route comparison carries the rule.
+        /// </summary>
+        public int ApplyAreaCosts()
+        {
+            int applied = 0;
+            for (int i = 0; i < _volumes.Length; i++)
+            {
+                NavRegionVolume v = _volumes[i];
+                if (v == null || string.IsNullOrEmpty(v.areaName)) continue;
+                int area = NavMesh.GetAreaFromName(v.areaName);
+                if (area <= 1) continue;   // -1 unknown, 0 Walkable, 1 Not Walkable
+                NavMesh.SetAreaCost(area, Mathf.Max(1f, v.costMultiplier));
+                applied++;
+            }
+
+            return applied;
+        }
+
+        /// <summary>
+        /// The ring map's volumes (World_AP005 / procedural layout share the WorldLayout frame:
+        /// +Z north, +X east). Coordinates from <c>WorldLayout</c> / <c>DefaultSpawnPointLayout</c>;
+        /// PROTOTYPE-ONLY sizes and numbers. Alternatives are projected onto the NavMesh at
+        /// use; one that does not project is simply not offered.
+        /// </summary>
+        public static RegionNavProfile CreateDefault()
+        {
+            var p = CreateInstance<RegionNavProfile>();
+            p.name = "DD_RegionNav (code defaults)";
+            p._volumes = new[]
+            {
+                // South koi-pond bridge: x = 4, z -18 … -39.5, deck 3 m wide in the procedural map, 1.2 m single file in AP-005 (WP-014).
+                new NavRegionVolume { id = "S_Bridge", kind = NavRegionKind.Bridge, center = new Vector3(4f, 0f, -28.75f), size = new Vector3(5f, 6f, 23f), costMultiplier = 1.6f, capacity = 2, hasAlternative = true, alternative = new Vector3(18f, 0f, -30f), areaName = "Bridge" },
+                // West bamboo corridor: x -36 … -30, z -12 … 12 (roofed; ≥ 2 exits - REQ-111). Alternative: the open ground east of the corridor.
+                new NavRegionVolume { id = "W_Corridor", kind = NavRegionKind.Corridor, center = new Vector3(-33f, 0f, 0f), size = new Vector3(7f, 6f, 25f), costMultiplier = 1.3f, capacity = 5, hasAlternative = true, alternative = new Vector3(-24f, 0f, 0f), areaName = "Corridor" },
+                // Palace front gates (north): west and east throats; each is the other's alternative.
+                new NavRegionVolume { id = "N_GateWest", kind = NavRegionKind.Gate, center = new Vector3(-8f, 0f, 34f), size = new Vector3(6f, 6f, 6f), costMultiplier = 1f, capacity = 3, hasAlternative = true, alternative = new Vector3(8f, 0f, 31f), areaName = "Gate" },
+                new NavRegionVolume { id = "N_GateEast", kind = NavRegionKind.Gate, center = new Vector3(8f, 0f, 34f), size = new Vector3(6f, 6f, 6f), costMultiplier = 1f, capacity = 3, hasAlternative = true, alternative = new Vector3(-8f, 0f, 31f), areaName = "Gate" },
+                // North-west service gate.
+                new NavRegionVolume { id = "NW_ServiceGate", kind = NavRegionKind.Gate, center = new Vector3(-26f, 0f, 25f), size = new Vector3(5f, 6f, 5f), costMultiplier = 1.15f, capacity = 2, hasAlternative = true, alternative = new Vector3(-8f, 0f, 31f), areaName = "Gate" },
+            };
+            return p;
+        }
+    }
+}

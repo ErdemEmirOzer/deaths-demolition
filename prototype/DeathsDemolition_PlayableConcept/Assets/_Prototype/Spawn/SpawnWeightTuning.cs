@@ -68,6 +68,11 @@ namespace DD.Prototype.Spawn
             "distance cannot cover.", true)]
         public float BehindCameraRejectDistance = 15f;
 
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-030 spawn visibility rule: weight factor of a point that is on screen beyond the reject " +
+            "distance (1 = no preference; technical default keeps >= 60 % of spawns off camera).", true)]
+        [Range(0.05f, 1f)] public float OnScreenFactor = 0.35f;
+
         [Header("Placement and cost")]
         [PrototypeOnly(PendingDecisions.None,
             "Random scatter around the point so two enemies never spawn inside each other, m.", true)]

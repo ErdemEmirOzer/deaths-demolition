@@ -91,6 +91,7 @@ namespace DD.Prototype.Enemies
         private Vector3 _knockbackVelocity;
         private float _verticalVelocity;
         private Vector3 _plannedVelocity;
+        private float _riseRemaining;   // WP-030: spawn rise handshake (WP-018 animator drives it; DEC-023 counts the body active meanwhile)
         private float _currentSpeed;
 
         // --------------------------------------- fallbacks used before ApplyConfig arrives
@@ -222,6 +223,18 @@ namespace DD.Prototype.Enemies
         public TierSilhouetteSlot Silhouette => _silhouette;
 
         public bool IsAlive => _alive;
+
+        /// <summary>WP-030 · Spawn rise handshake: while rising the body neither walks nor attacks, the crowd routes around it, and the round ledger already counts it active (DEC-023 - activation, not first step). Two sources: the WP-018 AP-009 rise clip (<c>ZombieSkinnedVisual.IsRising</c>, <c>RiseOnSpawn</c>) and this timer (<c>BeginRise</c>, for bodies without a driven clip / tests); <c>CompleteRise</c> or the timer ends the latter.</summary>
+        public bool IsRising => _riseRemaining > 0f || (_skinned != null && _skinned.IsRising);   // timer handshake OR the WP-018 AP-009 rise clip (RiseOnSpawn)
+        public float RiseRemaining => Mathf.Max(0f, _riseRemaining);
+
+        public void BeginRise(float seconds)
+        {
+            if (!_alive || _dying) return;
+            _riseRemaining = Mathf.Max(0f, seconds);
+        }
+
+        public void CompleteRise() => _riseRemaining = 0f;
         public bool IsDying => _dying;
         public float Health => _body != null ? _body.Health : 0f;
         public float MaxHealth => _body != null ? _body.MaxHealth : 0f;
@@ -397,6 +410,8 @@ namespace DD.Prototype.Enemies
 
             RollArmor(config);
 
+            ApplyNavProfileForLife(seed);   // WP-030: fit-scaled separation radius + route roll (after the look, before the first tick)
+
             // WP-028: the version's silhouette piece under its anchor (placeholder until AP-014).
             _silhouette = EnemyVersionApplier.ApplySilhouette(_silhouette, _appearance.Anchors, _tier, _versionProfile, _rig != null ? _rig.Visual : transform);
 
@@ -414,6 +429,7 @@ namespace DD.Prototype.Enemies
             _alive = true;
             _dying = false;
             _despawnCountdown = 0f;
+            _riseRemaining = 0f;   // WP-030: the animator (WP-018) calls BeginRise when a rise clip plays; without one the body walks at once (WP-003 behaviour)
 
             DamageTargetRegistry.Register(transform, this, this, _bodyRadius, ZombieBodyBuilder.StandHeight * 0.5f);
         }
@@ -741,6 +757,17 @@ namespace DD.Prototype.Enemies
                 distance = toTarget.magnitude;
             }
 
+            // ------------------------------------------------------------------ rise (WP-030)
+            if (_riseRemaining > 0f)
+            {
+                _riseRemaining -= dt;
+                _plannedVelocity = Vector3.zero;
+                ConsumeCrowdCorrection();
+                _verticalVelocity = _controller.isGrounded ? -2f : _verticalVelocity + Gravity * dt;
+                _controller.Move(new Vector3(0f, _verticalVelocity, 0f) * dt);
+                return;
+            }
+
             // ------------------------------------------------------------------ attack
             // WP-018: a body still rising from its spawn (AP-009 rise clip) neither walks nor swings.
             bool staggering = _animator.IsStaggering || (_skinned != null && _skinned.IsRising);
@@ -761,7 +788,7 @@ namespace DD.Prototype.Enemies
             bool canWalk = !staggering && _attack.Phase != ZombieAttackPhase.Recovery;
             if (canWalk && target != null && TickNavigation(selfPosition, target.position, out Vector3 heading))
             {
-                float speed = _moveSpeed;
+                float speed = _moveSpeed * _navSpeedFactor;   // WP-030: chokepoint queue slows the approach, never stops the threat
 
                 // Stop pushing into the player once inside attack range; the swing closes
                 // the last gap. Without this the swarm compresses into a solid wall.

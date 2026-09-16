@@ -167,6 +167,21 @@ namespace DD.Prototype.Navigation
         /// Living members inside a radius. Used by the spawn layer for local density, so
         /// the spawn director never needs to know the enemy type. Allocation free.
         /// </summary>
+        /// <summary>WP-030: members whose position lies in the XZ box (chokepoint occupancy). Allocation-free.</summary>
+        public int CountMembersInBox(Vector3 center, Vector3 size)
+        {
+            float hx = size.x * 0.5f, hz = size.z * 0.5f;
+            int count = 0;
+            for (int i = 0; i < _count; i++)
+            {
+                float dx = _records[i].Position.x - center.x;
+                float dz = _records[i].Position.z - center.z;
+                if (dx >= -hx && dx <= hx && dz >= -hz && dz <= hz) count++;
+            }
+
+            return count;
+        }
+
         public int CountMembersWithin(Vector3 position, float radius)
         {
             float sqr = radius * radius;

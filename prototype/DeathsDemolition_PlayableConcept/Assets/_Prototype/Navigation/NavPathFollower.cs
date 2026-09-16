@@ -55,6 +55,26 @@ namespace DD.Prototype.Navigation
         /// <summary>Corners still ahead of the agent.</summary>
         public int RemainingCorners => Mathf.Max(0, _cornerCount - _cornerIndex);
 
+        // WP-030 (ADR-030-1): regional routing state of this follower.
+        private float _routeRoll;            // 0..1 from the member's spawn seed: route diversification (REQ-112)
+        private float _queuedSeconds;        // time spent queued at a chokepoint mouth
+        private bool _rerouted;              // the current path is the alternative route
+        private NavRegionVolume _queueVolume;
+
+        /// <summary>Speed factor the owner applies this tick: 1, or the profile's QueueSpeedFactor while queued at a full chokepoint.</summary>
+        public float SpeedFactor { get; private set; } = 1f;
+        public bool IsQueued => _queueVolume != null;
+        public bool IsRerouted => _rerouted;
+        public NavRegionVolume QueueVolume => _queueVolume;
+        public float QueuedSeconds => _queuedSeconds;
+
+        /// <summary>Route roll from the spawn seed (deterministic per life); 0.5 when never set.</summary>
+        public void SetRouteSeed(uint seed)
+        {
+            uint x = seed ^ 0x9E3779B9u; x ^= x >> 16; x *= 0x85EBCA6Bu; x ^= x >> 13; x *= 0xC2B2AE35u; x ^= x >> 16;
+            _routeRoll = (x >> 8) * (1f / 16777216f);
+        }
+
         public NavPathFollower(int cornerCapacity = 32)
         {
             _corners = new Vector3[Mathf.Clamp(cornerCapacity, 4, NavPathService.MaxCorners)];
@@ -94,9 +114,24 @@ namespace DD.Prototype.Navigation
             if (_hasPath && _cornerIndex < _cornerCount)
             {
                 steeringTarget = _corners[_cornerIndex];
+                // WP-030: chokepoint queue - hold at the mouth (slow, not stopped) while the throat is full, for a bounded time.
+                RegionNavProfile profile = RegionNavProfile.Active;
+                if (RegionNavRouter.ShouldQueue(profile, position, steeringTarget, _queuedSeconds, out NavRegionVolume volume))
+                {
+                    _queueVolume = volume;
+                    _queuedSeconds += Time.deltaTime;
+                    SpeedFactor = profile.QueueSpeedFactor;
+                    return true;
+                }
+
+                if (_queueVolume != null && (volume == null || volume.Contains(position))) _queuedSeconds = 0f;
+                _queueVolume = null;
+                SpeedFactor = 1f;
                 return true;
             }
 
+            _queueVolume = null;
+            SpeedFactor = 1f;
             steeringTarget = goal;
             return false;
         }
@@ -108,6 +143,10 @@ namespace DD.Prototype.Navigation
             _cornerCount = 0;
             _cornerIndex = 0;
             Status = NavPathStatus.Invalid;
+            _queuedSeconds = 0f;
+            _queueVolume = null;
+            _rerouted = false;
+            SpeedFactor = 1f;
         }
 
         /// <summary>
@@ -135,6 +174,8 @@ namespace DD.Prototype.Navigation
 
             if (_hasPath)
             {
+                // WP-030: regional route comparison (alternative around a costly volume when it is cheap enough for this member's roll).
+                _cornerCount = RegionNavRouter.ChooseRoute(RegionNavProfile.Active, position, goal, _corners, _cornerCount, _routeRoll, out _rerouted);
                 // Corner 0 is the agent's own position; start steering at the next one.
                 _cornerIndex = 1;
             }

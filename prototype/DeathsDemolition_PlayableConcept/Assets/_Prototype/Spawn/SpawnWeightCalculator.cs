@@ -32,6 +32,7 @@ namespace DD.Prototype.Spawn
         public float Cooldown;
         public float Occupancy;
         public float Density;
+        public float Visibility;   // WP-030: on-screen factor (1 off screen)
         public float Total;
         public bool Valid;
         public string Reason;
@@ -175,6 +176,9 @@ namespace DD.Prototype.Spawn
                 tuning.DensityFloor,
                 1f - config.LocalDensityPenalty * point.LocalDensity);
 
+            // ---------------------------------------------------------- 9. visibility (WP-030)
+            breakdown.Visibility = point.IsOnScreen && (relaxation & SpawnRelaxation.Screen) == 0 ? tuning.OnScreenFactor : 1f;
+
             float total = breakdown.Base
                           * breakdown.Distance
                           * breakdown.Region
@@ -182,7 +186,8 @@ namespace DD.Prototype.Spawn
                           * breakdown.Recency
                           * breakdown.Cooldown
                           * breakdown.Occupancy
-                          * breakdown.Density;
+                          * breakdown.Density
+                          * breakdown.Visibility;
 
             if (total < config.MinimumUsableWeight)
             {

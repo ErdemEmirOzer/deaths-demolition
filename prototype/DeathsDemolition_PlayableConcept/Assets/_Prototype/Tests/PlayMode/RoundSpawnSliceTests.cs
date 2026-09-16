@@ -636,7 +636,9 @@ namespace DD.Prototype.Tests.PlayMode
             // Konum A: kuzeydoğu (taş yol köşesi yakını). Konum B: güneybatı (bambu girişi
             // kavşağı yakını). İkisi de halka üzerinde yürünebilir zemin; her birinde karşı
             // taraftaki girişlerin yol mesafesi MaxUsefulDistance'ı (62 m) aşar.
-            Vector3 konumA = new Vector3(20f, 0.1f, 16f);
+            // WP-030: A, AP-005 dünyasında (WP-014) (20,16)'dan en uzak nokta 61,7 m kalıyordu (kapı
+            // sınanmıyor — WP-018 tabanında da FAIL); köşeye taşındı: SW girişleri > 62 m.
+            Vector3 konumA = new Vector3(25f, 0.1f, 21f);
             Vector3 konumB = new Vector3(-26f, 0.1f, -21f);
 
             Dictionary<string, float> agirlikA = null;

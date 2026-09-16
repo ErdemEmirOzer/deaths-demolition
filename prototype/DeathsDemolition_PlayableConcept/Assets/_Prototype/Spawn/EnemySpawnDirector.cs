@@ -190,6 +190,13 @@ namespace DD.Prototype.Spawn
         /// <summary>Total pool of the round, straight from the round plan.</summary>
         public int RoundPoolTotal => _ledger.PoolTotal;
 
+        private int _spawnsThisRun, _onScreenSpawnsThisRun;
+
+        /// <summary>WP-030: share of this run's spawns whose point was off camera at spawn time (rule: ≥ 0.6, technical default).</summary>
+        public float OffScreenSpawnShare => _spawnsThisRun > 0 ? 1f - (float)_onScreenSpawnsThisRun / _spawnsThisRun : 1f;
+        public int SpawnsThisRun => _spawnsThisRun;
+        public int OnScreenSpawnsThisRun => _onScreenSpawnsThisRun;
+
         /// <summary>Refill attempts that found no eligible point. Debug / test readout.</summary>
         public int NoPointTicks => _noPointTicks;
 
@@ -721,6 +728,9 @@ namespace DD.Prototype.Spawn
             point.AliveFromHere++;
             point.SpawnedThisRound++;
             point.LastUsedTime = Time.time;
+            // WP-030 spawn visibility readout (DEC-023 counting is unchanged: the body is active from activation, rise included).
+            _spawnsThisRun++;
+            if (point.IsOnScreen) _onScreenSpawnsThisRun++;
 
             Action<EnemySpawnContext> spawnedHandler = EnemySpawned;
             if (spawnedHandler != null)

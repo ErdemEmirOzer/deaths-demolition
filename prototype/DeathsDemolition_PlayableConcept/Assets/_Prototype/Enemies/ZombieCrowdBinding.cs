@@ -40,7 +40,24 @@ namespace DD.Prototype.Enemies
         public Vector3 Position => transform.position;
 
         /// <summary>Physical radius from the tier's PROTOTYPE-ONLY BodyRadius.</summary>
-        public float Radius => _bodyRadius;
+        /// <summary>WP-030: separation radius follows the AP-007 body fit (A slim / B / C broad); the collision capsule stays the config radius.</summary>
+        public float Radius => _bodyRadius * _fitRadiusScale;
+
+        private float _fitRadiusScale = 1f;
+        private float _navSpeedFactor = 1f;
+
+        /// <summary>WP-030: the follower's regional state for readouts / tests.</summary>
+        public NavPathFollower PathFollower => _pathFollower;
+
+        /// <summary>WP-030: called once per life after the look is known (ZombieEnemy.Initialise).</summary>
+        private void ApplyNavProfileForLife(uint seed)
+        {
+            string fit = _appearance != null && _appearance.IsSkinned ? _appearance.Look.fit : "B";
+            _fitRadiusScale = RegionNavProfile.Active.FitRadiusScale(fit);
+            if (_pathFollower == null) _pathFollower = new NavPathFollower();
+            _pathFollower.SetRouteSeed(seed);
+            RegionNavRouter.EnsureAreaCosts();
+        }
 
         /// <summary>
         /// Relative mass. An Executioner (5) shoulders a Standard (1) aside instead of
@@ -68,6 +85,10 @@ namespace DD.Prototype.Enemies
                 }
 
                 if (_animator != null && _animator.IsStaggering)
+                {
+                    return transform.position;
+                }
+                if (IsRising)   // WP-030: a rising body (timer or AP-009 clip) holds its ground; the crowd flows around it
                 {
                     return transform.position;
                 }
@@ -168,6 +189,7 @@ namespace DD.Prototype.Enemies
             // per-frame query budget was spent). Either way it is still a usable heading;
             // the flag only says how trustworthy it is.
             _hasSteeringCorner = _pathFollower.Tick(position, goal, out _steeringCorner);
+            _navSpeedFactor = _pathFollower.SpeedFactor;
 
             Vector3 toCorner = _steeringCorner - position;
             toCorner.y = 0f;

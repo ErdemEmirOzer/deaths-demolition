@@ -1,0 +1,208 @@
+using DD.Prototype.Core.Config;
+using DD.Prototype.Core.DebugTools;
+using DD.Prototype.Navigation;
+using DD.Prototype.Spawn;
+using NUnit.Framework;
+using UnityEngine;
+
+namespace DD.Prototype.Tests.EditMode
+{
+    /// <summary>
+    /// WP-030 (ADR-030-1) · Regional navigation profile and router: the ring map defaults,
+    /// route cost comparison, chokepoint occupancy / queue rule, fit-scaled separation radius,
+    /// route roll determinism, allocation-free hot paths, the spawn visibility factor and the
+    /// post-bake area-cost assignment on a single-area bake.
+    /// </summary>
+    [Category("WP030")]
+    public sealed class RegionNavProfileTests
+    {
+        private RegionNavProfile _profile;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _profile = RegionNavProfile.CreateDefault();
+            RegionNavProfile.SetActive(_profile);
+            RegionNavRouter.ResetStatics();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            RegionNavProfile.ResetStatics();
+            RegionNavRouter.ResetStatics();
+            if (_profile != null) Object.DestroyImmediate(_profile);
+        }
+
+        private static ICrowdMember Uye(Vector3 p) => new SahteUye(p);
+
+        private sealed class SahteUye : ICrowdMember
+        {
+            private readonly Vector3 _p;
+            public SahteUye(Vector3 p) { _p = p; }
+            public Vector3 Position => _p;
+            public float Radius => 0.45f;
+            public float Mass => 1f;
+            public Vector3 SteeringTarget => _p;
+            public void ApplySteering(Vector3 velocity) { }
+        }
+
+        [Test]
+        public void Varsayilanlar_HalkaHaritasi_BesHacim_KoprüKoridorKapilar()
+        {
+            NavRegionVolume[] v = _profile.Volumes;
+            Assert.AreEqual(5, v.Length);
+            NavRegionVolume bridge = System.Array.Find(v, x => x.id == "S_Bridge");
+            NavRegionVolume corridor = System.Array.Find(v, x => x.id == "W_Corridor");
+            NavRegionVolume gw = System.Array.Find(v, x => x.id == "N_GateWest"), ge = System.Array.Find(v, x => x.id == "N_GateEast");
+            Assert.IsNotNull(bridge); Assert.IsNotNull(corridor); Assert.IsNotNull(gw); Assert.IsNotNull(ge);
+            Assert.AreEqual(NavRegionKind.Bridge, bridge.kind); Assert.IsTrue(bridge.IsCostly && bridge.IsChokepoint && bridge.hasAlternative);
+            Assert.IsTrue(bridge.Contains(new Vector3(4f, 0f, -28f)), "köprü ortası"); Assert.IsFalse(bridge.Contains(new Vector3(10f, 0f, -28f)), "köprü dışı");
+            Assert.IsTrue(corridor.Contains(new Vector3(-33f, 0f, 5f))); Assert.IsFalse(corridor.Contains(new Vector3(-20f, 0f, 5f)));
+            Assert.IsTrue(gw.Contains(new Vector3(-8f, 0f, 34f)) && ge.Contains(new Vector3(8f, 0f, 34f)));
+            // gates are each other's alternative; bridge alternative is off the bridge (shore path)
+            Assert.IsTrue(ge.Contains(new Vector3(gw.alternative.x, 0f, 34f)) || Mathf.Abs(gw.alternative.x - ge.center.x) < 0.01f);
+            Assert.IsFalse(bridge.Contains(bridge.alternative));
+            // Find: first containing volume; open ground → null
+            Assert.AreSame(bridge, _profile.Find(new Vector3(4f, 0f, -20f)));
+            Assert.IsNull(_profile.Find(new Vector3(0f, 0f, 0f)));
+            Assert.AreEqual(1f, _profile.FitRadiusScaleB); Assert.Less(_profile.FitRadiusScaleA, 1f); Assert.Greater(_profile.FitRadiusScaleC, 1f);
+            Assert.AreEqual(_profile.FitRadiusScaleC, _profile.FitRadiusScale("C")); Assert.AreEqual(_profile.FitRadiusScaleB, _profile.FitRadiusScale("?"));
+        }
+
+        [Test]
+        public void EtkinMaliyet_KopruUzerindenCarpanli_AcikAlanUzunluk_IlkMaliyetliHacim()
+        {
+            var direct = new[] { new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -20f), new Vector3(4f, 0f, -38f), new Vector3(4f, 0f, -44f) };
+            float cost = RegionNavRouter.EffectiveCost(_profile, direct, direct.Length, out NavRegionVolume costly);
+            Assert.IsNotNull(costly); Assert.AreEqual("S_Bridge", costly.id);
+            // segment 1 (−10→−20): midpoint −15 outside; end −20 inside → costly; segments 2 inside; segment 3 (−38→−44): midpoint −41 outside, end outside
+            float expected = 10f * 1.6f + 18f * 1.6f + 6f * 1f;
+            Assert.AreEqual(expected, cost, 1e-3f);
+            var open = new[] { new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 10f), new Vector3(5f, 0f, 10f) };
+            Assert.AreEqual(15f, RegionNavRouter.EffectiveCost(_profile, open, open.Length, out NavRegionVolume none), 1e-4f);
+            Assert.IsNull(none);
+            // the shore route around the bridge: longer in metres, cheaper in effective cost when the multiplier bites
+            var shore = new[] { new Vector3(4f, 0f, -10f), new Vector3(18f, 0f, -20f), new Vector3(18f, 0f, -38f), new Vector3(4f, 0f, -44f) };
+            float shoreCost = RegionNavRouter.EffectiveCost(_profile, shore, shore.Length, out _);
+            float shoreLen = 0f; for (int i = 1; i < shore.Length; i++) shoreLen += Vector3.Distance(shore[i - 1], shore[i]);
+            Assert.AreEqual(shoreLen, shoreCost, 1e-3f, "kıyı yolu hacim dışı → maliyet = uzunluk");
+            Assert.Greater(shoreLen, 34f, "kıyı yolu köprüden uzun");
+            Assert.Less(shoreCost, cost, "çarpan 1,6 ile köprü rotası kıyıdan pahalı → çeşitlenme (REQ-112)");
+        }
+
+        [Test]
+        public void RotaSecimi_NavMeshYokken_DirektKalir_BosProfilKimlik()
+        {
+            var direct = new[] { new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -20f), new Vector3(4f, 0f, -38f), new Vector3(4f, 0f, -44f), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
+            int n = RegionNavRouter.ChooseRoute(_profile, direct[0], direct[3], direct, 4, 1f, out bool rerouted);
+            Assert.AreEqual(4, n); Assert.IsFalse(rerouted, "EditMode'da NavMesh yok → alternatif hesaplanamaz → direkt rota");
+            var empty = ScriptableObject.CreateInstance<RegionNavProfile>();
+            Assert.AreEqual(4, RegionNavRouter.ChooseRoute(empty, direct[0], direct[3], direct, 4, 1f, out rerouted)); Assert.IsFalse(rerouted);
+            Assert.AreEqual(0, RegionNavRouter.RerouteCount);
+            Object.DestroyImmediate(empty);
+        }
+
+        [Test]
+        public void Bogaz_KutuSayimi_KuyrukKurali_AzamiBekleme()
+        {
+            var solver = new CrowdSolver();
+            NavRegionVolume bridge = _profile.Find(new Vector3(4f, 0f, -28f));
+            for (int i = 0; i < 3; i++) solver.Register(Uye(new Vector3(4f, 0f, -22f - i)));   // inside the bridge
+            solver.Register(Uye(new Vector3(20f, 0f, -22f)));                                   // outside
+            Assert.AreEqual(3, solver.CountMembersInBox(bridge.center, bridge.size));
+            Assert.AreEqual(4, solver.CountMembersInBox(new Vector3(0f, 0f, 0f), new Vector3(200f, 10f, 200f)));
+            // queue rule geometry: member outside, next corner inside a chokepoint → volume reported; capacity 0 → never queue; max wait → never queue
+            Assert.IsFalse(RegionNavRouter.ShouldQueue(_profile, new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -20f), _profile.MaxQueueSeconds, out NavRegionVolume v1));
+            Assert.AreSame(bridge, v1, "azami bekleme dolunca hacim yine raporlanır, kuyruk yok");
+            Assert.IsFalse(RegionNavRouter.ShouldQueue(_profile, new Vector3(4f, 0f, -25f), new Vector3(4f, 0f, -30f), 0f, out NavRegionVolume v2), "hacmin içindeki üye kuyruğa girmez");
+            Assert.IsNull(v2);
+            var open = new NavRegionVolume { id = "x", center = Vector3.zero, size = new Vector3(4f, 4f, 4f), capacity = 0 };
+            var p2 = ScriptableObject.CreateInstance<RegionNavProfile>(); p2.Set(new[] { open });
+            Assert.IsFalse(RegionNavRouter.ShouldQueue(p2, new Vector3(5f, 0f, 0f), Vector3.zero, 0f, out NavRegionVolume v3)); Assert.IsNull(v3);
+            Object.DestroyImmediate(p2);
+            // occupancy through the service is 0 without a live solver (EditMode) → the rule cannot queue; the full case is PlayMode
+            Assert.AreEqual(0, RegionNavRouter.Occupancy(bridge));
+            Assert.IsFalse(RegionNavRouter.ShouldQueue(_profile, new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -20f), 0f, out _));
+        }
+
+        [Test]
+        public void RotaRulosu_SeedDeterministik_Dagilim_HizFaktoruVarsayilan()
+        {
+            var a = new NavPathFollower(); var b = new NavPathFollower();
+            a.SetRouteSeed(12345u); b.SetRouteSeed(12345u);
+            Assert.AreEqual(1f, a.SpeedFactor); Assert.IsFalse(a.IsQueued); Assert.IsFalse(a.IsRerouted);
+            float min = 1f, max = 0f;
+            for (uint s = 1; s <= 1000; s++)
+            {
+                var f = new NavPathFollower(); f.SetRouteSeed(s);
+                float roll = Rulo(f);
+                min = Mathf.Min(min, roll); max = Mathf.Max(max, roll);
+            }
+
+            Assert.Less(min, 0.1f); Assert.Greater(max, 0.9f);
+            Assert.AreEqual(Rulo(a), Rulo(b), 0f, "aynı seed aynı rulo");
+        }
+
+        private static float Rulo(NavPathFollower f)
+        {
+            var field = typeof(NavPathFollower).GetField("_routeRoll", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            return (float)field.GetValue(f);
+        }
+
+        [Test]
+        public void SicakYollar_AyirmaSifir_PozitifKontrol()
+        {
+            var corners = new[] { new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -20f), new Vector3(4f, 0f, -38f), new Vector3(4f, 0f, -44f) };
+            var solver = new CrowdSolver();
+            for (int i = 0; i < 40; i++) solver.Register(Uye(new Vector3(i * 0.5f, 0f, -20f)));
+            NavRegionVolume bridge = _profile.Find(new Vector3(4f, 0f, -28f));
+            HeapWindow.Prepare();
+            byte[] yem = null;
+            HeapWindow.Result control = HeapWindow.Measure(() => { yem = new byte[64 * 1024]; }, 0);
+            Assert.Greater(control.Delta, 0, "pozitif kontrol");
+            HeapWindow.Result window = HeapWindow.Measure(() =>
+            {
+                for (int i = 0; i < 2000; i++)
+                {
+                    RegionNavRouter.EffectiveCost(_profile, corners, corners.Length, out _);
+                    _profile.Find(corners[i & 3]);
+                    solver.CountMembersInBox(bridge.center, bridge.size);
+                    RegionNavRouter.ShouldQueue(_profile, corners[0], corners[1], 0f, out _);
+                }
+            }, 1);
+            Assert.AreEqual(0, window.Gen0, "pencerede gen0 (yeniden ölçüm sonrası)");
+            Assert.LessOrEqual(window.Delta, 4 * 1024, "sıcak yollar ayırma yapmaz (delta " + window.Delta + " B; yem " + yem.Length + ")");
+        }
+
+        [Test]
+        public void SpawnGorunurluk_EkranIciNoktaFaktoru_EkranDisiBir()
+        {
+            var config = new SpawnConfigSection(); var tuning = new SpawnWeightTuning();
+            Assert.AreEqual(0.35f, tuning.OnScreenFactor, 1e-6f);
+            var tanim = new SpawnPointDefinition { Id = "p", Region = RingRegion.North, Position = new Vector3(0f, 0f, 30f), BaseWeight = 1f, Enabled = true, FaceMapCenter = true };
+            var p = new SpawnPointRuntime(0, tanim) { PathDistance = 30f, StraightDistance = 30f, PathStatus = NavPathStatus.Complete, LastUsedTime = -999f };
+            var inputs = new SpawnWeightInputs { PlayerPosition = Vector3.zero, PlayerRegion = RingRegion.Center, PlayerVelocity = Vector3.zero, Now = 100f, NavDegraded = false };
+            p.IsOnScreen = false;
+            float off = SpawnWeightCalculator.Evaluate(p, in inputs, config, tuning, SpawnRelaxation.None, out SpawnWeightBreakdown bOff);
+            p.IsOnScreen = true;
+            float on = SpawnWeightCalculator.Evaluate(p, in inputs, config, tuning, SpawnRelaxation.None, out SpawnWeightBreakdown bOn);
+            Assert.Greater(off, 0f);
+            Assert.AreEqual(1f, bOff.Visibility); Assert.AreEqual(tuning.OnScreenFactor, bOn.Visibility, 1e-6f);
+            Assert.AreEqual(off * tuning.OnScreenFactor, on, 1e-4f, "ekran içi nokta OnScreenFactor ile çarpılır (reddedilmez: 30 m > OnScreenRejectDistance)");
+            float relaxed = SpawnWeightCalculator.Evaluate(p, in inputs, config, tuning, SpawnRelaxation.Screen, out SpawnWeightBreakdown bRelax);
+            Assert.AreEqual(1f, bRelax.Visibility, "ekran gevşetmesinde faktör 1");
+            Assert.AreEqual(off, relaxed, 1e-4f);
+        }
+
+        [Test]
+        public void AlanMaliyetiAtama_TekAlanBake_SifirAtama_RaporEdilir()
+        {
+            int applied = _profile.ApplyAreaCosts();
+            Assert.AreEqual(0, applied, "World_AP005 tek alanlı bake: adlandırılmış alan yok → 0 atama; kural router'da");
+            Assert.IsFalse(RegionNavRouter.AreaCostsAppliedOnce);
+            RegionNavRouter.EnsureAreaCosts();
+            Assert.IsTrue(RegionNavRouter.AreaCostsAppliedOnce); Assert.AreEqual(0, RegionNavRouter.AreaCostsApplied);
+        }
+    }
+}
