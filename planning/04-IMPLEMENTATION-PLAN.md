@@ -1121,3 +1121,30 @@ AP paketleri Unity projesine ve depoya yazmaz; çıktı tavanı ProductionCandid
 **Teknik notlar (ADR-035-1 — ürün kararı değildir):** kozmetik seçimi kazanım değildir: run transaction'ının dışında, ordinal'e dokunmadan tek save ile yazılır; "yeni" bayrakları sıralı listelerde `Seen` sayacıyla (ek liste yok, O(1)). Skin seçimi profile yazılmaz (DEC-039). Roster türetmesi yükleme anında `PrototypeConfig.Active`'i okur; testlerde `UnlockCatalog.TestSeam.Override(null)` yeniden türetir.
 
 **Devirler:** S-09 UI (unvan/rozet seçici, ilerleme çubuğu, Results tür ikonları — WP-022C/D); dal (`Branch`) katalog girdileri (roster çekirdek dal kümesi veri kararına bağlı); unvan metinlerinin oyuncu adı yüzeyi (UI).
+## WP-037 — Combat Hot-Path Audit & Special Weapon Hooks: vuruş yolu ayırma regresyonu kök neden, hot-path 0-alloc sözleşmesi, Special kullanım kimlikleri
+
+**Yürütme promptu:** `planning/work-packages/WP-037-COMBAT-HOTPATH-AUDIT.md` · Durum: **Tamamlandı (S-02, 2026-09-17, hızlı hat)**.
+
+**Amaç:** `RegionalArmorSliceTests.VurusYolu_SifirAyirma` (WP-006) kırmızısının (12 KB / 420 olay) kök nedenini site bazında bulmak, kendi alanında düzeltmek, diğer sahiplere tek satır talimat; Special Weapon yaşam döngüsü kancalarını (animasyon/VFX/ses) sözleşmeye bağlamak; silah kararı geldiyse veri.
+
+**A · Kök neden (ölçüm: `Unity.Profiling.ProfilerRecorder` "GC Allocated In Frame" / "GC Allocation In Frame Count" — her yönetilen ayırmayı sayar, yığın-büyümesi sayaçlarının 16–64 KB blok tanecikliği yok; `HotPathAllocationAuditTests`):**
+
+| Konfigürasyon (kare: 300 doğrudan vuruş + 30 patlama, 4 zırhlı hedef) | Ayırma sayısı | Bayt |
+|---|---|---|
+| Boş kare (referans) | 6 | 162 |
+| Taban (tüm aboneler açık) | 428–450 | 12–21 KB |
+| Her bus abonesi tek tek ayrı (AudioEventRouter.OnEnemyDamaged/OnEnemyDied, RunDirector.OnArmorBroken/OnEnemyDied, GoldService.OnEnemyDied, AchievementRunTracker.OnPlayerAttacked, GamepadRumble.OnCue/OnPlayerAttacked, PrototypeAudioDirector.OnCombatCue/OnCueSuppressed) | 443–446 | ≈ taban |
+| Tüm aboneler ayrı + HitFeedbackDirector kapalı | 452 | ≈ taban |
+| **Hasar sayıları kapalı** (`ShowDamageNumbers=false`) | **30** | 8,9 KB (≈7 KB'ı önceki karenin Debug.Log'u) |
+| Vuruş işaretçileri kapalı | 445 | ≈ taban |
+| Yalnız 300 ıska (hedef yok) | 15 | ≈ log |
+
+Sonuç: vuruş yolundaki **tek** kare-başı ayırıcı **`Feedback/DamageNumberEffect.cs:93` `_text.text = rounded.ToString();`** (gösterilen hasar sayısı başına bir string, ~28 B; 300 vuruş + 30 patlama × 4 hedef ≈ 400 sayı ≈ 12 KB) — WP-006'nın S-07/M4 devri "DamageNumberEffect ~27 B/isabet" ile aynı kalem; WP-002'den beri var, yığın-büyümesi yöntemi yığın boşluğuna göre bazen görüyor bazen görmüyor (0 B ↔ 12 KB dalgalanması bundan). Bus aboneleri (WP-021/023/024, Gold, RunDirector), HUD işaretçileri (WP-022), ThreatDirector (WP-033; bus abonesi değil), hasar çekirdeği, hitscan, ses yükseltme yolu: **0 ayırma**. S-02 alanında (Weapons/Damage/Player) düzeltilecek site yok. Talimat (S-07, C-00 üzerinden): `DamageNumberEffect` için önbellekli tam sayı string tablosu (0..N; taşan değerlere tek seferlik) ya da metin yalnız değer değişince atansın → ayırma 0; ardından `HotPathAllocationContractTests`'teki gözlem satırı kendiliğinden "zero-alloc" okur. WP-024 tembel tercih yüklemesi (rumble) WP-034'te kapatılmıştı (bu paketten önce).
+
+**B · Special Weapon kullanım kancaları:** yaşam döngüsü kancaları zaten bus üzerinde ve bağlı — animasyon: `PlayerSkinnedVisual` `WeaponEvents.SpecialWeaponPickedUp` → `PlayPickup` (WP-018 `AP009_player_pickup_special`); ses: `AudioEventMap` satırları (SpecialWeaponSpawn gong, BeaconLoop, Pickup, FinalSeconds, Expired, GroundExpired, HeavyWeaponSpinUp/Fire/SpinDown — WP-021); HUD: `SpecialWeaponFinalSeconds` → `RunHudScreen` uyarı (REQ-058). Eklenen: `Weapons/SpecialWeaponUsageIds.cs` — silah başına kullanım kimlik tablosu (`FireCue`, `ActiveLoop`, `FireVfxFamily`/`FieldVfxFamily`/`ImpactVfxFamily` slotları, `HudIconId`): Kagura `sw_kagura_wave`/`sw_kagura_field`, Ofuda `sw_ofuda_dart`/`sw_ofuda_web`, Tide `sw_tide_pull`/`sw_tide_well` (+`explosion`) — AP-014 sheet'leri gelince WP-019 `VfxCatalog` bu slotları doldurur; davranış değişmez.
+
+**C · Silah kararı:** gelmedi → bekleyen (WP-034 verisi hazır; karar gelince yalnız asset).
+
+**D · Testler:** PlayMode `HotPathAllocationContractTests` — (1) `VurusYolu_KareBasiAyirma_SifirSozlesmesi`: pozitif kontrol (300 küçük nesne görülür), hasar sayıları kapalıyken kare ayırması ≤ boş kare + 12 (SÖZLEŞME, ADR-037-1); hasar sayıları açıkken gözlem satırı (S-07 düzeltmesi gelince kendiliğinden "zero-alloc"); (2) `SpecialAlmaVeBitim_KareBasiAyirma_Gozlem`: alma / aktif / bitim kareleri ölçülür, aktif sabit kare = boş kare (sözleşme); `HotPathAllocationAuditTests` (abone bazında ayırma tablosu, tanı). EditMode `SpecialWeaponUsageIdsTests`. Regresyon: `RegionalArmorSliceTests` (WP-006 testi hasar sayıları açıkken yığın-büyümesi yöntemiyle S-07 düzeltmesine kadar dalgalı — kabul S-10 kapanışında), `SpecialWeaponLifecycleSliceTests`.
+
+**Teknik not — ADR-037-1 Hot-path 0-alloc sözleşmesi:** (1) Kapsam: `HitscanEngine.Fire/Explode` → hasar çekirdeği (`ZombieEnemy` uygulama, `DamageTransaction`, meta) → bus yayınları (`DamageEvents`, `AudioEvents`, `HitFeedbackDirector.EnemyHitDressed`, `WeaponEvents`) → abone işleyicileri; kare başına 0 yönetilen ayırma (boş kare + test harness payı dışında). (2) Kurallar: olay argümanları `readonly struct`, `in` ile; string/format/LINQ/closure/boxing yok; koleksiyonlar ısınmada kapasiteli, döngüde `Clear`; tembel ilk yüklemeler (dosya/JSON/Resources) Awake/Install'da; havuzlar ısınmada büyür. (3) Ölçüm: `ProfilerRecorder` kare sayaçları (Editor/dev build) — referans yöntem; `GC.GetTotalMemory`/`GetMonoUsedSizeLong` blok-büyümesi yalnız gözlem. (4) Bilinen dışında kalan: hasar sayısı metni (S-07) — kapanınca gözlem satırı sözleşmeye döner.
