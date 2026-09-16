@@ -17,7 +17,10 @@ namespace DD.Prototype.Characters
         Pickup = 8,
         Breath = 9,
         Hit = 10,
-        StaggerEnd = 11
+        StaggerEnd = 11,
+        /// <summary>WP-032B · idle_queue weight shifts (AP-009B v002) — a foot-shuffle cue for S-07/S-08, no gameplay meaning.</summary>
+        ShiftLeft = 12,
+        ShiftRight = 13
     }
 
     /// <summary>
@@ -39,7 +42,7 @@ namespace DD.Prototype.Characters
         public static readonly string[] Names =
         {
             "", "fire", "hit_window_start", "hit_window_end", "foot_l", "foot_r",
-            "death_end", "rise_end", "pickup", "breath", "hit", "stagger_end"
+            "death_end", "rise_end", "pickup", "breath", "hit", "stagger_end", "shift_l", "shift_r"
         };
 
         public static CharacterAnimationEvent Parse(string name)
@@ -85,6 +88,8 @@ namespace DD.Prototype.Characters
         public void breath() => Raise(CharacterAnimationEvent.Breath);
         public void hit() => Raise(CharacterAnimationEvent.Hit);
         public void stagger_end() => Raise(CharacterAnimationEvent.StaggerEnd);
+        public void shift_l() => Raise(CharacterAnimationEvent.ShiftLeft);
+        public void shift_r() => Raise(CharacterAnimationEvent.ShiftRight);
 
         /// <summary>Tests / probes: raise an event as if the clip had fired it.</summary>
         public void RaiseForTest(CharacterAnimationEvent e) => Raise(e);

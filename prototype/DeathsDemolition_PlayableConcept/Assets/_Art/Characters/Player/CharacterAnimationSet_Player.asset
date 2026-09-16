@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12a645b13c760498a9cf5d8b4292b682, type: 3}
   m_Name: CharacterAnimationSet_Player
   m_EditorClassIdentifier: 
-  _idle: {fileID: -623603649343465320, guid: aed148aa6a0c6495a8db423e00b8ba4d, type: 3}
-  _walk: {fileID: -623603649343465320, guid: f1f4360e2772149a18850848dcefbf29, type: 3}
-  _walkSpeedMetersPerSecond: 2.92
+  _idle: {fileID: -623603649343465320, guid: 7ca0fadcac8ef403aba0cfcb3381b42d, type: 3}
+  _walk: {fileID: -623603649343465320, guid: 925c8afcd84a3436ea17ec50b98de44e, type: 3}
+  _walkSpeedMetersPerSecond: 3.01
   _controller: {fileID: 9100000, guid: b245a12937d084f689f339a22d4e41f8, type: 2}
-  _source: "AP-009 v001 (30 clips, AP009-clips-manifest.json) \u2014 WP-018 generated
-    controller"
+  _source: "AP-009B v002 (36 clips, AP009-clips-manifest.json) \u2014 WP-018/032B
+    generated controller"
   _clips:
   - name: AP009_player_death_back
-    clip: {fileID: -623603649343465320, guid: 949eaa954bc2b416db84616d11288fa3, type: 3}
+    clip: {fileID: -623603649343465320, guid: e3f8c61f39fb54012916a2bab408a101, type: 3}
     loop: 0
     seconds: 1.167
     speedMps: 0
@@ -30,7 +30,7 @@ MonoBehaviour:
     frames: 36
     events: death_end=35
   - name: AP009_player_death_fwd
-    clip: {fileID: -623603649343465320, guid: a546f60057d964013bee806eecdd565e, type: 3}
+    clip: {fileID: -623603649343465320, guid: 46b49ef079264411da478967a3433020, type: 3}
     loop: 0
     seconds: 1.167
     speedMps: 0
@@ -40,7 +40,7 @@ MonoBehaviour:
     frames: 36
     events: death_end=35
   - name: AP009_player_fire_recoil
-    clip: {fileID: -623603649343465320, guid: b57564765dc1142789d5a0a6a28b6045, type: 3}
+    clip: {fileID: -623603649343465320, guid: f20b9ec0e72034edc82737d0ab14c616, type: 3}
     loop: 0
     seconds: 0.3
     speedMps: 0
@@ -50,7 +50,7 @@ MonoBehaviour:
     frames: 10
     events: fire=0
   - name: AP009_player_hit_light
-    clip: {fileID: -623603649343465320, guid: eede924627e6d455c89c1d3d70374820, type: 3}
+    clip: {fileID: -623603649343465320, guid: f29a27e2639964cf494daa46a5306adc, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -60,7 +60,7 @@ MonoBehaviour:
     frames: 12
     events: hit=0
   - name: AP009_player_idle
-    clip: {fileID: -623603649343465320, guid: aed148aa6a0c6495a8db423e00b8ba4d, type: 3}
+    clip: {fileID: -623603649343465320, guid: 7ca0fadcac8ef403aba0cfcb3381b42d, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -70,7 +70,7 @@ MonoBehaviour:
     frames: 61
     events: breath=0
   - name: AP009_player_pickup_special
-    clip: {fileID: -623603649343465320, guid: f106b32e410f34109b45a0c7af08ee18, type: 3}
+    clip: {fileID: -623603649343465320, guid: 6bf551074591749aaaab7ad859c2194b, type: 3}
     loop: 0
     seconds: 0.767
     speedMps: 0
@@ -79,45 +79,85 @@ MonoBehaviour:
     additive: 0
     frames: 24
     events: pickup=11
+  - name: AP009_player_run_back
+    clip: {fileID: -623603649343465320, guid: 5d64b9a8bdf0645fd8e26e40ad7b9b86, type: 3}
+    loop: 1
+    seconds: 0.467
+    speedMps: 4.599
+    unitySpeedMps: 4.5001435
+    layer: base
+    additive: 0
+    frames: 15
+    events: foot_l=0;foot_r=7
+  - name: AP009_player_run_fwd
+    clip: {fileID: -623603649343465320, guid: db772821d1d9a4eca9d00a4bf224f3ce, type: 3}
+    loop: 1
+    seconds: 0.467
+    speedMps: 4.531
+    unitySpeedMps: 3.7532537
+    layer: base
+    additive: 0
+    frames: 15
+    events: foot_l=0;foot_r=7
+  - name: AP009_player_run_strafe_left
+    clip: {fileID: -623603649343465320, guid: 48334fb8536ec45c19c77ed854e755f1, type: 3}
+    loop: 1
+    seconds: 0.467
+    speedMps: 4.415
+    unitySpeedMps: 4.4043508
+    layer: base
+    additive: 0
+    frames: 15
+    events: foot_l=1;foot_r=8
+  - name: AP009_player_run_strafe_right
+    clip: {fileID: -623603649343465320, guid: f6fbcf67eb0b540f7b3b7eacae35801c, type: 3}
+    loop: 1
+    seconds: 0.467
+    speedMps: 4.415
+    unitySpeedMps: 4.5611014
+    layer: base
+    additive: 0
+    frames: 15
+    events: foot_l=1;foot_r=8
   - name: AP009_player_strafe_left
-    clip: {fileID: -623603649343465320, guid: 1ef133dde25294af8ab79268cd661c64, type: 3}
+    clip: {fileID: -623603649343465320, guid: 9403585df9f0f4e62b7a7361196c3ea6, type: 3}
     loop: 1
     seconds: 0.4
-    speedMps: 1.939
-    unitySpeedMps: 2.089645
+    speedMps: 1.969
+    unitySpeedMps: 2.0597591
     layer: base
     additive: 0
     frames: 13
-    events: foot_r=0;foot_l=6
+    events: foot_l=1;foot_r=7
   - name: AP009_player_strafe_right
-    clip: {fileID: -623603649343465320, guid: ef6b9e71499ad43d5ae0638c690762a7, type: 3}
+    clip: {fileID: -623603649343465320, guid: ce302c32dcb864827b77933fabe66ec1, type: 3}
     loop: 1
     seconds: 0.4
-    speedMps: 1.939
-    unitySpeedMps: 2.1011138
+    speedMps: 1.969
+    unitySpeedMps: 2.070102
     layer: base
     additive: 0
     frames: 13
-    events: foot_r=0;foot_l=6
+    events: foot_l=1;foot_r=7
   - name: AP009_player_walk_back
-    clip: {fileID: -623603649343465320, guid: 3669accecb8f646b997cf5b260b351e3, type: 3}
+    clip: {fileID: -623603649343465320, guid: e8a1c4f77d4b04788beeb75e69b808d9, type: 3}
     loop: 1
     seconds: 0.4
-    speedMps: 2.426
+    speedMps: 2.494
     unitySpeedMps: 2.6570563
     layer: base
     additive: 0
     frames: 13
-    events: foot_r=0;foot_l=6
+    events: foot_l=0;foot_r=6
   - name: AP009_player_walk_fwd
-    clip: {fileID: -623603649343465320, guid: f1f4360e2772149a18850848dcefbf29, type: 3}
+    clip: {fileID: -623603649343465320, guid: 925c8afcd84a3436ea17ec50b98de44e, type: 3}
     loop: 1
     seconds: 0.4
-    speedMps: 2.92
+    speedMps: 3.01
     unitySpeedMps: 3.2661102
     layer: base
     additive: 0
     frames: 13
-    events: foot_r=0;foot_l=6
-  _manifestSchema: AP009.clips-manifest.v001
+    events: foot_l=0;foot_r=6
+  _manifestSchema: AP009.clips-manifest.v002
   _locomotionReferenceSpeed: 6.2

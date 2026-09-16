@@ -368,6 +368,8 @@ namespace DD.Prototype.Characters
         private static readonly int TelegraphId = Animator.StringToHash(CharacterAnimatorContract.Telegraph);
         private static readonly int TelegraphStyleId = Animator.StringToHash(CharacterAnimatorContract.TelegraphStyle);
         private static readonly int TelegraphRateId = Animator.StringToHash(CharacterAnimatorContract.TelegraphRate);
+        private static readonly int WaitingId = Animator.StringToHash(CharacterAnimatorContract.Waiting);       // WP-032B
+        private static readonly int WaitPhaseId = Animator.StringToHash(CharacterAnimatorContract.WaitPhase);   // WP-032B
 
         [PrototypeOnly(PendingDecisions.None,
             "Height above the threat's feet the zombie looks at (the player's head), metres. Invented.", true)]
@@ -479,6 +481,9 @@ namespace DD.Prototype.Characters
             _animator.ResetTrigger(RiseId);
             _animator.ResetTrigger(TelegraphId);
             _waiting = false;
+            _animator.SetBool(WaitingId, false);
+            // WP-032B: the queue idle's cycle offset — deterministic per spawn (the idle variant coin's neighbour), so a throat queue is out of step.
+            _animator.SetFloat(WaitPhaseId, Mathf.Repeat((idleVariant * 0.618034f) + (GetInstanceID() & 1023) / 1024f, 1f));
             if (_telegraphLayer >= 0) _animator.SetLayerWeight(_telegraphLayer, _telegraphEmphasis);
             if (_lookAt != null) _lookAt.ResetWeight();
             _animator.SetBool(AliveId, true);
@@ -525,7 +530,9 @@ namespace DD.Prototype.Characters
         public float PlayAttack(ZombieAttackStyle style, float telegraphSeconds)
         {
             if (!_authored || _dying) return 1f;
-            int index = style == ZombieAttackStyle.Lunge ? 1 : style == ZombieAttackStyle.Swipe ? 0 : 2;   // Sweep and Overhead share the two-armed sweep
+            // WP-032B: the Ultra overhead has its own v002 clip (Attack_Overhead); a set without it (v001) falls back to the sweep.
+            int index = style == ZombieAttackStyle.Lunge ? 1 : style == ZombieAttackStyle.Swipe ? 0
+                : style == ZombieAttackStyle.Overhead && _animation.Find(CharacterAnimatorContract.ZombieAttackOverhead) != null ? 3 : 2;
             float windowStart = WindowStartSeconds(CharacterAnimatorContract.ZombieAttackClips[index]);
             float rate = telegraphSeconds > 0.01f && windowStart > 0.01f ? windowStart / telegraphSeconds : 1f;
             rate = Mathf.Clamp(rate, 0.25f, 4f);
@@ -536,7 +543,7 @@ namespace DD.Prototype.Characters
             // WP-032: the additive wind-up emphasis spans the wind-up (1 s clip at 1 / telegraph) and is gone by hit_window_start.
             if (_telegraphLayer >= 0 && _telegraphEmphasis > 0.001f && telegraphSeconds > 0.05f)
             {
-                _animator.SetInteger(TelegraphStyleId, index);
+                _animator.SetInteger(TelegraphStyleId, Mathf.Min(index, 2));   // the overhead shares the sweep's wide-arm emphasis
                 _animator.SetFloat(TelegraphRateId, 1f / telegraphSeconds);
                 _animator.SetTrigger(TelegraphId);
             }
@@ -605,12 +612,12 @@ namespace DD.Prototype.Characters
             if (_authored && _telegraphLayer >= 0) _animator.SetLayerWeight(_telegraphLayer, _telegraphEmphasis);
         }
 
-        /// <summary>WP-032: idle-in-crowd / queue wait (WP-030): the body holds the twitch idle and stops tracking the threat.</summary>
+        /// <summary>WP-032: idle-in-crowd / queue wait (WP-030): the body holds the queue idle (WP-032B: the v002 idle_queue Wait state, cycle offset per body) and stops tracking the threat.</summary>
         public void SetWaiting(bool waiting)
         {
             if (!_authored) return;
             _waiting = waiting;
-            _animator.SetFloat(IdleVariantId, waiting ? 1f : 0f);
+            _animator.SetBool(WaitingId, waiting);
         }
 
         /// <summary>Light directional hit: override_upper L/R by the bullet's lateral side + the regional additive flinch.</summary>

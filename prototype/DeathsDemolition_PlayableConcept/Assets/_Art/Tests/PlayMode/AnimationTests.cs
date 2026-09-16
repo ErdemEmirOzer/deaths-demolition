@@ -400,11 +400,19 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(over).IsName(C.HitState) || an.GetNextAnimatorStateInfo(over).IsName(C.HitState), "hit_light override katmanda değil");
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState), "ateş/hit taban katmanını değiştirdi");
 
-            // Pickup through the WP-007 event → base Pickup, then back to Locomotion.
+            // Pickup through the WP-007 event → WP-032B (DEC-082): the grab on the upper-body override layer while the
+            // legs keep the locomotion blend (walking forward the whole time), then back to the layer's Empty.
+            velocity = Vector3.forward * 6.2f;
+            yield return CharacterTests.Bekle(() => pv.Move.y > 0.9f, 2f, "pickup öncesi ileri blend");
             WeaponEvents.PublishSpecialPickedUp(10f);
             yield return null; yield return null;
-            Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.PickupState) || an.GetNextAnimatorStateInfo(0).IsName(C.PickupState), "pickup klibi başlamadı");
-            yield return CharacterTests.Bekle(() => an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState) && !an.IsInTransition(0), 3f, "pickup sonrası locomotion'a dönüş");
+            Assert.IsTrue(an.GetCurrentAnimatorStateInfo(over).IsName(C.PickupState) || an.GetNextAnimatorStateInfo(over).IsName(C.PickupState), "pickup klibi üst gövde katmanında başlamadı");
+            Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState) && !an.IsInTransition(0), "pickup taban katmanını kesti");
+            Assert.Greater(pv.Move.y, 0.9f, "pickup sırasında yürüyüş blend'i düştü");
+            yield return CharacterTests.Bekle(() => an.GetCurrentAnimatorStateInfo(over).IsName(C.EmptyState) && !an.IsInTransition(over), 3f, "pickup sonrası üst katman boşa dönmedi");
+            Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState), "pickup boyunca taban katmanı locomotion kalmalı");
+            velocity = Vector3.zero;
+            yield return CharacterTests.Bekle(() => pv.Move.magnitude < 0.05f, 2f, "pickup sonrası idle");
 
             // Death: back push → Death_1; death_end arrives; no way back.
             pv.PlayDeath(Vector3.back, false);

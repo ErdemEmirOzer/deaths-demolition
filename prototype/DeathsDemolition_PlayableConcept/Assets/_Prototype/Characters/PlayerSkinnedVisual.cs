@@ -15,8 +15,9 @@ namespace DD.Prototype.Characters
     /// <c>socket_weapon_r</c>.
     ///
     /// WP-018 (ADR-018-2): the AP-009 Animator owns the pose — base layer 2-D locomotion
-    /// (idle / walk_fwd / walk_back / strafe_L / strafe_R on MoveX·MoveY, rate LocoRate),
-    /// deaths ×2 and the pickup; <c>override_upper</c> hit_light; <c>additive</c> fire_recoil;
+    /// (idle / walk ring / run ring on MoveX·MoveY, rate LocoRate — WP-032B: the AP-009B v002 run
+    /// cycles are the outer ring), deaths ×2; <c>override_upper</c> hit_light and the pickup
+    /// (WP-032B · DEC-082: the grab plays over the legs, no movement lock); <c>additive</c> fire_recoil;
     /// <c>aim_layer</c> = <see cref="PlayerAimLayer"/> turning Spine/Chest/UpperChest toward the
     /// aim (REQ-038) on top of the base. <c>PlayerProceduralAnimator</c> forwards its hooks
     /// here and writes nothing to the hidden block rig; the ProceduralPoseBridge is gone.
@@ -70,9 +71,14 @@ namespace DD.Prototype.Characters
         private const float MoveSmoothing = 0.12f;
 
         [PrototypeOnly(PendingDecisions.None,
-            "Highest playback rate of the walk clips: the 6.2 m/s Run speed over walk_fwd 2.92 m/s is " +
-            "×2.12 (AP-009 README known issue 1 — a run cycle is the follow-up if this reads as skating). Cap, invented.", true)]
+            "Highest child time scale of a locomotion clip (walk_fwd at the 6.2 m/s reference is ×1.9; the walk carries no " +
+            "weight there since WP-032B's run ring). Cap, invented.", true)]
         public const float MaxLocoRate = 2.4f;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-032B (AP-009B P-06 note ×1.6 assumed the Blender 4.5 m/s; the Unity-retargeted run_fwd covers ≈ 3.5–3.9 m/s in contact, so 6.2 m/s is ×1.6–1.8) — " +
+            "the state rate is clamped so the run never exceeds this (a faster run reads as a flicker). Cap.", true)]
+        public const float MaxRunRate = 2.0f;
 
         public Animator Animator => _animator;
         public LODGroup LodGroup => _lodGroup;
@@ -85,20 +91,10 @@ namespace DD.Prototype.Characters
         public CharacterLookAt LookAt => _lookAt;
         public FootIkAdapter FootIk => _footIk;
 
-        [PrototypeOnly(PendingDecisions.None,
-            "WP-032: the Special Weapon pickup clip locks the motor for its grab (0.767 s). Off until the user decides " +
-            "(pickup was never a movement lock in WP-007); probe / test switch.", true)]
-        public static bool PickupLocksMovement;
-
-        [PrototypeOnly(PendingDecisions.None, "Seconds the pickup lock holds when PickupLocksMovement is on (= AP-009 pickup_special length). Invented.", true)]
-        public const float PickupLockSeconds = 0.767f;
-
         [PrototypeOnly(PendingDecisions.None, "Distance ahead along the aim the head looks at, metres. Invented.", true)]
         private const float AimLookDistance = 8f;
 
-        private Action<bool> _movementLock;
-        private float _pickupLockUntil = -1f;
-        public bool PickupLockActive => _pickupLockUntil > Time.time;
+        private float _runTimeScale = 1f;
         public int AppliedSkinIndex => _appliedSkin;
         /// <summary>True when the AP-009 controller drives this body (false on the rig-test set).</summary>
         public bool Authored => _authored;
@@ -133,13 +129,6 @@ namespace DD.Prototype.Characters
         /// </summary>
         public Transform Attach(Transform visual, Func<Vector3> planarVelocity, Func<float> referenceSpeed, Func<Vector3> aimDirection)
         {
-            return Attach(visual, planarVelocity, referenceSpeed, aimDirection, null);
-        }
-
-        /// <summary>WP-032 overload: + the motor lock the pickup clip may hold (PickupLocksMovement).</summary>
-        public Transform Attach(Transform visual, Func<Vector3> planarVelocity, Func<float> referenceSpeed, Func<Vector3> aimDirection, Action<bool> movementLock)
-        {
-            _movementLock = movementLock;
             transform.SetParent(visual, false);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
@@ -161,6 +150,9 @@ namespace DD.Prototype.Characters
             }
 
             _authored = _animation != null && _animation.IsAuthored && _animator != null && _animator.runtimeAnimatorController != null;
+            // WP-032B: the run ring's child time scale (reference / run_fwd no-slide speed) — the MaxRunRate clamp divides by it.
+            float runSpeed = _animation != null ? _animation.SpeedOf(CharacterAnimatorContract.PlayerRunFwd) : 0f;
+            _runTimeScale = runSpeed > 0.01f && _animation != null ? ChildTimeScale(_animation.LocomotionReferenceSpeed, runSpeed) : 1f;
             if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
             if (_aimLayer == null && _animator != null) _aimLayer = _animator.GetComponent<PlayerAimLayer>();
             if (_aimLayer != null) _aimLayer.Bind(_animator, aimDirection, _authored);
@@ -233,7 +225,6 @@ namespace DD.Prototype.Characters
         public void PlayDeath(Vector3 localHitDirection, bool coin)
         {
             if (!_authored || _dying) return;
-            if (_pickupLockUntil > 0f) { _pickupLockUntil = -1f; _movementLock?.Invoke(false); }
             _dying = true;
             _deathEnded = false;
             int style = localHitDirection.z > 0.2f ? 0 : localHitDirection.z < -0.2f ? 1 : coin ? 0 : 1;
@@ -242,16 +233,11 @@ namespace DD.Prototype.Characters
             _animator.SetTrigger(DieId);
         }
 
-        /// <summary>Special Weapon picked up (WP-007 event): the grab clip on the base layer; movement is not locked.</summary>
+        /// <summary>Special Weapon picked up (WP-007 event): the grab clip on the upper-body override layer (WP-032B · DEC-082 — the legs keep walking, nothing locks the motor).</summary>
         public void PlayPickup()
         {
             if (!_authored || _dying) return;
             _animator.SetTrigger(PickupId);
-            if (PickupLocksMovement && _movementLock != null)
-            {
-                _pickupLockUntil = Time.time + PickupLockSeconds;
-                _movementLock(true);
-            }
         }
 
         /// <summary>Albedo swap for a skin (index = PlayerSkin). Same material asset for every skin; one property block per renderer.</summary>
@@ -297,12 +283,6 @@ namespace DD.Prototype.Characters
                 return;
             }
 
-            if (_pickupLockUntil > 0f && Time.time >= _pickupLockUntil)
-            {
-                _pickupLockUntil = -1f;
-                _movementLock?.Invoke(false);
-            }
-
             if (_dying) return;
 
             // Local (character-space) velocity over the set's reference speed: the 2-D blend axes.
@@ -313,7 +293,8 @@ namespace DD.Prototype.Characters
             Vector3 local = transform.InverseTransformDirection(v) / reference;
             Vector2 targetMove = new Vector2(Mathf.Clamp(local.x, -1f, 1f), Mathf.Clamp(local.z, -1f, 1f));
             float speed01 = Mathf.Clamp01(mps / reference);
-            float targetRate = Mathf.Lerp(1f, Mathf.Min(speed01, MaxLocoRate), speed01);
+            // WP-032B: the run ring's clip rate is LocoRate × its child time scale; cap it at MaxRunRate (P-06).
+            float targetRate = Mathf.Lerp(1f, Mathf.Min(speed01, MaxRunRate / _runTimeScale), speed01);
             if (dt > 0f)
             {
                 _move = Vector2.MoveTowards(_move, targetMove, dt / MoveSmoothing);

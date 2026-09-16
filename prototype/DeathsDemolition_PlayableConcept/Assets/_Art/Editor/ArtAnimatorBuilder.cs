@@ -15,13 +15,17 @@ namespace DD.Art.Pipeline.EditorTools
     /// stable (the controller / set assets are rebuilt in place).
     ///
     /// Player (<c>DD_Player.controller</c>): base = 2-D freeform-directional locomotion
-    /// (idle / walk_fwd / walk_back / strafe_L / strafe_R on MoveX·MoveY; child time scales =
-    /// reference speed / clip speed_mps; state speed = LocoRate), Death_0/1, Pickup;
-    /// <c>override_upper</c> = hit_light; <c>additive</c> = fire_recoil; <c>aim_layer</c> =
+    /// (idle / walk ring at the walk clips' no-slide radius / run ring at radius 1 — AP-009B v002
+    /// run_fwd/back/strafe_L/R — on MoveX·MoveY; child time scales = reference speed / clip
+    /// speed; state speed = LocoRate), Death_0/1; <c>override_upper</c> = hit_light + Pickup
+    /// (WP-032B · DEC-082, recorded by S-02 in WP-042: the grab plays over uninterrupted locomotion, no movement lock);
+    /// <c>additive</c> = fire_recoil; <c>aim_layer</c> =
     /// empty state with the IK pass (PlayerAimLayer writes Spine/Chest/UpperChest).
     /// Zombie (<c>DD_Zombie.controller</c>): base = Locomotion (Speed01: idle sway/twitch ↔ gait
-    /// shamble_A/B/C/run by Gait; state speed = GaitRate), Attack_Swipe/Lunge/Sweep (speed =
-    /// AttackRate, so hit_window_start lands on the tier telegraph), Stagger, Death_0..3, Rise;
+    /// shamble_A/B/C/run by Gait; state speed = GaitRate), Wait (idle_queue, cycle offset =
+    /// WaitPhase, gated by Waiting), Attack_Swipe/Lunge/Sweep/Overhead (speed = AttackRate, so
+    /// hit_window_start lands on the tier telegraph; the overhead holds its last frame 0.3 s into
+    /// the recovery), Stagger, Death_0..3, Rise;
     /// <c>override_upper</c> = hit_light L/R; <c>additive</c> = hit_region head/torso/leg.
     /// Every one-shot returns to its layer's rest state on exit time; nothing loops but the
     /// manifest loops; Alive gates every reaction so a corpse never re-enters locomotion.
@@ -35,8 +39,10 @@ namespace DD.Art.Pipeline.EditorTools
         public const string PlayerController = ArtCharacterContract.PlayerFolder + "/DD_Player.controller";
         public const string GeneratedFolder = ArtCharacterContract.ZombieFolder + "/Generated";   // WP-032 telegraph emphasis clips
         public const string ZombieController = ArtCharacterContract.ZombieFolder + "/DD_Zombie.controller";
-        public const string PlayerSource = "AP-009 v001 (30 clips, AP009-clips-manifest.json) — WP-018 generated controller";
-        public const string ZombieSource = "AP-009 v001 (30 clips, AP009-clips-manifest.json) — WP-018 generated controller";
+        public const string PlayerSource = "AP-009B v002 (36 clips, AP009-clips-manifest.json) — WP-018/032B generated controller";
+        public const string ZombieSource = "AP-009B v002 (36 clips, AP009-clips-manifest.json) — WP-018/032B generated controller";
+        /// <summary>WP-032B: seconds the overhead's last frame is held before the blend back to locomotion (P-06: 24-frame recovery vs the Ultra timer).</summary>
+        public const float OverheadHoldSeconds = 0.3f;
 
         [Serializable]
         public struct Report
@@ -235,7 +241,8 @@ namespace DD.Art.Pipeline.EditorTools
                     foreach (ArtAnimationClipContract.ClipSpec s in manifest.Values)
                     {
                         if (s.target != target || s.speedMps <= 0.01f) continue;
-                        StrideCalibrator.Result r = StrideCalibrator.Measure(rig, rig.GetComponent<Animator>(), clips[s.name], s.frames, ArtAnimationClipContract.Fps, s.EventsText());
+                        StrideCalibrator.Result r = StrideCalibrator.Measure(rig, rig.GetComponent<Animator>(), clips[s.name], s.frames, ArtAnimationClipContract.Fps, s.EventsText(),
+                            StrideCalibrator.FootTravelDirection(s.name), s.stanceFrames);
                         if (r.windows > 0) result[s.name] = r.speedMps;
                         Debug.Log(LogPrefix + "stride " + s.name + ": manifest " + s.speedMps.ToString("F3") + " m/s → Unity " + r.speedMps.ToString("F3") + " m/s (" + r.windows + " windows: " + r.report + ")");
                     }
@@ -267,13 +274,21 @@ namespace DD.Art.Pipeline.EditorTools
             tree.blendParameter = C.MoveX;
             tree.blendParameterY = C.MoveY;
             tree.useAutomaticThresholds = false;
+            // WP-032B: two rings. The walk clips sit at their own no-slide speed over the reference
+            // (radius = clip speed / reference, so the blend passes THROUGH the walk at rate 1) and
+            // the v002 run cycles sit on the unit circle; between them the tree cross-fades walk→run
+            // (AP-009B README: blend above ~1.6× the walk speed — the walk scaled beyond ×2.1 reads as skating).
             tree.children = new[]
             {
                 Child2D(clips[C.PlayerIdle], 0f, 0f, 1f),
-                Child2D(clips[C.PlayerWalkFwd], 0f, 1f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerWalkFwd))),
-                Child2D(clips[C.PlayerWalkBack], 0f, -1f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerWalkBack))),
-                Child2D(clips[C.PlayerStrafeLeft], -1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerStrafeLeft))),
-                Child2D(clips[C.PlayerStrafeRight], 1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerStrafeRight)))
+                Ring(clips, m, unitySpeeds, reference, C.PlayerWalkFwd, 0f, 1f),
+                Ring(clips, m, unitySpeeds, reference, C.PlayerWalkBack, 0f, -1f),
+                Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeLeft, -1f, 0f),
+                Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeRight, 1f, 0f),
+                Child2D(clips[C.PlayerRunFwd], 0f, 1f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunFwd))),
+                Child2D(clips[C.PlayerRunBack], 0f, -1f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunBack))),
+                Child2D(clips[C.PlayerRunStrafeLeft], -1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeLeft))),
+                Child2D(clips[C.PlayerRunStrafeRight], 1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeRight)))
             };
             loco.speedParameterActive = true;
             loco.speedParameter = C.LocoRate;
@@ -284,15 +299,15 @@ namespace DD.Art.Pipeline.EditorTools
             AnimatorState death1 = OneShot(sm, C.DeathState + "_1", clips[C.PlayerDeathBack], null);
             FromAny(sm, death0, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, 0f, C.DeathStyle));
             FromAny(sm, death1, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, 1f, C.DeathStyle));
-            AnimatorState pickup = OneShot(sm, C.PickupState, clips[C.PlayerPickup], loco, 0.9f, 0.12f);
-            FromAny(sm, pickup, 0.08f, (AnimatorConditionMode.If, 0f, C.Pickup), (AnimatorConditionMode.If, 0f, C.Alive));
 
-            // ---- override_upper: hit_light
+            // ---- override_upper: hit_light + pickup (WP-032B · DEC-082: the grab is an upper-body beat over the legs' locomotion)
             AnimatorControllerLayer over = AddLayer(c, C.OverrideUpperLayer, upper, AnimatorLayerBlendingMode.Override, false);
             AnimatorState overEmpty = over.stateMachine.AddState(C.EmptyState);
             over.stateMachine.defaultState = overEmpty;
             AnimatorState hit = OneShot(over.stateMachine, C.HitState, clips[C.PlayerHitLight], overEmpty, 0.9f, 0.1f);
             FromAny(over.stateMachine, hit, 0.03f, (AnimatorConditionMode.If, 0f, C.HitLight), (AnimatorConditionMode.If, 0f, C.Alive));
+            AnimatorState pickup = OneShot(over.stateMachine, C.PickupState, clips[C.PlayerPickup], overEmpty, 0.9f, 0.12f);
+            FromAny(over.stateMachine, pickup, 0.08f, (AnimatorConditionMode.If, 0f, C.Pickup), (AnimatorConditionMode.If, 0f, C.Alive));
 
             // ---- additive: fire_recoil
             AnimatorControllerLayer add = AddLayer(c, C.AdditiveLayer, upper, AnimatorLayerBlendingMode.Additive, false);
@@ -323,6 +338,7 @@ namespace DD.Art.Pipeline.EditorTools
             AnimatorController c = Fresh(ZombieController,
                 (C.Speed01, AnimatorControllerParameterType.Float), (C.GaitRate, AnimatorControllerParameterType.Float),
                 (C.Gait, AnimatorControllerParameterType.Float), (C.IdleVariant, AnimatorControllerParameterType.Float),
+                (C.Waiting, AnimatorControllerParameterType.Bool), (C.WaitPhase, AnimatorControllerParameterType.Float),
                 (C.Attack, AnimatorControllerParameterType.Trigger), (C.AttackStyle, AnimatorControllerParameterType.Int), (C.AttackRate, AnimatorControllerParameterType.Float),
                 (C.Stagger, AnimatorControllerParameterType.Trigger),
                 (C.HitLeft, AnimatorControllerParameterType.Trigger), (C.HitRight, AnimatorControllerParameterType.Trigger),
@@ -361,11 +377,28 @@ namespace DD.Art.Pipeline.EditorTools
             loco.writeDefaultValues = true;
             sm.defaultState = loco;
 
-            // attacks (speed = AttackRate → hit_window_start lands on TelegraphTime)
-            string[] attackStates = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState };
+            // WP-032B: Wait = the v002 queue idle, entered from Locomotion on Waiting and left on !Waiting;
+            // the cycle offset is the body's WaitPhase so a throat queue never shifts its weight in unison.
+            AnimatorState wait = sm.AddState(C.WaitState);
+            wait.motion = clips[C.ZombieIdleQueue];
+            wait.writeDefaultValues = false;
+            wait.cycleOffsetParameterActive = true;
+            wait.cycleOffsetParameter = C.WaitPhase;
+            AnimatorStateTransition toWait = loco.AddTransition(wait);
+            toWait.hasExitTime = false; toWait.hasFixedDuration = true; toWait.duration = 0.35f;
+            toWait.AddCondition(AnimatorConditionMode.If, 0f, C.Waiting);
+            toWait.AddCondition(AnimatorConditionMode.If, 0f, C.Alive);
+            AnimatorStateTransition fromWait = wait.AddTransition(loco);
+            fromWait.hasExitTime = false; fromWait.hasFixedDuration = true; fromWait.duration = 0.35f;
+            fromWait.AddCondition(AnimatorConditionMode.IfNot, 0f, C.Waiting);
+
+            // attacks (speed = AttackRate → hit_window_start lands on TelegraphTime); WP-032B: + overhead (Ultra, v002),
+            // whose 24-frame recovery is shorter than the Ultra timer — the last frame is held OverheadHoldSeconds.
+            string[] attackStates = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState, C.AttackOverheadState };
             for (int i = 0; i < C.ZombieAttackClips.Length; i++)
             {
-                AnimatorState a = OneShot(sm, attackStates[i], clips[C.ZombieAttackClips[i]], loco, 0.97f, 0.12f);
+                bool overhead = i == 3;
+                AnimatorState a = OneShot(sm, attackStates[i], clips[C.ZombieAttackClips[i]], loco, overhead ? 1f : 0.97f, overhead ? OverheadHoldSeconds : 0.12f);
                 a.speedParameterActive = true;
                 a.speedParameter = C.AttackRate;
                 FromAny(sm, a, 0.06f, (AnimatorConditionMode.If, 0f, C.Attack), (AnimatorConditionMode.Equals, (float)i, C.AttackStyle), (AnimatorConditionMode.If, 0f, C.Alive));
@@ -518,6 +551,15 @@ namespace DD.Art.Pipeline.EditorTools
         private static ChildMotion Child1D(Motion motion, float threshold)
         {
             return new ChildMotion { motion = motion, threshold = threshold, timeScale = 1f, directBlendParameter = "" };
+        }
+
+        /// <summary>WP-032B: a walk child at its own no-slide radius (clip speed / reference) along (x, y), time scale reference / clip speed.</summary>
+        private static ChildMotion Ring(Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> m, Dictionary<string, float> unity,
+            float reference, string clip, float x, float y)
+        {
+            float speed = SpeedOf(m, unity, clip);
+            float radius = Mathf.Clamp(speed / Mathf.Max(0.1f, reference), 0.2f, 0.9f);
+            return Child2D(clips[clip], x * radius, y * radius, PlayerSkinnedVisual.ChildTimeScale(reference, speed));
         }
 
         private static ChildMotion Child2D(Motion motion, float x, float y, float timeScale)

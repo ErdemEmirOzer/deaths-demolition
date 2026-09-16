@@ -104,15 +104,28 @@ namespace DD.Art.Tests.EditMode
                 Assert.LessOrEqual(slip, 0.02f, g.clip + " @ " + g.speed + " m/s kayma > 2 cm/adım");
             }
 
-            // Player: forward walk honest at 6.2; back / strafe cycles hit the 2.4 cap → reported slip (AP-009B: run / strafe cycles)
+            // Player (WP-032B): at the 6.2 m/s reference the run ring carries the weight — every v002 run cycle is honest
+            // (rate = reference / run speed ≈ 1.35, under the MaxRunRate cap); the walk ring is honest at its own radius.
             float v = player.LocomotionReferenceSpeed;
-            float fwd = StrideMatch.SlipPerStep(v, player.SpeedOf(C.PlayerWalkFwd), PlayerSkinnedVisual.ChildTimeScale(v, player.SpeedOf(C.PlayerWalkFwd)), player.Find(C.PlayerWalkFwd).seconds);
-            float back = StrideMatch.SlipPerStep(v, player.SpeedOf(C.PlayerWalkBack), PlayerSkinnedVisual.ChildTimeScale(v, player.SpeedOf(C.PlayerWalkBack)), player.Find(C.PlayerWalkBack).seconds);
-            float strafe = StrideMatch.SlipPerStep(v, player.SpeedOf(C.PlayerStrafeLeft), PlayerSkinnedVisual.ChildTimeScale(v, player.SpeedOf(C.PlayerStrafeLeft)), player.Find(C.PlayerStrafeLeft).seconds);
-            rows.Add("player fwd slip/step=" + (fwd * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm, back=" + (back * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm (cap " + PlayerSkinnedVisual.MaxLocoRate + "), strafe=" + (strafe * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm (cap)");
+            foreach (string run in new[] { C.PlayerRunFwd, C.PlayerRunBack, C.PlayerRunStrafeLeft, C.PlayerRunStrafeRight })
+            {
+                float speed = player.SpeedOf(run);
+                float timeScale = PlayerSkinnedVisual.ChildTimeScale(v, speed);
+                float slip = StrideMatch.SlipPerStep(v, speed, timeScale, player.Find(run).seconds);
+                rows.Add(run + " v=" + v + " rate=" + timeScale.ToString("F2", CultureInfo.InvariantCulture) + " slip/step=" + (slip * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm");
+                Assert.LessOrEqual(slip, 0.02f, run + " 6,2 m/s'de kaymamalı");
+                Assert.LessOrEqual(timeScale, PlayerSkinnedVisual.MaxRunRate, run + " koşu oran tavanı (P-06 ×1,6)");
+            }
+
+            foreach (string walk in new[] { C.PlayerWalkFwd, C.PlayerWalkBack, C.PlayerStrafeLeft, C.PlayerStrafeRight })
+            {
+                float speed = player.SpeedOf(walk);
+                float slip = StrideMatch.SlipPerStep(speed, speed, 1f, player.Find(walk).seconds);   // the walk ring sits at its own speed (rate 1)
+                rows.Add(walk + " ring v=" + speed.ToString("F2", CultureInfo.InvariantCulture) + " slip/step=" + (slip * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm");
+                Assert.LessOrEqual(slip, 0.02f, walk + " kendi halkasında kaymamalı");
+            }
+
             Debug.Log("[DD-TEST] wp032.stride\n" + string.Join("\n", rows));
-            Assert.LessOrEqual(fwd, 0.02f, "ileri yürüyüş 6,2 m/s'de kaymamalı");
-            Assert.Greater(strafe, 0.02f, "strafe döngüsü 6,2 m/s'de tavana çarpar — AP-009B devri (bilinen)");
         }
     }
 }

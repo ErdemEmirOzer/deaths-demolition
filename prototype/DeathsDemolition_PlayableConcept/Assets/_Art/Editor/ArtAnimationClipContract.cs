@@ -25,7 +25,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string AnimationsFolderName = "Animations";
         public const string AnimationsFolder = ArtImportContract.CharactersRoot + "/" + AnimationsFolderName;
         public const string ManifestPath = AnimationsFolder + "/AP009-clips-manifest.json";
-        public const string ManifestSchema = "AP009.clips-manifest.v001";
+        public const string ManifestSchema = "AP009.clips-manifest.v002";   // WP-032B: AP-009B v002 (36 clips; foot_l/foot_r sides corrected)
         public const int Fps = CharacterAnimatorContract.Fps;
 
         /// <summary>
@@ -52,6 +52,8 @@ namespace DD.Art.Pipeline.EditorTools
             public string fit;
             public string tier;
             public bool optional;
+            /// <summary>WP-032B: manifest validation.foot_contact_A stance frames (min over both feet); 0 = not given (whole-window calibration).</summary>
+            public int stanceFrames;
             public readonly List<KeyValuePair<string, int>> events = new List<KeyValuePair<string, int>>();
 
             /// <summary>"name=frame;…" in manifest order (CharacterAnimationSet.Entry.events).</summary>
@@ -114,6 +116,20 @@ namespace DD.Art.Pipeline.EditorTools
                 spec.fit = fit == null ? null : ArtJson.AsString(fit, "fit");
                 object tier = ArtJson.Get(c, "tier");
                 spec.tier = tier == null ? null : ArtJson.AsString(tier, "tier");
+                object validation = ArtJson.Get(c, "validation");
+                object contact = validation is Dictionary<string, object> vd ? ArtJson.Get(vd, "foot_contact_A") : null;
+                if (contact is Dictionary<string, object> cd)
+                {
+                    foreach (KeyValuePair<string, object> side in cd)
+                    {
+                        if (!(side.Value is Dictionary<string, object> sd)) continue;
+                        object sf = ArtJson.Get(sd, "stance_frames");
+                        if (sf == null) continue;
+                        int n = ArtJson.AsInt(sf, "stance_frames");
+                        spec.stanceFrames = spec.stanceFrames == 0 ? n : Math.Min(spec.stanceFrames, n);
+                    }
+                }
+
                 object ev = ArtJson.Get(c, "events");
                 if (ev != null)
                 {

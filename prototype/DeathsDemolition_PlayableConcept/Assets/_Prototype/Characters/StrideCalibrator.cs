@@ -9,7 +9,8 @@ namespace DD.Prototype.Characters
     /// the feet a few percent differently (shamble_A: 1.464 → ≈1.36 m/s measured, i.e. 7 % skating
     /// at the manifest rate). The clip is sampled frame by frame (no playback); between two
     /// authored contact events (foot_l / foot_r) the planted foot is the one travelling backward,
-    /// and its mean backward speed is the speed the body must move at rate 1 for zero slip.
+    /// and its mean backward speed OVER ITS CONTACT PHASE (WP-032B: a run cycle lifts the foot before
+    /// the other lands) is the speed the body must move at rate 1 for zero slip.
     /// </summary>
     public static class StrideCalibrator
     {
@@ -43,6 +44,17 @@ namespace DD.Prototype.Characters
         }
 
         public static Result Measure(GameObject root, Animator animator, AnimationClip clip, int frames, int fps, string eventsText, Vector3 footTravel)
+        {
+            return Measure(root, animator, clip, frames, fps, eventsText, footTravel, 0);
+        }
+
+        /// <summary>
+        /// WP-032B: <paramref name="stanceFrames"/> = the manifest's authored contact length per foot (Blender stance
+        /// detection; retargeting changes the geometry, not the timing). When it is shorter than the event window the
+        /// clip has a flight phase and the speed is taken over exactly those frames from the landing (run_fwd: 6 of 7);
+        /// 0 or a full window = the WP-032 whole-window rule (walk 8/13, strafe 6/13, shamble 11/17).
+        /// </summary>
+        public static Result Measure(GameObject root, Animator animator, AnimationClip clip, int frames, int fps, string eventsText, Vector3 footTravel, int stanceFrames)
         {
             var result = new Result();
             if (root == null || animator == null || clip == null || frames < 2) return result;
@@ -89,9 +101,27 @@ namespace DD.Prototype.Characters
 
                 if (n == 0) continue;
                 // planted = the foot that travelled the most ALONG the planted-foot axis over the window
+                bool leftPlanted = dl >= dr;
                 float planted = Mathf.Max(dl, dr);
+                float[] z = leftPlanted ? lz : rz;
+                // WP-032B: a cycle with a flight phase (manifest stance shorter than the window) — the planted foot lifts and
+                // swings forward before the other foot lands; the speed is its travel over the authored stance frames only.
+                int contactFrames = n;
                 float speed = planted / n * fps;
-                sb.Append(from).Append('→').Append(to).Append(':').Append(speed.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append(dl >= dr ? "L " : "R ");
+                if (stanceFrames > 0 && stanceFrames < n)
+                {
+                    float travel = 0f;
+                    for (int f = from; f < from + stanceFrames; f++)
+                    {
+                        int a = f % cycle, b = (f + 1) % cycle;
+                        travel += z[b] - z[a];
+                    }
+
+                    contactFrames = stanceFrames;
+                    speed = travel / stanceFrames * fps;
+                }
+
+                sb.Append(from).Append('→').Append(to).Append(':').Append(speed.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append(leftPlanted ? "L" : "R").Append('/').Append(contactFrames).Append("f ");
                 sum += speed;
                 windows++;
             }

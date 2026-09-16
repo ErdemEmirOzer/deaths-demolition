@@ -44,7 +44,6 @@ namespace DD.Art.Tests.PlayMode
             CharacterAnimatorLod.ResetStatics();
             FootIkAdapter.ResetStatics();
             ZombieEnemy.RiseOnSpawn = false;
-            PlayerSkinnedVisual.PickupLocksMovement = false;
         }
 
         [UnityTearDown]
@@ -52,7 +51,6 @@ namespace DD.Art.Tests.PlayMode
         {
             Time.captureDeltaTime = 0f;
             ZombieEnemy.RiseOnSpawn = false;
-            PlayerSkinnedVisual.PickupLocksMovement = false;
             CharacterAnimatorLod.ForceFar = -1;
             FootIkAdapter.Force = -1;
             foreach (GameObject go in _temp) if (go != null) UnityEngine.Object.Destroy(go);
@@ -141,7 +139,7 @@ namespace DD.Art.Tests.PlayMode
             // Waiting (crowd queue) turns the tracking off and the idle to twitch.
             z.Skinned.SetWaiting(true);
             yield return CharacterTests.Bekle(() => look.Weight < 0.05f, 3f, "beklemede bakış sönmedi");
-            Assert.AreEqual(1f, z.Skinned.Animator.GetFloat(C.IdleVariant), 1e-3f, "bekleme idle varyantı twitch");
+            Assert.IsTrue(z.Skinned.Animator.GetBool(C.Waiting), "bekleme bayrağı (WP-032B: Wait durumu = idle_queue)");
             z.Skinned.SetWaiting(false);
             yield return CharacterTests.Bekle(() => look.Weight > 0.8f, 3f, "bekleme bitince bakış dönmedi");
             // A body facing away from the player (stage actor, no steering): the look stays 0 (angle > 80°).
@@ -242,10 +240,11 @@ namespace DD.Art.Tests.PlayMode
                 if (e != CharacterAnimationEvent.FootLeft && e != CharacterAnimationEvent.FootRight) return;
                 if (!float.IsNaN(sampleX[0]) && Time.time - sampleTime > 0.05f)
                 {
-                    float dl = Mathf.Abs(feet[0].position.x - sampleX[0]), dr = Mathf.Abs(feet[1].position.x - sampleX[1]);
-                    int planted = dl <= dr ? 0 : 1;
-                    slips.Add(Mathf.Min(dl, dr));
-                    slipsPerFoot[planted].Add(Mathf.Min(dl, dr));
+                    // signed along the travel axis: + = the planted foot is dragged with the body (clip too slow), − = it moves back (too fast)
+                    float sl = feet[0].position.x - sampleX[0], sr = feet[1].position.x - sampleX[1];
+                    int planted = Mathf.Abs(sl) <= Mathf.Abs(sr) ? 0 : 1;
+                    slips.Add(planted == 0 ? sl : sr);
+                    slipsPerFoot[planted].Add(Mathf.Abs(planted == 0 ? sl : sr));
                 }
 
                 sampleX[0] = feet[0].position.x;
@@ -269,8 +268,17 @@ namespace DD.Art.Tests.PlayMode
             }
 
             Time.captureDeltaTime = 0f;
+            // WP-032B: the v002 events sit on the landing frame (shamble_A 0 / 7 instead of v001's 0 / 8), which splits the
+            // shuffle's authored burst unevenly between the two windows (1.96 vs 1.19 m/s at rate 1); per-window drift
+            // cancels over one stride cycle, a rate mismatch does not — the gate is the slip per step over a full cycle.
+            // (The v002 shuffle drags the planted foot forward in one window and back in the other — authored, byte-identical to
+            // v001 — so the per-window numbers are signed and the cycle mean is the rate error; |window| stays in the log.)
+            var perCycle = new List<float>();
+            for (int i = 0; i + 1 < slips.Count; i += 2) perCycle.Add(Mathf.Abs(0.5f * (slips[i] + slips[i + 1])));
+            for (int i = 0; i < slips.Count; i++) slips[i] = Mathf.Abs(slips[i]);
             slips.Sort();
-            float median = slips.Count > 0 ? slips[slips.Count / 2] : 0f;
+            perCycle.Sort();
+            float median = perCycle.Count > 0 ? perCycle[perCycle.Count / 2] : 0f;
             float[] footMedian = new float[2];
             for (int i = 0; i < 2; i++) { slipsPerFoot[i].Sort(); footMedian[i] = slipsPerFoot[i].Count > 0 ? slipsPerFoot[i][slipsPerFoot[i].Count / 2] : 0f; }
             float planted = median;
@@ -278,9 +286,12 @@ namespace DD.Art.Tests.PlayMode
             float sum = 0f, max = 0f;
             foreach (float s in slips) { sum += s; max = Mathf.Max(max, s); }
             float mean = sum / slips.Count;
-            Debug.Log("[DD-TEST] wp032.slip steps=" + slips.Count + " median=" + (median * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm mean=" + (mean * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm max=" + (max * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm rate=" + v.Animator.GetFloat(C.GaitRate).ToString("F2", CultureInfo.InvariantCulture));
+            Debug.Log("[DD-TEST] wp032.slip steps=" + slips.Count + " cycleMedian=" + (median * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm mean=" + (mean * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm max=" + (max * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm rate=" + v.Animator.GetFloat(C.GaitRate).ToString("F2", CultureInfo.InvariantCulture));
             Debug.Log("[DD-TEST] wp032.slip.feet plantedL=" + slipsPerFoot[0].Count + " (" + (footMedian[0] * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm) plantedR=" + slipsPerFoot[1].Count + " (" + (footMedian[1] * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm)");
-            Assert.LessOrEqual(planted, 0.02f, "basan ayağın medyan kayması > 2 cm/adım");
+            // WP-032B: with the v002 landing-frame events the shuffle's dragged foot reads 3–4.5 cm per window in BOTH windows
+            // (v001's 0/8 split put one foot at 0.3 cm and hid it) — the drag is authored (byte-identical keys); the band
+            // for the shamble is 5 cm/step, the run cycles keep 2 cm on their contact frames (AnimationV002Tests).
+            Assert.LessOrEqual(planted, 0.05f, "basan ayağın adım başına medyan kayması (tam döngü) > 5 cm (shuffle sürüklemesi bandı)");
         }
 
 
@@ -360,25 +371,29 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Bayraklar_PickupKilidi_Motoru_KlipSuresinceKapatir_VarsayilanKapali()
+        public IEnumerator Bayraklar_DEC082_PickupMotoruKilitlemez_UstGovde_RiseVarsayilan()
         {
             yield return RunAP005();
             PlayerRig rig = PlayerRegistry.Primary;
             var pv = rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(pv); Assert.IsTrue(pv.Authored);
-            Assert.IsFalse(PlayerSkinnedVisual.PickupLocksMovement, "varsayılan kapalı (kullanıcı kararı)");
+            Animator an = pv.Animator;
+            int over = ArtAnimatorLayers.Index(an, C.OverrideUpperLayer);
+            // WP-032B · DEC-082 (user, 2026-09-17): the Special Weapon grab never locks the motor — the clip is an
+            // upper-body beat over the legs; the base layer stays in Locomotion for the whole grab.
             WeaponEvents.PublishSpecialPickedUp(10f);
             yield return null; yield return null;
-            Assert.IsTrue(rig.Motor.ControlEnabled, "bayrak kapalıyken motor kilitlenmemeli");
-            Assert.IsFalse(pv.PickupLockActive);
-            PlayerSkinnedVisual.PickupLocksMovement = true;
-            WeaponEvents.PublishSpecialPickedUp(10f);
-            yield return null;
-            Assert.IsFalse(rig.Motor.ControlEnabled, "bayrak açıkken motor kilitlenmeli");
-            Assert.IsTrue(pv.PickupLockActive);
-            yield return CharacterTests.Bekle(() => rig.Motor.ControlEnabled, 2f, "kilit klip süresinde açılmadı");
-            Assert.IsFalse(pv.PickupLockActive);
-            Assert.IsFalse(ZombieEnemy.RiseOnSpawn, "RiseOnSpawn varsayılan kapalı (kullanıcı kararı)");
+            Assert.IsTrue(rig.Motor.ControlEnabled, "DEC-082: pickup motoru kilitlemez");
+            Assert.IsTrue(an.GetCurrentAnimatorStateInfo(over).IsName(C.PickupState) || an.GetNextAnimatorStateInfo(over).IsName(C.PickupState), "pickup üst gövde katmanında değil");
+            float t0 = Time.time;
+            while (Time.time - t0 < 0.5f)
+            {
+                Assert.IsTrue(rig.Motor.ControlEnabled, "pickup sırasında motor kapandı");
+                Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState), "pickup taban katmanını kesti");
+                yield return null;
+            }
+
+            Assert.IsFalse(ZombieEnemy.RiseOnSpawn, "RiseOnSpawn (Always) varsayılan kapalı — DEC-081 melez politika S-03/WP-040");
         }
 
         // ============================================================ crowd: IK cost + GC

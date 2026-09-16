@@ -24,7 +24,7 @@ namespace DD.Prototype.Characters
         /// <summary>Zombie: 0 sway, 1 twitch.</summary>
         public const string IdleVariant = "IdleVariant";
         public const string Attack = "Attack";           // trigger
-        public const string AttackStyle = "AttackStyle"; // int: 0 swipe, 1 lunge, 2 sweep
+        public const string AttackStyle = "AttackStyle"; // int: 0 swipe, 1 lunge, 2 sweep, 3 overhead (WP-032B, Ultra)
         public const string AttackRate = "AttackRate";   // float: clip speed so hit_window_start lands on the tier telegraph
         public const string Stagger = "Stagger";         // trigger (heavy, full body)
         public const string HitLeft = "HitL";            // trigger, override layer
@@ -42,9 +42,12 @@ namespace DD.Prototype.Characters
         public const string MoveX = "MoveX";             // player: local strafe velocity / reference speed
         public const string MoveY = "MoveY";             // player: local forward velocity / reference speed
         public const string LocoRate = "LocoRate";       // player: |v| / reference speed (state speed multiplier)
+        // WP-032B queue / idle-in-crowd wait (AP-009B idle_queue): bool gate + per-body cycle offset so a queue never shifts in unison
+        public const string Waiting = "Waiting";           // bool
+        public const string WaitPhase = "WaitPhase";       // float 0..1 (cycle offset of the Wait state)
         // WP-032 telegraph exaggeration bridge (additive upper-body emphasis over the wind-up; DEC-029 events untouched)
         public const string Telegraph = "Telegraph";         // trigger
-        public const string TelegraphStyle = "TelegraphStyle"; // int: 0 swipe, 1 lunge, 2 sweep
+        public const string TelegraphStyle = "TelegraphStyle"; // int: 0 swipe, 1 lunge, 2 sweep (overhead shares the sweep emphasis)
         public const string TelegraphRate = "TelegraphRate";   // float: 1 / wind-up seconds (the 1 s clip spans the wind-up)
 
         // ----------------------------------------------------------------- states
@@ -54,6 +57,8 @@ namespace DD.Prototype.Characters
         public const string AttackSwipeState = "Attack_Swipe";
         public const string AttackLungeState = "Attack_Lunge";
         public const string AttackSweepState = "Attack_Sweep";
+        public const string AttackOverheadState = "Attack_Overhead";   // WP-032B (AP-009B v002, Ultra)
+        public const string WaitState = "Wait";                        // WP-032B (idle_queue)
         public const string StaggerState = "Stagger";
         public const string DeathState = "Death";
         public const string RiseState = "Rise";
@@ -78,6 +83,11 @@ namespace DD.Prototype.Characters
         public const string PlayerWalkBack = "AP009_player_walk_back";
         public const string PlayerStrafeLeft = "AP009_player_strafe_left";
         public const string PlayerStrafeRight = "AP009_player_strafe_right";
+        // WP-032B · AP-009B v002 run cycles (flight phase; the outer ring of the 2-D locomotion blend)
+        public const string PlayerRunFwd = "AP009_player_run_fwd";
+        public const string PlayerRunBack = "AP009_player_run_back";
+        public const string PlayerRunStrafeLeft = "AP009_player_run_strafe_left";
+        public const string PlayerRunStrafeRight = "AP009_player_run_strafe_right";
         public const string PlayerFireRecoil = "AP009_player_fire_recoil";
         public const string PlayerHitLight = "AP009_player_hit_light";
         public const string PlayerDeathFwd = "AP009_player_death_fwd";
@@ -85,6 +95,7 @@ namespace DD.Prototype.Characters
         public const string PlayerPickup = "AP009_player_pickup_special";
         public const string ZombieIdleSway = "AP009_zombie_idle_sway";
         public const string ZombieIdleTwitch = "AP009_zombie_idle_twitch";
+        public const string ZombieIdleQueue = "AP009_zombie_idle_queue";   // WP-032B (v002)
         public const string ZombieShambleA = "AP009_zombie_shamble_A";
         public const string ZombieShambleB = "AP009_zombie_shamble_B";
         public const string ZombieShambleC = "AP009_zombie_shamble_C";
@@ -92,6 +103,7 @@ namespace DD.Prototype.Characters
         public const string ZombieAttackLunge = "AP009_zombie_attack_lunge";
         public const string ZombieAttackSweep = "AP009_zombie_attack_sweep";
         public const string ZombieAttackSwipe = "AP009_zombie_attack_swipe";
+        public const string ZombieAttackOverhead = "AP009_zombie_attack_overhead";   // WP-032B (v002, Ultra)
         public const string ZombieHitLightL = "AP009_zombie_hit_light_L";
         public const string ZombieHitLightR = "AP009_zombie_hit_light_R";
         public const string ZombieHitHeavyStagger = "AP009_zombie_hit_heavy_stagger";
@@ -107,25 +119,26 @@ namespace DD.Prototype.Characters
         public static readonly string[] PlayerClips =
         {
             PlayerIdle, PlayerWalkFwd, PlayerWalkBack, PlayerStrafeLeft, PlayerStrafeRight,
+            PlayerRunFwd, PlayerRunBack, PlayerRunStrafeLeft, PlayerRunStrafeRight,
             PlayerFireRecoil, PlayerHitLight, PlayerDeathFwd, PlayerDeathBack, PlayerPickup
         };
 
         public static readonly string[] ZombieClips =
         {
-            ZombieIdleSway, ZombieIdleTwitch, ZombieShambleA, ZombieShambleB, ZombieShambleC, ZombieRun,
-            ZombieAttackLunge, ZombieAttackSweep, ZombieAttackSwipe,
+            ZombieIdleSway, ZombieIdleTwitch, ZombieIdleQueue, ZombieShambleA, ZombieShambleB, ZombieShambleC, ZombieRun,
+            ZombieAttackLunge, ZombieAttackSweep, ZombieAttackSwipe, ZombieAttackOverhead,
             ZombieHitLightL, ZombieHitLightR, ZombieHitHeavyStagger,
             ZombieHitRegionHead, ZombieHitRegionTorso, ZombieHitRegionLeg,
             ZombieDeathForward, ZombieDeathBackward, ZombieDeathSide, ZombieDeathKneel, ZombieRise
         };
 
-        public const int ClipCount = 30;
+        public const int ClipCount = 36;   // WP-032B: AP-009B v002 (30 + run ×4, overhead, idle_queue)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel).</summary>
         public static readonly string[] ZombieDeathClips = { ZombieDeathForward, ZombieDeathBackward, ZombieDeathSide, ZombieDeathKneel };
-        /// <summary>The zombie attack clips in AttackStyle order (0 swipe, 1 lunge, 2 sweep).</summary>
-        public static readonly string[] ZombieAttackClips = { ZombieAttackSwipe, ZombieAttackLunge, ZombieAttackSweep };
+        /// <summary>The zombie attack clips in AttackStyle order (0 swipe, 1 lunge, 2 sweep, 3 overhead).</summary>
+        public static readonly string[] ZombieAttackClips = { ZombieAttackSwipe, ZombieAttackLunge, ZombieAttackSweep, ZombieAttackOverhead };
         /// <summary>The zombie gait clips in Gait order (0 A, 1 B, 2 C, 3 run).</summary>
         public static readonly string[] ZombieGaitClips = { ZombieShambleA, ZombieShambleB, ZombieShambleC, ZombieRun };
     }
@@ -133,7 +146,7 @@ namespace DD.Prototype.Characters
     /// <summary>
     /// WP-016/018 · The clips a character's Animator plays, as one asset: the WP-016 rig-test
     /// pair (idle / walk, 1-D blend on <c>Speed</c>) stays as the fallback when AP-009 is
-    /// absent, and the WP-018 table carries the 30 AP-009 clips with their manifest data
+    /// absent, and the WP-018 table carries the AP-009 clips (36 with AP-009B v002) with their manifest data
     /// (loop, seconds, no-slide ground speed) for the generated controller
     /// (<c>ArtAnimatorBuilder</c>) and the runtime rate maths (<see cref="SpeedOf"/>).
     /// </summary>

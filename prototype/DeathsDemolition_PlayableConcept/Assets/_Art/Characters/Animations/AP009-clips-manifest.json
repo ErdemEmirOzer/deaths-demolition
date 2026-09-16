@@ -1,6 +1,6 @@
 {
- "schema": "AP009.clips-manifest.v001",
- "package": "AP-009",
+ "schema": "AP009.clips-manifest.v002",
+ "package": "AP-009B",
  "fps": 30,
  "skeleton": {
   "armature": "PlayerRig",
@@ -28,11 +28,11 @@
   "additive": "additive layer (recoil, regional flinches): first frame is the reference pose (deltas from rest)",
   "aim_layer": "WP-018: rotate Spine/Chest/UpperChest toward the aim direction on top of the base (REQ-038)"
  },
- "speed_reference": "speed_mps = the measured ground speed at which the in-place cycle shows no foot slide (mean stance-foot ankle displacement x 30 fps; playback rate 1.0). Unity scales the playback rate by MoveSpeed / speed_mps \u2014 see README \u00a7speed table; a dedicated player run cycle is the WP-018 follow-up if the walk scaled to 6.2 m/s reads as skating",
+ "speed_reference": "speed_mps = the measured ground speed at which the in-place cycle shows no foot slide (mean stance-foot ankle displacement x 30 fps; playback rate 1.0). Unity scales the playback rate by MoveSpeed / speed_mps \u2014 see README \u00a7speed table; v002: dedicated player run cycles (run_fwd/back/strafe_l/r, flight phase) \u2014 blend walk->run above ~1.6x the walk speed_mps (walk scaled beyond x2.1 reads as skating)",
  "clips": [
   {
    "clip": "AP009_player_death_back",
-   "fbx": "AP009_player_death_back_v001.fbx",
+   "fbx": "AP009_player_death_back_v002.fbx",
    "target": "player",
    "frames": 36,
    "fps": 30,
@@ -64,7 +64,7 @@
   },
   {
    "clip": "AP009_player_death_fwd",
-   "fbx": "AP009_player_death_fwd_v001.fbx",
+   "fbx": "AP009_player_death_fwd_v002.fbx",
    "target": "player",
    "frames": 36,
    "fps": 30,
@@ -96,7 +96,7 @@
   },
   {
    "clip": "AP009_player_fire_recoil",
-   "fbx": "AP009_player_fire_recoil_v001.fbx",
+   "fbx": "AP009_player_fire_recoil_v002.fbx",
    "target": "player",
    "frames": 10,
    "fps": 30,
@@ -128,7 +128,7 @@
   },
   {
    "clip": "AP009_player_hit_light",
-   "fbx": "AP009_player_hit_light_v001.fbx",
+   "fbx": "AP009_player_hit_light_v002.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -160,7 +160,7 @@
   },
   {
    "clip": "AP009_player_idle",
-   "fbx": "AP009_player_idle_v001.fbx",
+   "fbx": "AP009_player_idle_v002.fbx",
    "target": "player",
    "frames": 61,
    "fps": 30,
@@ -192,7 +192,7 @@
   },
   {
    "clip": "AP009_player_pickup_special",
-   "fbx": "AP009_player_pickup_special_v001.fbx",
+   "fbx": "AP009_player_pickup_special_v002.fbx",
    "target": "player",
    "frames": 24,
    "fps": 30,
@@ -223,21 +223,225 @@
    }
   },
   {
+   "clip": "AP009_player_run_back",
+   "fbx": "AP009_player_run_back_v002.fbx",
+   "target": "player",
+   "frames": 15,
+   "fps": 30,
+   "seconds": 0.467,
+   "loop": true,
+   "events": {
+    "foot_l": 0,
+    "foot_r": 7
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": 4.599,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.601,
+      "capsule_r_max_no_feet": 0.54,
+      "z_min": -0.014,
+      "z_max": 1.723
+     }
+    },
+    "foot_contact_A": {
+     "Left": {
+      "ankle_z_min": 0.0879,
+      "ankle_z_max": 0.3358,
+      "stance_frames": 5,
+      "stance_step_m_mean": 0.1533,
+      "stance_step_m_spread": 0.0032,
+      "speed_mps_measured": 4.599
+     },
+     "Right": {
+      "ankle_z_min": 0.0879,
+      "ankle_z_max": 0.3358,
+      "stance_frames": 5,
+      "stance_step_m_mean": 0.1533,
+      "stance_step_m_spread": 0.0032,
+      "speed_mps_measured": 4.599
+     }
+    }
+   },
+   "speed_mps_design": 4.5
+  },
+  {
+   "clip": "AP009_player_run_fwd",
+   "fbx": "AP009_player_run_fwd_v002.fbx",
+   "target": "player",
+   "frames": 15,
+   "fps": 30,
+   "seconds": 0.467,
+   "loop": true,
+   "events": {
+    "foot_l": 0,
+    "foot_r": 7
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": 4.531,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.598,
+      "capsule_r_max_no_feet": 0.548,
+      "z_min": 0.011,
+      "z_max": 1.71
+     }
+    },
+    "foot_contact_A": {
+     "Left": {
+      "ankle_z_min": 0.092,
+      "ankle_z_max": 0.3336,
+      "stance_frames": 6,
+      "stance_step_m_mean": 0.151,
+      "stance_step_m_spread": 0.0141,
+      "speed_mps_measured": 4.531
+     },
+     "Right": {
+      "ankle_z_min": 0.092,
+      "ankle_z_max": 0.3336,
+      "stance_frames": 6,
+      "stance_step_m_mean": 0.151,
+      "stance_step_m_spread": 0.0141,
+      "speed_mps_measured": 4.531
+     }
+    }
+   },
+   "speed_mps_design": 4.5
+  },
+  {
+   "clip": "AP009_player_run_strafe_left",
+   "fbx": "AP009_player_run_strafe_left_v002.fbx",
+   "target": "player",
+   "frames": 15,
+   "fps": 30,
+   "seconds": 0.467,
+   "loop": true,
+   "events": {
+    "foot_l": 1,
+    "foot_r": 8
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": 4.415,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.635,
+      "capsule_r_max_no_feet": 0.573,
+      "z_min": 0.015,
+      "z_max": 1.722
+     }
+    },
+    "foot_contact_A": {
+     "Left": {
+      "ankle_z_min": 0.1045,
+      "ankle_z_max": 0.3638,
+      "stance_frames": 2,
+      "stance_step_m_mean": 0.1452,
+      "stance_step_m_spread": 0.0,
+      "speed_mps_measured": 4.357
+     },
+     "Right": {
+      "ankle_z_min": 0.103,
+      "ankle_z_max": 0.3556,
+      "stance_frames": 3,
+      "stance_step_m_mean": 0.1491,
+      "stance_step_m_spread": 0.0069,
+      "speed_mps_measured": 4.472
+     }
+    }
+   },
+   "speed_mps_design": 4.4
+  },
+  {
+   "clip": "AP009_player_run_strafe_right",
+   "fbx": "AP009_player_run_strafe_right_v002.fbx",
+   "target": "player",
+   "frames": 15,
+   "fps": 30,
+   "seconds": 0.467,
+   "loop": true,
+   "events": {
+    "foot_l": 1,
+    "foot_r": 8
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": 4.415,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.628,
+      "capsule_r_max_no_feet": 0.529,
+      "z_min": 0.028,
+      "z_max": 1.722
+     }
+    },
+    "foot_contact_A": {
+     "Left": {
+      "ankle_z_min": 0.103,
+      "ankle_z_max": 0.3556,
+      "stance_frames": 3,
+      "stance_step_m_mean": 0.1491,
+      "stance_step_m_spread": 0.0069,
+      "speed_mps_measured": 4.472
+     },
+     "Right": {
+      "ankle_z_min": 0.1045,
+      "ankle_z_max": 0.3638,
+      "stance_frames": 2,
+      "stance_step_m_mean": 0.1452,
+      "stance_step_m_spread": 0.0,
+      "speed_mps_measured": 4.357
+     }
+    }
+   },
+   "speed_mps_design": 4.4
+  },
+  {
    "clip": "AP009_player_strafe_left",
-   "fbx": "AP009_player_strafe_left_v001.fbx",
+   "fbx": "AP009_player_strafe_left_v002.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
    "seconds": 0.4,
    "loop": true,
    "events": {
-    "foot_r": 0,
-    "foot_l": 6
+    "foot_l": 1,
+    "foot_r": 7
    },
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 1.939,
+   "speed_mps": 1.969,
    "fit": null,
    "tier": null,
    "anticipation_frames": null,
@@ -256,18 +460,18 @@
      "Left": {
       "ankle_z_min": 0.1005,
       "ankle_z_max": 0.2299,
-      "stance_frames": 3,
-      "stance_step_m_mean": 0.0689,
-      "stance_step_m_spread": 0.0075,
-      "speed_mps_measured": 2.068
+      "stance_frames": 6,
+      "stance_step_m_mean": 0.0674,
+      "stance_step_m_spread": 0.0138,
+      "speed_mps_measured": 2.023
      },
      "Right": {
       "ankle_z_min": 0.0999,
       "ankle_z_max": 0.231,
-      "stance_frames": 3,
-      "stance_step_m_mean": 0.0603,
-      "stance_step_m_spread": 0.0104,
-      "speed_mps_measured": 1.81
+      "stance_frames": 6,
+      "stance_step_m_mean": 0.0638,
+      "stance_step_m_spread": 0.015,
+      "speed_mps_measured": 1.914
      }
     }
    },
@@ -275,20 +479,20 @@
   },
   {
    "clip": "AP009_player_strafe_right",
-   "fbx": "AP009_player_strafe_right_v001.fbx",
+   "fbx": "AP009_player_strafe_right_v002.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
    "seconds": 0.4,
    "loop": true,
    "events": {
-    "foot_r": 0,
-    "foot_l": 6
+    "foot_l": 1,
+    "foot_r": 7
    },
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 1.939,
+   "speed_mps": 1.969,
    "fit": null,
    "tier": null,
    "anticipation_frames": null,
@@ -307,18 +511,18 @@
      "Left": {
       "ankle_z_min": 0.0999,
       "ankle_z_max": 0.231,
-      "stance_frames": 3,
-      "stance_step_m_mean": 0.0603,
-      "stance_step_m_spread": 0.0104,
-      "speed_mps_measured": 1.81
+      "stance_frames": 6,
+      "stance_step_m_mean": 0.0638,
+      "stance_step_m_spread": 0.015,
+      "speed_mps_measured": 1.914
      },
      "Right": {
       "ankle_z_min": 0.1005,
       "ankle_z_max": 0.2299,
-      "stance_frames": 3,
-      "stance_step_m_mean": 0.0689,
-      "stance_step_m_spread": 0.0075,
-      "speed_mps_measured": 2.068
+      "stance_frames": 6,
+      "stance_step_m_mean": 0.0674,
+      "stance_step_m_spread": 0.0138,
+      "speed_mps_measured": 2.023
      }
     }
    },
@@ -326,20 +530,20 @@
   },
   {
    "clip": "AP009_player_walk_back",
-   "fbx": "AP009_player_walk_back_v001.fbx",
+   "fbx": "AP009_player_walk_back_v002.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
    "seconds": 0.4,
    "loop": true,
    "events": {
-    "foot_r": 0,
-    "foot_l": 6
+    "foot_l": 0,
+    "foot_r": 6
    },
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 2.426,
+   "speed_mps": 2.494,
    "fit": null,
    "tier": null,
    "anticipation_frames": null,
@@ -359,17 +563,17 @@
       "ankle_z_min": 0.0907,
       "ankle_z_max": 0.2244,
       "stance_frames": 8,
-      "stance_step_m_mean": 0.0809,
-      "stance_step_m_spread": 0.0198,
-      "speed_mps_measured": 2.426
+      "stance_step_m_mean": 0.0831,
+      "stance_step_m_spread": 0.0029,
+      "speed_mps_measured": 2.494
      },
      "Right": {
       "ankle_z_min": 0.0907,
       "ankle_z_max": 0.2244,
       "stance_frames": 8,
-      "stance_step_m_mean": 0.0809,
-      "stance_step_m_spread": 0.0198,
-      "speed_mps_measured": 2.426
+      "stance_step_m_mean": 0.0831,
+      "stance_step_m_spread": 0.0029,
+      "speed_mps_measured": 2.494
      }
     }
    },
@@ -377,20 +581,20 @@
   },
   {
    "clip": "AP009_player_walk_fwd",
-   "fbx": "AP009_player_walk_fwd_v001.fbx",
+   "fbx": "AP009_player_walk_fwd_v002.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
    "seconds": 0.4,
    "loop": true,
    "events": {
-    "foot_r": 0,
-    "foot_l": 6
+    "foot_l": 0,
+    "foot_r": 6
    },
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 2.92,
+   "speed_mps": 3.01,
    "fit": null,
    "tier": null,
    "anticipation_frames": null,
@@ -409,18 +613,18 @@
      "Left": {
       "ankle_z_min": 0.088,
       "ankle_z_max": 0.2261,
-      "stance_frames": 7,
-      "stance_step_m_mean": 0.0973,
-      "stance_step_m_spread": 0.0198,
-      "speed_mps_measured": 2.92
+      "stance_frames": 8,
+      "stance_step_m_mean": 0.1003,
+      "stance_step_m_spread": 0.0058,
+      "speed_mps_measured": 3.01
      },
      "Right": {
       "ankle_z_min": 0.088,
       "ankle_z_max": 0.2261,
-      "stance_frames": 7,
-      "stance_step_m_mean": 0.0973,
-      "stance_step_m_spread": 0.0198,
-      "speed_mps_measured": 2.92
+      "stance_frames": 8,
+      "stance_step_m_mean": 0.1003,
+      "stance_step_m_spread": 0.0058,
+      "speed_mps_measured": 3.01
      }
     }
    },
@@ -428,7 +632,7 @@
   },
   {
    "clip": "AP009_zombie_attack_lunge",
-   "fbx": "AP009_zombie_attack_lunge_v001.fbx",
+   "fbx": "AP009_zombie_attack_lunge_v002.fbx",
    "target": "zombie",
    "frames": 30,
    "fps": 30,
@@ -450,27 +654,27 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 10,
-      "pokes_frame0": 1,
-      "capsule_r_max": 0.628,
-      "capsule_r_max_no_feet": 0.628,
-      "z_min": 0.02,
+      "pokes_peak": 22,
+      "pokes_frame0": 3,
+      "capsule_r_max": 0.599,
+      "capsule_r_max_no_feet": 0.52,
+      "z_min": 0.025,
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 32,
-      "pokes_frame0": 13,
-      "capsule_r_max": 0.639,
-      "capsule_r_max_no_feet": 0.639,
-      "z_min": 0.02,
+      "pokes_peak": 42,
+      "pokes_frame0": 10,
+      "capsule_r_max": 0.599,
+      "capsule_r_max_no_feet": 0.543,
+      "z_min": 0.025,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 10,
+      "pokes_peak": 21,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.633,
-      "capsule_r_max_no_feet": 0.633,
-      "z_min": 0.02,
+      "capsule_r_max": 0.599,
+      "capsule_r_max_no_feet": 0.527,
+      "z_min": 0.026,
       "z_max": 1.737
      }
     },
@@ -478,8 +682,59 @@
    }
   },
   {
+   "clip": "AP009_zombie_attack_overhead",
+   "fbx": "AP009_zombie_attack_overhead_v002.fbx",
+   "target": "zombie",
+   "frames": 64,
+   "fps": 30,
+   "seconds": 2.1,
+   "loop": false,
+   "events": {
+    "hit_window_start": 35,
+    "hit_window_end": 40
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Ultra",
+   "anticipation_frames": 35,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 19,
+      "pokes_frame0": 3,
+      "capsule_r_max": 0.607,
+      "capsule_r_max_no_feet": 0.607,
+      "z_min": 0.022,
+      "z_max": 1.825
+     },
+     "B": {
+      "pokes_peak": 53,
+      "pokes_frame0": 10,
+      "capsule_r_max": 0.619,
+      "capsule_r_max_no_feet": 0.619,
+      "z_min": 0.022,
+      "z_max": 1.833
+     },
+     "C": {
+      "pokes_peak": 24,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.612,
+      "capsule_r_max_no_feet": 0.612,
+      "z_min": 0.022,
+      "z_max": 1.828
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_zombie_attack_sweep",
-   "fbx": "AP009_zombie_attack_sweep_v001.fbx",
+   "fbx": "AP009_zombie_attack_sweep_v002.fbx",
    "target": "zombie",
    "frames": 51,
    "fps": 30,
@@ -501,23 +756,23 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 10,
-      "pokes_frame0": 1,
+      "pokes_peak": 8,
+      "pokes_frame0": 3,
       "capsule_r_max": 0.468,
       "capsule_r_max_no_feet": 0.468,
       "z_min": 0.022,
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 27,
-      "pokes_frame0": 13,
+      "pokes_peak": 20,
+      "pokes_frame0": 10,
       "capsule_r_max": 0.489,
       "capsule_r_max_no_feet": 0.489,
       "z_min": 0.022,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 7,
+      "pokes_peak": 2,
       "pokes_frame0": 0,
       "capsule_r_max": 0.473,
       "capsule_r_max_no_feet": 0.473,
@@ -530,7 +785,7 @@
   },
   {
    "clip": "AP009_zombie_attack_swipe",
-   "fbx": "AP009_zombie_attack_swipe_v001.fbx",
+   "fbx": "AP009_zombie_attack_swipe_v002.fbx",
    "target": "zombie",
    "frames": 34,
    "fps": 30,
@@ -552,28 +807,28 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 10,
-      "pokes_frame0": 1,
-      "capsule_r_max": 0.489,
-      "capsule_r_max_no_feet": 0.422,
-      "z_min": 0.018,
-      "z_max": 1.751
+      "pokes_peak": 29,
+      "pokes_frame0": 3,
+      "capsule_r_max": 0.52,
+      "capsule_r_max_no_feet": 0.474,
+      "z_min": 0.019,
+      "z_max": 1.756
      },
      "B": {
-      "pokes_peak": 35,
-      "pokes_frame0": 13,
-      "capsule_r_max": 0.489,
-      "capsule_r_max_no_feet": 0.447,
-      "z_min": 0.018,
-      "z_max": 1.737
+      "pokes_peak": 40,
+      "pokes_frame0": 10,
+      "capsule_r_max": 0.52,
+      "capsule_r_max_no_feet": 0.467,
+      "z_min": 0.019,
+      "z_max": 1.74
      },
      "C": {
-      "pokes_peak": 12,
+      "pokes_peak": 8,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.489,
-      "capsule_r_max_no_feet": 0.428,
-      "z_min": 0.018,
-      "z_max": 1.749
+      "capsule_r_max": 0.52,
+      "capsule_r_max_no_feet": 0.47,
+      "z_min": 0.019,
+      "z_max": 1.754
      }
     },
     "foot_contact_A": null
@@ -581,7 +836,7 @@
   },
   {
    "clip": "AP009_zombie_death_backward",
-   "fbx": "AP009_zombie_death_backward_v001.fbx",
+   "fbx": "AP009_zombie_death_backward_v002.fbx",
    "target": "zombie",
    "frames": 36,
    "fps": 30,
@@ -602,23 +857,23 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 10,
-      "pokes_frame0": 1,
+      "pokes_peak": 8,
+      "pokes_frame0": 3,
       "capsule_r_max": 1.015,
       "capsule_r_max_no_feet": 1.015,
       "z_min": -0.008,
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 19,
-      "pokes_frame0": 13,
+      "pokes_peak": 16,
+      "pokes_frame0": 10,
       "capsule_r_max": 1.016,
       "capsule_r_max_no_feet": 1.016,
       "z_min": -0.009,
       "z_max": 1.724
      },
      "C": {
-      "pokes_peak": 5,
+      "pokes_peak": 2,
       "pokes_frame0": 0,
       "capsule_r_max": 1.016,
       "capsule_r_max_no_feet": 1.016,
@@ -631,7 +886,7 @@
   },
   {
    "clip": "AP009_zombie_death_forward",
-   "fbx": "AP009_zombie_death_forward_v001.fbx",
+   "fbx": "AP009_zombie_death_forward_v002.fbx",
    "target": "zombie",
    "frames": 36,
    "fps": 30,
@@ -652,23 +907,23 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 37,
-      "pokes_frame0": 1,
+      "pokes_peak": 32,
+      "pokes_frame0": 3,
       "capsule_r_max": 1.014,
       "capsule_r_max_no_feet": 1.014,
       "z_min": 0.014,
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 43,
-      "pokes_frame0": 13,
+      "pokes_peak": 42,
+      "pokes_frame0": 10,
       "capsule_r_max": 1.006,
       "capsule_r_max_no_feet": 1.006,
       "z_min": -0.039,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 34,
+      "pokes_peak": 33,
       "pokes_frame0": 0,
       "capsule_r_max": 1.013,
       "capsule_r_max_no_feet": 1.013,
@@ -681,7 +936,7 @@
   },
   {
    "clip": "AP009_zombie_death_kneel",
-   "fbx": "AP009_zombie_death_kneel_v001.fbx",
+   "fbx": "AP009_zombie_death_kneel_v002.fbx",
    "target": "zombie",
    "frames": 44,
    "fps": 30,
@@ -702,23 +957,23 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 48,
-      "pokes_frame0": 1,
+      "pokes_peak": 51,
+      "pokes_frame0": 3,
       "capsule_r_max": 0.607,
       "capsule_r_max_no_feet": 0.607,
       "z_min": -0.036,
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 67,
-      "pokes_frame0": 13,
+      "pokes_peak": 64,
+      "pokes_frame0": 10,
       "capsule_r_max": 0.576,
       "capsule_r_max_no_feet": 0.576,
       "z_min": -0.036,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 23,
+      "pokes_peak": 17,
       "pokes_frame0": 0,
       "capsule_r_max": 0.604,
       "capsule_r_max_no_feet": 0.604,
@@ -731,7 +986,7 @@
   },
   {
    "clip": "AP009_zombie_death_side",
-   "fbx": "AP009_zombie_death_side_v001.fbx",
+   "fbx": "AP009_zombie_death_side_v002.fbx",
    "target": "zombie",
    "frames": 40,
    "fps": 30,
@@ -752,23 +1007,23 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 36,
-      "pokes_frame0": 1,
+      "pokes_peak": 30,
+      "pokes_frame0": 3,
       "capsule_r_max": 1.236,
       "capsule_r_max_no_feet": 1.236,
       "z_min": 0.018,
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 53,
-      "pokes_frame0": 13,
+      "pokes_peak": 51,
+      "pokes_frame0": 10,
       "capsule_r_max": 1.239,
       "capsule_r_max_no_feet": 1.239,
       "z_min": 0.008,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 18,
+      "pokes_peak": 19,
       "pokes_frame0": 0,
       "capsule_r_max": 1.238,
       "capsule_r_max_no_feet": 1.238,
@@ -781,7 +1036,7 @@
   },
   {
    "clip": "AP009_zombie_hit_heavy_stagger",
-   "fbx": "AP009_zombie_hit_heavy_stagger_v001.fbx",
+   "fbx": "AP009_zombie_hit_heavy_stagger_v002.fbx",
    "target": "zombie",
    "frames": 30,
    "fps": 30,
@@ -803,7 +1058,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 3,
+      "pokes_peak": 1,
       "pokes_frame0": 0,
       "capsule_r_max": 0.405,
       "capsule_r_max_no_feet": 0.405,
@@ -811,16 +1066,16 @@
       "z_max": 1.761
      },
      "B": {
-      "pokes_peak": 15,
-      "pokes_frame0": 13,
+      "pokes_peak": 10,
+      "pokes_frame0": 8,
       "capsule_r_max": 0.395,
       "capsule_r_max_no_feet": 0.394,
       "z_min": 0.022,
       "z_max": 1.77
      },
      "C": {
-      "pokes_peak": 4,
-      "pokes_frame0": 1,
+      "pokes_peak": 1,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.403,
       "capsule_r_max_no_feet": 0.403,
       "z_min": 0.022,
@@ -832,7 +1087,7 @@
   },
   {
    "clip": "AP009_zombie_hit_light_L",
-   "fbx": "AP009_zombie_hit_light_L_v001.fbx",
+   "fbx": "AP009_zombie_hit_light_L_v002.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -853,16 +1108,16 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 2,
-      "pokes_frame0": 2,
+      "pokes_peak": 4,
+      "pokes_frame0": 4,
       "capsule_r_max": 0.358,
       "capsule_r_max_no_feet": 0.358,
       "z_min": 0.018,
       "z_max": 1.728
      },
      "B": {
-      "pokes_peak": 17,
-      "pokes_frame0": 15,
+      "pokes_peak": 13,
+      "pokes_frame0": 13,
       "capsule_r_max": 0.385,
       "capsule_r_max_no_feet": 0.385,
       "z_min": 0.018,
@@ -882,7 +1137,7 @@
   },
   {
    "clip": "AP009_zombie_hit_light_R",
-   "fbx": "AP009_zombie_hit_light_R_v001.fbx",
+   "fbx": "AP009_zombie_hit_light_R_v002.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -903,16 +1158,16 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 2,
-      "pokes_frame0": 2,
+      "pokes_peak": 4,
+      "pokes_frame0": 4,
       "capsule_r_max": 0.358,
       "capsule_r_max_no_feet": 0.358,
       "z_min": 0.018,
       "z_max": 1.728
      },
      "B": {
-      "pokes_peak": 17,
-      "pokes_frame0": 15,
+      "pokes_peak": 13,
+      "pokes_frame0": 13,
       "capsule_r_max": 0.385,
       "capsule_r_max_no_feet": 0.385,
       "z_min": 0.018,
@@ -932,7 +1187,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_head",
-   "fbx": "AP009_zombie_hit_region_head_v001.fbx",
+   "fbx": "AP009_zombie_hit_region_head_v002.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -953,24 +1208,24 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 2,
-      "pokes_frame0": 2,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.233,
       "capsule_r_max_no_feet": 0.198,
       "z_min": -0.0,
       "z_max": 1.797
      },
      "B": {
-      "pokes_peak": 4,
-      "pokes_frame0": 4,
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
       "capsule_r_max": 0.244,
       "capsule_r_max_no_feet": 0.244,
       "z_min": -0.0,
       "z_max": 1.805
      },
      "C": {
-      "pokes_peak": 1,
-      "pokes_frame0": 1,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.233,
       "capsule_r_max_no_feet": 0.181,
       "z_min": 0.0,
@@ -982,7 +1237,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_leg",
-   "fbx": "AP009_zombie_hit_region_leg_v001.fbx",
+   "fbx": "AP009_zombie_hit_region_leg_v002.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -1003,24 +1258,24 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 2,
-      "pokes_frame0": 2,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.34,
       "capsule_r_max_no_feet": 0.274,
       "z_min": 0.02,
       "z_max": 1.797
      },
      "B": {
-      "pokes_peak": 4,
-      "pokes_frame0": 4,
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
       "capsule_r_max": 0.34,
       "capsule_r_max_no_feet": 0.286,
       "z_min": 0.02,
       "z_max": 1.798
      },
      "C": {
-      "pokes_peak": 1,
-      "pokes_frame0": 1,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.34,
       "capsule_r_max_no_feet": 0.263,
       "z_min": 0.021,
@@ -1032,7 +1287,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_torso",
-   "fbx": "AP009_zombie_hit_region_torso_v001.fbx",
+   "fbx": "AP009_zombie_hit_region_torso_v002.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -1053,24 +1308,24 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 2,
-      "pokes_frame0": 2,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.233,
       "capsule_r_max_no_feet": 0.23,
       "z_min": -0.0,
       "z_max": 1.797
      },
      "B": {
-      "pokes_peak": 4,
-      "pokes_frame0": 4,
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
       "capsule_r_max": 0.244,
       "capsule_r_max_no_feet": 0.244,
       "z_min": -0.0,
       "z_max": 1.801
      },
      "C": {
-      "pokes_peak": 1,
-      "pokes_frame0": 1,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.233,
       "capsule_r_max_no_feet": 0.231,
       "z_min": 0.0,
@@ -1081,8 +1336,59 @@
    }
   },
   {
+   "clip": "AP009_zombie_idle_queue",
+   "fbx": "AP009_zombie_idle_queue_v002.fbx",
+   "target": "zombie",
+   "frames": 91,
+   "fps": 30,
+   "seconds": 3.0,
+   "loop": true,
+   "events": {
+    "shift_l": 22,
+    "shift_r": 67
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": 0.0,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "A": {
+      "pokes_peak": 8,
+      "pokes_frame0": 4,
+      "capsule_r_max": 0.459,
+      "capsule_r_max_no_feet": 0.459,
+      "z_min": 0.014,
+      "z_max": 1.709
+     },
+     "B": {
+      "pokes_peak": 22,
+      "pokes_frame0": 10,
+      "capsule_r_max": 0.478,
+      "capsule_r_max_no_feet": 0.478,
+      "z_min": 0.014,
+      "z_max": 1.684
+     },
+     "C": {
+      "pokes_peak": 2,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.464,
+      "capsule_r_max_no_feet": 0.464,
+      "z_min": 0.014,
+      "z_max": 1.706
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_zombie_idle_sway",
-   "fbx": "AP009_zombie_idle_sway_v001.fbx",
+   "fbx": "AP009_zombie_idle_sway_v002.fbx",
    "target": "zombie",
    "frames": 61,
    "fps": 30,
@@ -1101,24 +1407,24 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 3,
-      "pokes_frame0": 2,
+      "pokes_peak": 5,
+      "pokes_frame0": 4,
       "capsule_r_max": 0.378,
       "capsule_r_max_no_feet": 0.378,
       "z_min": 0.015,
       "z_max": 1.732
      },
      "B": {
-      "pokes_peak": 19,
-      "pokes_frame0": 19,
+      "pokes_peak": 15,
+      "pokes_frame0": 12,
       "capsule_r_max": 0.403,
       "capsule_r_max_no_feet": 0.403,
       "z_min": 0.015,
       "z_max": 1.707
      },
      "C": {
-      "pokes_peak": 2,
-      "pokes_frame0": 1,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.383,
       "capsule_r_max_no_feet": 0.383,
       "z_min": 0.015,
@@ -1130,7 +1436,7 @@
   },
   {
    "clip": "AP009_zombie_idle_twitch",
-   "fbx": "AP009_zombie_idle_twitch_v001.fbx",
+   "fbx": "AP009_zombie_idle_twitch_v002.fbx",
    "target": "zombie",
    "frames": 61,
    "fps": 30,
@@ -1149,16 +1455,16 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 3,
-      "pokes_frame0": 2,
+      "pokes_peak": 4,
+      "pokes_frame0": 4,
       "capsule_r_max": 0.377,
       "capsule_r_max_no_feet": 0.377,
       "z_min": 0.017,
       "z_max": 1.732
      },
      "B": {
-      "pokes_peak": 17,
-      "pokes_frame0": 15,
+      "pokes_peak": 15,
+      "pokes_frame0": 13,
       "capsule_r_max": 0.403,
       "capsule_r_max_no_feet": 0.403,
       "z_min": 0.017,
@@ -1178,7 +1484,7 @@
   },
   {
    "clip": "AP009_zombie_rise",
-   "fbx": "AP009_zombie_rise_v001.fbx",
+   "fbx": "AP009_zombie_rise_v002.fbx",
    "target": "zombie",
    "frames": 48,
    "fps": 30,
@@ -1199,24 +1505,24 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 38,
-      "pokes_frame0": 12,
+      "pokes_peak": 34,
+      "pokes_frame0": 7,
       "capsule_r_max": 1.017,
       "capsule_r_max_no_feet": 1.017,
       "z_min": 0.001,
       "z_max": 1.71
      },
      "B": {
-      "pokes_peak": 51,
-      "pokes_frame0": 26,
+      "pokes_peak": 56,
+      "pokes_frame0": 21,
       "capsule_r_max": 1.008,
       "capsule_r_max_no_feet": 1.008,
       "z_min": -0.07,
       "z_max": 1.682
      },
      "C": {
-      "pokes_peak": 40,
-      "pokes_frame0": 20,
+      "pokes_peak": 31,
+      "pokes_frame0": 12,
       "capsule_r_max": 1.015,
       "capsule_r_max_no_feet": 1.015,
       "z_min": 0.006,
@@ -1228,20 +1534,20 @@
   },
   {
    "clip": "AP009_zombie_run",
-   "fbx": "AP009_zombie_run_v001.fbx",
+   "fbx": "AP009_zombie_run_v002.fbx",
    "target": "zombie",
    "frames": 13,
    "fps": 30,
    "seconds": 0.4,
    "loop": true,
    "events": {
-    "foot_r": 0,
-    "foot_l": 6
+    "foot_l": 0,
+    "foot_r": 6
    },
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 5.31,
+   "speed_mps": 5.32,
    "fit": null,
    "tier": null,
    "anticipation_frames": null,
@@ -1250,7 +1556,7 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 6,
+      "pokes_peak": 4,
       "pokes_frame0": 4,
       "capsule_r_max": 0.751,
       "capsule_r_max_no_feet": 0.6,
@@ -1258,16 +1564,16 @@
       "z_max": 1.61
      },
      "B": {
-      "pokes_peak": 23,
-      "pokes_frame0": 18,
+      "pokes_peak": 13,
+      "pokes_frame0": 13,
       "capsule_r_max": 0.751,
       "capsule_r_max_no_feet": 0.606,
       "z_min": 0.004,
       "z_max": 1.577
      },
      "C": {
-      "pokes_peak": 4,
-      "pokes_frame0": 4,
+      "pokes_peak": 3,
+      "pokes_frame0": 3,
       "capsule_r_max": 0.751,
       "capsule_r_max_no_feet": 0.596,
       "z_min": 0.004,
@@ -1279,17 +1585,17 @@
       "ankle_z_min": 0.0811,
       "ankle_z_max": 0.2726,
       "stance_frames": 5,
-      "stance_step_m_mean": 0.177,
+      "stance_step_m_mean": 0.1773,
       "stance_step_m_spread": 0.0075,
-      "speed_mps_measured": 5.31
+      "speed_mps_measured": 5.32
      },
      "Right": {
       "ankle_z_min": 0.0811,
       "ankle_z_max": 0.2726,
       "stance_frames": 5,
-      "stance_step_m_mean": 0.177,
+      "stance_step_m_mean": 0.1773,
       "stance_step_m_spread": 0.0075,
-      "speed_mps_measured": 5.31
+      "speed_mps_measured": 5.32
      }
     }
    },
@@ -1297,20 +1603,20 @@
   },
   {
    "clip": "AP009_zombie_shamble_A",
-   "fbx": "AP009_zombie_shamble_A_v001.fbx",
+   "fbx": "AP009_zombie_shamble_A_v002.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,
    "seconds": 0.533,
    "loop": true,
    "events": {
-    "foot_r": 0,
-    "foot_l": 8
+    "foot_l": 0,
+    "foot_r": 7
    },
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 1.464,
+   "speed_mps": 1.485,
    "fit": "A",
    "tier": null,
    "anticipation_frames": null,
@@ -1319,16 +1625,16 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 5,
-      "pokes_frame0": 1,
+      "pokes_peak": 7,
+      "pokes_frame0": 3,
       "capsule_r_max": 0.484,
       "capsule_r_max_no_feet": 0.425,
       "z_min": 0.013,
       "z_max": 1.65
      },
      "B": {
-      "pokes_peak": 19,
-      "pokes_frame0": 15,
+      "pokes_peak": 12,
+      "pokes_frame0": 8,
       "capsule_r_max": 0.484,
       "capsule_r_max_no_feet": 0.451,
       "z_min": 0.013,
@@ -1336,7 +1642,7 @@
      },
      "C": {
       "pokes_peak": 1,
-      "pokes_frame0": 0,
+      "pokes_frame0": 1,
       "capsule_r_max": 0.484,
       "capsule_r_max_no_feet": 0.431,
       "z_min": 0.013,
@@ -1348,17 +1654,17 @@
       "ankle_z_min": 0.0886,
       "ankle_z_max": 0.1778,
       "stance_frames": 11,
-      "stance_step_m_mean": 0.0491,
-      "stance_step_m_spread": 0.0107,
-      "speed_mps_measured": 1.472
+      "stance_step_m_mean": 0.0497,
+      "stance_step_m_spread": 0.0071,
+      "speed_mps_measured": 1.49
      },
      "Right": {
       "ankle_z_min": 0.0901,
       "ankle_z_max": 0.155,
       "stance_frames": 11,
-      "stance_step_m_mean": 0.0485,
-      "stance_step_m_spread": 0.0122,
-      "speed_mps_measured": 1.455
+      "stance_step_m_mean": 0.0493,
+      "stance_step_m_spread": 0.0064,
+      "speed_mps_measured": 1.479
      }
     }
    },
@@ -1366,20 +1672,20 @@
   },
   {
    "clip": "AP009_zombie_shamble_B",
-   "fbx": "AP009_zombie_shamble_B_v001.fbx",
+   "fbx": "AP009_zombie_shamble_B_v002.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,
    "seconds": 0.533,
    "loop": true,
    "events": {
-    "foot_r": 0,
-    "foot_l": 8
+    "foot_l": 0,
+    "foot_r": 7
    },
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 1.315,
+   "speed_mps": 1.293,
    "fit": "B",
    "tier": null,
    "anticipation_frames": null,
@@ -1388,16 +1694,16 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 4,
-      "pokes_frame0": 3,
+      "pokes_peak": 6,
+      "pokes_frame0": 5,
       "capsule_r_max": 0.481,
       "capsule_r_max_no_feet": 0.425,
       "z_min": 0.018,
       "z_max": 1.651
      },
      "B": {
-      "pokes_peak": 19,
-      "pokes_frame0": 17,
+      "pokes_peak": 13,
+      "pokes_frame0": 10,
       "capsule_r_max": 0.481,
       "capsule_r_max_no_feet": 0.451,
       "z_min": 0.018,
@@ -1416,18 +1722,18 @@
      "Left": {
       "ankle_z_min": 0.0937,
       "ankle_z_max": 0.1629,
-      "stance_frames": 4,
-      "stance_step_m_mean": 0.0443,
-      "stance_step_m_spread": 0.0066,
-      "speed_mps_measured": 1.329
+      "stance_frames": 11,
+      "stance_step_m_mean": 0.0436,
+      "stance_step_m_spread": 0.0105,
+      "speed_mps_measured": 1.308
      },
      "Right": {
       "ankle_z_min": 0.0898,
       "ankle_z_max": 0.1433,
-      "stance_frames": 6,
-      "stance_step_m_mean": 0.0434,
-      "stance_step_m_spread": 0.0114,
-      "speed_mps_measured": 1.301
+      "stance_frames": 12,
+      "stance_step_m_mean": 0.0426,
+      "stance_step_m_spread": 0.0122,
+      "speed_mps_measured": 1.279
      }
     }
    },
@@ -1435,20 +1741,20 @@
   },
   {
    "clip": "AP009_zombie_shamble_C",
-   "fbx": "AP009_zombie_shamble_C_v001.fbx",
+   "fbx": "AP009_zombie_shamble_C_v002.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,
    "seconds": 0.533,
    "loop": true,
    "events": {
-    "foot_r": 0,
-    "foot_l": 8
+    "foot_l": 0,
+    "foot_r": 7
    },
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 1.535,
+   "speed_mps": 1.554,
    "fit": "C",
    "tier": null,
    "anticipation_frames": null,
@@ -1465,8 +1771,8 @@
       "z_max": 1.646
      },
      "B": {
-      "pokes_peak": 19,
-      "pokes_frame0": 17,
+      "pokes_peak": 13,
+      "pokes_frame0": 13,
       "capsule_r_max": 0.485,
       "capsule_r_max_no_feet": 0.454,
       "z_min": 0.011,
@@ -1486,21 +1792,37 @@
       "ankle_z_min": 0.0876,
       "ankle_z_max": 0.1979,
       "stance_frames": 11,
-      "stance_step_m_mean": 0.0515,
-      "stance_step_m_spread": 0.0094,
-      "speed_mps_measured": 1.545
+      "stance_step_m_mean": 0.052,
+      "stance_step_m_spread": 0.006,
+      "speed_mps_measured": 1.561
      },
      "Right": {
       "ankle_z_min": 0.0891,
       "ankle_z_max": 0.1784,
       "stance_frames": 11,
-      "stance_step_m_mean": 0.0508,
-      "stance_step_m_spread": 0.0115,
-      "speed_mps_measured": 1.525
+      "stance_step_m_mean": 0.0516,
+      "stance_step_m_spread": 0.0055,
+      "speed_mps_measured": 1.548
      }
     }
    },
    "speed_mps_design": 1.013
   }
- ]
+ ],
+ "v002_changes": {
+  "new_clips": [
+   "AP009_zombie_attack_overhead (Ultra, tier row; replaces the sweep placeholder for Ultra)",
+   "AP009_zombie_idle_queue (throat queue / waiting idle, events shift_l/shift_r)",
+   "AP009_player_run_fwd",
+   "AP009_player_run_back",
+   "AP009_player_run_strafe_left",
+   "AP009_player_run_strafe_right"
+  ],
+  "changed_clips": [
+   "AP009_zombie_attack_swipe (exaggerated coil anticipation)",
+   "AP009_zombie_attack_lunge (exaggerated crouch anticipation)"
+  ],
+  "events": "foot_l/foot_r frames are now measured from the keyed clip (landing frame); v001 had the two names swapped (foot_r at frame 0 was the LEFT heel strike) \u2014 all v001 locomotion clips are re-exported with the corrected sides",
+  "unchanged": "skeleton, fps, layers/masks, every other clip's poses (byte-identical keys)"
+ }
 }

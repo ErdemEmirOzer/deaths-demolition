@@ -15,7 +15,7 @@ using C = DD.Prototype.Characters.CharacterAnimatorContract;
 namespace DD.Art.Tests.EditMode
 {
     /// <summary>
-    /// WP-018 · The AP-009 set in the project: the 30 clips on the manifest contract
+    /// WP-018 · The AP-009 set in the project: the 36 clips (AP-009B v002, WP-032B) on the manifest contract
     /// (ADR-018-1: loop / events / additive from the manifest, importer idempotent), the
     /// generated controllers (ADR-018-2: parameters, layers, masks, blend trees, rates), the
     /// animation set tables, the event contract and the removal of the WP-016 pose bridge.
@@ -38,7 +38,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.ClipCount, m.Count);
             int player = 0, zombie = 0;
             foreach (var s in m.Values) { if (s.target == "player") player++; else if (s.target == "zombie") zombie++; }
-            Assert.AreEqual(10, player); Assert.AreEqual(20, zombie);
+            Assert.AreEqual(14, player); Assert.AreEqual(22, zombie);   // WP-032B: v002 = + run ×4, overhead, idle_queue
             foreach (string name in C.PlayerClips) Assert.IsTrue(m.ContainsKey(name), name);
             foreach (string name in C.ZombieClips) Assert.IsTrue(m.ContainsKey(name), name);
             // Every manifest event name is in the contract table.
@@ -120,7 +120,7 @@ namespace DD.Art.Tests.EditMode
             var tree = loco.motion as BlendTree;
             Assert.IsNotNull(tree);
             Assert.AreEqual(BlendTreeType.FreeformDirectional2D, tree.blendType);
-            Assert.AreEqual(5, tree.children.Length);
+            Assert.AreEqual(9, tree.children.Length);   // WP-032B: idle + walk ring ×4 + run ring ×4
             Assert.IsTrue(loco.speedParameterActive && loco.speedParameter == C.LocoRate);
             float reference = set.LocomotionReferenceSpeed;
             foreach (ChildMotion ch in tree.children)
@@ -128,15 +128,22 @@ namespace DD.Art.Tests.EditMode
                 float clipSpeed = set.SpeedOf(ch.motion.name);
                 float expected = clipSpeed > 0f ? PlayerSkinnedVisual.ChildTimeScale(reference, clipSpeed) : 1f;
                 Assert.AreEqual(expected, ch.timeScale, 1e-4f, ch.motion.name + " timeScale");
+                bool run = ch.motion.name.Contains("_run_");
+                float radius = ch.position.magnitude;
+                if (run) Assert.AreEqual(1f, radius, 1e-4f, ch.motion.name + " koşu halkası birim çemberde");
+                else if (clipSpeed > 0f) Assert.AreEqual(Mathf.Clamp(clipSpeed / reference, 0.2f, 0.9f), radius, 1e-4f, ch.motion.name + " yürüyüş halkası kendi hızında");
+                else Assert.AreEqual(0f, radius, 1e-4f, "idle merkezde");
             }
 
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_0")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_1"));
-            Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.PickupState));
+            Assert.IsNull(ArtAnimatorBuilder.FindState(c, 0, C.PickupState), "WP-032B · DEC-082: pickup taban katmanında değil");
+            Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.PickupState), "pickup üst gövde override katmanında");
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.HitState)); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 2, C.FireState));
             Assert.AreEqual(C.EmptyState, c.layers[1].stateMachine.defaultState.name); Assert.AreEqual(C.EmptyState, c.layers[2].stateMachine.defaultState.name);
-            // Deaths never leave (no transitions out); the pickup returns to locomotion.
+            // Deaths never leave (no transitions out); the pickup returns to the upper layer's Empty.
             Assert.AreEqual(0, ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_0").transitions.Length);
-            Assert.AreEqual(1, ArtAnimatorBuilder.FindState(c, 0, C.PickupState).transitions.Length);
+            Assert.AreEqual(1, ArtAnimatorBuilder.FindState(c, 1, C.PickupState).transitions.Length);
+            Assert.AreEqual(C.EmptyState, ArtAnimatorBuilder.FindState(c, 1, C.PickupState).transitions[0].destinationState.name);
         }
 
         [Test]
@@ -146,7 +153,7 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(set.IsAuthored, "zombi seti AP-009 değil");
             var c = set.Controller as AnimatorController;
             Assert.IsNotNull(c);
-            Params(c, C.Speed01, C.GaitRate, C.Gait, C.IdleVariant, C.Attack, C.AttackStyle, C.AttackRate, C.Stagger, C.HitLeft, C.HitRight,
+            Params(c, C.Speed01, C.GaitRate, C.Gait, C.IdleVariant, C.Waiting, C.WaitPhase, C.Attack, C.AttackStyle, C.AttackRate, C.Stagger, C.HitLeft, C.HitRight,
                 C.FlinchHead, C.FlinchTorso, C.FlinchLeg, C.Die, C.DeathStyle, C.Rise, C.Alive);
             Assert.AreEqual(4, c.layers.Length);   // WP-032: + telegraph
             Assert.AreEqual(C.OverrideUpperLayer, c.layers[1].name); Assert.AreEqual(C.AdditiveLayer, c.layers[2].name); Assert.AreEqual(C.TelegraphLayer, c.layers[3].name);
@@ -164,8 +171,8 @@ namespace DD.Art.Tests.EditMode
             for (int i = 0; i < 4; i++) Assert.AreEqual(set.Clip(C.ZombieGaitClips[i]), gait.children[i].motion, "gait " + i);
             Assert.IsTrue(loco.speedParameterActive && loco.speedParameter == C.GaitRate);
 
-            string[] attacks = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState };
-            for (int i = 0; i < 3; i++)
+            string[] attacks = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState, C.AttackOverheadState };   // WP-032B: + overhead (v002, Ultra)
+            for (int i = 0; i < 4; i++)
             {
                 AnimatorState a = ArtAnimatorBuilder.FindState(c, 0, attacks[i]);
                 Assert.IsNotNull(a, attacks[i]);
@@ -173,6 +180,16 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsTrue(a.speedParameterActive && a.speedParameter == C.AttackRate, attacks[i] + " AttackRate");
                 Assert.AreEqual(1, a.transitions.Length, attacks[i] + " → Locomotion");
             }
+
+            // WP-032B: the overhead holds its last frame (exit at 1.0, blend = OverheadHoldSeconds); the Wait state is the queue idle with a per-body cycle offset.
+            AnimatorStateTransition overheadOut = ArtAnimatorBuilder.FindState(c, 0, C.AttackOverheadState).transitions[0];
+            Assert.AreEqual(1f, overheadOut.exitTime, 1e-4f); Assert.AreEqual(ArtAnimatorBuilder.OverheadHoldSeconds, overheadOut.duration, 1e-4f);
+            AnimatorState wait = ArtAnimatorBuilder.FindState(c, 0, C.WaitState);
+            Assert.IsNotNull(wait, "Wait durumu");
+            Assert.AreEqual(set.Clip(C.ZombieIdleQueue), wait.motion);
+            Assert.IsTrue(wait.cycleOffsetParameterActive && wait.cycleOffsetParameter == C.WaitPhase, "Wait cycle offset = WaitPhase");
+            Assert.AreEqual(1, wait.transitions.Length); Assert.AreEqual(C.LocomotionState, wait.transitions[0].destinationState.name);
+            Assert.IsTrue(System.Array.Exists(loco.transitions, t => t.destinationState == wait), "Locomotion → Wait (Waiting)");
 
             for (int i = 0; i < 4; i++)
             {
@@ -203,7 +220,9 @@ namespace DD.Art.Tests.EditMode
             foreach (string gait in C.ZombieGaitClips)
             {
                 Assert.AreEqual(m[gait].speedMps, set.ManifestSpeedOf(gait), 1e-4f, gait);
-                Assert.AreEqual(m[gait].speedMps, set.SpeedOf(gait), m[gait].speedMps * 0.15f, gait + " kalibrasyon manifestin ±%15'i içinde");
+                // WP-032B: a flight-phase cycle calibrates over its authored stance frames (zombie_run 5.32 → 6.14 on the Unity rig, +15.4 %, slip-verified); shuffles stay within ±15 %.
+                float band = gait == C.ZombieRun ? 0.20f : 0.15f;
+                Assert.AreEqual(m[gait].speedMps, set.SpeedOf(gait), m[gait].speedMps * band, gait + " kalibrasyon manifestin ±%" + (int)(band * 100) + "'i içinde");
                 Assert.AreNotEqual(m[gait].speedMps, set.SpeedOf(gait), gait + " kalibre edilmemiş");
             }
 
@@ -219,6 +238,8 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(20, ZombieSkinnedVisual.FrameOf(set.Find(C.ZombieAttackSwipe).events, "hit_window_end"));
             Assert.AreEqual(10, ZombieSkinnedVisual.FrameOf(set.Find(C.ZombieAttackLunge).events, "hit_window_start"));
             Assert.AreEqual(24, ZombieSkinnedVisual.FrameOf(set.Find(C.ZombieAttackSweep).events, "hit_window_start"));
+            Assert.AreEqual(35, ZombieSkinnedVisual.FrameOf(set.Find(C.ZombieAttackOverhead).events, "hit_window_start"));   // WP-032B: 1.167 s vs the Ultra 1.15 s timer
+            Assert.AreEqual(40, ZombieSkinnedVisual.FrameOf(set.Find(C.ZombieAttackOverhead).events, "hit_window_end"));
             Assert.AreEqual(-1, ZombieSkinnedVisual.FrameOf(set.Find(C.ZombieAttackSweep).events, "hit"), "'hit' 'hit_window_start' içinde eşleşmemeli");
             float swipeRate = swipeStart / config.Find(EnemyTier.Standard).TelegraphTime;
             float lungeRate = lungeStart / config.Find(EnemyTier.Special).TelegraphTime;
@@ -230,6 +251,8 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(swipeRate > 0.8f && swipeRate < 1.25f, "swipe oranı klibe yakın olmalı: " + swipeRate);
             Assert.IsTrue(lungeRate > 0.8f && lungeRate < 1.25f, "lunge oranı: " + lungeRate);
             Assert.IsTrue(sweepRate > 0.8f && sweepRate < 1.25f, "sweep oranı: " + sweepRate);
+            float overheadRate = 35f / C.Fps / config.Find(EnemyTier.Ultra).TelegraphTime;
+            Assert.IsTrue(overheadRate > 0.9f && overheadRate < 1.1f, "overhead oranı klibe yakın olmalı (1,167 s / 1,15 s): " + overheadRate);
         }
 
         [Test]
@@ -253,7 +276,7 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(10, player.Clips.Count); Assert.AreEqual(20, zombie.Clips.Count);
+            Assert.AreEqual(14, player.Clips.Count); Assert.AreEqual(22, zombie.Clips.Count);   // WP-032B v002
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
             var m = Manifest();
             foreach (var set in new[] { player, zombie })
