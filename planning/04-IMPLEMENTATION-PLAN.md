@@ -1179,3 +1179,21 @@ Sonuç: vuruş yolundaki **tek** kare-başı ayırıcı **`Feedback/DamageNumber
 **Devirler:** `Gfx.WaitForPresent` sayacı (PilotPerfProbe, S-05) → kapanış koşusundan önce eklenirse aggregate satırı otomatik dolar; bot upgrade satın alma (şimdi hep Skip) → M4; okunabilirlik bandı "ÇV" kontrast ölçüsü (DEC-077'nin ΔV tanımıyla aynı yüzey — `ArmorTests` `MeanValue` kalıbı) yerine luminans isteniyorsa tek sabit.
 
 **Kapanış listesi ekleri (C-00, 2026-09-17):** `VurusYolu_SifirAyirma` 12/16 KB aralıklı ayırma (WP-034 r2, WP-036) · DEC-077 motor içi ölçüm (WP-036 devri; `QaReadabilityGate` ile yan yana) · release 453 MB (tavan 450 kullanıcı kararı; rapor, kapı değil). Ayrıntı `tools/qa/README.md`.
+
+## WP-041 — Economy & Progression Balance Simulation v1
+
+**Durum:** Tamamlandı (S-04, 2026-09-17, HIZLI HAT); tek commit; C-00 ff-merge + etiket. Taban `a39c20c`. **Hiçbir veri değeri değişmedi**; çıktı ölçüm + öneri.
+
+**Yürütme promptu:** `planning/work-packages/WP-041-M3-BALANCE-SIMULATION.md` · **Öneri (kullanıcı kararı):** `planning/work-packages/WP-041-BALANCE-PROPOSAL.md`
+
+**Kapsam ve sonuç:**
+- (A) `Diagnostics/Editor/EconomySimulator.cs` (ADR-041-1): R1–R15 deterministik (seed); kalabalık bileşimi `SpawnMixSimulator` çağrısıyla (ADR-027-1, yeniden yazılmadı); girdiler sevk verisi (`PrototypeConfig`, roster A/B/C + çekirdek dallar, `WeaponUpgradeTuning`, `GoldRewardCalculator`, `CostForTier` + DEC-070 klamp, XP/seviye eğrisi, `SpecialWeaponSpawnChance`); modeller belgeli (isabet, bölge karışımı, açgözlü tek kart/round, kalabalık çarpanları, temas süresi); çıktı JSON (`dd-balance-v1`) + markdown tablo; batch girişi `RunFromCommandLine -ddOut`.
+- (B) Bant bayrakları: DEC-070 açılış fiyatı (tümü 15–45 içinde, klamp gerekmedi), DEC-071 tek satın alma modeli (cüzdan ≥ 0), DEC-021 giriş roundları/monoton gelir, DEC-008 ilerleme; model bantları (TTK Standard R1 ≤ 2 s, ilk kart ≤ R3, risk ≥ 1 R6'dan önce değil, Ultra TTK ≤ 12 s) → bant dışı bayrak yok; bilgi bayrakları: R15 gelir düşüşü (gürültü), ilk koşuda L4.
+- (C) Öneri: Ö-1 altın enflasyonu (`CostGrowthPerTier` → 2,0, S-04), Ö-2 zırh doygunluğu (S-03), Ö-3 B/C açılış seviyeleri 3/5 (S-02), Ö-4 B/C hasar paritesi (S-02), Ö-5 DEC-021 elle tanımlı round satırları (S-03); dal katalog girdisi gerekmez.
+- (D) `EconomySimulatorTests` (determinizm byte-aynı, roster A/B/C + giriş roundları + DEC-070 bandı, cüzdan muhasebesi/DEC-074, havuz-gelir monotonluğu, JSON/markdown yazımı, kalabalık çarpanı monotonluğu).
+
+**Testler:** EditMode `EconomySimulatorTests` + `SpawnMixSimulatorTests` + `WeaponRosterTests` + `HandoffIntegrityTests` + `ProjectIntegrityTests` **42/42**; simülasyon batch koşusu exit 0 (`wp-041/evidence/balance-v1.{json,md}`). Build/PlayMode gerekmedi (Editor-only kod + test).
+
+**Teknik notlar (ADR-041-1 — ürün kararı değildir):** simülatör yalnız okur; determinizm = seed + sevk verisi; model alanları raporda "MODEL", üretim formülleri "EXACT" olarak ayrılır; bantlar iki sınıf: DEC (kural) ve model (öneri eşiği, S-04 sahipli, bant dışı = öneri satırı, veri değişikliği değil). Yeni denge verisi (Ö-1) yalnız kullanıcı onayıyla ve ayrı commit'te.
+
+**Devirler:** Ö-1..Ö-5 kullanıcı kararı; matplotlib yok → PNG üretilmedi (markdown tablo yeterli); Special Weapon "kullanım" oranı yalnız spawn olasılığı (alma davranışı modellenmedi); Threat Director (WP-033) simüle edilmedi (sinyal katmanı, ekonomi dışı).
