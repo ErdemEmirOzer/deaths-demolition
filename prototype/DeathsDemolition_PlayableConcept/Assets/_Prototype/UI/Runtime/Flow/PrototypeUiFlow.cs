@@ -179,6 +179,10 @@ namespace DD.Prototype.UI
             RunEvents.RunEnded += OnRunEnded;
             RunEvents.RunStarted += OnRunStarted;
 
+            // WP-022D (WP-035 contract): the cosmetics source lists skins with the
+            // SESSION selection (DEC-039: never persisted), and the UI flow owns it.
+            ProfileService.SessionSkinProvider = () => SelectedSkin;
+
             // Created eagerly rather than on first use: it is also where the profile is
             // flushed on quit and where the F1 rows live, and both of those have to
             // exist before anything interesting happens.

@@ -16,8 +16,8 @@ Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, 
 | Denied | Kilitli/erişilemez kontrol | `UiDenied` (mevcut) | Sabit (yıkama yok); durum çipi "LOCKED / TOO EXPENSIVE" | `UiButton.Activate` (interactable=false) |
 | ScreenEntered | Ekran kuruldu (MainMenu/Selection/Run HUD/Results/Pause/Upgrade) | `UiEvent.ScreenEntered` + detail=ekran adı → geçiş vuruşu (AP-011) | Canvas fade 0→1 `MotionScreen` 0,28 s (reduced motion: anında) | `UiScreen.Awake` |
 | ScreenLeft | Ekran yok ediliyor | n/a (bir sonraki ScreenEntered taşır) | — | `UiScreen.OnDestroy` |
-| PaneOpened | Ana menü paneli (Profile/Statistics/Achievements/Settings) | `UiEvent.PaneOpened` → hafif kâğıt sesi (AP-011) | Panel yeniden kurulur; seçili sekme raised + krem kenar + vermilion tik | `MainMenuScreen.ShowPane` |
-| ChoiceSelected | Skin / silah kartı seçildi | `UiEvent.ChoiceSelected` (detail Skin/Weapon) → seçim tık | Kart raised + SELECTED rozeti | `SelectionScreen.SelectSkin/SelectWeapon` |
+| PaneOpened | Ana menü paneli (Profile/Statistics/Achievements/Settings); başarım sayfası çevrildi (detail AchievementsPage, WP-022D) | `UiEvent.PaneOpened` → hafif kâğıt sesi (AP-011) | Panel yeniden kurulur; seçili sekme raised + krem kenar + krem tik | `MainMenuScreen.ShowPane`, `TurnAchievementPage` |
+| ChoiceSelected | Skin / silah kartı seçildi; profil unvanı / rozeti seçildi (WP-022D) | `UiEvent.ChoiceSelected` (detail Skin/Weapon/Title/Badge) → seçim tık | Kart raised + SELECTED rozeti; seçenek satırında krem işaret | `SelectionScreen.SelectSkin/SelectWeapon`, `MainMenuScreen.AddCosmeticOption` |
 | SliderChanged | Ayar kaydırıcısı değişti | `UiEvent.SliderChanged` → tik (adım başına) | Okuma metni yerinde güncellenir | `MainMenuScreen.AddSettingSlider` |
 | ToggleChanged | Reduced motion açık/kapalı | `UiEvent.ToggleChanged` → tık | Düğme etiketi ON/OFF | `MainMenuScreen` Settings |
 | DialogOpened | Pause → "koşuyu bırak" onayı açıldı | `UiEvent.DialogOpened` → kısa vurgu | Alt katman `OpacityScrimUnderDialog`, odak diyaloğa | `PauseScreen.OpenConfirm` |

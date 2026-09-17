@@ -48,10 +48,13 @@ namespace DD.Prototype.UI
     {
         private const float RowHeight = 40f;
         private const float HeroValueHeight = 56f;
-        private const float RewardEntryHeight = 72f;
+        private const float RewardEntryHeight = 92f; // AD v004 MUST-5: two-line detail, no truncation (24 title + 44 detail + 2·12)
 
         /// <summary>Title band inside a reward entry. 24 px clears an 18 px bold line.</summary>
         private const float RewardTitleBand = 24f;
+
+        /// <summary>Two Caption lines under the title (AD v004 MUST-5); the card content is 92 − 2·12 = 68 px, so title = 24, detail = 44 (2 × 22 with TMP's leading).</summary>
+        private const float RewardDetailBand = 44f;
 
         private const float FooterHeight = 88f;
 
@@ -329,9 +332,11 @@ namespace DD.Prototype.UI
             // WP-022: an AP-012 medallion carries the entry (unlocks: rare wreath,
             // achievements: ring by WP-023 rarity); the petal mark stays the no-art fallback.
             float markSize = RewardEntryHeight - (int)UiSpace.M * 2;
-            Image mark = UiFactory.NewImage(
-                "Mark", content, accent,
-                UiArt.Medal(accent == UiColor.StateSuccess ? _model.MedalFor(entry.Title) : UiMedal.Rare));
+            string typeLabel = string.Empty;
+            Sprite markSprite = accent == UiColor.StateSuccess
+                ? UiArt.Medal(_model.MedalFor(entry.Title))
+                : _model.UnlockSpriteFor(entry.Title, out typeLabel); // WP-022D: glyph by unlock type
+            Image mark = UiFactory.NewImage("Mark", content, accent, markSprite);
             mark.preserveAspect = true;
             var markRect = (RectTransform)mark.transform;
             markRect.anchorMin = new Vector2(0f, 0.5f);
@@ -341,21 +346,37 @@ namespace DD.Prototype.UI
             markRect.anchoredPosition = Vector2.zero;
 
             float textLeft = markSize + (int)UiSpace.M;
+            // AD v004 MUST-2: the type is said once, on the detail line - "Blooded", not
+            // "Title: Blooded" (the data keeps its prefix; only the headline drops it).
+            string titleText = entry.Title;
+            if (!string.IsNullOrEmpty(typeLabel))
+            {
+                int colon = titleText.IndexOf(": ", System.StringComparison.Ordinal);
+                if (colon > 0 && colon < 12)
+                {
+                    titleText = titleText.Substring(colon + 2);
+                }
+            }
+
             TMP_Text title = UiFactory.Label(
-                "Title", content, UiFactory.Clip(entry.Title, 32), UiType.BodyStrong, accent,
+                "Title", content, UiFactory.Clip(titleText, 32), UiType.BodyStrong, accent,
                 TextAnchor.LowerLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
-            titleRect.offsetMin = new Vector2(textLeft, RewardTitleBand);
+            titleRect.offsetMin = new Vector2(textLeft, RewardDetailBand); // title sits above the two-line detail band
             titleRect.offsetMax = new Vector2(-64f, 0f);
 
+            // WP-022D: the type in front of the detail ("TITLE · shown next to your name"),
+            // so a title, a badge and a weapon read as three different things.
+            string detailText = string.IsNullOrEmpty(typeLabel) ? entry.Detail : typeLabel + "  ·  " + entry.Detail;
             TMP_Text detail = UiFactory.Label(
-                "Detail", content, UiFactory.Clip(entry.Detail, 60), UiType.Caption, UiColor.TextSecondary,
-                TextAnchor.UpperLeft);
+                "Detail", content, UiFactory.Clip(detailText, 120), UiType.Caption, UiColor.TextSecondary,
+                TextAnchor.UpperLeft); // wraps to the second line (Label truncates at the box, AD v004 MUST-5)
             RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
             detailRect.offsetMin = new Vector2(textLeft, 0f);
             detailRect.offsetMax = new Vector2(-64f, -RewardTitleBand);
 
-            TMP_Text badge = UiFactory.Chip("New", content, "NEW", accent, UiColor.SurfaceInset, 56f, 24f);
+            // AD v004 MUST-1: NEW is one token everywhere - ink on sakura - whatever the card's accent.
+            TMP_Text badge = UiFactory.Chip("New", content, "NEW", UiColor.AccentSakura, UiColor.SurfaceBase, 56f, 24f);
             var badgeRect = (RectTransform)badge.transform.parent;
             badgeRect.anchorMin = new Vector2(1f, 0.5f);
             badgeRect.anchorMax = new Vector2(1f, 0.5f);

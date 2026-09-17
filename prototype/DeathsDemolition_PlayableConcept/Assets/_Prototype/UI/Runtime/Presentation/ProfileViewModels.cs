@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DD.Prototype.Achievements;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Profile;
 using UnityEngine;
@@ -66,12 +67,102 @@ namespace DD.Prototype.UI
         public string Description;
         public bool Earned;
 
+        // WP-022D (WP-035 contract): progress and rarity, read from the profile source.
+        public AchievementRarity Rarity;
+        public bool IsNew;
+        public long Current;
+        public int Threshold;
+        public float Progress01;
+
         public UiAchievementLine(string id, string title, string description, bool earned)
+            : this(id, title, description, earned, AchievementRarity.Common, false, earned ? 1 : 0, 1)
+        {
+        }
+
+        public UiAchievementLine(string id, string title, string description, bool earned,
+            AchievementRarity rarity, bool isNew, long current, int threshold)
         {
             Id = id;
             Title = title;
             Description = description;
             Earned = earned;
+            Rarity = rarity;
+            IsNew = isNew;
+            Threshold = Math.Max(1, threshold);
+            Current = earned ? Threshold : Math.Min(Math.Max(0, current), Threshold);
+            Progress01 = earned ? 1f : (float)Current / Threshold;
+        }
+
+        /// <summary>"7 / 10" for an unearned counter; empty when earned (the chip says it).</summary>
+        public string ProgressCaption => Earned ? string.Empty : Current + " / " + Threshold;
+    }
+
+    /// <summary>One selectable cosmetic (title / badge) as the Profile pane shows it (WP-035).</summary>
+    public struct UiCosmeticLine
+    {
+        public string Id;
+        public CosmeticKind Kind;
+        public string Title;
+        public string Detail;
+        public bool Unlocked;
+        public bool IsNew;
+        public bool Selected;
+
+        public UiCosmeticLine(CosmeticEntry entry)
+        {
+            Id = entry.Id;
+            Kind = entry.Kind;
+            Title = entry.Title;
+            Detail = entry.Detail;
+            Unlocked = entry.Unlocked;
+            IsNew = entry.IsNew;
+            Selected = entry.Selected;
+        }
+    }
+
+    /// <summary>
+    /// The Profile pane's title / badge picker (WP-022D). Read from
+    /// <see cref="ICosmeticsSource"/>; the pane never decides what is unlocked.
+    /// </summary>
+    public sealed class CosmeticsViewModel
+    {
+        public const string TitlesLabel = "PROFILE TITLE";
+        public const string BadgesLabel = "PROFILE BADGE";
+        public const string NoneOption = "None";
+        public const string PickNote = "Locked titles and badges open through achievements and unlocks.";
+
+        public readonly List<UiCosmeticLine> Titles = new List<UiCosmeticLine>(6);
+        public readonly List<UiCosmeticLine> Badges = new List<UiCosmeticLine>(6);
+        public int NewCount;
+        public string SelectedTitle = string.Empty;
+        public string SelectedBadge = string.Empty;
+
+        public bool IsEmpty => Titles.Count == 0 && Badges.Count == 0;
+
+        public static CosmeticsViewModel From(ICosmeticsSource source)
+        {
+            var model = new CosmeticsViewModel();
+            if (source == null)
+            {
+                return model;
+            }
+
+            IReadOnlyList<CosmeticEntry> titles = source.Titles;
+            for (int i = 0; titles != null && i < titles.Count; i++)
+            {
+                model.Titles.Add(new UiCosmeticLine(titles[i]));
+            }
+
+            IReadOnlyList<CosmeticEntry> badges = source.Badges;
+            for (int i = 0; badges != null && i < badges.Count; i++)
+            {
+                model.Badges.Add(new UiCosmeticLine(badges[i]));
+            }
+
+            model.NewCount = source.NewCount;
+            model.SelectedTitle = source.SelectedTitle ?? string.Empty;
+            model.SelectedBadge = source.SelectedBadge ?? string.Empty;
+            return model;
         }
     }
 
@@ -295,9 +386,50 @@ namespace DD.Prototype.UI
         public int Earned;
         public int Defined;
 
+        /// <summary>Earned since the player last opened the pane (WP-035).</summary>
+        public int NewCount;
+
         public string Progress = string.Empty;
 
         public bool IsEmpty => Defined == 0;
+
+        /// <summary>
+        /// WP-022D: the pane from the WP-035 progress source - catalog order, lifetime
+        /// counters, rarity and "new" flags. Nothing is recomputed here.
+        /// </summary>
+        public static AchievementsViewModel From(IAchievementProgressSource source)
+        {
+            var model = new AchievementsViewModel();
+            if (source == null)
+            {
+                return model;
+            }
+
+            IReadOnlyList<AchievementProgressEntry> entries = source.Entries;
+            for (int i = 0; entries != null && i < entries.Count; i++)
+            {
+                AchievementProgressEntry e = entries[i];
+                if (string.IsNullOrEmpty(e.Id))
+                {
+                    continue;
+                }
+
+                model.Lines.Add(new UiAchievementLine(
+                    e.Id, string.IsNullOrEmpty(e.Title) ? e.Id : e.Title, e.Description ?? string.Empty,
+                    e.Earned, e.Rarity, e.IsNew, e.Current, e.Threshold));
+                model.Defined++;
+                if (e.Earned)
+                {
+                    model.Earned++;
+                }
+            }
+
+            model.NewCount = source.NewCount;
+            model.Progress = model.Defined == 0
+                ? string.Empty
+                : model.Earned + " of " + model.Defined + " earned" + (model.NewCount > 0 ? "  ·  " + model.NewCount + " new" : string.Empty);
+            return model;
+        }
 
         public static AchievementsViewModel From(ProfileData profile, IReadOnlyList<AchievementSettings> definitions)
         {

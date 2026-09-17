@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DD.Prototype.Achievements;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Profile;
 using DD.Prototype.UI;
@@ -285,6 +286,82 @@ namespace DD.Prototype.Tests.EditMode
             vm = AchievementsViewModel.From(null, null);
             Assert.IsTrue(vm.IsEmpty, "null girdiler de güvenli");
             StringAssert.Contains("nothing to claim", AchievementsViewModel.AutoNote);
+        }
+
+        // ------------------------------------------------------------ WP-022D (WP-035)
+
+        private sealed class SahteIlerleme : IAchievementProgressSource
+        {
+            public List<AchievementProgressEntry> Girdiler = new List<AchievementProgressEntry>();
+            public int GorulduCagri;
+            public IReadOnlyList<AchievementProgressEntry> Entries => Girdiler;
+            public int EarnedCount { get { int n = 0; foreach (var e in Girdiler) if (e.Earned) n++; return n; } }
+            public int TotalCount => Girdiler.Count;
+            public int NewCount { get { int n = 0; foreach (var e in Girdiler) if (e.IsNew) n++; return n; } }
+            public string LastEarnedId => string.Empty;
+            public void MarkAchievementsSeen() { GorulduCagri++; }
+        }
+
+        private sealed class SahteKozmetik : ICosmeticsSource
+        {
+            public List<CosmeticEntry> Unvanlar = new List<CosmeticEntry>();
+            public List<CosmeticEntry> Rozetler = new List<CosmeticEntry>();
+            public IReadOnlyList<CosmeticEntry> Titles => Unvanlar;
+            public IReadOnlyList<CosmeticEntry> Badges => Rozetler;
+            public IReadOnlyList<CosmeticEntry> Skins => new List<CosmeticEntry>();
+            public string SelectedTitle = "veteran";
+            public string SelectedBadge = string.Empty;
+            string ICosmeticsSource.SelectedTitle => SelectedTitle;
+            string ICosmeticsSource.SelectedBadge => SelectedBadge;
+            public int NewCount => 1;
+            public bool SelectTitle(string id) { SelectedTitle = id; return true; }
+            public bool SelectBadge(string id) { SelectedBadge = id; return true; }
+            public void MarkContentSeen() { }
+        }
+
+        /// <summary>WP-022D: pane model from the WP-035 progress source - counters, rarity, "new", caption.</summary>
+        [Test]
+        public void BasarimlarModeli_IlerlemeKaynagindan_SayacNadirlikYeni()
+        {
+            var kaynak = new SahteIlerleme();
+            kaynak.Girdiler.Add(new AchievementProgressEntry("first_blood", "First Blood", "Kill one.", AchievementRarity.Common, AchievementScope.Lifetime, true, true, 1, 1));
+            kaynak.Girdiler.Add(new AchievementProgressEntry("rounds_50", "Regular", "Finish 50 rounds.", AchievementRarity.Rare, AchievementScope.Lifetime, false, false, 7, 50));
+            kaynak.Girdiler.Add(new AchievementProgressEntry("ultra", "Ultra Slayer", "Defeat an Ultra.", AchievementRarity.Epic, AchievementScope.SingleRun, false, false, 0, 1));
+
+            AchievementsViewModel vm = AchievementsViewModel.From(kaynak);
+            Assert.AreEqual(3, vm.Defined);
+            Assert.AreEqual(1, vm.Earned);
+            Assert.AreEqual(1, vm.NewCount);
+            StringAssert.Contains("1 of 3 earned", vm.Progress);
+            StringAssert.Contains("1 new", vm.Progress);
+            Assert.IsTrue(vm.Lines[0].IsNew && vm.Lines[0].Earned);
+            Assert.AreEqual(string.Empty, vm.Lines[0].ProgressCaption, "kazanılmışta sayaç yok");
+            Assert.AreEqual(AchievementRarity.Rare, vm.Lines[1].Rarity);
+            Assert.AreEqual("7 / 50", vm.Lines[1].ProgressCaption);
+            Assert.AreEqual(0.14f, vm.Lines[1].Progress01, 0.001f);
+            Assert.AreEqual(0f, vm.Lines[2].Progress01, 0.001f);
+            Assert.AreEqual(0, kaynak.GorulduCagri, "model kurmak 'görüldü' yazmaz; pane açılışı yazar");
+            Assert.IsTrue(AchievementsViewModel.From((IAchievementProgressSource)null).IsEmpty, "kaynak yokken boş durum");
+        }
+
+        /// <summary>WP-022D: title / badge picker model mirrors the cosmetics source, never recomputes.</summary>
+        [Test]
+        public void KozmetikModeli_UnvanRozetSecimi_KaynaktanBirebir()
+        {
+            var kaynak = new SahteKozmetik();
+            kaynak.Unvanlar.Add(new CosmeticEntry("veteran", CosmeticKind.Title, "Veteran", "Finish 10 runs", true, false, true));
+            kaynak.Unvanlar.Add(new CosmeticEntry("blooded", CosmeticKind.Title, "Blooded", "Kill 100", false, false, false));
+            kaynak.Rozetler.Add(new CosmeticEntry("sakura", CosmeticKind.Badge, "Sakura", "Reach round 20", true, true, false));
+
+            CosmeticsViewModel vm = CosmeticsViewModel.From(kaynak);
+            Assert.AreEqual(2, vm.Titles.Count);
+            Assert.AreEqual(1, vm.Badges.Count);
+            Assert.AreEqual("veteran", vm.SelectedTitle);
+            Assert.IsTrue(vm.Titles[0].Selected && vm.Titles[0].Unlocked);
+            Assert.IsFalse(vm.Titles[1].Unlocked);
+            Assert.IsTrue(vm.Badges[0].IsNew);
+            Assert.AreEqual(1, vm.NewCount);
+            Assert.IsTrue(CosmeticsViewModel.From(null).IsEmpty);
         }
     }
 }

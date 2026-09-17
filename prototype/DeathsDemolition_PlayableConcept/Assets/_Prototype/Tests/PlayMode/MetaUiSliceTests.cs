@@ -810,7 +810,8 @@ namespace DD.Prototype.Tests.PlayMode
             Buton<MainMenuScreen>("Tab.Achievements").OnSubmit(null);
             yield return null;
             Assert.IsTrue(MetinVar<MainMenuScreen>("1 of " + tanim + " earned", out _), "First Blood otomatik açıldı");
-            Assert.IsTrue(MetinVar<MainMenuScreen>("EARNED", out _));
+            // WP-022D: a freshly earned entry reads NEW on the first visit (WP-035 "new" flag), EARNED afterwards.
+            Assert.IsTrue(MetinVar<MainMenuScreen>("EARNED", out _) || MetinVar<MainMenuScreen>("NEW", out _), "kazanılmış çip");
             Debug.Log("[DD-TEST] wp005.panes=OK");
         }
 

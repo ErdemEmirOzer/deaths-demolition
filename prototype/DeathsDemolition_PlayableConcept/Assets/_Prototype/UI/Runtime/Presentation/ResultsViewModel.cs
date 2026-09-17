@@ -129,6 +129,70 @@ namespace DD.Prototype.UI
                     AchievementRarities[a.Title] = a.Rarity;
                 }
             }
+
+            // WP-022D (WP-035): the unlock's type and id drive its glyph on the Results card.
+            UnlockTypes.Clear();
+            for (int i = 0; i < data.NewUnlocks.Count; i++)
+            {
+                RunResultsUnlock u = data.NewUnlocks[i];
+                if (!string.IsNullOrEmpty(u.Title))
+                {
+                    UnlockTypes[u.Title] = new UnlockGlyph(u.Type, u.Id);
+                }
+            }
+        }
+
+        public readonly struct UnlockGlyph
+        {
+            public readonly UnlockContentType Type;
+            public readonly string Id;
+
+            public UnlockGlyph(UnlockContentType type, string id)
+            {
+                Type = type;
+                Id = id ?? string.Empty;
+            }
+        }
+
+        /// <summary>Unlock title → type/id (WP-035 <c>NewUnlocks</c>); ladder-only rows read as Weapon by their title.</summary>
+        public readonly Dictionary<string, UnlockGlyph> UnlockTypes =
+            new Dictionary<string, UnlockGlyph>(4, StringComparer.Ordinal);
+
+        /// <summary>
+        /// The glyph for an unlock row: a weapon's own icon, an upgrade branch's icon, a
+        /// wreath for a title, the sakura medallion for a badge, the reticle ring for a
+        /// HUD indicator; the rare wreath when the type is unknown (WP-005 report path).
+        /// </summary>
+        public Sprite UnlockSpriteFor(string title, out string typeLabel)
+        {
+            UnlockGlyph glyph;
+            if (title == null || !UnlockTypes.TryGetValue(title, out glyph))
+            {
+                typeLabel = string.Empty;
+                return UiArt.Medal(UiMedal.Rare);
+            }
+
+            switch (glyph.Type)
+            {
+                case UnlockContentType.Weapon:
+                    typeLabel = "WEAPON";
+                    return UiArt.Icon("Weapon." + glyph.Id) ?? UiArt.Medal(UiMedal.Rare);
+                case UnlockContentType.Branch:
+                    typeLabel = "BRANCH";
+                    return UiArt.Icon("Upgrade." + glyph.Id) ?? UiArt.Medal(UiMedal.Rare);
+                case UnlockContentType.Title:
+                    typeLabel = "TITLE";
+                    return UiArt.Medal(UiMedal.Rare);
+                case UnlockContentType.Badge:
+                    typeLabel = "BADGE";
+                    return UiArt.Medal(UiMedal.Epic);
+                case UnlockContentType.Indicator:
+                    typeLabel = "HUD";
+                    return UiArt.Reticle(true) ?? UiArt.Medal(UiMedal.Rare);
+                default:
+                    typeLabel = "COSMETIC";
+                    return UiArt.Medal(UiMedal.Rare);
+            }
         }
 
         public UiMedal MedalFor(string achievementTitle)

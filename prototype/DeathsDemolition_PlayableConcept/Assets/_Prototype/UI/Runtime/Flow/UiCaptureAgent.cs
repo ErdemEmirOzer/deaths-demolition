@@ -14,7 +14,7 @@ namespace DD.Prototype.UI
     ///
     ///   DeathsDemolition.app/Contents/MacOS/... -ddUiCapture selection -ddUiCaptureOut /tmp/sel.png -ddSize 1920x1080
     ///
-    /// Screens: <c>mainmenu</c>, <c>settings</c> (main menu with the Settings pane),
+    /// Screens: <c>mainmenu</c>, <c>settings</c> / <c>profile</c> / <c>achievements</c> / <c>statistics</c> (main menu with that pane),
     /// <c>selection</c>, <c>pause</c> (a run, paused), <c>results</c> (a run ended by
     /// lethal diagnostic damage, so the real Results screen with a real receipt - on the
     /// Player's own profile: run the user-data restore afterwards, as every smoke does).
@@ -91,11 +91,17 @@ namespace DD.Prototype.UI
                 switch (_screen)
                 {
                     case "settings":
+                    case "profile":
+                    case "achievements":
+                    case "statistics":
                         {
                             MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
                             if (menu != null)
                             {
-                                menu.ShowPane(UiContext.Settings);
+                                menu.ShowPane(_screen == "settings" ? UiContext.Settings
+                                    : _screen == "achievements" ? UiContext.Achievements
+                                    : _screen == "statistics" ? UiContext.Statistics
+                                    : UiContext.Profile);
                             }
 
                             break;

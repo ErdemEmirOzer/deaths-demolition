@@ -386,6 +386,73 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ============================================================== 4 · ölçek ayarı
 
+        /// <summary>
+        /// WP-022D (WP-035): the Profile pane's title picker and the Achievements pager
+        /// are reachable with the pad - Right from the tab enters the pane, Left returns,
+        /// NEXT turns the page and keeps focus. The "None" title option is the current
+        /// choice on a fresh profile; a locked option is not interactable.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Gamepad_ProfilUnvanSecici_VeBasarimSayfalari()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return BootTanMainMenuye();
+            yield return null;
+            yield return null;
+            MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
+            Assert.IsNotNull(menu);
+
+            // Profile pane: Right from the tab lands on the "None" title option (selected).
+            menu.ShowPane(UiContext.Profile);
+            yield return null;
+            UiInput.Focus(Buton(menu, "Tab.Profile"));
+            yield return SeciliBekle("Tab.Profile");
+            Hareket(MoveDirection.Right);
+            yield return SeciliBekle("Option.Title.None");
+            Assert.IsTrue(Secili.GetComponent<UiButton>().IsSelectedChoice, "taze profilde unvan yok → None seçili");
+            int locked = 0, options = 0;
+            foreach (UiButton b in menu.GetComponentsInChildren<UiButton>(true))
+            {
+                if (b.name.StartsWith("Option.Title."))
+                {
+                    options++;
+                    if (!b.IsInteractable()) locked++;
+                }
+            }
+
+            Assert.GreaterOrEqual(options, 2, "None + en az bir katalog unvanı");
+            Assert.GreaterOrEqual(locked, 1, "taze profilde kilitli unvan var (etkileşimsiz)");
+            Hareket(MoveDirection.Left);
+            yield return SeciliBekle("Tab.Profile");
+
+            // Achievements pane: pages of five; NEXT turns the page and stays focused.
+            menu.ShowPane(UiContext.Achievements);
+            yield return null;
+            Assert.IsTrue(MetinVar(menu, "Page 1 of"), "27 başarım → sayfalı");
+            UiInput.Focus(Buton(menu, "Tab.Achievements"));
+            yield return SeciliBekle("Tab.Achievements");
+            Hareket(MoveDirection.Right);
+            yield return SeciliBekle("Pager.Next");
+            Onayla();
+            yield return null;
+            yield return null;
+            Assert.IsTrue(MetinVar(menu, "Page 2 of"), "NEXT ikinci sayfayı açar");
+            yield return SeciliBekle("Pager.Next");
+            Assert.IsTrue(MetinVar(menu, "IN PROGRESS"), "kazanılmamış girdi ilerleme çipi + çubuğu taşır");
+            Assert.IsNotNull(menu.GetComponentInChildren<UiBar>(true), "ilerleme çubuğu (kazanılmamış girdi)");
+        }
+
+        private static bool MetinVar(Component ekran, string parca)
+        {
+            foreach (TMPro.TMP_Text t in ekran.GetComponentsInChildren<TMPro.TMP_Text>(true))
+            {
+                if (t.text != null && t.text.Contains(parca)) return true;
+            }
+
+            return false;
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator UiOlcegi_SonrakiEkraninReferansCerceveniOlcekler()

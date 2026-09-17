@@ -148,6 +148,7 @@ namespace DD.Prototype.UI
             // light text, so neither direction has headroom. StateSuccess replaced it.
             new UiContrastCase("Earned / level-up pill label", UiColor.SurfaceInset, UiColor.StateSuccess, 4.5f),
             new UiContrastCase("New-unlock pill label", UiColor.SurfaceInset, UiColor.AccentSakura, 4.5f),
+            new UiContrastCase("NEW chip ink text on sakura (AD v004)", UiColor.SurfaceBase, UiColor.AccentSakura, 4.5f),
             new UiContrastCase("New-unlock title on a raised card", UiColor.AccentSakura,
                 UiColor.SurfaceRaised, 4.5f),
             new UiContrastCase("Earned-achievement title on a raised card", UiColor.StateSuccess,
