@@ -237,22 +237,10 @@ namespace DD.Prototype.Weapons
 
             // REQ-055: the use timer starts HERE, on collection. The weapon that was
             // rolled when the drop landed is the weapon that comes up.
+            // The controller hands the HUD straight from ground phase to active phase in the same
+            // frame (one Active notify, then PickedUp — WP-059C); going through "None" first would
+            // flash the marker off and the timer on in two different frames, which reads as a bug.
             controller.ActivateSpecialWeapon(_weaponId);
-
-            // Hand the HUD straight from ground phase to active phase in the same frame.
-            // Going through "None" first would flash the marker off and the timer on in
-            // two different frames, which reads as a bug.
-            SpecialWeaponHudState state = WeaponEvents.Special;
-            state.Phase = SpecialWeaponPhase.Active;
-            state.WeaponId = controller.Special.Id;
-            state.DisplayName = controller.Special.DisplayName;
-            state.GroundRemaining = 0f;
-            state.GroundDuration = 0f;
-            state.GroundBlinkPhase = 0f;
-            state.ActiveDuration = controller.Special.Duration;
-            state.ActiveRemaining = controller.Special.Remaining;
-            state.FinalSecondsWarning = false;
-            WeaponEvents.PublishSpecial(state, true);
 
             TearDownGroundVisuals();
 

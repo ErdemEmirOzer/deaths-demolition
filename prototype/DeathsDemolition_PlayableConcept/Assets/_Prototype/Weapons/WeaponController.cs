@@ -279,7 +279,7 @@ namespace DD.Prototype.Weapons
             }
 
             _classic.CancelReload();
-            _special.Begin(Config.Weapons.Special, id);
+            _special.Begin(Config.Weapons.Special, id, raisePickedUp: false);
 
             // WP-042 (DEC-082): the grab is an upper-body clip; the hand model shows at its
             // pickup_done event — or at the fallback timeout when the clip cannot carry it
@@ -289,6 +289,11 @@ namespace DD.Prototype.Weapons
 
             SetRigVisibility();
             PublishClassicState(true);
+            // WP-059C (C-00): the ONE Active notify — straight from the ground phase to the active phase in the
+            // same frame (the pickup no longer publishes its own) — and only then the PickedUp news, so a
+            // PickedUp handler reading WeaponEvents.Special sees THIS weapon's name / duration (S-09 banner).
+            PublishSpecialState(true);
+            WeaponEvents.PublishSpecialPickedUp(_special.Duration);
             // WP-056: the usage bus — Activated carries the active seconds (S-03/S-07/S-08 consumers).
             SpecialWeaponUsageEvents.Publish(id, SpecialUsageKind.Activated, SpecialWeaponUsage.For(id).FireVfxFamily,
                 transform.position, transform.forward, 0f, _special.Duration, 0);
@@ -741,6 +746,7 @@ namespace DD.Prototype.Weapons
                 // stale world marker under the player's feet.
                 state.GroundRemaining = 0f;
                 state.GroundDuration = 0f;
+                state.GroundBlinkPhase = 0f;
 
                 WeaponEvents.PublishSpecial(state, notify);
                 return;

@@ -210,7 +210,12 @@ namespace DD.Prototype.Weapons
         /// REQ-055. The clock starts here and nowhere else - specifically NOT when the
         /// weapon spawned on the map.
         /// </summary>
-        public void Begin(SpecialWeaponConfigSection settings, SpecialWeaponId id)
+        /// <param name="raisePickedUp">
+        /// WP-059C: false lets the owner raise <c>SpecialWeaponPickedUp</c> itself AFTER it has
+        /// published the Active snapshot (S-09 reads the new weapon's name from the snapshot in
+        /// the PickedUp handler; the old order left the previous weapon's name there).
+        /// </param>
+        public void Begin(SpecialWeaponConfigSection settings, SpecialWeaponId id, bool raisePickedUp = true)
         {
             _settings = settings;
             Id = id;
@@ -227,7 +232,10 @@ namespace DD.Prototype.Weapons
 
             AudioEvents.RaiseCritical(CombatAudioEvent.SpecialWeaponPickup, Vector3.zero, 1f, 90);
             AudioEvents.RaiseLoop(CombatAudioEvent.HeavyWeaponSpinUp, Vector3.zero, 1f, 85);
-            WeaponEvents.PublishSpecialPickedUp(Duration);
+            if (raisePickedUp)
+            {
+                WeaponEvents.PublishSpecialPickedUp(Duration);
+            }
         }
 
         /// <summary>

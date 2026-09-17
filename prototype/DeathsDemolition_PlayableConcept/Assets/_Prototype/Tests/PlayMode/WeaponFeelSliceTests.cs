@@ -203,6 +203,10 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, Count(WeaponMechanismKind.CasingEjected), "C: kovan atış anında değil, pump'ta");
             yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.CasingEjected) == 1, 1.5f, "pump (eject ≈ 0,4 s)");
 
+            // WP-059C: the fire clip's own pump (eject f12, chamber f20 ≈ 0.67 s) may land before or during the
+            // reload (the additive fire clip keeps playing under the override reload — v006b) or be cut (v005b):
+            // the shot's pump contributes 0–1 chambers, the reload's pump exactly one, and the reload's is the LAST
+            // mechanism event (chamber f60 after mag_in_3 f46).
             _s.Girdi.DoldurBasti = true;
             yield return null;
             _s.Girdi.DoldurBasti = false;
@@ -211,7 +215,8 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, reload + 1f, "reload biter");
             Assert.AreEqual(0, Count(WeaponMechanismKind.MagazineDropped), "C: şarjör düşmez (fişek)");
             Assert.AreEqual(3, Count(WeaponMechanismKind.ShellSeated), "C: üç fişek slotu (AP-009C mag_in / mag_in_2 / mag_in_3; klip ya da yedek)");
-            Assert.AreEqual(1, Count(WeaponMechanismKind.Chambered), "C: pump chamber");
+            Assert.That(Count(WeaponMechanismKind.Chambered), Is.InRange(1, 2), "C: atışın pump'ı (0–1) + reload'un pump chamber'ı (1)");
+            Assert.AreEqual(WeaponMechanismKind.Chambered, _mechanism[_mechanism.Count - 1].Kind, "C: reload'un son mekanizma olayı chamber (pump)");
         }
 
         [UnityTest]
