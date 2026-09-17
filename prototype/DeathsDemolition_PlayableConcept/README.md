@@ -211,6 +211,8 @@ WP-022C (UI/HUD v2.2) builds the Selection weapon column from the WP-034 roster 
 
 WP-022D (UI/HUD v2.3) binds the WP-035 contract: the Achievements pane reads `ProfileService.AchievementProgressSource` (progress bars, rarity medallions, NEW chips, five-per-page pager), the Profile pane gets a title/badge picker on `ProfileService.CosmeticsSource` (`SelectTitle`/`SelectBadge`, locked options non-interactable with their condition), Results unlock cards carry a glyph by unlock type, and `UiCaptureAgent` accepts `profile|achievements|statistics`.
 
+WP-022E (UI/HUD v2.4) adds the Settings "RUN TELEMETRY" toggle (`UiSettings.Telemetry` → `RunTelemetry.SetEnabled`; `-ddTelemetry 0` still wins) and the name plate (`CosmeticsViewModel.NamePlate`: selected title · badge on the Profile heading and the Results eyebrow).
+
 | Folder | One-line summary |
 |---|---|
 | `Core/` | The spine: `PrototypeConfig` and its ten sections, the `PrototypeOnly` origin attribute, boot/scene hand-off, object pooling, the input abstraction, and the F1 panel plus its registry. |

@@ -451,6 +451,26 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)reduced.transform, UiTokens.TargetPreferred);
             UiInput.LeadingIcon(reduced, "Menu.Gamepad", UiColor.TextSecondary, 22f);
 
+            // Run telemetry (WP-022E, WP-045): local files only, no identity data; the
+            // player can still switch it off. Same toggle-button pattern as reduced motion.
+            stack.Gap(UiSpace.S);
+            UiButton telemetry = UiFactory.Button(
+                "Telemetry", _paneHost, TelemetryLabel(), UiButtonVariant.Secondary, null);
+            telemetry.SetOnClick(() =>
+            {
+                UiSettings.Telemetry = !UiSettings.Telemetry;
+                telemetry.SetText(TelemetryLabel());
+                UiEvents.Raise(UiEvent.ToggleChanged, "Telemetry");
+            });
+            stack.Add((RectTransform)telemetry.transform, UiTokens.TargetPreferred);
+            UiInput.LeadingIcon(telemetry, "Menu.Statistics", UiColor.TextSecondary, 22f);
+            stack.Gap(UiSpace.XS);
+            TMP_Text telemetryNote = UiFactory.Label(
+                "TelemetryNote", _paneHost,
+                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.",
+                UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)telemetryNote.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
+
             stack.Gap(UiSpace.L);
             TMP_Text note = UiFactory.Label(
                 "Note", _paneHost,
@@ -458,13 +478,18 @@ namespace DD.Prototype.UI
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
-            UiInput.ChainVertical(scale, volume, quality, reduced);
+            UiInput.ChainVertical(scale, volume, quality, reduced, telemetry);
             UiInput.Focus(scale);
         }
 
         private static string ReducedMotionLabel()
         {
             return UiSettings.ReducedMotion ? "REDUCED MOTION · ON" : "REDUCED MOTION · OFF";
+        }
+
+        private static string TelemetryLabel()
+        {
+            return UiSettings.Telemetry ? "RUN TELEMETRY · ON" : "RUN TELEMETRY · OFF";
         }
 
         private Slider AddSettingSlider(
@@ -521,6 +546,22 @@ namespace DD.Prototype.UI
             var stack = new UiStack(_paneHost);
 
             stack.Add(UiFactory.Heading(ProfileViewModel.Title, _paneHost), UiFactory.LineHeight(UiType.H2));
+
+            // WP-022E name plate: the chosen title · badge on the heading's right, in the
+            // sakura accent - the one place the pick is shown next to "the name".
+            string plate = CosmeticsViewModel.NamePlate(ProfileService.CosmeticsSource);
+            if (!string.IsNullOrEmpty(plate))
+            {
+                TMP_Text plateText = UiFactory.Label(
+                    "NamePlate", _paneHost, plate, UiType.BodyStrong, UiColor.AccentSakura, TextAnchor.MiddleRight);
+                RectTransform plateRect = (RectTransform)plateText.transform;
+                plateRect.anchorMin = new Vector2(0.5f, 1f);
+                plateRect.anchorMax = new Vector2(1f, 1f);
+                plateRect.pivot = new Vector2(1f, 1f);
+                plateRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.H2));
+                plateRect.anchoredPosition = new Vector2(0f, 0f);
+            }
+
             stack.Gap(UiSpace.L); // WP-022D: the pane gained a two-column band; gaps above it tightened by 32 px
 
             if (!string.IsNullOrEmpty(model.Notice))

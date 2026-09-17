@@ -362,6 +362,14 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(vm.Badges[0].IsNew);
             Assert.AreEqual(1, vm.NewCount);
             Assert.IsTrue(CosmeticsViewModel.From(null).IsEmpty);
+
+            // WP-022E name plate: selected + unlocked names without the data prefix; badge alone when no title.
+            Assert.AreEqual("Veteran", CosmeticsViewModel.NamePlate(kaynak));
+            kaynak.Rozetler[0] = new CosmeticEntry("sakura", CosmeticKind.Badge, "Badge: Sakura", "Reach round 20", true, true, true);
+            Assert.AreEqual("Veteran  ·  Sakura", CosmeticsViewModel.NamePlate(kaynak));
+            kaynak.Unvanlar[0] = new CosmeticEntry("veteran", CosmeticKind.Title, "Veteran", "Finish 10 runs", false, false, true);
+            Assert.AreEqual("Sakura", CosmeticsViewModel.NamePlate(kaynak), "kilitli seçim plakaya çıkmaz");
+            Assert.AreEqual(string.Empty, CosmeticsViewModel.NamePlate(null));
         }
     }
 }

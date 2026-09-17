@@ -19,7 +19,7 @@ Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, 
 | PaneOpened | Ana menü paneli (Profile/Statistics/Achievements/Settings); başarım sayfası çevrildi (detail AchievementsPage, WP-022D) | `UiEvent.PaneOpened` → hafif kâğıt sesi (AP-011) | Panel yeniden kurulur; seçili sekme raised + krem kenar + krem tik | `MainMenuScreen.ShowPane`, `TurnAchievementPage` |
 | ChoiceSelected | Skin / silah kartı seçildi; profil unvanı / rozeti seçildi (WP-022D) | `UiEvent.ChoiceSelected` (detail Skin/Weapon/Title/Badge) → seçim tık | Kart raised + SELECTED rozeti; seçenek satırında krem işaret | `SelectionScreen.SelectSkin/SelectWeapon`, `MainMenuScreen.AddCosmeticOption` |
 | SliderChanged | Ayar kaydırıcısı değişti | `UiEvent.SliderChanged` → tik (adım başına) | Okuma metni yerinde güncellenir | `MainMenuScreen.AddSettingSlider` |
-| ToggleChanged | Reduced motion açık/kapalı | `UiEvent.ToggleChanged` → tık | Düğme etiketi ON/OFF | `MainMenuScreen` Settings |
+| ToggleChanged | Reduced motion / run telemetry (WP-022E) açık/kapalı | `UiEvent.ToggleChanged` (detail ReducedMotion/Telemetry) → tık | Düğme etiketi ON/OFF | `MainMenuScreen` Settings |
 | DialogOpened | Pause → "koşuyu bırak" onayı açıldı | `UiEvent.DialogOpened` → kısa vurgu | Alt katman `OpacityScrimUnderDialog`, odak diyaloğa | `PauseScreen.OpenConfirm` |
 | DialogClosed | Onay kapandı | `UiBack` (mevcut) | Odak iadesi | `PauseScreen.CloseConfirm` |
 | HudRoundStarted | Round başladı | `UiEvent.HudRoundStarted` (Run.RoundStarted ile aynı olay; S-08 tek kaynak seçer) | "ROUND N" banner 2,4 s | `RunHudScreen.OnRoundStarted` |

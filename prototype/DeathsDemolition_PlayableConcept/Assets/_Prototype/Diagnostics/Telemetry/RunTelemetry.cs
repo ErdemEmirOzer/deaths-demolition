@@ -218,7 +218,31 @@ namespace DD.Prototype.Diagnostics.Telemetry
 
         private static void OnRunStarted(int startRound)
         {
+            if (!s_enabled)
+            {
+                // Switched off from the Settings pane (WP-022E): no run is recorded and
+                // nothing is written until it is switched back on before a run.
+                return;
+            }
+
             BeginRun();
+        }
+
+        /// <summary>
+        /// WP-022E · the player's Settings toggle ("RUN TELEMETRY"). Persisted by the UI
+        /// (ui-settings.json); applied here at load and on change. Enabling subscribes
+        /// once; disabling keeps the subscription and skips the next runs (a run already
+        /// in progress still completes its file). The command line (-ddTelemetry 0)
+        /// still wins for bots and tests because it is parsed at install.
+        /// </summary>
+        public static void SetEnabled(bool enabled)
+        {
+            s_enabled = enabled;
+            if (enabled && !s_installed)
+            {
+                s_installed = true;
+                Subscribe();
+            }
         }
 
         public static void OnRoundStarted(int round)

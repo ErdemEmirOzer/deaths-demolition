@@ -17,6 +17,9 @@ namespace DD.Prototype.UI
         public int Quality = -1;
         public bool ReducedMotion;
 
+        /// <summary>WP-022E: local run telemetry (WP-045) on/off; default on, no identity data either way.</summary>
+        public bool Telemetry = true;
+
         public UiSettingsData Clamp()
         {
             Version = CurrentVersion;
@@ -163,6 +166,28 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>WP-022E: whether WP-045 run telemetry records runs (Settings toggle).</summary>
+        public static bool Telemetry
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_data.Telemetry;
+            }
+            set
+            {
+                EnsureLoaded();
+                if (value == s_data.Telemetry)
+                {
+                    return;
+                }
+
+                s_data.Telemetry = value;
+                ApplyTelemetry();
+                Persist();
+            }
+        }
+
         public static string QualityName(int index)
         {
             string[] names = QualitySettings.names;
@@ -196,12 +221,40 @@ namespace DD.Prototype.UI
             s_data.UiScale = loaded != null ? loaded.UiScale : defaultScale;
             s_data.MasterVolume = loaded != null ? loaded.MasterVolume : 1f;
             s_data.ReducedMotion = loaded != null && loaded.ReducedMotion;
+            s_data.Telemetry = loaded == null || loaded.Telemetry;
             int count = Mathf.Max(1, QualitySettings.names.Length);
             int quality = loaded != null && loaded.Quality >= 0 ? loaded.Quality : QualitySettings.GetQualityLevel();
             s_data.Quality = Mathf.Clamp(quality, 0, count - 1);
             s_data.Clamp();
             ApplyVolume();
             ApplyQuality();
+            ApplyTelemetry();
+        }
+
+        private static void ApplyTelemetry()
+        {
+            // The command line (-ddTelemetry 0, bots/tests) is parsed by RunTelemetry at
+            // install and is not overridden by a saved "on".
+            if (s_data.Telemetry && !DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled && CommandLineDisablesTelemetry())
+            {
+                return;
+            }
+
+            DD.Prototype.Diagnostics.Telemetry.RunTelemetry.SetEnabled(s_data.Telemetry);
+        }
+
+        private static bool CommandLineDisablesTelemetry()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] == "-ddTelemetry" && (args[i + 1] == "0" || string.Equals(args[i + 1], "off", StringComparison.OrdinalIgnoreCase) || string.Equals(args[i + 1], "false", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void ApplyVolume()

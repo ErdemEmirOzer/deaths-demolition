@@ -139,6 +139,42 @@ namespace DD.Prototype.UI
 
         public bool IsEmpty => Titles.Count == 0 && Badges.Count == 0;
 
+        /// <summary>
+        /// WP-022E name plate: "Blooded  ·  Ghost" from the selected title and badge (names
+        /// without their "Title: " / "Badge: " data prefix); empty when nothing is selected.
+        /// </summary>
+        public static string NamePlate(ICosmeticsSource source)
+        {
+            if (source == null)
+            {
+                return string.Empty;
+            }
+
+            string title = SelectedName(source.Titles);
+            string badge = SelectedName(source.Badges);
+            if (string.IsNullOrEmpty(title))
+            {
+                return badge;
+            }
+
+            return string.IsNullOrEmpty(badge) ? title : title + "  ·  " + badge;
+        }
+
+        private static string SelectedName(IReadOnlyList<CosmeticEntry> entries)
+        {
+            for (int i = 0; entries != null && i < entries.Count; i++)
+            {
+                if (entries[i].Selected && entries[i].Unlocked)
+                {
+                    string name = entries[i].Title ?? string.Empty;
+                    int colon = name.IndexOf(": ", StringComparison.Ordinal);
+                    return colon > 0 && colon < 12 ? name.Substring(colon + 2) : name;
+                }
+            }
+
+            return string.Empty;
+        }
+
         public static CosmeticsViewModel From(ICosmeticsSource source)
         {
             var model = new CosmeticsViewModel();

@@ -337,6 +337,19 @@ namespace DD.Prototype.Tests.PlayMode
             Onayla();
             yield return null;
             Assert.IsFalse(UiSettings.ReducedMotion);
+
+            // WP-022E: the run telemetry toggle is the last control; Submit flips it and
+            // RunTelemetry follows; flip back. Down wraps to the first slider.
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("Telemetry");
+            bool telemetryBefore = UiSettings.Telemetry;
+            Onayla();
+            yield return null;
+            Assert.AreNotEqual(telemetryBefore, UiSettings.Telemetry, "Submit telemetriyi çevirir");
+            Assert.AreEqual(UiSettings.Telemetry, DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled, "RunTelemetry ayarı izler");
+            Onayla();
+            yield return null;
+            Assert.AreEqual(telemetryBefore, UiSettings.Telemetry);
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.UI SCALE");
 

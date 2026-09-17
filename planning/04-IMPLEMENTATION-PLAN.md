@@ -1554,3 +1554,20 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 **Teknik not — ADR-010-3 eki (WP-050): satır zırh kapsamı.** Tek kaynaklı yazar (kod) → asset; kapsam listesi boşsa eski anlam; listeliyse yalnız o tier'lar. Alternatif (satır değerinin tier formülüyle `max`'ı) reddedildi: ADR-010-3 "satır formülü değiştirir" sözleşmesini ve WP-010 testlerini bozar. **Spawn yol sözleşmesi:** `PathCachedAt ≥ 0` = "oyuncuya karşı sorgulandı"; Invalid + bekleyen → spawn yok; Invalid + taze → gevşeme (gerçek bake/konum sorunu).
 
 **Devirler:** DEC-085 satırı (S-04); WP-038 sonrası NavMesh yeniden doğrulama (F); S-04 EconomySimulator yeniden koşusu (Ö-2/Ö-5 sonrası TTK/risk); Ö-4 (S-02) Ö-2 sonrası ölçülür (WP-041 kabul sırası); `RegionalArmorSliceTests` küçük-nesne penceresi main'de aralıklı (S-10).
+
+## WP-022E — UI/HUD v2.4: ad plakası, telemetri ayarı, dükkân dal kapısı görünümü, AP-013 hazırlığı
+
+**Durum:** Tamamlandı (S-09, 2026-09-17, HIZLI HAT §6; kredi 0). Dal `wp-022e-ui-polish` = main `e0ef509` (WP-022D `4a9463e` dâhil) + tek commit; ff-merge + etiket C-00.
+
+**Yürütme promptu:** `planning/work-packages/WP-022E-UI-NAMEPLATE-TELEMETRY.md` (C-00 hız modu talimatı).
+
+**Kapsam ve sonuç:**
+
+- (A) Telemetri ayarı — Settings panelinde "RUN TELEMETRY · ON/OFF" (toggle düğmesi, pad Submit; `ToggleChanged` detail Telemetry) + iki satırlık açıklama (yerel dosya, profil/ad yok). `UiSettingsData.Telemetry` (varsayılan true; eski dosya anahtarsız → true), `UiSettings.Telemetry` yazınca `RunTelemetry.SetEnabled` + kayıt; yüklemede uygulanır; komut satırı `-ddTelemetry 0` (bot/test) kayıtlı "açık"ı ezmez. **WP-045 modülüne dokunuş (S-09, 4 satır):** `RunTelemetry.SetEnabled(bool)` (açınca bir kez abone olur; kapatınca abonelik kalır, `OnRunStarted` kayıt başlatmaz; süren koşu dosyasını tamamlar).
+- (B) Ad plakası — `CosmeticsViewModel.NamePlate(ICosmeticsSource)`: seçili **ve açık** unvan · rozet adları ("Title: " ön eksiz); Profil başlığının sağında `BodyStrong` sakura; Results eyebrow "RUN RESULTS · BLOODED". HUD'da ad alanı yok (bilinçli: oyun içi plaka yok).
+- (C) Dükkân dal kapısı — WP-034/042 `UpgradeCardKind.WeaponCore/Utility` eyebrow'u + tier pip'leri görünümü zaten taşıyor; Selection CORE glif satırıyla (022C) aynı dil — kod değişmedi.
+- (D) AP-013 — modeller WP-042B'de (S-02), ikon sheet'i yok; `UiArt.RosterGlyph` yer tutucu sözleşmesi (022C) ikonlar `Resources/UI/AP013/` altına `Weapon.<HudIconId>` anahtarıyla düşünce değişiklik gerektirmez.
+
+**Testler:** EditMode 55/55 (`UiArtThemeTests` ayar dosyası +Telemetry alanı ve `RunTelemetry.Enabled` izleme, `ProfilePresentationTests` +ad plakası), PlayMode 16/16 (`UiArtSliceTests` Settings pad yolu +telemetri toggle'ı); dev build ×2 (ea: paket; eb: yakalama ajanı `-ddUiPickTitle` opt-in bayrağı — kilidi açık bir unvanı seçip plakayı kanıtlar, profil sonra restore); yakalamalar `wp-022d/evidence/captures-e/` (settings, profile plakalı, results eyebrow "RUN RESULTS · BLOODED"); restore OK ×3. AD: v004 turu kapsamında (görsel delta: bir toggle satırı + plaka metni); ayrı tur açılmadı.
+
+**Devirler:** WP-045 sahibi → `RunTelemetry.SetEnabled` onayı (tek satır); AP-013 ikon sheet'i → P-06/S-02; AD v004 SHOULD'ları (çubuk ray hairline'ı) sonraki UI paketi.

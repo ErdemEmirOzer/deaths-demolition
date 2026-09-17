@@ -32,6 +32,9 @@ namespace DD.Prototype.UI
         private const string SizeFlag = "-ddSize";
         private const string DelayFlag = "-ddUiCaptureDelay";
 
+        /// <summary>WP-022E: <c>-ddUiPickTitle &lt;id&gt;</c> selects an already-unlocked title before the capture (name-plate evidence; the profile is restored after every capture run, as after every smoke).</summary>
+        private const string PickTitleFlag = "-ddUiPickTitle";
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
         {
@@ -43,7 +46,7 @@ namespace DD.Prototype.UI
 
             var carrier = new GameObject("UiCaptureAgent");
             UnityEngine.Object.DontDestroyOnLoad(carrier);
-            carrier.AddComponent<Driver>().Configure(screen.ToLowerInvariant(), Arg(OutFlag), Arg(SizeFlag), Arg(DelayFlag));
+            carrier.AddComponent<Driver>().Configure(screen.ToLowerInvariant(), Arg(OutFlag), Arg(SizeFlag), Arg(DelayFlag), Arg(PickTitleFlag));
         }
 
         private static string Arg(string name)
@@ -66,10 +69,12 @@ namespace DD.Prototype.UI
             private string _out;
             private string _size;
             private float _delay = 2f;
+            private string _pickTitle;
 
-            internal void Configure(string screen, string output, string size, string delay)
+            internal void Configure(string screen, string output, string size, string delay, string pickTitle)
             {
                 _screen = screen;
+                _pickTitle = pickTitle;
                 _out = string.IsNullOrEmpty(output) ? Path.Combine(Application.persistentDataPath, "ui-capture-" + screen + ".png") : output;
                 _size = size;
                 float d;
@@ -87,6 +92,12 @@ namespace DD.Prototype.UI
                 // -ddSize is accepted and logged for parity with the WP-011 capture agent.
                 yield return WaitScene(PrototypeScenes.MainMenu, 20f);
                 yield return new WaitForSecondsRealtime(1f);
+
+                if (!string.IsNullOrEmpty(_pickTitle) && DD.Prototype.Profile.ProfileService.CosmeticsSource != null)
+                {
+                    bool picked = DD.Prototype.Profile.ProfileService.CosmeticsSource.SelectTitle(_pickTitle);
+                    Debug.Log("[UiCapture] pick title " + _pickTitle + ": " + (picked ? "selected" : "refused (locked?)"));
+                }
 
                 switch (_screen)
                 {

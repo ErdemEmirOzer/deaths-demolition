@@ -90,7 +90,10 @@ namespace DD.Prototype.UI
             string ending = string.IsNullOrEmpty(_model.KilledBy)
                 ? _model.Eyebrow
                 : _model.Eyebrow + "  ·  " + UiFactory.Clip(_model.KilledBy, 32);
-            float headerHeight = BuildHeader(ResultsViewModel.Title, ending, _model.Loadout);
+            // WP-022E name plate: "RUN RESULTS  ·  BLOODED" when a title is chosen.
+            string plate = CosmeticsViewModel.NamePlate(ProfileService.CosmeticsSource);
+            string eyebrow = string.IsNullOrEmpty(plate) ? ResultsViewModel.Title : ResultsViewModel.Title + "  ·  " + plate.ToUpperInvariant();
+            float headerHeight = BuildHeader(eyebrow, ending, _model.Loadout);
 
             float top = headerHeight + (int)UiSpace.XXL;
 

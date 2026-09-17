@@ -223,15 +223,21 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(UiTheme.UiScaleMin, UiSettings.UiScale, 1e-4f);
                 UiSettings.UiScale = 1.1f;
                 UiSettings.ReducedMotion = true;
+                UiSettings.Telemetry = false; // WP-022E
                 Assert.IsTrue(File.Exists(path), "ayarlar dosyaya yazılmalı: " + path);
                 string json = File.ReadAllText(path);
                 StringAssert.Contains("\"UiScale\": 1.1", json);
                 StringAssert.Contains("\"ReducedMotion\": true", json);
+                StringAssert.Contains("\"Telemetry\": false", json);
+                Assert.IsFalse(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled, "ayar RunTelemetry'ye uygulanır");
 
                 // Reload from disk: the same values come back, clamped.
                 UiSettings.SetPathOverride(path);
                 Assert.AreEqual(1.1f, UiSettings.UiScale, 1e-4f, "dosyadan geri okunmalı");
                 Assert.IsTrue(UiSettings.ReducedMotion);
+                Assert.IsFalse(UiSettings.Telemetry);
+                UiSettings.Telemetry = true;
+                Assert.IsTrue(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled);
 
                 Vector2 reference = UiTokens.ReferenceResolution / UiSettings.UiScale;
                 Assert.AreEqual(1920f / 1.1f, reference.x, 0.01f, "ölçek 1.1 referans çerçeveyi 1/1.1 küçültmeli (UI büyür)");
