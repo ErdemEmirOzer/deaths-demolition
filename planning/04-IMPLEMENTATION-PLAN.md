@@ -1941,3 +1941,11 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 **Testler:** `SpecialWeaponHudAllocationTests.DusmanDurumIsaretleri_NetVeDaze_GorunurVeSifirAyirma` (Web + Push tepkileri → 2 işaret görünür, ProfilerRecorder kare sayacı HUD-katman açık maks 8 ↔ kapalı 8 → 0 ek ayırma; alan bitince park) — fixture 3/3 (ia); `UiArtSliceTests` 5/5; EditMode 15/15; dev build; kredi 0.
 
 **Devirler:** AD turu (r8/r12 + Special + NET/DAZED kareleri) → S-10 run4/5 kareleri gelince; S-03 → `IsPulled` durumu.
+
+## WP-058C — Audio: AP-015P plakaları → ayak sesi varyantları (WP-038) + düşman Special tepki vokalleri (WP-055) (kredi 0)
+
+**Durum:** Tamamlandı (S-08, 2026-09-17). Branch `wp-058c` (taban `main` = `5e417fc` = WP-055; WP-038 r2 üstünden ff), **tek commit**; kredi 0.
+
+- WP-038 plakaları `SurfaceTag` Dirt/Stone/Water taşır; daha ince ayak kimliği için `AudioSurfaceHints.FootstepVariant` seam'i (Audio) + `Ap005SurfaceTags.FootstepVariantFor` (DD.Art): plaka adı `AP015_paving_*` → **FootstepPavement**, `AP015_ground_center_*` → **FootstepGravel** (çakıl avlusu), AP-015 su yüzeyi → **FootstepWaterShallow**; diğerleri → tür varsayılanı (taş rota → FootstepStone, kenar zemin → FootstepDirt). Collider başına önbellek. `FootstepWaterDeep` rezerve (derinlik sinyali yok; havuz havzası yürünmez).
+- **WP-055 tepkileri:** `EnemyCombatEvents.sw_push / sw_web / sw_pull` → `AudioEventRouter.OnCombatBeat` → **ZombieReactPush / ZombieReactWeb / ZombieReactPull** (`AudioMixPlan.SpecialReaction`: 3D, ağır tier pitch 0,84; pull beden başına 0,25 s kısma). AP-011 v010 (Fable tasarım, kredi 0): 3 kimlik / 9 dosya — vokal + foley (sendeleme+"uff"+ayak kayması / boğuk hırıltı+tılsım sıkılaşması+ip / kısa hırıltı+sürüklenme). Manifest **v010 = 181 kimlik / 417 dosya**.
+- **Ölçüm/test (§6 tek acquire, tek build):** EditMode Audio+HandoffIntegrity+UiEvents+ProjectIntegrity **42/42** (+plaka ad kuralı); PlayMode `AudioSliceTests` **19/19** (+`SpecialTepkisi_SwPushBeat_TepkiVokali`: sw_push vokal, sw_pull kısma; ayak testi plaka varyantıyla; SurfaceTags 2 738 = 2 664 + 74 plaka); release build + e1/e4 smoke 0 hata (smoke slotu), restore 6/6.

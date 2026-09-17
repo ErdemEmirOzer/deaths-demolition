@@ -302,15 +302,28 @@ namespace DD.Prototype.Tests.PlayMode
             events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootLeft);
             Assert.AreEqual(once + 1, r.FootstepCount, "foot_l ayak sesi üretmedi.");
             // WP-021C: the surface under the rig is whatever the world's tags + routes say (Default still reads as stone).
-            SurfaceKind altta = YuzeyAltinda(_s.Rig.transform.position);
-            AudioSoundId beklenen = AudioEventRouter.FootstepFor(altta);
-            Assert.AreEqual(beklenen, _d.LastPlayed, "Ayak sesi altındaki yüzeye göre çalmalı (" + altta + ").");
+            AudioSoundId beklenen = AyakBeklenen(_s.Rig.transform.position, out SurfaceKind altta);
+            Assert.AreEqual(beklenen, _d.LastPlayed, "Ayak sesi altındaki yüzeye/plakaya göre çalmalı (" + altta + ").");
             yield return new WaitForSecondsRealtime(0.2f);   // PlayerFootstep MinRetrigger 0.08 s
             events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootRight);
             Assert.AreEqual(once + 2, r.FootstepCount, "foot_r ayak sesi üretmedi.");
             Assert.AreEqual(AudioSoundId.FootstepWood, AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Wood));
             Assert.AreEqual(AudioSoundId.FootstepWater, AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Water));
             Debug.Log("[DD-TEST] wp021b.footstep " + r.Describe());
+        }
+
+        /// <summary>WP-058B: the expected footstep = plate variant (AudioSurfaceHints.FootstepVariant) or the kind's default.</summary>
+        private static AudioSoundId AyakBeklenen(Vector3 root, out SurfaceKind kind)
+        {
+            int mask = (1 << DD.Prototype.Core.PrototypeLayers.Environment) | (1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder);
+            if (Physics.Raycast(root + Vector3.up * 0.4f, Vector3.down, out RaycastHit hit, 1.2f, mask, QueryTriggerInteraction.Ignore))
+            {
+                kind = AudioSurfaceHints.Resolve(hit.collider, hit.point);
+                return AudioSurfaceHints.Footstep(hit.collider, hit.point, kind, AudioEventRouter.FootstepFor);
+            }
+
+            kind = SurfaceKind.Default;
+            return AudioEventRouter.FootstepFor(kind);
         }
 
         private static SurfaceKind YuzeyAltinda(Vector3 root)
@@ -527,6 +540,27 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Less(_d.Mixer.DuckLevel(AudioBus.Music), 0.95f, "HudLowHealth müzik bus'ını duck etmeli (−3 dB).");
             yield return new WaitForSecondsRealtime(1.2f);
             Assert.Greater(_d.Mixer.DuckLevel(AudioBus.Music), 0.9f, "duck 1 s içinde bırakılmalı");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator SpecialTepkisi_SwPushBeat_TepkiVokali()
+        {
+            AudioEventRouter r = _d.Router;
+            ZombieEnemy z = _s.Dogur(_s.Zemin(0f, 5f));
+            yield return null;
+            int once = r.ReactionCount;
+            var info = new DD.Prototype.Enemies.EnemyCombatEventInfo(DD.Prototype.Enemies.EnemyCombatEventKind.SpecialPush, z.transform, z.Tier, z.LifeId,
+                z.transform.position, Vector3.forward, DD.Prototype.Core.Config.ArmorSlot.None, false, 0f);
+            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in info);
+            Assert.AreEqual(once + 1, r.ReactionCount, "sw_push tepki vokali üretmedi.");
+            Assert.AreEqual(AudioSoundId.ZombieReactPush, _d.LastPlayed);
+            var pull = new DD.Prototype.Enemies.EnemyCombatEventInfo(DD.Prototype.Enemies.EnemyCombatEventKind.SpecialPull, z.transform, z.Tier, z.LifeId,
+                z.transform.position, Vector3.forward, DD.Prototype.Core.Config.ArmorSlot.None, false, 0f);
+            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in pull);
+            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in pull);   // same body, same frame → throttled to one
+            Assert.AreEqual(once + 2, r.ReactionCount, "sw_pull beden başına 0,25 s kısma.");
+            Debug.Log("[DD-TEST] wp058c.react " + r.Describe());
         }
 
         // ================================================================== WP-058 · WP-056 Special kullanım sesleri

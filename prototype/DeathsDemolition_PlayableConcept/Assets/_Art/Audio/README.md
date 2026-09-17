@@ -49,3 +49,8 @@
 - **MusicTension retuned +4 st** (designer decision after the Fable v008 gate: the stem sat off the base's tonal centre) by resample + phase-vocoder stretch back to the exact stem length, so the four layers stay lock-step (`asset-production/AP-011/tools/ap011_music_arrange.py`, `TENSION_SHIFT_ST`).
 - Phase meter now reports BS.1770 loudness (K-weighted, gated) instead of dBFS RMS; `MusicDirector.CombatTrim` trims the score −2 dB at threat layer 3; snapshot UI trims RoundBreak 0 dB / Menu −1 dB.
 - `AmbPondBed` re-derived (crest 26.5 → 15.2 dB, −22 LUFS on target).
+
+## WP-058C — plates → footstep variants (WP-038) and enemy Special reactions (WP-055), 0 credits
+
+- WP-038 plates carry Dirt / Stone / Water tags; `AudioSurfaceHints.FootstepVariant` (set by `Ap005SurfaceTags.FootstepVariantFor`) refines by plate id: `AP015_paving_*` → FootstepPavement, `AP015_ground_center_*` → FootstepGravel (the gravel courtyard), AP-015 water surface → FootstepWaterShallow; everything else keeps the kind's default clip. FootstepWaterDeep stays reserved (no wading-depth signal).
+- WP-055 `sw_push / sw_web / sw_pull` beats → ZombieReactPush / Web / Pull (AP-011 v010, Fable design): the body's side of the Kagura push, Ofuda net and Tide pull (the field's touch is SpecialUsage.Hit). Manifest v010 = 181 ids / 417 files.

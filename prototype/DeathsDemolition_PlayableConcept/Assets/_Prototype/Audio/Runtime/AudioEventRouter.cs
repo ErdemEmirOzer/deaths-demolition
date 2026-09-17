@@ -164,6 +164,7 @@ namespace DD.Prototype.Audio
             _drops.Clear();
             _animOwner.Clear();
             s_breakSounds.Clear();
+            _pullLast.Clear();
         }
 
         // ------------------------------------------------------------------ WP-021B · ADR-018-1 animation events
@@ -287,8 +288,33 @@ namespace DD.Prototype.Audio
                 case EnemyCombatEventKind.SpawnLand:
                     if (_play(AudioMixPlan.ZombieAggro(AudioEventMap.ZombieAggro(info.Tier), w), head, 1f, 55)) AggroCount++;
                     break;
+                // WP-058C · WP-055 Special reactions (the body's side of the Kagura push / Ofuda web / Tide pull)
+                case EnemyCombatEventKind.SpecialPush:
+                    if (_play(AudioMixPlan.SpecialReaction(AudioSoundId.ZombieReactPush, w), head, 1f, 44)) ReactionCount++;
+                    break;
+                case EnemyCombatEventKind.SpecialWeb:
+                    if (_play(AudioMixPlan.SpecialReaction(AudioSoundId.ZombieReactWeb, w), head, 1f, 44)) ReactionCount++;
+                    break;
+                case EnemyCombatEventKind.SpecialPull:
+                {
+                    // Pull ticks repeat every few frames per body: one voice per body per 0.25 s.
+                    float now = Time.unscaledTime;
+                    if (info.Body != null)
+                    {
+                        int id = info.Body.GetInstanceID();
+                        if (_pullLast.TryGetValue(id, out float last) && now - last < 0.25f) break;
+                        _pullLast[id] = now;
+                    }
+
+                    if (_play(AudioMixPlan.SpecialReaction(AudioSoundId.ZombieReactPull, w), head, 0.8f, 30)) ReactionCount++;
+                    break;
+                }
             }
         }
+
+        private readonly Dictionary<int, float> _pullLast = new Dictionary<int, float>(48);
+        /// <summary>WP-058C: Special reaction voices (sw_push / sw_web / sw_pull) played.</summary>
+        public int ReactionCount { get; private set; }
 
         // ------------------------------------------------------------------ WP-058 · WP-056 SpecialUsageEvent
 
@@ -397,7 +423,7 @@ namespace DD.Prototype.Audio
         private void OnFootstep(CharacterAnimationEvents source, float gain = 1f)
         {
             Vector3 root = source.transform.position;
-            SurfaceKind surface = SurfaceUnder(root);
+            SurfaceKind surface = SurfaceUnder(root, out Collider under, out Vector3 underPoint);
             ZombieEnemy z = OwnerOf(source);
 
             if (z != null)
@@ -425,7 +451,8 @@ namespace DD.Prototype.Audio
             }
 
             bool running = rig.Motor != null && rig.Motor.Speed01 > 0.7f;
-            if (_play(AudioMixPlan.PlayerFootstep(FootstepFor(surface), running), root, gain, 20))
+            AudioSoundId step = AudioSurfaceHints.Footstep(under, underPoint, surface, FootstepFor);   // WP-058B: plate variants (gravel / pavement / shallow water)
+            if (_play(AudioMixPlan.PlayerFootstep(step, running), root, gain, 20))
             {
                 FootstepCount++;
             }
@@ -470,17 +497,19 @@ namespace DD.Prototype.Audio
             }
         }
 
-        private SurfaceKind SurfaceUnder(Vector3 root)
+        private SurfaceKind SurfaceUnder(Vector3 root, out Collider under, out Vector3 point)
         {
             int mask = (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
             int n = Physics.RaycastNonAlloc(root + Vector3.up * FootRayUp, Vector3.down, _footHits, FootRayDown, mask, QueryTriggerInteraction.Ignore);
-            float best = float.MaxValue; SurfaceKind kind = SurfaceKind.Default;
+            float best = float.MaxValue; SurfaceKind kind = SurfaceKind.Default; under = null; point = root;
             for (int i = 0; i < n; i++)
             {
                 if (_footHits[i].distance < best)
                 {
                     best = _footHits[i].distance;
-                    kind = AudioSurfaceHints.Resolve(_footHits[i].collider, _footHits[i].point);   // WP-021C: tag + route refinement
+                    under = _footHits[i].collider;
+                    point = _footHits[i].point;
+                    kind = AudioSurfaceHints.Resolve(under, point);   // WP-021C: tag + route refinement
                 }
             }
 
@@ -679,8 +708,8 @@ namespace DD.Prototype.Audio
 
         public string Describe()
         {
-            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · regionBreak {16} · foley {17} · special {18} · tracked {13}",
-                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount, RegionBreakCount, FoleyCount, SpecialUsageCount);
+            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · regionBreak {16} · foley {17} · special {18} · react {19} · tracked {13}",
+                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount, RegionBreakCount, FoleyCount, SpecialUsageCount, ReactionCount);
         }
     }
 }

@@ -256,6 +256,11 @@ namespace DD.Prototype.Audio
         SwFieldEndTide = 318,
         SwHitKagura = 319,
         SwHitOfuda = 320,
-        SwHitTide = 321
+        SwHitTide = 321,
+
+        // ---- WP-058C · enemy Special reactions (WP-055 sw_push / sw_web / sw_pull beats; AP-011 v010, derived, 0 cr)
+        ZombieReactPush = 330,
+        ZombieReactWeb = 331,
+        ZombieReactPull = 332
     }
 }

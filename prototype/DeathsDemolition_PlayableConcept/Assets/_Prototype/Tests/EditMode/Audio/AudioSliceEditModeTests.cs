@@ -162,6 +162,18 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.None, AudioEventMap.WeaponFoley(DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, DD.Prototype.Characters.CharacterAnimationEvent.FootLeft));
         }
 
+        /// <summary>WP-058B · AP-015P plate → footstep variant rule (WP-038 plates carry Dirt/Stone/Water tags only).</summary>
+        [Test]
+        public void AyakSesi_PlakaVaryantlari_AdKurali()
+        {
+            Assert.AreEqual(AudioSoundId.FootstepPavement, DD.Art.Ap005SurfaceTags.FootstepVariantForName("AP015_paving_quiet_01", SurfaceKind.Stone));
+            Assert.AreEqual(AudioSoundId.FootstepGravel, DD.Art.Ap005SurfaceTags.FootstepVariantForName("AP015_ground_center_01", SurfaceKind.Dirt));
+            Assert.AreEqual(AudioSoundId.None, DD.Art.Ap005SurfaceTags.FootstepVariantForName("AP015_ground_east_01", SurfaceKind.Dirt), "kenar zemin = toprak (varsayılan)");
+            Assert.AreEqual(AudioSoundId.None, DD.Art.Ap005SurfaceTags.FootstepVariantForName("AP015_route_00", SurfaceKind.Stone), "taş rota = FootstepStone varsayılanı");
+            Assert.AreEqual(AudioSoundId.FootstepWaterShallow, DD.Art.Ap005SurfaceTags.FootstepVariantForName("AP015_water_pond", SurfaceKind.Water));
+            Assert.AreEqual(AudioSoundId.None, DD.Art.Ap005SurfaceTags.FootstepVariantForName("AP005_i0001", SurfaceKind.Wood));
+        }
+
         /// <summary>WP-058 · WP-056 SpecialUsageEvent: every (Special, kind) pair resolves to its own voice; Activated / Deactivated are covered.</summary>
         [Test]
         public void SpecialKullanim_HerSpecialVeKind_KendiSesi()

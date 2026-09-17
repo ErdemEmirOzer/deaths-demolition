@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
   _manifestVersion: ap011-v010
-  _sourceHash: c44bfdbc3647b27987dc8fc872c31d2c9aef25bd98762958704cea139beda0ce
+  _sourceHash: 43b93645c908f4de63b16537f911d6f281db71689191af8ad1afab945bde141f
   _entries:
   - Sound: 10
     Clips:
@@ -2582,3 +2582,52 @@ MonoBehaviour:
     BitDepth: 24
     Layers: 'derived (v009, no credits): ImpactWater_01.wav@0ms 0dB -6st + ZombieStagger_01.wav@15ms
       -12dB + noise:pink@0ms -10dB'
+  - Sound: 330
+    Clips:
+    - {fileID: 8300000, guid: 7183407d2c227415db67b1e82b39162d, type: 3}
+    - {fileID: 8300000, guid: 7ed1e0cff4a5042c19e910ca1143b1cc, type: 3}
+    - {fileID: 8300000, guid: 9cc376ebdfbaf498db649776f7666e7c, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -2.53
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieHitStandard_03.wav,
+      exports/ZombieStagger_01.wav, exports/ZombieStepHeavy_02.wav, noise:pink
+    NoiseFloorDb: -85.8
+    DcDb: -154.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v010, no credits): ZombieStagger_01.wav@0ms 0dB + ZombieHitStandard_03.wav@20ms
+      -3dB -1st + ZombieStepHeavy_02.wav@60ms -10dB -2st + noise:pink@0ms -14dB'
+  - Sound: 331
+    Clips:
+    - {fileID: 8300000, guid: 54f979201e3e74b3fab769aaf8c27680, type: 3}
+    - {fileID: 8300000, guid: d7c3ed73e84894e4eb3a010f95b94eba, type: 3}
+    - {fileID: 8300000, guid: 4ec4404d6ef01491595c859843e5b618, type: 3}
+    Loop: 0
+    Lufs: -21.19
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_01.wav,
+      exports/ZombieHitStandard_02.wav, noise:pink, tone:900,1350@1.6
+    NoiseFloorDb: -85.8
+    DcDb: -177.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v010, no credits): ZombieHitStandard_02.wav@0ms 0dB -1st +
+      ImpactPaper_01.wav@0ms -6dB +1st + noise:pink@120ms -16dB + tone:900,1350@1.6@150ms
+      -18dB'
+  - Sound: 332
+    Clips:
+    - {fileID: 8300000, guid: 07d45f72e99d7459d8fe8c3795961d3d, type: 3}
+    - {fileID: 8300000, guid: 494b5d290fc55486a93714921320c8ed, type: 3}
+    - {fileID: 8300000, guid: c5b0c367f741d4ab6bc696b90d458785, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepDirt_03.wav,
+      exports/ZombieIdle_02.wav, exports/ZombieStepLight_03.wav
+    NoiseFloorDb: -94.8
+    DcDb: -173.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v010, no credits): ZombieIdle_02.wav@0ms 0dB +2st + FootstepDirt_03.wav@20ms
+      -6dB -2st + ZombieStepLight_03.wav@60ms -10dB'

@@ -134,7 +134,38 @@ namespace DD.Art
             s_routes = placement;
             AudioSurfaceHints.Refine = RefineByRoute;
             RegisterPond(placement);
+            AudioSurfaceHints.FootstepVariant = FootstepVariantFor;   // WP-058B: AP-015P plate variants
             return added;
+        }
+
+        // ---- WP-058B · AP-015P plates → footstep variants (WP-038 tags plates Dirt / Stone / Water only)
+
+        private static readonly Dictionary<int, AudioSoundId> s_footVariant = new Dictionary<int, AudioSoundId>(256);
+
+        /// <summary>
+        /// Plate id (the SurfaceTag owner's name, ArtSurfaceImporter) → finer footstep: paving plates = cut-stone
+        /// pavement, the centre ground plate = the gravel courtyard, water surfaces = shallow water (deep water waits
+        /// for a wading-depth signal). Anything else → None (the kind's default clip). Cached per collider.
+        /// </summary>
+        public static AudioSoundId FootstepVariantFor(Collider collider, Vector3 point, SurfaceKind kind)
+        {
+            if (collider == null) return AudioSoundId.None;
+            int key = collider.GetInstanceID();
+            if (s_footVariant.TryGetValue(key, out AudioSoundId cached)) return cached;
+            SurfaceTag tag = collider.GetComponentInParent<SurfaceTag>();
+            AudioSoundId v = FootstepVariantForName(tag != null ? tag.gameObject.name : collider.gameObject.name, kind);
+            s_footVariant[key] = v;
+            return v;
+        }
+
+        /// <summary>Name rule (public for the EditMode test).</summary>
+        public static AudioSoundId FootstepVariantForName(string plateName, SurfaceKind kind)
+        {
+            if (string.IsNullOrEmpty(plateName)) return AudioSoundId.None;
+            if (plateName.StartsWith("AP015_paving", System.StringComparison.Ordinal)) return AudioSoundId.FootstepPavement;
+            if (plateName.StartsWith("AP015_ground_center", System.StringComparison.Ordinal)) return AudioSoundId.FootstepGravel;
+            if (kind == SurfaceKind.Water && plateName.StartsWith("AP015_", System.StringComparison.Ordinal)) return AudioSoundId.FootstepWaterShallow;
+            return AudioSoundId.None;
         }
 
         /// <summary>
@@ -201,6 +232,7 @@ namespace DD.Art
             UnknownFamilies = 0;
             s_unknown.Clear();
             s_routes = null;
+            s_footVariant.Clear();
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 

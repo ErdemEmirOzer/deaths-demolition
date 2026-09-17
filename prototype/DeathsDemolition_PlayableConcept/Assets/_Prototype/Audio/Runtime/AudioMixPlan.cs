@@ -644,6 +644,16 @@ namespace DD.Prototype.Audio
             return Interface(AudioSoundId.UiTransition, 0.55f, 85f, 0f, 1, 0.3f);
         }
 
+        /// <summary>WP-058C: the body's reaction to a Special (WP-055 sw_* beats) - positional, under the field touch, heavy tiers deeper.</summary>
+        public static AudioPlacement SpecialReaction(AudioSoundId sound, EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.7f : 0.58f, 42f, 6, 0.04f);
+            p.Spatial = 0.9f;
+            p.PitchJitter = 0.06f;
+            p.Pitch = weight == EnemyTierWeight.Heavy ? 0.84f : 1f;
+            return p;
+        }
+
         /// <summary>WP-058: the Special's own fire character over the shared HeavyWeaponFire body (player's hand, near).</summary>
         public static AudioPlacement SpecialFire(AudioSoundId sound)
         {

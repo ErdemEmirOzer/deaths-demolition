@@ -23,6 +23,29 @@ namespace DD.Prototype.Audio
         /// <summary>Refinements applied (answer differed from the collider's). Test / F1 readout.</summary>
         public static int RefinedCount { get; private set; }
 
+        /// <summary>
+        /// WP-058B (WP-038 AP-015P plates): a finer footstep than <see cref="SurfaceKind"/> can carry - gravel field,
+        /// cut-stone pavement, shallow water - decided by the world assembly from the plate under the foot.
+        /// (collider, point, resolved kind) → sound, or None to fall back to the kind's default clip.
+        /// </summary>
+        public static Func<Collider, Vector3, SurfaceKind, AudioSoundId> FootstepVariant;
+
+        /// <summary>Footstep sound for a hit: the world's variant when it has one, else the kind's default.</summary>
+        public static AudioSoundId Footstep(Collider collider, Vector3 point, SurfaceKind kind, Func<SurfaceKind, AudioSoundId> byKind)
+        {
+            Func<Collider, Vector3, SurfaceKind, AudioSoundId> variant = FootstepVariant;
+            if (variant != null)
+            {
+                AudioSoundId v = variant(collider, point, kind);
+                if (v != AudioSoundId.None)
+                {
+                    return v;
+                }
+            }
+
+            return byKind(kind);
+        }
+
         public static SurfaceKind Resolve(Collider collider, Vector3 point)
         {
             SurfaceKind kind = SurfaceResolver.Resolve(collider);
@@ -51,6 +74,7 @@ namespace DD.Prototype.Audio
         private static void ResetStatics()
         {
             Refine = null;
+            FootstepVariant = null;
             RefinedCount = 0;
             PondCenters.Clear();
         }

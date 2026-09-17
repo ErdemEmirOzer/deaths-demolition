@@ -307,6 +307,9 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.SwHitKagura: return BuildFleshHit(false, ref rng);
                 case AudioSoundId.SwHitOfuda: return BuildImpactPaper(ref rng);
                 case AudioSoundId.SwHitTide: return BuildImpactWater(ref rng);
+                case AudioSoundId.ZombieReactPush: return BuildFleshHit(false, ref rng);
+                case AudioSoundId.ZombieReactWeb: return BuildImpactPaper(ref rng);
+                case AudioSoundId.ZombieReactPull: return BuildImpactDirt(ref rng);
 
                 default:
                     return BuildImpactDefault(ref rng);

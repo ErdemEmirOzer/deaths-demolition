@@ -3963,6 +3963,78 @@
    "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactMetal_01.wav, exports/ZombieIdle_02.wav, exports/ZombieStepHeavy_01.wav, tone:41,62,87@1.1"
   },
   {
+   "sound": "ZombieReactPull",
+   "event": "EnemyCombatEvents.sw_pull",
+   "files": [
+    "ZombieReactPull_01.wav",
+    "ZombieReactPull_02.wav",
+    "ZombieReactPull_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -94.8,
+   "dcDb": -173.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -198.6,
+   "layers": "derived (v010, no credits): ZombieIdle_02.wav@0ms 0dB +2st + FootstepDirt_03.wav@20ms -6dB -2st + ZombieStepLight_03.wav@60ms -10dB",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepDirt_03.wav, exports/ZombieIdle_02.wav, exports/ZombieStepLight_03.wav"
+  },
+  {
+   "sound": "ZombieReactPush",
+   "event": "EnemyCombatEvents.sw_push",
+   "files": [
+    "ZombieReactPush_01.wav",
+    "ZombieReactPush_02.wav",
+    "ZombieReactPush_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -2.53,
+   "noiseFloorDb": -85.8,
+   "dcDb": -154.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -196.1,
+   "layers": "derived (v010, no credits): ZombieStagger_01.wav@0ms 0dB + ZombieHitStandard_03.wav@20ms -3dB -1st + ZombieStepHeavy_02.wav@60ms -10dB -2st + noise:pink@0ms -14dB",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieHitStandard_03.wav, exports/ZombieStagger_01.wav, exports/ZombieStepHeavy_02.wav, noise:pink"
+  },
+  {
+   "sound": "ZombieReactWeb",
+   "event": "EnemyCombatEvents.sw_web",
+   "files": [
+    "ZombieReactWeb_01.wav",
+    "ZombieReactWeb_02.wav",
+    "ZombieReactWeb_03.wav"
+   ],
+   "loop": false,
+   "lufs": -21.19,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -85.8,
+   "dcDb": -177.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -213.0,
+   "layers": "derived (v010, no credits): ZombieHitStandard_02.wav@0ms 0dB -1st + ImpactPaper_01.wav@0ms -6dB +1st + noise:pink@120ms -16dB + tone:900,1350@1.6@150ms -18dB",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_01.wav, exports/ZombieHitStandard_02.wav, noise:pink, tone:900,1350@1.6"
+  },
+  {
    "sound": "ZombieRise",
    "event": "ZombieEnemy.Live first frame",
    "files": [
