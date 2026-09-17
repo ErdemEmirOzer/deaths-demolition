@@ -377,10 +377,22 @@ namespace DD.Art.Pipeline.EditorTools
             return role == TextureRole.MetallicSmoothness || role == TextureRole.DetailMask;
         }
 
+        /// <summary>
+        /// WP-038H (DEC-086 growth gate, main release 551.8 MB): the packed source masks (<c>_Mask</c>: metallic / AO / smoothness /
+        /// cloth-gate channels) ship under the same 1024² cap as the masks derived from them. They were budgeted as provenance-only
+        /// (WP-016), but the tier tint materials bind them as <c>_TierMask</c> (WP-036), so the two AP-007/AP-008 atlases shipped at
+        /// 2048² (5.3 MB each) next to their 1024² derived maps; a lerp mask on a 2K atlas resolves nothing beyond 1024 at the
+        /// gameplay rig. Albedo and normal keep their class size.
+        /// </summary>
+        public static bool IsCappedMaskRole(TextureRole role)
+        {
+            return IsDerivedMaskRole(role) || role == TextureRole.Mask;
+        }
+
         public static int MaxSizeOf(TextureClass c, TextureRole role)
         {
             int size = MaxSizeOf(c);
-            return IsDerivedMaskRole(role) ? Mathf.Min(size, DerivedMaskMaxSize) : size;
+            return IsCappedMaskRole(role) ? Mathf.Min(size, DerivedMaskMaxSize) : size;
         }
 
         /// <summary>Shipped max size for a texture path (its class's size, derived masks capped).</summary>

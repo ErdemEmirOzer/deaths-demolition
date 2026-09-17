@@ -251,7 +251,7 @@ namespace DD.Art.Tests.EditMode
                 ArtImportContract.TextureRole role = ArtImportContract.RoleOf(path);
                 var importer = AssetImporter.GetAtPath(path) as TextureImporter;
                 if (importer == null) continue;
-                if (ArtImportContract.IsDerivedMaskRole(role) && importer.maxTextureSize > ArtImportContract.DerivedMaskMaxSize) hatalar.Add(path + ": türetilmiş maske " + importer.maxTextureSize + " > 1024");
+                if (ArtImportContract.IsCappedMaskRole(role) && importer.maxTextureSize > ArtImportContract.DerivedMaskMaxSize) hatalar.Add(path + ": türetilmiş maske " + importer.maxTextureSize + " > 1024");
             }
 
             var character = AssetImporter.GetAtPath(ArtCharacterContract.PlayerAvatarSource) as ModelImporter;
