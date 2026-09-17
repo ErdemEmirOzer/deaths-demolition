@@ -142,7 +142,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Greater(enAzToplam, l4Kumulatif,
                 "R8 koşusu L4 eşiğini geçmiyorsa 'merdiven tek koşuda tükeniyor' bulgusu geçersizdir.");
 
-            // Merdivenin tepesi: en yüksek unlock seviyesi 3 (Combat Shotgun).
+            // Merdivenin tepesi: DEC-085 Ö-3 (WP-049) sonrası en yüksek unlock seviyesi 5 (Combat Shotgun);
+            // L5 kümülatif eşiği (850) en düşük R8 toplamını (648) aşar → merdiven artık tek R8 koşusunda tükenmez.
             var weapons = new WeaponConfigSection();
             int enYuksekUnlock = 1;
             for (int i = 0; i < weapons.ClassicWeapons.Count; i++)
@@ -150,7 +151,10 @@ namespace DD.Prototype.Tests.EditMode
                 enYuksekUnlock = Mathf.Max(enYuksekUnlock, weapons.ClassicWeapons[i].UnlockProfileLevel);
             }
 
-            Assert.AreEqual(3, enYuksekUnlock, "En yüksek silah unlock seviyesi 3 olmalı.");
+            Assert.AreEqual(5, enYuksekUnlock, "En yüksek silah unlock seviyesi 5 olmalı (DEC-085 Ö-3).");
+            int tepeKumulatif = 0;
+            for (int l = 1; l < enYuksekUnlock; l++) tepeKumulatif += _prog.LevelRequirement(l);
+            Assert.Greater(tepeKumulatif, enAzToplam, "DEC-085 Ö-3: merdivenin tepesi en düşük XP'li R8 koşusunda açılmamalı.");
         }
 
         [Test]
@@ -158,8 +162,8 @@ namespace DD.Prototype.Tests.EditMode
         {
             var weapons = new WeaponConfigSection();
             Assert.AreEqual(1, weapons.Find(ClassicWeaponId.AssaultRifle).UnlockProfileLevel);
-            Assert.AreEqual(2, weapons.Find(ClassicWeaponId.AutoSmg).UnlockProfileLevel);
-            Assert.AreEqual(3, weapons.Find(ClassicWeaponId.CombatShotgun).UnlockProfileLevel);
+            Assert.AreEqual(3, weapons.Find(ClassicWeaponId.AutoSmg).UnlockProfileLevel, "DEC-085 Ö-3: B seviye 3");
+            Assert.AreEqual(5, weapons.Find(ClassicWeaponId.CombatShotgun).UnlockProfileLevel, "DEC-085 Ö-3: C seviye 5");
         }
 
         [Test]
