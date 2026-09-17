@@ -167,9 +167,36 @@ namespace DD.Prototype.Tests.PlayMode
                     yield return Sample(bytes, count, 3, (b, c) => { tb = b; tc = c; });
                     for (int i = 0; i < kv.Value.Count; i++) if (kv.Value[i] != null) kv.Value[i].enabled = wasEnabled[i];
                     yield return null;
-                    if (zc - tc > 50 || tc > zc + 50)
+                    // WP-053C: a few-object, byte-heavy allocator (one big string / array per frame) shows in bytes, not count.
+                    if (zc - tc > 50 || tc > zc + 50 || Math.Abs(zb - tb) > 2048)
                         sb.Append("[DD-BISECT] scene without ").Append(kv.Key.FullName).Append(" x").Append(kv.Value.Count)
-                          .Append(" count=").Append(tc).Append(" bytes=").Append(tb).Append(" saved=").Append(zc - tc).Append('\n');
+                          .Append(" count=").Append(tc).Append(" bytes=").Append(tb).Append(" saved=").Append(zc - tc).Append(" savedBytes=").Append(zb - tb).Append('\n');
+                }
+
+                // (e2) WP-053C: the player rig's own behaviours (weapon controller, skinned visual, mount, feedback…), disabled in turn.
+                var playerTypes = new Dictionary<Type, List<Behaviour>>();
+                foreach (Behaviour b in _s.Rig.transform.root.GetComponentsInChildren<Behaviour>(true))
+                {
+                    if (b == null) continue;
+                    Type t = b.GetType();
+                    if (t == typeof(Camera) || t == typeof(Animator)) continue;
+                    if (!playerTypes.TryGetValue(t, out List<Behaviour> list)) playerTypes[t] = list = new List<Behaviour>();
+                    list.Add(b);
+                }
+
+                sb.Append("[DD-BISECT] player behaviour types=").Append(playerTypes.Count).Append('\n');
+                foreach (KeyValuePair<Type, List<Behaviour>> kv in playerTypes)
+                {
+                    var wasEnabled = new bool[kv.Value.Count];
+                    for (int i = 0; i < kv.Value.Count; i++) { wasEnabled[i] = kv.Value[i].enabled; kv.Value[i].enabled = false; }
+                    yield return null;
+                    long tb = 0, tc = 0;
+                    yield return Sample(bytes, count, 3, (b, c) => { tb = b; tc = c; });
+                    for (int i = 0; i < kv.Value.Count; i++) if (kv.Value[i] != null) kv.Value[i].enabled = wasEnabled[i];
+                    yield return null;
+                    if (zc - tc > 50 || tc > zc + 50 || Math.Abs(zb - tb) > 2048)
+                        sb.Append("[DD-BISECT] player without ").Append(kv.Key.FullName).Append(" x").Append(kv.Value.Count)
+                          .Append(" count=").Append(tc).Append(" bytes=").Append(tb).Append(" saved=").Append(zc - tc).Append(" savedBytes=").Append(zb - tb).Append('\n');
                 }
             }
 
