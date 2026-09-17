@@ -122,7 +122,10 @@ namespace DD.Prototype.UI
         /// <summary>The widest glyph this action draws on any device: what a button reserves so its label never shifts on a scheme flip.</summary>
         public static float ReservedWidth(UiPromptAction action, float size = DefaultSize)
         {
-            return Mathf.Max(WidthOf(For(action, InputSchemeKind.Gamepad), size), WidthOf(For(action, InputSchemeKind.KeyboardMouse), size));
+            // Both schemes, and - for a rebindable action - both the rebound name and the
+            // default vocabulary, so the label never moves whichever the player picks.
+            float reserve = Mathf.Max(WidthOf(For(action, InputSchemeKind.Gamepad), size), WidthOf(For(action, InputSchemeKind.KeyboardMouse), size));
+            return Mathf.Max(reserve, MinCapWidth);
         }
 
         public static float WidthOf(Glyph glyph, float size)
@@ -323,6 +326,37 @@ namespace DD.Prototype.UI
 
         public UiPromptAction Action => _action;
 
+        // WP-022J (S-02 devir): the button label this prompt sits in and its untouched
+        // right offset, so a rebind to a wider name ("Left Trigger") re-insets the label
+        // instead of overlapping the cap.
+        private RectTransform _label;
+        private float _labelBaseOffsetMax;
+        private bool _hasLabel;
+
+        internal void AttachLabel(RectTransform label, float baseOffsetMax)
+        {
+            _label = label;
+            _labelBaseOffsetMax = baseOffsetMax;
+            _hasLabel = label != null;
+            ApplyLabelReserve();
+        }
+
+        private void ApplyLabelReserve()
+        {
+            if (!_hasLabel || _label == null)
+            {
+                return;
+            }
+
+            float reserve = UiInputGlyphs.ReservedWidth(_action, _size) + (int)UiSpace.M;
+            Vector2 max = _label.offsetMax;
+            float target = _labelBaseOffsetMax - reserve;
+            if (!Mathf.Approximately(max.x, target))
+            {
+                _label.offsetMax = new Vector2(target, max.y);
+            }
+        }
+
         /// <summary>The text currently drawn ("A", "ENTER"...). Tests read it.</summary>
         public string CurrentText => _text != null ? _text.text : string.Empty;
 
@@ -398,6 +432,7 @@ namespace DD.Prototype.UI
 
         private void Apply(InputSchemeKind scheme)
         {
+            ApplyLabelReserve();
             UiInputGlyphs.Glyph glyph = UiInputGlyphs.For(_action, scheme);
             var rect = (RectTransform)transform;
             rect.sizeDelta = new Vector2(UiInputGlyphs.WidthOf(glyph, _size), _size);

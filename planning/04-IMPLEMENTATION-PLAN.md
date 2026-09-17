@@ -2005,3 +2005,22 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 **Ölçüm:** EditMode 11 süit **128/128** (ilk koşu 3 fail = test sabitleri: `none` proxy collider beklentisi, v004 kayıt sayımı, bölge sayıları 24/548/822/656/1006 → düzeltildi; tekrar 28/28 + 4/4); PlayMode 6 süit **31/31** (WorldAp005 3120 instance / 10 410 renderer / 3214 LODGroup / 2077 collider / NavMesh 3005, erişim 122/122, rota uçları 49/49; `wp021c.surface` 3194 etiket, `wp013.breakable` küçük kırılabilir aynen; köprü boğazı 187 yeniden rota); bake3 3 lightmap 13,1 MB (aynı; AP-017 dressing/breakable probe-lit); release r3 **531,7 MB** (r2 508,0; +23,7 MB — dosya tablosu yalnız +0,9 MB (38 FBX 4,7 MB kaynak), fark statik birleştirilmiş mesh'ler: static 529 → 897; tavan 550 içinde, boşluk 18 MB), e1/e4 4/4 temiz, restore OK; perf kirli tek koşu **ort 6,91 / p99 10,49 ms** @ 40 zırhlı zombi (WP-038 6,67/10,79; yük 19–27, Blender %28), draw 2970 (+375), tri 4,48 M, çalışma zamanı mesh 294,0 MB (+47 MB, statik birleştirme kopyaları), tex 296,5 MB; kareler `wp-038/evidence/captures-b/` (AP-017 döküntüsü doğu/batıda okunuyor, ince — AD ikinci okuma devri).
 
 **Kapsam dışı / devirler:** S-10/S-05 → AP-017 dressing statik birleştirme maliyeti (+24 MB build / +47 MB mesh RAM, 368 örnek): tavan daralırsa `role dressing` için BatchingStatic kapatma (SRP batcher) seçeneği ölçülür. AP-017 Faz 2 (Higgsfield "yeni" 10 kalem, kredi sonrası) → delta v005; kırılma VFX/SFX satırları S-07/S-08 (`EventId` sözleşmesi hazır); AD ikinci okuma (döküntü okunurluğu %0,2–4 kare payı — AP-017 README bilinen konu 1) WP-038 kare setiyle sonraki dünya paketinde; `ArtVfxCatalogTests`/`AudioEventMap` kırılma olayı satırları değişmedi (BreakCeramic tek). AP-007C v003 (karakter) → WP-038C ayrı commit.
+
+## WP-022J — UI takipleri: rebound etiket rezervi, ölüm overlay HUD sönümü, sayaç kare hızı, M3 UI süit tablosu
+
+**Durum:** Tamamlandı (S-09, 2026-09-17, HIZLI HAT §6; kredi 0). Dal `wp-022j-ui-followups` = main `8039c5d` + tek commit; ff-merge + etiket C-00.
+
+**Yürütme promptu:** `planning/work-packages/WP-022J-UI-FOLLOWUPS.md`.
+
+**Kapsam ve sonuç:**
+
+- (A) `UiPrompt.AttachLabel(label, baseOffsetMax)` — istem, oturduğu düğmenin etiket rezervini her yeniden çizimde (şema değişimi, `BindingsChanged`) `UiInputGlyphs.ReservedWidth` ile yeniden kurar (iki şema + rebound ad, taban `MinCapWidth`); "Left Trigger" gibi geniş rebound adı kapağı etiketin üstüne bindirmez, etiket kaymaz (S-02 devri kapandı).
+- (B) Ölüm sönümü — `RunHudScreen.UpdateDeathDim`: `RunPhase.Dead`'de HUD canvas grubu S-07 `DamageVignetteLayer.DeathOverlayT` ile (aynı unscaled 2 s) `EaseOut` eğrisinde 1 → 0,35 α; reduced motion → taban anında; kare başı tek alfa yazımı, layout yok.
+- (C) WP-052 notu uygulandı — `SpecialWeaponHudAllocationTests` iki ProfilerRecorder testi `Application.targetFrameRate = -1` ile ölçer, teardown önceki değeri geri koyar → batch sırasındaki "sayaç 0" (WP-022C/F gözlemi) kök nedeni kapandı.
+- (D) `UiInputScheme` → WP-059B okuma yüzeyi main'de yok → WP-022I r2 yolu (`InputSourceRegistry.Current.ActiveScheme()`) kalır; gelince tek satır.
+- (E) AD turu — S-10 r8/r12 kareleri henüz yok → kareler gelince (r8/r12 + Special + NET/DAZED + ölüm sönümü).
+- (F) M3 kapanış UI süit tablosu — `planning/work-packages/M3-UI-SUITE-OWNERS.md` (süit → tür → sahip → durum → bilinen koşul).
+
+**Testler:** EditMode 25/25 (`UiArtThemeTests`, `InputParityContractTests` — main'deki r2 ile yeşil, `UiTextAuditTests`); PlayMode batch (jb: UiArtSlice + MetaUi + SpecialHudAlloc) 17/19 — iki FAIL heap-büyüme testleri (`MetaUiSliceTests.HudMetinleri_*` +254 KB/600 kare, WP-007 `HudSpecialYolu_*` aktif pencere +426 KB) **yalnız batch'te**: tek başına (jd) 32 KB PASS, HUD art testiyle çiftte (je) 28 KB PASS; yeni tanı testi `UiArtSliceTests.Hud_KareBasiAyirma_BilesenBazinda` (ProfilerRecorder, gerçek koşu): HUD ekranı 8 ↔ kapalı 6 ayırma/kare — HUD `Update`'i temiz; batch büyümesi süit-sırası etkileşimi (üçüncü+ fixture, ayar toggle'ları ya da GC durumu) → S-10 M3 kapanışında süitler fixture başına koşulur (tablo notu), S-09 WP-022K'da izole eder. Dev build; kredi 0.
+
+**Devirler:** S-02 → WP-059B cihaz-saat yüzeyi; S-10 → r8/r12 + Special kareleri (AD turu), M3 tam regresyonunda UI FAIL'leri tabloya göre sahibe.

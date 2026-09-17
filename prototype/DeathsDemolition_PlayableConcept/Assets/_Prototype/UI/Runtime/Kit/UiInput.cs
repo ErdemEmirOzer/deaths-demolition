@@ -259,7 +259,7 @@ namespace DD.Prototype.UI
             // The label gives up the widest glyph the action can draw (A vs ENTER), so it
             // does not shift when the device flips (AD v005 MUST-4).
             RectTransform label = (RectTransform)button.LabelText.transform;
-            label.offsetMax = new Vector2(label.offsetMax.x - UiInputGlyphs.ReservedWidth(action, size) - (int)UiSpace.M, label.offsetMax.y);
+            prompt.AttachLabel(label, label.offsetMax.x); // WP-022J: re-inset on every rebind, not only at build
             return prompt;
         }
     }

@@ -167,6 +167,11 @@ namespace DD.Prototype.UI
         // changes (ADR-037-1 - no per-frame string work).
         private TMP_Text _specialUsage;
 
+        /// <summary>WP-022J: the HUD dims with the S-07 death overlay (DamageVignetteLayer.DeathOverlayT), so the frozen numbers recede while the world desaturates; Results carries the same figures.</summary>
+        private CanvasGroup _deathDim;
+        private DD.Prototype.Feedback.Vfx.DamageVignetteLayer _deathLayer;
+        private const float DeathDimFloor = 0.35f;
+
         /// <summary>WP-022I enemy status markers (test readout).</summary>
         public UiEnemyStatusMarkers EnemyStatus => _enemyStatus;
         private UiEnemyStatusMarkers _enemyStatus;
@@ -1087,10 +1092,36 @@ namespace DD.Prototype.UI
             // summary the player was just looking at.
             if (state.Phase == RunPhase.Dead)
             {
+                UpdateDeathDim();
                 return;
             }
 
             ApplyRunFields(_model.ApplyRun(state));
+        }
+
+        /// <summary>
+        /// WP-022J · while the player is dead the HUD canvas fades to DeathDimFloor in step
+        /// with the S-07 death overlay (same unscaled clock, same 2 s), reduced motion →
+        /// the floor at once. One CanvasGroup alpha per frame, no layout.
+        /// </summary>
+        private void UpdateDeathDim()
+        {
+            if (_deathDim == null)
+            {
+                _deathDim = UiFactory.Group(Canvas.gameObject);
+            }
+
+            if (_deathLayer == null)
+            {
+                _deathLayer = FindObjectOfType<DD.Prototype.Feedback.Vfx.DamageVignetteLayer>();
+            }
+
+            float t = UiSettings.ReducedMotion ? 1f : (_deathLayer != null ? _deathLayer.DeathOverlayT : 1f);
+            float alpha = Mathf.Lerp(1f, DeathDimFloor, UiMotionCurve.EaseOut(t));
+            if (!Mathf.Approximately(_deathDim.alpha, alpha))
+            {
+                _deathDim.alpha = alpha;
+            }
         }
 
         /// <summary>

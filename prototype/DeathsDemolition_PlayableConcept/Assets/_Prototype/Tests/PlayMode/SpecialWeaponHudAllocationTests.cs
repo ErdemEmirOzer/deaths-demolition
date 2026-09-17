@@ -26,10 +26,16 @@ namespace DD.Prototype.Tests.PlayMode
         private const long EsikBayt = 128 * 1024;
 
         private SpecialWeaponSahne _s;
+        private int? _frameRateBefore;
 
         [UnityTearDown]
         public IEnumerator Bitir()
         {
+            if (_frameRateBefore.HasValue)
+            {
+                Application.targetFrameRate = _frameRateBefore.Value; // restore what the runner had (WP-052 note)
+                _frameRateBefore = null;
+            }
             if (_s != null)
             {
                 yield return _s.Bitir();
@@ -123,6 +129,10 @@ namespace DD.Prototype.Tests.PlayMode
 
             // Recorder order and control size mirror WP-037 (HotPathAllocationContractTests):
             // bytes first, then count; 300 x 80 B in one frame must read > 250.
+            // WP-052 note: the Editor runner reports LastValue 0 while targetFrameRate is 60
+            // (an earlier fixture leaves it there) - the batch-order "counter 0" of WP-022C/F.
+            _frameRateBefore = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
             using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
             using (var count = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count"))
             {
@@ -222,6 +232,8 @@ namespace DD.Prototype.Tests.PlayMode
 
             Assert.IsTrue(labels.Contains("NET") || labels.Contains("DAZED"), "görünür işaret metni NET/DAZED: " + string.Join(",", labels));
 
+            _frameRateBefore = Application.targetFrameRate;
+            Application.targetFrameRate = -1; // WP-052 note
             using (var count = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count"))
             {
                 yield return null;

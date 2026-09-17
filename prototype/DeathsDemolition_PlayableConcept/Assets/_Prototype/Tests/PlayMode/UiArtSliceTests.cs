@@ -564,6 +564,63 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(menu.GetComponentInChildren<UiBar>(true), "ilerleme çubuğu (kazanılmamış girdi)");
         }
 
+        /// <summary>
+        /// WP-022J diagnostic · which HUD component allocates per frame in a real run
+        /// (ProfilerRecorder counts, targetFrameRate -1): the whole HUD screen, the enemy
+        /// status layer, the hit-direction layer, each toggled alone. Logs only; the
+        /// assertion is on the HUD screen's own Update once the layers are off.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Hud_KareBasiAyirma_BilesenBazinda()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.GoToSelection();
+            yield return SahneyiBekle(PrototypeScenes.Selection);
+            PrototypeUiFlow.StartRun();
+            yield return SahneyiBekle(PrototypeScenes.Run);
+            yield return KosuHazirOlsun();
+            RunHudScreen hud = Object.FindObjectOfType<RunHudScreen>();
+            Assert.IsNotNull(hud);
+            int before = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
+            try
+            {
+                using (var count = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count"))
+                using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
+                {
+                    for (int i = 0; i < 30; i++) yield return null;
+                    long all = 0, allB = 0;
+                    for (int i = 0; i < 20; i++) { yield return null; if (count.LastValue > all) { all = count.LastValue; allB = bytes.LastValue; } }
+                    hud.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    long hudOff = 0;
+                    for (int i = 0; i < 20; i++) { yield return null; if (count.LastValue > hudOff) hudOff = count.LastValue; }
+                    hud.enabled = true;
+                    if (hud.EnemyStatus != null) hud.EnemyStatus.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    long statusOff = 0;
+                    for (int i = 0; i < 20; i++) { yield return null; if (count.LastValue > statusOff) statusOff = count.LastValue; }
+                    if (hud.EnemyStatus != null) hud.EnemyStatus.enabled = true;
+                    var hit = Object.FindObjectOfType<UiHitDirectionLayer>();
+                    if (hit != null) hit.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    long hitOff = 0;
+                    for (int i = 0; i < 20; i++) { yield return null; if (count.LastValue > hitOff) hitOff = count.LastValue; }
+                    if (hit != null) hit.enabled = true;
+                    Debug.Log("[DD-TEST] wp022j.hudAlloc all=" + all + "/" + allB + "B hudScreenOff=" + hudOff + " statusOff=" + statusOff + " hitOff=" + hitOff);
+                }
+            }
+            finally
+            {
+                Application.targetFrameRate = before;
+            }
+
+            PrototypeUiFlow.AbortRunToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+        }
+
         private static bool MetinVar(Component ekran, string parca)
         {
             foreach (TMPro.TMP_Text t in ekran.GetComponentsInChildren<TMPro.TMP_Text>(true))
