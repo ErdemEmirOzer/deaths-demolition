@@ -1328,9 +1328,24 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            _footerNote.text = purchases > 0
-                ? "Applied immediately. One upgrade per round, so the offer is now locked. " + gold + " gold carries into the next round."
-                : "Nothing bought yet. All " + gold + " gold carries into the next round.";
+            // WP-022H (Ö-6a readiness): the wording follows UpgradeOfferPolicy.MaxPurchasesPerRound
+            // and the shop's own lock, so a second pick (when S-04 raises the policy) is
+            // announced here without a UI change; with the policy at 1 the text is unchanged.
+            int max = UpgradeOfferPolicy.MaxPurchasesPerRound;
+            RoundUpgradeShop shop = Shop;
+            bool locked = shop == null || shop.IsLocked;
+            if (purchases > 0 && max > 1 && !locked)
+            {
+                int left = Mathf.Max(0, max - purchases);
+                _footerNote.text = "Applied immediately. " + purchases + " of " + max + " picks used, " + left + " left. " + gold + " gold carries into the next round.";
+            }
+            else
+            {
+                _footerNote.text = purchases > 0
+                    ? "Applied immediately. " + (max > 1 ? "All picks used" : "One upgrade per round") + ", so the offer is now locked. " + gold + " gold carries into the next round."
+                    : "Nothing bought yet. All " + gold + " gold carries into the next round.";
+            }
+
             _footerNote.color = UiTokens.Get(UiColor.TextMuted);
         }
 

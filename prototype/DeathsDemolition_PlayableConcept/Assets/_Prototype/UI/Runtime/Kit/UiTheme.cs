@@ -50,6 +50,9 @@ namespace DD.Prototype.UI
         /// <summary>WP-022F: AP-013 weapon glyphs (silhouettes from the AP-013 side renders), keyed <c>Weapon.&lt;HudIconId&gt;</c>.</summary>
         public const string WeaponGlyphAtlas = "UI/AP013/AP013_weapon_icons_512x128";
 
+        /// <summary>WP-022H: AP-014 Special Weapon glyphs (hand-model silhouettes), keyed <c>Sw.&lt;SpecialWeaponId&gt;</c>.</summary>
+        public const string SpecialGlyphAtlas = "UI/AP014/AP014_sw_icons_256x128";
+
         /// <summary>UI scale the player may choose (settings). Clamped to this range.</summary>
         public const float UiScaleMin = 0.9f;
         public const float UiScaleMax = 1.2f;
@@ -135,6 +138,7 @@ namespace DD.Prototype.UI
 
             AddAll(Icons, Resources.LoadAll<Sprite>(IconAtlas));
             AddAll(Icons, Resources.LoadAll<Sprite>(WeaponGlyphAtlas)); // AP-013 roster glyphs (absent → AP-012 stand-ins via UiArt.RosterGlyph)
+            AddAll(Icons, Resources.LoadAll<Sprite>(SpecialGlyphAtlas)); // AP-014 Special glyphs (absent → AP-012 Special.<id>)
             AddAll(Frames, Resources.LoadAll<Sprite>(FrameAtlas));
             MenuPlate = Resources.Load<Sprite>(MenuPlateResource);
             HudMarker = Resources.Load<Sprite>(HudMarkerResource);

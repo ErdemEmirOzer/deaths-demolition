@@ -196,9 +196,57 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(special);
             Assert.IsNotNull(special.GetComponent<Canvas>(), "Special bloğu kendi canvas'ında olmalı");
 
+            // WP-022H · Special usage v2: a fake Active state plus the WP-056 usage events
+            // drive the usage line ("FIELD 4s · 2 HIT" → "FIELD ENDED · 2 HIT") and the
+            // glyph; the string is rebuilt only on integer change (allocation contract
+            // covered by SpecialWeaponHudAllocationTests).
+            {
+                var active = new DD.Prototype.Weapons.SpecialWeaponHudState
+                {
+                    Phase = DD.Prototype.Weapons.SpecialWeaponPhase.Active,
+                    WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell,
+                    DisplayName = "Kagura Bell",
+                    ActiveRemaining = 20f,
+                    ActiveDuration = 20f
+                };
+                DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, true);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Activated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 20f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_kagura_bell_ring", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 4f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 1);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 1);
+                DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
+                yield return null;
+                DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
+                yield return null;
+                TMPro.TMP_Text usage = null;
+                foreach (TMPro.TMP_Text t in hud.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "Usage") usage = t;
+                Assert.IsNotNull(usage, "Special usage satırı");
+                StringAssert.Contains("FIELD", usage.text);
+                StringAssert.Contains("2 HIT", usage.text);
+                Image glyph = null;
+                foreach (Image im in hud.GetComponentsInChildren<Image>(true)) if (im.name == "Glyph") glyph = im;
+                Assert.IsNotNull(glyph);
+                Assert.IsTrue(glyph.enabled && glyph.sprite != null && glyph.sprite.name.StartsWith("Sw."), "AP-014 Kagura Bell glifi: " + (glyph.sprite != null ? glyph.sprite.name : "yok"));
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 2);
+                // The weapon runtime republishes its own (None) state every frame in this
+                // scene, so the fake Active state is re-asserted before each observed frame.
+                DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
+                yield return null;
+                DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
+                yield return null;
+                StringAssert.Contains("FIELD ENDED", usage.text);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Deactivated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                yield return null;
+                Assert.AreEqual(string.Empty, usage.text);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.ResetForTests();
+                Assert.IsFalse(glyph.enabled);
+            }
+
             PrototypeUiFlow.AbortRunToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
             Debug.Log("[DD-TEST] wp022.hud=OK");
+
         }
 
         private static Rect PanelRect(RectTransform panel, RectTransform canvas)

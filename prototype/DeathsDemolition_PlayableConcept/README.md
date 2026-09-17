@@ -221,6 +221,8 @@ WP-022F (UI quality v3) adds device-aware input prompts (`UiInputScheme` polls I
 
 WP-022G (accessibility & options v1) adds two main-menu panes: ACCESSIBILITY (colour-blind safe palette via `UiTokens.Palette`, reading-text scale, flash reduction through `UiTokens.FlashScale` + `GameFeelSettings.FlashScale`, reduced motion) and CONTROLS (WP-024 rebinding rows on `IInputRemapService`, stick dead zone, aim-assist level, rumble on `InputPreferencesStore`). All UI values persist in `ui-settings.json`; the contrast table is asserted under both palettes.
 
+WP-022H (Special HUD v2) subscribes the HUD to the WP-056 `SpecialWeaponUsageEvents` bus — a usage line under the Special ring ("FIELD 4s · 2 HIT", "FIELD ENDED", "SHOTS n", rebuilt only on integer change) and an AP-014 hand-model glyph (`Sw.<id>` atlas under `UI/AP014`, `UiArt.SpecialIcon` prefers it) — and makes the shop footer follow `UpgradeOfferPolicy.MaxPurchasesPerRound` so a second pick needs no UI change.
+
 | Folder | One-line summary |
 |---|---|
 | `Core/` | The spine: `PrototypeConfig` and its ten sections, the `PrototypeOnly` origin attribute, boot/scene hand-off, object pooling, the input abstraction, and the F1 panel plus its registry. |

@@ -160,6 +160,19 @@ namespace DD.Prototype.UI
         private Image _specialPip;
         private Image _weaponIcon;
         private TMP_Text _shotModel;
+
+        // WP-022H · Special usage v2 (WP-056 SpecialWeaponUsageEvents): a field / shots line
+        // under the ring and the AP-014 glyph next to the phase text. State is integers
+        // and one expiry time; the line's text is rebuilt only when a displayed integer
+        // changes (ADR-037-1 - no per-frame string work).
+        private TMP_Text _specialUsage;
+        private Image _specialGlyph;
+        private int _swShots;
+        private int _swFieldHits;
+        private float _swFieldEndsAt = -1f;
+        private float _swFieldEndedAt = -1f;
+        private int _swFieldEndedCount;
+        private int _swShownSeconds = -1, _swShownHits = -1, _swShownShots = -1, _swShownMode = -1;
         private const float ShotModelWidth = 150f;
         private Image _healthIcon;
         private Image _reticle;
@@ -245,6 +258,7 @@ namespace DD.Prototype.UI
             WeaponEvents.SpecialWeaponPickedUp += OnSpecialPickedUp;
             WeaponEvents.SpecialWeaponFinalSeconds += OnSpecialFinalSeconds;
             WeaponEvents.SpecialWeaponEnded += OnSpecialEnded;
+            SpecialWeaponUsageEvents.Usage += OnSpecialUsage;
             WeaponEvents.SpecialWeaponGroundExpired += OnSpecialGroundExpired;
 
             PlayerHealth.AnyHealthChanged += ApplyHealth;
@@ -270,6 +284,7 @@ namespace DD.Prototype.UI
             WeaponEvents.SpecialWeaponPickedUp -= OnSpecialPickedUp;
             WeaponEvents.SpecialWeaponFinalSeconds -= OnSpecialFinalSeconds;
             WeaponEvents.SpecialWeaponEnded -= OnSpecialEnded;
+            SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
             WeaponEvents.SpecialWeaponGroundExpired -= OnSpecialGroundExpired;
 
             PlayerHealth.AnyHealthChanged -= ApplyHealth;
@@ -503,6 +518,28 @@ namespace DD.Prototype.UI
             captionRect.pivot = new Vector2(0.5f, 0f);
             captionRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Caption));
             captionRect.anchoredPosition = Vector2.zero;
+
+            // WP-022H: usage line between the ring and the name - "FIELD 4s · 3 HIT" while a
+            // field lives, "SHOTS 2" between fields, "FIELD ENDED · 5 HIT" for two seconds.
+            _specialUsage = UiFactory.Label(
+                "Usage", specialHost, string.Empty, UiType.Caption, UiColor.StateGold, TextAnchor.LowerCenter);
+            RectTransform usageRect = UiFactory.Fill((RectTransform)_specialUsage.transform);
+            usageRect.anchorMax = new Vector2(1f, 0f);
+            usageRect.pivot = new Vector2(0.5f, 0f);
+            usageRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Caption));
+            usageRect.anchoredPosition = new Vector2(0f, UiFactory.LineHeight(UiType.Caption));
+            _specialUsage.fontStyle = TMPro.FontStyles.Bold;
+
+            // AP-014 glyph (Sw.<id>, AP-012 Special.<id> as the fallback) at the block's top-left.
+            _specialGlyph = UiFactory.NewImage("Glyph", specialHost, UiColor.StateGold, UiSprites.Disc);
+            _specialGlyph.preserveAspect = true;
+            RectTransform glyphRect = (RectTransform)_specialGlyph.transform;
+            glyphRect.anchorMin = new Vector2(0f, 1f);
+            glyphRect.anchorMax = new Vector2(0f, 1f);
+            glyphRect.pivot = new Vector2(0f, 1f);
+            glyphRect.sizeDelta = new Vector2(28f, 28f);
+            glyphRect.anchoredPosition = Vector2.zero;
+            _specialGlyph.enabled = false;
 
             _specialBlock.SetActive(false);
 
@@ -1279,7 +1316,103 @@ namespace DD.Prototype.UI
             _specialRing.color = UiTokens.Get(warning ? UiColor.BarHealthLow : UiColor.BarSpecial);
             _specialRing.fillAmount = state.ActiveProgress01;
 
+            RefreshSpecialUsage();
             SetWarning(warning);
+        }
+
+        /// <summary>The usage line; string work only when a displayed integer changes.</summary>
+        private void RefreshSpecialUsage()
+        {
+            if (_specialUsage == null)
+            {
+                return;
+            }
+
+            int mode;
+            int seconds = 0;
+            int hits = _swFieldHits;
+            if (_swFieldEndsAt > 0f && Time.time < _swFieldEndsAt)
+            {
+                mode = 1;
+                seconds = Mathf.CeilToInt(_swFieldEndsAt - Time.time);
+            }
+            else if (_swFieldEndedAt > 0f && Time.time - _swFieldEndedAt < 2f)
+            {
+                mode = 2;
+                hits = _swFieldEndedCount;
+            }
+            else
+            {
+                mode = _swShots > 0 ? 3 : 0;
+            }
+
+            if (mode == _swShownMode && seconds == _swShownSeconds && hits == _swShownHits && _swShots == _swShownShots)
+            {
+                return;
+            }
+
+            _swShownMode = mode;
+            _swShownSeconds = seconds;
+            _swShownHits = hits;
+            _swShownShots = _swShots;
+            switch (mode)
+            {
+                case 1: _specialUsage.text = "FIELD " + seconds + "s" + (hits > 0 ? "  ·  " + hits + " HIT" : string.Empty); break;
+                case 2: _specialUsage.text = "FIELD ENDED  ·  " + hits + " HIT"; break;
+                case 3: _specialUsage.text = "SHOTS " + _swShots; break;
+                default: _specialUsage.text = string.Empty; break;
+            }
+        }
+
+        private void OnSpecialUsage(SpecialUsageEvent e)
+        {
+            switch (e.Kind)
+            {
+                case SpecialUsageKind.Activated:
+                    _swShots = 0;
+                    _swFieldHits = 0;
+                    _swFieldEndsAt = -1f;
+                    _swFieldEndedAt = -1f;
+                    if (_specialGlyph != null)
+                    {
+                        Sprite glyph = UiArt.SpecialIcon(e.Id);
+                        _specialGlyph.sprite = glyph;
+                        _specialGlyph.enabled = glyph != null;
+                    }
+
+                    break;
+                case SpecialUsageKind.Fired:
+                    _swShots++;
+                    break;
+                case SpecialUsageKind.FieldSpawned:
+                    _swFieldHits = 0;
+                    _swFieldEndsAt = Time.time + Mathf.Max(0.5f, e.Seconds);
+                    _swFieldEndedAt = -1f;
+                    break;
+                case SpecialUsageKind.Hit:
+                    _swFieldHits++;
+                    break;
+                case SpecialUsageKind.FieldEnded:
+                    _swFieldEndedCount = Mathf.Max(_swFieldHits, e.Count);
+                    _swFieldEndsAt = -1f;
+                    _swFieldEndedAt = Time.time;
+                    break;
+                case SpecialUsageKind.Deactivated:
+                    _swFieldEndsAt = -1f;
+                    _swFieldEndedAt = -1f;
+                    if (_specialGlyph != null)
+                    {
+                        _specialGlyph.enabled = false;
+                    }
+
+                    if (_specialUsage != null)
+                    {
+                        _specialUsage.text = string.Empty;
+                        _swShownMode = -1;
+                    }
+
+                    break;
+            }
         }
 
         /// <summary>

@@ -83,6 +83,10 @@ MonoBehaviour:
     Sprite: {fileID: -3565161546827349900, guid: 92b579d60ffd4433bbfbe8c59f029e1d, type: 3}
   - Name: Weapon.weapon_shotgun
     Sprite: {fileID: 8103654521030751796, guid: 92b579d60ffd4433bbfbe8c59f029e1d, type: 3}
+  - Name: Sw.KaguraBell
+    Sprite: {fileID: 7196120457397676169, guid: 1e4cf67d5dda1418fb3298badbddc601, type: 3}
+  - Name: Sw.OfudaLoom
+    Sprite: {fileID: 5442189960441275019, guid: 1e4cf67d5dda1418fb3298badbddc601, type: 3}
   Frames:
   - Name: Cursor.Arrow
     Sprite: {fileID: 1009899790209449875, guid: 11c996ca452324ec9adcfac76409f108, type: 3}

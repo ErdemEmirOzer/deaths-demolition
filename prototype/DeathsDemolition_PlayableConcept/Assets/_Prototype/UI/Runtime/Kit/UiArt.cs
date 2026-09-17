@@ -35,7 +35,10 @@ namespace DD.Prototype.UI
 
         public static Sprite SpecialIcon(SpecialWeaponId id)
         {
-            return Icon("Special." + id);
+            // WP-022H: the AP-014 silhouette (UI/AP014, "Sw.<id>") when the atlas ships it,
+            // the AP-012 v002 glyph otherwise (Tide Jewel has no AP-014 model yet).
+            Sprite sw = Icon("Sw." + id);
+            return sw != null ? sw : Icon("Special." + id);
         }
 
         public static Sprite UpgradeIcon(UpgradeBranch branch)

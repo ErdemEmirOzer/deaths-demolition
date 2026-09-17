@@ -1,0 +1,37 @@
+{
+ "schema": "AP012-ui-manifest-v1",
+ "package": "AP-014 (WP-022H sw glyphs)",
+ "pixelsPerUnit": 100,
+ "atlases": [
+  {
+   "file": "AP014_sw_icons_256x128.png",
+   "width": 256,
+   "height": 128,
+   "tint": "runtime (white glyphs)",
+   "sprites": [
+    {
+     "name": "Sw.KaguraBell",
+     "x": 0,
+     "y": 0,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Sw.OfudaLoom",
+     "x": 128,
+     "y": 0,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    }
+   ]
+  }
+ ]
+}

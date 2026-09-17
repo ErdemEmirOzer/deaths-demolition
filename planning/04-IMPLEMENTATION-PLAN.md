@@ -1802,3 +1802,20 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 - **Ölçüm/test (§6 tek acquire, tek build):** EditMode Audio+HandoffIntegrity+UiEvents+ProjectIntegrity **41/41** (+`SpecialKullanim_HerSpecialVeKind_KendiSesi`); PlayMode `AudioSliceTests` **18/18** (+`SpecialKullanim_FiredFieldHit_…`: Tide Fired/FieldSpawned döngü/FieldEnded durdurma/Kagura one-shot; limiter yığın −8,8 dBFS); release build 572 MB (Sounds ~9 MB), e1/e4 smoke 0 hata (smoke slotu), restore 6/6.
 
 **Devirler:** WP-055 düşman Special tepkileri (S-03) → vokal/foley bağlama; WP-038 plakaları → ayak satırı; AmbPondBed crest (v4 take); mühendis mix önerileri (LUFS-M faz ölçümü, Run Music −7 L3, UI trimleri), MusicTension↔Base tonal çatışması (DEC adayı); dinleme turu manuel.
+
+## WP-022H — Special Weapon HUD v2, Ö-6a hazırlığı, AP-013/AP-014 glifleri
+
+**Durum:** Tamamlandı (S-09, 2026-09-17, HIZLI HAT §6; kredi 0). Dal `wp-022h-special-hud` = main `f9ff487` (WP-056) + tek commit; ff-merge + etiket C-00. Düşman durum işaretleri (WP-055) bu pakette değil — WP-055 main'e girince WP-022I.
+
+**Yürütme promptu:** `planning/work-packages/WP-022H-SPECIAL-HUD-V2.md`.
+
+**Kapsam ve sonuç:**
+
+- (A) Special HUD v2 — `RunHudScreen` WP-056 `SpecialWeaponUsageEvents.Usage`'a abone: `Activated` sayaçları sıfırlar ve bloğun sol üstüne 28 px AP-014 glifini koyar (`UiArt.SpecialIcon`: `Sw.<id>` varsa, yoksa AP-012 `Special.<id>` — Tide Jewel), `Fired` atış sayar, `FieldSpawned` alan bitiş zamanını (Seconds) tutar, `Hit` alan isabetini sayar, `FieldEnded` 2 s "FIELD ENDED · n HIT", `Deactivated` temizler. Kullanım satırı (Caption bold StateGold, ring ile ad arasında): "FIELD 4s · 2 HIT" → "FIELD ENDED · 2 HIT" → "SHOTS 2"; metin yalnız gösterilen tamsayı (saniye/isabet/atış/mod) değişince kurulur — kare başı string yok (ADR-037-1); `SpecialWeaponHudAllocationTests` sabit kare 0 aynen. Aktif süre halkası/sayaç (WP-022) değişmedi.
+- (B) AP-014 sw glifleri — `tools/build_ap013_icons.py <dst> ap014`: AP-014 el modeli closeup render'larından (gri stüdyo, eşik 40) siluet, 22° eğik, `UI/Art/Resources/UI/AP014/AP014_sw_icons_256x128.png` (`Sw.KaguraBell`, `Sw.OfudaLoom`), `UiTheme` yükler; AP-013 glifleri de aynı eğik sığdırmayla yeniden üretildi (56 px'te okunur — AD v005 SHOULD kapandı). Tema: icons 37.
+- (C) Ö-6a hazırlığı — `UpgradeScreen.RefreshFooter` politika (`UpgradeOfferPolicy.MaxPurchasesPerRound`) + `shop.IsLocked` okur: politika 1 → metin aynen ("One upgrade per round…"); politika 2 ve kilit yoksa → "1 of 2 picks used, 1 left" — S-04 politikayı ve entitlement'ı açınca UI değişikliği gerekmez.
+- (D) Düşman durum işaretleri (WP-055 net/daze/çekim) — sözleşme main'de yok → yapılmadı (WP-022I). r8/r12 kareleri: S-10 run3 bot'u gelince AD turu (bu pakette AD turu yok: görsel delta glif + bir satır; v005 kapsamı).
+
+**Testler:** EditMode 32/32 (`UiArtThemeTests`, `UiTextAuditTests`, `UiEventsTests`, `UpgradeOfferPolicyTests`), PlayMode `UiArtSliceTests` 5/5 (hd: HUD testi +Special kullanım satırı: sahte Active durumu + WP-056 olayları → "FIELD 4s · 2 HIT" → "FIELD ENDED · 2 HIT" → boş, AP-014 glifi `Sw.KaguraBell`), `EconomyUpgradeRulesSliceTests` (hc), `SpecialWeaponHudAllocationTests` 2/2 (hc, yalnız başına); tema 37 ikon; dev build (hc); yakalama `wp-022d/evidence/captures-h/selection` (eğik AP-013 glifleri); restore OK; kredi 0.
+
+**Devirler:** WP-022I → WP-055 durum işaretleri + AD turu (r8/r12 + Special kareleri); S-02 → Tide Jewel AP-014 modeli/glifi; S-04 → Ö-6a onayı (politika 2 + entitlement) — UI hazır.
