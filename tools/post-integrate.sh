@@ -25,8 +25,11 @@ say; say "== cleanup candidates (dry-run; C-00 applies with user approval)"; "$D
 say; say "== disk"; "$DD_TOOLS_DIR/disk-report.sh" 2>&1 | tee -a "$OUT"
 say; say "== build footprint (last known, WP-046)"
 # newest footprint.json under the build root (dev or release) → copy as footprint-<tag>.json, print line + delta vs previous tag
-FP=$(ls -t "$DD_BUILD_ROOT"/*/footprint.json ~/Desktop/KADRO/context/projects/deaths-demolition/wp-*/evidence/*/footprint.json 2>/dev/null | head -1)
-if [ -n "$FP" ]; then
+# WP-051D: with nullglob an empty pattern list makes `ls -t` list the cwd (a directory name came back →
+# "cp: tools is a directory"); collect candidates first and pick the newest only if there is one.
+FP=""; CANDS=("$DD_BUILD_ROOT"/*/footprint.json(N) ~/Desktop/KADRO/context/projects/deaths-demolition/wp-*/evidence/*/footprint.json(N))
+[ ${#CANDS} -gt 0 ] && FP=$(ls -t "${CANDS[@]}" 2>/dev/null | head -1)
+if [ -n "$FP" ] && [ -f "$FP" ]; then
   cp "$FP" "$DEST/footprint-$TAG.json"
   PREV=$(ls -t "$DEST"/footprint-*.json 2>/dev/null | grep -v "footprint-$TAG.json" | head -1)
   python3 - "$FP" "${PREV:-}" "$TAG" <<'PY' | tee -a "$OUT"
