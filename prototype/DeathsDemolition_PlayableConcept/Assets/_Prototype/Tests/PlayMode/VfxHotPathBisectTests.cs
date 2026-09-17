@@ -27,6 +27,7 @@ namespace DD.Prototype.Tests.PlayMode
     public sealed class VfxHotPathBisectTests
     {
         private SpecialWeaponSahne _s;
+        private int _fpsWas = int.MinValue;
 
         [UnityTearDown]
         public IEnumerator Bitir()
@@ -34,6 +35,7 @@ namespace DD.Prototype.Tests.PlayMode
             VfxDressing.AuditMute = false;
             VfxDressing.AuditExplosionMask = -1;
             BloodSystem.AuditStepMask = -1;
+            if (_fpsWas != int.MinValue) { Application.targetFrameRate = _fpsWas; _fpsWas = int.MinValue; }
             if (HitFeedbackDirector.Instance != null) HitFeedbackDirector.Instance.ShowDamageNumbers = true;
             if (_s != null)
             {
@@ -99,6 +101,12 @@ namespace DD.Prototype.Tests.PlayMode
             fd.ShowDamageNumbers = false;
             bool profilerWas = UnityEngine.Profiling.Profiler.enabled;
             UnityEngine.Profiling.Profiler.enabled = true;
+            // S-02 (M3-COMBAT-SUITE-OWNERS F3): with Application.targetFrameRate capped at 60 by an earlier fixture the frame
+            // counters' LastValue reads 0 for the positive control; uncapped for the measurement (PlayerExperienceSliceTests pattern).
+            int fpsWas = Application.targetFrameRate;
+            _fpsWas = fpsWas;
+            Application.targetFrameRate = -1;
+            yield return null;
             using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
             using (var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count"))
             {
@@ -155,6 +163,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             UnityEngine.Profiling.Profiler.enabled = profilerWas;
+            Application.targetFrameRate = fpsWas;
+            _fpsWas = int.MinValue;
         }
     }
 }
