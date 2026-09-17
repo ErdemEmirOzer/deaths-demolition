@@ -36,13 +36,31 @@ fail() { echo "GATE FAIL: $*"; FAILS=$((FAILS+1)); }
 # to HEAD (restore) or is dropped again if HEAD never had it. main HEAD is untouched at this point.
 abort_pick() {
   "${G[@]}" cherry-pick --quit >/dev/null 2>&1   # no sequencer state with --no-commit; --abort would fail
-  # every path the pick left dirty (staged, unmerged, added, or modified) — not only the source's file list
-  "${G[@]}" status --porcelain=v1 -z | tr '\0' '\n' | cut -c4- | while IFS= read -r f; do
-    [ -n "$f" ] || continue
-    if "${G[@]}" cat-file -e "HEAD:$f" 2>/dev/null; then "${G[@]}" restore --staged --worktree -- "$f" 2>/dev/null
-    else "${G[@]}" rm -q --cached --force -- "$f" >/dev/null 2>&1; rm -f "$DD_REPO/$f"; fi
+  # WP-051E: every dirty path from `status --porcelain -z`, parsed by a small python (rename entries carry
+  # TWO paths, unmerged DU/UD/AA/UU entries are ordinary paths here). Up to 3 passes: a path that HEAD knows
+  # is restored (index + worktree), anything else is dropped from the index and the disk.
+  local pass=0 left=1
+  while [ "$left" != "0" ] && [ "$pass" -lt 3 ]; do
+    pass=$((pass+1))
+    "${G[@]}" status --porcelain=v1 -z | python3 -c '
+import sys
+data = sys.stdin.buffer.read().split(b"\0"); i = 0; out = []
+while i < len(data):
+    e = data[i]; i += 1
+    if len(e) < 4: continue
+    xy, path = e[:2], e[3:]
+    out.append(path)
+    if xy[0:1] in (b"R", b"C") or xy[1:2] in (b"R", b"C"):   # rename/copy: next record is the original path
+        if i < len(data) and data[i]: out.append(data[i])
+        i += 1
+sys.stdout.buffer.write(b"\n".join(out) + b"\n")
+' | while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      if "${G[@]}" cat-file -e "HEAD:$f" 2>/dev/null; then "${G[@]}" restore --staged --worktree -- "$f" 2>/dev/null
+      else "${G[@]}" rm -q --cached --force -- "$f" >/dev/null 2>&1; rm -f "$DD_REPO/$f"; fi
+    done
+    left=$("${G[@]}" status --porcelain | wc -l | tr -d ' ')
   done
-  left=$("${G[@]}" status --porcelain | wc -l | tr -d ' ')
   echo "aborted: $left dirty paths remain (expected 0); main unchanged"
   [ "$left" = "0" ] || { echo "WARN: rollback left paths — inspect with: git -C '$DD_REPO' status"; "${G[@]}" status --porcelain | head -10; }
 }
