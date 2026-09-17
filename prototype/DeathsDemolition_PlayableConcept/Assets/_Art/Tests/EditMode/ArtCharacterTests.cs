@@ -405,7 +405,8 @@ namespace DD.Art.Tests.EditMode
                 Assert.AreEqual(ArtImportContract.TextureClass.Character, ArtImportContract.ClassOf(p), p);
                 var importer = AssetImporter.GetAtPath(p) as TextureImporter;
                 Assert.IsNotNull(importer, p);
-                Assert.AreEqual(2048, importer.maxTextureSize, p);
+                // Contract v1.3 (WP-038 C): sources 2048, derived masks (MetallicSmoothness / DetailMask) ≤ 1024.
+                Assert.AreEqual(ArtImportContract.IsDerivedMaskRole(ArtImportContract.RoleOf(p)) ? ArtImportContract.DerivedMaskMaxSize : 2048, importer.maxTextureSize, p);
                 Assert.IsTrue(importer.streamingMipmaps, p);
                 Assert.IsEmpty(ArtImportContract.ValidateTexture(importer, ArtImportContract.RoleOf(p)), p);
             }
