@@ -20,8 +20,20 @@ namespace DD.Prototype.UI
         /// <summary>WP-022E: local run telemetry (WP-045) on/off; default on, no identity data either way.</summary>
         public bool Telemetry = true;
 
+        // ---- WP-022G accessibility
+        /// <summary>0 = default palette, 1 = colour-blind safe (greens → blue family; danger keeps vermilion; blood is not touched).</summary>
+        public int ColorPalette;
+
+        /// <summary>Reading-text scale (Body/Label/Caption), 1.0–1.25; applies to the next screen built.</summary>
+        public float TextScale = 1f;
+
+        /// <summary>Halves damage / final-seconds flashes (HUD edges, WP-019 vignette flash) - never the blood.</summary>
+        public bool ReduceFlashes;
+
         public UiSettingsData Clamp()
         {
+            ColorPalette = ColorPalette == 1 ? 1 : 0;
+            TextScale = Mathf.Clamp(TextScale, UiSettings.TextScaleMin, UiSettings.TextScaleMax);
             Version = CurrentVersion;
             UiScale = Mathf.Clamp(UiScale, UiTheme.UiScaleMin, UiTheme.UiScaleMax);
             MasterVolume = Mathf.Clamp01(MasterVolume);
@@ -166,6 +178,68 @@ namespace DD.Prototype.UI
             }
         }
 
+        public const float TextScaleMin = 1f;
+        public const float TextScaleMax = 1.25f;
+
+        /// <summary>WP-022G: 0 default, 1 colour-blind safe palette (UiTokens swaps the green family for blue).</summary>
+        public static int ColorPalette
+        {
+            get { EnsureLoaded(); return s_data.ColorPalette; }
+            set
+            {
+                EnsureLoaded();
+                int v = value == 1 ? 1 : 0;
+                if (v == s_data.ColorPalette) return;
+                s_data.ColorPalette = v;
+                UiTokens.Palette = v == 1 ? UiPalette.ColorBlindSafe : UiPalette.Default;
+                Persist();
+                Action handlers = PaletteChanged;
+                if (handlers != null) handlers();
+            }
+        }
+
+        /// <summary>Raised after the palette flips (screens rebuild their colours on the next build; the HUD re-reads tokens).</summary>
+        public static event Action PaletteChanged;
+
+        /// <summary>WP-022G: reading-text scale; UiTokens.FontSize multiplies Body / Label / Caption by it.</summary>
+        public static float TextScale
+        {
+            get { EnsureLoaded(); return s_data.TextScale; }
+            set
+            {
+                EnsureLoaded();
+                float v = Mathf.Clamp(value, TextScaleMin, TextScaleMax);
+                if (Mathf.Approximately(v, s_data.TextScale)) return;
+                s_data.TextScale = v;
+                UiTokens.TextScale = v;
+                Persist();
+            }
+        }
+
+        /// <summary>WP-022G: flash reduction (HUD damage edges and the WP-019 vignette flash at 0.4×; blood untouched).</summary>
+        public static bool ReduceFlashes
+        {
+            get { EnsureLoaded(); return s_data.ReduceFlashes; }
+            set
+            {
+                EnsureLoaded();
+                if (value == s_data.ReduceFlashes) return;
+                s_data.ReduceFlashes = value;
+                ApplyFlashes();
+                Persist();
+            }
+        }
+
+        /// <summary>The multiplier the flash consumers read (HUD, WP-019 GameFeelSettings.FlashScale).</summary>
+        public const float ReducedFlashScale = 0.4f;
+
+        private static void ApplyFlashes()
+        {
+            float scale = s_data.ReduceFlashes ? ReducedFlashScale : 1f;
+            UiTokens.FlashScale = scale;
+            DD.Prototype.Feedback.Vfx.GameFeelSettings.FlashScale = scale;
+        }
+
         /// <summary>WP-022E: whether WP-045 run telemetry records runs (Settings toggle).</summary>
         public static bool Telemetry
         {
@@ -222,6 +296,9 @@ namespace DD.Prototype.UI
             s_data.MasterVolume = loaded != null ? loaded.MasterVolume : 1f;
             s_data.ReducedMotion = loaded != null && loaded.ReducedMotion;
             s_data.Telemetry = loaded == null || loaded.Telemetry;
+            s_data.ColorPalette = loaded != null ? loaded.ColorPalette : 0;
+            s_data.TextScale = loaded != null && loaded.TextScale > 0f ? loaded.TextScale : 1f;
+            s_data.ReduceFlashes = loaded != null && loaded.ReduceFlashes;
             int count = Mathf.Max(1, QualitySettings.names.Length);
             int quality = loaded != null && loaded.Quality >= 0 ? loaded.Quality : QualitySettings.GetQualityLevel();
             s_data.Quality = Mathf.Clamp(quality, 0, count - 1);
@@ -229,6 +306,9 @@ namespace DD.Prototype.UI
             ApplyVolume();
             ApplyQuality();
             ApplyTelemetry();
+            UiTokens.Palette = s_data.ColorPalette == 1 ? UiPalette.ColorBlindSafe : UiPalette.Default;
+            UiTokens.TextScale = s_data.TextScale;
+            ApplyFlashes();
         }
 
         private static void ApplyTelemetry()

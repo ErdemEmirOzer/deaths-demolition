@@ -82,8 +82,11 @@ namespace DD.Prototype.Feedback.Vfx
         public float ShakePlayerDamageSeconds => Mathf.Clamp(_shakePlayerDamageSeconds, 0f, MaxShakeSeconds);
         public float ShakeArmorBreakAmplitude => _enabled ? Mathf.Clamp(_shakeArmorBreakAmplitude, 0f, MaxShakeAmplitude) : 0f;
         public float ShakeHeavyDeathAmplitude => _enabled ? Mathf.Clamp(_shakeHeavyDeathAmplitude, 0f, MaxShakeAmplitude) : 0f;
-        public float VignetteFlashAlpha => _enabled ? Mathf.Clamp(_vignetteFlashAlpha, 0f, MaxVignetteAlpha) : 0f;
-        public float VignetteLowHealthAlpha => _enabled ? Mathf.Clamp(_vignetteLowHealthAlpha, 0f, MaxVignetteAlpha) : 0f;
+        /// <summary>WP-022G (S-09 accessibility): the player's flash-reduction multiplier (1 = authored; 0.4 when "reduce flashes" is on). Set by UiSettings; the vignette flash and low-health hold scale by it, blood never does.</summary>
+        public static float FlashScale = 1f;
+
+        public float VignetteFlashAlpha => _enabled ? Mathf.Clamp(_vignetteFlashAlpha, 0f, MaxVignetteAlpha) * FlashScale : 0f;
+        public float VignetteLowHealthAlpha => _enabled ? Mathf.Clamp(_vignetteLowHealthAlpha, 0f, MaxVignetteAlpha) * FlashScale : 0f;
         public float LowHealthFraction => Mathf.Clamp01(_lowHealthFraction);
         public int VignetteFlashInFrames => Mathf.Max(1, _vignetteFlashInFrames);
         public int VignetteFlashOutFrames => Mathf.Max(1, _vignetteFlashOutFrames);

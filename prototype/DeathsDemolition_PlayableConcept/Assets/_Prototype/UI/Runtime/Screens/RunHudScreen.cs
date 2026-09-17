@@ -637,8 +637,10 @@ namespace DD.Prototype.UI
             bottomRect.offsetMin = Vector2.zero;
             bottomRect.offsetMax = Vector2.zero;
 
+            // WP-022G: the final-seconds pulse band scales with the flash-reduction setting
+            // (built per screen; the setting applies to the next run's HUD).
             vignette.gameObject.AddComponent<UiPulse>().Configure(
-                new Graphic[] { top, bottom }, 0.10f, 0.30f, UiTokens.PulsePeriod * 0.5f);
+                new Graphic[] { top, bottom }, 0.10f * UiTokens.FlashScale, 0.30f * UiTokens.FlashScale, UiTokens.PulsePeriod * 0.5f);
 
             _warningVignette.SetActive(false);
 

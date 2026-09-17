@@ -219,6 +219,8 @@ WP-029 (M3 lighting & look pass, ADR-029-1/2) gives the game its target look and
 
 WP-022F (UI quality v3) adds device-aware input prompts (`UiInputScheme` polls Input System device timestamps; `UiInputGlyphs`/`UiPrompt` draw procedural A/B/X/Y/MENU or key caps; `UiInput.Prompt(button, action)`), the `UiCaptureAgent` HUD observer for real-gameplay frames next to the WP-026 bot (`-ddUiCapture hud -ddUiCaptureRounds 1,4,8,12`), a staggered Results entry (`UiStaggerIn`) and the `RunTelemetry` CLI-off / subscribed flag split.
 
+WP-022G (accessibility & options v1) adds two main-menu panes: ACCESSIBILITY (colour-blind safe palette via `UiTokens.Palette`, reading-text scale, flash reduction through `UiTokens.FlashScale` + `GameFeelSettings.FlashScale`, reduced motion) and CONTROLS (WP-024 rebinding rows on `IInputRemapService`, stick dead zone, aim-assist level, rumble on `InputPreferencesStore`). All UI values persist in `ui-settings.json`; the contrast table is asserted under both palettes.
+
 | Folder | One-line summary |
 |---|---|
 | `Core/` | The spine: `PrototypeConfig` and its ten sections, the `PrototypeOnly` origin attribute, boot/scene hand-off, object pooling, the input abstraction, and the F1 panel plus its registry. |

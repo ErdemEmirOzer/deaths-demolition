@@ -429,7 +429,7 @@ namespace DD.Prototype.UI
             // 0.001 is the point below which an 8-bit alpha channel rounds to zero anyway,
             // i.e. the threshold at which the graphic stops existing on screen. Not a taste
             // value and not a fade floor.
-            float alpha = Mathf.Clamp01(level) * UiTokens.DamageEdgePeakAlpha;
+            float alpha = Mathf.Clamp01(level) * UiTokens.DamageEdgePeakAlpha * UiTokens.FlashScale; // WP-022G reduce flashes
             bool on = alpha > 0.001f;
 
             if (image.enabled != on)

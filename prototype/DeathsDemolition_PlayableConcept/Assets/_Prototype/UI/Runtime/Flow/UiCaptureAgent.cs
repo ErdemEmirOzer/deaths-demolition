@@ -294,6 +294,8 @@ namespace DD.Prototype.UI
                     case "profile":
                     case "achievements":
                     case "statistics":
+                    case "controls":
+                    case "accessibility":
                         {
                             MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
                             if (menu != null)
@@ -301,6 +303,8 @@ namespace DD.Prototype.UI
                                 menu.ShowPane(_screen == "settings" ? UiContext.Settings
                                     : _screen == "achievements" ? UiContext.Achievements
                                     : _screen == "statistics" ? UiContext.Statistics
+                                    : _screen == "controls" ? UiContext.Controls
+                                    : _screen == "accessibility" ? UiContext.Accessibility
                                     : UiContext.Profile);
                             }
 

@@ -219,6 +219,10 @@ namespace DD.Prototype.Tests.EditMode
         {
             Assert.IsTrue(UiNavigationModel.IsLayer(UiContext.Settings));
             Assert.AreEqual(UiContext.MainMenu, UiNavigationModel.BaseOf(UiContext.Settings));
+            // WP-022G: the two new panes are MainMenu layers like Settings.
+            Assert.IsTrue(UiNavigationModel.IsLayer(UiContext.Controls) && UiNavigationModel.IsLayer(UiContext.Accessibility));
+            Assert.AreEqual(UiContext.MainMenu, UiNavigationModel.BaseOf(UiContext.Controls));
+            Assert.AreEqual(UiContext.MainMenu, UiNavigationModel.BaseOf(UiContext.Accessibility));
 
             _model.EnterBase(UiContext.MainMenu);
             Assert.AreEqual(UiNavigationResult.Changed, _model.EnterLayer(UiContext.Settings));

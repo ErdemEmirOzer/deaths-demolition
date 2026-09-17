@@ -237,6 +237,22 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.IsTrue(UiSettings.ReducedMotion);
                 Assert.IsFalse(UiSettings.Telemetry);
                 UiSettings.Telemetry = true;
+
+                // WP-022G accessibility values round-trip and apply to the tokens.
+                UiSettings.ColorPalette = 1;
+                UiSettings.TextScale = 1.2f;
+                UiSettings.ReduceFlashes = true;
+                Assert.AreEqual(UiPalette.ColorBlindSafe, UiTokens.Palette);
+                Assert.AreEqual(Mathf.RoundToInt(18 * 1.2f), UiTokens.FontSize(UiType.Body), "Body metin ölçeğini izler");
+                Assert.AreEqual(34, UiTokens.FontSize(UiType.H1), "başlıklar ölçeklenmez");
+                Assert.AreEqual(UiSettings.ReducedFlashScale, UiTokens.FlashScale, 0.001f);
+                UiSettings.SetPathOverride(path);
+                Assert.AreEqual(1, UiSettings.ColorPalette);
+                Assert.AreEqual(1.2f, UiSettings.TextScale, 1e-4f);
+                Assert.IsTrue(UiSettings.ReduceFlashes);
+                UiSettings.ColorPalette = 0;
+                UiSettings.TextScale = 1f;
+                UiSettings.ReduceFlashes = false;
                 Assert.IsTrue(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled);
 
                 // WP-022F (S-04 review): -ddTelemetry 0 owns the process - the toggle cannot
@@ -382,6 +398,47 @@ namespace DD.Prototype.Tests.EditMode
             Debug.Log("[DD-TEST] wp022c.contrastTable\n" + table);
             Assert.AreEqual(0, failures, "kontrast tablosunda FAIL:\n" + table);
             Assert.GreaterOrEqual(UiContrast.Cases.Count, 30, "audit çift sayısı daraldı");
+        }
+
+        /// <summary>
+        /// WP-022G: the colour-blind safe palette passes the same WCAG table (every pair,
+        /// both palettes), the green family really leaves green, and the palette is
+        /// restored afterwards.
+        /// </summary>
+        [Test]
+        public void KontrastTablosu_RenkKorlukPaleti_TumCiftlerGecer()
+        {
+            UiPalette before = UiTokens.Palette;
+            try
+            {
+                UiTokens.Palette = UiPalette.ColorBlindSafe;
+                var table = new System.Text.StringBuilder();
+                int failures = 0;
+                foreach (UiContrastCase c in UiContrast.Cases)
+                {
+                    float ratio = UiContrast.Measure(c);
+                    bool ok = ratio >= c.Required;
+                    if (!ok) failures++;
+                    table.AppendLine("| " + c.Description + " | " + ratio.ToString("0.00") + ":1 | " + c.Required.ToString("0.0") + " | " + (ok ? "PASS" : "FAIL") + " |");
+                }
+
+                Debug.Log("[DD-TEST] wp022g.contrastTableColorBlind\n" + table);
+                Assert.AreEqual(0, failures, "renk körlüğü paletinde FAIL:\n" + table);
+
+                Color success = UiTokens.Get(UiColor.StateSuccess);
+                Color health = UiTokens.Get(UiColor.BarHealth);
+                Color danger = UiTokens.Get(UiColor.StateDanger);
+                Assert.Greater(success.b, success.g, "başarı jade'den maviye taşındı");
+                Assert.Greater(health.b, health.r, "sağlık çubuğu mavi aileye taşındı");
+                Assert.Greater(danger.r, danger.b, "tehlike vermilion kalır");
+                // Hue separation between health and low health is what the palette exists for.
+                Color low = UiTokens.Get(UiColor.BarHealthLow);
+                Assert.Greater(Mathf.Abs(low.r - health.r), 0.3f, "sağlık ↔ düşük sağlık kanal farkı belirgin");
+            }
+            finally
+            {
+                UiTokens.Palette = before;
+            }
         }
 
         private static Color Hex(int r, int g, int b)

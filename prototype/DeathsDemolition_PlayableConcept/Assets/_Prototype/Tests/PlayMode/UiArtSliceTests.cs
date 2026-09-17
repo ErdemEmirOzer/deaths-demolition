@@ -326,22 +326,12 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SeciliBekle("Setting.MASTER VOLUME");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.GRAPHICS QUALITY");
-            Hareket(MoveDirection.Down);
-            yield return SeciliBekle("ReducedMotion");
-            // Submit flips the toggle (WP-022B) and the label says so; flip it back.
-            int raisedBefore = UiEvents.RaisedCount;
-            Onayla();
-            yield return null;
-            Assert.IsTrue(UiSettings.ReducedMotion, "Submit reduced motion'ı açmalı");
-            Assert.Greater(UiEvents.RaisedCount, raisedBefore, "toggle bir UiEvent yükseltir");
-            Onayla();
-            yield return null;
-            Assert.IsFalse(UiSettings.ReducedMotion);
-
-            // WP-022E: the run telemetry toggle is the last control; Submit flips it and
-            // RunTelemetry follows; flip back. Down wraps to the first slider.
+            // WP-022E: the run telemetry toggle is the last control (reduced motion moved
+            // to the ACCESSIBILITY pane in WP-022G); Submit flips it and RunTelemetry
+            // follows; flip back. Down wraps to the first slider.
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Telemetry");
+            int raisedBefore = UiEvents.RaisedCount;
             bool telemetryBefore = UiSettings.Telemetry;
             Onayla();
             yield return null;
@@ -350,8 +340,56 @@ namespace DD.Prototype.Tests.PlayMode
             Onayla();
             yield return null;
             Assert.AreEqual(telemetryBefore, UiSettings.Telemetry);
+            Assert.Greater(UiEvents.RaisedCount, raisedBefore, "toggle bir UiEvent yükseltir");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.UI SCALE");
+
+            // WP-022G: ACCESSIBILITY pane - palette / text scale / flashes / reduced motion
+            // reachable from its tab; the palette toggle swaps UiTokens and back.
+            menu.ShowPane(UiContext.Accessibility);
+            yield return null;
+            UiInput.Focus(Buton(menu, "Tab.Accessibility"));
+            yield return SeciliBekle("Tab.Accessibility");
+            Hareket(MoveDirection.Right);
+            yield return SeciliBekle("Palette");
+            Onayla();
+            yield return null;
+            Assert.AreEqual(1, UiSettings.ColorPalette);
+            Assert.AreEqual(UiPalette.ColorBlindSafe, UiTokens.Palette);
+            Assert.AreNotEqual(UiTokens.Get(UiColor.StateSuccess), UiTokens.Get(UiColor.StateDanger));
+            Onayla();
+            yield return null;
+            Assert.AreEqual(0, UiSettings.ColorPalette);
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("Setting.TEXT SCALE");
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("ReduceFlashes");
+            Onayla();
+            yield return null;
+            Assert.IsTrue(UiSettings.ReduceFlashes);
+            Assert.AreEqual(UiSettings.ReducedFlashScale, UiTokens.FlashScale, 0.001f);
+            Assert.AreEqual(UiSettings.ReducedFlashScale, DD.Prototype.Feedback.Vfx.GameFeelSettings.FlashScale, 0.001f);
+            Onayla();
+            yield return null;
+            Assert.IsFalse(UiSettings.ReduceFlashes);
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("ReducedMotion");
+            Onayla();
+            yield return null;
+            Assert.IsTrue(UiSettings.ReducedMotion, "Submit reduced motion'ı açmalı");
+            Onayla();
+            yield return null;
+            Assert.IsFalse(UiSettings.ReducedMotion);
+
+            // WP-022G: CONTROLS pane - keyboard slots on the left, gamepad options on the right.
+            menu.ShowPane(UiContext.Controls);
+            yield return null;
+            UiInput.Focus(Buton(menu, "Tab.Controls"));
+            yield return SeciliBekle("Tab.Controls");
+            Hareket(MoveDirection.Right);
+            yield return null;
+            Assert.IsTrue(Secili != null && (Secili.name.StartsWith("Bind.") || Secili.name == "ResetBindings"), "sekmeden sağ → ilk klavye slotu; seçili: " + (Secili != null ? Secili.name : "yok"));
+            Assert.IsNotNull(Buton(menu, "Rumble"), "gamepad seçenekleri");
 
             // Cancel (Escape / east button) returns to Profile with the tab focused.
             menu.ShowPane(UiContext.Profile); // the Cancel path minus the hardware read

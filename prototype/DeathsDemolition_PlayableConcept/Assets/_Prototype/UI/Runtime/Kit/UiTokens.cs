@@ -30,6 +30,13 @@ namespace DD.Prototype.UI
     ///
     /// Sizes are for the 1920x1080 reference; the CanvasScaler handles everything else.
     /// </summary>
+    /// <summary>WP-022G: which colour set UiTokens.Get answers from.</summary>
+    public enum UiPalette
+    {
+        Default = 0,
+        ColorBlindSafe = 1
+    }
+
     public enum UiType
     {
         /// <summary>56 bold. The game title, once per screen at most.</summary>
@@ -230,6 +237,15 @@ namespace DD.Prototype.UI
         private static readonly Color Gold400 = Hex(0xD9, 0xA9, 0x3C);
         private static readonly Color Coral400 = Hex(0xEE, 0x70, 0x63);
         private static readonly Color Jade400 = Hex(0x8F, 0xC0, 0x79);
+
+        // WP-022G colour-blind safe palette: the green family (Moss / Jade: health, earned,
+        // UNLOCKED) moves to a sky blue that deuteranopes and protanopes separate from the
+        // vermilion / coral danger family; low health keeps coral but the healthy bar is
+        // blue, so the two ends of the bar differ in hue AND luminance. Blood (VFX) is
+        // untouched by directive. Every pair is in the UiContrast table under both palettes.
+        private static readonly Color Sky400 = Hex(0x7A, 0xB8, 0xF0);
+        private static readonly Color Sky500 = Hex(0x5C, 0x9F, 0xE0);
+        private static readonly Color Amber400 = Hex(0xF2, 0xB4, 0x4C);
         private static readonly Color Focus400 = Hex(0xF2, 0xD9, 0x8C);
 
         private static Color Hex(int r, int g, int b)
@@ -246,8 +262,27 @@ namespace DD.Prototype.UI
         // =================================================================== semantic
 
         /// <summary>Resolve a semantic token. This is the ONLY way screens obtain a colour.</summary>
+        /// <summary>WP-022G: the active palette (UiSettings.ColorPalette); Get() answers from it.</summary>
+        public static UiPalette Palette = UiPalette.Default;
+
+        /// <summary>WP-022G: reading-text multiplier (Body / BodyStrong / Label / Caption), 1.0–1.25.</summary>
+        public static float TextScale = 1f;
+
+        /// <summary>WP-022G: 1, or UiSettings.ReducedFlashScale when "reduce flashes" is on; the HUD's damage-edge and final-seconds peaks multiply by it.</summary>
+        public static float FlashScale = 1f;
+
         public static Color Get(UiColor token)
         {
+            if (Palette == UiPalette.ColorBlindSafe)
+            {
+                switch (token)
+                {
+                    case UiColor.StateSuccess: return Sky400;
+                    case UiColor.BarHealth: return Sky500;
+                    case UiColor.StateWarning: return Amber400;
+                }
+            }
+
             switch (token)
             {
                 case UiColor.Transparent: return new Color(0f, 0f, 0f, 0f);
@@ -298,6 +333,21 @@ namespace DD.Prototype.UI
 
         /// <summary>Font size in reference pixels.</summary>
         public static int FontSize(UiType type)
+        {
+            int size = BaseFontSize(type);
+            switch (type)
+            {
+                case UiType.Body:
+                case UiType.BodyStrong:
+                case UiType.Label:
+                case UiType.Caption:
+                    return Mathf.RoundToInt(size * Mathf.Clamp(TextScale, 1f, 1.25f));
+                default:
+                    return size;
+            }
+        }
+
+        private static int BaseFontSize(UiType type)
         {
             switch (type)
             {

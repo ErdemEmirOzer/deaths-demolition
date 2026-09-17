@@ -38,6 +38,12 @@ namespace DD.Prototype.UI
         /// <summary>WP-022: the settings pane (UI scale, volume, quality). A MainMenu layer.</summary>
         Settings = 13,
 
+        /// <summary>WP-022G: controls pane (key / button rebinding, gamepad options). A MainMenu layer.</summary>
+        Controls = 14,
+
+        /// <summary>WP-022G: accessibility pane (colour-blind palette, text scale, flash reduction, reduced motion). A MainMenu layer.</summary>
+        Accessibility = 15,
+
         // ---- layers on GameplayHud
         RoundUpgrade = 20,
         Paused = 21
@@ -148,6 +154,8 @@ namespace DD.Prototype.UI
                    context == UiContext.Statistics ||
                    context == UiContext.Achievements ||
                    context == UiContext.Settings ||
+                   context == UiContext.Controls ||
+                   context == UiContext.Accessibility ||
                    context == UiContext.RoundUpgrade;
         }
 
@@ -160,6 +168,8 @@ namespace DD.Prototype.UI
                 case UiContext.Statistics:
                 case UiContext.Achievements:
                 case UiContext.Settings:
+                case UiContext.Controls:
+                case UiContext.Accessibility:
                     return UiContext.MainMenu;
 
                 case UiContext.RoundUpgrade:

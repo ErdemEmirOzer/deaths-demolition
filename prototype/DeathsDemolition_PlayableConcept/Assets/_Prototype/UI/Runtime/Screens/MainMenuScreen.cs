@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.IO;
 using DD.Prototype.Achievements;
+using DD.Prototype.Core.InputAbstraction;
+using DD.Prototype.Inputs;
 using DD.Prototype.Profile;
 using TMPro;
 using UnityEngine;
@@ -70,6 +73,11 @@ namespace DD.Prototype.UI
         private UiButton _statisticsTab;
         private UiButton _achievementsTab;
         private UiButton _settingsTab;
+        private UiButton _controlsTab;
+        private UiButton _accessibilityTab;
+
+        /// <summary>WP-022G: the remap row currently listening ("PRESS A KEY"), for the redraw after the result.</summary>
+        private string _rebindingEntryId;
         private UiButton _playButton;
 
         /// <summary>The pane on screen. Exposed for tests; the source of truth is <see cref="UiNavigation"/>.</summary>
@@ -210,6 +218,10 @@ namespace DD.Prototype.UI
             _achievementsTab = AddTab(ref stack, column, "ACHIEVEMENTS", UiContext.Achievements, "Menu.Achievements");
             stack.Gap(UiSpace.S);
             _settingsTab = AddTab(ref stack, column, "SETTINGS", UiContext.Settings, "Menu.Settings");
+            stack.Gap(UiSpace.S);
+            _controlsTab = AddTab(ref stack, column, "CONTROLS", UiContext.Controls, "Menu.Keyboard");
+            stack.Gap(UiSpace.S);
+            _accessibilityTab = AddTab(ref stack, column, "ACCESSIBILITY", UiContext.Accessibility, null); // AD v006 MUST-2: no glyph (the kit has no eye/person glyph; gamepad stays with CONTROLS)
 
             // Quit is docked to the foot of the column rather than to the cursor: a
             // destructive action should not sit adjacent to the reading tabs.
@@ -225,7 +237,7 @@ namespace DD.Prototype.UI
             // Explicit vertical chain (WP-022 gamepad): PLAY -> tabs -> QUIT, no wrap - Up
             // from PLAY must never land on QUIT. Automatic navigation would also reach the
             // pane's sliders from a tab, which is what the horizontal axis is for.
-            UiInput.ChainVertical(false, play, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, quit);
+            UiInput.ChainVertical(false, play, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, _controlsTab, _accessibilityTab, quit);
 
             TMP_Text build = UiFactory.Label(
                 "BuildNote", column,
@@ -297,6 +309,8 @@ namespace DD.Prototype.UI
                 _statisticsTab.SetSelectedChoice(_pane == UiContext.Statistics);
                 _achievementsTab.SetSelectedChoice(_pane == UiContext.Achievements);
                 _settingsTab.SetSelectedChoice(_pane == UiContext.Settings);
+                _controlsTab.SetSelectedChoice(_pane == UiContext.Controls);
+                _accessibilityTab.SetSelectedChoice(_pane == UiContext.Accessibility);
             }
 
             ClearChildren(_paneHost);
@@ -308,6 +322,8 @@ namespace DD.Prototype.UI
             ClearRightLink(_statisticsTab);
             ClearRightLink(_achievementsTab);
             ClearRightLink(_settingsTab);
+            ClearRightLink(_controlsTab);
+            ClearRightLink(_accessibilityTab);
 
             ProfileData profile = ProfileService.Current;
 
@@ -337,6 +353,14 @@ namespace DD.Prototype.UI
 
                 case UiContext.Settings:
                     BuildSettingsPane();
+                    break;
+
+                case UiContext.Controls:
+                    BuildControlsPane();
+                    break;
+
+                case UiContext.Accessibility:
+                    BuildAccessibilityPane();
                     break;
 
                 default:
@@ -442,48 +466,25 @@ namespace DD.Prototype.UI
                 v => UiSettings.Quality = Mathf.RoundToInt(v));
             quality.wholeNumbers = true;
 
-            // Reduced motion (WP-022B, accessibility): pulses hold, fades are instant,
-            // petals stand still. A toggle button, so the pad's Submit flips it.
-            stack.Gap(UiSpace.S);
-            UiButton reduced = UiFactory.Button(
-                "ReducedMotion", _paneHost, ReducedMotionLabel(), UiButtonVariant.Secondary, null);
-            reduced.SetOnClick(() =>
-            {
-                UiSettings.ReducedMotion = !UiSettings.ReducedMotion;
-                reduced.SetText(ReducedMotionLabel());
-                UiEvents.Raise(UiEvent.ToggleChanged, "ReducedMotion");
-            });
-            stack.Add((RectTransform)reduced.transform, UiTokens.TargetPreferred);
-            UiInput.LeadingIcon(reduced, "Menu.Gamepad", UiColor.TextSecondary, 22f);
+            // Reduced motion moved to the ACCESSIBILITY pane (WP-022G); Settings keeps the
+            // device preferences.
 
             // Run telemetry (WP-022E, WP-045): local files only, no identity data; the
             // player can still switch it off. Same toggle-button pattern as reduced motion.
             stack.Gap(UiSpace.S);
-            UiButton telemetry = UiFactory.Button(
-                "Telemetry", _paneHost, TelemetryLabel(), UiButtonVariant.Secondary, null);
-            telemetry.SetOnClick(() =>
-            {
-                UiSettings.Telemetry = !UiSettings.Telemetry;
-                telemetry.SetText(TelemetryLabel());
-                UiEvents.Raise(UiEvent.ToggleChanged, "Telemetry");
-            });
-            stack.Add((RectTransform)telemetry.transform, UiTokens.TargetPreferred);
-            UiInput.LeadingIcon(telemetry, "Menu.Statistics", UiColor.TextSecondary, 22f);
-            stack.Gap(UiSpace.XS);
-            TMP_Text telemetryNote = UiFactory.Label(
-                "TelemetryNote", _paneHost,
-                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.",
-                UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)telemetryNote.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
+            UiButton telemetry = AddToggleRow(ref stack, _paneHost, "Telemetry", "RUN TELEMETRY",
+                () => (UiSettings.Telemetry ? "ON" : "OFF", UiSettings.Telemetry),
+                () => { UiSettings.Telemetry = !UiSettings.Telemetry; return (UiSettings.Telemetry ? "ON" : "OFF", UiSettings.Telemetry); }, "Telemetry");
+            AddCaptionUnder(ref stack, _paneHost, "TelemetryNote",
+                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.");
 
-            stack.Gap(UiSpace.L);
             TMP_Text note = UiFactory.Label(
                 "Note", _paneHost,
                 "UI scale applies to the next screen you open. Use the arrow keys or the left stick on a slider.",
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
-            UiInput.ChainVertical(scale, volume, quality, reduced, telemetry);
+            UiInput.ChainVertical(scale, volume, quality, telemetry);
             UiInput.Focus(scale);
         }
 
@@ -492,25 +493,31 @@ namespace DD.Prototype.UI
             return UiSettings.ReducedMotion ? "REDUCED MOTION · ON" : "REDUCED MOTION · OFF";
         }
 
-        private static string TelemetryLabel()
-        {
-            return UiSettings.Telemetry ? "RUN TELEMETRY · ON" : "RUN TELEMETRY · OFF";
-        }
-
         private Slider AddSettingSlider(
             ref UiStack stack, string label, string icon, float min, float max, float value,
             System.Func<float, string> readout, System.Action<float> onChanged)
         {
-            RectTransform row = UiFactory.NewRect("Setting." + label, _paneHost);
+            return AddSettingSliderIn(ref stack, _paneHost, label, icon, min, max, value, readout, onChanged);
+        }
+
+        private static Slider AddSettingSliderIn(
+            ref UiStack stack, RectTransform parent, string label, string icon, float min, float max, float value,
+            System.Func<float, string> readout, System.Action<float> onChanged)
+        {
+            RectTransform row = UiFactory.NewRect("Setting." + label, parent);
             stack.Add(row, UiTokens.TargetCompact + UiFactory.LineHeight(UiType.Label) + (int)UiSpace.XS);
             stack.Gap(UiSpace.L);
 
-            Image glyph = UiArt.IconImage("Icon", row, icon, UiColor.TextSecondary, 22f);
-            RectTransform glyphRect = (RectTransform)glyph.transform;
-            glyphRect.anchorMin = new Vector2(0f, 1f);
-            glyphRect.anchorMax = new Vector2(0f, 1f);
-            glyphRect.pivot = new Vector2(0f, 1f);
-            glyphRect.anchoredPosition = Vector2.zero;
+            Image glyph = null;
+            if (!string.IsNullOrEmpty(icon))
+            {
+                glyph = UiArt.IconImage("Icon", row, icon, UiColor.TextSecondary, 22f);
+                RectTransform glyphRect = (RectTransform)glyph.transform;
+                glyphRect.anchorMin = new Vector2(0f, 1f);
+                glyphRect.anchorMax = new Vector2(0f, 1f);
+                glyphRect.pivot = new Vector2(0f, 1f);
+                glyphRect.anchoredPosition = Vector2.zero;
+            }
 
             TMP_Text title = UiFactory.Label("Label", row, label, UiType.Label, UiColor.TextMuted, TextAnchor.UpperLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
@@ -518,7 +525,7 @@ namespace DD.Prototype.UI
             titleRect.pivot = new Vector2(0f, 1f);
             titleRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Label));
             titleRect.anchoredPosition = Vector2.zero;
-            titleRect.offsetMin = new Vector2(glyph.enabled ? 22f + (int)UiSpace.S : 0f, titleRect.offsetMin.y);
+            titleRect.offsetMin = new Vector2(glyph != null && glyph.enabled ? 22f + (int)UiSpace.S : 0f, titleRect.offsetMin.y);
 
             TMP_Text valueText = UiFactory.Label(
                 "Value", row, readout(value), UiType.Label, UiColor.TextPrimary, TextAnchor.UpperRight);
@@ -542,6 +549,471 @@ namespace DD.Prototype.UI
                 UiEvents.Raise(UiEvent.SliderChanged, label);
             });
             return slider;
+        }
+
+        // ------------------------------------------------------------ controls pane
+
+        private const float RemapRowHeight = 40f;   // AD v006 MUST-5: 40 px slot, 48 px pitch
+        private const float RemapButtonWidth = 220f;
+
+        /// <summary>
+        /// WP-022G · key / button rebinding on the WP-024 <see cref="IInputRemapService"/>
+        /// plus the gamepad options (stick dead zone, aim assist level, rumble) from
+        /// <see cref="InputPreferencesStore"/>. Two columns: keyboard slots, gamepad slots.
+        /// A slot is a Nav-style button showing the effective control; Submit starts the
+        /// interactive rebind ("PRESS A KEY"), the service's callback redraws the pane.
+        /// </summary>
+        private void BuildControlsPane()
+        {
+            var stack = new UiStack(_paneHost);
+            stack.Add(UiFactory.Heading("CONTROLS", _paneHost), UiFactory.LineHeight(UiType.H2));
+            stack.Gap(UiSpace.XS);
+            TMP_Text intro = UiFactory.Label(
+                "Intro", _paneHost, "Select a slot and press the key or button you want. Escape cancels. Overrides are saved on this machine.",
+                UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)intro.transform, UiFactory.LineHeight(UiType.Caption));
+            stack.Gap(UiSpace.M);
+
+            IInputRemapService remap = PrototypeInputInstaller.Instance != null ? PrototypeInputInstaller.Instance.Remap : null;
+            var focusables = new List<Selectable>(16);
+
+            RectTransform columns = UiFactory.NewRect("Columns", _paneHost);
+            stack.Add(columns, ControlsColumnsHeight);
+            RectTransform left = UiFactory.NewRect("Keyboard", columns);
+            UiFactory.Fill(left);
+            left.anchorMax = new Vector2(0.5f, 1f);
+            left.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
+            RectTransform right = UiFactory.NewRect("Gamepad", columns);
+            UiFactory.Fill(right);
+            right.anchorMin = new Vector2(0.5f, 0f);
+            right.offsetMin = new Vector2((int)UiSpace.M, 0f);
+
+            var leftStack = new UiStack(left);
+            var rightStack = new UiStack(right);
+            var leftButtons = new List<Selectable>(8);
+            var rightButtons = new List<Selectable>(8);
+            AddRemapColumn(ref leftStack, "KEYBOARD", DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse, remap, leftButtons);
+            AddRemapColumn(ref rightStack, "GAMEPAD", DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad, remap, rightButtons);
+
+            // Gamepad options under the gamepad column.
+            InputPreferences prefs = InputPreferencesStore.Current;
+            rightStack.Gap(UiSpace.M);
+            Slider deadzone = AddSettingSliderIn(ref rightStack, right, "STICK DEAD ZONE", null, 0f, 0.5f, prefs.StickDeadzone,
+                v => Mathf.RoundToInt(v * 100f) + "%", v => UpdatePreferences(p => p.StickDeadzone = v));
+            // AD v006 MUST-6: AIM ASSIST as a cycle toggle (Off → Light → Full), MUST-1 recipe.
+            UiButton assist = AddToggleRow(ref rightStack, right, "AimAssist", "AIM ASSIST",
+                () => AimAssistState(),
+                () => { UpdatePreferences(p => SetAimAssistLevel(p, (Mathf.RoundToInt(AimAssistLevel(p)) + 1) % 3)); return AimAssistState(); }, "AimAssist");
+            rightStack.Gap(UiSpace.S);
+            UiButton rumble = AddToggleRow(ref rightStack, right, "Rumble", "RUMBLE",
+                () => (InputPreferencesStore.Current.RumbleEnabled ? "ON" : "OFF", InputPreferencesStore.Current.RumbleEnabled),
+                () => { UpdatePreferences(p => p.RumbleEnabled = !p.RumbleEnabled); return (InputPreferencesStore.Current.RumbleEnabled ? "ON" : "OFF", InputPreferencesStore.Current.RumbleEnabled); }, "Rumble");
+            rightButtons.Add(deadzone);
+            rightButtons.Add(assist);
+            rightButtons.Add(rumble);
+
+            // AD v006 MUST-7: reset as a full-width footer row under both columns, the
+            // overrides file name right-aligned on the same row.
+            stack.Gap(UiSpace.XL);
+            RectTransform footer = UiFactory.NewRect("Footer", _paneHost);
+            stack.Add(footer, UiTokens.TargetCompact);
+            UiButton reset = UiFactory.Button("ResetBindings", footer, "RESET ALL BINDINGS TO DEFAULTS", UiButtonVariant.Secondary, () =>
+            {
+                if (remap != null)
+                {
+                    remap.ResetToDefaults();
+                }
+
+                UiEvents.Raise(UiEvent.Confirm, "ResetBindings");
+                _refocusName = "Footer/ResetBindings";
+                RedrawPane();
+            });
+            RectTransform resetRect = (RectTransform)reset.transform;
+            resetRect.anchorMin = new Vector2(0f, 0.5f);
+            resetRect.anchorMax = new Vector2(0f, 0.5f);
+            resetRect.pivot = new Vector2(0f, 0.5f);
+            resetRect.sizeDelta = new Vector2(420f, UiTokens.TargetCompact);
+            resetRect.anchoredPosition = Vector2.zero;
+            TMP_Text file = UiFactory.Label(
+                "File", footer, remap != null ? "Overrides: " + Path.GetFileName(remap.OverridesFilePath) : "Input service not running.",
+                UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleRight);
+            RectTransform fileRect = UiFactory.Fill((RectTransform)file.transform);
+            fileRect.offsetMin = new Vector2(440f, 0f);
+            leftButtons.Add(reset);
+
+            UiInput.ChainVertical(false, leftButtons.ToArray());
+            UiInput.ChainVertical(false, rightButtons.ToArray());
+            for (int i = 0; i < leftButtons.Count; i++)
+            {
+                UiInput.LinkHorizontal(leftButtons[i], _controlsTab, rightButtons[Mathf.Min(i, rightButtons.Count - 1)]);
+            }
+
+            for (int i = 0; i < rightButtons.Count; i++)
+            {
+                UiInput.LinkHorizontal(rightButtons[i], leftButtons[Mathf.Min(i, leftButtons.Count - 1)], null);
+            }
+
+            if (leftButtons.Count > 0)
+            {
+                UiInput.LinkHorizontal(_controlsTab, null, leftButtons[0]);
+                UiInput.LinkVertical(reset, leftButtons.Count > 1 ? leftButtons[leftButtons.Count - 2] : null, null);
+                if (rightButtons.Count > 0)
+                {
+                    UiInput.LinkVertical(rightButtons[rightButtons.Count - 1], null, reset);
+                }
+
+                if (_focusPaneOnOpen)
+                {
+                    UiInput.Focus(leftButtons[0]); // AD v006 MUST-8
+                }
+            }
+        }
+
+        private const float ControlsColumnsHeight = 500f; // 9 slots × 48 + heading; gamepad column shorter
+
+        private void AddRemapColumn(ref UiStack stack, string heading, DD.Prototype.Core.InputAbstraction.InputSchemeKind scheme, IInputRemapService remap, List<Selectable> buttons)
+        {
+            TMP_Text label = UiFactory.Label("Label", stack.Parent, heading, UiType.Label, UiColor.TextMuted);
+            stack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
+            stack.Gap(UiSpace.XS);
+
+            if (remap == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<InputRemapEntry> entries = remap.Entries;
+            int shown = 0;
+            for (int i = 0; i < entries.Count && shown < MaxRemapRows; i++)
+            {
+                InputRemapEntry e = entries[i];
+                if (e.Scheme != scheme || e.Map != PrototypeInputNames.MapGameplay || e.Action == PrototypeInputNames.ActionDebugPanel)
+                {
+                    continue;
+                }
+
+                if (e.Action == PrototypeInputNames.ActionAim || e.Action == PrototypeInputNames.ActionAimStick)
+                {
+                    continue; // pointer / stick axes are not rebindable slots
+                }
+
+                shown++;
+                RectTransform row = UiFactory.NewRect("Slot." + e.Id, stack.Parent);
+                stack.Add(row, RemapRowHeight);
+                stack.Gap(UiSpace.S); // 48 px pitch
+
+                TMP_Text name = UiFactory.Label("Action", row, RemapRowName(e), UiType.Body, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+                RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
+                nameRect.offsetMax = new Vector2(-RemapButtonWidth - (int)UiSpace.S, 0f);
+
+                bool listening = _rebindingEntryId == e.Id;
+                string entryId = e.Id;
+                UiButton slot = UiFactory.Button("Bind." + e.Id, row, string.Empty, UiButtonVariant.Secondary, null);
+                slot.SetOnClick(() => StartRebind(remap, entryId));
+                RectTransform slotRect = (RectTransform)slot.transform;
+                slotRect.anchorMin = new Vector2(1f, 0.5f);
+                slotRect.anchorMax = new Vector2(1f, 0.5f);
+                slotRect.pivot = new Vector2(1f, 0.5f);
+                slotRect.sizeDelta = new Vector2(RemapButtonWidth, RemapRowHeight);
+                slotRect.anchoredPosition = Vector2.zero;
+
+                // AD v006 MUST-5: the control sits in a WP-022F key cap inside the slot
+                // (inset + hairline, TextPrimary, 12 px left inset); an overridden slot adds
+                // a sakura 6 px diamond after the cap (never colour alone); a listening slot
+                // reads PRESS A KEY in StateWarning with the threat-chip outline.
+                string capText = listening ? "PRESS A KEY" : e.DisplayName;
+                TMP_Text cap = UiFactory.Chip("Cap", slot.transform, capText,
+                    listening ? UiColor.SurfaceBase : UiColor.SurfaceInset,
+                    listening ? UiColor.StateWarning : (e.IsOverridden ? UiColor.AccentSakura : UiColor.TextPrimary),
+                    Mathf.Max(UiInputGlyphs.MinCapWidth, 20f + capText.Length * 9f), UiInputGlyphs.DefaultSize);
+                cap.fontStyle = TMPro.FontStyles.Bold;
+                RectTransform capRect = (RectTransform)cap.transform.parent;
+                capRect.anchorMin = new Vector2(0f, 0.5f);
+                capRect.anchorMax = new Vector2(0f, 0.5f);
+                capRect.pivot = new Vector2(0f, 0.5f);
+                capRect.anchoredPosition = new Vector2(12f, 0f);
+                var capEdge = capRect.gameObject.AddComponent<UnityEngine.UI.Outline>();
+                capEdge.effectDistance = new Vector2(1f, 1f);
+                capEdge.useGraphicAlpha = true;
+                Color edgeColor = UiTokens.Get(listening ? UiColor.StateWarning : UiColor.BorderHairline);
+                if (listening) edgeColor.a = 0.6f;
+                capEdge.effectColor = edgeColor;
+                if (e.IsOverridden && !listening)
+                {
+                    Image diamond = UiFactory.NewImage("Overridden", slot.transform, UiColor.AccentSakura, UiSprites.Solid);
+                    RectTransform diamondRect = (RectTransform)diamond.transform;
+                    diamondRect.anchorMin = new Vector2(0f, 0.5f);
+                    diamondRect.anchorMax = new Vector2(0f, 0.5f);
+                    diamondRect.pivot = new Vector2(0.5f, 0.5f);
+                    diamondRect.sizeDelta = new Vector2(6f, 6f);
+                    diamondRect.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                    diamondRect.anchoredPosition = new Vector2(12f + capRect.sizeDelta.x + 8f + 3f, 0f);
+                }
+
+                buttons.Add(slot);
+            }
+        }
+
+        private const int MaxRemapRows = 10; // Gameplay map: Move ×4, Fire, Reload, Pause, Special, Interact (9 on keyboard)
+
+        private static string RemapRowName(InputRemapEntry e)
+        {
+            string action = e.Action == PrototypeInputNames.ActionMove ? "Move" : e.Action;
+            if (!string.IsNullOrEmpty(e.CompositePart))
+            {
+                string part = e.CompositePart;
+                return action + " " + char.ToUpperInvariant(part[0]) + part.Substring(1);
+            }
+
+            return action;
+        }
+
+        private void StartRebind(IInputRemapService remap, string entryId)
+        {
+            if (remap == null || remap.IsRebinding)
+            {
+                return;
+            }
+
+            _rebindingEntryId = entryId;
+            _refocusName = null;
+            RedrawPane();
+            bool started = remap.StartRebind(entryId, (result, entry) =>
+            {
+                _rebindingEntryId = null;
+                UiEvents.Raise(result == InputRebindResult.Completed ? UiEvent.Confirm : UiEvent.Back, "Rebind");
+                if (this != null && _paneHost != null && _pane == UiContext.Controls)
+                {
+                    _refocusName = FindSlotPath(entryId);
+                    RedrawPane();
+                }
+            });
+
+            if (!started)
+            {
+                _rebindingEntryId = null;
+                RedrawPane();
+            }
+        }
+
+        private string FindSlotPath(string entryId)
+        {
+            Transform t = _paneHost.Find("Columns/Keyboard/Slot." + entryId + "/Bind." + entryId);
+            if (t == null)
+            {
+                t = _paneHost.Find("Columns/Gamepad/Slot." + entryId + "/Bind." + entryId);
+            }
+
+            return t != null ? "Columns/" + t.parent.parent.name + "/" + t.parent.name + "/" + t.name : null;
+        }
+
+        private static void UpdatePreferences(System.Action<InputPreferences> edit)
+        {
+            var next = new InputPreferences();
+            next.CopyFrom(InputPreferencesStore.Current);
+            edit(next);
+            InputPreferencesStore.Apply(next);
+        }
+
+        private static float AimAssistLevel(InputPreferences p)
+        {
+            if (!p.AimAssistEnabled) return 0f;
+            return p.AimAssistAngleDegrees < InputPreferences.MaxAimAssistAngleDegrees * 0.75f ? 1f : 2f;
+        }
+
+        private static void SetAimAssistLevel(InputPreferences p, int level)
+        {
+            p.AimAssistEnabled = level > 0;
+            p.AimAssistAngleDegrees = level == 1 ? InputPreferences.MaxAimAssistAngleDegrees * 0.5f : InputPreferences.MaxAimAssistAngleDegrees;
+            p.AimAssistDistance = InputPreferences.MaxAimAssistDistance;
+        }
+
+        private static (string, bool) AimAssistState()
+        {
+            int level = Mathf.RoundToInt(AimAssistLevel(InputPreferencesStore.Current));
+            return (level <= 0 ? "OFF" : level == 1 ? "LIGHT" : "FULL", level > 0);
+        }
+
+        // ------------------------------------------------------- accessibility pane
+
+        /// <summary>
+        /// WP-022G · accessibility: colour-blind safe palette, reading-text scale, flash
+        /// reduction, reduced motion (moved here from Settings, which keeps device
+        /// preferences). Every value lives in ui-settings.json.
+        /// </summary>
+        private void BuildAccessibilityPane()
+        {
+            var stack = new UiStack(_paneHost);
+            stack.Add(UiFactory.Heading("ACCESSIBILITY", _paneHost), UiFactory.LineHeight(UiType.H2));
+            stack.Gap(UiSpace.XS);
+            TMP_Text intro = UiFactory.Label(
+                "Intro", _paneHost, "These change how the game is presented, never how it plays. Text scale applies to the next screen you open; the palette to the next screen and the next run.",
+                UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)intro.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
+            stack.Gap(UiSpace.L);
+
+            // AD v006 MUST-1/3/4: toggle rows (label + state chip), 40 / 8 / caption / 24
+            // rhythm, and an in-place preview under PALETTE and TEXT SCALE.
+            Image[] swatches = null;
+            UiButton palette = AddToggleRow(ref stack, _paneHost, "Palette", "PALETTE",
+                () => PaletteState(), () => { UiSettings.ColorPalette = UiSettings.ColorPalette == 1 ? 0 : 1; TintSwatches(swatches); return PaletteState(); }, "Palette");
+            stack.Gap(UiSpace.S);
+            swatches = AddPaletteSwatches(ref stack, _paneHost);
+            AddCaptionUnder(ref stack, _paneHost, "PaletteNote",
+                "Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays vermilion; every state also has a shape and a word.");
+
+            TMP_Text sample = null;
+            Slider text = AddSettingSlider(ref stack, "TEXT SCALE", null, UiSettings.TextScaleMin, UiSettings.TextScaleMax, UiSettings.TextScale,
+                v => Mathf.RoundToInt(v * 100f) + "%", v =>
+                {
+                    UiSettings.TextScale = v;
+                    if (sample != null)
+                    {
+                        sample.fontSize = Mathf.RoundToInt(14f * v);
+                        sample.text = "Caption sample · 14 px → " + Mathf.RoundToInt(14f * v) + " px at " + Mathf.RoundToInt(v * 100f) + " %";
+                    }
+                });
+            sample = UiFactory.Label("TextSample", _paneHost, "Caption sample · 14 px → " + Mathf.RoundToInt(14f * UiSettings.TextScale) + " px at " + Mathf.RoundToInt(UiSettings.TextScale * 100f) + " %", UiType.Caption, UiColor.TextSecondary);
+            sample.fontSize = Mathf.RoundToInt(14f * UiSettings.TextScale);
+            stack.Add((RectTransform)sample.transform, UiFactory.LineHeight(UiType.Caption) * 1.5f);
+            stack.Gap(UiSpace.XL);
+
+            UiButton flashes = AddToggleRow(ref stack, _paneHost, "ReduceFlashes", "REDUCE FLASHES",
+                () => (UiSettings.ReduceFlashes ? "ON" : "OFF", UiSettings.ReduceFlashes),
+                () => { UiSettings.ReduceFlashes = !UiSettings.ReduceFlashes; return (UiSettings.ReduceFlashes ? "ON" : "OFF", UiSettings.ReduceFlashes); }, "ReduceFlashes");
+            AddCaptionUnder(ref stack, _paneHost, "FlashNote",
+                "Damage and final-seconds flashes at 40%. Blood and the world are not changed. Camera shake has its own slider on the pause screen.");
+
+            UiButton reduced = AddToggleRow(ref stack, _paneHost, "ReducedMotion", "REDUCED MOTION",
+                () => (UiSettings.ReducedMotion ? "ON" : "OFF", UiSettings.ReducedMotion),
+                () => { UiSettings.ReducedMotion = !UiSettings.ReducedMotion; return (UiSettings.ReducedMotion ? "ON" : "OFF", UiSettings.ReducedMotion); }, "ReducedMotion");
+            AddCaptionUnder(ref stack, _paneHost, "MotionNote",
+                "Pulses hold still, screen fades are instant and the menu petals stop drifting.", 1);
+
+            UiInput.ChainVertical(false, palette, text, flashes, reduced);
+            UiInput.LinkHorizontal(_accessibilityTab, null, palette);
+            UiInput.LinkHorizontal(palette, _accessibilityTab, null);
+            UiInput.LinkHorizontal(text, _accessibilityTab, null);
+            UiInput.LinkHorizontal(flashes, _accessibilityTab, null);
+            UiInput.LinkHorizontal(reduced, _accessibilityTab, null);
+            if (_focusPaneOnOpen)
+            {
+                UiInput.Focus(palette); // AD v006 MUST-8: focus lands on the first control
+            }
+        }
+
+        private static (string, bool) PaletteState()
+        {
+            return UiSettings.ColorPalette == 1 ? ("COLOUR-BLIND SAFE", true) : ("DEFAULT", false);
+        }
+
+        private static readonly UiColor[] SwatchTokens = { UiColor.BarHealth, UiColor.StateSuccess, UiColor.StateWarning, UiColor.StateDanger };
+        private static readonly string[] SwatchNames = { "HEALTH", "EARNED", "WARNING", "DANGER" };
+
+        /// <summary>AD v006 MUST-4: four 24 px chips filled from the CURRENT palette tokens, the word inside each; retinted the frame the palette flips.</summary>
+        private static Image[] AddPaletteSwatches(ref UiStack stack, RectTransform parent)
+        {
+            RectTransform row = UiFactory.NewRect("Swatches", parent);
+            stack.Add(row, StateChipHeight);
+            var images = new Image[SwatchTokens.Length];
+            for (int i = 0; i < SwatchTokens.Length; i++)
+            {
+                TMP_Text chip = UiFactory.Chip("Swatch." + SwatchNames[i], row, SwatchNames[i], SwatchTokens[i], UiColor.SurfaceBase, 96f, StateChipHeight);
+                chip.fontStyle = TMPro.FontStyles.Bold;
+                RectTransform rect = (RectTransform)chip.transform.parent;
+                rect.anchorMin = new Vector2(0f, 0.5f);
+                rect.anchorMax = new Vector2(0f, 0.5f);
+                rect.pivot = new Vector2(0f, 0.5f);
+                rect.anchoredPosition = new Vector2(20f + i * (96f + (int)UiSpace.S), 0f);
+                images[i] = rect.GetComponent<Image>();
+            }
+
+            return images;
+        }
+
+        private static void TintSwatches(Image[] swatches)
+        {
+            for (int i = 0; swatches != null && i < swatches.Length; i++)
+            {
+                if (swatches[i] != null)
+                {
+                    swatches[i].color = UiTokens.Get(SwatchTokens[i]);
+                }
+            }
+        }
+
+        // --------------------------------------------------------- toggle rows (AD v006)
+
+        private const float ToggleRowHeight = 40f;
+        private const float StateChipHeight = 24f;
+        private const float StateChipMinWidth = 72f;
+
+        /// <summary>
+        /// AD v006 MUST-1 · a cycle toggle as a row: label left (Body, TextPrimary), the
+        /// current value as a state chip on the right (OFF/DEFAULT: inset + hairline +
+        /// TextSecondary; ON: StateSuccess fill + ink). The whole row is the button, so
+        /// pad Submit and a click both cycle it; <paramref name="cycle"/> returns the new
+        /// (chip text, isOn) after advancing.
+        /// </summary>
+        private static UiButton AddToggleRow(ref UiStack stack, RectTransform parent, string name, string label,
+            System.Func<(string text, bool on)> current, System.Func<(string text, bool on)> cycle, string eventDetail)
+        {
+            UiButton button = UiFactory.Button(name, parent, label, UiButtonVariant.Secondary, null);
+            stack.Add((RectTransform)button.transform, ToggleRowHeight);
+            button.LabelText.alignment = TMPro.TextAlignmentOptions.Left;
+            button.LabelText.fontSize = UiTokens.FontSize(UiType.Body);
+            button.LabelText.color = UiTokens.Get(UiColor.TextPrimary);
+            RectTransform labelRect = (RectTransform)button.LabelText.transform;
+            labelRect.offsetMin = new Vector2(20f, labelRect.offsetMin.y);
+            labelRect.offsetMax = new Vector2(-(ChipWidthFor("COLOUR-BLIND SAFE") + 16f + (int)UiSpace.M), labelRect.offsetMax.y);
+
+            (string text, bool on) state = current();
+            TMP_Text chip = UiFactory.Chip("State", button.transform, state.text,
+                state.on ? UiColor.StateSuccess : UiColor.SurfaceInset,
+                state.on ? UiColor.SurfaceBase : UiColor.TextSecondary,
+                Mathf.Max(StateChipMinWidth, ChipWidthFor(state.text)), StateChipHeight);
+            chip.fontStyle = TMPro.FontStyles.Bold;
+            RectTransform chipRect = (RectTransform)chip.transform.parent;
+            chipRect.anchorMin = new Vector2(1f, 0.5f);
+            chipRect.anchorMax = new Vector2(1f, 0.5f);
+            chipRect.pivot = new Vector2(1f, 0.5f);
+            chipRect.anchoredPosition = new Vector2(-16f, 0f);
+            var edge = chipRect.gameObject.AddComponent<UnityEngine.UI.Outline>();
+            edge.effectDistance = new Vector2(1f, 1f);
+            edge.useGraphicAlpha = true;
+            ApplyStateChip(chipRect, chip, edge, state);
+
+            button.SetOnClick(() =>
+            {
+                (string text, bool on) next = cycle();
+                ApplyStateChip(chipRect, chip, edge, next);
+                UiEvents.Raise(UiEvent.ToggleChanged, eventDetail);
+            });
+            return button;
+        }
+
+        /// <summary>Caption 14 bold at +2 tracking measures ≈ 10.5 px per capital; 28 px of padding.</summary>
+        private static float ChipWidthFor(string text)
+        {
+            return Mathf.Max(StateChipMinWidth, 28f + text.Length * 10.5f);
+        }
+
+        private static void ApplyStateChip(RectTransform chipRect, TMP_Text chip, UnityEngine.UI.Outline edge, (string text, bool on) state)
+        {
+            chip.text = state.text;
+            chip.color = UiTokens.Get(state.on ? UiColor.SurfaceBase : UiColor.TextSecondary);
+            chipRect.GetComponent<Image>().color = UiTokens.Get(state.on ? UiColor.StateSuccess : UiColor.SurfaceInset);
+            edge.effectColor = state.on ? new Color(0f, 0f, 0f, 0f) : UiTokens.Get(UiColor.BorderHairline);
+            chipRect.sizeDelta = new Vector2(Mathf.Max(StateChipMinWidth, ChipWidthFor(state.text)), StateChipHeight);
+        }
+
+        private static TMP_Text AddCaptionUnder(ref UiStack stack, RectTransform parent, string name, string text, int lines = 2)
+        {
+            stack.Gap(UiSpace.S);
+            TMP_Text caption = UiFactory.Label(name, parent, text, UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption) * lines);
+            stack.Gap(UiSpace.XL);
+            return caption;
         }
 
         // ------------------------------------------------------------- profile pane
