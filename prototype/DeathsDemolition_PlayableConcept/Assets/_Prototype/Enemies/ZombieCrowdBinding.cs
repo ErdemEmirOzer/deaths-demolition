@@ -98,16 +98,25 @@ namespace DD.Prototype.Enemies
             return _flankSign != 0 ? CrowdFeelSettings.Active.FlankGoal(transform.position, target, _flankSign, _flankAngle) : target;
         }
 
-        /// <summary>WP-054: world contact from the CharacterController (environment layer, mostly horizontal normal) feeds the wall-friction hysteresis.</summary>
-        private void OnControllerColliderHit(ControllerColliderHit hit)
+        /// <summary>
+        /// WP-054 / WP-055E: world side contact feeds the wall-friction hysteresis. Read from the CharacterController's
+        /// CollisionFlags after Move (M3 K1: the OnControllerColliderHit message allocates a ControllerColliderHit per
+        /// call — one per zombie per grounded frame, ≈ 138 B / 1.7 allocations, 91 % of the frame's GC); a side contact
+        /// is a wall only when Environment geometry is inside the capsule ring (zombie-zombie contacts share the flag),
+        /// asked with Physics.CheckCapsule — no allocation, and only on contact frames.
+        /// </summary>
+        private void NoteWallContact(CollisionFlags flags)
         {
-            if (!_alive || _dying || hit.collider == null) return;
-            if (hit.collider.gameObject.layer != PrototypeLayers.Environment) return;
-            if (Mathf.Abs(hit.normal.y) > 0.5f) return;   // floor / ceiling contacts are not walls
+            if (!_alive || _dying || (flags & CollisionFlags.Sides) == 0 || _controller == null) return;
+            float half = Mathf.Max(0f, _controller.height * 0.5f - _controller.radius);
+            Vector3 centre = transform.TransformPoint(_controller.center);
+            if (!Physics.CheckCapsule(centre + Vector3.up * half, centre - Vector3.up * half, _controller.radius + WallProbeMargin, 1 << PrototypeLayers.Environment, QueryTriggerInteraction.Ignore)) return;
             float now = Time.time;
             if (_wallContactSince < 0f || now - _wallLastContact > CrowdFeelSettings.Active.WallExitSeconds) _wallContactSince = now;
             _wallLastContact = now;
         }
+
+        private const float WallProbeMargin = 0.06f;
 
         /// <summary>WP-054: the speed factor from wall friction this tick (1 = free).</summary>
         private float WallFrictionFactor()

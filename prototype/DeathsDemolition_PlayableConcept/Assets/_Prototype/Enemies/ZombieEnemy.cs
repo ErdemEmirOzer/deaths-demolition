@@ -985,7 +985,7 @@ namespace DD.Prototype.Enemies
 
             Vector3 motion = velocity;
             motion.y = _verticalVelocity;
-            _controller.Move(motion * dt);
+            NoteWallContact(_controller.Move(motion * dt));   // WP-055E (M3 K1): side-contact flag instead of the allocating OnControllerColliderHit message
 
             // A strong push can walk the body off the mesh; put it back.
             ClampToWalkable(correction);
