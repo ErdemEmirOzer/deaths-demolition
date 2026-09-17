@@ -261,7 +261,13 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static readonly Dictionary<string, float> LiveCalibrationOverrides = new Dictionary<string, float>(StringComparer.Ordinal)
         {
-            { C.PlayerRunFwd, 6.26f },
+            // WP-032D · AnimationLiveCalibrationTests (two LocoRate points, zero crossing, 6.2 m/s along each clip's axis, iterated
+            // twice — the slip is only linear near the zero): fwd 5.91, back 5.04, strafe L/R 5.85 / 5.85 (sampled 5.02 / 4.50 /
+            // 4.40 / 4.56 — the sampled run cycles under-read by 15–33 %; the walk cycles agree with the live rig).
+            { C.PlayerRunFwd, 5.91f },
+            { C.PlayerRunBack, 4.9f },   // 4.83 → −2.2 cm, 5.04 → +5.2 cm (noisy contact on the back cycle) — the midpoint
+            { C.PlayerRunStrafeLeft, 5.85f },
+            { C.PlayerRunStrafeRight, 5.85f },
         };
 
         /// <summary>WP-032: measure every locomotion clip on the character's avatar (StrideCalibrator); keyed by clip name.</summary>

@@ -343,7 +343,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.467
     speedMps: 4.599
-    unitySpeedMps: 4.5001435
+    unitySpeedMps: 4.9
     layer: base
     additive: 0
     frames: 15
@@ -354,7 +354,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.467
     speedMps: 5.687
-    unitySpeedMps: 6.26
+    unitySpeedMps: 5.91
     layer: base
     additive: 0
     frames: 15
@@ -365,7 +365,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.467
     speedMps: 4.415
-    unitySpeedMps: 4.4043508
+    unitySpeedMps: 5.85
     layer: base
     additive: 0
     frames: 15
@@ -376,7 +376,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.467
     speedMps: 4.415
-    unitySpeedMps: 4.5611014
+    unitySpeedMps: 5.85
     layer: base
     additive: 0
     frames: 15
