@@ -376,7 +376,7 @@ namespace DD.Art.Pipeline.EditorTools
                 if (lightmapped) report.contributeGI++;
             }
 
-            Transform ground = root.Find(PlacementImporter.GroundName);
+            Transform ground = root.Find(PlacementImporter.GroundName);   // WP-014 stand-in; absent once the AP-015P plates are in (WP-038)
             if (ground != null)
             {
                 StaticEditorFlags gf = GameObjectUtility.GetStaticEditorFlags(ground.gameObject);

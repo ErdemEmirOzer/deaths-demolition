@@ -45,9 +45,19 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-029 · Only models under here take generated lightmap UVs (Contract v1.2); weapons, VFX props and characters never sit in a lightmap.</summary>
         public const string EnvironmentRoot = ArtRoot + "/Environment";
 
+        /// <summary>WP-038 · AP-015P surface plates and water meshes (probe-lit by contract, huge flat charts) skip generated lightmap UVs.</summary>
+        public const string SurfacesRoot = EnvironmentRoot + "/Ground/AP015";
+        public const string WaterRoot = EnvironmentRoot + "/Water/AP015";
+
+        public static bool IsSurfaceModel(string assetPath)
+        {
+            string p = assetPath != null ? assetPath.Replace('\\', '/') : string.Empty;
+            return p.StartsWith(SurfacesRoot + "/", StringComparison.Ordinal) || p.StartsWith(WaterRoot + "/", StringComparison.Ordinal);
+        }
+
         public static bool WantsLightmapUv(string assetPath)
         {
-            return ModelGenerateSecondaryUV && assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal);
+            return ModelGenerateSecondaryUV && assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal) && !IsSurfaceModel(assetPath);
         }
 
         /// <summary>Every asset below this folder is under contract.</summary>
@@ -80,6 +90,13 @@ namespace DD.Art.Pipeline.EditorTools
         public const ModelImporterNormals ModelNormals = ModelImporterNormals.Import;
         public const ModelImporterTangents ModelTangents = ModelImporterTangents.CalculateMikk;
         public const ModelImporterMeshCompression ModelMeshCompression = ModelImporterMeshCompression.Off;
+        /// <summary>WP-038 (ADR-015-1 v4) · Environment models ship with Medium mesh compression (vertex / normal / tangent / UV quantised; Meshes were 31 % of the build); skinned characters stay Off (ArtCharacterContract — normal / tangent precision on the deforming surface).</summary>
+        public const ModelImporterMeshCompression EnvironmentMeshCompression = ModelImporterMeshCompression.Medium;
+
+        public static ModelImporterMeshCompression MeshCompressionOf(string assetPath)
+        {
+            return assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal) ? EnvironmentMeshCompression : ModelMeshCompression;
+        }
         public const bool ModelIsReadable = false;
         public const ModelImporterIndexFormat ModelIndexFormat = ModelImporterIndexFormat.Auto;
         public const bool ModelOptimizeMeshPolygons = true;
@@ -246,6 +263,14 @@ namespace DD.Art.Pipeline.EditorTools
             { "earth", TextureClass.Ground },
             { "gravel", TextureClass.Ground },
             { "stone", TextureClass.Ground },
+            // WP-038 · AP-015P water v2 inputs (1024 / 512 sources; Ground class, streamed; the ring sheet is a VFX Sheet).
+            { "water_large", TextureClass.Ground },
+            { "water_small", TextureClass.Ground },
+            { "water_flow", TextureClass.Ground },
+            { "water_foam", TextureClass.Ground },
+            { "water_sparkle", TextureClass.Ground },
+            { "water_caustic", TextureClass.Ground },
+            { "water_rings", TextureClass.Vfx },
             // Structure (palace timber/screens, plaster, roofs, shore-path and basin module surfaces).
             { "wood", TextureClass.Structure },
             { "plaster", TextureClass.Structure },
@@ -316,16 +341,47 @@ namespace DD.Art.Pipeline.EditorTools
             return ClassifiedClassOf(assetPath) ?? TextureClass.Prop;
         }
 
-        /// <summary>Shipped max size for a texture path (its class's size).</summary>
+        /// <summary>WP-038 (ADR-015-1 v4) · Derived masks (MetallicSmoothness, DetailMask) ship at most 1024²: the metallic /
+        /// smoothness / occlusion / cloth-gate channels carry no detail the gameplay camera resolves beyond that, and they
+        /// were 31 % of the 2048 texture bytes (WP-039 build report). Albedo and normal keep their class size.</summary>
+        public const int DerivedMaskMaxSize = 1024;
+
+        public static bool IsDerivedMaskRole(TextureRole role)
+        {
+            return role == TextureRole.MetallicSmoothness || role == TextureRole.DetailMask;
+        }
+
+        public static int MaxSizeOf(TextureClass c, TextureRole role)
+        {
+            int size = MaxSizeOf(c);
+            return IsDerivedMaskRole(role) ? Mathf.Min(size, DerivedMaskMaxSize) : size;
+        }
+
+        /// <summary>Shipped max size for a texture path (its class's size, derived masks capped).</summary>
         public static int MaxTextureSizeOf(string assetPath)
         {
-            return MaxSizeOf(ClassOf(assetPath));
+            return MaxSizeOf(ClassOf(assetPath), RoleOf(assetPath));
+        }
+
+        /// <summary>WP-038 · Mask-role textures a material actually samples (the AP-015P water data maps); the AP packs / ID masks stay provenance-only.</summary>
+        public static bool IsBoundMask(string assetPath)
+        {
+            return RoleSlugOf(assetPath).StartsWith("water_", StringComparison.Ordinal);
         }
 
         /// <summary>Estimated bytes a texture occupies in the build (BC7/BC5 = 1 byte per texel, full mip chain), capped at the source size.</summary>
         public static long EstimatedShippedBytes(int sourceWidth, int sourceHeight, TextureClass c, bool mipmaps)
         {
-            int cap = MaxSizeOf(c);
+            return EstimatedShippedBytes(sourceWidth, sourceHeight, MaxSizeOf(c), mipmaps);
+        }
+
+        public static long EstimatedShippedBytes(int sourceWidth, int sourceHeight, TextureClass c, TextureRole role, bool mipmaps)
+        {
+            return EstimatedShippedBytes(sourceWidth, sourceHeight, MaxSizeOf(c, role), mipmaps);
+        }
+
+        private static long EstimatedShippedBytes(int sourceWidth, int sourceHeight, int cap, bool mipmaps)
+        {
             int w = sourceWidth, h = sourceHeight;
             while (Mathf.Max(w, h) > cap)
             {
@@ -523,7 +579,7 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.bakeAxisConversion, ModelBakeAxisConversion && BakesAxis(importer.assetPath), v => importer.bakeAxisConversion = v);
             changed |= Set(importer.importNormals, ModelNormals, v => importer.importNormals = v);
             changed |= Set(importer.importTangents, ModelTangents, v => importer.importTangents = v);
-            changed |= Set(importer.meshCompression, ModelMeshCompression, v => importer.meshCompression = v);
+            changed |= Set(importer.meshCompression, MeshCompressionOf(importer.assetPath), v => importer.meshCompression = v);
             changed |= Set(importer.isReadable, ModelIsReadable, v => importer.isReadable = v);
             changed |= Set(importer.indexFormat, ModelIndexFormat, v => importer.indexFormat = v);
             changed |= Set(importer.optimizeMeshPolygons, ModelOptimizeMeshPolygons, v => importer.optimizeMeshPolygons = v);
@@ -565,7 +621,7 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.sRGBTexture, !linear, v => importer.sRGBTexture = v);
             // WP-015 (ADR-015-1): size and streaming come from the role's distance class.
             TextureClass textureClass = ClassOf(importer.assetPath);
-            int maxSize = MaxSizeOf(textureClass);
+            int maxSize = MaxSizeOf(textureClass, role);
             changed |= Set(importer.mipmapEnabled, TextureMipmaps, v => importer.mipmapEnabled = v);
             changed |= Set(importer.streamingMipmaps, StreamsMipmaps(textureClass), v => importer.streamingMipmaps = v);
             changed |= Set(importer.maxTextureSize, maxSize, v => importer.maxTextureSize = v);
@@ -617,7 +673,7 @@ namespace DD.Art.Pipeline.EditorTools
             Check(v, "bakeAxisConversion", importer.bakeAxisConversion, ModelBakeAxisConversion && BakesAxis(importer.assetPath));
             Check(v, "importNormals", importer.importNormals, ModelNormals);
             Check(v, "importTangents", importer.importTangents, ModelTangents);
-            Check(v, "meshCompression", importer.meshCompression, ModelMeshCompression);
+            Check(v, "meshCompression", importer.meshCompression, MeshCompressionOf(importer.assetPath));
             Check(v, "isReadable", importer.isReadable, ModelIsReadable);
             Check(v, "indexFormat", importer.indexFormat, ModelIndexFormat);
             Check(v, "optimizeMeshPolygons", importer.optimizeMeshPolygons, ModelOptimizeMeshPolygons);
@@ -671,7 +727,7 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             TextureClass textureClass = roleClass ?? TextureClass.Prop;
-            int maxSize = MaxSizeOf(textureClass);
+            int maxSize = MaxSizeOf(textureClass, role);
 
             Check(v, "textureType", importer.textureType, type);
             Check(v, "sRGBTexture", importer.sRGBTexture, !linear);

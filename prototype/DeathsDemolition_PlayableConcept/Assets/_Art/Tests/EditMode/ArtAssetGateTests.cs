@@ -256,6 +256,11 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
+            // WP-038 (ADR-038-1): the AP-015P surface plates and water meshes listed by the surfaces manifest.
+            int yuzey = 0;
+            foreach (string f in ArtSurfaceImporter.ManifestFbxPaths()) if (beklenen.Add(f)) yuzey++;
+            Assert.AreEqual(74, yuzey, "AP-015P 74 yüzey FBX (9 zemin + 49 rota + 13 kaldırım + 3 su)");
+
             // WP-016 (ADR-016-1): the character files — player base + 2 clips, zombie 3 bodies + 19 modules
             // (AP007-modules.json) + 2 clips; the library test checks their contents.
             beklenen.Add(ArtCharacterContract.PlayerAvatarSource);
@@ -437,6 +442,10 @@ namespace DD.Art.Tests.EditMode
             foreach (string f in ArtWeaponBuilder.TextureFiles()) beklenen.Add(f);
             Assert.AreEqual(147, beklenen.Count, "Beklenen doku kümesi 143 + 4 (WP-042B silah atlası) = 147 olmalı.");
 
+            // WP-038: the seven AP-015P water v2 inputs (2 normals, 4 data masks, 1 ring sheet) → 143 + 7 = 150.
+            foreach (string f in ArtSurfaceImporter.WaterTextures) beklenen.Add(f);
+            Assert.AreEqual(150, beklenen.Count, "Beklenen doku kümesi 143 + 7 (WP-038 su v2) = 150 olmalı.");
+
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;
             foreach (string f in ArtVfxManifestPngs()) if (beklenen.Add(f)) vfx++;
@@ -521,15 +530,15 @@ namespace DD.Art.Tests.EditMode
                     continue;
                 }
 
-                int beklenenBoyut = ArtImportContract.MaxSizeOf(sinif.Value);
+                int beklenenBoyut = ArtImportContract.MaxSizeOf(sinif.Value, rol);   // WP-038: derived masks capped at 1024
                 if (importer.maxTextureSize != beklenenBoyut) ihlaller.Add(yol + ": maxTextureSize " + importer.maxTextureSize + " != " + beklenenBoyut + " (" + sinif + ")");
                 TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(ArtImportContract.StandalonePlatform);
                 if (!st.overridden || st.maxTextureSize != beklenenBoyut) ihlaller.Add(yol + ": Standalone maxTextureSize " + st.maxTextureSize + " != " + beklenenBoyut);
                 if (importer.streamingMipmaps != ArtImportContract.StreamsMipmaps(sinif.Value)) ihlaller.Add(yol + ": streamingMipmaps " + importer.streamingMipmaps + " != " + ArtImportContract.StreamsMipmaps(sinif.Value) + " (" + sinif + ")");
 
                 PngBoyut(yol, out int w, out int h);
-                if (rol == ArtImportContract.TextureRole.Packed || rol == ArtImportContract.TextureRole.Mask) continue;   // provenance only; no material binds them (WP-016: the AP-007 ID mask feeds the derived DetailMask)
-                long bytes = ArtImportContract.EstimatedShippedBytes(w, h, sinif.Value, importer.mipmapEnabled);
+                if (rol == ArtImportContract.TextureRole.Packed || (rol == ArtImportContract.TextureRole.Mask && !ArtImportContract.IsBoundMask(yol))) continue;   // provenance only; no material binds them (WP-016: the AP-007 ID mask feeds the derived DetailMask)
+                long bytes = ArtImportContract.EstimatedShippedBytes(w, h, sinif.Value, rol, importer.mipmapEnabled);
                 sevk += bytes;
                 if (ArtImportContract.IsCharacterClass(sinif.Value)) sevkKarakter += bytes;
                 else if (ArtImportContract.IsWeaponClass(sinif.Value)) sevkSilah += bytes;

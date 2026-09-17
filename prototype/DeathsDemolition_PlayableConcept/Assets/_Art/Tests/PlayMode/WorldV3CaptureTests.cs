@@ -21,7 +21,7 @@ namespace DD.Art.Tests.PlayMode
     /// <summary>
     /// WP-020 · Fidelity captures of world v3 (Higgsfield §5: Unity ↔ AP-005C render side by side): the four
     /// AP-005C fidelity cameras of <c>AP005-render-log-v006.json</c> (Blender pos/target/lens → Unity, 36 mm
-    /// horizontal fit) plus the west-corridor gameplay framing, 1920×1080 with the gameplay grade, written to
+    /// horizontal fit) plus the west-corridor gameplay framing and the WP-038 water close-up, 1920×1080 with the gameplay grade, written to
     /// <c>DD_ART_CAPTURE_DIR/world-v3/</c>. Standalone world (own bootstrap), no crowd.
     /// </summary>
     [TestFixture]
@@ -50,7 +50,9 @@ namespace DD.Art.Tests.PlayMode
             Blender("fid-palace-gable-west", new Vector3(-38f, 24f, 16f), new Vector3(-14f, 37f, 6.5f), 45f),
             Blender("fid-pavilion-north", new Vector3(40.5f, 40f, 6f), new Vector3(27.7f, 36.6f, 2f), 40f),
             new ArtVisualRegression.CameraPose("gameplay-west", new Vector3(-36.95f, 15f, -13.05f), new Vector3(-36.95f, 0f, 0f), 42f),
-            new ArtVisualRegression.CameraPose("gameplay-north", new Vector3(0f, 15f, 11.95f), new Vector3(0f, 0f, 25f), 42f)
+            new ArtVisualRegression.CameraPose("gameplay-north", new Vector3(0f, 15f, 11.95f), new Vector3(0f, 0f, 25f), 42f),
+            // WP-038: south koi ponds 02/03 (AP005_i0094 / i0093 basins) at a low angle for the DD/Water v2 sheen, foam band and caustics.
+            new ArtVisualRegression.CameraPose("water-closeup", new Vector3(-3f, 4.5f, -19.5f), new Vector3(-3f, -0.15f, -29.2f), 42f)
         };
 
         [SetUp]

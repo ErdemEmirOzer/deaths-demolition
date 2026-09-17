@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_ground_blend
+  m_Shader: {fileID: 4800000, guid: 9e9335e7496c9490c9853a56206a0731, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _EarthMap:
+        m_Texture: {fileID: 2800000, guid: d0d0ac0b8ce6749089f4518474f77b4a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EarthMask:
+        m_Texture: {fileID: 2800000, guid: ada666f86e1c54b35b70d8717c636cb4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EarthNormal:
+        m_Texture: {fileID: 2800000, guid: 7a62b83a353b7463db928e7b12f7de11, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GravelMap:
+        m_Texture: {fileID: 2800000, guid: add03124e9e5e423cab3c49ac2ef5a5c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _StoneMap:
+        m_Texture: {fileID: 2800000, guid: 1887a8b2a4b754aaf93c703719f0af5b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _StoneMask:
+        m_Texture: {fileID: 2800000, guid: 2713ac2df94b046f8a8b43ef9a5c4563, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _StoneNormal:
+        m_Texture: {fileID: 2800000, guid: c8b431464ed5c4884aed00f010c62f30, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Cull: 2
+    - _EarthSmoothness: 0.08
+    - _GravelSmoothness: 0.15
+    - _GravelTint: 0.72
+    - _NormalStrength: 1
+    - _Occlusion: 1
+    - _StoneSmoothness: 0.43
+    - _Tile: 4
+    - _UseMasks: 1
+    - _WetDarken: 0.45
+    - _WetSmoothness: 0.6
+    m_Colors: []
+  m_BuildTextureStacks: []

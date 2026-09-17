@@ -271,20 +271,20 @@ LODGroup:
   m_GameObject: {fileID: 5318494911103441048}
   serializedVersion: 2
   m_LocalReferencePoint: {x: 0, y: 0.0918803, z: -0.006914377}
-  m_Size: 3
+  m_Size: 3.0000916
   m_FadeMode: 1
   m_AnimateCrossFading: 1
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.24414062
+  - screenRelativeHeight: 0.24414808
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 8074677221187309260}
-  - screenRelativeHeight: 0.15024038
+  - screenRelativeHeight: 0.15024497
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 8018922307558500710}
-  - screenRelativeHeight: 0.056612317
+  - screenRelativeHeight: 0.056614045
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 7388967921545088414}

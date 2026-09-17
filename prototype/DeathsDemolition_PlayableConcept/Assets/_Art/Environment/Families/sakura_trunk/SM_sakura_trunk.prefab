@@ -134,8 +134,8 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.35
-  m_Height: 3.4
+  m_Radius: 0.3500572
+  m_Height: 3.4001145
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: -1.7}
 --- !u!1 &6650116427173806681
@@ -263,20 +263,20 @@ LODGroup:
   m_GameObject: {fileID: 7317297059061630114}
   serializedVersion: 2
   m_LocalReferencePoint: {x: 0.15775132, y: 3.0695045, z: 0.34416676}
-  m_Size: 6.189237
+  m_Size: 6.189508
   m_FadeMode: 1
   m_AnimateCrossFading: 1
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.5036812
+  - screenRelativeHeight: 0.50370324
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 7932481150673449083}
-  - screenRelativeHeight: 0.30995765
+  - screenRelativeHeight: 0.30997124
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 3431554786741056560}
-  - screenRelativeHeight: 0.116795644
+  - screenRelativeHeight: 0.116800755
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 7390579693179902304}

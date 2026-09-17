@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_water_v2
+  m_Shader: {fileID: 4800000, guid: dc3bf26a3ffa1439cb2941b3001ec0e7, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _CausticMap:
+        m_Texture: {fileID: 2800000, guid: 277acae2f4a644d30b0c7f60188cad37, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FlowMap:
+        m_Texture: {fileID: 2800000, guid: e811cb24aa6a44115a9cf67300370f86, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FoamMap:
+        m_Texture: {fileID: 2800000, guid: 74302a05c65194bae99bf76c2c9572d6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalLarge:
+        m_Texture: {fileID: 2800000, guid: c8c8ad2a310ef4ed08ec0cdd1b836f08, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalSmall:
+        m_Texture: {fileID: 2800000, guid: c93d46a4062cf4233b8261b45300fcb2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SparkleMap:
+        m_Texture: {fileID: 2800000, guid: 4dacc9c3a092845e485c87c13a3ba69a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Blend: 0
+    - _CausticFps: 8
+    - _CausticIntensity: 0.08
+    - _CausticMinDepth: 0.15
+    - _CausticTile: 2
+    - _Cull: 2
+    - _DepthFade: 0.6
+    - _DstBlend: 10
+    - _FlowPeriod: 3
+    - _FlowSpeed: 0.04
+    - _FoamIntensity: 0.2
+    - _FoamTile: 2
+    - _FresnelPower: 4
+    - _NormalLargeSpeed: 0.03
+    - _NormalLargeStrength: 0.35
+    - _NormalLargeTile: 4
+    - _NormalSmallSpeed: 0.06
+    - _NormalSmallStrength: 0.25
+    - _NormalSmallTile: 1
+    - _QueueOffset: 0
+    - _Smoothness: 0.88
+    - _SparkleCap: 0.18
+    - _SparkleDensity: 0.15
+    - _SparkleTile: 1.5
+    - _SrcBlend: 5
+    - _Surface: 1
+    - _ZWrite: 0
+    m_Colors:
+    - _BaseColor: {r: 0.18, g: 0.294, b: 0.31, a: 0.92}
+    - _FlowBounds: {r: -16, g: -46, b: 16, a: -14}
+    - _ShallowColor: {r: 0.24, g: 0.33, b: 0.33, a: 0.45}
+  m_BuildTextureStacks: []

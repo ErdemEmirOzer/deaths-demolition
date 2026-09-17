@@ -90,12 +90,17 @@ namespace DD.Art.Pipeline.EditorTools
             public int Occluders;
             public int StaticInstances;
             public int IgnoreModifiers;
+            /// <summary>WP-038 · bridge rail / post colliders kept out of the NavMesh bake (the deck keeps its width).</summary>
+            public int BridgeRailIgnores;
             public int NavMeshTriangles;
             public int MaterialOverrides;
             public int MaterialSlotsReplaced;
             public int HeavyUnbatched;
             /// <summary>WP-020 · NavMeshModifierVolumes written for the named areas (Bridge / Corridor / Gate).</summary>
             public int AreaVolumes;
+            /// <summary>WP-038 · AP-015P plates (ground / route / paving) and water meshes placed; 0 = stand-in ground.</summary>
+            public int SurfacePlates;
+            public int WaterMeshes;
             public List<string> Unmatched = new List<string>();
             public string Digest;
         }
@@ -640,6 +645,8 @@ namespace DD.Art.Pipeline.EditorTools
                     report.IgnoreModifiers++;
                 }
 
+                if (inst.family == BridgeFamily) report.BridgeRailIgnores += IgnoreBridgeRailColliders(go);
+
                 if (!string.IsNullOrEmpty(inst.materialOverride))
                 {
                     report.MaterialSlotsReplaced += ApplyMaterialOverride(go, inst);
@@ -667,7 +674,20 @@ namespace DD.Art.Pipeline.EditorTools
             // (M_earth, 4 m tiles, PilotGround's recipe) carries the NavMesh and the walk
             // everywhere else, with holes under the koi basins so the water planes stay
             // visible. Reported to production (WP-014 handover).
-            BuildStandInGround(root.transform, placement);
+            // WP-038 · With the AP-015P surfaces staged, the real ground / route / paving plates and water meshes
+            // replace the stand-in ground (+ pond beds); without them the WP-014 stand-in stays (procedural fallback).
+            if (ArtSurfaceImporter.Available)
+            {
+                Transform standIn = root.transform.Find(GroundName);
+                if (standIn != null) UnityEngine.Object.DestroyImmediate(standIn.gameObject);
+                ArtSurfaceImporter.Report surfaces = ArtSurfaceImporter.Build(root.transform, instances.transform, BasinHoles(placement));
+                report.SurfacePlates = surfaces.Plates;
+                report.WaterMeshes = surfaces.Water;
+            }
+            else
+            {
+                BuildStandInGround(root.transform, placement);
+            }
 
             // WP-020 (AD MUST-1): the quiet_paving plate's slab seams let the AP-005 earth plate 3 mm below
             // read as thin brown lines at the gameplay camera; a stone-coloured grout quad inside the
@@ -687,9 +707,9 @@ namespace DD.Art.Pipeline.EditorTools
             PilotSceneBuilder.Save(scene, ArtLibraryPaths.Ap005WorldScene);
             report.Digest = Digest(instances.transform);
 
-            Debug.Log(LogPrefix + "Wrote " + ArtLibraryPaths.Ap005WorldScene + ": " + report.Instances + " instances (" + report.Assemblies +
+            Debug.Log(LogPrefix + "Wrote " + ArtLibraryPaths.Ap005WorldScene + ": " + report.Instances + " instances (surfaces " + report.SurfacePlates + " plates + " + report.WaterMeshes + " water; " + report.Assemblies +
                       " assemblies, " + report.Occluders + " on CameraOccluder, " + report.StaticInstances + " static, " + report.IgnoreModifiers +
-                      " navmesh-ignore modifiers, " + report.MaterialOverrides + " material overrides / " + report.MaterialSlotsReplaced + " slots, " + report.HeavyUnbatched + " heavy unbatched), NavMesh " + report.NavMeshTriangles + " triangles, digest " + report.Digest.Substring(0, 12) + "…");
+                      " navmesh-ignore modifiers (+ " + report.BridgeRailIgnores + " bridge rail colliders), " + report.MaterialOverrides + " material overrides / " + report.MaterialSlotsReplaced + " slots, " + report.HeavyUnbatched + " heavy unbatched), NavMesh " + report.NavMeshTriangles + " triangles, digest " + report.Digest.Substring(0, 12) + "…");
             return report;
         }
 
@@ -718,14 +738,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             // Basin water ellipses (Unity XZ): centre + semi-axes from the water-plane bounds
             // of the basin's own variation (pond_water_surface V01/V02 ↔ koi_pond_basin V01/V02/V03).
-            var holes = new List<(Vector2 centre, Vector2 semi, float yaw)>();
-            for (int i = 0; i < placement.instances.Count; i++)
-            {
-                WorldPlacementAsset.Instance inst = placement.instances[i];
-                if (inst.family != "koi_pond_basin") continue;
-                Vector2 semi = (inst.variation == "V01" ? new Vector2(2.8f, 1.8f) : new Vector2(5.8f, 3.8f)) + Vector2.one * HoleMargin;
-                holes.Add((new Vector2(inst.position.x, inst.position.z), semi, inst.yawDegrees));
-            }
+            List<(Vector2 centre, Vector2 semi, float yaw)> holes = BasinHoles(placement);
 
             // Pond beds: one quad per basin under its water plane, so the hole shows soil, not sky.
             var bed = new MeshBuilder(64);
@@ -915,6 +928,26 @@ namespace DD.Art.Pipeline.EditorTools
                 1f / PilotGround.TileMetres);
         }
 
+        /// <summary>
+        /// Basin water ellipses (Unity XZ): centre + semi-axes from the water-plane bounds of the basin's own variation
+        /// (pond_water_surface V01/V02 ↔ koi_pond_basin V01/V02/V03) + <see cref="HoleMargin"/>. WP-014 cut them out of
+        /// the stand-in ground; WP-038 keeps them as the NavMesh pond footprint on top of the AP-015P plates (the real
+        /// basins leave a 0.75 m ground strip between the south ponds 02 / 03 that would bypass the WP-030 choke).
+        /// </summary>
+        public static List<(Vector2 centre, Vector2 semi, float yaw)> BasinHoles(WorldPlacementAsset placement)
+        {
+            var holes = new List<(Vector2 centre, Vector2 semi, float yaw)>();
+            for (int i = 0; i < placement.instances.Count; i++)
+            {
+                WorldPlacementAsset.Instance inst = placement.instances[i];
+                if (inst.family != "koi_pond_basin") continue;
+                Vector2 semi = (inst.variation == "V01" ? new Vector2(2.8f, 1.8f) : new Vector2(5.8f, 3.8f)) + Vector2.one * HoleMargin;
+                holes.Add((new Vector2(inst.position.x, inst.position.z), semi, inst.yawDegrees));
+            }
+
+            return holes;
+        }
+
         private static bool InsideHole(List<(Vector2 centre, Vector2 semi, float yaw)> holes, float x, float z)
         {
             foreach ((Vector2 centre, Vector2 semi, float yaw) hole in holes)
@@ -1023,6 +1056,40 @@ namespace DD.Art.Pipeline.EditorTools
         public const string AreaVolumesName = "NavMesh Areas (WP-020)";
         public const string AreaBridge = "Bridge", AreaCorridor = "Corridor", AreaGate = "Gate";
         /// <summary>Family stem → NavMesh area name; the volume is the instance's renderer bounds (XZ) from the floor to <see cref="AreaVolumeHeight"/>.</summary>
+        public const string BridgeFamily = "bridge_segment";
+        /// <summary>A bridge child collider thinner than this in both horizontal axes and taller than <see cref="BridgeRailMinHeight"/> is a post / rail.</summary>
+        public const float BridgeRailMaxThickness = 0.2f, BridgeRailMinHeight = 0.5f;
+
+        /// <summary>
+        /// WP-038 · The AP-003B bridge deck is 1.45 m wide, but its rail posts (0.12–0.15 m boxes, 0.7–1.35 m tall) stand
+        /// inside the deck's edge: eroded by the 0.5 m agent radius they left a ~0.1 m NavMesh sliver that broke at the
+        /// segment joints, so the WP-030 "bridge" crossing was really the basin rim stones plus a one-voxel thread of
+        /// ground between ponds 02 / 03 — gone with the AP-015P plates. The posts / rails (thin in both horizontal
+        /// axes, tall) are excluded from the bake (NavMeshModifier ignore on the collider object; the deck, the end
+        /// steps and the piers stay), which gives the deck its 0.45 m walkable corridor — the choke WP-030 designed.
+        /// </summary>
+        private static int IgnoreBridgeRailColliders(GameObject go)
+        {
+            int count = 0;
+            foreach (BoxCollider box in go.GetComponentsInChildren<BoxCollider>(true))
+            {
+                Vector3 size = box.size;
+                // Height is whichever local axis points along world up (the FBX child carries the axis rotation).
+                Vector3 up = box.transform.InverseTransformDirection(Vector3.up);
+                float ax = Mathf.Abs(up.x), ay = Mathf.Abs(up.y), az = Mathf.Abs(up.z);
+                float height, thinA, thinB;
+                if (ax >= ay && ax >= az) { height = size.x; thinA = size.y; thinB = size.z; }
+                else if (ay >= az) { height = size.y; thinA = size.x; thinB = size.z; }
+                else { height = size.z; thinA = size.x; thinB = size.y; }
+                if (height < BridgeRailMinHeight || Mathf.Min(thinA, thinB) >= BridgeRailMaxThickness) continue;
+                NavMeshModifier m = box.GetComponent<NavMeshModifier>() ?? box.gameObject.AddComponent<NavMeshModifier>();
+                m.ignoreFromBuild = true;
+                count++;
+            }
+
+            return count;
+        }
+
         public static readonly Dictionary<string, string> AreaFamilies = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             { "bridge_segment", AreaBridge },

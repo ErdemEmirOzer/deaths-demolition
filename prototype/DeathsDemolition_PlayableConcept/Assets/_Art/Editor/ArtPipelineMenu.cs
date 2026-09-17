@@ -287,6 +287,64 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run World v2: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-038 world v4
+
+        /// <summary>
+        /// WP-038 · AP-015P → Unity world v4: the surface materials (DD/GroundBlend, DD/Water v2), then the
+        /// placement import (v3 chain) with the ground / route / paving plates and water meshes in place of
+        /// the stand-in, NavMesh rebake on the plates, the look's world prepare (sun / probes / chart policy)
+        /// and the showcase. The lightmap bake is a separate step (tools/bake-lighting.sh).
+        /// Batch: <c>-executeMethod …RunWorldV4</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run World v4 (WP-038)", priority = 307)]
+        public static void RunWorldV4()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run World v4 cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run World v4: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Contract models (mesh compression, lightmap UVs)", ReimportContractModels);
+            LibraryStep(2, "Contract textures (derived masks ≤ 1024, water inputs)", ReimportContractTextures);
+            LibraryStep(2, "Library masks + roof-course normal", ArtTextureRepack.BuildAllLibrary);
+            LibraryStep(3, "Library materials", ArtMaterialBuilder.BuildAllLibraryRoles);
+            LibraryStep(4, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone)", ArtSurfaceImporter.BuildMaterials);
+            // Mesh compression (Contract v1.3) quantises the imported vertices: the family / library prefabs carry LOD reference
+            // points and bounds from the meshes, so they are rebuilt from the compressed meshes (idempotence gate).
+            LibraryStep(4, "Rebuild AP-001 family prefabs + library prefabs on the compressed meshes", () => { ArtFamilyPrefabBuilder.BuildAll(); ArtLibraryPrefabBuilder.BuildAll(); });
+            LibraryStep(5, "Import AP-005 placement + delta chain + AP-015P surfaces (asset, World_AP005.unity, NavMesh, build settings)", () => PlacementImporter.ImportAll());
+            LibraryStep(6, "Prepare World_AP005 for the bake (sun, probes, reflection probes, chart policy)", () => ArtLightingBake.PrepareWorld());
+            LibraryStep(7, "Rebuild library showcase", ArtLibraryShowcaseBuilder.Build);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run World v4: done in " + Seconds(total) + " s.");
+        }
+
+        /// <summary>
+        /// WP-038 · The surface half of <see cref="RunWorldV4"/> only: surface materials (parameter round), the placement
+        /// import with the AP-015P plates (scene, NavMesh with the water rows, build settings) and the bake preparation.
+        /// Models, textures and prefabs are untouched — re-bake afterwards (<c>ArtLightingBake.BakeWorld</c>).
+        /// </summary>
+        [MenuItem(MenuRoot + "Run World v4 Surfaces (WP-038)", priority = 308)]
+        public static void RunWorldV4Surfaces()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run World v4 Surfaces cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run World v4 Surfaces: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone)", ArtSurfaceImporter.BuildMaterials);
+            LibraryStep(2, "Import AP-005 placement + delta chain + AP-015P surfaces (asset, World_AP005.unity, NavMesh, build settings)", () => PlacementImporter.ImportAll());
+            LibraryStep(3, "Prepare World_AP005 for the bake (sun, probes, reflection probes, chart policy)", () => ArtLightingBake.PrepareWorld());
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run World v4 Surfaces: done in " + Seconds(total) + " s.");
+        }
+
         // ------------------------------------------------------------ WP-020 world v3
 
         /// <summary>

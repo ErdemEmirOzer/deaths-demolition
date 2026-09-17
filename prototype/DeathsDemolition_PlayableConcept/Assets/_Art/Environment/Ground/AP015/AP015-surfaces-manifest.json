@@ -1,0 +1,5715 @@
+{
+ "schema": "dd-surfaces-v1",
+ "package": "AP-015P",
+ "version": 1,
+ "created": "2026-09-17T01:33:25",
+ "space": "AP001-contract-metres",
+ "coordinate_space": "Blender / AP-001 metres, +Z up; FBX -Z forward / Y up (Unity bakeAxisConversion); Unity (X,Z) = (x,y)",
+ "source_blend": "asset-production/AP-015/05-blender/source/AP015-surfaces-master-v001.blend",
+ "plan": "asset-production/AP-015/02-plan/AP015-surface-plan-v001.json",
+ "heights": {
+  "ground_top": -0.005,
+  "route_top_min": 0.01,
+  "route_top_max": 0.016,
+  "paving_top": 0.0175,
+  "water": -0.15,
+  "kerb_height": 0.05,
+  "relief_arena_max": 0.02,
+  "relief_outer_max": 0.2
+ },
+ "vertex_mask": {
+  "attribute": "AP015_Mask",
+  "domain": "corner",
+  "type": "float linear",
+  "R": "earth (T_earth)",
+  "G": "gravel (T_gravel)",
+  "B": "stone (T_stone)",
+  "A": "wetness 0..1",
+  "sum_rgb": 1.0
+ },
+ "shader_contract": {
+  "ground": {
+   "name": "DD/GroundBlend",
+   "tiling_m": 4.0,
+   "uv": "UVMap = world/4 (or planar world xz in shader)",
+   "blend": "albedo = R*earth + G*gravel*_GravelTint + B*stone; normal/mask likewise; height-weighted blend optional",
+   "_GravelTint": 0.6,
+   "wet": "albedo *= 1 - 0.45*A; smoothness = lerp(map, 0.60, A) (cap 0.60, DEC-076 no mirror-wet)",
+   "roughness_defaults": {
+    "earth": 0.92,
+    "gravel": 0.85,
+    "stone": 0.57
+   }
+  },
+  "water": {
+   "name": "DD/Water v2",
+   "deep_color": [
+    0.18,
+    0.294,
+    0.31
+   ],
+   "shallow_color": [
+    0.24,
+    0.33,
+    0.33
+   ],
+   "depth_fade_m": 0.6,
+   "smoothness": 0.88,
+   "fresnel_power": 4.0,
+   "normal_large": {
+    "tile_m": 4.0,
+    "speed_m_s": 0.03,
+    "strength": 0.35
+   },
+   "normal_small": {
+    "tile_m": 1.0,
+    "speed_m_s": 0.06,
+    "strength": 0.25
+   },
+   "flow": {
+    "speed_m_s": 0.04,
+    "circulation": "cw",
+    "note": "Gentle clockwise drift seen from above in each pond; flow map RG 512 per pond, zero at the rim."
+   },
+   "foam": {
+    "shore_width_m": 0.25,
+    "intensity": 0.2,
+    "tile_m": 2.0
+   },
+   "sparkle": {
+    "density": 0.15,
+    "tile_m": 1.5,
+    "intensity_cap": 0.3
+   },
+   "caustics": {
+    "tile_m": 2.0,
+    "fps": 8,
+    "intensity": 0.18,
+    "depth_min_m": 0.15
+   },
+   "rings": {
+    "rain_rate_per_m2_s": 0.4,
+    "koi_ring_radius_m": 0.4,
+    "life_s": 1.0
+   },
+   "note": "Colours sRGB (PondWater). Dark teal-grey plane with a soft overcast-sky sheen; at the -49 deg camera specular stays point-like (1-2 sun glints). Foam is a thin wet scum line, not white crests. rain_rate applies only in a drizzle weather state; 0 when dry.",
+   "inputs": [
+    "AP015_water_normal_large_1024.png",
+    "AP015_water_normal_small_1024.png",
+    "AP015_water_flow_pond_512.png",
+    "AP015_water_foam_512.png",
+    "AP015_water_sparkle_512.png",
+    "AP015_water_caustic_4x4_512.png",
+    "AP015_water_rings_4x4_512.png"
+   ],
+   "mesh_vertex_colour": "R depth/0.6, G shore mask",
+   "flow_map_world_bounds": {
+    "x_min": -16.0,
+    "x_max": 16.0,
+    "y_min": -46.0,
+    "y_max": -14.0
+   }
+  }
+ },
+ "unity_target": {
+  "ground": "Assets/_Art/Environment/Ground/AP015/",
+  "water": "Assets/_Art/Environment/Water/AP015/"
+ },
+ "totals": {
+  "assets": 74,
+  "fbx_bytes": 8055576,
+  "objects": 177,
+  "verts_lod0": 54733,
+  "textures": 7,
+  "texture_png_bytes": 1403004,
+  "texture_shipped_mb_estimate": 4.33,
+  "texture_budget_mb": 24
+ },
+ "route_check": {
+  "file": "../05-blender/validation/AP015-route-check-v001.json",
+  "pass": true,
+  "fail": 0
+ },
+ "review_glb": {
+  "file": "glb/AP015_surfaces_review_v001.glb",
+  "bytes": 14652900,
+  "sha256": "d83cf5b6e0e0f7f5fbafbef593fafb787755c5d98586cd30547d2bd489ecf4d7",
+  "objects": 101
+ },
+ "assets": [
+  {
+   "id": "AP015_ground_center_01",
+   "kind": "ground_plate",
+   "region": "center",
+   "fbx": {
+    "file": "ground/AP015_ground_center_01.fbx",
+    "bytes": 191772,
+    "sha256": "0d52f1a2060806c414dbb22d2f27b17281745f33c3eebcff7811cfca8a92ebaf"
+   },
+   "lods": [
+    "AP015_ground_center_01_LOD0",
+    "AP015_ground_center_01_LOD1"
+   ],
+   "collider_mesh": "AP015_ground_center_01_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_center_01_LOD0",
+     "verts": 3025,
+     "tris": 5832,
+     "collider": "render",
+     "z_top": -0.005,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_center_01_LOD1",
+     "verts": 361,
+     "tris": 648,
+     "collider": "render",
+     "z_top": -0.005,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_center_01_COL",
+     "verts": 361,
+     "tris": 648,
+     "collider": "walkable",
+     "z_top": -0.005,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -13.5,
+     -13.5,
+     -0.005
+    ],
+    "max": [
+     13.5,
+     13.5,
+     -0.005
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_ground_east_01",
+   "kind": "ground_plate",
+   "region": "east",
+   "fbx": {
+    "file": "ground/AP015_ground_east_01.fbx",
+    "bytes": 605548,
+    "sha256": "ce338f8e81753d20550fb4a0fae38aaec4ae0519d5b94e9bc538ddfcf49f8d22"
+   },
+   "lods": [
+    "AP015_ground_east_01_LOD0",
+    "AP015_ground_east_01_LOD1"
+   ],
+   "collider_mesh": "AP015_ground_east_01_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_east_01_LOD0",
+     "verts": 6742,
+     "tris": 13062,
+     "collider": "render",
+     "z_top": 0.0135,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_east_01_LOD1",
+     "verts": 820,
+     "tris": 1498,
+     "collider": "render",
+     "z_top": 0.0135,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_east_01_COL",
+     "verts": 820,
+     "tris": 1498,
+     "collider": "walkable",
+     "z_top": 0.0135,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     13.5,
+     -37.5,
+     -0.017
+    ],
+    "max": [
+     45.0,
+     37.5,
+     0.013
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_ground_north_01",
+   "kind": "ground_plate",
+   "region": "north",
+   "fbx": {
+    "file": "ground/AP015_ground_north_01.fbx",
+    "bytes": 819068,
+    "sha256": "f53510aba5c4288b54a1c715d38b09d5af7e24d6e4e093430e3077bf01228e0a"
+   },
+   "lods": [
+    "AP015_ground_north_01_LOD0",
+    "AP015_ground_north_01_LOD1"
+   ],
+   "collider_mesh": "AP015_ground_north_01_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_north_01_LOD0",
+     "verts": 8662,
+     "tris": 16842,
+     "collider": "render",
+     "z_top": 0.0065,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_north_01_LOD1",
+     "verts": 1040,
+     "tris": 1918,
+     "collider": "render",
+     "z_top": 0.0064,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_north_01_COL",
+     "verts": 1040,
+     "tris": 1918,
+     "collider": "walkable",
+     "z_top": 0.0064,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -45.0,
+     13.5,
+     -0.014
+    ],
+    "max": [
+     45.0,
+     45.0,
+     0.006
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_ground_outer_01",
+   "kind": "ground_plate",
+   "region": "outer",
+   "fbx": {
+    "file": "ground/AP015_ground_outer_01.fbx",
+    "bytes": 375372,
+    "sha256": "a8dffa31fb606a20c8463268fd50c9915deef24e933190ddce0ec12060b0fa4f"
+   },
+   "lods": [
+    "AP015_ground_outer_01_LOD0"
+   ],
+   "collider_mesh": "AP015_ground_outer_01_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_outer_01_LOD0",
+     "verts": 1199,
+     "tris": 2234,
+     "collider": "render",
+     "z_top": 0.1086,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_outer_01_COL",
+     "verts": 1199,
+     "tris": 2234,
+     "collider": "walkable",
+     "z_top": 0.1086,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -80.0,
+     45.0,
+     -0.158
+    ],
+    "max": [
+     80.0,
+     80.0,
+     0.109
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_ground_outer_02",
+   "kind": "ground_plate",
+   "region": "outer",
+   "fbx": {
+    "file": "ground/AP015_ground_outer_02.fbx",
+    "bytes": 370716,
+    "sha256": "27b3b935b0e4bda0196f13d02653ef3bc212953c75b00186a837f270cd8e0f46"
+   },
+   "lods": [
+    "AP015_ground_outer_02_LOD0"
+   ],
+   "collider_mesh": "AP015_ground_outer_02_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_outer_02_LOD0",
+     "verts": 1199,
+     "tris": 2234,
+     "collider": "render",
+     "z_top": 0.1237,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_outer_02_COL",
+     "verts": 1199,
+     "tris": 2234,
+     "collider": "walkable",
+     "z_top": 0.1237,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     45.0,
+     -80.0,
+     -0.146
+    ],
+    "max": [
+     80.0,
+     80.0,
+     0.124
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_ground_outer_03",
+   "kind": "ground_plate",
+   "region": "outer",
+   "fbx": {
+    "file": "ground/AP015_ground_outer_03.fbx",
+    "bytes": 374508,
+    "sha256": "ff2025fbabd0da993b8a088f38577d71d8177fe9ed7212b40139419f0e71bd10"
+   },
+   "lods": [
+    "AP015_ground_outer_03_LOD0"
+   ],
+   "collider_mesh": "AP015_ground_outer_03_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_outer_03_LOD0",
+     "verts": 1199,
+     "tris": 2234,
+     "collider": "render",
+     "z_top": 0.1192,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_outer_03_COL",
+     "verts": 1199,
+     "tris": 2234,
+     "collider": "walkable",
+     "z_top": 0.1192,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -80.0,
+     -80.0,
+     -0.128
+    ],
+    "max": [
+     80.0,
+     -45.0,
+     0.119
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_ground_outer_04",
+   "kind": "ground_plate",
+   "region": "outer",
+   "fbx": {
+    "file": "ground/AP015_ground_outer_04.fbx",
+    "bytes": 373180,
+    "sha256": "d54a6d235582c54aa59c2f9064865955eaa599a62b0aa1e0ce10dc405d42d7aa"
+   },
+   "lods": [
+    "AP015_ground_outer_04_LOD0"
+   ],
+   "collider_mesh": "AP015_ground_outer_04_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_outer_04_LOD0",
+     "verts": 1199,
+     "tris": 2234,
+     "collider": "render",
+     "z_top": 0.1201,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_outer_04_COL",
+     "verts": 1199,
+     "tris": 2234,
+     "collider": "walkable",
+     "z_top": 0.1201,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -80.0,
+     -80.0,
+     -0.179
+    ],
+    "max": [
+     -45.0,
+     80.0,
+     0.12
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_ground_south_01",
+   "kind": "ground_plate",
+   "region": "south",
+   "fbx": {
+    "file": "ground/AP015_ground_south_01.fbx",
+    "bytes": 948780,
+    "sha256": "7b258c564bd834e5b34016dd21b1ff282da973194ed03f5298a312246bf05df8"
+   },
+   "lods": [
+    "AP015_ground_south_01_LOD0",
+    "AP015_ground_south_01_LOD1"
+   ],
+   "collider_mesh": "AP015_ground_south_01_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_south_01_LOD0",
+     "verts": 7219,
+     "tris": 13800,
+     "collider": "render",
+     "z_top": 0.0083,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_south_01_LOD1",
+     "verts": 894,
+     "tris": 1584,
+     "collider": "render",
+     "z_top": 0.0083,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_south_01_COL",
+     "verts": 894,
+     "tris": 1584,
+     "collider": "walkable",
+     "z_top": 0.0083,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -37.5,
+     -45.0,
+     -0.018
+    ],
+    "max": [
+     45.0,
+     -13.5,
+     0.008
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_ground_west_01",
+   "kind": "ground_plate",
+   "region": "west",
+   "fbx": {
+    "file": "ground/AP015_ground_west_01.fbx",
+    "bytes": 1087500,
+    "sha256": "4230a454d8401d2f09c6951959b3daefdbaf0ac3ebf2c52f9fc806af003171e7"
+   },
+   "lods": [
+    "AP015_ground_west_01_LOD0",
+    "AP015_ground_west_01_LOD1"
+   ],
+   "collider_mesh": "AP015_ground_west_01_COL",
+   "collider": "walkable",
+   "objects": [
+    {
+     "name": "AP015_ground_west_01_LOD0",
+     "verts": 7702,
+     "tris": 14952,
+     "collider": "render",
+     "z_top": 0.0091,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_west_01_LOD1",
+     "verts": 930,
+     "tris": 1708,
+     "collider": "render",
+     "z_top": 0.0091,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_ground_west_01_COL",
+     "verts": 930,
+     "tris": 1708,
+     "collider": "walkable",
+     "z_top": 0.0091,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -45.0,
+     -45.0,
+     -0.021
+    ],
+    "max": [
+     -13.5,
+     37.5,
+     0.009
+    ]
+   },
+   "lod_note": "LOD0 0.5 m grid (outer 2 m, single LOD); LOD1 1.5 m; COL = LOD1 geometry; suggested LOD switch 45 m, never cull (fog 210 m)",
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_00",
+   "kind": "route_plate",
+   "route_index": 0,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    10.0,
+    10.0
+   ],
+   "b": [
+    23.0,
+    22.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_00.fbx",
+    "bytes": 57644,
+    "sha256": "f89e657204e3d4b193fbd3b0728663d53cbf1f9c105416a75117bce7548c5455"
+   },
+   "lods": [
+    "AP015_route_00_LOD0"
+   ],
+   "collider_mesh": "AP015_route_00_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_00_LOD0",
+     "verts": 325,
+     "tris": 552,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_00_COL",
+     "verts": 325,
+     "tris": 552,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     8.002,
+     8.002,
+     0.013
+    ],
+    "max": [
+     24.998,
+     23.998,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_01",
+   "kind": "route_plate",
+   "route_index": 1,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    23.0,
+    22.0
+   ],
+   "b": [
+    26.0,
+    25.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_01.fbx",
+    "bytes": 34332,
+    "sha256": "ff2ab15ebab1d8c7b022d42d7b49b2a3ff42bd5a5d2e6731ce74229eb3541c91"
+   },
+   "lods": [
+    "AP015_route_01_LOD0"
+   ],
+   "collider_mesh": "AP015_route_01_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_01_LOD0",
+     "verts": 136,
+     "tris": 228,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_01_COL",
+     "verts": 136,
+     "tris": 228,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     21.0,
+     20.0,
+     0.012
+    ],
+    "max": [
+     28.0,
+     27.0,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_02",
+   "kind": "route_plate",
+   "route_index": 2,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    10.0,
+    -10.0
+   ],
+   "b": [
+    23.0,
+    -22.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_02.fbx",
+    "bytes": 58796,
+    "sha256": "19a4177e33d5529ed5480eb54925fae8d5ec4e213e2d5413021223597f525b33"
+   },
+   "lods": [
+    "AP015_route_02_LOD0"
+   ],
+   "collider_mesh": "AP015_route_02_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_02_LOD0",
+     "verts": 325,
+     "tris": 552,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_02_COL",
+     "verts": 325,
+     "tris": 552,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     8.002,
+     -23.998,
+     0.012
+    ],
+    "max": [
+     24.998,
+     -8.002,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_03",
+   "kind": "route_plate",
+   "route_index": 3,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    23.0,
+    -22.0
+   ],
+   "b": [
+    25.0,
+    -25.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_03.fbx",
+    "bytes": 35276,
+    "sha256": "dfe4708a9b654c5dbf4ed145263c354bd4b65622767e466c9106208efd41de2f"
+   },
+   "lods": [
+    "AP015_route_03_LOD0"
+   ],
+   "collider_mesh": "AP015_route_03_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.01,
+   "tier": 4,
+   "objects": [
+    {
+     "name": "AP015_route_03_LOD0",
+     "verts": 129,
+     "tris": 216,
+     "collider": "render",
+     "z_top": 0.01,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_03_COL",
+     "verts": 129,
+     "tris": 216,
+     "collider": "walkable",
+     "z_top": 0.01,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     21.004,
+     -26.996,
+     0.01
+    ],
+    "max": [
+     26.996,
+     -20.004,
+     0.01
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_04",
+   "kind": "route_plate",
+   "route_index": 4,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    -10.0,
+    -10.0
+   ],
+   "b": [
+    -23.0,
+    -22.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_04.fbx",
+    "bytes": 58988,
+    "sha256": "de785866eceacaab93fa2caddee8ecb4fd9a9e5fab157539d528bf68a9911253"
+   },
+   "lods": [
+    "AP015_route_04_LOD0"
+   ],
+   "collider_mesh": "AP015_route_04_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_04_LOD0",
+     "verts": 325,
+     "tris": 552,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_04_COL",
+     "verts": 325,
+     "tris": 552,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -24.998,
+     -23.998,
+     0.012
+    ],
+    "max": [
+     -8.002,
+     -8.002,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_05",
+   "kind": "route_plate",
+   "route_index": 5,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    -23.0,
+    -22.0
+   ],
+   "b": [
+    -27.0,
+    -24.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_05.fbx",
+    "bytes": 36940,
+    "sha256": "ed5780176b00c86f6d20a3ad127f11f1b100a5b0661968b484d6be13588913a3"
+   },
+   "lods": [
+    "AP015_route_05_LOD0"
+   ],
+   "collider_mesh": "AP015_route_05_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.01,
+   "tier": 4,
+   "objects": [
+    {
+     "name": "AP015_route_05_LOD0",
+     "verts": 136,
+     "tris": 228,
+     "collider": "render",
+     "z_top": 0.01,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_05_COL",
+     "verts": 136,
+     "tris": 228,
+     "collider": "walkable",
+     "z_top": 0.01,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -28.996,
+     -25.996,
+     0.01
+    ],
+    "max": [
+     -21.004,
+     -20.004,
+     0.01
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_06",
+   "kind": "route_plate",
+   "route_index": 6,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    -10.0,
+    10.0
+   ],
+   "b": [
+    -23.0,
+    22.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_06.fbx",
+    "bytes": 57580,
+    "sha256": "6f2451c21d89033efb58a87e711a0f9e9da7728c21261ffcc2cd97189b905c8e"
+   },
+   "lods": [
+    "AP015_route_06_LOD0"
+   ],
+   "collider_mesh": "AP015_route_06_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_06_LOD0",
+     "verts": 325,
+     "tris": 552,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_06_COL",
+     "verts": 325,
+     "tris": 552,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -24.998,
+     8.002,
+     0.013
+    ],
+    "max": [
+     -8.002,
+     23.998,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_07",
+   "kind": "route_plate",
+   "route_index": 7,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    -23.0,
+    22.0
+   ],
+   "b": [
+    -26.0,
+    25.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_07.fbx",
+    "bytes": 34604,
+    "sha256": "bd493e28a6d72ef8b02ba21d99932b85a1c29c9c82392360cf1ff116e01e13ec"
+   },
+   "lods": [
+    "AP015_route_07_LOD0"
+   ],
+   "collider_mesh": "AP015_route_07_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_07_LOD0",
+     "verts": 136,
+     "tris": 228,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_07_COL",
+     "verts": 136,
+     "tris": 228,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -28.0,
+     20.0,
+     0.012
+    ],
+    "max": [
+     -21.0,
+     27.0,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_08",
+   "kind": "route_plate",
+   "route_index": 8,
+   "surface": "Dirt",
+   "half_width_m": 1.8,
+   "a": [
+    17.0,
+    2.0
+   ],
+   "b": [
+    24.0,
+    10.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_08.fbx",
+    "bytes": 49756,
+    "sha256": "eb0a5629ddfb96bb54e61eaaceda6b020b488fc6916364e0f4ce9e5aaefe7077"
+   },
+   "lods": [
+    "AP015_route_08_LOD0"
+   ],
+   "collider_mesh": "AP015_route_08_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_08_LOD0",
+     "verts": 227,
+     "tris": 384,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_08_COL",
+     "verts": 227,
+     "tris": 384,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     15.204,
+     0.204,
+     0.014
+    ],
+    "max": [
+     25.796,
+     11.796,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_09",
+   "kind": "route_plate",
+   "route_index": 9,
+   "surface": "Dirt",
+   "half_width_m": 1.8,
+   "a": [
+    24.0,
+    10.0
+   ],
+   "b": [
+    30.0,
+    16.5
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_09.fbx",
+    "bytes": 43708,
+    "sha256": "4ca4955875c4cf11d9d7c8a89427fe5e9c92a2ef0b6d0824f2737f6a11d3b850"
+   },
+   "lods": [
+    "AP015_route_09_LOD0"
+   ],
+   "collider_mesh": "AP015_route_09_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_09_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_09_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     22.201,
+     8.201,
+     0.012
+    ],
+    "max": [
+     31.799,
+     18.299,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_10",
+   "kind": "route_plate",
+   "route_index": 10,
+   "surface": "Dirt",
+   "half_width_m": 1.8,
+   "a": [
+    17.0,
+    -2.0
+   ],
+   "b": [
+    24.0,
+    -10.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_10.fbx",
+    "bytes": 50908,
+    "sha256": "f5407b8a147fc844b6eca63cd19c0db36e6b96fb147b4920da1d05a8eb043a75"
+   },
+   "lods": [
+    "AP015_route_10_LOD0"
+   ],
+   "collider_mesh": "AP015_route_10_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_10_LOD0",
+     "verts": 227,
+     "tris": 384,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_10_COL",
+     "verts": 227,
+     "tris": 384,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     15.204,
+     -11.796,
+     0.014
+    ],
+    "max": [
+     25.796,
+     -0.204,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_11",
+   "kind": "route_plate",
+   "route_index": 11,
+   "surface": "Dirt",
+   "half_width_m": 1.8,
+   "a": [
+    24.0,
+    -10.0
+   ],
+   "b": [
+    30.0,
+    -16.5
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_11.fbx",
+    "bytes": 44172,
+    "sha256": "86d6076010e92c33742507e2423f7b3be60a0ce3a22d3806f7372f564bb3e768"
+   },
+   "lods": [
+    "AP015_route_11_LOD0"
+   ],
+   "collider_mesh": "AP015_route_11_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_11_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_11_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     22.201,
+     -18.299,
+     0.013
+    ],
+    "max": [
+     31.799,
+     -8.201,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_12",
+   "kind": "route_plate",
+   "route_index": 12,
+   "surface": "Dirt",
+   "half_width_m": 1.8,
+   "a": [
+    39.0,
+    1.0
+   ],
+   "b": [
+    42.0,
+    -10.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_12.fbx",
+    "bytes": 48732,
+    "sha256": "db5ed837feb68483c93ce2be4ae922ff3cd8e02eabe3b808aa4f4524f18a75cb"
+   },
+   "lods": [
+    "AP015_route_12_LOD0"
+   ],
+   "collider_mesh": "AP015_route_12_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_12_LOD0",
+     "verts": 234,
+     "tris": 396,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_12_COL",
+     "verts": 234,
+     "tris": 396,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     37.2,
+     -11.8,
+     0.013
+    ],
+    "max": [
+     43.8,
+     2.8,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_13",
+   "kind": "route_plate",
+   "route_index": 13,
+   "surface": "Dirt",
+   "half_width_m": 1.8,
+   "a": [
+    42.0,
+    -10.0
+   ],
+   "b": [
+    34.0,
+    -14.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_13.fbx",
+    "bytes": 43260,
+    "sha256": "cc75dd4e43b56cbabb877d45842acdf36921b1d7e346e653d15e03d6d575d7b7"
+   },
+   "lods": [
+    "AP015_route_13_LOD0"
+   ],
+   "collider_mesh": "AP015_route_13_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_13_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_13_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     32.203,
+     -15.797,
+     0.014
+    ],
+    "max": [
+     43.797,
+     -8.203,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_14",
+   "kind": "route_plate",
+   "route_index": 14,
+   "surface": "Dirt",
+   "half_width_m": 1.5,
+   "a": [
+    -33.0,
+    -14.0
+   ],
+   "b": [
+    -40.0,
+    -10.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_14.fbx",
+    "bytes": 43644,
+    "sha256": "2f59b19de6d9e617ebd5bd02fcfe9c0401cc797ae9c69ed638db69d24874e527"
+   },
+   "lods": [
+    "AP015_route_14_LOD0"
+   ],
+   "collider_mesh": "AP015_route_14_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_14_LOD0",
+     "verts": 192,
+     "tris": 324,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_14_COL",
+     "verts": 192,
+     "tris": 324,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -41.5,
+     -15.5,
+     0.016
+    ],
+    "max": [
+     -31.5,
+     -8.5,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_15",
+   "kind": "route_plate",
+   "route_index": 15,
+   "surface": "Dirt",
+   "half_width_m": 1.5,
+   "a": [
+    -40.0,
+    -10.0
+   ],
+   "b": [
+    -40.0,
+    10.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_15.fbx",
+    "bytes": 48428,
+    "sha256": "0c000111b17021de9d7e35d8b6981eb8f63fa69cae897bbabe6fcea80b5fbed8"
+   },
+   "lods": [
+    "AP015_route_15_LOD0"
+   ],
+   "collider_mesh": "AP015_route_15_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_15_LOD0",
+     "verts": 353,
+     "tris": 600,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_15_COL",
+     "verts": 353,
+     "tris": 600,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -41.5,
+     -11.5,
+     0.014
+    ],
+    "max": [
+     -38.5,
+     11.5,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_16",
+   "kind": "route_plate",
+   "route_index": 16,
+   "surface": "Dirt",
+   "half_width_m": 1.5,
+   "a": [
+    -40.0,
+    10.0
+   ],
+   "b": [
+    -33.0,
+    14.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_16.fbx",
+    "bytes": 46044,
+    "sha256": "d8df0e256f34594d83291087e0e90e4fb193b0b175425a976c10f8edb17f9582"
+   },
+   "lods": [
+    "AP015_route_16_LOD0"
+   ],
+   "collider_mesh": "AP015_route_16_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_16_LOD0",
+     "verts": 192,
+     "tris": 324,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_16_COL",
+     "verts": 192,
+     "tris": 324,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -41.5,
+     8.5,
+     0.012
+    ],
+    "max": [
+     -31.5,
+     15.5,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_17",
+   "kind": "route_plate",
+   "route_index": 17,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    -27.0,
+    -28.0
+   ],
+   "b": [
+    -31.0,
+    -32.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_17.fbx",
+    "bytes": 37084,
+    "sha256": "69673bd7a6d16928c4412add9c9be17ebc3d7bb8bb936b7faef487abfa34e593"
+   },
+   "lods": [
+    "AP015_route_17_LOD0"
+   ],
+   "collider_mesh": "AP015_route_17_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_17_LOD0",
+     "verts": 157,
+     "tris": 264,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_17_COL",
+     "verts": 157,
+     "tris": 264,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -33.0,
+     -34.0,
+     0.012
+    ],
+    "max": [
+     -25.0,
+     -26.0,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_18",
+   "kind": "route_plate",
+   "route_index": 18,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    -31.0,
+    -32.0
+   ],
+   "b": [
+    -24.0,
+    -38.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_18.fbx",
+    "bytes": 45596,
+    "sha256": "53564e2d79ac41a20e2bd4075446bd033de6d6e9d2c84cbff12e3186ba9b482d"
+   },
+   "lods": [
+    "AP015_route_18_LOD0"
+   ],
+   "collider_mesh": "AP015_route_18_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_18_LOD0",
+     "verts": 206,
+     "tris": 348,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_18_COL",
+     "verts": 206,
+     "tris": 348,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -32.994,
+     -39.994,
+     0.013
+    ],
+    "max": [
+     -22.006,
+     -30.006,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_19",
+   "kind": "route_plate",
+   "route_index": 19,
+   "surface": "Dirt",
+   "half_width_m": 2.0,
+   "a": [
+    -24.0,
+    -38.0
+   ],
+   "b": [
+    -20.0,
+    -41.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_19.fbx",
+    "bytes": 36828,
+    "sha256": "6b9651765b6e95123b418f316745f4b07af98816c7826e0dc3c9842f744745bb"
+   },
+   "lods": [
+    "AP015_route_19_LOD0"
+   ],
+   "collider_mesh": "AP015_route_19_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_19_LOD0",
+     "verts": 143,
+     "tris": 240,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_19_COL",
+     "verts": 143,
+     "tris": 240,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -25.986,
+     -42.986,
+     0.012
+    ],
+    "max": [
+     -18.014,
+     -36.014,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_20",
+   "kind": "route_plate",
+   "route_index": 20,
+   "surface": "Dirt",
+   "half_width_m": 2.5,
+   "a": [
+    20.0,
+    -41.0
+   ],
+   "b": [
+    -20.0,
+    -41.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_20.fbx",
+    "bytes": 68892,
+    "sha256": "4ec11eee4fb32775445d18199b1a8a80256d48a5170c2c7d5b718a6494bbeaa8"
+   },
+   "lods": [
+    "AP015_route_20_LOD0"
+   ],
+   "collider_mesh": "AP015_route_20_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_20_LOD0",
+     "verts": 633,
+     "tris": 1080,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_20_COL",
+     "verts": 633,
+     "tris": 1080,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -22.5,
+     -43.5,
+     0.016
+    ],
+    "max": [
+     22.5,
+     -38.5,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_21",
+   "kind": "route_plate",
+   "route_index": 21,
+   "surface": "Dirt",
+   "half_width_m": 2.5,
+   "a": [
+    -15.0,
+    -17.0
+   ],
+   "b": [
+    -15.0,
+    -41.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_21.fbx",
+    "bytes": 55452,
+    "sha256": "fccb0e145bd28846c3dd009b0debd1721d98b035e36e4e46222061d323571a07"
+   },
+   "lods": [
+    "AP015_route_21_LOD0"
+   ],
+   "collider_mesh": "AP015_route_21_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_21_LOD0",
+     "verts": 409,
+     "tris": 696,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_21_COL",
+     "verts": 409,
+     "tris": 696,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -17.5,
+     -43.5,
+     0.013
+    ],
+    "max": [
+     -12.5,
+     -14.5,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_22",
+   "kind": "route_plate",
+   "route_index": 22,
+   "surface": "Dirt",
+   "half_width_m": 2.5,
+   "a": [
+    16.0,
+    -17.0
+   ],
+   "b": [
+    16.0,
+    -41.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_22.fbx",
+    "bytes": 52716,
+    "sha256": "aae85a5d6d674bea5102d8b7e9e45f6f79247d9e2f1ecf767af6f75e0fc64dd0"
+   },
+   "lods": [
+    "AP015_route_22_LOD0"
+   ],
+   "collider_mesh": "AP015_route_22_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_22_LOD0",
+     "verts": 409,
+     "tris": 696,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_22_COL",
+     "verts": 409,
+     "tris": 696,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     13.5,
+     -43.5,
+     0.013
+    ],
+    "max": [
+     18.5,
+     -14.5,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_23",
+   "kind": "route_plate",
+   "route_index": 23,
+   "surface": "Dirt",
+   "half_width_m": 2.5,
+   "a": [
+    22.0,
+    -17.0
+   ],
+   "b": [
+    25.0,
+    -25.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_23.fbx",
+    "bytes": 43676,
+    "sha256": "921bfcaa24f8bd869defb0a5243520c6d232d454d42992442de9a647307f0980"
+   },
+   "lods": [
+    "AP015_route_23_LOD0"
+   ],
+   "collider_mesh": "AP015_route_23_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_23_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_23_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     19.512,
+     -27.488,
+     0.016
+    ],
+    "max": [
+     27.488,
+     -14.512,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_24",
+   "kind": "route_plate",
+   "route_index": 24,
+   "surface": "Dirt",
+   "half_width_m": 2.5,
+   "a": [
+    -22.0,
+    -17.0
+   ],
+   "b": [
+    -27.0,
+    -24.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_24.fbx",
+    "bytes": 43628,
+    "sha256": "950eb15d6343d1392d7cdcffb7097fe82ffda1387cf6d6cf588801e5a8b56bff"
+   },
+   "lods": [
+    "AP015_route_24_LOD0"
+   ],
+   "collider_mesh": "AP015_route_24_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_24_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_24_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -29.488,
+     -26.488,
+     0.013
+    ],
+    "max": [
+     -19.512,
+     -14.512,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_25",
+   "kind": "route_plate",
+   "route_index": 25,
+   "surface": "Dirt",
+   "half_width_m": 2.5,
+   "a": [
+    25.0,
+    -25.0
+   ],
+   "b": [
+    27.0,
+    -32.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_25.fbx",
+    "bytes": 43244,
+    "sha256": "ebc9e20de8b9d592306eba36886036ab8a9199fee965383e83e8bfa36fcf634d"
+   },
+   "lods": [
+    "AP015_route_25_LOD0"
+   ],
+   "collider_mesh": "AP015_route_25_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_25_LOD0",
+     "verts": 178,
+     "tris": 300,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_25_COL",
+     "verts": 178,
+     "tris": 300,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     22.5,
+     -34.5,
+     0.013
+    ],
+    "max": [
+     29.5,
+     -22.5,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_26",
+   "kind": "route_plate",
+   "route_index": 26,
+   "surface": "Dirt",
+   "half_width_m": 2.5,
+   "a": [
+    27.0,
+    -32.0
+   ],
+   "b": [
+    20.0,
+    -41.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_26.fbx",
+    "bytes": 48572,
+    "sha256": "9ceceac15c118a4e177ddd55dc4443ca799783fcccce6aeee468a2f24791adbb"
+   },
+   "lods": [
+    "AP015_route_26_LOD0"
+   ],
+   "collider_mesh": "AP015_route_26_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_26_LOD0",
+     "verts": 234,
+     "tris": 396,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_26_COL",
+     "verts": 234,
+     "tris": 396,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     17.519,
+     -43.481,
+     0.014
+    ],
+    "max": [
+     29.481,
+     -29.519,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_27",
+   "kind": "route_plate",
+   "route_index": 27,
+   "surface": "Dirt",
+   "half_width_m": 2.5,
+   "a": [
+    -20.0,
+    -41.0
+   ],
+   "b": [
+    -27.0,
+    -32.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_27.fbx",
+    "bytes": 48476,
+    "sha256": "88e01b5edbb6f644bc2f8c749f1ca5629ad0e0e4a321a423e7486cb7971c8ecd"
+   },
+   "lods": [
+    "AP015_route_27_LOD0"
+   ],
+   "collider_mesh": "AP015_route_27_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_27_LOD0",
+     "verts": 234,
+     "tris": 396,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_27_COL",
+     "verts": 234,
+     "tris": 396,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -29.481,
+     -43.481,
+     0.014
+    ],
+    "max": [
+     -17.519,
+     -29.519,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_28",
+   "kind": "route_plate",
+   "route_index": 28,
+   "surface": "Dirt",
+   "half_width_m": 3.0,
+   "a": [
+    -27.0,
+    -32.0
+   ],
+   "b": [
+    -27.0,
+    -24.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_28.fbx",
+    "bytes": 35644,
+    "sha256": "68943f3b965221d142a9696f4948a17f33a13469a672efb85bd2053443121476"
+   },
+   "lods": [
+    "AP015_route_28_LOD0"
+   ],
+   "collider_mesh": "AP015_route_28_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_28_LOD0",
+     "verts": 185,
+     "tris": 312,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_28_COL",
+     "verts": 185,
+     "tris": 312,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -30.0,
+     -35.0,
+     0.016
+    ],
+    "max": [
+     -24.0,
+     -21.0,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_29",
+   "kind": "route_plate",
+   "route_index": 29,
+   "surface": "Stone",
+   "half_width_m": 3.0,
+   "a": [
+    -22.0,
+    -17.0
+   ],
+   "b": [
+    22.0,
+    -17.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_29.fbx",
+    "bytes": 100236,
+    "sha256": "f1975cafadd5368c87fcaf7b68b18c47b27bc73fd7511e581f391a2b6d60e39a"
+   },
+   "lods": [
+    "AP015_route_29_LOD0"
+   ],
+   "collider_mesh": "AP015_route_29_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_29_L1_LOD0",
+    "AP015_kerb_29_L2_LOD0",
+    "AP015_kerb_29_L3_LOD0",
+    "AP015_kerb_29_L4_LOD0",
+    "AP015_kerb_29_R1_LOD0",
+    "AP015_kerb_29_R2_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_29_LOD0",
+     "verts": 689,
+     "tris": 1176,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_29_COL",
+     "verts": 689,
+     "tris": 1176,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_29_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_29_L2_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_29_L3_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_29_L4_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_29_R1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_29_R2_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -25.0,
+     -20.0,
+     0.014
+    ],
+    "max": [
+     25.0,
+     -14.0,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_30",
+   "kind": "route_plate",
+   "route_index": 30,
+   "surface": "Stone",
+   "half_width_m": 3.0,
+   "a": [
+    -27.0,
+    -24.0
+   ],
+   "b": [
+    -33.0,
+    -12.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_30.fbx",
+    "bytes": 51868,
+    "sha256": "a559d78c9f3c28cfc43bfb616baa6fb34a1d0ecbe9d7479acc3503bc70eed57a"
+   },
+   "lods": [
+    "AP015_route_30_LOD0"
+   ],
+   "collider_mesh": "AP015_route_30_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_30_LOD0",
+     "verts": 262,
+     "tris": 444,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_30_COL",
+     "verts": 262,
+     "tris": 444,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -35.995,
+     -26.995,
+     0.014
+    ],
+    "max": [
+     -24.005,
+     -9.005,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_31",
+   "kind": "route_plate",
+   "route_index": 31,
+   "surface": "Stone",
+   "half_width_m": 2.4,
+   "a": [
+    -33.0,
+    -12.0
+   ],
+   "b": [
+    -33.0,
+    12.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_31.fbx",
+    "bytes": 51276,
+    "sha256": "fb57b28b5b47bde73f5698b004854cf36a1d59d3bbf92041d46ec06ae3055c75"
+   },
+   "lods": [
+    "AP015_route_31_LOD0"
+   ],
+   "collider_mesh": "AP015_route_31_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_31_LOD0",
+     "verts": 409,
+     "tris": 696,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_31_COL",
+     "verts": 409,
+     "tris": 696,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -35.4,
+     -14.4,
+     0.013
+    ],
+    "max": [
+     -30.6,
+     14.4,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_32",
+   "kind": "route_plate",
+   "route_index": 32,
+   "surface": "Stone",
+   "half_width_m": 3.0,
+   "a": [
+    -33.0,
+    12.0
+   ],
+   "b": [
+    -26.0,
+    25.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_32.fbx",
+    "bytes": 54924,
+    "sha256": "d9e818cb0d18a3c2dc643b69f349b96b5de58b0de8032b956c839e0be0097ac5"
+   },
+   "lods": [
+    "AP015_route_32_LOD0"
+   ],
+   "collider_mesh": "AP015_route_32_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_32_LOD0",
+     "verts": 283,
+     "tris": 480,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_32_COL",
+     "verts": 283,
+     "tris": 480,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -35.999,
+     9.001,
+     0.016
+    ],
+    "max": [
+     -23.001,
+     27.999,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_33",
+   "kind": "route_plate",
+   "route_index": 33,
+   "surface": "Stone",
+   "half_width_m": 4.0,
+   "a": [
+    26.0,
+    25.0
+   ],
+   "b": [
+    31.0,
+    16.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_33.fbx",
+    "bytes": 57612,
+    "sha256": "b4d38ada85f706a4e1182f55514ad895eb46f57e44bbba7fabbdd6f41880f9bc"
+   },
+   "lods": [
+    "AP015_route_33_LOD0"
+   ],
+   "collider_mesh": "AP015_route_33_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_33_L1_LOD0",
+    "AP015_kerb_33_R1_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_33_LOD0",
+     "verts": 220,
+     "tris": 372,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_33_COL",
+     "verts": 220,
+     "tris": 372,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_33_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_33_R1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     22.001,
+     12.001,
+     0.016
+    ],
+    "max": [
+     34.999,
+     28.999,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_34",
+   "kind": "route_plate",
+   "route_index": 34,
+   "surface": "Stone",
+   "half_width_m": 3.5,
+   "a": [
+    31.0,
+    16.0
+   ],
+   "b": [
+    34.0,
+    8.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_34.fbx",
+    "bytes": 56492,
+    "sha256": "409fb49768cecc59d53721f5d14aac033e0dba4f71ca434ab1bb7c1211e5d842"
+   },
+   "lods": [
+    "AP015_route_34_LOD0"
+   ],
+   "collider_mesh": "AP015_route_34_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_34_L1_LOD0",
+    "AP015_kerb_34_R1_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_34_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_34_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_34_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.063,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_34_R1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.063,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     27.516,
+     4.516,
+     0.013
+    ],
+    "max": [
+     37.484,
+     19.484,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_35",
+   "kind": "route_plate",
+   "route_index": 35,
+   "surface": "Stone",
+   "half_width_m": 2.5,
+   "a": [
+    34.0,
+    8.0
+   ],
+   "b": [
+    39.0,
+    1.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_35.fbx",
+    "bytes": 45020,
+    "sha256": "9740e5265dd4b3ee71181ba580b2f4e250594d118bfdd6cfd40e667155e4912f"
+   },
+   "lods": [
+    "AP015_route_35_LOD0"
+   ],
+   "collider_mesh": "AP015_route_35_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_35_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_35_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     31.512,
+     -1.488,
+     0.016
+    ],
+    "max": [
+     41.488,
+     10.488,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_36",
+   "kind": "route_plate",
+   "route_index": 36,
+   "surface": "Stone",
+   "half_width_m": 2.5,
+   "a": [
+    39.0,
+    1.0
+   ],
+   "b": [
+    34.0,
+    -7.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_36.fbx",
+    "bytes": 46028,
+    "sha256": "b069c9ee5d2b301b7b73e6e9596c351f375f3b1156c14b022d34de0399a6d059"
+   },
+   "lods": [
+    "AP015_route_36_LOD0"
+   ],
+   "collider_mesh": "AP015_route_36_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_36_LOD0",
+     "verts": 206,
+     "tris": 348,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_36_COL",
+     "verts": 206,
+     "tris": 348,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     31.502,
+     -9.498,
+     0.014
+    ],
+    "max": [
+     41.498,
+     3.498,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_37",
+   "kind": "route_plate",
+   "route_index": 37,
+   "surface": "Stone",
+   "half_width_m": 2.5,
+   "a": [
+    34.0,
+    8.0
+   ],
+   "b": [
+    30.0,
+    1.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_37.fbx",
+    "bytes": 43836,
+    "sha256": "0b6674ee1a13f8309d7f83e78ea44bf8892f76f0f27e280a3806f947d259c529"
+   },
+   "lods": [
+    "AP015_route_37_LOD0"
+   ],
+   "collider_mesh": "AP015_route_37_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_37_LOD0",
+     "verts": 192,
+     "tris": 324,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_37_COL",
+     "verts": 192,
+     "tris": 324,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     27.5,
+     -1.5,
+     0.014
+    ],
+    "max": [
+     36.5,
+     10.5,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_38",
+   "kind": "route_plate",
+   "route_index": 38,
+   "surface": "Stone",
+   "half_width_m": 2.5,
+   "a": [
+    30.0,
+    1.0
+   ],
+   "b": [
+    34.0,
+    -7.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_38.fbx",
+    "bytes": 45052,
+    "sha256": "84ba105cf2428a3626f13cd6df747b59505e42e6d1cebbb3b1ccc3aa9989320b"
+   },
+   "lods": [
+    "AP015_route_38_LOD0"
+   ],
+   "collider_mesh": "AP015_route_38_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_38_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_38_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     27.504,
+     -9.496,
+     0.013
+    ],
+    "max": [
+     36.496,
+     3.496,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_39",
+   "kind": "route_plate",
+   "route_index": 39,
+   "surface": "Stone",
+   "half_width_m": 3.0,
+   "a": [
+    34.0,
+    -7.0
+   ],
+   "b": [
+    30.0,
+    -17.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_39.fbx",
+    "bytes": 63468,
+    "sha256": "4d1308acd2ade9adf997788ea30a3e059ded2ffffd0dd634648da262f241b3ac"
+   },
+   "lods": [
+    "AP015_route_39_LOD0"
+   ],
+   "collider_mesh": "AP015_route_39_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_39_L1_LOD0",
+    "AP015_kerb_39_L2_LOD0",
+    "AP015_kerb_39_R1_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_39_LOD0",
+     "verts": 227,
+     "tris": 384,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_39_COL",
+     "verts": 227,
+     "tris": 384,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_39_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_39_L2_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_39_R1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     27.021,
+     -19.979,
+     0.016
+    ],
+    "max": [
+     36.979,
+     -4.021,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_40",
+   "kind": "route_plate",
+   "route_index": 40,
+   "surface": "Stone",
+   "half_width_m": 3.0,
+   "a": [
+    30.0,
+    -17.0
+   ],
+   "b": [
+    25.0,
+    -25.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_40.fbx",
+    "bytes": 56556,
+    "sha256": "9190592cf31b2b8d1ba8caca9e87b51103a1ae4d93b406a51f4170f807650e5c"
+   },
+   "lods": [
+    "AP015_route_40_LOD0"
+   ],
+   "collider_mesh": "AP015_route_40_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_40_L1_LOD0",
+    "AP015_kerb_40_R1_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_40_LOD0",
+     "verts": 206,
+     "tris": 348,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_40_COL",
+     "verts": 206,
+     "tris": 348,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_40_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_40_R1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     22.002,
+     -27.998,
+     0.014
+    ],
+    "max": [
+     32.998,
+     -14.002,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_41",
+   "kind": "route_plate",
+   "route_index": 41,
+   "surface": "Stone",
+   "half_width_m": 3.5,
+   "a": [
+    13.0,
+    0.0
+   ],
+   "b": [
+    30.0,
+    1.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_41.fbx",
+    "bytes": 77820,
+    "sha256": "f709dac8d1f40364fcc23adb513544b311252c3089a59d47b6c9100d15b6be1c"
+   },
+   "lods": [
+    "AP015_route_41_LOD0"
+   ],
+   "collider_mesh": "AP015_route_41_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_41_L1_LOD0",
+    "AP015_kerb_41_R1_LOD0",
+    "AP015_kerb_41_R2_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_41_LOD0",
+     "verts": 318,
+     "tris": 540,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_41_COL",
+     "verts": 318,
+     "tris": 540,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_41_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_41_R1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_41_R2_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     9.506,
+     -3.494,
+     0.016
+    ],
+    "max": [
+     33.494,
+     4.494,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_42",
+   "kind": "route_plate",
+   "route_index": 42,
+   "surface": "Stone",
+   "half_width_m": 3.0,
+   "a": [
+    -13.0,
+    0.0
+   ],
+   "b": [
+    -30.0,
+    0.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_42.fbx",
+    "bytes": 47308,
+    "sha256": "8b6432558be197eea72dac281e20876a7ea681dac2836e8f6ceaf4eed402896a"
+   },
+   "lods": [
+    "AP015_route_42_LOD0"
+   ],
+   "collider_mesh": "AP015_route_42_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_42_LOD0",
+     "verts": 311,
+     "tris": 528,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_42_COL",
+     "verts": 311,
+     "tris": 528,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -33.0,
+     -3.0,
+     0.016
+    ],
+    "max": [
+     -10.0,
+     3.0,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_43",
+   "kind": "route_plate",
+   "route_index": 43,
+   "surface": "Stone",
+   "half_width_m": 4.0,
+   "a": [
+    0.0,
+    -13.0
+   ],
+   "b": [
+    0.0,
+    -17.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_43.fbx",
+    "bytes": 32348,
+    "sha256": "b0e84b4bd21946c5f11c58b64d2a88bc347d6ab5cda6ed808aa732a6aa1ecfe5"
+   },
+   "lods": [
+    "AP015_route_43_LOD0"
+   ],
+   "collider_mesh": "AP015_route_43_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_43_LOD0",
+     "verts": 129,
+     "tris": 216,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_43_COL",
+     "verts": 129,
+     "tris": 216,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -4.0,
+     -21.0,
+     0.016
+    ],
+    "max": [
+     4.0,
+     -9.0,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_44",
+   "kind": "route_plate",
+   "route_index": 44,
+   "surface": "Stone",
+   "half_width_m": 3.0,
+   "a": [
+    4.0,
+    -13.0
+   ],
+   "b": [
+    4.0,
+    -17.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_44.fbx",
+    "bytes": 32540,
+    "sha256": "1578b8dfd7d99e2d6dd00637398795581fb22016aa4593e208e55929efbc3a45"
+   },
+   "lods": [
+    "AP015_route_44_LOD0"
+   ],
+   "collider_mesh": "AP015_route_44_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_44_LOD0",
+     "verts": 129,
+     "tris": 216,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_44_COL",
+     "verts": 129,
+     "tris": 216,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     1.0,
+     -20.0,
+     0.013
+    ],
+    "max": [
+     7.0,
+     -10.0,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_45",
+   "kind": "route_plate",
+   "route_index": 45,
+   "surface": "Stone",
+   "half_width_m": 7.0,
+   "a": [
+    -26.0,
+    25.0
+   ],
+   "b": [
+    26.0,
+    25.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_45.fbx",
+    "bytes": 99788,
+    "sha256": "3584062397e76585bc659cbaeef3f5bbc93f70e2a1e3c478e5f835dff99a1762"
+   },
+   "lods": [
+    "AP015_route_45_LOD0"
+   ],
+   "collider_mesh": "AP015_route_45_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_45_L1_LOD0",
+    "AP015_kerb_45_R1_LOD0",
+    "AP015_kerb_45_R2_LOD0",
+    "AP015_kerb_45_R3_LOD0",
+    "AP015_kerb_45_R4_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.0145,
+   "tier": 1,
+   "objects": [
+    {
+     "name": "AP015_route_45_LOD0",
+     "verts": 801,
+     "tris": 1368,
+     "collider": "render",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_45_COL",
+     "verts": 801,
+     "tris": 1368,
+     "collider": "walkable",
+     "z_top": 0.0145,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_45_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_45_R1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_45_R2_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_45_R3_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_45_R4_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0645,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -33.0,
+     18.0,
+     0.014
+    ],
+    "max": [
+     33.0,
+     32.0,
+     0.014
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_46",
+   "kind": "route_plate",
+   "route_index": 46,
+   "surface": "Stone",
+   "half_width_m": 3.0,
+   "a": [
+    -14.0,
+    31.0
+   ],
+   "b": [
+    14.0,
+    31.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_46.fbx",
+    "bytes": 64444,
+    "sha256": "c6a6582a761bb6da630d44aa778bdf004b9c2f59e8e22097229afe73ea0c73bb"
+   },
+   "lods": [
+    "AP015_route_46_LOD0"
+   ],
+   "collider_mesh": "AP015_route_46_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_46_L1_LOD0",
+    "AP015_kerb_46_L2_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.0115,
+   "tier": 3,
+   "objects": [
+    {
+     "name": "AP015_route_46_LOD0",
+     "verts": 465,
+     "tris": 792,
+     "collider": "render",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_46_COL",
+     "verts": 465,
+     "tris": 792,
+     "collider": "walkable",
+     "z_top": 0.0115,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_46_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0615,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_46_L2_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.0615,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -17.0,
+     28.0,
+     0.012
+    ],
+    "max": [
+     17.0,
+     34.0,
+     0.012
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_47",
+   "kind": "route_plate",
+   "route_index": 47,
+   "surface": "Stone",
+   "half_width_m": 6.0,
+   "a": [
+    0.0,
+    22.0
+   ],
+   "b": [
+    0.0,
+    31.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_47.fbx",
+    "bytes": 37804,
+    "sha256": "6a49c323e0bf96a9e49dcba4da92d684944e7f96b05215d45ce9a2202b712f4c"
+   },
+   "lods": [
+    "AP015_route_47_LOD0"
+   ],
+   "collider_mesh": "AP015_route_47_COL",
+   "collider": "walkable",
+   "kerbs": [],
+   "kerb_collider": "none",
+   "z_top": 0.013000000000000001,
+   "tier": 2,
+   "objects": [
+    {
+     "name": "AP015_route_47_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_47_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.013,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -6.0,
+     16.0,
+     0.013
+    ],
+    "max": [
+     6.0,
+     37.0,
+     0.013
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_route_48",
+   "kind": "route_plate",
+   "route_index": 48,
+   "surface": "Stone",
+   "half_width_m": 8.0,
+   "a": [
+    0.0,
+    13.0
+   ],
+   "b": [
+    0.0,
+    22.0
+   ],
+   "region": null,
+   "fbx": {
+    "file": "routes/AP015_route_48.fbx",
+    "bytes": 47260,
+    "sha256": "6ea2608a1926393a0f9e1597398c22c8d599445d86806d82944e5ab1e8f38a38"
+   },
+   "lods": [
+    "AP015_route_48_LOD0"
+   ],
+   "collider_mesh": "AP015_route_48_COL",
+   "collider": "walkable",
+   "kerbs": [
+    "AP015_kerb_48_L1_LOD0",
+    "AP015_kerb_48_R1_LOD0"
+   ],
+   "kerb_collider": "none",
+   "z_top": 0.016,
+   "tier": 0,
+   "objects": [
+    {
+     "name": "AP015_route_48_LOD0",
+     "verts": 199,
+     "tris": 336,
+     "collider": "render",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_route_48_COL",
+     "verts": 199,
+     "tris": 336,
+     "collider": "walkable",
+     "z_top": 0.016,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_48_L1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_kerb_48_R1_LOD0",
+     "verts": 12,
+     "tris": 20,
+     "collider": "none",
+     "z_top": 0.066,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -8.0,
+     5.0,
+     0.016
+    ],
+    "max": [
+     8.0,
+     30.0,
+     0.016
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_east_01",
+   "kind": "paving_plate",
+   "paving_kind": "gate_threshold",
+   "plate_id": "gate_e_threshold",
+   "region": "east",
+   "fbx": {
+    "file": "routes/AP015_paving_east_01.fbx",
+    "bytes": 21692,
+    "sha256": "86182aab98b7554b456bf00c436af3bf3872ac8e71fa37f63d4a99c7b89242ac"
+   },
+   "lods": [
+    "AP015_paving_east_01_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_east_01_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_east_01_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_east_01_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     23.28,
+     -3.125,
+     0.018
+    ],
+    "max": [
+     26.12,
+     4.505,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_east_02",
+   "kind": "paving_plate",
+   "paving_kind": "pavilion_apron",
+   "plate_id": "pavilion_e_apron",
+   "region": "east",
+   "fbx": {
+    "file": "routes/AP015_paving_east_02.fbx",
+    "bytes": 20796,
+    "sha256": "c25c773937ac5b6cb76b52353cced7d6c54ac5cc05f58f6c1665994a2eb23e38"
+   },
+   "lods": [
+    "AP015_paving_east_02_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_east_02_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_east_02_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_east_02_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     35.5,
+     21.2,
+     0.018
+    ],
+    "max": [
+     40.5,
+     26.8,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_east_03",
+   "kind": "paving_plate",
+   "paving_kind": "tsukubai_apron",
+   "plate_id": "tsukubai_e_apron",
+   "region": "east",
+   "fbx": {
+    "file": "routes/AP015_paving_east_03.fbx",
+    "bytes": 27996,
+    "sha256": "ac73aa86b4a609968ab3560a6a399c876a242f41a29798d6645ed08ddcb6cbfe"
+   },
+   "lods": [
+    "AP015_paving_east_03_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_east_03_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_east_03_LOD0",
+     "verts": 73,
+     "tris": 120,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_east_03_COL",
+     "verts": 73,
+     "tris": 120,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     38.7,
+     20.9,
+     0.018
+    ],
+    "max": [
+     41.3,
+     23.1,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_north_01",
+   "kind": "paving_plate",
+   "paving_kind": "gate_threshold",
+   "plate_id": "gate_n_threshold",
+   "region": "north",
+   "fbx": {
+    "file": "routes/AP015_paving_north_01.fbx",
+    "bytes": 20844,
+    "sha256": "f292ecc9256f9047cfb431c887afff310f76576f853f0748c210218afad69ee3"
+   },
+   "lods": [
+    "AP015_paving_north_01_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_north_01_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_north_01_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_north_01_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -8.25,
+     15.8,
+     0.018
+    ],
+    "max": [
+     8.25,
+     18.2,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_north_02",
+   "kind": "paving_plate",
+   "paving_kind": "pavilion_apron",
+   "plate_id": "pavilion_n_apron",
+   "region": "north",
+   "fbx": {
+    "file": "routes/AP015_paving_north_02.fbx",
+    "bytes": 20812,
+    "sha256": "60c2062d7fc1a6590d8b3f897be7bde1cf68afe0288fa916b6d8750f2588d114"
+   },
+   "lods": [
+    "AP015_paving_north_02_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_north_02_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_north_02_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_north_02_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     25.2,
+     33.6,
+     0.018
+    ],
+    "max": [
+     30.2,
+     39.2,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_north_03",
+   "kind": "paving_plate",
+   "paving_kind": "pavilion_apron",
+   "plate_id": "pavilion_nw_apron",
+   "region": "north",
+   "fbx": {
+    "file": "routes/AP015_paving_north_03.fbx",
+    "bytes": 20812,
+    "sha256": "ed62048300ba96e4f32aaf61afca0efe8055a1b004e982d58efa73c03f85148c"
+   },
+   "lods": [
+    "AP015_paving_north_03_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_north_03_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_north_03_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_north_03_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -38.5,
+     33.7,
+     0.018
+    ],
+    "max": [
+     -33.5,
+     39.3,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_north_04",
+   "kind": "paving_plate",
+   "paving_kind": "tsukubai_apron",
+   "plate_id": "tsukubai_nw_apron",
+   "region": "north",
+   "fbx": {
+    "file": "routes/AP015_paving_north_04.fbx",
+    "bytes": 28156,
+    "sha256": "bee8658a38ac060a54b26c474d3f38aea709e92d4e2e176afb53da9fc85cb6d7"
+   },
+   "lods": [
+    "AP015_paving_north_04_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_north_04_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_north_04_LOD0",
+     "verts": 73,
+     "tris": 120,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_north_04_COL",
+     "verts": 73,
+     "tris": 120,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -39.3,
+     33.4,
+     0.018
+    ],
+    "max": [
+     -36.7,
+     35.6,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_north_05",
+   "kind": "paving_plate",
+   "paving_kind": "shed_apron",
+   "plate_id": "shed_apron",
+   "region": "north",
+   "fbx": {
+    "file": "routes/AP015_paving_north_05.fbx",
+    "bytes": 20988,
+    "sha256": "9c6af7d2fb7e146479006fd6dd00161238bf29b4afbefae6fac8e08e682b9299"
+   },
+   "lods": [
+    "AP015_paving_north_05_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_north_05_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_north_05_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_north_05_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -18.9,
+     34.6,
+     0.018
+    ],
+    "max": [
+     -14.7,
+     37.8,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_south_01",
+   "kind": "paving_plate",
+   "paving_kind": "bridge_head",
+   "plate_id": "bridge_head_n",
+   "region": "south",
+   "fbx": {
+    "file": "routes/AP015_paving_south_01.fbx",
+    "bytes": 20972,
+    "sha256": "f44bfaa157e387ac865aca4a3ff13045f8da8ab849598831ec4d0a8137f3d6de"
+   },
+   "lods": [
+    "AP015_paving_south_01_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_south_01_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_south_01_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_south_01_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     1.0,
+     -23.4,
+     0.018
+    ],
+    "max": [
+     7.0,
+     -21.8,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_south_02",
+   "kind": "paving_plate",
+   "paving_kind": "bridge_head",
+   "plate_id": "bridge_head_s",
+   "region": "south",
+   "fbx": {
+    "file": "routes/AP015_paving_south_02.fbx",
+    "bytes": 21036,
+    "sha256": "20d7116741063669d04c2fe174388418371f453a6291f18b8824b90b2d3be429"
+   },
+   "lods": [
+    "AP015_paving_south_02_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_south_02_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_south_02_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_south_02_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     2.0,
+     -37.0,
+     0.018
+    ],
+    "max": [
+     6.0,
+     -35.0,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_west_01",
+   "kind": "paving_plate",
+   "paving_kind": "gate_threshold",
+   "plate_id": "gate_nw_threshold",
+   "region": "west",
+   "fbx": {
+    "file": "routes/AP015_paving_west_01.fbx",
+    "bytes": 21964,
+    "sha256": "a873353763dc466e4e05803b0bed2f49d9d535ea696ed1b2599b41e4bcfee1de"
+   },
+   "lods": [
+    "AP015_paving_west_01_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_west_01_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_west_01_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_west_01_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -33.83,
+     14.203,
+     0.018
+    ],
+    "max": [
+     -26.97,
+     19.397,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_west_02",
+   "kind": "paving_plate",
+   "paving_kind": "gate_threshold",
+   "plate_id": "gate_w_threshold",
+   "region": "west",
+   "fbx": {
+    "file": "routes/AP015_paving_west_02.fbx",
+    "bytes": 20924,
+    "sha256": "111d9667d899e36fcb20a85aeb5ad511ab25ad6f5726fa501b24542ef006eab6"
+   },
+   "lods": [
+    "AP015_paving_west_02_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_west_02_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_west_02_LOD0",
+     "verts": 16,
+     "tris": 18,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_west_02_COL",
+     "verts": 16,
+     "tris": 18,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -27.2,
+     -3.25,
+     0.018
+    ],
+    "max": [
+     -24.8,
+     3.25,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_paving_west_03",
+   "kind": "paving_plate",
+   "paving_kind": "landmark_apron",
+   "plate_id": "pagoda_base_apron",
+   "region": "west",
+   "fbx": {
+    "file": "routes/AP015_paving_west_03.fbx",
+    "bytes": 27468,
+    "sha256": "e6991c849dcf518126ef4b909959aca6d95b107b0239b15999e137af013b5bf0"
+   },
+   "lods": [
+    "AP015_paving_west_03_LOD0"
+   ],
+   "collider_mesh": "AP015_paving_west_03_COL",
+   "collider": "walkable",
+   "z_top": 0.0175,
+   "objects": [
+    {
+     "name": "AP015_paving_west_03_LOD0",
+     "verts": 73,
+     "tris": 120,
+     "collider": "render",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    },
+    {
+     "name": "AP015_paving_west_03_COL",
+     "verts": 73,
+     "tris": 120,
+     "collider": "walkable",
+     "z_top": 0.0175,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -29.5,
+     -31.0,
+     0.018
+    ],
+    "max": [
+     -25.5,
+     -27.0,
+     0.018
+    ]
+   },
+   "textures": [
+    "T_earth_*",
+    "T_gravel_*",
+    "T_stone_*"
+   ],
+   "material": "DD/GroundBlend (S-05; vertex mask)",
+   "unity_target": "Assets/_Art/Environment/Ground/AP015/"
+  },
+  {
+   "id": "AP015_water_pond_01",
+   "kind": "water_surface",
+   "region": "south",
+   "basins": [
+    "AP005_i0095"
+   ],
+   "fbx": {
+    "file": "water/AP015_water_pond_01.fbx",
+    "bytes": 28028,
+    "sha256": "3c8ef38c62b71a027de6632c802b20c62fec4e9590f0c9ec6314b4bceaa588c3"
+   },
+   "lods": [
+    "AP015_water_pond_01_LOD0"
+   ],
+   "collider_mesh": null,
+   "collider": "none",
+   "z_top": -0.15,
+   "objects": [
+    {
+     "name": "AP015_water_pond_01_LOD0",
+     "verts": 344,
+     "tris": 606,
+     "collider": "none",
+     "z_top": -0.15,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     7.25,
+     -38.25,
+     -0.15
+    ],
+    "max": [
+     13.25,
+     -34.25,
+     -0.15
+    ]
+   },
+   "attributes_note": "AP015_Mask on water: R = depth / 0.6 m (0 shore, 1 = 0.6 m), G = shore mask (1 at rim -> 0 inside), B unused, A 1",
+   "textures": [
+    "AP015_water_normal_large_1024",
+    "AP015_water_normal_small_1024",
+    "AP015_water_flow_pond_512",
+    "AP015_water_foam_512",
+    "AP015_water_sparkle_512",
+    "AP015_water_caustic_4x4_512",
+    "AP015_water_rings_4x4_512"
+   ],
+   "material": "DD/Water v2 (S-05; parameter contract in README)",
+   "unity_target": "Assets/_Art/Environment/Water/AP015/"
+  },
+  {
+   "id": "AP015_water_pond_02",
+   "kind": "water_surface",
+   "region": "south",
+   "basins": [
+    "AP005_i0094"
+   ],
+   "fbx": {
+    "file": "water/AP015_water_pond_02.fbx",
+    "bytes": 59964,
+    "sha256": "75cefe0a0886b9cd66f523f6a54217ff44424a0ea05e71047e122ba3b4d6533d"
+   },
+   "lods": [
+    "AP015_water_pond_02_LOD0"
+   ],
+   "collider_mesh": null,
+   "collider": "none",
+   "z_top": -0.15,
+   "objects": [
+    {
+     "name": "AP015_water_pond_02_LOD0",
+     "verts": 1320,
+     "tris": 2476,
+     "collider": "none",
+     "z_top": -0.15,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -12.5,
+     -35.0,
+     -0.15
+    ],
+    "max": [
+     -4.25,
+     -23.0,
+     -0.15
+    ]
+   },
+   "attributes_note": "AP015_Mask on water: R = depth / 0.6 m (0 shore, 1 = 0.6 m), G = shore mask (1 at rim -> 0 inside), B unused, A 1",
+   "textures": [
+    "AP015_water_normal_large_1024",
+    "AP015_water_normal_small_1024",
+    "AP015_water_flow_pond_512",
+    "AP015_water_foam_512",
+    "AP015_water_sparkle_512",
+    "AP015_water_caustic_4x4_512",
+    "AP015_water_rings_4x4_512"
+   ],
+   "material": "DD/Water v2 (S-05; parameter contract in README)",
+   "unity_target": "Assets/_Art/Environment/Water/AP015/"
+  },
+  {
+   "id": "AP015_water_pond_03",
+   "kind": "water_surface",
+   "region": "south",
+   "basins": [
+    "AP005_i0093"
+   ],
+   "fbx": {
+    "file": "water/AP015_water_pond_03.fbx",
+    "bytes": 62380,
+    "sha256": "cfb7ec9e9366c5cd3cd0dc3dd16e2a530175e9ff4172187bb8b437d9fd0eeb07"
+   },
+   "lods": [
+    "AP015_water_pond_03_LOD0"
+   ],
+   "collider_mesh": null,
+   "collider": "none",
+   "z_top": -0.15,
+   "objects": [
+    {
+     "name": "AP015_water_pond_03_LOD0",
+     "verts": 1333,
+     "tris": 2498,
+     "collider": "none",
+     "z_top": -0.15,
+     "attributes": {
+      "color": "AP015_Mask (R earth / G gravel / B stone / A wetness, linear float, corner)",
+      "uv": "UVMap = world xy / 4 m"
+     }
+    }
+   ],
+   "bounds": {
+    "min": [
+     -3.5,
+     -33.25,
+     -0.15
+    ],
+    "max": [
+     8.5,
+     -25.25,
+     -0.15
+    ]
+   },
+   "attributes_note": "AP015_Mask on water: R = depth / 0.6 m (0 shore, 1 = 0.6 m), G = shore mask (1 at rim -> 0 inside), B unused, A 1",
+   "textures": [
+    "AP015_water_normal_large_1024",
+    "AP015_water_normal_small_1024",
+    "AP015_water_flow_pond_512",
+    "AP015_water_foam_512",
+    "AP015_water_sparkle_512",
+    "AP015_water_caustic_4x4_512",
+    "AP015_water_rings_4x4_512"
+   ],
+   "material": "DD/Water v2 (S-05; parameter contract in README)",
+   "unity_target": "Assets/_Art/Environment/Water/AP015/"
+  }
+ ],
+ "textures": [
+  {
+   "file": "AP015_water_normal_large_1024.png",
+   "bytes": 374643,
+   "sha256": "235e04ae9060eff06533717ecfff8cf664960b80ac725f1252ef663211d3482a",
+   "kind": "normal_tileable",
+   "size_px": 1024,
+   "suggested_tile_m": 4.0,
+   "unity_class": "Ground/BC5 linear",
+   "convention": "OpenGL +Y (Unity)",
+   "path": "water/textures/AP015_water_normal_large_1024.png",
+   "shipped_mb_estimate": 1.333
+  },
+  {
+   "file": "AP015_water_normal_small_1024.png",
+   "bytes": 669554,
+   "sha256": "8b3166ba87d1bee92c5cc9c78a3f806ca3f572aaab19d4d9906986dc8824fb09",
+   "kind": "normal_tileable",
+   "size_px": 1024,
+   "suggested_tile_m": 1.0,
+   "unity_class": "Ground/BC5 linear",
+   "convention": "OpenGL +Y (Unity)",
+   "path": "water/textures/AP015_water_normal_small_1024.png",
+   "shipped_mb_estimate": 1.333
+  },
+  {
+   "file": "AP015_water_flow_pond_512.png",
+   "bytes": 29228,
+   "sha256": "7ac5d109189c5700934e583ad8c3fe15b72f4d40d3df0dfd0d1565175ed96350",
+   "kind": "flow_map_world",
+   "size_px": 512,
+   "world_bounds": {
+    "x_min": -16.0,
+    "x_max": 16.0,
+    "y_min": -46.0,
+    "y_max": -14.0
+   },
+   "encoding": "R = 0.5 + 0.5*vx, G = 0.5 + 0.5*vy (Blender x/y = Unity X/Z), B = water mask; PNG top row = +y/+Z (north)",
+   "speed_m_s_at_full": 0.04,
+   "circulation": "cw",
+   "unity_class": "Ground/BC7 linear",
+   "path": "water/textures/AP015_water_flow_pond_512.png",
+   "shipped_mb_estimate": 0.333
+  },
+  {
+   "file": "AP015_water_foam_512.png",
+   "bytes": 63888,
+   "sha256": "3874460f346fbb42ed7e27be544777e9e2fe7602d1aaca5f37721fbb239febf4",
+   "kind": "mask_tileable",
+   "size_px": 512,
+   "suggested_tile_m": 2.0,
+   "unity_class": "Ground/BC7 linear (single channel)",
+   "path": "water/textures/AP015_water_foam_512.png",
+   "shipped_mb_estimate": 0.333
+  },
+  {
+   "file": "AP015_water_sparkle_512.png",
+   "bytes": 28783,
+   "sha256": "841512ea91ec543a13c51da3700e5cb5620addc47cf489e4c6afebf25eb3afd1",
+   "kind": "mask_tileable",
+   "size_px": 512,
+   "suggested_tile_m": 1.5,
+   "unity_class": "Ground/BC7 linear (single channel)",
+   "path": "water/textures/AP015_water_sparkle_512.png",
+   "shipped_mb_estimate": 0.333
+  },
+  {
+   "file": "AP015_water_caustic_4x4_512.png",
+   "bytes": 166746,
+   "sha256": "3209c4d5a9d10ea11da2eef7c8492c6201d149beab79062536ffd82323935452",
+   "kind": "flipbook_grey",
+   "size_px": 512,
+   "grid": [
+    4,
+    4
+   ],
+   "frames": 16,
+   "loop": true,
+   "cell_px": 128,
+   "suggested_fps": 8,
+   "suggested_tile_m": 2.0,
+   "unity_class": "Ground/BC7 linear (single channel)",
+   "note": "each cell is itself tileable (toroidal Voronoi); no cell border needed",
+   "path": "water/textures/AP015_water_caustic_4x4_512.png",
+   "shipped_mb_estimate": 0.333
+  },
+  {
+   "file": "AP015_water_rings_4x4_512.png",
+   "bytes": 70162,
+   "sha256": "2b45ba872414358b951222dad3af49fd6eb14db68213e9be72b765657e2dfeb2",
+   "kind": "decal_sheet_LA",
+   "size_px": 512,
+   "grid": [
+    4,
+    4
+   ],
+   "frames": 16,
+   "loop": false,
+   "cell_px": 128,
+   "border_px": 8,
+   "suggested_fps": 16,
+   "life_s": 1.0,
+   "world_size_m": [
+    0.6,
+    0.6
+   ],
+   "encoding": "L = 0.5 neutral, crest > 0.5, trough < 0.5 (height-like, tint at runtime); A = coverage",
+   "unity_class": "VFX/BC7 straight alpha",
+   "path": "water/textures/AP015_water_rings_4x4_512.png",
+   "shipped_mb_estimate": 0.333
+  }
+ ]
+}
