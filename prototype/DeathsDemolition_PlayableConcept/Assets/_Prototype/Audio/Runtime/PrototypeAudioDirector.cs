@@ -197,6 +197,10 @@ namespace DD.Prototype.Audio
                 _bridge.SetVolume(AudioMixerBridge.GroupMaster, _masterTarget);
                 _masterApplied = _masterTarget;
             }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioOutputCapture.TryArm(gameObject);   // WP-060: -ddAudioCapture <wav> records the Player output for the listening round
+#endif
         }
 
         private IEnumerator Start()

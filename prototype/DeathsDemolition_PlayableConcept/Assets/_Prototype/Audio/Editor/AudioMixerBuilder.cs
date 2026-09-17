@@ -30,11 +30,15 @@ namespace DD.Prototype.Audio.EditorTools
         {
             // WP-057 mix pass v2 (sound-designer proposal, calibrated by the PlayMode phase meter):
             // the score sits under the fight, comes forward in the break and the menu, UI trims 3-4 dB.
+            // WP-060 v2.2 (Fable listening round on the Player output capture): the fight read
+            // −17.9 LUFS-I / −0.8 dBTP at the speakers, ~3 dB above the PlayMode meter, so the Run
+            // snapshot comes down 1-2 dB per group (target ≈ −19.5 LUFS-I, TP ≈ −2.5) and the menu
+            // ambience comes up 3 dB so results/menu are not a 10 dB hole under the fight.
             //           Master  Music  Ambience  SFX-World  SFX-Player  UI
-            new[] { 0f,   -5f,   -4f,       0f,       -1f,      -3f },   // Run
+            new[] { 0f,   -6f,   -5f,      -2f,       -2f,      -4f },   // Run (WP-060: −5/−4/0/−1/−3 → −6/−5/−2/−2/−4)
             new[] { 0f,   -3f,   -3f,      -6f,       -3f,       0f },   // RoundBreak: stinger + shop UI forward, world back (WP-058B: UI −2 → 0)
             new[] { 0f,  -14f,  -12f,     -18f,      -18f,      -2f },   // Pause: world far back, UI audible (listener is paused anyway)
-            new[] { 0f,   -4f,  -10f,     -80f,      -80f,      -1f }    // Menu: menu loop + UI, no world (WP-058B: UI −3 → −1)
+            new[] { 0f,   -4f,   -7f,     -80f,      -80f,      -1f }    // Menu: menu loop + UI, no world (WP-058B: UI −3 → −1; WP-060: Amb −10 → −7)
         };
 
         [MenuItem("DD/Audio/Build Mixer")]

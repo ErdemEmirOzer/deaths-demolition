@@ -76,7 +76,7 @@ namespace DD.Prototype.Audio
         private const float StingerDuckRelease = 1.5f;
         private const float PhaseLoopRiseSeconds = 2.5f;
         private const float PhaseLoopFallSeconds = 1.8f;
-        private const float MenuLevel = 0.55f, ResultsLevel = 0.5f;
+        private const float MenuLevel = 0.55f, ResultsLevel = 0.7f;   // WP-060: results read −27.6 LUFS-I on the Player capture (10 dB under the fight) → +2.9 dB
 
         private AudioSource _stinger;
         private AudioSource _phaseLoop;

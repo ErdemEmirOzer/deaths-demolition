@@ -150,11 +150,13 @@ namespace DD.Prototype.Audio
             switch (cue.Event)
             {
                 // ---- weapon mechanics ------------------------------------------
+                // WP-060: continuous fire built a −14…−15 LUFS-S wall over vocals / steps / beds on
+                // the Player capture; −1 dB and one instance fewer open a ~2 dB window for them.
                 case CombatAudioEvent.ClassicWeaponFire:
-                    return Weapon(ClassicWeaponFor(cue.Intensity), 0.95f, 50f, 4, 0.03f);
+                    return Weapon(ClassicWeaponFor(cue.Intensity), 0.85f, 50f, 3, 0.03f);
 
                 case CombatAudioEvent.HeavyWeaponFire:
-                    return Weapon(AudioSoundId.HeavyFire, 1.00f, 60f, 5, 0.05f);
+                    return Weapon(AudioSoundId.HeavyFire, 0.90f, 60f, 5, 0.05f);
 
                 case CombatAudioEvent.ClassicWeaponDryFire:
                     return Weapon(AudioSoundId.DryFire, 0.70f, 40f, 1, 0.02f);

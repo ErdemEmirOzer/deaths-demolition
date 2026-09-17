@@ -57,7 +57,7 @@
 | Saldırı isabeti (oyuncuya) | `EnemyCombatEvents.attack_hit` (WP-040; WP-048'de DamageEvents.PlayerAttacked'ten taşındı) | AttackImpactBody (et/deri darbe) | 3D | SFX-World | Ü | `vignette_damage` parlama (oyuncu) + `claw_swipe` (commit'te) — AP-010 v003 / WP-047 A |
 | Saldırı ıskası | `EnemyCombatEvents.attack_miss` | n/a — savurma commit'te çaldı, ıska sonraki sessizliktir | — | — | n/a | n/a — görsel yok; swipe commit'te oynadı (`claw_swipe`) |
 | Hit — kafa (açık) | `EnemyDamaged` bölge Head | paylaşımlı:ZombieHit* + CriticalHit (×3, v006 T) | 3D | SFX-World | Ü | kan A7 `fb_blood_heavy_01/02` (kritik) + damlacık + 2 iz — AP-010B v003 (`BloodSystem.HitClass.Critical`) |
-| Hit — gövde | `EnemyDamaged` bölge UpperBody | ZombieHit{Standard,Elite,Ultra} (Ü) · ZombieHitSpecial (T, ×3) | 3D | SFX-World | Ü/T | kan A1 `fb_blood_splash_01..06` + 12 damlacık + yön izi (+%40 damla) — AP-010B v003 |
+| Hit — gövde | `EnemyDamaged` bölge UpperBody | ZombieHit{Standard,Elite,Ultra} (Ü) · ZombieHitSpecial (T, ×3) + FleshHit (mermi et darbesi, `HitFeedbackTier.FleshHit` → `CombatAudioEvent.FleshHit`; kafa/bacak satırları aynı darbeyi paylaşır — WP-060 denetimi) | 3D | SFX-World | Ü/T | kan A1 `fb_blood_splash_01..06` + 12 damlacık + yön izi (+%40 damla) — AP-010B v003 |
 | Hit — bacak | `EnemyDamaged` bölge LowerBody | paylaşımlı:ZombieHit* (pitch −2 st) | 3D | SFX-World | Ü | kan A1 sıçrama + damlacık + yön izi — AP-010B v003 |
 | Ağır sendeleme (stagger) | `EnemyCombatEvents.stagger` (WP-040: REQ-124 penceresi + zırh kırılma sendelemesi; WP-048) | ZombieStagger (×3) | 3D | SFX-World | Ü | n/a — animasyon; zırh kırılma satırındaki efekt |
 | Ölüm — öne çökme / geriye / diz / patlama | `DamageEvents.EnemyDied` (+ `CombatAudioEvent.EnemyDeath` beden) | ZombieDeath{Standard,Elite,Ultra} (×2–3) · ZombieDeathSpecial (T, ×3) + EnemyDeath (×3, v006 T) / HeavyEnemyDeath | 3D | SFX-World | Ü | A6 `fb_blood_death_01..03` (3.0 m) + 2 A1 kartı + 36 damlacık + göl — AP-010B v003; hit-stop 40 ms |
@@ -205,7 +205,7 @@ Yayın: `UiEvents.Raise(UiEvent, detail)`; S-08 `AudioEventRouter.OnUiEvent` yal
 | AchievementRevealed | Başarım | **UiAchievement** (×2, T) | 2D | UI | T | Nadirlik madalyonu |
 | NewBestRound | Rekor | **UiNewBest** (×2, T) | 2D | UI | T | NEW BEST ROUND pulse |
 | SettingsChanged | Ayar kaydedildi | n/a — Slider/Toggle olayı taşır | — | — | n/a | — |
-| (mixer) Ana ses | `UiSettings.MasterVolume` → `PrototypeAudio.MasterVolume` + `MasterVolumeChanged` → mixer "MasterVolume" (60 ms rampa) | — | — | Master | Ü | — |
+| (mixer) Ana ses | `UiSettings.MasterVolume` → `PrototypeAudio.MasterVolume` + `MasterVolumeChanged` → mixer "MasterVolume" (60 ms rampa) | n/a — ses değil, kontrol satırı (mixer parametresi; UiSliderTick ayrı satırda) | — | Master | Ü | n/a — görsel yok |
 | Pause aç / kapat | `RunFlowClock` pause hold → snapshot Pause (+ `PrototypeAudio.Back`) | UiBack + snapshot | 2D | UI | Ü | |
 
 ## AP-011 v4 kuyruğu → **v006 ile kapandı** (kullanıcı kararı 2026-09-17: taban 200→100, S-08'e ≤ 26 kr; 17 render = 40,8 kr gerçek (izin 26 → 14,8 aşım, bildirildi) + 11 kredisiz türetme; prosedürel canlı SFX **0**)

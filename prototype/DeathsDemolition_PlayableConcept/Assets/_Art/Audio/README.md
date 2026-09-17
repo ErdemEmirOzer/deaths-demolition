@@ -54,3 +54,23 @@
 
 - WP-038 plates carry Dirt / Stone / Water tags; `AudioSurfaceHints.FootstepVariant` (set by `Ap005SurfaceTags.FootstepVariantFor`) refines by plate id: `AP015_paving_*` → FootstepPavement, `AP015_ground_center_*` → FootstepGravel (the gravel courtyard), AP-015 water surface → FootstepWaterShallow; everything else keeps the kind's default clip. FootstepWaterDeep stays reserved (no wading-depth signal).
 - WP-055 `sw_push / sw_web / sw_pull` beats → ZombieReactPush / Web / Pull (AP-011 v010, Fable design): the body's side of the Kagura push, Ofuda net and Tide pull (the field's touch is SpecialUsage.Hit). Manifest v010 = 181 ids / 417 files.
+
+## WP-060 — M3 audio closure (0 credits): matrix audit, Player-output listening round, phase report, credit list
+
+- **Coverage matrix audit** (`planning/work-packages/EVENT-COVERAGE-MATRIX.md`, 165 audio rows): every row names a sound or a justified `n/a` (6 + the master-volume control row, now marked as such); `proc:` rows 0; all 178 sound identities on the matrix exist in manifest v010 (181 ids / 417 files); FleshHit (bullet-on-flesh impact) added to the hit rows where it was implied but unnamed; the six WP-002 recipe-only bed ids (`AmbWind … AmbTensionHigh`) stay as legacy enum members with no row (nobody plays them). Reserved rows: FootstepWaterDeep (no wading-depth signal), AP-017 family key (pending).
+- **Player-output listening round.** New dev-only recorder `AudioOutputCapture` (`-ddAudioCapture <wav>`, see `Assets/_Prototype/Audio/README.md` §6) run under the S-10 QA bot (`-ddQaBot`, seeds 26/27): A = 5 rounds invulnerable + Special (535 s), B = death at 51 s, B2 = death at 17.6 s + 99 s results. Report tool `asset-production/AP-011/tools/audio_capture_report.py` (BS.1770 per phase, 5 s timeline, log-spectrogram PNG). **Before** (main 5b4c3f2, at the speakers, post limiter):
+
+| Capture | Phase | s | LUFS-I | LUFS-M max | LUFS-S max | LRA | dBTP | crest | presence / air dB re LUFS |
+|---|---|---|---|---|---|---|---|---|---|
+| A · 5 rounds, invulnerable + Special | fight | 516.6 | −17.9 | −13.7 | −14.3 | 7.7 | −0.81 | 19.6 | −12.8 / −20.7 |
+| A | break | 16.5 | −20.9 | −15.5 | −19.7 | 2.5 | −4.98 | 18.5 | −13.1 / −21.6 |
+| B · death at 51 s | fight | 45.9 | −16.6 | −14.2 | −14.9 | 3.3 | −1.40 | 18.3 | −12.4 / −18.7 |
+| B | break | 4.1 | −22.9 | −16.1 | −22.0 | 0.0 | −7.47 | 17.2 | −13.2 / −22.4 |
+| B2 · death at 17.6 s → results | fight | 17.0 | −19.7 | −14.2 | −16.1 | 6.0 | −3.99 | 18.3 | −14.3 / −26.2 |
+| B2 | results | 101.3 | −27.6 | −17.4 | −19.3 | 7.3 | −7.43 | 22.5 | −23.6 / −33.6 |
+
+  Menu ≈ −28 LUFS (PlayMode meter; the captures hold < 3 s of menu). Silence holes ≥ 1.5 s: none. Bot caveat: continuous fire overstates fight density and LRA; the 300 s solo patrol in A (last enemy) is not a normal state; B2 has no player motion (no foley).
+- **Fable verdict** (single round, on the reports + spectrograms, not by ear): fight DÜZELT (−17.9 LUFS-I / −0.8 dBTP, ~3 dB above the PlayMode meter; dark, mid-heavy), break KABUL, empty arena KOŞULLU, results DÜZELT (10 dB hole under the fight, presence −23.6 / air −33.6), menu KOŞULLU; target ladder fight −19 / break −23 / results −25 / menu −26.
+- **Applied (0 cr):** snapshot table **v2.2** — Run Music −6 / Amb −5 / World −2 / Player −2 / UI −4, Menu Amb −7 (`AudioMixerBuilder.SnapshotVolumesDb`, written in place by Build Mixer); `AudioMixPlan` ClassicWeaponFire 0.95 → 0.85 gain and 4 → 3 instances, HeavyWeaponFire 1.00 → 0.90; `MusicDirector.ResultsLevel` 0.5 → 0.7; `AmbienceDirector` Dead beds 0.35/0.20 → 0.45/0.30 and the fight scatter rate drops to the calm rate with ≤ 3 enemies alive. Fable fix 5 ("last stand" music floor) was already covered: `RoundProgress01` = kills / pool, so the ramp is at its top when the arena empties.
+- **Deferred (documented, not done here):** SFX-World ParamEQ +2 dB @ 3.5 kHz (mixer effect insertion by reflection — post-M3), and the 0-cr re-derivation pass with high-shelf/presence EQ on the fire family, tier vocals and MusicResults (needs a new AP-011 version + gate); produced-take wishes are in the credit list below.
+- **Credit request list** (after the Higgsfield top-up; real unit cost Seed Audio 1.9–2.8 cr/render, mean 2.4, from the transaction record): P1 SwFire{Kagura,Ofuda,Tide} 3 renders ≈ 7 cr · P2 Special-tier vocals + Aggro{Special,Elite,Ultra} 4 ≈ 10 · P3 ZombieReact{Push,Web,Pull} 2 ≈ 5 · P4 SwField loops 3 ≈ 7 · P5 Weapon B/C Chamber/MagIn/MagOut 3 ≈ 7 · P6 Break{LanternStone,LanternPaper,Planter,Shoji} 2 ≈ 5 · P7 AmbThunderDistant/AmbPondBed 2 ≈ 5 → **19 renders ≈ 46 cr (cap 53)**; P8 music stingers/loops need a music model whose cost must be verified first. Full table: `asset-production/AP-011/README.md` §WP-060.

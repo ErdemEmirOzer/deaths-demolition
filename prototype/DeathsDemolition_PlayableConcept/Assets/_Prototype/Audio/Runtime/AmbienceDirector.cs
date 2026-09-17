@@ -443,8 +443,10 @@ namespace DD.Prototype.Audio
                     break;
 
                 case RunPhase.Dead:
-                    common = 0.35f;
-                    region = 0.20f;
+                    // WP-060: the results screen sat 10 dB under the fight with almost no low-band
+                    // fill; the beds come up so the death stinger lands on something.
+                    common = 0.45f;
+                    region = 0.30f;
                     break;
 
                 default: // None - menus, selection, results
@@ -475,7 +477,10 @@ namespace DD.Prototype.Audio
                 return;
             }
 
-            float multiplier = _phase == RunPhase.Fighting ? 1.6f
+            // WP-060: with the arena nearly empty (last few enemies) the fight rate 1.6 left
+            // the world dead-quiet between music bars; the calm rate keeps it alive.
+            bool lastStand = _phase == RunPhase.Fighting && RunEvents.Current.AliveEnemies <= 3;
+            float multiplier = _phase == RunPhase.Fighting ? (lastStand ? 1f : 1.6f)
                 : _phase == RunPhase.Upgrading || _phase == RunPhase.None ? 0.7f
                 : 1f;
 

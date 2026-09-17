@@ -668,6 +668,49 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.LessOrEqual(peakDb, -1.0f, "Master çıkış tepesi −1 dBFS tavanını aştı: " + peakDb.ToString("0.00"));
         }
 
+        // ================================================================== WP-060 · output capture
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator CikisKaydi_DinlemeTuru_WavVeFazIsaretleri()
+        {
+            string path = System.IO.Path.Combine(Application.temporaryCachePath, "wp060-capture-test.wav");
+            AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, path);
+            for (int rep = 0; rep < 3; rep++)
+            {
+                AudioEvents.RaiseCritical(CombatAudioEvent.ClassicWeaponFire, Vector3.zero, 1f, 50);
+                RunAudioEvents.Raise(RunAudioEvent.RoundStart, default, 1f, 0);
+                yield return new WaitForSecondsRealtime(0.4f);
+            }
+
+            RunEvents.PublishPhaseChanged(RunPhase.Fighting);
+            yield return new WaitForSecondsRealtime(0.3f);
+            long frames = cap.FramesWritten;
+            long dropped = cap.DroppedSamples;
+            UnityEngine.Object.DestroyImmediate(cap);   // Finish(): header patched, markers closed
+
+            var info = new System.IO.FileInfo(path);
+            string markers = System.IO.File.ReadAllText(path + ".markers.txt");
+            Debug.Log("[DD-TEST] wp060.capture frames=" + frames + " dropped=" + dropped + " bytes=" + info.Length + " markers=" + markers.Split('\n').Length);
+            if (frames == 0)
+            {
+                Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok): kayıt bu ortamda alınamıyor.");
+            }
+
+            Assert.AreEqual(0, dropped, "Kayıt halkası örnek düşürdü.");
+            Assert.Greater(info.Length, 44 + frames, "WAV gövdesi yazılmadı.");
+            using (var r = new System.IO.BinaryReader(System.IO.File.OpenRead(path)))
+            {
+                Assert.AreEqual("RIFF", new string(r.ReadChars(4)));
+                r.ReadInt32();
+                Assert.AreEqual("WAVE", new string(r.ReadChars(4)));
+            }
+
+            StringAssert.Contains("phase\tFighting", markers, "Faz işareti yazılmadı.");
+            StringAssert.Contains("capture\tend", markers, "Kapanış işareti yazılmadı.");
+            foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+        }
+
         // ================================================================== GC 0
 
         [UnityTest]
