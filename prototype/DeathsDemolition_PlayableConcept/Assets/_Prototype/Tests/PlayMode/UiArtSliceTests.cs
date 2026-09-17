@@ -633,6 +633,80 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
         }
 
+        /// <summary>
+        /// WP-022K diagnostic (S-10 finding: ~4 allocations/frame in the MainMenu, UI-sourced):
+        /// ProfilerRecorder counts on the main menu with the UI's per-frame components toggled
+        /// alone - petal drift, pulses, the prompt driver, the menu screen's Update.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator AnaMenu_KareBasiAyirma_BilesenBazinda()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return BootTanMainMenuye();
+            yield return null;
+            MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
+            Assert.IsNotNull(menu);
+            int before = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
+            try
+            {
+                using (var count = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count"))
+                using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
+                {
+                    var sb = new System.Text.StringBuilder("[DD-TEST] wp022k.menuDiag");
+                    for (int i = 0; i < 30; i++) yield return null;
+                    long c = 0, b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" sum60 all=").Append(c).Append("/").Append(b).Append("B");
+
+                    UiDrift[] drifts = Object.FindObjectsOfType<UiDrift>();
+                    foreach (UiDrift d in drifts) d.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" driftOff(").Append(drifts.Length).Append(")=").Append(c).Append("/").Append(b).Append("B");
+                    foreach (UiDrift d in drifts) d.enabled = true;
+
+                    UiPulse[] pulses = Object.FindObjectsOfType<UiPulse>();
+                    foreach (UiPulse p in pulses) p.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" pulsesOff(").Append(pulses.Length).Append(")=").Append(c).Append("/").Append(b).Append("B");
+                    foreach (UiPulse p in pulses) p.enabled = true;
+
+                    var driver = Object.FindObjectOfType<UiPromptDriver>();
+                    if (driver != null) driver.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" promptDriverOff=").Append(c).Append("/").Append(b).Append("B");
+                    if (driver != null) driver.enabled = true;
+
+                    menu.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" menuUpdateOff=").Append(c).Append("/").Append(b).Append("B");
+                    menu.enabled = true;
+
+                    Canvas[] canvases = Object.FindObjectsOfType<Canvas>();
+                    foreach (Canvas cv in canvases) cv.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" canvasesOff(").Append(canvases.Length).Append(")=").Append(c).Append("/").Append(b).Append("B");
+                    foreach (Canvas cv in canvases) cv.enabled = true;
+                    Debug.Log(sb.ToString());
+                }
+            }
+            finally
+            {
+                Application.targetFrameRate = before;
+            }
+        }
+
         private static bool MetinVar(Component ekran, string parca)
         {
             foreach (TMPro.TMP_Text t in ekran.GetComponentsInChildren<TMPro.TMP_Text>(true))

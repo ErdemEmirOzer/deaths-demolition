@@ -264,6 +264,108 @@ namespace DD.Prototype.Tests.PlayMode
         /// ProfilerRecorder "GC Allocated In Frame" batchmode Editor'de 64 KB'lik bilinçli
         /// ayırmayı 0 okudu (iter4–iter6, probe-alloc kanıtı); bu yüzden yığın deltası kullanılır.
         /// </summary>
+        /// <summary>
+        /// WP-022K diagnostic (runs right before HudMetinleri_SnapshotVeGoldOlayi in fixture
+        /// order, so it sees the same leaked state): the same prelude (run, controlled arena,
+        /// gold event, low health, invulnerable), then ProfilerRecorder frame counts / bytes
+        /// with each HUD-side component toggled alone, plus a heap delta over 200 frames.
+        /// Logs only - the assertion lives in the real test; this one names the source.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator HudMetinleri_AyirmaTanisi_BilesenBazinda()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return KosuyaGir();
+            yield return KontrolluSaha();
+            yield return null;
+            RunHudScreen hud = UnityEngine.Object.FindObjectOfType<RunHudScreen>();
+            Assert.IsNotNull(hud);
+            PlayerRig rig = PlayerRegistry.Primary;
+            GoldService.Instance.Wallet.Credit(7, rig.transform.position);
+            rig.Health.ApplyDamage(rig.Health.Max * 0.75f, rig.transform.position + Vector3.forward, "wp022k-diag");
+            yield return null;
+            rig.Health.DiagnosisInvulnerable = true;
+
+            int before = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
+            try
+            {
+                using (var count = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count"))
+                using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
+                {
+                    var sb = new System.Text.StringBuilder("[DD-TEST] wp022k.hudDiag");
+                    for (int i = 0; i < 20; i++) yield return null;
+                    long c = 0, b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" sum60 all=").Append(c).Append("/").Append(b).Append("B");
+
+                    hud.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" hudOff=").Append(c).Append("/").Append(b).Append("B");
+                    hud.enabled = true;
+
+                    UiPulse[] pulses = hud.GetComponentsInChildren<UiPulse>(true);
+                    foreach (UiPulse p in pulses) p.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" pulsesOff(").Append(pulses.Length).Append(")=").Append(c).Append("/").Append(b).Append("B");
+                    foreach (UiPulse p in pulses) p.enabled = true;
+
+                    var hit = UnityEngine.Object.FindObjectOfType<UiHitDirectionLayer>();
+                    if (hit != null) hit.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" hitOff=").Append(c).Append("/").Append(b).Append("B");
+                    if (hit != null) hit.enabled = true;
+
+                    if (hud.EnemyStatus != null) hud.EnemyStatus.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" statusOff=").Append(c).Append("/").Append(b).Append("B");
+                    if (hud.EnemyStatus != null) hud.EnemyStatus.enabled = true;
+
+                    var driver = UnityEngine.Object.FindObjectOfType<UiPromptDriver>();
+                    if (driver != null) driver.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    c = 0; b = 0;
+                    for (int i = 0; i < 60; i++) { yield return null; c += count.LastValue; b += bytes.LastValue; }
+                    sb.Append(" promptDriverOff=").Append(c).Append("/").Append(b).Append("B");
+                    if (driver != null) driver.enabled = true;
+
+                    // 600-frame timeline: total, frames with > 1 KB, and what the health
+                    // state text / regen looked like on the heaviest frames.
+                    long total = 0; int heavy = 0; long top = 0; string topNote = string.Empty; int changes = 0; string lastState = null;
+                    TMPro.TMP_Text stateText = HudMetni(hud, "Health", "State");
+                    for (int i = 0; i < 600; i++)
+                    {
+                        yield return null;
+                        long v = bytes.LastValue; total += v;
+                        if (v > 1024) heavy++;
+                        string st = stateText != null ? stateText.text : string.Empty;
+                        if (!ReferenceEquals(st, lastState)) { changes++; lastState = st; }
+                        if (v > top) { top = v; topNote = "frame" + i + ":" + v + "B state='" + st + "' regen=" + rig.Health.Snapshot.IsRegenerating; }
+                    }
+
+                    sb.Append(" timeline600 totalB=").Append(total).Append(" heavyFrames=").Append(heavy).Append(" stateChanges=").Append(changes).Append(" top=").Append(topNote);
+                    sb.Append(" special=").Append(WeaponEvents.Special.Phase).Append(" reduced=").Append(UiSettings.ReducedMotion).Append(" palette=").Append(UiSettings.ColorPalette).Append(" textScale=").Append(UiSettings.TextScale);
+                    Debug.Log(sb.ToString());
+                }
+            }
+            finally
+            {
+                Application.targetFrameRate = before;
+            }
+
+            PrototypeUiFlow.AbortRunToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+        }
+
         private static IEnumerator SayacPozitifKontrol()
         {
             long once = GC.GetTotalMemory(false);
@@ -280,29 +382,74 @@ namespace DD.Prototype.Tests.PlayMode
         /// gen0 GC koşarsa sonuç güvenilmezdir; bir kez daha denenir, yine koşarsa −1 döner.
         /// Yığın 64 KB parçalar hâlinde büyüdüğünden pencere uzun tutulur (600 kare).
         /// </summary>
+        /// <summary>
+        /// WP-022K · arbiter method (WP-044 REPORT §ölçüm, WP-052): the window's cost is the
+        /// ProfilerRecorder "GC Allocated In Frame" SUM when the recorder is live (a 64-object
+        /// probe frame must read > 0), else the managed-heap delta of the old method. The heap
+        /// delta grows in 64 KB steps and drifts with what earlier fixtures left on the heap
+        /// (batch-order FAILs of WP-022C/F/J with the recorder reading a clean HUD), so it is
+        /// the fallback, logged next to the recorder number when both exist.
+        /// </summary>
         private static IEnumerator AyirmaOlc(int kare, Action<long> sonuc)
         {
-            for (int deneme = 0; deneme < 2; deneme++)
+            int frameRateBefore = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
+            try
             {
-                for (int i = 0; i < 10; i++) yield return null; // ısınma
-                long c0 = GC.CollectionCount(0);
-                long once = GC.GetTotalMemory(false);
-                for (int i = 0; i < kare; i++)
+                using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
                 {
+                    for (int i = 0; i < 10; i++) yield return null; // ısınma
+
+                    // Recorder probe: one frame with 64 small objects must register.
+                    var yem = new object[64];
+                    for (int i = 0; i < yem.Length; i++) yem[i] = new byte[32];
                     yield return null;
-                }
+                    bool recorderLive = bytes.Valid && bytes.LastValue > 0;
+                    GC.KeepAlive(yem);
+                    yield return null;
 
-                long fark = GC.GetTotalMemory(false) - once;
-                if (GC.CollectionCount(0) == c0)
-                {
-                    sonuc(fark);
-                    yield break;
-                }
+                    for (int deneme = 0; deneme < 2; deneme++)
+                    {
+                        long c0 = GC.CollectionCount(0);
+                        long once = GC.GetTotalMemory(false);
+                        long recorded = 0, top = 0; int topFrame = -1, heavy = 0; var buckets = new System.Text.StringBuilder();
+                        for (int i = 0; i < kare; i++)
+                        {
+                            yield return null;
+                            if (recorderLive)
+                            {
+                                long v = bytes.LastValue; recorded += v;
+                                if (v > top) { top = v; topFrame = i; }
+                                if (v > 512) heavy++;
+                                if (i % 100 == 99) buckets.Append(recorded).Append(' ');
+                            }
+                        }
 
-                Debug.Log("[DD-TEST] wp005.perf window gc-interrupted, retrying");
+                        long fark = GC.GetTotalMemory(false) - once;
+                        if (recorderLive)
+                        {
+                            Debug.Log("[DD-TEST] alloc window frames=" + kare + " recorderB=" + recorded + " heapDeltaB=" + fark + (GC.CollectionCount(0) != c0 ? " (gc ran)" : "")
+                                      + " topFrame=" + topFrame + ":" + top + "B heavyFrames(>512B)=" + heavy + " cumulative@100=" + buckets);
+                            sonuc(recorded);
+                            yield break;
+                        }
+
+                        if (GC.CollectionCount(0) == c0)
+                        {
+                            sonuc(fark);
+                            yield break;
+                        }
+
+                        Debug.Log("[DD-TEST] perf window gc-interrupted, retrying");
+                    }
+
+                    sonuc(-1);
+                }
             }
-
-            sonuc(-1);
+            finally
+            {
+                Application.targetFrameRate = frameRateBefore;
+            }
         }
 
         private static IEnumerator AkisiYatistir()
@@ -515,6 +662,22 @@ namespace DD.Prototype.Tests.PlayMode
             // 120 kare HUD açık, 120 kare HUD kapalı (Update durur); fark = HUD'ın kare başı maliyeti.
             // Test koşucusunun kendi kare maliyeti her iki pencerede de aynıdır.
             rig.Health.DiagnosisInvulnerable = true;
+
+            // WP-022K: the window must be QUIET. Health regenerates from 25 % and crosses the
+            // low-health threshold a few frames in; the HUD raises HudLowHealthLeft once and
+            // its downstream consumers (audio cue, VFX) do a one-time ~200 KB set-up on that
+            // frame - a batch-only FAIL that looked like 350 B/frame but was one frame
+            // (recorder timeline: topFrame 41 = 197 KB, the other 599 frames ≈ 40 B). Wait
+            // for the crossing before measuring; the per-frame contract is what this test is for.
+            float t0 = Time.realtimeSinceStartup;
+            while (vm.HealthLow && Time.realtimeSinceStartup - t0 < 15f)
+            {
+                yield return null;
+            }
+
+            Assert.IsFalse(vm.HealthLow, "öncül: can eşiğin üstüne çıkmalı (regen)");
+            for (int i = 0; i < 30; i++) yield return null;
+
             yield return SayacPozitifKontrol();
             long hudAcik = 0;
             yield return AyirmaOlc(600, v => hudAcik = v);

@@ -2065,3 +2065,22 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 ## WP-060B — AP-011 v011 EQ türetme geçişi (kredi 0)
 
 **Durum:** Tamamlandı (S-08, 2026-09-17, §7). Branch `wp-060b-eq-v011` (taban main `74c73f8`), tek commit. Fable WP-060 #8: ateş ailesi HS +2 dB @ 4 k / LS −1,5 @ 120; tier vokalleri peak +1,5 dB @ 2,5 k Q 1; MusicResults HS +3 @ 3 k + 2 @ 8 k — sevk dosyaları üstünde, hedefe yeniden normalize; 44 dosya / 16 kimlik, manifest v011 (181/417), katalog yeniden. Doğrulama: katalog yeniden (manifest 9fcff3f9), Audio EditMode 18/18 (ilk koşuda ZombieHitSpecial kuyruk −59,7 dBFS → EQ sonrası `finish_silent` kapısı eklendi), release 539 MB + e1/e4 smoke 0, restore 6/6.
+
+## WP-022K — Batch ayırma izolasyonu ve ana menü ayırma tanısı
+
+**Durum:** Tamamlandı (S-09, 2026-09-17, HIZLI HAT §6; kredi 0). Dal `wp-022k-alloc-isolation` = main `f319190` + tek commit; ff-merge + etiket C-00.
+
+**Yürütme promptu:** `planning/work-packages/WP-022K-ALLOC-ISOLATION.md`.
+
+**Kapsam ve sonuç:**
+
+- (A) **Kök neden (batch FAIL):** `MetaUiSliceTests.HudMetinleri_*` 600 sessiz karede HUD açık +235 KB — recorder zaman çizelgesi (`AyirmaOlc` artık topFrame/heavyFrames/100'lük kümülatif loglar) tek kareyi gösterdi: **kare 41 = 197 KB, diğer 599 kare ≈ 40 B**. Pencere, canın 25 %'ten regen ile eşiği geçtiği anı içeriyordu → HUD `HudLowHealthLeft` yükseltir → tüketiciler (S-08 cue / S-07) tek seferlik kurulum. Yalnız başına koşunca eşik geçişi pencereden önce oluyordu (zamanlama) → "batch'te FAIL" görüntüsü. Test düzeltmesi: eşik geçişini bekle (`vm.HealthLow` false) + 30 kare, sonra ölç; sonuç batch'te HUD deltası **9 B/kare** (`hudIdle600 31 KB ↔ hudOff 25 KB`), WP-007 aktif pencere 9 B/kare.
+- (B) **Hakem ölçüm yöntemi** (WP-044 REPORT §ölçüm / WP-052): `AyirmaOlc` (MetaUi + WP-007 fixture) recorder "GC Allocated In Frame" toplamını kullanır (64 nesnelik yem karesi > 0 ise), yığın deltası yedek ve yan yana loglanır; `targetFrameRate = -1` pencere boyunca, sonra geri.
+- (C) **Ana menü ~4 ayırma/kare (S-10 bulgusu):** tanı testi `UiArtSliceTests.AnaMenu_KareBasiAyirma_BilesenBazinda` (60 kare toplam): tümü 6,0/kare; canvas'lar kapalı 4,0 (taban: harness + UI dışı); `MainMenuScreen.Update` kapalı −1,9 → **`UiInput.CancelPressed` her karede `Input.GetButtonDown("Cancel")` ArgumentException fırlatıp yakalıyordu** (Input Manager'da "Cancel" yok) → tek seferlik sonda (`s_cancelButtonState`), sıcak yolda istisna yok; petal drift ≈ 1,2 (uGUI rebuild, RectTransform yazımı — bilinen). UI payı ~2 → ~0.
+- (D) HUD numerics `autoSize:false` (`UiFactory.Numeric` parametresi): HUD sayaçları tasarımda sınırlı; TMP auto-size her değişimde çok geçiş — koruyucu (ölçümde asıl neden değildi).
+- (E) HUD tanı testi `MetaUiSliceTests.HudMetinleri_AyirmaTanisi_BilesenBazinda` (bileşen bazında 60 kare toplam + 600 kare zaman çizelgesi) kalıcı tanı aracı.
+- (F) AD turu r8/r12: S-10 run5 kareleri yok → bekleme.
+
+**Testler:** EditMode 15/15; PlayMode **batch** `UiArtSlice + MetaUi + SpecialWeaponHudAllocation` 22/22 (kg) — heap-büyüme testleri batch'te PASS; dev build; kredi 0.
+
+**Devirler:** S-08/S-07 → `HudLowHealthLeft` tüketicisinin tek seferlik ~197 KB kurulumu (cue/VFX ısınma — prewarm adayı); S-10 → M3 kapanışında hakem yöntem satırı; AD turu kareler gelince.

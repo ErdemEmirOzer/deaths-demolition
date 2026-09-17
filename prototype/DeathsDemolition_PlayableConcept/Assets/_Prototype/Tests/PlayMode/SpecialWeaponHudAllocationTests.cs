@@ -263,34 +263,67 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>Harness'ın (coroutine adımı, recorder) bir kareye ekleyebileceği ayırma sayısı (WP-037 ile aynı pay).</summary>
         private const int HarnessAllocationSlack = 8;
 
-        /// <summary>N kare yığın büyümesi; pencerede gen0 GC koşarsa bir kez daha dener, yine koşarsa −1.</summary>
+        /// <summary>
+        /// WP-022K · arbiter method (WP-044 REPORT §ölçüm, WP-052): the window's cost is the
+        /// ProfilerRecorder "GC Allocated In Frame" SUM when the recorder is live (a 64-object
+        /// probe frame must read > 0), else the managed-heap delta of the old method. The heap
+        /// delta grows in 64 KB steps and drifts with what earlier fixtures left on the heap
+        /// (batch-order FAILs of WP-022C/F/J with the recorder reading a clean HUD), so it is
+        /// the fallback, logged next to the recorder number when both exist.
+        /// </summary>
         private static IEnumerator AyirmaOlc(int kare, Action<long> sonuc)
         {
-            for (int deneme = 0; deneme < 2; deneme++)
+            int frameRateBefore = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
+            try
             {
-                for (int i = 0; i < 10; i++)
+                using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
                 {
+                    for (int i = 0; i < 10; i++) yield return null; // ısınma
+
+                    // Recorder probe: one frame with 64 small objects must register.
+                    var yem = new object[64];
+                    for (int i = 0; i < yem.Length; i++) yem[i] = new byte[32];
                     yield return null;
-                }
-
-                long c0 = GC.CollectionCount(0);
-                long once = GC.GetTotalMemory(false);
-                for (int i = 0; i < kare; i++)
-                {
+                    bool recorderLive = bytes.Valid && bytes.LastValue > 0;
+                    GC.KeepAlive(yem);
                     yield return null;
-                }
 
-                long fark = GC.GetTotalMemory(false) - once;
-                if (GC.CollectionCount(0) == c0)
-                {
-                    sonuc(fark);
-                    yield break;
-                }
+                    for (int deneme = 0; deneme < 2; deneme++)
+                    {
+                        long c0 = GC.CollectionCount(0);
+                        long once = GC.GetTotalMemory(false);
+                        long recorded = 0;
+                        for (int i = 0; i < kare; i++)
+                        {
+                            yield return null;
+                            if (recorderLive) recorded += bytes.LastValue;
+                        }
 
-                Debug.Log("[DD-TEST] wp007.perf window gc-interrupted, retrying");
+                        long fark = GC.GetTotalMemory(false) - once;
+                        if (recorderLive)
+                        {
+                            Debug.Log("[DD-TEST] alloc window frames=" + kare + " recorderB=" + recorded + " heapDeltaB=" + fark + (GC.CollectionCount(0) != c0 ? " (gc ran)" : ""));
+                            sonuc(recorded);
+                            yield break;
+                        }
+
+                        if (GC.CollectionCount(0) == c0)
+                        {
+                            sonuc(fark);
+                            yield break;
+                        }
+
+                        Debug.Log("[DD-TEST] perf window gc-interrupted, retrying");
+                    }
+
+                    sonuc(-1);
+                }
             }
-
-            sonuc(-1);
+            finally
+            {
+                Application.targetFrameRate = frameRateBefore;
+            }
         }
     }
 }

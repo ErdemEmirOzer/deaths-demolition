@@ -362,7 +362,7 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)roundLabel.transform, UiFactory.LineHeight(UiType.Label));
 
             _roundValue = UiFactory.Numeric(
-                "RoundValue", host, "—", UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleCenter);
+                "RoundValue", host, "—", UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleCenter, false);
             stack.Add((RectTransform)_roundValue.transform, 36f);
 
             stack.Gap(UiSpace.XS);
@@ -380,7 +380,7 @@ namespace DD.Prototype.UI
             wavesRect.anchoredPosition = new Vector2(-44f, 0f);
 
             _enemiesValue = UiFactory.Numeric(
-                "EnemiesValue", enemiesRow, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+                "EnemiesValue", enemiesRow, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleLeft, false);
             RectTransform enemiesValueRect = UiFactory.Fill((RectTransform)_enemiesValue.transform);
             enemiesValueRect.offsetMin = new Vector2(SmallBlockWidth * 0.5f - (int)UiSpace.L - 36f, 0f);
 
@@ -411,7 +411,7 @@ namespace DD.Prototype.UI
             coinRect.anchoredPosition = Vector2.zero;
 
             _goldValue = UiFactory.Numeric(
-                "Value", host, "0", UiType.NumericL, UiColor.StateGold, TextAnchor.MiddleLeft);
+                "Value", host, "0", UiType.NumericL, UiColor.StateGold, TextAnchor.MiddleLeft, false);
             RectTransform valueRect = UiFactory.Fill((RectTransform)_goldValue.transform);
             valueRect.offsetMin = new Vector2(PanelIconSize + (int)UiSpace.M, 0f);
         }
@@ -441,7 +441,7 @@ namespace DD.Prototype.UI
             labelRect.anchoredPosition = new Vector2(textLeft, -4f);
 
             _healthValue = UiFactory.Numeric(
-                "Value", host, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleRight);
+                "Value", host, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
             RectTransform valueRect = (RectTransform)_healthValue.transform;
             valueRect.anchorMin = new Vector2(1f, 1f);
             valueRect.anchorMax = new Vector2(1f, 1f);
@@ -517,7 +517,7 @@ namespace DD.Prototype.UI
             _specialPip.gameObject.SetActive(false);
 
             _specialTimer = UiFactory.Numeric(
-                "Timer", ringRoot, "0.0", UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleCenter);
+                "Timer", ringRoot, "0.0", UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleCenter, false);
             RectTransform timerRect = UiFactory.Fill((RectTransform)_specialTimer.transform, 20f);
 
             _specialCaption = UiFactory.Label(
@@ -601,7 +601,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.XS);
 
-            _ammoValue = UiFactory.Numeric("Ammo", textColumn, "—", UiType.NumericL, UiColor.TextPrimary);
+            _ammoValue = UiFactory.Numeric("Ammo", textColumn, "—", UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleLeft, false);
             stack.Add((RectTransform)_ammoValue.transform, 38f);
 
             stack.Gap(UiSpace.XS);

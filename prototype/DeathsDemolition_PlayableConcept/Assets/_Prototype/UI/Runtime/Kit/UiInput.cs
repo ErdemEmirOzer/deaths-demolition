@@ -28,16 +28,34 @@ namespace DD.Prototype.UI
         /// </summary>
         public static bool CancelPressed()
         {
-            try
+            // WP-022K (S-10 finding, MainMenu ~2 allocations/frame from the UI): probing the
+            // legacy button by name throws when the Input Manager has no "Cancel" entry, and
+            // a thrown-and-caught exception every frame IS the allocation. Probe once, then
+            // read the remembered path with no exception on the hot path.
+            if (s_cancelButtonState == 0)
+            {
+                try
+                {
+                    Input.GetButtonDown(CancelButton);
+                    s_cancelButtonState = 1;
+                }
+                catch (System.ArgumentException)
+                {
+                    s_cancelButtonState = -1;
+                }
+            }
+
+            if (s_cancelButtonState > 0)
             {
                 return Input.GetButtonDown(CancelButton);
             }
-            catch (System.ArgumentException)
-            {
-                // Input Manager without a "Cancel" entry: Escape alone.
-                return Input.GetKeyDown(KeyCode.Escape);
-            }
+
+            // Input Manager without a "Cancel" entry: Escape alone.
+            return Input.GetKeyDown(KeyCode.Escape);
         }
+
+        /// <summary>0 = not probed, 1 = the "Cancel" button exists, -1 = missing (Escape only).</summary>
+        private static int s_cancelButtonState;
 
         /// <summary>Puts EventSystem focus on a control, if both exist and the control accepts it.</summary>
         public static void Focus(Selectable selectable)

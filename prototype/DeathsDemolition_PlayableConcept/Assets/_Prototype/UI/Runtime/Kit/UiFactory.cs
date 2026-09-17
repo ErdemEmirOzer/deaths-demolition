@@ -412,13 +412,19 @@ namespace DD.Prototype.UI
             string content,
             UiType type,
             UiColor color,
-            TextAnchor anchor = TextAnchor.MiddleLeft)
+            TextAnchor anchor = TextAnchor.MiddleLeft,
+            bool autoSize = true)
         {
             TMP_Text text = Label(name, parent, content, type, color, anchor);
             text.enableWordWrapping = false;
-            text.enableAutoSizing = true;
+            // WP-022K: auto-sizing re-runs TMP's mesh generation several times per text
+            // change and allocates on every pass (HUD low-health window: ~9 KB per changed
+            // readout, 400 B/frame while health regenerates). A readout whose value is
+            // bounded by design (HUD health / ammo / gold / round / timer) passes
+            // autoSize:false and keeps one fixed size.
+            text.enableAutoSizing = autoSize;
             text.fontSizeMax = UiTokens.FontSize(type);
-            text.fontSizeMin = Mathf.Max(12, UiTokens.FontSize(type) / 2);
+            text.fontSizeMin = autoSize ? Mathf.Max(12, UiTokens.FontSize(type) / 2) : UiTokens.FontSize(type);
             return text;
         }
 

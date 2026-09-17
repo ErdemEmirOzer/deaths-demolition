@@ -11,8 +11,8 @@
 | `RunHudViewModelTests` | EditMode | S-09 | geçer | — |
 | `InputParityContractTests` | EditMode | S-02 | geçer (WP-022I r2 sonrası) | UI'da `UnityEngine.InputSystem` → FAIL |
 | `UiArtSliceTests` | PlayMode | S-09 | geçer (HUD ikon/güvenli bölge/Special usage, seçim, pad yolları, panolar) | `Force/Release` şema dikişi; gerçek profil yazmaz (test profili) |
-| `MetaUiSliceTests` | PlayMode | S-09 (WP-005 kökeni S-04) | tek başına / çiftte geçer; 3+ fixture batch'inde `HudMetinleri_*` heap-büyüme FAIL (WP-022J gözlemi) | **fixture başına koş**; başarım "First Blood" ilk ziyaret NEW |
-| `SpecialWeaponHudAllocationTests` | PlayMode | S-09 | tek başına geçer; sayaç 0 → WP-022J `targetFrameRate = -1` ile kapandı; batch'te WP-007 aktif pencere heap-büyüme FAIL | **fixture başına koş**; WP-052 notu |
+| `MetaUiSliceTests` | PlayMode | S-09 (WP-005 kökeni S-04) | batch'te geçer (WP-022K: pencere eşik geçişinden sonra, hakem ölçüm) | tek kare ~197 KB = HudLowHealthLeft tüketicisi (S-08/S-07 ısınma); başarım "First Blood" ilk ziyaret NEW |
+| `SpecialWeaponHudAllocationTests` | PlayMode | S-09 | batch'te geçer (WP-022K hakem ölçüm, targetFrameRate −1) | WP-052 notu |
 | `SessionSelectionTests` | PlayMode | S-09 | geçer | — |
 | `EconomyUpgradeRulesSliceTests` | PlayMode | S-04 (UI bağlama S-09) | geçer | Ö-6a politikası değişirse altbilgi metni |
 | `PlayerHitDirectionHudTests` | PlayMode | S-09 | geçer (WP-022F 150 px rampa, 0,45 düşük-can) | `DamageEdgeDepth` değişirse |
