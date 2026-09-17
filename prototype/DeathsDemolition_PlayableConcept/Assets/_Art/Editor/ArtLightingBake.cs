@@ -81,6 +81,15 @@ namespace DD.Art.Pipeline.EditorTools
         public const uint CharacterLightLayer = DD.Prototype.Characters.ZombieSkinnedVisual.CharacterRenderingLayers & ~1u;
         public static readonly Color CharacterFillColor = new Color(0.96f, 0.97f, 1.0f);
 
+        /// <summary>Batch entry (WP-038J): the overcast profile (bloom chain, grade) and the renderer (SSAO, shadows) only — no scene, no bake.</summary>
+        public static void ConfigurePostAndRendererCli()
+        {
+            ArtLightingBuilder.BuildOvercastProfile();
+            ConfigureRenderer();
+            AssetDatabase.SaveAssets();
+            Debug.Log(LogPrefix + "post profile + renderer configured (bloom iterations " + WorldAtmosphere.PostFx.BloomMaxIterations + ", HQ " + WorldAtmosphere.PostFx.BloomHighQualityFiltering + ", SSAO blur " + SsaoBlurQuality + ")");
+        }
+
         /// <summary>Batch entry: renderer / pipeline-asset settings (ConfigureRenderer) plus the character fill on World_AP005 — no re-import, no bake.</summary>
         public static void ConfigureCharacterFillCli()
         {
@@ -129,7 +138,15 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-038G (M3 closure K1): 4 → 2 cascades at 60 m — the top-down camera never needs four splits; each cascade re-draws every caster (~300 draws each).</summary>
         public const int ShadowCascadeCount = 2;
         /// <summary>WP-038G: SSAO normals reconstructed from depth (URP Source = Depth, Medium samples) — the DepthNormals prepass re-drew every opaque renderer (~1 000 draws at 3 120 instances).</summary>
-        public const int SsaoSource = 1, SsaoNormalSamples = 1;
+        /// <summary>
+        /// URP 14 <c>DepthSource</c>: Depth = 0, DepthNormals = 1. WP-038G wrote 1 believing it was Depth — the DepthNormals prepass
+        /// (every opaque drawn again into a normals target, ~170 draws / ~8 setPass at 1080p) kept running through the M3 closure.
+        /// WP-038J: Depth (0) — normals reconstructed from depth inside the AO pass; same-frame A/B ΔE against DepthNormals in
+        /// planning/04 §WP-038J.
+        /// </summary>
+        public const int SsaoSource = 0, SsaoNormalSamples = 1;
+        /// <summary>WP-038J: URP 14 BlurQuality High 0 / Medium 1 / Low 2 — Low is the single-pass Kawase blur on the half-resolution AO (Downsample on); the reference frames read the same.</summary>
+        public const int SsaoBlurQuality = 2;
         public const float SsaoIntensity = 1.2f;
         public const float SsaoRadius = 0.30f;
         public const float SsaoDirectLightingStrength = 0.25f;
@@ -195,13 +212,13 @@ namespace DD.Art.Pipeline.EditorTools
             var written = new List<string>();
             SetIfPresent(settings, "Downsample", p => p.boolValue = true, written);
             SetIfPresent(settings, "AfterOpaque", p => p.boolValue = true, written);
-            SetIfPresent(settings, "Source", p => p.enumValueIndex = SsaoSource, written);          // WP-038G: Depth (1) — no DepthNormals prepass
+            SetIfPresent(settings, "Source", p => p.enumValueIndex = SsaoSource, written);          // WP-038J: Depth (0) — no DepthNormals prepass (WP-038G had written 1 = DepthNormals)
             SetIfPresent(settings, "NormalSamples", p => p.enumValueIndex = SsaoNormalSamples, written);   // Medium
             SetIfPresent(settings, "Intensity", p => p.floatValue = SsaoIntensity, written);
             SetIfPresent(settings, "DirectLightingStrength", p => p.floatValue = SsaoDirectLightingStrength, written);
             SetIfPresent(settings, "Radius", p => p.floatValue = SsaoRadius, written);
             SetIfPresent(settings, "Samples", p => p.enumValueIndex = 2, written);         // Low (URP 14 enum: High 0, Medium 1, Low 2)
-            SetIfPresent(settings, "BlurQuality", p => p.enumValueIndex = 1, written);     // Medium
+            SetIfPresent(settings, "BlurQuality", p => p.enumValueIndex = SsaoBlurQuality, written);   // WP-038J: Low (2) — one blur pass at half resolution
             SetIfPresent(settings, "Falloff", p => p.floatValue = SsaoFalloff, written);
             SetIfPresent(settings, "AOMethod", p => p.enumValueIndex = 0, written);        // interleaved gradient (URP 14: 0 = SSAO)
             fso.ApplyModifiedPropertiesWithoutUndo();

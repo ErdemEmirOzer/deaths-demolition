@@ -124,6 +124,10 @@ namespace DD.Prototype.World
 
             public const float BloomIntensity = 0.5f;
             public const float BloomScatter = 0.62f;
+            /// <summary>WP-038J: 6 → 4 mip iterations (setPass 16 → 10 for the chain); the frame diff against the WP-029 references is below the JND.</summary>
+            public const int BloomMaxIterations = 4;
+            /// <summary>WP-038J: bilinear upsampling (URP default) — bicubic bought nothing the reference frames show.</summary>
+            public const bool BloomHighQualityFiltering = false;
 
             public static readonly Color ColorFilter = new Color(1f, 0.99f, 0.96f);
         }
@@ -476,8 +480,14 @@ namespace DD.Prototype.World
             bloom.intensity.value = PostFx.BloomIntensity;
             bloom.scatter.overrideState = true;
             bloom.scatter.value = PostFx.BloomScatter;
+            // WP-038J (M3 K1 setPass): the bloom chain was 16 of the world side's 68 setPass calls (6 mip iterations, bicubic
+            // upsampling). Four iterations keep every radius the 1080p frame resolves at scatter 0.62 (the last two mips are
+            // 34 px and 17 px wide — a screen-sized haze the overcast frame has no source for at threshold 1.25); bilinear
+            // upsampling is the URP default. Both measured against the WP-029 reference frames (planning/04 §WP-038J).
             bloom.highQualityFiltering.overrideState = true;
-            bloom.highQualityFiltering.value = true;
+            bloom.highQualityFiltering.value = PostFx.BloomHighQualityFiltering;
+            bloom.maxIterations.overrideState = true;
+            bloom.maxIterations.value = PostFx.BloomMaxIterations;
         }
 
         private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent

@@ -69,6 +69,10 @@ Shadow casters are the draw-call mass under URP (every caster re-draws per casca
 
 Four Higgsfield → Tripo H3.1 props with their own 1K PBR sets follow the AP-005B path: `Textures/Source/T_prop_<family>_{BaseColor,Normal,Packed}.png` → Prop class 512, `ArtTextureRepack` MetallicSmoothnessAO, `M_prop_<family>` (`ArtLibraryMaterialRoles`); `AP017_Library.json` v002 (21 families / 44 variations, `wp-038i/tools/build-ap017-library.py`) and `AP005_placement-delta-v005.json` (+23 → 3143). The sake jar is a `breakable` on the existing `BreakCeramic` / `TL_ceramic` binder.
 
+## setPass attribution (WP-038J)
+
+`Tests/PlayMode/SetPassAttributionTests` (`[Explicit]`, run by name with `DD_ART_CAPTURE_DIR`) renders the frozen 40-zombie probe frame by hand and reads the Render recorders per feature toggle, writes the shader-variant / UI-canvas census and a same-frame A/B PNG pair — the Frame Debugger records nothing in batch mode. World side after WP-038J: 52 setPass / 1 031 draws (shadows 16, bloom 10, foliage 10); SSAO source is Depth (0 — URP 14 `DepthSource.Depth`; 1 is DepthNormals and costs a full prepass), blur Low; bloom 4 iterations, bilinear (`WorldAtmosphere.PostFx`). Re-apply without a bake: `ArtLightingBake.ConfigurePostAndRendererCli`.
+
 ## Surface tags (ADR-021-1 v2, WP-021C)
 
 World_AP005 instances get their `SurfaceTag` at scene load, from data: `Runtime/Ap005SurfaceTags.cs` maps the placement **family** to a `SurfaceKind` (Dirt / Stone / Wood / Water / Foliage) and tags each `Instances` child plus the ground stand-in (Dirt; Stone inside the placement's stone routes via `AudioSurfaceHints.Refine`). Rule for new content (AP-015P, any family): add the family to `Ap005SurfaceTags.FamilySurface` — no scene file or prefab edit; an unknown family falls back by role and fails the EditMode audio gate. If the importer ever writes tags itself, use the same table so the two never disagree.

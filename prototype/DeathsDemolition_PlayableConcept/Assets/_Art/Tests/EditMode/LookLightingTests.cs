@@ -152,7 +152,9 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(ArtLightingBake.ShadowCascadeCount, asset.shadowCascadeCount);
             // WP-038G (M3 closure K1/K2): 2 cascades, SSAO from depth (no DepthNormals prepass), and the realtime character fill in the world scene.
             Assert.AreEqual(2, asset.shadowCascadeCount, "WP-038G: 2 cascade");
-            Assert.AreEqual(ArtLightingBake.SsaoSource, s.FindPropertyRelative("Source").enumValueIndex, "SSAO kaynağı Depth (WP-038G)");
+            Assert.AreEqual(0, ArtLightingBake.SsaoSource, "URP 14 DepthSource.Depth = 0 (WP-038J: WP-038G'nin 1'i DepthNormals'tı — ön geçiş sürüyordu)");
+            Assert.AreEqual(ArtLightingBake.SsaoSource, s.FindPropertyRelative("Source").enumValueIndex, "SSAO kaynağı Depth (WP-038J)");
+            Assert.AreEqual(ArtLightingBake.SsaoBlurQuality, s.FindPropertyRelative("BlurQuality").enumValueIndex, "SSAO blur Low (WP-038J)");
             Assert.AreEqual(2, asset.msaaSampleCount, "MSAA 4× → 2× (ADR-025-2 ölçümü: RT sürücü belleği 413,6 → 334,3 MB; C-00 teknik kararı WP-029'da uygulandı)");
             Assert.IsTrue(asset.supportsHDR, "HDR WP-025'e kadar değişmez");
             Assert.AreEqual(32, asset.colorGradingLutSize);

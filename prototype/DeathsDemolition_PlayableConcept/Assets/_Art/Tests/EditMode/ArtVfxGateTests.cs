@@ -159,6 +159,9 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(profile.TryGet(out WhiteBalance white) && Mathf.Abs(white.temperature.value - WorldAtmosphere.PostFx.WhiteBalanceTemperature) < 0.01f, "WhiteBalance");
             Assert.IsTrue(profile.TryGet(out Vignette vignette) && Mathf.Abs(vignette.intensity.value - WorldAtmosphere.PostFx.VignetteIntensity) < 0.01f, "Vignette");
             Assert.IsTrue(profile.TryGet(out Bloom bloom) && Mathf.Abs(bloom.threshold.value - WorldAtmosphere.PostFx.BloomThreshold) < 0.01f, "Bloom eşiği (REQ-105: yalnız > 1 emissive)");
+            // WP-038J: the bloom chain is four mip iterations with bilinear upsampling (setPass 16 → 10; same-frame ΔE p99 1.4).
+            Assert.AreEqual(WorldAtmosphere.PostFx.BloomMaxIterations, bloom.maxIterations.value, "Bloom maxIterations (WP-038J)");
+            Assert.AreEqual(WorldAtmosphere.PostFx.BloomHighQualityFiltering, bloom.highQualityFiltering.value, "Bloom HQ filtering (WP-038J)");
             Assert.IsTrue(WorldAtmosphere.PostFx.Enabled, "WP-013: post-fx kamerada açık olmalı.");
 
             // Kamera fabrikası bayrağı gerçekten yazıyor.
