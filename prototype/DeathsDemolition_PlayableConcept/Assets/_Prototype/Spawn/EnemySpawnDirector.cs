@@ -229,6 +229,23 @@ namespace DD.Prototype.Spawn
         /// <summary>Refill attempts that found no eligible point. Debug / test readout.</summary>
         public int NoPointTicks => _noPointTicks;
 
+        private int _pathPendingTicks;
+        /// <summary>WP-050: refill ticks skipped because some point had never been path-queried against a player yet (pending ≠ unreachable). Debug / test readout.</summary>
+        public int PathPendingTicks => _pathPendingTicks;
+        /// <summary>WP-050: times the reachability gate was relaxed with every path FRESH (a real bake / layout problem, not a start-of-round race).</summary>
+        public int PathRelaxCount => _pathRelaxCount;
+
+        /// <summary>WP-050: true when every registered point has a path result computed against a player this round.</summary>
+        public bool AllPathsQueried
+        {
+            get
+            {
+                IReadOnlyList<SpawnPointRuntime> points = SpawnPointRegistry.Points;
+                for (int i = 0; i < points.Count; i++) if (points[i].PathCachedAt < 0f) return false;
+                return true;
+            }
+        }
+
         /// <summary>Bounded scatter around a point, metres (SpawnWeightTuning). Test readout for the REQ-065 check.</summary>
         public float SpawnScatterRadius => _weightTuning.SpawnScatterRadius;
 
@@ -320,6 +337,7 @@ namespace DD.Prototype.Spawn
             _cooldownRelaxCount = 0;
             _pathRelaxCount = 0;
             _noPointTicks = 0;
+            _pathPendingTicks = 0;
 
             _tierSelector.BeginRound(_round, Config, plan.PoolTotal, _weightTuning.GuaranteedIntroPoolFraction);
 
@@ -679,6 +697,21 @@ namespace DD.Prototype.Spawn
                 }
             }
 
+            // WP-050 (S-10 finding "[Spawn] No spawn point had a complete NavMesh path"): a point that was never
+            // path-queried against a player is PENDING, not unreachable. At round start BeginRound's forced
+            // refresh runs before the player state may exist (NavigationSystemBehaviour.Update publishes it),
+            // which left every point Invalid with a fresh cache stamp and let the ladder relax reachability
+            // on the first tick. Query the pending ones now; if there is still no player, wait a tick.
+            if (!AllPathsQueried)
+            {
+                RefreshPendingPoints();
+                if (!AllPathsQueried)
+                {
+                    _pathPendingTicks++;
+                    return false;
+                }
+            }
+
             SpawnPointRuntime point = SelectPoint();
             if (point == null)
             {
@@ -946,8 +979,8 @@ namespace DD.Prototype.Spawn
             {
                 NavigationDiagnostics.WarnThrottled(
                     "spawn.relax.path", 15f,
-                    "[Spawn] No spawn point had a complete NavMesh path to the player (REQ-068). " +
-                    "The reachability gate was relaxed so the round can continue - check the NavMesh bake.");
+                    "[Spawn] No spawn point had a complete NavMesh path to the player (REQ-068) although every point was queried this round. " +
+                    "The reachability gate was relaxed so the round can continue - check the NavMesh bake / the player's position on the mesh.");
                 _pathRelaxCount++;
             }
 
@@ -989,6 +1022,17 @@ namespace DD.Prototype.Spawn
         /// Re-queries a few points per refill tick instead of all twelve every frame:
         /// NavMesh.CalculatePath is the single most expensive call in this system.
         /// </summary>
+        /// <summary>WP-050: query every point that has no path result yet (round start, or a player that registered late). Bounded by the point count, once per round in practice.</summary>
+        private void RefreshPendingPoints()
+        {
+            if (!CrowdService.PlayerState.HasPlayer) return;
+            IReadOnlyList<SpawnPointRuntime> points = SpawnPointRegistry.Points;
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (points[i].PathCachedAt < 0f) RefreshPoint(points[i], force: true);
+            }
+        }
+
         private void RefreshStalePoints(int budget)
         {
             IReadOnlyList<SpawnPointRuntime> points = SpawnPointRegistry.Points;
@@ -1041,10 +1085,10 @@ namespace DD.Prototype.Spawn
                 point.PathDistance = distance;
                 point.PathStatus = status;
                 point.StraightDistance = NavPathService.FlatDistance(point.NavPosition, player.Position);
+                point.PathCachedAt = Time.time;   // WP-050: a cache stamp means "queried against a player"; no player = still pending
             }
 
             UpdateScreenFlags(point);
-            point.PathCachedAt = Time.time;
         }
 
         private void UpdateScreenFlags(SpawnPointRuntime point)

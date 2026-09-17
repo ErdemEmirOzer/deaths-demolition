@@ -571,6 +571,7 @@ namespace DD.Prototype.Enemies
             _plannedVelocity = Vector3.zero;
             _verticalVelocity = 0f;
             _currentSpeed = 0f;
+            ResetWaiting();   // WP-050
             _alive = false;   // Initialise flips this on
             _dying = false;
             _lastTransactionId = 0;
@@ -990,6 +991,51 @@ namespace DD.Prototype.Enemies
             {
                 _skinned.SetSpeed(_currentSpeed, dt);
             }
+
+            UpdateWaiting(ownVelocity, distance, dt);   // WP-050: WP-032 queue / idle-in-crowd wait state
+        }
+
+        // ------------------------------------------------------------ WP-050 · waiting (WP-032 SetWaiting)
+        [PrototypeOnly(PendingDecisions.None, "WP-050: seconds a body must want to walk (own velocity ≥ WaitWantsSpeedShare × speed) while going nowhere (< WaitStalledSpeed) before the queue idle plays; cleared after WaitClearSeconds of real movement. Hysteresis so the idle does not flicker in a jostling crowd.", true)]
+        private const float WaitStallSeconds = 0.6f, WaitClearSeconds = 0.25f, WaitStalledSpeed = 0.15f, WaitWantsSpeedShare = 0.4f;
+        [PrototypeOnly(PendingDecisions.None, "WP-050: a body within this × AttackRange of its target is engaging, not queued — it holds the threat pose (DEC-032), never the queue idle.", true)]
+        private const float WaitEngageRangeFactor = 1.6f;
+
+        private float _stallSeconds, _moveSeconds;
+        private bool _waiting;
+
+        /// <summary>WP-050: the body is holding the WP-032 queue idle (chokepoint queue or stalled in the crowd). Readout / tests.</summary>
+        public bool IsWaiting => _waiting;
+
+        /// <summary>
+        /// WP-050: the WP-030 chokepoint queue (follower.IsQueued) and a body stalled behind others
+        /// (wants to walk, does not move) both read as "waiting" for the driven body: WP-032's
+        /// SetWaiting → the v002 idle_queue Wait state. Attack / stagger / rise never wait.
+        /// </summary>
+        private void UpdateWaiting(Vector3 ownVelocity, float distanceToTarget, float dt)
+        {
+            bool queued = _pathFollower != null && _pathFollower.IsQueued;
+            bool wants = ownVelocity.sqrMagnitude >= (_moveSpeed * WaitWantsSpeedShare) * (_moveSpeed * WaitWantsSpeedShare);
+            bool engaging = distanceToTarget <= _attack.Range * WaitEngageRangeFactor;   // blocked by the player at the front line ≠ queued behind others
+            bool stalled = wants && !engaging && _currentSpeed < WaitStalledSpeed;
+            bool busy = _attack.IsAttacking || _animator.IsStaggering || IsRising || engaging;
+
+            if (stalled && !busy) { _stallSeconds += dt; _moveSeconds = 0f; }
+            else if (_currentSpeed >= WaitStalledSpeed || busy) { _moveSeconds += dt; if (_moveSeconds >= WaitClearSeconds) _stallSeconds = 0f; }
+
+            bool waiting = !busy && (queued || _stallSeconds >= WaitStallSeconds);
+            if (waiting != _waiting)
+            {
+                _waiting = waiting;
+                _animator.SetWaiting(waiting);
+            }
+        }
+
+        private void ResetWaiting()
+        {
+            _stallSeconds = 0f;
+            _moveSeconds = 0f;
+            if (_waiting) { _waiting = false; _animator?.SetWaiting(false); }
         }
 
         private void TickDying(float dt)
@@ -1264,6 +1310,7 @@ namespace DD.Prototype.Enemies
             DamageTargetRegistry.Unregister(transform);
             UnregisterCrowdMembership();
             _attack.Cancel();
+            ResetWaiting();   // WP-050: a corpse never holds the queue idle
 
             if (_controller != null)
             {

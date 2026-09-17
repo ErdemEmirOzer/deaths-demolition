@@ -105,7 +105,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(28f, config.Enemies.Armor.LegDurability, 0.0001f);
             Assert.AreEqual(StandardCanR1, config.EnemyHealth(EnemyTier.Standard, 1), 0.01f, "Standard R1 canı sabiti saptı; türetmeyi yenile.");
             Assert.AreNotEqual(1f, config.Enemies.Armor.ExposedHeadMultiplier, "Açık kafa çarpanı 1 ise açık/zırhlı ayrımının ayırt gücü yok (nöbetçi).");
-            Assert.AreEqual(0, config.RoundDifficultyOverrides.Count, "DEC-021 tablosu boş kalmalı.");
+            Assert.AreEqual(3, config.RoundDifficultyOverrides.Count, "DEC-021 tablosu: WP-050 Ö-5 satırları R8/R11/R14 (kullanıcı onayı 2026-09-17); başka satır sızmamalı.");
         }
 
         // ============================================================== yardımcılar
@@ -357,7 +357,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsNotNull(z.ArmorAnchors.Helmet); Assert.IsNotNull(z.ArmorAnchors.Body); Assert.IsNotNull(z.ArmorAnchors.Leg);
             }
 
-            Assert.AreEqual(0, PrototypeConfig.Active.RoundDifficultyOverrides.Count, "Harness DEC-021 tablosunu doldurdu.");
+            Assert.AreEqual(3, PrototypeConfig.Active.RoundDifficultyOverrides.Count, "Harness DEC-021 tablosunu değiştirdi (sevk: WP-050 Ö-5, 3 satır).");
 
             // [#25] pause: zırh/can/yaşam durumu donar. Pozitif kontrol: aynı anda bir ceset (despawn geri sayımı
             // 0.55 s) pause altında 1.2 s gerçek zaman boyunca sahnede kalır; pause kalkınca geri sayım koşar ve ceset

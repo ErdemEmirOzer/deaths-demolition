@@ -114,13 +114,21 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(100f, config.Player.MaxHealth, 0.0001f);
         }
 
+        /// <summary>
+        /// t-0002 kept the DEC-021 table empty until a user decision; WP-050 (WP-041 proposal Ö-5,
+        /// user approval 2026-09-17, DEC-085 by S-04) authored exactly three rows — R8 / R11 / R14 —
+        /// from one source (RoundTableAuthoring). Anything else in the shipped asset is a leak.
+        /// </summary>
         [Test]
-        public void SevkiyatAsseti_Dec021ElleTanimliYariBosKalmis()
+        public void SevkiyatAsseti_Dec021ElleTanimliTablo_YalnizOnayliSatirlar()
         {
             PrototypeConfig config = SevkiyatConfig();
-            Assert.AreEqual(0, config.RoundDifficultyOverrides.Count,
-                "SEVKİYAT ASSET'İNDE DEC-021 override listesi doldurulmuş. " +
-                "Kullanıcı kararı t-0002 gereği bu liste boş kalmalı.");
+            Assert.AreEqual(3, config.RoundDifficultyOverrides.Count,
+                "SEVKİYAT ASSET'İNDE DEC-021 override listesi onaylı üç satır (R8/R11/R14, WP-050 Ö-5) taşımalı; başka satır sızmış ya da tablo silinmiş.");
+            var rounds = new List<int>();
+            foreach (RoundDifficultyOverride r in config.RoundDifficultyOverrides) rounds.Add(r.Round);
+            CollectionAssert.AreEqual(new[] { 8, 11, 14 }, rounds);
+            Assert.IsEmpty(RoundDifficultyOverrideRules.Validate(config));
         }
 
         // -------------------------------------------------------------- sahne sıralaması

@@ -66,7 +66,7 @@ namespace DD.Prototype.Core.Config
         public FeedbackConfigSection Feedback => _feedback;
         public SystemConfigSection System => _system;
 
-        /// <summary>DEC-021 authored overrides. Empty in the shipped asset of this package; see the field remarks.</summary>
+        /// <summary>DEC-021 authored overrides. WP-050: the shipped asset carries the Ö-5 rows (R8 / R11 / R14); a fresh instance is empty.</summary>
         public IReadOnlyList<RoundDifficultyOverride> RoundDifficultyOverrides => _roundDifficultyOverrides;
 
         /// <summary>
@@ -230,12 +230,13 @@ namespace DD.Prototype.Core.Config
 
         /// <summary>
         /// Chance that a tier spawns wearing the given armour piece this round.
-        /// Applies a DEC-021 authored override when one exists (the shipped table is empty in
-        /// this package; an authored row's own growth/max curve is resolved per round).
+        /// Applies a DEC-021 authored override when one exists and its armour scope includes the
+        /// tier (WP-050: <see cref="RoundDifficultyOverride.ArmorTiers"/>, empty = all tiers; an
+        /// authored row's own growth/max curve is resolved per round).
         /// </summary>
         public float ArmorChance(EnemyTier tier, ArmorSlot slot, int round)
         {
-            if (TryGetRoundOverride(round, out RoundDifficultyOverride ovr) && ovr.OverrideArmorChances)
+            if (TryGetRoundOverride(round, out RoundDifficultyOverride ovr) && ovr.ArmorAppliesTo(tier))
             {
                 return ovr.ArmorChances.Resolve(slot, round);
             }

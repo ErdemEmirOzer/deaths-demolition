@@ -142,8 +142,8 @@ MonoBehaviour:
         HelmetChance: 0.15
         BodyChance: 0.12
         LegChance: 0.08
-        ChanceGrowthPerRound: 0.025
-        MaxChance: 0.75
+        ChanceGrowthPerRound: 0.012
+        MaxChance: 0.55
     - Tier: 1
       DisplayName: Runner
       HealthMultiplier: 0.85
@@ -167,8 +167,8 @@ MonoBehaviour:
         HelmetChance: 0.15
         BodyChance: 0.12
         LegChance: 0.08
-        ChanceGrowthPerRound: 0.025
-        MaxChance: 0.75
+        ChanceGrowthPerRound: 0.012
+        MaxChance: 0.55
     - Tier: 2
       DisplayName: Guard
       HealthMultiplier: 2.2
@@ -192,7 +192,7 @@ MonoBehaviour:
         HelmetChance: 0.45
         BodyChance: 0.5
         LegChance: 0.35
-        ChanceGrowthPerRound: 0.03
+        ChanceGrowthPerRound: 0.015
         MaxChance: 0.9
     - Tier: 3
       DisplayName: Executioner
@@ -431,4 +431,53 @@ MonoBehaviour:
     DirectToRun: 0
     FixedDeltaTime: 0.02
     DebugPanelEnabled: 1
-  _roundDifficultyOverrides: []
+  _roundDifficultyOverrides:
+  - Round: 8
+    OverrideArmorChances: 1
+    ArmorChances:
+      HelmetChance: 0.4
+      BodyChance: 0.36
+      LegChance: 0.3
+      ChanceGrowthPerRound: 0
+      MaxChance: 0.55
+    ArmorTiers: 0000000001000000
+    OverrideTierWeights: 1
+    TierWeights:
+    - Tier: 3
+      Weight: 6
+    OverrideForcedCounts: 0
+    ForcedTierCounts: []
+  - Round: 11
+    OverrideArmorChances: 1
+    ArmorChances:
+      HelmetChance: 0.48
+      BodyChance: 0.44
+      LegChance: 0.38
+      ChanceGrowthPerRound: 0
+      MaxChance: 0.55
+    ArmorTiers: 0000000001000000
+    OverrideTierWeights: 1
+    TierWeights:
+    - Tier: 3
+      Weight: 9
+    OverrideForcedCounts: 1
+    ForcedTierCounts:
+    - Tier: 3
+      Count: 2
+  - Round: 14
+    OverrideArmorChances: 1
+    ArmorChances:
+      HelmetChance: 0.55
+      BodyChance: 0.5
+      LegChance: 0.45
+      ChanceGrowthPerRound: 0
+      MaxChance: 0.55
+    ArmorTiers: 0000000001000000
+    OverrideTierWeights: 1
+    TierWeights:
+    - Tier: 3
+      Weight: 12
+    OverrideForcedCounts: 1
+    ForcedTierCounts:
+    - Tier: 3
+      Count: 3

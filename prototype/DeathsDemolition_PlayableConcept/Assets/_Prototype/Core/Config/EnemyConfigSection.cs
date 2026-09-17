@@ -21,10 +21,10 @@ namespace DD.Prototype.Core.Config
         [Range(0f, 1f)] public float LegChance = 0.08f;
 
         [PrototypeOnly(PendingDecisions.CombatScaling, "Added to every chance per round beyond round 1.", true)]
-        [Range(0f, 0.2f)] public float ChanceGrowthPerRound = 0.025f;
+        [Range(0f, 0.2f)] public float ChanceGrowthPerRound = 0.012f;   // WP-050 Ö-2 (user 2026-09-17): 0.025 → 0.012
 
         [PrototypeOnly(PendingDecisions.CombatScaling, "Ceiling for any single armour chance.", true)]
-        [Range(0f, 1f)] public float MaxChance = 0.75f;
+        [Range(0f, 1f)] public float MaxChance = 0.55f;   // WP-050 Ö-2: 0.75 → 0.55 (Standard / Runner)
 
         public float Resolve(ArmorSlot slot, int round)
         {
@@ -291,7 +291,7 @@ namespace DD.Prototype.Core.Config
                     HelmetChance = 0.45f,
                     BodyChance = 0.5f,
                     LegChance = 0.35f,
-                    ChanceGrowthPerRound = 0.03f,
+                    ChanceGrowthPerRound = 0.015f,   // WP-050 Ö-2: 0.03 → 0.015 (entry odds 0.45/0.5/0.35 kept)
                     MaxChance = 0.9f
                 }
             },

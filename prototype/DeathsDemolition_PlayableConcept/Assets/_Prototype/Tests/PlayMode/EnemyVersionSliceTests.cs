@@ -33,6 +33,8 @@ namespace DD.Prototype.Tests.PlayMode
     public sealed class EnemyVersionSliceTests
     {
         private const float KurulumZamanAsimi = 40f;
+        private const int SevkSatirSayisi = 3;   // WP-050 Ö-5: sevk edilen DEC-021 tablosu R8 / R11 / R14
+
         private const float HizliAdim = 0.45f;   // = refill aralığı: her kare bir refill tiki (PrototypeOnly; nöbetçi ile)
 
         private RunDirector _run;
@@ -62,7 +64,7 @@ namespace DD.Prototype.Tests.PlayMode
             _rig.Health.DiagnosisInvulnerable = true;   // ölçümler oyuncu ölümüyle kesilmesin (tanı)
             if (_sevkConfig == null) _sevkConfig = PrototypeConfig.Active;   // WP-027: aynı test içinde ikinci sahne kurulumu (klon aktifken) sevk referansını ezmez
             Assert.IsNotNull(_sevkConfig);
-            Assert.AreEqual(0, _sevkConfig.RoundDifficultyOverrides.Count, "Sevk edilen config'in DEC-021 tablosu boş olmalı (öncül).");
+            Assert.AreEqual(SevkSatirSayisi, _sevkConfig.RoundDifficultyOverrides.Count, "Sevk edilen config'in DEC-021 tablosu WP-050 Ö-5 satırlarını taşır (öncül: 3 satır R8/R11/R14).");
             Assert.AreEqual(HizliAdim, _sevkConfig.Rounds.SpawnRefillInterval, 0.0001f, "Refill aralığı sabiti saptı; HizliAdim'i yenile.");
             Assert.IsNotNull(_director.TierSelector, "Tek tier otoritesi (director.TierSelector) yok.");
             Assert.AreEqual(0, _director.TierSelector.PendingObligations);
@@ -135,7 +137,7 @@ namespace DD.Prototype.Tests.PlayMode
             };
             Assert.IsTrue(_klon.ReplaceRoundDifficultyOverrides(new[] { satir }, out List<string> hatalar), string.Join("; ", hatalar));
             PrototypeConfig.SetActive(_klon);
-            Assert.AreEqual(0, _sevkConfig.RoundDifficultyOverrides.Count, "Sevk edilen asset'e satır sızdı.");
+            Assert.AreEqual(SevkSatirSayisi, _sevkConfig.RoundDifficultyOverrides.Count, "Sevk edilen asset'e satır sızdı (WP-050: sevk 3 satır).");
         }
 
         private sealed class SpawnKaydi : IDisposable
@@ -302,6 +304,9 @@ namespace DD.Prototype.Tests.PlayMode
             // yalnız "kalan ≤ borç" zorlar. Ağırlık 0: SpawnWeight/Max 0 (kısmi satır DEĞİL, tier tablosu; klon).
             EnemyTierSettings u = _klon.Enemies.Find(EnemyTier.Ultra);
             u.SpawnWeight = 0f; u.SpawnWeightGrowthPerRound = 0f; u.SpawnWeightMax = 0f;
+            // WP-050: the shipped Ö-5 rows carry an Executioner weight on R8 (the intro round) — this test is about the
+            // FORMULA weight being 0, so the clone runs with an empty table (the clone is not active yet → allowed).
+            Assert.IsTrue(_klon.ReplaceRoundDifficultyOverrides(null, out List<string> temiz), string.Join("\n", temiz));
             PrototypeConfig.SetActive(_klon);
             yield return null;
             using (var kayit = new SpawnKaydi(_director))
@@ -511,7 +516,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(_klon.ReplaceRoundDifficultyOverrides(new[] { satir }, out List<string> hatalar), string.Join("; ", hatalar));
             PrototypeConfig.SetActive(_klon);
             yield return null;
-            Assert.AreEqual(0, _sevkConfig.RoundDifficultyOverrides.Count, "Sevk edilen asset'e satır sızdı.");
+            Assert.AreEqual(SevkSatirSayisi, _sevkConfig.RoundDifficultyOverrides.Count, "Sevk edilen asset'e satır sızdı (WP-050: sevk 3 satır).");
 
             var kasklar = new List<bool>();
             using (var kayit = new SpawnKaydi(_director))

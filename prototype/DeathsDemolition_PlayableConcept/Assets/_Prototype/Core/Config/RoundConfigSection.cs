@@ -84,7 +84,7 @@ namespace DD.Prototype.Core.Config
     }
 
     /// <summary>
-    /// DEC-021 OVERRIDE TABLE - SHIPS EMPTY.
+    /// DEC-021 OVERRIDE TABLE.
     ///
     /// The approved decision DEC-021 requires round difficulty to scale through a
     /// HYBRID system: a formula baseline plus hand-authored armour ratios and
@@ -92,11 +92,13 @@ namespace DD.Prototype.Core.Config
     /// is implemented (PrototypeConfig.ArmorChance / TierSpawnWeight / ForcedTierCount,
     /// RoundDifficultyOverrideRules, TierSelectionPolicy): an authored row beats the
     /// formula for the fields it overrides, a field it does not override falls back to
-    /// the formula. The shipped list stays EMPTY, so every lookup falls through to the
-    /// formula bit-for-bit (the row VALUES are an undecided product question).
+    /// the formula.
     ///
-    /// DO NOT populate this list without an explicit instruction. A non-empty list
-    /// means the prototype has started making authored-difficulty decisions.
+    /// WP-050 (user approval 2026-09-17, WP-041 proposal Ö-5; DEC-085 recorded by S-04): the
+    /// SHIPPED asset carries three authored rows — R8 / R11 / R14 armour jumps for the
+    /// Standard + Runner crowd (<see cref="ArmorTiers"/> scope) plus an Executioner share
+    /// (tier weight, forced minimum). Code defaults (a fresh instance) stay EMPTY so the
+    /// formula tests keep their baseline. Row values are PROTOTYPE-ONLY tuning.
     /// </summary>
     [Serializable]
     public sealed class RoundDifficultyOverride
@@ -108,6 +110,19 @@ namespace DD.Prototype.Core.Config
         public bool OverrideArmorChances = false;
 
         public ArmorChanceSettings ArmorChances = new ArmorChanceSettings();
+
+        [Tooltip("WP-050 (ADR-010-3 addendum): tiers the armour override applies to. EMPTY = every tier (the WP-010 behaviour); " +
+                 "listed = only those tiers read the row, the others keep their own DEC-021 odds (so a Standard/Runner armour jump never lowers Guard/Executioner).")]
+        public List<EnemyTier> ArmorTiers = new List<EnemyTier>();
+
+        /// <summary>True when the row's armour override applies to <paramref name="tier"/> (empty scope = all tiers).</summary>
+        public bool ArmorAppliesTo(EnemyTier tier)
+        {
+            if (!OverrideArmorChances) return false;
+            if (ArmorTiers == null || ArmorTiers.Count == 0) return true;
+            for (int i = 0; i < ArmorTiers.Count; i++) if (ArmorTiers[i] == tier) return true;
+            return false;
+        }
 
         [Tooltip("When true, TierWeights replaces the computed tier selection weights for this round.")]
         public bool OverrideTierWeights = false;
