@@ -467,6 +467,7 @@ namespace DD.Prototype.Enemies
                     : 3;
                 if (_tier == EnemyTier.Ultra) style = 7;
                 else if (_tier == EnemyTier.Special) style = local.z > 0.35f ? 5 : 6;
+                LastDeathStyleIndex = style;   // WP-052 readout
                 Driver.PlayDeath(style);
             }
         }
@@ -496,8 +497,12 @@ namespace DD.Prototype.Enemies
         public void PlayStumble()
         {
             if (_dying) return;
-            if (Driven) Driver.PlayStumble();
+            if (Driven) { Driver.PlayStumble(); StumbleCount++; }
         }
+
+        /// <summary>WP-052 readouts: the AP-009 death index of the last driven death (0 fwd, 1 back, 2 side, 3 kneel, 4 side_R, 5/6 special, 7 ultra) and stumbles played this life-set (tests).</summary>
+        public int LastDeathStyleIndex { get; private set; } = -1;
+        public int StumbleCount { get; private set; }
 
         public void SetWaiting(bool waiting)
         {

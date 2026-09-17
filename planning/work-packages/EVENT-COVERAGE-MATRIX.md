@@ -69,13 +69,13 @@
 | Olay (satır) | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
 |---|---|---|---|---|---|---|
 | `telegraph_start` | `EnemyCombatEvents` · saldırı Windup başlangıcı (Seconds = telegraph) | paylaşımlı:ZombieWindup{Standard,Elite,Ultra} (tier) | 3D | SFX-World | Ü | n/a — animasyon telegraph; HUD çip (S-09) |
-| `attack_commit` | `EnemyCombatEvents` · Windup→Active (klip `hit_window_start`; yer tutucuda zamanlayıcı) | paylaşımlı:ZombieAttack{Standard,Elite,Ultra} | 3D | SFX-World | Ü | `claw_swipe` — WP-047 A |
+| `attack_commit` | `EnemyCombatEvents` · Windup→Active (klip `hit_window_start`; yer tutucuda zamanlayıcı) | paylaşımlı:ZombieAttack{Standard,Elite,Ultra} | 3D | SFX-World | Ü | `claw_swipe` — S-07 bağlar (WP-047 A; WP-052 vuruşa `Style` ekledi: Lunge/Swipe/Sweep/Overhead, Ultra overhead = zemin darbesi anı) |
 | `attack_hit` | `EnemyCombatEvents` · bağlantı karesi (= `DamageEvents.PlayerAttacked`) | paylaşımlı:AttackImpactBody | 3D | SFX-World | Ü | `vignette_damage` + `claw_swipe` (oyuncu satırı) — WP-047 A |
 | `attack_miss` | `EnemyCombatEvents` · Active→Recovery, bağlantı yok (ceza penceresi) | paylaşımlı:ZombieAttack* kuyruğu (whoosh katmanı; WP-021C aday) | 3D | SFX-World | Ü | n/a — görsel yok (ceza penceresi HUD) |
 | `stagger` | `EnemyCombatEvents` · REQ-124 sendeleme (`Seconds` = süre) / zırh kırılması ağır sendeleme klibi (`Seconds` = 1,4 tavan, `stagger_end`'e kadar; kırılma vuruşunda ikisi birden gelebilir) | ZombieStagger (×3) | 3D | SFX-World | Ü | n/a — animasyon; zırh kırılmada parça patlaması |
 | `armor_break_head` / `_torso` / `_leg` | `EnemyCombatEvents` · `Region` (= `DamageEvents.ArmorBroken` anı) | ArmorBreak (×2) + ArmorPieceDrop | 3D | SFX-World | Ü | `fb_impact_armor` v003 ×1.3 + `atlas_armorbreak` + `decal_lacquer_splinter` + kan A7 — AP-010 v003 (`ArmorVisualBinder.AnyBroken`); WP-047 A: bölge → plaka ankrajı |
 | `death_standard` / `_special` / `_elite` / `_ultra` | `EnemyCombatEvents` · `Tier` (= `DamageEvents.EnemyDied` anı) | ZombieDeath{Standard,Elite,Ultra} (Special → Standard seti, WP-021C ayrı vokal) | 3D | SFX-World | Ü | A6 / `death_special` / `death_ultra` + kan katmanı + göl — AP-010B v003 (bugün `ReportEnemyHit` Death; WP-047 A: `EnemyCombatEvents`) |
-| `spawn_rise` | `EnemyCombatEvents` · DEC-081 kamera dışı doğuş, klip başlangıcı (`Seconds` 1,57) | ZombieRise (×3, toprak katmanı) | 3D | SFX-World | Ü | `spawn_dust` bölge tint'i — katalogda, WP-047 A |
+| `spawn_rise` | `EnemyCombatEvents` · DEC-081 kamera dışı doğuş, klip başlangıcı (`Seconds` 1,57) | ZombieRise (×3, toprak katmanı) | 3D | SFX-World | Ü | `spawn_dust` bölge tint'i — S-07 bağlar (WP-047 A) |
 | `spawn_land` | `EnemyCombatEvents` · `rise_end` / kalkışsız doğuşta hemen | paylaşımlı:ZombieStepHeavy (pitch 0,8; yalnız kalkış sonrası) | 3D | SFX-World | Ü | n/a — görsel yok (adım tozu adım satırı) |
 
 ## 3. Zırh (bölge başına: kask / gövde / bacak)

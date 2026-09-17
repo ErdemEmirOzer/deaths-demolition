@@ -47,6 +47,12 @@ namespace DD.Prototype.Qa
         public const string SeedFlag = "-ddQaBotSeed";
         public const string RoundTimeoutFlag = "-ddQaBotRoundTimeout";
         public const string ProfileFlag = "-ddProfilePath";
+        /// <summary>WP-052: start the run at this round (the Executioner rounds without playing 1–7 first).</summary>
+        public const string StartRoundFlag = "-ddQaBotStartRound";
+        /// <summary>WP-052: write tier readability frames into this directory (first Special / Elite / Ultra spawn per round, the Ultra overhead).</summary>
+        public const string FramesFlag = "-ddQaBotFrames";
+        /// <summary>WP-052: evidence runs only — the player cannot die (PlayerHealth.DiagnosisInvulnerable), so the late rounds are reached; the summary is marked and never a QA pass.</summary>
+        public const string InvulnerableFlag = "-ddQaBotInvulnerable";
         public const int DefaultRounds = 8;
         public const int DefaultSeed = 26;
         public const float DefaultRoundTimeout = 300f;
@@ -76,8 +82,9 @@ namespace DD.Prototype.Qa
                 return;
             }
 
-            Arm(outDir, QaArgs.ArgInt(RoundsFlag, DefaultRounds, 1, 50), QaArgs.ArgInt(SeedFlag, DefaultSeed, 0, int.MaxValue),
+            Driver d = Arm(outDir, QaArgs.ArgInt(RoundsFlag, DefaultRounds, 1, 50), QaArgs.ArgInt(SeedFlag, DefaultSeed, 0, int.MaxValue),
                 QaArgs.ArgFloat(RoundTimeoutFlag, DefaultRoundTimeout, 30f, 3600f), true);
+            d.ConfigureTierEvidence(QaArgs.ArgInt(StartRoundFlag, 1, 1, 50), QaArgs.Arg(FramesFlag), QaArgs.Arg(InvulnerableFlag) != null);   // WP-052
         }
 
         /// <summary>Also used by the PlayMode slice test: boot=false means the caller already put the run into Fighting.</summary>
@@ -199,6 +206,73 @@ namespace DD.Prototype.Qa
                 _summary.roundsRequested = rounds;
             }
 
+            // ------------------------------------------------------------ WP-052 · tier readability evidence
+            private int _startRound = 1;
+            private string _framesDir;
+            private readonly HashSet<string> _framesTaken = new HashSet<string>();
+            private struct PendingFrame { public string Name; public float Due; public EnemyTier Tier; public float Deadline; }
+            private bool _invulnerable;
+            private readonly List<PendingFrame> _pendingFrames = new List<PendingFrame>();
+            /// <summary>WP-052 readout: frames written (tests).</summary>
+            public int FramesWritten { get; private set; }
+
+            /// <summary>WP-052: start round (1 = the normal run) and the frames directory ("" = no frames).</summary>
+            public void ConfigureTierEvidence(int startRound, string framesDir, bool invulnerable = false)
+            {
+                _startRound = Mathf.Max(1, startRound);
+                _framesDir = framesDir;
+                _invulnerable = invulnerable;
+                if (!string.IsNullOrEmpty(_framesDir)) Directory.CreateDirectory(_framesDir);
+            }
+
+            private const float TierFrameNearMetres = 10f, TierFrameDeadlineSeconds = 25f;
+
+            private void QueueFrame(string name, float delaySeconds, EnemyTier tier = EnemyTier.Standard)
+            {
+                if (string.IsNullOrEmpty(_framesDir) || !_framesTaken.Add(name)) return;
+                _pendingFrames.Add(new PendingFrame { Name = name, Due = Time.unscaledTime + delaySeconds, Tier = tier, Deadline = Time.unscaledTime + TierFrameDeadlineSeconds });
+            }
+
+            private static bool TierNearPlayer(EnemyTier tier, float metres)
+            {
+                Transform p = PlayerRegistry.Primary != null ? PlayerRegistry.Primary.transform : null;
+                if (p == null) return false;
+                foreach (ZombieEnemy z in UnityEngine.Object.FindObjectsOfType<ZombieEnemy>())
+                {
+                    if (z.IsAlive && z.Tier == tier && (z.transform.position - p.position).sqrMagnitude <= metres * metres) return true;
+                }
+                return false;
+            }
+
+            /// <summary>
+            /// One frame per tick at most (ScreenCapture writes at end of frame). A tier's first spawn is captured once a
+            /// body of that tier is within 10 m of the player (readable in frame), or at the 25 s deadline; the Ultra
+            /// overhead is captured on the beat (Tier = Standard marks "no proximity wait").
+            /// </summary>
+            private void FlushPendingFrame()
+            {
+                for (int i = 0; i < _pendingFrames.Count; i++)
+                {
+                    PendingFrame f = _pendingFrames[i];
+                    if (Time.unscaledTime < f.Due) continue;
+                    bool proximity = f.Tier == EnemyTier.Standard || TierNearPlayer(f.Tier, TierFrameNearMetres) || Time.unscaledTime >= f.Deadline;
+                    if (!proximity) continue;
+                    _pendingFrames.RemoveAt(i);
+                    ScreenCapture.CaptureScreenshot(Path.Combine(_framesDir, f.Name + ".png"));
+                    FramesWritten++;
+                    Log("frame " + f.Name + (Time.unscaledTime >= f.Deadline ? " (deadline)" : " (near)"));
+                    return;
+                }
+            }
+
+            private void OnCombatBeat(EnemyCombatEventInfo info)
+            {
+                if (info.Kind == EnemyCombatEventKind.AttackCommit && info.Tier == EnemyTier.Ultra && info.Style == ZombieAttackStyle.Overhead)
+                {
+                    QueueFrame("tierframe-r" + (RunDirector.Instance != null ? RunDirector.Instance.Round : 0) + "-ultra-overhead", 0f);
+                }
+            }
+
             private IEnumerator Start()
             {
                 _path = new NavMeshPath();
@@ -227,6 +301,20 @@ namespace DD.Prototype.Qa
                                              RunDirector.Instance.Phase == RunPhase.Fighting, "run did not reach Fighting", SceneTimeoutSeconds);
                 if (!string.IsNullOrEmpty(_fail)) { Finish(); yield break; }
 
+                // WP-052: jump to the evidence rounds (the run is already Fighting; BeginRound re-opens the ledger at the target round)
+                if (_startRound > 1 && RunDirector.Instance != null && RunDirector.Instance.Round < _startRound)
+                {
+                    RunDirector.Instance.BeginRound(_startRound);
+                    yield return null;
+                    Log("start-round " + RunDirector.Instance.Round + " (WP-052 tier evidence)");
+                }
+
+                if (_invulnerable && PlayerRegistry.Primary != null && PlayerRegistry.Primary.Health != null)
+                {
+                    PlayerRegistry.Primary.Health.DiagnosisInvulnerable = true;   // WP-052 evidence runs: reach the late rounds; never a QA pass
+                    Log("invulnerable (WP-052 evidence run — summary marked, not a QA pass)");
+                }
+
                 Subscribe();
                 _pad = new QaVirtualGamepad();
                 _pad.Neutral();
@@ -249,10 +337,12 @@ namespace DD.Prototype.Qa
                 {
                     EnemySpawnDirector.Instance.EnemySpawned += OnEnemySpawned;
                 }
+                EnemyCombatEvents.Raised += OnCombatBeat;   // WP-052
             }
 
             private void Unsubscribe()
             {
+                EnemyCombatEvents.Raised -= OnCombatBeat;   // WP-052
                 Application.quitting -= OnApplicationQuitting;
                 RunEvents.RoundStarted -= OnRoundStarted;
                 RunEvents.RoundCompleted -= OnRoundCompleted;
@@ -288,6 +378,7 @@ namespace DD.Prototype.Qa
             {
                 _spawnTiers.Add((int)ctx.Tier);
                 _summary.spawnCount++;
+                if (ctx.Tier != EnemyTier.Standard) QueueFrame("tierframe-r" + ctx.Round + "-" + ctx.Tier.ToString().ToLowerInvariant(), 1f, ctx.Tier);   // WP-052: captured when that tier is near the player
             }
 
             private void OnRoundStarted(int round)
@@ -377,6 +468,7 @@ namespace DD.Prototype.Qa
                 }
 
                 _frameMs.Add(Time.unscaledDeltaTime * 1000f);
+                FlushPendingFrame();   // WP-052
                 RunDirector run = RunDirector.Instance;
                 PlayerRig rig = PlayerRegistry.Primary;
                 if (run == null || rig == null)
@@ -880,7 +972,8 @@ namespace DD.Prototype.Qa
                 var sb = new StringBuilder();
                 for (int i = 0; i < top.Count && i < 6; i++) sb.Append(i > 0 ? " | " : "").Append(top[i].Key).Append('=').Append(top[i].Value);
                 _summary.fireLineHits = sb.ToString();
-                _summary.pass = _summary.roundsCompleted >= _rounds && string.IsNullOrEmpty(_fail);
+                _summary.pass = _summary.roundsCompleted >= _rounds && string.IsNullOrEmpty(_fail) && !_invulnerable;   // WP-052: an invulnerable evidence run is never a QA pass
+                if (_invulnerable) _summary.note = (_summary.note ?? "") + " [invulnerable evidence run: WP-052 tier frames; not a QA pass]";
                 _summary.note = string.IsNullOrEmpty(_fail) ? (_died ? "player died" : "ok") : _fail;
 
                 try

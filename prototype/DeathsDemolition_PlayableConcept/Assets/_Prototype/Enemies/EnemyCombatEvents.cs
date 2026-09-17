@@ -35,8 +35,10 @@ namespace DD.Prototype.Enemies
     public readonly struct EnemyCombatEventInfo
     {
         public EnemyCombatEventInfo(EnemyCombatEventKind kind, Transform body, EnemyTier tier, int lifeId,
-            Vector3 position, Vector3 direction, ArmorSlot region, bool animationDriven, float seconds)
+            Vector3 position, Vector3 direction, ArmorSlot region, bool animationDriven, float seconds,
+            ZombieAttackStyle style = ZombieAttackStyle.Swipe)
         {
+            Style = style;
             Kind = kind;
             Body = body;
             Tier = tier;
@@ -63,6 +65,8 @@ namespace DD.Prototype.Enemies
         public bool AnimationDriven { get; }
         /// <summary>The beat's own duration when it has one (telegraph / rise seconds), else 0.</summary>
         public float Seconds { get; }
+        /// <summary>WP-052: the swing's style for the attack beats (Lunge / Swipe / Sweep / Overhead); Swipe otherwise.</summary>
+        public ZombieAttackStyle Style { get; }
 
         /// <summary>The coverage-matrix row name: kind, with the region / tier suffix where the matrix has one.</summary>
         public string RowName => EnemyCombatEvents.RowName(Kind, Region, Tier);

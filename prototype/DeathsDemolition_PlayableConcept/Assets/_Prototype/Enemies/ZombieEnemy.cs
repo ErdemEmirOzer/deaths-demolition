@@ -288,6 +288,8 @@ namespace DD.Prototype.Enemies
         public ZombieAttackPhase AttackPhase => _attack != null ? _attack.Phase : ZombieAttackPhase.None;
         /// <summary>WP-018: the hit window is opened / closed by the AP-009 clip events (DEC-029 through ADR-018-1).</summary>
         public bool AttackAnimationDriven => _attack != null && _attack.AnimationDriven;
+        /// <summary>WP-052: the animator (named reaction readouts, tests).</summary>
+        public ZombieAnimator Animator => _animator;
         /// <summary>WP-040: the live cooldown after the version floor (readout / tests).</summary>
         public float AttackCooldownSeconds => _attack != null ? _attack.CooldownSeconds : 0f;
         /// <summary>WP-018: Time.frameCount of the last connecting swing (tests; -1 = never).</summary>
@@ -511,7 +513,8 @@ namespace DD.Prototype.Enemies
 
         private void RaiseBeat(EnemyCombatEventKind kind, Vector3 position, Vector3 direction, ArmorSlot region, bool animationDriven, float seconds)
         {
-            EnemyCombatEvents.Raise(new EnemyCombatEventInfo(kind, transform, _tier, _lifeId, position, direction, region, animationDriven, seconds));
+            EnemyCombatEvents.Raise(new EnemyCombatEventInfo(kind, transform, _tier, _lifeId, position, direction, region, animationDriven, seconds,
+                _attack != null ? _attack.Style : ZombieAttackStyle.Swipe));   // WP-052: the style rides on every beat (attack beats read it)
         }
 
         private void RaiseLand(bool fromClip)
@@ -572,6 +575,7 @@ namespace DD.Prototype.Enemies
             _verticalVelocity = 0f;
             _currentSpeed = 0f;
             ResetWaiting();   // WP-050
+            _noticed = false;   // WP-052
             _alive = false;   // Initialise flips this on
             _dying = false;
             _lastTransactionId = 0;
@@ -903,6 +907,15 @@ namespace DD.Prototype.Enemies
                 return;
             }
 
+            // ------------------------------------------------------------------ WP-052 · Ultra notice
+            // Once per life, the first time the Executioner has the player inside its notice range: the
+            // "noticed you" moment (readout now; an upper-body clip is an AP-009 reserve — no clip in v003/v004,
+            // so the moment is carried by the WP-022B ULTRA NEARBY chip and the WP-048 aggro voice).
+            if (_tier == EnemyTier.Ultra && !_noticed && target != null && distance <= UltraNoticeRange)
+            {
+                _noticed = true;
+            }
+
             // ------------------------------------------------------------------ attack
             // WP-018: a body still rising from its spawn (AP-009 rise clip) neither walks nor swings.
             // WP-040: the armour-break heavy stagger holds the body until the clip's stagger_end (timer cap inside).
@@ -1003,6 +1016,12 @@ namespace DD.Prototype.Enemies
 
         private float _stallSeconds, _moveSeconds;
         private bool _waiting;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-052: distance at which the Executioner 'notices' the player once per life (upper-body clip when AP-009 ships it).", true)]
+        private const float UltraNoticeRange = 12f;
+        private bool _noticed;
+        /// <summary>WP-052 readout: the Ultra notice fired this life.</summary>
+        public bool Noticed => _noticed;
 
         /// <summary>WP-050: the body is holding the WP-032 queue idle (chokepoint queue or stalled in the crowd). Readout / tests.</summary>
         public bool IsWaiting => _waiting;
@@ -1240,11 +1259,15 @@ namespace DD.Prototype.Enemies
 
             if (!result.Killed)
             {
+                // WP-032C: the driven body picks Hit_<dir>_<tier> from the local hit itself (AddFlinch passes it).
                 _animator.AddFlinch(direction, reaction.FlinchIntensity, result.Region, transform);
 
                 if (reaction.Stagger)
                 {
                     _animator.BeginStagger(direction, reaction.StaggerIntensity, reaction.StaggerDuration, transform);
+                    // WP-052 · Special B: the REQ-124 stagger reads as the Runner's stumble (v003 hit_special_stumble, base layer;
+                    // S-06's PlayStumble hook — the block rig ignores it, the stagger timer is unchanged).
+                    if (_tier == EnemyTier.Special) _animator.PlayStumble();
                     _attack.Cancel();
                     RaiseBeat(EnemyCombatEventKind.Stagger, point, direction, ArmorSlot.None, _animator.Driven, reaction.StaggerDuration);   // WP-040
                 }
@@ -1332,6 +1355,7 @@ namespace DD.Prototype.Enemies
             // colliders off makes the ray pass through and removes the fake feedback.
             SetHitboxesEnabled(false);
 
+            // WP-032C: the driven body picks the tier death (Special A/B, Ultra, side_R) from the tier and the push itself.
             _animator.BeginDeath(direction, hit.ImpactForce, result.Region, heavyTier, transform, ref _random);
 
             PrototypeConfig config = PrototypeConfig.Active;

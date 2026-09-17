@@ -391,6 +391,7 @@ namespace DD.Prototype.Enemies
                     {
                         _look = ZombieLookSelector.WithoutMinoCape(_library, _look, _lookSeed);
                         _skinned.Assemble(_library, _look);
+                        ApplyTierTint(_appliedVersion);   // WP-052: WP-020's Assemble re-applies the library material — the version tint goes back on top
                     }
 
                     EquipArmor(slot);
@@ -440,6 +441,7 @@ namespace DD.Prototype.Enemies
             _look = next;
             _skinned.Assemble(_library, _look);
             _armor?.SetFit(_look.fit);
+            ApplyTierTint(_appliedVersion);   // WP-052: see above — a re-assembled look must keep the WP-036 tint
         }
 
         /// <summary>

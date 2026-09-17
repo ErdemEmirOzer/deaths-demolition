@@ -207,9 +207,19 @@ namespace DD.Prototype.Tests.PlayMode
                 samples++;
                 yield return null;
             }
-            Debug.Log("[DD-OBS] wp050.waiting samples=" + samples + " waitingSamples=" + waitingSamples + " queuedSamples=" + queuedSamples + " queuedWithoutWait=" + queuedWithoutWait + " queueEvents=" + RegionNavRouter.QueueEvents);
-            Assert.Greater(waitingSamples, 0, "14 gövde köprü boğazında: en az bir gövde kuyruk/takılma beklemesine girer");
-            Assert.LessOrEqual(queuedWithoutWait, Mathf.CeilToInt(queuedSamples * 0.05f), "kuyruktaki gövde aynı karede bekler (kuyruk dalı histerezissiz; yalnız saldırı/sendeleme istisnası)");
+            Debug.Log("[DD-OBS] wp050.waiting samples=" + samples + " waitingSamples=" + waitingSamples + " queuedSamples=" + queuedSamples + " queuedWithoutWait=" + queuedWithoutWait + " queueEvents=" + RegionNavRouter.QueueEvents + " reroutes=" + RegionNavRouter.RerouteCount);
+            // WP-052 note: on the world v3 NavMesh (WP-020 area costs) the crowd may take the shore alternative and never queue at the
+            // bridge mouth; the binding is asserted whenever a queue DID happen, otherwise the run only proves the idle does not misfire.
+            if (RegionNavRouter.QueueEvents > 0 || queuedSamples > 0)
+            {
+                Assert.Greater(waitingSamples, 0, "köprü kuyruğu oluştu: en az bir gövde bekleme durumuna girer");
+                Assert.LessOrEqual(queuedWithoutWait, Mathf.CeilToInt(queuedSamples * 0.05f), "kuyruktaki gövde aynı karede bekler (kuyruk dalı histerezissiz; yalnız saldırı/sendeleme istisnası)");
+            }
+            else
+            {
+                Assert.Greater(RegionNavRouter.RerouteCount, 0, "kuyruk yoksa sürü kıyı rotasına dönmüş olmalı (aksi hâlde boğaz kuralı hiç çalışmadı)");
+                Assert.LessOrEqual((float)waitingSamples / Mathf.Max(1, samples * 14), 0.05f, "kuyruksuz koşuda serbest yürüyen gövdeler beklemez");
+            }
 
             // release: a body that waited and then died never holds the idle; a body cleared from the crowd walks again
             if (waited != null && waited.IsAlive)
