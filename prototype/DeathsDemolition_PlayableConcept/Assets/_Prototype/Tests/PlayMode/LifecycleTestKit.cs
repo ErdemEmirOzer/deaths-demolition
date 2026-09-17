@@ -86,6 +86,29 @@ namespace DD.Prototype.Tests.PlayMode
             return d == null ? 0 : d.GetInvocationList().Length;
         }
 
+        /// <summary>
+        /// WP-059: bir statik event'in abonelerinin hedef tipleri ("Tip" ya da statik/lambda için
+        /// "Tip::Metot"). Bilinen süreç-boyu tüketiciler beyaz listesiyle karşılaştırılır — liste dışı
+        /// her abone bir sızıntıdır.
+        /// </summary>
+        public static List<string> AboneHedefleri(Type tip, string eventAdi)
+        {
+            FieldInfo alan = tip.GetField(eventAdi, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.IsNotNull(alan, tip.Name + "." + eventAdi + " backing field bulunamadı.");
+            var sonuc = new List<string>();
+            var d = alan.GetValue(null) as Delegate;
+            if (d == null) return sonuc;
+            foreach (Delegate h in d.GetInvocationList())
+            {
+                Type sahip = h.Target != null ? h.Target.GetType() : h.Method.DeclaringType;
+                // A lambda / closure lives in a compiler class nested under its owner.
+                while (sahip != null && sahip.IsNested && sahip.Name.StartsWith("<")) sahip = sahip.DeclaringType;
+                sonuc.Add(sahip != null ? sahip.Name : "?");
+            }
+
+            return sonuc;
+        }
+
         /// <summary>Tüm izlenen event'lerin abone sayıları; anahtar "Tip.Event".</summary>
         public static Dictionary<string, int> AboneAnlikGoruntu()
         {

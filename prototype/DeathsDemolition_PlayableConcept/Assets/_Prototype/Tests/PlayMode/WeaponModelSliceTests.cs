@@ -5,6 +5,7 @@ using DD.Prototype.Characters;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
+using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.UI;
 using DD.Prototype.Weapons;
@@ -102,6 +103,22 @@ namespace DD.Prototype.Tests.PlayMode
                 WeaponSocketContract.Measures m = WeaponSocketContract.MeasuresOf(d.TypeClass);
                 Vector3 muzzleLocal = mount.InverseTransformPoint(_s.Controller.Muzzle.position);
                 Assert.Less(Vector3.Distance(muzzleLocal, m.Muzzle), WeaponSocketContract.MarkerToleranceMetres, d.RosterKey + ": namlu " + muzzleLocal + " ≠ " + m.Muzzle);
+
+                // WP-059: the weapon frame on the LIVE rig — the mount re-asserts the authored intent after the Animator
+                // (facing, level; WeaponMountAlignment), so the muzzle points where the character faces and the grip
+                // sits in the palm, for every weapon and every aim pose (the socket bone alone stood the rifle on end).
+                var alignment = mount.GetComponent<WeaponMountAlignment>();
+                Assert.IsNotNull(alignment, "WeaponMountAlignment montajda yok.");
+                Assert.IsTrue(alignment.AlignedThisFrame, d.RosterKey + ": montaj bu karede hizalanmadı.");
+                Vector3 muzzleDir = _s.Rig.transform.InverseTransformDirection((_s.Controller.Muzzle.position - mount.position).normalized);
+                Assert.Greater(muzzleDir.z, 0.95f, d.RosterKey + ": namlu karakterin önüne bakmıyor " + muzzleDir);
+                Assert.Less(Mathf.Abs(muzzleDir.y), 0.2f, d.RosterKey + ": namlu düz değil " + muzzleDir);
+                Transform rightHand = skinned.Animator.GetBoneTransform(HumanBodyBones.RightHand);
+                Transform grip = WeaponSocketContract.Find(mount, WeaponSocketContract.MarkerGrip);
+                Assert.IsNotNull(grip, d.RosterKey + ": marker_grip yok.");
+                float gripToHand = Vector3.Distance(grip.position, rightHand.position);
+                Assert.Less(gripToHand, 0.08f, d.RosterKey + ": kabza sağ elden " + (gripToHand * 100f).ToString("0.0") + " cm uzakta.");
+                report.Add(d.RosterKey + " muzzleDir=" + muzzleDir.ToString("F2") + " grip→hand=" + (gripToHand * 100f).ToString("0.0") + "cm");
 
                 // Orthographic side frame (evidence) — camera on the character's right, looking −X in the mount frame.
                 string png = OrthoSideFrame(mount, d.RosterKey);

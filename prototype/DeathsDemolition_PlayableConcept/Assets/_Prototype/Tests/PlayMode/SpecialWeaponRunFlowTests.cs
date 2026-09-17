@@ -299,10 +299,24 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            int specialAboneMenu = LifecycleTestKit.AboneSayisi(typeof(WeaponEvents), "SpecialWeaponSpawned")
-                                   + LifecycleTestKit.AboneSayisi(typeof(WeaponEvents), "SpecialChanged")
-                                   + LifecycleTestKit.AboneSayisi(typeof(SpecialWeaponRoundBridge), "RoundStarted");
-            Assert.AreEqual(0, specialAboneMenu, "Ana menüde Special/Bridge statik abonesi kaldı (teardown sonrası abone).");
+            // WP-059 (C-00 kararı): ana menüde kalan abone yalnız bilinen SÜREÇ-BOYU tüketiciler olabilir —
+            // RunTelemetry (WP-045, ADR-045-1), VfxDressing (WP-047), GamepadRumble (WP-056). Beyaz liste dışı
+            // her abone bir sızıntıdır (testin amacı korunur: teardown sonrası run'a ait abone kalmaz).
+            var kalan = new List<string>();
+            foreach ((System.Type tip, string ad) in new[] { (typeof(WeaponEvents), "SpecialWeaponSpawned"), (typeof(WeaponEvents), "SpecialChanged"), (typeof(SpecialWeaponRoundBridge), "RoundStarted") })
+            {
+                foreach (string hedef in LifecycleTestKit.AboneHedefleri(tip, ad))
+                {
+                    if (System.Array.IndexOf(SurecBoyuTuketiciler, hedef) < 0) kalan.Add(tip.Name + "." + ad + " ← " + hedef);
+                }
+            }
+
+            Debug.Log("[DD-TEST] wp007.tm50 menü aboneleri: " + string.Join(", ", LifecycleTestKit.AboneHedefleri(typeof(WeaponEvents), "SpecialWeaponSpawned")) + " | " +
+                      string.Join(", ", LifecycleTestKit.AboneHedefleri(typeof(WeaponEvents), "SpecialChanged")) + " | " + string.Join(", ", LifecycleTestKit.AboneHedefleri(typeof(SpecialWeaponRoundBridge), "RoundStarted")));
+            CollectionAssert.IsEmpty(kalan, "Ana menüde Special/Bridge statik abonesi kaldı (teardown sonrası abone; beyaz liste dışı).");
         }
+
+        /// <summary>WP-059: statik Special/Bridge event'lerine süreç boyu bağlı kalması TASARLANMIŞ tüketiciler (C-00 kararı 2026-09-17).</summary>
+        private static readonly string[] SurecBoyuTuketiciler = { "RunTelemetry", "VfxDressing", "GamepadRumble" };
     }
 }

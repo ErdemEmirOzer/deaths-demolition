@@ -4,4 +4,6 @@ Sahip S-02. Taban main f9ff487 (WP-056). Kredi 0. Kapsam (C-00 mesajı): oyuncu 
 
 Not: oyuncu / silah tasarımı proje sonunda ortak revize edilecek (kullanıcı 16.09 son revizyon listesi) — buradaki sayılar PROTOTYPE-ONLY teknik varsayılanlardır, `DD_GameFeel` asset'i ayar yüzeyidir.
 
+Ekler (C-00, teslim sonrası, aynı paket 2. commit): P-06 AD turu motor kusuru — sağ kol silahtan ayrık / A tüfeği dik → soket ofseti sıfır + `WeaponSocketContract` ile ölç, klipse P-06'ya; S-06 yakalamada silah değişiminde mesh; `SpecialWeaponRunFlowTests.IkinciKosu_OlayVeAboneSayilari` beyaz liste (RunTelemetry / VfxDressing / GamepadRumble).
+
 Sonuç: `planning/04-IMPLEMENTATION-PLAN.md` § WP-059.

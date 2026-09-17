@@ -231,6 +231,9 @@ namespace DD.Prototype.PlayerSystem
                 weaponMount.SetParent(socket, false);
                 weaponMount.localPosition = Vector3.zero;
                 weaponMount.localRotation = Quaternion.identity;
+                // WP-059: the socket's rotation does not survive Humanoid retargeting (hand roll); the mount
+                // re-asserts the authored frame (facing, level) after the Animator every frame.
+                WeaponMountAlignment.Attach(weaponMount, root.GetComponent<PlayerRig>());
             }
 
             ApplySkinAlbedo(skinned, skin);
