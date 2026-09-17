@@ -48,6 +48,7 @@ namespace DD.Prototype.Feedback.Vfx
         public int SpecialHits { get; private set; }
         public int SpecialHitsThrottled { get; private set; }
         public int ChainArcs { get; private set; }
+        public int TideImplodes { get; private set; }
 
         public VfxEventBinder(VfxDressing owner)
         {
@@ -93,7 +94,11 @@ namespace DD.Prototype.Feedback.Vfx
                     if (e.Id == SpecialWeaponId.TideJewel) { _tideWellCentre = e.Origin; _tideWellLive = true; }
                     return;
                 case SpecialUsageKind.FieldEnded:
-                    if (e.Id == SpecialWeaponId.TideJewel) _tideWellLive = false;
+                    if (e.Id == SpecialWeaponId.TideJewel)
+                    {
+                        _tideWellLive = false;
+                        if (_owner.PlayTideImplode(e.Origin, e.Radius)) TideImplodes++;
+                    }
                     return;
                 case SpecialUsageKind.Hit:
                     break;
@@ -124,7 +129,7 @@ namespace DD.Prototype.Feedback.Vfx
                     break;
                 case SpecialWeaponId.OfudaLoom:
                     // The seal's height comes with the target (cached standing height); the web card wraps the torso.
-                    played = _owner.PlayOfudaWeb(body, Mathf.Max(1.2f, e.Target.Height), e.Seconds);
+                    played = _owner.PlayOfudaWeb(body, Mathf.Max(1.2f, e.Target.Height), e.Seconds, e.Origin);
                     break;
                 case SpecialWeaponId.TideJewel:
                     played = _owner.PlayTidePull(feet, e.Direction);

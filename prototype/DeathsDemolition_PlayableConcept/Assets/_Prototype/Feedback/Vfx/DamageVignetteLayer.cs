@@ -1,5 +1,7 @@
 using DD.Prototype.PlayerSystem;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 namespace DD.Prototype.Feedback.Vfx
@@ -105,6 +107,51 @@ namespace DD.Prototype.Feedback.Vfx
             PlayerHealth.AnyHealthChanged += OnHealthChanged;
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
             DD.Prototype.Rounds.RunEvents.RunStarted += OnRunStarted;
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnSceneChanged;
+        }
+
+        /// <summary>WP-047E: the overlay + desaturation belong to the Run scene — a scene change (results, menu) clears them.</summary>
+        private void OnSceneChanged(UnityEngine.SceneManagement.Scene from, UnityEngine.SceneManagement.Scene to)
+        {
+            OnRunStarted(0);
+            SetDeathDesaturation(0f);
+        }
+
+        // ------------------------------------------------------------------ WP-047E · death desaturation (S-02 hand-off, post-fx)
+
+        /// <summary>Saturation at the end of the death overlay ramp (−100 = grey); the LUT / grade volume (WP-029) stays as is — this is a second, higher-priority global volume.</summary>
+        public const float DeathDesaturation = -70f;   // AD SHOULD (WP-047E): −85 flattened the silhouette; −70 + contrast +8
+        public const float DeathContrast = 8f;
+        public const float DeathVolumePriority = 50f;
+
+        private Volume _deathVolume;
+        private ColorAdjustments _deathColour;
+
+        public float DeathVolumeWeight => _deathVolume != null ? _deathVolume.weight : 0f;
+
+        private void SetDeathDesaturation(float t)
+        {
+            if (_deathVolume == null)
+            {
+                if (t <= 0f) return;
+                var go = new GameObject("[Death Desaturation]");
+                go.transform.SetParent(transform, false);
+                _deathVolume = go.AddComponent<Volume>();
+                _deathVolume.isGlobal = true;
+                _deathVolume.priority = DeathVolumePriority;
+                _deathVolume.weight = 0f;
+                VolumeProfile profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                profile.name = "DeathDesaturation (runtime)";
+                _deathColour = profile.Add<ColorAdjustments>(true);
+                _deathColour.saturation.overrideState = true;
+                _deathColour.saturation.value = DeathDesaturation;
+                _deathColour.contrast.overrideState = true;
+                _deathColour.contrast.value = DeathContrast;
+                _deathVolume.sharedProfile = profile;
+            }
+
+            // Ease-in: the colour drains after the darkening starts reading, not with it.
+            _deathVolume.weight = Mathf.Clamp01(t * t);
         }
 
         private void OnDisable()
@@ -113,9 +160,16 @@ namespace DD.Prototype.Feedback.Vfx
             PlayerHealth.AnyHealthChanged -= OnHealthChanged;
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
             DD.Prototype.Rounds.RunEvents.RunStarted -= OnRunStarted;
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnSceneChanged;
         }
 
         private void OnPlayerDied(PlayerDeathInfo info)
+        {
+            _deathT = 0f;
+        }
+
+        /// <summary>Test seam: start the death overlay + desaturation ramp without a death event.</summary>
+        public void BeginDeathOverlayForTests()
         {
             _deathT = 0f;
         }
@@ -182,6 +236,11 @@ namespace DD.Prototype.Feedback.Vfx
                 d.a = DeathOverlayDarkening * _deathT;
                 _deathImage.color = d;
                 _deathImage.enabled = true;
+                SetDeathDesaturation(_deathT);
+            }
+            else if (_deathVolume != null && _deathVolume.weight > 0f)
+            {
+                SetDeathDesaturation(0f);
             }
 
             float hold = _healthFraction < feel.LowHealthFraction && _healthFraction > 0f ? feel.VignetteLowHealthAlpha : 0f;

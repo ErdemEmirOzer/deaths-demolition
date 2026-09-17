@@ -1,5 +1,12 @@
 # `_Art/VFX` — WP-013 atmosphere & foliage VFX (M3)
 
+> **Map (WP-047E consolidation).** One folder, four layers, one contract:
+> 1. **Atmosphere** — wind (ADR-013-1), drift prefabs, foliage/pollen/petals, post-processing (§ Wind … § Post-processing).
+> 2. **AP-010 catalog** — manifest → `DD_VfxCatalog` rows → materials (ADR-019-1); v003 108 assets (§ Catalog, § AP-010B v003).
+> 3. **Runtime** — pools, the director + `VfxEventBinder` hooks, blood system, wave 3 / WP-047D–E items, game feel (ADR-019-2) (§ Runtime … § WP-047D/E).
+> 4. **Contract & measurement** — ADR-047-1 (event binding, throttles, prewarmed pools, zero-alloc method), fps/resolution table, evidence (§ Contract, § Frame rate, § Measurements).
+> Hand-offs live in `planning/04-IMPLEMENTATION-PLAN.md` (WP-047E "Devirler"); the event coverage matrix VFX column is the completeness gate (`planning/work-packages/EVENT-COVERAGE-MATRIX.md`, no empty cell).
+
 Generated assets (`Tools › Deaths Demolition › Art Pipeline › Run Atmosphere VFX (WP-013)`, batch
 `-executeMethod DD.Art.Pipeline.EditorTools.ArtPipelineMenu.RunAtmosphereVfx`). Re-running restores the
 contract; GUIDs are stable. Nothing here is a product decision — every number is PROTOTYPE-ONLY
@@ -197,6 +204,35 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
 - `FeedbackPalette`: damage-number and hit-marker colours from S-09's `UiTokens` state tokens (critical = warning, kill =
   danger, armour = wisteria on the colour-blind palette). Blood untouched (DEC-077).
 - `WaterLook`: the pond's `DD/Water v2` shallow / deep colours (one scan per scene) tint the splash, ring and Tide arc.
+
+## WP-047E — M3 closure items
+
+- `barrel_heat_distort` → `DD/VFX HeatHaze` (`Resources/Shaders`, ships): refracts through the URP opaque texture when the
+  pipeline asset provides it (`DD_OPAQUE_TEXTURE`), otherwise a faint scrolled shimmer — WP-029's asset keeps the opaque
+  texture off, so the shimmer path runs (`VfxDressing.HazeRefracts`). Half-size card centred on the strip.
+- Death ramp desaturation: `DamageVignetteLayer` adds a second global `Volume` (priority 50, runtime profile) with
+  `ColorAdjustments` saturation −70 / contrast +8, weight t² over the 2 s overlay; cleared on scene change.
+- Lantern point lights: ≤ 6 (range 1.6 m, 0.35, amber, no shadows) re-assigned every 0.5 s to the nearest lanterns
+  within 26 m (S-05 budget: keep ≤ 2 m range, per-object limit 4 untouched); ±10 % alpha flicker on the flame cards.
+- Tide well implosion (`FieldEnded`): pond splash crown + a ring growing to the well radius (`PlayTideImplode`).
+- AD round (Fable, 7 frames) MUSTs: Ofuda web card on the event's torso centre, body-aligned, paper tint; Kagura dust 1.2 m;
+  chain arc stretched ×2.4 and ×1.6 gain; claw card driven to (0.85, 0.82, 0.75) × 1.4 through the block tint; placeholder
+  ring lines at alpha 0.25 under the sheet.
+
+## Contract — ADR-047-1 (event binding, throttles, pools, measurement)
+
+1. One entry per beat: the director for hit / death / armour / explosion / Special reports, `VfxEventBinder` for the buses
+   (`EnemyCombatEvents`, `CharacterAnimationEvents.Any`, `WeaponEvents.ReloadStarted`, `SpecialWeaponUsageEvents.Usage`).
+   A beat that two buses announce (WP-055 `sw_*` vs WP-056 `Hit`) is bound once.
+2. Throttles are fixed-size tables keyed by body / target id (96, cleared when full) plus camera-distance gates; frame caps
+   live in `FeedbackBudget`.
+3. Every pool is prewarmed to capacity and activated once (`FeedbackPoolWarmer`); events are readonly structs; no string
+   work on the hot path (`Object.name` cached per instance, `TextMesh.text` never read, number table built at type load).
+4. Allocation is measured in S-02's fixture with `Profiler.enabled` frame counters, in a fresh session; the used-heap delta
+   and `GC.GetAllocatedBytesForCurrentThread` are not evidence.
+5. Looks are derived, not duplicated: manifest tint × block tint (AD targets expressed as block tints), scene looks
+   (`WaterLook`, `SurfaceTag.Family`) scanned once per scene; WP-002 placeholders only when the AP-010 row is missing, and at
+   alpha ≤ 0.25 under a sheet.
 
 ## Frame rate / resolution table (directive §10 "high quality" gate)
 

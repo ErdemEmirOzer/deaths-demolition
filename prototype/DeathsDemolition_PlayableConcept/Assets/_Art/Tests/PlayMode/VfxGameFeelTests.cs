@@ -231,8 +231,9 @@ namespace DD.Art.Tests.PlayMode
             Assert.AreEqual(hitsBefore + 1, vignette.Hits);
             Assert.Greater(peak, 0.05f, "Vinyet parlamadı.");
             Assert.LessOrEqual(peak, GameFeelSettings.MaxVignetteAlpha + 0.001f);
-            // The bump comes from PlayerSystem.PlayerDamageFeedback (REQ-045); the vignette layer adds none by default.
-            Assert.AreEqual(0f, GameFeelSettings.Active.ShakePlayerDamageAmplitude, 1e-6f, "Vinyet katmanı ikinci bir sarsıntı istememeli.");
+            // The bump comes from PlayerSystem.PlayerDamageFeedback alone (REQ-045; WP-059 gives it 0.09 from DD_GameFeel) — the
+            // vignette layer never requests a shake of its own, and the setting stays inside the type's ceiling.
+            Assert.LessOrEqual(GameFeelSettings.Active.ShakePlayerDamageAmplitude, GameFeelSettings.MaxShakeAmplitude + 1e-6f, "Oyuncu hasarı sarsıntısı tavanı aşıyor.");
             yield return CharacterTests.Bekle(() => !vignette.IsFlashing, 5f, "vinyet sönmedi");
 
             // Hit-stop: an armour-break dressing stops time ≤ 40 ms, an explosion does not.

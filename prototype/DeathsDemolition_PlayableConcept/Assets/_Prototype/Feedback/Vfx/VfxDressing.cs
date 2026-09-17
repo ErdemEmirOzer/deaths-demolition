@@ -190,11 +190,23 @@ namespace DD.Prototype.Feedback.Vfx
         // ------------------------------------------------------------------ WP-047D · enemy Special reactions (WP-055 / WP-056 Hit)
 
         public const float SpecialHitThrottleSeconds = 0.30f;
-        public const float KaguraHitDustScale = 1.6f;
+        public const float KaguraHitDustMetres = 1.2f;     // AD M2 (WP-047E): 0.6 → 1.2 m, alpha 0.5, ≥ 0.6 s
+        public const float KaguraHitDustSeconds = 0.6f;
+        public const float ChainArcThickness = 2.4f;        // AD M2: the bolt's height stretched so the core reads at 20 m
+        public const float ChainArcGain = 1.6f;
         public const float TidePullStreakSize = 0.55f;
-        public const float ChainArcMinMetres = 1.2f, ChainArcMaxMetres = 3.5f;
+        public const float ChainArcMinMetres = 1.5f, ChainArcMaxMetres = 3.5f;
 
         public int SpecialHitsPlayed { get; private set; }
+
+        public static readonly Color ClawTargetTint = new Color(0.85f * 1.4f, 0.82f * 1.4f, 0.75f * 1.4f, 1f);
+
+        /// <summary>Block tint that lands the card on <see cref="ClawTargetTint"/> after the manifest tint multiplies it.</summary>
+        public static Color ClawTintFor(VfxCatalogEntry row)
+        {
+            Color m = row != null ? row.DefaultTint : Color.white;
+            return new Color(ClawTargetTint.r / Mathf.Max(0.05f, m.r), ClawTargetTint.g / Mathf.Max(0.05f, m.g), ClawTargetTint.b / Mathf.Max(0.05f, m.b), 1f);
+        }
 
         /// <summary>Kagura wave front crossed a body (S-03 Dazed): a ground puff kicked off the feet in the front's direction.</summary>
         public bool PlayKaguraHit(Vector3 feet, Vector3 direction)
@@ -210,14 +222,17 @@ namespace DD.Prototype.Feedback.Vfx
                 return false;
             }
 
-            fx.Play(row, FlipbookEffect.Facing.CameraYaw, row.WorldSizeMetres * KaguraHitDustScale, VfxLibrary.BeaconTint, 0.8f, 0.3f);
+            fx.Play(row, FlipbookEffect.Facing.CameraYaw, KaguraHitDustMetres, VfxLibrary.BeaconTint, 0.5f, 0.35f, KaguraHitDustSeconds);
             fx.SetAlign(direction.sqrMagnitude > 1e-4f ? direction : Vector3.forward, true);
             SpecialHitsPlayed++;
             return true;
         }
 
-        /// <summary>Ofuda seal on a body (S-03 Netted): the AP-014 web card wrapped on the body for the seal's life, following it.</summary>
-        public bool PlayOfudaWeb(Transform body, float height, float seconds)
+        public const float OfudaWebWidthOfHeight = 0.30f;   // AD M1 (WP-047E): shoulder width × 0.9 ≈ 0.3 of the standing height
+        public static readonly Color OfudaWebTint = new Color(0.92f, 0.88f, 0.78f, 1f);
+
+        /// <summary>Ofuda seal on a body (S-03 Netted): the AP-014 web card on the torso (the event's centre), body-aligned, for the seal's life.</summary>
+        public bool PlayOfudaWeb(Transform body, float height, float seconds, Vector3 centre)
         {
             if (!_ready || AuditMute || body == null)
             {
@@ -230,14 +245,17 @@ namespace DD.Prototype.Feedback.Vfx
                 return false;
             }
 
-            FlipbookEffect fx = _flipbooks.Get(body.position + Vector3.up * (height * 0.55f), Quaternion.identity, body);
+            // AD M1: the card sits on the torso the event points at (not above the root + a guess), faces the body's forward and
+            // stays parented so a Netted body that still sways carries it.
+            Vector3 forward = body.forward.sqrMagnitude > 1e-4f ? body.forward : Vector3.forward;
+            FlipbookEffect fx = _flipbooks.Get(centre, Quaternion.LookRotation(forward, Vector3.up), body);
             if (fx == null)
             {
                 return false;
             }
 
-            float size = Mathf.Clamp(height * 0.62f, 0.6f, 1.4f);
-            fx.Play(sheet.Row, FlipbookEffect.Facing.CameraYaw, size, VfxLibrary.OfudaCreamTint, 0.9f, 0.25f, Mathf.Max(0.3f, seconds));
+            float size = Mathf.Clamp(height * OfudaWebWidthOfHeight, 0.4f, 0.7f);
+            fx.Play(sheet.Row, FlipbookEffect.Facing.Fixed, size, OfudaWebTint, 0.7f, 0.25f, Mathf.Max(0.3f, seconds));
             SpecialHitsPlayed++;
             return true;
         }
@@ -263,6 +281,36 @@ namespace DD.Prototype.Feedback.Vfx
             return true;
         }
 
+        /// <summary>Tide well imploded (WP-056 FieldEnded): the pond splash crown at the centre and a wide ring at the well's radius (no AP-014 well sheet — AP-014C).</summary>
+        public bool PlayTideImplode(Vector3 centre, float radius)
+        {
+            if (!_ready || AuditMute)
+            {
+                return false;
+            }
+
+            bool any = false;
+            if (VfxLibrary.TryGetPlayable(VfxIds.WaterSplash, out VfxCatalogEntry splash))
+            {
+                FlipbookEffect fx = _flipbooks.Get(centre + Vector3.up * 0.05f, Quaternion.identity);
+                if (fx != null) { fx.Play(splash, FlipbookEffect.Facing.Camera, splash.WorldSizeMetres * 1.8f, WaterLook.ArcTint, 0.9f, 0.3f); any = true; }
+            }
+
+            if (VfxLibrary.TryGetPlayable(VfxIds.WaterSplashRing, out VfxCatalogEntry ring))
+            {
+                FlipbookEffect fx = _flipbooks.Get(centre + Vector3.up * 0.03f, Quaternion.Euler(90f, 0f, 0f));
+                if (fx != null)
+                {
+                    fx.Play(ring, FlipbookEffect.Facing.Fixed, Mathf.Clamp(radius * 1.6f, 1f, 6f), WaterLook.SplashTint, 0.7f, 0.4f);
+                    fx.SetGrow(radius * 0.4f, 0.25f);   // the ring collapses inward in the sheet; the card grows to the rim as the well empties
+                    any = true;
+                }
+            }
+
+            if (any) SpecialHitsPlayed++;
+            return any;
+        }
+
         /// <summary>AP-010B `chain_arc_sheet` stretched between two points (Tide well → pulled body; manifest: 0.6–1.4× of 2.5 m).</summary>
         public bool PlayChainArc(Vector3 from, Vector3 to)
         {
@@ -284,8 +332,10 @@ namespace DD.Prototype.Feedback.Vfx
                 return false;
             }
 
-            fx.Play(row, FlipbookEffect.Facing.Camera, Mathf.Clamp(length, ChainArcMinMetres, ChainArcMaxMetres), WaterLook.ArcTint, 1f, 0f);
+            Color arc = WaterLook.ArcTint * ChainArcGain; arc.a = 1f;
+            fx.Play(row, FlipbookEffect.Facing.Camera, Mathf.Clamp(length, ChainArcMinMetres, ChainArcMaxMetres), arc, 1f, 0f);
             fx.SetAlign(delta / length, true);
+            fx.SetStretch(1f, ChainArcThickness);
             SpecialHitsPlayed++;
             return true;
         }
@@ -330,6 +380,62 @@ namespace DD.Prototype.Feedback.Vfx
             return _heatMuzzle != null ? _heatMuzzle.forward : Vector3.forward;
         }
 
+        // WP-047E · `barrel_heat_distort` haze card over the strip (DD/VFX HeatHaze: refraction when the pipeline asset has the
+        // opaque texture, a faint shimmer otherwise — WP-029's asset keeps it off; the keyword follows the asset).
+        private FlipbookEffect _hazeCard;
+        private VfxCatalogEntry _hazeRow;
+        private bool _hazeTried;
+
+        public bool BarrelHazeVisible => _hazeCard != null && _hazeCard.IsSpawned;
+        public bool HazeRefracts { get; private set; }
+
+        private VfxCatalogEntry HazeRow()
+        {
+            if (_hazeTried) return _hazeRow;
+            _hazeTried = true;
+            VfxCatalogEntry data = VfxLibrary.Get(VfxIds.BarrelHeatDistort);
+            Shader shader = Shader.Find("DD/VFX HeatHaze");   // lives under _Art/VFX/Resources/Shaders so the player build carries it
+            if (data == null || data.Texture == null || shader == null) return null;
+            var m = new Material(shader) { name = "M_barrel_heat_haze (runtime)" };
+            m.SetTexture("_Sheet", data.Texture);
+            var urp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            HazeRefracts = urp != null && urp.supportsCameraOpaqueTexture;
+            if (HazeRefracts) m.EnableKeyword("DD_OPAQUE_TEXTURE"); else m.DisableKeyword("DD_OPAQUE_TEXTURE");
+            _hazeRow = new VfxCatalogEntry
+            {
+                Id = VfxIds.BarrelHeatDistort, Family = VfxFamily.Weapon, Kind = VfxKind.Flipbook, SourceFile = data.SourceFile, ManifestFile = data.ManifestFile,
+                Texture = data.Texture, Material = m, Columns = 1, Rows = 1, FramesUsed = 1, Fps = 1f, DurationSeconds = 0f, Loop = true,
+                WorldSizeMetres = data.WorldSizeMetres > 0f ? data.WorldSizeMetres : 0.06f, WorldHeightMetres = data.WorldHeightMetres > 0f ? data.WorldHeightMetres : 0.3f,
+                OriginUv = new Vector2(0.5f, 0.5f), DefaultTint = Color.white, HdrIntensity = 1f
+            };
+            return _hazeRow;
+        }
+
+        private void TickBarrelHaze(Vector3 barrel)
+        {
+            if (_heatCard == null)
+            {
+                if (_hazeCard != null) { if (_hazeCard.IsSpawned) _flipbooks.Release(_hazeCard); _hazeCard = null; }
+                return;
+            }
+
+            VfxCatalogEntry row = HazeRow();
+            if (row == null) return;
+            // The haze rises off the strip: half a strip above the barrel line, camera-yaw so it stays a vertical shimmer.
+            // AD SHOULD (WP-047E): half size, centred on the strip (it read as a separate smudge below the barrel).
+            Vector3 at = _heatMuzzle.position - barrel * (_heatLength * 0.5f) + Vector3.up * (row.WorldHeightMetres * 0.25f);
+            if (_hazeCard == null || !_hazeCard.IsSpawned)
+            {
+                _hazeCard = _flipbooks.Get(at, Quaternion.identity);
+                if (_hazeCard == null) return;
+                _hazeCard.Play(row, FlipbookEffect.Facing.CameraYaw, row.WorldSizeMetres * 1.25f, Color.white, _heat, 0f, 3600f);
+                return;
+            }
+
+            _hazeCard.transform.position = at;
+            _hazeCard.SetAlphaCap(_heat);
+        }
+
         private void TickBarrelHeat(float now)
         {
             if (_heatTickAt < 0f) _heatTickAt = now;
@@ -341,6 +447,7 @@ namespace DD.Prototype.Feedback.Vfx
             {
                 if (_heatCard.IsSpawned) _flipbooks.Release(_heatCard);
                 _heatCard = null;
+                TickBarrelHaze(Vector3.forward);
                 return;
             }
 
@@ -370,6 +477,7 @@ namespace DD.Prototype.Feedback.Vfx
             _heatCard.transform.position = _heatMuzzle.position - barrel * (_heatLength * 0.5f);
             _heatCard.SetAlign(barrel, false);
             _heatCard.SetAlphaCap(_heat);
+            TickBarrelHaze(barrel);
         }
 
         private static T Template<T>(Transform root, string name) where T : PooledEffect
@@ -680,7 +788,9 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             float scale = tier >= DD.Prototype.Core.Config.EnemyTier.Elite ? 1.3f : tier == DD.Prototype.Core.Config.EnemyTier.Special ? 1.1f : 1f;
-            fx.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres * scale, Color.white);
+            // AD M3 (WP-047E): the manifest tint (0.22, 0.20, 0.19) is a dark streak that vanished on dark bodies; the card is driven
+            // to (0.85, 0.82, 0.75) × 1.4 through the block tint (which multiplies the manifest tint), alpha 0.8.
+            fx.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres * scale, ClawTintFor(row), 0.8f);
             fx.SetAlign(direction, true);
             Wave3Played++;
             return true;

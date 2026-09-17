@@ -376,8 +376,20 @@ namespace DD.Art.Tests.PlayMode
             yield return null;
             ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_heat", muzzle.position + muzzle.right * 0.9f + Vector3.up * 0.25f - muzzle.forward * 0.3f, muzzle.position - muzzle.forward * 0.2f, 38f), W, H, Path.Combine(dir, "06-barrel-heat-near.png"), true);
 
+            // WP-047E: the haze card rides on the strip; lantern lights stay inside the budget; the death ramp desaturates.
+            Assert.IsTrue(vfx.BarrelHazeVisible, "barrel_heat_distort haze kartı şeritle birlikte görünmeli");
+            Assert.LessOrEqual(vfx.Lanterns.LightsLit, LanternFlames.MaxLanternLights, "fener ışık bütçesi aşıldı");
+            Debug.Log("[DD-TEST] wp047e haze=" + vfx.BarrelHazeVisible + " refracts=" + vfx.HazeRefracts + " heat=" + vfx.BarrelHeat.ToString("F2") + " lanternLights=" + vfx.Lanterns.LightsLit + "/" + LanternFlames.MaxLanternLights);
+            DamageVignetteLayer vignette = DamageVignetteLayer.EnsureExists();
+            vignette.BeginDeathOverlayForTests();
+            yield return new WaitForSeconds(DamageVignetteLayer.DeathOverlaySeconds + 0.1f);
+            Assert.Greater(vignette.DeathVolumeWeight, 0.9f, "ölüm desaturasyon hacmi dolmadı: " + vignette.DeathVolumeWeight.ToString("F2"));
+            ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3e_death", feet + new Vector3(0f, 14f, -14.2f), feet + Vector3.up * 0.8f, 40f), W, H, Path.Combine(dir, "07-death-desaturation-20m.png"), true);
+            Debug.Log("[DD-TEST] wp047e deathVolume=" + vignette.DeathVolumeWeight.ToString("F2"));
+
             yield return new WaitForSeconds(3.2f);
             Assert.IsFalse(vfx.BarrelHeatVisible, "ısı şeridi 3 s sonra sönmedi (heat " + vfx.BarrelHeat.ToString("F2") + ")");
+            Assert.IsFalse(vfx.BarrelHazeVisible, "haze kartı şeritle birlikte sönmeli");
         }
     }
 }

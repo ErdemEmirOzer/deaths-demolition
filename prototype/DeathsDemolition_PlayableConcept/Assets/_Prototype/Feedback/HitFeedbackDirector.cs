@@ -600,7 +600,7 @@ namespace DD.Prototype.Feedback
             {
                 // AD (WP-047): under the sheet the two lines read as painted-on strokes at full alpha; 60 % keeps them as the leading edge.
                 Color lines = _kaguraColor;
-                if (sheet) lines.a *= 0.6f;
+                if (sheet) lines.a *= 0.25f;   // AD WP-047E M4: under the AP-014 sheet the WP-002 lines are a debug edge, not the effect
                 ring.Play(origin, radius, travelSeconds, lines, 0.16f);
             }
 

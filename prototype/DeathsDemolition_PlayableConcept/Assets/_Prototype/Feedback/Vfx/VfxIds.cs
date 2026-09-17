@@ -76,6 +76,7 @@ namespace DD.Prototype.Feedback.Vfx
         public const string DustStep = "dust_step";
         public const string MagDrop = "mag_drop";
         public const string BarrelHeat = "barrel_heat";
+        public const string BarrelHeatDistort = "barrel_heat_distort";
         public const string ChainArcSheet = "chain_arc_sheet";
         public const string OfudaSeal = "ofuda_seal";
 

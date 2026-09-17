@@ -46,8 +46,100 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
+        // ------------------------------------------------------------------ WP-047E · point-light budget (AD SHOULD 2, S-05 lighting budget)
+
+        /// <summary>Lights follow the nearest lit lanterns: at most this many at once (URP per-object additional-light limit is 4 — WP-029 asset).</summary>
+        public const int MaxLanternLights = 6;
+        public const float LanternLightRange = 1.6f;
+        public const float LanternLightIntensity = 0.35f;
+        public const float LanternLightMaxCameraMetres = 26f;
+        public const float LanternLightReassignSeconds = 0.5f;
+        /// <summary>Off switch for the budget review (S-05); default on.</summary>
+        public static bool PointLightsEnabled = true;
+
+        private readonly List<Light> _lights = new List<Light>(MaxLanternLights);
+        private readonly int[] _lightAnchor = new int[MaxLanternLights];
+        private float _nextLightPass;
+
+        public int LightsLit
+        {
+            get { int n = 0; for (int i = 0; i < _lights.Count; i++) if (_lights[i] != null && _lights[i].enabled) n++; return n; }
+        }
+
+        private void TickLights(float now)
+        {
+            if (!PointLightsEnabled || _anchors.Count == 0 || now < _nextLightPass) return;
+            _nextLightPass = now + LanternLightReassignSeconds;
+            if (!FeedbackCameraRef.TryGetPosition(out Vector3 camera)) return;
+
+            if (_lights.Count == 0)
+            {
+                for (int i = 0; i < MaxLanternLights; i++)
+                {
+                    var go = new GameObject("LanternLight");
+                    go.transform.SetParent(_root, false);
+                    Light l = go.AddComponent<Light>();
+                    l.type = LightType.Point;
+                    l.range = LanternLightRange;
+                    l.intensity = LanternLightIntensity;
+                    l.color = new Color(FlameTint.r, FlameTint.g, FlameTint.b, 1f);
+                    l.shadows = LightShadows.None;
+                    l.enabled = false;
+                    _lights.Add(l);
+                    _lightAnchor[i] = -1;
+                }
+            }
+
+            // Nearest anchors within reach, by insertion sort into the light slots (≤ 40 anchors × 6 slots, no allocation).
+            float max2 = LanternLightMaxCameraMetres * LanternLightMaxCameraMetres;
+            for (int i = 0; i < MaxLanternLights; i++) _lightAnchor[i] = -1;
+            for (int a = 0; a < _anchors.Count; a++)
+            {
+                float d = (_anchors[a] - camera).sqrMagnitude;
+                if (d > max2) continue;
+                for (int slot = 0; slot < MaxLanternLights; slot++)
+                {
+                    int cur = _lightAnchor[slot];
+                    if (cur >= 0 && (_anchors[cur] - camera).sqrMagnitude <= d) continue;
+                    for (int k = MaxLanternLights - 1; k > slot; k--) _lightAnchor[k] = _lightAnchor[k - 1];
+                    _lightAnchor[slot] = a;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < MaxLanternLights; i++)
+            {
+                Light l = _lights[i];
+                if (l == null) continue;
+                int a = _lightAnchor[i];
+                if (a < 0) { l.enabled = false; continue; }
+                l.transform.position = _anchors[a] + Vector3.up * 0.08f;
+                l.enabled = true;
+            }
+        }
+
+        public const float FlickerHz = 20f;
+        public const float FlickerAmplitude = 0.10f;
+        private float _nextFlicker;
+
+        /// <summary>AD SHOULD (WP-047E): ±10 % alpha flicker per flame (phase by index) so the point lights read as fire, not lamps.</summary>
+        private void TickFlicker(float now)
+        {
+            if (_flames.Count == 0 || now < _nextFlicker) return;
+            _nextFlicker = now + 1f / FlickerHz;
+            for (int i = 0; i < _flames.Count; i++)
+            {
+                FlipbookEffect f = _flames[i];
+                if (f == null || !f.IsSpawned) continue;
+                float a = 1f - FlickerAmplitude * (0.5f + 0.5f * Mathf.Sin(now * 9.7f + i * 1.7f) * Mathf.Sin(now * 23.1f + i * 0.9f));
+                f.SetAlphaCap(a);
+            }
+        }
+
         public void Tick(float now)
         {
+            TickFlicker(now);
+            TickLights(now);
             if (_cards == null || now < _nextScan)
             {
                 return;
@@ -136,6 +228,7 @@ namespace DD.Prototype.Feedback.Vfx
 
             _flames.Clear();
             _anchors.Clear();
+            for (int i = 0; i < _lights.Count; i++) if (_lights[i] != null) _lights[i].enabled = false;
         }
     }
 }
