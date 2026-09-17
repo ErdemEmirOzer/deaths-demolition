@@ -23,6 +23,9 @@ namespace DD.Prototype.Navigation
         private static readonly Stopwatch s_watch = new Stopwatch();
 
         public static int RerouteCount { get; private set; }
+        /// <summary>WP-055B: bodies that switched from the direct route to the alternative (a per-body edge, not the per-refresh decision count above — WP-038 read 163 decisions as 163 reroutes).</summary>
+        public static int RouteSwitchCount { get; private set; }
+        public static void NoteRouteSwitch() => RouteSwitchCount++;
 
         /// <summary>The alternative-route query shape (see <see cref="TryAlternative"/>).</summary>
         public delegate int AlternativeQuery(RegionNavProfile profile, NavRegionVolume volume, Vector3 position, Vector3 goal, Vector3[] buffer, out float altCost);
@@ -44,6 +47,7 @@ namespace DD.Prototype.Navigation
         {
             AlternativeQueryOverride = null;
             RerouteCount = 0;
+            RouteSwitchCount = 0;
             QueueEvents = 0;
             AreaCostsApplied = 0;
             AreaCostsAppliedOnce = false;

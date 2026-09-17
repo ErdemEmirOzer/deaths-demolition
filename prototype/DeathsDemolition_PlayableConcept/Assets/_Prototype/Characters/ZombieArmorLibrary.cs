@@ -218,9 +218,11 @@ namespace DD.Prototype.Characters
         public List<string> excludedHeads;
         public bool fadedTop;
         public bool fadedBottom;
+        /// <summary>WP-055B · AP-007C: no head-occluding accessory (A1 straw hat) — any plate is Present / Damaged or the spawn is not a Standard (AP-014 tier head part).</summary>
+        public bool noHeadAccessory;
 
         public bool IsEmpty => (excludedTops == null || excludedTops.Count == 0) && (excludedBottoms == null || excludedBottoms.Count == 0) &&
-                               (excludedHeads == null || excludedHeads.Count == 0) && !fadedTop && !fadedBottom;
+                               (excludedHeads == null || excludedHeads.Count == 0) && !fadedTop && !fadedBottom && !noHeadAccessory;
 
         public bool ExcludesTop(string id) => excludedTops != null && excludedTops.Contains(id);
         public bool ExcludesBottom(string id) => excludedBottoms != null && excludedBottoms.Contains(id);
@@ -228,14 +230,22 @@ namespace DD.Prototype.Characters
 
         public static ZombieLookConstraints None => default;
 
-        /// <summary>Constraints of the armour pieces that are Present / Damaged for this spawn (Broken and Absent constrain nothing).</summary>
-        public static ZombieLookConstraints Build(ZombieArmorLibrary library, in ArmorLook look, bool helmet, bool body, bool leg)
+        /// <summary>
+        /// Constraints of the armour pieces that are Present / Damaged for this spawn (Broken and Absent constrain nothing).
+        /// WP-055B · AP-011B (C-00, DEC-077 readability): ANY armoured spawn wears the faded cloth (cw2) top AND bottom — the
+        /// helmet-only spawn included (WP-017 faded only the cloth under a body / leg plate); the Elite / Ultra already read cw2.
+        /// The vivid cw1 share of the live crowd is kept ≥ 30 % by the unarmoured draw (SpawnMixSimulator rule).
+        /// AP-007C: <paramref name="standardTier"/> false (a tier head part) or a helmet forbids the head-occluding accessory.
+        /// </summary>
+        public static ZombieLookConstraints Build(ZombieArmorLibrary library, in ArmorLook look, bool helmet, bool body, bool leg, bool standardTier = true)
         {
             var c = new ZombieLookConstraints();
+            c.noHeadAccessory = !standardTier || helmet || body || leg;   // C-00: A1 never on an armoured spawn (the manifest names the helmet slot; the simulator rule is "0 A1 + armour")
+            if (helmet || body || leg) { c.fadedTop = true; c.fadedBottom = true; }
             if (library == null) return c;
             if (helmet) Add(library.Find(look.helmet), ref c);
-            if (body) { Add(library.Find(look.body), ref c); c.fadedTop = true; }
-            if (leg) { Add(library.Find(look.leg), ref c); c.fadedBottom = true; }
+            if (body) Add(library.Find(look.body), ref c);
+            if (leg) Add(library.Find(look.leg), ref c);
             return c;
         }
 

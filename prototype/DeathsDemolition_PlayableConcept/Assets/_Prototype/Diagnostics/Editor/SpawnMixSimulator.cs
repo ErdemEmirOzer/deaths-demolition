@@ -101,6 +101,11 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public float swWebHoldSeconds;                            // Ofuda: mean net seconds per netted body (SealSeconds × tier share of the seal)
             public float swWebRootShare;                              // Ofuda: share of the crowd that is fully rooted (Standard)
             public float swPullMovableShare;                          // Tide: share of the crowd the well actually drags (all but Ultra)
+
+            // WP-055B · AP-011B / AP-007C crowd rules:
+            public int armouredVividCloth;                            // cloth picks on an armoured spawn that are NOT cw2 (must be 0)
+            public float vividShare;                                  // cw1 share of the constrained colourway picks (≥ MinVividShare)
+            public int accessoryPicks, strawHats, strawHatWithArmour, strawHatOffStandard, strawHatWithMino, strawHatEligible;   // A1 rules (0 / 0 / 0; share of eligible Standards 15–25 %)
         }
 
         [Serializable]
@@ -210,7 +215,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
 
                         if (!lookOn) continue;
                         ArmorLook armorLook = armourVariantsOn ? ArmorLookSelector.Select(armorLib, spawnSeed) : default;
-                        ZombieLookConstraints c = armourVariantsOn ? ZombieLookConstraints.Build(armorLib, armorLook, h, b, l) : ZombieLookConstraints.None;
+                        ZombieLookConstraints c = armourVariantsOn ? ZombieLookConstraints.Build(armorLib, armorLook, h, b, l, pick.Tier == EnemyTier.Standard) : ZombieLookConstraints.None;
                         ZombieLook look = ZombieLookSelector.Select(modules, spawnSeed, c);
                         if (profile != null && profile.ForcesFit && HasFit(modules, profile.ForcedFit)) { look.fit = profile.ForcedFit; r.forcedFitByTier[t]++; }   // ZombieAppearance.WithVersionFit
                         r.lookSamples++;
@@ -226,6 +231,25 @@ namespace DD.Prototype.Diagnostics.EditorTools
                         if (look.head == ZombieModuleLibrary.HeadNone) r.bald++;
                         if (look.top == ZombieModuleLibrary.TopBareStraps && look.bottom == ZombieModuleLibrary.BottomFundoshi) r.forbiddenPairs++;
                         if (c.ExcludesTop(look.top) || c.ExcludesBottom(look.bottom) || c.ExcludesHead(look.head)) r.excludedModuleHits++;
+                        // WP-055B · AP-011B: any plate ⇒ cw2 top + bottom (counted where the cloth has colourways)
+                        if (h || b || l)
+                        {
+                            if (modules.FindModule(look.top).HasColourways && look.topColourway != ZombieModuleLibrary.ColourwayFaded) r.armouredVividCloth++;
+                            if (modules.FindModule(look.bottom).HasColourways && look.bottomColourway != ZombieModuleLibrary.ColourwayFaded) r.armouredVividCloth++;
+                        }
+                        // WP-055B · AP-007C accessory slot (only when the library carries it)
+                        if (look.HasAccessory)
+                        {
+                            r.accessoryPicks++;
+                            if (look.accessory == ZombieModuleLibrary.AccessoryStrawHat)
+                            {
+                                r.strawHats++;
+                                if (h || b || l) r.strawHatWithArmour++;
+                                if (pick.Tier != EnemyTier.Standard) r.strawHatOffStandard++;
+                                if (look.top == ZombieModuleLibrary.TopMinoCape) r.strawHatWithMino++;
+                            }
+                        }
+                        if (pick.Tier == EnemyTier.Standard && !h && !b && !l && look.top != ZombieModuleLibrary.TopMinoCape) r.strawHatEligible++;
                     }
 
                     r.shortfall += policy.ShortfallCount;
@@ -280,6 +304,17 @@ namespace DD.Prototype.Diagnostics.EditorTools
                     if (faded > ZombieLookSelector.MaxFadedShare) notes.Add("round " + round + ": armour-constrained cw2 share " + F(faded) + " > " + F(ZombieLookSelector.MaxFadedShare) + " (free " + F(fadedFree) + "; " + r.fadedForcedByArmour + " forced under plates)");
                 }
 
+                // WP-055B: crowd identity rules
+                r.vividShare = r.colourwayPicks > 0 ? 1f - (float)r.fadedPicks / r.colourwayPicks : 1f;
+                if (r.armouredVividCloth > 0) violations.Add("round " + round + ": " + r.armouredVividCloth + " cloth picks on armoured spawns are not cw2 (AP-011B)");
+                if (r.lookSamples > 0 && r.colourwayPicks > 0 && r.vividShare < ZombieLookSelector.MinVividShare) violations.Add("round " + round + ": vivid cw1 share " + F(r.vividShare) + " < " + F(ZombieLookSelector.MinVividShare) + " (AP-011B identity)");
+                if (r.strawHatWithArmour > 0 || r.strawHatOffStandard > 0 || r.strawHatWithMino > 0) violations.Add("round " + round + ": A1 straw hat with armour / off-Standard / mino " + r.strawHatWithArmour + "/" + r.strawHatOffStandard + "/" + r.strawHatWithMino + " (AP-007C)");
+                if (r.accessoryPicks > 0 && r.strawHatEligible >= 50)
+                {
+                    float hatShare = (float)r.strawHats / r.strawHatEligible;
+                    if (hatShare < ZombieLookSelector.MinStrawHatShare || hatShare > ZombieLookSelector.MaxStrawHatShare) notes.Add("round " + round + ": A1 straw hat share of eligible Standards " + F(hatShare) + " outside " + F(ZombieLookSelector.MinStrawHatShare) + "–" + F(ZombieLookSelector.MaxStrawHatShare) + " (AP-007C AD band)");
+                }
+
                 report.totalSpawns += r.spawns;
                 rounds.Add(r);
             }
@@ -316,7 +351,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
                   .Append(" armour H/B/L=").Append(Share(r.armour[0], r.spawns)).Append('/').Append(Share(r.armour[1], r.spawns)).Append('/').Append(Share(r.armour[2], r.spawns))
                   .Append(" eliteBody=").Append(F(r.tierCounts[2] > 0 ? (float)r.armour[1].equippedByTier[2] / r.tierCounts[2] : 0f))
                   .Append(" ultra3=").Append(F(r.tierCounts[3] > 0 ? (float)r.threeRegionByTier[3] / r.tierCounts[3] : 0f)).Append(" ultraFitC=").Append(r.forcedFitByTier[3]).Append('/').Append(r.tierCounts[3])
-                  .Append(" sw push=").Append(F(r.swPushEfficacy)).Append(" web=").Append(F(r.swWebHoldSeconds)).Append("s(root ").Append(F(r.swWebRootShare)).Append(") pull=").Append(F(r.swPullMovableShare));   // WP-055
+                  .Append(" sw push=").Append(F(r.swPushEfficacy)).Append(" web=").Append(F(r.swWebHoldSeconds)).Append("s(root ").Append(F(r.swWebRootShare)).Append(") pull=").Append(F(r.swPullMovableShare))   // WP-055
+                  .Append(" vivid=").Append(F(r.vividShare)).Append(r.accessoryPicks > 0 ? " A1=" + r.strawHats + "/" + r.strawHatEligible : "");   // WP-055B
                 if (r.lookSamples > 0)
                 {
                     sb.Append(" cw2=").Append(F(r.colourwayPicks > 0 ? (float)r.fadedPicks / r.colourwayPicks : 0f)).Append("(forced ").Append(r.fadedForcedByArmour).Append(')')

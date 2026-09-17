@@ -192,8 +192,10 @@ namespace DD.Prototype.Navigation
             {
                 // WP-030: regional route comparison (alternative around a costly volume when it is cheap enough for this member's roll).
                 // WP-040: a corridor closer keeps the direct corners (it goes THROUGH the throat by design).
+                bool wasRerouted = _rerouted;
                 if (HoldsChokepoints) _rerouted = false;
                 else _cornerCount = RegionNavRouter.ChooseRoute(RegionNavProfile.Active, position, goal, _corners, _cornerCount, _routeRoll, out _rerouted);
+                if (_rerouted && !wasRerouted) RegionNavRouter.NoteRouteSwitch();   // WP-055B: a body that CHANGED to the alternative (RerouteCount counts every refresh decision)
                 // Corner 0 is the agent's own position; start steering at the next one.
                 _cornerIndex = 1;
             }

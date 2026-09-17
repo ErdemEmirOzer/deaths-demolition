@@ -150,8 +150,8 @@ namespace DD.Prototype.Enemies
 
         /// <summary>The garment constraints the equipped armour imposes right now (tests).</summary>
         public ZombieLookConstraints CurrentConstraints => HasArmor
-            ? ZombieLookConstraints.Build(_armorLibrary, _armorLook, _equipped[(int)ArmorSlot.Helmet], _equipped[(int)ArmorSlot.Body], _equipped[(int)ArmorSlot.Leg])
-            : ZombieLookConstraints.None;
+            ? ZombieLookConstraints.Build(_armorLibrary, _armorLook, _equipped[(int)ArmorSlot.Helmet], _equipped[(int)ArmorSlot.Body], _equipped[(int)ArmorSlot.Leg], _appliedVersion == EnemyTier.Standard)
+            : ZombieLookConstraints.Build(null, default, false, false, false, _appliedVersion == EnemyTier.Standard);   // WP-055B: a tier head part alone forbids the straw hat
 
         /// <summary>The spawn seed the look is derived from (set by ZombieEnemy.Initialise before ApplyVersion).</summary>
         public uint LookSeed

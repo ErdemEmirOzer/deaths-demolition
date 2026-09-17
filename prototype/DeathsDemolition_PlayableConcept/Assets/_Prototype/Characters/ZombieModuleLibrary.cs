@@ -26,6 +26,9 @@ namespace DD.Prototype.Characters
         public const string TopMinoCape = "T7_mino_cape";
         public const string TopBareStraps = "T6_bare_straps";
         public const string BottomFundoshi = "B5_fundoshi";
+        public const string KindAccessory = "accessory";          // WP-055B · AP-007C: 0–1 per zombie, Head-bound, worn with any head module
+        public const string AccessoryStrawHat = "A1_straw_hat";   // occludes the head module; Standard only; never with a helmet / tier head part / T7
+        public const string AccessoryFaceWrap = "A2_face_wrap";
         public const string ColourwayDark = "cw1";
         public const string ColourwayFaded = "cw2";
         public const string NoColourway = "-";
@@ -60,8 +63,10 @@ namespace DD.Prototype.Characters
         public sealed class Module
         {
             public string id;           // T1_kosode_short …
-            public string kind;         // top | bottom | head
+            public string kind;         // top | bottom | head | accessory (WP-055B)
             public string[] colourways; // ["cw1","cw2"] or ["-"]
+            /// <summary>WP-055B · AP-007C: the accessory hides the head module beneath it (A1 straw hat); the importer reads it from the manifest.</summary>
+            public bool occludesHead;
             public Variant[] variants;
             /// <summary>WP-020 · AP-007 v002: the module's materials in FBX sub-mesh order (<see cref="MaterialAtlas"/> / <see cref="MaterialCloth"/>); v001-style modules list the atlas only.</summary>
             public string[] materials = { MaterialAtlas };
@@ -164,10 +169,14 @@ namespace DD.Prototype.Characters
         public string bottom;
         public string bottomColourway;
         public string head;      // ZombieModuleLibrary.HeadNone = bald
+        /// <summary>WP-055B · AP-007C accessory id, or null / "" = none (a library without the slot never sets it — WP-016/017 keys unchanged).</summary>
+        public string accessory;
+        public string accessoryColourway;
 
         public bool IsValid => !string.IsNullOrEmpty(fit) && !string.IsNullOrEmpty(top) && !string.IsNullOrEmpty(bottom);
+        public bool HasAccessory => !string.IsNullOrEmpty(accessory);
 
-        public string Key => fit + "/" + top + ":" + topColourway + "/" + bottom + ":" + bottomColourway + "/" + head;
+        public string Key => fit + "/" + top + ":" + topColourway + "/" + bottom + ":" + bottomColourway + "/" + head + (HasAccessory ? "/" + accessory + ":" + accessoryColourway : "");
 
         public override string ToString() => Key;
     }
@@ -194,6 +203,13 @@ namespace DD.Prototype.Characters
         public const float MaxFadedShare = 0.30f;
         public const float MaxMinoShare = 0.10f;
         public const float MaxBaldShare = 0.25f;
+
+        // WP-055B · AP-007C accessory slot (PROTOTYPE-ONLY; only drawn when the library carries the slot):
+        public const float StrawHatWeight = 0.20f;      // vs 1.0 for "none" (+ the wrap): ≈ 15 % of eligible Standards (AD band 15–25 %)
+        public const float FaceWrapWeight = 0.15f;
+        public const float MinStrawHatShare = 0.15f, MaxStrawHatShare = 0.25f;
+        /// <summary>WP-055B · AP-011B: the vivid cw1 share of a round's colourway picks must stay at or above this (identity read).</summary>
+        public const float MinVividShare = 0.30f;
 
         public static ZombieLook Select(ZombieModuleLibrary library, uint seed, bool allowMinoCape = true)
         {
@@ -233,7 +249,29 @@ namespace DD.Prototype.Characters
             var headOptions = new List<string>(heads.Count + 1) { ZombieModuleLibrary.HeadNone };
             headOptions.AddRange(heads);
             look.head = Pick(headOptions, ref state, id => cc.ExcludesHead(id) ? 0f : id == ZombieModuleLibrary.HeadNone ? BaldWeight : 1f);
+
+            // WP-055B · AP-007C accessory: drawn only when the library has the slot, so a library without it keeps the
+            // WP-016/017 sequence bit-for-bit. The straw hat never with a mino cape, a helmet or a tier head part.
+            List<string> accessories = library.Ids(ZombieModuleLibrary.KindAccessory);
+            if (accessories.Count > 0)
+            {
+                bool mino = look.top == ZombieModuleLibrary.TopMinoCape;
+                var accessoryOptions = new List<string>(accessories.Count + 1) { "" };
+                accessoryOptions.AddRange(accessories);
+                look.accessory = Pick(accessoryOptions, ref state, id => id == "" ? 1f
+                    : id == ZombieModuleLibrary.AccessoryStrawHat ? (cc.noHeadAccessory || mino ? 0f : StrawHatWeight)
+                    : id == ZombieModuleLibrary.AccessoryFaceWrap ? FaceWrapWeight : 0.1f);
+                look.accessoryColourway = look.HasAccessory ? Colourway(library.FindModule(look.accessory), ref state) : null;
+            }
             return look;
+        }
+
+        /// <summary>WP-055B: true when the look's accessory hides the head module (A1) — the assembler skips the head mesh.</summary>
+        public static bool AccessoryOccludesHead(ZombieModuleLibrary library, in ZombieLook look)
+        {
+            if (library == null || !look.HasAccessory) return false;
+            ZombieModuleLibrary.Module m = library.FindModule(look.accessory);
+            return m != null && m.occludesHead;
         }
 
         /// <summary>The same look with another top when the mino cape must go (body armour Present).</summary>

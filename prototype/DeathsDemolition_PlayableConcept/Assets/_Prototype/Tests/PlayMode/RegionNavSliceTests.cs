@@ -87,16 +87,42 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(bridge);
             _rig.Teleport(Yerde(new Vector3(4f, 0f, -43f)), Quaternion.identity);
             yield return null;
+
+            // WP-055B · v4 NavMesh (WP-038 real deck, 0.45 m corridor) diagnostic: is the deck on the mesh, does the direct
+            // path cross the bridge volume, what do the two routes cost (WP-038 measured 163 reroutes / 0 queue / maxInside 0)
+            {
+                var d = new System.Text.StringBuilder("[DD-OBS] wp055b.bridge-navmesh volume c=" + bridge.center.ToString("F1") + " s=" + bridge.size.ToString("F1") + " ");
+                foreach (Vector3 probe in new[] { new Vector3(4f, 0f, -20f), new Vector3(4f, 0f, -28.75f), new Vector3(4f, 0f, -36f), new Vector3(3f, 0f, -28.75f), new Vector3(5f, 0f, -28.75f), new Vector3(18f, 0f, -30f) })
+                {
+                    bool on = UnityEngine.AI.NavMesh.SamplePosition(probe + Vector3.up, out UnityEngine.AI.NavMeshHit hit, 1.5f, UnityEngine.AI.NavMesh.AllAreas);
+                    d.Append(probe.x + "," + probe.z + "→" + (on ? hit.position.ToString("F2") + " area" + hit.mask + " d" + hit.distance.ToString("F2") : "OFF") + " | ");
+                }
+                var path = new UnityEngine.AI.NavMeshPath();
+                bool ok = UnityEngine.AI.NavMesh.CalculatePath(Yerde(new Vector3(0f, 0f, -8f)), Yerde(new Vector3(4f, 0f, -43f)), UnityEngine.AI.NavMesh.AllAreas, path);
+                d.Append("direct " + path.status + " corners=" + path.corners.Length + " ");
+                int inVol = 0; float len = 0f;
+                for (int i = 0; i < path.corners.Length; i++) { if (bridge.Contains(path.corners[i])) inVol++; if (i > 0) len += Vector3.Distance(path.corners[i - 1], path.corners[i]); d.Append(path.corners[i].ToString("F1")).Append(' '); }
+                d.Append("| cornersInVolume=" + inVol + " len=" + len.ToString("F1"));
+                Debug.Log(d.ToString());
+            }
+
             var bodies = new List<ZombieEnemy>();
             for (int i = 0; i < 12; i++) bodies.Add(Dogur(EnemyTier.Standard, new Vector3(-2f + (i % 4) * 2f, 0f, -8f - (i / 4) * 2f)));
             yield return null;
             float t0 = Time.realtimeSinceStartup;
             int samples = 0, overCapacity = 0, maxInside = 0, queuedSamples = 0, reroutedSamples = 0;
             float startMean = OrtalamaMesafe(bodies);
+            float nextTrace = 0f; var trace = new System.Text.StringBuilder("[DD-OBS] wp055b.bridge-trace ");
             while (Time.realtimeSinceStartup - t0 < 12f)
             {
                 int inside = RegionNavRouter.Occupancy(bridge);
                 maxInside = Mathf.Max(maxInside, inside);
+                if (Time.realtimeSinceStartup - t0 >= nextTrace)
+                {
+                    nextTrace += 2f; int onDeckX = 0, shoreX = 0;
+                    foreach (ZombieEnemy z in bodies) { Vector3 q = z.transform.position; if (q.z < -18f && q.z > -39.5f) { if (Mathf.Abs(q.x - 4f) < 2.5f) onDeckX++; else shoreX++; } }
+                    trace.Append("t" + nextTrace + ": inside=" + inside + " deckBand=" + onDeckX + " shoreBand=" + shoreX + " q=" + RegionNavRouter.QueueEvents + " r=" + RegionNavRouter.RerouteCount + " switches=" + RegionNavRouter.RouteSwitchCount + " | ");
+                }
                 if (inside > bridge.capacity + 2) overCapacity++;
                 foreach (ZombieEnemy z in bodies) { if (z.PathFollower != null && z.PathFollower.IsQueued) queuedSamples++; if (z.PathFollower != null && z.PathFollower.IsRerouted) reroutedSamples++; }
                 samples++;
@@ -104,9 +130,11 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             float endMean = OrtalamaMesafe(bodies);
+            Debug.Log(trace.ToString());
             Debug.Log("[DD-TEST] wp030.bridge samples=" + samples + " maxInside=" + maxInside + " overCap(+2)=" + overCapacity + " queuedSamples=" + queuedSamples + " reroutedSamples=" + reroutedSamples +
-                      " queueEvents=" + RegionNavRouter.QueueEvents + " reroutes=" + RegionNavRouter.RerouteCount + " meanDist " + startMean.ToString("0.0") + "→" + endMean.ToString("0.0"));
+                      " queueEvents=" + RegionNavRouter.QueueEvents + " reroutes=" + RegionNavRouter.RerouteCount + " routeSwitches=" + RegionNavRouter.RouteSwitchCount + " meanDist " + startMean.ToString("0.0") + "→" + endMean.ToString("0.0"));
             Assert.Greater(samples, 200);
+            Assert.Greater(maxInside, 0, "WP-055B: en az bir gövde v4 güvertesini (0,45 m koridor) kullanır — kuyruk mantığı güvertede canlı");
             Assert.Less(endMean, startMean - 8f, "sürü oyuncuya yaklaşmalı (DEC-032 tehdit korunur)");
             Assert.IsTrue(RegionNavRouter.QueueEvents > 0 || RegionNavRouter.RerouteCount > 0, "12 gövde köprü boğazında ya kuyruğa girer ya kıyı rotasına döner");
             Assert.LessOrEqual((float)overCapacity / samples, 0.25f, "köprü içinde kapasite+2 üstü kare payı");
