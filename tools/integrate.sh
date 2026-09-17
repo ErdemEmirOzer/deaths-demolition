@@ -8,7 +8,7 @@
 #          --allow-paths) · ProjectIntegrityTests.cs only with --s01 · secret/credential grep on added lines
 #          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers.
 #   Apply: parent == main HEAD → git merge --ff-only; otherwise git cherry-pick --no-commit + automatic
-#          planning resolution (03-ROADMAP: character-level — both sides' insertions into the same base line are applied in base-offset order, WP-043B;
+#          planning resolution (03-ROADMAP: git 3-way merge, then each conflicting single line = base + both sides' character-level insertions in offset order, WP-043B/051C;
 #          04-IMPLEMENTATION-PLAN: conflict blocks → HEAD then THEIRS, blank line between; 00/01 DEC/REQ tables: HEAD
 #          rows then THEIRS rows, then re-numbered check) → any other
 #          conflict → rollback and stop · non-planning paths must carry the source commit's change (blob identity, or
@@ -90,7 +90,9 @@ if [ -n "$HITS" ]; then fail "secret-like content in added lines:"; echo "$HITS"
 #     order, REQ strictly increasing; no number may already exist on main — WP-037B/WP-040 both took REQ-156)
 check_ids() {  # $1 = planning/00 content file, $2 = planning/01 content file → prints problems, exit 1 on any
   python3 - "$1" "$2" <<'PY'
-import sys, re
+import sys, re, os
+for a in sys.argv[1:3]:
+    if not os.path.isfile(a): print(f"numbering check: not a file: {a!r} (argv={sys.argv[1:]})"); sys.exit(1)
 # Same rule as ProjectIntegrityTests.TabloKimlikleri: collect, SORT numerically (the tables are not in
 # authored order), then DEC must be exactly 1..N and REQ must have no duplicates (authored gaps allowed).
 dec=sorted(int(m) for m in re.findall(r'^\| DEC-(\d{3}) \|', open(sys.argv[1],encoding='utf-8').read(), re.M))
@@ -149,35 +151,36 @@ else
     [ -n "$f" ] || continue
     case "$f" in
       planning/03-ROADMAP.md)
+        # WP-051C: git's own 3-way merge (diff3 markers) keeps every non-conflicting change — new lines added
+        # elsewhere on either side no longer block the merge; only the conflicting hunks are resolved here,
+        # each as one base line with both sides' character-level insertions (difflib) applied in offset order.
         "${G[@]}" show ":1:$f" > "/tmp/dd-int-base.$$"; "${G[@]}" show ":2:$f" > "/tmp/dd-int-ours.$$"; "${G[@]}" show ":3:$f" > "/tmp/dd-int-theirs.$$"
-        python3 - "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$" "$DD_REPO/$f" <<'PY' || { echo "03-ROADMAP: automatic merge failed"; abort_pick; exit 4; }
-import sys, difflib
-base,ours,theirs=[open(p,encoding='utf-8').read().split('\n') for p in sys.argv[1:4]]
-if len(base)!=len(ours) or len(base)!=len(theirs): sys.exit(1)   # line count must agree; only in-line inserts are merged
+        git merge-file -p --diff3 -L ours -L base -L theirs "/tmp/dd-int-ours.$$" "/tmp/dd-int-base.$$" "/tmp/dd-int-theirs.$$" > "/tmp/dd-int-merged.$$" 2>/dev/null
+        python3 - "/tmp/dd-int-merged.$$" "$DD_REPO/$f" <<'PY' || { echo "03-ROADMAP: automatic merge failed (a conflicting hunk is not a single-line insert-only change)"; rm -f /tmp/dd-int-*.$$; abort_pick; exit 4; }
+import sys, re, difflib
+src = open(sys.argv[1], encoding='utf-8').read()
+pat = re.compile(r'<<<<<<< ours\n(.*?)\n?\|\|\|\|\|\|\| base\n(.*?)\n?=======\n(.*?)\n?>>>>>>> theirs\n', re.S)
 def inserts(b, v):
-    # character-level: every 'insert' opcode of v against b, as (base offset, text); anything else → not auto-mergeable
-    sm = difflib.SequenceMatcher(None, b, v, autojunk=False)
-    out = []
+    sm = difflib.SequenceMatcher(None, b, v, autojunk=False); out = []
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if tag == 'equal': continue
         if tag != 'insert': raise ValueError(tag)
         out.append((i1, v[j1:j2]))
     return out
-out=[]
+def merge_block(m):
+    o, b, t = m.group(1), m.group(2), m.group(3)
+    if '\n' in o or '\n' in b or '\n' in t: raise ValueError('multi-line hunk')
+    ins = sorted(inserts(b, o) + inserts(b, t), key=lambda x: x[0]); merged = ''; pos = 0
+    for off, text in ins: merged += b[pos:off] + text; pos = off
+    return merged + b[pos:] + '\n'
 try:
-    for b,o,t in zip(base,ours,theirs):
-        if o==t or t==b: out.append(o); continue
-        if o==b: out.append(t); continue
-        ins = sorted(inserts(b,o) + inserts(b,t), key=lambda x: x[0])   # stable: HEAD inserts first at equal offsets
-        merged = ''; pos = 0
-        for off, text in ins:
-            merged += b[pos:off] + text; pos = off
-        out.append(merged + b[pos:])
+    out = pat.sub(merge_block, src)
 except ValueError:
     sys.exit(1)
-open(sys.argv[4],'w',encoding='utf-8').write('\n'.join(out))
+if '<<<<<<<' in out or '>>>>>>>' in out or '|||||||' in out: sys.exit(1)
+open(sys.argv[2], 'w', encoding='utf-8').write(out)
 PY
-        rm -f "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$"; "${G[@]}" add "$f"; echo "resolved $f (both sides' insertions applied on the base line)" ;;
+        rm -f "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$" "/tmp/dd-int-merged.$$"; "${G[@]}" add "$f"; echo "resolved $f (git 3-way + both sides' insertions on each conflicting line)" ;;
       planning/04-IMPLEMENTATION-PLAN.md|planning/00-PROJECT-PLAN.md|planning/01-REQUIREMENTS.md)
         # 04: sections → HEAD block, blank line, THEIRS block. 00/01: table rows → HEAD rows then THEIRS rows
         # (the post-merge DEC/REQ numbering check below guarantees the result is still unique and ordered).
