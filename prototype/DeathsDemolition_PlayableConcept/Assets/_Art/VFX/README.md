@@ -119,7 +119,7 @@ called AFTER the budget check. Pools (RecycleOldest): 48 `FlipbookEffect` quads,
 
 ## Game feel — ADR-019-2 (`Resources/DD_GameFeel.asset`, `GameFeelSettings`)
 
-Ceilings baked into the type: hit-stop ≤ 40 ms and only on armour break / death (the heavy-impact door is closed);
+Ceilings baked into the type: hit-stop ≤ 40 ms and only on armour break / Elite-Ultra death — a Standard death gets none, REQ-127 (the heavy-impact door is closed);
 shake ≤ 0.15 m / 0.2 s (explosion 0.12 m / 0.20 s, armour break 0.075, heavy death 0.095); vignette ≤ 0.5
 (flash 0.35, low-health hold 0.35 under 30 %). The REQ-045 camera bump stays in `PlayerSystem.PlayerDamageFeedback`
 (0.09 m / 0.25 s — its 0.25 s predates this ceiling; Player file, noted as a devir); the vignette layer's own shake
@@ -164,6 +164,28 @@ under `AP010B/<sub>/`, one manifest `AP010/AP010-vfx-manifest-v003.json` (paths 
 size / version (`_v003b` too); grid / fps / frames come from the manifest, never from the name. `family: blood` rows play
 as painted (no recolour; a uniform 0.8 linear darkening keeps the on-screen coverage-weighted mean under v 0.45), the v002
 rows remain the recoloured fallback. Bound / pending per row: `planning/work-packages/EVENT-COVERAGE-MATRIX.md`.
+
+## Wave 3 — WP-047 (event hooks, weapon A/B/C, AP-017 identities, lanterns)
+
+- `VfxEventBinder` (owned by `VfxDressing`): `EnemyCombatEvents.Raised` → `attack_commit` = `claw_swipe`, `spawn_rise` = `spawn_dust`
+  (card lifted `SpawnDustLift` 0.5 m — the flipbook shader has no depth fade); `CharacterAnimationEvents.Any` foot events →
+  `dust_step` with the surface tint (0.22 s per body, ≤ 26 m from the camera); `WeaponEvents.ReloadStarted` → `mag_drop` after
+  0.45 s. Breaks and deaths keep the director path (one source per beat).
+- Muzzle variants (DEC-083): A rifle long cone, B SMG short flash (0.75 size, 60 % duration), C shotgun wide bloom + pump smoke
+  0.35 s later. AP-014 Special Weapon use sheets come through `SpecialWeaponSheets` (one runtime `DD/VFX Flipbook` material per
+  usage, `SpecialWeaponVisualLibrary.FindSheet`); the WP-002 `ShockRingEffect` lines stay under the Kagura sheet at 60 % alpha,
+  64 segments.
+- `BreakableVfx` — the six AP-017 event ids (`BreakCeramic/Stone/Wood/Bamboo/Paper/Straw`) with residue cell, debris sheet and
+  dust card; prefab name → id (`AP017_breakable_*`, AP-003B `small_breakable`, keywords). S-08 uses the same ids for SFX.
+- `LanternFlames` — `lantern_flame` loop on every `SurfaceTag.Family` "lantern" anchor (≤ 40, own pool, one scan per scene);
+  tint (1.0, 0.60, 0.28) × 0.9 (AD: off the gold-orb band, under the bloom threshold).
+- Allocation (ADR-037-1): `VfxHotPathBisectTests` (S-02's contract fixture, `Profiler.enabled` frame counters, run alone or
+  first in a batch — after other PlayMode fixtures the counters read 0). Root causes of the WP-053 finding: pools prewarmed to
+  a third of capacity (the rest Instantiated + Awake'd inside hit frames, ≈ 12 allocations each; 128 blood marks' worth per
+  round) and `TextMesh.text`'s allocating getter plus the lazy number table. `FeedbackPoolWarmer` prewarms and activates every
+  feedback pool at configure time; the number table is built at type load. Window (300 armoured hits + 30 explosions in one
+  frame): idle 8 → full 8 / hits 8 / explosions 8 / numbers 8; S-02 contract core 16 ≤ idle 11 + 12 (was 112).
+  `GC.GetAllocatedBytesForCurrentThread` is always 0 in Unity Mono — never cite it.
 
 ## Frame rate / resolution table (directive §10 "high quality" gate)
 

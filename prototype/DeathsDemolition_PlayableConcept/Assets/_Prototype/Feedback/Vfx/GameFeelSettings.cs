@@ -27,7 +27,7 @@ namespace DD.Prototype.Feedback.Vfx
         [Header("Layer")]
         [SerializeField] private bool _enabled = true;
 
-        [Header("Hit-stop (s) — armour break and death only")]
+        [Header("Hit-stop (s) — armour break and Elite/Ultra death only (REQ-127: a Standard death gets none)")]
         [SerializeField, Range(0f, MaxHitStopSeconds)] private float _hitStopArmorBreak = 0.035f;
         [SerializeField, Range(0f, MaxHitStopSeconds)] private float _hitStopDeath = 0.040f;
         [SerializeField, Range(0f, 0.5f)] private float _hitStopMinInterval = 0.12f;

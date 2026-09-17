@@ -164,15 +164,16 @@ namespace DD.Art.Tests.PlayMode
             // Warm-up then measure the effect path's managed allocation over 60 events.
             for (int i = 0; i < 60; i++) fx.ReportSurfaceImpact(p + Vector3.right * (i % 7) * 0.2f, Vector3.up, SurfaceKind.Stone, 1f);
             yield return null; yield return null;
-            long gc0 = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 60; i++) fx.ReportSurfaceImpact(p + Vector3.right * (i % 7) * 0.2f, Vector3.up, SurfaceKind.Stone, 1f);
-            fx.ReportExplosion(p + Vector3.forward * 4f, 2.5f);
-            fx.ReportEnemyHit(Info(p, rootGo.transform, false, false, true, 30f));
-            long gc1 = GC.GetAllocatedBytesForCurrentThread();
-            long perEvent = (gc1 - gc0) / 62;
+            // Used-heap delta over 2000 direct layer calls (WP-047: GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono —
+            // the earlier 62-event figure measured nothing). The director path (budget, hit stop) is measured in VfxAllocationAuditTests.
+            long gc0 = GC.GetTotalMemory(false);
+            for (int i = 0; i < 2000; i++) fx.Vfx.PlaySurfaceImpact(SurfaceKind.Stone, p + Vector3.right * (i % 7) * 0.2f, Vector3.up, 1f);
+            for (int i = 0; i < 100; i++) fx.Vfx.PlayExplosion(p + Vector3.forward * 4f, 2.5f);
+            long gc1 = GC.GetTotalMemory(false);
+            long perEvent = (gc1 - gc0) / 2100;
             Debug.Log("[DD-TEST] wp019.events played=" + played + " decals=" + decals + " flipbookPool=" + fx.Vfx.FlipbookPool.CountSpawned + "/" + fx.Vfx.FlipbookPool.CountTotal +
                       " decalPool=" + fx.Vfx.DecalPool.CountSpawned + "/" + fx.Vfx.DecalPool.CountTotal + " gcBytes62events=" + (gc1 - gc0) + " perEvent=" + perEvent);
-            Assert.LessOrEqual(gc1 - gc0, 0, "Efekt yolu yönetilen bellek ayırdı: " + (gc1 - gc0) + " B / 62 olay.");
+            Assert.LessOrEqual(gc1 - gc0, 4096, "Efekt yolu yönetilen bellek ayırdı: " + (gc1 - gc0) + " B / 2100 olay (yığın deltası).");
         }
 
         // ============================================================== 2 · beacon + altın + hasar vinyeti + game feel

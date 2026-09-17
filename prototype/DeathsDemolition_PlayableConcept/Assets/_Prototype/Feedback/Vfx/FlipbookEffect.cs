@@ -20,7 +20,9 @@ namespace DD.Prototype.Feedback.Vfx
         public enum Facing
         {
             Camera = 0,
-            Fixed = 1
+            Fixed = 1,
+            /// <summary>Billboard about the world up axis only: ground-anchored sheets (spawn dust, dust step, flames) never dip below the floor.</summary>
+            CameraYaw = 2
         }
 
         private static readonly int FrameId = Shader.PropertyToID("_Frame");
@@ -40,6 +42,8 @@ namespace DD.Prototype.Feedback.Vfx
         private float _alphaCap;
         private int _lastFrame = -1;
         private Vector3 _align;
+        private float _growFrom, _growTo, _growAspect, _growSeconds;
+        private int _holdFrame = -1;
         private bool _alignRight;
         private float _alphaStepAt = -1f;
         private float _alphaStepTo = 1f;
@@ -96,6 +100,8 @@ namespace DD.Prototype.Feedback.Vfx
             _lastFrame = -1;
             _align = Vector3.zero;
             _alignRight = false;
+            _growSeconds = 0f;
+            _holdFrame = -1;
             _alphaStepAt = -1f;
             _alphaStepTo = 1f;
             // A one-shot sheet asked to finish sooner than its manifest length plays every frame faster (blood splash 12 frames in 0.26 s).
@@ -108,7 +114,11 @@ namespace DD.Prototype.Feedback.Vfx
             float aspect = row.Texture != null ? (float)row.Texture.width / Mathf.Max(1, row.Texture.height) : 1f;
             // A non-square texture (the beacon column 512×2048) keeps its aspect: width = size.
             float cellAspect = aspect * row.Rows / Mathf.Max(1, row.Columns);
-            _quad.localScale = new Vector3(size, size / Mathf.Max(0.01f, cellAspect), 1f);
+            // v003 [w, h] world sizes (spawn dust 1.76 × 1.1, claw 1.1 × 0.7): the authored height wins over the cell aspect.
+            float height = row.WorldHeightMetres > 0f && row.WorldSizeMetres > 0f && Mathf.Abs(row.WorldHeightMetres - row.WorldSizeMetres) > 1e-4f
+                ? size * row.WorldHeightMetres / row.WorldSizeMetres
+                : size / Mathf.Max(0.01f, cellAspect);
+            _quad.localScale = new Vector3(size, height, 1f);
             _quad.localPosition = new Vector3((0.5f - row.OriginUv.x) * _quad.localScale.x, (0.5f - row.OriginUv.y) * _quad.localScale.y, 0f);
             _quad.localRotation = Quaternion.identity;
 
@@ -116,7 +126,13 @@ namespace DD.Prototype.Feedback.Vfx
             _block.SetFloat(FrameId, 0f);
             _block.SetFloat(AlphaId, 1f);
             _block.SetFloat(AlphaCapId, _alphaCap);
-            _block.SetColor(TintId, tint);
+            // LA (greyscale) v003 sheets carry their colour in the manifest tint (× hdr when additive); the caller's tint
+            // multiplies it. v002 rows have a white default, so nothing changes for them. The property block overrides
+            // the material's _Tint, which is why the manifest tint must ride along here (a white block made claw_swipe white).
+            Color manifest = row.DefaultTint;
+            if (row.Additive && row.HdrIntensity > 1f) manifest *= row.HdrIntensity;
+            manifest.a = 1f;
+            _block.SetColor(TintId, tint * manifest);
             _renderer.SetPropertyBlock(_block);
 
             float life = seconds > 0f ? seconds : row.DurationSeconds > 0f ? row.DurationSeconds : _frames / _fps;
@@ -136,6 +152,30 @@ namespace DD.Prototype.Feedback.Vfx
             Face();
         }
 
+        /// <summary>Freeze the sheet on one cell (the sealed Ofuda talisman: frame 1 for the seal's life).</summary>
+        public void HoldFrame(int frame)
+        {
+            _holdFrame = Mathf.Clamp(frame, 0, Mathf.Max(0, _frames - 1));
+        }
+
+        /// <summary>Non-uniform stretch of the card (muzzle variants: A long / C wide) — multiplies the Play size per axis.</summary>
+        public void SetStretch(float x, float y)
+        {
+            Vector3 sc = _quad.localScale;
+            sc.x = Mathf.Abs(sc.x) * x * Mathf.Sign(sc.x == 0f ? 1f : sc.x);
+            sc.y = Mathf.Abs(sc.y) * y;
+            _quad.localScale = sc;
+        }
+
+        /// <summary>Grow the card from <paramref name="fromSize"/> to its Play size over <paramref name="seconds"/> (the Kagura ring follows the wave front).</summary>
+        public void SetGrow(float fromSize, float seconds)
+        {
+            _growFrom = Mathf.Max(0.01f, fromSize);
+            _growTo = _quad.localScale.x;
+            _growAspect = _quad.localScale.y / Mathf.Max(0.0001f, _quad.localScale.x);
+            _growSeconds = Mathf.Max(0.01f, seconds);
+        }
+
         /// <summary>Mirror the sheet along its +u axis (random handedness breaks a symmetric authored burst — AD M2).</summary>
         public void SetMirror(bool mirror)
         {
@@ -153,8 +193,15 @@ namespace DD.Prototype.Feedback.Vfx
 
         protected override void Tick(float t)
         {
+            if (_growSeconds > 0f && Age <= _growSeconds + 0.05f)
+            {
+                float u = Mathf.Clamp01(Age / _growSeconds);
+                float s = Mathf.Lerp(_growFrom, _growTo, u);
+                _quad.localScale = new Vector3(s, s * _growAspect, 1f);
+            }
+
             int frame = Mathf.FloorToInt(t * Lifetime * _fps);
-            frame = _loop ? frame % _frames : Mathf.Min(frame, _frames - 1);
+            frame = _holdFrame >= 0 ? _holdFrame : _loop ? frame % _frames : Mathf.Min(frame, _frames - 1);
             float alpha = t > _fadeOutFrom && _fadeOutFrom < 1f ? 1f - (t - _fadeOutFrom) / (1f - _fadeOutFrom) : 1f;
             bool stepping = _alphaStepAt >= 0f && Age > _alphaStepAt;
             if (stepping)
@@ -175,7 +222,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         private void Face()
         {
-            if (_facing != Facing.Camera)
+            if (_facing == Facing.Fixed)
             {
                 return;
             }
@@ -183,6 +230,11 @@ namespace DD.Prototype.Feedback.Vfx
             if (FeedbackCameraRef.TryGetPosition(out Vector3 viewer))
             {
                 Vector3 to = viewer - transform.position;
+                if (_facing == Facing.CameraYaw)
+                {
+                    to.y = 0f;
+                }
+
                 if (to.sqrMagnitude > 1e-4f)
                 {
                     // The quad's mesh normal is -Z, so it must look AWAY from the viewer to face it.

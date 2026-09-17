@@ -393,11 +393,13 @@ namespace DD.Prototype.Feedback
             // RecycleOldest everywhere: when the ceiling is reached the newest event
             // must still be visible, and the thing that disappears is the oldest one -
             // which is the one the player has already read.
-            return PoolService.GetOrCreate(
+            // WP-047 (ADR-037-1): prewarmed to capacity — a pool that grows on demand allocates ≈ 12 objects per Instantiate
+            // in the hit frame (S-02 WP-053: the damage-number pool read as "1,75 allocations per number").
+            return FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(
                 template,
-                Mathf.Max(2, capacity / 3),
                 capacity,
-                PoolExhaustedPolicy.RecycleOldest);
+                capacity,
+                PoolExhaustedPolicy.RecycleOldest));
         }
 
         // ------------------------------------------------------------------ step 2: muzzle flash
@@ -591,10 +593,14 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
+            bool sheet = _vfx.PlayKaguraRing(origin, radius, travelSeconds);   // WP-047 B: the AP-014 ring sheet grows with the front (placeholder ring stays under it)
             ShockRingEffect ring = _shockRingPool.Get(origin, Quaternion.identity);
             if (ring != null)
             {
-                ring.Play(origin, radius, travelSeconds, _kaguraColor, 0.16f);
+                // AD (WP-047): under the sheet the two lines read as painted-on strokes at full alpha; 60 % keeps them as the leading edge.
+                Color lines = _kaguraColor;
+                if (sheet) lines.a *= 0.6f;
+                ring.Play(origin, radius, travelSeconds, lines, 0.16f);
             }
 
             CameraShakeBridge.Shake(_shakeArmorBreak, 0.14f, ShakeProfile.HeavyFire);
@@ -646,6 +652,7 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
+            _vfx.PlayOfudaCollapse(from, to);   // WP-047 B: AP-014 collapse burst at both sealed bodies (de-duplicated per frame)
             LinkEffect link = _linkPool.Get(from, Quaternion.identity);
             if (link != null)
             {
@@ -829,7 +836,9 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            if (tier == HitFeedbackTier.HeavyDeath || tier == HitFeedbackTier.Death)
+            // WP-047 (C-00, REQ-127 stays): the death door is the heavy tier's only — a Standard death (tier Death) gets none;
+            // Elite / Ultra deaths arrive as HeavyDeath and take the HitStopDeath value (WP-019 had opened it to every death).
+            if (tier == HitFeedbackTier.HeavyDeath)
             {
                 HitStopService.Request(_hitStopHeavyDeath, _hitStopMinInterval);
                 return;

@@ -114,7 +114,9 @@ namespace DD.Art
                     UnknownFamilies++;
                 }
 
-                t.gameObject.AddComponent<SurfaceTag>().Surface = SurfaceFor(inst);
+                SurfaceTag tag = t.gameObject.AddComponent<SurfaceTag>();
+                tag.Surface = SurfaceFor(inst);
+                tag.Family = inst.family;   // WP-047 (S-07): the family handle for effects (lantern flames); the instance name is AP005_iNNNN
                 added++;
             }
 

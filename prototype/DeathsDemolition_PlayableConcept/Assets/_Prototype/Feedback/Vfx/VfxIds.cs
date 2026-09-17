@@ -67,7 +67,9 @@ namespace DD.Prototype.Feedback.Vfx
         public const string BreakableResidue = "breakable_residue";
         public const string WeaponPickupFlash = "weapon_pickup_flash";
         public const string WeaponExpire = "weapon_expire";
+        public const string StrawPuff = "straw_puff";
         public const string StrawPuffCloud = "straw_puff_cloud";
+        public const string MagDropDust = "mag_drop_dust";
         public const string SpawnDust = "spawn_dust";
         public const string ClawSwipe = "claw_swipe";
         public const string LanternFlame = "lantern_flame";
@@ -76,5 +78,11 @@ namespace DD.Prototype.Feedback.Vfx
         public const string BarrelHeat = "barrel_heat";
         public const string ChainArcSheet = "chain_arc_sheet";
         public const string OfudaSeal = "ofuda_seal";
+
+        // ---- AP-014 Special Weapon use sheets (`SpecialWeaponVisualLibrary.FindSheet(usage)`, WP-037B) — runtime materials, not catalog rows
+        public const string SwKaguraWave = "sw_kagura_wave";
+        public const string SwOfudaDart = "sw_ofuda_dart";
+        public const string SwOfudaWeb = "sw_ofuda_web";
+        public const string SwOfudaCollapse = "sw_ofuda_collapse";
     }
 }

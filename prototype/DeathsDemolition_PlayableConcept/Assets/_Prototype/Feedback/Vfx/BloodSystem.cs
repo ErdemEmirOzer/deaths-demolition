@@ -90,6 +90,8 @@ namespace DD.Prototype.Feedback.Vfx
         private bool _subscribed;
 
         public bool IsReady => _ready;
+        /// <summary>Audit seam (VfxAllocationAuditTests): bit 0 cards, 1 droplets, 2 marks, 3 drips — one PlayHit step per window. Default all.</summary>
+        public static int AuditStepMask = -1;
         public bool DropletsReady => _droplets != null;
         public PrototypePool<DecalEffect> DecalPool => _decals;
         public PrototypePool<BloodDropletEffect> DropletPool => _droplets;
@@ -132,7 +134,7 @@ namespace DD.Prototype.Feedback.Vfx
                 var template = new GameObject("FX_AP010_BloodDecal");
                 template.transform.SetParent(templateRoot, false);
                 template.SetActive(false);
-                _decals = PoolService.GetOrCreate(template.AddComponent<DecalEffect>(), DecalCapacity / 4, DecalCapacity, PoolExhaustedPolicy.RecycleOldest);
+                _decals = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(template.AddComponent<DecalEffect>(), DecalCapacity, DecalCapacity, PoolExhaustedPolicy.RecycleOldest));
                 _merger.Configure(templateRoot);
                 _mask = (1 << 0) | PrototypeLayerMask("Environment");
             }
@@ -144,7 +146,7 @@ namespace DD.Prototype.Feedback.Vfx
                 template.SetActive(false);
                 BloodDropletEffect t = template.AddComponent<BloodDropletEffect>();
                 t.Configure(_dropletRow);
-                _droplets = PoolService.GetOrCreate(t, 3, DropletCapacity, PoolExhaustedPolicy.RecycleOldest);
+                _droplets = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(t, DropletCapacity, DropletCapacity, PoolExhaustedPolicy.RecycleOldest));
             }
 
             if (!_subscribed)
@@ -201,7 +203,7 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             bool heavySheet = hitClass != HitClass.Normal;
-            for (int i = 0; i < cards; i++)
+            for (int i = 0; i < ((AuditStepMask & 1) != 0 ? cards : 0); i++)
             {
                 float roll = cards == 1 ? 0f : (i == 0 ? -spread : spread);
                 // v003: the A7 heavy-hit sheets (twin cone / lobe burst) carry the critical / armour-break spread themselves — one card, the second card only for the v002 fallback.
@@ -209,17 +211,17 @@ namespace DD.Prototype.Feedback.Vfx
                 if (heavySheet && s_heavy.Count > 0 && s_heavy[0].Family == VfxFamily.Blood) break;
             }
 
-            if (drops > 0)
+            if (drops > 0 && (AuditStepMask & 2) != 0)
             {
                 any |= PlayDroplets(point, dir, drops, dropMin, dropMax, speedMin, speedMax, 0.45f);
             }
 
-            if (markSize > 0f)
+            if (markSize > 0f && (AuditStepMask & 4) != 0)
             {
                 any |= PlaySplashMark(point, dir, markSize);
             }
 
-            if (drip && dripSize > 0f)
+            if (drip && dripSize > 0f && (AuditStepMask & 8) != 0)
             {
                 any |= PlayDripMark(point, dripSize);
             }

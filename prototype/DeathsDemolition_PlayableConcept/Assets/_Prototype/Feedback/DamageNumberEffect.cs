@@ -17,6 +17,7 @@ namespace DD.Prototype.Feedback
     public sealed class DamageNumberEffect : PooledEffect
     {
         private TextMesh _text;
+        private string _lastAssigned;
         private Renderer _renderer;
         private Transform _tf;
 
@@ -82,7 +83,16 @@ namespace DD.Prototype.Feedback
             RestartLife();
         }
 
-        private static readonly string[] s_numberTable = new string[1000];
+        // WP-047: filled at type load (≈ 30 KB once) — the lazy fill put each value's first string into a hit frame
+        // (S-02 WP-053 read that as "1,75 allocations per number"; the contract observation showed 97 per first window).
+        private static readonly string[] s_numberTable = BuildNumberTable();
+
+        private static string[] BuildNumberTable()
+        {
+            var table = new string[1000];
+            for (int i = 0; i < table.Length; i++) table[i] = i.ToString();
+            return table;
+        }
         private static readonly System.Collections.Generic.Dictionary<int, string> s_bigNumbers = new System.Collections.Generic.Dictionary<int, string>(64);
 
         /// <summary>Integer text without a per-call allocation (table 0..999, larger values cached on first sight).</summary>
@@ -90,7 +100,7 @@ namespace DD.Prototype.Feedback
         {
             if (value >= 0 && value < s_numberTable.Length)
             {
-                return s_numberTable[value] ?? (s_numberTable[value] = value.ToString());
+                return s_numberTable[value];
             }
 
             if (!s_bigNumbers.TryGetValue(value, out string text))
@@ -112,10 +122,14 @@ namespace DD.Prototype.Feedback
             int rounded = Mathf.Max(1, Mathf.RoundToInt(_amount));
             // WP-037 finding (ADR-037-1 zero-alloc hot path): the per-number string was the whole 12 KB/window regression.
             // Cached table for 0..999, a one-time string per larger value; the text is only assigned when it changes.
+            // WP-047 (S-02 WP-053: ≈ 1,75 allocations per number with the table): `TextMesh.text`'s getter marshals a new
+            // managed string on every read, so the old "assign only when it changes" check itself allocated twice per
+            // refresh. The last string handed to the mesh is remembered here and compared by reference instead.
             string text = NumberText(rounded);
-            if (!ReferenceEquals(_text.text, text) && _text.text != text)
+            if (!ReferenceEquals(_lastAssigned, text))
             {
                 _text.text = text;
+                _lastAssigned = text;
             }
 
             _text.color = _color;

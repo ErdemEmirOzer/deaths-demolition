@@ -230,16 +230,12 @@ namespace DD.Art.Tests.PlayMode
             }
 
             yield return null; yield return null;
-            long gcTotal = 0;
-            for (int i = 0; i < 40; i++)
-            {
-                long g0 = GC.GetAllocatedBytesForCurrentThread();
-                fx.ReportEnemyHit(Hit(p + Vector3.right * (i % 7) * 0.6f, Vector3.forward, i % 8 == 7, 12f, 6000 + i));
-                gcTotal += GC.GetAllocatedBytesForCurrentThread() - g0;
-                if (i % 4 == 3) yield return null;
-            }
-
-            long gc0 = 0, gc1 = gcTotal;
+            // Used-heap delta over 2000 direct blood hits (WP-047: GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono —
+            // the earlier 40-hit figure measured nothing). Synchronous, pools recycling, marks evicting.
+            long gc0 = GC.GetTotalMemory(false);
+            for (int i = 0; i < 2000; i++) blood.PlayHit(p + Vector3.right * (i % 7) * 0.6f, Vector3.back, Vector3.forward, i % 8 == 7 ? BloodSystem.HitClass.Critical : BloodSystem.HitClass.Normal);
+            long gc1 = GC.GetTotalMemory(false);
+            yield return null;
 
             // Far LOD: walk the camera 30 m away; settled marks (> 2 s) beyond 18 m merge into the chunk mesh and free their slots.
             int liveBefore = blood.LiveMarks;
@@ -259,9 +255,9 @@ namespace DD.Art.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp019b.blood splashes=" + blood.Splashes + " droplets=" + blood.DropletBursts + " marks=" + blood.Marks + " pools=" + blood.Pools +
                       " evicted=" + blood.Evicted + " skippedGold=" + blood.SkippedForGold + " liveImpact=" + liveImpact + " live=" + live + " poolTotal=" + blood.DecalPool.CountTotal +
-                      " gcBytes40hits=" + (gc1 - gc0) + " far: live " + liveBefore + "→" + liveAfter + " merged=" + merged + " quads=" + mergedQuads +
+                      " gcBytes2000hits=" + (gc1 - gc0) + " far: live " + liveBefore + "→" + liveAfter + " merged=" + merged + " quads=" + mergedQuads +
                       " reset: live=" + liveReset + " quads=" + quadsReset + " cardTint=" + cardTint + " gpuInstanced=" + drops.GpuInstanced);
-            Assert.LessOrEqual(gc1 - gc0, 0, "Kan olay yolu yönetilen bellek ayırdı: " + (gc1 - gc0) + " B / 40 olay.");
+            Assert.LessOrEqual(gc1 - gc0, 4096, "Kan olay yolu yönetilen bellek ayırdı: " + (gc1 - gc0) + " B / 2000 vuruş (yığın deltası).");
             Assert.Greater(merged, 0, "Uzak izler birleşik mesh'e alınmadı.");
             Assert.Greater(mergedQuads, 0);
             Assert.Less(liveAfter, liveBefore, "Birleştirme havuz slotu boşaltmadı.");

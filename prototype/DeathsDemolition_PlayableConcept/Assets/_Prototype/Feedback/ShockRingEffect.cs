@@ -23,7 +23,8 @@ namespace DD.Prototype.Feedback
         /// PROTOTYPE-ONLY: vertices in the loop. 40 is where the polygon stops reading as
         /// a polygon at the 9.5 m radius this weapon uses.
         /// </summary>
-        public const int Segments = 40;
+        // WP-047 AD M3: 40 read as a polygon at the 4 m front under the AP-014 sheet; 64 keeps the edge round.
+        public const int Segments = 64;
 
         /// <summary>PROTOTYPE-ONLY: metres above ground, so the ring never z-fights the floor.</summary>
         public const float GroundOffset = 0.12f;

@@ -42,7 +42,21 @@ namespace DD.Prototype.Feedback.Vfx
         private PrototypePool<AtlasBurstEffect> _leaves;
         private PrototypePool<AtlasBurstEffect> _paper;
         private readonly BloodSystem _blood = new BloodSystem();
+        private VfxEventBinder _binder;
+        private PrototypePool<AtlasBurstEffect> _straw;
+        private readonly LanternFlames _lanterns = new LanternFlames();
+        private readonly SpecialWeaponSheets _swSheets = new SpecialWeaponSheets();
         private static readonly List<VfxCatalogEntry> s_deathSheets = new List<VfxCatalogEntry>(4);
+        private readonly Dictionary<int, BreakEventId> _breakIds = new Dictionary<int, BreakEventId>(64);
+        public const int StrawBurstCapacity = 4;
+        /// <summary>WP-047 wave-3 effects played (claw swipe, spawn dust, dust step, mag drop, pump smoke, break debris, Kagura ring, Ofuda seal).</summary>
+        public int Wave3Played { get; private set; }
+        public VfxEventBinder Binder => _binder;
+        public MuzzleVariant LastMuzzleVariant { get; private set; }
+        public int MuzzlePlays { get; private set; }
+        public string LastMuzzleNote { get; private set; } = string.Empty;
+        public LanternFlames Lanterns => _lanterns;
+        public SpecialWeaponSheets SwSheets => _swSheets;
         private int _deathToggle;
         private Vector3 _lastBeaconPoint;
         private bool _wave2Subscribed;
@@ -63,6 +77,10 @@ namespace DD.Prototype.Feedback.Vfx
         private const float DeathSheetNearAlphaCap = 0.6f;
 
         public bool IsReady => _ready;
+        /// <summary>Audit seam (allocation bisect): true = every Play* returns false so the director's WP-002 fallbacks run instead. Default false.</summary>
+        public static bool AuditMute;
+        /// <summary>Audit seam (allocation bisect): PlayExplosion steps — 1 card, 2 shockwave, 4 smoke, 8 scorch decal. Default all.</summary>
+        public static int AuditExplosionMask = -1;
         public int Played { get; private set; }
         public int DecalsPlayed { get; private set; }
 
@@ -81,23 +99,26 @@ namespace DD.Prototype.Feedback.Vfx
 
             if (_flipbooks == null)
             {
-                _flipbooks = PoolService.GetOrCreate(Template<FlipbookEffect>(templateRoot, "FX_AP010_Flipbook"),
-                    FlipbookCapacity / 3, FlipbookCapacity, PoolExhaustedPolicy.RecycleOldest);
-                _decals = PoolService.GetOrCreate(Template<DecalEffect>(templateRoot, "FX_AP010_Decal"),
-                    DecalCapacity / 3, DecalCapacity, PoolExhaustedPolicy.RecycleOldest);
+                // WP-047 (S-02 WP-053 finding): every pool is prewarmed to capacity at configure time — growing on demand
+                // cost ≈ 12 allocations per Instantiate inside the hot path (the scorch decals of the first explosions
+                // were the "+100 per window"), and decals live long enough that the growth spanned a whole round.
+                _flipbooks = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(Template<FlipbookEffect>(templateRoot, "FX_AP010_Flipbook"),
+                    FlipbookCapacity, FlipbookCapacity, PoolExhaustedPolicy.RecycleOldest));
+                _decals = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(Template<DecalEffect>(templateRoot, "FX_AP010_Decal"),
+                    DecalCapacity, DecalCapacity, PoolExhaustedPolicy.RecycleOldest));
 
                 if (VfxLibrary.TryGetPlayable(VfxIds.AtlasArmorBreak, out VfxCatalogEntry atlas))
                 {
                     AtlasBurstEffect t = Template<AtlasBurstEffect>(templateRoot, "FX_AP010_ArmorFragments");
                     t.Configure(atlas, true, 1.5f, 3.2f, 45f);
-                    _fragments = PoolService.GetOrCreate(t, 2, FragmentBurstCapacity, PoolExhaustedPolicy.RecycleOldest);
+                    _fragments = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(t, FragmentBurstCapacity, FragmentBurstCapacity, PoolExhaustedPolicy.RecycleOldest));
                 }
 
                 if (VfxLibrary.TryGetPlayable(VfxIds.CardSmoke, out VfxCatalogEntry smoke))
                 {
                     AtlasBurstEffect t = Template<AtlasBurstEffect>(templateRoot, "FX_AP010_Smoke");
                     t.Configure(smoke, false, 0.4f, 1.2f, 30f);
-                    _smoke = PoolService.GetOrCreate(t, 2, SmokeBurstCapacity, PoolExhaustedPolicy.RecycleOldest);
+                    _smoke = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(t, SmokeBurstCapacity, SmokeBurstCapacity, PoolExhaustedPolicy.RecycleOldest));
                 }
 
                 // AP-010B v003 wave 2: sprite-sheet bursts (spark on ricochet, leaf on foliage, paper on paper).
@@ -105,23 +126,40 @@ namespace DD.Prototype.Feedback.Vfx
                 {
                     AtlasBurstEffect t = Template<AtlasBurstEffect>(templateRoot, "FX_AP010B_Sparks");
                     t.Configure(spark, true, 2.5f, 5f, 35f);
-                    _sparks = PoolService.GetOrCreate(t, 2, SparkBurstCapacity, PoolExhaustedPolicy.RecycleOldest);
+                    _sparks = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(t, SparkBurstCapacity, SparkBurstCapacity, PoolExhaustedPolicy.RecycleOldest));
                 }
 
                 if (VfxLibrary.TryGetPlayable(VfxIds.LeafBurst, out VfxCatalogEntry leaf))
                 {
                     AtlasBurstEffect t = Template<AtlasBurstEffect>(templateRoot, "FX_AP010B_Leaves");
                     t.Configure(leaf, true, 0.8f, 2f, 50f);
-                    _leaves = PoolService.GetOrCreate(t, 1, LeafBurstCapacity, PoolExhaustedPolicy.RecycleOldest);
+                    _leaves = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(t, LeafBurstCapacity, LeafBurstCapacity, PoolExhaustedPolicy.RecycleOldest));
                 }
 
                 if (VfxLibrary.TryGetPlayable(VfxIds.PaperTear, out VfxCatalogEntry paper))
                 {
                     AtlasBurstEffect t = Template<AtlasBurstEffect>(templateRoot, "FX_AP010B_Paper");
                     t.Configure(paper, true, 0.6f, 1.6f, 45f);
-                    _paper = PoolService.GetOrCreate(t, 1, PaperBurstCapacity, PoolExhaustedPolicy.RecycleOldest);
+                    _paper = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(t, PaperBurstCapacity, PaperBurstCapacity, PoolExhaustedPolicy.RecycleOldest));
                 }
+
+                // WP-047 C: straw stalks for the bale break.
+                if (VfxLibrary.TryGetPlayable(VfxIds.StrawPuff, out VfxCatalogEntry straw))
+                {
+                    AtlasBurstEffect t = Template<AtlasBurstEffect>(templateRoot, "FX_AP010B_Straw");
+                    t.Configure(straw, true, 0.5f, 1.4f, 60f);
+                    _straw = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(t, StrawBurstCapacity, StrawBurstCapacity, PoolExhaustedPolicy.RecycleOldest));
+                }
+
+                _lanterns.Configure(templateRoot, _flipbooks);
             }
+
+            if (_binder == null)
+            {
+                _binder = new VfxEventBinder(this);
+            }
+
+            _binder.Subscribe();
 
             if (!_wave2Subscribed)
             {
@@ -143,6 +181,8 @@ namespace DD.Prototype.Feedback.Vfx
             if (_ready)
             {
                 _blood.Tick(now);
+                _binder?.Tick(now);
+                _lanterns.Tick(now);
             }
         }
 
@@ -159,7 +199,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Family 1: surface impact flipbook (+ decal on static surfaces). False = not dressed here.</summary>
         public bool PlaySurfaceImpact(SurfaceKind surface, Vector3 point, Vector3 normal, float scale)
         {
-            if (!_ready)
+            if (!_ready || AuditMute)
             {
                 return false;
             }
@@ -192,7 +232,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Family 1 on a body: flesh or armour impact sheet at the hit point (no decal: the body moves). An armour hit adds the AP-010B crack dust (plate damaged, not yet broken).</summary>
         public bool PlayBodyImpact(bool armored, Vector3 point, Vector3 normal, float scale)
         {
-            if (!_ready)
+            if (!_ready || AuditMute)
             {
                 return false;
             }
@@ -218,7 +258,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>AP-010B wave 2: sparks at a ricochet point (sprite burst + the streak flipbook rolled to the reflection).</summary>
         public bool PlaySpark(Vector3 point, Vector3 reflection)
         {
-            if (!_ready)
+            if (!_ready || AuditMute)
             {
                 return false;
             }
@@ -305,16 +345,42 @@ namespace DD.Prototype.Feedback.Vfx
                 return;
             }
 
-            // 2×2 atlas: TL ceramic / TR wood / BL straw / BR cloth — picked by the prop's name, wood when unknown.
-            string name = prop.name.ToLowerInvariant();
-            int cell = name.Contains("pot") || name.Contains("cerami") || name.Contains("jar") || name.Contains("lantern") ? 0 : name.Contains("straw") || name.Contains("bale") ? 2 : name.Contains("cloth") || name.Contains("banner") ? 3 : 1;
+            // WP-047 C: the AP-017 event identity (six break families) picks the residue cell, the debris sheet and the dust card.
+            // `Object.name` marshals a new string per read (ADR-037-1): the id is resolved once per prop instance.
+            int propId = prop.GetInstanceID();
+            if (!_breakIds.TryGetValue(propId, out BreakEventId breakId))
+            {
+                breakId = BreakableVfx.EventIdFor(prop.name);
+                if (_breakIds.Count >= 256) _breakIds.Clear();
+                _breakIds[propId] = breakId;
+            }
+
+            BreakableVfxProfile profile = BreakableVfx.Get(breakId);
             Vector3 ground = prop.transform.position;
             DecalEffect decal = _decals.Get(ground + Vector3.up * 0.01f, Quaternion.LookRotation(Vector3.up, Vector3.forward));
             if (decal != null)
             {
-                decal.Play(residue, residue.WorldSizeMetres, DecalSecondsSplat, DecalAlphaCap, Color.white, Random.Range(0f, 360f), cell);
+                decal.Play(residue, residue.WorldSizeMetres, DecalSecondsSplat, DecalAlphaCap, Color.white, Random.Range(0f, 360f), profile.ResidueCell);
                 DecalsPlayed++;
                 Wave2Played++;
+            }
+
+            Vector3 n = direction.sqrMagnitude > 1e-4f ? -direction.normalized : Vector3.up;
+            if (profile.DebrisCount > 0)
+            {
+                PrototypePool<AtlasBurstEffect> pool = profile.DebrisSheetId == VfxIds.LeafBurst ? _leaves : profile.DebrisSheetId == VfxIds.PaperTear ? _paper : profile.DebrisSheetId == VfxIds.StrawPuff ? _straw : null;
+                if (PlayBurst(pool, point, n, profile.DebrisCount, 0.03f, 0.12f, 1.0f)) Wave3Played++;
+            }
+
+            if (profile.DustSheetId.Length > 0 && VfxLibrary.TryGetPlayable(profile.DustSheetId, out VfxCatalogEntry dust))
+            {
+                FlipbookEffect fx = _flipbooks.Get(point + n * 0.05f, Quaternion.identity);
+                if (fx != null)
+                {
+                    fx.Play(dust, FlipbookEffect.Facing.Camera, profile.DustSize > 0f ? profile.DustSize : dust.WorldSizeMetres, Color.white);
+                    Played++;
+                    Wave3Played++;
+                }
             }
         }
 
@@ -350,7 +416,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool PlayFleshHit(Vector3 point, Vector3 normal, Vector3 shotDirection, bool critical, bool killed)
         {
-            if (!_ready)
+            if (!_ready || AuditMute)
             {
                 return false;
             }
@@ -377,27 +443,282 @@ namespace DD.Prototype.Feedback.Vfx
                 return false;
             }
 
-            fx.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres * Mathf.Max(0.5f, scale), Color.white);
+            // WP-047 B: A / B / C variant per classic weapon (DEC-083); a Special in hand keeps A.
+            MuzzleVariant variant = MuzzleVariant.A;
+            DD.Prototype.Weapons.WeaponController active = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
+            if (active != null && active.Classic != null && !active.SpecialWeaponActive)
+            {
+                variant = VfxEventBinder.VariantFor(active.Classic.Id);
+            }
+
+            LastMuzzleVariant = variant;
+            MuzzlePlays++;
+            LastMuzzleNote = active == null ? "no-active" : active.Classic == null ? "no-classic" : active.SpecialWeaponActive ? "special" : active.Classic.Id.ToString();
+            float size = row.WorldSizeMetres * Mathf.Max(0.5f, scale);
+            switch (variant)
+            {
+                case MuzzleVariant.B:
+                    fx.Play(row, FlipbookEffect.Facing.Camera, size * 0.75f, Color.white, 1f, 0f, Mathf.Max(0.05f, row.DurationSeconds * 0.6f));
+                    break;
+                case MuzzleVariant.C:
+                    fx.Play(row, FlipbookEffect.Facing.Camera, size * 1.25f, Color.white);
+                    fx.SetStretch(1f, 1.3f);
+                    _binder?.SchedulePumpSmoke(muzzle.position - muzzle.forward * 0.35f + Vector3.up * 0.05f, -muzzle.forward + Vector3.up * 0.6f, Time.time);
+                    break;
+                default:
+                    fx.Play(row, FlipbookEffect.Facing.Camera, size, Color.white);
+                    fx.SetStretch(1.35f, 1f);
+                    break;
+            }
+
             fx.SetAlign(muzzle.forward, true);   // AD M5: the v003 cone's +u points down the barrel, not a sphere
             Played++;
             return true;
         }
+
+        // ------------------------------------------------------------------ WP-047 wave 3
+
+        /// <summary>attack_commit: the swipe card at the attack socket, +u along the strike (dark tint from the manifest).</summary>
+        public bool PlayClawSwipe(Vector3 position, Vector3 direction, DD.Prototype.Core.Config.EnemyTier tier)
+        {
+            if (!_ready || !VfxLibrary.TryGetPlayable(VfxIds.ClawSwipe, out VfxCatalogEntry row))
+            {
+                return false;
+            }
+
+            FlipbookEffect fx = _flipbooks.Get(position, Quaternion.identity);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            float scale = tier >= DD.Prototype.Core.Config.EnemyTier.Elite ? 1.3f : tier == DD.Prototype.Core.Config.EnemyTier.Special ? 1.1f : 1f;
+            fx.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres * scale, Color.white);
+            fx.SetAlign(direction, true);
+            Wave3Played++;
+            return true;
+        }
+
+        /// <summary>spawn_rise (off-screen by DEC-081): ground-breaking dust at the feet, sized from the manifest (1.76 × 1.1 m).</summary>
+        public const float SpawnDustLift = 0.5f;
+
+        public bool PlaySpawnDust(Vector3 feet, Vector3 facing)
+        {
+            if (!_ready || !VfxLibrary.TryGetPlayable(VfxIds.SpawnDust, out VfxCatalogEntry row))
+            {
+                return false;
+            }
+
+            // AD M2 (WP-047): the card's bottom edge on the ground plane read as a straight cut (the flipbook shader has no depth
+            // fade); the cloud rises with the body, so the card sits half a metre up — the ground break is the body's own dust.
+            FlipbookEffect fx = _flipbooks.Get(feet + Vector3.up * SpawnDustLift, Quaternion.identity);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            fx.Play(row, FlipbookEffect.Facing.CameraYaw, row.WorldSizeMetres, Color.white, 1f, 0.3f);
+            Wave3Played++;
+            return true;
+        }
+
+        /// <summary>Foot event: a small dust card at the foot, surface-tinted (earth / stone / wood; none on water — the ring plays there).</summary>
+        public bool PlayDustStep(Vector3 point, Vector3 normal, Vector3 forward, SurfaceKind surface)
+        {
+            if (!_ready || AuditMute)
+            {
+                return false;
+            }
+
+            if (surface == SurfaceKind.Water)
+            {
+                if (!VfxLibrary.TryGetPlayable(VfxIds.WaterSplashRing, out VfxCatalogEntry ring)) return false;
+                FlipbookEffect rfx = _flipbooks.Get(point + Vector3.up * 0.02f, Quaternion.Euler(90f, 0f, 0f));
+                if (rfx == null) return false;
+                rfx.Play(ring, FlipbookEffect.Facing.Fixed, ring.WorldSizeMetres * 0.35f, Color.white);
+                Wave3Played++;
+                return true;
+            }
+
+            if (!VfxLibrary.TryGetPlayable(VfxIds.DustStep, out VfxCatalogEntry row))
+            {
+                return false;
+            }
+
+            FlipbookEffect fx = _flipbooks.Get(point + normal * 0.02f, Quaternion.identity);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            // The sheet's manifest default (earth) rides in the property block; the per-surface tint replaces it (ratio).
+            Color tint = surface == SurfaceKind.Wood || surface == SurfaceKind.Paper ? DustWoodTint : surface == SurfaceKind.Dirt || surface == SurfaceKind.Foliage ? DustEarthTint : DustStoneTint;
+            fx.Play(row, FlipbookEffect.Facing.CameraYaw, row.WorldSizeMetres, Replace(tint, row.DefaultTint));
+            Wave3Played++;
+            return true;
+        }
+
+        /// <summary>Reload: the dropped magazine card lands under the player (+ a small bounce-dust puff).</summary>
+        public bool PlayMagDrop()
+        {
+            if (!_ready || _decals == null || !VfxLibrary.TryGetPlayable(VfxIds.MagDrop, out VfxCatalogEntry row))
+            {
+                return false;
+            }
+
+            DD.Prototype.PlayerSystem.PlayerRig rig = DD.Prototype.PlayerSystem.PlayerRegistry.Primary;
+            if (rig == null)
+            {
+                return false;
+            }
+
+            Vector3 at = rig.transform.position + rig.transform.right * 0.35f + rig.transform.forward * 0.2f;
+            if (!Physics.Raycast(at + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 2.5f, (1 << 0) | (1 << LayerMask.NameToLayer("Environment")), QueryTriggerInteraction.Ignore))
+            {
+                return false;
+            }
+
+            DecalEffect card = _decals.Get(hit.point, Quaternion.LookRotation(hit.normal, rig.transform.forward));
+            if (card == null)
+            {
+                return false;
+            }
+
+            card.Play(row, row.WorldSizeMetres, DecalSecondsEnvironment, 1f, Color.white, Random.Range(0f, 360f));
+            DecalsPlayed++;
+            if (VfxLibrary.TryGetPlayable(VfxIds.MagDropDust, out VfxCatalogEntry dust))
+            {
+                FlipbookEffect fx = _flipbooks.Get(hit.point + Vector3.up * 0.03f, Quaternion.identity);
+                if (fx != null) fx.Play(dust, FlipbookEffect.Facing.Camera, dust.WorldSizeMetres, Replace(DustStoneTint, dust.DefaultTint));
+            }
+
+            Wave3Played++;
+            return true;
+        }
+
+        /// <summary>Shotgun pump: a small smoke puff venting from the port 0.35 s after the shot.</summary>
+        public bool PlayPumpSmoke(Vector3 anchor, Vector3 direction)
+        {
+            if (!_ready || _smoke == null)
+            {
+                return false;
+            }
+
+            AtlasBurstEffect puff = _smoke.Get(anchor, Quaternion.LookRotation(direction.sqrMagnitude > 1e-4f ? direction : Vector3.up));
+            if (puff == null)
+            {
+                return false;
+            }
+
+            puff.Play(2, 0.12f, 0.2f, 0.8f);
+            Wave3Played++;
+            return true;
+        }
+
+        /// <summary>Kagura Bell wave: the AP-014 ring sheet on the ground, growing with the wave front (`ReportShockRing`).</summary>
+        public bool PlayKaguraRing(Vector3 origin, float radius, float travelSeconds)
+        {
+            if (!_ready || AuditMute)
+            {
+                return false;
+            }
+
+            SpecialWeaponSheets.Playable sheet = _swSheets.Get(VfxIds.SwKaguraWave);
+            if (sheet.Row == null)
+            {
+                return false;
+            }
+
+            FlipbookEffect fx = _flipbooks.Get(origin + Vector3.up * 0.06f, Quaternion.Euler(90f, 0f, 0f));
+            if (fx == null)
+            {
+                return false;
+            }
+
+            float size = Mathf.Min(sheet.Row.WorldSizeMetres, Mathf.Max(1f, radius * 2f));
+            fx.Play(sheet.Row, FlipbookEffect.Facing.Fixed, size, VfxLibrary.BeaconTint, 1f, 0.35f, Mathf.Max(sheet.Row.DurationSeconds, travelSeconds + 0.4f));
+            fx.SetGrow(0.5f, Mathf.Max(0.1f, travelSeconds));
+            Wave3Played++;
+            return true;
+        }
+
+        /// <summary>
+        /// Ofuda Loom collapse (`ReportSealLink` is raised once per link when the web is spent): the AP-014
+        /// collapse burst (flash core + paper flakes, 3.0 m sheet) at each sealed body, de-duplicated within
+        /// the frame so a closed net does not burst twice at the same body.
+        /// </summary>
+        public bool PlayOfudaCollapse(Vector3 from, Vector3 to)
+        {
+            if (!_ready || AuditMute)
+            {
+                return false;
+            }
+
+            SpecialWeaponSheets.Playable sheet = _swSheets.Get(VfxIds.SwOfudaCollapse);
+            if (sheet.Row == null)
+            {
+                return false;
+            }
+
+            bool any = false;
+            any |= OfudaBurstAt(sheet.Row, from);
+            any |= OfudaBurstAt(sheet.Row, to);
+            return any;
+        }
+
+        private readonly Vector3[] _ofudaRecent = new Vector3[8];
+        private int _ofudaRecentCount, _ofudaRecentFrame = -1;
+
+        private bool OfudaBurstAt(VfxCatalogEntry row, Vector3 point)
+        {
+            if (_ofudaRecentFrame != Time.frameCount)
+            {
+                _ofudaRecentFrame = Time.frameCount;
+                _ofudaRecentCount = 0;
+            }
+
+            for (int i = 0; i < _ofudaRecentCount; i++)
+            {
+                if ((_ofudaRecent[i] - point).sqrMagnitude < 0.09f) return false;
+            }
+
+            if (_ofudaRecentCount < _ofudaRecent.Length) _ofudaRecent[_ofudaRecentCount++] = point;
+            FlipbookEffect fx = _flipbooks.Get(point, Quaternion.identity);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            fx.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres * 0.6f, Color.white);   // 3.0 m sheet at 1.8 m: the flash core reads, the flakes stay inside the body
+            Wave3Played++;
+            return true;
+        }
+
+        /// <summary>A block tint that lands on <paramref name="wanted"/> when the sheet's manifest default multiplies in (FlipbookEffect.Play).</summary>
+        private static Color Replace(Color wanted, Color manifestDefault)
+        {
+            return new Color(wanted.r / Mathf.Max(0.01f, manifestDefault.r), wanted.g / Mathf.Max(0.01f, manifestDefault.g), wanted.b / Mathf.Max(0.01f, manifestDefault.b), 1f);
+        }
+
+        private static readonly Color DustEarthTint = new Color(0.55f, 0.48f, 0.40f, 1f);
+        private static readonly Color DustStoneTint = new Color(0.58f, 0.58f, 0.56f, 1f);
+        private static readonly Color DustWoodTint = new Color(0.62f, 0.55f, 0.44f, 1f);
 
         // ------------------------------------------------------------------ explosion
 
         /// <summary>Family 3: fireball sheet + ground shockwave sheet + smoke puffs + scorch decal.</summary>
         public bool PlayExplosion(Vector3 origin, float radius)
         {
-            if (!_ready)
+            if (!_ready || AuditMute)
             {
                 return false;
             }
 
-            bool any = PlayFlipbook(VfxIds.Explosion, origin, FlipbookEffect.Facing.Camera, Quaternion.identity, 1f, Color.white, 1f, 0f);
+            bool any = (AuditExplosionMask & 1) != 0 && PlayFlipbook(VfxIds.Explosion, origin, FlipbookEffect.Facing.Camera, Quaternion.identity, 1f, Color.white, 1f, 0f);
             // Manifest: ring seen frontally, ground-aligned 5 m quad, 0.3 s.
             // AD M6: the ground ring reads as dust, not white fog — dust tint (s ≤ 0.25) and alpha ≤ 0.5.
-            any |= PlayFlipbook(VfxIds.Shockwave, origin + Vector3.up * 0.05f, FlipbookEffect.Facing.Fixed, Quaternion.Euler(90f, 0f, 0f), 1f, ShockRingDustTint, 0.5f, 0.3f);
-            if (_smoke != null)
+            any |= (AuditExplosionMask & 2) != 0 && PlayFlipbook(VfxIds.Shockwave, origin + Vector3.up * 0.05f, FlipbookEffect.Facing.Fixed, Quaternion.Euler(90f, 0f, 0f), 1f, ShockRingDustTint, 0.5f, 0.3f);
+            if (_smoke != null && (AuditExplosionMask & 4) != 0)
             {
                 AtlasBurstEffect puff = _smoke.Get(origin + Vector3.up * 0.6f, Quaternion.LookRotation(Vector3.up));
                 if (puff != null)
@@ -406,7 +727,7 @@ namespace DD.Prototype.Feedback.Vfx
                 }
             }
 
-            PlayDecal(VfxIds.DecalScorch, origin, Vector3.up, 0f, DecalSecondsScorch, ScorchAlphaCap, Color.white);
+            if ((AuditExplosionMask & 8) != 0) PlayDecal(VfxIds.DecalScorch, origin, Vector3.up, 0f, DecalSecondsScorch, ScorchAlphaCap, Color.white);
             return any;
         }
 
@@ -415,7 +736,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Family 4: armour impact sheet + atlas fragments + lacquer splinter on the ground under the hit.</summary>
         public bool PlayArmorBreak(Vector3 point, Vector3 normal, Vector3 groundPoint, float scale, Vector3 shotDirection)
         {
-            if (!_ready)
+            if (!_ready || AuditMute)
             {
                 return false;
             }
@@ -462,7 +783,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public bool PlayZombieDeath(Vector3 feet, Vector3 hitDirection, bool heavy, Vector3 hitPoint, Vector3 normal, FeedbackWeight weight = FeedbackWeight.Standard)
         {
-            if (!_ready)
+            if (!_ready || AuditMute)
             {
                 return false;
             }

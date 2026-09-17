@@ -18,6 +18,13 @@ namespace DD.Prototype.Feedback
     {
         [SerializeField] private SurfaceKind _surface = SurfaceKind.Stone;
 
+        /// <summary>
+        /// WP-047 · The placement family this instance came from (AP005 world: written by Ap005SurfaceTags next
+        /// to the surface). World instances are renamed AP005_iNNNN, so this is the only runtime handle on the
+        /// family (lantern flames, breakable identities). Empty on hand-placed tags.
+        /// </summary>
+        public string Family = string.Empty;
+
         public SurfaceKind Surface
         {
             get => _surface;

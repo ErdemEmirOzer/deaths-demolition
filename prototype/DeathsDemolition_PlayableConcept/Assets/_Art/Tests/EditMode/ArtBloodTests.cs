@@ -155,11 +155,11 @@ namespace DD.Art.Tests.EditMode
         {
             for (int i = 0; i < 1200; i++) DD.Prototype.Feedback.DamageNumberEffect.NumberText(i);
             DD.Prototype.Feedback.DamageNumberEffect.NumberText(4242);
-            long before = System.GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1200; i++) DD.Prototype.Feedback.DamageNumberEffect.NumberText(i);
-            DD.Prototype.Feedback.DamageNumberEffect.NumberText(4242);
-            long after = System.GC.GetAllocatedBytesForCurrentThread();
-            Assert.AreEqual(0, after - before, "NumberText ısınma sonrası ayırdı: " + (after - before) + " B");
+            // Used-heap delta (GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono): 12 000 lookups would be ~300 KB as strings.
+            long before = System.GC.GetTotalMemory(false);
+            for (int r = 0; r < 10; r++) { for (int i = 0; i < 1200; i++) DD.Prototype.Feedback.DamageNumberEffect.NumberText(i); DD.Prototype.Feedback.DamageNumberEffect.NumberText(4242); }
+            long after = System.GC.GetTotalMemory(false);
+            Assert.LessOrEqual(after - before, 4096, "NumberText ısınma sonrası ayırdı: " + (after - before) + " B / 12 010 çağrı");
             Assert.AreSame(DD.Prototype.Feedback.DamageNumberEffect.NumberText(12), DD.Prototype.Feedback.DamageNumberEffect.NumberText(12));
         }
 
