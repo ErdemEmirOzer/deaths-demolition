@@ -161,6 +161,7 @@ namespace DD.Prototype.Enemies
                     r.updateWhenOffscreen = false;
                     r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
                     r.skinnedMotionVectors = false;
+                    r.renderingLayerMask = ZombieSkinnedVisual.CharacterRenderingLayers;   // WP-038G: the character fill light lives on a Rendering Layer — runtime tier parts must join it or stay dark
                     _partRenderers[p * LodCount + lod] = r;
                 }
             }
