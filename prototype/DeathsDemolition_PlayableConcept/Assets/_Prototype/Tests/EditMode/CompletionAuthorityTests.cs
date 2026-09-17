@@ -23,7 +23,7 @@ namespace DD.Prototype.Tests.EditMode
         private const string Soy = "0123456789abcdef0123456789abcdef";
         private const string Yabanci = "fedcba9876543210fedcba9876543210";
 
-        private static readonly string TestDir = Path.Combine(Application.temporaryCachePath, "dd-editmode-wp009h-authority");
+        private static readonly string TestDir = Path.Combine(Application.temporaryCachePath, "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "dd-editmode-wp009h-authority");
         private static readonly string TestPath = Path.Combine(TestDir, "prototype-profile.json");
         private static readonly string RealPath = Path.Combine(Application.persistentDataPath, ProfileStore.FileName);
         private string _realHashBefore;

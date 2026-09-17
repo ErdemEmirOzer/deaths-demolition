@@ -23,7 +23,7 @@ namespace DD.Prototype.Tests.EditMode
     public sealed class CosmeticsBindingTests
     {
         private static readonly string TestPath =
-            Path.Combine(Application.temporaryCachePath, "dd-editmode-wp035", "prototype-profile.json");
+            Path.Combine(Application.temporaryCachePath, "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "dd-editmode-wp035", "prototype-profile.json");
 
         private static readonly string RealPath =
             Path.Combine(Application.persistentDataPath, ProfileStore.FileName);

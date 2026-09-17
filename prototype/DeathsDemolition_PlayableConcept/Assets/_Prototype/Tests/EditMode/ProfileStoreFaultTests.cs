@@ -24,7 +24,7 @@ namespace DD.Prototype.Tests.EditMode
     public sealed class ProfileStoreFaultTests
     {
         private static readonly string Dir =
-            Path.Combine(Application.temporaryCachePath, "dd-editmode-wp009-store");
+            Path.Combine(Application.temporaryCachePath, "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "dd-editmode-wp009-store");
 
         private static readonly string Primary = Path.Combine(Dir, ProfileStore.FileName);
         private static string Candidate => Primary + ProfileStore.CandidateSuffix;

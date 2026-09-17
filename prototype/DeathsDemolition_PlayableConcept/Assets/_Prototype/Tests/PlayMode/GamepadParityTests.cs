@@ -66,7 +66,7 @@ namespace DD.Prototype.Tests.PlayMode
             installer.SetInputEnabled(true);
 
             // Preferences to a temp file so the test never touches the user's settings.
-            InputPreferencesStore.SetPathOverride(System.IO.Path.Combine(Application.temporaryCachePath, "wp024-test-input-settings.json"));
+            InputPreferencesStore.SetPathOverride(System.IO.Path.Combine(Application.temporaryCachePath, "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "wp024-test-input-settings.json"));
             InputPreferencesStore.ResetToDefaults();
 
             _pad = VirtualGamepadDriver.Create();

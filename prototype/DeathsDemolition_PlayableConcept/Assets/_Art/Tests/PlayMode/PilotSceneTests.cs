@@ -30,7 +30,7 @@ using UnityEngine.TestTools;
 public sealed class ArtTestProfileIsolation
 {
     public static string TestProfilePath =>
-        Path.Combine(Application.temporaryCachePath, "dd-art-test-profile.json");
+        Path.Combine(Application.temporaryCachePath, "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "dd-art-test-profile.json");
 
     [OneTimeSetUp]
     public void OneTimeSetUp()

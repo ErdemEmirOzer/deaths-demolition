@@ -28,7 +28,7 @@ namespace DD.Prototype.Tests.EditMode
     public sealed class ProfileReplayClosureTests
     {
         private static readonly string TestDir =
-            Path.Combine(Application.temporaryCachePath, "dd-editmode-wp009h-replay");
+            Path.Combine(Application.temporaryCachePath, "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "dd-editmode-wp009h-replay");
 
         private static readonly string TestPath = Path.Combine(TestDir, "prototype-profile.json");
 
