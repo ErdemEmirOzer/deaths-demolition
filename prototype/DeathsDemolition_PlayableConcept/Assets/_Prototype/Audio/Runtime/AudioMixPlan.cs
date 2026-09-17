@@ -45,6 +45,9 @@ namespace DD.Prototype.Audio
         /// <summary>Seconds the duck is held before it releases.</summary>
         public float DuckSeconds;
 
+        /// <summary>WP-057: gain floor for the Music bus while this plays (1 = no duck). HudLowHealth / threat chips / stingers use it.</summary>
+        public float DuckMusic;
+
         public bool IsValid => Sound != AudioSoundId.None;
     }
 
@@ -541,6 +544,7 @@ namespace DD.Prototype.Audio
                     AudioPlacement p = Interface(sound, 0.75f, 78f, 0f, 1, 1.0f);
                     p.DuckAmbience = 0.7f;
                     p.DuckCombat = 0.63f;
+                    p.DuckMusic = 0.7f;      // WP-057 mix pass: the taiko band is where HudLowHealth lives (gate M10)
                     p.DuckSeconds = 0.35f;
                     return p;
                 }
@@ -550,6 +554,7 @@ namespace DD.Prototype.Audio
                     AudioPlacement p = Interface(sound, 0.8f, 82f, 0f, 1, 1.5f);
                     p.DuckAmbience = 0.7f;
                     p.DuckCombat = 0.63f;
+                    p.DuckMusic = 0.7f;
                     p.DuckSeconds = 0.35f;
                     return p;
                 }
@@ -558,6 +563,7 @@ namespace DD.Prototype.Audio
                     AudioPlacement p = Interface(sound, 0.75f, 80f, 0f, 1, 0.8f);
                     p.DuckAmbience = 0.7f;
                     p.DuckCombat = 0.63f;
+                    p.DuckMusic = 0.7f;
                     p.DuckSeconds = 0.3f;
                     return p;
                 }
@@ -566,6 +572,7 @@ namespace DD.Prototype.Audio
                     AudioPlacement p = Interface(sound, 0.7f, 76f, 0f, 1, 2.0f);
                     p.DuckAmbience = 0.7f;
                     p.DuckCombat = 0.63f;
+                    p.DuckMusic = 0.7f;
                     p.DuckSeconds = 0.35f;
                     return p;
                 }
@@ -700,6 +707,7 @@ namespace DD.Prototype.Audio
                 Pitch = 1f,
                 DuckAmbience = 1f,
                 DuckCombat = 1f,
+                DuckMusic = 1f,
                 DuckSeconds = 0f
             };
         }
@@ -737,6 +745,7 @@ namespace DD.Prototype.Audio
                 Pitch = 1f,
                 DuckAmbience = 1f,
                 DuckCombat = 1f,
+                DuckMusic = 1f,
                 DuckSeconds = 0f
             };
         }
@@ -759,6 +768,7 @@ namespace DD.Prototype.Audio
                 Pitch = 1f,
                 DuckAmbience = 1f,
                 DuckCombat = 1f,
+                DuckMusic = 1f,
                 DuckSeconds = 0f
             };
         }
@@ -778,6 +788,7 @@ namespace DD.Prototype.Audio
                 Pitch = 1f,
                 DuckAmbience = 1f,
                 DuckCombat = 1f,
+                DuckMusic = 1f,
                 DuckSeconds = 0f
             };
         }
@@ -799,6 +810,7 @@ namespace DD.Prototype.Audio
                 Pitch = 1f,
                 DuckAmbience = 1f,
                 DuckCombat = 1f,
+                DuckMusic = 1f,
                 DuckSeconds = 0f
             };
         }

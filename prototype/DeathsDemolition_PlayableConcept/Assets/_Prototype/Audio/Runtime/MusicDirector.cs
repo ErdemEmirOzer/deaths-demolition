@@ -54,7 +54,7 @@ namespace DD.Prototype.Audio
         private const float TierPollSeconds = 0.25f;
 
         /// <summary>Layer levels (0-1, before bus gain) by state; BASE first.</summary>
-        private const float BaseFighting = 0.62f, BaseBreak = 0.34f, BaseMenu = 0.28f, BaseDead = 0.22f;
+        private const float BaseFighting = 0.62f, BaseBreak = 0.34f;   // WP-057: menu / dead levels moved to the phase loops
 
         private readonly AudioSource[] _sources = new AudioSource[LayerCount];
         private readonly float[] _current = new float[LayerCount];
@@ -67,6 +67,33 @@ namespace DD.Prototype.Audio
         private float _tierPoll;
         private bool _tierPresent;
         private bool _specialActive;
+
+        // ---- WP-057 · music v2: threat-layer driver, stingers, menu / results music
+        /// <summary>Layer levels the WP-033 threat layer (0–3, hysteresis inside ThreatDirector) guarantees while fighting. PROTOTYPE-ONLY.</summary>
+        private static readonly float[] s_percByLayer = { 0f, 0.55f, 0.70f, 0.72f };
+        private static readonly float[] s_tensByLayer = { 0f, 0f, 0.50f, 0.66f };
+        private const float StingerDuck = 0.55f;
+        private const float StingerDuckRelease = 1.5f;
+        private const float PhaseLoopRiseSeconds = 2.5f;
+        private const float PhaseLoopFallSeconds = 1.8f;
+        private const float MenuLevel = 0.55f, ResultsLevel = 0.5f;
+
+        private AudioSource _stinger;
+        private AudioSource _phaseLoop;
+        private AudioSoundId _phaseLoopSound = AudioSoundId.None;
+        private float _phaseLoopLevel, _phaseLoopTarget;
+        private float _stingerHold;           // seconds the layer duck stays at StingerDuck
+        private float _stingerDuckLevel = 1f;
+        private bool _afterRun;               // results state: RunEnded / Dead until the next RunStarted
+
+        /// <summary>Stingers played (test / F1 readout).</summary>
+        public int StingerCount { get; private set; }
+        public AudioSoundId LastStinger { get; private set; }
+        /// <summary>The menu / results loop currently faded in (None while running).</summary>
+        public AudioSoundId PhaseLoop => _phaseLoopSound;
+        public float PhaseLoopLevel => _phaseLoopLevel;
+        /// <summary>Threat layer (0–3) the driver saw on the last tick.</summary>
+        public int ThreatLayer { get; private set; }
 
         /// <summary>The 0-1 driver of the percussion and tension layers. F1 readout, test seam.</summary>
         public float Intensity { get; private set; }
@@ -81,6 +108,12 @@ namespace DD.Prototype.Audio
 
         /// <summary>Test seam: pin the accent driver.</summary>
         public bool? AccentOverride { get; set; }
+
+        /// <summary>Test seam (WP-057): pin the threat layer (0–3) instead of reading ThreatMusicFeed.</summary>
+        public int? ThreatLayerOverride { get; set; }
+
+        /// <summary>Current layer duck from a stinger (1 = none). Test readout.</summary>
+        public float StingerDuckLevel => _stingerDuckLevel;
 
         public MusicDirector(Transform root, AudioClipLibrary library, AudioBusMixer mixer, AudioMixerBridge bridge)
         {
@@ -103,6 +136,66 @@ namespace DD.Prototype.Audio
                 source.priority = 0;
                 bridge?.RouteMusic(source);
                 _sources[i] = source;
+            }
+
+            _stinger = MakeSource(root, "Music Stinger", false, bridge);
+            _phaseLoop = MakeSource(root, "Music Phase Loop", true, bridge);
+        }
+
+        private static AudioSource MakeSource(Transform root, string name, bool loop, AudioMixerBridge bridge)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(root, false);
+            AudioSource source = go.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.loop = loop;
+            source.spatialBlend = 0f;
+            source.volume = 0f;
+            source.dopplerLevel = 0f;
+            source.bypassReverbZones = true;
+            source.bypassEffects = true;
+            source.priority = 0;
+            bridge?.RouteMusic(source);
+            return source;
+        }
+
+        /// <summary>WP-057: a one-shot phrase over the layers (round break, Special pickup, death, run end). The layers duck to <see cref="StingerDuck"/> for its length.</summary>
+        public bool PlayStinger(AudioSoundId sound)
+        {
+            AudioClip clip = _library.First(sound);
+            if (clip == null || _stinger == null)
+            {
+                return false;
+            }
+
+            _stinger.Stop();
+            _stinger.clip = clip;
+            _stinger.volume = 0.9f * _mixer.Gain(AudioBus.Music);
+            _stinger.Play();
+            _stingerHold = Mathf.Max(0.2f, clip.length - StingerDuckRelease * 0.5f);
+            _stingerDuckLevel = StingerDuck;
+            StingerCount++;
+            LastStinger = sound;
+            return true;
+        }
+
+        /// <summary>WP-057: RunEnded / death → results state until the next RunStarted (results loop instead of the menu loop).</summary>
+        public void OnRunEnded(bool died)
+        {
+            if (_afterRun)
+            {
+                return;   // death already ended the run (RunEnded follows the death frame); one stinger
+            }
+
+            _afterRun = true;
+            PlayStinger(died ? AudioSoundId.StingerDeath : AudioSoundId.StingerRunEnd);
+        }
+
+        public void OnSpecialPickup()
+        {
+            if (_phase == RunPhase.Fighting || _phase == RunPhase.Countdown)
+            {
+                PlayStinger(AudioSoundId.StingerSpecialPickup);
             }
         }
 
@@ -148,6 +241,11 @@ namespace DD.Prototype.Audio
             }
         }
 
+        public void OnRunStarted()
+        {
+            _afterRun = false;
+        }
+
         public void OnRoundStarted()
         {
             _surge = 1f;
@@ -156,6 +254,7 @@ namespace DD.Prototype.Audio
         public void OnRoundCompleted()
         {
             _surge = 0f;
+            PlayStinger(AudioSoundId.StingerRoundBreak);   // WP-057
         }
 
         public float Level(int layer)
@@ -183,7 +282,17 @@ namespace DD.Prototype.Audio
             ResolveTargets();
 
             bool pullback = _phase != RunPhase.Fighting && _phase != RunPhase.Countdown;
-            float busGain = _mixer.Gain(AudioBus.Ambience);
+            float busGain = _mixer.Gain(AudioBus.Music);   // WP-057: the score has its own software bus (duck + user volume)
+
+            // Stinger duck: hold, then release over StingerDuckRelease.
+            if (_stingerHold > 0f)
+            {
+                _stingerHold -= unscaledDeltaTime;
+            }
+            else
+            {
+                _stingerDuckLevel = Mathf.MoveTowards(_stingerDuckLevel, 1f, unscaledDeltaTime / StingerDuckRelease);
+            }
 
             for (int i = 0; i < LayerCount; i++)
             {
@@ -192,8 +301,59 @@ namespace DD.Prototype.Audio
                     : (pullback ? PullbackSeconds : LayerFallSeconds);
 
                 _current[i] = Mathf.MoveTowards(_current[i], _target[i], unscaledDeltaTime / Mathf.Max(0.05f, seconds));
-                _sources[i].volume = _current[i] * busGain;
+                _sources[i].volume = _current[i] * busGain * _stingerDuckLevel;
             }
+
+            if (_stinger != null && _stinger.isPlaying)
+            {
+                _stinger.volume = 0.9f * busGain;
+            }
+
+            TickPhaseLoop(unscaledDeltaTime, busGain);
+        }
+
+        /// <summary>
+        /// WP-057: menu and results music are their own loops, cross-faded against the run layers
+        /// (which fall to 0 outside a run instead of idling at a low base level).
+        /// </summary>
+        private void TickPhaseLoop(float dt, float busGain)
+        {
+            AudioSoundId want = AudioSoundId.None;
+            float level = 0f;
+            if (_phase == RunPhase.None || _phase == RunPhase.Dead)
+            {
+                want = _afterRun || _phase == RunPhase.Dead ? AudioSoundId.MusicResults : AudioSoundId.MusicMenu;
+                level = want == AudioSoundId.MusicMenu ? MenuLevel : ResultsLevel;
+            }
+
+            if (want != _phaseLoopSound)
+            {
+                // Fade the old loop out first; swap the clip when it is silent.
+                _phaseLoopTarget = 0f;
+                if (_phaseLoopLevel <= 0.001f)
+                {
+                    _phaseLoop.Stop();
+                    _phaseLoopSound = want;
+                    if (want != AudioSoundId.None)
+                    {
+                        AudioClip clip = _library.First(want);
+                        if (clip != null)
+                        {
+                            _phaseLoop.clip = clip;
+                            _phaseLoop.time = 0f;
+                            _phaseLoop.Play();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                _phaseLoopTarget = level;
+            }
+
+            float seconds = _phaseLoopTarget > _phaseLoopLevel ? PhaseLoopRiseSeconds : PhaseLoopFallSeconds;
+            _phaseLoopLevel = Mathf.MoveTowards(_phaseLoopLevel, _phaseLoopTarget, dt / seconds);
+            _phaseLoop.volume = _phaseLoopLevel * busGain * _stingerDuckLevel;
         }
 
         private void PollTier()
@@ -253,13 +413,19 @@ namespace DD.Prototype.Audio
             {
                 case RunPhase.Fighting:
                 case RunPhase.Countdown:
-                    _target[Base] = BaseFighting;
+                {
                     // Ramps rather than gates: a layer that snaps in on a threshold is a
-                    // seam; one that rises over 0.2 of intensity is a swell.
-                    _target[Percussion] = Mathf.Clamp01((Intensity - PercussionAt) / 0.25f) * 0.70f;
-                    _target[Tension] = Mathf.Clamp01((Intensity - TensionAt) / 0.30f) * 0.62f;
-                    _target[Accent] = AccentActive ? 0.66f : 0f;
+                    // seam; one that rises over 0.2 of intensity is a swell. WP-057: the WP-033
+                    // threat layer (0–3, hysteresis in ThreatDirector) is a FLOOR under the ramp,
+                    // so a layer never drops while the director still says "surrounded".
+                    int layer = ThreatLayerOverride.HasValue ? Mathf.Clamp(ThreatLayerOverride.Value, 0, 3) : IntensityOverride.HasValue ? 0 : Mathf.Clamp(ThreatMusicFeed.Layer, 0, 3);
+                    ThreatLayer = layer;
+                    _target[Base] = layer >= 3 ? 0.70f : BaseFighting;
+                    _target[Percussion] = Mathf.Max(Mathf.Clamp01((Intensity - PercussionAt) / 0.25f) * 0.70f, s_percByLayer[layer]);
+                    _target[Tension] = Mathf.Max(Mathf.Clamp01((Intensity - TensionAt) / 0.30f) * 0.62f, s_tensByLayer[layer]);
+                    _target[Accent] = AccentActive ? (layer >= 3 ? 0.76f : 0.66f) : 0f;
                     break;
+                }
 
                 case RunPhase.RoundComplete:
                 case RunPhase.Upgrading:
@@ -270,14 +436,9 @@ namespace DD.Prototype.Audio
                     break;
 
                 case RunPhase.Dead:
-                    _target[Base] = BaseDead;
-                    _target[Percussion] = 0f;
-                    _target[Tension] = 0f;
-                    _target[Accent] = 0f;
-                    break;
-
                 default:
-                    _target[Base] = BaseMenu;
+                    // WP-057: menus / results / death have their own loops (TickPhaseLoop); the run layers leave.
+                    _target[Base] = 0f;
                     _target[Percussion] = 0f;
                     _target[Tension] = 0f;
                     _target[Accent] = 0f;
@@ -294,6 +455,9 @@ namespace DD.Prototype.Audio
                 _target[i] = 0f;
             }
 
+            if (_stinger != null) _stinger.Stop();
+            if (_phaseLoop != null) { _phaseLoop.Stop(); _phaseLoopLevel = 0f; _phaseLoopSound = AudioSoundId.None; }
+            _stingerDuckLevel = 1f; _stingerHold = 0f;
             Started = false;
             Intensity = 0f;
             _surge = 0f;
@@ -302,9 +466,9 @@ namespace DD.Prototype.Audio
         public string Describe()
         {
             return string.Format(
-                "{0} · intensity {1:0.00} (surge {2:0.00}) · accent {3} · base {4:0.00} perc {5:0.00} tens {6:0.00} acc {7:0.00}",
+                "{0} · intensity {1:0.00} (surge {2:0.00}, threat L{8}) · accent {3} · base {4:0.00} perc {5:0.00} tens {6:0.00} acc {7:0.00} · loop {9} {10:0.00} · stingers {11}",
                 _phase, Intensity, _surge, AccentActive ? (_specialActive ? "special" : "tier") : "off",
-                _current[Base], _current[Percussion], _current[Tension], _current[Accent]);
+                _current[Base], _current[Percussion], _current[Tension], _current[Accent], ThreatLayer, _phaseLoopSound, _phaseLoopLevel, StingerCount);
         }
     }
 }

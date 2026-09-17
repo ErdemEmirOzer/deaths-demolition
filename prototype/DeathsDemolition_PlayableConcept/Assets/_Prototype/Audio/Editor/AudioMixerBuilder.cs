@@ -28,11 +28,13 @@ namespace DD.Prototype.Audio.EditorTools
         /// <summary>Per-snapshot group volumes in dB, groups in <see cref="AudioMixerBridge.GroupNames"/> order (Master first).</summary>
         private static readonly float[][] SnapshotVolumesDb =
         {
+            // WP-057 mix pass v2 (sound-designer proposal, calibrated by the PlayMode phase meter):
+            // the score sits under the fight, comes forward in the break and the menu, UI trims 3-4 dB.
             //           Master  Music  Ambience  SFX-World  SFX-Player  UI
-            new[] { 0f,    0f,    0f,       0f,        0f,       0f },   // Run
-            new[] { 0f,   -6f,    2f,      -4f,       -4f,       0f },   // RoundBreak: music pulls back, ambience forward
-            new[] { 0f,  -14f,   -10f,     -80f,      -80f,      0f },   // Pause: world silent, UI audible (listener is paused anyway)
-            new[] { 0f,   -8f,   -3f,      -12f,      -12f,      0f }    // Menu
+            new[] { 0f,   -5f,   -4f,       0f,       -1f,      -3f },   // Run
+            new[] { 0f,   -3f,   -3f,      -6f,       -3f,      -2f },   // RoundBreak: stinger + shop UI forward, world back
+            new[] { 0f,  -14f,  -12f,     -18f,      -18f,      -2f },   // Pause: world far back, UI audible (listener is paused anyway)
+            new[] { 0f,   -4f,  -10f,     -80f,      -80f,      -3f }    // Menu: menu loop + UI, no world
         };
 
         [MenuItem("DD/Audio/Build Mixer")]
@@ -63,11 +65,12 @@ namespace DD.Prototype.Audio.EditorTools
             }
 
             // WP-021C: an asset whose tree is right but which predates the master limiter is
-            // upgraded in place (same GUID), not rebuilt.
-            if (VerifyTree(out string _) && !HasMasterLimiter(out string _))
+            // upgraded in place (same GUID), not rebuilt. WP-057: same for the snapshot mix table.
+            if (VerifyTree(out string _))
             {
-                string limiter = EnsureMasterLimiter();
-                return Verify(out string why0) ? "upgraded (master limiter): " + AssetPath + " · " + limiter : "upgrade with gaps: " + why0 + " · " + limiter;
+                string limiter = HasMasterLimiter(out string _) ? "limiter: present" : EnsureMasterLimiter();
+                string mix = EnsureSnapshotMix();
+                return Verify(out string why0) ? "upgraded in place: " + AssetPath + " · " + limiter + " · " + mix : "upgrade with gaps: " + why0 + " · " + limiter + " · " + mix;
             }
 
             Type controllerType = FindType("UnityEditor.Audio.AudioMixerController");
@@ -364,10 +367,95 @@ namespace DD.Prototype.Audio.EditorTools
             return true;
         }
 
-        /// <summary>True when the asset exists with every expected group, snapshot, exposed volume AND the master limiter (WP-021C).</summary>
+        /// <summary>True when the asset exists with every expected group, snapshot, exposed volume, the master limiter (WP-021C) AND the mix table (WP-057).</summary>
         public static bool Verify(out string why)
         {
-            return VerifyTree(out why) && HasMasterLimiter(out why);
+            return VerifyTree(out why) && HasMasterLimiter(out why) && HasSnapshotMix(out why);
+        }
+
+        // ---- WP-057 · snapshot mix table ------------------------------------------------
+
+        /// <summary>Writes <see cref="SnapshotVolumesDb"/> into the existing snapshots (in place, same GUID). Idempotent.</summary>
+        public static string EnsureSnapshotMix()
+        {
+            var mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(AssetPath);
+            if (mixer == null) return "mix: asset missing";
+            if (HasSnapshotMix(out string _)) return "mix: up to date";
+            Type controllerType = FindType("UnityEditor.Audio.AudioMixerController");
+            Type groupType = FindType("UnityEditor.Audio.AudioMixerGroupController");
+            Type snapshotType = FindType("UnityEditor.Audio.AudioMixerSnapshotController");
+            MethodInfo guidForVolume = groupType.GetMethod("GetGUIDForVolume", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            MethodInfo setValue = snapshotType.GetMethod("SetValue", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Array snapshots = (Array)Get(controllerType, mixer, "snapshots");
+            int written = 0;
+            foreach (object snap in snapshots)
+            {
+                int s = Array.IndexOf(AudioMixerBridge.SnapshotNames, ((UnityEngine.Object)snap).name);
+                if (s < 0) continue;
+                for (int g = 0; g < AudioMixerBridge.GroupNames.Length; g++)
+                {
+                    object group = FindGroup(mixer, controllerType, groupType, AudioMixerBridge.GroupNames[g]);
+                    if (group == null) continue;
+                    setValue.Invoke(snap, new[] { guidForVolume.Invoke(group, null), (object)SnapshotVolumesDb[s][g] });
+                    written++;
+                }
+            }
+
+            EditorUtility.SetDirty(mixer);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(AssetPath, ImportAssetOptions.ForceUpdate);
+            return "mix: " + written + " snapshot volumes written (v2)";
+        }
+
+        /// <summary>True when every snapshot carries the <see cref="SnapshotVolumesDb"/> values (±0.01 dB).</summary>
+        public static bool HasSnapshotMix(out string why)
+        {
+            var mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(AssetPath);
+            if (mixer == null) { why = "asset missing"; return false; }
+            Type controllerType = FindType("UnityEditor.Audio.AudioMixerController");
+            Type groupType = FindType("UnityEditor.Audio.AudioMixerGroupController");
+            Type snapshotType = FindType("UnityEditor.Audio.AudioMixerSnapshotController");
+            MethodInfo guidForVolume = groupType.GetMethod("GetGUIDForVolume", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            MethodInfo getValue = snapshotType.GetMethod("GetValue", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (getValue == null) { why = "AudioMixerSnapshotController.GetValue missing"; return false; }
+            Array snapshots = (Array)Get(controllerType, mixer, "snapshots");
+            foreach (object snap in snapshots)
+            {
+                int s = Array.IndexOf(AudioMixerBridge.SnapshotNames, ((UnityEngine.Object)snap).name);
+                if (s < 0) continue;
+                for (int g = 0; g < AudioMixerBridge.GroupNames.Length; g++)
+                {
+                    object group = FindGroup(mixer, controllerType, groupType, AudioMixerBridge.GroupNames[g]);
+                    if (group == null) continue;
+                    object[] args = { guidForVolume.Invoke(group, null), 0f };
+                    bool has = (bool)getValue.Invoke(snap, args);
+                    float value = has ? (float)args[1] : float.NaN;
+                    if (!has || Mathf.Abs(value - SnapshotVolumesDb[s][g]) > 0.01f)
+                    {
+                        why = "snapshot " + AudioMixerBridge.SnapshotNames[s] + " / " + AudioMixerBridge.GroupNames[g] + " = " + value + " dB, expected " + SnapshotVolumesDb[s][g];
+                        return false;
+                    }
+                }
+            }
+
+            why = string.Empty;
+            return true;
+        }
+
+        private static object FindGroup(AudioMixer mixer, Type controllerType, Type groupType, string name)
+        {
+            object master = Get(controllerType, mixer, "masterGroup");
+            if (((UnityEngine.Object)master).name == name) return master;
+            MethodInfo getAll = controllerType.GetMethod("GetAllAudioGroupsSlow", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (getAll != null)
+            {
+                var all = getAll.Invoke(mixer, null) as System.Collections.IEnumerable;
+                if (all != null) foreach (object g in all) if (((UnityEngine.Object)g).name == name) return g;
+            }
+
+            Array children = (Array)Get(groupType, master, "children");
+            foreach (object c in children) if (((UnityEngine.Object)c).name == name) return c;
+            return null;
         }
 
         /// <summary>The WP-021 tree check: groups, snapshots, exposed volumes.</summary>

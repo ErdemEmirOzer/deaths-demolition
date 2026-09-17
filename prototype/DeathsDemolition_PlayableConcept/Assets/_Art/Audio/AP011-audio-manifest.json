@@ -1,5 +1,5 @@
 {
- "version": "ap011-v007",
+ "version": "ap011-v008",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -1656,6 +1656,28 @@
    "provenance": "seed_audio job 7410c7d5 (1.1 cr) · music_base"
   },
   {
+   "sound": "MusicMenu",
+   "event": "Music.menu",
+   "files": [
+    "MusicMenu.wav"
+   ],
+   "loop": true,
+   "lufs": -18.0,
+   "truePeakDb": -2.29,
+   "noiseFloorDb": -120.0,
+   "dcDb": -214.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -16.0,
+   "layers": "derived (v008, no credits): MusicBase.wav@0ms 0dB + AmbRegionCenter.wav@0ms -14dB",
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbRegionCenter.wav, exports/MusicBase.wav"
+  },
+  {
    "sound": "MusicPercussion",
    "event": "Music.percussion",
    "files": [
@@ -1676,6 +1698,28 @@
    "bus": "Music",
    "spatial": false,
    "provenance": "seed_audio job a0266933 (1.1 cr) · music_percussion"
+  },
+  {
+   "sound": "MusicResults",
+   "event": "Music.results",
+   "files": [
+    "MusicResults.wav"
+   ],
+   "loop": true,
+   "lufs": -18.39,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -120.0,
+   "dcDb": -222.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -13.5,
+   "layers": "derived (v008, no credits): MusicBase.wav@0ms 0dB + MusicPercussion.wav@0ms -10dB + MusicAccent.wav@0ms -12dB",
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav, exports/MusicBase.wav, exports/MusicPercussion.wav"
   },
   {
    "sound": "MusicTension",
@@ -2022,6 +2066,96 @@
    "bus": "SFX-Player",
    "spatial": true,
    "provenance": "seed_audio job d0d389ec (2.4 cr) · carbine_fire_c1"
+  },
+  {
+   "sound": "StingerDeath",
+   "event": "RunPhase.Dead",
+   "files": [
+    "StingerDeath_01.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -3.48,
+   "noiseFloorDb": -68.0,
+   "dcDb": -195.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -197.3,
+   "layers": "derived (v008, no credits): PlayerDeath_01.wav@0ms 0dB + MusicBase.wav@150ms -6dB + HudThreatStrong_01.wav@950ms -7dB -4st",
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav, exports/MusicBase.wav, exports/PlayerDeath_01.wav"
+  },
+  {
+   "sound": "StingerRoundBreak",
+   "event": "Run.RoundCompleted",
+   "files": [
+    "StingerRoundBreak_01.wav",
+    "StingerRoundBreak_02.wav"
+   ],
+   "loop": false,
+   "lufs": -20.61,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -68.0,
+   "dcDb": -177.7,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -16.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -202.3,
+   "layers": "derived (v008, no credits): MusicPercussion.wav@0ms 0dB + HudThreatStrong_01.wav@70ms -5dB +5st + MusicAccent.wav@120ms -9dB",
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav, exports/MusicAccent.wav, exports/MusicPercussion.wav"
+  },
+  {
+   "sound": "StingerRunEnd",
+   "event": "Run.RunEnded → Results",
+   "files": [
+    "StingerRunEnd_01.wav"
+   ],
+   "loop": false,
+   "lufs": -17.03,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -77.6,
+   "dcDb": -168.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -16.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -194.5,
+   "layers": "derived (v008, no credits): UiTransition_01.wav@0ms -10dB + RoundComplete_01.wav@250ms 0dB + MusicAccent.wav@300ms -9dB",
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav, exports/RoundComplete_01.wav, exports/UiTransition_01.wav"
+  },
+  {
+   "sound": "StingerSpecialPickup",
+   "event": "Combat.SpecialWeaponPickup",
+   "files": [
+    "StingerSpecialPickup_01.wav",
+    "StingerSpecialPickup_02.wav"
+   ],
+   "loop": false,
+   "lufs": -16.35,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -70.2,
+   "dcDb": -186.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -16.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -195.6,
+   "layers": "derived (v008, no credits): MusicTension.wav@0ms -4dB +3st + SwPickup_01.wav@520ms -9dB + MusicPercussion.wav@720ms -3dB -1st",
+   "bus": "Music",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicPercussion.wav, exports/MusicTension.wav, exports/SwPickup_01.wav"
   },
   {
    "sound": "SwBeaconLoop",

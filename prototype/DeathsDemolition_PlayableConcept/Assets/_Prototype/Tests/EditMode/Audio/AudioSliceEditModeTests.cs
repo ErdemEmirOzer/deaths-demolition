@@ -55,7 +55,9 @@ namespace DD.Prototype.Tests.EditMode.Audio
             int bed = 0;
             foreach (AudioEventBinding b in AudioEventMap.For(AudioEventSource.Ambience)) { if (b.Event.StartsWith("Region.")) bed++; }
             Assert.AreEqual(6, bed, "5 bölge + ortak katman (DEC-066)");
-            Assert.AreEqual(4, AudioEventMap.For(AudioEventSource.Music).Count, "4 müzik katmanı (DEC-065)");
+            int katman = 0;
+            foreach (AudioEventBinding b in AudioEventMap.For(AudioEventSource.Music)) { if (b.Event.StartsWith("Music.") && b.Bus == AudioBus.Ambience) katman++; }
+            Assert.AreEqual(4, katman, "4 müzik katmanı (DEC-065); WP-057 menü/sonuç döngüleri ve stinger'lar Music bus'ında ayrı satırlar");
             Assert.GreaterOrEqual(AudioEventMap.For(AudioEventSource.Polled).Count + AudioEventMap.For(AudioEventSource.Damage).Count, 4,
                 "Zombi vokal seti: hazırlık, saldırı, hit, ölüm (DEC-067)");
 
@@ -273,6 +275,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 string ad = e.Sound.ToString();
                 // Region / common beds only: WP-048 adds the pond bed (AmbPondBed, 3D at the pond) as a seventh loop outside the crossfade set.
                 if ((ad.StartsWith("AmbRegion") || ad == "AmbCommon") && e.Loop) amb++;
+                else if (ad.StartsWith("Music") && !e.Loop) sfx += e.Clips.Length;   // WP-057 stingers are one-shots
+                else if (ad.StartsWith("Music") && (ad == "MusicMenu" || ad == "MusicResults")) { }   // WP-057 phase loops
                 else if (ad.StartsWith("Music")) muzik++;
                 else sfx += e.Clips.Length;
             }

@@ -420,6 +420,106 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
         }
 
+        // ================================================================== WP-057 · müzik v2
+
+        [UnityTest]
+        [Timeout(90000)]
+        public IEnumerator MuzikV2_TehditKatmaniTaban_Stinger_MenuSonucDongusu()
+        {
+            MusicDirector m = _d.Music;
+            try
+            {
+                // Threat layer floor: layer 2 raises percussion + tension even at low intensity, and holds them.
+                m.IntensityOverride = null;
+                m.ThreatLayerOverride = 2;
+                yield return new WaitForSecondsRealtime(2.0f);
+                Assert.GreaterOrEqual(m.Level(MusicDirector.Percussion), 0.5f, "L2: vurmalı taban");
+                Assert.GreaterOrEqual(m.Level(MusicDirector.Tension), 0.4f, "L2: gerilim taban");
+                m.ThreatLayerOverride = 0;
+                m.IntensityOverride = 0.05f;
+                yield return new WaitForSecondsRealtime(3.0f);
+                Assert.LessOrEqual(m.Level(MusicDirector.Tension), 0.05f, "L0 + düşük yoğunluk: gerilim gider");
+
+                // Stinger: plays over the layers and ducks them.
+                int once = m.StingerCount;
+                Assert.IsTrue(m.PlayStinger(AudioSoundId.StingerRoundBreak), "StingerRoundBreak klibi yok");
+                Assert.AreEqual(once + 1, m.StingerCount);
+                Assert.AreEqual(AudioSoundId.StingerRoundBreak, m.LastStinger);
+                yield return null;
+                Assert.Less(m.StingerDuckLevel, 0.7f, "katmanlar stinger sırasında duck edilmeli");
+
+                // Phase loops: menu when out of the run, results after a run end.
+                m.SetPhase(RunPhase.None);
+                yield return SpecialWeaponSahne.Bekle(() => m.PhaseLoop == AudioSoundId.MusicMenu && m.PhaseLoopLevel > 0.2f, 12f, "Menü döngüsü yükselmedi.");
+                yield return SpecialWeaponSahne.Bekle(() => m.Level(MusicDirector.Base) <= 0.15f, 8f, "menüde koşu katmanları çekilmedi (PullbackSeconds 3 s).");
+                m.OnRunEnded(false);
+                Assert.AreEqual(AudioSoundId.StingerRunEnd, m.LastStinger);
+                yield return SpecialWeaponSahne.Bekle(() => m.PhaseLoop == AudioSoundId.MusicResults && m.PhaseLoopLevel > 0.2f, 12f, "Sonuç döngüsü yükselmedi.");
+                Debug.Log("[DD-TEST] wp057.music " + m.Describe());
+            }
+            finally
+            {
+                m.ThreatLayerOverride = null;
+                m.IntensityOverride = null;
+                m.OnRunStarted();
+                m.SetPhase(RunPhase.Fighting);
+            }
+        }
+
+        [UnityTest]
+        [Timeout(90000)]
+        public IEnumerator MixGecisi_FazOlcumu_LowHealthMuzikDuck()
+        {
+            // WP-057 mix pass: output RMS per phase (report) + the HudLowHealth ↔ taiko rule (Music bus ducks).
+            var buffer = new float[2048];
+            float fightDb = 0f, breakDb = 0f, menuDb = 0f;
+            IEnumerator Measure(System.Action<float> sink)
+            {
+                double sumSq = 0; long n = 0;
+                for (int f = 0; f < 45; f++)
+                {
+                    yield return null;
+                    AudioListener.GetOutputData(buffer, 0);
+                    for (int i = 0; i < buffer.Length; i++) sumSq += buffer[i] * buffer[i];
+                    n += buffer.Length;
+                }
+
+                sink(20f * Mathf.Log10((float)Math.Sqrt(sumSq / Math.Max(1, n)) + 1e-9f));
+            }
+
+            MusicDirector m = _d.Music;
+            try
+            {
+                m.IntensityOverride = 0.9f; m.AccentOverride = true;
+                yield return new WaitForSecondsRealtime(1.5f);
+                yield return Measure(v => fightDb = v);
+                m.SetPhase(RunPhase.Upgrading); _d.Bridge.Transition(AudioSnapshot.RoundBreak, 0.2f);
+                yield return new WaitForSecondsRealtime(2.5f);
+                yield return Measure(v => breakDb = v);
+                m.SetPhase(RunPhase.None); _d.Bridge.Transition(AudioSnapshot.Menu, 0.2f);
+                yield return new WaitForSecondsRealtime(3.5f);
+                yield return Measure(v => menuDb = v);
+                Debug.Log("[DD-TEST] wp057.mix fight=" + fightDb.ToString("0.0") + " dBFS break=" + breakDb.ToString("0.0") + " menu=" + menuDb.ToString("0.0") + " · " + m.Describe());
+                if (fightDb > -60f)
+                {
+                    Assert.Greater(fightDb, menuDb - 0.1f, "Dövüş karışımı menüden sessiz olmamalı.");
+                }
+            }
+            finally
+            {
+                m.IntensityOverride = null; m.AccentOverride = null;
+                m.SetPhase(RunPhase.Fighting); _d.Bridge.Transition(AudioSnapshot.Run, 0.2f);
+            }
+
+            // HudLowHealth ducks the Music bus (gate M10 / designer rule 2).
+            Assert.AreEqual(1f, _d.Mixer.DuckLevel(AudioBus.Music), 0.01f, "öncül: müzik duck yok");
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.HudLowHealthEntered);
+            yield return null; yield return null;
+            Assert.Less(_d.Mixer.DuckLevel(AudioBus.Music), 0.95f, "HudLowHealth müzik bus'ını duck etmeli (−3 dB).");
+            yield return new WaitForSecondsRealtime(1.2f);
+            Assert.Greater(_d.Mixer.DuckLevel(AudioBus.Music), 0.9f, "duck 1 s içinde bırakılmalı");
+        }
+
         // ================================================================== WP-048B · WP-032C silah foley
 
         [UnityTest]

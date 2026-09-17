@@ -113,6 +113,7 @@ namespace DD.Prototype.Audio
                 case AudioBus.Target: return _groups[3];
                 case AudioBus.Interface: return _groups[5];
                 case AudioBus.Ambience: return _groups[2];
+                case AudioBus.Music: return _groups[1];
                 default: return _groups[0];
             }
         }

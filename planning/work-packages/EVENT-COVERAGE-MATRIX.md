@@ -4,7 +4,7 @@
 
 > Kullanıcı direktifi (2026-09-16, §12): "Her şeyin kendine ait sesi ve efekti olacak; hiçbir detay atlanmasın." Ortak dosya: S-08 ses sütununu, S-07 VFX sütununu doldurur (satır çakışmasında ikinci biten rebase'de birleştirir). **Boş ses satırı = WP-021 DoD FAIL.**
 >
-> Ses sütunu okunuşu: `SFX dosya` = AP-011 klip kökü (`Assets/_Art/Audio/AP011/<kök>_nn.wav`) ya da `proc:<AudioSoundId>` (WP-002 prosedürel recipe, katalogda üretilmiş klip yok) ya da `paylaşımlı:<kök>` (başka satırın klibini mix-plan farkıyla kullanır). `Kaynak` = olayın koddaki tetiği. Durum: **Ü** üretildi (AP-011 v003), **P** prosedürel, **R** rezerve (tetik henüz yok). WP-021B: WP-018 (ADR-018-1) main'e geldi → ayak/nefes/ölüm-sonu satırları `CharacterAnimationEvents.Any` ile bağlandı (R kalktı). Kredi kalanı yetmeyen satırlar **P** ile sevk edilir ve "AP-011 v4 kuyruğu" bölümünde listelenir (kredi kararı kullanıcıda). **WP-021C:** **T** = türetilmiş (AP-011 v005/v006/v007: mevcut 48k/24-bit kaynaklardan ofline katman/pitch/stretch, kredi 0; `EVENT-COVERAGE-MATRIX-UI.md` satırları §8'e taşındı, olay adları sabit); zemin: AP-005 placement aileleri sahne yüklenince `SurfaceTag` alır (`DD.Art.Ap005SurfaceTags`, ADR-021-1 v2), avlu zemini taş rotalarda taşa iyileşir.
+> Ses sütunu okunuşu: `SFX dosya` = AP-011 klip kökü (`Assets/_Art/Audio/AP011/<kök>_nn.wav`) ya da `proc:<AudioSoundId>` (WP-002 prosedürel recipe, katalogda üretilmiş klip yok) ya da `paylaşımlı:<kök>` (başka satırın klibini mix-plan farkıyla kullanır). `Kaynak` = olayın koddaki tetiği. Durum: **Ü** üretildi (AP-011 v003), **P** prosedürel, **R** rezerve (tetik henüz yok). WP-021B: WP-018 (ADR-018-1) main'e geldi → ayak/nefes/ölüm-sonu satırları `CharacterAnimationEvents.Any` ile bağlandı (R kalktı). Kredi kalanı yetmeyen satırlar **P** ile sevk edilir ve "AP-011 v4 kuyruğu" bölümünde listelenir (kredi kararı kullanıcıda). **WP-021C:** **T** = türetilmiş (AP-011 v005/v006/v007/v008: mevcut 48k/24-bit kaynaklardan ofline katman/pitch/stretch, kredi 0; `EVENT-COVERAGE-MATRIX-UI.md` satırları §8'e taşındı, olay adları sabit); zemin: AP-005 placement aileleri sahne yüklenince `SurfaceTag` alır (`DD.Art.Ap005SurfaceTags`, ADR-021-1 v2), avlu zemini taş rotalarda taşa iyileşir.
 
 ## 1. Oyuncu
 
@@ -136,6 +136,12 @@
 
 | Olay | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
 |---|---|---|---|---|---|---|
+| Müzik — round bitti stinger'ı | `RunEvents.RoundCompleted` → `MusicDirector.PlayStinger` (WP-057; katmanlar 0,55'e duck, 1,5 s bırakma) | StingerRoundBreak (×2, v008 T) | 2D | Music | T | |
+| Müzik — Special alındı stinger'ı | `CombatAudioEvent.SpecialWeaponPickup` (dövüşte) | StingerSpecialPickup (×2, v008 T) | 2D | Music | T | |
+| Müzik — ölüm stinger'ı + sonuç döngüsü | `PlayerHealth.AnyPlayerDied` → StingerDeath, ardından `Music.results` | StingerDeath (v008 T) → MusicResults (loop) | 2D | Music | T | |
+| Müzik — koşu sonu stinger'ı | `RunAudioEvent.RunEnded` (ölümsüz) → StingerRunEnd → MusicResults | StingerRunEnd (v008 T) | 2D | Music | T | |
+| Müzik — menü döngüsü | `RunPhase.None` (koşu sonrası değil) → `MusicDirector.TickPhaseLoop` (koşu katmanları 0'a çekilir) | MusicMenu (45 s loop, v008 T) | 2D | Music | T | |
+| Müzik — tehdit katmanı tabanı | `ThreatMusicFeed.Layer` 0–3 (WP-033 histerezis) → perc/tension/accent tabanı (WP-057) | MusicPercussion/Tension/Accent | 2D | Music | Ü | |
 | Gold düşme | `RunAudioEvent.GoldSpawned` | GoldSpawn (×2) | 3D | UI | Ü | `goldpack_V01` mesh + `card_gold_sparkle` v003 (0.45 m, alfa 0.5–0.7) — AP-010 v003 |
 | Gold çekilme (mıknatıs) / toplama | `GoldCollected` | GoldMagnet / GoldPickup | 2D | UI | Ü | `card_gold_trail` v003 (`SetPulling`) — AP-010 v003; toplama HUD (S-09) |
 | Round başı / geri sayım | `RoundStart` / `CountdownTick` | RoundStart / RoundCountdownTick | 2D | UI | Ü | kan izleri 2 s solar + birleşik mesh temizlenir (`RoundStarted`) — WP-019b; HUD (S-09) |

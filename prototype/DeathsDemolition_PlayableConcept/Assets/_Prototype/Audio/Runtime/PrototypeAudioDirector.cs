@@ -397,6 +397,11 @@ namespace DD.Prototype.Audio
                 return;
             }
 
+            if (cue.Event == CombatAudioEvent.SpecialWeaponPickup)
+            {
+                _music.OnSpecialPickup();   // WP-057 stinger over the layers
+            }
+
             bool failing = false;
             if (cue.Event == CombatAudioEvent.ArmorHit)
             {
@@ -448,6 +453,11 @@ namespace DD.Prototype.Audio
                 return;
             }
 
+            if (cue.Event == RunAudioEvent.RunEnded)
+            {
+                _music.OnRunEnded(false);   // WP-057: results music + run-end stinger (death already handled in OnPlayerDied)
+            }
+
             AudioPlacement placement = AudioMixPlan.Resolve(cue);
             if (!placement.IsValid)
             {
@@ -492,6 +502,7 @@ namespace DD.Prototype.Audio
         {
             // v003: entering the run is a screen transition (matrix §8).
             PlayResolved(AudioMixPlan.UiTransition(), Vector3.zero, 1f, 80);
+            _music.OnRunStarted();   // WP-057: leave the results state
         }
 
         private void OnRoundStarted(int round)
@@ -532,6 +543,7 @@ namespace DD.Prototype.Audio
         {
             StopAllLoops();
             PlayResolved(AudioMixPlan.PlayerDeath(), Vector3.zero, 1f, 100);
+            _music.OnRunEnded(true);   // WP-057: death stinger, then the results loop
         }
 
         // ================================================================== playback
@@ -585,6 +597,11 @@ namespace DD.Prototype.Audio
                 _mixer.Duck(AudioBus.Weapon, placement.DuckCombat, placement.DuckSeconds);
                 _mixer.Duck(AudioBus.Impact, placement.DuckCombat * 0.92f, placement.DuckSeconds);
                 _mixer.Duck(AudioBus.Target, placement.DuckCombat, placement.DuckSeconds);
+            }
+
+            if (placement.DuckMusic > 0f && placement.DuckMusic < 1f)
+            {
+                _mixer.Duck(AudioBus.Music, placement.DuckMusic, placement.DuckSeconds);   // WP-057
             }
         }
 
@@ -783,6 +800,7 @@ namespace DD.Prototype.Audio
             AddBusSlider(AudioBus.Target, "Target bus", 3);
             AddBusSlider(AudioBus.Interface, "Interface bus", 4);
             AddBusSlider(AudioBus.Ambience, "Ambience bus", 5);
+            AddBusSlider(AudioBus.Music, "Music bus", 6);
 
             _debugEntries.Add(DebugPanelRegistry.AddSlider(AudioTab, "Voice budget (0 = config)",
                 () => _budgetOverride,

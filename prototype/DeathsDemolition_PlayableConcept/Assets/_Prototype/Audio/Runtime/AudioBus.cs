@@ -26,7 +26,9 @@ namespace DD.Prototype.Audio
         Impact = 1,
         Target = 2,
         Interface = 3,
-        Ambience = 4
+        Ambience = 4,
+        /// <summary>WP-057: the score. Software gain + duck for the music layers and stingers (mixer group "Music").</summary>
+        Music = 5
     }
 
     /// <summary>
@@ -46,7 +48,7 @@ namespace DD.Prototype.Audio
     /// </summary>
     public sealed class AudioBusMixer
     {
-        private const int BusCount = 5;
+        private const int BusCount = 6;
 
         /// <summary>PROTOTYPE-ONLY / INVENTED: seconds to reach a new duck floor.</summary>
         private const float AttackSeconds = 0.03f;

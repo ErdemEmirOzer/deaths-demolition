@@ -176,6 +176,13 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Music, "Music.percussion", AudioSoundId.MusicPercussion, A, false, "MusicIntensity ≥ 0.15"),
             B(AudioEventSource.Music, "Music.tension", AudioSoundId.MusicTension, A, false, "MusicIntensity ≥ 0.45"),
             B(AudioEventSource.Music, "Music.accent", AudioSoundId.MusicAccent, A, false, "Elite/Ultra alive or Special Weapon active"),
+            // WP-057 · music v2: phase loops and stingers (AP-011 v008, derived from the stems, 0 cr); Music software bus
+            B(AudioEventSource.Music, "Music.menu", AudioSoundId.MusicMenu, AudioBus.Music, false, "main menu / selection loop; cross-fades against the run layers (RunPhase.None, not after a run)"),
+            B(AudioEventSource.Music, "Music.results", AudioSoundId.MusicResults, AudioBus.Music, false, "results loop after RunEnded / death until the next RunStarted"),
+            B(AudioEventSource.Music, "Stinger.round_break", AudioSoundId.StingerRoundBreak, AudioBus.Music, false, "RunEvents.RoundCompleted: taiko + bell phrase over the layers (layers duck to 0.55, release 1.5 s)"),
+            B(AudioEventSource.Music, "Stinger.special_pickup", AudioSoundId.StingerSpecialPickup, AudioBus.Music, false, "CombatAudioEvent.SpecialWeaponPickup while fighting"),
+            B(AudioEventSource.Music, "Stinger.death", AudioSoundId.StingerDeath, AudioBus.Music, false, "PlayerHealth.AnyPlayerDied → results state"),
+            B(AudioEventSource.Music, "Stinger.run_end", AudioSoundId.StingerRunEnd, AudioBus.Music, false, "RunAudioEvent.RunEnded without a death (one stinger per run end)"),
 
             // ---- v003 · coverage matrix rows (EVENT-COVERAGE-MATRIX.md) --------------
             B(AudioEventSource.Damage, "EnemyCombatEvents.attack_hit", AudioSoundId.AttackImpactBody, T, true, "the claw landing (3D, from the zombie); PlayerDamage is the 2D grunt (was DamageEvents.PlayerAttacked)"),

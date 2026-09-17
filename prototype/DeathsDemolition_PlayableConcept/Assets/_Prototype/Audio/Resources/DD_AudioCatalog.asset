@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v007
-  _sourceHash: e8f15f8417060ac1dfbb5d1c1875b50776ed7b340ca6e20a85223ee6d323f15c
+  _manifestVersion: ap011-v008
+  _sourceHash: a2913870df1afaf632fb0614a1d7613fe05624eec55d8885c920c4f36a4ee3d6
   _entries:
   - Sound: 10
     Clips:
@@ -2319,3 +2319,89 @@ MonoBehaviour:
     BitDepth: 24
     Layers: 'derived (v007, no credits): amb_region_south.wav@0ms 0dB + impact_water.wav@0ms
       -14dB -5st'
+  - Sound: 301
+    Clips:
+    - {fileID: 8300000, guid: 3b296f7c613704496ac4442611ee3b99, type: 3}
+    - {fileID: 8300000, guid: 17f6b2dbf60cb4794b91de91b2f9b2a7, type: 3}
+    Loop: 0
+    Lufs: -20.61
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav,
+      exports/MusicAccent.wav, exports/MusicPercussion.wav
+    NoiseFloorDb: -68
+    DcDb: -177.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v008, no credits): MusicPercussion.wav@0ms 0dB + HudThreatStrong_01.wav@70ms
+      -5dB +5st + MusicAccent.wav@120ms -9dB'
+  - Sound: 302
+    Clips:
+    - {fileID: 8300000, guid: 4d9b9b396efaa43b195f1a516509bdc4, type: 3}
+    - {fileID: 8300000, guid: d9377dfd9d43c4229998620aec170ec6, type: 3}
+    Loop: 0
+    Lufs: -16.35
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicPercussion.wav,
+      exports/MusicTension.wav, exports/SwPickup_01.wav
+    NoiseFloorDb: -70.2
+    DcDb: -186.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v008, no credits): MusicTension.wav@0ms -4dB +3st + SwPickup_01.wav@520ms
+      -9dB + MusicPercussion.wav@720ms -3dB -1st'
+  - Sound: 303
+    Clips:
+    - {fileID: 8300000, guid: 8d4b160cbb5b14af3a02544204c9f3ad, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -3.48
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav,
+      exports/MusicBase.wav, exports/PlayerDeath_01.wav
+    NoiseFloorDb: -68
+    DcDb: -195.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v008, no credits): PlayerDeath_01.wav@0ms 0dB + MusicBase.wav@150ms
+      -6dB + HudThreatStrong_01.wav@950ms -7dB -4st'
+  - Sound: 304
+    Clips:
+    - {fileID: 8300000, guid: d0cef2520299e4e60b10a02556578b12, type: 3}
+    Loop: 0
+    Lufs: -17.03
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav,
+      exports/RoundComplete_01.wav, exports/UiTransition_01.wav
+    NoiseFloorDb: -77.6
+    DcDb: -168.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v008, no credits): UiTransition_01.wav@0ms -10dB + RoundComplete_01.wav@250ms
+      0dB + MusicAccent.wav@300ms -9dB'
+  - Sound: 305
+    Clips:
+    - {fileID: 8300000, guid: 9215530615cfc45ccacc4140e1882cf6, type: 3}
+    Loop: 1
+    Lufs: -18
+    TruePeakDb: -2.29
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbRegionCenter.wav,
+      exports/MusicBase.wav
+    NoiseFloorDb: -120
+    DcDb: -214.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v008, no credits): MusicBase.wav@0ms 0dB + AmbRegionCenter.wav@0ms
+      -14dB'
+  - Sound: 306
+    Clips:
+    - {fileID: 8300000, guid: 9a23af536b90a448da01fac7d9b5582e, type: 3}
+    Loop: 1
+    Lufs: -18.39
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav,
+      exports/MusicBase.wav, exports/MusicPercussion.wav
+    NoiseFloorDb: -120
+    DcDb: -222.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v008, no credits): MusicBase.wav@0ms 0dB + MusicPercussion.wav@0ms
+      -10dB + MusicAccent.wav@0ms -12dB'

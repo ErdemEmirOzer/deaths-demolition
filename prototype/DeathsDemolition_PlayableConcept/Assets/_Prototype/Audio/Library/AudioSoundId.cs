@@ -234,6 +234,14 @@ namespace DD.Prototype.Audio
         FootstepPavement = 297,
         AmbThunderDistant = 298,
         AmbDripSlate = 299,
-        AmbPondBed = 300
+        AmbPondBed = 300,
+
+        // ---- WP-057 · music v2 (AP-011 v008, derived from the WP-021B stems, 0 cr) ---------
+        StingerRoundBreak = 301,
+        StingerSpecialPickup = 302,
+        StingerDeath = 303,
+        StingerRunEnd = 304,
+        MusicMenu = 305,
+        MusicResults = 306
     }
 }

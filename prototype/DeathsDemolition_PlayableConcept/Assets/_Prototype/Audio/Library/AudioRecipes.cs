@@ -286,6 +286,14 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.AmbDripSlate: return BuildImpactWater(ref rng);
                 case AudioSoundId.AmbPondBed: return BuildWaterBed(ref rng);
 
+                // WP-057 music v2 (AP-011 v008 owns the shipped clips).
+                case AudioSoundId.StingerRoundBreak:
+                case AudioSoundId.StingerRunEnd: return BuildRoundComplete(ref rng);
+                case AudioSoundId.StingerSpecialPickup: return BuildSwPickup(ref rng);
+                case AudioSoundId.StingerDeath: return BuildPlayerDeath(ref rng);
+                case AudioSoundId.MusicMenu:
+                case AudioSoundId.MusicResults: return BuildPalaceTone(ref rng);
+
                 default:
                     return BuildImpactDefault(ref rng);
             }
@@ -305,6 +313,8 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.SwBeaconLoop:
                 case AudioSoundId.HeavyMotorLoop:
                 case AudioSoundId.AmbPondBed:
+                case AudioSoundId.MusicMenu:
+                case AudioSoundId.MusicResults:
                 case AudioSoundId.AmbCommon:
                 case AudioSoundId.AmbRegionCenter:
                 case AudioSoundId.AmbRegionNorth:

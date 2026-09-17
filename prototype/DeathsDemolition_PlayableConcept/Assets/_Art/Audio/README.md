@@ -32,3 +32,9 @@
 - **Look B (wet):** `AmbienceDirector.WetLook` — slate drips in the scatter ring, distant thunder on its own 40–90 s clock, and a 3D pond bed at the pond centroid registered by `Ap005SurfaceTags.RegisterPond` (`AudioSurfaceHints.PondCenters`).
 - **Ready, reserved until their producers land:** weapon foley `Weapon{A,B,C}{Eject,Chamber,MagOut,MagIn,Switch,Lowered,Raised}` + `PickupGrab/Done` (WP-032C clip events), `Footstep{WaterShallow,WaterDeep,Gravel,Pavement}` (AP-015P plates, WP-038).
 - **AP-011 v007:** 41 derived identities / 98 files (design: Opus 5 stand-in — Fable 429; `asset-production/AP-011/v007/`), manifest v007 = 160 ids / 381 files; Unity build category Sounds 8.1 MB.
+
+## WP-057 — Music v2 & mix pass (AP-011 v008, 0 credits)
+
+- `MusicDirector`: the WP-033 threat layer (0–3) is a floor under the intensity ramp (perc 0/0.55/0.70/0.72, tension 0/0/0.50/0.66, L3 base 0.70 + accent 0.76); stingers (`PlayStinger`: round break, Special pickup, death, run end) play over the layers and duck them to 0.55 (1.5 s release); menu / results music are their own loops (`Music Phase Loop`) cross-faded against the run layers, which now leave entirely outside a run.
+- Mix: new software bus `AudioBus.Music` (mixer group Music; F1 slider), `AudioPlacement.DuckMusic` (HudLowHealth + threat chips ≈ −3 dB / 0.35 s — the taiko band rule), snapshot mix table v2 written in place by `AudioMixerBuilder.EnsureSnapshotMix` (Run Music −5 / Amb −4 / World 0 / Player −1 / UI −3; RoundBreak −3/−3/−6/−3/−2; Pause −14/−12/−18/−18/−2; Menu −4/−10/−80/−80/−3); `Verify` requires it. Phase meter (PlayMode): fight −22.6 / break −26.4 / menu −27.1 dBFS RMS.
+- AP-011 v008 (Fable design): StingerRoundBreak ×2, StingerSpecialPickup ×2, StingerDeath, StingerRunEnd, MusicMenu (45 s loop), MusicResults (34 s = 13-bar loop) — manifest v008 = 166 ids / 389 files.
