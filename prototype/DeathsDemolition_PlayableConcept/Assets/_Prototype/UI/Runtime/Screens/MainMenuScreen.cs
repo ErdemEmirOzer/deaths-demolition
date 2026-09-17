@@ -713,7 +713,9 @@ namespace DD.Prototype.UI
                 "State", row,
                 line.Unlocked ? "UNLOCKED" : "LEVEL " + line.RequiredLevel,
                 UiColor.SurfaceInset,
-                line.Unlocked ? UiColor.StateSuccess : UiColor.TextSecondary,
+                // BarHealth (moss), not StateSuccess (jade): one green in the theme (AD SHOULD-7);
+                // Moss400 on SurfaceInset measures 5.1:1.
+                line.Unlocked ? UiColor.BarHealth : UiColor.TextSecondary,
                 144f, 28f);
 
             RectTransform chipRect = (RectTransform)chip.transform.parent;

@@ -1,4 +1,5 @@
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.Enemies;
 using DD.Prototype.Feedback;
 using DD.Prototype.PlayerSystem;
@@ -158,6 +159,8 @@ namespace DD.Prototype.UI
         private Image _specialRing;
         private Image _specialPip;
         private Image _weaponIcon;
+        private TMP_Text _shotModel;
+        private const float ShotModelWidth = 150f;
         private Image _healthIcon;
         private Image _reticle;
         private readonly System.Collections.Generic.List<RectTransform> _panels =
@@ -533,10 +536,22 @@ namespace DD.Prototype.UI
             _classicName = UiFactory.Label("Name", textColumn, "—", UiType.Label, UiColor.TextMuted);
             RectTransform nameRect = stack.Add(
                 (RectTransform)_classicName.transform, UiFactory.LineHeight(UiType.Label));
-            nameRect.offsetMax = new Vector2(-150f, nameRect.offsetMax.y);
 
             _classicBuild = UiFactory.Label("Build", textColumn, string.Empty, UiType.Caption, UiColor.TextSecondary);
-            stack.Add((RectTransform)_classicBuild.transform, UiFactory.LineHeight(UiType.Caption));
+            RectTransform buildRect = stack.Add((RectTransform)_classicBuild.transform, UiFactory.LineHeight(UiType.Caption));
+            buildRect.offsetMax = new Vector2(-ShotModelWidth - (int)UiSpace.S, buildRect.offsetMax.y);
+
+            // WP-022C: roster type / shot model ("SHOTGUN · PELLET x8") on the build row's
+            // right, set once per weapon change - the pellet contract made visible. The
+            // name row keeps its full width: "ASSAULT RIFLE" at Label size already fills
+            // it (the 1080p pause capture showed the two overlapping on one row).
+            _shotModel = UiFactory.Label("ShotModel", textColumn, string.Empty, UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleRight);
+            RectTransform modelRect = (RectTransform)_shotModel.transform;
+            modelRect.anchorMin = new Vector2(1f, 1f);
+            modelRect.anchorMax = new Vector2(1f, 1f);
+            modelRect.pivot = new Vector2(1f, 1f);
+            modelRect.sizeDelta = new Vector2(ShotModelWidth, UiFactory.LineHeight(UiType.Caption));
+            modelRect.anchoredPosition = buildRect.anchoredPosition;
 
             stack.Gap(UiSpace.XS);
 
@@ -952,7 +967,11 @@ namespace DD.Prototype.UI
 
         private Vector2 _reticleLocal = new Vector2(float.NaN, float.NaN);
 
-        /// <summary>The classic weapon glyph follows the weapon in hand; hidden when the atlas has none.</summary>
+        /// <summary>
+        /// The classic weapon glyph follows the weapon in hand: the WP-034 roster's
+        /// HudIconId through the placeholder contract, the enum glyph as fallback, hidden
+        /// when neither exists. The shot-model caption is refreshed at the same time.
+        /// </summary>
         private void ApplyWeaponIcon()
         {
             if (_weaponIcon == null)
@@ -960,9 +979,35 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            Sprite sprite = UiArt.WeaponIcon(WeaponEvents.Classic.Id);
+            ClassicWeaponId id = WeaponEvents.Classic.Id;
+            ClassicWeaponDefinition def = WeaponRoster.IsLoaded ? WeaponRoster.Find(id) : null;
+            Sprite sprite = def != null ? UiArt.RosterGlyph(def.HudIconId) : null;
+            if (sprite == null)
+            {
+                sprite = UiArt.WeaponIcon(id);
+            }
+
             _weaponIcon.sprite = sprite;
             _weaponIcon.enabled = sprite != null;
+
+            if (_shotModel != null)
+            {
+                string model = string.Empty;
+                if (def != null)
+                {
+                    PrototypeConfig config = PrototypeConfig.Active;
+                    ClassicWeaponSettings settings = config != null ? def.Settings(config) : null;
+                    model = def.ShotModel == WeaponShotModel.Pellet
+                        ? (settings != null && settings.PelletCount > 1 ? "PELLET x" + settings.PelletCount : "PELLET")
+                        : "HITSCAN";
+                    model = def.TypeClass.ToString().ToUpperInvariant() + " · " + model;
+                }
+
+                if (_shotModel.text != model)
+                {
+                    _shotModel.text = model;
+                }
+            }
         }
 
         private void UpdateRun()

@@ -43,6 +43,38 @@ namespace DD.Prototype.UI
             return Icon("Upgrade." + branch);
         }
 
+        /// <summary>
+        /// WP-022C: the WP-034 roster names its glyph by <c>HudIconId</c> ("weapon_rifle",
+        /// "weapon_carbine", "weapon_shotgun", "weapon_heavypistol", ...). The AP-012 v002
+        /// set has three weapon glyphs; this table is the PLACEHOLDER CONTRACT until
+        /// AP-013 / AP-012 v003 deliver one per roster key:
+        ///   weapon_rifle -> Weapon.AssaultRifle · weapon_carbine -> Weapon.AutoSmg (stand-in)
+        ///   weapon_shotgun -> Weapon.CombatShotgun · anything else -> null (monogram tile).
+        /// A future atlas that ships "Weapon.<hudIconId>" wins automatically.
+        /// </summary>
+        public static Sprite RosterGlyph(string hudIconId)
+        {
+            if (string.IsNullOrEmpty(hudIconId))
+            {
+                return null;
+            }
+
+            Sprite direct = Icon("Weapon." + hudIconId);
+            if (direct != null)
+            {
+                return direct;
+            }
+
+            switch (hudIconId)
+            {
+                case "weapon_rifle": return Icon("Weapon.AssaultRifle");
+                case "weapon_carbine":
+                case "weapon_smg": return Icon("Weapon.AutoSmg");
+                case "weapon_shotgun": return Icon("Weapon.CombatShotgun");
+                default: return null;
+            }
+        }
+
         // ----------------------------------------------------------------- frames
 
         /// <summary>A 9-sliced frame sprite; the procedural rounded rect when art is absent.</summary>

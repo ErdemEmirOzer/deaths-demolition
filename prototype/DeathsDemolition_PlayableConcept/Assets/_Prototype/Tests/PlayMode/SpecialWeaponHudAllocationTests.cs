@@ -104,6 +104,88 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
         }
 
+
+        /// <summary>
+        /// WP-022C (C-00 / WP-037 bulgusu "yerde marker/pip ~206 ayırma/kare"): yer fazı
+        /// kare başı ayırma SAYISI Profiler sayacıyla (ADR-037-1 yöntemi). Spawn'ın hemen
+        /// ardındaki kareler (banner metni ilk kez üretilir, TMP/Canvas tek seferlik) gözlem
+        /// olarak loglanır; sözleşme sabit kare içindir: HUD açık sabit kare − HUD kapalı
+        /// sabit kare ≤ harness payı. Pozitif kontrol: bilerek ayıran kare sayacı yükseltir.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator HudSpecialYerFazi_SabitKare_SifirAyirma_Sayac()
+        {
+            _s = new SpecialWeaponSahne();
+            yield return _s.Kur();
+            RunHudScreen hud = UnityEngine.Object.FindObjectOfType<RunHudScreen>();
+            Assert.IsNotNull(hud, "RunHudScreen yok.");
+
+            // Recorder order and control size mirror WP-037 (HotPathAllocationContractTests):
+            // bytes first, then count; 300 x 80 B in one frame must read > 250.
+            using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
+            using (var count = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count"))
+            {
+                yield return null;
+                yield return null;
+                Assert.IsTrue(bytes.Valid && count.Valid, "Profiler kare sayaçları yok.");
+
+                // Pozitif kontrol (bir kare gecikmeli okumayı da dener: sayaç önceki kareyi verir).
+                long kontrol = 0;
+                for (int deneme = 0; deneme < 3 && kontrol <= 250; deneme++)
+                {
+                    var yem = new object[300];
+                    for (int i = 0; i < yem.Length; i++) yem[i] = new byte[80];
+                    yield return null;
+                    kontrol = count.LastValue;
+                    long kontrolB = bytes.LastValue;
+                    yield return null;
+                    if (count.LastValue > kontrol) { kontrol = count.LastValue; kontrolB = bytes.LastValue; }
+                    Debug.Log("[DD-TEST] wp022c.specialGround control attempt=" + deneme + " count=" + kontrol + " bytes=" + kontrolB + " keep=" + yem.Length);
+                    GC.KeepAlive(yem);
+                }
+
+                Assert.Greater(kontrol, 250, "Sayaç bilerek ayıran kareyi görmedi — ölçüm geçersiz (" + kontrol + ").");
+
+                yield return _s.SpawnEt(Pencere);
+                yield return null;
+                long spawn1 = count.LastValue, spawn1B = bytes.LastValue;
+                yield return null;
+                long spawn2 = count.LastValue, spawn2B = bytes.LastValue;
+
+                // Sabit kare: banner ve ilk kurulum geçtikten sonra (30 kare), 20 karelik en yüksek değer.
+                for (int i = 0; i < 30; i++) yield return null;
+                long acikMax = 0, acikB = 0;
+                for (int i = 0; i < 20; i++)
+                {
+                    yield return null;
+                    if (count.LastValue > acikMax) { acikMax = count.LastValue; acikB = bytes.LastValue; }
+                }
+
+                Assert.AreEqual(SpecialWeaponPhase.OnGround, WeaponEvents.Special.Phase, "Öncül: pencere boyunca yerde kalmadı.");
+
+                hud.enabled = false;
+                for (int i = 0; i < 5; i++) yield return null;
+                long kapaliMax = 0;
+                for (int i = 0; i < 20; i++)
+                {
+                    yield return null;
+                    if (count.LastValue > kapaliMax) kapaliMax = count.LastValue;
+                }
+
+                hud.enabled = true;
+                yield return null;
+
+                Debug.Log("[DD-TEST] wp022c.specialGround spawnFrame1=" + spawn1 + "/" + spawn1B + "B spawnFrame2=" + spawn2 + "/" + spawn2B +
+                          "B steadyHudOnMax=" + acikMax + "/" + acikB + "B steadyHudOffMax=" + kapaliMax + " control=" + kontrol);
+                Assert.LessOrEqual(acikMax, kapaliMax + HarnessAllocationSlack,
+                    "Yer fazı sabit karesinde HUD ayırma yapıyor: " + acikMax + " (HUD kapalı " + kapaliMax + ").");
+            }
+        }
+
+        /// <summary>Harness'ın (coroutine adımı, recorder) bir kareye ekleyebileceği ayırma sayısı (WP-037 ile aynı pay).</summary>
+        private const int HarnessAllocationSlack = 8;
+
         /// <summary>N kare yığın büyümesi; pencerede gen0 GC koşarsa bir kez daha dener, yine koşarsa −1.</summary>
         private static IEnumerator AyirmaOlc(int kare, Action<long> sonuc)
         {

@@ -121,6 +121,14 @@ namespace DD.Prototype.UI
             new UiContrastCase("De-emphasised text on a card", UiColor.TextMuted, UiColor.SurfacePanel, 4.5f),
             new UiContrastCase("Accent text on a card", UiColor.TextAccent, UiColor.SurfacePanel, 4.5f),
             new UiContrastCase("Text on a raised panel", UiColor.TextPrimary, UiColor.SurfaceRaised, 4.5f),
+
+            // WP-022C: the pairs the v2.x screens added - the UNLOCKED chip (moss text on
+            // the inset well), the threat chips (danger/warning text on the inset well) and
+            // the muted caption at 14 px on a card (DEC-077 UI comfort floor).
+            new UiContrastCase("Unlocked chip text (moss) on the inset well", UiColor.BarHealth, UiColor.SurfaceInset, 4.5f),
+            new UiContrastCase("Threat chip text (danger) on the inset well", UiColor.StateDanger, UiColor.SurfaceInset, 4.5f),
+            new UiContrastCase("Threat chip text (warning) on the inset well", UiColor.StateWarning, UiColor.SurfaceInset, 4.5f),
+            new UiContrastCase("Best-round chip text (success) on the inset well", UiColor.StateSuccess, UiColor.SurfaceInset, 4.5f),
             new UiContrastCase("Supporting text on a raised panel", UiColor.TextSecondary, UiColor.SurfaceRaised, 4.5f),
 
             // Added when the four screens were built. TextMuted is deliberately ABSENT
@@ -182,6 +190,9 @@ namespace DD.Prototype.UI
 
             // -------------------------------------------------------------- button text
             new UiContrastCase("Primary button label", UiColor.TextOnAccent, UiColor.AccentPrimary, 4.5f),
+            new UiContrastCase("Selected chip label on the cream chip (AD v003)", UiColor.SurfaceBase, UiColor.TextPrimary, 4.5f),
+            new UiContrastCase("Slider fill against its track (AD v003)", UiColor.TextPrimary, UiColor.BarTrack, 3f),
+            new UiContrastCase("Slider knob edge against the panel", UiColor.TextPrimary, UiColor.SurfacePanel, 3f),
             new UiContrastCase("Primary button label, pressed", UiColor.TextOnAccent, UiColor.AccentPrimaryPressed, 4.5f),
             new UiContrastCase("Secondary button label", UiColor.TextPrimary, UiColor.SurfaceBase, 4.5f),
             new UiContrastCase("Disabled button label", UiColor.TextSecondary, UiColor.SurfaceRaised, 4.5f),

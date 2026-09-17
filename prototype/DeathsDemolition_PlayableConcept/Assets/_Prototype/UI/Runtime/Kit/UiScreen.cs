@@ -94,10 +94,17 @@ namespace DD.Prototype.UI
 
             if (WantsPageGrid)
             {
-                Content = UiFactory.NewRect("Page", ScreenRect);
+                // WP-022C (AD SHOULD-2, 21:9): the page is centred and capped at
+                // UiTokens.ContentMaxWidth, so an ultrawide frame gains margin, not
+                // stretched cards; the menu plate stays visible at both sides.
+                RectTransform pageHost = UiFactory.NewRect("PageHost", ScreenRect);
+                UiFactory.Fill(pageHost);
+                pageHost.offsetMin = new Vector2((int)UiSpace.Page, (int)UiSpace.Section);
+                pageHost.offsetMax = new Vector2(-(int)UiSpace.Page, -(int)UiSpace.Section);
+                pageHost.gameObject.AddComponent<UiMaxWidth>().Configure(UiTokens.ContentMaxWidth);
+
+                Content = UiFactory.NewRect("Page", pageHost);
                 UiFactory.Fill(Content);
-                Content.offsetMin = new Vector2((int)UiSpace.Page, (int)UiSpace.Section);
-                Content.offsetMax = new Vector2(-(int)UiSpace.Page, -(int)UiSpace.Section);
             }
             else
             {

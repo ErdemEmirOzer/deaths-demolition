@@ -204,6 +204,8 @@ WP-032B (AP-009B v002 on the characters) regenerates both controllers from the 3
 
 WP-045 (run telemetry & simulator calibration, ADR-045-1): `Assets/_Prototype/Diagnostics/Telemetry/RunTelemetry` observes the existing run / damage / weapon events into preallocated struct buffers and writes one `dd-run-telemetry-v1` JSON per run to `persistentDataPath/telemetry/` (per-round gold, kills per tier and armour, damage taken, special pickups, card tiers, TTK samples; no profile or identity data; `-ddTelemetry 0` disables, `-ddTelemetryDir` redirects). `Diagnostics/Editor/SimulatorCalibration` compares a folder of runs with `EconomySimulator` (WP-041) and reports deviations plus implied model parameters; the bot runs come from `QaRunBot` inside PlayMode tests.
 
+WP-022C (UI/HUD v2.2) builds the Selection weapon column from the WP-034 roster (`IWeaponRosterSource` / `WeaponRoster.All`: A/B/C cards, a locked-look D card, `CORE` branch glyph row, shot-model caption, glyph placeholder contract `UiArt.RosterGlyph(HudIconId)`), adds the Player capture hook `UiCaptureAgent` (`-ddUiCapture mainmenu|settings|selection|pause|results -ddUiCaptureOut <png>`; opt-in, quits after one frame), caps the page grid on 21:9 (`UiTokens.ContentMaxWidth`, `UiMaxWidth`), standardises UI motion (`UiMotionCurve.EaseOut`, reduced motion everywhere) and publishes the measured WCAG 2.2 AA contrast table from `UiContrast` (EditMode test, 0 FAIL).
+
 | Folder | One-line summary |
 |---|---|
 | `Core/` | The spine: `PrototypeConfig` and its ten sections, the `PrototypeOnly` origin attribute, boot/scene hand-off, object pooling, the input abstraction, and the F1 panel plus its registry. |

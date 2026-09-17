@@ -647,7 +647,7 @@ namespace DD.Prototype.UI
             fillArea.sizeDelta = new Vector2(-UiTokens.TargetCompact, 10f);
             fillArea.anchoredPosition = Vector2.zero;
 
-            Image fill = NewImage("Fill", fillArea, UiColor.AccentPrimary, UiSprites.Control);
+            Image fill = NewImage("Fill", fillArea, UiColor.TextPrimary, UiSprites.Control); // AD v003 MUST-2: cream, vermilion is CTA/danger only
             var fillRect = (RectTransform)fill.transform;
             fillRect.anchorMin = Vector2.zero;
             fillRect.anchorMax = Vector2.one;
@@ -659,10 +659,16 @@ namespace DD.Prototype.UI
             handleArea.offsetMin = new Vector2(UiTokens.TargetCompact * 0.5f, 0f);
             handleArea.offsetMax = new Vector2(-UiTokens.TargetCompact * 0.5f, 0f);
 
-            Image handle = NewImage("Handle", handleArea, UiColor.AccentPrimary, UiSprites.Disc);
+            // AD v003 MUST-2: cream knob with a 2 px ink edge (the disc is the edge, the
+            // inset child is the knob) so it separates from the cream fill.
+            Image handle = NewImage("Handle", handleArea, UiColor.SurfacePanel, UiSprites.Disc);
             var handleRect = (RectTransform)handle.transform;
             handleRect.sizeDelta = new Vector2(UiTokens.TargetCompact, 0f);
             handle.raycastTarget = true;
+            Image knob = NewImage("Knob", handleRect, UiColor.TextPrimary, UiSprites.Disc);
+            Fill((RectTransform)knob.transform);
+            ((RectTransform)knob.transform).offsetMin = new Vector2(2f, 2f);
+            ((RectTransform)knob.transform).offsetMax = new Vector2(-2f, -2f);
 
             // Annulus, so the handle stays visible through its own focus ring.
             Image ringHalo = NewImage("FocusHalo", handleRect, UiColor.BorderFocusHalo, UiSprites.Ring);

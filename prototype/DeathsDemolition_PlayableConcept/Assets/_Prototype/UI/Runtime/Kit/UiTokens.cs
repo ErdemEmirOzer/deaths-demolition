@@ -53,7 +53,7 @@ namespace DD.Prototype.UI
         /// <summary>15 bold, written upper case by the caller. Field labels, tags.</summary>
         Label,
 
-        /// <summary>13 regular. Footnotes, hints, origin captions.</summary>
+        /// <summary>14 regular (WP-022C, AD SHOULD-3/6: 13 was under the DEC-077 comfort floor). Footnotes, hints, captions.</summary>
         Caption,
 
         /// <summary>44 bold. The one number a screen is about.</summary>
@@ -308,7 +308,7 @@ namespace DD.Prototype.UI
                 case UiType.Body: return 18;
                 case UiType.BodyStrong: return 18;
                 case UiType.Label: return 15;
-                case UiType.Caption: return 13;
+                case UiType.Caption: return 14;
                 case UiType.NumericXL: return 44;
                 case UiType.NumericL: return 32;
                 case UiType.NumericM: return 22;
@@ -524,8 +524,12 @@ namespace DD.Prototype.UI
         /// <summary>Distance from the screen edge to any HUD or screen content.</summary>
         public const UiSpace SafeInset = UiSpace.XXL;
 
-        /// <summary>Widest a content column ever gets, so ultrawide does not stretch cards.</summary>
-        public const int ContentMaxWidth = 1440;
+        /// <summary>
+        /// Widest the page ever gets, so ultrawide does not stretch cards: exactly the
+        /// 16:9 reference page (1920 minus two Page margins), i.e. 16:9 layouts are
+        /// untouched and 21:9 gains side margin instead of width (WP-022C, AD SHOULD-2).
+        /// </summary>
+        public const int ContentMaxWidth = 1728;
 
         // ============================================================ canvas layers
 

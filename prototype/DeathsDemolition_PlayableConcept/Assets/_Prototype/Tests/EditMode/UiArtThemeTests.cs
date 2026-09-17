@@ -258,6 +258,78 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsEmpty(offenders, "UI/Runtime PlayerPrefs kullanmamalı: " + string.Join(", ", offenders));
         }
 
+        /// <summary>
+        /// WP-022C: the whole UiContrast audit (WP-005 pairs + the v2.x chips) as a
+        /// WCAG 2.2 AA table, asserted and written to the log for the evidence folder.
+        /// </summary>
+        /// <summary>
+        /// WP-022C: the 21:9 page cap converges in one pass. The first UiMaxWidth re-derived
+        /// its inset inside its own dimension-change callback and overflowed the Player's
+        /// stack at 2560 px (crash reports in wp-022/evidence/crash-reports); this drives a
+        /// 2560- then 1920-wide parent through the component and checks width and re-entry.
+        /// </summary>
+        [Test]
+        public void SayfaGenislikKapagi_UltraGenisTeYakinsar_YinelenmeYok()
+        {
+            var canvasGo = new GameObject("Canvas", typeof(RectTransform));
+            try
+            {
+                var parent = (RectTransform)canvasGo.transform;
+                parent.sizeDelta = new Vector2(2560f, 1080f);
+
+                var hostGo = new GameObject("PageHost", typeof(RectTransform));
+                var host = (RectTransform)hostGo.transform;
+                host.SetParent(parent, false);
+                host.anchorMin = Vector2.zero;
+                host.anchorMax = Vector2.one;
+                host.pivot = new Vector2(0.5f, 0.5f);
+                host.offsetMin = new Vector2((int)UiSpace.Page, (int)UiSpace.Section);
+                host.offsetMax = new Vector2(-(int)UiSpace.Page, -(int)UiSpace.Section);
+
+                UiMaxWidth cap = hostGo.AddComponent<UiMaxWidth>();
+                cap.Configure(UiTokens.ContentMaxWidth);
+                Assert.AreEqual(UiTokens.ContentMaxWidth, host.rect.width, 0.5f, "2560 px: sayfa kapağa kırpılır.");
+                Assert.AreEqual(0f, host.anchoredPosition.x, 0.01f, "2560 px: sayfa ortalanır.");
+
+                // Edit mode has no canvas driving the dimension-change callback (and
+                // SendMessage asserts on a non-edit-mode behaviour); re-applying through
+                // Configure is the same Apply the callback runs. Twice: it must be idempotent.
+                parent.sizeDelta = new Vector2(1920f, 1080f);
+                cap.Configure(UiTokens.ContentMaxWidth);
+                cap.Configure(UiTokens.ContentMaxWidth);
+                Assert.AreEqual(1920f - 2 * (int)UiSpace.Page, host.rect.width, 0.5f, "1920 px: sayfa kenar boşluğu dışında tam genişlik.");
+
+                parent.sizeDelta = new Vector2(3440f, 1440f);
+                cap.Configure(UiTokens.ContentMaxWidth);
+                Assert.AreEqual(UiTokens.ContentMaxWidth, host.rect.width, 0.5f, "3440 px: yine kapak.");
+                Assert.AreEqual((int)UiSpace.Section, host.offsetMin.y, 0.01f, "dikey ofset dokunulmaz.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(canvasGo);
+            }
+        }
+
+        [Test]
+        public void KontrastTablosu_WcagAA_TumCiftlerGecer()
+        {
+            var table = new System.Text.StringBuilder();
+            table.AppendLine("| pair | ratio | floor | result |");
+            table.AppendLine("|---|---|---|---|");
+            int failures = 0;
+            foreach (UiContrastCase c in UiContrast.Cases)
+            {
+                float ratio = UiContrast.Measure(c);
+                bool ok = ratio >= c.Required;
+                if (!ok) failures++;
+                table.AppendLine("| " + c.Description + " | " + ratio.ToString("0.00") + ":1 | " + c.Required.ToString("0.0") + " | " + (ok ? "PASS" : "FAIL") + " |");
+            }
+
+            Debug.Log("[DD-TEST] wp022c.contrastTable\n" + table);
+            Assert.AreEqual(0, failures, "kontrast tablosunda FAIL:\n" + table);
+            Assert.GreaterOrEqual(UiContrast.Cases.Count, 30, "audit çift sayısı daraldı");
+        }
+
         private static Color Hex(int r, int g, int b)
         {
             return new Color(r / 255f, g / 255f, b / 255f, 1f);

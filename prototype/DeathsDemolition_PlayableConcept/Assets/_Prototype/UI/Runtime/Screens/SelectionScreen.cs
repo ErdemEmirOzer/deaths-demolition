@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Profile;
 using TMPro;
@@ -40,7 +42,7 @@ namespace DD.Prototype.UI
         // WP-022: the skin card grew to carry the AP-006 character preview (a 3:4 portrait
         // slot at the leading edge); the palette bands survive as a thin strip beside it.
         private const float SkinCardHeight = 168f;
-        private const float WeaponCardHeight = 112f;
+        private const float WeaponCardHeight = 136f;
         private const float SwatchWidth = 100f;
         private const float WeaponIconSize = 56f;
         private const float BadgeWidth = 160f;
@@ -52,8 +54,10 @@ namespace DD.Prototype.UI
 
         private UiButton[] _weaponButtons;
         private GameObject[] _weaponBadges;
+        private Graphic[][] _coreGlyphs;
 
         private ClassicWeaponId[] _weaponIds;
+        private bool[] _weaponEnabled;
         private UiButton _backButton;
         private UiButton _startButton;
         private Image[] _skinPreviews;
@@ -307,6 +311,14 @@ namespace DD.Prototype.UI
 
         // ================================================================= weapons
 
+        /// <summary>
+        /// One card per roster definition (WP-034 <c>WeaponRoster.All</c>, sorted): enabled
+        /// entries come from <see cref="IWeaponRosterSource"/> with their earned unlock state;
+        /// a disabled definition (roster D in this build) is shown as a dead card so the
+        /// player sees the whole roster and the data value is never touched here. Each card
+        /// carries the glyph (placeholder contract in <see cref="UiArt.RosterGlyph"/>), the
+        /// type / shot model line and the three core upgrade branches the weapon gates.
+        /// </summary>
         private void BuildWeaponColumn(RectTransform column)
         {
             var stack = new UiStack(column);
@@ -322,32 +334,60 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.L);
 
-            _weaponIds = (ClassicWeaponId[])Enum.GetValues(typeof(ClassicWeaponId));
-            _weaponButtons = new UiButton[_weaponIds.Length];
-            _weaponBadges = new GameObject[_weaponIds.Length];
+            List<ClassicWeaponDefinition> roster = RosterForDisplay();
+            _weaponIds = new ClassicWeaponId[roster.Count];
+            _weaponButtons = new UiButton[roster.Count];
+            _weaponBadges = new GameObject[roster.Count];
+            _coreGlyphs = new Graphic[roster.Count][];
+            _weaponEnabled = new bool[roster.Count];
 
-            for (int i = 0; i < _weaponIds.Length; i++)
+            IWeaponRosterSource source = WeaponRosterSourceRegistry.Current;
+
+            for (int i = 0; i < roster.Count; i++)
             {
-                ClassicWeaponId id = _weaponIds[i];
-                bool unlocked = ProfileService.IsWeaponUnlocked(id);
+                ClassicWeaponDefinition def = roster[i];
+                ClassicWeaponId id = def.Id;
+                bool enabled = def.Enabled && def.HasRuntimeId && (source == null || IsInSource(source, id));
+                bool unlocked = enabled && ProfileService.IsWeaponUnlocked(id);
+                _weaponIds[i] = id;
+                _weaponEnabled[i] = enabled;
 
+                string title = enabled ? ProfileService.WeaponDisplayName(id) : RosterTitle(def);
                 UiButton button = UiFactory.Button(
-                    "Weapon." + id, column, ProfileService.WeaponDisplayName(id), UiButtonVariant.Card,
+                    "Weapon." + def.RosterKey + "." + id, column, title, UiButtonVariant.Card,
                     () => SelectWeapon(id));
 
                 stack.Add((RectTransform)button.transform, WeaponCardHeight);
                 stack.Gap(UiSpace.L);
 
-                // AP-012 weapon glyph at the leading edge (WP-022); muted when locked.
-                Image glyph = UiArt.IconImage(
-                    "Icon", button.transform, "Weapon." + id,
-                    unlocked ? UiColor.TextPrimary : UiColor.TextMuted, WeaponIconSize);
-                RectTransform glyphRect = (RectTransform)glyph.transform;
-                glyphRect.anchorMin = new Vector2(0f, 0.5f);
-                glyphRect.anchorMax = new Vector2(0f, 0.5f);
-                glyphRect.pivot = new Vector2(0f, 0.5f);
-                glyphRect.anchoredPosition = new Vector2((int)UiSpace.XL, 0f);
-                float textLeft = (int)UiSpace.XL + (glyph.enabled ? WeaponIconSize + (int)UiSpace.L : 0f);
+                // AP-012 glyph at the leading edge (roster HudIconId → placeholder contract);
+                // a roster key monogram stands in where the set has no glyph yet (AP-013).
+                Sprite glyphSprite = UiArt.RosterGlyph(def.HudIconId);
+                UiColor glyphColor = unlocked ? UiColor.TextPrimary : UiColor.TextMuted;
+                float textLeft = (int)UiSpace.XL + WeaponIconSize + (int)UiSpace.L;
+                if (glyphSprite != null)
+                {
+                    Image glyph = UiFactory.NewImage("Icon", button.transform, glyphColor, glyphSprite);
+                    glyph.preserveAspect = true;
+                    RectTransform glyphRect = (RectTransform)glyph.transform;
+                    glyphRect.anchorMin = new Vector2(0f, 0.5f);
+                    glyphRect.anchorMax = new Vector2(0f, 0.5f);
+                    glyphRect.pivot = new Vector2(0f, 0.5f);
+                    glyphRect.sizeDelta = new Vector2(WeaponIconSize, WeaponIconSize);
+                    glyphRect.anchoredPosition = new Vector2((int)UiSpace.XL, 0f);
+                }
+                else
+                {
+                    Image well = UiFactory.NewImage("IconWell", button.transform, UiColor.SurfaceInset, UiSprites.Disc);
+                    RectTransform wellRect = (RectTransform)well.transform;
+                    wellRect.anchorMin = new Vector2(0f, 0.5f);
+                    wellRect.anchorMax = new Vector2(0f, 0.5f);
+                    wellRect.pivot = new Vector2(0f, 0.5f);
+                    wellRect.sizeDelta = new Vector2(WeaponIconSize, WeaponIconSize);
+                    wellRect.anchoredPosition = new Vector2((int)UiSpace.XL, 0f);
+                    TMP_Text mono = UiFactory.Label("Monogram", wellRect, def.RosterKey, UiType.H3, glyphColor, TextAnchor.MiddleCenter);
+                    UiFactory.Fill((RectTransform)mono.transform);
+                }
 
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
                 labelRect.offsetMin = new Vector2(textLeft, TitleBand);
@@ -355,27 +395,185 @@ namespace DD.Prototype.UI
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
                 button.LabelText.alignment = TextAlignmentOptions.BottomLeft;
 
+                string detailText = !enabled
+                    ? "Not in this build."
+                    : unlocked
+                        ? DescribeWeapon(id) + "  ·  " + DescribeModel(def)
+                        : "Reach profile level " + ProfileService.UnlockLevelFor(id) + " to unlock this weapon.  ·  " + DescribeModel(def);
                 TMP_Text detail = UiFactory.Label(
-                    "Detail", button.transform,
-                    unlocked ? DescribeWeapon(id) : "Reach profile level " + ProfileService.UnlockLevelFor(id) +
-                                                    " to unlock this weapon.",
-                    UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
+                    "Detail", button.transform, detailText, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
+                detail.richText = true; // AD v003 MUST-5: values in TextPrimary, labels in TextSecondary (built once per card)
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-                detailRect.offsetMin = new Vector2(textLeft, (int)UiSpace.L);
+                detailRect.offsetMin = new Vector2(textLeft, (int)UiSpace.L + CoreBranchRowHeight);
                 detailRect.offsetMax = new Vector2(-(int)UiSpace.XL, -(TitleBand + (int)UiSpace.L));
 
+                _coreGlyphs[i] = BuildCoreBranchRow(button, def, textLeft, unlocked);
+
                 _weaponButtons[i] = button;
-                _weaponBadges[i] = BuildBadge(button, unlocked ? "SELECTED" : "LOCKED", !unlocked);
+                _weaponBadges[i] = BuildBadge(button, !enabled ? "UNAVAILABLE" : unlocked ? "SELECTED" : "LOCKED", !unlocked);
 
                 if (!unlocked)
                 {
                     button.SetInteractable(false);
 
-                    // A locked row keeps its badge on permanently: the state is
-                    // permanent until the profile levels, so it is not a selection cue.
+                    // A locked or unavailable row keeps its badge on permanently: the state
+                    // is not a selection cue.
                     _weaponBadges[i].SetActive(true);
                 }
             }
+        }
+
+        /// <summary>Row height reserved under the detail line for the three core-branch glyphs.</summary>
+        private const float CoreBranchRowHeight = 30f;
+        private const float CoreGlyphSize = 26f; // AD v003 MUST-4: >= 24 px at 1080p
+
+        /// <summary>
+        /// The weapon's three core upgrade branches (WP-034 shop gate) as small glyph tiles
+        /// with a "CORE" label: what the round-end shop will offer this weapon beyond the
+        /// shared branches. Muted on a locked card.
+        /// </summary>
+        private static Graphic[] BuildCoreBranchRow(UiButton button, ClassicWeaponDefinition def, float left, bool unlocked)
+        {
+            var glyphs = new List<Graphic>(3);
+            RectTransform row = UiFactory.NewRect("CoreBranches", button.transform);
+            row.anchorMin = new Vector2(0f, 0f);
+            row.anchorMax = new Vector2(1f, 0f);
+            row.pivot = new Vector2(0f, 0f);
+            row.sizeDelta = new Vector2(0f, CoreBranchRowHeight);
+            row.offsetMin = new Vector2(left, (int)UiSpace.M);
+            row.offsetMax = new Vector2(-BadgeWidth, (int)UiSpace.M + CoreBranchRowHeight);
+
+            TMP_Text label = UiFactory.Label("Label", row, "CORE", UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
+            RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
+            labelRect.anchorMax = new Vector2(0f, 1f);
+            labelRect.sizeDelta = new Vector2(44f, 0f);
+
+            UpgradeBranch[] branches = def.CoreBranches ?? new UpgradeBranch[0];
+            UiColor tint = unlocked ? UiColor.TextSecondary : UiColor.TextMuted;
+            for (int i = 0; i < branches.Length && i < 3; i++)
+            {
+                float x = 44f + i * (CoreGlyphSize + (int)UiSpace.S);
+                Sprite sprite = UiArt.UpgradeIcon(branches[i]);
+                if (sprite != null)
+                {
+                    Image glyph = UiFactory.NewImage("Core." + branches[i], row, tint, sprite);
+                    glyph.preserveAspect = true;
+                    RectTransform glyphRect = (RectTransform)glyph.transform;
+                    glyphRect.anchorMin = new Vector2(0f, 0.5f);
+                    glyphRect.anchorMax = new Vector2(0f, 0.5f);
+                    glyphRect.pivot = new Vector2(0f, 0.5f);
+                    glyphRect.sizeDelta = new Vector2(CoreGlyphSize, CoreGlyphSize);
+                    glyphRect.anchoredPosition = new Vector2(x, 0f);
+                    glyphs.Add(glyph);
+                }
+                else
+                {
+                    TMP_Text mono = UiFactory.Label("Core." + branches[i], row, UpgradeIcons.Monogram(branches[i]), UiType.Caption, tint, TextAnchor.MiddleLeft);
+                    RectTransform monoRect = (RectTransform)mono.transform;
+                    monoRect.anchorMin = new Vector2(0f, 0f);
+                    monoRect.anchorMax = new Vector2(0f, 1f);
+                    monoRect.pivot = new Vector2(0f, 0.5f);
+                    monoRect.sizeDelta = new Vector2(30f, 0f);
+                    monoRect.anchoredPosition = new Vector2(x, 0f);
+                    glyphs.Add(mono);
+                }
+            }
+
+            return glyphs.ToArray();
+        }
+
+        /// <summary>"Rifle · Hitscan" / "Shotgun · Pellet ×8" - the roster's type and shot model, no numbers changed.</summary>
+        private static string DescribeModel(ClassicWeaponDefinition def)
+        {
+            string model = def.ShotModel == WeaponShotModel.Pellet ? "Pellet" : "Hitscan";
+            PrototypeConfig config = PrototypeConfig.Active;
+            ClassicWeaponSettings settings = config != null ? def.Settings(config) : null;
+            if (def.ShotModel == WeaponShotModel.Pellet && settings != null && settings.PelletCount > 1)
+            {
+                model += " x" + settings.PelletCount;
+            }
+
+            return def.TypeClass + " · " + model;
+        }
+
+        private static string RosterTitle(ClassicWeaponDefinition def)
+        {
+            PrototypeConfig config = PrototypeConfig.Active;
+            ClassicWeaponSettings settings = config != null ? def.Settings(config) : null;
+            string name = settings != null && !string.IsNullOrEmpty(settings.DisplayName) ? settings.DisplayName : SpaceCamelCase(def.TypeClass.ToString());
+            return def.RosterKey + " · " + name;
+        }
+
+        /// <summary>"HeavyPistol" → "Heavy Pistol": the enum name is a stand-in until the
+        /// weapon has a config entry with a display name (build once per card, not per frame).</summary>
+        private static string SpaceCamelCase(string value)
+        {
+            var sb = new System.Text.StringBuilder(value.Length + 4);
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (i > 0 && char.IsUpper(value[i]) && !char.IsUpper(value[i - 1]))
+                {
+                    sb.Append(' ');
+                }
+
+                sb.Append(value[i]);
+            }
+
+            return sb.ToString();
+        }
+
+        private static bool IsInSource(IWeaponRosterSource source, ClassicWeaponId id)
+        {
+            IReadOnlyList<WeaponRosterEntry> entries = source.Entries;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (entries[i].Id == id)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Every roster definition in roster order (A, B, C, D...). Falls back to the
+        /// three enum ids when the roster is not loaded (a test scene without the assets).
+        /// </summary>
+        private static List<ClassicWeaponDefinition> RosterForDisplay()
+        {
+            var list = new List<ClassicWeaponDefinition>();
+            IReadOnlyList<ClassicWeaponDefinition> all = WeaponRoster.All;
+            if (all != null)
+            {
+                for (int i = 0; i < all.Count; i++)
+                {
+                    // User decision (C-00, 2026-09-17): a roster entry that is not shipped
+                    // (D · Enabled=false / no runtime id) is not shown at all - no locked
+                    // card, no placeholder. Only what the player can eventually carry.
+                    if (all[i] != null && all[i].Enabled && all[i].HasRuntimeId)
+                    {
+                        list.Add(all[i]);
+                    }
+                }
+            }
+
+            list.Sort((x, y) => x.SortOrder != y.SortOrder ? x.SortOrder.CompareTo(y.SortOrder) : string.CompareOrdinal(x.RosterKey, y.RosterKey));
+            if (list.Count > 0)
+            {
+                return list;
+            }
+
+            foreach (ClassicWeaponId id in Enum.GetValues(typeof(ClassicWeaponId)))
+            {
+                var stub = ScriptableObject.CreateInstance<ClassicWeaponDefinition>();
+                stub.Id = id;
+                stub.RosterKey = id.ToString();
+                stub.Enabled = true;
+                list.Add(stub);
+            }
+
+            return list;
         }
 
         private void SelectWeapon(ClassicWeaponId id)
@@ -396,11 +594,25 @@ namespace DD.Prototype.UI
             for (int i = 0; i < _weaponButtons.Length; i++)
             {
                 ClassicWeaponId id = _weaponIds[i];
-                bool unlocked = ProfileService.IsWeaponUnlocked(id);
+                bool unlocked = _weaponEnabled[i] && ProfileService.IsWeaponUnlocked(id);
                 bool selected = unlocked && id == PrototypeUiFlow.SelectedWeapon;
 
                 _weaponButtons[i].SetSelectedChoice(selected);
                 _weaponBadges[i].SetActive(unlocked ? selected : true);
+
+                // AD v003 MUST-4: the selected card's core glyphs read in TextPrimary.
+                Graphic[] glyphs = _coreGlyphs != null && i < _coreGlyphs.Length ? _coreGlyphs[i] : null;
+                if (glyphs != null && unlocked)
+                {
+                    Color tint = UiTokens.Get(selected ? UiColor.TextPrimary : UiColor.TextSecondary);
+                    for (int g = 0; g < glyphs.Length; g++)
+                    {
+                        if (glyphs[g] != null && glyphs[g].color != tint)
+                        {
+                            glyphs[g].color = tint;
+                        }
+                    }
+                }
             }
         }
 
@@ -417,13 +629,19 @@ namespace DD.Prototype.UI
             }
 
             string damage = settings.PelletCount > 1
-                ? "DMG " + settings.Damage.ToString("0.#") + " x" + settings.PelletCount
-                : "DMG " + settings.Damage.ToString("0.#");
+                ? "DMG " + Value(settings.Damage.ToString("0.#") + " x" + settings.PelletCount)
+                : "DMG " + Value(settings.Damage.ToString("0.#"));
 
             return damage
-                   + "  ·  " + settings.FireRate.ToString("0.#") + " shots/s"
-                   + "  ·  MAG " + settings.MagazineSize
-                   + "  ·  RELOAD " + settings.ReloadTime.ToString("0.#") + "s";
+                   + "  ·  " + Value(settings.FireRate.ToString("0.#")) + " shots/s"
+                   + "  ·  MAG " + Value(settings.MagazineSize.ToString())
+                   + "  ·  RELOAD " + Value(settings.ReloadTime.ToString("0.#") + "s");
+        }
+
+        /// <summary>Stat value in TextPrimary inside a TextSecondary line (TMP rich text; card build only).</summary>
+        private static string Value(string text)
+        {
+            return "<color=#" + ColorUtility.ToHtmlStringRGB(UiTokens.Get(UiColor.TextPrimary)) + ">" + text + "</color>";
         }
 
         // ================================================================== chrome
@@ -435,8 +653,8 @@ namespace DD.Prototype.UI
                 "Badge",
                 button.transform,
                 text,
-                locked ? UiColor.SurfaceInset : UiColor.AccentPrimary,
-                locked ? UiColor.TextSecondary : UiColor.TextOnAccent,
+                locked ? UiColor.SurfaceInset : UiColor.TextPrimary, // AD v003 MUST-3: cream, vermilion stays with START RUN
+                locked ? UiColor.TextSecondary : UiColor.SurfaceBase,
                 140f,
                 30f);
 

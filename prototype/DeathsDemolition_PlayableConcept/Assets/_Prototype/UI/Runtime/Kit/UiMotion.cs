@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DD.Prototype.UI
@@ -125,6 +126,22 @@ namespace DD.Prototype.UI
     }
 
     /// <summary>
+    /// The one easing this module uses (WP-022C motion standard, interaction-designer):
+    /// ease-out (fast start, soft landing) for everything that appears or settles -
+    /// screen fades, focus/hover washes (UiButton's exponential lerp is the same family);
+    /// the attention pulse is a cosine wave (UiPulse). Durations: UiTokens.Motion* (0.08 /
+    /// 0.14 / 0.22 / 0.28 s), all unscaled; reduced motion collapses every one to instant.
+    /// </summary>
+    public static class UiMotionCurve
+    {
+        public static float EaseOut(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return 1f - (1f - t) * (1f - t);
+        }
+    }
+
+    /// <summary>
     /// Screen entrance (WP-022B micro-animation): the canvas fades from 0 to 1 over
     /// UiTokens.MotionScreen on unscaled time, then removes itself. Instant when reduced
     /// motion is on. One CanvasGroup alpha per frame - no layout, no vertex rebuild.
@@ -156,10 +173,76 @@ namespace DD.Prototype.UI
             float t = UiSettings.ReducedMotion
                 ? 1f
                 : Mathf.Clamp01((Time.unscaledTime - _start) / UiTokens.MotionScreen);
-            _group.alpha = t;
+            _group.alpha = UiMotionCurve.EaseOut(t);
             if (t >= 1f)
             {
                 Destroy(this);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Keeps a stretched rect no wider than a cap, centred (WP-022C ultrawide rule). Applied
+    /// once per dimension change - no per-frame work.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class UiMaxWidth : UIBehaviour
+    {
+        private float _max = UiTokens.ContentMaxWidth;
+        private bool _applying;
+
+        public void Configure(float maxWidth)
+        {
+            _max = maxWidth;
+            Apply();
+        }
+
+        protected override void OnRectTransformDimensionsChange()
+        {
+            base.OnRectTransformDimensionsChange();
+
+            // Re-entrancy guard. Each offset write below fires this callback again
+            // before the write is complete; without the guard the inset was re-derived
+            // from a half-applied rect and the Player overflowed its stack at 2560 px
+            // (the only width where the cap actually engages - crash reports in
+            // wp-022/evidence/crash-reports/).
+            if (!_applying)
+            {
+                Apply();
+            }
+        }
+
+        private void Apply()
+        {
+            var rect = transform as RectTransform;
+            var parent = transform.parent as RectTransform;
+            if (rect == null || parent == null || _applying)
+            {
+                return;
+            }
+
+            float available = parent.rect.width - (int)UiSpace.Page * 2;
+            float width = Mathf.Min(available, _max);
+            float inset = Mathf.Round(Mathf.Max(0f, (parent.rect.width - width) * 0.5f));
+
+            // Stretch-anchored on x: the horizontal inset is one sizeDelta write with the
+            // anchored position centred. One write, one callback, already guarded.
+            Vector2 size = rect.sizeDelta;
+            Vector2 pos = rect.anchoredPosition;
+            if (Mathf.Approximately(size.x, -2f * inset) && Mathf.Approximately(pos.x, 0f))
+            {
+                return;
+            }
+
+            _applying = true;
+            try
+            {
+                rect.sizeDelta = new Vector2(-2f * inset, size.y);
+                rect.anchoredPosition = new Vector2(0f, pos.y);
+            }
+            finally
+            {
+                _applying = false;
             }
         }
     }
