@@ -131,7 +131,32 @@ namespace DD.Art
             SurfaceResolver.Invalidate();
             s_routes = placement;
             AudioSurfaceHints.Refine = RefineByRoute;
+            RegisterPond(placement);
             return added;
+        }
+
+        /// <summary>
+        /// WP-048 (Look B): the koi pond's centre from the water-surface instances, for the ambience
+        /// director's 3D pond bed. One pond in AP-005 → one centroid; a second cluster (> 25 m apart)
+        /// would register separately.
+        /// </summary>
+        private static void RegisterPond(WorldPlacementAsset placement)
+        {
+            AudioSurfaceHints.PondCenters.Clear();
+            Vector3 sum = Vector3.zero; int n = 0;
+            for (int i = 0; i < placement.instances.Count; i++)
+            {
+                WorldPlacementAsset.Instance inst = placement.instances[i];
+                if (Key(inst.family) == "pond_water_surface")
+                {
+                    sum += inst.position; n++;
+                }
+            }
+
+            if (n > 0)
+            {
+                AudioSurfaceHints.PondCenters.Add(sum / n);
+            }
         }
 
         /// <summary>Inside a stone route's strip the ground (Dirt) reads as Stone. Only the ground's own answer is refined.</summary>

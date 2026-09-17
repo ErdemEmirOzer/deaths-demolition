@@ -21,17 +21,13 @@ namespace DD.Prototype.Audio
     ///   EnemyDamaged  → pain grunt, throttled per enemy life (a shotgun's nine pellets
     ///                   are one grunt, not nine)
     ///   EnemyDied     → the death vocal, once per life, over the body cue
-    ///   attack WINDUP → the telegraph growl. No event exists for it, so this polls
-    ///                   <see cref="ZombieEnemy.AttackPhase"/> on the live list and fires
-    ///                   on the None/Recovery → Windup edge. The telegraph is 0.55 s
-    ///                   (EnemyTierSettings), so the growl lands ≥ 0.3 s before the swing
-    ///                   by construction; it is positional (REQ-104 "yön + tehdit").
-    ///   attack ACTIVE → the swing, on the Windup → Active edge.
+    ///   telegraph_start → the telegraph growl (WP-040 beat since WP-048; was an AttackPhase
+    ///                   poll). The telegraph is 0.55 s (EnemyTierSettings), so the growl lands
+    ///                   ≥ 0.3 s before the swing by construction; positional (REQ-104).
+    ///   attack_commit / attack_hit / stagger / armor_break_&lt;region&gt; / death_&lt;tier&gt; /
+    ///   spawn_rise / spawn_land → their voices, see <see cref="OnCombatBeat"/>.
     ///
-    /// Polling forty enemies' enum once a frame is a few hundred instructions and no
-    /// allocation; it keeps this package out of <c>Enemies/</c> entirely and it goes away
-    /// the day WP-018's animation events (ADR-018-1 hit_window) reach main - see the
-    /// reserved rows in <see cref="AudioEventMap"/>.
+    /// The live list is still walked once a frame, only for the idle breath clock.
     ///
     /// Everything is routed through the director's single funnel so the budget, the
     /// bus, the duck and the mixer group are the same as for every other sound.
@@ -91,6 +87,8 @@ namespace DD.Prototype.Audio
         /// <summary>WP-021C: aggro growls (anim.rise_end) and UI event cues actually played.</summary>
         public int AggroCount { get; private set; }
         public int UiCount { get; private set; }
+        /// <summary>WP-048: region armour-break voices (WP-040 armor_break_&lt;region&gt;).</summary>
+        public int RegionBreakCount { get; private set; }
 
         /// <summary>WP-021B: foot → surface lookup (down ray from the character root). PROTOTYPE-ONLY / INVENTED.</summary>
         private const float FootRayUp = 0.4f;
@@ -118,10 +116,9 @@ namespace DD.Prototype.Audio
                 return;
             }
 
-            DamageEvents.EnemyDamaged += OnEnemyDamaged;
-            DamageEvents.EnemyDied += OnEnemyDied;
-            DamageEvents.PlayerAttacked += OnPlayerAttacked;
-            DamageEvents.ArmorBroken += OnArmorBroken;
+            DamageEvents.EnemyDamaged += OnEnemyDamaged;       // pain grunt: the one moment the beat layer has no row for
+            DamageEvents.EnemyDied += OnEnemyDied;             // bookkeeping only since WP-048 (the death vocal is the death_<tier> beat)
+            EnemyCombatEvents.Raised += OnCombatBeat;          // WP-048: WP-040 beat surface (ADR-040-1)
             Props.BreakableProp.Broke += OnPropBroke;
             CharacterAnimationEvents.Any += OnAnimationEvent;
             DD.Prototype.UI.UiEvents.Raised += OnUiEvent;
@@ -137,8 +134,7 @@ namespace DD.Prototype.Audio
 
             DamageEvents.EnemyDamaged -= OnEnemyDamaged;
             DamageEvents.EnemyDied -= OnEnemyDied;
-            DamageEvents.PlayerAttacked -= OnPlayerAttacked;
-            DamageEvents.ArmorBroken -= OnArmorBroken;
+            EnemyCombatEvents.Raised -= OnCombatBeat;
             Props.BreakableProp.Broke -= OnPropBroke;
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             DD.Prototype.UI.UiEvents.Raised -= OnUiEvent;
@@ -150,6 +146,7 @@ namespace DD.Prototype.Audio
             _tracked.Clear();
             _drops.Clear();
             _animOwner.Clear();
+            s_breakSounds.Clear();
         }
 
         // ------------------------------------------------------------------ WP-021B · ADR-018-1 animation events
@@ -207,21 +204,52 @@ namespace DD.Prototype.Audio
                     break;
                 }
 
-                case CharacterAnimationEvent.RiseEnd:
-                {
-                    // WP-021C: the earth was ZombieRise (first live frame); this is the voice - up, and looking at you.
-                    ZombieEnemy z = OwnerOf(source);
-                    if (z != null && z.IsAlive)
-                    {
-                        Vector3 at = z.transform.position + Vector3.up * 1.4f;
-                        if (_play(AudioMixPlan.ZombieAggro(AudioEventMap.ZombieAggro(z.Tier), WeightOf(z.Tier)), at, 1f, 55))
-                        {
-                            AggroCount++;
-                        }
-                    }
+                // RiseEnd: since WP-048 the aggro growl rides the spawn_land beat (WP-040), which also
+                // covers bodies that spawn without a rise clip; the clip event alone would miss those.
+            }
+        }
 
+        // ------------------------------------------------------------------ WP-048 · WP-040 EnemyCombatEvents (ADR-040-1)
+
+        /// <summary>
+        /// The beat layer. One subscription replaces the WP-021 attack-phase polling (telegraph /
+        /// commit edges), the PlayerAttacked claw, the CausedStagger stagger, the ArmorBroken plate
+        /// and the EnemyDied vocal: every zombie moment now has one owner and the same frame.
+        /// </summary>
+        private void OnCombatBeat(EnemyCombatEventInfo info)
+        {
+            EnemyTierWeight w = WeightOf(info.Tier);
+            Vector3 head = info.Body != null ? info.Body.position + Vector3.up * 1.4f : info.Position;
+            switch (info.Kind)
+            {
+                case EnemyCombatEventKind.TelegraphStart:
+                    if (_play(AudioMixPlan.ZombieWindup(AudioEventMap.ZombieWindup(info.Tier), w), head, 1f, 60)) WindupCount++;
                     break;
-                }
+                case EnemyCombatEventKind.AttackCommit:
+                    if (_play(AudioMixPlan.ZombieAttack(AudioEventMap.ZombieAttack(info.Tier), w), head, 1f, 50)) AttackCount++;
+                    break;
+                case EnemyCombatEventKind.AttackHit:
+                    if (_play(AudioMixPlan.AttackImpactBody(), info.Position, 1f, 90)) ImpactCount++;
+                    break;
+                case EnemyCombatEventKind.AttackMiss:
+                    break;   // the swing already sounded at commit; a whiff is the silence after it (matrix row: covered)
+                case EnemyCombatEventKind.Stagger:
+                    if (_play(AudioMixPlan.ZombieStagger(w), info.Position, 1f, 45)) StaggerCount++;
+                    break;
+                case EnemyCombatEventKind.ArmorBreak:
+                    // The break itself is the tier cue (ReportEnemyHit, WP-006 N1); this is the REGION voice (v007) + the plate landing.
+                    if (_play(AudioMixPlan.ArmorBreakRegion(AudioEventMap.ArmorBreakRegion(info.Region), w), info.Position, 1f, 70)) RegionBreakCount++;
+                    _drops.Add(new PendingDrop { At = Time.unscaledTime + PieceDropDelay, Point = info.Position });
+                    break;
+                case EnemyCombatEventKind.Death:
+                    if (_play(AudioMixPlan.ZombieDeath(AudioEventMap.ZombieDeath(info.Tier), w), info.Position, 1f, 70)) DeathCount++;
+                    break;
+                case EnemyCombatEventKind.SpawnRise:
+                    if (_play(AudioMixPlan.ZombieRise(w), info.Position, 1f, 55)) RiseCount++;
+                    break;
+                case EnemyCombatEventKind.SpawnLand:
+                    if (_play(AudioMixPlan.ZombieAggro(AudioEventMap.ZombieAggro(info.Tier), w), head, 1f, 55)) AggroCount++;
+                    break;
             }
         }
 
@@ -353,26 +381,53 @@ namespace DD.Prototype.Audio
 
         // ------------------------------------------------------------------ v003 rows
 
-        private void OnPlayerAttacked(EnemyAttackLandedInfo info)
-        {
-            if (_play(AudioMixPlan.AttackImpactBody(), info.Point, 1f, 90))
-            {
-                ImpactCount++;
-            }
-        }
-
-        private void OnArmorBroken(ArmorBreakInfo info)
-        {
-            // The break itself is the tier cue (WP-006 N1); this is only the plate landing.
-            _drops.Add(new PendingDrop { At = Time.unscaledTime + PieceDropDelay, Point = info.Point });
-        }
-
         private void OnPropBroke(Props.BreakableProp prop, Vector3 point, Vector3 direction)
         {
-            if (_play(AudioMixPlan.BreakCeramic(), point, 1f, 60))
+            if (_play(AudioMixPlan.Breakable(BreakSoundFor(prop)), point, 1f, 60))
             {
                 BreakCount++;
             }
+        }
+
+        /// <summary>
+        /// WP-048 · AP-017 breakable families → their own voice (AP017-breakable-event-table-v001: BreakStone
+        /// lantern_stone, BreakCeramic planter, BreakWood bench/sign, BreakBamboo fence_panel, BreakPaper
+        /// lantern_paper/shoji, BreakStraw strawbale). The family is read from the prop's root name once per
+        /// prop (a break is a rare event; the lookup is cached per instance) - the AP-003B small_breakable
+        /// and anything unknown stay on the ceramic voice.
+        /// </summary>
+        public static AudioSoundId BreakSoundFor(Props.BreakableProp prop)
+        {
+            if (prop == null)
+            {
+                return AudioSoundId.BreakCeramic;
+            }
+
+            if (s_breakSounds.TryGetValue(prop, out AudioSoundId cached))
+            {
+                return cached;
+            }
+
+            AudioSoundId sound = BreakSoundForName(prop.gameObject.name);
+            s_breakSounds[prop] = sound;
+            return sound;
+        }
+
+        private static readonly Dictionary<Props.BreakableProp, AudioSoundId> s_breakSounds = new Dictionary<Props.BreakableProp, AudioSoundId>(64);
+
+        /// <summary>Family name (prefab / instance root) → break voice. Public for the EditMode table test.</summary>
+        public static AudioSoundId BreakSoundForName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return AudioSoundId.BreakCeramic;
+            if (name.IndexOf("lantern_stone", StringComparison.OrdinalIgnoreCase) >= 0) return AudioSoundId.BreakLanternStone;
+            if (name.IndexOf("lantern_paper", StringComparison.OrdinalIgnoreCase) >= 0) return AudioSoundId.BreakLanternPaper;
+            if (name.IndexOf("planter", StringComparison.OrdinalIgnoreCase) >= 0) return AudioSoundId.BreakPlanter;
+            if (name.IndexOf("fence", StringComparison.OrdinalIgnoreCase) >= 0) return AudioSoundId.BreakFence;
+            if (name.IndexOf("strawbale", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("bale", StringComparison.OrdinalIgnoreCase) >= 0) return AudioSoundId.BreakBale;
+            if (name.IndexOf("bench", StringComparison.OrdinalIgnoreCase) >= 0) return AudioSoundId.BreakBench;
+            if (name.IndexOf("sign", StringComparison.OrdinalIgnoreCase) >= 0) return AudioSoundId.BreakSign;
+            if (name.IndexOf("shoji", StringComparison.OrdinalIgnoreCase) >= 0) return AudioSoundId.BreakShoji;
+            return AudioSoundId.BreakCeramic;
         }
 
         // ------------------------------------------------------------------ events
@@ -404,20 +459,12 @@ namespace DD.Prototype.Audio
                 HitCount++;
             }
 
-            if (info.CausedStagger && _play(AudioMixPlan.ZombieStagger(weight), info.Point, 1f, 45))
-            {
-                StaggerCount++;
-            }
+            // CausedStagger: the stagger vocal is the WP-040 `stagger` beat since WP-048 (same frame, one owner).
         }
 
         private void OnEnemyDied(EnemyDeathInfo info)
         {
-            EnemyTierWeight weight = WeightOf(info.Tier);
-            if (_play(AudioMixPlan.ZombieDeath(AudioEventMap.ZombieDeath(info.Tier), weight), info.Position, 1f, 70))
-            {
-                DeathCount++;
-            }
-
+            // The death vocal is the `death_<tier>` beat (WP-048); this only forgets the body.
             ZombieEnemy z = info.Owner != null ? info.Owner.GetComponent<ZombieEnemy>() : null;
             if (z != null)
             {
@@ -460,14 +507,10 @@ namespace DD.Prototype.Audio
 
                 if (!t.Seen)
                 {
-                    // First frame alive in this life: the rise from the ground.
+                    // First frame alive in this life: arm the idle clock. The spawn_rise / spawn_land
+                    // beats (WP-040) own the spawn sounds since WP-048.
                     t.Seen = true;
                     t.NextIdle = now + _rng.Range(IdleMinSeconds, IdleMaxSeconds);
-                    EnemyTierWeight w = WeightOf(z.Tier);
-                    if (_play(AudioMixPlan.ZombieRise(w), z.transform.position, 1f, 55))
-                    {
-                        RiseCount++;
-                    }
                 }
                 else if (now >= t.NextIdle)
                 {
@@ -482,31 +525,9 @@ namespace DD.Prototype.Audio
                     }
                 }
 
-                ZombieAttackPhase phase = z.AttackPhase;
-                if (phase == t.Phase)
-                {
-                    _tracked[z] = t;
-                    continue;
-                }
-
-                if (phase == ZombieAttackPhase.Windup && t.Phase != ZombieAttackPhase.Windup)
-                {
-                    Vector3 at = z.transform.position + Vector3.up * 1.4f;
-                    if (_play(AudioMixPlan.ZombieWindup(AudioEventMap.ZombieWindup(z.Tier), WeightOf(z.Tier)), at, 1f, 60))
-                    {
-                        WindupCount++;
-                    }
-                }
-                else if (phase == ZombieAttackPhase.Active && t.Phase == ZombieAttackPhase.Windup)
-                {
-                    Vector3 at = z.transform.position + Vector3.up * 1.4f;
-                    if (_play(AudioMixPlan.ZombieAttack(AudioEventMap.ZombieAttack(z.Tier), WeightOf(z.Tier)), at, 1f, 50))
-                    {
-                        AttackCount++;
-                    }
-                }
-
-                t.Phase = phase;
+                // Attack-phase edges are the telegraph_start / attack_commit beats since WP-048; the
+                // phase is only tracked for the idle gate.
+                t.Phase = z.AttackPhase;
                 _tracked[z] = t;
             }
 
@@ -537,8 +558,8 @@ namespace DD.Prototype.Audio
 
         public string Describe()
         {
-            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · tracked {13}",
-                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount);
+            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · regionBreak {16} · tracked {13}",
+                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount, RegionBreakCount);
         }
     }
 }

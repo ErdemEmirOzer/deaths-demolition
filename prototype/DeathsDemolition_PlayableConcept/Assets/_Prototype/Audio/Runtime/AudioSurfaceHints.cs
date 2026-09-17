@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DD.Prototype.Feedback;
 using UnityEngine;
 
@@ -40,11 +41,18 @@ namespace DD.Prototype.Audio
             return refined;
         }
 
+        /// <summary>
+        /// WP-048 (Look B): world points the ambience can anchor 3D beds to, registered by the world
+        /// assembly at scene load (the koi pond centroid from the placement families). Empty = no pond bed.
+        /// </summary>
+        public static readonly List<Vector3> PondCenters = new List<Vector3>(4);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             Refine = null;
             RefinedCount = 0;
+            PondCenters.Clear();
         }
     }
 }

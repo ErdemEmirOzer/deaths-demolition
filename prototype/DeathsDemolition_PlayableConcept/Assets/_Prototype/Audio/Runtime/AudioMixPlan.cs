@@ -497,12 +497,25 @@ namespace DD.Prototype.Audio
             return p;
         }
 
-        /// <summary>WP-021C (anim.rise_end): the aggro growl - the voice that follows the rise's earth. Positional, priced like a windup minus a step.</summary>
+        /// <summary>WP-021C (spawn_land since WP-048): the aggro growl - the voice that follows the rise's earth. Positional, priced like a windup minus a step.</summary>
         public static AudioPlacement ZombieAggro(AudioSoundId sound, EnemyTierWeight weight)
         {
             AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.9f : 0.72f, 64f, 4, 0.12f);
             p.Spatial = 1f;
             p.PitchJitter = 0.05f;
+            return p;
+        }
+
+        /// <summary>
+        /// WP-048 (WP-040 armor_break_&lt;region&gt;): the region's own voice - helmet thin and high, torso the
+        /// heaviest, leg short with the strap - layered over the tier break cue from ReportEnemyHit. Slightly
+        /// under that cue so the pair reads as one break with a place, not two breaks.
+        /// </summary>
+        public static AudioPlacement ArmorBreakRegion(AudioSoundId sound, EnemyTierWeight weight)
+        {
+            AudioPlacement p = Target(sound, weight == EnemyTierWeight.Heavy ? 0.8f : 0.66f, 66f, 3, 0.06f);
+            p.Spatial = 0.9f;
+            p.PitchJitter = 0.04f;
             return p;
         }
 
@@ -605,9 +618,16 @@ namespace DD.Prototype.Audio
 
         public static AudioPlacement BreakCeramic()
         {
-            AudioPlacement p = Impact(AudioSoundId.BreakCeramic, 0.85f, 58f, 3);
+            return Breakable(AudioSoundId.BreakCeramic);
+        }
+
+        /// <summary>WP-048: any breakable family (AP-003B ceramic, AP-017 stone / paper / bamboo / straw / wood) - world, positional, one per prop.</summary>
+        public static AudioPlacement Breakable(AudioSoundId sound)
+        {
+            AudioPlacement p = Impact(sound, sound == AudioSoundId.BreakLanternStone || sound == AudioSoundId.BreakBench ? 0.95f : 0.85f, 58f, 3);
             p.Spatial = 1f;
             p.MinRetrigger = 0.05f;
+            p.PitchJitter = 0.05f;
             return p;
         }
 

@@ -122,6 +122,28 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Debug.Log("[DD-TEST] wp021c.ui rows bound=" + bagli + " reserved=" + rezerve);
         }
 
+        /// <summary>WP-048 · AP-017 breakable event table (AP017-breakable-event-table-v001): every family root name resolves to its own voice.</summary>
+        [Test]
+        public void Kirilabilirler_AP017AileAdlari_KendiSesineCozulur()
+        {
+            var beklenen = new (string ad, AudioSoundId ses)[]
+            {
+                ("AP017_breakable_bench_V01", AudioSoundId.BreakBench), ("AP017_breakable_sign_V01", AudioSoundId.BreakSign),
+                ("AP017_breakable_fence_panel_V02", AudioSoundId.BreakFence), ("AP017_breakable_lantern_paper_V01", AudioSoundId.BreakLanternPaper),
+                ("AP017_breakable_shoji_V01", AudioSoundId.BreakShoji), ("AP017_breakable_lantern_stone_V02", AudioSoundId.BreakLanternStone),
+                ("AP017_breakable_planter_V01", AudioSoundId.BreakPlanter), ("AP017_breakable_strawbale_V01", AudioSoundId.BreakBale),
+                ("SM_small_breakable_V03", AudioSoundId.BreakCeramic), ("", AudioSoundId.BreakCeramic)
+            };
+            var sesler = new HashSet<AudioSoundId>();
+            foreach ((string ad, AudioSoundId ses) in beklenen)
+            {
+                Assert.AreEqual(ses, AudioEventRouter.BreakSoundForName(ad), ad);
+                sesler.Add(ses);
+            }
+
+            Assert.AreEqual(9, sesler.Count, "8 AP-017 ailesi + seramik: dokuz ayrı ses");
+        }
+
         /// <summary>WP-021C · tier vocal set: every tier has its own windup/attack/hit/death/idle/aggro id (B·B·B).</summary>
         [Test]
         public void TierVokalSeti_HerTierKendiKimligi()
@@ -211,7 +233,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 foreach (AudioClip c in e.Clips) Assert.IsNotNull(c, "Null klip: " + e.Sound);
                 dosya += e.Clips.Length;
                 string ad = e.Sound.ToString();
-                if (ad.StartsWith("Amb") && e.Loop) amb++;
+                // Region / common beds only: WP-048 adds the pond bed (AmbPondBed, 3D at the pond) as a seventh loop outside the crossfade set.
+                if ((ad.StartsWith("AmbRegion") || ad == "AmbCommon") && e.Loop) amb++;
                 else if (ad.StartsWith("Music")) muzik++;
                 else sfx += e.Clips.Length;
             }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using UnityEngine;
@@ -54,6 +55,35 @@ namespace DD.Prototype.Audio
             AudioSoundId.AmbDrip,      // v003: after-rain drips, the most frequent scatter
             AudioSoundId.AmbDrip
         };
+
+        /// <summary>WP-048 Look B: the wet set - slate drips join the ring, thunder has its own slow clock.</summary>
+        private static readonly AudioSoundId[] s_scatterWet =
+        {
+            AudioSoundId.AmbWoodCreak,
+            AudioSoundId.AmbMetalRing,
+            AudioSoundId.AmbBambooKnock,
+            AudioSoundId.AmbStoneSettle,
+            AudioSoundId.AmbDrip,
+            AudioSoundId.AmbDripSlate,
+            AudioSoundId.AmbDrip,
+            AudioSoundId.AmbDripSlate
+        };
+
+        /// <summary>
+        /// WP-048 · Look B ("wet"): distant thunder every <see cref="ThunderMin"/>–<see cref="ThunderMax"/> s,
+        /// slate drips in the scatter ring, and a koi-pond water bed anchored at the pond (3D, distance-faded).
+        /// Default on (the wet after-rain look is the shipped palette); WP-029 flips it with the look.
+        /// PROTOTYPE-ONLY / INVENTED timings.
+        /// </summary>
+        public static bool WetLook = true;
+        public const float ThunderMin = 40f;
+        public const float ThunderMax = 90f;
+        private float _thunderCountdown = 25f;
+        private AudioSource _pond;
+        private float _pondLevel;
+        public int ThunderCount { get; private set; }
+        public bool PondPlaying => _pond != null && _pond.isPlaying;
+        public float PondLevel => _pondLevel;
 
         /// <summary>
         /// v003 (ADR-021-2 spatial depth): one <see cref="AudioReverbZone"/> per region,
@@ -290,6 +320,70 @@ namespace DD.Prototype.Audio
             }
 
             TickScatter(unscaledDeltaTime);
+            TickWetLook(unscaledDeltaTime, busGain);
+        }
+
+        /// <summary>Look B clocks: thunder (slow, far, low) and the pond bed level by distance to the nearest pond centre.</summary>
+        private void TickWetLook(float unscaledDeltaTime, float busGain)
+        {
+            if (!WetLook)
+            {
+                if (_pond != null && _pond.isPlaying) { _pond.Stop(); _pondLevel = 0f; }
+                return;
+            }
+
+            _thunderCountdown -= unscaledDeltaTime;
+            if (_thunderCountdown <= 0f)
+            {
+                _thunderCountdown = _rng.Range(ThunderMin, ThunderMax);
+                AudioClip clip = _library.Next(AudioSoundId.AmbThunderDistant, out int _);
+                if (clip != null && _worldPool != null)
+                {
+                    // Far: 45-60 m out on a random bearing, above the horizon - the LPF-by-distance darkens it.
+                    Vector3 origin = _root != null ? _root.position : Vector3.zero;
+                    if (DD.Prototype.Feedback.FeedbackCameraRef.TryGetPosition(out Vector3 listener)) origin = listener;
+                    float angle = _rng.Range(0f, Mathf.PI * 2f);
+                    Vector3 at = origin + new Vector3(Mathf.Cos(angle) * 52f, 18f, Mathf.Sin(angle) * 52f);
+                    AudioPlacement placement = AudioMixPlan.AmbientOneShot(AudioSoundId.AmbThunderDistant, _phase == RunPhase.Fighting ? 0.45f : 0.7f);
+                    if (_worldPool.Play(placement, clip, at, 1f, placement.Priority)) ThunderCount++;
+                }
+            }
+
+            // Pond bed: one looping 3D source at the nearest pond centre (registered by the world assembly).
+            List<Vector3> ponds = AudioSurfaceHints.PondCenters;
+            if (ponds.Count == 0)
+            {
+                return;
+            }
+
+            if (_pond == null)
+            {
+                AudioClip clip = _library.First(AudioSoundId.AmbPondBed);
+                if (clip == null) return;
+                var go = new GameObject("Ambience Pond");
+                go.transform.SetParent(_root, false);
+                _pond = go.AddComponent<AudioSource>();
+                _pond.clip = clip; _pond.loop = true; _pond.playOnAwake = false; _pond.spatialBlend = 1f;
+                _pond.rolloffMode = AudioRolloffMode.Linear; _pond.minDistance = 6f; _pond.maxDistance = 30f;
+                _pond.dopplerLevel = 0f; _pond.bypassReverbZones = true; _pond.priority = 8; _pond.volume = 0f;
+                _pond.outputAudioMixerGroup = _sources[Common].outputAudioMixerGroup;   // same routing as the beds
+                _pond.time = _rng.Range(0f, Mathf.Max(0.01f, clip.length - 0.05f));
+            }
+
+            Vector3 who = _root != null ? _root.position : Vector3.zero;
+            if (DD.Prototype.Feedback.FeedbackCameraRef.TryGetPosition(out Vector3 ear)) who = ear;
+            int best = 0; float bestD = float.MaxValue;
+            for (int i = 0; i < ponds.Count; i++)
+            {
+                float d = (ponds[i] - who).sqrMagnitude;
+                if (d < bestD) { bestD = d; best = i; }
+            }
+
+            _pond.transform.position = ponds[best];
+            float target = _regionLevel * 0.9f;
+            _pondLevel = Mathf.MoveTowards(_pondLevel, target, unscaledDeltaTime / CrossfadeSeconds);
+            _pond.volume = _pondLevel * busGain;
+            if (!_pond.isPlaying) _pond.Play();
         }
 
         private void ResolveRegion()
@@ -386,15 +480,16 @@ namespace DD.Prototype.Audio
 
             _scatterCountdown = _rng.Range(ScatterMin, ScatterMax) * multiplier;
 
-            int pick = _rng.RangeInt(0, s_scatter.Length);
+            AudioSoundId[] set = WetLook ? s_scatterWet : s_scatter;
+            int pick = _rng.RangeInt(0, set.Length);
             if (pick == _lastScatter)
             {
-                pick = (pick + 1 + _rng.RangeInt(0, s_scatter.Length - 1)) % s_scatter.Length;
+                pick = (pick + 1 + _rng.RangeInt(0, set.Length - 1)) % set.Length;
             }
 
             _lastScatter = pick;
 
-            AudioSoundId sound = s_scatter[pick];
+            AudioSoundId sound = set[pick];
             AudioClip clip = _library.Next(sound, out int _);
             if (clip == null || _worldPool == null)
             {
@@ -433,6 +528,7 @@ namespace DD.Prototype.Audio
                 _target[i] = 0f;
             }
 
+            if (_pond != null) { _pond.Stop(); _pondLevel = 0f; }
             Started = false;
         }
 

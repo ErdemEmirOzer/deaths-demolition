@@ -147,11 +147,12 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Player, "PlayerHealth.AnyDamaged", AudioSoundId.PlayerDamage, U, false, "severity + low-health gain"),
             B(AudioEventSource.Player, "PlayerHealth.AnyPlayerDied", AudioSoundId.PlayerDeath, U, false, ""),
 
-            // ---- zombie vocal set (Damage + Polled) — DEC-067 -----------------------
-            B(AudioEventSource.Polled, "ZombieEnemy.AttackPhase→Windup", AudioSoundId.ZombieWindupStandard, T, true, "DEC-067: ≥ 0.3 s before the swing, positional (telegraph 0.55 s); Special/Elite/Ultra ids by tier (WP-021C: Special added)"),
-            B(AudioEventSource.Polled, "ZombieEnemy.AttackPhase→Active", AudioSoundId.ZombieAttackStandard, T, true, "the swing; Special/Elite/Ultra ids by tier"),
-            B(AudioEventSource.Damage, "DamageEvents.EnemyDamaged", AudioSoundId.ZombieHitStandard, T, true, "pain grunt, throttled per enemy; Special/Elite/Ultra ids by tier"),
-            B(AudioEventSource.Damage, "DamageEvents.EnemyDied", AudioSoundId.ZombieDeathStandard, T, true, "vocal layer over CombatAudioEvent.EnemyDeath; Special/Elite/Ultra ids by tier"),
+            // ---- zombie vocal set — DEC-067; since WP-048 on the WP-040 beat surface (EnemyCombatEvents, ADR-040-1)
+            B(AudioEventSource.Damage, "EnemyCombatEvents.telegraph_start", AudioSoundId.ZombieWindupStandard, T, true, "DEC-067: ≥ 0.3 s before the swing, positional (telegraph 0.55 s); Special/Elite/Ultra ids by tier (was the WP-021 AttackPhase poll)"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.attack_commit", AudioSoundId.ZombieAttackStandard, T, true, "the swing (hit window opens); Special/Elite/Ultra ids by tier"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.attack_miss", AudioSoundId.None, T, true, "the swing already sounded at commit; a whiff is the silence after it", true),
+            B(AudioEventSource.Damage, "DamageEvents.EnemyDamaged", AudioSoundId.ZombieHitStandard, T, true, "pain grunt, throttled per enemy; Special/Elite/Ultra ids by tier (no beat row exists for a plain hit)"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.death_<tier>", AudioSoundId.ZombieDeathStandard, T, true, "vocal layer over CombatAudioEvent.EnemyDeath; Special/Elite/Ultra ids by tier (was DamageEvents.EnemyDied)"),
             B(AudioEventSource.Damage, "DamageEvents.PlayerAttacked", AudioSoundId.PlayerDamage, U, false, "same cue as AnyDamaged (single owner: PlayerHealth); listed for completeness"),
             B(AudioEventSource.Damage, "DamageEvents.ArmorBroken", AudioSoundId.ArmorBreak, T, true, "no second cue: the tier cue in ReportEnemyHit owns it (WP-006 N1)"),
 
@@ -177,10 +178,10 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Music, "Music.accent", AudioSoundId.MusicAccent, A, false, "Elite/Ultra alive or Special Weapon active"),
 
             // ---- v003 · coverage matrix rows (EVENT-COVERAGE-MATRIX.md) --------------
-            B(AudioEventSource.Damage, "DamageEvents.PlayerAttacked→claw", AudioSoundId.AttackImpactBody, T, true, "the claw landing (3D, from the zombie); PlayerDamage is the 2D grunt"),
-            B(AudioEventSource.Damage, "DamageEvents.EnemyDamaged.CausedStagger", AudioSoundId.ZombieStagger, T, true, "heavy stagger grunt + stumble"),
-            B(AudioEventSource.Damage, "DamageEvents.ArmorBroken+0.42s", AudioSoundId.ArmorPieceDrop, I, true, "plate landing after the break cue"),
-            B(AudioEventSource.Polled, "ZombieEnemy.Live→first frame", AudioSoundId.ZombieRise, T, true, "spawn / rise from the ground"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.attack_hit", AudioSoundId.AttackImpactBody, T, true, "the claw landing (3D, from the zombie); PlayerDamage is the 2D grunt (was DamageEvents.PlayerAttacked)"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.stagger", AudioSoundId.ZombieStagger, T, true, "heavy stagger grunt + stumble (REQ-124 window and the armour-break stagger; was EnemyDamaged.CausedStagger)"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.armor_break_<region>+0.42s", AudioSoundId.ArmorPieceDrop, I, true, "plate landing after the break cue (was DamageEvents.ArmorBroken)"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.spawn_rise", AudioSoundId.ZombieRise, T, true, "spawn / rise from the ground (DEC-081: only bodies that rise; was the first-live-frame poll)"),
             B(AudioEventSource.Polled, "ZombieEnemy idle 6–14 s ≤ 9 m", AudioSoundId.ZombieIdle, T, true, "near-range breath/growl, AttackPhase None only; Special/Elite/Ultra idle ids by tier (WP-021C)"),
             B(AudioEventSource.Combat, "BreakableProp.Broke", AudioSoundId.BreakCeramic, I, true, "AP-003B small_breakable (ceramic)"),
             B(AudioEventSource.Ambience, "scatter.drip", AudioSoundId.AmbDrip, A, true, "after-rain single drops in the scatter ring"),
@@ -196,9 +197,54 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Animation, "anim.foot_l/foot_r → zombie, Elite/Ultra", AudioSoundId.ZombieStepHeavy, I, true, "heavy tiers (−1 st)"),
             B(AudioEventSource.Animation, "anim.breath", AudioSoundId.ZombieIdle, T, true, "re-arms the polled idle timer (no double)"),
             B(AudioEventSource.Animation, "anim.death_end", AudioSoundId.ZombieStepHeavy, I, true, "body settle layer (pitch 0.8)"),
-            B(AudioEventSource.Animation, "anim.hit_window_start", AudioSoundId.ZombieAttackStandard, T, true, "covered by the polled AttackPhase→Active edge (same frame); no second cue", true),
-            B(AudioEventSource.Animation, "anim.rise_end", AudioSoundId.ZombieAggroStandard, T, true, "WP-021C: the body is up and has seen you - the aggro growl, ids by tier (ZombieRise is the earth, this is the voice)"),
+            B(AudioEventSource.Animation, "anim.hit_window_start", AudioSoundId.ZombieAttackStandard, T, true, "covered by EnemyCombatEvents.attack_commit (same frame); no second cue", true),
+            B(AudioEventSource.Animation, "anim.rise_end", AudioSoundId.ZombieAggroStandard, T, true, "covered by EnemyCombatEvents.spawn_land (WP-048): the aggro growl also reaches bodies that spawn without a rise clip", true),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.spawn_land", AudioSoundId.ZombieAggroStandard, T, true, "the body is up and has seen you - the aggro growl, ids by tier (ZombieRise is the earth, this is the voice)"),
             B(AudioEventSource.Animation, "anim.fire / anim.pickup / anim.stagger_end", AudioSoundId.None, T, false, "covered by weapon / Special / stagger cues from their own events", true),
+
+            // ---- WP-048 · Audio Wave 3 — AP-011 v007 identities. Rows marked reserved wait for their producer on main
+            // (WP-032C clip events, WP-040 EnemyCombatEvents, AP-017 breakable families, AP-015P plates); Look B ambience is live.
+            B(AudioEventSource.Animation, "anim.eject → weapon A", AudioSoundId.WeaponAEject, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.chamber → weapon A", AudioSoundId.WeaponAChamber, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.mag_out → weapon A", AudioSoundId.WeaponAMagOut, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.mag_in → weapon A", AudioSoundId.WeaponAMagIn, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.switch → weapon A", AudioSoundId.WeaponASwitch, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.lowered → weapon A", AudioSoundId.WeaponALowered, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.raised → weapon A", AudioSoundId.WeaponARaised, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.eject → weapon B", AudioSoundId.WeaponBEject, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.chamber → weapon B", AudioSoundId.WeaponBChamber, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.mag_out → weapon B", AudioSoundId.WeaponBMagOut, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.mag_in → weapon B", AudioSoundId.WeaponBMagIn, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.switch → weapon B", AudioSoundId.WeaponBSwitch, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.lowered → weapon B", AudioSoundId.WeaponBLowered, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.raised → weapon B", AudioSoundId.WeaponBRaised, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.eject → weapon C", AudioSoundId.WeaponCEject, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.chamber → weapon C", AudioSoundId.WeaponCChamber, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.mag_out → weapon C", AudioSoundId.WeaponCMagOut, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.mag_in → weapon C", AudioSoundId.WeaponCMagIn, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.switch → weapon C", AudioSoundId.WeaponCSwitch, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.lowered → weapon C", AudioSoundId.WeaponCLowered, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.raised → weapon C", AudioSoundId.WeaponCRaised, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.pickup_grab", AudioSoundId.PickupGrab, W, false, "WP-032C: hand closes on the weapon (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.pickup_done", AudioSoundId.PickupDone, W, false, "WP-032C: weapon seats (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.armor_break_head", AudioSoundId.ArmorBreakHelmet, T, true, "WP-040 region voice (v007) over the tier ArmorBreak cue (ReportEnemyHit, WP-006 N1)"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.armor_break_torso", AudioSoundId.ArmorBreakBody, T, true, "WP-040 region voice (v007)"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.armor_break_leg", AudioSoundId.ArmorBreakLeg, T, true, "WP-040 region voice (v007)"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke → lantern_stone", AudioSoundId.BreakLanternStone, I, true, "AP-017 BreakStone (v007); family from the prop root name (AudioEventRouter.BreakSoundFor)"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke → lantern_paper", AudioSoundId.BreakLanternPaper, I, true, "AP-017 BreakPaper (v007)"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke → planter", AudioSoundId.BreakPlanter, I, true, "AP-017 BreakCeramic (v007)"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke → fence", AudioSoundId.BreakFence, I, true, "AP-017 BreakBamboo (v007)"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke → bale", AudioSoundId.BreakBale, I, true, "AP-017 BreakStraw (v007)"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke → bench", AudioSoundId.BreakBench, I, true, "AP-017 BreakWood (v007)"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke → sign", AudioSoundId.BreakSign, I, true, "AP-017 BreakWood (v007)"),
+            B(AudioEventSource.Combat, "BreakableProp.Broke → shoji", AudioSoundId.BreakShoji, I, true, "AP-017 BreakPaper (v007)"),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, plate water_shallow", AudioSoundId.FootstepWaterShallow, W, true, "AP-015P plate (WP-038) → Ap005SurfaceTags family (v007)", true),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, plate water_deep", AudioSoundId.FootstepWaterDeep, W, true, "AP-015P (v007)", true),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, plate gravel", AudioSoundId.FootstepGravel, W, true, "AP-015P (v007)", true),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, plate pavement", AudioSoundId.FootstepPavement, W, true, "AP-015P (v007)", true),
+            B(AudioEventSource.Ambience, "scatter.thunder", AudioSoundId.AmbThunderDistant, A, true, "Look B: distant thunder every 40-90 s, far and low (v007)"),
+            B(AudioEventSource.Ambience, "scatter.drip_slate", AudioSoundId.AmbDripSlate, A, true, "Look B: wet-slate drips in the scatter ring (v007)"),
+            B(AudioEventSource.Ambience, "Pond.bed", AudioSoundId.AmbPondBed, A, true, "Look B: koi pond water bed at the pond (3D loop, distance-faded) (v007)"),
 
             // ---- WP-021C · WP-022B UI events (EVENT-COVERAGE-MATRIX §UI) — one row per UiEvent member;
             // reserved = the same frame already plays the sound through another row (single owner, no double).
@@ -335,7 +381,18 @@ namespace DD.Prototype.Audio
             }
         }
 
-        /// <summary>WP-021C: the aggro growl at anim.rise_end, per tier.</summary>
+        /// <summary>WP-048: the region voice of an armour break (WP-040 armor_break_&lt;region&gt;). Body is the fallback for None.</summary>
+        public static AudioSoundId ArmorBreakRegion(DD.Prototype.Core.Config.ArmorSlot region)
+        {
+            switch (region)
+            {
+                case DD.Prototype.Core.Config.ArmorSlot.Helmet: return AudioSoundId.ArmorBreakHelmet;
+                case DD.Prototype.Core.Config.ArmorSlot.Leg: return AudioSoundId.ArmorBreakLeg;
+                default: return AudioSoundId.ArmorBreakBody;
+            }
+        }
+
+        /// <summary>WP-021C: the aggro growl (since WP-048 on the spawn_land beat), per tier.</summary>
         public static AudioSoundId ZombieAggro(DD.Prototype.Core.Config.EnemyTier tier)
         {
             switch (tier)

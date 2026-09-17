@@ -257,6 +257,35 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.UiAchievement:
                 case AudioSoundId.UiNewBest: return BuildRoundComplete(ref rng);
 
+                // WP-048 ids - fallbacks by family (AP-011 v007 owns the shipped clips).
+                case AudioSoundId.WeaponAEject: case AudioSoundId.WeaponBEject: case AudioSoundId.WeaponCEject:
+                case AudioSoundId.WeaponAChamber: case AudioSoundId.WeaponBChamber: case AudioSoundId.WeaponCChamber: return BuildReloadEnd(ref rng);
+                case AudioSoundId.WeaponAMagOut: case AudioSoundId.WeaponBMagOut: case AudioSoundId.WeaponCMagOut: return BuildReloadStart(ref rng);
+                case AudioSoundId.WeaponAMagIn: case AudioSoundId.WeaponBMagIn: case AudioSoundId.WeaponCMagIn: return BuildReloadInsert(ref rng);
+                case AudioSoundId.WeaponASwitch: case AudioSoundId.WeaponBSwitch: case AudioSoundId.WeaponCSwitch:
+                case AudioSoundId.WeaponALowered: case AudioSoundId.WeaponBLowered: case AudioSoundId.WeaponCLowered:
+                case AudioSoundId.WeaponARaised: case AudioSoundId.WeaponBRaised: case AudioSoundId.WeaponCRaised: return BuildWoodCreak(ref rng);
+                case AudioSoundId.PickupGrab:
+                case AudioSoundId.PickupDone: return BuildSwPickup(ref rng);
+                case AudioSoundId.ArmorBreakHelmet:
+                case AudioSoundId.ArmorBreakBody:
+                case AudioSoundId.ArmorBreakLeg: return BuildArmorBreak(ref rng);
+                case AudioSoundId.BreakLanternStone:
+                case AudioSoundId.BreakPlanter: return BuildImpactStone(ref rng);
+                case AudioSoundId.BreakLanternPaper:
+                case AudioSoundId.BreakShoji: return BuildImpactPaper(ref rng);
+                case AudioSoundId.BreakFence:
+                case AudioSoundId.BreakBench:
+                case AudioSoundId.BreakSign: return BuildImpactWood(ref rng);
+                case AudioSoundId.BreakBale: return BuildImpactFoliage(ref rng);
+                case AudioSoundId.FootstepWaterShallow:
+                case AudioSoundId.FootstepWaterDeep: return BuildImpactWater(ref rng);
+                case AudioSoundId.FootstepGravel: return BuildImpactDirt(ref rng);
+                case AudioSoundId.FootstepPavement: return BuildImpactStone(ref rng);
+                case AudioSoundId.AmbThunderDistant: return BuildTensionBed(false, ref rng);
+                case AudioSoundId.AmbDripSlate: return BuildImpactWater(ref rng);
+                case AudioSoundId.AmbPondBed: return BuildWaterBed(ref rng);
+
                 default:
                     return BuildImpactDefault(ref rng);
             }
@@ -275,6 +304,7 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.AmbTensionHigh:
                 case AudioSoundId.SwBeaconLoop:
                 case AudioSoundId.HeavyMotorLoop:
+                case AudioSoundId.AmbPondBed:
                 case AudioSoundId.AmbCommon:
                 case AudioSoundId.AmbRegionCenter:
                 case AudioSoundId.AmbRegionNorth:

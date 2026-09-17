@@ -4,12 +4,15 @@
 
 > Kullanıcı direktifi (2026-09-16, §12): "Her şeyin kendine ait sesi ve efekti olacak; hiçbir detay atlanmasın." Ortak dosya: S-08 ses sütununu, S-07 VFX sütununu doldurur (satır çakışmasında ikinci biten rebase'de birleştirir). **Boş ses satırı = WP-021 DoD FAIL.**
 >
-> Ses sütunu okunuşu: `SFX dosya` = AP-011 klip kökü (`Assets/_Art/Audio/AP011/<kök>_nn.wav`) ya da `proc:<AudioSoundId>` (WP-002 prosedürel recipe, katalogda üretilmiş klip yok) ya da `paylaşımlı:<kök>` (başka satırın klibini mix-plan farkıyla kullanır). `Kaynak` = olayın koddaki tetiği. Durum: **Ü** üretildi (AP-011 v003), **P** prosedürel, **R** rezerve (tetik henüz yok). WP-021B: WP-018 (ADR-018-1) main'e geldi → ayak/nefes/ölüm-sonu satırları `CharacterAnimationEvents.Any` ile bağlandı (R kalktı). Kredi kalanı yetmeyen satırlar **P** ile sevk edilir ve "AP-011 v4 kuyruğu" bölümünde listelenir (kredi kararı kullanıcıda). **WP-021C:** **T** = türetilmiş (AP-011 v005/v006: mevcut 48k/24-bit kaynaklardan ofline katman/pitch/stretch, kredi 0; `EVENT-COVERAGE-MATRIX-UI.md` satırları §8'e taşındı, olay adları sabit); zemin: AP-005 placement aileleri sahne yüklenince `SurfaceTag` alır (`DD.Art.Ap005SurfaceTags`, ADR-021-1 v2), avlu zemini taş rotalarda taşa iyileşir.
+> Ses sütunu okunuşu: `SFX dosya` = AP-011 klip kökü (`Assets/_Art/Audio/AP011/<kök>_nn.wav`) ya da `proc:<AudioSoundId>` (WP-002 prosedürel recipe, katalogda üretilmiş klip yok) ya da `paylaşımlı:<kök>` (başka satırın klibini mix-plan farkıyla kullanır). `Kaynak` = olayın koddaki tetiği. Durum: **Ü** üretildi (AP-011 v003), **P** prosedürel, **R** rezerve (tetik henüz yok). WP-021B: WP-018 (ADR-018-1) main'e geldi → ayak/nefes/ölüm-sonu satırları `CharacterAnimationEvents.Any` ile bağlandı (R kalktı). Kredi kalanı yetmeyen satırlar **P** ile sevk edilir ve "AP-011 v4 kuyruğu" bölümünde listelenir (kredi kararı kullanıcıda). **WP-021C:** **T** = türetilmiş (AP-011 v005/v006/v007: mevcut 48k/24-bit kaynaklardan ofline katman/pitch/stretch, kredi 0; `EVENT-COVERAGE-MATRIX-UI.md` satırları §8'e taşındı, olay adları sabit); zemin: AP-005 placement aileleri sahne yüklenince `SurfaceTag` alır (`DD.Art.Ap005SurfaceTags`, ADR-021-1 v2), avlu zemini taş rotalarda taşa iyileşir.
 
 ## 1. Oyuncu
 
 | Olay | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
 |---|---|---|---|---|---|---|
+| Ayak sesi — sığ su / derin su / çakıl / kaldırım (AP-015P plakaları) | `anim.foot_l/foot_r` + `Ap005SurfaceTags` aile (WP-038 plakaları gelince; şimdi R) | FootstepWaterShallow / FootstepWaterDeep / FootstepGravel / FootstepPavement (×3, v007 T) | 3D | SFX-Player | T/R | |
+| Silah foley A/B/C — eject / chamber / mag_out / mag_in / switch / lowered / raised | WP-032C klip olayları (main'e gelince; şimdi R) | Weapon{A,B,C}{Eject,Chamber,MagOut,MagIn,Switch,Lowered,Raised} (×2, v007 T; A tüfek, B carbine, C pompalı ayrışması) | 2D | SFX-Player | T/R | |
+| Silah/Special alma — kavrama / yerine oturma | `anim.pickup_grab` / `anim.pickup_done` (WP-032C; şimdi R) | PickupGrab / PickupDone (×2, v007 T) | 2D | SFX-Player | T/R | |
 | Ayak sesi — taş | `anim.foot_l/foot_r` + aşağı ışın → `AudioSurfaceHints` → `SurfaceResolver` (WP-021C: quiet_paving/ring/gate/shore_path/kaya/fener + taş rota şeridi; etiketsiz = taş) | FootstepStone (×4) | 3D | SFX-Player | Ü | `dust_step` (katalogda, stone tint) — bağlama `anim.foot_l/foot_r` WP-047 A (S-06 ayak olayı) |
 | Ayak sesi — ahşap (veranda/köprü) | `anim.foot_l/foot_r` + `SurfaceKind.Wood` | FootstepWood (×3) | 3D | SFX-Player | Ü | `dust_step` wood_tatami tint — WP-047 A |
 | Ayak sesi — toprak/çakıl | `anim.foot_l/foot_r` + `SurfaceKind.Dirt` | FootstepDirt (×4) | 3D | SFX-Player | Ü | `dust_step` earth tint — WP-047 A |
@@ -42,19 +45,21 @@
 | Ölüm sonu — beden yere oturur | `anim.death_end` | paylaşımlı:ZombieStepHeavy (pitch 0,8) | 3D | SFX-World | Ü | kan gölü büyümesi bu anda tamamlanır (0.4→1.0 m 3 s) — AP-010B v003 `decal_blood_pool_albedo` |
 | Idle / nefes (yakın mesafe hırıltı) — Standard | `AudioEventRouter` idle yoklaması (≤ 9 m, 6–14 s aralık, düşman başına, saldırı fazı dışında) | ZombieIdle (×4) | 3D | SFX-World | Ü | n/a — görsel yok |
 | Idle — Special / Elite / Ultra | idle yoklaması, `AudioEventMap.ZombieIdle(tier)` (WP-021C) | ZombieIdleSpecial / ZombieIdleElite / ZombieIdleUltra (×3) | 3D | SFX-World | T | n/a — görsel yok (tier siluet WP-036) |
-| Aggro — ayağa kalktı, seni gördü ×4 tier | `anim.rise_end` → `AudioEventMap.ZombieAggro(tier)` (WP-021C; ZombieRise toprak, bu vokal) | ZombieAggro{Standard,Special,Elite,Ultra} (×3) | 3D | SFX-World | T | `spawn_dust` bölge tint'i (yalnız kamera dışı rise, DEC-081) — katalogda, WP-047 A `spawn_rise` |
-| Saldırı hazırlığı — Standard | `ZombieEnemy.AttackPhase → Windup` | ZombieWindupStandard (×3) | 3D | SFX-World | Ü | n/a — telegraph animasyon (DEC-029) + HUD çip; `claw_swipe` vuruşta |
+| Aggro — ayağa kalktı, seni gördü ×4 tier | `EnemyCombatEvents.spawn_land` → `AudioEventMap.ZombieAggro(tier)` (WP-048; anim.rise_end ile aynı an, doğrulmasız spawn'ı da kapsar) | ZombieAggro{Standard,Special,Elite,Ultra} (×3) | 3D | SFX-World | T | `spawn_dust` bölge tint'i (yalnız kamera dışı rise, DEC-081) — katalogda, WP-047 A `spawn_rise` |
+| Saldırı hazırlığı — Standard | `EnemyCombatEvents.telegraph_start` (WP-040; WP-048'de AttackPhase yoklaması kaldırıldı) | ZombieWindupStandard (×3) | 3D | SFX-World | Ü | n/a — telegraph animasyon (DEC-029) + HUD çip; `claw_swipe` vuruşta |
 | Saldırı hazırlığı — Special (Lunge, kısa hazırlık) | Windup, tier Special (WP-021C) | ZombieWindupSpecial (×3) | 3D | SFX-World | T | n/a — telegraph animasyon; tier cue WP-036 |
 | Saldırı hazırlığı — Elite | Windup, tier Elite | ZombieWindupElite (×3) | 3D | SFX-World | Ü | n/a — telegraph animasyon |
 | Saldırı hazırlığı — Ultra | Windup, tier Ultra | ZombieWindupUltra (×3) | 3D | SFX-World | Ü | n/a — telegraph animasyon (Ultra sweep) |
-| Saldırı (savurma) ×4 tier | `AttackPhase → Active` | ZombieAttack{Standard,Elite,Ultra} (Ü) · ZombieAttackSpecial (T, ×3) | 3D | SFX-World | Ü/T | `claw_swipe` 4×4 8 f (1.1 × 0.7 m, koyu tint) katalogda — WP-047 A `attack_commit` |
-| Saldırı isabeti (oyuncuya) | `DamageEvents.PlayerAttacked` | AttackImpactBody (et/deri darbe) | 3D | SFX-World | Ü | `vignette_damage` parlama + `claw_swipe` — AP-010 v003 / WP-047 A `attack_hit` |
+| Saldırı (savurma) ×4 tier | `EnemyCombatEvents.attack_commit` (WP-040) | ZombieAttack{Standard,Elite,Ultra} (Ü) · ZombieAttackSpecial (T, ×3) | 3D | SFX-World | Ü/T | `claw_swipe` 4×4 8 f (1.1 × 0.7 m, koyu tint) katalogda — WP-047 A `attack_commit` |
+| Saldırı isabeti (oyuncuya) | `EnemyCombatEvents.attack_hit` (WP-040; WP-048'de DamageEvents.PlayerAttacked'ten taşındı) | AttackImpactBody (et/deri darbe) | 3D | SFX-World | Ü | `vignette_damage` parlama + `claw_swipe` — AP-010 v003 / WP-047 A `attack_hit` |
+| Saldırı ıskası | `EnemyCombatEvents.attack_miss` | n/a — savurma commit'te çaldı, ıska sonraki sessizliktir | — | — | n/a | |
 | Hit — kafa (açık) | `EnemyDamaged` bölge Head | paylaşımlı:ZombieHit* + CriticalHit (×3, v006 T) | 3D | SFX-World | Ü | kan A7 `fb_blood_heavy_01/02` (kritik) + damlacık + 2 iz — AP-010B v003 (`BloodSystem.HitClass.Critical`) |
 | Hit — gövde | `EnemyDamaged` bölge UpperBody | ZombieHit{Standard,Elite,Ultra} (Ü) · ZombieHitSpecial (T, ×3) | 3D | SFX-World | Ü/T | kan A1 `fb_blood_splash_01..06` + 12 damlacık + yön izi (+%40 damla) — AP-010B v003 |
 | Hit — bacak | `EnemyDamaged` bölge LowerBody | paylaşımlı:ZombieHit* (pitch −2 st) | 3D | SFX-World | Ü | kan A1 sıçrama + damlacık + yön izi — AP-010B v003 |
-| Ağır sendeleme (stagger) | `DamageEvents.EnemyDamaged.CausedStagger` (`AudioEventRouter`) | ZombieStagger (×3) | 3D | SFX-World | Ü | n/a — animasyon; zırh kırılma satırındaki efekt |
+| Ağır sendeleme (stagger) | `EnemyCombatEvents.stagger` (WP-040: REQ-124 penceresi + zırh kırılma sendelemesi; WP-048) | ZombieStagger (×3) | 3D | SFX-World | Ü | n/a — animasyon; zırh kırılma satırındaki efekt |
 | Ölüm — öne çökme / geriye / diz / patlama | `DamageEvents.EnemyDied` (+ `CombatAudioEvent.EnemyDeath` beden) | ZombieDeath{Standard,Elite,Ultra} (×2–3) · ZombieDeathSpecial (T, ×3) + EnemyDeath (×3, v006 T) / HeavyEnemyDeath | 3D | SFX-World | Ü | A6 `fb_blood_death_01..03` (3.0 m) + 2 A1 kartı + 36 damlacık + göl — AP-010B v003; hit-stop 40 ms |
-| Spawn / yerden doğrulma | `ZombieEnemy.Live` giriş kenarı (`AudioEventRouter`) | ZombieRise (×3, toprak katmanı) | 3D | SFX-World | Ü | `spawn_dust` (yalnız kamera dışı rise) — katalogda, WP-047 A |
+| Spawn / yerden doğrulma | `EnemyCombatEvents.spawn_rise` (WP-040 DEC-081: yalnız doğrulan gövdeler; WP-048) | ZombieRise (×3, toprak katmanı) | 3D | SFX-World | Ü | `spawn_dust` (yalnız kamera dışı rise) — katalogda, WP-047 A |
+| Ayağa kalktı / doğrudan indi | `EnemyCombatEvents.spawn_land` (rise_end ya da doğrulmasız spawn) | ZombieAggro{tier} (×3) | 3D | SFX-World | T | |
 | Special / Elite / Ultra farkı | tier → vokal seti + `HeavyEnemyDeath`; WP-033 `ThreatMusicFeed.Accent` → müzik vurgu katmanı | tier'lı kökler (yukarıda) + MusicAccent | — | — | Ü | `death_special` (2.64 m) / `death_ultra` (3.96 m) A6'nın yerine; Elite ağır A6 ×1.15 + göl 1.2 m — AP-010B v003 |
 
 ## 2b. Düşman olay yüzeyi — `EnemyCombatEvents` (WP-040, ADR-040-1)
@@ -77,6 +82,7 @@
 
 | Olay | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
 |---|---|---|---|---|---|---|
+| Kırılma — bölge sesi (kask / gövde / bacak) | `EnemyCombatEvents.armor_break_{head,torso,leg}` (WP-040; WP-048) — tier ArmorBreak cue'sunun üstüne bölge vokali + 0,42 s plaka düşüşü | ArmorBreakHelmet / ArmorBreakBody / ArmorBreakLeg (×3, v007 T) + ArmorPieceDrop | 3D | SFX-World | T | |
 | Vuruş — plaka dayanıyor | `CombatAudioEvent.ArmorHit` (rung 1) | ArmorImpact (×3, v006) | 3D | SFX-World | Ü/T | `fb_impact_armor` v003 (+ emissive) + `armor_crack_dust` — AP-010 v003 / AP-010B v003 |
 | Hasar — plaka çatlıyor | `ArmorHit` rung ≥ 3 (fatigue) | ArmorCrack (×3, v006 T) | 3D | SFX-World | Ü/T | AP-008 durum mesh'i (K→D) + `armor_crack_dust` — AP-008 / AP-010B v003 |
 | Kırılma — kask / gövde / bacak | `CombatAudioEvent.ArmorBreak` (slot `ArmorBreakInfo`) | ArmorBreak (×2, metal transient + lake kırılması) | 3D | SFX-World | Ü | `fb_impact_armor` v003 ×1.3 + `atlas_armorbreak` v003 parça patlaması + `decal_lacquer_splinter` v003 + kan A7 + 14 damlacık + hit-stop 35 ms + sarsıntı 0.075 — AP-010 v003 / AP-010B v003 |
@@ -86,6 +92,7 @@
 
 | Olay | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
 |---|---|---|---|---|---|---|
+| AP-017 aileleri (fener taş / fener kâğıt / saksı / çit / balya / bank / tabela / shoji) | `BreakableProp.Broke` aile → ses (AP-017 main'e gelince aile anahtarı bağlanır; şimdi R) | Break{LanternStone,LanternPaper,Planter,Fence,Bale,Bench,Sign,Shoji} (×3, v007 T) | 3D | SFX-World | T/R | |
 | AP-003B small_breakable (seramik/çömlek) | WP-013 kırılma bağlaması → `SurfaceImpact*` + `BreakCeramic` | BreakCeramic (×2) | 3D | SFX-World | Ü | `BreakableProp` çip + toz + `fb_impact_wood` + `breakable_residue` 2×2 atlas dekalı (seramik hücresi) — WP-013 / AP-010B v003 |
 | AP-003B stone_lantern (isabet) | `SurfaceImpactStone` | ImpactStone | 3D | SFX-World | Ü | `fb_impact_stone` v003 + `decal_impact_stone` — AP-010 v003; `lantern_flame` katalogda (WP-029 ankrajı) |
 | AP-003B bamboo_fence / bamboo_stalk (isabet) | `SurfaceImpactWood` (yüzey tablosunda bambu ayrı değil) | ImpactWood (bambu varyantı v4 kuyruğu) | 3D | SFX-World | Ü | `fb_impact_wood` v003 + dekal — AP-010 v003 |
@@ -98,6 +105,9 @@
 
 | Olay | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
 |---|---|---|---|---|---|---|
+| Look B — uzak gök gürültüsü | `AmbienceDirector.TickWetLook` (WetLook, 40–90 s, 52 m uzakta, yüksek) | AmbThunderDistant (×3, v007 T) | 3D | Ambience | T | |
+| Look B — ıslak arduvaz damlası | scatter halkası (WetLook seti) | AmbDripSlate (×3, v007 T) | 3D | Ambience | T | |
+| Look B — koi havuzu su bed'i | `Ap005SurfaceTags.RegisterPond` → `AudioSurfaceHints.PondCenters` → havuz merkezinde 3D loop (6–30 m) | AmbPondBed (loop, v007 T) | 3D | Ambience | T | |
 | Ortak atmosfer (yağmur sonrası damla, rüzgâr) | `AmbienceDirector` ortak bed | AmbCommon (loop) | 2D | Ambience | Ü | `AtmosphereDrift` polen/sakura + `WindDriver` gust — WP-013 |
 | Merkez avlu (taş, damla, yankı) | bölge `center` | AmbRegionCenter (loop) | 2D | Ambience | Ü | n/a — bölge sesi; görsel ortak atmosfer |
 | Kuzey — koridor/ahşap rüzgârı | bölge `north` | AmbRegionNorth (loop) | 2D | Ambience | Ü | n/a — bölge sesi |

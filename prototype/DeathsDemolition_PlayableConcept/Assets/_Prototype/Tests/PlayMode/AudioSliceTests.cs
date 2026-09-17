@@ -281,7 +281,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SpecialWeaponSahne.Bekle(() => r.AttackCount > attackOnce, 10f, "Saldırı (active) sesi üretilmedi.");
             float aralik = Time.realtimeSinceStartup - windupAt;
             Assert.GreaterOrEqual(aralik, 0.3f, "DEC-067: hazırlık sesi saldırıdan ≥ 0,3 s önce olmalı (" + aralik.ToString("0.00") + " s).");
-            Assert.GreaterOrEqual(r.RiseCount, 1, "Spawn/doğrulma sesi üretilmedi (v003).");
+            Assert.GreaterOrEqual(r.RiseCount + r.AggroCount, 1, "Spawn sesi üretilmedi (WP-048: spawn_rise toprak ya da spawn_land aggro).");
             Debug.Log("[DD-TEST] wp021.zombie windup→attack=" + aralik.ToString("0.00") + "s " + r.Describe());
         }
 
@@ -384,24 +384,20 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(60000)]
-        public IEnumerator Aggro_RiseEnd_TierVokali()
+        public IEnumerator Aggro_SpawnLandBeat_TierVokali()
         {
+            // WP-048: the aggro growl rides the WP-040 spawn_land beat (rise_end clip or an immediate
+            // land on a spawn without a rise); the earth is the spawn_rise beat when the body rises.
             AudioEventRouter r = _d.Router;
+            int once = r.AggroCount, landOnce = DD.Prototype.Enemies.EnemyCombatEvents.Count(DD.Prototype.Enemies.EnemyCombatEventKind.SpawnLand);
             ZombieEnemy z = _s.Dogur(_s.Zemin(0f, 4f));
             _s.Rig.Health.DiagnosisInvulnerable = true;
-            yield return null;
-            var events = z.GetComponentInChildren<DD.Prototype.Characters.CharacterAnimationEvents>(true);
-            if (events == null)
-            {
-                Assert.Ignore("Zombide CharacterAnimationEvents yok (prosedürel karakter modu).");
-            }
-
-            int once = r.AggroCount;
-            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.RiseEnd);
-            Assert.AreEqual(once + 1, r.AggroCount, "rise_end aggro vokali üretmedi.");
-            Assert.AreEqual(AudioEventMap.ZombieAggro(z.Tier), _d.LastPlayed, "Tier'ın kendi aggro kimliği.");
+            yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Enemies.EnemyCombatEvents.Count(DD.Prototype.Enemies.EnemyCombatEventKind.SpawnLand) > landOnce, 8f, "spawn_land beat gelmedi.");
+            Assert.GreaterOrEqual(r.AggroCount, once + 1, "spawn_land aggro vokali üretmedi.");
             Assert.AreNotEqual(AudioEventMap.ZombieAggro(DD.Prototype.Core.Config.EnemyTier.Ultra), AudioEventMap.ZombieAggro(DD.Prototype.Core.Config.EnemyTier.Special));
-            Debug.Log("[DD-TEST] wp021c.aggro tier=" + z.Tier + " " + r.Describe());
+            Assert.AreEqual(AudioSoundId.ArmorBreakHelmet, AudioEventMap.ArmorBreakRegion(DD.Prototype.Core.Config.ArmorSlot.Helmet));
+            Assert.AreEqual(AudioSoundId.ArmorBreakLeg, AudioEventMap.ArmorBreakRegion(DD.Prototype.Core.Config.ArmorSlot.Leg));
+            Debug.Log("[DD-TEST] wp048.aggro tier=" + z.Tier + " beats=" + DD.Prototype.Enemies.EnemyCombatEvents.Total + " " + r.Describe());
         }
 
         [UnityTest]
