@@ -131,6 +131,8 @@ namespace DD.Prototype.Characters
         public const string PlayerPickupUpper = "AP009_player_pickup_upper";
         public const string PlayerSwHoldBell = "AP009_player_sw_hold_bell";
         public const string PlayerSwHoldLoom = "AP009_player_sw_hold_loom";
+        /// <summary>AP-009G v007: the Tide Jewel hold (SwHold_3).</summary>
+        public const string PlayerSwHoldJewel = "AP009_player_sw_hold_jewel";
         public const string PlayerDeathSide = "AP009_player_death_side";
         public const string PlayerHurtA = "AP009_player_hurt_A";
         public const string PlayerHurtB = "AP009_player_hurt_B";
@@ -183,7 +185,7 @@ namespace DD.Prototype.Characters
             PlayerIdle, PlayerWalkFwd, PlayerWalkBack, PlayerStrafeLeft, PlayerStrafeRight,
             PlayerRunFwd, PlayerRunBack, PlayerRunStrafeLeft, PlayerRunStrafeRight,
             PlayerFireRecoil, PlayerHitLight, PlayerDeathFwd, PlayerDeathBack, PlayerPickup,
-            PlayerPickupUpper, PlayerSwHoldBell, PlayerSwHoldLoom, PlayerDeathSide, PlayerHurtA, PlayerHurtB, PlayerWeaponLower, PlayerWeaponRaise,
+            PlayerPickupUpper, PlayerSwHoldBell, PlayerSwHoldLoom, PlayerSwHoldJewel, PlayerDeathSide, PlayerHurtA, PlayerHurtB, PlayerWeaponLower, PlayerWeaponRaise,
             "AP009_player_B_weapon_lower", "AP009_player_B_weapon_raise", "AP009_player_C_weapon_lower", "AP009_player_C_weapon_raise",
             "AP009_player_A_idle_aim", "AP009_player_A_fire", "AP009_player_A_reload", "AP009_player_A_switch_in", "AP009_player_A_switch_out",
             "AP009_player_B_idle_aim", "AP009_player_B_fire", "AP009_player_B_reload", "AP009_player_B_switch_in", "AP009_player_B_switch_out",
@@ -204,7 +206,7 @@ namespace DD.Prototype.Characters
             "AP009_zombie_hit_front_ultra", "AP009_zombie_hit_back_ultra", "AP009_zombie_hit_left_ultra", "AP009_zombie_hit_right_ultra"
         };
 
-        public const int ClipCount = 85;   // WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+        public const int ClipCount = 86;   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>

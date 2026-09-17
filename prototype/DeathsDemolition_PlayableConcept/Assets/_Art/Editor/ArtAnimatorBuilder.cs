@@ -378,9 +378,10 @@ namespace DD.Art.Pipeline.EditorTools
                 aims[w].writeDefaultValues = false;
             }
 
-            var holds = new AnimatorState[2];
+            var holds = new AnimatorState[3];
             holds[0] = osm.AddState(C.SwHoldState + "_1"); holds[0].motion = clips[C.PlayerSwHoldBell]; holds[0].writeDefaultValues = false;
             holds[1] = osm.AddState(C.SwHoldState + "_2"); holds[1].motion = clips[C.PlayerSwHoldLoom]; holds[1].writeDefaultValues = false;
+            holds[2] = osm.AddState(C.SwHoldState + "_3"); holds[2].motion = clips[C.PlayerSwHoldJewel]; holds[2].writeDefaultValues = false;   // AP-009G v007 (Tide Jewel; no swing clip — the pull is a VFX beat)
             // Empty / Aim_x / SwHold_x ↔ the weapon and special-weapon selection (no exit time)
             var rests = new List<AnimatorState> { overEmpty }; rests.AddRange(aims); rests.AddRange(holds);
             foreach (AnimatorState from in rests)
@@ -394,7 +395,7 @@ namespace DD.Art.Pipeline.EditorTools
                     t.AddCondition(AnimatorConditionMode.Equals, 0f, C.SwHold);
                 }
 
-                for (int h = 0; h < 2; h++)
+                for (int h = 0; h < holds.Length; h++)
                 {
                     if (from == holds[h]) continue;
                     AnimatorStateTransition t = from.AddTransition(holds[h]);

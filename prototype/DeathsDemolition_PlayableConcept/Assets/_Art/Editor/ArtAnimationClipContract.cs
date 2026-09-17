@@ -25,7 +25,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string AnimationsFolderName = "Animations";
         public const string AnimationsFolder = ArtImportContract.CharactersRoot + "/" + AnimationsFolderName;
         public const string ManifestPath = AnimationsFolder + "/AP009-clips-manifest.json";
-        public const string ManifestSchema = "AP009.clips-manifest.v006";   // WP-032E: AP-009F v006 (85 clips; 23 pose re-keys: aim A shoulder / B compact / C hip class poses, stumble, death_ultra — frames/events as v005b)
+        public const string ManifestSchema = "AP009.clips-manifest.v007";   // WP-032G: AP-009G v007 = v006b + player_sw_hold_jewel (TideJewel);   // WP-032E: AP-009F v006 (85 clips; 23 pose re-keys: aim A shoulder / B compact / C hip class poses, stumble, death_ultra — frames/events as v005b)
         public const int Fps = CharacterAnimatorContract.Fps;
 
         /// <summary>

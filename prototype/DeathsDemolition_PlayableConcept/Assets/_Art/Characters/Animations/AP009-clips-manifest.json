@@ -1,5 +1,5 @@
 {
- "schema": "AP009.clips-manifest.v006",
+ "schema": "AP009.clips-manifest.v007",
  "package": "AP-009B",
  "fps": 30,
  "skeleton": {
@@ -10,13 +10,13 @@
   "in_place": "Root never moves; Hips carries bob/sink only; locomotion is code-driven (CharacterAnimationSet.SpeedParameterFor)"
  },
  "events": {
-  "convention": "frame index at 30 fps from the clip start; also stored as Blender pose markers on the action and as the armature custom property AP009_events ('name=frame;\u2026') in each FBX",
+  "convention": "frame index at 30 fps from the clip start; also stored as Blender pose markers on the action and as the armature custom property AP009_events ('name=frame;…') in each FBX",
   "names": {
    "foot_l/foot_r": "foot contact (footstep sfx / decal)",
    "hit_window_start/hit_window_end": "attack active window (DEC-029: the hitbox is ON only between these frames)",
    "fire": "muzzle / recoil frame",
    "hit": "reaction start",
-   "death_end": "last frame \u2014 hold and despawn",
+   "death_end": "last frame — hold and despawn",
    "rise_end": "spawn finished",
    "pickup": "grab frame",
    "stagger_end": "stagger recovered"
@@ -24,11 +24,11 @@
  },
  "layers": {
   "base": "full-body state (Animator base layer)",
-  "override_upper": "upper-body override layer (hit reactions) \u2014 play at weight 1 over locomotion, mask Spine+",
+  "override_upper": "upper-body override layer (hit reactions) — play at weight 1 over locomotion, mask Spine+",
   "additive": "additive layer (recoil, regional flinches): first frame is the reference pose (deltas from rest)",
   "aim_layer": "WP-018: rotate Spine/Chest/UpperChest toward the aim direction on top of the base (REQ-038)"
  },
- "speed_reference": "speed_mps = the measured ground speed at which the in-place cycle shows no foot slide (mean stance-foot ankle displacement x 30 fps; playback rate 1.0). Unity scales the playback rate by MoveSpeed / speed_mps \u2014 see README \u00a7speed table; v002: dedicated player run cycles (run_fwd/back/strafe_l/r, flight phase) \u2014 blend walk->run above ~1.6x the walk speed_mps (walk scaled beyond x2.1 reads as skating)",
+ "speed_reference": "speed_mps = the measured ground speed at which the in-place cycle shows no foot slide (mean stance-foot ankle displacement x 30 fps; playback rate 1.0). Unity scales the playback rate by MoveSpeed / speed_mps — see README §speed table; v002: dedicated player run cycles (run_fwd/back/strafe_l/r, flight phase) — blend walk->run above ~1.6x the walk speed_mps (walk scaled beyond x2.1 reads as skating)",
  "clips": [
   {
    "clip": "AP009_player_A_fire",
@@ -1376,6 +1376,27 @@
     },
     "foot_contact_A": null
    }
+  },
+  {
+   "clip": "AP009_player_sw_hold_jewel",
+   "fbx": "AP009_player_sw_hold_jewel_v007.fbx",
+   "target": "player",
+   "frames": 61,
+   "fps": 30,
+   "seconds": 2.0,
+   "loop": true,
+   "events": {
+    "breath": 0
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": 0.0,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "special_weapon": "TideJewel"
   },
   {
    "clip": "AP009_player_walk_back",
@@ -3871,7 +3892,7 @@
    "AP009_player_<A|B|C>_fire (3)",
    "AP009_zombie_rise_B"
   ],
-  "hits": "direction carried by rotation: torso twist + head turn x1.8, shoulders x1.5, front lean x1.45 (peak head-top displacement front 0.51 -> 0.72 m); side / back lateral displacement is capsule-bound (C03: torso / head inside r 0.50 of the root axis, v004 already at 0.48-0.495) \u2014 more lateral throw needs a C03 hit-clip tolerance decision (like attacks 0.66); Elite stays 0.45 of Standard, Ultra unchanged",
+  "hits": "direction carried by rotation: torso twist + head turn x1.8, shoulders x1.5, front lean x1.45 (peak head-top displacement front 0.51 -> 0.72 m); side / back lateral displacement is capsule-bound (C03: torso / head inside r 0.50 of the root axis, v004 already at 0.48-0.495) — more lateral throw needs a C03 hit-clip tolerance decision (like attacks 0.66); Elite stays 0.45 of Standard, Ultra unchanged",
   "armorbreak": "18 -> 21 f: the peak holds 3 frames (f3-6); torso = fold (spine 42 / head 28 / shoulders down-forward), head = shoulder collapse after the snap, leg = hips drop held; events hit / armor_break 0 unchanged",
   "reload_A_B": "low reload: the grip drops to the waist (Hips +10 cm / 30 cm forward) and holds through mag_in (A f30 / B f34: left hand at belt height, z ~1.0 m vs 1.22 before), the weapon comes back up for the chamber beat; events unchanged",
   "fire": "kick: shoulder driven back (-9 deg x kick_amp), torso lean back 5 deg x kick_amp (C 9 deg), head follows; still ADDITIVE over <weapon>_idle_aim frame 0",
@@ -3880,7 +3901,7 @@
  },
  "v005b_changes": {
   "package": "AP-009E v005b (C-00 decisions 2026-09-17)",
-  "hits": "C03 hit-clip capsule tolerance 0.50 -> 0.60 (attacks 0.66 as precedent): zombie_hit_<front|back|left|right>_<std|elite> re-keyed with the lateral / back throw +50 % too (sides x1.5, back / front x1.6 on the body displacement; rotation x1.8, shoulders x1.5) \u2014 peak head-top displacement front 0.51 -> 0.79 m, sides 0.36 -> 0.53, back 0.20 -> 0.31; torso / head r up to 0.59 for 3-5 frames \u2014 S-06 verifies the hitbox effect",
+  "hits": "C03 hit-clip capsule tolerance 0.50 -> 0.60 (attacks 0.66 as precedent): zombie_hit_<front|back|left|right>_<std|elite> re-keyed with the lateral / back throw +50 % too (sides x1.5, back / front x1.6 on the body displacement; rotation x1.8, shoulders x1.5) — peak head-top displacement front 0.51 -> 0.79 m, sides 0.36 -> 0.53, back 0.20 -> 0.31; torso / head r up to 0.59 for 3-5 frames — S-06 verifies the hitbox effect",
   "reload_fire_reverted": "S-06 live measurement: the weapon layers play at full amplitude in the engine (reload left hand 76 cm, kick 4-10 cm); the AD's identical reload / fire frames were a static-capture artefact -> player_<A|B>_reload and player_<A|B|C>_fire are back on their v004 keys (the v005 low reload / stronger kick was not needed)",
   "unchanged": "armorbreak x3, rise_B as v005; every other clip key-identical to v004"
  },
@@ -3888,9 +3909,9 @@
   "package": "AP-009F (WP-032C AD SHOULD 5-7, credits 0)",
   "aim_class_poses": "player_<A|B|C>_{idle_aim,fire,reload,switch_in,switch_out} + player_[B|C_]weapon_{lower,raise} (21 clips) re-keyed on class holds: A LONG = stocked at the shoulder, cheek on the stock, torso bladed (twist -30), long left arm, staggered narrow stance; B MEDIUM = compact, weapon pulled in low in front of the chest, elbows tucked, squarer torso, square stance; C SHORT-THICK = low at the hip, knees bent (hips -9 cm), wide staggered stance, torso leaning in. Gameplay-camera pairwise IoU A/B 0.72, B/C 0.73, A/C 0.71 (was 0.93-0.97); side widths A 49 / B 37 / C 39 px; forend reach <= 8 mm; barrel checks unchanged",
   "runner_stumble": "zombie_hit_special_stumble: torso falls back 34 deg with a 12 deg side tilt, arms windmill (one up-back, one out-forward, wrists broken) and swap on the second step, hips -8 cm; feet r 0.59",
-  "ultra_slam": "zombie_death_ultra: collapse read \u2014 shoulders drop and roll forward from the kneel, the head hangs 55 deg at the slam, face down at the settle",
+  "ultra_slam": "zombie_death_ultra: collapse read — shoulders drop and roll forward from the kneel, the head hangs 55 deg at the slam, face down at the settle",
   "unchanged": "every other clip key-identical to v005b (hits, armorbreak, rise_B as v005b; reload / fire on the v004 amplitude)",
-  "engine_review": "AD round with S-06 live frames (requested) \u2014 the class poses are judged with the AP-013 meshes in the engine"
+  "engine_review": "AD round with S-06 live frames (requested) — the class poses are judged with the AP-013 meshes in the engine"
  },
  "v002_changes": {
   "new_clips": [
@@ -3905,7 +3926,14 @@
    "AP009_zombie_attack_swipe (exaggerated coil anticipation)",
    "AP009_zombie_attack_lunge (exaggerated crouch anticipation)"
   ],
-  "events": "foot_l/foot_r frames are now measured from the keyed clip (landing frame); v001 had the two names swapped (foot_r at frame 0 was the LEFT heel strike) \u2014 all v001 locomotion clips are re-exported with the corrected sides",
+  "events": "foot_l/foot_r frames are now measured from the keyed clip (landing frame); v001 had the two names swapped (foot_r at frame 0 was the LEFT heel strike) — all v001 locomotion clips are re-exported with the corrected sides",
   "unchanged": "skeleton, fps, layers/masks, every other clip's poses (byte-identical keys)"
+ },
+ "v007_changes": {
+  "package": "AP-009G (P-06, credits 0)",
+  "added": [
+   "AP009_player_sw_hold_jewel (TideJewel hold, override_upper / upper_body, 61 f loop)"
+  ],
+  "note": "the v007 export manifest re-emitted the 85 existing entries without their layer/mask/weapon/tier/validation fields — this file keeps the v006b entries and adds the jewel clip"
  }
 }

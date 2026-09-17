@@ -503,5 +503,5 @@ MonoBehaviour:
     frames: 17
     events: foot_l=0;foot_r=7
     stanceFrames: 11
-  _manifestSchema: AP009.clips-manifest.v006
+  _manifestSchema: AP009.clips-manifest.v007
   _locomotionReferenceSpeed: 1.485

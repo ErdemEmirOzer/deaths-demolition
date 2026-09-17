@@ -415,6 +415,17 @@ MonoBehaviour:
     frames: 61
     events: breath=0
     stanceFrames: 0
+  - name: AP009_player_sw_hold_jewel
+    clip: {fileID: -623603649343465320, guid: 75c0cec74dd584f3a8ea5fc630e2c3f9, type: 3}
+    loop: 1
+    seconds: 2
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 61
+    events: breath=0
+    stanceFrames: 0
   - name: AP009_player_sw_hold_loom
     clip: {fileID: -623603649343465320, guid: c420447f978ec44529bc6a0877c519e6, type: 3}
     loop: 1
@@ -470,5 +481,5 @@ MonoBehaviour:
     frames: 14
     events: raised=13
     stanceFrames: 0
-  _manifestSchema: AP009.clips-manifest.v006
+  _manifestSchema: AP009.clips-manifest.v007
   _locomotionReferenceSpeed: 6.2
