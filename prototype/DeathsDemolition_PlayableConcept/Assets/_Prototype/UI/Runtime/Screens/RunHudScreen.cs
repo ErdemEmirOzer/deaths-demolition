@@ -1339,6 +1339,7 @@ namespace DD.Prototype.UI
             }
 
             SetGroundReadout(false);
+            RetitleSpecialBanner(state);
 
             bool warning = state.FinalSecondsWarning;
 
@@ -1679,10 +1680,35 @@ namespace DD.Prototype.UI
         private void OnSpecialPickedUp(float activeDuration)
         {
             UiEvents.Raise(UiEvent.HudSpecialPickedUp);
-            string name = WeaponEvents.Special.DisplayName;
-            ShowBanner(string.IsNullOrEmpty(name)
-                ? "SPECIAL WEAPON ONLINE"
-                : UiFactory.Clip(name.ToUpperInvariant(), 30) + " ONLINE");
+
+            // WP-022J r2 (AP-020 §2.4 S-8): the runtime raises PickedUp BEFORE the controller
+            // publishes the new state, so WeaponEvents.Special.DisplayName is still the
+            // previous weapon's on a consecutive pickup. Show the generic line now and let
+            // the first Active snapshot with a name retitle the banner (same banner timer).
+            ShowBanner("SPECIAL WEAPON ONLINE");
+            _bannerAwaitsSpecialName = true;
+        }
+
+        /// <summary>True between a Special pickup and the first Active snapshot that names the weapon.</summary>
+        private bool _bannerAwaitsSpecialName;
+
+        private void RetitleSpecialBanner(in SpecialWeaponHudState state)
+        {
+            if (!_bannerAwaitsSpecialName)
+            {
+                return;
+            }
+
+            if (state.Phase != SpecialWeaponPhase.Active)
+            {
+                return;
+            }
+
+            _bannerAwaitsSpecialName = false;
+            if (!string.IsNullOrEmpty(state.DisplayName) && _bannerRemaining > 0f)
+            {
+                _bannerText.text = UiFactory.Clip(state.DisplayName.ToUpperInvariant(), 30) + " ONLINE";
+            }
         }
 
         private void OnSpecialFinalSeconds(float remaining)

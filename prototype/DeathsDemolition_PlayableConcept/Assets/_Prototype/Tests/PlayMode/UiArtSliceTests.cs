@@ -209,7 +209,19 @@ namespace DD.Prototype.Tests.PlayMode
                     ActiveRemaining = 20f,
                     ActiveDuration = 20f
                 };
+                // WP-022J r2 (AP-020 §2.4 S-8): a pickup raised while the snapshot still names
+                // the PREVIOUS weapon must not print that name - the banner retitles from
+                // the first Active snapshot that carries the new one.
+                var stale = active; stale.DisplayName = "Ofuda Loom"; stale.WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom;
+                DD.Prototype.Weapons.WeaponEvents.PublishSpecial(stale, false);
+                DD.Prototype.Weapons.WeaponEvents.PublishSpecialPickedUp(20f);
+                TMPro.TMP_Text banner = null;
+                foreach (TMPro.TMP_Text t in hud.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "Banner") banner = t;
+                Assert.IsNotNull(banner, "banner metni");
+                Assert.AreEqual("SPECIAL WEAPON ONLINE", banner.text, "alma anında eski ad basılmaz");
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, true);
+                yield return null;
+                StringAssert.Contains("KAGURA BELL ONLINE", banner.text, "ilk adlı Active snapshot banner'ı yeniden adlandırır");
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Activated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 20f, 0);
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_kagura_bell_ring", Vector3.zero, Vector3.forward, 0f, 0f, 0);
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 4f, 0);
