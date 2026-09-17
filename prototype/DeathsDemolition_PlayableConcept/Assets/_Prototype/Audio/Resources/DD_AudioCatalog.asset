@@ -12,19 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v010
-  _sourceHash: 43b93645c908f4de63b16537f911d6f281db71689191af8ad1afab945bde141f
+  _manifestVersion: ap011-v011
+  _sourceHash: 9fcff3f95c7bd3339ba53161090347ff1f74843a809c5d13c1d2b53503b12c66
   _entries:
   - Sound: 10
     Clips:
     - {fileID: 8300000, guid: 5eb175071558b4d7bb40f059605cdaa1, type: 3}
     - {fileID: 8300000, guid: d9eb6b91e4962452f947ceb0867d0439, type: 3}
     Loop: 0
-    Lufs: -23.52
+    Lufs: -21.16
     TruePeakDb: -2
-    Provenance: "seed_audio job 0708ccea (1.1 cr) \xB7 rifle_fire"
+    Provenance: "seed_audio job 0708ccea (1.1 cr) \xB7 rifle_fire \xB7 EQ v011 (WP-060B,
+      0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
     NoiseFloorDb: -62.6
-    DcDb: -160.6
+    DcDb: -189.6
     Clipped: 0
     BitDepth: 24
     Layers: body:rifle_fire.wav + rifle_mech.wav@0.0s -9dB + rifle_tail.wav@0.015s
@@ -37,11 +38,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 3322f0aae03a74b89868a67ca221d366, type: 3}
     - {fileID: 8300000, guid: 816427f7147e84357837f5b884ff194e, type: 3}
     Loop: 0
-    Lufs: -22.48
+    Lufs: -23.13
     TruePeakDb: -2
-    Provenance: "seed_audio job d0d389ec (2.4 cr) \xB7 carbine_fire_c1"
+    Provenance: "seed_audio job d0d389ec (2.4 cr) \xB7 carbine_fire_c1 \xB7 EQ v011
+      (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
     NoiseFloorDb: -62.4
-    DcDb: -130.2
+    DcDb: -156.3
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -50,11 +52,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 5e08402501225476584576eaf6578708, type: 3}
     - {fileID: 8300000, guid: 4dcafc4909fbb41ebaff1618dd285661, type: 3}
     Loop: 0
-    Lufs: -19.54
+    Lufs: -19.57
     TruePeakDb: -2
-    Provenance: "seed_audio job d6a9baae (1.1 cr) \xB7 shotgun_fire"
+    Provenance: "seed_audio job d6a9baae (1.1 cr) \xB7 shotgun_fire \xB7 EQ v011
+      (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
     NoiseFloorDb: -66.4
-    DcDb: -103.5
+    DcDb: -116.1
     Clipped: 0
     BitDepth: 24
     Layers: body:shotgun_fire.wav + rifle_mech.wav@0.0s -12dB + shotgun_tail.wav@0.025s
@@ -741,10 +744,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 51327aea46de7450b8fdc86d951d188b, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.87
-    Provenance: "seed_audio job 5cf0fd0e (1.1 cr) \xB7 zombie_std_attack"
+    TruePeakDb: -4.86
+    Provenance: "seed_audio job 5cf0fd0e (1.1 cr) \xB7 zombie_std_attack \xB7 EQ
+      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -84.4
-    DcDb: -152.4
+    DcDb: -176.9
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -756,10 +760,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 63a4d188418dd4e7280e1b71fb97df41, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -2.16
-    Provenance: "seed_audio job 856d3ae9 (1.1 cr) \xB7 zombie_std_hit"
+    TruePeakDb: -1.96
+    Provenance: "seed_audio job 856d3ae9 (1.1 cr) \xB7 zombie_std_hit \xB7 EQ v011
+      (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -85.8
-    DcDb: -110.9
+    DcDb: -132.6
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -771,9 +776,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 09af45d1 (1.1 cr) \xB7 zombie_std_death"
+    Provenance: "seed_audio job 09af45d1 (1.1 cr) \xB7 zombie_std_death \xB7 EQ v011
+      (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -95
-    DcDb: -130.3
+    DcDb: -156.8
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -799,9 +805,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -5.88
-    Provenance: "seed_audio job 84c7d7ad (1.1 cr) \xB7 zombie_elite_attack_v2"
+    Provenance: "seed_audio job 84c7d7ad (1.1 cr) \xB7 zombie_elite_attack_v2 \xB7
+      EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -75.2
-    DcDb: -137.1
+    DcDb: -155.5
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -813,9 +820,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 964135d9 (1.1 cr) \xB7 zombie_elite_hit"
+    Provenance: "seed_audio job 964135d9 (1.1 cr) \xB7 zombie_elite_hit \xB7 EQ v011
+      (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -76
-    DcDb: -111.1
+    DcDb: -124
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -826,9 +834,10 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
-    Provenance: "seed_audio job 1d6aa31b (1.1 cr) \xB7 zombie_elite_death"
+    Provenance: "seed_audio job 1d6aa31b (1.1 cr) \xB7 zombie_elite_death \xB7 EQ
+      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -79.1
-    DcDb: -131.1
+    DcDb: -158.4
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -853,10 +862,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: d6bcd91a92198499fb6c4b5b47f4eeed, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -3.52
-    Provenance: "seed_audio job 08094651 (1.1 cr) \xB7 zombie_ultra_attack"
+    TruePeakDb: -3.58
+    Provenance: "seed_audio job 08094651 (1.1 cr) \xB7 zombie_ultra_attack \xB7 EQ
+      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -57.2
-    DcDb: -85.1
+    DcDb: -111.6
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -867,10 +877,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 4ac117412eb094b4b8e997053994d1bd, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -3.83
-    Provenance: "seed_audio job 7bad0868 (1.1 cr) \xB7 zombie_ultra_hit"
+    TruePeakDb: -3.89
+    Provenance: "seed_audio job 7bad0868 (1.1 cr) \xB7 zombie_ultra_hit \xB7 EQ v011
+      (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -70.5
-    DcDb: -101.6
+    DcDb: -122.5
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -880,10 +891,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 39cfe76aa160b4460a886d4fb56299f2, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.99
-    Provenance: "seed_audio job 367300ab (1.1 cr) \xB7 zombie_ultra_death"
+    TruePeakDb: -5.08
+    Provenance: "seed_audio job 367300ab (1.1 cr) \xB7 zombie_ultra_death \xB7 EQ
+      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -70.4
-    DcDb: -138.9
+    DcDb: -160.7
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -1270,10 +1282,11 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -6.23
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieAttackStandard_01.wav,
-      noise:pink, noise:white
+    Provenance: "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieAttackStandard_01.wav,
+      noise:pink, noise:white \xB7 EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz
+      Q 1"
     NoiseFloorDb: -84.4
-    DcDb: -153.9
+    DcDb: -173.9
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v005, no credits): ZombieAttackStandard_01.wav@0ms -4dB +3st
@@ -1285,10 +1298,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: af4ca913e3b6f49bebe7b89a5f700c10, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.28
-    Provenance: "seed_audio job 488ac407 (2.6 cr) \xB7 zombie_special_hit"
+    TruePeakDb: -4.63
+    Provenance: "seed_audio job 488ac407 (2.6 cr) \xB7 zombie_special_hit \xB7 EQ
+      v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -69.7
-    DcDb: -134.6
+    DcDb: -151.4
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -1299,11 +1313,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 2906ed17f382c434ea0ae06ee4436acc, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -3.45
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieDeathStandard_02.wav,
-      exports/ZombieIdle_01.wav, exports/ZombieStepLight_02.wav, noise:pink
+    TruePeakDb: -3.61
+    Provenance: "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieDeathStandard_02.wav,
+      exports/ZombieIdle_01.wav, exports/ZombieStepLight_02.wav, noise:pink \xB7
+      EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
     NoiseFloorDb: -94.8
-    DcDb: -191.1
+    DcDb: -198.3
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v005, no credits): ZombieDeathStandard_02.wav@0ms -4dB +3st
@@ -2396,12 +2411,13 @@ MonoBehaviour:
     Clips:
     - {fileID: 8300000, guid: 9a23af536b90a448da01fac7d9b5582e, type: 3}
     Loop: 1
-    Lufs: -18.39
+    Lufs: -18.4
     TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav,
-      exports/MusicBase.wav, exports/MusicPercussion.wav
+    Provenance: "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav,
+      exports/MusicBase.wav, exports/MusicPercussion.wav \xB7 EQ v011 (WP-060B, 0
+      cr): high-shelf +3 dB @ 3 kHz, +2 dB @ 8 kHz"
     NoiseFloorDb: -120
-    DcDb: -222.5
+    DcDb: -212.6
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v008, no credits): MusicBase.wav@0ms 0dB + MusicPercussion.wav@0ms

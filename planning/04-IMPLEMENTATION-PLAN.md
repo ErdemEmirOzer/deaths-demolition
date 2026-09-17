@@ -2061,3 +2061,7 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 - **Ölçüm/test (§6):** mixer yerinde yeniden yazıldı (24 snapshot değeri, VERIFY OK); EditMode Audio+HandoffIntegrity+ProjectIntegrity **39/39**; PlayMode `AudioSliceTests` **20/20** (kayıt testi 71 680 kare / 0 düşme; limiter yığın tepesi −6,49 dBFS; sentetik faz ölçeri fight −19,8 / break −29,0 / menu −27,8 — koşudan koşuya ~1 dB oynar, Player kaydı esas); release build 515 MB + e1/e4 smoke 0 hata, restore 6/6. Ek: dinleme turu için 2 dev build (kayıt bileşeni; ikinci build kaldırılan bir "linger" denemesi içindi) + 3 Player koşusu (`-ddProfilePath` sandbox; gerçek profil dokunulmadı).
 
 **Devirler:** S-10 kapanış koşusuna `-ddAudioCapture` eklenebilir (ses faz raporu her koşuda otomatik); insan dinleme turu (maskeleme/yorgunluk) kullanıcıda; AP-011 v011 (0 kr EQ türetme geçişi) + kredi listesi kullanıcı kararı.
+
+## WP-060B — AP-011 v011 EQ türetme geçişi (kredi 0)
+
+**Durum:** Tamamlandı (S-08, 2026-09-17, §7). Branch `wp-060b-eq-v011` (taban main `74c73f8`), tek commit. Fable WP-060 #8: ateş ailesi HS +2 dB @ 4 k / LS −1,5 @ 120; tier vokalleri peak +1,5 dB @ 2,5 k Q 1; MusicResults HS +3 @ 3 k + 2 @ 8 k — sevk dosyaları üstünde, hedefe yeniden normalize; 44 dosya / 16 kimlik, manifest v011 (181/417), katalog yeniden. Doğrulama: katalog yeniden (manifest 9fcff3f9), Audio EditMode 18/18 (ilk koşuda ZombieHitSpecial kuyruk −59,7 dBFS → EQ sonrası `finish_silent` kapısı eklendi), release 539 MB + e1/e4 smoke 0, restore 6/6.
