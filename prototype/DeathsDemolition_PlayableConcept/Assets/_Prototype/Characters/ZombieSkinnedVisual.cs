@@ -330,7 +330,7 @@ namespace DD.Prototype.Characters
             {
                 _lookAt.Bind(
                     () => EnemyTargeting.HasPlayer ? EnemyTargeting.Player.position + Vector3.up * ThreatLookHeight : Vector3.zero,
-                    () => _authored && !_dying && !_rising && !_waiting && (_lod == null || !_lod.Far));
+                    () => _authored && !_dying && !_rising && !_waiting && _special == ZombieSpecialVisual.None && (_lod == null || !_lod.Far));
             }
 
             if (_footIk != null)
@@ -541,6 +541,8 @@ namespace DD.Prototype.Characters
             _animator.SetInteger(HitTierId, _hitTier);
             _animator.SetInteger(RiseVariantId, (idleVariant + (GetInstanceID() & 3)) % CharacterAnimatorContract.ZombieRiseClips.Length);
             _waiting = false;
+            _special = ZombieSpecialVisual.None;   // WP-032E: a pooled body comes back free and at speed 1
+            _animator.speed = 1f;
             _animator.SetBool(WaitingId, false);
             // WP-032B: the queue idle's cycle offset — deterministic per spawn (the idle variant coin's neighbour), so a throat queue is out of step.
             _animator.SetFloat(WaitPhaseId, Mathf.Repeat((idleVariant * 0.618034f) + (GetInstanceID() & 1023) / 1024f, 1f));
@@ -677,7 +679,45 @@ namespace DD.Prototype.Characters
         {
             if (!_authored) return;
             _waiting = waiting;
-            _animator.SetBool(WaitingId, waiting);
+            _animator.SetBool(WaitingId, waiting || _special == ZombieSpecialVisual.Dazed);
+        }
+
+        private ZombieSpecialVisual _special;
+        /// <summary>WP-032E: the Special Weapon reaction currently shown.</summary>
+        public ZombieSpecialVisual SpecialVisual => _special;
+
+        /// <summary>
+        /// WP-032E: Special Weapon reactions on the existing clips. Netted (Ofuda Loom) freezes the Animator where it is
+        /// (speed 0; hit reads and the window stop with it — the bind is a full stop) and drops the look-at; Dazed (Kagura
+        /// Bell) plays the Runner stumble once and parks the body in the queue sway with the look-at off; None restores speed
+        /// 1 and the wait flag S-03 last set. Death and the pool reset clear it.
+        /// </summary>
+        public void SetSpecialVisual(ZombieSpecialVisual state)
+        {
+            if (!_authored) return;
+            if (_special == state) return;
+            ZombieSpecialVisual previous = _special;
+            _special = state;
+            switch (state)
+            {
+                case ZombieSpecialVisual.Netted:
+                    _windowOpen = false;
+                    _animator.ResetTrigger(AttackId);
+                    _animator.ResetTrigger(TelegraphId);
+                    _animator.speed = 0f;
+                    break;
+                case ZombieSpecialVisual.Dazed:
+                    _animator.speed = 1f;
+                    _windowOpen = false;
+                    _animator.ResetTrigger(AttackId);
+                    if (!_dying) _animator.SetTrigger(StumbleId);
+                    _animator.SetBool(WaitingId, true);
+                    break;
+                default:
+                    _animator.speed = 1f;
+                    if (previous == ZombieSpecialVisual.Dazed) _animator.SetBool(WaitingId, _waiting);
+                    break;
+            }
         }
 
         /// <summary>Light directional hit: override_upper L/R by the bullet's lateral side + the regional additive flinch.</summary>
@@ -744,6 +784,8 @@ namespace DD.Prototype.Characters
         public void PlayDeath(int deathStyle)
         {
             if (!_authored) return;
+            _special = ZombieSpecialVisual.None;   // WP-032E: a netted / dazed body still dies at full speed
+            _animator.speed = 1f;
             _dying = true;
             _deathEnded = false;
             _windowOpen = false;

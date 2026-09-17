@@ -159,6 +159,16 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.SwHoldState + "_1")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.SwHoldState + "_2"));
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_2"), "death_side");
             Assert.AreEqual(set.Clip(C.PlayerPickupUpper), ArtAnimatorBuilder.FindState(c, 1, C.PickupState).motion, "pickup = v003 pickup_upper");
+            // WP-032E: Special Weapon swings — generated additive clips SwFire_1 (bell) / SwFire_2 (loom) gated by SwHold
+            for (int h = 1; h <= 2; h++)
+            {
+                AnimatorState sw = ArtAnimatorBuilder.FindState(c, 2, C.SwFireState + "_" + h);
+                Assert.IsNotNull(sw, "SwFire_" + h);
+                Assert.AreEqual(C.SwFireClips[h - 1], sw.motion.name);
+                Assert.AreEqual(0.5f, ((AnimationClip)sw.motion).length, 1e-3f, "swing 0,5 s");
+                // the generated muscle-curve clips start at 0 (= the reference), like the WP-032 telegraph clips; the additive read comes from layer 2's blending mode
+                Assert.AreEqual(AnimatorLayerBlendingMode.Additive, c.layers[2].blendingMode, "swing additive katmanda");
+            }
             Assert.AreEqual(5, ArtAnimatorBuilder.FindState(c, 1, C.EmptyState).transitions.Length, "Empty → Aim_0..2 + SwHold_1..2");
             Assert.AreEqual(C.EmptyState, c.layers[1].stateMachine.defaultState.name); Assert.AreEqual(C.EmptyState, c.layers[2].stateMachine.defaultState.name);
             // Deaths never leave (no transitions out); the pickup returns to the upper layer's Empty.

@@ -317,7 +317,8 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.Weapon, AnimatorControllerParameterType.Int), (C.Reload, AnimatorControllerParameterType.Trigger), (C.ReloadRate, AnimatorControllerParameterType.Float),
                 (C.SwitchOut, AnimatorControllerParameterType.Trigger), (C.SwitchIn, AnimatorControllerParameterType.Trigger),
                 (C.Lower, AnimatorControllerParameterType.Trigger), (C.Raise, AnimatorControllerParameterType.Trigger),
-                (C.SwHold, AnimatorControllerParameterType.Int), (C.Hurt, AnimatorControllerParameterType.Trigger), (C.HurtStyle, AnimatorControllerParameterType.Int));
+                (C.SwHold, AnimatorControllerParameterType.Int), (C.Hurt, AnimatorControllerParameterType.Trigger), (C.HurtStyle, AnimatorControllerParameterType.Int),
+                (C.SwFire, AnimatorControllerParameterType.Trigger));
             SetDefault(c, C.LocoRate, 1f);
             SetDefault(c, C.ReloadRate, 1f);
             SetDefault(c, C.Alive, true);
@@ -439,6 +440,13 @@ namespace DD.Art.Pipeline.EditorTools
 
             AnimatorState fire = OneShot(add.stateMachine, C.FireState, clips[C.PlayerFireRecoil], addEmpty, 0.9f, 0.05f);
             FromAny(add.stateMachine, fire, 0.0f, (AnimatorConditionMode.If, 0f, C.Fire), (AnimatorConditionMode.Equals, 3f, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+            // WP-032E: Special Weapon swings — generated additive clips over the SwHold pose (bell: two-arm sweep with a chest twist; loom: two-hand cast forward)
+            AnimationClip[] swFire = BuildSwFireClips();
+            for (int h = 0; h < swFire.Length; h++)
+            {
+                AnimatorState sw = OneShot(add.stateMachine, C.SwFireState + "_" + (h + 1), swFire[h], addEmpty, 0.95f, 0.05f);
+                FromAny(add.stateMachine, sw, 0.0f, (AnimatorConditionMode.If, 0f, C.SwFire), (AnimatorConditionMode.Equals, h + 1, C.SwHold), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
 
             // ---- aim_layer: IK pass only (PlayerAimLayer)
             AnimatorControllerLayer aimLayer = AddLayer(c, C.AimLayer, aim, AnimatorLayerBlendingMode.Override, true);
@@ -684,6 +692,61 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             return clips;
+        }
+
+        /// <summary>
+        /// WP-032E: two 0.5 s additive Humanoid clips (muscle curves, reference pose = frame 0) for the Special Weapon use beat
+        /// over the SwHold pose — bell = both arms sweep out and up with a chest twist (the ring), loom = both hands thrust
+        /// forward and down (the cast). Bridge until AP-009F ships sw_fire clips. Written to the player's Generated folder.
+        /// </summary>
+        public static AnimationClip[] BuildSwFireClips()
+        {
+            string folder = ArtCharacterContract.PlayerFolder + "/Generated";
+            EnsureFolder(folder);
+            var clips = new AnimationClip[C.SwFireClips.Length];
+            for (int i = 0; i < clips.Length; i++)
+            {
+                string path = folder + "/" + C.SwFireClips[i] + ".anim";
+                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                if (clip == null)
+                {
+                    clip = new AnimationClip { name = C.SwFireClips[i] };
+                    AssetDatabase.CreateAsset(clip, path);
+                }
+
+                clip.ClearCurves();
+                clip.frameRate = 30f;
+                if (i == 0)
+                {
+                    Pulse(clip, "Left Arm Down-Up", 0.55f); Pulse(clip, "Right Arm Down-Up", 0.55f);
+                    Pulse(clip, "Left Arm Front-Back", -0.35f); Pulse(clip, "Right Arm Front-Back", -0.35f);
+                    Pulse(clip, "Chest Twist Left-Right", 0.35f); Pulse(clip, "Spine Front-Back", -0.15f);
+                }
+                else
+                {
+                    Pulse(clip, "Left Arm Front-Back", 0.5f); Pulse(clip, "Right Arm Front-Back", 0.5f);
+                    Pulse(clip, "Left Forearm Stretch", 0.4f); Pulse(clip, "Right Forearm Stretch", 0.4f);
+                    Pulse(clip, "Spine Front-Back", 0.2f); Pulse(clip, "Head Nod Down-Up", -0.2f);
+                }
+
+                AnimationUtility.SetAdditiveReferencePose(clip, clip, 0f);
+                AnimationClipSettings settings = AnimationUtility.GetAnimationClipSettings(clip);
+                settings.loopTime = false;
+                settings.keepOriginalPositionY = true; settings.keepOriginalOrientation = true; settings.keepOriginalPositionXZ = true;
+                AnimationUtility.SetAnimationClipSettings(clip, settings);
+                EditorUtility.SetDirty(clip);
+                clips[i] = clip;
+            }
+
+            return clips;
+        }
+
+        /// <summary>0.5 s pulse: 0 → peak at 0.12 s → 0 at 0.5 s (a use beat, not a wind-up).</summary>
+        private static void Pulse(AnimationClip clip, string muscle, float peak)
+        {
+            var curve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.12f, peak), new Keyframe(0.3f, peak * 0.6f), new Keyframe(0.5f, 0f));
+            for (int i = 0; i < curve.length; i++) curve.SmoothTangents(i, 0f);
+            clip.SetCurve("", typeof(Animator), muscle, curve);
         }
 
         /// <summary>Muscle curve over the 1 s clip: keys at 0 / 0.25 / 0.6 / 0.9 / 1.0 s (AD S2: ≥ half the peak by 40 % of the wind-up; hold; release before the strike frame).</summary>

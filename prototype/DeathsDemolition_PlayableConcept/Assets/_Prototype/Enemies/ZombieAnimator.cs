@@ -504,6 +504,12 @@ namespace DD.Prototype.Enemies
         public int LastDeathStyleIndex { get; private set; } = -1;
         public int StumbleCount { get; private set; }
 
+        /// <summary>WP-032E: Special Weapon reaction visual (S-03 WP-055 — Netted / Dazed / None) on the driven body; the block rig ignores it.</summary>
+        public void SetSpecialVisual(ZombieSpecialVisual state)
+        {
+            if (Driven) Driver.SetSpecialVisual(state);
+        }
+
         public void SetWaiting(bool waiting)
         {
             if (Driven)

@@ -50,6 +50,8 @@ namespace DD.Prototype.Characters
         public const string SwHold = "SwHold";           // int: 0 none, 1 Kagura Bell, 2 Ofuda Loom (SwHold_ loops replace Aim_)
         public const string Hurt = "Hurt";               // trigger (player): HurtStyle 0 = hurt_A (override_upper), 1 = hurt_B (base, gut hit with a step)
         public const string HurtStyle = "HurtStyle";     // int
+        // WP-032E · Special Weapon use (S-02 WP-056 SpecialUsageEvent.Fired): additive swing emphasis over the SwHold pose — SwFire_<SwHold>
+        public const string SwFire = "SwFire";           // trigger (player, additive layer); SwHold selects the swing (1 bell sweep, 2 loom cast)
         // WP-032C zombie tier reactions / variants
         public const string HitDir = "HitDir";           // int: 0 front, 1 back, 2 left, 3 right (Hit_<dir>_<tier>)
         public const string HitTier = "HitTier";         // int: 0 std, 1 elite, 2 ultra
@@ -88,6 +90,7 @@ namespace DD.Prototype.Characters
         public const string HurtState = "Hurt";               // Hurt_A (override_upper), Hurt_B (base)
         public const string ArmorBreakState = "ArmorBreak";   // ArmorBreak_<region>
         public const string StumbleState = "Stumble";
+        public const string SwFireState = "SwFire";           // SwFire_1 / SwFire_2 (generated additive clips)
         public const string StaggerState = "Stagger";
         public const string DeathState = "Death";
         public const string RiseState = "Rise";
@@ -105,6 +108,8 @@ namespace DD.Prototype.Characters
         public const string TelegraphLayer = "telegraph";   // WP-032
         public const string TelegraphState = "Telegraph";
         public static readonly string[] TelegraphClips = { "DD_Telegraph_Swipe", "DD_Telegraph_Lunge", "DD_Telegraph_Sweep" };   // generated (ArtAnimatorBuilder)
+        /// <summary>WP-032E: generated additive Special Weapon swings (bell sweep, loom cast) until AP-009F ships sw_fire clips.</summary>
+        public static readonly string[] SwFireClips = { "DD_SwFire_Bell", "DD_SwFire_Loom" };
 
         // -------------------------------------------------------- AP-009 clip names
         public const string PlayerIdle = "AP009_player_idle";

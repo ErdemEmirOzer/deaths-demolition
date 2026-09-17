@@ -10,6 +10,16 @@ namespace DD.Prototype.Characters
     /// AP-009 controller is attached. The gameplay calls (ZombieEnemy → ZombieAnimator) stay
     /// exactly as they were; only the pose owner changes.
     /// </summary>
+    /// <summary>WP-032E · Enemy Special Weapon reaction visuals (existing clips; AP-009F may bring dedicated ones).</summary>
+    public enum ZombieSpecialVisual
+    {
+        None = 0,
+        /// <summary>Ofuda Loom bind: the body is held mid-pose (Animator speed 0), look-at off.</summary>
+        Netted = 1,
+        /// <summary>Kagura Bell ring: hit_special_stumble once, then the queue sway for the daze.</summary>
+        Dazed = 2
+    }
+
     public interface IZombieAnimationDriver
     {
         bool Authored { get; }
@@ -32,6 +42,8 @@ namespace DD.Prototype.Characters
         void SetTelegraphEmphasis(float emphasis01);
         /// <summary>WP-032: idle-in-crowd / queue wait (WP-030 hands the flag in through ZombieAnimator.SetWaiting).</summary>
         void SetWaiting(bool waiting);
+        /// <summary>WP-032E: the Special Weapon reaction the body shows (S-03 WP-055): Netted = frozen where it stands (Ofuda Loom), Dazed = stumble then sway (Kagura Bell); None restores.</summary>
+        void SetSpecialVisual(ZombieSpecialVisual state);
     }
 
     /// <summary>

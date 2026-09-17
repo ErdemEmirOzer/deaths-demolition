@@ -64,6 +64,7 @@ namespace DD.Prototype.Characters
         private static readonly int SwHoldId = Animator.StringToHash(CharacterAnimatorContract.SwHold);
         private static readonly int HurtId = Animator.StringToHash(CharacterAnimatorContract.Hurt);
         private static readonly int HurtStyleId = Animator.StringToHash(CharacterAnimatorContract.HurtStyle);
+        private static readonly int SwFireId = Animator.StringToHash(CharacterAnimatorContract.SwFire);   // WP-032E
         private int _weapon;
         private int _swHold;
         private int _overrideLayer = -1;
@@ -196,6 +197,7 @@ namespace DD.Prototype.Characters
                 WeaponEvents.SpecialChanged += OnSpecialChanged;
                 WeaponEvents.SpecialWeaponEnded += OnSpecialEnded;
                 WeaponEvents.SpecialWeaponCleared += OnSpecialEnded;
+                SpecialWeaponUsageEvents.Usage += OnSpecialUsage;   // WP-032E · S-02 WP-056 (ADR-056-1): Activated → hold pose, Fired → swing beat, Deactivated → classic Aim
                 _subscribed = true;
             }
 
@@ -222,6 +224,7 @@ namespace DD.Prototype.Characters
                 WeaponEvents.SpecialChanged -= OnSpecialChanged;
                 WeaponEvents.SpecialWeaponEnded -= OnSpecialEnded;
                 WeaponEvents.SpecialWeaponCleared -= OnSpecialEnded;
+                SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
                 _subscribed = false;
             }
         }
@@ -241,10 +244,25 @@ namespace DD.Prototype.Characters
         private void OnReloadInterrupted() => CancelReload();
         private void OnSpecialEnded() => SetSpecialHold(0);
 
+        /// <summary>WP-032E: the usage bus is the authoritative Special beat surface (WP-056); the HUD-state path above stays as the fallback for a Special without usage events.</summary>
+        private void OnSpecialUsage(SpecialUsageEvent e)
+        {
+            switch (e.Kind)
+            {
+                case SpecialUsageKind.Activated: SetSpecialHold(HoldIndexOf(e.Id)); break;
+                // Fired: the swing is already fired through IWeaponHost.OnWeaponFired → PlayerProceduralAnimator.PlayFireRecoil → PlayFire()
+                // (WeaponController.FireSpecialOnce keeps that call); a second trigger here would only re-arm the same beat.
+                case SpecialUsageKind.Deactivated: SetSpecialHold(0); break;
+            }
+        }
+
+        /// <summary>SwHold index of a Special: 1 Kagura Bell (sweep), 2 Ofuda Loom (cast); any other Special uses the bell hold until AP-009 ships its clip.</summary>
+        public static int HoldIndexOf(SpecialWeaponId id) => id == SpecialWeaponId.OfudaLoom ? 2 : 1;
+
         private void OnSpecialChanged(SpecialWeaponHudState state)
         {
             // The hold pose follows the ACTIVE special (the pickup clip's pickup_done frame is when the hand closes on it).
-            if (state.Phase == SpecialWeaponPhase.Active) SetSpecialHold(state.WeaponId == SpecialWeaponId.OfudaLoom ? 2 : 1);
+            if (state.Phase == SpecialWeaponPhase.Active) SetSpecialHold(HoldIndexOf(state.WeaponId));
             else if (state.Phase == SpecialWeaponPhase.None) SetSpecialHold(0);
         }
 
@@ -307,11 +325,11 @@ namespace DD.Prototype.Characters
 
         // ------------------------------------------------------------------ driver hooks
 
-        /// <summary>Weapon fired: the additive recoil clip (once per trigger pull; stacks naturally by re-trigger).</summary>
+        /// <summary>Weapon fired: the additive recoil clip (once per trigger pull; stacks naturally by re-trigger). WP-032E: while a Special Weapon is held (SwHold 1/2) the use beat is the generated swing (SwFire_<hold>) instead of the classic recoil.</summary>
         public void PlayFire()
         {
             if (!_authored || _dying) return;
-            _animator.SetTrigger(FireId);
+            _animator.SetTrigger(_swHold > 0 ? SwFireId : FireId);
         }
 
         /// <summary>Damage taken: the upper-body hit clip. Never touches movement, aim or fire (REQ-044/045).</summary>

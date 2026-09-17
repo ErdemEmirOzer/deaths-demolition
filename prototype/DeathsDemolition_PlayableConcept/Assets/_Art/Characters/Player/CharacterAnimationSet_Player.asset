@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12a645b13c760498a9cf5d8b4292b682, type: 3}
   m_Name: CharacterAnimationSet_Player
   m_EditorClassIdentifier: 
-  _idle: {fileID: -623603649343465320, guid: 5f03a9923fc4c413da6871833a984c0d, type: 3}
-  _walk: {fileID: -623603649343465320, guid: f1083cd8bfa944766a7e1cbacfd8489b, type: 3}
+  _idle: {fileID: -623603649343465320, guid: a04bc52845dd84c2199c89657174e838, type: 3}
+  _walk: {fileID: -623603649343465320, guid: ac1796e4fed7e46a1a849aefcf713b3e, type: 3}
   _walkSpeedMetersPerSecond: 3.01
   _controller: {fileID: 9100000, guid: b245a12937d084f689f339a22d4e41f8, type: 2}
   _source: "AP-009D v004 (85 clips, AP009-clips-manifest.json) \u2014 WP-018/032B/032C
     generated controller"
   _clips:
   - name: AP009_player_A_fire
-    clip: {fileID: -623603649343465320, guid: 48cd5b6ec643240f9baaad2ddf3f2d15, type: 3}
+    clip: {fileID: -623603649343465320, guid: 37892111a04194d1bb0dc15ee0690264, type: 3}
     loop: 0
     seconds: 0.167
     speedMps: 0
@@ -31,7 +31,7 @@ MonoBehaviour:
     events: fire=0;eject=1
     stanceFrames: 0
   - name: AP009_player_A_idle_aim
-    clip: {fileID: -623603649343465320, guid: e70d59254f6964e9cb70406560f152c3, type: 3}
+    clip: {fileID: -623603649343465320, guid: 87f7af84435bb443a867919ab8a6f308, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -42,7 +42,7 @@ MonoBehaviour:
     events: breath=0
     stanceFrames: 0
   - name: AP009_player_A_reload
-    clip: {fileID: -623603649343465320, guid: 3f63fff231b124b3cb570cfaeeb8984a, type: 3}
+    clip: {fileID: -623603649343465320, guid: c8aac9f80da7b460fab8a0bf52a8854d, type: 3}
     loop: 0
     seconds: 1.467
     speedMps: 0
@@ -53,7 +53,7 @@ MonoBehaviour:
     events: mag_out=12;mag_in=30;chamber=40
     stanceFrames: 0
   - name: AP009_player_A_switch_in
-    clip: {fileID: -623603649343465320, guid: 9cfa7ab8b20904c58bc4222869a07f79, type: 3}
+    clip: {fileID: -623603649343465320, guid: c632576693c99479099b94e90608ad5a, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -64,7 +64,7 @@ MonoBehaviour:
     events: switch_ready=11
     stanceFrames: 0
   - name: AP009_player_A_switch_out
-    clip: {fileID: -623603649343465320, guid: 3a2e831c60ffc4459867608534e57a57, type: 3}
+    clip: {fileID: -623603649343465320, guid: 1b3dc8ada4c1242e0bf9d0dea5dd7d32, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -75,7 +75,7 @@ MonoBehaviour:
     events: switch_away=11
     stanceFrames: 0
   - name: AP009_player_B_fire
-    clip: {fileID: -623603649343465320, guid: 398ed25a7a2644e6d8877aae65cecdbf, type: 3}
+    clip: {fileID: -623603649343465320, guid: feb9e695c5cc34bb1b4fe061c5fe6d1f, type: 3}
     loop: 0
     seconds: 0.133
     speedMps: 0
@@ -86,7 +86,7 @@ MonoBehaviour:
     events: fire=0;eject=1
     stanceFrames: 0
   - name: AP009_player_B_idle_aim
-    clip: {fileID: -623603649343465320, guid: 3c5f5fde2852e4514a8766d5325a27af, type: 3}
+    clip: {fileID: -623603649343465320, guid: bb97282e46af3477e9512e295cfae3ae, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -97,7 +97,7 @@ MonoBehaviour:
     events: breath=0
     stanceFrames: 0
   - name: AP009_player_B_reload
-    clip: {fileID: -623603649343465320, guid: 827216b196692462d93d654bfb965be9, type: 3}
+    clip: {fileID: -623603649343465320, guid: 498a719c8287b476188d75ad6018aeaa, type: 3}
     loop: 0
     seconds: 1.667
     speedMps: 0
@@ -108,7 +108,7 @@ MonoBehaviour:
     events: mag_out=12;mag_in=34;chamber=44
     stanceFrames: 0
   - name: AP009_player_B_switch_in
-    clip: {fileID: -623603649343465320, guid: 2a64f451d73da4de5a7b03ee720c4bfb, type: 3}
+    clip: {fileID: -623603649343465320, guid: 330f2b5ca65584b09957e860602a7016, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -119,7 +119,7 @@ MonoBehaviour:
     events: switch_ready=11
     stanceFrames: 0
   - name: AP009_player_B_switch_out
-    clip: {fileID: -623603649343465320, guid: 236f30632c27c4a4cbcb482a333e3b70, type: 3}
+    clip: {fileID: -623603649343465320, guid: 51c9294618e354cebaf677b738363109, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -130,7 +130,7 @@ MonoBehaviour:
     events: switch_away=11
     stanceFrames: 0
   - name: AP009_player_B_weapon_lower
-    clip: {fileID: -623603649343465320, guid: 69177090fb15b4bc7b0c4e5ec8fd22b1, type: 3}
+    clip: {fileID: -623603649343465320, guid: 063c7b881681b4cb18ea8657e5cb251a, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
     events: lowered=13
     stanceFrames: 0
   - name: AP009_player_B_weapon_raise
-    clip: {fileID: -623603649343465320, guid: 3bf141c3a5a8e4253b4a27fc4e51a58f, type: 3}
+    clip: {fileID: -623603649343465320, guid: 9f5a3f2427bf744bd8cab0b5ef807515, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -152,7 +152,7 @@ MonoBehaviour:
     events: raised=13
     stanceFrames: 0
   - name: AP009_player_C_fire
-    clip: {fileID: -623603649343465320, guid: 5f64eb2a8b54748ae8fe349023fe6581, type: 3}
+    clip: {fileID: -623603649343465320, guid: 883bce857da2f42a4ae6f19a2d55b03f, type: 3}
     loop: 0
     seconds: 0.7
     speedMps: 0
@@ -163,7 +163,7 @@ MonoBehaviour:
     events: fire=0;eject=12;chamber=20
     stanceFrames: 0
   - name: AP009_player_C_idle_aim
-    clip: {fileID: -623603649343465320, guid: fee67973176244dcc8c11ab1fae26b22, type: 3}
+    clip: {fileID: -623603649343465320, guid: d0df1605786f24f4eb13c6a0de3cec7f, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -174,7 +174,7 @@ MonoBehaviour:
     events: breath=0
     stanceFrames: 0
   - name: AP009_player_C_reload
-    clip: {fileID: -623603649343465320, guid: 868f9bed6bfe04656a0b35197f9a4299, type: 3}
+    clip: {fileID: -623603649343465320, guid: 06377c6456e814ffeaa851e94277845e, type: 3}
     loop: 0
     seconds: 2.167
     speedMps: 0
@@ -185,7 +185,7 @@ MonoBehaviour:
     events: mag_in=14;mag_in_2=30;mag_in_3=46;chamber=60
     stanceFrames: 0
   - name: AP009_player_C_switch_in
-    clip: {fileID: -623603649343465320, guid: 1c36ad222ce154633b586c147ca15c25, type: 3}
+    clip: {fileID: -623603649343465320, guid: dbb6da244211e48899688514802c2e1f, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -196,7 +196,7 @@ MonoBehaviour:
     events: switch_ready=11
     stanceFrames: 0
   - name: AP009_player_C_switch_out
-    clip: {fileID: -623603649343465320, guid: 699ccfdde4c074311906f59ee65c442c, type: 3}
+    clip: {fileID: -623603649343465320, guid: c63c9d0ef50024734bfe847d3cdb5946, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -207,7 +207,7 @@ MonoBehaviour:
     events: switch_away=11
     stanceFrames: 0
   - name: AP009_player_C_weapon_lower
-    clip: {fileID: -623603649343465320, guid: a6bd2b54f4f514e6c8d7c3bd21c16e0a, type: 3}
+    clip: {fileID: -623603649343465320, guid: be51c45fccc764c4faa220d73c55ceb4, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -218,7 +218,7 @@ MonoBehaviour:
     events: lowered=13
     stanceFrames: 0
   - name: AP009_player_C_weapon_raise
-    clip: {fileID: -623603649343465320, guid: b52514203dace40d18e5c66406f3f46b, type: 3}
+    clip: {fileID: -623603649343465320, guid: 85ca62f0eb6834ba590877875dfb79f7, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -229,7 +229,7 @@ MonoBehaviour:
     events: raised=13
     stanceFrames: 0
   - name: AP009_player_death_back
-    clip: {fileID: -623603649343465320, guid: 21cde8c6c6d7d49948ef3748cbe47fd0, type: 3}
+    clip: {fileID: -623603649343465320, guid: 2c5264d5e369143c59fa804d218125c3, type: 3}
     loop: 0
     seconds: 1.167
     speedMps: 0
@@ -240,7 +240,7 @@ MonoBehaviour:
     events: death_end=35
     stanceFrames: 0
   - name: AP009_player_death_fwd
-    clip: {fileID: -623603649343465320, guid: 29907b9f694cd488aa0694a02b7a63b3, type: 3}
+    clip: {fileID: -623603649343465320, guid: 6a4dd76b553464cafb82043848e8b673, type: 3}
     loop: 0
     seconds: 1.167
     speedMps: 0
@@ -251,7 +251,7 @@ MonoBehaviour:
     events: death_end=35
     stanceFrames: 0
   - name: AP009_player_death_side
-    clip: {fileID: -623603649343465320, guid: c34c4e7dedfe74f6f9813147adcee94d, type: 3}
+    clip: {fileID: -623603649343465320, guid: f6b7145d5ef0d411981fdcb20a4ad045, type: 3}
     loop: 0
     seconds: 1.567
     speedMps: 0
@@ -262,7 +262,7 @@ MonoBehaviour:
     events: death_end=47
     stanceFrames: 0
   - name: AP009_player_fire_recoil
-    clip: {fileID: -623603649343465320, guid: eb4e49d3cce6d4a74804261c711e80de, type: 3}
+    clip: {fileID: -623603649343465320, guid: 6e729e19f552d4008a31c40a656bd242, type: 3}
     loop: 0
     seconds: 0.3
     speedMps: 0
@@ -273,7 +273,7 @@ MonoBehaviour:
     events: fire=0
     stanceFrames: 0
   - name: AP009_player_hit_light
-    clip: {fileID: -623603649343465320, guid: 83b0725f5708840fdbcb4c9afcd1c6ba, type: 3}
+    clip: {fileID: -623603649343465320, guid: 4b090978b31de45a5be21e1d51d4de09, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -284,7 +284,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_player_hurt_A
-    clip: {fileID: -623603649343465320, guid: 21e537aca723242ca9d9b92fa2896901, type: 3}
+    clip: {fileID: -623603649343465320, guid: 94bb7d7902fa34159939c229ccf2b48a, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -295,7 +295,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_player_hurt_B
-    clip: {fileID: -623603649343465320, guid: 9e104fd26e0004870baf372780cc983c, type: 3}
+    clip: {fileID: -623603649343465320, guid: f372174bd3ac24e0ba1c1fc6225236a5, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -306,7 +306,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_player_idle
-    clip: {fileID: -623603649343465320, guid: 5f03a9923fc4c413da6871833a984c0d, type: 3}
+    clip: {fileID: -623603649343465320, guid: a04bc52845dd84c2199c89657174e838, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -317,7 +317,7 @@ MonoBehaviour:
     events: breath=0
     stanceFrames: 0
   - name: AP009_player_pickup_special
-    clip: {fileID: -623603649343465320, guid: 6b50267d202c9457a84775f826785654, type: 3}
+    clip: {fileID: -623603649343465320, guid: 204d51b660e7d462483266afd78117b2, type: 3}
     loop: 0
     seconds: 0.767
     speedMps: 0
@@ -328,7 +328,7 @@ MonoBehaviour:
     events: pickup=11
     stanceFrames: 0
   - name: AP009_player_pickup_upper
-    clip: {fileID: -623603649343465320, guid: f328c249f80ec45569560563019f2309, type: 3}
+    clip: {fileID: -623603649343465320, guid: 397d3fb15dd3d4bdfa54ad0f0bfc1d90, type: 3}
     loop: 0
     seconds: 0.767
     speedMps: 0
@@ -339,7 +339,7 @@ MonoBehaviour:
     events: pickup_grab=9;pickup=9;pickup_done=22
     stanceFrames: 0
   - name: AP009_player_run_back
-    clip: {fileID: -623603649343465320, guid: f28daff59ea9841d4ba9298a941139ea, type: 3}
+    clip: {fileID: -623603649343465320, guid: ab88f31e09d7541a387615e2fd319663, type: 3}
     loop: 1
     seconds: 0.467
     speedMps: 4.599
@@ -350,7 +350,7 @@ MonoBehaviour:
     events: foot_l=0;foot_r=7
     stanceFrames: 5
   - name: AP009_player_run_fwd
-    clip: {fileID: -623603649343465320, guid: 899a679f03e07421a9a628e3fd409327, type: 3}
+    clip: {fileID: -623603649343465320, guid: 99708944e565a4568a1aa95be055c5cd, type: 3}
     loop: 1
     seconds: 0.467
     speedMps: 5.687
@@ -361,7 +361,7 @@ MonoBehaviour:
     events: foot_l=0;foot_r=7
     stanceFrames: 4
   - name: AP009_player_run_strafe_left
-    clip: {fileID: -623603649343465320, guid: b46df4539ae0e4c5386492ecfbd9cb51, type: 3}
+    clip: {fileID: -623603649343465320, guid: c586043da3c3c4a13a31b3b565e108c6, type: 3}
     loop: 1
     seconds: 0.467
     speedMps: 4.415
@@ -372,7 +372,7 @@ MonoBehaviour:
     events: foot_l=1;foot_r=8
     stanceFrames: 2
   - name: AP009_player_run_strafe_right
-    clip: {fileID: -623603649343465320, guid: 76475c7948178439a8e0e0cff376476a, type: 3}
+    clip: {fileID: -623603649343465320, guid: 7c21016ebd8b24106a07990724e261e4, type: 3}
     loop: 1
     seconds: 0.467
     speedMps: 4.415
@@ -383,7 +383,7 @@ MonoBehaviour:
     events: foot_l=1;foot_r=8
     stanceFrames: 2
   - name: AP009_player_strafe_left
-    clip: {fileID: -623603649343465320, guid: 2a07f6f076e0747e08fd2c5003f32528, type: 3}
+    clip: {fileID: -623603649343465320, guid: 6fab77d6035a64fbea225f4cbd40ef9a, type: 3}
     loop: 1
     seconds: 0.4
     speedMps: 1.969
@@ -394,7 +394,7 @@ MonoBehaviour:
     events: foot_l=1;foot_r=7
     stanceFrames: 6
   - name: AP009_player_strafe_right
-    clip: {fileID: -623603649343465320, guid: 803f968d8481b4bcb82aeee6af508e85, type: 3}
+    clip: {fileID: -623603649343465320, guid: f463bcb63e3754fac979b7795bd42b25, type: 3}
     loop: 1
     seconds: 0.4
     speedMps: 1.969
@@ -405,7 +405,7 @@ MonoBehaviour:
     events: foot_l=1;foot_r=7
     stanceFrames: 6
   - name: AP009_player_sw_hold_bell
-    clip: {fileID: -623603649343465320, guid: dfd4cd4fc1234430194b38ddb5ddfb30, type: 3}
+    clip: {fileID: -623603649343465320, guid: 048a87d58b4664df9abbd8227d5229df, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -416,7 +416,7 @@ MonoBehaviour:
     events: breath=0
     stanceFrames: 0
   - name: AP009_player_sw_hold_loom
-    clip: {fileID: -623603649343465320, guid: 6d522b1e8f8894fc8b307bf9624e0ad4, type: 3}
+    clip: {fileID: -623603649343465320, guid: c420447f978ec44529bc6a0877c519e6, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -427,7 +427,7 @@ MonoBehaviour:
     events: breath=0
     stanceFrames: 0
   - name: AP009_player_walk_back
-    clip: {fileID: -623603649343465320, guid: 22c1b91a6e6da411f8756116365036db, type: 3}
+    clip: {fileID: -623603649343465320, guid: 7fdfbed6916be42c897fc80dbd7ab03b, type: 3}
     loop: 1
     seconds: 0.4
     speedMps: 2.494
@@ -438,7 +438,7 @@ MonoBehaviour:
     events: foot_l=0;foot_r=6
     stanceFrames: 8
   - name: AP009_player_walk_fwd
-    clip: {fileID: -623603649343465320, guid: f1083cd8bfa944766a7e1cbacfd8489b, type: 3}
+    clip: {fileID: -623603649343465320, guid: ac1796e4fed7e46a1a849aefcf713b3e, type: 3}
     loop: 1
     seconds: 0.4
     speedMps: 3.01
@@ -449,7 +449,7 @@ MonoBehaviour:
     events: foot_l=0;foot_r=6
     stanceFrames: 8
   - name: AP009_player_weapon_lower
-    clip: {fileID: -623603649343465320, guid: 34463520626d342258e558c34a165a17, type: 3}
+    clip: {fileID: -623603649343465320, guid: 02cc21757f65e4f41af47f490eec8f95, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -460,7 +460,7 @@ MonoBehaviour:
     events: lowered=13
     stanceFrames: 0
   - name: AP009_player_weapon_raise
-    clip: {fileID: -623603649343465320, guid: cc5a8bb91538041b1aa7b34c1b25cfd9, type: 3}
+    clip: {fileID: -623603649343465320, guid: d620b8d885cf543eb87ad9eec1758754, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -470,5 +470,5 @@ MonoBehaviour:
     frames: 14
     events: raised=13
     stanceFrames: 0
-  _manifestSchema: AP009.clips-manifest.v005b
+  _manifestSchema: AP009.clips-manifest.v006
   _locomotionReferenceSpeed: 6.2
