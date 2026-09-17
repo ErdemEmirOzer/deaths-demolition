@@ -25,8 +25,8 @@ MonoBehaviour:
     - {fileID: 9106013116827018600, guid: c7673999339704e148bd8ac641f69c6a, type: 3}
     - {fileID: 4783995307923534670, guid: c7673999339704e148bd8ac641f69c6a, type: 3}
     - {fileID: -7331926105172707340, guid: c7673999339704e148bd8ac641f69c6a, type: 3}
-    pickupTriangles: cb040000dd020000dd020000
-    handTriangles: e8060000e7020000a7020000
+    pickupTriangles: cb0400005a0100006f000000
+    handTriangles: e80600006401000071000000
   - id: 1
     pickupLods:
     - {fileID: -9195562310179135791, guid: 54aaab822f2284a26b85c6a20a8daf4e, type: 3}

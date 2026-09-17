@@ -58,6 +58,9 @@ namespace DD.Prototype.Weapons
         /// <summary>Pull ticks applied since the last <see cref="CloseAll"/>. Test hook.</summary>
         public static int TotalPullTicks { get; private set; }
 
+        /// <summary>WP-056: pull ticks of this well (the FieldEnded count).</summary>
+        private int _pullsThisWell;
+
         /// <summary>The pooled template, built from primitives like every other visual here.</summary>
         public static TideWell CreateTemplate()
         {
@@ -92,6 +95,10 @@ namespace DD.Prototype.Weapons
             AttachVortex();
 
             AudioEvents.RaiseLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, transform.position, 0.5f, 55);
+            _pullsThisWell = 0;
+            // WP-056: the well is the jewel's field (S-03 pull lean, S-07 sw_tide_well); Seconds = time to the implosion.
+            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.TideJewel, SpecialUsageKind.FieldSpawned,
+                SpecialWeaponUsage.For(SpecialWeaponId.TideJewel).FieldVfxFamily, transform.position, Vector3.up, _radius, _duration, 0);
         }
 
         /// <summary>Close every open well without imploding it. Run teardown and activation end.</summary>
@@ -201,6 +208,7 @@ namespace DD.Prototype.Weapons
                     }
 
                     TotalPullTicks++;
+                    _pullsThisWell++;
 
                     HitscanEngine.ApplyExternalHit(
                         target,
@@ -210,6 +218,9 @@ namespace DD.Prototype.Weapons
                         _pullForce,
                         DamageSourceKind.Explosion,
                         WeaponPower.Heavy);
+                    // WP-056 · targeted Hit for S-03 (pull lean toward the well): direction = inward, seconds = time left to the implosion.
+                    SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.TideJewel, SpecialWeaponUsage.For(SpecialWeaponId.TideJewel).FieldVfxFamily,
+                        target, point, inward.normalized, _pullForce, 1f, Mathf.Max(0f, _remaining));
                 }
             }
         }
@@ -226,6 +237,8 @@ namespace DD.Prototype.Weapons
             // split, the explosion feedback, the camera rumble and the hit stop, and none
             // of that should be re-implemented by a weapon.
             HitscanEngine.Explode(centre, _implosionDamage, _radius);
+            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.TideJewel, SpecialUsageKind.FieldEnded,
+                SpecialWeaponUsage.For(SpecialWeaponId.TideJewel).FieldVfxFamily, centre, Vector3.up, _radius, 0f, _pullsThisWell);
 
             Despawn();
         }

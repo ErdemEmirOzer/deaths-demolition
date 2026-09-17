@@ -84,6 +84,36 @@ namespace DD.Prototype.Weapons
         /// <summary>The Kagura Bell's fronts in flight. F1 readout and test hook.</summary>
         public KaguraWaveField Waves => _waves;
 
+        /// <summary>WP-056: the reach of one primary event — wave radius (bell), dart range (loom), throw range (jewel).</summary>
+        public float FireRadius
+        {
+            get
+            {
+                if (_settings == null) return 0f;
+                switch (Id)
+                {
+                    case SpecialWeaponId.OfudaLoom: return Mathf.Max(1f, _settings.OfudaLoom.Common.Range);
+                    case SpecialWeaponId.TideJewel: return Mathf.Max(1f, _settings.TideJewel.ThrowRange);
+                    default: return Mathf.Max(1f, _settings.KaguraBell.WaveRadius);
+                }
+            }
+        }
+
+        /// <summary>WP-056: the duration one primary event's field lasts — wave travel (bell), seal seconds (loom), well seconds (jewel).</summary>
+        public float FireSeconds
+        {
+            get
+            {
+                if (_settings == null) return 0f;
+                switch (Id)
+                {
+                    case SpecialWeaponId.OfudaLoom: return Mathf.Max(0.2f, _settings.OfudaLoom.SealSeconds);
+                    case SpecialWeaponId.TideJewel: return Mathf.Max(0.2f, _settings.TideJewel.WellSeconds);
+                    default: return Mathf.Max(0.05f, _settings.KaguraBell.WaveTravelSeconds);
+                }
+            }
+        }
+
         /// <summary>The Ofuda Loom's live web. F1 readout and test hook.</summary>
         public OfudaSealWeb Web => _web;
 

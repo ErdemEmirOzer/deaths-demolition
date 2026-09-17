@@ -127,6 +127,12 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.None, "Effective reach in metres.", true)]
         public float Range = 30f;
 
+        [PrototypeOnly(PendingDecisions.None, "WP-056: gamepad pulse per primary event as a fraction of the WP-024 rumble ceiling (bell 1.0 low ring, loom 0.4 dart, jewel 0.7 throw). Invented.", true)]
+        public float RumbleFraction = 0.7f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-056: gamepad pulse length per primary event, ms (≤ 120).", true)]
+        public int RumbleMilliseconds = 80;
+
         [PrototypeOnly(PendingDecisions.SpecialWeapon,
             "Relative chance this weapon is the one that drops. Equal weights = uniform.", true)]
         public float SpawnWeight = 1f;
@@ -145,6 +151,7 @@ namespace DD.Prototype.Core.Config
         public SpecialWeaponCommon Common = new SpecialWeaponCommon
         {
             DisplayName = "Kagura Bell",
+            RumbleFraction = 1f, RumbleMilliseconds = 120,
             Damage = 26f,
             FireRate = 2.4f,
 
@@ -184,6 +191,7 @@ namespace DD.Prototype.Core.Config
         public SpecialWeaponCommon Common = new SpecialWeaponCommon
         {
             DisplayName = "Ofuda Loom",
+            RumbleFraction = 0.4f, RumbleMilliseconds = 50,
             Damage = 9f,
             FireRate = 5f,
 
@@ -238,6 +246,7 @@ namespace DD.Prototype.Core.Config
         public SpecialWeaponCommon Common = new SpecialWeaponCommon
         {
             DisplayName = "Tide Jewel",
+            RumbleFraction = 0.7f, RumbleMilliseconds = 90,
             Damage = 6f,
             FireRate = 1.1f,
 

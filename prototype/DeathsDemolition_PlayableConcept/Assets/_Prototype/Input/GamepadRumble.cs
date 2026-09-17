@@ -29,6 +29,11 @@ namespace DD.Prototype.Inputs
         public float WeaponFireFraction { get; private set; } = FireFraction;
         public int WeaponFireMilliseconds { get; private set; } = FireMilliseconds;
 
+        /// <summary>WP-056: the active Special Weapon's pulse (SpecialWeaponCommon.RumbleFraction / RumbleMilliseconds), cached when the Special snapshot turns Active.</summary>
+        public float SpecialFireFraction { get; private set; } = HeavyFireFraction;
+        public int SpecialFireMilliseconds { get; private set; } = HeavyFireMilliseconds;
+        private SpecialWeaponId _specialProfileId = (SpecialWeaponId)(-1);
+
         [PrototypeOnly(PendingDecisions.None, "Heavy (Special) weapon shot pulse: 0.7 x ceiling, 80 ms.", true)]
         public const float HeavyFireFraction = 0.7f;
         public const int HeavyFireMilliseconds = 80;
@@ -64,7 +69,35 @@ namespace DD.Prototype.Inputs
             AudioEvents.Cue += OnCue;
             DamageEvents.PlayerAttacked += OnPlayerAttacked;
             WeaponEvents.WeaponEquipped += OnWeaponEquipped;
+            WeaponEvents.SpecialChanged += OnSpecialChanged;
             _subscribed = true;
+        }
+
+        /// <summary>WP-056: the Special snapshot left the Active phase → back to the WP-024 default pulse.</summary>
+        private void OnSpecialChanged(SpecialWeaponHudState state)
+        {
+            if (state.Phase != SpecialWeaponPhase.Active)
+            {
+                _specialProfileId = (SpecialWeaponId)(-1);
+                SpecialFireFraction = HeavyFireFraction;
+                SpecialFireMilliseconds = HeavyFireMilliseconds;
+            }
+        }
+
+        /// <summary>
+        /// WP-056: the active Special's pulse, resolved from the snapshot's weapon id on the first heavy fire
+        /// cue of an activation (one config lookup per activation; the activation itself does not notify —
+        /// the pickup path owns that single notify, WP-007).
+        /// </summary>
+        private void EnsureSpecialProfile()
+        {
+            SpecialWeaponHudState state = WeaponEvents.Special;
+            if (state.Phase != SpecialWeaponPhase.Active || _specialProfileId == state.WeaponId) return;
+            _specialProfileId = state.WeaponId;
+            PrototypeConfig config = PrototypeConfig.Active;
+            SpecialWeaponCommon common = config != null ? config.Weapons.Special.Common(state.WeaponId) : null;
+            SpecialFireFraction = common != null ? Mathf.Clamp01(common.RumbleFraction) : HeavyFireFraction;
+            SpecialFireMilliseconds = common != null ? Mathf.Clamp(common.RumbleMilliseconds, 0, InputPreferences.MaxRumbleMilliseconds) : HeavyFireMilliseconds;
         }
 
         /// <summary>WP-042: cache the equipped weapon's pulse profile (equip is not a hot path; the fire cue reads two fields).</summary>
@@ -93,6 +126,7 @@ namespace DD.Prototype.Inputs
             AudioEvents.Cue -= OnCue;
             DamageEvents.PlayerAttacked -= OnPlayerAttacked;
             WeaponEvents.WeaponEquipped -= OnWeaponEquipped;
+            WeaponEvents.SpecialChanged -= OnSpecialChanged;
             _subscribed = false;
             StopMotors();
         }
@@ -195,7 +229,8 @@ namespace DD.Prototype.Inputs
                     Pulse(WeaponFireFraction, WeaponFireMilliseconds);
                     break;
                 case CombatAudioEvent.HeavyWeaponFire:
-                    Pulse(HeavyFireFraction, HeavyFireMilliseconds);
+                    EnsureSpecialProfile();
+                    Pulse(SpecialFireFraction, SpecialFireMilliseconds);
                     break;
                 case CombatAudioEvent.Explosion:
                     Pulse(ExplosionFraction, ExplosionMilliseconds);

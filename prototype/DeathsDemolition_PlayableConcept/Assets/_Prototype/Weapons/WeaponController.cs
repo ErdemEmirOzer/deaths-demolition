@@ -289,6 +289,9 @@ namespace DD.Prototype.Weapons
 
             SetRigVisibility();
             PublishClassicState(true);
+            // WP-056: the usage bus — Activated carries the active seconds (S-03/S-07/S-08 consumers).
+            SpecialWeaponUsageEvents.Publish(id, SpecialUsageKind.Activated, SpecialWeaponUsage.For(id).FireVfxFamily,
+                transform.position, transform.forward, 0f, _special.Duration, 0);
         }
 
         /// <summary>End the Special Weapon early, as if its timer had run out. Debug panel and tests.</summary>
@@ -598,6 +601,10 @@ namespace DD.Prototype.Weapons
 
             AudioEvents.Raise(CombatAudioEvent.HeavyWeaponFire, origin, 1f, 60);
 
+            // WP-056: Fired — the bell's ring radius / travel, the dart's range, the jewel's throw range.
+            SpecialWeaponUsageEvents.Publish(_special.Id, SpecialUsageKind.Fired, SpecialWeaponUsage.For(_special.Id).FireVfxFamily,
+                eventOrigin, aim, _special.FireRadius, _special.FireSeconds, 0);
+
             _special.ConsumeShot();
         }
 
@@ -606,6 +613,8 @@ namespace DD.Prototype.Weapons
             // REQ-057: the classic weapon comes back automatically, with the magazine it
             // had when it was parked.
             _pickupDonePending = false;
+            SpecialWeaponUsageEvents.Publish(_special.Id, SpecialUsageKind.Deactivated, SpecialWeaponUsage.For(_special.Id).FireVfxFamily,
+                transform.position, transform.forward, 0f, 0f, 0);
             SetRigVisibility();
             PublishClassicState(true);
             PublishSpecialState(true);

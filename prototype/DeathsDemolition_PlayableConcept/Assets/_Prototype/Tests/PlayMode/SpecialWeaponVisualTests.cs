@@ -57,8 +57,10 @@ namespace DD.Prototype.Tests.PlayMode
 
             _s.PickupaGit(pickup);
             yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "Special aktif olmadı.");
+            // WP-042C / WP-032C: the hand model shows at the grab clip's pickup_done (0.73 s) or the 0.8 s fallback.
+            yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.PickupDonePending, 1.5f, "pickup_done / yedek");
             yield return null;
-            Assert.IsTrue(_s.Controller.SpecialRigVisible, "Aktifken special rig görünür olmalı.");
+            Assert.IsTrue(_s.Controller.SpecialRigVisible, "Aktifken special rig görünür olmalı (pickup_done / 0,8 s yedek sonrası).");
             Assert.AreEqual(authoredExpected, _s.Controller.SpecialRigHasAuthoredModel, id + ": el modeli kütüphaneyle uyumsuz.");
 
             Time.captureDeltaTime = 0.05f;

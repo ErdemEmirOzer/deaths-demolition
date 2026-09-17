@@ -10,8 +10,8 @@ namespace DD.Prototype.Tests.EditMode
     /// WP-037 · AP-014 Special Weapon asset gate (Import Contract v1, rigid mesh): the
     /// library is built, both authored weapons carry pickup + hand LOD0–2 meshes, LOD0 is
     /// inside the AP-014 budget (pickup 1 500 / hand 3 000), the atlas material carries
-    /// the three maps, textures are 1K, the four use sheets are bound. LOD1/2 budget
-    /// overages are logged (AP-014 manifest "ok": false — P-05 item), not enforced.
+    /// the three maps, textures are 1K, the four use sheets are bound. LOD0–2 budgets are
+    /// enforced (AP-014B v002 brought LOD1/2 inside them; WP-056).
     /// </summary>
     [TestFixture]
     [Category("WP037")]
@@ -60,15 +60,13 @@ namespace DD.Prototype.Tests.EditMode
             Assert.LessOrEqual(e.pickupTriangles[2], e.pickupTriangles[0], "LOD2 LOD0'dan ağır olamaz.");
             Assert.LessOrEqual(e.handTriangles[2], e.handTriangles[0]);
 
+            // WP-056 (AP-014B v002): the LOD1/2 budgets are met (kagura 510/147, ofuda 322/200 · 322/300) — enforced from here on.
             int[] pickupBudget = { 1500, 600, 200 };
             int[] handBudget = { 3000, 1000, 300 };
             for (int lod = 1; lod < 3; lod++)
             {
-                if (e.pickupTriangles[lod] > pickupBudget[lod] || e.handTriangles[lod] > handBudget[lod])
-                {
-                    Debug.Log("[DD-OBS] wp037.ap014 " + id + " LOD" + lod + " tris pickup=" + e.pickupTriangles[lod] + "/" + pickupBudget[lod] +
-                              " hand=" + e.handTriangles[lod] + "/" + handBudget[lod] + " — AP-014 manifest budgets.ok=false (P-05 kalemi)");
-                }
+                Assert.LessOrEqual(e.pickupTriangles[lod], pickupBudget[lod], id + " pickup LOD" + lod + " " + e.pickupTriangles[lod] + " tri > " + pickupBudget[lod] + " (AP-014B bütçesi).");
+                Assert.LessOrEqual(e.handTriangles[lod], handBudget[lod], id + " hand LOD" + lod + " " + e.handTriangles[lod] + " tri > " + handBudget[lod] + " (AP-014B bütçesi).");
             }
 
             // Rigid meshes: no bind poses (Import Contract v1 for props).

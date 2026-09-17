@@ -73,7 +73,7 @@ its first argument (the pending decision) and its third argument (`invented`).
 
 | Module | Declarations | Invented | Where the invented ones live |
 |---|---|---|---|
-| `Core` | 184 | 84 | `EnemyConfigSection` 17 · `FeedbackConfigSection` 17 · `WeaponConfigSection` 19 (WP-042 +6 feel knobs) · `RoundConfigSection` 12 · `EconomyConfigSection` 9 · `PlayerConfigSection` 7 · `ProgressionConfigSection` 3 |
+| `Core` | 186 | 86 | `EnemyConfigSection` 17 · `FeedbackConfigSection` 17 · `WeaponConfigSection` 21 (WP-042 +6 feel knobs, WP-056 +2 Special rumble) · `RoundConfigSection` 12 · `EconomyConfigSection` 9 · `PlayerConfigSection` 7 · `ProgressionConfigSection` 3 |
 | `Player` | 41 | 41 | `PlayerProceduralAnimator` 17 · `PlayerUpgradeTuning` 8 · `PlayerMotor` 5 · `PlayerRigFactory` 5 · `PlayerDamageFeedback` 4 · `PlayerAim` 2 |
 | `Weapons` | 36 | 36 | `WeaponUpgradeTuning` 21 · `WeaponVisualRig` 7 · `WeaponController` 7 (WP-042 +1: damage-ray height 1.39 m) · `SpecialWeaponDirector` 1 |
 | `Feedback` | 18 | 18 | `HitFeedbackDirector` 18 |
@@ -321,7 +321,7 @@ Listed per file, because the file is what a reviewer has to open. Counts are exa
 |---|---|---|
 | `EnemyConfigSection.cs` | 17 | five armour spawn probabilities (per-slot chance, growth per round, ceiling); three tier spawn weight fields (weight, growth, maximum); Runner / Guard / Executioner move speeds and attack damage; attack active, recovery, range and cooldown for every tier; body radius; separation mass; stagger susceptibility; explosion blast radius and falloff exponent |
 | `FeedbackConfigSection.cs` | 17 | all hit-stop durations and the minimum interval between them, every simultaneous-effect ceiling, shake amplitude cap and decay, damage vignette time, stagger cooldown and maximum duration, audio voice budget |
-| `WeaponConfigSection.cs` | 19 | spread cone angles, spread bloom per shot / maximum / decay, recoil kick, per-weapon camera shake, stagger impulse, effective range, Special Weapon pierce count and spread, Special Weapon chance growth per round, final-seconds warning length; WP-042 weapon feel v1 (game-designer outline, in-band): recoil recovery seconds, recoil up-share, gamepad pulse fraction / ms per weapon (under the WP-024 0.3 × 120 ms ceiling), shotgun pellet ring radius / jitter shares |
+| `WeaponConfigSection.cs` | 21 | spread cone angles, spread bloom per shot / maximum / decay, recoil kick, per-weapon camera shake, stagger impulse, effective range, Special Weapon pierce count and spread, Special Weapon chance growth per round, final-seconds warning length; WP-042 weapon feel v1 (game-designer outline, in-band): recoil recovery seconds, recoil up-share, gamepad pulse fraction / ms per weapon (under the WP-024 0.3 × 120 ms ceiling), shotgun pellet ring radius / jitter shares; WP-056 Special Weapon rumble fraction / ms per weapon (bell 1.0/120, loom 0.4/50, jewel 0.7/90) |
 | `RoundConfigSection.cs` | 12 | max spawns per refill tick, max useful spawn distance, spawn scatter, and the remaining spawn safety geometry the request does not fix |
 | `EconomyConfigSection.cs` | 9 | magnet speed and acceleration, orb lifetime, contact pickup radius, orb ceiling, and — per branch — cost growth per tier, max tier, effect per tier, offer weight |
 | `PlayerConfigSection.cs` | 7 | collision capsule radius and height, aim plane height, motor smoothing and the remaining rig geometry |

@@ -96,6 +96,10 @@ namespace DD.Prototype.Weapons
             // sounding like a rattle.
             HitFeedbackDirector.Instance.ReportShockRing(origin, wave.Radius, wave.TravelSeconds);
 
+            // WP-056: the usage bus (S-03 stumble at the front, S-07 sw_kagura_field sheet, S-08).
+            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.KaguraBell, SpecialUsageKind.FieldSpawned,
+                SpecialWeaponUsage.For(SpecialWeaponId.KaguraBell).FieldVfxFamily, origin, Vector3.up, wave.Radius, wave.TravelSeconds, 0);
+
             RecountActive();
             return true;
         }
@@ -125,6 +129,8 @@ namespace DD.Prototype.Weapons
                 if (wave.Elapsed >= wave.TravelSeconds)
                 {
                     wave.Active = false;
+                    SpecialWeaponUsageEvents.Publish(SpecialWeaponId.KaguraBell, SpecialUsageKind.FieldEnded,
+                        SpecialWeaponUsage.For(SpecialWeaponId.KaguraBell).FieldVfxFamily, wave.Origin, Vector3.up, wave.Radius, wave.TravelSeconds, wave.Crossed.Count);
                     wave.Crossed.Clear();
                 }
             }
@@ -222,6 +228,9 @@ namespace DD.Prototype.Weapons
                         wave.ImpactForce,
                         DamageSourceKind.Explosion,
                         WeaponPower.Heavy);
+                    // WP-056 · targeted Hit for S-03 (stumble at the front): force on the DamageForce scale, falloff at this distance.
+                    SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.KaguraBell, SpecialWeaponUsage.For(SpecialWeaponId.KaguraBell).FieldVfxFamily,
+                        target, centre, direction, wave.ImpactForce, falloff, wave.TravelSeconds - wave.Elapsed);
                 }
             }
         }

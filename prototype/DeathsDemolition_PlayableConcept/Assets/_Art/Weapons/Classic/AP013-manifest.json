@@ -1,5 +1,5 @@
 {
- "schema": "AP013.manifest.v001",
+ "schema": "AP013.manifest.v002",
  "package": "AP-013",
  "date": "2026-09-17",
  "owner": "P-06",
@@ -12,7 +12,7 @@
    "silhouette_class": "Long",
    "length_m": 1.2,
    "fbx": "AP013_A_rifle_base.fbx",
-   "fbx_sha256_16": "bf1d30e43371af51",
+   "fbx_sha256_16": "1a2ff4c91fce6d50",
    "glb_review": "glb/AP013_A_rifle_review.glb",
    "objects": [
     "A.attach_barrel",
@@ -95,7 +95,7 @@
     "grip_to_muzzle_ratio": 0.716,
     "L_T_render": 14.0,
     "L_T_concept": 15.3,
-    "render_mean_v": 0.365
+    "render_mean_v": 0.366
    },
    "material": "M_AP013_weapons (shared)",
    "atlas_rect_px": [
@@ -137,6 +137,9 @@
       0.511
      ]
     }
+   },
+   "v002": {
+    "serpentine": "S5 deferred: the Tripo A already carries a serpentine + pan (see WEAPONS['A']['serpentine'] note)"
    }
   },
   "B": {
@@ -145,7 +148,7 @@
    "silhouette_class": "Medium",
    "length_m": 0.85,
    "fbx": "AP013_B_carbine_base.fbx",
-   "fbx_sha256_16": "211e78b04af25025",
+   "fbx_sha256_16": "96188e3fb5b89b8e",
    "glb_review": "glb/AP013_B_carbine_review.glb",
    "objects": [
     "AP013_B_carbine_LOD0",
@@ -178,7 +181,7 @@
     ],
     "attach_stock": [
      0.0,
-     0.03,
+     0.01,
      -0.22
     ],
     "attach_top": [
@@ -228,7 +231,7 @@
     "grip_to_muzzle_ratio": 0.658,
     "L_T_render": 10.0,
     "L_T_concept": 9.3,
-    "render_mean_v": 0.363
+    "render_mean_v": 0.366
    },
    "material": "M_AP013_weapons (shared)",
    "atlas_rect_px": [
@@ -270,6 +273,21 @@
       0.498
      ]
     }
+   },
+   "v002": {
+    "stock_drop": {
+     "deg": 8.0,
+     "pivot": [
+      0.06,
+      -0.02
+     ],
+     "verts": 4075,
+     "attach_stock": [
+      0.0,
+      0.01,
+      -0.22
+     ]
+    }
    }
   },
   "C": {
@@ -278,7 +296,7 @@
    "silhouette_class": "Short-thick",
    "length_m": 0.78,
    "fbx": "AP013_C_shotgun_base.fbx",
-   "fbx_sha256_16": "e601283555c5a112",
+   "fbx_sha256_16": "27d6d4f541af2d89",
    "glb_review": "glb/AP013_C_shotgun_review.glb",
    "objects": [
     "AP013_C_shotgun_LOD0",
@@ -359,9 +377,9 @@
    },
    "measure": {
     "grip_to_muzzle_ratio": 0.665,
-    "L_T_render": 7.5,
+    "L_T_render": 6.9,
     "L_T_concept": 6.4,
-    "render_mean_v": 0.374,
+    "render_mean_v": 0.37,
     "bell_over_barrel": 0.94,
     "bell_over_barrel_concept": 1.13
    },
@@ -411,6 +429,24 @@
     "rim_r_after": 0.0749,
     "factor": 1.0,
     "verts": 608
+   },
+   "v002": {
+    "cluster": {
+     "y_bottom": -0.0116,
+     "ky": 1.32,
+     "kx": 1.12,
+     "verts": 5809,
+     "note": "bore centre rises ~ (axis_y - y_bottom) * (ky - 1) above the contract Muzzle socket (flash origin) \u2014 accepted at gameplay scale"
+    },
+    "bell": {
+     "rim_r_before": 0.0836,
+     "rim_r_after": 0.0836,
+     "factor": 1.0,
+     "verts": 490,
+     "axis_y_used": 0.1108
+    },
+    "tube_band_px": 7011,
+    "shell_port_px": 755
    }
   }
  },
@@ -497,5 +533,16 @@
    "S5 A serpentine",
    "S6 C tube + port"
   ]
+ },
+ "v002_changes": {
+  "package": "AP-013B (AD verdict SHOULD S1-S6, credits 0)",
+  "S1_C_cluster": "barrel + tube cluster forward of the receiver thickened about its UNDERSIDE (height x1.32, width x1.12, ramp z 0.06-0.13): the hand / marker_foregrip contact is unchanged (AP-009 W1 PASS), L:T 7.5 -> 6.9 (concept 6.4; the AD's <= 6.5 would need the receiver / stock taller, not the cluster); the bore centre sits ~2.6 cm above the contract Muzzle socket (flash origin) \u2014 accepted at gameplay scale",
+  "S2_dilation": "atlas islands dilated 16 px (>= 8) on BaseColor / Normal / MRA after the class grading; metallic snapped back to {0, 0.9}, normals re-normalised \u2014 no gutter bleed in the 64 px mip",
+  "S3_B_stock": "stock dropped 8 deg below the barrel line (pivot axis_y / z -0.02, 6 cm ramp); attach_stock (0, 0.03, -0.22) -> (0, 0.01, -0.22) (AD tolerance +-2 cm) \u2014 S-02 WeaponSocket table row B",
+  "S4_cord_normal": "2 px box blur of the normal map on the cord-class texels (77.7 k px), re-normalised",
+  "S5_A_serpentine": "DEFERRED \u2014 the Tripo A already carries a serpentine + pan; a clean S-arm at x 0.03-0.05 lands inside the receiver (lock plate x ~0.065) and a second arm outside would double the mechanism; needs the Tripo lever removed first (UI close-up only)",
+  "S6_C_port": "+X shell port = 3 x 5 cm dark rectangle (albedo x0.35, roughness >= 0.70, 1-texel lighter rim + tangent tilt) on the LOD0 faces at Ejection (0.035, 0.06, 0.02); tube magazine side faces below the barrel axis darkened x0.80 (7.1 k px)",
+  "unchanged": "lengths, frame, socket names, LOD budgets (A 2940 / B 2940 / C 2940 at LOD0), atlas layout; AP-009 v005 weapon checks W1-W3 PASS against the v002 meshes (AP009C-check-v005-ap013v002.json)",
+  "previous": "exports/v001-pre-ap013b/ (FBX, GLB, textures, manifest v001), 05-blender/source/weapons-master-v001.blend, validation/AP013-build-v001.json / AP013-measure-v001.json, 06-renders/v001/"
  }
 }

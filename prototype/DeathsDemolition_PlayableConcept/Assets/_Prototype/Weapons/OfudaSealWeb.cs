@@ -120,6 +120,12 @@ namespace DD.Prototype.Weapons
             };
 
             _seals.Add(seal);
+            // WP-056 · targeted Hit for S-03 (sealed pose on THIS body): no force, seconds = the seal's life.
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.OfudaLoom, SpecialWeaponUsage.For(SpecialWeaponId.OfudaLoom).FieldVfxFamily,
+                target, HitscanEngine.CentreOf(target), Vector3.up, 0f, 1f, seconds);
+            // WP-056: a seal is the loom's field (S-03 sealed pose, S-07 sw_ofuda_web); Count = seals on bodies now.
+            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.OfudaLoom, SpecialUsageKind.FieldSpawned,
+                SpecialWeaponUsage.For(SpecialWeaponId.OfudaLoom).FieldVfxFamily, HitscanEngine.CentreOf(target), Vector3.up, 0f, seconds, _seals.Count);
             return true;
         }
 
@@ -207,8 +213,11 @@ namespace DD.Prototype.Weapons
                 }
             }
 
+            Vector3 collapseCentre = _points.Count > 0 ? _points[0] : (_seals.Count > 0 ? HitscanEngine.CentreOf(_seals[0].Target) : Vector3.zero);
             _seals.Clear();
             CollapseCount++;
+            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.OfudaLoom, SpecialUsageKind.FieldEnded,
+                SpecialWeaponUsage.For(SpecialWeaponId.OfudaLoom).FieldVfxFamily, collapseCentre, Vector3.up, 0f, 0f, hit);
 
             if (hit > 0)
             {
@@ -238,6 +247,13 @@ namespace DD.Prototype.Weapons
                 {
                     ReleaseGlyph(seal);
                     _seals.RemoveAt(i);
+                    if (_seals.Count == 0)
+                    {
+                        // The web is gone without a collapse (expiry / bodies died): the field ended with 0 spent.
+                        SpecialWeaponUsageEvents.Publish(SpecialWeaponId.OfudaLoom, SpecialUsageKind.FieldEnded,
+                            SpecialWeaponUsage.For(SpecialWeaponId.OfudaLoom).FieldVfxFamily, seal.Target.IsValid ? HitscanEngine.CentreOf(seal.Target) : Vector3.zero, Vector3.up, 0f, 0f, 0);
+                    }
+
                     continue;
                 }
 
