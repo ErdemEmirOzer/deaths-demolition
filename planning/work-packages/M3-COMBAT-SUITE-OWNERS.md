@@ -33,3 +33,16 @@ Toplam: EditMode 224 → 222 + 2 düzeltildi; PlayMode 109 → 107 + 1 düzeltil
 | P8 (S-10) | `VurusYolu_SifirAyirma` aralıklı | Bu koşuda yeşil (idle 12 / core ≤ 24); aralıklılık kaynağı: kirli pencere + targetFrameRate kısıtı (F3) | S-10 kapanış hakem yöntemiyle yan yana okur |
 
 Kapanış notu: main'de combat süitlerinde bilinen açık kırmızı yalnız F3 (S-07, ölçüm yöntemi). Kullanıcı 16.09 son revizyon listesi (silahlar / Special / tier saldırıları) ayrı; buradaki sayılar PrototypeOnly.
+
+## 3 · K1 boş-kare GC bisect (WP-053C, S-10 kapanış FAIL: 372 B → 14,2 KB/kare, gen0 2–3 → 53/60 s)
+
+`AllocationProbeTests` (kit sahnesi: spawner durmuş, 4 zombi; byte tabanlı tip taraması + oyuncu kökü taraması eklendi) dört noktada tek koşu — `wp-059c/evidence/probe-<sha>.log`:
+
+| Nokta | idle0 | idle4 | 40 vuruş karesi | ağır pencere | sonrası (3 s) |
+|---|---|---|---|---|---|
+| 5e417fc WP-055 | 3 / 122 B | 10 / 635 B | 39 / 1,6 KB | 109 / 27,9 KB | 11–13 / 0,74–0,78 KB |
+| ced21c1 WP-059 | 3 / 122 B | 11 / 643 B | 39 / 1,6 KB | 111 / 28,0 KB | 10–15 / 0,71–0,83 KB |
+| 92a6e72 WP-047E | 3 / 122 B | 11 / 643 B | 40 / 1,7 KB | 117 / 31,8 KB | 11–13 / 0,74–0,78 KB |
+| 52580a7 WP-052C | 5 / 178 B | 13 / 715 B | 42 / 1,8 KB | 121 / 31,9 KB | 15 / 0,83 KB |
+
+Sonuç: combat çekirdeği, oyuncu rig'i (17 Behaviour tipi), zombi tipleri ve sahne tipleri (61) dört noktada da boş karede ≤ 0,9 KB — 14 KB/kare fırtınası burada değil; tip taraması hiçbir tipte > 2 KB tasarruf göstermedi. Fırtına spawner açık koşuya bağlı sistemlerde (round/spawn/ölüm akışı, HUD, telemetri, VFX dressing, müzik/ses yönetimi) → S-10 perf-1 penceresinde `PilotPerfProbe`'un tip taramasıyla (probe (e) kalıbı, spawner açık) tek koşu; S-02 dosyalarında düzeltilecek bir şey yok.
