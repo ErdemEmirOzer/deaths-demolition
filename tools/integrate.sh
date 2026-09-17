@@ -19,17 +19,18 @@
 set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
-SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0
+SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0; VERBOSE=0
+say() { [ "$VERBOSE" -eq 1 ] && echo "$@"; return 0; }   # informational lines only with --verbose (HIZLI HAT §7: 3-line output)
 while [ $# -gt 0 ]; do
   case "$1" in
     --tag) TAG="$2"; shift ;; --apply) APPLY=1 ;; --allow-paths) ALLOW="$2"; shift ;; --s01) S01=1 ;;
-    --message) MSG="$2"; shift ;; --repo) DD_REPO="$2"; shift ;; --no-post) NOPOST=1 ;;
+    --message) MSG="$2"; shift ;; --repo) DD_REPO="$2"; shift ;; --no-post) NOPOST=1 ;; --verbose|-v) VERBOSE=1 ;;
     -*) echo "unknown option: $1" >&2; exit 64 ;;
     *) [ -z "$SRC" ] && SRC="$1" || { echo "one source only" >&2; exit 64; } ;;
   esac
   shift
 done
-[ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post]" >&2; exit 64; }
+[ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post] [--verbose]" >&2; exit 64; }
 G=(git -C "$DD_REPO")
 fail() { echo "GATE FAIL: $*"; FAILS=$((FAILS+1)); }
 # Clean rollback of a failed --no-commit pick without git reset: every path the pick touched goes back
@@ -68,8 +69,8 @@ FAILS=0
 MAIN=$("${G[@]}" rev-parse main) || exit 64
 C=$("${G[@]}" rev-parse --verify "$SRC^{commit}" 2>/dev/null) || { echo "unknown commit/branch: $SRC" >&2; exit 64; }
 SUBJ=$("${G[@]}" log -1 --format=%s "$C")
-echo "integrate $( [ "$APPLY" -eq 1 ] && echo APPLY || echo DRY-RUN )  source=$SRC → $C  main=$MAIN"
-echo "subject: $SUBJ"
+echo "integrate $( [ "$APPLY" -eq 1 ] && echo APPLY || echo DRY-RUN ) $SRC → ${C:0:12} on main ${MAIN:0:12}: $SUBJ" | cut -c1-160
+say "subject: $SUBJ"
 
 # --- gate 1: single parent, not already on main
 NPAR=$("${G[@]}" rev-list --parents -n1 "$C" | wc -w | tr -d ' '); NPAR=$((NPAR-1))
@@ -77,20 +78,20 @@ NPAR=$("${G[@]}" rev-list --parents -n1 "$C" | wc -w | tr -d ' '); NPAR=$((NPAR-
 "${G[@]}" merge-base --is-ancestor "$C" "$MAIN" && fail "commit is already contained in main"
 PARENT=$("${G[@]}" rev-parse "$C^" 2>/dev/null || echo none)
 FF=0; [ "$PARENT" = "$MAIN" ] && FF=1
-echo "parent=$PARENT mode=$( [ "$FF" -eq 1 ] && echo ff-only || echo cherry-pick )"
+say "parent=$PARENT mode=$( [ "$FF" -eq 1 ] && echo ff-only || echo cherry-pick )"
 
 # --- gate 2: source worktree clean (if the source is a branch with a worktree)
 SRCWT=$("${G[@]}" worktree list --porcelain | awk -v b="refs/heads/$SRC" '/^worktree /{w=substr($0,10)} /^branch /{if($2==b)print w}')
 if [ -n "$SRCWT" ]; then
   D=$(git -C "$SRCWT" status --porcelain | wc -l | tr -d ' ')
-  [ "$D" = "0" ] && echo "source worktree clean: $SRCWT" || fail "source worktree dirty ($D paths): $SRCWT"
+  [ "$D" = "0" ] && say "source worktree clean: $SRCWT" || fail "source worktree dirty ($D paths): $SRCWT"
 fi
 
 # --- gate 3: path scope
 ALLOWED=("prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/" "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/" "prototype/DeathsDemolition_PlayableConcept/Assets/TextMesh Pro/" "prototype/DeathsDemolition_PlayableConcept/README.md" "prototype/DeathsDemolition_PlayableConcept/PROTOTYPE-ONLY.md" "planning/" "tools/")
 for extra in ${(s:,:)ALLOW}; do ALLOWED+=("$extra"); done
 FILES=("${(@f)$("${G[@]}" diff-tree --no-commit-id --name-only -r "$C")}")
-echo "changed paths: ${#FILES}"
+say "changed paths: ${#FILES}"
 for f in "${FILES[@]}"; do
   ok=0
   for a in "${ALLOWED[@]}"; do [[ "$f" == "$a"* ]] && ok=1; done
@@ -102,7 +103,7 @@ done
 # --- gate 4: secrets on added lines (false-positive words excluded)
 SECRET='AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,}|(api[_-]?key|secret[_-]?key|password|passwd|access[_-]?token)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{8,}'
 HITS=$("${G[@]}" diff "$C^" "$C" -- . ':!*.png' ':!*.fbx' ':!*.asset' 2>/dev/null | grep -E '^\+[^+]' | grep -Ei "$SECRET" | grep -Ev 'CancellationToken|CompletionToken|tokenizer|TokenVerdict|PlaceholderJson|EXAMPLE|example\.com' | head -5)
-if [ -n "$HITS" ]; then fail "secret-like content in added lines:"; echo "$HITS" | cut -c1-160; else echo "secret grep: clean"; fi
+if [ -n "$HITS" ]; then fail "secret-like content in added lines:"; echo "$HITS" | cut -c1-160; else say "secret grep: clean"; fi
 
 # --- gate 4b: DEC/REQ numbering after the source is applied (ProjectIntegrityTests rule: DEC = 1..N in file
 #     order, REQ strictly increasing; no number may already exist on main — WP-037B/WP-040 both took REQ-156)
@@ -139,7 +140,7 @@ if printf '%s\n' "${FILES[@]}" | grep -qE '^planning/0[01]-'; then
     done
   done
   rm -rf "$T0"
-  echo "DEC/REQ numbering: checked"
+  say "DEC/REQ numbering: checked"
 fi
 
 # --- gate 5: tag
@@ -149,15 +150,15 @@ fi
 
 # --- gate 6: main worktree clean
 MD=$("${G[@]}" status --porcelain | wc -l | tr -d ' ')
-[ "$MD" = "0" ] && echo "main worktree clean" || fail "main worktree dirty ($MD paths)"
+[ "$MD" = "0" ] && say "main worktree clean" || fail "main worktree dirty ($MD paths)"
 
 # --- gate 7: LFS
 LP=$("${G[@]}" lfs ls-files 2>/dev/null | wc -l | tr -d ' '); LO=$(find "$("${G[@]}" rev-parse --path-format=absolute --git-common-dir)/lfs/objects" -type f 2>/dev/null | wc -l | tr -d ' ')
-[ "$LO" -ge "$LP" ] && echo "lfs pointers=$LP objects=$LO" || fail "LFS objects ($LO) < pointers ($LP)"
+[ "$LO" -ge "$LP" ] && say "lfs pointers=$LP objects=$LO" || fail "LFS objects ($LO) < pointers ($LP)"
 
-if [ "$FAILS" -gt 0 ]; then echo "RESULT: gate failed ($FAILS)"; exit 3; fi
-echo "RESULT: gate passed"
-[ "$APPLY" -eq 1 ] || { echo "(dry-run; add --apply to integrate)"; exit 0; }
+if [ "$FAILS" -gt 0 ]; then echo "RESULT: gate failed ($FAILS) — see GATE FAIL lines above"; exit 3; fi
+echo "RESULT: gate passed ($( [ "$FF" -eq 1 ] && echo ff-only || echo cherry-pick ), ${#FILES} paths, lfs $LP/$LO)$( [ "$APPLY" -eq 1 ] || echo ' — dry-run, add --apply')"
+[ "$APPLY" -eq 1 ] || exit 0
 
 # ================================================================== apply
 if [ "$FF" -eq 1 ]; then
@@ -198,7 +199,7 @@ except ValueError:
 if '<<<<<<<' in out or '>>>>>>>' in out or '|||||||' in out: sys.exit(1)
 open(sys.argv[2], 'w', encoding='utf-8').write(out)
 PY
-        rm -f "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$" "/tmp/dd-int-merged.$$"; "${G[@]}" add "$f"; echo "resolved $f (git 3-way + both sides' insertions on each conflicting line)" ;;
+        rm -f "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$" "/tmp/dd-int-merged.$$"; "${G[@]}" add "$f"; say "resolved $f (git 3-way + both sides' insertions on each conflicting line)" ;;
       planning/04-IMPLEMENTATION-PLAN.md|planning/00-PROJECT-PLAN.md|planning/01-REQUIREMENTS.md)
         # 04: sections → HEAD block, blank line, THEIRS block. 00/01: table rows → HEAD rows then THEIRS rows
         # (the post-merge DEC/REQ numbering check below guarantees the result is still unique and ordered).
@@ -214,7 +215,7 @@ s2=pat.sub(rep,s)
 if n[0]==0 or '<<<<<<<' in s2 or '>>>>>>>' in s2: sys.exit(1)
 open(p,'w',encoding='utf-8').write(s2)
 PY
-        "${G[@]}" add "$f"; echo "resolved $f (HEAD block then THEIRS block)" ;;
+        "${G[@]}" add "$f"; say "resolved $f (HEAD block then THEIRS block)" ;;
       *) echo "CONFLICT in $f — not auto-resolvable; aborting (main unchanged)"; "${G[@]}" diff --name-only --diff-filter=U; abort_pick; exit 4 ;;
     esac
   done
@@ -228,7 +229,7 @@ PY
     S=$("${G[@]}" rev-parse -q --verify "$C:$f" 2>/dev/null || echo deleted); I=$("${G[@]}" rev-parse -q --verify ":$f" 2>/dev/null || echo deleted)
     [ "$S" = "$I" ] && continue
     A=$("${G[@]}" diff "$C^" "$C" -- "$f" | hunks); B=$("${G[@]}" diff --cached HEAD -- "$f" | hunks)
-    if [ "$A" = "$B" ]; then echo "verified by hunks (3-way merged): $f"; else echo "VERIFY FAIL: $f (blob $S vs $I; hunks differ)"; BAD=1; fi
+    if [ "$A" = "$B" ]; then say "verified by hunks (3-way merged): $f"; else echo "VERIFY FAIL: $f (blob $S vs $I; hunks differ)"; BAD=1; fi
   done
   [ "$BAD" -eq 0 ] || { abort_pick; exit 4; }
   # the merged planning tree must still number DEC/REQ uniquely and in order
@@ -242,6 +243,8 @@ NEW=$("${G[@]}" rev-parse main)
 "${G[@]}" tag -a "$TAG" -m "${MSG:-$SUBJ}" "$NEW"
 echo "integrated: main=$NEW ($( [ "$FF" -eq 1 ] && echo ff-only || echo cherry-pick )) tag=$TAG tags=$("${G[@]}" tag | wc -l | tr -d ' ')"
 if [ "$NOPOST" -eq 0 ] && [ -x "$DD_TOOLS_DIR/post-integrate.sh" ] && [ "$DD_REPO" = "${DD_TOOLS_DIR:h}" ]; then
-  DD_REPO="$DD_REPO" "$DD_TOOLS_DIR/post-integrate.sh" "$TAG" | tail -4 || { echo "post-integrate failed"; exit 5; }
+  PI=$(DD_REPO="$DD_REPO" "$DD_TOOLS_DIR/post-integrate.sh" "$TAG" 2>&1); PX=$?
+  if [ "$VERBOSE" -eq 1 ]; then echo "$PI" | tail -6; else echo "post-integrate: $(echo "$PI" | grep -E '^(backup exit=|lfs pointers|OK  report=|.*NOT VERIFIED|.*CHECK FAILED)' | tr '\n' ' ' | cut -c1-160)"; fi
+  [ "$PX" -eq 0 ] || { echo "post-integrate failed (exit $PX) — run with --verbose"; exit 5; }
 fi
 exit 0
