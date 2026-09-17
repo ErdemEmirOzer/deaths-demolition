@@ -212,7 +212,7 @@ namespace DD.Art.Tests.EditMode
         [TestCase("green_foliage_03", ArtImportContract.TextureClass.Foliage, 1024)]
         [TestCase("bamboo_culm", ArtImportContract.TextureClass.Foliage, 1024)]
         [TestCase("bark", ArtImportContract.TextureClass.Foliage, 1024)]
-        [TestCase("sky", ArtImportContract.TextureClass.Sky, 256)]
+        [TestCase("sky", ArtImportContract.TextureClass.Sky, 1024)]   // WP-038E (2): AP-019 band lat-long
         [TestCase("sw_atlas", ArtImportContract.TextureClass.Weapon, 1024)]
         [TestCase("weapons", ArtImportContract.TextureClass.Weapon, 1024)]
         public void DokuSinifi_RolTablosu_VeBoyut(string rol, ArtImportContract.TextureClass beklenen, int boyut)

@@ -47,6 +47,97 @@ namespace DD.Art.Pipeline.EditorTools
         public const string DecalShaderName = "Shader Graphs/Decal";
         public const string DecalFeatureTypeName = "UnityEngine.Rendering.Universal.DecalRendererFeature";
         public const string PuddleDecalsName = "PuddleDecals (AP-018)";
+
+        // ------------------------------------------------------------------ WP-038E (2) · AP-019 sky / horizon plates
+        public const string SkyRootName = "Sky (AP-019)";
+        public const string SkyPlateShaderName = "DD/SkyPlate";
+        public const string SkyMeshFolder = ArtImportContract.EnvironmentRoot + "/Sky/AP019";
+        /// <summary>
+        /// AP-019 placement contract (manifest files[]): cylinders centred on the map, base −1 m, unlit / fog-excluded, drawn
+        /// right after the skybox. The rings sit beyond the gameplay camera's 260 m far clip (PrototypeCameraRig, S-02): the
+        /// DD/SkyPlate vertex shader pins their depth just inside the far plane (skybox-style), so the contract radii are used as
+        /// delivered and nothing is clipped; a 0.55 scale (tried first) put the treeline 53 m from the 90 m presentation camera.
+        /// </summary>
+        public const float HorizonScale = 1.0f;
+        public static readonly (string layer, float radius, float height, int repeats, float azimuthOffset)[] HorizonLayers =
+        {
+            ("near", 260f, 51.1f, 8, 0f),
+            ("mid", 330f, 86.4f, 6, 15f),
+            ("far", 420f, 178.2f, 4, 22.5f)
+        };
+        public const float HorizonBaseY = -1f;
+        public const int HorizonSegmentsPerRepeat = 12;
+
+        /// <summary>Horizon materials (DD/SkyPlate, one per layer) — built with the surface materials.</summary>
+        public static string HorizonMaterialPath(string layer) { return ArtPipelinePaths.Materials + "/M_horizon_" + layer + ".mat"; }
+
+        /// <summary>
+        /// Three inward-facing cylinder strips around the map origin, u = repeats around 360° (offset per layer so seams never
+        /// stack), v = 0 at the base → 1 at the top. Meshes are saved under Environment/Sky/AP019 (regenerated, byte-stable).
+        /// </summary>
+        public static int BuildHorizonPlates(GameObject parent)
+        {
+            var root = new GameObject(SkyRootName);
+            root.transform.SetParent(parent.transform, false);
+            EnsureFolder(SkyMeshFolder);
+            int built = 0;
+            foreach ((string layer, float radius, float height, int repeats, float azimuthOffset) l in HorizonLayers)
+            {
+                Material material = AssetDatabase.LoadAssetAtPath<Material>(HorizonMaterialPath(l.layer));
+                if (material == null) throw new InvalidOperationException(LogPrefix + "build the surface materials first (" + HorizonMaterialPath(l.layer) + ")");
+                float r = l.radius * HorizonScale, h = l.height * HorizonScale, baseY = HorizonBaseY * HorizonScale;
+                int segments = l.repeats * HorizonSegmentsPerRepeat;
+                var verts = new Vector3[(segments + 1) * 2];
+                var uvs = new Vector2[verts.Length];
+                var tris = new int[segments * 6];
+                for (int i = 0; i <= segments; i++)
+                {
+                    float t = (float)i / segments;
+                    float ang = (l.azimuthOffset + t * 360f) * Mathf.Deg2Rad;
+                    float x = Mathf.Sin(ang) * r, z = Mathf.Cos(ang) * r;
+                    verts[i * 2] = new Vector3(x, baseY, z);
+                    verts[i * 2 + 1] = new Vector3(x, baseY + h, z);
+                    uvs[i * 2] = new Vector2(t * l.repeats, 0f);
+                    uvs[i * 2 + 1] = new Vector2(t * l.repeats, 1f);
+                }
+
+                for (int i = 0; i < segments; i++)
+                {
+                    int a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+                    // Wound to face the map centre (inside of the cylinder); the shader culls neither side.
+                    tris[i * 6] = a; tris[i * 6 + 1] = c; tris[i * 6 + 2] = b;
+                    tris[i * 6 + 3] = b; tris[i * 6 + 4] = c; tris[i * 6 + 5] = d;
+                }
+
+                string meshPath = SkyMeshFolder + "/SM_horizon_" + l.layer + ".asset";
+                var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+                bool created = mesh == null;
+                if (created) mesh = new Mesh();
+                mesh.name = "SM_horizon_" + l.layer;
+                mesh.Clear();
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt16;
+                mesh.vertices = verts; mesh.uv = uvs; mesh.triangles = tris;
+                mesh.RecalculateBounds();
+                mesh.UploadMeshData(false);
+                if (created) AssetDatabase.CreateAsset(mesh, meshPath); else EditorUtility.SetDirty(mesh);
+
+                var go = new GameObject("Horizon_" + l.layer);
+                go.transform.SetParent(root.transform, false);
+                go.layer = PrototypeLayers.Environment;
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = material;
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = false;
+                mr.lightProbeUsage = LightProbeUsage.Off;
+                mr.reflectionProbeUsage = ReflectionProbeUsage.Off;
+                mr.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
+                GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.OccludeeStatic);
+                built++;
+            }
+
+            return built;
+        }
         /// <summary>Puddle decal cells: 4×2 sheet, 1.2 m world size, seeded where the plate wetness × puddle tile peaks; ≥ 1.8 m apart, capped.</summary>
         public const int PuddleDecalCap = 160;
         public const float PuddleDecalSpacing = 1.8f, PuddleDecalSize = 1.2f, PuddleDecalDepth = 0.4f, PuddleDecalDrawDistance = 45f;
@@ -154,7 +245,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         public sealed class Report
         {
-            public int Plates, Water, Colliders, Kerbs, Lods, Tags, WaterNavVolumes, PuddleDecals;
+            public int Plates, Water, Colliders, Kerbs, Lods, Tags, WaterNavVolumes, PuddleDecals, HorizonPlates;
             public string ManifestSha256;
         }
 
@@ -235,6 +326,18 @@ namespace DD.Art.Pipeline.EditorTools
             k.SetColor("_BaseColor", new Color(KerbAlbedoLift, KerbAlbedoLift, KerbAlbedoLift, 1f));
             k.enableInstancing = stone.enableInstancing;
             EditorUtility.SetDirty(k);
+
+            // WP-038E (2) · AP-019 horizon plates: one DD/SkyPlate material per layer.
+            Shader skyPlate = Shader.Find(SkyPlateShaderName);
+            if (skyPlate == null) throw new InvalidOperationException(LogPrefix + "shader missing: " + SkyPlateShaderName);
+            foreach ((string layer, float radius, float height, int repeats, float azimuthOffset) l in HorizonLayers)
+            {
+                Material hm = LoadOrCreate(HorizonMaterialPath(l.layer), skyPlate, "M_horizon_" + l.layer);
+                hm.SetTexture("_BaseMap", Load(ArtPipelinePaths.SourceTexture("horizon_" + l.layer, "Sheet")));
+                hm.SetColor("_BaseColor", Color.white);
+                hm.enableInstancing = false;
+                EditorUtility.SetDirty(hm);
+            }
 
             // WP-038E · puddle decal (URP Decal shader graph: Base_Map RGBA sheet 4×2 + Normal_Map; cells picked per projector by uvScale / uvBias).
             Shader decal = Shader.Find(DecalShaderName);
@@ -401,6 +504,8 @@ namespace DD.Art.Pipeline.EditorTools
 
             // WP-038E · AP-018 puddle decals seeded from the plates' own wetness (readable LOD0 vertex colour) × the puddle tile.
             report.PuddleDecals = BuildPuddleDecals(parent, basinHoles);
+            // WP-038E (2) · AP-019 horizon plates (three unlit cylinders; the sky band itself is the panoramic skybox, ArtSkyBuilder).
+            report.HorizonPlates = BuildHorizonPlates(parent);
 
             // The v1 pond planes (AP-003B pond_water_surface placement instances) are replaced by the water meshes: keep the
             // instances (counts, NavMesh ignore) but stop rendering them.
@@ -416,7 +521,7 @@ namespace DD.Art.Pipeline.EditorTools
                 }
             }
 
-            Debug.Log(LogPrefix + "built " + report.Plates + " plates (" + report.Lods + " LOD renderers, " + report.Kerbs + " kerbs, " + report.Colliders + " colliders) + " + report.Water + " water meshes (" + report.WaterNavVolumes + " not-walkable basin NavMesh rows, " + report.PuddleDecals + " puddle decals), " + report.Tags + " surface tags; v1 pond renderers hidden " + hidden + "; manifest " + report.ManifestSha256.Substring(0, 12) + "…");
+            Debug.Log(LogPrefix + "built " + report.Plates + " plates (" + report.Lods + " LOD renderers, " + report.Kerbs + " kerbs, " + report.Colliders + " colliders) + " + report.Water + " water meshes (" + report.WaterNavVolumes + " not-walkable basin NavMesh rows, " + report.PuddleDecals + " puddle decals, " + report.HorizonPlates + " horizon plates), " + report.Tags + " surface tags; v1 pond renderers hidden " + hidden + "; manifest " + report.ManifestSha256.Substring(0, 12) + "…");
             return report;
         }
 
@@ -720,6 +825,14 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             return chosen.Count;
+        }
+
+        private static void EnsureFolder(string assetFolder)
+        {
+            if (AssetDatabase.IsValidFolder(assetFolder)) return;
+            string parent = Path.GetDirectoryName(assetFolder).Replace('\\', '/');
+            EnsureFolder(parent);
+            AssetDatabase.CreateFolder(parent, Path.GetFileName(assetFolder));
         }
 
         private static Texture2D ReadPng(string assetPath)

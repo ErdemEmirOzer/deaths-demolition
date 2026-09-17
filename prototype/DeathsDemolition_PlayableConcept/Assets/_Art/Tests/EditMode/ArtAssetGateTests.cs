@@ -458,10 +458,14 @@ namespace DD.Art.Tests.EditMode
             beklenen.Add(ArtPipelinePaths.SourceTexture("decal_puddle", "Sheet"));
             beklenen.Add(ArtPipelinePaths.SourceTexture("decal_puddle", "Normal"));
             Assert.AreEqual(166, beklenen.Count, "Beklenen doku kümesi 154 + 12 (WP-038E AP-018 ıslak yüzeyler) = 166 olmalı.");
+            // WP-038E (2): the AP-019 sky / horizon plates — three horizon sheets + the sky band source → 166 + 4 = 170.
+            foreach (string layer in new[] { "near", "mid", "far" }) beklenen.Add(ArtPipelinePaths.SourceTexture("horizon_" + layer, "Sheet"));
+            beklenen.Add(ArtSkyBuilder.SkyBandSourcePath);
+            Assert.AreEqual(170, beklenen.Count, "Beklenen doku kümesi 166 + 4 (WP-038E AP-019 gök/ufuk) = 170 olmalı.");
 
             // WP-047E · AP-013C casings: BaseColor + Normal + MRA source + derived MetallicSmoothness = 4 → 170.
             foreach (string f in ArtCasingBuilder.TextureFiles()) beklenen.Add(f);
-            Assert.AreEqual(170, beklenen.Count, "Beklenen doku kümesi 166 + 4 (WP-047E kovan seti) = 170 olmalı.");
+            Assert.AreEqual(174, beklenen.Count, "Beklenen doku kümesi 170 + 4 (WP-047E kovan seti) = 174 olmalı.");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;

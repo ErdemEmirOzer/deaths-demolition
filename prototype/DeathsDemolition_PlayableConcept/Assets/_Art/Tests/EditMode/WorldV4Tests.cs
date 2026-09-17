@@ -85,6 +85,23 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(puddles, "PuddleDecals kökü");
             int projectors = puddles.GetComponentsInChildren<UnityEngine.Rendering.Universal.DecalProjector>(true).Length;
             Assert.IsTrue(projectors >= 20 && projectors <= ArtSurfaceImporter.PuddleDecalCap, "su birikintisi projektörleri 20..160: " + projectors);
+            // WP-038E (2) · AP-019: three unlit horizon cylinders (scaled 0.55 to the 260 m far clip) + the sky band lat-long on the panoramic skybox.
+            Transform sky = surfaces.Find(ArtSurfaceImporter.SkyRootName);
+            Assert.IsNotNull(sky, "Sky (AP-019) kökü");
+            MeshRenderer[] horizon = sky.GetComponentsInChildren<MeshRenderer>(true);
+            Assert.AreEqual(3, horizon.Length, "3 ufuk plakası");
+            foreach (MeshRenderer hr in horizon)
+            {
+                Assert.AreEqual(ArtSurfaceImporter.SkyPlateShaderName, hr.sharedMaterial.shader.name, hr.name + ": DD/SkyPlate");
+                Assert.AreEqual(ShadowCastingMode.Off, hr.shadowCastingMode, hr.name + ": gölge yok");
+                Bounds hb = hr.bounds;
+                Assert.Greater(Mathf.Max(hb.extents.x, hb.extents.z), 250f, hr.name + ": AP-019 sözleşme yarıçapı (260/330/420 m; derinlik shader'da far plane'e sabitlenir)");
+            }
+
+            var skyMat = AssetDatabase.LoadAssetAtPath<Material>(ArtLibraryPaths.SkyMaterial);
+            var skyTex = skyMat.GetTexture("_MainTex") as Texture2D;
+            Assert.IsNotNull(skyTex, "gök dokusu");
+            Assert.GreaterOrEqual(skyTex.width, 1024, "AP-019 gök bandı lat-long ≥ 1024 (4×256 gradyan değil)");
             Assert.AreEqual(0.6f, water.GetFloat("_DepthFade"), 1e-4f);
             Assert.AreEqual(ArtSurfaceImporter.WaterSpecularScale, water.GetFloat("_SpecularScale"), 1e-4f, "_SpecularScale 0,40 (WP-038D, AD SHOULD-5)");
             Assert.AreEqual(ArtSurfaceImporter.WaterSmoothness, water.GetFloat("_Smoothness"), 1e-4f, "_Smoothness 0,88 (P-05; AD SHOULD-5 0,82 denendi, lob genişledi → geri alındı)");
@@ -94,7 +111,7 @@ namespace DD.Art.Tests.EditMode
             for (int i = 0; i < surfaces.childCount; i++)
             {
                 Transform t = surfaces.GetChild(i);
-                if (t.name == "PondNavHoles" || t.name == ArtSurfaceImporter.PuddleDecalsName) continue;   // NavMesh basin rows / AP-018 decal projectors (no renderer / collider)
+                if (t.name == "PondNavHoles" || t.name == ArtSurfaceImporter.PuddleDecalsName || t.name == ArtSurfaceImporter.SkyRootName) continue;   // NavMesh basin rows / AP-018 decal projectors / AP-019 horizon (no collider, own materials)
                 bool isWater = t.name.StartsWith("AP015_water_", StringComparison.Ordinal);
                 if (isWater) waters++; else plates++;
                 var tag = t.GetComponent<SurfaceTag>();

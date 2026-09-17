@@ -312,7 +312,8 @@ namespace DD.Art.Pipeline.EditorTools
             LibraryStep(3, "Library materials", ArtMaterialBuilder.BuildAllLibraryRoles);
             LibraryStep(4, "AP-018 wet packed maps → derived MetallicSmoothness", ArtSurfaceImporter.BuildWetTextures);
             LibraryStep(4, "Decal renderer feature (AP-018 puddles)", ArtSurfaceImporter.ConfigureDecalFeature);
-            LibraryStep(4, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone, M_decal_puddle)", ArtSurfaceImporter.BuildMaterials);
+            LibraryStep(4, "Overcast sky (AP-019 band → lat-long, WP-038E)", () => ArtSkyBuilder.Build());
+            LibraryStep(4, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone, M_decal_puddle, M_horizon_*)", ArtSurfaceImporter.BuildMaterials);
             // Mesh compression (Contract v1.3) quantises the imported vertices: the family / library prefabs carry LOD reference
             // points and bounds from the meshes, so they are rebuilt from the compressed meshes (idempotence gate).
             LibraryStep(4, "Rebuild AP-001 family prefabs + library prefabs on the compressed meshes", () => { ArtFamilyPrefabBuilder.BuildAll(); ArtLibraryPrefabBuilder.BuildAll(); });
@@ -343,7 +344,8 @@ namespace DD.Art.Pipeline.EditorTools
             LibraryStep(1, "Contract textures (AP-018 wet inputs)", ReimportContractTextures);
             LibraryStep(1, "AP-018 wet packed maps → derived MetallicSmoothness", ArtSurfaceImporter.BuildWetTextures);
             LibraryStep(1, "Decal renderer feature (AP-018 puddles)", ArtSurfaceImporter.ConfigureDecalFeature);
-            LibraryStep(1, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone, M_decal_puddle)", ArtSurfaceImporter.BuildMaterials);
+            LibraryStep(1, "Overcast sky (AP-019 band → lat-long, WP-038E)", () => ArtSkyBuilder.Build());
+            LibraryStep(1, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone, M_decal_puddle, M_horizon_*)", ArtSurfaceImporter.BuildMaterials);
             LibraryStep(2, "Import AP-005 placement + delta chain + AP-015P surfaces (asset, World_AP005.unity, NavMesh, build settings)", () => PlacementImporter.ImportAll());
             LibraryStep(3, "Prepare World_AP005 for the bake (sun, probes, reflection probes, chart policy)", () => ArtLightingBake.PrepareWorld());
             AssetDatabase.SaveAssets();

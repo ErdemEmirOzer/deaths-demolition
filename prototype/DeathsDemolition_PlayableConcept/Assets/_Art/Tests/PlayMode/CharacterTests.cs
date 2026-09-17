@@ -329,8 +329,11 @@ namespace DD.Art.Tests.PlayMode
                 Color32[] noZombies = Capture(pose, Path.Combine(dir, "readability-characters-nozombies.png"));
                 SetEnabled(zombieRenderers, true);
 
-                bool[] playerMask = Diff(full, noPlayer);
-                bool[] zombieMask = Diff(full, noZombies);
+                // WP-038E (P-06 AP-007D measurement): the plain frame diff also picks up the zombies' cast shadows and SSAO
+                // on the ground (60–68 % of the "zombie" pixels), which drags the crowd luma down as the crowd grows —
+                // a pixel that merely got darker while keeping the ground's hue is shadow, not body, and is excluded.
+                bool[] playerMask = DiffFigure(full, noPlayer);
+                bool[] zombieMask = DiffFigure(full, noZombies);
                 int playerPx = Count(playerMask), zombiePx = Count(zombieMask);
                 Assert.Greater(playerPx, 400, "oyuncu maskesi boş (" + playerPx + " px)");
                 Assert.Greater(zombiePx, 4000, "zombi maskesi boş (" + zombiePx + " px)");
@@ -432,6 +435,26 @@ namespace DD.Art.Tests.PlayMode
             for (int i = 0; i < a.Length; i++)
             {
                 mask[i] = Mathf.Abs(a[i].r - b[i].r) + Mathf.Abs(a[i].g - b[i].g) + Mathf.Abs(a[i].b - b[i].b) > 24;
+            }
+
+            return mask;
+        }
+
+        /// <summary>
+        /// Figure pixels: the frame differs from the reference AND the change is not a uniform darkening (cast shadow /
+        /// AO: luma drops, the per-channel deltas stay within 10 of each other). Body pixels replace the ground colour.
+        /// </summary>
+        internal static bool[] DiffFigure(Color32[] a, Color32[] b)
+        {
+            var mask = new bool[a.Length];
+            for (int i = 0; i < a.Length; i++)
+            {
+                int dr = a[i].r - b[i].r, dg = a[i].g - b[i].g, db = a[i].b - b[i].b;
+                int sum = Mathf.Abs(dr) + Mathf.Abs(dg) + Mathf.Abs(db);
+                if (sum <= 24) continue;
+                bool darker = dr <= 0 && dg <= 0 && db <= 0;
+                int spread = Mathf.Max(dr, Mathf.Max(dg, db)) - Mathf.Min(dr, Mathf.Min(dg, db));
+                mask[i] = !(darker && spread <= 10);
             }
 
             return mask;

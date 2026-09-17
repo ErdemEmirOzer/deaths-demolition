@@ -201,7 +201,7 @@ namespace DD.Art.Pipeline.EditorTools
                 case TextureClass.Foliage: return 1024;
                 case TextureClass.Prop: return 512;
                 case TextureClass.Breakable: return 512;
-                case TextureClass.Sky: return 256;
+                case TextureClass.Sky: return 1024;   // WP-038E (2): the AP-019 sky band lat-long (was 256 for the 4×256 gradient)
                 case TextureClass.Character: return 2048;
                 case TextureClass.Vfx: return 1024;
                 case TextureClass.Weapon: return 1024;
@@ -234,7 +234,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// (+22.4 MB at 2048) and the AP-005B props (+6.3 MB at 512) needed the split.
         /// If the character set exceeds its line the armour atlas drops to 1024 (technical rule, reported).
         /// </summary>
-        public const int ShippedWorldBudgetMb = 120;
+        /// <summary>v5 (WP-038E): 120 → 125 — the AP-018 wet inputs (2.6 MB at 512²) and the AP-019 sky band; the character line keeps its 35 MB headroom, the 220 total holds.</summary>
+        public const int ShippedWorldBudgetMb = 125;
         public const int ShippedCharacterBudgetMb = 100;   // v3 (WP-020, C-00 technical decision): the AP-007 second cloth atlas (3 × 2K maps)
         /// <summary>WP-042B (ADR-015-1 v4 line, S-05 handshake): the weapon set — AP-014 Special Weapon atlas + AP-013 classic atlas (1K each, BaseColor + Normal + derived MS) on its own line (moved out of the character set).</summary>
         public const int ShippedWeaponBudgetMb = 12;
@@ -289,6 +290,11 @@ namespace DD.Art.Pipeline.EditorTools
             { "wet_puddle", TextureClass.Ground },
             { "wet_shore", TextureClass.Ground },
             { "decal_puddle", TextureClass.Vfx },
+            // WP-038E (2) · AP-019 sky / horizon plates: three unlit horizon sheets (alpha, 1024 cap) and the overcast sky band (Sky class source of the derived lat-long).
+            { "horizon_near", TextureClass.Vfx },
+            { "horizon_mid", TextureClass.Vfx },
+            { "horizon_far", TextureClass.Vfx },
+            { "skyband", TextureClass.Sky },
             // Structure (palace timber/screens, plaster, roofs, shore-path and basin module surfaces).
             { "wood", TextureClass.Structure },
             { "plaster", TextureClass.Structure },
