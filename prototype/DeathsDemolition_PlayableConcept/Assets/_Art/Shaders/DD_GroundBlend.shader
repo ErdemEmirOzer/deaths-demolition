@@ -3,8 +3,12 @@
 // blends the three ADR-015-1 Ground tiles sampled at world xz / _Tile (4 m — the stand-in / hero_earth
 // tile, so plates and the golden-slice ground share one texture space). Gravel has no normal map
 // (flat) and is toned by _GravelTint (0.60: T_gravel's albedo Y 0.286 would break the value order).
-// Wetness (A) darkens the albedo by up to 45 % and lifts smoothness towards _WetSmoothness (hard cap
-// 0.60 — no mirror-wet). Realtime lit + light probes (plates are not lightmapped: AP-015P contract);
+// Wetness (A) — WP-038E, AP-018 Look B wet surfaces: A × the damp tile (4 m) is the wet amount; the wet
+// albedo is the shipped wet stone tile / the earth and gravel wet tints (AP-018 role_stats), the wet
+// smoothness comes from the wet packed maps' derived MetallicSmoothness (≤ 0.60 by construction — no
+// mirror-wet), and the puddle tile × wet above _PuddleThreshold flattens the normal and lifts smoothness
+// to _PuddleSmoothness (0.70, the water exception). Inside the koi-pond bounds the shore map scales the
+// wet amount (1 at the rim → 0 at 2.5 m; half of the plate's own wetness is kept elsewhere). Realtime lit + light probes (plates are not lightmapped: AP-015P contract);
 // DepthNormals pass so the WP-029 SSAO sees the ground; ShadowCaster kept for the raised kerbs/paving.
 Shader "DD/GroundBlend"
 {
@@ -24,8 +28,23 @@ Shader "DD/GroundBlend"
         _GravelSmoothness("Gravel smoothness", Range(0, 1)) = 0.15
         _StoneSmoothness("Stone smoothness fallback", Range(0, 1)) = 0.43
         _UseMasks("Use MetallicSmoothness maps (0 = fallbacks)", Range(0, 1)) = 1.0
-        _WetDarken("Wet darkening", Range(0, 1)) = 0.45
+        _WetDarken("Wet darkening (legacy, 0 with the AP-018 tints)", Range(0, 1)) = 0.0
         _WetSmoothness("Wet smoothness (cap)", Range(0, 0.6)) = 0.60
+        [Header(AP018 wet surfaces)]
+        _DampMask("Damp tile (R, 4 m)", 2D) = "white" {}
+        _PuddleMask("Puddle tile (R, 4 m)", 2D) = "black" {}
+        _ShoreMask("Shore wetness (R, world)", 2D) = "white" {}
+        _ShoreBounds("Shore bounds (xMin, zMin, xMax, zMax)", Vector) = (-16, -46, 16, -14)
+        _ShoreFloor("Wet kept off the shore inside the bounds", Range(0, 1)) = 0.5
+        _WetStoneMap("Wet stone BaseColor", 2D) = "gray" {}
+        _WetStoneMask("Wet stone MetallicSmoothness", 2D) = "black" {}
+        _WetEarthMask("Wet earth MetallicSmoothness", 2D) = "black" {}
+        _WetGravelMask("Wet gravel MetallicSmoothness", 2D) = "black" {}
+        _WetTintEarth("Wet earth tint (linear)", Color) = (0.522, 0.539, 0.567, 1)
+        _WetTintGravel("Wet gravel tint (linear)", Color) = (0.545, 0.568, 0.609, 1)
+        _PuddleThreshold("Puddle threshold (wet × puddle tile)", Range(0, 1)) = 0.30
+        _PuddleRamp("Puddle ramp width", Range(0.02, 0.5)) = 0.12
+        _PuddleSmoothness("Puddle smoothness", Range(0, 1)) = 0.70
         _NormalStrength("Normal strength", Range(0, 2)) = 1.0
         _Occlusion("Occlusion (vertex mask edges)", Range(0, 1)) = 1.0
 
@@ -60,6 +79,13 @@ Shader "DD/GroundBlend"
             half _NormalStrength;
             half _Occlusion;
             half _Cull;
+            float4 _ShoreBounds;
+            half _ShoreFloor;
+            half4 _WetTintEarth;
+            half4 _WetTintGravel;
+            half _PuddleThreshold;
+            half _PuddleRamp;
+            half _PuddleSmoothness;
         CBUFFER_END
 
         TEXTURE2D(_EarthMap);    SAMPLER(sampler_EarthMap);
@@ -69,6 +95,26 @@ Shader "DD/GroundBlend"
         TEXTURE2D(_StoneMap);    SAMPLER(sampler_StoneMap);
         TEXTURE2D(_StoneNormal); SAMPLER(sampler_StoneNormal);
         TEXTURE2D(_StoneMask);   SAMPLER(sampler_StoneMask);
+        TEXTURE2D(_DampMask);      SAMPLER(sampler_DampMask);
+        TEXTURE2D(_PuddleMask);    SAMPLER(sampler_PuddleMask);
+        TEXTURE2D(_ShoreMask);     SAMPLER(sampler_ShoreMask);
+        TEXTURE2D(_WetStoneMap);   SAMPLER(sampler_WetStoneMap);
+        TEXTURE2D(_WetStoneMask);  SAMPLER(sampler_WetStoneMask);
+        TEXTURE2D(_WetEarthMask);  SAMPLER(sampler_WetEarthMask);
+        TEXTURE2D(_WetGravelMask); SAMPLER(sampler_WetGravelMask);
+
+        // AP-018 wet amount: the plate's vertex wetness × the damp tile, scaled by the shore map inside the koi-pond bounds.
+        half WetAmount(half vertexWet, float2 uv, float3 positionWS)
+        {
+            half wet = saturate(vertexWet) * SAMPLE_TEXTURE2D(_DampMask, sampler_DampMask, uv).r;
+            float2 shoreUv = (positionWS.xz - _ShoreBounds.xy) / max(_ShoreBounds.zw - _ShoreBounds.xy, 1e-3);
+            if (all(shoreUv >= 0.0) && all(shoreUv <= 1.0))
+            {
+                half shore = SAMPLE_TEXTURE2D(_ShoreMask, sampler_ShoreMask, shoreUv).r;
+                wet *= max(shore, _ShoreFloor);
+            }
+            return wet;
+        }
 
         // Mask weights: normalise R/G/B (the exporter keeps R+G+B = 1, a bilinear seam can drift).
         half3 GroundWeights(half4 mask)
@@ -158,30 +204,47 @@ Shader "DD/GroundBlend"
 
                 float2 uv = input.positionWS.xz / max(_Tile, 0.01);
                 half3 w = GroundWeights(input.mask);
-                half wet = saturate(input.mask.a);
+                half wet = WetAmount(input.mask.a, uv, input.positionWS);
+                // The plates' wetness tops out around 0.55 (AP-015P), the damp tile averages 0.82: the puddle score (wet × puddle tile) peaks near 0.45,
+                // so the threshold sits at 0.30 with a 0.12 ramp to a full puddle (the decal seeds use the same threshold).
+                half puddle = saturate((SAMPLE_TEXTURE2D(_PuddleMask, sampler_PuddleMask, uv).r * wet - _PuddleThreshold) / max(_PuddleRamp, 0.02h));
 
                 half3 earth = SAMPLE_TEXTURE2D(_EarthMap, sampler_EarthMap, uv).rgb;
                 half3 gravel = SAMPLE_TEXTURE2D(_GravelMap, sampler_GravelMap, uv).rgb * _GravelTint;
                 half3 stone = SAMPLE_TEXTURE2D(_StoneMap, sampler_StoneMap, uv).rgb;
+                // AP-018: earth / gravel go wet through their tints, stone through the shipped wet tile.
+                half3 wetStone = SAMPLE_TEXTURE2D(_WetStoneMap, sampler_WetStoneMap, uv).rgb;
+                earth = lerp(earth, earth * _WetTintEarth.rgb, wet);
+                gravel = lerp(gravel, gravel * _WetTintGravel.rgb, wet);
+                stone = lerp(stone, wetStone, wet);
                 half3 albedo = earth * w.r + gravel * w.g + stone * w.b;
                 albedo *= 1.0h - _WetDarken * wet;
+                albedo *= 1.0h - 0.15h * puddle;   // standing water reads a touch darker still
 
-                half earthS = _EarthSmoothness, stoneS = _StoneSmoothness;
+                half earthS = _EarthSmoothness, stoneS = _StoneSmoothness, gravelS = _GravelSmoothness;
                 if (_UseMasks > 0.5h)
                 {
                     earthS = SAMPLE_TEXTURE2D(_EarthMask, sampler_EarthMask, uv).a;
                     stoneS = SAMPLE_TEXTURE2D(_StoneMask, sampler_StoneMask, uv).a;
+                    // Wet packed maps (AP-018, roughness ≥ 0.40 → smoothness ≤ 0.60) replace the dry smoothness by the wet amount.
+                    earthS = lerp(earthS, SAMPLE_TEXTURE2D(_WetEarthMask, sampler_WetEarthMask, uv).a, wet);
+                    stoneS = lerp(stoneS, SAMPLE_TEXTURE2D(_WetStoneMask, sampler_WetStoneMask, uv).a, wet);
+                    gravelS = lerp(gravelS, SAMPLE_TEXTURE2D(_WetGravelMask, sampler_WetGravelMask, uv).a, wet);
+                }
+                else
+                {
+                    earthS = lerp(earthS, _WetSmoothness, wet); stoneS = lerp(stoneS, _WetSmoothness, wet); gravelS = lerp(gravelS, _WetSmoothness, wet);
                 }
 
-                half smoothness = earthS * w.r + _GravelSmoothness * w.g + stoneS * w.b;
-                smoothness = lerp(smoothness, _WetSmoothness, wet);
+                half smoothness = earthS * w.r + gravelS * w.g + stoneS * w.b;
                 smoothness = min(smoothness, 0.60h);
+                smoothness = lerp(smoothness, _PuddleSmoothness, puddle);   // the water exception (AP-018 puddle core)
 
                 half3 nEarth = UnpackNormalScale(SAMPLE_TEXTURE2D(_EarthNormal, sampler_EarthNormal, uv), _NormalStrength);
                 half3 nStone = UnpackNormalScale(SAMPLE_TEXTURE2D(_StoneNormal, sampler_StoneNormal, uv), _NormalStrength);
                 half3 normalTS = normalize(nEarth * w.r + half3(0, 0, 1) * w.g + nStone * w.b);
                 // Wet surfaces read flatter (water fills the grain).
-                normalTS = normalize(lerp(normalTS, half3(0, 0, 1), wet * 0.5h));
+                normalTS = normalize(lerp(normalTS, half3(0, 0, 1), saturate(wet * 0.5h + puddle)));
 
                 half3 bitangentWS = input.tangentWS.w * cross(input.normalWS, input.tangentWS.xyz);
                 half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangentWS, input.normalWS);

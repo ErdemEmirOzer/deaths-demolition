@@ -98,6 +98,15 @@ namespace DD.Art.Pipeline.EditorTools
             return assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal) ? EnvironmentMeshCompression : ModelMeshCompression;
         }
         public const bool ModelIsReadable = false;
+
+        /// <summary>
+        /// WP-038E · The nine AP-015P ground plates stay CPU-readable: their LOD0 vertex colour (AP015_Mask, A = wetness) seeds the
+        /// AP-018 puddle decal projectors at import (<c>ArtSurfaceImporter.BuildPuddleDecals</c>). ~55 k vertices, no other model is readable.
+        /// </summary>
+        public static bool ModelIsReadableOf(string assetPath)
+        {
+            return assetPath != null && System.IO.Path.GetFileName(assetPath).StartsWith("AP015_ground_", StringComparison.Ordinal) && IsSurfaceModel(assetPath);
+        }
         public const ModelImporterIndexFormat ModelIndexFormat = ModelImporterIndexFormat.Auto;
         public const bool ModelOptimizeMeshPolygons = true;
         public const bool ModelOptimizeMeshVertices = true;
@@ -271,6 +280,15 @@ namespace DD.Art.Pipeline.EditorTools
             { "water_sparkle", TextureClass.Ground },
             { "water_caustic", TextureClass.Ground },
             { "water_rings", TextureClass.Vfx },
+            // WP-038E · AP-018 Look B wet surfaces: wet stone albedo + wet packed maps (derived MetallicSmoothness like the dry tiles),
+            // the damp / puddle tiles and the koi-pond shore wetness map (bound masks), the puddle decal sheet + normal (Vfx-class sheet).
+            { "wet_stone", TextureClass.Ground },
+            { "wet_earth", TextureClass.Ground },
+            { "wet_gravel", TextureClass.Ground },
+            { "wet_damp", TextureClass.Ground },
+            { "wet_puddle", TextureClass.Ground },
+            { "wet_shore", TextureClass.Ground },
+            { "decal_puddle", TextureClass.Vfx },
             // Structure (palace timber/screens, plaster, roofs, shore-path and basin module surfaces).
             { "wood", TextureClass.Structure },
             { "plaster", TextureClass.Structure },
@@ -360,15 +378,22 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>Shipped max size for a texture path (its class's size, derived masks capped).</summary>
+        /// <summary>WP-038E · every AP-018 <c>wet_*</c> map (wet stone albedo, wet packed maps and their derived masks; the tiles are 512 already) ships at 512² — wet reads through the blend (plate wetness ≤ 0.55), and the world set stays under the 120 MB budget (ADR-015-1 v2).</summary>
+        public const int WetPackedMaxSize = 512;
+
         public static int MaxTextureSizeOf(string assetPath)
         {
-            return MaxSizeOf(ClassOf(assetPath), RoleOf(assetPath));
+            int size = MaxSizeOf(ClassOf(assetPath), RoleOf(assetPath));
+            string slug = RoleSlugOf(assetPath);
+            if (slug != null && slug.StartsWith("wet_", StringComparison.Ordinal)) size = Mathf.Min(size, WetPackedMaxSize);
+            return size;
         }
 
         /// <summary>WP-038 · Mask-role textures a material actually samples (the AP-015P water data maps); the AP packs / ID masks stay provenance-only.</summary>
         public static bool IsBoundMask(string assetPath)
         {
-            return RoleSlugOf(assetPath).StartsWith("water_", StringComparison.Ordinal);
+            string slug = RoleSlugOf(assetPath);
+            return slug != null && (slug.StartsWith("water_", StringComparison.Ordinal) || slug.StartsWith("wet_", StringComparison.Ordinal));
         }
 
         /// <summary>Estimated bytes a texture occupies in the build (BC7/BC5 = 1 byte per texel, full mip chain), capped at the source size.</summary>
@@ -380,6 +405,12 @@ namespace DD.Art.Pipeline.EditorTools
         public static long EstimatedShippedBytes(int sourceWidth, int sourceHeight, TextureClass c, TextureRole role, bool mipmaps)
         {
             return EstimatedShippedBytes(sourceWidth, sourceHeight, MaxSizeOf(c, role), mipmaps);
+        }
+
+        /// <summary>Per asset: the class / role cap plus the path-specific caps (WP-038E wet packed 512).</summary>
+        public static long EstimatedShippedBytes(string assetPath, int sourceWidth, int sourceHeight, bool mipmaps)
+        {
+            return EstimatedShippedBytes(sourceWidth, sourceHeight, MaxTextureSizeOf(assetPath), mipmaps);
         }
 
         private static long EstimatedShippedBytes(int sourceWidth, int sourceHeight, int cap, bool mipmaps)
@@ -582,7 +613,7 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.importNormals, ModelNormals, v => importer.importNormals = v);
             changed |= Set(importer.importTangents, ModelTangents, v => importer.importTangents = v);
             changed |= Set(importer.meshCompression, MeshCompressionOf(importer.assetPath), v => importer.meshCompression = v);
-            changed |= Set(importer.isReadable, ModelIsReadable, v => importer.isReadable = v);
+            changed |= Set(importer.isReadable, ModelIsReadableOf(importer.assetPath) || ModelIsReadable, v => importer.isReadable = v);
             changed |= Set(importer.indexFormat, ModelIndexFormat, v => importer.indexFormat = v);
             changed |= Set(importer.optimizeMeshPolygons, ModelOptimizeMeshPolygons, v => importer.optimizeMeshPolygons = v);
             changed |= Set(importer.optimizeMeshVertices, ModelOptimizeMeshVertices, v => importer.optimizeMeshVertices = v);
@@ -623,7 +654,7 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.sRGBTexture, !linear, v => importer.sRGBTexture = v);
             // WP-015 (ADR-015-1): size and streaming come from the role's distance class.
             TextureClass textureClass = ClassOf(importer.assetPath);
-            int maxSize = MaxSizeOf(textureClass, role);
+            int maxSize = MaxTextureSizeOf(importer.assetPath);
             changed |= Set(importer.mipmapEnabled, TextureMipmaps, v => importer.mipmapEnabled = v);
             changed |= Set(importer.streamingMipmaps, StreamsMipmaps(textureClass), v => importer.streamingMipmaps = v);
             changed |= Set(importer.maxTextureSize, maxSize, v => importer.maxTextureSize = v);
@@ -676,7 +707,7 @@ namespace DD.Art.Pipeline.EditorTools
             Check(v, "importNormals", importer.importNormals, ModelNormals);
             Check(v, "importTangents", importer.importTangents, ModelTangents);
             Check(v, "meshCompression", importer.meshCompression, MeshCompressionOf(importer.assetPath));
-            Check(v, "isReadable", importer.isReadable, ModelIsReadable);
+            Check(v, "isReadable", importer.isReadable, ModelIsReadableOf(importer.assetPath) || ModelIsReadable);
             Check(v, "indexFormat", importer.indexFormat, ModelIndexFormat);
             Check(v, "optimizeMeshPolygons", importer.optimizeMeshPolygons, ModelOptimizeMeshPolygons);
             Check(v, "optimizeMeshVertices", importer.optimizeMeshVertices, ModelOptimizeMeshVertices);
@@ -729,7 +760,7 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             TextureClass textureClass = roleClass ?? TextureClass.Prop;
-            int maxSize = MaxSizeOf(textureClass, role);
+            int maxSize = MaxTextureSizeOf(importer.assetPath);
 
             Check(v, "textureType", importer.textureType, type);
             Check(v, "sRGBTexture", importer.sRGBTexture, !linear);

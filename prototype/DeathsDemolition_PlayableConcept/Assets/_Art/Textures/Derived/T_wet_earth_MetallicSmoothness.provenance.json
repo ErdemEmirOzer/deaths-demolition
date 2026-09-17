@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_wet_earth_Packed.png",
+    "sourceSha256": "f90e8b3ff232630acca8e16264ec42e308ffb5154860eed9472fc42f65ff4aab",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T08:48:22.9226550Z",
+    "outputSha256": "dc52846dbacc1c6310d3db5e3822bc5d6978f9988236cc1a972fad36e39962d2"
+}

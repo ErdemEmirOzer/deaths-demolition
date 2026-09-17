@@ -310,7 +310,9 @@ namespace DD.Art.Pipeline.EditorTools
             LibraryStep(2, "Contract textures (derived masks ≤ 1024, water inputs)", ReimportContractTextures);
             LibraryStep(2, "Library masks + roof-course normal", ArtTextureRepack.BuildAllLibrary);
             LibraryStep(3, "Library materials", ArtMaterialBuilder.BuildAllLibraryRoles);
-            LibraryStep(4, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone)", ArtSurfaceImporter.BuildMaterials);
+            LibraryStep(4, "AP-018 wet packed maps → derived MetallicSmoothness", ArtSurfaceImporter.BuildWetTextures);
+            LibraryStep(4, "Decal renderer feature (AP-018 puddles)", ArtSurfaceImporter.ConfigureDecalFeature);
+            LibraryStep(4, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone, M_decal_puddle)", ArtSurfaceImporter.BuildMaterials);
             // Mesh compression (Contract v1.3) quantises the imported vertices: the family / library prefabs carry LOD reference
             // points and bounds from the meshes, so they are rebuilt from the compressed meshes (idempotence gate).
             LibraryStep(4, "Rebuild AP-001 family prefabs + library prefabs on the compressed meshes", () => { ArtFamilyPrefabBuilder.BuildAll(); ArtLibraryPrefabBuilder.BuildAll(); });
@@ -337,7 +339,11 @@ namespace DD.Art.Pipeline.EditorTools
 
             Stopwatch total = Stopwatch.StartNew();
             Debug.Log(LogPrefix + "Run World v4 Surfaces: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
-            LibraryStep(1, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone)", ArtSurfaceImporter.BuildMaterials);
+            LibraryStep(1, "Contract models (WP-038E: the nine ground plates readable for the puddle seeds)", ReimportContractModels);
+            LibraryStep(1, "Contract textures (AP-018 wet inputs)", ReimportContractTextures);
+            LibraryStep(1, "AP-018 wet packed maps → derived MetallicSmoothness", ArtSurfaceImporter.BuildWetTextures);
+            LibraryStep(1, "Decal renderer feature (AP-018 puddles)", ArtSurfaceImporter.ConfigureDecalFeature);
+            LibraryStep(1, "Surface materials (M_ground_blend, M_water_v2, M_kerb_stone, M_decal_puddle)", ArtSurfaceImporter.BuildMaterials);
             LibraryStep(2, "Import AP-005 placement + delta chain + AP-015P surfaces (asset, World_AP005.unity, NavMesh, build settings)", () => PlacementImporter.ImportAll());
             LibraryStep(3, "Prepare World_AP005 for the bake (sun, probes, reflection probes, chart policy)", () => ArtLightingBake.PrepareWorld());
             AssetDatabase.SaveAssets();

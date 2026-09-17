@@ -23,6 +23,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _DampMask:
+        m_Texture: {fileID: 2800000, guid: 6b21185da30e648db9a5bc479be3e4bc, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EarthMap:
         m_Texture: {fileID: 2800000, guid: d0d0ac0b8ce6749089f4518474f77b4a, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -39,6 +43,14 @@ Material:
         m_Texture: {fileID: 2800000, guid: add03124e9e5e423cab3c49ac2ef5a5c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _PuddleMask:
+        m_Texture: {fileID: 2800000, guid: c7a492acf77f341559fb30462f143a14, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShoreMask:
+        m_Texture: {fileID: 2800000, guid: 7e5086a724e8143dbb847a032479d683, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _StoneMap:
         m_Texture: {fileID: 2800000, guid: 1887a8b2a4b754aaf93c703719f0af5b, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -51,6 +63,22 @@ Material:
         m_Texture: {fileID: 2800000, guid: c8b431464ed5c4884aed00f010c62f30, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _WetEarthMask:
+        m_Texture: {fileID: 2800000, guid: 8aeb77d66637a41f8a9b6fdfe9bc25f4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WetGravelMask:
+        m_Texture: {fileID: 2800000, guid: 1fdd802e5de7a4f5d8aac7216f08de33, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WetStoneMap:
+        m_Texture: {fileID: 2800000, guid: 5b033361c3bf440e5929855234e27010, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WetStoneMask:
+        m_Texture: {fileID: 2800000, guid: 56207082ffbf340469f5914dff85d318, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _Cull: 2
@@ -59,10 +87,17 @@ Material:
     - _GravelTint: 0.72
     - _NormalStrength: 1
     - _Occlusion: 1
+    - _PuddleRamp: 0.12
+    - _PuddleSmoothness: 0.7
+    - _PuddleThreshold: 0.3
+    - _ShoreFloor: 0.5
     - _StoneSmoothness: 0.43
     - _Tile: 4
     - _UseMasks: 1
-    - _WetDarken: 0.45
+    - _WetDarken: 0
     - _WetSmoothness: 0.6
-    m_Colors: []
+    m_Colors:
+    - _ShoreBounds: {r: -16, g: -46, b: 16, a: -14}
+    - _WetTintEarth: {r: 0.522, g: 0.539, b: 0.567, a: 1}
+    - _WetTintGravel: {r: 0.545, g: 0.568, b: 0.609, a: 1}
   m_BuildTextureStacks: []

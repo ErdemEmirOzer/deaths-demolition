@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_wet_stone_Packed.png",
+    "sourceSha256": "441170ad267d7bfe1258a083f4bb0b6824485ebd3c99d67e537d8825d9e30229",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T08:48:22.7352650Z",
+    "outputSha256": "6ca800ebf5e31c5dfe03fdf2d907ded3e123d4dd37969edbd4bea44369e7a1c7"
+}

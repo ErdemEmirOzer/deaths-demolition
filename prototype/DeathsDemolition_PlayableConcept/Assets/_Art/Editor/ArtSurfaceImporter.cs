@@ -9,6 +9,7 @@ using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace DD.Art.Pipeline.EditorTools
 {
@@ -33,6 +34,71 @@ namespace DD.Art.Pipeline.EditorTools
         public const string WaterMaterialPath = ArtPipelinePaths.Materials + "/M_water_v2.mat";
         /// <summary>Kerb runs: the stone material with the AP-015P M4 albedo lift (× 1.20) so the rim reads above the gravel field (WP-038 AD MUST-4).</summary>
         public const string KerbMaterialPath = ArtPipelinePaths.Materials + "/M_kerb_stone.mat";
+
+        // ------------------------------------------------------------------ WP-038E · AP-018 Look B wet surfaces
+        /// <summary>AP-018 roles whose wet packed map gets a derived MetallicSmoothness (the dry tiles' repack), bound by DD/GroundBlend.</summary>
+        public static readonly string[] WetPackedRoles = { "wet_stone", "wet_earth", "wet_gravel" };
+        /// <summary>AP-018 role_stats.wet_tint_linear_rgb (v001): the wet albedo of the roles that ship no wet tile.</summary>
+        public static readonly Color WetTintEarth = new Color(0.522f, 0.539f, 0.567f, 1f), WetTintGravel = new Color(0.545f, 0.568f, 0.609f, 1f);
+        /// <summary>Puddle score = vertex wetness (≤ ~0.55 on the AP-015P plates) × damp tile (≈ 0.82) × puddle tile: threshold 0.30, full at 0.42.</summary>
+        public const float PuddleThreshold = 0.30f, PuddleRamp = 0.12f, PuddleSmoothness = 0.70f, ShoreFloor = 0.5f;
+        public static readonly Vector4 ShoreBounds = new Vector4(-16f, -46f, 16f, -14f);   // AP018_shore_wetness_pond world bounds (top = north)
+        public const string PuddleDecalMaterialPath = ArtPipelinePaths.Materials + "/M_decal_puddle.mat";
+        public const string DecalShaderName = "Shader Graphs/Decal";
+        public const string DecalFeatureTypeName = "UnityEngine.Rendering.Universal.DecalRendererFeature";
+        public const string PuddleDecalsName = "PuddleDecals (AP-018)";
+        /// <summary>Puddle decal cells: 4×2 sheet, 1.2 m world size, seeded where the plate wetness × puddle tile peaks; ≥ 1.8 m apart, capped.</summary>
+        public const int PuddleDecalCap = 160;
+        public const float PuddleDecalSpacing = 1.8f, PuddleDecalSize = 1.2f, PuddleDecalDepth = 0.4f, PuddleDecalDrawDistance = 45f;
+
+        /// <summary>Derived MetallicSmoothness for the AP-018 wet packed maps (same repack as the dry Ground tiles).</summary>
+        public static void BuildWetTextures()
+        {
+            for (int i = 0; i < WetPackedRoles.Length; i++) ArtTextureRepack.BuildMask(WetPackedRoles[i]);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// URP Decal Renderer Feature on the WP-029 renderer (screen space, low normal blend, 60 m): the AP-018 puddle projectors.
+        /// Created by type name like the WP-029 SSAO feature (the URP 14 class is internal); idempotent.
+        /// </summary>
+        public static void ConfigureDecalFeature()
+        {
+            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(ArtLightingBake.UrpRendererPath);
+            if (renderer == null) throw new FileNotFoundException(LogPrefix + "renderer data missing", ArtLightingBake.UrpRendererPath);
+            Type type = typeof(UniversalRendererData).Assembly.GetType(DecalFeatureTypeName);
+            if (type == null) throw new InvalidOperationException(LogPrefix + "decal feature type not found: " + DecalFeatureTypeName);
+            ScriptableRendererFeature feature = null;
+            foreach (ScriptableRendererFeature f in renderer.rendererFeatures) if (f != null && f.GetType() == type) feature = f;
+            var so = new SerializedObject(renderer);
+            if (feature == null)
+            {
+                feature = (ScriptableRendererFeature)ScriptableObject.CreateInstance(type);
+                feature.name = "DecalRendererFeature";
+                AssetDatabase.AddObjectToAsset(feature, renderer);
+                SerializedProperty list = so.FindProperty("m_RendererFeatures");
+                SerializedProperty map = so.FindProperty("m_RendererFeatureMap");
+                list.arraySize++;
+                list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = feature;
+                AssetDatabase.TryGetGUIDAndLocalFileIdentifier(feature, out _, out long localId);
+                map.arraySize++;
+                map.GetArrayElementAtIndex(map.arraySize - 1).longValue = localId;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            var fso = new SerializedObject(feature);
+            SerializedProperty settings = fso.FindProperty("m_Settings");
+            SerializedProperty technique = settings.FindPropertyRelative("technique");
+            if (technique != null) technique.enumValueIndex = 2;   // ScreenSpace (URP 14: Automatic 0, DBuffer 1, ScreenSpace 2) — DepthNormals already on for SSAO
+            SerializedProperty distance = settings.FindPropertyRelative("maxDrawDistance");
+            if (distance != null) distance.floatValue = 60f;
+            SerializedProperty blend = settings.FindPropertyRelative("screenSpaceSettings.normalBlend");
+            if (blend != null) blend.enumValueIndex = 0;          // Low
+            fso.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(renderer);
+            AssetDatabase.SaveAssets();
+            Debug.Log(LogPrefix + "decal feature: screen space, 60 m, normal blend low → " + ArtLightingBake.UrpRendererPath);
+        }
         public const float KerbAlbedoLift = 1.2f;
         /// <summary>
         /// WP-038 art-director round (Fable, KOŞULLU KABUL 85 %): P-05's 0.60 gravel tint left earth ≈ gravel at the
@@ -88,7 +154,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         public sealed class Report
         {
-            public int Plates, Water, Colliders, Kerbs, Lods, Tags, WaterNavVolumes;
+            public int Plates, Water, Colliders, Kerbs, Lods, Tags, WaterNavVolumes, PuddleDecals;
             public string ManifestSha256;
         }
 
@@ -110,12 +176,27 @@ namespace DD.Art.Pipeline.EditorTools
             g.SetTexture("_StoneNormal", Load(ArtPipelinePaths.SourceTexture("stone", "Normal")));
             g.SetTexture("_StoneMask", Load(ArtPipelinePaths.DerivedMask("stone")));
             g.SetFloat("_Tile", 4f);
+            // WP-038E · AP-018 wet surfaces (Look B): tiles, wet packed → derived masks, tints, puddles, shore map.
+            g.SetTexture("_DampMask", Load(ArtPipelinePaths.SourceTexture("wet_damp", "Mask")));
+            g.SetTexture("_PuddleMask", Load(ArtPipelinePaths.SourceTexture("wet_puddle", "Mask")));
+            g.SetTexture("_ShoreMask", Load(ArtPipelinePaths.SourceTexture("wet_shore", "Mask")));
+            g.SetVector("_ShoreBounds", ShoreBounds);
+            g.SetFloat("_ShoreFloor", ShoreFloor);
+            g.SetTexture("_WetStoneMap", Load(ArtPipelinePaths.SourceTexture("wet_stone", "BaseColor")));
+            g.SetTexture("_WetStoneMask", Load(ArtPipelinePaths.DerivedMask("wet_stone")));
+            g.SetTexture("_WetEarthMask", Load(ArtPipelinePaths.DerivedMask("wet_earth")));
+            g.SetTexture("_WetGravelMask", Load(ArtPipelinePaths.DerivedMask("wet_gravel")));
+            g.SetColor("_WetTintEarth", WetTintEarth);
+            g.SetColor("_WetTintGravel", WetTintGravel);
+            g.SetFloat("_PuddleThreshold", PuddleThreshold);
+            g.SetFloat("_PuddleRamp", PuddleRamp);
+            g.SetFloat("_PuddleSmoothness", PuddleSmoothness);
             g.SetFloat("_GravelTint", GravelTint);
             g.SetFloat("_GravelSmoothness", 0.15f);
             g.SetFloat("_EarthSmoothness", 0.08f);
             g.SetFloat("_StoneSmoothness", 0.43f);
             g.SetFloat("_UseMasks", 1f);
-            g.SetFloat("_WetDarken", 0.45f);
+            g.SetFloat("_WetDarken", 0f);   // WP-038E: the AP-018 tints / wet tile carry the darkening
             g.SetFloat("_WetSmoothness", 0.60f);
             g.SetFloat("_NormalStrength", 1f);
             g.enableInstancing = false;
@@ -154,6 +235,16 @@ namespace DD.Art.Pipeline.EditorTools
             k.SetColor("_BaseColor", new Color(KerbAlbedoLift, KerbAlbedoLift, KerbAlbedoLift, 1f));
             k.enableInstancing = stone.enableInstancing;
             EditorUtility.SetDirty(k);
+
+            // WP-038E · puddle decal (URP Decal shader graph: Base_Map RGBA sheet 4×2 + Normal_Map; cells picked per projector by uvScale / uvBias).
+            Shader decal = Shader.Find(DecalShaderName);
+            if (decal == null) throw new InvalidOperationException(LogPrefix + "decal shader missing: " + DecalShaderName);
+            Material d = LoadOrCreate(PuddleDecalMaterialPath, decal, "M_decal_puddle");
+            d.SetTexture("Base_Map", Load(ArtPipelinePaths.SourceTexture("decal_puddle", "Sheet")));
+            d.SetTexture("Normal_Map", Load(ArtPipelinePaths.SourceTexture("decal_puddle", "Normal")));
+            d.SetFloat("Normal_Blend", 1f);
+            d.enableInstancing = true;
+            EditorUtility.SetDirty(d);
             AssetDatabase.SaveAssets();
             Debug.Log(LogPrefix + "materials: M_ground_blend (DD/GroundBlend) + M_water_v2 (DD/Water v2)");
         }
@@ -308,6 +399,9 @@ namespace DD.Art.Pipeline.EditorTools
             holesRoot.transform.SetParent(parent.transform, false);
             foreach ((Vector2 centre, Vector2 semi, float yaw) hole in basinHoles) report.WaterNavVolumes += BuildBasinNavVolumes(holesRoot, hole, env);
 
+            // WP-038E · AP-018 puddle decals seeded from the plates' own wetness (readable LOD0 vertex colour) × the puddle tile.
+            report.PuddleDecals = BuildPuddleDecals(parent, basinHoles);
+
             // The v1 pond planes (AP-003B pond_water_surface placement instances) are replaced by the water meshes: keep the
             // instances (counts, NavMesh ignore) but stop rendering them.
             int hidden = 0;
@@ -322,7 +416,7 @@ namespace DD.Art.Pipeline.EditorTools
                 }
             }
 
-            Debug.Log(LogPrefix + "built " + report.Plates + " plates (" + report.Lods + " LOD renderers, " + report.Kerbs + " kerbs, " + report.Colliders + " colliders) + " + report.Water + " water meshes (" + report.WaterNavVolumes + " not-walkable basin NavMesh rows), " + report.Tags + " surface tags; v1 pond renderers hidden " + hidden + "; manifest " + report.ManifestSha256.Substring(0, 12) + "…");
+            Debug.Log(LogPrefix + "built " + report.Plates + " plates (" + report.Lods + " LOD renderers, " + report.Kerbs + " kerbs, " + report.Colliders + " colliders) + " + report.Water + " water meshes (" + report.WaterNavVolumes + " not-walkable basin NavMesh rows, " + report.PuddleDecals + " puddle decals), " + report.Tags + " surface tags; v1 pond renderers hidden " + hidden + "; manifest " + report.ManifestSha256.Substring(0, 12) + "…");
             return report;
         }
 
@@ -510,6 +604,134 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             return count;
+        }
+
+        /// <summary>
+        /// AP-018 puddle projectors. For every ground plate (readable LOD0: AP015_Mask.A = wetness per vertex) a vertex is a
+        /// candidate when wetness × damp tile × puddle tile (both 4 m, sampled from the PNGs) clears <see cref="PuddleThreshold"/>
+        /// and it lies outside the basin ellipses; candidates are taken strongest-first with a <see cref="PuddleDecalSpacing"/>
+        /// exclusion up to <see cref="PuddleDecalCap"/>. Each projector is 1.2 × 1.2 m, points down, random yaw and sheet cell
+        /// (uvScale 0.25 × 0.5 + bias), screen-space decal (albedo + normal); the shader's puddle path lifts the smoothness there.
+        /// </summary>
+        private static int BuildPuddleDecals(GameObject parent, List<(Vector2 centre, Vector2 semi, float yaw)> basinHoles)
+        {
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(PuddleDecalMaterialPath);
+            if (material == null) throw new InvalidOperationException(LogPrefix + "build the surface materials first (M_decal_puddle)");
+            Texture2D damp = ReadPng(ArtPipelinePaths.SourceTexture("wet_damp", "Mask"));
+            Texture2D puddle = ReadPng(ArtPipelinePaths.SourceTexture("wet_puddle", "Mask"));
+            Texture2D shore = ReadPng(ArtPipelinePaths.SourceTexture("wet_shore", "Mask"));
+            var candidates = new List<(float score, Vector3 pos)>();
+            int platesSeen = 0, platesReadable = 0, vertsSeen = 0, vertsColoured = 0, a20 = 0, a35 = 0, a45 = 0; float maxA = 0f, maxScore = 0f;
+            try
+            {
+                foreach (MeshFilter mf in parent.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if (!mf.name.StartsWith("AP015_ground_", StringComparison.Ordinal) || !mf.name.EndsWith("_LOD0", StringComparison.Ordinal)) continue;
+                    platesSeen++;
+                    Mesh mesh = mf.sharedMesh;
+                    if (mesh == null || !mesh.isReadable) continue;
+                    platesReadable++;
+                    Vector3[] verts = mesh.vertices;
+                    Color[] colours = mesh.colors;
+                    vertsSeen += verts.Length;
+                    if (colours == null || colours.Length != verts.Length) continue;
+                    vertsColoured += colours.Length;
+                    for (int i = 0; i < verts.Length; i++)
+                    {
+                        float a = colours[i].a;
+                        maxA = Mathf.Max(maxA, a);
+                        if (a >= 0.20f) a20++; if (a >= 0.35f) a35++; if (a >= 0.45f) a45++;
+                        if (a < 0.20f) continue;
+                        Vector3 w = mf.transform.TransformPoint(verts[i]);
+                        float wet = a * Tile(damp, w.x / 4f, w.z / 4f);
+                        if (w.x >= ShoreBounds.x && w.x <= ShoreBounds.z && w.z >= ShoreBounds.y && w.z <= ShoreBounds.w)
+                        {
+                            float sh = shore.GetPixelBilinear((w.x - ShoreBounds.x) / (ShoreBounds.z - ShoreBounds.x), (w.z - ShoreBounds.y) / (ShoreBounds.w - ShoreBounds.y)).r;
+                            wet *= Mathf.Max(sh, ShoreFloor);
+                        }
+
+                        // The vertex grid (0.5 m) rarely lands on a puddle-tile peak: probe a 3×3 ring (±0.4 m) and seed at the best sample.
+                        float best = -1f; Vector3 at = w;
+                        for (int oz = -1; oz <= 1; oz++)
+                        for (int ox = -1; ox <= 1; ox++)
+                        {
+                            Vector3 q = w + new Vector3(ox * 0.4f, 0f, oz * 0.4f);
+                            float pv = Tile(puddle, q.x / 4f, q.z / 4f);
+                            if (pv > best) { best = pv; at = q; }
+                        }
+
+                        float score = wet * best;
+                        maxScore = Mathf.Max(maxScore, score);
+                        if (score < PuddleThreshold) continue;
+                        w = at;
+                        bool inBasin = false;
+                        foreach ((Vector2 centre, Vector2 semi, float yaw) hole in basinHoles)
+                        {
+                            float ang = hole.yaw * Mathf.Deg2Rad, dx = w.x - hole.centre.x, dz = w.z - hole.centre.y;
+                            float lx = dx * Mathf.Cos(ang) + dz * Mathf.Sin(ang), lz = -dx * Mathf.Sin(ang) + dz * Mathf.Cos(ang);
+                            float sx = hole.semi.x + PuddleDecalSize, sz = hole.semi.y + PuddleDecalSize;
+                            if ((lx * lx) / (sx * sx) + (lz * lz) / (sz * sz) <= 1f) { inBasin = true; break; }
+                        }
+
+                        if (!inBasin) candidates.Add((score, w));
+                    }
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(damp); UnityEngine.Object.DestroyImmediate(puddle); UnityEngine.Object.DestroyImmediate(shore);
+            }
+
+            candidates.Sort((a, b) => b.score.CompareTo(a.score));
+            Debug.Log(LogPrefix + "puddle seeds: plates " + platesSeen + " readable " + platesReadable + " vertices " + vertsSeen + " coloured " + vertsColoured + " A≥0.2/0.35/0.45 " + a20 + "/" + a35 + "/" + a45 + " maxA " + maxA.ToString("F2") + " maxScore " + maxScore.ToString("F2") + " candidates " + candidates.Count);
+            var chosen = new List<Vector3>();
+            foreach ((float score, Vector3 pos) c in candidates)
+            {
+                if (chosen.Count >= PuddleDecalCap) break;
+                bool far = true;
+                for (int i = 0; i < chosen.Count; i++)
+                {
+                    float dx = chosen[i].x - c.pos.x, dz = chosen[i].z - c.pos.z;
+                    if (dx * dx + dz * dz < PuddleDecalSpacing * PuddleDecalSpacing) { far = false; break; }
+                }
+
+                if (far) chosen.Add(c.pos);
+            }
+
+            var root = new GameObject(PuddleDecalsName);
+            root.transform.SetParent(parent.transform, false);
+            var rng = new System.Random(18);   // AP-018 seed
+            for (int i = 0; i < chosen.Count; i++)
+            {
+                var go = new GameObject("Puddle_" + i.ToString("000"));
+                go.transform.SetParent(root.transform, false);
+                go.transform.position = chosen[i] + Vector3.up * (PuddleDecalDepth * 0.5f);
+                go.transform.rotation = Quaternion.Euler(90f, (float)(rng.NextDouble() * 360.0), 0f);   // projects along local +Z = world down
+                var projector = go.AddComponent<DecalProjector>();
+                projector.material = material;
+                projector.size = new Vector3(PuddleDecalSize, PuddleDecalSize, PuddleDecalDepth);
+                projector.pivot = new Vector3(0f, 0f, PuddleDecalDepth * 0.5f);
+                projector.drawDistance = PuddleDecalDrawDistance;
+                projector.fadeScale = 0.6f;
+                int cell = rng.Next(8);
+                projector.uvScale = new Vector2(0.25f, 0.5f);
+                projector.uvBias = new Vector2((cell % 4) * 0.25f, (cell / 4) * 0.5f);
+                GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.OccludeeStatic);
+            }
+
+            return chosen.Count;
+        }
+
+        private static Texture2D ReadPng(string assetPath)
+        {
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
+            if (!ImageConversion.LoadImage(tex, File.ReadAllBytes(assetPath), false)) throw new InvalidOperationException(LogPrefix + "cannot decode " + assetPath);
+            return tex;
+        }
+
+        private static float Tile(Texture2D tex, float u, float v)
+        {
+            return tex.GetPixelBilinear(u - Mathf.Floor(u), v - Mathf.Floor(v)).r;
         }
 
         private static void CopyLocalTransform(Transform src, Transform dst)

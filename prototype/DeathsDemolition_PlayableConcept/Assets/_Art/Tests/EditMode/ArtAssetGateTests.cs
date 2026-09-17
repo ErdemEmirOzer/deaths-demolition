@@ -450,10 +450,18 @@ namespace DD.Art.Tests.EditMode
             foreach (string f in ArtSurfaceImporter.WaterTextures) beklenen.Add(f);
             // (WP-047E: the WP-038 line said 150 but the set already held the 4 weapon maps — 147 + 7 = 154.)
             Assert.AreEqual(154, beklenen.Count, "Beklenen doku kümesi 147 + 7 (WP-038 su v2) = 154 olmalı.");
+            // WP-038E: the AP-018 wet inputs — wet stone albedo, three wet packed maps + their derived MetallicSmoothness, damp / puddle /
+            // shore masks, the puddle decal sheet + normal → 154 + 12 = 166.
+            beklenen.Add(ArtPipelinePaths.SourceTexture("wet_stone", "BaseColor"));
+            foreach (string role in ArtSurfaceImporter.WetPackedRoles) { beklenen.Add(ArtPipelinePaths.SourceTexture(role, "Packed")); beklenen.Add(ArtPipelinePaths.DerivedMask(role)); }
+            foreach (string role in new[] { "wet_damp", "wet_puddle", "wet_shore" }) beklenen.Add(ArtPipelinePaths.SourceTexture(role, "Mask"));
+            beklenen.Add(ArtPipelinePaths.SourceTexture("decal_puddle", "Sheet"));
+            beklenen.Add(ArtPipelinePaths.SourceTexture("decal_puddle", "Normal"));
+            Assert.AreEqual(166, beklenen.Count, "Beklenen doku kümesi 154 + 12 (WP-038E AP-018 ıslak yüzeyler) = 166 olmalı.");
 
-            // WP-047E · AP-013C casings: BaseColor + Normal + MRA source + derived MetallicSmoothness = 4 → 158.
+            // WP-047E · AP-013C casings: BaseColor + Normal + MRA source + derived MetallicSmoothness = 4 → 170.
             foreach (string f in ArtCasingBuilder.TextureFiles()) beklenen.Add(f);
-            Assert.AreEqual(158, beklenen.Count, "Beklenen doku kümesi 154 + 4 (WP-047E kovan seti) = 158 olmalı.");
+            Assert.AreEqual(170, beklenen.Count, "Beklenen doku kümesi 166 + 4 (WP-047E kovan seti) = 170 olmalı.");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;
@@ -539,7 +547,7 @@ namespace DD.Art.Tests.EditMode
                     continue;
                 }
 
-                int beklenenBoyut = ArtImportContract.MaxSizeOf(sinif.Value, rol);   // WP-038: derived masks capped at 1024
+                int beklenenBoyut = ArtImportContract.MaxTextureSizeOf(yol);   // WP-038: derived masks capped at 1024; WP-038E: wet packed / derived 512
                 if (importer.maxTextureSize != beklenenBoyut) ihlaller.Add(yol + ": maxTextureSize " + importer.maxTextureSize + " != " + beklenenBoyut + " (" + sinif + ")");
                 TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(ArtImportContract.StandalonePlatform);
                 if (!st.overridden || st.maxTextureSize != beklenenBoyut) ihlaller.Add(yol + ": Standalone maxTextureSize " + st.maxTextureSize + " != " + beklenenBoyut);
@@ -547,7 +555,7 @@ namespace DD.Art.Tests.EditMode
 
                 PngBoyut(yol, out int w, out int h);
                 if (rol == ArtImportContract.TextureRole.Packed || (rol == ArtImportContract.TextureRole.Mask && !ArtImportContract.IsBoundMask(yol))) continue;   // provenance only; no material binds them (WP-016: the AP-007 ID mask feeds the derived DetailMask)
-                long bytes = ArtImportContract.EstimatedShippedBytes(w, h, sinif.Value, rol, importer.mipmapEnabled);
+                long bytes = ArtImportContract.EstimatedShippedBytes(yol, w, h, importer.mipmapEnabled);   // class / role cap + the WP-038E wet 512 cap
                 sevk += bytes;
                 if (ArtImportContract.IsCharacterClass(sinif.Value)) sevkKarakter += bytes;
                 else if (ArtImportContract.IsWeaponClass(sinif.Value)) sevkSilah += bytes;

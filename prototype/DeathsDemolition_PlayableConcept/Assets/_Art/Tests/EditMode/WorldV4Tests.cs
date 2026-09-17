@@ -68,6 +68,23 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(kerbMat, "M_kerb_stone");
             Assert.AreEqual(ArtSurfaceImporter.KerbAlbedoLift, kerbMat.GetColor("_BaseColor").r, 1e-4f, "kerb albedo × 1,2 (AP-015P M4 / AD MUST-4)");
             Assert.LessOrEqual(ground.GetFloat("_WetSmoothness"), 0.60f, "ıslak smoothness ≤ 0,60 (DEC-076 ayna yok)");
+            // WP-038E · AP-018 wet path: tiles / masks / wet packed → derived masks bound, tints from role_stats, puddle exception 0,70, legacy darkening off.
+            foreach (string prop in new[] { "_DampMask", "_PuddleMask", "_ShoreMask", "_WetStoneMap", "_WetStoneMask", "_WetEarthMask", "_WetGravelMask" })
+                Assert.IsNotNull(ground.GetTexture(prop), prop + " (AP-018) bağlı değil");
+            Assert.Less(((Vector4)(ground.GetColor("_WetTintEarth") - ArtSurfaceImporter.WetTintEarth)).magnitude, 1e-3f, "_WetTintEarth (AP-018 role_stats)");
+            Assert.Less(((Vector4)(ground.GetColor("_WetTintGravel") - ArtSurfaceImporter.WetTintGravel)).magnitude, 1e-3f, "_WetTintGravel (AP-018 role_stats)");
+            Assert.AreEqual(ArtSurfaceImporter.PuddleSmoothness, ground.GetFloat("_PuddleSmoothness"), 1e-4f);
+            Assert.AreEqual(0f, ground.GetFloat("_WetDarken"), 1e-4f, "AP-018 tint/ıslak karo koyulaştırmayı taşır");
+            Material puddleMat = AssetDatabase.LoadAssetAtPath<Material>(ArtSurfaceImporter.PuddleDecalMaterialPath);
+            Assert.IsNotNull(puddleMat, "M_decal_puddle"); Assert.IsNotNull(puddleMat.GetTexture("Base_Map"), "puddle decal sheet");
+            var rendererData = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>(ArtLightingBake.UrpRendererPath);
+            bool decalFeature = false;
+            foreach (UnityEngine.Rendering.Universal.ScriptableRendererFeature f in rendererData.rendererFeatures) if (f != null && f.GetType().Name == "DecalRendererFeature") decalFeature = true;
+            Assert.IsTrue(decalFeature, "DecalRendererFeature (AP-018 su birikintileri) renderer'da yok");
+            Transform puddles = surfaces.Find(ArtSurfaceImporter.PuddleDecalsName);
+            Assert.IsNotNull(puddles, "PuddleDecals kökü");
+            int projectors = puddles.GetComponentsInChildren<UnityEngine.Rendering.Universal.DecalProjector>(true).Length;
+            Assert.IsTrue(projectors >= 20 && projectors <= ArtSurfaceImporter.PuddleDecalCap, "su birikintisi projektörleri 20..160: " + projectors);
             Assert.AreEqual(0.6f, water.GetFloat("_DepthFade"), 1e-4f);
             Assert.AreEqual(ArtSurfaceImporter.WaterSpecularScale, water.GetFloat("_SpecularScale"), 1e-4f, "_SpecularScale 0,40 (WP-038D, AD SHOULD-5)");
             Assert.AreEqual(ArtSurfaceImporter.WaterSmoothness, water.GetFloat("_Smoothness"), 1e-4f, "_Smoothness 0,88 (P-05; AD SHOULD-5 0,82 denendi, lob genişledi → geri alındı)");
@@ -77,7 +94,7 @@ namespace DD.Art.Tests.EditMode
             for (int i = 0; i < surfaces.childCount; i++)
             {
                 Transform t = surfaces.GetChild(i);
-                if (t.name == "PondNavHoles") continue;   // NavMesh basin rows (no renderer / collider), counted in the NavMesh test
+                if (t.name == "PondNavHoles" || t.name == ArtSurfaceImporter.PuddleDecalsName) continue;   // NavMesh basin rows / AP-018 decal projectors (no renderer / collider)
                 bool isWater = t.name.StartsWith("AP015_water_", StringComparison.Ordinal);
                 if (isWater) waters++; else plates++;
                 var tag = t.GetComponent<SurfaceTag>();

@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_wet_gravel_Packed.png",
+    "sourceSha256": "071cf798a2756a8a7f22120262b41c07efb5f23d525addb5a52ee62fd11c5c10",
+    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T08:48:23.2357440Z",
+    "outputSha256": "318bb85b4a9fb32fef0e42970eef1293adb282e98b9e45f6213464a2bf9c25ef"
+}
