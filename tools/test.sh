@@ -19,6 +19,9 @@ while [ $# -gt 0 ]; do case "$1" in --filter) FILTER="$2"; shift ;; --out) OUT="
 [ -n "$OUT" ] || OUT="$DD_BUILD_ROOT/tests-$MODE-$(dd_utc)"
 mkdir -p "$OUT"; DD_TIMELINE="$OUT/timeline.txt"; XML="$OUT/$MODE.xml"; LOG="$OUT/$MODE.log"
 dd_log "test.sh mode=$MODE filter='${FILTER:-all}' timeout=${TMIN}min out=$OUT head=$(git -C "$DD_REPO" rev-parse --short=12 HEAD 2>/dev/null)"
+# WP-052 note (S-02 finding): the Editor test runner leaves ProfilerRecorder.LastValue at 0 while
+# Application.targetFrameRate == 60; tests that read recorders must set targetFrameRate = -1 in SetUp.
+[ "$MODE" = "playmode" ] && dd_log "note: ProfilerRecorder-based tests need Application.targetFrameRate = -1 in SetUp (LastValue stays 0 at 60 in the Editor runner)"
 if [ "$NOWAIT" -eq 1 ] && [ "$(dd_unity_count)" -ge "$DD_MAX_UNITY" ]; then dd_log "busy"; exit 75; fi
 trap 'dd_slot_release' EXIT
 dd_slot_acquire
