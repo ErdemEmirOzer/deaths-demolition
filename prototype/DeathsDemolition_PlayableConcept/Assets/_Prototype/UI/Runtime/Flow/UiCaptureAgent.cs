@@ -91,7 +91,7 @@ namespace DD.Prototype.UI
             private float _settle = 3f;
             private bool _bot;
             private int _nextRoundIndex;
-            private bool _upgradeDone, _groundDone, _activeDone, _threatDone, _lowDone;
+            private bool _upgradeDone, _groundDone, _activeDone, _threatDone, _lowDone, _statusDone;
 
             internal void Configure(string folder, string rounds, string delay, bool bot)
             {
@@ -194,15 +194,37 @@ namespace DD.Prototype.UI
                         yield return Capture("low-health.png");
                     }
 
+                    // WP-022L: first frame with a NET / DAZED enemy status chip on screen (WP-055 states).
+                    if (!_statusDone && state.Phase == RunPhase.Fighting && AnyEnemyStatusVisible())
+                    {
+                        _statusDone = true;
+                        yield return Capture("enemy-status.png");
+                    }
+
                     yield return null;
                 }
 
-                Debug.Log("[UiCapture] hud observer done · rounds " + _nextRoundIndex + "/" + _rounds.Length
+                Debug.Log("[UiCapture] hud observer done · rounds " + _nextRoundIndex + "/" + _rounds.Length + " status " + _statusDone
                           + " upgrade " + _upgradeDone + " special " + _groundDone + "/" + _activeDone + " threat " + _threatDone + " lowHealth " + _lowDone);
                 if (!_bot)
                 {
                     Application.Quit();
                 }
+            }
+
+            private static bool AnyEnemyStatusVisible()
+            {
+                System.Collections.Generic.IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; i < live.Count; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z != null && (z.IsNetted || z.IsDazed))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
             private IEnumerator Capture(string file)

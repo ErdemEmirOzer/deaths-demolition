@@ -526,6 +526,191 @@
      ]
     }
    ]
+  },
+  {
+   "file": "AP012_status_icons_1024x512.png",
+   "width": 1024,
+   "height": 512,
+   "tint": "runtime (white glyphs)",
+   "note": "AP-012 v003 (hf-06): status/threat/menu glyphs",
+   "sprites": [
+    {
+     "name": "Status.Netted",
+     "x": 4,
+     "y": 401,
+     "w": 74,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.Dazed",
+     "x": 82,
+     "y": 401,
+     "w": 99,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.Pulled",
+     "x": 185,
+     "y": 427,
+     "w": 107,
+     "h": 81,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.Surrounded",
+     "x": 296,
+     "y": 401,
+     "w": 106,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.Behind",
+     "x": 406,
+     "y": 401,
+     "w": 84,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.Elite",
+     "x": 494,
+     "y": 401,
+     "w": 80,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.Ultra",
+     "x": 578,
+     "y": 401,
+     "w": 90,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.LowHealth",
+     "x": 672,
+     "y": 413,
+     "w": 107,
+     "h": 95,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Accessibility",
+     "x": 783,
+     "y": 401,
+     "w": 106,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Controls",
+     "x": 893,
+     "y": 438,
+     "w": 107,
+     "h": 70,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Palette",
+     "x": 4,
+     "y": 296,
+     "w": 107,
+     "h": 101,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.TextScale",
+     "x": 115,
+     "y": 317,
+     "w": 107,
+     "h": 80,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.KaguraSuzu",
+     "x": 226,
+     "y": 290,
+     "w": 67,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Shop.Reroll",
+     "x": 297,
+     "y": 290,
+     "w": 98,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Shop.Picks",
+     "x": 399,
+     "y": 290,
+     "w": 105,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.ReduceFlashes",
+     "x": 508,
+     "y": 290,
+     "w": 87,
+     "h": 107,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    }
+   ]
   }
  ],
  "plates": [

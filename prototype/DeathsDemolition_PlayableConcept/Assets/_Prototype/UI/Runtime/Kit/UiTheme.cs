@@ -53,6 +53,9 @@ namespace DD.Prototype.UI
         /// <summary>WP-022H: AP-014 Special Weapon glyphs (hand-model silhouettes), keyed <c>Sw.&lt;SpecialWeaponId&gt;</c>.</summary>
         public const string SpecialGlyphAtlas = "UI/AP014/AP014_sw_icons_256x128";
 
+        /// <summary>WP-022L: AP-012 v003 status / threat / menu glyphs (Status.Netted, Threat.Surrounded, Menu.Accessibility ...).</summary>
+        public const string StatusGlyphAtlas = AtlasFolder + "AP012_status_icons_1024x512";
+
         /// <summary>UI scale the player may choose (settings). Clamped to this range.</summary>
         public const float UiScaleMin = 0.9f;
         public const float UiScaleMax = 1.2f;
@@ -139,6 +142,7 @@ namespace DD.Prototype.UI
             AddAll(Icons, Resources.LoadAll<Sprite>(IconAtlas));
             AddAll(Icons, Resources.LoadAll<Sprite>(WeaponGlyphAtlas)); // AP-013 roster glyphs (absent → AP-012 stand-ins via UiArt.RosterGlyph)
             AddAll(Icons, Resources.LoadAll<Sprite>(SpecialGlyphAtlas)); // AP-014 Special glyphs (absent → AP-012 Special.<id>)
+            AddAll(Icons, Resources.LoadAll<Sprite>(StatusGlyphAtlas)); // AP-012 v003 status/threat/menu glyphs (absent → chips stay text-only)
             AddAll(Frames, Resources.LoadAll<Sprite>(FrameAtlas));
             MenuPlate = Resources.Load<Sprite>(MenuPlateResource);
             HudMarker = Resources.Load<Sprite>(HudMarkerResource);

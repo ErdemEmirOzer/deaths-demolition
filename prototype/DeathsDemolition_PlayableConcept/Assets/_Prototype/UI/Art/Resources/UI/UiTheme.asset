@@ -87,6 +87,38 @@ MonoBehaviour:
     Sprite: {fileID: 7196120457397676169, guid: 1e4cf67d5dda1418fb3298badbddc601, type: 3}
   - Name: Sw.OfudaLoom
     Sprite: {fileID: 5442189960441275019, guid: 1e4cf67d5dda1418fb3298badbddc601, type: 3}
+  - Name: Hud.LowHealth
+    Sprite: {fileID: 2439851728315976112, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Menu.Accessibility
+    Sprite: {fileID: 4832987740125689751, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Menu.Controls
+    Sprite: {fileID: -7791906619513945541, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Menu.Palette
+    Sprite: {fileID: 51740241372468016, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Menu.ReduceFlashes
+    Sprite: {fileID: 8682259112821382147, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Menu.TextScale
+    Sprite: {fileID: -7218751633457364648, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Shop.Picks
+    Sprite: {fileID: 6874426133314298516, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Shop.Reroll
+    Sprite: {fileID: 2238186751384665839, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Special.KaguraSuzu
+    Sprite: {fileID: -6238732093555145420, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Status.Dazed
+    Sprite: {fileID: -5993203429339079311, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Status.Netted
+    Sprite: {fileID: -5314764791681496320, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Status.Pulled
+    Sprite: {fileID: 8979140712131725963, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Threat.Behind
+    Sprite: {fileID: -6479162511968892724, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Threat.Elite
+    Sprite: {fileID: 4634457664064740359, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Threat.Surrounded
+    Sprite: {fileID: -9158368645991034503, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
+  - Name: Threat.Ultra
+    Sprite: {fileID: 7773821288182575364, guid: 09232af0eaf4148718663bea72db94f2, type: 3}
   Frames:
   - Name: Cursor.Arrow
     Sprite: {fileID: 1009899790209449875, guid: 11c996ca452324ec9adcfac76409f108, type: 3}

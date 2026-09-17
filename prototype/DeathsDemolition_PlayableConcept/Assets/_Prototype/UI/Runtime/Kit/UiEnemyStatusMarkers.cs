@@ -21,14 +21,18 @@ namespace DD.Prototype.UI
     {
         public const int PoolSize = 16;
         private const float HeadHeight = 2.1f;
-        private const float ChipWidth = 64f;
-        private const float ChipHeight = 20f;
+        private const float ChipWidth = 88f;
+        private const float GlyphSize = 18f; // WP-022L: AP-012 v003 Status.Netted / Status.Dazed glyph, left of the word
+        private const float ChipHeight = 24f; // WP-022L (AD v007 MUST-2): room for the 18 px glyph
         private static readonly Vector2 Parked = new Vector2(-10000f, -10000f);
 
         private enum State { None = 0, Netted = 1, Dazed = 2 }
 
         private RectTransform[] _chips;
         private Image[] _fills;
+        private Image[] _glyphs;
+        private Sprite _nettedSprite;
+        private Sprite _dazedSprite;
         private TMP_Text[] _labels;
         private State[] _shown;
         private RectTransform _canvas;
@@ -41,6 +45,10 @@ namespace DD.Prototype.UI
             _canvas = canvasRect;
             _chips = new RectTransform[PoolSize];
             _fills = new Image[PoolSize];
+            _glyphs = new Image[PoolSize];
+            _nettedSprite = UiArt.Icon("Status.Netted");
+            _dazedSprite = UiArt.Icon("Status.Dazed");
+            bool glyphs = _nettedSprite != null && _dazedSprite != null;
             _labels = new TMP_Text[PoolSize];
             _shown = new State[PoolSize];
             for (int i = 0; i < PoolSize; i++)
@@ -55,6 +63,20 @@ namespace DD.Prototype.UI
                 _chips[i] = chip;
                 _fills[i] = chip.GetComponent<Image>();
                 _labels[i] = label;
+                if (glyphs)
+                {
+                    // Word + glyph (never colour alone): the glyph sits in the chip's left inset
+                    // and the label's own left inset moves past it. Sprites swap by reference.
+                    Image glyph = UiArt.IconImage("Icon", chip, "Status.Netted", UiColor.StateWarning, GlyphSize);
+                    var glyphRect = (RectTransform)glyph.transform;
+                    glyphRect.anchorMin = new Vector2(0f, 0.5f);
+                    glyphRect.anchorMax = new Vector2(0f, 0.5f);
+                    glyphRect.pivot = new Vector2(0f, 0.5f);
+                    glyphRect.anchoredPosition = new Vector2((int)UiSpace.XS, 0f);
+                    var labelRect = (RectTransform)label.transform;
+                    labelRect.offsetMin = new Vector2((int)UiSpace.XS + GlyphSize + (int)UiSpace.XS, 0f);
+                    _glyphs[i] = glyph;
+                }
                 _shown[i] = State.None;
             }
         }
@@ -100,6 +122,11 @@ namespace DD.Prototype.UI
                         // Literals: no formatting. NET = warning gold (held), DAZED = danger coral (stunned).
                         _labels[used].text = state == State.Netted ? "NET" : "DAZED";
                         _labels[used].color = UiTokens.Get(state == State.Netted ? UiColor.StateWarning : UiColor.StateDanger);
+                        if (_glyphs[used] != null)
+                        {
+                            _glyphs[used].sprite = state == State.Netted ? _nettedSprite : _dazedSprite;
+                            _glyphs[used].color = _labels[used].color;
+                        }
                     }
 
                     used++;

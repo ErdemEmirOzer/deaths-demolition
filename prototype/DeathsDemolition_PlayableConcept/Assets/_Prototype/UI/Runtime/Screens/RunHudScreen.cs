@@ -184,6 +184,7 @@ namespace DD.Prototype.UI
         private int _swShownSeconds = -1, _swShownHits = -1, _swShownShots = -1, _swShownMode = -1;
         private const float ShotModelWidth = 150f;
         private Image _healthIcon;
+        private bool _lowHealthIconShown;
         private Image _reticle;
         private readonly System.Collections.Generic.List<RectTransform> _panels =
             new System.Collections.Generic.List<RectTransform>(6);
@@ -812,9 +813,9 @@ namespace DD.Prototype.UI
 
         // ============================================================ threat chips
 
-        private const float ThreatChipWidth = 200f;
+        private const float ThreatChipWidth = 208f; // WP-022L (AD v007 MUST-1): +8 for the 24 px glyph
         private const float ThreatChipHeight = 40f; // AD v005 MUST-1: 20 px Body bold, 20 px glyph inside, 40 px tall
-        private const float ThreatGlyphSize = 20f;
+        private const float ThreatGlyphSize = 24f; // AD v007 MUST-1
 
         /// <summary>
         /// Combat warnings from the threat director (WP-033 <see cref="ThreatHudFeed"/>):
@@ -836,9 +837,9 @@ namespace DD.Prototype.UI
             row.anchoredPosition = new Vector2(0f, -((int)UiTokens.SafeInset + RoundBlockHeight + (int)UiSpace.XS));
             _threatRow = row.gameObject;
 
-            _threatSurrounded = ThreatChip(row, 0, "SURROUNDED", "Hud.Enemies", UiColor.StateDanger, out _);
-            _threatRear = ThreatChip(row, 1, "BEHIND YOU", "Menu.Back", UiColor.StateDanger, out _);
-            _threatStrong = ThreatChip(row, 2, "ELITE NEARBY", "Hud.Special", UiColor.StateWarning, out _threatStrongText);
+            _threatSurrounded = ThreatChip(row, 0, "SURROUNDED", "Threat.Surrounded", UiColor.StateDanger, out _);
+            _threatRear = ThreatChip(row, 1, "BEHIND YOU", "Threat.Behind", UiColor.StateDanger, out _);
+            _threatStrong = ThreatChip(row, 2, "ELITE NEARBY", "Threat.Elite", UiColor.StateWarning, out _threatStrongText);
         }
 
         private static GameObject ThreatChip(RectTransform row, int index, string text, string icon, UiColor color, out TMP_Text label)
@@ -870,12 +871,8 @@ namespace DD.Prototype.UI
             glyphRect.anchorMax = new Vector2(0f, 0.5f);
             glyphRect.pivot = new Vector2(0f, 0.5f);
             glyphRect.anchoredPosition = new Vector2(20f, 0f); // 20 px padding, glyph inside the chip
-            if (index == 1)
-            {
-                // The back chevron points the way the danger is: behind.
-                glyphRect.localRotation = Quaternion.Euler(0f, 0f, 90f);
-            }
-
+            // WP-022L: the AP-012 v003 threat glyphs are drawn upright (Threat.Behind already
+            // shows the arrow striking from behind), so the old Menu.Back rotation is gone.
             RectTransform labelRect = (RectTransform)label.transform;
             labelRect.offsetMin = new Vector2(20f + ThreatGlyphSize + (int)UiSpace.S, 0f);
             labelRect.offsetMax = new Vector2(-20f, 0f);
@@ -1195,6 +1192,17 @@ namespace DD.Prototype.UI
                 if (_healthIcon != null)
                 {
                     _healthIcon.color = UiTokens.Get(_model.HealthLow ? UiColor.BarHealthLow : UiColor.BarHealth);
+                    // WP-022L (AP-012 v003): cracked heart while low; the whole heart otherwise.
+                    // Sprite swap only when the low state flips (HealthBar refreshes every tick).
+                    if (_model.HealthLow != _lowHealthIconShown)
+                    {
+                        _lowHealthIconShown = _model.HealthLow;
+                        Sprite heartSprite = UiArt.Icon(_model.HealthLow ? "Hud.LowHealth" : "Hud.Health");
+                        if (heartSprite != null)
+                        {
+                            _healthIcon.sprite = heartSprite;
+                        }
+                    }
                 }
             }
 

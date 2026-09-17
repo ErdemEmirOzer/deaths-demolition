@@ -78,6 +78,20 @@ namespace DD.Prototype.Tests.EditMode
             foreach (string key in HudKeys) Assert.IsTrue(names.Contains(key), "eksik HUD ikonu: " + key);
             foreach (string key in MenuKeys) Assert.IsTrue(names.Contains(key), "eksik menü ikonu: " + key);
             foreach (string key in FrameKeys) Assert.IsTrue(names.Contains(key), "eksik çerçeve: " + key);
+
+            // WP-022L: AP-012 v003 status/threat/menu atlas (16 sprites, 128², white glyphs).
+            Sprite[] status = Resources.LoadAll<Sprite>(UiTheme.StatusGlyphAtlas);
+            Assert.AreEqual(16, status.Length, "durum atlası 16 sprite'a dilimlenmeli");
+            var statusNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Sprite s in status)
+            {
+                Assert.IsTrue(statusNames.Add(s.name), "durum ikon adı tekrarlı: " + s.name);
+                Assert.LessOrEqual(s.rect.width, 128f, s.name + " 128² hücreye sığmalı (AD v007 MUST-1: sıkı rect)");
+            }
+            foreach (string key in new[] { "Status.Netted", "Status.Dazed", "Threat.Surrounded", "Threat.Behind", "Threat.Elite", "Hud.LowHealth", "Menu.Accessibility", "Menu.Controls" })
+            {
+                Assert.IsTrue(statusNames.Contains(key), "eksik durum ikonu: " + key);
+            }
         }
 
         [Test]

@@ -219,9 +219,9 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.S);
             _settingsTab = AddTab(ref stack, column, "SETTINGS", UiContext.Settings, "Menu.Settings");
             stack.Gap(UiSpace.S);
-            _controlsTab = AddTab(ref stack, column, "CONTROLS", UiContext.Controls, "Menu.Keyboard");
+            _controlsTab = AddTab(ref stack, column, "CONTROLS", UiContext.Controls, "Menu.Controls");
             stack.Gap(UiSpace.S);
-            _accessibilityTab = AddTab(ref stack, column, "ACCESSIBILITY", UiContext.Accessibility, null); // AD v006 MUST-2: no glyph (the kit has no eye/person glyph; gamepad stays with CONTROLS)
+            _accessibilityTab = AddTab(ref stack, column, "ACCESSIBILITY", UiContext.Accessibility, "Menu.Accessibility"); // AD v006 MUST-2 → AP-012 v003 person-in-circle glyph (gamepad stays with CONTROLS)
 
             // Quit is docked to the foot of the column rather than to the cursor: a
             // destructive action should not sit adjacent to the reading tabs.
