@@ -84,6 +84,7 @@ namespace DD.Prototype.Audio
         private float _phaseLoopLevel, _phaseLoopTarget;
         private float _stingerHold;           // seconds the layer duck stays at StingerDuck
         private float _stingerDuckLevel = 1f;
+        private float _combatTrim = 1f;
         private bool _afterRun;               // results state: RunEnded / Dead until the next RunStarted
 
         /// <summary>Stingers played (test / F1 readout).</summary>
@@ -114,6 +115,9 @@ namespace DD.Prototype.Audio
 
         /// <summary>Current layer duck from a stinger (1 = none). Test readout.</summary>
         public float StingerDuckLevel => _stingerDuckLevel;
+
+        /// <summary>WP-058B: the L3 combat trim currently applied to the score (1 = none, 0.79 = −2 dB). Test readout.</summary>
+        public float CombatTrim => _combatTrim;
 
         public MusicDirector(Transform root, AudioClipLibrary library, AudioBusMixer mixer, AudioMixerBridge bridge)
         {
@@ -282,7 +286,10 @@ namespace DD.Prototype.Audio
             ResolveTargets();
 
             bool pullback = _phase != RunPhase.Fighting && _phase != RunPhase.Countdown;
-            float busGain = _mixer.Gain(AudioBus.Music);   // WP-057: the score has its own software bus (duck + user volume)
+            // WP-058B (engineer, v008 gate): at threat layer 3 the score trims −2 dB so the weapon and the
+            // claw stay legible under the full stack; ramped, never stepped.
+            _combatTrim = Mathf.MoveTowards(_combatTrim, ThreatLayer >= 3 && !pullback ? 0.79f : 1f, unscaledDeltaTime / 1.5f);
+            float busGain = _mixer.Gain(AudioBus.Music) * _combatTrim;   // WP-057: the score has its own software bus (duck + user volume)
 
             // Stinger duck: hold, then release over StingerDuckRelease.
             if (_stingerHold > 0f)

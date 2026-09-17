@@ -1819,3 +1819,14 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 **Testler:** EditMode 32/32 (`UiArtThemeTests`, `UiTextAuditTests`, `UiEventsTests`, `UpgradeOfferPolicyTests`), PlayMode `UiArtSliceTests` 5/5 (hd: HUD testi +Special kullanım satırı: sahte Active durumu + WP-056 olayları → "FIELD 4s · 2 HIT" → "FIELD ENDED · 2 HIT" → boş, AP-014 glifi `Sw.KaguraBell`), `EconomyUpgradeRulesSliceTests` (hc), `SpecialWeaponHudAllocationTests` 2/2 (hc, yalnız başına); tema 37 ikon; dev build (hc); yakalama `wp-022d/evidence/captures-h/selection` (eğik AP-013 glifleri); restore OK; kredi 0.
 
 **Devirler:** WP-022I → WP-055 durum işaretleri + AD turu (r8/r12 + Special kareleri); S-02 → Tide Jewel AP-014 modeli/glifi; S-04 → Ö-6a onayı (politika 2 + entitlement) — UI hazır.
+
+## WP-058B — Audio: mühendis mix önerileri ölçümle, MusicTension tonal düzeltmesi, AmbPondBed v2 (kredi 0)
+
+**Durum:** Tamamlandı (S-08, 2026-09-17, HIZLI HAT §6). Branch `wp-058b` (taban `main` = `1a41d4f` = WP-058), **tek commit**; kredi 0. WP-055 tepki sesleri ve WP-038 plakaları main'e girince ayrı küçük commit.
+
+- **MusicTension ↔ Base tonal çatışması (sound-designer kararı, DEC değil):** tension stem'i **+4 st** yeniden akort — yeniden örneklemeyle pitch, faz-vokoder stretch ile tam stem uzunluğuna (131,6 s) geri → kilit-adım korunur (`ap011_music_arrange.py TENSION_SHIFT_ST`); kroma korelasyonu Base ile −0,34 → +0,42 (kapı ölçümü −0,50 → 0,81; tarama −6…+7 st içinde en iyi +4). README notu.
+- **Mühendis önerileri:** (a) faz ölçümü **LUFS-M/entegre (BS.1770, `LoudnessMeter`)** ile — dBFS RMS yerine; (b) **L3 combat trim**: `MusicDirector.CombatTrim` tehdit katmanı 3'te müzik −2 dB (0,79) rampalı; (c) UI trimleri: RoundBreak UI −2 → 0, Menu UI −3 → −1 (snapshot tablosu v2.1, `EnsureSnapshotMix` yerinde).
+- **AmbPondBed v2 (kredisiz):** AmbRegionSouth durağan dilim (drive 0,35) + yavaş pembe su gövdesi + ezilmiş impact_water dokusu → crest 26,5 → **15,2 dB**, −22 LUFS hedefte (tepe-sınırlı değil).
+- **Ölçüm/test (§6 tek acquire, tek build):** EditMode 41/41; PlayMode `AudioSliceTests` 18/18 — faz ölçümü **LUFS (BS.1770 entegre, Player çıkışı)**: dövüş -20.9 / round arası -28.7 / menü -28.0; L3 combat trim < 0,85 ✓; HudLowHealth müzik duck ✓; limiter yığın tepe −6,0 dBFS. Release build 572 MB, e1/e4 smoke 0 hata (smoke slotu), restore 6/6.
+
+**Devirler:** WP-055 düşman Special tepkileri, WP-038 plakaları; dinleme turu manuel.

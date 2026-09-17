@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v009
-  _sourceHash: b425980fa33bfd231b1a9eb76055b10bbb098130b3719f00db7011f8c403f4fe
+  _manifestVersion: ap011-v010
+  _sourceHash: c44bfdbc3647b27987dc8fc872c31d2c9aef25bd98762958704cea139beda0ce
   _entries:
   - Sound: 10
     Clips:
@@ -1013,10 +1013,10 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 72b3ba29c5f1a42d28ca13d250d0cdfd, type: 3}
     Loop: 1
     Lufs: -16
-    TruePeakDb: -3.34
+    TruePeakDb: -2.1
     Provenance: "seed_audio job 074c5f9a (1.1 cr) \xB7 music_tension"
     NoiseFloorDb: -85.5
-    DcDb: -240
+    DcDb: -177
     Clipped: 0
     BitDepth: 24
     Layers: single take
@@ -2310,16 +2310,16 @@ MonoBehaviour:
     Clips:
     - {fileID: 8300000, guid: 900849b47d0b448788b791982bac4f8c, type: 3}
     Loop: 1
-    Lufs: -26.26
-    TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from raw/amb_region_south.wav,
-      raw/impact_water.wav
+    Lufs: -22
+    TruePeakDb: -7.03
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbRegionSouth.wav,
+      noise:pink, raw/impact_water.wav
     NoiseFloorDb: -80.9
-    DcDb: -229.6
+    DcDb: -209.2
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v007, no credits): amb_region_south.wav@0ms 0dB + impact_water.wav@0ms
-      -30dB -5st'
+    Layers: 'derived (v007, no credits): AmbRegionSouth.wav@0ms 0dB -2st + noise:pink@0ms
+      -9dB + impact_water.wav@0ms -26dB -6st'
   - Sound: 301
     Clips:
     - {fileID: 8300000, guid: 3b296f7c613704496ac4442611ee3b99, type: 3}

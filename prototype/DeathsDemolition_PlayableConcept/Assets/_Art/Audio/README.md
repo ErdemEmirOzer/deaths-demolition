@@ -43,3 +43,9 @@
 
 - `AudioEventRouter.OnSpecialUsage`: Fired → the Special's own fire character (SwFire{Kagura,Ofuda,Tide}) over HeavyWeaponFire; FieldSpawned → Kagura wave-front one-shot / Ofuda web hum and Tide well as **3D loops** at the field origin (director `Special Field` pool, Impact bus) until FieldEnded (+ end voice); Hit → per-body touch (gain × Falloff01, 60 ms throttle per Special); Activated / Deactivated stay with the spin-up / expired cues. `AudioEventMap.SpecialUsage(id, kind)` → 12 distinct ids; SwSpawnGong is not used by any of them (REQ-053).
 - Fable measurement gate v007 + v008 applied (`asset-production/AP-011/v007/review/AP011-quality-gate-v007-applied.md`): weapon A/B/C Switch/Lowered/Raised now differ (B > A > C centroid), C Chamber pump body, Gravel/Pavement distinct, thunder band 142–157 Hz, stinger conditions (bell +1 st, SpecialPickup ≥ 2 s, Death pad-led, RunEnd −2 st). Manifest v009 = 178 ids / 408 files.
+
+## WP-058B — mix follow-ups (0 credits)
+
+- **MusicTension retuned +4 st** (designer decision after the Fable v008 gate: the stem sat off the base's tonal centre) by resample + phase-vocoder stretch back to the exact stem length, so the four layers stay lock-step (`asset-production/AP-011/tools/ap011_music_arrange.py`, `TENSION_SHIFT_ST`).
+- Phase meter now reports BS.1770 loudness (K-weighted, gated) instead of dBFS RMS; `MusicDirector.CombatTrim` trims the score −2 dB at threat layer 3; snapshot UI trims RoundBreak 0 dB / Menu −1 dB.
+- `AmbPondBed` re-derived (crest 26.5 → 15.2 dB, −22 LUFS on target).

@@ -32,9 +32,9 @@ namespace DD.Prototype.Audio.EditorTools
             // the score sits under the fight, comes forward in the break and the menu, UI trims 3-4 dB.
             //           Master  Music  Ambience  SFX-World  SFX-Player  UI
             new[] { 0f,   -5f,   -4f,       0f,       -1f,      -3f },   // Run
-            new[] { 0f,   -3f,   -3f,      -6f,       -3f,      -2f },   // RoundBreak: stinger + shop UI forward, world back
+            new[] { 0f,   -3f,   -3f,      -6f,       -3f,       0f },   // RoundBreak: stinger + shop UI forward, world back (WP-058B: UI −2 → 0)
             new[] { 0f,  -14f,  -12f,     -18f,      -18f,      -2f },   // Pause: world far back, UI audible (listener is paused anyway)
-            new[] { 0f,   -4f,  -10f,     -80f,      -80f,      -3f }    // Menu: menu loop + UI, no world
+            new[] { 0f,   -4f,  -10f,     -80f,      -80f,      -1f }    // Menu: menu loop + UI, no world (WP-058B: UI −3 → −1)
         };
 
         [MenuItem("DD/Audio/Build Mixer")]

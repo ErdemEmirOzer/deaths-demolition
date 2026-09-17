@@ -473,18 +473,20 @@ namespace DD.Prototype.Tests.PlayMode
             // WP-057 mix pass: output RMS per phase (report) + the HudLowHealth ↔ taiko rule (Music bus ducks).
             var buffer = new float[2048];
             float fightDb = 0f, breakDb = 0f, menuDb = 0f;
+            // WP-058B: K-weighted, gated loudness (BS.1770 via LoudnessMeter) of the captured output, not raw dBFS RMS.
+            var captured = new System.Collections.Generic.List<float>(45 * 2048);
             IEnumerator Measure(System.Action<float> sink)
             {
-                double sumSq = 0; long n = 0;
+                captured.Clear();
                 for (int f = 0; f < 45; f++)
                 {
                     yield return null;
                     AudioListener.GetOutputData(buffer, 0);
-                    for (int i = 0; i < buffer.Length; i++) sumSq += buffer[i] * buffer[i];
-                    n += buffer.Length;
+                    captured.AddRange(buffer);
                 }
 
-                sink(20f * Mathf.Log10((float)Math.Sqrt(sumSq / Math.Max(1, n)) + 1e-9f));
+                LoudnessMeter.Result r = LoudnessMeter.Measure(captured.ToArray(), AudioSettings.outputSampleRate);
+                sink(r.IntegratedLufs);
             }
 
             MusicDirector m = _d.Music;
@@ -499,15 +501,22 @@ namespace DD.Prototype.Tests.PlayMode
                 m.SetPhase(RunPhase.None); _d.Bridge.Transition(AudioSnapshot.Menu, 0.2f);
                 yield return new WaitForSecondsRealtime(3.5f);
                 yield return Measure(v => menuDb = v);
-                Debug.Log("[DD-TEST] wp057.mix fight=" + fightDb.ToString("0.0") + " dBFS break=" + breakDb.ToString("0.0") + " menu=" + menuDb.ToString("0.0") + " · " + m.Describe());
+                Debug.Log("[DD-TEST] wp057.mix fight=" + fightDb.ToString("0.0") + " LUFS break=" + breakDb.ToString("0.0") + " menu=" + menuDb.ToString("0.0") + " · " + m.Describe());
                 if (fightDb > -60f)
                 {
                     Assert.Greater(fightDb, menuDb - 0.1f, "Dövüş karışımı menüden sessiz olmamalı.");
                 }
+
+                // WP-058B: L3 combat trim on the score.
+                m.SetPhase(RunPhase.Fighting); _d.Bridge.Transition(AudioSnapshot.Run, 0.2f);
+                m.ThreatLayerOverride = 3;
+                yield return new WaitForSecondsRealtime(2.0f);
+                Assert.Less(m.CombatTrim, 0.85f, "L3'te müzik −2 dB trim almalı.");
+                m.ThreatLayerOverride = 0;
             }
             finally
             {
-                m.IntensityOverride = null; m.AccentOverride = null;
+                m.IntensityOverride = null; m.AccentOverride = null; m.ThreatLayerOverride = null;
                 m.SetPhase(RunPhase.Fighting); _d.Bridge.Transition(AudioSnapshot.Run, 0.2f);
             }
 
