@@ -425,13 +425,23 @@ namespace DD.Art.Tests.PlayMode
             long monoBefore = Profiler.GetMonoUsedSizeLong();
             int gen0Before = GC.CollectionCount(0);
             int frames = 0;
+            // WP-032D (WP-053 bisect): count the managed allocations per frame with the profiler recorders — the mono-heap
+            // delta and gen0 count missed a 40 B/body/frame params-array in the foot IK (Mathf.Min(a, b, c)).
+            long allocCount = 0, allocBytes = 0;
+            long[] phaseCount = new long[3];   // 0: locomotion only, 1: + attacks, 2: + attacks with the foot IK forced off
+            using var recCount = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count");
+            using var recBytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame");
             for (int f = 0; f < 240; f++)
             {
+                if (f >= 60) { allocCount += recCount.LastValue; allocBytes += recBytes.LastValue; }
+                if (f >= 60 && f < 120) phaseCount[0] += recCount.LastValue;
+                else if (f >= 120 && f < 180) phaseCount[1] += recCount.LastValue;
+                else if (f >= 180) { phaseCount[2] += recCount.LastValue; FootIkAdapter.Force = 0; }
                 for (int i = 0; i < visuals.Count; i++)
                 {
                     ZombieSkinnedVisual v = visuals[i];
                     v.SetSpeed(2.7f * ((f / 30 + i) % 2), Time.deltaTime);
-                    if ((f + i) % 120 == 0) v.PlayAttack(ZombieAttackStyle.Swipe, 0.55f);
+                    if (f >= 120 && (f + i) % 120 == 0) v.PlayAttack(ZombieAttackStyle.Swipe, 0.55f);
                 }
 
                 yield return null;
@@ -440,9 +450,15 @@ namespace DD.Art.Tests.PlayMode
 
             long delta = Profiler.GetMonoUsedSizeLong() - monoBefore;
             int gen0 = GC.CollectionCount(0) - gen0Before;
-            Debug.Log("[DD-TEST] wp032.crowd frames=" + frames + " monoDelta=" + delta + " gen0=" + gen0 + " served=" + FootIkAdapter.ServedThisFrame + " rays=" + FootIkAdapter.RaycastsThisFrame + " lookActive=" + CharacterLookAt.ActiveCount);
+            Debug.Log("[DD-TEST] wp032.crowd frames=" + frames + " monoDelta=" + delta + " gen0=" + gen0 + " allocPerFrame=" + (allocCount / 180f).ToString("F2", CultureInfo.InvariantCulture) + " bytesPerFrame=" + (allocBytes / 180f).ToString("F0", CultureInfo.InvariantCulture)
+                      + " served=" + FootIkAdapter.ServedThisFrame + " rays=" + FootIkAdapter.RaycastsThisFrame + " lookActive=" + CharacterLookAt.ActiveCount);
             Assert.AreEqual(0, gen0, "IK yolu gen0 tetikledi");
             Assert.LessOrEqual(delta, 4096, "IK/look-at yolu kare başına ayırıyor: " + delta);
+            FootIkAdapter.Force = -1;
+            Debug.Log("[DD-TEST] wp032.crowd.phases locoOnly=" + (phaseCount[0] / 60f).ToString("F2", CultureInfo.InvariantCulture) + " withAttacks=" + (phaseCount[1] / 60f).ToString("F2", CultureInfo.InvariantCulture) + " attacksNoFootIk=" + (phaseCount[2] / 60f).ToString("F2", CultureInfo.InvariantCulture) + " allocs/frame");
+            // WP-032D: the IK / look-at path itself is 0 (AllocationProbeTests idle-4: 0 / frame after the Mathf.Min fix); the gate here is the
+            // locomotion-only phase of 40 bodies (12 served by the foot IK, 40 look-ats).
+            Assert.LessOrEqual(phaseCount[0] / 60f, 0.5f, "40 gövdenin IK/look-at/locomotion yolu kare başına ayırıyor (sayaç): " + (phaseCount[0] / 60f));
             EnemyTargeting.Clear();
         }
     }

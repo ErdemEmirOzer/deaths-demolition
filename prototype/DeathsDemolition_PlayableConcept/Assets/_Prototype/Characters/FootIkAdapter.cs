@@ -128,7 +128,8 @@ namespace DD.Prototype.Characters
             _rightLift = rightDelta;
 
             // Pelvis follows the lower foot (a negative delta = the ground is below the animated foot).
-            float lowest = Mathf.Min(leftDelta, rightDelta, 0f);
+            // WP-032D (WP-053 bisect): the three-argument Mathf.Min is the params overload — one float[] per served body per frame.
+            float lowest = Mathf.Min(Mathf.Min(leftDelta, rightDelta), 0f);
             _pelvisOffset = Mathf.Lerp(_pelvisOffset, Mathf.Max(-MaxCorrection, lowest), k);
             if (Mathf.Abs(_pelvisOffset) > 1e-4f)
             {
