@@ -41,7 +41,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public uint seed = 1u;
             public int spawnsPerRound = 0;                       // 0 → the round's real pool (whole pools, see SpawnMixSimulator)
             public float hitFraction = 0.70f;                    // MODEL: fraction of fired shots that land
-            public float goldPickupFraction = 0.90f;             // MODEL: orbs collected before OrbLifetime (magnet mode)
+            public float goldPickupFraction = 1.00f;             // MODEL: orbs collected before OrbLifetime (magnet mode) — WP-045 calibration: bot runs collected ~everything (implied 1.00; was 0.90)
+            public float minSecondsPerEnemy = 2.5f;              // MODEL: round-time floor per spawn (travel + engage) — WP-045 calibration: bot R1 30 s / 12, R2 53 s / 20 (was refill-rate only, 8 s / 12)
             public float engagedFraction = 0.30f;                // MODEL: share of round time the player is inside an enemy's attack window
             public int simultaneousAttackers = 3;                // MODEL: enemies that can reach the player at once
             public bool buyEveryRound = true;                    // MODEL: one purchase per round when affordable (DEC-071)
@@ -70,7 +71,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public float sustainedDps;                           // build: mag/(mag/rps+reload) × damage × pellets × hit fraction × fire-rate mult
             public float crowdDps;                               // sustainedDps × crowd multiplier (pierce/chain/explosion/ricochet model)
             public float clearSeconds;                           // Σ effective HP / crowdDps, floored by the spawn pacing
-            public float pacingFloorSeconds;                     // pool / (MaxSpawnsPerRefillTick / SpawnRefillInterval)
+            public float pacingFloorSeconds;                     // max(pool / refill rate, pool × minSecondsPerEnemy)
             public int goldIncome;                               // Σ GoldRewardCalculator.Compute over the crowd × pickup fraction
             public int goldSpent;
             public int walletAfter;
@@ -113,7 +114,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public string utc;
             public uint seed;
             public int firstRound, lastRound;
-            public float hitFraction, goldPickupFraction, engagedFraction;
+            public float hitFraction, goldPickupFraction, engagedFraction, minSecondsPerEnemy;
             public int simultaneousAttackers;
             public string[] tierNames = { "Standard", "Special", "Elite", "Ultra" };
             public int[] introductionRound = new int[TierCount];
@@ -139,7 +140,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             {
                 utc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
                 seed = o.seed, firstRound = Math.Max(1, o.firstRound), lastRound = Math.Max(o.firstRound, o.lastRound),
-                hitFraction = o.hitFraction, goldPickupFraction = o.goldPickupFraction, engagedFraction = o.engagedFraction,
+                hitFraction = o.hitFraction, goldPickupFraction = o.goldPickupFraction, engagedFraction = o.engagedFraction, minSecondsPerEnemy = o.minSecondsPerEnemy,
                 simultaneousAttackers = o.simultaneousAttackers
             };
 
@@ -186,7 +187,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             report.flags = BuildFlags(report, config).ToArray();
             report.notes = new[]
             {
-                "MODEL fields: hitFraction, region mix (head 25% ×2 / upper 45% ×1 / lower 30% ×0.8 = shot multiplier 1.19), greedy cheapest-core-card purchase, crowd multipliers (pierce 0.82^k, chain 0.5×0.75^k, explosion chance×scale×(radius/2.2), ricochet chance×0.6), engagedFraction × simultaneousAttackers for incoming damage, regen counted over the un-engaged time.",
+                "MODEL fields (WP-045 calibrated: pickup 1.00, minSecondsPerEnemy 2.5 from QA-bot runs; hit / engaged kept at 0.70 / 0.30 — the bot's implied 0.15 / 0.60 reflect bot skill, see calibration-v1.md): hitFraction, region mix (head 25% ×2 / upper 45% ×1 / lower 30% ×0.8 = shot multiplier 1.19), greedy cheapest-core-card purchase, crowd multipliers (pierce 0.82^k, chain 0.5×0.75^k, explosion chance×scale×(radius/2.2), ricochet chance×0.6), engagedFraction × simultaneousAttackers for incoming damage, regen counted over the un-engaged time.",
                 "EXACT fields: pool, tier / armour counts (SpawnMixSimulator), EnemyHealth / EnemyAttackDamage / round multipliers, GoldRewardCalculator, CostForTier + DEC-070 clamp, LevelRequirement, RoundCompletionXp / KillXp, SpecialWeaponSpawnChance, weapon settings, WeaponUpgradeTuning multipliers, roster core branches."
             };
             return report;
@@ -278,7 +279,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
                     row.armouredShare[t] = n > 0 ? Mathf.Clamp01((mr.armour[0].equippedByTier[t] + mr.armour[1].equippedByTier[t] + mr.armour[2].equippedByTier[t]) / (float)n) : 0f;
                 }
 
-                row.pacingFloorSeconds = mr.pool / Mathf.Max(0.01f, config.Rounds.MaxSpawnsPerRefillTick / Mathf.Max(0.01f, config.Rounds.SpawnRefillInterval));
+                float refillFloor = mr.pool / Mathf.Max(0.01f, config.Rounds.MaxSpawnsPerRefillTick / Mathf.Max(0.01f, config.Rounds.SpawnRefillInterval));
+                row.pacingFloorSeconds = Mathf.Max(refillFloor, mr.pool * Mathf.Max(0f, o.minSecondsPerEnemy));
                 row.clearSeconds = Mathf.Max(row.pacingFloorSeconds, totalEffectiveHp / Mathf.Max(0.01f, row.crowdDps));
 
                 // ---- risk proxy: expected damage taken over the engaged time vs health + regen over the rest
@@ -511,7 +513,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
         {
             var sb = new StringBuilder();
             var ic = CultureInfo.InvariantCulture;
-            sb.AppendLine("# Balance v1 — " + r.schema + " · seed " + r.seed + " · R" + r.firstRound + "–R" + r.lastRound + " · hit " + r.hitFraction.ToString("0.00", ic) + " · pickup " + r.goldPickupFraction.ToString("0.00", ic) + " · engaged " + r.engagedFraction.ToString("0.00", ic) + " × " + r.simultaneousAttackers);
+            sb.AppendLine("# Balance v1 — " + r.schema + " · seed " + r.seed + " · R" + r.firstRound + "–R" + r.lastRound + " · hit " + r.hitFraction.ToString("0.00", ic) + " · pickup " + r.goldPickupFraction.ToString("0.00", ic) + " · engaged " + r.engagedFraction.ToString("0.00", ic) + " × " + r.simultaneousAttackers + " · s/enemy " + r.minSecondsPerEnemy.ToString("0.0", ic));
             sb.AppendLine();
             sb.Append("Opening card prices (after DEC-070 clamp): ");
             var names = Enum.GetNames(typeof(UpgradeBranch));

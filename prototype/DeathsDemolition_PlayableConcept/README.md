@@ -202,6 +202,8 @@ WP-032 (animation polish, ADR-032-1) adds the built-in Humanoid IK layer on top:
 
 WP-032B (AP-009B v002 on the characters) regenerates both controllers from the 36-clip v002 manifest (`AP009.clips-manifest.v002`; foot events on the correct side — the v001 names were mirrored, so footstep decals/SFX flip with this set), puts the player's four run cycles on the outer ring of the 2-D locomotion blend (walk ring at its own no-slide radius, run rate capped ×1.6), moves the Special Weapon pickup onto the upper-body override layer with no movement lock (DEC-082), adds the Ultra `Attack_Overhead` state (DEC-029 window from the clip's own events; S-03's sweep placeholder retires by data) and the `Wait` state on the queue idle with a per-body cycle offset (`SetWaiting`), and keeps the rise handshake clip-driven for S-03's hybrid policy (DEC-081).
 
+WP-045 (run telemetry & simulator calibration, ADR-045-1): `Assets/_Prototype/Diagnostics/Telemetry/RunTelemetry` observes the existing run / damage / weapon events into preallocated struct buffers and writes one `dd-run-telemetry-v1` JSON per run to `persistentDataPath/telemetry/` (per-round gold, kills per tier and armour, damage taken, special pickups, card tiers, TTK samples; no profile or identity data; `-ddTelemetry 0` disables, `-ddTelemetryDir` redirects). `Diagnostics/Editor/SimulatorCalibration` compares a folder of runs with `EconomySimulator` (WP-041) and reports deviations plus implied model parameters; the bot runs come from `QaRunBot` inside PlayMode tests.
+
 | Folder | One-line summary |
 |---|---|
 | `Core/` | The spine: `PrototypeConfig` and its ten sections, the `PrototypeOnly` origin attribute, boot/scene hand-off, object pooling, the input abstraction, and the F1 panel plus its registry. |

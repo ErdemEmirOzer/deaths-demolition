@@ -4,6 +4,7 @@
     "references": [
         "DD.Prototype.Core",
         "DD.Prototype.Runtime",
+        "DD.Prototype.Qa",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "Unity.TextMeshPro"
