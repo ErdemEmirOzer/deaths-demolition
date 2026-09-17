@@ -603,7 +603,7 @@ namespace DD.Prototype.UI
             // AD v006 MUST-6: AIM ASSIST as a cycle toggle (Off → Light → Full), MUST-1 recipe.
             UiButton assist = AddToggleRow(ref rightStack, right, "AimAssist", "AIM ASSIST",
                 () => AimAssistState(),
-                () => { UpdatePreferences(p => SetAimAssistLevel(p, (Mathf.RoundToInt(AimAssistLevel(p)) + 1) % 3)); return AimAssistState(); }, "AimAssist");
+                () => { UpdatePreferences(p => p.AimAssist = (InputAimAssistLevel)(((int)p.AimAssist + 1) % 3)); return AimAssistState(); }, "AimAssist");   // WP-059: the level is WP-024 data
             rightStack.Gap(UiSpace.S);
             UiButton rumble = AddToggleRow(ref rightStack, right, "Rumble", "RUMBLE",
                 () => (InputPreferencesStore.Current.RumbleEnabled ? "ON" : "OFF", InputPreferencesStore.Current.RumbleEnabled),
@@ -815,23 +815,10 @@ namespace DD.Prototype.UI
             InputPreferencesStore.Apply(next);
         }
 
-        private static float AimAssistLevel(InputPreferences p)
-        {
-            if (!p.AimAssistEnabled) return 0f;
-            return p.AimAssistAngleDegrees < InputPreferences.MaxAimAssistAngleDegrees * 0.75f ? 1f : 2f;
-        }
-
-        private static void SetAimAssistLevel(InputPreferences p, int level)
-        {
-            p.AimAssistEnabled = level > 0;
-            p.AimAssistAngleDegrees = level == 1 ? InputPreferences.MaxAimAssistAngleDegrees * 0.5f : InputPreferences.MaxAimAssistAngleDegrees;
-            p.AimAssistDistance = InputPreferences.MaxAimAssistDistance;
-        }
-
         private static (string, bool) AimAssistState()
         {
-            int level = Mathf.RoundToInt(AimAssistLevel(InputPreferencesStore.Current));
-            return (level <= 0 ? "OFF" : level == 1 ? "LIGHT" : "FULL", level > 0);
+            InputAimAssistLevel level = InputPreferencesStore.Current.AimAssist;   // WP-059: InputPreferences.AimAssistLevel is the source
+            return (AimAssistLevels.Label(level), level != InputAimAssistLevel.Off);
         }
 
         // ------------------------------------------------------- accessibility pane

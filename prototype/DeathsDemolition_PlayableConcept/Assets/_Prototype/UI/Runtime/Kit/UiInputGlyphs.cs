@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DD.Prototype.Core.InputAbstraction;
 using TMPro;
 using UnityEngine;
@@ -157,10 +158,20 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>The glyph for an action on a device. Gamepad labels follow the Xbox layout (the WP-024 default); keys are the WP-024 defaults.</summary>
+        /// <summary>
+        /// The glyph for an action on a device. Gamepad labels follow the Xbox layout (the
+        /// WP-024 default); keys are the WP-024 defaults. WP-059: a prompt whose action is a
+        /// rebindable Gameplay slot (Pause) shows the REBOUND control's name from the WP-024
+        /// remap service when the player changed it (<see cref="Rebound"/>).
+        /// </summary>
         public static Glyph For(UiPromptAction action, InputSchemeKind scheme)
         {
             bool pad = scheme == InputSchemeKind.Gamepad;
+            if (Rebound(action, scheme, out Glyph rebound))
+            {
+                return rebound;
+            }
+
             switch (action)
             {
                 case UiPromptAction.Submit: return pad ? new Glyph("A", true, 1f) : new Glyph("ENTER", false, 2.4f);
@@ -170,6 +181,107 @@ namespace DD.Prototype.UI
                 case UiPromptAction.Reroll: return pad ? new Glyph("Y", true, 1f) : new Glyph("R", false, 1.2f);
                 default: return new Glyph("?", true, 1f);
             }
+        }
+
+        /// <summary>The Gameplay action a prompt action is bound to, or null when the prompt is a fixed UI key (Submit / Cancel / Skip / Reroll).</summary>
+        public static string GameplayActionOf(UiPromptAction action)
+        {
+            return action == UiPromptAction.Pause ? PrototypeInputNames.ActionPause : null;
+        }
+
+        /// <summary>
+        /// WP-059: true (and the glyph) when the player rebound the prompt's Gameplay action on
+        /// <paramref name="scheme"/>; false leaves the default label. Reads the live
+        /// <see cref="InputRemapRegistry"/> service; no service (menus before the installer,
+        /// tests) means no override. Never allocates when nothing is overridden.
+        /// </summary>
+        public static bool Rebound(UiPromptAction action, InputSchemeKind scheme, out Glyph glyph)
+        {
+            glyph = default;
+            string gameplayAction = GameplayActionOf(action);
+            IInputRemapService remap = InputRemapRegistry.Current;
+            if (gameplayAction == null || remap == null)
+            {
+                return false;
+            }
+
+            IReadOnlyList<InputRemapEntry> entries = remap.Entries;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                InputRemapEntry e = entries[i];
+                if (e.Scheme != scheme || e.Action != gameplayAction || !string.IsNullOrEmpty(e.CompositePart) || !e.IsOverridden)
+                {
+                    continue;
+                }
+
+                glyph = FromControlName(e.DisplayName, scheme);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// The glyph a control's human-readable name draws: Xbox face-button letters as discs,
+        /// shoulders / triggers / sticks / menu buttons as short pills, keys as their upper-case
+        /// name (Escape → ESC, Space → SPACE). Width grows with the label so it never clips.
+        /// </summary>
+        public static Glyph FromControlName(string displayName, InputSchemeKind scheme)
+        {
+            string label = ShortLabel(displayName, scheme, out bool round);
+            return new Glyph(label, round, Mathf.Max(1.2f, 0.6f + 0.4f * label.Length));
+        }
+
+        private static string ShortLabel(string displayName, InputSchemeKind scheme, out bool round)
+        {
+            round = false;
+            if (string.IsNullOrEmpty(displayName))
+            {
+                return "?";
+            }
+
+            if (scheme == InputSchemeKind.Gamepad)
+            {
+                switch (displayName)
+                {
+                    case "Button South": case "A": round = true; return "A";
+                    case "Button East": case "B": round = true; return "B";
+                    case "Button West": case "X": round = true; return "X";
+                    case "Button North": case "Y": round = true; return "Y";
+                    case "Start": return "MENU";
+                    case "Select": return "VIEW";
+                    case "Left Shoulder": return "LB";
+                    case "Right Shoulder": return "RB";
+                    case "Left Trigger": return "LT";
+                    case "Right Trigger": return "RT";
+                    case "Left Stick Press": return "LS";
+                    case "Right Stick Press": return "RS";
+                }
+
+                if (displayName.StartsWith("D-Pad ", StringComparison.Ordinal))
+                {
+                    return "D-" + displayName.Substring(6).ToUpperInvariant();
+                }
+            }
+            else
+            {
+                switch (displayName)
+                {
+                    case "Escape": return "ESC";
+                    case "Space": return "SPACE";
+                    case "Enter": case "Return": return "ENTER";
+                    case "Backspace": return "BKSP";
+                    case "Left Shift": case "Right Shift": return "SHIFT";
+                    case "Left Ctrl": case "Right Ctrl": case "Left Control": case "Right Control": return "CTRL";
+                    case "Left Alt": case "Right Alt": return "ALT";
+                    case "Left Button": return "LMB";
+                    case "Right Button": return "RMB";
+                    case "Middle Button": return "MMB";
+                }
+            }
+
+            string upper = displayName.ToUpperInvariant();
+            return upper.Length <= 8 ? upper : upper.Substring(0, 8);
         }
 
         /// <summary>
@@ -238,9 +350,13 @@ namespace DD.Prototype.UI
             Apply(UiInputScheme.Current);
         }
 
+        private IInputRemapService _remap;
+
         private void OnEnable()
         {
             UiInputScheme.Changed += Apply;
+            InputRemapRegistry.CurrentChanged += OnRemapChanged;
+            Watch(InputRemapRegistry.Current);
             if (_text != null)
             {
                 Apply(UiInputScheme.Current);
@@ -250,6 +366,48 @@ namespace DD.Prototype.UI
         private void OnDisable()
         {
             UiInputScheme.Changed -= Apply;
+            InputRemapRegistry.CurrentChanged -= OnRemapChanged;
+            Watch(null);
+        }
+
+        // WP-059: a rebind (or reset) redraws the prompt at once — the pause screen's "same key closes it" stays true.
+        private void Watch(IInputRemapService remap)
+        {
+            if (ReferenceEquals(_remap, remap))
+            {
+                return;
+            }
+
+            if (_remap != null)
+            {
+                _remap.BindingsChanged -= OnBindingsChanged;
+            }
+
+            _remap = remap;
+            if (_remap != null)
+            {
+                _remap.BindingsChanged += OnBindingsChanged;
+            }
+        }
+
+        private void OnRemapChanged(IInputRemapService remap)
+        {
+            Watch(remap);
+            OnBindingsChanged();
+        }
+
+        private void OnBindingsChanged()
+        {
+            if (_text != null)
+            {
+                Apply(UiInputScheme.Current);
+            }
+        }
+
+        /// <summary>Redraw now (tests / screens that rebuilt their entries).</summary>
+        public void Refresh()
+        {
+            OnBindingsChanged();
         }
 
         private void Apply(InputSchemeKind scheme)

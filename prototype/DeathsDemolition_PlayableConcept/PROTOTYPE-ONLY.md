@@ -74,7 +74,7 @@ its first argument (the pending decision) and its third argument (`invented`).
 | Module | Declarations | Invented | Where the invented ones live |
 |---|---|---|---|
 | `Core` | 186 | 86 | `EnemyConfigSection` 17 · `FeedbackConfigSection` 17 · `WeaponConfigSection` 21 (WP-042 +6 feel knobs, WP-056 +2 Special rumble) · `RoundConfigSection` 12 · `EconomyConfigSection` 9 · `PlayerConfigSection` 7 · `ProgressionConfigSection` 3 |
-| `Player` | 41 | 41 | `PlayerProceduralAnimator` 17 · `PlayerUpgradeTuning` 8 · `PlayerMotor` 5 · `PlayerRigFactory` 5 · `PlayerDamageFeedback` 4 · `PlayerAim` 2 |
+| `Player` | 38 | 38 | `PlayerProceduralAnimator` 17 · `PlayerUpgradeTuning` 8 · `PlayerMotor` 5 · `PlayerRigFactory` 5 · `PlayerDamageFeedback` 1 (WP-059 −3: bump amplitude / duration and the death shake moved to `DD_GameFeel`, the WP-019 asset — one source) · `PlayerAim` 2 |
 | `Weapons` | 36 | 36 | `WeaponUpgradeTuning` 21 · `WeaponVisualRig` 7 · `WeaponController` 7 (WP-042 +1: damage-ray height 1.39 m) · `SpecialWeaponDirector` 1 |
 | `Feedback` | 18 | 18 | `HitFeedbackDirector` 18 |
 | `Economy` | 17 | 17 | `GoldOrbTuning` 17 |
@@ -85,7 +85,7 @@ its first argument (the pending decision) and its third argument (`invented`).
 | `Input` | 7 | 7 | `PrototypeInputSource` 3 · `GamepadRumble` 4 (WP-024) |
 | `Core/Input` | 4 | 4 | `InputPreferences` 4 (WP-024: deadzone, rumble intensity, aim-assist angle and distance — player preferences behind the request's ceilings, not balance) |
 | `Rounds` | 2 | 2 | `RunDirector` 2 |
-| **Total** | **337** | **237** | |
+| **Total** | **334** | **234** | |
 
 `Damage`, `Profile`, `UI`, `Audio` and `Tests` declare no `[PrototypeOnly]` fields of
 their own; they read `PrototypeConfig`.
@@ -345,7 +345,7 @@ Listed per file, because the file is what a reviewer has to open. Counts are exa
 | `Player/PlayerRigFactory.cs` | 5 | hips height, torso height, head radius, leg length and arm length — all as fractions of the capsule |
 | `Camera/CameraOcclusionFader.cs` | 4 | probe height above the follow target, probe interval, faded target alpha, fade time |
 | `World/WorldBootstrap.cs` | 4 | build-on-awake, bake-NavMesh-after-build, print-self-check-report, install-run-systems-after-build — build-order switches, not visuals |
-| `Player/PlayerDamageFeedback.cs` | 4 | bump amplitude and duration, the damage fraction that triggers a full reaction, death shake amplitude |
+| `Player/PlayerDamageFeedback.cs` | 1 | the damage fraction that triggers a full reaction (WP-059: bump amplitude / duration and the death shake are `GameFeelSettings` fields on `DD_GameFeel`, untagged like the rest of that asset) |
 | `Input/PrototypeInputSource.cs` | 3 | pointer intent threshold in pixels, stick intent threshold — the two numbers that arbitrate which device owns aim; WP-024: `StickSaturation` 0.95 (radial deadzone outer edge; the inner edge is the player preference, default 0.15 from the request) |
 | `Input/GamepadRumble.cs` | 4 | WP-024 pulse table as fractions of the preference ceiling (fire 0.5/60 ms — WP-042: overridden by the equipped weapon's `RumbleFraction`/`RumbleMilliseconds`, heavy fire 0.7/80 ms, hit taken 1.0/120 ms, explosion 0.8/100 ms); the ceiling itself (0.3, 120 ms) is the request's |
 | `Core/Input/InputPreferences.cs` | 4 | WP-024 player preferences: stick deadzone 0.15, rumble intensity 0.3, aim-assist angle 6°, aim-assist distance 15 m — defaults equal the request's limits; preferences narrow, never widen |

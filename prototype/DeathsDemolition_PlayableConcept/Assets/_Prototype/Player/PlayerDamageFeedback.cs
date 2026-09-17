@@ -1,5 +1,7 @@
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Feedback;
+using DD.Prototype.Feedback.Vfx;
 using UnityEngine;
 
 namespace DD.Prototype.PlayerSystem
@@ -9,10 +11,16 @@ namespace DD.Prototype.PlayerSystem
     /// and a small camera response - do not interrupt control".
     ///
     /// This component owns the two halves that live on the player itself:
-    ///   * the procedural flinch, which is pose only, and
+    ///   * the procedural flinch / the WP-032C hurt clip, which is pose only, and
     ///   * a small directional camera bump, deliberately the gentlest of the four shake
     ///     profiles, because it plays while the player is being surrounded and must not
     ///     make the fight unreadable.
+    ///
+    /// WP-059: the bump, the death shake and the death beat (slow-down, camera push-in,
+    /// results delay) read <see cref="GameFeelSettings"/> — the one game-feel source —
+    /// so there is no second set of numbers on the player prefab. Death starts
+    /// <see cref="DeathSequence"/>; everything else about the death (the collapse clip,
+    /// the run ending, the results hand-off) stays where it was.
     ///
     /// The other two halves belong to other tasks and hang off the same events:
     ///   * the screen-edge vignette  -> HUD task, PlayerHealth.AnyDamaged
@@ -26,18 +34,8 @@ namespace DD.Prototype.PlayerSystem
     public sealed class PlayerDamageFeedback : PrototypeConfigBehaviour
     {
         [PrototypeOnly(PendingDecisions.None,
-            "Camera bump amplitude in metres for a hit worth a quarter of max health.", true)]
-        [SerializeField] private float _bumpAmplitude = 0.09f;
-
-        [PrototypeOnly(PendingDecisions.None, "Camera bump duration in seconds.", true)]
-        [SerializeField] private float _bumpDuration = 0.25f;
-
-        [PrototypeOnly(PendingDecisions.None,
             "Damage as a fraction of max health that counts as a full-strength reaction.", true)]
         [SerializeField] private float _fullReactionDamageFraction = 0.25f;
-
-        [PrototypeOnly(PendingDecisions.None, "Camera shake played once on death.", true)]
-        [SerializeField] private float _deathShakeAmplitude = 0.18f;
 
         private PlayerHealth _health;
         private PlayerProceduralAnimator _animator;
@@ -116,10 +114,17 @@ namespace DD.Prototype.PlayerSystem
             }
 
             // Bump is pushed along the direction the blow travelled, so being hit from
-            // behind reads differently from being hit head on.
+            // behind reads differently from being hit head on. Amplitude / seconds are the
+            // WP-019 layer's (≤ 0.15 m / 0.2 s); a fatal hit leaves the shake to OnDied.
+            if (info.WasFatal)
+            {
+                return;
+            }
+
+            GameFeelSettings feel = GameFeelSettings.Active;
             CameraShakeService.Shake(
-                _bumpAmplitude * Mathf.Max(0.35f, strength),
-                _bumpDuration,
+                feel.ShakePlayerDamageAmplitude * Mathf.Max(0.35f, strength),
+                feel.ShakePlayerDamageSeconds,
                 ShakeKind.Bump,
                 info.HitDirection);
         }
@@ -127,7 +132,15 @@ namespace DD.Prototype.PlayerSystem
         private void OnDied(PlayerDeathInfo info)
         {
             _flash = 1f;
-            CameraShakeService.Shake(_deathShakeAmplitude, 0.5f, ShakeKind.Rumble, info.KillingHitDirection);
+            GameFeelSettings feel = GameFeelSettings.Active;
+            CameraShakeService.Shake(feel.ShakePlayerDeathAmplitude, feel.ShakePlayerDeathSeconds, ShakeKind.Rumble, info.KillingHitDirection);
+
+            // WP-059: the death beat — the world eases into the slow scale while the collapse
+            // plays, comes back before the results hold, the camera pushes in a little.
+            if (feel.DeathSlowScale < 0.999f || feel.DeathCameraPushIn > 0f)
+            {
+                DeathSequence.Begin(feel.DeathSlowScale, feel.DeathSlowInSeconds, feel.DeathSlowHoldSeconds, feel.DeathSlowOutSeconds);
+            }
         }
     }
 }

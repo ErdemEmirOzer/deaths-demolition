@@ -8,8 +8,14 @@ namespace DD.Prototype.Feedback.Vfx
     /// ceilings so a tuning pass cannot push the layer past "measured":
     ///
     ///   hit-stop        ≤ 40 ms, only armour break and death (a heavy impact no longer stops time)
-    ///   screen shake    ≤ 0.15 m amplitude, ≤ 0.2 s (explosion, player damage)
+    ///   screen shake    ≤ 0.15 m amplitude, ≤ 0.2 s (explosion, player damage, player death)
     ///   damage vignette ≤ 0.5 alpha; flash in 4 f / out 12 f; low-health hold 0.35
+    ///   death beat      time scale ≥ 0.2 for ≤ 2.5 s unscaled, camera push-in ≤ 25 %, results ≤ 4 s after the death
+    ///
+    /// WP-059: the player's damage bump, death shake, death slow-down / push-in and the
+    /// results hand-off delay live here too (PlayerDamageFeedback / DeathSequence /
+    /// PrototypeCameraRig / PrototypeUiFlow read them) — one source, no second copy on
+    /// the player prefab.
     ///
     /// Numbers are PROTOTYPE-ONLY (technical defaults, not a product decision); the asset
     /// is the tuning surface, <see cref="Enabled"/> switches the whole layer off for A/B.
@@ -23,6 +29,10 @@ namespace DD.Prototype.Feedback.Vfx
         public const float MaxShakeAmplitude = 0.15f;
         public const float MaxShakeSeconds = 0.20f;
         public const float MaxVignetteAlpha = 0.5f;
+        public const float MinDeathSlowScale = 0.2f;
+        public const float MaxDeathSlowSeconds = 2.5f;
+        public const float MaxDeathPushIn = 0.25f;
+        public const float MaxDeathResultsDelaySeconds = 4f;
 
         [Header("Layer")]
         [SerializeField] private bool _enabled = true;
@@ -35,8 +45,10 @@ namespace DD.Prototype.Feedback.Vfx
         [Header("Screen shake (m, s)")]
         [SerializeField, Range(0f, MaxShakeAmplitude)] private float _shakeExplosionAmplitude = 0.12f;
         [SerializeField, Range(0f, MaxShakeSeconds)] private float _shakeExplosionSeconds = 0.20f;
-        [SerializeField, Range(0f, MaxShakeAmplitude)] private float _shakePlayerDamageAmplitude = 0f;   // REQ-045 bump lives in PlayerSystem.PlayerDamageFeedback; 0 = no double bump
+        [SerializeField, Range(0f, MaxShakeAmplitude)] private float _shakePlayerDamageAmplitude = 0.09f;   // WP-059: the REQ-045 bump (PlayerDamageFeedback reads it; the vignette layer no longer shakes)
         [SerializeField, Range(0f, MaxShakeSeconds)] private float _shakePlayerDamageSeconds = 0.15f;
+        [SerializeField, Range(0f, MaxShakeAmplitude)] private float _shakePlayerDeathAmplitude = 0.15f;   // WP-059: was 0.18 m / 0.5 s on the player, over the ceilings
+        [SerializeField, Range(0f, MaxShakeSeconds)] private float _shakePlayerDeathSeconds = 0.20f;
         [SerializeField, Range(0f, MaxShakeAmplitude)] private float _shakeArmorBreakAmplitude = 0.075f;
         [SerializeField, Range(0f, MaxShakeAmplitude)] private float _shakeHeavyDeathAmplitude = 0.095f;
 
@@ -46,6 +58,14 @@ namespace DD.Prototype.Feedback.Vfx
         [SerializeField, Range(0f, 1f)] private float _lowHealthFraction = 0.30f;
         [SerializeField, Range(1, 12)] private int _vignetteFlashInFrames = 4;
         [SerializeField, Range(1, 60)] private int _vignetteFlashOutFrames = 12;
+
+        [Header("Death beat (WP-059) — unscaled seconds")]
+        [SerializeField, Range(MinDeathSlowScale, 1f)] private float _deathSlowScale = 0.5f;
+        [SerializeField, Range(0f, 0.5f)] private float _deathSlowInSeconds = 0.15f;
+        [SerializeField, Range(0f, MaxDeathSlowSeconds)] private float _deathSlowHoldSeconds = 1.2f;
+        [SerializeField, Range(0f, 1f)] private float _deathSlowOutSeconds = 0.45f;
+        [SerializeField, Range(0f, MaxDeathPushIn)] private float _deathCameraPushIn = 0.12f;
+        [SerializeField, Range(0.5f, MaxDeathResultsDelaySeconds)] private float _deathResultsDelaySeconds = 2.4f;
 
         private static GameFeelSettings s_active;
         private static bool s_tried;
@@ -80,6 +100,8 @@ namespace DD.Prototype.Feedback.Vfx
         public float ShakeExplosionSeconds => Mathf.Clamp(_shakeExplosionSeconds, 0f, MaxShakeSeconds);
         public float ShakePlayerDamageAmplitude => _enabled ? Mathf.Clamp(_shakePlayerDamageAmplitude, 0f, MaxShakeAmplitude) : 0f;
         public float ShakePlayerDamageSeconds => Mathf.Clamp(_shakePlayerDamageSeconds, 0f, MaxShakeSeconds);
+        public float ShakePlayerDeathAmplitude => _enabled ? Mathf.Clamp(_shakePlayerDeathAmplitude, 0f, MaxShakeAmplitude) : 0f;
+        public float ShakePlayerDeathSeconds => Mathf.Clamp(_shakePlayerDeathSeconds, 0f, MaxShakeSeconds);
         public float ShakeArmorBreakAmplitude => _enabled ? Mathf.Clamp(_shakeArmorBreakAmplitude, 0f, MaxShakeAmplitude) : 0f;
         public float ShakeHeavyDeathAmplitude => _enabled ? Mathf.Clamp(_shakeHeavyDeathAmplitude, 0f, MaxShakeAmplitude) : 0f;
         /// <summary>WP-022G (S-09 accessibility): the player's flash-reduction multiplier (1 = authored; 0.4 when "reduce flashes" is on). Set by UiSettings; the vignette flash and low-health hold scale by it, blood never does.</summary>
@@ -90,6 +112,18 @@ namespace DD.Prototype.Feedback.Vfx
         public float LowHealthFraction => Mathf.Clamp01(_lowHealthFraction);
         public int VignetteFlashInFrames => Mathf.Max(1, _vignetteFlashInFrames);
         public int VignetteFlashOutFrames => Mathf.Max(1, _vignetteFlashOutFrames);
+
+        /// <summary>Held time scale of the death beat (1 = no slow-down; the layer off = 1).</summary>
+        public float DeathSlowScale => _enabled ? Mathf.Clamp(_deathSlowScale, MinDeathSlowScale, 1f) : 1f;
+        public float DeathSlowInSeconds => _enabled ? Mathf.Clamp(_deathSlowInSeconds, 0f, 0.5f) : 0f;
+        public float DeathSlowHoldSeconds => _enabled ? Mathf.Clamp(_deathSlowHoldSeconds, 0f, MaxDeathSlowSeconds) : 0f;
+        public float DeathSlowOutSeconds => _enabled ? Mathf.Clamp(_deathSlowOutSeconds, 0f, 1f) : 0f;
+        /// <summary>The whole beat, unscaled; never longer than <see cref="MaxDeathSlowSeconds"/> + the ramps' caps.</summary>
+        public float DeathSlowTotalSeconds => DeathSlowInSeconds + DeathSlowHoldSeconds + DeathSlowOutSeconds;
+        /// <summary>Fraction of the camera's offset from the focus removed at the beat's peak (0 = no push-in).</summary>
+        public float DeathCameraPushIn => _enabled ? Mathf.Clamp(_deathCameraPushIn, 0f, MaxDeathPushIn) : 0f;
+        /// <summary>Realtime seconds from the death to the Results screen; always past the end of the slow-down so the results hold never captures a slowed clock.</summary>
+        public float DeathResultsDelaySeconds => Mathf.Max(DeathSlowTotalSeconds + 0.1f, Mathf.Clamp(_deathResultsDelaySeconds, 0.5f, MaxDeathResultsDelaySeconds));
 
         /// <summary>Tests / A/B: swap the active asset (null restores the Resources asset).</summary>
         public static void Override(GameFeelSettings settings)

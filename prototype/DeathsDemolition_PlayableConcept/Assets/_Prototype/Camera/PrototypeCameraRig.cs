@@ -1,5 +1,7 @@
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.DebugTools;
+using DD.Prototype.Feedback;
+using DD.Prototype.Feedback.Vfx;
 using UnityEngine;
 
 namespace DD.Prototype.CameraSystem
@@ -202,6 +204,7 @@ namespace DD.Prototype.CameraSystem
             base.OnEnable();
 
             Active = this;
+            DeathSequence.ReleasePushIn();   // WP-059: a new run's rig starts at the full offset
             CameraShakeService.Register(this);
 
             _shakeSlider = DebugPanelRegistry.AddSlider(
@@ -333,7 +336,10 @@ namespace DD.Prototype.CameraSystem
 
             // Stable pose. Rotation is written once in ApplyConfig and re-asserted here
             // so nothing external can rotate the rig without being immediately undone.
-            transform.SetPositionAndRotation(_focus + _lookAhead + _offsetFromFocus, _fixedRotation);
+            // WP-059: the death beat pulls the camera a little towards the fallen body
+            // (GameFeelSettings.DeathCameraPushIn of the offset, eased with the slow-down).
+            float pushIn = DeathSequence.PushIn01 * GameFeelSettings.Active.DeathCameraPushIn;
+            transform.SetPositionAndRotation(_focus + _lookAhead + _offsetFromFocus * (1f - pushIn), _fixedRotation);
 
             ApplyShake(dt);
         }

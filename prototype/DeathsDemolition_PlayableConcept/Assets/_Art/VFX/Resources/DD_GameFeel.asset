@@ -18,8 +18,10 @@ MonoBehaviour:
   _hitStopMinInterval: 0.12
   _shakeExplosionAmplitude: 0.12
   _shakeExplosionSeconds: 0.2
-  _shakePlayerDamageAmplitude: 0
+  _shakePlayerDamageAmplitude: 0.09
   _shakePlayerDamageSeconds: 0.15
+  _shakePlayerDeathAmplitude: 0.15
+  _shakePlayerDeathSeconds: 0.2
   _shakeArmorBreakAmplitude: 0.075
   _shakeHeavyDeathAmplitude: 0.095
   _vignetteFlashAlpha: 0.35
@@ -27,3 +29,9 @@ MonoBehaviour:
   _lowHealthFraction: 0.3
   _vignetteFlashInFrames: 4
   _vignetteFlashOutFrames: 12
+  _deathSlowScale: 0.5
+  _deathSlowInSeconds: 0.15
+  _deathSlowHoldSeconds: 1.2
+  _deathSlowOutSeconds: 0.45
+  _deathCameraPushIn: 0.12
+  _deathResultsDelaySeconds: 2.4

@@ -16,7 +16,7 @@ namespace DD.Prototype.Core.InputAbstraction
     [Serializable]
     public sealed class InputPreferences
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         public int Version = CurrentVersion;
 
@@ -36,6 +36,18 @@ namespace DD.Prototype.Core.InputAbstraction
         [PrototypeOnly(PendingDecisions.None, "Aim assist maximum target distance in metres (request: <= 15).")]
         [Range(0f, 15f)] public float AimAssistDistance = 15f;
 
+        /// <summary>
+        /// WP-059 (S-09 AIM ASSIST Off / Light / Full → WP-024 data): the player-facing level
+        /// is the source; <see cref="AimAssistEnabled"/> / <see cref="AimAssistAngleDegrees"/> /
+        /// <see cref="AimAssistDistance"/> are derived from it by <see cref="Clamp"/> (see
+        /// <see cref="AimAssistLevels"/>). A version-1 file (no level) migrates from those
+        /// fields once. Stored as an int so JsonUtility keeps it stable.
+        /// </summary>
+        public int AimAssistLevel = (int)InputAimAssistLevel.Full;
+
+        /// <summary>Marker of a version-1 document: the level is derived from the legacy fields on the first clamp.</summary>
+        public const int AimAssistLevelUnset = -1;
+
         /// <summary>Hard ceilings from the request (ADR-024-1). Preferences can only narrow the assist, never widen it.</summary>
         public const float MaxAimAssistAngleDegrees = 6f;
         public const float MaxAimAssistDistance = 15f;
@@ -46,12 +58,38 @@ namespace DD.Prototype.Core.InputAbstraction
         /// <summary>Clamp every field into its allowed range. Returns this.</summary>
         public InputPreferences Clamp()
         {
+            if (AimAssistLevel == AimAssistLevelUnset || Version < 2 || !AimAssistLevels.Matches((InputAimAssistLevel)AimAssistLevel, AimAssistEnabled, AimAssistAngleDegrees, AimAssistDistance))
+            {
+                // Version 1 (WP-024 / WP-022G) or a direct edit of the legacy fields (tests, imports):
+                // the fields say what the player meant, the level follows them; then the fields
+                // snap to the level's numbers (a custom 4° cone reads as Light).
+                AimAssistLevel = (int)AimAssistLevels.FromLegacy(AimAssistEnabled, AimAssistAngleDegrees);
+            }
+
             Version = CurrentVersion;
             StickDeadzone = Mathf.Clamp(StickDeadzone, 0f, MaxStickDeadzone);
             RumbleIntensity = Mathf.Clamp(RumbleIntensity, 0f, MaxRumbleIntensity);
-            AimAssistAngleDegrees = Mathf.Clamp(AimAssistAngleDegrees, 0f, MaxAimAssistAngleDegrees);
-            AimAssistDistance = Mathf.Clamp(AimAssistDistance, 0f, MaxAimAssistDistance);
+            AimAssistLevel = Mathf.Clamp(AimAssistLevel, (int)InputAimAssistLevel.Off, (int)InputAimAssistLevel.Full);
+            var level = (InputAimAssistLevel)AimAssistLevel;
+            AimAssistEnabled = level != InputAimAssistLevel.Off;
+            AimAssistAngleDegrees = AimAssistLevels.AngleDegreesOf(level);
+            AimAssistDistance = AimAssistLevels.DistanceOf(level);
             return this;
+        }
+
+        /// <summary>The level as the enum (always in range after <see cref="Clamp"/>).</summary>
+        public InputAimAssistLevel AimAssist
+        {
+            get { return (InputAimAssistLevel)Mathf.Clamp(AimAssistLevel, (int)InputAimAssistLevel.Off, (int)InputAimAssistLevel.Full); }
+            set
+            {
+                // The level writes its numbers into the legacy fields first, so Clamp sees them agree.
+                AimAssistLevel = (int)value;
+                AimAssistEnabled = value != InputAimAssistLevel.Off;
+                AimAssistAngleDegrees = AimAssistLevels.AngleDegreesOf(value);
+                AimAssistDistance = AimAssistLevels.DistanceOf(value);
+                Clamp();
+            }
         }
 
         public InputPreferences Copy()
@@ -72,6 +110,8 @@ namespace DD.Prototype.Core.InputAbstraction
             AimAssistEnabled = other.AimAssistEnabled;
             AimAssistAngleDegrees = other.AimAssistAngleDegrees;
             AimAssistDistance = other.AimAssistDistance;
+            AimAssistLevel = other.AimAssistLevel;
+            Version = other.Version;
             Clamp();
         }
 
@@ -83,7 +123,8 @@ namespace DD.Prototype.Core.InputAbstraction
                    Mathf.Approximately(RumbleIntensity, other.RumbleIntensity) &&
                    AimAssistEnabled == other.AimAssistEnabled &&
                    Mathf.Approximately(AimAssistAngleDegrees, other.AimAssistAngleDegrees) &&
-                   Mathf.Approximately(AimAssistDistance, other.AimAssistDistance);
+                   Mathf.Approximately(AimAssistDistance, other.AimAssistDistance) &&
+                   AimAssistLevel == other.AimAssistLevel;
         }
 
         public string ToJson()
@@ -107,6 +148,66 @@ namespace DD.Prototype.Core.InputAbstraction
             catch (Exception)
             {
                 return new InputPreferences();
+            }
+        }
+    }
+
+    /// <summary>WP-059: the aim-assist level the CONTROLS pane offers (S-09), stored in the WP-024 data.</summary>
+    public enum InputAimAssistLevel
+    {
+        Off = 0,
+        Light = 1,
+        Full = 2
+    }
+
+    /// <summary>
+    /// WP-059: what each <see cref="InputAimAssistLevel"/> means in the ADR-024-1 terms —
+    /// Light narrows the cone to half the ceiling at the full distance, Full is the ceiling,
+    /// Off keeps the Full numbers on file but disables the pull. Preferences can only
+    /// narrow the assist, never widen it.
+    /// </summary>
+    public static class AimAssistLevels
+    {
+        public const float LightAngleShare = 0.5f;
+
+        public static float AngleDegreesOf(InputAimAssistLevel level)
+        {
+            return level == InputAimAssistLevel.Light
+                ? InputPreferences.MaxAimAssistAngleDegrees * LightAngleShare
+                : InputPreferences.MaxAimAssistAngleDegrees;
+        }
+
+        public static float DistanceOf(InputAimAssistLevel level)
+        {
+            return InputPreferences.MaxAimAssistDistance;
+        }
+
+        /// <summary>True when the legacy fields are exactly what <paramref name="level"/> derives (so a direct field edit can be told apart).</summary>
+        public static bool Matches(InputAimAssistLevel level, bool enabled, float angleDegrees, float distance)
+        {
+            return enabled == (level != InputAimAssistLevel.Off) &&
+                   Mathf.Abs(angleDegrees - AngleDegreesOf(level)) < 1e-4f &&
+                   Mathf.Abs(distance - DistanceOf(level)) < 1e-4f;
+        }
+
+        /// <summary>A version-1 file: off when disabled, Light when the angle sat under three quarters of the ceiling, else Full.</summary>
+        public static InputAimAssistLevel FromLegacy(bool enabled, float angleDegrees)
+        {
+            if (!enabled)
+            {
+                return InputAimAssistLevel.Off;
+            }
+
+            return angleDegrees < InputPreferences.MaxAimAssistAngleDegrees * 0.75f ? InputAimAssistLevel.Light : InputAimAssistLevel.Full;
+        }
+
+        public static string Label(InputAimAssistLevel level)
+        {
+            switch (level)
+            {
+                case InputAimAssistLevel.Off: return "OFF";
+                case InputAimAssistLevel.Light: return "LIGHT";
+                default: return "FULL";
             }
         }
     }

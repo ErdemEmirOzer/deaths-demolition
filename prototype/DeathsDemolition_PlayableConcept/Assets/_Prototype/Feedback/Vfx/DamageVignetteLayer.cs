@@ -9,8 +9,9 @@ namespace DD.Prototype.Feedback.Vfx
     /// edge gradient, tinted Vermilion600 at runtime) flashed on every hit — in over
     /// <see cref="GameFeelSettings.VignetteFlashInFrames"/> frames, out over
     /// <see cref="GameFeelSettings.VignetteFlashOutFrames"/> — and held at the low-health
-    /// alpha while health is under <see cref="GameFeelSettings.LowHealthFraction"/>; plus
-    /// a short directional shake (≤ 0.15 m / 0.2 s, ADR-019-2).
+    /// alpha while health is under <see cref="GameFeelSettings.LowHealthFraction"/>. The
+    /// directional shake (≤ 0.15 m / 0.2 s, ADR-019-2) is played by PlayerDamageFeedback
+    /// from the same settings (WP-059: one source, one bump).
     ///
     /// Its own overlay canvas (sorting order under the hit markers), so the HUD (S-09)
     /// is not touched. Created by <see cref="EnsureExists"/> from the feedback director.
@@ -143,17 +144,8 @@ namespace DD.Prototype.Feedback.Vfx
             _flashOutFrames = feel.VignetteFlashOutFrames;
             _healthFraction = info.MaxHealth > 0f ? info.HealthAfter / info.MaxHealth : 1f;
 
-            Vector3 away = Vector3.zero;
-            if (info.Player != null && FeedbackCameraRef.TryGetPosition(out Vector3 viewer))
-            {
-                away = viewer - info.Player.transform.position;
-                away.y = 0f;
-            }
-
-            if (feel.ShakePlayerDamageAmplitude > 0f)
-            {
-                CameraShakeBridge.Shake(feel.ShakePlayerDamageAmplitude, feel.ShakePlayerDamageSeconds, ShakeProfile.PlayerDamage, away);
-            }
+            // WP-059: the directional damage bump is PlayerDamageFeedback's (it reads the same
+            // GameFeelSettings.ShakePlayerDamage* numbers); this layer only draws the vignette.
         }
 
         private void OnHealthChanged(PlayerHealthSnapshot snapshot)

@@ -25,8 +25,9 @@ namespace DD.Prototype.Rounds
     /// pause overlaps a round end, which is exactly the case a player will find first.
     ///
     /// Hit-stop safety: <see cref="HitStopService"/> also owns the time scale for a few
-    /// milliseconds at a time. Freezing cancels an in-flight hit stop first and restores
-    /// its base scale rather than the 0.06 it happened to be showing.
+    /// milliseconds at a time, <see cref="DeathSequence"/> for the death beat. Freezing
+    /// cancels either first and restores its base scale rather than the 0.06 / 0.3 it
+    /// happened to be showing.
     /// </summary>
     public static class RunFlowClock
     {
@@ -77,8 +78,10 @@ namespace DD.Prototype.Rounds
             }
 
             // A hit stop owns the clock for ~45 ms at a time. Ending it first means the
-            // scale we remember is the real one, not the 0.06 of the freeze frame.
+            // scale we remember is the real one, not the 0.06 of the freeze frame. The
+            // WP-059 death beat is the same story with 0.3 for a second and a half.
             HitStopService.Cancel();
+            DeathSequence.Cancel();
 
             s_restoreScale = Time.timeScale > 0.01f ? Time.timeScale : 1f;
             Time.timeScale = 0f;

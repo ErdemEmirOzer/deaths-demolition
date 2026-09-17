@@ -218,12 +218,17 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            UiFlowRunner.Instance.Run(GoToResultsAfterDelay(s_transition));
+            // WP-059: a death waits for the death beat (GameFeelSettings, one source with the
+            // slow-down); any other end keeps the short hand-off.
+            float delay = summary.EndReason == RunEndReason.PlayerDeath
+                ? DD.Prototype.Feedback.Vfx.GameFeelSettings.Active.DeathResultsDelaySeconds
+                : ResultsDelaySeconds;
+            UiFlowRunner.Instance.Run(GoToResultsAfterDelay(s_transition, delay));
         }
 
-        private static IEnumerator GoToResultsAfterDelay(int scheduledAt)
+        private static IEnumerator GoToResultsAfterDelay(int scheduledAt, float delaySeconds)
         {
-            yield return new WaitForSecondsRealtime(ResultsDelaySeconds);
+            yield return new WaitForSecondsRealtime(delaySeconds);
 
             if (scheduledAt != s_transition)
             {

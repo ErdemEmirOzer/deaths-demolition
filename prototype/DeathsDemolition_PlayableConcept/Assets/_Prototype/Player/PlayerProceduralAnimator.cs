@@ -348,10 +348,6 @@ namespace DD.Prototype.PlayerSystem
             }
 
             _flinch = Mathf.Clamp01(Mathf.Max(_flinch, strength01));
-            if (_skinned != null)
-            {
-                _skinned.PlayHit();
-            }
 
             if (fromDirection.sqrMagnitude > 1e-6f)
             {
@@ -363,7 +359,33 @@ namespace DD.Prototype.PlayerSystem
             {
                 _flinchDirectionLocal = Vector3.back;
             }
+
+            if (_skinned != null)
+            {
+                // WP-059 (AP-009C v003 hurt clips): a blow that travels BACK through the body
+                // came from the front — the gut hit with a step (hurt_B, base layer) when it
+                // is worth at least half a full reaction and the player is not running;
+                // everything else (side, behind, light, on the move) is the upper-body
+                // hurt_A over uninterrupted locomotion. Never a control lock (REQ-045).
+                bool frontal = _flinchDirectionLocal.z < -0.2f && Mathf.Abs(_flinchDirectionLocal.z) >= Mathf.Abs(_flinchDirectionLocal.x);
+                bool moving = _motor != null && _motor.PlanarVelocity.sqrMagnitude > HurtStepMaxSpeed * HurtStepMaxSpeed;
+                LastHurtUpper = !frontal || moving || strength01 < HurtStepMinStrength;
+                HurtCount++;
+                _skinned.PlayHurt(LastHurtUpper);
+            }
         }
+
+        /// <summary>WP-059: below this reaction strength (0..1) a frontal hit stays an upper-body hurt.</summary>
+        public const float HurtStepMinStrength = 0.5f;
+
+        /// <summary>WP-059: above this planar speed (m/s) a frontal hit stays an upper-body hurt (the gut step would slide).</summary>
+        public const float HurtStepMaxSpeed = 1.5f;
+
+        /// <summary>True when the last hurt went to the upper-body clip (hurt_A), false for the full-body gut hit (hurt_B). Tests / F1.</summary>
+        public bool LastHurtUpper { get; private set; } = true;
+
+        /// <summary>Hurt clips requested since spawn (tests).</summary>
+        public int HurtCount { get; private set; }
 
         /// <summary>One-way collapse. There is no revive, so there is no way back out.</summary>
         public void PlayDeath()

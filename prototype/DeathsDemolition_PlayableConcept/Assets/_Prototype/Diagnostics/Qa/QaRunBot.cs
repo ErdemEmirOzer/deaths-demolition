@@ -55,6 +55,8 @@ namespace DD.Prototype.Qa
         public const string InvulnerableFlag = "-ddQaBotInvulnerable";
         /// <summary>WP-055: evidence only — the bot grants itself the Special Weapons in turn (Kagura → Ofuda → Tide) whenever a body is near, writes one frame per sw_* beat × tier; summary marked, never a QA pass.</summary>
         public const string SpecialFlag = "-ddQaBotSpecial";
+        /// <summary>WP-059: evidence runs only — this many seconds after run-ready the bot takes a lethal hit from the nearest zombie's side, so the death beat (hurt → collapse → overlay → Results) is captured as deathframe-* PNGs (with -ddQaBotFrames); the summary is marked and never a QA pass.</summary>
+        public const string DieAfterFlag = "-ddQaBotDieAfter";
         public const int DefaultRounds = 8;
         public const int DefaultSeed = 26;
         public const float DefaultRoundTimeout = 300f;
@@ -88,6 +90,7 @@ namespace DD.Prototype.Qa
                 QaArgs.ArgFloat(RoundTimeoutFlag, DefaultRoundTimeout, 30f, 3600f), true);
             d.ConfigureTierEvidence(QaArgs.ArgInt(StartRoundFlag, 1, 1, 50), QaArgs.Arg(FramesFlag), QaArgs.Arg(InvulnerableFlag) != null);   // WP-052
             d.ConfigureSpecialEvidence(QaArgs.Arg(SpecialFlag) != null);   // WP-055
+            d.ConfigureDeathEvidence(QaArgs.ArgFloat(DieAfterFlag, -1f, -1f, 3600f));   // WP-059
         }
 
         /// <summary>Also used by the PlayMode slice test: boot=false means the caller already put the run into Fighting.</summary>
@@ -220,6 +223,18 @@ namespace DD.Prototype.Qa
             private readonly List<PendingFrame> _pendingFrames = new List<PendingFrame>();
             /// <summary>WP-052 readout: frames written (tests).</summary>
             public int FramesWritten { get; private set; }
+            // WP-059 · death evidence: seconds after run-ready at which the bot takes a lethal hit (< 0 = never); frames queued from the death.
+            private float _dieAfterSeconds = -1f;
+            private bool _deathEvidence;
+            public const float DeathFrameImpactSeconds = 0.12f, DeathFrameCollapseSeconds = 0.9f, DeathFrameOverlaySeconds = 2.0f;
+            public const float DeathFramesQuitTimeoutSeconds = 4f;
+
+            /// <summary>WP-059: die this many unscaled seconds after run-ready (&lt; 0 = never); marks the run as evidence (never a QA pass).</summary>
+            public void ConfigureDeathEvidence(float dieAfterSeconds)
+            {
+                _dieAfterSeconds = dieAfterSeconds;
+                _deathEvidence = dieAfterSeconds >= 0f;
+            }
 
             /// <summary>WP-052: start round (1 = the normal run) and the frames directory ("" = no frames).</summary>
             public void ConfigureTierEvidence(int startRound, string framesDir, bool invulnerable = false)
@@ -479,7 +494,31 @@ namespace DD.Prototype.Qa
             {
                 _died = true;
                 _summary.deaths++;
-                Log("player-died round=" + (_current != null ? _current.round : 0));
+                int round = _current != null ? _current.round : 0;
+                Log("player-died round=" + round);
+                // WP-059: the death beat on three frames — the hit, the slowed collapse, the overlay before Results
+                // (unscaled delays; Standard tier = no proximity wait). Flushed after Finish, QuitSoon waits for them.
+                QueueFrame("deathframe-r" + round + "-impact", DeathFrameImpactSeconds);
+                QueueFrame("deathframe-r" + round + "-collapse", DeathFrameCollapseSeconds);
+                QueueFrame("deathframe-r" + round + "-overlay", DeathFrameOverlaySeconds);
+            }
+
+            /// <summary>WP-059 evidence: a lethal hit from the nearest zombie's side (or from behind when none is near) — the real damage path, so the hurt / death chain is what the player would see.</summary>
+            private void DieNow(PlayerRig rig)
+            {
+                _dieAfterSeconds = -1f;
+                if (rig == null || rig.Health == null || rig.Health.IsDead) return;
+                rig.Health.DiagnosisInvulnerable = false;
+                Vector3 from = rig.transform.position - rig.transform.forward * 1.2f;
+                float best = float.MaxValue;
+                foreach (ZombieEnemy z in UnityEngine.Object.FindObjectsOfType<ZombieEnemy>())
+                {
+                    if (!z.IsAlive) continue;
+                    float d = (z.transform.position - rig.transform.position).sqrMagnitude;
+                    if (d < best) { best = d; from = z.transform.position; }
+                }
+                Log("die-after (WP-059 death evidence) from=" + QaArgs.F(from.x, 1) + "," + QaArgs.F(from.z, 1));
+                rig.Health.ApplyDamage(rig.Health.Max * 4f, from, "QaRunBot.DieAfter");
             }
 
             private void BeginRoundRecord(int round)
@@ -502,7 +541,13 @@ namespace DD.Prototype.Qa
 
             private void Update()
             {
-                if (!_running || _finished)
+                if (_finished)
+                {
+                    FlushPendingFrame();   // WP-059: the death frames land after the run ended
+                    return;
+                }
+
+                if (!_running)
                 {
                     return;
                 }
@@ -516,6 +561,12 @@ namespace DD.Prototype.Qa
                     return;
                 }
                 TickSpecialEvidence(rig);   // WP-055
+
+                if (_dieAfterSeconds >= 0f && !_died && Time.unscaledTime - _runStart >= _dieAfterSeconds)
+                {
+                    DieNow(rig);   // WP-059
+                    if (_finished) return;   // the death ended the run inside ApplyDamage (RunEnded → Finish → pad disposed)
+                }
 
                 if (_current != null && Time.unscaledTime - _roundStart > _roundTimeout)
                 {
@@ -1016,10 +1067,11 @@ namespace DD.Prototype.Qa
                 var sb = new StringBuilder();
                 for (int i = 0; i < top.Count && i < 6; i++) sb.Append(i > 0 ? " | " : "").Append(top[i].Key).Append('=').Append(top[i].Value);
                 _summary.fireLineHits = sb.ToString();
-                _summary.pass = _summary.roundsCompleted >= _rounds && string.IsNullOrEmpty(_fail) && !_invulnerable && !_specialEvidence;   // WP-052/055: an evidence run is never a QA pass
+                _summary.pass = _summary.roundsCompleted >= _rounds && string.IsNullOrEmpty(_fail) && !_invulnerable && !_specialEvidence && !_deathEvidence;   // WP-052/055/059: an evidence run is never a QA pass
                 _summary.note = string.IsNullOrEmpty(_fail) ? (_died ? "player died" : "ok") : _fail;
                 if (_invulnerable) _summary.note += " [invulnerable evidence run: WP-052 tier frames; not a QA pass]";   // (WP-055: the marks used to be overwritten by the line above)
                 if (_specialEvidence) _summary.note += " [special evidence run: WP-055 sw_* frames; not a QA pass]";
+                if (_deathEvidence) _summary.note += " [death evidence run: WP-059 deathframe-*; not a QA pass]";
                 _summary.swBeats = (_swBeats[0] + _swBeats[1] + _swBeats[2]) > 0 ? "sw_push=" + _swBeats[0] + " sw_web=" + _swBeats[1] + " sw_pull=" + _swBeats[2] : "";
 
                 try
@@ -1097,6 +1149,14 @@ namespace DD.Prototype.Qa
             private IEnumerator QuitSoon()
             {
                 yield return new WaitForSecondsRealtime(0.5f);
+                // WP-059: let the queued death frames land (bounded), they are written at end of frame.
+                float deadline = Time.unscaledTime + DeathFramesQuitTimeoutSeconds;
+                while (_pendingFrames.Count > 0 && Time.unscaledTime < deadline)
+                {
+                    yield return null;
+                }
+
+                yield return null;
                 Application.Quit(_summary.pass ? 0 : 3);
             }
 
