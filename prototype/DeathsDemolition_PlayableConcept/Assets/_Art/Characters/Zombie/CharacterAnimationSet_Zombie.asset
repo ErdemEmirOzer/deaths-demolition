@@ -12,48 +12,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12a645b13c760498a9cf5d8b4292b682, type: 3}
   m_Name: CharacterAnimationSet_Zombie
   m_EditorClassIdentifier: 
-  _idle: {fileID: -623603649343465320, guid: 371efa798130c46b993cd84b4f8f456a, type: 3}
-  _walk: {fileID: -623603649343465320, guid: 3ef468a330c6840eab418d684a0caa9f, type: 3}
+  _idle: {fileID: -623603649343465320, guid: 72934b2774e24456886bc7bb36fc9a5c, type: 3}
+  _walk: {fileID: -623603649343465320, guid: c2ea03a5eece24bbfaddeb3211dc7574, type: 3}
   _walkSpeedMetersPerSecond: 1.485
   _controller: {fileID: 9100000, guid: 2de824c60c07e47ab9f7ab8e4e406741, type: 2}
   _source: "AP-009D v004 (85 clips, AP009-clips-manifest.json) \u2014 WP-018/032B/032C
     generated controller"
   _clips:
   - name: AP009_zombie_armorbreak_head
-    clip: {fileID: -623603649343465320, guid: 650f05b856243416498bd7bb37fd323b, type: 3}
+    clip: {fileID: -623603649343465320, guid: 4f06f93074868496db1370179c2ba541, type: 3}
     loop: 0
-    seconds: 0.567
+    seconds: 0.667
     speedMps: 0
     unitySpeedMps: 0
     layer: base
     additive: 0
-    frames: 18
+    frames: 21
     events: hit=0;armor_break=0
     stanceFrames: 0
   - name: AP009_zombie_armorbreak_leg
-    clip: {fileID: -623603649343465320, guid: a6dcd7bffb0334bb3b14a4bdb8c9d0e6, type: 3}
+    clip: {fileID: -623603649343465320, guid: aec60390804b14167bfee4d8a40cce6c, type: 3}
     loop: 0
-    seconds: 0.567
+    seconds: 0.667
     speedMps: 0
     unitySpeedMps: 0
     layer: base
     additive: 0
-    frames: 18
+    frames: 21
     events: hit=0;armor_break=0
     stanceFrames: 0
   - name: AP009_zombie_armorbreak_torso
-    clip: {fileID: -623603649343465320, guid: 171c0824c52124b7fb26cb3d58e8e1a6, type: 3}
+    clip: {fileID: -623603649343465320, guid: aa75e19979e3a42ac8bd356e49979ceb, type: 3}
     loop: 0
-    seconds: 0.567
+    seconds: 0.667
     speedMps: 0
     unitySpeedMps: 0
     layer: base
     additive: 0
-    frames: 18
+    frames: 21
     events: hit=0;armor_break=0
     stanceFrames: 0
   - name: AP009_zombie_attack_lunge
-    clip: {fileID: -623603649343465320, guid: ae3f655db203a48f88d2ae97c55445b1, type: 3}
+    clip: {fileID: -623603649343465320, guid: 4e64a1f17083a45c6b6c8fe44d88adf0, type: 3}
     loop: 0
     seconds: 0.967
     speedMps: 0
@@ -64,7 +64,7 @@ MonoBehaviour:
     events: hit_window_start=10;hit_window_end=13
     stanceFrames: 0
   - name: AP009_zombie_attack_overhead
-    clip: {fileID: -623603649343465320, guid: e15ae8fde741f46c8996fbd20e4b68a9, type: 3}
+    clip: {fileID: -623603649343465320, guid: 59c79f2e785f94c078ecc5fabd4ddf0b, type: 3}
     loop: 0
     seconds: 2.4
     speedMps: 0
@@ -75,7 +75,7 @@ MonoBehaviour:
     events: hit_window_start=35;hit_window_end=40
     stanceFrames: 0
   - name: AP009_zombie_attack_sweep
-    clip: {fileID: -623603649343465320, guid: a791e8321a106465a97416e5ac176da4, type: 3}
+    clip: {fileID: -623603649343465320, guid: 35eab488a7e4c4a3cac5431627a775b0, type: 3}
     loop: 0
     seconds: 1.667
     speedMps: 0
@@ -86,7 +86,7 @@ MonoBehaviour:
     events: hit_window_start=24;hit_window_end=30
     stanceFrames: 0
   - name: AP009_zombie_attack_swipe
-    clip: {fileID: -623603649343465320, guid: f99b39a22455142ee83c0ba79d928074, type: 3}
+    clip: {fileID: -623603649343465320, guid: 5f2b1abe99f134e2d9916fb9157f07ea, type: 3}
     loop: 0
     seconds: 1.1
     speedMps: 0
@@ -97,7 +97,7 @@ MonoBehaviour:
     events: hit_window_start=16;hit_window_end=20
     stanceFrames: 0
   - name: AP009_zombie_death_backward
-    clip: {fileID: -623603649343465320, guid: c680484e4170a48578c16ad25b50ecc3, type: 3}
+    clip: {fileID: -623603649343465320, guid: 2954a8a03a0f74d2ca27f6e139f5ce57, type: 3}
     loop: 0
     seconds: 1.167
     speedMps: 0
@@ -108,7 +108,7 @@ MonoBehaviour:
     events: death_end=35
     stanceFrames: 0
   - name: AP009_zombie_death_forward
-    clip: {fileID: -623603649343465320, guid: e7363f70e6a9d4131b7cb64b1a24a8ed, type: 3}
+    clip: {fileID: -623603649343465320, guid: e1acd3662c4074074ab1cf4e15d477a0, type: 3}
     loop: 0
     seconds: 1.167
     speedMps: 0
@@ -119,7 +119,7 @@ MonoBehaviour:
     events: death_end=35
     stanceFrames: 0
   - name: AP009_zombie_death_kneel
-    clip: {fileID: -623603649343465320, guid: 44273b4d150b442969d2d553fa63f304, type: 3}
+    clip: {fileID: -623603649343465320, guid: 85814f84eac874fcc95fdd6f59e90107, type: 3}
     loop: 0
     seconds: 1.433
     speedMps: 0
@@ -130,7 +130,7 @@ MonoBehaviour:
     events: death_end=43
     stanceFrames: 0
   - name: AP009_zombie_death_side
-    clip: {fileID: -623603649343465320, guid: 64d3bd12ce1684fa09ec020ab32bf23a, type: 3}
+    clip: {fileID: -623603649343465320, guid: 8213db3ecda524414a4d1e3218f9810d, type: 3}
     loop: 0
     seconds: 1.3
     speedMps: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
     events: death_end=39
     stanceFrames: 0
   - name: AP009_zombie_death_side_R
-    clip: {fileID: -623603649343465320, guid: d4b4145d05d7f4375b6665a41acf4ac8, type: 3}
+    clip: {fileID: -623603649343465320, guid: 0813fb1226aee438f816a239e5c8a5de, type: 3}
     loop: 0
     seconds: 1.433
     speedMps: 0
@@ -152,7 +152,7 @@ MonoBehaviour:
     events: death_end=43
     stanceFrames: 0
   - name: AP009_zombie_death_special_A
-    clip: {fileID: -623603649343465320, guid: 4d36c26c5eeda42e5b8f93772f218065, type: 3}
+    clip: {fileID: -623603649343465320, guid: c4329e40bd2674af6a0dfe3b4e85e526, type: 3}
     loop: 0
     seconds: 1.167
     speedMps: 0
@@ -163,7 +163,7 @@ MonoBehaviour:
     events: death_end=35
     stanceFrames: 0
   - name: AP009_zombie_death_special_B
-    clip: {fileID: -623603649343465320, guid: 32137b804140a44efafe6f37a6be2ddc, type: 3}
+    clip: {fileID: -623603649343465320, guid: e2283ac8258024e2394e4efca56c804a, type: 3}
     loop: 0
     seconds: 1.3
     speedMps: 0
@@ -174,7 +174,7 @@ MonoBehaviour:
     events: death_end=39
     stanceFrames: 0
   - name: AP009_zombie_death_ultra
-    clip: {fileID: -623603649343465320, guid: 6ce81ed5388b64156b00aabc4d30f157, type: 3}
+    clip: {fileID: -623603649343465320, guid: 0ed9fb817749642d7a6f0da6b234caf1, type: 3}
     loop: 0
     seconds: 1.967
     speedMps: 0
@@ -185,7 +185,7 @@ MonoBehaviour:
     events: death_end=59
     stanceFrames: 0
   - name: AP009_zombie_hit_back_elite
-    clip: {fileID: -623603649343465320, guid: 64efd26b581e04f3ba9ae974dda5d0da, type: 3}
+    clip: {fileID: -623603649343465320, guid: 4f7b528a988a94ae9a02522423b8453b, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -196,7 +196,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_back_std
-    clip: {fileID: -623603649343465320, guid: 3b33571d9f21a4b1fa9bdabbf1751828, type: 3}
+    clip: {fileID: -623603649343465320, guid: bf8014e5c14ba406eba83afb373411bd, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -207,7 +207,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_back_ultra
-    clip: {fileID: -623603649343465320, guid: 93c8cfbee85bc442bba264e0f82c1868, type: 3}
+    clip: {fileID: -623603649343465320, guid: 540aa0751de5042868dd8d671c2fed56, type: 3}
     loop: 0
     seconds: 0.233
     speedMps: 0
@@ -218,7 +218,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_front_elite
-    clip: {fileID: -623603649343465320, guid: 68088f27335174e19bfe7dd3fe206475, type: 3}
+    clip: {fileID: -623603649343465320, guid: 4b64958ff222b4ad28e12130c2da9e08, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -229,7 +229,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_front_std
-    clip: {fileID: -623603649343465320, guid: 6b0f7786f308f4207927aa2ae1783ac3, type: 3}
+    clip: {fileID: -623603649343465320, guid: 945ad97dfbdcf48f5a71b071eaf34324, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -240,7 +240,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_front_ultra
-    clip: {fileID: -623603649343465320, guid: 1c1d54fb610dd4799bea35de6e304907, type: 3}
+    clip: {fileID: -623603649343465320, guid: 613e974dc79864e4d8ecd2cbc2a0def9, type: 3}
     loop: 0
     seconds: 0.233
     speedMps: 0
@@ -251,7 +251,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_heavy_stagger
-    clip: {fileID: -623603649343465320, guid: f21a0ebf6be69453c958dd9a6143ec1f, type: 3}
+    clip: {fileID: -623603649343465320, guid: 5eb2cdea7185c46f69a527c38f4b566d, type: 3}
     loop: 0
     seconds: 0.967
     speedMps: 0
@@ -262,7 +262,7 @@ MonoBehaviour:
     events: hit=0;stagger_end=29
     stanceFrames: 0
   - name: AP009_zombie_hit_left_elite
-    clip: {fileID: -623603649343465320, guid: 7a7f8529b9863424889f00155d68b8b1, type: 3}
+    clip: {fileID: -623603649343465320, guid: 0b30ec0bd01e34810b218fc0139906f3, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -273,7 +273,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_left_std
-    clip: {fileID: -623603649343465320, guid: d8d4cd4fc631a4e2daafb6a20dd4d95e, type: 3}
+    clip: {fileID: -623603649343465320, guid: dffa7874f7a1643c78de18d22c3cdf25, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -284,7 +284,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_left_ultra
-    clip: {fileID: -623603649343465320, guid: f6d98761c1b0049fa964f37ded1f4487, type: 3}
+    clip: {fileID: -623603649343465320, guid: 6082fe3ac316d461299cf5df09306d95, type: 3}
     loop: 0
     seconds: 0.233
     speedMps: 0
@@ -295,7 +295,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_light_L
-    clip: {fileID: -623603649343465320, guid: 9ae2a8d690d204038b2499c46442fd7e, type: 3}
+    clip: {fileID: -623603649343465320, guid: 0780833ee39b645a99bff9bbec87b926, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -306,7 +306,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_light_R
-    clip: {fileID: -623603649343465320, guid: 5a3b1df18ebac4e54a74efca3b925085, type: 3}
+    clip: {fileID: -623603649343465320, guid: 1a038173347f14fb99ad66498422f56e, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -317,7 +317,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_region_head
-    clip: {fileID: -623603649343465320, guid: 10d6972eb82554e849eaeb5ddb5824e8, type: 3}
+    clip: {fileID: -623603649343465320, guid: 09f5ed4ae3c0c493d98b815af12f8a42, type: 3}
     loop: 0
     seconds: 0.3
     speedMps: 0
@@ -328,7 +328,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_region_leg
-    clip: {fileID: -623603649343465320, guid: dd13d2227295d4644811f3b43fe49da5, type: 3}
+    clip: {fileID: -623603649343465320, guid: 496e10c22665241cb83124237ff95809, type: 3}
     loop: 0
     seconds: 0.3
     speedMps: 0
@@ -339,7 +339,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_region_torso
-    clip: {fileID: -623603649343465320, guid: 7331b10e91dfc40c8b18d15784d1579e, type: 3}
+    clip: {fileID: -623603649343465320, guid: f177c4ace50c440f7a618a1503470e79, type: 3}
     loop: 0
     seconds: 0.3
     speedMps: 0
@@ -350,7 +350,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_right_elite
-    clip: {fileID: -623603649343465320, guid: 4e3deb24d7d6146c8ab7ad9e363236fd, type: 3}
+    clip: {fileID: -623603649343465320, guid: dce72b14a94494dc58ad980eb069795a, type: 3}
     loop: 0
     seconds: 0.367
     speedMps: 0
@@ -361,7 +361,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_right_std
-    clip: {fileID: -623603649343465320, guid: 094ccde372d47467588ce325313b3ffb, type: 3}
+    clip: {fileID: -623603649343465320, guid: 3acedbe5ba00f424e9bc36c9548e1364, type: 3}
     loop: 0
     seconds: 0.433
     speedMps: 0
@@ -372,7 +372,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_right_ultra
-    clip: {fileID: -623603649343465320, guid: 5878054a3598c4ef284e4728cc6f43c3, type: 3}
+    clip: {fileID: -623603649343465320, guid: d9e348464868f471582f771e53d6a994, type: 3}
     loop: 0
     seconds: 0.233
     speedMps: 0
@@ -383,7 +383,7 @@ MonoBehaviour:
     events: hit=0
     stanceFrames: 0
   - name: AP009_zombie_hit_special_stumble
-    clip: {fileID: -623603649343465320, guid: 83d72664f564045528701ab10f1ecdb3, type: 3}
+    clip: {fileID: -623603649343465320, guid: e93c40b0d51ad48d8a8e3200380207df, type: 3}
     loop: 0
     seconds: 0.5
     speedMps: 0
@@ -394,7 +394,7 @@ MonoBehaviour:
     events: hit=0;stagger_end=15
     stanceFrames: 0
   - name: AP009_zombie_idle_queue
-    clip: {fileID: -623603649343465320, guid: 86dfbb0e6293745cf98993844d33a06a, type: 3}
+    clip: {fileID: -623603649343465320, guid: 0c6cf1c458b21454cac5ef647601bc41, type: 3}
     loop: 1
     seconds: 3
     speedMps: 0
@@ -405,7 +405,7 @@ MonoBehaviour:
     events: shift_l=22;shift_r=67
     stanceFrames: 0
   - name: AP009_zombie_idle_sway
-    clip: {fileID: -623603649343465320, guid: 371efa798130c46b993cd84b4f8f456a, type: 3}
+    clip: {fileID: -623603649343465320, guid: 72934b2774e24456886bc7bb36fc9a5c, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -416,7 +416,7 @@ MonoBehaviour:
     events: 
     stanceFrames: 0
   - name: AP009_zombie_idle_twitch
-    clip: {fileID: -623603649343465320, guid: 4c7e7d2327b03441a9d9fdd9cf7bd55c, type: 3}
+    clip: {fileID: -623603649343465320, guid: af5a176ef7c9b45a58d7631ddda14ed2, type: 3}
     loop: 1
     seconds: 2
     speedMps: 0
@@ -427,7 +427,7 @@ MonoBehaviour:
     events: 
     stanceFrames: 0
   - name: AP009_zombie_rise
-    clip: {fileID: -623603649343465320, guid: 239a02e4c19954dd999fc32c46e8a1cd, type: 3}
+    clip: {fileID: -623603649343465320, guid: 572547f9d8bdb4aacbad718ac6c3d738, type: 3}
     loop: 0
     seconds: 1.567
     speedMps: 0
@@ -438,7 +438,7 @@ MonoBehaviour:
     events: rise_end=47
     stanceFrames: 0
   - name: AP009_zombie_rise_B
-    clip: {fileID: -623603649343465320, guid: cf5c98ae95126479a9a7547e4cf80942, type: 3}
+    clip: {fileID: -623603649343465320, guid: 956d71a5baca7479a8d843e346a67326, type: 3}
     loop: 0
     seconds: 1.167
     speedMps: 0
@@ -446,10 +446,10 @@ MonoBehaviour:
     layer: base
     additive: 0
     frames: 36
-    events: spawn_rise=0;spawn_land=26;rise_end=35
+    events: spawn_rise=0;spawn_land=25;rise_end=35
     stanceFrames: 0
   - name: AP009_zombie_rise_C
-    clip: {fileID: -623603649343465320, guid: 8e8bcd3faf47d4e3f9cc721b4e0c89d1, type: 3}
+    clip: {fileID: -623603649343465320, guid: 012b5200f9f5548ee8005ef1b7c605ee, type: 3}
     loop: 0
     seconds: 0.9
     speedMps: 0
@@ -460,7 +460,7 @@ MonoBehaviour:
     events: spawn_rise=0;spawn_land=14;rise_end=27
     stanceFrames: 0
   - name: AP009_zombie_run
-    clip: {fileID: -623603649343465320, guid: 41eb95aeb9b434351a40975f14be20f0, type: 3}
+    clip: {fileID: -623603649343465320, guid: c5fd750d6b3584f98bd4774fb53a1e21, type: 3}
     loop: 1
     seconds: 0.4
     speedMps: 5.32
@@ -471,7 +471,7 @@ MonoBehaviour:
     events: foot_l=0;foot_r=6
     stanceFrames: 5
   - name: AP009_zombie_shamble_A
-    clip: {fileID: -623603649343465320, guid: 3ef468a330c6840eab418d684a0caa9f, type: 3}
+    clip: {fileID: -623603649343465320, guid: c2ea03a5eece24bbfaddeb3211dc7574, type: 3}
     loop: 1
     seconds: 0.533
     speedMps: 1.485
@@ -482,7 +482,7 @@ MonoBehaviour:
     events: foot_l=0;foot_r=7
     stanceFrames: 11
   - name: AP009_zombie_shamble_B
-    clip: {fileID: -623603649343465320, guid: acb839745fada4540b304c3bc14a01fe, type: 3}
+    clip: {fileID: -623603649343465320, guid: 57148816cb67248ad8a501b6b76894d6, type: 3}
     loop: 1
     seconds: 0.533
     speedMps: 1.293
@@ -493,7 +493,7 @@ MonoBehaviour:
     events: foot_l=0;foot_r=7
     stanceFrames: 11
   - name: AP009_zombie_shamble_C
-    clip: {fileID: -623603649343465320, guid: 6111253af2f9c4c928b4a3a3015cb1af, type: 3}
+    clip: {fileID: -623603649343465320, guid: a3bb7f01ff42542dd9bc1b24b02ae3c3, type: 3}
     loop: 1
     seconds: 0.533
     speedMps: 1.554
@@ -503,5 +503,5 @@ MonoBehaviour:
     frames: 17
     events: foot_l=0;foot_r=7
     stanceFrames: 11
-  _manifestSchema: AP009.clips-manifest.v004
+  _manifestSchema: AP009.clips-manifest.v005b
   _locomotionReferenceSpeed: 1.485

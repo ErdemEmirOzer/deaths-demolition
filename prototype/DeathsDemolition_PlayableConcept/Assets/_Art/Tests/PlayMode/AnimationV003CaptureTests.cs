@@ -107,9 +107,9 @@ namespace DD.Art.Tests.PlayMode
             (string state, int layer, float t, string name)[] zshots =
             {
                 (C.HitState + "_front_std", 1, 4f / 13f, "hit_front_std"), (C.HitState + "_right_std", 1, 4f / 13f, "hit_right_std"),
-                (C.HitState + "_front_ultra", 1, 3f / 7f, "hit_front_ultra"), (C.ArmorBreakState + "_1", 0, 6f / 17f, "armorbreak_torso"),
+                (C.HitState + "_front_ultra", 1, 3f / 7f, "hit_front_ultra"), (C.ArmorBreakState + "_1", 0, 9f / 20f, "armorbreak_torso"),
                 (C.DeathState + "_7", 0, 2f / 59f, "death_ultra_hold"), (C.DeathState + "_7", 0, 30f / 59f, "death_ultra_slam"),
-                (C.RiseState + "_1", 0, 26f / 35f, "rise_B_land"), (C.StumbleState, 0, 6f / 15f, "stumble")
+                (C.RiseState + "_1", 0, 25f / 35f, "rise_B_land"), (C.StumbleState, 0, 6f / 15f, "stumble")
             };
             foreach ((string state, int layer, float t, string name) sh in zshots)
             {
@@ -143,17 +143,32 @@ namespace DD.Art.Tests.PlayMode
                 written++;
             }
 
+            // WP-032D: reload at its WIDEST hand moment (first pass measures when the left hand is farthest from the aim pose,
+            // second pass captures there) and the C kick on its 2nd frame — the mag_in beat itself sits near the aim pose.
             pv.SetWeapon(1);
             yield return Settle(0.4f);
+            Transform lhand = pa.GetBoneTransform(HumanBodyBones.LeftHand);
+            Vector3 lAim = pa.transform.InverseTransformPoint(lhand.position);
             pv.PlayReload(1.7f);
-            yield return Settle(1.7f * 34f / 50f);
-            CharacterTests.Capture(ppose, Path.Combine(dir, "p_reload_B_mag_in.png"));
+            float best = 0f, bestAt = 0.5f, rt0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - rt0 < 1.7f)
+            {
+                yield return null;
+                float dist = Vector3.Distance(pa.transform.InverseTransformPoint(lhand.position), lAim);
+                if (dist > best) { best = dist; bestAt = Time.realtimeSinceStartup - rt0; }
+            }
+
+            yield return Settle(0.6f);
+            pv.PlayReload(1.7f);
+            yield return Settle(bestAt);
+            CharacterTests.Capture(ppose, Path.Combine(dir, "p_reload_B_widest.png"));
+            Debug.Log("[DD-TEST] wp032d.capture.reload widestAt=" + bestAt.ToString("F2", CultureInfo.InvariantCulture) + " s leftHandTravel=" + (best * 100f).ToString("F0", CultureInfo.InvariantCulture) + " cm");
             written++;
-            yield return Settle(1.2f);
+            yield return Settle(1.5f);
             pv.SetWeapon(2);
             yield return Settle(0.4f);
             pv.PlayFire();
-            yield return null; yield return null; yield return null;
+            yield return null; yield return null;
             CharacterTests.Capture(ppose, Path.Combine(dir, "p_fire_C_kick.png"));
             written++;
             pv.SetWeapon(0);

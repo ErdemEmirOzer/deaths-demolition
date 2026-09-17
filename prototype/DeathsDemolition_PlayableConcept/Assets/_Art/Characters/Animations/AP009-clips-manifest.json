@@ -1,5 +1,5 @@
 {
- "schema": "AP009.clips-manifest.v004",
+ "schema": "AP009.clips-manifest.v005b",
  "package": "AP-009B",
  "fps": 30,
  "skeleton": {
@@ -32,7 +32,7 @@
  "clips": [
   {
    "clip": "AP009_player_A_fire",
-   "fbx": "AP009_player_A_fire_v004.fbx",
+   "fbx": "AP009_player_A_fire_v005b.fbx",
    "target": "player",
    "frames": 6,
    "fps": 30,
@@ -59,8 +59,8 @@
     "fits": {
      "player": {
       "capsule_r_max": 0.29,
-      "capsule_r_max_no_feet": 0.287,
-      "z_min": 0.001,
+      "capsule_r_max_no_feet": 0.286,
+      "z_min": -0.0,
       "z_max": 1.8
      }
     },
@@ -69,7 +69,7 @@
   },
   {
    "clip": "AP009_player_A_idle_aim",
-   "fbx": "AP009_player_A_idle_aim_v004.fbx",
+   "fbx": "AP009_player_A_idle_aim_v005b.fbx",
    "target": "player",
    "frames": 61,
    "fps": 30,
@@ -102,7 +102,7 @@
   },
   {
    "clip": "AP009_player_A_reload",
-   "fbx": "AP009_player_A_reload_v004.fbx",
+   "fbx": "AP009_player_A_reload_v005b.fbx",
    "target": "player",
    "frames": 45,
    "fps": 30,
@@ -138,7 +138,7 @@
   },
   {
    "clip": "AP009_player_A_switch_in",
-   "fbx": "AP009_player_A_switch_in_v004.fbx",
+   "fbx": "AP009_player_A_switch_in_v005b.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -171,7 +171,7 @@
   },
   {
    "clip": "AP009_player_A_switch_out",
-   "fbx": "AP009_player_A_switch_out_v004.fbx",
+   "fbx": "AP009_player_A_switch_out_v005b.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -204,7 +204,7 @@
   },
   {
    "clip": "AP009_player_B_fire",
-   "fbx": "AP009_player_B_fire_v004.fbx",
+   "fbx": "AP009_player_B_fire_v005b.fbx",
    "target": "player",
    "frames": 5,
    "fps": 30,
@@ -231,8 +231,8 @@
     "fits": {
      "player": {
       "capsule_r_max": 0.29,
-      "capsule_r_max_no_feet": 0.285,
-      "z_min": 0.001,
+      "capsule_r_max_no_feet": 0.283,
+      "z_min": -0.0,
       "z_max": 1.8
      }
     },
@@ -241,7 +241,7 @@
   },
   {
    "clip": "AP009_player_B_idle_aim",
-   "fbx": "AP009_player_B_idle_aim_v004.fbx",
+   "fbx": "AP009_player_B_idle_aim_v005b.fbx",
    "target": "player",
    "frames": 61,
    "fps": 30,
@@ -274,7 +274,7 @@
   },
   {
    "clip": "AP009_player_B_reload",
-   "fbx": "AP009_player_B_reload_v004.fbx",
+   "fbx": "AP009_player_B_reload_v005b.fbx",
    "target": "player",
    "frames": 51,
    "fps": 30,
@@ -310,7 +310,7 @@
   },
   {
    "clip": "AP009_player_B_switch_in",
-   "fbx": "AP009_player_B_switch_in_v004.fbx",
+   "fbx": "AP009_player_B_switch_in_v005b.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -343,7 +343,7 @@
   },
   {
    "clip": "AP009_player_B_switch_out",
-   "fbx": "AP009_player_B_switch_out_v004.fbx",
+   "fbx": "AP009_player_B_switch_out_v005b.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -376,7 +376,7 @@
   },
   {
    "clip": "AP009_player_B_weapon_lower",
-   "fbx": "AP009_player_B_weapon_lower_v004.fbx",
+   "fbx": "AP009_player_B_weapon_lower_v005b.fbx",
    "target": "player",
    "frames": 14,
    "fps": 30,
@@ -409,7 +409,7 @@
   },
   {
    "clip": "AP009_player_B_weapon_raise",
-   "fbx": "AP009_player_B_weapon_raise_v004.fbx",
+   "fbx": "AP009_player_B_weapon_raise_v005b.fbx",
    "target": "player",
    "frames": 14,
    "fps": 30,
@@ -442,7 +442,7 @@
   },
   {
    "clip": "AP009_player_C_fire",
-   "fbx": "AP009_player_C_fire_v004.fbx",
+   "fbx": "AP009_player_C_fire_v005b.fbx",
    "target": "player",
    "frames": 22,
    "fps": 30,
@@ -469,8 +469,8 @@
     "loop_seam_deg": null,
     "fits": {
      "player": {
-      "capsule_r_max": 0.296,
-      "capsule_r_max_no_feet": 0.296,
+      "capsule_r_max": 0.298,
+      "capsule_r_max_no_feet": 0.298,
       "z_min": 0.001,
       "z_max": 1.802
      }
@@ -480,7 +480,7 @@
   },
   {
    "clip": "AP009_player_C_idle_aim",
-   "fbx": "AP009_player_C_idle_aim_v004.fbx",
+   "fbx": "AP009_player_C_idle_aim_v005b.fbx",
    "target": "player",
    "frames": 61,
    "fps": 30,
@@ -513,7 +513,7 @@
   },
   {
    "clip": "AP009_player_C_reload",
-   "fbx": "AP009_player_C_reload_v004.fbx",
+   "fbx": "AP009_player_C_reload_v005b.fbx",
    "target": "player",
    "frames": 66,
    "fps": 30,
@@ -550,7 +550,7 @@
   },
   {
    "clip": "AP009_player_C_switch_in",
-   "fbx": "AP009_player_C_switch_in_v004.fbx",
+   "fbx": "AP009_player_C_switch_in_v005b.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -583,7 +583,7 @@
   },
   {
    "clip": "AP009_player_C_switch_out",
-   "fbx": "AP009_player_C_switch_out_v004.fbx",
+   "fbx": "AP009_player_C_switch_out_v005b.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -616,7 +616,7 @@
   },
   {
    "clip": "AP009_player_C_weapon_lower",
-   "fbx": "AP009_player_C_weapon_lower_v004.fbx",
+   "fbx": "AP009_player_C_weapon_lower_v005b.fbx",
    "target": "player",
    "frames": 14,
    "fps": 30,
@@ -649,7 +649,7 @@
   },
   {
    "clip": "AP009_player_C_weapon_raise",
-   "fbx": "AP009_player_C_weapon_raise_v004.fbx",
+   "fbx": "AP009_player_C_weapon_raise_v005b.fbx",
    "target": "player",
    "frames": 14,
    "fps": 30,
@@ -682,7 +682,7 @@
   },
   {
    "clip": "AP009_player_death_back",
-   "fbx": "AP009_player_death_back_v004.fbx",
+   "fbx": "AP009_player_death_back_v005b.fbx",
    "target": "player",
    "frames": 36,
    "fps": 30,
@@ -714,7 +714,7 @@
   },
   {
    "clip": "AP009_player_death_fwd",
-   "fbx": "AP009_player_death_fwd_v004.fbx",
+   "fbx": "AP009_player_death_fwd_v005b.fbx",
    "target": "player",
    "frames": 36,
    "fps": 30,
@@ -746,7 +746,7 @@
   },
   {
    "clip": "AP009_player_death_side",
-   "fbx": "AP009_player_death_side_v004.fbx",
+   "fbx": "AP009_player_death_side_v005b.fbx",
    "target": "player",
    "frames": 48,
    "fps": 30,
@@ -779,7 +779,7 @@
   },
   {
    "clip": "AP009_player_fire_recoil",
-   "fbx": "AP009_player_fire_recoil_v004.fbx",
+   "fbx": "AP009_player_fire_recoil_v005b.fbx",
    "target": "player",
    "frames": 10,
    "fps": 30,
@@ -811,7 +811,7 @@
   },
   {
    "clip": "AP009_player_hit_light",
-   "fbx": "AP009_player_hit_light_v004.fbx",
+   "fbx": "AP009_player_hit_light_v005b.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -843,7 +843,7 @@
   },
   {
    "clip": "AP009_player_hurt_A",
-   "fbx": "AP009_player_hurt_A_v004.fbx",
+   "fbx": "AP009_player_hurt_A_v005b.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -876,7 +876,7 @@
   },
   {
    "clip": "AP009_player_hurt_B",
-   "fbx": "AP009_player_hurt_B_v004.fbx",
+   "fbx": "AP009_player_hurt_B_v005b.fbx",
    "target": "player",
    "frames": 14,
    "fps": 30,
@@ -909,7 +909,7 @@
   },
   {
    "clip": "AP009_player_idle",
-   "fbx": "AP009_player_idle_v004.fbx",
+   "fbx": "AP009_player_idle_v005b.fbx",
    "target": "player",
    "frames": 61,
    "fps": 30,
@@ -941,7 +941,7 @@
   },
   {
    "clip": "AP009_player_pickup_special",
-   "fbx": "AP009_player_pickup_special_v004.fbx",
+   "fbx": "AP009_player_pickup_special_v005b.fbx",
    "target": "player",
    "frames": 24,
    "fps": 30,
@@ -973,7 +973,7 @@
   },
   {
    "clip": "AP009_player_pickup_upper",
-   "fbx": "AP009_player_pickup_upper_v004.fbx",
+   "fbx": "AP009_player_pickup_upper_v005b.fbx",
    "target": "player",
    "frames": 24,
    "fps": 30,
@@ -1007,7 +1007,7 @@
   },
   {
    "clip": "AP009_player_run_back",
-   "fbx": "AP009_player_run_back_v004.fbx",
+   "fbx": "AP009_player_run_back_v005b.fbx",
    "target": "player",
    "frames": 15,
    "fps": 30,
@@ -1058,7 +1058,7 @@
   },
   {
    "clip": "AP009_player_run_fwd",
-   "fbx": "AP009_player_run_fwd_v004.fbx",
+   "fbx": "AP009_player_run_fwd_v005b.fbx",
    "target": "player",
    "frames": 15,
    "fps": 30,
@@ -1109,7 +1109,7 @@
   },
   {
    "clip": "AP009_player_run_strafe_left",
-   "fbx": "AP009_player_run_strafe_left_v004.fbx",
+   "fbx": "AP009_player_run_strafe_left_v005b.fbx",
    "target": "player",
    "frames": 15,
    "fps": 30,
@@ -1160,7 +1160,7 @@
   },
   {
    "clip": "AP009_player_run_strafe_right",
-   "fbx": "AP009_player_run_strafe_right_v004.fbx",
+   "fbx": "AP009_player_run_strafe_right_v005b.fbx",
    "target": "player",
    "frames": 15,
    "fps": 30,
@@ -1211,7 +1211,7 @@
   },
   {
    "clip": "AP009_player_strafe_left",
-   "fbx": "AP009_player_strafe_left_v004.fbx",
+   "fbx": "AP009_player_strafe_left_v005b.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
@@ -1262,7 +1262,7 @@
   },
   {
    "clip": "AP009_player_strafe_right",
-   "fbx": "AP009_player_strafe_right_v004.fbx",
+   "fbx": "AP009_player_strafe_right_v005b.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
@@ -1313,7 +1313,7 @@
   },
   {
    "clip": "AP009_player_sw_hold_bell",
-   "fbx": "AP009_player_sw_hold_bell_v004.fbx",
+   "fbx": "AP009_player_sw_hold_bell_v005b.fbx",
    "target": "player",
    "frames": 61,
    "fps": 30,
@@ -1346,7 +1346,7 @@
   },
   {
    "clip": "AP009_player_sw_hold_loom",
-   "fbx": "AP009_player_sw_hold_loom_v004.fbx",
+   "fbx": "AP009_player_sw_hold_loom_v005b.fbx",
    "target": "player",
    "frames": 61,
    "fps": 30,
@@ -1379,7 +1379,7 @@
   },
   {
    "clip": "AP009_player_walk_back",
-   "fbx": "AP009_player_walk_back_v004.fbx",
+   "fbx": "AP009_player_walk_back_v005b.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
@@ -1430,7 +1430,7 @@
   },
   {
    "clip": "AP009_player_walk_fwd",
-   "fbx": "AP009_player_walk_fwd_v004.fbx",
+   "fbx": "AP009_player_walk_fwd_v005b.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
@@ -1481,7 +1481,7 @@
   },
   {
    "clip": "AP009_player_weapon_lower",
-   "fbx": "AP009_player_weapon_lower_v004.fbx",
+   "fbx": "AP009_player_weapon_lower_v005b.fbx",
    "target": "player",
    "frames": 14,
    "fps": 30,
@@ -1514,7 +1514,7 @@
   },
   {
    "clip": "AP009_player_weapon_raise",
-   "fbx": "AP009_player_weapon_raise_v004.fbx",
+   "fbx": "AP009_player_weapon_raise_v005b.fbx",
    "target": "player",
    "frames": 14,
    "fps": 30,
@@ -1547,11 +1547,11 @@
   },
   {
    "clip": "AP009_zombie_armorbreak_head",
-   "fbx": "AP009_zombie_armorbreak_head_v004.fbx",
+   "fbx": "AP009_zombie_armorbreak_head_v005b.fbx",
    "target": "zombie",
-   "frames": 18,
+   "frames": 21,
    "fps": 30,
-   "seconds": 0.567,
+   "seconds": 0.667,
    "loop": false,
    "events": {
     "hit": 0,
@@ -1570,7 +1570,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 33,
+      "pokes_peak": 30,
       "pokes_frame0": 1,
       "capsule_r_max": 0.391,
       "capsule_r_max_no_feet": 0.391,
@@ -1578,15 +1578,15 @@
       "z_max": 1.789
      },
      "B": {
-      "pokes_peak": 37,
-      "pokes_frame0": 7,
+      "pokes_peak": 32,
+      "pokes_frame0": 5,
       "capsule_r_max": 0.416,
       "capsule_r_max_no_feet": 0.416,
       "z_min": 0.022,
       "z_max": 1.79
      },
      "C": {
-      "pokes_peak": 17,
+      "pokes_peak": 18,
       "pokes_frame0": 0,
       "capsule_r_max": 0.396,
       "capsule_r_max_no_feet": 0.396,
@@ -1599,11 +1599,11 @@
   },
   {
    "clip": "AP009_zombie_armorbreak_leg",
-   "fbx": "AP009_zombie_armorbreak_leg_v004.fbx",
+   "fbx": "AP009_zombie_armorbreak_leg_v005b.fbx",
    "target": "zombie",
-   "frames": 18,
+   "frames": 21,
    "fps": 30,
-   "seconds": 0.567,
+   "seconds": 0.667,
    "loop": false,
    "events": {
     "hit": 0,
@@ -1622,27 +1622,27 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 5,
+      "pokes_peak": 1,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.411,
-      "capsule_r_max_no_feet": 0.411,
-      "z_min": 0.019,
+      "capsule_r_max": 0.433,
+      "capsule_r_max_no_feet": 0.433,
+      "z_min": 0.02,
       "z_max": 1.745
      },
      "B": {
-      "pokes_peak": 10,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.435,
-      "capsule_r_max_no_feet": 0.435,
-      "z_min": 0.019,
+      "pokes_peak": 11,
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.456,
+      "capsule_r_max_no_feet": 0.456,
+      "z_min": 0.02,
       "z_max": 1.721
      },
      "C": {
-      "pokes_peak": 1,
+      "pokes_peak": 0,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.417,
-      "capsule_r_max_no_feet": 0.417,
-      "z_min": 0.019,
+      "capsule_r_max": 0.438,
+      "capsule_r_max_no_feet": 0.438,
+      "z_min": 0.02,
       "z_max": 1.743
      }
     },
@@ -1651,11 +1651,11 @@
   },
   {
    "clip": "AP009_zombie_armorbreak_torso",
-   "fbx": "AP009_zombie_armorbreak_torso_v004.fbx",
+   "fbx": "AP009_zombie_armorbreak_torso_v005b.fbx",
    "target": "zombie",
-   "frames": 18,
+   "frames": 21,
    "fps": 30,
-   "seconds": 0.567,
+   "seconds": 0.667,
    "loop": false,
    "events": {
     "hit": 0,
@@ -1674,26 +1674,26 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 1,
+      "pokes_peak": 2,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.386,
-      "capsule_r_max_no_feet": 0.384,
+      "capsule_r_max": 0.467,
+      "capsule_r_max_no_feet": 0.467,
       "z_min": 0.025,
-      "z_max": 1.775
+      "z_max": 1.774
      },
      "B": {
       "pokes_peak": 13,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.393,
-      "capsule_r_max_no_feet": 0.393,
-      "z_min": 0.025,
-      "z_max": 1.76
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.461,
+      "capsule_r_max_no_feet": 0.461,
+      "z_min": 0.024,
+      "z_max": 1.759
      },
      "C": {
-      "pokes_peak": 1,
+      "pokes_peak": 2,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.384,
-      "capsule_r_max_no_feet": 0.384,
+      "capsule_r_max": 0.466,
+      "capsule_r_max_no_feet": 0.466,
       "z_min": 0.025,
       "z_max": 1.772
      }
@@ -1703,7 +1703,7 @@
   },
   {
    "clip": "AP009_zombie_attack_lunge",
-   "fbx": "AP009_zombie_attack_lunge_v004.fbx",
+   "fbx": "AP009_zombie_attack_lunge_v005b.fbx",
    "target": "zombie",
    "frames": 30,
    "fps": 30,
@@ -1725,7 +1725,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 22,
+      "pokes_peak": 10,
       "pokes_frame0": 3,
       "capsule_r_max": 0.599,
       "capsule_r_max_no_feet": 0.52,
@@ -1733,15 +1733,15 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 42,
-      "pokes_frame0": 10,
+      "pokes_peak": 28,
+      "pokes_frame0": 6,
       "capsule_r_max": 0.599,
       "capsule_r_max_no_feet": 0.543,
       "z_min": 0.025,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 21,
+      "pokes_peak": 7,
       "pokes_frame0": 0,
       "capsule_r_max": 0.599,
       "capsule_r_max_no_feet": 0.527,
@@ -1754,7 +1754,7 @@
   },
   {
    "clip": "AP009_zombie_attack_overhead",
-   "fbx": "AP009_zombie_attack_overhead_v004.fbx",
+   "fbx": "AP009_zombie_attack_overhead_v005b.fbx",
    "target": "zombie",
    "frames": 73,
    "fps": 30,
@@ -1776,7 +1776,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 19,
+      "pokes_peak": 30,
       "pokes_frame0": 3,
       "capsule_r_max": 0.608,
       "capsule_r_max_no_feet": 0.608,
@@ -1784,15 +1784,15 @@
       "z_max": 1.825
      },
      "B": {
-      "pokes_peak": 53,
-      "pokes_frame0": 10,
+      "pokes_peak": 43,
+      "pokes_frame0": 6,
       "capsule_r_max": 0.619,
       "capsule_r_max_no_feet": 0.619,
       "z_min": 0.02,
       "z_max": 1.833
      },
      "C": {
-      "pokes_peak": 24,
+      "pokes_peak": 32,
       "pokes_frame0": 0,
       "capsule_r_max": 0.612,
       "capsule_r_max_no_feet": 0.612,
@@ -1805,7 +1805,7 @@
   },
   {
    "clip": "AP009_zombie_attack_sweep",
-   "fbx": "AP009_zombie_attack_sweep_v004.fbx",
+   "fbx": "AP009_zombie_attack_sweep_v005b.fbx",
    "target": "zombie",
    "frames": 51,
    "fps": 30,
@@ -1827,7 +1827,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 8,
+      "pokes_peak": 5,
       "pokes_frame0": 3,
       "capsule_r_max": 0.468,
       "capsule_r_max_no_feet": 0.468,
@@ -1835,8 +1835,8 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 20,
-      "pokes_frame0": 10,
+      "pokes_peak": 13,
+      "pokes_frame0": 6,
       "capsule_r_max": 0.489,
       "capsule_r_max_no_feet": 0.489,
       "z_min": 0.022,
@@ -1856,7 +1856,7 @@
   },
   {
    "clip": "AP009_zombie_attack_swipe",
-   "fbx": "AP009_zombie_attack_swipe_v004.fbx",
+   "fbx": "AP009_zombie_attack_swipe_v005b.fbx",
    "target": "zombie",
    "frames": 34,
    "fps": 30,
@@ -1878,7 +1878,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 29,
+      "pokes_peak": 27,
       "pokes_frame0": 3,
       "capsule_r_max": 0.52,
       "capsule_r_max_no_feet": 0.474,
@@ -1886,8 +1886,8 @@
       "z_max": 1.756
      },
      "B": {
-      "pokes_peak": 40,
-      "pokes_frame0": 10,
+      "pokes_peak": 33,
+      "pokes_frame0": 6,
       "capsule_r_max": 0.52,
       "capsule_r_max_no_feet": 0.467,
       "z_min": 0.019,
@@ -1907,7 +1907,7 @@
   },
   {
    "clip": "AP009_zombie_death_backward",
-   "fbx": "AP009_zombie_death_backward_v004.fbx",
+   "fbx": "AP009_zombie_death_backward_v005b.fbx",
    "target": "zombie",
    "frames": 36,
    "fps": 30,
@@ -1928,7 +1928,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 8,
+      "pokes_peak": 3,
       "pokes_frame0": 3,
       "capsule_r_max": 1.015,
       "capsule_r_max_no_feet": 1.015,
@@ -1936,8 +1936,8 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 16,
-      "pokes_frame0": 10,
+      "pokes_peak": 9,
+      "pokes_frame0": 6,
       "capsule_r_max": 1.016,
       "capsule_r_max_no_feet": 1.016,
       "z_min": -0.009,
@@ -1957,7 +1957,7 @@
   },
   {
    "clip": "AP009_zombie_death_forward",
-   "fbx": "AP009_zombie_death_forward_v004.fbx",
+   "fbx": "AP009_zombie_death_forward_v005b.fbx",
    "target": "zombie",
    "frames": 36,
    "fps": 30,
@@ -1978,7 +1978,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 32,
+      "pokes_peak": 20,
       "pokes_frame0": 3,
       "capsule_r_max": 1.014,
       "capsule_r_max_no_feet": 1.014,
@@ -1986,15 +1986,15 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 42,
-      "pokes_frame0": 10,
+      "pokes_peak": 22,
+      "pokes_frame0": 6,
       "capsule_r_max": 1.006,
       "capsule_r_max_no_feet": 1.006,
       "z_min": -0.039,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 33,
+      "pokes_peak": 31,
       "pokes_frame0": 0,
       "capsule_r_max": 1.013,
       "capsule_r_max_no_feet": 1.013,
@@ -2007,7 +2007,7 @@
   },
   {
    "clip": "AP009_zombie_death_kneel",
-   "fbx": "AP009_zombie_death_kneel_v004.fbx",
+   "fbx": "AP009_zombie_death_kneel_v005b.fbx",
    "target": "zombie",
    "frames": 44,
    "fps": 30,
@@ -2028,7 +2028,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 51,
+      "pokes_peak": 48,
       "pokes_frame0": 3,
       "capsule_r_max": 0.607,
       "capsule_r_max_no_feet": 0.607,
@@ -2036,15 +2036,15 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 64,
-      "pokes_frame0": 10,
+      "pokes_peak": 60,
+      "pokes_frame0": 6,
       "capsule_r_max": 0.576,
       "capsule_r_max_no_feet": 0.576,
       "z_min": -0.036,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 17,
+      "pokes_peak": 15,
       "pokes_frame0": 0,
       "capsule_r_max": 0.604,
       "capsule_r_max_no_feet": 0.604,
@@ -2057,7 +2057,7 @@
   },
   {
    "clip": "AP009_zombie_death_side",
-   "fbx": "AP009_zombie_death_side_v004.fbx",
+   "fbx": "AP009_zombie_death_side_v005b.fbx",
    "target": "zombie",
    "frames": 40,
    "fps": 30,
@@ -2078,7 +2078,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 30,
+      "pokes_peak": 24,
       "pokes_frame0": 3,
       "capsule_r_max": 1.236,
       "capsule_r_max_no_feet": 1.236,
@@ -2086,15 +2086,15 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 51,
-      "pokes_frame0": 10,
+      "pokes_peak": 41,
+      "pokes_frame0": 6,
       "capsule_r_max": 1.239,
       "capsule_r_max_no_feet": 1.239,
       "z_min": 0.008,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 19,
+      "pokes_peak": 14,
       "pokes_frame0": 0,
       "capsule_r_max": 1.238,
       "capsule_r_max_no_feet": 1.238,
@@ -2107,7 +2107,7 @@
   },
   {
    "clip": "AP009_zombie_death_side_R",
-   "fbx": "AP009_zombie_death_side_R_v004.fbx",
+   "fbx": "AP009_zombie_death_side_R_v005b.fbx",
    "target": "zombie",
    "frames": 44,
    "fps": 30,
@@ -2129,7 +2129,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 57,
+      "pokes_peak": 38,
       "pokes_frame0": 3,
       "capsule_r_max": 1.237,
       "capsule_r_max_no_feet": 1.237,
@@ -2137,15 +2137,15 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 94,
-      "pokes_frame0": 10,
+      "pokes_peak": 50,
+      "pokes_frame0": 6,
       "capsule_r_max": 1.24,
       "capsule_r_max_no_feet": 1.24,
       "z_min": 0.008,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 43,
+      "pokes_peak": 17,
       "pokes_frame0": 0,
       "capsule_r_max": 1.237,
       "capsule_r_max_no_feet": 1.237,
@@ -2158,7 +2158,7 @@
   },
   {
    "clip": "AP009_zombie_death_special_A",
-   "fbx": "AP009_zombie_death_special_A_v004.fbx",
+   "fbx": "AP009_zombie_death_special_A_v005b.fbx",
    "target": "zombie",
    "frames": 36,
    "fps": 30,
@@ -2179,7 +2179,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 17,
+      "pokes_peak": 10,
       "pokes_frame0": 3,
       "capsule_r_max": 1.185,
       "capsule_r_max_no_feet": 1.185,
@@ -2187,15 +2187,15 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 32,
-      "pokes_frame0": 10,
+      "pokes_peak": 21,
+      "pokes_frame0": 6,
       "capsule_r_max": 1.185,
       "capsule_r_max_no_feet": 1.185,
       "z_min": -0.07,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 18,
+      "pokes_peak": 11,
       "pokes_frame0": 0,
       "capsule_r_max": 1.186,
       "capsule_r_max_no_feet": 1.186,
@@ -2208,7 +2208,7 @@
   },
   {
    "clip": "AP009_zombie_death_special_B",
-   "fbx": "AP009_zombie_death_special_B_v004.fbx",
+   "fbx": "AP009_zombie_death_special_B_v005b.fbx",
    "target": "zombie",
    "frames": 40,
    "fps": 30,
@@ -2229,7 +2229,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 106,
+      "pokes_peak": 83,
       "pokes_frame0": 3,
       "capsule_r_max": 0.733,
       "capsule_r_max_no_feet": 0.719,
@@ -2237,15 +2237,15 @@
       "z_max": 1.74
      },
      "B": {
-      "pokes_peak": 95,
-      "pokes_frame0": 10,
+      "pokes_peak": 71,
+      "pokes_frame0": 6,
       "capsule_r_max": 0.733,
       "capsule_r_max_no_feet": 0.721,
       "z_min": -0.042,
       "z_max": 1.714
      },
      "C": {
-      "pokes_peak": 101,
+      "pokes_peak": 83,
       "pokes_frame0": 0,
       "capsule_r_max": 0.733,
       "capsule_r_max_no_feet": 0.72,
@@ -2258,7 +2258,7 @@
   },
   {
    "clip": "AP009_zombie_death_ultra",
-   "fbx": "AP009_zombie_death_ultra_v004.fbx",
+   "fbx": "AP009_zombie_death_ultra_v005b.fbx",
    "target": "zombie",
    "frames": 60,
    "fps": 30,
@@ -2279,7 +2279,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 33,
+      "pokes_peak": 30,
       "pokes_frame0": 3,
       "capsule_r_max": 1.155,
       "capsule_r_max_no_feet": 1.155,
@@ -2287,15 +2287,15 @@
       "z_max": 1.777
      },
      "B": {
-      "pokes_peak": 64,
-      "pokes_frame0": 10,
+      "pokes_peak": 58,
+      "pokes_frame0": 6,
       "capsule_r_max": 1.146,
       "capsule_r_max_no_feet": 1.146,
       "z_min": -0.021,
       "z_max": 1.765
      },
      "C": {
-      "pokes_peak": 31,
+      "pokes_peak": 27,
       "pokes_frame0": 0,
       "capsule_r_max": 1.153,
       "capsule_r_max_no_feet": 1.153,
@@ -2308,7 +2308,7 @@
   },
   {
    "clip": "AP009_zombie_hit_back_elite",
-   "fbx": "AP009_zombie_hit_back_elite_v004.fbx",
+   "fbx": "AP009_zombie_hit_back_elite_v005b.fbx",
    "target": "zombie",
    "frames": 12,
    "fps": 30,
@@ -2333,25 +2333,25 @@
      "A": {
       "pokes_peak": 2,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.392,
-      "capsule_r_max_no_feet": 0.392,
-      "z_min": 0.018,
+      "capsule_r_max": 0.43,
+      "capsule_r_max_no_feet": 0.43,
+      "z_min": 0.019,
       "z_max": 1.745
      },
      "B": {
-      "pokes_peak": 16,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.418,
-      "capsule_r_max_no_feet": 0.418,
-      "z_min": 0.018,
+      "pokes_peak": 10,
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.456,
+      "capsule_r_max_no_feet": 0.456,
+      "z_min": 0.019,
       "z_max": 1.721
      },
      "C": {
       "pokes_peak": 0,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.397,
-      "capsule_r_max_no_feet": 0.397,
-      "z_min": 0.018,
+      "capsule_r_max": 0.436,
+      "capsule_r_max_no_feet": 0.436,
+      "z_min": 0.02,
       "z_max": 1.743
      }
     },
@@ -2360,7 +2360,7 @@
   },
   {
    "clip": "AP009_zombie_hit_back_std",
-   "fbx": "AP009_zombie_hit_back_std_v004.fbx",
+   "fbx": "AP009_zombie_hit_back_std_v005b.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -2383,27 +2383,27 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 3,
+      "pokes_peak": 4,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.47,
-      "capsule_r_max_no_feet": 0.47,
-      "z_min": 0.018,
+      "capsule_r_max": 0.548,
+      "capsule_r_max_no_feet": 0.548,
+      "z_min": 0.02,
       "z_max": 1.745
      },
      "B": {
-      "pokes_peak": 19,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.495,
-      "capsule_r_max_no_feet": 0.495,
-      "z_min": 0.018,
+      "pokes_peak": 16,
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.568,
+      "capsule_r_max_no_feet": 0.568,
+      "z_min": 0.019,
       "z_max": 1.721
      },
      "C": {
       "pokes_peak": 0,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.476,
-      "capsule_r_max_no_feet": 0.476,
-      "z_min": 0.019,
+      "capsule_r_max": 0.554,
+      "capsule_r_max_no_feet": 0.554,
+      "z_min": 0.02,
       "z_max": 1.743
      }
     },
@@ -2412,7 +2412,7 @@
   },
   {
    "clip": "AP009_zombie_hit_back_ultra",
-   "fbx": "AP009_zombie_hit_back_ultra_v004.fbx",
+   "fbx": "AP009_zombie_hit_back_ultra_v005b.fbx",
    "target": "zombie",
    "frames": 8,
    "fps": 30,
@@ -2443,8 +2443,8 @@
       "z_max": 1.747
      },
      "B": {
-      "pokes_peak": 10,
-      "pokes_frame0": 7,
+      "pokes_peak": 7,
+      "pokes_frame0": 5,
       "capsule_r_max": 0.352,
       "capsule_r_max_no_feet": 0.352,
       "z_min": 0.022,
@@ -2464,7 +2464,7 @@
   },
   {
    "clip": "AP009_zombie_hit_front_elite",
-   "fbx": "AP009_zombie_hit_front_elite_v004.fbx",
+   "fbx": "AP009_zombie_hit_front_elite_v005b.fbx",
    "target": "zombie",
    "frames": 12,
    "fps": 30,
@@ -2491,24 +2491,24 @@
       "pokes_frame0": 1,
       "capsule_r_max": 0.325,
       "capsule_r_max_no_feet": 0.325,
-      "z_min": 0.019,
+      "z_min": 0.02,
       "z_max": 1.777
      },
      "B": {
-      "pokes_peak": 9,
-      "pokes_frame0": 7,
+      "pokes_peak": 5,
+      "pokes_frame0": 5,
       "capsule_r_max": 0.352,
       "capsule_r_max_no_feet": 0.352,
-      "z_min": 0.018,
-      "z_max": 1.771
+      "z_min": 0.02,
+      "z_max": 1.783
      },
      "C": {
       "pokes_peak": 0,
       "pokes_frame0": 0,
       "capsule_r_max": 0.33,
       "capsule_r_max_no_feet": 0.33,
-      "z_min": 0.019,
-      "z_max": 1.776
+      "z_min": 0.02,
+      "z_max": 1.778
      }
     },
     "foot_contact_A": null
@@ -2516,7 +2516,7 @@
   },
   {
    "clip": "AP009_zombie_hit_front_std",
-   "fbx": "AP009_zombie_hit_front_std_v004.fbx",
+   "fbx": "AP009_zombie_hit_front_std_v005b.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -2541,26 +2541,26 @@
      "A": {
       "pokes_peak": 1,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.325,
-      "capsule_r_max_no_feet": 0.325,
-      "z_min": 0.019,
-      "z_max": 1.774
+      "capsule_r_max": 0.516,
+      "capsule_r_max_no_feet": 0.516,
+      "z_min": 0.02,
+      "z_max": 1.778
      },
      "B": {
-      "pokes_peak": 7,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.352,
-      "capsule_r_max_no_feet": 0.352,
-      "z_min": 0.019,
-      "z_max": 1.783
+      "pokes_peak": 5,
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.493,
+      "capsule_r_max_no_feet": 0.493,
+      "z_min": 0.02,
+      "z_max": 1.772
      },
      "C": {
       "pokes_peak": 2,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.33,
-      "capsule_r_max_no_feet": 0.33,
-      "z_min": 0.019,
-      "z_max": 1.778
+      "capsule_r_max": 0.513,
+      "capsule_r_max_no_feet": 0.513,
+      "z_min": 0.021,
+      "z_max": 1.777
      }
     },
     "foot_contact_A": null
@@ -2568,7 +2568,7 @@
   },
   {
    "clip": "AP009_zombie_hit_front_ultra",
-   "fbx": "AP009_zombie_hit_front_ultra_v004.fbx",
+   "fbx": "AP009_zombie_hit_front_ultra_v005b.fbx",
    "target": "zombie",
    "frames": 8,
    "fps": 30,
@@ -2599,8 +2599,8 @@
       "z_max": 1.786
      },
      "B": {
-      "pokes_peak": 10,
-      "pokes_frame0": 7,
+      "pokes_peak": 9,
+      "pokes_frame0": 5,
       "capsule_r_max": 0.352,
       "capsule_r_max_no_feet": 0.352,
       "z_min": 0.022,
@@ -2620,7 +2620,7 @@
   },
   {
    "clip": "AP009_zombie_hit_heavy_stagger",
-   "fbx": "AP009_zombie_hit_heavy_stagger_v004.fbx",
+   "fbx": "AP009_zombie_hit_heavy_stagger_v005b.fbx",
    "target": "zombie",
    "frames": 30,
    "fps": 30,
@@ -2650,8 +2650,8 @@
       "z_max": 1.761
      },
      "B": {
-      "pokes_peak": 10,
-      "pokes_frame0": 8,
+      "pokes_peak": 6,
+      "pokes_frame0": 6,
       "capsule_r_max": 0.395,
       "capsule_r_max_no_feet": 0.394,
       "z_min": 0.022,
@@ -2671,7 +2671,7 @@
   },
   {
    "clip": "AP009_zombie_hit_left_elite",
-   "fbx": "AP009_zombie_hit_left_elite_v004.fbx",
+   "fbx": "AP009_zombie_hit_left_elite_v005b.fbx",
    "target": "zombie",
    "frames": 12,
    "fps": 30,
@@ -2696,24 +2696,24 @@
      "A": {
       "pokes_peak": 1,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.358,
-      "capsule_r_max_no_feet": 0.358,
+      "capsule_r_max": 0.394,
+      "capsule_r_max_no_feet": 0.394,
       "z_min": 0.017,
       "z_max": 1.745
      },
      "B": {
-      "pokes_peak": 7,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.38,
-      "capsule_r_max_no_feet": 0.38,
+      "pokes_peak": 5,
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.416,
+      "capsule_r_max_no_feet": 0.416,
       "z_min": 0.017,
       "z_max": 1.721
      },
      "C": {
-      "pokes_peak": 0,
+      "pokes_peak": 1,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.362,
-      "capsule_r_max_no_feet": 0.362,
+      "capsule_r_max": 0.398,
+      "capsule_r_max_no_feet": 0.398,
       "z_min": 0.017,
       "z_max": 1.743
      }
@@ -2723,7 +2723,7 @@
   },
   {
    "clip": "AP009_zombie_hit_left_std",
-   "fbx": "AP009_zombie_hit_left_std_v004.fbx",
+   "fbx": "AP009_zombie_hit_left_std_v005b.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -2748,24 +2748,24 @@
      "A": {
       "pokes_peak": 2,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.464,
-      "capsule_r_max_no_feet": 0.464,
+      "capsule_r_max": 0.567,
+      "capsule_r_max_no_feet": 0.567,
       "z_min": 0.017,
       "z_max": 1.745
      },
      "B": {
-      "pokes_peak": 12,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.482,
-      "capsule_r_max_no_feet": 0.482,
+      "pokes_peak": 10,
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.581,
+      "capsule_r_max_no_feet": 0.581,
       "z_min": 0.017,
       "z_max": 1.721
      },
      "C": {
-      "pokes_peak": 4,
+      "pokes_peak": 2,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.468,
-      "capsule_r_max_no_feet": 0.468,
+      "capsule_r_max": 0.572,
+      "capsule_r_max_no_feet": 0.572,
       "z_min": 0.017,
       "z_max": 1.743
      }
@@ -2775,7 +2775,7 @@
   },
   {
    "clip": "AP009_zombie_hit_left_ultra",
-   "fbx": "AP009_zombie_hit_left_ultra_v004.fbx",
+   "fbx": "AP009_zombie_hit_left_ultra_v005b.fbx",
    "target": "zombie",
    "frames": 8,
    "fps": 30,
@@ -2806,8 +2806,8 @@
       "z_max": 1.746
      },
      "B": {
-      "pokes_peak": 11,
-      "pokes_frame0": 7,
+      "pokes_peak": 8,
+      "pokes_frame0": 5,
       "capsule_r_max": 0.352,
       "capsule_r_max_no_feet": 0.352,
       "z_min": 0.022,
@@ -2827,7 +2827,7 @@
   },
   {
    "clip": "AP009_zombie_hit_light_L",
-   "fbx": "AP009_zombie_hit_light_L_v004.fbx",
+   "fbx": "AP009_zombie_hit_light_L_v005b.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -2856,8 +2856,8 @@
       "z_max": 1.728
      },
      "B": {
-      "pokes_peak": 13,
-      "pokes_frame0": 13,
+      "pokes_peak": 9,
+      "pokes_frame0": 9,
       "capsule_r_max": 0.385,
       "capsule_r_max_no_feet": 0.385,
       "z_min": 0.018,
@@ -2877,7 +2877,7 @@
   },
   {
    "clip": "AP009_zombie_hit_light_R",
-   "fbx": "AP009_zombie_hit_light_R_v004.fbx",
+   "fbx": "AP009_zombie_hit_light_R_v005b.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -2906,8 +2906,8 @@
       "z_max": 1.728
      },
      "B": {
-      "pokes_peak": 13,
-      "pokes_frame0": 13,
+      "pokes_peak": 9,
+      "pokes_frame0": 9,
       "capsule_r_max": 0.385,
       "capsule_r_max_no_feet": 0.385,
       "z_min": 0.018,
@@ -2927,7 +2927,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_head",
-   "fbx": "AP009_zombie_hit_region_head_v004.fbx",
+   "fbx": "AP009_zombie_hit_region_head_v005b.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -2977,7 +2977,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_leg",
-   "fbx": "AP009_zombie_hit_region_leg_v004.fbx",
+   "fbx": "AP009_zombie_hit_region_leg_v005b.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -3027,7 +3027,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_torso",
-   "fbx": "AP009_zombie_hit_region_torso_v004.fbx",
+   "fbx": "AP009_zombie_hit_region_torso_v005b.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -3077,7 +3077,7 @@
   },
   {
    "clip": "AP009_zombie_hit_right_elite",
-   "fbx": "AP009_zombie_hit_right_elite_v004.fbx",
+   "fbx": "AP009_zombie_hit_right_elite_v005b.fbx",
    "target": "zombie",
    "frames": 12,
    "fps": 30,
@@ -3102,24 +3102,24 @@
      "A": {
       "pokes_peak": 2,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.357,
-      "capsule_r_max_no_feet": 0.357,
+      "capsule_r_max": 0.394,
+      "capsule_r_max_no_feet": 0.394,
       "z_min": 0.016,
       "z_max": 1.745
      },
      "B": {
-      "pokes_peak": 9,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.379,
-      "capsule_r_max_no_feet": 0.379,
+      "pokes_peak": 7,
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.414,
+      "capsule_r_max_no_feet": 0.414,
       "z_min": 0.016,
       "z_max": 1.721
      },
      "C": {
       "pokes_peak": 0,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.361,
-      "capsule_r_max_no_feet": 0.361,
+      "capsule_r_max": 0.398,
+      "capsule_r_max_no_feet": 0.398,
       "z_min": 0.016,
       "z_max": 1.743
      }
@@ -3129,7 +3129,7 @@
   },
   {
    "clip": "AP009_zombie_hit_right_std",
-   "fbx": "AP009_zombie_hit_right_std_v004.fbx",
+   "fbx": "AP009_zombie_hit_right_std_v005b.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -3152,26 +3152,26 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 6,
+      "pokes_peak": 4,
       "pokes_frame0": 1,
-      "capsule_r_max": 0.463,
-      "capsule_r_max_no_feet": 0.463,
+      "capsule_r_max": 0.567,
+      "capsule_r_max_no_feet": 0.567,
       "z_min": 0.016,
       "z_max": 1.745
      },
      "B": {
-      "pokes_peak": 10,
-      "pokes_frame0": 7,
-      "capsule_r_max": 0.48,
-      "capsule_r_max_no_feet": 0.48,
+      "pokes_peak": 7,
+      "pokes_frame0": 5,
+      "capsule_r_max": 0.581,
+      "capsule_r_max_no_feet": 0.581,
       "z_min": 0.016,
       "z_max": 1.721
      },
      "C": {
-      "pokes_peak": 3,
+      "pokes_peak": 2,
       "pokes_frame0": 0,
-      "capsule_r_max": 0.467,
-      "capsule_r_max_no_feet": 0.467,
+      "capsule_r_max": 0.572,
+      "capsule_r_max_no_feet": 0.572,
       "z_min": 0.016,
       "z_max": 1.743
      }
@@ -3181,7 +3181,7 @@
   },
   {
    "clip": "AP009_zombie_hit_right_ultra",
-   "fbx": "AP009_zombie_hit_right_ultra_v004.fbx",
+   "fbx": "AP009_zombie_hit_right_ultra_v005b.fbx",
    "target": "zombie",
    "frames": 8,
    "fps": 30,
@@ -3212,8 +3212,8 @@
       "z_max": 1.747
      },
      "B": {
-      "pokes_peak": 9,
-      "pokes_frame0": 7,
+      "pokes_peak": 6,
+      "pokes_frame0": 5,
       "capsule_r_max": 0.352,
       "capsule_r_max_no_feet": 0.352,
       "z_min": 0.022,
@@ -3233,7 +3233,7 @@
   },
   {
    "clip": "AP009_zombie_hit_special_stumble",
-   "fbx": "AP009_zombie_hit_special_stumble_v004.fbx",
+   "fbx": "AP009_zombie_hit_special_stumble_v005b.fbx",
    "target": "zombie",
    "frames": 16,
    "fps": 30,
@@ -3255,7 +3255,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 1,
+      "pokes_peak": 0,
       "pokes_frame0": 0,
       "capsule_r_max": 0.419,
       "capsule_r_max_no_feet": 0.418,
@@ -3263,8 +3263,8 @@
       "z_max": 1.768
      },
      "B": {
-      "pokes_peak": 10,
-      "pokes_frame0": 9,
+      "pokes_peak": 6,
+      "pokes_frame0": 5,
       "capsule_r_max": 0.424,
       "capsule_r_max_no_feet": 0.424,
       "z_min": 0.023,
@@ -3284,7 +3284,7 @@
   },
   {
    "clip": "AP009_zombie_idle_queue",
-   "fbx": "AP009_zombie_idle_queue_v004.fbx",
+   "fbx": "AP009_zombie_idle_queue_v005b.fbx",
    "target": "zombie",
    "frames": 91,
    "fps": 30,
@@ -3306,7 +3306,7 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 8,
+      "pokes_peak": 7,
       "pokes_frame0": 4,
       "capsule_r_max": 0.459,
       "capsule_r_max_no_feet": 0.459,
@@ -3314,15 +3314,15 @@
       "z_max": 1.709
      },
      "B": {
-      "pokes_peak": 22,
-      "pokes_frame0": 10,
+      "pokes_peak": 12,
+      "pokes_frame0": 7,
       "capsule_r_max": 0.478,
       "capsule_r_max_no_feet": 0.478,
       "z_min": 0.014,
       "z_max": 1.684
      },
      "C": {
-      "pokes_peak": 2,
+      "pokes_peak": 1,
       "pokes_frame0": 0,
       "capsule_r_max": 0.464,
       "capsule_r_max_no_feet": 0.464,
@@ -3335,7 +3335,7 @@
   },
   {
    "clip": "AP009_zombie_idle_sway",
-   "fbx": "AP009_zombie_idle_sway_v004.fbx",
+   "fbx": "AP009_zombie_idle_sway_v005b.fbx",
    "target": "zombie",
    "frames": 61,
    "fps": 30,
@@ -3362,8 +3362,8 @@
       "z_max": 1.732
      },
      "B": {
-      "pokes_peak": 15,
-      "pokes_frame0": 12,
+      "pokes_peak": 10,
+      "pokes_frame0": 8,
       "capsule_r_max": 0.403,
       "capsule_r_max_no_feet": 0.403,
       "z_min": 0.015,
@@ -3383,7 +3383,7 @@
   },
   {
    "clip": "AP009_zombie_idle_twitch",
-   "fbx": "AP009_zombie_idle_twitch_v004.fbx",
+   "fbx": "AP009_zombie_idle_twitch_v005b.fbx",
    "target": "zombie",
    "frames": 61,
    "fps": 30,
@@ -3410,8 +3410,8 @@
       "z_max": 1.732
      },
      "B": {
-      "pokes_peak": 15,
-      "pokes_frame0": 13,
+      "pokes_peak": 11,
+      "pokes_frame0": 9,
       "capsule_r_max": 0.403,
       "capsule_r_max_no_feet": 0.403,
       "z_min": 0.017,
@@ -3431,7 +3431,7 @@
   },
   {
    "clip": "AP009_zombie_rise",
-   "fbx": "AP009_zombie_rise_v004.fbx",
+   "fbx": "AP009_zombie_rise_v005b.fbx",
    "target": "zombie",
    "frames": 48,
    "fps": 30,
@@ -3452,24 +3452,24 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 34,
-      "pokes_frame0": 7,
+      "pokes_peak": 27,
+      "pokes_frame0": 1,
       "capsule_r_max": 1.017,
       "capsule_r_max_no_feet": 1.017,
       "z_min": 0.001,
       "z_max": 1.71
      },
      "B": {
-      "pokes_peak": 56,
-      "pokes_frame0": 21,
+      "pokes_peak": 44,
+      "pokes_frame0": 7,
       "capsule_r_max": 1.008,
       "capsule_r_max_no_feet": 1.008,
       "z_min": -0.07,
       "z_max": 1.682
      },
      "C": {
-      "pokes_peak": 31,
-      "pokes_frame0": 12,
+      "pokes_peak": 30,
+      "pokes_frame0": 0,
       "capsule_r_max": 1.015,
       "capsule_r_max_no_feet": 1.015,
       "z_min": 0.006,
@@ -3481,7 +3481,7 @@
   },
   {
    "clip": "AP009_zombie_rise_B",
-   "fbx": "AP009_zombie_rise_B_v004.fbx",
+   "fbx": "AP009_zombie_rise_B_v005b.fbx",
    "target": "zombie",
    "frames": 36,
    "fps": 30,
@@ -3489,7 +3489,7 @@
    "loop": false,
    "events": {
     "spawn_rise": 0,
-    "spawn_land": 26,
+    "spawn_land": 25,
     "rise_end": 35
    },
    "layer": "base",
@@ -3505,28 +3505,28 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 38,
+      "pokes_peak": 41,
       "pokes_frame0": 1,
       "capsule_r_max": 1.017,
       "capsule_r_max_no_feet": 1.017,
-      "z_min": -0.089,
-      "z_max": 1.694
+      "z_min": -0.083,
+      "z_max": 1.685
      },
      "B": {
-      "pokes_peak": 63,
-      "pokes_frame0": 10,
+      "pokes_peak": 51,
+      "pokes_frame0": 7,
       "capsule_r_max": 1.008,
       "capsule_r_max_no_feet": 1.008,
-      "z_min": -0.089,
-      "z_max": 1.665
+      "z_min": -0.083,
+      "z_max": 1.656
      },
      "C": {
-      "pokes_peak": 27,
+      "pokes_peak": 36,
       "pokes_frame0": 0,
       "capsule_r_max": 1.015,
       "capsule_r_max_no_feet": 1.015,
-      "z_min": -0.089,
-      "z_max": 1.692
+      "z_min": -0.083,
+      "z_max": 1.683
      }
     },
     "foot_contact_A": null
@@ -3534,7 +3534,7 @@
   },
   {
    "clip": "AP009_zombie_rise_C",
-   "fbx": "AP009_zombie_rise_C_v004.fbx",
+   "fbx": "AP009_zombie_rise_C_v005b.fbx",
    "target": "zombie",
    "frames": 28,
    "fps": 30,
@@ -3558,24 +3558,24 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 24,
-      "pokes_frame0": 24,
+      "pokes_peak": 20,
+      "pokes_frame0": 20,
       "capsule_r_max": 0.577,
       "capsule_r_max_no_feet": 0.577,
       "z_min": 0.022,
       "z_max": 1.728
      },
      "B": {
-      "pokes_peak": 49,
-      "pokes_frame0": 49,
+      "pokes_peak": 45,
+      "pokes_frame0": 45,
       "capsule_r_max": 0.584,
       "capsule_r_max_no_feet": 0.584,
       "z_min": 0.022,
       "z_max": 1.7
      },
      "C": {
-      "pokes_peak": 12,
-      "pokes_frame0": 12,
+      "pokes_peak": 9,
+      "pokes_frame0": 9,
       "capsule_r_max": 0.579,
       "capsule_r_max_no_feet": 0.579,
       "z_min": 0.023,
@@ -3587,7 +3587,7 @@
   },
   {
    "clip": "AP009_zombie_run",
-   "fbx": "AP009_zombie_run_v004.fbx",
+   "fbx": "AP009_zombie_run_v005b.fbx",
    "target": "zombie",
    "frames": 13,
    "fps": 30,
@@ -3609,24 +3609,24 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 4,
-      "pokes_frame0": 4,
+      "pokes_peak": 2,
+      "pokes_frame0": 1,
       "capsule_r_max": 0.751,
       "capsule_r_max_no_feet": 0.6,
       "z_min": 0.004,
       "z_max": 1.61
      },
      "B": {
-      "pokes_peak": 13,
-      "pokes_frame0": 13,
+      "pokes_peak": 10,
+      "pokes_frame0": 10,
       "capsule_r_max": 0.751,
       "capsule_r_max_no_feet": 0.606,
       "z_min": 0.004,
       "z_max": 1.577
      },
      "C": {
-      "pokes_peak": 3,
-      "pokes_frame0": 3,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.751,
       "capsule_r_max_no_feet": 0.596,
       "z_min": 0.004,
@@ -3656,7 +3656,7 @@
   },
   {
    "clip": "AP009_zombie_shamble_A",
-   "fbx": "AP009_zombie_shamble_A_v004.fbx",
+   "fbx": "AP009_zombie_shamble_A_v005b.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,
@@ -3678,7 +3678,7 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 7,
+      "pokes_peak": 5,
       "pokes_frame0": 3,
       "capsule_r_max": 0.484,
       "capsule_r_max_no_feet": 0.425,
@@ -3686,16 +3686,16 @@
       "z_max": 1.65
      },
      "B": {
-      "pokes_peak": 12,
-      "pokes_frame0": 8,
+      "pokes_peak": 9,
+      "pokes_frame0": 7,
       "capsule_r_max": 0.484,
       "capsule_r_max_no_feet": 0.451,
       "z_min": 0.013,
       "z_max": 1.617
      },
      "C": {
-      "pokes_peak": 1,
-      "pokes_frame0": 1,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.484,
       "capsule_r_max_no_feet": 0.431,
       "z_min": 0.013,
@@ -3725,7 +3725,7 @@
   },
   {
    "clip": "AP009_zombie_shamble_B",
-   "fbx": "AP009_zombie_shamble_B_v004.fbx",
+   "fbx": "AP009_zombie_shamble_B_v005b.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,
@@ -3747,23 +3747,23 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 6,
-      "pokes_frame0": 5,
+      "pokes_peak": 5,
+      "pokes_frame0": 3,
       "capsule_r_max": 0.481,
       "capsule_r_max_no_feet": 0.425,
       "z_min": 0.018,
       "z_max": 1.651
      },
      "B": {
-      "pokes_peak": 13,
-      "pokes_frame0": 10,
+      "pokes_peak": 9,
+      "pokes_frame0": 7,
       "capsule_r_max": 0.481,
       "capsule_r_max_no_feet": 0.451,
       "z_min": 0.018,
       "z_max": 1.617
      },
      "C": {
-      "pokes_peak": 1,
+      "pokes_peak": 0,
       "pokes_frame0": 0,
       "capsule_r_max": 0.481,
       "capsule_r_max_no_feet": 0.431,
@@ -3794,7 +3794,7 @@
   },
   {
    "clip": "AP009_zombie_shamble_C",
-   "fbx": "AP009_zombie_shamble_C_v004.fbx",
+   "fbx": "AP009_zombie_shamble_C_v005b.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,
@@ -3816,7 +3816,7 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "A": {
-      "pokes_peak": 4,
+      "pokes_peak": 3,
       "pokes_frame0": 1,
       "capsule_r_max": 0.485,
       "capsule_r_max_no_feet": 0.429,
@@ -3824,16 +3824,16 @@
       "z_max": 1.646
      },
      "B": {
-      "pokes_peak": 13,
-      "pokes_frame0": 13,
+      "pokes_peak": 9,
+      "pokes_frame0": 9,
       "capsule_r_max": 0.485,
       "capsule_r_max_no_feet": 0.454,
       "z_min": 0.011,
       "z_max": 1.612
      },
      "C": {
-      "pokes_peak": 1,
-      "pokes_frame0": 1,
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
       "capsule_r_max": 0.485,
       "capsule_r_max_no_feet": 0.436,
       "z_min": 0.012,
@@ -3862,6 +3862,28 @@
    "speed_mps_design": 1.013
   }
  ],
+ "v005_changes": {
+  "package": "AP-009E (WP-032C AD MUST 1-4)",
+  "rekeyed_clips": [
+   "AP009_zombie_hit_<front|back|left|right>_<std|elite> (8)",
+   "AP009_zombie_armorbreak_<head|torso|leg> (3)",
+   "AP009_player_<A|B>_reload (2)",
+   "AP009_player_<A|B|C>_fire (3)",
+   "AP009_zombie_rise_B"
+  ],
+  "hits": "direction carried by rotation: torso twist + head turn x1.8, shoulders x1.5, front lean x1.45 (peak head-top displacement front 0.51 -> 0.72 m); side / back lateral displacement is capsule-bound (C03: torso / head inside r 0.50 of the root axis, v004 already at 0.48-0.495) \u2014 more lateral throw needs a C03 hit-clip tolerance decision (like attacks 0.66); Elite stays 0.45 of Standard, Ultra unchanged",
+  "armorbreak": "18 -> 21 f: the peak holds 3 frames (f3-6); torso = fold (spine 42 / head 28 / shoulders down-forward), head = shoulder collapse after the snap, leg = hips drop held; events hit / armor_break 0 unchanged",
+  "reload_A_B": "low reload: the grip drops to the waist (Hips +10 cm / 30 cm forward) and holds through mag_in (A f30 / B f34: left hand at belt height, z ~1.0 m vs 1.22 before), the weapon comes back up for the chamber beat; events unchanged",
+  "fire": "kick: shoulder driven back (-9 deg x kick_amp), torso lean back 5 deg x kick_amp (C 9 deg), head follows; still ADDITIVE over <weapon>_idle_aim frame 0",
+  "rise_B": "36 f kept (<= 1.2 s): both feet planted and the body still f25-27 (spawn_land 26 -> 25 = first planted frame), then the last straightening",
+  "unchanged": "every other v004 clip key-identical (68 clips)"
+ },
+ "v005b_changes": {
+  "package": "AP-009E v005b (C-00 decisions 2026-09-17)",
+  "hits": "C03 hit-clip capsule tolerance 0.50 -> 0.60 (attacks 0.66 as precedent): zombie_hit_<front|back|left|right>_<std|elite> re-keyed with the lateral / back throw +50 % too (sides x1.5, back / front x1.6 on the body displacement; rotation x1.8, shoulders x1.5) \u2014 peak head-top displacement front 0.51 -> 0.79 m, sides 0.36 -> 0.53, back 0.20 -> 0.31; torso / head r up to 0.59 for 3-5 frames \u2014 S-06 verifies the hitbox effect",
+  "reload_fire_reverted": "S-06 live measurement: the weapon layers play at full amplitude in the engine (reload left hand 76 cm, kick 4-10 cm); the AD's identical reload / fire frames were a static-capture artefact -> player_<A|B>_reload and player_<A|B|C>_fire are back on their v004 keys (the v005 low reload / stronger kick was not needed)",
+  "unchanged": "armorbreak x3, rise_B as v005; every other clip key-identical to v004"
+ },
  "v002_changes": {
   "new_clips": [
    "AP009_zombie_attack_overhead (Ultra, tier row; replaces the sweep placeholder for Ultra)",

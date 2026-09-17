@@ -727,8 +727,8 @@ namespace DD.Prototype.Characters
             _animator.SetTrigger(ArmorBreakId);
         }
 
-        [PrototypeOnly(PendingDecisions.None, "WP-032C: seconds the body is held (no walk / attack) by an armorbreak clip = the 18-frame clip. Clip length.", true)]
-        public const float ArmorBreakHoldSeconds = 0.6f;
+        [PrototypeOnly(PendingDecisions.None, "WP-032C: seconds the body is held (no walk / attack) by an armorbreak clip = the clip length (v005b: 21 frames, peak hold). Clip length.", true)]
+        public const float ArmorBreakHoldSeconds = 0.7f;
 
         /// <summary>Full-body heavy stagger (armour break, ADR-018-2). Cancels the attack clip.</summary>
         public void PlayHeavyStagger()
