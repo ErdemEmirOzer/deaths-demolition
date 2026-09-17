@@ -106,6 +106,19 @@ namespace DD.Prototype.Audio
 
         public bool Subscribed { get; private set; }
 
+        // WP-058: the director's field-loop seam (start(sound, position, slot) / stop(slot)); slot = (int)SpecialWeaponId.
+        private Action<AudioSoundId, Vector3, int> _fieldStart;
+        private Action<int> _fieldStop;
+        private readonly float[] _swHitLast = new float[3];
+        /// <summary>Special usage cues played (fire / field / hit). Test readout.</summary>
+        public int SpecialUsageCount { get; private set; }
+
+        public void SetFieldLoopHandlers(Action<AudioSoundId, Vector3, int> start, Action<int> stop)
+        {
+            _fieldStart = start;
+            _fieldStop = stop;
+        }
+
         public AudioEventRouter(AudioPlayFunc play)
         {
             _play = play;
@@ -124,6 +137,7 @@ namespace DD.Prototype.Audio
             Props.BreakableProp.Broke += OnPropBroke;
             CharacterAnimationEvents.Any += OnAnimationEvent;
             DD.Prototype.UI.UiEvents.Raised += OnUiEvent;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage += OnSpecialUsage;   // WP-058 (WP-056 ADR-056-1)
             Subscribed = true;
         }
 
@@ -140,6 +154,7 @@ namespace DD.Prototype.Audio
             Props.BreakableProp.Broke -= OnPropBroke;
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             DD.Prototype.UI.UiEvents.Raised -= OnUiEvent;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
             Subscribed = false;
         }
 
@@ -272,6 +287,51 @@ namespace DD.Prototype.Audio
                 case EnemyCombatEventKind.SpawnLand:
                     if (_play(AudioMixPlan.ZombieAggro(AudioEventMap.ZombieAggro(info.Tier), w), head, 1f, 55)) AggroCount++;
                     break;
+            }
+        }
+
+        // ------------------------------------------------------------------ WP-058 · WP-056 SpecialUsageEvent
+
+        /// <summary>
+        /// Per-Special usage voices over the shared lifecycle cues: Fired adds the weapon's own
+        /// character to HeavyWeaponFire, FieldSpawned starts the field (Kagura one-shot front,
+        /// Ofuda / Tide 3D loops), FieldEnded stops the loop and plays the end, Hit is the per-body
+        /// touch (gain × Falloff01, throttled 60 ms per Special so a wave over eight bodies is a
+        /// chord, not a machine gun). Activated / Deactivated are owned by the spin-up / expired cues.
+        /// </summary>
+        private void OnSpecialUsage(DD.Prototype.Weapons.SpecialUsageEvent e)
+        {
+            int slot = Mathf.Clamp((int)e.Id, 0, 2);
+            AudioSoundId sound = AudioEventMap.SpecialUsage(e.Id, e.Kind);
+            switch (e.Kind)
+            {
+                case DD.Prototype.Weapons.SpecialUsageKind.Fired:
+                    if (_play(AudioMixPlan.SpecialFire(sound), e.Origin, 1f, 55)) SpecialUsageCount++;
+                    break;
+                case DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned:
+                    if (e.Id == DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell)
+                    {
+                        if (_play(AudioMixPlan.SpecialField(sound), e.Origin, 1f, 65)) SpecialUsageCount++;
+                    }
+                    else
+                    {
+                        _fieldStart?.Invoke(sound, e.Origin, slot);
+                        SpecialUsageCount++;
+                    }
+                    break;
+                case DD.Prototype.Weapons.SpecialUsageKind.FieldEnded:
+                    _fieldStop?.Invoke(slot);
+                    if (_play(AudioMixPlan.SpecialField(sound), e.Origin, 1f, 60)) SpecialUsageCount++;
+                    break;
+                case DD.Prototype.Weapons.SpecialUsageKind.Hit:
+                {
+                    float now = Time.unscaledTime;
+                    if (now - _swHitLast[slot] < 0.06f) return;
+                    _swHitLast[slot] = now;
+                    Vector3 at = e.Origin + Vector3.up * 0.6f;   // PublishHit: Origin = the hit point on the body
+                    if (_play(AudioMixPlan.SpecialHit(sound), at, Mathf.Clamp(e.Falloff01, 0.35f, 1f), 40)) SpecialUsageCount++;
+                    break;
+                }
             }
         }
 
@@ -619,8 +679,8 @@ namespace DD.Prototype.Audio
 
         public string Describe()
         {
-            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · regionBreak {16} · foley {17} · tracked {13}",
-                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount, RegionBreakCount, FoleyCount);
+            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · regionBreak {16} · foley {17} · special {18} · tracked {13}",
+                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount, RegionBreakCount, FoleyCount, SpecialUsageCount);
         }
     }
 }

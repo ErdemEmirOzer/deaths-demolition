@@ -644,6 +644,35 @@ namespace DD.Prototype.Audio
             return Interface(AudioSoundId.UiTransition, 0.55f, 85f, 0f, 1, 0.3f);
         }
 
+        /// <summary>WP-058: the Special's own fire character over the shared HeavyWeaponFire body (player's hand, near).</summary>
+        public static AudioPlacement SpecialFire(AudioSoundId sound)
+        {
+            AudioPlacement p = Weapon(sound, 0.7f, 58f, 3, 0.05f);
+            p.Spatial = 0.25f;
+            p.PitchJitter = 0.03f;
+            return p;
+        }
+
+        /// <summary>WP-058: field spawn / end at the field origin - world, positional, wide.</summary>
+        public static AudioPlacement SpecialField(AudioSoundId sound)
+        {
+            AudioPlacement p = Impact(sound, 0.9f, 64f, 2);
+            p.Spatial = 0.9f;
+            p.MinRetrigger = 0.1f;
+            p.DuckAmbience = 0.75f;
+            p.DuckSeconds = 0.4f;
+            return p;
+        }
+
+        /// <summary>WP-058: one body touched by a field - cheap, many at once.</summary>
+        public static AudioPlacement SpecialHit(AudioSoundId sound)
+        {
+            AudioPlacement p = Target(sound, 0.6f, 36f, 6, 0.03f);
+            p.Spatial = 0.9f;
+            p.PitchJitter = 0.07f;
+            return p;
+        }
+
         /// <summary>WP-048B: weapon-handling foley on the player's own weapon (WP-032C clip events) - dry, near, never positional.</summary>
         public static AudioPlacement WeaponFoley(AudioSoundId sound)
         {

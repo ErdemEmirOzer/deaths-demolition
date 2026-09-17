@@ -175,7 +175,9 @@ namespace DD.Prototype.Audio
             _ambience = new AmbienceDirector(transform, _library, _mixer, _world, _bridge, AudioRegionMap.Load());
             _music = new MusicDirector(transform, _library, _mixer, _bridge);
             _router = new AudioEventRouter(PlayResolved);
+            _router.SetFieldLoopHandlers(StartFieldLoop, StopFieldLoop);   // WP-058
             _listener = new AudioListenerAnchor(transform);
+            BuildFieldLoops();
 
             // v003 (ADR-021-2): distance darkening and the idle range are measured from the
             // player-anchored listener, not the camera.
@@ -309,6 +311,7 @@ namespace DD.Prototype.Audio
             }
 
             TickLoops(dt);
+            TickFieldLoops();
         }
 
         private void LateUpdate()
@@ -486,6 +489,7 @@ namespace DD.Prototype.Audio
             if (phase == RunPhase.Dead || phase == RunPhase.None)
             {
                 StopAllLoops();
+                for (int i = 0; i < _fieldLoops.Length; i++) StopFieldLoop(i);
                 _armour.Clear();
                 _router.Clear();
             }
@@ -611,6 +615,55 @@ namespace DD.Prototype.Audio
             AudioPlacement placement = AudioMixPlan.Ui(sound);
             placement.Spatial = position == Vector3.zero ? 0f : 0.7f;
             return PlayResolved(placement, position, gain, 50);
+        }
+
+        // ================================================================== WP-058 · Special field loops
+
+        /// <summary>One looping 3D source per Special (Ofuda web hum, Tide well; Kagura's front is a one-shot). PROTOTYPE-ONLY sizes.</summary>
+        private readonly AudioSource[] _fieldLoops = new AudioSource[3];
+        private readonly AudioSoundId[] _fieldLoopSound = new AudioSoundId[3];
+        public int FieldLoopsPlaying { get { int n = 0; for (int i = 0; i < _fieldLoops.Length; i++) if (_fieldLoops[i] != null && _fieldLoops[i].isPlaying) n++; return n; } }
+
+        private void BuildFieldLoops()
+        {
+            for (int i = 0; i < _fieldLoops.Length; i++)
+            {
+                var go = new GameObject("Special Field " + i);
+                go.transform.SetParent(transform, false);
+                AudioSource src = go.AddComponent<AudioSource>();
+                src.playOnAwake = false; src.loop = true; src.spatialBlend = 1f; src.rolloffMode = AudioRolloffMode.Linear;
+                src.minDistance = 4f; src.maxDistance = 40f; src.dopplerLevel = 0f; src.priority = 24; src.volume = 0f;
+                _bridge.Route(src, AudioBus.Impact);
+                _fieldLoops[i] = src;
+            }
+        }
+
+        private void StartFieldLoop(AudioSoundId sound, Vector3 at, int slot)
+        {
+            if (slot < 0 || slot >= _fieldLoops.Length) return;
+            AudioClip clip = _library.First(sound);
+            if (clip == null) return;
+            AudioSource src = _fieldLoops[slot];
+            src.transform.position = at;
+            if (src.clip != clip) src.clip = clip;
+            _fieldLoopSound[slot] = sound;
+            src.volume = 0.7f * _mixer.Gain(AudioBus.Impact);
+            if (!src.isPlaying) src.Play();
+        }
+
+        private void StopFieldLoop(int slot)
+        {
+            if (slot < 0 || slot >= _fieldLoops.Length) return;
+            _fieldLoops[slot].Stop();
+        }
+
+        private void TickFieldLoops()
+        {
+            float g = _mixer.Gain(AudioBus.Impact);
+            for (int i = 0; i < _fieldLoops.Length; i++)
+            {
+                if (_fieldLoops[i] != null && _fieldLoops[i].isPlaying) _fieldLoops[i].volume = 0.7f * g;
+            }
         }
 
         // ================================================================== loops

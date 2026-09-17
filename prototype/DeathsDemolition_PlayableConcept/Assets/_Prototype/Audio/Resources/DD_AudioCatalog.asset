@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v008
-  _sourceHash: a2913870df1afaf632fb0614a1d7613fe05624eec55d8885c920c4f36a4ee3d6
+  _manifestVersion: ap011-v009
+  _sourceHash: b425980fa33bfd231b1a9eb76055b10bbb098130b3719f00db7011f8c403f4fe
   _entries:
   - Sound: 10
     Clips:
@@ -1703,26 +1703,26 @@ MonoBehaviour:
     - {fileID: 8300000, guid: fa3f1cd058f7a4d62a02d30fe5e610ba, type: 3}
     - {fileID: 8300000, guid: 34503b067b35f41f7b0114d21943f9cd, type: 3}
     Loop: 0
-    Lufs: -28.32
+    Lufs: -23.43
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_01.wav,
       raw/rifle_mech.wav, tone:2900,4300@0.6
     NoiseFloorDb: -86.5
-    DcDb: -138
+    DcDb: -131.9
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): rifle_mech.wav@0ms -3dB +2st + tone:2900,4300@0.6@0ms
-      -22dB + ArmorPieceDrop_01.wav@140ms -16dB +5st'
+      -16dB + ArmorPieceDrop_01.wav@140ms -10dB +5st'
   - Sound: 261
     Clips:
     - {fileID: 8300000, guid: 84a1cf0363fb04b5d9e2e7df9e7f1ef9, type: 3}
     - {fileID: 8300000, guid: 8e8f8d344543b4aa4970f074eceabe61, type: 3}
     Loop: 0
-    Lufs: -23.13
+    Lufs: -22.85
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from raw/rifle_mech.wav
     NoiseFloorDb: -92.4
-    DcDb: -161.5
+    DcDb: -158.5
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): rifle_mech.wav@0ms 0dB + rifle_mech.wav@110ms
@@ -1732,12 +1732,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: e960edd4e200b45368c9d064f6812e48, type: 3}
     - {fileID: 8300000, guid: 9ec0a767b60d8436da8b8ce13e8fc331, type: 3}
     Loop: 0
-    Lufs: -25.37
+    Lufs: -25.68
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadStart_01.wav,
       noise:pink
     NoiseFloorDb: -77.7
-    DcDb: -178.6
+    DcDb: -181.4
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ReloadStart_01.wav@0ms 0dB + noise:pink@40ms
@@ -1747,12 +1747,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 6813f8217f81f48bca0848cc46e7a5fa, type: 3}
     - {fileID: 8300000, guid: 04fede4e8ba054827800551251fcb95f, type: 3}
     Loop: 0
-    Lufs: -25.32
+    Lufs: -24.09
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadInsert_01.wav,
       raw/rifle_mech.wav
     NoiseFloorDb: -77.7
-    DcDb: -146.3
+    DcDb: -135.1
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ReloadInsert_01.wav@0ms 0dB + rifle_mech.wav@150ms
@@ -1763,68 +1763,68 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 244959affccae42a5b51081c2a8cd9be, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -4.38
+    TruePeakDb: -2.89
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav,
       noise:pink, raw/rifle_mech.wav
     NoiseFloorDb: -86.5
-    DcDb: -139.9
+    DcDb: -136.9
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v007, no credits): noise:pink@0ms -10dB + ArmorPieceDrop_02.wav@120ms
-      -14dB +3st + rifle_mech.wav@260ms -9dB'
+    Layers: 'derived (v007, no credits): noise:pink@0ms -12dB + ArmorPieceDrop_02.wav@120ms
+      -9dB + rifle_mech.wav@260ms -6dB'
   - Sound: 265
     Clips:
     - {fileID: 8300000, guid: 835b53554547a4cf1b5125a6a75b51f2, type: 3}
     - {fileID: 8300000, guid: 0550aa11a83f44d46b1f360f364375bc, type: 3}
     Loop: 0
-    Lufs: -23.24
+    Lufs: -24.95
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav
     NoiseFloorDb: -92.4
-    DcDb: -144.5
+    DcDb: -151.4
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): noise:pink@0ms -12dB + rifle_mech.wav@170ms
-      -14dB -2st'
+      -9dB -2st'
   - Sound: 266
     Clips:
     - {fileID: 8300000, guid: 97081d73e4ef2443ab52ef36f5ae3661, type: 3}
     - {fileID: 8300000, guid: 330a37380facb45ea98c8135a0206986, type: 3}
     Loop: 0
-    Lufs: -23.83
+    Lufs: -24.69
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav
     NoiseFloorDb: -92.4
-    DcDb: -147.9
+    DcDb: -177.7
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): noise:pink@0ms -11dB + rifle_mech.wav@110ms
-      -12dB +2st'
+      -8dB -2st'
   - Sound: 267
     Clips:
     - {fileID: 8300000, guid: beb0c9faa28224e1ba28716c897dc719, type: 3}
     - {fileID: 8300000, guid: e401d40cc5d9d46de99d9f1fb4b0cda8, type: 3}
     Loop: 0
-    Lufs: -25.46
+    Lufs: -24.58
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_01.wav,
       raw/rifle_mech.wav, tone:2900,4300@0.6
     NoiseFloorDb: -86.5
-    DcDb: -133
+    DcDb: -128.5
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): rifle_mech.wav@0ms -3dB +5st + tone:2900,4300@0.6@0ms
-      -22dB + ArmorPieceDrop_01.wav@140ms -16dB +8st'
+      -17dB + ArmorPieceDrop_01.wav@140ms -11dB +8st'
   - Sound: 268
     Clips:
     - {fileID: 8300000, guid: 8f81b1a47a3264c1fb88aa803fe8ed3e, type: 3}
     - {fileID: 8300000, guid: a2d1473df214e4559a9ea9404edfcc25, type: 3}
     Loop: 0
-    Lufs: -20
+    Lufs: -23.16
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from raw/rifle_mech.wav
     NoiseFloorDb: -92.4
-    DcDb: -136.8
+    DcDb: -148.5
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): rifle_mech.wav@0ms -1dB +3st + rifle_mech.wav@110ms
@@ -1834,7 +1834,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f22013ae884cb4c4fbb9c8cc2e7a0340, type: 3}
     - {fileID: 8300000, guid: f33fb630703084c4d86e50bf03298465, type: 3}
     Loop: 0
-    Lufs: -23.31
+    Lufs: -23.23
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadStart_01.wav,
       noise:pink
@@ -1849,12 +1849,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 76f7780ac4cbb4358ae9a14691e19fe8, type: 3}
     - {fileID: 8300000, guid: 1cb572ce7f5e348d39f179a82cada6f0, type: 3}
     Loop: 0
-    Lufs: -25.3
+    Lufs: -25.18
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadInsert_01.wav,
       raw/rifle_mech.wav
     NoiseFloorDb: -77.7
-    DcDb: -153.5
+    DcDb: -139
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ReloadInsert_01.wav@0ms -1dB +3st + rifle_mech.wav@150ms
@@ -1865,7 +1865,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 4999c4af7236a4ecba20da79948fdfaf, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -1.65
+    TruePeakDb: -1.71
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav,
       noise:pink, raw/rifle_mech.wav
     NoiseFloorDb: -86.5
@@ -1873,65 +1873,65 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): noise:pink@0ms -10dB + ArmorPieceDrop_02.wav@120ms
-      -14dB +6st + rifle_mech.wav@260ms -9dB +3st'
+      -10dB +6st + rifle_mech.wav@260ms -9dB +3st'
   - Sound: 272
     Clips:
     - {fileID: 8300000, guid: 5cdd44269f6f84ef6843cd45a2e88c68, type: 3}
     - {fileID: 8300000, guid: fffa9cae500ab47458781f6fc3bafa6a, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -2.65
+    TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav
     NoiseFloorDb: -92.4
-    DcDb: -153.2
+    DcDb: -141.5
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): noise:pink@0ms -12dB + rifle_mech.wav@170ms
-      -14dB +1st'
+      -9dB +1st'
   - Sound: 273
     Clips:
     - {fileID: 8300000, guid: 5f546e88406434c2a9a196f70a9c36e9, type: 3}
     - {fileID: 8300000, guid: 2a69736913cec41d49f4d09e2c0bdd4b, type: 3}
     Loop: 0
-    Lufs: -22
+    Lufs: -24.73
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav
     NoiseFloorDb: -92.4
-    DcDb: -130.7
+    DcDb: -159.8
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): noise:pink@0ms -11dB + rifle_mech.wav@110ms
-      -12dB +5st'
+      -8dB +1st'
   - Sound: 274
     Clips:
     - {fileID: 8300000, guid: 3c075c4c1c3594393bca2555ca696457, type: 3}
     - {fileID: 8300000, guid: 2818fa952fe144cfab44055c91820340, type: 3}
     Loop: 0
-    Lufs: -25.26
+    Lufs: -23.79
     TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_01.wav,
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWood_01.wav,
       raw/rifle_mech.wav, tone:2900,4300@0.6
-    NoiseFloorDb: -86.5
-    DcDb: -137.9
+    NoiseFloorDb: -69
+    DcDb: -118.8
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): rifle_mech.wav@0ms -3dB -2st + tone:2900,4300@0.6@0ms
-      -22dB + ArmorPieceDrop_01.wav@140ms -16dB +1st'
+      -17dB + ImpactWood_01.wav@140ms -14dB +4st'
   - Sound: 275
     Clips:
     - {fileID: 8300000, guid: e2194e6873e76409792051b4233e6a86, type: 3}
     - {fileID: 8300000, guid: a00e1acfec3ab45f7bf8ef67b71d8599, type: 3}
     Loop: 0
-    Lufs: -22.29
+    Lufs: -22.2
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from raw/rifle_mech.wav,
       raw/shotgun_tail.wav
     NoiseFloorDb: -81
-    DcDb: -154.7
+    DcDb: -154.3
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): rifle_mech.wav@0ms 1dB -4st + rifle_mech.wav@190ms
-      -2dB -5st + shotgun_tail.wav@60ms -14dB -2st'
+      -2dB -5st + shotgun_tail.wav@0ms -6dB -2st + shotgun_tail.wav@175ms -6dB -2st'
   - Sound: 276
     Clips:
     - {fileID: 8300000, guid: 12a471cdf916d4a9ea3ddb0740deeb67, type: 3}
@@ -1968,68 +1968,69 @@ MonoBehaviour:
     - {fileID: 8300000, guid: d2eff2afdac9b44729800af45d38e038, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -2.41
+    TruePeakDb: -3.41
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav,
-      noise:pink, raw/rifle_mech.wav
-    NoiseFloorDb: -86.5
-    DcDb: -154.7
+      noise:pink, raw/shotgun_tail.wav
+    NoiseFloorDb: -81
+    DcDb: -137.9
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): noise:pink@0ms -10dB + ArmorPieceDrop_02.wav@120ms
-      -14dB -1st + rifle_mech.wav@260ms -9dB -4st'
+      -10dB -1st + shotgun_tail.wav@260ms -10dB -4st'
   - Sound: 279
     Clips:
     - {fileID: 8300000, guid: 1975ce7acd4094d0d8dd27052b4f3a96, type: 3}
     - {fileID: 8300000, guid: f18898229e0ac4f4aafb2cbea2e0f876, type: 3}
     Loop: 0
-    Lufs: -22
-    TruePeakDb: -1.61
+    Lufs: -22.39
+    TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav
     NoiseFloorDb: -92.4
-    DcDb: -152
+    DcDb: -168.4
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): noise:pink@0ms -12dB + rifle_mech.wav@170ms
-      -14dB -6st'
+      -9dB -6st'
   - Sound: 280
     Clips:
     - {fileID: 8300000, guid: 4e0155064a2034dbcae775e9a1713d25, type: 3}
     - {fileID: 8300000, guid: 89855c87bf006444490697ae0e82690b, type: 3}
     Loop: 0
-    Lufs: -22
-    TruePeakDb: -1.94
+    Lufs: -24.56
+    TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav
     NoiseFloorDb: -92.4
-    DcDb: -145.2
+    DcDb: -169.6
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): noise:pink@0ms -11dB + rifle_mech.wav@110ms
-      -12dB -2st'
+      -8dB -6st'
   - Sound: 281
     Clips:
     - {fileID: 8300000, guid: 23fa1a0342a4e40998a34ea20ba7c0b7, type: 3}
     - {fileID: 8300000, guid: 38ee9c321ea7241ca87fa21664bb4fb9, type: 3}
     Loop: 0
-    Lufs: -22.93
+    Lufs: -21.1
     TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav
-    NoiseFloorDb: -92.4
-    DcDb: -142.7
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav,
+      noise:pink
+    NoiseFloorDb: -86.5
+    DcDb: -143.9
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v007, no credits): noise:pink@0ms -9dB + rifle_mech.wav@60ms
-      -10dB -1st'
+    Layers: 'derived (v007, no credits): noise:pink@0ms -9dB + ArmorPieceDrop_02.wav@60ms
+      -12dB -3st'
   - Sound: 282
     Clips:
     - {fileID: 8300000, guid: 2cf9bfa32238945f4898c64bdab280f3, type: 3}
     - {fileID: 8300000, guid: 17e8488f943594de3ba13aad4e7c55d1, type: 3}
     Loop: 0
-    Lufs: -24.58
+    Lufs: -24.6
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadInsert_01.wav,
       noise:pink
     NoiseFloorDb: -77.7
-    DcDb: -162.7
+    DcDb: -159.7
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ReloadInsert_01.wav@0ms -2dB -2st + noise:pink@90ms
@@ -2040,12 +2041,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 9c82ac5034c044c91be4bba950ded048, type: 3}
     - {fileID: 8300000, guid: 3939f769e96834a2c8867bdd4be8db5f, type: 3}
     Loop: 0
-    Lufs: -21.86
+    Lufs: -20.75
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorBreak_01.wav,
       exports/ArmorImpact_01.wav, tone:3100,4700@0.8
     NoiseFloorDb: -76.8
-    DcDb: -181
+    DcDb: -179.9
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ArmorBreak_01.wav@0ms 0dB +5st + ArmorImpact_01.wav@0ms
@@ -2056,12 +2057,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 4cf27c4d78da04c94a81f364cf46b550, type: 3}
     - {fileID: 8300000, guid: b21e507a571474cf8a3ccf25ed21821e, type: 3}
     Loop: 0
-    Lufs: -22.04
+    Lufs: -22.09
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorBreak_01.wav,
       exports/ArmorCrack_01.wav, exports/AttackImpactBody_02.wav
     NoiseFloorDb: -72.8
-    DcDb: -177
+    DcDb: -178.4
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ArmorBreak_01.wav@0ms 0dB -1st + AttackImpactBody_02.wav@0ms
@@ -2072,28 +2073,28 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 1af6d2f2e67244658b84ed1805856440, type: 3}
     - {fileID: 8300000, guid: 16ddeeab83cdd4e59a6fb51db2980b9b, type: 3}
     Loop: 0
-    Lufs: -24.8
+    Lufs: -22.91
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorBreak_02.wav,
       exports/ArmorPieceDrop_01.wav, noise:white
     NoiseFloorDb: -76.8
-    DcDb: -178.5
+    DcDb: -172.4
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ArmorBreak_02.wav@0ms -1dB +2st + ArmorPieceDrop_01.wav@90ms
-      -9dB +3st + noise:white@30ms -16dB'
+      -5dB +3st + noise:white@30ms -11dB'
   - Sound: 286
     Clips:
     - {fileID: 8300000, guid: 9c811d243067141519ba11d9fc021b65, type: 3}
     - {fileID: 8300000, guid: bef22aa3601bf4deaa43d5250b745a87, type: 3}
     - {fileID: 8300000, guid: 77d8ec5258dd2423baecc71e6c0de4ae, type: 3}
     Loop: 0
-    Lufs: -21.09
+    Lufs: -20.7
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbStoneSettle_01.wav,
       exports/BreakCeramic_02.wav, exports/ImpactStone_01.wav
     NoiseFloorDb: -72.8
-    DcDb: -152.8
+    DcDb: -153.2
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ImpactStone_01.wav@0ms 0dB -4st + AmbStoneSettle_01.wav@120ms
@@ -2104,28 +2105,28 @@ MonoBehaviour:
     - {fileID: 8300000, guid: fa7b603e747a6451ab8911a0f2ad7abc, type: 3}
     - {fileID: 8300000, guid: d1121905c62cb4d1fb94590de8a78c22, type: 3}
     Loop: 0
-    Lufs: -24.5
+    Lufs: -20.78
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_02.wav,
       exports/ImpactWood_01.wav, noise:pink
     NoiseFloorDb: -69
-    DcDb: -150.1
+    DcDb: -159.7
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ImpactPaper_02.wav@0ms 0dB +1st + ImpactWood_01.wav@60ms
-      -9dB +6st + noise:pink@20ms -18dB'
+      -9dB +6st + noise:pink@20ms -13dB'
   - Sound: 288
     Clips:
     - {fileID: 8300000, guid: ab696fa33f8c1422aaf36e7e82dbee6a, type: 3}
     - {fileID: 8300000, guid: d63d7da0c98d541e2868002c46008d06, type: 3}
     - {fileID: 8300000, guid: 3b486589fe473444ead01fb3b5db09db, type: 3}
     Loop: 0
-    Lufs: -21.39
+    Lufs: -21.4
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/BreakCeramic_01.wav,
       exports/FootstepDirt_03.wav, exports/ImpactDirt_01.wav
     NoiseFloorDb: -72.8
-    DcDb: -143.5
+    DcDb: -142
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): BreakCeramic_01.wav@0ms 0dB + ImpactDirt_01.wav@90ms
@@ -2136,12 +2137,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: d65c316a811254a3f955a559fc7e953b, type: 3}
     - {fileID: 8300000, guid: 059bf1997f2ed4e0f8c7b0cdfc19f835, type: 3}
     Loop: 0
-    Lufs: -20.07
+    Lufs: -20.28
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbBambooKnock_01.wav,
       exports/AmbBambooKnock_02.wav, exports/ImpactWood_01.wav
     NoiseFloorDb: -69
-    DcDb: -140.6
+    DcDb: -139.2
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): AmbBambooKnock_01.wav@0ms 0dB -2st + ImpactWood_01.wav@70ms
@@ -2152,12 +2153,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 3ea48ab50414f41948a3c9b9845e1d17, type: 3}
     - {fileID: 8300000, guid: ac5040e544bd44c74a3de4a564cf346f, type: 3}
     Loop: 0
-    Lufs: -18.41
-    TruePeakDb: -1.5
+    Lufs: -18
+    TruePeakDb: -1.89
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepFoliage_02.wav,
       exports/FootstepFoliage_04.wav, exports/ImpactDirt_01.wav
     NoiseFloorDb: -93
-    DcDb: -171.3
+    DcDb: -175.7
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): FootstepFoliage_02.wav@0ms 0dB -3st + FootstepFoliage_04.wav@60ms
@@ -2168,12 +2169,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: bcd5525f9f16a4a8ba837d266b7cc9de, type: 3}
     - {fileID: 8300000, guid: abc4b3c9a92f148489fc434a7c925c0b, type: 3}
     Loop: 0
-    Lufs: -22.3
+    Lufs: -22.02
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav,
       exports/ImpactWood_01.wav
     NoiseFloorDb: -69
-    DcDb: -147.3
+    DcDb: -153.6
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ImpactWood_01.wav@0ms 0dB -6st + ArmorPieceDrop_02.wav@180ms
@@ -2189,7 +2190,7 @@ MonoBehaviour:
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbBambooKnock_03.wav,
       exports/ImpactWood_01.wav
     NoiseFloorDb: -69
-    DcDb: -143.8
+    DcDb: -147
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ImpactWood_01.wav@0ms 0dB -1st + AmbBambooKnock_03.wav@110ms
@@ -2200,12 +2201,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 849b056201b2c4822b1b46ba867b8c14, type: 3}
     - {fileID: 8300000, guid: 7c317f97684a54a48905aea1fca90c1d, type: 3}
     Loop: 0
-    Lufs: -22.44
+    Lufs: -22.7
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_01.wav,
       exports/ImpactPaper_03.wav, exports/ImpactWood_01.wav
     NoiseFloorDb: -69
-    DcDb: -162.4
+    DcDb: -162.5
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): ImpactPaper_01.wav@0ms 0dB + ImpactPaper_03.wav@90ms
@@ -2216,12 +2217,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 06cb633597e494b2a81ea09d1bae1fd7, type: 3}
     - {fileID: 8300000, guid: d6e4385a4328e406497a9685bfa247a1, type: 3}
     Loop: 0
-    Lufs: -24.45
+    Lufs: -23.15
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepWater_01.wav,
       noise:white
     NoiseFloorDb: -91
-    DcDb: -177.1
+    DcDb: -176.5
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): FootstepWater_01.wav@0ms 0dB +3st + noise:white@0ms
@@ -2232,12 +2233,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 949240e4dc7614f9f86fd2af282319df, type: 3}
     - {fileID: 8300000, guid: c2329d1bf3cdf4ef6b6133c0dc241bb4, type: 3}
     Loop: 0
-    Lufs: -20
-    TruePeakDb: -2.34
+    Lufs: -23.71
+    TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbDrip_01.wav,
       exports/FootstepWater_02.wav, exports/ImpactWater_01.wav
     NoiseFloorDb: -80.9
-    DcDb: -160.3
+    DcDb: -163.8
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): FootstepWater_02.wav@0ms 0dB -4st + ImpactWater_01.wav@40ms
@@ -2248,32 +2249,32 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f9681e37e4c5d444392fb79470c3269f, type: 3}
     - {fileID: 8300000, guid: 2c28ee91f9c5244578b99f48bfffdeb0, type: 3}
     Loop: 0
-    Lufs: -24.7
+    Lufs: -23.52
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepDirt_01.wav,
       exports/ImpactStone_01.wav, noise:white
     NoiseFloorDb: -81.8
-    DcDb: -156.8
+    DcDb: -164.7
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): FootstepDirt_01.wav@0ms 0dB + ImpactStone_01.wav@0ms
-      -10dB +7st + noise:white@0ms -17dB'
+      -5dB +7st + noise:white@0ms -12dB + ImpactStone_01.wav@45ms -8dB +9st'
   - Sound: 297
     Clips:
     - {fileID: 8300000, guid: 320b293bcafd049fa95d8b289ebf7b55, type: 3}
     - {fileID: 8300000, guid: c9c2562e303b249008f1b7ac7daaef73, type: 3}
     - {fileID: 8300000, guid: 8b12b48db20b442429e68d368f887760, type: 3}
     Loop: 0
-    Lufs: -25.54
+    Lufs: -25.18
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepStone_01.wav,
-      exports/ImpactStone_01.wav
+      exports/ImpactStone_01.wav, tone:1900,2850@0.5
     NoiseFloorDb: -81.8
-    DcDb: -176.8
+    DcDb: -184.7
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): FootstepStone_01.wav@0ms 0dB +2st + ImpactStone_01.wav@0ms
-      -12dB +4st'
+      -6dB +6st + tone:1900,2850@0.5@0ms -22dB'
   - Sound: 298
     Clips:
     - {fileID: 8300000, guid: 20b3bc18972694942a320d4b2cc8e360, type: 3}
@@ -2281,26 +2282,26 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 591ccae22e6e74dbfba32a5b4b0e330d, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -2.81
+    TruePeakDb: -1.82
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/explosion_tail.wav
     NoiseFloorDb: -89.8
-    DcDb: -154.5
+    DcDb: -145.8
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v007, no credits): explosion_tail.wav@0ms 0dB -12st + noise:pink@0ms
-      -10dB'
+    Layers: 'derived (v007, no credits): explosion_tail.wav@0ms -4dB -8st + noise:pink@0ms
+      -18dB + explosion_tail.wav@600ms -6dB -4st'
   - Sound: 299
     Clips:
     - {fileID: 8300000, guid: 59d53da6df2f04a5f99fb933e8a869c7, type: 3}
     - {fileID: 8300000, guid: 9dd86c4fce39446b5a15551c5e0bc914, type: 3}
     - {fileID: 8300000, guid: 9f8baa75aa4444bbb99f7cfd4c4f2053, type: 3}
     Loop: 0
-    Lufs: -24.44
+    Lufs: -24.14
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbDrip_01.wav,
       exports/AmbDrip_02.wav, exports/ImpactWater_01.wav
     NoiseFloorDb: -80.9
-    DcDb: -150.8
+    DcDb: -165.2
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): AmbDrip_01.wav@0ms 0dB +4st + ImpactWater_01.wav@230ms
@@ -2309,42 +2310,42 @@ MonoBehaviour:
     Clips:
     - {fileID: 8300000, guid: 900849b47d0b448788b791982bac4f8c, type: 3}
     Loop: 1
-    Lufs: -25.87
+    Lufs: -26.26
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from raw/amb_region_south.wav,
       raw/impact_water.wav
     NoiseFloorDb: -80.9
-    DcDb: -229.7
+    DcDb: -229.6
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v007, no credits): amb_region_south.wav@0ms 0dB + impact_water.wav@0ms
-      -14dB -5st'
+      -30dB -5st'
   - Sound: 301
     Clips:
     - {fileID: 8300000, guid: 3b296f7c613704496ac4442611ee3b99, type: 3}
     - {fileID: 8300000, guid: 17f6b2dbf60cb4794b91de91b2f9b2a7, type: 3}
     Loop: 0
-    Lufs: -20.61
+    Lufs: -20.43
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav,
       exports/MusicAccent.wav, exports/MusicPercussion.wav
     NoiseFloorDb: -68
-    DcDb: -177.7
+    DcDb: -177.1
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v008, no credits): MusicPercussion.wav@0ms 0dB + HudThreatStrong_01.wav@70ms
-      -5dB +5st + MusicAccent.wav@120ms -9dB'
+      -5dB +1st + MusicAccent.wav@120ms -9dB'
   - Sound: 302
     Clips:
     - {fileID: 8300000, guid: 4d9b9b396efaa43b195f1a516509bdc4, type: 3}
     - {fileID: 8300000, guid: d9377dfd9d43c4229998620aec170ec6, type: 3}
     Loop: 0
-    Lufs: -16.35
+    Lufs: -16.11
     TruePeakDb: -1.5
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicPercussion.wav,
       exports/MusicTension.wav, exports/SwPickup_01.wav
     NoiseFloorDb: -70.2
-    DcDb: -186.5
+    DcDb: -201.9
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v008, no credits): MusicTension.wav@0ms -4dB +3st + SwPickup_01.wav@520ms
@@ -2354,29 +2355,29 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 8d4b160cbb5b14af3a02544204c9f3ad, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -3.48
+    TruePeakDb: -3.35
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav,
       exports/MusicBase.wav, exports/PlayerDeath_01.wav
     NoiseFloorDb: -68
-    DcDb: -195.2
+    DcDb: -191.5
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v008, no credits): PlayerDeath_01.wav@0ms 0dB + MusicBase.wav@150ms
-      -6dB + HudThreatStrong_01.wav@950ms -7dB -4st'
+    Layers: 'derived (v008, no credits): PlayerDeath_01.wav@0ms -6dB + MusicBase.wav@150ms
+      -2dB + HudThreatStrong_01.wav@950ms -7dB -4st'
   - Sound: 304
     Clips:
     - {fileID: 8300000, guid: d0cef2520299e4e60b10a02556578b12, type: 3}
     Loop: 0
-    Lufs: -17.03
-    TruePeakDb: -1.5
+    Lufs: -16
+    TruePeakDb: -2.1
     Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav,
       exports/RoundComplete_01.wav, exports/UiTransition_01.wav
     NoiseFloorDb: -77.6
-    DcDb: -168.6
+    DcDb: -187.5
     Clipped: 0
     BitDepth: 24
     Layers: 'derived (v008, no credits): UiTransition_01.wav@0ms -10dB + RoundComplete_01.wav@250ms
-      0dB + MusicAccent.wav@300ms -9dB'
+      0dB -2st + MusicAccent.wav@300ms -9dB'
   - Sound: 305
     Clips:
     - {fileID: 8300000, guid: 9215530615cfc45ccacc4140e1882cf6, type: 3}
@@ -2405,3 +2406,179 @@ MonoBehaviour:
     BitDepth: 24
     Layers: 'derived (v008, no credits): MusicBase.wav@0ms 0dB + MusicPercussion.wav@0ms
       -10dB + MusicAccent.wav@0ms -12dB'
+  - Sound: 310
+    Clips:
+    - {fileID: 8300000, guid: 9337db223538a4de081b58cfabff6c61, type: 3}
+    - {fileID: 8300000, guid: be142b291d2114d9fa7f7272a68808bb, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav,
+      noise:pink
+    NoiseFloorDb: -68
+    DcDb: -142
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): HudThreatStrong_01.wav@0ms 0dB +12st + HudThreatStrong_01.wav@45ms
+      -3dB +7st + HudThreatStrong_01.wav@90ms -6dB +12st + noise:pink@0ms -6dB'
+  - Sound: 311
+    Clips:
+    - {fileID: 8300000, guid: df7e6c9a4495140258c3b4932d2a87dd, type: 3}
+    - {fileID: 8300000, guid: 125c9ca072e6d47ccb11288629808439, type: 3}
+    Loop: 0
+    Lufs: -22.18
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_01.wav,
+      exports/UiTransition_01.wav, tone:1200,1800@1.5
+    NoiseFloorDb: -77.6
+    DcDb: -170.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): ImpactPaper_01.wav@0ms 0dB +2st + UiTransition_01.wav@20ms
+      -6dB + tone:1200,1800@1.5@60ms -12dB'
+  - Sound: 312
+    Clips:
+    - {fileID: 8300000, guid: f69918b3972cc430b882e958bb9cd4ab, type: 3}
+    - {fileID: 8300000, guid: bed6a2fc7057545cb9a479af1ae1bc2d, type: 3}
+    Loop: 0
+    Lufs: -21.43
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWater_01.wav,
+      exports/SwPickup_01.wav, exports/UiTransition_01.wav
+    NoiseFloorDb: -70.2
+    DcDb: -219.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): UiTransition_01.wav@0ms -5dB -2st + ImpactWater_01.wav@90ms
+      0dB +4st + SwPickup_01.wav@120ms -14dB'
+  - Sound: 313
+    Clips:
+    - {fileID: 8300000, guid: e02fa4a0cf8164e969fe14fe7b250de6, type: 3}
+    - {fileID: 8300000, guid: c419de26eea924da7bf1bbaa59a67136, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -1.79
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav,
+      noise:pink, raw/explosion_tail.wav
+    NoiseFloorDb: -68
+    DcDb: -154.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): noise:pink@0ms -2dB + noise:pink@350ms -6dB
+      + HudThreatStrong_01.wav@150ms -10dB + explosion_tail.wav@0ms -12dB -8st'
+  - Sound: 314
+    Clips:
+    - {fileID: 8300000, guid: bbbbcfef4386a4f88be34838c992ef4d, type: 3}
+    Loop: 1
+    Lufs: -22
+    TruePeakDb: -5.04
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/SwBeaconLoop.wav,
+      noise:white
+    NoiseFloorDb: -120
+    DcDb: -209.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): SwBeaconLoop.wav@0ms 0dB -5st + noise:white@0ms
+      -20dB'
+  - Sound: 315
+    Clips:
+    - {fileID: 8300000, guid: 5d719d32ff8c94e2ab8c684f0c01beb8, type: 3}
+    Loop: 1
+    Lufs: -23.34
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbPondBed.wav,
+      raw/explosion_tail.wav
+    NoiseFloorDb: -89.8
+    DcDb: -201.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): AmbPondBed.wav@0ms 0dB -4st + explosion_tail.wav@0ms
+      -8dB'
+  - Sound: 316
+    Clips:
+    - {fileID: 8300000, guid: bf6bbf1670d2d49dd829816798d787a0, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -4.07
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav,
+      noise:pink
+    NoiseFloorDb: -68
+    DcDb: -154
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): HudThreatStrong_01.wav@0ms 0dB + noise:pink@550ms
+      -8dB + HudThreatStrong_01.wav@600ms -9dB +12st'
+  - Sound: 317
+    Clips:
+    - {fileID: 8300000, guid: 363ad845590d948e5be3198cae6e38a8, type: 3}
+    Loop: 0
+    Lufs: -23.56
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_01.wav,
+      exports/BreakShoji_01.wav, exports/ImpactPaper_02.wav, exports/ImpactPaper_03.wav
+    NoiseFloorDb: -69
+    DcDb: -190.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): BreakShoji_01.wav@0ms 0dB + ImpactPaper_02.wav@90ms
+      -2dB -2st + ImpactPaper_03.wav@180ms -3dB +3st + ArmorPieceDrop_01.wav@230ms
+      -6dB +6st'
+  - Sound: 318
+    Clips:
+    - {fileID: 8300000, guid: 10567e8217306471eacafae2d379ec0a, type: 3}
+    Loop: 0
+    Lufs: -18.56
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/Explosion_01.wav,
+      exports/FootstepWaterDeep_01.wav, exports/ImpactWater_01.wav
+    NoiseFloorDb: -80.9
+    DcDb: -134
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): ImpactWater_01.wav@0ms -2dB + Explosion_01.wav@380ms
+      -8dB -6st + FootstepWaterDeep_01.wav@420ms -4dB'
+  - Sound: 319
+    Clips:
+    - {fileID: 8300000, guid: dc5edc91994514080960c100a7e8dc6e, type: 3}
+    - {fileID: 8300000, guid: f561b3d4a74fb4dc6b46410c1311ff2b, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.52
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AttackImpactBody_01.wav,
+      exports/HudThreatStrong_01.wav, noise:pink
+    NoiseFloorDb: -68
+    DcDb: -159.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): AttackImpactBody_01.wav@0ms 0dB -3st + noise:pink@0ms
+      -6dB + HudThreatStrong_01.wav@10ms -14dB +12st'
+  - Sound: 320
+    Clips:
+    - {fileID: 8300000, guid: 12d50bb4e606847ebace0dea10b82626, type: 3}
+    - {fileID: 8300000, guid: 461385488d22f42e3b88595f652a9c06, type: 3}
+    Loop: 0
+    Lufs: -23.17
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ChainArc_01.wav,
+      exports/ImpactPaper_01.wav, tone:2600,3900@2
+    NoiseFloorDb: -73
+    DcDb: -183.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): ImpactPaper_01.wav@0ms 0dB +3st + tone:2600,3900@2@10ms
+      -10dB + ChainArc_01.wav@20ms -14dB -8st'
+  - Sound: 321
+    Clips:
+    - {fileID: 8300000, guid: ad351ea86b314428eb748e81a24f004e, type: 3}
+    - {fileID: 8300000, guid: 852837647710d404db489b86ef5997b0, type: 3}
+    Loop: 0
+    Lufs: -21.21
+    TruePeakDb: -1.5
+    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWater_01.wav,
+      exports/ZombieStagger_01.wav, noise:pink
+    NoiseFloorDb: -80.9
+    DcDb: -152.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: 'derived (v009, no credits): ImpactWater_01.wav@0ms 0dB -6st + ZombieStagger_01.wav@15ms
+      -12dB + noise:pink@0ms -10dB'

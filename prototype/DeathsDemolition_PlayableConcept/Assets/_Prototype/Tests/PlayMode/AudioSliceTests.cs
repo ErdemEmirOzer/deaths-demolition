@@ -520,6 +520,35 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(_d.Mixer.DuckLevel(AudioBus.Music), 0.9f, "duck 1 s içinde bırakılmalı");
         }
 
+        // ================================================================== WP-058 · WP-056 Special kullanım sesleri
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator SpecialKullanim_FiredFieldHit_KendiSesleri_AlanDongusu()
+        {
+            AudioEventRouter r = _d.Router;
+            int once = r.SpecialUsageCount;
+            Vector3 at = _s.Zemin(0f, 6f);
+            var id = DD.Prototype.Core.Config.SpecialWeaponId.TideJewel;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_tide_pull", _s.Rig.transform.position, Vector3.forward, 0f, 0f, 1);
+            Assert.AreEqual(once + 1, r.SpecialUsageCount, "Fired ses üretmedi.");
+            Assert.AreEqual(AudioSoundId.SwFireTide, _d.LastPlayed);
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_tide_well", at, Vector3.forward, 4f, 6f, 0);
+            yield return null;
+            Assert.AreEqual(1, _d.FieldLoopsPlaying, "Tide kuyusu döngüsü çalmıyor.");
+            yield return new WaitForSecondsRealtime(0.1f);
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_tide_well", at, Vector3.forward, 4f, 0f, 3);
+            yield return null;
+            Assert.AreEqual(0, _d.FieldLoopsPlaying, "FieldEnded döngüyü durdurmalı.");
+            Assert.AreEqual(AudioSoundId.SwFieldEndTide, _d.LastPlayed);
+            yield return new WaitForSecondsRealtime(0.1f);
+            var kagura = DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(kagura, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_wave", at, Vector3.forward, 6f, 1.2f, 0);
+            Assert.AreEqual(AudioSoundId.SwFieldKagura, _d.LastPlayed, "Kagura cephesi one-shot.");
+            Assert.AreEqual(0, _d.FieldLoopsPlaying, "Kagura döngü değil.");
+            Debug.Log("[DD-TEST] wp058.special " + r.Describe());
+        }
+
         // ================================================================== WP-048B · WP-032C silah foley
 
         [UnityTest]

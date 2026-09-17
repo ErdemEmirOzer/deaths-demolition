@@ -162,6 +162,28 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.None, AudioEventMap.WeaponFoley(DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, DD.Prototype.Characters.CharacterAnimationEvent.FootLeft));
         }
 
+        /// <summary>WP-058 · WP-056 SpecialUsageEvent: every (Special, kind) pair resolves to its own voice; Activated / Deactivated are covered.</summary>
+        [Test]
+        public void SpecialKullanim_HerSpecialVeKind_KendiSesi()
+        {
+            var ids = new HashSet<AudioSoundId>();
+            foreach (DD.Prototype.Core.Config.SpecialWeaponId w in Enum.GetValues(typeof(DD.Prototype.Core.Config.SpecialWeaponId)))
+            {
+                foreach (DD.Prototype.Weapons.SpecialUsageKind k in Enum.GetValues(typeof(DD.Prototype.Weapons.SpecialUsageKind)))
+                {
+                    AudioSoundId id = AudioEventMap.SpecialUsage(w, k);
+                    bool covered = k == DD.Prototype.Weapons.SpecialUsageKind.Activated || k == DD.Prototype.Weapons.SpecialUsageKind.Deactivated;
+                    Assert.AreEqual(covered, id == AudioSoundId.None, w + "/" + k + " → " + id);
+                    if (!covered) Assert.IsTrue(ids.Add(id), "Special kullanım sesi paylaşılıyor: " + id);
+                    string satir = covered ? "SpecialUsage." + k : "SpecialUsage." + k + " → " + w;
+                    Assert.IsTrue(AudioEventMap.TryFind(AudioEventSource.Combat, satir, out AudioEventBinding b), "Matris satırı yok: " + satir);
+                    Assert.AreEqual(covered, b.Reserved, satir);
+                }
+            }
+
+            Assert.AreEqual(12, ids.Count, "3 Special × 4 kullanım anı");
+        }
+
         /// <summary>WP-048 · AP-017 breakable event table (AP017-breakable-event-table-v001): every family root name resolves to its own voice.</summary>
         [Test]
         public void Kirilabilirler_AP017AileAdlari_KendiSesineCozulur()

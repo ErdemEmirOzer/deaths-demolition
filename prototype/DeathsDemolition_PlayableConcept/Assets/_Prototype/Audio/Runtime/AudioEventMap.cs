@@ -127,6 +127,22 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Combat, "SpecialWeaponUsage.OfudaLoom.FireCue/ActiveLoop", AudioSoundId.HeavyFire, W, true, "→ HeavyWeaponFire / HeavyWeaponSpinUp rows"),
             B(AudioEventSource.Combat, "SpecialWeaponUsage.TideJewel.FireCue/ActiveLoop", AudioSoundId.HeavyFire, W, true, "→ HeavyWeaponFire / HeavyWeaponSpinUp rows"),
 
+            // ---- WP-058 · WP-056 SpecialUsageEvent (ADR-056-1) — per-Special usage voices (AP-011 v009, 0 cr)
+            B(AudioEventSource.Combat, "SpecialUsage.Activated", AudioSoundId.None, W, false, "covered by HeavyWeaponSpinUp (SpecialWeaponUsage.ActiveLoop) on the same frame", true),
+            B(AudioEventSource.Combat, "SpecialUsage.Fired → KaguraBell", AudioSoundId.SwFireKagura, W, false, "bell-tree strike + air push, layered over HeavyWeaponFire (the shared fire body)"),
+            B(AudioEventSource.Combat, "SpecialUsage.Fired → OfudaLoom", AudioSoundId.SwFireOfuda, W, false, "talisman throw: paper + whoosh + string"),
+            B(AudioEventSource.Combat, "SpecialUsage.Fired → TideJewel", AudioSoundId.SwFireTide, W, false, "jewel throw: whoosh + water drop + sparkle"),
+            B(AudioEventSource.Combat, "SpecialUsage.FieldSpawned → KaguraBell", AudioSoundId.SwFieldKagura, I, true, "pressure-wave front: one-shot sweep at the origin (the front travels; 3D at the ring's centre)"),
+            B(AudioEventSource.Combat, "SpecialUsage.FieldSpawned → OfudaLoom", AudioSoundId.SwFieldOfuda, I, true, "seal-web hum: 3D loop at the field origin until FieldEnded"),
+            B(AudioEventSource.Combat, "SpecialUsage.FieldSpawned → TideJewel", AudioSoundId.SwFieldTide, I, true, "well: 3D water + pull rumble loop at the field origin until FieldEnded"),
+            B(AudioEventSource.Combat, "SpecialUsage.FieldEnded → KaguraBell", AudioSoundId.SwFieldEndKagura, I, true, "wave reached its rim"),
+            B(AudioEventSource.Combat, "SpecialUsage.FieldEnded → OfudaLoom", AudioSoundId.SwFieldEndOfuda, I, true, "web collapse (loop stops)"),
+            B(AudioEventSource.Combat, "SpecialUsage.FieldEnded → TideJewel", AudioSoundId.SwFieldEndTide, I, true, "well implodes (loop stops)"),
+            B(AudioEventSource.Combat, "SpecialUsage.Deactivated", AudioSoundId.None, W, false, "covered by SpecialWeaponExpired / HeavyWeaponSpinDown", true),
+            B(AudioEventSource.Combat, "SpecialUsage.Hit → KaguraBell", AudioSoundId.SwHitKagura, T, true, "the front crossing one body (gain × Falloff01)"),
+            B(AudioEventSource.Combat, "SpecialUsage.Hit → OfudaLoom", AudioSoundId.SwHitOfuda, T, true, "a talisman seals one body"),
+            B(AudioEventSource.Combat, "SpecialUsage.Hit → TideJewel", AudioSoundId.SwHitTide, T, true, "one pull tick on one body (throttled per target)"),
+
             // ---- confirmation (Combat) -------------------------------------------
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.HitMarker), AudioSoundId.HitMarker, U, false, ""),
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.KillMarker), AudioSoundId.KillMarker, U, false, ""),
@@ -416,6 +432,20 @@ namespace DD.Prototype.Audio
 
             // Ids are laid out Weapon{A,B,C}{Eject,Chamber,MagOut,MagIn,Switch,Lowered,Raised} = 260 + w*7 + slot.
             return (AudioSoundId)((int)AudioSoundId.WeaponAEject + w * 7 + slot);
+        }
+
+        /// <summary>WP-058: per-Special usage voice for a WP-056 usage kind; None when the kind is covered by an existing cue.</summary>
+        public static AudioSoundId SpecialUsage(DD.Prototype.Core.Config.SpecialWeaponId id, DD.Prototype.Weapons.SpecialUsageKind kind)
+        {
+            int w = id == DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom ? 1 : id == DD.Prototype.Core.Config.SpecialWeaponId.TideJewel ? 2 : 0;
+            switch (kind)
+            {
+                case DD.Prototype.Weapons.SpecialUsageKind.Fired: return (AudioSoundId)((int)AudioSoundId.SwFireKagura + w);
+                case DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned: return (AudioSoundId)((int)AudioSoundId.SwFieldKagura + w);
+                case DD.Prototype.Weapons.SpecialUsageKind.FieldEnded: return (AudioSoundId)((int)AudioSoundId.SwFieldEndKagura + w);
+                case DD.Prototype.Weapons.SpecialUsageKind.Hit: return (AudioSoundId)((int)AudioSoundId.SwHitKagura + w);
+                default: return AudioSoundId.None;
+            }
         }
 
         /// <summary>WP-048: the region voice of an armour break (WP-040 armor_break_&lt;region&gt;). Body is the fallback for None.</summary>

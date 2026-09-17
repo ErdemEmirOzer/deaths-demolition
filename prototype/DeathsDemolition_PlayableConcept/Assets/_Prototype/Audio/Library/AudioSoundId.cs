@@ -242,6 +242,20 @@ namespace DD.Prototype.Audio
         StingerDeath = 303,
         StingerRunEnd = 304,
         MusicMenu = 305,
-        MusicResults = 306
+        MusicResults = 306,
+
+        // ---- WP-058 · Special Weapon usage (WP-056 SpecialUsageEvent; AP-011 v009, derived, 0 cr) — Kagura / Ofuda / Tide
+        SwFireKagura = 310,
+        SwFireOfuda = 311,
+        SwFireTide = 312,
+        SwFieldKagura = 313,
+        SwFieldOfuda = 314,
+        SwFieldTide = 315,
+        SwFieldEndKagura = 316,
+        SwFieldEndOfuda = 317,
+        SwFieldEndTide = 318,
+        SwHitKagura = 319,
+        SwHitOfuda = 320,
+        SwHitTide = 321
     }
 }
