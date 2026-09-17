@@ -10,9 +10,10 @@
 
 | Olay | Kaynak (tetik) | SFX dosya | 2D/3D | Bus | Durum | VFX (S-07) |
 |---|---|---|---|---|---|---|
+| Idle ağırlık kayması (shift_l/shift_r, WP-032B) | `anim.shift_l/shift_r` → yüzeye göre ayak sesi yarım kazanç (WP-048B) | paylaşımlı:Footstep* / ZombieStep* | 3D | SFX-Player/World | Ü | |
 | Ayak sesi — sığ su / derin su / çakıl / kaldırım (AP-015P plakaları) | `anim.foot_l/foot_r` + `Ap005SurfaceTags` aile (WP-038 plakaları gelince; şimdi R) | FootstepWaterShallow / FootstepWaterDeep / FootstepGravel / FootstepPavement (×3, v007 T) | 3D | SFX-Player | T/R | |
-| Silah foley A/B/C — eject / chamber / mag_out / mag_in / switch / lowered / raised | WP-032C klip olayları (main'e gelince; şimdi R) | Weapon{A,B,C}{Eject,Chamber,MagOut,MagIn,Switch,Lowered,Raised} (×2, v007 T; A tüfek, B carbine, C pompalı ayrışması) | 2D | SFX-Player | T/R | |
-| Silah/Special alma — kavrama / yerine oturma | `anim.pickup_grab` / `anim.pickup_done` (WP-032C; şimdi R) | PickupGrab / PickupDone (×2, v007 T) | 2D | SFX-Player | T/R | |
+| Silah foley A/B/C — eject / chamber / mag_out / mag_in(+2/3) / switch_ready+away / lowered / raised | WP-032C klip olayları oyuncu rig'inde → `AudioEventMap.WeaponFoley(WeaponRegistry.SelectedWeapon, olay)` (WP-048B) | Weapon{A,B,C}{Eject,Chamber,MagOut,MagIn,Switch,Lowered,Raised} (×2, v007 T; A tüfek, B carbine, C pompalı ayrışması) | 2D | SFX-Player | T | |
+| Silah/Special alma — kavrama / yerine oturma | `anim.pickup_grab` / `anim.pickup_done` (WP-032C; WP-048B bağlı) | PickupGrab / PickupDone (×2, v007 T) | 2D | SFX-Player | T | |
 | Ayak sesi — taş | `anim.foot_l/foot_r` + aşağı ışın → `AudioSurfaceHints` → `SurfaceResolver` (WP-021C: quiet_paving/ring/gate/shore_path/kaya/fener + taş rota şeridi; etiketsiz = taş) | FootstepStone (×4) | 3D | SFX-Player | Ü | `dust_step` (katalogda, stone tint) — bağlama `anim.foot_l/foot_r` WP-047 A (S-06 ayak olayı) |
 | Ayak sesi — ahşap (veranda/köprü) | `anim.foot_l/foot_r` + `SurfaceKind.Wood` | FootstepWood (×3) | 3D | SFX-Player | Ü | `dust_step` wood_tatami tint — WP-047 A |
 | Ayak sesi — toprak/çakıl | `anim.foot_l/foot_r` + `SurfaceKind.Dirt` | FootstepDirt (×4) | 3D | SFX-Player | Ü | `dust_step` earth tint — WP-047 A |

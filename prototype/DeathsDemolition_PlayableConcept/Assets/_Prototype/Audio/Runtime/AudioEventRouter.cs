@@ -89,6 +89,8 @@ namespace DD.Prototype.Audio
         public int UiCount { get; private set; }
         /// <summary>WP-048: region armour-break voices (WP-040 armor_break_&lt;region&gt;).</summary>
         public int RegionBreakCount { get; private set; }
+        /// <summary>WP-048B: weapon-handling foley + pickup cues (WP-032C clip events).</summary>
+        public int FoleyCount { get; private set; }
 
         /// <summary>WP-021B: foot → surface lookup (down ray from the character root). PROTOTYPE-ONLY / INVENTED.</summary>
         private const float FootRayUp = 0.4f;
@@ -172,6 +174,26 @@ namespace DD.Prototype.Audio
                 case CharacterAnimationEvent.FootLeft:
                 case CharacterAnimationEvent.FootRight:
                     OnFootstep(source);
+                    break;
+
+                case CharacterAnimationEvent.ShiftLeft:
+                case CharacterAnimationEvent.ShiftRight:
+                    OnFootstep(source, 0.5f);   // WP-032B idle weight shift: half a step
+                    break;
+
+                case CharacterAnimationEvent.Eject:
+                case CharacterAnimationEvent.Chamber:
+                case CharacterAnimationEvent.MagOut:
+                case CharacterAnimationEvent.MagIn:
+                case CharacterAnimationEvent.MagIn2:
+                case CharacterAnimationEvent.MagIn3:
+                case CharacterAnimationEvent.SwitchReady:
+                case CharacterAnimationEvent.SwitchAway:
+                case CharacterAnimationEvent.Lowered:
+                case CharacterAnimationEvent.Raised:
+                case CharacterAnimationEvent.PickupGrab:
+                case CharacterAnimationEvent.PickupDone:
+                    OnWeaponHandling(source, e);   // WP-048B (WP-032C)
                     break;
 
                 case CharacterAnimationEvent.Breath:
@@ -312,7 +334,7 @@ namespace DD.Prototype.Audio
             return z;
         }
 
-        private void OnFootstep(CharacterAnimationEvents source)
+        private void OnFootstep(CharacterAnimationEvents source, float gain = 1f)
         {
             Vector3 root = source.transform.position;
             SurfaceKind surface = SurfaceUnder(root);
@@ -327,7 +349,7 @@ namespace DD.Prototype.Audio
 
                 EnemyTierWeight w = WeightOf(z.Tier);
                 AudioSoundId sound = w == EnemyTierWeight.Heavy ? AudioSoundId.ZombieStepHeavy : AudioSoundId.ZombieStepLight;
-                if (_play(AudioMixPlan.ZombieFootstep(sound, w), root, 1f, 10))
+                if (_play(AudioMixPlan.ZombieFootstep(sound, w), root, gain, 10))
                 {
                     FootstepCount++;
                 }
@@ -343,9 +365,48 @@ namespace DD.Prototype.Audio
             }
 
             bool running = rig.Motor != null && rig.Motor.Speed01 > 0.7f;
-            if (_play(AudioMixPlan.PlayerFootstep(FootstepFor(surface), running), root, 1f, 20))
+            if (_play(AudioMixPlan.PlayerFootstep(FootstepFor(surface), running), root, gain, 20))
             {
                 FootstepCount++;
+            }
+        }
+
+        // ------------------------------------------------------------------ WP-048B · WP-032C weapon handling (player rig)
+
+        /// <summary>
+        /// The AP-009C weapon-handling clip events on the PLAYER rig → the equipped roster weapon's
+        /// own foley (A Rifle / B Carbine / C Shotgun, v007). Events on a zombie rig (none today)
+        /// are ignored; the pickup pair is weapon-independent.
+        /// </summary>
+        private void OnWeaponHandling(CharacterAnimationEvents source, CharacterAnimationEvent e)
+        {
+            PlayerRig rig = PlayerRegistry.Primary;
+            if (rig == null || !source.transform.IsChildOf(rig.transform))
+            {
+                return;
+            }
+
+            AudioSoundId sound;
+            AudioPlacement placement;
+            if (e == CharacterAnimationEvent.PickupGrab || e == CharacterAnimationEvent.PickupDone)
+            {
+                sound = e == CharacterAnimationEvent.PickupGrab ? AudioSoundId.PickupGrab : AudioSoundId.PickupDone;
+                placement = AudioMixPlan.Pickup(sound);
+            }
+            else
+            {
+                sound = AudioEventMap.WeaponFoley(DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon, e);
+                if (sound == AudioSoundId.None)
+                {
+                    return;
+                }
+
+                placement = AudioMixPlan.WeaponFoley(sound);
+            }
+
+            if (_play(placement, rig.transform.position, 1f, 30))
+            {
+                FoleyCount++;
             }
         }
 
@@ -558,8 +619,8 @@ namespace DD.Prototype.Audio
 
         public string Describe()
         {
-            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · regionBreak {16} · tracked {13}",
-                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount, RegionBreakCount);
+            return string.Format("windup {0} · attack {1} · hit {2} (throttled {3}) · death {4} · rise {5} · idle {6} · stagger {7} · claw {8} · plate {9} · ceramic {10} · steps {11} · settle {12} · aggro {14} · ui {15} · regionBreak {16} · foley {17} · tracked {13}",
+                WindupCount, AttackCount, HitCount, HitThrottled, DeathCount, RiseCount, IdleCount, StaggerCount, ImpactCount, PieceDropCount, BreakCount, FootstepCount, SettleCount, _tracked.Count, AggroCount, UiCount, RegionBreakCount, FoleyCount);
         }
     }
 }

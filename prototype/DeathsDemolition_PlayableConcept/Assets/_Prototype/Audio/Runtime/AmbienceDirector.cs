@@ -72,7 +72,8 @@ namespace DD.Prototype.Audio
         /// <summary>
         /// WP-048 · Look B ("wet"): distant thunder every <see cref="ThunderMin"/>–<see cref="ThunderMax"/> s,
         /// slate drips in the scatter ring, and a koi-pond water bed anchored at the pond (3D, distance-faded).
-        /// Default on (the wet after-rain look is the shipped palette); WP-029 flips it with the look.
+        /// On: WP-029 chose Look B "Islak Arduvaz" (B4, 2026-09-17) - the wet after-rain palette is the shipped look
+        /// (WP-048B). A future look switch flips this from its own code; nothing else writes it.
         /// PROTOTYPE-ONLY / INVENTED timings.
         /// </summary>
         public static bool WetLook = true;

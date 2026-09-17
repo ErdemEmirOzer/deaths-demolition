@@ -637,6 +637,23 @@ namespace DD.Prototype.Audio
             return Interface(AudioSoundId.UiTransition, 0.55f, 85f, 0f, 1, 0.3f);
         }
 
+        /// <summary>WP-048B: weapon-handling foley on the player's own weapon (WP-032C clip events) - dry, near, never positional.</summary>
+        public static AudioPlacement WeaponFoley(AudioSoundId sound)
+        {
+            AudioPlacement p = Weapon(sound, 0.55f, 40f, 2, 0.03f);
+            p.Spatial = 0.15f;
+            p.PitchJitter = 0.03f;
+            return p;
+        }
+
+        /// <summary>WP-048B: pickup grab / seat on the upper body (WP-032C).</summary>
+        public static AudioPlacement Pickup(AudioSoundId sound)
+        {
+            AudioPlacement p = Weapon(sound, 0.6f, 45f, 1, 0.08f);
+            p.Spatial = 0.15f;
+            return p;
+        }
+
         /// <summary>WP-021B (ADR-018-1 foot_l/foot_r): the player's own step - near, mostly dry, the cheapest player sound.</summary>
         public static AudioPlacement PlayerFootstep(AudioSoundId sound, bool running)
         {

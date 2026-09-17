@@ -420,6 +420,34 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
         }
 
+        // ================================================================== WP-048B · WP-032C silah foley
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator SilahFoley_KlipOlayi_SecilenSilahinKendiSesi()
+        {
+            AudioEventRouter r = _d.Router;
+            var events = _s.Rig.GetComponentInChildren<DD.Prototype.Characters.CharacterAnimationEvents>(true);
+            if (events == null)
+            {
+                Assert.Ignore("Oyuncu rig'inde CharacterAnimationEvents yok (prosedürel karakter modu).");
+            }
+
+            var weapon = DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon;
+            int once = r.FoleyCount;
+            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Eject);
+            Assert.AreEqual(once + 1, r.FoleyCount, "eject foley üretmedi.");
+            Assert.AreEqual(AudioEventMap.WeaponFoley(weapon, DD.Prototype.Characters.CharacterAnimationEvent.Eject), _d.LastPlayed, "Seçili silahın kendi eject sesi.");
+            yield return new WaitForSecondsRealtime(0.1f);
+            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Chamber);
+            Assert.AreEqual(AudioEventMap.WeaponFoley(weapon, DD.Prototype.Characters.CharacterAnimationEvent.Chamber), _d.LastPlayed);
+            yield return new WaitForSecondsRealtime(0.1f);
+            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.PickupDone);
+            Assert.AreEqual(AudioSoundId.PickupDone, _d.LastPlayed);
+            Assert.IsTrue(AmbienceDirector.WetLook, "Look B (WP-029 B4) → WetLook açık.");
+            Debug.Log("[DD-TEST] wp048b.foley weapon=" + weapon + " " + r.Describe() + " · thunder " + _d.Ambience.ThunderCount + " pond " + _d.Ambience.PondPlaying);
+        }
+
         // ================================================================== WP-021C · master limiter ölçümü
 
         [UnityTest]

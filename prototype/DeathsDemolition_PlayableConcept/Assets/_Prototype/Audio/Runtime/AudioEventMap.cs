@@ -201,32 +201,35 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Animation, "anim.rise_end", AudioSoundId.ZombieAggroStandard, T, true, "covered by EnemyCombatEvents.spawn_land (WP-048): the aggro growl also reaches bodies that spawn without a rise clip", true),
             B(AudioEventSource.Damage, "EnemyCombatEvents.spawn_land", AudioSoundId.ZombieAggroStandard, T, true, "the body is up and has seen you - the aggro growl, ids by tier (ZombieRise is the earth, this is the voice)"),
             B(AudioEventSource.Animation, "anim.fire / anim.pickup / anim.stagger_end", AudioSoundId.None, T, false, "covered by weapon / Special / stagger cues from their own events", true),
+            B(AudioEventSource.Animation, "anim.hit_window_end / anim.hit", AudioSoundId.None, T, false, "silent by design: the window closing has no sound; anim.hit is the enemy's own hit reaction frame (the grunt is DamageEvents.EnemyDamaged)", true),
+            B(AudioEventSource.Animation, "anim.shift_l/shift_r", AudioSoundId.FootstepStone, W, true, "WP-032B idle weight shift: a footstep at half gain on the surface under the character (player or zombie step set)"),
+            B(AudioEventSource.Animation, "anim.armor_break / anim.spawn_rise / anim.spawn_land (clip)", AudioSoundId.None, T, false, "covered by the EnemyCombatEvents beats of the same names (one owner)", true),
 
             // ---- WP-048 · Audio Wave 3 — AP-011 v007 identities. Rows marked reserved wait for their producer on main
             // (WP-032C clip events, WP-040 EnemyCombatEvents, AP-017 breakable families, AP-015P plates); Look B ambience is live.
-            B(AudioEventSource.Animation, "anim.eject → weapon A", AudioSoundId.WeaponAEject, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.chamber → weapon A", AudioSoundId.WeaponAChamber, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.mag_out → weapon A", AudioSoundId.WeaponAMagOut, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.mag_in → weapon A", AudioSoundId.WeaponAMagIn, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.switch → weapon A", AudioSoundId.WeaponASwitch, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.lowered → weapon A", AudioSoundId.WeaponALowered, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.raised → weapon A", AudioSoundId.WeaponARaised, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.eject → weapon B", AudioSoundId.WeaponBEject, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.chamber → weapon B", AudioSoundId.WeaponBChamber, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.mag_out → weapon B", AudioSoundId.WeaponBMagOut, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.mag_in → weapon B", AudioSoundId.WeaponBMagIn, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.switch → weapon B", AudioSoundId.WeaponBSwitch, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.lowered → weapon B", AudioSoundId.WeaponBLowered, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.raised → weapon B", AudioSoundId.WeaponBRaised, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.eject → weapon C", AudioSoundId.WeaponCEject, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.chamber → weapon C", AudioSoundId.WeaponCChamber, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.mag_out → weapon C", AudioSoundId.WeaponCMagOut, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.mag_in → weapon C", AudioSoundId.WeaponCMagIn, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.switch → weapon C", AudioSoundId.WeaponCSwitch, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.lowered → weapon C", AudioSoundId.WeaponCLowered, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.raised → weapon C", AudioSoundId.WeaponCRaised, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.pickup_grab", AudioSoundId.PickupGrab, W, false, "WP-032C: hand closes on the weapon (v007); bound when WP-032C lands", true),
-            B(AudioEventSource.Animation, "anim.pickup_done", AudioSoundId.PickupDone, W, false, "WP-032C: weapon seats (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.eject → weapon A", AudioSoundId.WeaponAEject, W, false, "WP-032C clip event on the player rig, A Rifle foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.chamber → weapon A", AudioSoundId.WeaponAChamber, W, false, "WP-032C clip event on the player rig, A Rifle foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.mag_out → weapon A", AudioSoundId.WeaponAMagOut, W, false, "WP-032C clip event on the player rig, A Rifle foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.mag_in/mag_in_2/mag_in_3 → weapon A", AudioSoundId.WeaponAMagIn, W, false, "WP-032C clip event, A Rifle foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.switch_ready/switch_away → weapon A", AudioSoundId.WeaponASwitch, W, false, "WP-032C clip event on the player rig, A Rifle foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.lowered → weapon A", AudioSoundId.WeaponALowered, W, false, "WP-032C clip event on the player rig, A Rifle foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.raised → weapon A", AudioSoundId.WeaponARaised, W, false, "WP-032C clip event on the player rig, A Rifle foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.eject → weapon B", AudioSoundId.WeaponBEject, W, false, "WP-032C clip event on the player rig, B Carbine foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.chamber → weapon B", AudioSoundId.WeaponBChamber, W, false, "WP-032C clip event on the player rig, B Carbine foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.mag_out → weapon B", AudioSoundId.WeaponBMagOut, W, false, "WP-032C clip event on the player rig, B Carbine foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.mag_in/mag_in_2/mag_in_3 → weapon B", AudioSoundId.WeaponBMagIn, W, false, "WP-032C clip event, B Carbine foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.switch_ready/switch_away → weapon B", AudioSoundId.WeaponBSwitch, W, false, "WP-032C clip event on the player rig, B Carbine foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.lowered → weapon B", AudioSoundId.WeaponBLowered, W, false, "WP-032C clip event on the player rig, B Carbine foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.raised → weapon B", AudioSoundId.WeaponBRaised, W, false, "WP-032C clip event on the player rig, B Carbine foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.eject → weapon C", AudioSoundId.WeaponCEject, W, false, "WP-032C clip event on the player rig, C Shotgun foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.chamber → weapon C", AudioSoundId.WeaponCChamber, W, false, "WP-032C clip event on the player rig, C Shotgun foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.mag_out → weapon C", AudioSoundId.WeaponCMagOut, W, false, "WP-032C clip event on the player rig, C Shotgun foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.mag_in/mag_in_2/mag_in_3 → weapon C", AudioSoundId.WeaponCMagIn, W, false, "WP-032C clip event, C Shotgun foley (v007); bound when WP-032C lands", true),
+            B(AudioEventSource.Animation, "anim.switch_ready/switch_away → weapon C", AudioSoundId.WeaponCSwitch, W, false, "WP-032C clip event on the player rig, C Shotgun foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.lowered → weapon C", AudioSoundId.WeaponCLowered, W, false, "WP-032C clip event on the player rig, C Shotgun foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.raised → weapon C", AudioSoundId.WeaponCRaised, W, false, "WP-032C clip event on the player rig, C Shotgun foley (v007); weapon = WeaponRegistry.SelectedWeapon (WP-048B)"),
+            B(AudioEventSource.Animation, "anim.pickup_grab", AudioSoundId.PickupGrab, W, false, "WP-032C: hand closes on the weapon (v007; WP-048B bound)"),
+            B(AudioEventSource.Animation, "anim.pickup_done", AudioSoundId.PickupDone, W, false, "WP-032C: weapon seats (v007; WP-048B bound); the reward tail stays SwPickup / RunAudioEvent"),
             B(AudioEventSource.Damage, "EnemyCombatEvents.armor_break_head", AudioSoundId.ArmorBreakHelmet, T, true, "WP-040 region voice (v007) over the tier ArmorBreak cue (ReportEnemyHit, WP-006 N1)"),
             B(AudioEventSource.Damage, "EnemyCombatEvents.armor_break_torso", AudioSoundId.ArmorBreakBody, T, true, "WP-040 region voice (v007)"),
             B(AudioEventSource.Damage, "EnemyCombatEvents.armor_break_leg", AudioSoundId.ArmorBreakLeg, T, true, "WP-040 region voice (v007)"),
@@ -379,6 +382,33 @@ namespace DD.Prototype.Audio
                 case DD.Prototype.Core.Config.EnemyTier.Ultra: return AudioSoundId.ZombieIdleUltra;
                 default: return AudioSoundId.ZombieIdle;
             }
+        }
+
+        /// <summary>
+        /// WP-048B: WP-032C weapon-handling clip event → the equipped roster weapon's own foley
+        /// (A Rifle = AssaultRifle, B Carbine = AutoSmg, C Shotgun = CombatShotgun). None for events that are not foley.
+        /// </summary>
+        public static AudioSoundId WeaponFoley(DD.Prototype.Core.Config.ClassicWeaponId weapon, DD.Prototype.Characters.CharacterAnimationEvent e)
+        {
+            int w = weapon == DD.Prototype.Core.Config.ClassicWeaponId.AutoSmg ? 1 : weapon == DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun ? 2 : 0;
+            int slot;
+            switch (e)
+            {
+                case DD.Prototype.Characters.CharacterAnimationEvent.Eject: slot = 0; break;
+                case DD.Prototype.Characters.CharacterAnimationEvent.Chamber: slot = 1; break;
+                case DD.Prototype.Characters.CharacterAnimationEvent.MagOut: slot = 2; break;
+                case DD.Prototype.Characters.CharacterAnimationEvent.MagIn:
+                case DD.Prototype.Characters.CharacterAnimationEvent.MagIn2:
+                case DD.Prototype.Characters.CharacterAnimationEvent.MagIn3: slot = 3; break;
+                case DD.Prototype.Characters.CharacterAnimationEvent.SwitchReady:
+                case DD.Prototype.Characters.CharacterAnimationEvent.SwitchAway: slot = 4; break;
+                case DD.Prototype.Characters.CharacterAnimationEvent.Lowered: slot = 5; break;
+                case DD.Prototype.Characters.CharacterAnimationEvent.Raised: slot = 6; break;
+                default: return AudioSoundId.None;
+            }
+
+            // Ids are laid out Weapon{A,B,C}{Eject,Chamber,MagOut,MagIn,Switch,Lowered,Raised} = 260 + w*7 + slot.
+            return (AudioSoundId)((int)AudioSoundId.WeaponAEject + w * 7 + slot);
         }
 
         /// <summary>WP-048: the region voice of an armour break (WP-040 armor_break_&lt;region&gt;). Body is the fallback for None.</summary>

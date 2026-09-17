@@ -122,6 +122,44 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Debug.Log("[DD-TEST] wp021c.ui rows bound=" + bagli + " reserved=" + rezerve);
         }
 
+        /// <summary>WP-048B · every AP-009 clip event (CharacterAnimationEvents.Names) has an Animation row; the WP-032C weapon foley resolves to 21 distinct ids.</summary>
+        [Test]
+        public void AnimasyonOlaylari_HerKlipOlayininSatiriVar_SilahFoleyAyrik()
+        {
+            var satirlar = AudioEventMap.For(AudioEventSource.Animation);
+            var eksik = new List<string>();
+            for (int i = 1; i < DD.Prototype.Characters.CharacterAnimationEvents.Names.Length; i++)
+            {
+                string ad = DD.Prototype.Characters.CharacterAnimationEvents.Names[i];
+                bool var = false;
+                foreach (AudioEventBinding b in satirlar)
+                {
+                    // "anim.foot_l/foot_r", "anim.mag_in/mag_in_2/mag_in_3", "anim.fire / anim.pickup" - the name is a token of the row key.
+                    if (System.Text.RegularExpressions.Regex.IsMatch(b.Event, @"(^|[ ./])" + System.Text.RegularExpressions.Regex.Escape(ad) + @"($|[ /→(])")) { var = true; break; }
+                }
+
+                if (!var) eksik.Add(ad);
+            }
+
+            Assert.IsEmpty(eksik, "Haritada satırı olmayan klip olayı: " + string.Join(", ", eksik));
+
+            var ids = new HashSet<AudioSoundId>();
+            foreach (DD.Prototype.Core.Config.ClassicWeaponId w in Enum.GetValues(typeof(DD.Prototype.Core.Config.ClassicWeaponId)))
+            {
+                foreach (var e in new[] { DD.Prototype.Characters.CharacterAnimationEvent.Eject, DD.Prototype.Characters.CharacterAnimationEvent.Chamber, DD.Prototype.Characters.CharacterAnimationEvent.MagOut, DD.Prototype.Characters.CharacterAnimationEvent.MagIn, DD.Prototype.Characters.CharacterAnimationEvent.SwitchReady, DD.Prototype.Characters.CharacterAnimationEvent.Lowered, DD.Prototype.Characters.CharacterAnimationEvent.Raised })
+                {
+                    AudioSoundId id = AudioEventMap.WeaponFoley(w, e);
+                    Assert.IsTrue(id.ToString().StartsWith("Weapon"), w + "/" + e + " → " + id);
+                    Assert.IsTrue(ids.Add(id), "Silah foley kimliği paylaşılıyor: " + id);
+                }
+            }
+
+            Assert.AreEqual(21, ids.Count);
+            Assert.AreEqual(AudioSoundId.WeaponCChamber, AudioEventMap.WeaponFoley(DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun, DD.Prototype.Characters.CharacterAnimationEvent.Chamber));
+            Assert.AreEqual(AudioSoundId.WeaponBMagIn, AudioEventMap.WeaponFoley(DD.Prototype.Core.Config.ClassicWeaponId.AutoSmg, DD.Prototype.Characters.CharacterAnimationEvent.MagIn3));
+            Assert.AreEqual(AudioSoundId.None, AudioEventMap.WeaponFoley(DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, DD.Prototype.Characters.CharacterAnimationEvent.FootLeft));
+        }
+
         /// <summary>WP-048 · AP-017 breakable event table (AP017-breakable-event-table-v001): every family root name resolves to its own voice.</summary>
         [Test]
         public void Kirilabilirler_AP017AileAdlari_KendiSesineCozulur()
