@@ -99,7 +99,7 @@ namespace DD.Prototype.Weapons
         /// <c>CharacterAnimationEvents.Names</c> at install, so the slots come alive when the
         /// S-06 enum carries them and stay inert (timer fallback) until then.
         /// </summary>
-        public static readonly string[] ClipEventNames = { "eject", "mag_out", "mag_in", "chamber", PickupGrabEvent, PickupDoneEvent };
+        public static readonly string[] ClipEventNames = { "eject", "mag_out", "mag_in", "chamber", PickupGrabEvent, PickupDoneEvent, "mag_in_2", "mag_in_3" };
     }
 
     /// <summary>The clip events the weapon layer consumes; index into <see cref="SpecialWeaponUsage.ClipEventNames"/>.</summary>
@@ -110,6 +110,9 @@ namespace DD.Prototype.Weapons
         MagIn = 2,
         Chamber = 3,
         PickupGrab = 4,
-        PickupDone = 5
+        PickupDone = 5,
+        /// <summary>The shotgun's second / third shell (AP-009C reload: mag_in / mag_in_2 / mag_in_3).</summary>
+        MagIn2 = 6,
+        MagIn3 = 7
     }
 }

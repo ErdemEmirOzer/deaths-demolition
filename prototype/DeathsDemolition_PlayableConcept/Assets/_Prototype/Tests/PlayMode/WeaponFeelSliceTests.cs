@@ -143,6 +143,8 @@ namespace DD.Prototype.Tests.PlayMode
             using (var sayac = new SpecialOlaySayaci())
             {
                 yield return SpawnVeAl();
+                // WP-032C: the grab clip hands the weapon over at pickup_done (0.73 s; 0.8 s fallback) — the hand model shows then.
+                yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.PickupDonePending, 1.5f, "pickup_done / yedek");
                 Assert.IsTrue(_s.Controller.SpecialRigVisible, "aktifken el rig'i görünür");
                 _s.Rig.Health.DiagnosisInvulnerable = false;
                 Assert.IsTrue(_s.Rig.Health.ApplyDamage(100000f, _s.Rig.transform.position + Vector3.forward * 2f, "test.kill"), "öldürücü vuruş uygulanmalı");
@@ -172,15 +174,16 @@ namespace DD.Prototype.Tests.PlayMode
             for (int i = 0; i < _mechanism.Count; i++)
             {
                 Assert.AreEqual(ClassicWeaponId.AssaultRifle, _mechanism[i].Weapon);
-                Assert.IsFalse(_mechanism[i].FromClipEvent, "AP-009C klip olayı henüz yok → zamanlayıcı yedeği (WP-032C sonrası klipten)");
+                Assert.IsFalse(_mechanism[i].FromClipEvent, "A/B kovanı atışta yayınlanır (klipten değil — WP-042C: additive fire klibi otomatik ateşte olayı düşürüyor)");
                 Assert.Greater(_mechanism[i].Direction.magnitude, 0.9f, "yön birim");
             }
 
             _s.Girdi.DoldurBasti = true;
             yield return null;
             _s.Girdi.DoldurBasti = false;
-            yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.MagazineDropped) == 1, 1.5f, "şarjör düşme (mag_out yedeği ≈ 0,4 s)");
-            yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.ShellSeated) == 1, 2f, "şarjör takma (mag_in yedeği)");
+            yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.MagazineDropped) == 1, 1.5f, "şarjör düşme (mag_out: klip ya da 0,4 s yedek)");
+            yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.ShellSeated) == 1, 2f, "şarjör takma (mag_in: klip ya da yedek)");
+            Debug.Log("[DD-TEST] wp042c.mechanism A clipDriven=" + _s.Controller.ClipDrivesMechanism + " magOutFromClip=" + _mechanism.Find(e => e.Kind == WeaponMechanismKind.MagazineDropped).FromClipEvent);
             Assert.AreEqual(1, Count(WeaponMechanismKind.MagazineDropped), "reload başına tek şarjör");
         }
 
@@ -207,7 +210,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(reload, 1f);
             yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, reload + 1f, "reload biter");
             Assert.AreEqual(0, Count(WeaponMechanismKind.MagazineDropped), "C: şarjör düşmez (fişek)");
-            Assert.AreEqual(3, Count(WeaponMechanismKind.ShellSeated), "C: üç fişek slotu (AP-009C mag_in 14/30/46 f; zamanlayıcı yedeği klibi izler)");
+            Assert.AreEqual(3, Count(WeaponMechanismKind.ShellSeated), "C: üç fişek slotu (AP-009C mag_in / mag_in_2 / mag_in_3; klip ya da yedek)");
             Assert.AreEqual(1, Count(WeaponMechanismKind.Chambered), "C: pump chamber");
         }
 

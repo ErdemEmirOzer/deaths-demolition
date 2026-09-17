@@ -281,10 +281,22 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
                 Assert.IsTrue(bytes.Valid, "'GC Allocated In Frame' sayacı yok (Editor/dev build gerekir).");
 
-                // Idle frame reference (test runner + scene overhead with no hits).
-                yield return null;
-                long idleBytes = bytes.LastValue, idleCount = count.LastValue;
-                Debug.Log("[DD-AUDIT2] idleFrame bytes=" + idleBytes + " count=" + idleCount);
+                // Idle frame reference (test runner + scene overhead with no hits). WP-053: the bodies were just
+                // spawned — a camera-off spawn RISES for up to 1.2 s (DEC-081) and the armour binder is still
+                // dressing them; a single frame here read 3 999 allocations on main and was misread as an idle
+                // storm. Settle for 2.5 s, then average five frames.
+                yield return new WaitForSeconds(2.5f);
+                long idleBytes = 0, idleCount = 0;
+                for (int i = 0; i < 5; i++)
+                {
+                    yield return null;
+                    idleBytes += bytes.LastValue;
+                    idleCount += count.LastValue;
+                }
+
+                idleBytes /= 5;
+                idleCount /= 5;
+                Debug.Log("[DD-AUDIT2] idleFrame(settled, avg5) bytes=" + idleBytes + " count=" + idleCount);
 
                 // Positive control in a frame.
                 var yem = new object[300];
@@ -395,7 +407,17 @@ namespace DD.Prototype.Tests.PlayMode
                 // Idle again: what the frame costs with nothing happening (HUD / directors polling).
                 yield return null;
                 yield return null;
-                Debug.Log("[DD-AUDIT2] idleFrameAfter bytes=" + bytes.LastValue + " count=" + count.LastValue);
+                // WP-053: settle after the last window before reading the trailing idle (effects and reactions end).
+                yield return new WaitForSeconds(1f);
+                long afterBytes = 0, afterCount = 0;
+                for (int i = 0; i < 5; i++)
+                {
+                    yield return null;
+                    afterBytes += bytes.LastValue;
+                    afterCount += count.LastValue;
+                }
+
+                Debug.Log("[DD-AUDIT2] idleFrameAfter(settled, avg5) bytes=" + afterBytes / 5 + " count=" + afterCount / 5);
             }
         }
     }

@@ -106,6 +106,8 @@ namespace DD.Prototype.Weapons
         private static readonly CharacterAnimationEvent s_eject = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.Eject]);
         private static readonly CharacterAnimationEvent s_magOut = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.MagOut]);
         private static readonly CharacterAnimationEvent s_magIn = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.MagIn]);
+        private static readonly CharacterAnimationEvent s_magIn2 = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.MagIn2]);
+        private static readonly CharacterAnimationEvent s_magIn3 = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.MagIn3]);
         private static readonly CharacterAnimationEvent s_chamber = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.Chamber]);
         private static readonly CharacterAnimationEvent s_pickupDone = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.PickupDone]);
 
@@ -464,13 +466,12 @@ namespace DD.Prototype.Weapons
 
             _classic.ConsumeShot();
 
-            // WP-042: the casing slot — from the clip's eject event when the character carries it,
-            // else now (A/B, frame 1) or at the pump-back (C, 0.40 s).
-            if (!ClipDrivesMechanism)
-            {
-                if (_timeline.CasingDelaySeconds <= 0f) PublishMechanism(WeaponMechanismKind.CasingEjected, false);
-                else _casingAt = Time.time + _timeline.CasingDelaySeconds;
-            }
+            // WP-042 / WP-042C: the casing slot. A/B eject at the SHOT — always from here, never from the
+            // clip: the 6/5-frame additive fire clip is retriggered per shot and drops its frame-1 event
+            // under auto fire (measured on WP-032C: 3 shots → 2 events). C ejects at the pump-back —
+            // the clip's eject event when the character carries it, else the 0.40 s timer.
+            if (_timeline.CasingDelaySeconds <= 0f) PublishMechanism(WeaponMechanismKind.CasingEjected, false);
+            else if (!ClipDrivesMechanism) _casingAt = Time.time + _timeline.CasingDelaySeconds;
         }
 
         // ------------------------------------------------------------------ reload presentation
@@ -996,9 +997,9 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            if (e == s_eject) PublishMechanism(WeaponMechanismKind.CasingEjected, true);
+            if (e == s_eject) { if (_timeline.CasingDelaySeconds > 0f) PublishMechanism(WeaponMechanismKind.CasingEjected, true); }   // pump weapons only (A/B eject at the shot)
             else if (e == s_magOut) PublishMechanism(WeaponMechanismKind.MagazineDropped, true);
-            else if (e == s_magIn) PublishMechanism(WeaponMechanismKind.ShellSeated, true);
+            else if (e == s_magIn || e == s_magIn2 || e == s_magIn3) PublishMechanism(WeaponMechanismKind.ShellSeated, true);
             else if (e == s_chamber) PublishMechanism(WeaponMechanismKind.Chambered, true);
         }
 
