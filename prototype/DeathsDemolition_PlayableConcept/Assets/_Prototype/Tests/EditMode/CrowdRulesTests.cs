@@ -112,24 +112,27 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void SpawnMixSimulator_R1_12_Cw2Kurali_CanliPay30_A1Kurali()
         {
-            var config = ScriptableObject.CreateInstance<PrototypeConfig>();
+            // the SHIPPED config (Ö-5 armour rows R8/R11/R14) — the S-10 spawn-mix gate measures the same table (M3 K4: R8 cw1 0.233)
+            PrototypeConfig config = Resources.Load<PrototypeConfig>(PrototypeConfig.ResourcesPath);
+            Assert.IsNotNull(config, "sevk config'i (Resources) yok");
             try
             {
-                SpawnMixSimulator.Report rep = SpawnMixSimulator.Run(new SpawnMixSimulator.Options { config = config, seed = 3u, spawnsPerRound = 200, firstRound = 1, lastRound = 12 });
+                Assert.AreEqual(0.30f, ZombieLookSelector.MinVividShareFor(7), 1e-6f); Assert.AreEqual(0f, ZombieLookSelector.MinVividShareFor(8), 1e-6f);
+                SpawnMixSimulator.Report rep = SpawnMixSimulator.Run(new SpawnMixSimulator.Options { config = config, seed = 3u, spawnsPerRound = 1000, firstRound = 1, lastRound = 14 });
                 if (!rep.lookSimulated) Assert.Ignore("no character asset set (Resources) — look rules not simulated");
                 var sb = new System.Text.StringBuilder("[DD-TEST] wp055b.simulator ");
                 for (int i = 0; i < rep.rounds.Length; i++)
                 {
                     SpawnMixSimulator.RoundResult r = rep.rounds[i];
                     Assert.AreEqual(0, r.armouredVividCloth, "R" + r.round + ": zırhlı spawn'da cw1 kumaş");
-                    Assert.GreaterOrEqual(r.vividShare, ZombieLookSelector.MinVividShare, "R" + r.round + ": canlı cw1 payı");
+                    Assert.GreaterOrEqual(r.vividShare, ZombieLookSelector.MinVividShareFor(r.round), "R" + r.round + ": canlı cw1 payı (taban R1–7 0,30; R8+ yalnız rapor — Ö-5)");
                     Assert.AreEqual(0, r.strawHatWithArmour + r.strawHatOffStandard + r.strawHatWithMino, "R" + r.round + ": A1 kuralı");
                     sb.Append("R").Append(r.round).Append(" vivid=").Append(r.vividShare.ToString("0.00")).Append(r.accessoryPicks > 0 ? " A1=" + r.strawHats + "/" + r.strawHatEligible : " A1=n/a").Append(' ');
                 }
                 Debug.Log(sb.ToString() + (rep.rounds[0].accessoryPicks == 0 ? "(accessory slot not in the shipped library yet — S-05 WP-038 import)" : ""));
                 for (int v = 0; v < rep.violations.Length; v++) Assert.IsFalse(rep.violations[v].Contains("AP-011B") || rep.violations[v].Contains("AP-007C"), rep.violations[v]);
             }
-            finally { Object.DestroyImmediate(config); }
+            finally { }
         }
     }
 }

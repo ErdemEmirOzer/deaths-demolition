@@ -307,7 +307,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 // WP-055B: crowd identity rules
                 r.vividShare = r.colourwayPicks > 0 ? 1f - (float)r.fadedPicks / r.colourwayPicks : 1f;
                 if (r.armouredVividCloth > 0) violations.Add("round " + round + ": " + r.armouredVividCloth + " cloth picks on armoured spawns are not cw2 (AP-011B)");
-                if (r.lookSamples > 0 && r.colourwayPicks > 0 && r.vividShare < ZombieLookSelector.MinVividShare) violations.Add("round " + round + ": vivid cw1 share " + F(r.vividShare) + " < " + F(ZombieLookSelector.MinVividShare) + " (AP-011B identity)");
+                if (r.lookSamples > 0 && r.colourwayPicks > 0 && r.vividShare < ZombieLookSelector.MinVividShareFor(round)) violations.Add("round " + round + ": vivid cw1 share " + F(r.vividShare) + " < " + F(ZombieLookSelector.MinVividShareFor(round)) + " (AP-011B identity, R1–R7)");
+                else if (r.lookSamples > 0 && r.colourwayPicks > 0 && round >= ZombieLookSelector.LateVividRound && r.vividShare < ZombieLookSelector.MinVividShare) notes.Add("round " + round + ": vivid cw1 share " + F(r.vividShare) + " < " + F(ZombieLookSelector.MinVividShare) + " — Ö-5 armour bands (cw2 by decision), reported not enforced from R8");
                 if (r.strawHatWithArmour > 0 || r.strawHatOffStandard > 0 || r.strawHatWithMino > 0) violations.Add("round " + round + ": A1 straw hat with armour / off-Standard / mino " + r.strawHatWithArmour + "/" + r.strawHatOffStandard + "/" + r.strawHatWithMino + " (AP-007C)");
                 if (r.accessoryPicks > 0 && r.strawHatEligible >= 50)
                 {

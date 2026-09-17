@@ -214,8 +214,16 @@ namespace DD.Prototype.Characters
         public const float StrawHatWeight = 0.20f;      // vs 1.0 for "none" (+ the wrap): ≈ 15 % of eligible Standards (AD band 15–25 %)
         public const float FaceWrapWeight = 0.15f;
         public const float MinStrawHatShare = 0.15f, MaxStrawHatShare = 0.25f;
-        /// <summary>WP-055B · AP-011B: the vivid cw1 share of a round's colourway picks must stay at or above this (identity read).</summary>
+        /// <summary>WP-055B · AP-011B: the vivid cw1 share of a round's colourway picks must stay at or above this (identity read) — early rounds.</summary>
         public const float MinVividShare = 0.30f;
+        /// <summary>
+        /// WP-055C (M3 K4): from round 8 the Ö-5 armour bands (per slot 0.40/0.36/0.30 → 0.55/0.50/0.45, user decision) leave
+        /// only ~27 % → ~12 % of the Standards unarmoured, so the shipped table can reach at most ≈ 0.19 (R8) → ≈ 0.09 (R14)
+        /// vivid cw1 whatever the selector does (S-10 spawn-mix 0.233 at R8, shipped config 0.187). The identity floor is an
+        /// EARLY-round rule; from R8 the share is reported (simulator note), not enforced — the lever would be the armour bands.
+        /// </summary>
+        public const int LateVividRound = 8;
+        public static float MinVividShareFor(int round) => round >= LateVividRound ? 0f : MinVividShare;
 
         public static ZombieLook Select(ZombieModuleLibrary library, uint seed, bool allowMinoCape = true)
         {
