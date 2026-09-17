@@ -244,20 +244,20 @@
         "A": [
           1498,
           598,
-          449,
-          449
+          196,
+          78
         ],
         "B": [
           1499,
           598,
-          442,
-          442
+          190,
+          78
         ],
         "C": [
           1499,
           598,
-          430,
-          430
+          196,
+          78
         ]
       },
       "material": "M_Tier_Atlas",
@@ -337,20 +337,20 @@
         "A": [
           1499,
           599,
-          579,
-          579
+          158,
+          78
         ],
         "B": [
           1499,
           599,
-          579,
-          579
+          158,
+          78
         ],
         "C": [
           1499,
           599,
-          579,
-          579
+          158,
+          78
         ]
       },
       "material": "M_Tier_Atlas",
@@ -511,8 +511,8 @@
         ],
         "tris_LOD": [
           1499,
-          1005,
-          1005
+          510,
+          147
         ],
         "socket": "ground",
         "frame": "lying on the ground (hand frame rolled 25 deg about Y), z min 0.005; long axis along Y",
@@ -529,8 +529,8 @@
         ],
         "tris_LOD": [
           2024,
-          999,
-          935
+          510,
+          147
         ],
         "socket": "socket_weapon_r",
         "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end continues along +Y, +Z = up; the socket's +Z 'barrel' axis is unused by the sweep weapon (omnidirectional) and is the throw direction for the loom (tip at +Y, cards hang -Z)",
@@ -1796,6 +1796,6 @@
       1000,
       300
     ],
-    "ok": false
+    "ok": true
   }
 }

@@ -15,7 +15,7 @@ MonoBehaviour:
   schema: dd-zombie-tier-v1
   package: AP-014
   version: AP014.manifest.v001
-  sourceSha256: aba2bd7b7f8147fc5d27f52f1c0175b6e22c24a7d4318b36f8f88bbbb64eaaa3
+  sourceSha256: 120d4d667e5f5eefcb3ca1bcc6ee70bdbf714df4e3f524942961a44ed96e18c3
   fits:
   - A
   - B
@@ -1682,7 +1682,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 445
+        triangles: 196
       - mesh: {fileID: -679917039161619363, guid: c871040aaa6ef447e8ba0655f880caeb, type: 3}
         boneNames:
         - Root
@@ -1742,7 +1742,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 445
+        triangles: 78
     - fit: B
       lods:
       - mesh: {fileID: -1141181138662514263, guid: c871040aaa6ef447e8ba0655f880caeb, type: 3}
@@ -1924,7 +1924,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 442
+        triangles: 190
       - mesh: {fileID: 2673508909960226550, guid: c871040aaa6ef447e8ba0655f880caeb, type: 3}
         boneNames:
         - Root
@@ -1984,7 +1984,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 442
+        triangles: 78
     - fit: C
       lods:
       - mesh: {fileID: 5812530748650501885, guid: c871040aaa6ef447e8ba0655f880caeb, type: 3}
@@ -2166,7 +2166,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 430
+        triangles: 196
       - mesh: {fileID: 4182508119491871642, guid: c871040aaa6ef447e8ba0655f880caeb, type: 3}
         boneNames:
         - Root
@@ -2226,7 +2226,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 430
+        triangles: 78
     trianglesLod0: 1499
     materialIndex: 0
   - id: ultra_yoke
@@ -2416,7 +2416,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 579
+        triangles: 158
       - mesh: {fileID: 8688291472688362125, guid: ba879aa4f73a24d73bca980c16f8e99a, type: 3}
         boneNames:
         - Root
@@ -2476,7 +2476,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 579
+        triangles: 78
     - fit: B
       lods:
       - mesh: {fileID: 3102398025905273479, guid: ba879aa4f73a24d73bca980c16f8e99a, type: 3}
@@ -2658,7 +2658,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 579
+        triangles: 158
       - mesh: {fileID: 7618840782175697985, guid: ba879aa4f73a24d73bca980c16f8e99a, type: 3}
         boneNames:
         - Root
@@ -2718,7 +2718,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 579
+        triangles: 78
     - fit: C
       lods:
       - mesh: {fileID: 7149520335969224109, guid: ba879aa4f73a24d73bca980c16f8e99a, type: 3}
@@ -2900,7 +2900,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 579
+        triangles: 158
       - mesh: {fileID: -996496752741130950, guid: ba879aa4f73a24d73bca980c16f8e99a, type: 3}
         boneNames:
         - Root
@@ -2960,7 +2960,7 @@ MonoBehaviour:
         - RightFoot
         - RightToes
         rootBone: Root
-        triangles: 579
+        triangles: 78
     trianglesLod0: 1499
     materialIndex: 0
   tints:

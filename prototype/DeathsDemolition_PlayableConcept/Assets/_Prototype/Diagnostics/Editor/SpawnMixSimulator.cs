@@ -95,6 +95,12 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public int excludedModuleHits;                            // a look carrying a module its armour excludes (must be 0)
             // the same seeds drawn WITHOUT armour constraints (the WP-016 crowd the README ceilings were written for)
             public int freeColourwayPicks, freeFadedPicks, freeMinoCape, freeBald;
+
+            // WP-055: what one Special use does to THIS round's crowd (tier-share weighted, SpecialReactionProfile):
+            public float swPushEfficacy;                              // Kagura: mean push/daze resistance factor (1 = every body shoved fully)
+            public float swWebHoldSeconds;                            // Ofuda: mean net seconds per netted body (SealSeconds × tier share of the seal)
+            public float swWebRootShare;                              // Ofuda: share of the crowd that is fully rooted (Standard)
+            public float swPullMovableShare;                          // Tide: share of the crowd the well actually drags (all but Ultra)
         }
 
         [Serializable]
@@ -237,6 +243,17 @@ namespace DD.Prototype.Diagnostics.EditorTools
 
                 for (int t = 0; t < TierCount; t++) r.tierShare[t] = r.spawns > 0 ? (float)r.tierCounts[t] / r.spawns : 0f;
 
+                // WP-055: Special usage effect on this crowd — the same tier profile the bodies resolve at runtime.
+                float sealSeconds = config.Weapons.Special.OfudaLoom.SealSeconds;
+                for (int t = 0; t < TierCount; t++)
+                {
+                    var tier = (EnemyTier)t;
+                    r.swPushEfficacy += r.tierShare[t] * SpecialReactionProfile.PushResistance(tier);
+                    r.swWebHoldSeconds += r.tierShare[t] * SpecialReactionProfile.WebSeconds(tier, sealSeconds);
+                    if (SpecialReactionProfile.WebFactor(tier) <= 0f) r.swWebRootShare += r.tierShare[t];
+                    if (SpecialReactionProfile.PullMoves(tier)) r.swPullMovableShare += r.tierShare[t];
+                }
+
                 // Rule checks per round (DEC-022 guarantee; README crowd ceilings; forbidden pair; armour exclusions).
                 if (r.repetitionsWithWrongGuaranteeCount > 0) violations.Add("round " + round + ": guaranteed debut flag count != expected in " + r.repetitionsWithWrongGuaranteeCount + "/" + reps + " repetitions");
                 for (int t = 1; t < TierCount; t++)
@@ -298,7 +315,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
                   .Append(" debutFlags=").Append(r.guaranteedFlags[1]).Append('/').Append(r.guaranteedFlags[2]).Append('/').Append(r.guaranteedFlags[3])
                   .Append(" armour H/B/L=").Append(Share(r.armour[0], r.spawns)).Append('/').Append(Share(r.armour[1], r.spawns)).Append('/').Append(Share(r.armour[2], r.spawns))
                   .Append(" eliteBody=").Append(F(r.tierCounts[2] > 0 ? (float)r.armour[1].equippedByTier[2] / r.tierCounts[2] : 0f))
-                  .Append(" ultra3=").Append(F(r.tierCounts[3] > 0 ? (float)r.threeRegionByTier[3] / r.tierCounts[3] : 0f)).Append(" ultraFitC=").Append(r.forcedFitByTier[3]).Append('/').Append(r.tierCounts[3]);
+                  .Append(" ultra3=").Append(F(r.tierCounts[3] > 0 ? (float)r.threeRegionByTier[3] / r.tierCounts[3] : 0f)).Append(" ultraFitC=").Append(r.forcedFitByTier[3]).Append('/').Append(r.tierCounts[3])
+                  .Append(" sw push=").Append(F(r.swPushEfficacy)).Append(" web=").Append(F(r.swWebHoldSeconds)).Append("s(root ").Append(F(r.swWebRootShare)).Append(") pull=").Append(F(r.swPullMovableShare));   // WP-055
                 if (r.lookSamples > 0)
                 {
                     sb.Append(" cw2=").Append(F(r.colourwayPicks > 0 ? (float)r.fadedPicks / r.colourwayPicks : 0f)).Append("(forced ").Append(r.fadedForcedByArmour).Append(')')

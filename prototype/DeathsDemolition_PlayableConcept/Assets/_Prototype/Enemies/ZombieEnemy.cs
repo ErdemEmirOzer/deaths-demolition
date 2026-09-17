@@ -580,6 +580,7 @@ namespace DD.Prototype.Enemies
             _plannedVelocity = Vector3.zero;
             _verticalVelocity = 0f;
             _currentSpeed = 0f;
+            ResetSpecialReactions();   // WP-055: no net / transaction memory crosses a life
             ResetWaiting();   // WP-050
             _noticed = false;   // WP-052
             _alive = false;   // Initialise flips this on
@@ -879,6 +880,7 @@ namespace DD.Prototype.Enemies
             }
 
             TickCombat(dt);
+            TickSpecialVisual();   // WP-055 / WP-032E: Netted / Dazed visual follows the reaction timers
             _animator.Tick(dt);
         }
 
@@ -926,6 +928,9 @@ namespace DD.Prototype.Enemies
             // WP-018: a body still rising from its spawn (AP-009 rise clip) neither walks nor swings.
             // WP-040: the armour-break heavy stagger holds the body until the clip's stagger_end (timer cap inside).
             bool staggering = _animator.IsStaggering || (_skinned != null && (_skinned.IsRising || _skinned.IsHeavyStaggering));
+            // WP-055: a rooted body (Ofuda net, WP-032E Netted = the clip is frozen) neither walks nor swings; a slowed one does both.
+            if (IsRooted && _attack.IsAttacking) _attack.Cancel();
+            staggering |= IsRooted;
 
             if (!staggering && target != null && _attack.CanStartAttack(distance))
             {
@@ -946,6 +951,7 @@ namespace DD.Prototype.Enemies
             {
                 float speed = _moveSpeed * _navSpeedFactor;   // WP-030: chokepoint queue slows the approach, never stops the threat
                 speed *= WallFrictionFactor();                // WP-054: sliding along world geometry keeps 80 % (hysteresis)
+                speed *= SpecialSlowFactor;                   // WP-055: Ofuda net (root / slow by tier) and the Ultra's Tide drag
 
                 // Stop pushing into the player once inside attack range; the swing closes
                 // the last gap. Without this the swarm compresses into a solid wall.
@@ -961,7 +967,7 @@ namespace DD.Prototype.Enemies
             float impulse = _attack.ForwardImpulse;
             if (impulse > 0f)
             {
-                ownVelocity += transform.forward * impulse;
+                ownVelocity += transform.forward * (impulse * SpecialSlowFactor);   // WP-055: a netted Runner's lunge is held by the same net
             }
 
             ownVelocity += QueueShuffle(dt);   // WP-054: a queued light body sways a little so the queue reads alive

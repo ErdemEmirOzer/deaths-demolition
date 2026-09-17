@@ -84,12 +84,16 @@ namespace DD.Art.Tests.EditMode
                 }
 
                 Assert.LessOrEqual(p.trianglesLod0, 1500, p.id + " LOD0 bütçesi 1500");
+                // WP-055 / AP-014B: the far LODs are inside the manifest budgets too (collar / yoke hulls 158 / 78; budgets.ok = true)
+                int[] budget = { 1500, 600, 200, 80 };
+                for (int f = 0; f < p.fits.Length; f++) for (int lod = 0; lod < ZombieTierLibrary.LodCount; lod++)
+                    Assert.LessOrEqual(p.fits[f].lods[lod].triangles, budget[lod], p.id + " " + p.fits[f].fit + " LOD" + lod + " bütçesi " + budget[lod] + " (AP-014B)");
             }
 
             Assert.AreEqual(48, refs, "4 × 3 × 4 skinned mesh referansı");
             var buffer = new ZombieTierLibrary.Part[ZombieTierLibrary.MaxPartsPerTier];
             Assert.AreEqual(0, lib.PartsOf(EnemyTier.Standard, buffer)); Assert.AreEqual(1, lib.PartsOf(EnemyTier.Special, buffer)); Assert.AreEqual(2, lib.PartsOf(EnemyTier.Elite, buffer)); Assert.AreEqual(1, lib.PartsOf(EnemyTier.Ultra, buffer));
-            Debug.Log("[DD-TEST] wp036.library\n" + report + "(bilinen: Tripo parçalarının LOD2/3 üçgenleri manifest bütçesi 200/80'in üstünde olabilir — AP-014 README; LOD0 ≤ 1500 kapı)");
+            Debug.Log("[DD-TEST] wp036.library\n" + report + "(AP-014B: dört LOD da bütçede — 1500/600/200/80)");
         }
 
         [Test]

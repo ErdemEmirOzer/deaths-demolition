@@ -25,6 +25,12 @@ namespace DD.Prototype.Enemies
         SpawnRise = 7,
         /// <summary>spawn_land · the body is up and walking (rise_end, or immediately on a spawn without a rise).</summary>
         SpawnLand = 8,
+        /// <summary>sw_push · WP-055 Kagura Bell wave shoved the body (tier-resisted push + daze).</summary>
+        SpecialPush = 9,
+        /// <summary>sw_web · WP-055 Ofuda Loom seal netted the body (rooted / slowed by tier for Seconds).</summary>
+        SpecialWeb = 10,
+        /// <summary>sw_pull · WP-055 Tide Jewel well pulled the body one tick toward the core (the Ultra only slows).</summary>
+        SpecialPull = 11,
     }
 
     /// <summary>
@@ -36,9 +42,10 @@ namespace DD.Prototype.Enemies
     {
         public EnemyCombatEventInfo(EnemyCombatEventKind kind, Transform body, EnemyTier tier, int lifeId,
             Vector3 position, Vector3 direction, ArmorSlot region, bool animationDriven, float seconds,
-            ZombieAttackStyle style = ZombieAttackStyle.Swipe)
+            ZombieAttackStyle style = ZombieAttackStyle.Swipe, SpecialWeaponId special = SpecialWeaponId.KaguraBell)
         {
             Style = style;
+            Special = special;
             Kind = kind;
             Body = body;
             Tier = tier;
@@ -67,6 +74,8 @@ namespace DD.Prototype.Enemies
         public float Seconds { get; }
         /// <summary>WP-052: the swing's style for the attack beats (Lunge / Swipe / Sweep / Overhead); Swipe otherwise.</summary>
         public ZombieAttackStyle Style { get; }
+        /// <summary>WP-055: the Special Weapon behind the sw_* beats (Kagura / Ofuda / Tide); KaguraBell otherwise (unused).</summary>
+        public SpecialWeaponId Special { get; }
 
         /// <summary>The coverage-matrix row name: kind, with the region / tier suffix where the matrix has one.</summary>
         public string RowName => EnemyCombatEvents.RowName(Kind, Region, Tier);
@@ -86,6 +95,7 @@ namespace DD.Prototype.Enemies
     ///   death_*          Die, once per life (same frame as DamageEvents.EnemyDied)
     ///   spawn_rise       Initialise, when the rise plays (DEC-081 policy)
     ///   spawn_land       rise_end (clip) / the rise timer, or Initialise itself without a rise
+    ///   sw_push/web/pull WP-055 ApplySpecialReaction (Kagura wave / Ofuda seal / Tide well; Special = the weapon)
     ///
     /// The existing WP-002 DamageEvents stay as they are (damage numbers, kill attribution);
     /// this surface is the BEAT layer on top: phase edges that DamageEvents never carried
@@ -94,13 +104,13 @@ namespace DD.Prototype.Enemies
     /// </summary>
     public static class EnemyCombatEvents
     {
-        public const int KindCount = 9;
+        public const int KindCount = 12;
 
         /// <summary>The matrix row roots, index = (int)EnemyCombatEventKind.</summary>
         public static readonly string[] RowRoots =
         {
             "telegraph_start", "attack_commit", "attack_hit", "attack_miss", "stagger",
-            "armor_break", "death", "spawn_rise", "spawn_land"
+            "armor_break", "death", "spawn_rise", "spawn_land", "sw_push", "sw_web", "sw_pull"
         };
 
         public static event Action<EnemyCombatEventInfo> Raised;
