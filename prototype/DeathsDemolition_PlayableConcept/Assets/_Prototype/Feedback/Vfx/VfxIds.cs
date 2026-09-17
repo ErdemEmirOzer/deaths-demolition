@@ -10,6 +10,8 @@ namespace DD.Prototype.Feedback.Vfx
         public const string ImpactEarth = "fb_impact_earth";
         public const string Muzzle = "fb_muzzle";
         public const string Explosion = "fb_explosion";
+        /// <summary>WP-047H (AP-010B v004): the asymmetric armour-break sheet — origin uv (0.3, 0.5), the break travels +u.</summary>
+        public const string ArmorBreak = "fb_armor_break";
         public const string Shockwave = "fb_shockwave";
         public const string ZombieDeath = "fb_zombiedeath";
         public const string BeaconRingAnim = "beacon_ring_anim";

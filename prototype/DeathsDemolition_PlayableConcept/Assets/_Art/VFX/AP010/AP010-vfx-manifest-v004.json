@@ -1,8 +1,8 @@
 {
- "schema": "AP010.vfx-manifest.v003",
+ "schema": "AP010.vfx-manifest.v004",
  "package": "AP-010 + AP-010B",
  "created": "2026-09-17",
- "supersedes": "AP010-vfx-manifest-v002.json (entries kept where no v003 slot exists)",
+ "supersedes": "AP010-vfx-manifest-v003.json (6 files replaced by v004, 1 row added; everything else unchanged)",
  "unity_target": {
   "AP010": "Assets/_Art/VFX/AP010/",
   "AP010B": "Assets/_Art/VFX/AP010B/"
@@ -16,12 +16,15 @@
   "hq_flipbooks": "exports/AP010-flipbooks-index-v003-hq.json",
   "hq_statics": "exports/AP010-statics-index-v003-hq.json",
   "blood": "exports/blood/AP010B-blood-index-v003b.json",
-  "wave2": "exports/wave2/AP010B-vfx-manifest-wave2-v003.json"
+  "wave2": "exports/wave2/AP010B-vfx-manifest-wave2-v003.json",
+  "flipbooks_v004": "exports/AP010-flipbooks-index-v004.json",
+  "explosion_retint": "exports/AP010-explosion-retint-v004.json",
+  "pool_lobes": "exports/AP010B-pool-lobes-v004.json"
  },
  "totals": {
-  "assets": 108,
-  "bytes": 48927141,
-  "mb": 48.93,
+  "assets": 109,
+  "bytes": 48938091,
+  "mb": 48.94,
   "limit_mb": 60,
   "within_limit": true,
   "v002_kept": 14
@@ -58,6 +61,44 @@
    "source_index": "flipbooks-v003-hq",
    "bytes": 240209,
    "sha256": "4412179824d678610945255004c79ac3d3a0190b2f7225eb4d232ac6f4ff9154"
+  },
+  {
+   "slot": "AP010_fb_armor_break_8x8",
+   "file": "AP010/flipbooks/AP010_fb_armor_break_8x8_v004.png",
+   "family": "armorbreak",
+   "kind": "flipbook",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30.0,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 0.6,
+   "colour_reserve": null,
+   "emissive_file": "AP010/flipbooks/AP010_fb_armor_break_8x8_emissive_v004.png",
+   "capsule_cover_s": 0.0,
+   "usage_note": "billboard at the plate hit point, sheet +u rolled to the break direction (60 % shot + 40 % bounce, the blood card rule); quad 0.60 m (= the WP-019 armour sheet x 1.3), origin uv (0.30, 0.50); 16 f @ 30 fps (0.533 s): flash f0-2, sparks f1-9, one dominant lacquer shard + two chips travel +u f1-12, f12-15 alpha tail <= 0.2; emissive = flash + sparks (Unity HDR x4)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.3,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "flipbooks-v004",
+   "bytes": 139886,
+   "sha256": "b620bad1a2aa2631ca6ca8f4bed5d73d4d9b0f8f6fd4f816a446798948f732fd",
+   "emissive_bytes": 101125,
+   "emissive_sha256": "b9044b3cc308c7f0943137e6cceac3e5f8ddd2164d02d00b7993113bd6dea9e5",
+   "v004": "new id fb_armor_break (AD WP-019 MUST: asymmetric break, +u); fb_impact_armor keeps the plain armour hit"
   },
   {
    "slot": "AP010_fb_impact_stone_8x8",
@@ -189,7 +230,7 @@
   },
   {
    "slot": "AP010_fb_explosion_8x8",
-   "file": "AP010/flipbooks/AP010_fb_explosion_8x8_v003.png",
+   "file": "AP010/flipbooks/AP010_fb_explosion_8x8_v004.png",
    "family": null,
    "kind": null,
    "grid": [
@@ -203,7 +244,7 @@
    "size_px": null,
    "world_size_m": 3.6,
    "colour_reserve": null,
-   "emissive_file": "AP010/flipbooks/AP010_fb_explosion_8x8_emissive_v003.png",
+   "emissive_file": "AP010/flipbooks/AP010_fb_explosion_8x8_emissive_v004.png",
    "capsule_cover_s": 0.067,
    "usage_note": "blast point at uv (0.5,0.125): quad 3.6 m, centre 1.35 m above the blast point; 48 f @ 30 fps (1.6 s): f0-35 = v002 timing (fireball ~1.7 m, warm core f0-11, plume rise to 1.4x by f35, alpha cap 0.45 from f13 baked), f36-47 smoke tail alpha <= 0.3 -> 0; emissive sheet 2048^2 (256^2 cells) holds f0-11 only",
    "blend": null,
@@ -214,10 +255,13 @@
     0.125
    ],
    "mra_g": null,
-   "supersedes": "flipbooks/AP010_fb_explosion_8x8_v002.png",
+   "supersedes": "AP010/flipbooks/AP010_fb_explosion_8x8_v003.png",
    "source_index": "flipbooks-v003-hq",
-   "bytes": 3596123,
-   "sha256": "251ccb1029bc00a99346c7a8da8b5e8aad4143e130ade245b33e7c4d3991179f"
+   "bytes": 3595531,
+   "sha256": "6f43ce8d1086cf834ca350d3e885c70fe18ecd257bd605a9f90b3debd41e3009",
+   "v004": "explosion retint (core h 30-32, outer 19-21, v <= 0.90)",
+   "emissive_sha256": "0a761717c90fd872bdf4e0d639769883c0a6d19eb9d5aeffd9f6c6987dbbe486",
+   "emissive_bytes": 179980
   },
   {
    "slot": "AP010_fb_shockwave_4x4",
@@ -2294,7 +2338,7 @@
   },
   {
    "slot": "AP010B_pool_mask_0.",
-   "file": "AP010B/blood/AP010B_sheet_blood_pool_growth_4x2_v003.png",
+   "file": "AP010B/blood/AP010B_sheet_blood_pool_growth_4x2_v004.png",
    "family": "blood",
    "kind": "A5 pool growth radial masks",
    "grid": [
@@ -2325,14 +2369,15 @@
     0.5
    ],
    "mra_g": null,
-   "supersedes": null,
+   "supersedes": "AP010B/blood/AP010B_sheet_blood_pool_growth_4x2_v003.png",
    "source_index": "blood-v003b",
-   "bytes": 184385,
-   "sha256": "4f8220de1c8024395b379ce75b60ab3e6aa5272331064324d4141544d083b550"
+   "bytes": 211385,
+   "sha256": "59a851c5ebc331e551d81e0d570674e75c11d63ee2ea05b7cbbccaa1e4e4b915",
+   "v004": "pool edge lobes (polar warp, 4 lobes, mean radius 0.88x)"
   },
   {
    "slot": "AP010B_pool_albedo",
-   "file": "AP010B/blood/AP010B_decal_blood_pool_albedo_2048_v003.png",
+   "file": "AP010B/blood/AP010B_decal_blood_pool_albedo_2048_v004.png",
    "family": "blood",
    "kind": "A5 pool albedo",
    "grid": null,
@@ -2360,14 +2405,15 @@
     0.5
    ],
    "mra_g": null,
-   "supersedes": null,
+   "supersedes": "AP010B/blood/AP010B_decal_blood_pool_albedo_2048_v003.png",
    "source_index": "blood-v003b",
-   "bytes": 225240,
-   "sha256": "7ad63be3766b7a569785cab987649b2f2d95dea9c3748d640883886b53778f1c"
+   "bytes": 219817,
+   "sha256": "bc728234fb8f46179e7c3e58f2cfee4350bd08bcd17b247ac5db2b47e9355e1a",
+   "v004": "pool edge lobes (polar warp, 4 lobes, mean radius 0.88x)"
   },
   {
    "slot": "AP010B_pool_albedo",
-   "file": "AP010B/blood/AP010B_decal_blood_pool_normal_2048_v003.png",
+   "file": "AP010B/blood/AP010B_decal_blood_pool_normal_2048_v004.png",
    "family": "blood",
    "kind": "A5 pool normal",
    "grid": null,
@@ -2395,14 +2441,15 @@
     0.5
    ],
    "mra_g": null,
-   "supersedes": null,
+   "supersedes": "AP010B/blood/AP010B_decal_blood_pool_normal_2048_v003.png",
    "source_index": "blood-v003b",
-   "bytes": 164752,
-   "sha256": "60013ebdd8d262b704a994a3238ad837dc82e785318096f1c1cc63350f44cf2a"
+   "bytes": 157569,
+   "sha256": "9f7b0d7c57b2ff891d271fe8f0513d5e84702af8b903c0bfa9402c20060b240e",
+   "v004": "pool edge lobes (polar warp, 4 lobes, mean radius 0.88x)"
   },
   {
    "slot": "AP010B_pool_albedo",
-   "file": "AP010B/blood/AP010B_decal_blood_pool_height_2048_v003.png",
+   "file": "AP010B/blood/AP010B_decal_blood_pool_height_2048_v004.png",
    "family": "blood",
    "kind": "A5 pool height",
    "grid": null,
@@ -2442,10 +2489,11 @@
     "metallic_R": "n/a (R = height; metallic = 0 constant)",
     "ao_B": 1.0
    },
-   "supersedes": null,
+   "supersedes": "AP010B/blood/AP010B_decal_blood_pool_height_2048_v003.png",
    "source_index": "blood-v003b",
-   "bytes": 925138,
-   "sha256": "6d0929ba504faf59cdda4296b98e317c302ddab0dbc43ffdc3ac13eefc18b28b"
+   "bytes": 501295,
+   "sha256": "4421b323006cbe99425dda1ec843fe7c0aeec7140f54ac778b4d2046d3b6fea2",
+   "v004": "pool edge lobes (polar warp, 4 lobes, mean radius 0.88x)"
   },
   {
    "slot": "AP010B_player_death_overlay",
@@ -4019,5 +4067,6 @@
    "bytes": 280992,
    "sha256": "de08a2fb73b8c7f8bf2b570ad55a9962adf0feb8ff2a09a64aac4a64660fbdf3"
   }
- ]
+ ],
+ "version": "v004"
 }

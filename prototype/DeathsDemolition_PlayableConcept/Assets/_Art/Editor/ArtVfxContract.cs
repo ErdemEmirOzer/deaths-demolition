@@ -24,7 +24,7 @@ namespace DD.Art.Pipeline.EditorTools
     public static class ArtVfxContract
     {
         public const string VfxRoot = ArtImportContract.ArtRoot + "/VFX/AP010";
-        public const string ManifestPath = VfxRoot + "/AP010-vfx-manifest-v003.json";
+        public const string ManifestPath = VfxRoot + "/AP010-vfx-manifest-v004.json";   // WP-047H: AP-010B v004 (explosion retint, pool lobes, fb_armor_break)
 
         /// <summary>Resident budget for the VFX texture class (MB, BC7/BC5 with mips).</summary>
         /// <summary>Main VFX line. WP-019: 20 MB for the v002 set; WP-019b: 32 MB for the v003 HQ pass (ADR-019-1 amendment, reported against the release ceiling).</summary>
@@ -152,6 +152,9 @@ namespace DD.Art.Pipeline.EditorTools
 
             if (name.StartsWith("AP010_fb_", StringComparison.Ordinal))
             {
+                // WP-047H: the v004 armour-break sheet ships at 512 (64² cells on a 0.60 m quad ≈ 107 px/m, above the 57 px/m
+                // gameplay read) so the VFX main line stays under its 32 MB budget (1024 → 33.4 MB).
+                if (name.Contains("armor_break")) return 512;
                 return name.Contains("explosion") && !name.Contains("emissive") ? 2048 : 1024;
             }
 

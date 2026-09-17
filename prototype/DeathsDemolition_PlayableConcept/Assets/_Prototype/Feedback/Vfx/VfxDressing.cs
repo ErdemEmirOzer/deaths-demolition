@@ -86,6 +86,8 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Audit seam (allocation bisect): PlayExplosion steps — 1 card, 2 shockwave, 4 smoke, 8 scorch decal. Default all.</summary>
         public static int AuditExplosionMask = -1;
         public int Played { get; private set; }
+        /// <summary>WP-047H: v004 asymmetric armour-break sheets played (0 when the row is absent → the ×1.3 armour sheet fallback).</summary>
+        public int ArmorBreakSheets { get; private set; }
         public int DecalsPlayed { get; private set; }
 
         public PrototypePool<FlipbookEffect> FlipbookPool => _flipbooks;
@@ -1098,7 +1100,11 @@ namespace DD.Prototype.Feedback.Vfx
                 return false;
             }
 
-            bool any = PlayFlipbook(VfxIds.ImpactArmor, point + normal * ImpactSurfaceLift, FlipbookEffect.Facing.Camera, Quaternion.identity, scale * 1.3f, Color.white, 1f, 0f);
+            // WP-047H (AP-010B v004, AD WP-019 MUST): the asymmetric break sheet — one dominant shard + two chips leave along +u,
+            // rolled to the blood card's splash direction (60 % shot + 40 % bounce) so the plate breaks away from the shot;
+            // the plain armour sheet ×1.3 stays as the fallback when the v004 row is absent.
+            bool any = PlayArmorBreakSheet(point + normal * ImpactSurfaceLift, BloodSystem.SplashDirection(normal, shotDirection), scale)
+                       || PlayFlipbook(VfxIds.ImpactArmor, point + normal * ImpactSurfaceLift, FlipbookEffect.Facing.Camera, Quaternion.identity, scale * 1.3f, Color.white, 1f, 0f);
             // Fragments come from the WP-017 plate hook (PlayArmorFragments, at the plate anchor);
             // the hit path draws the sheet at the impact and the splinter under the body.
             PlayDecal(VfxIds.DecalLacquerSplinter, groundPoint, Vector3.up, 0f, DecalSecondsSplinter, 0.7f, Color.white);
@@ -1109,6 +1115,26 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             return any;
+        }
+
+        private bool PlayArmorBreakSheet(Vector3 position, Vector3 direction, float scale)
+        {
+            if (!VfxLibrary.TryGetPlayable(VfxIds.ArmorBreak, out VfxCatalogEntry row))
+            {
+                return false;
+            }
+
+            FlipbookEffect fx = _flipbooks.Get(position, Quaternion.identity);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            fx.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres * Mathf.Max(0.25f, scale), Color.white, 1f, 0f);
+            fx.SetAlign(direction, true);
+            Played++;
+            ArmorBreakSheets++;
+            return true;
         }
 
         /// <summary>WP-017 plate hook (ArmorVisualBinder.AnyBroken): atlas fragments at the plate anchor.</summary>

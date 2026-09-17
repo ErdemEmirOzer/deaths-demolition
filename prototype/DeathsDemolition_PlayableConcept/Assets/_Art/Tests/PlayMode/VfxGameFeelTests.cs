@@ -126,7 +126,7 @@ namespace DD.Art.Tests.PlayMode
 
             Vector3 p = PlayerRegistry.Primary.transform.position + new Vector3(0f, 1f, 3f);
             var rootGo = new GameObject("wp019-target"); rootGo.transform.position = p - Vector3.up; _gecici.Add(rootGo);
-            int before = fx.Vfx.Played, decalsBefore = fx.Vfx.DecalsPlayed;
+            int before = fx.Vfx.Played, decalsBefore = fx.Vfx.DecalsPlayed, breakSheetsBefore = fx.Vfx.ArmorBreakSheets;
 
             // 1 impact ×5 surfaces (+3 decals on static surfaces), 2 muzzle, 3 explosion, 4 armour break, 5 death, body impacts.
             foreach (SurfaceKind s in new[] { SurfaceKind.Stone, SurfaceKind.Wood, SurfaceKind.Dirt, SurfaceKind.Metal, SurfaceKind.Flesh })
@@ -144,6 +144,18 @@ namespace DD.Art.Tests.PlayMode
             int played = fx.Vfx.Played - before;
             int decals = fx.Vfx.DecalsPlayed - decalsBefore;
             Assert.GreaterOrEqual(played, 11, "5 yüzey + namlu + patlama(2 sheet) + zırh kırılma + ölüm(2) + zırh vuruş ≥ 11 flipbook");
+            // WP-047H (AP-010B v004): the armour break plays the asymmetric sheet (origin u 0.3) rolled to the break direction, not the ×1.3 armour sheet.
+            Assert.AreEqual(1, fx.Vfx.ArmorBreakSheets - breakSheetsBefore, "zırh kırılması v004 asimetrik sheet'i (fb_armor_break) oynatmalı");
+            bool breakSheet = false;
+            foreach (FlipbookEffect f in fx.Vfx.FlipbookPool.Spawned)
+            {
+                if (f.Row == null || f.Row.Id != VfxIds.ArmorBreak) continue;
+                breakSheet = true;
+                Assert.That(f.Row.OriginUv.x, Is.EqualTo(0.3f).Within(0.01f), "kırılma sheet'i origin u 0.3 (+u yönünde kırılır)");
+                Assert.Greater(f.AlignDirection.sqrMagnitude, 0.5f, "kırılma sheet'i vuruş/sekme yönüne yatırılmalı");
+                Assert.IsNotNull(f.Row.Emissive, "kırılma sheet'i emissive katmanı (flaş + kıvılcım)");
+            }
+            Assert.IsTrue(breakSheet, "fb_armor_break havuzda oynuyor olmalı");
             Assert.GreaterOrEqual(decals, 6, "taş/ahşap/toprak/zırh dekalı + yanık + splinter + splat ≥ 6");
             Assert.Greater(fx.Vfx.FlipbookPool.CountSpawned, 0);
             Assert.LessOrEqual(fx.Vfx.FlipbookPool.CountTotal, VfxDressing.FlipbookCapacity, "havuz taşması");

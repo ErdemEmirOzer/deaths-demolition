@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a98c701b980ba4a72a7df512d6506bb8, type: 3}
   m_Name: DD_VfxCatalog
   m_EditorClassIdentifier: 
-  _manifestSchema: AP010.vfx-manifest.v003
-  _manifestVersion: v002
+  _manifestSchema: AP010.vfx-manifest.v004
+  _manifestVersion: v004
   _entries:
   - Id: fb_impact_armor
     Family: 0
@@ -41,11 +41,46 @@ MonoBehaviour:
       smooth alpha tail <= 0.2; emissive sheet = sparks f0-2 + hit flash (Unity HDR
       x4)'
     MeanOpaqueColour: {r: 0.49627137, g: 0.4614735, b: 0.40944022, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_impact_armor_8x8
     Supersedes: flipbooks/AP010_fb_impact_armor_8x8.png
     AliasTo: 
     WorldHeightMetres: 0.44
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_armor_break
+    Family: 3
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_armor_break_8x8_v004.png
+    Sha256: b620bad1a2aa2631ca6ca8f4bed5d73d4d9b0f8f6fd4f816a446798948f732fd
+    Texture: {fileID: 2800000, guid: c2832f3eadbce4f34ba77a34b15ca3bc, type: 3}
+    Emissive: {fileID: 2800000, guid: 92a2b3c63771f45058cd983a27f44713, type: 3}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: fa10700f67cb3457ab225afee88d1f97, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 0.6
+    OriginUv: {x: 0.3, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'billboard at the plate hit point, sheet +u rolled to the break direction
+      (60 % shot + 40 % bounce, the blood card rule); quad 0.60 m (= the WP-019 armour
+      sheet x 1.3), origin uv (0.30, 0.50); 16 f @ 30 fps (0.533 s): flash f0-2,
+      sparks f1-9, one dominant lacquer shard + two chips travel +u f1-12, f12-15
+      alpha tail <= 0.2; emissive = flash + sparks (Unity HDR x4)'
+    MeanOpaqueColour: {r: 0.37707868, g: 0.35089284, b: 0.31319374, a: 1}
+    ManifestFile: AP010-vfx-manifest-v004.json
+    Slot: AP010_fb_armor_break_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.6
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
@@ -73,7 +108,7 @@ MonoBehaviour:
     UsageNote: 'billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002
       timing, f12-15 smooth alpha tail <= 0.2; chips carry dust trails'
     MeanOpaqueColour: {r: 0.19967176, g: 0.21302205, b: 0.22672823, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_impact_stone_8x8
     Supersedes: flipbooks/AP010_fb_impact_stone_8x8.png
     AliasTo: 
@@ -105,7 +140,7 @@ MonoBehaviour:
     UsageNote: 'billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002
       timing, f12-15 smooth alpha tail <= 0.2; splinters with streak blur'
     MeanOpaqueColour: {r: 0.18844558, g: 0.12958054, b: 0.08946952, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_impact_wood_8x8
     Supersedes: flipbooks/AP010_fb_impact_wood_8x8.png
     AliasTo: 
@@ -137,7 +172,7 @@ MonoBehaviour:
     UsageNote: 'billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002
       timing, f12-15 smooth alpha tail <= 0.2; clods carry dust trails'
     MeanOpaqueColour: {r: 0.05970389, g: 0.046365324, b: 0.03353903, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_impact_earth_8x8
     Supersedes: flipbooks/AP010_fb_impact_earth_8x8.png
     AliasTo: 
@@ -171,7 +206,7 @@ MonoBehaviour:
       decay f5-7), f8-23 grey wisps alpha <= 0.25 -> 0; emissive non-zero only f0-5
       (Unity HDR ~4)'
     MeanOpaqueColour: {r: 0.70103437, g: 0.63242054, b: 0.53153634, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_muzzle_4x4
     Supersedes: flipbooks/AP010_fb_muzzle_4x4_v002.png
     AliasTo: 
@@ -182,8 +217,8 @@ MonoBehaviour:
   - Id: fb_explosion
     Family: 2
     Kind: 0
-    SourceFile: AP010/flipbooks/AP010_fb_explosion_8x8_v003.png
-    Sha256: 251ccb1029bc00a99346c7a8da8b5e8aad4143e130ade245b33e7c4d3991179f
+    SourceFile: AP010/flipbooks/AP010_fb_explosion_8x8_v004.png
+    Sha256: 6f43ce8d1086cf834ca350d3e885c70fe18ecd257bd605a9f90b3debd41e3009
     Texture: {fileID: 2800000, guid: f6b66aa19c46244b19f1d71745b415d0, type: 3}
     Emissive: {fileID: 2800000, guid: 7112daec5a5a241ebb3b76324b3931d2, type: 3}
     Normal: {fileID: 0}
@@ -205,10 +240,10 @@ MonoBehaviour:
       core f0-11, plume rise to 1.4x by f35, alpha cap 0.45 from f13 baked), f36-47
       smoke tail alpha <= 0.3 -> 0; emissive sheet 2048^2 (256^2 cells) holds f0-11
       only'
-    MeanOpaqueColour: {r: 0.16711654, g: 0.11375939, b: 0.09250599, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    MeanOpaqueColour: {r: 0.166268, g: 0.115517475, b: 0.09220827, a: 1}
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_explosion_8x8
-    Supersedes: flipbooks/AP010_fb_explosion_8x8_v002.png
+    Supersedes: AP010/flipbooks/AP010_fb_explosion_8x8_v003.png
     AliasTo: 
     WorldHeightMetres: 3.6
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
@@ -240,7 +275,7 @@ MonoBehaviour:
       cards/AP010_card_shockwave_1024_v003.png is the mid-expansion ring at 3.5 m
       (see shockwave_sizes)'
     MeanOpaqueColour: {r: 0.65930915, g: 0.6594116, b: 0.659377, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_shockwave_4x4
     Supersedes: flipbooks/AP010_fb_shockwave_4x4.png
     AliasTo: 
@@ -273,7 +308,7 @@ MonoBehaviour:
       greyscale v ~0.30; alpha cap 0.45 after f13 (readability); v003 = 1024^2, 8
       octaves + fine layer'
     MeanOpaqueColour: {r: 0.085191265, g: 0.08522849, b: 0.085221045, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_card_smoke_512
     Supersedes: cards/AP010_card_smoke_512.png
     AliasTo: 
@@ -307,7 +342,7 @@ MonoBehaviour:
       flipbooks/AP010_fb_shockwave_4x4_v003.png is the full expansion on a 5.0 m
       quad (see shockwave_sizes)'
     MeanOpaqueColour: {r: 0.9108711, g: 0.91096693, b: 0.9109902, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_card_shockwave_512
     Supersedes: cards/AP010_card_shockwave_512.png
     AliasTo: 
@@ -340,7 +375,7 @@ MonoBehaviour:
       0.40, core v 0.12, ash ring s<=0.18, 12 s fade (v002 tone); v003 = 2048^2,
       8 octaves, radial streak detail; normal variant AP010_decal_scorch_normal_2048_v003.png'
     MeanOpaqueColour: {r: 0.020282341, g: 0.018702503, b: 0.017213779, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_scorch_1024
     Supersedes: decals/AP010_decal_scorch_1024_v002.png
     AliasTo: 
@@ -372,7 +407,7 @@ MonoBehaviour:
     UsageNote: tangent normal map for the scorch decal (OpenGL Y+ up, BC5 import),
       shallow relief (ash granules, streaks, recessed centre); alpha = decal coverage
     MeanOpaqueColour: {r: 0.2419882, g: 0.23745732, b: 0.9047128, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_scorch_normal_2048
     Supersedes: 
     AliasTo: 
@@ -405,7 +440,7 @@ MonoBehaviour:
       [3] dust puff; fragments 2-6 cm (Unity particle sprites), puff 0.40 m; same
       cell order as v002'
     MeanOpaqueColour: {r: 0.07015674, g: 0.071720995, b: 0.080408424, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_atlas_armorbreak_1024
     Supersedes: cards/AP010_atlas_armorbreak_1024.png
     AliasTo: 
@@ -437,7 +472,7 @@ MonoBehaviour:
     UsageNote: lacquer splinter star + flakes (v 0.12), alpha 0.7, 8 s fade; ground-projected
       at the hit; v003 = 1024^2
     MeanOpaqueColour: {r: 0.040439446, g: 0.030574145, b: 0.02622456, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_lacquer_splinter_512
     Supersedes: decals/AP010_decal_lacquer_splinter_512.png
     AliasTo: 
@@ -470,7 +505,7 @@ MonoBehaviour:
       (u>=0.5,v>=0.5) with edge bevel + secondary ridges, cord slate (u>=0.5,v<0.5);
       sRGB; same UV layout as v002 (mesh unchanged)'
     MeanOpaqueColour: {r: 0.28839654, g: 0.20059298, b: 0.0966623, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_goldpack_albedo_512
     Supersedes: gold/AP010_goldpack_albedo_512.png
     AliasTo: 
@@ -502,7 +537,7 @@ MonoBehaviour:
     UsageNote: 'emissive: coins region only, RGB = #FFC74D * mask, A = 1; Unity HDR
       intensity ~2 so bloom (threshold 1.25) lifts the coins'
     MeanOpaqueColour: {r: 0.10998192, g: 0.06362753, b: 0.008972169, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_goldpack_emissive_512
     Supersedes: gold/AP010_goldpack_emissive_512.png
     AliasTo: 
@@ -535,7 +570,7 @@ MonoBehaviour:
       + glow, gold band (#FFC74D core); glow 0.6 m pulsing scale 0.85-1.0, 6-8 sparkles
       0.06-0.12 m; additive'
     MeanOpaqueColour: {r: 0.79648125, g: 0.46954384, b: 0.07037774, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_card_gold_sparkle_512
     Supersedes: gold/AP010_card_gold_sparkle_512.png
     AliasTo: 
@@ -567,7 +602,7 @@ MonoBehaviour:
     UsageNote: 'pull trail: head at top (v=1), tail fades; stretched 1.0 x 0.15 m
       along pouch->player, 10 f, alpha <= 0.6; gold band (runtime tint optional)'
     MeanOpaqueColour: {r: 0.8733365, g: 0.5273237, b: 0.093443796, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_card_gold_trail_256x1024
     Supersedes: gold/AP010_card_gold_trail_256x1024.png
     AliasTo: 
@@ -601,7 +636,7 @@ MonoBehaviour:
       (1.00,0.82,0.35) a0.3 additive; v003 = 1024x4096, float -> blue-noise dithered
       8-bit (no banding)'
     MeanOpaqueColour: {r: 0.84314936, g: 0.8432984, b: 0.84328854, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_beacon_column_512x2048
     Supersedes: beacon/AP010_beacon_column_512x2048.png
     AliasTo: 
@@ -633,7 +668,7 @@ MonoBehaviour:
     UsageNote: 'ground ring 2.4 m: greyscale annulus (sigma 4 %) + dashed inner ring
       + faint fill; runtime tint, additive a0.3; v003 = 2048^2 dithered'
     MeanOpaqueColour: {r: 0.84559935, g: 0.8457023, b: 0.84570384, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_beacon_ring_1024
     Supersedes: beacon/AP010_beacon_ring_1024.png
     AliasTo: 
@@ -665,7 +700,7 @@ MonoBehaviour:
     UsageNote: 'animated ring 4x4 @ 512, 16 f @ 16 fps = 1 s loop: radius 0.9 ->
       1.2 m (card 2.6 m), thickness 8 %, alpha 1 -> 0; runtime tint'
     MeanOpaqueColour: {r: 0.6877003, g: 0.6877794, b: 0.6877729, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_beacon_ring_anim_4x4_1024
     Supersedes: beacon/AP010_beacon_ring_anim_4x4_1024.png
     AliasTo: 
@@ -698,7 +733,7 @@ MonoBehaviour:
       shader = tint Vermilion600 * A; hit flash in 4 f / out 12 f, low-health hold
       0.35; v003 = 2048^2, grain sigma 0.04 per texel (finer)'
     MeanOpaqueColour: {r: 0.5520115, g: 0.036889445, b: 0.02415763, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_vignette_damage_1024
     Supersedes: vignette/AP010_vignette_damage_1024.png
     AliasTo: 
@@ -730,7 +765,7 @@ MonoBehaviour:
     UsageNote: hit point at origin_uv; cone travels +u; runtime rotates/mirrors toward
       the hit direction
     MeanOpaqueColour: {r: 0.101482205, g: 0.007725983, b: 0.00770747, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_splash_01_8x8
     Supersedes: 
     AliasTo: 
@@ -761,7 +796,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: as splash_01
     MeanOpaqueColour: {r: 0.09816129, g: 0.007552188, b: 0.007529911, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_splash_02_8x8
     Supersedes: 
     AliasTo: 
@@ -792,7 +827,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: as splash_01
     MeanOpaqueColour: {r: 0.101121984, g: 0.007756917, b: 0.007735297, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_splash_03_8x8
     Supersedes: 
     AliasTo: 
@@ -823,7 +858,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: as splash_01
     MeanOpaqueColour: {r: 0.1049225, g: 0.008037804, b: 0.008013744, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_splash_04_8x8
     Supersedes: 
     AliasTo: 
@@ -854,7 +889,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: as splash_01; mist gone by f12
     MeanOpaqueColour: {r: 0.10005716, g: 0.007407137, b: 0.0073943296, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_splash_05_8x8
     Supersedes: 
     AliasTo: 
@@ -886,7 +921,7 @@ MonoBehaviour:
     UsageNote: 'gravity-led (1.6 g): keep the card upright (+v = world up), horizontal
       hits only'
     MeanOpaqueColour: {r: 0.0979155, g: 0.0075414497, b: 0.0075225704, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_splash_06_8x8
     Supersedes: 
     AliasTo: 
@@ -918,7 +953,7 @@ MonoBehaviour:
     UsageNote: ground point at origin_uv (quad centre 1.26 m above the ground); spawned
       at the dying capsule; capsule-critical
     MeanOpaqueColour: {r: 0.10782636, g: 0.008188565, b: 0.008162459, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_death_01_8x8
     Supersedes: AP010B_fb_blood_death_01_8x8_v003.png
     AliasTo: 
@@ -949,7 +984,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: as death_01
     MeanOpaqueColour: {r: 0.10106399, g: 0.00772767, b: 0.007707022, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_death_02_8x8
     Supersedes: 
     AliasTo: 
@@ -981,7 +1016,7 @@ MonoBehaviour:
     UsageNote: 'ground point at origin_uv (0.22, 0.08): low sheet thrown +u across
       3.0 m (mirror for -u); capsule-critical'
     MeanOpaqueColour: {r: 0.102962814, g: 0.0078167, b: 0.0077880463, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_death_03_8x8
     Supersedes: AP010B_fb_blood_death_03_8x8_v003.png
     AliasTo: 
@@ -1012,7 +1047,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: hit point at origin_uv; cones at +-30 deg travel +u
     MeanOpaqueColour: {r: 0.10139106, g: 0.007744322, b: 0.007724308, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_heavy_01_8x8
     Supersedes: 
     AliasTo: 
@@ -1043,7 +1078,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: as heavy_01
     MeanOpaqueColour: {r: 0.094056785, g: 0.007297943, b: 0.0072781607, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_fb_blood_heavy_02_8x8
     Supersedes: 
     AliasTo: 
@@ -1077,7 +1112,7 @@ MonoBehaviour:
       spatter 5/8/12 + mist blob (alpha <= 0.6); rows 0 and 3 = PIL 4x supersampled
       discs / Poisson dots (v003b F3), rows 1-2 EEVEE
     MeanOpaqueColour: {r: 0.08930744, g: 0.0064180386, b: 0.0064165005, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_sheet_blood_droplets_4x4
     Supersedes: AP010B_sheet_blood_droplets_4x4_v003.png
     AliasTo: 
@@ -1108,7 +1143,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.07225849, g: 0.005705956, b: 0.0061179786, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_splat
     Supersedes: 
     AliasTo: 
@@ -1139,7 +1174,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.21607223, g: 0.2161698, b: 0.99748355, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_splat
     Supersedes: 
     AliasTo: 
@@ -1170,7 +1205,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.8594533, g: 0.038478345, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_splat
     Supersedes: 
     AliasTo: 
@@ -1201,7 +1236,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.086076766, g: 0.0062866136, b: 0.006847272, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_drag
     Supersedes: 
     AliasTo: 
@@ -1232,7 +1267,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.2156082, g: 0.2163672, b: 0.9975759, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_drag
     Supersedes: 
     AliasTo: 
@@ -1263,7 +1298,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.7135476, g: 0.062561765, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_drag
     Supersedes: 
     AliasTo: 
@@ -1294,7 +1329,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.07269352, g: 0.0057647564, b: 0.005660463, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_pooledge
     Supersedes: 
     AliasTo: 
@@ -1325,7 +1360,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.21557902, g: 0.21547309, b: 0.9991172, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_pooledge
     Supersedes: 
     AliasTo: 
@@ -1356,7 +1391,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.8390897, g: 0.039694894, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_pooledge
     Supersedes: 
     AliasTo: 
@@ -1387,7 +1422,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.1005935, g: 0.0069993287, b: 0.0070109204, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_sprayfan
     Supersedes: 
     AliasTo: 
@@ -1418,7 +1453,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.21675318, g: 0.2193572, b: 0.99032503, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_sprayfan
     Supersedes: 
     AliasTo: 
@@ -1449,7 +1484,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.5113994, g: 0.046147745, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_sprayfan
     Supersedes: 
     AliasTo: 
@@ -1480,7 +1515,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.07882863, g: 0.0059612445, b: 0.0060982946, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_drips
     Supersedes: 
     AliasTo: 
@@ -1511,7 +1546,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.21635798, g: 0.21636386, b: 0.99750966, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_drips
     Supersedes: 
     AliasTo: 
@@ -1542,7 +1577,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.80194175, g: 0.036665093, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_drips
     Supersedes: 
     AliasTo: 
@@ -1573,7 +1608,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.11591993, g: 0.0074099787, b: 0.0075661317, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_footprint
     Supersedes: 
     AliasTo: 
@@ -1604,7 +1639,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.21674514, g: 0.21619879, b: 0.99518114, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_footprint
     Supersedes: 
     AliasTo: 
@@ -1635,7 +1670,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.40650177, g: 0.0685481, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_ground_footprint
     Supersedes: 
     AliasTo: 
@@ -1666,7 +1701,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.07492125, g: 0.006067976, b: 0.006149854, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_01
     Supersedes: 
     AliasTo: 
@@ -1697,7 +1732,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.21636105, g: 0.21591827, b: 0.9986942, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_01
     Supersedes: 
     AliasTo: 
@@ -1728,7 +1763,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.84663916, g: 0.0357156, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_01
     Supersedes: 
     AliasTo: 
@@ -1759,7 +1794,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.08819324, g: 0.006512242, b: 0.0068346336, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_02
     Supersedes: 
     AliasTo: 
@@ -1790,7 +1825,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.21702857, g: 0.21588519, b: 0.99740416, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_02
     Supersedes: 
     AliasTo: 
@@ -1821,7 +1856,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.66462415, g: 0.038050022, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_02
     Supersedes: 
     AliasTo: 
@@ -1852,7 +1887,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.07262656, g: 0.0056013917, b: 0.0054789092, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_03
     Supersedes: 
     AliasTo: 
@@ -1883,7 +1918,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.2175342, g: 0.21576962, b: 0.9956988, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_03
     Supersedes: 
     AliasTo: 
@@ -1914,7 +1949,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.8331274, g: 0.037918985, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_03
     Supersedes: 
     AliasTo: 
@@ -1945,7 +1980,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.083908126, g: 0.0065074246, b: 0.006302782, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_04
     Supersedes: 
     AliasTo: 
@@ -1976,7 +2011,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.21701711, g: 0.2160441, b: 0.9971015, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_04
     Supersedes: 
     AliasTo: 
@@ -2007,7 +2042,7 @@ MonoBehaviour:
     Additive: 0
     UsageNote: 
     MeanOpaqueColour: {r: 0.70188403, g: 0.03530331, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_decal_blood_wall_04
     Supersedes: 
     AliasTo: 
@@ -2018,8 +2053,8 @@ MonoBehaviour:
   - Id: sheet_blood_pool_growth
     Family: 8
     Kind: 0
-    SourceFile: AP010B/blood/AP010B_sheet_blood_pool_growth_4x2_v003.png
-    Sha256: 4f8220de1c8024395b379ce75b60ab3e6aa5272331064324d4141544d083b550
+    SourceFile: AP010B/blood/AP010B_sheet_blood_pool_growth_4x2_v004.png
+    Sha256: 59a851c5ebc331e551d81e0d570674e75c11d63ee2ea05b7cbbccaa1e4e4b915
     Texture: {fileID: 2800000, guid: 0b4496b8de6ac44d691a74f97d0e99b8, type: 3}
     Emissive: {fileID: 0}
     Normal: {fileID: 0}
@@ -2037,10 +2072,10 @@ MonoBehaviour:
     ColourReserve: 0
     Additive: 0
     UsageNote: 
-    MeanOpaqueColour: {r: 0.9967294, g: 0.9967294, b: 0.9967294, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    MeanOpaqueColour: {r: 0.9960711, g: 0.9960711, b: 0.9960711, a: 1}
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_pool_mask_0.
-    Supersedes: 
+    Supersedes: AP010B/blood/AP010B_sheet_blood_pool_growth_4x2_v003.png
     AliasTo: 
     WorldHeightMetres: 2.8
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
@@ -2049,8 +2084,8 @@ MonoBehaviour:
   - Id: decal_blood_pool_albedo
     Family: 8
     Kind: 1
-    SourceFile: AP010B/blood/AP010B_decal_blood_pool_albedo_2048_v003.png
-    Sha256: 7ad63be3766b7a569785cab987649b2f2d95dea9c3748d640883886b53778f1c
+    SourceFile: AP010B/blood/AP010B_decal_blood_pool_albedo_2048_v004.png
+    Sha256: bc728234fb8f46179e7c3e58f2cfee4350bd08bcd17b247ac5db2b47e9355e1a
     Texture: {fileID: 2800000, guid: 3309ef8622eb04fe68484900054c8d84, type: 3}
     Emissive: {fileID: 0}
     Normal: {fileID: 0}
@@ -2068,10 +2103,10 @@ MonoBehaviour:
     ColourReserve: 0
     Additive: 0
     UsageNote: 
-    MeanOpaqueColour: {r: 0.06966745, g: 0.0056631183, b: 0.0055125216, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    MeanOpaqueColour: {r: 0.0696233, g: 0.005663517, b: 0.0054956274, a: 1}
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_pool_albedo
-    Supersedes: 
+    Supersedes: AP010B/blood/AP010B_decal_blood_pool_albedo_2048_v003.png
     AliasTo: 
     WorldHeightMetres: 2.8
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
@@ -2080,8 +2115,8 @@ MonoBehaviour:
   - Id: decal_blood_pool_normal
     Family: 8
     Kind: 3
-    SourceFile: AP010B/blood/AP010B_decal_blood_pool_normal_2048_v003.png
-    Sha256: 60013ebdd8d262b704a994a3238ad837dc82e785318096f1c1cc63350f44cf2a
+    SourceFile: AP010B/blood/AP010B_decal_blood_pool_normal_2048_v004.png
+    Sha256: 9f7b0d7c57b2ff891d271fe8f0513d5e84702af8b903c0bfa9402c20060b240e
     Texture: {fileID: 2800000, guid: 556497604bf26416f9e3f8e00c8fefff, type: 3}
     Emissive: {fileID: 0}
     Normal: {fileID: 0}
@@ -2099,10 +2134,10 @@ MonoBehaviour:
     ColourReserve: 0
     Additive: 0
     UsageNote: 
-    MeanOpaqueColour: {r: 0.215093, g: 0.21502529, b: 0.9981268, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    MeanOpaqueColour: {r: 0.2152448, g: 0.21524158, b: 0.99829364, a: 1}
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_pool_albedo
-    Supersedes: 
+    Supersedes: AP010B/blood/AP010B_decal_blood_pool_normal_2048_v003.png
     AliasTo: 
     WorldHeightMetres: 2.8
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
@@ -2111,8 +2146,8 @@ MonoBehaviour:
   - Id: decal_blood_pool_height
     Family: 8
     Kind: 3
-    SourceFile: AP010B/blood/AP010B_decal_blood_pool_height_2048_v003.png
-    Sha256: 6d0929ba504faf59cdda4296b98e317c302ddab0dbc43ffdc3ac13eefc18b28b
+    SourceFile: AP010B/blood/AP010B_decal_blood_pool_height_2048_v004.png
+    Sha256: 4421b323006cbe99425dda1ec843fe7c0aeec7140f54ac778b4d2046d3b6fea2
     Texture: {fileID: 2800000, guid: 96b420b583ff2434d812b4743209695b, type: 3}
     Emissive: {fileID: 0}
     Normal: {fileID: 0}
@@ -2130,10 +2165,10 @@ MonoBehaviour:
     ColourReserve: 0
     Additive: 0
     UsageNote: 
-    MeanOpaqueColour: {r: 0.8718626, g: 0.039343175, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    MeanOpaqueColour: {r: 0.86919856, g: 0.03933021, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_pool_albedo
-    Supersedes: 
+    Supersedes: AP010B/blood/AP010B_decal_blood_pool_height_2048_v003.png
     AliasTo: 
     WorldHeightMetres: 2.8
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
@@ -2164,7 +2199,7 @@ MonoBehaviour:
       < 0.40 untouched; corners 1.0, smoothstep from diagonal radius 0.55 -> 1.15,
       bottom-weighted x1.15; no baked grain
     MeanOpaqueColour: {r: 0.04934984, g: 0.04934984, b: 0.04934984, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_player_death_overlay
     Supersedes: 
     AliasTo: 
@@ -2198,7 +2233,7 @@ MonoBehaviour:
       / 0.42 / 0.48; crossfaded loop 1.2 s slowing to 2.4 s at the end (runtime-driven,
       fps here = 4 f / 1.2 s)
     MeanOpaqueColour: {r: 0.07925165, g: 0.07925165, b: 0.07925165, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_player_death_overlay_pulse
     Supersedes: 
     AliasTo: 
@@ -2231,7 +2266,7 @@ MonoBehaviour:
       muzzle end at v = 0; cherry heat h 20-28 s <= 0.45 v 0.62-0.75 (baked = full
       heat)'
     MeanOpaqueColour: {r: 0.4597526, g: 0.28432795, b: 0.18568699, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_barrel_heat
     Supersedes: 
     AliasTo: 
@@ -2265,7 +2300,7 @@ MonoBehaviour:
       3-octave noise, period = strip height, scrolled +v at 0.6/s; haze column 0.06
       x 0.30 m rising above the barrel
     MeanOpaqueColour: {r: 0.083670884, g: 0.26457638, b: 0, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_barrel_heat_distort
     Supersedes: 
     AliasTo: 
@@ -2298,7 +2333,7 @@ MonoBehaviour:
       m cell), 2 broad leaves, 3 fragments; greyscale luma 0.62-1.0 (veins 0.55,
       edge -25 %), colour = tint x L; WP-019 caps a burst at 24 sprites / 0.6 s'
     MeanOpaqueColour: {r: 0.61497337, g: 0.61497337, b: 0.61497337, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_leaf_burst
     Supersedes: 
     AliasTo: 
@@ -2333,7 +2368,7 @@ MonoBehaviour:
       f8-15, alpha -> 0 over the last 5 f; luma = render normalised (p99 = 1.0, floor
       0.6), foam rim 1.0; pair with water_splash_ring'
     MeanOpaqueColour: {r: 0.98169273, g: 0.98169273, b: 0.98169273, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_water_splash
     Supersedes: 
     AliasTo: 
@@ -2366,7 +2401,7 @@ MonoBehaviour:
       over 16 f; Gaussian annulus sigma 5 % of r + second ring at 0.6 r x0.5, radius
       noise +-6 %; footsteps in water reuse it at 0.4x
     MeanOpaqueColour: {r: 0.0052100103, g: 0.0052100103, b: 0.0052100103, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_water_splash_ring
     Supersedes: 
     AliasTo: 
@@ -2399,7 +2434,7 @@ MonoBehaviour:
       slivers, folded), rows 2-3 paper-screen bits; BLANK (no text / kanji / stamp);
       paper (0.94, 0.91, 0.83) h 42 s 0.12, torn-edge fibres -15 %, crease v 0.80
     MeanOpaqueColour: {r: 0.78931546, g: 0.7335926, b: 0.5963363, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_paper_tear
     Supersedes: 
     AliasTo: 
@@ -2433,7 +2468,7 @@ MonoBehaviour:
       0.10 v 1.0 -> body h 28 s 0.40 v 0.90 -> tail h 24 s 0.44 v 0.60; bloom catches
       only the core
     MeanOpaqueColour: {r: 0.7449357, g: 0.54673874, b: 0.41601178, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_spark
     Supersedes: 
     AliasTo: 
@@ -2468,7 +2503,7 @@ MonoBehaviour:
       m, f4-7 break into dots, alpha -> 0; core h 30 s <= 0.10 v 1.0 -> body h 28
       s 0.40 v 0.90 -> tail h 24 s 0.44 v 0.60; bloom catches only the core'
     MeanOpaqueColour: {r: 0.6401593, g: 0.3720982, b: 0.21013133, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_spark_streak
     Supersedes: 
     AliasTo: 
@@ -2503,7 +2538,7 @@ MonoBehaviour:
       to 0.25 m, core gone by f12); endpoint contact balls f0-9; Tide Jewel only,
       never the default gold tint
     MeanOpaqueColour: {r: 0.18654771, g: 0.18654771, b: 0.18654771, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_chain_arc_sheet
     Supersedes: 
     AliasTo: 
@@ -2537,7 +2572,7 @@ MonoBehaviour:
       hovering on the enemy chest; paper = Ofuda tint (0.96, 0.93, 0.84) baked with
       +-3 % fibre noise
     MeanOpaqueColour: {r: 0.89940876, g: 0.837022, b: 0.66513824, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_ofuda_seal
     Supersedes: 
     AliasTo: 
@@ -2571,7 +2606,7 @@ MonoBehaviour:
       noise amp 18 % of the height), thresholds t = n/15 mapped over -0.21..1.21
       so f0 = intact, f15 = gone; same UV layout as the card
     MeanOpaqueColour: {r: 0.1389286, g: 0.1389286, b: 0.1389286, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_ofuda_seal_burn
     Supersedes: 
     AliasTo: 
@@ -2606,7 +2641,7 @@ MonoBehaviour:
       -> 0; tint = weapon type; the pre-expiry warning is the beacon ring tinted
       urgent (WP-019), not a texture'
     MeanOpaqueColour: {r: 0.7031869, g: 0.7031869, b: 0.7031869, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_weapon_expire
     Supersedes: 
     AliasTo: 
@@ -2639,7 +2674,7 @@ MonoBehaviour:
       disc 0.15 m; f1-2 disc 0.45 m + ring 0.6 m + 8 motes; f3-7 ring expands to
       1.2 m (sigma 4 %), luma -> 0, motes rise 0.5 m/s; NO star spikes'
     MeanOpaqueColour: {r: 0.35260203, g: 0.35260203, b: 0.35260203, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_weapon_pickup_flash
     Supersedes: 
     AliasTo: 
@@ -2674,7 +2709,7 @@ MonoBehaviour:
       +0.2 m, alpha -> 0; tint = region ground colour (5 AP-005 regions, default
       east/earth); luma normalised 0.5-1.0'
     MeanOpaqueColour: {r: 0.9981145, g: 0.9981145, b: 0.9981145, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_spawn_dust
     Supersedes: 
     AliasTo: 
@@ -2708,7 +2743,7 @@ MonoBehaviour:
       pale ground ring 0.8 -> 2.2 m f2-10 (alpha 0.8 -> 0), decay with alpha -> 0
       over the last 8 f; burst = \xA7A0 blood band, ring (0.90, 0.88, 0.84) not weapon-tinted"
     MeanOpaqueColour: {r: 0.10241285, g: 0.013298289, b: 0.01270424, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_death_special
     Supersedes: 
     AliasTo: 
@@ -2743,7 +2778,7 @@ MonoBehaviour:
       0, second at 0.6x radius x0.5), decay with alpha -> 0 over the last 10 f; burst
       = \xA7A0 blood band, ring (0.90, 0.88, 0.84) not weapon-tinted"
     MeanOpaqueColour: {r: 0.10551529, g: 0.017098023, b: 0.01612034, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_death_ultra
     Supersedes: 
     AliasTo: 
@@ -2779,7 +2814,7 @@ MonoBehaviour:
       tail, alpha 0.8; f5-7 dissolve into 8 smudge flecks; desaturated dark = motion,
       never blood'
     MeanOpaqueColour: {r: 0.4428947, g: 0.4428947, b: 0.4428947, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_claw_swipe
     Supersedes: 
     AliasTo: 
@@ -2814,7 +2849,7 @@ MonoBehaviour:
       0.4, f7-11 puff -> 0, flakes leave the frame; puff s 0 v 0.45, flakes lacquer
       h 20 s 0.25 v 0.14 with a key-light gloss line; no sparks, no gold, no red'
     MeanOpaqueColour: {r: 0.16361938, g: 0.16314743, b: 0.16294138, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_armor_crack_dust
     Supersedes: 
     AliasTo: 
@@ -2849,7 +2884,7 @@ MonoBehaviour:
       lifetime 30 s, fade 4 s, pool <= 12 live; contact shadow 2 px alpha 0.35 offset
       (+2,+2)
     MeanOpaqueColour: {r: 0.38248244, g: 0.32488, b: 0.24319743, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_breakable_residue
     Supersedes: 
     AliasTo: 
@@ -2882,7 +2917,7 @@ MonoBehaviour:
       row 2 bent / broken, row 3 chaff clusters; stalks (0.70, 0.63, 0.50) h 39 s
       <= 0.285 (gold exclusion)
     MeanOpaqueColour: {r: 0.4471145, g: 0.35411274, b: 0.21363589, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_straw_puff
     Supersedes: 
     AliasTo: 
@@ -2916,7 +2951,7 @@ MonoBehaviour:
       0.3 m/s, alpha -> 0; chaff cloud (0.60, 0.55, 0.45) s 0.25 (gold exclusion),
       stalks (0.70, 0.63, 0.50); pair with the straw_puff stalk sprites'
     MeanOpaqueColour: {r: 0.31874883, g: 0.26240748, b: 0.17153245, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_straw_puff_cloud
     Supersedes: 
     AliasTo: 
@@ -2951,7 +2986,7 @@ MonoBehaviour:
       v 0.92 -> edge h 32 s 0.25 v 0.75, s <= 0.25 everywhere (out of the gold band);
       no sparks, no smoke; mood light, never a pickup cue'
     MeanOpaqueColour: {r: 0.8240725, g: 0.73520476, b: 0.60862243, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_lantern_flame
     Supersedes: 
     AliasTo: 
@@ -2985,7 +3020,7 @@ MonoBehaviour:
       f5-7 -> 0; tints earth / stone / wood-tatami (s <= 0.30); water surfaces use
       water_splash_ring at 0.4x'
     MeanOpaqueColour: {r: 0.8344866, g: 0.8344866, b: 0.8344866, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_dust_step
     Supersedes: 
     AliasTo: 
@@ -3018,7 +3053,7 @@ MonoBehaviour:
       lifetime 6 s, fade 1 s; gunmetal (0.20, 0.21, 0.22) h 210 s 0.09 v 0.22 with
       the key-light edge highlight; pair with mag_drop_dust at the landing point'
     MeanOpaqueColour: {r: 0.0564741, g: 0.060036525, b: 0.0625829, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_mag_drop
     Supersedes: 
     AliasTo: 
@@ -3050,7 +3085,7 @@ MonoBehaviour:
     UsageNote: '0.12 m quad at the landing point: single puff f0-2 0.05 m alpha 0.45
       -> f3-7 0.12 m -> 0 (item 19 recipe with one blob); tints as dust_step'
     MeanOpaqueColour: {r: 0.8307669, g: 0.8307669, b: 0.8307669, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010B_mag_drop_dust
     Supersedes: 
     AliasTo: 
@@ -3082,7 +3117,7 @@ MonoBehaviour:
     UsageNote: 'flesh hit mark: tar/mud h20-30 s0.10-0.15 v0.15-0.25 (v1.1 band);
       ground/wall projected, 8 s fade; pair with impact_flesh flipbook v002'
     MeanOpaqueColour: {r: 0.020888703, g: 0.018382315, b: 0.016364828, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_impact_flesh_1024
     Supersedes: 
     AliasTo: 
@@ -3114,7 +3149,7 @@ MonoBehaviour:
     UsageNote: 'armour/lacquer chip: pale exposed scale (v 0.55) + dark lacquer rim
       (h 20 s 0.25) + cracks; 8 s fade'
     MeanOpaqueColour: {r: 0.08939778, g: 0.091810256, b: 0.099113174, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_impact_armor_1024
     Supersedes: 
     AliasTo: 
@@ -3146,7 +3181,7 @@ MonoBehaviour:
     UsageNote: stone chip + dust ring (h 210 s<=0.08); normal variant AP010_decal_impact_stone_normal_1024.png
       (OpenGL Y+); 8 s fade
     MeanOpaqueColour: {r: 0.17015018, g: 0.18191579, b: 0.19401625, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_impact_stone_1024
     Supersedes: 
     AliasTo: 
@@ -3178,7 +3213,7 @@ MonoBehaviour:
     UsageNote: tangent normal map for the stone decal (OpenGL Y+ up, BC5 import);
       alpha = decal coverage
     MeanOpaqueColour: {r: 0.2782296, g: 0.28345266, b: 0.6147199, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_impact_stone_normal_1024
     Supersedes: 
     AliasTo: 
@@ -3210,7 +3245,7 @@ MonoBehaviour:
     UsageNote: 'wood splinter hole: grain along image Y (rotate to surface grain),
       tan splinters h 27 s<=0.35; 8 s fade'
     MeanOpaqueColour: {r: 0.18006556, g: 0.117275976, b: 0.077175654, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_impact_wood_1024
     Supersedes: 
     AliasTo: 
@@ -3242,7 +3277,7 @@ MonoBehaviour:
     UsageNote: tangent normal map for the wood decal (OpenGL Y+ up, BC5 import);
       alpha = decal coverage
     MeanOpaqueColour: {r: 0.4423822, g: 0.24066281, b: 0.37296307, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_impact_wood_normal_1024
     Supersedes: 
     AliasTo: 
@@ -3274,7 +3309,7 @@ MonoBehaviour:
     UsageNote: earth crater with clods + dust halo (h 36 s<=0.28, gold band avoided
       by s<0.30); 8 s fade
     MeanOpaqueColour: {r: 0.06477161, g: 0.055844203, b: 0.04361806, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_impact_earth_1024
     Supersedes: 
     AliasTo: 
@@ -3306,7 +3341,7 @@ MonoBehaviour:
     UsageNote: 'ground splat variant 1 (radial): tar/mud h 20 s<=0.15 v 0.08-0.15;
       fades in f6-10 under the body, lives 8 s; gore MEDIUM'
     MeanOpaqueColour: {r: 0.012762188, g: 0.010979755, b: 0.010040416, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_zombie_splat_01_1024
     Supersedes: 
     AliasTo: 
@@ -3338,7 +3373,7 @@ MonoBehaviour:
     UsageNote: 'ground splat variant 2 (directional smear): same colour band; orient
       along the kill direction; gore MEDIUM'
     MeanOpaqueColour: {r: 0.013319961, g: 0.01143078, b: 0.010422937, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_decal_zombie_splat_02_1024
     Supersedes: 
     AliasTo: 
@@ -3372,7 +3407,7 @@ MonoBehaviour:
       to +0.21 m x; -Z fwd / Y up, FBX_SCALE_UNITS, embed off (textures by name);
       re-import verified 480 tris / 0.28 m / scale 1
     MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_goldpack_V01
     Supersedes: 
     AliasTo: 
@@ -3404,7 +3439,7 @@ MonoBehaviour:
     UsageNote: GLB review copy of the gold pack (materials + textures embedded);
       not for import
     MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_goldpack_V01
     Supersedes: 
     AliasTo: 
@@ -3436,7 +3471,7 @@ MonoBehaviour:
     UsageNote: 'HUD marker: plain diamond outline 60 % of tile, 8 % stroke, white
       on alpha, no text; HUD tint = beacon colour'
     MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_hud_marker_256
     Supersedes: 
     AliasTo: 
@@ -3468,7 +3503,7 @@ MonoBehaviour:
     UsageNote: v002 flesh impact kept as reference; HIGH-gore path uses the blood
       splash (alias)
     MeanOpaqueColour: {r: 0.044161245, g: 0.038947225, b: 0.03542458, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_impact_flesh_8x8
     Supersedes: 
     AliasTo: AP010B_fb_blood_splash_01_8x8
@@ -3500,7 +3535,7 @@ MonoBehaviour:
     UsageNote: gore-MEDIUM fallback; HIGH-gore deaths use AP010B_fb_blood_death_*
       + pool
     MeanOpaqueColour: {r: 0.024262346, g: 0.021207165, b: 0.019695465, a: 1}
-    ManifestFile: AP010-vfx-manifest-v003.json
+    ManifestFile: AP010-vfx-manifest-v004.json
     Slot: AP010_fb_zombiedeath_8x8
     Supersedes: 
     AliasTo: 

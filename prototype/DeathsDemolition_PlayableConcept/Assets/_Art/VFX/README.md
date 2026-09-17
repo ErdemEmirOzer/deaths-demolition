@@ -225,6 +225,16 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
   chain arc stretched ×2.4 and ×1.6 gain; claw card driven to (0.85, 0.82, 0.75) × 1.4 through the block tint; placeholder
   ring lines at alpha 0.25 under the sheet.
 
+## WP-047H — AP-010B v004 (the three AD WP-019 MUSTs, 0 credits)
+
+- Manifest `AP010/AP010-vfx-manifest-v004.json` (109 rows; 6 files replaced in place — same GUIDs — and one new row); catalog 114.
+- `fb_armor_break` (new id, `VfxIds.ArmorBreak`): one dominant lacquer shard + two chips + sparks along +u, origin uv (0.3, 0.5), quad 0.60 m,
+  emissive flash/sparks; ships at 512 (main line 31.4 / 32 MB). `PlayArmorBreak` rolls it to `BloodSystem.SplashDirection` (`SetAlign` right) and falls back to `fb_impact_armor` ×1.3
+  only when the row is absent; the plain armour hit keeps `fb_impact_armor`.
+- `decal_blood_pool_*` + growth masks: one polar warp → 4 irregular lobes (edge 750–1014 px), mean radius 0.88× v003 (runtime sizes unchanged).
+- `fb_explosion` (+ emissive) retint: core h 30–32, outer h 19–21, v ≤ 0.90; smoke and alpha untouched.
+- Production scripts / reports: `asset-production/AP-010/05-blender/scripts/*_v004.py`, `exports/*-v004.json`; AP-010 README §v004.
+
 ## Contract — ADR-047-1 (event binding, throttles, pools, measurement)
 
 1. One entry per beat: the director for hit / death / armour / explosion / Special reports, `VfxEventBinder` for the buses

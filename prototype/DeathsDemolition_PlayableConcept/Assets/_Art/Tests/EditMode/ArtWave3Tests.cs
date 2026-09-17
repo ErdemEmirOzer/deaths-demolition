@@ -107,6 +107,24 @@ namespace DD.Art.Tests.EditMode
         }
 
         [Test]
+        public void V004_AsimetrikZirhKirilmasi_GolLoblari_AtesTopuRengi()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<VfxCatalog>(ArtVfxImporter.CatalogPath);
+            Assert.IsNotNull(catalog);
+            Assert.AreEqual("v004", catalog.ManifestVersion, "AP-010B v004 manifesti (WP-047H)");
+            VfxCatalogEntry brk = catalog.Find(VfxIds.ArmorBreak);
+            Assert.IsNotNull(brk, "fb_armor_break yok"); Assert.IsNotNull(brk.Material); Assert.IsNotNull(brk.Emissive, "kırılma emissive katmanı");
+            Assert.AreEqual(VfxFamily.ArmorBreak, brk.Family); Assert.AreEqual(VfxKind.Flipbook, brk.Kind);
+            Assert.AreEqual(0.3f, brk.OriginUv.x, 0.01f, "kırılma +u yönünde: origin u 0.3");
+            Assert.AreEqual(0.6f, brk.WorldSizeMetres, 0.01f, "quad 0.60 m (= zırh sheet'i × 1.3)");
+            Assert.AreEqual(16, brk.FramesUsed); Assert.AreEqual(30f, brk.Fps, 0.01f);
+            Assert.IsNotNull(catalog.Find(VfxIds.ImpactArmor), "düz zırh vuruşu sheet'i kalır");
+            Assert.IsTrue(catalog.Find(VfxIds.Explosion).SourceFile.Contains("_v004"), "ateş topu retint (v004) sevk edilir");
+            Assert.IsTrue(catalog.Find(VfxIds.BloodPoolAlbedo).SourceFile.Contains("_v004"), "göl lobları (v004) sevk edilir");
+            Assert.IsTrue(catalog.Find(VfxIds.BloodPoolGrowth).SourceFile.Contains("_v004"), "göl büyüme maskeleri lob kenarını izler");
+        }
+
+        [Test]
         public void Wave3D_KatalogSatirlari_BarrelHeat_ChainArc()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<VfxCatalog>(ArtVfxImporter.CatalogPath);

@@ -470,7 +470,7 @@ namespace DD.Art.Tests.EditMode
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;
             foreach (string f in ArtVfxManifestPngs()) if (beklenen.Add(f)) vfx++;
-            Assert.AreEqual(113, vfx, "AP-010 v003 manifest 109 PNG (105 satır + 4 emissive; AP010 36 + AP010B 73) + AP010C 4 (WP-047E, AP-014C) = 113 olmalı.");
+            Assert.AreEqual(115, vfx, "AP-010 v004 manifest 111 PNG (v003 109 + fb_armor_break sheet + emissive, WP-047H) + AP010C 4 (WP-047E, AP-014C) = 115 olmalı.");
 
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();
