@@ -201,7 +201,12 @@ namespace DD.Prototype.Tests.EditMode
             RunRewardReport r1 = ProfileService.ApplyRun(ozet);
             Assert.AreEqual(2, r1.LevelAfter);
             Assert.IsTrue(r1.LeveledUp);
-            Assert.AreEqual(3, r1.NewUnlocks.Count, "AutoSmg + Explosion (merdiven) + Title: Blooded (WP-023 kataloğu, first_blood'a bağlı)");
+            // WP-049: merdiven açılışları veri-güdümlü (DEC-085 / Ö-3 sonrası B seviyesi değişebilir): L2'de açılan
+            // her silah/dal + Title: Blooded (WP-023 kataloğu) beklenir; sayı roster/config verisinden türetilir.
+            int beklenenMerdiven = 0;
+            foreach (ClassicWeaponId w in (ClassicWeaponId[])System.Enum.GetValues(typeof(ClassicWeaponId))) if (ProfileService.UnlockLevelFor(w) == 2) beklenenMerdiven++;
+            foreach (UpgradeBranch b in (UpgradeBranch[])System.Enum.GetValues(typeof(UpgradeBranch))) if (ProfileService.UnlockLevelFor(b) == 2) beklenenMerdiven++;
+            Assert.AreEqual(beklenenMerdiven + 1, r1.NewUnlocks.Count, "L2 merdiven açılışları + Title: Blooded (first_blood'a bağlı)");
             Assert.AreEqual(1, r1.NewAchievements.Count, "First Blood");
 
             int seviye = ProfileService.Current.ProfileLevel;
@@ -228,8 +233,10 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void UnlockOtomatik_ClaimApiYok()
         {
-            RunRewardReport r = ProfileService.ApplyRun(Ozet(2, 1, 0, 0, 100));
-            Assert.AreEqual(2, r.LevelAfter);
+            int hedef = ProfileService.UnlockLevelFor(ClassicWeaponId.AutoSmg);
+            int gerekliXp = 0; for (int l = 1; l < hedef; l++) gerekliXp += ProfileService.LevelRequirement(l);
+            RunRewardReport r = ProfileService.ApplyRun(Ozet(2, 1, 0, 0, gerekliXp));
+            Assert.AreEqual(hedef, r.LevelAfter, "AutoSmg'nin roster/config açılış seviyesine ulaşıldı");
             Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg), "unlock ApplyRun içinde otomatik uygulanır");
             Assert.IsTrue(ProfileService.Current.UnlockedWeapons.Contains("AutoSmg"));
 

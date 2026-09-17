@@ -54,16 +54,18 @@ namespace DD.Prototype.Tests.PlayMode
             yield return BootTanMainMenuye();
             Assert.AreEqual(TestProfileIsolation.TestProfilePath, ProfileStore.Path, "Profil yolu izole değil.");
 
-            // Kurulum: izole profili 2. seviyeye çıkar ki AutoSmg açılsın (silah hatırlama ölçülebilsin).
+            // Kurulum: izole profili AutoSmg'nin açılış seviyesine çıkar (DEC-085 Ö-3: veri-güdümlü).
             if (!ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg))
             {
+                int hedef = ProfileService.UnlockLevelFor(ClassicWeaponId.AutoSmg);
+                int gerekliXp = 0; for (int l = 1; l < hedef; l++) gerekliXp += ProfileService.LevelRequirement(l);
                 var ozet = new RunSummary
                 {
                     CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(),
                     ReachedRound = 1,
                     CompletedRounds = 1,
-                    CompletedRoundXp = 100,
-                    TotalXpEarned = 100,
+                    CompletedRoundXp = gerekliXp,
+                    TotalXpEarned = gerekliXp,
                     EndReason = RunEndReason.PlayerDeath,
                     BuildDescription = "session-selection-setup"
                 };

@@ -434,8 +434,10 @@ namespace DD.Prototype.Tests.EditMode
         public void Entitlement_ConfigEsigiYukselse_ReloadSonrasiDaAcikKalir()
         {
             Assert.IsFalse(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg));
-            RunRewardReport r = ProfileService.ApplyRun(Ozet(Kimlik(), 2, 1, 0, 0, 100));
-            Assert.AreEqual(2, r.LevelAfter);
+            int hedef = Math.Max(ProfileService.UnlockLevelFor(ClassicWeaponId.AutoSmg), ProfileService.UnlockLevelFor(UpgradeBranch.Explosion));
+            int gerekliXp = 0; for (int l = 1; l < hedef; l++) gerekliXp += ProfileService.LevelRequirement(l);
+            RunRewardReport r = ProfileService.ApplyRun(Ozet(Kimlik(), 2, 1, 0, 0, gerekliXp));
+            Assert.AreEqual(hedef, r.LevelAfter);
             Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg), "unlock otomatik; claim yok");
             Assert.IsTrue(ProfileService.IsBranchUnlocked(UpgradeBranch.Explosion));
 
@@ -588,8 +590,11 @@ namespace DD.Prototype.Tests.EditMode
             PrototypeUiFlow.StartRun();
             Assert.AreEqual(ClassicWeaponId.AssaultRifle, PrototypeUiFlow.SelectedWeapon, "L1'de kilitli seçim ilk açık silaha döner");
 
-            // Kazanılmış SMG (L2), eşik sonradan 40'a çıkmış: seçim korunur (liste otoritedir).
-            Assert.IsTrue(ProfileService.ApplyRun(Ozet(Kimlik(), 2, 1, 0, 0, 100)).Applied);
+            // Kazanılmış SMG (açılış seviyesi = liste/DEC-085 Ö-3), eşik sonradan 40'a çıkmış: seçim korunur (liste otoritedir).
+            int smgSeviye = ProfileService.UnlockLevelFor(ClassicWeaponId.AutoSmg);
+            int smgXp = 0; for (int l = 1; l < smgSeviye; l++) smgXp += ProfileService.LevelRequirement(l);
+            Assert.IsTrue(ProfileService.ApplyRun(Ozet(Kimlik(), 2, 1, 0, 0, smgXp)).Applied);
+            Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg), "SMG açılış seviyesine ulaşıldı");
             PrototypeConfig orijinal = PrototypeConfig.Active;
             PrototypeConfig klon = UnityEngine.Object.Instantiate(orijinal);
             try

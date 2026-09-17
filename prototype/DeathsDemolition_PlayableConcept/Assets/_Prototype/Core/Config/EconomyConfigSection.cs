@@ -20,8 +20,8 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Cost of tier 1. Request: start the range at 15-45 gold.")]
         public int BaseCost = 20;
 
-        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Multiplier applied per already-owned tier. Request: cost rises with tier.", true)]
-        public float CostGrowthPerTier = 1.55f;
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Multiplier applied per already-owned tier. Request: cost rises with tier. DEC-085 (user, 2026-09-17, WP-041/045 simulation): 2.0 per tier for every branch — one card per round (DEC-071) absorbed ~12% of income at 1.5–1.6.")]
+        public float CostGrowthPerTier = 2f;
 
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Highest tier obtainable in one run.", true)]
         public int MaxTier = 4;
@@ -116,61 +116,61 @@ namespace DD.Prototype.Core.Config
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.Piercing, DisplayName = "Piercing",
-                BaseCost = 30, CostGrowthPerTier = 1.55f, MaxTier = 4, EffectPerTier = 1f,
+                BaseCost = 30, CostGrowthPerTier = 2f, MaxTier = 4, EffectPerTier = 1f,
                 OfferWeight = 1f, UnlockProfileLevel = 1
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.Ricochet, DisplayName = "Ricochet",
-                BaseCost = 30, CostGrowthPerTier = 1.55f, MaxTier = 4, EffectPerTier = 1f,
+                BaseCost = 30, CostGrowthPerTier = 2f, MaxTier = 4, EffectPerTier = 1f,
                 OfferWeight = 1f, UnlockProfileLevel = 1
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.Explosion, DisplayName = "Explosion",
-                BaseCost = 45, CostGrowthPerTier = 1.6f, MaxTier = 3, EffectPerTier = 0.18f,
+                BaseCost = 45, CostGrowthPerTier = 2f, MaxTier = 3, EffectPerTier = 0.18f,
                 OfferWeight = 0.8f, UnlockProfileLevel = 2
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.Chain, DisplayName = "Chain",
-                BaseCost = 40, CostGrowthPerTier = 1.6f, MaxTier = 3, EffectPerTier = 1f,
+                BaseCost = 40, CostGrowthPerTier = 2f, MaxTier = 3, EffectPerTier = 1f,
                 OfferWeight = 0.8f, UnlockProfileLevel = 3
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.FireRate, DisplayName = "Fire Rate",
-                BaseCost = 18, CostGrowthPerTier = 1.5f, MaxTier = 5, EffectPerTier = 0.08f,
+                BaseCost = 18, CostGrowthPerTier = 2f, MaxTier = 5, EffectPerTier = 0.08f,
                 OfferWeight = 1.2f, UnlockProfileLevel = 1
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.ReloadSpeed, DisplayName = "Reload Speed",
-                BaseCost = 15, CostGrowthPerTier = 1.5f, MaxTier = 5, EffectPerTier = 0.10f,
+                BaseCost = 15, CostGrowthPerTier = 2f, MaxTier = 5, EffectPerTier = 0.10f,
                 OfferWeight = 1.2f, UnlockProfileLevel = 1
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.MovementSpeed, DisplayName = "Movement Speed",
-                BaseCost = 22, CostGrowthPerTier = 1.5f, MaxTier = 4, EffectPerTier = 0.06f,
+                BaseCost = 22, CostGrowthPerTier = 2f, MaxTier = 4, EffectPerTier = 0.06f,
                 OfferWeight = 1f, UnlockProfileLevel = 1
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.MaximumHealth, DisplayName = "Maximum Health",
-                BaseCost = 25, CostGrowthPerTier = 1.5f, MaxTier = 5, EffectPerTier = 15f,
+                BaseCost = 25, CostGrowthPerTier = 2f, MaxTier = 5, EffectPerTier = 15f,
                 OfferWeight = 1f, UnlockProfileLevel = 1
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.RegenerationDelay, DisplayName = "Regeneration Delay",
-                BaseCost = 18, CostGrowthPerTier = 1.5f, MaxTier = 4, EffectPerTier = 0.5f,
+                BaseCost = 18, CostGrowthPerTier = 2f, MaxTier = 4, EffectPerTier = 0.5f,
                 OfferWeight = 0.9f, UnlockProfileLevel = 1
             },
             new UpgradeBranchSettings
             {
                 Branch = UpgradeBranch.RegenerationRate, DisplayName = "Regeneration Rate",
-                BaseCost = 18, CostGrowthPerTier = 1.5f, MaxTier = 4, EffectPerTier = 3f,
+                BaseCost = 18, CostGrowthPerTier = 2f, MaxTier = 4, EffectPerTier = 3f,
                 OfferWeight = 0.9f, UnlockProfileLevel = 1
             }
         };

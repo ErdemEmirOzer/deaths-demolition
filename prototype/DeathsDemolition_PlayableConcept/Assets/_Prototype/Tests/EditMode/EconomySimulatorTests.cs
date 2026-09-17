@@ -49,8 +49,8 @@ namespace DD.Prototype.Tests.EditMode
             EconomySimulator.Report r = EconomySimulator.Run(Secenekler());
             Assert.AreEqual(3, r.weapons.Length, "A/B/C etkin, D devre dışı (DEC-083)");
             Assert.AreEqual("A", r.weapons[0].rosterKey); Assert.AreEqual(1, r.weapons[0].unlockLevel);
-            Assert.AreEqual(2, r.weapons[1].unlockLevel, "B seviye 2 (roster verisi)");
-            Assert.AreEqual(3, r.weapons[2].unlockLevel, "C seviye 3");
+            Assert.AreEqual(3, r.weapons[1].unlockLevel, "B seviye 3 (DEC-085 Ö-3, roster verisi)");
+            Assert.AreEqual(5, r.weapons[2].unlockLevel, "C seviye 5");
             CollectionAssert.AreEqual(new[] { 1, 3, 5, 8 }, r.introductionRound, "DEC-021/022 giriş roundları");
             PrototypeConfig config = PrototypeConfig.Active;
             for (int i = 0; i < 10; i++)

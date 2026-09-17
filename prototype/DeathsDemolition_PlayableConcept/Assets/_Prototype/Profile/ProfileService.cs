@@ -65,12 +65,12 @@ namespace DD.Prototype.Profile
         private const int FallbackLevelRequirementPerLevel = 75;
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
-            "Fallback unlock level for the Auto SMG. Request value: Profile Level 2.")]
-        private const int FallbackAutoSmgUnlockLevel = 2;
+            "Fallback unlock level for the Auto SMG. Request value: Profile Level 2; DEC-085 Ö-3 (user, 2026-09-17): 3.")]
+        private const int FallbackAutoSmgUnlockLevel = 3;
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
-            "Fallback unlock level for the Combat Shotgun. Request value: Profile Level 3.")]
-        private const int FallbackCombatShotgunUnlockLevel = 3;
+            "Fallback unlock level for the Combat Shotgun. Request value: Profile Level 3; DEC-085 Ö-3 (user, 2026-09-17): 5.")]
+        private const int FallbackCombatShotgunUnlockLevel = 5;
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
             "Fallback unlock level for the Explosion upgrade branch. Request value: Profile Level 2.")]

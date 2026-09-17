@@ -450,7 +450,7 @@ namespace DD.Prototype.Core.Config
                 RumbleMilliseconds = 45,
                 PelletRingRadiusShare = 0f,
                 PelletRingJitterShare = 0f,
-                UnlockProfileLevel = 2
+                UnlockProfileLevel = 3
             },
             new ClassicWeaponSettings
             {
@@ -475,7 +475,7 @@ namespace DD.Prototype.Core.Config
                 RumbleMilliseconds = 120,
                 PelletRingRadiusShare = 0.6f,
                 PelletRingJitterShare = 0.10f,
-                UnlockProfileLevel = 3
+                UnlockProfileLevel = 5
             }
         };
 

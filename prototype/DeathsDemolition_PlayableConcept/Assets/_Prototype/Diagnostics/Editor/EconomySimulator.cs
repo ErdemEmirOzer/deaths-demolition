@@ -6,6 +6,7 @@ using System.Text;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Economy;
+using DD.Prototype.Enemies;
 using DD.Prototype.Weapons;
 using UnityEngine;
 
@@ -46,7 +47,86 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public float engagedFraction = 0.30f;                // MODEL: share of round time the player is inside an enemy's attack window
             public int simultaneousAttackers = 3;                // MODEL: enemies that can reach the player at once
             public bool buyEveryRound = true;                    // MODEL: one purchase per round when affordable (DEC-071)
+            public int purchasesPerRound = 1;                    // WP-049 what-if (Ö-6a): DEC-071 relaxation; 1 = shipped rule
             public ClassicWeaponId[] weapons;                    // null → every enabled roster weapon
+            public Scenario scenario;                            // WP-049: what-if overrides applied to a CLONE of the config (shipped asset untouched)
+            public bool threatColumn = true;                     // WP-049: evaluate the Threat Director model (ThreatModel.Evaluate) per round
+        }
+
+        /// <summary>
+        /// WP-049 what-if scenario (Ö-2..Ö-5 of the WP-041 proposal). Every field is optional;
+        /// applied to a cloned PrototypeConfig for the run, never to the shipped asset. Names
+        /// map to the proposal: armour (Ö-2), unlock levels (Ö-3), weapon damage (Ö-4), DEC-021
+        /// override rows (Ö-5). <see cref="Preset"/> builds the approved proposal values.
+        /// </summary>
+        public sealed class Scenario
+        {
+            public string name = "custom";
+            public float armourGrowthScale = 1f;                 // × ChanceGrowthPerRound on every tier
+            public float armourMaxCap = -1f;                     // MaxChance clamp for Standard / Special (<0 = keep)
+            public Dictionary<ClassicWeaponId, int> unlockLevels = new Dictionary<ClassicWeaponId, int>();
+            public Dictionary<ClassicWeaponId, float> weaponDamage = new Dictionary<ClassicWeaponId, float>();
+            public Dictionary<ClassicWeaponId, float> weaponFireRate = new Dictionary<ClassicWeaponId, float>();
+            public List<RoundDifficultyOverride> overrideRows = new List<RoundDifficultyOverride>();
+            public float costGrowthOverride = -1f;               // Ö-1 what-if (<0 = keep the config value)
+            public int purchasesPerRound = 1;                    // Ö-6a what-if: cards per round (DEC-071 is 1)
+            public float roundPriceScalePerRound = 0f;           // Ö-6b what-if: card price × (1 + scale × (round − 1)); 0 = shipped
+
+            /// <summary>"o2", "o3", "o4", "o5", "o2345" — the approved WP-041 proposal values (DEC-085).</summary>
+            public static Scenario Preset(string key)
+            {
+                var sc = new Scenario { name = key ?? "custom" };
+                string k = (key ?? string.Empty).ToLowerInvariant();
+                if (k.Contains("2")) { sc.armourGrowthScale = 0.5f; sc.armourMaxCap = 0.55f; }
+                if (k.Contains("3")) { sc.unlockLevels[ClassicWeaponId.AutoSmg] = 3; sc.unlockLevels[ClassicWeaponId.CombatShotgun] = 5; }
+                if (k.Contains("4")) { sc.weaponDamage[ClassicWeaponId.AutoSmg] = 8f; sc.weaponDamage[ClassicWeaponId.CombatShotgun] = 8f; }
+                if (k.Contains("6a")) sc.purchasesPerRound = 2;
+                if (k.Contains("6b")) sc.roundPriceScalePerRound = 0.15f;
+                if (k.Contains("5"))
+                {
+                    foreach (int round in new[] { 8, 11, 14 })
+                    {
+                        var row = new RoundDifficultyOverride { Round = round, OverrideArmorChances = true, OverrideTierWeights = true };
+                        row.ArmorChances = new ArmorChanceSettings { HelmetChance = 0.35f, BodyChance = 0.35f, LegChance = 0.25f, ChanceGrowthPerRound = 0f, MaxChance = 0.6f };
+                        row.TierWeights.Add(new TierWeightOverride { Tier = EnemyTier.Ultra, Weight = 6f + (round - 8) });
+                        sc.overrideRows.Add(row);
+                    }
+                }
+
+                return sc;
+            }
+
+            /// <summary>Applies the overrides to <paramref name="clone"/> (a runtime instance, never the asset).</summary>
+            public void ApplyTo(PrototypeConfig clone, List<string> notes)
+            {
+                if (clone == null) return;
+                foreach (EnemyTierSettings t in clone.Enemies.Tiers)
+                {
+                    if (t == null || t.ArmorChances == null) continue;
+                    t.ArmorChances.ChanceGrowthPerRound *= Mathf.Max(0f, armourGrowthScale);
+                    if (armourMaxCap >= 0f && (t.Tier == EnemyTier.Standard || t.Tier == EnemyTier.Special)) t.ArmorChances.MaxChance = Mathf.Min(t.ArmorChances.MaxChance, armourMaxCap);
+                }
+
+                foreach (KeyValuePair<ClassicWeaponId, int> kv in unlockLevels) { ClassicWeaponSettings w = clone.Weapons.Find(kv.Key); if (w != null) w.UnlockProfileLevel = kv.Value; }
+                foreach (KeyValuePair<ClassicWeaponId, float> kv in weaponDamage) { ClassicWeaponSettings w = clone.Weapons.Find(kv.Key); if (w != null) w.Damage = kv.Value; }
+                foreach (KeyValuePair<ClassicWeaponId, float> kv in weaponFireRate) { ClassicWeaponSettings w = clone.Weapons.Find(kv.Key); if (w != null) w.FireRate = kv.Value; }
+                if (costGrowthOverride > 0f) foreach (UpgradeBranchSettings b in clone.Economy.Branches) b.CostGrowthPerTier = costGrowthOverride;
+                if (overrideRows.Count > 0)
+                {
+                    List<string> failures;
+                    if (!clone.ReplaceRoundDifficultyOverrides(overrideRows, out failures) && notes != null) notes.Add("scenario override rows rejected: " + string.Join("; ", failures));
+                }
+
+                if (notes != null) notes.Add("scenario '" + name + "': armourGrowth×" + armourGrowthScale.ToString("0.00", CultureInfo.InvariantCulture) + (armourMaxCap >= 0f ? " armourMax≤" + armourMaxCap.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty) + " unlock" + Describe(unlockLevels) + " damage" + Describe(weaponDamage) + " overrideRows=" + overrideRows.Count + (costGrowthOverride > 0f ? " costGrowth=" + costGrowthOverride.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty) + " purchases/round=" + purchasesPerRound + (roundPriceScalePerRound > 0f ? " priceScale/round=" + roundPriceScalePerRound.ToString("0.00", CultureInfo.InvariantCulture) : string.Empty));
+            }
+
+            private static string Describe<T>(Dictionary<ClassicWeaponId, T> d)
+            {
+                if (d.Count == 0) return "{}";
+                var sb = new StringBuilder("{");
+                foreach (KeyValuePair<ClassicWeaponId, T> kv in d) sb.Append(kv.Key).Append('=').Append(Convert.ToString(kv.Value, CultureInfo.InvariantCulture)).Append(' ');
+                return sb.ToString().TrimEnd() + "}";
+            }
         }
 
         [Serializable]
@@ -82,6 +162,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public int profileLevelIfFirstRun;                   // level reached by a fresh profile at the end of this round (single run)
             public float riskProxy;                              // expected damage taken this round / (max health + regen over the exposure) — ≥ 1 = likely death
             public float expectedSpecialPickups;                 // SpecialWeaponSpawnChance(round) (+ second spawn)
+            public float threatIntensity;                        // WP-049: ThreatModel.Evaluate steady state for this round's crowd (MODEL context: near = min(active, 2×attackers), sectors from near count, strongest tier present, round progress 0.5, health from risk)
+            public int threatLayer;                              // DEC-065 layer 0..3 from the same evaluation
             public TierTtk[] ttk = new TierTtk[TierCount];
         }
 
@@ -125,6 +207,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public WeaponTrack[] weapons = Array.Empty<WeaponTrack>();
             public Flag[] flags = Array.Empty<Flag>();
             public string[] notes = Array.Empty<string>();
+            public string scenario = "shipped";                  // WP-049
+            public float costGrowthPerTierPiercing;              // the config value the run used (Ö-1 evidence)
         }
 
         // ------------------------------------------------------------------ run
@@ -135,14 +219,38 @@ namespace DD.Prototype.Diagnostics.EditorTools
             PrototypeConfig config = o.config != null ? o.config : PrototypeConfig.Active;
             if (config == null) throw new InvalidOperationException("EconomySimulator: no PrototypeConfig.");
             WeaponUpgradeTuning tuning = WeaponUpgradeTuning.Active;
+            var extraNotes = new List<string>();
+            PrototypeConfig clone = null;
+            if (o.scenario != null)
+            {
+                clone = UnityEngine.Object.Instantiate(config);   // the shipped asset is never written
+                o.scenario.ApplyTo(clone, extraNotes);
+                config = clone;
+            }
+
+            try
+            {
+                return RunWith(o, config, tuning, extraNotes);
+            }
+            finally
+            {
+                if (clone != null) UnityEngine.Object.DestroyImmediate(clone);
+            }
+        }
+
+        private static Report RunWith(Options o, PrototypeConfig config, WeaponUpgradeTuning tuning, List<string> extraNotes)
+        {
 
             var report = new Report
             {
                 utc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
                 seed = o.seed, firstRound = Math.Max(1, o.firstRound), lastRound = Math.Max(o.firstRound, o.lastRound),
                 hitFraction = o.hitFraction, goldPickupFraction = o.goldPickupFraction, engagedFraction = o.engagedFraction, minSecondsPerEnemy = o.minSecondsPerEnemy,
-                simultaneousAttackers = o.simultaneousAttackers
+                simultaneousAttackers = o.simultaneousAttackers,
+                scenario = o.scenario != null ? o.scenario.name : "shipped"
             };
+            UpgradeBranchSettings piercing = config.Economy.Find(UpgradeBranch.Piercing);
+            report.costGrowthPerTierPiercing = piercing != null ? piercing.CostGrowthPerTier : 0f;
 
             for (int t = 0; t < TierCount; t++)
             {
@@ -185,11 +293,14 @@ namespace DD.Prototype.Diagnostics.EditorTools
 
             report.weapons = tracks.ToArray();
             report.flags = BuildFlags(report, config).ToArray();
-            report.notes = new[]
+            var notes = new List<string>(extraNotes);
+            notes.AddRange(new[]
             {
                 "MODEL fields (WP-045 calibrated: pickup 1.00, minSecondsPerEnemy 2.5 from QA-bot runs; hit / engaged kept at 0.70 / 0.30 — the bot's implied 0.15 / 0.60 reflect bot skill, see calibration-v1.md): hitFraction, region mix (head 25% ×2 / upper 45% ×1 / lower 30% ×0.8 = shot multiplier 1.19), greedy cheapest-core-card purchase, crowd multipliers (pierce 0.82^k, chain 0.5×0.75^k, explosion chance×scale×(radius/2.2), ricochet chance×0.6), engagedFraction × simultaneousAttackers for incoming damage, regen counted over the un-engaged time.",
-                "EXACT fields: pool, tier / armour counts (SpawnMixSimulator), EnemyHealth / EnemyAttackDamage / round multipliers, GoldRewardCalculator, CostForTier + DEC-070 clamp, LevelRequirement, RoundCompletionXp / KillXp, SpecialWeaponSpawnChance, weapon settings, WeaponUpgradeTuning multipliers, roster core branches."
-            };
+                "EXACT fields: pool, tier / armour counts (SpawnMixSimulator), EnemyHealth / EnemyAttackDamage / round multipliers, GoldRewardCalculator, CostForTier + DEC-070 clamp, LevelRequirement, RoundCompletionXp / KillXp, SpecialWeaponSpawnChance, weapon settings, WeaponUpgradeTuning multipliers, roster core branches.",
+                "THREAT column (WP-049): ThreatModel.Evaluate (WP-033, DEC-065) on a synthetic steady-state context per round — near enemies = min(TargetActiveEnemies, 2 × simultaneousAttackers) spread over sectors, windups = simultaneousAttackers, strongest tier present in the crowd, round progress 0.5, health = 1 − min(0.9, risk/2); intensity smoothed to steady state; layer with hysteresis."
+            });
+            report.notes = notes.ToArray();
             return report;
         }
 
@@ -293,6 +404,10 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 float budget = maxHealth + Mathf.Min(regenRate * regenWindow, maxHealth * 2f);
                 row.riskProxy = budget > 0f ? damageTaken / budget : 99f;
                 if (firstRisk == 0 && row.riskProxy >= 1f) firstRisk = round;
+                if (o.threatColumn)
+                {
+                    EvaluateThreat(config, o, mr, round, row);
+                }
 
                 // ---- gold: exact reward per spawn (tier + armour composition), pickup fraction
                 float gold = 0f;
@@ -308,9 +423,11 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 row.goldIncome = Mathf.RoundToInt(gold * o.goldPickupFraction);
                 wallet += row.goldIncome;
 
-                // ---- purchase: cheapest affordable, not maxed, offered card; core first (MODEL)
+                // ---- purchase: cheapest affordable, not maxed, offered card; core first (MODEL); DEC-071 = one per round
                 row.purchase = "-";
-                if (o.buyEveryRound)
+                int purchases = o.buyEveryRound ? Math.Max(1, o.scenario != null ? Math.Max(o.purchasesPerRound, o.scenario.purchasesPerRound) : o.purchasesPerRound) : 0;
+                float priceScale = 1f + (o.scenario != null ? Mathf.Max(0f, o.scenario.roundPriceScalePerRound) : 0f) * (round - 1);
+                for (int buy = 0; buy < purchases; buy++)
                 {
                     UpgradeBranch best = UpgradeBranch.Piercing; int bestCost = int.MaxValue; bool found = false;
                     foreach (UpgradeBranch b in offered)
@@ -319,22 +436,20 @@ namespace DD.Prototype.Diagnostics.EditorTools
                         if (bs == null) continue;
                         int owned = tiers[(int)b];
                         if (owned >= bs.MaxTier) continue;
-                        int cost = owned == 0 ? ClampOpening(bs.CostForTier(0), config.Economy) : bs.CostForTier(owned);
+                        int cost = Mathf.RoundToInt((owned == 0 ? ClampOpening(bs.CostForTier(0), config.Economy) : bs.CostForTier(owned)) * priceScale);
                         bool core = d.HasCoreBranch(b);
                         int rank = cost - (core ? 1000 : 0);          // core branches first, then cheapest
                         if (cost <= wallet && rank < bestCost) { bestCost = rank; best = b; found = true; }
                     }
 
-                    if (found)
-                    {
-                        UpgradeBranchSettings bs = config.Economy.Find(best);
-                        int owned = tiers[(int)best];
-                        int cost = owned == 0 ? ClampOpening(bs.CostForTier(0), config.Economy) : bs.CostForTier(owned);
-                        wallet -= cost; tiers[(int)best]++;
-                        row.goldSpent = cost;
-                        row.purchase = best + " t" + tiers[(int)best] + " " + cost + "g";
-                        if (firstBuy == 0) firstBuy = round;
-                    }
+                    if (!found) break;
+                    UpgradeBranchSettings chosen = config.Economy.Find(best);
+                    int ownedNow = tiers[(int)best];
+                    int paid = Mathf.RoundToInt((ownedNow == 0 ? ClampOpening(chosen.CostForTier(0), config.Economy) : chosen.CostForTier(ownedNow)) * priceScale);
+                    wallet -= paid; tiers[(int)best]++;
+                    row.goldSpent += paid;
+                    row.purchase = (row.purchase == "-" ? string.Empty : row.purchase + " + ") + best + " t" + tiers[(int)best] + " " + paid + "g";
+                    if (firstBuy == 0) firstBuy = round;
                 }
 
                 if (firstFullCore == 0 && d.CoreBranches != null && d.CoreBranches.Length > 0)
@@ -365,6 +480,51 @@ namespace DD.Prototype.Diagnostics.EditorTools
             track.firstRoundWithAnyPurchase = firstBuy;
             track.firstRoundWithFullCoreTier1 = firstFullCore;
             return track;
+        }
+
+        private static readonly ThreatEnemyInput[] s_threatEnemies = new ThreatEnemyInput[64];
+
+        /// <summary>WP-049: the Threat Director model on a synthetic steady-state crowd for the round (see the report note).</summary>
+        private static void EvaluateThreat(PrototypeConfig config, Options o, SpawnMixSimulator.RoundResult mr, int round, RoundRow row)
+        {
+            ThreatSettings settings = ThreatSettings.Active;
+            if (settings == null)
+            {
+                return;
+            }
+
+            int active = Mathf.Clamp(config.TargetActiveEnemies(round), 1, s_threatEnemies.Length);
+            int near = Mathf.Clamp(Mathf.Min(active, o.simultaneousAttackers * 2), 1, active);
+            EnemyTier strongest = EnemyTier.Standard;
+            for (int t = 3; t >= 1; t--) if (mr.tierCounts[t] > 0) { strongest = (EnemyTier)t; break; }
+            // deterministic ring: the near ones inside NearRadius spread over sectors, the rest outside
+            for (int i = 0; i < active; i++)
+            {
+                float angle = (i * 2.399963f) % (2f * Mathf.PI);     // golden angle → even sector spread
+                float radius = i < near ? Mathf.Max(0.5f, settings.NearRadius * 0.6f) : settings.NearRadius * 2.5f;
+                s_threatEnemies[i] = new ThreatEnemyInput
+                {
+                    Position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius),
+                    Tier = i == 0 ? strongest : EnemyTier.Standard,
+                    WindingUp = i < Mathf.Min(near, o.simultaneousAttackers)
+                };
+            }
+
+            var ctx = new ThreatContext
+            {
+                PlayerPosition = Vector3.zero, ViewForward = Vector3.forward,
+                Health01 = Mathf.Clamp01(1f - Mathf.Min(0.9f, row.riskProxy * 0.5f)),
+                RoundProgress01 = 0.5f, InFight = true
+            };
+            var state = new ThreatState();
+            ThreatSnapshot snap = default;
+            for (int step = 0; step < 60; step++)          // 60 × 0.5 s → smoothing reaches steady state
+            {
+                snap = ThreatModel.Evaluate(settings, in ctx, s_threatEnemies, active, ref state, 0.5f);
+            }
+
+            row.threatIntensity = snap.Intensity;
+            row.threatLayer = snap.Layer;
         }
 
         /// <summary>MODEL: crowd damage multiplier of the on-hit branches (per-target extras, falloff applied).</summary>
@@ -513,7 +673,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
         {
             var sb = new StringBuilder();
             var ic = CultureInfo.InvariantCulture;
-            sb.AppendLine("# Balance v1 — " + r.schema + " · seed " + r.seed + " · R" + r.firstRound + "–R" + r.lastRound + " · hit " + r.hitFraction.ToString("0.00", ic) + " · pickup " + r.goldPickupFraction.ToString("0.00", ic) + " · engaged " + r.engagedFraction.ToString("0.00", ic) + " × " + r.simultaneousAttackers + " · s/enemy " + r.minSecondsPerEnemy.ToString("0.0", ic));
+            sb.AppendLine("# Balance v1 — " + r.schema + " · seed " + r.seed + " · R" + r.firstRound + "–R" + r.lastRound + " · hit " + r.hitFraction.ToString("0.00", ic) + " · pickup " + r.goldPickupFraction.ToString("0.00", ic) + " · engaged " + r.engagedFraction.ToString("0.00", ic) + " × " + r.simultaneousAttackers + " · s/enemy " + r.minSecondsPerEnemy.ToString("0.0", ic) + " · scenario " + r.scenario + " · costGrowth " + r.costGrowthPerTierPiercing.ToString("0.00", ic));
             sb.AppendLine();
             sb.Append("Opening card prices (after DEC-070 clamp): ");
             var names = Enum.GetNames(typeof(UpgradeBranch));
@@ -524,8 +684,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
             {
                 sb.AppendLine("## " + w.rosterKey + " · " + w.weapon + " (unlock L" + w.unlockLevel + ", core " + w.coreBranches + ") — first buy R" + w.firstRoundWithAnyPurchase + ", core complete R" + w.firstRoundWithFullCoreTier1 + ", risk≥1 at R" + w.firstRiskRound);
                 sb.AppendLine();
-                sb.AppendLine("| R | pool | S/Sp/E/U | armoured% | DPS single/crowd | clear s | TTK S/Sp/E/U (exp.) | gold +/− wallet | buy | build | XP cum → L | risk | special |");
-                sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+                sb.AppendLine("| R | pool | S/Sp/E/U | armoured% | DPS single/crowd | clear s | TTK S/Sp/E/U (exp.) | gold +/− wallet | buy | build | XP cum → L | risk | special | threat/L |");
+                sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
                 foreach (RoundRow row in w.rounds)
                 {
                     sb.Append("| ").Append(row.round).Append(" | ").Append(row.pool).Append(" | ")
@@ -538,7 +698,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
                       .Append(row.purchase).Append(" | ").Append(row.build).Append(" | ")
                       .Append(row.xpCumulative).Append(" → L").Append(row.profileLevelIfFirstRun).Append(" | ")
                       .Append(row.riskProxy.ToString("0.00", ic)).Append(" | ")
-                      .Append(row.expectedSpecialPickups.ToString("0.00", ic)).AppendLine(" |");
+                      .Append(row.expectedSpecialPickups.ToString("0.00", ic)).Append(" | ")
+                      .Append(row.threatIntensity.ToString("0.00", ic)).Append('/').Append(row.threatLayer).AppendLine(" |");
                 }
 
                 sb.AppendLine();
@@ -556,16 +717,19 @@ namespace DD.Prototype.Diagnostics.EditorTools
         public static void RunFromCommandLine()
         {
             string[] args = Environment.GetCommandLineArgs();
-            string outDir = null; uint seed = 1u; int last = 15;
+            string outDir = null; uint seed = 1u; int last = 15; string scenario = null;
             for (int i = 0; i < args.Length - 1; i++)
             {
                 if (args[i] == "-ddOut") outDir = args[i + 1];
                 else if (args[i] == "-ddSeed") uint.TryParse(args[i + 1], out seed);
                 else if (args[i] == "-ddLastRound") int.TryParse(args[i + 1], out last);
+                else if (args[i] == "-ddScenario") scenario = args[i + 1];
             }
 
             if (string.IsNullOrEmpty(outDir)) throw new ArgumentException("-ddOut <dir> required");
-            Report r = RunAndWrite(new Options { seed = seed, lastRound = last }, Path.Combine(outDir, "balance-v1.json"), Path.Combine(outDir, "balance-v1.md"));
+            var options = new Options { seed = seed, lastRound = last, scenario = string.IsNullOrEmpty(scenario) || scenario == "shipped" ? null : Scenario.Preset(scenario) };
+            string suffix = options.scenario != null ? "-" + options.scenario.name : string.Empty;
+            Report r = RunAndWrite(options, Path.Combine(outDir, "balance-v1" + suffix + ".json"), Path.Combine(outDir, "balance-v1" + suffix + ".md"));
             Debug.Log("[EconomySimulator] wrote " + outDir + " weapons=" + r.weapons.Length + " flags=" + r.flags.Length);
         }
     }

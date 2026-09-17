@@ -35,3 +35,16 @@ Ekonomi "kazan, harca, güçlen" döngüsünü kırıyor: harcayamayan oyuncu i�
 - "Ö-1'i onaylıyorum" → S-04 `CostGrowthPerTier` 2,0 (config asset, PrototypeOnly) + test + simülatör yeniden koşusu (ayrı küçük commit).
 - "Ö-2/Ö-4/Ö-5'i onaylıyorum" → S-03/S-02 kendi paketlerinde uygular; S-04 simülatörü tekrar koşar.
 - "Ö-3'ü onaylıyorum" → S-02 `UnlockProfileLevel`; S-04 unlock kataloğu roster'ı referansladığı için kendiliğinden güncellenir.
+
+## 5. Ek — Ö-6 (WP-049 yeniden koşusu, 2026-09-17; kalibre model, Ö-1 + Ö-3 sevkte)
+
+Ö-1 sonrası harcama payı %12 → %19–22, ama tek kart/round (DEC-071) tavanı yüzünden R15'te cüzdan ~5 200 harcanmamış (gelir 6 677). Klon senaryoları (`-ddScenario`):
+
+| senaryo | harcama payı | cüzdan R15 | risk R15 | not |
+|---|---|---|---|---|
+| sevk | %19–22 | 5 186–5 389 | 8,83 | tek kart, çekirdek üçlü dolu, yan dallar boş |
+| **o6a** — round başına 2 kart | **%38–44** | 3 744–4 159 | **6,09** | MS/HP/RD/RR dalları da doluyor → altın güce dönüşüyor |
+| o6b — fiyat ×(1+0,15·(R−1)) | %43–55 | 3 013–3 812 | 8,83 | altın yakılıyor, güç aynı |
+| o23456a — Ö-2..Ö-5 + 2 kart | %36–46 | 3 500–4 091 | 6,09 | Ö-5 örnek satırı R8 zırhı %96 (Ö-2 tavanına uymalı) |
+
+**Ö-6a (öneri):** DEC-071 "round başına tek geliştirme kartı" → **iki kart** (ürün kararı; WP-008 kuralı + WP-022 dükkân UI ikinci seçim). **Ö-6b önerilmez.** Karar biçimi: "Ö-6a'yı onaylıyorum" → S-04 dükkân sayacı/`UpgradeOfferPolicy` + S-09 UI, ayrı küçük paket; simülatör `purchasesPerRound=2` sevk varsayılanı olur.

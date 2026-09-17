@@ -227,7 +227,9 @@ namespace DD.Prototype.Profile
                 {
                     ProfileUnlockEntry e = report.NewUnlocks[i];
                     bool branch = e.Detail != null && e.Detail.StartsWith("Upgrade branch", System.StringComparison.Ordinal);
-                    unlocks.Add(new RunResultsUnlock(e.Title, branch ? UnlockContentType.Branch : UnlockContentType.Weapon, e.Title, e.Detail));
+                    // WP-049: the id is the enum NAME (roster / catalog key), resolved from the ladder's display name;
+                    // the title stays the display name. An unresolvable title keeps the title as id (never invented).
+                    unlocks.Add(new RunResultsUnlock(LadderId(e.Title, branch), branch ? UnlockContentType.Branch : UnlockContentType.Weapon, e.Title, e.Detail));
                 }
 
                 for (int i = 0; i < report.OpenedContent.Count; i++)
@@ -241,6 +243,33 @@ namespace DD.Prototype.Profile
             }
 
             return data;
+        }
+
+        /// <summary>Resolves a ladder display name back to its enum name (weapon or branch) through the service's ladder.</summary>
+        private static string LadderId(string title, bool branch)
+        {
+            IUnlockLadder ladder = ProfileService.Ladder;
+            if (ladder == null || string.IsNullOrEmpty(title))
+            {
+                return title ?? string.Empty;
+            }
+
+            if (branch)
+            {
+                foreach (UpgradeBranch b in (UpgradeBranch[])System.Enum.GetValues(typeof(UpgradeBranch)))
+                {
+                    if (string.Equals(ladder.BranchDisplayName(b), title, System.StringComparison.Ordinal)) return b.ToString();
+                }
+            }
+            else
+            {
+                foreach (ClassicWeaponId w in (ClassicWeaponId[])System.Enum.GetValues(typeof(ClassicWeaponId)))
+                {
+                    if (string.Equals(ladder.WeaponDisplayName(w), title, System.StringComparison.Ordinal)) return w.ToString();
+                }
+            }
+
+            return title;
         }
     }
 

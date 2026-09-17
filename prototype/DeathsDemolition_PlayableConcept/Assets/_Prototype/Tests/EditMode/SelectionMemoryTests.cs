@@ -95,11 +95,13 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void RelaunchSimulasyonu_VarsayilanaDoner_ProfilKalir()
         {
-            // Profili L2'ye çıkar (AutoSmg açılır), sonra seçim yap.
+            // Profili AutoSmg'nin açılış seviyesine çıkar (DEC-085 Ö-3: veri-güdümlü), sonra seçim yap.
+            int hedef = ProfileService.UnlockLevelFor(ClassicWeaponId.AutoSmg);
+            int gerekliXp = 0; for (int l = 1; l < hedef; l++) gerekliXp += ProfileService.LevelRequirement(l);
             ProfileService.ApplyRun(new RunSummary
             {
                 CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(),
-                ReachedRound = 2, CompletedRounds = 1, CompletedRoundXp = 100, TotalXpEarned = 100,
+                ReachedRound = 2, CompletedRounds = 1, CompletedRoundXp = gerekliXp, TotalXpEarned = gerekliXp,
                 TotalKills = 3, StandardKills = 3, KillXp = 3, EndReason = RunEndReason.PlayerDeath
             });
             Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg));
@@ -125,7 +127,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(UiContext.None, UiNavigation.Base, "navigation temiz başlar");
 
             ProfileData yeniden = ProfileService.Current;
-            Assert.AreEqual(2, yeniden.ProfileLevel, "kalıcı profil diskten geri gelir");
+            Assert.AreEqual(ProfileService.UnlockLevelFor(ClassicWeaponId.AutoSmg), yeniden.ProfileLevel, "kalıcı profil diskten geri gelir (SMG açılış seviyesi, DEC-085 Ö-3)");
             Assert.AreEqual(3, yeniden.TotalKills);
             Assert.AreEqual(2, yeniden.HighestRound);
             Assert.AreEqual(1, yeniden.RunsPlayed);
