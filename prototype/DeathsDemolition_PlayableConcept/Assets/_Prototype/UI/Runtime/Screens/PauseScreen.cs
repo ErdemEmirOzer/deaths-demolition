@@ -326,6 +326,7 @@ namespace DD.Prototype.UI
             // Actions are docked to the foot of the card, not to the cursor, so the
             // panel keeps the same shape whatever the caption above wraps to.
             _resumeButton = UiFactory.Button("Resume", host, "RESUME", UiButtonVariant.Primary, Resume);
+            UiInput.Prompt(_resumeButton, UiPromptAction.Pause, true); // the same key that opened it closes it
             RectTransform resumeRect = (RectTransform)_resumeButton.transform;
             resumeRect.anchorMin = new Vector2(0f, 0f);
             resumeRect.anchorMax = new Vector2(0.5f, 0f);

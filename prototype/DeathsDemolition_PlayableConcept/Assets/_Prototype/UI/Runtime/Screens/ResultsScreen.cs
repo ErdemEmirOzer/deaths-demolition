@@ -97,9 +97,21 @@ namespace DD.Prototype.UI
 
             float top = headerHeight + (int)UiSpace.XXL;
 
-            BuildPerformanceColumn(Column("Performance", 0f, 0.32f, top, FooterHeight));
-            BuildExperienceColumn(Column("Experience", 0.34f, 0.66f, top, FooterHeight));
-            BuildRewardsColumn(Column("Rewards", 0.68f, 1f, top, FooterHeight));
+            RectTransform performance = Column("Performance", 0f, 0.32f, top, FooterHeight);
+            RectTransform experience = Column("Experience", 0.34f, 0.66f, top, FooterHeight);
+            RectTransform rewards = Column("Rewards", 0.68f, 1f, top, FooterHeight);
+            BuildPerformanceColumn(performance);
+            BuildExperienceColumn(experience);
+            BuildRewardsColumn(rewards);
+
+            // WP-022F: the three columns land left to right (60 ms apart) after the screen
+            // fade - the one motion the Results screen has; reduced motion → at rest.
+            gameObject.AddComponent<UiStaggerIn>().Configure(new[]
+            {
+                UiFactory.Group(performance.gameObject),
+                UiFactory.Group(experience.gameObject),
+                UiFactory.Group(rewards.gameObject)
+            });
 
             BuildFooter();
         }
@@ -420,6 +432,7 @@ namespace DD.Prototype.UI
             rect.sizeDelta = new Vector2(320f, UiTokens.TargetPreferred);
             rect.anchoredPosition = Vector2.zero;
 
+            UiInput.Prompt(continueButton, UiPromptAction.Submit, true);
             SetInitialFocus(continueButton);
             _continueButton = continueButton;
         }

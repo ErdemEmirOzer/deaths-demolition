@@ -372,6 +372,28 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             yield return null;
 
+            // WP-022F: the footer prompts follow the active device - START RUN shows "A" on
+            // a pad and "ENTER" on the keyboard, BACK "B" / "ESC"; one source for both.
+            {
+                UiPrompt[] prompts = Object.FindObjectsOfType<UiPrompt>(true);
+                Assert.GreaterOrEqual(prompts.Length, 2, "Selection footer'ında iki istem");
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
+                yield return null;
+                UiPrompt submit = null, cancel = null;
+                foreach (UiPrompt p in prompts)
+                {
+                    if (p.Action == UiPromptAction.Submit) submit = p;
+                    if (p.Action == UiPromptAction.Cancel) cancel = p;
+                }
+
+                Assert.IsNotNull(submit); Assert.IsNotNull(cancel);
+                Assert.AreEqual("A", submit.CurrentText); Assert.AreEqual("B", cancel.CurrentText);
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse);
+                yield return null;
+                Assert.AreEqual("ENTER", submit.CurrentText); Assert.AreEqual("ESC", cancel.CurrentText);
+                UiInputScheme.Release();
+            }
+
             // Selection: the selected skin card has focus; Right hops to the weapon column;
             // Down reaches the footer; Left returns to the skin column.
             yield return SeciliBekle("Skin.");

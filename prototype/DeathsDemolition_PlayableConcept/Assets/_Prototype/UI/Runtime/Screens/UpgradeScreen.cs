@@ -146,9 +146,9 @@ namespace DD.Prototype.UI
         private const float ContinueWidth = 320f;
 
         /// <summary>PROTOTYPE-ONLY: the countdown strip that survives the screen's close.</summary>
-        private const float CountdownWidth = 420f;
+        private const float CountdownWidth = 380f; // AD v005 MUST-3 (360 + the frame's notches)
 
-        private const float CountdownHeight = 72f;
+        private const float CountdownHeight = 56f;
 
         /// <summary>Lines reserved for Describe(). The box truncates; it never grows.</summary>
         private const int DescribeLines = 4;
@@ -398,6 +398,7 @@ namespace DD.Prototype.UI
 
             _rerollButton = UiFactory.Button(
                 "Reroll", reroll, "REROLL", UiButtonVariant.Secondary, OnRerollActivated);
+            UiInput.Prompt(_rerollButton, UiPromptAction.Reroll);
             rerollStack.Add((RectTransform)_rerollButton.transform, UiTokens.TargetPreferred);
         }
 
@@ -729,6 +730,7 @@ namespace DD.Prototype.UI
 
             _continueButton = UiFactory.Button(
                 "Continue", footer, "CONTINUE", UiButtonVariant.Primary, CloseScreen);
+            UiInput.Prompt(_continueButton, UiPromptAction.Submit, true);
             RectTransform rect = (RectTransform)_continueButton.transform;
             rect.anchorMin = new Vector2(1f, 0.5f);
             rect.anchorMax = new Vector2(1f, 0.5f);
@@ -756,23 +758,28 @@ namespace DD.Prototype.UI
 
             var canvasRect = (RectTransform)_countdownCanvas.transform;
 
-            RectTransform card = UiFactory.Card(
-                "Countdown", canvasRect, UiColor.BorderHairline, UiColor.HudInk);
+            // AD v005 MUST-3: the same HUD panel frame as the round block (9-slice, gold
+            // hairline, corner notches), so the strip reads as HUD, not as a stray card.
+            RectTransform card = UiFactory.FramedCard(
+                "Countdown", canvasRect, UiColor.BorderHairline, UiColor.HudInk, UiFrame.HudPanel, UiColor.TextSecondary);
             card.anchorMin = new Vector2(0.5f, 0f);
             card.anchorMax = new Vector2(0.5f, 0f);
             card.pivot = new Vector2(0.5f, 0f);
             card.sizeDelta = new Vector2(CountdownWidth, CountdownHeight);
             card.anchoredPosition = new Vector2(0f, (int)UiSpace.Section);
 
+            // L padding: the HudPanel frame's corner notches take ~16 px on each side, and
+            // the H2 numeral must not touch the frame (bot-run3 upgrade frame).
             RectTransform host = UiFactory.CardContent(card, UiSpace.L);
 
             TMP_Text label = UiFactory.Label(
-                "Label", host, "NEXT ROUND IN", UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+                "Label", host, "NEXT ROUND IN", UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
             labelRect.offsetMax = new Vector2(-100f, 0f);
 
+            // Cream, not gold: gold stays with the gold chip and the ammo / reload bar.
             _countdownValue = UiFactory.Numeric(
-                "Value", host, "3", UiType.NumericL, UiColor.StateGold, TextAnchor.MiddleRight);
+                "Value", host, "3", UiType.H2, UiColor.TextPrimary, TextAnchor.MiddleRight);
             UiFactory.Fill((RectTransform)_countdownValue.transform);
 
             _countdownCanvas.gameObject.SetActive(false);

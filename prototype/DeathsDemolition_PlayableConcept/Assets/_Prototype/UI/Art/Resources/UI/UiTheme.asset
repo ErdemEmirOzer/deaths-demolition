@@ -77,6 +77,12 @@ MonoBehaviour:
     Sprite: {fileID: 5844087827914377564, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
   - Name: Weapon.CombatShotgun
     Sprite: {fileID: 8056251770492120768, guid: e946c960d1b314ca3b0b7a006556156d, type: 3}
+  - Name: Weapon.weapon_carbine
+    Sprite: {fileID: -460513182214409413, guid: 92b579d60ffd4433bbfbe8c59f029e1d, type: 3}
+  - Name: Weapon.weapon_rifle
+    Sprite: {fileID: -3565161546827349900, guid: 92b579d60ffd4433bbfbe8c59f029e1d, type: 3}
+  - Name: Weapon.weapon_shotgun
+    Sprite: {fileID: 8103654521030751796, guid: 92b579d60ffd4433bbfbe8c59f029e1d, type: 3}
   Frames:
   - Name: Cursor.Arrow
     Sprite: {fileID: 1009899790209449875, guid: 11c996ca452324ec9adcfac76409f108, type: 3}

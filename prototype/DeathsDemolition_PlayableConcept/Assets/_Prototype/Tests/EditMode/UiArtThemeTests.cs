@@ -239,6 +239,17 @@ namespace DD.Prototype.Tests.EditMode
                 UiSettings.Telemetry = true;
                 Assert.IsTrue(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled);
 
+                // WP-022F (S-04 review): -ddTelemetry 0 owns the process - the toggle cannot
+                // turn it on, so Enabled never claims a subscription that was skipped.
+                DD.Prototype.Diagnostics.Telemetry.RunTelemetry.ParseArgs(new[] { "app", "-ddTelemetry", "0" });
+                Assert.IsTrue(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.CommandLineOff);
+                DD.Prototype.Diagnostics.Telemetry.RunTelemetry.SetEnabled(true);
+                Assert.IsFalse(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled, "CLI kapatması ayar toggle'ından üstün");
+                DD.Prototype.Diagnostics.Telemetry.RunTelemetry.ParseArgs(new[] { "app", "-ddTelemetry", "1" });
+                Assert.IsFalse(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.CommandLineOff);
+                DD.Prototype.Diagnostics.Telemetry.RunTelemetry.SetEnabled(true);
+                Assert.IsTrue(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled);
+
                 Vector2 reference = UiTokens.ReferenceResolution / UiSettings.UiScale;
                 Assert.AreEqual(1920f / 1.1f, reference.x, 0.01f, "ölçek 1.1 referans çerçeveyi 1/1.1 küçültmeli (UI büyür)");
             }
@@ -313,6 +324,43 @@ namespace DD.Prototype.Tests.EditMode
             finally
             {
                 UnityEngine.Object.DestroyImmediate(canvasGo);
+            }
+        }
+
+        /// <summary>
+        /// WP-022F: one vocabulary for prompts - every action has a glyph on both devices,
+        /// gamepad face buttons are round single letters, keys are named caps; the scheme
+        /// seam raises Changed once per flip and nothing on a repeat.
+        /// </summary>
+        [Test]
+        public void GirdiGlifleri_HerEylemIkiCihaz_SemaDegisimiTekOlay()
+        {
+            foreach (UiPromptAction action in Enum.GetValues(typeof(UiPromptAction)))
+            {
+                UiInputGlyphs.Glyph pad = UiInputGlyphs.For(action, DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
+                UiInputGlyphs.Glyph key = UiInputGlyphs.For(action, DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse);
+                Assert.IsFalse(string.IsNullOrEmpty(pad.Text) || string.IsNullOrEmpty(key.Text), action + ": iki cihazda da metin");
+                Assert.AreNotEqual("?", pad.Text, action + ": pad glifi tanımlı");
+                Assert.IsTrue(!pad.Round || pad.Text.Length == 1, action + ": yuvarlak pad glifi tek harf");
+                Assert.IsFalse(key.Round, action + ": tuş kapağı yuvarlak değil");
+                Assert.GreaterOrEqual(key.Width, 1f);
+            }
+
+            int raised = 0;
+            Action<DD.Prototype.Core.InputAbstraction.InputSchemeKind> handler = _ => raised++;
+            UiInputScheme.Changed += handler;
+            try
+            {
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse);
+                Assert.AreEqual(2, raised, "yalnız gerçek geçişler olay yükseltir");
+                Assert.AreEqual(DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse, UiInputScheme.Current);
+            }
+            finally
+            {
+                UiInputScheme.Changed -= handler;
+                UiInputScheme.Release();
             }
         }
 

@@ -328,7 +328,7 @@ namespace DD.Prototype.UI
         /// answers the question the element exists to answer.
         ///
         /// LOW HEALTH. A hit that leaves the player at or below UiTokens.LowHealthFraction
-        /// is promoted to full strength. This is the only low-health treatment on the
+        /// is promoted to UiTokens.LowHealthEdgeStrength. This is the only low-health treatment on the
         /// screen edge, and that is deliberate: the HUD already signals low health
         /// continuously - the health bar and its readout switch to their low tokens at the
         /// same threshold, read from the same constant - and adding a second, persistent
@@ -347,7 +347,10 @@ namespace DD.Prototype.UI
 
             if (info.NormalizedAfter <= UiTokens.LowHealthFraction)
             {
-                strength = 1f;
+                // AD v005 MUST-2: promoted, but capped - 0.45 α at the edge, not 0.92. No
+                // persistent pulse is added on purpose (see the summary above): the bar
+                // and readout carry the continuous low-health signal.
+                strength = Mathf.Max(strength, UiTokens.LowHealthEdgeStrength);
             }
 
             return strength;

@@ -182,6 +182,84 @@ namespace DD.Prototype.UI
     }
 
     /// <summary>
+    /// WP-022F · staggered entry for a row of panels (Results columns): each CanvasGroup
+    /// fades in over MotionBase, starting <c>step</c> seconds after the previous one, and
+    /// lifts 12 px into place (anchoredPosition on unscaled time - no layout, no vertex
+    /// rebuild). Reduced motion: every group is at rest on the first frame. Removes itself
+    /// when the last group lands.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class UiStaggerIn : MonoBehaviour
+    {
+        private const float Lift = 12f;
+
+        private CanvasGroup[] _groups;
+        private RectTransform[] _rects;
+        private Vector2[] _rest;
+        private float _start;
+        private float _step;
+
+        public void Configure(CanvasGroup[] groups, float step = 0.06f)
+        {
+            _groups = groups ?? new CanvasGroup[0];
+            _step = step;
+            _rects = new RectTransform[_groups.Length];
+            _rest = new Vector2[_groups.Length];
+            _start = Time.unscaledTime;
+            bool instant = UiSettings.ReducedMotion;
+            for (int i = 0; i < _groups.Length; i++)
+            {
+                if (_groups[i] == null)
+                {
+                    continue;
+                }
+
+                _rects[i] = (RectTransform)_groups[i].transform;
+                _rest[i] = _rects[i].anchoredPosition;
+                _groups[i].alpha = instant ? 1f : 0f;
+                if (!instant)
+                {
+                    _rects[i].anchoredPosition = _rest[i] - new Vector2(0f, Lift);
+                }
+            }
+
+            if (instant)
+            {
+                Destroy(this);
+            }
+        }
+
+        private void Update()
+        {
+            bool done = true;
+            float now = Time.unscaledTime - _start;
+            for (int i = 0; i < _groups.Length; i++)
+            {
+                if (_groups[i] == null)
+                {
+                    continue;
+                }
+
+                float t = UiSettings.ReducedMotion
+                    ? 1f
+                    : Mathf.Clamp01((now - i * _step) / UiTokens.MotionBase);
+                float e = UiMotionCurve.EaseOut(t);
+                _groups[i].alpha = e;
+                _rects[i].anchoredPosition = _rest[i] - new Vector2(0f, Lift * (1f - e));
+                if (t < 1f)
+                {
+                    done = false;
+                }
+            }
+
+            if (done)
+            {
+                Destroy(this);
+            }
+        }
+    }
+
+    /// <summary>
     /// Keeps a stretched rect no wider than a cap, centred (WP-022C ultrawide rule). Applied
     /// once per dimension change - no per-frame work.
     /// </summary>

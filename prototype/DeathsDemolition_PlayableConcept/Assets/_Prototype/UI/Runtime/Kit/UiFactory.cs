@@ -478,6 +478,10 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>Small pill used for states: LOCKED, EARNED, NEW, SUSPENDED.</summary>
+        /// <summary>AD v004 SHOULD-5 chip system - two heights only: card chips (NEW / EARNED / IN PROGRESS / LOCKED / SELECTED) and row chips (UNLOCKED / LEVEL n / condition).</summary>
+        public const float CardChipHeight = 28f;
+        public const float RowChipHeight = 22f;
+
         public static TMP_Text Chip(
             string name,
             Transform parent,

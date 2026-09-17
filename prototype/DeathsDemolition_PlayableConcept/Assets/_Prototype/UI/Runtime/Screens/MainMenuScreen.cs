@@ -60,6 +60,9 @@ namespace DD.Prototype.UI
         /// <summary>Option button to re-focus after a profile-changed redraw (title / badge pick).</summary>
         private string _refocusName;
 
+        /// <summary>True only while ShowPane builds (SHOULD-6 pad focus rule).</summary>
+        private bool _focusPaneOnOpen;
+
         private RectTransform _paneHost;
         private UiContext _pane = UiContext.Profile;
 
@@ -280,7 +283,9 @@ namespace DD.Prototype.UI
             // in another scene). The pane is drawn anyway; the model is simply not
             // tracking this screen.
             _pane = pane;
+            _focusPaneOnOpen = true;
             RedrawPane();
+            _focusPaneOnOpen = false;
             UiEvents.Raise(UiEvent.PaneOpened, pane.ToString());
         }
 
@@ -790,6 +795,14 @@ namespace DD.Prototype.UI
                 UiInput.LinkHorizontal(_achievementsTab, null, _achievementPage > 0 ? previous : next);
                 UiInput.LinkHorizontal(previous, _achievementsTab, next);
                 UiInput.LinkHorizontal(next, _achievementPage > 0 ? previous : _achievementsTab, null);
+
+                // AD v004 SHOULD-6: opening the pane from the nav lands on NEXT (the rows are
+                // not focusable - nothing to claim); a redraw caused by a profile change or
+                // a page turn keeps its own focus rule.
+                if (_focusPaneOnOpen && UiInputScheme.Current == DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad)
+                {
+                    UiInput.Focus(next);
+                }
                 stack.Gap(UiSpace.S);
             }
 
@@ -903,7 +916,7 @@ namespace DD.Prototype.UI
                     isNew ? "NEW" : "LOCKED",
                     isNew ? UiColor.AccentSakura : UiColor.SurfaceInset,
                     isNew ? UiColor.SurfaceBase : UiColor.TextSecondary,
-                    isNew ? 56f : 88f, 22f);
+                    isNew ? 56f : 88f, UiFactory.RowChipHeight);
                 RectTransform chipRect = (RectTransform)chip.transform.parent;
                 chipRect.anchorMin = new Vector2(1f, 0.5f);
                 chipRect.anchorMax = new Vector2(1f, 0.5f);
@@ -995,7 +1008,7 @@ namespace DD.Prototype.UI
                 line.Earned ? (line.IsNew ? "NEW" : "EARNED") : "IN PROGRESS",
                 line.Earned ? (line.IsNew ? UiColor.AccentSakura : UiColor.StateSuccess) : UiColor.SurfaceInset,
                 line.Earned ? (line.IsNew ? UiColor.SurfaceBase : UiColor.SurfaceInset) : UiColor.TextSecondary, // NEW = ink on sakura (AD v004 MUST-1)
-                140f, 30f); // 140: "IN PROGRESS" at Caption tracking needs it (120 clipped the last S)
+                140f, UiFactory.CardChipHeight); // 140: "IN PROGRESS" at Caption tracking needs it (120 clipped the last S)
             if (line.IsNew)
             {
                 chip.transform.parent.gameObject.AddComponent<UiPulse>().Configure(

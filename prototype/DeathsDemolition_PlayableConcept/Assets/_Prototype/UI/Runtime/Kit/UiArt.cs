@@ -50,7 +50,10 @@ namespace DD.Prototype.UI
         /// AP-013 / AP-012 v003 deliver one per roster key:
         ///   weapon_rifle -> Weapon.AssaultRifle · weapon_carbine -> Weapon.AutoSmg (stand-in)
         ///   weapon_shotgun -> Weapon.CombatShotgun · anything else -> null (monogram tile).
-        /// A future atlas that ships "Weapon.<hudIconId>" wins automatically.
+        /// A future atlas that ships "Weapon.<hudIconId>" wins automatically - and since
+        /// WP-022F one does: UI/AP013/AP013_weapon_icons_512x128 (silhouettes cut from the
+        /// AP-013 side renders, wp-022d/tools/build_ap013_icons.py), so the table below is
+        /// only the fallback for a build without that atlas.
         /// </summary>
         public static Sprite RosterGlyph(string hudIconId)
         {

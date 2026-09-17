@@ -758,8 +758,9 @@ namespace DD.Prototype.UI
 
         // ============================================================ threat chips
 
-        private const float ThreatChipWidth = 176f;
-        private const float ThreatChipHeight = 32f;
+        private const float ThreatChipWidth = 200f;
+        private const float ThreatChipHeight = 40f; // AD v005 MUST-1: 20 px Body bold, 20 px glyph inside, 40 px tall
+        private const float ThreatGlyphSize = 20f;
 
         /// <summary>
         /// Combat warnings from the threat director (WP-033 <see cref="ThreatHudFeed"/>):
@@ -776,7 +777,9 @@ namespace DD.Prototype.UI
             row.anchorMax = new Vector2(0.5f, 1f);
             row.pivot = new Vector2(0.5f, 1f);
             row.sizeDelta = new Vector2(ThreatChipWidth * 3f + (int)UiSpace.S * 2, ThreatChipHeight);
-            row.anchoredPosition = new Vector2(0f, -((int)UiTokens.SafeInset + RoundBlockHeight + (int)UiSpace.S));
+            // 4 px under the round block (was 8): the taller chip still ends >= 6 px above
+            // the safe-zone top (32 + 150 + 4 + 40 = 226 < 270 at 1080p).
+            row.anchoredPosition = new Vector2(0f, -((int)UiTokens.SafeInset + RoundBlockHeight + (int)UiSpace.XS));
             _threatRow = row.gameObject;
 
             _threatSurrounded = ThreatChip(row, 0, "SURROUNDED", "Hud.Enemies", UiColor.StateDanger, out _);
@@ -793,12 +796,26 @@ namespace DD.Prototype.UI
             chip.pivot = new Vector2(0f, 0.5f);
             chip.anchoredPosition = new Vector2(index * (ThreatChipWidth + (int)UiSpace.S), 0f);
 
-            Image glyph = UiArt.IconImage("Icon", chip, icon, color, 20f);
+            // AD v005 MUST-1: Body 20 bold, and a 1 px outline in the state colour (0.6 α)
+            // behind the fill so the chip separates from bright water and dark foliage.
+            label.fontSize = UiTokens.FontSize(UiType.Body);
+            label.fontStyle = TMPro.FontStyles.Bold;
+            label.characterSpacing = 4f;
+            // The chip root IS the fill image, so the outline is a uGUI Outline effect on
+            // it (a child would draw over the fill): 1 px in the state colour at 0.6 α.
+            Color outlineColor = UiTokens.Get(color);
+            outlineColor.a = 0.6f;
+            var outline = chip.gameObject.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = outlineColor;
+            outline.effectDistance = new Vector2(1f, 1f);
+            outline.useGraphicAlpha = true;
+
+            Image glyph = UiArt.IconImage("Icon", chip, icon, color, ThreatGlyphSize);
             var glyphRect = (RectTransform)glyph.transform;
             glyphRect.anchorMin = new Vector2(0f, 0.5f);
             glyphRect.anchorMax = new Vector2(0f, 0.5f);
             glyphRect.pivot = new Vector2(0f, 0.5f);
-            glyphRect.anchoredPosition = new Vector2((int)UiSpace.S, 0f);
+            glyphRect.anchoredPosition = new Vector2(20f, 0f); // 20 px padding, glyph inside the chip
             if (index == 1)
             {
                 // The back chevron points the way the danger is: behind.
@@ -806,7 +823,8 @@ namespace DD.Prototype.UI
             }
 
             RectTransform labelRect = (RectTransform)label.transform;
-            labelRect.offsetMin = new Vector2(20f + (int)UiSpace.M, 0f);
+            labelRect.offsetMin = new Vector2(20f + ThreatGlyphSize + (int)UiSpace.S, 0f);
+            labelRect.offsetMax = new Vector2(-20f, 0f);
             label.alignment = TMPro.TextAlignmentOptions.Left;
 
             chip.gameObject.SetActive(false);

@@ -232,5 +232,35 @@ namespace DD.Prototype.UI
             label.offsetMin = new Vector2(label.offsetMin.x + size + (int)UiSpace.M, label.offsetMin.y);
             return icon;
         }
+
+        /// <summary>
+        /// WP-022F · an input prompt glyph at the button's trailing edge ("BACK  Ⓑ"): the
+        /// action's glyph on the active device, redrawn when the device flips. Ink on the
+        /// button's own text colour family: Primary buttons get ink-on-cream, the others
+        /// cream-on-inset, so the glyph reads on either fill.
+        /// </summary>
+        public static UiPrompt Prompt(UiButton button, UiPromptAction action, bool onPrimary = false, float size = UiInputGlyphs.DefaultSize)
+        {
+            if (button == null)
+            {
+                return null;
+            }
+
+            UiPrompt prompt = UiInputGlyphs.Build(
+                "Prompt", button.transform, action,
+                onPrimary ? UiColor.SurfaceBase : UiColor.TextPrimary,
+                onPrimary ? UiColor.TextPrimary : UiColor.SurfaceInset, size);
+            var rect = (RectTransform)prompt.transform;
+            rect.anchorMin = new Vector2(1f, 0.5f);
+            rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = new Vector2(-(int)UiSpace.L, 0f);
+
+            // The label gives up the widest glyph the action can draw (A vs ENTER), so it
+            // does not shift when the device flips (AD v005 MUST-4).
+            RectTransform label = (RectTransform)button.LabelText.transform;
+            label.offsetMax = new Vector2(label.offsetMax.x - UiInputGlyphs.ReservedWidth(action, size) - (int)UiSpace.M, label.offsetMax.y);
+            return prompt;
+        }
     }
 }

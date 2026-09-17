@@ -4,6 +4,8 @@ Direktif §12 tamlık kuralı: her UI etkileşiminin sesi ve efekti. Bu dosya `E
 
 > **WP-021C (S-08):** ses sütunu `EVENT-COVERAGE-MATRIX.md` §8'e taşındı ve orada nihaidir (bağlı satırlar AP-011 v005 türetilmiş kimlikler, sahibi-başka satırlar tek ses); bu tablo `UiEvent` enum sözleşmesi olarak (`UiEventsTests`) aynen kalır.
 
+Not (WP-022F): aktif cihaz değişimi (`UiInputScheme.Changed`) bir UiEvent değildir — sessiz, yalnız istem glifleri yeniden çizilir (`UiPrompt`).
+
 Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, "n/a" gerekçeli) · VFX / mikro-animasyon (UI tarafı, mevcut) · kaynak.
 
 | UiEvent | Ne zaman | SFX (AudioEventSource.Ui anahtarı) | VFX / mikro-animasyon | Kaynak |

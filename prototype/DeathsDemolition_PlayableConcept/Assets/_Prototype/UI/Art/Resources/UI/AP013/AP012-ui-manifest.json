@@ -1,0 +1,48 @@
+{
+ "schema": "AP012-ui-manifest-v1",
+ "package": "AP-013 (WP-022F glyphs)",
+ "pixelsPerUnit": 100,
+ "atlases": [
+  {
+   "file": "AP013_weapon_icons_512x128.png",
+   "width": 512,
+   "height": 128,
+   "tint": "runtime (white glyphs)",
+   "sprites": [
+    {
+     "name": "Weapon.weapon_rifle",
+     "x": 0,
+     "y": 0,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.weapon_carbine",
+     "x": 128,
+     "y": 0,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.weapon_shotgun",
+     "x": 256,
+     "y": 0,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -457,7 +457,14 @@ namespace DD.Prototype.UI
         /// </summary>
         [PrototypeOnly(PendingDecisions.None,
             "Inward reach of the damage edge in reference pixels. Half the final-seconds veil.", true)]
-        public const float DamageEdgeDepth = 96f;
+        public const float DamageEdgeDepth = 150f; // AD v005 MUST-2: 14 % of 1080 - the ramp reaches 0 well outside the panels
+
+        /// <summary>
+        /// AD v005 MUST-2: a hit that leaves the player at low health raises its edges to
+        /// this fraction of <see cref="DamageEdgePeakAlpha"/> (0.45 / 0.92) instead of to
+        /// full strength, so the health / weapon panels never sit inside saturated red.
+        /// </summary>
+        public const float LowHealthEdgeStrength = 0.49f;
 
         /// <summary>
         /// Seconds a damage edge is held at full amplitude before it starts to fall.

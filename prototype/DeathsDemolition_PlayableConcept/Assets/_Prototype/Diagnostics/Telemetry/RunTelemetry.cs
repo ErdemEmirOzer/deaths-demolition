@@ -85,6 +85,12 @@ namespace DD.Prototype.Diagnostics.Telemetry
 
         private static bool s_installed;
         private static bool s_enabled = true;
+
+        /// <summary>WP-022F (S-04 review): the event subscription is a separate fact from "installed" - the CLI can install without subscribing.</summary>
+        private static bool s_subscribed;
+
+        /// <summary>WP-022F: <c>-ddTelemetry 0</c> on the command line; the Settings toggle cannot override it (bots, tests).</summary>
+        private static bool s_commandLineOff;
         private static string s_directory;
         private static bool s_inRun;
         private static float s_runStart;
@@ -103,6 +109,9 @@ namespace DD.Prototype.Diagnostics.Telemetry
         private static string s_lastPath;
 
         public static bool Enabled => s_enabled;
+
+        /// <summary>True when the command line switched telemetry off for this process (the Settings toggle is then a no-op).</summary>
+        public static bool CommandLineOff => s_commandLineOff;
         public static bool InRun => s_inRun;
 
         /// <summary>The last written document (null before any run) — tests, F1.</summary>
@@ -143,6 +152,17 @@ namespace DD.Prototype.Diagnostics.Telemetry
                 return;
             }
 
+            EnsureSubscribed();
+        }
+
+        private static void EnsureSubscribed()
+        {
+            if (s_subscribed)
+            {
+                return;
+            }
+
+            s_subscribed = true;
             Subscribe();
         }
 
@@ -150,6 +170,8 @@ namespace DD.Prototype.Diagnostics.Telemetry
         private static void ResetStatics()
         {
             s_installed = false;
+            s_subscribed = false;
+            s_commandLineOff = false;
             s_enabled = true;
             s_directory = null;
             Reset();
@@ -170,6 +192,7 @@ namespace DD.Prototype.Diagnostics.Telemetry
                 if (string.Equals(args[i], "-ddTelemetry", StringComparison.Ordinal))
                 {
                     s_enabled = !(args[i + 1] == "0" || string.Equals(args[i + 1], "off", StringComparison.OrdinalIgnoreCase) || string.Equals(args[i + 1], "false", StringComparison.OrdinalIgnoreCase));
+                    s_commandLineOff = !s_enabled;
                 }
                 else if (string.Equals(args[i], "-ddTelemetryDir", StringComparison.Ordinal))
                 {
@@ -237,11 +260,17 @@ namespace DD.Prototype.Diagnostics.Telemetry
         /// </summary>
         public static void SetEnabled(bool enabled)
         {
-            s_enabled = enabled;
-            if (enabled && !s_installed)
+            if (s_commandLineOff)
             {
-                s_installed = true;
-                Subscribe();
+                // -ddTelemetry 0 owns this process (bots, tests): the toggle is a no-op and
+                // Enabled stays false, so the flag never lies about a missing subscription.
+                return;
+            }
+
+            s_enabled = enabled;
+            if (enabled)
+            {
+                EnsureSubscribed();
             }
         }
 
@@ -538,11 +567,11 @@ namespace DD.Prototype.Diagnostics.Telemetry
             public static void Configure(bool enabled, string directory)
             {
                 s_enabled = enabled;
+                s_commandLineOff = false;
                 s_directory = directory;
-                if (enabled && !s_installed)
+                if (enabled)
                 {
-                    s_installed = true;
-                    Subscribe();
+                    EnsureSubscribed();
                 }
             }
         }

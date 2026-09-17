@@ -681,6 +681,7 @@ namespace DD.Prototype.UI
             UiButton back = UiFactory.Button("Back", footer, "BACK", UiButtonVariant.Secondary, GoBack);
             _backButton = back;
             UiInput.LeadingIcon(back, "Menu.Back", UiColor.TextSecondary, 22f);
+            UiInput.Prompt(back, UiPromptAction.Cancel);
             RectTransform backRect = (RectTransform)back.transform;
             backRect.anchorMin = new Vector2(0f, 0.5f);
             backRect.anchorMax = new Vector2(0f, 0.5f);
@@ -691,6 +692,7 @@ namespace DD.Prototype.UI
             UiButton start = UiFactory.Button(
                 "Start", footer, "START RUN", UiButtonVariant.Primary, PrototypeUiFlow.StartRun);
             _startButton = start;
+            UiInput.Prompt(start, UiPromptAction.Submit, true);
             RectTransform startRect = (RectTransform)start.transform;
             startRect.anchorMin = new Vector2(1f, 0.5f);
             startRect.anchorMax = new Vector2(1f, 0.5f);
