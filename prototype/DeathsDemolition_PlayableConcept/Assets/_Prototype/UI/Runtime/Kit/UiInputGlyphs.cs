@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using DD.Prototype.Core.InputAbstraction;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace DD.Prototype.UI
@@ -24,17 +23,13 @@ namespace DD.Prototype.UI
 
     /// <summary>
     /// WP-022F · which device the player touched last, for prompts. Polled once per frame
-    /// from the Input System's device timestamps (the WP-024 gameplay source only runs in a
-    /// run; menus need the same answer). No allocation per frame; <see cref="Changed"/>
-    /// fires only on a flip. Menus and the run agree: a run in progress also raises the
-    /// WP-024 <c>SchemeChanged</c>, and the two always land on the same value because both
-    /// read the same devices.
+    /// from the WP-024 input abstraction (<see cref="InputSourceRegistry"/>); no Input
+    /// System type in the UI (ADR-024-2). No allocation per frame; <see cref="Changed"/>
+    /// fires only on a flip.
     /// </summary>
     public static class UiInputScheme
     {
         private static InputSchemeKind s_current = InputSchemeKind.KeyboardMouse;
-        private static double s_lastGamepad = -1d;
-        private static double s_lastKeyboard = -1d;
         private static bool s_forced;
 
         public static InputSchemeKind Current => s_current;
@@ -53,7 +48,13 @@ namespace DD.Prototype.UI
             s_forced = false;
         }
 
-        /// <summary>Called by the prompt driver once per frame.</summary>
+        /// <summary>
+        /// Called by the prompt driver once per frame. Reads the WP-024 input abstraction
+        /// only (ADR-024-2: the Input System package is touched in Assets/_Prototype/Input
+        /// alone - WP-059 parity contract); the source answers the last device that spoke,
+        /// in menus as well as in a run. S-02's device-clock surface replaces this read
+        /// when it lands; the prompts themselves do not change.
+        /// </summary>
         internal static void Poll()
         {
             if (s_forced)
@@ -61,30 +62,17 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            Gamepad pad = Gamepad.current;
-            double padTime = pad != null ? pad.lastUpdateTime : -1d;
-            Keyboard keyboard = Keyboard.current;
-            Mouse mouse = Mouse.current;
-            double keyTime = keyboard != null ? keyboard.lastUpdateTime : -1d;
-            if (mouse != null && mouse.lastUpdateTime > keyTime)
+            IInputSource source = InputSourceRegistry.Current;
+            if (source == null)
             {
-                keyTime = mouse.lastUpdateTime;
+                return;
             }
 
-            // Mouse movement updates every frame on a desktop; only a NEW pad update after
-            // the last keyboard/mouse update flips to Gamepad, and vice versa. The first
-            // frame with no history stays on KeyboardMouse (the desktop default).
-            if (padTime > s_lastGamepad && padTime > keyTime && s_current != InputSchemeKind.Gamepad)
+            InputSchemeKind scheme = source.ActiveScheme();
+            if (scheme != s_current)
             {
-                Set(InputSchemeKind.Gamepad);
+                Set(scheme);
             }
-            else if (keyTime > s_lastKeyboard && keyTime > padTime && s_current != InputSchemeKind.KeyboardMouse)
-            {
-                Set(InputSchemeKind.KeyboardMouse);
-            }
-
-            s_lastGamepad = padTime;
-            s_lastKeyboard = keyTime;
         }
 
         private static void Set(InputSchemeKind scheme)
@@ -113,8 +101,6 @@ namespace DD.Prototype.UI
         private static void ResetStatics()
         {
             s_current = InputSchemeKind.KeyboardMouse;
-            s_lastGamepad = -1d;
-            s_lastKeyboard = -1d;
             s_forced = false;
             Changed = null;
         }

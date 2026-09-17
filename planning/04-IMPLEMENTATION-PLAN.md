@@ -1961,3 +1961,7 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 - (D) **Testler** — EditMode `CrowdRulesTests` ×3 (kısıt kuralları; sentetik v003 kütüphanesinde 1000 seed A1 payı / dışlamalar / sıra paritesi; simülatör R1–R12 kuralları) + `ArtArmorTests` / `SpawnMixSimulatorTests` / `SpecialReactionTests` / `RegionNavProfileTests` / `ArmorLookTests`; PlayMode köprü testi + `ArmorTests`. Sonuçlar `wp-055/evidence-b/`.
 
 **Devirler:** S-05 WP-038(B): AP-007C v003 import (accessory slot + `occludesHead` manifestten; assembler A1 → baş modülü gizli; H6/H7/T8); S-10: run3 v003 albedo + cw1 payı ölçümü (R11–R14 ~0,33); S-04/S-10: kalabalık kimlik oranları telemetri (cw1 payı, A1 payı).
+
+- (D) **r2 — ADR-024-2 uyumu (WP-059 parite sözleşmesi):** WP-022F `UiInputScheme` UI'da `UnityEngine.InputSystem`'i doğrudan okuyordu (`InputParityContractTests.InputSystem_YalnizInputKlasorunde` main'de kırmızı) → yoklama `InputSourceRegistry.Current.ActiveScheme()` (WP-024 soyutlaması) üzerinden; UI'da Input System türü yok. S-02'nin cihaz-saat okuma yüzeyi gelince tek satır değişimi; istemler (`UiPrompt`) aynen. Test: `InputParityContractTests` 20/20, `UiArtSliceTests` 5/5 (istem şema testi `Force` dikişiyle).
+
+**Devirler:** AD turu (r8/r12 + Special + NET/DAZED kareleri) → S-10 run4/5 kareleri gelince; S-03 → `IsPulled` durumu; S-02 → cihaz-saat API'si (`UiInputScheme.Poll` bağlanır) + geniş rebound etiketleri için `UiInputGlyphs.ReservedWidth`.
