@@ -323,7 +323,9 @@ namespace DD.Prototype.Qa
                 Camera cam = ResolveCamera();
                 if (cam == null) { Evaluate(r); yield break; }
                 PlayerSkin original = rig.Skin;
-                Renderer[] playerRenderers = rig.GetComponentsInChildren<Renderer>(true);
+                // WP-059C: the figure is the body — the weapon in hand (level in front of the chest since WP-059B) is not player pixels.
+                WeaponController weaponsInHand = WeaponRegistry.ActiveController;
+                Renderer[] playerRenderers = Array.FindAll(rig.GetComponentsInChildren<Renderer>(true), rr => weaponsInHand == null || !weaponsInHand.IsWeaponRenderer(rr));
                 List<Renderer> zombieRenderers = r.zombieRenderers ?? new List<Renderer>();
                 float timeScale = Time.timeScale;
                 Time.timeScale = 0f;

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
@@ -138,6 +139,26 @@ namespace DD.Prototype.Weapons
 
         /// <summary>WP-042 readout: the classic rig carries the roster model (blockout / AP-013).</summary>
         public bool ClassicRigHasAuthoredModel => _classicRig != null && _classicRig.HasAuthoredModel;
+
+        /// <summary>
+        /// WP-059C: every renderer of the weapon in hand (classic + Special rigs, models and placeholders).
+        /// The readability captures (DEC-077: S-05 CharacterTests, S-10 QaReadabilityGate) exclude these so
+        /// the figure mask is the body — since WP-059B the weapon sits level in front of the chest and would
+        /// otherwise count as player pixels / hide the body band.
+        /// </summary>
+        public void CollectWeaponRenderers(List<Renderer> into)
+        {
+            if (into == null) return;
+            if (_classicRig != null) into.AddRange(_classicRig.GetComponentsInChildren<Renderer>(true));
+            if (_specialRig != null) into.AddRange(_specialRig.GetComponentsInChildren<Renderer>(true));
+        }
+
+        /// <summary>WP-059C: true when <paramref name="r"/> belongs to the weapon in hand (see <see cref="CollectWeaponRenderers"/>).</summary>
+        public bool IsWeaponRenderer(Renderer r)
+        {
+            if (r == null) return false;
+            return (_classicRig != null && r.transform.IsChildOf(_classicRig.transform)) || (_specialRig != null && r.transform.IsChildOf(_specialRig.transform));
+        }
 
         // ------------------------------------------------------------------ lifecycle
 

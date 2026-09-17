@@ -311,6 +311,11 @@ namespace DD.Art.Tests.PlayMode
 
             var zombieRenderers = new List<SkinnedMeshRenderer>();
             foreach (ZombieEnemy z in zombies) zombieRenderers.AddRange(z.GetComponentsInChildren<SkinnedMeshRenderer>(true));
+            // WP-059C (S-02): the weapon in hand sits level in front of the chest since WP-059B — hidden for the captures so the
+            // figure / body band is the body itself, as the DEC-077 method measured it (S-10's gate excludes the same renderers).
+            var weaponRenderers = new List<Renderer>();
+            if (WeaponRegistry.ActiveController != null) WeaponRegistry.ActiveController.CollectWeaponRenderers(weaponRenderers);
+            foreach (Renderer wr in weaponRenderers) if (wr != null) wr.enabled = false;
             Time.captureDeltaTime = 0f;
             Time.timeScale = 0f;
             try
@@ -395,6 +400,7 @@ namespace DD.Art.Tests.PlayMode
             {
                 Time.timeScale = 1f;
                 Time.captureDeltaTime = 0f;
+                foreach (Renderer wr in weaponRenderers) if (wr != null) wr.enabled = true;   // WP-059C
                 foreach (ZombieEnemy z in zombies) if (z != null && z.IsAlive) z.Kill();
             }
         }
