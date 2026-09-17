@@ -182,6 +182,12 @@ namespace DD.Art.Pipeline.EditorTools
             EditorUtility.SetDirty(settings);
         }
 
+        /// <remarks>
+        /// WP-038K: the pipeline asset's <c>m_Prefilter*</c> shader-prefiltering flags are DERIVED by URP at build time from the
+        /// renderer features and the SSAO settings (<c>ShaderBuildPreprocessor.OnPreprocessBuild</c> → <c>SetDirty</c>), and the
+        /// build serialises them. This method does not recompute them (internal API), so after any SSAO / renderer change here:
+        /// build once and commit <c>DD_URP_PipelineAsset.asset</c>, or the next build re-serialises it (S-10 closure note).
+        /// </remarks>
         public static void ConfigureRenderer()
         {
             var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(UrpRendererPath);
