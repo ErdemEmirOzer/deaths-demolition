@@ -270,7 +270,7 @@ namespace DD.Art.Tests.EditMode
             int klip = 0;
             var manifest = ArtAnimationClipContract.Manifest();
             if (manifest != null) foreach (var spec in manifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) klip++;
-            Assert.AreEqual(85, klip, "AP-009D v004 85 klip FBX (WP-032C)");
+            Assert.AreEqual(86, klip, "AP-009D v004 85 klip FBX (WP-032C) + player_sw_hold_jewel (AP-009G v007, WP-032G) = 86");
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerIdleClipFile);
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerWalkClipFile);
             foreach (string b in ArtCharacterPrefabBuilder.ZombieBodyModels) beklenen.Add(b);
@@ -283,7 +283,7 @@ namespace DD.Art.Tests.EditMode
                 if (beklenen.Add(ArtCharacterContract.ZombieFolder + "/Modules/" + Path.GetFileName(fbx))) moduller++;
             }
 
-            Assert.AreEqual(19, moduller, "AP-007 19 modül FBX");
+            Assert.AreEqual(24, moduller, "AP-007 v003 24 modül FBX (19 + H6/H7 baş, A1/A2 aksesuar, T8 üst — WP-038C)");
 
             // WP-017 (ADR-017-1): the 18 AP-008 armour files listed by the manifest (6 variants × 3 states).
             int zirh = 0;
