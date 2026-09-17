@@ -154,7 +154,7 @@ namespace DD.Prototype.Navigation
             p._volumes = new[]
             {
                 // South koi-pond bridge: x = 4, z -18 … -39.5, deck 3 m wide in the procedural map, 1.2 m single file in AP-005 (WP-014).
-                new NavRegionVolume { id = "S_Bridge", kind = NavRegionKind.Bridge, center = new Vector3(4f, 0f, -28.75f), size = new Vector3(5f, 6f, 23f), costMultiplier = 1.6f, capacity = 2, hasAlternative = true, alternative = new Vector3(18f, 0f, -30f), areaName = "Bridge" },
+                new NavRegionVolume { id = "S_Bridge", kind = NavRegionKind.Bridge, center = new Vector3(4f, 0f, -28.75f), size = new Vector3(5f, 6f, 23f), costMultiplier = 1.35f, capacity = 2, hasAlternative = true, alternative = new Vector3(18f, 0f, -30f), areaName = "Bridge" },   // WP-054: 1.6 → 1.35 on the v3 NavMesh (baked Bridge area cost already biases the shore; 1.6 sent every body round — 0 queue events / 47 reroutes in WP-052)
                 // West bamboo corridor: x -36 … -30, z -12 … 12 (roofed; ≥ 2 exits - REQ-111). Alternative: the open ground east of the corridor.
                 new NavRegionVolume { id = "W_Corridor", kind = NavRegionKind.Corridor, center = new Vector3(-33f, 0f, 0f), size = new Vector3(7f, 6f, 25f), costMultiplier = 1.3f, capacity = 5, hasAlternative = true, alternative = new Vector3(-24f, 0f, 0f), areaName = "Corridor" },
                 // Palace front gates (north): west and east throats; each is the other's alternative.

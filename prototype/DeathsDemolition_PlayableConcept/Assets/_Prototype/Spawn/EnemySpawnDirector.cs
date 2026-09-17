@@ -950,7 +950,8 @@ namespace DD.Prototype.Spawn
                 PlayerRegion = RingRegionMap.Classify(player.Position),
                 PlayerVelocity = player.Velocity,
                 Now = Time.time,
-                NavDegraded = !CrowdService.IsNavMeshAvailable
+                NavDegraded = !CrowdService.IsNavMeshAvailable,
+                ThreatLayer = ThreatLevelFeed.Layer   // WP-054: threat-aware visibility weight
             };
 
             UpdatePointDensity(points);

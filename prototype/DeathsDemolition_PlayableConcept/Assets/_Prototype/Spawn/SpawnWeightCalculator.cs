@@ -46,6 +46,8 @@ namespace DD.Prototype.Spawn
         public Vector3 PlayerVelocity;
         public float Now;
         public bool NavDegraded;
+        /// <summary>WP-054: the Threat Director layer (ThreatLevelFeed; -1 = none) — a rising threat weighs on-screen points down further.</summary>
+        public int ThreatLayer;
     }
 
     /// <summary>
@@ -177,7 +179,8 @@ namespace DD.Prototype.Spawn
                 1f - config.LocalDensityPenalty * point.LocalDensity);
 
             // ---------------------------------------------------------- 9. visibility (WP-030)
-            breakdown.Visibility = point.IsOnScreen && (relaxation & SpawnRelaxation.Screen) == 0 ? tuning.OnScreenFactor : 1f;
+            float onScreenFactor = inputs.ThreatLayer >= 0 ? DD.Prototype.Navigation.CrowdFeelSettings.Active.OnScreenFactorFor(inputs.ThreatLayer, tuning.OnScreenFactor) : tuning.OnScreenFactor;   // WP-054
+            breakdown.Visibility = point.IsOnScreen && (relaxation & SpawnRelaxation.Screen) == 0 ? onScreenFactor : 1f;
 
             float total = breakdown.Base
                           * breakdown.Distance

@@ -77,7 +77,7 @@ namespace DD.Prototype.Tests.EditMode
             float cost = RegionNavRouter.EffectiveCost(_profile, direct, direct.Length, out NavRegionVolume costly);
             Assert.IsNotNull(costly); Assert.AreEqual("S_Bridge", costly.id);
             // segment 1 (−10→−20): midpoint −15 outside; end −20 inside → costly; segments 2 inside; segment 3 (−38→−44): midpoint −41 outside, end outside
-            float expected = 10f * 1.6f + 18f * 1.6f + 6f * 1f;
+            float expected = 10f * 1.35f + 18f * 1.35f + 6f * 1f;   // WP-054: bridge ×1.35
             Assert.AreEqual(expected, cost, 1e-3f);
             var open = new[] { new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 10f), new Vector3(5f, 0f, 10f) };
             Assert.AreEqual(15f, RegionNavRouter.EffectiveCost(_profile, open, open.Length, out NavRegionVolume none), 1e-4f);
@@ -88,7 +88,18 @@ namespace DD.Prototype.Tests.EditMode
             float shoreLen = 0f; for (int i = 1; i < shore.Length; i++) shoreLen += Vector3.Distance(shore[i - 1], shore[i]);
             Assert.AreEqual(shoreLen, shoreCost, 1e-3f, "kıyı yolu hacim dışı → maliyet = uzunluk");
             Assert.Greater(shoreLen, 34f, "kıyı yolu köprüden uzun");
-            Assert.Less(shoreCost, cost, "çarpan 1,6 ile köprü rotası kıyıdan pahalı → çeşitlenme (REQ-112)");
+            // WP-054: with the bridge at ×1.35 (v3 NavMesh) this synthetic shore is dearer than the bridge (50.4 vs 43.8 m) —
+            // diversification (REQ-112) now comes from the acceptance band: a high route roll still takes the shore
+            // (alt < direct × (1 + roll × 0.25)), a low roll keeps the bridge. Both sides asserted through the router itself.
+            Assert.Less(shoreCost, cost * (1f + _profile.RouteBiasSpread), "kıyı yolu kabul bandı içinde (roll 1)");
+            Assert.Greater(shoreCost, cost, "köprü ×1,35 ile kıyı yolu artık düz maliyetten pahalı (roll 0 köprüde kalır)");
+            float shoreCostCopy = shoreCost;
+            RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile pr, NavRegionVolume v, Vector3 a, Vector3 b, Vector3[] buf, out float c) => { for (int i = 0; i < shore.Length; i++) buf[i] = shore[i]; c = shoreCostCopy; return shore.Length; };
+            var direct1 = (Vector3[])direct.Clone();
+            Assert.AreEqual(shore.Length, RegionNavRouter.ChooseRoute(_profile, direct1[0], direct1[3], direct1, 4, 1f, out bool rr1)); Assert.IsTrue(rr1, "roll 1 → kıyı");
+            var direct0 = (Vector3[])direct.Clone();
+            Assert.AreEqual(4, RegionNavRouter.ChooseRoute(_profile, direct0[0], direct0[3], direct0, 4, 0f, out bool rr0)); Assert.IsFalse(rr0, "roll 0 → köprü");
+            RegionNavRouter.AlternativeQueryOverride = null;
         }
 
         [Test]
@@ -232,8 +243,8 @@ namespace DD.Prototype.Tests.EditMode
         {
             // WP-020: World_AP005 bakes Bridge (3) / Corridor (4) / Gate (5) areas — every default volume names one → 5 assignments.
             int applied = _profile.ApplyAreaCosts();
-            Assert.AreEqual(5, applied, "5 hacim adlandırılmış alana maliyet yazar (Bridge ×1,6, Corridor ×1,3, Gate ×1 / ×1,15)");
-            Assert.AreEqual(1.6f, UnityEngine.AI.NavMesh.GetAreaCost(UnityEngine.AI.NavMesh.GetAreaFromName("Bridge")), 1e-4f);
+            Assert.AreEqual(5, applied, "5 hacim adlandırılmış alana maliyet yazar (Bridge ×1,35 — WP-054, Corridor ×1,3, Gate ×1 / ×1,15)");
+            Assert.AreEqual(1.35f, UnityEngine.AI.NavMesh.GetAreaCost(UnityEngine.AI.NavMesh.GetAreaFromName("Bridge")), 1e-4f);
             Assert.AreEqual(1.3f, UnityEngine.AI.NavMesh.GetAreaCost(UnityEngine.AI.NavMesh.GetAreaFromName("Corridor")), 1e-4f);
             Assert.IsFalse(RegionNavRouter.AreaCostsAppliedOnce);
             RegionNavRouter.EnsureAreaCosts();

@@ -1,4 +1,5 @@
 using UnityEngine;
+using DD.Prototype.Core;
 using DD.Prototype.Navigation;
 
 namespace DD.Prototype.Enemies
@@ -57,6 +58,7 @@ namespace DD.Prototype.Enemies
             if (_pathFollower == null) _pathFollower = new NavPathFollower();
             _pathFollower.SetRouteSeed(seed);
             _pathFollower.HoldsChokepoints = _versionProfile != null && _versionProfile.HoldsChokepoints;   // WP-040: Elite B corridor closing
+            RollCrowdFeel(ref _random);   // WP-054: flank side / angle for this life
             RegionNavRouter.EnsureAreaCosts();
         }
 
@@ -65,7 +67,58 @@ namespace DD.Prototype.Enemies
         /// being pushed by it, which is what keeps the swarm flowing (DEC-033) while a wall
         /// of bodies can still block the player (DEC-032).
         /// </summary>
-        public float Mass => _separationMass;
+        /// <summary>WP-054: inside a Gate volume the mass is scaled (heavy ×1.5 takes the threshold, light ×0.6 opens to the sides); elsewhere the tier mass.</summary>
+        public float Mass => _separationMass * _gateMassScale;
+
+        private float _gateMassScale = 1f;
+        /// <summary>WP-054 readouts.</summary>
+        public float GateMassScale => _gateMassScale;
+        public int FlankSign => _flankSign;
+        public float FlankAngle => _flankAngle;
+        public bool WallSliding => _wallSliding;
+
+        private int _flankSign;
+        private float _flankAngle;
+        private float _wallContactSince = -1f, _wallLastContact = -1f;
+        private bool _wallSliding;
+
+        /// <summary>WP-054: per-life rolls (flank side / angle) — called from ApplyNavProfileForLife with the spawn seed's random.</summary>
+        private void RollCrowdFeel(ref EnemyRandom random)
+        {
+            CrowdFeelSettings feel = CrowdFeelSettings.Active;
+            _flankSign = random.Chance(feel.FlankShareOf(_tier)) ? (random.Chance(0.5f) ? 1 : -1) : 0;
+            _flankAngle = random.Range(feel.FlankAngleMin, feel.FlankAngleMax);
+            _gateMassScale = 1f;
+            _wallContactSince = -1f; _wallLastContact = -1f; _wallSliding = false;
+        }
+
+        /// <summary>WP-054: the navigation goal for this life — the flank goal while far, the target itself inside the straight radius.</summary>
+        private Vector3 CrowdFeelGoal(Vector3 target)
+        {
+            return _flankSign != 0 ? CrowdFeelSettings.Active.FlankGoal(transform.position, target, _flankSign, _flankAngle) : target;
+        }
+
+        /// <summary>WP-054: world contact from the CharacterController (environment layer, mostly horizontal normal) feeds the wall-friction hysteresis.</summary>
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            if (!_alive || _dying || hit.collider == null) return;
+            if (hit.collider.gameObject.layer != PrototypeLayers.Environment) return;
+            if (Mathf.Abs(hit.normal.y) > 0.5f) return;   // floor / ceiling contacts are not walls
+            float now = Time.time;
+            if (_wallContactSince < 0f || now - _wallLastContact > CrowdFeelSettings.Active.WallExitSeconds) _wallContactSince = now;
+            _wallLastContact = now;
+        }
+
+        /// <summary>WP-054: the speed factor from wall friction this tick (1 = free).</summary>
+        private float WallFrictionFactor()
+        {
+            CrowdFeelSettings feel = CrowdFeelSettings.Active;
+            float now = Time.time;
+            bool inContact = _wallLastContact >= 0f && now - _wallLastContact <= feel.WallExitSeconds;
+            _wallSliding = inContact && _wallContactSince >= 0f && now - _wallContactSince >= feel.WallEnterSeconds;
+            if (!inContact) _wallContactSince = -1f;
+            return _wallSliding ? feel.WallFriction : 1f;
+        }
 
         /// <summary>
         /// The NEXT PATH CORNER, as the crowd solver requires - not the player's position.
@@ -191,6 +244,10 @@ namespace DD.Prototype.Enemies
             // the flag only says how trustworthy it is.
             _hasSteeringCorner = _pathFollower.Tick(position, goal, out _steeringCorner);
             _navSpeedFactor = _pathFollower.SpeedFactor;
+
+            // WP-054: gate threshold push — inside a Gate volume the tier mass is scaled (never on the bridge / corridor).
+            NavRegionVolume here = RegionNavProfile.Active.Find(position);
+            _gateMassScale = here != null && here.kind == NavRegionKind.Gate ? CrowdFeelSettings.Active.GateMassFor(_tier) : 1f;
 
             Vector3 toCorner = _steeringCorner - position;
             toCorner.y = 0f;

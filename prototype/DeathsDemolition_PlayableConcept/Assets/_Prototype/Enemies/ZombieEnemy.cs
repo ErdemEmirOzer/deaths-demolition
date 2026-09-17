@@ -7,6 +7,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Pooling;
 using DD.Prototype.Damage;
 using DD.Prototype.Economy;
+using DD.Prototype.Navigation;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
 namespace DD.Prototype.Enemies
@@ -184,10 +185,9 @@ namespace DD.Prototype.Enemies
         // PROTOTYPE-ONLY / INVENTED. Not in the request; needed so a corpse leaves the
         // playfield without popping and so knockback bleeds off smoothly.
 
-        [PrototypeOnly(PendingDecisions.None,
-            "Seconds a corpse stays after its death reaction finishes, before it despawns. " +
-            "Directly controls how cluttered a busy round looks.", true)]
-        private const float CorpseLingerSeconds = 0.55f;
+        // WP-054: the corpse linger moved to CrowdFeelSettings.CorpseLinger (per tier, jitter, ceiling rule); readout below.
+        /// <summary>WP-054: the linger this life's corpse was given at death (tests).</summary>
+        public float LastCorpseLinger { get; private set; }
 
         [PrototypeOnly(PendingDecisions.None,
             "How fast a knockback shove bleeds off, per second. Invented.", true)]
@@ -465,6 +465,12 @@ namespace DD.Prototype.Enemies
             RollArmor(config);
 
             ApplyNavProfileForLife(seed);   // WP-030: fit-scaled separation radius + route roll (after the look, before the first tick)
+            {
+                CrowdFeelSettings feel = CrowdFeelSettings.Active;   // WP-054: per-life queue variety
+                _waitStallSeconds = _random.Range(feel.StallSecondsMin, feel.StallSecondsMax);
+                _shufflePeriod = _random.Range(feel.ShufflePeriodMin, feel.ShufflePeriodMax);
+                _shufflePhase = _random.Range(0f, 2f * Mathf.PI);
+            }
 
             // WP-028: the version's silhouette piece under its anchor (placeholder until AP-014).
             _silhouette = EnemyVersionApplier.ApplySilhouette(_silhouette, _appearance.Anchors, _tier, _versionProfile, _rig != null ? _rig.Visual : transform, _appearance);   // WP-036: real AP-014 parts when the library is built
@@ -936,9 +942,10 @@ namespace DD.Prototype.Enemies
             Vector3 ownVelocity = Vector3.zero;
 
             bool canWalk = !staggering && _attack.Phase != ZombieAttackPhase.Recovery;
-            if (canWalk && target != null && TickNavigation(selfPosition, target.position, out Vector3 heading))
+            if (canWalk && target != null && TickNavigation(selfPosition, CrowdFeelGoal(target.position), out Vector3 heading))   // WP-054: flank goal while far
             {
                 float speed = _moveSpeed * _navSpeedFactor;   // WP-030: chokepoint queue slows the approach, never stops the threat
+                speed *= WallFrictionFactor();                // WP-054: sliding along world geometry keeps 80 % (hysteresis)
 
                 // Stop pushing into the player once inside attack range; the swing closes
                 // the last gap. Without this the swarm compresses into a solid wall.
@@ -957,6 +964,7 @@ namespace DD.Prototype.Enemies
                 ownVelocity += transform.forward * impulse;
             }
 
+            ownVelocity += QueueShuffle(dt);   // WP-054: a queued light body sways a little so the queue reads alive
             _plannedVelocity = ownVelocity;
 
             // ICrowdMember contract: final = own locomotion + correction.
@@ -1009,8 +1017,29 @@ namespace DD.Prototype.Enemies
         }
 
         // ------------------------------------------------------------ WP-050 · waiting (WP-032 SetWaiting)
-        [PrototypeOnly(PendingDecisions.None, "WP-050: seconds a body must want to walk (own velocity ≥ WaitWantsSpeedShare × speed) while going nowhere (< WaitStalledSpeed) before the queue idle plays; cleared after WaitClearSeconds of real movement. Hysteresis so the idle does not flicker in a jostling crowd.", true)]
-        private const float WaitStallSeconds = 0.6f, WaitClearSeconds = 0.25f, WaitStalledSpeed = 0.15f, WaitWantsSpeedShare = 0.4f;
+        [PrototypeOnly(PendingDecisions.None, "WP-050: seconds a body must want to walk (own velocity ≥ WaitWantsSpeedShare × speed) while going nowhere (< WaitStalledSpeed) before the queue idle plays; cleared after WaitClearSeconds of real movement. Hysteresis so the idle does not flicker in a jostling crowd. WP-054: the stall threshold is rolled per life (CrowdFeelSettings band).", true)]
+        private const float WaitClearSeconds = 0.25f, WaitStalledSpeed = 0.15f, WaitWantsSpeedShare = 0.4f;
+        private float _waitStallSeconds = 0.6f;
+        private float _shufflePeriod = 1.8f, _shufflePhase;
+        /// <summary>WP-054 readouts.</summary>
+        public float WaitStallSeconds => _waitStallSeconds;
+        public Vector3 LastShuffle { get; private set; }
+
+        /// <summary>WP-054: lateral sway while queued (light tiers only), bounded by amplitude; zero otherwise.</summary>
+        private Vector3 QueueShuffle(float dt)
+        {
+            LastShuffle = Vector3.zero;
+            if (!_waiting || _pathFollower == null || !_pathFollower.IsQueued) return Vector3.zero;
+            CrowdFeelSettings feel = CrowdFeelSettings.Active;
+            if (feel.IsHeavy(_tier)) return Vector3.zero;
+            float w = 2f * Mathf.PI / Mathf.Max(0.2f, _shufflePeriod);
+            // velocity of a sine displacement with amplitude A: A·w·cos(wt + φ); A = ShuffleSpeed / w capped at ShuffleAmplitude
+            float amplitude = Mathf.Min(feel.ShuffleAmplitude, feel.ShuffleSpeed / w);
+            float v = amplitude * w * Mathf.Cos(Time.time * w + _shufflePhase);
+            Vector3 side = Vector3.Cross(Vector3.up, transform.forward);
+            LastShuffle = side * v;
+            return LastShuffle;
+        }
         [PrototypeOnly(PendingDecisions.None, "WP-050: a body within this × AttackRange of its target is engaging, not queued — it holds the threat pose (DEC-032), never the queue idle.", true)]
         private const float WaitEngageRangeFactor = 1.6f;
 
@@ -1042,7 +1071,7 @@ namespace DD.Prototype.Enemies
             if (stalled && !busy) { _stallSeconds += dt; _moveSeconds = 0f; }
             else if (_currentSpeed >= WaitStalledSpeed || busy) { _moveSeconds += dt; if (_moveSeconds >= WaitClearSeconds) _stallSeconds = 0f; }
 
-            bool waiting = !busy && (queued || _stallSeconds >= WaitStallSeconds);
+            bool waiting = !busy && (queued || _stallSeconds >= _waitStallSeconds);
             if (waiting != _waiting)
             {
                 _waiting = waiting;
@@ -1322,7 +1351,13 @@ namespace DD.Prototype.Enemies
 
             _alive = false;
             _dying = true;
-            _despawnCountdown = CorpseLingerSeconds;
+            // WP-054: corpse linger by tier with jitter; near the body ceiling (DEC-023: corpses count) it shortens.
+            {
+                CrowdFeelSettings feel = CrowdFeelSettings.Active;
+                bool nearCeiling = EnemyFactory.Capacity > 0 && EnemyFactory.SpawnedCount >= EnemyFactory.Capacity - feel.CorpseCapMargin;
+                _despawnCountdown = feel.CorpseLingerFor(_tier, _random.Range(0f, 1f), nearCeiling);
+                LastCorpseLinger = _despawnCountdown;
+            }
 
             // WP-003 lifecycle contract: from here on this body is a corpse. The round
             // ledger stops counting it as alive NOW, not when the corpse despawns (REQ-012).

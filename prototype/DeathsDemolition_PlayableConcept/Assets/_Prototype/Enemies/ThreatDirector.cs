@@ -70,6 +70,7 @@ namespace DD.Prototype.Enemies
             int count = GatherEnemies();
             ThreatSnapshot previous = s_current;
             s_current = ThreatModel.Evaluate(ThreatSettings.Active, in ctx, s_enemies, count, ref s_state, dt);
+            DD.Prototype.Navigation.ThreatLevelFeed.Publish(s_current.Layer);   // WP-054: the spawn director weighs on-screen points by the layer
             s_watch.Stop();
             LastSampleMilliseconds = s_watch.Elapsed.TotalMilliseconds;
             SampleCount++;
@@ -86,6 +87,7 @@ namespace DD.Prototype.Enemies
 
         public static void ResetStatics()
         {
+            DD.Prototype.Navigation.ThreatLevelFeed.ResetStatics();
             s_state = default;
             s_current = default;
             s_frame = -1;
