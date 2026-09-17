@@ -51,7 +51,8 @@ namespace DD.Art.Pipeline.EditorTools
             { "AP003_", "AP-003" },
             { "AP003B_", "AP-003B" },
             { "AP005_", "AP-005" },
-            { "AP005B_", "AP-005B" }   // WP-017 · AP-005B prop families
+            { "AP005B_", "AP-005B" },  // WP-017 · AP-005B prop families
+            { "AP017_", "AP-017" }     // WP-038B · AP-017 derivatives + world breakables
         };
 
         /// <summary>

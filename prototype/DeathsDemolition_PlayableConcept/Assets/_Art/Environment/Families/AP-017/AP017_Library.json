@@ -1,0 +1,4674 @@
+{
+ "ap": "AP-017",
+ "version": "Phase 1 v001 (manifest AP017.manifest.v1)",
+ "sources": [
+  {
+   "path": "asset-production/AP-017/exports/AP017-manifest-v001.json",
+   "sha256": "c335753106a0fe4d225a30e0f2aa048a650cddb454c5284634b195bb57acea72"
+  }
+ ],
+ "derived": "source FBX used directly (embed_textures False, path_mode STRIP); breakables carry breakEventId / residueCell (AP-017 custom props)",
+ "families": [
+  {
+   "family": "broken_fence",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_broken_fence_V01",
+     "boundsMin": [
+      -0.7725,
+      -0.269,
+      -0.02
+     ],
+     "boundsMax": [
+      0.7725,
+      0.269,
+      0.9968
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_broken_fence_V01.fbx",
+         "object": "AP017_broken_fence_V01_LOD0",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          276
+         ],
+         "triangles": 276,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_fence_V01.fbx",
+         "object": "AP017_broken_fence_V01_LOD1",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          110
+         ],
+         "triangles": 110,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_fence_V01.fbx",
+         "object": "AP017_broken_fence_V01_LOD2",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          54
+         ],
+         "triangles": 54,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_broken_fence_V01.fbx",
+       "object": "AP017_broken_fence_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.7725,
+          -0.268998,
+          -0.02
+         ],
+         "max": [
+          0.7725,
+          0.268998,
+          0.996848
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_broken_fence_V02",
+     "boundsMin": [
+      -0.541,
+      -0.1197,
+      -0.02
+     ],
+     "boundsMax": [
+      0.541,
+      0.1197,
+      1.062
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_broken_fence_V02.fbx",
+         "object": "AP017_broken_fence_V02_LOD0",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          188
+         ],
+         "triangles": 188,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_fence_V02.fbx",
+         "object": "AP017_broken_fence_V02_LOD1",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          75
+         ],
+         "triangles": 75,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_fence_V02.fbx",
+         "object": "AP017_broken_fence_V02_LOD2",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          26
+         ],
+         "triangles": 26,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_broken_fence_V02.fbx",
+       "object": "AP017_broken_fence_V02_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.541037,
+          -0.119716,
+          -0.02
+         ],
+         "max": [
+          0.541037,
+          0.119716,
+          1.062015
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_broken_fence_V03",
+     "boundsMin": [
+      -0.2881,
+      -0.04,
+      -0.02
+     ],
+     "boundsMax": [
+      0.2881,
+      0.04,
+      1.0313
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_broken_fence_V03.fbx",
+         "object": "AP017_broken_fence_V03_LOD0",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_fence_V03.fbx",
+         "object": "AP017_broken_fence_V03_LOD1",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_fence_V03.fbx",
+         "object": "AP017_broken_fence_V03_LOD2",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_broken_fence_V03.fbx",
+       "object": "AP017_broken_fence_V03_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.288138,
+          -0.04,
+          -0.02
+         ],
+         "max": [
+          0.288138,
+          0.04,
+          1.03128
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "broken_planter",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_broken_planter_V01",
+     "boundsMin": [
+      -1.5517,
+      -0.5456,
+      -0.01
+     ],
+     "boundsMax": [
+      1.5517,
+      0.5456,
+      0.4785
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_broken_planter_V01.fbx",
+         "object": "AP017_broken_planter_V01_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          218
+         ],
+         "triangles": 218,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_planter_V01.fbx",
+         "object": "AP017_broken_planter_V01_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          86
+         ],
+         "triangles": 86,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_planter_V01.fbx",
+         "object": "AP017_broken_planter_V01_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          26
+         ],
+         "triangles": 26,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_broken_planter_V01.fbx",
+       "object": "AP017_broken_planter_V01_PROXY",
+       "class": "blocking",
+       "shells": 2,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.551652,
+          -0.505723,
+          -0.01
+         ],
+         "max": [
+          -0.05231,
+          0.545622,
+          0.478505
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          0.054363,
+          -0.545622,
+          -0.01
+         ],
+         "max": [
+          1.551652,
+          0.518299,
+          0.465736
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_broken_planter_V02",
+     "boundsMin": [
+      -1.6217,
+      -0.7819,
+      -0.01
+     ],
+     "boundsMax": [
+      1.6217,
+      0.7819,
+      0.4785
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_broken_planter_V02.fbx",
+         "object": "AP017_broken_planter_V02_LOD0",
+         "materials": [
+          "stone",
+          "earth_01"
+         ],
+         "facesPerSlot": [
+          218,
+          90
+         ],
+         "triangles": 308,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_planter_V02.fbx",
+         "object": "AP017_broken_planter_V02_LOD1",
+         "materials": [
+          "stone",
+          "earth_01"
+         ],
+         "facesPerSlot": [
+          60,
+          62
+         ],
+         "triangles": 122,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_broken_planter_V02.fbx",
+         "object": "AP017_broken_planter_V02_LOD2",
+         "materials": [
+          "stone",
+          "earth_01"
+         ],
+         "facesPerSlot": [
+          24,
+          13
+         ],
+         "triangles": 37,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_broken_planter_V02.fbx",
+       "object": "AP017_broken_planter_V02_PROXY",
+       "class": "blocking",
+       "shells": 2,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.621652,
+          -0.269403,
+          -0.01
+         ],
+         "max": [
+          -0.12231,
+          0.781942,
+          0.478505
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          0.124363,
+          -0.309302,
+          -0.01
+         ],
+         "max": [
+          1.621652,
+          0.754619,
+          0.465736
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "fallen_culm",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_fallen_culm_V01",
+     "boundsMin": [
+      -1.7504,
+      -0.3878,
+      0.0
+     ],
+     "boundsMax": [
+      1.7504,
+      0.3878,
+      0.1024
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_fallen_culm_V01.fbx",
+         "object": "AP017_fallen_culm_V01_LOD0",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          399
+         ],
+         "triangles": 399,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_culm_V01.fbx",
+         "object": "AP017_fallen_culm_V01_LOD1",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          159
+         ],
+         "triangles": 159,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_culm_V01.fbx",
+         "object": "AP017_fallen_culm_V01_LOD2",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_fallen_culm_V01.fbx",
+       "object": "AP017_fallen_culm_V01_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.750373,
+          -0.387809,
+          0.0
+         ],
+         "max": [
+          1.750373,
+          0.387809,
+          0.102359
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_fallen_culm_V02",
+     "boundsMin": [
+      -1.7,
+      -0.4766,
+      0.0
+     ],
+     "boundsMax": [
+      1.7,
+      0.4766,
+      0.774
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_fallen_culm_V02.fbx",
+         "object": "AP017_fallen_culm_V02_LOD0",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          402
+         ],
+         "triangles": 402,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_culm_V02.fbx",
+         "object": "AP017_fallen_culm_V02_LOD1",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          160
+         ],
+         "triangles": 160,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_culm_V02.fbx",
+         "object": "AP017_fallen_culm_V02_LOD2",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          47
+         ],
+         "triangles": 47,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_fallen_culm_V02.fbx",
+       "object": "AP017_fallen_culm_V02_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.729997,
+          0.365869,
+          0.0
+         ],
+         "max": [
+          -1.572208,
+          0.506623,
+          0.824009
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_fallen_culm_V03",
+     "boundsMin": [
+      -0.95,
+      -0.327,
+      0.0
+     ],
+     "boundsMax": [
+      0.95,
+      0.327,
+      0.0325
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_fallen_culm_V03.fbx",
+         "object": "AP017_fallen_culm_V03_LOD0",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          296
+         ],
+         "triangles": 296,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_culm_V03.fbx",
+         "object": "AP017_fallen_culm_V03_LOD1",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          118
+         ],
+         "triangles": 118,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_culm_V03.fbx",
+         "object": "AP017_fallen_culm_V03_LOD2",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_fallen_culm_V03.fbx",
+       "object": "AP017_fallen_culm_V03_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.950021,
+          -0.327031,
+          0.0
+         ],
+         "max": [
+          0.950021,
+          0.327031,
+          0.032485
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_fallen_culm_V04",
+     "boundsMin": [
+      -0.6321,
+      -0.4604,
+      0.0
+     ],
+     "boundsMax": [
+      0.6321,
+      0.4604,
+      0.026
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_fallen_culm_V04.fbx",
+         "object": "AP017_fallen_culm_V04_LOD0",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_culm_V04.fbx",
+         "object": "AP017_fallen_culm_V04_LOD1",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          62
+         ],
+         "triangles": 62,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_culm_V04.fbx",
+         "object": "AP017_fallen_culm_V04_LOD2",
+         "materials": [
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          19
+         ],
+         "triangles": 19,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_fallen_culm_V04.fbx",
+       "object": "AP017_fallen_culm_V04_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.632087,
+          -0.460359,
+          0.0
+         ],
+         "max": [
+          0.632087,
+          0.460359,
+          0.025981
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "fallen_lantern",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_fallen_lantern_V01",
+     "boundsMin": [
+      -1.1331,
+      -0.317,
+      -0.02
+     ],
+     "boundsMax": [
+      1.1331,
+      0.317,
+      0.6415
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_fallen_lantern_V01.fbx",
+         "object": "AP017_fallen_lantern_V01_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          980
+         ],
+         "triangles": 980,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_lantern_V01.fbx",
+         "object": "AP017_fallen_lantern_V01_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          392
+         ],
+         "triangles": 392,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_lantern_V01.fbx",
+         "object": "AP017_fallen_lantern_V01_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          118
+         ],
+         "triangles": 118,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_fallen_lantern_V01.fbx",
+       "object": "AP017_fallen_lantern_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.133071,
+          -0.317008,
+          -0.02
+         ],
+         "max": [
+          0.849383,
+          0.317008,
+          0.641457
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_fallen_lantern_V02",
+     "boundsMin": [
+      -0.998,
+      -0.6113,
+      -0.02
+     ],
+     "boundsMax": [
+      0.998,
+      0.6113,
+      0.5
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_fallen_lantern_V02.fbx",
+         "object": "AP017_fallen_lantern_V02_LOD0",
+         "materials": [
+          "stone",
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          924,
+          116
+         ],
+         "triangles": 1040,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_lantern_V02.fbx",
+         "object": "AP017_fallen_lantern_V02_LOD1",
+         "materials": [
+          "stone",
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          368,
+          48
+         ],
+         "triangles": 416,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fallen_lantern_V02.fbx",
+         "object": "AP017_fallen_lantern_V02_LOD2",
+         "materials": [
+          "stone",
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          113,
+          11
+         ],
+         "triangles": 124,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_fallen_lantern_V02.fbx",
+       "object": "AP017_fallen_lantern_V02_PROXY",
+       "class": "blocking",
+       "shells": 3,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.997992,
+          -0.545001,
+          -0.02
+         ],
+         "max": [
+          -0.017961,
+          0.428881,
+          0.480383
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          -0.136441,
+          -0.611315,
+          0.0
+         ],
+         "max": [
+          0.31587,
+          -0.157612,
+          0.5
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          0.262099,
+          -0.09265,
+          -0.02
+         ],
+         "max": [
+          0.815039,
+          0.495416,
+          0.350803
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "leaf_pile",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_leaf_pile_V01",
+     "boundsMin": [
+      -0.6955,
+      -0.511,
+      0.0
+     ],
+     "boundsMax": [
+      0.6955,
+      0.511,
+      0.0379
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP017_leaf_pile_V01.fbx",
+         "object": "AP017_leaf_pile_V01_LOD0",
+         "materials": [
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          64
+         ],
+         "triangles": 64,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP017_leaf_pile_V01.fbx",
+         "object": "AP017_leaf_pile_V01_LOD1",
+         "materials": [
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          26
+         ],
+         "triangles": 26,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP017_leaf_pile_V01.fbx",
+         "object": "AP017_leaf_pile_V01_LOD2",
+         "materials": [
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_leaf_pile_V01.fbx",
+       "object": "AP017_leaf_pile_V01_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.695527,
+          -0.511004,
+          0.0
+         ],
+         "max": [
+          0.695527,
+          0.511004,
+          0.037895
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_leaf_pile_V02",
+     "boundsMin": [
+      -0.7918,
+      -0.4524,
+      0.0
+     ],
+     "boundsMax": [
+      0.7918,
+      0.4524,
+      0.0342
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP017_leaf_pile_V02.fbx",
+         "object": "AP017_leaf_pile_V02_LOD0",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          72
+         ],
+         "triangles": 72,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP017_leaf_pile_V02.fbx",
+         "object": "AP017_leaf_pile_V02_LOD1",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP017_leaf_pile_V02.fbx",
+         "object": "AP017_leaf_pile_V02_LOD2",
+         "materials": [
+          "sakura_foliage_01"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_leaf_pile_V02.fbx",
+       "object": "AP017_leaf_pile_V02_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.791806,
+          -0.452391,
+          0.0
+         ],
+         "max": [
+          0.791806,
+          0.452391,
+          0.034236
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_leaf_pile_V03",
+     "boundsMin": [
+      -0.7674,
+      -0.5443,
+      0.0
+     ],
+     "boundsMax": [
+      0.7674,
+      0.5443,
+      0.0366
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP017_leaf_pile_V03.fbx",
+         "object": "AP017_leaf_pile_V03_LOD0",
+         "materials": [
+          "green_foliage_02",
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          32,
+          32
+         ],
+         "triangles": 64,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP017_leaf_pile_V03.fbx",
+         "object": "AP017_leaf_pile_V03_LOD1",
+         "materials": [
+          "green_foliage_02",
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          14,
+          12
+         ],
+         "triangles": 26,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP017_leaf_pile_V03.fbx",
+         "object": "AP017_leaf_pile_V03_LOD2",
+         "materials": [
+          "green_foliage_02",
+          "sakura_foliage_02"
+         ],
+         "facesPerSlot": [
+          6,
+          6
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_leaf_pile_V03.fbx",
+       "object": "AP017_leaf_pile_V03_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.767368,
+          -0.54428,
+          0.0
+         ],
+         "max": [
+          0.767368,
+          0.54428,
+          0.036605
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "moss_patch",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_moss_patch_V01",
+     "boundsMin": [
+      -0.3436,
+      -0.429,
+      0.0
+     ],
+     "boundsMax": [
+      0.3436,
+      0.429,
+      0.0358
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_moss_patch_V01.fbx",
+         "object": "AP017_moss_patch_V01_LOD0",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_moss_patch_V01.fbx",
+         "object": "AP017_moss_patch_V01_LOD1",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          32
+         ],
+         "triangles": 32,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_moss_patch_V01.fbx",
+         "object": "AP017_moss_patch_V01_LOD2",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_moss_patch_V01.fbx",
+       "object": "AP017_moss_patch_V01_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.34356,
+          -0.429007,
+          0.0
+         ],
+         "max": [
+          0.34356,
+          0.429007,
+          0.035805
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_moss_patch_V02",
+     "boundsMin": [
+      -0.7046,
+      -0.8258,
+      0.0
+     ],
+     "boundsMax": [
+      0.7046,
+      0.8258,
+      0.042
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_moss_patch_V02.fbx",
+         "object": "AP017_moss_patch_V02_LOD0",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          100
+         ],
+         "triangles": 100,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_moss_patch_V02.fbx",
+         "object": "AP017_moss_patch_V02_LOD1",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          40
+         ],
+         "triangles": 40,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_moss_patch_V02.fbx",
+         "object": "AP017_moss_patch_V02_LOD2",
+         "materials": [
+          "moss_03"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_moss_patch_V02.fbx",
+       "object": "AP017_moss_patch_V02_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.704588,
+          -0.82582,
+          0.0
+         ],
+         "max": [
+          0.704588,
+          0.82582,
+          0.042
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_moss_patch_V03",
+     "boundsMin": [
+      -1.2144,
+      -1.2414,
+      0.0
+     ],
+     "boundsMax": [
+      1.2144,
+      1.2414,
+      0.0478
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_moss_patch_V03.fbx",
+         "object": "AP017_moss_patch_V03_LOD0",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          256
+         ],
+         "triangles": 256,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_moss_patch_V03.fbx",
+         "object": "AP017_moss_patch_V03_LOD1",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          101
+         ],
+         "triangles": 101,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_moss_patch_V03.fbx",
+         "object": "AP017_moss_patch_V03_LOD2",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          31
+         ],
+         "triangles": 31,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_moss_patch_V03.fbx",
+       "object": "AP017_moss_patch_V03_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.214415,
+          -1.241421,
+          0.0
+         ],
+         "max": [
+          1.214415,
+          1.241421,
+          0.047758
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_moss_patch_V04",
+     "boundsMin": [
+      -0.8149,
+      -0.6244,
+      0.0
+     ],
+     "boundsMax": [
+      0.8149,
+      0.6244,
+      0.0405
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_moss_patch_V04.fbx",
+         "object": "AP017_moss_patch_V04_LOD0",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          210
+         ],
+         "triangles": 210,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_moss_patch_V04.fbx",
+         "object": "AP017_moss_patch_V04_LOD1",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          84
+         ],
+         "triangles": 84,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_moss_patch_V04.fbx",
+         "object": "AP017_moss_patch_V04_LOD2",
+         "materials": [
+          "moss_01"
+         ],
+         "facesPerSlot": [
+          25
+         ],
+         "triangles": 25,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_moss_patch_V04.fbx",
+       "object": "AP017_moss_patch_V04_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.814939,
+          -0.624446,
+          0.0
+         ],
+         "max": [
+          0.814939,
+          0.624446,
+          0.040515
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "shore_debris",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_shore_debris_V01",
+     "boundsMin": [
+      -0.9483,
+      -0.6857,
+      -0.05
+     ],
+     "boundsMax": [
+      0.9483,
+      0.6857,
+      0.075
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_shore_debris_V01.fbx",
+         "object": "AP017_shore_debris_V01_LOD0",
+         "materials": [
+          "bamboo_culm",
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          270,
+          88,
+          270
+         ],
+         "triangles": 628,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_shore_debris_V01.fbx",
+         "object": "AP017_shore_debris_V01_LOD1",
+         "materials": [
+          "bamboo_culm",
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          84,
+          24,
+          142
+         ],
+         "triangles": 250,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_shore_debris_V01.fbx",
+         "object": "AP017_shore_debris_V01_LOD2",
+         "materials": [
+          "bamboo_culm",
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          37,
+          10,
+          28
+         ],
+         "triangles": 75,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_shore_debris_V01.fbx",
+       "object": "AP017_shore_debris_V01_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.948286,
+          -0.685733,
+          -0.05
+         ],
+         "max": [
+          0.948286,
+          0.685733,
+          0.075
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_shore_debris_V02",
+     "boundsMin": [
+      -0.6471,
+      -0.4113,
+      -0.05
+     ],
+     "boundsMax": [
+      0.6471,
+      0.4113,
+      0.289
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_shore_debris_V02.fbx",
+         "object": "AP017_shore_debris_V02_LOD0",
+         "materials": [
+          "stone",
+          "wood",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          160,
+          88,
+          171
+         ],
+         "triangles": 419,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_shore_debris_V02.fbx",
+         "object": "AP017_shore_debris_V02_LOD1",
+         "materials": [
+          "stone",
+          "wood",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          76,
+          24,
+          67
+         ],
+         "triangles": 167,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_shore_debris_V02.fbx",
+         "object": "AP017_shore_debris_V02_LOD2",
+         "materials": [
+          "stone",
+          "wood",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          18,
+          8,
+          24
+         ],
+         "triangles": 50,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_shore_debris_V02.fbx",
+       "object": "AP017_shore_debris_V02_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.647102,
+          -0.411316,
+          -0.05
+         ],
+         "max": [
+          0.647102,
+          0.411316,
+          0.288959
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_shore_debris_V03",
+     "boundsMin": [
+      -1.2155,
+      -0.1761,
+      -0.04
+     ],
+     "boundsMax": [
+      1.2155,
+      0.1761,
+      0.0377
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_shore_debris_V03.fbx",
+         "object": "AP017_shore_debris_V03_LOD0",
+         "materials": [
+          "bamboo_culm",
+          "stone"
+         ],
+         "facesPerSlot": [
+          408,
+          160
+         ],
+         "triangles": 568,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_shore_debris_V03.fbx",
+         "object": "AP017_shore_debris_V03_LOD1",
+         "materials": [
+          "bamboo_culm",
+          "stone"
+         ],
+         "facesPerSlot": [
+          144,
+          82
+         ],
+         "triangles": 226,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_shore_debris_V03.fbx",
+         "object": "AP017_shore_debris_V03_LOD2",
+         "materials": [
+          "bamboo_culm",
+          "stone"
+         ],
+         "facesPerSlot": [
+          56,
+          12
+         ],
+         "triangles": 68,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_shore_debris_V03.fbx",
+       "object": "AP017_shore_debris_V03_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.215509,
+          -0.17615,
+          -0.04
+         ],
+         "max": [
+          1.215509,
+          0.17615,
+          0.037745
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "stone_pile",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_stone_pile_V01",
+     "boundsMin": [
+      -0.6022,
+      -0.561,
+      -0.03
+     ],
+     "boundsMax": [
+      0.6022,
+      0.561,
+      0.3183
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_stone_pile_V01.fbx",
+         "object": "AP017_stone_pile_V01_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          1200
+         ],
+         "triangles": 1200,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_stone_pile_V01.fbx",
+         "object": "AP017_stone_pile_V01_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          480
+         ],
+         "triangles": 480,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_stone_pile_V01.fbx",
+         "object": "AP017_stone_pile_V01_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          144
+         ],
+         "triangles": 144,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_stone_pile_V01.fbx",
+       "object": "AP017_stone_pile_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.60217,
+          -0.560959,
+          -0.03
+         ],
+         "max": [
+          0.60217,
+          0.560959,
+          0.318265
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_stone_pile_V02",
+     "boundsMin": [
+      -0.4622,
+      -0.3239,
+      0.0
+     ],
+     "boundsMax": [
+      0.4622,
+      0.3239,
+      0.4386
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_stone_pile_V02.fbx",
+         "object": "AP017_stone_pile_V02_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          264
+         ],
+         "triangles": 264,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_stone_pile_V02.fbx",
+         "object": "AP017_stone_pile_V02_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          106
+         ],
+         "triangles": 106,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_stone_pile_V02.fbx",
+         "object": "AP017_stone_pile_V02_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          32
+         ],
+         "triangles": 32,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_stone_pile_V02.fbx",
+       "object": "AP017_stone_pile_V02_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.462204,
+          -0.323882,
+          0.0
+         ],
+         "max": [
+          0.462204,
+          0.323882,
+          0.438617
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_stone_pile_V03",
+     "boundsMin": [
+      -0.2708,
+      -0.2979,
+      0.0
+     ],
+     "boundsMax": [
+      0.2708,
+      0.2979,
+      0.7022
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_stone_pile_V03.fbx",
+         "object": "AP017_stone_pile_V03_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          1000
+         ],
+         "triangles": 1000,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_stone_pile_V03.fbx",
+         "object": "AP017_stone_pile_V03_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          400
+         ],
+         "triangles": 400,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_stone_pile_V03.fbx",
+         "object": "AP017_stone_pile_V03_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          120
+         ],
+         "triangles": 120,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_stone_pile_V03.fbx",
+       "object": "AP017_stone_pile_V03_PROXY",
+       "class": "blocking",
+       "shells": 2,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.270844,
+          -0.297856,
+          0.0
+         ],
+         "max": [
+          0.270844,
+          0.297856,
+          0.316
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          -0.162506,
+          -0.178714,
+          0.316
+         ],
+         "max": [
+          0.162506,
+          0.178714,
+          0.702222
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_stone_pile_V04",
+     "boundsMin": [
+      -0.6728,
+      -0.3891,
+      0.0
+     ],
+     "boundsMax": [
+      0.6728,
+      0.3891,
+      0.3475
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_stone_pile_V04.fbx",
+         "object": "AP017_stone_pile_V04_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_stone_pile_V04.fbx",
+         "object": "AP017_stone_pile_V04_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          52
+         ],
+         "triangles": 52,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_stone_pile_V04.fbx",
+         "object": "AP017_stone_pile_V04_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          16
+         ],
+         "triangles": 16,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_stone_pile_V04.fbx",
+       "object": "AP017_stone_pile_V04_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.672811,
+          -0.389111,
+          0.0
+         ],
+         "max": [
+          0.672811,
+          0.389111,
+          0.34748
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "yard_stack",
+   "occluder": false,
+   "kind": "derivative",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_yard_stack_V01",
+     "boundsMin": [
+      -0.9738,
+      -0.3876,
+      0.0
+     ],
+     "boundsMax": [
+      0.9738,
+      0.3876,
+      0.45
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_yard_stack_V01.fbx",
+         "object": "AP017_yard_stack_V01_LOD0",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          704
+         ],
+         "triangles": 704,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_yard_stack_V01.fbx",
+         "object": "AP017_yard_stack_V01_LOD1",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          282
+         ],
+         "triangles": 282,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_yard_stack_V01.fbx",
+         "object": "AP017_yard_stack_V01_LOD2",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          84
+         ],
+         "triangles": 84,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_yard_stack_V01.fbx",
+       "object": "AP017_yard_stack_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.973825,
+          -0.387605,
+          0.0
+         ],
+         "max": [
+          0.973825,
+          0.387605,
+          0.45
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_yard_stack_V02",
+     "boundsMin": [
+      -0.4356,
+      -0.3777,
+      0.0
+     ],
+     "boundsMax": [
+      0.4356,
+      0.3777,
+      0.35
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_yard_stack_V02.fbx",
+         "object": "AP017_yard_stack_V02_LOD0",
+         "materials": [
+          "wood",
+          "bamboo_culm",
+          "roof"
+         ],
+         "facesPerSlot": [
+          364,
+          512,
+          336
+         ],
+         "triangles": 1212,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_yard_stack_V02.fbx",
+         "object": "AP017_yard_stack_V02_LOD1",
+         "materials": [
+          "wood",
+          "bamboo_culm",
+          "roof"
+         ],
+         "facesPerSlot": [
+          150,
+          218,
+          116
+         ],
+         "triangles": 484,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_yard_stack_V02.fbx",
+         "object": "AP017_yard_stack_V02_LOD2",
+         "materials": [
+          "wood",
+          "bamboo_culm",
+          "roof"
+         ],
+         "facesPerSlot": [
+          62,
+          60,
+          22
+         ],
+         "triangles": 144,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_yard_stack_V02.fbx",
+       "object": "AP017_yard_stack_V02_PROXY",
+       "class": "blocking",
+       "shells": 3,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.435585,
+          -0.053426,
+          0.0
+         ],
+         "max": [
+          -0.125921,
+          0.256239,
+          0.32
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          -0.159281,
+          -0.377746,
+          0.0
+         ],
+         "max": [
+          0.117775,
+          -0.099441,
+          0.3
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          0.002908,
+          -0.054932,
+          0.0
+         ],
+         "max": [
+          0.435585,
+          0.377746,
+          0.35
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_yard_stack_V03",
+     "boundsMin": [
+      -0.4223,
+      -0.2685,
+      0.0
+     ],
+     "boundsMax": [
+      0.4223,
+      0.2685,
+      0.32
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_yard_stack_V03.fbx",
+         "object": "AP017_yard_stack_V03_LOD0",
+         "materials": [
+          "prop_strawbales",
+          "wood"
+         ],
+         "facesPerSlot": [
+          876,
+          364
+         ],
+         "triangles": 1240,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_yard_stack_V03.fbx",
+         "object": "AP017_yard_stack_V03_LOD1",
+         "materials": [
+          "prop_strawbales",
+          "wood"
+         ],
+         "facesPerSlot": [
+          292,
+          204
+         ],
+         "triangles": 496,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_yard_stack_V03.fbx",
+         "object": "AP017_yard_stack_V03_LOD2",
+         "materials": [
+          "prop_strawbales",
+          "wood"
+         ],
+         "facesPerSlot": [
+          84,
+          64
+         ],
+         "triangles": 148,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_yard_stack_V03.fbx",
+       "object": "AP017_yard_stack_V03_PROXY",
+       "class": "blocking",
+       "shells": 2,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.422281,
+          -0.268495,
+          0.0
+         ],
+         "max": [
+          0.242353,
+          0.19208,
+          0.072258
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          0.119721,
+          -0.034065,
+          0.0
+         ],
+         "max": [
+          0.422281,
+          0.268495,
+          0.32
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "breakable_bench",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_bench_V01",
+     "boundsMin": [
+      -0.8024,
+      -0.2,
+      0.0
+     ],
+     "boundsMax": [
+      0.8108,
+      0.2,
+      0.45
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_bench_V01.fbx",
+         "object": "AP017_breakable_bench_V01_BROKEN_LOD0",
+         "materials": [
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          40,
+          166
+         ],
+         "triangles": 206,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_bench_V01.fbx",
+         "object": "AP017_breakable_bench_V01_BROKEN_LOD1",
+         "materials": [
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          22,
+          60
+         ],
+         "triangles": 82,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_bench_V01.fbx",
+         "object": "AP017_breakable_bench_V01_BROKEN_LOD2",
+         "materials": [
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_bench_V01.fbx",
+         "object": "AP017_breakable_bench_V01_LOD0",
+         "materials": [
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          20,
+          88
+         ],
+         "triangles": 108,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_bench_V01.fbx",
+         "object": "AP017_breakable_bench_V01_LOD1",
+         "materials": [
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          12,
+          30
+         ],
+         "triangles": 42,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_bench_V01.fbx",
+         "object": "AP017_breakable_bench_V01_LOD2",
+         "materials": [
+          "wood",
+          "stone"
+         ],
+         "facesPerSlot": [
+          0,
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_bench_V01.fbx",
+       "object": "AP017_breakable_bench_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.802413,
+          -0.2,
+          0.0
+         ],
+         "max": [
+          0.810839,
+          0.2,
+          0.45
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_bench_V01.fbx",
+       "object": "AP017_breakable_bench_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.802413,
+          -0.2,
+          0.0
+         ],
+         "max": [
+          0.810839,
+          0.2,
+          0.45
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_bench_V01.fbx",
+       "object": "AP017_breakable_bench_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.852413,
+          -0.25,
+          -0.05
+         ],
+         "max": [
+          0.860839,
+          0.25,
+          0.5
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakWood",
+     "residueCell": "TR_wood"
+    }
+   ]
+  },
+  {
+   "family": "breakable_fence_panel",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_fence_panel_V01",
+     "boundsMin": [
+      -0.045,
+      -0.045,
+      0.0
+     ],
+     "boundsMax": [
+      1.526,
+      0.045,
+      1.08
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_fence_panel_V01.fbx",
+         "object": "AP017_breakable_fence_panel_V01_BROKEN_LOD0",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          364,
+          0
+         ],
+         "triangles": 364,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_fence_panel_V01.fbx",
+         "object": "AP017_breakable_fence_panel_V01_BROKEN_LOD1",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          145,
+          0
+         ],
+         "triangles": 145,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_fence_panel_V01.fbx",
+         "object": "AP017_breakable_fence_panel_V01_BROKEN_LOD2",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          44,
+          0
+         ],
+         "triangles": 44,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_fence_panel_V01.fbx",
+         "object": "AP017_breakable_fence_panel_V01_LOD0",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          296,
+          0
+         ],
+         "triangles": 296,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_fence_panel_V01.fbx",
+         "object": "AP017_breakable_fence_panel_V01_LOD1",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          116,
+          0
+         ],
+         "triangles": 116,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_fence_panel_V01.fbx",
+         "object": "AP017_breakable_fence_panel_V01_LOD2",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          36,
+          0
+         ],
+         "triangles": 36,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_fence_panel_V01.fbx",
+       "object": "AP017_breakable_fence_panel_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.045,
+          -0.045,
+          0.0
+         ],
+         "max": [
+          1.525981,
+          0.045,
+          1.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_fence_panel_V01.fbx",
+       "object": "AP017_breakable_fence_panel_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.045,
+          -0.045,
+          0.0
+         ],
+         "max": [
+          1.525981,
+          0.045,
+          1.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_fence_panel_V01.fbx",
+       "object": "AP017_breakable_fence_panel_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.095,
+          -0.095,
+          -0.05
+         ],
+         "max": [
+          1.575981,
+          0.095,
+          1.13
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakBamboo",
+     "residueCell": "TR_wood"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_breakable_fence_panel_V02",
+     "boundsMin": [
+      -0.045,
+      -0.045,
+      0.0
+     ],
+     "boundsMax": [
+      1.526,
+      0.045,
+      1.08
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_fence_panel_V02.fbx",
+         "object": "AP017_breakable_fence_panel_V02_BROKEN_LOD0",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          328,
+          0
+         ],
+         "triangles": 328,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_fence_panel_V02.fbx",
+         "object": "AP017_breakable_fence_panel_V02_BROKEN_LOD1",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          130,
+          0
+         ],
+         "triangles": 130,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_fence_panel_V02.fbx",
+         "object": "AP017_breakable_fence_panel_V02_BROKEN_LOD2",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          38,
+          0
+         ],
+         "triangles": 38,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_fence_panel_V02.fbx",
+         "object": "AP017_breakable_fence_panel_V02_LOD0",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          292,
+          0
+         ],
+         "triangles": 292,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_fence_panel_V02.fbx",
+         "object": "AP017_breakable_fence_panel_V02_LOD1",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          116,
+          0
+         ],
+         "triangles": 116,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_fence_panel_V02.fbx",
+         "object": "AP017_breakable_fence_panel_V02_LOD2",
+         "materials": [
+          "bamboo_culm",
+          "wood"
+         ],
+         "facesPerSlot": [
+          33,
+          0
+         ],
+         "triangles": 33,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_fence_panel_V02.fbx",
+       "object": "AP017_breakable_fence_panel_V02_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.045,
+          -0.045,
+          0.0
+         ],
+         "max": [
+          1.525981,
+          0.045,
+          1.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_fence_panel_V02.fbx",
+       "object": "AP017_breakable_fence_panel_V02_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.045,
+          -0.045,
+          0.0
+         ],
+         "max": [
+          1.525981,
+          0.045,
+          1.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_fence_panel_V02.fbx",
+       "object": "AP017_breakable_fence_panel_V02_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.095,
+          -0.095,
+          -0.05
+         ],
+         "max": [
+          1.575981,
+          0.095,
+          1.13
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakBamboo",
+     "residueCell": "TR_wood"
+    }
+   ]
+  },
+  {
+   "family": "breakable_lantern_paper",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_lantern_paper_V01",
+     "boundsMin": [
+      -0.1805,
+      -0.1805,
+      0.0
+     ],
+     "boundsMax": [
+      0.1805,
+      0.1805,
+      2.01
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+         "object": "AP017_breakable_lantern_paper_V01_BROKEN_LOD0",
+         "materials": [
+          "wood",
+          "plaster_hf003",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          24,
+          248,
+          844
+         ],
+         "triangles": 1116,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+         "object": "AP017_breakable_lantern_paper_V01_BROKEN_LOD1",
+         "materials": [
+          "wood",
+          "plaster_hf003",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          24,
+          92,
+          322
+         ],
+         "triangles": 438,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+         "object": "AP017_breakable_lantern_paper_V01_BROKEN_LOD2",
+         "materials": [
+          "wood",
+          "plaster_hf003",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          2,
+          2,
+          166
+         ],
+         "triangles": 170,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+         "object": "AP017_breakable_lantern_paper_V01_LOD0",
+         "materials": [
+          "wood",
+          "plaster_hf003",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          132,
+          128,
+          688
+         ],
+         "triangles": 948,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+         "object": "AP017_breakable_lantern_paper_V01_LOD1",
+         "materials": [
+          "wood",
+          "plaster_hf003",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          66,
+          64,
+          244
+         ],
+         "triangles": 374,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+         "object": "AP017_breakable_lantern_paper_V01_LOD2",
+         "materials": [
+          "wood",
+          "plaster_hf003",
+          "bamboo_culm"
+         ],
+         "facesPerSlot": [
+          3,
+          16,
+          96
+         ],
+         "triangles": 115,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+       "object": "AP017_breakable_lantern_paper_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.180536,
+          -0.180536,
+          0.0
+         ],
+         "max": [
+          0.180536,
+          0.180536,
+          2.01
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+       "object": "AP017_breakable_lantern_paper_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.180536,
+          -0.180536,
+          0.0
+         ],
+         "max": [
+          0.180536,
+          0.180536,
+          2.01
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_lantern_paper_V01.fbx",
+       "object": "AP017_breakable_lantern_paper_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.230536,
+          -0.230536,
+          -0.05
+         ],
+         "max": [
+          0.230536,
+          0.230536,
+          2.06
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakPaper",
+     "residueCell": "BR_cloth"
+    }
+   ]
+  },
+  {
+   "family": "breakable_lantern_stone",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_lantern_stone_V01",
+     "boundsMin": [
+      -0.31,
+      -0.2685,
+      0.0
+     ],
+     "boundsMax": [
+      0.31,
+      0.2685,
+      2.1
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+         "object": "AP017_breakable_lantern_stone_V01_BROKEN_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          710
+         ],
+         "triangles": 710,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+         "object": "AP017_breakable_lantern_stone_V01_BROKEN_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          284
+         ],
+         "triangles": 284,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+         "object": "AP017_breakable_lantern_stone_V01_BROKEN_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          84
+         ],
+         "triangles": 84,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+         "object": "AP017_breakable_lantern_stone_V01_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          980
+         ],
+         "triangles": 980,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+         "object": "AP017_breakable_lantern_stone_V01_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          392
+         ],
+         "triangles": 392,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+         "object": "AP017_breakable_lantern_stone_V01_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          118
+         ],
+         "triangles": 118,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+       "object": "AP017_breakable_lantern_stone_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.31,
+          -0.268468,
+          0.0
+         ],
+         "max": [
+          0.31,
+          0.268468,
+          2.1
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+       "object": "AP017_breakable_lantern_stone_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.31,
+          -0.268468,
+          0.0
+         ],
+         "max": [
+          0.31,
+          0.268468,
+          2.1
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_lantern_stone_V01.fbx",
+       "object": "AP017_breakable_lantern_stone_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.36,
+          -0.318468,
+          -0.05
+         ],
+         "max": [
+          0.36,
+          0.318468,
+          2.15
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakStone",
+     "residueCell": "TL_ceramic"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_breakable_lantern_stone_V02",
+     "boundsMin": [
+      -0.475,
+      -0.4114,
+      0.0
+     ],
+     "boundsMax": [
+      0.475,
+      0.4114,
+      1.6
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+         "object": "AP017_breakable_lantern_stone_V02_BROKEN_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          668
+         ],
+         "triangles": 668,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+         "object": "AP017_breakable_lantern_stone_V02_BROKEN_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          266
+         ],
+         "triangles": 266,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+         "object": "AP017_breakable_lantern_stone_V02_BROKEN_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+         "object": "AP017_breakable_lantern_stone_V02_LOD0",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          1232
+         ],
+         "triangles": 1232,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+         "object": "AP017_breakable_lantern_stone_V02_LOD1",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          492
+         ],
+         "triangles": 492,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+         "object": "AP017_breakable_lantern_stone_V02_LOD2",
+         "materials": [
+          "stone"
+         ],
+         "facesPerSlot": [
+          145
+         ],
+         "triangles": 145,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+       "object": "AP017_breakable_lantern_stone_V02_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.475,
+          -0.411362,
+          0.0
+         ],
+         "max": [
+          0.475,
+          0.411362,
+          1.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+       "object": "AP017_breakable_lantern_stone_V02_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.475,
+          -0.411362,
+          0.0
+         ],
+         "max": [
+          0.475,
+          0.411362,
+          1.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_lantern_stone_V02.fbx",
+       "object": "AP017_breakable_lantern_stone_V02_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.525,
+          -0.461362,
+          -0.05
+         ],
+         "max": [
+          0.525,
+          0.461362,
+          1.65
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakStone",
+     "residueCell": "TL_ceramic"
+    }
+   ]
+  },
+  {
+   "family": "breakable_planter",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_planter_V01",
+     "boundsMin": [
+      -0.375,
+      -0.375,
+      0.0
+     ],
+     "boundsMax": [
+      0.375,
+      0.375,
+      1.0183
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_planter_V01.fbx",
+         "object": "AP017_breakable_planter_V01_BROKEN_LOD0",
+         "materials": [
+          "roof",
+          "earth_01",
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          350,
+          158,
+          720
+         ],
+         "triangles": 1228,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_planter_V01.fbx",
+         "object": "AP017_breakable_planter_V01_BROKEN_LOD1",
+         "materials": [
+          "roof",
+          "earth_01",
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          284,
+          138,
+          83
+         ],
+         "triangles": 505,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_planter_V01.fbx",
+         "object": "AP017_breakable_planter_V01_BROKEN_LOD2",
+         "materials": [
+          "roof",
+          "earth_01",
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          106,
+          30,
+          12
+         ],
+         "triangles": 148,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_planter_V01.fbx",
+         "object": "AP017_breakable_planter_V01_LOD0",
+         "materials": [
+          "roof",
+          "earth_01",
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          480,
+          94,
+          720
+         ],
+         "triangles": 1294,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_planter_V01.fbx",
+         "object": "AP017_breakable_planter_V01_LOD1",
+         "materials": [
+          "roof",
+          "earth_01",
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          374,
+          54,
+          100
+         ],
+         "triangles": 528,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_planter_V01.fbx",
+         "object": "AP017_breakable_planter_V01_LOD2",
+         "materials": [
+          "roof",
+          "earth_01",
+          "green_foliage_02"
+         ],
+         "facesPerSlot": [
+          126,
+          14,
+          17
+         ],
+         "triangles": 157,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_planter_V01.fbx",
+       "object": "AP017_breakable_planter_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.375,
+          -0.375,
+          0.0
+         ],
+         "max": [
+          0.375,
+          0.375,
+          0.7
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_planter_V01.fbx",
+       "object": "AP017_breakable_planter_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.375,
+          -0.375,
+          0.0
+         ],
+         "max": [
+          0.375,
+          0.375,
+          0.7
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_planter_V01.fbx",
+       "object": "AP017_breakable_planter_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.425,
+          -0.425,
+          -0.05
+         ],
+         "max": [
+          0.425,
+          0.425,
+          0.75
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakCeramic",
+     "residueCell": "TL_ceramic"
+    }
+   ]
+  },
+  {
+   "family": "breakable_shoji",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_shoji_V01",
+     "boundsMin": [
+      -0.45,
+      -0.18,
+      0.0
+     ],
+     "boundsMax": [
+      0.45,
+      0.18,
+      1.8
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_shoji_V01.fbx",
+         "object": "AP017_breakable_shoji_V01_BROKEN_LOD0",
+         "materials": [
+          "wood",
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          156,
+          228
+         ],
+         "triangles": 384,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_shoji_V01.fbx",
+         "object": "AP017_breakable_shoji_V01_BROKEN_LOD1",
+         "materials": [
+          "wood",
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          92,
+          62
+         ],
+         "triangles": 154,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_shoji_V01.fbx",
+         "object": "AP017_breakable_shoji_V01_BROKEN_LOD2",
+         "materials": [
+          "wood",
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          4,
+          48
+         ],
+         "triangles": 52,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_shoji_V01.fbx",
+         "object": "AP017_breakable_shoji_V01_LOD0",
+         "materials": [
+          "wood",
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          168,
+          12
+         ],
+         "triangles": 180,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_shoji_V01.fbx",
+         "object": "AP017_breakable_shoji_V01_LOD1",
+         "materials": [
+          "wood",
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          66,
+          6
+         ],
+         "triangles": 72,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_shoji_V01.fbx",
+         "object": "AP017_breakable_shoji_V01_LOD2",
+         "materials": [
+          "wood",
+          "plaster_hf003"
+         ],
+         "facesPerSlot": [
+          12,
+          10
+         ],
+         "triangles": 22,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_shoji_V01.fbx",
+       "object": "AP017_breakable_shoji_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.45,
+          -0.18,
+          0.0
+         ],
+         "max": [
+          0.45,
+          0.18,
+          1.8
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_shoji_V01.fbx",
+       "object": "AP017_breakable_shoji_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.45,
+          -0.18,
+          0.0
+         ],
+         "max": [
+          0.45,
+          0.18,
+          1.8
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_shoji_V01.fbx",
+       "object": "AP017_breakable_shoji_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.5,
+          -0.23,
+          -0.05
+         ],
+         "max": [
+          0.5,
+          0.23,
+          1.85
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakPaper",
+     "residueCell": "BR_cloth"
+    }
+   ]
+  },
+  {
+   "family": "breakable_sign",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_sign_V01",
+     "boundsMin": [
+      -0.3,
+      -0.3,
+      0.0
+     ],
+     "boundsMax": [
+      0.3,
+      0.3,
+      1.6
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_sign_V01.fbx",
+         "object": "AP017_breakable_sign_V01_BROKEN_LOD0",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          104
+         ],
+         "triangles": 104,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sign_V01.fbx",
+         "object": "AP017_breakable_sign_V01_BROKEN_LOD1",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          42
+         ],
+         "triangles": 42,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sign_V01.fbx",
+         "object": "AP017_breakable_sign_V01_BROKEN_LOD2",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_sign_V01.fbx",
+         "object": "AP017_breakable_sign_V01_LOD0",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sign_V01.fbx",
+         "object": "AP017_breakable_sign_V01_LOD1",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sign_V01.fbx",
+         "object": "AP017_breakable_sign_V01_LOD2",
+         "materials": [
+          "wood"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_sign_V01.fbx",
+       "object": "AP017_breakable_sign_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.3,
+          -0.3,
+          0.0
+         ],
+         "max": [
+          0.3,
+          0.3,
+          1.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_sign_V01.fbx",
+       "object": "AP017_breakable_sign_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.3,
+          -0.3,
+          0.0
+         ],
+         "max": [
+          0.3,
+          0.3,
+          1.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_sign_V01.fbx",
+       "object": "AP017_breakable_sign_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.35,
+          -0.35,
+          -0.05
+         ],
+         "max": [
+          0.35,
+          0.35,
+          1.65
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakWood",
+     "residueCell": "TR_wood"
+    }
+   ]
+  },
+  {
+   "family": "breakable_strawbale",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_strawbale_V01",
+     "boundsMin": [
+      -0.515,
+      -0.5341,
+      -0.0
+     ],
+     "boundsMax": [
+      0.5092,
+      0.5315,
+      1.1965
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_strawbale_V01.fbx",
+         "object": "AP017_breakable_strawbale_V01_BROKEN_LOD0",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          1460
+         ],
+         "triangles": 1460,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_strawbale_V01.fbx",
+         "object": "AP017_breakable_strawbale_V01_BROKEN_LOD1",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          584
+         ],
+         "triangles": 584,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_strawbale_V01.fbx",
+         "object": "AP017_breakable_strawbale_V01_BROKEN_LOD2",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          175
+         ],
+         "triangles": 175,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_strawbale_V01.fbx",
+         "object": "AP017_breakable_strawbale_V01_LOD0",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          1450
+         ],
+         "triangles": 1450,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_strawbale_V01.fbx",
+         "object": "AP017_breakable_strawbale_V01_LOD1",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          579
+         ],
+         "triangles": 579,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_strawbale_V01.fbx",
+         "object": "AP017_breakable_strawbale_V01_LOD2",
+         "materials": [
+          "prop_strawbales"
+         ],
+         "facesPerSlot": [
+          174
+         ],
+         "triangles": 174,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_strawbale_V01.fbx",
+       "object": "AP017_breakable_strawbale_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.514982,
+          -0.534101,
+          -3.6e-05
+         ],
+         "max": [
+          0.509197,
+          0.531513,
+          1.196452
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_strawbale_V01.fbx",
+       "object": "AP017_breakable_strawbale_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.514982,
+          -0.534101,
+          -3.6e-05
+         ],
+         "max": [
+          0.509197,
+          0.531513,
+          1.196452
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_strawbale_V01.fbx",
+       "object": "AP017_breakable_strawbale_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.564982,
+          -0.584101,
+          -0.050036
+         ],
+         "max": [
+          0.559197,
+          0.581513,
+          1.246452
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakStraw",
+     "residueCell": "BL_straw"
+    }
+   ]
+  }
+ ]
+}

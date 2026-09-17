@@ -180,6 +180,7 @@ namespace DD.Art.Pipeline.EditorTools
                 for (int c = 0; c < variation.colliders.Count; c++)
                 {
                     ArtLibraryManifest.Collider col = variation.colliders[c];
+                    if (col.IsNone) continue;   // WP-038B: AP-017 litter footprint, no collision
                     Mesh mesh = LoadMesh(ap, family.family, col.fbx, col.@object);
                     Transform parent;
                     if (col.broken)
@@ -228,8 +229,8 @@ namespace DD.Art.Pipeline.EditorTools
                     AddLodGroup(broken.gameObject, brokenLods, root.transform);
                     SetLayerRecursively(broken.gameObject, envLayer);
                     broken.gameObject.SetActive(false);
-                    // WP-013 (REQ-113): the intact/broken switch lives on the prefab root.
-                    ArtVfxBuilder.Bind(root);
+                    // WP-013 (REQ-113): the intact/broken switch lives on the prefab root; WP-038B: AP-017 event id / residue cell.
+                    ArtVfxBuilder.Bind(root, variation.breakEventId, variation.residueCell);
                 }
 
                 string path = ArtLibraryPaths.Prefab(ap, family.family, variation.prefab);

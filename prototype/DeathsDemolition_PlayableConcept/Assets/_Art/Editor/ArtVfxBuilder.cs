@@ -351,6 +351,12 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Adds/refreshes the component on a prefab root with a Broken child. Returns true when something changed.</summary>
         public static bool Bind(GameObject root)
         {
+            return Bind(root, null, null);
+        }
+
+        /// <summary>WP-038B · As <see cref="Bind(GameObject)"/>, also writing the AP-017 break event id / residue cell (null = keep the prop's current values, i.e. the AP-003B defaults).</summary>
+        public static bool Bind(GameObject root, string breakEventId, string residueCell)
+        {
             Transform broken = root.transform.Find(BreakableProp.BrokenName);
             Transform geometry = root.transform.Find(BreakableProp.GeometryName);
             if (broken == null || geometry == null)
@@ -371,6 +377,20 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= g.objectReferenceValue != geometry || b.objectReferenceValue != broken;
             g.objectReferenceValue = geometry;
             b.objectReferenceValue = broken;
+            if (!string.IsNullOrEmpty(breakEventId))
+            {
+                SerializedProperty e = so.FindProperty("_eventId");
+                changed |= e.stringValue != breakEventId;
+                e.stringValue = breakEventId;
+            }
+
+            if (!string.IsNullOrEmpty(residueCell))
+            {
+                SerializedProperty r = so.FindProperty("_residueCell");
+                changed |= r.stringValue != residueCell;
+                r.stringValue = residueCell;
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
 
             // Intact by default; the Broken child is inactive in the generated prefab already.

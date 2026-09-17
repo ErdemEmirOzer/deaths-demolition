@@ -20,7 +20,7 @@ namespace DD.Art
     public static class ArtLibraryPaths
     {
         /// <summary>The imported libraries, in production order (WP-012: AP-002/AP-003/AP-003B; WP-014: AP-005 modules).</summary>
-        public static readonly string[] Packages = { "AP-002", "AP-003", "AP-003B", "AP-005", "AP-005B" };
+        public static readonly string[] Packages = { "AP-002", "AP-003", "AP-003B", "AP-005", "AP-005B", "AP-017" };   // WP-038B: AP-017 Phase 1 (derivatives + world breakables)
 
         // ------------------------------------------------------------ WP-014 world assembly
 
@@ -34,7 +34,9 @@ namespace DD.Art
         /// <summary>WP-020 · AP-005C delta (v003) applied after the v002 delta.</summary>
         public const string Ap005PlacementDeltaV3Json = WorldRoot + "/AP005_placement-delta-v003.json";
         /// <summary>The delta chain in application order; each file's base must describe the instance count the previous step produced.</summary>
-        public static readonly string[] Ap005PlacementDeltaJsons = { Ap005PlacementDeltaJson, Ap005PlacementDeltaV3Json };
+        /// <summary>WP-038B · AP-017 Phase 1 delta (+456 → 3120: derivative litter / piles + world breakables; added only).</summary>
+        public const string Ap005PlacementDeltaV4Json = WorldRoot + "/AP005_placement-delta-v004.json";
+        public static readonly string[] Ap005PlacementDeltaJsons = { Ap005PlacementDeltaJson, Ap005PlacementDeltaV3Json, Ap005PlacementDeltaV4Json };
         /// <summary>The imported placement (Unity space) the importer and the world bootstrap read.</summary>
         public const string Ap005PlacementAsset = WorldRoot + "/AP005_Placement.asset";
         /// <summary>The stand-in soil ground under the whole 90 m map (AP-005 ships only the NE golden-slice ground plate); holes at the koi basins.</summary>

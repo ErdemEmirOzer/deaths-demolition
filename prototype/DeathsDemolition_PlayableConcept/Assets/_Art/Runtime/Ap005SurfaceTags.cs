@@ -46,7 +46,14 @@ namespace DD.Art
             { "palace_roof_bay", SurfaceKind.Stone }, { "small_breakable", SurfaceKind.Stone },
             // vegetation & straw
             { "creeping_groundcover", SurfaceKind.Foliage }, { "greenery_cluster", SurfaceKind.Foliage }, { "understory_shrub", SurfaceKind.Foliage },
-            { "sakura_trunk", SurfaceKind.Wood }, { "sakura_foliage", SurfaceKind.Foliage }, { "strawbales", SurfaceKind.Foliage }
+            { "sakura_trunk", SurfaceKind.Wood }, { "sakura_foliage", SurfaceKind.Foliage }, { "strawbales", SurfaceKind.Foliage },
+            // WP-038B · AP-017 Phase 1 derivatives (litter / piles) and world breakables (by their break material: stone / ceramic → Stone, wood / bamboo → Wood, paper → Wood frame, straw → Foliage)
+            { "fallen_culm", SurfaceKind.Wood }, { "broken_fence", SurfaceKind.Wood }, { "stone_pile", SurfaceKind.Stone }, { "moss_patch", SurfaceKind.Foliage },
+            { "leaf_pile", SurfaceKind.Foliage }, { "fallen_lantern", SurfaceKind.Stone }, { "broken_planter", SurfaceKind.Stone }, { "yard_stack", SurfaceKind.Wood },
+            { "shore_debris", SurfaceKind.Wood },
+            { "breakable_lantern_stone", SurfaceKind.Stone }, { "breakable_lantern_paper", SurfaceKind.Wood }, { "breakable_planter", SurfaceKind.Stone },
+            { "breakable_fence_panel", SurfaceKind.Wood }, { "breakable_strawbale", SurfaceKind.Foliage }, { "breakable_bench", SurfaceKind.Wood },
+            { "breakable_sign", SurfaceKind.Wood }, { "breakable_shoji", SurfaceKind.Wood }
         };
 
         /// <summary>Fallback when a family is not in the table (counted in <see cref="UnknownFamilies"/>).</summary>

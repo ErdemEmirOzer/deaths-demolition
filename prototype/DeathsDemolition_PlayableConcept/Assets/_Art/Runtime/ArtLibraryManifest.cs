@@ -56,6 +56,10 @@ namespace DD.Art
             public float[] boundsMax;
             public List<Part> parts = new List<Part>();
             public List<Collider> colliders = new List<Collider>();
+            /// <summary>WP-038B · AP-017 breakables: the break event id (BreakStone / BreakCeramic / BreakWood / BreakBamboo / BreakPaper / BreakStraw) for the VFX / SFX rows. Empty = the AP-003B default.</summary>
+            public string breakEventId;
+            /// <summary>WP-038B · AP-017 breakables: residue decal cell of the AP-010B 2×2 sheet (TL_ceramic / TR_wood / BL_straw / BR_cloth).</summary>
+            public string residueCell;
         }
 
         /// <summary>
@@ -109,6 +113,8 @@ namespace DD.Art
             public bool broken;
 
             public bool IsTrigger => @class != null && @class.StartsWith(ClassTrigger, StringComparison.Ordinal);
+            /// <summary>WP-038B · AP-017 flat litter: the proxy is a placement footprint only, no collider is built.</summary>
+            public bool IsNone => @class == ClassNone;
         }
 
         /// <summary>
@@ -144,6 +150,7 @@ namespace DD.Art
         public const string RoleBroken = "broken";
         public const string RoleWater = "water";
         public const string ClassTrigger = "trigger";
+        public const string ClassNone = "none";
 
         /// <summary>Blender-space bounds of a variation as a Unity prefab-space Bounds ((x, z, y), the AP world contract).</summary>
         public static Bounds PrefabBounds(Variation v)

@@ -78,16 +78,19 @@ namespace DD.Art.Tests.EditMode
 
             // WP-020: the chain v002 → v003; the asset keeps one record per file and the totals.
             WorldPlacementAsset p = Placement();
-            Assert.AreEqual(2, p.deltas.Count, "delta zinciri: v002 + v003");
+            Assert.AreEqual(3, p.deltas.Count, "delta zinciri: v002 + v003 + v004 (WP-038B AP-017)");
             WorldPlacementAsset.DeltaRecord r2 = p.deltas[0], r3 = p.deltas[1];
             Assert.AreEqual("v002", r2.version); Assert.AreEqual(Sha256(bytes), r2.sha256, "v002 delta sha256");
             Assert.AreEqual(202, r2.added); Assert.AreEqual(9, r2.changed); Assert.AreEqual(169, r2.removed);
             Assert.AreEqual("v003", r3.version); Assert.AreEqual(Sha256(File.ReadAllBytes(ArtLibraryPaths.Ap005PlacementDeltaV3Json)), r3.sha256, "v003 delta sha256");
             Assert.AreEqual(312, r3.added); Assert.AreEqual(23, r3.changed); Assert.AreEqual(35, r3.removed);
-            Assert.AreEqual(r3.sha256, p.deltaSha256, "skaler alanlar son deltayı taşır");
-            Assert.AreEqual(202 + 312, p.deltaAdded); Assert.AreEqual(9 + 23, p.deltaChanged); Assert.AreEqual(169 + 35, p.deltaRemoved);
-            Assert.AreEqual(2354 - 169 + 202 - 35 + 312, p.instances.Count);
-            Assert.AreEqual(2664, p.instances.Count);
+            WorldPlacementAsset.DeltaRecord r4 = p.deltas[2];
+            Assert.AreEqual("v004", r4.version); Assert.AreEqual(Sha256(File.ReadAllBytes(ArtLibraryPaths.Ap005PlacementDeltaV4Json)), r4.sha256, "v004 delta sha256");
+            Assert.AreEqual(456, r4.added); Assert.AreEqual(0, r4.changed); Assert.AreEqual(0, r4.removed);
+            Assert.AreEqual(r4.sha256, p.deltaSha256, "skaler alanlar son deltayı taşır");
+            Assert.AreEqual(202 + 312 + 456, p.deltaAdded); Assert.AreEqual(9 + 23, p.deltaChanged); Assert.AreEqual(169 + 35, p.deltaRemoved);
+            Assert.AreEqual(2354 - 169 + 202 - 35 + 312 + 456, p.instances.Count);
+            Assert.AreEqual(3120, p.instances.Count);
 
             var byId = new Dictionary<string, WorldPlacementAsset.Instance>(StringComparer.Ordinal);
             foreach (WorldPlacementAsset.Instance i in p.instances) byId[i.id] = i;
@@ -110,7 +113,8 @@ namespace DD.Art.Tests.EditMode
             foreach (string id in r3.removedIds) if (id.CompareTo("AP005_i2354") <= 0) v3RemovedV1++;
             Assert.AreEqual(29, v3RemovedV1, "v003'ün v001 kayıtlarından kaldırdıkları");
             Assert.AreEqual(2354 - 169 - v3RemovedV1, firstAdded, "v002 eklenenler v001 kalanlarının ardında");
-            Assert.AreEqual(2664 - 312, firstV3, "v003 eklenenler en sonda");
+            Assert.AreEqual(2664 - 312, firstV3, "v003 eklenenler v004'ten önce");
+            for (int i = 2664; i < p.instances.Count; i++) Assert.AreEqual("v004", p.instances[i].deltaVersion, "v004 eklenenler en sonda: " + p.instances[i].id);
             int v3Records = 0;
             foreach (WorldPlacementAsset.Instance i in p.instances) if (i.deltaVersion == WorldPlacementAsset.DeltaVersionTagV3) v3Records++;
             Assert.AreEqual(312 + 23, v3Records, "v003 ile eklenen + değişen kayıtlar");
@@ -141,7 +145,7 @@ namespace DD.Art.Tests.EditMode
             }
 
             var hatalar = new List<string>();
-            int tilted = 0, checkedCount = 0, overrideCount = 0, v2 = 0, v3 = 0;
+            int tilted = 0, checkedCount = 0, overrideCount = 0, v2 = 0, v3 = 0, v4 = 0;
             foreach (KeyValuePair<string, KeyValuePair<string, Dictionary<string, object>>> e in expectedRecords)
             {
                 string id = e.Key, version = e.Value.Key;
@@ -157,7 +161,7 @@ namespace DD.Art.Tests.EditMode
                 if (Vector3.Distance(euler, inst.rotationEuler) > 1e-4f) hatalar.Add(id + ": euler " + inst.rotationEuler + " ≠ " + euler);
                 if (Mathf.Abs(inst.yawDegrees - euler.z) > 1e-4f) hatalar.Add(id + ": yaw");
                 if (inst.deltaVersion != version) hatalar.Add(id + ": deltaVersion '" + inst.deltaVersion + "' ≠ " + version);
-                if (version == WorldPlacementAsset.DeltaVersionTag) v2++; else v3++;
+                if (version == WorldPlacementAsset.DeltaVersionTag) v2++; else if (version == WorldPlacementAsset.DeltaVersionTagV3) v3++; else v4++;
                 if (inst.IsTilted) tilted++;
                 string mo = r.ContainsKey("material_override") ? ArtJson.AsString(r["material_override"]) : string.Empty;
                 if (mo != (inst.materialOverride ?? string.Empty)) hatalar.Add(id + ": material_override '" + inst.materialOverride + "' ≠ '" + mo + "'");
@@ -169,8 +173,9 @@ namespace DD.Art.Tests.EditMode
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             // v002: 211 records (202 + 9) − 6 removed by v003 − those v003 re-changed; v003: 312 + 23.
             Assert.AreEqual(312 + 23, v3, "v003 kayıtları");
+            Assert.AreEqual(456, v4, "v004 kayıtları (WP-038B AP-017, yalnız ekleme)");
             Assert.AreEqual(211 - 14 - 13, v2, "v002 kayıtları: v003 14'ünü kaldırdı (6 eklenen + 8 değişen), 23 değişikliğinin 13'ü v002 kayıtlarına (10'u v001 kayıtlarına)");
-            Assert.AreEqual(v2 + v3, checkedCount);
+            Assert.AreEqual(v2 + v3 + v4, checkedCount);
             Assert.AreEqual(8 + 4, tilted, "AP-005B: sekiz eğik alınlık paneli (Y ekseni) + AP-005C: dört dikey alınlık dikmesi (timber_beam Y 90°)");
             Assert.GreaterOrEqual(overrideCount, 100, "material_override taşıyan delta kaydı (v002 100 + v003 kerb/çatı)");
 

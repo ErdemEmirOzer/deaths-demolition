@@ -78,7 +78,7 @@ namespace DD.Art.Tests.EditMode
         // ================================================================== şema ve sayılar
 
         [Test]
-        public void Placement_SemaGecerli_Sayilar_2664_49_24_12_12_5_KaynakShaAyni()
+        public void Placement_SemaGecerli_Sayilar_3120_49_24_12_12_5_KaynakShaAyni()
         {
             Dictionary<string, object> doc = SourceJson();
             Assert.DoesNotThrow(() => PlacementImporter.Validate(doc), "dd-placement-v1 şema doğrulaması");
@@ -87,7 +87,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(WorldPlacementAsset.Schema, p.schema);
             Assert.AreEqual("AP-005", p.package);
             // WP-017: v001 source (2354) + AP-005B delta (+202 / ~9 / −169) = 2387; WP-020: + AP-005C delta (+312 / ~23 / −35) = 2664.
-            Assert.AreEqual(2664, p.instances.Count, "instances");
+            Assert.AreEqual(3120, p.instances.Count, "instances");   // WP-038B: + AP-017 delta v004 (+456)
             Assert.AreEqual(49, p.routes.Count, "routes");
             Assert.AreEqual(24, p.markers.Count, "markers");
             Assert.AreEqual(12, p.spawnPoints.Count, "spawn_points");
@@ -351,7 +351,7 @@ namespace DD.Art.Tests.EditMode
         // ================================================================== sahne atamaları
 
         [Test]
-        public void Sahne_2664Ornek_RegionNavmeshKatmanStatik_NavMeshVerisi()
+        public void Sahne_3120Ornek_RegionNavmeshKatmanStatik_NavMeshVerisi()
         {
             WorldPlacementAsset p = Placement();
             Scene scene = OpenWorld();
@@ -404,8 +404,9 @@ namespace DD.Art.Tests.EditMode
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar.GetRange(0, Math.Min(40, hatalar.Count))));
             // WP-017 (AP-005B v002): center 20, north 397, east 630, south 527, west 813; occluder 146 ∪ fade 27 = 150.
             // WP-020 (AP-005C v003): center 20, north 473, east 696, south 589, west 886; occluder 186 ∪ fade 29 = 190.
-            Assert.AreEqual(20, regionCounts["center"]); Assert.AreEqual(473, regionCounts["north"]); Assert.AreEqual(696, regionCounts["east"]);
-            Assert.AreEqual(589, regionCounts["south"]); Assert.AreEqual(886, regionCounts["west"]);
+            // WP-038B (AP-017 v004, +456): center +4, north +75, east +126, south +67, west +120, outer +64; no new occluders.
+            Assert.AreEqual(24, regionCounts["center"]); Assert.AreEqual(548, regionCounts["north"]); Assert.AreEqual(822, regionCounts["east"]);
+            Assert.AreEqual(656, regionCounts["south"]); Assert.AreEqual(1006, regionCounts["west"]);
             Assert.AreEqual(190, occluders, "occluder_candidate 186 ∪ fade_mesh 29 = 190 (AP-005C v003)");
 
             NavMeshSurface surface = null;
@@ -440,7 +441,7 @@ namespace DD.Art.Tests.EditMode
             try
             {
                 PlacementImporter.ImportReport report = PlacementImporter.BuildScene(p);
-                Assert.AreEqual(2664, report.Instances);
+                Assert.AreEqual(3120, report.Instances);
                 Assert.IsEmpty(report.Unmatched, "eşleşmeyen kayıt");
                 Assert.AreEqual(once, report.Digest, "İkinci koşu farklı bir örnek kümesi üretti (idempotency kırık).");
                 Scene again = OpenWorld();

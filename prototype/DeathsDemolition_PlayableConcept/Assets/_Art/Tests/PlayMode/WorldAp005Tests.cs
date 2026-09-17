@@ -145,12 +145,12 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Dunya_TekBasina_2664Ornek_NavMeshPismis_MarkerlarVeSistemler()
+        public IEnumerator Dunya_TekBasina_3120Ornek_NavMeshPismis_MarkerlarVeSistemler()
         {
             yield return DunyayiTekBasinaYukle();
             Ap005WorldBootstrap.Result r = Ap005WorldBootstrap.Last;
             Assert.IsTrue(r.Ok, "Bootstrap raporu FAIL:\n" + r.Report);
-            Assert.AreEqual(2664, r.Instances);   // WP-020: AP-005C v003
+            Assert.AreEqual(3120, r.Instances);   // WP-020: AP-005C v003 2664 + WP-038B AP-017 v004 456
             Assert.Greater(r.NavMeshTriangles, 0, "NavMesh boş");
             Assert.AreEqual(0, r.Unreachable, "erişilemeyen marker:\n" + r.Report);
             Assert.AreEqual(12, UnityEngine.Object.FindObjectsOfType<SpawnPointMarker>().Length, "12 spawn marker");

@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP017_Library
+  m_EditorClassIdentifier: 
+  ap: AP-017
+  items:
+  - family: broken_fence
+    variation: V01
+    prefab: {fileID: 2420840358186037087, guid: 33fbccdfec0354f0da707c717f4a2df5, type: 3}
+  - family: broken_fence
+    variation: V02
+    prefab: {fileID: 6609046771841004029, guid: de210362118784ded8bc9aa4fd517018, type: 3}
+  - family: broken_fence
+    variation: V03
+    prefab: {fileID: 4485162460627961432, guid: f244c0dd26f064bd58fba037b7c85f7c, type: 3}
+  - family: broken_planter
+    variation: V01
+    prefab: {fileID: 3749519968331245470, guid: b461b081b12a0482c8367f8493773928, type: 3}
+  - family: broken_planter
+    variation: V02
+    prefab: {fileID: 5623291358132605509, guid: ec18280b9eb2d4bee8ab7f5b94c3c545, type: 3}
+  - family: fallen_culm
+    variation: V01
+    prefab: {fileID: 2317744920432320780, guid: c03735608db974f928148c7ebd78a0fc, type: 3}
+  - family: fallen_culm
+    variation: V02
+    prefab: {fileID: 7846247953744763276, guid: a5408a12c126143ddac4af37580cd1f5, type: 3}
+  - family: fallen_culm
+    variation: V03
+    prefab: {fileID: 2139670390947317911, guid: a3a4c86a9e7a34190a09036e2e3e4e08, type: 3}
+  - family: fallen_culm
+    variation: V04
+    prefab: {fileID: 8644783309638736973, guid: b51a6fdc1287546bcad370ab9bafb139, type: 3}
+  - family: fallen_lantern
+    variation: V01
+    prefab: {fileID: 5356661663141677083, guid: 59971e54c08ce40e892fe6d4814a0b00, type: 3}
+  - family: fallen_lantern
+    variation: V02
+    prefab: {fileID: 6216326033306982403, guid: 427569561259840d5937e23d090667b2, type: 3}
+  - family: leaf_pile
+    variation: V01
+    prefab: {fileID: 1159436943393034675, guid: 44e546bb01e3a4cecb2e95470b76c4f1, type: 3}
+  - family: leaf_pile
+    variation: V02
+    prefab: {fileID: 1288110717104652730, guid: 1db0d36e1874b434ab553f471e3ac797, type: 3}
+  - family: leaf_pile
+    variation: V03
+    prefab: {fileID: 7978537838616477322, guid: 81f6449607dee47c6a469ff30dbf7953, type: 3}
+  - family: moss_patch
+    variation: V01
+    prefab: {fileID: 968773844568163719, guid: f780d858b130a47388e6fcab9ffecde5, type: 3}
+  - family: moss_patch
+    variation: V02
+    prefab: {fileID: 8246083822462988617, guid: caa83b6e912904f539b2d8670a631d00, type: 3}
+  - family: moss_patch
+    variation: V03
+    prefab: {fileID: 6638472861425986135, guid: 473236b08de0f4c66b0f9fa16bb55da5, type: 3}
+  - family: moss_patch
+    variation: V04
+    prefab: {fileID: 896409271442792920, guid: d68be86e93da9412a9742b645ac3872e, type: 3}
+  - family: shore_debris
+    variation: V01
+    prefab: {fileID: 3543592872618051401, guid: 95acdc064b6764bdea3a633c46606f3c, type: 3}
+  - family: shore_debris
+    variation: V02
+    prefab: {fileID: 2573075867076709067, guid: 39546ca9c96b84fa5a196af486e9d0eb, type: 3}
+  - family: shore_debris
+    variation: V03
+    prefab: {fileID: 3031336806252746497, guid: 550ef8385d8134c0da9c5a91da53f3b1, type: 3}
+  - family: stone_pile
+    variation: V01
+    prefab: {fileID: 7058052745883860187, guid: e7b24e5f579bd4ce88ac2686dc398405, type: 3}
+  - family: stone_pile
+    variation: V02
+    prefab: {fileID: 357187597864489454, guid: e86d8b9a690154ff6aa3295a5015e80b, type: 3}
+  - family: stone_pile
+    variation: V03
+    prefab: {fileID: 6393380131225425722, guid: ace6d37387edd42de824d115131463a2, type: 3}
+  - family: stone_pile
+    variation: V04
+    prefab: {fileID: 3000274769355863598, guid: 3433a0def7e8f42a4a494e4b88423c78, type: 3}
+  - family: yard_stack
+    variation: V01
+    prefab: {fileID: 8186256348708853206, guid: b3c4fad080ad94d8780df999e2be697e, type: 3}
+  - family: yard_stack
+    variation: V02
+    prefab: {fileID: 6376590723796700826, guid: 2cb66af8686c94256af022ce04c8fa1b, type: 3}
+  - family: yard_stack
+    variation: V03
+    prefab: {fileID: 8813164306329837360, guid: 9ea5243875f044228ad9699d61fdad27, type: 3}
+  - family: breakable_bench
+    variation: V01
+    prefab: {fileID: 6274628480159563651, guid: e2e1bdfcdb6a24984bd275b8a8d689b9, type: 3}
+  - family: breakable_fence_panel
+    variation: V01
+    prefab: {fileID: 1846814152719296118, guid: 52087416a8d7942008cdd778b0e951f9, type: 3}
+  - family: breakable_fence_panel
+    variation: V02
+    prefab: {fileID: 277243388199361900, guid: a7b8b5666be94444d9ef421684d4b4ba, type: 3}
+  - family: breakable_lantern_paper
+    variation: V01
+    prefab: {fileID: 7697455911201807061, guid: 79119b30fa19b4782b0bab8eae847604, type: 3}
+  - family: breakable_lantern_stone
+    variation: V01
+    prefab: {fileID: 2257517720515041169, guid: 35d09ea427c56436789e9e5590d4ee46, type: 3}
+  - family: breakable_lantern_stone
+    variation: V02
+    prefab: {fileID: 332583088855984154, guid: 94c8cc9f554434f8984a12262ec0b81f, type: 3}
+  - family: breakable_planter
+    variation: V01
+    prefab: {fileID: 401059304818179994, guid: 706eca716dd684631b9ea37bf9d5c755, type: 3}
+  - family: breakable_shoji
+    variation: V01
+    prefab: {fileID: 7279856355250826772, guid: 5702a76eb348e443d933a244a0db6dd3, type: 3}
+  - family: breakable_sign
+    variation: V01
+    prefab: {fileID: 2309927887108438092, guid: 7bebec171bd7f493cb70168947dd4a10, type: 3}
+  - family: breakable_strawbale
+    variation: V01
+    prefab: {fileID: 5254462117164083731, guid: a01b8c873f0924c398dfae20af584811, type: 3}

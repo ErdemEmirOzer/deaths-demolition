@@ -41,6 +41,14 @@ namespace DD.Prototype.Props
         [Tooltip("Scale of the chip burst; 1 = the prefab's own size.")]
         [SerializeField] private float _burstScale = 1f;
 
+        /// <summary>WP-038B · AP-017 break event id for the VFX / SFX rows (BreakStone / BreakCeramic / BreakWood / BreakBamboo / BreakPaper / BreakStraw). The prefab builder writes it; AP-003B props keep the ceramic default.</summary>
+        [SerializeField] private string _eventId = DefaultEventId;
+        /// <summary>WP-038B · residue decal cell of the AP-010B 2×2 sheet (TL_ceramic / TR_wood / BL_straw / BR_cloth).</summary>
+        [SerializeField] private string _residueCell = DefaultResidueCell;
+
+        public const string DefaultEventId = "BreakCeramic";
+        public const string DefaultResidueCell = "TL_ceramic";
+
         private readonly List<Collider> _registered = new List<Collider>(4);
 
         private static int s_breakCount;
@@ -56,6 +64,10 @@ namespace DD.Prototype.Props
 
         public Transform Geometry => _geometry;
         public Transform Broken => _broken;
+        /// <summary>Break event id (see the AP-017 event table); consumers of <see cref="Broke"/> pick the VFX / SFX row by it.</summary>
+        public string EventId => string.IsNullOrEmpty(_eventId) ? DefaultEventId : _eventId;
+        /// <summary>Residue decal cell for the footprint (AP-010B sheet).</summary>
+        public string ResidueCell => string.IsNullOrEmpty(_residueCell) ? DefaultResidueCell : _residueCell;
 
         /// <summary>Resolves the two state roots by name when the fields are empty (the prefab builder fills them; a hand-placed copy may not).</summary>
         public void ResolveChildren()

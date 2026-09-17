@@ -88,6 +88,8 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(12, Manifest("AP-005").families.Count, "AP-005 12 aile (WP-014 modüller)");
             Assert.AreEqual(12, Manifest("AP-005").VariationCount, "AP-005 12 varyasyon");
             Assert.AreEqual(53, Manifest("AP-003B").VariationCount, "AP-003B 53 varyasyon");
+            Assert.AreEqual(17, Manifest("AP-017").families.Count, "AP-017 17 aile (9 türev + 8 kırılabilir, WP-038B)");
+            Assert.AreEqual(38, Manifest("AP-017").VariationCount, "AP-017 38 varyasyon");
 
             var hatalar = new List<string>();
             foreach ((string ap, ArtLibraryManifest.Family f, ArtLibraryManifest.Variation v) in Varyasyonlar())
@@ -145,7 +147,7 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(161, fbx, "143 + 12 (AP-005) + 6 (AP-005B, WP-017) = 161 kütüphane FBX");
+            Assert.AreEqual(199, fbx, "143 + 12 (AP-005) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) = 199 kütüphane FBX");
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.fbx contract=ok fbx=" + fbx + " meshRefs=" + mesh);
         }
@@ -266,7 +268,7 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(125, prefabSayisi, "12 + 42 + 53 + 12 (AP-005) + 6 (AP-005B) = 125 varyasyon prefabı");
+            Assert.AreEqual(163, prefabSayisi, "12 + 42 + 53 + 12 (AP-005) + 6 (AP-005B) + 38 (AP-017) = 163 varyasyon prefabı");
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.prefab count=" + prefabSayisi + " renderers=" + renderer);
         }
@@ -285,17 +287,20 @@ namespace DD.Art.Tests.EditMode
                 Collider[] hepsi = prefab.GetComponentsInChildren<Collider>(true);
                 int beklenenShell = 0;
                 int beklenenTrigger = 0;
+                int beklenenProxy = 0;   // WP-038B: AP-017 `none` footprints build no collider
                 foreach (ArtLibraryManifest.Collider c in v.colliders)
                 {
+                    if (c.IsNone) continue;
+                    beklenenProxy++;
                     beklenenShell += Math.Max(1, c.shells);
                     if (c.IsTrigger) beklenenTrigger += Math.Max(1, c.shells);
                 }
 
-                if (v.colliders.Count > 0 && hepsi.Length == 0) hatalar.Add(on + ": collider bekleniyordu, yok");
-                if (v.colliders.Count == 0 && hepsi.Length > 0) hatalar.Add(on + ": collider beklenmiyordu, " + hepsi.Length + " var");
+                if (beklenenProxy > 0 && hepsi.Length == 0) hatalar.Add(on + ": collider bekleniyordu, yok");
+                if (beklenenProxy == 0 && hepsi.Length > 0) hatalar.Add(on + ": collider beklenmiyordu, " + hepsi.Length + " var");
                 // AP-003B beyan ettiği shell sayısıyla birebir; AP-002/AP-003 tek shell beyan eder (roof envelope birden fazla olabilir).
                 if (ap == "AP-003B" && hepsi.Length != beklenenShell) hatalar.Add(on + ": " + hepsi.Length + " collider ≠ " + beklenenShell + " shell");
-                if (ap != "AP-003B" && hepsi.Length < v.colliders.Count) hatalar.Add(on + ": " + hepsi.Length + " collider < " + v.colliders.Count + " proxy");
+                if (ap != "AP-003B" && hepsi.Length < beklenenProxy) hatalar.Add(on + ": " + hepsi.Length + " collider < " + beklenenProxy + " proxy");
                 int t = 0;
                 foreach (Collider c in hepsi)
                 {
@@ -344,7 +349,7 @@ namespace DD.Art.Tests.EditMode
                 if (sapma > SinirToleransMetre) hatalar.Add(ap + " " + v.prefab + ": sapma " + (sapma * 1000f).ToString("0.0") + " mm (ölçüm " + olcum.min + ".." + olcum.max + ", manifest " + beklenen.min + ".." + beklenen.max + ")");
             }
 
-            Assert.AreEqual(125, sayi);
+            Assert.AreEqual(163, sayi);
             Assert.IsEmpty(hatalar, "Eksen sözleşmesi ihlali (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.aabb variations=" + sayi + " maxDeviationMm=" + (enBuyuk * 1000f).ToString("0.00"));
         }
@@ -499,7 +504,7 @@ namespace DD.Art.Tests.EditMode
                 toplam++;
             }
 
-            Assert.AreEqual(125, toplam);
+            Assert.AreEqual(163, toplam);
         }
     }
 }
