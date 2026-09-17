@@ -82,9 +82,10 @@ namespace DD.Prototype.Tests.EditMode
             // Ö-2: R8'de Standard zırhlı payı düşer.
             float sArm = shipped.weapons[0].rounds[7].armouredShare[0], o2Arm = o2.weapons[0].rounds[7].armouredShare[0];
             Assert.Less(o2Arm, sArm, "Ö-2 zırh doygunluğunu düşürür: " + sArm + " → " + o2Arm);
-            // Ö-4: B tek-hedef DPS artar (hasar 7 → 8); Ö-3: B/C açılış seviyeleri raporda 3/5.
+            // Ö-4: preset B hasarını DEC-085 değerine (8) çeker; sevk 8'in altındaysa DPS artar, sevk zaten 8 ise (WP-042) eşit kalır.
             EconomySimulator.WeaponTrack bS = shipped.weapons[1], b34 = o34.weapons[1];
-            Assert.Greater(b34.rounds[0].sustainedDps, bS.rounds[0].sustainedDps, "Ö-4 B DPS");
+            if (dmgOnce < 8f) Assert.Greater(b34.rounds[0].sustainedDps, bS.rounds[0].sustainedDps, "Ö-4 B DPS");
+            else Assert.AreEqual(bS.rounds[0].sustainedDps, b34.rounds[0].sustainedDps, 1e-3f, "Ö-4 sevkte (WP-042): preset DPS'i değiştirmez");
             Assert.AreEqual(3, b34.unlockLevel); Assert.AreEqual(5, o34.weapons[2].unlockLevel);
             Assert.AreEqual(lvlOnce, bS.unlockLevel, "sevk raporu sevk seviyesini taşır");
             Assert.AreEqual(3, lvlOnce, "DEC-085 Ö-3 sevk verisi: B seviye 3"); Assert.AreEqual(5, c.Weapons.Find(ClassicWeaponId.CombatShotgun).UnlockProfileLevel, "C seviye 5");
