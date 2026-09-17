@@ -283,7 +283,9 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
-            Assert.Greater(env, 150); Assert.AreEqual(85, chars, "45 karakter FBX + 36 AP-009B klip (WP-032B) + 4 AP-014 tier parçası (WP-036)");   // env sayısı silah/VFX modellerini de içerir (UV2'siz)
+            // WP-038D: the character set grows with every animation / weapon package (85 at WP-032B, 134 at WP-032F/WP-059) — the
+            // contract here is "every character FBX is UV2-free", counted by ArtCharacterTests, not pinned again.
+            Assert.Greater(env, 150); Assert.GreaterOrEqual(chars, 85, "karakter FBX kümesi (WP-032B 85 → WP-032F/059 134)");   // env sayısı silah/VFX modellerini de içerir (UV2'siz)
             Assert.LessOrEqual(ArtImportContract.ModelSecondaryUVMinLightmapResolution, ArtLightingBake.LightmapResolution, "margin, bake çözünürlüğünün altındaki bir çözünürlüğü de kaldıracak şekilde hesaplanır (küçük değer = geniş margin)");
             var sample = AssetDatabase.LoadAssetAtPath<GameObject>(ArtLibraryPaths.Fbx("AP-002", "plaster_wall", "plaster_wall_LOD0.fbx"));
             Assert.IsNotNull(sample);

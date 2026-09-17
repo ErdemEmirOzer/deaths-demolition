@@ -17,6 +17,7 @@ Shader "DD/Water v2"
         [MainColor] _BaseColor("Deep Color", Color) = (0.180, 0.294, 0.310, 0.92)
         _ShallowColor("Shallow Color", Color) = (0.240, 0.330, 0.330, 0.45)
         _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.88
+        _SpecularScale("Direct specular scale (main light)", Range(0.0, 1.0)) = 1.0
         _FresnelPower("Fresnel Power", Range(1.0, 8.0)) = 4.0
         _DepthFade("Depth Fade (m)", Range(0.05, 3.0)) = 0.6
 
@@ -100,6 +101,7 @@ Shader "DD/Water v2"
                 half4 _BaseColor;
                 half4 _ShallowColor;
                 half _Smoothness;
+                half _SpecularScale;
                 half _FresnelPower;
                 half _DepthFade;
                 float _NormalLargeTile, _NormalSmallTile, _NormalLargeSpeed, _NormalSmallSpeed;
@@ -243,6 +245,20 @@ Shader "DD/Water v2"
                 inputData.shadowMask = half4(1, 1, 1, 1);
 
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);
+
+                // WP-038D (AD SHOULD-5): tame the main-light hot spot without widening the lobe (a lower smoothness grew the lit
+                // area in WP-038) — subtract the share of the direct main-light GGX specular that _SpecularScale removes, with the
+                // same BRDF / radiance URP used above; additional lights (S-07 lantern points), GI and probe reflections keep theirs.
+                if (_SpecularScale < 1.0h)
+                {
+                    BRDFData brdf;
+                    InitializeBRDFData(surfaceData, brdf);
+                    Light sun = GetMainLight(inputData.shadowCoord, inputData.positionWS, inputData.shadowMask);
+                    half ndl = saturate(dot(normalWS, sun.direction));
+                    half3 radiance = sun.color * (sun.distanceAttenuation * sun.shadowAttenuation * ndl);
+                    half3 direct = brdf.specular * DirectBRDFSpecular(brdf, normalWS, sun.direction, inputData.viewDirectionWS) * radiance;
+                    color.rgb = max(color.rgb - direct * (1.0h - _SpecularScale), 0.0h);
+                }
 
                 // Sparkle: a sparse specular glint sheet, capped so the highlight stays point-like.
                 half sparkle = SAMPLE_TEXTURE2D(_SparkleMap, sampler_SparkleMap, xz / _SparkleTile + float2(0.13, -0.09) * t).r;

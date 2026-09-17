@@ -73,6 +73,7 @@ Material:
     - _SparkleCap: 0.18
     - _SparkleDensity: 0.15
     - _SparkleTile: 1.5
+    - _SpecularScale: 0.4
     - _SrcBlend: 5
     - _Surface: 1
     - _ZWrite: 0

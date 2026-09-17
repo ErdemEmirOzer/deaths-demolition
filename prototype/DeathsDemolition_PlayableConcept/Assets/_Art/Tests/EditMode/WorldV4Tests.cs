@@ -69,6 +69,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(ArtSurfaceImporter.KerbAlbedoLift, kerbMat.GetColor("_BaseColor").r, 1e-4f, "kerb albedo × 1,2 (AP-015P M4 / AD MUST-4)");
             Assert.LessOrEqual(ground.GetFloat("_WetSmoothness"), 0.60f, "ıslak smoothness ≤ 0,60 (DEC-076 ayna yok)");
             Assert.AreEqual(0.6f, water.GetFloat("_DepthFade"), 1e-4f);
+            Assert.AreEqual(ArtSurfaceImporter.WaterSpecularScale, water.GetFloat("_SpecularScale"), 1e-4f, "_SpecularScale 0,40 (WP-038D, AD SHOULD-5)");
             Assert.AreEqual(ArtSurfaceImporter.WaterSmoothness, water.GetFloat("_Smoothness"), 1e-4f, "_Smoothness 0,88 (P-05; AD SHOULD-5 0,82 denendi, lob genişledi → geri alındı)");
 
             int plates = 0, waters = 0, kerbs = 0, colliders = 0, tags = 0, lodGroups = 0, otherMaterial = 0;

@@ -155,7 +155,7 @@ namespace DD.Art.Tests.PlayMode
 
             var materials = new HashSet<Material>();
             var looks = new HashSet<string>(StringComparer.Ordinal);
-            int skinned = 0, slots = 0, tris = 0;
+            int skinned = 0, slots = 0, tris = 0, rising = 0, waiting = 0;
             var hatalar = new List<string>();
             foreach (ZombieEnemy z in ZombieEnemy.Live)
             {
@@ -175,14 +175,27 @@ namespace DD.Art.Tests.PlayMode
                     if (r != null && r.enabled && r.sharedMesh != null) tris += (int)(r.sharedMesh.GetIndexCount(0) / 3);
                 }
 
-                if (v.Animator == null || !v.Animator.GetCurrentAnimatorStateInfo(0).IsName(CharacterAnimationSet.LocomotionState)) hatalar.Add(z.name + ": Animator Locomotion'da değil");
+                // WP-040 (DEC-081 hybrid rise): a share of the spawns rises from the ground first (Rise state for a second or two
+                // after the fill), and WP-030/032B queue bodies at the bridge choke (Wait state) — both are authored controller
+                // states, exempt here (WP-038D; the rise handshake and the queue have their own tests).
+                if (v.Animator == null) hatalar.Add(z.name + ": Animator yok");
+                else if (z.IsRising) rising++;
+                else
+                {
+                    AnimatorStateInfo st = v.Animator.GetCurrentAnimatorStateInfo(0);
+                    // Rise / Rise_1 / Rise_2 (the WP-040 variants): the timer handshake can end a few frames before the clip's own exit.
+                    bool rise = st.IsName(CharacterAnimatorContract.RiseState) || st.IsName(CharacterAnimatorContract.RiseState + "_1") || st.IsName(CharacterAnimatorContract.RiseState + "_2");
+                    if (rise) rising++;
+                    else if (st.IsName(CharacterAnimatorContract.WaitState)) waiting++;
+                    else if (!st.IsName(CharacterAnimationSet.LocomotionState)) hatalar.Add(z.name + ": Animator Locomotion'da değil (" + st.shortNameHash + ")");
+                }
                 if (v.HelmetAnchor == null || v.HelmetAnchor.parent.name != "Head") hatalar.Add(z.name + ": ankraj_helmet Head altında değil");
                 Collider head = z.GetComponentInChildren<SphereCollider>(true);
                 if (head == null || head.transform.parent != HumanoidBones.Bone(v.Animator, HumanBodyBones.Head)) hatalar.Add(z.name + ": kafa hitbox'ı Head kemiğinde değil");
                 if (z.ArmorAnchors.Helmet != v.HelmetAnchor) hatalar.Add(z.name + ": ArmorAnchors.Helmet ankraja bağlı değil");
             }
 
-            Debug.Log("[DD-TEST] wp016.crowd spawned=" + skinned + " fillSeconds=" + (Time.realtimeSinceStartup - t0).ToString("F2", CultureInfo.InvariantCulture) + " distinctLooks=" + looks.Count + " materials=" + materials.Count + " avgSlots=" + ((float)slots / Mathf.Max(1, skinned)).ToString("F2") + " avgLod0Tris=" + (tris / Mathf.Max(1, skinned)));
+            Debug.Log("[DD-TEST] wp016.crowd spawned=" + skinned + " rising=" + rising + " waiting=" + waiting + " fillSeconds=" + (Time.realtimeSinceStartup - t0).ToString("F2", CultureInfo.InvariantCulture) + " distinctLooks=" + looks.Count + " materials=" + materials.Count + " avgSlots=" + ((float)slots / Mathf.Max(1, skinned)).ToString("F2") + " avgLod0Tris=" + (tris / Mathf.Max(1, skinned)));
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
             Assert.GreaterOrEqual(skinned, 40);
             Assert.LessOrEqual(materials.Count, 8, "kalabalık ≤ 8 paylaşılan materyal (atlas + kumaş atlası (WP-020) × Standard + 3 versiyon), örnek materyal yok");

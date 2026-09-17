@@ -47,6 +47,12 @@ namespace DD.Art.Pipeline.EditorTools
         /// instead of shrinking — the right tool is a direct-specular scale, not smoothness (WP-038B handover).
         /// </summary>
         public const float WaterSmoothness = 0.88f;
+        /// <summary>
+        /// WP-038D (AD SHOULD-5, second try — the smoothness route widened the lobe): share of the direct main-light GGX specular kept
+        /// on the water. 0.40 → south pond p99 0.67 → 0.53 sRGB at 19.9 m (AD ceiling 0.55); the residual 3.75× over the gravel is
+        /// sky / probe reflection, not the sun hot spot.
+        /// </summary>
+        public const float WaterSpecularScale = 0.40f;
         public const string GroundShaderName = "DD/GroundBlend";
         public const string WaterShaderName = "DD/Water v2";
         public const float LodSwitchMetres = 45f;
@@ -121,6 +127,7 @@ namespace DD.Art.Pipeline.EditorTools
             w.SetColor("_BaseColor", new Color(0.180f, 0.294f, 0.310f, 0.92f));
             w.SetColor("_ShallowColor", new Color(0.240f, 0.330f, 0.330f, 0.45f));
             w.SetFloat("_Smoothness", WaterSmoothness);
+            w.SetFloat("_SpecularScale", WaterSpecularScale);
             w.SetFloat("_FresnelPower", 4f);
             w.SetFloat("_DepthFade", 0.6f);
             w.SetTexture("_NormalLarge", Load(wt + "/T_water_large_Normal.png"));
