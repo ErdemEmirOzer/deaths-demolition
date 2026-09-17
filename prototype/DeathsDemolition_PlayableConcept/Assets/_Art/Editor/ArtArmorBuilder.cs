@@ -228,12 +228,32 @@ namespace DD.Art.Pipeline.EditorTools
             library.sourceSha256 = ArtTextureRepack.Sha256Hex(bytes);
             library.fits = Fits;
 
+            // WP-020 · AP-008 v002 `broken_remnants`: the Broken state is per FAMILY — both variants' Broken files
+            // carry the same `<family>_any` objects, so every variant references the family's first file (one
+            // remnant mesh set per family in the build; the second file stays on disk, unreferenced).
+            var canonicalBroken = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (doc.ContainsKey("broken_remnants"))
+            {
+                Dictionary<string, object> br = ArtJson.AsObject(doc["broken_remnants"], "broken_remnants");
+                foreach (KeyValuePair<string, object> kv in ArtJson.AsObject(br["files_per_family"], "files_per_family"))
+                {
+                    List<object> files = ArtJson.AsList(kv.Value, kv.Key);
+                    if (files.Count > 0) canonicalBroken[kv.Key] = ArtJson.AsString(files[0]);
+                }
+            }
+
             var variants = new Dictionary<string, ZombieArmorLibrary.Variant>(StringComparer.Ordinal);
             var order = new List<string>();
-            int referenced = 0, deviations = 0;
+            int referenced = 0, deviations = 0, sharedBroken = 0;
             var models = new Dictionary<string, GameObject>(StringComparer.Ordinal);
             foreach (ManifestPiece p in pieces)
             {
+                if (p.state == ZombieArmorLibrary.StateBroken && canonicalBroken.TryGetValue(p.family, out string canonical) && Path.GetFileName(p.fbx) != canonical)
+                {
+                    p.fbx = canonical;
+                    sharedBroken++;
+                }
+
                 if (!variants.TryGetValue(p.variant, out ZombieArmorLibrary.Variant v))
                 {
                     v = new ZombieArmorLibrary.Variant
@@ -305,7 +325,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             EditorUtility.SetDirty(library);
             AssetDatabase.SaveAssets();
-            Debug.Log(LogPrefix + "armour library " + (created ? "created" : "updated") + ": " + library.variants.Length + " variants, " + referenced + " mesh references (FBX), name deviations " + deviations + " (Broken '_any' token), sha " + library.sourceSha256.Substring(0, 12) + "…");
+            Debug.Log(LogPrefix + "armour library " + (created ? "created" : "updated") + ": " + library.variants.Length + " variants, " + referenced + " mesh references (FBX), name deviations " + deviations + " (Broken '_any' token), shared Broken files " + sharedBroken + ", sha " + library.sourceSha256.Substring(0, 12) + "…");
             return library;
         }
 

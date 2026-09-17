@@ -1,0 +1,247 @@
+{
+  "schema": "AP007.texture-manifest.v002",
+  "package": "AP-007",
+  "rule": "TWO 2K atlases: M_Zombie_Atlas (skin / straw / hair / sash — the v001 maps, unchanged) + M_Zombie_Cloth (v002: the four cloth colourway regions, one 1024x1024 quadrant each, 360-490 px/m); a zombie uses <= 2 materials; cloth-region faces of a module carry M_Zombie_Cloth, its sash/rope/straw faces M_Zombie_Atlas (2 submeshes in Unity); FBX carries no embedded textures",
+  "atlas_regions_uv": {
+    "M_Zombie_Atlas": {
+      "skin": [
+        0.0,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "straw": [
+        0.75,
+        0.0,
+        1.0,
+        0.125
+      ],
+      "hair": [
+        0.75,
+        0.125,
+        0.875,
+        0.25
+      ],
+      "sash": [
+        0.875,
+        0.125,
+        1.0,
+        0.25
+      ],
+      "rope": [
+        0.875,
+        0.125,
+        1.0,
+        0.25
+      ]
+    },
+    "M_Zombie_Cloth": {
+      "cloth_dk1": [
+        0.0,
+        0.5,
+        0.5,
+        1.0
+      ],
+      "cloth_dk2": [
+        0.5,
+        0.5,
+        1.0,
+        1.0
+      ],
+      "cloth_fd1": [
+        0.0,
+        0.0,
+        0.5,
+        0.5
+      ],
+      "cloth_fd2": [
+        0.5,
+        0.0,
+        1.0,
+        0.5
+      ]
+    }
+  },
+  "mask_channels": {
+    "skin": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "cloth_dk1": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "cloth_dk2": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "cloth_fd1": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "cloth_fd2": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "straw": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "hair": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sash": [
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  "cloth_mask_note": "the cloth atlas mask is constant G = 1 (all version-tintable cloth)",
+  "images": [
+    {
+      "image": "AP007_IMG_zombie_atlas_BaseColor_v001",
+      "role": "BaseColor",
+      "map": "base colour (sRGB)",
+      "colorspace": "sRGB",
+      "size": [
+        2048,
+        2048
+      ],
+      "path": "asset-production/AP-007/exports/v002/textures/AP007_IMG_zombie_atlas_BaseColor_v001.png",
+      "sha256": "a2d168524bbdfa2bdfdb686d1892acacc1843007e0407cdc1a554dfce01561cd",
+      "bytes": 6225097,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
+    },
+    {
+      "image": "AP007_IMG_zombie_atlas_Normal_v001",
+      "role": "Normal",
+      "map": "tangent-space normal, OpenGL (+Y up); Unity: Normal map, no flip",
+      "colorspace": "Non-Color",
+      "size": [
+        2048,
+        2048
+      ],
+      "path": "asset-production/AP-007/exports/v002/textures/AP007_IMG_zombie_atlas_Normal_v001.png",
+      "sha256": "29607ea6dff5c3445af0cd89b36556820d16d1699ba21b685777f751b0c348b0",
+      "bytes": 6532694,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
+    },
+    {
+      "image": "AP007_IMG_zombie_atlas_packed_R_ao_G_roughness_B_metallic_v001",
+      "role": "Packed",
+      "map": "R = ambient occlusion, G = roughness (Unity smoothness = 1 - G), B = metallic (0)",
+      "colorspace": "Non-Color",
+      "size": [
+        2048,
+        2048
+      ],
+      "path": "asset-production/AP-007/exports/v002/textures/AP007_IMG_zombie_atlas_packed_R_ao_G_roughness_B_metallic_v001.png",
+      "sha256": "12fdbf194f4a0e5f3eb7326e888f553b54ea68a7243451351178b4ffc4323f3d",
+      "bytes": 4364692,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
+    },
+    {
+      "image": "AP007_IMG_zombie_atlas_Mask_R_skin_G_cloth_B_accessory_A_emissive_v001",
+      "role": "Mask",
+      "map": "ID / tint mask: R = skin, G = cloth (version-tintable, IEnemyVersionVisual), B = accessory (straw/rope/hair), A = emissive-permitted band (sash tile only)",
+      "colorspace": "Non-Color",
+      "size": [
+        2048,
+        2048
+      ],
+      "path": "asset-production/AP-007/exports/v002/textures/AP007_IMG_zombie_atlas_Mask_R_skin_G_cloth_B_accessory_A_emissive_v001.png",
+      "sha256": "c14c9c680ba376a599d641ecdb1b7947551899bf49c65d3b0aa2dce54b403024",
+      "bytes": 80323,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
+    },
+    {
+      "image": "AP007_IMG_zombie_cloth_BaseColor_v002",
+      "role": "BaseColor",
+      "map": "base colour (sRGB)",
+      "colorspace": "sRGB",
+      "size": [
+        2048,
+        2048
+      ],
+      "path": "asset-production/AP-007/exports/v002/textures/AP007_IMG_zombie_cloth_BaseColor_v002.png",
+      "sha256": "e7547135e7b642741e76520e9acb3114cafe7eab56e5a6d8eaaf4fb25f395ffc",
+      "bytes": 7235214,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
+    },
+    {
+      "image": "AP007_IMG_zombie_cloth_Normal_v002",
+      "role": "Normal",
+      "map": "tangent-space normal, OpenGL (+Y up); Unity: Normal map, no flip",
+      "colorspace": "Non-Color",
+      "size": [
+        2048,
+        2048
+      ],
+      "path": "asset-production/AP-007/exports/v002/textures/AP007_IMG_zombie_cloth_Normal_v002.png",
+      "sha256": "be2e40ff2266b2ad79943a2f26ae3d13027eb08dfc5a4357809fe0cd110e4bbe",
+      "bytes": 8847620,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
+    },
+    {
+      "image": "AP007_IMG_zombie_cloth_packed_R_ao_G_roughness_B_metallic_v002",
+      "role": "Packed",
+      "map": "R = ambient occlusion, G = roughness (Unity smoothness = 1 - G), B = metallic (0)",
+      "colorspace": "Non-Color",
+      "size": [
+        2048,
+        2048
+      ],
+      "path": "asset-production/AP-007/exports/v002/textures/AP007_IMG_zombie_cloth_packed_R_ao_G_roughness_B_metallic_v002.png",
+      "sha256": "041e7755ac3d94382185f39d8c172ae1e4880da49376a399ca79d2de70082857",
+      "bytes": 4882907,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
+    },
+    {
+      "image": "AP007_IMG_zombie_cloth_Mask_R_skin_G_cloth_B_accessory_A_emissive_v002",
+      "role": "Mask",
+      "map": "ID / tint mask: R = skin, G = cloth (version-tintable, IEnemyVersionVisual), B = accessory (straw/rope/hair), A = emissive-permitted band (sash tile only)",
+      "colorspace": "Non-Color",
+      "size": [
+        2048,
+        2048
+      ],
+      "path": "asset-production/AP-007/exports/v002/textures/AP007_IMG_zombie_cloth_Mask_R_skin_G_cloth_B_accessory_A_emissive_v002.png",
+      "sha256": "f76d5fa0017cc16ae008b0b1c8353e02ef87685d1e79d6f039dd643669bb6702",
+      "bytes": 78297,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
+    }
+  ],
+  "count": 8
+}

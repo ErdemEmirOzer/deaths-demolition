@@ -174,8 +174,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// If the character set exceeds its line the armour atlas drops to 1024 (technical rule, reported).
         /// </summary>
         public const int ShippedWorldBudgetMb = 120;
-        public const int ShippedCharacterBudgetMb = 80;
-        public const int ShippedTotalBudgetMb = 200;
+        public const int ShippedCharacterBudgetMb = 100;   // v3 (WP-020, C-00 technical decision): the AP-007 second cloth atlas (3 × 2K maps)
+        public const int ShippedTotalBudgetMb = 220;       // v3
 
         /// <summary>
         /// ADR-015-2 release build ceiling, MB (Editor build report "Complete build size").
@@ -234,6 +234,7 @@ namespace DD.Art.Pipeline.EditorTools
             { "player_skin2b", TextureClass.Character },   // WP-017: skin 2 = 2b Steel/Indigo (user 2026-09-16); 2a retired
             { "player_skin3", TextureClass.Character },
             { "zombie_atlas", TextureClass.Character },
+            { "zombie_cloth", TextureClass.Character },    // WP-020 · AP-007 v002 second (cloth) atlas
             // WP-017 · AP-008 armour atlas (one 2K set for every family / variant / state).
             { "zombie_armor", TextureClass.Character },
             // WP-036 · AP-014 tier silhouette parts atlas (1K set; S-03, one-line handshake with S-05).

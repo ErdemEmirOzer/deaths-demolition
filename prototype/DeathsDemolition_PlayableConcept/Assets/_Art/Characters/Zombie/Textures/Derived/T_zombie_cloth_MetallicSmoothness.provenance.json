@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Characters/Zombie/Textures/T_zombie_cloth_Packed.png",
+    "sourceSha256": "041e7755ac3d94382185f39d8c172ae1e4880da49376a399ca79d2de70082857",
+    "algorithm": "MetallicSmoothnessAO v1 (WP-016): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T22:21:19.6512140Z",
+    "outputSha256": "41fcbb0c98679a5f82767bde814605695b728fccfc4652d7a825df30b3a2915f"
+}

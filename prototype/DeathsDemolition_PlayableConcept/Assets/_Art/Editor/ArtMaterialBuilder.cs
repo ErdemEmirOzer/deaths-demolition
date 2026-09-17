@@ -537,6 +537,14 @@ namespace DD.Art.Pipeline.EditorTools
 
             m.EnableKeyword("_NORMALMAP");
             m.EnableKeyword("_METALLICSPECGLOSSMAP");
+
+            // WP-020 · prop roles: the ORM v002 AO rides the same mask (G) — URP reads _OcclusionMap.g.
+            if (ArtTextureRepack.CarriesOcclusion(role))
+            {
+                m.SetTexture("_OcclusionMap", mask);
+                m.SetFloat("_OcclusionStrength", 1f);
+                m.EnableKeyword("_OCCLUSIONMAP");
+            }
         }
 
         private static void ApplyBaseColorOnly(Material m, string role, float smoothness)

@@ -414,16 +414,18 @@ namespace DD.Art.Tests.EditMode
                 zd + "/T_zombie_atlas_MetallicSmoothness.png", zd + "/T_zombie_atlas_DetailMask.png",
                 // WP-017 AP-008 armour atlas: BaseColor + Normal + Packed + Mask + derived MS + lacquer DetailMask.
                 ArtArmorBuilder.BaseColorMap, ArtArmorBuilder.NormalMap, ArtArmorBuilder.PackedMap, ArtArmorBuilder.MaskMap,
-                ArtArmorBuilder.MetallicSmoothnessMap, ArtArmorBuilder.DetailMaskMap
+                ArtArmorBuilder.MetallicSmoothnessMap, ArtArmorBuilder.DetailMaskMap,
+                // WP-020 AP-007 v002 cloth atlas: BaseColor + Normal + Packed + derived MS (the constant Mask is a 4×4 sub-texture, not a map).
+                zt + "/T_zombie_cloth_BaseColor.png", zt + "/T_zombie_cloth_Normal.png", zt + "/T_zombie_cloth_Packed.png", zd + "/T_zombie_cloth_MetallicSmoothness.png"
             }) beklenen.Add(f);
 
-            Assert.AreEqual(125, beklenen.Count, "Beklenen doku kümesi 107 + 12 (WP-016 karakterler) + 6 (WP-017 zırh) = 125 olmalı.");
+            Assert.AreEqual(129, beklenen.Count, "Beklenen doku kümesi 107 + 12 (WP-016 karakterler) + 6 (WP-017 zırh) + 4 (WP-020 kumaş atlası) = 129 olmalı.");
 
             // WP-036 tier parts atlas (BaseColor + Normal + Packed + Mask + derived MS = 5) and WP-037B Special Weapon
             // atlas (4 + derived MS) + 4 VFX use sheets (Sheet role) = 9 → 125 + 5 + 9 = 139.
             foreach (string f in new[] { ArtTierBuilder.BaseColorMap, ArtTierBuilder.NormalMap, ArtTierBuilder.PackedMap, ArtTierBuilder.MaskMap, ArtTierBuilder.MetallicSmoothnessMap }) beklenen.Add(f);
             foreach (string f in ArtSpecialWeaponBuilder.TextureFiles()) beklenen.Add(f);
-            Assert.AreEqual(139, beklenen.Count, "Beklenen doku kümesi 125 + 5 (WP-036 tier) + 9 (WP-037B SW atlas + sheet) = 139 olmalı.");
+            Assert.AreEqual(143, beklenen.Count, "Beklenen doku kümesi 129 (WP-020 kumaş atlası dâhil) + 5 (WP-036 tier) + 9 (WP-037B SW atlas + sheet) = 143 olmalı.");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;

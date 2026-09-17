@@ -33,6 +33,16 @@ namespace DD.Art.Pipeline.EditorTools
             "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G " +
             "(smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); " +
             "8-bit RGBA PNG, no resampling";
+        /// <summary>WP-020 · Prop roles carry the Tripo/Cycles AO of ORM v002 (AP-005C) in G so the prop materials can bind <c>_OcclusionMap</c>; the other library roles keep v1 (no AO in their packs).</summary>
+        public const string PropAlgorithm =
+            "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, " +
+            "out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling";
+
+        /// <summary>Roles whose derived mask carries occlusion in G (<see cref="PropAlgorithm"/>).</summary>
+        public static bool CarriesOcclusion(string role)
+        {
+            return role.StartsWith("prop_", StringComparison.Ordinal);
+        }
 
         [Serializable]
         public sealed class Provenance
@@ -90,7 +100,7 @@ namespace DD.Art.Pipeline.EditorTools
             byte[] sourceBytes = File.ReadAllBytes(sourcePath);
             string sourceSha = Sha256Hex(sourceBytes);
 
-            byte[] png = Repack(sourceBytes, sourcePath);
+            byte[] png = Repack(sourceBytes, sourcePath, CarriesOcclusion(role));
             string outputSha = Sha256Hex(png);
 
             EnsureFolder(ArtPipelinePaths.TexturesDerived);
@@ -107,7 +117,7 @@ namespace DD.Art.Pipeline.EditorTools
                 {
                     source = sourcePath,
                     sourceSha256 = sourceSha,
-                    algorithm = Algorithm,
+                    algorithm = CarriesOcclusion(role) ? PropAlgorithm : Algorithm,
                     utc = DateTime.UtcNow.ToString("o"),
                     outputSha256 = outputSha
                 };
@@ -295,7 +305,7 @@ namespace DD.Art.Pipeline.EditorTools
         // ---------------------------------------------------------------- internals
 
         /// <summary>Decodes the packed PNG, moves the channels and encodes an 8-bit PNG.</summary>
-        private static byte[] Repack(byte[] sourceBytes, string sourcePath)
+        private static byte[] Repack(byte[] sourceBytes, string sourcePath, bool occlusionInG)
         {
             // Linear = true only documents intent; LoadImage never colour-converts and the
             // pixels below are read raw. The texture is temporary and destroyed on exit.
@@ -315,7 +325,7 @@ namespace DD.Art.Pipeline.EditorTools
                 for (int i = 0; i < pixels.Length; i++)
                 {
                     Color32 p = pixels[i];
-                    pixels[i] = new Color32(p.b, 0, 0, (byte)(255 - p.g));
+                    pixels[i] = new Color32(p.b, occlusionInG ? p.r : (byte)0, 0, (byte)(255 - p.g));
                 }
 
                 mask = new Texture2D(width, height, TextureFormat.RGBA32, false, true);

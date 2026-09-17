@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_prop_mossrock_Packed.png",
-    "sourceSha256": "65c824140db8c05ac2c30d9b330e7d9644971d8babb1e67aa1e09fc16114bdd8",
-    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-16T09:38:12.3635440Z",
-    "outputSha256": "6640ba31bf64162d6285230abda914f4c0961ee327b4ff8f55ecc5ca8c7f9157"
+    "sourceSha256": "1b6198edd33293f07d867e7a3a29d15eefabd1f0139d5d639bb6310c6bd696db",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T21:31:03.6409200Z",
+    "outputSha256": "565ffb8c7477fe91870e009aee5c07635fded5e950605761c4ce49e3583bb97a"
 }

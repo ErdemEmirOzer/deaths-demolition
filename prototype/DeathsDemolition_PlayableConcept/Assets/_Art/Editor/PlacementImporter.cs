@@ -94,6 +94,8 @@ namespace DD.Art.Pipeline.EditorTools
             public int MaterialOverrides;
             public int MaterialSlotsReplaced;
             public int HeavyUnbatched;
+            /// <summary>WP-020 · NavMeshModifierVolumes written for the named areas (Bridge / Corridor / Gate).</summary>
+            public int AreaVolumes;
             public List<string> Unmatched = new List<string>();
             public string Digest;
         }
@@ -237,6 +239,21 @@ namespace DD.Art.Pipeline.EditorTools
                 throw new FormatException(LogPrefix + ArtJson.AsString(r["id"]) + ": material_override '" + materialOverride + "' has no Unity mapping (PlacementImporter.MaterialOverrides)");
             }
 
+            // WP-020 · AP-005C: per-part overrides ({ part: material }); the part must be in the assembly and the material mapped.
+            var parts = new List<WorldPlacementAsset.PartOverride>();
+            if (r.ContainsKey("material_override_parts"))
+            {
+                foreach (KeyValuePair<string, object> kv in ArtJson.AsObject(r["material_override_parts"], "material_override_parts"))
+                {
+                    string material = ArtJson.AsString(kv.Value, kv.Key);
+                    if (!assembly.Contains(kv.Key)) throw new FormatException(LogPrefix + ArtJson.AsString(r["id"]) + ": material_override_parts names part '" + kv.Key + "' outside the assembly [" + string.Join(", ", assembly) + "]");
+                    if (!MaterialOverrides.ContainsKey(material)) throw new FormatException(LogPrefix + ArtJson.AsString(r["id"]) + ": material_override_parts '" + kv.Key + "' → '" + material + "' has no Unity mapping (PlacementImporter.MaterialOverrides)");
+                    parts.Add(new WorldPlacementAsset.PartOverride { part = kv.Key, material = material });
+                }
+
+                parts.Sort((a, b) => string.CompareOrdinal(a.part, b.part));
+            }
+
             return new WorldPlacementAsset.Instance
             {
                 id = ArtJson.AsString(r["id"]),
@@ -255,6 +272,7 @@ namespace DD.Art.Pipeline.EditorTools
                 occluder = r.ContainsKey("occluder_candidate") && ArtJson.AsBool(r["occluder_candidate"]),
                 fade = r.ContainsKey("fade_mesh") && ArtJson.AsBool(r["fade_mesh"]),
                 materialOverride = materialOverride,
+                materialOverrideParts = parts.ToArray(),
                 deltaVersion = deltaVersion ?? string.Empty
             };
         }
@@ -262,12 +280,13 @@ namespace DD.Art.Pipeline.EditorTools
         // --------------------------------------------------------------------- delta
 
         /// <summary>
-        /// WP-017 · AP-005B delta (<see cref="ArtLibraryPaths.Ap005PlacementDeltaJson"/>, schema
-        /// dd-placement-delta-v1) on top of the parsed v001 source, in this order: <c>removed_ids</c>
-        /// (every id must exist), <c>changed</c> (ids kept, full record replaces the v001 one),
-        /// <c>added</c> (ids must be new). The v001 file stays the source (WP-014 staged it);
-        /// re-running yields the same list (idempotent), and the asset records the delta's sha256
-        /// and counts. Missing file = v001 world. Returns the number of records touched.
+        /// WP-017 / WP-020 · The delta chain (<see cref="ArtLibraryPaths.Ap005PlacementDeltaJsons"/>: AP-005B v002,
+        /// then AP-005C v003; schema dd-placement-delta-v1) on top of the parsed v001 source. Each file, in order:
+        /// <c>removed_ids</c> (every id must exist), <c>changed</c> (ids kept, full record replaces the previous one),
+        /// <c>added</c> (ids must be new); its <c>base</c> must describe the instance count the previous step produced.
+        /// The v001 file stays the source (WP-014 staged it); re-running yields the same list (idempotent), and the
+        /// asset records every file's sha256 / target / counts (<see cref="WorldPlacementAsset.deltas"/>) plus the
+        /// totals. A missing file ends the chain (no file = v001 world). Returns the number of records touched.
         /// </summary>
         public static int ApplyDelta(WorldPlacementAsset asset)
         {
@@ -275,26 +294,43 @@ namespace DD.Art.Pipeline.EditorTools
             asset.deltaTarget = string.Empty;
             asset.deltaAdded = asset.deltaChanged = asset.deltaRemoved = 0;
             asset.deltaRemovedIds = new List<string>();
-            string path = ArtLibraryPaths.Ap005PlacementDeltaJson;
-            if (!File.Exists(path))
+            asset.deltas = new List<WorldPlacementAsset.DeltaRecord>();
+            int touched = 0;
+            foreach (string path in ArtLibraryPaths.Ap005PlacementDeltaJsons)
             {
-                return 0;
+                if (!File.Exists(path)) break;
+                touched += ApplyDeltaFile(asset, path);
             }
 
+            asset.deltaRemovedIds.Sort(StringComparer.Ordinal);
+            return touched;
+        }
+
+        /// <summary>Version tag of a delta file from its name (<c>…-delta-v003.json</c> → "v003").</summary>
+        public static string DeltaVersionOf(string path)
+        {
+            string name = Path.GetFileNameWithoutExtension(path);
+            int at = name.LastIndexOf("-v", StringComparison.Ordinal);
+            return at >= 0 ? name.Substring(at + 1) : WorldPlacementAsset.DeltaVersionTag;
+        }
+
+        private static int ApplyDeltaFile(WorldPlacementAsset asset, string path)
+        {
             byte[] bytes = File.ReadAllBytes(path);
             Dictionary<string, object> doc = ArtJson.AsObject(ArtJson.Parse(Encoding.UTF8.GetString(bytes)), "delta");
             string schema = ArtJson.AsString(ArtJson.Require(doc, "schema"), "schema");
             if (schema != WorldPlacementAsset.DeltaSchema)
             {
-                throw new FormatException(LogPrefix + "delta schema '" + schema + "' != " + WorldPlacementAsset.DeltaSchema);
+                throw new FormatException(LogPrefix + "delta schema '" + schema + "' != " + WorldPlacementAsset.DeltaSchema + " (" + path + ")");
             }
 
             string basePath = ArtJson.AsString(ArtJson.Require(doc, "base"), "base");
             if (!basePath.Contains(asset.instances.Count.ToString(CultureInfo.InvariantCulture) + " instances"))
             {
-                throw new FormatException(LogPrefix + "delta base '" + basePath + "' does not describe the parsed source (" + asset.instances.Count + " instances)");
+                throw new FormatException(LogPrefix + "delta base '" + basePath + "' does not describe the parsed source (" + asset.instances.Count + " instances) — " + path);
             }
 
+            string version = DeltaVersionOf(path);
             var byId = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int i = 0; i < asset.instances.Count; i++) byId[asset.instances[i].id] = i;
 
@@ -302,24 +338,24 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (object o in ArtJson.AsList(ArtJson.Require(doc, "removed_ids"), "removed_ids"))
             {
                 string id = ArtJson.AsString(o, "removed id");
-                if (!byId.ContainsKey(id)) throw new FormatException(LogPrefix + "delta removes unknown instance '" + id + "'");
-                if (!removed.Add(id)) throw new FormatException(LogPrefix + "delta removes '" + id + "' twice");
+                if (!byId.ContainsKey(id)) throw new FormatException(LogPrefix + "delta removes unknown instance '" + id + "' (" + path + ")");
+                if (!removed.Add(id)) throw new FormatException(LogPrefix + "delta removes '" + id + "' twice (" + path + ")");
             }
 
             var changed = new Dictionary<string, WorldPlacementAsset.Instance>(StringComparer.Ordinal);
             foreach (object o in ArtJson.AsList(ArtJson.Require(doc, "changed"), "changed"))
             {
-                WorldPlacementAsset.Instance inst = ParseInstance(ArtJson.AsObject(o, "changed"), WorldPlacementAsset.DeltaVersionTag);
-                if (!byId.ContainsKey(inst.id)) throw new FormatException(LogPrefix + "delta changes unknown instance '" + inst.id + "'");
-                if (removed.Contains(inst.id)) throw new FormatException(LogPrefix + "delta both removes and changes '" + inst.id + "'");
+                WorldPlacementAsset.Instance inst = ParseInstance(ArtJson.AsObject(o, "changed"), version);
+                if (!byId.ContainsKey(inst.id)) throw new FormatException(LogPrefix + "delta changes unknown instance '" + inst.id + "' (" + path + ")");
+                if (removed.Contains(inst.id)) throw new FormatException(LogPrefix + "delta both removes and changes '" + inst.id + "' (" + path + ")");
                 changed[inst.id] = inst;
             }
 
             var added = new List<WorldPlacementAsset.Instance>();
             foreach (object o in ArtJson.AsList(ArtJson.Require(doc, "added"), "added"))
             {
-                WorldPlacementAsset.Instance inst = ParseInstance(ArtJson.AsObject(o, "added"), WorldPlacementAsset.DeltaVersionTag);
-                if (byId.ContainsKey(inst.id)) throw new FormatException(LogPrefix + "delta adds existing instance '" + inst.id + "'");
+                WorldPlacementAsset.Instance inst = ParseInstance(ArtJson.AsObject(o, "added"), version);
+                if (byId.ContainsKey(inst.id)) throw new FormatException(LogPrefix + "delta adds existing instance '" + inst.id + "' (" + path + ")");
                 added.Add(inst);
             }
 
@@ -333,14 +369,26 @@ namespace DD.Art.Pipeline.EditorTools
 
             result.AddRange(added);
             asset.instances = result;
-            asset.deltaSha256 = Sha256(bytes);
-            asset.deltaTarget = ArtJson.AsString(ArtJson.Require(doc, "target"), "target");
-            asset.deltaAdded = added.Count;
-            asset.deltaChanged = changed.Count;
-            asset.deltaRemoved = removed.Count;
-            asset.deltaRemovedIds = new List<string>(removed);
-            asset.deltaRemovedIds.Sort(StringComparer.Ordinal);
-            Debug.Log(LogPrefix + "Applied delta " + path + ": +" + added.Count + " / ~" + changed.Count + " / -" + removed.Count + " → " + result.Count + " instances (sha256 " + asset.deltaSha256.Substring(0, 12) + "…)");
+            var record = new WorldPlacementAsset.DeltaRecord
+            {
+                file = Path.GetFileName(path),
+                version = version,
+                sha256 = Sha256(bytes),
+                target = ArtJson.AsString(ArtJson.Require(doc, "target"), "target"),
+                added = added.Count,
+                changed = changed.Count,
+                removed = removed.Count,
+                removedIds = new List<string>(removed)
+            };
+            record.removedIds.Sort(StringComparer.Ordinal);
+            asset.deltas.Add(record);
+            asset.deltaSha256 = record.sha256;
+            asset.deltaTarget = record.target;
+            asset.deltaAdded += added.Count;
+            asset.deltaChanged += changed.Count;
+            asset.deltaRemoved += removed.Count;
+            asset.deltaRemovedIds.AddRange(record.removedIds);
+            Debug.Log(LogPrefix + "Applied delta " + path + " (" + version + "): +" + added.Count + " / ~" + changed.Count + " / -" + removed.Count + " → " + result.Count + " instances (sha256 " + record.sha256.Substring(0, 12) + "…)");
             return added.Count + changed.Count + removed.Count;
         }
 
@@ -547,12 +595,14 @@ namespace DD.Art.Pipeline.EditorTools
 
             var instances = new GameObject(Ap005WorldBootstrap.InstancesName);
             instances.transform.SetParent(root.transform, false);
+            var areaInstances = new List<KeyValuePair<GameObject, string>>();
 
             for (int i = 0; i < placement.instances.Count; i++)
             {
                 WorldPlacementAsset.Instance inst = placement.instances[i];
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[i], scene);
                 go.name = inst.id;
+                if (AreaFamilies.TryGetValue(inst.family, out string areaName)) areaInstances.Add(new KeyValuePair<GameObject, string>(go, areaName));
                 go.transform.SetParent(instances.transform, false);
                 go.transform.SetPositionAndRotation(inst.position, inst.Rotation);
                 go.transform.localScale = inst.scale;
@@ -592,6 +642,12 @@ namespace DD.Art.Pipeline.EditorTools
                     report.MaterialOverrides++;
                 }
 
+                if (inst.materialOverrideParts != null && inst.materialOverrideParts.Length > 0)
+                {
+                    report.MaterialSlotsReplaced += ApplyPartOverrides(go, inst);
+                    report.MaterialOverrides++;
+                }
+
                 if (inst.assembly != null && inst.assembly.Length > 0) report.Assemblies++;
             }
 
@@ -608,6 +664,16 @@ namespace DD.Art.Pipeline.EditorTools
             // everywhere else, with holes under the koi basins so the water planes stay
             // visible. Reported to production (WP-014 handover).
             BuildStandInGround(root.transform, placement);
+
+            // WP-020 (AD MUST-1): the quiet_paving plate's slab seams let the AP-005 earth plate 3 mm below
+            // read as thin brown lines at the gameplay camera; a stone-coloured grout quad inside the
+            // plate's thickness hides it (production overlap of the slabs stays an AP-015 / P-05 item).
+            BuildPavingGrout(root.transform, instances.transform, placement);
+
+            // WP-020 · Named NavMesh areas (S-03 / WP-030 request): the bridge deck, the west corridor
+            // modules and the gate openings carry their own area so RegionNavProfile.ApplyAreaCosts can
+            // price them on the NavMesh itself (Bridge ×1.6, Corridor ×1.3, Gate ×1 / ×1.15).
+            report.AreaVolumes = BuildAreaVolumes(root.transform, areaInstances);
 
             // NavMesh: the WorldNavigation settings (agent 0, physics colliders in
             // Environment|CameraOccluder, ±48 m volume), baked HERE and saved as an asset so
@@ -757,6 +823,72 @@ namespace DD.Art.Pipeline.EditorTools
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
         }
 
+        public const string PavingGroutName = "Paving grout (WP-020)";
+        public const float PavingGroutDepth = 0.002f;   // m under the plate's top: above the earth plate (−0.003), below the slabs
+
+        /// <summary>
+        /// One flat quad per <c>quiet_paving</c> instance, the plate's renderer footprint in XZ at
+        /// (top − <see cref="PavingGroutDepth"/>), with the plate's own <c>stone</c> material (untextured
+        /// tint would differ from the slabs; the same map keeps the seams at the slab value). No collider
+        /// (the NavMesh stays on the plate), no GI contribution, probe-lit static.
+        /// </summary>
+        private static void BuildPavingGrout(Transform root, Transform instances, WorldPlacementAsset placement)
+        {
+            Transform old = root.Find(PavingGroutName);
+            if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            var parent = new GameObject(PavingGroutName);
+            parent.transform.SetParent(root, false);
+            var stone = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material("stone"));
+            if (stone == null) throw new InvalidOperationException(LogPrefix + "stone material missing for the paving grout");
+            int count = 0;
+            for (int i = 0; i < placement.instances.Count; i++)
+            {
+                WorldPlacementAsset.Instance inst = placement.instances[i];
+                if (inst.family != "quiet_paving") continue;
+                Transform t = instances.Find(inst.id);
+                if (t == null) continue;
+                Renderer[] renderers = t.GetComponentsInChildren<Renderer>(true);
+                if (renderers.Length == 0) continue;
+                Bounds b = renderers[0].bounds;
+                for (int r = 1; r < renderers.Length; r++) b.Encapsulate(renderers[r].bounds);
+                var builder = new MeshBuilder();
+                float y = b.max.y - PavingGroutDepth;
+                builder.AddQuad(new Vector3(b.min.x, y, b.min.z), new Vector3(b.min.x, y, b.max.z), new Vector3(b.max.x, y, b.max.z), new Vector3(b.max.x, y, b.min.z), 1f / GroundTile);
+                Mesh mesh = builder.Build("PavingGrout_" + inst.id);
+                var go = new GameObject("grout " + inst.id);
+                go.transform.SetParent(parent.transform, false);
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = go.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = stone;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = true;
+                renderer.lightProbeUsage = LightProbeUsage.BlendProbes;
+                renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+                renderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
+                go.layer = PrototypeLayers.Environment;
+                GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
+                string meshPath = Path.GetDirectoryName(ArtLibraryPaths.Ap005GroundMesh).Replace('\\', '/') + "/AP005_PavingGrout_" + inst.id + ".asset";
+                var existing = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+                if (existing != null)
+                {
+                    EditorUtility.CopySerialized(mesh, existing);
+                    EditorUtility.SetDirty(existing);
+                    UnityEngine.Object.DestroyImmediate(mesh);
+                    mesh = existing;
+                }
+                else
+                {
+                    AssetDatabase.CreateAsset(mesh, meshPath);
+                }
+
+                go.GetComponent<MeshFilter>().sharedMesh = mesh;
+                count++;
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log(LogPrefix + "paving grout: " + count + " quad(s) under the quiet_paving plate(s)");
+        }
+
         private static void AppendMesh(MeshBuilder builder, Mesh source)
         {
             Vector3[] v = source.vertices;
@@ -821,14 +953,38 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static int ApplyMaterialOverride(GameObject instance, WorldPlacementAsset.Instance inst)
         {
-            if (!MaterialOverrides.TryGetValue(inst.materialOverride, out MaterialOverride over))
+            return ApplyMaterialOverride(instance, inst.id, inst.lodGroup, inst.materialOverride, null);
+        }
+
+        /// <summary>
+        /// WP-020 · AP-005C <c>material_override_parts</c>: each named assembly part (its renderers are
+        /// <c>&lt;part&gt;_LOD&lt;n&gt;</c> or <c>&lt;part&gt;</c>) takes its own world-master material; the
+        /// other parts keep the prefab's materials. A part that matches no renderer or no slot is an error.
+        /// </summary>
+        public static int ApplyPartOverrides(GameObject instance, WorldPlacementAsset.Instance inst)
+        {
+            int replaced = 0;
+            foreach (WorldPlacementAsset.PartOverride po in inst.materialOverrideParts)
             {
-                throw new InvalidOperationException(LogPrefix + inst.id + ": material_override '" + inst.materialOverride + "' has no Unity mapping");
+                string part = po.part;
+                replaced += ApplyMaterialOverride(instance, inst.id, inst.lodGroup + "/" + part, po.material,
+                    r => r.name == part || r.name.StartsWith(part + "_LOD", StringComparison.Ordinal));
+            }
+
+            return replaced;
+        }
+
+        private static int ApplyMaterialOverride(GameObject instance, string id, string what, string overrideName, Func<Renderer, bool> rendererFilter)
+        {
+            if (!MaterialOverrides.TryGetValue(overrideName, out MaterialOverride over))
+            {
+                throw new InvalidOperationException(LogPrefix + id + ": material_override '" + overrideName + "' has no Unity mapping");
             }
 
             int replaced = 0;
             foreach (Renderer renderer in instance.GetComponentsInChildren<Renderer>(true))
             {
+                if (rendererFilter != null && !rendererFilter(renderer)) continue;
                 Material[] slots = renderer.sharedMaterials;
                 bool touched = false;
                 for (int i = 0; i < slots.Length; i++)
@@ -841,7 +997,7 @@ namespace DD.Art.Pipeline.EditorTools
                     var material = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material(target));
                     if (material == null)
                     {
-                        throw new InvalidOperationException(LogPrefix + inst.id + ": override target material missing: " + ArtPipelinePaths.Material(target) + " (build the library materials first)");
+                        throw new InvalidOperationException(LogPrefix + id + ": override target material missing: " + ArtPipelinePaths.Material(target) + " (build the library materials first)");
                     }
 
                     slots[i] = material;
@@ -854,10 +1010,60 @@ namespace DD.Art.Pipeline.EditorTools
 
             if (replaced == 0)
             {
-                throw new InvalidOperationException(LogPrefix + inst.id + " (" + inst.lodGroup + "): material_override '" + inst.materialOverride + "' matched no material slot");
+                throw new InvalidOperationException(LogPrefix + id + " (" + what + "): material_override '" + overrideName + "' matched no material slot");
             }
 
             return replaced;
+        }
+
+        public const string AreaVolumesName = "NavMesh Areas (WP-020)";
+        public const string AreaBridge = "Bridge", AreaCorridor = "Corridor", AreaGate = "Gate";
+        /// <summary>Family stem → NavMesh area name; the volume is the instance's renderer bounds (XZ) from the floor to <see cref="AreaVolumeHeight"/>.</summary>
+        public static readonly Dictionary<string, string> AreaFamilies = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "bridge_segment", AreaBridge },
+            { "west_corridor_module", AreaCorridor },
+            { "gate_transition", AreaGate }
+        };
+        public const float AreaVolumeHeight = 3f;
+        public const float AreaVolumeMargin = 0.25f;
+
+        /// <summary>
+        /// WP-020 · One <see cref="NavMeshModifierVolume"/> per instance of an area family under
+        /// <see cref="AreaVolumesName"/>: the bridge deck segments (5), the west corridor modules (6) and
+        /// the gate transitions (5 incl. the AP-005C north gate). The volume spans the instance's
+        /// renderer bounds in XZ (+ margin) from the ground to 3 m, so the whole opening / deck / floor
+        /// gets the area. Areas must exist in ProjectSettings/NavMeshAreas (3 Bridge, 4 Corridor, 5 Gate);
+        /// a missing area name is an error, not a silent Walkable.
+        /// </summary>
+        public static int BuildAreaVolumes(Transform root, List<KeyValuePair<GameObject, string>> areaInstances)
+        {
+            Transform old = root.Find(AreaVolumesName);
+            if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            var parent = new GameObject(AreaVolumesName);
+            parent.transform.SetParent(root, false);
+            int count = 0;
+            foreach (KeyValuePair<GameObject, string> pair in areaInstances)
+            {
+                string area = pair.Value;
+                int areaIndex = NavMesh.GetAreaFromName(area);
+                if (areaIndex < 0) throw new InvalidOperationException(LogPrefix + "NavMesh area '" + area + "' is not defined in ProjectSettings/NavMeshAreas.asset");
+                Renderer[] renderers = pair.Key.GetComponentsInChildren<Renderer>(true);
+                if (renderers.Length == 0) continue;
+                Bounds b = renderers[0].bounds;
+                for (int r = 1; r < renderers.Length; r++) b.Encapsulate(renderers[r].bounds);
+                var go = new GameObject(area + " " + pair.Key.name);
+                go.layer = PrototypeLayers.Environment;   // NavMeshSurface collects modifier volumes through its layer mask
+                go.transform.SetParent(parent.transform, false);
+                go.transform.position = new Vector3(b.center.x, b.min.y, b.center.z);
+                var vol = go.AddComponent<NavMeshModifierVolume>();
+                vol.area = areaIndex;
+                vol.center = new Vector3(0f, AreaVolumeHeight * 0.5f, 0f);
+                vol.size = new Vector3(b.size.x + AreaVolumeMargin * 2f, AreaVolumeHeight, b.size.z + AreaVolumeMargin * 2f);
+                count++;
+            }
+
+            return count;
         }
 
         private static int BakeNavMesh(Transform root)

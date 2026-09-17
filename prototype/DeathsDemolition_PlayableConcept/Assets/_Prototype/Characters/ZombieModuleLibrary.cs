@@ -63,6 +63,8 @@ namespace DD.Prototype.Characters
             public string kind;         // top | bottom | head
             public string[] colourways; // ["cw1","cw2"] or ["-"]
             public Variant[] variants;
+            /// <summary>WP-020 · AP-007 v002: the module's materials in FBX sub-mesh order (<see cref="MaterialAtlas"/> / <see cref="MaterialCloth"/>); v001-style modules list the atlas only.</summary>
+            public string[] materials = { MaterialAtlas };
 
             public Variant Find(string colourway, string fit)
             {
@@ -86,7 +88,13 @@ namespace DD.Prototype.Characters
         public Module[] modules;
         [Tooltip("Shared atlas material (Standard); index = EnemyTier (0 Standard, 1 Special, 2 Elite, 3 Ultra).")]
         public Material[] tierMaterials = new Material[4];
+        [Tooltip("WP-020 · AP-007 v002 second atlas (cloth): index = EnemyTier; the whole cloth atlas is version-tintable.")]
+        public Material[] tierClothMaterials = new Material[4];
         public string[] fits = { "A", "B", "C" };
+
+        public const string MaterialAtlas = "M_Zombie_Atlas";
+        public const string MaterialCloth = "M_Zombie_Cloth";
+        [NonSerialized] private Dictionary<string, Material[]> _materialSets;
 
         public Body FindBody(string fit)
         {
@@ -104,9 +112,36 @@ namespace DD.Prototype.Characters
 
         public Material MaterialFor(int tierIndex)
         {
-            if (tierMaterials == null || tierMaterials.Length == 0) return null;
-            if (tierIndex < 0 || tierIndex >= tierMaterials.Length || tierMaterials[tierIndex] == null) return tierMaterials[0];
-            return tierMaterials[tierIndex];
+            return Pick(tierMaterials, tierIndex);
+        }
+
+        public Material ClothMaterialFor(int tierIndex)
+        {
+            Material m = Pick(tierClothMaterials, tierIndex);
+            return m != null ? m : MaterialFor(tierIndex);   // v001 libraries: no cloth atlas yet
+        }
+
+        private static Material Pick(Material[] set, int tierIndex)
+        {
+            if (set == null || set.Length == 0) return null;
+            if (tierIndex < 0 || tierIndex >= set.Length || set[tierIndex] == null) return set[0];
+            return set[tierIndex];
+        }
+
+        /// <summary>
+        /// WP-020 · The shared-material array of a module's sub-mesh order for one enemy version
+        /// (cached per pattern × tier: at most 3 patterns × 4 tiers — no per-spawn allocation after warm-up).
+        /// </summary>
+        public Material[] MaterialsFor(string[] materialNames, int tierIndex)
+        {
+            if (materialNames == null || materialNames.Length == 0) materialNames = new[] { MaterialAtlas };
+            string key = string.Join("|", materialNames) + "#" + tierIndex;
+            if (_materialSets == null) _materialSets = new Dictionary<string, Material[]>(StringComparer.Ordinal);
+            if (_materialSets.TryGetValue(key, out Material[] set)) return set;
+            set = new Material[materialNames.Length];
+            for (int i = 0; i < set.Length; i++) set[i] = materialNames[i] == MaterialCloth ? ClothMaterialFor(tierIndex) : MaterialFor(tierIndex);
+            _materialSets[key] = set;
+            return set;
         }
 
         /// <summary>Module ids of one kind, in asset order (stable: the selector indexes into it).</summary>

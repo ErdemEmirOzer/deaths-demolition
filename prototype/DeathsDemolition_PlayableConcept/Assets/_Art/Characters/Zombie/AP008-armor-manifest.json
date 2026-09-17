@@ -1,5 +1,5 @@
 {
-  "schema": "AP008.armor-manifest.v001",
+  "schema": "AP008.armor-manifest-v002",
   "package": "AP-008",
   "skeleton": {
     "armature": "ZombieRig",
@@ -205,45 +205,46 @@
       "meshes": 12,
       "tris_LOD0_3_by_fit": {
         "A": [
-          208,
-          208,
-          208,
+          357,
+          357,
+          277,
           180
         ],
         "B": [
-          208,
-          208,
-          208,
+          314,
+          314,
+          238,
           180
         ],
         "C": [
-          208,
-          208,
-          208,
+          331,
+          331,
+          249,
           180
         ]
       },
       "tris_by_sub_fit": {
         "remnants/A": [
-          208,
-          208,
-          208,
+          357,
+          357,
+          277,
           180
         ],
         "remnants/B": [
-          208,
-          208,
-          208,
+          314,
+          314,
+          238,
           180
         ],
         "remnants/C": [
-          208,
-          208,
-          208,
+          331,
+          331,
+          249,
           180
         ]
       },
       "atlas_regions": [
+        "LACQ",
         "STRAP"
       ],
       "skin_bones_LOD0_A": {
@@ -269,41 +270,41 @@
       "tris_LOD0_3_by_fit": {
         "A": [
           3749,
+          1500,
+          499,
+          180
+        ],
+        "B": [
+          3749,
           1499,
           499,
           179
         ],
-        "B": [
+        "C": [
           3750,
           1499,
-          500,
-          180
-        ],
-        "C": [
-          3749,
-          1499,
           499,
-          180
+          179
         ]
       },
       "tris_by_sub_fit": {
         "kabuto/A": [
           3749,
+          1500,
+          499,
+          180
+        ],
+        "kabuto/B": [
+          3749,
           1499,
           499,
           179
         ],
-        "kabuto/B": [
+        "kabuto/C": [
           3750,
           1499,
-          500,
-          180
-        ],
-        "kabuto/C": [
-          3749,
-          1499,
           499,
-          180
+          179
         ]
       },
       "atlas_regions": [
@@ -332,40 +333,40 @@
       "meshes": 12,
       "tris_LOD0_3_by_fit": {
         "A": [
-          3750,
-          1499,
-          499,
-          179
-        ],
-        "B": [
           3749,
           1500,
           500,
-          180
+          179
         ],
-        "C": [
+        "B": [
           3750,
           1500,
+          500,
+          179
+        ],
+        "C": [
+          3749,
+          1499,
           499,
           179
         ]
       },
       "tris_by_sub_fit": {
         "kabuto/A": [
-          3750,
-          1499,
-          499,
-          179
-        ],
-        "kabuto/B": [
           3749,
           1500,
           500,
-          180
+          179
         ],
-        "kabuto/C": [
+        "kabuto/B": [
           3750,
           1500,
+          500,
+          179
+        ],
+        "kabuto/C": [
+          3749,
+          1499,
           499,
           179
         ]
@@ -396,45 +397,46 @@
       "meshes": 12,
       "tris_LOD0_3_by_fit": {
         "A": [
-          208,
-          208,
-          208,
+          357,
+          357,
+          277,
           180
         ],
         "B": [
-          208,
-          208,
-          208,
+          314,
+          314,
+          238,
           180
         ],
         "C": [
-          208,
-          208,
-          208,
+          331,
+          331,
+          249,
           180
         ]
       },
       "tris_by_sub_fit": {
         "remnants/A": [
-          208,
-          208,
-          208,
+          357,
+          357,
+          277,
           180
         ],
         "remnants/B": [
-          208,
-          208,
-          208,
+          314,
+          314,
+          238,
           180
         ],
         "remnants/C": [
-          208,
-          208,
-          208,
+          331,
+          331,
+          249,
           180
         ]
       },
       "atlas_regions": [
+        "LACQ",
         "STRAP"
       ],
       "skin_bones_LOD0_A": {
@@ -463,7 +465,7 @@
       "tris_LOD0_3_by_fit": {
         "A": [
           4815,
-          1499,
+          1498,
           500,
           180
         ],
@@ -471,19 +473,19 @@
           4933,
           1499,
           499,
-          179
+          180
         ],
         "C": [
-          4719,
-          1498,
-          499,
+          4720,
+          1499,
+          500,
           180
         ]
       },
       "tris_by_sub_fit": {
         "do/A": [
           3599,
-          1080,
+          1079,
           360,
           130
         ],
@@ -491,11 +493,11 @@
           3599,
           1079,
           360,
-          129
+          130
         ],
         "do/C": [
-          3599,
-          1079,
+          3600,
+          1080,
           360,
           130
         ],
@@ -514,7 +516,7 @@
         "kote/C": [
           1120,
           419,
-          139,
+          140,
           50
         ]
       },
@@ -566,39 +568,39 @@
       "meshes": 24,
       "tris_LOD0_3_by_fit": {
         "A": [
-          4816,
+          4815,
           1499,
-          499,
-          179
+          500,
+          180
         ],
         "B": [
-          4934,
-          1499,
+          4933,
+          1500,
           498,
           180
         ],
         "C": [
-          4719,
+          4720,
           1498,
-          499,
+          500,
           180
         ]
       },
       "tris_by_sub_fit": {
         "do/A": [
-          3600,
+          3599,
           1080,
-          359,
-          129
+          360,
+          130
         ],
         "do/B": [
-          3600,
-          1079,
+          3599,
+          1080,
           359,
           130
         ],
         "do/C": [
-          3599,
+          3600,
           1079,
           360,
           130
@@ -618,7 +620,7 @@
         "kote/C": [
           1120,
           419,
-          139,
+          140,
           50
         ]
       },
@@ -633,6 +635,7 @@
           "Chest",
           "Hips",
           "LeftShoulder",
+          "Neck",
           "RightShoulder",
           "Spine",
           "UpperChest"
@@ -667,45 +670,46 @@
       "meshes": 12,
       "tris_LOD0_3_by_fit": {
         "A": [
-          256,
-          256,
-          256,
-          180
+          376,
+          376,
+          294,
+          179
         ],
         "B": [
-          265,
-          265,
-          265,
-          180
+          362,
+          362,
+          326,
+          179
         ],
         "C": [
-          274,
-          274,
-          274,
+          369,
+          369,
+          311,
           180
         ]
       },
       "tris_by_sub_fit": {
         "remnants/A": [
-          256,
-          256,
-          256,
-          180
+          376,
+          376,
+          294,
+          179
         ],
         "remnants/B": [
-          265,
-          265,
-          265,
-          180
+          362,
+          362,
+          326,
+          179
         ],
         "remnants/C": [
-          274,
-          274,
-          274,
+          369,
+          369,
+          311,
           180
         ]
       },
       "atlas_regions": [
+        "LACQ",
         "STRAP"
       ],
       "skin_bones_LOD0_A": {
@@ -739,41 +743,41 @@
       "meshes": 24,
       "tris_LOD0_3_by_fit": {
         "A": [
-          4816,
-          1499,
+          4815,
+          1498,
           500,
-          180
+          179
         ],
         "B": [
-          4933,
+          4934,
           1500,
-          498,
-          179
+          499,
+          180
         ],
         "C": [
           4719,
-          1499,
+          1498,
           499,
           180
         ]
       },
       "tris_by_sub_fit": {
         "do/A": [
+          3599,
+          1079,
+          360,
+          129
+        ],
+        "do/B": [
           3600,
           1080,
           360,
           130
         ],
-        "do/B": [
-          3599,
-          1080,
-          359,
-          129
-        ],
         "do/C": [
           3599,
-          1080,
-          360,
+          1079,
+          359,
           130
         ],
         "kote/A": [
@@ -791,7 +795,7 @@
         "kote/C": [
           1120,
           419,
-          139,
+          140,
           50
         ]
       },
@@ -844,42 +848,42 @@
       "meshes": 24,
       "tris_LOD0_3_by_fit": {
         "A": [
-          4816,
+          4815,
           1499,
           500,
-          179
+          180
         ],
         "B": [
-          4933,
-          1499,
-          497,
+          4934,
+          1500,
+          498,
           180
         ],
         "C": [
-          4720,
+          4719,
           1499,
-          498,
-          179
+          499,
+          180
         ]
       },
       "tris_by_sub_fit": {
         "do/A": [
-          3600,
+          3599,
           1080,
           360,
-          129
-        ],
-        "do/B": [
-          3599,
-          1079,
-          358,
           130
         ],
-        "do/C": [
+        "do/B": [
           3600,
           1080,
           359,
-          129
+          130
+        ],
+        "do/C": [
+          3599,
+          1080,
+          359,
+          130
         ],
         "kote/A": [
           1216,
@@ -896,7 +900,7 @@
         "kote/C": [
           1120,
           419,
-          139,
+          140,
           50
         ]
       },
@@ -911,6 +915,7 @@
           "Chest",
           "Hips",
           "LeftShoulder",
+          "Neck",
           "RightShoulder",
           "Spine",
           "UpperChest"
@@ -945,45 +950,46 @@
       "meshes": 12,
       "tris_LOD0_3_by_fit": {
         "A": [
-          256,
-          256,
-          256,
-          180
+          376,
+          376,
+          294,
+          179
         ],
         "B": [
-          265,
-          265,
-          265,
-          180
+          362,
+          362,
+          326,
+          179
         ],
         "C": [
-          274,
-          274,
-          274,
+          369,
+          369,
+          311,
           180
         ]
       },
       "tris_by_sub_fit": {
         "remnants/A": [
-          256,
-          256,
-          256,
-          180
+          376,
+          376,
+          294,
+          179
         ],
         "remnants/B": [
-          265,
-          265,
-          265,
-          180
+          362,
+          362,
+          326,
+          179
         ],
         "remnants/C": [
-          274,
-          274,
-          274,
+          369,
+          369,
+          311,
           180
         ]
       },
       "atlas_regions": [
+        "LACQ",
         "STRAP"
       ],
       "skin_bones_LOD0_A": {
@@ -1017,42 +1023,42 @@
       "meshes": 24,
       "tris_LOD0_3_by_fit": {
         "A": [
-          3396,
+          3395,
           1497,
           497,
-          177
+          178
         ],
         "B": [
-          3395,
+          3396,
           1500,
-          495,
-          178
+          494,
+          177
         ],
         "C": [
           3395,
           1497,
-          494,
-          178
+          495,
+          177
         ]
       },
       "tris_by_sub_fit": {
         "haidate/A": [
-          2500,
+          2499,
           999,
           325,
-          117
+          118
         ],
         "haidate/B": [
-          2499,
+          2500,
           1000,
-          325,
-          118
+          324,
+          117
         ],
         "haidate/C": [
           2499,
           999,
-          324,
-          118
+          325,
+          117
         ],
         "suneate/A": [
           896,
@@ -1115,41 +1121,41 @@
       "tris_LOD0_3_by_fit": {
         "A": [
           3396,
-          1497,
+          1496,
           496,
           178
         ],
         "B": [
           3395,
-          1500,
-          495,
+          1499,
+          494,
           177
         ],
         "C": [
           3396,
           1498,
           495,
-          177
+          178
         ]
       },
       "tris_by_sub_fit": {
         "haidate/A": [
           2500,
-          999,
+          998,
           324,
           118
         ],
         "haidate/B": [
           2499,
-          1000,
-          325,
+          999,
+          324,
           117
         ],
         "haidate/C": [
           2500,
           1000,
           325,
-          117
+          118
         ],
         "suneate/A": [
           896,
@@ -1208,45 +1214,46 @@
       "meshes": 12,
       "tris_LOD0_3_by_fit": {
         "A": [
-          336,
-          336,
-          336,
-          180
+          345,
+          345,
+          378,
+          179
         ],
         "B": [
-          336,
-          336,
-          336,
-          180
+          360,
+          360,
+          376,
+          179
         ],
         "C": [
-          336,
-          336,
-          336,
+          339,
+          339,
+          379,
           180
         ]
       },
       "tris_by_sub_fit": {
         "remnants/A": [
-          336,
-          336,
-          336,
-          180
+          345,
+          345,
+          378,
+          179
         ],
         "remnants/B": [
-          336,
-          336,
-          336,
-          180
+          360,
+          360,
+          376,
+          179
         ],
         "remnants/C": [
-          336,
-          336,
-          336,
+          339,
+          339,
+          379,
           180
         ]
       },
       "atlas_regions": [
+        "LACQ",
         "STRAP"
       ],
       "skin_bones_LOD0_A": {
@@ -1286,7 +1293,7 @@
         ],
         "B": [
           3395,
-          1499,
+          1500,
           497,
           178
         ],
@@ -1294,7 +1301,7 @@
           3396,
           1497,
           495,
-          176
+          175
         ]
       },
       "tris_by_sub_fit": {
@@ -1306,7 +1313,7 @@
         ],
         "haidate/B": [
           2499,
-          999,
+          1000,
           325,
           118
         ],
@@ -1314,7 +1321,7 @@
           2500,
           999,
           325,
-          118
+          117
         ],
         "suneate/A": [
           896,
@@ -1377,40 +1384,40 @@
       "tris_LOD0_3_by_fit": {
         "A": [
           3395,
-          1500,
-          494,
-          178
+          1499,
+          495,
+          177
         ],
         "B": [
           3395,
           1499,
           497,
-          178
+          177
         ],
         "C": [
           3396,
-          1498,
-          495,
+          1497,
+          494,
           176
         ]
       },
       "tris_by_sub_fit": {
         "haidate/A": [
           2499,
-          1000,
-          324,
-          118
+          999,
+          325,
+          117
         ],
         "haidate/B": [
           2499,
           999,
           325,
-          118
+          117
         ],
         "haidate/C": [
           2500,
-          1000,
-          325,
+          999,
+          324,
           118
         ],
         "suneate/A": [
@@ -1470,45 +1477,46 @@
       "meshes": 12,
       "tris_LOD0_3_by_fit": {
         "A": [
-          336,
-          336,
-          336,
-          180
+          345,
+          345,
+          378,
+          179
         ],
         "B": [
-          336,
-          336,
-          336,
-          180
+          360,
+          360,
+          376,
+          179
         ],
         "C": [
-          336,
-          336,
-          336,
+          339,
+          339,
+          379,
           180
         ]
       },
       "tris_by_sub_fit": {
         "remnants/A": [
-          336,
-          336,
-          336,
-          180
+          345,
+          345,
+          378,
+          179
         ],
         "remnants/B": [
-          336,
-          336,
-          336,
-          180
+          360,
+          360,
+          376,
+          179
         ],
         "remnants/C": [
-          336,
-          336,
-          336,
+          339,
+          339,
+          379,
           180
         ]
       },
       "atlas_regions": [
+        "LACQ",
         "STRAP"
       ],
       "skin_bones_LOD0_A": {
@@ -1583,6 +1591,32 @@
       ]
     },
     "note": "family = main + sub meshes at the same LOD index; Broken <= 400"
+  },
+  "broken_remnants": {
+    "token": "_any",
+    "meaning": "the Broken state is per FAMILY, not per variant: one remnant mesh set per family (K = Helmet, D = Body, L = Leg) is shared by both variants, so `zombie_armor_K1_jingasa_Broken.fbx` and `zombie_armor_K2_kabuto_Broken.fbx` contain the SAME objects `zombie_armor_K_any_Broken_remnants_<fit>_LOD<n>` (likewise D_any for D1/D2, L_any for L1/L2)",
+    "import_rule": "import ONE Broken FBX per family (any variant) and bind it to every variant's Broken state; importing both files yields duplicate object names (WP-017 handoff clarification)",
+    "files_per_family": {
+      "Helmet": [
+        "zombie_armor_K1_jingasa_Broken.fbx",
+        "zombie_armor_K2_kabuto_Broken.fbx"
+      ],
+      "Body": [
+        "zombie_armor_D1_lamellar_Broken.fbx",
+        "zombie_armor_D2_plate_Broken.fbx"
+      ],
+      "Leg": [
+        "zombie_armor_L1_haidate_heavy_Broken.fbx",
+        "zombie_armor_L2_suneate_heavy_Broken.fbx"
+      ]
+    },
+    "object_names": {
+      "Helmet": "zombie_armor_K_any_Broken_remnants_<fit>_LOD<n>",
+      "Body": "zombie_armor_D_any_Broken_remnants_<fit>_LOD<n>",
+      "Leg": "zombie_armor_L_any_Broken_remnants_<fit>_LOD<n>"
+    },
+    "kote_note": "the kote sub-mesh is also variant-independent (`zombie_armor_D_any_Present_kote_<fit>_LOD<n>`) and is included in both D1 and D2 Present/Damaged FBX files — same dedupe rule",
+    "v002": "remnants = cords/straps/ties + one or two broken lacquer plate remnants per family (helmet: hanging shikoro lame; body: half tasset front-right + shoulder plate stub; leg: half thigh-tube fragment) with hemp-bound lips, <= 400 tris"
   },
   "rules": {
     "excluded_modules_by_piece": {

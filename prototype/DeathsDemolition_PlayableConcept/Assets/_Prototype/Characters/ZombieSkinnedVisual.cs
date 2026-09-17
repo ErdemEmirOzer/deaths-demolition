@@ -59,6 +59,8 @@ namespace DD.Prototype.Characters
         private static readonly int SpeedId = Animator.StringToHash(CharacterAnimationSet.SpeedParameter);
         private ZombieLook _look;
         private int _materialTier = -1;
+        /// <summary>WP-020 · Per module slot (body/top/bottom/head): the bound module's material names in sub-mesh order; null = atlas only.</summary>
+        private readonly string[][] _slotMaterials = new string[SlotCount][];
 
         public Animator Animator => _animator;
         public LODGroup LodGroup => _lodGroup;
@@ -174,6 +176,10 @@ namespace DD.Prototype.Characters
             ZombieModuleLibrary.Variant bottomV = bottom != null ? bottom.Find(look.bottomColourway, look.fit) : null;
             ZombieModuleLibrary.Variant headV = head != null ? head.Find(ZombieModuleLibrary.NoColourway, look.fit) : null;
             bool ok = body != null && topV != null && bottomV != null;
+            _slotMaterials[SlotBody] = null;
+            _slotMaterials[SlotTop] = top != null ? top.materials : null;
+            _slotMaterials[SlotBottom] = bottom != null ? bottom.materials : null;
+            _slotMaterials[SlotHead] = head != null ? head.materials : null;
 
             for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
             {
@@ -183,6 +189,8 @@ namespace DD.Prototype.Characters
                 Bind(Slot(lod, SlotHead), headV != null ? headV.lods[lod] : null);
             }
 
+            // A re-assembled look changes the sub-mesh layout: re-apply the current version's material arrays.
+            if (_materialTier >= 0) ApplyMaterial(library, _materialTier);
             return ok;
         }
 
@@ -208,17 +216,41 @@ namespace DD.Prototype.Characters
             renderer.enabled = true;
         }
 
-        /// <summary>The shared material variant of an enemy version on every slot (no instance material).</summary>
+        /// <summary>
+        /// The shared material variant of an enemy version on every slot (no instance material). WP-020: a
+        /// module with two sub-meshes (AP-007 v002 cloth atlas) takes the library's cached [atlas, cloth]
+        /// array for the version; single-material slots keep the plain shared material.
+        /// </summary>
         public void ApplyMaterial(ZombieModuleLibrary library, int tierIndex)
         {
             Material m = library != null ? library.MaterialFor(tierIndex) : null;
             if (m == null) return;
             for (int i = 0; i < _slots.Length; i++)
             {
-                if (_slots[i] != null && _slots[i].sharedMaterial != m) _slots[i].sharedMaterial = m;
+                SkinnedMeshRenderer r = _slots[i];
+                if (r == null) continue;
+                string[] names = _slotMaterials[i % SlotCount];
+                if (names != null && names.Length > 1)
+                {
+                    Material[] set = library.MaterialsFor(names, tierIndex);
+                    if (!SameMaterials(r, set)) r.sharedMaterials = set;
+                }
+                else
+                {
+                    Material single = names != null && names.Length == 1 && names[0] == ZombieModuleLibrary.MaterialCloth ? library.ClothMaterialFor(tierIndex) : m;
+                    if (r.sharedMaterial != single) r.sharedMaterial = single;
+                }
             }
 
             _materialTier = tierIndex;
+        }
+
+        private static bool SameMaterials(Renderer r, Material[] set)
+        {
+            Material[] current = r.sharedMaterials;
+            if (current.Length != set.Length) return false;
+            for (int i = 0; i < set.Length; i++) if (current[i] != set[i]) return false;
+            return true;
         }
 
         /// <summary>Enabled renderers at LOD 0 (tests / probe).</summary>

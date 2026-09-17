@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
@@ -77,7 +78,7 @@ namespace DD.Art.Tests.EditMode
         // ================================================================== şema ve sayılar
 
         [Test]
-        public void Placement_SemaGecerli_Sayilar_2387_49_24_12_12_5_KaynakShaAyni()
+        public void Placement_SemaGecerli_Sayilar_2664_49_24_12_12_5_KaynakShaAyni()
         {
             Dictionary<string, object> doc = SourceJson();
             Assert.DoesNotThrow(() => PlacementImporter.Validate(doc), "dd-placement-v1 şema doğrulaması");
@@ -85,8 +86,8 @@ namespace DD.Art.Tests.EditMode
             WorldPlacementAsset p = Placement();
             Assert.AreEqual(WorldPlacementAsset.Schema, p.schema);
             Assert.AreEqual("AP-005", p.package);
-            // WP-017: v001 source (2354) + AP-005B delta (+202 / ~9 / −169) = 2387.
-            Assert.AreEqual(2387, p.instances.Count, "instances");
+            // WP-017: v001 source (2354) + AP-005B delta (+202 / ~9 / −169) = 2387; WP-020: + AP-005C delta (+312 / ~23 / −35) = 2664.
+            Assert.AreEqual(2664, p.instances.Count, "instances");
             Assert.AreEqual(49, p.routes.Count, "routes");
             Assert.AreEqual(24, p.markers.Count, "markers");
             Assert.AreEqual(12, p.spawnPoints.Count, "spawn_points");
@@ -111,7 +112,7 @@ namespace DD.Art.Tests.EditMode
         /// camera-plane culms are the ones listed.
         /// </summary>
         [Test]
-        public void Overridelar_UcBambuGovdesi_YalnizListelenenlerKaynaktanSapar_DigestVeSha()
+        public void Overridelar_WP020_DosyaBos_KatlananDortBambuKaynaktaV003_HicbiriSapmaz()
         {
             string path = ArtLibraryPaths.Ap005PlacementOverridesJson;
             Assert.IsTrue(File.Exists(path), "override dosyası yok: " + path);
@@ -132,7 +133,12 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsFalse(string.IsNullOrWhiteSpace(ArtJson.AsString(r["reason"])), id + " gerekçesiz");
             }
 
-            CollectionAssert.AreEquivalent(new[] { "AP005_i1532", "AP005_i1535", "AP005_i1605", "AP005_i1549" }, delta.Keys, "WP-014 devri: üç bambu gövdesi + i1532 arkasındaki gövde (ilk isabet gizliyordu)");
+            // WP-020: AP-005C folded the four WP-014/WP-015 bamboo nudges into the source (delta v003 unity_overrides_folded) — the file stays, empty.
+            Assert.AreEqual(0, delta.Count, "override dosyası boş (AP-005C katladı)");
+            Dictionary<string, object> v3 = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtLibraryPaths.Ap005PlacementDeltaV3Json)), "delta");
+            var folded = new List<string>();
+            foreach (object o in ArtJson.AsList(v3["unity_overrides_folded"], "unity_overrides_folded")) folded.Add(ArtJson.AsString(ArtJson.AsObject(o, "folded")["id"]));
+            CollectionAssert.AreEquivalent(new[] { "AP005_i1532", "AP005_i1535", "AP005_i1605", "AP005_i1549", "AP005_i0048" }, folded, "katlanan kayıtlar: 4 bambu + i0048 materyal override'ı");
 
             WorldPlacementAsset p = Placement();
             Assert.AreEqual(Sha256(bytes), p.overridesSha256, "asset override dosyasının sha256'sını taşımalı");
@@ -146,14 +152,17 @@ namespace DD.Art.Tests.EditMode
                 source[ArtJson.AsString(r["id"])] = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(pos[0]), ArtJson.AsFloat(pos[1]), ArtJson.AsFloat(pos[2]));
             }
 
-            // WP-017: the AP-005B delta (added + changed records) is part of the "source" the overrides sit on.
-            Dictionary<string, object> deltaDoc = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtLibraryPaths.Ap005PlacementDeltaJson)), "delta");
-            foreach (string key in new[] { "added", "changed" })
-            foreach (object o in ArtJson.AsList(deltaDoc[key], key))
+            // WP-017/WP-020: the delta chain (added + changed records, later files win) is part of the "source" the overrides sit on.
+            foreach (string deltaPath in ArtLibraryPaths.Ap005PlacementDeltaJsons)
             {
-                Dictionary<string, object> r = ArtJson.AsObject(o, key);
-                List<object> pos = ArtJson.AsList(r["position"], "position");
-                source[ArtJson.AsString(r["id"])] = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(pos[0]), ArtJson.AsFloat(pos[1]), ArtJson.AsFloat(pos[2]));
+                Dictionary<string, object> deltaDoc = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(deltaPath)), "delta");
+                foreach (string key in new[] { "added", "changed" })
+                foreach (object o in ArtJson.AsList(deltaDoc[key], key))
+                {
+                    Dictionary<string, object> r = ArtJson.AsObject(o, key);
+                    List<object> pos = ArtJson.AsList(r["position"], "position");
+                    source[ArtJson.AsString(r["id"])] = WorldPlacementAsset.ToUnity(ArtJson.AsFloat(pos[0]), ArtJson.AsFloat(pos[1]), ArtJson.AsFloat(pos[2]));
+                }
             }
 
             int moved = 0, same = 0;
@@ -164,19 +173,19 @@ namespace DD.Art.Tests.EditMode
                 if (delta.ContainsKey(i.id)) moved++; else same++;
             }
 
-            Assert.AreEqual(4, moved);
-            Assert.AreEqual(p.instances.Count - 4, same);
+            Assert.AreEqual(0, moved);
+            Assert.AreEqual(p.instances.Count, same);
 
-            // The scene carries the moved transforms (the importer ran after the file was written).
+            // The scene carries the folded (v003) transforms of the four culms: source + the old nudge, now from the delta.
             Transform instances = Instances(OpenWorld());
-            foreach (KeyValuePair<string, Vector3> kv in delta)
+            foreach (string id in new[] { "AP005_i1532", "AP005_i1535", "AP005_i1605", "AP005_i1549" })
             {
-                Transform t = instances.Find(kv.Key);
-                Assert.IsNotNull(t, kv.Key + " sahnede yok");
-                Assert.AreEqual((source[kv.Key] + kv.Value).ToString("F3"), t.position.ToString("F3"), kv.Key + " sahne konumu = kaynak + override");
+                Transform t = instances.Find(id);
+                Assert.IsNotNull(t, id + " sahnede yok");
+                Assert.AreEqual(source[id].ToString("F3"), t.position.ToString("F3"), id + " sahne konumu = v003 kaynak (override yok)");
             }
 
-            Debug.Log("[DD-TEST] wp015.overrides applied=" + moved + " sha=" + p.overridesSha256.Substring(0, 12));
+            Debug.Log("[DD-TEST] wp020.overrides applied=" + moved + " folded=" + folded.Count + " sha=" + p.overridesSha256.Substring(0, 12));
         }
 
         // ================================================================== koordinat sözleşmesi
@@ -335,14 +344,14 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(213, assemblies, "assembly[] taşıyan kayıt (v001 242 − delta kaldırılan 29)");
+            Assert.AreEqual(247, assemblies, "assembly[] taşıyan kayıt (v001 242 − v002 kaldırılan 29 + v003 outer-band bambu kümeleri/props 34)");
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
         }
 
         // ================================================================== sahne atamaları
 
         [Test]
-        public void Sahne_2387Ornek_RegionNavmeshKatmanStatik_NavMeshVerisi()
+        public void Sahne_2664Ornek_RegionNavmeshKatmanStatik_NavMeshVerisi()
         {
             WorldPlacementAsset p = Placement();
             Scene scene = OpenWorld();
@@ -394,9 +403,10 @@ namespace DD.Art.Tests.EditMode
 
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar.GetRange(0, Math.Min(40, hatalar.Count))));
             // WP-017 (AP-005B v002): center 20, north 397, east 630, south 527, west 813; occluder 146 ∪ fade 27 = 150.
-            Assert.AreEqual(20, regionCounts["center"]); Assert.AreEqual(397, regionCounts["north"]); Assert.AreEqual(630, regionCounts["east"]);
-            Assert.AreEqual(527, regionCounts["south"]); Assert.AreEqual(813, regionCounts["west"]);
-            Assert.AreEqual(150, occluders, "occluder_candidate 146 ∪ fade_mesh 27 = 150 (AP-005B v002)");
+            // WP-020 (AP-005C v003): center 20, north 473, east 696, south 589, west 886; occluder 186 ∪ fade 29 = 190.
+            Assert.AreEqual(20, regionCounts["center"]); Assert.AreEqual(473, regionCounts["north"]); Assert.AreEqual(696, regionCounts["east"]);
+            Assert.AreEqual(589, regionCounts["south"]); Assert.AreEqual(886, regionCounts["west"]);
+            Assert.AreEqual(190, occluders, "occluder_candidate 186 ∪ fade_mesh 29 = 190 (AP-005C v003)");
 
             NavMeshSurface surface = null;
             foreach (GameObject root in scene.GetRootGameObjects())
@@ -417,13 +427,37 @@ namespace DD.Art.Tests.EditMode
             WorldPlacementAsset p = Placement();
             Scene scene = OpenWorld();
             string once = PlacementImporter.Digest(Instances(scene));
-            PlacementImporter.ImportReport report = PlacementImporter.BuildScene(p);
-            Assert.AreEqual(2387, report.Instances);
-            Assert.IsEmpty(report.Unmatched, "eşleşmeyen kayıt");
-            Assert.AreEqual(once, report.Digest, "İkinci koşu farklı bir örnek kümesi üretti (idempotency kırık).");
-            Scene again = OpenWorld();
-            Assert.AreEqual(once, PlacementImporter.Digest(Instances(again)), "Kaydedilen sahnenin digest'i");
-            Debug.Log("[DD-TEST] wp014.importer.idempotent digest=" + once.Substring(0, 12) + " navTris=" + report.NavMeshTriangles);
+            // WP-020 (WP-039 sanity N1): the re-import rewrites the scene, the NavMesh data and the generated meshes
+            // in place (content-equal, but the serialisation churns 200 k lines) — restore the committed bytes after the check
+            // so a test run leaves the working tree clean.
+            string[] rewritten =
+            {
+                ArtLibraryPaths.Ap005WorldScene, ArtLibraryPaths.Ap005NavMeshData, ArtLibraryPaths.Ap005GroundMesh,
+                Path.GetDirectoryName(ArtLibraryPaths.Ap005GroundMesh).Replace('\\', '/') + "/AP005_PavingGrout_AP005_i0051.asset"
+            };
+            var snapshot = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+            foreach (string f in rewritten) if (File.Exists(f)) snapshot[f] = File.ReadAllBytes(f);
+            try
+            {
+                PlacementImporter.ImportReport report = PlacementImporter.BuildScene(p);
+                Assert.AreEqual(2664, report.Instances);
+                Assert.IsEmpty(report.Unmatched, "eşleşmeyen kayıt");
+                Assert.AreEqual(once, report.Digest, "İkinci koşu farklı bir örnek kümesi üretti (idempotency kırık).");
+                Scene again = OpenWorld();
+                Assert.AreEqual(once, PlacementImporter.Digest(Instances(again)), "Kaydedilen sahnenin digest'i");
+                Debug.Log("[DD-TEST] wp014.importer.idempotent digest=" + once.Substring(0, 12) + " navTris=" + report.NavMeshTriangles);
+            }
+            finally
+            {
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                foreach (KeyValuePair<string, byte[]> kv in snapshot)
+                {
+                    byte[] now = File.ReadAllBytes(kv.Key);
+                    if (now.Length == kv.Value.Length && StructuralComparisons.StructuralEqualityComparer.Equals(now, kv.Value)) continue;
+                    File.WriteAllBytes(kv.Key, kv.Value);
+                    AssetDatabase.ImportAsset(kv.Key, ImportAssetOptions.ForceUpdate);
+                }
+            }
         }
 
         // ================================================================== noktalar ve kaynak

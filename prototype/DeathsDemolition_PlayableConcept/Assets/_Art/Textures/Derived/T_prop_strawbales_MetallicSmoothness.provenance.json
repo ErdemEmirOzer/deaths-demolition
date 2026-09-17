@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_prop_strawbales_Packed.png",
-    "sourceSha256": "71ada3848c64891d18137e68352cc474fb1b896d3f9339c2cd8a6b88bd00869f",
-    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-16T09:38:11.4769930Z",
-    "outputSha256": "e10227a29e2b70272fc58a47ec24347c46b703f680a0089d4326ba0f4df2f31a"
+    "sourceSha256": "36bb74b65ded0901b68e14bf4c5d2b288932e5bc2faf1064693fe263c72c7a26",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T21:31:02.5598910Z",
+    "outputSha256": "76bcc5980e9b90308f13c9bbeb6c29aca6bc2586f487678abf1bcdfd2a85098f"
 }

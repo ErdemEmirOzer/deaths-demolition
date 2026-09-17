@@ -216,7 +216,36 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(lib.tierMaterials[1].IsKeywordEnabled("_DETAIL_MULX2") && lib.tierMaterials[1].GetTexture("_DetailMask") != null, "versiyon tintleri DetailMask ile kumaşa sınırlı");
             Assert.IsFalse(lib.tierMaterials[0].IsKeywordEnabled("_DETAIL_MULX2"), "Standard tintsiz");
             Assert.AreEqual(Color.black, lib.tierMaterials[1].GetColor("_EmissionColor"), "emissive yok (DEC-067)");
-            Debug.Log("[DD-TEST] wp016.library bodies=3 modules=19 meshes=" + meshes);
+
+            // WP-020 · AP-007 v002 second cloth atlas: material order per module (7 atlas+cloth, 7 cloth only, 5 atlas only), M_zombie_cloth ×4,
+            // sub-mesh count of every variant mesh equals the module's material count, tier arrays cached (no allocation after warm-up).
+            int both = 0, clothOnly = 0, atlasOnly = 0;
+            foreach (ZombieModuleLibrary.Module m in lib.modules)
+            {
+                Assert.IsNotNull(m.materials, m.id + ": materyal sırası");
+                string key = string.Join("+", m.materials);
+                if (key == ZombieModuleLibrary.MaterialAtlas + "+" + ZombieModuleLibrary.MaterialCloth) both++;
+                else if (key == ZombieModuleLibrary.MaterialCloth) clothOnly++;
+                else if (key == ZombieModuleLibrary.MaterialAtlas) atlasOnly++;
+                else hatalar.Add(m.id + ": materyal sırası " + key);
+                foreach (ZombieModuleLibrary.Variant v in m.variants)
+                    for (int lod = 0; lod < 4; lod++)
+                        if (v.lods[lod] != null && v.lods[lod].mesh != null && v.lods[lod].mesh.subMeshCount != m.materials.Length)
+                            hatalar.Add(m.id + " " + v.colourway + "/" + v.fit + " LOD" + lod + ": " + v.lods[lod].mesh.subMeshCount + " alt-mesh ≠ " + m.materials.Length + " materyal");
+            }
+
+            Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
+            Assert.AreEqual(7, both, "atlas + kumaş modülleri"); Assert.AreEqual(7, clothOnly, "yalnız kumaş"); Assert.AreEqual(5, atlasOnly, "yalnız atlas (baş/saç/straw)");
+            Assert.AreEqual(4, lib.tierClothMaterials.Length);
+            for (int t = 0; t < 4; t++) Assert.IsNotNull(lib.tierClothMaterials[t], "kumaş tier materyali " + t);
+            Assert.AreNotEqual(lib.tierMaterials[0], lib.tierClothMaterials[0]);
+            Assert.IsTrue(lib.tierClothMaterials[1].IsKeywordEnabled("_DETAIL_MULX2") && lib.tierClothMaterials[1].GetTexture("_DetailMask") != null, "kumaş atlası versiyon tint'li (DetailMask 4×4 sabit)");
+            Assert.AreEqual(4, lib.tierClothMaterials[1].GetTexture("_DetailMask").width, "kumaş DetailMask 4×4 alt doku (2K Mask sevk edilmez)");
+            Assert.IsFalse(lib.tierClothMaterials[0].IsKeywordEnabled("_DETAIL_MULX2"));
+            Material[] pair = lib.MaterialsFor(new[] { ZombieModuleLibrary.MaterialAtlas, ZombieModuleLibrary.MaterialCloth }, 2);
+            Assert.AreSame(pair, lib.MaterialsFor(new[] { ZombieModuleLibrary.MaterialAtlas, ZombieModuleLibrary.MaterialCloth }, 2), "önbellek: aynı dizi");
+            Assert.AreEqual(lib.tierMaterials[2], pair[0]); Assert.AreEqual(lib.tierClothMaterials[2], pair[1]);
+            Debug.Log("[DD-TEST] wp016.library bodies=3 modules=19 meshes=" + meshes + " wp020 both=" + both + " cloth=" + clothOnly + " atlas=" + atlasOnly);
         }
 
         private static void CheckMesh(List<string> hatalar, string what, ZombieModuleLibrary.MeshRef r, int ceiling)

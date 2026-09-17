@@ -265,6 +265,9 @@ namespace DD.Prototype.Tests.PlayMode
 
         private IEnumerator RunSahnesiniHazirla()
         {
+            // WP-020 (WP-039 sanity P2): the wall constants (south inner face z = −44, east wall) are the M0
+            // procedural blockout's; the authored AP-005 world has water, not a wall, at z −44 — pin the source.
+            System.Environment.SetEnvironmentVariable(DD.Prototype.World.WorldSourceSettings.EnvironmentVariable, "Procedural");
             SceneManager.LoadScene(PrototypeScenes.Run, LoadSceneMode.Single);
             yield return null;
 
@@ -314,6 +317,7 @@ namespace DD.Prototype.Tests.PlayMode
         public void Bitir()
         {
             Time.captureDeltaTime = 0f;
+            System.Environment.SetEnvironmentVariable(DD.Prototype.World.WorldSourceSettings.EnvironmentVariable, null);
 
             if (_rig != null && _rig.Motor != null)
             {

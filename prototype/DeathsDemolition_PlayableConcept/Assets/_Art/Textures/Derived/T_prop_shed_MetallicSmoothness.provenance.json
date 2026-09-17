@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_prop_shed_Packed.png",
-    "sourceSha256": "2aad23ea7b2243a7953ea6454178eb4b50fec5982da260c8b62bea6068f32382",
-    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-16T09:38:12.8155550Z",
-    "outputSha256": "32f67e476c847d36bf7b7056e648ccc8d8f012dd9f4b3d8f471213f94379ca30"
+    "sourceSha256": "efdc00f925db6a32240265d356b56fa21035b69a1277dfba3f204037f1440860",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T21:31:04.2028100Z",
+    "outputSha256": "311867542afb77b80bd3212b236282b9e73a19d9c5f9084475fdeef5499c7cd4"
 }

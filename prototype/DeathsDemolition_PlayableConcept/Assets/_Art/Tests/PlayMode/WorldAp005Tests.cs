@@ -24,7 +24,7 @@ namespace DD.Art.Tests.PlayMode
 {
     /// <summary>
     /// WP-014 · The authored world in play (Metal): the scene stands alone with its bootstrap
-    /// (2387 instances after the AP-005B delta, baked NavMesh, 12+12 markers, run systems), every spawn / weapon /
+    /// (2664 instances after the AP-005B + AP-005C deltas, baked NavMesh, 12+12 markers, run systems), every spawn / weapon /
     /// route endpoint reaches the player start, the route sample points stay readable with
     /// the WP-011 capsule method, the corridor roof fades for the camera (REQ-111), and the
     /// Run scene loads the same world additively under WorldSource.AP005 and spawns a round.
@@ -145,12 +145,12 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Dunya_TekBasina_2387Ornek_NavMeshPismis_MarkerlarVeSistemler()
+        public IEnumerator Dunya_TekBasina_2664Ornek_NavMeshPismis_MarkerlarVeSistemler()
         {
             yield return DunyayiTekBasinaYukle();
             Ap005WorldBootstrap.Result r = Ap005WorldBootstrap.Last;
             Assert.IsTrue(r.Ok, "Bootstrap raporu FAIL:\n" + r.Report);
-            Assert.AreEqual(2387, r.Instances);   // WP-017: AP-005B v002
+            Assert.AreEqual(2664, r.Instances);   // WP-020: AP-005C v003
             Assert.Greater(r.NavMeshTriangles, 0, "NavMesh boş");
             Assert.AreEqual(0, r.Unreachable, "erişilemeyen marker:\n" + r.Report);
             Assert.AreEqual(12, UnityEngine.Object.FindObjectsOfType<SpawnPointMarker>().Length, "12 spawn marker");

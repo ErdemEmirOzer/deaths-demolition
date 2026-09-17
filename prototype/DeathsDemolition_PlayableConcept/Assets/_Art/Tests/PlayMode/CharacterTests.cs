@@ -168,7 +168,7 @@ namespace DD.Art.Tests.PlayMode
                 if (active < 3) hatalar.Add(z.name + ": " + active + " etkin slot (gövde+üst+alt en az 3)");
                 if (!v.Look.IsValid) hatalar.Add(z.name + ": geçersiz look");
                 looks.Add(v.Look.Key);
-                foreach (SkinnedMeshRenderer r in v.GetComponentsInChildren<SkinnedMeshRenderer>(true)) if (r.sharedMaterial != null) materials.Add(r.sharedMaterial);
+                foreach (SkinnedMeshRenderer r in v.GetComponentsInChildren<SkinnedMeshRenderer>(true)) foreach (Material sm in r.sharedMaterials) if (sm != null) materials.Add(sm);
                 for (int s = 0; s < ZombieSkinnedVisual.SlotCount; s++)
                 {
                     SkinnedMeshRenderer r = v.Slot(0, s);
@@ -185,7 +185,7 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log("[DD-TEST] wp016.crowd spawned=" + skinned + " fillSeconds=" + (Time.realtimeSinceStartup - t0).ToString("F2", CultureInfo.InvariantCulture) + " distinctLooks=" + looks.Count + " materials=" + materials.Count + " avgSlots=" + ((float)slots / Mathf.Max(1, skinned)).ToString("F2") + " avgLod0Tris=" + (tris / Mathf.Max(1, skinned)));
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
             Assert.GreaterOrEqual(skinned, 40);
-            Assert.LessOrEqual(materials.Count, 4, "kalabalık ≤ 4 paylaşılan materyal (Standard + 3 versiyon), örnek materyal yok");
+            Assert.LessOrEqual(materials.Count, 8, "kalabalık ≤ 8 paylaşılan materyal (atlas + kumaş atlası (WP-020) × Standard + 3 versiyon), örnek materyal yok");
             Assert.GreaterOrEqual(looks.Count, 30, "40 spawn'da ≥ 30 farklı look");
 
             // Art-director evidence: the crowd closing on the player from the gameplay rig, 1080p, post-fx on.

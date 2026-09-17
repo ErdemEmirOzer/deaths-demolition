@@ -39,8 +39,31 @@ namespace DD.Art
             public bool fade;
             /// <summary>WP-017 · AP-005B world-master material name (<c>material_override</c>), empty = the prefab's own materials. Mapped by <c>PlacementImporter.MaterialOverrides</c>.</summary>
             public string materialOverride;
-            /// <summary>WP-017 · "v002" for records added or changed by the AP-005B delta; empty for v001 records.</summary>
+            /// <summary>WP-017 · "v002" for records added or changed by the AP-005B delta, "v003" by the AP-005C delta (WP-020); empty for v001 records.</summary>
             public string deltaVersion;
+            /// <summary>WP-020 · AP-005C <c>material_override_parts</c>: world-master material per assembly part (part = renderer name prefix, e.g. <c>panel</c> → <c>panel_LOD0</c>); the other parts keep the prefab's materials. Empty = none.</summary>
+            public PartOverride[] materialOverrideParts = new PartOverride[0];
+        }
+
+        [Serializable]
+        public struct PartOverride
+        {
+            public string part;
+            public string material;
+        }
+
+        /// <summary>WP-020 · One applied delta file (in order): file name, sha256, target and counts.</summary>
+        [Serializable]
+        public sealed class DeltaRecord
+        {
+            public string file;
+            public string version;
+            public string sha256;
+            public string target;
+            public int added;
+            public int changed;
+            public int removed;
+            public List<string> removedIds = new List<string>();
         }
 
         [Serializable]
@@ -90,13 +113,14 @@ namespace DD.Art
         public string overridesSha256;
         /// <summary>WP-015 · ids whose transform differs from the source by an override (in file order).</summary>
         public List<string> overriddenIds = new List<string>();
-        /// <summary>WP-017 · AP-005B delta (dd-placement-delta-v1) applied on top of the v001 source: sha256 of the delta file and its counts; empty sha = no delta.</summary>
+        /// <summary>WP-017 · Delta chain (dd-placement-delta-v1) applied on top of the v001 source, in <see cref="ArtLibraryPaths.Ap005PlacementDeltaJsons"/> order: sha256 of the LAST delta file, its target; counts and removed ids are the totals over the chain (WP-020: v002 + v003). Empty sha = no delta. Per-file records in <see cref="deltas"/>.</summary>
         public string deltaSha256;
         public string deltaTarget;
         public int deltaAdded;
         public int deltaChanged;
         public int deltaRemoved;
         public List<string> deltaRemovedIds = new List<string>();
+        public List<DeltaRecord> deltas = new List<DeltaRecord>();
         public List<Instance> instances = new List<Instance>();
         public List<Route> routes = new List<Route>();
         public List<Marker> markers = new List<Marker>();
@@ -109,6 +133,7 @@ namespace DD.Art
         public const string OverridesSchema = "dd-placement-overrides-v1";
         public const string DeltaSchema = "dd-placement-delta-v1";
         public const string DeltaVersionTag = "v002";
+        public const string DeltaVersionTagV3 = "v003";
 
         /// <summary>Blender (x, y, z) → Unity (x, z, y).</summary>
         public static Vector3 ToUnity(float bx, float by, float bz)

@@ -1,5 +1,5 @@
 {
-  "schema": "AP007.modules.v001",
+  "schema": "AP007.modules.v002",
   "package": "AP-007",
   "skeleton": {
     "armature": "ZombieRig",
@@ -136,7 +136,11 @@
           115
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Atlas",
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "B2_momohiki_tight",
@@ -195,7 +199,11 @@
           114
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Atlas",
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "B3_koshimaki_wrap",
@@ -254,7 +262,11 @@
           114
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Atlas",
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "B4_tattsuke_hakama",
@@ -313,7 +325,11 @@
           114
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Atlas",
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "B5_fundoshi",
@@ -351,7 +367,10 @@
           115
         ]
       },
-      "meshes": 12
+      "meshes": 12,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "B6_hakama_torn",
@@ -410,7 +429,11 @@
           115
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Atlas",
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "B7_momohiki_kyahan",
@@ -436,41 +459,45 @@
         "cw1/A": [
           2398,
           999,
-          348,
-          114
+          350,
+          112
         ],
         "cw1/B": [
           2398,
           996,
           349,
-          115
+          114
         ],
         "cw1/C": [
-          2400,
-          996,
-          348,
-          113
-        ],
-        "cw2/A": [
-          2398,
-          999,
-          350,
-          112
-        ],
-        "cw2/B": [
-          2398,
-          996,
-          347,
-          115
-        ],
-        "cw2/C": [
           2400,
           998,
           348,
           115
+        ],
+        "cw2/A": [
+          2398,
+          999,
+          348,
+          115
+        ],
+        "cw2/B": [
+          2398,
+          996,
+          349,
+          114
+        ],
+        "cw2/C": [
+          2400,
+          996,
+          348,
+          113
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Atlas",
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "H1_hair_crop",
@@ -508,7 +535,10 @@
           55
         ]
       },
-      "meshes": 12
+      "meshes": 12,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
     },
     {
       "module": "H2_hair_matted",
@@ -546,7 +576,10 @@
           54
         ]
       },
-      "meshes": 12
+      "meshes": 12,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
     },
     {
       "module": "H3_topknot_broken",
@@ -584,7 +617,10 @@
           54
         ]
       },
-      "meshes": 12
+      "meshes": 12,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
     },
     {
       "module": "H4_tenugui_wrap",
@@ -622,7 +658,10 @@
           55
         ]
       },
-      "meshes": 12
+      "meshes": 12,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "H5_hachimaki_band",
@@ -661,7 +700,10 @@
           54
         ]
       },
-      "meshes": 12
+      "meshes": 12,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
     },
     {
       "module": "T1_kosode_short",
@@ -685,41 +727,44 @@
         "cw1/A": [
           2800,
           1199,
-          429,
-          140
+          430,
+          139
         ],
         "cw1/B": [
           2799,
-          1199,
+          1200,
           430,
-          140
+          139
         ],
         "cw1/C": [
-          2800,
+          2799,
           1199,
-          430,
+          429,
           139
         ],
         "cw2/A": [
           2800,
           1199,
-          429,
-          140
+          430,
+          139
         ],
         "cw2/B": [
           2799,
-          1199,
+          1200,
           430,
-          140
+          139
         ],
         "cw2/C": [
-          2800,
+          2799,
           1199,
-          430,
+          429,
           139
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "T2_kosode_long",
@@ -742,42 +787,45 @@
       "tris_LOD0_3_by_cw_fit": {
         "cw1/A": [
           2800,
-          1198,
-          429,
-          137
+          1200,
+          427,
+          139
         ],
         "cw1/B": [
           2800,
           1200,
-          428,
+          427,
           140
         ],
         "cw1/C": [
-          2800,
+          2797,
           1200,
           430,
           140
         ],
         "cw2/A": [
           2800,
-          1198,
-          429,
-          137
+          1200,
+          427,
+          139
         ],
         "cw2/B": [
           2800,
           1200,
-          428,
+          427,
           140
         ],
         "cw2/C": [
-          2800,
+          2797,
           1200,
           430,
           140
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "T3_haori_open",
@@ -799,43 +847,46 @@
       "object_name_pattern": "zombie_T3_haori_open_<cw>_<fit>_LOD<n>",
       "tris_LOD0_3_by_cw_fit": {
         "cw1/A": [
-          2799,
-          1200,
+          2797,
+          1199,
           430,
-          137
+          139
         ],
         "cw1/B": [
-          2800,
+          2799,
           1200,
-          430,
+          427,
           139
         ],
         "cw1/C": [
-          2799,
-          1199,
+          2797,
+          1198,
           429,
-          139
+          140
         ],
         "cw2/A": [
-          2799,
-          1200,
+          2797,
+          1199,
           430,
-          137
+          139
         ],
         "cw2/B": [
-          2800,
+          2799,
           1200,
-          430,
+          427,
           139
         ],
         "cw2/C": [
-          2799,
-          1199,
+          2797,
+          1198,
           429,
-          139
+          140
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "T4_hanten_vest",
@@ -860,13 +911,13 @@
           2799,
           1200,
           428,
-          139
+          140
         ],
         "cw1/B": [
           2800,
-          1199,
+          1200,
           429,
-          139
+          140
         ],
         "cw1/C": [
           2799,
@@ -878,13 +929,13 @@
           2799,
           1200,
           428,
-          139
+          140
         ],
         "cw2/B": [
           2800,
-          1199,
+          1200,
           429,
-          139
+          140
         ],
         "cw2/C": [
           2799,
@@ -893,7 +944,10 @@
           140
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "T5_kosode_torn",
@@ -918,40 +972,43 @@
           2799,
           1200,
           429,
-          139
+          140
         ],
         "cw1/B": [
-          2799,
+          2800,
           1200,
-          429,
+          430,
           140
         ],
         "cw1/C": [
           2800,
           1200,
           430,
-          140
+          139
         ],
         "cw2/A": [
           2799,
           1200,
           429,
-          139
+          140
         ],
         "cw2/B": [
-          2799,
+          2800,
           1200,
-          429,
+          430,
           140
         ],
         "cw2/C": [
           2800,
           1200,
           430,
-          140
+          139
         ]
       },
-      "meshes": 24
+      "meshes": 24,
+      "materials": [
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "T6_bare_straps",
@@ -990,7 +1047,11 @@
           140
         ]
       },
-      "meshes": 12
+      "meshes": 12,
+      "materials": [
+        "M_Zombie_Atlas",
+        "M_Zombie_Cloth"
+      ]
     },
     {
       "module": "T7_mino_cape",
@@ -1028,14 +1089,17 @@
           140
         ]
       },
-      "meshes": 12
+      "meshes": 12,
+      "materials": [
+        "M_Zombie_Atlas"
+      ]
     }
   ],
   "assembly": {
     "zombie": "ZombieRig + zombie_body_<fit>_LOD* + one top + one bottom + one head (H0 = no head module)",
     "binding": "every module mesh is skinned to the same bone names; in Unity re-point SkinnedMeshRenderer.bones/rootBone of the module to the body prefab's ZombieRig transforms (by name), or import each module FBX with the same Humanoid avatar",
     "lod": "LOD0..3 per mesh; combine into one LODGroup per zombie (body+top+bottom+head at the same LOD index); per-zombie worst case 11900 / 4980 / 1780 / 590 tris",
-    "material": "single shared M_Zombie_Atlas (URP/Lit, no per-instance material, no MaterialPropertyBlock - SRP batching); colour variety = module colourway meshes (cw1 dark / cw2 faded) + module mix",
+    "material": "M_Zombie_Atlas (body, straw, hair, sash) + M_Zombie_Cloth (cloth atlas v002) — <= 2 materials per zombie, no per-instance material (SRP batching); colour variety = module colourway meshes (cw1 dark / cw2 faded) + module mix",
     "combinations": "3 fits x 7 tops (5 with 2 cw) x 7 bottoms (6 with 2 cw) x 6 heads = 3 x 12 x 13 x 6 = 2808 distinct looks; 24 reference looks in looks[]",
     "rules": [
       "T7_mino_cape never together with ArmorSlot.Body Present (conflicts with the do) -> pick another top at spawn",
@@ -1263,7 +1327,5 @@
       "bottom_cw": "cw1",
       "head": "H5_hachimaki_band"
     }
-  ],
-  "version": "v002",
-  "v002_note": "body fits A/B/C = Tripo H3.1 bases fitted onto the AP-006 mannequin topology (same UV/weights/skeleton); T7_mino_cape = Tripo H3.1 mesh (LOD0 collapse, LOD1-3 voxel-remesh) with its own baked texture in the straw atlas rect; rope/strap/wrap parts now use the sash tile"
+  ]
 }

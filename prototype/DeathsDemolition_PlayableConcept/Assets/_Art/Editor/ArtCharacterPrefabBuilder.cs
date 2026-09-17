@@ -42,6 +42,9 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ZombieDerived = ZombieTextures + "/Derived";
         public const string PlayerMaterial = PlayerFolder + "/M_player.mat";
         public const string ZombieMaterial = ZombieFolder + "/M_zombie_atlas.mat";
+        /// <summary>WP-020 · AP-007 v002 second (cloth) atlas material; the cloth Mask is a constant (G = 1) so its DetailMask is a 4×4 sub-texture, not a 2K map.</summary>
+        public const string ZombieClothMaterial = ZombieFolder + "/M_zombie_cloth.mat";
+        public const string ZombieClothBaseColor = ZombieTextures + "/T_zombie_cloth_BaseColor.png";
         public static readonly string[] TierSuffix = { "", "_Special", "_Elite", "_Ultra" };
         public const string PlayerAnimationSet = PlayerFolder + "/CharacterAnimationSet_Player.asset";
         public const string ZombieAnimationSet = ZombieFolder + "/CharacterAnimationSet_Zombie.asset";
@@ -139,7 +142,15 @@ namespace DD.Art.Pipeline.EditorTools
                 ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
             ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_atlas_Mask.png", ZombieDerived + "/T_zombie_atlas_DetailMask.png",
                 ZombieDerived + "/T_zombie_atlas_DetailMask.provenance.json", ArtTextureRepack.IdMaskToDetailMask, ArtTextureRepack.DetailMaskAlgorithm);
+            if (HasClothAtlas)
+            {
+                ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_cloth_Packed.png", ZombieDerived + "/T_zombie_cloth_MetallicSmoothness.png",
+                    ZombieDerived + "/T_zombie_cloth_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
+            }
         }
+
+        /// <summary>WP-020 · True once the AP-007 v002 cloth atlas is staged (the v001 world keeps one atlas).</summary>
+        public static bool HasClothAtlas => File.Exists(ZombieClothBaseColor);
 
         // ================================================================== 3 materials
 
@@ -181,13 +192,47 @@ namespace DD.Art.Pipeline.EditorTools
                 EditorUtility.SetDirty(m);
             }
 
+            // WP-020 · AP-007 v002 cloth atlas: same Lit block; every texel is version-tintable (mask constant G = 1 → DetailMask A = 1, a 4×4 sub-texture).
+            if (HasClothAtlas)
+            {
+                Texture2D cloth = Load<Texture2D>(ZombieClothBaseColor);
+                Texture2D clothNormal = Load<Texture2D>(ZombieTextures + "/T_zombie_cloth_Normal.png");
+                Texture2D clothMask = Load<Texture2D>(ZombieDerived + "/T_zombie_cloth_MetallicSmoothness.png");
+                for (int tier = 0; tier < TierSuffix.Length; tier++)
+                {
+                    string path = ClothMaterialPath(tier);
+                    Material m = LoadOrCreateMaterial(path, lit, Path.GetFileNameWithoutExtension(path));
+                    ArtMaterialBuilder.ApplyCommonPublic(m);
+                    ApplyCharacterMaps(m, cloth, clothNormal, clothMask);
+                    if (tier > 0)
+                    {
+                        m.SetFloat("_DetailAlbedoMapScale", 1f);
+                        m.SetFloat("_DetailNormalMapScale", 0f);
+                        m.EnableKeyword("_DETAIL_MULX2");   // _DetailMask / _DetailAlbedoMap bound by BuildZombieLibrary (sub-textures inside the library asset)
+                    }
+                    else
+                    {
+                        m.SetTexture("_DetailMask", null);
+                        m.SetTexture("_DetailAlbedoMap", null);
+                        m.DisableKeyword("_DETAIL_MULX2");
+                    }
+
+                    EditorUtility.SetDirty(m);
+                }
+            }
+
             AssetDatabase.SaveAssets();
-            Debug.Log(LogPrefix + "materials: M_player + M_zombie_atlas ×4 (version detail tints through Mask.G)");
+            Debug.Log(LogPrefix + "materials: M_player + M_zombie_atlas ×4 (version detail tints through Mask.G)" + (HasClothAtlas ? " + M_zombie_cloth ×4 (whole cloth atlas tintable)" : ""));
         }
 
         public static string TierMaterialPath(int tier)
         {
             return ZombieFolder + "/M_zombie_atlas" + TierSuffix[Mathf.Clamp(tier, 0, TierSuffix.Length - 1)] + ".mat";
+        }
+
+        public static string ClothMaterialPath(int tier)
+        {
+            return ZombieFolder + "/M_zombie_cloth" + TierSuffix[Mathf.Clamp(tier, 0, TierSuffix.Length - 1)] + ".mat";
         }
 
         public static void ApplyCharacterMapsPublic(Material m, Texture2D baseMap, Texture2D normal, Texture2D mask) => ApplyCharacterMaps(m, baseMap, normal, mask);
@@ -449,7 +494,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             library.schema = ZombieModuleLibrary.Schema;
             library.package = "AP-007";
-            library.version = ArtJson.AsString(doc["version"]);
+            library.version = doc.ContainsKey("version") ? ArtJson.AsString(doc["version"]) : ArtJson.AsString(doc["schema"]);   // v002 manifest: schema only
             library.sourceSha256 = ArtTextureRepack.Sha256Hex(bytes);
 
             // Bodies A/B/C: zombie_body_<fit>_LOD<n>.
@@ -480,6 +525,19 @@ namespace DD.Art.Pipeline.EditorTools
                 foreach (object f in ArtJson.AsList(r["fits"], "fits")) fits.Add(ArtJson.AsString(f));
                 string fbx = ZombieFolder + "/Modules/" + Path.GetFileName(ArtJson.AsString(r["fbx"]));
                 var module = new ZombieModuleLibrary.Module { id = id, kind = kind, colourways = cws.ToArray() };
+                // WP-020 · AP-007 v002: materials in FBX sub-mesh order (atlas / cloth); v001 records carry none → atlas only.
+                if (r.ContainsKey("materials"))
+                {
+                    var mats = new List<string>();
+                    foreach (object mo in ArtJson.AsList(r["materials"], "materials"))
+                    {
+                        string name = ArtJson.AsString(mo);
+                        if (name != ZombieModuleLibrary.MaterialAtlas && name != ZombieModuleLibrary.MaterialCloth) throw new InvalidOperationException(LogPrefix + id + ": unknown module material '" + name + "'");
+                        mats.Add(name);
+                    }
+
+                    module.materials = mats.ToArray();
+                }
                 var variants = new List<ZombieModuleLibrary.Variant>();
                 foreach (string cw in cws)
                 {
@@ -519,11 +577,30 @@ namespace DD.Art.Pipeline.EditorTools
                 }
             }
 
+            // WP-020 · cloth atlas tier materials: the same tint sub-textures, DetailMask = a 4×4 opaque-alpha sub-texture (mask constant G = 1).
+            library.tierClothMaterials = new Material[TierSuffix.Length];
+            if (HasClothAtlas)
+            {
+                Texture2D clothDetailMask = TintTexture(library, "T_zombie_cloth_DetailMask", new Color(0f, 1f, 0f, 1f));
+                for (int tier = 0; tier < TierSuffix.Length; tier++)
+                {
+                    var m = AssetDatabase.LoadAssetAtPath<Material>(ClothMaterialPath(tier));
+                    if (m == null) throw new InvalidOperationException(LogPrefix + "build materials first: " + ClothMaterialPath(tier));
+                    library.tierClothMaterials[tier] = m;
+                    if (tier > 0)
+                    {
+                        m.SetTexture("_DetailMask", clothDetailMask);
+                        m.SetTexture("_DetailAlbedoMap", TintTexture(library, "T_zombie_tint" + TierSuffix[tier], TierDetailTint[tier]));
+                        EditorUtility.SetDirty(m);
+                    }
+                }
+            }
+
             EditorUtility.SetDirty(library);
             AssetDatabase.SaveAssets();
-            int meshes = 0;
-            foreach (ZombieModuleLibrary.Module m in library.modules) meshes += m.variants.Length * ZombieModuleLibrary.LodCount;
-            Debug.Log(LogPrefix + "zombie library " + (created ? "created" : "updated") + ": " + library.bodies.Length + " bodies, " + library.modules.Length + " modules, " + meshes + " module meshes (+12 body), sha " + library.sourceSha256.Substring(0, 12) + "…");
+            int meshes = 0, twoMaterial = 0;
+            foreach (ZombieModuleLibrary.Module m in library.modules) { meshes += m.variants.Length * ZombieModuleLibrary.LodCount; if (m.materials != null && m.materials.Length > 1) twoMaterial++; }
+            Debug.Log(LogPrefix + "zombie library " + (created ? "created" : "updated") + ": " + library.bodies.Length + " bodies, " + library.modules.Length + " modules (" + twoMaterial + " two-material), " + meshes + " module meshes (+12 body), sha " + library.sourceSha256.Substring(0, 12) + "…");
             return library;
         }
 

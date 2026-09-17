@@ -259,6 +259,34 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run World v2: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-020 world v3
+
+        /// <summary>
+        /// WP-020 · AP-005C → Unity world v3: derived masks from the ORM v002 props (+ player ORM v004),
+        /// library materials, then the placement import with the delta chain v002 → v003 (overrides
+        /// folded → empty file), the named NavMesh areas (Bridge / Corridor / Gate) and the NavMesh
+        /// rebake, and the showcase. Batch: <c>-executeMethod …RunWorldV3</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run World v3 (WP-020)", priority = 306)]
+        public static void RunWorldV3()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run World v3 cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run World v3: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Library masks (prop ORM v002 → MetallicSmoothness) + roof-course normal", ArtTextureRepack.BuildAllLibrary);
+            LibraryStep(2, "Character derived masks (player ORM v004 → MetallicSmoothness)", ArtCharacterPrefabBuilder.BuildTextures);
+            LibraryStep(3, "Library materials (prop roles, plaster/roof world copies)", ArtMaterialBuilder.BuildAllLibraryRoles);
+            LibraryStep(4, "Import AP-005 placement + delta chain v002 → v003 (asset, World_AP005.unity, NavMesh areas + bake, build settings)", () => PlacementImporter.ImportAll());
+            LibraryStep(5, "Rebuild library showcase", ArtLibraryShowcaseBuilder.Build);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run World v3: done in " + Seconds(total) + " s.");
+        }
+
         // ------------------------------------------------------------ WP-014 world assembly
 
         /// <summary>

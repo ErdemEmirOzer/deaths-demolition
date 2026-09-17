@@ -228,13 +228,16 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void AlanMaliyetiAtama_TekAlanBake_SifirAtama_RaporEdilir()
+        public void AlanMaliyetiAtama_WP020AdliAlanlar_BesHacimAtanir_RaporEdilir()
         {
+            // WP-020: World_AP005 bakes Bridge (3) / Corridor (4) / Gate (5) areas — every default volume names one → 5 assignments.
             int applied = _profile.ApplyAreaCosts();
-            Assert.AreEqual(0, applied, "World_AP005 tek alanlı bake: adlandırılmış alan yok → 0 atama; kural router'da");
+            Assert.AreEqual(5, applied, "5 hacim adlandırılmış alana maliyet yazar (Bridge ×1,6, Corridor ×1,3, Gate ×1 / ×1,15)");
+            Assert.AreEqual(1.6f, UnityEngine.AI.NavMesh.GetAreaCost(UnityEngine.AI.NavMesh.GetAreaFromName("Bridge")), 1e-4f);
+            Assert.AreEqual(1.3f, UnityEngine.AI.NavMesh.GetAreaCost(UnityEngine.AI.NavMesh.GetAreaFromName("Corridor")), 1e-4f);
             Assert.IsFalse(RegionNavRouter.AreaCostsAppliedOnce);
             RegionNavRouter.EnsureAreaCosts();
-            Assert.IsTrue(RegionNavRouter.AreaCostsAppliedOnce); Assert.AreEqual(0, RegionNavRouter.AreaCostsApplied);
+            Assert.IsTrue(RegionNavRouter.AreaCostsAppliedOnce); Assert.AreEqual(5, RegionNavRouter.AreaCostsApplied);
         }
     }
 }

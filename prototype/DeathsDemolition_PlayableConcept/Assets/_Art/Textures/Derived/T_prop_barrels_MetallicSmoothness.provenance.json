@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_prop_barrels_Packed.png",
-    "sourceSha256": "701adcc5bfe5e2dc2d76d98a1e155520c561146b8be143151f0fe1f385e0a367",
-    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-16T09:38:11.9066270Z",
-    "outputSha256": "b9c41a2c2368de7889689faacb32e4f2d30fd0a2942a45bc8454ddeee4edc53e"
+    "sourceSha256": "a92609272cbd4aa58251bae3f0c119193235eaf62c28e8921add3ba914ca48cb",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T21:31:03.0910600Z",
+    "outputSha256": "af8646d8359916d2751cbe18b06a948ac7fd5e4a5809f10665b94ad66e47481e"
 }

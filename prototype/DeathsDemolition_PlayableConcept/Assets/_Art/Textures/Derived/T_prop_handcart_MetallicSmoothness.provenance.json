@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_prop_handcart_Packed.png",
-    "sourceSha256": "741c28f6af6ee63a753776220402243bb2b1dc3128ad26022f7eb38bb0ea3eb2",
-    "algorithm": "MetallicSmoothness v1: out.R = src.B (metallic), out.G = 0, out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit (v * 255 / 65535); 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-16T09:38:11.0212920Z",
-    "outputSha256": "373e25ea1bb4e5fa27657a0048e9edf9d3dc773a7682f542d8234026cc35a64e"
+    "sourceSha256": "d76ba2e02b221ada83a2d0964aaba06dc140cf315cbd295c45cb743d5ad35cc2",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-16T21:31:02.0173420Z",
+    "outputSha256": "6ef911384b6e3971d7ca942e0956d8209c5ee5d866c2acf3455aef7c37c31206"
 }

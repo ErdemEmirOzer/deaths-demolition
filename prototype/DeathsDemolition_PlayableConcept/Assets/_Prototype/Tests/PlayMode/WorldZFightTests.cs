@@ -36,6 +36,12 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>Zemin düzlemine "çakışık" sayılma toleransı: 0.1 mm.</summary>
         private const float DuzlemToleransi = 0.0001f;
 
+        [TearDown]
+        public void Bitir()
+        {
+            System.Environment.SetEnvironmentVariable(DD.Prototype.World.WorldSourceSettings.EnvironmentVariable, null);
+        }
+
         [UnityTest]
         [Category("Regression")]
         [Timeout(300000)]
@@ -43,6 +49,9 @@ namespace DD.Prototype.Tests.PlayMode
         {
             LogAssert.ignoreFailingMessages = true;
 
+            // WP-020 (WP-039 sanity P5): this measures the M0 procedural blockout (WorldBootstrap.Last.Root);
+            // with the AP-005 world as the default source that root is gone (MissingReferenceException) — pin it.
+            System.Environment.SetEnvironmentVariable(DD.Prototype.World.WorldSourceSettings.EnvironmentVariable, "Procedural");
             SceneManager.LoadScene(PrototypeScenes.Run, LoadSceneMode.Single);
             yield return null;
 

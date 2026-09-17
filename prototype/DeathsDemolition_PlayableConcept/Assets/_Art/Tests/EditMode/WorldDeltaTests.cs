@@ -76,46 +76,77 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(202, ArtJson.AsInt(counts["added"])); Assert.AreEqual(9, ArtJson.AsInt(counts["changed"])); Assert.AreEqual(169, ArtJson.AsInt(counts["removed"]));
             Assert.AreEqual(2387, ArtJson.AsInt(counts["instances_v002"]));
 
+            // WP-020: the chain v002 → v003; the asset keeps one record per file and the totals.
             WorldPlacementAsset p = Placement();
-            Assert.AreEqual(Sha256(bytes), p.deltaSha256, "asset delta sha256");
-            Assert.AreEqual(202, p.deltaAdded); Assert.AreEqual(9, p.deltaChanged); Assert.AreEqual(169, p.deltaRemoved);
-            Assert.AreEqual(2387, p.instances.Count);
+            Assert.AreEqual(2, p.deltas.Count, "delta zinciri: v002 + v003");
+            WorldPlacementAsset.DeltaRecord r2 = p.deltas[0], r3 = p.deltas[1];
+            Assert.AreEqual("v002", r2.version); Assert.AreEqual(Sha256(bytes), r2.sha256, "v002 delta sha256");
+            Assert.AreEqual(202, r2.added); Assert.AreEqual(9, r2.changed); Assert.AreEqual(169, r2.removed);
+            Assert.AreEqual("v003", r3.version); Assert.AreEqual(Sha256(File.ReadAllBytes(ArtLibraryPaths.Ap005PlacementDeltaV3Json)), r3.sha256, "v003 delta sha256");
+            Assert.AreEqual(312, r3.added); Assert.AreEqual(23, r3.changed); Assert.AreEqual(35, r3.removed);
+            Assert.AreEqual(r3.sha256, p.deltaSha256, "skaler alanlar son deltayı taşır");
+            Assert.AreEqual(202 + 312, p.deltaAdded); Assert.AreEqual(9 + 23, p.deltaChanged); Assert.AreEqual(169 + 35, p.deltaRemoved);
+            Assert.AreEqual(2354 - 169 + 202 - 35 + 312, p.instances.Count);
+            Assert.AreEqual(2664, p.instances.Count);
 
             var byId = new Dictionary<string, WorldPlacementAsset.Instance>(StringComparer.Ordinal);
             foreach (WorldPlacementAsset.Instance i in p.instances) byId[i.id] = i;
             var removed = new List<string>();
             foreach (object o in ArtJson.AsList(d["removed_ids"], "removed_ids")) removed.Add(ArtJson.AsString(o));
             Assert.AreEqual(169, removed.Count);
-            CollectionAssert.AreEquivalent(removed, p.deltaRemovedIds);
-            foreach (string id in removed) Assert.IsFalse(byId.ContainsKey(id), id + " kaldırılmış olmalı");
+            CollectionAssert.AreEquivalent(removed, r2.removedIds);
+            Assert.AreEqual(169 + 35, p.deltaRemovedIds.Count);
+            foreach (string id in p.deltaRemovedIds) Assert.IsFalse(byId.ContainsKey(id), id + " kaldırılmış olmalı");
 
-            // Order: the v001 survivors keep their order, the added records follow (deterministic digest).
-            int firstAdded = -1;
+            // Order: the v001 survivors keep their order, the v002 added records follow, then the v003 ones (deterministic digest).
+            int firstAdded = -1, firstV3 = -1;
             for (int i = 0; i < p.instances.Count; i++)
             {
-                if (p.instances[i].deltaVersion == WorldPlacementAsset.DeltaVersionTag && p.instances[i].id.CompareTo("AP005_i2354") > 0) { firstAdded = i; break; }
+                if (firstAdded < 0 && p.instances[i].deltaVersion == WorldPlacementAsset.DeltaVersionTag && p.instances[i].id.CompareTo("AP005_i2354") > 0) firstAdded = i;
+                if (firstV3 < 0 && p.instances[i].deltaVersion == WorldPlacementAsset.DeltaVersionTagV3 && p.instances[i].id.CompareTo("AP005_i2558") > 0) firstV3 = i;
             }
 
-            Assert.AreEqual(2354 - 169, firstAdded, "eklenenler v001 kalanlarının ardında");
-            Debug.Log("[DD-TEST] wp017.delta added=" + p.deltaAdded + " changed=" + p.deltaChanged + " removed=" + p.deltaRemoved + " instances=" + p.instances.Count + " target=" + p.deltaTarget);
+            int v3RemovedV1 = 0;
+            foreach (string id in r3.removedIds) if (id.CompareTo("AP005_i2354") <= 0) v3RemovedV1++;
+            Assert.AreEqual(29, v3RemovedV1, "v003'ün v001 kayıtlarından kaldırdıkları");
+            Assert.AreEqual(2354 - 169 - v3RemovedV1, firstAdded, "v002 eklenenler v001 kalanlarının ardında");
+            Assert.AreEqual(2664 - 312, firstV3, "v003 eklenenler en sonda");
+            int v3Records = 0;
+            foreach (WorldPlacementAsset.Instance i in p.instances) if (i.deltaVersion == WorldPlacementAsset.DeltaVersionTagV3) v3Records++;
+            Assert.AreEqual(312 + 23, v3Records, "v003 ile eklenen + değişen kayıtlar");
+            Debug.Log("[DD-TEST] wp020.delta v002 " + r2.added + "/" + r2.changed + "/" + r2.removed + " v003 " + r3.added + "/" + r3.changed + "/" + r3.removed + " instances=" + p.instances.Count + " target=" + p.deltaTarget);
         }
 
         [Test]
         public void Delta_EklenenVeDegisen_Transform_Paritesi_TamEuler_8EgikPanel()
         {
-            Dictionary<string, object> d = Delta(out _);
             WorldPlacementAsset p = Placement();
             var byId = new Dictionary<string, WorldPlacementAsset.Instance>(StringComparer.Ordinal);
             foreach (WorldPlacementAsset.Instance i in p.instances) byId[i.id] = i;
             var overrides = new HashSet<string>(p.overriddenIds, StringComparer.Ordinal);
 
-            var hatalar = new List<string>();
-            int tilted = 0, checkedCount = 0, overrideCount = 0;
-            foreach (string key in new[] { "added", "changed" })
-            foreach (object o in ArtJson.AsList(d[key], key))
+            // WP-020: the chain — the expected record per id is the LAST delta's (v003 changes v002 records and removes six of them).
+            var expectedRecords = new Dictionary<string, KeyValuePair<string, Dictionary<string, object>>>(StringComparer.Ordinal);
+            foreach (string deltaPath in ArtLibraryPaths.Ap005PlacementDeltaJsons)
             {
-                Dictionary<string, object> r = ArtJson.AsObject(o, key);
-                string id = ArtJson.AsString(r["id"]);
+                Dictionary<string, object> dd = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(deltaPath)), "delta");
+                string version = PlacementImporter.DeltaVersionOf(deltaPath);
+                foreach (object o in ArtJson.AsList(dd["removed_ids"], "removed_ids")) expectedRecords.Remove(ArtJson.AsString(o));
+                foreach (string key in new[] { "added", "changed" })
+                foreach (object o in ArtJson.AsList(dd[key], key))
+                {
+                    Dictionary<string, object> r = ArtJson.AsObject(o, key);
+                    expectedRecords[ArtJson.AsString(r["id"])] = new KeyValuePair<string, Dictionary<string, object>>(version, r);
+                }
+            }
+
+            var hatalar = new List<string>();
+            int tilted = 0, checkedCount = 0, overrideCount = 0, v2 = 0, v3 = 0;
+            foreach (KeyValuePair<string, KeyValuePair<string, Dictionary<string, object>>> e in expectedRecords)
+            {
+                string id = e.Key, version = e.Value.Key;
+                Dictionary<string, object> r = e.Value.Value;
+                string key = version;
                 if (!byId.TryGetValue(id, out WorldPlacementAsset.Instance inst)) { hatalar.Add(id + " (" + key + ") asset'te yok"); continue; }
                 Assert.IsFalse(overrides.Contains(id), id + ": delta kaydı override ile çakışmamalı");
                 List<object> pos = ArtJson.AsList(r["position"], "position");
@@ -125,7 +156,8 @@ namespace DD.Art.Tests.EditMode
                 var euler = new Vector3(ArtJson.AsFloat(rot[0]), ArtJson.AsFloat(rot[1]), ArtJson.AsFloat(rot[2]));
                 if (Vector3.Distance(euler, inst.rotationEuler) > 1e-4f) hatalar.Add(id + ": euler " + inst.rotationEuler + " ≠ " + euler);
                 if (Mathf.Abs(inst.yawDegrees - euler.z) > 1e-4f) hatalar.Add(id + ": yaw");
-                if (inst.deltaVersion != WorldPlacementAsset.DeltaVersionTag) hatalar.Add(id + ": deltaVersion '" + inst.deltaVersion + "'");
+                if (inst.deltaVersion != version) hatalar.Add(id + ": deltaVersion '" + inst.deltaVersion + "' ≠ " + version);
+                if (version == WorldPlacementAsset.DeltaVersionTag) v2++; else v3++;
                 if (inst.IsTilted) tilted++;
                 string mo = r.ContainsKey("material_override") ? ArtJson.AsString(r["material_override"]) : string.Empty;
                 if (mo != (inst.materialOverride ?? string.Empty)) hatalar.Add(id + ": material_override '" + inst.materialOverride + "' ≠ '" + mo + "'");
@@ -135,9 +167,12 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
-            Assert.AreEqual(211, checkedCount);
-            Assert.AreEqual(8, tilted, "AP-005B: sekiz eğik alınlık paneli (Y ekseni)");
-            Assert.AreEqual(100, overrideCount, "material_override taşıyan delta kaydı");
+            // v002: 211 records (202 + 9) − 6 removed by v003 − those v003 re-changed; v003: 312 + 23.
+            Assert.AreEqual(312 + 23, v3, "v003 kayıtları");
+            Assert.AreEqual(211 - 14 - 13, v2, "v002 kayıtları: v003 14'ünü kaldırdı (6 eklenen + 8 değişen), 23 değişikliğinin 13'ü v002 kayıtlarına (10'u v001 kayıtlarına)");
+            Assert.AreEqual(v2 + v3, checkedCount);
+            Assert.AreEqual(8 + 4, tilted, "AP-005B: sekiz eğik alınlık paneli (Y ekseni) + AP-005C: dört dikey alınlık dikmesi (timber_beam Y 90°)");
+            Assert.GreaterOrEqual(overrideCount, 100, "material_override taşıyan delta kaydı (v002 100 + v003 kerb/çatı)");
 
             // The rotation map: (0, 0, yaw) is the WP-014 yaw rule; a Y tilt lands on Unity's Z with the sign flipped.
             Assert.AreEqual(WorldPlacementAsset.ToUnityYaw(37f).eulerAngles.ToString("F3"), WorldPlacementAsset.ToUnityRotation(new Vector3(0f, 0f, 37f)).eulerAngles.ToString("F3"));
@@ -181,8 +216,9 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
-            Assert.AreEqual(74, counts["AP005_M_plaster_world"]); Assert.AreEqual(21, counts["AP005_M_roof_world"]);
-            Assert.AreEqual(4, counts["AP002_M_stone_v009_build_v003"]); Assert.AreEqual(1, counts["AP005_M_plaster_world_ap001"]);
+            // WP-020 (v003): + 2 north-gate roof slices, + the north-gate kerb, + the second AP-001 plaster panel copy.
+            Assert.AreEqual(74, counts["AP005_M_plaster_world"]); Assert.AreEqual(23, counts["AP005_M_roof_world"]);
+            Assert.AreEqual(5, counts["AP002_M_stone_v009_build_v003"]); Assert.AreEqual(2, counts["AP005_M_plaster_world_ap001"]);
 
             // The world materials: plaster copies carry the ×0.82 linear tint on the same maps; the roof copy the tile-course detail normal.
             var plasterWorld = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material("plaster_hf003_world"));
@@ -215,8 +251,9 @@ namespace DD.Art.Tests.EditMode
                 byFamily[i.family] = (byFamily.TryGetValue(i.family, out int n) ? n : 0) + 1;
             }
 
-            Assert.AreEqual(2, byFamily["tsukubai"]); Assert.AreEqual(2, byFamily["handcart"]); Assert.AreEqual(4, byFamily["strawbales"]);
-            Assert.AreEqual(2, byFamily["barrels"]); Assert.AreEqual(5, byFamily["mossrock"]); Assert.AreEqual(1, byFamily["shed"]);
+            // WP-020 (v003 outer band): + 6 mossrock, + 4 strawbales, + 2 handcart, + 2 barrels.
+            Assert.AreEqual(2, byFamily["tsukubai"]); Assert.AreEqual(4, byFamily["handcart"]); Assert.AreEqual(8, byFamily["strawbales"]);
+            Assert.AreEqual(4, byFamily["barrels"]); Assert.AreEqual(11, byFamily["mossrock"]); Assert.AreEqual(1, byFamily["shed"]);
             foreach (string prop in new[] { "tsukubai", "handcart", "strawbales", "barrels", "mossrock", "shed" })
             {
                 string role = "prop_" + prop;

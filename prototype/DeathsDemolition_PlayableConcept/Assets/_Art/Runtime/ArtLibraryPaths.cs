@@ -31,6 +31,10 @@ namespace DD.Art
         public const string Ap005PlacementOverridesJson = WorldRoot + "/AP005_placement-overrides.json";
         /// <summary>WP-017 · AP-005B delta (dd-placement-delta-v1) applied on top of the v001 source at import.</summary>
         public const string Ap005PlacementDeltaJson = WorldRoot + "/AP005_placement-delta-v002.json";
+        /// <summary>WP-020 · AP-005C delta (v003) applied after the v002 delta.</summary>
+        public const string Ap005PlacementDeltaV3Json = WorldRoot + "/AP005_placement-delta-v003.json";
+        /// <summary>The delta chain in application order; each file's base must describe the instance count the previous step produced.</summary>
+        public static readonly string[] Ap005PlacementDeltaJsons = { Ap005PlacementDeltaJson, Ap005PlacementDeltaV3Json };
         /// <summary>The imported placement (Unity space) the importer and the world bootstrap read.</summary>
         public const string Ap005PlacementAsset = WorldRoot + "/AP005_Placement.asset";
         /// <summary>The stand-in soil ground under the whole 90 m map (AP-005 ships only the NE golden-slice ground plate); holes at the koi basins.</summary>
