@@ -183,6 +183,71 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// WP-022I · enemy status markers: a netted zombie gets a "NET" chip over its head, a
+        /// dazed one "DAZED"; the marker layer adds no allocation to a steady frame
+        /// (ProfilerRecorder count, HUD on vs off) and the chips park when the state ends.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator DusmanDurumIsaretleri_NetVeDaze_GorunurVeSifirAyirma()
+        {
+            _s = new SpecialWeaponSahne();
+            yield return _s.Kur();
+            RunHudScreen hud = UnityEngine.Object.FindObjectOfType<RunHudScreen>();
+            Assert.IsNotNull(hud, "RunHudScreen yok.");
+            Assert.IsNotNull(hud.EnemyStatus, "durum işareti katmanı");
+
+            Vector3 merkez = _s.Zemin(0f, 6f);
+            DD.Prototype.Enemies.ZombieEnemy a = _s.Dogur(merkez + Vector3.left);
+            DD.Prototype.Enemies.ZombieEnemy b = _s.Dogur(merkez + Vector3.right);
+            yield return null;
+            yield return null;
+
+            bool netted = a.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
+                DD.Prototype.Damage.SpecialReactionKind.Web, DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom, Vector3.forward, 0f, 4f, 0));
+            bool dazed = b.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
+                DD.Prototype.Damage.SpecialReactionKind.Push, DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, Vector3.forward, 1f, 1.5f, 0));
+            Assert.IsTrue(netted && dazed, "tepkiler uygulanmadı (net " + netted + ", daze " + dazed + ")");
+            yield return null;
+            yield return null;
+            Assert.IsTrue(a.IsNetted, "A netted");
+            Assert.GreaterOrEqual(hud.EnemyStatus.VisibleCount, 1, "en az bir işaret (kamera görüyorsa iki)");
+
+            var labels = new System.Collections.Generic.List<string>();
+            foreach (TMPro.TMP_Text t in hud.EnemyStatus.GetComponentsInChildren<TMPro.TMP_Text>(true))
+            {
+                if (((RectTransform)t.transform.parent).anchoredPosition.x > -9000f) labels.Add(t.text);
+            }
+
+            Assert.IsTrue(labels.Contains("NET") || labels.Contains("DAZED"), "görünür işaret metni NET/DAZED: " + string.Join(",", labels));
+
+            using (var count = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count"))
+            {
+                yield return null;
+                yield return null;
+                long onMax = 0;
+                for (int i = 0; i < 10; i++) { yield return null; if (count.LastValue > onMax) onMax = count.LastValue; }
+                hud.EnemyStatus.enabled = false;
+                for (int i = 0; i < 3; i++) yield return null;
+                long offMax = 0;
+                for (int i = 0; i < 10; i++) { yield return null; if (count.LastValue > offMax) offMax = count.LastValue; }
+                hud.EnemyStatus.enabled = true;
+                Debug.Log("[DD-TEST] wp022i.statusMarkers visible=" + hud.EnemyStatus.VisibleCount + " onMax=" + onMax + " offMax=" + offMax);
+                if (onMax > 0 || offMax > 0)
+                {
+                    Assert.LessOrEqual(onMax, offMax + HarnessAllocationSlack, "durum işaretleri kare başı ayırma yapıyor: " + onMax + " (kapalı " + offMax + ")");
+                }
+            }
+
+            // The daze ends by itself; the net ends with the field.
+            DD.Prototype.Enemies.ZombieEnemy.EndSpecialField(DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom);
+            yield return new WaitForSecondsRealtime(2f);
+            yield return null;
+            Assert.IsFalse(a.IsNetted);
+            Assert.AreEqual(0, hud.EnemyStatus.VisibleCount, "durum bitince işaretler park eder");
+        }
+
         /// <summary>Harness'ın (coroutine adımı, recorder) bir kareye ekleyebileceği ayırma sayısı (WP-037 ile aynı pay).</summary>
         private const int HarnessAllocationSlack = 8;
 

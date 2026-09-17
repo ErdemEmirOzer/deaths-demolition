@@ -166,6 +166,10 @@ namespace DD.Prototype.UI
         // and one expiry time; the line's text is rebuilt only when a displayed integer
         // changes (ADR-037-1 - no per-frame string work).
         private TMP_Text _specialUsage;
+
+        /// <summary>WP-022I enemy status markers (test readout).</summary>
+        public UiEnemyStatusMarkers EnemyStatus => _enemyStatus;
+        private UiEnemyStatusMarkers _enemyStatus;
         private Image _specialGlyph;
         private int _swShots;
         private int _swFieldHits;
@@ -716,6 +720,12 @@ namespace DD.Prototype.UI
             RectTransform layer = UiFactory.NewRect("MarkerLayer", ScreenRect);
             UiFactory.Fill(layer);
             layer.gameObject.AddComponent<Canvas>();
+
+            // WP-022I: enemy status markers (NET / DAZED) share the marker canvas.
+            RectTransform statusHost = UiFactory.NewRect("EnemyStatus", layer);
+            UiFactory.Fill(statusHost);
+            _enemyStatus = statusHost.gameObject.AddComponent<UiEnemyStatusMarkers>();
+            _enemyStatus.Configure(ScreenRect);
 
             _marker = UiFactory.NewRect("SpecialWeaponMarker", layer);
             _marker.sizeDelta = new Vector2(56f, 56f);

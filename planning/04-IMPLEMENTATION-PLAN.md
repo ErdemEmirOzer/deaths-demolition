@@ -1925,3 +1925,19 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 **Testler:** EditMode `PlayerExperienceTests` (game-feel tavanları + tek kaynak, DeathSequence saat sözleşmesi, nişan yardımı seviye / v1 göçü / alan yazımı, rebound glif); PlayMode `PlayerExperienceSliceTests` (yön/güç/hıza göre hurt_A/B + animator katman durumu + kontrol açık; ölüm yavaşlama / push-in / saat geri; pickup ve tutma sırasında vurulma → Special sürer, ateş eder; yaralanma yolu kare başı ayırma). Değişen süitler: `InputParityContractTests`, `UiArtThemeTests`, `ProjectIntegrityTests`, `CoreCombatSliceTests`, `GamepadParityTests`, `FlowSmokeTest`, `PlayerHitDirectionHudTests`, `UiArtSliceTests`, `SpecialWeaponUsageSliceTests`, `SpecialWeaponVisualTests`, `QaRunBotSliceTests`, `ProfileApplyOnceTests`, `SecondRunTests`. Sonuçlar (wp-059/evidence): EditMode em2 48/50 → em4 **30/31** (tek kırmızı `InputParityContractTests.InputSystem_YalnizInputKlasorunde`: WP-022F `UiInputScheme` UI'da `UnityEngine.InputSystem` okuyor — main'de de kırmızı, S-09); PlayMode pm2 31/33 + pm4 **7/7** (pm2'nin ikinci kırmızısı `CoreCombatSliceTests.GameFeelOlaylari…` REQ-127 hit-stop — WP-019, S-07, main'de de kırmızı); release b4 585 MB (> 550 tavanı, main geneli), e1/e4 exit 0 / 0 exception; dev build b4-dev + bot `-ddQaBotDieAfter 20` → 3/3 deathframe, 0 exception. Yaralanma yolu: idle 4 → en kötü vuruş karesi 11 ayırma / 279 B (WP-037 sözleşme payı 12 içinde). **Ölçüm bulgusu (S-07/S-10):** `Application.targetFrameRate` 60'a kısıtlıyken (bootstrapper; tam akışı açan bir fixture sonrası) ProfilerRecorder kare sayaçlarının `LastValue`'su Editor test koşucusunda hiç güncellenmiyor (CurrentValue akıyor) — pozitif kontrol 0 okur; ölçüm süresince -1 yapmak çözüyor.
 
 **Devirler:** S-07 → ölüm overlay'inin desaturasyon yarısı (post-fx) hâlâ açık (WP-019b devri); S-09 → istem gliflerinde yeniden bağlanan geniş etiketler (`D-DOWN`) `ReservedWidth`'i aşabilir (düğme etiketi kayar); S-06 → koşarken önden ağır darbe için adımlı bir "run hurt" klibi (şimdi hurt_A); kullanıcı → oyuncu / silah tasarımı son ortak revizyon (16.09).
+
+## WP-022I — Düşman durum işaretleri (WP-055 Netted / Dazed)
+
+**Durum:** Tamamlandı (S-09, 2026-09-17, HIZLI HAT §6; kredi 0). Dal `wp-022i-enemy-status` = main `5e417fc` (WP-055) + tek commit; ff-merge + etiket C-00.
+
+**Yürütme promptu:** `planning/work-packages/WP-022I-ENEMY-STATUS-MARKERS.md`.
+
+**Kapsam ve sonuç:**
+
+- (A) `UI/Runtime/Kit/UiEnemyStatusMarkers.cs` — HUD `MarkerLayer` nested canvas'ında 16 çipli havuz (`UiFactory.Chip` 64×20, Caption bold); `LateUpdate` `ZombieEnemy.Live`'ı indeksle gezer, `IsAlive` + `IsNetted` → **NET** (`StateWarning`), `IsDazed` → **DAZED** (`StateDanger`); baş üstü (2,1 m) viewport→canvas; ekran dışı atlanır; kullanılmayan çipler ekran dışına park (SetActive/canvas rebuild yok — WP-022 reticle dersi); metin/renk yalnız durum değişince literal atanır. Şekil (çip) + sözcük — renk tek başına değil (§14). `RunHudScreen.EnemyStatus` test okuması.
+- (B) Pulled — WP-055 kalıcı çekim durumu sunmuyor (`LastSpecialReaction` anlık, süre yok) → işaret yok; S-03 `IsPulled`/süre eklerse tek satır.
+- (C) AD turu — S-10 run4 r8/r12 kareleri yok (bot 3. roundda öldü); Special/durum işareti gerçek oynanış karesi de bot ile üretilemedi → AD turu kareler gelince (WP-022J ya da C-00 kararı).
+
+**Testler:** `SpecialWeaponHudAllocationTests.DusmanDurumIsaretleri_NetVeDaze_GorunurVeSifirAyirma` (Web + Push tepkileri → 2 işaret görünür, ProfilerRecorder kare sayacı HUD-katman açık maks 8 ↔ kapalı 8 → 0 ek ayırma; alan bitince park) — fixture 3/3 (ia); `UiArtSliceTests` 5/5; EditMode 15/15; dev build; kredi 0.
+
+**Devirler:** AD turu (r8/r12 + Special + NET/DAZED kareleri) → S-10 run4/5 kareleri gelince; S-03 → `IsPulled` durumu.
