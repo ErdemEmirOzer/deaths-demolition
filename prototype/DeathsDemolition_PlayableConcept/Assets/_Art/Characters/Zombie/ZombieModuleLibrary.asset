@@ -1049,6 +1049,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -2516,6 +2517,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -3983,6 +3985,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -5450,6 +5453,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -6916,6 +6920,7 @@ MonoBehaviour:
     kind: bottom
     colourways:
     - '-'
+    occludesHead: 0
     variants:
     - colourway: '-'
       fit: A
@@ -7653,6 +7658,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -9120,6 +9126,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -10586,6 +10593,7 @@ MonoBehaviour:
     kind: head
     colourways:
     - '-'
+    occludesHead: 0
     variants:
     - colourway: '-'
       fit: A
@@ -11322,6 +11330,7 @@ MonoBehaviour:
     kind: head
     colourways:
     - '-'
+    occludesHead: 0
     variants:
     - colourway: '-'
       fit: A
@@ -12058,6 +12067,7 @@ MonoBehaviour:
     kind: head
     colourways:
     - '-'
+    occludesHead: 0
     variants:
     - colourway: '-'
       fit: A
@@ -12794,6 +12804,7 @@ MonoBehaviour:
     kind: head
     colourways:
     - '-'
+    occludesHead: 0
     variants:
     - colourway: '-'
       fit: A
@@ -13530,6 +13541,7 @@ MonoBehaviour:
     kind: head
     colourways:
     - '-'
+    occludesHead: 0
     variants:
     - colourway: '-'
       fit: A
@@ -14267,6 +14279,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -15733,6 +15746,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -17199,6 +17213,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -18665,6 +18680,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -20131,6 +20147,7 @@ MonoBehaviour:
     colourways:
     - cw1
     - cw2
+    occludesHead: 0
     variants:
     - colourway: cw1
       fit: A
@@ -21596,6 +21613,7 @@ MonoBehaviour:
     kind: top
     colourways:
     - '-'
+    occludesHead: 0
     variants:
     - colourway: '-'
       fit: A
@@ -22333,6 +22351,7 @@ MonoBehaviour:
     kind: top
     colourways:
     - '-'
+    occludesHead: 0
     variants:
     - colourway: '-'
       fit: A
