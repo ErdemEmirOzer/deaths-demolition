@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void HerKarakterFbx_V11Sozlesmesi_Avatar_HumanEslemesiKaynaklaAyni()
         {
             List<string> files = CharacterFbx();
-            Assert.AreEqual(135, files.Count, "135 (WP-032G + sw_hold_jewel) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 19 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
+            Assert.AreEqual(140, files.Count, "140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
 
             List<string> playerMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.PlayerAvatarSource));
             List<string> zombieMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource));
@@ -90,7 +90,7 @@ namespace DD.Art.Tests.EditMode
         }
 
         [Test]
-        public void ZombiGovdeleri_56Kemik_3Ankraj_4Lod_AnkrajKonumlari()
+        public void ZombiGovdeleri_56Kemik_17Ikincil_3Ankraj_4Lod_AnkrajKonumlari()
         {
             foreach (string fit in Fits)
             {
@@ -179,16 +179,16 @@ namespace DD.Art.Tests.EditMode
         // ================================================================ kütüphane
 
         [Test]
-        public void ZombiKutuphanesi_3Govde_19Modul_360Mesh_KemikAdlari_Butceler()
+        public void ZombiKutuphanesi_3Govde_24Modul_444Mesh_KemikAdlari_Butceler()
         {
             var lib = AssetDatabase.LoadAssetAtPath<ZombieModuleLibrary>(ArtCharacterPrefabBuilder.ZombieLibrary);
             Assert.IsNotNull(lib);
             Assert.AreEqual(ZombieModuleLibrary.Schema, lib.schema);
             Assert.AreEqual(3, lib.bodies.Length);
-            Assert.AreEqual(19, lib.modules.Length);
+            Assert.AreEqual(24, lib.modules.Length);   // WP-038C: AP-007C v003 (+H6/H7, A1/A2 accessory, T8)
             var hatalar = new List<string>();
             int[] bodyCeil = { 6000, 2500, 900, 300 };
-            var moduleCeil = new Dictionary<string, int[]> { { "top", new[] { 2800, 1200, 430, 140 } }, { "bottom", new[] { 2400, 1000, 350, 115 } }, { "head", new[] { 900, 380, 150, 55 } } };
+            var moduleCeil = new Dictionary<string, int[]> { { "top", new[] { 2800, 1200, 430, 140 } }, { "bottom", new[] { 2400, 1000, 350, 115 } }, { "head", new[] { 900, 380, 150, 55 } }, { "accessory", new[] { 300, 120, 50, 32 } } };   // accessory: AP-007C budget 300/120/50/20; A1 LOD3 32 (rim collapse stall, never on screen — README)
             foreach (ZombieModuleLibrary.Body b in lib.bodies)
             {
                 for (int lod = 0; lod < 4; lod++) CheckMesh(hatalar, "body " + b.fit + " LOD" + lod, b.lods[lod], bodyCeil[lod]);
@@ -199,7 +199,7 @@ namespace DD.Art.Tests.EditMode
             {
                 int expectedVariants = (m.HasColourways ? m.colourways.Length : 1) * 3;
                 if (m.variants.Length != expectedVariants) hatalar.Add(m.id + ": " + m.variants.Length + " varyant, beklenen " + expectedVariants);
-                if (m.kind == "top") tops++; else if (m.kind == "bottom") bottoms++; else if (m.kind == "head") heads++; else hatalar.Add(m.id + ": tür " + m.kind);
+                if (m.kind == "top") tops++; else if (m.kind == "bottom") bottoms++; else if (m.kind == "head") heads++; else if (m.kind != "accessory") hatalar.Add(m.id + ": tür " + m.kind);
                 foreach (ZombieModuleLibrary.Variant v in m.variants)
                 {
                     for (int lod = 0; lod < 4; lod++)
@@ -212,8 +212,9 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
-            Assert.AreEqual(7, tops); Assert.AreEqual(7, bottoms); Assert.AreEqual(5, heads);
-            Assert.AreEqual(360, meshes, "19 modül × cw × fit × 4 LOD = 360");
+            int accessories = lib.Ids("accessory").Count;
+            Assert.AreEqual(8, tops); Assert.AreEqual(7, bottoms); Assert.AreEqual(7, heads); Assert.AreEqual(2, accessories, "A1_straw_hat + A2_face_wrap (accessory slot: library only — the renderer slot / selection rule is the S-03 binder follow-up)");
+            Assert.AreEqual(444, meshes, "24 modül × cw × fit × 4 LOD = 444");
             Assert.AreEqual(4, lib.tierMaterials.Length);
             for (int t = 0; t < 4; t++) Assert.IsNotNull(lib.tierMaterials[t], "tier materyali " + t);
             Assert.AreEqual(lib.tierMaterials[0].shader, lib.tierMaterials[1].shader);
@@ -234,12 +235,19 @@ namespace DD.Art.Tests.EditMode
                 else hatalar.Add(m.id + ": materyal sırası " + key);
                 foreach (ZombieModuleLibrary.Variant v in m.variants)
                     for (int lod = 0; lod < 4; lod++)
-                        if (v.lods[lod] != null && v.lods[lod].mesh != null && v.lods[lod].mesh.subMeshCount != m.materials.Length)
-                            hatalar.Add(m.id + " " + v.colourway + "/" + v.fit + " LOD" + lod + ": " + v.lods[lod].mesh.subMeshCount + " alt-mesh ≠ " + m.materials.Length + " materyal");
+                    {
+                        if (v.lods[lod] == null || v.lods[lod].mesh == null) continue;
+                        // WP-038C: a per-LOD override (fewer sub-meshes: T8 cw1 cloth-only, A1 LOD3 without the cord) must match its mesh and end the module list.
+                        string[] eff = v.lods[lod].materials ?? m.materials;
+                        if (v.lods[lod].mesh.subMeshCount != eff.Length)
+                            hatalar.Add(m.id + " " + v.colourway + "/" + v.fit + " LOD" + lod + ": " + v.lods[lod].mesh.subMeshCount + " alt-mesh ≠ " + eff.Length + " materyal");
+                        if (v.lods[lod].materials != null && (v.lods[lod].materials.Length >= m.materials.Length || v.lods[lod].materials[v.lods[lod].materials.Length - 1] != m.materials[m.materials.Length - 1]))
+                            hatalar.Add(m.id + " " + v.colourway + "/" + v.fit + " LOD" + lod + ": LOD materyal listesi modül listesinin kuyruğu olmalı");
+                    }
             }
 
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
-            Assert.AreEqual(7, both, "atlas + kumaş modülleri"); Assert.AreEqual(7, clothOnly, "yalnız kumaş"); Assert.AreEqual(5, atlasOnly, "yalnız atlas (baş/saç/straw)");
+            Assert.AreEqual(11, both, "atlas + kumaş modülleri (v003: +H6, H7, A1, T8)"); Assert.AreEqual(8, clothOnly, "yalnız kumaş (v003: +A2)"); Assert.AreEqual(5, atlasOnly, "yalnız atlas (baş/saç/straw)");
             Assert.AreEqual(4, lib.tierClothMaterials.Length);
             for (int t = 0; t < 4; t++) Assert.IsNotNull(lib.tierClothMaterials[t], "kumaş tier materyali " + t);
             Assert.AreNotEqual(lib.tierMaterials[0], lib.tierClothMaterials[0]);

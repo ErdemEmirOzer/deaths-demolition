@@ -42,6 +42,12 @@ namespace DD.Prototype.Characters
             public string[] boneNames;
             public string rootBone;
             public int triangles;
+            /// <summary>
+            /// WP-038C · Per-LOD material names when this mesh has fewer sub-meshes than the module's <c>materials</c> list
+            /// (AP-007C v003: T8 cw1 is cloth-only, the A1 hat LOD3 drops its rope cord) — the trailing entries of the module
+            /// list, i.e. the cloth atlas; null = the module list applies.
+            /// </summary>
+            public string[] materials;
         }
 
         [Serializable]

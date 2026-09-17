@@ -1,1331 +1,1998 @@
 {
-  "schema": "AP007.modules.v002",
-  "package": "AP-007",
-  "skeleton": {
-    "armature": "ZombieRig",
-    "bones": 56,
-    "identical_to": "AP-006 PlayerRig (names, hierarchy, rest pose); Unity Humanoid avatar; AP-009 clips shared",
-    "sockets": [
-      "socket_weapon_r",
-      "socket_weapon_l",
-      "socket_back"
-    ],
-    "root": "Root"
-  },
-  "anchors": {
-    "file": "../05-blender/validation/AP007-anchors.json",
-    "empties": [
-      "anchor_helmet",
-      "anchor_torso",
-      "anchor_legs"
-    ],
-    "parents": [
-      "Head",
-      "Chest",
-      "Hips"
-    ],
-    "in_files": [
-      "zombie_body_A.fbx",
-      "zombie_body_B.fbx",
-      "zombie_body_C.fbx",
-      "zombie_rigtest_*.fbx"
-    ]
-  },
-  "bodies": {
-    "zombie_body_A.fbx": {
-      "fit": "A",
-      "meshes": [
-        "zombie_body_A_LOD0",
-        "zombie_body_A_LOD1",
-        "zombie_body_A_LOD2",
-        "zombie_body_A_LOD3"
-      ],
-      "tris": [
-        5798,
-        2400,
-        850,
-        278
-      ]
-    },
-    "zombie_body_B.fbx": {
-      "fit": "B",
-      "meshes": [
-        "zombie_body_B_LOD0",
-        "zombie_body_B_LOD1",
-        "zombie_body_B_LOD2",
-        "zombie_body_B_LOD3"
-      ],
-      "tris": [
-        5798,
-        2400,
-        850,
-        278
-      ]
-    },
-    "zombie_body_C.fbx": {
-      "fit": "C",
-      "meshes": [
-        "zombie_body_C_LOD0",
-        "zombie_body_C_LOD1",
-        "zombie_body_C_LOD2",
-        "zombie_body_C_LOD3"
-      ],
-      "tris": [
-        5800,
-        2400,
-        850,
-        278
-      ]
-    }
-  },
-  "modules": [
-    {
-      "module": "B1_hakama_wide",
-      "kind": "bottom",
-      "fbx": "modules/zombie_B1_hakama_wide.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk2",
-        "cloth_fd2",
-        "sash"
-      ],
-      "object_name_pattern": "zombie_B1_hakama_wide_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2400,
-          999,
-          347,
-          114
-        ],
-        "cw1/B": [
-          2399,
-          998,
-          349,
-          114
-        ],
-        "cw1/C": [
-          2400,
-          1000,
-          347,
-          115
-        ],
-        "cw2/A": [
-          2400,
-          999,
-          347,
-          114
-        ],
-        "cw2/B": [
-          2399,
-          998,
-          349,
-          114
-        ],
-        "cw2/C": [
-          2400,
-          1000,
-          347,
-          115
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Atlas",
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "B2_momohiki_tight",
-      "kind": "bottom",
-      "fbx": "modules/zombie_B2_momohiki_tight.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk1",
-        "cloth_fd1",
-        "sash"
-      ],
-      "object_name_pattern": "zombie_B2_momohiki_tight_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2400,
-          1000,
-          347,
-          112
-        ],
-        "cw1/B": [
-          2399,
-          996,
-          350,
-          115
-        ],
-        "cw1/C": [
-          2399,
-          999,
-          348,
-          114
-        ],
-        "cw2/A": [
-          2400,
-          1000,
-          347,
-          112
-        ],
-        "cw2/B": [
-          2399,
-          996,
-          350,
-          115
-        ],
-        "cw2/C": [
-          2399,
-          999,
-          348,
-          114
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Atlas",
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "B3_koshimaki_wrap",
-      "kind": "bottom",
-      "fbx": "modules/zombie_B3_koshimaki_wrap.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk2",
-        "cloth_fd2",
-        "sash"
-      ],
-      "object_name_pattern": "zombie_B3_koshimaki_wrap_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          1968,
-          999,
-          350,
-          115
-        ],
-        "cw1/B": [
-          1880,
-          999,
-          350,
-          115
-        ],
-        "cw1/C": [
-          1974,
-          999,
-          350,
-          114
-        ],
-        "cw2/A": [
-          1968,
-          999,
-          350,
-          115
-        ],
-        "cw2/B": [
-          1880,
-          999,
-          350,
-          115
-        ],
-        "cw2/C": [
-          1974,
-          999,
-          350,
-          114
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Atlas",
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "B4_tattsuke_hakama",
-      "kind": "bottom",
-      "fbx": "modules/zombie_B4_tattsuke_hakama.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk1",
-        "cloth_fd2",
-        "sash"
-      ],
-      "object_name_pattern": "zombie_B4_tattsuke_hakama_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2397,
-          997,
-          350,
-          112
-        ],
-        "cw1/B": [
-          2400,
-          999,
-          349,
-          115
-        ],
-        "cw1/C": [
-          2400,
-          999,
-          349,
-          114
-        ],
-        "cw2/A": [
-          2397,
-          997,
-          350,
-          112
-        ],
-        "cw2/B": [
-          2400,
-          999,
-          349,
-          115
-        ],
-        "cw2/C": [
-          2400,
-          999,
-          349,
-          114
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Atlas",
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "B5_fundoshi",
-      "kind": "bottom",
-      "fbx": "modules/zombie_B5_fundoshi.fbx",
-      "colourways": [
-        "-"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_fd1"
-      ],
-      "object_name_pattern": "zombie_B5_fundoshi_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "-/A": [
-          1056,
-          1000,
-          349,
-          115
-        ],
-        "-/B": [
-          1120,
-          1000,
-          349,
-          115
-        ],
-        "-/C": [
-          1076,
-          999,
-          350,
-          115
-        ]
-      },
-      "meshes": 12,
-      "materials": [
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "B6_hakama_torn",
-      "kind": "bottom",
-      "fbx": "modules/zombie_B6_hakama_torn.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk1",
-        "cloth_fd1",
-        "sash"
-      ],
-      "object_name_pattern": "zombie_B6_hakama_torn_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2400,
-          999,
-          349,
-          115
-        ],
-        "cw1/B": [
-          2399,
-          1000,
-          349,
-          114
-        ],
-        "cw1/C": [
-          2400,
-          999,
-          350,
-          115
-        ],
-        "cw2/A": [
-          2400,
-          999,
-          349,
-          115
-        ],
-        "cw2/B": [
-          2399,
-          1000,
-          349,
-          114
-        ],
-        "cw2/C": [
-          2400,
-          999,
-          350,
-          115
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Atlas",
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "B7_momohiki_kyahan",
-      "kind": "bottom",
-      "fbx": "modules/zombie_B7_momohiki_kyahan.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk2",
-        "cloth_fd2",
-        "rope",
-        "sash"
-      ],
-      "object_name_pattern": "zombie_B7_momohiki_kyahan_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2398,
-          999,
-          350,
-          112
-        ],
-        "cw1/B": [
-          2398,
-          996,
-          349,
-          114
-        ],
-        "cw1/C": [
-          2400,
-          998,
-          348,
-          115
-        ],
-        "cw2/A": [
-          2398,
-          999,
-          348,
-          115
-        ],
-        "cw2/B": [
-          2398,
-          996,
-          349,
-          114
-        ],
-        "cw2/C": [
-          2400,
-          996,
-          348,
-          113
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Atlas",
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "H1_hair_crop",
-      "kind": "head",
-      "fbx": "modules/zombie_H1_hair_crop.fbx",
-      "colourways": [
-        "-"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "hair"
-      ],
-      "object_name_pattern": "zombie_H1_hair_crop_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "-/A": [
-          662,
-          379,
-          149,
-          55
-        ],
-        "-/B": [
-          698,
-          379,
-          150,
-          53
-        ],
-        "-/C": [
-          670,
-          379,
-          150,
-          55
-        ]
-      },
-      "meshes": 12,
-      "materials": [
-        "M_Zombie_Atlas"
-      ]
-    },
-    {
-      "module": "H2_hair_matted",
-      "kind": "head",
-      "fbx": "modules/zombie_H2_hair_matted.fbx",
-      "colourways": [
-        "-"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "hair"
-      ],
-      "object_name_pattern": "zombie_H2_hair_matted_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "-/A": [
-          864,
-          380,
-          149,
-          55
-        ],
-        "-/B": [
-          900,
-          379,
-          150,
-          55
-        ],
-        "-/C": [
-          856,
-          380,
-          150,
-          54
-        ]
-      },
-      "meshes": 12,
-      "materials": [
-        "M_Zombie_Atlas"
-      ]
-    },
-    {
-      "module": "H3_topknot_broken",
-      "kind": "head",
-      "fbx": "modules/zombie_H3_topknot_broken.fbx",
-      "colourways": [
-        "-"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "hair"
-      ],
-      "object_name_pattern": "zombie_H3_topknot_broken_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "-/A": [
-          710,
-          379,
-          150,
-          55
-        ],
-        "-/B": [
-          746,
-          379,
-          149,
-          54
-        ],
-        "-/C": [
-          718,
-          379,
-          149,
-          54
-        ]
-      },
-      "meshes": 12,
-      "materials": [
-        "M_Zombie_Atlas"
-      ]
-    },
-    {
-      "module": "H4_tenugui_wrap",
-      "kind": "head",
-      "fbx": "modules/zombie_H4_tenugui_wrap.fbx",
-      "colourways": [
-        "-"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk2"
-      ],
-      "object_name_pattern": "zombie_H4_tenugui_wrap_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "-/A": [
-          692,
-          379,
-          150,
-          54
-        ],
-        "-/B": [
-          718,
-          380,
-          150,
-          55
-        ],
-        "-/C": [
-          702,
-          379,
-          149,
-          55
-        ]
-      },
-      "meshes": 12,
-      "materials": [
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "H5_hachimaki_band",
-      "kind": "head",
-      "fbx": "modules/zombie_H5_hachimaki_band.fbx",
-      "colourways": [
-        "-"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "hair",
-        "sash"
-      ],
-      "object_name_pattern": "zombie_H5_hachimaki_band_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "-/A": [
-          899,
-          380,
-          150,
-          54
-        ],
-        "-/B": [
-          899,
-          379,
-          150,
-          54
-        ],
-        "-/C": [
-          899,
-          380,
-          150,
-          54
-        ]
-      },
-      "meshes": 12,
-      "materials": [
-        "M_Zombie_Atlas"
-      ]
-    },
-    {
-      "module": "T1_kosode_short",
-      "kind": "top",
-      "fbx": "modules/zombie_T1_kosode_short.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk1",
-        "cloth_fd1"
-      ],
-      "object_name_pattern": "zombie_T1_kosode_short_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2800,
-          1199,
-          430,
-          139
-        ],
-        "cw1/B": [
-          2799,
-          1200,
-          430,
-          139
-        ],
-        "cw1/C": [
-          2799,
-          1199,
-          429,
-          139
-        ],
-        "cw2/A": [
-          2800,
-          1199,
-          430,
-          139
-        ],
-        "cw2/B": [
-          2799,
-          1200,
-          430,
-          139
-        ],
-        "cw2/C": [
-          2799,
-          1199,
-          429,
-          139
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "T2_kosode_long",
-      "kind": "top",
-      "fbx": "modules/zombie_T2_kosode_long.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk2",
-        "cloth_fd2"
-      ],
-      "object_name_pattern": "zombie_T2_kosode_long_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2800,
-          1200,
-          427,
-          139
-        ],
-        "cw1/B": [
-          2800,
-          1200,
-          427,
-          140
-        ],
-        "cw1/C": [
-          2797,
-          1200,
-          430,
-          140
-        ],
-        "cw2/A": [
-          2800,
-          1200,
-          427,
-          139
-        ],
-        "cw2/B": [
-          2800,
-          1200,
-          427,
-          140
-        ],
-        "cw2/C": [
-          2797,
-          1200,
-          430,
-          140
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "T3_haori_open",
-      "kind": "top",
-      "fbx": "modules/zombie_T3_haori_open.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk1",
-        "cloth_fd1"
-      ],
-      "object_name_pattern": "zombie_T3_haori_open_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2797,
-          1199,
-          430,
-          139
-        ],
-        "cw1/B": [
-          2799,
-          1200,
-          427,
-          139
-        ],
-        "cw1/C": [
-          2797,
-          1198,
-          429,
-          140
-        ],
-        "cw2/A": [
-          2797,
-          1199,
-          430,
-          139
-        ],
-        "cw2/B": [
-          2799,
-          1200,
-          427,
-          139
-        ],
-        "cw2/C": [
-          2797,
-          1198,
-          429,
-          140
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "T4_hanten_vest",
-      "kind": "top",
-      "fbx": "modules/zombie_T4_hanten_vest.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk2",
-        "cloth_fd2"
-      ],
-      "object_name_pattern": "zombie_T4_hanten_vest_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2799,
-          1200,
-          428,
-          140
-        ],
-        "cw1/B": [
-          2800,
-          1200,
-          429,
-          140
-        ],
-        "cw1/C": [
-          2799,
-          1199,
-          429,
-          140
-        ],
-        "cw2/A": [
-          2799,
-          1200,
-          428,
-          140
-        ],
-        "cw2/B": [
-          2800,
-          1200,
-          429,
-          140
-        ],
-        "cw2/C": [
-          2799,
-          1199,
-          429,
-          140
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "T5_kosode_torn",
-      "kind": "top",
-      "fbx": "modules/zombie_T5_kosode_torn.fbx",
-      "colourways": [
-        "cw1",
-        "cw2"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_dk1",
-        "cloth_fd1"
-      ],
-      "object_name_pattern": "zombie_T5_kosode_torn_<cw>_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "cw1/A": [
-          2799,
-          1200,
-          429,
-          140
-        ],
-        "cw1/B": [
-          2800,
-          1200,
-          430,
-          140
-        ],
-        "cw1/C": [
-          2800,
-          1200,
-          430,
-          139
-        ],
-        "cw2/A": [
-          2799,
-          1200,
-          429,
-          140
-        ],
-        "cw2/B": [
-          2800,
-          1200,
-          430,
-          140
-        ],
-        "cw2/C": [
-          2800,
-          1200,
-          430,
-          139
-        ]
-      },
-      "meshes": 24,
-      "materials": [
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "T6_bare_straps",
-      "kind": "top",
-      "fbx": "modules/zombie_T6_bare_straps.fbx",
-      "colourways": [
-        "-"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "cloth_fd1",
-        "rope"
-      ],
-      "object_name_pattern": "zombie_T6_bare_straps_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "-/A": [
-          2070,
-          1199,
-          430,
-          138
-        ],
-        "-/B": [
-          2086,
-          1200,
-          430,
-          139
-        ],
-        "-/C": [
-          2064,
-          1200,
-          430,
-          140
-        ]
-      },
-      "meshes": 12,
-      "materials": [
-        "M_Zombie_Atlas",
-        "M_Zombie_Cloth"
-      ]
-    },
-    {
-      "module": "T7_mino_cape",
-      "kind": "top",
-      "fbx": "modules/zombie_T7_mino_cape.fbx",
-      "colourways": [
-        "-"
-      ],
-      "fits": [
-        "A",
-        "B",
-        "C"
-      ],
-      "atlas_regions": [
-        "straw"
-      ],
-      "object_name_pattern": "zombie_T7_mino_cape_<fit>_LOD<n>",
-      "tris_LOD0_3_by_cw_fit": {
-        "-/A": [
-          2797,
-          1200,
-          430,
-          140
-        ],
-        "-/B": [
-          2797,
-          1200,
-          430,
-          140
-        ],
-        "-/C": [
-          2797,
-          1200,
-          430,
-          140
-        ]
-      },
-      "meshes": 12,
-      "materials": [
-        "M_Zombie_Atlas"
-      ]
-    }
+ "schema": "AP007.modules.v003",
+ "package": "AP-007",
+ "skeleton": {
+  "armature": "ZombieRig",
+  "bones": 56,
+  "identical_to": "AP-006 PlayerRig (names, hierarchy, rest pose); Unity Humanoid avatar; AP-009 clips shared",
+  "sockets": [
+   "socket_weapon_r",
+   "socket_weapon_l",
+   "socket_back"
   ],
-  "assembly": {
-    "zombie": "ZombieRig + zombie_body_<fit>_LOD* + one top + one bottom + one head (H0 = no head module)",
-    "binding": "every module mesh is skinned to the same bone names; in Unity re-point SkinnedMeshRenderer.bones/rootBone of the module to the body prefab's ZombieRig transforms (by name), or import each module FBX with the same Humanoid avatar",
-    "lod": "LOD0..3 per mesh; combine into one LODGroup per zombie (body+top+bottom+head at the same LOD index); per-zombie worst case 11900 / 4980 / 1780 / 590 tris",
-    "material": "M_Zombie_Atlas (body, straw, hair, sash) + M_Zombie_Cloth (cloth atlas v002) — <= 2 materials per zombie, no per-instance material (SRP batching); colour variety = module colourway meshes (cw1 dark / cw2 faded) + module mix",
-    "combinations": "3 fits x 7 tops (5 with 2 cw) x 7 bottoms (6 with 2 cw) x 6 heads = 3 x 12 x 13 x 6 = 2808 distinct looks; 24 reference looks in looks[]",
-    "rules": [
-      "T7_mino_cape never together with ArmorSlot.Body Present (conflicts with the do) -> pick another top at spawn",
-      "T5/B6 torn variants: mirror (scale x -1 is NOT allowed on skinned meshes) -> the missing sleeve/leg is always the RIGHT side; vary with yaw/pose",
-      "H0 bald <= 25 % of a crowd, T7 <= 10 %, B5 fundoshi cw2 (light) <= 10 %",
-      "version tint (IEnemyVersionVisual): tint only where Mask.G = 1 (cloth); never skin (Mask.R); emissive only where Mask.A = 1 (sash band) and only if DEC-067 allows it later",
-      "helmet Present: H1-H5 head modules stay (hidden under the kabuto by the helmet mesh); H2 hair reaches z 1.40 - kabuto shikoro sits over it"
-    ],
-    "capsule": "all fits + modules fit the 1.8 m x 0.45 m-radius capsule (torso/leg envelope <= 0.46 m, T7 mino hem); A-pose arms/sleeves excluded"
-  },
-  "looks_24": [
-    {
-      "id": 1,
-      "fit": "A",
-      "top": "T1_kosode_short",
-      "top_cw": "cw1",
-      "bottom": "B1_hakama_wide",
-      "bottom_cw": "cw1",
-      "head": "H0_bald_scalp"
-    },
-    {
-      "id": 2,
-      "fit": "B",
-      "top": "T2_kosode_long",
-      "top_cw": "cw1",
-      "bottom": "B4_tattsuke_hakama",
-      "bottom_cw": "cw2",
-      "head": "H1_hair_crop"
-    },
-    {
-      "id": 3,
-      "fit": "C",
-      "top": "T3_haori_open",
-      "top_cw": "cw2",
-      "bottom": "B7_momohiki_kyahan",
-      "bottom_cw": "cw1",
-      "head": "H2_hair_matted"
-    },
-    {
-      "id": 4,
-      "fit": "A",
-      "top": "T4_hanten_vest",
-      "top_cw": "cw1",
-      "bottom": "B3_koshimaki_wrap",
-      "bottom_cw": "cw1",
-      "head": "H3_topknot_broken"
-    },
-    {
-      "id": 5,
-      "fit": "B",
-      "top": "T5_kosode_torn",
-      "top_cw": "cw1",
-      "bottom": "B6_hakama_torn",
-      "bottom_cw": "cw2",
-      "head": "H4_tenugui_wrap"
-    },
-    {
-      "id": 6,
-      "fit": "C",
-      "top": "T6_bare_straps",
-      "top_cw": "-",
-      "bottom": "B2_momohiki_tight",
-      "bottom_cw": "cw1",
-      "head": "H5_hachimaki_band"
-    },
-    {
-      "id": 7,
-      "fit": "A",
-      "top": "T7_mino_cape",
-      "top_cw": "-",
-      "bottom": "B5_fundoshi",
-      "bottom_cw": "-",
-      "head": "H0_bald_scalp"
-    },
-    {
-      "id": 8,
-      "fit": "B",
-      "top": "T1_kosode_short",
-      "top_cw": "cw1",
-      "bottom": "B2_momohiki_tight",
-      "bottom_cw": "cw2",
-      "head": "H1_hair_crop"
-    },
-    {
-      "id": 9,
-      "fit": "C",
-      "top": "T2_kosode_long",
-      "top_cw": "cw2",
-      "bottom": "B5_fundoshi",
-      "bottom_cw": "-",
-      "head": "H2_hair_matted"
-    },
-    {
-      "id": 10,
-      "fit": "A",
-      "top": "T3_haori_open",
-      "top_cw": "cw1",
-      "bottom": "B1_hakama_wide",
-      "bottom_cw": "cw1",
-      "head": "H3_topknot_broken"
-    },
-    {
-      "id": 11,
-      "fit": "B",
-      "top": "T4_hanten_vest",
-      "top_cw": "cw1",
-      "bottom": "B4_tattsuke_hakama",
-      "bottom_cw": "cw2",
-      "head": "H4_tenugui_wrap"
-    },
-    {
-      "id": 12,
-      "fit": "C",
-      "top": "T5_kosode_torn",
-      "top_cw": "cw2",
-      "bottom": "B7_momohiki_kyahan",
-      "bottom_cw": "cw1",
-      "head": "H5_hachimaki_band"
-    },
-    {
-      "id": 13,
-      "fit": "A",
-      "top": "T6_bare_straps",
-      "top_cw": "-",
-      "bottom": "B3_koshimaki_wrap",
-      "bottom_cw": "cw1",
-      "head": "H0_bald_scalp"
-    },
-    {
-      "id": 14,
-      "fit": "B",
-      "top": "T7_mino_cape",
-      "top_cw": "-",
-      "bottom": "B6_hakama_torn",
-      "bottom_cw": "cw2",
-      "head": "H1_hair_crop"
-    },
-    {
-      "id": 15,
-      "fit": "C",
-      "top": "T1_kosode_short",
-      "top_cw": "cw2",
-      "bottom": "B3_koshimaki_wrap",
-      "bottom_cw": "cw1",
-      "head": "H2_hair_matted"
-    },
-    {
-      "id": 16,
-      "fit": "A",
-      "top": "T2_kosode_long",
-      "top_cw": "cw1",
-      "bottom": "B6_hakama_torn",
-      "bottom_cw": "cw1",
-      "head": "H3_topknot_broken"
-    },
-    {
-      "id": 17,
-      "fit": "B",
-      "top": "T3_haori_open",
-      "top_cw": "cw1",
-      "bottom": "B2_momohiki_tight",
-      "bottom_cw": "cw2",
-      "head": "H4_tenugui_wrap"
-    },
-    {
-      "id": 18,
-      "fit": "C",
-      "top": "T4_hanten_vest",
-      "top_cw": "cw2",
-      "bottom": "B5_fundoshi",
-      "bottom_cw": "-",
-      "head": "H5_hachimaki_band"
-    },
-    {
-      "id": 19,
-      "fit": "A",
-      "top": "T5_kosode_torn",
-      "top_cw": "cw1",
-      "bottom": "B1_hakama_wide",
-      "bottom_cw": "cw1",
-      "head": "H0_bald_scalp"
-    },
-    {
-      "id": 20,
-      "fit": "B",
-      "top": "T6_bare_straps",
-      "top_cw": "-",
-      "bottom": "B4_tattsuke_hakama",
-      "bottom_cw": "cw2",
-      "head": "H1_hair_crop"
-    },
-    {
-      "id": 21,
-      "fit": "C",
-      "top": "T7_mino_cape",
-      "top_cw": "-",
-      "bottom": "B7_momohiki_kyahan",
-      "bottom_cw": "cw1",
-      "head": "H2_hair_matted"
-    },
-    {
-      "id": 22,
-      "fit": "A",
-      "top": "T1_kosode_short",
-      "top_cw": "cw1",
-      "bottom": "B4_tattsuke_hakama",
-      "bottom_cw": "cw1",
-      "head": "H3_topknot_broken"
-    },
-    {
-      "id": 23,
-      "fit": "B",
-      "top": "T2_kosode_long",
-      "top_cw": "cw1",
-      "bottom": "B7_momohiki_kyahan",
-      "bottom_cw": "cw2",
-      "head": "H4_tenugui_wrap"
-    },
-    {
-      "id": 24,
-      "fit": "C",
-      "top": "T3_haori_open",
-      "top_cw": "cw2",
-      "bottom": "B3_koshimaki_wrap",
-      "bottom_cw": "cw1",
-      "head": "H5_hachimaki_band"
-    }
+  "root": "Root"
+ },
+ "anchors": {
+  "file": "../05-blender/validation/AP007-anchors.json",
+  "empties": [
+   "anchor_helmet",
+   "anchor_torso",
+   "anchor_legs"
+  ],
+  "parents": [
+   "Head",
+   "Chest",
+   "Hips"
+  ],
+  "in_files": [
+   "zombie_body_A.fbx",
+   "zombie_body_B.fbx",
+   "zombie_body_C.fbx",
+   "zombie_rigtest_*.fbx"
   ]
+ },
+ "bodies": {
+  "zombie_body_A.fbx": {
+   "fit": "A",
+   "meshes": [
+    "zombie_body_A_LOD0",
+    "zombie_body_A_LOD1",
+    "zombie_body_A_LOD2",
+    "zombie_body_A_LOD3"
+   ],
+   "tris": [
+    5798,
+    2400,
+    850,
+    278
+   ]
+  },
+  "zombie_body_B.fbx": {
+   "fit": "B",
+   "meshes": [
+    "zombie_body_B_LOD0",
+    "zombie_body_B_LOD1",
+    "zombie_body_B_LOD2",
+    "zombie_body_B_LOD3"
+   ],
+   "tris": [
+    5798,
+    2400,
+    850,
+    278
+   ]
+  },
+  "zombie_body_C.fbx": {
+   "fit": "C",
+   "meshes": [
+    "zombie_body_C_LOD0",
+    "zombie_body_C_LOD1",
+    "zombie_body_C_LOD2",
+    "zombie_body_C_LOD3"
+   ],
+   "tris": [
+    5800,
+    2400,
+    850,
+    278
+   ]
+  }
+ },
+ "modules": [
+  {
+   "module": "A1_straw_hat",
+   "kind": "accessory",
+   "fbx": "modules/zombie_A1_straw_hat.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_fd1",
+    "rope"
+   ],
+   "object_name_pattern": "zombie_A1_straw_hat_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     296,
+     120,
+     50,
+     32
+    ],
+    "-/B": [
+     296,
+     120,
+     50,
+     32
+    ],
+    "-/C": [
+     296,
+     120,
+     50,
+     32
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "A2_face_wrap",
+   "kind": "accessory",
+   "fbx": "modules/zombie_A2_face_wrap.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk1",
+    "cloth_fd2"
+   ],
+   "object_name_pattern": "zombie_A2_face_wrap_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     299,
+     119,
+     49,
+     19
+    ],
+    "cw1/B": [
+     299,
+     120,
+     50,
+     19
+    ],
+    "cw1/C": [
+     299,
+     120,
+     50,
+     19
+    ],
+    "cw2/A": [
+     299,
+     119,
+     49,
+     19
+    ],
+    "cw2/B": [
+     299,
+     120,
+     50,
+     19
+    ],
+    "cw2/C": [
+     299,
+     120,
+     50,
+     19
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "B1_hakama_wide",
+   "kind": "bottom",
+   "fbx": "modules/zombie_B1_hakama_wide.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk2",
+    "cloth_fd2",
+    "sash"
+   ],
+   "object_name_pattern": "zombie_B1_hakama_wide_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2400,
+     999,
+     347,
+     114
+    ],
+    "cw1/B": [
+     2399,
+     998,
+     349,
+     114
+    ],
+    "cw1/C": [
+     2400,
+     1000,
+     347,
+     115
+    ],
+    "cw2/A": [
+     2400,
+     999,
+     347,
+     114
+    ],
+    "cw2/B": [
+     2399,
+     998,
+     349,
+     114
+    ],
+    "cw2/C": [
+     2400,
+     1000,
+     347,
+     115
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "B2_momohiki_tight",
+   "kind": "bottom",
+   "fbx": "modules/zombie_B2_momohiki_tight.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk1",
+    "cloth_fd1",
+    "sash"
+   ],
+   "object_name_pattern": "zombie_B2_momohiki_tight_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2400,
+     1000,
+     347,
+     112
+    ],
+    "cw1/B": [
+     2399,
+     996,
+     350,
+     115
+    ],
+    "cw1/C": [
+     2399,
+     999,
+     348,
+     114
+    ],
+    "cw2/A": [
+     2400,
+     1000,
+     347,
+     112
+    ],
+    "cw2/B": [
+     2399,
+     996,
+     350,
+     115
+    ],
+    "cw2/C": [
+     2399,
+     999,
+     348,
+     114
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "B3_koshimaki_wrap",
+   "kind": "bottom",
+   "fbx": "modules/zombie_B3_koshimaki_wrap.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk2",
+    "cloth_fd2",
+    "sash"
+   ],
+   "object_name_pattern": "zombie_B3_koshimaki_wrap_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     1968,
+     999,
+     350,
+     115
+    ],
+    "cw1/B": [
+     1880,
+     999,
+     350,
+     115
+    ],
+    "cw1/C": [
+     1974,
+     999,
+     350,
+     114
+    ],
+    "cw2/A": [
+     1968,
+     999,
+     350,
+     115
+    ],
+    "cw2/B": [
+     1880,
+     999,
+     350,
+     115
+    ],
+    "cw2/C": [
+     1974,
+     999,
+     350,
+     114
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "B4_tattsuke_hakama",
+   "kind": "bottom",
+   "fbx": "modules/zombie_B4_tattsuke_hakama.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk1",
+    "cloth_fd2",
+    "sash"
+   ],
+   "object_name_pattern": "zombie_B4_tattsuke_hakama_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2397,
+     997,
+     350,
+     112
+    ],
+    "cw1/B": [
+     2400,
+     999,
+     349,
+     115
+    ],
+    "cw1/C": [
+     2400,
+     999,
+     349,
+     114
+    ],
+    "cw2/A": [
+     2397,
+     997,
+     350,
+     112
+    ],
+    "cw2/B": [
+     2400,
+     999,
+     349,
+     115
+    ],
+    "cw2/C": [
+     2400,
+     999,
+     349,
+     114
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "B5_fundoshi",
+   "kind": "bottom",
+   "fbx": "modules/zombie_B5_fundoshi.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_fd1"
+   ],
+   "object_name_pattern": "zombie_B5_fundoshi_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     1056,
+     1000,
+     349,
+     115
+    ],
+    "-/B": [
+     1120,
+     1000,
+     349,
+     115
+    ],
+    "-/C": [
+     1076,
+     999,
+     350,
+     115
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "B6_hakama_torn",
+   "kind": "bottom",
+   "fbx": "modules/zombie_B6_hakama_torn.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk1",
+    "cloth_fd1",
+    "sash"
+   ],
+   "object_name_pattern": "zombie_B6_hakama_torn_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2400,
+     999,
+     349,
+     115
+    ],
+    "cw1/B": [
+     2399,
+     1000,
+     349,
+     114
+    ],
+    "cw1/C": [
+     2400,
+     999,
+     350,
+     115
+    ],
+    "cw2/A": [
+     2400,
+     999,
+     349,
+     115
+    ],
+    "cw2/B": [
+     2399,
+     1000,
+     349,
+     114
+    ],
+    "cw2/C": [
+     2400,
+     999,
+     350,
+     115
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "B7_momohiki_kyahan",
+   "kind": "bottom",
+   "fbx": "modules/zombie_B7_momohiki_kyahan.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk2",
+    "cloth_fd2",
+    "rope",
+    "sash"
+   ],
+   "object_name_pattern": "zombie_B7_momohiki_kyahan_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2398,
+     999,
+     350,
+     114
+    ],
+    "cw1/B": [
+     2398,
+     996,
+     349,
+     115
+    ],
+    "cw1/C": [
+     2400,
+     998,
+     348,
+     113
+    ],
+    "cw2/A": [
+     2398,
+     999,
+     350,
+     114
+    ],
+    "cw2/B": [
+     2398,
+     996,
+     347,
+     115
+    ],
+    "cw2/C": [
+     2400,
+     998,
+     350,
+     113
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "H1_hair_crop",
+   "kind": "head",
+   "fbx": "modules/zombie_H1_hair_crop.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "hair"
+   ],
+   "object_name_pattern": "zombie_H1_hair_crop_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     662,
+     379,
+     149,
+     55
+    ],
+    "-/B": [
+     698,
+     379,
+     150,
+     53
+    ],
+    "-/C": [
+     670,
+     379,
+     150,
+     55
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas"
+   ]
+  },
+  {
+   "module": "H2_hair_matted",
+   "kind": "head",
+   "fbx": "modules/zombie_H2_hair_matted.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "hair"
+   ],
+   "object_name_pattern": "zombie_H2_hair_matted_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     864,
+     380,
+     149,
+     55
+    ],
+    "-/B": [
+     900,
+     379,
+     150,
+     55
+    ],
+    "-/C": [
+     856,
+     380,
+     150,
+     54
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas"
+   ]
+  },
+  {
+   "module": "H3_topknot_broken",
+   "kind": "head",
+   "fbx": "modules/zombie_H3_topknot_broken.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "hair"
+   ],
+   "object_name_pattern": "zombie_H3_topknot_broken_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     710,
+     379,
+     150,
+     55
+    ],
+    "-/B": [
+     746,
+     379,
+     149,
+     54
+    ],
+    "-/C": [
+     718,
+     379,
+     149,
+     54
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas"
+   ]
+  },
+  {
+   "module": "H4_tenugui_wrap",
+   "kind": "head",
+   "fbx": "modules/zombie_H4_tenugui_wrap.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk2"
+   ],
+   "object_name_pattern": "zombie_H4_tenugui_wrap_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     692,
+     379,
+     150,
+     54
+    ],
+    "-/B": [
+     718,
+     380,
+     150,
+     55
+    ],
+    "-/C": [
+     702,
+     379,
+     149,
+     55
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "H5_hachimaki_band",
+   "kind": "head",
+   "fbx": "modules/zombie_H5_hachimaki_band.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "hair",
+    "sash"
+   ],
+   "object_name_pattern": "zombie_H5_hachimaki_band_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     899,
+     380,
+     150,
+     54
+    ],
+    "-/B": [
+     899,
+     379,
+     150,
+     54
+    ],
+    "-/C": [
+     899,
+     380,
+     150,
+     54
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas"
+   ]
+  },
+  {
+   "module": "H6_bandage_wrap",
+   "kind": "head",
+   "fbx": "modules/zombie_H6_bandage_wrap.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_fd1",
+    "hair",
+    "stain"
+   ],
+   "object_name_pattern": "zombie_H6_bandage_wrap_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     899,
+     379,
+     150,
+     55
+    ],
+    "-/B": [
+     899,
+     379,
+     150,
+     55
+    ],
+    "-/C": [
+     900,
+     380,
+     150,
+     55
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "H7_matted_wound",
+   "kind": "head",
+   "fbx": "modules/zombie_H7_matted_wound.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_fd1",
+    "hair",
+    "stain"
+   ],
+   "object_name_pattern": "zombie_H7_matted_wound_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     899,
+     380,
+     150,
+     55
+    ],
+    "-/B": [
+     900,
+     379,
+     150,
+     55
+    ],
+    "-/C": [
+     899,
+     380,
+     149,
+     55
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "T1_kosode_short",
+   "kind": "top",
+   "fbx": "modules/zombie_T1_kosode_short.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk1",
+    "cloth_fd1"
+   ],
+   "object_name_pattern": "zombie_T1_kosode_short_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2800,
+     1199,
+     430,
+     139
+    ],
+    "cw1/B": [
+     2799,
+     1200,
+     430,
+     139
+    ],
+    "cw1/C": [
+     2799,
+     1199,
+     429,
+     139
+    ],
+    "cw2/A": [
+     2800,
+     1199,
+     430,
+     139
+    ],
+    "cw2/B": [
+     2799,
+     1200,
+     430,
+     139
+    ],
+    "cw2/C": [
+     2799,
+     1199,
+     429,
+     139
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "T2_kosode_long",
+   "kind": "top",
+   "fbx": "modules/zombie_T2_kosode_long.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk2",
+    "cloth_fd2"
+   ],
+   "object_name_pattern": "zombie_T2_kosode_long_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2800,
+     1200,
+     427,
+     139
+    ],
+    "cw1/B": [
+     2800,
+     1200,
+     427,
+     140
+    ],
+    "cw1/C": [
+     2797,
+     1200,
+     430,
+     140
+    ],
+    "cw2/A": [
+     2800,
+     1200,
+     427,
+     139
+    ],
+    "cw2/B": [
+     2800,
+     1200,
+     427,
+     140
+    ],
+    "cw2/C": [
+     2797,
+     1200,
+     430,
+     140
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "T3_haori_open",
+   "kind": "top",
+   "fbx": "modules/zombie_T3_haori_open.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk1",
+    "cloth_fd1"
+   ],
+   "object_name_pattern": "zombie_T3_haori_open_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2797,
+     1199,
+     430,
+     139
+    ],
+    "cw1/B": [
+     2799,
+     1200,
+     427,
+     139
+    ],
+    "cw1/C": [
+     2797,
+     1198,
+     429,
+     140
+    ],
+    "cw2/A": [
+     2797,
+     1199,
+     430,
+     139
+    ],
+    "cw2/B": [
+     2799,
+     1200,
+     427,
+     139
+    ],
+    "cw2/C": [
+     2797,
+     1198,
+     429,
+     140
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "T4_hanten_vest",
+   "kind": "top",
+   "fbx": "modules/zombie_T4_hanten_vest.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk2",
+    "cloth_fd2"
+   ],
+   "object_name_pattern": "zombie_T4_hanten_vest_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2799,
+     1200,
+     428,
+     140
+    ],
+    "cw1/B": [
+     2800,
+     1200,
+     429,
+     140
+    ],
+    "cw1/C": [
+     2799,
+     1199,
+     429,
+     140
+    ],
+    "cw2/A": [
+     2799,
+     1200,
+     428,
+     140
+    ],
+    "cw2/B": [
+     2800,
+     1200,
+     429,
+     140
+    ],
+    "cw2/C": [
+     2799,
+     1199,
+     429,
+     140
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "T5_kosode_torn",
+   "kind": "top",
+   "fbx": "modules/zombie_T5_kosode_torn.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk1",
+    "cloth_fd1"
+   ],
+   "object_name_pattern": "zombie_T5_kosode_torn_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2799,
+     1200,
+     429,
+     140
+    ],
+    "cw1/B": [
+     2800,
+     1200,
+     430,
+     140
+    ],
+    "cw1/C": [
+     2800,
+     1200,
+     430,
+     139
+    ],
+    "cw2/A": [
+     2799,
+     1200,
+     429,
+     140
+    ],
+    "cw2/B": [
+     2800,
+     1200,
+     430,
+     140
+    ],
+    "cw2/C": [
+     2800,
+     1200,
+     430,
+     139
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "T6_bare_straps",
+   "kind": "top",
+   "fbx": "modules/zombie_T6_bare_straps.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_fd1",
+    "rope"
+   ],
+   "object_name_pattern": "zombie_T6_bare_straps_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     2070,
+     1199,
+     430,
+     138
+    ],
+    "-/B": [
+     2086,
+     1200,
+     430,
+     139
+    ],
+    "-/C": [
+     2064,
+     1200,
+     430,
+     140
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  },
+  {
+   "module": "T7_mino_cape",
+   "kind": "top",
+   "fbx": "modules/zombie_T7_mino_cape.fbx",
+   "colourways": [
+    "-"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "straw"
+   ],
+   "object_name_pattern": "zombie_T7_mino_cape_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "-/A": [
+     2797,
+     1200,
+     430,
+     140
+    ],
+    "-/B": [
+     2797,
+     1200,
+     430,
+     140
+    ],
+    "-/C": [
+     2797,
+     1200,
+     430,
+     140
+    ]
+   },
+   "meshes": 12,
+   "materials": [
+    "M_Zombie_Atlas"
+   ]
+  },
+  {
+   "module": "T8_kosode_rolled",
+   "kind": "top",
+   "fbx": "modules/zombie_T8_kosode_rolled.fbx",
+   "colourways": [
+    "cw1",
+    "cw2"
+   ],
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "atlas_regions": [
+    "cloth_dk2",
+    "cloth_fd1",
+    "cloth_fd2",
+    "rope"
+   ],
+   "object_name_pattern": "zombie_T8_kosode_rolled_<cw>_<fit>_LOD<n>",
+   "tris_LOD0_3_by_cw_fit": {
+    "cw1/A": [
+     2799,
+     1200,
+     430,
+     139
+    ],
+    "cw1/B": [
+     2799,
+     1199,
+     429,
+     139
+    ],
+    "cw1/C": [
+     2800,
+     1200,
+     430,
+     140
+    ],
+    "cw2/A": [
+     2799,
+     1200,
+     430,
+     139
+    ],
+    "cw2/B": [
+     2799,
+     1199,
+     429,
+     139
+    ],
+    "cw2/C": [
+     2800,
+     1200,
+     430,
+     140
+    ]
+   },
+   "meshes": 24,
+   "materials": [
+    "M_Zombie_Atlas",
+    "M_Zombie_Cloth"
+   ]
+  }
+ ],
+ "assembly": {
+  "zombie": "ZombieRig + zombie_body_<fit>_LOD* + one top + one bottom + one head (H0 = no head module)",
+  "binding": "every module mesh is skinned to the same bone names; in Unity re-point SkinnedMeshRenderer.bones/rootBone of the module to the body prefab's ZombieRig transforms (by name), or import each module FBX with the same Humanoid avatar",
+  "lod": "LOD0..3 per mesh; combine into one LODGroup per zombie (body+top+bottom+head at the same LOD index); per-zombie worst case 11900 / 4980 / 1780 / 590 tris",
+  "material": "M_Zombie_Atlas (body, straw, hair, sash) + M_Zombie_Cloth (cloth atlas v002) \u2014 <= 2 materials per zombie, no per-instance material (SRP batching); colour variety = module colourway meshes (cw1 dark / cw2 faded) + module mix",
+  "combinations": "3 fits x 7 tops (5 with 2 cw) x 7 bottoms (6 with 2 cw) x 6 heads = 3 x 12 x 13 x 6 = 2808 distinct looks; 24 reference looks in looks[]",
+  "rules": [
+   "T7_mino_cape never together with ArmorSlot.Body Present (conflicts with the do) -> pick another top at spawn",
+   "T5/B6 torn variants: mirror (scale x -1 is NOT allowed on skinned meshes) -> the missing sleeve/leg is always the RIGHT side; vary with yaw/pose",
+   "H0 bald <= 25 % of a crowd, T7 <= 10 %, B5 fundoshi cw2 (light) <= 10 %",
+   "version tint (IEnemyVersionVisual): tint only where Mask.G = 1 (cloth); never skin (Mask.R); emissive only where Mask.A = 1 (sash band) and only if DEC-067 allows it later",
+   "helmet Present: H1-H5 head modules stay (hidden under the kabuto by the helmet mesh); H2 hair reaches z 1.40 - kabuto shikoro sits over it"
+  ],
+  "capsule": "all fits + modules fit the 1.8 m x 0.45 m-radius capsule (torso/leg envelope <= 0.46 m, T7 mino hem); A-pose arms/sleeves excluded"
+ },
+ "looks_24": [
+  {
+   "id": 1,
+   "fit": "A",
+   "top": "T1_kosode_short",
+   "top_cw": "cw1",
+   "bottom": "B1_hakama_wide",
+   "bottom_cw": "cw1",
+   "head": "H0_bald_scalp"
+  },
+  {
+   "id": 2,
+   "fit": "B",
+   "top": "T2_kosode_long",
+   "top_cw": "cw1",
+   "bottom": "B4_tattsuke_hakama",
+   "bottom_cw": "cw2",
+   "head": "H1_hair_crop"
+  },
+  {
+   "id": 3,
+   "fit": "C",
+   "top": "T3_haori_open",
+   "top_cw": "cw2",
+   "bottom": "B7_momohiki_kyahan",
+   "bottom_cw": "cw1",
+   "head": "H2_hair_matted"
+  },
+  {
+   "id": 4,
+   "fit": "A",
+   "top": "T4_hanten_vest",
+   "top_cw": "cw1",
+   "bottom": "B3_koshimaki_wrap",
+   "bottom_cw": "cw1",
+   "head": "H3_topknot_broken"
+  },
+  {
+   "id": 5,
+   "fit": "B",
+   "top": "T5_kosode_torn",
+   "top_cw": "cw1",
+   "bottom": "B6_hakama_torn",
+   "bottom_cw": "cw2",
+   "head": "H4_tenugui_wrap"
+  },
+  {
+   "id": 6,
+   "fit": "C",
+   "top": "T6_bare_straps",
+   "top_cw": "-",
+   "bottom": "B2_momohiki_tight",
+   "bottom_cw": "cw1",
+   "head": "H5_hachimaki_band"
+  },
+  {
+   "id": 7,
+   "fit": "A",
+   "top": "T7_mino_cape",
+   "top_cw": "-",
+   "bottom": "B5_fundoshi",
+   "bottom_cw": "-",
+   "head": "H0_bald_scalp"
+  },
+  {
+   "id": 8,
+   "fit": "B",
+   "top": "T1_kosode_short",
+   "top_cw": "cw1",
+   "bottom": "B2_momohiki_tight",
+   "bottom_cw": "cw2",
+   "head": "H1_hair_crop"
+  },
+  {
+   "id": 9,
+   "fit": "C",
+   "top": "T2_kosode_long",
+   "top_cw": "cw2",
+   "bottom": "B5_fundoshi",
+   "bottom_cw": "-",
+   "head": "H2_hair_matted"
+  },
+  {
+   "id": 10,
+   "fit": "A",
+   "top": "T3_haori_open",
+   "top_cw": "cw1",
+   "bottom": "B1_hakama_wide",
+   "bottom_cw": "cw1",
+   "head": "H3_topknot_broken"
+  },
+  {
+   "id": 11,
+   "fit": "B",
+   "top": "T4_hanten_vest",
+   "top_cw": "cw1",
+   "bottom": "B4_tattsuke_hakama",
+   "bottom_cw": "cw2",
+   "head": "H4_tenugui_wrap"
+  },
+  {
+   "id": 12,
+   "fit": "C",
+   "top": "T5_kosode_torn",
+   "top_cw": "cw2",
+   "bottom": "B7_momohiki_kyahan",
+   "bottom_cw": "cw1",
+   "head": "H5_hachimaki_band"
+  },
+  {
+   "id": 13,
+   "fit": "A",
+   "top": "T6_bare_straps",
+   "top_cw": "-",
+   "bottom": "B3_koshimaki_wrap",
+   "bottom_cw": "cw1",
+   "head": "H0_bald_scalp"
+  },
+  {
+   "id": 14,
+   "fit": "B",
+   "top": "T7_mino_cape",
+   "top_cw": "-",
+   "bottom": "B6_hakama_torn",
+   "bottom_cw": "cw2",
+   "head": "H1_hair_crop"
+  },
+  {
+   "id": 15,
+   "fit": "C",
+   "top": "T1_kosode_short",
+   "top_cw": "cw2",
+   "bottom": "B3_koshimaki_wrap",
+   "bottom_cw": "cw1",
+   "head": "H2_hair_matted"
+  },
+  {
+   "id": 16,
+   "fit": "A",
+   "top": "T2_kosode_long",
+   "top_cw": "cw1",
+   "bottom": "B6_hakama_torn",
+   "bottom_cw": "cw1",
+   "head": "H3_topknot_broken"
+  },
+  {
+   "id": 17,
+   "fit": "B",
+   "top": "T3_haori_open",
+   "top_cw": "cw1",
+   "bottom": "B2_momohiki_tight",
+   "bottom_cw": "cw2",
+   "head": "H4_tenugui_wrap"
+  },
+  {
+   "id": 18,
+   "fit": "C",
+   "top": "T4_hanten_vest",
+   "top_cw": "cw2",
+   "bottom": "B5_fundoshi",
+   "bottom_cw": "-",
+   "head": "H5_hachimaki_band"
+  },
+  {
+   "id": 19,
+   "fit": "A",
+   "top": "T5_kosode_torn",
+   "top_cw": "cw1",
+   "bottom": "B1_hakama_wide",
+   "bottom_cw": "cw1",
+   "head": "H0_bald_scalp"
+  },
+  {
+   "id": 20,
+   "fit": "B",
+   "top": "T6_bare_straps",
+   "top_cw": "-",
+   "bottom": "B4_tattsuke_hakama",
+   "bottom_cw": "cw2",
+   "head": "H1_hair_crop"
+  },
+  {
+   "id": 21,
+   "fit": "C",
+   "top": "T7_mino_cape",
+   "top_cw": "-",
+   "bottom": "B7_momohiki_kyahan",
+   "bottom_cw": "cw1",
+   "head": "H2_hair_matted"
+  },
+  {
+   "id": 22,
+   "fit": "A",
+   "top": "T1_kosode_short",
+   "top_cw": "cw1",
+   "bottom": "B4_tattsuke_hakama",
+   "bottom_cw": "cw1",
+   "head": "H3_topknot_broken"
+  },
+  {
+   "id": 23,
+   "fit": "B",
+   "top": "T2_kosode_long",
+   "top_cw": "cw1",
+   "bottom": "B7_momohiki_kyahan",
+   "bottom_cw": "cw2",
+   "head": "H4_tenugui_wrap"
+  },
+  {
+   "id": 24,
+   "fit": "C",
+   "top": "T3_haori_open",
+   "top_cw": "cw2",
+   "bottom": "B3_koshimaki_wrap",
+   "bottom_cw": "cw1",
+   "head": "H5_hachimaki_band"
+  }
+ ],
+ "v003_changes": {
+  "package": "AP-007C crowd variety (2026-09-17, P-06, credits 0)",
+  "new_modules": {
+   "H6_bandage_wrap": "head: cropped hair + dirty-cream bandage (cloth_fd1) tilted 9 deg over the LEFT eye + dried-blood stain tile at the temple (M1: H 9.5 / S 0.31 / V 0.19, 30 % soft edge wicked along the weave)",
+   "H7_matted_wound": "head: H2 matted hair + bandage patch (cloth_fd1) with the stain tile over the RIGHT crown and a hanging tie",
+   "A1_straw_hat": "accessory (Head-bound): sugegasa cone, rim r 0.255 m at z 1.735, apex 1.965 m, inner shell, chin cord (rope); hemp tile (cloth_fd1) = pale straw read; top-down silhouette IoU vs the same look without it 0.77-0.85",
+   "A2_face_wrap": "accessory (Head-bound): cloth wrap over nose / mouth / cheeks knotted at the nape; cw1 (cloth_dk1) / cw2 (cloth_fd1); no silhouette change from above (colour / detail cue)",
+   "T8_kosode_rolled": "top: short kosode, sleeves rolled to mid upper-arm (bare forearms) + hemp rope over the left shoulder; cw1 (dk2) / cw2 (fd2) - spawn weight cw2 0.7 / cw1 0.3"
+  },
+  "accessory_slot": {
+   "rule": "NEW slot 'accessory' (0-1 per zombie, skinned to Head via the body weights, worn with any head module)",
+   "budgets_LOD0_3": [
+    300,
+    120,
+    50,
+    20
+   ],
+   "A1_straw_hat": {
+    "occludesHead": true,
+    "standard_only": true,
+    "exclusive_with": [
+     "Helmet armour slot (kabuto / jingasa / mask)",
+     "AP-014 tier head parts",
+     "T7_mino_cape"
+    ],
+    "spawn_weight_standard": 0.2,
+    "spawn_weight_range_AD": [
+     0.15,
+     0.25
+    ],
+    "note": "AD verdict M2/M3: at -49 deg the disc hides the whole head -> never on armoured / tier heads; hats a minority (15-25 % of Standard spawns)"
+   },
+   "A2_face_wrap": {
+    "occludesHead": false,
+    "exclusive_with": [
+     "face-covering helmet mask"
+    ],
+    "spawn_weight": 0.15
+   },
+   "per_zombie_budget": "worst case body + top + bottom + head + accessory = 11 900 + 300 = 12 200 LOD0 (WP-016 ceiling 12 000): the 'no A1 with T7 mino' exclusion keeps it <= 11 700; otherwise raise the ceiling by 300 / 120 / 50 / 20 (S-05 / S-03)"
+  },
+  "spawn_weights": {
+   "H6_bandage_wrap": 0.1,
+   "H7_matted_wound": 0.08,
+   "A1_straw_hat": 0.2,
+   "A2_face_wrap": 0.15,
+   "T8_kosode_rolled": {
+    "cw2": 0.7,
+    "cw1": 0.3
+   }
+  },
+  "textures": "body atlas v003 (stain tile in the free v001 cloth area, +0 MB), cloth atlas v002 unchanged",
+  "unchanged": "the 19 v002 modules and the 3 bodies are rebuilt from the same inputs (same geometry / weights / UVs); masters: zombie-master-v003.blend",
+  "dec077_proxy": "AP007C-review-v003.py: figure/ring luma Michelson per review look 0.008-0.244 (mean 0.073) - the low readings are the mixed cw2-top / cw1-trousers looks that exist in v002; the new modules do not move a look toward the ring",
+  "ad_verdict": "06-renders/v003/AP007C-art-verdict-v003.md ACCEPT_WITH_FIXES: M1 stain (done), M2 hat exclusivity + occludesHead (this manifest, S-03 binder), M3 hat weight 15-25 % (this manifest, S-03 SpawnMixSimulator sample)"
+ },
+ "secondary_chains": {
+  "package": "AP-006C (2026-09-17)",
+  "rule": "sec_<chain>_<i> deform bones parented to core bones (Head / UpperChest), outside the 56-bone Humanoid map (Unity: extra transforms, never animated by the AP-009 clips); driven at runtime by a spring / verlet script with the table below; every FBX in exports/v003 carries the 73-bone rig (56 core + 17 secondary), modules without chain weights ignore them",
+  "table": [
+   {
+    "chain": "mino_back",
+    "bones": [
+     "sec_mino_back_1",
+     "sec_mino_back_2",
+     "sec_mino_back_3"
+    ],
+    "parent": "UpperChest",
+    "root_world_rest_m": [
+     0.0,
+     0.22,
+     1.44
+    ],
+    "direction": [
+     0.0,
+     0.1,
+     -1.0
+    ],
+    "length_m": 0.3,
+    "segments": 3,
+    "stiffness": 0.55,
+    "damping": 0.22,
+    "gravity": 9.81,
+    "max_angle_deg": 55,
+    "collision_radius_m": 0.02,
+    "body_radius_m": 0.24,
+    "weighted_vertices": 1398,
+    "note": "straw mino cape, back centre"
+   },
+   {
+    "chain": "mino_left",
+    "bones": [
+     "sec_mino_left_1",
+     "sec_mino_left_2",
+     "sec_mino_left_3"
+    ],
+    "parent": "UpperChest",
+    "root_world_rest_m": [
+     0.3,
+     0.06,
+     1.42
+    ],
+    "direction": [
+     0.12,
+     0.0,
+     -1.0
+    ],
+    "length_m": 0.3,
+    "segments": 3,
+    "stiffness": 0.55,
+    "damping": 0.22,
+    "gravity": 9.81,
+    "max_angle_deg": 55,
+    "collision_radius_m": 0.02,
+    "body_radius_m": 0.24,
+    "weighted_vertices": 1458,
+    "note": "mino cape, left side"
+   },
+   {
+    "chain": "mino_right",
+    "bones": [
+     "sec_mino_right_1",
+     "sec_mino_right_2",
+     "sec_mino_right_3"
+    ],
+    "parent": "UpperChest",
+    "root_world_rest_m": [
+     -0.3,
+     0.06,
+     1.42
+    ],
+    "direction": [
+     -0.12,
+     0.0,
+     -1.0
+    ],
+    "length_m": 0.3,
+    "segments": 3,
+    "stiffness": 0.55,
+    "damping": 0.22,
+    "gravity": 9.81,
+    "max_angle_deg": 55,
+    "collision_radius_m": 0.02,
+    "body_radius_m": 0.24,
+    "weighted_vertices": 1650,
+    "note": "mino cape, right side"
+   },
+   {
+    "chain": "hair_mass",
+    "bones": [
+     "sec_hair_mass_1",
+     "sec_hair_mass_2"
+    ],
+    "parent": "Head",
+    "root_world_rest_m": [
+     0.0,
+     0.06,
+     1.65
+    ],
+    "direction": [
+     0.0,
+     0.18,
+     -1.0
+    ],
+    "length_m": 0.22,
+    "segments": 2,
+    "stiffness": 0.5,
+    "damping": 0.2,
+    "gravity": 9.81,
+    "max_angle_deg": 75,
+    "collision_radius_m": 0.01,
+    "body_radius_m": 0.11,
+    "weighted_vertices": 980,
+    "note": "H2 / H7 matted hair mass hanging down the neck"
+   },
+   {
+    "chain": "queue",
+    "bones": [
+     "sec_queue_1",
+     "sec_queue_2"
+    ],
+    "parent": "Head",
+    "root_world_rest_m": [
+     0.0,
+     0.05,
+     1.825
+    ],
+    "direction": [
+     0.0,
+     1.0,
+     -0.25
+    ],
+    "length_m": 0.09,
+    "segments": 2,
+    "stiffness": 0.7,
+    "damping": 0.25,
+    "gravity": 9.81,
+    "max_angle_deg": 80,
+    "collision_radius_m": 0.01,
+    "body_radius_m": 0.1,
+    "weighted_vertices": 175,
+    "note": "H3 limp topknot queue"
+   },
+   {
+    "chain": "hachimaki",
+    "bones": [
+     "sec_hachimaki_1",
+     "sec_hachimaki_2"
+    ],
+    "parent": "Head",
+    "root_world_rest_m": [
+     0.0,
+     0.11,
+     1.715
+    ],
+    "direction": [
+     0.3,
+     0.4,
+     -0.9
+    ],
+    "length_m": 0.11,
+    "segments": 2,
+    "stiffness": 0.5,
+    "damping": 0.2,
+    "gravity": 9.81,
+    "max_angle_deg": 90,
+    "collision_radius_m": 0.01,
+    "body_radius_m": 0.1,
+    "weighted_vertices": 105,
+    "note": "H5 hachimaki tail"
+   },
+   {
+    "chain": "bandage_tie",
+    "bones": [
+     "sec_bandage_tie_1",
+     "sec_bandage_tie_2"
+    ],
+    "parent": "Head",
+    "root_world_rest_m": [
+     -0.1,
+     0.02,
+     1.72
+    ],
+    "direction": [
+     0.0,
+     0.55,
+     -0.85
+    ],
+    "length_m": 0.14,
+    "segments": 2,
+    "stiffness": 0.5,
+    "damping": 0.2,
+    "gravity": 9.81,
+    "max_angle_deg": 90,
+    "collision_radius_m": 0.01,
+    "body_radius_m": 0.1,
+    "weighted_vertices": 162,
+    "note": "H7 bandage tie"
+   }
+  ],
+  "verification_blender": {
+   "AP009_zombie_shamble_A": {
+    "mino_back": {
+     "max_angle_deg": 18.7,
+     "min_clearance_m": 0.02,
+     "max_tip_travel_m": 0.02
+    },
+    "mino_left": {
+     "max_angle_deg": 11.0,
+     "min_clearance_m": 0.069,
+     "max_tip_travel_m": 0.03
+    },
+    "mino_right": {
+     "max_angle_deg": 11.1,
+     "min_clearance_m": 0.069,
+     "max_tip_travel_m": 0.029
+    },
+    "hair_mass": {
+     "max_angle_deg": 29.9,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.039
+    },
+    "queue": {
+     "max_angle_deg": 59.6,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.042
+    },
+    "hachimaki": {
+     "max_angle_deg": 33.0,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.053
+    },
+    "bandage_tie": {
+     "max_angle_deg": 41.7,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.067
+    }
+   },
+   "AP009_zombie_run": {
+    "mino_back": {
+     "max_angle_deg": 55.0,
+     "min_clearance_m": 0.02,
+     "max_tip_travel_m": 0.087
+    },
+    "mino_left": {
+     "max_angle_deg": 55.0,
+     "min_clearance_m": 0.06,
+     "max_tip_travel_m": 0.124
+    },
+    "mino_right": {
+     "max_angle_deg": 55.0,
+     "min_clearance_m": 0.062,
+     "max_tip_travel_m": 0.087
+    },
+    "hair_mass": {
+     "max_angle_deg": 68.0,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.109
+    },
+    "queue": {
+     "max_angle_deg": 57.7,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.062
+    },
+    "hachimaki": {
+     "max_angle_deg": 87.1,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.121
+    },
+    "bandage_tie": {
+     "max_angle_deg": 78.9,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.127
+    }
+   },
+   "AP009_zombie_hit_front_std": {
+    "mino_back": {
+     "max_angle_deg": 49.7,
+     "min_clearance_m": 0.02,
+     "max_tip_travel_m": 0.157
+    },
+    "mino_left": {
+     "max_angle_deg": 46.7,
+     "min_clearance_m": 0.066,
+     "max_tip_travel_m": 0.098
+    },
+    "mino_right": {
+     "max_angle_deg": 55.0,
+     "min_clearance_m": 0.059,
+     "max_tip_travel_m": 0.155
+    },
+    "hair_mass": {
+     "max_angle_deg": 75.0,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.228
+    },
+    "queue": {
+     "max_angle_deg": 83.3,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.084
+    },
+    "hachimaki": {
+     "max_angle_deg": 90.0,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.151
+    },
+    "bandage_tie": {
+     "max_angle_deg": 90.0,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.189
+    }
+   },
+   "AP009_zombie_attack_swipe": {
+    "mino_back": {
+     "max_angle_deg": 51.7,
+     "min_clearance_m": 0.02,
+     "max_tip_travel_m": 0.126
+    },
+    "mino_left": {
+     "max_angle_deg": 55.0,
+     "min_clearance_m": 0.045,
+     "max_tip_travel_m": 0.175
+    },
+    "mino_right": {
+     "max_angle_deg": 28.9,
+     "min_clearance_m": 0.046,
+     "max_tip_travel_m": 0.112
+    },
+    "hair_mass": {
+     "max_angle_deg": 75.8,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.141
+    },
+    "queue": {
+     "max_angle_deg": 84.2,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.102
+    },
+    "hachimaki": {
+     "max_angle_deg": 90.0,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.145
+    },
+    "bandage_tie": {
+     "max_angle_deg": 79.7,
+     "min_clearance_m": 0.01,
+     "max_tip_travel_m": 0.107
+    }
+   }
+  }
+ }
 }

@@ -134,6 +134,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: -2754804388192789608, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -194,6 +195,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: -416641449181024363, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -254,6 +256,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 499
+          materials: []
         - mesh: {fileID: 644581289295402047, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -314,23 +317,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 177
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -8662634130711293718, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
@@ -393,6 +401,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: -549367250866156091, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -453,6 +462,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: 7075551581273918748, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -513,6 +523,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 499
+          materials: []
         - mesh: {fileID: 7774218621388400139, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -573,23 +584,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       broken:
         main:
         - mesh: {fileID: 5855936832468411409, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
@@ -652,6 +668,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 357
+          materials: []
         - mesh: {fileID: 593722192522269645, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -712,6 +729,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 357
+          materials: []
         - mesh: {fileID: -249382503932177204, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -772,6 +790,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 277
+          materials: []
         - mesh: {fileID: 8456336573360957688, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -832,23 +851,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: B
       present:
         main:
@@ -912,6 +936,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: -6756516063957055733, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -972,6 +997,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: -2229895347574692745, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -1032,6 +1058,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: -330863421330318652, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -1092,23 +1119,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -7833549787315293195, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
@@ -1171,6 +1203,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: 7048338601963337098, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -1231,6 +1264,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: -202174868416211444, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -1291,6 +1325,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: -7905830181329715216, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -1351,23 +1386,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       broken:
         main:
         - mesh: {fileID: -5337498050560113436, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
@@ -1430,6 +1470,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 314
+          materials: []
         - mesh: {fileID: -6532450328047491838, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -1490,6 +1531,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 314
+          materials: []
         - mesh: {fileID: -6437571885597521035, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -1550,6 +1592,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 238
+          materials: []
         - mesh: {fileID: 8447014404298414290, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -1610,23 +1653,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: C
       present:
         main:
@@ -1690,6 +1738,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: 1234286796987449329, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -1750,6 +1799,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: -8089965797796486250, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -1810,6 +1860,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: -1465657119869813812, guid: 18f68e24a6982478cb28091bf3d48650, type: 3}
           boneNames:
           - Root
@@ -1870,23 +1921,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 177
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       damaged:
         main:
         - mesh: {fileID: 4199519161875160097, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
@@ -1949,6 +2005,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: 4719480784446927134, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -2009,6 +2066,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1172
+          materials: []
         - mesh: {fileID: -7726107055427627858, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -2069,6 +2127,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: 8301336746889267092, guid: 1b62ce0dc028845eab81527ea9381ee0, type: 3}
           boneNames:
           - Root
@@ -2129,23 +2188,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       broken:
         main:
         - mesh: {fileID: 8395340354110918195, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
@@ -2208,6 +2272,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 331
+          materials: []
         - mesh: {fileID: -6529277587077942990, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -2268,6 +2333,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 331
+          materials: []
         - mesh: {fileID: -5574685161244552969, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -2328,6 +2394,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 249
+          materials: []
         - mesh: {fileID: -4884756247807582342, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -2388,23 +2455,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     trianglesLod0: 1172
   - id: K2_kabuto
     family: Helmet
@@ -2479,6 +2551,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3749
+          materials: []
         - mesh: {fileID: -5769731250064188647, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -2539,6 +2612,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1500
+          materials: []
         - mesh: {fileID: 8478964586292888360, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -2599,6 +2673,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 499
+          materials: []
         - mesh: {fileID: -5578928799199612454, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -2659,23 +2734,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -7122871384597673826, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
@@ -2738,6 +2818,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3749
+          materials: []
         - mesh: {fileID: -1774655736612255543, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -2798,6 +2879,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1500
+          materials: []
         - mesh: {fileID: -3414423219585626202, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -2858,6 +2940,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: -6773503215393808648, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -2918,23 +3001,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       broken:
         main:
         - mesh: {fileID: 5855936832468411409, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
@@ -2997,6 +3085,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 357
+          materials: []
         - mesh: {fileID: 593722192522269645, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -3057,6 +3146,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 357
+          materials: []
         - mesh: {fileID: -249382503932177204, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -3117,6 +3207,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 277
+          materials: []
         - mesh: {fileID: 8456336573360957688, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -3177,23 +3268,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: B
       present:
         main:
@@ -3257,6 +3353,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3749
+          materials: []
         - mesh: {fileID: -720498276653438885, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -3317,6 +3414,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1499
+          materials: []
         - mesh: {fileID: 8112397622477991293, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -3377,6 +3475,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 499
+          materials: []
         - mesh: {fileID: 5518509322467567368, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -3437,23 +3536,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -6675803727946322512, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
@@ -3516,6 +3620,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3750
+          materials: []
         - mesh: {fileID: -1948060837366723965, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -3576,6 +3681,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1500
+          materials: []
         - mesh: {fileID: 7909255537447922677, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -3636,6 +3742,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: 4476137921060510838, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -3696,23 +3803,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       broken:
         main:
         - mesh: {fileID: -5337498050560113436, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
@@ -3775,6 +3887,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 314
+          materials: []
         - mesh: {fileID: -6532450328047491838, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -3835,6 +3948,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 314
+          materials: []
         - mesh: {fileID: -6437571885597521035, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -3895,6 +4009,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 238
+          materials: []
         - mesh: {fileID: 8447014404298414290, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -3955,23 +4070,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: C
       present:
         main:
@@ -4035,6 +4155,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3750
+          materials: []
         - mesh: {fileID: 8602271352463418432, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -4095,6 +4216,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1499
+          materials: []
         - mesh: {fileID: -8499949527673810288, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -4155,6 +4277,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 499
+          materials: []
         - mesh: {fileID: 9022998854792284970, guid: 3dae8cbe33ec341fa825550ac95c62da, type: 3}
           boneNames:
           - Root
@@ -4215,23 +4338,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -2801881324984776592, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
@@ -4294,6 +4422,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3749
+          materials: []
         - mesh: {fileID: -3004796763842202188, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -4354,6 +4483,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1499
+          materials: []
         - mesh: {fileID: -86590130981309421, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -4414,6 +4544,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 499
+          materials: []
         - mesh: {fileID: 3694222455230944722, guid: 1031357f5948946128b7e353332eb6c6, type: 3}
           boneNames:
           - Root
@@ -4474,23 +4605,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
       broken:
         main:
         - mesh: {fileID: 8395340354110918195, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
@@ -4553,6 +4689,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 331
+          materials: []
         - mesh: {fileID: -6529277587077942990, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -4613,6 +4750,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 331
+          materials: []
         - mesh: {fileID: -5574685161244552969, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -4673,6 +4811,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 249
+          materials: []
         - mesh: {fileID: -4884756247807582342, guid: 0e2d0bfb0209543f29016b99d67d0544, type: 3}
           boneNames:
           - Root
@@ -4733,23 +4872,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     trianglesLod0: 3750
   - id: D1_lamellar
     family: Body
@@ -4823,6 +4967,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3599
+          materials: []
         - mesh: {fileID: -3203942018008268543, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -4883,6 +5028,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1079
+          materials: []
         - mesh: {fileID: 6591994774289165426, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -4943,6 +5089,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: -8668125622465625074, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -5003,6 +5150,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: -1579945526378523459, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
@@ -5064,6 +5212,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1216
+          materials: []
         - mesh: {fileID: 2055635590670654178, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -5124,6 +5273,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 419
+          materials: []
         - mesh: {fileID: -5448239830613190944, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -5184,6 +5334,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 140
+          materials: []
         - mesh: {fileID: 3345315050624887036, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -5244,6 +5395,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       damaged:
         main:
         - mesh: {fileID: 2469445120390276314, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
@@ -5306,6 +5458,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3599
+          materials: []
         - mesh: {fileID: 8181745458985466826, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -5366,6 +5519,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1080
+          materials: []
         - mesh: {fileID: 1053114978371425919, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -5426,6 +5580,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: 8132775444121728896, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -5486,6 +5641,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: -1579945526378523459, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
@@ -5547,6 +5703,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1216
+          materials: []
         - mesh: {fileID: 2055635590670654178, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -5607,6 +5764,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 419
+          materials: []
         - mesh: {fileID: -5448239830613190944, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -5667,6 +5825,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 140
+          materials: []
         - mesh: {fileID: 3345315050624887036, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -5727,6 +5886,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       broken:
         main:
         - mesh: {fileID: -8732186057139481873, guid: a09779e66aaf24269957544bb2355b02, type: 3}
@@ -5789,6 +5949,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 376
+          materials: []
         - mesh: {fileID: 2288603470987748808, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -5849,6 +6010,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 376
+          materials: []
         - mesh: {fileID: 8940358584160933541, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -5909,6 +6071,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 294
+          materials: []
         - mesh: {fileID: -1390903828295235216, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -5969,23 +6132,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: B
       present:
         main:
@@ -6049,6 +6217,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3599
+          materials: []
         - mesh: {fileID: 4763328464497067856, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -6109,6 +6278,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1079
+          materials: []
         - mesh: {fileID: 1877030620045417246, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -6169,6 +6339,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: 1147350080427629009, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -6229,6 +6400,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: -8252316790349871897, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
@@ -6290,6 +6462,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1334
+          materials: []
         - mesh: {fileID: 5488620217498779136, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -6350,6 +6523,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 420
+          materials: []
         - mesh: {fileID: -2272752309854071421, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -6410,6 +6584,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 139
+          materials: []
         - mesh: {fileID: 6160299472485891293, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -6470,6 +6645,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -2753233561203919193, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
@@ -6532,6 +6708,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3599
+          materials: []
         - mesh: {fileID: -7021151240752016166, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -6592,6 +6769,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1080
+          materials: []
         - mesh: {fileID: 2928253692648466563, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -6652,6 +6830,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 359
+          materials: []
         - mesh: {fileID: 1265789103204705618, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -6712,6 +6891,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: -8252316790349871897, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
@@ -6773,6 +6953,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1334
+          materials: []
         - mesh: {fileID: 5488620217498779136, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -6833,6 +7014,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 420
+          materials: []
         - mesh: {fileID: -2272752309854071421, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -6893,6 +7075,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 139
+          materials: []
         - mesh: {fileID: 6160299472485891293, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -6953,6 +7136,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       broken:
         main:
         - mesh: {fileID: 423569526885718305, guid: a09779e66aaf24269957544bb2355b02, type: 3}
@@ -7015,6 +7199,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 362
+          materials: []
         - mesh: {fileID: -1791225375294669411, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -7075,6 +7260,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 362
+          materials: []
         - mesh: {fileID: 4067122365385519557, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -7135,6 +7321,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 326
+          materials: []
         - mesh: {fileID: 8516328846766666698, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -7195,23 +7382,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: C
       present:
         main:
@@ -7275,6 +7467,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3600
+          materials: []
         - mesh: {fileID: 3242407353533520329, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -7335,6 +7528,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1080
+          materials: []
         - mesh: {fileID: 950666183766315094, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -7395,6 +7589,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: 3442486527986032023, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -7455,6 +7650,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: 1523138824039905079, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
@@ -7516,6 +7712,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1120
+          materials: []
         - mesh: {fileID: 7960765283242603823, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -7576,6 +7773,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 419
+          materials: []
         - mesh: {fileID: 3806412934662349779, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -7636,6 +7834,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 140
+          materials: []
         - mesh: {fileID: -4141669229033156381, guid: cd6c4a6bc49724597aeb3565843f41fc, type: 3}
           boneNames:
           - Root
@@ -7696,6 +7895,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       damaged:
         main:
         - mesh: {fileID: 3355545151736027729, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
@@ -7758,6 +7958,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3600
+          materials: []
         - mesh: {fileID: -3370979191132939203, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -7818,6 +8019,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1079
+          materials: []
         - mesh: {fileID: 5644232770648605507, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -7878,6 +8080,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: -4914642284424218212, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -7938,6 +8141,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: 1523138824039905079, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
@@ -7999,6 +8203,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1120
+          materials: []
         - mesh: {fileID: 7960765283242603823, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -8059,6 +8264,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 419
+          materials: []
         - mesh: {fileID: 3806412934662349779, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -8119,6 +8325,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 140
+          materials: []
         - mesh: {fileID: -4141669229033156381, guid: f1b3027dc79d14d39a42802a5783b60e, type: 3}
           boneNames:
           - Root
@@ -8179,6 +8386,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       broken:
         main:
         - mesh: {fileID: -2396450303421138738, guid: a09779e66aaf24269957544bb2355b02, type: 3}
@@ -8241,6 +8449,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 369
+          materials: []
         - mesh: {fileID: 7295890782091808058, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -8301,6 +8510,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 369
+          materials: []
         - mesh: {fileID: 1857376764117934064, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -8361,6 +8571,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 311
+          materials: []
         - mesh: {fileID: -2821710949054612327, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -8421,23 +8632,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     trianglesLod0: 4933
   - id: D2_plate
     family: Body
@@ -8510,6 +8726,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3599
+          materials: []
         - mesh: {fileID: -8698054584664798027, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -8570,6 +8787,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1079
+          materials: []
         - mesh: {fileID: 893349591908435347, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -8630,6 +8848,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: 8814719709351145319, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -8690,6 +8909,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 129
+          materials: []
         sub:
         - mesh: {fileID: -1579945526378523459, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
@@ -8751,6 +8971,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1216
+          materials: []
         - mesh: {fileID: 2055635590670654178, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -8811,6 +9032,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 419
+          materials: []
         - mesh: {fileID: -5448239830613190944, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -8871,6 +9093,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 140
+          materials: []
         - mesh: {fileID: 3345315050624887036, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -8931,6 +9154,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       damaged:
         main:
         - mesh: {fileID: 6821527127236614672, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
@@ -8993,6 +9217,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3599
+          materials: []
         - mesh: {fileID: -5478035448130701575, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -9053,6 +9278,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1080
+          materials: []
         - mesh: {fileID: -8252165897851737478, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -9113,6 +9339,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: 433369485927412847, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -9173,6 +9400,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: -1579945526378523459, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
@@ -9234,6 +9462,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1216
+          materials: []
         - mesh: {fileID: 2055635590670654178, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -9294,6 +9523,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 419
+          materials: []
         - mesh: {fileID: -5448239830613190944, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -9354,6 +9584,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 140
+          materials: []
         - mesh: {fileID: 3345315050624887036, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -9414,6 +9645,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       broken:
         main:
         - mesh: {fileID: -8732186057139481873, guid: a09779e66aaf24269957544bb2355b02, type: 3}
@@ -9476,6 +9708,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 376
+          materials: []
         - mesh: {fileID: 2288603470987748808, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -9536,6 +9769,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 376
+          materials: []
         - mesh: {fileID: 8940358584160933541, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -9596,6 +9830,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 294
+          materials: []
         - mesh: {fileID: -1390903828295235216, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -9656,23 +9891,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: B
       present:
         main:
@@ -9736,6 +9976,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3600
+          materials: []
         - mesh: {fileID: -4102628861280102805, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -9796,6 +10037,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1080
+          materials: []
         - mesh: {fileID: 146941280242178395, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -9856,6 +10098,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: 4130255829903015071, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -9916,6 +10159,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: -8252316790349871897, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
@@ -9977,6 +10221,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1334
+          materials: []
         - mesh: {fileID: 5488620217498779136, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -10037,6 +10282,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 420
+          materials: []
         - mesh: {fileID: -2272752309854071421, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -10097,6 +10343,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 139
+          materials: []
         - mesh: {fileID: 6160299472485891293, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -10157,6 +10404,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       damaged:
         main:
         - mesh: {fileID: 1411826430123807668, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
@@ -10219,6 +10467,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3600
+          materials: []
         - mesh: {fileID: -5412526099249157578, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -10279,6 +10528,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1080
+          materials: []
         - mesh: {fileID: -6152269282362351003, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -10339,6 +10589,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 359
+          materials: []
         - mesh: {fileID: -3212959612084910546, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -10399,6 +10650,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: -8252316790349871897, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
@@ -10460,6 +10712,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1334
+          materials: []
         - mesh: {fileID: 5488620217498779136, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -10520,6 +10773,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 420
+          materials: []
         - mesh: {fileID: -2272752309854071421, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -10580,6 +10834,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 139
+          materials: []
         - mesh: {fileID: 6160299472485891293, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -10640,6 +10895,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       broken:
         main:
         - mesh: {fileID: 423569526885718305, guid: a09779e66aaf24269957544bb2355b02, type: 3}
@@ -10702,6 +10958,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 362
+          materials: []
         - mesh: {fileID: -1791225375294669411, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -10762,6 +11019,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 362
+          materials: []
         - mesh: {fileID: 4067122365385519557, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -10822,6 +11080,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 326
+          materials: []
         - mesh: {fileID: 8516328846766666698, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -10882,23 +11141,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: C
       present:
         main:
@@ -10962,6 +11226,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3599
+          materials: []
         - mesh: {fileID: 6843977995899832123, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -11022,6 +11287,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1079
+          materials: []
         - mesh: {fileID: 2161797070890501746, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -11082,6 +11348,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 359
+          materials: []
         - mesh: {fileID: -4057912245593233442, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -11142,6 +11409,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: 1523138824039905079, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
@@ -11203,6 +11471,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1120
+          materials: []
         - mesh: {fileID: 7960765283242603823, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -11263,6 +11532,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 419
+          materials: []
         - mesh: {fileID: 3806412934662349779, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -11323,6 +11593,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 140
+          materials: []
         - mesh: {fileID: -4141669229033156381, guid: f85244f18d6b34aa6ab883305a62e73f, type: 3}
           boneNames:
           - Root
@@ -11383,6 +11654,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       damaged:
         main:
         - mesh: {fileID: 3090909753610697774, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
@@ -11445,6 +11717,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 3599
+          materials: []
         - mesh: {fileID: 3122570119758585222, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -11505,6 +11778,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1080
+          materials: []
         - mesh: {fileID: 1913856062381037452, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -11565,6 +11839,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 359
+          materials: []
         - mesh: {fileID: -2206674141836066593, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -11625,6 +11900,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 130
+          materials: []
         sub:
         - mesh: {fileID: 1523138824039905079, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
@@ -11686,6 +11962,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1120
+          materials: []
         - mesh: {fileID: 7960765283242603823, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -11746,6 +12023,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 419
+          materials: []
         - mesh: {fileID: 3806412934662349779, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -11806,6 +12084,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 140
+          materials: []
         - mesh: {fileID: -4141669229033156381, guid: 579930c61ffe04316947e4a6dd3edbca, type: 3}
           boneNames:
           - Root
@@ -11866,6 +12145,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 50
+          materials: []
       broken:
         main:
         - mesh: {fileID: -2396450303421138738, guid: a09779e66aaf24269957544bb2355b02, type: 3}
@@ -11928,6 +12208,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 369
+          materials: []
         - mesh: {fileID: 7295890782091808058, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -11988,6 +12269,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 369
+          materials: []
         - mesh: {fileID: 1857376764117934064, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -12048,6 +12330,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 311
+          materials: []
         - mesh: {fileID: -2821710949054612327, guid: a09779e66aaf24269957544bb2355b02, type: 3}
           boneNames:
           - Root
@@ -12108,23 +12391,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     trianglesLod0: 4934
   - id: L1_haidate_heavy
     family: Leg
@@ -12199,6 +12487,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2499
+          materials: []
         - mesh: {fileID: -2717505729120353131, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -12259,6 +12548,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 999
+          materials: []
         - mesh: {fileID: 6349837416253744691, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -12319,6 +12609,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 325
+          materials: []
         - mesh: {fileID: 6816272714222341682, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -12379,6 +12670,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 118
+          materials: []
         sub:
         - mesh: {fileID: 1931416935274019991, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
@@ -12440,6 +12732,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 8609798671844682169, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -12500,6 +12793,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 498
+          materials: []
         - mesh: {fileID: -3663847269409342961, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -12560,6 +12854,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 172
+          materials: []
         - mesh: {fileID: 3405135065515997662, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -12620,6 +12915,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -1371455172324550779, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
@@ -12682,6 +12978,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2500
+          materials: []
         - mesh: {fileID: 5255882460123822104, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -12742,6 +13039,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 998
+          materials: []
         - mesh: {fileID: 3375836083065147394, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -12802,6 +13100,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 324
+          materials: []
         - mesh: {fileID: -1992722111586664031, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -12862,6 +13161,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 118
+          materials: []
         sub:
         - mesh: {fileID: 1931416935274019991, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
@@ -12923,6 +13223,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 8609798671844682169, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -12983,6 +13284,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 498
+          materials: []
         - mesh: {fileID: -3663847269409342961, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -13043,6 +13345,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 172
+          materials: []
         - mesh: {fileID: 3405135065515997662, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -13103,6 +13406,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       broken:
         main:
         - mesh: {fileID: 7580939440050754509, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
@@ -13165,6 +13469,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 345
+          materials: []
         - mesh: {fileID: 9126879578827327151, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -13225,6 +13530,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 345
+          materials: []
         - mesh: {fileID: 7167277909842664628, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -13285,6 +13591,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 378
+          materials: []
         - mesh: {fileID: 2981153374523555370, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -13345,23 +13652,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: B
       present:
         main:
@@ -13425,6 +13737,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2500
+          materials: []
         - mesh: {fileID: -6607911883954495526, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -13485,6 +13798,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1000
+          materials: []
         - mesh: {fileID: 8868753559030923155, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -13545,6 +13859,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 324
+          materials: []
         - mesh: {fileID: -8236257765444258747, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -13605,6 +13920,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 117
+          materials: []
         sub:
         - mesh: {fileID: -393315342591645815, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
@@ -13666,6 +13982,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 5801690282842214127, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -13726,6 +14043,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: -7700728334783906888, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -13786,6 +14104,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 170
+          materials: []
         - mesh: {fileID: 5969802521052802140, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -13846,6 +14165,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       damaged:
         main:
         - mesh: {fileID: 7401337962627174500, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
@@ -13908,6 +14228,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2499
+          materials: []
         - mesh: {fileID: 8693390764589135698, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -13968,6 +14289,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 999
+          materials: []
         - mesh: {fileID: -2394497753212631427, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -14028,6 +14350,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 324
+          materials: []
         - mesh: {fileID: -5085057763499016446, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -14088,6 +14411,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 117
+          materials: []
         sub:
         - mesh: {fileID: -393315342591645815, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
@@ -14149,6 +14473,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 5801690282842214127, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -14209,6 +14534,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: -7700728334783906888, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -14269,6 +14595,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 170
+          materials: []
         - mesh: {fileID: 5969802521052802140, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -14329,6 +14656,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       broken:
         main:
         - mesh: {fileID: 3747294807583989440, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
@@ -14391,6 +14719,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: -2231821045113693240, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -14451,6 +14780,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: -2641984622569201945, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -14511,6 +14841,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 376
+          materials: []
         - mesh: {fileID: -608566412672264934, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -14571,23 +14902,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: C
       present:
         main:
@@ -14651,6 +14987,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2499
+          materials: []
         - mesh: {fileID: -4892732195726266552, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -14711,6 +15048,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 999
+          materials: []
         - mesh: {fileID: 8269925224850670970, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -14771,6 +15109,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 325
+          materials: []
         - mesh: {fileID: -5402776672959658505, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -14831,6 +15170,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 117
+          materials: []
         sub:
         - mesh: {fileID: -2656726180323314476, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
@@ -14892,6 +15232,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 3917782013277940127, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -14952,6 +15293,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 498
+          materials: []
         - mesh: {fileID: -718002478755465492, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -15012,6 +15354,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 170
+          materials: []
         - mesh: {fileID: -962233462683231785, guid: 036c6c448fe1b4628b47f202ed41f36f, type: 3}
           boneNames:
           - Root
@@ -15072,6 +15415,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       damaged:
         main:
         - mesh: {fileID: 7034737178786710732, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
@@ -15134,6 +15478,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2500
+          materials: []
         - mesh: {fileID: 3512523249204600069, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -15194,6 +15539,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1000
+          materials: []
         - mesh: {fileID: -7025073380819333812, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -15254,6 +15600,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 325
+          materials: []
         - mesh: {fileID: -1538493608803332552, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -15314,6 +15661,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 118
+          materials: []
         sub:
         - mesh: {fileID: -2656726180323314476, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
@@ -15375,6 +15723,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 3917782013277940127, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -15435,6 +15784,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 498
+          materials: []
         - mesh: {fileID: -718002478755465492, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -15495,6 +15845,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 170
+          materials: []
         - mesh: {fileID: -962233462683231785, guid: 4f900000af6b04c359bcf18cb050b50b, type: 3}
           boneNames:
           - Root
@@ -15555,6 +15906,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       broken:
         main:
         - mesh: {fileID: -4190829824772150082, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
@@ -15617,6 +15969,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 339
+          materials: []
         - mesh: {fileID: -5201948385944502914, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -15677,6 +16030,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 339
+          materials: []
         - mesh: {fileID: -478085794399515671, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -15737,6 +16091,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 379
+          materials: []
         - mesh: {fileID: 4025375503802004696, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -15797,23 +16152,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     trianglesLod0: 3396
   - id: L2_suneate_heavy
     family: Leg
@@ -15888,6 +16248,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2499
+          materials: []
         - mesh: {fileID: 4067586032599501681, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -15948,6 +16309,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 999
+          materials: []
         - mesh: {fileID: -9137987116943523698, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -16008,6 +16370,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 325
+          materials: []
         - mesh: {fileID: 8107037323890283522, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -16068,6 +16431,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 118
+          materials: []
         sub:
         - mesh: {fileID: 5006707135572510990, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
@@ -16129,6 +16493,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 1569153026146594482, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -16189,6 +16554,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: -2357709160773217184, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -16249,6 +16615,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 170
+          materials: []
         - mesh: {fileID: -2790857956945369814, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -16309,6 +16676,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -186796337061485052, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
@@ -16371,6 +16739,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2499
+          materials: []
         - mesh: {fileID: -6011334974136317888, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -16431,6 +16800,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 999
+          materials: []
         - mesh: {fileID: -819431339288039320, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -16491,6 +16861,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 325
+          materials: []
         - mesh: {fileID: 3379269661416429328, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -16551,6 +16922,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 117
+          materials: []
         sub:
         - mesh: {fileID: 5006707135572510990, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
@@ -16612,6 +16984,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 1569153026146594482, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -16672,6 +17045,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: -2357709160773217184, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -16732,6 +17106,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 170
+          materials: []
         - mesh: {fileID: -2790857956945369814, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -16792,6 +17167,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       broken:
         main:
         - mesh: {fileID: 7580939440050754509, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
@@ -16854,6 +17230,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 345
+          materials: []
         - mesh: {fileID: 9126879578827327151, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -16914,6 +17291,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 345
+          materials: []
         - mesh: {fileID: 7167277909842664628, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -16974,6 +17352,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 378
+          materials: []
         - mesh: {fileID: 2981153374523555370, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -17034,23 +17413,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: B
       present:
         main:
@@ -17114,6 +17498,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2499
+          materials: []
         - mesh: {fileID: -6430961479820814430, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -17174,6 +17559,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 1000
+          materials: []
         - mesh: {fileID: 5925622287054889949, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -17234,6 +17620,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 325
+          materials: []
         - mesh: {fileID: -304678448190746265, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -17294,6 +17681,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 118
+          materials: []
         sub:
         - mesh: {fileID: 6046529777368350122, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
@@ -17355,6 +17743,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 3300010787215333355, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -17415,6 +17804,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: 76731140247879302, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -17475,6 +17865,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 172
+          materials: []
         - mesh: {fileID: -6528747336729635827, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -17535,6 +17926,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -3496586407753257422, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
@@ -17597,6 +17989,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2499
+          materials: []
         - mesh: {fileID: 8954738763402326686, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -17657,6 +18050,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 999
+          materials: []
         - mesh: {fileID: -5670552044524430084, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -17717,6 +18111,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 325
+          materials: []
         - mesh: {fileID: -6748900129456510225, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -17777,6 +18172,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 117
+          materials: []
         sub:
         - mesh: {fileID: 6046529777368350122, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
@@ -17838,6 +18234,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 3300010787215333355, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -17898,6 +18295,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 500
+          materials: []
         - mesh: {fileID: 76731140247879302, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -17958,6 +18356,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 172
+          materials: []
         - mesh: {fileID: -6528747336729635827, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -18018,6 +18417,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 60
+          materials: []
       broken:
         main:
         - mesh: {fileID: 3747294807583989440, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
@@ -18080,6 +18480,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: -2231821045113693240, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -18140,6 +18541,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 360
+          materials: []
         - mesh: {fileID: -2641984622569201945, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -18200,6 +18602,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 376
+          materials: []
         - mesh: {fileID: -608566412672264934, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -18260,23 +18663,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 179
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     - fit: C
       present:
         main:
@@ -18340,6 +18748,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2500
+          materials: []
         - mesh: {fileID: -6578434385817816545, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -18400,6 +18809,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 999
+          materials: []
         - mesh: {fileID: -1645015522684709124, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -18460,6 +18870,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 325
+          materials: []
         - mesh: {fileID: -8131435742125054874, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -18520,6 +18931,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 117
+          materials: []
         sub:
         - mesh: {fileID: 3652397288267772061, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
@@ -18581,6 +18993,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 2130202415136528856, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -18641,6 +19054,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 498
+          materials: []
         - mesh: {fileID: -3219857670566568010, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -18701,6 +19115,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 170
+          materials: []
         - mesh: {fileID: -7552595345755617788, guid: 68317ad695ab04906957193f32eb72a1, type: 3}
           boneNames:
           - Root
@@ -18761,6 +19176,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 58
+          materials: []
       damaged:
         main:
         - mesh: {fileID: -2387305903732702284, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
@@ -18823,6 +19239,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 2500
+          materials: []
         - mesh: {fileID: 8567942311793000348, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -18883,6 +19300,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 999
+          materials: []
         - mesh: {fileID: -6314575112251312639, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -18943,6 +19361,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 324
+          materials: []
         - mesh: {fileID: 2378815434801805297, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -19003,6 +19422,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 118
+          materials: []
         sub:
         - mesh: {fileID: 3652397288267772061, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
@@ -19064,6 +19484,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 896
+          materials: []
         - mesh: {fileID: 2130202415136528856, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -19124,6 +19545,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 498
+          materials: []
         - mesh: {fileID: -3219857670566568010, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -19184,6 +19606,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 170
+          materials: []
         - mesh: {fileID: -7552595345755617788, guid: efa839d1643a94cd6b9c8d81928a6ed5, type: 3}
           boneNames:
           - Root
@@ -19244,6 +19667,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 58
+          materials: []
       broken:
         main:
         - mesh: {fileID: -4190829824772150082, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
@@ -19306,6 +19730,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 339
+          materials: []
         - mesh: {fileID: -5201948385944502914, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -19366,6 +19791,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 339
+          materials: []
         - mesh: {fileID: -478085794399515671, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -19426,6 +19852,7 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 379
+          materials: []
         - mesh: {fileID: 4025375503802004696, guid: 244383bd59e764614a9edad31c23f9a1, type: 3}
           boneNames:
           - Root
@@ -19486,23 +19913,28 @@ MonoBehaviour:
           - RightToes
           rootBone: Root
           triangles: 180
+          materials: []
         sub:
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
         - mesh: {fileID: 0}
           boneNames: []
           rootBone: 
           triangles: 0
+          materials: []
     trianglesLod0: 3396
   tierMaterials:
   - {fileID: 2100000, guid: ae805e2e538ef4424b74db8323151c17, type: 2}

@@ -61,6 +61,8 @@ namespace DD.Prototype.Characters
         private int _materialTier = -1;
         /// <summary>WP-020 · Per module slot (body/top/bottom/head): the bound module's material names in sub-mesh order; null = atlas only.</summary>
         private readonly string[][] _slotMaterials = new string[SlotCount][];
+        /// <summary>WP-038C · Per renderer (LOD-major) override when the bound mesh carries its own material list (fewer sub-meshes than the module).</summary>
+        private readonly string[][] _rendererMaterials = new string[ZombieModuleLibrary.LodCount * SlotCount][];
 
         public Animator Animator => _animator;
         public LODGroup LodGroup => _lodGroup;
@@ -187,6 +189,10 @@ namespace DD.Prototype.Characters
                 Bind(Slot(lod, SlotTop), topV != null ? topV.lods[lod] : null);
                 Bind(Slot(lod, SlotBottom), bottomV != null ? bottomV.lods[lod] : null);
                 Bind(Slot(lod, SlotHead), headV != null ? headV.lods[lod] : null);
+                _rendererMaterials[lod * SlotCount + SlotBody] = null;
+                _rendererMaterials[lod * SlotCount + SlotTop] = topV != null ? topV.lods[lod].materials : null;
+                _rendererMaterials[lod * SlotCount + SlotBottom] = bottomV != null ? bottomV.lods[lod].materials : null;
+                _rendererMaterials[lod * SlotCount + SlotHead] = headV != null ? headV.lods[lod].materials : null;
             }
 
             // A re-assembled look changes the sub-mesh layout: re-apply the current version's material arrays.
@@ -229,7 +235,7 @@ namespace DD.Prototype.Characters
             {
                 SkinnedMeshRenderer r = _slots[i];
                 if (r == null) continue;
-                string[] names = _slotMaterials[i % SlotCount];
+                string[] names = (i < _rendererMaterials.Length ? _rendererMaterials[i] : null) ?? _slotMaterials[i % SlotCount];
                 if (names != null && names.Length > 1)
                 {
                     Material[] set = library.MaterialsFor(names, tierIndex);

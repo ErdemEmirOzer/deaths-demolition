@@ -551,6 +551,15 @@ namespace DD.Art.Pipeline.EditorTools
                                 ? "zombie_" + id + "_" + fit + "_LOD" + lod
                                 : "zombie_" + id + "_" + cw + "_" + fit + "_LOD" + lod;
                             v.lods[lod] = MeshRefOf(fbx, meshName);
+                            // WP-038C · AP-007C v003: a colourway / LOD may carry fewer sub-meshes than the module's material list (T8 cw1 is
+                            // cloth-only; the A1 hat LOD3 drops the rope cord). The list is atlas-first / cloth-last, so the trailing entries apply.
+                            int sub = v.lods[lod].mesh.subMeshCount;
+                            if (module.materials != null && sub < module.materials.Length)
+                            {
+                                var trimmed = new string[sub];
+                                Array.Copy(module.materials, module.materials.Length - sub, trimmed, 0, sub);
+                                v.lods[lod].materials = trimmed;
+                            }
                         }
 
                         variants.Add(v);
