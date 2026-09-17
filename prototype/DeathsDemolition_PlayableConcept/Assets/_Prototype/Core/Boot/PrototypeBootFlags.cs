@@ -19,6 +19,7 @@ namespace DD.Prototype.Core.Boot
     {
         public const string DirectToRunDefine = "PROTOTYPE_DIRECT_TO_RUN";
         private const string DirectToRunPrefKey = "DD.Prototype.DirectToRun";
+        public const string DirectToRunArg = "-ddDirectToRun";
 
         private static bool? s_sessionOverride;
 
@@ -52,6 +53,14 @@ namespace DD.Prototype.Core.Boot
                     return true;
                 }
 
+                // WP-052C: `-ddDirectToRun` on the command line (tools/smoke.sh e4). Process-local, so a
+                // smoke run never has to write the machine-wide PlayerPrefs key that used to drop OTHER
+                // sessions' players straight into Run (S-10 run5 "instant death" root cause).
+                if (HasCommandLineFlag(DirectToRunArg))
+                {
+                    return true;
+                }
+
                 Config.PrototypeConfig config = Config.PrototypeConfig.Active;
                 if (config != null && config.System.DirectToRun)
                 {
@@ -80,6 +89,26 @@ namespace DD.Prototype.Core.Boot
         private static void ResetStatics()
         {
             s_sessionOverride = null;
+        }
+    
+        private static bool HasCommandLineFlag(string flag)
+        {
+            try
+            {
+                string[] args = System.Environment.GetCommandLineArgs();
+                for (int i = 0; i < args.Length; i++)
+                {
+                    if (string.Equals(args[i], flag, System.StringComparison.Ordinal))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (System.Exception)
+            {
+            }
+
+            return false;
         }
     }
 }

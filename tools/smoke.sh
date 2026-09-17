@@ -50,11 +50,13 @@ dd_slot_acquire smoke   # slot.sh v4 'smoke' kind (limit 1): only one player smo
 "$BIN" -screen-fullscreen 0 -ddCapture "$OUT/e1-mainmenu-1280x720.png" -ddSize 1280x720 -ddDelay "$DELAY" "${DEVFLAGS[@]}" -logFile "$OUT/e1-player.log"
 E1=$?; E1X=$(grep -c 'Exception\|WITH FAILURES' "$OUT/e1-player.log" 2>/dev/null); E1X=${E1X:-0}
 dd_log "e1 exit=$E1 exceptions=$E1X capture=$([ -s "$OUT/e1-mainmenu-1280x720.png" ] && echo yes || echo no)"
-# 3) e4 direct to run (PlayerPrefs live in the real plist; restored below)
-defaults write "$DD_BUNDLE_ID" "DD.Prototype.DirectToRun" -int 1
-"$BIN" -screen-fullscreen 0 -ddCapture "$OUT/e4-run-1280x720.png" -ddSize 1280x720 -ddDelay "$DELAY" "${DEVFLAGS[@]}" -logFile "$OUT/e4-run-player.log"
+# 3) e4 direct to run — WP-052C: process-local `-ddDirectToRun` flag instead of the machine-wide
+#    PlayerPrefs key (that key dropped OTHER sessions' players straight into Run). Guard: if an old
+#    run left the key in the real plist, remove it now and after the run (idempotent).
+defaults delete "$DD_BUNDLE_ID" "DD.Prototype.DirectToRun" >/dev/null 2>&1 && dd_log "guard: stale DD.Prototype.DirectToRun key removed from PlayerPrefs"
+"$BIN" -screen-fullscreen 0 -ddDirectToRun -ddCapture "$OUT/e4-run-1280x720.png" -ddSize 1280x720 -ddDelay "$DELAY" "${DEVFLAGS[@]}" -logFile "$OUT/e4-run-player.log"
 E4=$?; E4X=$(grep -c 'Exception\|WITH FAILURES' "$OUT/e4-run-player.log" 2>/dev/null); E4X=${E4X:-0}
-defaults delete "$DD_BUNDLE_ID" "DD.Prototype.DirectToRun" 2>/dev/null
+defaults delete "$DD_BUNDLE_ID" "DD.Prototype.DirectToRun" >/dev/null 2>&1 && dd_log "guard: DD.Prototype.DirectToRun key removed after e4"
 dd_log "e4 exit=$E4 exceptions=$E4X capture=$([ -s "$OUT/e4-run-1280x720.png" ] && echo yes || echo no)"
 
 # 4) guard: restore + verify
