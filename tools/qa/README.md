@@ -16,7 +16,7 @@ Adımlar (her biri `<out-dir>` altına kanıt bırakır; `timeline.txt` sırayı
 | 6 | Zırh biçim testi | DD.Art PlayMode `ArmorTests.Okunabilirlik` (≥ %30 + bant 0,08/0,12) — `--quick`'te atlanır | `playmode-armor.xml` |
 | 7 | Toplama | `aggregate.py` → `qa-report.json` (şema `dd-qa-report-v1`) + `qa-report.txt` (≤ 20 satır) | çıkış kodu 0 PASS / 1 FAIL / 2 kural |
 
-Kapı değerleri araç içinde değiştirilmez: perf ort. ≤ 7,0 ms ve temiz p99 ≤ 10 ms (ADR-011-3 v2), okunabilirlik `ReadabilityThresholds` (DEC-077), bot = istenen round sayısı tamamlandı, spawner = WP-027 simülatörü `violations` = 0.
+Kapı değerleri araç içinde değiştirilmez: perf ort. ≤ 8,0 ms ve temiz p99 ≤ 10 ms (ADR-011-3 v3 / DEC-088, kullanıcı 2026-09-17; 7,0 look pass öncesiydi), okunabilirlik `ReadabilityThresholds` (DEC-077), bot = round ≥ 4 tamamlandı + öncesinde ölüm/zaman aşımı yok (C-00 kararı 2026-09-17; istenen round sayısı raporlanır), spawner = WP-027 simülatörü `violations` = 0.
 
 ## Rapor şeması `dd-qa-report-v1`
 
@@ -30,6 +30,10 @@ Kapı değerleri araç içinde değiştirilmez: perf ort. ≤ 7,0 ms ve temiz p9
 ## Bot (`QaRunBot`)
 
 `Assets/_Prototype/Diagnostics/Qa/QaRunBot.cs` (yalnız `DEVELOPMENT_BUILD || UNITY_EDITOR`, asm `DD.Prototype.Qa`). Girdi yalnız Input System'in sanal `Gamepad` cihazı (`QaVirtualGamepad`: leftStick = Move, rightStick = AimStick, rightTrigger = Fire, buttonWest = Reload) — oyun kodu ve `IInputSource` değişmez. Karar katmanı `QaBotBrain` (saf, tohumlu): en yakın zombiye nişan, menzilde + namlu hattı açıkken sürekli ateş (namlunun 2 m önündeki çevre çarpışıcısı her atışı yer → ateş yok, engelden geri çekil), kalabalık merkezine göre 8–14 m kite, hasar sonrası 1 s geri çekilme, uzaktaki hedefe NavMesh ile avlanma, spawn noktaları arasında devriye, takılma kurtarması. Sürücü her hareket komutunu NavMesh üzerinde yönlendirir (`NavMesh.Raycast` 1,6 m sonda, ilk açık dönüş kazanır) — duvara/saksıya sürtünme yerine kayar; 2,5 s kapalı hat sürerse arena merkezine yürür. `events.txt` 1 Hz iz satırı taşır (`t pos= mode= tgt= los= mz= eye= blk= fire= hp= near= kills=`); Player dışarıdan sonlandırılırsa (`Application.quitting`) kısmi özet yine yazılır. Upgrade ekranı `RunDirector.CloseUpgradeScreen()` (Skip düğmesinin çağrısı) ile atlanır. Çıktı: round kayıtları, kill/hasar sayıları, `spawnSequenceHash` (spawn tier dizisi FNV) ve `outcomeHash`; aynı seed ile spawn dizisi tekrarlanır, kare zamanı tohumlanmadığı için kill zaman çizgisi tekrarlanmayabilir (raporlanır, durma koşulu değil).
+
+## Yalnız etkilenen kapılar (WP-044)
+
+`--steps build,bot` gibi bir liste yalnız o adımları koşar (`build,editmode,spawnmix,bot,perf,readability,playmode`; aggregate her zaman koşar, koşulmayan adımlar raporda `missing`). Kapanış düzeltme turunda perf değiştiyse `--steps build,perf`, görsel değiştiyse `--steps build,readability,playmode`.
 
 ## Makine kuralı
 

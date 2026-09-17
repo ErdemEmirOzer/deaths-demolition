@@ -2,7 +2,7 @@
 """WP-026 · M3 closure aggregate: merges the per-step artefacts of tools/qa/regression.sh into one
 qa-report.json (schema dd-qa-report-v1, same shape the Unity drivers write) and a <= 20-line qa-report.txt.
 
-Gate values are read, never invented here: perf thresholds are ADR-011-3 v2 (mean <= 7.0 ms, clean p99 <= 10 ms),
+Gate values are read, never invented here: perf thresholds are ADR-011-3 v3 / DEC-088 (mean <= 8.0 ms, clean p99 <= 10 ms),
 readability is DEC-077 (drivers already applied ReadabilityThresholds), bot = N rounds completed, spawn mix = EditMode
 QA tests green, armour form test = DD.Art ArmorTests.Okunabilirlik green.
 """
@@ -14,7 +14,7 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 
-PERF_MEAN_MAX_MS = 7.0      # ADR-011-3 v2 — reported, not tunable here
+PERF_MEAN_MAX_MS = 8.0      # ADR-011-3 v3 (DEC-088, kullanıcı 2026-09-17): look pass sonrası ortalama ≤ 8,0; p99 10 aynı
 PERF_P99_MAX_MS = 10.0      # clean (stall-filtered) p99
 
 
@@ -126,8 +126,8 @@ def main():
     if means:
         mean_avg = sum(means) / len(means)
         p99f_avg = sum(p99f) / len(p99f)
-        gates.append(gate("perf.meanMs", mean_avg <= PERF_MEAN_MAX_MS, f"{mean_avg:.2f} (runs {', '.join(f'{m:.2f}' for m in means)})", f"<= {PERF_MEAN_MAX_MS:.1f} ms (ADR-011-3 v2)", "", "perf-*/04-window.json"))
-        gates.append(gate("perf.cleanP99Ms", p99f_avg <= PERF_P99_MAX_MS, f"{p99f_avg:.2f} (runs {', '.join(f'{m:.2f}' for m in p99f)}; raw p99 {', '.join(f'{m:.2f}' for m in p99s)})", f"<= {PERF_P99_MAX_MS:.1f} ms stall-filtered (ADR-011-3 v2)", "", "perf-*/04-window.json"))
+        gates.append(gate("perf.meanMs", mean_avg <= PERF_MEAN_MAX_MS, f"{mean_avg:.2f} (runs {', '.join(f'{m:.2f}' for m in means)})", f"<= {PERF_MEAN_MAX_MS:.1f} ms (ADR-011-3 v3 / DEC-088)", "", "perf-*/04-window.json"))
+        gates.append(gate("perf.cleanP99Ms", p99f_avg <= PERF_P99_MAX_MS, f"{p99f_avg:.2f} (runs {', '.join(f'{m:.2f}' for m in p99f)}; raw p99 {', '.join(f'{m:.2f}' for m in p99s)})", f"<= {PERF_P99_MAX_MS:.1f} ms stall-filtered (ADR-011-3 v3 / DEC-088)", "", "perf-*/04-window.json"))
         gates.append(gate("perf.externalPresentContention", True, f"stalls>33.3ms {sum(stalls)} / max {max(maxes):.1f} ms",
                           "report only", "host presentation stalls (WindowServer/other windows); Gfx.WaitForPresent counter not in PilotPerfProbe — proxy = frames > 33.3 ms", "perf-*/04-window.json"))
         notes.append(f"perf: draw {sum(draws)/len(draws):.0f} tris {sum(tris)/len(tris)/1e6:.2f} M tex {max(texmb):.0f} MB mesh {max(meshmb):.0f} MB rt {max(rtmb):.0f} MB gc/frame {sum(gcalloc)/len(gcalloc):.0f} B gen0 {sum(gen0)} load1 {loads}")

@@ -1,7 +1,7 @@
 #!/bin/zsh
 # WP-026 · M3 kapanış regresyonu — tek komut (S-10). HIZLI HAT: tören yok; her adım bir klasöre kanıt bırakır, aggregate.py tek qa-report.json + ≤20 satır özet üretir.
 #
-# Kullanım: tools/qa/regression.sh <out-dir> [--rounds 8] [--seed 26] [--perf-runs 3] [--window 60] [--skip-build] [--skip-tests] [--quick]
+# Kullanım: tools/qa/regression.sh <out-dir> [--rounds 8] [--seed 26] [--perf-runs 3] [--window 60] [--skip-build] [--skip-tests] [--quick] [--steps build,bot,…]
 #   --quick  : kısa doğrulama (2 round bot, 1 perf koşusu, okunabilirlik 1 karışım, EditMode simülatörü) — WP-026 §5E
 #   Ortam    : DD_UNITY (Unity ikilisi), DD_PROJECT (proje kökü), DD_BUILD_SH (WP-025 tools/build.sh varsa onu kullanır), DD_PERF_CLEAN (perf-clean kalıbı: Blender < %50, 60 s),
 #              DD_SLOT_SH (C-00 makine slot kilidi ~/Desktop/KADRO/context/projects/deaths-demolition/tools/slot.sh; her Unity batch/Player koşusu acquire/release ile sarılır)
@@ -15,14 +15,18 @@ ROUNDS=8; SEED=26; PERF_RUNS=3; WINDOW=60; SKIP_BUILD=0; SKIP_TESTS=0; QUICK=0
 while [ $# -gt 0 ]; do case "$1" in
   --rounds) ROUNDS="$2"; shift 2;; --seed) SEED="$2"; shift 2;; --perf-runs) PERF_RUNS="$2"; shift 2;; --window) WINDOW="$2"; shift 2;;
   --skip-build) SKIP_BUILD=1; shift;; --skip-tests) SKIP_TESTS=1; shift;; --quick) QUICK=1; ROUNDS=2; PERF_RUNS=1; shift;;
+  --steps) STEPS="$2"; shift 2;;   # WP-044: yalnız etkilenen kapılar (build,editmode,spawnmix,bot,perf,readability,playmode; aggregate hep koşar)
   *) echo "bilinmeyen arg: $1"; exit 2;; esac; done
-HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../.." && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="${DD_REPO:-$(cd "$HERE/../.." && pwd)}"   # DD_REPO: betik anlık kopyadan koşarken (queue-start.sh)
+AGG="${DD_AGGREGATE:-$HERE/aggregate.py}"
+BOT_EXTRA=(); if [ -n "${DD_BOT_EXTRA:-}" ]; then if [ -n "${ZSH_VERSION:-}" ]; then BOT_EXTRA=(${=DD_BOT_EXTRA}); else read -ra BOT_EXTRA <<< "$DD_BOT_EXTRA"; fi; fi   # zsh kelime bölmez
+STEPS="${STEPS:-build,editmode,spawnmix,bot,perf,readability,playmode}"; has_step(){ case ",$STEPS," in *",$1,"*) return 0;; esac; return 1; }
 UNITY="${DD_UNITY:-/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity}"
 PROJECT="${DD_PROJECT:-$REPO/prototype/DeathsDemolition_PlayableConcept}"
 APP=""; BIN=""   # resolved after the build step (build.sh → DeathsDemolition.app; fallback → DeathsDemolition-dev.app)
 find_app(){ APP=$(ls -d "$OUT"/build-dev/*.app 2>/dev/null | head -1); BIN="$APP/Contents/MacOS/Deaths Demolition - Playable Concept"; }
 mkdir -p "$OUT"; T="$OUT/timeline.txt"; log(){ echo "$(date -u +%FT%TZ) $*" | tee -a "$T"; }
-SLOT="${DD_SLOT_SH:-}"; [ -n "$SLOT" ] || { [ -x "$REPO/tools/slot.sh" ] && SLOT="$REPO/tools/slot.sh" || SLOT="$HOME/Desktop/KADRO/context/projects/deaths-demolition/tools/slot.sh"; }; SLOT_TAG="wp-026-qa-$$"
+SLOT="${DD_SLOT_SH:-}"; [ -n "$SLOT" ] || { [ -x "$REPO/tools/slot.sh" ] && SLOT="$REPO/tools/slot.sh" || SLOT="$HOME/Desktop/KADRO/context/projects/deaths-demolition/tools/slot.sh"; }; SLOT_TAG="qa-$$"
 unity_count(){ ps -Ao comm | grep -c '/MacOS/Unity$'; }
 load1(){ uptime | sed 's/.*load averages: //' | awk '{print $1}'; }
 slot_acquire(){ # MAKİNE KURALI (C-00): slot.sh varsa kilit (≤ 2 Unity batch, bloklar); yoksa süreç sayımıyla bekle
@@ -47,7 +51,7 @@ run_player(){ # run_player <label> <extra args…>
 log "START out=$OUT rounds=$ROUNDS seed=$SEED perfRuns=$PERF_RUNS window=$WINDOW quick=$QUICK project=$PROJECT"
 # 1 · dev build — WP-025 tools/build.sh (kendi slot kilidi + build-info damgası + build-report.json); yoksa LifecycleProbeBuild
 BUILD_SH="${DD_BUILD_SH:-$REPO/tools/build.sh}"
-if [ $SKIP_BUILD -eq 0 ]; then
+if [ $SKIP_BUILD -eq 0 ] && has_step build; then
   if [ -x "$BUILD_SH" ]; then
     "$BUILD_SH" dev --out "$OUT/build-dev" > "$OUT/build-dev.log" 2>&1; X=$?
     cp -f "$OUT/build-dev/build-report.json" "$OUT/build-info.json" 2>/dev/null || true
@@ -61,36 +65,45 @@ fi
 find_app; [ -x "$BIN" ] || { log "dev build yok: $OUT/build-dev"; exit 1; }
 
 # 2 · EditMode QA: rapor şeması + bot eşlemesi + spawn-mix dilimi testi
-if [ $SKIP_TESTS -eq 0 ]; then
+if [ $SKIP_TESTS -eq 0 ] && has_step editmode; then
   slot_acquire || exit 2
   "$UNITY" -batchmode -nographics -forgetProjectPath -projectPath "$PROJECT" -runTests -testPlatform EditMode -testFilter 'DD.Prototype.Qa.Tests.EditMode' -testResults "$OUT/editmode-qa.xml" -logFile "$OUT/editmode-qa.log"
   X=$?; slot_release; log "editmode-qa exit=$X $(grep -o 'total="[0-9]*" passed="[0-9]*" failed="[0-9]*"' "$OUT/editmode-qa.xml" | head -1)"
 fi
 
 # 2b · spawner karışım istatistiği (WP-027 SpawnMixSimulator, dd-spawn-mix-v1) — 1000 spawn × round 1–10
+if has_step spawnmix; then
 slot_acquire || exit 2
 "$UNITY" -batchmode -nographics -quit -forgetProjectPath -projectPath "$PROJECT" -executeMethod DD.Prototype.Qa.EditorTools.QaSpawnMixCli.Run -ddOut "$OUT/spawn-mix" -ddSeed "$SEED" -ddRounds 10 -ddSpawns 1000 -logFile "$OUT/spawn-mix.log"
 X=$?; slot_release; log "spawn-mix exit=$X $(head -1 "$OUT/spawn-mix/spawn-mix.txt" 2>/dev/null)"
+fi
 
 # 3 · bot koşusu (N round, tohumlu)
-slot_acquire || exit 2; run_player bot -ddQaBot "$OUT/bot" -ddQaBotRounds "$ROUNDS" -ddQaBotSeed "$SEED"; slot_release
+if has_step bot; then
+slot_acquire || exit 2; run_player bot -ddQaBot "$OUT/bot" -ddQaBotRounds "$ROUNDS" -ddQaBotSeed "$SEED" -ddTelemetryDir "$OUT/bot/telemetry" "${BOT_EXTRA[@]}"; slot_release   # DD_BOT_EXTRA: ör. "-ddQaAllocScan 4" (WP-044 K1 tip taraması; ölçüm koşusu, kapı geçişi sayılmaz)   # WP-045 run telemetry (dd-run-telemetry-v1) yanına düşer
 [ -f "$OUT/bot/bot-summary.json" ] || log "bot: bot-summary.json yok — Player dışarıdan sonlandırıldı (SIGTERM → Unity exit 0) ya da sürücü kurulmadı; player.log'a bak"
+fi
 
 # 4 · perf: PilotPerfProbe Run sahnesi, temiz pencere, N × WINDOW s
+if has_step perf; then
 for i in $(seq 1 $PERF_RUNS); do clean_window || log "perf-$i: temiz pencere yok, koşu yine de alınıyor (raporda işaretlenir)"   # slot alınmadan beklenir: kuyruktaki oturumları tutmaz
   slot_acquire || exit 2
   run_player "perf-$i" -ddPilotPerfProbe "$OUT/perf-$i" -ddPilotScene Run -ddPilotWindowSeconds "$WINDOW"; slot_release; done
+fi
 
 # 5 · okunabilirlik: gerçek spawner karışımı, round 1/4/8, 3 skin
-slot_acquire || exit 2; run_player readability -ddQaReadability "$OUT/readability" -ddQaReadabilityRounds "1,4,8" -ddQaCrowd 40 -ddQaSkins "0,1,2"; slot_release
+if has_step readability; then
+slot_acquire || exit 2; run_player readability -ddQaReadability "$OUT/readability" -ddQaReadabilityRounds "${DD_READABILITY_ROUNDS:-1,4,8,10,12}" -ddQaCrowd 40 -ddQaSkins "0,1,2"; slot_release
+fi
 
 # 6 · DEC-077 zırh biçim testi (DD.Art PlayMode) — quick'te atlanır
-if [ $SKIP_TESTS -eq 0 ] && [ $QUICK -eq 0 ]; then
+if [ $SKIP_TESTS -eq 0 ] && [ $QUICK -eq 0 ] && has_step playmode; then
   slot_acquire || exit 2
-  "$UNITY" -batchmode -forgetProjectPath -projectPath "$PROJECT" -runTests -testPlatform PlayMode -testFilter 'DD.Art.Tests.PlayMode.ArmorTests.Okunabilirlik' -testResults "$OUT/playmode-armor.xml" -logFile "$OUT/playmode-armor.log"
-  X=$?; slot_release; log "playmode-armor exit=$X $(grep -o 'total="[0-9]*" passed="[0-9]*" failed="[0-9]*"' "$OUT/playmode-armor.xml" | head -1)"
+  "$UNITY" -batchmode -forgetProjectPath -projectPath "$PROJECT" -runTests -testPlatform PlayMode -testFilter 'DD.Art.Tests.PlayMode.ArmorTests.Okunabilirlik' -testResults "$OUT/playmode-armor.xml" -logFile "$OUT/playmode-armor.log" & P=$!
+  ( sleep "${DD_EDITOR_TIMEOUT:-1800}"; kill -0 $P 2>/dev/null && { echo "timeout" > "$OUT/playmode-armor.timeout"; log "playmode-armor: ${DD_EDITOR_TIMEOUT:-1800} s içinde bitmedi, Unity sonlandırılıyor"; kill $P; sleep 10; kill -9 $P 2>/dev/null; } ) & G=$!
+  wait $P; X=$?; kill $G 2>/dev/null; wait $G 2>/dev/null; slot_release; log "playmode-armor exit=$X $(grep -o 'total="[0-9]*" passed="[0-9]*" failed="[0-9]*"' "$OUT/playmode-armor.xml" | head -1)"
 fi
 
 # 7 · aggregate
-python3 "$HERE/aggregate.py" "$OUT" --window "$WINDOW" --perf-runs "$PERF_RUNS"; X=$?
+python3 "$AGG" "$OUT" --window "$WINDOW" --perf-runs "$PERF_RUNS"; X=$?
 log "DONE aggregate exit=$X"; cat "$OUT/qa-report.txt" 2>/dev/null; exit $X

@@ -17,6 +17,7 @@ using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
 using DD.Prototype.UI;
 using DD.Prototype.Weapons;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -53,13 +54,16 @@ namespace DD.Prototype.Qa
         public const string FramesFlag = "-ddQaBotFrames";
         /// <summary>WP-052: evidence runs only — the player cannot die (PlayerHealth.DiagnosisInvulnerable), so the late rounds are reached; the summary is marked and never a QA pass.</summary>
         public const string InvulnerableFlag = "-ddQaBotInvulnerable";
+        /// <summary>WP-044 K1: <c>-ddQaAllocScan N</c> — at round N (spawner on, crowd live) disable every Behaviour type in turn and sample 3 frames of GC (AllocationProbeTests pattern); writes alloc-scan.txt. The player is invulnerable during the scan; the run is a measurement, not a QA pass.</summary>
+        public const string AllocScanFlag = "-ddQaAllocScan";
         /// <summary>WP-055: evidence only — the bot grants itself the Special Weapons in turn (Kagura → Ofuda → Tide) whenever a body is near, writes one frame per sw_* beat × tier; summary marked, never a QA pass.</summary>
         public const string SpecialFlag = "-ddQaBotSpecial";
         /// <summary>WP-059: evidence runs only — this many seconds after run-ready the bot takes a lethal hit from the nearest zombie's side, so the death beat (hurt → collapse → overlay → Results) is captured as deathframe-* PNGs (with -ddQaBotFrames); the summary is marked and never a QA pass.</summary>
         public const string DieAfterFlag = "-ddQaBotDieAfter";
         public const int DefaultRounds = 8;
         public const int DefaultSeed = 26;
-        public const float DefaultRoundTimeout = 300f;
+        public const int GateRoundsMin = 4;              // C-00 closure decision: bot gate = round >= 4 + no death before it
+        public const float DefaultRoundTimeout = 420f;   // WP-044: round 8 (pool ~80, tier bodies) needs > 300 s at bot pace
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void RedirectProfile()
@@ -134,6 +138,15 @@ namespace DD.Prototype.Qa
             public int relocations;         // blocked fire line → walked back to the open arena centre
             public int wallEscapes;         // frames spent backing off a blocker within 2 m of the muzzle
             public int reloads;
+            public string allocMethod;         // WP-044: positive control result for both readings
+            public bool allocMethodValid;      // both readings saw the 64 KB bait
+            public float allocRecorderAvgB, allocHeapDeltaAvgB;
+            public long allocRecorderMaxB, allocHeapDeltaMaxB;
+            public int allocFrames, allocFramesOver4K;
+            public int edgeBias;               // frames whose move was leaned away from the NavMesh edge
+            public bool gatePass;              // bot.rounds gate (round >= 4 + no death before), separate from the full-run pass
+            public int upgradesBought;      // WP-044: cheapest affordable card per upgrade screen (DEC-048 one per round)
+            public int goldSpent;
             public float meanFrameMs;
             public float meanAimErrorDeg;     // angle between the rig's aim direction and the bot's target direction while a target was aimed
             public string aimKind;            // PlayerAim.AimKind seen most (Stick expected)
@@ -181,6 +194,7 @@ namespace DD.Prototype.Qa
             private bool _hasGoal;
             private bool _hunting;
             private bool _relocating;
+            private float _relocateSince;
             private Collider _closeBlocker;
             private bool _lastMuzzleClear, _lastEyeClear;
             private float _lastTrace = -999f;
@@ -191,6 +205,7 @@ namespace DD.Prototype.Qa
             private float _upgradeSeen = -1f;
             private bool _running;
             private bool _finished;
+            private int _deathRound, _timeoutRound;   // round of the death / timeout (0 = none)
             private bool _externalQuit;
             private bool _died;
             private string _fail;
@@ -199,6 +214,19 @@ namespace DD.Prototype.Qa
             private int _aimErrorSamples;
             private int _aimKindStick, _aimKindPointer;
             private readonly Dictionary<string, int> _fireHits = new Dictionary<string, int>();
+
+            // WP-044 allocation arbiter (C-00 / S-07 WP-047 finding: GC.GetAllocatedBytesForCurrentThread is always 0 on Unity Mono and
+            // ProfilerRecorder "GC Allocated In Frame" read 0 in batchmode): in the dev Player two readings per frame — the recorder and
+            // the managed-heap delta (GC.GetTotalMemory(false), rising steps only) — each validated by a 64 KB bait allocation first.
+            private ProfilerRecorder _gcRecorder;
+            private long _lastHeap = -1;
+            private double _allocRecorderSum, _allocHeapSum;
+            private long _allocRecorderMax, _allocHeapMax;
+            private int _allocFrames, _allocFramesOver4K;
+            private byte[] _bait;
+            private int _targetFrameRateBefore = int.MinValue;
+            private int _baitPhase;            // 0 = not yet, 1 = bait allocated this frame, 2 = read next frame, 3 = done
+            private long _baitRecorder = -1, _baitHeap = -1, _heapBeforeBait;
 
             public bool Finished => _finished;
             public Summary Result => _summary;
@@ -444,6 +472,111 @@ namespace DD.Prototype.Qa
                 }
 
                 Log("round-start " + round + " pool=" + (RunDirector.Instance != null ? RunDirector.Instance.RoundPoolTotal : 0));
+                int scanRound = QaArgs.ArgInt(AllocScanFlag, 0, 0, 99);
+                if (scanRound > 0 && round == scanRound && !_allocScanDone)
+                {
+                    _allocScanDone = true;
+                    StartCoroutine(AllocScan(round));
+                }
+            }
+
+            private bool _allocScanDone;
+            private bool _allocScanning;
+
+            /// <summary>
+            /// WP-044 K1 attribution with the spawner on: 8 s into the round (crowd around the player) freeze the bot's input, make the
+            /// player invulnerable, take a 3-frame baseline, then disable every Behaviour type in the scene one at a time (zombies,
+            /// player rig, scene objects; Camera/QA drivers excluded), settle 1 frame, sample 3 frames, restore — the types whose
+            /// absence saves bytes/count are the allocators. Same recorders and thresholds as AllocationProbeTests (WP-053C).
+            /// </summary>
+            private IEnumerator AllocScan(int round)
+            {
+                yield return new WaitForSecondsRealtime(8f);
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (rig == null || rig.Health == null) yield break;
+                _allocScanning = true;
+                _invulnerable = true;   // measurement run: never a QA pass
+                rig.Health.DiagnosisInvulnerable = true;
+                if (_pad != null) { _pad.Neutral(); _pad.Flush(); }
+                // -ddQaAllocScanCrowd N: match the perf probe's forced crowd (PilotPerfProbe force-40) so the reading is comparable
+                int crowd = QaArgs.ArgInt("-ddQaAllocScanCrowd", 0, 0, 200);
+                if (crowd > 0 && EnemySpawnDirector.Instance != null)
+                {
+                    EnemySpawnDirector.Instance.ForceActiveTarget(crowd, true);
+                    float t0 = Time.realtimeSinceStartup;
+                    while (Time.realtimeSinceStartup - t0 < 40f)
+                    {
+                        int a = 0; IReadOnlyList<ZombieEnemy> lv = ZombieEnemy.Live;
+                        for (int i = 0; i < lv.Count; i++) if (lv[i] != null && lv[i].IsAlive) a++;
+                        if (a >= crowd) break;
+                        yield return null;
+                    }
+                    yield return new WaitForSecondsRealtime(3f);   // let them close in and start attacking (the probe's steady state)
+                }
+                bool profilerWas = UnityEngine.Profiling.Profiler.enabled;
+                UnityEngine.Profiling.Profiler.enabled = true;
+                var sb = new StringBuilder();
+                var rows = new List<KeyValuePair<string, long[]>>();
+                using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
+                using (var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count"))
+                {
+                    yield return null; yield return null;
+                    long zb = 0, zc = 0;
+                    yield return SampleAlloc(bytes, count, 6, (b, c) => { zb = b; zc = c; });
+                    int alive = 0; IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                    for (int i = 0; i < live.Count; i++) if (live[i] != null && live[i].IsAlive) alive++;
+                    sb.Append("alloc-scan round=").Append(round).Append(" alive=").Append(alive).Append(" baseline bytes=").Append(zb).Append(" count=").Append(zc).Append(" (6 frames avg)\n");
+                    Log("alloc-scan baseline round=" + round + " alive=" + alive + " bytes=" + zb + " count=" + zc);
+
+                    var byType = new Dictionary<Type, List<Behaviour>>();
+                    foreach (Behaviour b in UnityEngine.Object.FindObjectsOfType<Behaviour>())
+                    {
+                        if (b == null) continue;
+                        Type t = b.GetType();
+                        if (t == typeof(Camera) || t.Namespace == null || !t.Namespace.StartsWith("DD.")) continue;   // game code only
+                        if (t.Namespace.StartsWith("DD.Prototype.Qa")) continue;
+                        if (!byType.TryGetValue(t, out List<Behaviour> list)) byType[t] = list = new List<Behaviour>();
+                        list.Add(b);
+                    }
+
+                    sb.Append("behaviour types=").Append(byType.Count).Append("\n");
+                    foreach (KeyValuePair<Type, List<Behaviour>> kv in byType)
+                    {
+                        var wasEnabled = new bool[kv.Value.Count];
+                        for (int i = 0; i < kv.Value.Count; i++) { wasEnabled[i] = kv.Value[i] != null && kv.Value[i].enabled; if (kv.Value[i] != null) kv.Value[i].enabled = false; }
+                        yield return null;
+                        long tb = 0, tc = 0;
+                        yield return SampleAlloc(bytes, count, 3, (b, c) => { tb = b; tc = c; });
+                        for (int i = 0; i < kv.Value.Count; i++) if (kv.Value[i] != null) kv.Value[i].enabled = wasEnabled[i];
+                        yield return null;
+                        rows.Add(new KeyValuePair<string, long[]>(kv.Key.FullName + " x" + kv.Value.Count, new[] { tb, tc, zb - tb, zc - tc }));
+                    }
+                }
+
+                UnityEngine.Profiling.Profiler.enabled = profilerWas;
+                rows.Sort((a, b) => b.Value[2].CompareTo(a.Value[2]));
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    long[] v = rows[i].Value;
+                    if (i < 25 || Math.Abs(v[2]) > 2048 || Math.Abs(v[3]) > 50)
+                        sb.Append("without ").Append(rows[i].Key).Append(" bytes=").Append(v[0]).Append(" count=").Append(v[1]).Append(" savedBytes=").Append(v[2]).Append(" savedCount=").Append(v[3]).Append('\n');
+                }
+
+                try { Directory.CreateDirectory(_outDir); File.WriteAllText(Path.Combine(_outDir, "alloc-scan.txt"), sb.ToString()); } catch (Exception) { }
+                Log("alloc-scan done types=" + rows.Count + " top=" + (rows.Count > 0 ? rows[0].Key + " savedBytes=" + rows[0].Value[2] : "n/a"));
+                _allocScanning = false;
+            }
+
+            private static IEnumerator SampleAlloc(ProfilerRecorder bytes, ProfilerRecorder count, int frames, Action<long, long> result)
+            {
+                long b = 0, c = 0;
+                for (int i = 0; i < frames; i++)
+                {
+                    yield return null;
+                    b += bytes.LastValue;
+                    c += count.LastValue;
+                }
+                result(b / frames, c / frames);
             }
 
             private void OnRoundCompleted(int round)
@@ -468,6 +601,7 @@ namespace DD.Prototype.Qa
                 if (s.EndReason == RunEndReason.PlayerDeath && !_died)
                 {
                     _died = true;   // AnyPlayerDied can arrive after RunEnded; count the death from the summary
+                    if (_deathRound <= 0) _deathRound = _current != null ? _current.round : s.ReachedRound;
                     _summary.deaths++;
                 }
 
@@ -488,6 +622,14 @@ namespace DD.Prototype.Qa
                 _lastDamageTime = Time.unscaledTime;
                 if (_current != null) _current.damageEvents++;
                 _summary.totalDamageEvents++;
+                if (_summary.totalDamageEvents <= 5 || info.HealthAfter <= 0f)
+                {
+                    // WP-044 / WP-047E finding (instant PlayerDeath at run start): where, how much, from which direction
+                    PlayerRig rig = PlayerRegistry.Primary;
+                    Log("damage #" + _summary.totalDamageEvents + " t+" + QaArgs.F(_runStart >= 0f ? Time.unscaledTime - _runStart : -1f, 2) + "s amount=" + QaArgs.F(info.AppliedAmount, 1) +
+                        " hp " + QaArgs.F(info.HealthBefore, 1) + "→" + QaArgs.F(info.HealthAfter, 1) + "/" + QaArgs.F(info.MaxHealth, 0) + " at=" + V(info.WorldPoint) + " dir=" + V(info.HitDirection) +
+                        " player=" + (rig != null ? V(rig.transform.position) : "n/a") + " onNavMesh=" + (rig != null && NavMesh.SamplePosition(rig.transform.position, out NavMeshHit nh, 0.5f, NavMesh.AllAreas) ? "1" : "0"));
+                }
             }
 
             private void OnDied(PlayerDeathInfo info)
@@ -495,7 +637,8 @@ namespace DD.Prototype.Qa
                 _died = true;
                 _summary.deaths++;
                 int round = _current != null ? _current.round : 0;
-                Log("player-died round=" + round);
+                if (_deathRound <= 0) _deathRound = round;
+                Log("player-died round=" + round + " t+" + QaArgs.F(_runStart >= 0f ? Time.unscaledTime - _runStart : -1f, 2) + "s killedBy=" + info.KilledBy + " pos=" + V(info.Position) + " overkill=" + QaArgs.F(info.Overkill, 1) + " kills=" + (_current != null ? _current.kills : 0));
                 // WP-059: the death beat on three frames — the hit, the slowed collapse, the overlay before Results
                 // (unscaled delays; Standard tier = no proximity wait). Flushed after Finish, QuitSoon waits for them.
                 QueueFrame("deathframe-r" + round + "-impact", DeathFrameImpactSeconds);
@@ -554,6 +697,8 @@ namespace DD.Prototype.Qa
 
                 _frameMs.Add(Time.unscaledDeltaTime * 1000f);
                 FlushPendingFrame();   // WP-052
+                SampleAllocation();    // WP-044 allocation arbiter
+                if (_allocScanning) return;   // the scan owns the frame: no bot input, no steering
                 RunDirector run = RunDirector.Instance;
                 PlayerRig rig = PlayerRegistry.Primary;
                 if (run == null || rig == null)
@@ -571,6 +716,7 @@ namespace DD.Prototype.Qa
                 if (_current != null && Time.unscaledTime - _roundStart > _roundTimeout)
                 {
                     CloseRoundRecord(false, "timeout");
+                    _timeoutRound = _current.round;
                     _fail = "round " + _current.round + " timed out after " + QaArgs.F(_roundTimeout, 0) + " s (kills " + run.RoundKills + "/" + run.RoundPoolTotal + ")";
                     _running = false;
                     Finish();
@@ -586,9 +732,40 @@ namespace DD.Prototype.Qa
                         _pad.Flush();
                         if (run.Phase == RunPhase.Upgrading && Time.unscaledTime - _upgradeSeen > UpgradeSkipDelay)
                         {
-                            run.CloseUpgradeScreen();   // the Skip button's call; the bot buys nothing
+                            // WP-044: a player buys between rounds — the bot takes the cheapest affordable card once the offer is
+                            // ready (shop.TryPurchase is the card button's own call; DEC-048 one purchase per round), then CONTINUE
+                            RoundUpgradeShop shop = run.Shop;
+                            if (shop != null && shop.Status == UpgradeOfferStatus.Ready && !shop.IsLocked)
+                            {
+                                // the dearest affordable card (cost is the shop's own value ladder; run3 left 230 gold unspent with the cheapest rule)
+                                int pick = -1, pickCost = -1;
+                                for (int c = 0; c < shop.Cards.Count; c++)
+                                {
+                                    if (!shop.CanAfford(c)) continue;
+                                    int cost = shop.Cards[c].Cost;
+                                    if (cost > pickCost) { pickCost = cost; pick = c; }
+                                }
+
+                                if (pick >= 0 && shop.TryPurchase(pick))
+                                {
+                                    _summary.upgradesBought++;
+                                    _summary.goldSpent += pickCost;
+                                    Log("upgrade-bought round=" + run.Round + " card=" + shop.Cards[pick].DisplayName + " cost=" + pickCost + " goldLeft=" + shop.Gold);
+                                }
+                                else
+                                {
+                                    Log("upgrade-none round=" + run.Round + " gold=" + shop.Gold + " affordable=" + (pick >= 0));
+                                }
+                            }
+                            else if (shop != null && shop.Status != UpgradeOfferStatus.Ready)
+                            {
+                                if (Time.unscaledTime - _upgradeSeen < UpgradeSkipDelay + 3f) return;   // offer still building; give it a moment
+                                Log("upgrade-offer-not-ready status=" + shop.Status + " fault=" + shop.Fault);
+                            }
+
+                            run.CloseUpgradeScreen();   // the CONTINUE button's call
                             _upgradeSeen = -1f;
-                            Log("upgrade-skipped");
+                            Log("upgrade-closed");
                         }
 
                         return;
@@ -652,6 +829,7 @@ namespace DD.Prototype.Qa
                         if (Time.unscaledTime - _blockedSince > 2.5f && !_relocating)
                         {
                             _relocating = true;   // walls/planters keep eating the shots: walk to the open centre of the arena
+                            _relocateSince = Time.unscaledTime;
                             _goal = _arenaCentre;
                             _hasGoal = true;
                             _hunting = false;
@@ -662,9 +840,13 @@ namespace DD.Prototype.Qa
                     else
                     {
                         _blockedSince = -1f;
-                        if (_relocating && (pos - _arenaCentre).sqrMagnitude < 9f) _relocating = false;
+                        // the line is clear again (or the centre is reached, or 8 s passed): relocation is over — run2 showed a
+                        // relocation that never ended, which demoted every target and put the bot into a reload loop
+                        if (_relocating && (muzzleClear || (pos - _arenaCentre).sqrMagnitude < 9f || Time.unscaledTime - _relocateSince > 8f)) _relocating = false;
                     }
                 }
+
+                if (_relocating && (target == null || Time.unscaledTime - _relocateSince > 8f)) _relocating = false;
 
                 WeaponController wc = WeaponRegistry.ActiveController;
                 ClassicWeaponRuntime classic = wc != null ? wc.Classic : null;
@@ -713,12 +895,20 @@ namespace DD.Prototype.Qa
                 if (cmd.Move.sqrMagnitude > 0.01f)
                 {
                     Vector3 wantMove = QaBotBrain.StickToWorld(cmd.Move, fwd, right);
-                    Vector3 steered = SteerOnNavMesh(pos, wantMove);
+                    Vector3 avoid = nearby >= 3 ? crowdDir : Vector3.zero;   // run3: a wall-avoiding rotation walked the bot into a 10-body crowd
+                    NavMeshHit edge;
+                    if (NavMesh.FindClosestEdge(pos, out edge, NavMesh.AllAreas) && edge.distance < 2.5f)
+                    {
+                        Vector3 inward = _arenaCentre - pos; inward.y = 0f;
+                        if (inward.sqrMagnitude > 1f) wantMove = (wantMove.normalized + inward.normalized).normalized;   // never kite into the boundary
+                        _summary.edgeBias++;
+                    }
+                    Vector3 steered = SteerOnNavMesh(pos, wantMove, avoid);
                     if (_closeBlocker != null && cmd.Mode != QaBotMode.Patrol)
                     {
                         // hugging a wall with the target beyond it: back off from the blocker before anything else
                         Vector3 away = pos - _closeBlocker.ClosestPoint(pos); away.y = 0f;
-                        if (away.sqrMagnitude > 1e-4f) steered = SteerOnNavMesh(pos, (away.normalized * 0.7f + steered * 0.3f).normalized);
+                        if (away.sqrMagnitude > 1e-4f) steered = SteerOnNavMesh(pos, (away.normalized * 0.7f + steered * 0.3f).normalized, avoid);
                         _summary.wallEscapes++;
                     }
                     cmd.Move = QaBotBrain.WorldToStick(steered, fwd, right) * Mathf.Clamp01(cmd.Move.magnitude);
@@ -728,7 +918,7 @@ namespace DD.Prototype.Qa
                     _lastTrace = Time.unscaledTime;
                     Log("t pos=" + V(pos) + " mode=" + cmd.Mode + " tgt=" + (target != null ? QaArgs.F(o.TargetDistance, 1) : "-") + " los=" + (o.TargetLineOfSight ? 1 : 0) +
                         " mz=" + (_lastMuzzleClear ? 1 : 0) + " eye=" + (_lastEyeClear ? 1 : 0) + " blk=" + (_closeBlocker != null ? _closeBlocker.name + "@" + V(_closeBlocker.bounds.center) + "/" + V(_closeBlocker.bounds.size) : "-") +
-                        " fire=" + (cmd.Fire ? 1 : 0) + " hp=" + QaArgs.F(rig.Health != null ? rig.Health.Normalized : -1f, 2) + " near=" + nearby + " kills=" + _summary.totalKills);
+                        " fire=" + (cmd.Fire ? 1 : 0) + " hp=" + QaArgs.F(rig.Health != null ? rig.Health.Normalized : -1f, 2) + " near=" + nearby + " kills=" + _summary.totalKills + "+" + (_current != null ? _current.kills : 0));
                 }
                 if (_relocating && target != null && cmd.Mode == QaBotMode.Patrol)
                 {
@@ -780,7 +970,67 @@ namespace DD.Prototype.Qa
                         _summary.stuckRecoveries++;
                         PickNewGoal();
                     }
+                    else if (_stuckTimer > 1.5f && cmd.Mode != QaBotMode.Patrol && !_relocating)
+                    {
+                        // run4: pinned against the world edge by a crowd (position frozen 15 s, hp → 0) — break out along the
+                        // NavMesh toward the open centre; the relocation path keeps firing at anything in range
+                        _stuckTimer = 0f;
+                        _summary.stuckRecoveries++;
+                        _relocating = true;
+                        _relocateSince = Time.unscaledTime;
+                        _goal = _arenaCentre;
+                        _hasGoal = true;
+                        _hunting = false;
+                        _lastPathTime = -999f;
+                        Log("breakout pos=" + V(pos) + " near=" + nearby);
+                    }
                 }
+            }
+
+            private void SampleAllocation()
+            {
+                if (!_gcRecorder.Valid)
+                {
+                    // S-02 WP-052 finding: with Application.targetFrameRate == 60 the recorder's LastValue can stay 0 (Editor runner);
+                    // the gate measurement runs uncapped and the original cap is restored in Finish
+                    _targetFrameRateBefore = Application.targetFrameRate;
+                    Application.targetFrameRate = -1;
+                    try { _gcRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"); } catch (Exception) { }
+                    if (!_gcRecorder.Valid) return;
+                }
+
+                long recorder = _gcRecorder.LastValue;            // bytes allocated during the previous frame
+                long heap = GC.GetTotalMemory(false);
+                long heapDelta = _lastHeap >= 0 ? heap - _lastHeap : 0;   // a drop = collection; only rising steps count as allocation
+                if (heapDelta < 0) heapDelta = 0;
+
+                switch (_baitPhase)
+                {
+                    case 0:
+                        _heapBeforeBait = heap;
+                        _bait = new byte[65536];
+                        _bait[0] = 1;
+                        _baitPhase = 1;
+                        _lastHeap = heap;
+                        return;                                   // this frame is the bait frame: not counted
+                    case 1:
+                        _baitRecorder = recorder;                 // the recorder reports the bait frame now
+                        _baitHeap = heap - _heapBeforeBait;
+                        _baitPhase = 2;
+                        _lastHeap = heap;
+                        _summary.allocMethodValid = _baitRecorder >= 65536 && _baitHeap >= 65536;
+                        _summary.allocMethod = "positive control 64 KB: recorder " + _baitRecorder + " B, heap-delta " + _baitHeap + " B → " + (_summary.allocMethodValid ? "both readings valid" : "READING INVALID (see WP-047)");
+                        Log("alloc-method " + _summary.allocMethod);
+                        return;
+                }
+
+                _lastHeap = heap;
+                _allocFrames++;
+                _allocRecorderSum += recorder;
+                _allocHeapSum += heapDelta;
+                if (recorder > _allocRecorderMax) _allocRecorderMax = recorder;
+                if (heapDelta > _allocHeapMax) _allocHeapMax = heapDelta;
+                if (recorder > 4096) _allocFramesOver4K++;
             }
 
             private void SampleFireLine(PlayerRig rig)
@@ -877,18 +1127,24 @@ namespace DD.Prototype.Qa
             /// stays on the NavMesh wins, so the bot slides along walls and planters instead of grinding into them.
             /// </summary>
             private static readonly float[] SteerAngles = { 0f, 35f, -35f, 70f, -70f, 110f, -110f, 150f, -150f, 180f };
-            private static Vector3 SteerOnNavMesh(Vector3 pos, Vector3 want)
+            private static Vector3 SteerOnNavMesh(Vector3 pos, Vector3 want, Vector3 avoidDirection)
             {
                 want.y = 0f;
                 if (want.sqrMagnitude < 1e-4f) return want;
                 want.Normalize();
+                avoidDirection.y = 0f;
+                bool avoiding = avoidDirection.sqrMagnitude > 1e-4f;
+                if (avoiding) avoidDirection.Normalize();
                 NavMeshHit hit;
+                Vector3 fallback = Vector3.zero;
                 for (int i = 0; i < SteerAngles.Length; i++)
                 {
                     Vector3 d = Quaternion.Euler(0f, SteerAngles[i], 0f) * want;
-                    if (!NavMesh.Raycast(pos, pos + d * 1.6f, out hit, NavMesh.AllAreas)) return d;
+                    if (NavMesh.Raycast(pos, pos + d * 1.6f, out hit, NavMesh.AllAreas)) continue;
+                    if (avoiding && Vector3.Dot(d, avoidDirection) > 0.5f) { if (fallback == Vector3.zero) fallback = d; continue; }   // open, but into the crowd
+                    return d;
                 }
-                return want;
+                return fallback != Vector3.zero ? fallback : want;
             }
 
             private static string V(Vector3 v) { return QaArgs.F(v.x, 1) + "," + QaArgs.F(v.y, 1) + "," + QaArgs.F(v.z, 1); }
@@ -1060,6 +1316,15 @@ namespace DD.Prototype.Qa
                 _summary.spawnSequenceHash = Fnv(_spawnTiers);
                 _summary.outcomeHash = Fnv(OutcomeTokens());
                 _summary.meanFrameMs = MeanFrame();
+                _summary.allocFrames = _allocFrames;
+                _summary.allocFramesOver4K = _allocFramesOver4K;
+                _summary.allocRecorderAvgB = _allocFrames > 0 ? (float)(_allocRecorderSum / _allocFrames) : -1f;
+                _summary.allocHeapDeltaAvgB = _allocFrames > 0 ? (float)(_allocHeapSum / _allocFrames) : -1f;
+                _summary.allocRecorderMaxB = _allocRecorderMax;
+                _summary.allocHeapDeltaMaxB = _allocHeapMax;
+                if (_gcRecorder.Valid) _gcRecorder.Dispose();
+                if (_targetFrameRateBefore != int.MinValue) Application.targetFrameRate = _targetFrameRateBefore;
+                if (string.IsNullOrEmpty(_summary.allocMethod)) _summary.allocMethod = "no reading (recorder unavailable or run too short)";
                 _summary.meanAimErrorDeg = _aimErrorSamples > 0 ? (float)(_aimErrorSum / _aimErrorSamples) : -1f;
                 _summary.aimKind = "stick " + _aimKindStick + " / pointer " + _aimKindPointer;
                 var top = new List<KeyValuePair<string, int>>(_fireHits);
@@ -1067,7 +1332,13 @@ namespace DD.Prototype.Qa
                 var sb = new StringBuilder();
                 for (int i = 0; i < top.Count && i < 6; i++) sb.Append(i > 0 ? " | " : "").Append(top[i].Key).Append('=').Append(top[i].Value);
                 _summary.fireLineHits = sb.ToString();
-                _summary.pass = _summary.roundsCompleted >= _rounds && string.IsNullOrEmpty(_fail) && !_invulnerable && !_specialEvidence && !_deathEvidence;   // WP-052/055/059: an evidence run is never a QA pass
+                // C-00 decision 2026-09-17 (M3 closure, user informed): the gate is "round >= 4 completed with no death before it"
+                // — the bot's skill past round 4 is not the product; later rounds still run for perf/readability coverage
+                // and are reported. The full requested count remains the reported target.
+                int gateRounds = Mathf.Min(GateRoundsMin, _rounds);
+                bool gateOk = _summary.roundsCompleted >= gateRounds && (_deathRound <= 0 || _deathRound > gateRounds) && (_timeoutRound <= 0 || _timeoutRound > gateRounds);
+                _summary.gatePass = gateOk;
+                _summary.pass = gateOk && !_invulnerable && !_specialEvidence && !_deathEvidence;   // WP-052/055/059: an evidence run is never a QA pass
                 _summary.note = string.IsNullOrEmpty(_fail) ? (_died ? "player died" : "ok") : _fail;
                 if (_invulnerable) _summary.note += " [invulnerable evidence run: WP-052 tier frames; not a QA pass]";   // (WP-055: the marks used to be overwritten by the line above)
                 if (_specialEvidence) _summary.note += " [special evidence run: WP-055 sw_* frames; not a QA pass]";
@@ -1081,9 +1352,13 @@ namespace DD.Prototype.Qa
                     File.WriteAllText(Path.Combine(_outDir, "events.txt"), _events.ToString());
                     File.WriteAllText(Path.Combine(_outDir, "summary.txt"), SummaryLines());
                     QaReport report = QaReport.Create("QaRunBot", _seed);
-                    report.Add("bot.rounds", _summary.roundsCompleted >= _rounds, _summary.roundsCompleted + "/" + _rounds, ">= " + _rounds,
+                    report.Add("bot.alloc.method", _summary.allocMethodValid, _summary.allocMethod, "both readings see the 64 KB bait",
+                        "single arbiter for the closure: dev Player (not batchmode), targetFrameRate -1 during the reading (WP-052), ProfilerRecorder 'GC Allocated In Frame' + managed heap delta (GC.GetTotalMemory rising steps), positive control first (C-00 / WP-047)", "bot-summary.json");
+                    report.Add("bot.alloc.perFrame", true, "recorder avg " + QaArgs.F(_summary.allocRecorderAvgB, 0) + " B / max " + _summary.allocRecorderMaxB + " B; heap-delta avg " + QaArgs.F(_summary.allocHeapDeltaAvgB, 0) + " B / max " + _summary.allocHeapDeltaMaxB + " B; frames > 4 KB " + _summary.allocFramesOver4K + "/" + _summary.allocFrames,
+                        "report only (0-allocation rule is the hit-path test; whole-run figure here)", "bot run, all phases incl. upgrade screens", "bot-summary.json");
+                    report.Add("bot.rounds", _summary.gatePass, _summary.roundsCompleted + "/" + _rounds + (_deathRound > 0 ? " (died r" + _deathRound + ")" : "") + (_timeoutRound > 0 ? " (timeout r" + _timeoutRound + ")" : ""), ">= " + GateRoundsMin + " rounds, no death/timeout before (C-00 2026-09-17); " + _rounds + " requested",
                         _summary.note + "; kills " + _summary.totalKills + ", deaths " + _summary.deaths + ", damage " + _summary.totalDamageEvents +
-                        ", stuck " + _summary.stuckRecoveries + ", relocations " + _summary.relocations + ", wallEscapes " + _summary.wallEscapes + ", reloads " + _summary.reloads, "bot-summary.json");
+                        ", stuck " + _summary.stuckRecoveries + ", relocations " + _summary.relocations + ", wallEscapes " + _summary.wallEscapes + ", upgrades " + _summary.upgradesBought + " (" + _summary.goldSpent + " gold), reloads " + _summary.reloads, "bot-summary.json");
                     report.Add("bot.determinism", true, "spawn " + _summary.spawnSequenceHash + " outcome " + _summary.outcomeHash, "report only",
                         "compare across runs with the same seed; frame timing is not seeded", "bot-summary.json");
                     report.summary = "bot mean frame " + QaArgs.F(_summary.meanFrameMs) + " ms over " + _frameMs.Count + " frames";

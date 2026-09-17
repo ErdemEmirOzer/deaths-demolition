@@ -2187,3 +2187,28 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 **Uygulanan (görsel değişimsiz):** (1) SSAO kaynağı **Depth (0)** — ön geçiş kalktı: −158 draw, −9 setPass; (2) SSAO blur Medium → **Low** (Kawase, yarım çözünürlük); (3) bloom **6 → 4 yineleme, bikübik → bilinear** (`WorldAtmosphere.PostFx.BloomMaxIterations/BloomHighQualityFiltering`): −6 setPass. Aynı karede A/B ΔE (CIE76, 1080p): **ort 0,062, p95 0,53, p99 1,38, piksellerin %0,24'ü > 2,3 (JND)** — `wp-038j/evidence/fd-after/ab-*.png`. Sonuç dünya tarafı **setPass 68 → 52–53, draw 1 194 → 1 031**; probe beklentisi ~136 → ~120, draw ~1 740 → ~1 580. `ConfigurePostAndRendererCli` (profil + renderer, sahne/bake yok). EditMode LookLighting + ArtVfxGate 15/15 (kaynak/blur/bloom sabitleri kapıda).
 
 **≤ 90 hedefi bu paketle sağlanmaz:** kalan dünya kalemleri görsel karar ister — bloom kapalı (−10), tek kaskat (−7; WP-029 iki kaskat), gölge mesafesi, SSAO kapalı (−2). Kameranın dışındaki ~68 (S-09 HUD canvas batch'leri, S-07 VFX/hasar sayıları) sahiplerinde. Ort ≤ 7,0 kararı S-10 tekrarında; getirmezse bütçe kararı kullanıcıda. Ders: SRP Batcher'da setPass = varyant başına bir SRP batch; "kaç materyal" değil "kaç anahtar kümesi" sayılır.
+
+## WP-044 — Interim Main Regression, Clean-Machine Baseline & M3 Closure (S-10)
+
+**Durum:** Tamamlandı (S-10, 2026-09-17, HIZLI HAT §7). Branch `wp-044-m3-closure` (taban `main` = `25ed95c`); tek commit; ff-merge + etiket `m3-closure` C-00. Kanıt `~/Desktop/KADRO/context/projects/deaths-demolition/wp-044/evidence/` (run1..run5, closure, closure2..4; `REPORT.md`, `CLOSURE-PLAN.md`).
+
+**Kapsam:** (A) `tools/qa/regression.sh` gerçek main üzerinde ilk tam koşular ve **temiz makine perf tabanı v1** (run1, `dc32ecf`, kuyruk boş: ort 5,35 / p99 6,0 ms, draw ~1 800, GC 372 B/kare). (B) DEC-077 motor içi tier ölçümü (WP-036 devri): `QaReadabilityGate` tier maskeleri (Special/Elite/Ultra çevre kontrastı kapı, ↔Standard ΔV rapor), tier yakınlık beklemesi (WP-054/DEC-081), round 1/4/8/10/12; DD.Art `ReadabilityThresholds.FigureDiff` paylaşımlı maske (WP-038G). (C) QA aracı düzeltmeleri: renderer durumları tam geri yüklenir (P-06 bulgusu: gizli M1 kapsül gövde ölçülüyordu → skin 3 "< 0,06" artefaktı, AP-006B geri çekildi), bot upgrade alımı (`RoundUpgradeShop.TryPurchase`, en pahalı alınabilir kart), NavMesh kenar/kalabalık kaçınma + breakout, hasar/ölüm logu, `Application.quitting` kısmi özet, `--steps` (yalnız etkilenen kapılar), editör zaman aşımı, `-ddTelemetryDir` (WP-045), `-ddQaAllocScan` tip taraması. (D) **Ayırma hakem yöntemi** (C-00 / S-07 WP-047): dev Player, `targetFrameRate −1`, 64 KB yem pozitif kontrol + ProfilerRecorder "GC Allocated In Frame" + yönetilen yığın deltası (`bot.alloc.method` / `bot.alloc.perFrame`); `GC.GetAllocatedBytesForCurrentThread` Unity Mono'da 0, batchmode recorder 0 → kullanılmaz. (E) Bot kapısı (C-00 kararı, kullanıcıya bilgi): round ≥ 4 + öncesinde ölüm/zaman aşımı yok. (F) Bulgular → sahip: DirectToRun PlayerPrefs sızıntısı (anında ölüm/Results; → WP-052C bayrak), GC 14 KB/kare (`ZombieEnemy` 138 B × 40 + `PlayerRig` 2,3 KB → WP-055E/053D), draw 3 400 → 1 400 (WP-038G/J), kalabalık kontrastı (WP-038G dolgu ışığı), cw1 payı (S-03), Special tint (P-06).
+
+- **ADR-011-3 v3 (DEC-088).** Ortalama kare ≤ 8,0 ms / temiz p99 ≤ 10 ms (M1 Pro 1920×1080, 40 düşman, 60 s, temiz pencere: Blender/diğer Unity < %50, stall > 33 ms rapor). v2'nin 7,0 ms'si look pass (WP-029: SSAO, MSAA 2×, 2 kaskat, dolgu ışığı) öncesi öneriydi; kapanış 3/4 ölçümü kare minimumunun 4,7 → 6,6 ms'ye taşındığını (sabit render maliyeti) gösterdi, GC ve draw tabana döndü. Kullanıcı onayı 2026-09-17 ~20:40.
+
+**Devirler:** Ultra tier motor içi ölçümü (r12'de bile karede yok — kamera dışı doğuş; bot tier kareleri WP-052 ile yan yana), r4 oyuncu gövde bandı boş artefaktı, r12 oyuncu↔zombi skin 2b 0,039 (tier round; DEC-077 roundları geçiyor), bot 8 round yetkinliği (r5 kuşatma), `DD_URP_PipelineAsset` build sırasında yeniden serileşiyor (prefilter bayrakları; S-05), `Gfx.WaitForPresent` sayacı.
+
+## M3 çıkış koşullarının durumu (2026-09-17, WP-044 kapanış koşusu 2–4 ile)
+
+`03-ROADMAP.md` M3 çıkış koşulu: "Onaylı stil ve okunabilirlik hedefleri oynanabilir yapıda karşılanır." Kapanış aracı `tools/qa/regression.sh` (ADR-026-1); kapanış 2 tam zincir main `b2f4fcd`, kapanış 3/4 yalnız perf (`--steps build,perf`) main `677c3ff` / `25ed95c`.
+
+| Koşul / kapı | Kanıt | Durum |
+|---|---|---|
+| Perf ortalama ≤ 8,0 ms (DEC-088), temiz p99 ≤ 10 | kapanış 4 (`25ed95c`, temiz pencere yük 4–5): ort **7,48 / 7,54 / 7,53**, p99 **8,36 / 8,43 / 8,46**, GC 431 B/kare, gen0 2/60 s, draw 1 417–1 464, setPass 117 | Karşılandı |
+| DEC-077 okunabilirlik: örtülme 0, kalabalık/çevre ≥ 0,06, oyuncu skin 1/2b/3 ≥ 0,06, tier ≥ 0,06 | kapanış 2 (`b2f4fcd`): örtülme 0/22–0/18 r1–r12; kalabalık 0,25–0,33; oyuncu figür/çevre 0,31–0,41; Special 0,26–0,42, Elite r10 0,375; zırh biçim testi `ArmorTests.Okunabilirlik` 1/1 | Karşılandı (Ultra ölçümsüz — devir) |
+| Spawner karışımı (DEC-022, AP-011B cw1, zırh dışlamaları) 0 ihlal | kapanış 2: 10 200 spawn, violations 0; EditMode QA 9/9 | Karşılandı |
+| Otomatik koşu (bot) round ≥ 4, ölüm yok | kapanış 2: r1–r4 139/139 kill, 0 ölüm, upgrade alımı; spawn hash tekrar üretilir | Karşılandı |
+| Ayırma hakemi (pozitif kontrol) | kapanış 2/3/4: yem 64 KB → recorder ≥ 86 KB, yığın ≥ 98 KB | Karşılandı |
+| Build boyutu ≤ 550 MB (DEC-086) | WP-038H release 543,8 MB | Karşılandı (S-05 ölçümü) |
+
+Karar bekleyenler (karar yazılmaz): M4 kapsamı; Windows hedefi (DEC-080); Ultra okunabilirliğinin ölçüm yolu.

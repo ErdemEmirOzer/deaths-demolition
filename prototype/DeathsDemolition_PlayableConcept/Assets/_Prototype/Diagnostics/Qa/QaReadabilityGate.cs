@@ -101,7 +101,16 @@ namespace DD.Prototype.Qa
             public float[] playerBodyContrast;    // per skin index: body band (rows 20–60 %) / ring contrast
             public float[] playerZombieDeltaV;    // per skin index: body luma vs zombie crowd luma contrast
             public int playerPixels, zombiePixels;
+            public float zombieShadowShare, playerShadowShare;   // share of the raw difference mask dropped as cast shadow / AO (P-06)
+            public float[] playerFigureLuma, playerRingLuma;   // per skin: raw lumas behind the contrast (WP-044)
+            public string playerLod;                           // LOD level of the player figure at capture (WP-044)
+            public string shadowsNote;                         // what the masks/rings include (WP-044)
             [NonSerialized] public List<Renderer> zombieRenderers;
+            [NonSerialized] public List<Renderer>[] tierRenderers;   // index = (int)EnemyTier, on-screen bodies only
+            // WP-036 / DEC-077 in-engine tier reading (index = (int)EnemyTier): figure/environment contrast, tier vs Standard luma
+            // contrast and raw ΔV, pixels; -1 = tier not on screen
+            public float[] tierEnvContrast, tierVsStandardContrast, tierVsStandardDeltaV, tierArmouredShare;
+            public int[] tierPixels, tierOnScreen;
             public int standard, special, elite, ultra;
             public int helmet, body, leg, bare;
             public int fadedGarments, garments, minoCape, bald;
@@ -203,6 +212,14 @@ namespace DD.Prototype.Qa
                         yield return null;
                     }
 
+                    // S-03 (WP-054 / DEC-081): non-Standard tiers spawn off-camera and become visible as they close in — same rule
+                    // as the bot's tier frames: wait until a Special/Elite/Ultra body is within 10 m, or 25 s
+                    t0 = Time.realtimeSinceStartup;
+                    while (TierAlive() && !TierNear(rig.transform.position, 10f) && Time.realtimeSinceStartup - t0 < 25f)
+                    {
+                        yield return null;
+                    }
+
                     yield return new WaitForSeconds(SettleSeconds);
                     RoundResult rr = Measure(round, rig);
                     rr.nearPlayer = NearCount(rig.transform.position, NearRadius);
@@ -213,6 +230,26 @@ namespace DD.Prototype.Qa
 
                 dir.ForceActiveTarget(0, false);
                 Finish();
+            }
+
+            private static bool TierAlive()
+            {
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; i < live.Count; i++) if (live[i] != null && live[i].IsAlive && live[i].Tier != EnemyTier.Standard) return true;
+                return false;
+            }
+
+            private static bool TierNear(Vector3 from, float radius)
+            {
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; i < live.Count; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z == null || !z.IsAlive || z.Tier == EnemyTier.Standard) continue;
+                    Vector3 d = z.transform.position - from; d.y = 0f;
+                    if (d.sqrMagnitude <= radius * radius) return true;
+                }
+                return false;
             }
 
             private static int NearCount(Vector3 from, float radius)
@@ -286,6 +323,17 @@ namespace DD.Prototype.Qa
                     bool inFrustum = vp.z > 0f && vp.x >= 0f && vp.x <= 1f && vp.y >= 0f && vp.y <= 1f && vp.z <= OcclusionMaxDistance;
                     if (!inFrustum) continue;
                     r.onScreen++;
+                    int ti = (int)z.Tier;
+                    if (r.tierRenderers == null) r.tierRenderers = new List<Renderer>[4];
+                    if (ti >= 0 && ti < 4)
+                    {
+                        if (r.tierRenderers[ti] == null) r.tierRenderers[ti] = new List<Renderer>(64);
+                        r.tierRenderers[ti].AddRange(z.GetComponentsInChildren<Renderer>(true));
+                        if (r.tierOnScreen == null) r.tierOnScreen = new int[4];
+                        r.tierOnScreen[ti]++;
+                        if (r.tierArmouredShare == null) r.tierArmouredShare = new float[4];
+                        if (z.Armor != null && (z.Armor.IsEquipped(ArmorSlot.Helmet) || z.Armor.IsEquipped(ArmorSlot.Body) || z.Armor.IsEquipped(ArmorSlot.Leg))) r.tierArmouredShare[ti]++;
+                    }
 
                     int visible = 0;
                     for (int p = 0; p < points.Length; p++)
@@ -320,6 +368,8 @@ namespace DD.Prototype.Qa
                 r.playerEnvDeltaV = new float[_skins.Length];
                 r.playerZombieDeltaV = new float[_skins.Length];
                 r.playerBodyContrast = new float[_skins.Length];
+                r.playerFigureLuma = new float[_skins.Length];
+                r.playerRingLuma = new float[_skins.Length];
                 Camera cam = ResolveCamera();
                 if (cam == null) { Evaluate(r); yield break; }
                 PlayerSkin original = rig.Skin;
@@ -329,22 +379,30 @@ namespace DD.Prototype.Qa
                 List<Renderer> zombieRenderers = r.zombieRenderers ?? new List<Renderer>();
                 float timeScale = Time.timeScale;
                 Time.timeScale = 0f;
+                List<Renderer> hiddenPlayer = null, hiddenZombies = null, hiddenTier = null;
                 try
                 {
                     yield return null;
                     Color32[] full = Pixels(cam, Path.Combine(_outDir, "readability-r" + r.round.ToString("D2") + "-full.png"));
-                    SetEnabled(playerRenderers, false);
+                    hiddenPlayer = Hide(playerRenderers);
                     yield return null;
                     Color32[] noPlayer = Pixels(cam, null);
-                    SetEnabled(playerRenderers, true);
-                    SetEnabled(zombieRenderers, false);
+                    Show(hiddenPlayer);
+                    hiddenZombies = Hide(zombieRenderers);
                     yield return null;
                     Color32[] noZombies = Pixels(cam, Path.Combine(_outDir, "readability-r" + r.round.ToString("D2") + "-nozombies.png"));
-                    SetEnabled(zombieRenderers, true);
+                    Show(hiddenZombies);
                     yield return null;
+                    r.playerLod = LodState(rig);
+                    r.shadowsNote = "masks = renderer on/off difference (Diff > 24) → cast shadows of the hidden body are inside the mask; ring = 4–10 px outside the mask (shadow pixels excluded from the ring)";
 
-                    bool[] playerMask = Diff(full, noPlayer);
-                    bool[] zombieMask = Diff(full, noZombies);
+                    // WP-038G: the DEC-077 figure mask is shared with DD.Art (ReadabilityThresholds.FigureDiff — difference above
+                    // FigureDiffThreshold that is not a uniform darkening; cast shadow / SSAO stays out of the body). The share the
+                    // plain difference would have added is reported so the two readings stay comparable with WP-016/WP-026 numbers.
+                    bool[] playerMask = ReadabilityThresholds.FigureDiff(full, noPlayer);
+                    bool[] zombieMask = ReadabilityThresholds.FigureDiff(full, noZombies);
+                    r.zombieShadowShare = ShadowShare(Diff(full, noZombies), zombieMask);
+                    r.playerShadowShare = ShadowShare(Diff(full, noPlayer), playerMask);
                     r.playerPixels = Count(playerMask);
                     r.zombiePixels = Count(zombieMask);
                     bool[] zombieRing = Ring(zombieMask, playerMask, RingInner, RingOuter);
@@ -353,6 +411,52 @@ namespace DD.Prototype.Qa
                     r.zombieEnvDeltaVMean = Contrast(zombieLuma, zombieRingLuma);            // official crowd/environment reading
                     r.zombieEnvDeltaVMin = Mathf.Abs(MeanValue(full, zombieMask) - MeanValue(full, zombieRing));   // raw ΔV (report)
                     r.zombieMeanV = zombieLuma;
+
+                    // WP-036 tier reading: hide one tier at a time → its mask; compare with the environment ring and with the
+                    // Standard bodies (the remainder of the crowd mask once every non-Standard tier is removed)
+                    r.tierEnvContrast = new float[] { -1f, -1f, -1f, -1f };
+                    r.tierVsStandardContrast = new float[] { -1f, -1f, -1f, -1f };
+                    r.tierVsStandardDeltaV = new float[] { -1f, -1f, -1f, -1f };
+                    r.tierPixels = new int[4];
+                    if (r.tierRenderers != null)
+                    {
+                        bool[] standardMask = (bool[])zombieMask.Clone();
+                        var tierMasks = new bool[4][];
+                        for (int t = 1; t < 4; t++)
+                        {
+                            if (r.tierRenderers[t] == null || r.tierRenderers[t].Count == 0) continue;
+                            // back-to-back pair per tier (shader time keeps running at timeScale 0 — foliage sway would otherwise
+                            // leak into the mask), then clipped to the crowd mask: a tier body is by definition part of the crowd
+                            Color32[] fullT = Pixels(cam, null);
+                            hiddenTier = Hide(r.tierRenderers[t]);
+                            yield return null;
+                            Color32[] noTier = Pixels(cam, null);
+                            Show(hiddenTier);
+                            yield return null;
+                            tierMasks[t] = ReadabilityThresholds.FigureDiff(fullT, noTier);
+                            for (int i = 0; i < tierMasks[t].Length; i++) if (!zombieMask[i]) tierMasks[t][i] = false;
+                            for (int i = 0; i < standardMask.Length; i++) if (tierMasks[t][i]) standardMask[i] = false;
+                        }
+
+                        float standardLuma = MeanLuma(full, standardMask);
+                        float standardValue = MeanValue(full, standardMask);
+                        int standardPixels = Count(standardMask);
+                        for (int t = 1; t < 4; t++)
+                        {
+                            if (tierMasks[t] == null) continue;
+                            r.tierPixels[t] = Count(tierMasks[t]);
+                            if (r.tierPixels[t] == 0) continue;
+                            bool[] tierRing = Ring(tierMasks[t], zombieMask, RingInner, RingOuter);   // environment only: other bodies excluded
+                            for (int i = 0; i < tierRing.Length; i++) if (playerMask[i]) tierRing[i] = false;
+                            float tierLuma = MeanLuma(full, tierMasks[t]);
+                            r.tierEnvContrast[t] = Contrast(tierLuma, MeanLuma(full, tierRing));
+                            r.tierVsStandardContrast[t] = standardPixels > 0 ? Contrast(tierLuma, standardLuma) : -1f;
+                            r.tierVsStandardDeltaV[t] = standardPixels > 0 ? Mathf.Abs(MeanValue(full, tierMasks[t]) - standardValue) : -1f;
+                        }
+                        r.tierPixels[0] = standardPixels;
+                        if (r.tierArmouredShare != null && r.tierOnScreen != null)
+                            for (int t = 0; t < 4; t++) r.tierArmouredShare[t] = r.tierOnScreen[t] > 0 ? r.tierArmouredShare[t] / r.tierOnScreen[t] : -1f;
+                    }
 
                     bool[] bodyMask = Band(playerMask, 0.20f, 0.60f, 0.20f, 0.80f);
                     bool[] playerRing = Ring(playerMask, zombieMask, RingInner, RingOuter);
@@ -364,6 +468,7 @@ namespace DD.Prototype.Qa
                         float figure = MeanLuma(frame, playerMask);
                         float body = MeanLuma(frame, bodyMask);
                         float ring = MeanLuma(frame, playerRing);
+                        r.playerFigureLuma[s] = figure; r.playerRingLuma[s] = ring;
                         r.playerEnvDeltaV[s] = r.playerPixels > 0 ? Contrast(figure, ring) : -1f;
                         r.playerBodyContrast[s] = r.playerPixels > 0 ? Contrast(body, ring) : -1f;
                         r.playerZombieDeltaV[s] = r.playerPixels > 0 && r.zombiePixels > 0 ? Contrast(body, zombieLuma) : -1f;
@@ -371,8 +476,9 @@ namespace DD.Prototype.Qa
                 }
                 finally
                 {
-                    SetEnabled(playerRenderers, true);
-                    SetEnabled(zombieRenderers, true);
+                    Show(hiddenPlayer);
+                    Show(hiddenZombies);
+                    Show(hiddenTier);
                     rig.ApplySkin(original);
                     Time.timeScale = timeScale;
                 }
@@ -395,16 +501,51 @@ namespace DD.Prototype.Qa
                 r.pass = occl && zEnv && pEnv && pZ && r.alive > 0 && r.zombiePixels > 0;
                 r.note = "alive " + r.alive + " near " + r.nearPlayer + " onScreen " + r.onScreen + " occluded>50% " + r.occludedOverHalf +
                          " px player/zombie " + r.playerPixels + "/" + r.zombiePixels +
-                         " zombieCrowd contrast " + QaArgs.F(r.zombieEnvDeltaVMean, 3) + " (ΔV " + QaArgs.F(r.zombieEnvDeltaVMin, 3) + ")" +
+                         " zombieCrowd contrast " + QaArgs.F(r.zombieEnvDeltaVMean, 3) + " (ΔV " + QaArgs.F(r.zombieEnvDeltaVMin, 3) + ", shadow/AO dropped " + QaArgs.F(r.zombieShadowShare * 100f, 0) + " %)" +
                          " player figure " + Join(r.playerEnvDeltaV) + " body " + Join(r.playerBodyContrast) + " player↔zombie " + Join(r.playerZombieDeltaV) +
                          " tiers " + r.standard + "/" + r.special + "/" + r.elite + "/" + r.ultra +
                          " armour H/B/L/bare " + r.helmet + "/" + r.body + "/" + r.leg + "/" + r.bare +
-                         " cw2 " + r.fadedGarments + "/" + r.garments + " T7 " + r.minoCape + " H0 " + r.bald;
+                         " cw2 " + r.fadedGarments + "/" + r.garments + " T7 " + r.minoCape + " H0 " + r.bald +
+                         (r.tierEnvContrast != null ? " tierEnv S/E/U " + QaArgs.F(r.tierEnvContrast[1], 3) + "/" + QaArgs.F(r.tierEnvContrast[2], 3) + "/" + QaArgs.F(r.tierEnvContrast[3], 3) +
+                         " tierVsStd " + QaArgs.F(r.tierVsStandardContrast[1], 3) + "/" + QaArgs.F(r.tierVsStandardContrast[2], 3) + "/" + QaArgs.F(r.tierVsStandardContrast[3], 3) +
+                         " (ΔV " + QaArgs.F(r.tierVsStandardDeltaV[1], 3) + "/" + QaArgs.F(r.tierVsStandardDeltaV[2], 3) + "/" + QaArgs.F(r.tierVsStandardDeltaV[3], 3) + ")" : "");
             }
 
             // ---- pixel helpers (CharacterTests.Okunabilirlik parity: Diff > 24, ring 4–10 px, luma 0.2126/0.7152/0.0722)
 
             private static float Contrast(float a, float b) => Mathf.Abs(a - b) / Mathf.Max(a + b, 1e-3f);
+
+            /// <summary>
+            /// Removes shadow-like pixels from a difference mask: same chroma direction as the frame without the body
+            /// (cosine &gt; 0.995) and darker (luma ratio 0.35–0.97). Returns the share of the mask that was removed.
+            /// </summary>
+            private static float ShadowShare(bool[] raw, bool[] figure)
+            {
+                int total = 0, kept = 0;
+                for (int i = 0; i < raw.Length && i < figure.Length; i++) { if (raw[i]) { total++; if (figure[i]) kept++; } }
+                return total > 0 ? 1f - (float)kept / total : 0f;
+            }
+
+            private static float StripShadowLike(bool[] mask, Color32[] with, Color32[] without)
+            {
+                int total = 0, removed = 0;
+                for (int i = 0; i < mask.Length && i < with.Length && i < without.Length; i++)
+                {
+                    if (!mask[i]) continue;
+                    total++;
+                    Color32 a = with[i], b = without[i];
+                    float la = Luma(a), lb = Luma(b);
+                    if (lb < 1e-3f) continue;
+                    float ratio = la / lb;
+                    if (ratio > 0.97f || ratio < 0.35f) continue;
+                    float dot = a.r * (float)b.r + a.g * (float)b.g + a.b * (float)b.b;
+                    float na = Mathf.Sqrt(a.r * (float)a.r + a.g * (float)a.g + a.b * (float)a.b);
+                    float nb = Mathf.Sqrt(b.r * (float)b.r + b.g * (float)b.g + b.b * (float)b.b);
+                    if (na < 1e-3f || nb < 1e-3f) continue;
+                    if (dot / (na * nb) > 0.995f) { mask[i] = false; removed++; }
+                }
+                return total > 0 ? (float)removed / total : 0f;
+            }
 
             private Color32[] Pixels(Camera cam, string png)
             {
@@ -421,9 +562,43 @@ namespace DD.Prototype.Qa
                 }
             }
 
-            private static void SetEnabled(IEnumerable<Renderer> renderers, bool on)
+            /// <summary>
+            /// Hides the renderers that are currently visible and returns exactly that set, so <see cref="Show"/> never switches on a
+            /// renderer the game keeps disabled (P-06 finding on run1: the player's hidden M1 capsule body was re-enabled by a blanket
+            /// enabled=true and the skin readings measured the capsule palette instead of the AP-006 albedo).
+            /// </summary>
+            private static List<Renderer> Hide(IEnumerable<Renderer> renderers)
             {
-                foreach (Renderer rr in renderers) if (rr != null) rr.enabled = on;
+                var hidden = new List<Renderer>();
+                foreach (Renderer rr in renderers)
+                {
+                    if (rr != null && rr.enabled) { rr.enabled = false; hidden.Add(rr); }
+                }
+                return hidden;
+            }
+
+            private static void Show(List<Renderer> hidden)
+            {
+                if (hidden == null) return;
+                foreach (Renderer rr in hidden) if (rr != null) rr.enabled = true;
+                hidden.Clear();
+            }
+
+            private static string LodState(Component root)
+            {
+                if (root == null) return "n/a";
+                LODGroup g = root.GetComponentInChildren<LODGroup>(true);
+                if (g == null) return "noLODGroup";
+                LOD[] lods = g.GetLODs();
+                for (int i = 0; i < lods.Length; i++)
+                {
+                    for (int k = 0; k < lods[i].renderers.Length; k++)
+                    {
+                        Renderer rr = lods[i].renderers[k];
+                        if (rr != null && rr.enabled && rr.isVisible) return "LOD" + i;
+                    }
+                }
+                return "LOD?";
             }
 
             // WP-038G (S-05, parity with CharacterTests.Okunabilirlik since WP-038E): the DEC-077 figure mask excludes the
@@ -489,6 +664,8 @@ namespace DD.Prototype.Qa
                     if (y >= 0 && y < h && x >= 0 && x < w) band[y * w + x] = m[y * w + x];
                 return band;
             }
+
+            private static float Luma(Color32 c) => (float)(0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b);
 
             public static float MeanLuma(Color32[] px, bool[] m)
             {
@@ -630,11 +807,21 @@ namespace DD.Prototype.Qa
                     sb.Append(r.pass ? "PASS " : "FAIL ").Append("round-").Append(r.round.ToString("D2")).Append(" | ").Append(r.note).Append('\n');
                     string src = "readability-r" + r.round.ToString("D2") + ".json";
                     report.Add("readability.r" + r.round + ".occlusion", r.occludedOverHalf == 0 && r.alive > 0, r.occludedOverHalf + "/" + r.onScreen + " on screen", "== 0 over " + QaArgs.F(ReadabilityThresholds.OcclusionRatioMax * 100f, 0) + " %", "capsule 5-ray occlusion", src);
-                    report.Add("readability.r" + r.round + ".zombieCrowdContrast", r.zombiePixels == 0 || r.zombieEnvDeltaVMean >= ReadabilityThresholds.CapsuleContrastMin, QaArgs.F(r.zombieEnvDeltaVMean, 3) + " (ΔV " + QaArgs.F(r.zombieEnvDeltaVMin, 3) + ")", ">= " + QaArgs.F(ReadabilityThresholds.CapsuleContrastMin) + " (WP-016 method)", r.onScreen + " on screen, " + r.zombiePixels + " px", src);
+                    report.Add("readability.r" + r.round + ".zombieCrowdContrast", r.zombiePixels == 0 || r.zombieEnvDeltaVMean >= ReadabilityThresholds.CapsuleContrastMin, QaArgs.F(r.zombieEnvDeltaVMean, 3) + " (ΔV " + QaArgs.F(r.zombieEnvDeltaVMin, 3) + ")", ">= " + QaArgs.F(ReadabilityThresholds.CapsuleContrastMin) + " (WP-016 method)", r.onScreen + " on screen, " + r.zombiePixels + " px, FigureDiff (WP-038G shared rule) dropped " + QaArgs.F(r.zombieShadowShare * 100f, 0) + " % shadow/AO px", src);
                     for (int s = 0; r.playerEnvDeltaV != null && s < r.playerEnvDeltaV.Length; s++)
                     {
-                        report.Add("readability.r" + r.round + ".playerEnvContrast.skin" + _skins[s], r.playerEnvDeltaV[s] >= ReadabilityThresholds.CapsuleContrastMin, QaArgs.F(r.playerEnvDeltaV[s], 3) + " (body " + QaArgs.F(r.playerBodyContrast != null ? r.playerBodyContrast[s] : -1f, 3) + ")", ">= " + QaArgs.F(ReadabilityThresholds.CapsuleContrastMin), "", src);
+                        report.Add("readability.r" + r.round + ".playerEnvContrast.skin" + _skins[s], r.playerEnvDeltaV[s] >= ReadabilityThresholds.CapsuleContrastMin, QaArgs.F(r.playerEnvDeltaV[s], 3) + " (body " + QaArgs.F(r.playerBodyContrast != null ? r.playerBodyContrast[s] : -1f, 3) + ")", ">= " + QaArgs.F(ReadabilityThresholds.CapsuleContrastMin), "luma figure " + QaArgs.F(r.playerFigureLuma != null ? r.playerFigureLuma[s] : -1f, 3) + " / ring " + QaArgs.F(r.playerRingLuma != null ? r.playerRingLuma[s] : -1f, 3) + ", " + r.playerLod + ", shadows in mask", src);
                         report.Add("readability.r" + r.round + ".playerZombieContrast.skin" + _skins[s], r.playerZombieDeltaV[s] >= ReadabilityThresholds.CapsuleContrastMin, QaArgs.F(r.playerZombieDeltaV[s], 3), ">= " + QaArgs.F(ReadabilityThresholds.CapsuleContrastMin), "", src);
+                    }
+
+                    // WP-036 tier reading (DEC-077 in-engine): environment contrast is the same DEC-077 rule; tier-vs-Standard is report-only
+                    string[] tierNames = { "Standard", "Special", "Elite", "Ultra" };
+                    for (int t = 1; r.tierEnvContrast != null && t < 4; t++)
+                    {
+                        if (r.tierPixels == null || r.tierPixels[t] <= 0) continue;
+                        string who = tierNames[t] + " ×" + (r.tierOnScreen != null ? r.tierOnScreen[t] : 0) + " on screen, " + r.tierPixels[t] + " px, armoured " + QaArgs.F(r.tierArmouredShare != null ? r.tierArmouredShare[t] * 100f : -1f, 0) + " %";
+                        report.Add("readability.r" + r.round + ".tierEnvContrast." + tierNames[t], r.tierEnvContrast[t] >= ReadabilityThresholds.CapsuleContrastMin, QaArgs.F(r.tierEnvContrast[t], 3), ">= " + QaArgs.F(ReadabilityThresholds.CapsuleContrastMin), who, src);
+                        report.Add("readability.r" + r.round + ".tierVsStandard." + tierNames[t], true, QaArgs.F(r.tierVsStandardContrast[t], 3) + " (ΔV " + QaArgs.F(r.tierVsStandardDeltaV[t], 3) + ")", "report only (AP-014 Blender ΔV min 0.064)", "Standard " + (r.tierPixels[0]) + " px", src);
                     }
                 }
 
