@@ -11,6 +11,8 @@ using NUnit.Framework;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.TestTools;
+using DD.Prototype.Navigation;
+using DD.Prototype.PlayerSystem;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
 namespace DD.Prototype.Tests.PlayMode
@@ -290,6 +292,98 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             UnityEngine.Profiling.Profiler.enabled = profilerWas;
+            Debug.Log(sb.ToString());
+        }
+        // ------------------------------------------------------------------ WP-053D · K1 "PlayerRig 2 329 B/kare"
+        // S-10's type scan disables PlayerRig, which has no Update: OnDisable unregisters the rig, RunPlayerBinding
+        // clears EnemyTargeting / CrowdService, and every player-dependent path (40 chasing bodies, HUD, threat,
+        // audio anchor) goes idle. So the number is the PLAYER-DEPENDENT share of the frame, not the rig's own.
+        // This test splits that share: (A) zombies lose the player while everything else keeps it, (B) S-10's rig
+        // disable, (C) rig disabled but the zombies re-targeted. Found: A == B and C == base, i.e. the whole share is
+        // the chase path — 80 B per allocation = the ControllerColliderHit object of the WP-054 OnControllerColliderHit
+        // message (bodies pressing on each other on the way to the player), closed by WP-055E (S-03). After it, B
+        // saves ≈ 0 against base40. Log lines only, no budget assert (a 40-body crowd is not deterministic).
+        private static IEnumerator Ortalama(ProfilerRecorder bytes, ProfilerRecorder count, int frames, System.Text.StringBuilder sb, string etiket)
+        {
+            long b = 0, c = 0;
+            yield return Sample(bytes, count, frames, (x, y) => { b = x; c = y; });
+            sb.Append("[DD-K1] ").Append(etiket).Append(" avg count=").Append(c).Append(" bytes=").Append(b).Append('\n');
+        }
+
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator AyirmaKaynagi_KirkZombi_OyuncuBagimliPay_CagriYigini()
+        {
+            _s = new SpecialWeaponSahne();
+            yield return _s.Kur();
+            LogAssert.ignoreFailingMessages = true;
+            int fpsWas = Application.targetFrameRate;
+            Application.targetFrameRate = -1;   // WP-053C: a capped frame rate zeroes ProfilerRecorder.LastValue
+            bool profilerWas = UnityEngine.Profiling.Profiler.enabled;
+            UnityEngine.Profiling.Profiler.enabled = true;
+            var sb = new System.Text.StringBuilder();
+
+            // 40 bodies (DEC-023 ceiling) on a ring 6–10 m out, mixed tiers like a round-5 wave; 3 s settle so they chase.
+            PlayerRig rig = _s.Rig;
+            var zombiler = new List<ZombieEnemy>();
+            for (int i = 0; i < 40; i++)
+            {
+                float a = i * (Mathf.PI * 2f / 40f);
+                float r = 6f + (i % 5);
+                Vector3 p = _s.Zemin(Mathf.Cos(a) * r, Mathf.Sin(a) * r);
+                EnemyTier tier = i % 10 == 9 ? EnemyTier.Special : i % 10 == 4 ? EnemyTier.Elite : EnemyTier.Standard;
+                Vector3 d = rig.transform.position - p; d.y = 0f;
+                ZombieEnemy z = EnemyFactory.Spawn(tier, 5, p, Quaternion.LookRotation(d.normalized, Vector3.up));
+                if (z != null) zombiler.Add(z);
+            }
+
+            yield return new WaitForSeconds(3f);
+            int alive = 0;
+            foreach (ZombieEnemy z in zombiler) if (z != null && z.IsAlive) alive++;
+            sb.Append("[DD-K1] spawned=").Append(zombiler.Count).Append(" alive=").Append(alive).Append(" live=").Append(ZombieEnemy.Live.Count).Append('\n');
+
+            using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
+            using (var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count"))
+            {
+                yield return null;
+                yield return null;
+                var yem = new object[300];
+                for (int i = 0; i < yem.Length; i++) yem[i] = new byte[80];
+                yield return null;
+                sb.Append("[DD-K1] control count=").Append(count.LastValue).Append(" bytes=").Append(bytes.LastValue).Append('\n');
+                GC.KeepAlive(yem);
+
+                yield return Ortalama(bytes, count, 6, sb, "base40");
+
+                // (A) zombies lose the player, everything else keeps it.
+                float radius = CrowdService.PlayerRadius;
+                Transform t = rig.transform;
+                EnemyTargeting.Clear();
+                CrowdService.SetPlayer(null, 0f);
+                yield return null;
+                yield return Ortalama(bytes, count, 6, sb, "A targetingCleared");
+                CrowdService.SetPlayer(t, radius);
+                EnemyTargeting.SetPlayer(t);
+                yield return null;
+                yield return Ortalama(bytes, count, 6, sb, "A' targetingRestored");
+
+                // (B) S-10's move: PlayerRig disabled (registry unbinds everything).
+                rig.enabled = false;
+                yield return null;
+                yield return Ortalama(bytes, count, 6, sb, "B rigDisabled");
+
+                // (C) rig still disabled, but the zombies get their target back: what is left is the registry-only share.
+                CrowdService.SetPlayer(t, radius);
+                EnemyTargeting.SetPlayer(t);
+                yield return null;
+                yield return Ortalama(bytes, count, 6, sb, "C rigDisabled+targetingRebound");
+                rig.enabled = true;
+                yield return null;
+                yield return Ortalama(bytes, count, 6, sb, "base40 again");
+            }
+
+            UnityEngine.Profiling.Profiler.enabled = profilerWas;
+            Application.targetFrameRate = fpsWas;
             Debug.Log(sb.ToString());
         }
     }
