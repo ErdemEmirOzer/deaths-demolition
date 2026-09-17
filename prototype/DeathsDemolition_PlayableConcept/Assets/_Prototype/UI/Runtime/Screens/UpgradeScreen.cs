@@ -216,7 +216,7 @@ namespace DD.Prototype.UI
             _cardsTop = BuildHeader(
                 "ROUND COMPLETE",
                 "SPEND YOUR GOLD",
-                "Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round.");
+                IntroSentence());
 
             _cardsTop += (int)UiSpace.XXL;
 
@@ -1198,7 +1198,9 @@ namespace DD.Prototype.UI
                 SetChip(slot, "OFFER LOCKED", UiColor.SurfaceRaised, UiColor.TextSecondary);
                 slot.Price.color = UiTokens.Get(UiColor.TextMuted);
                 slot.Coin.color = UiTokens.Get(UiColor.TextMuted);
-                slot.Sentence.text = "One upgrade per round. Continue to the next round.";
+                slot.Sentence.text = PicksPerRound > 1
+                    ? "All picks for this round are used. Continue to the next round."
+                    : "One upgrade per round. Continue to the next round.";
                 slot.Sentence.color = UiTokens.Get(UiColor.TextSecondary);
                 return;
             }
@@ -1293,7 +1295,7 @@ namespace DD.Prototype.UI
             {
                 // The round's purchase is made: every remaining card is locked, not
                 // "unaffordable" - say the true thing (probe screenshot 06 caught this).
-                _goldNote.text = "Upgrade applied. Continue when ready.";
+                _goldNote.text = shop.PurchasesThisRound > 1 ? "Upgrades applied. Continue when ready." : "Upgrade applied. Continue when ready.";
                 _goldNote.color = UiTokens.Get(UiColor.TextMuted);
                 return;
             }
@@ -1309,8 +1311,37 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            _goldNote.text = "Choose one upgrade, or reroll once, then continue.";
+            _goldNote.text = PicksPerRound > 1
+                ? (shop.PurchasesThisRound > 0
+                    ? "Choose another upgrade, or continue."
+                    : "Choose up to " + Words(PicksPerRound) + " upgrades, or reroll once first, then continue.")
+                : "Choose one upgrade, or reroll once, then continue.";
             _goldNote.color = UiTokens.Get(UiColor.TextMuted);
+        }
+
+        /// <summary>
+        /// WP-022L (Ö-6a, DEC-087): picks per round-end screen. Read from the policy, not
+        /// cached, so the S-04 value is the one every sentence on this screen follows.
+        /// </summary>
+        private static int PicksPerRound => UpgradeOfferPolicy.MaxPurchasesPerRound;
+
+        private static string IntroSentence()
+        {
+            return PicksPerRound > 1
+                ? "Buy up to " + Words(PicksPerRound) + " upgrades this round, or reroll the offer once before the first. Unspent gold carries into the next round."
+                : "Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round.";
+        }
+
+        /// <summary>Small counts read as words in a sentence ("up to two upgrades"); larger ones as digits.</summary>
+        private static string Words(int n)
+        {
+            switch (n)
+            {
+                case 1: return "one";
+                case 2: return "two";
+                case 3: return "three";
+                default: return n.ToString();
+            }
         }
 
         private void RefreshFooter(int gold, int purchases)
@@ -1331,7 +1362,7 @@ namespace DD.Prototype.UI
             // WP-022H (Ö-6a readiness): the wording follows UpgradeOfferPolicy.MaxPurchasesPerRound
             // and the shop's own lock, so a second pick (when S-04 raises the policy) is
             // announced here without a UI change; with the policy at 1 the text is unchanged.
-            int max = UpgradeOfferPolicy.MaxPurchasesPerRound;
+            int max = PicksPerRound;
             RoundUpgradeShop shop = Shop;
             bool locked = shop == null || shop.IsLocked;
             if (purchases > 0 && max > 1 && !locked)
@@ -1485,7 +1516,9 @@ namespace DD.Prototype.UI
                 case UpgradePurchaseResult.AlreadyPurchased:
                     return "You already own that card. Nothing was spent.";
                 case UpgradePurchaseResult.PurchaseLimitReached:
-                    return "One upgrade per round. The offer is locked; nothing was spent.";
+                    return PicksPerRound > 1
+                        ? "All " + Words(PicksPerRound) + " picks for this round are used. The offer is locked; nothing was spent."
+                        : "One upgrade per round. The offer is locked; nothing was spent.";
                 case UpgradePurchaseResult.OfferUnavailable:
                     return "There is no valid offer this round. Nothing was spent.";
                 case UpgradePurchaseResult.ShopClosed:
