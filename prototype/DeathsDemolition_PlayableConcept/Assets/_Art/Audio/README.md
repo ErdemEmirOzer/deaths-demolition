@@ -78,3 +78,7 @@
 ## WP-060B — AP-011 v011 EQ pass (0 credits)
 
 Fable listening-round fix #8 applied offline on the shipped files (`asset-production/AP-011/tools/ap011_eq_v011.py`, then `ap011_manifest.py … ap011-v011`): fire family Rifle/Smg/Shotgun high-shelf +2 dB @ 4 kHz + low-shelf −1.5 dB @ 120 Hz; tier vocals Zombie{Attack,Hit,Death}×{Standard,Special,Elite,Ultra} peak +1.5 dB @ 2.5 kHz Q 1; MusicResults high-shelf +3 dB @ 3 kHz + 2 dB @ 8 kHz (loop filtered with the tail primed, seam kept). Every file re-normalised to its manifest target / ceiling; 44 files, 16 identities; manifest `ap011-v011` (181 ids / 417 files), provenance carries `EQ v011`. Catalog rebuilt (manifest SHA).
+
+## WP-060C — AP-011 v012 produced takes (credit list P1 + P2, 23.1 cr real)
+
+Seven Seed Audio renders (ledger 138–144; 3.0–3.6 cr each on the transaction record, cap ≤ 25) replace derived identities with produced takes: `SwFire{Kagura,Ofuda,Tide}` (the Specials' own fire voices), `ZombieWindupSpecial` + `ZombieAttackSpecial` (one pair take), `ZombieDeathSpecial`, `ZombieAggroSpecial`, `ZombieAggroElite`. Windows from the 100 ms envelope grid (`asset-production/AP-011/tools/ap011_run_v012.py`; Seed Audio ran the bell strikes together, so the strikes are cut by hand), −18 LUFS / −1.5 dBTP (bell and talisman throws peak-limited at −21). Routing kept from the replaced entries. Manifest `ap011-v012` = 181 ids / 419 files; catalog rebuilt. Not rendered (cap): P3 ZombieReact* and P4–P7 — prompts ready in `v012/render_prompts.json`.

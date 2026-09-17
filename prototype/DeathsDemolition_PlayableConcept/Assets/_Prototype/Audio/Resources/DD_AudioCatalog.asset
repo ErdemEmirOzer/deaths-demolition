@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v011
-  _sourceHash: 9fcff3f95c7bd3339ba53161090347ff1f74843a809c5d13c1d2b53503b12c66
+  _manifestVersion: ap011-v012
+  _sourceHash: 87c8b073c22f7d4b61a038fe496e175bc473c81263ccfe877df3244be730b943
   _entries:
   - Sound: 10
     Clips:
@@ -1262,18 +1262,15 @@ MonoBehaviour:
     Clips:
     - {fileID: 8300000, guid: cbe1117f2c3e648c197c4dbb59254656, type: 3}
     - {fileID: 8300000, guid: c91d1f0d60d1642bdaf71cee9ee209f1, type: 3}
-    - {fileID: 8300000, guid: 933fa06d5948c4c73a742f5bc7b3d8da, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -4.36
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieIdle_03.wav,
-      exports/ZombieWindupStandard_01.wav, noise:pink
-    NoiseFloorDb: -68.9
-    DcDb: -181.5
+    TruePeakDb: -5.29
+    Provenance: "seed_audio job c7a8f84f (3.6 cr) \xB7 zombie_special_windup_attack"
+    NoiseFloorDb: -79.5
+    DcDb: -134.3
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v005, no credits): ZombieWindupStandard_01.wav@0ms -4dB +3st
-      + noise:pink@0ms -14dB + ZombieIdle_03.wav@50ms -10dB +4st'
+    Layers: single take
   - Sound: 221
     Clips:
     - {fileID: 8300000, guid: 6ce7eb1c0cf2d455ea9172e3022dd994, type: 3}
@@ -1281,16 +1278,13 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f7fa3887b36ff436492e777ed46a82d5, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -6.23
-    Provenance: "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieAttackStandard_01.wav,
-      noise:pink, noise:white \xB7 EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz
-      Q 1"
-    NoiseFloorDb: -84.4
-    DcDb: -173.9
+    TruePeakDb: -4.17
+    Provenance: "seed_audio job c7a8f84f (3.6 cr) \xB7 zombie_special_windup_attack"
+    NoiseFloorDb: -79.5
+    DcDb: -144
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v005, no credits): ZombieAttackStandard_01.wav@0ms -4dB +3st
-      + noise:white@0ms -15dB + noise:pink@0ms -14dB'
+    Layers: single take
   - Sound: 222
     Clips:
     - {fileID: 8300000, guid: 7bb8b9e815adc49beaaf3b7a454b4263, type: 3}
@@ -1313,17 +1307,13 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 2906ed17f382c434ea0ae06ee4436acc, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -3.61
-    Provenance: "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieDeathStandard_02.wav,
-      exports/ZombieIdle_01.wav, exports/ZombieStepLight_02.wav, noise:pink \xB7
-      EQ v011 (WP-060B, 0 cr): peak +1.5 dB @ 2.5 kHz Q 1"
-    NoiseFloorDb: -94.8
-    DcDb: -198.3
+    TruePeakDb: -2.79
+    Provenance: "seed_audio job 3529b820 (3.4 cr) \xB7 zombie_special_death"
+    NoiseFloorDb: -92.5
+    DcDb: -117.2
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v005, no credits): ZombieDeathStandard_02.wav@0ms -4dB +3st
-      + noise:pink@250ms -15dB + ZombieIdle_01.wav@400ms -11dB +5st + ZombieStepLight_02.wav@800ms
-      -9dB -3st'
+    Layers: single take
   - Sound: 224
     Clips:
     - {fileID: 8300000, guid: 9e56ccc2843b54ef994521fa179e57c2, type: 3}
@@ -1394,17 +1384,16 @@ MonoBehaviour:
     - {fileID: 8300000, guid: d1505855ace724ebca401e2096fee281, type: 3}
     - {fileID: 8300000, guid: 81009f223902c4cf99c6b29901ea99fb, type: 3}
     - {fileID: 8300000, guid: 8780a3f8e4760470a974c8c8ceff5240, type: 3}
+    - {fileID: 8300000, guid: ddf8e955ebc8c4c81a6f6fb4f02e217c, type: 3}
     Loop: 0
-    Lufs: -19.18
+    Lufs: -18
     TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieHitStandard_03.wav,
-      exports/ZombieWindupStandard_03.wav, noise:white
-    NoiseFloorDb: -68.9
-    DcDb: -192.8
+    Provenance: "seed_audio job 56913a7c (3.0 cr) \xB7 zombie_special_aggro"
+    NoiseFloorDb: -83.1
+    DcDb: -147.1
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v005, no credits): ZombieWindupStandard_03.wav@0ms -4dB +4st
-      + noise:white@0ms -14dB + ZombieHitStandard_03.wav@0ms -13dB +6st'
+    Layers: single take
   - Sound: 229
     Clips:
     - {fileID: 8300000, guid: b087fc97058ea42f58fdeada95649bb3, type: 3}
@@ -1412,15 +1401,13 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7badb87bce10e43c0bbff11c84ce165f, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -7.45
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieAttackElite_03.wav,
-      exports/ZombieHitElite_02.wav, tone:55,82@0.5
-    NoiseFloorDb: -75.2
-    DcDb: -131.1
+    TruePeakDb: -3.59
+    Provenance: "seed_audio job 3804e7de (3.4 cr) \xB7 zombie_elite_aggro"
+    NoiseFloorDb: -82.5
+    DcDb: -133.2
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v005, no credits): ZombieAttackElite_03.wav@0ms -4dB -1st +
-      ZombieHitElite_02.wav@0ms -7dB -4st + tone:55,82@0.5@0ms -20dB'
+    Layers: single take
   - Sound: 230
     Clips:
     - {fileID: 8300000, guid: f32a635d570b04f79ac0077cd316a398, type: 3}
@@ -2426,47 +2413,43 @@ MonoBehaviour:
     Clips:
     - {fileID: 8300000, guid: 9337db223538a4de081b58cfabff6c61, type: 3}
     - {fileID: 8300000, guid: be142b291d2114d9fa7f7272a68808bb, type: 3}
+    - {fileID: 8300000, guid: 5f1bbc6c3d7b2482d85d760614f59ce1, type: 3}
     Loop: 0
-    Lufs: -18
+    Lufs: -21.02
     TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav,
-      noise:pink
-    NoiseFloorDb: -68
-    DcDb: -142
+    Provenance: "seed_audio job 0559e66b (3.2 cr) \xB7 sw_fire_kagura"
+    NoiseFloorDb: -67.3
+    DcDb: -98.5
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v009, no credits): HudThreatStrong_01.wav@0ms 0dB +12st + HudThreatStrong_01.wav@45ms
-      -3dB +7st + HudThreatStrong_01.wav@90ms -6dB +12st + noise:pink@0ms -6dB'
+    Layers: single take
   - Sound: 311
     Clips:
     - {fileID: 8300000, guid: df7e6c9a4495140258c3b4932d2a87dd, type: 3}
     - {fileID: 8300000, guid: 125c9ca072e6d47ccb11288629808439, type: 3}
+    - {fileID: 8300000, guid: e8d2f4e08f162498dae91c0865bee0f3, type: 3}
     Loop: 0
-    Lufs: -22.18
+    Lufs: -21.4
     TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_01.wav,
-      exports/UiTransition_01.wav, tone:1200,1800@1.5
-    NoiseFloorDb: -77.6
-    DcDb: -170.5
+    Provenance: "seed_audio job 8e29491b (3.3 cr) \xB7 sw_fire_ofuda"
+    NoiseFloorDb: -72.7
+    DcDb: -120.2
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v009, no credits): ImpactPaper_01.wav@0ms 0dB +2st + UiTransition_01.wav@20ms
-      -6dB + tone:1200,1800@1.5@60ms -12dB'
+    Layers: single take
   - Sound: 312
     Clips:
     - {fileID: 8300000, guid: f69918b3972cc430b882e958bb9cd4ab, type: 3}
     - {fileID: 8300000, guid: bed6a2fc7057545cb9a479af1ae1bc2d, type: 3}
     Loop: 0
-    Lufs: -21.43
-    TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWater_01.wav,
-      exports/SwPickup_01.wav, exports/UiTransition_01.wav
-    NoiseFloorDb: -70.2
-    DcDb: -219.2
+    Lufs: -18
+    TruePeakDb: -2.33
+    Provenance: "seed_audio job 851b6be7 (3.2 cr) \xB7 sw_fire_tide"
+    NoiseFloorDb: -65
+    DcDb: -121.6
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v009, no credits): UiTransition_01.wav@0ms -5dB -2st + ImpactWater_01.wav@90ms
-      0dB +4st + SwPickup_01.wav@120ms -14dB'
+    Layers: single take
   - Sound: 313
     Clips:
     - {fileID: 8300000, guid: e02fa4a0cf8164e969fe14fe7b250de6, type: 3}
