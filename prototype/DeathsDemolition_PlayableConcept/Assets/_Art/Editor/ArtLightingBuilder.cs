@@ -53,6 +53,10 @@ namespace DD.Art.Pipeline.EditorTools
             // Same values as Assets/Settings/DD_GlobalVolumeProfile.asset (WorldAtmosphere.PostFx),
             // written through the same method, so the two profiles cannot drift.
             WorldAtmosphere.ApplyPostFx(profile);
+            // WP-029 (ADR-029-1): the look recipe as a user LUT on top of the WP-013 grade — the
+            // Lightroom recipe was applied to frames rendered WITH that grade, so nothing is
+            // applied twice. Absent LUT (before the user picked a recipe) = no Color Lookup override.
+            ApplyLookLut(profile);
             // profile.Add only creates the instance; without AddObjectToAsset the component is
             // not serialised (same rule PrototypeProjectSetup follows for the Run profile).
             for (int i = 0; i < profile.components.Count; i++)
@@ -72,6 +76,26 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Overcast profile " + (created ? "created" : "updated") + ": " + path + " (" +
                       profile.components.Count + " components)");
             return profile;
+        }
+
+        /// <summary>WP-029 · Color Lookup override: DD_Look_v1.png at full contribution when it exists, otherwise the override is removed.</summary>
+        public static bool ApplyLookLut(VolumeProfile profile)
+        {
+            var lut = AssetDatabase.LoadAssetAtPath<Texture2D>(LutBuilder.Look);
+            if (!profile.TryGet(out UnityEngine.Rendering.Universal.ColorLookup lookup))
+            {
+                if (lut == null) return false;
+                lookup = profile.Add<UnityEngine.Rendering.Universal.ColorLookup>();
+            }
+
+            lookup.texture.overrideState = true;
+            lookup.texture.value = lut;
+            lookup.contribution.overrideState = true;
+            lookup.contribution.value = lut != null ? 1f : 0f;
+            lookup.active = lut != null;
+            EditorUtility.SetDirty(lookup);
+            Debug.Log(LogPrefix + "Color Lookup " + (lut != null ? "= " + LutBuilder.Look + " (contribution 1)" : "inactive (no DD_Look_v1.png yet)"));
+            return lut != null;
         }
 
         /// <summary>

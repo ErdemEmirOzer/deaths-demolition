@@ -460,7 +460,7 @@ namespace DD.Art.Tests.EditMode
         {
             var profil = AssetDatabase.LoadAssetAtPath<VolumeProfile>(ArtLibraryPaths.OvercastVolumeProfile);
             Assert.IsNotNull(profil, "Profil yok: " + ArtLibraryPaths.OvercastVolumeProfile);
-            Assert.AreEqual(5, profil.components.Count, "Tonemapping/ColorAdjustments/WhiteBalance/Vignette/Bloom");
+            Assert.AreEqual(6, profil.components.Count, "Tonemapping/ColorAdjustments/WhiteBalance/Vignette/Bloom + ColorLookup (WP-029 look LUT)");
             foreach (VolumeComponent c in profil.components) Assert.AreEqual(ArtLibraryPaths.OvercastVolumeProfile, AssetDatabase.GetAssetPath(c), c.GetType().Name + " alt-varlık değil");
 
             var gok = AssetDatabase.LoadAssetAtPath<Material>(ArtLibraryPaths.SkyMaterial);

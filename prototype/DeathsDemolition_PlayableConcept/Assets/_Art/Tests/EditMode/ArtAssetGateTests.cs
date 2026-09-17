@@ -47,7 +47,9 @@ namespace DD.Art.Tests.EditMode
             var sonuc = new List<string>();
             foreach (string yol in Directory.GetFiles(ArtRoot, "*" + uzanti, SearchOption.AllDirectories))
             {
-                sonuc.Add(yol.Replace('\\', '/'));
+                string p = yol.Replace('\\', '/');
+                if (ArtImportContract.IsLutTexture(p)) continue;   // WP-029: LUT strips have their own contract (LutTests)
+                sonuc.Add(p);
             }
 
             sonuc.Sort(string.CompareOrdinal);

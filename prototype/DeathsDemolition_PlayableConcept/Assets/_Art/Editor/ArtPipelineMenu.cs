@@ -231,6 +231,34 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run Asset Budget: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-029 lighting & look
+
+        /// <summary>
+        /// WP-029 · Look pass without the bake: neutral LUT strips, the overcast profile (+ Color
+        /// Lookup when DD_Look_v1.png exists), renderer SSAO + shadow distance, Run.unity alignment.
+        /// Batch: <c>-executeMethod …RunLook</c>. The bake is <see cref="ArtLightingBake.BakeWorld"/> (tools/bake-lighting.sh).
+        /// </summary>
+        [MenuItem(MenuRoot + "Run Look (WP-029)", priority = 306)]
+        public static void RunLook()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run Look cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run Look: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Contract v1.2 environment models (lightmap UVs, calculated margin)", ReimportContractModels);
+            LibraryStep(2, "Neutral LUT strips (32 / 64)", LutBuilder.BuildNeutralStrips);
+            LibraryStep(3, "Overcast profile v2 (grade + Color Lookup)", () => ArtLightingBuilder.BuildOvercastProfile());
+            LibraryStep(4, "Renderer: SSAO feature + shadow distance", ArtLightingBake.ConfigureRenderer);
+            LibraryStep(5, "Align Run.unity (shared profile + sky)", ArtLightingBuilder.AlignRunScene);
+            LibraryStep(6, "Prepare World_AP005 for the bake (sun, probes, reflection probes, settings)", () => ArtLightingBake.PrepareWorld());
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run Look: done in " + Seconds(total) + " s.");
+        }
+
         // ------------------------------------------------------------ WP-017 world v2
 
         /// <summary>
@@ -325,6 +353,39 @@ namespace DD.Art.Pipeline.EditorTools
         /// Re-imports every contract texture whose importer no longer matches the contract
         /// (after a contract change the postprocessor only runs on the next import).
         /// </summary>
+        /// <summary>
+        /// WP-029 · Re-imports every environment model whose importer no longer matches Contract v1.2
+        /// (lightmap UV generation and the calculated chart margin — ADR-029-2). Characters have their
+        /// own contract and are left alone. Cheap when nothing is stale; part of <c>Run Look</c> and of
+        /// <see cref="ArtLightingBake.BakeWorld"/> so a margin change cannot be baked with stale UVs.
+        /// </summary>
+        [MenuItem(MenuRoot + "Reimport Contract Models", priority = 342)]
+        public static void ReimportContractModels()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:Model", new[] { ArtImportContract.ArtRoot });
+            int reimported = 0;
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                if (!ArtImportContract.IsContractModel(path) || ArtCharacterContract.IsCharacterModel(path))
+                {
+                    continue;
+                }
+
+                var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+                if (importer == null || ArtImportContract.ValidateModel(importer).Count == 0)
+                {
+                    continue;
+                }
+
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                reimported++;
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log(LogPrefix + "Reimport contract models: " + reimported + " of " + guids.Length + " re-imported.");
+        }
+
         [MenuItem(MenuRoot + "Reimport Contract Textures", priority = 341)]
         public static void ReimportContractTextures()
         {

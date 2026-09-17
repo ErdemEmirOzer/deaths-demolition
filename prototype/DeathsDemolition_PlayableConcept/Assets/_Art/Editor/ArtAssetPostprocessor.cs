@@ -19,7 +19,8 @@ namespace DD.Art.Pipeline.EditorTools
             // Bumping this re-imports every asset the postprocessor touches. It is tied to
             // the contract version so a contract change cannot leave stale artifacts.
             // 2: WP-015 texture class table (ADR-015-1). 3: WP-016 skinned characters (ADR-016-1). 4: WP-018 AP-009 clip events (ADR-018-1).
-            return 4;
+            // 5: WP-029 lightmap UVs on environment models (calculated chart margin) + LUT strips (ADR-029-1/2).
+            return 5;
         }
 
         private void OnPreprocessModel()
@@ -61,6 +62,17 @@ namespace DD.Art.Pipeline.EditorTools
 
         private void OnPreprocessTexture()
         {
+            // WP-029: LUT strips have their own rules (linear, uncompressed, no mips — ArtImportContract.ApplyLut).
+            if (ArtImportContract.IsLutTexture(assetPath))
+            {
+                if (ArtImportContract.ApplyLut((TextureImporter)assetImporter))
+                {
+                    Debug.Log("[ArtImportContract] LUT rules applied to " + assetPath);
+                }
+
+                return;
+            }
+
             // WP-019: AP-010 effect textures have their own rules (ArtVfxContract).
             if (ArtVfxContract.IsVfxTexture(assetPath))
             {

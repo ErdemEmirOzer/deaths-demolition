@@ -298,13 +298,29 @@ namespace DD.Prototype.World
 
         // ------------------------------------------------------------------ lighting
 
-        private static void ApplyLighting(Transform root)
-        {
-            var go = new GameObject("Sun (overcast spring afternoon)");
-            go.transform.SetParent(root, false);
-            go.transform.rotation = Quaternion.Euler(SunEuler.x, SunEuler.y, SunEuler.z);
+        /// <summary>WP-029: name of the Mixed-mode sun the world scene serialises for the lightmap bake (ArtLightingBake).</summary>
+        public const string BakedSunName = "Sun (baked, WP-029)";
 
-            Light light = go.AddComponent<Light>();
+        /// <summary>
+        /// WP-029 · A world scene that carries its own baked sun (Mixed: direct realtime with
+        /// shadows, indirect in the lightmaps and probes) is the one light; a second runtime sun
+        /// would double the direct term and shade the lightmapped world twice. Returns it, or null.
+        /// </summary>
+        public static Light FindBakedSun()
+        {
+            Light[] lights = UnityEngine.Object.FindObjectsOfType<Light>(true);
+            for (int i = 0; i < lights.Length; i++)
+            {
+                Light l = lights[i];
+                if (l != null && l.type == LightType.Directional && l.name == BakedSunName) return l;
+            }
+
+            return null;
+        }
+
+        /// <summary>The sun parameters every path uses (runtime sun and the baked sun the bake builder writes).</summary>
+        public static void ConfigureSun(Light light)
+        {
             light.type = LightType.Directional;
             light.color = SunColor;
             light.intensity = SunIntensity;
@@ -316,7 +332,24 @@ namespace DD.Prototype.World
             light.shadowBias = 0.06f;
             light.shadowNormalBias = 0.5f;
             light.shadowNearPlane = 0.2f;
+        }
 
+        private static void ApplyLighting(Transform root)
+        {
+            Light baked = FindBakedSun();
+            if (baked != null)
+            {
+                baked.enabled = true;
+                RenderSettings.sun = baked;
+                return;
+            }
+
+            var go = new GameObject("Sun (overcast spring afternoon)");
+            go.transform.SetParent(root, false);
+            go.transform.rotation = Quaternion.Euler(SunEuler.x, SunEuler.y, SunEuler.z);
+
+            Light light = go.AddComponent<Light>();
+            ConfigureSun(light);
             RenderSettings.sun = light;
         }
 

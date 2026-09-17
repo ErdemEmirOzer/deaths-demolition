@@ -123,6 +123,17 @@ Skinler yalnız kumaş rengini değiştirir; silüet değişmez (AP-006: 9 skin 
 | `DD_StyleRef_DEC076_gameplay_2k.png` (aynı model/ayar, sha `7f7d491e…`) | Oynanış kadrajı (20 m, −49°): ıslak taş döşeme, sıva+ahşap kafes duvar, toprak saksı+yosun+çalı, fener, yaprak; savaş menzilinde sis yok | §2.1 palet ve §7.1 nemli taş parlaması için ton/doku hedefi | Döşeme parlaması kılavuz kuralından daha parlak okunur (stone smoothness map ort. 0.43, ayna gibi asla — §2.5); sayı kılavuzundur |
 Kaynak/kredi kaydı: `wp-015/higgsfield/WP015-HF-ledger.json` — 2 üretim (1,5 + 1,5) + kullanıcı izniyle (2026-09-16) 2 adet 4K upscale (`bytedance_image_upscale`, 2 + 2; `DD_StyleRef_DEC076_{overview,gameplay}_4k.png`, 4096×2323) = 7,0 kredi; bakiye 608,14 → 569,64 (son adım diğer oturumların harcamasını da içerir; taban 330). Gök/bulut plakası ve stand-in zemin dokusu gerekmedi — gök düz gradyan, zemin üretim hero_earth materyali.
 
+### 5.2 Görünüm reçetesi — Look B "Islak Arduvaz" (kullanıcı kararı 2026-09-17, DEC-084 [S-02 WP-042 kaydı]; WP-029, ADR-029-1) `[kod Lighting/LUT/DD_Look_v1.recipe.json]`
+| Katman | Değer | Not |
+|---|---|---|
+| Kaynak | Adobe Lightroom API (Adobe MCP), 8 referans karesi (`LookReferenceTests`, oynanış grade'i **açık** = `post`) | 3 aday (A Sessiz Pus / B Islak Arduvaz / C Sakura Baharı) kontak sayfasıyla sunuldu; kullanıcı **B** |
+| Preset | `Creative - Cool Shadows & Warm Highlights` (split-tone: soğuk gölge, ılık ışık) | yalnız global ton/renk → LUT'a taşınır |
+| Ayarlar (preset sonrası) | gamma 0,94 · contrast +16 · shadows +6 · darks −4 · lights +4 · **highlights −6** · tempA 0 / tempB −8 (luminance 50) · vibrance +6 · **saturation 0** · **sarı kanal +12** | Sunulan B: highlights −10, saturation −8 — DEC-077/REQ-105 ince ayarı (seçim korunarak): altın orb doygunluğu 0,878 → 0,672 ve çevreden ayrışması 0,513 → 0,324 (< %80) düşmüştü; ayarla 0,832 / 0,458 (kapı ≥ 0,60 / ≥ 0,41 ✓). S-eğrisi orta-koyu ayrımı; taş = ıslak arduvaz; değer kontrastı taşır |
+| LUT | `Lighting/LUT/DD_Look_v1.png` 1024×32 (nötr şerit `DD_Neutral_32.png` aynı reçeteyle işlendi; sRGB kapalı, RGBA32, mip yok) → `DD_Overcast_v1` Color Lookup, contribution 1 | reçete `post` kareye göre → WP-013 grade'i (Neutral tonemap, contrast +8, sat −2, WB −3/+1, vignette 0,20, bloom 1,25) aynen altında kalır, çift uygulama yok |
+| Doğrulama | Lightroom karesi ↔ Unity LUT'lu kare CIE76 ΔE: nötr şerit taşıma **0,68** ort (p95 1,31; kapı ≤ 6, `LookLightingTests`); reçetenin kendi hareketi 15,5 ΔE | siyah 0 kalır, beyaz ~228 |
+| DEC-077 | LUT sonrası ölçüm (v2 dünya, ön kontrol): oyuncu↔zombi luma 0,138 / 0,101 / 0,119 (skin 1/2b/3; LUT'suz 0,085 / 0,070 / 0,084 — contrast +16 yardımcı), kapsül kontrastı 0,095 (0,060), altın orb s 0,832 / ayrışma 0,458; zırh bandı ölçümü v3'te tekrar | eşik altına düşerse yalnız parametre ince ayarı (seçim korunur) — B4 böyle doğdu |
+| Yeniden uygulama | dünya v3/v4, karakter, VFX paketlerinden sonra referans set + reçete (`tools/finalize-look.py`) tekrar; reçete değişikliği = kullanıcı kararı | AP-015P plakaları (WP-038) sonrası kontrol |
+
 ## 6 · Okunabilirlik kuralları (REQ-104 / REQ-105)
 ### 6.1 Resmi eşikler `[DEC-077]` `[kod Runtime/ReadabilityThresholds.cs:20–29]`
 | # | Ölçüt | Eşik | Yöntem | Test |

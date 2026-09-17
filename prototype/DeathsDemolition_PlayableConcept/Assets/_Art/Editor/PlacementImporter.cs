@@ -623,9 +623,13 @@ namespace DD.Art.Pipeline.EditorTools
                 if (inst.role == "structure" || inst.role == "ground" || inst.role == "dressing")
                 {
                     bool heavy = IsHeavyForStaticBatching(prefabs[i]);
+                    // WP-029 (ADR-029-2): structures and ground contribute to the lightmap bake (lightmap UVs from
+                    // Contract v1.2); dressing stays static but probe-lit (small charts overlapped at bake resolution).
                     StaticEditorFlags flags = StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic;
+                    if (inst.role != "dressing") flags |= StaticEditorFlags.ContributeGI;
                     if (!heavy) flags |= StaticEditorFlags.BatchingStatic; else report.HeavyUnbatched++;
                     SetStaticRecursively(go, flags);
+                    ArtLightingBake.ApplyLightmapLodPolicy(go, inst.role != "dressing");   // LOD0 charts only (ADR-029-2)
                     report.StaticInstances++;
                 }
 

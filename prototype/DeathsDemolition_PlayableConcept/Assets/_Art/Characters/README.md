@@ -2,6 +2,8 @@
 
 The AP-006 player and the AP-007 zombie in Unity, on Import Contract **v1.1** (ADR-016-1, `Editor/ArtCharacterContract.cs`) and the zombie look contract (ADR-016-2, `_Prototype/Characters/ZombieModuleLibrary.cs`). Built by `Tools > Deaths Demolition > Art Pipeline > Run Characters (WP-016)` (`ArtCharacterPrefabBuilder.BuildAll`, idempotent). The prototype reads one asset: `Resources/DD_Characters.asset` (`CharacterAssetSet`; `-ddCharacters Procedural|Skinned` / `DD_CHARACTERS` override) and keeps its M1 primitive bodies when the asset is absent or the source is Procedural.
 
+WP-029: characters stay **UV2-less** (Contract v1.1 sets `generateSecondaryUV` off — skinned meshes are lit by the World_AP005 light probe group + reflection probes, never lightmapped; `Lighting/README.md`).
+
 ## Files
 
 | Path | What |

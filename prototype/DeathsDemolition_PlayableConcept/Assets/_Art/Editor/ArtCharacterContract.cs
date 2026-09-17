@@ -146,6 +146,7 @@ namespace DD.Art.Pipeline.EditorTools
             bool clip = IsClip(path);
 
             changed |= Set(importer.animationType, ModelImporterAnimationType.Human, v => importer.animationType = v);
+            changed |= Set(importer.generateSecondaryUV, ArtImportContract.CharacterGenerateSecondaryUV, v => importer.generateSecondaryUV = v);   // WP-029: skinned = probe-lit, no lightmap UVs
             changed |= Set(importer.optimizeGameObjects, false, v => importer.optimizeGameObjects = v);
             changed |= Set(importer.importAnimation, clip, v => importer.importAnimation = v);
             changed |= Set(importer.importBlendShapes, false, v => importer.importBlendShapes = v);
@@ -227,7 +228,8 @@ namespace DD.Art.Pipeline.EditorTools
         {
             List<string> v = ArtImportContract.ValidateModel(importer);
             // v1 expects animationType None / importAnimation false; v1.1 overrides those two.
-            v.RemoveAll(line => line.StartsWith("animationType:", StringComparison.Ordinal) || line.StartsWith("importAnimation:", StringComparison.Ordinal));
+            v.RemoveAll(line => line.StartsWith("animationType:", StringComparison.Ordinal) || line.StartsWith("importAnimation:", StringComparison.Ordinal) || line.StartsWith("generateSecondaryUV:", StringComparison.Ordinal));
+            Check(v, "generateSecondaryUV", importer.generateSecondaryUV, ArtImportContract.CharacterGenerateSecondaryUV);
 
             string path = importer.assetPath;
             bool clip = IsClip(path);

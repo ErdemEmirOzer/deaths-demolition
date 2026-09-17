@@ -42,6 +42,13 @@ namespace DD.Art.Pipeline.EditorTools
 
         /// <summary>WP-016 · Skinned character assets live here (ADR-016-1): <c>Characters/Player</c>, <c>Characters/Zombie</c>.</summary>
         public const string CharactersRoot = ArtRoot + "/Characters";
+        /// <summary>WP-029 · Only models under here take generated lightmap UVs (Contract v1.2); weapons, VFX props and characters never sit in a lightmap.</summary>
+        public const string EnvironmentRoot = ArtRoot + "/Environment";
+
+        public static bool WantsLightmapUv(string assetPath)
+        {
+            return ModelGenerateSecondaryUV && assetPath != null && assetPath.Replace('\\', '/').StartsWith(EnvironmentRoot + "/", StringComparison.Ordinal);
+        }
 
         /// <summary>Every asset below this folder is under contract.</summary>
         public const string ArtRoot = "Assets/_Art";
@@ -78,7 +85,21 @@ namespace DD.Art.Pipeline.EditorTools
         public const bool ModelOptimizeMeshPolygons = true;
         public const bool ModelOptimizeMeshVertices = true;
         public const bool ModelWeldVertices = true;
-        public const bool ModelGenerateSecondaryUV = false;
+        /// <summary>
+        /// WP-029 (ADR-029-2): lightmap UVs are generated for every ENVIRONMENT model (the AP
+        /// exports carry no UV2; the world v2 bakes lightmaps). Characters stay without (skinned,
+        /// probe-lit; <c>ArtCharacterContract</c> overrides to false). WP-011..017 imported with false.
+        /// </summary>
+        public const bool ModelGenerateSecondaryUV = true;
+        public const bool CharacterGenerateSecondaryUV = false;
+        public const float ModelSecondaryUVHardAngle = 88f;
+        // Chart margin is computed for the bake resolution (ADR-029-2) instead of a fixed texel count at a
+        // 1024 lightmap: a fixed 4 left 0.5 texel between the charts of a 128² object at bake2 (1096 overlaps).
+        public const ModelImporterSecondaryUVMarginMethod ModelSecondaryUVMarginMethod = ModelImporterSecondaryUVMarginMethod.Calculate;
+        public const float ModelSecondaryUVMinLightmapResolution = 8f;    // texels/m — the LOWEST resolution the margin must survive: ½ × ArtLightingBake.LightmapResolution (at 16 the margin left 122 sub-texel chart gaps, at 32 it shrank and left 299 — bake5/bake6)
+        public const float ModelSecondaryUVMinObjectScale = 1f;
+        public const float ModelSecondaryUVAngleDistortion = 8f;
+        public const float ModelSecondaryUVAreaDistortion = 15f;
         public const bool ModelSwapUVChannels = false;
         public const ModelImporterMaterialImportMode ModelMaterialImportMode = ModelImporterMaterialImportMode.None;
         public const ModelImporterAnimationType ModelAnimationType = ModelImporterAnimationType.None;
@@ -430,7 +451,65 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool IsContractTexture(string assetPath)
         {
-            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
+            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath);
+        }
+
+        // ------------------------------------------------------------------ WP-029 LUTs
+
+        /// <summary>WP-029 (ADR-029-1): colour-grading LUT strips live here and follow their own importer rules, not the T_&lt;role&gt;_&lt;Map&gt; contract.</summary>
+        public const string LutRoot = ArtRoot + "/Lighting/LUT";
+
+        public static bool IsLutTexture(string assetPath)
+        {
+            return assetPath != null && assetPath.Replace('\\', '/').StartsWith(LutRoot + "/", StringComparison.Ordinal) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// A URP user LUT: linear (sRGB off — the strip's bytes ARE the sRGB-coded output), no
+        /// mips, uncompressed RGBA32, bilinear, clamp, no streaming, never downsized. The
+        /// Volume's Color Lookup validates height = LUT size and width = size², so the
+        /// pipeline asset's <c>colorGradingLutSize</c> (32) picks <c>DD_Look_v1.png</c> at 1024×32.
+        /// </summary>
+        public static bool ApplyLut(TextureImporter importer)
+        {
+            bool changed = false;
+            changed |= Set(importer.textureType, TextureImporterType.Default, v => importer.textureType = v);
+            changed |= Set(importer.sRGBTexture, false, v => importer.sRGBTexture = v);
+            changed |= Set(importer.mipmapEnabled, false, v => importer.mipmapEnabled = v);
+            changed |= Set(importer.filterMode, FilterMode.Bilinear, v => importer.filterMode = v);
+            changed |= Set(importer.wrapMode, TextureWrapMode.Clamp, v => importer.wrapMode = v);
+            changed |= Set(importer.anisoLevel, 0, v => importer.anisoLevel = v);
+            changed |= Set(importer.streamingMipmaps, false, v => importer.streamingMipmaps = v);
+            changed |= Set(importer.textureCompression, TextureImporterCompression.Uncompressed, v => importer.textureCompression = v);
+            changed |= Set(importer.alphaSource, TextureImporterAlphaSource.None, v => importer.alphaSource = v);
+            changed |= Set(importer.maxTextureSize, 8192, v => importer.maxTextureSize = v);
+            changed |= Set(importer.npotScale, TextureImporterNPOTScale.None, v => importer.npotScale = v);
+            TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(StandalonePlatform);
+            if (!st.overridden || st.format != TextureImporterFormat.RGBA32 || st.maxTextureSize != 8192 || st.textureCompression != TextureImporterCompression.Uncompressed)
+            {
+                st.overridden = true;
+                st.format = TextureImporterFormat.RGBA32;
+                st.maxTextureSize = 8192;
+                st.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SetPlatformTextureSettings(st);
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        public static List<string> ValidateLut(TextureImporter importer)
+        {
+            var v = new List<string>();
+            Check(v, "sRGBTexture", importer.sRGBTexture, false);
+            Check(v, "mipmapEnabled", importer.mipmapEnabled, false);
+            Check(v, "filterMode", importer.filterMode, FilterMode.Bilinear);
+            Check(v, "wrapMode", importer.wrapMode, TextureWrapMode.Clamp);
+            Check(v, "streamingMipmaps", importer.streamingMipmaps, false);
+            Check(v, "textureCompression", importer.textureCompression, TextureImporterCompression.Uncompressed);
+            TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(StandalonePlatform);
+            if (!st.overridden || st.format != TextureImporterFormat.RGBA32) v.Add("Standalone format: " + (st.overridden ? st.format.ToString() : "not overridden") + " != RGBA32");
+            return v;
         }
 
         // ------------------------------------------------------------------ apply
@@ -450,7 +529,17 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.optimizeMeshPolygons, ModelOptimizeMeshPolygons, v => importer.optimizeMeshPolygons = v);
             changed |= Set(importer.optimizeMeshVertices, ModelOptimizeMeshVertices, v => importer.optimizeMeshVertices = v);
             changed |= Set(importer.weldVertices, ModelWeldVertices, v => importer.weldVertices = v);
-            changed |= Set(importer.generateSecondaryUV, ModelGenerateSecondaryUV, v => importer.generateSecondaryUV = v);
+            bool uv2 = WantsLightmapUv(importer.assetPath);
+            changed |= Set(importer.generateSecondaryUV, uv2, v => importer.generateSecondaryUV = v);
+            if (uv2)
+            {
+                changed |= Set(importer.secondaryUVHardAngle, ModelSecondaryUVHardAngle, v => importer.secondaryUVHardAngle = v);
+                changed |= Set(importer.secondaryUVMarginMethod, ModelSecondaryUVMarginMethod, v => importer.secondaryUVMarginMethod = v);
+                changed |= Set(importer.secondaryUVMinLightmapResolution, ModelSecondaryUVMinLightmapResolution, v => importer.secondaryUVMinLightmapResolution = v);
+                changed |= Set(importer.secondaryUVMinObjectScale, ModelSecondaryUVMinObjectScale, v => importer.secondaryUVMinObjectScale = v);
+                changed |= Set(importer.secondaryUVAngleDistortion, ModelSecondaryUVAngleDistortion, v => importer.secondaryUVAngleDistortion = v);
+                changed |= Set(importer.secondaryUVAreaDistortion, ModelSecondaryUVAreaDistortion, v => importer.secondaryUVAreaDistortion = v);
+            }
             changed |= Set(importer.swapUVChannels, ModelSwapUVChannels, v => importer.swapUVChannels = v);
             changed |= Set(importer.materialImportMode, ModelMaterialImportMode, v => importer.materialImportMode = v);
             changed |= Set(importer.animationType, ModelAnimationType, v => importer.animationType = v);
@@ -534,7 +623,19 @@ namespace DD.Art.Pipeline.EditorTools
             Check(v, "optimizeMeshPolygons", importer.optimizeMeshPolygons, ModelOptimizeMeshPolygons);
             Check(v, "optimizeMeshVertices", importer.optimizeMeshVertices, ModelOptimizeMeshVertices);
             Check(v, "weldVertices", importer.weldVertices, ModelWeldVertices);
-            Check(v, "generateSecondaryUV", importer.generateSecondaryUV, ModelGenerateSecondaryUV);
+            bool uv2 = WantsLightmapUv(importer.assetPath);
+            Check(v, "generateSecondaryUV", importer.generateSecondaryUV, uv2);
+            // The chart settings only matter where lightmap UVs are generated (environment models; characters / weapons / VFX props stay UV2-less).
+            if (uv2)
+            {
+                Check(v, "secondaryUVHardAngle", importer.secondaryUVHardAngle, ModelSecondaryUVHardAngle);
+                Check(v, "secondaryUVMarginMethod", importer.secondaryUVMarginMethod, ModelSecondaryUVMarginMethod);
+                Check(v, "secondaryUVMinLightmapResolution", importer.secondaryUVMinLightmapResolution, ModelSecondaryUVMinLightmapResolution);
+                Check(v, "secondaryUVMinObjectScale", importer.secondaryUVMinObjectScale, ModelSecondaryUVMinObjectScale);
+                Check(v, "secondaryUVAngleDistortion", importer.secondaryUVAngleDistortion, ModelSecondaryUVAngleDistortion);
+                Check(v, "secondaryUVAreaDistortion", importer.secondaryUVAreaDistortion, ModelSecondaryUVAreaDistortion);
+            }
+
             Check(v, "swapUVChannels", importer.swapUVChannels, ModelSwapUVChannels);
             Check(v, "materialImportMode", importer.materialImportMode, ModelMaterialImportMode);
             Check(v, "animationType", importer.animationType, ModelAnimationType);

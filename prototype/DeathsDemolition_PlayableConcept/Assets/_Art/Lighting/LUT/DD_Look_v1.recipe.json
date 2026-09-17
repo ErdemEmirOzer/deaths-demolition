@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "chosen": "B",
+  "variant": "B4",
+  "name": "Islak Arduvaz",
+  "chosenUtc": "2026-09-17T02:40:41Z",
+  "decision": "user choice via C-00 (WP-029 §2, single decision; DEC-084 recorded by S-02 in WP-042)",
+  "tune": "DEC-077/REQ-105 tune: saturation −8→0, highlights −10→−6, yellow +12 (gold orb s 0.672→0.79+, separation 0.324→≥0.41)",
+  "intent": "Yağmur sonrası sinematik okuma: S-eğrisi ile orta-koyu ayrımı artar, taş Higgsfield gameplay referansındaki ıslak arduvaz koyuluğuna yaklaşır; gölgeler soğuk, ışık alan yüzeyler hafif ılık. Doygunluk kısık; renk değil değer kontrastı sahneyi taşır.",
+  "lightroom": {
+    "preset": "Creative - Cool Shadows & Warm Highlights",
+    "adjustments": {
+      "gamma": 0.94,
+      "contrast": 16,
+      "shadows": 6,
+      "darks": -4,
+      "lights": 4,
+      "highlights": -6,
+      "tempA": 0,
+      "tempB": -8,
+      "tempLuminance": 50,
+      "vibrance": 6,
+      "saturation": 0,
+      "channelTarget": "yellow",
+      "channelSaturation": 12
+    },
+    "order": "preset (image_apply_preset) then adjustments (image_apply_adjustments) — identical on the 8 reference frames and on the neutral strip",
+    "source": "Adobe Lightroom API (Adobe MCP), S-05 session, 2026-09-16/17",
+    "neutralStrip": "DD_Neutral_32.png (1024×32, URP ApplyLut2D layout)"
+  },
+  "lut": {
+    "file": "DD_Look_v1.png",
+    "size": 32,
+    "sha256": "946da75585d32e15e5360e29f913cde88b1b8470a8c6d7b688ffec231260992c",
+    "import": "sRGB off, RGBA32, no mips, bilinear, clamp (ArtImportContract.ApplyLut)",
+    "appliedAfter": "DD_Overcast_v1 grade (Neutral tonemap, contrast +8, saturation −2, WB −3/+1) — the recipe was graded on the post frames, so nothing is applied twice"
+  },
+  "caveats": [
+    "Split-tone global işlem → LUT taşır; presette Clarity/Dehaze/Grain gömülüyse LUT şeridinde sıfırlanmalı. gamma 0,94 'orta ton koyulaşır' varsayımıyla.",
+    "Local / masked / adaptive preset operations do not survive the strip; only global tone and colour do (README)."
+  ],
+  "dec077Note": "Contrast +16 pivotu 0,5: taş az, koyu kumaş çok koyulaşır → K3 taş/kumaş oranı artar; shadows +6 toe'yu tutar; altın orb s 0,70 → ≈0,64; sıcak highlight DirtyCream ve fildişiyi ısıtır — s 0,30 altın bandı sınırı ölçülmeli.",
+  "validation": {
+    "pair": "LUT/Validation/center-post-source.png ↔ center-post-lightroom.png (480×270)",
+    "gate": "LookLightingTests.SecilenLook_… mean ΔE ≤ 6 (LutBuilder.Measure)"
+  }
+}
