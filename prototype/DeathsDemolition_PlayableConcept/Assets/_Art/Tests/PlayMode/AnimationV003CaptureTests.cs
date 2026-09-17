@@ -129,8 +129,26 @@ namespace DD.Art.Tests.PlayMode
             pa.updateMode = AnimatorUpdateMode.UnscaledTime;   // the run clock is held (timeScale 0) — the live poses need real time
             var ppose = new ArtVisualRegression.CameraPose("v003-player", feet + new Vector3(0f, 15f, -13f), feet + new Vector3(0f, 0.9f, 0f), 42f);
             IEnumerator Settle(float seconds) { float t0 = Time.realtimeSinceStartup; while (Time.realtimeSinceStartup - t0 < seconds) yield return null; }
+            // WP-032F r2 (WP-059B mount): each weapon's AP-013 model from the visual library sits under the weapon mount for its frames
+            // (the run's ClassicWeaponRig carries only the equipped weapon — hidden meanwhile); SetWeapon is the pose alone.
+            Transform mount = pv.WeaponSocket != null && pv.WeaponSocket.childCount > 0 ? pv.WeaponSocket.GetChild(0) : pv.WeaponSocket;
+            GameObject runRig = mount != null ? mount.Find("ClassicWeaponRig")?.gameObject : null;
+            if (runRig != null) runRig.SetActive(false);
+            ClassicWeaponVisualLibrary library = ClassicWeaponVisualLibrary.Current;
+            GameObject shown = null;
+            GameObject ShowModel(int id)
+            {
+                if (shown != null) UnityEngine.Object.Destroy(shown);
+                ClassicWeaponVisualLibrary.Entry entry = library != null ? library.Find((ClassicWeaponId)id) : null;
+                shown = ClassicWeaponVisualLibrary.Instantiate(entry, library != null ? library.material : null, new[] { 0.12f, 0.05f, 0.01f });
+                if (shown != null && mount != null) { shown.transform.SetParent(mount, false); shown.transform.localPosition = Vector3.zero; shown.transform.localRotation = Quaternion.identity; }
+                Debug.Log("[DD-TEST] wp032f.capture.model w=" + id + " model=" + (shown != null) + " mount=" + (mount != null ? mount.name : "-") + " alignment=" + (mount != null && mount.GetComponent<WeaponMountAlignment>() != null));
+                return shown;
+            }
+
             for (int w = 0; w < 3; w++)
             {
+                ShowModel(w);
                 pv.SetWeapon(w);
                 yield return Settle(0.6f);
                 int overL = -1; for (int i = 0; i < pa.layerCount; i++) if (pa.GetLayerName(i) == C.OverrideUpperLayer) overL = i;
@@ -145,6 +163,7 @@ namespace DD.Art.Tests.PlayMode
 
             // WP-032D: reload at its WIDEST hand moment (first pass measures when the left hand is farthest from the aim pose,
             // second pass captures there) and the C kick on its 2nd frame — the mag_in beat itself sits near the aim pose.
+            ShowModel(1);
             pv.SetWeapon(1);
             yield return Settle(0.4f);
             Transform lhand = pa.GetBoneTransform(HumanBodyBones.LeftHand);
@@ -165,21 +184,42 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log("[DD-TEST] wp032d.capture.reload widestAt=" + bestAt.ToString("F2", CultureInfo.InvariantCulture) + " s leftHandTravel=" + (best * 100f).ToString("F0", CultureInfo.InvariantCulture) + " cm");
             written++;
             yield return Settle(1.5f);
+            ShowModel(2);
             pv.SetWeapon(2);
             yield return Settle(0.4f);
             // WP-032F (AD SHOULD 3): muzzle travel of the C kick in gameplay-camera pixels (1920-wide frame) — the Barrel renderer's far bound
             Camera gameCam = Camera.main;
-            Renderer barrel = null;
-            if (pv.WeaponSocket != null) foreach (Renderer r in pv.WeaponSocket.GetComponentsInChildren<Renderer>(true)) if (r.name == "Barrel") barrel = r;
-            Vector3 muzzleAim = barrel != null ? barrel.bounds.center + barrel.transform.forward * barrel.bounds.extents.magnitude : Vector3.zero;
+            // muzzle = the model's farthest renderer-bounds corner along the mount's forward (the AP-013 models carry no "Barrel" node)
+            Vector3 Muzzle()
+            {
+                if (shown == null || mount == null) return Vector3.zero;
+                Vector3 best = mount.position; float bestD = float.MinValue;
+                foreach (Renderer r in shown.GetComponentsInChildren<Renderer>(true))
+                {
+                    Bounds bb = r.bounds;
+                    for (int c = 0; c < 8; c++)
+                    {
+                        var corner = new Vector3((c & 1) == 0 ? bb.min.x : bb.max.x, (c & 2) == 0 ? bb.min.y : bb.max.y, (c & 4) == 0 ? bb.min.z : bb.max.z);
+                        float d = Vector3.Dot(corner - mount.position, mount.forward);
+                        if (d > bestD) { bestD = d; best = corner; }
+                    }
+                }
+
+                return best;
+            }
+
+            bool barrel = shown != null && shown.GetComponentInChildren<Renderer>(true) != null;
+            Vector3 muzzleAim = Muzzle();
             Vector2 aimPx = gameCam != null ? (Vector2)gameCam.WorldToScreenPoint(muzzleAim) * (1920f / Mathf.Max(1, gameCam.pixelWidth)) : Vector2.zero;
             pv.PlayFire();
             yield return null; yield return null;
-            Vector3 muzzleKick = barrel != null ? barrel.bounds.center + barrel.transform.forward * barrel.bounds.extents.magnitude : Vector3.zero;
+            Vector3 muzzleKick = Muzzle();
             Vector2 kickPx = gameCam != null ? (Vector2)gameCam.WorldToScreenPoint(muzzleKick) * (1920f / Mathf.Max(1, gameCam.pixelWidth)) : Vector2.zero;
-            Debug.Log("[DD-TEST] wp032f.kick barrel=" + (barrel != null) + " muzzleTravelPx=" + Vector2.Distance(aimPx, kickPx).ToString("F1", CultureInfo.InvariantCulture) + " worldCm=" + (Vector3.Distance(muzzleAim, muzzleKick) * 100f).ToString("F1", CultureInfo.InvariantCulture) + " camPx=" + (gameCam != null ? gameCam.pixelWidth : 0));
+            Debug.Log("[DD-TEST] wp032f.kick barrel=" + barrel + " muzzleTravelPx=" + Vector2.Distance(aimPx, kickPx).ToString("F1", CultureInfo.InvariantCulture) + " worldCm=" + (Vector3.Distance(muzzleAim, muzzleKick) * 100f).ToString("F1", CultureInfo.InvariantCulture) + " camPx=" + (gameCam != null ? gameCam.pixelWidth : 0));
             CharacterTests.Capture(ppose, Path.Combine(dir, "p_fire_C_kick.png"));
             written++;
+            if (shown != null) UnityEngine.Object.Destroy(shown);
+            if (runRig != null) runRig.SetActive(true);
             pv.SetWeapon(0);
             pv.SetSpecialHold(1);
             yield return Settle(0.6f);
