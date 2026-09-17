@@ -283,16 +283,21 @@ namespace DD.Art.Tests.PlayMode
 
             float t0 = Time.realtimeSinceStartup;
             var ended = new bool[cases.Length];
+            var endedAt = new float[cases.Length];
             while (Time.realtimeSinceStartup - t0 < 6f)
             {
-                for (int i = 0; i < cases.Length; i++) if (zombies[i].gameObject.activeInHierarchy && zombies[i].Skinned.DeathFinished) ended[i] = true;
+                for (int i = 0; i < cases.Length; i++) if (zombies[i].gameObject.activeInHierarchy && zombies[i].Skinned.DeathFinished && !ended[i]) { ended[i] = true; endedAt[i] = Time.realtimeSinceStartup - t0; }
                 yield return null;
             }
 
             for (int i = 0; i < cases.Length; i++)
             {
+                Debug.Log("[DD-TEST] wp018.death.pool case=" + i + " endedAt=" + endedAt[i].ToString("F2", CultureInfo.InvariantCulture) + " s active=" + zombies[i].gameObject.activeInHierarchy + " linger=" + zombies[i].LastCorpseLinger.ToString("F2", CultureInfo.InvariantCulture)
+                          + " timeScale=" + Time.timeScale.ToString("F2", CultureInfo.InvariantCulture) + " animSpeed=" + zombies[i].Skinned.Animator.speed.ToString("F2", CultureInfo.InvariantCulture) + " dying=" + zombies[i].IsDying);
                 Assert.IsTrue(ended[i], "vaka " + i + ": death_end gelmedi");
-                Assert.IsFalse(zombies[i].gameObject.activeInHierarchy, "vaka " + i + ": ceset havuza dönmedi");
+                // WP-032F: the Run scene's spawn director may check the pooled body out again inside the window — "left the corpse
+                // state" (inactive, or active in a new life) is the pool return, not activeInHierarchy alone.
+                Assert.IsTrue(!zombies[i].gameObject.activeInHierarchy || !zombies[i].IsDying, "vaka " + i + ": ceset havuza dönmedi");
             }
 
             Assert.AreEqual(0, EnemyAttackState.WindowFallbackCount);

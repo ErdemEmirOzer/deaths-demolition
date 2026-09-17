@@ -41,6 +41,10 @@ namespace DD.Art.Pipeline.EditorTools
         public const string PlayerAvatarSource = PlayerFolder + "/player_base.fbx";
         public const string ZombieAvatarSource = ZombieFolder + "/zombie_body_A.fbx";
         public const int BoneCount = 56;
+        /// <summary>WP-032F (AP-006C): secondary-motion chain bones `sec_&lt;chain&gt;_&lt;i&gt;` — extra transforms outside the human map, never keyed by the clips. Player 7 (sash ×3, pouch, gourd, band ×2), zombie 17 (mino ×9, hair ×2, queue ×2, hachimaki ×2, bandage ×2).</summary>
+        public const int PlayerSecondaryBones = 7;
+        public const int ZombieSecondaryBones = 17;
+        public const string SecondaryBonePrefix = "sec_";
         public const int HumanoidBoneCount = 52;
         public static readonly string[] Sockets = { "socket_weapon_r", "socket_weapon_l", "socket_back" };
 

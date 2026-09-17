@@ -320,6 +320,9 @@ namespace DD.Prototype.Characters
             if (_lookAt == null) _lookAt = _animator.GetComponent<CharacterLookAt>();
             if (_footIk == null) _footIk = _animator.GetComponent<FootIkAdapter>();
             if (_lod == null) _lod = GetComponent<CharacterAnimatorLod>();
+            // WP-032F: the secondary chains (mino / hair / ties) run on LOD0/1 bodies only, after the Animator; the pool reset restarts them
+            if (_chains == null) _chains = _animator.GetComponent<SecondaryChainDriver>();
+            if (_chains != null) _chains.Bind(() => _authored && (_lod == null || !_lod.Far));
             _telegraphLayer = -1;
             for (int i = 0; i < _animator.layerCount; i++)
             {
@@ -406,6 +409,10 @@ namespace DD.Prototype.Characters
         private static readonly int HitDirId = Animator.StringToHash(CharacterAnimatorContract.HitDir);
         private static readonly int HitTierId = Animator.StringToHash(CharacterAnimatorContract.HitTier);
         private static readonly int RiseVariantId = Animator.StringToHash(CharacterAnimatorContract.RiseVariant);
+        private static int s_riseOrdinal;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetRiseOrdinal() { s_riseOrdinal = 0; }
         private static readonly int ArmorBreakId = Animator.StringToHash(CharacterAnimatorContract.ArmorBreak);
         private static readonly int ArmorBreakRegionId = Animator.StringToHash(CharacterAnimatorContract.ArmorBreakRegion);
         private static readonly int StumbleId = Animator.StringToHash(CharacterAnimatorContract.Stumble);
@@ -539,10 +546,13 @@ namespace DD.Prototype.Characters
             // rise variant (A 48 f / B 36 f / C 28 f) is a deterministic per-spawn pick — B/C are the ≤ 1.2 s camera-off cuts.
             _hitTier = tier == EnemyTier.Elite ? 1 : tier == EnemyTier.Ultra ? 2 : 0;
             _animator.SetInteger(HitTierId, _hitTier);
-            _animator.SetInteger(RiseVariantId, (idleVariant + (GetInstanceID() & 3)) % CharacterAnimatorContract.ZombieRiseClips.Length);
+            // WP-032F: the pick walks a spawn ordinal — the instance-id bits it used before went constant once the 73-bone rig
+            // changed the id stride between pooled bodies (six spawns, one variant).
+            _animator.SetInteger(RiseVariantId, (idleVariant + s_riseOrdinal++) % CharacterAnimatorContract.ZombieRiseClips.Length);
             _waiting = false;
             _special = ZombieSpecialVisual.None;   // WP-032E: a pooled body comes back free and at speed 1
             _animator.speed = 1f;
+            if (_chains != null) _chains.Reset();   // WP-032F: tails restart from the rest pose at the new spawn point
             _animator.SetBool(WaitingId, false);
             // WP-032B: the queue idle's cycle offset — deterministic per spawn (the idle variant coin's neighbour), so a throat queue is out of step.
             _animator.SetFloat(WaitPhaseId, Mathf.Repeat((idleVariant * 0.618034f) + (GetInstanceID() & 1023) / 1024f, 1f));
@@ -683,6 +693,9 @@ namespace DD.Prototype.Characters
         }
 
         private ZombieSpecialVisual _special;
+        private SecondaryChainDriver _chains;   // WP-032F
+        /// <summary>WP-032F: the secondary-motion driver on the Model (null on the rig-test body).</summary>
+        public SecondaryChainDriver Chains => _chains;
         /// <summary>WP-032E: the Special Weapon reaction currently shown.</summary>
         public ZombieSpecialVisual SpecialVisual => _special;
 

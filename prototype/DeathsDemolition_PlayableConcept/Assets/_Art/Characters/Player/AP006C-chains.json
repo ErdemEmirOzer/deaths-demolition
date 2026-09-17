@@ -1,0 +1,179 @@
+{
+ "render_objects": [
+  "Player_LOD0"
+ ],
+ "chains": [
+  {
+   "name": "sash",
+   "parent": "Hips",
+   "root": [
+    -0.06,
+    0.16,
+    0.97
+   ],
+   "dir": [
+    0.0,
+    0.15,
+    -1.0
+   ],
+   "length": 0.24,
+   "segments": 3,
+   "stiffness": 0.45,
+   "damping": 0.15,
+   "gravity": 9.81,
+   "collision_radius": 0.02,
+   "body_radius": 0.17,
+   "attach_fraction": 0.15,
+   "objects": [
+    "Player_LOD*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.16,
+      0.03
+     ],
+     [
+      0.14,
+      0.3
+     ],
+     [
+      0.7,
+      0.98
+     ]
+    ]
+   ],
+   "note": "obi tails hanging behind the right hip (red sash ends)",
+   "max_angle_deg": 70
+  },
+  {
+   "name": "pouch",
+   "parent": "Hips",
+   "root": [
+    -0.22,
+    -0.12,
+    1.02
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "length": 0.14,
+   "segments": 1,
+   "stiffness": 0.6,
+   "damping": 0.2,
+   "gravity": 9.81,
+   "collision_radius": 0.03,
+   "body_radius": 0.15,
+   "attach_fraction": 0.2,
+   "objects": [
+    "Player_LOD*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.32,
+      -0.12
+     ],
+     [
+      -0.26,
+      -0.06
+     ],
+     [
+      0.86,
+      1.03
+     ]
+    ]
+   ],
+   "note": "belt pouch, right hip front \u2014 single pendulum bone",
+   "max_angle_deg": 45
+  },
+  {
+   "name": "gourd",
+   "parent": "Hips",
+   "root": [
+    0.22,
+    -0.13,
+    1.06
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "length": 0.18,
+   "segments": 1,
+   "stiffness": 0.6,
+   "damping": 0.2,
+   "gravity": 9.81,
+   "collision_radius": 0.04,
+   "body_radius": 0.15,
+   "attach_fraction": 0.2,
+   "objects": [
+    "Player_LOD*"
+   ],
+   "boxes": [
+    [
+     [
+      0.12,
+      0.32
+     ],
+     [
+      -0.26,
+      -0.06
+     ],
+     [
+      0.86,
+      1.08
+     ]
+    ]
+   ],
+   "note": "gourd flask, left hip front \u2014 single pendulum bone",
+   "max_angle_deg": 45
+  },
+  {
+   "name": "band",
+   "parent": "Head",
+   "root": [
+    0.0,
+    0.1,
+    1.62
+   ],
+   "dir": [
+    0.0,
+    0.35,
+    -1.0
+   ],
+   "length": 0.14,
+   "segments": 2,
+   "stiffness": 0.5,
+   "damping": 0.15,
+   "gravity": 9.81,
+   "collision_radius": 0.01,
+   "body_radius": 0.1,
+   "attach_fraction": 0.2,
+   "objects": [
+    "Player_LOD*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.07,
+      0.07
+     ],
+     [
+      0.09,
+      0.22
+     ],
+     [
+      1.48,
+      1.63
+     ]
+    ]
+   ],
+   "note": "hachimaki tails behind the head",
+   "max_angle_deg": 80
+  }
+ ]
+}

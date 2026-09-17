@@ -67,6 +67,8 @@ namespace DD.Prototype.Characters
         private static readonly int SwFireId = Animator.StringToHash(CharacterAnimatorContract.SwFire);   // WP-032E
         private int _weapon;
         private int _swHold;
+        private SecondaryChainDriver _chains;   // WP-032F
+        public SecondaryChainDriver Chains => _chains;
         private int _overrideLayer = -1;
         /// <summary>WP-032C: the ClassicWeaponId index the upper layer is posed for (0 A, 1 B, 2 C; 3 = no weapon clip → v001 recoil, Empty upper).</summary>
         public int Weapon => _weapon;
@@ -186,6 +188,9 @@ namespace DD.Prototype.Characters
             }
 
             if (_footIk != null) _footIk.Bind(() => _authored && !_dying, () => true);
+            // WP-032F: sash / pouch / gourd / hachimaki tails — the player is always LOD0
+            if (_chains == null) _chains = _animator.GetComponent<SecondaryChainDriver>();
+            if (_chains != null) _chains.Bind(() => _authored);
             if (!_subscribed)
             {
                 if (_events != null) _events.Raised += OnAnimationEvent;

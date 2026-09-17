@@ -80,7 +80,9 @@ namespace DD.Art.Tests.EditMode
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(ArtCharacterContract.PlayerAvatarSource);
             Assert.IsNotNull(model);
             Dictionary<string, Transform> bones = ArtCharacterContract.Bones(model, ArtCharacterPrefabBuilder.PlayerArmature);
-            Assert.AreEqual(ArtCharacterContract.BoneCount, bones.Count, "PlayerRig altında 56 transform (Root + 52 + 3 soket)");
+            int secondary = 0; foreach (string b in bones.Keys) if (b.StartsWith(ArtCharacterContract.SecondaryBonePrefix)) secondary++;
+            Assert.AreEqual(ArtCharacterContract.PlayerSecondaryBones, secondary, "WP-032F: AP-006C sec_* zincir kemikleri (4 zincir / 7)");
+            Assert.AreEqual(ArtCharacterContract.BoneCount + ArtCharacterContract.PlayerSecondaryBones, bones.Count, "PlayerRig altında 56 transform (Root + 52 + 3 soket) + 7 sec_*");
             foreach (string s in ArtCharacterContract.Sockets) Assert.IsTrue(bones.ContainsKey(s), "soket yok: " + s);
             for (int lod = 0; lod < 3; lod++) Assert.IsNotNull(model.transform.Find("Player_LOD" + lod), "Player_LOD" + lod);
             int tris0 = (int)(model.transform.Find("Player_LOD0").GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0) / 3);
@@ -96,7 +98,9 @@ namespace DD.Art.Tests.EditMode
                 var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 Assert.IsNotNull(model, path);
                 Dictionary<string, Transform> bones = ArtCharacterContract.Bones(model, ArtCharacterPrefabBuilder.ZombieArmature);
-                Assert.AreEqual(ArtCharacterContract.BoneCount + 3, bones.Count, fit + ": ZombieRig altında 56 + 3 ankraj");
+                int secondary = 0; foreach (string b in bones.Keys) if (b.StartsWith(ArtCharacterContract.SecondaryBonePrefix)) secondary++;
+                Assert.AreEqual(ArtCharacterContract.ZombieSecondaryBones, secondary, fit + ": WP-032F AP-007 v003 sec_* zincir kemikleri (7 zincir / 17)");
+                Assert.AreEqual(ArtCharacterContract.BoneCount + 3 + ArtCharacterContract.ZombieSecondaryBones, bones.Count, fit + ": ZombieRig altında 56 + 3 ankraj + 17 sec_*");
                 for (int lod = 0; lod < 4; lod++) Assert.IsNotNull(model.transform.Find("zombie_body_" + fit + "_LOD" + lod), fit + " LOD" + lod);
                 // Anchor origins (AP007-anchors.json, Blender z → Unity y): helmet 1.60, torso 1.17, legs 0.93; parents Head / Chest / Hips.
                 AssertAnchor(bones, ZombieSkinnedVisual.AnchorHelmet, "Head", 1.60f);

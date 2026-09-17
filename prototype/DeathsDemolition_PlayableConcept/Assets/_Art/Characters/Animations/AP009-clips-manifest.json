@@ -3255,7 +3255,7 @@
     "loop_seam_deg": null,
     "fits": {
      "A": {
-      "pokes_peak": 1,
+      "pokes_peak": 2,
       "pokes_frame0": 0,
       "capsule_r_max": 0.585,
       "capsule_r_max_no_feet": 0.585,

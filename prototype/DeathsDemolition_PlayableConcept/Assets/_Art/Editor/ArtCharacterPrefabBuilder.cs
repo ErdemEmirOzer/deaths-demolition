@@ -424,6 +424,7 @@ namespace DD.Art.Pipeline.EditorTools
                 playerLook.Configure(animator, 0.6f, 0.05f);
                 FootIkAdapter playerFeet = instance.GetComponent<FootIkAdapter>() ?? instance.AddComponent<FootIkAdapter>();
                 playerFeet.Configure(animator);
+                ArtSecondaryChains.Build(instance, animator, PlayerFolder + "/AP006C-chains.json");   // WP-032F
 
                 var renderers = new SkinnedMeshRenderer[3];
                 for (int lod = 0; lod < 3; lod++)
@@ -680,6 +681,7 @@ namespace DD.Art.Pipeline.EditorTools
                 zombieLook.Configure(animator, 0.8f, 0.15f);
                 FootIkAdapter zombieFeet = instance.GetComponent<FootIkAdapter>() ?? instance.AddComponent<FootIkAdapter>();
                 zombieFeet.Configure(animator);
+                ArtSecondaryChains.Build(instance, animator, ZombieFolder + "/AP007C-chains.json");   // WP-032F
 
                 // Slots: the imported body renderers become the body slots; top/bottom/head slots are new.
                 var slots = new SkinnedMeshRenderer[ZombieModuleLibrary.LodCount * ZombieSkinnedVisual.SlotCount];

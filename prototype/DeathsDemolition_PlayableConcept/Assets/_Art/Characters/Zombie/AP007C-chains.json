@@ -1,0 +1,312 @@
+{
+ "render_objects": [
+  "zombie_body_A_LOD0",
+  "zombie_T7_mino_cape_A_LOD0",
+  "zombie_B2_momohiki_tight_cw1_A_LOD0",
+  "zombie_H2_hair_matted_A_LOD0"
+ ],
+ "chains": [
+  {
+   "name": "mino_back",
+   "parent": "UpperChest",
+   "root": [
+    0.0,
+    0.22,
+    1.44
+   ],
+   "dir": [
+    0.0,
+    0.1,
+    -1.0
+   ],
+   "length": 0.3,
+   "segments": 3,
+   "stiffness": 0.55,
+   "damping": 0.22,
+   "gravity": 9.81,
+   "collision_radius": 0.02,
+   "body_radius": 0.24,
+   "attach_fraction": 0.15,
+   "objects": [
+    "zombie_T7_mino_cape_*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.16,
+      0.16
+     ],
+     [
+      0.12,
+      0.55
+     ],
+     [
+      1.04,
+      1.46
+     ]
+    ]
+   ],
+   "note": "straw mino cape, back centre",
+   "max_angle_deg": 55
+  },
+  {
+   "name": "mino_left",
+   "parent": "UpperChest",
+   "root": [
+    0.3,
+    0.06,
+    1.42
+   ],
+   "dir": [
+    0.12,
+    0.0,
+    -1.0
+   ],
+   "length": 0.3,
+   "segments": 3,
+   "stiffness": 0.55,
+   "damping": 0.22,
+   "gravity": 9.81,
+   "collision_radius": 0.02,
+   "body_radius": 0.24,
+   "attach_fraction": 0.15,
+   "objects": [
+    "zombie_T7_mino_cape_*"
+   ],
+   "boxes": [
+    [
+     [
+      0.16,
+      0.55
+     ],
+     [
+      -0.3,
+      0.55
+     ],
+     [
+      1.04,
+      1.46
+     ]
+    ]
+   ],
+   "note": "mino cape, left side",
+   "max_angle_deg": 55
+  },
+  {
+   "name": "mino_right",
+   "parent": "UpperChest",
+   "root": [
+    -0.3,
+    0.06,
+    1.42
+   ],
+   "dir": [
+    -0.12,
+    0.0,
+    -1.0
+   ],
+   "length": 0.3,
+   "segments": 3,
+   "stiffness": 0.55,
+   "damping": 0.22,
+   "gravity": 9.81,
+   "collision_radius": 0.02,
+   "body_radius": 0.24,
+   "attach_fraction": 0.15,
+   "objects": [
+    "zombie_T7_mino_cape_*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.55,
+      -0.16
+     ],
+     [
+      -0.3,
+      0.55
+     ],
+     [
+      1.04,
+      1.46
+     ]
+    ]
+   ],
+   "note": "mino cape, right side",
+   "max_angle_deg": 55
+  },
+  {
+   "name": "hair_mass",
+   "parent": "Head",
+   "root": [
+    0.0,
+    0.06,
+    1.65
+   ],
+   "dir": [
+    0.0,
+    0.18,
+    -1.0
+   ],
+   "length": 0.22,
+   "segments": 2,
+   "stiffness": 0.5,
+   "damping": 0.2,
+   "gravity": 9.81,
+   "collision_radius": 0.01,
+   "body_radius": 0.11,
+   "attach_fraction": 0.2,
+   "objects": [
+    "zombie_H2_hair_matted_*",
+    "zombie_H7_matted_wound_*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.15,
+      0.15
+     ],
+     [
+      -0.02,
+      0.22
+     ],
+     [
+      1.4,
+      1.63
+     ]
+    ]
+   ],
+   "note": "H2 / H7 matted hair mass hanging down the neck",
+   "max_angle_deg": 75
+  },
+  {
+   "name": "queue",
+   "parent": "Head",
+   "root": [
+    0.0,
+    0.05,
+    1.825
+   ],
+   "dir": [
+    0.0,
+    1.0,
+    -0.25
+   ],
+   "length": 0.09,
+   "segments": 2,
+   "stiffness": 0.7,
+   "damping": 0.25,
+   "gravity": 9.81,
+   "collision_radius": 0.01,
+   "body_radius": 0.1,
+   "attach_fraction": 0.2,
+   "objects": [
+    "zombie_H3_topknot_broken_*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.04,
+      0.04
+     ],
+     [
+      0.03,
+      0.16
+     ],
+     [
+      1.78,
+      1.85
+     ]
+    ]
+   ],
+   "note": "H3 limp topknot queue",
+   "max_angle_deg": 80
+  },
+  {
+   "name": "hachimaki",
+   "parent": "Head",
+   "root": [
+    0.0,
+    0.11,
+    1.715
+   ],
+   "dir": [
+    0.3,
+    0.4,
+    -0.9
+   ],
+   "length": 0.11,
+   "segments": 2,
+   "stiffness": 0.5,
+   "damping": 0.2,
+   "gravity": 9.81,
+   "collision_radius": 0.01,
+   "body_radius": 0.1,
+   "attach_fraction": 0.2,
+   "objects": [
+    "zombie_H5_hachimaki_band_*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.02,
+      0.06
+     ],
+     [
+      0.1,
+      0.18
+     ],
+     [
+      1.6,
+      1.72
+     ]
+    ]
+   ],
+   "note": "H5 hachimaki tail",
+   "max_angle_deg": 90
+  },
+  {
+   "name": "bandage_tie",
+   "parent": "Head",
+   "root": [
+    -0.1,
+    0.02,
+    1.72
+   ],
+   "dir": [
+    0.0,
+    0.55,
+    -0.85
+   ],
+   "length": 0.14,
+   "segments": 2,
+   "stiffness": 0.5,
+   "damping": 0.2,
+   "gravity": 9.81,
+   "collision_radius": 0.01,
+   "body_radius": 0.1,
+   "attach_fraction": 0.2,
+   "objects": [
+    "zombie_H7_matted_wound_*"
+   ],
+   "boxes": [
+    [
+     [
+      -0.14,
+      -0.07
+     ],
+     [
+      0.0,
+      0.13
+     ],
+     [
+      1.58,
+      1.73
+     ]
+    ]
+   ],
+   "note": "H7 bandage tie",
+   "max_angle_deg": 90
+  }
+ ]
+}

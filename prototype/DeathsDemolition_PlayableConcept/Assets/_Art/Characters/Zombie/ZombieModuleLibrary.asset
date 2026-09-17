@@ -124,6 +124,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -165,6 +173,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -184,6 +201,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -225,6 +250,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -244,6 +278,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -285,6 +327,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -304,6 +355,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -345,6 +404,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -366,6 +434,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -407,6 +483,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -426,6 +511,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -467,6 +560,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -486,6 +588,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -527,6 +637,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -546,6 +665,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -587,6 +714,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -608,6 +744,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -649,6 +793,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -668,6 +821,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -709,6 +870,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -728,6 +898,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -769,6 +947,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot
@@ -788,6 +975,14 @@ MonoBehaviour:
       - UpperChest
       - Neck
       - Head
+      - sec_hair_mass_1
+      - sec_hair_mass_2
+      - sec_queue_1
+      - sec_queue_2
+      - sec_hachimaki_1
+      - sec_hachimaki_2
+      - sec_bandage_tie_1
+      - sec_bandage_tie_2
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -829,6 +1024,15 @@ MonoBehaviour:
       - RightPinky3
       - socket_weapon_r
       - socket_back
+      - sec_mino_back_1
+      - sec_mino_back_2
+      - sec_mino_back_3
+      - sec_mino_left_1
+      - sec_mino_left_2
+      - sec_mino_left_3
+      - sec_mino_right_1
+      - sec_mino_right_2
+      - sec_mino_right_3
       - LeftUpperLeg
       - LeftLowerLeg
       - LeftFoot

@@ -167,8 +167,17 @@ namespace DD.Art.Tests.PlayMode
             yield return Settle(1.5f);
             pv.SetWeapon(2);
             yield return Settle(0.4f);
+            // WP-032F (AD SHOULD 3): muzzle travel of the C kick in gameplay-camera pixels (1920-wide frame) — the Barrel renderer's far bound
+            Camera gameCam = Camera.main;
+            Renderer barrel = null;
+            if (pv.WeaponSocket != null) foreach (Renderer r in pv.WeaponSocket.GetComponentsInChildren<Renderer>(true)) if (r.name == "Barrel") barrel = r;
+            Vector3 muzzleAim = barrel != null ? barrel.bounds.center + barrel.transform.forward * barrel.bounds.extents.magnitude : Vector3.zero;
+            Vector2 aimPx = gameCam != null ? (Vector2)gameCam.WorldToScreenPoint(muzzleAim) * (1920f / Mathf.Max(1, gameCam.pixelWidth)) : Vector2.zero;
             pv.PlayFire();
             yield return null; yield return null;
+            Vector3 muzzleKick = barrel != null ? barrel.bounds.center + barrel.transform.forward * barrel.bounds.extents.magnitude : Vector3.zero;
+            Vector2 kickPx = gameCam != null ? (Vector2)gameCam.WorldToScreenPoint(muzzleKick) * (1920f / Mathf.Max(1, gameCam.pixelWidth)) : Vector2.zero;
+            Debug.Log("[DD-TEST] wp032f.kick barrel=" + (barrel != null) + " muzzleTravelPx=" + Vector2.Distance(aimPx, kickPx).ToString("F1", CultureInfo.InvariantCulture) + " worldCm=" + (Vector3.Distance(muzzleAim, muzzleKick) * 100f).ToString("F1", CultureInfo.InvariantCulture) + " camPx=" + (gameCam != null ? gameCam.pixelWidth : 0));
             CharacterTests.Capture(ppose, Path.Combine(dir, "p_fire_C_kick.png"));
             written++;
             pv.SetWeapon(0);
