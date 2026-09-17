@@ -261,7 +261,7 @@ namespace DD.Art.Tests.EditMode
             int klip = 0;
             var manifest = ArtAnimationClipContract.Manifest();
             if (manifest != null) foreach (var spec in manifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) klip++;
-            Assert.AreEqual(36, klip, "AP-009B v002 36 klip FBX (WP-032B)");
+            Assert.AreEqual(85, klip, "AP-009D v004 85 klip FBX (WP-032C)");
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerIdleClipFile);
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerWalkClipFile);
             foreach (string b in ArtCharacterPrefabBuilder.ZombieBodyModels) beklenen.Add(b);

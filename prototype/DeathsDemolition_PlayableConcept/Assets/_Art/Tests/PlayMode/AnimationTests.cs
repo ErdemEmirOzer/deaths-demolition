@@ -209,7 +209,9 @@ namespace DD.Art.Tests.PlayMode
             AnimatorStateInfo overState = an.GetCurrentAnimatorStateInfo(over);
             AnimatorStateInfo addState = an.GetCurrentAnimatorStateInfo(add);
             AnimatorStateInfo baseState = an.GetCurrentAnimatorStateInfo(0);
-            bool overHit = overState.IsName(C.HitState + "_L") || overState.IsName(C.HitState + "_R") || an.GetNextAnimatorStateInfo(over).IsName(C.HitState + "_L") || an.GetNextAnimatorStateInfo(over).IsName(C.HitState + "_R");
+            // WP-032C: the upper read is the v003 directional × tier clip (a Standard shoved along +right → Hit_right_std / left by the impulse)
+            bool overHit = false;
+            foreach (string d in C.HitDirections) { string n = C.HitState + "_" + d + "_std"; overHit |= overState.IsName(n) || an.GetNextAnimatorStateInfo(over).IsName(n); }
             bool addFlinch = addState.IsName(C.FlinchState + "_Torso") || an.GetNextAnimatorStateInfo(add).IsName(C.FlinchState + "_Torso");
             Debug.Log("[DD-TEST] wp018.hit overHit=" + overHit + " addFlinch=" + addFlinch + " base=" + baseState.IsName(C.LocomotionState));
             Assert.IsTrue(addFlinch, "bölgesel additive flinch oynamadı");
@@ -227,12 +229,13 @@ namespace DD.Art.Tests.PlayMode
             {
                 if (i == 0) z.ApplyHit(Hit(1000f, BodyRegion.Head, Vector3.back, 1f));
                 AnimatorStateInfo s = an.GetCurrentAnimatorStateInfo(0);
-                if (s.IsName(C.StaggerState) || an.GetNextAnimatorStateInfo(0).IsName(C.StaggerState)) { stagger++; break; }
+                // WP-032C: a broken helmet plays the v003 armorbreak_head clip (ArmorBreak_0) — the WP-018 heavy stagger stays for REQ-124
+                if (s.IsName(C.ArmorBreakState + "_0") || an.GetNextAnimatorStateInfo(0).IsName(C.ArmorBreakState + "_0")) { stagger++; break; }
                 yield return null;
             }
 
             Assert.IsTrue(z.Armor.IsBroken(ArmorSlot.Helmet), "kask kırılmadı");
-            Assert.Greater(stagger, 0, "kırılmada ağır sendeleme klibi oynamadı");
+            Assert.Greater(stagger, 0, "kırılmada armorbreak_head klibi oynamadı");
         }
 
         // ============================================================================ ölüm ×4
@@ -248,7 +251,7 @@ namespace DD.Art.Tests.PlayMode
             {
                 (dir: Vector3.forward, region: BodyRegion.UpperBody, force: 1f, expected: 0),
                 (dir: Vector3.back, region: BodyRegion.UpperBody, force: 1f, expected: 1),
-                (dir: Vector3.right, region: BodyRegion.UpperBody, force: 2.5f, expected: 2),
+                (dir: Vector3.right, region: BodyRegion.UpperBody, force: 2.5f, expected: 4),   // WP-032C: a push to the right = death_side_R (4); to the left = death_side (2)
                 (dir: Vector3.right, region: BodyRegion.Head, force: 1f, expected: 3)
             };
             var zombies = new List<ZombieEnemy>();
@@ -311,7 +314,10 @@ namespace DD.Art.Tests.PlayMode
             Animator ra = z.Skinned.Animator;
             Debug.Log("[DD-TEST] wp018.rise enabled=" + ra.enabled + " init=" + ra.isInitialized + " cur=" + ra.GetCurrentAnimatorStateInfo(0).IsName(C.RiseState) + " next=" + ra.GetNextAnimatorStateInfo(0).IsName(C.RiseState) + " loco=" + ra.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState) + " trigger=" + ra.GetBool(C.Rise) + " alive=" + ra.GetBool(C.Alive) + " far=" + z.Skinned.GetComponent<CharacterAnimatorLod>().Far + " culled=" + ra.cullingMode + " visible=" + z.Skinned.Slot(0, 0).isVisible);
             yield return null;
-            Assert.IsTrue(ra.GetCurrentAnimatorStateInfo(0).IsName(C.RiseState) || ra.GetNextAnimatorStateInfo(0).IsName(C.RiseState), "Rise durumu yok");
+            // WP-032C: the rise is one of Rise / Rise_1 / Rise_2 (v003 rise_B / rise_C variants, deterministic per spawn)
+            bool inRise = false;
+            for (int v = 0; v < C.ZombieRiseClips.Length; v++) { string n = v == 0 ? C.RiseState : C.RiseState + "_" + v; inRise |= ra.GetCurrentAnimatorStateInfo(0).IsName(n) || ra.GetNextAnimatorStateInfo(0).IsName(n); }
+            Assert.IsTrue(inRise, "Rise durumu yok");
             float t0 = Time.realtimeSinceStartup;
             float movedWhileRising = 0f;
             while (z.Skinned.IsRising && Time.realtimeSinceStartup - t0 < 4f)
@@ -394,7 +400,7 @@ namespace DD.Art.Tests.PlayMode
             // Fire → additive layer state; Hit → override layer state; both leave the base layer alone.
             pv.PlayFire();
             yield return null; yield return null;
-            Assert.IsTrue(an.GetCurrentAnimatorStateInfo(add).IsName(C.FireState) || an.GetNextAnimatorStateInfo(add).IsName(C.FireState), "fire_recoil additive katmanda değil");
+            Assert.IsTrue(an.GetCurrentAnimatorStateInfo(add).IsName(C.FireState + "_0") || an.GetNextAnimatorStateInfo(add).IsName(C.FireState + "_0"), "WP-032C: Fire_0 (A rifle recoil) additive katmanda değil");
             pv.PlayHit();
             yield return null; yield return null;
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(over).IsName(C.HitState) || an.GetNextAnimatorStateInfo(over).IsName(C.HitState), "hit_light override katmanda değil");
@@ -409,7 +415,8 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(over).IsName(C.PickupState) || an.GetNextAnimatorStateInfo(over).IsName(C.PickupState), "pickup klibi üst gövde katmanında başlamadı");
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState) && !an.IsInTransition(0), "pickup taban katmanını kesti");
             Assert.Greater(pv.Move.y, 0.9f, "pickup sırasında yürüyüş blend'i düştü");
-            yield return CharacterTests.Bekle(() => an.GetCurrentAnimatorStateInfo(over).IsName(C.EmptyState) && !an.IsInTransition(over), 3f, "pickup sonrası üst katman boşa dönmedi");
+            // WP-032C: the armed rest is Aim_<Weapon> (A rifle by default), not Empty
+            yield return CharacterTests.Bekle(() => an.GetCurrentAnimatorStateInfo(over).IsName(C.AimState + "_0") && !an.IsInTransition(over), 3f, "pickup sonrası üst katman Aim_0'a dönmedi");
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState), "pickup boyunca taban katmanı locomotion kalmalı");
             velocity = Vector3.zero;
             yield return CharacterTests.Bekle(() => pv.Move.magnitude < 0.05f, 2f, "pickup sonrası idle");
@@ -504,8 +511,8 @@ namespace DD.Art.Tests.PlayMode
                 v.SetSpeed(2.7f * ((frame / 30 + i) % 2), Time.deltaTime);
                 int beat = (frame + i) % 120;
                 if (beat == 0) v.PlayAttack(ZombieAttackStyle.Swipe, 0.55f);
-                else if (beat == 40) v.PlayFlinch(i % 2 == 0 ? -1f : 1f, BodyRegion.UpperBody, true);
-                else if (beat == 60) v.PlayFlinch(1f, BodyRegion.Head, false);
+                else if (beat == 40) v.PlayFlinch(i % 2 == 0 ? Vector3.left : Vector3.right, BodyRegion.UpperBody, true);
+                else if (beat == 60) v.PlayFlinch(Vector3.right, BodyRegion.Head, false);
                 else if (beat == 80) v.PlayHeavyStagger();
             }
         }

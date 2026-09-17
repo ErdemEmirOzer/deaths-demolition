@@ -402,6 +402,16 @@ namespace DD.Prototype.Characters
         private static readonly int TelegraphRateId = Animator.StringToHash(CharacterAnimatorContract.TelegraphRate);
         private static readonly int WaitingId = Animator.StringToHash(CharacterAnimatorContract.Waiting);       // WP-032B
         private static readonly int WaitPhaseId = Animator.StringToHash(CharacterAnimatorContract.WaitPhase);   // WP-032B
+        private static readonly int HitId = Animator.StringToHash(CharacterAnimatorContract.HitLight);           // WP-032C directional × tier
+        private static readonly int HitDirId = Animator.StringToHash(CharacterAnimatorContract.HitDir);
+        private static readonly int HitTierId = Animator.StringToHash(CharacterAnimatorContract.HitTier);
+        private static readonly int RiseVariantId = Animator.StringToHash(CharacterAnimatorContract.RiseVariant);
+        private static readonly int ArmorBreakId = Animator.StringToHash(CharacterAnimatorContract.ArmorBreak);
+        private static readonly int ArmorBreakRegionId = Animator.StringToHash(CharacterAnimatorContract.ArmorBreakRegion);
+        private static readonly int StumbleId = Animator.StringToHash(CharacterAnimatorContract.Stumble);
+        private int _hitTier;   // WP-032C: 0 std (Standard / Special), 1 elite, 2 ultra — from the spawn tier
+        /// <summary>WP-032C: the v003 hit tier index the directional reactions use (tests).</summary>
+        public int HitTier => _hitTier;
 
         [PrototypeOnly(PendingDecisions.None,
             "Height above the threat's feet the zombie looks at (the player's head), metres. Invented.", true)]
@@ -522,6 +532,14 @@ namespace DD.Prototype.Characters
             _animator.ResetTrigger(DieId);
             _animator.ResetTrigger(RiseId);
             _animator.ResetTrigger(TelegraphId);
+            _animator.ResetTrigger(HitId);
+            _animator.ResetTrigger(ArmorBreakId);
+            _animator.ResetTrigger(StumbleId);
+            // WP-032C: the directional hit reads scale with the tier (StaggerSusceptibility 1.0 / 0.45 / 0.12 in the clips); the
+            // rise variant (A 48 f / B 36 f / C 28 f) is a deterministic per-spawn pick — B/C are the ≤ 1.2 s camera-off cuts.
+            _hitTier = tier == EnemyTier.Elite ? 1 : tier == EnemyTier.Ultra ? 2 : 0;
+            _animator.SetInteger(HitTierId, _hitTier);
+            _animator.SetInteger(RiseVariantId, (idleVariant + (GetInstanceID() & 3)) % CharacterAnimatorContract.ZombieRiseClips.Length);
             _waiting = false;
             _animator.SetBool(WaitingId, false);
             // WP-032B: the queue idle's cycle offset — deterministic per spawn (the idle variant coin's neighbour), so a throat queue is out of step.
@@ -663,7 +681,7 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>Light directional hit: override_upper L/R by the bullet's lateral side + the regional additive flinch.</summary>
-        public void PlayFlinch(float lateral, DD.Prototype.Damage.BodyRegion region, bool upperBody)
+        public void PlayFlinch(Vector3 localHit, DD.Prototype.Damage.BodyRegion region, bool upperBody)
         {
             if (!_authored || _dying) return;
             switch (region)
@@ -675,9 +693,42 @@ namespace DD.Prototype.Characters
 
             if (upperBody)
             {
-                _animator.SetTrigger(lateral < 0f ? HitLeftId : HitRightId);
+                // WP-032C: Hit_<dir>_<tier> — the hit direction is where the impulse pushes the body (M1 convention: +z = pushed
+                // forward, i.e. shot from behind → the "back" read; ±x = shoved sideways); ties go to the lateral read.
+                _animator.SetInteger(HitDirId, HitDirectionIndex(localHit));
+                _animator.SetTrigger(HitId);
             }
         }
+
+        /// <summary>WP-032C: 0 front (pushed back = hit from the front), 1 back, 2 left, 3 right — from the body-space push direction.</summary>
+        public static int HitDirectionIndex(Vector3 localPush)
+        {
+            if (Mathf.Abs(localPush.z) >= Mathf.Abs(localPush.x)) return localPush.z < 0f ? 0 : 1;
+            return localPush.x < 0f ? 2 : 3;
+        }
+
+        /// <summary>WP-032C: a Special (Runner) stumble — the base-layer hit_special_stumble clip (stagger_end closes it).</summary>
+        public void PlayStumble()
+        {
+            if (!_authored || _dying) return;
+            _windowOpen = false;
+            _animator.ResetTrigger(AttackId);
+            _animator.SetTrigger(StumbleId);
+        }
+
+        /// <summary>WP-032C: armour break by region — the full-body armorbreak_<region> clip; held like the heavy stagger until its end (0.6 s clip).</summary>
+        public void PlayArmorBreak(int region)
+        {
+            if (!_authored || _dying) return;
+            _windowOpen = false;
+            _heavyStaggerUntil = Time.time + Mathf.Min(HeavyStaggerCapSeconds, ArmorBreakHoldSeconds);
+            _animator.ResetTrigger(AttackId);
+            _animator.SetInteger(ArmorBreakRegionId, Mathf.Clamp(region, 0, 2));
+            _animator.SetTrigger(ArmorBreakId);
+        }
+
+        [PrototypeOnly(PendingDecisions.None, "WP-032C: seconds the body is held (no walk / attack) by an armorbreak clip = the 18-frame clip. Clip length.", true)]
+        public const float ArmorBreakHoldSeconds = 0.6f;
 
         /// <summary>Full-body heavy stagger (armour break, ADR-018-2). Cancels the attack clip.</summary>
         public void PlayHeavyStagger()
@@ -702,14 +753,14 @@ namespace DD.Prototype.Characters
             _animator.ResetTrigger(HitLeftId);
             _animator.ResetTrigger(HitRightId);
             _animator.SetBool(AliveId, false);
-            _animator.SetInteger(DeathStyleId, Mathf.Clamp(deathStyle, 0, 3));
+            _animator.SetInteger(DeathStyleId, Mathf.Clamp(deathStyle, 0, CharacterAnimatorContract.ZombieDeathClips.Length - 1));
             _animator.SetTrigger(DieId);
         }
 
-        /// <summary>Armour binder hook (ArmorVisualBinder): a broken plate is the heavy stagger's only trigger.</summary>
-        public void NotifyArmorBroken()
+        /// <summary>Armour binder hook (ArmorVisualBinder): a broken plate plays the region's armorbreak clip (WP-032C; the WP-018 heavy stagger stays the REQ-124 gameplay stagger's full-body read).</summary>
+        public void NotifyArmorBroken(DD.Prototype.Damage.BodyRegion region)
         {
-            PlayHeavyStagger();
+            PlayArmorBreak(region == DD.Prototype.Damage.BodyRegion.Head ? 0 : region == DD.Prototype.Damage.BodyRegion.LowerBody ? 2 : 1);
         }
 
         /// <summary>

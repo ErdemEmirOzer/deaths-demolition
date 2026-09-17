@@ -38,7 +38,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.ClipCount, m.Count);
             int player = 0, zombie = 0;
             foreach (var s in m.Values) { if (s.target == "player") player++; else if (s.target == "zombie") zombie++; }
-            Assert.AreEqual(14, player); Assert.AreEqual(22, zombie);   // WP-032B: v002 = + run ×4, overhead, idle_queue
+            Assert.AreEqual(41, player); Assert.AreEqual(44, zombie);   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
             foreach (string name in C.PlayerClips) Assert.IsTrue(m.ContainsKey(name), name);
             foreach (string name in C.ZombieClips) Assert.IsTrue(m.ContainsKey(name), name);
             // Every manifest event name is in the contract table.
@@ -105,7 +105,8 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(set.IsAuthored, "oyuncu seti AP-009 değil");
             var c = set.Controller as AnimatorController;
             Assert.IsNotNull(c);
-            Params(c, C.MoveX, C.MoveY, C.LocoRate, C.Fire, C.HitLight, C.Die, C.DeathStyle, C.Pickup, C.Alive);
+            Params(c, C.MoveX, C.MoveY, C.LocoRate, C.Fire, C.HitLight, C.Die, C.DeathStyle, C.Pickup, C.Alive,
+                C.Weapon, C.Reload, C.ReloadRate, C.SwitchOut, C.SwitchIn, C.Lower, C.Raise, C.SwHold, C.Hurt, C.HurtStyle);   // WP-032C
             Assert.AreEqual(4, c.layers.Length);
             Assert.AreEqual(C.OverrideUpperLayer, c.layers[1].name); Assert.AreEqual(C.AdditiveLayer, c.layers[2].name); Assert.AreEqual(C.AimLayer, c.layers[3].name);
             Assert.AreEqual(AnimatorLayerBlendingMode.Additive, c.layers[2].blendingMode);
@@ -139,11 +140,30 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNull(ArtAnimatorBuilder.FindState(c, 0, C.PickupState), "WP-032B · DEC-082: pickup taban katmanında değil");
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.PickupState), "pickup üst gövde override katmanında");
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.HitState)); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 2, C.FireState));
+            // WP-032C: weapon handling on the upper layer — Aim_0..2 rest loops, Reload_/SwitchOut_/SwitchIn_ per weapon (Reload at ReloadRate),
+            // Lower / Raise, Hurt_A, SwHold_1/2; Fire_0..2 additive per weapon; Death_2 (side) + Hurt_B on the base.
+            for (int w = 0; w < 3; w++)
+            {
+                AnimatorState aim = ArtAnimatorBuilder.FindState(c, 1, C.AimState + "_" + w);
+                Assert.IsNotNull(aim, "Aim_" + w); Assert.AreEqual(set.Clip(C.PlayerWeaponClip(w, "idle_aim")), aim.motion);
+                AnimatorState reload = ArtAnimatorBuilder.FindState(c, 1, C.ReloadState + "_" + w);
+                Assert.IsNotNull(reload, "Reload_" + w); Assert.IsTrue(reload.speedParameterActive && reload.speedParameter == C.ReloadRate, "Reload_" + w + " ReloadRate");
+                Assert.AreEqual(5, reload.transitions.Length, "Reload_" + w + " → Aim ×3 + SwHold ×2");
+                Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.SwitchOutState + "_" + w)); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.SwitchInState + "_" + w));
+                AnimatorState fireW = ArtAnimatorBuilder.FindState(c, 2, C.FireState + "_" + w);
+                Assert.IsNotNull(fireW, "Fire_" + w); Assert.AreEqual(set.Clip(C.PlayerWeaponClip(w, "fire")), fireW.motion);
+            }
+
+            for (int w = 0; w < 3; w++) { Assert.AreEqual(set.Clip(C.PlayerWeaponLowerClip(w)), ArtAnimatorBuilder.FindState(c, 1, C.WeaponLowerState + "_" + w).motion, "WeaponLower_" + w); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.WeaponRaiseState + "_" + w)); }
+            Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.HurtState + "_A")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.HurtState + "_B"));
+            Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.SwHoldState + "_1")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.SwHoldState + "_2"));
+            Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_2"), "death_side");
+            Assert.AreEqual(set.Clip(C.PlayerPickupUpper), ArtAnimatorBuilder.FindState(c, 1, C.PickupState).motion, "pickup = v003 pickup_upper");
+            Assert.AreEqual(5, ArtAnimatorBuilder.FindState(c, 1, C.EmptyState).transitions.Length, "Empty → Aim_0..2 + SwHold_1..2");
             Assert.AreEqual(C.EmptyState, c.layers[1].stateMachine.defaultState.name); Assert.AreEqual(C.EmptyState, c.layers[2].stateMachine.defaultState.name);
             // Deaths never leave (no transitions out); the pickup returns to the upper layer's Empty.
             Assert.AreEqual(0, ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_0").transitions.Length);
-            Assert.AreEqual(1, ArtAnimatorBuilder.FindState(c, 1, C.PickupState).transitions.Length);
-            Assert.AreEqual(C.EmptyState, ArtAnimatorBuilder.FindState(c, 1, C.PickupState).transitions[0].destinationState.name);
+            Assert.AreEqual(5, ArtAnimatorBuilder.FindState(c, 1, C.PickupState).transitions.Length, "WP-032C: pickup → Aim ×3 + SwHold ×2");
         }
 
         [Test]
@@ -183,7 +203,7 @@ namespace DD.Art.Tests.EditMode
 
             // WP-032B: the overhead holds its last frame (exit at 1.0, blend = OverheadHoldSeconds); the Wait state is the queue idle with a per-body cycle offset.
             AnimatorStateTransition overheadOut = ArtAnimatorBuilder.FindState(c, 0, C.AttackOverheadState).transitions[0];
-            Assert.AreEqual(1f, overheadOut.exitTime, 1e-4f); Assert.AreEqual(ArtAnimatorBuilder.OverheadHoldSeconds, overheadOut.duration, 1e-4f);
+            Assert.AreEqual(0.97f, overheadOut.exitTime, 1e-4f, "WP-032C: v003 overhead (73 f) has its own recovery — common exit"); Assert.AreEqual(0.12f, overheadOut.duration, 1e-4f);
             AnimatorState wait = ArtAnimatorBuilder.FindState(c, 0, C.WaitState);
             Assert.IsNotNull(wait, "Wait durumu");
             Assert.AreEqual(set.Clip(C.ZombieIdleQueue), wait.motion);
@@ -199,6 +219,18 @@ namespace DD.Art.Tests.EditMode
 
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.RiseState)); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.StaggerState));
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.HitState + "_L")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.HitState + "_R"));
+            // WP-032C: directional × tier hits, armour breaks by region, stumble, rise variants, 8 deaths
+            for (int dir = 0; dir < 4; dir++)
+            for (int tier = 0; tier < 3; tier++)
+            {
+                AnimatorState h = ArtAnimatorBuilder.FindState(c, 1, C.HitState + "_" + C.HitDirections[dir] + "_" + C.HitTiers[tier]);
+                Assert.IsNotNull(h, "Hit_" + dir + "_" + tier); Assert.AreEqual(set.Clip(C.ZombieHitClip(dir, tier)), h.motion);
+            }
+
+            for (int r = 0; r < 3; r++) Assert.AreEqual(set.Clip(C.ZombieArmorBreakClip(r)), ArtAnimatorBuilder.FindState(c, 0, C.ArmorBreakState + "_" + r).motion, "ArmorBreak_" + r);
+            Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.StumbleState));
+            Assert.AreEqual(set.Clip(C.ZombieRiseB), ArtAnimatorBuilder.FindState(c, 0, C.RiseState + "_1").motion); Assert.AreEqual(set.Clip(C.ZombieRiseC), ArtAnimatorBuilder.FindState(c, 0, C.RiseState + "_2").motion);
+            Assert.AreEqual(8, C.ZombieDeathClips.Length); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_7"), "death_ultra");
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 2, C.FlinchState + "_Head")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 2, C.FlinchState + "_Torso")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 2, C.FlinchState + "_Leg"));
 
             // Every AnyState reaction is gated by Alive except the deaths.
@@ -276,7 +308,7 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(14, player.Clips.Count); Assert.AreEqual(22, zombie.Clips.Count);   // WP-032B v002
+            Assert.AreEqual(41, player.Clips.Count); Assert.AreEqual(44, zombie.Clips.Count);   // WP-032C v004
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
             var m = Manifest();
             foreach (var set in new[] { player, zombie })

@@ -130,6 +130,7 @@ namespace DD.Prototype.Enemies
         private float _deathDuration = DeathDurationNormal;
         private ZombieDeathStyle _deathStyle;
         private float _deathSide;
+        private EnemyTier _tier;   // WP-032C
         private float _deathSpin;
 
         public ZombiePose Pose { get; private set; } = ZombiePose.Idle;
@@ -191,6 +192,7 @@ namespace DD.Prototype.Enemies
         /// </summary>
         public void ResetForSpawn(EnemyTier tier, float baseLeanDegrees, ref EnemyRandom random)
         {
+            _tier = tier;   // WP-032C: the v003 tier deaths / directional hit reads
             _phase = random.Range(0f, Mathf.PI * 2f);
             _speed01 = 0f;
             _speedMps = 0f;
@@ -356,7 +358,7 @@ namespace DD.Prototype.Enemies
 
             if (Driven)
             {
-                Driver.PlayFlinch(local.x, region, magnitude >= DrivenUpperBodyFlinchIntensity);
+                Driver.PlayFlinch(local, region, magnitude >= DrivenUpperBodyFlinchIntensity);
             }
         }
 
@@ -392,7 +394,7 @@ namespace DD.Prototype.Enemies
                 // ADR-018-2: a gameplay stagger (REQ-124 window, 0.16–0.5 s) shows as the upper-body
                 // hit clip while the legs stop (locomotion is suppressed by the enemy); the full-body
                 // hit_heavy_stagger clip is reserved for an armour break (ArmorVisualBinder).
-                Driver.PlayFlinch(local.x, BodyRegion.UpperBody, true);
+                Driver.PlayFlinch(local, BodyRegion.UpperBody, true);
             }
         }
 
@@ -456,11 +458,15 @@ namespace DD.Prototype.Enemies
             if (Driven)
             {
                 // AP-009 has four deaths; the five M1 styles fold onto them (HeadshotDrop → kneel,
-                // Crumple → kneel, SpinFall → side).
+                // Crumple → kneel, SpinFall → side — WP-032C: side_R when the push is to the right).
+                // WP-032C tier deaths (v003): Special → special_A (forward skid) / special_B (spin, on the back) by the
+                // push, Ultra → the 60 f death_ultra (3-frame standing hold for the S-07 cover VFX).
                 int style = _deathStyle == ZombieDeathStyle.FallForward ? 0
                     : _deathStyle == ZombieDeathStyle.FallBackward ? 1
-                    : _deathStyle == ZombieDeathStyle.SpinFall ? 2
+                    : _deathStyle == ZombieDeathStyle.SpinFall ? (_deathSide > 0f ? 4 : 2)
                     : 3;
+                if (_tier == EnemyTier.Ultra) style = 7;
+                else if (_tier == EnemyTier.Special) style = local.z > 0.35f ? 5 : 6;
                 Driver.PlayDeath(style);
             }
         }
@@ -486,6 +492,13 @@ namespace DD.Prototype.Enemies
         }
 
         /// <summary>WP-032: idle-in-crowd / queue wait for the driven body (WP-030 / S-03 calls this; the block rig ignores it).</summary>
+        /// <summary>WP-032C: Runner stumble (v003 hit_special_stumble) — S-03's tier-ability hook on the driven body; the block rig ignores it.</summary>
+        public void PlayStumble()
+        {
+            if (_dying) return;
+            if (Driven) Driver.PlayStumble();
+        }
+
         public void SetWaiting(bool waiting)
         {
             if (Driven)

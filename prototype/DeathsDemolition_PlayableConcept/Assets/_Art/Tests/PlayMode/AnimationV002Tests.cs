@@ -205,22 +205,27 @@ namespace DD.Art.Tests.PlayMode
             float runTimeScale = PlayerSkinnedVisual.ChildTimeScale(pv.AnimationSet.LocomotionReferenceSpeed, pv.AnimationSet.SpeedOf(C.PlayerRunFwd));
             float clipRate = pv.Animator.GetFloat(C.LocoRate) * runTimeScale;
             Assert.LessOrEqual(clipRate, PlayerSkinnedVisual.MaxRunRate + 1e-3f, "koşu klibi oran tavanını aştı: " + clipRate);
-            Assert.Greater(clipRate, 1.05f, "6,2 m/s'de koşu klibi 1×'in üstünde oynamalı: " + clipRate);
+            Assert.Greater(clipRate, 0.9f, "6,2 m/s'de koşu klibi ≈ 1× oynamalı (v004 run_fwd canlı kalibrasyon 6,26 m/s): " + clipRate);
 
             // Flight-phase cycle: the planted foot is in contact for the manifest's 6 stance frames (of 15) after its landing
             // event, then lifts and swings — skating is its world travel over THOSE frames only (the WP-032 event-to-event
             // window would count the swing). Contact seconds = stance frames / 30 / clip rate.
-            const int stanceFrames = 6;
+            // Contact = the frames after a landing event while the landed foot moves BACKWARD relative to the body (its world Δx
+            // below the body's Δx by more than the settle epsilon), at most the manifest stance length — the StrideCalibrator rule;
+            // skating is the foot's signed world travel over those frames.
+            int stanceFrames = Mathf.Max(1, pv.AnimationSet.Find(C.PlayerRunFwd).stanceFrames);
+            float stanceSeconds = stanceFrames / 30f / Mathf.Max(0.1f, clipRate);
             var slips = new List<float>();
-            float[] sampleX = { float.NaN, float.NaN };
-            float sampleTime = -1f;
-            bool pending = false;
-            CharacterAnimationEvent landed = CharacterAnimationEvent.None;
+            bool pending = false, started = false;
+            int landedFoot = 0, contactSamples = 0;
+            float lastX = 0f, travel = 0f, contactTime = 0f;
             Transform[] feet = { lf, rf };
             Action<CharacterAnimationEvent> onEvent = e =>
             {
                 if (e != CharacterAnimationEvent.FootLeft && e != CharacterAnimationEvent.FootRight) return;
-                sampleX[0] = feet[0].position.x; sampleX[1] = feet[1].position.x; sampleTime = Time.time; landed = e; pending = true;
+                if (pending && contactSamples > 0) slips.Add(travel);
+                landedFoot = e == CharacterAnimationEvent.FootLeft ? 0 : 1;
+                pending = true; started = false; contactSamples = 0; travel = 0f; contactTime = 0f; lastX = feet[landedFoot].position.x;
             };
             pv.Events.Raised += onEvent;
             float t0 = Time.time;
@@ -228,15 +233,17 @@ namespace DD.Art.Tests.PlayMode
             {
                 while (Time.time - t0 < 4f)
                 {
-                    root.position += Vector3.right * speed * Time.deltaTime;
+                    float bodyDx = speed * Time.deltaTime;
+                    root.position += Vector3.right * bodyDx;
                     yield return null;
-                    float contactSeconds = stanceFrames / 30f / Mathf.Max(0.1f, clipRate);
-                    if (pending && Time.time - sampleTime >= contactSeconds)
-                    {
-                        int foot = landed == CharacterAnimationEvent.FootLeft ? 0 : 1;
-                        slips.Add(feet[foot].position.x - sampleX[foot]);   // signed world travel of the landed foot over its contact
-                        pending = false;
-                    }
+                    if (!pending) continue;
+                    float dx = feet[landedFoot].position.x - lastX;
+                    lastX = feet[landedFoot].position.x;
+                    float relative = dx - bodyDx;   // < 0: the foot moves back relative to the body (contact)
+                    float eps = StrideCalibrator.SettleEpsilon * 30f * Time.deltaTime * clipRate;
+                    if (!started) { if (relative >= -eps) continue; started = true; }
+                    if (relative > eps || contactTime >= stanceSeconds) { pending = false; slips.Add(travel); continue; }
+                    travel += dx; contactSamples++; contactTime += Time.deltaTime;
                 }
             }
             finally { pv.Events.Raised -= onEvent; }

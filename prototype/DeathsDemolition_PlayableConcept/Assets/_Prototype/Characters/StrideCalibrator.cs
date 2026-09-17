@@ -14,6 +14,9 @@ namespace DD.Prototype.Characters
     /// </summary>
     public static class StrideCalibrator
     {
+        /// <summary>WP-032C: per-frame travel along the planted axis below which a frame is a landing settle / toe-off, metres per frame (≈ 0.15 m/s at 30 fps).</summary>
+        public const float SettleEpsilon = 0.005f;
+
         public struct Result
         {
             public float speedMps;
@@ -110,15 +113,28 @@ namespace DD.Prototype.Characters
                 float speed = planted / n * fps;
                 if (stanceFrames > 0 && stanceFrames < n)
                 {
+                    // WP-032C: flight-phase clip — contact = from the first frame after the landing event where the planted foot
+                    // moves along the planted axis (the authored landing frame can still be a settle frame) until it first moves
+                    // against it (toe-off) or the manifest stance length runs out. Verified against the PlayMode slip test on the
+                    // shipped prefab rig (the avatar source model sampled a different phase: v004 run_fwd 5.02 vs ≈ 5.9 m/s live).
                     float travel = 0f;
-                    for (int f = from; f < from + stanceFrames; f++)
+                    int count = 0;
+                    bool started = false;
+                    for (int f = from; f < to && count < stanceFrames; f++)
                     {
                         int a = f % cycle, b = (f + 1) % cycle;
-                        travel += z[b] - z[a];
+                        float d = z[b] - z[a];
+                        if (!started) { if (d <= SettleEpsilon) continue; started = true; }
+                        if (d < -SettleEpsilon) break;
+                        travel += d;
+                        count++;
                     }
 
-                    contactFrames = stanceFrames;
-                    speed = travel / stanceFrames * fps;
+                    if (count > 0)
+                    {
+                        contactFrames = count;
+                        speed = travel / count * fps;
+                    }
                 }
 
                 sb.Append(from).Append('→').Append(to).Append(':').Append(speed.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append(leftPlanted ? "L" : "R").Append('/').Append(contactFrames).Append("f ");

@@ -20,7 +20,23 @@ namespace DD.Prototype.Characters
         StaggerEnd = 11,
         /// <summary>WP-032B · idle_queue weight shifts (AP-009B v002) — a foot-shuffle cue for S-07/S-08, no gameplay meaning.</summary>
         ShiftLeft = 12,
-        ShiftRight = 13
+        ShiftRight = 13,
+        // WP-032C · AP-009C v003 (weapon handling, pickup swap, armour break, spawn beats)
+        Eject = 14,
+        Chamber = 15,
+        MagOut = 16,
+        MagIn = 17,
+        MagIn2 = 18,
+        MagIn3 = 19,
+        SwitchReady = 20,
+        SwitchAway = 21,
+        Lowered = 22,
+        Raised = 23,
+        PickupGrab = 24,
+        PickupDone = 25,
+        ArmorBreak = 26,
+        SpawnRise = 27,
+        SpawnLand = 28
     }
 
     /// <summary>
@@ -42,7 +58,9 @@ namespace DD.Prototype.Characters
         public static readonly string[] Names =
         {
             "", "fire", "hit_window_start", "hit_window_end", "foot_l", "foot_r",
-            "death_end", "rise_end", "pickup", "breath", "hit", "stagger_end", "shift_l", "shift_r"
+            "death_end", "rise_end", "pickup", "breath", "hit", "stagger_end", "shift_l", "shift_r",
+            "eject", "chamber", "mag_out", "mag_in", "mag_in_2", "mag_in_3", "switch_ready", "switch_away", "lowered", "raised",
+            "pickup_grab", "pickup_done", "armor_break", "spawn_rise", "spawn_land"
         };
 
         public static CharacterAnimationEvent Parse(string name)
@@ -90,6 +108,21 @@ namespace DD.Prototype.Characters
         public void stagger_end() => Raise(CharacterAnimationEvent.StaggerEnd);
         public void shift_l() => Raise(CharacterAnimationEvent.ShiftLeft);
         public void shift_r() => Raise(CharacterAnimationEvent.ShiftRight);
+        public void eject() => Raise(CharacterAnimationEvent.Eject);
+        public void chamber() => Raise(CharacterAnimationEvent.Chamber);
+        public void mag_out() => Raise(CharacterAnimationEvent.MagOut);
+        public void mag_in() => Raise(CharacterAnimationEvent.MagIn);
+        public void mag_in_2() => Raise(CharacterAnimationEvent.MagIn2);
+        public void mag_in_3() => Raise(CharacterAnimationEvent.MagIn3);
+        public void switch_ready() => Raise(CharacterAnimationEvent.SwitchReady);
+        public void switch_away() => Raise(CharacterAnimationEvent.SwitchAway);
+        public void lowered() => Raise(CharacterAnimationEvent.Lowered);
+        public void raised() => Raise(CharacterAnimationEvent.Raised);
+        public void pickup_grab() => Raise(CharacterAnimationEvent.PickupGrab);
+        public void pickup_done() => Raise(CharacterAnimationEvent.PickupDone);
+        public void armor_break() => Raise(CharacterAnimationEvent.ArmorBreak);
+        public void spawn_rise() => Raise(CharacterAnimationEvent.SpawnRise);
+        public void spawn_land() => Raise(CharacterAnimationEvent.SpawnLand);
 
         /// <summary>Tests / probes: raise an event as if the clip had fired it.</summary>
         public void RaiseForTest(CharacterAnimationEvent e) => Raise(e);

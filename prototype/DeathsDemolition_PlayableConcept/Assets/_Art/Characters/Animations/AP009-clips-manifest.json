@@ -1,5 +1,5 @@
 {
- "schema": "AP009.clips-manifest.v002",
+ "schema": "AP009.clips-manifest.v004",
  "package": "AP-009B",
  "fps": 30,
  "skeleton": {
@@ -31,8 +31,658 @@
  "speed_reference": "speed_mps = the measured ground speed at which the in-place cycle shows no foot slide (mean stance-foot ankle displacement x 30 fps; playback rate 1.0). Unity scales the playback rate by MoveSpeed / speed_mps \u2014 see README \u00a7speed table; v002: dedicated player run cycles (run_fwd/back/strafe_l/r, flight phase) \u2014 blend walk->run above ~1.6x the walk speed_mps (walk scaled beyond x2.1 reads as skating)",
  "clips": [
   {
+   "clip": "AP009_player_A_fire",
+   "fbx": "AP009_player_A_fire_v004.fbx",
+   "target": "player",
+   "frames": 6,
+   "fps": 30,
+   "seconds": 0.167,
+   "loop": false,
+   "events": {
+    "fire": 0,
+    "eject": 1
+   },
+   "layer": "additive",
+   "mask": "upper_body",
+   "additive": true,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "additive_base": "AP009_player_A_idle_aim",
+   "fire_rate": 8.5,
+   "seconds_per_shot": 0.118,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.29,
+      "capsule_r_max_no_feet": 0.287,
+      "z_min": 0.001,
+      "z_max": 1.8
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_A_idle_aim",
+   "fbx": "AP009_player_A_idle_aim_v004.fbx",
+   "target": "player",
+   "frames": 61,
+   "fps": 30,
+   "seconds": 2.0,
+   "loop": true,
+   "events": {
+    "breath": 0
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": 0.0,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.024,
+      "z_max": 1.778
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_A_reload",
+   "fbx": "AP009_player_A_reload_v004.fbx",
+   "target": "player",
+   "frames": 45,
+   "fps": 30,
+   "seconds": 1.467,
+   "loop": false,
+   "events": {
+    "mag_out": 12,
+    "mag_in": 30,
+    "chamber": 40
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "reload_s_config": 1.5,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.362,
+      "z_min": 0.026,
+      "z_max": 1.772
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_A_switch_in",
+   "fbx": "AP009_player_A_switch_in_v004.fbx",
+   "target": "player",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "switch_ready": 11
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.784
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_A_switch_out",
+   "fbx": "AP009_player_A_switch_out_v004.fbx",
+   "target": "player",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "switch_away": 11
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.024,
+      "z_max": 1.782
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_B_fire",
+   "fbx": "AP009_player_B_fire_v004.fbx",
+   "target": "player",
+   "frames": 5,
+   "fps": 30,
+   "seconds": 0.133,
+   "loop": false,
+   "events": {
+    "fire": 0,
+    "eject": 1
+   },
+   "layer": "additive",
+   "mask": "upper_body",
+   "additive": true,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "B",
+   "additive_base": "AP009_player_B_idle_aim",
+   "fire_rate": 13.0,
+   "seconds_per_shot": 0.077,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.29,
+      "capsule_r_max_no_feet": 0.285,
+      "z_min": 0.001,
+      "z_max": 1.8
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_B_idle_aim",
+   "fbx": "AP009_player_B_idle_aim_v004.fbx",
+   "target": "player",
+   "frames": 61,
+   "fps": 30,
+   "seconds": 2.0,
+   "loop": true,
+   "events": {
+    "breath": 0
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": 0.0,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "B",
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.783
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_B_reload",
+   "fbx": "AP009_player_B_reload_v004.fbx",
+   "target": "player",
+   "frames": 51,
+   "fps": 30,
+   "seconds": 1.667,
+   "loop": false,
+   "events": {
+    "mag_out": 12,
+    "mag_in": 34,
+    "chamber": 44
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "B",
+   "reload_s_config": 1.7,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.025,
+      "z_max": 1.778
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_B_switch_in",
+   "fbx": "AP009_player_B_switch_in_v004.fbx",
+   "target": "player",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "switch_ready": 11
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "B",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.784
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_B_switch_out",
+   "fbx": "AP009_player_B_switch_out_v004.fbx",
+   "target": "player",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "switch_away": 11
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "B",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.024,
+      "z_max": 1.783
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_B_weapon_lower",
+   "fbx": "AP009_player_B_weapon_lower_v004.fbx",
+   "target": "player",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "lowered": 13
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "B",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.782
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_B_weapon_raise",
+   "fbx": "AP009_player_B_weapon_raise_v004.fbx",
+   "target": "player",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "raised": 13
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "B",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.783
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_C_fire",
+   "fbx": "AP009_player_C_fire_v004.fbx",
+   "target": "player",
+   "frames": 22,
+   "fps": 30,
+   "seconds": 0.7,
+   "loop": false,
+   "events": {
+    "fire": 0,
+    "eject": 12,
+    "chamber": 20
+   },
+   "layer": "additive",
+   "mask": "upper_body",
+   "additive": true,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "C",
+   "additive_base": "AP009_player_C_idle_aim",
+   "fire_rate": 1.2,
+   "seconds_per_shot": 0.833,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.296,
+      "capsule_r_max_no_feet": 0.296,
+      "z_min": 0.001,
+      "z_max": 1.802
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_C_idle_aim",
+   "fbx": "AP009_player_C_idle_aim_v004.fbx",
+   "target": "player",
+   "frames": 61,
+   "fps": 30,
+   "seconds": 2.0,
+   "loop": true,
+   "events": {
+    "breath": 0
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": 0.0,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "C",
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.028,
+      "z_max": 1.758
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_C_reload",
+   "fbx": "AP009_player_C_reload_v004.fbx",
+   "target": "player",
+   "frames": 66,
+   "fps": 30,
+   "seconds": 2.167,
+   "loop": false,
+   "events": {
+    "mag_in": 14,
+    "mag_in_2": 30,
+    "mag_in_3": 46,
+    "chamber": 60
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "C",
+   "reload_s_config": 2.2,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.029,
+      "z_max": 1.752
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_C_switch_in",
+   "fbx": "AP009_player_C_switch_in_v004.fbx",
+   "target": "player",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "switch_ready": 11
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "C",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.784
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_C_switch_out",
+   "fbx": "AP009_player_C_switch_out_v004.fbx",
+   "target": "player",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "switch_away": 11
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "C",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.024,
+      "z_max": 1.78
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_C_weapon_lower",
+   "fbx": "AP009_player_C_weapon_lower_v004.fbx",
+   "target": "player",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "lowered": 13
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "C",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.024,
+      "z_max": 1.782
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_C_weapon_raise",
+   "fbx": "AP009_player_C_weapon_raise_v004.fbx",
+   "target": "player",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "raised": 13
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "C",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.783
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_player_death_back",
-   "fbx": "AP009_player_death_back_v002.fbx",
+   "fbx": "AP009_player_death_back_v004.fbx",
    "target": "player",
    "frames": 36,
    "fps": 30,
@@ -64,7 +714,7 @@
   },
   {
    "clip": "AP009_player_death_fwd",
-   "fbx": "AP009_player_death_fwd_v002.fbx",
+   "fbx": "AP009_player_death_fwd_v004.fbx",
    "target": "player",
    "frames": 36,
    "fps": 30,
@@ -95,8 +745,41 @@
    }
   },
   {
+   "clip": "AP009_player_death_side",
+   "fbx": "AP009_player_death_side_v004.fbx",
+   "target": "player",
+   "frames": 48,
+   "fps": 30,
+   "seconds": 1.567,
+   "loop": false,
+   "events": {
+    "death_end": 47
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 1.237,
+      "capsule_r_max_no_feet": 1.237,
+      "z_min": -0.03,
+      "z_max": 1.772
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_player_fire_recoil",
-   "fbx": "AP009_player_fire_recoil_v002.fbx",
+   "fbx": "AP009_player_fire_recoil_v004.fbx",
    "target": "player",
    "frames": 10,
    "fps": 30,
@@ -128,7 +811,7 @@
   },
   {
    "clip": "AP009_player_hit_light",
-   "fbx": "AP009_player_hit_light_v002.fbx",
+   "fbx": "AP009_player_hit_light_v004.fbx",
    "target": "player",
    "frames": 12,
    "fps": 30,
@@ -159,8 +842,74 @@
    }
   },
   {
+   "clip": "AP009_player_hurt_A",
+   "fbx": "AP009_player_hurt_A_v004.fbx",
+   "target": "player",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.471,
+      "capsule_r_max_no_feet": 0.397,
+      "z_min": 0.026,
+      "z_max": 1.772
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_hurt_B",
+   "fbx": "AP009_player_hurt_B_v004.fbx",
+   "target": "player",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.497,
+      "capsule_r_max_no_feet": 0.495,
+      "z_min": 0.026,
+      "z_max": 1.772
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_player_idle",
-   "fbx": "AP009_player_idle_v002.fbx",
+   "fbx": "AP009_player_idle_v004.fbx",
    "target": "player",
    "frames": 61,
    "fps": 30,
@@ -192,7 +941,7 @@
   },
   {
    "clip": "AP009_player_pickup_special",
-   "fbx": "AP009_player_pickup_special_v002.fbx",
+   "fbx": "AP009_player_pickup_special_v004.fbx",
    "target": "player",
    "frames": 24,
    "fps": 30,
@@ -223,8 +972,42 @@
    }
   },
   {
+   "clip": "AP009_player_pickup_upper",
+   "fbx": "AP009_player_pickup_upper_v004.fbx",
+   "target": "player",
+   "frames": 24,
+   "fps": 30,
+   "seconds": 0.767,
+   "loop": false,
+   "events": {
+    "pickup_grab": 9,
+    "pickup": 9,
+    "pickup_done": 22
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.452,
+      "capsule_r_max_no_feet": 0.452,
+      "z_min": 0.023,
+      "z_max": 1.784
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_player_run_back",
-   "fbx": "AP009_player_run_back_v002.fbx",
+   "fbx": "AP009_player_run_back_v004.fbx",
    "target": "player",
    "frames": 15,
    "fps": 30,
@@ -275,7 +1058,7 @@
   },
   {
    "clip": "AP009_player_run_fwd",
-   "fbx": "AP009_player_run_fwd_v002.fbx",
+   "fbx": "AP009_player_run_fwd_v004.fbx",
    "target": "player",
    "frames": 15,
    "fps": 30,
@@ -288,7 +1071,7 @@
    "layer": "base",
    "mask": "full",
    "additive": false,
-   "speed_mps": 4.531,
+   "speed_mps": 5.687,
    "fit": null,
    "tier": null,
    "anticipation_frames": null,
@@ -297,36 +1080,36 @@
     "loop_seam_deg": 0.0,
     "fits": {
      "player": {
-      "capsule_r_max": 0.598,
-      "capsule_r_max_no_feet": 0.548,
-      "z_min": 0.011,
-      "z_max": 1.71
+      "capsule_r_max": 0.67,
+      "capsule_r_max_no_feet": 0.612,
+      "z_min": 0.019,
+      "z_max": 1.689
      }
     },
     "foot_contact_A": {
      "Left": {
-      "ankle_z_min": 0.092,
-      "ankle_z_max": 0.3336,
-      "stance_frames": 6,
-      "stance_step_m_mean": 0.151,
-      "stance_step_m_spread": 0.0141,
-      "speed_mps_measured": 4.531
+      "ankle_z_min": 0.0901,
+      "ankle_z_max": 0.3335,
+      "stance_frames": 4,
+      "stance_step_m_mean": 0.1896,
+      "stance_step_m_spread": 0.0041,
+      "speed_mps_measured": 5.687
      },
      "Right": {
-      "ankle_z_min": 0.092,
-      "ankle_z_max": 0.3336,
-      "stance_frames": 6,
-      "stance_step_m_mean": 0.151,
-      "stance_step_m_spread": 0.0141,
-      "speed_mps_measured": 4.531
+      "ankle_z_min": 0.0901,
+      "ankle_z_max": 0.3335,
+      "stance_frames": 4,
+      "stance_step_m_mean": 0.1896,
+      "stance_step_m_spread": 0.0041,
+      "speed_mps_measured": 5.687
      }
     }
    },
-   "speed_mps_design": 4.5
+   "speed_mps_design": 5.5
   },
   {
    "clip": "AP009_player_run_strafe_left",
-   "fbx": "AP009_player_run_strafe_left_v002.fbx",
+   "fbx": "AP009_player_run_strafe_left_v004.fbx",
    "target": "player",
    "frames": 15,
    "fps": 30,
@@ -377,7 +1160,7 @@
   },
   {
    "clip": "AP009_player_run_strafe_right",
-   "fbx": "AP009_player_run_strafe_right_v002.fbx",
+   "fbx": "AP009_player_run_strafe_right_v004.fbx",
    "target": "player",
    "frames": 15,
    "fps": 30,
@@ -428,7 +1211,7 @@
   },
   {
    "clip": "AP009_player_strafe_left",
-   "fbx": "AP009_player_strafe_left_v002.fbx",
+   "fbx": "AP009_player_strafe_left_v004.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
@@ -479,7 +1262,7 @@
   },
   {
    "clip": "AP009_player_strafe_right",
-   "fbx": "AP009_player_strafe_right_v002.fbx",
+   "fbx": "AP009_player_strafe_right_v004.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
@@ -529,8 +1312,74 @@
    "speed_mps_design": 1.2
   },
   {
+   "clip": "AP009_player_sw_hold_bell",
+   "fbx": "AP009_player_sw_hold_bell_v004.fbx",
+   "target": "player",
+   "frames": 61,
+   "fps": 30,
+   "seconds": 2.0,
+   "loop": true,
+   "events": {
+    "breath": 0
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": 0.0,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "special_weapon": "KaguraBell",
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.401,
+      "capsule_r_max_no_feet": 0.355,
+      "z_min": 0.025,
+      "z_max": 1.806
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_sw_hold_loom",
+   "fbx": "AP009_player_sw_hold_loom_v004.fbx",
+   "target": "player",
+   "frames": 61,
+   "fps": 30,
+   "seconds": 2.0,
+   "loop": true,
+   "events": {
+    "breath": 0
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": 0.0,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "special_weapon": "OfudaLoom",
+   "validation": {
+    "loop_seam_deg": 0.0,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.401,
+      "capsule_r_max_no_feet": 0.355,
+      "z_min": 0.025,
+      "z_max": 1.808
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_player_walk_back",
-   "fbx": "AP009_player_walk_back_v002.fbx",
+   "fbx": "AP009_player_walk_back_v004.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
@@ -581,7 +1430,7 @@
   },
   {
    "clip": "AP009_player_walk_fwd",
-   "fbx": "AP009_player_walk_fwd_v002.fbx",
+   "fbx": "AP009_player_walk_fwd_v004.fbx",
    "target": "player",
    "frames": 13,
    "fps": 30,
@@ -631,8 +1480,230 @@
    "speed_mps_design": 1.8
   },
   {
+   "clip": "AP009_player_weapon_lower",
+   "fbx": "AP009_player_weapon_lower_v004.fbx",
+   "target": "player",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "lowered": 13
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.782
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_player_weapon_raise",
+   "fbx": "AP009_player_weapon_raise_v004.fbx",
+   "target": "player",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "raised": 13
+   },
+   "layer": "override_upper",
+   "mask": "upper_body",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "weapon": "A",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "player": {
+      "capsule_r_max": 0.402,
+      "capsule_r_max_no_feet": 0.356,
+      "z_min": 0.023,
+      "z_max": 1.783
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_armorbreak_head",
+   "fbx": "AP009_zombie_armorbreak_head_v004.fbx",
+   "target": "zombie",
+   "frames": 18,
+   "fps": 30,
+   "seconds": 0.567,
+   "loop": false,
+   "events": {
+    "hit": 0,
+    "armor_break": 0
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "region": "head",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 33,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.391,
+      "capsule_r_max_no_feet": 0.391,
+      "z_min": 0.022,
+      "z_max": 1.789
+     },
+     "B": {
+      "pokes_peak": 37,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.416,
+      "capsule_r_max_no_feet": 0.416,
+      "z_min": 0.022,
+      "z_max": 1.79
+     },
+     "C": {
+      "pokes_peak": 17,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.396,
+      "capsule_r_max_no_feet": 0.396,
+      "z_min": 0.023,
+      "z_max": 1.79
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_armorbreak_leg",
+   "fbx": "AP009_zombie_armorbreak_leg_v004.fbx",
+   "target": "zombie",
+   "frames": 18,
+   "fps": 30,
+   "seconds": 0.567,
+   "loop": false,
+   "events": {
+    "hit": 0,
+    "armor_break": 0
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "region": "leg",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 5,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.411,
+      "capsule_r_max_no_feet": 0.411,
+      "z_min": 0.019,
+      "z_max": 1.745
+     },
+     "B": {
+      "pokes_peak": 10,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.435,
+      "capsule_r_max_no_feet": 0.435,
+      "z_min": 0.019,
+      "z_max": 1.721
+     },
+     "C": {
+      "pokes_peak": 1,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.417,
+      "capsule_r_max_no_feet": 0.417,
+      "z_min": 0.019,
+      "z_max": 1.743
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_armorbreak_torso",
+   "fbx": "AP009_zombie_armorbreak_torso_v004.fbx",
+   "target": "zombie",
+   "frames": 18,
+   "fps": 30,
+   "seconds": 0.567,
+   "loop": false,
+   "events": {
+    "hit": 0,
+    "armor_break": 0
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "region": "torso",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.386,
+      "capsule_r_max_no_feet": 0.384,
+      "z_min": 0.025,
+      "z_max": 1.775
+     },
+     "B": {
+      "pokes_peak": 13,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.393,
+      "capsule_r_max_no_feet": 0.393,
+      "z_min": 0.025,
+      "z_max": 1.76
+     },
+     "C": {
+      "pokes_peak": 1,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.384,
+      "capsule_r_max_no_feet": 0.384,
+      "z_min": 0.025,
+      "z_max": 1.772
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_zombie_attack_lunge",
-   "fbx": "AP009_zombie_attack_lunge_v002.fbx",
+   "fbx": "AP009_zombie_attack_lunge_v004.fbx",
    "target": "zombie",
    "frames": 30,
    "fps": 30,
@@ -683,11 +1754,11 @@
   },
   {
    "clip": "AP009_zombie_attack_overhead",
-   "fbx": "AP009_zombie_attack_overhead_v002.fbx",
+   "fbx": "AP009_zombie_attack_overhead_v004.fbx",
    "target": "zombie",
-   "frames": 64,
+   "frames": 73,
    "fps": 30,
-   "seconds": 2.1,
+   "seconds": 2.4,
    "loop": false,
    "events": {
     "hit_window_start": 35,
@@ -707,9 +1778,9 @@
      "A": {
       "pokes_peak": 19,
       "pokes_frame0": 3,
-      "capsule_r_max": 0.607,
-      "capsule_r_max_no_feet": 0.607,
-      "z_min": 0.022,
+      "capsule_r_max": 0.608,
+      "capsule_r_max_no_feet": 0.608,
+      "z_min": 0.02,
       "z_max": 1.825
      },
      "B": {
@@ -717,7 +1788,7 @@
       "pokes_frame0": 10,
       "capsule_r_max": 0.619,
       "capsule_r_max_no_feet": 0.619,
-      "z_min": 0.022,
+      "z_min": 0.02,
       "z_max": 1.833
      },
      "C": {
@@ -725,7 +1796,7 @@
       "pokes_frame0": 0,
       "capsule_r_max": 0.612,
       "capsule_r_max_no_feet": 0.612,
-      "z_min": 0.022,
+      "z_min": 0.021,
       "z_max": 1.828
      }
     },
@@ -734,7 +1805,7 @@
   },
   {
    "clip": "AP009_zombie_attack_sweep",
-   "fbx": "AP009_zombie_attack_sweep_v002.fbx",
+   "fbx": "AP009_zombie_attack_sweep_v004.fbx",
    "target": "zombie",
    "frames": 51,
    "fps": 30,
@@ -785,7 +1856,7 @@
   },
   {
    "clip": "AP009_zombie_attack_swipe",
-   "fbx": "AP009_zombie_attack_swipe_v002.fbx",
+   "fbx": "AP009_zombie_attack_swipe_v004.fbx",
    "target": "zombie",
    "frames": 34,
    "fps": 30,
@@ -836,7 +1907,7 @@
   },
   {
    "clip": "AP009_zombie_death_backward",
-   "fbx": "AP009_zombie_death_backward_v002.fbx",
+   "fbx": "AP009_zombie_death_backward_v004.fbx",
    "target": "zombie",
    "frames": 36,
    "fps": 30,
@@ -886,7 +1957,7 @@
   },
   {
    "clip": "AP009_zombie_death_forward",
-   "fbx": "AP009_zombie_death_forward_v002.fbx",
+   "fbx": "AP009_zombie_death_forward_v004.fbx",
    "target": "zombie",
    "frames": 36,
    "fps": 30,
@@ -936,7 +2007,7 @@
   },
   {
    "clip": "AP009_zombie_death_kneel",
-   "fbx": "AP009_zombie_death_kneel_v002.fbx",
+   "fbx": "AP009_zombie_death_kneel_v004.fbx",
    "target": "zombie",
    "frames": 44,
    "fps": 30,
@@ -986,7 +2057,7 @@
   },
   {
    "clip": "AP009_zombie_death_side",
-   "fbx": "AP009_zombie_death_side_v002.fbx",
+   "fbx": "AP009_zombie_death_side_v004.fbx",
    "target": "zombie",
    "frames": 40,
    "fps": 30,
@@ -1035,8 +2106,521 @@
    }
   },
   {
+   "clip": "AP009_zombie_death_side_R",
+   "fbx": "AP009_zombie_death_side_R_v004.fbx",
+   "target": "zombie",
+   "frames": 44,
+   "fps": 30,
+   "seconds": 1.433,
+   "loop": false,
+   "events": {
+    "death_end": 43
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": false,
+   "mirror_of": "AP009_zombie_death_side",
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 57,
+      "pokes_frame0": 3,
+      "capsule_r_max": 1.237,
+      "capsule_r_max_no_feet": 1.237,
+      "z_min": 0.018,
+      "z_max": 1.74
+     },
+     "B": {
+      "pokes_peak": 94,
+      "pokes_frame0": 10,
+      "capsule_r_max": 1.24,
+      "capsule_r_max_no_feet": 1.24,
+      "z_min": 0.008,
+      "z_max": 1.714
+     },
+     "C": {
+      "pokes_peak": 43,
+      "pokes_frame0": 0,
+      "capsule_r_max": 1.237,
+      "capsule_r_max_no_feet": 1.237,
+      "z_min": 0.018,
+      "z_max": 1.737
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_death_special_A",
+   "fbx": "AP009_zombie_death_special_A_v004.fbx",
+   "target": "zombie",
+   "frames": 36,
+   "fps": 30,
+   "seconds": 1.167,
+   "loop": false,
+   "events": {
+    "death_end": 35
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Special",
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 17,
+      "pokes_frame0": 3,
+      "capsule_r_max": 1.185,
+      "capsule_r_max_no_feet": 1.185,
+      "z_min": 0.001,
+      "z_max": 1.74
+     },
+     "B": {
+      "pokes_peak": 32,
+      "pokes_frame0": 10,
+      "capsule_r_max": 1.185,
+      "capsule_r_max_no_feet": 1.185,
+      "z_min": -0.07,
+      "z_max": 1.714
+     },
+     "C": {
+      "pokes_peak": 18,
+      "pokes_frame0": 0,
+      "capsule_r_max": 1.186,
+      "capsule_r_max_no_feet": 1.186,
+      "z_min": 0.008,
+      "z_max": 1.737
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_death_special_B",
+   "fbx": "AP009_zombie_death_special_B_v004.fbx",
+   "target": "zombie",
+   "frames": 40,
+   "fps": 30,
+   "seconds": 1.3,
+   "loop": false,
+   "events": {
+    "death_end": 39
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Special",
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 106,
+      "pokes_frame0": 3,
+      "capsule_r_max": 0.733,
+      "capsule_r_max_no_feet": 0.719,
+      "z_min": -0.042,
+      "z_max": 1.74
+     },
+     "B": {
+      "pokes_peak": 95,
+      "pokes_frame0": 10,
+      "capsule_r_max": 0.733,
+      "capsule_r_max_no_feet": 0.721,
+      "z_min": -0.042,
+      "z_max": 1.714
+     },
+     "C": {
+      "pokes_peak": 101,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.733,
+      "capsule_r_max_no_feet": 0.72,
+      "z_min": -0.042,
+      "z_max": 1.737
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_death_ultra",
+   "fbx": "AP009_zombie_death_ultra_v004.fbx",
+   "target": "zombie",
+   "frames": 60,
+   "fps": 30,
+   "seconds": 1.967,
+   "loop": false,
+   "events": {
+    "death_end": 59
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Ultra",
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 33,
+      "pokes_frame0": 3,
+      "capsule_r_max": 1.155,
+      "capsule_r_max_no_feet": 1.155,
+      "z_min": 0.007,
+      "z_max": 1.777
+     },
+     "B": {
+      "pokes_peak": 64,
+      "pokes_frame0": 10,
+      "capsule_r_max": 1.146,
+      "capsule_r_max_no_feet": 1.146,
+      "z_min": -0.021,
+      "z_max": 1.765
+     },
+     "C": {
+      "pokes_peak": 31,
+      "pokes_frame0": 0,
+      "capsule_r_max": 1.153,
+      "capsule_r_max_no_feet": 1.153,
+      "z_min": 0.007,
+      "z_max": 1.775
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_back_elite",
+   "fbx": "AP009_zombie_hit_back_elite_v004.fbx",
+   "target": "zombie",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Elite",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "back",
+   "stagger_susceptibility": 0.45,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 2,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.392,
+      "capsule_r_max_no_feet": 0.392,
+      "z_min": 0.018,
+      "z_max": 1.745
+     },
+     "B": {
+      "pokes_peak": 16,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.418,
+      "capsule_r_max_no_feet": 0.418,
+      "z_min": 0.018,
+      "z_max": 1.721
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.397,
+      "capsule_r_max_no_feet": 0.397,
+      "z_min": 0.018,
+      "z_max": 1.743
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_back_std",
+   "fbx": "AP009_zombie_hit_back_std_v004.fbx",
+   "target": "zombie",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Standard",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "back",
+   "stagger_susceptibility": 1.0,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 3,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.47,
+      "capsule_r_max_no_feet": 0.47,
+      "z_min": 0.018,
+      "z_max": 1.745
+     },
+     "B": {
+      "pokes_peak": 19,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.495,
+      "capsule_r_max_no_feet": 0.495,
+      "z_min": 0.018,
+      "z_max": 1.721
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.476,
+      "capsule_r_max_no_feet": 0.476,
+      "z_min": 0.019,
+      "z_max": 1.743
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_back_ultra",
+   "fbx": "AP009_zombie_hit_back_ultra_v004.fbx",
+   "target": "zombie",
+   "frames": 8,
+   "fps": 30,
+   "seconds": 0.233,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Ultra",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "back",
+   "stagger_susceptibility": 0.12,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.325,
+      "capsule_r_max_no_feet": 0.325,
+      "z_min": 0.022,
+      "z_max": 1.747
+     },
+     "B": {
+      "pokes_peak": 10,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.352,
+      "capsule_r_max_no_feet": 0.352,
+      "z_min": 0.022,
+      "z_max": 1.725
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.33,
+      "capsule_r_max_no_feet": 0.33,
+      "z_min": 0.023,
+      "z_max": 1.744
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_front_elite",
+   "fbx": "AP009_zombie_hit_front_elite_v004.fbx",
+   "target": "zombie",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Elite",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "front",
+   "stagger_susceptibility": 0.45,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.325,
+      "capsule_r_max_no_feet": 0.325,
+      "z_min": 0.019,
+      "z_max": 1.777
+     },
+     "B": {
+      "pokes_peak": 9,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.352,
+      "capsule_r_max_no_feet": 0.352,
+      "z_min": 0.018,
+      "z_max": 1.771
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.33,
+      "capsule_r_max_no_feet": 0.33,
+      "z_min": 0.019,
+      "z_max": 1.776
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_front_std",
+   "fbx": "AP009_zombie_hit_front_std_v004.fbx",
+   "target": "zombie",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Standard",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "front",
+   "stagger_susceptibility": 1.0,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.325,
+      "capsule_r_max_no_feet": 0.325,
+      "z_min": 0.019,
+      "z_max": 1.774
+     },
+     "B": {
+      "pokes_peak": 7,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.352,
+      "capsule_r_max_no_feet": 0.352,
+      "z_min": 0.019,
+      "z_max": 1.783
+     },
+     "C": {
+      "pokes_peak": 2,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.33,
+      "capsule_r_max_no_feet": 0.33,
+      "z_min": 0.019,
+      "z_max": 1.778
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_front_ultra",
+   "fbx": "AP009_zombie_hit_front_ultra_v004.fbx",
+   "target": "zombie",
+   "frames": 8,
+   "fps": 30,
+   "seconds": 0.233,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Ultra",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "front",
+   "stagger_susceptibility": 0.12,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.325,
+      "capsule_r_max_no_feet": 0.325,
+      "z_min": 0.022,
+      "z_max": 1.786
+     },
+     "B": {
+      "pokes_peak": 10,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.352,
+      "capsule_r_max_no_feet": 0.352,
+      "z_min": 0.022,
+      "z_max": 1.78
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.33,
+      "capsule_r_max_no_feet": 0.33,
+      "z_min": 0.023,
+      "z_max": 1.785
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_zombie_hit_heavy_stagger",
-   "fbx": "AP009_zombie_hit_heavy_stagger_v002.fbx",
+   "fbx": "AP009_zombie_hit_heavy_stagger_v004.fbx",
    "target": "zombie",
    "frames": 30,
    "fps": 30,
@@ -1086,8 +2670,164 @@
    }
   },
   {
+   "clip": "AP009_zombie_hit_left_elite",
+   "fbx": "AP009_zombie_hit_left_elite_v004.fbx",
+   "target": "zombie",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Elite",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "left",
+   "stagger_susceptibility": 0.45,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.358,
+      "capsule_r_max_no_feet": 0.358,
+      "z_min": 0.017,
+      "z_max": 1.745
+     },
+     "B": {
+      "pokes_peak": 7,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.38,
+      "capsule_r_max_no_feet": 0.38,
+      "z_min": 0.017,
+      "z_max": 1.721
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.362,
+      "capsule_r_max_no_feet": 0.362,
+      "z_min": 0.017,
+      "z_max": 1.743
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_left_std",
+   "fbx": "AP009_zombie_hit_left_std_v004.fbx",
+   "target": "zombie",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Standard",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "left",
+   "stagger_susceptibility": 1.0,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 2,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.464,
+      "capsule_r_max_no_feet": 0.464,
+      "z_min": 0.017,
+      "z_max": 1.745
+     },
+     "B": {
+      "pokes_peak": 12,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.482,
+      "capsule_r_max_no_feet": 0.482,
+      "z_min": 0.017,
+      "z_max": 1.721
+     },
+     "C": {
+      "pokes_peak": 4,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.468,
+      "capsule_r_max_no_feet": 0.468,
+      "z_min": 0.017,
+      "z_max": 1.743
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_left_ultra",
+   "fbx": "AP009_zombie_hit_left_ultra_v004.fbx",
+   "target": "zombie",
+   "frames": 8,
+   "fps": 30,
+   "seconds": 0.233,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Ultra",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "left",
+   "stagger_susceptibility": 0.12,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.325,
+      "capsule_r_max_no_feet": 0.325,
+      "z_min": 0.022,
+      "z_max": 1.746
+     },
+     "B": {
+      "pokes_peak": 11,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.352,
+      "capsule_r_max_no_feet": 0.352,
+      "z_min": 0.022,
+      "z_max": 1.73
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.33,
+      "capsule_r_max_no_feet": 0.33,
+      "z_min": 0.023,
+      "z_max": 1.743
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_zombie_hit_light_L",
-   "fbx": "AP009_zombie_hit_light_L_v002.fbx",
+   "fbx": "AP009_zombie_hit_light_L_v004.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -1137,7 +2877,7 @@
   },
   {
    "clip": "AP009_zombie_hit_light_R",
-   "fbx": "AP009_zombie_hit_light_R_v002.fbx",
+   "fbx": "AP009_zombie_hit_light_R_v004.fbx",
    "target": "zombie",
    "frames": 14,
    "fps": 30,
@@ -1187,7 +2927,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_head",
-   "fbx": "AP009_zombie_hit_region_head_v002.fbx",
+   "fbx": "AP009_zombie_hit_region_head_v004.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -1237,7 +2977,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_leg",
-   "fbx": "AP009_zombie_hit_region_leg_v002.fbx",
+   "fbx": "AP009_zombie_hit_region_leg_v004.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -1287,7 +3027,7 @@
   },
   {
    "clip": "AP009_zombie_hit_region_torso",
-   "fbx": "AP009_zombie_hit_region_torso_v002.fbx",
+   "fbx": "AP009_zombie_hit_region_torso_v004.fbx",
    "target": "zombie",
    "frames": 10,
    "fps": 30,
@@ -1336,8 +3076,215 @@
    }
   },
   {
+   "clip": "AP009_zombie_hit_right_elite",
+   "fbx": "AP009_zombie_hit_right_elite_v004.fbx",
+   "target": "zombie",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Elite",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "right",
+   "stagger_susceptibility": 0.45,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 2,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.357,
+      "capsule_r_max_no_feet": 0.357,
+      "z_min": 0.016,
+      "z_max": 1.745
+     },
+     "B": {
+      "pokes_peak": 9,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.379,
+      "capsule_r_max_no_feet": 0.379,
+      "z_min": 0.016,
+      "z_max": 1.721
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.361,
+      "capsule_r_max_no_feet": 0.361,
+      "z_min": 0.016,
+      "z_max": 1.743
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_right_std",
+   "fbx": "AP009_zombie_hit_right_std_v004.fbx",
+   "target": "zombie",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Standard",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "right",
+   "stagger_susceptibility": 1.0,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 6,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.463,
+      "capsule_r_max_no_feet": 0.463,
+      "z_min": 0.016,
+      "z_max": 1.745
+     },
+     "B": {
+      "pokes_peak": 10,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.48,
+      "capsule_r_max_no_feet": 0.48,
+      "z_min": 0.016,
+      "z_max": 1.721
+     },
+     "C": {
+      "pokes_peak": 3,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.467,
+      "capsule_r_max_no_feet": 0.467,
+      "z_min": 0.016,
+      "z_max": 1.743
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_right_ultra",
+   "fbx": "AP009_zombie_hit_right_ultra_v004.fbx",
+   "target": "zombie",
+   "frames": 8,
+   "fps": 30,
+   "seconds": 0.233,
+   "loop": false,
+   "events": {
+    "hit": 0
+   },
+   "layer": "override_upper",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Ultra",
+   "anticipation_frames": null,
+   "optional": false,
+   "direction": "right",
+   "stagger_susceptibility": 0.12,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 1,
+      "capsule_r_max": 0.325,
+      "capsule_r_max_no_feet": 0.325,
+      "z_min": 0.022,
+      "z_max": 1.747
+     },
+     "B": {
+      "pokes_peak": 9,
+      "pokes_frame0": 7,
+      "capsule_r_max": 0.352,
+      "capsule_r_max_no_feet": 0.352,
+      "z_min": 0.022,
+      "z_max": 1.729
+     },
+     "C": {
+      "pokes_peak": 0,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.33,
+      "capsule_r_max_no_feet": 0.33,
+      "z_min": 0.023,
+      "z_max": 1.744
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_hit_special_stumble",
+   "fbx": "AP009_zombie_hit_special_stumble_v004.fbx",
+   "target": "zombie",
+   "frames": 16,
+   "fps": 30,
+   "seconds": 0.5,
+   "loop": false,
+   "events": {
+    "hit": 0,
+    "stagger_end": 15
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": "Special",
+   "anticipation_frames": null,
+   "optional": false,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 1,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.419,
+      "capsule_r_max_no_feet": 0.418,
+      "z_min": 0.023,
+      "z_max": 1.768
+     },
+     "B": {
+      "pokes_peak": 10,
+      "pokes_frame0": 9,
+      "capsule_r_max": 0.424,
+      "capsule_r_max_no_feet": 0.424,
+      "z_min": 0.023,
+      "z_max": 1.752
+     },
+     "C": {
+      "pokes_peak": 1,
+      "pokes_frame0": 0,
+      "capsule_r_max": 0.413,
+      "capsule_r_max_no_feet": 0.412,
+      "z_min": 0.023,
+      "z_max": 1.766
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_zombie_idle_queue",
-   "fbx": "AP009_zombie_idle_queue_v002.fbx",
+   "fbx": "AP009_zombie_idle_queue_v004.fbx",
    "target": "zombie",
    "frames": 91,
    "fps": 30,
@@ -1388,7 +3335,7 @@
   },
   {
    "clip": "AP009_zombie_idle_sway",
-   "fbx": "AP009_zombie_idle_sway_v002.fbx",
+   "fbx": "AP009_zombie_idle_sway_v004.fbx",
    "target": "zombie",
    "frames": 61,
    "fps": 30,
@@ -1436,7 +3383,7 @@
   },
   {
    "clip": "AP009_zombie_idle_twitch",
-   "fbx": "AP009_zombie_idle_twitch_v002.fbx",
+   "fbx": "AP009_zombie_idle_twitch_v004.fbx",
    "target": "zombie",
    "frames": 61,
    "fps": 30,
@@ -1484,7 +3431,7 @@
   },
   {
    "clip": "AP009_zombie_rise",
-   "fbx": "AP009_zombie_rise_v002.fbx",
+   "fbx": "AP009_zombie_rise_v004.fbx",
    "target": "zombie",
    "frames": 48,
    "fps": 30,
@@ -1533,8 +3480,114 @@
    }
   },
   {
+   "clip": "AP009_zombie_rise_B",
+   "fbx": "AP009_zombie_rise_B_v004.fbx",
+   "target": "zombie",
+   "frames": 36,
+   "fps": 30,
+   "seconds": 1.167,
+   "loop": false,
+   "events": {
+    "spawn_rise": 0,
+    "spawn_land": 26,
+    "rise_end": 35
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": true,
+   "camera_off_only": true,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 38,
+      "pokes_frame0": 1,
+      "capsule_r_max": 1.017,
+      "capsule_r_max_no_feet": 1.017,
+      "z_min": -0.089,
+      "z_max": 1.694
+     },
+     "B": {
+      "pokes_peak": 63,
+      "pokes_frame0": 10,
+      "capsule_r_max": 1.008,
+      "capsule_r_max_no_feet": 1.008,
+      "z_min": -0.089,
+      "z_max": 1.665
+     },
+     "C": {
+      "pokes_peak": 27,
+      "pokes_frame0": 0,
+      "capsule_r_max": 1.015,
+      "capsule_r_max_no_feet": 1.015,
+      "z_min": -0.089,
+      "z_max": 1.692
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
+   "clip": "AP009_zombie_rise_C",
+   "fbx": "AP009_zombie_rise_C_v004.fbx",
+   "target": "zombie",
+   "frames": 28,
+   "fps": 30,
+   "seconds": 0.9,
+   "loop": false,
+   "events": {
+    "spawn_rise": 0,
+    "spawn_land": 14,
+    "rise_end": 27
+   },
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "speed_mps": null,
+   "fit": null,
+   "tier": null,
+   "anticipation_frames": null,
+   "optional": true,
+   "camera_off_only": true,
+   "validation": {
+    "loop_seam_deg": null,
+    "fits": {
+     "A": {
+      "pokes_peak": 24,
+      "pokes_frame0": 24,
+      "capsule_r_max": 0.577,
+      "capsule_r_max_no_feet": 0.577,
+      "z_min": 0.022,
+      "z_max": 1.728
+     },
+     "B": {
+      "pokes_peak": 49,
+      "pokes_frame0": 49,
+      "capsule_r_max": 0.584,
+      "capsule_r_max_no_feet": 0.584,
+      "z_min": 0.022,
+      "z_max": 1.7
+     },
+     "C": {
+      "pokes_peak": 12,
+      "pokes_frame0": 12,
+      "capsule_r_max": 0.579,
+      "capsule_r_max_no_feet": 0.579,
+      "z_min": 0.023,
+      "z_max": 1.726
+     }
+    },
+    "foot_contact_A": null
+   }
+  },
+  {
    "clip": "AP009_zombie_run",
-   "fbx": "AP009_zombie_run_v002.fbx",
+   "fbx": "AP009_zombie_run_v004.fbx",
    "target": "zombie",
    "frames": 13,
    "fps": 30,
@@ -1603,7 +3656,7 @@
   },
   {
    "clip": "AP009_zombie_shamble_A",
-   "fbx": "AP009_zombie_shamble_A_v002.fbx",
+   "fbx": "AP009_zombie_shamble_A_v004.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,
@@ -1672,7 +3725,7 @@
   },
   {
    "clip": "AP009_zombie_shamble_B",
-   "fbx": "AP009_zombie_shamble_B_v002.fbx",
+   "fbx": "AP009_zombie_shamble_B_v004.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,
@@ -1741,7 +3794,7 @@
   },
   {
    "clip": "AP009_zombie_shamble_C",
-   "fbx": "AP009_zombie_shamble_C_v002.fbx",
+   "fbx": "AP009_zombie_shamble_C_v004.fbx",
    "target": "zombie",
    "frames": 17,
    "fps": 30,

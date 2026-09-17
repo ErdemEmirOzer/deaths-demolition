@@ -39,10 +39,10 @@ namespace DD.Art.Pipeline.EditorTools
         public const string PlayerController = ArtCharacterContract.PlayerFolder + "/DD_Player.controller";
         public const string GeneratedFolder = ArtCharacterContract.ZombieFolder + "/Generated";   // WP-032 telegraph emphasis clips
         public const string ZombieController = ArtCharacterContract.ZombieFolder + "/DD_Zombie.controller";
-        public const string PlayerSource = "AP-009B v002 (36 clips, AP009-clips-manifest.json) — WP-018/032B generated controller";
-        public const string ZombieSource = "AP-009B v002 (36 clips, AP009-clips-manifest.json) — WP-018/032B generated controller";
-        /// <summary>WP-032B: seconds the overhead's last frame is held before the blend back to locomotion (P-06: 24-frame recovery vs the Ultra timer).</summary>
-        public const float OverheadHoldSeconds = 0.3f;
+        public const string PlayerSource = "AP-009D v004 (85 clips, AP009-clips-manifest.json) — WP-018/032B/032C generated controller";
+        public const string ZombieSource = "AP-009D v004 (85 clips, AP009-clips-manifest.json) — WP-018/032B/032C generated controller";
+        /// <summary>WP-032B: seconds the overhead's last frame was held before the blend back to locomotion. WP-032C: v003 recut the recovery to 33 f (73 f = telegraph + window + AttackRecoveryTime) — no hold, the common exit.</summary>
+        public const float OverheadHoldSeconds = 0f;
 
         [Serializable]
         public struct Report
@@ -214,6 +214,30 @@ namespace DD.Art.Pipeline.EditorTools
             return t;
         }
 
+        /// <summary>WP-032C: an upper-layer one-shot that returns, on exit time, to the rest state the Weapon / SwHold parameters select (Aim_0..2 or SwHold_1..2).</summary>
+        private static AnimatorState OneShotUpper(AnimatorStateMachine osm, AnimatorState[] aims, AnimatorState[] holds, string name, Motion motion, float exitTime, float exitDuration)
+        {
+            AnimatorState st = osm.AddState(name);
+            st.motion = motion;
+            st.writeDefaultValues = false;
+            for (int w = 0; w < aims.Length; w++)
+            {
+                AnimatorStateTransition back = st.AddTransition(aims[w]);
+                back.hasExitTime = true; back.exitTime = exitTime; back.hasFixedDuration = true; back.duration = exitDuration; back.canTransitionToSelf = false;
+                back.AddCondition(AnimatorConditionMode.Equals, w, C.Weapon);
+                back.AddCondition(AnimatorConditionMode.Equals, 0f, C.SwHold);
+            }
+
+            for (int h = 0; h < holds.Length; h++)
+            {
+                AnimatorStateTransition back = st.AddTransition(holds[h]);
+                back.hasExitTime = true; back.exitTime = exitTime; back.hasFixedDuration = true; back.duration = exitDuration; back.canTransitionToSelf = false;
+                back.AddCondition(AnimatorConditionMode.Equals, h + 1, C.SwHold);
+            }
+
+            return st;
+        }
+
         private static void ApplyLayer(AnimatorController controller, int index, Action<AnimatorControllerLayer> edit)
         {
             AnimatorControllerLayer[] layers = controller.layers;
@@ -227,6 +251,18 @@ namespace DD.Art.Pipeline.EditorTools
         {
             return unity != null && unity.TryGetValue(clip, out float u) && u > 0.01f ? u : m[clip].speedMps;
         }
+
+        /// <summary>
+        /// WP-032C · Live-rig calibration overrides. The sampled calibration (StrideCalibrator on the prefab rig) and the
+        /// live Animator disagree on the v004 player run_fwd by ≈ 20 % (sampled 5.02 m/s; the PlayMode contact-slip test read
+        /// −11.1 cm/step at 5.02 and −15.6 at 4.52 → zero crossing ≈ 6.26 m/s; the walk / shamble / zombie run agree within
+        /// 2 %). The live value wins for the clip the test measures; the cause (blend-tree evaluation vs SampleAnimation on
+        /// a flight-phase clip) is an open S-06 item — the other three player run cycles carry the sampled value untested.
+        /// </summary>
+        public static readonly Dictionary<string, float> LiveCalibrationOverrides = new Dictionary<string, float>(StringComparer.Ordinal)
+        {
+            { C.PlayerRunFwd, 6.26f },
+        };
 
         /// <summary>WP-032: measure every locomotion clip on the character's avatar (StrideCalibrator); keyed by clip name.</summary>
         public static Dictionary<string, float> Calibrate(Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest, Dictionary<string, AnimationClip> clips)
@@ -249,8 +285,15 @@ namespace DD.Art.Pipeline.EditorTools
                 }
                 finally
                 {
-                    UnityEngine.Object.DestroyImmediate(rig);
+                    DestroyCalibrationRig();
                 }
+            }
+
+            foreach (KeyValuePair<string, float> o in LiveCalibrationOverrides)
+            {
+                if (!manifest.ContainsKey(o.Key)) continue;
+                Debug.Log(LogPrefix + "stride " + o.Key + ": live-rig override " + o.Value.ToString("F3") + " m/s (sampled " + (result.TryGetValue(o.Key, out float sampled) ? sampled.ToString("F3") : "-") + ")");
+                result[o.Key] = o.Value;
             }
 
             return result;
@@ -263,8 +306,14 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.MoveX, AnimatorControllerParameterType.Float), (C.MoveY, AnimatorControllerParameterType.Float), (C.LocoRate, AnimatorControllerParameterType.Float),
                 (C.Fire, AnimatorControllerParameterType.Trigger), (C.HitLight, AnimatorControllerParameterType.Trigger),
                 (C.Die, AnimatorControllerParameterType.Trigger), (C.DeathStyle, AnimatorControllerParameterType.Int),
-                (C.Pickup, AnimatorControllerParameterType.Trigger), (C.Alive, AnimatorControllerParameterType.Bool));
+                (C.Pickup, AnimatorControllerParameterType.Trigger), (C.Alive, AnimatorControllerParameterType.Bool),
+                // WP-032C weapon handling + hurt
+                (C.Weapon, AnimatorControllerParameterType.Int), (C.Reload, AnimatorControllerParameterType.Trigger), (C.ReloadRate, AnimatorControllerParameterType.Float),
+                (C.SwitchOut, AnimatorControllerParameterType.Trigger), (C.SwitchIn, AnimatorControllerParameterType.Trigger),
+                (C.Lower, AnimatorControllerParameterType.Trigger), (C.Raise, AnimatorControllerParameterType.Trigger),
+                (C.SwHold, AnimatorControllerParameterType.Int), (C.Hurt, AnimatorControllerParameterType.Trigger), (C.HurtStyle, AnimatorControllerParameterType.Int));
             SetDefault(c, C.LocoRate, 1f);
+            SetDefault(c, C.ReloadRate, 1f);
             SetDefault(c, C.Alive, true);
 
             // ---- base: 2-D locomotion + deaths + pickup
@@ -295,26 +344,95 @@ namespace DD.Art.Pipeline.EditorTools
             loco.writeDefaultValues = true;
             sm.defaultState = loco;
 
-            AnimatorState death0 = OneShot(sm, C.DeathState + "_0", clips[C.PlayerDeathFwd], null);
-            AnimatorState death1 = OneShot(sm, C.DeathState + "_1", clips[C.PlayerDeathBack], null);
-            FromAny(sm, death0, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, 0f, C.DeathStyle));
-            FromAny(sm, death1, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, 1f, C.DeathStyle));
+            for (int i = 0; i < C.PlayerDeathClips.Length; i++)   // WP-032C: + death_side (2)
+            {
+                AnimatorState d = OneShot(sm, C.DeathState + "_" + i, clips[C.PlayerDeathClips[i]], null);
+                FromAny(sm, d, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, (float)i, C.DeathStyle));
+            }
 
-            // ---- override_upper: hit_light + pickup (WP-032B · DEC-082: the grab is an upper-body beat over the legs' locomotion)
+            // WP-032C: hurt_B = full-body gut hit with a step (base one-shot); hurt_A stays on the upper layer.
+            AnimatorState hurtB = OneShot(sm, C.HurtState + "_B", clips[C.PlayerHurtB], loco, 0.9f, 0.12f);
+            FromAny(sm, hurtB, 0.03f, (AnimatorConditionMode.If, 0f, C.Hurt), (AnimatorConditionMode.Equals, 1f, C.HurtStyle), (AnimatorConditionMode.If, 0f, C.Alive));
+
+            // ---- override_upper (WP-032C · AP-009C weapon handling): the rest state while armed is Aim_<Weapon> (idle_aim loop,
+            // breathing) — Empty stays the entry state and hands over to the weapon's Aim at once. One-shots (reload / switch /
+            // lower / raise / hit / hurt_A / pickup_upper) return to the CURRENT weapon's Aim; SwHold_1/2 (Kagura Bell / Ofuda
+            // Loom in the right hand) replace the Aim while a Special Weapon is held. DEC-082 (S-02 WP-042): the pickup grab
+            // plays here over uninterrupted locomotion, no movement lock.
             AnimatorControllerLayer over = AddLayer(c, C.OverrideUpperLayer, upper, AnimatorLayerBlendingMode.Override, false);
-            AnimatorState overEmpty = over.stateMachine.AddState(C.EmptyState);
-            over.stateMachine.defaultState = overEmpty;
-            AnimatorState hit = OneShot(over.stateMachine, C.HitState, clips[C.PlayerHitLight], overEmpty, 0.9f, 0.1f);
-            FromAny(over.stateMachine, hit, 0.03f, (AnimatorConditionMode.If, 0f, C.HitLight), (AnimatorConditionMode.If, 0f, C.Alive));
-            AnimatorState pickup = OneShot(over.stateMachine, C.PickupState, clips[C.PlayerPickup], overEmpty, 0.9f, 0.12f);
-            FromAny(over.stateMachine, pickup, 0.08f, (AnimatorConditionMode.If, 0f, C.Pickup), (AnimatorConditionMode.If, 0f, C.Alive));
+            AnimatorStateMachine osm = over.stateMachine;
+            AnimatorState overEmpty = osm.AddState(C.EmptyState);
+            osm.defaultState = overEmpty;
+            var aims = new AnimatorState[3];
+            for (int w = 0; w < 3; w++)
+            {
+                aims[w] = osm.AddState(C.AimState + "_" + w);
+                aims[w].motion = clips[C.PlayerWeaponClip(w, "idle_aim")];
+                aims[w].writeDefaultValues = false;
+            }
 
-            // ---- additive: fire_recoil
+            var holds = new AnimatorState[2];
+            holds[0] = osm.AddState(C.SwHoldState + "_1"); holds[0].motion = clips[C.PlayerSwHoldBell]; holds[0].writeDefaultValues = false;
+            holds[1] = osm.AddState(C.SwHoldState + "_2"); holds[1].motion = clips[C.PlayerSwHoldLoom]; holds[1].writeDefaultValues = false;
+            // Empty / Aim_x / SwHold_x ↔ the weapon and special-weapon selection (no exit time)
+            var rests = new List<AnimatorState> { overEmpty }; rests.AddRange(aims); rests.AddRange(holds);
+            foreach (AnimatorState from in rests)
+            {
+                for (int w = 0; w < 3; w++)
+                {
+                    if (from == aims[w]) continue;
+                    AnimatorStateTransition t = from.AddTransition(aims[w]);
+                    t.hasExitTime = false; t.hasFixedDuration = true; t.duration = from == overEmpty ? 0f : 0.15f;
+                    t.AddCondition(AnimatorConditionMode.Equals, w, C.Weapon);
+                    t.AddCondition(AnimatorConditionMode.Equals, 0f, C.SwHold);
+                }
+
+                for (int h = 0; h < 2; h++)
+                {
+                    if (from == holds[h]) continue;
+                    AnimatorStateTransition t = from.AddTransition(holds[h]);
+                    t.hasExitTime = false; t.hasFixedDuration = true; t.duration = 0.15f;
+                    t.AddCondition(AnimatorConditionMode.Equals, h + 1, C.SwHold);
+                }
+            }
+
+            for (int w = 0; w < 3; w++)
+            {
+                AnimatorState reload = OneShotUpper(osm, aims, holds, C.ReloadState + "_" + w, clips[C.PlayerWeaponClip(w, "reload")], 0.98f, 0.1f);
+                reload.speedParameterActive = true; reload.speedParameter = C.ReloadRate;   // clip seconds / WeaponConfig.ReloadTime
+                FromAny(osm, reload, 0.05f, (AnimatorConditionMode.If, 0f, C.Reload), (AnimatorConditionMode.Equals, w, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                AnimatorState sOut = OneShotUpper(osm, aims, holds, C.SwitchOutState + "_" + w, clips[C.PlayerWeaponClip(w, "switch_out")], 0.98f, 0.05f);
+                FromAny(osm, sOut, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchOut), (AnimatorConditionMode.Equals, w, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                AnimatorState sIn = OneShotUpper(osm, aims, holds, C.SwitchInState + "_" + w, clips[C.PlayerWeaponClip(w, "switch_in")], 0.98f, 0.1f);
+                FromAny(osm, sIn, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchIn), (AnimatorConditionMode.Equals, w, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
+
+            for (int w = 0; w < 3; w++)   // v004: lower / raise per weapon (A = the v003 clip)
+            {
+                AnimatorState lower = OneShotUpper(osm, aims, holds, C.WeaponLowerState + "_" + w, clips[C.PlayerWeaponLowerClip(w)], 0.98f, 0.1f);
+                FromAny(osm, lower, 0.05f, (AnimatorConditionMode.If, 0f, C.Lower), (AnimatorConditionMode.Equals, w, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                AnimatorState raise = OneShotUpper(osm, aims, holds, C.WeaponRaiseState + "_" + w, clips[C.PlayerWeaponRaiseClip(w)], 0.98f, 0.1f);
+                FromAny(osm, raise, 0.05f, (AnimatorConditionMode.If, 0f, C.Raise), (AnimatorConditionMode.Equals, w, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
+            AnimatorState hit = OneShotUpper(osm, aims, holds, C.HitState, clips[C.PlayerHitLight], 0.9f, 0.1f);
+            FromAny(osm, hit, 0.03f, (AnimatorConditionMode.If, 0f, C.HitLight), (AnimatorConditionMode.If, 0f, C.Alive));
+            AnimatorState hurtA = OneShotUpper(osm, aims, holds, C.HurtState + "_A", clips[C.PlayerHurtA], 0.9f, 0.1f);
+            FromAny(osm, hurtA, 0.03f, (AnimatorConditionMode.If, 0f, C.Hurt), (AnimatorConditionMode.Equals, 0f, C.HurtStyle), (AnimatorConditionMode.If, 0f, C.Alive));
+            AnimatorState pickup = OneShotUpper(osm, aims, holds, C.PickupState, clips[C.PlayerPickupUpper], 0.95f, 0.12f);
+            FromAny(osm, pickup, 0.08f, (AnimatorConditionMode.If, 0f, C.Pickup), (AnimatorConditionMode.If, 0f, C.Alive));
+
+            // ---- additive: Fire_<Weapon> (v003 recoil, deltas over the weapon's idle_aim frame 0) + the v001 fire_recoil as the Weapon = 3 fallback
             AnimatorControllerLayer add = AddLayer(c, C.AdditiveLayer, upper, AnimatorLayerBlendingMode.Additive, false);
             AnimatorState addEmpty = add.stateMachine.AddState(C.EmptyState);
             add.stateMachine.defaultState = addEmpty;
+            for (int w = 0; w < 3; w++)
+            {
+                AnimatorState fireW = OneShot(add.stateMachine, C.FireState + "_" + w, clips[C.PlayerWeaponClip(w, "fire")], addEmpty, 0.9f, 0.03f);
+                FromAny(add.stateMachine, fireW, 0.0f, (AnimatorConditionMode.If, 0f, C.Fire), (AnimatorConditionMode.Equals, w, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
+
             AnimatorState fire = OneShot(add.stateMachine, C.FireState, clips[C.PlayerFireRecoil], addEmpty, 0.9f, 0.05f);
-            FromAny(add.stateMachine, fire, 0.0f, (AnimatorConditionMode.If, 0f, C.Fire), (AnimatorConditionMode.If, 0f, C.Alive));
+            FromAny(add.stateMachine, fire, 0.0f, (AnimatorConditionMode.If, 0f, C.Fire), (AnimatorConditionMode.Equals, 3f, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
 
             // ---- aim_layer: IK pass only (PlayerAimLayer)
             AnimatorControllerLayer aimLayer = AddLayer(c, C.AimLayer, aim, AnimatorLayerBlendingMode.Override, true);
@@ -345,7 +463,10 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.FlinchHead, AnimatorControllerParameterType.Trigger), (C.FlinchTorso, AnimatorControllerParameterType.Trigger), (C.FlinchLeg, AnimatorControllerParameterType.Trigger),
                 (C.Die, AnimatorControllerParameterType.Trigger), (C.DeathStyle, AnimatorControllerParameterType.Int),
                 (C.Rise, AnimatorControllerParameterType.Trigger), (C.Alive, AnimatorControllerParameterType.Bool),
-                (C.Telegraph, AnimatorControllerParameterType.Trigger), (C.TelegraphStyle, AnimatorControllerParameterType.Int), (C.TelegraphRate, AnimatorControllerParameterType.Float));
+                (C.Telegraph, AnimatorControllerParameterType.Trigger), (C.TelegraphStyle, AnimatorControllerParameterType.Int), (C.TelegraphRate, AnimatorControllerParameterType.Float),
+                // WP-032C tier reactions / variants
+                (C.HitLight, AnimatorControllerParameterType.Trigger), (C.HitDir, AnimatorControllerParameterType.Int), (C.HitTier, AnimatorControllerParameterType.Int), (C.RiseVariant, AnimatorControllerParameterType.Int),
+                (C.ArmorBreak, AnimatorControllerParameterType.Trigger), (C.ArmorBreakRegion, AnimatorControllerParameterType.Int), (C.Stumble, AnimatorControllerParameterType.Trigger));
             SetDefault(c, C.GaitRate, 1f);
             SetDefault(c, C.AttackRate, 1f);
             SetDefault(c, C.TelegraphRate, 1f);
@@ -392,13 +513,13 @@ namespace DD.Art.Pipeline.EditorTools
             fromWait.hasExitTime = false; fromWait.hasFixedDuration = true; fromWait.duration = 0.35f;
             fromWait.AddCondition(AnimatorConditionMode.IfNot, 0f, C.Waiting);
 
-            // attacks (speed = AttackRate → hit_window_start lands on TelegraphTime); WP-032B: + overhead (Ultra, v002),
-            // whose 24-frame recovery is shorter than the Ultra timer — the last frame is held OverheadHoldSeconds.
+            // attacks (speed = AttackRate → hit_window_start lands on TelegraphTime); WP-032B: + overhead (Ultra); WP-032C: the v003
+            // overhead carries its own 33-frame recovery, OverheadHoldSeconds = 0 → the common exit.
             string[] attackStates = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState, C.AttackOverheadState };
             for (int i = 0; i < C.ZombieAttackClips.Length; i++)
             {
-                bool overhead = i == 3;
-                AnimatorState a = OneShot(sm, attackStates[i], clips[C.ZombieAttackClips[i]], loco, overhead ? 1f : 0.97f, overhead ? OverheadHoldSeconds : 0.12f);
+                bool hold = i == 3 && OverheadHoldSeconds > 0f;
+                AnimatorState a = OneShot(sm, attackStates[i], clips[C.ZombieAttackClips[i]], loco, hold ? 1f : 0.97f, hold ? OverheadHoldSeconds : 0.12f);
                 a.speedParameterActive = true;
                 a.speedParameter = C.AttackRate;
                 FromAny(sm, a, 0.06f, (AnimatorConditionMode.If, 0f, C.Attack), (AnimatorConditionMode.Equals, (float)i, C.AttackStyle), (AnimatorConditionMode.If, 0f, C.Alive));
@@ -407,19 +528,40 @@ namespace DD.Art.Pipeline.EditorTools
             AnimatorState stagger = OneShot(sm, C.StaggerState, clips[C.ZombieHitHeavyStagger], loco, 0.95f, 0.15f);
             FromAny(sm, stagger, 0.05f, (AnimatorConditionMode.If, 0f, C.Stagger), (AnimatorConditionMode.If, 0f, C.Alive));
 
-            for (int i = 0; i < C.ZombieDeathClips.Length; i++)
+            // WP-032C: armour break by region (base, full body — replaces the heavy stagger as the armour-break reaction) and the Runner stumble
+            for (int r = 0; r < C.ArmorBreakRegions.Length; r++)
+            {
+                AnimatorState ab = OneShot(sm, C.ArmorBreakState + "_" + r, clips[C.ZombieArmorBreakClip(r)], loco, 0.95f, 0.12f);
+                FromAny(sm, ab, 0.04f, (AnimatorConditionMode.If, 0f, C.ArmorBreak), (AnimatorConditionMode.Equals, (float)r, C.ArmorBreakRegion), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
+
+            AnimatorState stumble = OneShot(sm, C.StumbleState, clips[C.ZombieHitSpecialStumble], loco, 0.95f, 0.12f);
+            FromAny(sm, stumble, 0.04f, (AnimatorConditionMode.If, 0f, C.Stumble), (AnimatorConditionMode.If, 0f, C.Alive));
+
+            for (int i = 0; i < C.ZombieDeathClips.Length; i++)   // WP-032C: 8 styles (+ side_R, special_A/B, ultra)
             {
                 AnimatorState d = OneShot(sm, C.DeathState + "_" + i, clips[C.ZombieDeathClips[i]], null);
                 FromAny(sm, d, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, (float)i, C.DeathStyle));
             }
 
-            AnimatorState rise = OneShot(sm, C.RiseState, clips[C.ZombieRise], loco, 0.97f, 0.15f);
-            FromAny(sm, rise, 0.0f, (AnimatorConditionMode.If, 0f, C.Rise), (AnimatorConditionMode.If, 0f, C.Alive));
+            for (int i = 0; i < C.ZombieRiseClips.Length; i++)   // WP-032C: Rise_0 (A 48 f), Rise_1 (B 36 f), Rise_2 (C 28 f) by RiseVariant; B/C carry spawn_rise / spawn_land
+            {
+                AnimatorState rs = OneShot(sm, i == 0 ? C.RiseState : C.RiseState + "_" + i, clips[C.ZombieRiseClips[i]], loco, 0.97f, 0.15f);
+                FromAny(sm, rs, 0.0f, (AnimatorConditionMode.If, 0f, C.Rise), (AnimatorConditionMode.Equals, (float)i, C.RiseVariant), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
 
-            // ---- override_upper: hit_light L / R
+            // ---- override_upper: WP-032C directional × tier hits (Hit_<dir>_<tier>, HitDir 0..3 × HitTier 0..2; the Ultra reads are
+            // upper-body only by design) + the v001 hit_light L / R (HitL / HitR triggers, kept for the block-rig parity path)
             AnimatorControllerLayer over = AddLayer(c, C.OverrideUpperLayer, upper, AnimatorLayerBlendingMode.Override, false);
             AnimatorState overEmpty = over.stateMachine.AddState(C.EmptyState);
             over.stateMachine.defaultState = overEmpty;
+            for (int dir = 0; dir < 4; dir++)
+            for (int tier = 0; tier < 3; tier++)
+            {
+                AnimatorState h = OneShot(over.stateMachine, C.HitState + "_" + C.HitDirections[dir] + "_" + C.HitTiers[tier], clips[C.ZombieHitClip(dir, tier)], overEmpty, 0.9f, 0.1f);
+                FromAny(over.stateMachine, h, 0.03f, (AnimatorConditionMode.If, 0f, C.HitLight), (AnimatorConditionMode.Equals, (float)dir, C.HitDir), (AnimatorConditionMode.Equals, (float)tier, C.HitTier), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
+
             AnimatorState hitL = OneShot(over.stateMachine, C.HitState + "_L", clips[C.ZombieHitLightL], overEmpty, 0.9f, 0.1f);
             AnimatorState hitR = OneShot(over.stateMachine, C.HitState + "_R", clips[C.ZombieHitLightR], overEmpty, 0.9f, 0.1f);
             FromAny(over.stateMachine, hitL, 0.03f, (AnimatorConditionMode.If, 0f, C.HitLeft), (AnimatorConditionMode.If, 0f, C.Alive));
@@ -638,7 +780,7 @@ namespace DD.Art.Pipeline.EditorTools
                 {
                     name = s.name, clip = clips[s.name], loop = s.loop, seconds = s.seconds, speedMps = s.speedMps,
                     unitySpeedMps = unitySpeeds != null && unitySpeeds.TryGetValue(s.name, out float u) ? u : 0f,
-                    layer = s.layer, additive = s.additive, frames = s.frames, events = s.EventsText()
+                    layer = s.layer, additive = s.additive, frames = s.frames, events = s.EventsText(), stanceFrames = s.stanceFrames
                 });
             }
 
@@ -648,8 +790,32 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>The avatar source model with an Animator (avatar set), for clip sampling in the editor.</summary>
+        /// <summary>
+        /// The character's shipped prefab (Player_AP006 / Zombie_AP007: the runtime Animator, avatar and skinned hierarchy)
+        /// when it exists — WP-032C: sampling the avatar SOURCE model under-read the v004 run_fwd by 15 % against the live
+        /// rig (the PlayMode slip test), the prefab samples the same bones the game plays; the source model is the fallback
+        /// for a first build. The returned object is the Animator's GameObject (SampleAnimation root).
+        /// </summary>
         private static GameObject InstantiateCalibrationRig(string target)
         {
+            string prefabPath = target == "player" ? ArtCharacterPrefabBuilder.PlayerPrefab : ArtCharacterPrefabBuilder.ZombiePrefab;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab != null)
+            {
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                instance.hideFlags = HideFlags.HideAndDontSave;
+                Animator prefabAnimator = instance.GetComponentInChildren<Animator>(true);
+                if (prefabAnimator != null && prefabAnimator.avatar != null)
+                {
+                    prefabAnimator.applyRootMotion = false;
+                    prefabAnimator.runtimeAnimatorController = null;   // SampleAnimation only; the controller is being rebuilt
+                    s_calibrationInstance = instance;
+                    return prefabAnimator.gameObject;
+                }
+
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+
             string source = target == "player" ? ArtCharacterContract.PlayerAvatarSource : ArtCharacterContract.ZombieAvatarSource;
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(source);
             if (model == null) return null;
@@ -658,7 +824,16 @@ namespace DD.Art.Pipeline.EditorTools
             Animator animator = go.GetComponent<Animator>() ?? go.AddComponent<Animator>();
             animator.avatar = ArtCharacterContract.AvatarOf(source);
             animator.applyRootMotion = false;
+            s_calibrationInstance = go;
             return go;
+        }
+
+        private static GameObject s_calibrationInstance;
+
+        private static void DestroyCalibrationRig()
+        {
+            if (s_calibrationInstance != null) UnityEngine.Object.DestroyImmediate(s_calibrationInstance);
+            s_calibrationInstance = null;
         }
 
         private static void EnsureFolder(string folder)

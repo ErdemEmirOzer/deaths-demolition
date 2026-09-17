@@ -1,4 +1,5 @@
 using DD.Prototype.Core.Config;
+using UnityEngine;
 using DD.Prototype.Enemies;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
@@ -17,8 +18,14 @@ namespace DD.Prototype.Characters
         void ResetForSpawn(EnemyTier tier, float topSpeedMetersPerSecond, string fit, int idleVariant, bool rise);
         float PlayAttack(ZombieAttackStyle style, float telegraphSeconds);
         void CancelAttack();
-        void PlayFlinch(float lateral, BodyRegion region, bool upperBody);
+        /// <summary>Light hit. WP-032C: <paramref name="localHit"/> is the hit direction in the body's space (x lateral, z forward) — the upper-body read is the v003 directional × tier clip.</summary>
+        void PlayFlinch(Vector3 localHit, BodyRegion region, bool upperBody);
         void PlayHeavyStagger();
+        /// <summary>WP-032C: an armour piece broke on a region (0 head, 1 torso, 2 leg) — the full-body armorbreak clip (replaces the heavy stagger for that moment).</summary>
+        void PlayArmorBreak(int region);
+        /// <summary>WP-032C: Runner stumble (hit_special_stumble) — S-03 gameplay call.</summary>
+        void PlayStumble();
+        /// <summary>DeathStyle: 0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra.</summary>
         void PlayDeath(int deathStyle);
         IAttackWindowSink WindowSink { get; set; }
         /// <summary>WP-032: additive wind-up emphasis weight (0..1).</summary>

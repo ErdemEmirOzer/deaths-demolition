@@ -37,8 +37,26 @@ namespace DD.Prototype.Characters
         public const string DeathStyle = "DeathStyle";   // int: zombie 0 fwd 1 back 2 side 3 kneel; player 0 fwd 1 back
         public const string Rise = "Rise";               // trigger
         public const string Alive = "Alive";             // bool: false after Die (blocks re-entry into locomotion)
-        public const string Fire = "Fire";               // trigger, additive layer (player)
-        public const string Pickup = "Pickup";           // trigger (player)
+        public const string Fire = "Fire";               // trigger, additive layer (player): Fire_<Weapon>
+        public const string Pickup = "Pickup";           // trigger (player, override_upper)
+        // WP-032C · AP-009C v003 weapon handling (player, override_upper / additive) — S-02 WP-042 drives these through PlayerSkinnedVisual
+        public const string Weapon = "Weapon";           // int: ClassicWeaponId (0 A rifle, 1 B smg, 2 C shotgun) — selects Aim_/Reload_/Switch_/Fire_ states
+        public const string Reload = "Reload";           // trigger → Reload_<Weapon> at ReloadRate
+        public const string ReloadRate = "ReloadRate";   // float: clip seconds / WeaponConfig.ReloadTime
+        public const string SwitchOut = "SwitchOut";     // trigger → SwitchOut_<Weapon> (switch_away event)
+        public const string SwitchIn = "SwitchIn";       // trigger → SwitchIn_<Weapon> (switch_ready event)
+        public const string Lower = "Lower";             // trigger → WeaponLower (lowered event)
+        public const string Raise = "Raise";             // trigger → WeaponRaise (raised event)
+        public const string SwHold = "SwHold";           // int: 0 none, 1 Kagura Bell, 2 Ofuda Loom (SwHold_ loops replace Aim_)
+        public const string Hurt = "Hurt";               // trigger (player): HurtStyle 0 = hurt_A (override_upper), 1 = hurt_B (base, gut hit with a step)
+        public const string HurtStyle = "HurtStyle";     // int
+        // WP-032C zombie tier reactions / variants
+        public const string HitDir = "HitDir";           // int: 0 front, 1 back, 2 left, 3 right (Hit_<dir>_<tier>)
+        public const string HitTier = "HitTier";         // int: 0 std, 1 elite, 2 ultra
+        public const string RiseVariant = "RiseVariant"; // int: 0 rise (A), 1 rise_B, 2 rise_C
+        public const string ArmorBreak = "ArmorBreak";   // trigger (base): ArmorBreak_<region>
+        public const string ArmorBreakRegion = "ArmorBreakRegion"; // int: 0 head, 1 torso, 2 leg
+        public const string Stumble = "Stumble";         // trigger (base): hit_special_stumble (Runner)
         public const string MoveX = "MoveX";             // player: local strafe velocity / reference speed
         public const string MoveY = "MoveY";             // player: local forward velocity / reference speed
         public const string LocoRate = "LocoRate";       // player: |v| / reference speed (state speed multiplier)
@@ -59,6 +77,17 @@ namespace DD.Prototype.Characters
         public const string AttackSweepState = "Attack_Sweep";
         public const string AttackOverheadState = "Attack_Overhead";   // WP-032B (AP-009B v002, Ultra)
         public const string WaitState = "Wait";                        // WP-032B (idle_queue)
+        // WP-032C states
+        public const string AimState = "Aim";                 // Aim_<weapon> (override_upper loop, the rest state while armed)
+        public const string ReloadState = "Reload";           // Reload_<weapon>
+        public const string SwitchOutState = "SwitchOut";     // SwitchOut_<weapon>
+        public const string SwitchInState = "SwitchIn";       // SwitchIn_<weapon>
+        public const string WeaponLowerState = "WeaponLower";
+        public const string WeaponRaiseState = "WeaponRaise";
+        public const string SwHoldState = "SwHold";           // SwHold_1 bell, SwHold_2 loom
+        public const string HurtState = "Hurt";               // Hurt_A (override_upper), Hurt_B (base)
+        public const string ArmorBreakState = "ArmorBreak";   // ArmorBreak_<region>
+        public const string StumbleState = "Stumble";
         public const string StaggerState = "Stagger";
         public const string DeathState = "Death";
         public const string RiseState = "Rise";
@@ -92,7 +121,22 @@ namespace DD.Prototype.Characters
         public const string PlayerHitLight = "AP009_player_hit_light";
         public const string PlayerDeathFwd = "AP009_player_death_fwd";
         public const string PlayerDeathBack = "AP009_player_death_back";
-        public const string PlayerPickup = "AP009_player_pickup_special";
+        public const string PlayerPickup = "AP009_player_pickup_special";   // v001 full-body grab (kept in the set; unused by the controller since WP-032C)
+        // WP-032C · AP-009C v003
+        public const string PlayerPickupUpper = "AP009_player_pickup_upper";
+        public const string PlayerSwHoldBell = "AP009_player_sw_hold_bell";
+        public const string PlayerSwHoldLoom = "AP009_player_sw_hold_loom";
+        public const string PlayerDeathSide = "AP009_player_death_side";
+        public const string PlayerHurtA = "AP009_player_hurt_A";
+        public const string PlayerHurtB = "AP009_player_hurt_B";
+        public const string PlayerWeaponLower = "AP009_player_weapon_lower";   // A (v003); v004: B/C = AP009_player_<B|C>_weapon_lower
+        public const string PlayerWeaponRaise = "AP009_player_weapon_raise";
+        /// <summary>WP-032C (v004): the weapon's lower / raise clip — A keeps the unsuffixed v003 name, B / C carry the letter.</summary>
+        public static string PlayerWeaponLowerClip(int weapon) => weapon <= 0 ? PlayerWeaponLower : PlayerWeaponClip(weapon, "weapon_lower");
+        public static string PlayerWeaponRaiseClip(int weapon) => weapon <= 0 ? PlayerWeaponRaise : PlayerWeaponClip(weapon, "weapon_raise");
+        /// <summary>Weapon letter of a ClassicWeaponId index (0 A AssaultRifle, 1 B AutoSmg, 2 C CombatShotgun).</summary>
+        public static readonly string[] WeaponLetters = { "A", "B", "C" };
+        public static string PlayerWeaponClip(int weapon, string kind) => "AP009_player_" + WeaponLetters[Mathf.Clamp(weapon, 0, 2)] + "_" + kind;   // idle_aim / fire / reload / switch_in / switch_out
         public const string ZombieIdleSway = "AP009_zombie_idle_sway";
         public const string ZombieIdleTwitch = "AP009_zombie_idle_twitch";
         public const string ZombieIdleQueue = "AP009_zombie_idle_queue";   // WP-032B (v002)
@@ -115,12 +159,30 @@ namespace DD.Prototype.Characters
         public const string ZombieDeathSide = "AP009_zombie_death_side";
         public const string ZombieDeathKneel = "AP009_zombie_death_kneel";
         public const string ZombieRise = "AP009_zombie_rise";
+        // WP-032C · AP-009C v003
+        public const string ZombieRiseB = "AP009_zombie_rise_B";
+        public const string ZombieRiseC = "AP009_zombie_rise_C";
+        public const string ZombieDeathSideR = "AP009_zombie_death_side_R";
+        public const string ZombieDeathSpecialA = "AP009_zombie_death_special_A";
+        public const string ZombieDeathSpecialB = "AP009_zombie_death_special_B";
+        public const string ZombieDeathUltra = "AP009_zombie_death_ultra";
+        public const string ZombieHitSpecialStumble = "AP009_zombie_hit_special_stumble";
+        public static readonly string[] HitDirections = { "front", "back", "left", "right" };
+        public static readonly string[] HitTiers = { "std", "elite", "ultra" };
+        public static readonly string[] ArmorBreakRegions = { "head", "torso", "leg" };
+        public static string ZombieHitClip(int dir, int tier) => "AP009_zombie_hit_" + HitDirections[Mathf.Clamp(dir, 0, 3)] + "_" + HitTiers[Mathf.Clamp(tier, 0, 2)];
+        public static string ZombieArmorBreakClip(int region) => "AP009_zombie_armorbreak_" + ArmorBreakRegions[Mathf.Clamp(region, 0, 2)];
 
         public static readonly string[] PlayerClips =
         {
             PlayerIdle, PlayerWalkFwd, PlayerWalkBack, PlayerStrafeLeft, PlayerStrafeRight,
             PlayerRunFwd, PlayerRunBack, PlayerRunStrafeLeft, PlayerRunStrafeRight,
-            PlayerFireRecoil, PlayerHitLight, PlayerDeathFwd, PlayerDeathBack, PlayerPickup
+            PlayerFireRecoil, PlayerHitLight, PlayerDeathFwd, PlayerDeathBack, PlayerPickup,
+            PlayerPickupUpper, PlayerSwHoldBell, PlayerSwHoldLoom, PlayerDeathSide, PlayerHurtA, PlayerHurtB, PlayerWeaponLower, PlayerWeaponRaise,
+            "AP009_player_B_weapon_lower", "AP009_player_B_weapon_raise", "AP009_player_C_weapon_lower", "AP009_player_C_weapon_raise",
+            "AP009_player_A_idle_aim", "AP009_player_A_fire", "AP009_player_A_reload", "AP009_player_A_switch_in", "AP009_player_A_switch_out",
+            "AP009_player_B_idle_aim", "AP009_player_B_fire", "AP009_player_B_reload", "AP009_player_B_switch_in", "AP009_player_B_switch_out",
+            "AP009_player_C_idle_aim", "AP009_player_C_fire", "AP009_player_C_reload", "AP009_player_C_switch_in", "AP009_player_C_switch_out"
         };
 
         public static readonly string[] ZombieClips =
@@ -129,14 +191,23 @@ namespace DD.Prototype.Characters
             ZombieAttackLunge, ZombieAttackSweep, ZombieAttackSwipe, ZombieAttackOverhead,
             ZombieHitLightL, ZombieHitLightR, ZombieHitHeavyStagger,
             ZombieHitRegionHead, ZombieHitRegionTorso, ZombieHitRegionLeg,
-            ZombieDeathForward, ZombieDeathBackward, ZombieDeathSide, ZombieDeathKneel, ZombieRise
+            ZombieDeathForward, ZombieDeathBackward, ZombieDeathSide, ZombieDeathKneel, ZombieRise,
+            ZombieRiseB, ZombieRiseC, ZombieDeathSideR, ZombieDeathSpecialA, ZombieDeathSpecialB, ZombieDeathUltra, ZombieHitSpecialStumble,
+            "AP009_zombie_armorbreak_head", "AP009_zombie_armorbreak_torso", "AP009_zombie_armorbreak_leg",
+            "AP009_zombie_hit_front_std", "AP009_zombie_hit_back_std", "AP009_zombie_hit_left_std", "AP009_zombie_hit_right_std",
+            "AP009_zombie_hit_front_elite", "AP009_zombie_hit_back_elite", "AP009_zombie_hit_left_elite", "AP009_zombie_hit_right_elite",
+            "AP009_zombie_hit_front_ultra", "AP009_zombie_hit_back_ultra", "AP009_zombie_hit_left_ultra", "AP009_zombie_hit_right_ultra"
         };
 
-        public const int ClipCount = 36;   // WP-032B: AP-009B v002 (30 + run ×4, overhead, idle_queue)
+        public const int ClipCount = 85;   // WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
-        /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel).</summary>
-        public static readonly string[] ZombieDeathClips = { ZombieDeathForward, ZombieDeathBackward, ZombieDeathSide, ZombieDeathKneel };
+        /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>
+        public static readonly string[] ZombieDeathClips = { ZombieDeathForward, ZombieDeathBackward, ZombieDeathSide, ZombieDeathKneel, ZombieDeathSideR, ZombieDeathSpecialA, ZombieDeathSpecialB, ZombieDeathUltra };
+        /// <summary>The zombie rise clips in RiseVariant order (0 rise, 1 rise_B, 2 rise_C — B/C are camera-off-only, ≤ 1.2 s).</summary>
+        public static readonly string[] ZombieRiseClips = { ZombieRise, ZombieRiseB, ZombieRiseC };
+        /// <summary>The player death clips in DeathStyle order (0 fwd, 1 back, 2 side).</summary>
+        public static readonly string[] PlayerDeathClips = { PlayerDeathFwd, PlayerDeathBack, PlayerDeathSide };
         /// <summary>The zombie attack clips in AttackStyle order (0 swipe, 1 lunge, 2 sweep, 3 overhead).</summary>
         public static readonly string[] ZombieAttackClips = { ZombieAttackSwipe, ZombieAttackLunge, ZombieAttackSweep, ZombieAttackOverhead };
         /// <summary>The zombie gait clips in Gait order (0 A, 1 B, 2 C, 3 run).</summary>
@@ -171,6 +242,8 @@ namespace DD.Prototype.Characters
             public int frames;
             /// <summary>Manifest events as "name=frame;…" (provenance / tests).</summary>
             public string events;
+            /// <summary>WP-032C: manifest stance frames per foot (contact length of a locomotion cycle; 0 = not given). The calibrator and the slip tests measure over exactly these frames.</summary>
+            public int stanceFrames;
         }
 
         [SerializeField] private AnimationClip _idle;

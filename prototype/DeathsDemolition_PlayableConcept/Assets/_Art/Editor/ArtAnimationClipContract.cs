@@ -25,7 +25,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string AnimationsFolderName = "Animations";
         public const string AnimationsFolder = ArtImportContract.CharactersRoot + "/" + AnimationsFolderName;
         public const string ManifestPath = AnimationsFolder + "/AP009-clips-manifest.json";
-        public const string ManifestSchema = "AP009.clips-manifest.v002";   // WP-032B: AP-009B v002 (36 clips; foot_l/foot_r sides corrected)
+        public const string ManifestSchema = "AP009.clips-manifest.v004";   // WP-032C: AP-009D v004 (85 clips: v003 weapon handling / tier reactions / deaths / rises + B/C weapon lower/raise; AD MUSTs re-keyed)
         public const int Fps = CharacterAnimatorContract.Fps;
 
         /// <summary>

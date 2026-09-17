@@ -128,8 +128,8 @@ namespace DD.Art.Tests.PlayMode
                 (C.ZombieShambleA, zv.Animator, 0, null), (C.ZombieAttackSwipe, zv.Animator, 0, C.AttackSwipeState), (C.ZombieAttackLunge, zv.Animator, 0, C.AttackLungeState),
                 (C.ZombieHitHeavyStagger, zv.Animator, 0, C.StaggerState), (C.ZombieDeathForward, zv.Animator, 0, C.DeathState + "_0"), (C.ZombieDeathKneel, zv.Animator, 0, C.DeathState + "_3"),
                 (C.ZombieHitLightL, zv.Animator, 1, C.HitState + "_L"), (C.ZombieRise, zv.Animator, 0, C.RiseState),
-                (C.PlayerWalkFwd, pv.Animator, 0, null), (C.PlayerFireRecoil, pv.Animator, 2, C.FireState), (C.PlayerHitLight, pv.Animator, 1, C.HitState),
-                (C.PlayerDeathFwd, pv.Animator, 0, C.DeathState + "_0"), (C.PlayerPickup, pv.Animator, 0, C.PickupState), (C.PlayerIdle, pv.Animator, 0, null)
+                (C.PlayerWalkFwd, pv.Animator, 0, null), (C.PlayerFireRecoil, pv.Animator, 2, C.FireState), (C.PlayerHitLight, pv.Animator, 1, C.HitState),   // WP-032C: Fire = the v001 recoil state (Weapon 3 fallback)
+                (C.PlayerDeathFwd, pv.Animator, 0, C.DeathState + "_0"), (C.PlayerPickupUpper, pv.Animator, 1, C.PickupState), (C.PlayerIdle, pv.Animator, 0, null)
             };
 
             zv.Animator.enabled = false;

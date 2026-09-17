@@ -53,6 +53,24 @@ namespace DD.Prototype.Characters
         private static readonly int DeathStyleId = Animator.StringToHash(CharacterAnimatorContract.DeathStyle);
         private static readonly int PickupId = Animator.StringToHash(CharacterAnimatorContract.Pickup);
         private static readonly int AliveId = Animator.StringToHash(CharacterAnimatorContract.Alive);
+        // WP-032C · AP-009C weapon handling (S-02 WP-042 drives fire / reload / switch through PlayerProceduralAnimator or the WeaponEvents below)
+        private static readonly int WeaponId = Animator.StringToHash(CharacterAnimatorContract.Weapon);
+        private static readonly int ReloadId = Animator.StringToHash(CharacterAnimatorContract.Reload);
+        private static readonly int ReloadRateId = Animator.StringToHash(CharacterAnimatorContract.ReloadRate);
+        private static readonly int SwitchOutId = Animator.StringToHash(CharacterAnimatorContract.SwitchOut);
+        private static readonly int SwitchInId = Animator.StringToHash(CharacterAnimatorContract.SwitchIn);
+        private static readonly int LowerId = Animator.StringToHash(CharacterAnimatorContract.Lower);
+        private static readonly int RaiseId = Animator.StringToHash(CharacterAnimatorContract.Raise);
+        private static readonly int SwHoldId = Animator.StringToHash(CharacterAnimatorContract.SwHold);
+        private static readonly int HurtId = Animator.StringToHash(CharacterAnimatorContract.Hurt);
+        private static readonly int HurtStyleId = Animator.StringToHash(CharacterAnimatorContract.HurtStyle);
+        private int _weapon;
+        private int _swHold;
+        private int _overrideLayer = -1;
+        /// <summary>WP-032C: the ClassicWeaponId index the upper layer is posed for (0 A, 1 B, 2 C; 3 = no weapon clip → v001 recoil, Empty upper).</summary>
+        public int Weapon => _weapon;
+        /// <summary>WP-032C: 0 none, 1 Kagura Bell, 2 Ofuda Loom in the right hand.</summary>
+        public int SpecialHold => _swHold;
 
         private Func<Vector3> _planarVelocity;
         private Func<float> _referenceSpeed;
@@ -76,9 +94,9 @@ namespace DD.Prototype.Characters
         public const float MaxLocoRate = 2.4f;
 
         [PrototypeOnly(PendingDecisions.None,
-            "WP-032B (AP-009B P-06 note ×1.6 assumed the Blender 4.5 m/s; the Unity-retargeted run_fwd covers ≈ 3.5–3.9 m/s in contact, so 6.2 m/s is ×1.6–1.8) — " +
-            "the state rate is clamped so the run never exceeds this (a faster run reads as a flicker). Cap.", true)]
-        public const float MaxRunRate = 2.0f;
+            "Highest playback rate of the run cycles (P-06 ×1.6: faster reads as a flicker). WP-032B needed 2.0 on the v002 run_fwd (3.75 m/s on the " +
+            "Unity rig); WP-032C: the v003 run_fwd stride is 1.05 m (Blender 5.69 m/s no-slide), so 6.2 m/s sits under the cap again. Cap.", true)]
+        public const float MaxRunRate = 1.6f;
 
         public Animator Animator => _animator;
         public LODGroup LodGroup => _lodGroup;
@@ -171,12 +189,22 @@ namespace DD.Prototype.Characters
             {
                 if (_events != null) _events.Raised += OnAnimationEvent;
                 WeaponEvents.SpecialWeaponPickedUp += OnSpecialPickedUp;
+                // WP-032C: the weapon-handling beats S-02 already publishes (WP-007/034) — the classic weapon's Aim / Reload / Fire clips follow them.
+                WeaponEvents.WeaponEquipped += OnWeaponEquipped;
+                WeaponEvents.ReloadStarted += OnReloadStarted;
+                WeaponEvents.ReloadInterrupted += OnReloadInterrupted;
+                WeaponEvents.SpecialChanged += OnSpecialChanged;
+                WeaponEvents.SpecialWeaponEnded += OnSpecialEnded;
+                WeaponEvents.SpecialWeaponCleared += OnSpecialEnded;
                 _subscribed = true;
             }
 
             if (_authored)
             {
                 _animator.SetBool(AliveId, true);
+                _overrideLayer = -1;
+                for (int i = 0; i < _animator.layerCount; i++) if (_animator.GetLayerName(i) == CharacterAnimatorContract.OverrideUpperLayer) _overrideLayer = i;
+                SetWeapon(_weapon);
             }
 
             return _weaponSocket;
@@ -188,6 +216,12 @@ namespace DD.Prototype.Characters
             {
                 if (_events != null) _events.Raised -= OnAnimationEvent;
                 WeaponEvents.SpecialWeaponPickedUp -= OnSpecialPickedUp;
+                WeaponEvents.WeaponEquipped -= OnWeaponEquipped;
+                WeaponEvents.ReloadStarted -= OnReloadStarted;
+                WeaponEvents.ReloadInterrupted -= OnReloadInterrupted;
+                WeaponEvents.SpecialChanged -= OnSpecialChanged;
+                WeaponEvents.SpecialWeaponEnded -= OnSpecialEnded;
+                WeaponEvents.SpecialWeaponCleared -= OnSpecialEnded;
                 _subscribed = false;
             }
         }
@@ -200,6 +234,75 @@ namespace DD.Prototype.Characters
         private void OnSpecialPickedUp(float activeDuration)
         {
             PlayPickup();
+        }
+
+        private void OnWeaponEquipped(ClassicWeaponId id) => SetWeapon((int)id);
+        private void OnReloadStarted(float duration) => PlayReload(duration);
+        private void OnReloadInterrupted() => CancelReload();
+        private void OnSpecialEnded() => SetSpecialHold(0);
+
+        private void OnSpecialChanged(SpecialWeaponHudState state)
+        {
+            // The hold pose follows the ACTIVE special (the pickup clip's pickup_done frame is when the hand closes on it).
+            if (state.Phase == SpecialWeaponPhase.Active) SetSpecialHold(state.WeaponId == SpecialWeaponId.OfudaLoom ? 2 : 1);
+            else if (state.Phase == SpecialWeaponPhase.None) SetSpecialHold(0);
+        }
+
+        // ------------------------------------------------------------- WP-032C weapon handling
+
+        /// <summary>The classic weapon held (ClassicWeaponId index): Aim_<w> is the upper rest, Fire_<w> the recoil, Reload_<w> / Switch_<w> the one-shots.</summary>
+        public void SetWeapon(int weapon)
+        {
+            _weapon = Mathf.Clamp(weapon, 0, 3);
+            if (_authored) _animator.SetInteger(WeaponId, _weapon);
+        }
+
+        /// <summary>Reload: the weapon's clip rate-scaled so mag_out / mag_in / chamber land inside <paramref name="seconds"/> (WeaponConfig.ReloadTime).</summary>
+        public void PlayReload(float seconds)
+        {
+            if (!_authored || _dying || _weapon > 2) return;
+            float clipSeconds = _animation.Find(CharacterAnimatorContract.PlayerWeaponClip(_weapon, "reload"))?.seconds ?? 0f;
+            _animator.SetFloat(ReloadRateId, seconds > 0.05f && clipSeconds > 0.05f ? clipSeconds / seconds : 1f);
+            _animator.SetTrigger(ReloadId);
+        }
+
+        /// <summary>Reload interrupted (special pickup / death): straight back to the rest pose.</summary>
+        public void CancelReload()
+        {
+            if (!_authored) return;
+            _animator.ResetTrigger(ReloadId);
+            if (_overrideLayer >= 0 && _animator.GetCurrentAnimatorStateInfo(_overrideLayer).IsName(CharacterAnimatorContract.ReloadState + "_" + _weapon))
+            {
+                _animator.CrossFadeInFixedTime(RestStateName(), 0.1f, _overrideLayer);
+            }
+        }
+
+        /// <summary>Weapon switch: the outgoing clip (switch_away event), then <see cref="SetWeapon"/> + <see cref="PlaySwitchIn"/> when S-02 swaps the mount.</summary>
+        public void PlaySwitchOut() { if (_authored && !_dying) _animator.SetTrigger(SwitchOutId); }
+        public void PlaySwitchIn() { if (_authored && !_dying) _animator.SetTrigger(SwitchInId); }
+        /// <summary>Weapon lowered / raised (lowered / raised events) — menu / results hand-off beats.</summary>
+        public void PlayLower() { if (_authored && !_dying) _animator.SetTrigger(LowerId); }
+        public void PlayRaise() { if (_authored && !_dying) _animator.SetTrigger(RaiseId); }
+
+        /// <summary>Special Weapon in the right hand: 0 none, 1 Kagura Bell, 2 Ofuda Loom — the SwHold loop replaces the Aim until it ends.</summary>
+        public void SetSpecialHold(int hold)
+        {
+            _swHold = Mathf.Clamp(hold, 0, 2);
+            if (_authored) _animator.SetInteger(SwHoldId, _swHold);
+        }
+
+        /// <summary>Damage taken with a v003 read: upper = hurt_A (from the right, override_upper), else hurt_B (base, gut hit with a step). Movement, aim and fire untouched (REQ-044/045).</summary>
+        public void PlayHurt(bool upperBody)
+        {
+            if (!_authored || _dying) return;
+            _animator.SetInteger(HurtStyleId, upperBody ? 0 : 1);
+            _animator.SetTrigger(HurtId);
+        }
+
+        private string RestStateName()
+        {
+            if (_swHold > 0) return CharacterAnimatorContract.SwHoldState + "_" + _swHold;
+            return _weapon <= 2 ? CharacterAnimatorContract.AimState + "_" + _weapon : CharacterAnimatorContract.EmptyState;
         }
 
         // ------------------------------------------------------------------ driver hooks
@@ -227,7 +330,9 @@ namespace DD.Prototype.Characters
             if (!_authored || _dying) return;
             _dying = true;
             _deathEnded = false;
-            int style = localHitDirection.z > 0.2f ? 0 : localHitDirection.z < -0.2f ? 1 : coin ? 0 : 1;
+            // WP-032C: a sideways push (|x| dominant) is the v003 death_side (2); the coin only breaks a dead-centre tie.
+            int style = Mathf.Abs(localHitDirection.x) > Mathf.Abs(localHitDirection.z) && Mathf.Abs(localHitDirection.x) > 0.2f ? 2
+                : localHitDirection.z > 0.2f ? 0 : localHitDirection.z < -0.2f ? 1 : coin ? 0 : 1;
             _animator.SetBool(AliveId, false);
             _animator.SetInteger(DeathStyleId, style);
             _animator.SetTrigger(DieId);

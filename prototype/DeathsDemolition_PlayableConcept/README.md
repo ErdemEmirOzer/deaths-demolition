@@ -213,6 +213,8 @@ WP-022D (UI/HUD v2.3) binds the WP-035 contract: the Achievements pane reads `Pr
 
 WP-022E (UI/HUD v2.4) adds the Settings "RUN TELEMETRY" toggle (`UiSettings.Telemetry` → `RunTelemetry.SetEnabled`; `-ddTelemetry 0` still wins) and the name plate (`CosmeticsViewModel.NamePlate`: selected title · badge on the Profile heading and the Results eyebrow).
 
+WP-032C (AP-009C v003 + AP-009D v004) takes the characters to the 85-clip set: the player's classic weapon is animated on the upper-body layer (`Aim_<weapon>` rest loops, per-weapon additive recoil, reload / switch / lower / raise one-shots with their events, rate-scaled to `WeaponConfig.ReloadTime`, bound to S-02's `WeaponEvents`), the Special Weapon hold poses and the v003 pickup, hurt A/B and the side death; the zombie gets directional × tier hit reads, armour-break-by-region clips, the Runner stumble, rise variants with `spawn_rise/spawn_land` (DEC-081 camera-off cuts) and the tier deaths; `CharacterAnimationEvents` grows to 28 names.
+
 | Folder | One-line summary |
 |---|---|
 | `Core/` | The spine: `PrototypeConfig` and its ten sections, the `PrototypeOnly` origin attribute, boot/scene hand-off, object pooling, the input abstraction, and the F1 panel plus its registry. |
