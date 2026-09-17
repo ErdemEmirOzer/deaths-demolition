@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Weapons/Classic/Textures/T_weapons_Packed.png",
+    "sourceSha256": "91901e093c74081badbda88a5b9c75ce77588de5fd38dc2a6d1c6dabd1230663",
+    "algorithm": "MetallicSmoothnessAO-MRA v1 (WP-042B): out.R = src.R (metallic), out.G = src.B (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T02:49:04.6684500Z",
+    "outputSha256": "b2dd6e301ed4634743f3fc49342f29a02804d18e20d7ded5791dba1e9e393a5e"
+}

@@ -213,7 +213,8 @@ namespace DD.Art.Tests.EditMode
         [TestCase("bamboo_culm", ArtImportContract.TextureClass.Foliage, 1024)]
         [TestCase("bark", ArtImportContract.TextureClass.Foliage, 1024)]
         [TestCase("sky", ArtImportContract.TextureClass.Sky, 256)]
-        [TestCase("sw_atlas", ArtImportContract.TextureClass.Character, 2048)]
+        [TestCase("sw_atlas", ArtImportContract.TextureClass.Weapon, 1024)]
+        [TestCase("weapons", ArtImportContract.TextureClass.Weapon, 1024)]
         public void DokuSinifi_RolTablosu_VeBoyut(string rol, ArtImportContract.TextureClass beklenen, int boyut)
         {
             Assert.AreEqual(beklenen, ArtImportContract.ClassOfRole(rol), "ClassOfRole(" + rol + ")");

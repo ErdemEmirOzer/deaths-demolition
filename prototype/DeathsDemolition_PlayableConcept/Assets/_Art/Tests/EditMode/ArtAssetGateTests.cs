@@ -303,6 +303,11 @@ namespace DD.Art.Tests.EditMode
             // WP-019 (ADR-019-1): the AP-010 gold pack mesh (the only FBX the effect package ships).
             beklenen.Add(ArtVfxContract.VfxRoot + "/gold/AP010_goldpack_V01.fbx");
 
+            // WP-042B: the AP-013 classic weapon base models A/B/C (S-02 builder).
+            int classic = 0;
+            foreach (string f in ArtWeaponBuilder.ModelFiles()) if (beklenen.Add(f)) classic++;
+            Assert.AreEqual(3, classic, "AP-013 3 klasik silah FBX");
+
             var diskte = new HashSet<string>(DiskteUzanti(".fbx"), StringComparer.Ordinal);
             var eksik = new List<string>();
             var fazla = new List<string>();
@@ -426,6 +431,9 @@ namespace DD.Art.Tests.EditMode
             foreach (string f in new[] { ArtTierBuilder.BaseColorMap, ArtTierBuilder.NormalMap, ArtTierBuilder.PackedMap, ArtTierBuilder.MaskMap, ArtTierBuilder.MetallicSmoothnessMap }) beklenen.Add(f);
             foreach (string f in ArtSpecialWeaponBuilder.TextureFiles()) beklenen.Add(f);
             Assert.AreEqual(143, beklenen.Count, "Beklenen doku kümesi 129 (WP-020 kumaş atlası dâhil) + 5 (WP-036 tier) + 9 (WP-037B SW atlas + sheet) = 143 olmalı.");
+            // WP-042B AP-013 weapons atlas (BaseColor + Normal + Packed(MRA) + derived MS = 4) → 147.
+            foreach (string f in ArtWeaponBuilder.TextureFiles()) beklenen.Add(f);
+            Assert.AreEqual(147, beklenen.Count, "Beklenen doku kümesi 143 + 4 (WP-042B silah atlası) = 147 olmalı.");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;
@@ -490,7 +498,7 @@ namespace DD.Art.Tests.EditMode
             var ihlaller = new List<string>();
             var sinifToplam = new SortedDictionary<string, long>();
             var sinifSayi = new SortedDictionary<string, int>();
-            long sevk = 0, tam2048 = 0, sevkDunya = 0, sevkKarakter = 0;
+            long sevk = 0, tam2048 = 0, sevkDunya = 0, sevkKarakter = 0, sevkSilah = 0;
             int sevkSayi = 0;
             foreach (string yol in pngler)
             {
@@ -521,7 +529,9 @@ namespace DD.Art.Tests.EditMode
                 if (rol == ArtImportContract.TextureRole.Packed || rol == ArtImportContract.TextureRole.Mask) continue;   // provenance only; no material binds them (WP-016: the AP-007 ID mask feeds the derived DetailMask)
                 long bytes = ArtImportContract.EstimatedShippedBytes(w, h, sinif.Value, importer.mipmapEnabled);
                 sevk += bytes;
-                if (ArtImportContract.IsCharacterClass(sinif.Value)) sevkKarakter += bytes; else sevkDunya += bytes;
+                if (ArtImportContract.IsCharacterClass(sinif.Value)) sevkKarakter += bytes;
+                else if (ArtImportContract.IsWeaponClass(sinif.Value)) sevkSilah += bytes;
+                else sevkDunya += bytes;
                 sevkSayi++;
                 tam2048 += ArtImportContract.EstimatedShippedBytes(w, h, ArtImportContract.TextureClass.Ground, importer.mipmapEnabled);
                 string k = sinif.Value.ToString();
@@ -532,11 +542,12 @@ namespace DD.Art.Tests.EditMode
             Assert.IsEmpty(ihlaller, "Doku politikası ihlali (" + ihlaller.Count + "):\n" + string.Join("\n", ihlaller));
             var satirlar = new List<string>();
             foreach (KeyValuePair<string, long> kv in sinifToplam) satirlar.Add(kv.Key + " " + sinifSayi[kv.Key] + " doku " + (kv.Value / 1048576.0).ToString("F1") + " MB");
-            double sevkMb = sevk / 1048576.0, dunyaMb = sevkDunya / 1048576.0, karakterMb = sevkKarakter / 1048576.0;
-            Debug.Log("[DD-TEST] wp015.texturePolicy shipped=" + sevkSayi + " estMB=" + sevkMb.ToString("F1") + " (all-2048 would be " + (tam2048 / 1048576.0).ToString("F1") + " MB) world=" + dunyaMb.ToString("F1") + "/" + ArtImportContract.ShippedWorldBudgetMb + " character=" + karakterMb.ToString("F1") + "/" + ArtImportContract.ShippedCharacterBudgetMb + " total/" + ArtImportContract.ShippedTotalBudgetMb + " | " + string.Join(" | ", satirlar));
+            double sevkMb = sevk / 1048576.0, dunyaMb = sevkDunya / 1048576.0, karakterMb = sevkKarakter / 1048576.0, silahMb = sevkSilah / 1048576.0;
+            Debug.Log("[DD-TEST] wp015.texturePolicy shipped=" + sevkSayi + " estMB=" + sevkMb.ToString("F1") + " (all-2048 would be " + (tam2048 / 1048576.0).ToString("F1") + " MB) world=" + dunyaMb.ToString("F1") + "/" + ArtImportContract.ShippedWorldBudgetMb + " character=" + karakterMb.ToString("F1") + "/" + ArtImportContract.ShippedCharacterBudgetMb + " weapon=" + silahMb.ToString("F1") + "/" + ArtImportContract.ShippedWeaponBudgetMb + " total/" + ArtImportContract.ShippedTotalBudgetMb + " | " + string.Join(" | ", satirlar));
             // WP-017 · ADR-015-1 v2: world ≤ 120, character ≤ 80, total ≤ 200 MB (fully resident, before streaming).
             Assert.LessOrEqual(dunyaMb, ArtImportContract.ShippedWorldBudgetMb, "Dünya doku kümesi (Ground/Structure/Foliage/Prop/Sky) sevk bütçesini aşıyor (ADR-015-1 v2).");
             Assert.LessOrEqual(karakterMb, ArtImportContract.ShippedCharacterBudgetMb, "Karakter doku kümesi (oyuncu + zombi + zırh atlası) sevk bütçesini aşıyor (ADR-015-1 v2).");
+            Assert.LessOrEqual(silahMb, ArtImportContract.ShippedWeaponBudgetMb, "Silah doku kümesi (AP-014 SW + AP-013 klasik atlas) sevk bütçesini aşıyor (ADR-015-1 v3, WP-042B).");
             Assert.LessOrEqual(sevkMb, ArtImportContract.ShippedTotalBudgetMb, "Sevk edilen doku kümesi toplam bütçeyi aşıyor (ADR-015-1 v2).");
         }
 

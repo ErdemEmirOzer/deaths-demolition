@@ -230,7 +230,19 @@ namespace DD.Prototype.Tests.PlayMode
         {
             yield return RunSahnesiniHazirla();
             ZombieEnemy z = Dogur(TestZemini(0f, 7f));
-            yield return null;
+            // WP-042B: a spawned body is not in its standing pose on the spawn frame — a pooled body's
+            // Animator.Update(0) in ResetForSpawn runs before the body is active (S-06), and since DEC-081 a spawn
+            // the camera does not see RISES from the ground for up to 1.2 s (WP-040) with its bone hitboxes lying
+            // flat (a horizontal chest ray met the head). Wait for the rise handshake, then two frames for the pose.
+            float riseT0 = Time.time;
+            while (z.IsRising && Time.time - riseT0 < 3f) yield return null;
+            Assert.IsFalse(z.IsRising, "kalkış 3 s içinde bitmedi");
+            yield return new WaitForSeconds(0.5f);   // rise → locomotion blend
+            Debug.Log("[DD-TEST] wp006.pose rising=" + z.IsRising + " root=" + z.transform.position.ToString("F2") +
+                      " head=" + z.HitboxFor(BodyRegion.Head).bounds.center.ToString("F2") + "/" + z.HitboxFor(BodyRegion.Head).bounds.size.ToString("F2") +
+                      " upper=" + z.HitboxFor(BodyRegion.UpperBody).bounds.center.ToString("F2") + "/" + z.HitboxFor(BodyRegion.UpperBody).bounds.size.ToString("F2") +
+                      " lower=" + z.HitboxFor(BodyRegion.LowerBody).bounds.center.ToString("F2") + "/" + z.HitboxFor(BodyRegion.LowerBody).bounds.size.ToString("F2") +
+                      " fwd=" + z.transform.forward.ToString("F2"));
             z.FitArmorComposition(true, true, true);
             Assert.AreEqual(3, z.Armor.EquippedCount);
 
@@ -238,7 +250,9 @@ namespace DD.Prototype.Tests.PlayMode
             using (var sayac = new OlaySayaci())
             {
                 // [#4] [#5] [#6]: her bölge yalnız kendi zırhına.
-                foreach (BodyRegion bolge in new[] { BodyRegion.Head, BodyRegion.UpperBody, BodyRegion.LowerBody })
+                // WP-042B: legs → torso → head, with the hit reaction settled between shots — the WP-032 head dip
+                // on a head hit brings the head collider into the horizontal chest ray (Head resolved for the torso).
+                foreach (BodyRegion bolge in new[] { BodyRegion.LowerBody, BodyRegion.UpperBody, BodyRegion.Head })
                 {
                     ArmorSlot slot = DamageRegions.SlotFor(bolge);
                     float once = z.Armor.Current(slot);
@@ -273,6 +287,7 @@ namespace DD.Prototype.Tests.PlayMode
                     Assert.AreEqual(ArmorVisualState.Damaged, z.ArmorVisualStateOf(slot), "K-12: hasarlı plaka görsel durumu Damaged olmalı.");
                     Assert.AreEqual(HitFeedbackTier.ArmorHit, sayac.LastTier, "[#28] zırh isabeti ArmorHit katmanında giydirilmeli.");
                     rapor.AppendLine("  " + bolge + " armored: armor " + once + "→" + z.Armor.Current(slot) + " health " + z.Health + " resolution=" + DamageTargetResolver.LastResolution);
+                    yield return new WaitForSeconds(0.6f);   // hit reaction settles before the next region's ray
                 }
 
                 Assert.AreEqual(3, sayac.DressedTotal, "[#28] üç zırh isabeti üç dressing üretmeli (ne eksik ne fazla).");

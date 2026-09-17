@@ -890,24 +890,47 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            ClassicWeaponDefinition definition = WeaponRoster.Find(_equippedId);
-            if (definition == null || string.IsNullOrEmpty(definition.ModelResource))
+            // WP-042B: the AP-013 model from the library first; the AP-009C blockout (roster
+            // ModelResource) for a weapon the library does not carry.
+            ClassicWeaponVisualLibrary library = ClassicWeaponVisualLibrary.Current;
+            ClassicWeaponVisualLibrary.Entry entry = library != null ? library.Find(_equippedId) : null;
+            GameObject model = null;
+            if (entry != null && entry.HasModel)
             {
-                return;
+                model = ClassicWeaponVisualLibrary.Instantiate(entry, library.material, s_classicLodHeights);
+                ClassicModelSource = ClassicModelKind.Authored;
+            }
+            else
+            {
+                ClassicWeaponDefinition definition = WeaponRoster.Find(_equippedId);
+                if (definition == null || string.IsNullOrEmpty(definition.ModelResource))
+                {
+                    return;
+                }
+
+                var prefab = Resources.Load<GameObject>(definition.ModelResource);
+                if (prefab == null)
+                {
+                    Debug.LogWarning("[WeaponController] classic model resource missing: " + definition.ModelResource);
+                    return;
+                }
+
+                model = Instantiate(prefab);
+                model.name = "Model";
+                ClassicModelSource = ClassicModelKind.Blockout;
             }
 
-            var prefab = Resources.Load<GameObject>(definition.ModelResource);
-            if (prefab == null)
-            {
-                Debug.LogWarning("[WeaponController] classic model resource missing: " + definition.ModelResource);
-                return;
-            }
-
-            GameObject model = Instantiate(prefab);
-            model.name = "Model";
             _classicRig.SetModel(model);
             _classicModelId = _equippedId;
         }
+
+        /// <summary>WP-042B: LOD transition heights for the weapon in hand (LOD0 ≥ 12 % of the screen, LOD1 ≥ 5 %, LOD2 ≥ 1 %). Screen-height fractions, not tunables.</summary>
+        private static readonly float[] s_classicLodHeights = { 0.12f, 0.05f, 0.01f };
+
+        public enum ClassicModelKind { None = 0, Blockout = 1, Authored = 2 }
+
+        /// <summary>WP-042B readout: which model the classic rig carries (tests / probe).</summary>
+        public ClassicModelKind ClassicModelSource { get; private set; }
 
         // ------------------------------------------------------------------ WP-042 · mechanism slots
 

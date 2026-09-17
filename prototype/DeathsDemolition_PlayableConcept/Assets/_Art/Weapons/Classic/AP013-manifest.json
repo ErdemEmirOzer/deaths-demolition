@@ -1,0 +1,501 @@
+{
+ "schema": "AP013.manifest.v001",
+ "package": "AP-013",
+ "date": "2026-09-17",
+ "owner": "P-06",
+ "contract": "WP-034-WEAPON-VISUAL-CONTRACT.md \u00a72/\u00a73/\u00a76 + AP-009C blockout markers (hands solved to them)",
+ "frame": "weapon root = grip / trigger point; +Z barrel, +Y up, +X lock / ejection side (Blender right-handed; Unity import mirrors to the shooter's right); metres; FBX -Z forward / Y up, embed off",
+ "weapons": {
+  "A": {
+   "kind": "rifle",
+   "runtime_id": "AssaultRifle",
+   "silhouette_class": "Long",
+   "length_m": 1.2,
+   "fbx": "AP013_A_rifle_base.fbx",
+   "fbx_sha256_16": "bf1d30e43371af51",
+   "glb_review": "glb/AP013_A_rifle_review.glb",
+   "objects": [
+    "A.attach_barrel",
+    "A.attach_stock",
+    "A.attach_top",
+    "A.Ejection",
+    "A.marker_foregrip",
+    "A.marker_grip",
+    "A.marker_mag",
+    "A.Muzzle",
+    "AP013_A_rifle_LOD0",
+    "AP013_A_rifle_LOD1",
+    "AP013_A_rifle_LOD2"
+   ],
+   "lod_tris": [
+    2940,
+    1176,
+    391
+   ],
+   "lod_budget": [
+    3000,
+    1200,
+    400
+   ],
+   "sockets": {
+    "attach_barrel": [
+     0.0,
+     0.085,
+     0.55
+    ],
+    "attach_stock": [
+     0.0,
+     0.0,
+     -0.3
+    ],
+    "attach_top": [
+     0.0,
+     0.11,
+     0.05
+    ],
+    "Ejection": [
+     0.03,
+     0.06,
+     0.06
+    ],
+    "Muzzle": [
+     0.0,
+     0.065,
+     0.86
+    ]
+   },
+   "markers": {
+    "marker_foregrip": [
+     0.0,
+     -0.01,
+     0.27
+    ],
+    "marker_grip": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "marker_mag": [
+     0.0,
+     -0.11,
+     0.1
+    ]
+   },
+   "tripo": {
+    "job": "6d863086-ff86-48e1-8450-3c8c8b7f6de9",
+    "tris": 19404,
+    "scale": 1.1823,
+    "thicken_xy": [
+     1.0,
+     1.0
+    ],
+    "mirrored": false
+   },
+   "measure": {
+    "grip_to_muzzle_ratio": 0.716,
+    "L_T_render": 14.0,
+    "L_T_concept": 15.3,
+    "render_mean_v": 0.365
+   },
+   "material": "M_AP013_weapons (shared)",
+   "atlas_rect_px": [
+    0,
+    512,
+    1024,
+    512
+   ],
+   "restyle": {
+    "wood": {
+     "fraction": 0.406,
+     "hsv_mean": [
+      25.2,
+      0.274,
+      0.277
+     ]
+    },
+    "iron": {
+     "fraction": 0.53,
+     "hsv_mean": [
+      217.5,
+      0.087,
+      0.315
+     ]
+    },
+    "cord": {
+     "fraction": 0.063,
+     "hsv_mean": [
+      32.1,
+      0.228,
+      0.362
+     ]
+    },
+    "red": {
+     "fraction": 0.001,
+     "hsv_mean": [
+      5.3,
+      0.51,
+      0.511
+     ]
+    }
+   }
+  },
+  "B": {
+   "kind": "carbine",
+   "runtime_id": "AutoSmg",
+   "silhouette_class": "Medium",
+   "length_m": 0.85,
+   "fbx": "AP013_B_carbine_base.fbx",
+   "fbx_sha256_16": "211e78b04af25025",
+   "glb_review": "glb/AP013_B_carbine_review.glb",
+   "objects": [
+    "AP013_B_carbine_LOD0",
+    "AP013_B_carbine_LOD1",
+    "AP013_B_carbine_LOD2",
+    "B.attach_barrel",
+    "B.attach_stock",
+    "B.attach_top",
+    "B.Ejection",
+    "B.marker_foregrip",
+    "B.marker_grip",
+    "B.marker_mag",
+    "B.Muzzle"
+   ],
+   "lod_tris": [
+    2940,
+    1176,
+    392
+   ],
+   "lod_budget": [
+    3000,
+    1200,
+    400
+   ],
+   "sockets": {
+    "attach_barrel": [
+     0.0,
+     0.08,
+     0.4
+    ],
+    "attach_stock": [
+     0.0,
+     0.03,
+     -0.22
+    ],
+    "attach_top": [
+     0.0,
+     0.11,
+     0.04
+    ],
+    "Ejection": [
+     0.03,
+     0.055,
+     0.05
+    ],
+    "Muzzle": [
+     0.0,
+     0.06,
+     0.56
+    ]
+   },
+   "markers": {
+    "marker_foregrip": [
+     0.0,
+     -0.01,
+     0.22
+    ],
+    "marker_grip": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "marker_mag": [
+     0.0,
+     -0.13,
+     0.06
+    ]
+   },
+   "tripo": {
+    "job": "673d2af9-0d8f-4db1-b43a-ecc513e1ff4b",
+    "tris": 19138,
+    "scale": 0.8496,
+    "thicken_xy": [
+     1.08,
+     1.18
+    ],
+    "mirrored": false
+   },
+   "measure": {
+    "grip_to_muzzle_ratio": 0.658,
+    "L_T_render": 10.0,
+    "L_T_concept": 9.3,
+    "render_mean_v": 0.363
+   },
+   "material": "M_AP013_weapons (shared)",
+   "atlas_rect_px": [
+    0,
+    0,
+    512,
+    512
+   ],
+   "restyle": {
+    "wood": {
+     "fraction": 0.368,
+     "hsv_mean": [
+      25.4,
+      0.279,
+      0.294
+     ]
+    },
+    "iron": {
+     "fraction": 0.553,
+     "hsv_mean": [
+      217.5,
+      0.087,
+      0.302
+     ]
+    },
+    "cord": {
+     "fraction": 0.071,
+     "hsv_mean": [
+      31.9,
+      0.228,
+      0.368
+     ]
+    },
+    "red": {
+     "fraction": 0.008,
+     "hsv_mean": [
+      5.3,
+      0.511,
+      0.498
+     ]
+    }
+   }
+  },
+  "C": {
+   "kind": "shotgun",
+   "runtime_id": "CombatShotgun",
+   "silhouette_class": "Short-thick",
+   "length_m": 0.78,
+   "fbx": "AP013_C_shotgun_base.fbx",
+   "fbx_sha256_16": "e601283555c5a112",
+   "glb_review": "glb/AP013_C_shotgun_review.glb",
+   "objects": [
+    "AP013_C_shotgun_LOD0",
+    "AP013_C_shotgun_LOD1",
+    "AP013_C_shotgun_LOD2",
+    "C.attach_barrel",
+    "C.attach_stock",
+    "C.attach_top",
+    "C.Ejection",
+    "C.marker_foregrip",
+    "C.marker_grip",
+    "C.marker_mag",
+    "C.Muzzle"
+   ],
+   "lod_tris": [
+    2940,
+    1176,
+    392
+   ],
+   "lod_budget": [
+    3000,
+    1200,
+    400
+   ],
+   "sockets": {
+    "attach_barrel": [
+     0.0,
+     0.095,
+     0.36
+    ],
+    "attach_stock": [
+     0.0,
+     0.02,
+     -0.22
+    ],
+    "attach_top": [
+     0.0,
+     0.115,
+     0.03
+    ],
+    "Ejection": [
+     0.035,
+     0.06,
+     0.02
+    ],
+    "Muzzle": [
+     0.0,
+     0.07,
+     0.52
+    ]
+   },
+   "markers": {
+    "marker_foregrip": [
+     0.0,
+     0.0,
+     0.2
+    ],
+    "marker_grip": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "marker_mag": [
+     0.0,
+     -0.05,
+     0.05
+    ]
+   },
+   "tripo": {
+    "job": "6e6882fb-8dd0-4f2f-8370-757ca49433a0",
+    "tris": 18708,
+    "scale": 0.7717,
+    "thicken_xy": [
+     1.15,
+     1.35
+    ],
+    "mirrored": false
+   },
+   "measure": {
+    "grip_to_muzzle_ratio": 0.665,
+    "L_T_render": 7.5,
+    "L_T_concept": 6.4,
+    "render_mean_v": 0.374,
+    "bell_over_barrel": 0.94,
+    "bell_over_barrel_concept": 1.13
+   },
+   "material": "M_AP013_weapons (shared)",
+   "atlas_rect_px": [
+    512,
+    0,
+    512,
+    512
+   ],
+   "restyle": {
+    "wood": {
+     "fraction": 0.362,
+     "hsv_mean": [
+      23.9,
+      0.248,
+      0.319
+     ]
+    },
+    "iron": {
+     "fraction": 0.533,
+     "hsv_mean": [
+      217.5,
+      0.103,
+      0.333
+     ]
+    },
+    "cord": {
+     "fraction": 0.1,
+     "hsv_mean": [
+      32.0,
+      0.234,
+      0.378
+     ]
+    },
+    "red": {
+     "fraction": 0.005,
+     "hsv_mean": [
+      5.3,
+      0.512,
+      0.502
+     ]
+    }
+   },
+   "bell": {
+    "rim_r_before": 0.0749,
+    "rim_r_after": 0.0749,
+    "factor": 1.0,
+    "verts": 608
+   }
+  }
+ },
+ "textures": {
+  "atlas": "1024 x 1024 shared by A (top half 1024x512) / B (bottom-left 512) / C (bottom-right 512); Tripo H3.1 2K PBR maps resampled into the rects on the Tripo UV layout (decimation keeps it)",
+  "files": {
+   "BaseColor": "textures/T_weapons_BaseColor.png (sRGB)",
+   "Normal": "textures/T_weapons_Normal.png (tangent, glTF convention +Y)",
+   "MRA": "textures/T_weapons_MRA.png (R metallic, G roughness, B AO = 1)",
+   "EmissiveMask": "textures/T_weapons_EmissiveMask_512.png (metal parts = tier-glow candidates; black = none)"
+  },
+  "palette": {
+   "size": [
+    1024,
+    1024
+   ],
+   "gold_band_px": 0,
+   "beacon_px": 0,
+   "px_total": 1048576,
+   "reserve_rule": "hue 35-65 & s > 0.30 (v >= 0.05) = 0 px; s > 0.55 & v > 0.80 = 0 px",
+   "metal_fraction": 0.536,
+   "non_metal_mean_hsv": [
+    25.8,
+    0.264,
+    0.305
+   ],
+   "metal_mean_hsv": [
+    217.6,
+    0.091,
+    0.316
+   ],
+   "red_accent_px": 4155,
+   "mean_v": 0.311
+  },
+  "value_contrast_vs_haori": {
+   "skin1": 0.59,
+   "skin2": 0.59,
+   "skin3": 0.57
+  },
+  "unity_class_note": "WP-034 \u00a72 asks 1K; style guide \u00a77.3 Prop class caps at 512 \u2014 ArtImportContract needs a 'weapon' role at 1024 (WP-035) or the atlas ships at 512",
+  "grading": "verdict v001 MUST 1/2/4/5: texels classified iron / wood / cord / red seizing per weapon rectangle and graded into the brief palette (wood h 20-30 s 0.22-0.32 v 0.22-0.42; iron h 217 s <= 0.14 v 0.18-0.47 metallic 0.90; cord h 28-36 s 0.18-0.28 v 0.30-0.45; red <= 3 % per weapon); MRA written from the classes (Tripo's MR map left 92 % of the iron dielectric)"
+ },
+ "attachments": {
+  "status": "not in this pass",
+  "note": "attach_barrel / attach_top / attach_stock sockets are placed; the 3 core-branch attachment meshes (<= 400 tri, share the atlas) are a follow-up pass (credits 0: iron ring / plate / stock band from the blockout library)"
+ },
+ "checks": {
+  "F1_length_ratio": "PASS",
+  "F2_thickness_ratio": "PASS",
+  "F2b_bell": "PASS",
+  "F3_markers_sockets": "PASS",
+  "F4_palette_reserves": "PASS",
+  "F5_value_contrast": "PASS",
+  "lod_budget": "PASS",
+  "M1_mra_from_classes": "PASS",
+  "M2_wood_family": "PASS",
+  "M3_bell_rim": "PASS",
+  "M4_cord_and_red_budget": "PASS",
+  "M5_printed_light": "PASS"
+ },
+ "result": "PASS",
+ "higgsfield": {
+  "credits": 30,
+  "cap": 45,
+  "balance_after": 124.74,
+  "floor": 100,
+  "ledger": "03-higgsfield/AP013-HF-ledger.json"
+ },
+ "verdict": {
+  "file": "06-renders/AP013-art-verdict-v001.md",
+  "result": "ACCEPT_WITH_FIXES",
+  "must_applied": [
+   "M1 MRA from classes",
+   "M2 wood family",
+   "M3 bell rim (rule met: rim r 0.075 m >= 0.04; the stack under the barrel keeps the flare read at 0.94x)",
+   "M4 cord + red budget",
+   "M5 printed light"
+  ],
+  "should_next": [
+   "S1 C stack thickness",
+   "S2 UV island dilation",
+   "S3 B stock drop 8 deg",
+   "S4 cord normal blur",
+   "S5 A serpentine",
+   "S6 C tube + port"
+  ]
+ }
+}

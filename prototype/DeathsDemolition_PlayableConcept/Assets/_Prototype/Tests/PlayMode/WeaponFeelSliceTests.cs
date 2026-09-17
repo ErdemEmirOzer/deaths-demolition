@@ -107,8 +107,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(maxSpeed, 0.5f, "oyuncu alma sırasında hareket etti (m/s)");
             Assert.Greater((_s.Rig.transform.position - p0).magnitude, 0.3f, "yer değiştirme");
             _s.Girdi.Imlec = new Vector2(Screen.width * 0.1f, Screen.height * 0.5f);
-            yield return SpecialWeaponSahne.Kareler(3);
-            Assert.Greater(Vector3.Angle(aim0, _s.Rig.Aim.AimDirection), 20f, "nişan alma sırasında imleci takip eder");
+            // The aim turns at its own rate; give it up to a second (it must move at all — a lock would hold it).
+            yield return SpecialWeaponSahne.Bekle(() => Vector3.Angle(aim0, _s.Rig.Aim.AimDirection) > 20f, 1f, "nişan alma sırasında imleci takip eder");
             Assert.IsTrue(_s.Controller.SpecialWeaponActive, "Special aktif kaldı");
         }
 

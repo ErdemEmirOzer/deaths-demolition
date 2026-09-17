@@ -59,6 +59,17 @@ namespace DD.Art.Pipeline.EditorTools
         public const float ModelGlobalScale = 1f;
         public const bool ModelUseFileScale = true;
         public const bool ModelBakeAxisConversion = true;
+
+        /// <summary>
+        /// WP-042B: the P-06 hand-held weapon exports (AP-013 under <c>Weapons/Classic</c>) are authored
+        /// for the DEFAULT importer frame (root = grip, +Z barrel, +X port — measured: the AP-009C
+        /// blockouts import correctly without baking, and baking mirrors Z); they skip the world
+        /// axis bake. Every other model keeps <see cref="ModelBakeAxisConversion"/>.
+        /// </summary>
+        public static bool BakesAxis(string assetPath)
+        {
+            return assetPath == null || !assetPath.StartsWith(ArtRoot + "/Weapons/Classic/", StringComparison.Ordinal);
+        }
         public const ModelImporterNormals ModelNormals = ModelImporterNormals.Import;
         public const ModelImporterTangents ModelTangents = ModelImporterTangents.CalculateMikk;
         public const ModelImporterMeshCompression ModelMeshCompression = ModelImporterMeshCompression.Off;
@@ -126,6 +137,8 @@ namespace DD.Art.Pipeline.EditorTools
             Breakable = 4,
             /// <summary>WP-037 · VFX sheets (<see cref="TextureRole.Sheet"/>): 1024, never streamed (an effect shows on its first frame; streaming would show the lowest mip first).</summary>
             Vfx = 7,
+            /// <summary>WP-042B · weapon atlases (AP-013 classic set, AP-014 Special Weapon set): 1024, held at character distance, streamed like everything else.</summary>
+            Weapon = 8,
             /// <summary>The 4×256 sky gradient (ArtSkyBuilder): 256, never streamed (a skybox has no renderer for the streaming system to rate).</summary>
             Sky = 5,
             /// <summary>WP-016 · Skinned characters (player, zombie atlas): 2048 — the one thing the fixed camera frames at 100 px and the player stares at (ADR-016-1).</summary>
@@ -144,6 +157,7 @@ namespace DD.Art.Pipeline.EditorTools
                 case TextureClass.Sky: return 256;
                 case TextureClass.Character: return 2048;
                 case TextureClass.Vfx: return 1024;
+                case TextureClass.Weapon: return 1024;
                 default: throw new ArgumentOutOfRangeException(nameof(c));
             }
         }
@@ -175,7 +189,9 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public const int ShippedWorldBudgetMb = 120;
         public const int ShippedCharacterBudgetMb = 100;   // v3 (WP-020, C-00 technical decision): the AP-007 second cloth atlas (3 × 2K maps)
-        public const int ShippedTotalBudgetMb = 220;       // v3
+        /// <summary>WP-042B (ADR-015-1 v4 line, S-05 handshake): the weapon set — AP-014 Special Weapon atlas + AP-013 classic atlas (1K each, BaseColor + Normal + derived MS) on its own line (moved out of the character set).</summary>
+        public const int ShippedWeaponBudgetMb = 12;
+        public const int ShippedTotalBudgetMb = 220;       // v3 (WP-020); the weapon set fits inside it (measured 201 MB with the weapon line at 8.0)
 
         /// <summary>
         /// ADR-015-2 release build ceiling, MB (Editor build report "Complete build size").
@@ -189,6 +205,12 @@ namespace DD.Art.Pipeline.EditorTools
         public static bool IsCharacterClass(TextureClass c)
         {
             return c == TextureClass.Character;
+        }
+
+        /// <summary>WP-042B: the weapon set (its own budget line; neither world nor character).</summary>
+        public static bool IsWeaponClass(TextureClass c)
+        {
+            return c == TextureClass.Weapon;
         }
 
         /// <summary>
@@ -239,8 +261,10 @@ namespace DD.Art.Pipeline.EditorTools
             { "zombie_armor", TextureClass.Character },
             // WP-036 · AP-014 tier silhouette parts atlas (1K set; S-03, one-line handshake with S-05).
             { "zombie_tier", TextureClass.Character },
-            // WP-037 · AP-014 special weapon atlas (1K set, held at character distance; S-02, one-line handshake with S-05).
-            { "sw_atlas", TextureClass.Character },
+            // WP-037 / WP-042B · weapon atlases (1K sets held at character distance; S-02, one-line handshake with S-05):
+            // AP-014 Special Weapons and the AP-013 classic A/B/C set.
+            { "sw_atlas", TextureClass.Weapon },
+            { "weapons", TextureClass.Weapon },
             // WP-017 · AP-005B prop families (Tripo H3.1 sets; the first Prop-class roles) and the generated roof course overlay.
             { "prop_tsukubai", TextureClass.Prop },
             { "prop_handcart", TextureClass.Prop },
@@ -417,7 +441,7 @@ namespace DD.Art.Pipeline.EditorTools
             bool changed = false;
             changed |= Set(importer.globalScale, ModelGlobalScale, v => importer.globalScale = v);
             changed |= Set(importer.useFileScale, ModelUseFileScale, v => importer.useFileScale = v);
-            changed |= Set(importer.bakeAxisConversion, ModelBakeAxisConversion, v => importer.bakeAxisConversion = v);
+            changed |= Set(importer.bakeAxisConversion, ModelBakeAxisConversion && BakesAxis(importer.assetPath), v => importer.bakeAxisConversion = v);
             changed |= Set(importer.importNormals, ModelNormals, v => importer.importNormals = v);
             changed |= Set(importer.importTangents, ModelTangents, v => importer.importTangents = v);
             changed |= Set(importer.meshCompression, ModelMeshCompression, v => importer.meshCompression = v);
@@ -501,7 +525,7 @@ namespace DD.Art.Pipeline.EditorTools
             var v = new List<string>();
             Check(v, "globalScale", importer.globalScale, ModelGlobalScale);
             Check(v, "useFileScale", importer.useFileScale, ModelUseFileScale);
-            Check(v, "bakeAxisConversion", importer.bakeAxisConversion, ModelBakeAxisConversion);
+            Check(v, "bakeAxisConversion", importer.bakeAxisConversion, ModelBakeAxisConversion && BakesAxis(importer.assetPath));
             Check(v, "importNormals", importer.importNormals, ModelNormals);
             Check(v, "importTangents", importer.importTangents, ModelTangents);
             Check(v, "meshCompression", importer.meshCompression, ModelMeshCompression);

@@ -167,10 +167,16 @@ namespace DD.Prototype.Weapons
             modelRoot.transform.localPosition = Vector3.zero;
             modelRoot.transform.localRotation = Quaternion.identity;
             modelRoot.transform.localScale = Vector3.one;
+            // WP-042B: the rest pose is the socket frame itself — never the body's CURRENT pose, which may
+            // still carry the previous weapon's kick / reload tilt (a model installed mid-kick stayed pitched).
+            _kick = 0f;
+            _kickVelocity = 0f;
+            _reloadTilt = 0f;
             _body.localPosition = Vector3.zero;
+            _body.localRotation = Quaternion.identity;
             _body.localScale = Vector3.one;
-            _bodyRestPosition = _body.localPosition;
-            _bodyRestRotation = _body.localRotation;
+            _bodyRestPosition = Vector3.zero;
+            _bodyRestRotation = Quaternion.identity;
             HasAuthoredModel = true;
 
             // WP-042 (ADR-042-1): a model that carries the contract sockets hands them to the rig —

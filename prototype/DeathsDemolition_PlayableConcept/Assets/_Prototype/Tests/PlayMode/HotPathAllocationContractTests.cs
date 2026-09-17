@@ -90,6 +90,11 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(fd, "HitFeedbackDirector yok.");
             bool numbersWere = fd.ShowDamageNumbers;
 
+            // WP-042B: the GC frame counters only count while the profiler is enabled — in a batch run the test
+            // framework enables it, in the Editor GUI with the Profiler window closed they read 0/1 (S-07 saw the
+            // positive control fail that way). Enable it for the measurement and restore afterwards.
+            bool profilerWas = UnityEngine.Profiling.Profiler.enabled;
+            UnityEngine.Profiling.Profiler.enabled = true;
             using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
             using (var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count"))
             {
@@ -148,6 +153,8 @@ namespace DD.Prototype.Tests.PlayMode
                               " B per window — Feedback/DamageNumberEffect.cs TextMesh.text = int.ToString() (S-07, WP-006 M4 kalemi)");
                 }
             }
+
+            UnityEngine.Profiling.Profiler.enabled = profilerWas;
         }
 
         /// <summary>Special Weapon pickup → active → final seconds → end: the lifecycle frames measured the same way (observation + subscriber-side contract for Weapons).</summary>

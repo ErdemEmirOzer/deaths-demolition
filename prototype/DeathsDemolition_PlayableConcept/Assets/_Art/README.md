@@ -1,6 +1,6 @@
 # `Assets/_Art/` — production art root
 
-Import Contract v1 (`Editor/ArtImportContract.cs`, applied by `ArtAssetPostprocessor` to every asset under this folder, verified by the EditMode asset gate) is the single source of truth for how models and textures import. Folder policy: ADR-011-2 (WP-011); prefab contract: ADR-012-2 (WP-012); placement contract: ADR-014-1 (WP-014); texture and build policy: ADR-015-1/2 (WP-015, v2 budgets WP-017); skinned characters: ADR-016-1/2 (WP-016); armour states and the AP-005B delta: ADR-017-1/2 (WP-017). Style: `StyleGuide/style-guide-v1.md`.
+Import Contract v1 (`Editor/ArtImportContract.cs`, applied by `ArtAssetPostprocessor` to every asset under this folder, verified by the EditMode asset gate) is the single source of truth for how models and textures import. WP-042B: models under `Weapons/Classic/` (P-06 hand-held frame, root = grip / +Z barrel) import without the world axis bake (`ArtImportContract.BakesAxis`). Folder policy: ADR-011-2 (WP-011); prefab contract: ADR-012-2 (WP-012); placement contract: ADR-014-1 (WP-014); texture and build policy: ADR-015-1/2 (WP-015, v2 budgets WP-017); skinned characters: ADR-016-1/2 (WP-016); armour states and the AP-005B delta: ADR-017-1/2 (WP-017). Style: `StyleGuide/style-guide-v1.md`.
 
 ## Texture policy (ADR-015-1, WP-015)
 
@@ -15,11 +15,12 @@ Every contract PNG (`Textures/Source|Derived/T_<role>_<Map>.png`) belongs to a d
 | Breakable | 512 | on | — (reserved) | `small_breakable` shares `bamboo_culm`/`roof`/`wood` |
 | Sky | 256 | off | `sky` (the 4×256 gradient `ArtSkyBuilder` writes) | A skybox has no renderer for the streaming system to rate |
 | Character | 2048 | on | `player`, `player_skin1/2b/3` (skin 2 = 2b Steel/Indigo, user 2026-09-16), `zombie_atlas` (WP-016), `zombie_armor` (AP-008, WP-017) | The one thing the camera frames at ~100 px; ADR-016-1 |
+| Weapon | 1024 | on | `sw_atlas` (AP-014 Special Weapons, WP-037B), `weapons` (AP-013 classic A/B/C set, WP-042B) | Held at character distance; 1K sources, never larger |
 | Vfx | 1024 | off | every `T_<name>_Sheet.png` (WP-037 · AP-014 `T_vfx_sw_*_Sheet`: flipbook / card / tile, sRGB + alpha coverage, `alphaIsTransparency`) — no table row needed | An effect shows on its first frame; streaming would show the lowest mip first |
 
-`sw_atlas` (Character, WP-037) is the AP-014 special-weapon 1K atlas, held at character distance. `roof_courses` (Structure) is the generated 256² tile-course detail normal for the AP-005B roof copy (`ArtTextureRepack.BuildRoofCourses`).
+`roof_courses` (Structure) is the generated 256² tile-course detail normal for the AP-005B roof copy (`ArtTextureRepack.BuildRoofCourses`).
 
-**Budgets v2 (ADR-015-1 v2, WP-017):** shipped-bytes estimate at the class sizes — world set (every class but Character) ≤ 120 MB, character set (player + zombie atlas + armour atlas) ≤ 80 MB, total ≤ 200 MB (`ArtImportContract.Shipped*BudgetMb`; measured 116.8 / 69.3 / 186.1 MB). Resident streaming budget stays 160 MB. If the character set ever exceeds its line the armour atlas drops to 1024 (technical rule).
+**Budgets v2 (ADR-015-1 v2, WP-017):** shipped-bytes estimate at the class sizes — world set (every class but Character) ≤ 120 MB, character set (player + zombie atlas + armour atlas) ≤ 80 MB, total ≤ 200 MB (`ArtImportContract.Shipped*BudgetMb`; measured 116.8 / 69.3 / 186.1 MB). Resident streaming budget stays 160 MB. If the character set ever exceeds its line the armour atlas drops to 1024 (technical rule). **Weapon line (WP-042B, S-02 handshake, on top of v3 below):** a third set for the weapon atlases (`Weapon` class — AP-014 SW atlas + AP-013 classic atlas, BaseColor + Normal + derived MS) ≤ 12 MB (`ShippedWeaponBudgetMb`), counted in the total; the SW atlas moved from the character set to the weapon set.
 
 **Budgets v3 (ADR-015-1 v3, WP-020, C-00 technical decision):** the AP-007 v002 second cloth atlas (3 × 2K maps: BaseColor / Normal / Packed — its constant Mask is a 4×4 sub-texture, not a map) raised the character set to ≤ 100 MB and the total to ≤ 220 MB (`ShippedCharacterBudgetMb` / `ShippedTotalBudgetMb`); the world set stays ≤ 120 MB, the release build ≤ 450 MB (ADR-015-2).
 
