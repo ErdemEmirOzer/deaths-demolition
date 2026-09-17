@@ -134,7 +134,7 @@ Bu dosyada yalnızca kullanıcı tarafından verilen veya açıkça onaylanan ka
 | REQ-070 | Aktif spawnlar kontrollü dağıtılacaktır. | Bütün düşmanlar sürekli tek noktadan çıkmaz; nokta cooldownı ve yerel yoğunluk kullanılabilir. |
 | REQ-071 | Special, Elite ve Ultra versiyonlar kontrollü biçimde tanıtılacaktır. | Her versiyon belirlenen ilk roundunda garantili görünür; sonraki roundlarda ağırlıklı düşman havuzuna katılır. |
 | REQ-072 | Spawn sistemi hedef aktif düşman sayısı ve teknik güvenlik tavanı kullanacaktır. | Sistem rounda ait hedef aktif sayıyı toplam düşman havuzundan tamamlar; hiçbir durumda ayrı teknik güvenlik tavanını aşmaz. |
-| REQ-156 | Spawn'da yerden kalkma yalnız kamera dışında oynayacaktır (DEC-081). | Spawn direktörü doğuş konumunu kameraya göre yargılar; kamera dışı doğuş kalkış klibiyle başlar ve kalkış bitene kadar yürümez/saldırmaz; kamera içi ya da yargısız doğuş hemen yürür; kalkış süresi round sayımını değiştirmez. |
+| REQ-157 | Spawn'da yerden kalkma yalnız kamera dışında oynayacaktır (DEC-081). | Spawn direktörü doğuş konumunu kameraya göre yargılar; kamera dışı doğuş kalkış klibiyle başlar ve kalkış bitene kadar yürümez/saldırmaz; kamera içi ya da yargısız doğuş hemen yürür; kalkış süresi round sayımını değiştirmez. |
 
 ## Bölgesel zırh ve hasar
 
