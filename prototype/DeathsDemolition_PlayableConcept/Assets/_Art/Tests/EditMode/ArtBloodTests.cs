@@ -146,7 +146,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual("decal_blood_pool", ArtVfxImporter.IdOf("decals/AP010B_decal_blood_pool_2048_v001.png"));
             Assert.AreEqual("fb_impact_flesh", ArtVfxImporter.IdOf("flipbooks/AP010_fb_impact_flesh_8x8_v002.png"));
             Assert.AreEqual(60, ArtVfxContract.ShippedBloodBudgetMb);
-            Assert.AreEqual(0, ArtVfxImporter.SupplementManifests().Count, "AP-010B v003 ana manifestte birleşik; ayrı ek manifest beklenmiyor.");
+            Assert.AreEqual(1, ArtVfxImporter.SupplementManifests().Count, "AP-010B v003 ana manifestte birleşik; tek ek manifest = AP010C (WP-047E, AP-014C sheet'leri).");
         }
 
         /// <summary>WP-037 finding (C-00): the per-number string in DamageNumberEffect was the whole hot-path regression; the table path allocates nothing after warm-up.</summary>

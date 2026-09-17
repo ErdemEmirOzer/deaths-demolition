@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32ac00b25dfd4b849315b3f16a72ce7d, type: 3}
+  m_Name: DD_Casings
+  m_EditorClassIdentifier: 
+  CasingA: {fileID: 7849418436026084327, guid: 2839186d851404106aa59ebf636e65e5, type: 3}
+  CasingB: {fileID: 5440160669860731974, guid: 2839186d851404106aa59ebf636e65e5, type: 3}
+  ShellC: {fileID: -5354045705334222050, guid: 2839186d851404106aa59ebf636e65e5, type: 3}
+  Material: {fileID: 2100000, guid: a446bed7842dc46c5b4dec811d9f7dc3, type: 2}
+  LengthA: 0.056
+  LengthB: 0.029
+  LengthC: 0.07

@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/VFX/AP013C/textures/T_casings_Packed.png",
+    "sourceSha256": "299158d89f61794b904ab2f54809a936e5497177639bf4c20f351523bc12309a",
+    "algorithm": "MetallicSmoothnessAO-MRA v1 (WP-042B): out.R = src.R (metallic), out.G = src.B (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T08:16:01.6194270Z",
+    "outputSha256": "2af0b3453ff36cf86e09e59cf84e49b53c004fb60bed2072ce7b77310fd8688f"
+}

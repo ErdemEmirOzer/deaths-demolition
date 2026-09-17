@@ -641,6 +641,72 @@ namespace DD.Prototype.Feedback
         /// a web is not a weaker version of the effect, it is a wrong one - the player
         /// would count five links and see twelve enemies die.
         /// </summary>
+        // ------------------------------------------------------------------ WP-047E · AP-014C Ofuda threads (thread tile on the link lines)
+
+        private Material _threadMaterial;
+        private bool _threadTried;
+        public int OfudaNets { get; private set; }
+        public int OfudaTrails { get; private set; }
+
+        private Material ThreadMaterial()
+        {
+            if (_threadTried) return _threadMaterial;
+            _threadTried = true;
+            // The AP-014 thread tile is staged by WP-037B as the `sw_ofuda_web` sheet (12 cm hemp + paper knots, tileable along U).
+            var library = DD.Prototype.Weapons.SpecialWeaponVisualLibrary.Current;
+            var sheet = library != null ? library.FindSheet(VfxIds.SwOfudaWeb) : null;
+            if (sheet == null || sheet.texture == null) return null;
+            _threadMaterial = FeedbackMaterials.Alpha(Color.white);
+            _threadMaterial = new Material(_threadMaterial) { name = "M_ofuda_thread (runtime)" };
+            _threadMaterial.mainTexture = sheet.texture;
+            _threadMaterial.mainTextureScale = new Vector2(1f / 0.12f, 1f);   // one tile per 12 cm of line
+            return _threadMaterial;
+        }
+
+        /// <summary>Netted body (WP-055 / WP-056 Hit): three thread loops around the torso for the seal's life.</summary>
+        public bool ReportOfudaNet(Transform body, Vector3 centre, float seconds)
+        {
+            if (_linkPool == null || body == null) return false;
+            Material thread = ThreadMaterial();
+            Vector3 right = body.right, fwd = body.forward;
+            bool any = false;
+            for (int loop = 0; loop < 3; loop++)
+            {
+                float y = -0.22f + loop * 0.22f;
+                float r = 0.30f - Mathf.Abs(loop - 1) * 0.04f;
+                Vector3 c = centre + Vector3.up * y;
+                Vector3 a = c + right * r + fwd * (r * 0.6f), b = c - right * r + fwd * (r * 0.6f), d = c - fwd * r;
+                any |= NetSegment(a, b, thread, seconds);
+                any |= NetSegment(b, d, thread, seconds);
+                any |= NetSegment(d, a, thread, seconds);
+            }
+
+            if (any) OfudaNets++;
+            return any;
+        }
+
+        private bool NetSegment(Vector3 from, Vector3 to, Material thread, float seconds)
+        {
+            LinkEffect link = _linkPool.Get(from, Quaternion.identity);
+            if (link == null) return false;
+            if (thread != null) link.SetThread(thread);
+            link.Play(from, to, VfxLibrary.OfudaCreamTint, thread != null ? 0.12f : 0.03f, 0.02f, Mathf.Max(0.3f, seconds));
+            return true;
+        }
+
+        /// <summary>Dart trail (Fired → Hit): the thread from the loom to the sealed body, 6 cm wide, gone in 0.25 s.</summary>
+        public bool ReportOfudaTrail(Vector3 from, Vector3 to)
+        {
+            if (_linkPool == null) return false;
+            LinkEffect link = _linkPool.Get(from, Quaternion.identity);
+            if (link == null) return false;
+            Material thread = ThreadMaterial();
+            if (thread != null) link.SetThread(thread);
+            link.Play(from, to, VfxLibrary.OfudaCreamTint, thread != null ? 0.06f : 0.02f, 0.03f, 0.25f);
+            OfudaTrails++;
+            return true;
+        }
+
         public void ReportSealLink(Vector3 from, Vector3 to)
         {
             if (_linkPool == null)

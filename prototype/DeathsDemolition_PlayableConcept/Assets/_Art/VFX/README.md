@@ -215,7 +215,13 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
 - Lantern point lights: ≤ 6 (range 1.6 m, 0.35, amber, no shadows) re-assigned every 0.5 s to the nearest lanterns
   within 26 m (S-05 budget: keep ≤ 2 m range, per-object limit 4 untouched); ±10 % alpha flicker on the flame cards.
 - Tide well implosion (`FieldEnded`): pond splash crown + a ring growing to the well radius (`PlayTideImplode`).
-- AD round (Fable, 7 frames) MUSTs: Ofuda web card on the event's torso centre, body-aligned, paper tint; Kagura dust 1.2 m;
+- AP-014C (P-06, credit 0) staged as the `AP010C/` supplement (same v003 manifest schema, `SupplementManifests`): `sw_tide_well`
+  loop under the well from `FieldSpawned` to `FieldEnded`, `sw_tide_implode` at the end, `sw_ofuda_dart` frame at the seal +
+  the AP-014 thread tile on `LinkEffect` lines (tile mode, 12 cm) for the Netted body (three loops, `ReportOfudaNet`) and the
+  loom → seal trail (`ReportOfudaTrail`); `barrel_heat_distort_tile` (normal + A mask, linear, Repeat) drives HeatHaze
+  `_TileMode 1`. Casings: `AP013C/` FBX + 256 set → `ArtCasingBuilder` → `Resources/DD_Casings` (`CasingLibrary`),
+  `CasingEffect` pool of 12 flung from the rig's Ejection socket per shot (ballistic, one bounce, 1.6 s).
+- AD round (Fable, 7 frames) MUSTs: Ofuda net as thread loops on the torso (the card was the thread tile — replaced with AP-014C); Kagura dust 1.2 m;
   chain arc stretched ×2.4 and ×1.6 gain; claw card driven to (0.85, 0.82, 0.75) × 1.4 through the block tint; placeholder
   ring lines at alpha 0.25 under the sheet.
 

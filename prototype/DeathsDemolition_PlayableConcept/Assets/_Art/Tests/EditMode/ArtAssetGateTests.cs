@@ -60,8 +60,10 @@ namespace DD.Art.Tests.EditMode
         public static List<string> ArtVfxManifestPngs()
         {
             var set = new HashSet<string>(StringComparer.Ordinal);
-            var manifest = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtVfxContract.ManifestPath)), "manifest");
-            foreach (object o in ArtJson.AsList(manifest["assets"], "assets"))
+            var paths = new List<string> { ArtVfxContract.ManifestPath };
+            paths.AddRange(ArtVfxImporter.SupplementManifests());   // WP-047E: AP010C (AP-014C) supplement
+            foreach (string path in paths)
+            foreach (object o in ArtJson.AsList(ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(path)), "manifest")["assets"], "assets"))
             {
                 var a = ArtJson.AsObject(o, "asset");
                 string file = ArtJson.AsString(a["file"], "file");
@@ -314,6 +316,8 @@ namespace DD.Art.Tests.EditMode
             int classic = 0;
             foreach (string f in ArtWeaponBuilder.ModelFiles()) if (beklenen.Add(f)) classic++;
             Assert.AreEqual(3, classic, "AP-013 3 klasik silah FBX");
+            // WP-047E: the AP-013C casings (S-07 builder, under VFX).
+            beklenen.Add(ArtCasingBuilder.ModelPath);
 
             var diskte = new HashSet<string>(DiskteUzanti(".fbx"), StringComparer.Ordinal);
             var eksik = new List<string>();
@@ -444,12 +448,17 @@ namespace DD.Art.Tests.EditMode
 
             // WP-038: the seven AP-015P water v2 inputs (2 normals, 4 data masks, 1 ring sheet) → 143 + 7 = 150.
             foreach (string f in ArtSurfaceImporter.WaterTextures) beklenen.Add(f);
-            Assert.AreEqual(150, beklenen.Count, "Beklenen doku kümesi 143 + 7 (WP-038 su v2) = 150 olmalı.");
+            // (WP-047E: the WP-038 line said 150 but the set already held the 4 weapon maps — 147 + 7 = 154.)
+            Assert.AreEqual(154, beklenen.Count, "Beklenen doku kümesi 147 + 7 (WP-038 su v2) = 154 olmalı.");
+
+            // WP-047E · AP-013C casings: BaseColor + Normal + MRA source + derived MetallicSmoothness = 4 → 158.
+            foreach (string f in ArtCasingBuilder.TextureFiles()) beklenen.Add(f);
+            Assert.AreEqual(158, beklenen.Count, "Beklenen doku kümesi 154 + 4 (WP-047E kovan seti) = 158 olmalı.");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;
             foreach (string f in ArtVfxManifestPngs()) if (beklenen.Add(f)) vfx++;
-            Assert.AreEqual(109, vfx, "AP-010 v003 manifest 109 PNG (105 satır + 4 emissive; AP010 36 + AP010B 73) olmalı.");
+            Assert.AreEqual(113, vfx, "AP-010 v003 manifest 109 PNG (105 satır + 4 emissive; AP010 36 + AP010B 73) + AP010C 4 (WP-047E, AP-014C) = 113 olmalı.");
 
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();

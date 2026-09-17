@@ -34,6 +34,20 @@ namespace DD.Prototype.Feedback
             _block = new MaterialPropertyBlock();
         }
 
+        private Material _defaultMaterial;
+        private bool _textured;
+
+        /// <summary>WP-047E · the AP-014C thread tile on this line (tiled per metre, alpha blend); reverts to the additive line when despawned.</summary>
+        public void SetThread(Material threadMaterial)
+        {
+            CacheLine();
+            if (_line == null || threadMaterial == null) return;
+            if (_defaultMaterial == null) _defaultMaterial = _line.sharedMaterial;
+            _line.sharedMaterial = threadMaterial;
+            _line.textureMode = LineTextureMode.Tile;
+            _textured = true;
+        }
+
         public void Play(Vector3 from, Vector3 to, Color color, float width, float jitter, float lifetime)
         {
             CacheLine();
@@ -104,6 +118,13 @@ namespace DD.Prototype.Feedback
 
         protected override void OnDespawned()
         {
+            if (_line != null && _textured)
+            {
+                _textured = false;
+                _line.textureMode = LineTextureMode.Stretch;
+                if (_defaultMaterial != null) _line.sharedMaterial = _defaultMaterial;
+            }
+
             if (_line != null)
             {
                 _line.positionCount = 0;

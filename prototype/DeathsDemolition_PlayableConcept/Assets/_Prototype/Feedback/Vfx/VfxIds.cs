@@ -77,6 +77,11 @@ namespace DD.Prototype.Feedback.Vfx
         public const string MagDrop = "mag_drop";
         public const string BarrelHeat = "barrel_heat";
         public const string BarrelHeatDistort = "barrel_heat_distort";
+        // WP-047E · AP-014C (staged as AP010C)
+        public const string SwTideWell = "sw_tide_well";
+        public const string SwTideImplode = "sw_tide_implode";
+        public const string SwOfudaDartSheet = "sw_ofuda_dart";
+        public const string BarrelHeatDistortTile = "barrel_heat_distort_tile";
         public const string ChainArcSheet = "chain_arc_sheet";
         public const string OfudaSeal = "ofuda_seal";
 

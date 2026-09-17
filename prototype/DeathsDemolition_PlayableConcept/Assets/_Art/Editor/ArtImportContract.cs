@@ -311,6 +311,8 @@ namespace DD.Art.Pipeline.EditorTools
             // AP-014 Special Weapons and the AP-013 classic A/B/C set.
             { "sw_atlas", TextureClass.Weapon },
             { "weapons", TextureClass.Weapon },
+            // WP-047E · AP-013C casings (separate 256 set; the weapons atlas is full — P-06 note): Weapon class.
+            { "casings", TextureClass.Weapon },
             // WP-017 · AP-005B prop families (Tripo H3.1 sets; the first Prop-class roles) and the generated roof course overlay.
             { "prop_tsukubai", TextureClass.Prop },
             { "prop_handcart", TextureClass.Prop },

@@ -181,6 +181,9 @@ namespace DD.Art.Pipeline.EditorTools
             bool changed = false;
             bool normal = role == VfxTextureRole.Normal;
             bool sprite = role == VfxTextureRole.HudSprite;
+            // WP-047E · AP-014C `barrel_heat_distort_tile`: RGB tangent normal + A mask, read by DD/VFX HeatHaze as linear data,
+            // wrap Repeat (scrolled along V). Not the NormalMap type — BC5 would drop the mask.
+            bool dataTile = importer.assetPath.IndexOf("_distort_tile", StringComparison.OrdinalIgnoreCase) >= 0;
             int maxSize = MaxSizeOf(importer.assetPath);
             TextureImporterFormat format = normal ? ArtImportContract.StandaloneNormalFormat : ArtImportContract.StandaloneColorFormat;
 
@@ -190,14 +193,14 @@ namespace DD.Art.Pipeline.EditorTools
                 changed |= Set(importer.spriteImportMode, SpriteImportMode.Single, v => importer.spriteImportMode = v);
             }
 
-            changed |= Set(importer.sRGBTexture, !normal, v => importer.sRGBTexture = v);
+            changed |= Set(importer.sRGBTexture, !normal && !dataTile, v => importer.sRGBTexture = v);
             changed |= Set(importer.mipmapEnabled, !sprite, v => importer.mipmapEnabled = v);
             changed |= Set(importer.streamingMipmaps, false, v => importer.streamingMipmaps = v);
             changed |= Set(importer.maxTextureSize, maxSize, v => importer.maxTextureSize = v);
             changed |= Set(importer.textureCompression, ArtImportContract.TextureCompression, v => importer.textureCompression = v);
             changed |= Set(importer.crunchedCompression, false, v => importer.crunchedCompression = v);
             changed |= Set(importer.filterMode, FilterMode.Bilinear, v => importer.filterMode = v);
-            changed |= Set(importer.wrapMode, TextureWrapMode.Clamp, v => importer.wrapMode = v);
+            changed |= Set(importer.wrapMode, dataTile ? TextureWrapMode.Repeat : TextureWrapMode.Clamp, v => importer.wrapMode = v);
             changed |= Set(importer.anisoLevel, 1, v => importer.anisoLevel = v);
             changed |= Set(importer.alphaIsTransparency, !normal, v => importer.alphaIsTransparency = v);
             changed |= Set(importer.alphaSource, normal ? TextureImporterAlphaSource.None : TextureImporterAlphaSource.FromInput, v => importer.alphaSource = v);
@@ -230,14 +233,15 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             bool normal = role == VfxTextureRole.Normal;
+            bool dataTile = importer.assetPath.IndexOf("_distort_tile", StringComparison.OrdinalIgnoreCase) >= 0;
             bool sprite = role == VfxTextureRole.HudSprite;
             int maxSize = MaxSizeOf(importer.assetPath);
             Check(v, "textureType", importer.textureType, normal ? TextureImporterType.NormalMap : sprite ? TextureImporterType.Sprite : TextureImporterType.Default);
-            Check(v, "sRGBTexture", importer.sRGBTexture, !normal);
+            Check(v, "sRGBTexture", importer.sRGBTexture, !normal && !dataTile);
             Check(v, "mipmapEnabled", importer.mipmapEnabled, !sprite);
             Check(v, "streamingMipmaps", importer.streamingMipmaps, false);
             Check(v, "maxTextureSize", importer.maxTextureSize, maxSize);
-            Check(v, "wrapMode", importer.wrapMode, TextureWrapMode.Clamp);
+            Check(v, "wrapMode", importer.wrapMode, dataTile ? TextureWrapMode.Repeat : TextureWrapMode.Clamp);
             Check(v, "alphaIsTransparency", importer.alphaIsTransparency, !normal);
             Check(v, "alphaSource", importer.alphaSource, normal ? TextureImporterAlphaSource.None : TextureImporterAlphaSource.FromInput);
             TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(ArtImportContract.StandalonePlatform);

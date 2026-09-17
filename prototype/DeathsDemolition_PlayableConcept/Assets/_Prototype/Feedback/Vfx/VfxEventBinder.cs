@@ -30,6 +30,8 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly Dictionary<int, float> _lastSpecialHit = new Dictionary<int, float>(ThrottleCapacity);
         private Vector3 _tideWellCentre;
         private bool _tideWellLive;
+        private Vector3 _ofudaFireOrigin;
+        private float _ofudaFiredAt = -1f;
         private readonly RaycastHit[] _hits = new RaycastHit[1];
         private int _mask;
         private bool _subscribed;
@@ -90,8 +92,15 @@ namespace DD.Prototype.Feedback.Vfx
         {
             switch (e.Kind)
             {
+                case SpecialUsageKind.Fired:
+                    if (e.Id == SpecialWeaponId.OfudaLoom) { _ofudaFireOrigin = e.Origin; _ofudaFiredAt = Time.time; }
+                    return;
                 case SpecialUsageKind.FieldSpawned:
-                    if (e.Id == SpecialWeaponId.TideJewel) { _tideWellCentre = e.Origin; _tideWellLive = true; }
+                    if (e.Id == SpecialWeaponId.TideJewel)
+                    {
+                        _tideWellCentre = e.Origin; _tideWellLive = true;
+                        _owner.PlayTideWell(e.Origin, e.Radius, e.Seconds);   // WP-047E: AP-014C vortex loop under the well
+                    }
                     return;
                 case SpecialUsageKind.FieldEnded:
                     if (e.Id == SpecialWeaponId.TideJewel)
@@ -128,8 +137,15 @@ namespace DD.Prototype.Feedback.Vfx
                     played = _owner.PlayKaguraHit(feet, e.Direction);
                     break;
                 case SpecialWeaponId.OfudaLoom:
-                    // The seal's height comes with the target (cached standing height); the web card wraps the torso.
-                    played = _owner.PlayOfudaWeb(body, Mathf.Max(1.2f, e.Target.Height), e.Seconds, e.Origin);
+                    {
+                        // WP-047E (AD M1 + AP-014C): the net is three thread loops around the torso (thread tile on the link lines),
+                        // the dart frame lands at the seal and its thread trail runs back to the loom for a quarter second.
+                        HitFeedbackDirector director = HitFeedbackDirector.Instance;
+                        played = director != null && director.ReportOfudaNet(body, e.Origin, e.Seconds);
+                        Vector3 flight = _ofudaFiredAt >= 0f && now - _ofudaFiredAt < 1f ? e.Origin - _ofudaFireOrigin : e.Direction;
+                        played |= _owner.PlayOfudaDart(e.Origin, flight);
+                        if (director != null && _ofudaFiredAt >= 0f && now - _ofudaFiredAt < 1f) director.ReportOfudaTrail(_ofudaFireOrigin, e.Origin);
+                    }
                     break;
                 case SpecialWeaponId.TideJewel:
                     played = _owner.PlayTidePull(feet, e.Direction);

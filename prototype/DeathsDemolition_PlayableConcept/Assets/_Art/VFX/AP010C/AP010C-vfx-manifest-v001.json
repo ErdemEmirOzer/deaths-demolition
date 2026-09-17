@@ -1,0 +1,180 @@
+{
+ "schema": "AP010 VFX manifest v003 (supplement)",
+ "package": "AP-014C (P-06, credit 0) staged as AP010C — Special Weapon use sheets + barrel heat distort tile",
+ "created": "2026-09-17",
+ "supersedes": null,
+ "unity_target": "Assets/_Art/VFX/AP010C",
+ "sources": {
+  "AP-014": "asset-production/AP-014/exports/vfx/AP014-vfx-manifest.json (v002)"
+ },
+ "totals": {
+  "assets": 4,
+  "bytes": 1275310
+ },
+ "assets": [
+  {
+   "slot": "AP010C_sw_tide_well",
+   "file": "AP010C/AP010C_sw_tide_well_4x4_v001.png",
+   "family": "weapon",
+   "kind": "flipbook (additive, seamless loop)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 20,
+   "duration_s": 0.8,
+   "loop": true,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    14.0,
+    14.0
+   ],
+   "colour_reserve": "beacon (Tide)",
+   "capsule_cover_s": 0.0,
+   "usage_note": "Tide Jewel well: looping vortex under the well, quad = 2 x WellRadius (7 m), ground-aligned, play for WellSeconds then tide_implode; greyscale + alpha, dark eye at the centre (AP-014C v002)",
+   "blend": "additive (Tide tint (0.55, 0.78, 0.86), hdr 1.6)",
+   "tint_rgb": [
+    0.55,
+    0.78,
+    0.86
+   ],
+   "hdr": 1.6,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "bytes": 887614,
+   "sha256": "8073f1d2be3a1722f6c5592f6a4eb32f66d006ba2a69e30d5d258915c9ed5c9f",
+   "emissive_file": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "AP-014C v002"
+  },
+  {
+   "slot": "AP010C_sw_tide_implode",
+   "file": "AP010C/AP010C_sw_tide_implode_4x4_v001.png",
+   "family": "weapon",
+   "kind": "flipbook (additive)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 40,
+   "duration_s": 0.4,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    14.0,
+    14.0
+   ],
+   "colour_reserve": "beacon (Tide)",
+   "capsule_cover_s": 0.0,
+   "usage_note": "Tide Jewel implosion: arms snap to the centre + bright core + outward dust ring; one play at FieldEnded, ground-aligned 2 x WellRadius (AP-014C v002)",
+   "blend": "additive (Tide tint, hdr 1.8)",
+   "tint_rgb": [
+    0.55,
+    0.78,
+    0.86
+   ],
+   "hdr": 1.8,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "bytes": 315673,
+   "sha256": "70ef0aba1784db8eaff7e15a237efdca2fe9e193cd0aa4b78586159621a3943a",
+   "emissive_file": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "AP-014C v002"
+  },
+  {
+   "slot": "AP010C_sw_ofuda_dart",
+   "file": "AP010C/AP010C_sw_ofuda_dart_2x1_v001.png",
+   "family": "weapon",
+   "kind": "flipbook (alpha)",
+   "grid": [
+    2,
+    1
+   ],
+   "frames_used": 2,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    512,
+    256
+   ],
+   "world_size_m": [
+    0.3,
+    0.15
+   ],
+   "colour_reserve": "none",
+   "capsule_cover_s": 0.0,
+   "usage_note": "Ofuda dart: frame 0 flying talisman dart (+U = flight direction, thread tail at -U), frame 1 thread strip tileable along U for the trail (line 6 cm wide); LA, Ofuda tint (0.96, 0.93, 0.84) (AP-014C v002)",
+   "blend": "alpha",
+   "tint_rgb": [
+    0.96,
+    0.93,
+    0.84
+   ],
+   "hdr": 1.0,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "bytes": 6232,
+   "sha256": "b1fad05ebcb0fa2323ca8d9b43e51b47b29e52926fbed0defd3150451141acd6",
+   "emissive_file": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "AP-014C v002"
+  },
+  {
+   "slot": "AP010C_barrel_heat_distort_tile",
+   "file": "AP010C/AP010C_barrel_heat_distort_tile_256_v001.png",
+   "family": "weapon",
+   "kind": "tile (data)",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": true,
+   "size_px": [
+    256,
+    256
+   ],
+   "world_size_m": [
+    0.08,
+    0.45
+   ],
+   "colour_reserve": "none",
+   "capsule_cover_s": 0.0,
+   "usage_note": "barrel_heat_distort: tangent-space normal tile (glTF +Y), seamless; A = intensity mask 1 at v 0 (muzzle end) -> 0 at v 1; scroll V ~0.6/s, strength = heat; linear RGBA, wrap repeat (DD/VFX HeatHaze) (AP-014C v002)",
+   "blend": "data (heat-haze shader)",
+   "tint_rgb": null,
+   "hdr": 1.0,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "bytes": 65791,
+   "sha256": "a019480b20a8fb76d502c62ff20285c740dc5edef75a844e271c171394a4994c",
+   "emissive_file": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "AP-014C v002"
+  }
+ ]
+}

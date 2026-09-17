@@ -11,6 +11,7 @@ Shader "DD/VFX HeatHaze"
         _Strength("Refraction strength (uv)", Range(0, 0.05)) = 0.012
         _ShimmerAlpha("Shimmer alpha (no opaque texture)", Range(0, 1)) = 0.18
         _Scroll("Noise scroll (1/s)", Float) = 1.6
+        _TileMode("0 = AP-010B data card (R falloff, G noise) · 1 = AP-014C normal tile (RGB normal, A mask)", Float) = 0
     }
 
     SubShader
@@ -44,6 +45,7 @@ Shader "DD/VFX HeatHaze"
                 float _Strength;
                 float _ShimmerAlpha;
                 float _Scroll;
+                float _TileMode;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
@@ -60,9 +62,22 @@ Shader "DD/VFX HeatHaze"
 
             float4 Frag(Varyings i) : SV_Target
             {
-                float falloff = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, i.uv).r;
-                float2 nuv = float2(i.uv.x, frac(i.uv.y + _Time.y * _Scroll));
-                float noise = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, nuv).g - 0.5;
+                float falloff, noise;
+                if (_TileMode > 0.5)
+                {
+                    // AP-014C: A = intensity (1 at the muzzle end v 0 → 0 at v 1), RGB = tangent normal scrolled along V.
+                    float4 t0 = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, i.uv);
+                    float2 nuvT = float2(i.uv.x, frac(i.uv.y + _Time.y * _Scroll * 0.375));
+                    float3 n = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, nuvT).rgb * 2.0 - 1.0;
+                    falloff = t0.a;
+                    noise = n.y * 0.5;
+                }
+                else
+                {
+                    falloff = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, i.uv).r;
+                    float2 nuv = float2(i.uv.x, frac(i.uv.y + _Time.y * _Scroll));
+                    noise = SAMPLE_TEXTURE2D(_Sheet, sampler_Sheet, nuv).g - 0.5;
+                }
                 float amount = falloff * saturate(_AlphaCap);
                 #if DD_OPAQUE_TEXTURE
                     float2 suv = i.screenPos.xy / i.screenPos.w;

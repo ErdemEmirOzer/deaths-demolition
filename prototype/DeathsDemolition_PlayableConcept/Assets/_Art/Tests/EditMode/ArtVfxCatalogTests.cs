@@ -23,11 +23,16 @@ namespace DD.Art.Tests.EditMode
         private static Dictionary<string, Dictionary<string, object>> ManifestRows()
         {
             var rows = new Dictionary<string, Dictionary<string, object>>(StringComparer.Ordinal);
-            var manifest = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtVfxContract.ManifestPath)), "manifest");
-            foreach (object o in ArtJson.AsList(manifest["assets"], "assets"))
+            var paths = new List<string> { ArtVfxContract.ManifestPath };
+            paths.AddRange(ArtVfxImporter.SupplementManifests());   // WP-047E: AP010C (AP-014C sheets) rides the same schema
+            foreach (string path in paths)
             {
-                var a = ArtJson.AsObject(o, "asset");
-                rows[ArtVfxImporter.IdOf(ArtJson.AsString(a["file"], "file"))] = a;
+                var manifest = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(path)), "manifest");
+                foreach (object o in ArtJson.AsList(manifest["assets"], "assets"))
+                {
+                    var a = ArtJson.AsObject(o, "asset");
+                    rows[ArtVfxImporter.IdOf(ArtJson.AsString(a["file"], "file"))] = a;
+                }
             }
 
             return rows;
@@ -39,9 +44,9 @@ namespace DD.Art.Tests.EditMode
             var catalog = AssetDatabase.LoadAssetAtPath<VfxCatalog>(ArtVfxImporter.CatalogPath);
             Assert.IsNotNull(catalog, "DD_VfxCatalog yok (Run VFX Catalog koşmalı).");
             Dictionary<string, Dictionary<string, object>> manifest = ManifestRows();
-            Assert.AreEqual(108, manifest.Count, "Manifest v003 108 varlık.");
-            // WP-019b: 108 v003 manifest rows + the synthesized blood_droplet row.
-            Assert.AreEqual(109, catalog.Entries.Count, "Katalog 108 manifest satırı + 1 sentez (blood_droplet).");
+            Assert.AreEqual(112, manifest.Count, "Manifest v003 108 varlık + AP010C 4 (WP-047E, AP-014C).");
+            // WP-019b: 108 v003 manifest rows + the synthesized blood_droplet row; WP-047E: + 4 AP010C rows.
+            Assert.AreEqual(113, catalog.Entries.Count, "Katalog 112 manifest satırı + 1 sentez (blood_droplet).");
 
             var hatalar = new List<string>();
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -117,7 +122,7 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp019.vfxTextures count=" + n + " estMB=" + mb.ToString("F1") + " main=" + mbMain.ToString("F1") + "/" + ArtVfxContract.ShippedVfxBudgetMb +
                       " ap010b=" + mbBlood.ToString("F1") + "/" + ArtVfxContract.ShippedBloodBudgetMb);
             Assert.IsEmpty(ihlaller, "VFX doku sözleşme ihlali (" + ihlaller.Count + "):\n" + string.Join("\n", ihlaller));
-            Assert.AreEqual(109, n);
+            Assert.AreEqual(113, n);   // WP-047E: + AP010C 4
             Assert.LessOrEqual(mbMain, ArtVfxContract.ShippedVfxBudgetMb, "VFX ana satırı bütçeyi aşıyor (ADR-019-1).");
             Assert.LessOrEqual(mbBlood, ArtVfxContract.ShippedBloodBudgetMb, "AP-010B satırı bütçeyi aşıyor (C-00 kuyruk notu ≤ 60 MB).");
         }

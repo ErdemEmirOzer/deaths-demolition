@@ -3508,6 +3508,137 @@ MonoBehaviour:
     DefaultTint: {r: 1, g: 1, b: 1, a: 1}
     HdrIntensity: 1
     BlendNote: 
+  - Id: sw_tide_well
+    Family: 9
+    Kind: 0
+    SourceFile: AP010C/AP010C_sw_tide_well_4x4_v001.png
+    Sha256: 8073f1d2be3a1722f6c5592f6a4eb32f66d006ba2a69e30d5d258915c9ed5c9f
+    Texture: {fileID: 2800000, guid: 6c6d6e890a0a349539d19c0e5244bce0, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: b88e8882f4b224e4796db7e5016afd00, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 20
+    DurationSeconds: 0.8
+    Loop: 1
+    WorldSizeMetres: 14
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: 'Tide Jewel well: looping vortex under the well, quad = 2 x WellRadius
+      (7 m), ground-aligned, play for WellSeconds then tide_implode; greyscale +
+      alpha, dark eye at the centre (AP-014C v002)'
+    MeanOpaqueColour: {r: 0.45250294, g: 0.45250294, b: 0.45250294, a: 1}
+    ManifestFile: AP010C-vfx-manifest-v001.json
+    Slot: AP010C_sw_tide_well
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 14
+    DefaultTint: {r: 0.55, g: 0.78, b: 0.86, a: 1}
+    HdrIntensity: 1.6
+    BlendNote: additive (Tide tint (0.55, 0.78, 0.86), hdr 1.6)
+  - Id: sw_tide_implode
+    Family: 9
+    Kind: 0
+    SourceFile: AP010C/AP010C_sw_tide_implode_4x4_v001.png
+    Sha256: 70ef0aba1784db8eaff7e15a237efdca2fe9e193cd0aa4b78586159621a3943a
+    Texture: {fileID: 2800000, guid: d5727005997884e34955568b64e9af51, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 9c423935340594bd5ae3223966ab2feb, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 40
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 14
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: 'Tide Jewel implosion: arms snap to the centre + bright core + outward
+      dust ring; one play at FieldEnded, ground-aligned 2 x WellRadius (AP-014C v002)'
+    MeanOpaqueColour: {r: 0.3910172, g: 0.3910172, b: 0.3910172, a: 1}
+    ManifestFile: AP010C-vfx-manifest-v001.json
+    Slot: AP010C_sw_tide_implode
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 14
+    DefaultTint: {r: 0.55, g: 0.78, b: 0.86, a: 1}
+    HdrIntensity: 1.8
+    BlendNote: additive (Tide tint, hdr 1.8)
+  - Id: sw_ofuda_dart
+    Family: 9
+    Kind: 0
+    SourceFile: AP010C/AP010C_sw_ofuda_dart_2x1_v001.png
+    Sha256: b1fad05ebcb0fa2323ca8d9b43e51b47b29e52926fbed0defd3150451141acd6
+    Texture: {fileID: 2800000, guid: dbcb54eefb5c94d2788f78386984ab6b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 398177184b37145aeb0f56c3a40f1ed5, type: 2}
+    Columns: 2
+    Rows: 1
+    FramesUsed: 2
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.3
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'Ofuda dart: frame 0 flying talisman dart (+U = flight direction,
+      thread tail at -U), frame 1 thread strip tileable along U for the trail (line
+      6 cm wide); LA, Ofuda tint (0.96, 0.93, 0.84) (AP-014C v002)'
+    MeanOpaqueColour: {r: 0.6384316, g: 0.6384316, b: 0.6384316, a: 1}
+    ManifestFile: AP010C-vfx-manifest-v001.json
+    Slot: AP010C_sw_ofuda_dart
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.15
+    DefaultTint: {r: 0.96, g: 0.93, b: 0.84, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: barrel_heat_distort_tile
+    Family: 9
+    Kind: 3
+    SourceFile: AP010C/AP010C_barrel_heat_distort_tile_256_v001.png
+    Sha256: a019480b20a8fb76d502c62ff20285c740dc5edef75a844e271c171394a4994c
+    Texture: {fileID: 2800000, guid: 73a1fab564823417da85f658286a5c2e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 1
+    WorldSizeMetres: 0.08
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'barrel_heat_distort: tangent-space normal tile (glTF +Y), seamless;
+      A = intensity mask 1 at v 0 (muzzle end) -> 0 at v 1; scroll V ~0.6/s, strength
+      = heat; linear RGBA, wrap repeat (DD/VFX HeatHaze) (AP-014C v002)'
+    MeanOpaqueColour: {r: 0.21565071, g: 0.2143335, b: 0.99485743, a: 1}
+    ManifestFile: AP010C-vfx-manifest-v001.json
+    Slot: AP010C_barrel_heat_distort_tile
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.45
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: data (heat-haze shader)
   - Id: blood_droplet
     Family: 8
     Kind: 2
