@@ -89,6 +89,7 @@ Shader "DD/Water v2"
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile _ _FORWARD_PLUS
+            #pragma multi_compile_fragment _ _LIGHT_LAYERS   // WP-038G: the character fill light stays on the character rendering layer
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
 

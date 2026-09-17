@@ -262,7 +262,7 @@ namespace DD.Art.Tests.EditMode
                             if (mats[i].shader == null || mats[i].shader.name != BeklenenShaderAdi(beklenen[i])) hatalar.Add(on + ": " + ad + " shader " + (mats[i].shader != null ? mats[i].shader.name : "null") + " ≠ " + BeklenenShaderAdi(beklenen[i]));
                         }
 
-                        ShadowCastingMode golge = lod == 2 ? ShadowCastingMode.Off : ShadowCastingMode.On;
+                        ShadowCastingMode golge = lod == 2 || f.IsDerivative ? ShadowCastingMode.Off : ShadowCastingMode.On;   // WP-038G: AP-017 litter never casts
                         if (mr.shadowCastingMode != golge) hatalar.Add(on + ": " + ad + " gölge " + mr.shadowCastingMode + " (ADR-012-1: " + golge + ")");
                     }
                 }

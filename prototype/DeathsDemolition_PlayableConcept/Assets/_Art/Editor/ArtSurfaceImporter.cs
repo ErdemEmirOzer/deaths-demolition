@@ -410,7 +410,8 @@ namespace DD.Art.Pipeline.EditorTools
                     part.AddComponent<MeshFilter>().sharedMesh = src.sharedMesh;
                     var mr = part.AddComponent<MeshRenderer>();
                     mr.sharedMaterial = isWater ? water : ground;
-                    mr.shadowCastingMode = isWater ? ShadowCastingMode.Off : ShadowCastingMode.On;
+                    // WP-038G (M3 closure K1): flat plates never cast a useful shadow — Off saves a draw per cascade per plate; the kerbs keep theirs.
+                    mr.shadowCastingMode = ShadowCastingMode.Off;
                     mr.receiveShadows = true;
                     mr.lightProbeUsage = LightProbeUsage.BlendProbes;
                     mr.reflectionProbeUsage = isWater ? ReflectionProbeUsage.BlendProbes : ReflectionProbeUsage.Off;
@@ -467,7 +468,7 @@ namespace DD.Art.Pipeline.EditorTools
 
                 // Static flags: occludee + reflection + ContributeGI (occluder / bounce in the bake) — receive from probes (no lightmap UVs).
                 var flags = StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic;
-                if (!isWater) flags |= StaticEditorFlags.ContributeGI;
+                if (!isWater) flags |= StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic;   // WP-038G: 71 plates + 27 kerbs on one material → a few static batches (was ~100 renderers × passes)
                 foreach (Transform c in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(c.gameObject, flags);
                 foreach (MeshRenderer mr in go.GetComponentsInChildren<MeshRenderer>(true))
                 {

@@ -100,6 +100,21 @@ namespace DD.Art.Pipeline.EditorTools
         // ==================================================================== 1 avatars
 
         /// <summary>Re-imports every character FBX whose importer is not yet on the v1.1 contract or has no valid humanoid avatar.</summary>
+        /// <summary>
+        /// Batch entry (WP-038G): rebuild the two character prefabs and the asset set only — textures, materials, the animation
+        /// sets / controllers and the module + armour libraries stay as they are on disk.
+        /// </summary>
+        public static void RebuildPrefabsCli()
+        {
+            BuildPlayerPrefab();
+            var library = AssetDatabase.LoadAssetAtPath<ZombieModuleLibrary>(ZombieLibrary);
+            if (library == null) throw new FileNotFoundException(LogPrefix + "zombie module library missing (Run Characters first)", ZombieLibrary);
+            BuildZombiePrefab(library);
+            BuildAssetSet();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
         public static int EnsureAvatars()
         {
             int reimported = 0;
@@ -741,7 +756,9 @@ namespace DD.Art.Pipeline.EditorTools
                         smr.rootBone = body.rootBone;
                         smr.localBounds = body.localBounds;
                         smr.enabled = false;
-                        ConfigureSkinnedRenderer(smr, lod >= 2);
+                        // WP-038G: armour plates sit on the body and cast inside its shadow — no caster of their own at any LOD
+                        // (40 bodies × up to 6 plates × 2 cascades were ~240 shadow draws in the M3 closure frame).
+                        ConfigureSkinnedRenderer(smr, true);
                         armorSlots[(lod * ZombieSkinnedVisual.ArmorSlotCount + a) * ZombieSkinnedVisual.ArmorPartCount + part] = smr;
                     }
                 }
@@ -818,9 +835,16 @@ namespace DD.Art.Pipeline.EditorTools
 
         // ================================================================== helpers
 
+        /// <summary>
+        /// WP-038G: every character renderer carries the default rendering layer plus <see cref="ArtLightingBake.CharacterLightLayer"/>,
+        /// so the character fill light (light layers) reaches characters and not the world.
+        /// </summary>
+        public const uint CharacterRenderingLayers = ZombieSkinnedVisual.CharacterRenderingLayers;
+
         private static void ConfigureSkinnedRenderer(SkinnedMeshRenderer smr, bool lodFar)
         {
             smr.shadowCastingMode = lodFar ? ShadowCastingMode.Off : ShadowCastingMode.On;   // ADR-012-1: far LODs cast none
+            smr.renderingLayerMask = CharacterRenderingLayers;
             smr.receiveShadows = true;
             smr.lightProbeUsage = LightProbeUsage.Off;
             smr.reflectionProbeUsage = ReflectionProbeUsage.Off;

@@ -91,6 +91,8 @@ namespace DD.Art.Pipeline.EditorTools
             public int Occluders;
             public int StaticInstances;
             public int IgnoreModifiers;
+            /// <summary>WP-038G · instances whose renderers stopped casting shadows (low vegetation / small dressing).</summary>
+            public int ShadowsOff;
             /// <summary>WP-038 · bridge rail / post colliders kept out of the NavMesh bake (the deck keeps its width).</summary>
             public int BridgeRailIgnores;
             public int NavMeshTriangles;
@@ -646,6 +648,16 @@ namespace DD.Art.Pipeline.EditorTools
                     report.IgnoreModifiers++;
                 }
 
+                // WP-038G (M3 closure K1): low vegetation and small dressing stop casting shadows. 1 750 groundcover / greenery /
+                // shrub instances re-drew into every cascade (the largest share of the ~3 400 draws); under the 0.5-strength
+                // overcast sun a ≤ 1.5 m bush's shadow is invisible at the 19.9 m camera. Structures, breakables, tall vegetation
+                // (bamboo, sakura) and the AP-017 breakables keep theirs.
+                if (LowCasterRole(inst.role) && ShadowCasterHeight(go) < LowCasterMaxHeight)
+                {
+                    foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.Off;
+                    report.ShadowsOff++;
+                }
+
                 if (inst.family == BridgeFamily) report.BridgeRailIgnores += IgnoreBridgeRailColliders(go);
 
                 if (!string.IsNullOrEmpty(inst.materialOverride))
@@ -710,7 +722,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             Debug.Log(LogPrefix + "Wrote " + ArtLibraryPaths.Ap005WorldScene + ": " + report.Instances + " instances (surfaces " + report.SurfacePlates + " plates + " + report.WaterMeshes + " water; " + report.Assemblies +
                       " assemblies, " + report.Occluders + " on CameraOccluder, " + report.StaticInstances + " static, " + report.IgnoreModifiers +
-                      " navmesh-ignore modifiers (+ " + report.BridgeRailIgnores + " bridge rail colliders), " + report.MaterialOverrides + " material overrides / " + report.MaterialSlotsReplaced + " slots, " + report.HeavyUnbatched + " heavy unbatched), NavMesh " + report.NavMeshTriangles + " triangles, digest " + report.Digest.Substring(0, 12) + "…");
+                      " navmesh-ignore modifiers (+ " + report.BridgeRailIgnores + " bridge rail colliders), " + report.ShadowsOff + " low casters shadow-off, " + report.MaterialOverrides + " material overrides / " + report.MaterialSlotsReplaced + " slots, " + report.HeavyUnbatched + " heavy unbatched), NavMesh " + report.NavMeshTriangles + " triangles, digest " + report.Digest.Substring(0, 12) + "…");
             return report;
         }
 
@@ -1057,6 +1069,24 @@ namespace DD.Art.Pipeline.EditorTools
         public const string AreaVolumesName = "NavMesh Areas (WP-020)";
         public const string AreaBridge = "Bridge", AreaCorridor = "Corridor", AreaGate = "Gate";
         /// <summary>Family stem → NavMesh area name; the volume is the instance's renderer bounds (XZ) from the floor to <see cref="AreaVolumeHeight"/>.</summary>
+        /// <summary>WP-038G · shadow-caster policy: vegetation / dressing instances lower than this (renderer bounds height, LOD0) cast no shadow.</summary>
+        public const float LowCasterMaxHeight = 1.5f;
+
+        public static bool LowCasterRole(string role) { return role == "vegetation" || role == "dressing"; }
+
+        public static float ShadowCasterHeight(GameObject go)
+        {
+            bool any = false; float min = float.MaxValue, max = float.MinValue;
+            foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r is ParticleSystemRenderer) continue;
+                Bounds b = r.bounds; any = true;
+                min = Mathf.Min(min, b.min.y); max = Mathf.Max(max, b.max.y);
+            }
+
+            return any ? max - min : 0f;
+        }
+
         public const string BridgeFamily = "bridge_segment";
         /// <summary>A bridge child collider thinner than this in both horizontal axes and taller than <see cref="BridgeRailMinHeight"/> is a post / rail.</summary>
         public const float BridgeRailMaxThickness = 0.2f, BridgeRailMinHeight = 0.5f;

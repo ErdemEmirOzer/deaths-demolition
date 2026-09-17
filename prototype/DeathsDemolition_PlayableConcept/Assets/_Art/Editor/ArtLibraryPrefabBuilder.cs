@@ -170,7 +170,10 @@ namespace DD.Art.Pipeline.EditorTools
                         Mesh mesh = LoadMesh(ap, family.family, entry.fbx, entry.@object);
                         Material[] materials = ResolveMaterials(mesh, entry, variation.prefab);
                         string name = (string.IsNullOrEmpty(part.name) ? string.Empty : part.name + "_") + "LOD" + lod;
-                        sink[lod].Add(BuildLod(parent, name, mesh, materials, lod));
+                        Renderer built = BuildLod(parent, name, mesh, materials, lod);
+                        // WP-038G (M3 closure K1): AP-017 derivative litter / piles cast no shadow (flat, ≤ 0.4 m; ~450 instances × 2 cascades).
+                        if (family.IsDerivative) built.shadowCastingMode = ShadowCastingMode.Off;
+                        sink[lod].Add(built);
                     }
                 }
 
@@ -206,7 +209,8 @@ namespace DD.Art.Pipeline.EditorTools
                 }
 
                 // Main LODGroup (root). Every part that is not roof/broken switches together.
-                AddLodGroup(root, mainLods, root.transform);
+                // WP-038G: AP-017 families cull at 40 m (intended) instead of the 138 m contract distance — the gameplay camera sees ≤ 30 m of ground.
+                AddLodGroup(root, mainLods, root.transform, family.IsDerivative || family.IsBreakable ? ArtFamilyPrefabBuilder.PropCullDistance : 0f);
                 bool occluder = family.occluder;
                 if (occluder)
                 {
@@ -226,7 +230,7 @@ namespace DD.Art.Pipeline.EditorTools
 
                 if (broken != null)
                 {
-                    AddLodGroup(broken.gameObject, brokenLods, root.transform);
+                    AddLodGroup(broken.gameObject, brokenLods, root.transform, family.IsBreakable ? ArtFamilyPrefabBuilder.PropCullDistance : 0f);
                     SetLayerRecursively(broken.gameObject, envLayer);
                     broken.gameObject.SetActive(false);
                     // WP-013 (REQ-113): the intact/broken switch lives on the prefab root; WP-038B: AP-017 event id / residue cell.
@@ -281,7 +285,7 @@ namespace DD.Art.Pipeline.EditorTools
             return renderer;
         }
 
-        private static void AddLodGroup(GameObject owner, List<Renderer>[] lods, Transform prefabRoot)
+        private static void AddLodGroup(GameObject owner, List<Renderer>[] lods, Transform prefabRoot, float cullDistanceOverride = 0f)
         {
             if (lods[0].Count == 0)
             {
@@ -293,7 +297,7 @@ namespace DD.Art.Pipeline.EditorTools
             group.animateCrossFading = true;
 
             Bounds bounds = PrefabSpaceBounds(lods[0], prefabRoot);
-            float[] heights = ArtFamilyPrefabBuilder.TransitionHeights(bounds);
+            float[] heights = cullDistanceOverride > 0f ? ArtFamilyPrefabBuilder.TransitionHeights(bounds, cullDistanceOverride) : ArtFamilyPrefabBuilder.TransitionHeights(bounds);
             group.SetLODs(new[]
             {
                 new LOD(heights[0], lods[0].ToArray()),

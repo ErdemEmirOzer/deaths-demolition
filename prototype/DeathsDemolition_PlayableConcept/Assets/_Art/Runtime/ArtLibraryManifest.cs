@@ -42,6 +42,10 @@ namespace DD.Art
         public sealed class Family
         {
             public string family;
+            /// <summary>WP-038B/G · AP-017 family kind: <c>derivative</c> (litter / piles / stacks) or <c>breakable</c>; empty for the older libraries. Drives the short LOD cull and the no-shadow rule (WP-038G, M3 closure K1).</summary>
+            public string kind;
+            public bool IsDerivative => kind == "derivative";
+            public bool IsBreakable => kind == "breakable";
             /// <summary>Root on the CameraOccluder layer (REQ-035 fade) — same policy as <see cref="ArtFamilies.OccluderCandidates"/>.</summary>
             public bool occluder;
             public List<Variation> variations = new List<Variation>();

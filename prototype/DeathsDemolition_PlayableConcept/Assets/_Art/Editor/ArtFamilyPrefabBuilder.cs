@@ -216,6 +216,21 @@ namespace DD.Art.Pipeline.EditorTools
         /// probe's LOD counter reports what actually happens. Quality lodBias (2 on
         /// Ultra) doubles every distance on top of that.
         /// </summary>
+        /// <summary>WP-038G · AP-017 litter / piles / breakables: cull at 40 m (intended; / lodBias like the contract distances) — small ground dressing the −49° camera never sees past ~30 m.</summary>
+        public const float IntendedPropCullDistance = 40f;
+        public const float PropCullDistance = IntendedPropCullDistance / ShippedLodBias;
+
+        /// <summary>Contract thresholds with a family-specific cull distance (LOD0 / LOD1 distances stay; the cull moves in, never out).</summary>
+        public static float[] TransitionHeights(Bounds prefabBounds, float cullDistance)
+        {
+            float h = Mathf.Max(MinObjectHeight, Mathf.Max(prefabBounds.size.x, Mathf.Max(prefabBounds.size.y, prefabBounds.size.z)));
+            float[] distances = { Mathf.Min(Lod0MaxDistance, cullDistance * 0.5f), Mathf.Min(Lod1MaxDistance, cullDistance * 0.75f), Mathf.Min(CullDistance, cullDistance) };
+            var result = new float[3];
+            for (int i = 0; i < 3; i++) result[i] = Mathf.Clamp(h / (VisibleHeightPerMetre * distances[i]), MinTransition, MaxTransition);
+            for (int i = 1; i < 3; i++) if (result[i] >= result[i - 1]) result[i] = result[i - 1] * 0.5f;
+            return result;
+        }
+
         public static float[] TransitionHeights(Bounds prefabBounds)
         {
             // Unity evaluates a LODGroup against LODGroup.size, which is the LARGEST extent of

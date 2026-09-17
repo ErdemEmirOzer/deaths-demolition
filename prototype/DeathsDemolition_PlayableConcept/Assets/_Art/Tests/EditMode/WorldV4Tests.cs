@@ -133,6 +133,10 @@ namespace DD.Art.Tests.EditMode
                 }
 
                 if (!isWater) Assert.AreNotEqual(0, (int)(GameObjectUtility.GetStaticEditorFlags(t.gameObject) & StaticEditorFlags.ContributeGI), t.name + ": bake'e katkı (occluder/bounce)");
+                // WP-038G (M3 closure K1): plates are static-batched (one material) and cast no shadow; the kerbs keep their shadow.
+                if (!isWater) Assert.AreNotEqual(0, (int)(GameObjectUtility.GetStaticEditorFlags(t.gameObject) & StaticEditorFlags.BatchingStatic), t.name + ": statik birleştirme");
+                foreach (MeshRenderer pr in t.GetComponentsInChildren<MeshRenderer>(true))
+                    if (!pr.name.Contains("_kerb_")) Assert.AreEqual(ShadowCastingMode.Off, pr.shadowCastingMode, pr.name + ": plaka gölge düşürmez (WP-038G)");
                 if (isWater) Assert.AreEqual(0, (int)(GameObjectUtility.GetStaticEditorFlags(t.gameObject) & StaticEditorFlags.ContributeGI), t.name + ": su bake'e girmez");
             }
 

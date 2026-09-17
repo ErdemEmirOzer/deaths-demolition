@@ -46,7 +46,7 @@ MonoBehaviour:
   m_ReflectionProbeBlending: 0
   m_ReflectionProbeBoxProjection: 0
   m_ShadowDistance: 60
-  m_ShadowCascadeCount: 4
+  m_ShadowCascadeCount: 2
   m_Cascade2Split: 0.25
   m_Cascade3Split: {x: 0.1, y: 0.3}
   m_Cascade4Split: {x: 0.08, y: 0.22, z: 0.48}
@@ -64,7 +64,7 @@ MonoBehaviour:
   m_SupportsDynamicBatching: 0
   m_MixedLightingSupported: 1
   m_SupportsLightCookies: 1
-  m_SupportsLightLayers: 0
+  m_SupportsLightLayers: 1
   m_DebugLevel: 0
   m_StoreActionsOptimization: 0
   m_EnableRenderGraph: 0
@@ -92,8 +92,8 @@ MonoBehaviour:
   m_PrefilterDebugKeywords: 1
   m_PrefilterWriteRenderingLayers: 1
   m_PrefilterHDROutput: 1
-  m_PrefilterSSAODepthNormals: 1
-  m_PrefilterSSAOSourceDepthLow: 0
+  m_PrefilterSSAODepthNormals: 0
+  m_PrefilterSSAOSourceDepthLow: 1
   m_PrefilterSSAOSourceDepthMedium: 1
   m_PrefilterSSAOSourceDepthHigh: 1
   m_PrefilterSSAOInterleaved: 1

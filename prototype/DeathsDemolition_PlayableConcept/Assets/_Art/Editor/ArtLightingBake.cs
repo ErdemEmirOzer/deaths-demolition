@@ -67,9 +67,69 @@ namespace DD.Art.Pipeline.EditorTools
         public const int ReflectionProbeResolution = 128;
         public const float ReflectionProbeHeight = 6f;
 
+        // ------------------------------------------------------------ character fill (WP-038G, M3 closure K2)
+        public const string CharacterFillName = "Fill (characters, WP-038G)";
+        public static readonly Vector3 CharacterFillEuler = new Vector3(50f, 0f, 0f);   // from the camera side (the rig looks +Z from the south), 50° down
+        /// <summary>
+        /// vs the 1.15 overcast sun. On the S-10 closure r1 frame the zombie figure (shadow px stripped) sits at luma 0.189 against a
+        /// 0.171 ring; the gate wants Michelson ≥ 0.06 on its own mask (0.019 there). 0.45 lifted the crowd only ~5 % (WP-016 test
+        /// 0.070 → 0.087); 0.9 targets a ~20 % lift on camera-facing cloth (Michelson ≈ 0.14 on the same frame's mask) — the
+        /// world layers are excluded, so the ground keeps its Look B value.
+        /// </summary>
+        public const float CharacterFillIntensity = 0.9f;
+        /// <summary>Rendering layer bit 1: the character fill lights only renderers that carry it (characters); the world renders on bit 0.</summary>
+        public const uint CharacterLightLayer = DD.Prototype.Characters.ZombieSkinnedVisual.CharacterRenderingLayers & ~1u;
+        public static readonly Color CharacterFillColor = new Color(0.96f, 0.97f, 1.0f);
+
+        /// <summary>Batch entry: renderer / pipeline-asset settings (ConfigureRenderer) plus the character fill on World_AP005 — no re-import, no bake.</summary>
+        public static void ConfigureCharacterFillCli()
+        {
+            ConfigureRenderer();
+            UnityEditor.SceneManagement.EditorSceneManager.OpenScene(ArtLibraryPaths.Ap005WorldScene, UnityEditor.SceneManagement.OpenSceneMode.Single);
+            var root = GameObject.Find(Ap005WorldBootstrap.RootName);
+            if (root == null) throw new InvalidOperationException(LogPrefix + "world root missing");
+            bool created = ConfigureCharacterFill(root.transform);
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+            Debug.Log(LogPrefix + "character fill " + (created ? "created" : "updated") + ": " + CharacterFillIntensity + " @ " + CharacterFillEuler);
+        }
+
+        /// <summary>Creates / updates the character fill light under the world root: realtime only, no shadows, culling mask = every layer but the world's.</summary>
+        public static bool ConfigureCharacterFill(Transform root)
+        {
+            Light fill = null;
+            foreach (Light l in root.GetComponentsInChildren<Light>(true)) if (l.name == CharacterFillName) fill = l;
+            bool created = fill == null;
+            if (created)
+            {
+                var go = new GameObject(CharacterFillName);
+                go.transform.SetParent(root, false);
+                fill = go.AddComponent<Light>();
+            }
+
+            fill.type = LightType.Directional;
+            fill.transform.rotation = Quaternion.Euler(CharacterFillEuler.x, CharacterFillEuler.y, CharacterFillEuler.z);
+            fill.color = CharacterFillColor;
+            fill.intensity = CharacterFillIntensity;
+            fill.shadows = LightShadows.None;
+            fill.lightmapBakeType = LightmapBakeType.Realtime;
+            fill.bounceIntensity = 0f;
+            // URP ignores Light.cullingMask; the character-only reach is a Rendering Layer (light layers on in the pipeline asset,
+            // ConfigureRenderer): the fill carries CharacterLightLayer alone, the character renderers carry it next to the default bit
+            // (ArtCharacterPrefabBuilder), the world keeps the default bit only — so the ground stays at its Look B value.
+            fill.cullingMask = -1;
+            fill.renderingLayerMask = (int)CharacterLightLayer;
+            var data = fill.GetComponent<UniversalAdditionalLightData>() ?? fill.gameObject.AddComponent<UniversalAdditionalLightData>();
+            data.renderingLayers = CharacterLightLayer;
+            data.customShadowLayers = false;
+            return created;
+        }
+
         // ------------------------------------------------------------ renderer (WP-029 look)
         public const float ShadowDistance = 60f;          // 45 → 60: the gameplay camera sees ~110 m; palace at 50–60 m grounds
-        public const int ShadowCascadeCount = 4;
+        /// <summary>WP-038G (M3 closure K1): 4 → 2 cascades at 60 m — the top-down camera never needs four splits; each cascade re-draws every caster (~300 draws each).</summary>
+        public const int ShadowCascadeCount = 2;
+        /// <summary>WP-038G: SSAO normals reconstructed from depth (URP Source = Depth, Medium samples) — the DepthNormals prepass re-drew every opaque renderer (~1 000 draws at 3 120 instances).</summary>
+        public const int SsaoSource = 1, SsaoNormalSamples = 1;
         public const float SsaoIntensity = 1.2f;
         public const float SsaoRadius = 0.30f;
         public const float SsaoDirectLightingStrength = 0.25f;
@@ -78,6 +138,33 @@ namespace DD.Art.Pipeline.EditorTools
         // ================================================================== renderer
 
         /// <summary>SSAO feature (low cost: downsample, after opaque, depth-normals, low normal quality, 4 samples, medium blur) + shadow distance.</summary>
+        /// <summary>Rendering-layer name of <see cref="CharacterLightLayer"/> in the URP global settings.</summary>
+        public const string CharacterLightLayerName = "Characters";
+
+        /// <summary>
+        /// URP masks every light's rendering layers with the layers that are NAMED in the global settings
+        /// (<c>ToValidRenderingLayers</c>); with the default single "Default" entry, a light on bit 1 reaches nothing.
+        /// Names bit 1 "Characters" (the array is trimmed to the bits in use).
+        /// </summary>
+        public static void ConfigureRenderingLayerNames()
+        {
+            // UniversalRenderPipelineGlobalSettings is internal in URP 14 — reached through the graphics settings as the public base type.
+            RenderPipelineGlobalSettings settings = GraphicsSettings.GetSettingsForRenderPipeline<UniversalRenderPipeline>();
+            if (settings == null) throw new InvalidOperationException(LogPrefix + "URP global settings missing");
+            var so = new SerializedObject(settings);
+            SerializedProperty names = so.FindProperty("m_RenderingLayerNames");
+            int characterBit = 0;
+            for (uint m = CharacterLightLayer; m > 1u; m >>= 1) characterBit++;
+            if (names.arraySize < characterBit + 1) names.arraySize = characterBit + 1;
+            if (string.IsNullOrEmpty(names.GetArrayElementAtIndex(0).stringValue)) names.GetArrayElementAtIndex(0).stringValue = "Default";
+            names.GetArrayElementAtIndex(characterBit).stringValue = CharacterLightLayerName;
+            uint valid = 0;
+            for (int i = 0; i < names.arraySize; i++) valid |= 1u << i;
+            so.FindProperty("m_ValidRenderingLayers").intValue = (int)valid;
+            so.ApplyModifiedPropertiesWithoutUndo();   // m_ValidRenderingLayers is the serialized field the getter returns; the name cache is rebuilt on load
+            EditorUtility.SetDirty(settings);
+        }
+
         public static void ConfigureRenderer()
         {
             var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(UrpRendererPath);
@@ -108,8 +195,8 @@ namespace DD.Art.Pipeline.EditorTools
             var written = new List<string>();
             SetIfPresent(settings, "Downsample", p => p.boolValue = true, written);
             SetIfPresent(settings, "AfterOpaque", p => p.boolValue = true, written);
-            SetIfPresent(settings, "Source", p => p.enumValueIndex = 0, written);          // DepthNormals
-            SetIfPresent(settings, "NormalSamples", p => p.enumValueIndex = 0, written);   // Low
+            SetIfPresent(settings, "Source", p => p.enumValueIndex = SsaoSource, written);          // WP-038G: Depth (1) — no DepthNormals prepass
+            SetIfPresent(settings, "NormalSamples", p => p.enumValueIndex = SsaoNormalSamples, written);   // Medium
             SetIfPresent(settings, "Intensity", p => p.floatValue = SsaoIntensity, written);
             SetIfPresent(settings, "DirectLightingStrength", p => p.floatValue = SsaoDirectLightingStrength, written);
             SetIfPresent(settings, "Radius", p => p.floatValue = SsaoRadius, written);
@@ -127,10 +214,12 @@ namespace DD.Art.Pipeline.EditorTools
             var aso = new SerializedObject(asset);
             aso.FindProperty("m_ShadowDistance").floatValue = ShadowDistance;
             aso.FindProperty("m_ShadowCascadeCount").intValue = ShadowCascadeCount;
+            aso.FindProperty("m_SupportsLightLayers").boolValue = true;   // WP-038G: the character fill reaches characters only (CharacterLightLayer)
+            ConfigureRenderingLayerNames();
             aso.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
-            Debug.Log(LogPrefix + "renderer: SSAO feature (" + string.Join(", ", written) + "), shadows " + ShadowDistance + " m / " + ShadowCascadeCount + " cascades");
+            Debug.Log(LogPrefix + "renderer: SSAO feature (" + string.Join(", ", written) + "), shadows " + ShadowDistance + " m / " + ShadowCascadeCount + " cascades, light layers on");
         }
 
         /// <summary>A/B helper (evidence only): <c>-executeMethod …ArtLightingBake.SetSsaoCli -ddSsao on|off</c> toggles the SSAO feature.</summary>
@@ -264,6 +353,7 @@ namespace DD.Art.Pipeline.EditorTools
             public int probes;
             public int reflectionProbes;
             public bool sunCreated;
+            public bool fillCreated;
         }
 
         /// <summary>Opens World_AP005 and writes the bake set-up into it (idempotent); saves the scene. Returns the report.</summary>
@@ -399,6 +489,12 @@ namespace DD.Art.Pipeline.EditorTools
             sun.bounceIntensity = 1f;
             RenderSettings.sun = sun;
 
+            // 2b) WP-038G (M3 closure K2): a realtime character fill from the camera side. Under Look B the zombie cloth and the
+            // AP-015P ground share one luma band once cast shadows are stripped from the reading (crowd/surround r1 0.019, r4
+            // 0.035 vs the 0.06 gate); the fill lights only the character layers (everything except Environment / CameraOccluder),
+            // so the plates keep their value and the characters lift ~25 % on camera-facing surfaces. Not baked, no shadows.
+            report.fillCreated = ConfigureCharacterFill(root);
+
             // 3) Environment (ambient trilight, sky, fog) — the same values the runtime writes, so the bake sees the runtime sky.
             WorldAtmosphere.ApplyEnvironment();
 
@@ -450,7 +546,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ArtLibraryPaths.Ap005WorldScene);
-            Debug.Log(LogPrefix + "prepared " + ArtLibraryPaths.Ap005WorldScene + ": ContributeGI " + report.contributeGI + " instances, sun " + (report.sunCreated ? "created" : "kept") + " (Mixed), probes " + report.probes + ", reflection probes " + report.reflectionProbes + ", settings " + LightingSettingsPath);
+            Debug.Log(LogPrefix + "prepared " + ArtLibraryPaths.Ap005WorldScene + ": ContributeGI " + report.contributeGI + " instances, fill " + (report.fillCreated ? "created" : "updated") + ", sun " + (report.sunCreated ? "created" : "kept") + " (Mixed), probes " + report.probes + ", reflection probes " + report.reflectionProbes + ", settings " + LightingSettingsPath);
             return report;
         }
 

@@ -137,6 +137,7 @@ namespace DD.Art.Tests.EditMode
             {
                 Assert.IsNotNull(r.sharedMesh, "LOD mesh");
                 Assert.AreEqual(material, r.sharedMaterial, "tek paylaşılan M_player");
+                Assert.AreEqual(ArtCharacterPrefabBuilder.CharacterRenderingLayers, r.renderingLayerMask, "WP-038G karakter rendering layer");
             }
 
             Assert.IsNotNull(visual.WeaponSocket);
@@ -174,6 +175,15 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(4, visual.LodGroup.GetLODs().Length);
             Assert.AreEqual(ZombieSkinnedVisual.SlotCount + ZombieSkinnedVisual.ArmorSlotCount * ZombieSkinnedVisual.ArmorPartCount, visual.LodGroup.GetLODs()[0].renderers.Length, "LOD0 dört giysi + altı zırh renderer'ı (WP-017)");
             Assert.IsTrue(visual.HasArmorSlots, "WP-017 zırh yuvaları");
+
+            // WP-038G: every character renderer carries the character rendering layer (fill light); armour plates never cast.
+            foreach (SkinnedMeshRenderer r in prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                Assert.AreEqual(ArtCharacterPrefabBuilder.CharacterRenderingLayers, r.renderingLayerMask, r.name + " rendering layer");
+                bool armour = r.name.Contains("Helmet") || r.name.Contains("Armor");
+                bool far = r.name.StartsWith("LOD2") || r.name.StartsWith("LOD3");
+                Assert.AreEqual(armour || far ? UnityEngine.Rendering.ShadowCastingMode.Off : UnityEngine.Rendering.ShadowCastingMode.On, r.shadowCastingMode, r.name + " gölge");
+            }
         }
 
         // ================================================================ kütüphane

@@ -32,6 +32,12 @@ namespace DD.Prototype.Characters
     public sealed class ZombieSkinnedVisual : MonoBehaviour, IZombieAnimationDriver
     {
         public const string PrefabName = "Zombie_AP007";
+        /// <summary>
+        /// WP-038G: rendering layers of every character renderer — the default bit (sun, lanterns, decals) plus bit 1, the
+        /// character fill light's layer (ArtLightingBake.CharacterLightLayer). Runtime-created character renderers (tier parts,
+        /// weapons) that should take the fill set this too.
+        /// </summary>
+        public const uint CharacterRenderingLayers = 1u | (1u << 1);
         public const string AnchorHelmet = "anchor_helmet";
         public const string AnchorTorso = "anchor_torso";
         public const string AnchorLegs = "anchor_legs";

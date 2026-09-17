@@ -17,8 +17,8 @@ MonoBehaviour:
     AOMethod: 0
     Downsample: 1
     AfterOpaque: 1
-    Source: 0
-    NormalSamples: 0
+    Source: 1
+    NormalSamples: 1
     Intensity: 1.2
     DirectLightingStrength: 0.25
     Radius: 0.3

@@ -150,6 +150,9 @@ namespace DD.Art.Tests.EditMode
             var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(ArtLightingBake.UrpAssetPath);
             Assert.AreEqual(ArtLightingBake.ShadowDistance, asset.shadowDistance, 1e-3f);
             Assert.AreEqual(ArtLightingBake.ShadowCascadeCount, asset.shadowCascadeCount);
+            // WP-038G (M3 closure K1/K2): 2 cascades, SSAO from depth (no DepthNormals prepass), and the realtime character fill in the world scene.
+            Assert.AreEqual(2, asset.shadowCascadeCount, "WP-038G: 2 cascade");
+            Assert.AreEqual(ArtLightingBake.SsaoSource, s.FindPropertyRelative("Source").enumValueIndex, "SSAO kaynağı Depth (WP-038G)");
             Assert.AreEqual(2, asset.msaaSampleCount, "MSAA 4× → 2× (ADR-025-2 ölçümü: RT sürücü belleği 413,6 → 334,3 MB; C-00 teknik kararı WP-029'da uygulandı)");
             Assert.IsTrue(asset.supportsHDR, "HDR WP-025'e kadar değişmez");
             Assert.AreEqual(32, asset.colorGradingLutSize);
@@ -173,6 +176,30 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(WorldAtmosphere.SunShadowStrength, sun.shadowStrength, 1e-4f);
             Assert.AreEqual(LightShadows.Soft, sun.shadows);
             Assert.Less(Quaternion.Angle(sun.transform.rotation, Quaternion.Euler(WorldAtmosphere.SunEuler)), 0.01f);
+
+            // WP-038G (M3 closure K2): the realtime character fill — never on the world layers, never baked, no shadows.
+            Light fill = null;
+            foreach (Light l in root.GetComponentsInChildren<Light>(true)) if (l.name == ArtLightingBake.CharacterFillName) fill = l;
+            Assert.IsNotNull(fill, "karakter dolgu ışığı (WP-038G)");
+            Assert.AreEqual(LightType.Directional, fill.type);
+            Assert.AreEqual(LightmapBakeType.Realtime, fill.lightmapBakeType);
+            Assert.AreEqual(LightShadows.None, fill.shadows);
+            Assert.AreEqual(ArtLightingBake.CharacterFillIntensity, fill.intensity, 1e-4f);
+            // URP ignores Light.cullingMask: the reach is the character rendering layer (light layers on in the pipeline asset).
+            var fillData = fill.GetComponent<UniversalAdditionalLightData>();
+            Assert.IsNotNull(fillData, "dolgu ışığı UniversalAdditionalLightData");
+            Assert.AreEqual(ArtLightingBake.CharacterLightLayer, fillData.renderingLayers, "dolgu ışığı yalnız karakter rendering layer'ına düşer");
+            Assert.AreEqual(0u, fillData.renderingLayers & 1u, "dolgu ışığı varsayılan (dünya) rendering layer'ına düşmez");
+            var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(ArtLightingBake.UrpAssetPath);
+            Assert.IsTrue(pipeline.useRenderingLayers, "pipeline asset: light layers açık (WP-038G)");
+            RenderPipelineGlobalSettings globals = GraphicsSettings.GetSettingsForRenderPipeline<UniversalRenderPipeline>();
+            Assert.IsNotNull(globals, "URP global settings");
+            var gso = new SerializedObject(globals);
+            uint valid = (uint)gso.FindProperty("m_ValidRenderingLayers").intValue;
+            Assert.AreEqual(ArtLightingBake.CharacterLightLayer, valid & ArtLightingBake.CharacterLightLayer, "karakter rendering layer'ı global ayarlarda adlı (URP ToValidRenderingLayers maskesi)");
+            Assert.AreEqual(ArtLightingBake.CharacterLightLayerName, gso.FindProperty("m_RenderingLayerNames").GetArrayElementAtIndex(1).stringValue, "rendering layer 1 adı");
+            var sunData = sun.GetComponent<UniversalAdditionalLightData>();
+            Assert.IsTrue(sunData == null || (sunData.renderingLayers & 1u) != 0u, "güneş varsayılan rendering layer'ı aydınlatır");
 
             Transform probes = root.Find(ArtLightingBake.ProbeGroupName);
             Assert.IsNotNull(probes);

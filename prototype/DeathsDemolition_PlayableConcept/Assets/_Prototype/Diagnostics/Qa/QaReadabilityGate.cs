@@ -426,16 +426,10 @@ namespace DD.Prototype.Qa
                 foreach (Renderer rr in renderers) if (rr != null) rr.enabled = on;
             }
 
-            public static bool[] Diff(Color32[] a, Color32[] b)
-            {
-                var m = new bool[a.Length];
-                for (int i = 0; i < a.Length && i < b.Length; i++)
-                {
-                    m[i] = Mathf.Abs(a[i].r - b[i].r) + Mathf.Abs(a[i].g - b[i].g) + Mathf.Abs(a[i].b - b[i].b) > 24;
-                }
-
-                return m;
-            }
+            // WP-038G (S-05, parity with CharacterTests.Okunabilirlik since WP-038E): the DEC-077 figure mask excludes the
+            // figures' own cast shadows / SSAO on the ground (uniform darkening) — the plain difference counted them as
+            // crowd (60–68 % of the pixels) and read the M3 closure crowd at 0.019 while the bodies sat at 0.07.
+            public static bool[] Diff(Color32[] a, Color32[] b) => DD.Art.ReadabilityThresholds.FigureDiff(a, b);
 
             public static int Count(bool[] m)
             {
