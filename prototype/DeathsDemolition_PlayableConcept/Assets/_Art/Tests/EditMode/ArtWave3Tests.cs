@@ -77,5 +77,47 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(19f, library.FindSheet(VfxIds.SwKaguraWave).worldSizeMetres, 0.01f, "Kagura ring 19 m (manifest)");
             Assert.AreEqual("sw_kagura_wave", SpecialWeaponUsage.For(SpecialWeaponId.KaguraBell).FireVfxFamily);
         }
+
+        [Test]
+        public void GeriBildirimPaleti_RenkKorlugu_UiTokens()
+        {
+            DD.Prototype.UI.UiPalette was = DD.Prototype.UI.UiTokens.Palette;
+            try
+            {
+                DD.Prototype.UI.UiTokens.Palette = DD.Prototype.UI.UiPalette.Default;
+                Color critDefault = DD.Prototype.Feedback.FeedbackPalette.Critical;
+                Color armorDefault = DD.Prototype.Feedback.FeedbackPalette.Armor;
+                DD.Prototype.UI.UiTokens.Palette = DD.Prototype.UI.UiPalette.ColorBlindSafe;
+                Color critSafe = DD.Prototype.Feedback.FeedbackPalette.Critical;
+                Color armorSafe = DD.Prototype.Feedback.FeedbackPalette.Armor;
+                Assert.AreEqual(DD.Prototype.UI.UiTokens.Get(DD.Prototype.UI.UiColor.StateWarning), critSafe, "kritik = uyarı jetonu");
+                Assert.AreNotEqual(critDefault, critSafe, "renk körlüğü paletinde kritik rengi değişmeli (altın → amber)");
+                Assert.AreEqual(DD.Prototype.UI.UiTokens.Get(DD.Prototype.UI.UiColor.AccentWisteria), armorSafe, "zırh = wisteria (kırmızı–altın ekseninin dışı)");
+                Assert.AreNotEqual(armorDefault, armorSafe);
+                Color kill = DD.Prototype.Feedback.FeedbackPalette.Kill;
+                // Kill (coral) and critical (amber) must stay apart in luminance, not only in hue.
+                float lumKill = 0.299f * kill.r + 0.587f * kill.g + 0.114f * kill.b;
+                float lumCrit = 0.299f * critSafe.r + 0.587f * critSafe.g + 0.114f * critSafe.b;
+                Assert.Greater(Mathf.Abs(lumKill - lumCrit), 0.08f, "öldürme / kritik parlaklık farkı");
+            }
+            finally
+            {
+                DD.Prototype.UI.UiTokens.Palette = was;
+            }
+        }
+
+        [Test]
+        public void Wave3D_KatalogSatirlari_BarrelHeat_ChainArc()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<VfxCatalog>(ArtVfxImporter.CatalogPath);
+            Assert.IsNotNull(catalog);
+            VfxCatalogEntry heat = catalog.Find(VfxIds.BarrelHeat);
+            Assert.IsNotNull(heat, "barrel_heat yok"); Assert.IsNotNull(heat.Material);
+            Assert.Greater(heat.WorldHeightMetres, heat.WorldSizeMetres, "barrel_heat dikey şerit ([w,h] 0.08 × 0.45)");
+            VfxCatalogEntry arc = catalog.Find(VfxIds.ChainArcSheet);
+            Assert.IsNotNull(arc, "chain_arc_sheet yok"); Assert.IsNotNull(arc.Material);
+            Assert.AreEqual(2.5f, arc.WorldSizeMetres, 0.01f);
+            Assert.IsTrue(VfxDressing.ChainArcMinMetres < 2.5f && VfxDressing.ChainArcMaxMetres <= 2.5f * 1.4f + 0.01f, "arkın gerilme aralığı manifestin 0.6–1.4× bandında");
+        }
     }
 }

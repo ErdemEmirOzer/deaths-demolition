@@ -187,6 +187,17 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
   frame): idle 8 → full 8 / hits 8 / explosions 8 / numbers 8; S-02 contract core 16 ≤ idle 11 + 12 (was 112).
   `GC.GetAllocatedBytesForCurrentThread` is always 0 in Unity Mono — never cite it.
 
+## WP-047D — Special reactions, barrel heat, palette, water look
+
+- `VfxEventBinder` ← `SpecialWeaponUsageEvents.Usage` (WP-056) `Hit`: Kagura = `dust_step` ×1.6 at the feet along the front;
+  Ofuda = `sw_ofuda_web` card parented to the body for the seal's life; Tide = stretched `water_splash` streak toward the
+  well + `chain_arc_sheet` from the well centre (remembered from `FieldSpawned`) to the body, 1.2–3.5 m. Per-body throttle 0.3 s.
+- Barrel heat: `barrel_heat` strip behind the muzzle along the rig-body → muzzle axis, alpha cap = heat (A 0.10 / B 0.06 /
+  C 0.18 per shot, 0.35/s cooling, shown ≥ 0.25, hidden < 0.08). Not parented — repositioned per frame.
+- `FeedbackPalette`: damage-number and hit-marker colours from S-09's `UiTokens` state tokens (critical = warning, kill =
+  danger, armour = wisteria on the colour-blind palette). Blood untouched (DEC-077).
+- `WaterLook`: the pond's `DD/Water v2` shallow / deep colours (one scan per scene) tint the splash, ring and Tide arc.
+
 ## Frame rate / resolution table (directive §10 "high quality" gate)
 
 | Family | Sheet(s) | Source px | Ships at | Grid · frames · fps · s | World size | Notes |

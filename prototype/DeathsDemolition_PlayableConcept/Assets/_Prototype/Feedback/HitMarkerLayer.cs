@@ -39,9 +39,7 @@ namespace DD.Prototype.Feedback
         private const float MinInterval = 0.035f;
 
         private static readonly Color FleshColor = new Color(1f, 1f, 1f, 0.9f);
-        private static readonly Color ArmorColor = new Color(0.68f, 0.78f, 0.9f, 0.95f);
-        private static readonly Color CriticalColor = new Color(1f, 0.78f, 0.28f, 1f);
-        private static readonly Color KillColor = new Color(1f, 0.32f, 0.26f, 1f);
+        // WP-047D: armour / critical / kill come from FeedbackPalette (S-09 UiTokens, colour-blind safe option).
 
         private sealed class Marker
         {
@@ -177,26 +175,26 @@ namespace DD.Prototype.Feedback
             switch (tier)
             {
                 case HitFeedbackTier.ArmorHit:
-                    marker.Color = ArmorColor;
+                    marker.Color = FeedbackPalette.WithAlpha(FeedbackPalette.Armor, 0.95f);   // WP-047D: palette token (colour-blind safe option)
                     marker.Spread = 10f;
                     marker.Length = 12f;
                     break;
 
                 case HitFeedbackTier.ArmorBreak:
-                    marker.Color = ArmorColor;
+                    marker.Color = FeedbackPalette.WithAlpha(FeedbackPalette.Armor, 0.95f);
                     marker.Spread = 14f;
                     marker.Length = 18f;
                     break;
 
                 case HitFeedbackTier.CriticalHit:
-                    marker.Color = CriticalColor;
+                    marker.Color = FeedbackPalette.Critical;
                     marker.Spread = 12f;
                     marker.Length = 17f;
                     break;
 
                 case HitFeedbackTier.Death:
                 case HitFeedbackTier.HeavyDeath:
-                    marker.Color = KillColor;
+                    marker.Color = FeedbackPalette.Kill;
                     marker.Spread = 16f;
                     marker.Length = tier == HitFeedbackTier.HeavyDeath ? 26f : 20f;
                     break;

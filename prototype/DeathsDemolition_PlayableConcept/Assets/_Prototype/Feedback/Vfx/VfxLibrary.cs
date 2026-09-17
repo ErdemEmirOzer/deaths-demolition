@@ -25,6 +25,9 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Gold band core (#FFC74D) for the sparkle / trail cards.</summary>
         public static readonly Color GoldTint = new Color(1f, 0.78f, 0.30f, 1f);
 
+        /// <summary>Ofuda talisman cream (the director's seal colour) for the AP-014 web card.</summary>
+        public static readonly Color OfudaCreamTint = new Color(0.96f, 0.93f, 0.84f, 1f);
+
         public static VfxCatalog Catalog
         {
             get

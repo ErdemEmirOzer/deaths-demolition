@@ -3,6 +3,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Pooling;
 using DD.Prototype.Damage;
 using DD.Prototype.Feedback.Vfx;
+using DD.Prototype.UI;
 using UnityEngine;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
@@ -867,8 +868,9 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            Color color = info.Result.WasArmored ? _armorColor
-                : tier == HitFeedbackTier.CriticalHit ? new Color(1f, 0.8f, 0.3f, 1f)
+            // WP-047D: critical / armour readouts through S-09's palette tokens (colour-blind safe option); flesh stays white.
+            Color color = info.Result.WasArmored ? (UiTokens.Palette == UiPalette.ColorBlindSafe ? FeedbackPalette.Armor : _armorColor)
+                : tier == HitFeedbackTier.CriticalHit ? FeedbackPalette.Critical
                 : Color.white;
 
             // Merge into an existing number on the same target rather than stacking a

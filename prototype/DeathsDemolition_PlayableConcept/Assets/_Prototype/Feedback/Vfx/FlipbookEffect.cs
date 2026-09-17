@@ -184,6 +184,14 @@ namespace DD.Prototype.Feedback.Vfx
             _quad.localScale = sc;
         }
 
+        /// <summary>Re-cap the alpha of a live card (barrel heat strip: cap = heat 0..1).</summary>
+        public void SetAlphaCap(float alphaCap)
+        {
+            _alphaCap = Mathf.Clamp01(alphaCap);
+            _block.SetFloat(AlphaCapId, _alphaCap);
+            _renderer.SetPropertyBlock(_block);
+        }
+
         /// <summary>After <paramref name="atSeconds"/> the alpha drops to <paramref name="toAlpha"/> over 0.1 s (death sheet: 1 → 0.35 after 0.28 s, readability).</summary>
         public void SetAlphaStep(float atSeconds, float toAlpha)
         {

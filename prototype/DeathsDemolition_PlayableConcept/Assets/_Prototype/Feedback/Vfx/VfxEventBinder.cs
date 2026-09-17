@@ -26,6 +26,10 @@ namespace DD.Prototype.Feedback.Vfx
 
         private readonly VfxDressing _owner;
         private readonly Dictionary<int, float> _lastStep = new Dictionary<int, float>(ThrottleCapacity);
+        // WP-047D: per-body throttle for the Special Hit events (the Tide well ticks every frame) + the well's centre for the arc.
+        private readonly Dictionary<int, float> _lastSpecialHit = new Dictionary<int, float>(ThrottleCapacity);
+        private Vector3 _tideWellCentre;
+        private bool _tideWellLive;
         private readonly RaycastHit[] _hits = new RaycastHit[1];
         private int _mask;
         private bool _subscribed;
@@ -41,6 +45,9 @@ namespace DD.Prototype.Feedback.Vfx
         public int MagDrops { get; private set; }
         public int PumpSmokes { get; private set; }
         public int BeatsSeen { get; private set; }
+        public int SpecialHits { get; private set; }
+        public int SpecialHitsThrottled { get; private set; }
+        public int ChainArcs { get; private set; }
 
         public VfxEventBinder(VfxDressing owner)
         {
@@ -59,6 +66,7 @@ namespace DD.Prototype.Feedback.Vfx
             EnemyCombatEvents.Raised += OnCombatBeat;
             CharacterAnimationEvents.Any += OnAnimationEvent;
             WeaponEvents.ReloadStarted += OnReloadStarted;
+            SpecialWeaponUsageEvents.Usage += OnSpecialUsage;
         }
 
         public void Unsubscribe()
@@ -72,6 +80,68 @@ namespace DD.Prototype.Feedback.Vfx
             EnemyCombatEvents.Raised -= OnCombatBeat;
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             WeaponEvents.ReloadStarted -= OnReloadStarted;
+            SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
+        }
+
+        // ------------------------------------------------------------------ WP-047D · Special Weapon usage (WP-056) → enemy reaction VFX (WP-055)
+
+        private void OnSpecialUsage(SpecialUsageEvent e)
+        {
+            switch (e.Kind)
+            {
+                case SpecialUsageKind.FieldSpawned:
+                    if (e.Id == SpecialWeaponId.TideJewel) { _tideWellCentre = e.Origin; _tideWellLive = true; }
+                    return;
+                case SpecialUsageKind.FieldEnded:
+                    if (e.Id == SpecialWeaponId.TideJewel) _tideWellLive = false;
+                    return;
+                case SpecialUsageKind.Hit:
+                    break;
+                default:
+                    return;
+            }
+
+            if (!e.Target.IsValid)
+            {
+                return;
+            }
+
+            Transform body = e.Target.Root;
+            int key = e.Target.Id;
+            float now = Time.time;
+            if (_lastSpecialHit.TryGetValue(key, out float last) && now - last < VfxDressing.SpecialHitThrottleSeconds)
+            {
+                SpecialHitsThrottled++;
+                return;
+            }
+
+            Vector3 feet = body.position;
+            bool played = false;
+            switch (e.Id)
+            {
+                case SpecialWeaponId.KaguraBell:
+                    played = _owner.PlayKaguraHit(feet, e.Direction);
+                    break;
+                case SpecialWeaponId.OfudaLoom:
+                    // The seal's height comes with the target (cached standing height); the web card wraps the torso.
+                    played = _owner.PlayOfudaWeb(body, Mathf.Max(1.2f, e.Target.Height), e.Seconds);
+                    break;
+                case SpecialWeaponId.TideJewel:
+                    played = _owner.PlayTidePull(feet, e.Direction);
+                    if (_tideWellLive && _owner.PlayChainArc(_tideWellCentre + Vector3.up * 0.4f, feet + Vector3.up * 0.9f)) ChainArcs++;
+                    break;
+            }
+
+            if (played)
+            {
+                if (_lastSpecialHit.Count >= ThrottleCapacity && !_lastSpecialHit.ContainsKey(key))
+                {
+                    _lastSpecialHit.Clear();
+                }
+
+                _lastSpecialHit[key] = now;
+                SpecialHits++;
+            }
         }
 
         private static int LayerBit(string name)

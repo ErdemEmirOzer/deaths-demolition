@@ -98,6 +98,17 @@ namespace DD.Art.Tests.PlayMode
             return new EnemyCombatEventInfo(kind, body, tier, 12345, pos, dir, ArmorSlot.None, true, 0.5f);
         }
 
+        private static ZombieEnemy NearestAlive(Vector3 origin)
+        {
+            ZombieEnemy best = null; float bestD = float.MaxValue;
+            foreach (ZombieEnemy c in UnityEngine.Object.FindObjectsOfType<ZombieEnemy>())
+            {
+                if (!c.IsAlive) continue;
+                float d = (c.transform.position - origin).sqrMagnitude; if (d < bestD) { bestD = d; best = c; }
+            }
+            return best;
+        }
+
         private static float GroundY(Vector3 near)
         {
             return Physics.Raycast(near + Vector3.up * 3f, Vector3.down, out RaycastHit hit, 10f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : near.y;
@@ -288,6 +299,85 @@ namespace DD.Art.Tests.PlayMode
             }
 
             return life;
+        }
+
+        /// <summary>
+        /// WP-047D · the Special Weapon usage bus (WP-056 Hit) → enemy reaction VFX (Kagura ground puff, Ofuda web card on
+        /// the body, Tide pull streak + chain arc from the well), per-body throttle; the barrel heat strip after a burst and
+        /// its decay; the koi pond look (DD/Water v2) behind the splash tint; 20 m evidence frames for the M3 closure.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator Run_Wave3D_SpecialTepkileri_NamluIsisi_SuGorunumu()
+        {
+            yield return RunAP005();
+            HitFeedbackDirector fx = HitFeedbackDirector.Instance;
+            VfxDressing vfx = fx.Vfx;
+            VfxEventBinder binder = vfx.Binder;
+            Assert.IsNotNull(binder);
+            Vector3 origin = PlayerRegistry.Primary.transform.position;
+            Vector3 p = origin + Vector3.forward * 3f;
+            p.y = GroundY(p);
+
+            // A real body (the reaction cards follow it): the nearest living zombie of the round (spawns within seconds in R1).
+            ZombieEnemy z = null;
+            yield return CharacterTests.Bekle(() => { z = NearestAlive(origin); return z != null; }, 20f, "canlı zombi");
+            Transform bodyT = z.transform;
+            var target = new DamageTarget { Receiver = z, Explosive = z, Root = bodyT, Id = bodyT.GetInstanceID(), Height = 1.8f, Weight = FeedbackWeight.Standard };
+            Assert.IsTrue(target.IsValid, "hedef geçersiz");
+            Vector3 feet = bodyT.position;
+
+            int hits0 = binder.SpecialHits, arcs0 = binder.ChainArcs, played0 = vfx.SpecialHitsPlayed;
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.KaguraBell, VfxIds.SwKaguraWave, target, feet + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
+            Assert.AreEqual(1, binder.SpecialHits - hits0, "Kagura Hit → zemin tozu");
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.KaguraBell, VfxIds.SwKaguraWave, target, feet + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
+            Assert.AreEqual(1, binder.SpecialHits - hits0, "aynı bedene 0,3 s içinde ikinci Hit kısılmalı");
+            yield return new WaitForSeconds(VfxDressing.SpecialHitThrottleSeconds + 0.05f);
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.OfudaLoom, VfxIds.SwOfudaWeb, target, feet + Vector3.up * 0.9f, Vector3.up, 0f, 1f, 2.5f);
+            Assert.AreEqual(2, binder.SpecialHits - hits0, "Ofuda Hit → ağ kartı");
+            FlipbookEffect web = null;
+            foreach (FlipbookEffect f in vfx.FlipbookPool.Spawned) { if (f.Row != null && f.Row.Id == VfxIds.SwOfudaWeb) { web = f; break; } }
+            Assert.IsNotNull(web, "sw_ofuda_web kartı havuzda yok");
+            Assert.AreEqual(bodyT, web.transform.parent, "ağ kartı bedene bağlı değil");
+            yield return new WaitForSeconds(VfxDressing.SpecialHitThrottleSeconds + 0.05f);
+            Vector3 well = feet + Vector3.right * 2.5f;
+            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.TideJewel, SpecialUsageKind.FieldSpawned, VfxIds.SwKaguraWave, well, Vector3.up, 3f, 4f, 0);
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.TideJewel, VfxIds.SwKaguraWave, target, feet + Vector3.up * 0.9f, (well - feet).normalized, 1.5f, 1f, 3f);
+            Assert.AreEqual(3, binder.SpecialHits - hits0, "Tide Hit → çekim izi");
+            Assert.AreEqual(1, binder.ChainArcs - arcs0, "Tide kuyusu → beden zincir arkı");
+            Assert.AreEqual(4, vfx.SpecialHitsPlayed - played0);
+
+            // Barrel heat: five rifle shots at the muzzle → strip visible; ~3 s later it has cooled off.
+            Transform muzzle = WeaponRegistry.ActiveController != null ? WeaponRegistry.ActiveController.Muzzle : PlayerRegistry.Primary.transform;
+            for (int i = 0; i < 5; i++) vfx.PlayMuzzle(muzzle, 1f);
+            Assert.Greater(vfx.BarrelHeat, VfxDressing.HeatShowAbove, "5 atış ısıyı eşiğin üstüne çıkarmalı");
+            yield return null; yield return null;
+            Assert.IsTrue(vfx.BarrelHeatVisible, "ısı şeridi görünmedi");
+            float heatShown = vfx.BarrelHeat;
+
+            // Water look: the koi pond (WP-038 DD/Water v2) is the splash tint's source in the AP005 world.
+            Color splashTint = WaterLook.SplashTint;
+            Debug.Log("[DD-TEST] wp047d.special hits=" + (binder.SpecialHits - hits0) + " throttled=" + binder.SpecialHitsThrottled + " arcs=" + (binder.ChainArcs - arcs0) +
+                      " body=" + (z != null ? z.name : "player") + " heat=" + heatShown.ToString("F2") + " visible=" + vfx.BarrelHeatVisible +
+                      " waterFound=" + WaterLook.Found + " splashTint=" + splashTint + " arcTint=" + WaterLook.ArcTint);
+            Assert.IsTrue(WaterLook.Found, "AP005 dünyasında DD/Water v2 malzemesi bulunamadı (WP-038 koi havuzu)");
+
+            // Evidence: the reactions from the gameplay distance (20 m) and the heat strip up close.
+            string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
+            if (string.IsNullOrEmpty(dir)) dir = Path.Combine(Application.temporaryCachePath, "wp047-captures");
+            dir = Path.Combine(dir, "wave3"); Directory.CreateDirectory(dir);
+            vfx.PlayKaguraHit(feet + Vector3.left * 1.2f, Vector3.forward);
+            vfx.PlayTidePull(feet + Vector3.right * 1.2f, Vector3.right);
+            vfx.PlayChainArc(well + Vector3.up * 0.4f, feet + Vector3.right * 1.2f + Vector3.up * 0.9f);
+            yield return new WaitForSeconds(0.08f);
+            ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_20m", feet + new Vector3(0f, 14f, -14.2f), feet + Vector3.up * 0.8f, 40f), W, H, Path.Combine(dir, "04-special-reactions-20m.png"), true);
+            ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_near", feet + new Vector3(2.2f, 1.5f, -2.4f), feet + Vector3.up * 0.9f, 42f), W, H, Path.Combine(dir, "05-special-reactions-near.png"), true);
+            for (int i = 0; i < 4; i++) vfx.PlayMuzzle(muzzle, 1f);
+            yield return null;
+            ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_heat", muzzle.position + muzzle.right * 0.9f + Vector3.up * 0.25f - muzzle.forward * 0.3f, muzzle.position - muzzle.forward * 0.2f, 38f), W, H, Path.Combine(dir, "06-barrel-heat-near.png"), true);
+
+            yield return new WaitForSeconds(3.2f);
+            Assert.IsFalse(vfx.BarrelHeatVisible, "ısı şeridi 3 s sonra sönmedi (heat " + vfx.BarrelHeat.ToString("F2") + ")");
         }
     }
 }

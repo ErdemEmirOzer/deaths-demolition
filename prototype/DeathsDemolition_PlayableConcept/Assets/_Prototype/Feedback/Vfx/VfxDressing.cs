@@ -175,7 +175,7 @@ namespace DD.Prototype.Feedback.Vfx
             _ready = true;
         }
 
-        /// <summary>Per frame from the director: blood far-LOD absorb + merged mesh rebuild.</summary>
+        /// <summary>Per frame from the director: blood far-LOD absorb + merged mesh rebuild, delayed cards, barrel heat.</summary>
         public void Tick(float now)
         {
             if (_ready)
@@ -183,7 +183,193 @@ namespace DD.Prototype.Feedback.Vfx
                 _blood.Tick(now);
                 _binder?.Tick(now);
                 _lanterns.Tick(now);
+                TickBarrelHeat(now);
             }
+        }
+
+        // ------------------------------------------------------------------ WP-047D · enemy Special reactions (WP-055 / WP-056 Hit)
+
+        public const float SpecialHitThrottleSeconds = 0.30f;
+        public const float KaguraHitDustScale = 1.6f;
+        public const float TidePullStreakSize = 0.55f;
+        public const float ChainArcMinMetres = 1.2f, ChainArcMaxMetres = 3.5f;
+
+        public int SpecialHitsPlayed { get; private set; }
+
+        /// <summary>Kagura wave front crossed a body (S-03 Dazed): a ground puff kicked off the feet in the front's direction.</summary>
+        public bool PlayKaguraHit(Vector3 feet, Vector3 direction)
+        {
+            if (!_ready || AuditMute || !VfxLibrary.TryGetPlayable(VfxIds.DustStep, out VfxCatalogEntry row))
+            {
+                return false;
+            }
+
+            FlipbookEffect fx = _flipbooks.Get(feet + Vector3.up * 0.03f, Quaternion.identity);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            fx.Play(row, FlipbookEffect.Facing.CameraYaw, row.WorldSizeMetres * KaguraHitDustScale, VfxLibrary.BeaconTint, 0.8f, 0.3f);
+            fx.SetAlign(direction.sqrMagnitude > 1e-4f ? direction : Vector3.forward, true);
+            SpecialHitsPlayed++;
+            return true;
+        }
+
+        /// <summary>Ofuda seal on a body (S-03 Netted): the AP-014 web card wrapped on the body for the seal's life, following it.</summary>
+        public bool PlayOfudaWeb(Transform body, float height, float seconds)
+        {
+            if (!_ready || AuditMute || body == null)
+            {
+                return false;
+            }
+
+            SpecialWeaponSheets.Playable sheet = _swSheets.Get(VfxIds.SwOfudaWeb);
+            if (sheet.Row == null)
+            {
+                return false;
+            }
+
+            FlipbookEffect fx = _flipbooks.Get(body.position + Vector3.up * (height * 0.55f), Quaternion.identity, body);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            float size = Mathf.Clamp(height * 0.62f, 0.6f, 1.4f);
+            fx.Play(sheet.Row, FlipbookEffect.Facing.CameraYaw, size, VfxLibrary.OfudaCreamTint, 0.9f, 0.25f, Mathf.Max(0.3f, seconds));
+            SpecialHitsPlayed++;
+            return true;
+        }
+
+        /// <summary>Tide well pull tick on a body (S-03 lean): a short splash streak dragged toward the well from the feet.</summary>
+        public bool PlayTidePull(Vector3 feet, Vector3 inward)
+        {
+            if (!_ready || AuditMute || !VfxLibrary.TryGetPlayable(VfxIds.WaterSplash, out VfxCatalogEntry row))
+            {
+                return false;
+            }
+
+            FlipbookEffect fx = _flipbooks.Get(feet + Vector3.up * 0.05f, Quaternion.identity);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            fx.Play(row, FlipbookEffect.Facing.Camera, TidePullStreakSize, WaterLook.SplashTint, 0.85f, 0.3f);
+            fx.SetAlign(inward.sqrMagnitude > 1e-4f ? inward : Vector3.forward, true);
+            fx.SetStretch(1.7f, 0.7f);
+            SpecialHitsPlayed++;
+            return true;
+        }
+
+        /// <summary>AP-010B `chain_arc_sheet` stretched between two points (Tide well → pulled body; manifest: 0.6–1.4× of 2.5 m).</summary>
+        public bool PlayChainArc(Vector3 from, Vector3 to)
+        {
+            if (!_ready || AuditMute || !VfxLibrary.TryGetPlayable(VfxIds.ChainArcSheet, out VfxCatalogEntry row))
+            {
+                return false;
+            }
+
+            Vector3 delta = to - from;
+            float length = delta.magnitude;
+            if (length < 0.2f)
+            {
+                return false;
+            }
+
+            FlipbookEffect fx = _flipbooks.Get((from + to) * 0.5f, Quaternion.identity);
+            if (fx == null)
+            {
+                return false;
+            }
+
+            fx.Play(row, FlipbookEffect.Facing.Camera, Mathf.Clamp(length, ChainArcMinMetres, ChainArcMaxMetres), WaterLook.ArcTint, 1f, 0f);
+            fx.SetAlign(delta / length, true);
+            SpecialHitsPlayed++;
+            return true;
+        }
+
+        // ------------------------------------------------------------------ WP-047D · barrel heat (AP-010B `barrel_heat` strip)
+
+        public const float HeatPerShotA = 0.10f, HeatPerShotB = 0.06f, HeatPerShotC = 0.18f;
+        public const float HeatDecayPerSecond = 0.35f;
+        public const float HeatShowAbove = 0.25f, HeatHideBelow = 0.08f;
+
+        private float _heat;
+        private float _heatTickAt = -1f;
+        private FlipbookEffect _heatCard;
+        private Transform _heatMuzzle;
+        private Transform _heatBody;
+        private float _heatLength = 0.45f;
+
+        public float BarrelHeat => _heat;
+        public bool BarrelHeatVisible => _heatCard != null && _heatCard.IsSpawned;
+
+        private void AddHeat(MuzzleVariant variant, Transform muzzle)
+        {
+            _heat = Mathf.Clamp01(_heat + (variant == MuzzleVariant.B ? HeatPerShotB : variant == MuzzleVariant.C ? HeatPerShotC : HeatPerShotA));
+            // The barrel's visual axis: rig body → muzzle socket (the socket's forward is the aim; in the lowered pose the
+            // barrel hangs). The rig is looked up once per muzzle transform (a weapon swap hands over a new one).
+            if (!ReferenceEquals(muzzle, _heatMuzzle))
+            {
+                _heatMuzzle = muzzle;
+                DD.Prototype.Weapons.WeaponVisualRig rig = muzzle != null ? muzzle.GetComponentInParent<DD.Prototype.Weapons.WeaponVisualRig>() : null;
+                _heatBody = rig != null ? rig.Body : null;
+            }
+        }
+
+        private Vector3 BarrelAxis()
+        {
+            if (_heatBody != null && _heatMuzzle != null)
+            {
+                Vector3 axis = _heatMuzzle.position - _heatBody.position;
+                if (axis.sqrMagnitude > 1e-4f) return axis.normalized;
+            }
+
+            return _heatMuzzle != null ? _heatMuzzle.forward : Vector3.forward;
+        }
+
+        private void TickBarrelHeat(float now)
+        {
+            if (_heatTickAt < 0f) _heatTickAt = now;
+            float dt = Mathf.Max(0f, now - _heatTickAt);
+            _heatTickAt = now;
+            _heat = Mathf.Max(0f, _heat - HeatDecayPerSecond * dt);
+
+            if (_heatCard != null && (!_heatCard.IsSpawned || _heatMuzzle == null || _heat < HeatHideBelow))
+            {
+                if (_heatCard.IsSpawned) _flipbooks.Release(_heatCard);
+                _heatCard = null;
+                return;
+            }
+
+            if (_heatCard == null)
+            {
+                if (_heat < HeatShowAbove || _heatMuzzle == null || !VfxLibrary.TryGetPlayable(VfxIds.BarrelHeat, out VfxCatalogEntry row))
+                {
+                    return;
+                }
+
+                // Manifest: 0.08 × 0.45 m strip, muzzle end at v = 0 → the card sits half its length behind the muzzle.
+                float length = row.WorldHeightMetres > 0f ? row.WorldHeightMetres : 0.45f;
+                // Not parented: a weapon swap rebuilds the rig and would take the pooled card down with the muzzle.
+                _heatCard = _flipbooks.Get(_heatMuzzle.position - BarrelAxis() * (length * 0.5f), Quaternion.identity);
+                if (_heatCard == null)
+                {
+                    return;
+                }
+
+                _heatLength = length;
+                _heatCard.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres, Color.white, _heat, 0f, 3600f);
+                _heatCard.SetAlign(BarrelAxis(), false);
+                return;
+            }
+
+            Vector3 barrel = BarrelAxis();
+            _heatCard.transform.position = _heatMuzzle.position - barrel * (_heatLength * 0.5f);
+            _heatCard.SetAlign(barrel, false);
+            _heatCard.SetAlphaCap(_heat);
         }
 
         private static T Template<T>(Transform root, string name) where T : PooledEffect
@@ -286,13 +472,13 @@ namespace DD.Prototype.Feedback.Vfx
             if (VfxLibrary.TryGetPlayable(VfxIds.WaterSplash, out VfxCatalogEntry splash))
             {
                 FlipbookEffect fx = _flipbooks.Get(point, Quaternion.identity);
-                if (fx != null) { fx.Play(splash, FlipbookEffect.Facing.Camera, splash.WorldSizeMetres, Color.white); any = true; }
+                if (fx != null) { fx.Play(splash, FlipbookEffect.Facing.Camera, splash.WorldSizeMetres, WaterLook.SplashTint); any = true; }   // WP-047D: the pond's DD/Water v2 shallow colour
             }
 
             if (VfxLibrary.TryGetPlayable(VfxIds.WaterSplashRing, out VfxCatalogEntry ring))
             {
                 FlipbookEffect fx = _flipbooks.Get(point + Vector3.up * 0.02f, Quaternion.Euler(90f, 0f, 0f));
-                if (fx != null) { fx.Play(ring, FlipbookEffect.Facing.Fixed, ring.WorldSizeMetres, Color.white); any = true; }
+                if (fx != null) { fx.Play(ring, FlipbookEffect.Facing.Fixed, ring.WorldSizeMetres, WaterLook.SplashTint); any = true; }
             }
 
             return any;
@@ -453,6 +639,7 @@ namespace DD.Prototype.Feedback.Vfx
 
             LastMuzzleVariant = variant;
             MuzzlePlays++;
+            AddHeat(variant, muzzle);
             LastMuzzleNote = active == null ? "no-active" : active.Classic == null ? "no-classic" : active.SpecialWeaponActive ? "special" : active.Classic.Id.ToString();
             float size = row.WorldSizeMetres * Mathf.Max(0.5f, scale);
             switch (variant)
