@@ -91,13 +91,15 @@ if [ -n "$HITS" ]; then fail "secret-like content in added lines:"; echo "$HITS"
 check_ids() {  # $1 = planning/00 content file, $2 = planning/01 content file → prints problems, exit 1 on any
   python3 - "$1" "$2" <<'PY'
 import sys, re
-dec=[int(m) for m in re.findall(r'^\| DEC-(\d{3}) \|', open(sys.argv[1],encoding='utf-8').read(), re.M)]
-req=[int(m) for m in re.findall(r'^\| REQ-(\d{3}) \|', open(sys.argv[2],encoding='utf-8').read(), re.M)]
+# Same rule as ProjectIntegrityTests.TabloKimlikleri: collect, SORT numerically (the tables are not in
+# authored order), then DEC must be exactly 1..N and REQ must have no duplicates (authored gaps allowed).
+dec=sorted(int(m) for m in re.findall(r'^\| DEC-(\d{3}) \|', open(sys.argv[1],encoding='utf-8').read(), re.M))
+req=sorted(int(m) for m in re.findall(r'^\| REQ-(\d{3}) \|', open(sys.argv[2],encoding='utf-8').read(), re.M))
 bad=[]
 for i,v in enumerate(dec):
-    if v!=i+1: bad.append(f"DEC-{v:03d} at position {i+1} (expected DEC-{i+1:03d}: duplicate or gap)"); break
+    if v!=i+1: bad.append(f"DEC-{v:03d} (expected DEC-{i+1:03d}: duplicate or gap)"); break
 for i in range(1,len(req)):
-    if req[i]<=req[i-1]: bad.append(f"REQ-{req[i]:03d} not increasing after REQ-{req[i-1]:03d} (duplicate or out of order)"); break
+    if req[i]==req[i-1]: bad.append(f"REQ-{req[i]:03d} duplicated"); break
 print("\n".join(bad)); sys.exit(1 if bad else 0)
 PY
 }
