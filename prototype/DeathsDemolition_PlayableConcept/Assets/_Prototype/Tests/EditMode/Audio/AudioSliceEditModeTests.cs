@@ -218,6 +218,33 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(9, sesler.Count, "8 AP-017 ailesi + seramik: dokuz ayrı ses");
         }
 
+        /// <summary>WP-060 · WP-038B: the break event id is data on the prop; six events each own a voice, the name only refines inside the event.</summary>
+        [Test]
+        public void Kirilabilirler_EventIdVeriden_AltiOlayKendiSesi_AdOlayIcindeInceltir()
+        {
+            var beklenen = new (string olay, string ad, AudioSoundId ses)[]
+            {
+                ("BreakStone", "SM_breakable_lantern_stone_V02", AudioSoundId.BreakLanternStone), ("BreakStone", "", AudioSoundId.BreakLanternStone),
+                ("BreakCeramic", "SM_breakable_planter_V01", AudioSoundId.BreakPlanter), ("BreakCeramic", "SM_small_breakable_V03", AudioSoundId.BreakCeramic),
+                ("BreakWood", "SM_breakable_bench_V01", AudioSoundId.BreakBench), ("BreakWood", "SM_breakable_sign_V01", AudioSoundId.BreakSign), ("BreakWood", "", AudioSoundId.BreakBench),
+                ("BreakBamboo", "SM_breakable_fence_panel_V02", AudioSoundId.BreakFence), ("BreakPaper", "SM_breakable_shoji_V01", AudioSoundId.BreakShoji),
+                ("BreakPaper", "SM_breakable_lantern_paper_V01", AudioSoundId.BreakLanternPaper), ("BreakStraw", "SM_breakable_strawbale_V01", AudioSoundId.BreakBale),
+                ("", "SM_breakable_sign_V01", AudioSoundId.BreakSign), ("Unknown", "", AudioSoundId.BreakCeramic)
+            };
+            foreach ((string olay, string ad, AudioSoundId ses) in beklenen)
+            {
+                Assert.AreEqual(ses, AudioEventRouter.BreakSoundForEvent(olay, ad), olay + " / " + ad);
+            }
+
+            string[] olaylar = { "BreakStone", "BreakCeramic", "BreakWood", "BreakBamboo", "BreakPaper", "BreakStraw" };
+            foreach (string olay in olaylar)
+            {
+                bool var = false;
+                foreach (AudioEventBinding e in AudioEventMap.Entries) if (e.Event == "BreakableProp.Broke · EventId " + olay) var = true;
+                Assert.IsTrue(var, "AudioEventMap satırı yok: " + olay);
+            }
+        }
+
         /// <summary>WP-021C · tier vocal set: every tier has its own windup/attack/hit/death/idle/aggro id (B·B·B).</summary>
         [Test]
         public void TierVokalSeti_HerTierKendiKimligi()

@@ -558,9 +558,31 @@ namespace DD.Prototype.Audio
                 return cached;
             }
 
-            AudioSoundId sound = BreakSoundForName(prop.gameObject.name);
+            AudioSoundId sound = BreakSoundForEvent(prop.EventId, prop.gameObject.name);
             s_breakSounds[prop] = sound;
             return sound;
+        }
+
+        /// <summary>
+        /// WP-060 (WP-038B on main): the break event id is DATA on the prop (<c>BreakableProp.EventId</c>,
+        /// six AP-017 events written by the prefab builder). The event picks the voice; the root name only
+        /// refines inside that event (BreakWood → bench / sign, BreakPaper → lantern_paper / shoji, BreakStone
+        /// → lantern_stone, BreakCeramic → planter vs the AP-003B ceramic). An unknown event id falls back to
+        /// the name rule, then ceramic. Public for the EditMode table test.
+        /// </summary>
+        public static AudioSoundId BreakSoundForEvent(string eventId, string name)
+        {
+            AudioSoundId byName = BreakSoundForName(name);
+            switch (eventId)
+            {
+                case "BreakStone": return AudioSoundId.BreakLanternStone;
+                case "BreakBamboo": return AudioSoundId.BreakFence;
+                case "BreakStraw": return AudioSoundId.BreakBale;
+                case "BreakWood": return byName == AudioSoundId.BreakSign ? AudioSoundId.BreakSign : AudioSoundId.BreakBench;
+                case "BreakPaper": return byName == AudioSoundId.BreakShoji ? AudioSoundId.BreakShoji : AudioSoundId.BreakLanternPaper;
+                case "BreakCeramic": return byName == AudioSoundId.BreakPlanter ? AudioSoundId.BreakPlanter : AudioSoundId.BreakCeramic;
+                default: return byName;
+            }
         }
 
         private static readonly Dictionary<Props.BreakableProp, AudioSoundId> s_breakSounds = new Dictionary<Props.BreakableProp, AudioSoundId>(64);
