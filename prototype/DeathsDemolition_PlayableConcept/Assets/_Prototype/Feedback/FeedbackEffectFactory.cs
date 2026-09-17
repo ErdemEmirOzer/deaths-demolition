@@ -44,6 +44,9 @@ namespace DD.Prototype.Feedback
         private static bool s_fontResolved;
         private static bool s_damageNumberUnavailable;
 
+        /// <summary>WP-019: the inactive template root, for the AP-010 pool templates.</summary>
+        public static Transform TemplateRoot => Root;
+
         private static Transform Root
         {
             get

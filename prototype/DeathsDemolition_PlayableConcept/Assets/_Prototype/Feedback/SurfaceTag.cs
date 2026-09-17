@@ -72,9 +72,61 @@ namespace DD.Prototype.Feedback
             {
                 resolved = SurfaceKind.Flesh;
             }
+            else
+            {
+                // WP-019: the AP library prefabs carry no SurfaceTag; their material role name
+                // (M_<role>) says what they are made of. One walk per collider, then cached.
+                resolved = FromMaterialRole(collider);
+            }
 
             s_cache[key] = resolved;
             return resolved;
+        }
+
+        /// <summary>
+        /// Material role → surface for the AP-002/003/003B/005 prefabs (ADR-012-2 names the
+        /// materials M_&lt;role&gt;). The nearest renderer under the collider's prefab root wins;
+        /// unknown roles stay Default (stone impact).
+        /// </summary>
+        public static SurfaceKind FromMaterialRole(Collider collider)
+        {
+            Transform t = collider.transform;
+            Renderer r = t.GetComponentInChildren<Renderer>(true);
+            if (r == null && t.parent != null)
+            {
+                r = t.parent.GetComponentInChildren<Renderer>(true);
+            }
+
+            if (r == null || r.sharedMaterial == null)
+            {
+                return SurfaceKind.Default;
+            }
+
+            return FromMaterialName(r.sharedMaterial.name);
+        }
+
+        /// <summary>Pure mapping for tests: "M_stone" → Stone, "M_wood"/"M_bark_02"/"M_bamboo_culm" → Wood, "M_earth_01"/"M_gravel"/"M_moss" → Dirt, foliage → Foliage, pond → Water.</summary>
+        public static SurfaceKind FromMaterialName(string materialName)
+        {
+            if (string.IsNullOrEmpty(materialName))
+            {
+                return SurfaceKind.Default;
+            }
+
+            string n = materialName.StartsWith("M_", System.StringComparison.Ordinal) ? materialName.Substring(2) : materialName;
+            if (n.StartsWith("stone", System.StringComparison.Ordinal) || n.StartsWith("plaster", System.StringComparison.Ordinal) || n.StartsWith("roof", System.StringComparison.Ordinal) ||
+                n.StartsWith("prop_tsukubai", System.StringComparison.Ordinal) || n.StartsWith("prop_mossrock", System.StringComparison.Ordinal))
+                return SurfaceKind.Stone;
+            if (n.StartsWith("wood", System.StringComparison.Ordinal) || n.StartsWith("bark", System.StringComparison.Ordinal) || n.StartsWith("bamboo", System.StringComparison.Ordinal) ||
+                n.StartsWith("prop_handcart", System.StringComparison.Ordinal) || n.StartsWith("prop_barrels", System.StringComparison.Ordinal) || n.StartsWith("prop_shed", System.StringComparison.Ordinal) || n.StartsWith("prop_strawbales", System.StringComparison.Ordinal))
+                return SurfaceKind.Wood;
+            if (n.StartsWith("earth", System.StringComparison.Ordinal) || n.StartsWith("gravel", System.StringComparison.Ordinal) || n.StartsWith("moss", System.StringComparison.Ordinal))
+                return SurfaceKind.Dirt;
+            if (n.StartsWith("green", System.StringComparison.Ordinal) || n.StartsWith("sakura", System.StringComparison.Ordinal))
+                return SurfaceKind.Foliage;
+            if (n.StartsWith("pond_water", System.StringComparison.Ordinal))
+                return SurfaceKind.Water;
+            return SurfaceKind.Default;
         }
 
         /// <summary>Drop the cache. Called on scene change and whenever a tag is edited at runtime.</summary>

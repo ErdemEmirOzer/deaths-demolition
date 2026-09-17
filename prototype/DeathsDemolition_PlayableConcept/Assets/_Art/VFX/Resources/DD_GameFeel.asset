@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bca8c05e8b4d6441aa8917af8f22e587, type: 3}
+  m_Name: DD_GameFeel
+  m_EditorClassIdentifier: 
+  _enabled: 1
+  _hitStopArmorBreak: 0.035
+  _hitStopDeath: 0.04
+  _hitStopMinInterval: 0.12
+  _shakeExplosionAmplitude: 0.12
+  _shakeExplosionSeconds: 0.2
+  _shakePlayerDamageAmplitude: 0
+  _shakePlayerDamageSeconds: 0.15
+  _shakeArmorBreakAmplitude: 0.075
+  _shakeHeavyDeathAmplitude: 0.095
+  _vignetteFlashAlpha: 0.35
+  _vignetteLowHealthAlpha: 0.35
+  _lowHealthFraction: 0.3
+  _vignetteFlashInFrames: 4
+  _vignetteFlashOutFrames: 12

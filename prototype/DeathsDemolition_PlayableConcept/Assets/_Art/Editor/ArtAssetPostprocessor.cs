@@ -61,6 +61,17 @@ namespace DD.Art.Pipeline.EditorTools
 
         private void OnPreprocessTexture()
         {
+            // WP-019: AP-010 effect textures have their own rules (ArtVfxContract).
+            if (ArtVfxContract.IsVfxTexture(assetPath))
+            {
+                if (ArtVfxContract.Apply((TextureImporter)assetImporter))
+                {
+                    Debug.Log("[ArtVfxContract] applied to " + assetPath);
+                }
+
+                return;
+            }
+
             if (!ArtImportContract.IsContractTexture(assetPath))
             {
                 return;

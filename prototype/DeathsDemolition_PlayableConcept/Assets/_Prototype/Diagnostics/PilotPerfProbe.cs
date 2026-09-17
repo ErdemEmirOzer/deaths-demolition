@@ -89,6 +89,14 @@ namespace DD.Prototype.Diagnostics
         /// particle/post cost, and the WP-012 numbers are the pre-shader baseline.
         /// </summary>
         private const string AtmosphereFlag = "-ddPilotAtmosphere";
+
+        /// <summary>
+        /// WP-019 · "-ddPilotVfxStress" (optional): during the window the probe drives the feedback
+        /// director with the dense effect scenario of the WP-019 budget — 10 surface impacts/s,
+        /// 1 explosion/s and 5 death dressings/s around the player — so the AP-010 layer is measured
+        /// on top of the 40-body crowd. Counts and the pool state go into the 04-window stage.
+        /// </summary>
+        private const string VfxStressFlag = "-ddPilotVfxStress";
         /// <summary>WP-017 · <c>-ddArmor all</c>: every forced zombie carries all three AP-008 pieces at full durability (worst-case crowd; the spawn roll is untouched).</summary>
         private const string ArmorFlag = "-ddArmor";
 
@@ -183,6 +191,7 @@ namespace DD.Prototype.Diagnostics
             driver.Configure(outDir, scene, window, warmup, resW, resH, lodBiasOverride);
             driver.ProfilerLogPath = Arg(ProfilerLogFlag);
             driver.AtmosphereOff = string.Equals(Arg(AtmosphereFlag), "off", StringComparison.OrdinalIgnoreCase);
+            driver.VfxStress = Array.IndexOf(Environment.GetCommandLineArgs(), VfxStressFlag) >= 0;
             driver.ArmorAll = string.Equals(Arg(ArmorFlag), "all", StringComparison.OrdinalIgnoreCase);
             Debug.Log("[PilotPerfProbe] armed scene=" + scene + " window=" + window.ToString("F0", CultureInfo.InvariantCulture) +
                       "s warmup=" + warmup.ToString("F0", CultureInfo.InvariantCulture) + "s out=" + outDir);
@@ -240,6 +249,40 @@ namespace DD.Prototype.Diagnostics
             public float playerZ;
             public int targetFrameRate;
             public int vSyncCount;
+
+            // ---- WP-019 VFX stress (04-window)
+            public bool vfxStress;
+            public int vfxImpacts;
+            public int vfxExplosions;
+            public int vfxDeaths;
+            public int vfxPlayed;
+            public int vfxDecals;
+            public int vfxFlipbookSpawned;
+            public int vfxFlipbookTotal;
+            public int vfxDecalSpawned;
+            public int vfxDecalTotal;
+            // WP-019b blood layer
+            public bool bloodReady;
+            public int bloodSplashes;
+            public int bloodDropletBursts;
+            public int bloodMarks;
+            public int bloodPools;
+            public int bloodMerged;
+            public int bloodEvicted;
+            public int bloodSkippedGold;
+            public int bloodLive;
+            public int bloodDecalSpawned;
+            public int bloodDecalTotal;
+            public int bloodMergedQuads;
+            // 04d GPU sub-window (dev build, Profiler on): average / max GPU ms per frame of the URP draw passes
+            public float gpuTransparentsAvgMs = -1f;
+            public float gpuTransparentsMaxMs = -1f;
+            public float gpuOpaquesAvgMs = -1f;
+            public float gpuCameraAvgMs = -1f;
+            public int gpuSampledFrames;
+            public float gpuSubWindowSeconds;
+            public float gpuSubWindowFrameMeanMs;
+            public bool vfxLayerReady;
 
             // ---- WP-013 atmosphere (every stage)
             public bool atmosphereOn;
@@ -783,6 +826,11 @@ namespace DD.Prototype.Diagnostics
 
                     for (int i = 0; i < counters.Length; i++) counters[i].Sample();
 
+                    if (VfxStress)
+                    {
+                        StepVfxStress(Time.realtimeSinceStartup, rig);
+                    }
+
                     if (Time.realtimeSinceStartup - t0 >= _windowSeconds)
                     {
                         break;
@@ -826,6 +874,7 @@ namespace DD.Prototype.Diagnostics
                 int subGen0 = GC.CollectionCount(0) - subGen0Before;
 
                 Stage s4 = Capture("04-window");
+                FillVfxStage(s4);
                 s4.lodBiasEffective = QualitySettings.lodBias;
                 s4.worldSource = _scene == PrototypeScenes.Run ? WorldBootstrap.ActiveSource.ToString() : _scene;
                 s4.windowSeconds = windowSeconds;
@@ -876,6 +925,13 @@ namespace DD.Prototype.Diagnostics
                           " | gen0 " + gen0InWindow + " alloc/frame " + s4.gcAllocatedInFrameAvg.ToString("F0", CultureInfo.InvariantCulture) + " B heap/s " + s4.gcSubWindowBytesPerSecond + " B (gen0 " + subGen0 + ")" +
                           " | spikes " + spikeFrames + " withGen0 " + spikeFramesWithGen0 + (profilerLog ? " profilerLog yes" : "") +
                           (string.IsNullOrEmpty(s4.unavailableCounters) ? "" : " | unavailable: " + s4.unavailableCounters);
+                if (VfxStress)
+                {
+                    s4.note += " | vfxStress impacts=" + s4.vfxImpacts + " explosions=" + s4.vfxExplosions + " deaths=" + s4.vfxDeaths + " played=" + s4.vfxPlayed + " decals=" + s4.vfxDecals +
+                               " flipbookPool=" + s4.vfxFlipbookSpawned + "/" + s4.vfxFlipbookTotal + " decalPool=" + s4.vfxDecalSpawned + "/" + s4.vfxDecalTotal + " ready=" + s4.vfxLayerReady +
+                               " | blood splashes=" + s4.bloodSplashes + " droplets=" + s4.bloodDropletBursts + " marks=" + s4.bloodMarks + " pools=" + s4.bloodPools + " live=" + s4.bloodLive +
+                               " merged=" + s4.bloodMerged + " evicted=" + s4.bloodEvicted + " bloodPool=" + s4.bloodDecalSpawned + "/" + s4.bloodDecalTotal;
+                }
                 Write(s4);
                 WriteFrameTimes();
 
@@ -902,6 +958,20 @@ namespace DD.Prototype.Diagnostics
                 s4c.note = "meshes " + s4c.meshCount + " = " + Mb(s4c.meshBytes) + " | armour " + s4c.meshArmorCount + " = " + Mb(s4c.meshArmorBytes) + " | zombie " + s4c.meshZombieCount + " = " + Mb(s4c.meshZombieBytes) +
                            " | player " + Mb(s4c.meshPlayerBytes) + " | world " + s4c.meshWorldCount + " = " + Mb(s4c.meshWorldBytes) + " | other " + Mb(s4c.meshOtherBytes) + " | top: " + s4c.meshTop;
                 Write(s4c);
+
+                // ---------------------------------------------------------------- 04d gpu (WP-019b)
+                Stage s4d = Capture("04d-gpu");
+                yield return MeasureGpu(s4d, rig, 8f);
+                FillVfxStage(s4d);
+                s4d.pass = true;   // informational: the effect-GPU ceiling (≤ 1.5 ms) is judged on the A/B delta, not here
+                s4d.note = "gpu transparents avg " + s4d.gpuTransparentsAvgMs.ToString("F3", CultureInfo.InvariantCulture) + " max " + s4d.gpuTransparentsMaxMs.ToString("F3", CultureInfo.InvariantCulture) +
+                           " opaques " + s4d.gpuOpaquesAvgMs.ToString("F3", CultureInfo.InvariantCulture) + " camera " + s4d.gpuCameraAvgMs.ToString("F3", CultureInfo.InvariantCulture) +
+                           " ms over " + s4d.gpuSampledFrames + " sampled frames / " + s4d.gpuSubWindowSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s (frame mean " + s4d.gpuSubWindowFrameMeanMs.ToString("F2", CultureInfo.InvariantCulture) + " ms, profiler on)" +
+                           (s4d.gpuSampledFrames == 0 ? " GPU SAMPLES UNAVAILABLE" : "") +
+                           " | blood ready=" + s4d.bloodReady + " splashes=" + s4d.bloodSplashes + " droplets=" + s4d.bloodDropletBursts + " marks=" + s4d.bloodMarks + " pools=" + s4d.bloodPools +
+                           " live=" + s4d.bloodLive + " merged=" + s4d.bloodMerged + "(" + s4d.bloodMergedQuads + " quads) evicted=" + s4d.bloodEvicted + " skippedGold=" + s4d.bloodSkippedGold +
+                           " bloodPool=" + s4d.bloodDecalSpawned + "/" + s4d.bloodDecalTotal;
+                Write(s4d);
 
                 // ---------------------------------------------------------------- 05 gc-positive-control
                 // A measurement that cannot see a known 1 MB allocation is blind, and every
@@ -1104,6 +1174,147 @@ namespace DD.Prototype.Diagnostics
             /// </summary>
             /// <summary>WP-013 A/B switch (see AtmosphereFlag).</summary>
             public bool AtmosphereOff;
+
+            /// <summary>WP-019 dense effect scenario (see VfxStressFlag).</summary>
+            public bool VfxStress;
+            private int _stressImpacts, _stressExplosions, _stressDeaths;
+            private float _stressImpactNext, _stressExplosionNext, _stressDeathNext;
+            private readonly DD.Prototype.Feedback.SurfaceKind[] _stressSurfaces =
+            {
+                DD.Prototype.Feedback.SurfaceKind.Stone, DD.Prototype.Feedback.SurfaceKind.Wood, DD.Prototype.Feedback.SurfaceKind.Dirt,
+                DD.Prototype.Feedback.SurfaceKind.Flesh, DD.Prototype.Feedback.SurfaceKind.Metal
+            };
+
+            /// <summary>One frame of the stress driver: 10 impacts/s, 1 explosion/s, 5 deaths/s around the player.</summary>
+            private void StepVfxStress(float now, PlayerRig rig)
+            {
+                DD.Prototype.Feedback.HitFeedbackDirector fx = DD.Prototype.Feedback.HitFeedbackDirector.Instance;
+                if (fx == null || rig == null)
+                {
+                    return;
+                }
+
+                Vector3 centre = rig.transform.position;
+                if (now >= _stressImpactNext)
+                {
+                    _stressImpactNext = now + 0.1f;
+                    int i = _stressImpacts++;
+                    float a = i * 2.399f;
+                    Vector3 p = centre + new Vector3(Mathf.Cos(a) * (3f + (i % 5)), 0.6f + (i % 3) * 0.3f, Mathf.Sin(a) * (3f + (i % 5)));
+                    if ((i & 1) == 0)
+                    {
+                        fx.ReportSurfaceImpact(p, Vector3.up, _stressSurfaces[i % _stressSurfaces.Length], 1f);
+                    }
+                    else
+                    {
+                        // WP-019b: every other impact is a flesh hit (blood: splash + droplets + marks), critical every 4th.
+                        Vector3 toCentre = (centre - p).normalized;
+                        var hit = new DD.Prototype.Damage.DamageResult { HealthDamage = (i % 4 == 3) ? 45f : 12f, Killed = false, Region = DD.Prototype.Damage.BodyRegion.UpperBody };
+                        fx.ReportEnemyHit(new DD.Prototype.Feedback.EnemyHitFeedbackInfo
+                        {
+                            Point = p, Direction = -toCentre, Normal = toCentre, Result = hit,
+                            Power = DD.Prototype.Feedback.WeaponPower.Medium, TargetId = 80000 + (i % 40), TargetRoot = null, Weight = DD.Prototype.Feedback.FeedbackWeight.Standard, ImpactForce = 1f
+                        });
+                    }
+                }
+
+                if (now >= _stressExplosionNext)
+                {
+                    _stressExplosionNext = now + 1f;
+                    int i = _stressExplosions++;
+                    float a = i * 1.7f;
+                    fx.ReportExplosion(centre + new Vector3(Mathf.Cos(a) * 6f, 0.1f, Mathf.Sin(a) * 6f), 2.5f);
+                }
+
+                if (now >= _stressDeathNext)
+                {
+                    _stressDeathNext = now + 0.2f;
+                    int i = _stressDeaths++;
+                    float a = i * 0.9f;
+                    Vector3 feet = centre + new Vector3(Mathf.Cos(a) * (4f + (i % 4)), 0f, Mathf.Sin(a) * (4f + (i % 4)));
+                    var r = new DD.Prototype.Damage.DamageResult { HealthDamage = 30f, Killed = true, Region = DD.Prototype.Damage.BodyRegion.UpperBody };
+                    fx.ReportEnemyHit(new DD.Prototype.Feedback.EnemyHitFeedbackInfo
+                    {
+                        Point = feet + Vector3.up, Direction = Vector3.forward, Normal = Vector3.back, Result = r,
+                        Power = DD.Prototype.Feedback.WeaponPower.Medium, TargetId = 90000 + i, TargetRoot = null, Weight = DD.Prototype.Feedback.FeedbackWeight.Standard, ImpactForce = 1f
+                    });
+                }
+            }
+
+            private void FillVfxStage(Stage s)
+            {
+                DD.Prototype.Feedback.HitFeedbackDirector fx = DD.Prototype.Feedback.HitFeedbackDirector.Instance;
+                s.vfxStress = VfxStress;
+                s.vfxImpacts = _stressImpacts;
+                s.vfxExplosions = _stressExplosions;
+                s.vfxDeaths = _stressDeaths;
+                if (fx == null || fx.Vfx == null)
+                {
+                    return;
+                }
+
+                s.vfxLayerReady = fx.Vfx.IsReady;
+                s.vfxPlayed = fx.Vfx.Played;
+                s.vfxDecals = fx.Vfx.DecalsPlayed;
+                if (fx.Vfx.FlipbookPool != null) { s.vfxFlipbookSpawned = fx.Vfx.FlipbookPool.CountSpawned; s.vfxFlipbookTotal = fx.Vfx.FlipbookPool.CountTotal; }
+                if (fx.Vfx.DecalPool != null) { s.vfxDecalSpawned = fx.Vfx.DecalPool.CountSpawned; s.vfxDecalTotal = fx.Vfx.DecalPool.CountTotal; }
+                DD.Prototype.Feedback.Vfx.BloodSystem blood = fx.Vfx.Blood;
+                if (blood != null)
+                {
+                    s.bloodReady = blood.IsReady;
+                    s.bloodSplashes = blood.Splashes; s.bloodDropletBursts = blood.DropletBursts; s.bloodMarks = blood.Marks; s.bloodPools = blood.Pools;
+                    s.bloodMerged = blood.Merged; s.bloodEvicted = blood.Evicted; s.bloodSkippedGold = blood.SkippedForGold; s.bloodLive = blood.LiveMarks;
+                    s.bloodMergedQuads = blood.Merger != null ? blood.Merger.MergedQuads : 0;
+                    if (blood.DecalPool != null) { s.bloodDecalSpawned = blood.DecalPool.CountSpawned; s.bloodDecalTotal = blood.DecalPool.CountTotal; }
+                }
+            }
+
+            /// <summary>
+            /// WP-019b · 04d: GPU time of the URP draw passes (Recorder.gpuElapsedNanoseconds; a development
+            /// build with the Profiler switched on for this sub-window only, so the 04 frame statistics stay
+            /// unbiased). Effect GPU = transparents(stress) − transparents(base) across the A/B pair.
+            /// -1 when the platform reports no GPU samples.
+            /// </summary>
+            private IEnumerator MeasureGpu(Stage s, PlayerRig rig, float seconds)
+            {
+                bool wasEnabled = UnityEngine.Profiling.Profiler.enabled;
+                UnityEngine.Profiling.Profiler.enabled = true;
+                UnityEngine.Profiling.Recorder transparents = UnityEngine.Profiling.Recorder.Get("DrawTransparentObjects");
+                UnityEngine.Profiling.Recorder opaques = UnityEngine.Profiling.Recorder.Get("DrawOpaqueObjects");
+                UnityEngine.Profiling.Recorder camera = UnityEngine.Profiling.Recorder.Get("Camera.Render");
+                transparents.enabled = true; opaques.enabled = true; camera.enabled = true;
+                double tSum = 0, tMax = 0, oSum = 0, cSum = 0, frameSum = 0;
+                int n = 0, frames = 0;
+                float t0 = Time.realtimeSinceStartup;
+                yield return null;
+                while (Time.realtimeSinceStartup - t0 < seconds)
+                {
+                    if (VfxStress) StepVfxStress(Time.realtimeSinceStartup, rig);
+                    yield return null;
+                    frames++;
+                    frameSum += Time.unscaledDeltaTime * 1000.0;
+                    if (transparents.gpuSampleBlockCount > 0)
+                    {
+                        double t = transparents.gpuElapsedNanoseconds / 1e6;
+                        tSum += t; if (t > tMax) tMax = t;
+                        oSum += opaques.gpuSampleBlockCount > 0 ? opaques.gpuElapsedNanoseconds / 1e6 : 0;
+                        cSum += camera.gpuSampleBlockCount > 0 ? camera.gpuElapsedNanoseconds / 1e6 : 0;
+                        n++;
+                    }
+                }
+
+                UnityEngine.Profiling.Profiler.enabled = wasEnabled;
+                s.gpuSubWindowSeconds = Time.realtimeSinceStartup - t0;
+                s.gpuSampledFrames = n;
+                s.gpuSubWindowFrameMeanMs = frames > 0 ? (float)(frameSum / frames) : -1f;
+                if (n > 0)
+                {
+                    s.gpuTransparentsAvgMs = (float)(tSum / n);
+                    s.gpuTransparentsMaxMs = (float)tMax;
+                    s.gpuOpaquesAvgMs = (float)(oSum / n);
+                    s.gpuCameraAvgMs = (float)(cSum / n);
+                }
+            }
 
             /// <summary>WP-017 · Fit helmet + body + leg on every live zombie that is not fully equipped (see ArmorFlag). Returns pieces fitted.</summary>
             public bool ArmorAll;

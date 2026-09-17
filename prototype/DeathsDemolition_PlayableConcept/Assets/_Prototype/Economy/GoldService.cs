@@ -147,6 +147,25 @@ namespace DD.Prototype.Economy
         /// <summary>Packets currently checked out of the pool (outstanding or animating out).</summary>
         public int LiveOrbCount => _liveOrbs.Count;
 
+        /// <summary>WP-019b · Horizontal (XZ) distance from <paramref name="point"/> to the nearest live packet (float.MaxValue when none): the blood marks keep 0.6 m clear of gold on the ground (DEC-077); the packet hovers, so height is ignored.</summary>
+        public float NearestLiveOrbDistance(Vector3 point)
+        {
+            float best = float.MaxValue;
+            for (int i = 0; i < _liveOrbs.Count; i++)
+            {
+                GoldOrb orb = _liveOrbs[i];
+                if (orb != null && orb.IsSpawned)
+                {
+                    Vector3 delta = orb.transform.position - point;
+                    delta.y = 0f;
+                    float d = delta.sqrMagnitude;
+                    if (d < best) best = d;
+                }
+            }
+
+            return best < float.MaxValue ? Mathf.Sqrt(best) : float.MaxValue;
+        }
+
         /// <summary>Packets on the floor or in flight to the player that still hold gold.</summary>
         public int OutstandingPacketCount
         {

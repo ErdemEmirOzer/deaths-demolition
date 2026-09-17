@@ -2,6 +2,7 @@ using System;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Pooling;
 using DD.Prototype.Damage;
+using DD.Prototype.Feedback.Vfx;
 using UnityEngine;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
@@ -148,6 +149,9 @@ namespace DD.Prototype.Feedback
         [PrototypeOnly(PendingDecisions.None, "Shake for an explosion, in metres.", true)]
         [SerializeField] private float _shakeExplosion = 0.12f;
 
+        /// <summary>WP-019: explosion shake length, from GameFeelSettings (≤ 0.2 s).</summary>
+        private float _shakeExplosionSeconds = 0.2f;
+
         [Header("Presentation toggles")]
         [SerializeField] private bool _showDamageNumbers = true;
         [SerializeField] private bool _showHitMarkers = true;
@@ -157,6 +161,9 @@ namespace DD.Prototype.Feedback
         private static HitFeedbackDirector s_instance;
 
         private readonly FeedbackBudget _budget = new FeedbackBudget();
+
+        /// <summary>WP-019: the AP-010 layer. Dresses AFTER the budget check; absent catalog → WP-002 bursts.</summary>
+        private readonly VfxDressing _vfx = new VfxDressing();
 
         private PrototypePool<BurstEffect> _impactPool;
         private PrototypePool<BurstEffect> _bloodPool;
@@ -215,6 +222,9 @@ namespace DD.Prototype.Feedback
         /// <summary>Budget diagnostics for the F1 panel.</summary>
         public FeedbackBudget Budget => _budget;
 
+        /// <summary>WP-019 · AP-010 dressing layer (test / probe readout).</summary>
+        public VfxDressing Vfx => _vfx;
+
         /// <summary>Whether floating damage numbers are drawn. Live-toggleable.</summary>
         public bool ShowDamageNumbers
         {
@@ -258,6 +268,27 @@ namespace DD.Prototype.Feedback
                 _hitMarkers = HitMarkerLayer.EnsureExists();
                 _hitMarkers.Enabled = true;
             }
+
+            // WP-019: the player-side layer (vignette + shake) and the armour plate hook (WP-017).
+            DamageVignetteLayer.EnsureExists();
+            DD.Prototype.Characters.ArmorVisualBinder.AnyBroken += OnArmorPlateBroken;
+        }
+
+        protected override void OnDisable()
+        {
+            DD.Prototype.Characters.ArmorVisualBinder.AnyBroken -= OnArmorPlateBroken;
+            base.OnDisable();
+        }
+
+        /// <summary>WP-017 plate hook: the fragments burst at the plate's anchor (the hit path draws the sheet + splinter).</summary>
+        private void OnArmorPlateBroken(DD.Prototype.Characters.ArmorVisualBinder.BrokenEvent e)
+        {
+            if (e.Anchor == null)
+            {
+                return;
+            }
+
+            _vfx.PlayArmorFragments(e.Anchor.position, Vector3.up);
         }
 
         private void OnDestroy()
@@ -273,6 +304,7 @@ namespace DD.Prototype.Feedback
             // Hit stop counts in unscaled time, because it is the thing that owns the
             // scaled clock.
             HitStopService.Tick(Time.unscaledDeltaTime);
+            _vfx.Tick(Time.time);
         }
 
         /// <summary>
@@ -283,10 +315,19 @@ namespace DD.Prototype.Feedback
         {
             FeedbackConfigSection f = config.Feedback;
 
-            _hitStopArmorBreak = Mathf.Max(0f, f.HitStopArmorBreak);
-            _hitStopHeavyImpact = Mathf.Max(0f, f.HitStopHeavyImpact);
-            _hitStopHeavyDeath = Mathf.Max(0f, f.HitStopHeavyDeath);
-            _hitStopMinInterval = Mathf.Max(0f, f.HitStopMinInterval);
+            // WP-019 (ADR-019-2): the game-feel asset caps the config values — hit-stop ≤ 40 ms and
+            // only on armour break / death, shake ≤ 0.15 m / 0.2 s. The config keeps its WP-002
+            // numbers; the cap is the layer's contract.
+            GameFeelSettings feel = GameFeelSettings.Active;
+            _hitStopArmorBreak = Mathf.Min(Mathf.Max(0f, f.HitStopArmorBreak), feel.HitStopArmorBreak);
+            _hitStopHeavyImpact = 0f;
+            _hitStopHeavyDeath = Mathf.Min(Mathf.Max(0f, f.HitStopHeavyDeath), feel.HitStopDeath);
+            _hitStopMinInterval = Mathf.Max(Mathf.Max(0f, f.HitStopMinInterval), feel.HitStopMinInterval);
+            _shakeArmorBreak = Mathf.Min(_shakeArmorBreak, feel.ShakeArmorBreakAmplitude);
+            _shakeHeavyDeath = Mathf.Min(_shakeHeavyDeath, feel.ShakeHeavyDeathAmplitude);
+            _shakeExplosion = Mathf.Min(_shakeExplosion, feel.ShakeExplosionAmplitude);
+            _shakeExplosionSeconds = feel.ShakeExplosionSeconds;
+            _vfx.Configure(FeedbackEffectFactory.TemplateRoot);
 
             int impacts = Mathf.Max(4, f.MaxImpactEffects);
             int blood = Mathf.Max(4, f.MaxBloodEffects);
@@ -374,6 +415,13 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
+            // WP-019: the AP-010 muzzle sheet replaces the procedural card; the light stays with the legacy
+            // effect only when the sheet is absent.
+            if (_vfx.PlayMuzzle(muzzle, scale))
+            {
+                return;
+            }
+
             MuzzleFlashEffect flash = _muzzlePool.Get(muzzle.position, muzzle.rotation, muzzle);
             if (flash != null)
             {
@@ -418,10 +466,13 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            BurstEffect burst = _impactPool.Get(point, Quaternion.LookRotation(SafeNormal(normal)));
-            if (burst != null)
+            if (!_vfx.PlaySurfaceImpact(surface, point, SafeNormal(normal), scale))
             {
-                burst.Play(ColorForSurface(surface), scale, ParticlesForSurface(surface), 0.4f);
+                BurstEffect burst = _impactPool.Get(point, Quaternion.LookRotation(SafeNormal(normal)));
+                if (burst != null)
+                {
+                    burst.Play(ColorForSurface(surface), scale, ParticlesForSurface(surface), 0.4f);
+                }
             }
 
             AudioEvents.Raise(AudioEvents.ImpactEventFor(surface), point, scale);
@@ -499,10 +550,13 @@ namespace DD.Prototype.Feedback
         {
             if (_explosionPool != null && _budget.TryConsume(FeedbackCategory.Explosion, origin, true))
             {
-                BurstEffect burst = _explosionPool.Get(origin, Quaternion.identity);
-                if (burst != null)
+                if (!_vfx.PlayExplosion(origin, radius))
                 {
-                    burst.Play(_explosionColor, Mathf.Max(0.5f, radius * 0.6f), 26, 0.55f);
+                    BurstEffect burst = _explosionPool.Get(origin, Quaternion.identity);
+                    if (burst != null)
+                    {
+                        burst.Play(_explosionColor, Mathf.Max(0.5f, radius * 0.6f), 26, 0.55f);
+                    }
                 }
             }
 
@@ -515,8 +569,8 @@ namespace DD.Prototype.Feedback
                 away.y = 0f;
             }
 
-            CameraShakeBridge.Shake(_shakeExplosion, 0.22f, ShakeProfile.Explosion, away);
-            HitStopService.Request(_hitStopHeavyImpact, _hitStopMinInterval);
+            CameraShakeBridge.Shake(_shakeExplosion, _shakeExplosionSeconds, ShakeProfile.Explosion, away);
+            // WP-019: no hit-stop on an explosion (only armour break and death, ADR-019-2).
             AudioEvents.RaiseCritical(CombatAudioEvent.Explosion, origin, 1f, 70);
         }
 
@@ -627,6 +681,11 @@ namespace DD.Prototype.Feedback
                 link.Play(from, to, _linkColor, isRicochet ? 0.03f : 0.022f, 0.18f, 0.16f);
             }
 
+            if (isRicochet)
+            {
+                _vfx.PlaySpark(from, to - from);   // AP-010B wave 2: sparks at the bounce, streak along the new leg
+            }
+
             AudioEvents.Raise(
                 isRicochet ? CombatAudioEvent.Ricochet : CombatAudioEvent.ChainArc,
                 to, 0.8f, 25);
@@ -646,6 +705,11 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
+            if (_vfx.PlayFleshHit(info.Point, normal, info.Direction, critical, info.Result.Killed))
+            {
+                return;
+            }
+
             BurstEffect burst = _bloodPool.Get(info.Point, Quaternion.LookRotation(normal));
             if (burst != null)
             {
@@ -661,6 +725,11 @@ namespace DD.Prototype.Feedback
             }
 
             if (!_budget.TryConsume(FeedbackCategory.ArmorHit, info.Point))
+            {
+                return;
+            }
+
+            if (_vfx.PlayBodyImpact(true, info.Point, normal, 1f))
             {
                 return;
             }
@@ -686,6 +755,12 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
+            Vector3 ground = info.TargetRoot != null ? info.TargetRoot.position : new Vector3(info.Point.x, info.Point.y - 0.9f, info.Point.z);
+            if (_vfx.PlayArmorBreak(info.Point, normal, ground, 1f, info.Direction))
+            {
+                return;
+            }
+
             BurstEffect burst = _armorBreakPool.Get(info.Point, Quaternion.LookRotation(normal));
             if (burst != null)
             {
@@ -706,6 +781,12 @@ namespace DD.Prototype.Feedback
             }
 
             if (!_budget.TryConsume(FeedbackCategory.Death, info.Point, true))
+            {
+                return;
+            }
+
+            Vector3 feet = info.TargetRoot != null ? info.TargetRoot.position : new Vector3(info.Point.x, info.Point.y - 0.9f, info.Point.z);
+            if (_vfx.PlayZombieDeath(feet, info.Direction, heavy, info.Point, normal, info.Weight))
             {
                 return;
             }
@@ -748,15 +829,15 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            if (tier == HitFeedbackTier.HeavyDeath)
+            if (tier == HitFeedbackTier.HeavyDeath || tier == HitFeedbackTier.Death)
             {
                 HitStopService.Request(_hitStopHeavyDeath, _hitStopMinInterval);
                 return;
             }
 
-            // A heavy weapon landing a solid blow. Never a Light or Medium weapon, which
-            // is what keeps the assault rifle and the SMG out of hit-stop entirely.
-            if (info.Power == WeaponPower.Heavy && tier >= HitFeedbackTier.CriticalHit)
+            // WP-019 (ADR-019-2): the heavy-impact door is closed — hit-stop only on armour break and death.
+            // _hitStopHeavyImpact is kept at 0 by ApplyConfig; the check stays for the F1 readout.
+            if (info.Power == WeaponPower.Heavy && tier >= HitFeedbackTier.CriticalHit && _hitStopHeavyImpact > 0f)
             {
                 HitStopService.Request(_hitStopHeavyImpact, _hitStopMinInterval);
             }

@@ -1,0 +1,4023 @@
+{
+ "schema": "AP010.vfx-manifest.v003",
+ "package": "AP-010 + AP-010B",
+ "created": "2026-09-17",
+ "supersedes": "AP010-vfx-manifest-v002.json (entries kept where no v003 slot exists)",
+ "unity_target": {
+  "AP010": "Assets/_Art/VFX/AP010/",
+  "AP010B": "Assets/_Art/VFX/AP010B/"
+ },
+ "shockwave_sizes": {
+  "flipbook_m": 5.0,
+  "card_m": 3.5,
+  "note": "flipbook quad is the max ring radius extent; card is the static mid-expansion ring"
+ },
+ "sources": {
+  "hq_flipbooks": "exports/AP010-flipbooks-index-v003-hq.json",
+  "hq_statics": "exports/AP010-statics-index-v003-hq.json",
+  "blood": "exports/blood/AP010B-blood-index-v003b.json",
+  "wave2": "exports/wave2/AP010B-vfx-manifest-wave2-v003.json"
+ },
+ "totals": {
+  "assets": 108,
+  "bytes": 48927141,
+  "mb": 48.93,
+  "limit_mb": 60,
+  "within_limit": true,
+  "v002_kept": 14
+ },
+ "assets": [
+  {
+   "slot": "AP010_fb_impact_armor_8x8",
+   "file": "AP010/flipbooks/AP010_fb_impact_armor_8x8_v003.png",
+   "family": null,
+   "kind": null,
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30.0,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 0.44,
+   "colour_reserve": null,
+   "emissive_file": "AP010/flipbooks/AP010_fb_impact_armor_8x8_emissive_v003.png",
+   "capsule_cover_s": 0.0,
+   "usage_note": "billboard at hit point (quad 0.44 m = effect 0.40 m x 1.1), +Z (sheet up) = hit normal; 16 f @ 30 fps (0.533 s): birth/peak = v002 timing, f12-15 smooth alpha tail <= 0.2; emissive sheet = sparks f0-2 + hit flash (Unity HDR x4)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": "flipbooks/AP010_fb_impact_armor_8x8.png",
+   "source_index": "flipbooks-v003-hq",
+   "bytes": 240209,
+   "sha256": "4412179824d678610945255004c79ac3d3a0190b2f7225eb4d232ac6f4ff9154"
+  },
+  {
+   "slot": "AP010_fb_impact_stone_8x8",
+   "file": "AP010/flipbooks/AP010_fb_impact_stone_8x8_v003.png",
+   "family": null,
+   "kind": null,
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30.0,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 0.44,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002 timing, f12-15 smooth alpha tail <= 0.2; chips carry dust trails",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": "flipbooks/AP010_fb_impact_stone_8x8.png",
+   "source_index": "flipbooks-v003-hq",
+   "bytes": 428626,
+   "sha256": "71252fb905a346a4a356c7d84e4ea5759b281e9067b8bdcd924989314c31c4fc"
+  },
+  {
+   "slot": "AP010_fb_impact_wood_8x8",
+   "file": "AP010/flipbooks/AP010_fb_impact_wood_8x8_v003.png",
+   "family": null,
+   "kind": null,
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30.0,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 0.44,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002 timing, f12-15 smooth alpha tail <= 0.2; splinters with streak blur",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": "flipbooks/AP010_fb_impact_wood_8x8.png",
+   "source_index": "flipbooks-v003-hq",
+   "bytes": 287591,
+   "sha256": "81588b618d78e48321c15e36fa76c0ab897ed44e7683ad42693b4e0593874450"
+  },
+  {
+   "slot": "AP010_fb_impact_earth_8x8",
+   "file": "AP010/flipbooks/AP010_fb_impact_earth_8x8_v003.png",
+   "family": null,
+   "kind": null,
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30.0,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 0.44,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002 timing, f12-15 smooth alpha tail <= 0.2; clods carry dust trails",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": "flipbooks/AP010_fb_impact_earth_8x8.png",
+   "source_index": "flipbooks-v003-hq",
+   "bytes": 418885,
+   "sha256": "f4e673213b97f3c5277e0071f8dc663c2425598e366fbf5f04a33868ada05bdf"
+  },
+  {
+   "slot": "AP010_fb_muzzle_4x4",
+   "file": "AP010/flipbooks/AP010_fb_muzzle_8x8_v003.png",
+   "family": null,
+   "kind": null,
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 60.0,
+   "duration_s": 0.4,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 0.5,
+   "colour_reserve": null,
+   "emissive_file": "AP010/flipbooks/AP010_fb_muzzle_8x8_emissive_v003.png",
+   "capsule_cover_s": 0.0,
+   "usage_note": "centre = muzzle tip, +X (sheet right) = barrel forward; 24 f @ 60 fps (0.4 s): bright life f0-7 (= v002 4 cells retimed: birth f0-1, peak f2-4, decay f5-7), f8-23 grey wisps alpha <= 0.25 -> 0; emissive non-zero only f0-5 (Unity HDR ~4)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": "flipbooks/AP010_fb_muzzle_4x4_v002.png",
+   "source_index": "flipbooks-v003-hq",
+   "bytes": 255237,
+   "sha256": "0e988e267aae1d5807c64a775f2d12a6d944cd802ecf160db7e2b300b1a4c71f"
+  },
+  {
+   "slot": "AP010_fb_explosion_8x8",
+   "file": "AP010/flipbooks/AP010_fb_explosion_8x8_v003.png",
+   "family": null,
+   "kind": null,
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 48,
+   "fps": 30.0,
+   "duration_s": 1.6,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 3.6,
+   "colour_reserve": null,
+   "emissive_file": "AP010/flipbooks/AP010_fb_explosion_8x8_emissive_v003.png",
+   "capsule_cover_s": 0.067,
+   "usage_note": "blast point at uv (0.5,0.125): quad 3.6 m, centre 1.35 m above the blast point; 48 f @ 30 fps (1.6 s): f0-35 = v002 timing (fireball ~1.7 m, warm core f0-11, plume rise to 1.4x by f35, alpha cap 0.45 from f13 baked), f36-47 smoke tail alpha <= 0.3 -> 0; emissive sheet 2048^2 (256^2 cells) holds f0-11 only",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.125
+   ],
+   "mra_g": null,
+   "supersedes": "flipbooks/AP010_fb_explosion_8x8_v002.png",
+   "source_index": "flipbooks-v003-hq",
+   "bytes": 3596123,
+   "sha256": "251ccb1029bc00a99346c7a8da8b5e8aad4143e130ade245b33e7c4d3991179f"
+  },
+  {
+   "slot": "AP010_fb_shockwave_4x4",
+   "file": "AP010/flipbooks/AP010_fb_shockwave_4x4_v003.png",
+   "family": null,
+   "kind": null,
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 53.333,
+   "duration_s": 0.3,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 5.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "ring seen frontally: ground-aligned (horizontal) quad 5.0 m (= max ring extent), ring 0.5 -> 4.0 m over 0.3 s, alpha 0.5 -> 0; the static card cards/AP010_card_shockwave_1024_v003.png is the mid-expansion ring at 3.5 m (see shockwave_sizes)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": "flipbooks/AP010_fb_shockwave_4x4.png",
+   "source_index": "flipbooks-v003-hq",
+   "bytes": 2792679,
+   "sha256": "31c1de2bad8e3cb1ccf053a07d588c65da9c0b8256c554868e41e2b431171a54"
+  },
+  {
+   "slot": "AP010_card_smoke_512",
+   "file": "AP010/cards/AP010_card_smoke_1024_v003.png",
+   "family": "explosion",
+   "kind": "card",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 1.0,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "smoke card: Unity spawns 3-5 billboards 0.8-1.2 m, 1.5 s, alpha-blend, greyscale v ~0.30; alpha cap 0.45 after f13 (readability); v003 = 1024^2, 8 octaves + fine layer",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "cards/AP010_card_smoke_512.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 301899,
+   "sha256": "d7d30c2d1aa114185f1c630ab3f7f2fa1adc8e365b359adb6baf12b8b044adbe"
+  },
+  {
+   "slot": "AP010_card_shockwave_512",
+   "file": "AP010/cards/AP010_card_shockwave_1024_v003.png",
+   "family": "explosion",
+   "kind": "card",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 3.5,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "static shock ring card at 3.5 m (mid-expansion ring): scale 0.5 -> 4.0 m over 8 f, alpha 0.5 -> 0, alpha blend, greyscale v 0.85; the flipbook flipbooks/AP010_fb_shockwave_4x4_v003.png is the full expansion on a 5.0 m quad (see shockwave_sizes)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "cards/AP010_card_shockwave_512.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 502248,
+   "sha256": "8c91046786a1ae29c8b5cc1dbf42ff9a4889a8af932459c2a41d1afb50cce735"
+  },
+  {
+   "slot": "AP010_decal_scorch_1024",
+   "file": "AP010/decals/AP010_decal_scorch_2048_v003.png",
+   "family": "explosion",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 2.4,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "ground scorch after the blast: 2.4 m (1.5x fireball), alpha peak 0.40, core v 0.12, ash ring s<=0.18, 12 s fade (v002 tone); v003 = 2048^2, 8 octaves, radial streak detail; normal variant AP010_decal_scorch_normal_2048_v003.png",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "decals/AP010_decal_scorch_1024_v002.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 2083888,
+   "sha256": "73af25c035544fa6b09d5402a9e3c0d6fbe22b27e4138854a52d7fcfe9dec4a4"
+  },
+  {
+   "slot": "AP010_decal_scorch_normal_2048",
+   "file": "AP010/decals/AP010_decal_scorch_normal_2048_v003.png",
+   "family": "explosion",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 2.4,
+   "colour_reserve": "data",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "tangent normal map for the scorch decal (OpenGL Y+ up, BC5 import), shallow relief (ash granules, streaks, recessed centre); alpha = decal coverage",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "statics-v003-hq",
+   "bytes": 2219143,
+   "sha256": "2a8f5367db646b4ba83784c9f4e16f177e98ccd2e1172f3322f50c76f4dfbcff"
+  },
+  {
+   "slot": "AP010_atlas_armorbreak_1024",
+   "file": "AP010/cards/AP010_atlas_armorbreak_2048_v003.png",
+   "family": "armorbreak",
+   "kind": "card",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 0.05,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "atlas 2x2 @ 1024: [0] lacquer flake, [1] iron scale, [2] cord bit, [3] dust puff; fragments 2-6 cm (Unity particle sprites), puff 0.40 m; same cell order as v002",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "cards/AP010_atlas_armorbreak_1024.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 896543,
+   "sha256": "729b3d8b981bd5555eb57e5e08a417f0867ae2686062d8f7029da2658fb7b547"
+  },
+  {
+   "slot": "AP010_decal_lacquer_splinter_512",
+   "file": "AP010/decals/AP010_decal_lacquer_splinter_1024_v003.png",
+   "family": "armorbreak",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.5,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "lacquer splinter star + flakes (v 0.12), alpha 0.7, 8 s fade; ground-projected at the hit; v003 = 1024^2",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "decals/AP010_decal_lacquer_splinter_512.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 282118,
+   "sha256": "78d92683b1e021eb3c31815c2c4f8c1f7c244eff7d51b2c372c0930b42875eb6"
+  },
+  {
+   "slot": "AP010_goldpack_albedo_512",
+   "file": "AP010/gold/AP010_goldpack_albedo_1024_v003.png",
+   "family": "gold",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.28,
+   "colour_reserve": "gold",
+   "emissive_file": "AP010/gold/AP010_goldpack_emissive_1024_v003.png",
+   "capsule_cover_s": null,
+   "usage_note": "albedo: pouch cloth h 35 s<=0.28 v 0.55 (u<0.5), coins gold #D9A93C/#FFC74D (u>=0.5,v>=0.5) with edge bevel + secondary ridges, cord slate (u>=0.5,v<0.5); sRGB; same UV layout as v002 (mesh unchanged)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "gold/AP010_goldpack_albedo_512.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 1052343,
+   "sha256": "51b5a75a4a2a5b0f049b54c8bae3e8e1d4d74dab71e4b5d9bc1a72bfb9b7ea0d"
+  },
+  {
+   "slot": "AP010_goldpack_emissive_512",
+   "file": "AP010/gold/AP010_goldpack_emissive_1024_v003.png",
+   "family": "gold",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.28,
+   "colour_reserve": "gold",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "emissive: coins region only, RGB = #FFC74D * mask, A = 1; Unity HDR intensity ~2 so bloom (threshold 1.25) lifts the coins",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "gold/AP010_goldpack_emissive_512.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 237104,
+   "sha256": "69d73cd67fb635dfeb56dbc9451788fb0670f1bad26aa5ae0884e1be264e2fb8"
+  },
+  {
+   "slot": "AP010_card_gold_sparkle_512",
+   "file": "AP010/gold/AP010_card_gold_sparkle_1024_v003.png",
+   "family": "gold",
+   "kind": "card",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.6,
+   "colour_reserve": "gold",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "glow/sparkle card: soft 4-point star + diagonal + faint 8-ray kernel + glow, gold band (#FFC74D core); glow 0.6 m pulsing scale 0.85-1.0, 6-8 sparkles 0.06-0.12 m; additive",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "gold/AP010_card_gold_sparkle_512.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 374795,
+   "sha256": "6932ade85606f2cae4c64c47914101af14b375c0a6dea78692f2e2bf2c716f81"
+  },
+  {
+   "slot": "AP010_card_gold_trail_256x1024",
+   "file": "AP010/gold/AP010_card_gold_trail_512x2048_v003.png",
+   "family": "gold",
+   "kind": "card",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    512,
+    2048
+   ],
+   "world_size_m": 1.0,
+   "colour_reserve": "gold",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "pull trail: head at top (v=1), tail fades; stretched 1.0 x 0.15 m along pouch->player, 10 f, alpha <= 0.6; gold band (runtime tint optional)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "gold/AP010_card_gold_trail_256x1024.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 538164,
+   "sha256": "b07ed4e821c9040b8c34eb49d2303ec8d673f0d0671fc4a90685ab87e0c1af8f"
+  },
+  {
+   "slot": "AP010_beacon_column_512x2048",
+   "file": "AP010/beacon/AP010_beacon_column_1024x4096_v003.png",
+   "family": "beacon",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    4096
+   ],
+   "world_size_m": 1.2,
+   "colour_reserve": "beacon",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "light column 1.2 m dia x 6 m: greyscale + alpha, bright at base fading up, cos^2 horizontal, vertical streak noise; UV scroll 0.2/s up; runtime tint (1.00,0.82,0.35) a0.3 additive; v003 = 1024x4096, float -> blue-noise dithered 8-bit (no banding)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "beacon/AP010_beacon_column_512x2048.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 3185188,
+   "sha256": "8ba76ddb1764731fbdf781fb1b5c0d240c5125b3fd024d830ff6841733f711f3"
+  },
+  {
+   "slot": "AP010_beacon_ring_1024",
+   "file": "AP010/beacon/AP010_beacon_ring_2048_v003.png",
+   "family": "beacon",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 2.4,
+   "colour_reserve": "beacon",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "ground ring 2.4 m: greyscale annulus (sigma 4 %) + dashed inner ring + faint fill; runtime tint, additive a0.3; v003 = 2048^2 dithered",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "beacon/AP010_beacon_ring_1024.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 1961159,
+   "sha256": "76a8c414ae4487c72aa49ed908f6a0ea7d9397f3daf7364270b5ca7c36189c75"
+  },
+  {
+   "slot": "AP010_beacon_ring_anim_4x4_1024",
+   "file": "AP010/beacon/AP010_beacon_ring_anim_4x4_2048_v003.png",
+   "family": "beacon",
+   "kind": "flipbook",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 16,
+   "duration_s": 1.0,
+   "loop": true,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 2.6,
+   "colour_reserve": "beacon",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "animated ring 4x4 @ 512, 16 f @ 16 fps = 1 s loop: radius 0.9 -> 1.2 m (card 2.6 m), thickness 8 %, alpha 1 -> 0; runtime tint",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "beacon/AP010_beacon_ring_anim_4x4_1024.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 1990142,
+   "sha256": "3ab96a950179769d7ff7aa0b0986a07629fab3e8dfc9970fc2f809f99f1c5999"
+  },
+  {
+   "slot": "AP010_vignette_damage_1024",
+   "file": "AP010/vignette/AP010_vignette_damage_2048_v003.png",
+   "family": "vignette",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": null,
+   "colour_reserve": "vermilion",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "player damage vignette: information in A only (RGB flat #C4362B reference); shader = tint Vermilion600 * A; hit flash in 4 f / out 12 f, low-health hold 0.35; v003 = 2048^2, grain sigma 0.04 per texel (finer)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": "vignette/AP010_vignette_damage_1024.png",
+   "source_index": "statics-v003-hq",
+   "bytes": 2013350,
+   "sha256": "adb26956d5c2ca5dac7ddcbfcb171ff2ecd1f7b968c83194527c3994e9f437dc"
+  },
+  {
+   "slot": "AP010B_fb_blood_splash_01_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_splash_01_8x8_v003.png",
+   "family": "blood",
+   "kind": "A1 flesh-hit narrow cone",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 20,
+   "fps": 30,
+   "duration_s": 0.6667,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "hit point at origin_uv; cone travels +u; runtime rotates/mirrors toward the hit direction",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.12,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 285700,
+   "sha256": "193b5243221928bc5e1c751c00ff6f194ef2978829cdd9c1b372dd3239b1ce2e"
+  },
+  {
+   "slot": "AP010B_fb_blood_splash_02_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_splash_02_8x8_v003.png",
+   "family": "blood",
+   "kind": "A1 flesh-hit wide fan",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "as splash_01",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.12,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 382963,
+   "sha256": "631d02dcf96fb9f8999aad68cf0de414431c923e4ec3bb9683e2fa0cee496c80"
+  },
+  {
+   "slot": "AP010B_fb_blood_splash_03_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_splash_03_8x8_v003.png",
+   "family": "blood",
+   "kind": "A1 flesh-hit double burst",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 20,
+   "fps": 30,
+   "duration_s": 0.6667,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "as splash_01",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.12,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 392122,
+   "sha256": "0aee822d384de9c1651d5fe473594aa41ca840f965ac9aae15347c1897cbb6ad"
+  },
+  {
+   "slot": "AP010B_fb_blood_splash_04_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_splash_04_8x8_v003.png",
+   "family": "blood",
+   "kind": "A1 flesh-hit strand-heavy",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 30,
+   "duration_s": 0.8,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "as splash_01",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.12,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 313298,
+   "sha256": "fce5486116f2a55eeff476e47f42e72520a1599ee2ff1f62849be98999d34e6c"
+  },
+  {
+   "slot": "AP010B_fb_blood_splash_05_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_splash_05_8x8_v003.png",
+   "family": "blood",
+   "kind": "A1 flesh-hit mist-heavy",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "as splash_01; mist gone by f12",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.12,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 278012,
+   "sha256": "6b22a7bd282e4d758ac84b3ef65d9e43e2615fe62b27ce9201edf1a8c3b0a455"
+  },
+  {
+   "slot": "AP010B_fb_blood_splash_06_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_splash_06_8x8_v003.png",
+   "family": "blood",
+   "kind": "A1 flesh-hit low arc",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 30,
+   "duration_s": 0.8,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "gravity-led (1.6 g): keep the card upright (+v = world up), horizontal hits only",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.12,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 238373,
+   "sha256": "5647f5e19046262d4014b787ad336e27c548cd4bb39cb1fbfea863c4f97b1b98"
+  },
+  {
+   "slot": "AP010B_fb_blood_death_01_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_death_01_8x8_v003b.png",
+   "family": "blood",
+   "kind": "A6 death splash crown",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 30,
+   "duration_s": 0.8,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 3.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "ground point at origin_uv (quad centre 1.26 m above the ground); spawned at the dying capsule; capsule-critical",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.08
+   ],
+   "mra_g": null,
+   "supersedes": "AP010B_fb_blood_death_01_8x8_v003.png",
+   "source_index": "blood-v003b",
+   "bytes": 674535,
+   "sha256": "c31bc78de5bd65b8dc5a986c0807405f7f1cc67305679bb3357fe36bd4edf70e"
+  },
+  {
+   "slot": "AP010B_fb_blood_death_02_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_death_02_8x8_v003.png",
+   "family": "blood",
+   "kind": "A6 death splash column burst",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 30,
+   "duration_s": 0.8,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 3.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "as death_01",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.08
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 599179,
+   "sha256": "8c272329f46cd3aabdf01ec8db1a0f5abe235ee5ae70c25efee3036fc54895bf"
+  },
+  {
+   "slot": "AP010B_fb_blood_death_03_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_death_03_8x8_v003b.png",
+   "family": "blood",
+   "kind": "A6 death splash side arc",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 30,
+   "duration_s": 0.8,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 3.0,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "ground point at origin_uv (0.22, 0.08): low sheet thrown +u across 3.0 m (mirror for -u); capsule-critical",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.22,
+    0.08
+   ],
+   "mra_g": null,
+   "supersedes": "AP010B_fb_blood_death_03_8x8_v003.png",
+   "source_index": "blood-v003b",
+   "bytes": 289856,
+   "sha256": "8c261aedc36cdaebb413fc9c2d1597c488e3225f7b4cce6e8b330a21398f4fd3"
+  },
+  {
+   "slot": "AP010B_fb_blood_heavy_01_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_heavy_01_8x8_v003.png",
+   "family": "blood",
+   "kind": "A7 heavy-hit twin cone",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 30,
+   "duration_s": 0.8,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.4,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "hit point at origin_uv; cones at +-30 deg travel +u",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.12,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 593692,
+   "sha256": "f2a7f54f102f8f7af6f92969863e5b6cf088fd6d3f79b87674e63dd624e0d9e7"
+  },
+  {
+   "slot": "AP010B_fb_blood_heavy_02_8x8",
+   "file": "AP010B/blood/AP010B_fb_blood_heavy_02_8x8_v003.png",
+   "family": "blood",
+   "kind": "A7 heavy-hit lobe burst",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 30,
+   "duration_s": 0.8,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.4,
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "as heavy_01",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.12,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 436278,
+   "sha256": "e0b0f8ee605c2b0f48aef4144b5420c5c75fc1321a5bcb1ef2e4824edbe10b47"
+  },
+  {
+   "slot": "AP010B_sheet_blood_droplets_4x4",
+   "file": "AP010B/blood/AP010B_sheet_blood_droplets_4x4_v003b.png",
+   "family": "blood",
+   "kind": "A2 droplet sprites (GPU particles)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    0.02,
+    0.08
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "row0 round drops r 0.35/0.25/0.18/0.12 cell; row1 teardrops head +u tail -u; row2 strands (bead at +u) - stretch rows 1-2 along velocity; row3 spatter 5/8/12 + mist blob (alpha <= 0.6); rows 0 and 3 = PIL 4x supersampled discs / Poisson dots (v003b F3), rows 1-2 EEVEE",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": "AP010B_sheet_blood_droplets_4x4_v003.png",
+   "source_index": "blood-v003b",
+   "bytes": 80442,
+   "sha256": "4786e73a875313a0bb6c80b977892cd2db157bd8ed79124f062e60fdcbf99625"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_splat",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_01_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.8,
+    0.8
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 270725,
+   "sha256": "1df50a7de29f4900eda61dcd1a26e31e66a74032d77af773d5bfbdae2a586024"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_splat",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_01_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.8,
+    0.8
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 221740,
+   "sha256": "73f9f07e1304e1978c47b735927b361758e10a0f47676b4b957308628ad29a3a"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_splat",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_01_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.8,
+    0.8
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.22,
+    "max": 0.298,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 490247,
+   "sha256": "c1ab78a88ec83f1d89bfc6b141e66c53c9d723b3d2a03126991e031be44006bd"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_drag",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_02_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.4,
+    0.5
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 348506,
+   "sha256": "374108f994e6bd393467c230a100d5a4ed062249b69006bfb5f5964be11c5d3c"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_drag",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_02_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.4,
+    0.5
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 271744,
+   "sha256": "5848d0c15e00d92ae6dbecb6bfa7cf64a013410138b53202ff3ab5f7698c04a6"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_drag",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_02_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.4,
+    0.5
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.298,
+    "max": 0.302,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 706074,
+   "sha256": "bb2673db75478b2d201848af0ab3caee8215aa5d66df8b84f810bfca79b80dee"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_pooledge",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_03_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 152979,
+   "sha256": "66051681e02dc93c580b0f56141f40ae8ca0dda355faa6f4e0f709ba83768d05"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_pooledge",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_03_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 93309,
+   "sha256": "4b120ab4c4e574cb24d95377793423d8efd036d12f7dc59b6fc6ff7d97cc5f81"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_pooledge",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_03_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.22,
+    "max": 0.298,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 639134,
+   "sha256": "5bd1500f49b1593ea3b3afd567beb0a3dd39267ae24a101c4d4c36fb69bf2a9a"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_sprayfan",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_04_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.2,
+    1.2
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 772112,
+   "sha256": "fb357b72ba3c40e97546d348d0fc1ed631a5b1bedeb8a34d5dc68db5af184318"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_sprayfan",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_04_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.2,
+    1.2
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 709946,
+   "sha256": "e187592f8ebce635ee2be7baeace3b044d9d7cf1cd83d9e368e3ee332ee97c2c"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_sprayfan",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_04_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.2,
+    1.2
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.212,
+    "median": 0.247,
+    "max": 0.302,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 952743,
+   "sha256": "b10e187efa5f6f91eaf710f0a9c912abf7765c4d36d07c983568107dd4be0056"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_drips",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_05_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.6,
+    0.6
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 271668,
+   "sha256": "a08069c9c715a5bd184767ee217ddda01911d92833cb7f7cff6f25885979634c"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_drips",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_05_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.6,
+    0.6
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 248637,
+   "sha256": "0bcdc17f226f5797a3a91dd373871a902abbec79e1225b74b849cc5f30383331"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_drips",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_05_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.6,
+    0.6
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.22,
+    "max": 0.294,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 377930,
+   "sha256": "2b78edd4d25beb7f20cb1f0bc4e391442207a48a15a16c1d3697338b127b1d5a"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_footprint",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_06_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.45,
+    0.25
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 321031,
+   "sha256": "ff80a93e28b9afbb62de42fcd81da6457ba9836fec3a59baf224e20fd1aebb0b"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_footprint",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_06_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.45,
+    0.25
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 371211,
+   "sha256": "9c1512b1cf981036ad1a33b375ef7811267e8d77da5bb01a667dbe273961c9dd"
+  },
+  {
+   "slot": "AP010B_decal_blood_ground_footprint",
+   "file": "AP010B/blood/AP010B_decal_blood_ground_06_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A3 ground decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.45,
+    0.25
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.255,
+    "median": 0.302,
+    "max": 0.302,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 683010,
+   "sha256": "75a02ab2ebec75cb876d23ac75b91ac95922ceb488d3149644645cfef5c4f52e"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_01",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_01_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 89864,
+   "sha256": "fd3841dcb2e86eccfe4fb62e5f8ca116bfb172b01807c31b310d990a4b5831ab"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_01",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_01_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 79680,
+   "sha256": "b7a51e17bbdc2724e1c0fe35f17f94887cd7361f3259f430e2c83541a158ef0d"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_01",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_01_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.208,
+    "max": 0.294,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 122314,
+   "sha256": "a08e1c68f53501f46f8f147f4fec1de28369c53b9e921cef5428b68555fa4eeb"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_02",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_02_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 108140,
+   "sha256": "935af16c3408625fe6a8a078dac9f665b1a63853557c11e06f5d64787f9af4a3"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_02",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_02_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 96429,
+   "sha256": "eb2ad9707295ce4e1938be79cfe6e1382f9a4c9046ff8a54cc30f66593ce89dd"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_02",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_02_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.22,
+    "max": 0.29,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 144870,
+   "sha256": "906ea242295546cf601ef87168829e0349bbb159d0734855b600f7d5dfbb0541"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_03",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_03_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 215683,
+   "sha256": "1262e55ac16dba6aaec90534000a15d474189cdc221c1c3427de2047f3584034"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_03",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_03_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 188606,
+   "sha256": "c6b9dc645cfe0272c92a507409e19579778d062536f27dbcb91eabec23a17573"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_03",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_03_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.22,
+    "max": 0.294,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 332733,
+   "sha256": "254355ba4d6af0e2f3a2dd29e3fdbe1aa412cd658c729322e60f4626494d0a67"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_04",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_04_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 149400,
+   "sha256": "4eae323607bebe75a3a7cd58deae6fd7039f46f45c274ae9da33489ad122fd51"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_04",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_04_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 131918,
+   "sha256": "afc686e6c43cc7aba9d12005f06681e95d7dd45a18a5fd82e3a70ab5b5879281"
+  },
+  {
+   "slot": "AP010B_decal_blood_wall_04",
+   "file": "AP010B/blood/AP010B_decal_blood_wall_04_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A4 wall drip decal height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.0,
+    1.0
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.212,
+    "max": 0.29,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 187123,
+   "sha256": "d0c9a6fcb5f516175b51435aae5748f748504fa67ff9520d218697e91e49fdad"
+  },
+  {
+   "slot": "AP010B_pool_mask_0.",
+   "file": "AP010B/blood/AP010B_sheet_blood_pool_growth_4x2_v003.png",
+   "family": "blood",
+   "kind": "A5 pool growth radial masks",
+   "grid": [
+    4,
+    2
+   ],
+   "frames_used": 8,
+   "fps": 0,
+   "duration_s": 8.0,
+   "loop": false,
+   "size_px": [
+    4096,
+    2048
+   ],
+   "world_size_m": [
+    2.8,
+    2.8
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 184385,
+   "sha256": "4f8220de1c8024395b379ce75b60ab3e6aa5272331064324d4141544d083b550"
+  },
+  {
+   "slot": "AP010B_pool_albedo",
+   "file": "AP010B/blood/AP010B_decal_blood_pool_albedo_2048_v003.png",
+   "family": "blood",
+   "kind": "A5 pool albedo",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    2.8,
+    2.8
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 225240,
+   "sha256": "7ad63be3766b7a569785cab987649b2f2d95dea9c3748d640883886b53778f1c"
+  },
+  {
+   "slot": "AP010B_pool_albedo",
+   "file": "AP010B/blood/AP010B_decal_blood_pool_normal_2048_v003.png",
+   "family": "blood",
+   "kind": "A5 pool normal",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    2.8,
+    2.8
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 164752,
+   "sha256": "60013ebdd8d262b704a994a3238ad837dc82e785318096f1c1cc63350f44cf2a"
+  },
+  {
+   "slot": "AP010B_pool_albedo",
+   "file": "AP010B/blood/AP010B_decal_blood_pool_height_2048_v003.png",
+   "family": "blood",
+   "kind": "A5 pool height",
+   "grid": null,
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    2.8,
+    2.8
+   ],
+   "colour_reserve": null,
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": null,
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": {
+    "channel": "G of the height pack",
+    "min": 0.149,
+    "median": 0.22,
+    "max": 0.282,
+    "classes": {
+     "beads_pool_centre": 0.15,
+     "mass": 0.22,
+     "feathered_dragged_edges": 0.3
+    },
+    "metallic_R": "n/a (R = height; metallic = 0 constant)",
+    "ao_B": 1.0
+   },
+   "supersedes": null,
+   "source_index": "blood-v003b",
+   "bytes": 925138,
+   "sha256": "6d0929ba504faf59cdda4296b98e317c302ddab0dbc43ffdc3ac13eefc18b28b"
+  },
+  {
+   "slot": "AP010B_player_death_overlay",
+   "file": "AP010B/wave2/AP010B_player_death_overlay_2048_v003.png",
+   "family": "player",
+   "kind": "screen overlay mask",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": "full screen",
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "post-death overlay; the texture carries no colour; centre |u|,|v| < 0.40 untouched; corners 1.0, smoothstep from diagonal radius 0.55 -> 1.15, bottom-weighted x1.15; no baked grain",
+   "blend": "alpha (shader: desaturation = mask x t, darkening = 0.6 x mask x t; Unity drives t 0 -> 1 over 2.0 s)",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 419663,
+   "sha256": "8836601d5b0e41a799d2e87fa2c44355d47e78e7d3052dfb6c6769780a9b3c0e"
+  },
+  {
+   "slot": "AP010B_player_death_overlay_pulse",
+   "file": "AP010B/wave2/AP010B_player_death_overlay_pulse_2x2_v003.png",
+   "family": "player",
+   "kind": "pulse mask sheet",
+   "grid": [
+    2,
+    2
+   ],
+   "frames_used": 4,
+   "fps": 3.3333333333333335,
+   "duration_s": 1.2,
+   "loop": true,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": "full screen",
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "pulse frames = the overlay mask with clear-centre radius 0.55 / 0.48 / 0.42 / 0.48; crossfaded loop 1.2 s slowing to 2.4 s at the end (runtime-driven, fps here = 4 f / 1.2 s)",
+   "blend": "alpha (same shader as the overlay; runtime crossfade)",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 148507,
+   "sha256": "af326585dde2849946b6122c5d69e3e1bef14656f4f9a16e84c2cbdbf8977e53"
+  },
+  {
+   "slot": "AP010B_barrel_heat",
+   "file": "AP010B/wave2/AP010B_barrel_heat_256x1024_v003.png",
+   "family": "weapon",
+   "kind": "strip card (glow, full-heat state)",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    256,
+    1024
+   ],
+   "world_size_m": [
+    0.08,
+    0.45
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "camera-facing 0.08 x 0.45 m strip along the barrel: u across, v along, muzzle end at v = 0; cherry heat h 20-28 s <= 0.45 v 0.62-0.75 (baked = full heat)",
+   "blend": "additive when heat > 0.6 (alpha blend below); Unity scales alpha by heat 0 -> 1 and lerps colour toward the dark anchor v 0.30",
+   "tint_rgb": null,
+   "hdr": 1.5,
+   "origin_uv": [
+    0.5,
+    1.0
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 97484,
+   "sha256": "a75b46f004f9039af07085491c0f7d897b227547aebc0f00a47f7f86428b7c3a"
+  },
+  {
+   "slot": "AP010B_barrel_heat_distort",
+   "file": "AP010B/wave2/AP010B_barrel_heat_distort_256x1024_v003.png",
+   "family": "weapon",
+   "kind": "distortion mask (RG data, B = 0)",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": true,
+   "size_px": [
+    256,
+    1024
+   ],
+   "world_size_m": [
+    0.06,
+    0.3
+   ],
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "R = haze intensity falloff (glow band widened 1.5x), G = tileable 3-octave noise, period = strip height, scrolled +v at 0.6/s; haze column 0.06 x 0.30 m rising above the barrel",
+   "blend": "data (heat-haze shader)",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.0
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 134405,
+   "sha256": "368144426b1963e163bbfe223a42116200ab006cf3f65ff10762738e36d70e46"
+  },
+  {
+   "slot": "AP010B_leaf_burst",
+   "file": "AP010B/wave2/AP010B_leaf_burst_4x4_v003.png",
+   "family": "world",
+   "kind": "sprite sheet, 16 static variants for GPU particles",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    0.02,
+    0.16
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "rows: 0 sakura petals, 1 bamboo blades (60/75/90/100 % of a 0.16 m cell), 2 broad leaves, 3 fragments; greyscale luma 0.62-1.0 (veins 0.55, edge -25 %), colour = tint x L; WP-019 caps a burst at 24 sprites / 0.6 s",
+   "blend": "alpha",
+   "tint_rgb": {
+    "sakura": [
+     0.92,
+     0.75,
+     0.78
+    ],
+    "bamboo": [
+     0.42,
+     0.55,
+     0.33
+    ],
+    "green": [
+     0.32,
+     0.45,
+     0.29
+    ]
+   },
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 84649,
+   "sha256": "f877b9f6161c30b275c7a13ef4a4a7c4e3a82622a717b8eec8bad78d77333c58"
+  },
+  {
+   "slot": "AP010B_water_splash",
+   "file": "AP010B/wave2/AP010B_water_splash_8x8_v003.png",
+   "family": "world",
+   "kind": "flipbook (alpha, greyscale, pond tint)",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    0.77,
+    0.77
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "splash quad 0.77 m (content 0.7 m + 10 % margin), pivot bottom centre image uv (0.5, 0.95): column 0.12 x 0.35 m f0-2 + rim, crown 0.5 x 0.45 m with rim spikes beading into 0.01 m drops f3-7, droplets fall / column collapses f8-15, alpha -> 0 over the last 5 f; luma = render normalised (p99 = 1.0, floor 0.6), foam rim 1.0; pair with water_splash_ring",
+   "blend": "alpha",
+   "tint_rgb": {
+    "pond": [
+     0.62,
+     0.7,
+     0.72
+    ]
+   },
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.05
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 153749,
+   "sha256": "4b9a50b5c86749bf97c334c139cb199fa8ea146a427df3c813979c0d3feab7c1"
+  },
+  {
+   "slot": "AP010B_water_splash_ring",
+   "file": "AP010B/wave2/AP010B_water_splash_ring_4x4_v003.png",
+   "family": "world",
+   "kind": "ripple ring mask sheet (ground-projected)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 30,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 1.2,
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "ground-projected 1.2 m quad, radius 0.15 -> 0.55 m, alpha 0.7 -> 0 over 16 f; Gaussian annulus sigma 5 % of r + second ring at 0.6 r x0.5, radius noise +-6 %; footsteps in water reuse it at 0.4x",
+   "blend": "alpha (L = mask x pond tint)",
+   "tint_rgb": [
+    0.62,
+    0.7,
+    0.72
+   ],
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 140180,
+   "sha256": "47e9fa4efb02971088b6efcdcbfe62e318736ef972caae59639a1c6e83279a79"
+  },
+  {
+   "slot": "AP010B_paper_tear",
+   "file": "AP010B/wave2/AP010B_paper_tear_4x4_v003.png",
+   "family": "world",
+   "kind": "sprite sheet, 16 static fragments for GPU particles (tumbling)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    0.03,
+    0.12
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "rows 0-1 talisman pieces (pentagonal head, mid strip, ragged rectangles, slivers, folded), rows 2-3 paper-screen bits; BLANK (no text / kanji / stamp); paper (0.94, 0.91, 0.83) h 42 s 0.12, torn-edge fibres -15 %, crease v 0.80",
+   "blend": "alpha",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 180493,
+   "sha256": "6f45c10f3f27e97961a88c5d57354dda0e0f47684fc28d241271ef5409909c3b"
+  },
+  {
+   "slot": "AP010B_spark",
+   "file": "AP010B/wave2/AP010B_spark_4x4_v003.png",
+   "family": "weapon",
+   "kind": "sprite sheet, 16 static sparks for GPU particles",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    512,
+    512
+   ],
+   "world_size_m": [
+    0.01,
+    0.04
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "rows 0-1 dots r 0.40 -> 0.15 of the cell with a white-hot core, row 2 streaks (head at +u, tail toward -u), row 3 forked streaks; core h 30 s <= 0.10 v 1.0 -> body h 28 s 0.40 v 0.90 -> tail h 24 s 0.44 v 0.60; bloom catches only the core",
+   "blend": "additive",
+   "tint_rgb": null,
+   "hdr": 3.0,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 49949,
+   "sha256": "e1d7baacfd3d6008c94b6ae1ef51528bb115d1a1a0c676c2b91b270e996dd967"
+  },
+  {
+   "slot": "AP010B_spark_streak",
+   "file": "AP010B/wave2/AP010B_spark_streak_4x4_v003.png",
+   "family": "weapon",
+   "kind": "flipbook (additive)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 8,
+   "fps": 60,
+   "duration_s": 0.1333,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    0.385,
+    0.385
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "ricochet streak flipbook: quad 0.385 m (content 0.35 m), pivot hit point image uv (0.10, 0.5), travel +u, runtime rotates to the reflection vector; 8 f at 60 fps effective (0.13 s): f0-3 16 streaks fan 70 deg lengthen to 0.3 m, f4-7 break into dots, alpha -> 0; core h 30 s <= 0.10 v 1.0 -> body h 28 s 0.40 v 0.90 -> tail h 24 s 0.44 v 0.60; bloom catches only the core",
+   "blend": "additive",
+   "tint_rgb": null,
+   "hdr": 3.0,
+   "origin_uv": [
+    0.1,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 110680,
+   "sha256": "a8ef03d5d8858d078ddac64ecee68d5f63ae4161f143c621b0ebef6a5345b3cd"
+  },
+  {
+   "slot": "AP010B_chain_arc_sheet",
+   "file": "AP010B/wave2/AP010B_chain_arc_sheet_8x8_v003.png",
+   "family": "weapon",
+   "kind": "flipbook (additive, greyscale, Tide Jewel tint)",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    2.5,
+    0.6
+   ],
+   "colour_reserve": "special",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "authored 2.5 x 0.6 m, endpoints u 0.04 / 0.96 at v 0.5; runtime stretches the quad between two capsules (0.6-1.4x); strike f0-1, flicker f2-9 (4 seeded paths, new path every 2 f, 2-3 side forks luma 0.6), fade f10-15 (halo widens to 0.25 m, core gone by f12); endpoint contact balls f0-9; Tide Jewel only, never the default gold tint",
+   "blend": "additive",
+   "tint_rgb": {
+    "tide_jewel": [
+     0.55,
+     0.78,
+     0.86
+    ]
+   },
+   "hdr": 2.0,
+   "origin_uv": [
+    0.04,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 150864,
+   "sha256": "8206c8003e6ac36f67917acec3dd68cf61f83b7e420b0cb1d11b60e391c07b90"
+  },
+  {
+   "slot": "AP010B_ofuda_seal",
+   "file": "AP010B/wave2/AP010B_ofuda_seal_512_v003.png",
+   "family": "weapon",
+   "kind": "card (blank talisman)",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    512,
+    512
+   ],
+   "world_size_m": [
+    0.25,
+    0.75
+   ],
+   "colour_reserve": "special",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "blank talisman 160 x 480 px centred (pentagonal head 12 % of the height, 1:3), 4 px border band luma 0.88, NO text; 0.25 x 0.75 m camera-facing card hovering on the enemy chest; paper = Ofuda tint (0.96, 0.93, 0.84) baked with +-3 % fibre noise",
+   "blend": "alpha (paper hdr 1.2)",
+   "tint_rgb": {
+    "ofuda": [
+     0.96,
+     0.93,
+     0.84
+    ]
+   },
+   "hdr": 1.2,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 68707,
+   "sha256": "a3adf87763139727c8608cc29cab4111fc71cccea8f4d2c0a977afd5098ca437"
+  },
+  {
+   "slot": "AP010B_ofuda_seal_burn",
+   "file": "AP010B/wave2/AP010B_ofuda_seal_burn_4x4_v003.png",
+   "family": "weapon",
+   "kind": "burn-away mask sheet",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 30,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    0.25,
+    0.75
+   ],
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "frame n = remaining paper 255, ember band (+-0.03 of the height = 3-4 px) 128, gone 0; burn runs from the head downward with a noisy front (3-octave noise amp 18 % of the height), thresholds t = n/15 mapped over -0.21..1.21 so f0 = intact, f15 = gone; same UV layout as the card",
+   "blend": "mask (paper where > 0.75, ember where 0.25-0.75)",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 5627,
+   "sha256": "264f12498bd101979bcb67732e2bc275a1a6815c782a3ae6bb5eadc7260055c6"
+  },
+  {
+   "slot": "AP010B_weapon_expire",
+   "file": "AP010B/wave2/AP010B_weapon_expire_4x4_v003.png",
+   "family": "weapon",
+   "kind": "flipbook (additive, greyscale, weapon-type tint)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 12,
+   "fps": 30,
+   "duration_s": 0.4,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.8,
+   "colour_reserve": "special",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "0.8 m quad centred on the pickup / weapon: f0-2 soft disc 0.30 m luma 1.0 -> ring 0.5 m; f3-8 dissolve into 52 flecks 0.01-0.03 m drifting up 0.4 m/s + outward 0.3 m/s, luma 0.8 -> 0.3; f9-11 faint ring 0.7 m alpha 0.2 -> 0; tint = weapon type; the pre-expiry warning is the beacon ring tinted urgent (WP-019), not a texture",
+   "blend": "additive",
+   "tint_rgb": {
+    "default": [
+     1.0,
+     0.82,
+     0.35
+    ],
+    "ofuda": [
+     0.96,
+     0.93,
+     0.84
+    ],
+    "tide_jewel": [
+     0.55,
+     0.78,
+     0.86
+    ]
+   },
+   "hdr": 2.0,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 233587,
+   "sha256": "0556a3fa8c76fd6a8ddde98bbddae9146a689ac0cb64f038915b98f254d3350d"
+  },
+  {
+   "slot": "AP010B_weapon_pickup_flash",
+   "file": "AP010B/wave2/AP010B_weapon_pickup_flash_4x4_v003.png",
+   "family": "weapon",
+   "kind": "flipbook (additive, greyscale, Special default tint)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 8,
+   "fps": 30,
+   "duration_s": 0.2667,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 1.2,
+   "colour_reserve": "special",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "1.2 m quad, pivot = pickup point at image uv (0.5, 0.75): f0 core disc 0.15 m; f1-2 disc 0.45 m + ring 0.6 m + 8 motes; f3-7 ring expands to 1.2 m (sigma 4 %), luma -> 0, motes rise 0.5 m/s; NO star spikes",
+   "blend": "additive",
+   "tint_rgb": {
+    "default": [
+     1.0,
+     0.82,
+     0.35
+    ]
+   },
+   "hdr": 2.0,
+   "origin_uv": [
+    0.5,
+    0.25
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 130397,
+   "sha256": "1cf992f086cfd9759a12f99942bb66765731d36f97772006b428c8fedea6c0fc"
+  },
+  {
+   "slot": "AP010B_spawn_dust",
+   "file": "AP010B/wave2/AP010B_spawn_dust_8x8_v003.png",
+   "family": "enemy",
+   "kind": "flipbook (alpha, greyscale, region ground tint)",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 16,
+   "fps": 30,
+   "duration_s": 0.5333,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    1.7600000000000002,
+    1.1
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.2,
+   "usage_note": "quad 1.76 x 1.10 m (content 1.6 x 1.0 m), pivot ground centre image uv (0.5, 0.95): f0-3 low ring puff 0.6 -> 1.4 m wide alpha 0.7 (the rise cue), f4-9 billow rises to 1.0 m in 6 lobes alpha <= 0.55, f10-15 thins + drifts +0.2 m, alpha -> 0; tint = region ground colour (5 AP-005 regions, default east/earth); luma normalised 0.5-1.0",
+   "blend": "alpha",
+   "tint_rgb": {
+    "east_sakura_earth": [
+     0.55,
+     0.48,
+     0.4
+    ],
+    "center_paving_bluegrey": [
+     0.5,
+     0.53,
+     0.56
+    ],
+    "north_stone_way": [
+     0.56,
+     0.55,
+     0.52
+    ],
+    "south_pond_rim_stone": [
+     0.58,
+     0.57,
+     0.53
+    ],
+    "west_bamboo_moss": [
+     0.42,
+     0.44,
+     0.36
+    ]
+   },
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.05
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 292073,
+   "sha256": "a59d19ea1fa00840312f1e7a06d638c6293c9a8a0892b32fb11871b197cdeb3d"
+  },
+  {
+   "slot": "AP010B_death_special",
+   "file": "AP010B/wave2/AP010B_death_special_8x8_v003.png",
+   "family": "enemy",
+   "kind": "flipbook (alpha; blood burst + pale ground ring in one sheet)",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 24,
+   "fps": 30,
+   "duration_s": 0.8,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    2.64,
+    2.64
+   ],
+   "colour_reserve": "blood+env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.2,
+   "usage_note": "quad 2.64 m (content 2.4 m), pivot ground centre image uv (0.5, 0.92), spawned at the dying capsule: column 0.4 m f0-2, burst 1.6 m in 10 lobes f3-8, pale ground ring 0.8 -> 2.2 m f2-10 (alpha 0.8 -> 0), decay with alpha -> 0 over the last 8 f; burst = §A0 blood band, ring (0.90, 0.88, 0.84) not weapon-tinted",
+   "blend": "alpha",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.08
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 674294,
+   "sha256": "60186871fedf42dbaf9f79bbddf28f415ccef0d7d3776595943e3507d81f5124"
+  },
+  {
+   "slot": "AP010B_death_ultra",
+   "file": "AP010B/wave2/AP010B_death_ultra_8x8_v003.png",
+   "family": "enemy",
+   "kind": "flipbook (alpha; blood burst + pale ground ring in one sheet)",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 32,
+   "fps": 30,
+   "duration_s": 1.0667,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": [
+    3.9600000000000004,
+    3.9600000000000004
+   ],
+   "colour_reserve": "blood+env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.27,
+   "usage_note": "quad 3.96 m (content 3.6 m), pivot ground centre image uv (0.5, 0.92), spawned at the dying capsule: column 0.6 m f0-2, burst 2.4 m in 14 lobes f3-10, second cascade from f6, pale ground rings 1.0 -> 3.2 m f2-13 (alpha 0.8 -> 0, second at 0.6x radius x0.5), decay with alpha -> 0 over the last 10 f; burst = §A0 blood band, ring (0.90, 0.88, 0.84) not weapon-tinted",
+   "blend": "alpha",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.08
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 1000204,
+   "sha256": "b57d96c70ef1e2a44e3fc20d980442a17b301d8338ff157bad45e5ba34490455"
+  },
+  {
+   "slot": "AP010B_claw_swipe",
+   "file": "AP010B/wave2/AP010B_claw_swipe_4x4_v003.png",
+   "family": "enemy",
+   "kind": "flipbook (alpha, greyscale, dark tint)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 8,
+   "fps": 30,
+   "duration_s": 0.2667,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    1.1,
+    0.7
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "1.1 x 0.7 m quad in front of the hand, pivot image uv (0.15, 0.5), swipe +u (runtime mirrors for the other hand): f0-1 three parallel arcs r 0.40/0.36/0.32 m (spec 0.60 scaled to fit the 0.7 m quad at 110 deg) sweep 20 deg, f2-4 sweep to 110 deg, widths 0.03/0.025/0.02 m tapered tails, luma 0.9 leading -> 0.5 tail, alpha 0.8; f5-7 dissolve into 8 smudge flecks; desaturated dark = motion, never blood",
+   "blend": "alpha",
+   "tint_rgb": {
+    "dark": [
+     0.22,
+     0.2,
+     0.19
+    ]
+   },
+   "hdr": null,
+   "origin_uv": [
+    0.15,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 63740,
+   "sha256": "dc18980cda3da8f55cb0dcce75c5d284db4fca52b00cefaa15cac67bd6df6d6d"
+  },
+  {
+   "slot": "AP010B_armor_crack_dust",
+   "file": "AP010B/wave2/AP010B_armor_crack_dust_4x4_v003.png",
+   "family": "enemy",
+   "kind": "flipbook (alpha)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 12,
+   "fps": 30,
+   "duration_s": 0.4,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    0.49500000000000005,
+    0.49500000000000005
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "crack-before-break: quad 0.495 m (content 0.45 m), pivot hit point image uv (0.3, 0.5), +u outward: f0-1 puff 0.15 m alpha 0.6 + 8 lacquer flakes 0.02 m, f2-6 flakes fly 2-3 m/s under gravity, puff expands to 0.35 m alpha 0.4, f7-11 puff -> 0, flakes leave the frame; puff s 0 v 0.45, flakes lacquer h 20 s 0.25 v 0.14 with a key-light gloss line; no sparks, no gold, no red",
+   "blend": "alpha",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.3,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 153116,
+   "sha256": "d87c2f5ff404184c58a98ed713ab19efe57c7bafcf191580049a68c4f207f6b7"
+  },
+  {
+   "slot": "AP010B_breakable_residue",
+   "file": "AP010B/wave2/AP010B_breakable_residue_2x2_v003.png",
+   "family": "world",
+   "kind": "decal atlas 2x2 (ceramic / wood / straw / cloth), ground-projected",
+   "grid": [
+    2,
+    2
+   ],
+   "frames_used": 4,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 0.9,
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "cells TL ceramic shards, TR wood splinters, BL straw, BR cloth; 0.9 x 0.9 m per cell, coverage 0.6-0.85 m, alpha 0 between pieces (no ground baked); no normal map, smoothness per cell in the manifest (ceramic 0.35, others 0.15); lifetime 30 s, fade 4 s, pool <= 12 live; contact shadow 2 px alpha 0.35 offset (+2,+2)",
+   "blend": "alpha (decal)",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 708478,
+   "sha256": "534fac37f4d2c3c600beae7c088296e87cd21bb22b1f0074fcdc2850d702c524"
+  },
+  {
+   "slot": "AP010B_straw_puff",
+   "file": "AP010B/wave2/AP010B_straw_puff_4x4_v003.png",
+   "family": "world",
+   "kind": "sprite sheet, 16 static stalks / chaff for GPU particles",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    512,
+    512
+   ],
+   "world_size_m": [
+    0.03,
+    0.12
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "rows 0-1 straight stalks in 4 lengths (row 1 thicker with node bumps), row 2 bent / broken, row 3 chaff clusters; stalks (0.70, 0.63, 0.50) h 39 s <= 0.285 (gold exclusion)",
+   "blend": "alpha",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 21859,
+   "sha256": "ea703a48153b16de62117fa0bf557b2167982e92ddd813298aacc6dae1b3f308"
+  },
+  {
+   "slot": "AP010B_straw_puff_cloud",
+   "file": "AP010B/wave2/AP010B_straw_puff_cloud_4x4_v003.png",
+   "family": "world",
+   "kind": "puff flipbook (alpha)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 12,
+   "fps": 30,
+   "duration_s": 0.4,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": [
+    0.77,
+    0.77
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "puff quad 0.77 m (content 0.7 m), pivot centre: f0-2 burst 0.25 m alpha 0.6, f3-7 expands to 0.6 m alpha 0.45 with 200 chaff flecks, f8-11 settles 0.3 m/s, alpha -> 0; chaff cloud (0.60, 0.55, 0.45) s 0.25 (gold exclusion), stalks (0.70, 0.63, 0.50); pair with the straw_puff stalk sprites",
+   "blend": "alpha",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 157152,
+   "sha256": "dedd04c9d7897e14e9a53ee2523aa91853217e98e77b46c0767f6c75f7581933"
+  },
+  {
+   "slot": "AP010B_lantern_flame",
+   "file": "AP010B/wave2/AP010B_lantern_flame_4x4_v003.png",
+   "family": "world",
+   "kind": "flipbook (alpha, seamless loop)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 16,
+   "fps": 24,
+   "duration_s": 0.6667,
+   "loop": true,
+   "size_px": [
+    512,
+    512
+   ],
+   "world_size_m": [
+    0.12,
+    0.18
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "0.12 x 0.18 m quad, pivot bottom centre: teardrop 0.06 x 0.12 m, height +-20 % and tip sway +-15 deg over the 16 f loop (24 fps = 0.67 s), inner core 40 % width; pale warm-white core h 40 s 0.05 v 0.98 -> body h 38 s 0.20 v 0.92 -> edge h 32 s 0.25 v 0.75, s <= 0.25 everywhere (out of the gold band); no sparks, no smoke; mood light, never a pickup cue",
+   "blend": "alpha (hdr 1.2, below the 1.25 bloom threshold)",
+   "tint_rgb": null,
+   "hdr": 1.2,
+   "origin_uv": [
+    0.5,
+    0.0
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 100729,
+   "sha256": "4f642168a4f014f0fd4a3c03f1b9986a4b8e4b709bbf4afff95c994cb3ffb07a"
+  },
+  {
+   "slot": "AP010B_dust_step",
+   "file": "AP010B/wave2/AP010B_dust_step_4x4_v003.png",
+   "family": "player/enemy",
+   "kind": "flipbook (alpha, greyscale, surface tint)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 8,
+   "fps": 30,
+   "duration_s": 0.2667,
+   "loop": false,
+   "size_px": [
+    512,
+    512
+   ],
+   "world_size_m": [
+    0.3,
+    0.2
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "0.3 x 0.2 m quad at the heel, pivot bottom centre: f0-1 two puffs 0.06 m alpha 0.5, f2-4 merge and drift 0.1 m back / up to 0.2 m alpha 0.35, f5-7 -> 0; tints earth / stone / wood-tatami (s <= 0.30); water surfaces use water_splash_ring at 0.4x",
+   "blend": "alpha",
+   "tint_rgb": {
+    "earth": [
+     0.55,
+     0.48,
+     0.4
+    ],
+    "stone": [
+     0.58,
+     0.58,
+     0.56
+    ],
+    "wood_tatami": [
+     0.62,
+     0.55,
+     0.44
+    ]
+   },
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.0
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 45723,
+   "sha256": "2e80b2a7ac909528ed54d7888d05e09b4ccf1304bfaabf6562b53a83068e0f6d"
+  },
+  {
+   "slot": "AP010B_mag_drop",
+   "file": "AP010B/wave2/AP010B_mag_drop_256_v003.png",
+   "family": "weapon",
+   "kind": "card (dropped box magazine, 3/4 top view, ground decal)",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    256,
+    256
+   ],
+   "world_size_m": [
+    0.16,
+    0.08
+   ],
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "dropped box magazine lying on the ground: 0.16 x 0.08 m billboard-decal, lifetime 6 s, fade 1 s; gunmetal (0.20, 0.21, 0.22) h 210 s 0.09 v 0.22 with the key-light edge highlight; pair with mag_drop_dust at the landing point",
+   "blend": "alpha (decal)",
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 11967,
+   "sha256": "11e7b4e1edc74beff2e181a6269e4f60407f74d11caf8ec7b6b01c4e4d94e367"
+  },
+  {
+   "slot": "AP010B_mag_drop_dust",
+   "file": "AP010B/wave2/AP010B_mag_drop_dust_4x4_v003.png",
+   "family": "weapon",
+   "kind": "bounce dust flipbook (alpha, greyscale, surface tint)",
+   "grid": [
+    4,
+    4
+   ],
+   "frames_used": 8,
+   "fps": 30,
+   "duration_s": 0.2667,
+   "loop": false,
+   "size_px": [
+    512,
+    512
+   ],
+   "world_size_m": 0.12,
+   "colour_reserve": "env",
+   "emissive_file": null,
+   "capsule_cover_s": 0.0,
+   "usage_note": "0.12 m quad at the landing point: single puff f0-2 0.05 m alpha 0.45 -> f3-7 0.12 m -> 0 (item 19 recipe with one blob); tints as dust_step",
+   "blend": "alpha",
+   "tint_rgb": {
+    "earth": [
+     0.55,
+     0.48,
+     0.4
+    ],
+    "stone": [
+     0.58,
+     0.58,
+     0.56
+    ],
+    "wood_tatami": [
+     0.62,
+     0.55,
+     0.44
+    ]
+   },
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.0
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "wave2-v003",
+   "bytes": 45967,
+   "sha256": "bff770487e4182134c91b5e0a6b6c1461b9ed5446d182f13106224ce30900a8a"
+  },
+  {
+   "slot": "AP010_decal_impact_flesh_1024",
+   "file": "AP010/decals/AP010_decal_impact_flesh_1024_v002.png",
+   "family": "impact",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.4,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "flesh hit mark: tar/mud h20-30 s0.10-0.15 v0.15-0.25 (v1.1 band); ground/wall projected, 8 s fade; pair with impact_flesh flipbook v002",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 122795,
+   "sha256": "2281031c25cd0f2674246694efdc81f1207ea3cfdf3233f57827eb787095c6d7"
+  },
+  {
+   "slot": "AP010_decal_impact_armor_1024",
+   "file": "AP010/decals/AP010_decal_impact_armor_1024.png",
+   "family": "impact",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.4,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "armour/lacquer chip: pale exposed scale (v 0.55) + dark lacquer rim (h 20 s 0.25) + cracks; 8 s fade",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 115622,
+   "sha256": "90b78ee7daa1ee8916ff75bc258a7e604a4c8f619115d7ba3c35957a4f0c248e"
+  },
+  {
+   "slot": "AP010_decal_impact_stone_1024",
+   "file": "AP010/decals/AP010_decal_impact_stone_1024.png",
+   "family": "impact",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.4,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "stone chip + dust ring (h 210 s<=0.08); normal variant AP010_decal_impact_stone_normal_1024.png (OpenGL Y+); 8 s fade",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 188014,
+   "sha256": "41b450d1d3dccab9c551c257bd10b95a17c441d9672a09618a8defb2990679c7"
+  },
+  {
+   "slot": "AP010_decal_impact_stone_normal_1024",
+   "file": "AP010/decals/AP010_decal_impact_stone_normal_1024.png",
+   "family": "impact",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.4,
+   "colour_reserve": "data",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "tangent normal map for the stone decal (OpenGL Y+ up, BC5 import); alpha = decal coverage",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 164562,
+   "sha256": "35fb3bff7b70ed8536b6a40ed0791a3b4911660c504713a7f7aa119e546211a5"
+  },
+  {
+   "slot": "AP010_decal_impact_wood_1024",
+   "file": "AP010/decals/AP010_decal_impact_wood_1024.png",
+   "family": "impact",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.4,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "wood splinter hole: grain along image Y (rotate to surface grain), tan splinters h 27 s<=0.35; 8 s fade",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 67236,
+   "sha256": "55cf7ee04ae1cbca86907b7dcad4ea4007e7b51f29bc738d439d35981806610a"
+  },
+  {
+   "slot": "AP010_decal_impact_wood_normal_1024",
+   "file": "AP010/decals/AP010_decal_impact_wood_normal_1024.png",
+   "family": "impact",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.4,
+   "colour_reserve": "data",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "tangent normal map for the wood decal (OpenGL Y+ up, BC5 import); alpha = decal coverage",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 151971,
+   "sha256": "2dfc38b6d581a793eef7e94187a8fa27018e80eb39f8dde06b641a437cc1d417"
+  },
+  {
+   "slot": "AP010_decal_impact_earth_1024",
+   "file": "AP010/decals/AP010_decal_impact_earth_1024.png",
+   "family": "impact",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 0.4,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "earth crater with clods + dust halo (h 36 s<=0.28, gold band avoided by s<0.30); 8 s fade",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 173510,
+   "sha256": "af23485627a7673a42bc6df960a626d6c7ff17ad8c8d23ad80dab1013ce118bd"
+  },
+  {
+   "slot": "AP010_decal_zombie_splat_01_1024",
+   "file": "AP010/decals/AP010_decal_zombie_splat_01_1024.png",
+   "family": "zombie",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 1.2,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "ground splat variant 1 (radial): tar/mud h 20 s<=0.15 v 0.08-0.15; fades in f6-10 under the body, lives 8 s; gore MEDIUM",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 117909,
+   "sha256": "4259713e75e5be57335b2dc3061e3fbccc475070d34fc97ebf3543b4ce6c85a3"
+  },
+  {
+   "slot": "AP010_decal_zombie_splat_02_1024",
+   "file": "AP010/decals/AP010_decal_zombie_splat_02_1024.png",
+   "family": "zombie",
+   "kind": "decal",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    1024,
+    1024
+   ],
+   "world_size_m": 1.2,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "ground splat variant 2 (directional smear): same colour band; orient along the kill direction; gore MEDIUM",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 158129,
+   "sha256": "bc32eb03576f938dded7e24b2d0571b55b425553ff622b5f7969a91ab0f5900a"
+  },
+  {
+   "slot": "AP010_goldpack_V01",
+   "file": "AP010/gold/AP010_goldpack_V01.fbx",
+   "family": "gold",
+   "kind": "mesh",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 0.28,
+   "colour_reserve": "gold",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "gold pack pickup mesh AP010_goldpack_V01_LOD0 (480 tris, LOD0 only), 0.28 m tall, pivot = pouch body centre at ground (origin), spilled coin extends to +0.21 m x; -Z fwd / Y up, FBX_SCALE_UNITS, embed off (textures by name); re-import verified 480 tris / 0.28 m / scale 1",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 49596,
+   "sha256": "34bfd0f38e6205b8aa9863a2683574e10d0223323364c94aca3dbd45044e417c"
+  },
+  {
+   "slot": "AP010_goldpack_V01",
+   "file": "AP010/gold/AP010_goldpack_V01.glb",
+   "family": "gold",
+   "kind": "mesh",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": null,
+   "world_size_m": 0.28,
+   "colour_reserve": "gold",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "GLB review copy of the gold pack (materials + textures embedded); not for import",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 245084,
+   "sha256": "d36a06b11ac754c2983bca3f1c31654c682d1120805361ace6dbd7587d7a852b"
+  },
+  {
+   "slot": "AP010_hud_marker_256",
+   "file": "AP010/beacon/AP010_hud_marker_256.png",
+   "family": "beacon",
+   "kind": "texture",
+   "grid": [
+    1,
+    1
+   ],
+   "frames_used": 1,
+   "fps": 0,
+   "duration_s": 0.0,
+   "loop": false,
+   "size_px": [
+    256,
+    256
+   ],
+   "world_size_m": null,
+   "colour_reserve": "beacon",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "HUD marker: plain diamond outline 60 % of tile, 8 % stroke, white on alpha, no text; HUD tint = beacon colour",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": null,
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 1962,
+   "sha256": "cca589b9790a5ad6e5e50a6ff40c2955fecdf5d10722cfd80c3a7f8c1048a537"
+  },
+  {
+   "slot": "AP010_fb_impact_flesh_8x8",
+   "file": "AP010/flipbooks/AP010_fb_impact_flesh_8x8_v002.png",
+   "family": "impact",
+   "kind": "flipbook",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 12,
+   "fps": 30,
+   "duration_s": 0.4,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 0.44,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "v002 flesh impact kept as reference; HIGH-gore path uses the blood splash (alias)",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.5
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 234611,
+   "sha256": "5da78b9f6877a77988ae487eac86dda599c0af51974918ef69138b7e14231cdc",
+   "alias_to": "AP010B_fb_blood_splash_01_8x8"
+  },
+  {
+   "slot": "AP010_fb_zombiedeath_8x8",
+   "file": "AP010/flipbooks/AP010_fb_zombiedeath_8x8.png",
+   "family": "zombie",
+   "kind": "flipbook",
+   "grid": [
+    8,
+    8
+   ],
+   "frames_used": 18,
+   "fps": 30,
+   "duration_s": 0.6,
+   "loop": false,
+   "size_px": [
+    2048,
+    2048
+   ],
+   "world_size_m": 1.6,
+   "colour_reserve": "none",
+   "emissive_file": null,
+   "capsule_cover_s": null,
+   "usage_note": "gore-MEDIUM fallback; HIGH-gore deaths use AP010B_fb_blood_death_* + pool",
+   "blend": null,
+   "tint_rgb": null,
+   "hdr": null,
+   "origin_uv": [
+    0.5,
+    0.25
+   ],
+   "mra_g": null,
+   "supersedes": null,
+   "source_index": "v002-kept",
+   "bytes": 280992,
+   "sha256": "de08a2fb73b8c7f8bf2b570ad55a9962adf0feb8ff2a09a64aac4a64660fbdf3"
+  }
+ ]
+}

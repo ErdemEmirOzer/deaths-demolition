@@ -1,0 +1,3541 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98c701b980ba4a72a7df512d6506bb8, type: 3}
+  m_Name: DD_VfxCatalog
+  m_EditorClassIdentifier: 
+  _manifestSchema: AP010.vfx-manifest.v003
+  _manifestVersion: v002
+  _entries:
+  - Id: fb_impact_armor
+    Family: 0
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_impact_armor_8x8_v003.png
+    Sha256: 4412179824d678610945255004c79ac3d3a0190b2f7225eb4d232ac6f4ff9154
+    Texture: {fileID: 2800000, guid: 1eeb27589f8ef4683b0cc315d0cf678d, type: 3}
+    Emissive: {fileID: 2800000, guid: edf04982ca8a34edeb567183a1c10de7, type: 3}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 9650359d5fbcc4ebf8e2d6410d070f68, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 0.44
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'billboard at hit point (quad 0.44 m = effect 0.40 m x 1.1), +Z (sheet
+      up) = hit normal; 16 f @ 30 fps (0.533 s): birth/peak = v002 timing, f12-15
+      smooth alpha tail <= 0.2; emissive sheet = sparks f0-2 + hit flash (Unity HDR
+      x4)'
+    MeanOpaqueColour: {r: 0.49627137, g: 0.4614735, b: 0.40944022, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_impact_armor_8x8
+    Supersedes: flipbooks/AP010_fb_impact_armor_8x8.png
+    AliasTo: 
+    WorldHeightMetres: 0.44
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_impact_stone
+    Family: 0
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_impact_stone_8x8_v003.png
+    Sha256: 71252fb905a346a4a356c7d84e4ea5759b281e9067b8bdcd924989314c31c4fc
+    Texture: {fileID: 2800000, guid: baa5883cb15cd46129ac853f8468bcd9, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 22c371e40770f45ecb86a1f6f7eec844, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 0.44
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002
+      timing, f12-15 smooth alpha tail <= 0.2; chips carry dust trails'
+    MeanOpaqueColour: {r: 0.19967176, g: 0.21302205, b: 0.22672823, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_impact_stone_8x8
+    Supersedes: flipbooks/AP010_fb_impact_stone_8x8.png
+    AliasTo: 
+    WorldHeightMetres: 0.44
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_impact_wood
+    Family: 0
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_impact_wood_8x8_v003.png
+    Sha256: 81588b618d78e48321c15e36fa76c0ab897ed44e7683ad42693b4e0593874450
+    Texture: {fileID: 2800000, guid: f96d8fe76468a497d9f6ca1df4b6bdef, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 65cc9af86aff14b0284a1727dc3047aa, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 0.44
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002
+      timing, f12-15 smooth alpha tail <= 0.2; splinters with streak blur'
+    MeanOpaqueColour: {r: 0.18844558, g: 0.12958054, b: 0.08946952, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_impact_wood_8x8
+    Supersedes: flipbooks/AP010_fb_impact_wood_8x8.png
+    AliasTo: 
+    WorldHeightMetres: 0.44
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_impact_earth
+    Family: 0
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_impact_earth_8x8_v003.png
+    Sha256: f4e673213b97f3c5277e0071f8dc663c2425598e366fbf5f04a33868ada05bdf
+    Texture: {fileID: 2800000, guid: 2a15b942466b945a1973889d1f0eba64, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: cacf34c4986bd4c50ace62c709ca84ab, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 0.44
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'billboard at hit point; 16 f @ 30 fps (0.533 s): birth/peak = v002
+      timing, f12-15 smooth alpha tail <= 0.2; clods carry dust trails'
+    MeanOpaqueColour: {r: 0.05970389, g: 0.046365324, b: 0.03353903, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_impact_earth_8x8
+    Supersedes: flipbooks/AP010_fb_impact_earth_8x8.png
+    AliasTo: 
+    WorldHeightMetres: 0.44
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_muzzle
+    Family: 1
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_muzzle_8x8_v003.png
+    Sha256: 0e988e267aae1d5807c64a775f2d12a6d944cd802ecf160db7e2b300b1a4c71f
+    Texture: {fileID: 2800000, guid: eafa558b2c91c40c791344b264316e6b, type: 3}
+    Emissive: {fileID: 2800000, guid: da5795556d8e14e7f94ce448fada7f2c, type: 3}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: ac41805f82a6d4b9fa97300b0c2ea4d6, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 60
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 0.5
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: 'centre = muzzle tip, +X (sheet right) = barrel forward; 24 f @ 60
+      fps (0.4 s): bright life f0-7 (= v002 4 cells retimed: birth f0-1, peak f2-4,
+      decay f5-7), f8-23 grey wisps alpha <= 0.25 -> 0; emissive non-zero only f0-5
+      (Unity HDR ~4)'
+    MeanOpaqueColour: {r: 0.70103437, g: 0.63242054, b: 0.53153634, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_muzzle_4x4
+    Supersedes: flipbooks/AP010_fb_muzzle_4x4_v002.png
+    AliasTo: 
+    WorldHeightMetres: 0.5
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_explosion
+    Family: 2
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_explosion_8x8_v003.png
+    Sha256: 251ccb1029bc00a99346c7a8da8b5e8aad4143e130ade245b33e7c4d3991179f
+    Texture: {fileID: 2800000, guid: f6b66aa19c46244b19f1d71745b415d0, type: 3}
+    Emissive: {fileID: 2800000, guid: 7112daec5a5a241ebb3b76324b3931d2, type: 3}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 364a3132843ab42bfb3d23db418961aa, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 48
+    Fps: 30
+    DurationSeconds: 1.6
+    Loop: 0
+    WorldSizeMetres: 3.6
+    OriginUv: {x: 0.5, y: 0.125}
+    ReadabilityLimitSeconds: 0.067
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'blast point at uv (0.5,0.125): quad 3.6 m, centre 1.35 m above the
+      blast point; 48 f @ 30 fps (1.6 s): f0-35 = v002 timing (fireball ~1.7 m, warm
+      core f0-11, plume rise to 1.4x by f35, alpha cap 0.45 from f13 baked), f36-47
+      smoke tail alpha <= 0.3 -> 0; emissive sheet 2048^2 (256^2 cells) holds f0-11
+      only'
+    MeanOpaqueColour: {r: 0.16711654, g: 0.11375939, b: 0.09250599, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_explosion_8x8
+    Supersedes: flipbooks/AP010_fb_explosion_8x8_v002.png
+    AliasTo: 
+    WorldHeightMetres: 3.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_shockwave
+    Family: 2
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_shockwave_4x4_v003.png
+    Sha256: 31c1de2bad8e3cb1ccf053a07d588c65da9c0b8256c554868e41e2b431171a54
+    Texture: {fileID: 2800000, guid: b2aa6543b69254e118fc6e7c74020533, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 117fc6fd4c7f649f8831cb04cb094bc8, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 53.333
+    DurationSeconds: 0.3
+    Loop: 0
+    WorldSizeMetres: 5
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: 'ring seen frontally: ground-aligned (horizontal) quad 5.0 m (= max
+      ring extent), ring 0.5 -> 4.0 m over 0.3 s, alpha 0.5 -> 0; the static card
+      cards/AP010_card_shockwave_1024_v003.png is the mid-expansion ring at 3.5 m
+      (see shockwave_sizes)'
+    MeanOpaqueColour: {r: 0.65930915, g: 0.6594116, b: 0.659377, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_shockwave_4x4
+    Supersedes: flipbooks/AP010_fb_shockwave_4x4.png
+    AliasTo: 
+    WorldHeightMetres: 5
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: card_smoke
+    Family: 2
+    Kind: 2
+    SourceFile: AP010/cards/AP010_card_smoke_1024_v003.png
+    Sha256: d7d30c2d1aa114185f1c630ab3f7f2fa1adc8e365b359adb6baf12b8b044adbe
+    Texture: {fileID: 2800000, guid: 6f6ecf4bdc20642d3abc9cef82f4ecf1, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: fc475607e95c24fb1a4c1f63e1b2be60, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'smoke card: Unity spawns 3-5 billboards 0.8-1.2 m, 1.5 s, alpha-blend,
+      greyscale v ~0.30; alpha cap 0.45 after f13 (readability); v003 = 1024^2, 8
+      octaves + fine layer'
+    MeanOpaqueColour: {r: 0.085191265, g: 0.08522849, b: 0.085221045, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_card_smoke_512
+    Supersedes: cards/AP010_card_smoke_512.png
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: card_shockwave
+    Family: 2
+    Kind: 2
+    SourceFile: AP010/cards/AP010_card_shockwave_1024_v003.png
+    Sha256: 8c91046786a1ae29c8b5cc1dbf42ff9a4889a8af932459c2a41d1afb50cce735
+    Texture: {fileID: 2800000, guid: deb9cd9186e7c4a92aeeae24b4c1a56f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 228970a0574764bb18e7e7d9016073c5, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 3.5
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: 'static shock ring card at 3.5 m (mid-expansion ring): scale 0.5 ->
+      4.0 m over 8 f, alpha 0.5 -> 0, alpha blend, greyscale v 0.85; the flipbook
+      flipbooks/AP010_fb_shockwave_4x4_v003.png is the full expansion on a 5.0 m
+      quad (see shockwave_sizes)'
+    MeanOpaqueColour: {r: 0.9108711, g: 0.91096693, b: 0.9109902, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_card_shockwave_512
+    Supersedes: cards/AP010_card_shockwave_512.png
+    AliasTo: 
+    WorldHeightMetres: 3.5
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_scorch
+    Family: 2
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_scorch_2048_v003.png
+    Sha256: 73af25c035544fa6b09d5402a9e3c0d6fbe22b27e4138854a52d7fcfe9dec4a4
+    Texture: {fileID: 2800000, guid: fb690d70432874448a648b21d44162d9, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 4089627f0372f4c42ad61d25b4576808, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 2.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'ground scorch after the blast: 2.4 m (1.5x fireball), alpha peak
+      0.40, core v 0.12, ash ring s<=0.18, 12 s fade (v002 tone); v003 = 2048^2,
+      8 octaves, radial streak detail; normal variant AP010_decal_scorch_normal_2048_v003.png'
+    MeanOpaqueColour: {r: 0.020282341, g: 0.018702503, b: 0.017213779, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_scorch_1024
+    Supersedes: decals/AP010_decal_scorch_1024_v002.png
+    AliasTo: 
+    WorldHeightMetres: 2.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_scorch_normal
+    Family: 2
+    Kind: 3
+    SourceFile: AP010/decals/AP010_decal_scorch_normal_2048_v003.png
+    Sha256: 2a8f5367db646b4ba83784c9f4e16f177e98ccd2e1172f3322f50c76f4dfbcff
+    Texture: {fileID: 2800000, guid: a9b5c0d41c5ba4b08bd6b83ee01fd124, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 2.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 4
+    Additive: 0
+    UsageNote: tangent normal map for the scorch decal (OpenGL Y+ up, BC5 import),
+      shallow relief (ash granules, streaks, recessed centre); alpha = decal coverage
+    MeanOpaqueColour: {r: 0.2419882, g: 0.23745732, b: 0.9047128, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_scorch_normal_2048
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: atlas_armorbreak
+    Family: 3
+    Kind: 2
+    SourceFile: AP010/cards/AP010_atlas_armorbreak_2048_v003.png
+    Sha256: 729b3d8b981bd5555eb57e5e08a417f0867ae2686062d8f7029da2658fb7b547
+    Texture: {fileID: 2800000, guid: 81eef99242a504c778a7fd59f01a5d4f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 5ca0f224a1afe4c86a98ace108b5e014, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.05
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'atlas 2x2 @ 1024: [0] lacquer flake, [1] iron scale, [2] cord bit,
+      [3] dust puff; fragments 2-6 cm (Unity particle sprites), puff 0.40 m; same
+      cell order as v002'
+    MeanOpaqueColour: {r: 0.07015674, g: 0.071720995, b: 0.080408424, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_atlas_armorbreak_1024
+    Supersedes: cards/AP010_atlas_armorbreak_1024.png
+    AliasTo: 
+    WorldHeightMetres: 0.05
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_lacquer_splinter
+    Family: 3
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_lacquer_splinter_1024_v003.png
+    Sha256: 78d92683b1e021eb3c31815c2c4f8c1f7c244eff7d51b2c372c0930b42875eb6
+    Texture: {fileID: 2800000, guid: 337d74f8d479f4a93a41699a09b32f2b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 9bd59c7a42a6948669d143f757afdc9d, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.5
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: lacquer splinter star + flakes (v 0.12), alpha 0.7, 8 s fade; ground-projected
+      at the hit; v003 = 1024^2
+    MeanOpaqueColour: {r: 0.040439446, g: 0.030574145, b: 0.02622456, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_lacquer_splinter_512
+    Supersedes: decals/AP010_decal_lacquer_splinter_512.png
+    AliasTo: 
+    WorldHeightMetres: 0.5
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: goldpack_albedo
+    Family: 5
+    Kind: 3
+    SourceFile: AP010/gold/AP010_goldpack_albedo_1024_v003.png
+    Sha256: 51b5a75a4a2a5b0f049b54c8bae3e8e1d4d74dab71e4b5d9bc1a72bfb9b7ea0d
+    Texture: {fileID: 2800000, guid: 41b70dafd92de46d0b253ab37af43b9f, type: 3}
+    Emissive: {fileID: 2800000, guid: d330b1e787bc44c15a9919d1b617cb47, type: 3}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 1
+    Additive: 0
+    UsageNote: 'albedo: pouch cloth h 35 s<=0.28 v 0.55 (u<0.5), coins gold #D9A93C/#FFC74D
+      (u>=0.5,v>=0.5) with edge bevel + secondary ridges, cord slate (u>=0.5,v<0.5);
+      sRGB; same UV layout as v002 (mesh unchanged)'
+    MeanOpaqueColour: {r: 0.28839654, g: 0.20059298, b: 0.0966623, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_goldpack_albedo_512
+    Supersedes: gold/AP010_goldpack_albedo_512.png
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: goldpack_emissive
+    Family: 5
+    Kind: 3
+    SourceFile: AP010/gold/AP010_goldpack_emissive_1024_v003.png
+    Sha256: 69d73cd67fb635dfeb56dbc9451788fb0670f1bad26aa5ae0884e1be264e2fb8
+    Texture: {fileID: 2800000, guid: d330b1e787bc44c15a9919d1b617cb47, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 1
+    Additive: 0
+    UsageNote: 'emissive: coins region only, RGB = #FFC74D * mask, A = 1; Unity HDR
+      intensity ~2 so bloom (threshold 1.25) lifts the coins'
+    MeanOpaqueColour: {r: 0.10998192, g: 0.06362753, b: 0.008972169, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_goldpack_emissive_512
+    Supersedes: gold/AP010_goldpack_emissive_512.png
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: card_gold_sparkle
+    Family: 5
+    Kind: 2
+    SourceFile: AP010/gold/AP010_card_gold_sparkle_1024_v003.png
+    Sha256: 6932ade85606f2cae4c64c47914101af14b375c0a6dea78692f2e2bf2c716f81
+    Texture: {fileID: 2800000, guid: e50627629dc784a0f84d6cb6f3a5a567, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: bcf28cdef613a44a089961270644dfd5, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 1
+    Additive: 1
+    UsageNote: 'glow/sparkle card: soft 4-point star + diagonal + faint 8-ray kernel
+      + glow, gold band (#FFC74D core); glow 0.6 m pulsing scale 0.85-1.0, 6-8 sparkles
+      0.06-0.12 m; additive'
+    MeanOpaqueColour: {r: 0.79648125, g: 0.46954384, b: 0.07037774, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_card_gold_sparkle_512
+    Supersedes: gold/AP010_card_gold_sparkle_512.png
+    AliasTo: 
+    WorldHeightMetres: 0.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: card_gold_trail
+    Family: 5
+    Kind: 2
+    SourceFile: AP010/gold/AP010_card_gold_trail_512x2048_v003.png
+    Sha256: b07ed4e821c9040b8c34eb49d2303ec8d673f0d0671fc4a90685ab87e0c1af8f
+    Texture: {fileID: 2800000, guid: 57028d22f11bf4ed694accee9a1404c0, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 5cbb98872c9a64249883d07353374812, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 1
+    Additive: 1
+    UsageNote: 'pull trail: head at top (v=1), tail fades; stretched 1.0 x 0.15 m
+      along pouch->player, 10 f, alpha <= 0.6; gold band (runtime tint optional)'
+    MeanOpaqueColour: {r: 0.8733365, g: 0.5273237, b: 0.093443796, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_card_gold_trail_256x1024
+    Supersedes: gold/AP010_card_gold_trail_256x1024.png
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: beacon_column
+    Family: 6
+    Kind: 3
+    SourceFile: AP010/beacon/AP010_beacon_column_1024x4096_v003.png
+    Sha256: 8ba76ddb1764731fbdf781fb1b5c0d240c5125b3fd024d830ff6841733f711f3
+    Texture: {fileID: 2800000, guid: 09d3d39116a894f03ad2cbee5058f667, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 2e30486b99c6542d9bd9ab22b6de56b9, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 2
+    Additive: 1
+    UsageNote: 'light column 1.2 m dia x 6 m: greyscale + alpha, bright at base fading
+      up, cos^2 horizontal, vertical streak noise; UV scroll 0.2/s up; runtime tint
+      (1.00,0.82,0.35) a0.3 additive; v003 = 1024x4096, float -> blue-noise dithered
+      8-bit (no banding)'
+    MeanOpaqueColour: {r: 0.84314936, g: 0.8432984, b: 0.84328854, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_beacon_column_512x2048
+    Supersedes: beacon/AP010_beacon_column_512x2048.png
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: beacon_ring
+    Family: 6
+    Kind: 3
+    SourceFile: AP010/beacon/AP010_beacon_ring_2048_v003.png
+    Sha256: 76a8c414ae4487c72aa49ed908f6a0ea7d9397f3daf7364270b5ca7c36189c75
+    Texture: {fileID: 2800000, guid: 47b2b611153ec4e30813d6948121d4ed, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 4cbf63e0cc31d4e4592c62206ea8f7b8, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 2.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 2
+    Additive: 1
+    UsageNote: 'ground ring 2.4 m: greyscale annulus (sigma 4 %) + dashed inner ring
+      + faint fill; runtime tint, additive a0.3; v003 = 2048^2 dithered'
+    MeanOpaqueColour: {r: 0.84559935, g: 0.8457023, b: 0.84570384, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_beacon_ring_1024
+    Supersedes: beacon/AP010_beacon_ring_1024.png
+    AliasTo: 
+    WorldHeightMetres: 2.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: beacon_ring_anim
+    Family: 6
+    Kind: 0
+    SourceFile: AP010/beacon/AP010_beacon_ring_anim_4x4_2048_v003.png
+    Sha256: 3ab96a950179769d7ff7aa0b0986a07629fab3e8dfc9970fc2f809f99f1c5999
+    Texture: {fileID: 2800000, guid: 4397a2816fd004b7da9833b153596f7c, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: bdeaac3e7515541228c168d1ff5efec2, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 16
+    DurationSeconds: 1
+    Loop: 1
+    WorldSizeMetres: 2.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 2
+    Additive: 1
+    UsageNote: 'animated ring 4x4 @ 512, 16 f @ 16 fps = 1 s loop: radius 0.9 ->
+      1.2 m (card 2.6 m), thickness 8 %, alpha 1 -> 0; runtime tint'
+    MeanOpaqueColour: {r: 0.6877003, g: 0.6877794, b: 0.6877729, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_beacon_ring_anim_4x4_1024
+    Supersedes: beacon/AP010_beacon_ring_anim_4x4_1024.png
+    AliasTo: 
+    WorldHeightMetres: 2.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: vignette_damage
+    Family: 7
+    Kind: 3
+    SourceFile: AP010/vignette/AP010_vignette_damage_2048_v003.png
+    Sha256: adb26956d5c2ca5dac7ddcbfcb171ff2ecd1f7b968c83194527c3994e9f437dc
+    Texture: {fileID: 2800000, guid: ba72c60e0a8d540f099c1b159dfa4d55, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 908ae058e796e4ab59d190bbad1822ef, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 3
+    Additive: 0
+    UsageNote: 'player damage vignette: information in A only (RGB flat #C4362B reference);
+      shader = tint Vermilion600 * A; hit flash in 4 f / out 12 f, low-health hold
+      0.35; v003 = 2048^2, grain sigma 0.04 per texel (finer)'
+    MeanOpaqueColour: {r: 0.5520115, g: 0.036889445, b: 0.02415763, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_vignette_damage_1024
+    Supersedes: vignette/AP010_vignette_damage_1024.png
+    AliasTo: 
+    WorldHeightMetres: 0
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_splash_01
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_splash_01_8x8_v003.png
+    Sha256: 193b5243221928bc5e1c751c00ff6f194ef2978829cdd9c1b372dd3239b1ce2e
+    Texture: {fileID: 2800000, guid: 77182d5ff19db4a35bb2dc8ebf7dbbe9, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 9462800e0406d436fad3a75af1a4f80a, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 20
+    Fps: 30
+    DurationSeconds: 0.6667
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.12, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: hit point at origin_uv; cone travels +u; runtime rotates/mirrors toward
+      the hit direction
+    MeanOpaqueColour: {r: 0.101482205, g: 0.007725983, b: 0.00770747, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_splash_01_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_splash_02
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_splash_02_8x8_v003.png
+    Sha256: 631d02dcf96fb9f8999aad68cf0de414431c923e4ec3bb9683e2fa0cee496c80
+    Texture: {fileID: 2800000, guid: 56346b883ed3a4744a855d59b1781cdc, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: a94c50d72000445cb88220ae4d4ca0d9, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.12, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: as splash_01
+    MeanOpaqueColour: {r: 0.09816129, g: 0.007552188, b: 0.007529911, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_splash_02_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_splash_03
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_splash_03_8x8_v003.png
+    Sha256: 0aee822d384de9c1651d5fe473594aa41ca840f965ac9aae15347c1897cbb6ad
+    Texture: {fileID: 2800000, guid: 3801677a34a9a47b493dbf9ac1756360, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 41d5532499c0544738cf900f185bf904, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 20
+    Fps: 30
+    DurationSeconds: 0.6667
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.12, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: as splash_01
+    MeanOpaqueColour: {r: 0.101121984, g: 0.007756917, b: 0.007735297, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_splash_03_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_splash_04
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_splash_04_8x8_v003.png
+    Sha256: fce5486116f2a55eeff476e47f42e72520a1599ee2ff1f62849be98999d34e6c
+    Texture: {fileID: 2800000, guid: 2e538b7ae62864ede9d9ae1ebf616181, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 25a4419c737d44c348830cb7f6e87c6b, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 30
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.12, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: as splash_01
+    MeanOpaqueColour: {r: 0.1049225, g: 0.008037804, b: 0.008013744, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_splash_04_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_splash_05
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_splash_05_8x8_v003.png
+    Sha256: 6b22a7bd282e4d758ac84b3ef65d9e43e2615fe62b27ce9201edf1a8c3b0a455
+    Texture: {fileID: 2800000, guid: 6046ef3bf63c3493fa2fae2c94dc229a, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: e79677f20ad52446e981d892b175e785, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.12, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: as splash_01; mist gone by f12
+    MeanOpaqueColour: {r: 0.10005716, g: 0.007407137, b: 0.0073943296, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_splash_05_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_splash_06
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_splash_06_8x8_v003.png
+    Sha256: 5647f5e19046262d4014b787ad336e27c548cd4bb39cb1fbfea863c4f97b1b98
+    Texture: {fileID: 2800000, guid: 1e3b5810e13174740bae5544310eb60f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: b69ea26b63d604295a43c56f87b6a4e3, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 30
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.12, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'gravity-led (1.6 g): keep the card upright (+v = world up), horizontal
+      hits only'
+    MeanOpaqueColour: {r: 0.0979155, g: 0.0075414497, b: 0.0075225704, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_splash_06_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_death_01
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_death_01_8x8_v003b.png
+    Sha256: c31bc78de5bd65b8dc5a986c0807405f7f1cc67305679bb3357fe36bd4edf70e
+    Texture: {fileID: 2800000, guid: 255f3c3a032784db58e7b96dfd38b67c, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: b9f678e99df0e47b99945ea1bc141288, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 30
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 3
+    OriginUv: {x: 0.5, y: 0.08}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: ground point at origin_uv (quad centre 1.26 m above the ground); spawned
+      at the dying capsule; capsule-critical
+    MeanOpaqueColour: {r: 0.10782636, g: 0.008188565, b: 0.008162459, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_death_01_8x8
+    Supersedes: AP010B_fb_blood_death_01_8x8_v003.png
+    AliasTo: 
+    WorldHeightMetres: 3
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_death_02
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_death_02_8x8_v003.png
+    Sha256: 8c272329f46cd3aabdf01ec8db1a0f5abe235ee5ae70c25efee3036fc54895bf
+    Texture: {fileID: 2800000, guid: 641be1da5df964362b5b8975021f1b42, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 9d5c0bc33615c4a8eb4ad2206079fcb0, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 30
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 3
+    OriginUv: {x: 0.5, y: 0.08}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: as death_01
+    MeanOpaqueColour: {r: 0.10106399, g: 0.00772767, b: 0.007707022, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_death_02_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 3
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_death_03
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_death_03_8x8_v003b.png
+    Sha256: 8c261aedc36cdaebb413fc9c2d1597c488e3225f7b4cce6e8b330a21398f4fd3
+    Texture: {fileID: 2800000, guid: 2dea7e20ff0e440cf8ed03f91734785b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 6717bfc29b7584cdba8ae0cb9b205cb4, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 30
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 3
+    OriginUv: {x: 0.22, y: 0.08}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'ground point at origin_uv (0.22, 0.08): low sheet thrown +u across
+      3.0 m (mirror for -u); capsule-critical'
+    MeanOpaqueColour: {r: 0.102962814, g: 0.0078167, b: 0.0077880463, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_death_03_8x8
+    Supersedes: AP010B_fb_blood_death_03_8x8_v003.png
+    AliasTo: 
+    WorldHeightMetres: 3
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_heavy_01
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_heavy_01_8x8_v003.png
+    Sha256: f2a7f54f102f8f7af6f92969863e5b6cf088fd6d3f79b87674e63dd624e0d9e7
+    Texture: {fileID: 2800000, guid: eac647155085e4a49b82b561143f8c86, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 5af93c50770bc4ec6a351f681e11523b, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 30
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 1.4
+    OriginUv: {x: 0.12, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: hit point at origin_uv; cones at +-30 deg travel +u
+    MeanOpaqueColour: {r: 0.10139106, g: 0.007744322, b: 0.007724308, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_heavy_01_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_blood_heavy_02
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_fb_blood_heavy_02_8x8_v003.png
+    Sha256: e0b0f8ee605c2b0f48aef4144b5420c5c75fc1321a5bcb1ef2e4824edbe10b47
+    Texture: {fileID: 2800000, guid: 8600b50f00c7d4af29b40a937e59877e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 26e6ed09e5ac04d2d86aaae8f19656d0, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 30
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 1.4
+    OriginUv: {x: 0.12, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: as heavy_01
+    MeanOpaqueColour: {r: 0.094056785, g: 0.007297943, b: 0.0072781607, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_fb_blood_heavy_02_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: sheet_blood_droplets
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_sheet_blood_droplets_4x4_v003b.png
+    Sha256: 4786e73a875313a0bb6c80b977892cd2db157bd8ed79124f062e60fdcbf99625
+    Texture: {fileID: 2800000, guid: 3a3f710f1d5794cdcb2d1f10982599d2, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: d8382af4341374d2e891996ba4a49131, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.02
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: row0 round drops r 0.35/0.25/0.18/0.12 cell; row1 teardrops head +u
+      tail -u; row2 strands (bead at +u) - stretch rows 1-2 along velocity; row3
+      spatter 5/8/12 + mist blob (alpha <= 0.6); rows 0 and 3 = PIL 4x supersampled
+      discs / Poisson dots (v003b F3), rows 1-2 EEVEE
+    MeanOpaqueColour: {r: 0.08930744, g: 0.0064180386, b: 0.0064165005, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_sheet_blood_droplets_4x4
+    Supersedes: AP010B_sheet_blood_droplets_4x4_v003.png
+    AliasTo: 
+    WorldHeightMetres: 0.08
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_01_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_01_albedo_2048_v003.png
+    Sha256: 1df50a7de29f4900eda61dcd1a26e31e66a74032d77af773d5bfbdae2a586024
+    Texture: {fileID: 2800000, guid: 48746c5b1a9204508a7f896e33ac2b34, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: e167c377f29de40bcbc5788269f32ddb, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.07225849, g: 0.005705956, b: 0.0061179786, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_splat
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_01_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_01_normal_2048_v003.png
+    Sha256: 73f9f07e1304e1978c47b735927b361758e10a0f47676b4b957308628ad29a3a
+    Texture: {fileID: 2800000, guid: 449f9d9bbfb4f43df94cfef6c69e2ad2, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.21607223, g: 0.2161698, b: 0.99748355, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_splat
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_01_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_01_height_2048_v003.png
+    Sha256: c1ab78a88ec83f1d89bfc6b141e66c53c9d723b3d2a03126991e031be44006bd
+    Texture: {fileID: 2800000, guid: 419be98be2e4c4cc190437707bc08e92, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.8594533, g: 0.038478345, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_splat
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_02_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_02_albedo_2048_v003.png
+    Sha256: 374108f994e6bd393467c230a100d5a4ed062249b69006bfb5f5964be11c5d3c
+    Texture: {fileID: 2800000, guid: 9bf76f4388c2545c1949c07515594751, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 5b2eb85c341294de2a0691b10aef997a, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.086076766, g: 0.0062866136, b: 0.006847272, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_drag
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.5
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_02_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_02_normal_2048_v003.png
+    Sha256: 5848d0c15e00d92ae6dbecb6bfa7cf64a013410138b53202ff3ab5f7698c04a6
+    Texture: {fileID: 2800000, guid: 2722fdaa37ad045d8b7a135d7f78e1fe, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.2156082, g: 0.2163672, b: 0.9975759, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_drag
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.5
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_02_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_02_height_2048_v003.png
+    Sha256: bb2673db75478b2d201848af0ab3caee8215aa5d66df8b84f810bfca79b80dee
+    Texture: {fileID: 2800000, guid: 00c6270c1332e46df812afdc1e3cc71c, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.7135476, g: 0.062561765, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_drag
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.5
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_03_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_03_albedo_2048_v003.png
+    Sha256: 66051681e02dc93c580b0f56141f40ae8ca0dda355faa6f4e0f709ba83768d05
+    Texture: {fileID: 2800000, guid: 16a02ff734d6f4d8682d473f1566b9ea, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 507ed2a9fbe494f019261c14cfae9234, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.07269352, g: 0.0057647564, b: 0.005660463, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_pooledge
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_03_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_03_normal_2048_v003.png
+    Sha256: 4b120ab4c4e574cb24d95377793423d8efd036d12f7dc59b6fc6ff7d97cc5f81
+    Texture: {fileID: 2800000, guid: a796429bda78b4773aca83b3b54a8f5f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.21557902, g: 0.21547309, b: 0.9991172, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_pooledge
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_03_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_03_height_2048_v003.png
+    Sha256: 5bd1500f49b1593ea3b3afd567beb0a3dd39267ae24a101c4d4c36fb69bf2a9a
+    Texture: {fileID: 2800000, guid: 18fb6247362114734af3d4577599f878, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.8390897, g: 0.039694894, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_pooledge
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_04_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_04_albedo_2048_v003.png
+    Sha256: fb357b72ba3c40e97546d348d0fc1ed631a5b1bedeb8a34d5dc68db5af184318
+    Texture: {fileID: 2800000, guid: ba11b8537e6fb4d02969d64ef7613e1e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: ddf36819eacbc4cddb0a429ea82f2452, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.1005935, g: 0.0069993287, b: 0.0070109204, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_sprayfan
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_04_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_04_normal_2048_v003.png
+    Sha256: e187592f8ebce635ee2be7baeace3b044d9d7cf1cd83d9e368e3ee332ee97c2c
+    Texture: {fileID: 2800000, guid: 1b7f80cfc30914fd9b8e460c669f05e1, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.21675318, g: 0.2193572, b: 0.99032503, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_sprayfan
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_04_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_04_height_2048_v003.png
+    Sha256: b10e187efa5f6f91eaf710f0a9c912abf7765c4d36d07c983568107dd4be0056
+    Texture: {fileID: 2800000, guid: 99d6df58344fd4329b7e9e0769837fa0, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.5113994, g: 0.046147745, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_sprayfan
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_05_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_05_albedo_2048_v003.png
+    Sha256: a08069c9c715a5bd184767ee217ddda01911d92833cb7f7cff6f25885979634c
+    Texture: {fileID: 2800000, guid: de545dfad7aac4da9990aa08636e9223, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 93275ea78f06a4532a8e2f904947c373, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.07882863, g: 0.0059612445, b: 0.0060982946, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_drips
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_05_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_05_normal_2048_v003.png
+    Sha256: 0bcdc17f226f5797a3a91dd373871a902abbec79e1225b74b849cc5f30383331
+    Texture: {fileID: 2800000, guid: 84b07b4eb564b481f9c8d08b59fa7643, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.21635798, g: 0.21636386, b: 0.99750966, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_drips
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_05_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_05_height_2048_v003.png
+    Sha256: 2b78edd4d25beb7f20cb1f0bc4e391442207a48a15a16c1d3697338b127b1d5a
+    Texture: {fileID: 2800000, guid: 6a3a2cd4c714d4bc1a391cc6967d66f2, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.6
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.80194175, g: 0.036665093, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_drips
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_06_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_06_albedo_2048_v003.png
+    Sha256: ff80a93e28b9afbb62de42fcd81da6457ba9836fec3a59baf224e20fd1aebb0b
+    Texture: {fileID: 2800000, guid: 54917ec17a42143b69fa827ffb4ecf12, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 0116828b79be74d4cb5c6988dbcc446c, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.45
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.11591993, g: 0.0074099787, b: 0.0075661317, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_footprint
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.25
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_06_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_06_normal_2048_v003.png
+    Sha256: 9c1512b1cf981036ad1a33b375ef7811267e8d77da5bb01a667dbe273961c9dd
+    Texture: {fileID: 2800000, guid: 211660c3b88584a0fa7836b5c16874a4, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.45
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.21674514, g: 0.21619879, b: 0.99518114, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_footprint
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.25
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_ground_06_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_ground_06_height_2048_v003.png
+    Sha256: 75a02ab2ebec75cb876d23ac75b91ac95922ceb488d3149644645cfef5c4f52e
+    Texture: {fileID: 2800000, guid: 4e83f91078a9b4dec824edcb6df468d2, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.45
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.40650177, g: 0.0685481, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_ground_footprint
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.25
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_01_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_01_albedo_2048_v003.png
+    Sha256: fd3841dcb2e86eccfe4fb62e5f8ca116bfb172b01807c31b310d990a4b5831ab
+    Texture: {fileID: 2800000, guid: a95abcca6aa6b42509c6c341b36efc9d, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 8115ce9d46e3d4e61b4314f2a90bbb6d, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.07492125, g: 0.006067976, b: 0.006149854, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_01
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_01_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_01_normal_2048_v003.png
+    Sha256: b7a51e17bbdc2724e1c0fe35f17f94887cd7361f3259f430e2c83541a158ef0d
+    Texture: {fileID: 2800000, guid: c4f0e49b8cf7c43f493781117b7124d2, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.21636105, g: 0.21591827, b: 0.9986942, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_01
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_01_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_01_height_2048_v003.png
+    Sha256: a08e1c68f53501f46f8f147f4fec1de28369c53b9e921cef5428b68555fa4eeb
+    Texture: {fileID: 2800000, guid: 5a8febd02daab4caf81307974ab91d0f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.84663916, g: 0.0357156, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_01
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_02_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_02_albedo_2048_v003.png
+    Sha256: 935af16c3408625fe6a8a078dac9f665b1a63853557c11e06f5d64787f9af4a3
+    Texture: {fileID: 2800000, guid: 7e644fc69d4174ebeb791c3debea667d, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: c0d7df4d9a031490f914fb14be38c382, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.08819324, g: 0.006512242, b: 0.0068346336, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_02
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_02_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_02_normal_2048_v003.png
+    Sha256: eb2ad9707295ce4e1938be79cfe6e1382f9a4c9046ff8a54cc30f66593ce89dd
+    Texture: {fileID: 2800000, guid: bff9c781e84a04115b54bea5dc0b9d54, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.21702857, g: 0.21588519, b: 0.99740416, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_02
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_02_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_02_height_2048_v003.png
+    Sha256: 906ea242295546cf601ef87168829e0349bbb159d0734855b600f7d5dfbb0541
+    Texture: {fileID: 2800000, guid: ec9c538362f2e4d97b10edd0f361fd49, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.66462415, g: 0.038050022, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_02
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_03_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_03_albedo_2048_v003.png
+    Sha256: 1262e55ac16dba6aaec90534000a15d474189cdc221c1c3427de2047f3584034
+    Texture: {fileID: 2800000, guid: b0c840f56606f406eac2b9711145ae3c, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 637245d87de3b4bd5830bb81bb727a6d, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.07262656, g: 0.0056013917, b: 0.0054789092, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_03
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_03_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_03_normal_2048_v003.png
+    Sha256: c6b9dc645cfe0272c92a507409e19579778d062536f27dbcb91eabec23a17573
+    Texture: {fileID: 2800000, guid: 59fdb8779aba842dc81d70b042681386, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.2175342, g: 0.21576962, b: 0.9956988, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_03
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_03_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_03_height_2048_v003.png
+    Sha256: 254355ba4d6af0e2f3a2dd29e3fdbe1aa412cd658c729322e60f4626494d0a67
+    Texture: {fileID: 2800000, guid: b1e5da0e162da4bc2ab57d9e5ddbfaae, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.8331274, g: 0.037918985, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_03
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_04_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_04_albedo_2048_v003.png
+    Sha256: 4eae323607bebe75a3a7cd58deae6fd7039f46f45c274ae9da33489ad122fd51
+    Texture: {fileID: 2800000, guid: 6b2fa2324dd3d495cbdd2d340086e437, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 0cdbd4d1e95f347d683ea0208d24f79a, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.083908126, g: 0.0065074246, b: 0.006302782, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_04
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_04_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_04_normal_2048_v003.png
+    Sha256: afc686e6c43cc7aba9d12005f06681e95d7dd45a18a5fd82e3a70ab5b5879281
+    Texture: {fileID: 2800000, guid: 6d1e05ae893144672898947abe743bbc, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.21701711, g: 0.2160441, b: 0.9971015, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_04
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_wall_04_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_wall_04_height_2048_v003.png
+    Sha256: d0c9a6fcb5f516175b51435aae5748f748504fa67ff9520d218697e91e49fdad
+    Texture: {fileID: 2800000, guid: 4c3cb8572a7be466ab25dd7881a08bcd, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.70188403, g: 0.03530331, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_decal_blood_wall_04
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: sheet_blood_pool_growth
+    Family: 8
+    Kind: 0
+    SourceFile: AP010B/blood/AP010B_sheet_blood_pool_growth_4x2_v003.png
+    Sha256: 4f8220de1c8024395b379ce75b60ab3e6aa5272331064324d4141544d083b550
+    Texture: {fileID: 2800000, guid: 0b4496b8de6ac44d691a74f97d0e99b8, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: d551d9db13309415582c30ac67c69c5d, type: 2}
+    Columns: 4
+    Rows: 2
+    FramesUsed: 8
+    Fps: 0
+    DurationSeconds: 8
+    Loop: 0
+    WorldSizeMetres: 2.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.9967294, g: 0.9967294, b: 0.9967294, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_pool_mask_0.
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_pool_albedo
+    Family: 8
+    Kind: 1
+    SourceFile: AP010B/blood/AP010B_decal_blood_pool_albedo_2048_v003.png
+    Sha256: 7ad63be3766b7a569785cab987649b2f2d95dea9c3748d640883886b53778f1c
+    Texture: {fileID: 2800000, guid: 3309ef8622eb04fe68484900054c8d84, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 27a2a4ed9a5de41bf85c90fca4be75a2, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 2.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.06966745, g: 0.0056631183, b: 0.0055125216, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_pool_albedo
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_pool_normal
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_pool_normal_2048_v003.png
+    Sha256: 60013ebdd8d262b704a994a3238ad837dc82e785318096f1c1cc63350f44cf2a
+    Texture: {fileID: 2800000, guid: 556497604bf26416f9e3f8e00c8fefff, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 2.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.215093, g: 0.21502529, b: 0.9981268, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_pool_albedo
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_blood_pool_height
+    Family: 8
+    Kind: 3
+    SourceFile: AP010B/blood/AP010B_decal_blood_pool_height_2048_v003.png
+    Sha256: 6d0929ba504faf59cdda4296b98e317c302ddab0dbc43ffdc3ac13eefc18b28b
+    Texture: {fileID: 2800000, guid: 96b420b583ff2434d812b4743209695b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 2.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 
+    MeanOpaqueColour: {r: 0.8718626, g: 0.039343175, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_pool_albedo
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.8
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: player_death_overlay
+    Family: 12
+    Kind: 3
+    SourceFile: AP010B/wave2/AP010B_player_death_overlay_2048_v003.png
+    Sha256: 8836601d5b0e41a799d2e87fa2c44355d47e78e7d3052dfb6c6769780a9b3c0e
+    Texture: {fileID: 2800000, guid: d121e5f66e43949978ab05e2f93b41f1, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: f14400d5597ed44b9b14337c002510cb, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: post-death overlay; the texture carries no colour; centre |u|,|v|
+      < 0.40 untouched; corners 1.0, smoothstep from diagonal radius 0.55 -> 1.15,
+      bottom-weighted x1.15; no baked grain
+    MeanOpaqueColour: {r: 0.04934984, g: 0.04934984, b: 0.04934984, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_player_death_overlay
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 'alpha (shader: desaturation = mask x t, darkening = 0.6 x mask x
+      t; Unity drives t 0 -> 1 over 2.0 s)'
+  - Id: player_death_overlay_pulse
+    Family: 12
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_player_death_overlay_pulse_2x2_v003.png
+    Sha256: af326585dde2849946b6122c5d69e3e1bef14656f4f9a16e84c2cbdbf8977e53
+    Texture: {fileID: 2800000, guid: 6c0ea50d1fd274a6784a6a80ab37b8d6, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 8f2574ce9cebe48b5bdf6a1cf3508c61, type: 2}
+    Columns: 2
+    Rows: 2
+    FramesUsed: 4
+    Fps: 3.3333333
+    DurationSeconds: 1.2
+    Loop: 1
+    WorldSizeMetres: 0
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: pulse frames = the overlay mask with clear-centre radius 0.55 / 0.48
+      / 0.42 / 0.48; crossfaded loop 1.2 s slowing to 2.4 s at the end (runtime-driven,
+      fps here = 4 f / 1.2 s)
+    MeanOpaqueColour: {r: 0.07925165, g: 0.07925165, b: 0.07925165, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_player_death_overlay_pulse
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha (same shader as the overlay; runtime crossfade)
+  - Id: barrel_heat
+    Family: 9
+    Kind: 2
+    SourceFile: AP010B/wave2/AP010B_barrel_heat_256x1024_v003.png
+    Sha256: a75b46f004f9039af07085491c0f7d897b227547aebc0f00a47f7f86428b7c3a
+    Texture: {fileID: 2800000, guid: c8cda8028bc0a449b9a0eb1970a8743c, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 1f0ba7a6f368a4b998d3cae08b1df8ea, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.08
+    OriginUv: {x: 0.5, y: 1}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: 'camera-facing 0.08 x 0.45 m strip along the barrel: u across, v along,
+      muzzle end at v = 0; cherry heat h 20-28 s <= 0.45 v 0.62-0.75 (baked = full
+      heat)'
+    MeanOpaqueColour: {r: 0.4597526, g: 0.28432795, b: 0.18568699, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_barrel_heat
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.45
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1.5
+    BlendNote: additive when heat > 0.6 (alpha blend below); Unity scales alpha by
+      heat 0 -> 1 and lerps colour toward the dark anchor v 0.30
+  - Id: barrel_heat_distort
+    Family: 9
+    Kind: 3
+    SourceFile: AP010B/wave2/AP010B_barrel_heat_distort_256x1024_v003.png
+    Sha256: 368144426b1963e163bbfe223a42116200ab006cf3f65ff10762738e36d70e46
+    Texture: {fileID: 2800000, guid: cd822694d9229490aa7a803aab0099e0, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 1
+    WorldSizeMetres: 0.06
+    OriginUv: {x: 0.5, y: 0}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: R = haze intensity falloff (glow band widened 1.5x), G = tileable
+      3-octave noise, period = strip height, scrolled +v at 0.6/s; haze column 0.06
+      x 0.30 m rising above the barrel
+    MeanOpaqueColour: {r: 0.083670884, g: 0.26457638, b: 0, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_barrel_heat_distort
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.3
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: data (heat-haze shader)
+  - Id: leaf_burst
+    Family: 10
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_leaf_burst_4x4_v003.png
+    Sha256: f877b9f6161c30b275c7a13ef4a4a7c4e3a82622a717b8eec8bad78d77333c58
+    Texture: {fileID: 2800000, guid: f903a4d28e3304514b843f22f9ab8802, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: d76033612ed504302bb478b9e82b726c, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.02
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'rows: 0 sakura petals, 1 bamboo blades (60/75/90/100 % of a 0.16
+      m cell), 2 broad leaves, 3 fragments; greyscale luma 0.62-1.0 (veins 0.55,
+      edge -25 %), colour = tint x L; WP-019 caps a burst at 24 sprites / 0.6 s'
+    MeanOpaqueColour: {r: 0.61497337, g: 0.61497337, b: 0.61497337, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_leaf_burst
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.16
+    DefaultTint: {r: 0.92, g: 0.75, b: 0.78, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: water_splash
+    Family: 10
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_water_splash_8x8_v003.png
+    Sha256: 4b9a50b5c86749bf97c334c139cb199fa8ea146a427df3c813979c0d3feab7c1
+    Texture: {fileID: 2800000, guid: 3a786c4821eb54c47ac3abf890d231e3, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: dc5c012236be34a319af8393d4b601c6, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 0.77
+    OriginUv: {x: 0.5, y: 0.05}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'splash quad 0.77 m (content 0.7 m + 10 % margin), pivot bottom centre
+      image uv (0.5, 0.95): column 0.12 x 0.35 m f0-2 + rim, crown 0.5 x 0.45 m with
+      rim spikes beading into 0.01 m drops f3-7, droplets fall / column collapses
+      f8-15, alpha -> 0 over the last 5 f; luma = render normalised (p99 = 1.0, floor
+      0.6), foam rim 1.0; pair with water_splash_ring'
+    MeanOpaqueColour: {r: 0.98169273, g: 0.98169273, b: 0.98169273, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_water_splash
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.77
+    DefaultTint: {r: 0.62, g: 0.7, b: 0.72, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: water_splash_ring
+    Family: 10
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_water_splash_ring_4x4_v003.png
+    Sha256: 47e9fa4efb02971088b6efcdcbfe62e318736ef972caae59639a1c6e83279a79
+    Texture: {fileID: 2800000, guid: 2e0821572cad94a2aa5fb456aeb6c618, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 185fd54935c3d4de1aa863750194563b, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: ground-projected 1.2 m quad, radius 0.15 -> 0.55 m, alpha 0.7 -> 0
+      over 16 f; Gaussian annulus sigma 5 % of r + second ring at 0.6 r x0.5, radius
+      noise +-6 %; footsteps in water reuse it at 0.4x
+    MeanOpaqueColour: {r: 0.0052100103, g: 0.0052100103, b: 0.0052100103, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_water_splash_ring
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 0.62, g: 0.7, b: 0.72, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha (L = mask x pond tint)
+  - Id: paper_tear
+    Family: 10
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_paper_tear_4x4_v003.png
+    Sha256: 6f45c10f3f27e97961a88c5d57354dda0e0f47684fc28d241271ef5409909c3b
+    Texture: {fileID: 2800000, guid: af537d84596024a6db121a8c6c46cc98, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 495dd8f1127824a15b0912cf7887fa1c, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.03
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: rows 0-1 talisman pieces (pentagonal head, mid strip, ragged rectangles,
+      slivers, folded), rows 2-3 paper-screen bits; BLANK (no text / kanji / stamp);
+      paper (0.94, 0.91, 0.83) h 42 s 0.12, torn-edge fibres -15 %, crease v 0.80
+    MeanOpaqueColour: {r: 0.78931546, g: 0.7335926, b: 0.5963363, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_paper_tear
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.12
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: spark
+    Family: 9
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_spark_4x4_v003.png
+    Sha256: e1d7baacfd3d6008c94b6ae1ef51528bb115d1a1a0c676c2b91b270e996dd967
+    Texture: {fileID: 2800000, guid: fa5b567400b094df5b4ef73cc12c25a4, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 2f0cc435759e24f46af24192948ade0d, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.01
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: rows 0-1 dots r 0.40 -> 0.15 of the cell with a white-hot core, row
+      2 streaks (head at +u, tail toward -u), row 3 forked streaks; core h 30 s <=
+      0.10 v 1.0 -> body h 28 s 0.40 v 0.90 -> tail h 24 s 0.44 v 0.60; bloom catches
+      only the core
+    MeanOpaqueColour: {r: 0.7449357, g: 0.54673874, b: 0.41601178, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_spark
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.04
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 3
+    BlendNote: additive
+  - Id: spark_streak
+    Family: 9
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_spark_streak_4x4_v003.png
+    Sha256: a8ef03d5d8858d078ddac64ecee68d5f63ae4161f143c621b0ebef6a5345b3cd
+    Texture: {fileID: 2800000, guid: 1226ee698162d494986b9817e4dd2228, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 88f382a94c41146648c050681d860dbe, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 8
+    Fps: 60
+    DurationSeconds: 0.1333
+    Loop: 0
+    WorldSizeMetres: 0.385
+    OriginUv: {x: 0.1, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: 'ricochet streak flipbook: quad 0.385 m (content 0.35 m), pivot hit
+      point image uv (0.10, 0.5), travel +u, runtime rotates to the reflection vector;
+      8 f at 60 fps effective (0.13 s): f0-3 16 streaks fan 70 deg lengthen to 0.3
+      m, f4-7 break into dots, alpha -> 0; core h 30 s <= 0.10 v 1.0 -> body h 28
+      s 0.40 v 0.90 -> tail h 24 s 0.44 v 0.60; bloom catches only the core'
+    MeanOpaqueColour: {r: 0.6401593, g: 0.3720982, b: 0.21013133, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_spark_streak
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.385
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 3
+    BlendNote: additive
+  - Id: chain_arc_sheet
+    Family: 9
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_chain_arc_sheet_8x8_v003.png
+    Sha256: 8206c8003e6ac36f67917acec3dd68cf61f83b7e420b0cb1d11b60e391c07b90
+    Texture: {fileID: 2800000, guid: 8f5d5875c915e4c12b86654098dae8e9, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 3756bfc1e3dcc435b971b73f29b17da9, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 2.5
+    OriginUv: {x: 0.04, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: authored 2.5 x 0.6 m, endpoints u 0.04 / 0.96 at v 0.5; runtime stretches
+      the quad between two capsules (0.6-1.4x); strike f0-1, flicker f2-9 (4 seeded
+      paths, new path every 2 f, 2-3 side forks luma 0.6), fade f10-15 (halo widens
+      to 0.25 m, core gone by f12); endpoint contact balls f0-9; Tide Jewel only,
+      never the default gold tint
+    MeanOpaqueColour: {r: 0.18654771, g: 0.18654771, b: 0.18654771, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_chain_arc_sheet
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.6
+    DefaultTint: {r: 0.55, g: 0.78, b: 0.86, a: 1}
+    HdrIntensity: 2
+    BlendNote: additive
+  - Id: ofuda_seal
+    Family: 9
+    Kind: 2
+    SourceFile: AP010B/wave2/AP010B_ofuda_seal_512_v003.png
+    Sha256: a3adf87763139727c8608cc29cab4111fc71cccea8f4d2c0a977afd5098ca437
+    Texture: {fileID: 2800000, guid: d503b6b09d94249aeaca7ed60edb455a, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: f16be6c15f39742d8b115956ca637752, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.25
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: blank talisman 160 x 480 px centred (pentagonal head 12 % of the height,
+      1:3), 4 px border band luma 0.88, NO text; 0.25 x 0.75 m camera-facing card
+      hovering on the enemy chest; paper = Ofuda tint (0.96, 0.93, 0.84) baked with
+      +-3 % fibre noise
+    MeanOpaqueColour: {r: 0.89940876, g: 0.837022, b: 0.66513824, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_ofuda_seal
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.75
+    DefaultTint: {r: 0.96, g: 0.93, b: 0.84, a: 1}
+    HdrIntensity: 1.2
+    BlendNote: alpha (paper hdr 1.2)
+  - Id: ofuda_seal_burn
+    Family: 9
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_ofuda_seal_burn_4x4_v003.png
+    Sha256: 264f12498bd101979bcb67732e2bc275a1a6815c782a3ae6bb5eadc7260055c6
+    Texture: {fileID: 2800000, guid: 62cc067d7889d435d843339f3b6e247a, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 68b04fd6bda1148ec910985f26e720a1, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 0.25
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: frame n = remaining paper 255, ember band (+-0.03 of the height =
+      3-4 px) 128, gone 0; burn runs from the head downward with a noisy front (3-octave
+      noise amp 18 % of the height), thresholds t = n/15 mapped over -0.21..1.21
+      so f0 = intact, f15 = gone; same UV layout as the card
+    MeanOpaqueColour: {r: 0.1389286, g: 0.1389286, b: 0.1389286, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_ofuda_seal_burn
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.75
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: mask (paper where > 0.75, ember where 0.25-0.75)
+  - Id: weapon_expire
+    Family: 9
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_weapon_expire_4x4_v003.png
+    Sha256: 0556a3fa8c76fd6a8ddde98bbddae9146a689ac0cb64f038915b98f254d3350d
+    Texture: {fileID: 2800000, guid: 846b4021b97354ed98114246186af9ad, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 433055253397f4f4692efe9ccde24895, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 12
+    Fps: 30
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 0.8
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: '0.8 m quad centred on the pickup / weapon: f0-2 soft disc 0.30 m
+      luma 1.0 -> ring 0.5 m; f3-8 dissolve into 52 flecks 0.01-0.03 m drifting up
+      0.4 m/s + outward 0.3 m/s, luma 0.8 -> 0.3; f9-11 faint ring 0.7 m alpha 0.2
+      -> 0; tint = weapon type; the pre-expiry warning is the beacon ring tinted
+      urgent (WP-019), not a texture'
+    MeanOpaqueColour: {r: 0.7031869, g: 0.7031869, b: 0.7031869, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_weapon_expire
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.8
+    DefaultTint: {r: 1, g: 0.82, b: 0.35, a: 1}
+    HdrIntensity: 2
+    BlendNote: additive
+  - Id: weapon_pickup_flash
+    Family: 9
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_weapon_pickup_flash_4x4_v003.png
+    Sha256: 1cf992f086cfd9759a12f99942bb66765731d36f97772006b428c8fedea6c0fc
+    Texture: {fileID: 2800000, guid: bd9f3bd88fef141d695ea1677a40fe55, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 7fa0953adade540ada1c3289882ded5e, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 8
+    Fps: 30
+    DurationSeconds: 0.2667
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.25}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 1
+    UsageNote: '1.2 m quad, pivot = pickup point at image uv (0.5, 0.75): f0 core
+      disc 0.15 m; f1-2 disc 0.45 m + ring 0.6 m + 8 motes; f3-7 ring expands to
+      1.2 m (sigma 4 %), luma -> 0, motes rise 0.5 m/s; NO star spikes'
+    MeanOpaqueColour: {r: 0.35260203, g: 0.35260203, b: 0.35260203, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_weapon_pickup_flash
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 0.82, b: 0.35, a: 1}
+    HdrIntensity: 2
+    BlendNote: additive
+  - Id: spawn_dust
+    Family: 11
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_spawn_dust_8x8_v003.png
+    Sha256: a59d19ea1fa00840312f1e7a06d638c6293c9a8a0892b32fb11871b197cdeb3d
+    Texture: {fileID: 2800000, guid: 091a442f5b6704c638d770df01c5b1b7, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 29e0227dafdd846cdb762295ac82b73f, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 16
+    Fps: 30
+    DurationSeconds: 0.5333
+    Loop: 0
+    WorldSizeMetres: 1.76
+    OriginUv: {x: 0.5, y: 0.05}
+    ReadabilityLimitSeconds: 0.2
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'quad 1.76 x 1.10 m (content 1.6 x 1.0 m), pivot ground centre image
+      uv (0.5, 0.95): f0-3 low ring puff 0.6 -> 1.4 m wide alpha 0.7 (the rise cue),
+      f4-9 billow rises to 1.0 m in 6 lobes alpha <= 0.55, f10-15 thins + drifts
+      +0.2 m, alpha -> 0; tint = region ground colour (5 AP-005 regions, default
+      east/earth); luma normalised 0.5-1.0'
+    MeanOpaqueColour: {r: 0.9981145, g: 0.9981145, b: 0.9981145, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_spawn_dust
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.1
+    DefaultTint: {r: 0.55, g: 0.48, b: 0.4, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: death_special
+    Family: 11
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_death_special_8x8_v003.png
+    Sha256: 60186871fedf42dbaf9f79bbddf28f415ccef0d7d3776595943e3507d81f5124
+    Texture: {fileID: 2800000, guid: 551d068015f7842b1958d4a21e2c4d48, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 10c5e03f5bffd4b8cb5022a88d9d8216, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 24
+    Fps: 30
+    DurationSeconds: 0.8
+    Loop: 0
+    WorldSizeMetres: 2.64
+    OriginUv: {x: 0.5, y: 0.08}
+    ReadabilityLimitSeconds: 0.2
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: "quad 2.64 m (content 2.4 m), pivot ground centre image uv (0.5, 0.92),
+      spawned at the dying capsule: column 0.4 m f0-2, burst 1.6 m in 10 lobes f3-8,
+      pale ground ring 0.8 -> 2.2 m f2-10 (alpha 0.8 -> 0), decay with alpha -> 0
+      over the last 8 f; burst = \xA7A0 blood band, ring (0.90, 0.88, 0.84) not weapon-tinted"
+    MeanOpaqueColour: {r: 0.10241285, g: 0.013298289, b: 0.01270424, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_death_special
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 2.64
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: death_ultra
+    Family: 11
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_death_ultra_8x8_v003.png
+    Sha256: b57d96c70ef1e2a44e3fc20d980442a17b301d8338ff157bad45e5ba34490455
+    Texture: {fileID: 2800000, guid: 13bed1d54fd9c492eb241b8f30ac88ea, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: cdeb4885f7af94f7ba9a42416a29fc15, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 32
+    Fps: 30
+    DurationSeconds: 1.0667
+    Loop: 0
+    WorldSizeMetres: 3.96
+    OriginUv: {x: 0.5, y: 0.08}
+    ReadabilityLimitSeconds: 0.27
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: "quad 3.96 m (content 3.6 m), pivot ground centre image uv (0.5, 0.92),
+      spawned at the dying capsule: column 0.6 m f0-2, burst 2.4 m in 14 lobes f3-10,
+      second cascade from f6, pale ground rings 1.0 -> 3.2 m f2-13 (alpha 0.8 ->
+      0, second at 0.6x radius x0.5), decay with alpha -> 0 over the last 10 f; burst
+      = \xA7A0 blood band, ring (0.90, 0.88, 0.84) not weapon-tinted"
+    MeanOpaqueColour: {r: 0.10551529, g: 0.017098023, b: 0.01612034, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_death_ultra
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 3.96
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: claw_swipe
+    Family: 11
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_claw_swipe_4x4_v003.png
+    Sha256: dc18980cda3da8f55cb0dcce75c5d284db4fca52b00cefaa15cac67bd6df6d6d
+    Texture: {fileID: 2800000, guid: 3894a9235c4074673946f1afb636cde5, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 4f4fa7ae7eeaa4c45bd0afdb66479d58, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 8
+    Fps: 30
+    DurationSeconds: 0.2667
+    Loop: 0
+    WorldSizeMetres: 1.1
+    OriginUv: {x: 0.15, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: '1.1 x 0.7 m quad in front of the hand, pivot image uv (0.15, 0.5),
+      swipe +u (runtime mirrors for the other hand): f0-1 three parallel arcs r 0.40/0.36/0.32
+      m (spec 0.60 scaled to fit the 0.7 m quad at 110 deg) sweep 20 deg, f2-4 sweep
+      to 110 deg, widths 0.03/0.025/0.02 m tapered tails, luma 0.9 leading -> 0.5
+      tail, alpha 0.8; f5-7 dissolve into 8 smudge flecks; desaturated dark = motion,
+      never blood'
+    MeanOpaqueColour: {r: 0.4428947, g: 0.4428947, b: 0.4428947, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_claw_swipe
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.7
+    DefaultTint: {r: 0.22, g: 0.2, b: 0.19, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: armor_crack_dust
+    Family: 11
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_armor_crack_dust_4x4_v003.png
+    Sha256: d87c2f5ff404184c58a98ed713ab19efe57c7bafcf191580049a68c4f207f6b7
+    Texture: {fileID: 2800000, guid: 6287202da020b4a688b5742469e126ed, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 80899efb2e3f246bfb1750f3e93db6e1, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 12
+    Fps: 30
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 0.495
+    OriginUv: {x: 0.3, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'crack-before-break: quad 0.495 m (content 0.45 m), pivot hit point
+      image uv (0.3, 0.5), +u outward: f0-1 puff 0.15 m alpha 0.6 + 8 lacquer flakes
+      0.02 m, f2-6 flakes fly 2-3 m/s under gravity, puff expands to 0.35 m alpha
+      0.4, f7-11 puff -> 0, flakes leave the frame; puff s 0 v 0.45, flakes lacquer
+      h 20 s 0.25 v 0.14 with a key-light gloss line; no sparks, no gold, no red'
+    MeanOpaqueColour: {r: 0.16361938, g: 0.16314743, b: 0.16294138, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_armor_crack_dust
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.495
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: breakable_residue
+    Family: 10
+    Kind: 1
+    SourceFile: AP010B/wave2/AP010B_breakable_residue_2x2_v003.png
+    Sha256: 534fac37f4d2c3c600beae7c088296e87cd21bb22b1f0074fcdc2850d702c524
+    Texture: {fileID: 2800000, guid: e9e62d321e12d47b0be223dd1a8e9a6c, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 91f506cf537ab4821a07cff7d6174aff, type: 2}
+    Columns: 2
+    Rows: 2
+    FramesUsed: 4
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.9
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: cells TL ceramic shards, TR wood splinters, BL straw, BR cloth; 0.9
+      x 0.9 m per cell, coverage 0.6-0.85 m, alpha 0 between pieces (no ground baked);
+      no normal map, smoothness per cell in the manifest (ceramic 0.35, others 0.15);
+      lifetime 30 s, fade 4 s, pool <= 12 live; contact shadow 2 px alpha 0.35 offset
+      (+2,+2)
+    MeanOpaqueColour: {r: 0.38248244, g: 0.32488, b: 0.24319743, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_breakable_residue
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.9
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha (decal)
+  - Id: straw_puff
+    Family: 10
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_straw_puff_4x4_v003.png
+    Sha256: ea703a48153b16de62117fa0bf557b2167982e92ddd813298aacc6dae1b3f308
+    Texture: {fileID: 2800000, guid: 7309f5a71de9f4ba89d3fb00679f9507, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 67c89f18ced9a4993af0837dc341cb2b, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.03
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: rows 0-1 straight stalks in 4 lengths (row 1 thicker with node bumps),
+      row 2 bent / broken, row 3 chaff clusters; stalks (0.70, 0.63, 0.50) h 39 s
+      <= 0.285 (gold exclusion)
+    MeanOpaqueColour: {r: 0.4471145, g: 0.35411274, b: 0.21363589, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_straw_puff
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.12
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: straw_puff_cloud
+    Family: 10
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_straw_puff_cloud_4x4_v003.png
+    Sha256: dedd04c9d7897e14e9a53ee2523aa91853217e98e77b46c0767f6c75f7581933
+    Texture: {fileID: 2800000, guid: 181a2321ad7434f2ebe22d7de7b157cf, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 146e37217d5234873a4025406542c0b3, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 12
+    Fps: 30
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 0.77
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'puff quad 0.77 m (content 0.7 m), pivot centre: f0-2 burst 0.25 m
+      alpha 0.6, f3-7 expands to 0.6 m alpha 0.45 with 200 chaff flecks, f8-11 settles
+      0.3 m/s, alpha -> 0; chaff cloud (0.60, 0.55, 0.45) s 0.25 (gold exclusion),
+      stalks (0.70, 0.63, 0.50); pair with the straw_puff stalk sprites'
+    MeanOpaqueColour: {r: 0.31874883, g: 0.26240748, b: 0.17153245, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_straw_puff_cloud
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.77
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: lantern_flame
+    Family: 10
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_lantern_flame_4x4_v003.png
+    Sha256: 4f642168a4f014f0fd4a3c03f1b9986a4b8e4b709bbf4afff95c994cb3ffb07a
+    Texture: {fileID: 2800000, guid: 9e4924178760a4243af9100901d3137b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 3494d932e149e432f8acd54e29173afc, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 24
+    DurationSeconds: 0.6667
+    Loop: 1
+    WorldSizeMetres: 0.12
+    OriginUv: {x: 0.5, y: 0}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: '0.12 x 0.18 m quad, pivot bottom centre: teardrop 0.06 x 0.12 m,
+      height +-20 % and tip sway +-15 deg over the 16 f loop (24 fps = 0.67 s), inner
+      core 40 % width; pale warm-white core h 40 s 0.05 v 0.98 -> body h 38 s 0.20
+      v 0.92 -> edge h 32 s 0.25 v 0.75, s <= 0.25 everywhere (out of the gold band);
+      no sparks, no smoke; mood light, never a pickup cue'
+    MeanOpaqueColour: {r: 0.8240725, g: 0.73520476, b: 0.60862243, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_lantern_flame
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.18
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1.2
+    BlendNote: alpha (hdr 1.2, below the 1.25 bloom threshold)
+  - Id: dust_step
+    Family: 11
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_dust_step_4x4_v003.png
+    Sha256: 2e80b2a7ac909528ed54d7888d05e09b4ccf1304bfaabf6562b53a83068e0f6d
+    Texture: {fileID: 2800000, guid: 9b1e68d50b9de4ec2804e8fc9927ec68, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: c14bc680578f14ee6944052401615c69, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 8
+    Fps: 30
+    DurationSeconds: 0.2667
+    Loop: 0
+    WorldSizeMetres: 0.3
+    OriginUv: {x: 0.5, y: 0}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: '0.3 x 0.2 m quad at the heel, pivot bottom centre: f0-1 two puffs
+      0.06 m alpha 0.5, f2-4 merge and drift 0.1 m back / up to 0.2 m alpha 0.35,
+      f5-7 -> 0; tints earth / stone / wood-tatami (s <= 0.30); water surfaces use
+      water_splash_ring at 0.4x'
+    MeanOpaqueColour: {r: 0.8344866, g: 0.8344866, b: 0.8344866, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_dust_step
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.2
+    DefaultTint: {r: 0.55, g: 0.48, b: 0.4, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: mag_drop
+    Family: 9
+    Kind: 1
+    SourceFile: AP010B/wave2/AP010B_mag_drop_256_v003.png
+    Sha256: 11e7b4e1edc74beff2e181a6269e4f60407f74d11caf8ec7b6b01c4e4d94e367
+    Texture: {fileID: 2800000, guid: 9328a1a90c7c8425ea8b38d68b8d4a57, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 82c6f88e13c4a4d24bb66fe41f473e7a, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.16
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'dropped box magazine lying on the ground: 0.16 x 0.08 m billboard-decal,
+      lifetime 6 s, fade 1 s; gunmetal (0.20, 0.21, 0.22) h 210 s 0.09 v 0.22 with
+      the key-light edge highlight; pair with mag_drop_dust at the landing point'
+    MeanOpaqueColour: {r: 0.0564741, g: 0.060036525, b: 0.0625829, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_mag_drop
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.08
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha (decal)
+  - Id: mag_drop_dust
+    Family: 9
+    Kind: 0
+    SourceFile: AP010B/wave2/AP010B_mag_drop_dust_4x4_v003.png
+    Sha256: bff770487e4182134c91b5e0a6b6c1461b9ed5446d182f13106224ce30900a8a
+    Texture: {fileID: 2800000, guid: 005d3b6fe4611440f85f1d497a77e00b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 72b28425d1ed24e7ea477c9087a48526, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 8
+    Fps: 30
+    DurationSeconds: 0.2667
+    Loop: 0
+    WorldSizeMetres: 0.12
+    OriginUv: {x: 0.5, y: 0}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: '0.12 m quad at the landing point: single puff f0-2 0.05 m alpha 0.45
+      -> f3-7 0.12 m -> 0 (item 19 recipe with one blob); tints as dust_step'
+    MeanOpaqueColour: {r: 0.8307669, g: 0.8307669, b: 0.8307669, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010B_mag_drop_dust
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.12
+    DefaultTint: {r: 0.55, g: 0.48, b: 0.4, a: 1}
+    HdrIntensity: 1
+    BlendNote: alpha
+  - Id: decal_impact_flesh
+    Family: 0
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_impact_flesh_1024_v002.png
+    Sha256: 2281031c25cd0f2674246694efdc81f1207ea3cfdf3233f57827eb787095c6d7
+    Texture: {fileID: 2800000, guid: 78858b32c0f134d6e81b847a95192beb, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: d5a4d6f1800c14c47afe43bb9ab3bcff, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'flesh hit mark: tar/mud h20-30 s0.10-0.15 v0.15-0.25 (v1.1 band);
+      ground/wall projected, 8 s fade; pair with impact_flesh flipbook v002'
+    MeanOpaqueColour: {r: 0.020888703, g: 0.018382315, b: 0.016364828, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_impact_flesh_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_impact_armor
+    Family: 0
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_impact_armor_1024.png
+    Sha256: 90b78ee7daa1ee8916ff75bc258a7e604a4c8f619115d7ba3c35957a4f0c248e
+    Texture: {fileID: 2800000, guid: 80a8652edebc94b48908dc4441397e14, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 1dca00a916c9e4d71b9919e459101490, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'armour/lacquer chip: pale exposed scale (v 0.55) + dark lacquer rim
+      (h 20 s 0.25) + cracks; 8 s fade'
+    MeanOpaqueColour: {r: 0.08939778, g: 0.091810256, b: 0.099113174, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_impact_armor_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_impact_stone
+    Family: 0
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_impact_stone_1024.png
+    Sha256: 41b450d1d3dccab9c551c257bd10b95a17c441d9672a09618a8defb2990679c7
+    Texture: {fileID: 2800000, guid: 7d7ad0b2436db498fa7e952c2643bec6, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: d88ff1bfaa95e4468bc000132957c680, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: stone chip + dust ring (h 210 s<=0.08); normal variant AP010_decal_impact_stone_normal_1024.png
+      (OpenGL Y+); 8 s fade
+    MeanOpaqueColour: {r: 0.17015018, g: 0.18191579, b: 0.19401625, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_impact_stone_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_impact_stone_normal
+    Family: 0
+    Kind: 3
+    SourceFile: AP010/decals/AP010_decal_impact_stone_normal_1024.png
+    Sha256: 35fb3bff7b70ed8536b6a40ed0791a3b4911660c504713a7f7aa119e546211a5
+    Texture: {fileID: 2800000, guid: 05e8553ae72a54a399d398a70b5297ae, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 4
+    Additive: 0
+    UsageNote: tangent normal map for the stone decal (OpenGL Y+ up, BC5 import);
+      alpha = decal coverage
+    MeanOpaqueColour: {r: 0.2782296, g: 0.28345266, b: 0.6147199, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_impact_stone_normal_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_impact_wood
+    Family: 0
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_impact_wood_1024.png
+    Sha256: 55cf7ee04ae1cbca86907b7dcad4ea4007e7b51f29bc738d439d35981806610a
+    Texture: {fileID: 2800000, guid: dfefeeac408df47cfbdd0007029c0a3e, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 729cd508e2df74a4d81ca87aba5efd2d, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'wood splinter hole: grain along image Y (rotate to surface grain),
+      tan splinters h 27 s<=0.35; 8 s fade'
+    MeanOpaqueColour: {r: 0.18006556, g: 0.117275976, b: 0.077175654, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_impact_wood_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_impact_wood_normal
+    Family: 0
+    Kind: 3
+    SourceFile: AP010/decals/AP010_decal_impact_wood_normal_1024.png
+    Sha256: 2dfc38b6d581a793eef7e94187a8fa27018e80eb39f8dde06b641a437cc1d417
+    Texture: {fileID: 2800000, guid: 05a2ce8e8728246e7b64da17b68a8f94, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 4
+    Additive: 0
+    UsageNote: tangent normal map for the wood decal (OpenGL Y+ up, BC5 import);
+      alpha = decal coverage
+    MeanOpaqueColour: {r: 0.4423822, g: 0.24066281, b: 0.37296307, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_impact_wood_normal_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_impact_earth
+    Family: 0
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_impact_earth_1024.png
+    Sha256: af23485627a7673a42bc6df960a626d6c7ff17ad8c8d23ad80dab1013ce118bd
+    Texture: {fileID: 2800000, guid: 0e96724e2b07e44e79d7e4fc40e5ad9f, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 7624b90ba49ae4bbb9b25c101b443404, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.4
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: earth crater with clods + dust halo (h 36 s<=0.28, gold band avoided
+      by s<0.30); 8 s fade
+    MeanOpaqueColour: {r: 0.06477161, g: 0.055844203, b: 0.04361806, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_impact_earth_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.4
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_zombie_splat_01
+    Family: 4
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_zombie_splat_01_1024.png
+    Sha256: 4259713e75e5be57335b2dc3061e3fbccc475070d34fc97ebf3543b4ce6c85a3
+    Texture: {fileID: 2800000, guid: 4e6b9565e60d04ddda17a2c20ce07f12, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: dfbe4728168aa40249d1165e4a38d5c4, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'ground splat variant 1 (radial): tar/mud h 20 s<=0.15 v 0.08-0.15;
+      fades in f6-10 under the body, lives 8 s; gore MEDIUM'
+    MeanOpaqueColour: {r: 0.012762188, g: 0.010979755, b: 0.010040416, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_zombie_splat_01_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: decal_zombie_splat_02
+    Family: 4
+    Kind: 1
+    SourceFile: AP010/decals/AP010_decal_zombie_splat_02_1024.png
+    Sha256: bc32eb03576f938dded7e24b2d0571b55b425553ff622b5f7969a91ab0f5900a
+    Texture: {fileID: 2800000, guid: dc2cd21723c9b4ab1b00e2fceb20ed92, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: b0d8a2cbe1c874429a09e3d82258c54d, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 1.2
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: 'ground splat variant 2 (directional smear): same colour band; orient
+      along the kill direction; gore MEDIUM'
+    MeanOpaqueColour: {r: 0.013319961, g: 0.01143078, b: 0.010422937, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_decal_zombie_splat_02_1024
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.2
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: goldpack_V01
+    Family: 5
+    Kind: 4
+    SourceFile: AP010/gold/AP010_goldpack_V01.fbx
+    Sha256: 34bfd0f38e6205b8aa9863a2683574e10d0223323364c94aca3dbd45044e417c
+    Texture: {fileID: 0}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 990084740408623919, guid: 8623b6d609b894f83a282efeaa4c5229, type: 3}
+    Material: {fileID: 2100000, guid: 11c3b1d73de504e52a2b6b1fd96d798a, type: 2}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 1
+    Additive: 0
+    UsageNote: gold pack pickup mesh AP010_goldpack_V01_LOD0 (480 tris, LOD0 only),
+      0.28 m tall, pivot = pouch body centre at ground (origin), spilled coin extends
+      to +0.21 m x; -Z fwd / Y up, FBX_SCALE_UNITS, embed off (textures by name);
+      re-import verified 480 tris / 0.28 m / scale 1
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_goldpack_V01
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: goldpack_V01_review
+    Family: 5
+    Kind: 5
+    SourceFile: AP010/gold/AP010_goldpack_V01.glb
+    Sha256: d36a06b11ac754c2983bca3f1c31654c682d1120805361ace6dbd7587d7a852b
+    Texture: {fileID: 0}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.28
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 1
+    Additive: 0
+    UsageNote: GLB review copy of the gold pack (materials + textures embedded);
+      not for import
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_goldpack_V01
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0.28
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: hud_marker
+    Family: 6
+    Kind: 3
+    SourceFile: AP010/beacon/AP010_hud_marker_256.png
+    Sha256: cca589b9790a5ad6e5e50a6ff40c2955fecdf5d10722cfd80c3a7f8c1048a537
+    Texture: {fileID: 2800000, guid: 4b1b3fc79cde1497d8f557056a192f52, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 0}
+    Columns: 1
+    Rows: 1
+    FramesUsed: 1
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 2
+    Additive: 0
+    UsageNote: 'HUD marker: plain diamond outline 60 % of tile, 8 % stroke, white
+      on alpha, no text; HUD tint = beacon colour'
+    MeanOpaqueColour: {r: 1, g: 1, b: 1, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_hud_marker_256
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_impact_flesh
+    Family: 0
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_impact_flesh_8x8_v002.png
+    Sha256: 5da78b9f6877a77988ae487eac86dda599c0af51974918ef69138b7e14231cdc
+    Texture: {fileID: 2800000, guid: d981194e7cce44234829488b80ef322b, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: ef778dc10e738432f989e9469fea3a7c, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 12
+    Fps: 30
+    DurationSeconds: 0.4
+    Loop: 0
+    WorldSizeMetres: 0.44
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: v002 flesh impact kept as reference; HIGH-gore path uses the blood
+      splash (alias)
+    MeanOpaqueColour: {r: 0.044161245, g: 0.038947225, b: 0.03542458, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_impact_flesh_8x8
+    Supersedes: 
+    AliasTo: AP010B_fb_blood_splash_01_8x8
+    WorldHeightMetres: 0.44
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: fb_zombiedeath
+    Family: 4
+    Kind: 0
+    SourceFile: AP010/flipbooks/AP010_fb_zombiedeath_8x8.png
+    Sha256: de08a2fb73b8c7f8bf2b570ad55a9962adf0feb8ff2a09a64aac4a64660fbdf3
+    Texture: {fileID: 2800000, guid: cdb9f55f109aa4f229aae14c9ee453f6, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 46ea6146b12cf4109b3190f44dc6097a, type: 2}
+    Columns: 8
+    Rows: 8
+    FramesUsed: 18
+    Fps: 30
+    DurationSeconds: 0.6
+    Loop: 0
+    WorldSizeMetres: 1.6
+    OriginUv: {x: 0.5, y: 0.25}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: gore-MEDIUM fallback; HIGH-gore deaths use AP010B_fb_blood_death_*
+      + pool
+    MeanOpaqueColour: {r: 0.024262346, g: 0.021207165, b: 0.019695465, a: 1}
+    ManifestFile: AP010-vfx-manifest-v003.json
+    Slot: AP010_fb_zombiedeath_8x8
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 1.6
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 
+  - Id: blood_droplet
+    Family: 8
+    Kind: 2
+    SourceFile: AP010B/blood/AP010B_sheet_blood_droplets_4x4_v003b.png
+    Sha256: 4786e73a875313a0bb6c80b977892cd2db157bd8ed79124f062e60fdcbf99625
+    Texture: {fileID: 2800000, guid: 3a3f710f1d5794cdcb2d1f10982599d2, type: 3}
+    Emissive: {fileID: 0}
+    Normal: {fileID: 0}
+    Mesh: {fileID: 0}
+    Material: {fileID: 2100000, guid: 765eeb09009734928b7e0851b70eaa61, type: 2}
+    Columns: 4
+    Rows: 4
+    FramesUsed: 16
+    Fps: 0
+    DurationSeconds: 0
+    Loop: 0
+    WorldSizeMetres: 0.04
+    OriginUv: {x: 0.5, y: 0.5}
+    ReadabilityLimitSeconds: 0
+    ColourReserve: 0
+    Additive: 0
+    UsageNote: blood droplets (BloodDropletEffect, mesh particles, GPU instanced)
+    MeanOpaqueColour: {r: 0.08930744, g: 0.0064180386, b: 0.0064165005, a: 1}
+    ManifestFile: synthesized
+    Slot: 
+    Supersedes: 
+    AliasTo: 
+    WorldHeightMetres: 0
+    DefaultTint: {r: 1, g: 1, b: 1, a: 1}
+    HdrIntensity: 1
+    BlendNote: 

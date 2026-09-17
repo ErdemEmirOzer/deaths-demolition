@@ -149,6 +149,11 @@ namespace DD.Prototype.Economy
 
         protected override void OnDespawned()
         {
+            if (_ap010 != null)
+            {
+                _ap010.SetPulling(false, Vector3.zero);
+            }
+
             bool lostGold = _packet.Recycle();
 
             if (_owner != null)
@@ -274,6 +279,10 @@ namespace DD.Prototype.Economy
             _packet.TickMagnet(dt);
             _magnetSpeed = Mathf.Min(_owner.MagnetSpeed, _magnetSpeed + _owner.MagnetAcceleration * dt);
             transform.position = Vector3.MoveTowards(transform.position, player, _magnetSpeed * dt);
+            if (_ap010 != null)
+            {
+                _ap010.SetPulling(true, player);   // REQ-014 pull trail
+            }
         }
 
         private void Bob(float dt)
@@ -367,6 +376,18 @@ namespace DD.Prototype.Economy
                 return;
             }
 
+            // WP-019: the AP-010 gold pack (mesh + emissive coins + sparkle/trail cards) when the
+            // catalog is present; the WP-004 additive sphere otherwise. Presentation only.
+            _ap010 = DD.Prototype.Feedback.Vfx.GoldPackVisual.TryAttach(transform, out MeshRenderer pouch);
+            if (_ap010 != null)
+            {
+                _visual = pouch.transform;
+                _visual.localScale = Vector3.one * _baseScale;
+                _renderer = pouch;
+                BuildLight();
+                return;
+            }
+
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.name = "Visual";
 
@@ -390,7 +411,13 @@ namespace DD.Prototype.Economy
             // The colour is (re)applied in Begin once the tuning is known; this default
             // only covers a body warmed before its first life.
             ApplyColor(_tuning != null ? _tuning.Color : Color.yellow);
+            BuildLight();
+        }
 
+        private DD.Prototype.Feedback.Vfx.GoldPackVisual _ap010;
+
+        private void BuildLight()
+        {
             var lightObject = new GameObject("Glow");
             lightObject.transform.SetParent(transform, false);
 
@@ -403,9 +430,9 @@ namespace DD.Prototype.Economy
 
         private void ApplyColor(Color color)
         {
-            if (_renderer == null)
+            if (_renderer == null || _ap010 != null)
             {
-                return;
+                return;   // the AP-010 pouch keeps its authored material
             }
 
             if (_renderer.sharedMaterial != null && _visualColor == color)

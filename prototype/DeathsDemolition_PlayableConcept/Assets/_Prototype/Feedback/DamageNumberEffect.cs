@@ -82,6 +82,26 @@ namespace DD.Prototype.Feedback
             RestartLife();
         }
 
+        private static readonly string[] s_numberTable = new string[1000];
+        private static readonly System.Collections.Generic.Dictionary<int, string> s_bigNumbers = new System.Collections.Generic.Dictionary<int, string>(64);
+
+        /// <summary>Integer text without a per-call allocation (table 0..999, larger values cached on first sight).</summary>
+        public static string NumberText(int value)
+        {
+            if (value >= 0 && value < s_numberTable.Length)
+            {
+                return s_numberTable[value] ?? (s_numberTable[value] = value.ToString());
+            }
+
+            if (!s_bigNumbers.TryGetValue(value, out string text))
+            {
+                text = value.ToString();
+                s_bigNumbers[value] = text;
+            }
+
+            return text;
+        }
+
         private void Refresh()
         {
             if (_text == null)
@@ -90,7 +110,14 @@ namespace DD.Prototype.Feedback
             }
 
             int rounded = Mathf.Max(1, Mathf.RoundToInt(_amount));
-            _text.text = rounded.ToString();
+            // WP-037 finding (ADR-037-1 zero-alloc hot path): the per-number string was the whole 12 KB/window regression.
+            // Cached table for 0..999, a one-time string per larger value; the text is only assigned when it changes.
+            string text = NumberText(rounded);
+            if (!ReferenceEquals(_text.text, text) && _text.text != text)
+            {
+                _text.text = text;
+            }
+
             _text.color = _color;
         }
 

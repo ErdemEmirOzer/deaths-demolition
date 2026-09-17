@@ -101,6 +101,24 @@ namespace DD.Art.Pipeline.EditorTools
             Debug.Log(LogPrefix + "Run Atmosphere VFX: done in " + Seconds(total) + " s.");
         }
 
+        // ------------------------------------------------------------ WP-019 AP-010 effects
+
+        /// <summary>WP-019 · AP-010 manifest → VfxCatalog + materials (idempotent). Batch: <c>-executeMethod …RunVfxCatalog</c>.</summary>
+        [MenuItem(MenuRoot + "Run VFX Catalog (WP-019)", priority = 303)]
+        public static void RunVfxCatalog()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run VFX Catalog cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Step(1, "AP-010 manifest → VfxCatalog + materials", () => ArtVfxImporter.BuildCatalog());
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run VFX Catalog: done in " + Seconds(total) + " s.");
+        }
+
         // ------------------------------------------------------------ WP-012 libraries
 
         private const int LibraryStepCount = 9;

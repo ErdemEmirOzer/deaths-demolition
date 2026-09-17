@@ -54,6 +54,30 @@ namespace DD.Art.Tests.EditMode
             return sonuc;
         }
 
+        /// <summary>WP-019: PNG paths the AP-010 manifest ships under the VFX root (row files + emissive layers; the GLB is not imported).</summary>
+        public static List<string> ArtVfxManifestPngs()
+        {
+            var set = new HashSet<string>(StringComparer.Ordinal);
+            var manifest = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtVfxContract.ManifestPath)), "manifest");
+            foreach (object o in ArtJson.AsList(manifest["assets"], "assets"))
+            {
+                var a = ArtJson.AsObject(o, "asset");
+                string file = ArtJson.AsString(a["file"], "file");
+                // v003 paths are relative to Assets/_Art/VFX/ (AP010/…, AP010B/…); v002 paths to the AP010 root.
+                string parent = ArtVfxContract.VfxRoot.Substring(0, ArtVfxContract.VfxRoot.LastIndexOf('/'));
+                if (file.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) set.Add((file.StartsWith("AP010") ? parent : ArtVfxContract.VfxRoot) + "/" + file);
+                if (a.TryGetValue("emissive_file", out object em) && em != null)
+                {
+                    string ef = ArtJson.AsString(em, "emissive_file");
+                    set.Add((ef.StartsWith("AP010") ? parent : ArtVfxContract.VfxRoot) + "/" + ef);
+                }
+            }
+
+            var list = new List<string>(set);
+            list.Sort(string.CompareOrdinal);
+            return list;
+        }
+
         private static int UcgenSayisi(Mesh mesh)
         {
             // GetIndexCount alt-mesh meta verisidir; Read/Write kapalı mesh'te de okunur
@@ -276,6 +300,9 @@ namespace DD.Art.Tests.EditMode
             foreach (string f in ArtSpecialWeaponBuilder.ModelFiles()) if (beklenen.Add(f)) sw++;
             Assert.AreEqual(4, sw, "AP-014 2 Special Weapon × pickup/hand FBX");
 
+            // WP-019 (ADR-019-1): the AP-010 gold pack mesh (the only FBX the effect package ships).
+            beklenen.Add(ArtVfxContract.VfxRoot + "/gold/AP010_goldpack_V01.fbx");
+
             var diskte = new HashSet<string>(DiskteUzanti(".fbx"), StringComparer.Ordinal);
             var eksik = new List<string>();
             var fazla = new List<string>();
@@ -302,6 +329,7 @@ namespace DD.Art.Tests.EditMode
             var ihlaller = new List<string>();
             foreach (string yol in pngler)
             {
+                if (ArtVfxContract.IsVfxTexture(yol)) continue;   // WP-019: AP-010 sheets follow ArtVfxContract (ArtVfxCatalogTests)
                 ArtImportContract.TextureRole rol = ArtImportContract.RoleOf(yol);
                 if (rol == ArtImportContract.TextureRole.Unknown)
                 {
@@ -397,6 +425,11 @@ namespace DD.Art.Tests.EditMode
             foreach (string f in ArtSpecialWeaponBuilder.TextureFiles()) beklenen.Add(f);
             Assert.AreEqual(139, beklenen.Count, "Beklenen doku kümesi 125 + 5 (WP-036 tier) + 9 (WP-037B SW atlas + sheet) = 139 olmalı.");
 
+            // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
+            int vfx = 0;
+            foreach (string f in ArtVfxManifestPngs()) if (beklenen.Add(f)) vfx++;
+            Assert.AreEqual(109, vfx, "AP-010 v003 manifest 109 PNG (105 satır + 4 emissive; AP010 36 + AP010B 73) olmalı.");
+
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();
             var fazla = new List<string>();
@@ -459,6 +492,7 @@ namespace DD.Art.Tests.EditMode
             int sevkSayi = 0;
             foreach (string yol in pngler)
             {
+                if (ArtVfxContract.IsVfxTexture(yol)) continue;   // WP-019: VFX class has its own line (ArtVfxCatalogTests)
                 ArtImportContract.TextureRole rol = ArtImportContract.RoleOf(yol);
                 string slug = ArtImportContract.RoleSlugOf(yol);
                 ArtImportContract.TextureClass? sinif = ArtImportContract.ClassifiedClassOf(yol);   // WP-037: a Sheet is the Vfx class without a table row
