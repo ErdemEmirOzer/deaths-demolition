@@ -1,13 +1,13 @@
 {
  "ap": "AP-017",
- "version": "Phase 1 v001 (manifest AP017.manifest.v1)",
+ "version": "Phase 1+2 v002 (manifest AP017.manifest.v1, phase 1+2)",
  "sources": [
   {
-   "path": "asset-production/AP-017/exports/AP017-manifest-v001.json",
-   "sha256": "c335753106a0fe4d225a30e0f2aa048a650cddb454c5284634b195bb57acea72"
+   "path": "asset-production/AP-017/exports/AP017-manifest-v002.json",
+   "sha256": "62108e7a3d17801896838b235904b61ed87f40d74706a04c21c43e3489463daa"
   }
  ],
- "derived": "source FBX used directly (embed_textures False, path_mode STRIP); breakables carry breakEventId / residueCell (AP-017 custom props)",
+ "derived": "source FBX used directly (embed_textures False, path_mode STRIP); breakables carry breakEventId / residueCell (AP-017 custom props); Phase 2 props bind prop_<family> (1K set \u2192 Prop 512, AP-005B path)",
  "families": [
   {
    "family": "broken_fence",
@@ -4667,6 +4667,838 @@
      ],
      "breakEventId": "BreakStraw",
      "residueCell": "BL_straw"
+    }
+   ]
+  },
+  {
+   "family": "ofuda_post",
+   "occluder": false,
+   "kind": "prop",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_ofuda_post_V01",
+     "boundsMin": [
+      -0.1815,
+      -0.1828,
+      0.0
+     ],
+     "boundsMax": [
+      0.1815,
+      0.1828,
+      2.0
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_ofuda_post_V01.fbx",
+         "object": "AP017_ofuda_post_V01_LOD0",
+         "materials": [
+          "prop_ofuda_post"
+         ],
+         "facesPerSlot": [
+          1938
+         ],
+         "triangles": 1938,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_ofuda_post_V01.fbx",
+         "object": "AP017_ofuda_post_V01_LOD1",
+         "materials": [
+          "prop_ofuda_post"
+         ],
+         "facesPerSlot": [
+          750
+         ],
+         "triangles": 750,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_ofuda_post_V01.fbx",
+         "object": "AP017_ofuda_post_V01_LOD2",
+         "materials": [
+          "prop_ofuda_post"
+         ],
+         "facesPerSlot": [
+          522
+         ],
+         "triangles": 522,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_ofuda_post_V01.fbx",
+       "object": "AP017_ofuda_post_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.18153,
+          -0.182815,
+          0.0
+         ],
+         "max": [
+          0.18153,
+          0.182815,
+          2.0
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "drying_rack_cloth",
+   "occluder": false,
+   "kind": "prop",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_drying_rack_cloth_V01",
+     "boundsMin": [
+      -1.1,
+      -0.499,
+      0.0
+     ],
+     "boundsMax": [
+      1.1,
+      0.499,
+      1.8726
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_drying_rack_cloth_V01.fbx",
+         "object": "AP017_drying_rack_cloth_V01_LOD0",
+         "materials": [
+          "prop_drying_rack_cloth"
+         ],
+         "facesPerSlot": [
+          3394
+         ],
+         "triangles": 3394,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_drying_rack_cloth_V01.fbx",
+         "object": "AP017_drying_rack_cloth_V01_LOD1",
+         "materials": [
+          "prop_drying_rack_cloth"
+         ],
+         "facesPerSlot": [
+          1316
+         ],
+         "triangles": 1316,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_drying_rack_cloth_V01.fbx",
+         "object": "AP017_drying_rack_cloth_V01_LOD2",
+         "materials": [
+          "prop_drying_rack_cloth"
+         ],
+         "facesPerSlot": [
+          394
+         ],
+         "triangles": 394,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_drying_rack_cloth_V01.fbx",
+       "object": "AP017_drying_rack_cloth_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.1,
+          -0.49899,
+          0.0
+         ],
+         "max": [
+          1.1,
+          0.49899,
+          1.8726
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "well_head_tsurube",
+   "occluder": false,
+   "kind": "prop",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_well_head_tsurube_V01",
+     "boundsMin": [
+      -0.7618,
+      -0.7613,
+      0.0
+     ],
+     "boundsMax": [
+      0.7618,
+      0.7613,
+      2.0
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_well_head_tsurube_V01.fbx",
+         "object": "AP017_well_head_tsurube_V01_LOD0",
+         "materials": [
+          "prop_well_head_tsurube"
+         ],
+         "facesPerSlot": [
+          4364
+         ],
+         "triangles": 4364,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_well_head_tsurube_V01.fbx",
+         "object": "AP017_well_head_tsurube_V01_LOD1",
+         "materials": [
+          "prop_well_head_tsurube"
+         ],
+         "facesPerSlot": [
+          1692
+         ],
+         "triangles": 1692,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_well_head_tsurube_V01.fbx",
+         "object": "AP017_well_head_tsurube_V01_LOD2",
+         "materials": [
+          "prop_well_head_tsurube"
+         ],
+         "facesPerSlot": [
+          506
+         ],
+         "triangles": 506,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_well_head_tsurube_V01.fbx",
+       "object": "AP017_well_head_tsurube_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.761772,
+          -0.761256,
+          0.0
+         ],
+         "max": [
+          0.761772,
+          0.761256,
+          2.0
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "breakable_sake_jar",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_sake_jar_V01",
+     "boundsMin": [
+      -0.352,
+      -0.3557,
+      0.0
+     ],
+     "boundsMax": [
+      0.352,
+      0.3557,
+      0.9
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_sake_jar_V01.fbx",
+         "object": "AP017_breakable_sake_jar_V01_BROKEN_LOD0",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          3063
+         ],
+         "triangles": 3063,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V01.fbx",
+         "object": "AP017_breakable_sake_jar_V01_BROKEN_LOD1",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V01.fbx",
+         "object": "AP017_breakable_sake_jar_V01_BROKEN_LOD2",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          355
+         ],
+         "triangles": 355,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_sake_jar_V01.fbx",
+         "object": "AP017_breakable_sake_jar_V01_LOD0",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          2424
+         ],
+         "triangles": 2424,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V01.fbx",
+         "object": "AP017_breakable_sake_jar_V01_LOD1",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          938
+         ],
+         "triangles": 938,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V01.fbx",
+         "object": "AP017_breakable_sake_jar_V01_LOD2",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_sake_jar_V01.fbx",
+       "object": "AP017_breakable_sake_jar_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.351952,
+          -0.355723,
+          0.0
+         ],
+         "max": [
+          0.351952,
+          0.355723,
+          0.9
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_sake_jar_V01.fbx",
+       "object": "AP017_breakable_sake_jar_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.351952,
+          -0.355723,
+          0.0
+         ],
+         "max": [
+          0.351952,
+          0.355723,
+          0.9
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_sake_jar_V01.fbx",
+       "object": "AP017_breakable_sake_jar_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.401952,
+          -0.405723,
+          0.0
+         ],
+         "max": [
+          0.401952,
+          0.405723,
+          0.95
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakCeramic",
+     "residueCell": "TL_ceramic"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_breakable_sake_jar_V02",
+     "boundsMin": [
+      -0.2731,
+      -0.2934,
+      0.0
+     ],
+     "boundsMax": [
+      0.2731,
+      0.2934,
+      0.72
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_sake_jar_V02.fbx",
+         "object": "AP017_breakable_sake_jar_V02_BROKEN_LOD0",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          3063
+         ],
+         "triangles": 3063,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V02.fbx",
+         "object": "AP017_breakable_sake_jar_V02_BROKEN_LOD1",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          1188
+         ],
+         "triangles": 1188,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V02.fbx",
+         "object": "AP017_breakable_sake_jar_V02_BROKEN_LOD2",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          354
+         ],
+         "triangles": 354,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_sake_jar_V02.fbx",
+         "object": "AP017_breakable_sake_jar_V02_LOD0",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          2424
+         ],
+         "triangles": 2424,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V02.fbx",
+         "object": "AP017_breakable_sake_jar_V02_LOD1",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          938
+         ],
+         "triangles": 938,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V02.fbx",
+         "object": "AP017_breakable_sake_jar_V02_LOD2",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_sake_jar_V02.fbx",
+       "object": "AP017_breakable_sake_jar_V02_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.273115,
+          -0.29338,
+          0.0
+         ],
+         "max": [
+          0.273115,
+          0.29338,
+          0.72
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_sake_jar_V02.fbx",
+       "object": "AP017_breakable_sake_jar_V02_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.273115,
+          -0.29338,
+          0.0
+         ],
+         "max": [
+          0.273115,
+          0.29338,
+          0.72
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_sake_jar_V02.fbx",
+       "object": "AP017_breakable_sake_jar_V02_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.323115,
+          -0.34338,
+          0.0
+         ],
+         "max": [
+          0.323115,
+          0.34338,
+          0.77
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakCeramic",
+     "residueCell": "TL_ceramic"
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_breakable_sake_jar_V03",
+     "boundsMin": [
+      -0.2233,
+      -0.2086,
+      0.0
+     ],
+     "boundsMax": [
+      0.2233,
+      0.2086,
+      0.549
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_sake_jar_V03.fbx",
+         "object": "AP017_breakable_sake_jar_V03_BROKEN_LOD0",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          3063
+         ],
+         "triangles": 3063,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V03.fbx",
+         "object": "AP017_breakable_sake_jar_V03_BROKEN_LOD1",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          1187
+         ],
+         "triangles": 1187,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V03.fbx",
+         "object": "AP017_breakable_sake_jar_V03_BROKEN_LOD2",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          354
+         ],
+         "triangles": 354,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_sake_jar_V03.fbx",
+         "object": "AP017_breakable_sake_jar_V03_LOD0",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          2424
+         ],
+         "triangles": 2424,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V03.fbx",
+         "object": "AP017_breakable_sake_jar_V03_LOD1",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          938
+         ],
+         "triangles": 938,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_sake_jar_V03.fbx",
+         "object": "AP017_breakable_sake_jar_V03_LOD2",
+         "materials": [
+          "prop_breakable_sake_jar"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_sake_jar_V03.fbx",
+       "object": "AP017_breakable_sake_jar_V03_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.223278,
+          -0.208645,
+          0.0
+         ],
+         "max": [
+          0.223278,
+          0.208645,
+          0.549
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_sake_jar_V03.fbx",
+       "object": "AP017_breakable_sake_jar_V03_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.223278,
+          -0.208645,
+          0.0
+         ],
+         "max": [
+          0.223278,
+          0.208645,
+          0.549
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_sake_jar_V03.fbx",
+       "object": "AP017_breakable_sake_jar_V03_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.273278,
+          -0.258645,
+          0.0
+         ],
+         "max": [
+          0.273278,
+          0.258645,
+          0.599
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakCeramic",
+     "residueCell": "TL_ceramic"
     }
    ]
   }

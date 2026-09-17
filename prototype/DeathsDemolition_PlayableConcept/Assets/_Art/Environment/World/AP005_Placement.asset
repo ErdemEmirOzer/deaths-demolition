@@ -20,9 +20,9 @@ MonoBehaviour:
   sourceSha256: 9e47c9ad7c8c6d2522b01072eb92722f640079c40d57fbe94131c9c7f2df39de
   overridesSha256: 4e4799a4df6e5987437aafb2ea1ec2193efe92cd4e12715971a719ba82855e6b
   overriddenIds: []
-  deltaSha256: 557904e0f7e41757780f55918e0826cda9b1a8ae0f04411c3c2446851699a9b8
-  deltaTarget: placement version 4
-  deltaAdded: 970
+  deltaSha256: d5129ca6a3b672fb4f52245a71e368996769d56e900a82a62558b6370f82f34b
+  deltaTarget: placement version 5
+  deltaAdded: 993
   deltaChanged: 32
   deltaRemoved: 204
   deltaRemovedIds:
@@ -456,6 +456,14 @@ MonoBehaviour:
     sha256: 557904e0f7e41757780f55918e0826cda9b1a8ae0f04411c3c2446851699a9b8
     target: placement version 4
     added: 456
+    changed: 0
+    removed: 0
+    removedIds: []
+  - file: AP005_placement-delta-v005.json
+    version: v005
+    sha256: d5129ca6a3b672fb4f52245a71e368996769d56e900a82a62558b6370f82f34b
+    target: placement version 5
+    added: 23
     changed: 0
     removed: 0
     removedIds: []
@@ -57134,6 +57142,420 @@ MonoBehaviour:
     fade: 0
     materialOverride: 
     deltaVersion: v004
+    materialOverrideParts: []
+  - id: AP005_i3327
+    ap: AP-017
+    family: drying_rack_cloth
+    variation: V01
+    lodGroup: AP017_drying_rack_cloth_V01
+    assembly: []
+    position: {x: -15.886, y: 0, z: 44.242}
+    yawDegrees: 307.24
+    rotationEuler: {x: 0, y: 0, z: 307.24}
+    scale: {x: 0.959, y: 0.959, z: 0.959}
+    region: north
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3328
+    ap: AP-017
+    family: well_head_tsurube
+    variation: V01
+    lodGroup: AP017_well_head_tsurube_V01
+    assembly: []
+    position: {x: -23.77, y: 0, z: 43.916}
+    yawDegrees: 201.93
+    rotationEuler: {x: 0, y: 0, z: 201.93}
+    scale: {x: 1.033, y: 1.033, z: 1.033}
+    region: north
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3329
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: 21.833, y: 0, z: 37.105}
+    yawDegrees: 92.8
+    rotationEuler: {x: 0, y: 0, z: 92.8}
+    scale: {x: 1.049, y: 1.049, z: 1.049}
+    region: north
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3330
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: -8.772, y: 0, z: 15.329}
+    yawDegrees: 26.76
+    rotationEuler: {x: 0, y: 0, z: 26.76}
+    scale: {x: 1.041, y: 1.041, z: 1.041}
+    region: north
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3332
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: 20.84, y: 0, z: -11.487}
+    yawDegrees: 164.86
+    rotationEuler: {x: 0, y: 0, z: 164.86}
+    scale: {x: 0.982, y: 0.982, z: 0.982}
+    region: east
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3333
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: 29.323, y: 0, z: -5.751}
+    yawDegrees: 12.17
+    rotationEuler: {x: 0, y: 0, z: 12.17}
+    scale: {x: 0.97, y: 0.97, z: 0.97}
+    region: east
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3334
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: 42.789, y: 0, z: -15.451}
+    yawDegrees: 29.7
+    rotationEuler: {x: 0, y: 0, z: 29.7}
+    scale: {x: 0.969, y: 0.969, z: 0.969}
+    region: east
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3335
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: 23.864, y: 0, z: 16.603}
+    yawDegrees: 309.18
+    rotationEuler: {x: 0, y: 0, z: 309.18}
+    scale: {x: 0.98, y: 0.98, z: 0.98}
+    region: east
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3336
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: 15.761, y: 0, z: 4.887}
+    yawDegrees: 8.53
+    rotationEuler: {x: 0, y: 0, z: 8.53}
+    scale: {x: 1.029, y: 1.029, z: 1.029}
+    region: east
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3338
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V03
+    lodGroup: AP017_breakable_sake_jar_V03
+    assembly: []
+    position: {x: 8.543, y: 0, z: -27.715}
+    yawDegrees: 114.87
+    rotationEuler: {x: 0, y: 0, z: 114.87}
+    scale: {x: 1.01, y: 1.01, z: 1.01}
+    region: south
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3339
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V02
+    lodGroup: AP017_breakable_sake_jar_V02
+    assembly: []
+    position: {x: 9.547, y: 0, z: -22.739}
+    yawDegrees: 141.23
+    rotationEuler: {x: 0, y: 0, z: 141.23}
+    scale: {x: 1.027, y: 1.027, z: 1.027}
+    region: south
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3340
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V01
+    lodGroup: AP017_breakable_sake_jar_V01
+    assembly: []
+    position: {x: -20.578, y: 0, z: -32.529}
+    yawDegrees: 140.59
+    rotationEuler: {x: 0, y: 0, z: 140.59}
+    scale: {x: 0.983, y: 0.983, z: 0.983}
+    region: south
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3341
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V01
+    lodGroup: AP017_breakable_sake_jar_V01
+    assembly: []
+    position: {x: -21.043, y: 0, z: -33.795}
+    yawDegrees: 125.59
+    rotationEuler: {x: 0, y: 0, z: 125.59}
+    scale: {x: 0.979, y: 0.979, z: 0.979}
+    region: south
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3342
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V03
+    lodGroup: AP017_breakable_sake_jar_V03
+    assembly: []
+    position: {x: 0.365, y: 0, z: -35.818}
+    yawDegrees: 36.19
+    rotationEuler: {x: 0, y: 0, z: 36.19}
+    scale: {x: 0.957, y: 0.957, z: 0.957}
+    region: south
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3343
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V02
+    lodGroup: AP017_breakable_sake_jar_V02
+    assembly: []
+    position: {x: 11.287, y: 0, z: -22.602}
+    yawDegrees: 255.29
+    rotationEuler: {x: 0, y: 0, z: 255.29}
+    scale: {x: 0.984, y: 0.984, z: 0.984}
+    region: south
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3344
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V02
+    lodGroup: AP017_breakable_sake_jar_V02
+    assembly: []
+    position: {x: -19.264, y: 0, z: -31.389}
+    yawDegrees: 279.47
+    rotationEuler: {x: 0, y: 0, z: 279.47}
+    scale: {x: 0.95, y: 0.95, z: 0.95}
+    region: south
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3345
+    ap: AP-017
+    family: drying_rack_cloth
+    variation: V01
+    lodGroup: AP017_drying_rack_cloth_V01
+    assembly: []
+    position: {x: -39.983, y: 0, z: 18.087}
+    yawDegrees: 340.21
+    rotationEuler: {x: 0, y: 0, z: 340.21}
+    scale: {x: 0.991, y: 0.991, z: 0.991}
+    region: west
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3347
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V02
+    lodGroup: AP017_breakable_sake_jar_V02
+    assembly: []
+    position: {x: -40.601, y: 0, z: -35.84}
+    yawDegrees: 216.81
+    rotationEuler: {x: 0, y: 0, z: 216.81}
+    scale: {x: 1.033, y: 1.033, z: 1.033}
+    region: west
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3348
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V02
+    lodGroup: AP017_breakable_sake_jar_V02
+    assembly: []
+    position: {x: -36.962, y: 0, z: -36.882}
+    yawDegrees: 187.9
+    rotationEuler: {x: 0, y: 0, z: 187.9}
+    scale: {x: 1.021, y: 1.021, z: 1.021}
+    region: west
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3349
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V01
+    lodGroup: AP017_breakable_sake_jar_V01
+    assembly: []
+    position: {x: -40.608, y: 0, z: -37.999}
+    yawDegrees: 282.84
+    rotationEuler: {x: 0, y: 0, z: 282.84}
+    scale: {x: 1.039, y: 1.039, z: 1.039}
+    region: west
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3352
+    ap: AP-017
+    family: breakable_sake_jar
+    variation: V03
+    lodGroup: AP017_breakable_sake_jar_V03
+    assembly: []
+    position: {x: -40.601, y: 0, z: -34.103}
+    yawDegrees: 220.85
+    rotationEuler: {x: 0, y: 0, z: 220.85}
+    scale: {x: 1.014, y: 1.014, z: 1.014}
+    region: west
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3353
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: -9.482, y: 0, z: 15}
+    yawDegrees: 90
+    rotationEuler: {x: 0, y: 0, z: 90}
+    scale: {x: 1, y: 1, z: 1}
+    region: north
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3354
+    ap: AP-017
+    family: ofuda_post
+    variation: V01
+    lodGroup: AP017_ofuda_post_V01
+    assembly: []
+    position: {x: 9.482, y: 0, z: 15}
+    yawDegrees: 90
+    rotationEuler: {x: 0, y: 0, z: 90}
+    scale: {x: 1, y: 1, z: 1}
+    region: north
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v005
     materialOverrideParts: []
   routes:
   - index: 0

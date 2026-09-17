@@ -128,3 +128,21 @@ MonoBehaviour:
   - family: breakable_strawbale
     variation: V01
     prefab: {fileID: 5254462117164083731, guid: a01b8c873f0924c398dfae20af584811, type: 3}
+  - family: ofuda_post
+    variation: V01
+    prefab: {fileID: 214541394891075908, guid: eedd2db78454c4a1cae30a300561b816, type: 3}
+  - family: drying_rack_cloth
+    variation: V01
+    prefab: {fileID: 4526233430914926403, guid: 4e56e0855d21249189b810c38d74d659, type: 3}
+  - family: well_head_tsurube
+    variation: V01
+    prefab: {fileID: 3714572238909048786, guid: fb0982f16ef444a3390eab60f34a9df6, type: 3}
+  - family: breakable_sake_jar
+    variation: V01
+    prefab: {fileID: 6759523285558281229, guid: 642fef4e56d884a3496a965563122405, type: 3}
+  - family: breakable_sake_jar
+    variation: V02
+    prefab: {fileID: 6022090817722814425, guid: 551b34daafc1b45f7a9ffa7a4c47ad15, type: 3}
+  - family: breakable_sake_jar
+    variation: V03
+    prefab: {fileID: 3327995149216299129, guid: b64c9e13c801e4d47b581fc8c2309690, type: 3}

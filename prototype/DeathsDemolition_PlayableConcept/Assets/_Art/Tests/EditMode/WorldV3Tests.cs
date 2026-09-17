@@ -178,7 +178,7 @@ namespace DD.Art.Tests.EditMode
                 bound++;
             }
 
-            Assert.AreEqual(6, bound, "6 AP-005B prop rolü");
+            Assert.AreEqual(10, bound, "6 AP-005B prop rolü + 4 AP-017 Faz 2 prop rolü (WP-038I)");
         }
     }
 }

@@ -199,6 +199,13 @@ namespace DD.Art
                 rows.Add(new Spec { Role = "prop_" + prop, Kind = Kind.Textured, TextureRole = "prop_" + prop });
             }
 
+            // WP-038I · AP-017 Phase 2 props (Tripo H3.1, 1K sets → Prop class 512): the same AP-005B path — ORM Packed → derived
+            // MetallicSmoothnessAO (occlusion in G), metallic forced to 0 in production, roughness floor 0.35.
+            foreach (string prop in new[] { "ofuda_post", "drying_rack_cloth", "well_head_tsurube", "breakable_sake_jar" })
+            {
+                rows.Add(new Spec { Role = "prop_" + prop, Kind = Kind.Textured, TextureRole = "prop_" + prop });
+            }
+
             // WP-017 · AP-005B world-master material copies (ADR-017-2, `material_override`):
             //   plaster copies = the same maps with the linear albedo × 0.82 (mean sRGB #CDCBC1, art verdict F1);
             //   roof copy = the AP-002 roof (flat dark tiles) with a generated tile-course normal overlay (F5),

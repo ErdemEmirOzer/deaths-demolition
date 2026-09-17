@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_ofuda_post_Packed.png",
+    "sourceSha256": "b299fa231af078addb4f4c2ef7721525a9bc5d52f325396628de810beb58d4dc",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T16:40:37.6600130Z",
+    "outputSha256": "0b6d8d8510963e22a6e2232205d69c18dba92a93010b7780b38ead2497b10110"
+}

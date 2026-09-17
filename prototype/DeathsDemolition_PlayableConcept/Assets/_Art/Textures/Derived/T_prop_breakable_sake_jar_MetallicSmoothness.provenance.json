@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_breakable_sake_jar_Packed.png",
+    "sourceSha256": "88a3032c48fac7857126cccdb90dc354c3d08683f91b0d7575e16c9717b1aed5",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T16:40:38.3445190Z",
+    "outputSha256": "4f3c9c5b1187d75678729bad47a79293974ca286448b77faaa683703cf570f2a"
+}

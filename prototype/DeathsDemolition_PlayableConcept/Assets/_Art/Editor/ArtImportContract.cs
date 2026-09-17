@@ -344,6 +344,11 @@ namespace DD.Art.Pipeline.EditorTools
             { "prop_barrels", TextureClass.Prop },
             { "prop_mossrock", TextureClass.Prop },
             { "prop_shed", TextureClass.Prop },
+            // WP-038I · AP-017 Phase 2 props (Higgsfield → Tripo H3.1, one 1K set each): Prop class 512, AP-005B path.
+            { "prop_ofuda_post", TextureClass.Prop },
+            { "prop_drying_rack_cloth", TextureClass.Prop },
+            { "prop_well_head_tsurube", TextureClass.Prop },
+            { "prop_breakable_sake_jar", TextureClass.Prop },
             { "roof_courses", TextureClass.Structure }
         };
 
@@ -389,10 +394,22 @@ namespace DD.Art.Pipeline.EditorTools
             return IsDerivedMaskRole(role) || role == TextureRole.Mask;
         }
 
+        /// <summary>
+        /// WP-038I · Prop / Breakable-class masks (the AP-005B and AP-017 Tripo props, 512² sets) ship at 256²: half the class size,
+        /// the same ratio the 2048² classes keep with <see cref="DerivedMaskMaxSize"/>. A ≤ 2 m prop reads 1.3 cm per mask texel at
+        /// 256 — nothing the gameplay rig resolves — and the ten prop roles stay 2.6 MB under the ADR-015-1 v5 world line.
+        /// </summary>
+        public const int PropMaskMaxSize = 256;
+
+        public static int MaskMaxSizeOf(TextureClass c)
+        {
+            return c == TextureClass.Prop || c == TextureClass.Breakable ? PropMaskMaxSize : DerivedMaskMaxSize;
+        }
+
         public static int MaxSizeOf(TextureClass c, TextureRole role)
         {
             int size = MaxSizeOf(c);
-            return IsCappedMaskRole(role) ? Mathf.Min(size, DerivedMaskMaxSize) : size;
+            return IsCappedMaskRole(role) ? Mathf.Min(size, MaskMaxSizeOf(c)) : size;
         }
 
         /// <summary>Shipped max size for a texture path (its class's size, derived masks capped).</summary>

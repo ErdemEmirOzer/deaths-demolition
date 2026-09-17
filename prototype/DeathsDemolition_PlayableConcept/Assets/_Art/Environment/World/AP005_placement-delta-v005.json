@@ -1,0 +1,787 @@
+{
+ "schema": "dd-placement-delta-v1",
+ "package": "AP-017",
+ "base": "AP-017/exports/placement-v004.json version 4 (3120 instances)",
+ "target": "placement version 5",
+ "created": "2026-09-17T19:23:18",
+ "coordinate_space": "Blender / AP-001 metres, +Z up; NO axis conversion (Unity applies bakeAxisConversion); Unity (X,Z) -> (x,y), Unity Y -> z; rotation_euler_deg about +z CCW from +x; scale baked",
+ "brief": "AP-017/AP017-brief.md",
+ "plan": "asset-production/AP-017/02-plan/AP017-phase2-plan-v001.json",
+ "counts": {
+  "added": 23,
+  "changed": 0,
+  "removed": 0,
+  "instances_v005": 3143
+ },
+ "added": [
+  {
+   "id": "AP005_i3327",
+   "family": "AP017_drying_rack_cloth",
+   "variation": "V01",
+   "lod_group": "AP017_drying_rack_cloth_V01",
+   "assembly": [],
+   "position": [
+    -15.886,
+    44.242,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    307.24
+   ],
+   "scale": [
+    0.959,
+    0.959,
+    0.959
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-north-00",
+   "plan_note": "NW yard racks at raster-verified open pockets near the shed (ref_points, 2.2 m footprint needs an explicit slot in the dense yard)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3328",
+   "family": "AP017_well_head_tsurube",
+   "variation": "V01",
+   "lod_group": "AP017_well_head_tsurube_V01",
+   "assembly": [],
+   "position": [
+    -23.77,
+    43.916,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    201.93
+   ],
+   "scale": [
+    1.033,
+    1.033,
+    1.033
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-north-01",
+   "plan_note": "NW yard water source, 3-8 m off the shed, never on the 45-48 corridors",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3329",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    21.833,
+    37.105,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    92.8
+   ],
+   "scale": [
+    1.049,
+    1.049,
+    1.049
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-north-02",
+   "plan_note": "shrine post beside the north lanterns, blank strips, off the stone way",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3330",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    -8.772,
+    15.329,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    26.76
+   ],
+   "scale": [
+    1.041,
+    1.041,
+    1.041
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-north-02",
+   "plan_note": "shrine post beside the north lanterns, blank strips, off the stone way",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3332",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    20.84,
+    -11.487,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    164.86
+   ],
+   "scale": [
+    0.982,
+    0.982,
+    0.982
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-east-00",
+   "plan_note": "post at the lantern bases",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3333",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    29.323,
+    -5.751,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    12.17
+   ],
+   "scale": [
+    0.97,
+    0.97,
+    0.97
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-east-00",
+   "plan_note": "post at the lantern bases",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3334",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    42.789,
+    -15.451,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    29.7
+   ],
+   "scale": [
+    0.969,
+    0.969,
+    0.969
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-east-00",
+   "plan_note": "post at the lantern bases",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3335",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    23.864,
+    16.603,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    309.18
+   ],
+   "scale": [
+    0.98,
+    0.98,
+    0.98
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-east-01",
+   "plan_note": "spoke-edge posts, 0.6-2 m off the kerb",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3336",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    15.761,
+    4.887,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    8.53
+   ],
+   "scale": [
+    1.029,
+    1.029,
+    1.029
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-east-01",
+   "plan_note": "spoke-edge posts, 0.6-2 m off the kerb",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3338",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V03",
+   "lod_group": "AP017_breakable_sake_jar_V03",
+   "assembly": [],
+   "position": [
+    8.543,
+    -27.715,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    114.87
+   ],
+   "scale": [
+    1.01,
+    1.01,
+    1.01
+   ],
+   "region": "south",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-south-00",
+   "plan_note": "jar cluster at the barrels",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3339",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V02",
+   "lod_group": "AP017_breakable_sake_jar_V02",
+   "assembly": [],
+   "position": [
+    9.547,
+    -22.739,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    141.23
+   ],
+   "scale": [
+    1.027,
+    1.027,
+    1.027
+   ],
+   "region": "south",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-south-00",
+   "plan_note": "jar cluster at the barrels",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3340",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V01",
+   "lod_group": "AP017_breakable_sake_jar_V01",
+   "assembly": [],
+   "position": [
+    -20.578,
+    -32.529,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    140.59
+   ],
+   "scale": [
+    0.983,
+    0.983,
+    0.983
+   ],
+   "region": "south",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-south-00",
+   "plan_note": "jar cluster at the barrels",
+   "source_package": "AP-017",
+   "placement_fallback": true,
+   "ad_fix": "MUST1 kept: anchored"
+  },
+  {
+   "id": "AP005_i3341",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V01",
+   "lod_group": "AP017_breakable_sake_jar_V01",
+   "assembly": [],
+   "position": [
+    -21.043,
+    -33.795,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    125.59
+   ],
+   "scale": [
+    0.979,
+    0.979,
+    0.979
+   ],
+   "region": "south",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-south-00",
+   "plan_note": "jar cluster at the barrels",
+   "source_package": "AP-017",
+   "placement_fallback": true,
+   "ad_fix": "MUST1 kept: anchored"
+  },
+  {
+   "id": "AP005_i3342",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V03",
+   "lod_group": "AP017_breakable_sake_jar_V03",
+   "assembly": [],
+   "position": [
+    0.365,
+    -35.818,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    36.19
+   ],
+   "scale": [
+    0.957,
+    0.957,
+    0.957
+   ],
+   "region": "south",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-south-01",
+   "plan_note": "bridge-head jars, never on the deck / rim",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3343",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V02",
+   "lod_group": "AP017_breakable_sake_jar_V02",
+   "assembly": [],
+   "position": [
+    11.287,
+    -22.602,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    255.29
+   ],
+   "scale": [
+    0.984,
+    0.984,
+    0.984
+   ],
+   "region": "south",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-south-01",
+   "plan_note": "bridge-head jars, never on the deck / rim",
+   "source_package": "AP-017",
+   "placement_fallback": true,
+   "ad_fix": "MUST1 kept: anchored"
+  },
+  {
+   "id": "AP005_i3344",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V02",
+   "lod_group": "AP017_breakable_sake_jar_V02",
+   "assembly": [],
+   "position": [
+    -19.264,
+    -31.389,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    279.47
+   ],
+   "scale": [
+    0.95,
+    0.95,
+    0.95
+   ],
+   "region": "south",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-south-01",
+   "plan_note": "bridge-head jars, never on the deck / rim",
+   "source_package": "AP-017",
+   "placement_fallback": true,
+   "ad_fix": "MUST1 kept: anchored"
+  },
+  {
+   "id": "AP005_i3345",
+   "family": "AP017_drying_rack_cloth",
+   "variation": "V01",
+   "lod_group": "AP017_drying_rack_cloth_V01",
+   "assembly": [],
+   "position": [
+    -39.983,
+    18.087,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    340.21
+   ],
+   "scale": [
+    0.991,
+    0.991,
+    0.991
+   ],
+   "region": "west",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-west-00",
+   "plan_note": "rack by the carts; yaw random (toward_ref found no 2.2 m slot in the dense yard)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3347",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V02",
+   "lod_group": "AP017_breakable_sake_jar_V02",
+   "assembly": [],
+   "position": [
+    -40.601,
+    -35.84,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    216.81
+   ],
+   "scale": [
+    1.033,
+    1.033,
+    1.033
+   ],
+   "region": "west",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-west-02",
+   "plan_note": "jars at the bale stacks",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3348",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V02",
+   "lod_group": "AP017_breakable_sake_jar_V02",
+   "assembly": [],
+   "position": [
+    -36.962,
+    -36.882,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    187.9
+   ],
+   "scale": [
+    1.021,
+    1.021,
+    1.021
+   ],
+   "region": "west",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-west-02",
+   "plan_note": "jars at the bale stacks",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3349",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V01",
+   "lod_group": "AP017_breakable_sake_jar_V01",
+   "assembly": [],
+   "position": [
+    -40.608,
+    -37.999,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    282.84
+   ],
+   "scale": [
+    1.039,
+    1.039,
+    1.039
+   ],
+   "region": "west",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-west-02",
+   "plan_note": "jars at the bale stacks",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3352",
+   "family": "AP017_breakable_sake_jar",
+   "variation": "V03",
+   "lod_group": "AP017_breakable_sake_jar_V03",
+   "assembly": [],
+   "position": [
+    -40.601,
+    -34.103,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    220.85
+   ],
+   "scale": [
+    1.014,
+    1.014,
+    1.014
+   ],
+   "region": "west",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-west-03",
+   "plan_note": "jars at the corridor module backs",
+   "source_package": "AP-017",
+   "placement_fallback": true,
+   "ad_fix": "MUST1 kept: anchored"
+  },
+  {
+   "id": "AP005_i3353",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    -9.482,
+    15.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-north-03",
+   "plan_note": "AD MUST 5: gate flank post, 1.0 m outside the corridor edge, yaw on the gate axis",
+   "source_package": "AP-017",
+   "ad_fix": "MUST5 hand-placed"
+  },
+  {
+   "id": "AP005_i3354",
+   "family": "AP017_ofuda_post",
+   "variation": "V01",
+   "lod_group": "AP017_ofuda_post_V01",
+   "assembly": [],
+   "position": [
+    9.482,
+    15.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    90.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v005",
+   "plan_id": "AP017-north-03",
+   "plan_note": "AD MUST 5: gate flank post, 1.0 m outside the corridor edge, yaw on the gate axis",
+   "source_package": "AP-017",
+   "ad_fix": "MUST5 hand-placed"
+  }
+ ],
+ "changed": [],
+ "removed_ids": [],
+ "removed": [],
+ "new_families": [
+  {
+   "family": "AP017_breakable_sake_jar",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01",
+    "V02",
+    "V03"
+   ]
+  },
+  {
+   "family": "AP017_drying_rack_cloth",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  },
+  {
+   "family": "AP017_ofuda_post",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  },
+  {
+   "family": "AP017_well_head_tsurube",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  }
+ ],
+ "summary": {
+  "per_region": {
+   "north": 6,
+   "east": 5,
+   "south": 7,
+   "west": 5
+  },
+  "per_family": {
+   "AP017_breakable_sake_jar": 11,
+   "AP017_drying_rack_cloth": 2,
+   "AP017_ofuda_post": 9,
+   "AP017_well_head_tsurube": 1
+  }
+ },
+ "ad_fixes_v001": [
+  "MUST1 AP005_i3331 (ofuda_post) dropped: no lantern base / kerb within 1.5 m",
+  "MUST1 AP005_i3337 (ofuda_post) dropped: no lantern base / kerb within 1.5 m",
+  "MUST1 AP005_i3341 (breakable_sake_jar) re-anchored [-27.77, -38.8] -> [-21.043, -33.795] next to AP005_i3340",
+  "MUST1 AP005_i3346 (drying_rack) dropped: no cart / wall within 3 m",
+  "MUST1 AP005_i3350 (breakable_sake_jar) dropped: no jar within 1.8 m / anchor within 2 m, nearest cluster > 12 m",
+  "MUST1 AP005_i3351 (breakable_sake_jar) dropped: no jar within 1.8 m / anchor within 2 m, nearest cluster > 12 m",
+  "MUST5 gate post AP005_i3353 at [-9.482, 15.0] (flank -1, 1.0 m outside the corridor edge)",
+  "MUST5 gate post AP005_i3354 at [9.482, 15.0] (flank +1, 1.0 m outside the corridor edge)"
+ ],
+ "removed_after_ad": [
+  "AP005_i3331",
+  "AP005_i3337",
+  "AP005_i3346",
+  "AP005_i3350",
+  "AP005_i3351"
+ ],
+ "note": "ids i3331/i3337/i3346/i3350/i3351 were never in a shipped placement (dropped inside the v005 build after the AD round); v005 ids are not contiguous"
+}

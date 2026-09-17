@@ -330,7 +330,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(18, ArtFamilies.All.Length, "ArtFamilies.All 18 aile olmalı.");
             Assert.IsEmpty(eksik, "Beklenen FBX diskte yok (" + eksik.Count + "):\n" + string.Join("\n", eksik));
             Assert.IsEmpty(fazla, "Aile tablosunda karşılığı olmayan FBX (" + fazla.Count + "):\n" + string.Join("\n", fazla));
-            Assert.AreEqual(199, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) = 199 olmalı.");
+            Assert.AreEqual(205, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) = 205 olmalı.");
             Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55 - kutuphane) + " collider + zemin + " + kutuphane + " kütüphane)");
         }
 
@@ -416,7 +416,8 @@ namespace DD.Art.Tests.EditMode
 
             // WP-017: + 6 AP-005B prop roles (BaseColor + Normal + Packed + derived mask = 24) + the generated roof-course normal → 82 + 25 = 107.
             beklenen.Add(ArtPipelinePaths.DerivedTexture(ArtLibraryMaterialRoles.RoofCoursesTextureRole, "Normal"));
-            Assert.AreEqual(107, beklenen.Count, "Beklenen doku kümesi 19 + 63 (WP-012) + 24 (WP-017 prop) + 1 (roof_courses) = 107 olmalı.");
+            // WP-038I: + 4 AP-017 Phase 2 prop roles (same four files each) → 107 + 16 = 123.
+            Assert.AreEqual(123, beklenen.Count, "Beklenen doku kümesi 19 + 63 (WP-012) + 24 (WP-017 prop) + 1 (roof_courses) + 16 (WP-038I AP-017 Faz 2 prop) = 123 olmalı.");
 
             // WP-016 karakter setleri (ADR-016-1): oyuncu 3 skin albedo + Normal + Packed(ORM) + türetilmiş
             // MetallicSmoothness(+AO); zombi atlas BaseColor + Normal + Packed + Mask + türetilmiş MS + DetailMask.
@@ -435,21 +436,21 @@ namespace DD.Art.Tests.EditMode
                 zt + "/T_zombie_cloth_BaseColor.png", zt + "/T_zombie_cloth_Normal.png", zt + "/T_zombie_cloth_Packed.png", zd + "/T_zombie_cloth_MetallicSmoothness.png"
             }) beklenen.Add(f);
 
-            Assert.AreEqual(129, beklenen.Count, "Beklenen doku kümesi 107 + 12 (WP-016 karakterler) + 6 (WP-017 zırh) + 4 (WP-020 kumaş atlası) = 129 olmalı.");
+            Assert.AreEqual(145, beklenen.Count, "Beklenen doku kümesi 123 + 12 (WP-016 karakterler) + 6 (WP-017 zırh) + 4 (WP-020 kumaş atlası) = 129 olmalı.");
 
             // WP-036 tier parts atlas (BaseColor + Normal + Packed + Mask + derived MS = 5) and WP-037B Special Weapon
             // atlas (4 + derived MS) + 4 VFX use sheets (Sheet role) = 9 → 125 + 5 + 9 = 139.
             foreach (string f in new[] { ArtTierBuilder.BaseColorMap, ArtTierBuilder.NormalMap, ArtTierBuilder.PackedMap, ArtTierBuilder.MaskMap, ArtTierBuilder.MetallicSmoothnessMap }) beklenen.Add(f);
             foreach (string f in ArtSpecialWeaponBuilder.TextureFiles()) beklenen.Add(f);
-            Assert.AreEqual(143, beklenen.Count, "Beklenen doku kümesi 129 (WP-020 kumaş atlası dâhil) + 5 (WP-036 tier) + 9 (WP-037B SW atlas + sheet) = 143 olmalı.");
+            Assert.AreEqual(159, beklenen.Count, "Beklenen doku kümesi 145 (WP-020 kumaş atlası dâhil) + 5 (WP-036 tier) + 9 (WP-037B SW atlas + sheet) = 143 olmalı.");
             // WP-042B AP-013 weapons atlas (BaseColor + Normal + Packed(MRA) + derived MS = 4) → 147.
             foreach (string f in ArtWeaponBuilder.TextureFiles()) beklenen.Add(f);
-            Assert.AreEqual(147, beklenen.Count, "Beklenen doku kümesi 143 + 4 (WP-042B silah atlası) = 147 olmalı.");
+            Assert.AreEqual(163, beklenen.Count, "Beklenen doku kümesi 159 + 4 (WP-042B silah atlası) = 147 olmalı.");
 
             // WP-038: the seven AP-015P water v2 inputs (2 normals, 4 data masks, 1 ring sheet) → 143 + 7 = 150.
             foreach (string f in ArtSurfaceImporter.WaterTextures) beklenen.Add(f);
             // (WP-047E: the WP-038 line said 150 but the set already held the 4 weapon maps — 147 + 7 = 154.)
-            Assert.AreEqual(154, beklenen.Count, "Beklenen doku kümesi 147 + 7 (WP-038 su v2) = 154 olmalı.");
+            Assert.AreEqual(170, beklenen.Count, "Beklenen doku kümesi 163 + 7 (WP-038 su v2) = 154 olmalı.");
             // WP-038E: the AP-018 wet inputs — wet stone albedo, three wet packed maps + their derived MetallicSmoothness, damp / puddle /
             // shore masks, the puddle decal sheet + normal → 154 + 12 = 166.
             beklenen.Add(ArtPipelinePaths.SourceTexture("wet_stone", "BaseColor"));
@@ -457,15 +458,15 @@ namespace DD.Art.Tests.EditMode
             foreach (string role in new[] { "wet_damp", "wet_puddle", "wet_shore" }) beklenen.Add(ArtPipelinePaths.SourceTexture(role, "Mask"));
             beklenen.Add(ArtPipelinePaths.SourceTexture("decal_puddle", "Sheet"));
             beklenen.Add(ArtPipelinePaths.SourceTexture("decal_puddle", "Normal"));
-            Assert.AreEqual(166, beklenen.Count, "Beklenen doku kümesi 154 + 12 (WP-038E AP-018 ıslak yüzeyler) = 166 olmalı.");
+            Assert.AreEqual(182, beklenen.Count, "Beklenen doku kümesi 170 + 12 (WP-038E AP-018 ıslak yüzeyler) = 166 olmalı.");
             // WP-038E (2): the AP-019 sky / horizon plates — three horizon sheets + the sky band source → 166 + 4 = 170.
             foreach (string layer in new[] { "near", "mid", "far" }) beklenen.Add(ArtPipelinePaths.SourceTexture("horizon_" + layer, "Sheet"));
             beklenen.Add(ArtSkyBuilder.SkyBandSourcePath);
-            Assert.AreEqual(170, beklenen.Count, "Beklenen doku kümesi 166 + 4 (WP-038E AP-019 gök/ufuk) = 170 olmalı.");
+            Assert.AreEqual(186, beklenen.Count, "Beklenen doku kümesi 182 + 4 (WP-038E AP-019 gök/ufuk) = 170 olmalı.");
 
             // WP-047E · AP-013C casings: BaseColor + Normal + MRA source + derived MetallicSmoothness = 4 → 170.
             foreach (string f in ArtCasingBuilder.TextureFiles()) beklenen.Add(f);
-            Assert.AreEqual(174, beklenen.Count, "Beklenen doku kümesi 170 + 4 (WP-047E kovan seti) = 174 olmalı.");
+            Assert.AreEqual(190, beklenen.Count, "Beklenen doku kümesi 186 + 4 (WP-047E kovan seti) = 174 olmalı.");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;

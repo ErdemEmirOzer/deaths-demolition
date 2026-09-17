@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_well_head_tsurube_Packed.png",
+    "sourceSha256": "01f39897e5f43c4e5b542bb8e8a716ee1df847c3c9ea05815ac28d76b1c9bc30",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T16:40:38.0932950Z",
+    "outputSha256": "b2a00bc75f97cec74e865c00d29eff97a3c0f249ad0e924217755ebbaee096b1"
+}

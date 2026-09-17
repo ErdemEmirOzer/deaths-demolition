@@ -635,7 +635,7 @@ namespace DD.Art.Pipeline.EditorTools
                     // Contract v1.2); dressing stays static but probe-lit (small charts overlapped at bake resolution).
                     StaticEditorFlags flags = StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic;
                     if (inst.role != "dressing") flags |= StaticEditorFlags.ContributeGI;
-                    if (!heavy) flags |= StaticEditorFlags.BatchingStatic; else report.HeavyUnbatched++;
+                    if (!heavy) flags |= StaticEditorFlags.BatchingStatic; else report.HeavyUnbatched++;   // WP-038I: + M_prop_* families (scene-file size)
                     SetStaticRecursively(go, flags);
                     ArtLightingBake.ApplyLightmapLodPolicy(go, inst.role != "dressing");   // LOD0 charts only (ADR-029-2)
                     report.StaticInstances++;
@@ -980,9 +980,21 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-017 · A prefab whose largest mesh exceeds this many triangles is not static-batched (ADR-017-2 note).</summary>
         public const int StaticBatchTriangleLimit = 5000;
 
+        /// <summary>Material-name prefix of the Tripo prop families (AP-005B, AP-017 Phase 2): one unique material per family.</summary>
+        public const string PropMaterialPrefix = "M_prop_";
+
         public static bool IsHeavyForStaticBatching(GameObject prefab)
         {
             if (prefab == null) return false;
+            // WP-038I: the Tripo prop families stay individual renderers as well — static batching copies every LOD's
+            // (seam-split) vertices into the scene file: the twelve Phase 2 dressing props alone grew World_AP005's level
+            // file by 5.5 MB in the release build, for a handful of merged draws the SRP Batcher already makes cheap.
+            foreach (Renderer r in prefab.GetComponentsInChildren<Renderer>(true))
+            foreach (Material m in r.sharedMaterials)
+            {
+                if (m != null && m.name.StartsWith(PropMaterialPrefix, StringComparison.Ordinal)) return true;
+            }
+
             foreach (MeshFilter mf in prefab.GetComponentsInChildren<MeshFilter>(true))
             {
                 Mesh m = mf.sharedMesh;

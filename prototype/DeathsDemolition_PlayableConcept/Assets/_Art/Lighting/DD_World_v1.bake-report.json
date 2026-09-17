@@ -1,5 +1,5 @@
 {
-    "utc": "2026-09-17T09:53:50.9302930Z",
+    "utc": "2026-09-17T16:49:29.5373830Z",
     "lightmapper": "ProgressiveGPU",
     "lightmapResolution": 16.0,
     "lightmapMaxSize": 2048,
@@ -7,9 +7,9 @@
     "probes": 1289,
     "reflectionProbes": 6,
     "uvOverlaps": 81,
-    "bakeSeconds": 46.589298248291019,
+    "bakeSeconds": 68.3282699584961,
     "lightmapCount": 3,
-    "lightmapBytes": 13790624,
+    "lightmapBytes": 13794168,
     "lightmapBudgetMb": 64,
     "withinBudget": true,
     "files": [

@@ -36,7 +36,9 @@ namespace DD.Art
         /// <summary>The delta chain in application order; each file's base must describe the instance count the previous step produced.</summary>
         /// <summary>WP-038B · AP-017 Phase 1 delta (+456 → 3120: derivative litter / piles + world breakables; added only).</summary>
         public const string Ap005PlacementDeltaV4Json = WorldRoot + "/AP005_placement-delta-v004.json";
-        public static readonly string[] Ap005PlacementDeltaJsons = { Ap005PlacementDeltaJson, Ap005PlacementDeltaV3Json, Ap005PlacementDeltaV4Json };
+        /// <summary>WP-038I · AP-017 Phase 2 delta (+23 → 3143).</summary>
+        public const string Ap005PlacementDeltaV5Json = WorldRoot + "/AP005_placement-delta-v005.json";
+        public static readonly string[] Ap005PlacementDeltaJsons = { Ap005PlacementDeltaJson, Ap005PlacementDeltaV3Json, Ap005PlacementDeltaV4Json, Ap005PlacementDeltaV5Json };
         /// <summary>The imported placement (Unity space) the importer and the world bootstrap read.</summary>
         public const string Ap005PlacementAsset = WorldRoot + "/AP005_Placement.asset";
         /// <summary>The stand-in soil ground under the whole 90 m map (AP-005 ships only the NE golden-slice ground plate); holes at the koi basins.</summary>

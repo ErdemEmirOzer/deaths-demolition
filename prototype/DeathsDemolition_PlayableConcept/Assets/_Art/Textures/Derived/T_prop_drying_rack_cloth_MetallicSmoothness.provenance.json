@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_drying_rack_cloth_Packed.png",
+    "sourceSha256": "99d89531f11704e1020fc781e223a814085110b9110dcfa3b44eb974d7f3c697",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-17T16:40:37.8763690Z",
+    "outputSha256": "1852d43d5c87c52649e00c7cbf4388b81a03f61ebeb3970f0767fcd654fcc5bc"
+}
