@@ -7,6 +7,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
+using DD.Prototype.Rounds;
 using DD.Prototype.Weapons;
 using UnityEngine;
 
@@ -47,7 +48,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public float engagedFraction = 0.30f;                // MODEL: share of round time the player is inside an enemy's attack window
             public int simultaneousAttackers = 3;                // MODEL: enemies that can reach the player at once
             public bool buyEveryRound = true;                    // MODEL: one purchase per round when affordable (DEC-071)
-            public int purchasesPerRound = 1;                    // WP-049 what-if (Ö-6a): DEC-071 relaxation; 1 = shipped rule
+            public int purchasesPerRound = 0;                    // 0 = shipped rule (UpgradeOfferPolicy.PurchaseLimit(config)); WP-049 what-if (Ö-6a) overrides via scenario
             public ClassicWeaponId[] weapons;                    // null → every enabled roster weapon
             public Scenario scenario;                            // WP-049: what-if overrides applied to a CLONE of the config (shipped asset untouched)
             public bool threatColumn = true;                     // WP-049: evaluate the Threat Director model (ThreatModel.Evaluate) per round
@@ -431,7 +432,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
 
                 // ---- purchase: cheapest affordable, not maxed, offered card; core first (MODEL); DEC-071 = one per round
                 row.purchase = "-";
-                int purchases = o.buyEveryRound ? Math.Max(1, o.scenario != null ? Math.Max(o.purchasesPerRound, o.scenario.purchasesPerRound) : o.purchasesPerRound) : 0;
+                int configured = o.purchasesPerRound > 0 ? o.purchasesPerRound : UpgradeOfferPolicy.PurchaseLimit(config);
+                int purchases = o.buyEveryRound ? Math.Max(1, o.scenario != null ? Math.Max(configured, o.scenario.purchasesPerRound) : configured) : 0;
                 float priceScale = 1f + (o.scenario != null ? Mathf.Max(0f, o.scenario.roundPriceScalePerRound) : 0f) * (round - 1);
                 for (int buy = 0; buy < purchases; buy++)
                 {

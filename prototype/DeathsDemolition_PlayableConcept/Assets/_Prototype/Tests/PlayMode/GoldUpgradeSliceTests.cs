@@ -131,10 +131,30 @@ namespace DD.Prototype.Tests.PlayMode
                       " magnet=" + _gold.MagnetRadius + " contact=" + _gold.ContactRadius + " runId=" + _run.RunId);
         }
 
+
+        // WP-049C (DEC-087): sevk artık round başına 2 kart. Bu WP-008 sözleşme testi "limit dolunca kilit"
+        // davranışını limit = 1 ile belgeler (config değeri olarak hâlâ geçerli); DEC-087 sevk limiti
+        // UpgradePurchaseLimitTests'te, ekranın ikinci seçim akışı S-09 UI paketinde doğrulanır.
+        private PrototypeConfig _sevkConfigDec071, _dec071Klon;
+        private void Dec071Klonu()
+        {
+            _sevkConfigDec071 = PrototypeConfig.Active;
+            _dec071Klon = UnityEngine.Object.Instantiate(_sevkConfigDec071);
+            _dec071Klon.Economy.PurchasesPerRound = 1;
+            PrototypeConfig.SetActive(_dec071Klon);
+        }
+        private void Dec071KlonunuGeriAl()
+        {
+            if (_sevkConfigDec071 != null && PrototypeConfig.Active != _sevkConfigDec071) PrototypeConfig.SetActive(_sevkConfigDec071);
+            if (_dec071Klon != null) UnityEngine.Object.DestroyImmediate(_dec071Klon);
+            _sevkConfigDec071 = null; _dec071Klon = null;
+        }
+
         [TearDown]
         public void TearDown()
         {
             Application.logMessageReceived -= HataTopla;
+            Dec071KlonunuGeriAl();
             Time.captureDeltaTime = 0f;
             RunFlowClock.ClearHolds();
             if (EnemySpawnDirector.Instance != null)
@@ -546,6 +566,7 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator P10_P19_RoundBitisi_Sweep_Ekran_SatinAlma_SonrakiRound()
         {
             yield return RunSahnesiniHazirla(spawnKapali: false);
+            Dec071Klonu();   // WP-049C: bu test limit = 1 sözleşmesini belgeler (bkz. yardımcı notu)
             _rig.Health.DiagnosisInvulnerable = true;   // ölçüm oyuncu ölümüyle kesilmesin (tanı)
 
             // Temiz bir round 1: director spawn'ı gerçek, oyuncu merkezde (spawn noktaları uzak → paketler yerde kalır).

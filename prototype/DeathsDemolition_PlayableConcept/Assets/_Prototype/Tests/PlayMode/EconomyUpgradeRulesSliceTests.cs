@@ -70,10 +70,30 @@ namespace DD.Prototype.Tests.PlayMode
             Application.logMessageReceived += HataTopla;
         }
 
+
+        // WP-049C (DEC-087): sevk artık round başına 2 kart. Bu WP-008 sözleşme testi "limit dolunca kilit"
+        // davranışını limit = 1 ile belgeler (config değeri olarak hâlâ geçerli); DEC-087 sevk limiti
+        // UpgradePurchaseLimitTests'te, ekranın ikinci seçim akışı S-09 UI paketinde doğrulanır.
+        private PrototypeConfig _sevkConfigDec071, _dec071Klon;
+        private void Dec071Klonu()
+        {
+            _sevkConfigDec071 = PrototypeConfig.Active;
+            _dec071Klon = UnityEngine.Object.Instantiate(_sevkConfigDec071);
+            _dec071Klon.Economy.PurchasesPerRound = 1;
+            PrototypeConfig.SetActive(_dec071Klon);
+        }
+        private void Dec071KlonunuGeriAl()
+        {
+            if (_sevkConfigDec071 != null && PrototypeConfig.Active != _sevkConfigDec071) PrototypeConfig.SetActive(_sevkConfigDec071);
+            if (_dec071Klon != null) UnityEngine.Object.DestroyImmediate(_dec071Klon);
+            _sevkConfigDec071 = null; _dec071Klon = null;
+        }
+
         [TearDown]
         public void TearDown()
         {
             Application.logMessageReceived -= HataTopla;
+            Dec071KlonunuGeriAl();
             Time.captureDeltaTime = 0f;
             RunFlowClock.ClearHolds();
             LogAssert.ignoreFailingMessages = false;
@@ -342,6 +362,7 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator P2_RoundSonuEkrani_UcKart_PahaliDisabled_TekReroll_TekSatinAlma_Kilit_Reopen_Continue()
         {
             yield return KosuyaGir(kontrollu: true);
+            Dec071Klonu();   // WP-049C: limit = 1 sözleşmesi (ekranın 2 kart akışı S-09 paketinde)
             UpgradeScreen ekran = UnityEngine.Object.FindObjectOfType<UpgradeScreen>();
             Assert.IsNotNull(ekran);
 
@@ -631,6 +652,7 @@ namespace DD.Prototype.Tests.PlayMode
             var sahne = new SpecialWeaponSahne();
             _sahne = sahne;
             yield return sahne.Kur();
+            sahne.Config.Economy.PurchasesPerRound = 1;   // WP-049C: limit = 1 sözleşmesi (sahnenin kendi klonu üzerinde; Bitir() sevki geri koyar)
             {
                 RunDirector run = RunDirector.Instance;
                 GoldService gold = GoldService.Instance;

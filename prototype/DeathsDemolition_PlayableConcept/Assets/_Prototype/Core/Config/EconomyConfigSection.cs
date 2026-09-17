@@ -81,6 +81,9 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Request: unspent gold carries into the next round.")]
         public bool CarryUnspentGold = true;
 
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Upgrade cards the player may buy on one round-end offer. DEC-087 (user, 2026-09-17, Ö-6a): 2 — DEC-071's one purchase per round is superseded (WP-049 simulation: spend share 20% → 38–44%, R15 risk 8.8 → 6.1). The reroll still closes on the first purchase (DEC-050); the shop clamps to 1..CardsPerOffer.")]
+        public int PurchasesPerRound = 2;
+
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Lower bound of the request's 15-45 starting cost band; used as a sanity clamp.")]
         public int StartingCostMin = 15;
 

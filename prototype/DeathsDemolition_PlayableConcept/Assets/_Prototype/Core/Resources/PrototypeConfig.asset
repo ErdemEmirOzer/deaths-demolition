@@ -273,6 +273,7 @@ MonoBehaviour:
     MaxActiveOrbs: 60
     RerollCost: 10
     CarryUnspentGold: 1
+    PurchasesPerRound: 2
     StartingCostMin: 15
     StartingCostMax: 45
     ArmorGoldBonusHelmet: 1

@@ -34,6 +34,7 @@ namespace DD.Prototype.Tests.EditMode
         public void SetUp()
         {
             _config = ScriptableObject.CreateInstance<PrototypeConfig>();
+            _config.Economy.PurchasesPerRound = 1;   // WP-049C (DEC-087 sevk 2): bu fixture limit = 1 sözleşmesini belgeler; sevk limiti UpgradePurchaseLimitTests
             _cuzdan = new GoldWallet();
             _cuzdan.InitializeForRun(1);
             _rank = new WeaponModifierState();

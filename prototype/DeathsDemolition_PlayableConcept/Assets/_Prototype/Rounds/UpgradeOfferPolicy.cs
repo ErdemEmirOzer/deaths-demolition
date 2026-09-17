@@ -115,8 +115,19 @@ namespace DD.Prototype.Rounds
         /// <summary>DEC-047 / decision 8: exactly three cards per round-end offer.</summary>
         public const int CardsPerOffer = 3;
 
-        /// <summary>DEC-048 / REQ-078: at most one purchase per round-end screen.</summary>
+        /// <summary>DEC-048 / DEC-071 / REQ-078: one purchase per round-end screen — the fallback when there is no config (DEC-087 ships 2 in the data).</summary>
         public const int MaxPurchasesPerRound = 1;
+
+        /// <summary>
+        /// WP-049C (DEC-087, Ö-6a): purchases allowed on one offer, from
+        /// <see cref="EconomyConfigSection.PurchasesPerRound"/> (shipped 2), clamped to 1..<see cref="CardsPerOffer"/>.
+        /// The shop and the simulator both read this; the reroll rule (DEC-050) is unchanged.
+        /// </summary>
+        public static int PurchaseLimit(PrototypeConfig config)
+        {
+            int wanted = config != null && config.Economy != null ? config.Economy.PurchasesPerRound : MaxPurchasesPerRound;
+            return Mathf.Clamp(wanted, 1, CardsPerOffer);
+        }
 
         /// <summary>DEC-050 / REQ-079: at most one paid reroll per round-end screen, before the purchase.</summary>
         public const int MaxRerollsPerRound = 1;

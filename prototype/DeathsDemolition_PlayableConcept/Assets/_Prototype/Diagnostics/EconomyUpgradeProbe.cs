@@ -186,7 +186,14 @@ namespace DD.Prototype.Diagnostics
                 GoldService gold = GoldService.Instance;
                 PlayerRig rig = PlayerRegistry.Primary;
                 WeaponController weapon = WeaponRegistry.ActiveController;
-                PrototypeConfig config = PrototypeConfig.Active;
+                // WP-049C (DEC-087): the shipped limit is 2 cards per round; this WP-008 probe documents the
+                // limit-1 contract (lock after one purchase), so it runs on a clone with PurchasesPerRound = 1;
+                // the shipped config is swapped back right after the last shop stage.
+                PrototypeConfig shippedConfig = PrototypeConfig.Active;
+                PrototypeConfig config = UnityEngine.Object.Instantiate(shippedConfig);
+                config.name = shippedConfig.name + " (probe, PurchasesPerRound=1)";
+                config.Economy.PurchasesPerRound = 1;
+                PrototypeConfig.SetActive(config);
                 int baseReward = GoldRewardCalculator.BaseReward(config);
                 int fullArmorBonus = GoldRewardCalculator.ArmorBonus(new SpawnArmorComposition(true, true, true), config);
                 rig.Health.DiagnosisInvulnerable = true;
@@ -404,6 +411,8 @@ namespace DD.Prototype.Diagnostics
                 Action<RunSummary> onEnded = s => { summary = s; ended++; };
                 RunEvents.RunEnded += onEnded;
                 int earnedAtDeath = gold.Wallet.TotalEarned;
+                PrototypeConfig.SetActive(shippedConfig);   // WP-049C: shop stages done → shipped config back
+                UnityEngine.Object.Destroy(config);
                 rig.Health.DiagnosisInvulnerable = false;
                 rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, "wp-008-probe");
                 yield return WaitUntil(() => run.Phase == RunPhase.Dead, "Dead");

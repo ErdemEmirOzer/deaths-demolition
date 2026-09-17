@@ -99,13 +99,16 @@ namespace DD.Prototype.Rounds
         /// <summary>WP-008: why <see cref="Status"/> is ConfigurationError. None when Ready.</summary>
         public UpgradeOfferFault Fault { get; private set; } = UpgradeOfferFault.None;
 
-        /// <summary>WP-008 (DEC-048): the one purchase of this round.</summary>
+        /// <summary>WP-008 (DEC-048): the purchase right of this round. Used once <see cref="PurchasesThisRound"/> reaches <see cref="PurchaseLimit"/>.</summary>
         public UpgradeEntitlement PurchaseEntitlement { get; private set; } = UpgradeEntitlement.Available;
+
+        /// <summary>WP-049C (DEC-087): cards the player may buy on THIS offer (config, clamped by <see cref="UpgradeOfferPolicy.PurchaseLimit"/>). Shipped 2; 1 was DEC-071.</summary>
+        public int PurchaseLimit { get; private set; } = UpgradeOfferPolicy.MaxPurchasesPerRound;
 
         /// <summary>WP-008 (DEC-050): the one paid reroll of this round. Locked once a purchase is made.</summary>
         public UpgradeEntitlement RerollEntitlement { get; private set; } = UpgradeEntitlement.Available;
 
-        /// <summary>True once this round's purchase was made: no further purchase, no reroll. CONTINUE only.</summary>
+        /// <summary>True once this round's purchase limit is reached: no further purchase, no reroll. CONTINUE only.</summary>
         public bool IsLocked => PurchaseEntitlement != UpgradeEntitlement.Available;
 
         /// <summary>Why the last <see cref="TryPurchase(int,int,int)"/> ended the way it did. F1 readout and the screen's footer.</summary>
@@ -120,7 +123,7 @@ namespace DD.Prototype.Rounds
         /// <summary>Spendable gold. Convenience so the screen does not need the wallet.</summary>
         public int Gold => _wallet != null ? _wallet.Balance : 0;
 
-        /// <summary>Cards bought on THIS offer. 0 or 1.</summary>
+        /// <summary>Cards bought on THIS offer. 0..<see cref="PurchaseLimit"/>.</summary>
         public int PurchasesThisRound { get; private set; }
 
         /// <summary>Rerolls used on THIS offer. 0 or 1.</summary>
@@ -211,6 +214,7 @@ namespace DD.Prototype.Rounds
             Round = wantedRound;
             RunId = wantedRun;
             IsOpen = true;
+            PurchaseLimit = UpgradeOfferPolicy.PurchaseLimit(config);
             LastResult = UpgradePurchaseResult.None;
             LastRerollResult = UpgradeRerollResult.None;
 
@@ -300,7 +304,9 @@ namespace DD.Prototype.Rounds
                     return RerollAvailability.Unavailable;
                 }
 
-                if (PurchaseEntitlement != UpgradeEntitlement.Available)
+                // WP-049C: with a purchase limit above 1 the FIRST purchase locks the reroll (DEC-050)
+                // while the purchase right is still Available, so the reroll entitlement is read first.
+                if (RerollEntitlement == UpgradeEntitlement.Locked || PurchaseEntitlement != UpgradeEntitlement.Available)
                 {
                     return RerollAvailability.LockedByPurchase;
                 }
@@ -416,7 +422,7 @@ namespace DD.Prototype.Rounds
             }
 
             // ---- 2 entitlement -----------------------------------------------------
-            if (PurchaseEntitlement != UpgradeEntitlement.Available)
+            if (PurchaseEntitlement != UpgradeEntitlement.Available || PurchasesThisRound >= PurchaseLimit)
             {
                 return Refuse(index, UpgradePurchaseResult.PurchaseLimitReached);
             }
@@ -502,7 +508,12 @@ namespace DD.Prototype.Rounds
 
             PurchasesThisRound++;
             GoldSpentThisRound += card.Cost;
-            PurchaseEntitlement = UpgradeEntitlement.Used;
+            if (PurchasesThisRound >= PurchaseLimit)
+            {
+                PurchaseEntitlement = UpgradeEntitlement.Used;
+            }
+
+            // DEC-050 is untouched by the limit: the reroll closes on the FIRST purchase.
             if (RerollEntitlement == UpgradeEntitlement.Available)
             {
                 RerollEntitlement = UpgradeEntitlement.Locked;
@@ -605,7 +616,7 @@ namespace DD.Prototype.Rounds
             }
 
             // ---- 2 entitlement -----------------------------------------------------
-            if (PurchaseEntitlement != UpgradeEntitlement.Available)
+            if (RerollEntitlement == UpgradeEntitlement.Locked || PurchaseEntitlement != UpgradeEntitlement.Available)
             {
                 return RefuseReroll(UpgradeRerollResult.OfferLocked);
             }

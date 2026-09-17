@@ -229,7 +229,7 @@ namespace DD.Prototype.Tests.EditMode
         public void Sabitler_UrunKurallari()
         {
             Assert.AreEqual(3, UpgradeOfferPolicy.CardsPerOffer, "DEC-047: tam üç kart.");
-            Assert.AreEqual(1, UpgradeOfferPolicy.MaxPurchasesPerRound, "DEC-048: round başına en fazla bir satın alma.");
+            Assert.AreEqual(1, UpgradeOfferPolicy.MaxPurchasesPerRound, "DEC-048/071 geri dönüş sabiti (config yokken); sevk kuralı DEC-087 = config PurchasesPerRound (2).");
             Assert.AreEqual(1, UpgradeOfferPolicy.MaxRerollsPerRound, "DEC-050: round başına bir ücretli reroll.");
             Assert.AreEqual(1, UpgradeOfferPolicy.MinRerollReplacements);
             Assert.AreEqual(2, UpgradeOfferPolicy.MaxRerollReplacements, "Üç kartın tamamı asla değişmez.");
