@@ -37,3 +37,4 @@ MonoBehaviour:
   FireSfx: RifleFire
   ReloadSfx: ReloadStart
   HudIconId: weapon_rifle
+  ModelResource: WeaponBlockout/AP013_A_rifle_blockout

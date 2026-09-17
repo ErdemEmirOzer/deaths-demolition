@@ -44,34 +44,46 @@ MonoBehaviour:
       MagazineSize: 30
       ReloadTime: 1.5
       PelletCount: 1
-      SpreadDegrees: 1.6
-      SpreadBloomPerShot: 0.35
+      SpreadDegrees: 1.4
+      SpreadBloomPerShot: 0.4
       SpreadBloomMax: 3.5
-      SpreadBloomDecay: 6
-      RecoilKick: 0.09
-      CameraShake: 0.35
+      SpreadBloomDecay: 7
+      RecoilKick: 0.1
+      CameraShake: 0.3
       StaggerImpulse: 0.15
       Range: 45
+      RecoilRecoverySeconds: 0.1
+      RecoilUpShare: 0.15
+      RumbleFraction: 0.67
+      RumbleMilliseconds: 70
+      PelletRingRadiusShare: 0
+      PelletRingJitterShare: 0
       UnlockProfileLevel: 1
     - Id: 1
       DisplayName: Auto SMG
-      Damage: 7
+      Damage: 8
       FireRate: 13
       MagazineSize: 42
       ReloadTime: 1.7
       PelletCount: 1
-      SpreadDegrees: 2.6
-      SpreadBloomPerShot: 0.45
-      SpreadBloomMax: 5.5
-      SpreadBloomDecay: 7
-      RecoilKick: 0.06
-      CameraShake: 0.22
+      SpreadDegrees: 2.8
+      SpreadBloomPerShot: 0.55
+      SpreadBloomMax: 6.5
+      SpreadBloomDecay: 6
+      RecoilKick: 0.05
+      CameraShake: 0.18
       StaggerImpulse: 0.08
       Range: 38
+      RecoilRecoverySeconds: 0.055
+      RecoilUpShare: 0.1
+      RumbleFraction: 0.5
+      RumbleMilliseconds: 45
+      PelletRingRadiusShare: 0
+      PelletRingJitterShare: 0
       UnlockProfileLevel: 2
     - Id: 2
       DisplayName: Combat Shotgun
-      Damage: 7
+      Damage: 8
       FireRate: 1.2
       MagazineSize: 7
       ReloadTime: 2.2
@@ -80,10 +92,16 @@ MonoBehaviour:
       SpreadBloomPerShot: 0
       SpreadBloomMax: 0
       SpreadBloomDecay: 0
-      RecoilKick: 0.28
-      CameraShake: 0.9
+      RecoilKick: 0.34
+      CameraShake: 1
       StaggerImpulse: 0.85
       Range: 22
+      RecoilRecoverySeconds: 0.3
+      RecoilUpShare: 0.3
+      RumbleFraction: 1
+      RumbleMilliseconds: 120
+      PelletRingRadiusShare: 0.6
+      PelletRingJitterShare: 0.1
       UnlockProfileLevel: 3
     Special:
       ActiveDuration: 11

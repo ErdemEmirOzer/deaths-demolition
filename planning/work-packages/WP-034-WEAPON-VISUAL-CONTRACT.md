@@ -51,3 +51,19 @@ Dükkân kapısı: silah takılıyken yalnız o silahın 3 çekirdek dalı + 4 o
 ## 6. Teslim listesi (AP-013 → WP-035 import)
 
 Silah başına: `AP013_<key>_<tür>_base.fbx/.glb` + 3 eklenti `AP013_<key>_attach_<barrel|top|stock>.fbx/.glb` + dokular (1K BaseColor/Normal/MRA + 512 emissive maske) + `AP013-manifest.json` (soket adları, tri sayıları, doku listesi, HF kredi satırı). Roundtrip: soketler Unity'de `Muzzle`/`Ejection`/`attach_*` çocuk transformları olarak gelmeli (isim birebir).
+
+## 7. ADR-042-1 · WeaponSocket sözleşmesi (WP-042, 2026-09-17) — §3'ün ölçülü hali
+
+`Core/Weapons/WeaponSocketContract.cs` tek kaynak; testle sabit (`WeaponFeelTests.SoketSozlesmesi_*`, `WeaponBlockoutGateTests`). Kaynak ölçüler AP-009C v003 README "AP-013 blockout contract" (P-06 elleri bu işaretlere çözdü):
+
+| Silah | Uzunluk | `Muzzle` (x, y, z) | `marker_foregrip` | `marker_mag` | Not |
+|---|---|---|---|---|---|
+| A tüfek (`AssaultRifle`, Long) | 1,20 m | (0, 0,065, 0,86) | (0, −0,01, 0,27) | (0, −0,11, 0,10) | stok omuzda, gövde −24° |
+| B karabina (`AutoSmg`, Medium) | 0,85 m | (0, 0,06, 0,56) | (0, −0,01, 0,22) | (0, −0,13, 0,06) | göğse yakın |
+| C pompalı (`CombatShotgun`, Short) | 0,78 m | (0, 0,07, 0,52) | (0, 0, 0,20) (pump; geri 0,11) | (0, −0,05, 0,05) = fişek portu | kol altı, göğüs hizası |
+
+Değerler blockout FBX'lerinden okundu (README yalnız z'yi verir; namlu kabzanın 6–7 cm üstündedir).
+
+Kurallar: kök = kabza/tetik (`marker_grip` = orijin), +Z namlu, +Y yukarı, +X sağ; kök `socket_weapon_r` altında identity. Zorunlu çocuklar `Muzzle`, `Ejection` (+X), `attach_barrel/top/stock`; ölçü işaretleri `marker_grip/foregrip/mag`. **Tolerans ±3 cm** (`MarkerToleranceMetres`): aşımda klipler yeniden çözülür (P-06, tek build koşusu). LOD0–2 (tri tavanı §2: 3 000 / 1 200 / 400; eklenti LOD0 ≤ 400), el modelinde collider yok (karakter collider'ı vuruş hacmi), rig yok (rijit). Yer tutucu: `Weapons/Roster/Resources/WeaponBlockout/AP013_<A|B|C>_*_blockout.fbx` (AP-009C props, 104–148 tri) `ClassicWeaponDefinition.ModelResource` ile `socket_weapon_r`'a takılır; AP-013 nihai modeli aynı alanı değiştirerek gelir (soket adları/ölçüler değişmez → kod değişmez).
+
+Mekanizma olay slotları (WP-042 C): `WeaponEvents.Mechanism` (`WeaponMechanismEvent`: kovan `eject`, şarjör `mag_out`, fişek `mag_in`, sürgü/pump `chamber`; konum/yön = soket dünya çerçevesi; `FromClipEvent` klip olayından mı zamanlayıcı yedeğinden mi) — S-07 `AP010B_mag_drop`/`spark`, S-08 SFX bu slotlardan okur; klip olayları (AP-009C `new_events`) `CharacterAnimationEvents` enum'una S-06 (WP-032C) ekleyince ada göre çözülür (`SpecialWeaponUsage.ClipEventNames`), o güne kadar denetleyici zamanlayıcı yedeği (A/B: kovan atışta, şarjör reload başında +0,4 s; C: kovan atış +0,4 s, fişek 14/30/46 f, pump 60 f).

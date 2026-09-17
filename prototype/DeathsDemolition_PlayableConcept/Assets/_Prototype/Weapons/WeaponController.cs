@@ -1,4 +1,6 @@
+using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Feedback;
 using UnityEngine;
@@ -62,6 +64,16 @@ namespace DD.Prototype.Weapons
             "Extra size and light multiplier applied to the Special Weapon's flash.", true)]
         [SerializeField] private float _specialFlashMultiplier = 1.6f;
 
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-042: height above the character root the classic damage ray starts at, metres — the WP-002 placeholder " +
+            "muzzle height (socket 1.37 + 0.02). The ray keeps this height whatever model / hold the weapon has, so the " +
+            "hit region (upper body vs head) does not change with the AP-013 muzzle marker or between A/B/C holds " +
+            "(1.36 / 1.37 / 1.24 m); the tracer and flash still start at the visual muzzle. Invented.", true)]
+        [SerializeField] private float _shotRayHeight = 1.39f;
+
+        /// <summary>WP-042 readout: the damage-ray height policy (tests).</summary>
+        public float ShotRayHeight => _shotRayHeight;
+
         // ------------------------------------------------------------------ state
 
         private readonly ClassicWeaponRuntime _classic = new ClassicWeaponRuntime();
@@ -78,6 +90,24 @@ namespace DD.Prototype.Weapons
         // one place instead of scattered through the runtime.
         private bool _wasReloading;
         private bool _reloadInsertFired;
+
+        // ---- WP-042 · mechanism slots, pickup hand-off, authored classic model
+        private PlayerSkinnedVisual _skinned;
+        private ClassicWeaponId _classicModelId = (ClassicWeaponId)(-1);
+        private WeaponMechanismTimeline _timeline = WeaponMechanismTimeline.Magazine;
+        private float _casingAt = -1f;
+        private bool _magOutFired;
+        private int _seatsFired;
+        private bool _chamberFired;
+        private bool _pickupDonePending;
+        private float _pickupDoneAt = -1f;
+
+        // AP-009C clip events resolved by NAME against the S-06 enum (None until WP-032C adds them).
+        private static readonly CharacterAnimationEvent s_eject = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.Eject]);
+        private static readonly CharacterAnimationEvent s_magOut = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.MagOut]);
+        private static readonly CharacterAnimationEvent s_magIn = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.MagIn]);
+        private static readonly CharacterAnimationEvent s_chamber = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.Chamber]);
+        private static readonly CharacterAnimationEvent s_pickupDone = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.PickupDone]);
 
         // ------------------------------------------------------------------ public surface
 
@@ -97,6 +127,15 @@ namespace DD.Prototype.Weapons
         public Transform Muzzle => ActiveRig != null ? ActiveRig.Muzzle : transform;
 
         private WeaponVisualRig ActiveRig => _special.IsActive ? _specialRig : _classicRig;
+
+        /// <summary>WP-042: the AP-009C clips carry the mechanism events on this character (else the timer fallback runs).</summary>
+        public bool ClipDrivesMechanism => s_eject != CharacterAnimationEvent.None && _skinned != null && _skinned.Authored;
+
+        /// <summary>WP-042: the hand model waits for the clip's pickup_done (or the fallback timeout).</summary>
+        public bool PickupDonePending => _pickupDonePending;
+
+        /// <summary>WP-042 readout: the classic rig carries the roster model (blockout / AP-013).</summary>
+        public bool ClassicRigHasAuthoredModel => _classicRig != null && _classicRig.HasAuthoredModel;
 
         // ------------------------------------------------------------------ lifecycle
 
@@ -139,6 +178,7 @@ namespace DD.Prototype.Weapons
             _host = binding;
 
             ReparentRigs();
+            _skinned = transform.root.GetComponentInChildren<PlayerSkinnedVisual>(true);
         }
 
         protected override void OnEnable()
@@ -152,11 +192,13 @@ namespace DD.Prototype.Weapons
             _ = HitFeedbackDirector.Instance;
 
             WeaponDebugHooks.EnsureExists();
+            CharacterAnimationEvents.Any += OnClipEvent;
         }
 
         protected override void OnDisable()
         {
             WeaponRegistry.Unregister(this);
+            CharacterAnimationEvents.Any -= OnClipEvent;
 
             if (_special.IsActive)
             {
@@ -214,6 +256,9 @@ namespace DD.Prototype.Weapons
             _equippedId = settings.Id;
             _equipped = true;
             _classic.Equip(settings, _modifiers);
+            _timeline = WeaponMechanismTimeline.For(settings);
+            _casingAt = -1f;
+            EnsureClassicModel();
 
             WeaponRegistry.SelectedWeapon = _equippedId;
             WeaponEvents.PublishWeaponEquipped(_equippedId);
@@ -233,6 +278,12 @@ namespace DD.Prototype.Weapons
 
             _classic.CancelReload();
             _special.Begin(Config.Weapons.Special, id);
+
+            // WP-042 (DEC-082): the grab is an upper-body clip; the hand model shows at its
+            // pickup_done event — or at the fallback timeout when the clip cannot carry it
+            // (no authored character, interrupted clip). Firing is not gated.
+            _pickupDonePending = s_pickupDone != CharacterAnimationEvent.None && _skinned != null && _skinned.Authored;
+            _pickupDoneAt = Time.time + SpecialWeaponUsage.PickupDoneFallbackSeconds;
 
             SetRigVisibility();
             PublishClassicState(true);
@@ -314,6 +365,7 @@ namespace DD.Prototype.Weapons
             }
 
             TickReloadPresentation();
+            TickMechanismFallback();
 
             PublishClassicState(false);
             PublishSpecialState(false);
@@ -372,7 +424,10 @@ namespace DD.Prototype.Weapons
 
         private void FireClassicOnce()
         {
-            Vector3 origin = Muzzle.position;
+            // WP-042: the damage ray leaves at a fixed height above the root (hit-region parity across
+            // weapon models / holds); the visual muzzle only feeds the tracer and the flash.
+            Vector3 muzzle = Muzzle.position;
+            Vector3 origin = new Vector3(muzzle.x, transform.root.position.y + _shotRayHeight, muzzle.z);
             Vector3 aim = ResolveAimDirection();
 
             // Steps 1 and 3: procedural recoil and mechanical movement. Two layers, on
@@ -380,7 +435,7 @@ namespace DD.Prototype.Weapons
             // one alone reads as half a shot.
             if (_classicRig != null)
             {
-                _classicRig.PlayFireMotion(_classic.RecoilKick);
+                _classicRig.PlayFireMotion(_classic.RecoilKick, _classic.RecoilRecoverySeconds, _classic.RecoilUpShare);
             }
 
             _host?.OnWeaponFired(RecoilStrength01(_classic.RecoilKick, _classic.Power), aim);
@@ -395,6 +450,8 @@ namespace DD.Prototype.Weapons
             for (int i = 0; i < pellets; i++)
             {
                 ShotRequest request = _classic.BuildShot(origin, aim, i);
+                request.HasTracerOrigin = true;
+                request.TracerOrigin = muzzle;
                 HitscanEngine.Fire(request);
             }
 
@@ -406,6 +463,14 @@ namespace DD.Prototype.Weapons
             AudioEvents.Raise(CombatAudioEvent.ClassicWeaponFire, origin, powerScale, 50);
 
             _classic.ConsumeShot();
+
+            // WP-042: the casing slot — from the clip's eject event when the character carries it,
+            // else now (A/B, frame 1) or at the pump-back (C, 0.40 s).
+            if (!ClipDrivesMechanism)
+            {
+                if (_timeline.CasingDelaySeconds <= 0f) PublishMechanism(WeaponMechanismKind.CasingEjected, false);
+                else _casingAt = Time.time + _timeline.CasingDelaySeconds;
+            }
         }
 
         // ------------------------------------------------------------------ reload presentation
@@ -424,6 +489,9 @@ namespace DD.Prototype.Weapons
             if (reloading && !_wasReloading)
             {
                 _reloadInsertFired = false;
+                _magOutFired = false;
+                _seatsFired = 0;
+                _chamberFired = false;
 
                 if (_classicRig != null)
                 {
@@ -536,6 +604,7 @@ namespace DD.Prototype.Weapons
         {
             // REQ-057: the classic weapon comes back automatically, with the magazine it
             // had when it was parked.
+            _pickupDonePending = false;
             SetRigVisibility();
             PublishClassicState(true);
             PublishSpecialState(true);
@@ -801,9 +870,122 @@ namespace DD.Prototype.Weapons
 
             if (_specialRig != null)
             {
-                _specialRig.SetVisible(special);
+                // WP-042: hidden until the grab clip hands the weapon to the right hand (pickup_done / fallback).
+                _specialRig.SetVisible(special && !_pickupDonePending);
                 _specialRig.SetSpin(special ? 0.15f : 0f);
             }
+        }
+
+        // ------------------------------------------------------------------ WP-042 · classic model (ADR-042-1)
+
+        /// <summary>
+        /// Put the roster model of the equipped classic weapon on the classic rig (once per weapon
+        /// id): the AP-009C blockout today, the AP-013 model when it replaces the resource — same
+        /// sockets, so the muzzle / ejection / mag markers come from the model.
+        /// </summary>
+        private void EnsureClassicModel()
+        {
+            if (_classicRig == null || _classicModelId == _equippedId)
+            {
+                return;
+            }
+
+            ClassicWeaponDefinition definition = WeaponRoster.Find(_equippedId);
+            if (definition == null || string.IsNullOrEmpty(definition.ModelResource))
+            {
+                return;
+            }
+
+            var prefab = Resources.Load<GameObject>(definition.ModelResource);
+            if (prefab == null)
+            {
+                Debug.LogWarning("[WeaponController] classic model resource missing: " + definition.ModelResource);
+                return;
+            }
+
+            GameObject model = Instantiate(prefab);
+            model.name = "Model";
+            _classicRig.SetModel(model);
+            _classicModelId = _equippedId;
+        }
+
+        // ------------------------------------------------------------------ WP-042 · mechanism slots
+
+        /// <summary>Timer fallback for the slots (casing after the pump, reload marks by progress, pickup hand-off timeout).</summary>
+        private void TickMechanismFallback()
+        {
+            if (_casingAt >= 0f && Time.time >= _casingAt)
+            {
+                _casingAt = -1f;
+                PublishMechanism(WeaponMechanismKind.CasingEjected, false);
+            }
+
+            if (_pickupDonePending && Time.time >= _pickupDoneAt)
+            {
+                _pickupDonePending = false;
+                SetRigVisibility();
+            }
+
+            if (_classic.IsReloading && !ClipDrivesMechanism)
+            {
+                float p = _classic.ReloadProgress01;
+                if (!_timeline.Shells && !_magOutFired && p >= _timeline.MagOutProgress)
+                {
+                    _magOutFired = true;
+                    PublishMechanism(WeaponMechanismKind.MagazineDropped, false);
+                }
+
+                while (_seatsFired < _timeline.SeatCount && p >= _timeline.SeatProgress(_seatsFired))
+                {
+                    _seatsFired++;
+                    PublishMechanism(WeaponMechanismKind.ShellSeated, false);
+                }
+
+                if (!_chamberFired && p >= _timeline.ChamberProgress)
+                {
+                    _chamberFired = true;
+                    PublishMechanism(WeaponMechanismKind.Chambered, false);
+                }
+            }
+        }
+
+        /// <summary>AP-009C clip events of THIS character (WP-032C enum names resolved at load; inert until then).</summary>
+        private void OnClipEvent(CharacterAnimationEvents sender, CharacterAnimationEvent e)
+        {
+            if (sender == null || e == CharacterAnimationEvent.None || sender.transform.root != transform.root)
+            {
+                return;
+            }
+
+            if (e == s_pickupDone)
+            {
+                if (_pickupDonePending)
+                {
+                    _pickupDonePending = false;
+                    SetRigVisibility();
+                }
+
+                return;
+            }
+
+            if (_special.IsActive || !ClipDrivesMechanism)
+            {
+                return;
+            }
+
+            if (e == s_eject) PublishMechanism(WeaponMechanismKind.CasingEjected, true);
+            else if (e == s_magOut) PublishMechanism(WeaponMechanismKind.MagazineDropped, true);
+            else if (e == s_magIn) PublishMechanism(WeaponMechanismKind.ShellSeated, true);
+            else if (e == s_chamber) PublishMechanism(WeaponMechanismKind.Chambered, true);
+        }
+
+        private void PublishMechanism(WeaponMechanismKind kind, bool fromClip)
+        {
+            Transform socket = kind == WeaponMechanismKind.CasingEjected
+                ? (_classicRig != null ? _classicRig.Ejection : Muzzle)
+                : (_classicRig != null ? _classicRig.MagMarker : Muzzle);
+            Vector3 direction = kind == WeaponMechanismKind.CasingEjected ? socket.right : Vector3.down;
+            WeaponEvents.PublishMechanism(new WeaponMechanismEvent(kind, _equippedId, socket.position, direction, fromClip));
         }
     }
 }

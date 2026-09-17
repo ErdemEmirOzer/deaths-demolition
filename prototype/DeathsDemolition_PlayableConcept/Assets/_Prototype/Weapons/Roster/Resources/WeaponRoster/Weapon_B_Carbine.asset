@@ -37,3 +37,4 @@ MonoBehaviour:
   FireSfx: SmgFire
   ReloadSfx: ReloadStart
   HudIconId: weapon_carbine
+  ModelResource: WeaponBlockout/AP013_B_carbine_blockout

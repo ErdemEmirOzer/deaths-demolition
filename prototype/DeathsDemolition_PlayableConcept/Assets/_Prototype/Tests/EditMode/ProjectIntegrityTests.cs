@@ -556,8 +556,8 @@ namespace DD.Prototype.Tests.EditMode
             for (int i = 0; i < decIds.Count; i++) Assert.AreEqual(i + 1, decIds[i], "DEC numaraları ardışık/tekil değil: " + decIds[i]);
             // REQ ids are unique; the table has authored gaps (91–99, 116–119 were never issued).
             for (int i = 1; i < reqIds.Count; i++) Assert.Greater(reqIds[i], reqIds[i - 1], "REQ numarası tekrar ediyor: " + reqIds[i]);
-            Assert.GreaterOrEqual(decIds.Count, 80, "DEC-076..080 (WP-015 kullanıcı kararları) kayıtlı olmalı.");
-            Assert.AreEqual(157, reqIds[reqIds.Count - 1], "son REQ numarası (REQ-156: WP-037 / DEC-083 klasik silah listesi; REQ-157: WP-040 / DEC-081 kalkış politikası)");
+            Assert.GreaterOrEqual(decIds.Count, 84, "DEC-076..080 (WP-015) ve DEC-081..084 (WP-042, kullanıcı kararları 2026-09-17) kayıtlı olmalı.");
+            Assert.AreEqual(158, reqIds[reqIds.Count - 1], "son REQ numarası (REQ-156: WP-037B roster seçimi; REQ-157: WP-040 / DEC-081 kalkış; REQ-158: WP-042 / DEC-082 pickup kilidi yok)");
 
             foreach (string id in new[] { "DEC-076", "DEC-077", "DEC-078", "DEC-079", "DEC-080" })
             {

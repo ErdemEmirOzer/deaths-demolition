@@ -118,6 +118,28 @@ namespace DD.Prototype.Weapons
 
         public float Range => _settings != null ? Mathf.Max(1f, _settings.Range) : 30f;
 
+        // ---- WP-042 feel knobs (ClassicWeaponSettings passthrough, clamped to the request's ceilings)
+
+        /// <summary>Seconds the rig kick takes to settle (WeaponVisualRig spring); 0.10 when unset.</summary>
+        public float RecoilRecoverySeconds => _settings != null && _settings.RecoilRecoverySeconds > 0.005f ? _settings.RecoilRecoverySeconds : 0.10f;
+
+        /// <summary>Share of the kick that reads as muzzle rise, 0..1.</summary>
+        public float RecoilUpShare => _settings != null ? Mathf.Clamp01(_settings.RecoilUpShare) : 0.15f;
+
+        /// <summary>Gamepad pulse per shot as a fraction of the WP-024 rumble ceiling, 0..1.</summary>
+        public float RumbleFraction => _settings != null ? Mathf.Clamp01(_settings.RumbleFraction) : 0.5f;
+
+        /// <summary>Gamepad pulse length per shot, ms, ≤ 120 (the request's ceiling).</summary>
+        public int RumbleMilliseconds => _settings != null ? Mathf.Clamp(_settings.RumbleMilliseconds, 0, 120) : 60;
+
+        /// <summary>True when the multi-pellet pattern is the WP-042 centre + ring (PelletRingRadiusShare &gt; 0).</summary>
+        public bool UsesPelletRing => _settings != null && _settings.PelletCount > 1 && _settings.PelletRingRadiusShare > 0f;
+
+        /// <summary>Ring phase of the current trigger pull (rolled on pellet 0; tests).</summary>
+        public float PelletRingPhase => _ringPhase;
+
+        private float _ringPhase;
+
         // ------------------------------------------------------------------ lifecycle
 
         /// <summary>Start a run with this weapon. Fills the magazine and clears every timer.</summary>
@@ -283,10 +305,26 @@ namespace DD.Prototype.Weapons
             bool multiPellet = PelletCount > 1;
             bool perShotCarrier = !multiPellet || pelletIndex == 0;
 
+            // WP-042: a pellet weapon fires one centre pellet and a ring (equal arc length on the
+            // flattened cone, random phase per trigger pull, small per-pellet jitter) — the fan
+            // reads the same every shot and the mean hit count is unchanged. Single-pellet
+            // weapons and a zero ring share keep the WP-002 independent scatter.
+            Vector3 direction;
+            if (UsesPelletRing)
+            {
+                if (pelletIndex == 0) _ringPhase = Random.value;
+                direction = SpreadUtility.ApplyRing(aimDirection, CurrentSpreadDegrees, pelletIndex, PelletCount,
+                    _settings.PelletRingRadiusShare, _settings.PelletRingJitterShare, _ringPhase);
+            }
+            else
+            {
+                direction = SpreadUtility.Apply(aimDirection, CurrentSpreadDegrees);
+            }
+
             var request = new ShotRequest
             {
                 Origin = origin,
-                Direction = SpreadUtility.Apply(aimDirection, CurrentSpreadDegrees),
+                Direction = direction,
                 Damage = _settings != null ? _settings.Damage : 1f,
                 Range = Range,
                 // On the shared DamageForce scale, NOT the raw config knob. See WeaponImpulse.
@@ -363,6 +401,91 @@ namespace DD.Prototype.Weapons
 
             Quaternion rotation = Quaternion.AngleAxis(yaw, Vector3.up) * Quaternion.AngleAxis(pitch, right);
             return rotation * forward;
+        }
+
+        /// <summary>
+        /// WP-042 pellet pattern. Pellet 0 is the centre (the aim reward); pellets 1..n−1 sit on
+        /// an ellipse of horizontal radius <paramref name="ringShare"/> × <paramref name="degrees"/>
+        /// and vertical radius × <see cref="VerticalSpreadFactor"/>, spaced by EQUAL ARC LENGTH
+        /// (equal parameter angle would bunch pellets at the flat ends), rotated by
+        /// <paramref name="phase01"/> turns, each jittered by ±<paramref name="jitterShare"/> ×
+        /// <paramref name="degrees"/>. No allocation.
+        /// </summary>
+        public static Vector3 ApplyRing(Vector3 direction, float degrees, int pelletIndex, int pelletCount,
+            float ringShare, float jitterShare, float phase01)
+        {
+            Vector3 forward = direction.normalized;
+            if (degrees <= 0.0001f || pelletCount <= 1)
+            {
+                return forward;
+            }
+
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            if (right.sqrMagnitude < 0.0001f)
+            {
+                right = Vector3.right;
+            }
+
+            right.Normalize();
+
+            float jitter = Mathf.Max(0f, jitterShare) * degrees;
+            float yaw, pitch;
+            if (pelletIndex <= 0)
+            {
+                yaw = Random.Range(-jitter, jitter);
+                pitch = Random.Range(-jitter, jitter) * VerticalSpreadFactor;
+            }
+            else
+            {
+                float a = Mathf.Max(0f, ringShare) * degrees;          // horizontal radius, degrees
+                float b = a * VerticalSpreadFactor;                     // vertical radius
+                int ringCount = pelletCount - 1;
+                // Equal-arc-length parameter for this pellet: walk the ellipse in RingSegments steps.
+                float target = ((pelletIndex - 1) + Mathf.Repeat(phase01, 1f)) / ringCount;
+                float t = RingParameterAtArcFraction(a, b, target);
+                yaw = a * Mathf.Cos(t) + Random.Range(-jitter, jitter);
+                pitch = b * Mathf.Sin(t) + Random.Range(-jitter, jitter) * VerticalSpreadFactor;
+            }
+
+            Quaternion rotation = Quaternion.AngleAxis(yaw, Vector3.up) * Quaternion.AngleAxis(pitch, right);
+            return rotation * forward;
+        }
+
+        private const int RingSegments = 64;
+
+        /// <summary>The ellipse parameter t (radians) at which the cumulative arc length equals fraction × perimeter.</summary>
+        public static float RingParameterAtArcFraction(float a, float b, float fraction)
+        {
+            fraction = Mathf.Repeat(fraction, 1f);
+            float total = 0f;
+            float px = a, py = 0f;
+            for (int i = 1; i <= RingSegments; i++)
+            {
+                float t = i * (2f * Mathf.PI / RingSegments);
+                float x = a * Mathf.Cos(t), y = b * Mathf.Sin(t);
+                total += Mathf.Sqrt((x - px) * (x - px) + (y - py) * (y - py));
+                px = x; py = y;
+            }
+
+            if (total <= 0f) return 0f;
+            float goal = fraction * total, walked = 0f;
+            px = a; py = 0f;
+            for (int i = 1; i <= RingSegments; i++)
+            {
+                float t = i * (2f * Mathf.PI / RingSegments);
+                float x = a * Mathf.Cos(t), y = b * Mathf.Sin(t);
+                float seg = Mathf.Sqrt((x - px) * (x - px) + (y - py) * (y - py));
+                if (walked + seg >= goal)
+                {
+                    float f = seg > 0f ? (goal - walked) / seg : 0f;
+                    return (i - 1 + f) * (2f * Mathf.PI / RingSegments);
+                }
+
+                walked += seg;
+                px = x; py = y;
+            }
+
+            return 2f * Mathf.PI;
         }
     }
 }

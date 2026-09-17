@@ -75,6 +75,9 @@ namespace DD.Prototype.Core.Weapons
         [Tooltip("HUD icon identifier (S-09 sprite key).")]
         public string HudIconId = "weapon_rifle";
 
+        [Tooltip("WP-042 (ADR-042-1): Resources path of the model root shown at socket_weapon_r — the AP-009C blockout until the AP-013 model replaces it (same sockets). Empty = the WP-002 primitive rig body.")]
+        public string ModelResource = "";
+
         /// <summary>The PrototypeOnly numbers of this weapon, or null (data-only entry / no config).</summary>
         public ClassicWeaponSettings Settings(PrototypeConfig config)
         {

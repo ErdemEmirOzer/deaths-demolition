@@ -47,6 +47,10 @@ namespace DD.Prototype.Weapons
         public bool DrawTracer;
         public float TracerWidth;
         public float TracerLifetime;
+
+        /// <summary>WP-042: where the tracer starts when it differs from the damage ray's origin (the visual muzzle); Origin when unset.</summary>
+        public bool HasTracerOrigin;
+        public Vector3 TracerOrigin;
     }
 
     /// <summary>What one shot did. Enough for the weapon to decide on recoil and audio.</summary>
@@ -230,7 +234,7 @@ namespace DD.Prototype.Weapons
             if (request.DrawTracer)
             {
                 HitFeedbackDirector.Instance.ReportTracer(
-                    request.Origin, result.EndPoint, request.TracerWidth, request.TracerLifetime);
+                    request.HasTracerOrigin ? request.TracerOrigin : request.Origin, result.EndPoint, request.TracerWidth, request.TracerLifetime);
             }
 
             if (haveFirstEnemy)

@@ -1,4 +1,5 @@
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.Feedback;
 using UnityEngine;
 
@@ -87,10 +88,35 @@ namespace DD.Prototype.Weapons
         /// <summary>Step 1 + step 3. Called once per trigger pull, not once per pellet.</summary>
         public void PlayFireMotion(float recoilKick)
         {
-            _kick += Mathf.Max(0f, recoilKick);
-            _kickVelocity -= Mathf.Max(0f, recoilKick) * 8f;
+            PlayFireMotion(recoilKick, DefaultRecoverySeconds, DefaultUpShare);
+        }
+
+        /// <summary>
+        /// WP-042 overload: the kick settles in <paramref name="recoverySeconds"/> (the initial
+        /// return velocity is kick / recovery — 0.125 s reproduces the WP-002 spring — and the
+        /// spring stiffness follows so a long recovery does not oscillate) and
+        /// <paramref name="upShare"/> of it reads as muzzle rise (0.15 = the WP-002 look).
+        /// </summary>
+        public void PlayFireMotion(float recoilKick, float recoverySeconds, float upShare)
+        {
+            float kick = Mathf.Max(0f, recoilKick);
+            float recovery = Mathf.Clamp(recoverySeconds, 0.02f, 1f);
+            _kick += kick;
+            _kickVelocity -= kick / recovery;
+            _returnSpeedActive = SpringStiffness / (recovery * recovery);
+            _pitchScale = Mathf.Clamp01(upShare) / DefaultUpShare;
             _actionTimer = _actionCycleTime;
         }
+
+        /// <summary>WP-002 spring: kick / 0.125 s initial return, stiffness 16 → 0.25 / 0.125².</summary>
+        public const float DefaultRecoverySeconds = 0.125f;
+        public const float DefaultUpShare = 0.15f;
+        private const float SpringStiffness = 0.25f;
+        private float _returnSpeedActive = -1f;
+        private float _pitchScale = 1f;
+
+        /// <summary>The recoil spring stiffness in use (serialized default until a WP-042 fire motion set one; tests).</summary>
+        public float ActiveReturnSpeed => _returnSpeedActive > 0f ? _returnSpeedActive : _returnSpeed;
 
         /// <summary>Visible reload: the weapon tips out of aim and comes back.</summary>
         public void PlayReloadMotion(float duration)
@@ -146,10 +172,31 @@ namespace DD.Prototype.Weapons
             _bodyRestPosition = _body.localPosition;
             _bodyRestRotation = _body.localRotation;
             HasAuthoredModel = true;
+
+            // WP-042 (ADR-042-1): a model that carries the contract sockets hands them to the rig —
+            // the flash / tracer origin moves to its muzzle, the casing and magazine slots read its ports.
+            Transform muzzle = WeaponSocketContract.Find(modelRoot.transform, WeaponSocketContract.Muzzle);
+            if (muzzle != null)
+            {
+                if (_muzzle != null && _muzzle.parent == _body) Destroy(_muzzle.gameObject);
+                _muzzle = muzzle;
+            }
+
+            _ejection = WeaponSocketContract.Find(modelRoot.transform, WeaponSocketContract.Ejection);
+            _magMarker = WeaponSocketContract.Find(modelRoot.transform, WeaponSocketContract.MarkerMag);
         }
 
         /// <summary>WP-037: true once <see cref="SetModel"/> installed an authored model.</summary>
         public bool HasAuthoredModel { get; private set; }
+
+        private Transform _ejection;
+        private Transform _magMarker;
+
+        /// <summary>WP-042: the casing port (model socket <c>Ejection</c>; the muzzle when the model has none).</summary>
+        public Transform Ejection => _ejection != null ? _ejection : Muzzle;
+
+        /// <summary>WP-042: the magazine marker (model <c>marker_mag</c>; the body when the model has none).</summary>
+        public Transform MagMarker => _magMarker != null ? _magMarker : (_body != null ? _body : transform);
 
         public void SetVisible(bool visible)
         {
@@ -181,8 +228,9 @@ namespace DD.Prototype.Weapons
 
             // Spring toward rest. Explicit integration is plenty at 50-60 Hz and stays
             // frame-rate independent because both terms are scaled by dt.
-            _kickVelocity += -_kick * _returnSpeed * dt;
-            _kickVelocity *= Mathf.Clamp01(1f - _damping * dt * _returnSpeed * 0.25f);
+            float returnSpeed = ActiveReturnSpeed;
+            _kickVelocity += -_kick * returnSpeed * dt;
+            _kickVelocity *= Mathf.Clamp01(1f - _damping * dt * returnSpeed * 0.25f);
             _kick += _kickVelocity * dt;
 
             if (Mathf.Abs(_kick) < 0.0005f && Mathf.Abs(_kickVelocity) < 0.0005f)
@@ -199,7 +247,7 @@ namespace DD.Prototype.Weapons
             }
 
             _body.localPosition = _bodyRestPosition - new Vector3(0f, 0f, _kick);
-            _body.localRotation = _bodyRestRotation * Quaternion.Euler(-_kick * _pitchPerKick - tilt, 0f, 0f);
+            _body.localRotation = _bodyRestRotation * Quaternion.Euler(-_kick * _pitchPerKick * _pitchScale - tilt, 0f, 0f);
         }
 
         private void UpdateAction(float dt)

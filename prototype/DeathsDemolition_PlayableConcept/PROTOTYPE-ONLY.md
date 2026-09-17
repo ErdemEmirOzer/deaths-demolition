@@ -73,9 +73,9 @@ its first argument (the pending decision) and its third argument (`invented`).
 
 | Module | Declarations | Invented | Where the invented ones live |
 |---|---|---|---|
-| `Core` | 178 | 78 | `EnemyConfigSection` 17 · `FeedbackConfigSection` 17 · `WeaponConfigSection` 13 · `RoundConfigSection` 12 · `EconomyConfigSection` 9 · `PlayerConfigSection` 7 · `ProgressionConfigSection` 3 |
+| `Core` | 184 | 84 | `EnemyConfigSection` 17 · `FeedbackConfigSection` 17 · `WeaponConfigSection` 19 (WP-042 +6 feel knobs) · `RoundConfigSection` 12 · `EconomyConfigSection` 9 · `PlayerConfigSection` 7 · `ProgressionConfigSection` 3 |
 | `Player` | 41 | 41 | `PlayerProceduralAnimator` 17 · `PlayerUpgradeTuning` 8 · `PlayerMotor` 5 · `PlayerRigFactory` 5 · `PlayerDamageFeedback` 4 · `PlayerAim` 2 |
-| `Weapons` | 35 | 35 | `WeaponUpgradeTuning` 21 · `WeaponVisualRig` 7 · `WeaponController` 6 · `SpecialWeaponDirector` 1 |
+| `Weapons` | 36 | 36 | `WeaponUpgradeTuning` 21 · `WeaponVisualRig` 7 · `WeaponController` 7 (WP-042 +1: damage-ray height 1.39 m) · `SpecialWeaponDirector` 1 |
 | `Feedback` | 18 | 18 | `HitFeedbackDirector` 18 |
 | `Economy` | 17 | 17 | `GoldOrbTuning` 17 |
 | `Spawn` | 16 | 16 | `SpawnWeightTuning` 13 · `SpawnPointDefinition` 2 · `EnemySpawnDirector` 1 |
@@ -321,7 +321,7 @@ Listed per file, because the file is what a reviewer has to open. Counts are exa
 |---|---|---|
 | `EnemyConfigSection.cs` | 17 | five armour spawn probabilities (per-slot chance, growth per round, ceiling); three tier spawn weight fields (weight, growth, maximum); Runner / Guard / Executioner move speeds and attack damage; attack active, recovery, range and cooldown for every tier; body radius; separation mass; stagger susceptibility; explosion blast radius and falloff exponent |
 | `FeedbackConfigSection.cs` | 17 | all hit-stop durations and the minimum interval between them, every simultaneous-effect ceiling, shake amplitude cap and decay, damage vignette time, stagger cooldown and maximum duration, audio voice budget |
-| `WeaponConfigSection.cs` | 13 | spread cone angles, spread bloom per shot / maximum / decay, recoil kick, per-weapon camera shake, stagger impulse, effective range, Special Weapon pierce count and spread, Special Weapon chance growth per round, final-seconds warning length |
+| `WeaponConfigSection.cs` | 19 | spread cone angles, spread bloom per shot / maximum / decay, recoil kick, per-weapon camera shake, stagger impulse, effective range, Special Weapon pierce count and spread, Special Weapon chance growth per round, final-seconds warning length; WP-042 weapon feel v1 (game-designer outline, in-band): recoil recovery seconds, recoil up-share, gamepad pulse fraction / ms per weapon (under the WP-024 0.3 × 120 ms ceiling), shotgun pellet ring radius / jitter shares |
 | `RoundConfigSection.cs` | 12 | max spawns per refill tick, max useful spawn distance, spawn scatter, and the remaining spawn safety geometry the request does not fix |
 | `EconomyConfigSection.cs` | 9 | magnet speed and acceleration, orb lifetime, contact pickup radius, orb ceiling, and — per branch — cost growth per tier, max tier, effect per tier, offer weight |
 | `PlayerConfigSection.cs` | 7 | collision capsule radius and height, aim plane height, motor smoothing and the remaining rig geometry |
@@ -347,7 +347,7 @@ Listed per file, because the file is what a reviewer has to open. Counts are exa
 | `World/WorldBootstrap.cs` | 4 | build-on-awake, bake-NavMesh-after-build, print-self-check-report, install-run-systems-after-build — build-order switches, not visuals |
 | `Player/PlayerDamageFeedback.cs` | 4 | bump amplitude and duration, the damage fraction that triggers a full reaction, death shake amplitude |
 | `Input/PrototypeInputSource.cs` | 3 | pointer intent threshold in pixels, stick intent threshold — the two numbers that arbitrate which device owns aim; WP-024: `StickSaturation` 0.95 (radial deadzone outer edge; the inner edge is the player preference, default 0.15 from the request) |
-| `Input/GamepadRumble.cs` | 4 | WP-024 pulse table as fractions of the preference ceiling (fire 0.5/60 ms, heavy fire 0.7/80 ms, hit taken 1.0/120 ms, explosion 0.8/100 ms); the ceiling itself (0.3, 120 ms) is the request's |
+| `Input/GamepadRumble.cs` | 4 | WP-024 pulse table as fractions of the preference ceiling (fire 0.5/60 ms — WP-042: overridden by the equipped weapon's `RumbleFraction`/`RumbleMilliseconds`, heavy fire 0.7/80 ms, hit taken 1.0/120 ms, explosion 0.8/100 ms); the ceiling itself (0.3, 120 ms) is the request's |
 | `Core/Input/InputPreferences.cs` | 4 | WP-024 player preferences: stick deadzone 0.15, rumble intensity 0.3, aim-assist angle 6°, aim-assist distance 15 m — defaults equal the request's limits; preferences narrow, never widen |
 | `Rounds/RunDirector.cs` | 2 | auto-start delay after scene load (`0.35 s`), the frozen "ROUND COMPLETE" beat before the upgrade screen opens (`1.1 s` — the request asks for the beat and states no duration) |
 | `Spawn/SpawnPointDefinition.cs` | 2 | the authored position of each spawn point, and the designer base weight — the first of the nine weighting inputs |

@@ -144,7 +144,9 @@ namespace DD.Prototype.Tests.EditMode
         /// Only Assets/_Prototype/Input may reference UnityEngine.InputSystem (IInputSource
         /// contract). Known pre-WP-024 exception: the F1 panel's keyboard fallback for a
         /// scene without a real source (Core/Debug/PrototypeDebugPanel.cs). Tests are scanned
-        /// too — the WP-024 seam (VirtualGamepadDriver) keeps the type out of them.
+        /// too — the WP-024 seam (VirtualGamepadDriver) keeps the type out of them. WP-042: the
+        /// WP-026 QA bot (Diagnostics/Qa) drives the game through a virtual gamepad of its own and
+        /// is the second sanctioned exception (its own assembly; nothing in gameplay reads it).
         /// </summary>
         [Test]
         public void InputSystem_YalnizInputKlasorunde()
@@ -153,7 +155,7 @@ namespace DD.Prototype.Tests.EditMode
             foreach (string path in Directory.GetFiles(PrototypeRoot, "*.cs", SearchOption.AllDirectories))
             {
                 string rel = path.Replace('\\', '/').Substring(PrototypeRoot.Length + 1);
-                if (rel.StartsWith("Input/") || rel == "Core/Debug/PrototypeDebugPanel.cs" || rel.EndsWith("InputParityContractTests.cs"))
+                if (rel.StartsWith("Input/") || rel.StartsWith("Diagnostics/Qa/") || rel == "Core/Debug/PrototypeDebugPanel.cs" || rel.EndsWith("InputParityContractTests.cs"))
                 {
                     continue;
                 }

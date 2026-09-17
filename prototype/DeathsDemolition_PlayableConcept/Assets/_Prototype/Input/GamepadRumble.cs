@@ -3,6 +3,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Damage;
 using DD.Prototype.Feedback;
+using DD.Prototype.Weapons;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -20,9 +21,13 @@ namespace DD.Prototype.Inputs
     public sealed class GamepadRumble : IDisposable
     {
         // PROTOTYPE-ONLY pulse table (fractions of the preference ceiling; durations in ms).
-        [PrototypeOnly(PendingDecisions.None, "Classic weapon shot pulse: 0.5 x intensity ceiling, 60 ms.", true)]
+        [PrototypeOnly(PendingDecisions.None, "Classic weapon shot pulse when no weapon profile is known: 0.5 x intensity ceiling, 60 ms (WP-042: the equipped weapon's RumbleFraction / RumbleMilliseconds override it).", true)]
         public const float FireFraction = 0.5f;
         public const int FireMilliseconds = 60;
+
+        /// <summary>WP-042: the equipped classic weapon's pulse (ClassicWeaponSettings.RumbleFraction / RumbleMilliseconds), cached at equip — not read on the fire path.</summary>
+        public float WeaponFireFraction { get; private set; } = FireFraction;
+        public int WeaponFireMilliseconds { get; private set; } = FireMilliseconds;
 
         [PrototypeOnly(PendingDecisions.None, "Heavy (Special) weapon shot pulse: 0.7 x ceiling, 80 ms.", true)]
         public const float HeavyFireFraction = 0.7f;
@@ -58,7 +63,24 @@ namespace DD.Prototype.Inputs
 
             AudioEvents.Cue += OnCue;
             DamageEvents.PlayerAttacked += OnPlayerAttacked;
+            WeaponEvents.WeaponEquipped += OnWeaponEquipped;
             _subscribed = true;
+        }
+
+        /// <summary>WP-042: cache the equipped weapon's pulse profile (equip is not a hot path; the fire cue reads two fields).</summary>
+        private void OnWeaponEquipped(ClassicWeaponId id)
+        {
+            PrototypeConfig config = PrototypeConfig.Active;
+            ClassicWeaponSettings w = config != null ? config.Weapons.Find(id) : null;
+            if (w == null)
+            {
+                WeaponFireFraction = FireFraction;
+                WeaponFireMilliseconds = FireMilliseconds;
+                return;
+            }
+
+            WeaponFireFraction = Mathf.Clamp01(w.RumbleFraction);
+            WeaponFireMilliseconds = Mathf.Clamp(w.RumbleMilliseconds, 0, InputPreferences.MaxRumbleMilliseconds);
         }
 
         public void Unsubscribe()
@@ -70,6 +92,7 @@ namespace DD.Prototype.Inputs
 
             AudioEvents.Cue -= OnCue;
             DamageEvents.PlayerAttacked -= OnPlayerAttacked;
+            WeaponEvents.WeaponEquipped -= OnWeaponEquipped;
             _subscribed = false;
             StopMotors();
         }
@@ -169,7 +192,7 @@ namespace DD.Prototype.Inputs
             switch (cue.Event)
             {
                 case CombatAudioEvent.ClassicWeaponFire:
-                    Pulse(FireFraction, FireMilliseconds);
+                    Pulse(WeaponFireFraction, WeaponFireMilliseconds);
                     break;
                 case CombatAudioEvent.HeavyWeaponFire:
                     Pulse(HeavyFireFraction, HeavyFireMilliseconds);

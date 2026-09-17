@@ -58,6 +58,47 @@ namespace DD.Prototype.Weapons
         }
     }
 
+    /// <summary>What a WP-042 weapon-mechanism event carries: the weapon and the socket it happened at.</summary>
+    public enum WeaponMechanismKind
+    {
+        /// <summary>A casing left the ejection port (clip event <c>eject</c>; A/B every shot, C at the pump).</summary>
+        CasingEjected = 0,
+
+        /// <summary>The magazine left the weapon (clip event <c>mag_out</c>; A/B only — C loads shells).</summary>
+        MagazineDropped = 1,
+
+        /// <summary>A shell was seated (clip event <c>mag_in</c>; C's three shells, A/B once).</summary>
+        ShellSeated = 2,
+
+        /// <summary>The bolt / pump closed (clip event <c>chamber</c>).</summary>
+        Chambered = 3
+    }
+
+    /// <summary>
+    /// WP-042 · payload of <see cref="WeaponEvents.Mechanism"/>: a slot for the S-07 VFX
+    /// (AP-010B <c>mag_drop</c> / <c>spark</c>) and S-08 SFX layers. Position / direction are
+    /// the socket's world frame at the event (Ejection +X for a casing, the mag marker down
+    /// for a magazine); <see cref="FromClipEvent"/> tells a clip-driven slot from the timer
+    /// fallback the controller uses until the AP-009C clips carry the event.
+    /// </summary>
+    public readonly struct WeaponMechanismEvent
+    {
+        public readonly WeaponMechanismKind Kind;
+        public readonly ClassicWeaponId Weapon;
+        public readonly Vector3 Position;
+        public readonly Vector3 Direction;
+        public readonly bool FromClipEvent;
+
+        public WeaponMechanismEvent(WeaponMechanismKind kind, ClassicWeaponId weapon, Vector3 position, Vector3 direction, bool fromClipEvent)
+        {
+            Kind = kind;
+            Weapon = weapon;
+            Position = position;
+            Direction = direction;
+            FromClipEvent = fromClipEvent;
+        }
+    }
+
     /// <summary>Everything the HUD needs about the classic weapon. Poll it, or listen for changes.</summary>
     public struct ClassicWeaponHudState
     {
@@ -178,6 +219,12 @@ namespace DD.Prototype.Weapons
         /// <summary>Any discrete change to the classic weapon snapshot.</summary>
         public static event Action<ClassicWeaponHudState> ClassicChanged;
 
+        /// <summary>WP-042: a casing / magazine / shell / chamber slot fired (see <see cref="WeaponMechanismEvent"/>). Read-only for effects and audio.</summary>
+        public static event Action<WeaponMechanismEvent> Mechanism;
+
+        /// <summary>Mechanism events published since the last reset (tests / probes).</summary>
+        public static int MechanismCount { get; private set; }
+
         // ------------------------------------------------------------------ special events
 
         /// <summary>
@@ -262,6 +309,12 @@ namespace DD.Prototype.Weapons
         public static void PublishReloadInterrupted() => ReloadInterrupted?.Invoke();
 
         public static void PublishDryFire() => DryFire?.Invoke();
+
+        public static void PublishMechanism(in WeaponMechanismEvent e)
+        {
+            MechanismCount++;
+            Mechanism?.Invoke(e);
+        }
 
         public static void PublishSpecialSpawned(Vector3 position, float groundLifetime)
             => SpecialWeaponSpawned?.Invoke(position, groundLifetime);

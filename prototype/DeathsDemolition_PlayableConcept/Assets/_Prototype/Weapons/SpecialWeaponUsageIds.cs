@@ -77,5 +77,39 @@ namespace DD.Prototype.Weapons
 
             return s_table[0];
         }
+
+        // ---- WP-042 · AP-009C pickup clip events (DEC-082: no movement lock; the upper-body layer carries the grab)
+
+        /// <summary>Clip event: the left hand closes on the Special Weapon on the ground (hide the ground pickup).</summary>
+        public const string PickupGrabEvent = "pickup_grab";
+
+        /// <summary>Clip event: the Special Weapon is in the right hand at socket_weapon_r (show the AP-014 hand model).</summary>
+        public const string PickupDoneEvent = "pickup_done";
+
+        /// <summary>
+        /// Seconds after activation the hand model shows if no <see cref="PickupDoneEvent"/>
+        /// arrives — the AP-009C clip fires it at frame 22 (0.73 s); the fallback keeps a missing
+        /// or interrupted clip (hit, death) from leaving the weapon invisible.
+        /// </summary>
+        public const float PickupDoneFallbackSeconds = 0.8f;
+
+        /// <summary>
+        /// Clip event names the weapon controller listens for (AP-009C v003 <c>new_events</c>):
+        /// index = <see cref="WeaponClipEvent"/>. Resolved by name against
+        /// <c>CharacterAnimationEvents.Names</c> at install, so the slots come alive when the
+        /// S-06 enum carries them and stay inert (timer fallback) until then.
+        /// </summary>
+        public static readonly string[] ClipEventNames = { "eject", "mag_out", "mag_in", "chamber", PickupGrabEvent, PickupDoneEvent };
+    }
+
+    /// <summary>The clip events the weapon layer consumes; index into <see cref="SpecialWeaponUsage.ClipEventNames"/>.</summary>
+    public enum WeaponClipEvent
+    {
+        Eject = 0,
+        MagOut = 1,
+        MagIn = 2,
+        Chamber = 3,
+        PickupGrab = 4,
+        PickupDone = 5
     }
 }

@@ -56,6 +56,26 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.None, "Effective range in metres before the tracer is culled.", true)]
         public float Range = 45f;
 
+        // ---- WP-042 weapon feel v1 (game-designer outline, in-band; consumed by WeaponVisualRig / GamepadRumble / SpreadUtility)
+
+        [PrototypeOnly(PendingDecisions.None, "WP-042: seconds the rig kick takes to settle (A ≈ one fire cycle = discrete hits, B shorter than its cycle = creeping, C long = heavy). Invented.", true)]
+        public float RecoilRecoverySeconds = 0.10f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-042: share of the kick that reads as pitch-up (the rest is slide-back); 0.15 rifle, 0.10 carbine, 0.30 shotgun. Invented.", true)]
+        public float RecoilUpShare = 0.15f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-042: gamepad pulse per shot as a fraction of the rumble ceiling (InputPreferences.MaxRumbleIntensity). Invented.", true)]
+        public float RumbleFraction = 0.67f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-042: gamepad pulse length per shot, ms (≤ 120).", true)]
+        public int RumbleMilliseconds = 70;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-042: multi-pellet pattern — one centre pellet + a ring at RingRadiusShare × SpreadDegrees with ±RingJitterShare × SpreadDegrees jitter (0 = the WP-002 independent scatter).", true)]
+        public float PelletRingRadiusShare = 0.6f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-042: per-pellet jitter on the ring as a share of SpreadDegrees.", true)]
+        public float PelletRingJitterShare = 0.10f;
+
         [PrototypeOnly(PendingDecisions.ProfileXp, "Profile level required to unlock. AR=1, SMG=2, Shotgun=3.")]
         public int UnlockProfileLevel = 1;
     }
@@ -391,40 +411,52 @@ namespace DD.Prototype.Core.Config
                 MagazineSize = 30,
                 ReloadTime = 1.5f,
                 PelletCount = 1,
-                SpreadDegrees = 1.6f,
-                SpreadBloomPerShot = 0.35f,
+                SpreadDegrees = 1.4f,
+                SpreadBloomPerShot = 0.40f,
                 SpreadBloomMax = 3.5f,
-                SpreadBloomDecay = 6f,
-                RecoilKick = 0.09f,
-                CameraShake = 0.35f,
+                SpreadBloomDecay = 7f,
+                RecoilKick = 0.10f,
+                CameraShake = 0.30f,
                 StaggerImpulse = 0.15f,
                 Range = 45f,
+                RecoilRecoverySeconds = 0.10f,
+                RecoilUpShare = 0.15f,
+                RumbleFraction = 0.67f,
+                RumbleMilliseconds = 70,
+                PelletRingRadiusShare = 0f,
+                PelletRingJitterShare = 0f,
                 UnlockProfileLevel = 1
             },
             new ClassicWeaponSettings
             {
                 Id = ClassicWeaponId.AutoSmg,
                 DisplayName = "Auto SMG",
-                Damage = 7f,
+                Damage = 8f,   // WP-042 · Ö-4 (user 2026-09-17): 7 → 8 against armour durability
                 FireRate = 13f,
                 MagazineSize = 42,
                 ReloadTime = 1.7f,
                 PelletCount = 1,
-                SpreadDegrees = 2.6f,
-                SpreadBloomPerShot = 0.45f,
-                SpreadBloomMax = 5.5f,
-                SpreadBloomDecay = 7f,
-                RecoilKick = 0.06f,
-                CameraShake = 0.22f,
+                SpreadDegrees = 2.8f,
+                SpreadBloomPerShot = 0.55f,
+                SpreadBloomMax = 6.5f,
+                SpreadBloomDecay = 6f,
+                RecoilKick = 0.05f,
+                CameraShake = 0.18f,
                 StaggerImpulse = 0.08f,
                 Range = 38f,
+                RecoilRecoverySeconds = 0.055f,
+                RecoilUpShare = 0.10f,
+                RumbleFraction = 0.5f,
+                RumbleMilliseconds = 45,
+                PelletRingRadiusShare = 0f,
+                PelletRingJitterShare = 0f,
                 UnlockProfileLevel = 2
             },
             new ClassicWeaponSettings
             {
                 Id = ClassicWeaponId.CombatShotgun,
                 DisplayName = "Combat Shotgun",
-                Damage = 7f,
+                Damage = 8f,   // WP-042 · Ö-4 (user 2026-09-17): 7 → 8 per pellet
                 FireRate = 1.2f,
                 MagazineSize = 7,
                 ReloadTime = 2.2f,
@@ -433,10 +465,16 @@ namespace DD.Prototype.Core.Config
                 SpreadBloomPerShot = 0f,
                 SpreadBloomMax = 0f,
                 SpreadBloomDecay = 0f,
-                RecoilKick = 0.28f,
-                CameraShake = 0.9f,
+                RecoilKick = 0.34f,
+                CameraShake = 1.0f,
                 StaggerImpulse = 0.85f,
                 Range = 22f,
+                RecoilRecoverySeconds = 0.30f,
+                RecoilUpShare = 0.30f,
+                RumbleFraction = 1f,
+                RumbleMilliseconds = 120,
+                PelletRingRadiusShare = 0.6f,
+                PelletRingJitterShare = 0.10f,
                 UnlockProfileLevel = 3
             }
         };

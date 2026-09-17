@@ -37,3 +37,4 @@ MonoBehaviour:
   FireSfx: ShotgunFire
   ReloadSfx: ReloadStart
   HudIconId: weapon_shotgun
+  ModelResource: WeaponBlockout/AP013_C_shotgun_blockout

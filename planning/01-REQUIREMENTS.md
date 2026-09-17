@@ -46,6 +46,7 @@ Bu dosyada yalnızca kullanıcı tarafından verilen veya açıkça onaylanan ka
 | REQ-154 | Gold işlemleri atomik ve tekrar-güvenli olacaktır. | Satın alma ve yenileme tek atomik işlemdir; başarısız işlem gold kaybettirmez; negatif bakiye oluşamaz; aynı işlem kimliği ikinci kez uygulanmaz. |
 | REQ-155 | Run Results `Gold Spent` birleşik toplamdır. | Geliştirme satın almaları ve yenileme ücretleri tek `Gold Spent` satırında toplanır; ayrı yenileme satırı yoktur; replay veya UI yeniden bağlanması toplamı iki kez artırmaz; gold kazanmak/harcamak profil XP'si vermez. |
 | REQ-156 | Koşu başında seçilebilir klasik silahlar roster verisinden gelecektir. | Skin & Weapon Selection üç klasik silahı (A tüfek / B karabina / C pompalı, DEC-083) roster sırasıyla ve profil açılış durumuyla listeler; dükkân takılı silahın çekirdek dalları + ortak oyuncu dallarını teklif eder (ADR-034-1). (WP-034/WP-037, 2026-09-17) |
+| REQ-158 | Special Weapon alma sırasında oyuncu kilitlenmeyecektir. | Alma anında ve alma klibi boyunca hareket girdisi ve nişan işlenmeye devam eder (DEC-082); alma tetikte kesinleşir; alma sırasında vurulma Special Weapon'ı iptal etmez ve süre işlemeye devam eder; ölüm koşuyu bitirir ve el modeli gizlenir. (WP-042, 2026-09-17) |
 
 ## Kalıcı profil, istatistik ve XP
 
