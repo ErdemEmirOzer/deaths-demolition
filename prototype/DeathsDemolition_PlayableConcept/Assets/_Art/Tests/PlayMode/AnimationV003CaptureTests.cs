@@ -225,6 +225,11 @@ namespace DD.Art.Tests.PlayMode
             yield return Settle(0.6f);
             CharacterTests.Capture(ppose, Path.Combine(dir, "p_sw_hold_bell.png"));
             written++;
+            // WP-032G: the Tide Jewel hold (SwHold_3, AP-009G v007) — the run's special rig carries whatever model S-02 equipped; the pose is the read
+            pv.SetSpecialHold(3);
+            yield return Settle(0.6f);
+            CharacterTests.Capture(ppose, Path.Combine(dir, "p_sw_hold_jewel.png"));
+            written++;
             pv.SetSpecialHold(0);
             yield return Settle(0.4f);
             pv.PlayHurt(false);
@@ -239,7 +244,7 @@ namespace DD.Art.Tests.PlayMode
 
             pa.updateMode = AnimatorUpdateMode.Normal;
             Debug.Log("[DD-TEST] wp032c.capture frames=" + written + " dir=" + dir + " warm=" + warm);
-            Assert.AreEqual(16, written);
+            Assert.AreEqual(17, written);
         }
     }
 }
