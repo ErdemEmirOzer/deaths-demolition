@@ -8,6 +8,7 @@
 # Writes <dest>/post-integrate-<tag>.txt (default dest ~/Backups/deaths-demolition/reports).
 # Exit: 0 ok · 2 tag mismatch · 3 backup not verified · 4 LFS check failed
 set -u
+setopt nullglob
 source "${0:A:h}/dd-env.sh"
 TAG="${1:-}"; shift 2>/dev/null || true; DEST="$HOME/Backups/deaths-demolition/reports"
 while [ $# -gt 0 ]; do case "$1" in --dest) DEST="$2"; shift ;; *) echo "usage: post-integrate.sh <tag> [--dest DIR]" >&2; exit 64 ;; esac; shift; done

@@ -7,13 +7,13 @@
 #   * roll-up by package/folder: _Art/Characters, _Art/Environment, _Art/VFX, _Art/Audio, _Art/Textures (world), _Art/UI, _Art/other,
 #     TextMesh Pro, _Prototype, Packages, other
 #   * complete build size (log) and the real .app size (du) when a build dir is given, plus mode (dev/release)
-#     from build-report.json when present, and a cap check (--cap MB, default 450 = ADR-015-2; warning only).
+#     from build-report.json when present, and a cap check (--cap MB, default 550 = user decision 2026-09-17; warning only).
 # Given a directory: uses <dir>/build.log (+ build-report.json, DeathsDemolition*.app). Writes footprint.json/.md
 # into the directory by default. Exit 0 (cap exceeded prints a WARN line, never fails) · 2 no build report in log · 64 usage
 set -u
 setopt nullglob
 IN="${1:-}"; shift 2>/dev/null || true
-JSON=""; MD=""; TOP=25; CAP=450
+JSON=""; MD=""; TOP=25; CAP=550
 while [ $# -gt 0 ]; do case "$1" in --json) JSON="$2"; shift ;; --md) MD="$2"; shift ;; --top) TOP="$2"; shift ;; --cap) CAP="$2"; shift ;; *) echo "usage: build-report.sh <build-dir|build.log> [--json f] [--md f] [--top N] [--cap MB]" >&2; exit 64 ;; esac; shift; done
 [ -n "$IN" ] || { echo "usage: build-report.sh <build-dir|build.log> [--json f] [--md f] [--top N] [--cap MB]" >&2; exit 64; }
 if [ -d "$IN" ]; then DIR="$IN"; LOG="$IN/build.log"; else LOG="$IN"; DIR="$(dirname "$IN")"; fi

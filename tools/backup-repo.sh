@@ -11,6 +11,7 @@
 # Exit: 0 ok · 10 bundle failed · 11 verify failed · 12 LFS mismatch (partial backup kept) · 13 no space · 64 usage
 # LFS copy is two-pass (WP-031): re-run rsync until source/backup object counts agree (≤ 3 passes).
 set -u
+setopt nullglob
 source "${0:A:h}/dd-env.sh"
 DEST="$HOME/Backups/deaths-demolition"; KEEP=3; VERIFY_ONLY=""
 while [ $# -gt 0 ]; do

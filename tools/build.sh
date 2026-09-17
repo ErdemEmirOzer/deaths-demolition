@@ -14,6 +14,7 @@
 #   0 ok · 10 build failed · 20 smoke failed · 30 user-data guard failed · 64 usage · 75 machine busy (--no-wait)
 # Machine rule: a Unity slot is taken through tools/slot.sh (max 2 Unity batch on this machine) and released after the build.
 set -u
+setopt nullglob
 source "${0:A:h}/dd-env.sh"
 MODE="${1:-}"; shift 2>/dev/null || true
 [ "$MODE" = "dev" ] || [ "$MODE" = "release" ] || { echo "usage: build.sh {dev|release} [--smoke] [--out DIR] [--no-wait]" >&2; exit 64; }
@@ -49,7 +50,7 @@ dd_slot_release   # the editor is gone; the smoke step takes its own slot
 BUILD_OK=0; [ "$X" -eq 0 ] && [ -d "$APP" ] && grep -q '"result": "Succeeded"' "$BREPORT" 2>/dev/null && BUILD_OK=1
 # WP-046: build footprint (categories, top assets, folder roll-up, cap check) from the Unity build log
 if [ "$BUILD_OK" -eq 1 ] && [ -x "$DD_TOOLS_DIR/build-report.sh" ]; then
-  "$DD_TOOLS_DIR/build-report.sh" "$OUT" --top 25 --cap "${DD_BUILD_CAP_MB:-450}" | head -1 | while IFS= read -r l; do dd_log "$l"; done
+  "$DD_TOOLS_DIR/build-report.sh" "$OUT" --top 25 --cap "${DD_BUILD_CAP_MB:-550}" | head -1 | while IFS= read -r l; do dd_log "$l"; done
 fi
 
 SMOKE_STATUS="skipped"; SMOKE_EXIT=0

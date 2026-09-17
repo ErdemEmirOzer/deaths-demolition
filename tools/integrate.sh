@@ -4,14 +4,15 @@
 #
 # C-00's integration gate as one command. DEFAULT IS DRY-RUN (checks + report). --apply integrates.
 #   Gate:  single parent · source worktree clean (if the branch has one) · every changed path inside the
-#          allowed scope (Assets/_Prototype|_Art|TextMesh Pro, planning/, tools/, wp-*/README*; more via
+#          allowed scope (Assets/_Prototype|_Art|TextMesh Pro, project README.md/PROTOTYPE-ONLY.md, planning/, tools/, wp-*/README*; more via
 #          --allow-paths) · ProjectIntegrityTests.cs only with --s01 · secret/credential grep on added lines
 #          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers.
 #   Apply: parent == main HEAD → git merge --ff-only; otherwise git cherry-pick --no-commit + automatic
 #          planning resolution (03-ROADMAP: character-level — both sides' insertions into the same base line are applied in base-offset order, WP-043B;
-#          04-IMPLEMENTATION-PLAN: conflict blocks → HEAD then THEIRS, blank line between) → any other
-#          conflict → cherry-pick --abort and stop · index blobs (non-planning) must equal the source
-#          commit's blobs → else abort and stop · git commit -C <source> (author, message, Co-Authored-By
+#          04-IMPLEMENTATION-PLAN: conflict blocks → HEAD then THEIRS, blank line between; 00/01 DEC/REQ tables: HEAD
+#          rows then THEIRS rows, then re-numbered check) → any other
+#          conflict → rollback and stop · non-planning paths must carry the source commit's change (blob identity, or
+#          identical +/- hunks when git 3-way-merged the file) → else rollback and stop · git commit -C <source> (author, message, Co-Authored-By
 #          kept) · annotated tag · tools/post-integrate.sh <tag> (backup + cleanup dry-run + disk + LFS).
 #   Never: reset, rebase, push, add -A, branch/tag deletion. main HEAD changes only at the commit step.
 # Exit: 0 ok · 3 gate failed · 4 apply conflict (aborted, main unchanged) · 5 post-integrate failed · 64 usage
@@ -34,12 +35,16 @@ fail() { echo "GATE FAIL: $*"; FAILS=$((FAILS+1)); }
 # Clean rollback of a failed --no-commit pick without git reset: every path the pick touched goes back
 # to HEAD (restore) or is dropped again if HEAD never had it. main HEAD is untouched at this point.
 abort_pick() {
-  "${G[@]}" cherry-pick --quit >/dev/null 2>&1
-  for f in "${FILES[@]}"; do
+  "${G[@]}" cherry-pick --quit >/dev/null 2>&1   # no sequencer state with --no-commit; --abort would fail
+  # every path the pick left dirty (staged, unmerged, added, or modified) — not only the source's file list
+  "${G[@]}" status --porcelain=v1 -z | tr '\0' '\n' | cut -c4- | while IFS= read -r f; do
+    [ -n "$f" ] || continue
     if "${G[@]}" cat-file -e "HEAD:$f" 2>/dev/null; then "${G[@]}" restore --staged --worktree -- "$f" 2>/dev/null
     else "${G[@]}" rm -q --cached --force -- "$f" >/dev/null 2>&1; rm -f "$DD_REPO/$f"; fi
   done
-  echo "aborted: $("${G[@]}" status --porcelain | wc -l | tr -d ' ') dirty paths remain (expected 0); main unchanged"
+  left=$("${G[@]}" status --porcelain | wc -l | tr -d ' ')
+  echo "aborted: $left dirty paths remain (expected 0); main unchanged"
+  [ "$left" = "0" ] || { echo "WARN: rollback left paths — inspect with: git -C '$DD_REPO' status"; "${G[@]}" status --porcelain | head -10; }
 }
 FAILS=0
 MAIN=$("${G[@]}" rev-parse main) || exit 64
@@ -64,7 +69,7 @@ if [ -n "$SRCWT" ]; then
 fi
 
 # --- gate 3: path scope
-ALLOWED=("prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/" "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/" "prototype/DeathsDemolition_PlayableConcept/Assets/TextMesh Pro/" "planning/" "tools/")
+ALLOWED=("prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/" "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/" "prototype/DeathsDemolition_PlayableConcept/Assets/TextMesh Pro/" "prototype/DeathsDemolition_PlayableConcept/README.md" "prototype/DeathsDemolition_PlayableConcept/PROTOTYPE-ONLY.md" "planning/" "tools/")
 for extra in ${(s:,:)ALLOW}; do ALLOWED+=("$extra"); done
 FILES=("${(@f)$("${G[@]}" diff-tree --no-commit-id --name-only -r "$C")}")
 echo "changed paths: ${#FILES}"
@@ -80,6 +85,40 @@ done
 SECRET='AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,}|(api[_-]?key|secret[_-]?key|password|passwd|access[_-]?token)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{8,}'
 HITS=$("${G[@]}" diff "$C^" "$C" -- . ':!*.png' ':!*.fbx' ':!*.asset' 2>/dev/null | grep -E '^\+[^+]' | grep -Ei "$SECRET" | grep -Ev 'CancellationToken|CompletionToken|tokenizer|TokenVerdict|PlaceholderJson|EXAMPLE|example\.com' | head -5)
 if [ -n "$HITS" ]; then fail "secret-like content in added lines:"; echo "$HITS" | cut -c1-160; else echo "secret grep: clean"; fi
+
+# --- gate 4b: DEC/REQ numbering after the source is applied (ProjectIntegrityTests rule: DEC = 1..N in file
+#     order, REQ strictly increasing; no number may already exist on main — WP-037B/WP-040 both took REQ-156)
+check_ids() {  # $1 = planning/00 content file, $2 = planning/01 content file → prints problems, exit 1 on any
+  python3 - "$1" "$2" <<'PY'
+import sys, re
+dec=[int(m) for m in re.findall(r'^\| DEC-(\d{3}) \|', open(sys.argv[1],encoding='utf-8').read(), re.M)]
+req=[int(m) for m in re.findall(r'^\| REQ-(\d{3}) \|', open(sys.argv[2],encoding='utf-8').read(), re.M)]
+bad=[]
+for i,v in enumerate(dec):
+    if v!=i+1: bad.append(f"DEC-{v:03d} at position {i+1} (expected DEC-{i+1:03d}: duplicate or gap)"); break
+for i in range(1,len(req)):
+    if req[i]<=req[i-1]: bad.append(f"REQ-{req[i]:03d} not increasing after REQ-{req[i-1]:03d} (duplicate or out of order)"); break
+print("\n".join(bad)); sys.exit(1 if bad else 0)
+PY
+}
+if printf '%s\n' "${FILES[@]}" | grep -qE '^planning/0[01]-'; then
+  T0="${TMPDIR:-/tmp}/dd-int-$$"; mkdir -p "$T0"
+  # (a) source tree itself must be consistent
+  "${G[@]}" show "$C:planning/00-PROJECT-PLAN.md" > "$T0/00s.md" 2>/dev/null; "${G[@]}" show "$C:planning/01-REQUIREMENTS.md" > "$T0/01s.md" 2>/dev/null
+  P=$(check_ids "$T0/00s.md" "$T0/01s.md") || fail "DEC/REQ numbering in the source tree: $P"
+  # (b) numbers the source ADDS must not already exist on main
+  for f in planning/00-PROJECT-PLAN.md planning/01-REQUIREMENTS.md; do
+    "${G[@]}" show "main:$f" > "$T0/main.md" 2>/dev/null || continue
+    # ids new in the source (present in C, absent in C^) must not exist on main
+    "${G[@]}" show "$C:$f" 2>/dev/null | grep -oE '^\| (DEC|REQ)-[0-9]{3} \|' | sort -u > "$T0/c.ids"
+    "${G[@]}" show "$C^:$f" 2>/dev/null | grep -oE '^\| (DEC|REQ)-[0-9]{3} \|' | sort -u > "$T0/p.ids"
+    for id in $(comm -23 "$T0/c.ids" "$T0/p.ids" | grep -oE '(DEC|REQ)-[0-9]{3}'); do
+      grep -qF "| $id |" "$T0/main.md" && fail "$id is new in the source but already exists on main ($f)"
+    done
+  done
+  rm -rf "$T0"
+  echo "DEC/REQ numbering: checked"
+fi
 
 # --- gate 5: tag
 [[ "$TAG" == */* ]] && fail "tag name must not contain '/': $TAG"
@@ -137,30 +176,43 @@ except ValueError:
 open(sys.argv[4],'w',encoding='utf-8').write('\n'.join(out))
 PY
         rm -f "/tmp/dd-int-base.$$" "/tmp/dd-int-ours.$$" "/tmp/dd-int-theirs.$$"; "${G[@]}" add "$f"; echo "resolved $f (both sides' insertions applied on the base line)" ;;
-      planning/04-IMPLEMENTATION-PLAN.md)
-        python3 - "$DD_REPO/$f" <<'PY' || { echo "04: automatic resolution failed"; abort_pick; exit 4; }
-import sys,re
-p=sys.argv[1]; s=open(p,encoding='utf-8').read()
+      planning/04-IMPLEMENTATION-PLAN.md|planning/00-PROJECT-PLAN.md|planning/01-REQUIREMENTS.md)
+        # 04: sections → HEAD block, blank line, THEIRS block. 00/01: table rows → HEAD rows then THEIRS rows
+        # (the post-merge DEC/REQ numbering check below guarantees the result is still unique and ordered).
+        SEP=$'\n\n'; [ "$f" = planning/04-IMPLEMENTATION-PLAN.md ] || SEP=$'\n'
+        DD_SEP="$SEP" python3 - "$DD_REPO/$f" <<'PY' || { echo "$f: automatic resolution failed"; abort_pick; exit 4; }
+import sys,re,os
+p=sys.argv[1]; s=open(p,encoding='utf-8').read(); sep=os.environ.get('DD_SEP','\n\n')
 pat=re.compile(r'<<<<<<< [^\n]*\n(.*?)\n?=======\n(.*?)\n?>>>>>>> [^\n]*\n', re.S)
 n=[0]
 def rep(m):
-    n[0]+=1; a=m.group(1).rstrip('\n'); b=m.group(2).rstrip('\n'); return a+'\n\n'+b+'\n'
+    n[0]+=1; a=m.group(1).rstrip('\n'); b=m.group(2).rstrip('\n'); return a+sep+b+'\n'
 s2=pat.sub(rep,s)
 if n[0]==0 or '<<<<<<<' in s2 or '>>>>>>>' in s2: sys.exit(1)
 open(p,'w',encoding='utf-8').write(s2)
 PY
-        "${G[@]}" add "$f"; echo "resolved $f (HEAD section then THEIRS section)" ;;
+        "${G[@]}" add "$f"; echo "resolved $f (HEAD block then THEIRS block)" ;;
       *) echo "CONFLICT in $f — not auto-resolvable; aborting (main unchanged)"; "${G[@]}" diff --name-only --diff-filter=U; abort_pick; exit 4 ;;
     esac
   done
-  # verification: every non-planning path in the source commit must be byte-identical in the index
+  # verification: every non-planning path must carry the SAME CHANGE as the source commit. Blob identity
+  # passes fast; when git 3-way-merged a file cleanly (both sides touched it) the blob differs, so the
+  # source diff (+/- lines) and the staged diff against HEAD are compared hunk-for-hunk instead.
   BAD=0
+  hunks() { grep -E '^[+-]' | grep -vE '^(\+\+\+|---) '; }
   for f in "${FILES[@]}"; do
     [[ "$f" == planning/* ]] && continue
     S=$("${G[@]}" rev-parse -q --verify "$C:$f" 2>/dev/null || echo deleted); I=$("${G[@]}" rev-parse -q --verify ":$f" 2>/dev/null || echo deleted)
-    [ "$S" = "$I" ] || { echo "VERIFY FAIL: $f (source $S, index $I)"; BAD=1; }
+    [ "$S" = "$I" ] && continue
+    A=$("${G[@]}" diff "$C^" "$C" -- "$f" | hunks); B=$("${G[@]}" diff --cached HEAD -- "$f" | hunks)
+    if [ "$A" = "$B" ]; then echo "verified by hunks (3-way merged): $f"; else echo "VERIFY FAIL: $f (blob $S vs $I; hunks differ)"; BAD=1; fi
   done
   [ "$BAD" -eq 0 ] || { abort_pick; exit 4; }
+  # the merged planning tree must still number DEC/REQ uniquely and in order
+  T1="${TMPDIR:-/tmp}/dd-int-$$-idx"; mkdir -p "$T1"
+  "${G[@]}" show ":planning/00-PROJECT-PLAN.md" > "$T1/00.md" 2>/dev/null; "${G[@]}" show ":planning/01-REQUIREMENTS.md" > "$T1/01.md" 2>/dev/null
+  P=$(check_ids "$T1/00.md" "$T1/01.md") || { echo "DEC/REQ numbering after merge: $P"; rm -rf "$T1"; abort_pick; exit 4; }
+  rm -rf "$T1"
   "${G[@]}" commit -q -C "$C" || { echo "commit failed"; abort_pick; exit 4; }
 fi
 NEW=$("${G[@]}" rev-parse main)

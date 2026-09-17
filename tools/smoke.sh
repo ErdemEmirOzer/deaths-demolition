@@ -13,7 +13,9 @@
 #     afterwards — the guard fails (exit 30) only if the restore does not reproduce the hashes;
 #   * result in <out>/smoke-report.json ("userdata": before/after/restored/verified).
 # Exit: 0 ok · 20 smoke failed (exit code / exception / missing capture) · 30 user-data guard failed · 64 usage
+# Machine slot: takes the single 'smoke' slot (tools/slot.sh v4) for the whole e1+e4+restore sequence.
 set -u
+setopt nullglob
 source "${0:A:h}/dd-env.sh"
 APP="${1:-}"; OUT="${2:-}"; shift 2 2>/dev/null || true
 DELAY=8; MODE=""
@@ -42,8 +44,8 @@ SBX="$OUT/profile-sandbox"; mkdir -p "$SBX"
 DEVFLAGS=(); [ "$MODE" = "dev" ] && DEVFLAGS=(-ddProfilePath "$SBX/prototype-profile.json")
 dd_log "smoke mode=$MODE profileSandbox=$([ "$MODE" = "dev" ] && echo yes || echo no)"
 
-trap 'dd_slot_release' EXIT
-dd_slot_acquire   # a player run counts as one machine slot (GPU/CPU heavy)
+trap 'dd_slot_release smoke' EXIT
+dd_slot_acquire smoke   # slot.sh v4 'smoke' kind (limit 1): only one player smoke at a time — release smokes write the real profile
 # 2) e1 main menu
 "$BIN" -screen-fullscreen 0 -ddCapture "$OUT/e1-mainmenu-1280x720.png" -ddSize 1280x720 -ddDelay "$DELAY" "${DEVFLAGS[@]}" -logFile "$OUT/e1-player.log"
 E1=$?; E1X=$(grep -c 'Exception\|WITH FAILURES' "$OUT/e1-player.log" 2>/dev/null); E1X=${E1X:-0}

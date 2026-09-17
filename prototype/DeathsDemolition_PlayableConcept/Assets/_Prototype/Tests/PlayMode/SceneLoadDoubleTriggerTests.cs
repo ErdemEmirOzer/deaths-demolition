@@ -5,6 +5,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.UI;
+using DD.Prototype.World;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -118,11 +119,25 @@ namespace DD.Prototype.Tests.PlayMode
             // 2) Kendi sayacı: her yükleme tam bir kez; ardışık tekrar yok.
             string sira = string.Join(" -> ", _yuklemeler);
             Debug.Log("[DD-TEST] sceneLoaded.sequence=" + sira + " activeChanges=" + _aktifDegisim);
-            string[] beklenen =
+            // WP-014/WP-020 (S-05, WP-039 P4): with WorldSource = AP005 the Run scene loads the
+            // world scene ADDITIVELY right after itself (WorldBootstrap). That is the one legitimate
+            // additive load; it does not change the active scene and must happen exactly once per Run.
+            string dunyaSahnesi;
+            bool ap005 = WorldSourceSettings.Resolve(out dunyaSahnesi) == WorldSource.AP005;
+            var beklenenListe = new List<string>
             {
-                PrototypeScenes.Boot, PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run,
-                PrototypeScenes.Results, PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.MainMenu
+                PrototypeScenes.Boot, PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run
             };
+            if (ap005)
+            {
+                beklenenListe.Add(dunyaSahnesi);
+            }
+
+            beklenenListe.AddRange(new[]
+            {
+                PrototypeScenes.Results, PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.MainMenu
+            });
+            string[] beklenen = beklenenListe.ToArray();
             var gozlenen = new List<string>();
             for (int i = 0; i < _yuklemeler.Count; i++)
             {
@@ -130,12 +145,22 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             CollectionAssert.AreEqual(beklenen, gozlenen, "Sahne yükleme dizisi beklenenden farklı (çift tetik/atlama).");
+            int additive = 0;
             for (int i = 0; i < _yuklemeler.Count; i++)
             {
+                string sahne = _yuklemeler[i].Split('/')[0];
+                if (ap005 && sahne == dunyaSahnesi)
+                {
+                    Assert.IsTrue(_yuklemeler[i].EndsWith("/Additive"), "Dünya sahnesi additive yüklenmeli: " + _yuklemeler[i]);
+                    additive++;
+                    continue;
+                }
+
                 Assert.IsTrue(_yuklemeler[i].EndsWith("/Single"), "Additive yükleme gözlendi: " + _yuklemeler[i]);
             }
 
-            Assert.AreEqual(_yuklemeler.Count, _aktifDegisim, "activeSceneChanged sayısı yükleme sayısıyla eşit olmalı.");
+            Assert.AreEqual(ap005 ? 1 : 0, additive, "Dünya sahnesi Run başına tam bir kez additive yüklenmeli.");
+            Assert.AreEqual(_yuklemeler.Count - additive, _aktifDegisim, "activeSceneChanged sayısı tekil yükleme sayısıyla eşit olmalı (additive dünya sahnesi aktif sahneyi değiştirmez).");
             Debug.Log("[DD-TEST] sceneLoadSingle=OK");
         }
     }
