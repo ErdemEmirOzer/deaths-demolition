@@ -41,6 +41,7 @@ namespace DD.Prototype.Tests.EditMode
 
         [TestCase(SpecialWeaponId.KaguraBell)]
         [TestCase(SpecialWeaponId.OfudaLoom)]
+        [TestCase(SpecialWeaponId.TideJewel)]   // WP-059C · AP-014D
         public void Silah_PickupVeElModeli_LOD0_2_Butce(SpecialWeaponId id)
         {
             SpecialWeaponVisualLibrary.Entry e = Library.Find(id);
@@ -73,10 +74,16 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0, e.handLods[0].bindposes.Length, id + " el modeli skinned görünüyor (rijit olmalı).");
         }
 
+        /// <summary>WP-059C · AP-014D: the Tide Jewel joined the library (hand 1800/600/200, pickup 1450/510/147 — under the AP-014B budgets); the WP-007 placeholder is gone for all three.</summary>
         [Test]
-        public void TideJewel_ModeliYok_PlaceholderKalir()
+        public void TideJewel_AP014D_ModeliVar_UcSilahTam()
         {
-            Assert.IsNull(Library.Find(SpecialWeaponId.TideJewel), "AP-014 Tide Jewel modeli içermez; placeholder kalmalı.");
+            SpecialWeaponVisualLibrary.Entry e = Library.Find(SpecialWeaponId.TideJewel);
+            Assert.IsNotNull(e, "AP-014D Tide Jewel girdisi yok.");
+            Assert.IsTrue(e.HasPickup && e.HasHand);
+            Assert.LessOrEqual(e.handTriangles[0], 1800, "AP-014D hand LOD0 1800");
+            Assert.LessOrEqual(e.pickupTriangles[0], 1450, "AP-014D pickup LOD0 1450");
+            Assert.AreEqual(3, Library.entries.Length, "üç Special Weapon da kütüphanede");
         }
 
         [Test]

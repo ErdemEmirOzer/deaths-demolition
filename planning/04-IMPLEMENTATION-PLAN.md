@@ -2103,11 +2103,16 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 
 ## WP-059C — PickedUp sırası, combat süitleri sahip tablosu (AP-013C kovanlar S-07 WP-047F'de)
 
-**Durum:** Tamamlandı (S-02, 2026-09-17, HIZ MODU). Branch `wp-059c-pickup-owners-r2` (taban main f6eff6f). Kredi 0.
+## WP-059C — Kick delta dönüş, AP-014D Tide Jewel, PickedUp sırası, combat süitleri sahip tablosu (AP-013C kovanlar S-07 WP-047F'de)
+
+**Durum:** Tamamlandı (S-02, 2026-09-17, HIZ MODU). Branch `wp-059c-pickup-owners-r2` (taban main f6eff6f, 2 commit). Kredi 0 (AP-014D P-06 10 kr).
+
+- **Kick delta (S-06 AD bulgusu):** `WeaponMountAlignment` artık taban (yüz, düz) × soketin dinlenme pozundan sapması — referans, override katmanı `Aim_<w>`/`SwHold_<n>` durumunda ve additive katman boşken karakter uzayında yakalanır; fire klibinin kick'i, reload/hurt el hareketi montaja geçer, roll düzeltmesi kalır (`WeaponModelSliceTests`: dinlenme < 0,75°, tek atış kick A 16,7° / B 16,4° / C 11,9°, 1,2 s'de dinlenmeye dönüş). S-06 tek kare yeniler.
+- **AP-014D Tide Jewel:** `sw_tide_jewel_{hand,pickup}.fbx` (1800/600/200 · 1450/510/147, AP-014B bütçeleri içinde) + SW atlas **v002** (4 PNG) + türetilmiş MS; `ArtSpecialWeaponBuilder.Weapons` += TideJewel, `DD_SpecialWeapons` 3 girdi (placeholder kalmadı), envanter 6 FBX, `SpecialWeaponAssetGateTests` Tide kapısı. Hold pozu: bell/loom klipleri gibi bir Tide hold klibi yok → jewel `Aim` pozunda elde (S-06/P-06 isterse `SwHold_3`).
 
 - **AP-013C kovanlar:** S-07 WP-047F aynı saatlerde `_Art/VFX/AP013C/` altına aldı (`ArtCasingBuilder`, `DD_Casings`, `casings` sözleşme satırı = Weapon sınıfı, envanter 158); S-02'nin paralel importu (Weapons/Classic + kütüphane v2) teslimden önce bırakıldı — tek kopya S-07'ninki. Silah ↔ kovan çerçevesi doğrulaması (köken taban merkezi, +Z eksen ≈ uzunluk; A 264/70 · B 154/70 · C 264/70 üçgen) S-02 ölçümüyle uyumlu.
 - **PickedUp sırası (C-00):** `SpecialWeaponRuntime.Begin(…, raisePickedUp)`; `WeaponController.ActivateSpecialWeapon` önce tek Active bildirimi (`PublishSpecialState(true)`, yer alanları sıfır), sonra `PublishSpecialPickedUp` — `SpecialWeaponPickup` kendi Active yayınını bıraktı (aynı karede OnGround → Active, None araya girmez; Lifecycle `Pickup_TekKabul…` 21/21). S-09 handler her iki sırada doğru; artık ad/süre yeni silahın.
-- **Combat süitleri FAIL → sahip:** `planning/work-packages/M3-COMBAT-SUITE-OWNERS.md` — 25 + 25 fixture, EditMode 224 / PlayMode 109 (main 0430fcf); F1 `SpecialWeaponChanceTests` DEC-085 sayıları (S-02, düzeltildi: B/C hasar 8, zırh büyüme 0,012 / tavan 0,55), F2 `WeaponFeelSliceTests` C chamber sayımı (fire klibinin pump'ı reload sırasında da düşebilir; S-02, düzeltildi), F3 `VfxHotPathBisectTests` targetFrameRate/ProfilerRecorder (S-07, açık); WP-039/044 combat kırmızıları (REQ-127, `VurusYolu…`) S-07 düzeltmeleriyle yeşil. Release b1 551,7 MB (550 tavanı +1,7 MB, main geneli).
+- **Combat süitleri FAIL → sahip:** `planning/work-packages/M3-COMBAT-SUITE-OWNERS.md` — 25 + 25 fixture, EditMode 224 / PlayMode 109 (main 0430fcf); F1 `SpecialWeaponChanceTests` DEC-085 sayıları (S-02, düzeltildi: B/C hasar 8, zırh büyüme 0,012 / tavan 0,55), F2 `WeaponFeelSliceTests` C chamber sayımı (fire klibinin pump'ı reload sırasında da düşebilir; S-02, düzeltildi), F3 `VfxHotPathBisectTests` targetFrameRate/ProfilerRecorder (S-07, açık); WP-039/044 combat kırmızıları (REQ-127, `VurusYolu…`) S-07 düzeltmeleriyle yeşil. Release b3b 552,9 MB (550 tavanı +2,9 MB, main geneli + SW atlas v002), e4 exit 0.
 - wp-059 worktree kaldırıldı.
 
 ## WP-038C — AP-007C v003: kalabalık çeşitliliği (baş ×2, aksesuar ×2, üst ×1, 73 kemikli rig, atlas v003)

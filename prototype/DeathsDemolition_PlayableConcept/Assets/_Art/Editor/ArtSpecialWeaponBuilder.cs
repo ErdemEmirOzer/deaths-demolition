@@ -41,6 +41,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             (SpecialWeaponId.KaguraBell, "kagura_bell"),
             (SpecialWeaponId.OfudaLoom, "ofuda_loom"),
+            (SpecialWeaponId.TideJewel, "tide_jewel"),   // WP-059C · AP-014D (hand 1800/600/200, pickup 1450/510/147; SW atlas v002)
         };
 
         /// <summary>Every FBX this package ships (inventory gate): pickup + hand per authored weapon.</summary>

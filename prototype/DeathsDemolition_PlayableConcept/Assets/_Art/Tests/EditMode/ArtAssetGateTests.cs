@@ -307,7 +307,7 @@ namespace DD.Art.Tests.EditMode
             // WP-037B: the AP-014 Special Weapon pickup + hand models (S-02 builder).
             int sw = 0;
             foreach (string f in ArtSpecialWeaponBuilder.ModelFiles()) if (beklenen.Add(f)) sw++;
-            Assert.AreEqual(4, sw, "AP-014 2 Special Weapon × pickup/hand FBX");
+            Assert.AreEqual(6, sw, "AP-014 3 Special Weapon × pickup/hand FBX (AP-014D Tide Jewel, WP-059C)");
 
             // WP-019 (ADR-019-1): the AP-010 gold pack mesh (the only FBX the effect package ships).
             beklenen.Add(ArtVfxContract.VfxRoot + "/gold/AP010_goldpack_V01.fbx");

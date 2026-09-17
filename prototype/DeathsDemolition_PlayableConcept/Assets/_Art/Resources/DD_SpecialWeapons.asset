@@ -38,6 +38,17 @@ MonoBehaviour:
     - {fileID: -5039990785528823828, guid: 1cb43e32159f146c195ca0c4c86b7d11, type: 3}
     pickupTriangles: 4201000042010000c8000000
     handTriangles: 42010000420100002c010000
+  - id: 2
+    pickupLods:
+    - {fileID: 7811119681072667109, guid: c0f3769dfe39b41ebb8a80d30e184d67, type: 3}
+    - {fileID: -4384736790768547182, guid: c0f3769dfe39b41ebb8a80d30e184d67, type: 3}
+    - {fileID: -4251452766655627223, guid: c0f3769dfe39b41ebb8a80d30e184d67, type: 3}
+    handLods:
+    - {fileID: -5183856032540043278, guid: 6b2a49ce6d3074b63b5e55b6e035438f, type: 3}
+    - {fileID: -4009787763239937739, guid: 6b2a49ce6d3074b63b5e55b6e035438f, type: 3}
+    - {fileID: -8047504026072077352, guid: 6b2a49ce6d3074b63b5e55b6e035438f, type: 3}
+    pickupTriangles: aa050000fe01000093000000
+    handTriangles: 0807000058020000c8000000
   sheets:
   - usage: sw_kagura_wave
     texture: {fileID: 2800000, guid: d9c47e5b383cd4e058050736d213840f, type: 3}

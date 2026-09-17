@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Weapons/Special/Textures/T_sw_atlas_Packed.png",
-    "sourceSha256": "b03b0643dbb5decf270b08421303ffcf8ea5278975dce9fb7d89ed3d45c2c37a",
+    "sourceSha256": "464d69cefa251ed5a99d770dd686d6e7ad473d2b09fff7665ad2c3042421f3ca",
     "algorithm": "MetallicSmoothnessAO v1 (WP-016): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-16T22:50:25.4965980Z",
-    "outputSha256": "9b53e6f8001c2709185c594640eea1d93ab3ad20013e53f8bb4b378a4c9f5dcb"
+    "utc": "2026-09-17T08:37:28.6437300Z",
+    "outputSha256": "61c5fb8ff0a9a0562e75bf35a8d1971f6d657dbe52e05611e6adecb6dda55fe9"
 }

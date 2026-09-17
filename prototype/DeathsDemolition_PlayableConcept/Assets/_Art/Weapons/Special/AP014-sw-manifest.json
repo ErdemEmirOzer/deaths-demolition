@@ -75,6 +75,46 @@
     "socket": "socket_weapon_r",
     "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end continues along +Y, +Z = up; the socket's +Z 'barrel' axis is unused by the sweep weapon (omnidirectional) and is the throw direction for the loom (tip at +Y, cards hang -Z)",
     "material": "M_SW_Atlas"
+   },
+   {
+    "weapon": "tide_jewel",
+    "pose": "hand",
+    "fbx": "sw/sw_tide_jewel_hand.fbx",
+    "objects": [
+     "sw_tide_jewel_hand_LOD0",
+     "sw_tide_jewel_hand_LOD1",
+     "sw_tide_jewel_hand_LOD2"
+    ],
+    "tris_LOD": [
+     1800,
+     600,
+     200
+    ],
+    "socket": "socket_weapon_r",
+    "frame": "socket_weapon_r: grip = local +Y (hand holds y 0..0.16), business end (claw + orb) continues along +Y; model +Z = the MON side (faces the camera in the front render; the back-of-hand direction in the socket); the socket's +Z 'barrel' axis is the throw direction",
+    "material": "M_SW_Atlas",
+    "source": "AP-014D Tripo H3.1 multiview (4 views of the gpt_image_2_5 concept sheet), decimated; textures in the SW atlas block",
+    "usage": "sw_tide_pull / sw_tide_well (WP-055 / AP-014C sheets)"
+   },
+   {
+    "weapon": "tide_jewel",
+    "pose": "pickup",
+    "fbx": "sw/sw_tide_jewel_pickup.fbx",
+    "objects": [
+     "sw_tide_jewel_pickup_LOD0",
+     "sw_tide_jewel_pickup_LOD1",
+     "sw_tide_jewel_pickup_LOD2"
+    ],
+    "tris_LOD": [
+     1450,
+     510,
+     147
+    ],
+    "socket": "ground",
+    "frame": "lying on the ground (hand frame rolled 25 deg about Y), z min 0.005; long axis along Y",
+    "material": "M_SW_Atlas",
+    "source": "AP-014D Tripo H3.1 multiview (4 views of the gpt_image_2_5 concept sheet), decimated; textures in the SW atlas block",
+    "usage": "sw_tide_pull / sw_tide_well (WP-055 / AP-014C sheets)"
    }
   ],
   "effects": [
@@ -229,7 +269,8 @@
    1000,
    300
   ],
-  "ok": true
+  "ok": true,
+  "ap014d": "tide_jewel hand 1800/600/200, pickup 1450/510/147 (AP-014D, 10 cr); sw atlas v002"
  },
  "event_coverage_rows": [
   {

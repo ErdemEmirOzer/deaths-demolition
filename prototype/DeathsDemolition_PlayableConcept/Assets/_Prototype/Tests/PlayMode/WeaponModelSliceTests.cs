@@ -120,6 +120,30 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.Less(gripToHand, 0.08f, d.RosterKey + ": kabza sağ elden " + (gripToHand * 100f).ToString("0.0") + " cm uzakta.");
                 report.Add(d.RosterKey + " muzzleDir=" + muzzleDir.ToString("F2") + " grip→hand=" + (gripToHand * 100f).ToString("0.0") + "cm");
 
+                // WP-059C: the alignment keeps the clip's motion — at rest the socket's deviation from its captured aim pose
+                // is ~0; one shot's additive kick (Fire_<w>) rotates the hand and the mount follows it (muzzle rise), then settles.
+                Assert.IsTrue(alignment.DeltaApplied, d.RosterKey + ": dinlenme pozu referansı yakalanmadı.");
+                Assert.Less(alignment.DeltaDegrees, 0.75f, d.RosterKey + ": dinlenmede sapma " + alignment.DeltaDegrees.ToString("0.00") + "°");
+                Vector3 muzzleRest = muzzleDir;
+                float kickMax = 0f, riseMax = 0f;
+                int ammoBefore = _s.Controller.Classic.Ammo;
+                _s.Girdi.AtesBasti = true;
+                _s.Girdi.AtesBasili = true;
+                for (int f = 0; f < 30; f++)
+                {
+                    yield return null;
+                    if (f == 0) { _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false; }
+                    kickMax = Mathf.Max(kickMax, alignment.DeltaDegrees);
+                    Vector3 muzzleNow = _s.Rig.transform.InverseTransformDirection((_s.Controller.Muzzle.position - mount.position).normalized);
+                    riseMax = Mathf.Max(riseMax, muzzleNow.y - muzzleRest.y);
+                }
+
+                Assert.Less(_s.Controller.Classic.Ammo, ammoBefore, d.RosterKey + ": atış olmadı.");
+                Assert.GreaterOrEqual(kickMax, 1f, d.RosterKey + ": klibin kick dönüşü montaja geçmedi (" + kickMax.ToString("0.00") + "°)");
+                yield return new WaitForSeconds(1.2f);
+                Assert.Less(alignment.DeltaDegrees, 0.75f, d.RosterKey + ": kick sonrası dinlenmeye dönmedi " + alignment.DeltaDegrees.ToString("0.00") + "°");
+                report.Add(d.RosterKey + " kick=" + kickMax.ToString("0.0") + "° muzzleRise=" + riseMax.ToString("0.000"));
+
                 // Orthographic side frame (evidence) — camera on the character's right, looking −X in the mount frame.
                 string png = OrthoSideFrame(mount, d.RosterKey);
                 report.Add(d.RosterKey + " ortho=" + png);
