@@ -359,10 +359,9 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTest]
         [Category("WP008")]
         [Timeout(300000)]
-        public IEnumerator P2_RoundSonuEkrani_UcKart_PahaliDisabled_TekReroll_TekSatinAlma_Kilit_Reopen_Continue()
+        public IEnumerator P2_RoundSonuEkrani_UcKart_PahaliDisabled_TekReroll_IkiSatinAlma_Kilit_Reopen_Continue()
         {
-            yield return KosuyaGir(kontrollu: true);
-            Dec071Klonu();   // WP-049C: limit = 1 sözleşmesi (ekranın 2 kart akışı S-09 paketinde)
+            yield return KosuyaGir(kontrollu: true);   // WP-049C/022L: sevk politikası (DEC-087, 2 kart) — klon yok, shop.PurchaseLimit okunur
             UpgradeScreen ekran = UnityEngine.Object.FindObjectOfType<UpgradeScreen>();
             Assert.IsNotNull(ekran);
 
@@ -484,8 +483,12 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(UpgradeEntitlement.Used, shop.RerollEntitlement, "Pause/resume reroll hakkını geri vermez.");
             Assert.AreEqual(0f, Time.timeScale, 0.0001f, "Round sonu donması sürüyor.");
 
-            // Tek satın alma ekran düğmesiyle; çift tıklama tek işlem; diğer kartlar kilitlenir.
+            // DEC-087 (WP-049C/022L): round başına shop.PurchaseLimit (sevk 2) kart. İlk satın alma ekran düğmesiyle;
+            // aynı kartta çift tıklama tek işlem (ikinci kart aynı karede ayrı, meşru bir seçimdir — aşağıda).
             WeaponController silah = WeaponRegistry.ActiveController;
+            int limit = shop.PurchaseLimit;
+            Assert.AreEqual(UpgradeOfferPolicy.PurchaseLimit(PrototypeConfig.Active), limit, "dükkân limiti config'den (DEC-087 sevk 2)");
+            Assert.AreEqual(2, limit, "DEC-087: sevk politikası iki kart");
             UpgradeCardOffer kart = shop.Cards[0];
             int tierOnce = silah.Modifiers.GetTier(kart.Branch);
             int bakiyeOnce = _gold.Wallet.Balance;
@@ -494,29 +497,54 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(Buton("Card.0").IsInteractable());
             Buton("Card.0").OnSubmit(null);
             Buton("Card.0").OnSubmit(null);   // çift tıklama
-            Buton("Card.1").OnSubmit(null);   // ikinci kart, aynı kare
             yield return null;
             yield return null;
 
-            Assert.AreEqual(1, satinAlmaOlayi, "Hızlı/çift input altında tek transaction.");
+            Assert.AreEqual(1, satinAlmaOlayi, "Aynı kartta çift tıklama tek transaction.");
             Assert.AreEqual(bakiyeOnce - kart.Cost, _gold.Wallet.Balance);
             Assert.AreEqual(tierOnce + 1, silah.Modifiers.GetTier(kart.Branch));
-            Assert.IsTrue(shop.IsLocked);
             Assert.IsTrue(shop.Cards[0].Purchased);
             Assert.IsFalse(shop.Cards[1].Purchased);
-            for (int i = 0; i < 3; i++) Assert.IsFalse(Buton("Card." + i).IsInteractable(), "Satın alma sonrası bütün kartlar kilitli.");
+            Assert.IsFalse(shop.IsLocked, "Limit 2: ilk alımdan sonra teklif açık kalır.");
+            Assert.AreEqual(1, shop.PurchasesThisRound);
+            Assert.AreEqual(UpgradeEntitlement.Used, shop.RerollEntitlement, "DEC-050: reroll bu round'da zaten kullanıldı; satın alma onu geri vermez.");
+            Assert.IsFalse(shop.CanReroll, "İlk satın alma sonrası reroll yok (kullanılmış olsa da olmasa da kapalı).");
+            Assert.IsFalse(Buton("Reroll").IsInteractable());
             Assert.IsTrue(MetinVar("PURCHASED"));
+            Assert.IsFalse(Buton("Card.0").IsInteractable(), "Alınan kart tekrar alınamaz.");
+            Assert.IsTrue(Buton("Card.1").IsInteractable() || Buton("Card.2").IsInteractable(), "İkinci seçim açık: en az bir kart alınabilir (limit 2).");
+            Assert.IsTrue(MetinVar("Choose another upgrade, or continue."), "Gold şeridi ikinci seçimi söyler (WP-022L).");
+
+            // İkinci kart: alınabilir olan ilk kart; limit dolar → teklif kilitlenir, yalnız Continue.
+            int ikinciIndeks = -1;
+            for (int i = 1; i < 3; i++) if (shop.IsPurchasable(i) && Buton("Card." + i).IsInteractable()) { ikinciIndeks = i; break; }
+            Assert.GreaterOrEqual(ikinciIndeks, 0, "Alınabilir ikinci kart yok (bakiye/maks tier?).");
+            UpgradeCardOffer kart2 = shop.Cards[ikinciIndeks];
+            int tier2Once = silah.Modifiers.GetTier(kart2.Branch);
+            int bakiye2Once = _gold.Wallet.Balance;
+            Buton("Card." + ikinciIndeks).OnSubmit(null);
+            Buton("Card." + ikinciIndeks).OnSubmit(null);   // çift tıklama
+            yield return null;
+            yield return null;
+            Assert.AreEqual(2, satinAlmaOlayi, "İkinci kart tek transaction.");
+            Assert.AreEqual(bakiye2Once - kart2.Cost, _gold.Wallet.Balance);
+            Assert.AreEqual(tier2Once + 1, silah.Modifiers.GetTier(kart2.Branch));
+            Assert.AreEqual(2, shop.PurchasesThisRound);
+            Assert.IsTrue(shop.IsLocked, "Limit doldu: teklif kilitli.");
+            Assert.IsTrue(shop.Cards[ikinciIndeks].Purchased);
+            for (int i = 0; i < 3; i++) Assert.IsFalse(Buton("Card." + i).IsInteractable(), "Limit sonrası bütün kartlar kilitli.");
             Assert.IsTrue(MetinVar("OFFER LOCKED"), "Kilitli teklif kart chip'inde yazılı.");
             Assert.IsTrue(MetinVar("REROLL · LOCKED"), "Reroll etiketi kilidi yazar.");
-            Assert.IsTrue(MetinVar("Upgrade applied. Continue when ready."), "Gold şeridi notu kilidi söyler, 'affordable değil' demez.");
+            Assert.IsTrue(MetinVar("Upgrades applied. Continue when ready."), "Gold şeridi notu iki alımı ve kilidi söyler (WP-022L).");
             Assert.IsFalse(MetinVar("None of these is affordable"), "Kilitli teklif 'karşılanamıyor' diye okunmaz.");
             Assert.IsFalse(Buton("Reroll").IsInteractable());
             Assert.IsTrue(Buton("Continue").IsInteractable());
             GameObject odak = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
             Assert.IsNotNull(odak, "Kilit sonrası odak yaşayan bir kontrolde.");
             Assert.AreEqual("Continue", odak.name, "Kilit sonrası odak CONTINUE'da.");
-            Assert.AreEqual(kart.Cost + rerollUcreti, _gold.Wallet.TotalSpent, "Cüzdan: satın alma + reroll.");
-            Assert.AreEqual(kart.Cost + rerollUcreti, _run.Stats.GoldSpent, "Tracker: satın alma + reroll.");
+            int alimToplam = kart.Cost + kart2.Cost;
+            Assert.AreEqual(alimToplam + rerollUcreti, _gold.Wallet.TotalSpent, "Cüzdan: iki satın alma + reroll.");
+            Assert.AreEqual(alimToplam + rerollUcreti, _run.Stats.GoldSpent, "Tracker: iki satın alma + reroll.");
 
             // GC penceresi (WP-008 kuralı "her kare string/arama/allocation yok", kilitli teklif + reroll bloğu):
             // yönetilen yığın deltası 600 kare ekran açık − 600 kare bileşen kapalı, pozitif kontrol ile
@@ -540,7 +568,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Assert.IsTrue(shop.IsLocked, "GC penceresi kilidi değiştirmedi.");
-            Assert.AreEqual(1, satinAlmaOlayi);
+            Assert.AreEqual(2, satinAlmaOlayi);
 
             // UI yeniden bağlanma: ekran kapatılıp aynı round için yeniden açılır → aynı teklif, aynı kilit.
             int oturum = shop.SessionId; int revizyon = shop.Revision; List<UpgradeBranch> kilitliKartlar = Dallar(shop);
@@ -560,7 +588,7 @@ namespace DD.Prototype.Tests.PlayMode
             Buton("Card.1").OnSubmit(null);
             yield return null;
             Assert.AreEqual(bakiyeReopen, _gold.Wallet.Balance);
-            Assert.AreEqual(1, satinAlmaOlayi);
+            Assert.AreEqual(2, satinAlmaOlayi);
 
             // Continue → round 2: gold ve build korunur; dünya çözülür.
             int bakiyeR1 = _gold.Wallet.Balance; string buildR1 = _run.Build.DescribeBuild(); int spentR1 = _gold.Wallet.TotalSpent;
@@ -599,10 +627,10 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Bekle(() => RunDirector.Instance == null || RunDirector.Instance.Phase == RunPhase.Dead, FazZamanAsimi, "Dead gelmedi.");
             RunEvents.RunEnded -= bittiDinle;
             Assert.AreEqual(1, bitti);
-            Assert.AreEqual(kart.Cost + rerollUcreti, ozet.GoldSpent, "Results Gold Spent = satın alma + reroll.");
-            Assert.AreEqual(kart.Cost, ozet.GoldSpentOnUpgrades);
+            Assert.AreEqual(alimToplam + rerollUcreti, ozet.GoldSpent, "Results Gold Spent = iki satın alma + reroll.");
+            Assert.AreEqual(alimToplam, ozet.GoldSpentOnUpgrades);
             Assert.AreEqual(rerollUcreti, ozet.GoldSpentOnRerolls);
-            Assert.AreEqual(1, ozet.UpgradesPurchased);
+            Assert.AreEqual(2, ozet.UpgradesPurchased, "DEC-087: iki kart");
             Assert.AreEqual(1, ozet.RerollsUsed);
             Assert.AreEqual(bakiyeR1, ozet.GoldUnspent);
             Assert.AreEqual(buildR1, ozet.BuildDescription);

@@ -1320,10 +1320,12 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// WP-022L (Ö-6a, DEC-087): picks per round-end screen. Read from the policy, not
-        /// cached, so the S-04 value is the one every sentence on this screen follows.
+        /// WP-022L (Ö-6a, DEC-087): picks per round-end screen. Read from the open shop (the
+        /// config limit it was opened with), not cached, so the S-04 value is the one every
+        /// sentence on this screen follows. WP-049C2: MaxPurchasesPerRound is the no-config
+        /// fallback (1); the shipped value lives in EconomyConfigSection.PurchasesPerRound (2).
         /// </summary>
-        private static int PicksPerRound => UpgradeOfferPolicy.MaxPurchasesPerRound;
+        private static int PicksPerRound => Shop != null ? Shop.PurchaseLimit : UpgradeOfferPolicy.PurchaseLimit(PrototypeConfig.Active);
 
         private static string IntroSentence()
         {
