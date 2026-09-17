@@ -15,7 +15,7 @@ MonoBehaviour:
   schema: dd-zombie-tier-v1
   package: AP-014
   version: AP014.manifest.v001
-  sourceSha256: 120d4d667e5f5eefcb3ca1bcc6ee70bdbf714df4e3f524942961a44ed96e18c3
+  sourceSha256: 3471e074bc03536d07a24320b2e5ce8bc39469037d1bf959e00c9b0ed052e082
   fits:
   - A
   - B
@@ -2971,8 +2971,8 @@ MonoBehaviour:
     lacquerK: 0
     lacquerFloor: 0
   - tier: 1
-    cloth: {r: 0.34509805, g: 0.37254903, b: 0.39215687, a: 1}
-    clothK: 0.42
+    cloth: {r: 0.68235296, g: 0.7058824, b: 0.7294118, a: 1}
+    clothK: 0.56
     lacquer: {r: 1, g: 1, b: 1, a: 1}
     lacquerK: 0
     lacquerFloor: 0

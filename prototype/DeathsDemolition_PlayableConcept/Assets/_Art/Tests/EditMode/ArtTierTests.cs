@@ -111,11 +111,11 @@ namespace DD.Art.Tests.EditMode
                 Assert.AreEqual(rows[t].cloth, e.cloth); Assert.AreEqual(rows[t].lacquer, e.lacquer);
             }
 
-            // AP-014 table: Special cloth ash #585F64 k 0.42 (no lacquer); Elite plum lacquer #4A3448 k 0.70; Ultra rust lacquer #6B5140 k 0.72; Standard none
+            // AP-014 table (AP-014E, K3): Special cloth pale ash #AEB4BA k 0.56 (no lacquer; v001 ash #585F64 k 0.42 sat on the ground value under the Look B LUT); Elite plum lacquer #4A3448 k 0.70; Ultra rust lacquer #6B5140 k 0.72; Standard none
             Assert.AreEqual(0f, lib.TintOf(EnemyTier.Standard).clothK); Assert.AreEqual(0f, lib.TintOf(EnemyTier.Standard).lacquerK);
-            Assert.AreEqual(0.42f, lib.TintOf(EnemyTier.Special).clothK, 1e-4f); Assert.AreEqual(0f, lib.TintOf(EnemyTier.Special).lacquerK);
+            Assert.AreEqual(0.56f, lib.TintOf(EnemyTier.Special).clothK, 1e-4f); Assert.AreEqual(0f, lib.TintOf(EnemyTier.Special).lacquerK);
             Assert.AreEqual(0.7f, lib.TintOf(EnemyTier.Elite).lacquerK, 1e-4f); Assert.AreEqual(0.72f, lib.TintOf(EnemyTier.Ultra).lacquerK, 1e-4f);
-            Assert.AreEqual("#585F64", "#" + ColorUtility.ToHtmlStringRGB(lib.TintOf(EnemyTier.Special).cloth));
+            Assert.AreEqual("#AEB4BA", "#" + ColorUtility.ToHtmlStringRGB(lib.TintOf(EnemyTier.Special).cloth));
             Assert.AreEqual("#4A3448", "#" + ColorUtility.ToHtmlStringRGB(lib.TintOf(EnemyTier.Elite).lacquer));
             Assert.AreEqual("#6B5140", "#" + ColorUtility.ToHtmlStringRGB(lib.TintOf(EnemyTier.Ultra).lacquer));
 
