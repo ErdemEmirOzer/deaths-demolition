@@ -147,7 +147,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public int round;
             public int pool;
             public int[] tierCounts = new int[TierCount];
-            public float[] armouredShare = new float[TierCount]; // share of spawns wearing ≥1 piece
+            public float[] armouredShare = new float[TierCount]; // share of spawns wearing ≥1 piece: 1 − Π(1 − slot equip rate) (WP-049C fix: earlier reports summed the three slot rates → pieces per spawn, clamped to 1)
+            public float[] armourPiecesPerSpawn = new float[TierCount]; // expected equipped pieces per spawn, 0..3
             public float sustainedDps;                           // build: mag/(mag/rps+reload) × damage × pellets × hit fraction × fire-rate mult
             public float crowdDps;                               // sustainedDps × crowd multiplier (pierce/chain/explosion/ricochet model)
             public float clearSeconds;                           // Σ effective HP / crowdDps, floored by the spawn pacing
@@ -387,7 +388,12 @@ namespace DD.Prototype.Diagnostics.EditorTools
                     };
                     totalEffectiveHp += expectedEff * n;
                     incomingWeighted += incoming * n;
-                    row.armouredShare[t] = n > 0 ? Mathf.Clamp01((mr.armour[0].equippedByTier[t] + mr.armour[1].equippedByTier[t] + mr.armour[2].equippedByTier[t]) / (float)n) : 0f;
+                    if (n > 0)
+                    {
+                        float pH = mr.armour[0].equippedByTier[t] / (float)n, pB = mr.armour[1].equippedByTier[t] / (float)n, pL = mr.armour[2].equippedByTier[t] / (float)n;
+                        row.armourPiecesPerSpawn[t] = pH + pB + pL;
+                        row.armouredShare[t] = Mathf.Clamp01(1f - (1f - pH) * (1f - pB) * (1f - pL));   // independent slot rolls (ZombieEnemy.TryFit)
+                    }
                 }
 
                 float refillFloor = mr.pool / Mathf.Max(0.01f, config.Rounds.MaxSpawnsPerRefillTick / Mathf.Max(0.01f, config.Rounds.SpawnRefillInterval));

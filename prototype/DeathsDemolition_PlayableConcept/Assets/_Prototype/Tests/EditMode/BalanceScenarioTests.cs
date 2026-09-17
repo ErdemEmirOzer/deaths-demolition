@@ -79,8 +79,9 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(rowsOnce, c.RoundDifficultyOverrides != null ? c.RoundDifficultyOverrides.Count : 0, "override satırları klonda kaldı");
 
             Assert.AreEqual("shipped", shipped.scenario); Assert.AreEqual("o2", o2.scenario);
-            // Ö-2: R8'de Standard zırhlı payı düşer.
-            float sArm = shipped.weapons[0].rounds[7].armouredShare[0], o2Arm = o2.weapons[0].rounds[7].armouredShare[0];
+            // Ö-2: elle yazılmış satırı olmayan bir round'da (R7; WP-050 satırları R8/R11/R14) Standard zırhlı payı düşer.
+            // (Sevk artık Ö-2 eğrisini taşır; preset büyümeyi bir kez daha yarılar → yine düşer.)
+            float sArm = shipped.weapons[0].rounds[6].armouredShare[0], o2Arm = o2.weapons[0].rounds[6].armouredShare[0];
             Assert.Less(o2Arm, sArm, "Ö-2 zırh doygunluğunu düşürür: " + sArm + " → " + o2Arm);
             // Ö-4: preset B hasarını DEC-085 değerine (8) çeker; sevk 8'in altındaysa DPS artar, sevk zaten 8 ise (WP-042) eşit kalır.
             EconomySimulator.WeaponTrack bS = shipped.weapons[1], b34 = o34.weapons[1];
@@ -95,6 +96,29 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(farkli, "Ö-5 override satırı R8'i değiştirir");
             Assert.IsTrue(Array.Exists(o5.notes, n => n.Contains("overrideRows=3")));
             Assert.IsFalse(Array.Exists(o5.notes, n => n.Contains("rejected")), "override satırları doğrulamayı geçer");
+        }
+
+        [Test]
+        public void ZirhliPay_ParcaSayisiDegil_EnAzBirParca()
+        {
+            // WP-049C düzeltmesi: önceki raporlar üç slot oranını toplayıp 1'e klamplıyordu (R8+ "%90–100" bulgusu şişkindi).
+            EconomySimulator.Report r = EconomySimulator.Run(Secenekler(null, 15));
+            bool birdenFazlaParcaGoruldu = false;
+            foreach (EconomySimulator.RoundRow row in r.weapons[0].rounds)
+            {
+                for (int t = 0; t < 4; t++)
+                {
+                    if (row.tierCounts[t] == 0) continue;
+                    float pay = row.armouredShare[t], parca = row.armourPiecesPerSpawn[t];
+                    Assert.GreaterOrEqual(pay, 0f); Assert.LessOrEqual(pay, 1f);
+                    Assert.LessOrEqual(pay, Mathf.Min(1f, parca) + 1e-4f, "≥1 parça payı beklenen parça sayısını aşamaz (R" + row.round + " t" + t + ")");
+                    Assert.GreaterOrEqual(pay, parca / 3f - 1e-4f, "üç slot eşit dağılsa bile pay ≥ parça/3");
+                    // Standard'ın slot tabanı yok (WP-040 profilleri Elite gövde / Ultra üç bölge garantili → orada %100 meşru);
+                    // slot tavanı 0,55 iken üç slot toplamı 1'i geçse de "≥1 parça" payı 1 − 0,45³ ≈ %91'i aşamaz.
+                    if (t == 0 && parca > 1f) { birdenFazlaParcaGoruldu = true; Assert.LessOrEqual(pay, 0.91f, "Standard: parça > 1 iken pay 1'e klamplanmaz (R" + row.round + ")"); }
+                }
+            }
+            Assert.IsTrue(birdenFazlaParcaGoruldu, "WP-050 satırları (R8/R11/R14) Standard parça sayısını 1'in üstüne çıkarır → metrik farkı görünür olmalı");
         }
 
         [Test]
