@@ -25,6 +25,8 @@ namespace DD.Prototype.Rendering.EditorTools
         private const string UnlitAd = "Universal Render Pipeline/Unlit";
         private const string ParticlesAd = "Universal Render Pipeline/Particles/Unlit";
         private const string SkyboxAd = "Skybox/Procedural";
+        private const string VfxFlipbookAd = "DD/VFX Flipbook";
+        private const string VfxHeatHazeAd = "DD/VFX HeatHaze";
 
         [MenuItem("Tools/Deaths Demolition/Rebuild Shader Library")]
         public static void Rebuild()
@@ -65,6 +67,8 @@ namespace DD.Prototype.Rendering.EditorTools
             Shader unlit = Bul(UnlitAd, ref hata);
             Shader particles = Bul(ParticlesAd, ref hata);
             Shader skybox = Bul(SkyboxAd, ref hata);
+            Shader vfxFlipbook = Bul(VfxFlipbookAd, ref hata);
+            Shader vfxHeatHaze = Bul(VfxHeatHazeAd, ref hata);
             if (hata != null)
             {
                 return false;
@@ -90,6 +94,8 @@ namespace DD.Prototype.Rendering.EditorTools
             so.FindProperty("_unlit").objectReferenceValue = unlit;
             so.FindProperty("_particlesUnlit").objectReferenceValue = particles;
             so.FindProperty("_skybox").objectReferenceValue = skybox;
+            so.FindProperty("_vfxFlipbook").objectReferenceValue = vfxFlipbook;
+            so.FindProperty("_vfxHeatHaze").objectReferenceValue = vfxHeatHaze;
 
             SerializedProperty dizi = so.FindProperty("_variantPins");
             dizi.arraySize = pins.Length;

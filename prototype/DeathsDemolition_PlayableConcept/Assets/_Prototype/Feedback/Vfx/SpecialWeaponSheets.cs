@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DD.Prototype.Rendering;
 using DD.Prototype.Weapons;
 using UnityEngine;
 
@@ -54,7 +55,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (!_shaderTried)
             {
                 _shaderTried = true;
-                _shader = Shader.Find("DD/VFX Flipbook");
+                _shader = PrototypeShaders.VfxFlipbook;
             }
 
             if (_shader == null)

@@ -17,6 +17,8 @@ MonoBehaviour:
   _unlit: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
   _particlesUnlit: {fileID: 4800000, guid: 0406db5a14f94604a8c57ccfbc9f3b46, type: 3}
   _skybox: {fileID: 106, guid: 0000000000000000f000000000000000, type: 0}
+  _vfxFlipbook: {fileID: 4800000, guid: 22c45be6913ed4829837730c98be22fc, type: 3}
+  _vfxHeatHaze: {fileID: 4800000, guid: ae7009cb71f34c5cb08dcf07139218c1, type: 3}
   _variantPins:
   - {fileID: 2100000, guid: 5316f235dfaf74d858dcd86e980f607d, type: 2}
   - {fileID: 2100000, guid: 2870161f0c01a47e78842c1d4e286854, type: 2}

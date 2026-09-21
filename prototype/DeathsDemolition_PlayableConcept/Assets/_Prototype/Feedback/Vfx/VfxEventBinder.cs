@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DD.Prototype.Characters;
+using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Enemies;
 using DD.Prototype.Weapons;
@@ -65,7 +66,10 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             _subscribed = true;
-            _mask = (1 << 0) | LayerBit("Environment");
+            // AP005 walkable surfaces are split between Environment and CameraOccluder.
+            // Keep Default for prototype/test stand-ins while matching the authoritative
+            // surface mask used by the audio footstep router.
+            _mask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
             EnemyCombatEvents.Raised += OnCombatBeat;
             CharacterAnimationEvents.Any += OnAnimationEvent;
             WeaponEvents.ReloadStarted += OnReloadStarted;
@@ -163,12 +167,6 @@ namespace DD.Prototype.Feedback.Vfx
                 _lastSpecialHit[key] = now;
                 SpecialHits++;
             }
-        }
-
-        private static int LayerBit(string name)
-        {
-            int layer = LayerMask.NameToLayer(name);
-            return layer >= 0 ? 1 << layer : 0;
         }
 
         /// <summary>Delayed effects (the magazine hits the ground, the pump vents after the shot).</summary>

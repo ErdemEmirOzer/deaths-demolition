@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DD.Prototype.Core.Pooling;
+using DD.Prototype.Rendering;
 using UnityEngine;
 
 namespace DD.Prototype.Feedback.Vfx
@@ -55,6 +56,7 @@ namespace DD.Prototype.Feedback.Vfx
         public const int StrawBurstCapacity = 4;
         /// <summary>WP-047 wave-3 effects played (claw swipe, spawn dust, dust step, mag drop, pump smoke, break debris, Kagura ring, Ofuda seal).</summary>
         public int Wave3Played { get; private set; }
+        public string LastFootstepEffectId { get; private set; }
         public VfxEventBinder Binder => _binder;
         public MuzzleVariant LastMuzzleVariant { get; private set; }
         public int MuzzlePlays { get; private set; }
@@ -453,7 +455,7 @@ namespace DD.Prototype.Feedback.Vfx
             VfxCatalogEntry data = VfxLibrary.Get(VfxIds.BarrelHeatDistortTile);
             bool tile = data != null && data.Texture != null;
             if (!tile) data = VfxLibrary.Get(VfxIds.BarrelHeatDistort);
-            Shader shader = Shader.Find("DD/VFX HeatHaze");   // lives under _Art/VFX/Resources/Shaders so the player build carries it
+            Shader shader = PrototypeShaders.VfxHeatHaze;
             if (data == null || data.Texture == null || shader == null) return null;
             var m = new Material(shader) { name = "M_barrel_heat_haze (runtime)" };
             m.SetTexture("_Sheet", data.Texture);
@@ -895,6 +897,7 @@ namespace DD.Prototype.Feedback.Vfx
                 FlipbookEffect rfx = _flipbooks.Get(point + Vector3.up * 0.02f, Quaternion.Euler(90f, 0f, 0f));
                 if (rfx == null) return false;
                 rfx.Play(ring, FlipbookEffect.Facing.Fixed, ring.WorldSizeMetres * 0.35f, Color.white);
+                LastFootstepEffectId = VfxIds.WaterSplashRing;
                 Wave3Played++;
                 return true;
             }
@@ -913,6 +916,7 @@ namespace DD.Prototype.Feedback.Vfx
             // The sheet's manifest default (earth) rides in the property block; the per-surface tint replaces it (ratio).
             Color tint = surface == SurfaceKind.Wood || surface == SurfaceKind.Paper ? DustWoodTint : surface == SurfaceKind.Dirt || surface == SurfaceKind.Foliage ? DustEarthTint : DustStoneTint;
             fx.Play(row, FlipbookEffect.Facing.CameraYaw, row.WorldSizeMetres, Replace(tint, row.DefaultTint));
+            LastFootstepEffectId = VfxIds.DustStep;
             Wave3Played++;
             return true;
         }

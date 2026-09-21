@@ -142,15 +142,20 @@ namespace DD.Art.Tests.PlayMode
 
             // A · foot events: the player's animation-event component; the second step inside 0.22 s is throttled.
             CharacterAnimationEvents feet = PlayerRegistry.Primary.GetComponentInChildren<CharacterAnimationEvents>(true);
+            Assert.IsNotNull(feet, "oyuncunun gerçek AnimationEvent alıcısı yok; dust_step testi atlanamaz");
+            Animator feetAnimator = feet.GetComponent<Animator>();
+            bool feetAnimatorWasEnabled = feetAnimator != null && feetAnimator.enabled;
+            if (feetAnimator != null) feetAnimator.enabled = false;   // doğal klip olayı ilk uygun adım fikstürüne karışmasın
+            yield return new WaitForSeconds(VfxEventBinder.FootStepMinInterval + 0.05f);
             int steps0 = binder.FootSteps, thr0 = binder.FootStepsThrottled;
-            if (feet != null)
-            {
-                feet.foot_l();
-                feet.foot_r();
-                yield return null;
-                Assert.AreEqual(1, binder.FootSteps - steps0, "ilk adım → dust_step");
-                Assert.AreEqual(1, binder.FootStepsThrottled - thr0, "0.22 s içindeki ikinci adım kısılır");
-            }
+            feet.foot_l();
+            Assert.AreEqual(1, binder.FootSteps - steps0, "ilk uygun gerçek foot_l → dust_step");
+            Assert.AreEqual(0, binder.FootStepsThrottled - thr0, "ilk uygun adım kısılmamalı");
+            Assert.AreEqual(VfxIds.DustStep, vfx.LastFootstepEffectId, "ilk uygun adım literal dust_step satırını oynatmalı");
+            feet.foot_r();
+            Assert.AreEqual(1, binder.FootSteps - steps0, "ilk adım → dust_step");
+            Assert.AreEqual(1, binder.FootStepsThrottled - thr0, "0.22 s içindeki ikinci adım kısılır");
+            if (feetAnimator != null) feetAnimator.enabled = feetAnimatorWasEnabled;
 
             // B · reload → magazine card + bounce dust after the delay.
             int mags0 = binder.MagDrops;

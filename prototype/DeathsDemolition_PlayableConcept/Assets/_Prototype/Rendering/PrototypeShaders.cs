@@ -37,6 +37,12 @@ namespace DD.Prototype.Rendering
         /// <summary>The procedural sky.</summary>
         public static Shader Skybox => Named(Library.Skybox, "Skybox");
 
+        /// <summary>Authored VFX and Special Weapon flipbook sheets.</summary>
+        public static Shader VfxFlipbook => Named(Library.VfxFlipbook, "VfxFlipbook");
+
+        /// <summary>Barrel heat distortion / shimmer card.</summary>
+        public static Shader VfxHeatHaze => Named(Library.VfxHeatHaze, "VfxHeatHaze");
+
         /// <summary>
         /// True when the library is present and every reference is filled. Lets a caller
         /// ask without triggering the throw - used by the tests and by tooling.

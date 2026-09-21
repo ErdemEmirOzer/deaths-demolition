@@ -56,6 +56,14 @@ namespace DD.Prototype.Rendering
         private Shader _skybox;
 
         [SerializeField]
+        [Tooltip("DD/VFX Flipbook - authored VFX sheets and Special Weapon usage cards.")]
+        private Shader _vfxFlipbook;
+
+        [SerializeField]
+        [Tooltip("DD/VFX HeatHaze - the Special Weapon barrel heat distortion card.")]
+        private Shader _vfxHeatHaze;
+
+        [SerializeField]
         [Tooltip("Materials that exist only to keep runtime keyword variants out of the stripper.")]
         private Material[] _variantPins = new Material[0];
 
@@ -74,6 +82,12 @@ namespace DD.Prototype.Rendering
         /// <summary>The procedural sky.</summary>
         public Shader Skybox => _skybox;
 
+        /// <summary>Authored VFX and Special Weapon flipbook sheets.</summary>
+        public Shader VfxFlipbook => _vfxFlipbook;
+
+        /// <summary>Barrel heat distortion / shimmer card.</summary>
+        public Shader VfxHeatHaze => _vfxHeatHaze;
+
         /// <summary>Read-only view, for the build check and the tests.</summary>
         public Material[] VariantPins => _variantPins;
 
@@ -84,12 +98,14 @@ namespace DD.Prototype.Rendering
         /// </summary>
         public string DescribeMissing()
         {
-            var eksik = new System.Collections.Generic.List<string>(5);
+            var eksik = new System.Collections.Generic.List<string>(7);
             if (_lit == null) { eksik.Add("Lit"); }
             if (_simpleLit == null) { eksik.Add("SimpleLit"); }
             if (_unlit == null) { eksik.Add("Unlit"); }
             if (_particlesUnlit == null) { eksik.Add("ParticlesUnlit"); }
             if (_skybox == null) { eksik.Add("Skybox"); }
+            if (_vfxFlipbook == null) { eksik.Add("VfxFlipbook"); }
+            if (_vfxHeatHaze == null) { eksik.Add("VfxHeatHaze"); }
 
             for (int i = 0; i < _variantPins.Length; i++)
             {

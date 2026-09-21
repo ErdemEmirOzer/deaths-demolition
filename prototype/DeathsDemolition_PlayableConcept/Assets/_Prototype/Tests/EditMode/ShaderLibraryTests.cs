@@ -56,6 +56,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("Universal Render Pipeline/Unlit", k.Unlit.name);
             Assert.AreEqual("Universal Render Pipeline/Particles/Unlit", k.ParticlesUnlit.name);
             Assert.AreEqual("Skybox/Procedural", k.Skybox.name);
+            Assert.AreEqual("DD/VFX Flipbook", k.VfxFlipbook.name);
+            Assert.AreEqual("DD/VFX HeatHaze", k.VfxHeatHaze.name);
         }
 
         /// <summary>Shader'in kendisi build'e girse de kullanilan VARYANT strip edilebilir.</summary>
