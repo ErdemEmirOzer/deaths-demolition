@@ -31,12 +31,29 @@ namespace DD.Prototype.Tests.PlayMode
     {
         /// <summary>Allocations the test harness itself may add to a measured frame (coroutine step, recorder). Idle frames read 6.</summary>
         private const int HarnessAllocationSlack = 12;
+        private const int RecorderSampleFrames = 6;
 
         private SpecialWeaponSahne _s;
+        private int _targetFrameRateWas;
+        private bool _restoreTargetFrameRate;
+        private bool _profilerWas;
+        private bool _restoreProfiler;
 
         [UnityTearDown]
         public IEnumerator Bitir()
         {
+            if (_restoreProfiler)
+            {
+                UnityEngine.Profiling.Profiler.enabled = _profilerWas;
+                _restoreProfiler = false;
+            }
+
+            if (_restoreTargetFrameRate)
+            {
+                Application.targetFrameRate = _targetFrameRateWas;
+                _restoreTargetFrameRate = false;
+            }
+
             if (_s != null)
             {
                 yield return _s.Bitir();
@@ -93,8 +110,17 @@ namespace DD.Prototype.Tests.PlayMode
             // WP-042B: the GC frame counters only count while the profiler is enabled — in a batch run the test
             // framework enables it, in the Editor GUI with the Profiler window closed they read 0/1 (S-07 saw the
             // positive control fail that way). Enable it for the measurement and restore afterwards.
-            bool profilerWas = UnityEngine.Profiling.Profiler.enabled;
+            _profilerWas = UnityEngine.Profiling.Profiler.enabled;
+            _restoreProfiler = true;
             UnityEngine.Profiling.Profiler.enabled = true;
+            // The bootstrapper caps the player loop at 60. In the Editor test runner that
+            // leaves ProfilerRecorder.LastValue one frame behind (the 300-object control
+            // reads as 1). Uncap only this measurement and restore it in UnityTearDown,
+            // including assertion failures.
+            _targetFrameRateWas = Application.targetFrameRate;
+            _restoreTargetFrameRate = true;
+            Application.targetFrameRate = -1;
+            yield return null;
             using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
             using (var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count"))
             {
@@ -105,8 +131,12 @@ namespace DD.Prototype.Tests.PlayMode
                 // Positive control: the counters see 300 small objects in a frame.
                 var yem = new object[300];
                 for (int i = 0; i < yem.Length; i++) yem[i] = new byte[80];
-                yield return null;
-                long controlCount = count.LastValue;
+                long controlCount = 0;
+                for (int i = 0; i < RecorderSampleFrames; i++)
+                {
+                    yield return null;
+                    controlCount = Math.Max(controlCount, count.LastValue);
+                }
                 Assert.Greater(controlCount, 250, "Sayaç 300 küçük ayırmayı görmedi — ölçüm geçersiz (" + controlCount + ").");
                 GC.KeepAlive(yem);
 
@@ -154,7 +184,6 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            UnityEngine.Profiling.Profiler.enabled = profilerWas;
         }
 
         /// <summary>Special Weapon pickup → active → final seconds → end: the lifecycle frames measured the same way (observation + subscriber-side contract for Weapons).</summary>

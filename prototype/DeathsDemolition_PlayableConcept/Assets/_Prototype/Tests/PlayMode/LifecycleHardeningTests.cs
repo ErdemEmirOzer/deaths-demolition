@@ -4,6 +4,7 @@ using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Economy;
+using DD.Prototype.Enemies;
 using DD.Prototype.Feedback;
 using DD.Prototype.Inputs;
 using DD.Prototype.PlayerSystem;
@@ -57,8 +58,15 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = true;
 
             yield return BootTanMainMenuye();
+            // HitFeedbackDirector is an intentionally lazy, process-long DDOL service. Its
+            // VfxDressing installs the reload and four Special Weapon observers once and
+            // keeps them between runs. Establish that documented owner before the baseline
+            // so this lifecycle contract is independent of which fixture touched feedback first.
+            _ = HitFeedbackDirector.Instance;
+            yield return null;
             Dictionary<string, int> menu0 = AboneAnlikGoruntu();
             Yazdir("menu0", menu0);
+            Assert.AreEqual(0, AktifSayi<ZombieEnemy>(), "İlk Main Menu'de aktif düşman kalıntısı.");
             IInputSource girdi0 = InputSourceRegistry.Current;
             Assert.IsTrue(InputSourceRegistry.HasRealSource, "Main Menu'de gerçek girdi kaynağı kurulmamış.");
             UiFlowRunner runner0 = UiFlowRunner.Instance;
@@ -86,11 +94,19 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return Bekle(() => RunDirector.Instance != null && EnemySpawnDirector.Instance != null &&
                                          GoldService.Instance != null, FazZamanAsimi, "Run servisleri kurulmadı.");
                 int aktifBaslangic = EnemySpawnDirector.Instance.ActiveCount;
+                int doganBaslangic = EnemySpawnDirector.Instance.SpawnedThisRound;
+                int mesgulBaslangic = EnemySpawnDirector.Instance.OccupiedCount;
                 int orbBaslangic = GoldService.Instance.LiveOrbCount;
                 int cuzdanBaslangic = RunDirector.Instance.Wallet != null ? RunDirector.Instance.Wallet.Balance : -1;
                 Debug.Log("[DD-TEST] run" + kosu + ".start active=" + aktifBaslangic + " orbs=" + orbBaslangic +
                           " gold=" + cuzdanBaslangic + " phase=" + RunDirector.Instance.Phase);
-                Assert.AreEqual(0, aktifBaslangic, "Koşu " + kosu + " başında aktif düşman kalıntısı.");
+                // A fast runner can advance the new round's refill clock before this coroutine resumes.
+                // Prove every body belongs to this run here; the MainMenu checks below prove the previous
+                // run left no active body behind after scene teardown.
+                Assert.AreEqual(doganBaslangic, aktifBaslangic,
+                    "Koşu " + kosu + " başında bu turda doğmamış aktif düşman var.");
+                Assert.AreEqual(mesgulBaslangic, aktifBaslangic,
+                    "Koşu " + kosu + " başında önceki turdan ceset/işgal kalıntısı var.");
                 Assert.AreEqual(0, orbBaslangic, "Koşu " + kosu + " başında gold orb kalıntısı.");
                 Assert.AreEqual(0, cuzdanBaslangic, "Koşu " + kosu + " başında cüzdan sıfır değil.");
 
@@ -161,6 +177,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsNull(GoldService.Instance, "Main Menu'de GoldService.Instance dolu.");
                 Assert.IsNull(WeaponRegistry.ActiveController, "Main Menu'de eski silah kontrolcüsü kayıtlı.");
                 Assert.AreEqual(0, AktifSayi<RunDirector>(), "Main Menu'de RunDirector nesnesi kaldı.");
+                Assert.AreEqual(0, AktifSayi<ZombieEnemy>(), "Main Menu'de aktif düşman nesnesi kaldı.");
                 Assert.AreEqual(0, AktifSayi<GoldOrb>(), "Main Menu'de gold orb nesnesi kaldı.");
             }
 
@@ -185,19 +202,19 @@ namespace DD.Prototype.Tests.PlayMode
                 // PlayerAttacked / EnemyHitDressed'a Run'da kalıcı abone yok (feedback tek sahibi çekmez, iter).
                 { "DamageEvents.EnemyDied", 2 }, { "DamageEvents.ArmorBroken", 1 }, { "DamageEvents.EnemyDamaged", 0 },
                 { "DamageEvents.PlayerAttacked", 0 }, { "HitFeedbackDirector.EnemyHitDressed", 0 },
-                // WP-007: silah/Special olay busu ve round köprüsü. Run-yerel aboneler: RunHudScreen'in 5
-                // Special olayı (spawn / pickup / final-seconds / ended / ground-expired) ve director'ın 4
-                // köprü aboneliği (round start/end + run start/end). Klasik 7 olay, SpecialChanged ve yeni
-                // üç yaşam döngüsü olayına (scheduled / cancelled / cleared) üretimde kalıcı abone yok.
-                { "WeaponEvents.WeaponEquipped", 0 }, { "WeaponEvents.AmmoChanged", 0 }, { "WeaponEvents.ReloadStarted", 0 },
-                { "WeaponEvents.ReloadCompleted", 0 }, { "WeaponEvents.ReloadInterrupted", 0 }, { "WeaponEvents.DryFire", 0 },
+                // WP-007/WP-032C: RunHudScreen owns five Special events; PlayerSkinnedVisual owns the
+                // equipped/reload/special animation beats for one player life; the director owns the four
+                // bridge subscriptions. Every one is scene-local and must disappear again in MainMenu.
+                { "WeaponEvents.WeaponEquipped", 1 }, { "WeaponEvents.AmmoChanged", 0 }, { "WeaponEvents.ReloadStarted", 1 },
+                { "WeaponEvents.ReloadCompleted", 0 }, { "WeaponEvents.ReloadInterrupted", 1 }, { "WeaponEvents.DryFire", 0 },
                 { "WeaponEvents.ClassicChanged", 0 },
                 { "WeaponEvents.SpecialWeaponSpawned", 1 }, { "WeaponEvents.SpecialWeaponGroundExpired", 1 },
-                // WP-018: + PlayerSkinnedVisual (pickup clip) on SpecialWeaponPickedUp, one per player life, unsubscribed with the rig.
+                // WP-018/WP-032C: PlayerSkinnedVisual follows the player life and unsubscribes with the rig.
+                // Besides the pickup clip it owns the equipped/reload/special hold animation beats.
                 { "WeaponEvents.SpecialWeaponPickedUp", 2 }, { "WeaponEvents.SpecialWeaponFinalSeconds", 1 },
-                { "WeaponEvents.SpecialWeaponEnded", 1 }, { "WeaponEvents.SpecialChanged", 0 },
+                { "WeaponEvents.SpecialWeaponEnded", 2 }, { "WeaponEvents.SpecialChanged", 1 },
                 { "WeaponEvents.SpecialWeaponScheduled", 0 }, { "WeaponEvents.SpecialWeaponCancelled", 0 },
-                { "WeaponEvents.SpecialWeaponCleared", 0 },
+                { "WeaponEvents.SpecialWeaponCleared", 1 },
                 { "SpecialWeaponRoundBridge.RoundStarted", 1 }, { "SpecialWeaponRoundBridge.RoundEnded", 1 },
                 { "SpecialWeaponRoundBridge.RunStarted", 1 }, { "SpecialWeaponRoundBridge.RunEnded", 1 },
             };

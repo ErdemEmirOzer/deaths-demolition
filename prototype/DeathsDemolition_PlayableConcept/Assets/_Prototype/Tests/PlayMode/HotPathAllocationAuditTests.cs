@@ -31,12 +31,29 @@ namespace DD.Prototype.Tests.PlayMode
     public sealed class HotPathAllocationAuditTests
     {
         private const int Rounds = 3;   // windows per configuration (the heap grows in 16-64 KB steps; more windows = better resolution)
+        private const int RecorderSampleFrames = 6;
 
         private SpecialWeaponSahne _s;
+        private int _targetFrameRateWas;
+        private bool _restoreTargetFrameRate;
+        private bool _profilerWas;
+        private bool _restoreProfiler;
 
         [UnityTearDown]
         public IEnumerator Bitir()
         {
+            if (_restoreProfiler)
+            {
+                Profiler.enabled = _profilerWas;
+                _restoreProfiler = false;
+            }
+
+            if (_restoreTargetFrameRate)
+            {
+                Application.targetFrameRate = _targetFrameRateWas;
+                _restoreTargetFrameRate = false;
+            }
+
             if (_s != null)
             {
                 yield return _s.Bitir();
@@ -274,6 +291,17 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             List<Site> sites = CollectSites();
+            _profilerWas = Profiler.enabled;
+            _restoreProfiler = true;
+            Profiler.enabled = true;
+            // PrototypeBootstrapper applies the shipped 60 FPS cap. ProfilerRecorder's
+            // Editor LastValue can remain stale at that cap, reducing this deliberate
+            // 300-object control to the runner's single allocation. Keep the gate strict,
+            // uncap the measurement, and restore both settings in UnityTearDown.
+            _targetFrameRateWas = Application.targetFrameRate;
+            _restoreTargetFrameRate = true;
+            Application.targetFrameRate = -1;
+            yield return null;
             using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
             using (var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count"))
             {
@@ -301,9 +329,20 @@ namespace DD.Prototype.Tests.PlayMode
                 // Positive control in a frame.
                 var yem = new object[300];
                 for (int i = 0; i < yem.Length; i++) yem[i] = new byte[80];
-                yield return null;
-                Debug.Log("[DD-AUDIT2] controlFrame(300x80B) bytes=" + bytes.LastValue + " count=" + count.LastValue + " keep=" + yem.Length);
-                Assert.Greater(count.LastValue, 250, "Sayaç kontrol ayırmalarını görmüyor.");
+                long controlBytes = 0;
+                long controlCount = 0;
+                for (int i = 0; i < RecorderSampleFrames; i++)
+                {
+                    yield return null;
+                    if (count.LastValue > controlCount)
+                    {
+                        controlCount = count.LastValue;
+                        controlBytes = bytes.LastValue;
+                    }
+                }
+                Debug.Log("[DD-AUDIT2] controlFrame(300x80B) bytes=" + controlBytes + " count=" + controlCount + " keep=" + yem.Length);
+                Assert.Greater(controlCount, 250, "Sayaç kontrol ayırmalarını görmüyor.");
+                GC.KeepAlive(yem);
 
                 // Baseline: 20-pair warm-up (as WP-006), then two measured frames.
                 for (int i = 0; i < 20; i++)
