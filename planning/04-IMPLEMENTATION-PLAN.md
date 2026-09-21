@@ -6,6 +6,13 @@ Mevcut `prototype/DeathsDemolition_PlayableConcept` Unity projesini, onaylanmı�
 
 Bu dosya hazır kontrolü değildir. Projede `04-READY-CHECK.md` oluşturulmaz.
 
+## M4 dağıtım ve model politikası — M4-PLAN-001 / WP-061P (2026-09-21)
+
+- M4 başlangıcı onaylıdır; taban `main @ c82e36d`, M3 kapalıdır. Paket zinciri `03-ROADMAP.md` M4 kaydındadır.
+- Geçerli mod, kullanıcı aksini söyleyene kadar otomatiktir: “otomatiğe geçiyoruz” doğrudan görev dağıtımı/rapor toplama; “manuele geçiyoruz” promptun kullanıcıya verilmesi ve raporun kullanıcı üzerinden dönmesidir.
+- Model politikası: tasarım, derin düşünme, üretkenlik ve inovasyon = `gpt-6-astra`; teknik uygulama, hata düzeltme, entegrasyon ve test = `gpt-5.6-sol`.
+- HIZLI HAT uygulanır; bu güncel kurallar çelişen önceki dağıtım/model ifadelerinin yerine geçer. İzole branch/worktree ve tek atomik commit; entegrasyon C-00, push/remote yok.
+
 ## Değişmez çalışma modeli
 
 - Kullanıcı kritik ürün, kapsam, teknoloji, maliyet ve geri dönüşsüzlük kararlarının sahibidir.
@@ -2211,4 +2218,4 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 | Ayırma hakemi (pozitif kontrol) | kapanış 2/3/4: yem 64 KB → recorder ≥ 86 KB, yığın ≥ 98 KB | Karşılandı |
 | Build boyutu ≤ 550 MB (DEC-086) | WP-038H release 543,8 MB | Karşılandı (S-05 ölçümü) |
 
-Karar bekleyenler (karar yazılmaz): M4 kapsamı; Windows hedefi (DEC-080); Ultra okunabilirliğinin ölçüm yolu.
+Karar bekleyenler (karar yazılmaz): Windows hedefi (DEC-080); Ultra okunabilirliğinin ölçüm yolu. M4 başlangıcı ve paket zinciri onaylandı (M4-PLAN-001 / WP-061P).
