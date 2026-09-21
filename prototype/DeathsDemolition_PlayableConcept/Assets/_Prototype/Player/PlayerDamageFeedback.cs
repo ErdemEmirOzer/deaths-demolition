@@ -82,7 +82,7 @@ namespace DD.Prototype.PlayerSystem
 
         protected override void ApplyConfig(PrototypeConfig config)
         {
-            _vignetteTime = Mathf.Max(0.01f, config.Feedback.DamageVignetteTime);
+            _vignetteTime = FeelRuntime.Current.PlayerDamage.flashDecaySeconds;
         }
 
         private void Update()
@@ -103,10 +103,12 @@ namespace DD.Prototype.PlayerSystem
 
         private void OnDamaged(PlayerDamageInfo info)
         {
+            PlayerDamageFeel tuning = FeelRuntime.Current.PlayerDamage;
+            _vignetteTime = tuning.flashDecaySeconds;
             float fraction = info.MaxHealth > 0f ? info.AppliedAmount / info.MaxHealth : 0f;
-            float strength = Mathf.Clamp01(fraction / Mathf.Max(0.001f, _fullReactionDamageFraction));
+            float strength = Mathf.Clamp01(fraction / Mathf.Max(0.001f, tuning.fullReactionDamageFraction));
 
-            _flash = Mathf.Max(_flash, Mathf.Max(strength, 0.35f));
+            _flash = Mathf.Max(_flash, Mathf.Max(strength, tuning.minimumStrength));
 
             if (_animator != null)
             {
@@ -121,19 +123,16 @@ namespace DD.Prototype.PlayerSystem
                 return;
             }
 
-            GameFeelSettings feel = GameFeelSettings.Active;
-            CameraShakeService.Shake(
-                feel.ShakePlayerDamageAmplitude * Mathf.Max(0.35f, strength),
-                feel.ShakePlayerDamageSeconds,
-                ShakeKind.Bump,
-                info.HitDirection);
+            FeelEventRouter.Enqueue(ImpactFeelId.PlayerDamage, FeelEventRouter.NextGroupId(),
+                transform.position, info.HitDirection, Mathf.Max(tuning.minimumStrength, strength));
         }
 
         private void OnDied(PlayerDeathInfo info)
         {
             _flash = 1f;
             GameFeelSettings feel = GameFeelSettings.Active;
-            CameraShakeService.Shake(feel.ShakePlayerDeathAmplitude, feel.ShakePlayerDeathSeconds, ShakeKind.Rumble, info.KillingHitDirection);
+            FeelEventRouter.Enqueue(ImpactFeelId.PlayerDeath, FeelEventRouter.NextGroupId(),
+                transform.position, info.KillingHitDirection);
 
             // WP-059: the death beat — the world eases into the slow scale while the collapse
             // plays, comes back before the results hold, the camera pushes in a little.

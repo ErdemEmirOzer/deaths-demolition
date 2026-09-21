@@ -203,14 +203,20 @@ namespace DD.Prototype.Tests.PlayMode
             Vector3 zombiPos = _s.Rig.transform.position + toZombie * 8f;
             zombiPos.y = _s.Rig.transform.position.y;
             ZombieEnemy z = _s.Dogur(zombiPos);
+            // Keep the geometric 4°/8 m fixture fixed. The target remains alive, registered
+            // and damageable; only its movement/animation Update is disabled so the region
+            // hitboxes cannot leave the ray between the assist sample and the one test shot.
+            z.CompleteRise();
+            z.enabled = false;
             yield return Kareler(3);
+            Physics.SyncTransforms();
 
             _pad.Set(Vector2.zero, new Vector2(0f, 1f));
             yield return Kareler(Kare);
             Assert.AreEqual(AimSourceKind.Stick, src.AimKind);
             AimAssist.Result r = _s.Rig.Aim.LastAssist;
             Assert.IsTrue(r.Assisted, "4°/8 m içindeki zombiye yapışmadı.");
-            // The zombie walks towards the player, so the angle drifts from the spawn value; it must stay inside the cone.
+            // The selected direction must stay inside the configured cone.
             Assert.That(r.AngleDegrees, Is.InRange(0.5f, InputPreferences.MaxAimAssistAngleDegrees), "Yapışma açısı koni içinde değil.");
             Vector3 aimed = _s.Rig.Aim.AimDirection;
             Vector3 exact = z.transform.position - _s.Rig.transform.position;
@@ -249,7 +255,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(_s.Rig.Aim.LastAssist.Assisted, "Yardım kapalıyken yapışma sürdü.");
             Assert.Less(Vector3.Angle(_s.Rig.Aim.AimDirection, _s.Rig.Aim.RawStickDirection), 0.01f, "Yardım kapalıyken yön ham değil.");
 
-            // The zombie walks; re-aim the stick at its LIVE position every frame (what the assist did for us above).
+            // Re-aim the stick at the target's live position every frame (what the assist did for us above).
             System.Func<Vector2> stickToZombie = () =>
             {
                 Vector3 e = z.transform.position - _s.Rig.transform.position;

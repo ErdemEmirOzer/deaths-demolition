@@ -52,6 +52,8 @@ namespace DD.Prototype.CameraSystem
         protected override void OnEnable()
         {
             base.OnEnable();
+            FeelRuntime.Changed += ApplyFeel;
+            ApplyFeel(FeelRuntime.Current);
 
             _rig = GetComponent<PrototypeCameraRig>();
             _hits = new RaycastHit[Mathf.Max(1, _maxOccluders)];
@@ -71,6 +73,7 @@ namespace DD.Prototype.CameraSystem
 
         protected override void OnDisable()
         {
+            FeelRuntime.Changed -= ApplyFeel;
             DebugPanelRegistry.Remove(_readout);
             _readout = null;
 
@@ -80,9 +83,14 @@ namespace DD.Prototype.CameraSystem
 
         protected override void ApplyConfig(PrototypeConfig config)
         {
-            CameraConfigSection cam = config.Camera;
-            _targetAlpha = Mathf.Clamp01(cam.OcclusionTargetAlpha);
-            _fadeTime = Mathf.Max(0.01f, cam.OcclusionFadeTime);
+            ApplyFeel(FeelRuntime.Current);
+        }
+
+        private void ApplyFeel(FeelSnapshot snapshot)
+        {
+            CameraFeel cam = snapshot.Camera;
+            _targetAlpha = Mathf.Clamp01(cam.occlusionTargetAlpha);
+            _fadeTime = Mathf.Max(0.01f, cam.occlusionFadeSeconds);
         }
 
         private void LateUpdate()

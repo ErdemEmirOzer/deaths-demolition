@@ -40,6 +40,7 @@ namespace DD.Prototype.Core.Config
         [SerializeField] private EconomyConfigSection _economy = new EconomyConfigSection();
         [SerializeField] private ProgressionConfigSection _progression = new ProgressionConfigSection();
         [SerializeField] private FeedbackConfigSection _feedback = new FeedbackConfigSection();
+        [SerializeField] private FeelConfig _feel;
         [SerializeField] private SystemConfigSection _system = new SystemConfigSection();
 
         /// <summary>
@@ -64,6 +65,8 @@ namespace DD.Prototype.Core.Config
         public EconomyConfigSection Economy => _economy;
         public ProgressionConfigSection Progression => _progression;
         public FeedbackConfigSection Feedback => _feedback;
+        /// <summary>Single authored combat-presentation profile. Runtime consumers use its immutable snapshot.</summary>
+        public FeelConfig Feel => _feel;
         public SystemConfigSection System => _system;
 
         /// <summary>DEC-021 authored overrides. WP-050: the shipped asset carries the Ö-5 rows (R8 / R11 / R14); a fresh instance is empty.</summary>

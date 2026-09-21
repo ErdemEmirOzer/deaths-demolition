@@ -1,0 +1,291 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f062c0f1c3a44d349e21ad7811b4fd11, type: 3}
+  m_Name: DD_FeelConfig
+  m_EditorClassIdentifier: 
+  _schemaVersion: 1
+  _profileId: m4-main-22c8ead
+  _baseCommit: 22c8ead
+  _data:
+    enabled: 1
+    aimAssist:
+      defaultLevel: 2
+      maxAngleDegrees: 6
+      maxDistanceMeters: 15
+      lightAngleShare: 0.5
+    aim:
+      stickPointDistanceMeters: 12
+      pointerMinDistanceMeters: 0.35
+    camera:
+      heightMeters: 15
+      backDistanceMeters: 13
+      fieldOfViewDegrees: 42
+      yawDegrees: 0
+      focusHeightOffsetMeters: 1
+      followSmoothSeconds: 0.12
+      maxLookAheadMeters: 2.5
+      lookAheadSmoothSeconds: 0.18
+      pointerLookAheadFactor: 0.35
+      occlusionFadeSeconds: 0.15
+      occlusionTargetAlpha: 0.22
+    shake:
+      designGain: 1
+      nominalAggregateCapMeters: 0.22
+      maxConcurrent: 12
+      rollDegreesPerMeter: 6
+      kernels:
+        rattleFrequency: 34
+        rumbleFrequency: 7
+        rumbleZShare: 0.35
+        rumbleDirectionShare: 0.45
+        rumbleRollDegreesPerMeter: 5
+        punchDecayPower: 2
+        punchCosinePiFactor: 3
+        punchRollDegreesPerMeter: 4
+        bumpDecayPower: 1.5
+        bumpCosinePiFactor: 1.5
+        bumpZShare: 0.3
+    fireShake:
+      metersAtWeightOne: 0.12
+      baseSeconds: 0.06
+      secondsPerWeight: 0.05
+    recoil:
+      damping: 0.82
+      pitchDegreesPerMeter: 90
+      springCoefficient: 0.25
+      animatorFullStrengthKickMeters: 0.2
+    playerDamage:
+      fullReactionDamageFraction: 0.25
+      minimumStrength: 0.35
+      flashDecaySeconds: 0.35
+    weapons:
+    - id: 0
+      recoilKickMeters: 0.1
+      recoilRecoverySeconds: 0.1
+      recoilUpShare: 0.15
+      shakeWeight: 0.3
+      shakeKind: 0
+      rumbleFraction: 0.67
+      rumbleDurationMs: 70
+    - id: 1
+      recoilKickMeters: 0.05
+      recoilRecoverySeconds: 0.055
+      recoilUpShare: 0.1
+      shakeWeight: 0.18
+      shakeKind: 0
+      rumbleFraction: 0.5
+      rumbleDurationMs: 45
+    - id: 2
+      recoilKickMeters: 0.34
+      recoilRecoverySeconds: 0.3
+      recoilUpShare: 0.3
+      shakeWeight: 1
+      shakeKind: 1
+      rumbleFraction: 1
+      rumbleDurationMs: 120
+    - id: 3
+      recoilKickMeters: 0.16
+      recoilRecoverySeconds: 0.125
+      recoilUpShare: 0.15
+      shakeWeight: 0.85
+      shakeKind: 0
+      rumbleFraction: 1
+      rumbleDurationMs: 120
+    - id: 4
+      recoilKickMeters: 0.03
+      recoilRecoverySeconds: 0.125
+      recoilUpShare: 0.15
+      shakeWeight: 0.12
+      shakeKind: 0
+      rumbleFraction: 0.4
+      rumbleDurationMs: 50
+    - id: 5
+      recoilKickMeters: 0.08
+      recoilRecoverySeconds: 0.125
+      recoilUpShare: 0.15
+      shakeWeight: 0.3
+      shakeKind: 0
+      rumbleFraction: 0.7
+      rumbleDurationMs: 90
+    impacts:
+    - id: 0
+      cameraPriority: 10
+      shakeAmplitudeMeters: 0
+      shakeSeconds: 0
+      shakeKind: 0
+      hitStopSeconds: 0
+      rumbleFraction: 0
+      rumbleDurationMs: 0
+    - id: 1
+      cameraPriority: 20
+      shakeAmplitudeMeters: 0
+      shakeSeconds: 0
+      shakeKind: 3
+      hitStopSeconds: 0
+      rumbleFraction: 0
+      rumbleDurationMs: 0
+    - id: 2
+      cameraPriority: 30
+      shakeAmplitudeMeters: 0
+      shakeSeconds: 0
+      shakeKind: 3
+      hitStopSeconds: 0
+      rumbleFraction: 0
+      rumbleDurationMs: 0
+    - id: 3
+      cameraPriority: 40
+      shakeAmplitudeMeters: 0.075
+      shakeSeconds: 0.12
+      shakeKind: 3
+      hitStopSeconds: 0.035
+      rumbleFraction: 0
+      rumbleDurationMs: 0
+    - id: 4
+      cameraPriority: 50
+      shakeAmplitudeMeters: 0
+      shakeSeconds: 0
+      shakeKind: 3
+      hitStopSeconds: 0
+      rumbleFraction: 0
+      rumbleDurationMs: 0
+    - id: 5
+      cameraPriority: 60
+      shakeAmplitudeMeters: 0
+      shakeSeconds: 0
+      shakeKind: 3
+      hitStopSeconds: 0
+      rumbleFraction: 0
+      rumbleDurationMs: 0
+    - id: 6
+      cameraPriority: 70
+      shakeAmplitudeMeters: 0.095
+      shakeSeconds: 0.18
+      shakeKind: 2
+      hitStopSeconds: 0.04
+      rumbleFraction: 0
+      rumbleDurationMs: 0
+    - id: 7
+      cameraPriority: 80
+      shakeAmplitudeMeters: 0.12
+      shakeSeconds: 0.2
+      shakeKind: 2
+      hitStopSeconds: 0
+      rumbleFraction: 0.8
+      rumbleDurationMs: 100
+    - id: 8
+      cameraPriority: 80
+      shakeAmplitudeMeters: 0.085
+      shakeSeconds: 0.2
+      shakeKind: 3
+      hitStopSeconds: 0
+      rumbleFraction: 0.8
+      rumbleDurationMs: 100
+    - id: 9
+      cameraPriority: 90
+      shakeAmplitudeMeters: 0.09
+      shakeSeconds: 0.15
+      shakeKind: 3
+      hitStopSeconds: 0
+      rumbleFraction: 1
+      rumbleDurationMs: 120
+    - id: 10
+      cameraPriority: 100
+      shakeAmplitudeMeters: 0.15
+      shakeSeconds: 0.2
+      shakeKind: 2
+      hitStopSeconds: 0
+      rumbleFraction: 0
+      rumbleDurationMs: 0
+    hitStop:
+      enabled: 1
+      minIntervalSeconds: 0.25
+      presentationScale: 0.06
+      maxContinuousSeconds: 0.04
+    vignette:
+      enabled: 1
+      flashAlpha: 0.35
+      lowHealthAlpha: 0.35
+      lowHealthFraction: 0.3
+      flashInFrames: 4
+      flashOutFrames: 12
+    death:
+      enabled: 1
+      slowScale: 0.5
+      slowInSeconds: 0.15
+      holdSeconds: 1.2
+      outSeconds: 0.45
+      cameraPushInFraction: 0.12
+      resultsDelaySeconds: 2.4
+    damageNumbers:
+      enabled: 1
+      maxConcurrent: 30
+      mergeWindowSeconds: 0.35
+      lifetimeSeconds: 0.85
+      anchorOffsetYMeters: 0.4
+      mergeAnchorBlend: 0.35
+      driftExtentXMeters: 0.315
+      driftRiseMeters: 1.26
+      driftExtentZMeters: 0.18
+      mergePopScale: 1.25
+      mergePopSeconds: 0.12
+      endScale: 0.85
+      fadeStartNormalized: 0.6
+      fontSize: 64
+      characterSize: 0.045
+      normalColor: {r: 1, g: 1, b: 1, a: 1}
+      armorDefaultColor: {r: 0.78, g: 0.8, b: 0.86, a: 1}
+      criticalToken: StateWarning
+      armorAccessibleToken: AccentWisteria
+    rumble:
+      highMotorRatio: 0.6
+      classicFallbackFraction: 0.5
+      classicFallbackDurationMs: 60
+      specialFallbackFraction: 0.7
+      specialFallbackDurationMs: 80
+    budgets:
+      categories:
+      - {id: Impact, capacity: 40}
+      - {id: ArmorHit, capacity: 40}
+      - {id: Blood, capacity: 24}
+      - {id: ArmorBreak, capacity: 12}
+      - {id: Death, capacity: 12}
+      - {id: DamageNumber, capacity: 30}
+      - {id: Tracer, capacity: 48}
+      - {id: MuzzleFlash, capacity: 6}
+      - {id: Link, capacity: 20}
+      - {id: Explosion, capacity: 8}
+      - {id: SpecialWeapon, capacity: 24}
+      perFrameFraction: 0.25
+      minStartsPerFrame: 2
+      importantStartMultiplier: 2
+      mergeDistanceMeters: 0.55
+      mergeWindowSeconds: 0.08
+      resources:
+        flipbook: 48
+        decal: 64
+        fragment: 8
+        smoke: 8
+        casing: 12
+        straw: 4
+        spark: 8
+        leaf: 6
+        paper: 4
+        bloodDecal: 128
+        bloodDroplet: 12
+    telemetry:
+      enabledByDefault: 1
+      uiRefreshHz: 4
+      roundCapacity: 64
+      ttkCapacity: 512
+      lifeCapacity: 256
+      eventTraceCapacity: 2048
+      captureEventTrace: 0

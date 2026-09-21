@@ -32,6 +32,7 @@ namespace DD.Prototype.CameraSystem
     /// scene-authoring value, never a runtime one.
     /// </summary>
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(100)]
     public sealed class PrototypeCameraRig : PrototypeConfigBehaviour
     {
         /// <summary>The rig every other system reads. Null before a run starts.</summary>
@@ -202,6 +203,8 @@ namespace DD.Prototype.CameraSystem
         protected override void OnEnable()
         {
             base.OnEnable();
+            FeelRuntime.Changed += ApplyFeel;
+            ApplyFeel(FeelRuntime.Current);
 
             Active = this;
             DeathSequence.ReleasePushIn();   // WP-059: a new run's rig starts at the full offset
@@ -232,6 +235,7 @@ namespace DD.Prototype.CameraSystem
 
         protected override void OnDisable()
         {
+            FeelRuntime.Changed -= ApplyFeel;
             DebugPanelRegistry.Remove(_shakeSlider);
             DebugPanelRegistry.Remove(_testPunch);
             DebugPanelRegistry.Remove(_testRumble);
@@ -261,15 +265,23 @@ namespace DD.Prototype.CameraSystem
 
         protected override void ApplyConfig(PrototypeConfig config)
         {
-            CameraConfigSection cam = config.Camera;
-            _height = cam.Height;
-            _backDistance = cam.BackDistance;
-            _fieldOfView = cam.FieldOfView;
-            _followSmoothTime = Mathf.Max(0f, cam.FollowSmoothTime);
-            _maxLookAhead = Mathf.Max(0f, cam.MaxAimLookAhead);
-            _lookAheadSmoothTime = Mathf.Max(0f, cam.LookAheadSmoothTime);
-            _shakeIntensity = Mathf.Max(0f, cam.ShakeIntensity);
-            _maxShakeAmplitude = Mathf.Max(0f, config.Feedback.MaxShakeAmplitude);
+            _shakeIntensity = Mathf.Max(0f, config.Camera.ShakeIntensity);
+            ApplyFeel(FeelRuntime.Current);
+        }
+
+        private void ApplyFeel(FeelSnapshot feel)
+        {
+            CameraFeel cam = feel.Camera;
+            _height = cam.heightMeters;
+            _backDistance = cam.backDistanceMeters;
+            _fieldOfView = cam.fieldOfViewDegrees;
+            _yawDegrees = cam.yawDegrees;
+            _focusHeightOffset = cam.focusHeightOffsetMeters;
+            _pointerLookAheadFactor = cam.pointerLookAheadFactor;
+            _followSmoothTime = cam.followSmoothSeconds;
+            _maxLookAhead = cam.maxLookAheadMeters;
+            _lookAheadSmoothTime = cam.lookAheadSmoothSeconds;
+            _maxShakeAmplitude = feel.Shake.nominalAggregateCapMeters;
 
             // Derived framing. Recomputed on every live edit, which is what makes the
             // F1 panel able to reframe the camera mid-run.

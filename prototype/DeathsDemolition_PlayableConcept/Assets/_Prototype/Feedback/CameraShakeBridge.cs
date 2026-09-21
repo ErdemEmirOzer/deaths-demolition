@@ -129,8 +129,14 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
+            FeelSnapshot feel = FeelRuntime.Current;
+            if (!feel.Enabled)
+            {
+                LastAmplitude = 0f;
+                return;
+            }
             float ceiling = MaxAmplitude();
-            float scaled = Mathf.Min(amplitude * s_intensityScale, ceiling);
+            float scaled = Mathf.Min(amplitude * feel.Shake.designGain * s_intensityScale, ceiling);
             LastAmplitude = scaled;
 
             if (scaled <= 0.0005f)
@@ -182,8 +188,7 @@ namespace DD.Prototype.Feedback
 
         private static float MaxAmplitude()
         {
-            PrototypeConfig config = PrototypeConfig.Active;
-            return config != null ? Mathf.Max(0f, config.Feedback.MaxShakeAmplitude) : 0.22f;
+            return FeelRuntime.Current.Shake.nominalAggregateCapMeters;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

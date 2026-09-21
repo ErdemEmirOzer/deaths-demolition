@@ -3,7 +3,7 @@ using UnityEngine;
 namespace DD.Prototype.Feedback
 {
     /// <summary>
-    /// REQ-127: hit-stop is a punctuation mark, not a texture.
+    /// REQ-127: combat hit-stop is a local VFX time envelope. It never owns Time.timeScale.
     ///
     /// The request is explicit that an automatic weapon must NOT hit-stop on every
     /// bullet, and only a heavy impact, an armour break or a heavy death may use a very
@@ -26,9 +26,10 @@ namespace DD.Prototype.Feedback
         public const float StopTimeScale = 0.06f;
 
         private static float _remaining;
-        private static float _appliedScale;
-        private static float _restoreScale = 1f;
+        private static float _presentationScale = StopTimeScale;
         private static float _lastEndUnscaledTime = -999f;
+        private static int _groupId;
+        private static int _spawnGroupId;
 
         public static bool IsActive { get; private set; }
 
@@ -47,7 +48,9 @@ namespace DD.Prototype.Feedback
         /// remember 0.06 and leave the game running at 6% speed after unpausing.
         /// Calling <see cref="Cancel"/> before pausing is the other correct answer.
         /// </summary>
-        public static float BaseTimeScale => IsActive ? _restoreScale : Time.timeScale;
+        public static float BaseTimeScale => Time.timeScale;
+        public static int ActiveGroupId => IsActive ? _groupId : 0;
+        public static float RemainingRealSeconds => Mathf.Max(0f, _remaining);
 
         /// <summary>
         /// Ask for a hit stop. Silently refused when one is already running, when the
@@ -56,39 +59,56 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static void Request(float duration, float minInterval)
         {
+            RequestForGroup(0, duration, minInterval, StopTimeScale);
+        }
+
+        public static bool RequestForGroup(int groupId, float duration, float minInterval, float presentationScale)
+        {
             if (duration <= 0f)
             {
-                return;
+                return false;
             }
 
             if (IsActive)
             {
                 // Extend rather than restart, so two heavy hits in the same frame do not
                 // double the freeze.
-                _remaining = Mathf.Max(_remaining, duration);
-                return;
+                if (_groupId == groupId) _remaining = Mathf.Min(0.04f, Mathf.Max(_remaining, duration));
+                else Refused++;
+                return _groupId == groupId;
             }
 
             if (Time.timeScale <= 0.01f)
             {
                 // Paused, or someone else already owns the clock.
                 Refused++;
-                return;
+                return false;
             }
 
             if (Time.unscaledTime - _lastEndUnscaledTime < minInterval)
             {
                 Refused++;
-                return;
+                return false;
             }
 
-            _restoreScale = Time.timeScale;
-            _appliedScale = StopTimeScale;
-            _remaining = duration;
+            _groupId = groupId;
+            _presentationScale = Mathf.Clamp(presentationScale, StopTimeScale, 1f);
+            _remaining = Mathf.Min(0.04f, duration);
             IsActive = true;
             Count++;
+            return true;
+        }
 
-            Time.timeScale = _appliedScale;
+        public static void BeginSpawnGroup(int groupId) { _spawnGroupId = groupId; }
+        public static void EndSpawnGroup() { _spawnGroupId = 0; }
+        public static int CaptureSpawnGroup() => _spawnGroupId;
+
+        /// <summary>Exact overlap prevents a 35 ms token becoming two 30 fps frames.</summary>
+        public static float VisualDelta(int groupId, float scaledDelta, float unscaledDelta)
+        {
+            if (!IsActive || groupId == 0 || groupId != _groupId || unscaledDelta <= 0f) return scaledDelta;
+            float overlap = Mathf.Min(unscaledDelta, Mathf.Max(0f, _remaining));
+            return overlap * _presentationScale + Mathf.Max(0f, unscaledDelta - overlap);
         }
 
         /// <summary>Ticked by the feedback director with unscaled time.</summary>
@@ -125,18 +145,20 @@ namespace DD.Prototype.Feedback
             Refused = 0;
         }
 
+#if UNITY_EDITOR
+        public static void ResetForTests()
+        {
+            ResetStatics();
+        }
+#endif
+
         private static void Finish()
         {
             IsActive = false;
             _remaining = 0f;
             _lastEndUnscaledTime = Time.unscaledTime;
 
-            // Only give the clock back if it is still ours. If a pause menu set the
-            // scale to 0 while we were running, restoring 1 here would un-pause the game.
-            if (Mathf.Abs(Time.timeScale - _appliedScale) < 0.0001f)
-            {
-                Time.timeScale = _restoreScale;
-            }
+            _groupId = 0;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -144,9 +166,10 @@ namespace DD.Prototype.Feedback
         {
             IsActive = false;
             _remaining = 0f;
-            _appliedScale = 0f;
-            _restoreScale = 1f;
+            _presentationScale = StopTimeScale;
             _lastEndUnscaledTime = -999f;
+            _groupId = 0;
+            _spawnGroupId = 0;
             Count = 0;
             Refused = 0;
         }

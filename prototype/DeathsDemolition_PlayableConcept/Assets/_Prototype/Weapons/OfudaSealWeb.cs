@@ -177,6 +177,7 @@ namespace DD.Prototype.Weapons
             }
 
             int hit = 0;
+            int presentationGroupId = FeelEventRouter.NextGroupId();
 
             // WP-007 (DT-1/3): the collapse is ONE attack - every sealed body shares one
             // transaction id. Seals are unique per target, so no body is applied twice.
@@ -207,7 +208,7 @@ namespace DD.Prototype.Weapons
 
                     HitscanEngine.ApplyExternalHit(
                         seal.Target, damage, centre, direction, impulse,
-                        DamageSourceKind.Chain, WeaponPower.Heavy);
+                        DamageSourceKind.Chain, WeaponPower.Heavy, presentationGroupId);
 
                     hit++;
                 }
@@ -222,8 +223,7 @@ namespace DD.Prototype.Weapons
             if (hit > 0)
             {
                 AudioEvents.RaiseCritical(CombatAudioEvent.Explosion, _points.Count > 0 ? _points[0] : Vector3.zero, 1f, 75);
-                CameraShakeBridge.Shake(0.085f, 0.2f, ShakeProfile.ArmorBreak);
-                HitStopService.Request(0.05f, 0.25f);
+                FeelEventRouter.Enqueue(ImpactFeelId.OfudaCollapse, presentationGroupId, collapseCentre, Vector3.zero);
             }
 
             return hit;

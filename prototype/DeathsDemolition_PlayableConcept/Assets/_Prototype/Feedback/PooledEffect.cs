@@ -22,6 +22,8 @@ namespace DD.Prototype.Feedback
 
         /// <summary>Seconds before the instance returns itself to the pool.</summary>
         protected float Lifetime { get; set; } = 0.6f;
+        private int _localTimeGroupId;
+        public int LocalTimeGroupId => _localTimeGroupId;
 
         /// <summary>0..1 progress through the lifetime.</summary>
         protected float Progress => Lifetime > 0f ? Mathf.Clamp01(Age / Lifetime) : 1f;
@@ -29,6 +31,7 @@ namespace DD.Prototype.Feedback
         protected override void OnSpawned()
         {
             Age = 0f;
+            _localTimeGroupId = HitStopService.CaptureSpawnGroup();
         }
 
         /// <summary>
@@ -47,7 +50,7 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            Age += Time.deltaTime;
+            Age += HitStopService.VisualDelta(_localTimeGroupId, Time.deltaTime, Time.unscaledDeltaTime);
 
             Tick(Progress);
 
@@ -60,6 +63,11 @@ namespace DD.Prototype.Feedback
         /// <summary>Animate here. <paramref name="t"/> runs 0 to 1 across the lifetime.</summary>
         protected virtual void Tick(float t)
         {
+        }
+
+        protected override void OnDespawned()
+        {
+            _localTimeGroupId = 0;
         }
     }
 }

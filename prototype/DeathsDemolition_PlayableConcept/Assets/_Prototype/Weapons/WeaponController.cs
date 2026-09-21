@@ -464,12 +464,13 @@ namespace DD.Prototype.Weapons
             // Steps 1 and 3: procedural recoil and mechanical movement. Two layers, on
             // purpose - the gun kicks (rig) and the character absorbs it (host). Either
             // one alone reads as half a shot.
+            WeaponFeel feelRow = FeelRuntime.Current.Weapon(WeaponFeelIds.From(_equippedId));
             if (_classicRig != null)
             {
-                _classicRig.PlayFireMotion(_classic.RecoilKick, _classic.RecoilRecoverySeconds, _classic.RecoilUpShare);
+                _classicRig.PlayFireMotion(feelRow.recoilKickMeters, feelRow.recoilRecoverySeconds, feelRow.recoilUpShare);
             }
 
-            _host?.OnWeaponFired(RecoilStrength01(_classic.RecoilKick, _classic.Power), aim);
+            _host?.OnWeaponFired(RecoilStrength01(feelRow.recoilKickMeters, _classic.Power), aim);
 
             // Step 2: muzzle flash.
             float powerScale = PowerScale(_classic.Power);
@@ -478,17 +479,19 @@ namespace DD.Prototype.Weapons
 
             // Step 4 and everything downstream, once per pellet.
             int pellets = _classic.PelletCount;
+            int presentationGroupId = FeelEventRouter.NextGroupId();
             for (int i = 0; i < pellets; i++)
             {
                 ShotRequest request = _classic.BuildShot(origin, aim, i);
                 request.HasTracerOrigin = true;
                 request.TracerOrigin = muzzle;
+                request.PresentationGroupId = presentationGroupId;
                 HitscanEngine.Fire(request);
             }
 
             // Step 11: controlled camera response, scaled by weapon weight and clamped
             // again inside the bridge so aim survives.
-            ApplyFireShake(_classic.CameraShakeScale, _classic.Power, aim);
+            ApplyFireShake(feelRow.shakeWeight, _classic.Power, aim);
 
             // Step 12: the fire layer of the layered sound.
             AudioEvents.Raise(CombatAudioEvent.ClassicWeaponFire, origin, powerScale, 50);
@@ -593,10 +596,11 @@ namespace DD.Prototype.Weapons
         {
             Vector3 origin = Muzzle.position;
             Vector3 aim = ResolveAimDirection();
+            WeaponFeel feelRow = FeelRuntime.Current.Weapon(WeaponFeelIds.From(_special.Id));
 
             if (_specialRig != null)
             {
-                _specialRig.PlayFireMotion(_special.RecoilKick);
+                _specialRig.PlayFireMotion(feelRow.recoilKickMeters, feelRow.recoilRecoverySeconds, feelRow.recoilUpShare);
             }
 
             _host?.OnWeaponFired(SpecialWeaponRuntime.RecoilStrength01, aim);
@@ -623,7 +627,7 @@ namespace DD.Prototype.Weapons
 
             _special.Fire(eventOrigin, aim);
 
-            ApplyFireShake(_special.CameraShakeScale, WeaponPower.Heavy, aim);
+            ApplyFireShake(feelRow.shakeWeight, WeaponPower.Heavy, aim);
 
             AudioEvents.Raise(CombatAudioEvent.HeavyWeaponFire, origin, 1f, 60);
 
@@ -672,8 +676,9 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            float amplitude = scale * _shakeMetresAtScaleOne;
-            float duration = _shakeBaseDuration + _shakeDurationPerScale * scale;
+            FireShakeFeel feel = FeelRuntime.Current.FireShake;
+            float amplitude = scale * feel.metersAtWeightOne;
+            float duration = feel.baseSeconds + feel.secondsPerWeight * scale;
 
             ShakeProfile profile =
                 power == WeaponPower.Heavy && _special.IsActive ? ShakeProfile.HeavyFire :
@@ -700,11 +705,9 @@ namespace DD.Prototype.Weapons
         /// roughly 0.05 (SMG) to 0.20 (shotgun), so the divisor lands the shotgun near 1
         /// and the SMG near 0.25 - which is the example pair in the animator's own docs.
         /// </summary>
-        private const float RecoilKickAtFullStrength = 0.2f;
-
         private static float RecoilStrength01(float recoilKick, WeaponPower power)
         {
-            float normalised = recoilKick / RecoilKickAtFullStrength;
+            float normalised = recoilKick / Mathf.Max(0.05f, FeelRuntime.Current.Recoil.animatorFullStrengthKickMeters);
 
             // A weapon with no authored kick still has weight; fall back to its power
             // class so a config with RecoilKick left at zero does not silence the

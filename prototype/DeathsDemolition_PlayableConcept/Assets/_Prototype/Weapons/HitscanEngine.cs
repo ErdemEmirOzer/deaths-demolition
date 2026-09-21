@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DD.Prototype.Core;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Damage;
 using DD.Prototype.Feedback;
 using UnityEngine;
@@ -51,6 +52,7 @@ namespace DD.Prototype.Weapons
         /// <summary>WP-042: where the tracer starts when it differs from the damage ray's origin (the visual muzzle); Origin when unset.</summary>
         public bool HasTracerOrigin;
         public Vector3 TracerOrigin;
+        public int PresentationGroupId;
     }
 
     /// <summary>What one shot did. Enough for the weapon to decide on recoil and audio.</summary>
@@ -135,7 +137,9 @@ namespace DD.Prototype.Weapons
             DamageTransaction.Begin();
             try
             {
-                return FireInTransaction(in request);
+                ShotRequest grouped = request;
+                if (grouped.PresentationGroupId == 0) grouped.PresentationGroupId = FeelEventRouter.NextGroupId();
+                return FireInTransaction(in grouped);
             }
             finally
             {
@@ -207,7 +211,7 @@ namespace DD.Prototype.Weapons
                 BodyRegion region = DamageTargetResolver.ResolveRegion(collider, target, hit.point);
                 DamageResult damageResult = ApplyHit(
                     target, damage, region, hit.point, request.Direction,
-                    request.ImpactForce, request.Source, request.Power, hit.normal);
+                    request.ImpactForce, request.Source, request.Power, hit.normal, request.PresentationGroupId);
 
                 result.HitSomething = true;
                 result.EndPoint = hit.point;
@@ -267,7 +271,8 @@ namespace DD.Prototype.Weapons
                     originPoint,
                     request.Damage * Mathf.Max(0f, request.ExplosionDamageScale),
                     request.ExplosionRadius,
-                    ref result);
+                    ref result,
+                    request.PresentationGroupId);
             }
         }
 
@@ -291,7 +296,7 @@ namespace DD.Prototype.Weapons
                 // firing weapon's: the request wants chains to never be a stagger engine.
                 DamageResult r = ApplyHit(
                     next, damage, BodyRegion.UpperBody, point, direction,
-                    DamageForce.Chain, DamageSourceKind.Chain, WeaponPower.Light, -direction);
+                    DamageForce.Chain, DamageSourceKind.Chain, WeaponPower.Light, -direction, request.PresentationGroupId);
 
                 result.EnemiesHit++;
                 result.AnyKill |= r.Killed;
@@ -322,7 +327,7 @@ namespace DD.Prototype.Weapons
 
                 DamageResult r = ApplyHit(
                     next, damage, BodyRegion.UpperBody, point, direction,
-                    DamageForce.Ricochet, DamageSourceKind.Ricochet, request.Power, -direction);
+                    DamageForce.Ricochet, DamageSourceKind.Ricochet, request.Power, -direction, request.PresentationGroupId);
 
                 result.EnemiesHit++;
                 result.AnyKill |= r.Killed;
@@ -340,9 +345,10 @@ namespace DD.Prototype.Weapons
         /// system owns that rule, and it is reached through <see cref="IExplosionReceiver"/>
         /// exactly so this class cannot get it subtly wrong.
         /// </summary>
-        public static void Explode(Vector3 origin, float totalDamage, float radius, ref ShotResult result)
+        public static void Explode(Vector3 origin, float totalDamage, float radius, ref ShotResult result, int presentationGroupId = 0)
         {
-            HitFeedbackDirector.Instance.ReportExplosion(origin, radius);
+            int group = presentationGroupId != 0 ? presentationGroupId : FeelEventRouter.NextGroupId();
+            HitFeedbackDirector.Instance.ReportExplosion(origin, radius, group);
 
             int count = Physics.OverlapSphereNonAlloc(
                 origin, radius, s_overlapBuffer, EnemyQueryMask, QueryTriggerInteraction.Collide);
@@ -407,7 +413,9 @@ namespace DD.Prototype.Weapons
                     TargetRoot = target.Root,
                     Weight = target.Weight,
                     ImpactForce = 1f,
-                    FromExplosion = true
+                    FromExplosion = true,
+                    PresentationGroupId = group,
+                    SnapshotRevision = FeelRuntime.Current.Revision
                 };
 
                 HitFeedbackDirector.Instance.ReportEnemyHit(info);
@@ -484,7 +492,8 @@ namespace DD.Prototype.Weapons
             Vector3 direction,
             float impactForce,
             DamageSourceKind source,
-            WeaponPower power)
+            WeaponPower power,
+            int presentationGroupId = 0)
         {
             if (!target.IsValid)
             {
@@ -507,7 +516,9 @@ namespace DD.Prototype.Weapons
             {
                 return ApplyHit(
                     target, damage, BodyRegion.UpperBody, point, safeDirection,
-                    impactForce, source, power, -safeDirection);
+                    impactForce, source, power, -safeDirection,
+                    presentationGroupId != 0 ? presentationGroupId :
+                        (DamageTransaction.Current != 0 ? DamageTransaction.Current : FeelEventRouter.NextGroupId()));
             }
             finally
             {
@@ -609,7 +620,8 @@ namespace DD.Prototype.Weapons
             float impactForce,
             DamageSourceKind source,
             WeaponPower power,
-            Vector3 normal)
+            Vector3 normal,
+            int presentationGroupId = 0)
         {
             // REQ-124: throttle the impulse before it ever reaches the enemy.
             float governed = StaggerGovernor.Govern(target.Id, impactForce);
@@ -649,7 +661,9 @@ namespace DD.Prototype.Weapons
                 // scale already puts a rifle bullet at exactly 1. Clamped so a pathological
                 // build cannot produce a blood spray the size of a building.
                 ImpactForce = Mathf.Clamp(governed, 0.35f, 2.5f),
-                FromExplosion = false
+                FromExplosion = false,
+                PresentationGroupId = presentationGroupId != 0 ? presentationGroupId : FeelEventRouter.NextGroupId(),
+                SnapshotRevision = FeelRuntime.Current.Revision
             };
 
             HitFeedbackDirector.Instance.ReportEnemyHit(info);

@@ -83,6 +83,9 @@ namespace DD.Prototype.Feedback
         }
 
         private readonly Track[] _tracks = new Track[CategoryCount];
+        private float _perFrameFraction = .25f;
+        private int _minStartsPerFrame = 2;
+        private int _importantStartMultiplier = 2;
 
         public FeedbackBudget()
         {
@@ -107,9 +110,16 @@ namespace DD.Prototype.Feedback
             // frame, never fewer than two. At 60 fps that still fills the ceiling in
             // ~4 frames, which is fast enough to feel instant and slow enough to stop
             // a single shotgun blast owning the entire budget.
-            t.PerFrameCap = Mathf.Max(2, Mathf.CeilToInt(concurrentCeiling * 0.25f));
+            t.PerFrameCap = Mathf.Max(_minStartsPerFrame, Mathf.CeilToInt(concurrentCeiling * _perFrameFraction));
             t.MinSpacing = Mathf.Max(0f, minSpacing);
             t.SpacingWindow = Mathf.Max(0f, spacingWindow);
+        }
+
+        public void ConfigurePolicy(float perFrameFraction, int minStartsPerFrame, int importantStartMultiplier)
+        {
+            _perFrameFraction = Mathf.Clamp(perFrameFraction, .05f, .25f);
+            _minStartsPerFrame = Mathf.Clamp(minStartsPerFrame, 1, 2);
+            _importantStartMultiplier = Mathf.Clamp(importantStartMultiplier, 1, 2);
         }
 
         /// <summary>
@@ -131,7 +141,7 @@ namespace DD.Prototype.Feedback
                 t.UsedThisFrame = 0;
             }
 
-            int cap = important ? t.PerFrameCap * 2 : t.PerFrameCap;
+            int cap = important ? t.PerFrameCap * _importantStartMultiplier : t.PerFrameCap;
             if (t.UsedThisFrame >= cap)
             {
                 t.Suppressed++;

@@ -33,6 +33,8 @@ namespace DD.Prototype.Inputs
         public float SpecialFireFraction { get; private set; } = HeavyFireFraction;
         public int SpecialFireMilliseconds { get; private set; } = HeavyFireMilliseconds;
         private SpecialWeaponId _specialProfileId = (SpecialWeaponId)(-1);
+        private ClassicWeaponId _classicProfileId = ClassicWeaponId.AssaultRifle;
+        private ulong _feelRevision;
 
         [PrototypeOnly(PendingDecisions.None, "Heavy (Special) weapon shot pulse: 0.7 x ceiling, 80 ms.", true)]
         public const float HeavyFireFraction = 0.7f;
@@ -92,28 +94,29 @@ namespace DD.Prototype.Inputs
         private void EnsureSpecialProfile()
         {
             SpecialWeaponHudState state = WeaponEvents.Special;
-            if (state.Phase != SpecialWeaponPhase.Active || _specialProfileId == state.WeaponId) return;
+            ulong revision = FeelRuntime.Current.Revision;
+            if (state.Phase != SpecialWeaponPhase.Active || (_specialProfileId == state.WeaponId && _feelRevision == revision)) return;
             _specialProfileId = state.WeaponId;
-            PrototypeConfig config = PrototypeConfig.Active;
-            SpecialWeaponCommon common = config != null ? config.Weapons.Special.Common(state.WeaponId) : null;
-            SpecialFireFraction = common != null ? Mathf.Clamp01(common.RumbleFraction) : HeavyFireFraction;
-            SpecialFireMilliseconds = common != null ? Mathf.Clamp(common.RumbleMilliseconds, 0, InputPreferences.MaxRumbleMilliseconds) : HeavyFireMilliseconds;
+            WeaponFeel row = FeelRuntime.Current.Weapon(WeaponFeelIds.From(state.WeaponId));
+            SpecialFireFraction = row.rumbleFraction;
+            SpecialFireMilliseconds = row.rumbleDurationMs;
+            _feelRevision = revision;
         }
 
         /// <summary>WP-042: cache the equipped weapon's pulse profile (equip is not a hot path; the fire cue reads two fields).</summary>
         private void OnWeaponEquipped(ClassicWeaponId id)
         {
-            PrototypeConfig config = PrototypeConfig.Active;
-            ClassicWeaponSettings w = config != null ? config.Weapons.Find(id) : null;
-            if (w == null)
-            {
-                WeaponFireFraction = FireFraction;
-                WeaponFireMilliseconds = FireMilliseconds;
-                return;
-            }
+            _classicProfileId = id;
+            RefreshClassicProfile();
+        }
 
-            WeaponFireFraction = Mathf.Clamp01(w.RumbleFraction);
-            WeaponFireMilliseconds = Mathf.Clamp(w.RumbleMilliseconds, 0, InputPreferences.MaxRumbleMilliseconds);
+        private void RefreshClassicProfile()
+        {
+            FeelSnapshot feel = FeelRuntime.Current;
+            WeaponFeel row = feel.Weapon(WeaponFeelIds.From(_classicProfileId));
+            WeaponFireFraction = row.rumbleFraction;
+            WeaponFireMilliseconds = row.rumbleDurationMs;
+            _feelRevision = feel.Revision;
         }
 
         public void Unsubscribe()
@@ -134,6 +137,7 @@ namespace DD.Prototype.Inputs
         /// <summary>Called once per frame by the installer (unscaled time; pause stops the motors).</summary>
         public void Tick()
         {
+            if (_feelRevision != FeelRuntime.Current.Revision) RefreshClassicProfile();
             if (!_motorsOn)
             {
                 return;
@@ -180,7 +184,7 @@ namespace DD.Prototype.Inputs
 
             // A stronger pulse replaces a weaker one; a weaker one never cuts a stronger one short.
             float low = Mathf.Max(_motorsOn ? _activeLow : 0f, intensity);
-            float high = Mathf.Max(_motorsOn ? _activeHigh : 0f, intensity * 0.6f);
+            float high = Mathf.Max(_motorsOn ? _activeHigh : 0f, intensity * FeelRuntime.Current.Rumble.highMotorRatio);
             float until = Time.unscaledTime + ms / 1000f;
 
             pad.SetMotorSpeeds(low, high);

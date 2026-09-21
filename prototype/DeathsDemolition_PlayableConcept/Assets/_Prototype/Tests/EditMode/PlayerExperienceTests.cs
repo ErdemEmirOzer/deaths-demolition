@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Feedback;
 using DD.Prototype.Feedback.Vfx;
@@ -31,6 +32,8 @@ namespace DD.Prototype.Tests.EditMode
             Time.timeScale = 1f;
             DeathSequence.Cancel();
             DeathSequence.ResetCounters();
+            FeelRuntime.ResetForTests();
+            FeelRuntime.Initialize(null);
         }
 
         [TearDown]
@@ -40,6 +43,7 @@ namespace DD.Prototype.Tests.EditMode
             RunFlowClock.ClearHolds();
             InputRemapRegistry.SetCurrent(null);
             GameFeelSettings.Override(null);
+            FeelRuntime.ResetForTests();
             Time.timeScale = _timeScaleWas;
         }
 
@@ -67,20 +71,17 @@ namespace DD.Prototype.Tests.EditMode
             Assert.LessOrEqual(feel.DeathResultsDelaySeconds, GameFeelSettings.MaxDeathResultsDelaySeconds);
             Assert.That(feel.DeathCameraPushIn, Is.InRange(0.05f, GameFeelSettings.MaxDeathPushIn));
 
-            // Layer off → no beat, no push-in, no shake; the results delay still outlasts the (now zero) slow-down.
-            var off = ScriptableObject.CreateInstance<GameFeelSettings>();
-            try
-            {
-                typeof(GameFeelSettings).GetField("_enabled", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(off, false);
-                Assert.AreEqual(1f, off.DeathSlowScale, 1e-5f);
-                Assert.AreEqual(0f, off.DeathCameraPushIn, 1e-5f);
-                Assert.AreEqual(0f, off.ShakePlayerDeathAmplitude, 1e-5f);
-                Assert.GreaterOrEqual(off.DeathResultsDelaySeconds, 0.5f);
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(off);
-            }
+            // WP-062: the compatibility facade preserves the old layer-off behavior, with
+            // FeelConfig as the single authority for that switch.
+            FeelConfigData off = FeelConfig.CreateDefaults();
+            off.enabled = false;
+            Assert.IsTrue(FeelRuntime.QueueAuthored(off, "legacy-off", "22c8ead", out string error), error);
+            Assert.IsTrue(FeelRuntime.BeginFrame(59062));
+            Assert.IsFalse(feel.Enabled);
+            Assert.AreEqual(1f, feel.DeathSlowScale, 1e-5f);
+            Assert.AreEqual(0f, feel.DeathCameraPushIn, 1e-5f);
+            Assert.AreEqual(0f, feel.ShakePlayerDeathAmplitude, 1e-5f);
+            Assert.GreaterOrEqual(feel.DeathResultsDelaySeconds, .5f);
         }
 
         // ------------------------------------------------------------------ death beat on the clock

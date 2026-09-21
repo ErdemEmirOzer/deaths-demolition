@@ -52,6 +52,7 @@ namespace DD.Prototype.Rounds
     /// every round is the formula.
     /// </summary>
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-31000)]
     public sealed partial class RunDirector : PrototypeConfigBehaviour
     {
         public static RunDirector Instance { get; private set; }
@@ -189,6 +190,9 @@ namespace DD.Prototype.Rounds
         /// </summary>
         public void StartRun(int startRound = 1)
         {
+            // The same-scene restart path is also a real new-run boundary. Commit N fields
+            // before any run-local state, pool policy or weapon build reads the snapshot.
+            FeelRuntime.ApplyPendingNextRun();
             _runEverStarted = true;
 
             RunFlowClock.ClearHolds();
@@ -423,6 +427,9 @@ namespace DD.Prototype.Rounds
                 return;
             }
 
+            // On scene entry this runs after FeelRuntimeDriver (-32000) and before ordinary
+            // pool/setup behaviours, so staged N fields size the new run from its first Awake.
+            FeelRuntime.ApplyPendingNextRun();
             Instance = this;
 
             // WP-005: the HUD snapshots are static and outlive the scene. Between this

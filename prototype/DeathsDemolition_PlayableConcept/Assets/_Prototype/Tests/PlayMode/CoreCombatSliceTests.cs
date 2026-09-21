@@ -963,6 +963,11 @@ namespace DD.Prototype.Tests.PlayMode
                 {
                     Assert.IsNotNull(Dogur(merkez + new Vector3(0f, 0f, 1.6f), merkez));
                     yield return Bekle(() => oyuncuHasar.Count > 0, 6f, "Zombi oyuncuya vuramadı.");
+                    // WP-062 presentation arbitration flushes once in LateUpdate. Sample the
+                    // camera service after that same-frame router boundary, not inside the
+                    // gameplay damage callback that deliberately precedes presentation.
+                    yield return null;
+                    shakeSayisi = CameraShakeService.ActiveCount;
 
                     Assert.AreEqual(1, oyuncuHasar.Count);
                     Assert.AreEqual(1f, oyuncuHasar[0].HitDirection.magnitude, 0.01f, "HitDirection normalize değil.");

@@ -41,6 +41,12 @@ namespace DD.Prototype.Feedback
 
         /// <summary>True when this came from an explosion rather than a projectile.</summary>
         public bool FromExplosion;
+
+        /// <summary>One trigger/blast/collapse presentation group. Zero is resolved to an isolated event.</summary>
+        public int PresentationGroupId;
+
+        /// <summary>Snapshot latched by the producer. Zero lets the director use the current revision.</summary>
+        public ulong SnapshotRevision;
     }
 
     /// <summary>
@@ -59,6 +65,7 @@ namespace DD.Prototype.Feedback
     /// <see cref="DamageResult"/> and dresses it.
     /// </summary>
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-100)]
     public sealed class HitFeedbackDirector : PrototypeConfigBehaviour
     {
         // ------------------------------------------------------------------ PROTOTYPE-ONLY palette
@@ -263,6 +270,8 @@ namespace DD.Prototype.Feedback
         protected override void OnEnable()
         {
             base.OnEnable();
+            FeelRuntime.Changed += OnFeelChanged;
+            OnFeelChanged(FeelRuntime.Current);
 
             if (_showHitMarkers)
             {
@@ -277,7 +286,9 @@ namespace DD.Prototype.Feedback
 
         protected override void OnDisable()
         {
+            FeelRuntime.Changed -= OnFeelChanged;
             DD.Prototype.Characters.ArmorVisualBinder.AnyBroken -= OnArmorPlateBroken;
+            FeelEventRouter.Clear();
             base.OnDisable();
         }
 
@@ -302,10 +313,12 @@ namespace DD.Prototype.Feedback
 
         private void Update()
         {
-            // Hit stop counts in unscaled time, because it is the thing that owns the
-            // scaled clock.
-            HitStopService.Tick(Time.unscaledDeltaTime);
             _vfx.Tick(Time.time);
+        }
+
+        private void LateUpdate()
+        {
+            FeelEventRouter.AdvanceLateFrame(Time.unscaledDeltaTime);
         }
 
         /// <summary>
@@ -314,32 +327,28 @@ namespace DD.Prototype.Feedback
         /// </summary>
         protected override void ApplyConfig(PrototypeConfig config)
         {
-            FeedbackConfigSection f = config.Feedback;
-
-            // WP-019 (ADR-019-2): the game-feel asset caps the config values — hit-stop ≤ 40 ms and
-            // only on armour break / death, shake ≤ 0.15 m / 0.2 s. The config keeps its WP-002
-            // numbers; the cap is the layer's contract.
-            GameFeelSettings feel = GameFeelSettings.Active;
-            _hitStopArmorBreak = Mathf.Min(Mathf.Max(0f, f.HitStopArmorBreak), feel.HitStopArmorBreak);
-            _hitStopHeavyImpact = 0f;
-            _hitStopHeavyDeath = Mathf.Min(Mathf.Max(0f, f.HitStopHeavyDeath), feel.HitStopDeath);
-            _hitStopMinInterval = Mathf.Max(Mathf.Max(0f, f.HitStopMinInterval), feel.HitStopMinInterval);
-            _shakeArmorBreak = Mathf.Min(_shakeArmorBreak, feel.ShakeArmorBreakAmplitude);
-            _shakeHeavyDeath = Mathf.Min(_shakeHeavyDeath, feel.ShakeHeavyDeathAmplitude);
-            _shakeExplosion = Mathf.Min(_shakeExplosion, feel.ShakeExplosionAmplitude);
-            _shakeExplosionSeconds = feel.ShakeExplosionSeconds;
+            FeelSnapshot feel = FeelRuntime.Current;
+            OnFeelChanged(feel);
             _vfx.Configure(FeedbackEffectFactory.TemplateRoot);
 
-            int impacts = Mathf.Max(4, f.MaxImpactEffects);
-            int blood = Mathf.Max(4, f.MaxBloodEffects);
-            int armorBreaks = Mathf.Max(2, f.MaxArmorBreakEffects);
-            int deaths = Mathf.Max(2, f.MaxDeathEffects);
-            int numbers = Mathf.Max(2, f.MaxDamageNumbers);
+            int impacts = Capacity(feel, FeedbackCategory.Impact, 40);
+            int armorHits = Capacity(feel, FeedbackCategory.ArmorHit, 40);
+            int blood = Capacity(feel, FeedbackCategory.Blood, 24);
+            int armorBreaks = Capacity(feel, FeedbackCategory.ArmorBreak, 12);
+            int deaths = Capacity(feel, FeedbackCategory.Death, 12);
+            int numbers = Capacity(feel, FeedbackCategory.DamageNumber, 30);
+            _maxExplosions = Capacity(feel, FeedbackCategory.Explosion, 8);
+            _maxTracers = Capacity(feel, FeedbackCategory.Tracer, 48);
+            _maxMuzzleFlashes = Capacity(feel, FeedbackCategory.MuzzleFlash, 6);
+            _maxLinks = Capacity(feel, FeedbackCategory.Link, 20);
+            _maxSpecialEffects = Capacity(feel, FeedbackCategory.SpecialWeapon, 24);
+            _budget.ConfigurePolicy(feel.Budgets.perFrameFraction, feel.Budgets.minStartsPerFrame,
+                feel.Budgets.importantStartMultiplier);
 
             // Armour *hits* share the impact ceiling: they are the same kind of visual
             // noise and the request budgets them together.
             _impactPool = Pool(FeedbackEffectFactory.ImpactTemplate, impacts);
-            _armorHitPool = Pool(FeedbackEffectFactory.ArmorHitTemplate, impacts);
+            _armorHitPool = Pool(FeedbackEffectFactory.ArmorHitTemplate, armorHits);
             _bloodPool = Pool(FeedbackEffectFactory.BloodTemplate, blood);
             _armorBreakPool = Pool(FeedbackEffectFactory.ArmorBreakTemplate, armorBreaks);
             _deathPool = Pool(FeedbackEffectFactory.DeathTemplate, deaths);
@@ -368,7 +377,7 @@ namespace DD.Prototype.Feedback
             }
 
             _budget.Configure(FeedbackCategory.Impact, impacts, _effectMergeDistance, _effectMergeWindow);
-            _budget.Configure(FeedbackCategory.ArmorHit, impacts, _effectMergeDistance, _effectMergeWindow);
+            _budget.Configure(FeedbackCategory.ArmorHit, armorHits, _effectMergeDistance, _effectMergeWindow);
             _budget.Configure(FeedbackCategory.Blood, blood, _effectMergeDistance, _effectMergeWindow);
             _budget.Configure(FeedbackCategory.ArmorBreak, armorBreaks, 0f, 0f);
             _budget.Configure(FeedbackCategory.Death, deaths, 0f, 0f);
@@ -382,6 +391,48 @@ namespace DD.Prototype.Feedback
             // at once in one place. Merging is exactly the wrong instinct here, and it is
             // affordable precisely because this family cannot borrow from any other.
             _budget.Configure(FeedbackCategory.SpecialWeapon, specials, 0f, 0f);
+        }
+
+        private void OnFeelChanged(FeelSnapshot snapshot)
+        {
+            ImpactFeel armorBreak = snapshot.Impact(ImpactFeelId.ArmorBreak);
+            ImpactFeel heavyDeath = snapshot.Impact(ImpactFeelId.HeavyDeath);
+            ImpactFeel explosion = snapshot.Impact(ImpactFeelId.Explosion);
+            _hitStopArmorBreak = armorBreak.hitStopSeconds;
+            _hitStopHeavyImpact = 0f;
+            _hitStopHeavyDeath = heavyDeath.hitStopSeconds;
+            _hitStopMinInterval = snapshot.HitStop.minIntervalSeconds;
+            _shakeArmorBreak = armorBreak.shakeAmplitudeMeters;
+            _shakeHeavyDeath = heavyDeath.shakeAmplitudeMeters;
+            _shakeExplosion = explosion.shakeAmplitudeMeters;
+            _shakeExplosionSeconds = explosion.shakeSeconds;
+            _effectMergeDistance = snapshot.Budgets.mergeDistanceMeters;
+            _effectMergeWindow = snapshot.Budgets.mergeWindowSeconds;
+            _damageNumberMergeWindow = snapshot.DamageNumbers.mergeWindowSeconds;
+            _showDamageNumbers = snapshot.DamageNumbers.enabled;
+            ConfigureBudget(snapshot);
+        }
+
+        private void ConfigureBudget(FeelSnapshot snapshot)
+        {
+            BudgetFeel b = snapshot.Budgets;
+            _budget.ConfigurePolicy(b.perFrameFraction, b.minStartsPerFrame, b.importantStartMultiplier);
+            _budget.Configure(FeedbackCategory.Impact, Capacity(snapshot, FeedbackCategory.Impact, 40), b.mergeDistanceMeters, b.mergeWindowSeconds);
+            _budget.Configure(FeedbackCategory.ArmorHit, Capacity(snapshot, FeedbackCategory.ArmorHit, 40), b.mergeDistanceMeters, b.mergeWindowSeconds);
+            _budget.Configure(FeedbackCategory.Blood, Capacity(snapshot, FeedbackCategory.Blood, 24), b.mergeDistanceMeters, b.mergeWindowSeconds);
+            _budget.Configure(FeedbackCategory.ArmorBreak, Capacity(snapshot, FeedbackCategory.ArmorBreak, 12), 0f, 0f);
+            _budget.Configure(FeedbackCategory.Death, Capacity(snapshot, FeedbackCategory.Death, 12), 0f, 0f);
+            _budget.Configure(FeedbackCategory.DamageNumber, Capacity(snapshot, FeedbackCategory.DamageNumber, 30), b.mergeDistanceMeters, b.mergeWindowSeconds);
+            _budget.Configure(FeedbackCategory.Tracer, Capacity(snapshot, FeedbackCategory.Tracer, 48), 0f, 0f);
+            _budget.Configure(FeedbackCategory.MuzzleFlash, Capacity(snapshot, FeedbackCategory.MuzzleFlash, 6), 0f, 0f);
+            _budget.Configure(FeedbackCategory.Link, Capacity(snapshot, FeedbackCategory.Link, 20), 0f, 0f);
+            _budget.Configure(FeedbackCategory.Explosion, Capacity(snapshot, FeedbackCategory.Explosion, 8), 0f, 0f);
+            _budget.Configure(FeedbackCategory.SpecialWeapon, Capacity(snapshot, FeedbackCategory.SpecialWeapon, 24), 0f, 0f);
+        }
+
+        private static int Capacity(FeelSnapshot snapshot, FeedbackCategory category, int fallback)
+        {
+            return snapshot.Budgets.CapacityFor(category.ToString(), fallback);
         }
 
         private static PrototypePool<T> Pool<T>(T template, int capacity) where T : PooledBehaviour
@@ -490,6 +541,8 @@ namespace DD.Prototype.Feedback
         public void ReportEnemyHit(in EnemyHitFeedbackInfo info)
         {
             HitFeedbackTier tier = ResolveTier(info);
+            int groupId = info.PresentationGroupId;
+            if (groupId == 0) groupId = FeelEventRouter.NextGroupId();
 
             // Step 6/7 handshake: the animator and the enemy's own reaction hang off this
             // event. It is raised before any budget decision so a reaction is never lost
@@ -499,40 +552,23 @@ namespace DD.Prototype.Feedback
             Vector3 normal = SafeNormal(info.Normal.sqrMagnitude > 0.0001f ? info.Normal : -info.Direction);
             float force = Mathf.Max(0.35f, info.ImpactForce);
 
-            switch (tier)
+            HitStopService.BeginSpawnGroup(groupId);
+            try
             {
-                case HitFeedbackTier.ArmorHit:
-                    PlayArmorHit(info, normal, force);
-                    break;
-
-                case HitFeedbackTier.ArmorBreak:
-                    PlayArmorBreak(info, normal, force);
-                    break;
-
-                case HitFeedbackTier.CriticalHit:
-                    PlayFlesh(info, normal, force * 1.4f, true);
-                    break;
-
-                case HitFeedbackTier.Death:
-                case HitFeedbackTier.HeavyDeath:
-                    PlayDeath(info, normal, force, tier);
-                    break;
-
-                default:
-                    PlayFlesh(info, normal, force, false);
-                    break;
+                switch (tier)
+                {
+                    case HitFeedbackTier.ArmorHit: PlayArmorHit(info, normal, force); break;
+                    case HitFeedbackTier.ArmorBreak: PlayArmorBreak(info, normal, force); break;
+                    case HitFeedbackTier.CriticalHit: PlayFlesh(info, normal, force * 1.4f, true); break;
+                    case HitFeedbackTier.Death:
+                    case HitFeedbackTier.HeavyDeath: PlayDeath(info, normal, force, tier); break;
+                    default: PlayFlesh(info, normal, force, false); break;
+                }
+                if (info.Result.ArmorBroke && info.Result.Killed) PlayArmorBreak(info, normal, force);
             }
+            finally { HitStopService.EndSpawnGroup(); }
 
-            // A hit that both broke armour and killed still deserves the flesh layer of
-            // the kill; the switch above already picked the loudest single layer, this
-            // adds the one that would otherwise be missing.
-            if (info.Result.ArmorBroke && info.Result.Killed)
-            {
-                PlayArmorBreak(info, normal, force);
-            }
-
-            ApplyCameraResponse(tier, info);
-            ApplyHitStop(tier, info);
+            FeelEventRouter.Enqueue(ImpactId(tier), groupId, info.Point, info.Direction);
             ShowDamageNumber(info, tier);
 
             if (_showHitMarkers && _hitMarkers != null)
@@ -549,7 +585,7 @@ namespace DD.Prototype.Feedback
         }
 
         /// <summary>Explosion branch. Radius is visual only; damage was already applied.</summary>
-        public void ReportExplosion(Vector3 origin, float radius)
+        public void ReportExplosion(Vector3 origin, float radius, int presentationGroupId = 0)
         {
             if (_explosionPool != null && _budget.TryConsume(FeedbackCategory.Explosion, origin, true))
             {
@@ -572,7 +608,8 @@ namespace DD.Prototype.Feedback
                 away.y = 0f;
             }
 
-            CameraShakeBridge.Shake(_shakeExplosion, _shakeExplosionSeconds, ShakeProfile.Explosion, away);
+            FeelEventRouter.Enqueue(ImpactFeelId.Explosion,
+                presentationGroupId != 0 ? presentationGroupId : FeelEventRouter.NextGroupId(), origin, away);
             // WP-019: no hit-stop on an explosion (only armour break and death, ADR-019-2).
             AudioEvents.RaiseCritical(CombatAudioEvent.Explosion, origin, 1f, 70);
         }
@@ -604,7 +641,6 @@ namespace DD.Prototype.Feedback
                 ring.Play(origin, radius, travelSeconds, lines, 0.16f);
             }
 
-            CameraShakeBridge.Shake(_shakeArmorBreak, 0.14f, ShakeProfile.HeavyFire);
         }
 
         /// <summary>
@@ -874,48 +910,16 @@ namespace DD.Prototype.Feedback
 
         // ------------------------------------------------------------------ steps 11 and hit stop
 
-        private void ApplyCameraResponse(HitFeedbackTier tier, in EnemyHitFeedbackInfo info)
+        private static ImpactFeelId ImpactId(HitFeedbackTier tier)
         {
-            // Ordinary hits produce no camera response at all. The camera reacts to the
-            // weapon firing (owned by the weapon) and to state changes - not to every
-            // bullet landing, which at 15/s would be a permanent tremor.
-            // Both of these are single events with a real world axis - something broke
-            // over there - so they carry the shot direction and read as a nudge from the
-            // impact rather than as generic noise.
             switch (tier)
             {
-                case HitFeedbackTier.ArmorBreak:
-                    CameraShakeBridge.Shake(_shakeArmorBreak, 0.12f, ShakeProfile.ArmorBreak, info.Direction);
-                    break;
-
-                case HitFeedbackTier.HeavyDeath:
-                    CameraShakeBridge.Shake(_shakeHeavyDeath, 0.18f, ShakeProfile.HeavyDeath, info.Direction);
-                    break;
-            }
-        }
-
-        private void ApplyHitStop(HitFeedbackTier tier, in EnemyHitFeedbackInfo info)
-        {
-            // REQ-127. Three doors, all narrow.
-            if (tier == HitFeedbackTier.ArmorBreak)
-            {
-                HitStopService.Request(_hitStopArmorBreak, _hitStopMinInterval);
-                return;
-            }
-
-            // WP-047 (C-00, REQ-127 stays): the death door is the heavy tier's only — a Standard death (tier Death) gets none;
-            // Elite / Ultra deaths arrive as HeavyDeath and take the HitStopDeath value (WP-019 had opened it to every death).
-            if (tier == HitFeedbackTier.HeavyDeath)
-            {
-                HitStopService.Request(_hitStopHeavyDeath, _hitStopMinInterval);
-                return;
-            }
-
-            // WP-019 (ADR-019-2): the heavy-impact door is closed — hit-stop only on armour break and death.
-            // _hitStopHeavyImpact is kept at 0 by ApplyConfig; the check stays for the F1 readout.
-            if (info.Power == WeaponPower.Heavy && tier >= HitFeedbackTier.CriticalHit && _hitStopHeavyImpact > 0f)
-            {
-                HitStopService.Request(_hitStopHeavyImpact, _hitStopMinInterval);
+                case HitFeedbackTier.ArmorHit: return ImpactFeelId.ArmorHit;
+                case HitFeedbackTier.ArmorBreak: return ImpactFeelId.ArmorBreak;
+                case HitFeedbackTier.CriticalHit: return ImpactFeelId.CriticalHit;
+                case HitFeedbackTier.Death: return ImpactFeelId.Death;
+                case HitFeedbackTier.HeavyDeath: return ImpactFeelId.HeavyDeath;
+                default: return ImpactFeelId.FleshHit;
             }
         }
 
@@ -949,7 +953,7 @@ namespace DD.Prototype.Feedback
                     continue;
                 }
 
-                if (existing.TargetId != info.TargetId)
+                if (existing.TargetId != info.TargetId || existing.SnapshotRevision != FeelRuntime.Current.Revision)
                 {
                     continue;
                 }
@@ -959,7 +963,7 @@ namespace DD.Prototype.Feedback
                     continue;
                 }
 
-                existing.Add(amount, color, info.Point + Vector3.up * 0.4f);
+                existing.Add(amount, color, info.Point + Vector3.up * FeelRuntime.Current.DamageNumbers.anchorOffsetYMeters);
                 return;
             }
 
@@ -968,14 +972,14 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            Vector3 spawnPoint = info.Point + Vector3.up * 0.4f;
+            Vector3 spawnPoint = info.Point + Vector3.up * FeelRuntime.Current.DamageNumbers.anchorOffsetYMeters;
             DamageNumberEffect number = _damageNumberPool.Get(spawnPoint, Quaternion.identity);
             if (number == null)
             {
                 return;
             }
 
-            number.Play(info.TargetId, spawnPoint, amount, color, 0.85f);
+            number.Play(info.TargetId, spawnPoint, amount, color, FeelRuntime.Current.DamageNumbers.lifetimeSeconds);
 
             for (int i = 0; i < _liveNumbers.Length; i++)
             {

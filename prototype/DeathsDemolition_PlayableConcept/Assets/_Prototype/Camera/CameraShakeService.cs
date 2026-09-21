@@ -1,3 +1,4 @@
+using DD.Prototype.Core.Config;
 using UnityEngine;
 
 namespace DD.Prototype.CameraSystem
@@ -65,6 +66,7 @@ namespace DD.Prototype.CameraSystem
             public ShakeKind Kind;
             public Vector3 Direction;
             public bool HasDirection;
+            public ShakeKernelFeel Kernel;
         }
 
         private static readonly ActiveShake[] s_shakes = new ActiveShake[MaxConcurrentShakes];
@@ -115,10 +117,14 @@ namespace DD.Prototype.CameraSystem
                 Seed = Random.Range(0f, 128f),
                 Kind = kind,
                 Direction = worldDirection.sqrMagnitude > 1e-6f ? worldDirection.normalized : Vector3.zero,
-                HasDirection = worldDirection.sqrMagnitude > 1e-6f
+                HasDirection = worldDirection.sqrMagnitude > 1e-6f,
+                // The snapshot is detached and replaced atomically; retaining this section
+                // latches the event envelope without a hot-path clone/allocation.
+                Kernel = FeelRuntime.Current.Shake.kernels
             };
 
-            if (s_count < MaxConcurrentShakes)
+            int activeLimit = Mathf.Clamp(FeelRuntime.Current.Shake.maxConcurrent, 1, MaxConcurrentShakes);
+            if (s_count < activeLimit)
             {
                 s_shakes[s_count++] = shake;
                 return;
@@ -220,7 +226,7 @@ namespace DD.Prototype.CameraSystem
 
             // Roll ceiling is derived from the amplitude ceiling so one slider governs
             // the whole camera response: 1 metre of allowed shake -> 6 degrees of roll.
-            float rollCeiling = ceiling * 6f;
+            float rollCeiling = ceiling * FeelRuntime.Current.Shake.rollDegreesPerMeter;
             rollDegrees = Mathf.Clamp(roll * Mathf.Max(0f, intensityScale), -rollCeiling, rollCeiling);
         }
 
@@ -236,13 +242,14 @@ namespace DD.Prototype.CameraSystem
                 ? inverseFrame * shake.Direction
                 : Vector3.zero;
 
+            ShakeKernelFeel kernel = shake.Kernel;
             switch (shake.Kind)
             {
                 case ShakeKind.Punch:
                 {
                     // One kick that overshoots slightly then settles.
-                    float env = (1f - u) * (1f - u);
-                    float wobble = Mathf.Cos(u * Mathf.PI * 3f);
+                    float env = Mathf.Pow(1f - u, kernel.punchDecayPower);
+                    float wobble = Mathf.Cos(u * Mathf.PI * kernel.punchCosinePiFactor);
                     Vector3 axis = shake.HasDirection
                         ? new Vector3(localDirection.x, localDirection.y, 0f)
                         : Vector3.up;
@@ -253,7 +260,7 @@ namespace DD.Prototype.CameraSystem
                     }
 
                     localOffset = axis.normalized * (amp * env * wobble);
-                    rollDegrees = amp * env * wobble * 4f;
+                    rollDegrees = amp * env * wobble * kernel.punchRollDegreesPerMeter;
                     return;
                 }
 
@@ -261,16 +268,16 @@ namespace DD.Prototype.CameraSystem
                 {
                     // Low frequency swell, felt more than seen.
                     float env = Mathf.Sin(u * Mathf.PI);
-                    float t = shake.Elapsed * 7f + shake.Seed;
+                    float t = shake.Elapsed * kernel.rumbleFrequency + shake.Seed;
                     float nx = Mathf.PerlinNoise(t, shake.Seed) * 2f - 1f;
                     float ny = Mathf.PerlinNoise(shake.Seed, t) * 2f - 1f;
                     float nz = Mathf.PerlinNoise(t * 0.7f, t * 0.3f) * 2f - 1f;
 
-                    Vector3 noise = new Vector3(nx, ny, nz * 0.35f) * (amp * env);
-                    Vector3 push = localDirection * (amp * env * 0.45f);
+                    Vector3 noise = new Vector3(nx, ny, nz * kernel.rumbleZShare) * (amp * env);
+                    Vector3 push = localDirection * (amp * env * kernel.rumbleDirectionShare);
 
                     localOffset = noise + push;
-                    rollDegrees = nx * amp * env * 5f;
+                    rollDegrees = nx * amp * env * kernel.rumbleRollDegreesPerMeter;
                     return;
                 }
 
@@ -278,11 +285,11 @@ namespace DD.Prototype.CameraSystem
                 {
                     // Soft single displacement, deliberately gentle: this one plays
                     // while the player is being hit and must not obscure the fight.
-                    float env = Mathf.Pow(1f - u, 1.5f);
+                    float env = Mathf.Pow(1f - u, kernel.bumpDecayPower);
                     Vector3 axis = shake.HasDirection ? localDirection : Vector3.down;
-                    axis.z *= 0.3f;
+                    axis.z *= kernel.bumpZShare;
 
-                    localOffset = axis * (amp * env * Mathf.Cos(u * Mathf.PI * 1.5f));
+                    localOffset = axis * (amp * env * Mathf.Cos(u * Mathf.PI * kernel.bumpCosinePiFactor));
                     rollDegrees = 0f;
                     return;
                 }
@@ -291,7 +298,7 @@ namespace DD.Prototype.CameraSystem
                 {
                     // Rattle: high frequency noise, no preferred direction.
                     float env = 1f - u;
-                    float t = shake.Elapsed * 34f + shake.Seed;
+                    float t = shake.Elapsed * kernel.rattleFrequency + shake.Seed;
                     float nx = Mathf.PerlinNoise(t, shake.Seed * 1.7f) * 2f - 1f;
                     float ny = Mathf.PerlinNoise(shake.Seed * 2.3f, t) * 2f - 1f;
 

@@ -49,6 +49,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             LogAssert.ignoreFailingMessages = false;
+            FeelRuntime.ResetForTests();
+            FeelRuntime.Initialize(null);
         }
 
         private IEnumerator Kur()
@@ -75,6 +77,28 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(pickup, "Pickup yok.");
             _s.PickupaGit(pickup);
             yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "alma");
+        }
+
+        [UnityTest]
+        [Category("WP062")]
+        public IEnumerator StagedNFields_CommitAtRealRunSceneBoundary_BeforeSetup()
+        {
+            FeelRuntime.ResetForTests();
+            FeelRuntime.Initialize(null);
+            FeelConfigData staged = FeelConfig.CreateDefaults();
+            staged.camera.heightMeters = 18f;
+            BudgetCategoryFeelRow impact = System.Array.Find(staged.budgets.categories, row => row.id == "Impact");
+            impact.capacity = 31;
+            Assert.IsTrue(FeelRuntime.QueueAuthored(staged, "run-boundary", "22c8ead", out string error), error);
+            Assert.IsTrue(FeelRuntime.BeginFrame(62062));
+            Assert.IsTrue(FeelRuntime.HasPendingNextRun);
+            Assert.AreNotEqual(18f, FeelRuntime.Current.Camera.heightMeters);
+
+            yield return Kur();
+
+            Assert.AreEqual(18f, FeelRuntime.Current.Camera.heightMeters, 1e-6f);
+            Assert.AreEqual(31, FeelRuntime.Current.Budgets.CapacityFor("Impact", -1));
+            Assert.IsFalse(FeelRuntime.HasPendingNextRun);
         }
 
         // ------------------------------------------------------------------ B · DEC-082 no pickup lock

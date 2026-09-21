@@ -133,11 +133,31 @@ namespace DD.Prototype.PlayerSystem
             get { return _inputOverride ?? InputSourceRegistry.Current; }
         }
 
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            FeelRuntime.Changed += ApplyFeel;
+            ApplyFeel(FeelRuntime.Current);
+        }
+
+        protected override void OnDisable()
+        {
+            FeelRuntime.Changed -= ApplyFeel;
+            base.OnDisable();
+        }
+
         protected override void ApplyConfig(PrototypeConfig config)
         {
             PlayerConfigSection player = config.Player;
             _rotationSpeed = Mathf.Max(0f, player.RotationSpeed);
             _aimPlaneHeight = Mathf.Max(0f, player.AimPlaneHeight);
+            ApplyFeel(FeelRuntime.Current);
+        }
+
+        private void ApplyFeel(FeelSnapshot feel)
+        {
+            _stickAimDistance = feel.Aim.stickPointDistanceMeters;
+            _minAimDistance = feel.Aim.pointerMinDistanceMeters;
         }
 
         private void Start()
@@ -261,8 +281,12 @@ namespace DD.Prototype.PlayerSystem
                 _assistCandidates.Add(z.transform.position + Vector3.up * _aimPlaneHeight);
             }
 
+            FeelSnapshot feel = FeelRuntime.Current;
+            float angle = prefs.AimAssist == InputAimAssistLevel.Light
+                ? feel.AimAssist.maxAngleDegrees * feel.AimAssist.lightAngleShare
+                : feel.AimAssist.maxAngleDegrees;
             _lastAssist = AimAssist.Resolve(transform.position, rawDirection, _assistCandidates,
-                prefs.AimAssistAngleDegrees, prefs.AimAssistDistance);
+                angle, feel.AimAssist.maxDistanceMeters);
             return _lastAssist.Direction;
         }
 

@@ -1,3 +1,4 @@
+using DD.Prototype.Core.Config;
 using UnityEngine;
 
 namespace DD.Prototype.Feedback.Vfx
@@ -92,38 +93,41 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
-        public bool Enabled => _enabled;
-        public float HitStopArmorBreak => _enabled ? Mathf.Clamp(_hitStopArmorBreak, 0f, MaxHitStopSeconds) : 0f;
-        public float HitStopDeath => _enabled ? Mathf.Clamp(_hitStopDeath, 0f, MaxHitStopSeconds) : 0f;
-        public float HitStopMinInterval => Mathf.Max(0f, _hitStopMinInterval);
-        public float ShakeExplosionAmplitude => _enabled ? Mathf.Clamp(_shakeExplosionAmplitude, 0f, MaxShakeAmplitude) : 0f;
-        public float ShakeExplosionSeconds => Mathf.Clamp(_shakeExplosionSeconds, 0f, MaxShakeSeconds);
-        public float ShakePlayerDamageAmplitude => _enabled ? Mathf.Clamp(_shakePlayerDamageAmplitude, 0f, MaxShakeAmplitude) : 0f;
-        public float ShakePlayerDamageSeconds => Mathf.Clamp(_shakePlayerDamageSeconds, 0f, MaxShakeSeconds);
-        public float ShakePlayerDeathAmplitude => _enabled ? Mathf.Clamp(_shakePlayerDeathAmplitude, 0f, MaxShakeAmplitude) : 0f;
-        public float ShakePlayerDeathSeconds => Mathf.Clamp(_shakePlayerDeathSeconds, 0f, MaxShakeSeconds);
-        public float ShakeArmorBreakAmplitude => _enabled ? Mathf.Clamp(_shakeArmorBreakAmplitude, 0f, MaxShakeAmplitude) : 0f;
-        public float ShakeHeavyDeathAmplitude => _enabled ? Mathf.Clamp(_shakeHeavyDeathAmplitude, 0f, MaxShakeAmplitude) : 0f;
+        // WP-062 compatibility facade. Serialized WP-019 fields remain only so existing assets/scenes
+        // deserialize without migration churn; all effective values come from the one FeelRuntime snapshot.
+        private static FeelSnapshot Feel => FeelRuntime.Current;
+        public bool Enabled => Feel.Enabled;
+        public float HitStopArmorBreak => Enabled ? Feel.Impact(ImpactFeelId.ArmorBreak).hitStopSeconds : 0f;
+        public float HitStopDeath => Enabled ? Feel.Impact(ImpactFeelId.HeavyDeath).hitStopSeconds : 0f;
+        public float HitStopMinInterval => Feel.HitStop.minIntervalSeconds;
+        public float ShakeExplosionAmplitude => Enabled ? Feel.Impact(ImpactFeelId.Explosion).shakeAmplitudeMeters : 0f;
+        public float ShakeExplosionSeconds => Feel.Impact(ImpactFeelId.Explosion).shakeSeconds;
+        public float ShakePlayerDamageAmplitude => Enabled ? Feel.Impact(ImpactFeelId.PlayerDamage).shakeAmplitudeMeters : 0f;
+        public float ShakePlayerDamageSeconds => Feel.Impact(ImpactFeelId.PlayerDamage).shakeSeconds;
+        public float ShakePlayerDeathAmplitude => Enabled ? Feel.Impact(ImpactFeelId.PlayerDeath).shakeAmplitudeMeters : 0f;
+        public float ShakePlayerDeathSeconds => Feel.Impact(ImpactFeelId.PlayerDeath).shakeSeconds;
+        public float ShakeArmorBreakAmplitude => Enabled ? Feel.Impact(ImpactFeelId.ArmorBreak).shakeAmplitudeMeters : 0f;
+        public float ShakeHeavyDeathAmplitude => Enabled ? Feel.Impact(ImpactFeelId.HeavyDeath).shakeAmplitudeMeters : 0f;
         /// <summary>WP-022G (S-09 accessibility): the player's flash-reduction multiplier (1 = authored; 0.4 when "reduce flashes" is on). Set by UiSettings; the vignette flash and low-health hold scale by it, blood never does.</summary>
         public static float FlashScale = 1f;
 
-        public float VignetteFlashAlpha => _enabled ? Mathf.Clamp(_vignetteFlashAlpha, 0f, MaxVignetteAlpha) * FlashScale : 0f;
-        public float VignetteLowHealthAlpha => _enabled ? Mathf.Clamp(_vignetteLowHealthAlpha, 0f, MaxVignetteAlpha) * FlashScale : 0f;
-        public float LowHealthFraction => Mathf.Clamp01(_lowHealthFraction);
-        public int VignetteFlashInFrames => Mathf.Max(1, _vignetteFlashInFrames);
-        public int VignetteFlashOutFrames => Mathf.Max(1, _vignetteFlashOutFrames);
+        public float VignetteFlashAlpha => Enabled && Feel.Vignette.enabled ? Feel.Vignette.flashAlpha * FlashScale : 0f;
+        public float VignetteLowHealthAlpha => Enabled && Feel.Vignette.enabled ? Feel.Vignette.lowHealthAlpha * FlashScale : 0f;
+        public float LowHealthFraction => Feel.Vignette.lowHealthFraction;
+        public int VignetteFlashInFrames => Feel.Vignette.flashInFrames;
+        public int VignetteFlashOutFrames => Feel.Vignette.flashOutFrames;
 
         /// <summary>Held time scale of the death beat (1 = no slow-down; the layer off = 1).</summary>
-        public float DeathSlowScale => _enabled ? Mathf.Clamp(_deathSlowScale, MinDeathSlowScale, 1f) : 1f;
-        public float DeathSlowInSeconds => _enabled ? Mathf.Clamp(_deathSlowInSeconds, 0f, 0.5f) : 0f;
-        public float DeathSlowHoldSeconds => _enabled ? Mathf.Clamp(_deathSlowHoldSeconds, 0f, MaxDeathSlowSeconds) : 0f;
-        public float DeathSlowOutSeconds => _enabled ? Mathf.Clamp(_deathSlowOutSeconds, 0f, 1f) : 0f;
+        public float DeathSlowScale => Enabled && Feel.Death.enabled ? Feel.Death.slowScale : 1f;
+        public float DeathSlowInSeconds => Enabled && Feel.Death.enabled ? Feel.Death.slowInSeconds : 0f;
+        public float DeathSlowHoldSeconds => Enabled && Feel.Death.enabled ? Feel.Death.holdSeconds : 0f;
+        public float DeathSlowOutSeconds => Enabled && Feel.Death.enabled ? Feel.Death.outSeconds : 0f;
         /// <summary>The whole beat, unscaled; never longer than <see cref="MaxDeathSlowSeconds"/> + the ramps' caps.</summary>
         public float DeathSlowTotalSeconds => DeathSlowInSeconds + DeathSlowHoldSeconds + DeathSlowOutSeconds;
         /// <summary>Fraction of the camera's offset from the focus removed at the beat's peak (0 = no push-in).</summary>
-        public float DeathCameraPushIn => _enabled ? Mathf.Clamp(_deathCameraPushIn, 0f, MaxDeathPushIn) : 0f;
+        public float DeathCameraPushIn => Enabled && Feel.Death.enabled ? Feel.Death.cameraPushInFraction : 0f;
         /// <summary>Realtime seconds from the death to the Results screen; always past the end of the slow-down so the results hold never captures a slowed clock.</summary>
-        public float DeathResultsDelaySeconds => Mathf.Max(DeathSlowTotalSeconds + 0.1f, Mathf.Clamp(_deathResultsDelaySeconds, 0.5f, MaxDeathResultsDelaySeconds));
+        public float DeathResultsDelaySeconds => Mathf.Max(DeathSlowTotalSeconds + 0.1f, Feel.Death.resultsDelaySeconds);
 
         /// <summary>Tests / A/B: swap the active asset (null restores the Resources asset).</summary>
         public static void Override(GameFeelSettings settings)

@@ -1,3 +1,4 @@
+using DD.Prototype.Core.Config;
 using UnityEngine;
 
 namespace DD.Prototype.Feedback
@@ -26,9 +27,15 @@ namespace DD.Prototype.Feedback
         private Vector3 _anchor;
         private Vector3 _drift;
         private float _popTimer;
+        private float _mergeAnchorBlend;
+        private float _mergePopScale;
+        private float _mergePopSeconds;
+        private float _endScale;
+        private float _fadeStartNormalized;
 
         /// <summary>Identity of the target this number belongs to, for merging. 0 means unowned.</summary>
         public int TargetId { get; private set; }
+        public ulong SnapshotRevision { get; private set; }
 
         /// <summary>Seconds since the last <see cref="Add"/>. The director uses it to decide on merging.</summary>
         public float TimeSinceLastAdd { get; private set; }
@@ -55,11 +62,19 @@ namespace DD.Prototype.Feedback
             _color = color;
             _popTimer = 0f;
             TimeSinceLastAdd = 0f;
-            Lifetime = Mathf.Max(0.2f, lifetime);
+            DamageNumberFeel feel = FeelRuntime.Current.DamageNumbers;
+            SnapshotRevision = FeelRuntime.Current.Revision;
+            Lifetime = feel.lifetimeSeconds;
+            _mergeAnchorBlend = feel.mergeAnchorBlend;
+            _mergePopScale = feel.mergePopScale;
+            _mergePopSeconds = feel.mergePopSeconds;
+            _endScale = feel.endScale;
+            _fadeStartNormalized = feel.fadeStartNormalized;
 
             // PROTOTYPE-ONLY drift: mostly up, slightly sideways so two numbers on
             // neighbouring enemies do not overlap exactly.
-            _drift = new Vector3(Random.Range(-0.35f, 0.35f), 1.4f, Random.Range(-0.2f, 0.2f));
+            _drift = new Vector3(Random.Range(-feel.driftExtentXMeters, feel.driftExtentXMeters),
+                feel.driftRiseMeters, Random.Range(-feel.driftExtentZMeters, feel.driftExtentZMeters));
 
             Refresh();
         }
@@ -69,8 +84,8 @@ namespace DD.Prototype.Feedback
         {
             _amount += amount;
             _color = color;
-            _anchor = Vector3.Lerp(_anchor, worldPosition, 0.35f);
-            _popTimer = 0.12f;
+            _anchor = Vector3.Lerp(_anchor, worldPosition, _mergeAnchorBlend);
+            _popTimer = _mergePopSeconds;
             TimeSinceLastAdd = 0f;
 
             // Adding resets the clock so a sustained burst keeps one number alive.
@@ -83,19 +98,19 @@ namespace DD.Prototype.Feedback
             RestartLife();
         }
 
-        // WP-047: filled at type load (≈ 30 KB once) — the lazy fill put each value's first string into a hit frame
+        // WP-062: bounded table filled at type load — the lazy/unbounded cache put each unseen value's first string into a hit frame
         // (S-02 WP-053 read that as "1,75 allocations per number"; the contract observation showed 97 per first window).
+        private const int NumberTableSize = 10000;
         private static readonly string[] s_numberTable = BuildNumberTable();
+        private const string OverflowNumberText = "9999+";
 
         private static string[] BuildNumberTable()
         {
-            var table = new string[1000];
+            var table = new string[NumberTableSize];
             for (int i = 0; i < table.Length; i++) table[i] = i.ToString();
             return table;
         }
-        private static readonly System.Collections.Generic.Dictionary<int, string> s_bigNumbers = new System.Collections.Generic.Dictionary<int, string>(64);
-
-        /// <summary>Integer text without a per-call allocation (table 0..999, larger values cached on first sight).</summary>
+        /// <summary>Integer text without hit-path allocations or an unbounded cache.</summary>
         public static string NumberText(int value)
         {
             if (value >= 0 && value < s_numberTable.Length)
@@ -103,13 +118,7 @@ namespace DD.Prototype.Feedback
                 return s_numberTable[value];
             }
 
-            if (!s_bigNumbers.TryGetValue(value, out string text))
-            {
-                text = value.ToString();
-                s_bigNumbers[value] = text;
-            }
-
-            return text;
+            return OverflowNumberText;
         }
 
         private void Refresh()
@@ -144,7 +153,7 @@ namespace DD.Prototype.Feedback
 
             TimeSinceLastAdd += Time.deltaTime;
 
-            _tf.position = _anchor + _drift * (t * 0.9f);
+            _tf.position = _anchor + _drift * t;
 
             Camera cam = FeedbackCameraRef.Current;
             if (cam != null)
@@ -156,12 +165,12 @@ namespace DD.Prototype.Feedback
             if (_popTimer > 0f)
             {
                 _popTimer -= Time.deltaTime;
-                pop = 1.25f;
+                pop = _mergePopScale;
             }
 
             // Fade out over the last 40% of the life.
-            float alpha = t < 0.6f ? 1f : 1f - Mathf.InverseLerp(0.6f, 1f, t);
-            _tf.localScale = Vector3.one * (pop * Mathf.Lerp(1f, 0.85f, t));
+            float alpha = t < _fadeStartNormalized ? 1f : 1f - Mathf.InverseLerp(_fadeStartNormalized, 1f, t);
+            _tf.localScale = Vector3.one * (pop * Mathf.Lerp(1f, _endScale, t));
 
             if (_text != null)
             {
@@ -179,6 +188,8 @@ namespace DD.Prototype.Feedback
         protected override void OnDespawned()
         {
             TargetId = 0;
+            SnapshotRevision = 0;
+            base.OnDespawned();
         }
     }
 }

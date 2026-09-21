@@ -99,12 +99,15 @@ namespace DD.Prototype.Weapons
         /// </summary>
         public void PlayFireMotion(float recoilKick, float recoverySeconds, float upShare)
         {
+            RecoilFeel feel = FeelRuntime.Current.Recoil;
             float kick = Mathf.Max(0f, recoilKick);
             float recovery = Mathf.Clamp(recoverySeconds, 0.02f, 1f);
             _kick += kick;
             _kickVelocity -= kick / recovery;
-            _returnSpeedActive = SpringStiffness / (recovery * recovery);
+            _returnSpeedActive = feel.springCoefficient / (recovery * recovery);
             _pitchScale = Mathf.Clamp01(upShare) / DefaultUpShare;
+            _activeDamping = feel.damping;
+            _activePitchPerKick = feel.pitchDegreesPerMeter;
             _actionTimer = _actionCycleTime;
         }
 
@@ -114,6 +117,8 @@ namespace DD.Prototype.Weapons
         private const float SpringStiffness = 0.25f;
         private float _returnSpeedActive = -1f;
         private float _pitchScale = 1f;
+        private float _activeDamping = 0.82f;
+        private float _activePitchPerKick = 90f;
 
         /// <summary>The recoil spring stiffness in use (serialized default until a WP-042 fire motion set one; tests).</summary>
         public float ActiveReturnSpeed => _returnSpeedActive > 0f ? _returnSpeedActive : _returnSpeed;
@@ -235,9 +240,15 @@ namespace DD.Prototype.Weapons
             // Spring toward rest. Explicit integration is plenty at 50-60 Hz and stays
             // frame-rate independent because both terms are scaled by dt.
             float returnSpeed = ActiveReturnSpeed;
-            _kickVelocity += -_kick * returnSpeed * dt;
-            _kickVelocity *= Mathf.Clamp01(1f - _damping * dt * returnSpeed * 0.25f);
-            _kick += _kickVelocity * dt;
+            float remaining = dt;
+            while (remaining > 0f)
+            {
+                float step = Mathf.Min(1f / 120f, remaining);
+                _kickVelocity += -_kick * returnSpeed * step;
+                _kickVelocity *= Mathf.Clamp01(1f - _activeDamping * step * returnSpeed * 0.25f);
+                _kick += _kickVelocity * step;
+                remaining -= step;
+            }
 
             if (Mathf.Abs(_kick) < 0.0005f && Mathf.Abs(_kickVelocity) < 0.0005f)
             {
@@ -253,7 +264,7 @@ namespace DD.Prototype.Weapons
             }
 
             _body.localPosition = _bodyRestPosition - new Vector3(0f, 0f, _kick);
-            _body.localRotation = _bodyRestRotation * Quaternion.Euler(-_kick * _pitchPerKick * _pitchScale - tilt, 0f, 0f);
+            _body.localRotation = _bodyRestRotation * Quaternion.Euler(-_kick * _activePitchPerKick * _pitchScale - tilt, 0f, 0f);
         }
 
         private void UpdateAction(float dt)
