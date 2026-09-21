@@ -146,6 +146,7 @@ namespace DD.Prototype.Audio
         {
             if (s_instance != null)
             {
+                s_instance.SynchronizeRunPhase();
                 return s_instance;
             }
 
@@ -212,6 +213,7 @@ namespace DD.Prototype.Audio
 
             _ambience.Start();
             _music.Start();
+            SynchronizeRunPhase();
 
             // One line per boot for the Player log (WP-021 smoke evidence): what is wired.
             Debug.Log("[Audio] ready · " + _bridge.Describe() + " · " + _library.DescribeMemory()
@@ -452,6 +454,34 @@ namespace DD.Prototype.Audio
         }
 
         // ================================================================== run flow
+
+        /// <summary>
+        /// Adopts the authoritative phase when this persistent director is created or found
+        /// after a Run scene has already advanced. The event path remains the normal path;
+        /// this closes only the late-subscriber gap and deliberately skips its one-shot cues.
+        /// </summary>
+        private void SynchronizeRunPhase()
+        {
+            RunDirector run = RunDirector.Instance;
+            if (run == null)
+            {
+                return;
+            }
+
+            RunPhase phase = run.Phase;
+            _ambience.SetPhase(phase);
+            _music.SetPhase(phase);
+
+            AudioSnapshot snapshot = SnapshotFor(phase);
+            if (_paused)
+            {
+                _snapshotBeforePause = snapshot;
+            }
+            else
+            {
+                _bridge.Transition(snapshot, 0f);
+            }
+        }
 
         private void OnRunCue(RunAudioCue cue)
         {
