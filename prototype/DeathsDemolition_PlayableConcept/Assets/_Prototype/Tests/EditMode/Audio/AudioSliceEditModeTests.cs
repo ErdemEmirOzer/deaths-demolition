@@ -595,6 +595,10 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(SurfaceKind.Wood, DD.Art.Ap005SurfaceTags.FamilySurface["bridge_segment"]);
             Assert.AreEqual(SurfaceKind.Water, DD.Art.Ap005SurfaceTags.FamilySurface["pond_water_surface"]);
             Assert.AreEqual(SurfaceKind.Dirt, DD.Art.Ap005SurfaceTags.FamilySurface["ground"]);
+            Assert.AreEqual(SurfaceKind.Wood, DD.Art.Ap005SurfaceTags.FamilySurface["drying_rack_cloth"]);
+            Assert.AreEqual(SurfaceKind.Wood, DD.Art.Ap005SurfaceTags.FamilySurface["well_head_tsurube"]);
+            Assert.AreEqual(SurfaceKind.Wood, DD.Art.Ap005SurfaceTags.FamilySurface["ofuda_post"]);
+            Assert.AreEqual(SurfaceKind.Stone, DD.Art.Ap005SurfaceTags.FamilySurface["breakable_sake_jar"]);
             int stone = 0;
             foreach (DD.Art.WorldPlacementAsset.Route r in placement.routes) if (r.surface == "Stone") stone++;
             Assert.Greater(stone, 0, "Taş rota yok: zemin iyileştirmesi çalışamaz");

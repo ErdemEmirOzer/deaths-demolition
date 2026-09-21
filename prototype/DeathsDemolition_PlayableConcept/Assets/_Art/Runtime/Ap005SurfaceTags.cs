@@ -53,7 +53,10 @@ namespace DD.Art
             { "shore_debris", SurfaceKind.Wood },
             { "breakable_lantern_stone", SurfaceKind.Stone }, { "breakable_lantern_paper", SurfaceKind.Wood }, { "breakable_planter", SurfaceKind.Stone },
             { "breakable_fence_panel", SurfaceKind.Wood }, { "breakable_strawbale", SurfaceKind.Foliage }, { "breakable_bench", SurfaceKind.Wood },
-            { "breakable_sign", SurfaceKind.Wood }, { "breakable_shoji", SurfaceKind.Wood }
+            { "breakable_sign", SurfaceKind.Wood }, { "breakable_shoji", SurfaceKind.Wood },
+            // WP-038I · AP-017 Phase 2: dominant blocking material (cloth/paper props follow their wood frame; ceramic follows stone).
+            { "drying_rack_cloth", SurfaceKind.Wood }, { "well_head_tsurube", SurfaceKind.Wood },
+            { "ofuda_post", SurfaceKind.Wood }, { "breakable_sake_jar", SurfaceKind.Stone }
         };
 
         /// <summary>Fallback when a family is not in the table (counted in <see cref="UnknownFamilies"/>).</summary>
