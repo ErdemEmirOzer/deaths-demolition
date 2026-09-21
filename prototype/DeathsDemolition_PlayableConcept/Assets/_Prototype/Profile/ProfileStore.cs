@@ -506,7 +506,10 @@ namespace DD.Prototype.Profile
 
                 // 1 ---- serialize and prove the text round-trips before it touches the disk
                 Hook(stage);
-                json = JsonUtility.ToJson(data, true);
+                // The profile is machine-owned. Compact JSON keeps the fixed-size
+                // lineage+ordinal replay state O(1) without pretty-print whitespace
+                // amplifying finite entitlement-list growth.
+                json = JsonUtility.ToJson(data, false);
                 ProfileData echo;
                 if (ProfileMigration.Parse(json, out echo) != ProfileLoadStatus.Ok || !echo.IsValid())
                 {
