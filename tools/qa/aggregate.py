@@ -38,6 +38,15 @@ def xml_counts(path):
         return None
 
 
+def testcase_passed(path, name_suffix):
+    try:
+        root = ET.parse(path).getroot()
+        matches = [case for case in root.iter("test-case") if (case.get("fullname") or case.get("name") or "").endswith(name_suffix)]
+        return bool(matches) and all((case.get("result") or "").lower() == "passed" for case in matches), len(matches)
+    except Exception:
+        return False, 0
+
+
 def load1(path):
     try:
         with open(path) as f:
@@ -72,11 +81,12 @@ def main():
         build_info = json.dumps(keep, separators=(",", ":"))[:240]
 
     # ---- EditMode QA (spawn-mix simulator, schema, bot mapping)
-    em = xml_counts(os.path.join(out, "editmode-qa.xml"))
+    em_path = os.environ.get("DD_EXTERNAL_EDITMODE_XML") or os.path.join(out, "editmode-qa.xml")
+    em = xml_counts(em_path)
     if em:
         total, passed, failed, skipped, inconclusive = em
         gates.append(gate("editmode.qa", failed == 0 and total > 0 and skipped == 0 and inconclusive == 0,
-                          f"{passed}/{total}", "all green, skipped 0", "report schema + bot mapping + virtual gamepad + spawn-mix slice test", "editmode-qa.xml"))
+                          f"{passed}/{total}", "all green, skipped 0", "QA tests or supplied full EditMode suite", em_path))
     else:
         gates.append(gate("editmode.qa", False, "missing", "editmode-qa.xml", "step skipped or crashed", "editmode-qa.xml"))
 
@@ -143,16 +153,23 @@ def main():
         gates.append(gate("readability.driver", False, "missing", "", "readability/qa-report.json not written", "readability/"))
 
     # ---- DEC-077 armour form test (DD.Art PlayMode)
-    pm = xml_counts(os.path.join(out, "playmode-armor.xml"))
+    pm_path = os.environ.get("DD_EXTERNAL_PLAYMODE_XML") or os.path.join(out, "playmode-armor.xml")
+    pm = xml_counts(pm_path)
     if pm:
-        total, passed, failed, skipped, inconclusive = pm
-        gates.append(gate("readability.armorForm.dec077", failed == 0 and total > 0, f"{passed}/{total}", ">= 30 % + band min 0.08 / mean 0.12 (ArmorTests.Okunabilirlik)", "", "playmode-armor.xml"))
+        ok, matches = testcase_passed(pm_path, "ArmorTests.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet")
+        gates.append(gate("readability.armorForm.dec077", ok, f"{matches} matching test(s)", ">= 30 % + band min 0.08 / mean 0.12 (ArmorTests.Okunabilirlik)", "", pm_path))
     else:
         gates.append(gate("readability.armorForm.dec077", False, "not run", "ArmorTests.Okunabilirlik", "quick mode skips it; full closure runs it", "playmode-armor.xml"))
 
+    if os.environ.get("DD_REQUIRE_ULTRA_EVIDENCE") == "1":
+        ultra = [g for g in gates if str(g.get("id", "")).endswith("tierEnvContrast.Ultra")]
+        gates.append(gate("readability.ultraEvidence", bool(ultra) and all(g.get("pass") for g in ultra),
+                          f"{len(ultra)} measured gate(s)", ">= 1 passing Ultra environment-contrast measurement",
+                          "existing QaReadabilityGate observation only; no gameplay/visual mutation", "readability/qa-report.json"))
+
     report = {
         "schema": "dd-qa-report-v1",
-        "package": "WP-026",
+        "package": os.environ.get("DD_QA_PACKAGE", "WP-026"),
         "driver": "aggregate",
         "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "buildInfo": build_info,

@@ -1,5 +1,13 @@
 # tools/qa — M3 kapanış regresyonu (WP-026)
 
+M4 RC tek girişi (WP-061): `tools/qa/rc.sh [out-dir]`. Varsayılan kapı tam EditMode + PlayMode,
+release build/smoke, dev-player M3 regresyonu, 12-round bot soak, Ultra round-12 kontrast ölçümü,
+C2-C4 pencere modu sürücüsü ve bütün üretilen loglarla yeni macOS crash raporlarının taramasıdır.
+İlk hata pahalı sonraki adımları durdurur; denenmiş bütün adımlar `stages/<adım>/` altında kalır ve
+`rc-report.json` / `rc-report.txt` eksik kapıları açıkça FAIL gösterir. `ProjectIntegrityTests` veya
+planning belgeleri bu araç tarafından değiştirilmez. Ürün engeline rağmen bağımsız tanı kanıtlarını
+tamamlamak için `--diagnostic-continue` kullanılır; nihai karar yine FAIL kalır.
+
 Tek komut: `tools/qa/regression.sh <out-dir> [--rounds 8] [--seed 26] [--perf-runs 3] [--window 60] [--quick] [--skip-build] [--skip-tests]`
 
 Adımlar (her biri `<out-dir>` altına kanıt bırakır; `timeline.txt` sırayı tutar):
