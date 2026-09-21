@@ -515,6 +515,10 @@ namespace DD.Prototype.UI
             RectTransform pipRect = (RectTransform)_specialPip.transform;
             pipRect.sizeDelta = new Vector2(40f, 40f);
             pipRect.anchoredPosition = Vector2.zero;
+            // Runtime blink tint is applied through CanvasRenderer. Keep the Graphic's
+            // vertex colour neutral so the renderer tint is the exact palette colour,
+            // rather than palette × palette.
+            _specialPip.color = Color.white;
             _specialPip.gameObject.SetActive(false);
 
             _specialTimer = UiFactory.Numeric(
@@ -738,7 +742,7 @@ namespace DD.Prototype.UI
 
             _markerHalo = UiFactory.NewImage("Halo", _marker, UiColor.SurfaceInset, UiSprites.Disc);
             UiFactory.Fill((RectTransform)_markerHalo.transform);
-            SetAlpha(_markerHalo, 0.65f);
+            _markerHalo.color = Color.white;
 
             // AP-010 beacon marker (greyscale diamond, DEC-053): tinted with the beacon
             // reserve colour at runtime. The procedural ring/disc pair is the fallback.
@@ -746,9 +750,11 @@ namespace DD.Prototype.UI
             _markerRing = UiFactory.NewImage("Ring", _marker, UiColor.StateGold, artMarker ? UiArt.HudMarker() : UiSprites.Ring);
             UiFactory.Fill((RectTransform)_markerRing.transform);
             _markerRing.preserveAspect = true;
+            _markerRing.color = Color.white;
 
             _markerCore = UiFactory.NewImage("Core", _marker, UiColor.StateGold, UiSprites.Disc);
             UiFactory.Fill((RectTransform)_markerCore.transform, artMarker ? 22f : 18f);
+            _markerCore.color = Color.white;
 
             _markerArrow = (RectTransform)UiFactory.NewImage(
                 "Arrow", _marker, UiColor.StateGold, UiSprites.Chevron).transform;
@@ -761,6 +767,7 @@ namespace DD.Prototype.UI
 
             _markerLabel = UiFactory.Label(
                 "Distance", _marker, string.Empty, UiType.Label, UiColor.StateGold, TextAnchor.UpperCenter);
+            _markerLabel.color = Color.white;
             RectTransform labelRect = (RectTransform)_markerLabel.transform;
             labelRect.anchorMin = new Vector2(0.5f, 0f);
             labelRect.anchorMax = new Vector2(0.5f, 0f);
@@ -1509,7 +1516,7 @@ namespace DD.Prototype.UI
             Color colour = Color.Lerp(
                 UiTokens.Get(UiColor.StateGold), UiTokens.Get(UiColor.StateDanger), Mathf.Clamp01(urgency));
             colour.a = blink;
-            _specialPip.color = colour;
+            _specialPip.canvasRenderer.SetColor(colour);
 
             float scale = Mathf.Lerp(0.72f, 1.15f, blink);
             _specialPip.rectTransform.localScale = new Vector3(scale, scale, 1f);
@@ -1628,7 +1635,9 @@ namespace DD.Prototype.UI
                 // The halo is the marker's backing, not part of the blink: it is what
                 // keeps the pip legible against a bright frame at the dark end of the
                 // cycle. It breathes a little so the whole marker still feels alive.
-                SetAlpha(_markerHalo, Mathf.Lerp(0.45f, 0.75f, blink));
+                Color haloColour = UiTokens.Get(UiColor.SurfaceInset);
+                haloColour.a = Mathf.Lerp(0.45f, 0.75f, blink);
+                _markerHalo.canvasRenderer.SetColor(haloColour);
             }
 
             float markerScale = Mathf.Lerp(0.86f, 1.14f, blink);
@@ -1644,7 +1653,7 @@ namespace DD.Prototype.UI
                 _markerLabel.text = metres + " m";
             }
 
-            _markerLabel.color = markerColour;
+            _markerLabel.canvasRenderer.SetColor(markerColour);
         }
 
         private static void ApplyMarkerBlink(Image image, Color colour, float blink, float weight)
@@ -1656,7 +1665,7 @@ namespace DD.Prototype.UI
 
             Color c = colour;
             c.a = Mathf.Lerp(1f - weight, 1f, blink);
-            image.color = c;
+            image.canvasRenderer.SetColor(c);
         }
 
         // ================================================================== banners
