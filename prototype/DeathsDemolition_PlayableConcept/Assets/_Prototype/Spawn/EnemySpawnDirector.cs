@@ -301,12 +301,17 @@ namespace DD.Prototype.Spawn
         /// Puts a spawn director in the scene if there is not one. The run installer's
         /// hook; mirrors RunDirector.EnsureExists so the two are created the same way.
         /// </summary>
-        public static EnemySpawnDirector EnsureExists()
+        public static EnemySpawnDirector EnsureExists(bool replaceExisting = false)
         {
-            if (Instance != null)
+            if (Instance != null && !replaceExisting)
             {
                 return Instance;
             }
+
+            // Run -> Run can install the new world after the old RunDirector was disabled
+            // but before this director receives OnDisable. The composition root identifies
+            // that orphan and requests takeover; the old OnDisable cannot clear the new slot.
+            Instance = null;
 
             var go = new GameObject("EnemySpawnDirector");
             return go.AddComponent<EnemySpawnDirector>();

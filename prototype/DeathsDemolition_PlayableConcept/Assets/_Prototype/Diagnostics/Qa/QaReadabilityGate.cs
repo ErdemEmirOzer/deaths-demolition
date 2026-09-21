@@ -111,6 +111,8 @@ namespace DD.Prototype.Qa
             // contrast and raw ΔV, pixels; -1 = tier not on screen
             public float[] tierEnvContrast, tierVsStandardContrast, tierVsStandardDeltaV, tierArmouredShare;
             public int[] tierPixels, tierOnScreen;
+            public int captureTier = -1;                  // highest non-Standard tier alive when this round's capture was scheduled
+            public bool captureTierInFrame;               // exact pre-capture viewport/range observation
             public int standard, special, elite, ultra;
             public int helmet, body, leg, bare;
             public int fadedGarments, garments, minoCape, bald;
@@ -212,16 +214,24 @@ namespace DD.Prototype.Qa
                         yield return null;
                     }
 
-                    // S-03 (WP-054 / DEC-081): non-Standard tiers spawn off-camera and become visible as they close in — same rule
-                    // as the bot's tier frames: wait until a Special/Elite/Ultra body is within 10 m, or 25 s
-                    t0 = Time.realtimeSinceStartup;
-                    while (TierAlive() && !TierNear(rig.transform.position, 10f) && Time.realtimeSinceStartup - t0 < 25f)
+                    // S-03 (WP-054 / DEC-081): wait for the highest tier that is already alive,
+                    // rather than letting a nearer lower tier end the wait. This changes only
+                    // when the evidence frame is taken; the spawn plan and debut policy stay put.
+                    bool hasCaptureTier = TryHighestTierAlive(out EnemyTier captureTier);
+                    Camera captureCamera = ResolveCamera();
+                    if (hasCaptureTier)
                     {
-                        yield return null;
+                        t0 = Time.realtimeSinceStartup;
+                        while (!TierInFrame(captureTier, rig.transform.position, captureCamera) && Time.realtimeSinceStartup - t0 < 25f)
+                        {
+                            yield return null;
+                        }
                     }
 
                     yield return new WaitForSeconds(SettleSeconds);
                     RoundResult rr = Measure(round, rig);
+                    rr.captureTier = hasCaptureTier ? (int)captureTier : -1;
+                    rr.captureTierInFrame = !hasCaptureTier || TierInFrame(captureTier, rig.transform.position, captureCamera);
                     rr.nearPlayer = NearCount(rig.transform.position, NearRadius);
                     yield return MeasureSkins(rr, rig);
                     _summary.rounds.Add(rr);
@@ -232,22 +242,37 @@ namespace DD.Prototype.Qa
                 Finish();
             }
 
-            private static bool TierAlive()
+            private static bool TryHighestTierAlive(out EnemyTier tier)
             {
-                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
-                for (int i = 0; i < live.Count; i++) if (live[i] != null && live[i].IsAlive && live[i].Tier != EnemyTier.Standard) return true;
-                return false;
-            }
-
-            private static bool TierNear(Vector3 from, float radius)
-            {
+                tier = EnemyTier.Standard;
+                bool found = false;
                 IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
                 for (int i = 0; i < live.Count; i++)
                 {
                     ZombieEnemy z = live[i];
-                    if (z == null || !z.IsAlive || z.Tier == EnemyTier.Standard) continue;
+                    if (z == null || !z.IsAlive || z.Tier == EnemyTier.Standard || (found && (int)z.Tier <= (int)tier)) continue;
+                    tier = z.Tier;
+                    found = true;
+                }
+
+                return found;
+            }
+
+            private static bool TierInFrame(EnemyTier tier, Vector3 from, Camera cam)
+            {
+                if (cam == null) return false;
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; i < live.Count; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z == null || !z.IsAlive || z.Tier != tier) continue;
                     Vector3 d = z.transform.position - from; d.y = 0f;
-                    if (d.sqrMagnitude <= radius * radius) return true;
+                    if (d.sqrMagnitude > 10f * 10f) continue;
+                    float height = ZombieBodyBuilder.StandHeight;
+                    CharacterController cc = z.GetComponent<CharacterController>();
+                    if (cc != null && cc.height > 0.1f) height = cc.height;
+                    Vector3 vp = cam.WorldToViewportPoint(z.transform.position + Vector3.up * (height * 0.5f));
+                    if (vp.z > 0f && vp.x >= 0f && vp.x <= 1f && vp.y >= 0f && vp.y <= 1f && vp.z <= OcclusionMaxDistance) return true;
                 }
                 return false;
             }
@@ -498,7 +523,8 @@ namespace DD.Prototype.Qa
                     pZ &= r.playerZombieDeltaV[s] >= ReadabilityThresholds.CapsuleContrastMin;
                 }
 
-                r.pass = occl && zEnv && pEnv && pZ && r.alive > 0 && r.zombiePixels > 0;
+                bool capture = r.captureTier < 0 || (r.captureTierInFrame && r.tierPixels != null && r.captureTier < r.tierPixels.Length && r.tierPixels[r.captureTier] > 0);
+                r.pass = occl && zEnv && pEnv && pZ && capture && r.alive > 0 && r.zombiePixels > 0;
                 r.note = "alive " + r.alive + " near " + r.nearPlayer + " onScreen " + r.onScreen + " occluded>50% " + r.occludedOverHalf +
                          " px player/zombie " + r.playerPixels + "/" + r.zombiePixels +
                          " zombieCrowd contrast " + QaArgs.F(r.zombieEnvDeltaVMean, 3) + " (ΔV " + QaArgs.F(r.zombieEnvDeltaVMin, 3) + ", shadow/AO dropped " + QaArgs.F(r.zombieShadowShare * 100f, 0) + " %)" +
@@ -806,6 +832,13 @@ namespace DD.Prototype.Qa
                     RoundResult r = _summary.rounds[i];
                     sb.Append(r.pass ? "PASS " : "FAIL ").Append("round-").Append(r.round.ToString("D2")).Append(" | ").Append(r.note).Append('\n');
                     string src = "readability-r" + r.round.ToString("D2") + ".json";
+                    if (r.captureTier >= 1 && r.captureTier < 4)
+                    {
+                        string captureName = new[] { "Standard", "Special", "Elite", "Ultra" }[r.captureTier];
+                        int capturePixels = r.tierPixels != null ? r.tierPixels[r.captureTier] : 0;
+                        report.Add("readability.r" + r.round + ".capture." + captureName, r.captureTierInFrame && capturePixels > 0,
+                            capturePixels + " px", "> 0 px", "highest existing tier scheduled into the measurement frame", src);
+                    }
                     report.Add("readability.r" + r.round + ".occlusion", r.occludedOverHalf == 0 && r.alive > 0, r.occludedOverHalf + "/" + r.onScreen + " on screen", "== 0 over " + QaArgs.F(ReadabilityThresholds.OcclusionRatioMax * 100f, 0) + " %", "capsule 5-ray occlusion", src);
                     report.Add("readability.r" + r.round + ".zombieCrowdContrast", r.zombiePixels == 0 || r.zombieEnvDeltaVMean >= ReadabilityThresholds.CapsuleContrastMin, QaArgs.F(r.zombieEnvDeltaVMean, 3) + " (ΔV " + QaArgs.F(r.zombieEnvDeltaVMin, 3) + ")", ">= " + QaArgs.F(ReadabilityThresholds.CapsuleContrastMin) + " (WP-016 method)", r.onScreen + " on screen, " + r.zombiePixels + " px, FigureDiff (WP-038G shared rule) dropped " + QaArgs.F(r.zombieShadowShare * 100f, 0) + " % shadow/AO px", src);
                     for (int s = 0; r.playerEnvDeltaV != null && s < r.playerEnvDeltaV.Length; s++)

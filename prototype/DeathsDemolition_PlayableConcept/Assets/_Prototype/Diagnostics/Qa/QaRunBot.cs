@@ -194,6 +194,7 @@ namespace DD.Prototype.Qa
             private bool _hasGoal;
             private bool _hunting;
             private bool _relocating;
+            private bool _forcedRelocation;
             private float _relocateSince;
             private Collider _closeBlocker;
             private bool _lastMuzzleClear, _lastEyeClear;
@@ -626,7 +627,7 @@ namespace DD.Prototype.Qa
                 {
                     // WP-044 / WP-047E finding (instant PlayerDeath at run start): where, how much, from which direction
                     PlayerRig rig = PlayerRegistry.Primary;
-                    Log("damage #" + _summary.totalDamageEvents + " t+" + QaArgs.F(_runStart >= 0f ? Time.unscaledTime - _runStart : -1f, 2) + "s amount=" + QaArgs.F(info.AppliedAmount, 1) +
+                    Log("damage #" + _summary.totalDamageEvents + " t+" + QaArgs.F(_runStart >= 0f ? Time.unscaledTime - _runStart : -1f, 2) + "s source=" + (info.SourceId ?? "<null>") + " amount=" + QaArgs.F(info.AppliedAmount, 1) +
                         " hp " + QaArgs.F(info.HealthBefore, 1) + "→" + QaArgs.F(info.HealthAfter, 1) + "/" + QaArgs.F(info.MaxHealth, 0) + " at=" + V(info.WorldPoint) + " dir=" + V(info.HitDirection) +
                         " player=" + (rig != null ? V(rig.transform.position) : "n/a") + " onNavMesh=" + (rig != null && NavMesh.SamplePosition(rig.transform.position, out NavMeshHit nh, 0.5f, NavMesh.AllAreas) ? "1" : "0"));
                 }
@@ -829,6 +830,7 @@ namespace DD.Prototype.Qa
                         if (Time.unscaledTime - _blockedSince > 2.5f && !_relocating)
                         {
                             _relocating = true;   // walls/planters keep eating the shots: walk to the open centre of the arena
+                            _forcedRelocation = false;
                             _relocateSince = Time.unscaledTime;
                             _goal = _arenaCentre;
                             _hasGoal = true;
@@ -842,11 +844,19 @@ namespace DD.Prototype.Qa
                         _blockedSince = -1f;
                         // the line is clear again (or the centre is reached, or 8 s passed): relocation is over — run2 showed a
                         // relocation that never ended, which demoted every target and put the bot into a reload loop
-                        if (_relocating && (muzzleClear || (pos - _arenaCentre).sqrMagnitude < 9f || Time.unscaledTime - _relocateSince > 8f)) _relocating = false;
+                        if (_relocating && ((!_forcedRelocation && muzzleClear) || (pos - _goal).sqrMagnitude < 9f || Time.unscaledTime - _relocateSince > 8f))
+                        {
+                            _relocating = false;
+                            _forcedRelocation = false;
+                        }
                     }
                 }
 
-                if (_relocating && (target == null || Time.unscaledTime - _relocateSince > 8f)) _relocating = false;
+                if (_relocating && (target == null || Time.unscaledTime - _relocateSince > 8f))
+                {
+                    _relocating = false;
+                    _forcedRelocation = false;
+                }
 
                 WeaponController wc = WeaponRegistry.ActiveController;
                 ClassicWeaponRuntime classic = wc != null ? wc.Classic : null;
@@ -890,8 +900,27 @@ namespace DD.Prototype.Qa
                     o.WaypointDirection = wpDir;
                 }
 
-                if (_relocating) { o.HasTarget = o.HasTarget && o.TargetDistance < QaBotBrain.PreferredDistanceMin; }   // keep only an emergency retreat; otherwise walk the path
                 QaBotCommand cmd = _brain.Decide(o);
+                // A stall recovery must actually follow the centre path. A close target keeps the
+                // brain in Retreat/Engage, whose movement ignored the relocation waypoint and
+                // left the bot pinned; preserve its aim/fire decision but replace that move.
+                if (_relocating)
+                {
+                    Vector3 recoveryDirection = o.HasWaypoint ? o.WaypointDirection : _goal - pos;
+                    recoveryDirection.y = 0f;
+                    if (_forcedRelocation && Time.unscaledTime - _relocateSince < 1.25f)
+                    {
+                        // A direct centre path can keep pushing into the same physical prop or
+                        // boundary that caused the measured stall. One deterministic side-step
+                        // clears that contact before following the unchanged centre path.
+                        float turn = (_summary.stuckRecoveries & 1) == 0 ? 90f : -90f;
+                        recoveryDirection = Quaternion.Euler(0f, turn, 0f) * recoveryDirection;
+                    }
+                    if (recoveryDirection.sqrMagnitude > 1e-4f)
+                    {
+                        cmd.Move = QaBotBrain.WorldToStick(recoveryDirection.normalized, fwd, right);
+                    }
+                }
                 if (cmd.Move.sqrMagnitude > 0.01f)
                 {
                     Vector3 wantMove = QaBotBrain.StickToWorld(cmd.Move, fwd, right);
@@ -968,7 +997,7 @@ namespace DD.Prototype.Qa
                     {
                         _stuckTimer = 0f;
                         _summary.stuckRecoveries++;
-                        PickNewGoal();
+                        BeginStallRecovery(pos, nearby, "patrol");
                     }
                     else if (_stuckTimer > 1.5f && cmd.Mode != QaBotMode.Patrol && !_relocating)
                     {
@@ -976,15 +1005,23 @@ namespace DD.Prototype.Qa
                         // NavMesh toward the open centre; the relocation path keeps firing at anything in range
                         _stuckTimer = 0f;
                         _summary.stuckRecoveries++;
-                        _relocating = true;
-                        _relocateSince = Time.unscaledTime;
-                        _goal = _arenaCentre;
-                        _hasGoal = true;
-                        _hunting = false;
-                        _lastPathTime = -999f;
-                        Log("breakout pos=" + V(pos) + " near=" + nearby);
+                        BeginStallRecovery(pos, nearby, "combat");
                     }
                 }
+            }
+
+            private void BeginStallRecovery(Vector3 pos, int nearby, string mode)
+            {
+                _relocating = true;
+                // A measured movement stall needs a committed path; otherwise a clear muzzle
+                // line cancels the recovery on its next frame before any movement is applied.
+                _forcedRelocation = true;
+                _relocateSince = Time.unscaledTime;
+                _goal = _arenaCentre;
+                _hasGoal = true;
+                _hunting = false;
+                _lastPathTime = -999f;
+                Log("stall-recovery mode=" + mode + " pos=" + V(pos) + " near=" + nearby + " goal=" + V(_goal));
             }
 
             private void SampleAllocation()

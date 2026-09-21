@@ -115,7 +115,11 @@ namespace DD.Prototype.Rounds
             EnemySystemHost.EnsureExists();
 
             // ------------------------------------------------------------------ 4. spawn
-            EnemySpawnDirector spawn = EnemySpawnDirector.EnsureExists();
+            // Same-scene reload teardown is not ordered component-by-component: the old
+            // RunDirector can be gone while its spawn director static still points at the
+            // unloading world. In that exact orphaned state, let the new scene take over.
+            bool replaceOrphanedSpawn = EnemySpawnDirector.Instance != null && RunDirector.Instance == null;
+            EnemySpawnDirector spawn = EnemySpawnDirector.EnsureExists(replaceOrphanedSpawn);
             if (spawn != null && spawn.EnemyPrefab == null)
             {
                 // THE HAND-OFF. EnemyFactory owns the template, EnemySpawnDirector owns the

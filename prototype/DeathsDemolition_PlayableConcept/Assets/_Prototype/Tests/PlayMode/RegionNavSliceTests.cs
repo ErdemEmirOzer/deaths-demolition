@@ -68,6 +68,30 @@ namespace DD.Prototype.Tests.PlayMode
             return c;
         }
 
+        private static Vector3 GovdeAcikligindaYerde(Vector3 p, float clearance)
+        {
+            Vector3 centre = Yerde(p);
+            Vector3 best = centre;
+            float bestEdge = -1f;
+            for (int ring = 0; ring <= 2; ring++)
+            {
+                float radius = ring * 1.5f;
+                int directions = ring == 0 ? 1 : 8;
+                for (int d = 0; d < directions; d++)
+                {
+                    float angle = directions == 1 ? 0f : d * Mathf.PI * 2f / directions;
+                    Vector3 probe = centre + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+                    if (!UnityEngine.AI.NavMesh.SamplePosition(probe, out UnityEngine.AI.NavMeshHit sample, 0.75f, UnityEngine.AI.NavMesh.AllAreas)) continue;
+                    if (!UnityEngine.AI.NavMesh.FindClosestEdge(sample.position, out UnityEngine.AI.NavMeshHit edge, UnityEngine.AI.NavMesh.AllAreas)) continue;
+                    if (edge.distance > bestEdge) { best = sample.position; bestEdge = edge.distance; }
+                }
+
+                if (bestEdge >= clearance) break;
+            }
+
+            return best;
+        }
+
         private ZombieEnemy Dogur(EnemyTier tier, Vector3 p)
         {
             ZombieEnemy z = EnemyFactory.Spawn(tier, 6, Yerde(p), Quaternion.identity);
@@ -239,11 +263,18 @@ namespace DD.Prototype.Tests.PlayMode
             Vector3[] bolgeler = { new Vector3(0f, 0f, -3f), new Vector3(0f, 0f, 24f), new Vector3(26f, 0f, 0f), new Vector3(4f, 0f, -43f), new Vector3(-33f, 0f, 0f) };
             string[] adlar = { "Center", "North", "East", "South", "West" };
             var bodies = new List<ZombieEnemy>();
-            for (int i = 0; i < 40; i++) bodies.Add(Dogur((EnemyTier)(i % 4 == 3 ? 2 : 0), new Vector3(-12f + (i % 10) * 2.5f, 0f, 8f + (i / 10) * 2.5f)));
+            for (int i = 0; i < 40; i++)
+            {
+                EnemyTier tier = (EnemyTier)(i % 4 == 3 ? 2 : 0);
+                float radius = PrototypeConfig.Active.Enemies.Find(tier).BodyRadius;
+                Vector3 requested = new Vector3(-12f + (i % 10) * 2.5f, 0f, 8f + (i / 10) * 2.5f);
+                bodies.Add(Dogur(tier, GovdeAcikligindaYerde(requested, radius + 0.15f)));
+            }
             yield return null;
             Assert.AreEqual(40, ZombieEnemy.Live.Count);
             var gcAlloc = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame");
             var lastPos = new Vector3[40]; var stillSince = new float[40];
+            var stuckByBody = new int[40]; var stuckReported = new bool[40];
             for (int i = 0; i < 40; i++) { lastPos[i] = bodies[i].transform.position; stillSince[i] = Time.realtimeSinceStartup; }
             int frames = 0, stuckSamples = 0, memberSamples = 0; double costSum = 0, crowdSum = 0, navSum = 0; long gcSum = 0; int gcFrames = 0; int stuckFramesMax = 0;
             var rapor = new System.Text.StringBuilder();
@@ -269,7 +300,26 @@ namespace DD.Prototype.Tests.PlayMode
                         bool nearPlayer = dist < 3.5f;   // arrived / attacking: standing still is correct
                         bool stuck = !nearPlayer && !z.IsRising && now - stillSince[i] >= 3f;
                         memberSamples++;
-                        if (stuck) { stuckSamples++; stuckNow++; }
+                        if (stuck)
+                        {
+                            stuckSamples++; stuckNow++; stuckByBody[i]++;
+                            if (!stuckReported[i])
+                            {
+                                stuckReported[i] = true;
+                                NavPathFollower follower = z.PathFollower;
+                                bool hasEdge = UnityEngine.AI.NavMesh.FindClosestEdge(p, out UnityEngine.AI.NavMeshHit edge, UnityEngine.AI.NavMesh.AllAreas);
+                                Debug.Log("[DD-OBS] wp030.stuck body=" + i + " tier=" + z.Tier + " region=" + adlar[b] +
+                                          " pos=" + p.ToString("F2") + " dist=" + dist.ToString("0.0") + " still=" + (now - stillSince[i]).ToString("0.0") +
+                                          " path=" + (follower != null ? follower.Status.ToString() : "null") +
+                                          " corners=" + (follower != null ? follower.RemainingCorners : -1) +
+                                          " queued=" + (follower != null && follower.IsQueued) +
+                                          " queueS=" + (follower != null ? follower.QueuedSeconds.ToString("0.0") : "-") +
+                                          " rerouted=" + (follower != null && follower.IsRerouted) +
+                                          " speed=" + (follower != null ? follower.SpeedFactor.ToString("0.00") : "-") +
+                                          " wall=" + z.WallSliding + " waiting=" + z.IsWaiting +
+                                          " edge=" + (hasEdge ? edge.distance.ToString("0.00") + "/" + edge.normal.ToString("F2") : "none"));
+                            }
+                        }
                     }
 
                     stuckFramesMax = Mathf.Max(stuckFramesMax, stuckNow);
@@ -283,6 +333,9 @@ namespace DD.Prototype.Tests.PlayMode
             gcAlloc.Dispose();
             float stuckRatio = memberSamples > 0 ? (float)stuckSamples / memberSamples : 0f;
             double avgCost = costSum / Mathf.Max(1, frames), avgGc = gcFrames > 0 ? (double)gcSum / gcFrames : -1;
+            rapor.Append("stuckBodies(frame samples):");
+            for (int i = 0; i < stuckByBody.Length; i++) if (stuckByBody[i] > 0) rapor.Append(' ').Append(i).Append('=').Append(stuckByBody[i]);
+            rapor.Append('\n');
             Debug.Log("[DD-TEST] wp030.stress frames=" + frames + " avgNav+Crowd=" + avgCost.ToString("0.000") + " ms (crowd " + (crowdSum / Mathf.Max(1, frames)).ToString("0.000") + ", nav " + (navSum / Mathf.Max(1, frames)).ToString("0.000") +
                       ") peakCrowd=" + CrowdService.Solver.PeakSolveMilliseconds.ToString("0.00") + " avgNavPerQueryFrame=" + paths.AverageQueryMilliseconds.ToString("0.000") + " queries=" + paths.TotalQueries +
                       " stuckRatio=" + stuckRatio.ToString("0.0000") + " maxStuckInFrame=" + stuckFramesMax + " gcAlloc/frame=" + avgGc.ToString("0") + " B (" + (gcAlloc.Valid ? "recorder" : "no recorder") + ") reroutes=" + RegionNavRouter.RerouteCount + " queueEvents=" + RegionNavRouter.QueueEvents + "\n" + rapor);
