@@ -34,12 +34,12 @@ namespace DD.Prototype.Tests.EditMode
         private static readonly string RealPath =
             Path.Combine(Application.persistentDataPath, ProfileStore.FileName);
 
-        private string _realHashBefore;
+        private string _realFamilyBefore;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            _realHashBefore = HashOf(RealPath);
+            _realFamilyBefore = FingerprintFamily(RealPath);
         }
 
         [OneTimeTearDown]
@@ -47,15 +47,17 @@ namespace DD.Prototype.Tests.EditMode
         {
             ProfileStore.SetPathOverride(null);
             ProfileStore.SaveStageHook = null;
+            ProfileStore.BackupWriteMidFault = null;
             ProfileStore.LockAcquisitionFault = null;
             TryDeleteDir(Dir);
-            Assert.AreEqual(_realHashBefore, HashOf(RealPath), "gerçek profil dosyası değişmemeli");
+            Assert.AreEqual(_realFamilyBefore, FingerprintFamily(RealPath), "gerçek profil ve bütün yan dosyaları değişmemeli");
         }
 
         [SetUp]
         public void SetUp()
         {
             ProfileStore.SaveStageHook = null;
+            ProfileStore.BackupWriteMidFault = null;
             ProfileStore.LockAcquisitionFault = null;
             ProfileStore.SetPathOverride(null);
             TryDeleteDir(Dir);
@@ -68,6 +70,7 @@ namespace DD.Prototype.Tests.EditMode
         public void TearDown()
         {
             ProfileStore.SaveStageHook = null;
+            ProfileStore.BackupWriteMidFault = null;
             ProfileStore.LockAcquisitionFault = null;
             ProfileStore.SetPathOverride(null);
         }
@@ -98,6 +101,27 @@ namespace DD.Prototype.Tests.EditMode
             {
                 return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path)));
             }
+        }
+
+        private static string FingerprintFamily(string primaryPath)
+        {
+            string directory = Path.GetDirectoryName(primaryPath);
+            if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+            {
+                return "MISSING_DIRECTORY";
+            }
+
+            string[] files = Directory.GetFiles(directory, Path.GetFileName(primaryPath) + "*");
+            Array.Sort(files, StringComparer.Ordinal);
+            var fingerprint = new System.Text.StringBuilder();
+            foreach (string file in files)
+            {
+                fingerprint.Append(Path.GetFileName(file)).Append(':')
+                    .Append(new FileInfo(file).Length).Append(':')
+                    .Append(HashOf(file)).Append('\n');
+            }
+
+            return fingerprint.ToString();
         }
 
         private static void TryDeleteDir(string dir)
@@ -138,6 +162,59 @@ namespace DD.Prototype.Tests.EditMode
                     src.CopyTo(dst);
                 }
             }
+        }
+
+        private static System.Diagnostics.Process StartPartialCandidateWriter(string path, byte[] partialBytes)
+        {
+            string scriptPath = Path.Combine(Dir, "wp063-partial-writer.py");
+            File.WriteAllText(scriptPath,
+                "import base64, os, sys, time\n" +
+                "data=base64.b64decode(sys.argv[2])\n" +
+                "with open(sys.argv[1], 'wb', buffering=0) as f:\n" +
+                "    f.write(data)\n" +
+                "    f.flush()\n" +
+                "    os.fsync(f.fileno())\n" +
+                "    print('READY', flush=True)\n" +
+                "    time.sleep(60)\n");
+
+            string payload = Convert.ToBase64String(partialBytes);
+            var start = new System.Diagnostics.ProcessStartInfo(
+                "/usr/bin/python3",
+                "\"" + scriptPath + "\" \"" + path + "\" " + payload)
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+            System.Diagnostics.Process process = System.Diagnostics.Process.Start(start);
+            var readyTask = process == null ? null : process.StandardOutput.ReadLineAsync();
+            string ready = readyTask != null && readyTask.Wait(5000) ? readyTask.Result : null;
+            if (!string.Equals("READY", ready, StringComparison.Ordinal))
+            {
+                string error = process == null ? "process did not start" : "ready marker timed out";
+                if (process != null)
+                {
+                    try { if (!process.HasExited) process.Kill(); process.WaitForExit(5000); } catch (Exception) { }
+                    process.Dispose();
+                }
+                Assert.Fail("partial writer failed: " + error);
+            }
+
+            return process;
+        }
+
+        private static void Kill9(System.Diagnostics.Process process)
+        {
+            using (var killer = System.Diagnostics.Process.Start("/bin/kill", "-9 " + process.Id))
+            {
+                Assert.IsNotNull(killer, "kill -9 process did not start");
+                Assert.IsTrue(killer.WaitForExit(5000), "kill -9 timed out");
+                Assert.AreEqual(0, killer.ExitCode, "kill -9 failed");
+            }
+
+            Assert.IsTrue(process.WaitForExit(5000), "partial writer survived kill -9");
+            process.Dispose();
         }
 
         // ------------------------------------------------------------------ zincir
@@ -182,19 +259,31 @@ namespace DD.Prototype.Tests.EditMode
                     throw new IOException("injected " + s);
                 }
             };
-            LogAssert.Expect(LogType.Warning, new Regex("injected " + hata));
-            LogAssert.Expect(LogType.Warning, new Regex("Profile not saved"));
+            bool replaceCommitted = hata == ProfileSaveStage.PostReplaceVerify;
+            LogAssert.Expect(LogType.Warning, new Regex("Save failed at " + hata + " \\(IOException\\)"));
+            if (!replaceCommitted)
+            {
+                LogAssert.Expect(LogType.Warning, new Regex("Profile not saved"));
+            }
             ProfileSaveResult r = ProfileStore.Save(Profil(6));
             ProfileStore.SaveStageHook = null;
 
-            Assert.IsFalse(r.Success);
-            Assert.AreEqual(hata, r.FailedStage);
-            Assert.AreEqual("The profile file could not be written.", r.Message, "oyuncuya giden mesaj sabit; exception ayrıntısı yalnız log'da");
+            Assert.AreEqual(replaceCommitted, r.Success, "replace sonrası tam doğrulanmış yeni primary başarı sayılır; önceki aşamalar başarısızdır");
+            Assert.AreEqual(replaceCommitted ? ProfileSaveStage.None : hata, r.FailedStage);
+            Assert.AreEqual(replaceCommitted ? string.Empty : "The profile file could not be written.", r.Message,
+                "oyuncuya giden mesaj sabit; exception ayrıntısı taşınmaz");
             Assert.IsFalse(File.Exists(Candidate), "aday temizlendi: " + hata);
-            Assert.AreEqual(eski, File.ReadAllText(Primary), "primary eski tam profil: " + hata);
+            if (replaceCommitted)
+            {
+                Assert.AreNotEqual(eski, File.ReadAllText(Primary), "post-replace faultta doğrulanmış yeni primary korunur");
+            }
+            else
+            {
+                Assert.AreEqual(eski, File.ReadAllText(Primary), "primary eski tam profil: " + hata);
+            }
 
             ProfileData y = ProfileStore.Load();
-            Assert.AreEqual(5, y.RunsPlayed);
+            Assert.AreEqual(replaceCommitted ? 6 : 5, y.RunsPlayed);
             Assert.IsTrue(y.IsValid());
         }
 
@@ -260,6 +349,204 @@ namespace DD.Prototype.Tests.EditMode
             long tam = new FileInfo(Primary).Length;
             Assert.Greater(adayBoyut, 0, "yarım aday diskte gerçekten bayt taşır (tampon boşaltıldı)");
             Assert.Less(adayBoyut, tam, "aday yarım: tam boyutun altında");
+        }
+
+        [Test]
+        [Category("WP063")]
+        public void Wp063_Kill9_YarimAday_EskiGecerliPrimaryKaybolmaz()
+        {
+            if (!File.Exists("/usr/bin/python3") || !File.Exists("/bin/kill"))
+            {
+                Assert.Ignore("kill -9 kanıtı için python3 ve /bin/kill gerekli");
+            }
+
+            Assert.IsTrue(ProfileStore.Save(Profil(5)).Success);
+            Assert.IsTrue(ProfileStore.Save(Profil(6)).Success);
+            string primaryHash = HashOf(Primary);
+            string backupHash = HashOf(Backup);
+            byte[] productionHalf = null;
+
+            ProfileStore.BackupWriteMidFault = () =>
+            {
+                productionHalf = File.ReadAllBytes(ProfileStore.BackupCandidatePath);
+                throw new IOException("WP063 crash preparation");
+            };
+            LogAssert.Expect(LogType.Warning, new Regex("Save failed at BackupCopy \\(IOException\\)"));
+            LogAssert.Expect(LogType.Warning, new Regex("Profile not saved \\(BackupCopy\\)"));
+            Assert.IsFalse(ProfileStore.Save(Profil(7)).Success);
+            ProfileStore.BackupWriteMidFault = null;
+            Assert.IsNotNull(productionHalf, "production ProfileStore gerçek yarım backup adayı üretti");
+            Assert.Greater(productionHalf.Length, 0);
+
+            System.Diagnostics.Process writer = null;
+            try
+            {
+                writer = StartPartialCandidateWriter(ProfileStore.BackupCandidatePath, productionHalf);
+                Kill9(writer);
+                writer = null;
+            }
+            finally
+            {
+                if (writer != null)
+                {
+                    try { if (!writer.HasExited) writer.Kill(); writer.WaitForExit(5000); } catch (Exception) { }
+                    writer.Dispose();
+                }
+            }
+
+            long partialLength = new FileInfo(ProfileStore.BackupCandidatePath).Length;
+            Assert.Greater(partialLength, 0, "child process diske gerçek bayt yazdı");
+            Assert.AreEqual(productionHalf.Length, partialLength, "kill -9 production zincirinin yarım backup adayını bıraktı");
+            CollectionAssert.AreEqual(productionHalf, File.ReadAllBytes(ProfileStore.BackupCandidatePath),
+                "child artefaktı production yarım backup yazımıyla aynı");
+            Assert.AreEqual(primaryHash, HashOf(Primary), "process ölümü primary'ye dokunmadı");
+            Assert.AreEqual(backupHash, HashOf(Backup), "process ölümü doğrulanmış yedeğe dokunmadı");
+
+            ProfileStore.SetPathOverride(null);
+            ProfileStore.SetPathOverride(Primary);
+            ProfileData reopened = ProfileStore.Load();
+            Assert.AreEqual(6, reopened.RunsPlayed, "son tamamlanmış primary açıldı");
+            Assert.AreEqual(ProfileLoadRecovery.None, ProfileStore.LastLoadRecovery);
+            Assert.IsFalse(File.Exists(ProfileStore.BackupCandidatePath), "yarım backup adayı yeniden açılışta temizlendi");
+        }
+
+        [Test]
+        [Category("WP063")]
+        public void Wp063_Enospc_YedekYazimiYaridaKesilir_PrimaryVeOncekiYedekKorunur()
+        {
+            Assert.IsTrue(ProfileStore.Save(Profil(5)).Success);
+            Assert.IsTrue(ProfileStore.Save(Profil(6)).Success);
+            string primaryHash = HashOf(Primary);
+            string backupHash = HashOf(Backup);
+            byte[] primaryBytes = File.ReadAllBytes(Primary);
+
+            ProfileStore.BackupWriteMidFault = () =>
+            {
+                byte[] partial = File.ReadAllBytes(ProfileStore.BackupCandidatePath);
+                Assert.Greater(partial.Length, 0, "backup staging diske gerçek bayt yazdı");
+                Assert.Less(partial.Length, primaryBytes.Length, "backup staging yarım kaldı");
+                for (int i = 0; i < partial.Length; i++)
+                {
+                    Assert.AreEqual(primaryBytes[i], partial[i], "backup staging primary prefix'i olmalı: " + i);
+                }
+                throw new IOException("ENOSPC secret-path-must-not-leak");
+            };
+            LogAssert.Expect(LogType.Warning, new Regex("Save failed at BackupCopy \\(IOException\\)"));
+            LogAssert.Expect(LogType.Warning, new Regex("Profile not saved \\(BackupCopy\\)"));
+            ProfileSaveResult result = ProfileStore.Save(Profil(7));
+            ProfileStore.BackupWriteMidFault = null;
+
+            Assert.IsFalse(result.Success);
+            Assert.AreEqual(ProfileSaveStage.BackupCopy, result.FailedStage);
+            Assert.AreEqual("The profile file could not be written.", result.Message);
+            Assert.AreEqual(primaryHash, HashOf(Primary), "ENOSPC eski primary'yi değiştirmedi");
+            Assert.AreEqual(backupHash, HashOf(Backup), "ENOSPC yayımlanmış son doğrulanmış yedeği bozmadı");
+            Assert.IsFalse(File.Exists(ProfileStore.BackupCandidatePath), "yarım backup adayı hata dönüşünde temizlendi");
+            Assert.IsFalse(File.Exists(Candidate), "yeni profil adayı hata dönüşünde temizlendi");
+            ProfileStore.SetPathOverride(null);
+            ProfileStore.SetPathOverride(Primary);
+            Assert.AreEqual(6, ProfileStore.Load().RunsPlayed, "yeniden açılış son geçerli primary'yi verdi");
+        }
+
+        [Test]
+        [Category("WP063")]
+        public void Wp063_BozukPrimary_GecerliYedekGeriYuklenir_BozukBaytlarKorunur()
+        {
+            Assert.IsTrue(ProfileStore.Save(Profil(10)).Success);
+            Assert.IsTrue(ProfileStore.Save(Profil(11)).Success);
+            string backupHash = HashOf(Backup);
+            File.WriteAllText(Primary, "{broken-primary");
+
+            LogAssert.Expect(LogType.Warning, new Regex("not valid JSON"));
+            ProfileData recovered = ProfileStore.Load();
+
+            Assert.AreEqual(10, recovered.RunsPlayed, "doğrulanmış önceki profil yedekten döndü");
+            Assert.AreEqual(ProfileLoadStatus.Malformed, ProfileStore.LastLoadStatus);
+            Assert.AreEqual(ProfileLoadRecovery.RestoredBackup, ProfileStore.LastLoadRecovery);
+            Assert.IsTrue(ProfileStore.LastLoadFellBack);
+            Assert.AreEqual(1, CorruptCount(), "bozuk ana dosya inceleme için korundu");
+            Assert.AreEqual(backupHash, HashOf(Backup), "yayımlanmış yedek recovery sırasında değişmedi");
+            ProfileData materialized;
+            Assert.AreEqual(ProfileLoadStatus.Ok, ProfileStore.ReadFile(Primary, out materialized));
+            Assert.AreEqual(10, materialized.RunsPlayed);
+            Assert.AreEqual(recovered.ProfileLineageId, materialized.ProfileLineageId);
+            Assert.AreEqual(recovered.LastAppliedCompletionOrdinal, materialized.LastAppliedCompletionOrdinal);
+            string corrupt = Directory.GetFiles(Dir, ProfileStore.FileName + ProfileStore.CorruptSuffix + "*")[0];
+            Assert.AreEqual("{broken-primary", File.ReadAllText(corrupt), "bozuk baytlar değiştirilmeden korundu");
+        }
+
+        [Test]
+        [Category("WP063")]
+        public void Wp063_V3Fixture_128SaveReopen_SonraBackupRecovery_VeriVeExactlyOnceKimligiKorunur()
+        {
+            const string v3 = "{\"SaveVersion\":3,\"ProfileLevel\":9,\"XpIntoLevel\":41," +
+                              "\"TotalXpEarned\":9041,\"HighestRound\":17,\"RunsPlayed\":73," +
+                              "\"RoundsCompleted\":211,\"TotalKills\":321,\"StandardKills\":300," +
+                              "\"SpecialKills\":12,\"EliteKills\":6,\"UltraKills\":3,\"UnattributedKills\":0," +
+                              "\"ArmorPiecesBroken\":44,\"BestRunXp\":777," +
+                              "\"Achievements\":[\"first_blood\",\"v3_soak\"]," +
+                              "\"UnlockedWeapons\":[\"AssaultRifle\",\"AutoSmg\"]," +
+                              "\"UnlockedBranches\":[\"Piercing\"]," +
+                              "\"ProfileLineageId\":\"" + Soy + "\",\"LastAppliedCompletionOrdinal\":73," +
+                              "\"LastSavedUtc\":\"2026-09-14T00:00:00.0000000Z\"}";
+            File.WriteAllText(Primary, v3);
+
+            ProfileData data = ProfileStore.Load();
+            Assert.AreEqual(ProfileData.CurrentVersion, data.SaveVersion, "v3 fixture güncel şemaya kayıpsız taşındı");
+            string expectedLineage = data.ProfileLineageId;
+            long expectedOrdinal = data.LastAppliedCompletionOrdinal;
+            data.LastSavedUtc = string.Empty;
+            string expected = Json(data);
+
+            for (int i = 0; i < 128; i++)
+            {
+                Assert.IsTrue(ProfileStore.Save(data).Success, "save döngüsü " + i);
+                ProfileStore.SetPathOverride(null);
+                ProfileStore.SetPathOverride(Primary);
+                data = ProfileStore.Load();
+                Assert.AreEqual(expectedLineage, data.ProfileLineageId, "lineage döngüsü " + i);
+                Assert.AreEqual(expectedOrdinal, data.LastAppliedCompletionOrdinal, "ordinal döngüsü " + i);
+                data.LastSavedUtc = string.Empty;
+                Assert.AreEqual(expected, Json(data), "v3 verisi döngüde değişti: " + i);
+            }
+
+            File.WriteAllText(Primary, "not-json");
+            LogAssert.Expect(LogType.Warning, new Regex("not valid JSON"));
+            ProfileData recovered = ProfileStore.Load();
+            recovered.LastSavedUtc = string.Empty;
+            Assert.AreEqual(ProfileLoadRecovery.RestoredBackup, ProfileStore.LastLoadRecovery);
+            Assert.AreEqual(expected, Json(recovered), "128 reopen sonrası yedek aynı v3 kökenli veriyi geri verdi");
+            Assert.AreEqual(expectedLineage, recovered.ProfileLineageId);
+            Assert.AreEqual(expectedOrdinal, recovered.LastAppliedCompletionOrdinal);
+        }
+
+        [Test]
+        [Category("WP063")]
+        public void Wp063_Reset_BackupAlignEnospc_OldProfileAtomikGeriYuklenir()
+        {
+            Assert.IsTrue(ProfileStore.Save(Profil(4)).Success);
+            string oldLineage = ProfileStore.Load().ProfileLineageId;
+            int backupWrites = 0;
+            ProfileStore.BackupWriteMidFault = () =>
+            {
+                backupWrites++;
+                if (backupWrites == 2)
+                {
+                    throw new IOException("ENOSPC during reset backup alignment");
+                }
+            };
+
+            LogAssert.Expect(LogType.Warning, new Regex("Reset did not happen.*previous profile was restored"));
+            ProfileData reset = ProfileStore.Reset();
+            ProfileStore.BackupWriteMidFault = null;
+
+            Assert.IsNull(reset, "backup hizalanamadıysa reset başarı ilan edilmez");
+            Assert.AreEqual(2, backupWrites, "ilk yazım eski backup, ikinci yazım yeni lineage hizalaması");
+            ProfileStore.SetPathOverride(null);
+            ProfileStore.SetPathOverride(Primary);
+            ProfileData reopened = ProfileStore.Load();
+            Assert.AreEqual(4, reopened.RunsPlayed, "eski geçerli profil atomik olarak geri yüklendi");
+            Assert.AreEqual(oldLineage, reopened.ProfileLineageId, "başarısız reset lineage değiştirmedi");
         }
 
         [Test]
@@ -500,7 +787,9 @@ namespace DD.Prototype.Tests.EditMode
         public void FutureVersion_SaltOkunur_DosyaDokunulmaz_SaveReddedilir()
         {
             File.WriteAllText(Primary, "{\"SaveVersion\": 99, \"ProfileLevel\": 7, \"RunsPlayed\": 3}");
+            File.WriteAllText(ProfileStore.BackupCandidatePath, "{\"SaveVersion\": 99, \"ProfileLevel\": 8, \"RunsPlayed\": 4}");
             string hash = HashOf(Primary);
+            string backupCandidateHash = HashOf(ProfileStore.BackupCandidatePath);
             LogAssert.Expect(LogType.Warning, new Regex("newer version"));
             ProfileData y = ProfileStore.Load();
             Assert.AreEqual(1, y.ProfileLevel, "bellekte taze profil; dosya downgrade edilmez");
@@ -513,6 +802,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(r.Success);
             Assert.AreEqual(ProfileSaveStage.Refused, r.FailedStage);
             Assert.AreEqual(hash, HashOf(Primary), "future dosya bayt bayt aynı");
+            Assert.AreEqual(backupCandidateHash, HashOf(ProfileStore.BackupCandidatePath),
+                "future backup adayı cleanup tarafından silinmez/değiştirilmez");
             Assert.IsFalse(File.Exists(Backup));
             Assert.IsFalse(File.Exists(Candidate));
         }

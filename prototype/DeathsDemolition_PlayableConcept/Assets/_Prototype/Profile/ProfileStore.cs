@@ -72,6 +72,7 @@ namespace DD.Prototype.Profile
     ///   prototype-profile.json                the primary; the only file anything reads in play
     ///   prototype-profile.json.writing        the candidate of a save in progress
     ///   prototype-profile.json.bak            verified copy of the primary taken before each replace
+    ///   prototype-profile.json.bak.writing    transient candidate used to refresh the backup atomically
     ///   prototype-profile.json.corrupt.N.json unreadable primaries, kept for inspection, never deleted
     ///   prototype-profile.json.lock           write ownership of this profile (pid + process name)
     ///
@@ -131,6 +132,7 @@ namespace DD.Prototype.Profile
 
         public static string CandidatePath => Path + CandidateSuffix;
         public static string BackupPath => Path + BackupSuffix;
+        public static string BackupCandidatePath => BackupPath + CandidateSuffix;
         public static string LockPath => Path + LockSuffix;
 
         // ------------------------------------------------------------ diagnostics
@@ -166,6 +168,12 @@ namespace DD.Prototype.Profile
         /// throw to simulate a failure there. Null in play. Reset on domain reload.
         /// </summary>
         public static Action<ProfileSaveStage> SaveStageHook;
+
+        /// <summary>
+        /// Fault injection for a real partial backup write. Invoked only after half of the
+        /// backup candidate has reached the OS; throwing simulates ENOSPC/device failure.
+        /// </summary>
+        public static Action BackupWriteMidFault;
 
         /// <summary>
         /// Lease fault injection (tests): invoked while acquiring the write lease; throw to
@@ -205,6 +213,18 @@ namespace DD.Prototype.Profile
                 return LoadReadOnly(path, status, data);
             }
 
+            // A future-version primary or side file belongs to a newer build. Detect it
+            // before any orphan cleanup so every byte remains untouched, fail-closed.
+            if (status == ProfileLoadStatus.FutureVersion || HasFutureVersionSideFile())
+            {
+                return RefuseFutureVersion(path);
+            }
+
+            // A backup refresh always happens before the primary replace. Therefore an
+            // orphan current-version staging file can never be newer authority than the
+            // still-complete primary / published backup and is safe to discard now.
+            DiscardOrphanBackupCandidate();
+
             switch (status)
             {
                 case ProfileLoadStatus.Ok:
@@ -213,9 +233,6 @@ namespace DD.Prototype.Profile
 
                 case ProfileLoadStatus.Missing:
                     return RecoverMissingPrimary(path);
-
-                case ProfileLoadStatus.FutureVersion:
-                    return RefuseFutureVersion(path);
 
                 default:
                     return RecoverUnreadablePrimary(path, status);
@@ -344,6 +361,13 @@ namespace DD.Prototype.Profile
             return File.Exists(path) && ReadFile(path, out ignored) == ProfileLoadStatus.FutureVersion;
         }
 
+        private static bool HasFutureVersionSideFile()
+        {
+            return IsFutureVersionFile(CandidatePath) ||
+                   IsFutureVersionFile(BackupPath) ||
+                   IsFutureVersionFile(BackupCandidatePath);
+        }
+
         private static string Describe(ProfileLoadStatus status)
         {
             switch (status)
@@ -422,6 +446,18 @@ namespace DD.Prototype.Profile
             }
 
             Debug.Log("[Profile] Discarding leftover save candidate '" + System.IO.Path.GetFileName(candidate) + "': " + why + ".");
+            TryDelete(candidate);
+        }
+
+        private static void DiscardOrphanBackupCandidate()
+        {
+            string candidate = BackupCandidatePath;
+            if (!File.Exists(candidate))
+            {
+                return;
+            }
+
+            Debug.Log("[Profile] Discarding leftover backup candidate '" + System.IO.Path.GetFileName(candidate) + "'.");
             TryDelete(candidate);
         }
 
@@ -521,7 +557,7 @@ namespace DD.Prototype.Profile
                     ProfileData current;
                     if (ReadFile(path, out current) == ProfileLoadStatus.Ok)
                     {
-                        CopyDurable(path, backupPath);
+                        RefreshBackupAtomically(path, backupPath);
                     }
                 }
 
@@ -537,7 +573,11 @@ namespace DD.Prototype.Profile
                 Hook(stage);
                 if (!FileEquals(path, json))
                 {
-                    RecoverAfterFailedReplace(path, candidatePath, backupPath, json);
+                    if (RecoverAfterFailedReplace(path, candidatePath, backupPath, json))
+                    {
+                        return ProfileSaveResult.Ok;
+                    }
+
                     return new ProfileSaveResult(false, stage, "The profile file did not verify after the replace; the previous profile was restored.");
                 }
 
@@ -545,8 +585,10 @@ namespace DD.Prototype.Profile
             }
             catch (Exception e)
             {
-                // The detail goes to the log; the receipt carries a fixed sentence.
-                Debug.LogWarning("[Profile] Save failed at " + stage + ": " + e.GetType().Name + ": " + e.Message);
+                // The exception class goes to the log; the receipt carries a fixed sentence.
+                // Exception messages can contain absolute paths or OS details. The stage
+                // and exception type are sufficient for diagnostics without leaking them.
+                Debug.LogWarning("[Profile] Save failed at " + stage + " (" + e.GetType().Name + ").");
                 if (stage >= ProfileSaveStage.Replace && RecoverAfterFailedReplace(path, candidatePath, backupPath, json))
                 {
                     // Nothing older was left to restore and the validated candidate is now
@@ -555,6 +597,7 @@ namespace DD.Prototype.Profile
                 }
 
                 TryDelete(candidatePath);
+                TryDelete(BackupCandidatePath);
                 return new ProfileSaveResult(false, stage, "The profile file could not be written.");
             }
         }
@@ -608,6 +651,17 @@ namespace DD.Prototype.Profile
         {
             try
             {
+                // The replace may have completed before a verification/read-back fault.
+                // If the primary is byte-for-byte the already validated candidate, the
+                // transaction committed. Publishing success keeps RAM and disk aligned;
+                // attempting a rollback first could itself fail and falsely report that
+                // the old profile is still authoritative while the new one is on disk.
+                if (!string.IsNullOrEmpty(json) && FileEquals(path, json))
+                {
+                    TryDelete(candidatePath);
+                    return true;
+                }
+
                 ProfileData backup;
                 if (File.Exists(backupPath) && ReadFile(backupPath, out backup) == ProfileLoadStatus.Ok)
                 {
@@ -669,6 +723,64 @@ namespace DD.Prototype.Profile
             {
                 stream.Write(bytes, 0, bytes.Length);
                 stream.Flush(true);
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the last-known-good backup without ever truncating the published
+        /// backup in place. A failed/partial write only damages .bak.writing; the prior
+        /// .bak and the primary remain complete. Publication is one atomic replace/move.
+        /// </summary>
+        private static void RefreshBackupAtomically(string source, string backupPath)
+        {
+            string staging = backupPath + CandidateSuffix;
+            TryDelete(staging);
+
+            byte[] bytes = File.ReadAllBytes(source);
+            using (var stream = new FileStream(staging, FileMode.Create, FileAccess.Write, FileShare.Read))
+            {
+                int half = bytes.Length / 2;
+                stream.Write(bytes, 0, half);
+                stream.Flush(false);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                Action fault = BackupWriteMidFault;
+                if (fault != null)
+                {
+                    fault();
+                }
+#endif
+                stream.Write(bytes, half, bytes.Length - half);
+                stream.Flush(true);
+            }
+
+            ProfileData candidate;
+            if (!FilesEqual(source, staging) || ReadFile(staging, out candidate) != ProfileLoadStatus.Ok)
+            {
+                throw new IOException("The backup candidate did not verify.");
+            }
+
+            if (File.Exists(backupPath))
+            {
+                try
+                {
+                    File.Replace(staging, backupPath, null);
+                }
+                catch (PlatformNotSupportedException e)
+                {
+                    // Do not fall back to delete+move: preserving the older verified
+                    // backup and failing before the primary replace is the safe outcome.
+                    throw new IOException("Atomic backup replace is unavailable.", e);
+                }
+            }
+            else
+            {
+                File.Move(staging, backupPath);
+            }
+
+            ProfileData published;
+            if (!FilesEqual(source, backupPath) || ReadFile(backupPath, out published) != ProfileLoadStatus.Ok)
+            {
+                throw new IOException("The published backup did not verify.");
             }
         }
 
@@ -881,6 +993,7 @@ namespace DD.Prototype.Profile
             TryDelete(Path);
             TryDelete(CandidatePath);
             TryDelete(BackupPath);
+            TryDelete(BackupCandidatePath);
             return true;
         }
 
@@ -916,14 +1029,51 @@ namespace DD.Prototype.Profile
 
             try
             {
-                CopyDurable(Path, BackupPath);
+                RefreshBackupAtomically(Path, BackupPath);
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[Profile] Reset: the backup could not be aligned with the new profile (" + e.GetType().Name + ").");
+                TryDelete(BackupCandidatePath);
+                if (TryRollbackResetFromBackup())
+                {
+                    Debug.LogWarning("[Profile] Reset did not happen: the new profile backup could not be aligned (" +
+                                     e.GetType().Name + "), so the previous profile was restored.");
+                    return null;
+                }
+
+                // No restorable old profile remains (for example, resetting before the
+                // first save). Keep the already committed fresh primary. Quarantine any
+                // stale backup so later corruption cannot resurrect an older lineage.
+                PreserveCorruptFile(BackupPath);
+                TryDelete(BackupPath);
+                Debug.LogWarning("[Profile] Reset completed, but its backup could not be aligned (" + e.GetType().Name + ").");
             }
 
             return fresh;
+        }
+
+        private static bool TryRollbackResetFromBackup()
+        {
+            ProfileData previous;
+            if (ReadFile(BackupPath, out previous) != ProfileLoadStatus.Ok)
+            {
+                return false;
+            }
+
+            try
+            {
+                ReplacePrimary(BackupPath, Path, File.Exists(Path));
+                ProfileData restored;
+                return ReadFile(Path, out restored) == ProfileLoadStatus.Ok &&
+                       string.Equals(restored.ProfileLineageId, previous.ProfileLineageId, StringComparison.Ordinal) &&
+                       restored.LastAppliedCompletionOrdinal == previous.LastAppliedCompletionOrdinal;
+            }
+            catch (Exception rollbackError)
+            {
+                Debug.LogWarning("[Profile] Reset rollback could not restore the previous profile (" +
+                                 rollbackError.GetType().Name + ").");
+                return false;
+            }
         }
 
         /// <summary>
@@ -979,6 +1129,7 @@ namespace DD.Prototype.Profile
             LastSaveResult = ProfileSaveResult.Ok;
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             SaveStageHook = null;
+            BackupWriteMidFault = null;
             LockAcquisitionFault = null;
 #endif
         }
