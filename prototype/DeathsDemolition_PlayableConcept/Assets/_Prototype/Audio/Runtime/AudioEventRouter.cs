@@ -106,14 +106,14 @@ namespace DD.Prototype.Audio
 
         public bool Subscribed { get; private set; }
 
-        // WP-058: the director's field-loop seam (start(sound, position, slot) / stop(slot)); slot = (int)SpecialWeaponId.
-        private Action<AudioSoundId, Vector3, int> _fieldStart;
-        private Action<int> _fieldStop;
+        // WP-058: the director's field-loop seam; stop carries the field origin so concurrent Tide wells release the matching source.
+        private Func<AudioSoundId, Vector3, int, bool> _fieldStart;
+        private Action<int, Vector3> _fieldStop;
         private readonly float[] _swHitLast = new float[3];
         /// <summary>Special usage cues played (fire / field / hit). Test readout.</summary>
         public int SpecialUsageCount { get; private set; }
 
-        public void SetFieldLoopHandlers(Action<AudioSoundId, Vector3, int> start, Action<int> stop)
+        public void SetFieldLoopHandlers(Func<AudioSoundId, Vector3, int, bool> start, Action<int, Vector3> stop)
         {
             _fieldStart = start;
             _fieldStop = stop;
@@ -341,12 +341,11 @@ namespace DD.Prototype.Audio
                     }
                     else
                     {
-                        _fieldStart?.Invoke(sound, e.Origin, slot);
-                        SpecialUsageCount++;
+                        if (_fieldStart != null && _fieldStart(sound, e.Origin, slot)) SpecialUsageCount++;
                     }
                     break;
                 case DD.Prototype.Weapons.SpecialUsageKind.FieldEnded:
-                    _fieldStop?.Invoke(slot);
+                    _fieldStop?.Invoke(slot, e.Origin);
                     if (_play(AudioMixPlan.SpecialField(sound), e.Origin, 1f, 60)) SpecialUsageCount++;
                     break;
                 case DD.Prototype.Weapons.SpecialUsageKind.Hit:

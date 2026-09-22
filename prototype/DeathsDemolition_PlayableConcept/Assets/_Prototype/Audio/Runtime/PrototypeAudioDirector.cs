@@ -130,6 +130,11 @@ namespace DD.Prototype.Audio
         public AudioVoicePool WorldPool => _world;
         public AudioVoicePool SignalPool => _signal;
         public bool IsPaused => _paused;
+        public int LoopCount => _loops.Count;
+        public Vector3 LoopPosition(CombatAudioEvent evt) =>
+            _loops.TryGetValue(evt, out LoopVoice voice) && voice.Source != null
+                ? voice.Source.transform.position
+                : Vector3.zero;
 
         /// <summary>Sounds actually handed to a voice since start (both pools). Test readout.</summary>
         public int PlayedCount { get; private set; }
@@ -228,7 +233,7 @@ namespace DD.Prototype.Audio
             base.OnEnable();
 
             AudioEvents.Cue += OnCombatCue;
-            AudioEvents.LoopStopped += OnLoopStopped;
+            AudioEvents.LoopStoppedAt += OnLoopStopped;
             AudioEvents.CueSuppressed += OnCueSuppressed;
 
             RunAudioEvents.Cue += OnRunCue;
@@ -241,17 +246,19 @@ namespace DD.Prototype.Audio
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
 
             DD.Prototype.UI.UiSettings.MasterVolumeChanged += RequestMasterVolume;   // WP-021C (S-09 contract)
+            DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded += StopAllFieldLoops;
 
             _router?.Subscribe();
             _listener?.Subscribe();
 
             RegisterDebugPanel();
+            SynchronizeRunPhase();
         }
 
         protected override void OnDisable()
         {
             AudioEvents.Cue -= OnCombatCue;
-            AudioEvents.LoopStopped -= OnLoopStopped;
+            AudioEvents.LoopStoppedAt -= OnLoopStopped;
             AudioEvents.CueSuppressed -= OnCueSuppressed;
 
             RunAudioEvents.Cue -= OnRunCue;
@@ -264,9 +271,16 @@ namespace DD.Prototype.Audio
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
 
             DD.Prototype.UI.UiSettings.MasterVolumeChanged -= RequestMasterVolume;
+            DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded -= StopAllFieldLoops;
 
             _router?.Unsubscribe();
             _listener?.Unsubscribe();
+
+            StopAllLoops();
+            StopAllFieldLoops();
+            AudioListener.pause = false;
+            _mixer.Muted = false;
+            _paused = false;
 
             UnregisterDebugPanel();
             base.OnDisable();
@@ -395,6 +409,9 @@ namespace DD.Prototype.Audio
 
         private void OnCombatCue(CombatAudioCue cue)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackTelemetry.RecordCombatCue(cue.Event, false);
+#endif
             if (_paused)
             {
                 return;
@@ -451,6 +468,9 @@ namespace DD.Prototype.Audio
             // Diagnosis only. G-03 already decided this cue is a duplicate of one that is
             // playing; making a sound here would undo the decision.
             _suppressedSeen++;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackTelemetry.RecordCombatCue(cue.Event, true);
+#endif
         }
 
         // ================================================================== run flow
@@ -523,7 +543,7 @@ namespace DD.Prototype.Audio
             if (phase == RunPhase.Dead || phase == RunPhase.None)
             {
                 StopAllLoops();
-                for (int i = 0; i < _fieldLoops.Length; i++) StopFieldLoop(i);
+                StopAllFieldLoops();
                 _armour.Clear();
                 _router.Clear();
             }
@@ -538,6 +558,7 @@ namespace DD.Prototype.Audio
 
         private void OnRunStarted(int runId)
         {
+            StopAllFieldLoops();
             // v003: entering the run is a screen transition (matrix §8).
             PlayResolved(AudioMixPlan.UiTransition(), Vector3.zero, 1f, 80);
             _music.OnRunStarted();   // WP-057: leave the results state
@@ -580,6 +601,7 @@ namespace DD.Prototype.Audio
         private void OnPlayerDied(PlayerDeathInfo info)
         {
             StopAllLoops();
+            StopAllFieldLoops();
             PlayResolved(AudioMixPlan.PlayerDeath(), Vector3.zero, 1f, 100);
             _music.OnRunEnded(true);   // WP-057: death stinger, then the results loop
         }
@@ -593,9 +615,20 @@ namespace DD.Prototype.Audio
         /// </summary>
         private bool PlayResolved(in AudioPlacement placement, Vector3 position, float gainScale, int cuePriority)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackPool evidencePool = placement.Bus == AudioBus.Interface ? AudioPlaybackPool.Signal : AudioPlaybackPool.World;
+            AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.Requested, evidencePool, placement.Sound,
+                active: evidencePool == AudioPlaybackPool.Signal ? _signal.ActiveCount : _world.ActiveCount,
+                capacity: evidencePool == AudioPlaybackPool.Signal ? _signal.Capacity : _world.Capacity);
+#endif
             AudioClip clip = _library.Next(placement.Sound, out int _);
             if (clip == null)
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.MissingClip, evidencePool, placement.Sound,
+                    active: evidencePool == AudioPlaybackPool.Signal ? _signal.ActiveCount : _world.ActiveCount,
+                    capacity: evidencePool == AudioPlaybackPool.Signal ? _signal.Capacity : _world.Capacity);
+#endif
                 return false;
             }
 
@@ -653,9 +686,11 @@ namespace DD.Prototype.Audio
 
         // ================================================================== WP-058 · Special field loops
 
-        /// <summary>One looping 3D source per Special (Ofuda web hum, Tide well; Kagura's front is a one-shot). PROTOTYPE-ONLY sizes.</summary>
-        private readonly AudioSource[] _fieldLoops = new AudioSource[3];
-        private readonly AudioSoundId[] _fieldLoopSound = new AudioSoundId[3];
+        /// <summary>One Ofuda source plus two Tide sources (the shipped MaxWells); Kagura's front is a one-shot.</summary>
+        private const int TidePrimarySlot = 2;
+        private const int TideSecondarySlot = 3;
+        private readonly AudioSource[] _fieldLoops = new AudioSource[4];
+        private readonly AudioSoundId[] _fieldLoopSound = new AudioSoundId[4];
         public int FieldLoopsPlaying { get { int n = 0; for (int i = 0; i < _fieldLoops.Length; i++) if (_fieldLoops[i] != null && _fieldLoops[i].isPlaying) n++; return n; } }
 
         private void BuildFieldLoops()
@@ -672,23 +707,98 @@ namespace DD.Prototype.Audio
             }
         }
 
-        private void StartFieldLoop(AudioSoundId sound, Vector3 at, int slot)
+        private bool StartFieldLoop(AudioSoundId sound, Vector3 at, int slot)
         {
-            if (slot < 0 || slot >= _fieldLoops.Length) return;
+            if (slot < 0 || slot > TidePrimarySlot) return false;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.Requested, AudioPlaybackPool.Field, sound,
+                active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
+#endif
+            int sourceSlot = slot;
+            if (slot == TidePrimarySlot && _fieldLoops[TidePrimarySlot].isPlaying)
+            {
+                if (_fieldLoops[TideSecondarySlot].isPlaying)
+                {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                    AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.BudgetDropped, AudioPlaybackPool.Field, sound,
+                        active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
+#endif
+                    return false;
+                }
+
+                sourceSlot = TideSecondarySlot;
+            }
             AudioClip clip = _library.First(sound);
-            if (clip == null) return;
-            AudioSource src = _fieldLoops[slot];
+            if (clip == null)
+            {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.MissingClip, AudioPlaybackPool.Field, sound,
+                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
+#endif
+                return false;
+            }
+            AudioSource src = _fieldLoops[sourceSlot];
             src.transform.position = at;
             if (src.clip != clip) src.clip = clip;
-            _fieldLoopSound[slot] = sound;
+            _fieldLoopSound[sourceSlot] = sound;
             src.volume = 0.7f * _mixer.Gain(AudioBus.Impact);
-            if (!src.isPlaying) src.Play();
+            if (!src.isPlaying)
+            {
+                src.Play();
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStarted, AudioPlaybackPool.Field, sound,
+                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
+#endif
+            }
+            return true;
         }
 
-        private void StopFieldLoop(int slot)
+        private void StopFieldLoop(int slot, Vector3 at)
         {
-            if (slot < 0 || slot >= _fieldLoops.Length) return;
-            _fieldLoops[slot].Stop();
+            if (slot < 0 || slot > TidePrimarySlot) return;
+            int sourceSlot = slot;
+            if (slot == TidePrimarySlot && _fieldLoops[TideSecondarySlot].isPlaying)
+            {
+                float primaryDistance = _fieldLoops[TidePrimarySlot].isPlaying
+                    ? (_fieldLoops[TidePrimarySlot].transform.position - at).sqrMagnitude
+                    : float.MaxValue;
+                float secondaryDistance = (_fieldLoops[TideSecondarySlot].transform.position - at).sqrMagnitude;
+                sourceSlot = secondaryDistance < primaryDistance ? TideSecondarySlot : TidePrimarySlot;
+            }
+
+            bool wasPlaying = _fieldLoops[sourceSlot].isPlaying;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (wasPlaying)
+            {
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStopRequested, AudioPlaybackPool.Field, _fieldLoopSound[sourceSlot],
+                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
+            }
+#endif
+            _fieldLoops[sourceSlot].Stop();
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (wasPlaying)
+            {
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopEnded, AudioPlaybackPool.Field, _fieldLoopSound[sourceSlot],
+                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
+            }
+#endif
+        }
+
+        private void StopAllFieldLoops()
+        {
+            for (int i = 0; i < _fieldLoops.Length; i++)
+            {
+                if (_fieldLoops[i] == null || !_fieldLoops[i].isPlaying) continue;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStopRequested, AudioPlaybackPool.Field, _fieldLoopSound[i],
+                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
+#endif
+                _fieldLoops[i].Stop();
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopEnded, AudioPlaybackPool.Field, _fieldLoopSound[i],
+                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
+#endif
+            }
         }
 
         private void TickFieldLoops()
@@ -712,6 +822,61 @@ namespace DD.Prototype.Audio
             public float TargetPitch;
             public float RampSeconds;
             public bool Stopping;
+            public int Claims;
+            public Vector3 Claim0;
+            public Vector3 Claim1;
+            public Vector3 Claim2;
+            public Vector3 Claim3;
+
+            public void AddClaim(Vector3 position)
+            {
+                int index = Mathf.Min(Claims, 3);
+                SetClaim(index, position);
+                Claims = Mathf.Min(Claims + 1, 4);
+            }
+
+            public bool RemoveNearestClaim(Vector3 position)
+            {
+                if (Claims <= 0) return false;
+
+                int nearest = 0;
+                float nearestDistance = (ClaimAt(0) - position).sqrMagnitude;
+                for (int i = 1; i < Claims; i++)
+                {
+                    float distance = (ClaimAt(i) - position).sqrMagnitude;
+                    if (distance < nearestDistance)
+                    {
+                        nearest = i;
+                        nearestDistance = distance;
+                    }
+                }
+
+                for (int i = nearest; i < Claims - 1; i++) SetClaim(i, ClaimAt(i + 1));
+                Claims--;
+                return true;
+            }
+
+            public Vector3 ClaimAt(int index)
+            {
+                switch (index)
+                {
+                    case 0: return Claim0;
+                    case 1: return Claim1;
+                    case 2: return Claim2;
+                    default: return Claim3;
+                }
+            }
+
+            private void SetClaim(int index, Vector3 value)
+            {
+                switch (index)
+                {
+                    case 0: Claim0 = value; break;
+                    case 1: Claim1 = value; break;
+                    case 2: Claim2 = value; break;
+                    default: Claim3 = value; break;
+                }
+            }
         }
 
         /// <summary>
@@ -726,20 +891,44 @@ namespace DD.Prototype.Audio
         /// </summary>
         private void StartLoop(in CombatAudioCue cue)
         {
-            if (_loops.ContainsKey(cue.Event))
-            {
-                return;
-            }
-
             AudioPlacement placement = AudioMixPlan.Resolve(cue, false);
             if (!placement.IsValid)
             {
                 return;
             }
 
-            AudioClip clip = _library.First(placement.Sound);
-            if (clip == null || _loops.Count >= LoopCapacity)
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.Requested, AudioPlaybackPool.Loop, placement.Sound,
+                active: _loops.Count, capacity: LoopCapacity, combatEvent: cue.Event);
+#endif
+
+            if (_loops.TryGetValue(cue.Event, out LoopVoice existing))
             {
+                existing.AddClaim(cue.Position);
+                existing.Stopping = false;
+                existing.TargetVolume = Mathf.Max(existing.TargetVolume,
+                    placement.Gain * Mathf.Clamp(cue.Intensity <= 0f ? 1f : cue.Intensity, 0.2f, 1.2f));
+                existing.Source.transform.position = cue.Position;
+                if (!existing.Source.isPlaying) existing.Source.Play();
+                return;
+            }
+
+            AudioClip clip = _library.First(placement.Sound);
+            if (clip == null)
+            {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.MissingClip, AudioPlaybackPool.Loop, placement.Sound,
+                    active: _loops.Count, capacity: LoopCapacity, combatEvent: cue.Event);
+#endif
+                return;
+            }
+
+            if (_loops.Count >= LoopCapacity)
+            {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.BudgetDropped, AudioPlaybackPool.Loop, placement.Sound,
+                    active: _loops.Count, capacity: LoopCapacity, combatEvent: cue.Event);
+#endif
                 return;
             }
 
@@ -770,20 +959,38 @@ namespace DD.Prototype.Audio
                 TargetVolume = placement.Gain * Mathf.Clamp(cue.Intensity <= 0f ? 1f : cue.Intensity, 0.2f, 1.2f),
                 Pitch = spinUp ? 0.45f : 1f,
                 TargetPitch = 1f,
-                RampSeconds = spinUp ? 0.55f : 0.25f
+                RampSeconds = spinUp ? 0.55f : 0.25f,
+                Claims = 0
             };
+
+            voice.AddClaim(cue.Position);
 
             source.pitch = voice.Pitch;
             source.volume = 0f;
             source.Play();
 
             _loops.Add(cue.Event, voice);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStarted, AudioPlaybackPool.Loop, placement.Sound,
+                active: _loops.Count, capacity: LoopCapacity, combatEvent: cue.Event);
+#endif
         }
 
-        private void OnLoopStopped(CombatAudioEvent evt)
+        private void OnLoopStopped(CombatAudioEvent evt, Vector3 position)
         {
             if (_loops.TryGetValue(evt, out LoopVoice voice))
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStopRequested, AudioPlaybackPool.Loop, voice.Sound,
+                    active: _loops.Count, capacity: LoopCapacity, combatEvent: evt);
+#endif
+                voice.RemoveNearestClaim(position);
+                if (voice.Claims > 0)
+                {
+                    voice.Source.transform.position = voice.Claim0;
+                    return;
+                }
+
                 // Fade rather than stop. A looping bed cut at an arbitrary sample is a
                 // click, and the beacon loop stops every time a player picks a weapon up -
                 // which is the exact frame they are paying attention to.
@@ -849,6 +1056,10 @@ namespace DD.Prototype.Audio
                 voice.Source.Stop();
                 Destroy(voice.Source.gameObject);
             }
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopEnded, AudioPlaybackPool.Loop, voice.Sound,
+                active: _loops.Count, capacity: LoopCapacity, combatEvent: evt);
+#endif
         }
 
         private void StopAllLoops()
@@ -861,6 +1072,13 @@ namespace DD.Prototype.Audio
             var keys = new List<CombatAudioEvent>(_loops.Keys);
             for (int i = 0; i < keys.Count; i++)
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                if (_loops.TryGetValue(keys[i], out LoopVoice voice))
+                {
+                    AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStopRequested, AudioPlaybackPool.Loop, voice.Sound,
+                        active: _loops.Count, capacity: LoopCapacity, combatEvent: keys[i]);
+                }
+#endif
                 DestroyLoop(keys[i]);
             }
         }

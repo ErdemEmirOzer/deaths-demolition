@@ -80,6 +80,7 @@ namespace DD.Prototype.Audio
         private const AudioBus T = AudioBus.Target;
         private const AudioBus U = AudioBus.Interface;
         private const AudioBus A = AudioBus.Ambience;
+        private const AudioBus M = AudioBus.Music;
 
         public static readonly AudioEventBinding[] Entries =
         {
@@ -188,10 +189,10 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ambience, "Region.west", AudioSoundId.AmbRegionWest, A, false, ""),
 
             // ---- music (continuous) — DEC-064 / DEC-065 ------------------------------
-            B(AudioEventSource.Music, "Music.base", AudioSoundId.MusicBase, A, false, "always; pulled back between rounds"),
-            B(AudioEventSource.Music, "Music.percussion", AudioSoundId.MusicPercussion, A, false, "MusicIntensity ≥ 0.15"),
-            B(AudioEventSource.Music, "Music.tension", AudioSoundId.MusicTension, A, false, "MusicIntensity ≥ 0.45"),
-            B(AudioEventSource.Music, "Music.accent", AudioSoundId.MusicAccent, A, false, "Elite/Ultra alive or Special Weapon active"),
+            B(AudioEventSource.Music, "Music.base", AudioSoundId.MusicBase, M, false, "always; pulled back between rounds"),
+            B(AudioEventSource.Music, "Music.percussion", AudioSoundId.MusicPercussion, M, false, "MusicIntensity ≥ 0.15"),
+            B(AudioEventSource.Music, "Music.tension", AudioSoundId.MusicTension, M, false, "MusicIntensity ≥ 0.45"),
+            B(AudioEventSource.Music, "Music.accent", AudioSoundId.MusicAccent, M, false, "Elite/Ultra alive or Special Weapon active"),
             // WP-057 · music v2: phase loops and stingers (AP-011 v008, derived from the stems, 0 cr); Music software bus
             B(AudioEventSource.Music, "Music.menu", AudioSoundId.MusicMenu, AudioBus.Music, false, "main menu / selection loop; cross-fades against the run layers (RunPhase.None, not after a run)"),
             B(AudioEventSource.Music, "Music.results", AudioSoundId.MusicResults, AudioBus.Music, false, "results loop after RunEnded / death until the next RunStarted"),

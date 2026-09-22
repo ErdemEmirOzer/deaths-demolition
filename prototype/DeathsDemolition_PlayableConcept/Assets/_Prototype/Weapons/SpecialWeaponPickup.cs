@@ -147,7 +147,7 @@ namespace DD.Prototype.Weapons
             if (_beaconLoopRunning)
             {
                 _beaconLoopRunning = false;
-                AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop);
+                AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, transform.position);
             }
         }
 
@@ -272,7 +272,7 @@ namespace DD.Prototype.Weapons
             if (_beaconLoopRunning)
             {
                 _beaconLoopRunning = false;
-                AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop);
+                AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, transform.position);
             }
         }
 

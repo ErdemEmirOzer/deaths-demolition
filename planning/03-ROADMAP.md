@@ -8,7 +8,7 @@ On ana yapısal karar alanının tamamı kararlaştırılmıştır. M0–M3 tama
 
 M4 başlangıcı onaylıdır; taban `main @ c82e36d`, M3 kapalıdır. Dağıtım ve model politikası `04-IMPLEMENTATION-PLAN.md` M4 kaydındadır.
 
-- `WP-061` S-10 Acceptance & Regression v2 → `WP-062` S-02 + S-07 Feel tuning surface → `WP-063` S-04 Save durability → `WP-064` S-05 Performance + soak → `WP-065` S-08 Audio final pass.
+- `WP-061` S-10 Acceptance & Regression v2 → `WP-062` S-02 + S-07 Feel tuning surface → `WP-063` S-04 Save durability → `WP-064` S-05 Performance + soak → `WP-065` S-08 Audio final pass. `WP-065` teknik uygulama ve otomatik kabul 2026-09-22'de tamamlandı; insan dinleme kabulü `PENDING`, entegrasyon C-00'dadır.
 - Ardından `WP-066` S-01 Release governance/distribution hazırlığı; hedef işletim sistemi, mağaza ve dağıtım kararlarına bağlıdır.
 - `WP-067 / AP üretim kapanışı` yalnız `04-IMPLEMENTATION-PLAN.md` içindeki mevcut AP üretim/devir kapsamıyla sınırlıdır; yeni kapsam eklenmez.
 

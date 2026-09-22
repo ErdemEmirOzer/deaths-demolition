@@ -172,9 +172,18 @@ namespace DD.Prototype.Feedback
         /// <summary>Stops a looping cue previously started with <see cref="RaiseLoop"/>.</summary>
         public static event Action<CombatAudioEvent> LoopStopped;
 
+        /// <summary>Position-aware stop for shared spatial loops. The legacy event remains for observers.</summary>
+        public static event Action<CombatAudioEvent, Vector3> LoopStoppedAt;
+
         public static void StopLoop(CombatAudioEvent evt)
         {
+            StopLoop(evt, Vector3.zero);
+        }
+
+        public static void StopLoop(CombatAudioEvent evt, Vector3 position)
+        {
             LoopStopped?.Invoke(evt);
+            LoopStoppedAt?.Invoke(evt, position);
         }
 
         public static void ResetCounters()
@@ -299,6 +308,7 @@ namespace DD.Prototype.Feedback
             Cue = null;
             CueSuppressed = null;
             LoopStopped = null;
+            LoopStoppedAt = null;
             SuppressedCount = 0;
             DeliveredCount = 0;
             s_recentHead = 0;

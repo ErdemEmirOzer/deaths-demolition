@@ -56,8 +56,8 @@ namespace DD.Prototype.Tests.EditMode.Audio
             foreach (AudioEventBinding b in AudioEventMap.For(AudioEventSource.Ambience)) { if (b.Event.StartsWith("Region.")) bed++; }
             Assert.AreEqual(6, bed, "5 bölge + ortak katman (DEC-066)");
             int katman = 0;
-            foreach (AudioEventBinding b in AudioEventMap.For(AudioEventSource.Music)) { if (b.Event.StartsWith("Music.") && b.Bus == AudioBus.Ambience) katman++; }
-            Assert.AreEqual(4, katman, "4 müzik katmanı (DEC-065); WP-057 menü/sonuç döngüleri ve stinger'lar Music bus'ında ayrı satırlar");
+            foreach (AudioEventBinding b in AudioEventMap.For(AudioEventSource.Music)) { if (b.Event.StartsWith("Music.") && b.Bus == AudioBus.Music) katman++; }
+            Assert.AreEqual(6, katman, "4 koşu katmanı + menü/sonuç döngüleri Music bus'ında");
             Assert.GreaterOrEqual(AudioEventMap.For(AudioEventSource.Polled).Count + AudioEventMap.For(AudioEventSource.Damage).Count, 4,
                 "Zombi vokal seti: hazırlık, saldırı, hit, ölüm (DEC-067)");
 

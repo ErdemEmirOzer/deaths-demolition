@@ -205,6 +205,56 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp021.pool requested=" + istek + " capacity=" + kapasite + " " + dunya.Describe() + " dropped=" + dunya.DroppedCount + " blocked=" + dunya.RetriggerBlockedCount + " stolen=" + dunya.StolenCount);
         }
 
+        [Test]
+        public void HavuzKarari_Telemetri_SebepleriAyriKaydeder()
+        {
+            var root = new GameObject("wp065-voice-telemetry-test");
+            AudioClip clip = AudioClip.Create("wp065-test", 4800, 1, 48000, false);
+            try
+            {
+                AudioPlaybackTelemetry.Reset();
+                var pool = new AudioVoicePool("World", root.transform, 1, new AudioBusMixer());
+                var placement = new AudioPlacement
+                {
+                    Sound = AudioSoundId.FleshHit,
+                    Bus = AudioBus.Target,
+                    Gain = 1f,
+                    Priority = 10f,
+                    Spatial = 0f,
+                    MaxInstances = 1,
+                    MinRetrigger = 0f,
+                    Pitch = 1f,
+                };
+
+                Assert.IsTrue(pool.Play(placement, clip, Vector3.zero, 1f, 10f));
+                Assert.IsTrue(pool.Play(placement, clip, Vector3.zero, 1f, 10f));
+                Assert.AreEqual(1, AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.SameSoundRecycled));
+
+                placement.Sound = AudioSoundId.CriticalHit;
+                Assert.IsTrue(pool.Play(placement, clip, Vector3.zero, 1f, 20f));
+                Assert.AreEqual(1, AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.LowerPriorityStolen));
+
+                placement.Sound = AudioSoundId.ImpactStone;
+                Assert.IsFalse(pool.Play(placement, clip, Vector3.zero, 1f, 5f));
+                Assert.AreEqual(1, AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.BudgetDropped));
+
+                placement.Sound = AudioSoundId.ArmorBreak;
+                placement.MinRetrigger = 1f;
+                Assert.IsTrue(pool.Play(placement, clip, Vector3.zero, 1f, 30f));
+                Assert.IsFalse(pool.Play(placement, clip, Vector3.zero, 1f, 30f));
+                Assert.AreEqual(1, AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.RetriggerBlocked));
+                Assert.AreEqual(4, AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.Started));
+                pool.StopAll();
+                Assert.AreEqual(1, AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.RequestedStop));
+                Assert.AreEqual(0, AudioPlaybackTelemetry.OverflowCount);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(clip);
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         // ================================================================== mixer snapshot
 
         [UnityTest]
@@ -251,6 +301,18 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.GreaterOrEqual(kapali, 1, "45 m'deki dünya sesi için mesafe low-pass'ı kapanmadı (beklenen ≈ 12 kHz).");
             Assert.Less(AudioVoicePool.CutoffFor(30f), AudioVoicePool.CutoffFor(10f), "Uzak ses daha karanlık olmalı.");
             Assert.AreEqual(AudioVoicePool.LowPassOpen, AudioVoicePool.CutoffFor(4f), "Yakın ses tam bant.");
+
+            RunFlowClock.AddHold(RunFlowClock.PauseHold);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(AudioListener.pause, "Öncül: pause listener'ı dondurmalı.");
+            _d.enabled = false;
+            Assert.IsFalse(AudioListener.pause, "Director devre dışı kalınca global listener pause serbest bırakılmalı.");
+            Assert.IsFalse(_d.Mixer.Muted, "Director devre dışı kalınca software mixer mute serbest bırakılmalı.");
+            RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+            _d.enabled = true;
+            yield return null;
+            Assert.AreEqual(AudioSnapshot.Run, k.Current, "Director yeniden etkinleşince güncel Fighting snapshot'ını benimsemeli.");
 
             Debug.Log("[DD-TEST] wp021.mixer " + k.Describe() + " · " + _d.Listener.Describe() + " · listener-player " + uzaklik.ToString("0.00") + " m · reverb zones " + _d.Ambience.ReverbZoneCount + " · lpf closed " + kapali);
         }
@@ -515,10 +577,13 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return new WaitForSecondsRealtime(3.5f);
                 yield return Measure(v => menuDb = v);
                 Debug.Log("[DD-TEST] wp057.mix fight=" + fightDb.ToString("0.0") + " LUFS break=" + breakDb.ToString("0.0") + " menu=" + menuDb.ToString("0.0") + " · " + m.Describe());
-                if (fightDb > -60f)
-                {
-                    Assert.Greater(fightDb, menuDb - 0.1f, "Dövüş karışımı menüden sessiz olmamalı.");
-                }
+                Assert.IsFalse(float.IsNaN(fightDb) || float.IsInfinity(fightDb), "Fight LUFS sonlu değil.");
+                Assert.IsFalse(float.IsNaN(breakDb) || float.IsInfinity(breakDb), "Break LUFS sonlu değil.");
+                Assert.IsFalse(float.IsNaN(menuDb) || float.IsInfinity(menuDb), "Menu LUFS sonlu değil.");
+                Assert.Greater(fightDb, -60f, "Fight ölçümü anlamlı ses içermiyor.");
+                Assert.Greater(breakDb, -60f, "Break ölçümü anlamlı ses içermiyor.");
+                Assert.Greater(menuDb, -60f, "Menu ölçümü anlamlı ses içermiyor.");
+                Assert.Greater(fightDb, menuDb - 0.1f, "Dövüş karışımı menüden sessiz olmamalı.");
 
                 // WP-058B: L3 combat trim on the score.
                 m.SetPhase(RunPhase.Fighting); _d.Bridge.Transition(AudioSnapshot.Run, 0.2f);
@@ -577,18 +642,58 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(once + 1, r.SpecialUsageCount, "Fired ses üretmedi.");
             Assert.AreEqual(AudioSoundId.SwFireTide, _d.LastPlayed);
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_tide_well", at, Vector3.forward, 4f, 6f, 0);
+            Vector3 at2 = at + Vector3.right * 8f;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_tide_well", at2, Vector3.forward, 4f, 6f, 0);
             yield return null;
-            Assert.AreEqual(1, _d.FieldLoopsPlaying, "Tide kuyusu döngüsü çalmıyor.");
+            Assert.AreEqual(2, _d.FieldLoopsPlaying, "İki Tide kuyusu iki konumsal döngü tutmalı.");
+            int afterTwoTide = r.SpecialUsageCount;
+            Vector3 at3 = at + Vector3.left * 8f;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_tide_well", at3, Vector3.forward, 4f, 6f, 0);
+            Assert.AreEqual(2, _d.FieldLoopsPlaying, "Shipped MaxWells=2 üstündeki üçüncü Tide kaynağı başlamamalı.");
+            Assert.AreEqual(afterTwoTide, r.SpecialUsageCount, "Başlamayan üçüncü Tide kullanılmış sayılmamalı.");
             yield return new WaitForSecondsRealtime(0.1f);
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_tide_well", at2, Vector3.forward, 4f, 0f, 3);
+            yield return null;
+            Assert.AreEqual(1, _d.FieldLoopsPlaying, "Ters sıradaki FieldEnded yalnız eşleşen Tide kuyusunu durdurmalı.");
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_tide_well", at, Vector3.forward, 4f, 0f, 3);
             yield return null;
-            Assert.AreEqual(0, _d.FieldLoopsPlaying, "FieldEnded döngüyü durdurmalı.");
+            Assert.AreEqual(0, _d.FieldLoopsPlaying, "İkinci FieldEnded kalan Tide döngüsünü durdurmalı.");
             Assert.AreEqual(AudioSoundId.SwFieldEndTide, _d.LastPlayed);
             yield return new WaitForSecondsRealtime(0.1f);
             var kagura = DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(kagura, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_wave", at, Vector3.forward, 6f, 1.2f, 0);
             Assert.AreEqual(AudioSoundId.SwFieldKagura, _d.LastPlayed, "Kagura cephesi one-shot.");
             Assert.AreEqual(0, _d.FieldLoopsPlaying, "Kagura döngü değil.");
+
+            var ofuda = DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(ofuda, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_ofuda_web", at, Vector3.forward, 4f, 6f, 0);
+            Assert.AreEqual(1, _d.FieldLoopsPlaying, "Ofuda alan döngüsü başlamadı.");
+            _d.enabled = false;
+            Assert.AreEqual(0, _d.FieldLoopsPlaying, "Director disable alan döngülerini temizlemeli.");
+            _d.enabled = true;
+            yield return null;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(ofuda, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_ofuda_web", at, Vector3.forward, 4f, 6f, 0);
+            Assert.AreEqual(1, _d.FieldLoopsPlaying, "Director re-enable sonrası alan döngüsü yeniden bağlanmalı.");
+            DD.Prototype.Weapons.WeaponEvents.PublishSpecialEnded();
+            Assert.AreEqual(0, _d.FieldLoopsPlaying, "Special bitişi FieldEnded gelmese de alan döngülerini temizlemeli.");
+
+            AudioEvents.RaiseLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, at, 0.5f, 55);
+            AudioEvents.RaiseLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, at2, 0.5f, 55);
+            Assert.AreEqual(1, _d.LoopCount, "Paylaşılan beacon tek fiziksel loop olmalı.");
+            AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, at);
+            yield return new WaitForSecondsRealtime(0.25f);
+            Assert.AreEqual(1, _d.LoopCount, "İlk claim bitişi ikinci claim'i kesmemeli.");
+            Assert.Less(Vector3.Distance(at2, _d.LoopPosition(CombatAudioEvent.SpecialWeaponBeaconLoop)), 0.01f,
+                "Kalan claim loop'un konumsal sahibini devralmalı.");
+
+            AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, at2);
+            yield return new WaitForSecondsRealtime(0.05f);
+            AudioEvents.RaiseLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, at, 0.5f, 55);
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.AreEqual(1, _d.LoopCount, "Fade sırasında yeni claim loop'u yeniden sahiplenmeli.");
+            AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, at);
+            yield return new WaitForSecondsRealtime(0.25f);
+            Assert.AreEqual(0, _d.LoopCount, "Son claim bitince beacon loop kapanmalı.");
             Debug.Log("[DD-TEST] wp058.special " + r.Describe());
         }
 
@@ -674,7 +779,9 @@ namespace DD.Prototype.Tests.PlayMode
         [Timeout(60000)]
         public IEnumerator CikisKaydi_DinlemeTuru_WavVeFazIsaretleri()
         {
-            string path = System.IO.Path.Combine(Application.temporaryCachePath, "wp060-capture-test.wav");
+            string captureDirectory = System.IO.Path.Combine(Application.temporaryCachePath, "wp065-capture-" + Guid.NewGuid().ToString("N"));
+            System.IO.Directory.CreateDirectory(captureDirectory);
+            string path = System.IO.Path.Combine(captureDirectory, "first.wav");
             AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, path);
             for (int rep = 0; rep < 3; rep++)
             {
@@ -688,11 +795,25 @@ namespace DD.Prototype.Tests.PlayMode
             long frames = cap.FramesWritten;
             long dropped = cap.DroppedSamples;
             UnityEngine.Object.DestroyImmediate(cap);   // Finish(): header patched, markers closed
+            Assert.IsNull(AudioOutputCapture.Armed, "Destroy sonrası statik capture sahibi bırakılmalı.");
+
+            string secondPath = System.IO.Path.Combine(captureDirectory, "second.wav");
+            AudioOutputCapture second = AudioOutputCapture.Arm(_d.gameObject, secondPath);
+            Assert.AreEqual(secondPath, second.Path, "Re-arm yeni dosya yolunu kullanmalı.");
+            AudioEvents.RaiseCritical(CombatAudioEvent.ClassicWeaponFire, Vector3.zero, 1f, 50);
+            yield return new WaitForSecondsRealtime(0.3f);
+            long secondFrames = second.FramesWritten;
+            long secondDropped = second.DroppedSamples;
+            UnityEngine.Object.DestroyImmediate(second);
+            Assert.IsNull(AudioOutputCapture.Armed, "İkinci capture kapanınca statik sahip bırakılmalı.");
 
             var info = new System.IO.FileInfo(path);
             string markers = System.IO.File.ReadAllText(path + ".markers.txt");
+            string telemetry = System.IO.File.ReadAllText(path + ".telemetry.tsv");
+            string secondMarkers = System.IO.File.ReadAllText(secondPath + ".markers.txt");
+            string secondTelemetry = System.IO.File.ReadAllText(secondPath + ".telemetry.tsv");
             Debug.Log("[DD-TEST] wp060.capture frames=" + frames + " dropped=" + dropped + " bytes=" + info.Length + " markers=" + markers.Split('\n').Length);
-            if (frames == 0)
+            if (frames == 0 || secondFrames == 0)
             {
                 Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok): kayıt bu ortamda alınamıyor.");
             }
@@ -707,8 +828,25 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             StringAssert.Contains("phase\tFighting", markers, "Faz işareti yazılmadı.");
+            StringAssert.Contains("density\t", markers, "Yoğunluk işareti yazılmadı.");
             StringAssert.Contains("capture\tend", markers, "Kapanış işareti yazılmadı.");
-            foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+            var requested = System.Text.RegularExpressions.Regex.Match(telemetry, @"(?m)^Requested\t([1-9][0-9]*)$");
+            var started = System.Text.RegularExpressions.Regex.Match(telemetry, @"(?m)^Started\t([1-9][0-9]*)$");
+            Assert.IsTrue(requested.Success, "İstek yaşam döngüsü pozitif sayıyla yazılmadı.");
+            Assert.IsTrue(started.Success, "Voice başlangıcı pozitif sayıyla yazılmadı.");
+            StringAssert.Contains("# combat_event\tdelivered\tsuppressed", telemetry, "Event teslim/bastırma tablosu yazılmadı.");
+            StringAssert.Contains("# ring_overflow\t0", telemetry, "Telemetri halkası taştı.");
+            Assert.Greater(secondFrames, 0, "İkinci capture mevcut listener tap'ini yeniden bağlayamadı.");
+            Assert.AreEqual(0, secondDropped, "İkinci capture halkası örnek düşürdü.");
+            Assert.Greater(new System.IO.FileInfo(secondPath).Length, 44 + secondFrames, "İkinci WAV gövdesi yazılmadı.");
+            using (var r = new System.IO.BinaryReader(System.IO.File.OpenRead(secondPath)))
+            {
+                Assert.AreEqual("RIFF", new string(r.ReadChars(4)));
+                r.ReadInt32();
+                Assert.AreEqual("WAVE", new string(r.ReadChars(4)));
+            }
+            StringAssert.Contains("capture\tend", secondMarkers, "İkinci capture kapanış işareti yazılmadı.");
+            StringAssert.Contains("# ring_overflow\t0", secondTelemetry, "İkinci telemetry raporu yazılmadı ya da taştı.");
         }
 
         // ================================================================== GC 0

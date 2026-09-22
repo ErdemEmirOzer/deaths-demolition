@@ -245,7 +245,7 @@ namespace DD.Prototype.Weapons
 
         private void TearDown()
         {
-            AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop);
+            AudioEvents.StopLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, transform.position);
             ReleaseVortex();
         }
 

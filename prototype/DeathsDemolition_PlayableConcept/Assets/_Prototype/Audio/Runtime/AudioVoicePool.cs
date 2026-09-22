@@ -51,6 +51,9 @@ namespace DD.Prototype.Audio
 
         private readonly Voice[] _voices;
         private readonly AudioBusMixer _mixer;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        private readonly AudioPlaybackPool _evidencePool;
+#endif
 
         /// <summary>WP-021: mixer group routing per bus. Null = default output (pre-WP-021).</summary>
         private readonly AudioMixerBridge _bridge;
@@ -145,6 +148,9 @@ namespace DD.Prototype.Audio
             Name = name;
             _mixer = mixer;
             _bridge = bridge;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            _evidencePool = name == "Signal" ? AudioPlaybackPool.Signal : AudioPlaybackPool.World;
+#endif
             _voices = new Voice[Mathf.Max(1, hardCapacity)];
             _softCapacity = _voices.Length;
 
@@ -200,6 +206,9 @@ namespace DD.Prototype.Audio
         {
             if (clip == null)
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.MissingClip, _evidencePool, placement.Sound, active: ActiveCount, capacity: _softCapacity);
+#endif
                 return false;
             }
 
@@ -211,6 +220,9 @@ namespace DD.Prototype.Audio
                 && now - last < placement.MinRetrigger)
             {
                 RetriggerBlockedCount++;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.RetriggerBlocked, _evidencePool, placement.Sound, active: ActiveCount, capacity: _softCapacity);
+#endif
                 return false;
             }
 
@@ -219,6 +231,9 @@ namespace DD.Prototype.Audio
             {
                 DroppedCount++;
                 LastDropped = placement.Sound;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.BudgetDropped, _evidencePool, placement.Sound, active: ActiveCount, capacity: _softCapacity);
+#endif
                 return false;
             }
 
@@ -271,6 +286,10 @@ namespace DD.Prototype.Audio
             source.volume = voice.BaseVolume * _mixer.Gain(placement.Bus);
             source.Play();
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.Started, _evidencePool, placement.Sound, active: ActiveCount, capacity: _softCapacity);
+#endif
+
             _lastPlayed[placement.Sound] = now;
 
             int active = ActiveCount;
@@ -304,6 +323,9 @@ namespace DD.Prototype.Audio
 
                 if (v.Remaining <= 0f)
                 {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                    AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.NaturalEnd, _evidencePool, v.Sound, active: ActiveCount, capacity: _softCapacity);
+#endif
                     v.Source.Stop();
                     v.Source.clip = null;
                     v.Active = false;
@@ -334,6 +356,12 @@ namespace DD.Prototype.Audio
         {
             for (int i = 0; i < _voices.Length; i++)
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                if (_voices[i].Active)
+                {
+                    AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.RequestedStop, _evidencePool, _voices[i].Sound, active: ActiveCount, capacity: _softCapacity);
+                }
+#endif
                 _voices[i].Source.Stop();
                 _voices[i].Source.clip = null;
                 _voices[i].Active = false;
@@ -415,6 +443,9 @@ namespace DD.Prototype.Audio
                 // does not count as a steal and is not reported as one.
                 oldestSame.Source.Stop();
                 oldestSame.Active = false;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.SameSoundRecycled, _evidencePool, placement.Sound, oldestSame.Sound, ActiveCount, _softCapacity);
+#endif
                 return oldestSame;
             }
 
@@ -428,9 +459,13 @@ namespace DD.Prototype.Audio
             // identically important one trades nothing for a click.
             if (weakest != null && weakestPriority < priority)
             {
+                AudioSoundId victim = weakest.Sound;
                 weakest.Source.Stop();
                 weakest.Active = false;
                 StolenCount++;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LowerPriorityStolen, _evidencePool, placement.Sound, victim, ActiveCount, _softCapacity);
+#endif
                 return weakest;
             }
 

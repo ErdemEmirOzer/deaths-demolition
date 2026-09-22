@@ -510,6 +510,10 @@ namespace DD.Prototype.Feedback
         /// <summary>Step 5. Surface-aware world impact, for shots that miss or overpenetrate.</summary>
         public void ReportSurfaceImpact(Vector3 point, Vector3 normal, SurfaceKind surface, float scale)
         {
+            // Audio owns its own budget. A missing/exhausted VFX pool must not suppress
+            // the surface event before it reaches the audio voice policy.
+            AudioEvents.Raise(AudioEvents.ImpactEventFor(surface), point, scale);
+
             if (_impactPool == null)
             {
                 return;
@@ -528,8 +532,6 @@ namespace DD.Prototype.Feedback
                     burst.Play(ColorForSurface(surface), scale, ParticlesForSurface(surface), 0.4f);
                 }
             }
-
-            AudioEvents.Raise(AudioEvents.ImpactEventFor(surface), point, scale);
         }
 
         // ------------------------------------------------------------------ steps 6-12
@@ -775,6 +777,11 @@ namespace DD.Prototype.Feedback
         /// <summary>Chain / ricochet connection. The "readable thin link" of the request.</summary>
         public void ReportLink(Vector3 from, Vector3 to, bool isRicochet)
         {
+            // Keep the event surface independent from the visual link budget.
+            AudioEvents.Raise(
+                isRicochet ? CombatAudioEvent.Ricochet : CombatAudioEvent.ChainArc,
+                to, 0.8f, 25);
+
             if (_linkPool == null)
             {
                 return;
@@ -795,10 +802,6 @@ namespace DD.Prototype.Feedback
             {
                 _vfx.PlaySpark(from, to - from);   // AP-010B wave 2: sparks at the bounce, streak along the new leg
             }
-
-            AudioEvents.Raise(
-                isRicochet ? CombatAudioEvent.Ricochet : CombatAudioEvent.ChainArc,
-                to, 0.8f, 25);
         }
 
         // ------------------------------------------------------------------ layers

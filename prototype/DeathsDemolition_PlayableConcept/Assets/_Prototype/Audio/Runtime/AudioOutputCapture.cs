@@ -3,6 +3,9 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading;
+using DD.Prototype.Core.Config;
+using DD.Prototype.Enemies;
+using DD.Prototype.Feedback;
 using DD.Prototype.Rounds;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,9 +22,9 @@ namespace DD.Prototype.Audio
     /// allocated on the audio thread; if the main thread stalls for longer than the ring holds, the
     /// dropped sample count is reported in the sidecar rather than blocking the DSP.
     ///
-    /// The sidecar <c>&lt;file&gt;.markers.txt</c> lists <c>seconds \t realtime \t kind \t detail</c>
-    /// (scene loads, run phases, rounds, run end, player death) so the recording can be cut per phase
-    /// offline (tools: AP-011 <c>audio_capture_report.py</c>) and aligned with the QA bot's events.txt.
+    /// The marker sidecar includes phase and one-second density checkpoints; the telemetry
+    /// sidecar carries the fixed-ring cue/voice lifecycle. <c>tools/qa/audio_capture_report.py</c>
+    /// cuts the recording per phase and fails evidence-integrity gates.
     /// </summary>
     public sealed class AudioOutputCapture : MonoBehaviour
     {
@@ -42,6 +45,7 @@ namespace DD.Prototype.Audio
         private byte[] _pcm;
         private long _framesWritten;
         private float _rescanAt;
+        private float _densityAt;
         private RunPhase _lastPhase = RunPhase.None;
         private string _path;
 
@@ -66,6 +70,11 @@ namespace DD.Prototype.Audio
 
         public static AudioOutputCapture Arm(GameObject host, string path)
         {
+            if (Armed != null)
+            {
+                return Armed;
+            }
+
             var c = host.AddComponent<AudioOutputCapture>();
             c.Begin(path);
             Armed = c;
@@ -89,6 +98,7 @@ namespace DD.Prototype.Audio
         private void Begin(string path)
         {
             _path = path;
+            AudioPlaybackTelemetry.Reset();
             _sampleRate = AudioSettings.outputSampleRate;
             AudioSettings.GetDSPBufferSize(out int bufferLength, out int numBuffers);
             int channels = SpeakerChannels(AudioSettings.driverCapabilities);
@@ -110,7 +120,14 @@ namespace DD.Prototype.Audio
             RunEvents.RoundCompleted += OnRoundCompleted;
             RunEvents.RunEnded += OnRunEnded;
             DD.Prototype.PlayerSystem.PlayerHealth.AnyPlayerDied += OnPlayerDied;
+            RunDirector run = RunDirector.Instance;
+            if (run != null)
+            {
+                _lastPhase = run.Phase;
+                Mark("phase", _lastPhase + " initial");
+            }
             Rescan();
+            MarkDensity();
         }
 
         private static int SpeakerChannels(AudioSpeakerMode mode)
@@ -163,6 +180,11 @@ namespace DD.Prototype.Audio
                 Rescan();
             }
 
+            if (Time.unscaledTime >= _densityAt)
+            {
+                MarkDensity();
+            }
+
             Drain();
         }
 
@@ -172,10 +194,9 @@ namespace DD.Prototype.Audio
             AudioListener[] all = FindObjectsOfType<AudioListener>(true);
             for (int i = 0; i < all.Length; i++)
             {
-                if (all[i].GetComponent<AudioOutputTap>() == null)
-                {
-                    all[i].gameObject.AddComponent<AudioOutputTap>().Bind(this, all[i]);
-                }
+                AudioOutputTap tap = all[i].GetComponent<AudioOutputTap>();
+                if (tap == null) tap = all[i].gameObject.AddComponent<AudioOutputTap>();
+                tap.Bind(this, all[i]);
             }
         }
 
@@ -200,6 +221,52 @@ namespace DD.Prototype.Audio
             _file.Write(_pcm, 0, o);
             Interlocked.Add(ref _read, count);
             if (_channels > 0) _framesWritten += count / _channels;
+        }
+
+        private void MarkDensity()
+        {
+            _densityAt = Time.unscaledTime + 1f;
+            int alive = 0;
+            int standard = 0;
+            int special = 0;
+            int elite = 0;
+            int ultra = 0;
+            var live = ZombieEnemy.Live;
+            for (int i = 0; i < live.Count; i++)
+            {
+                ZombieEnemy zombie = live[i];
+                if (zombie == null || !zombie.IsAlive) continue;
+                alive++;
+                switch (zombie.Tier)
+                {
+                    case EnemyTier.Special: special++; break;
+                    case EnemyTier.Elite: elite++; break;
+                    case EnemyTier.Ultra: ultra++; break;
+                    default: standard++; break;
+                }
+            }
+
+            PrototypeAudioDirector director = PrototypeAudioDirector.Instance;
+            int worldVoices = director != null && director.WorldPool != null ? director.WorldPool.ActiveCount : 0;
+            int signalVoices = director != null && director.SignalPool != null ? director.SignalPool.ActiveCount : 0;
+            int loops = director != null ? director.LoopCount : 0;
+            int fields = director != null ? director.FieldLoopsPlaying : 0;
+            string snapshot = director != null && director.Bridge != null ? director.Bridge.Current.ToString() : "None";
+            RunDirector run = RunDirector.Instance;
+            RunPhase phase = run != null ? run.Phase : _lastPhase;
+
+            Mark("density",
+                "phase " + phase + " snapshot " + snapshot
+                + " alive " + alive + " tiers " + standard + "/" + special + "/" + elite + "/" + ultra
+                + " voices " + worldVoices + "/" + signalVoices + " loops " + loops + "/" + fields
+                + " actions " + AudioEvents.DeliveredCount + " suppressed " + AudioEvents.SuppressedCount
+                + " requested " + AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.Requested)
+                + " started " + AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.Started)
+                + " dropped " + AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.BudgetDropped)
+                + " stolen " + AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.LowerPriorityStolen)
+                + " recycled " + AudioPlaybackTelemetry.Total(AudioPlaybackOutcome.SameSoundRecycled)
+                + " trace_overflow " + AudioPlaybackTelemetry.OverflowCount
+                + " dsp " + AudioSettings.dspTime.ToString("F6", System.Globalization.CultureInfo.InvariantCulture));
         }
 
         private double Seconds => _channels > 0 && _sampleRate > 0 ? Interlocked.Read(ref _write) / (double)(_channels * _sampleRate) : 0.0;
@@ -260,6 +327,14 @@ namespace DD.Prototype.Audio
 
             _file.Dispose();
             _file = null;
+            try
+            {
+                AudioPlaybackTelemetry.WriteReport(_path + ".telemetry.tsv");
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
             if (Armed == this) Armed = null;
         }
     }
