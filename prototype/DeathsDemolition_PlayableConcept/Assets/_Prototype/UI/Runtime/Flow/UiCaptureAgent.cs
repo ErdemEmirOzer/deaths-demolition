@@ -403,7 +403,8 @@ namespace DD.Prototype.UI
             /// </summary>
             private IEnumerator DisplayRoundTrip()
             {
-                string folder = Directory.Exists(_out) ? _out : (Path.GetDirectoryName(_out) ?? Application.persistentDataPath);
+                // -ddUiCaptureOut is a folder here (it need not exist yet); only a file-like path (".png") names its parent.
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
                 Directory.CreateDirectory(folder);
                 MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
                 if (menu != null)
