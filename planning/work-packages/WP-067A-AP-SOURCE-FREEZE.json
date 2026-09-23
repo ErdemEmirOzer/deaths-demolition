@@ -1,0 +1,226 @@
+{
+  "package": "WP-067A",
+  "title": "AP source freeze & backup",
+  "result": "PASS",
+  "run": "5088627-20260923T1939Z",
+  "base": "5088627",
+  "startedUtc": "2026-09-23T19:39:48Z",
+  "finishedUtc": "2026-09-23T19:53:38Z",
+  "totalSeconds": 830,
+  "source": "~/Desktop/KADRO/context/projects/deaths-demolition/asset-production",
+  "target": "~/Backups/DeathsDemolition/WP-067A/AP-source-freeze-5088627-20260923T1939Z",
+  "independence": "logical-independent-apfs-cow (same APFS volume/device; NOT hardware-failure independent)",
+  "rules": {
+    "excludeExact": [
+      ".DS_Store"
+    ],
+    "excludeSuffix": [
+      "~",
+      ".tmp",
+      ".temp",
+      ".bak",
+      ".backup",
+      ".swp",
+      ".autosave"
+    ]
+  },
+  "rootDigestAlgorithm": "sha256 over UTF-8 lines '<sha256>  <size>  <rel>\\n' sorted by UTF-8 rel path",
+  "canonicalFiles": 15457,
+  "canonicalBytes": 60259050326,
+  "directories": 1088,
+  "excluded": [
+    ".DS_Store",
+    "AP-020/.DS_Store"
+  ],
+  "rootDigest": "a44d767c63444ef6e0c568f7689605bb373ea6023263c567faf085096ff8eee2",
+  "externalManifest": {
+    "path": "~/Desktop/KADRO/context/projects/deaths-demolition/wp-067a/run-5088627-20260923T1939Z/manifest-start.tsv",
+    "sha256": "1f938b15f8436ad8d0a0a814b45a2604456d3429f733fd167e0a85b41e24bf4f",
+    "format": "sha256<TAB>size<TAB>mtime_ns<TAB>mode(octal)<TAB>rel"
+  },
+  "perAp": {
+    "AP-001": {
+      "bytes": 19680787397,
+      "digest": "f190f14e5293de88f52c565c971f509996da9a5d099696cba329f6b1c5388056",
+      "files": 3157
+    },
+    "AP-002": {
+      "bytes": 9213897098,
+      "digest": "284251b7924f167176631546748a91b57f92647c12149f2f8e76734459266760",
+      "files": 980
+    },
+    "AP-003": {
+      "bytes": 17538498377,
+      "digest": "5e8478133f6ea9c58bc16194f8898a45f134f9eafd764c13f4ee011fd0b69ece",
+      "files": 1934
+    },
+    "AP-003B": {
+      "bytes": 3705154063,
+      "digest": "45cec62d5361943569c7cebf69a92a3f843d41fe0443d78ceaffd66ad19f2d2b",
+      "files": 473
+    },
+    "AP-005": {
+      "bytes": 3100532992,
+      "digest": "ac0ff037fecab485d5cec20f7ed79ab7887c154c47b43fdfe52e9c710fc05cd8",
+      "files": 375
+    },
+    "AP-006": {
+      "bytes": 567873118,
+      "digest": "60a20ff480594c66971c85a0d0dee31e1fb353af840f68b8d8fc198e894ad0f3",
+      "files": 232
+    },
+    "AP-007": {
+      "bytes": 927895122,
+      "digest": "d9082046b681f1f6d8a42195fa9da452846c127d5b4e5c97e2d74a38b0a40f8e",
+      "files": 456
+    },
+    "AP-008": {
+      "bytes": 742862159,
+      "digest": "2b8eb1911212c503380a387a4a84df9d44f439c9fec743f6faa19f9e5fc35a20",
+      "files": 540
+    },
+    "AP-009": {
+      "bytes": 1052046593,
+      "digest": "a9208b3fb42b9e6cba6e4de5e5602a097e7b3bccf8adf93ef87d9735e142c9b5",
+      "files": 4122
+    },
+    "AP-010": {
+      "bytes": 224066005,
+      "digest": "5a82db803952d357900162d09a5b4037da11990b9800b8925da5e066c494b701",
+      "files": 1333
+    },
+    "AP-011": {
+      "bytes": 321034922,
+      "digest": "3e6d56e93780f6ae2bb69087037b8b6395dee9d8da3403f2a0ef0e32acd46980",
+      "files": 599
+    },
+    "AP-011B": {
+      "bytes": 70743750,
+      "digest": "256c5df46284654b62be1f80c4d91ddba1686179ac4487e84625c23aeaa7d439",
+      "files": 233
+    },
+    "AP-012": {
+      "bytes": 53245050,
+      "digest": "b10a667c2419df9427d37ea232755ef0c45aadd4e26b4a37da76d4cf9a931597",
+      "files": 38
+    },
+    "AP-013": {
+      "bytes": 67410126,
+      "digest": "2c5e3d6646ed3f9c82901c89e98daa563bee7bdea169b397891920326f8c4b6d",
+      "files": 100
+    },
+    "AP-014": {
+      "bytes": 444323195,
+      "digest": "a4c2e360441fd402850472eee7f9124af4f0cb6783ff7433b1c0c53793da146f",
+      "files": 213
+    },
+    "AP-015": {
+      "bytes": 206707809,
+      "digest": "e677b35bed39646255b5b961f3f1e4bbcd46f045a382c6e279ed922a2b38ee28",
+      "files": 197
+    },
+    "AP-017": {
+      "bytes": 962954794,
+      "digest": "2b7115ed98dd12e58700008d903078e3314e4a71702ef825d401526751bce717",
+      "files": 329
+    },
+    "AP-018": {
+      "bytes": 6957102,
+      "digest": "2e9856b891453bc2abf3fe7df708a588c0e6c2d935bf2f64705eed2d8d03a360",
+      "files": 24
+    },
+    "AP-019": {
+      "bytes": 33509271,
+      "digest": "c96f10f0acd331405fd18d2dcb526263fd36e856bb92165254f884dbfa7b78ef",
+      "files": 25
+    },
+    "AP-020": {
+      "bytes": 45242657,
+      "digest": "bf4e9c703c979bc395950a97bb042be8fdcfd490edc8853f7434cacc73d52f4a",
+      "files": 95
+    },
+    "showcase": {
+      "bytes": 1293308726,
+      "digest": "149f8ffb6cdf2b8d147021b3f6279a8a265025c9a4d2bd7030ed0e6b6ef4d2ab",
+      "files": 2
+    }
+  },
+  "phases": {
+    "startInventorySeconds": 15,
+    "cloneSeconds": 3,
+    "copyMethod": "clonefile(2) per canonical file, no fallback",
+    "readback": {
+      "equal": true,
+      "readbackRootDigest": "a44d767c63444ef6e0c568f7689605bb373ea6023263c567faf085096ff8eee2",
+      "missingCount": 0,
+      "extraCount": 0,
+      "diffCount": 0,
+      "seconds": 14
+    },
+    "restoreDrill": {
+      "ok": true,
+      "method": "plain byte copy from backup (copyfileobj), not clonefile",
+      "files": [
+        {
+          "rel": "AP-003/05-blender/validation/AP003-roundtrip-runner-v007.out",
+          "size": 39,
+          "sha256": "bea75cb66d9a3f5e18224b906e106548ff8278160017805d8d017ad54f79c188",
+          "ok": true
+        },
+        {
+          "rel": "AP-001/05-blender/validation/v009/GoldenSlice_fbx/GoldenSlice.fbx",
+          "size": 943442188,
+          "sha256": "bbf2f7882ad2f0f7d203a9120c8961736c3b27f0692115adeee3aa02d5a44864",
+          "ok": true
+        },
+        {
+          "rel": "AP-010/05-blender/wave2/frames/water_splash/meta.json",
+          "size": 393,
+          "sha256": "573ea93f9493bca9525724340ae9a1ad68b81d9454b5829f2e79a0b2c8c133c5",
+          "ok": true
+        },
+        {
+          "rel": "AP-001/04-adobe/source/AP001-material-bark-v001/bark-studio.blend",
+          "size": 20020688,
+          "sha256": "12805f3f0aadd55a40eb0f3749648383baeebfd2ff95b0f4e168bffa25ec841e",
+          "ok": true
+        },
+        {
+          "rel": "AP-006/06-renders/AP006-rigtest-walk-08.png",
+          "size": 1513813,
+          "sha256": "c6c7ee9141e417d0a0a499717a9c5e7727f680510b168fd32662544a4eb27ab7",
+          "ok": true
+        },
+        {
+          "rel": "AP-011/exports/ImpactDirt_01.wav",
+          "size": 117788,
+          "sha256": "4531e4e3e90febcf675f03caee15cdab1f7b773005b220f2d4dbf2762dbcff80",
+          "ok": true
+        },
+        {
+          "rel": "AP-013/06-renders/in-hand/contact/AP009_player_B_switch_in_f02.png",
+          "size": 342226,
+          "sha256": "c3162377a317a7c52e741a6b9f0c53f1a08ca33d0779eaf588e8623e2b93bc22",
+          "ok": true
+        },
+        {
+          "rel": "AP-017/06-renders/gameplay/AP017-p2b-south-ponds-eevee-v007.png",
+          "size": 3019149,
+          "sha256": "2184483739ae8bbb3db4a04c397498f7a2464117ac6e20356319532c54514e2a",
+          "ok": true
+        }
+      ]
+    },
+    "sourceStability": {
+      "equal": true,
+      "endRootDigest": "a44d767c63444ef6e0c568f7689605bb373ea6023263c567faf085096ff8eee2",
+      "missingCount": 0,
+      "extraCount": 0,
+      "diffCount": 0,
+      "seconds": 14
+    }
+  },
+  "openUserItems": [
+    "External (off-device) backup of the target is a separate user task; this copy shares the APFS volume and physical blocks with the source."
+  ]
+}
