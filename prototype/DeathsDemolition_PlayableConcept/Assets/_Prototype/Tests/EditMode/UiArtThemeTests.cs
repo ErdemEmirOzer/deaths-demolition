@@ -280,6 +280,14 @@ namespace DD.Prototype.Tests.EditMode
                 DD.Prototype.Diagnostics.Telemetry.RunTelemetry.SetEnabled(true);
                 Assert.IsTrue(DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Enabled);
 
+                // WP-022M: DISPLAY choice persists in ui-settings.json (applied by UiDisplayMode in play).
+                UiSettings.Fullscreen = true;
+                StringAssert.Contains("\"DisplayMode\": 1", File.ReadAllText(path));
+                UiSettings.Fullscreen = false;
+                StringAssert.Contains("\"DisplayMode\": 0", File.ReadAllText(path));
+                Assert.AreEqual(1, new UiSettingsData { DisplayMode = 7 }.Clamp().DisplayMode);
+                Assert.AreEqual(-1, new UiSettingsData { DisplayMode = -5 }.Clamp().DisplayMode);
+
                 Vector2 reference = UiTokens.ReferenceResolution / UiSettings.UiScale;
                 Assert.AreEqual(1920f / 1.1f, reference.x, 0.01f, "ölçek 1.1 referans çerçeveyi 1/1.1 küçültmeli (UI büyür)");
             }

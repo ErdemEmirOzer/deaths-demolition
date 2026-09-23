@@ -30,8 +30,18 @@ namespace DD.Prototype.UI
         /// <summary>Halves damage / final-seconds flashes (HUD edges, WP-019 vignette flash) - never the blood.</summary>
         public bool ReduceFlashes;
 
+        /// <summary>WP-022M: -1 = follow the launch / OS state, 0 = windowed, 1 = fullscreen (Settings DISPLAY).</summary>
+        public int DisplayMode = -1;
+
+        /// <summary>Last windowed size in Screen units (0 = let PrototypeWindowFit / 1280x720 decide).</summary>
+        public int WindowWidth;
+        public int WindowHeight;
+
         public UiSettingsData Clamp()
         {
+            DisplayMode = Mathf.Clamp(DisplayMode, -1, 1);
+            WindowWidth = Mathf.Max(0, WindowWidth);
+            WindowHeight = Mathf.Max(0, WindowHeight);
             ColorPalette = ColorPalette == 1 ? 1 : 0;
             TextScale = Mathf.Clamp(TextScale, UiSettings.TextScaleMin, UiSettings.TextScaleMax);
             Version = CurrentVersion;
@@ -299,6 +309,9 @@ namespace DD.Prototype.UI
             s_data.ColorPalette = loaded != null ? loaded.ColorPalette : 0;
             s_data.TextScale = loaded != null && loaded.TextScale > 0f ? loaded.TextScale : 1f;
             s_data.ReduceFlashes = loaded != null && loaded.ReduceFlashes;
+            s_data.DisplayMode = loaded != null ? loaded.DisplayMode : -1;
+            s_data.WindowWidth = loaded != null ? loaded.WindowWidth : 0;
+            s_data.WindowHeight = loaded != null ? loaded.WindowHeight : 0;
             int count = Mathf.Max(1, QualitySettings.names.Length);
             int quality = loaded != null && loaded.Quality >= 0 ? loaded.Quality : QualitySettings.GetQualityLevel();
             s_data.Quality = Mathf.Clamp(quality, 0, count - 1);
@@ -309,6 +322,71 @@ namespace DD.Prototype.UI
             UiTokens.Palette = s_data.ColorPalette == 1 ? UiPalette.ColorBlindSafe : UiPalette.Default;
             UiTokens.TextScale = s_data.TextScale;
             ApplyFlashes();
+            ApplyStoredDisplayMode();
+        }
+
+        // ---- WP-022M display mode
+
+        /// <summary>True when the game is (or is switching to) fullscreen. Settings DISPLAY row.</summary>
+        public static bool Fullscreen
+        {
+            get
+            {
+                EnsureLoaded();
+                return UiDisplayMode.Pending.HasValue ? UiDisplayMode.Pending.Value : Screen.fullScreenMode != FullScreenMode.Windowed;
+            }
+            set
+            {
+                EnsureLoaded();
+                if (value && Screen.fullScreenMode == FullScreenMode.Windowed)
+                {
+                    RememberWindow(); // the size to come back to
+                }
+
+                s_data.DisplayMode = value ? 1 : 0;
+                Persist();
+                UiDisplayMode.Request(value, s_data.WindowWidth, s_data.WindowHeight);
+            }
+        }
+
+        private static void RememberWindow()
+        {
+            if (Screen.fullScreenMode == FullScreenMode.Windowed && Screen.width > 0 && Screen.height > 0)
+            {
+                s_data.WindowWidth = Screen.width;
+                s_data.WindowHeight = Screen.height;
+            }
+        }
+
+        private static void ApplyStoredDisplayMode()
+        {
+#if !UNITY_EDITOR
+            // The command line (-screen-fullscreen, captures and QA gates) outranks the saved choice.
+            if (s_data.DisplayMode < 0 || HasArg("-screen-fullscreen"))
+            {
+                return;
+            }
+
+            bool wantFull = s_data.DisplayMode == 1;
+            if (wantFull != (Screen.fullScreenMode != FullScreenMode.Windowed))
+            {
+                UiDisplayMode.Request(wantFull, s_data.WindowWidth, s_data.WindowHeight);
+            }
+#endif
+        }
+
+        private static bool HasArg(string flag)
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void ApplyTelemetry()

@@ -421,6 +421,10 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SeciliBekle("Setting.MASTER VOLUME");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.GRAPHICS QUALITY");
+            // WP-022M: DISPLAY sits between quality and telemetry (not submitted here: the
+            // Editor has no window to switch).
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("Display");
             // WP-022E: the run telemetry toggle is the last control (reduced motion moved
             // to the ACCESSIBILITY pane in WP-022G); Submit flips it and RunTelemetry
             // follows; flip back. Down wraps to the first slider.

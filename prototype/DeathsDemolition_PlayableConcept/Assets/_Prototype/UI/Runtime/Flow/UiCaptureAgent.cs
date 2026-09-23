@@ -310,6 +310,12 @@ namespace DD.Prototype.UI
                     Debug.Log("[UiCapture] pick title " + _pickTitle + ": " + (picked ? "selected" : "refused (locked?)"));
                 }
 
+                if (_screen == "display")
+                {
+                    yield return DisplayRoundTrip();
+                    yield break;
+                }
+
                 switch (_screen)
                 {
                     case "settings":
@@ -387,6 +393,90 @@ namespace DD.Prototype.UI
                 yield return null;
                 Debug.Log("[UiCapture] done");
                 Application.Quit();
+            }
+
+            /// <summary>
+            /// WP-022M: <c>-ddUiCapture display</c> - Settings DISPLAY row driven through the
+            /// real submit path: windowed → fullscreen → windowed, a frame and a readout per
+            /// state, <c>display-report.json</c> beside the frames. Exit 0 when both switches
+            /// land and the saved file says windowed, 3 otherwise.
+            /// </summary>
+            private IEnumerator DisplayRoundTrip()
+            {
+                string folder = Directory.Exists(_out) ? _out : (Path.GetDirectoryName(_out) ?? Application.persistentDataPath);
+                Directory.CreateDirectory(folder);
+                MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
+                if (menu != null)
+                {
+                    menu.ShowPane(UiContext.Settings);
+                }
+
+                yield return new WaitForSecondsRealtime(1f);
+                var lines = new System.Collections.Generic.List<string>();
+                lines.Add(Readout("start"));
+                bool pass = true;
+                bool[] targets = { true, false };
+                for (int i = 0; i < targets.Length; i++)
+                {
+                    GameObject row = GameObject.Find("Display");
+                    if (row == null)
+                    {
+                        lines.Add("\"error\": \"Display row not found\"");
+                        pass = false;
+                        break;
+                    }
+
+                    UnityEngine.EventSystems.ExecuteEvents.Execute(row, new UnityEngine.EventSystems.BaseEventData(UnityEngine.EventSystems.EventSystem.current), UnityEngine.EventSystems.ExecuteEvents.submitHandler);
+                    float deadline = Time.realtimeSinceStartup + 20f;
+                    while (UiDisplayMode.Pending.HasValue && Time.realtimeSinceStartup < deadline)
+                    {
+                        yield return null;
+                    }
+
+                    yield return new WaitForSecondsRealtime(1.5f);
+                    string id = targets[i] ? "fullscreen" : "windowed";
+                    bool reached = targets[i] ? Screen.fullScreenMode != FullScreenMode.Windowed : Screen.fullScreenMode == FullScreenMode.Windowed;
+                    pass &= reached;
+                    yield return new WaitForEndOfFrame();
+                    WritePng(Path.Combine(folder, "display-" + id + ".png"));
+                    lines.Add(Readout(id) + ", \"reached\": " + (reached ? "true" : "false") + ", \"step\": \"" + UiDisplayMode.LastStep + "\"");
+                }
+
+                // Probe (not part of pass): the RC c4 harness path - FullScreenWindow requested
+                // with the display size in pixels, then the same windowed request the Settings row makes.
+                Screen.SetResolution(Display.main.systemWidth, Display.main.systemHeight, FullScreenMode.FullScreenWindow);
+                yield return new WaitForSecondsRealtime(2f);
+                lines.Add(Readout("probe-fullscreenwindow"));
+                UiDisplayMode.Request(false, 1280, 720);
+                float probeDeadline = Time.realtimeSinceStartup + 25f;
+                while (UiDisplayMode.Pending.HasValue && Time.realtimeSinceStartup < probeDeadline)
+                {
+                    yield return null;
+                }
+
+                yield return new WaitForSecondsRealtime(1f);
+                lines.Add(Readout("probe-windowed") + ", \"reached\": " + (Screen.fullScreenMode == FullScreenMode.Windowed ? "true" : "false") + ", \"step\": \"" + UiDisplayMode.LastStep + "\"");
+                UiSettings.Fullscreen = false; // the probe bypassed the file; leave it saying windowed
+
+                string saved = File.Exists(UiSettings.FilePath) ? File.ReadAllText(UiSettings.FilePath) : string.Empty;
+                bool savedWindowed = saved.Contains("\"DisplayMode\": 0") || saved.Contains("\"DisplayMode\":0");
+                pass &= savedWindowed;
+                var json = new System.Text.StringBuilder("{\n \"schema\": \"dd-display-roundtrip-v1\",\n \"pass\": " + (pass ? "true" : "false") + ",\n \"savedDisplayModeWindowed\": " + (savedWindowed ? "true" : "false") + ",\n \"states\": [\n");
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    json.Append("  {").Append(lines[i]).Append(i < lines.Count - 1 ? "},\n" : "}\n");
+                }
+
+                json.Append(" ]\n}\n");
+                File.WriteAllText(Path.Combine(folder, "display-report.json"), json.ToString());
+                Debug.Log("[UiCapture] display round-trip " + (pass ? "PASS" : "FAIL"));
+                yield return null;
+                Application.Quit(pass ? 0 : 3);
+            }
+
+            private static string Readout(string id)
+            {
+                return "\"id\": \"" + id + "\", \"mode\": \"" + Screen.fullScreenMode + "\", \"screen\": \"" + Screen.width + "x" + Screen.height + "\"";
             }
 
 

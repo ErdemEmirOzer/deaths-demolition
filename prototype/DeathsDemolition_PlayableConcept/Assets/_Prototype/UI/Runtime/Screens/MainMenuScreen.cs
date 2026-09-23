@@ -469,6 +469,13 @@ namespace DD.Prototype.UI
             // Reduced motion moved to the ACCESSIBILITY pane (WP-022G); Settings keeps the
             // device preferences.
 
+            // WP-022M: fullscreen / windowed. The chip shows the requested mode at once; the
+            // switch itself is asynchronous on macOS (UiDisplayMode) and saved in ui-settings.json.
+            stack.Gap(UiSpace.S);
+            UiButton display = AddToggleRow(ref stack, _paneHost, "Display", "DISPLAY",
+                () => (UiSettings.Fullscreen ? "FULLSCREEN" : "WINDOWED", UiSettings.Fullscreen),
+                () => { bool next = !UiSettings.Fullscreen; UiSettings.Fullscreen = next; return (next ? "FULLSCREEN" : "WINDOWED", next); }, "Display");
+
             // Run telemetry (WP-022E, WP-045): local files only, no identity data; the
             // player can still switch it off. Same toggle-button pattern as reduced motion.
             stack.Gap(UiSpace.S);
@@ -484,7 +491,7 @@ namespace DD.Prototype.UI
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
-            UiInput.ChainVertical(scale, volume, quality, telemetry);
+            UiInput.ChainVertical(scale, volume, quality, display, telemetry);
             UiInput.Focus(scale);
         }
 
