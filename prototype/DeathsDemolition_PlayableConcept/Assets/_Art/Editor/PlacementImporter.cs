@@ -718,6 +718,8 @@ namespace DD.Art.Pipeline.EditorTools
             // Environment|CameraOccluder, ±48 m volume), baked HERE and saved as an asset so
             // the Player never bakes; the bootstrap only verifies.
             report.NavMeshTriangles = BakeNavMesh(root.transform);
+            // WP-038M: the playable-area ring (±45 m, invisible, Ignore Raycast), the pond rims + the fall guard — after the bake, never in it.
+            WorldBoundaryBuilder.Build(root.transform, BasinHoles(placement));
 
             PilotSceneBuilder.Save(scene, ArtLibraryPaths.Ap005WorldScene);
             report.Digest = Digest(instances.transform);
