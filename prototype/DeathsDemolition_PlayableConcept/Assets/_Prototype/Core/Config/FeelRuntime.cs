@@ -339,6 +339,23 @@ namespace DD.Prototype.Core.Config
             return true;
         }
 
+        /// <summary>
+        /// WP-062H · the runtime master switch (A/B): stages the active profile with <c>enabled</c> flipped.
+        /// A live field, so it commits on the next <see cref="BeginFrame"/>; the authored asset is never written.
+        /// </summary>
+        public static void SetEnabled(bool on)
+        {
+            // Base = what will be current after the pending commits (a queued next-run profile keeps its N fields).
+            FeelConfigData data = s_pendingNextRun ?? s_pendingLive;
+            if (data == null && Current.Enabled == on) return;
+            data = data != null ? FeelProfileCodec.Clone(data) : Current.CloneData();
+            data.enabled = on;
+            Stage(data);
+        }
+
+        /// <summary>The master switch as it will read after the next commit (a pending A/B flip included).</summary>
+        public static bool EnabledAfterCommit => s_pendingLive != null ? s_pendingLive.enabled : Current.Enabled;
+
         public static string ExportJson(string profileId, string baseCommit)
         {
             return FeelProfileCodec.Export(Current.CloneData(), profileId, baseCommit);

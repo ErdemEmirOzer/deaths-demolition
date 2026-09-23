@@ -96,7 +96,13 @@ namespace DD.Prototype.Feedback.Vfx
         // WP-062 compatibility facade. Serialized WP-019 fields remain only so existing assets/scenes
         // deserialize without migration churn; all effective values come from the one FeelRuntime snapshot.
         private static FeelSnapshot Feel => FeelRuntime.Current;
-        public bool Enabled => Feel.Enabled;
+        /// <summary>
+        /// WP-062H · two switches, one per owner: the asset's <c>_enabled</c> (this WP-019 layer, e.g. an
+        /// <see cref="Override"/> instance for A/B tests) AND the runtime master <c>FeelConfigData.enabled</c>
+        /// (<see cref="FeelRuntime.SetEnabled"/>, the F1 "Game Feel (A/B)" toggle — it also gates the shake bridge
+        /// and the feel router). Either off → every value below reads zero / neutral.
+        /// </summary>
+        public bool Enabled => _enabled && Feel.Enabled;
         public float HitStopArmorBreak => Enabled ? Feel.Impact(ImpactFeelId.ArmorBreak).hitStopSeconds : 0f;
         public float HitStopDeath => Enabled ? Feel.Impact(ImpactFeelId.HeavyDeath).hitStopSeconds : 0f;
         public float HitStopMinInterval => Feel.HitStop.minIntervalSeconds;

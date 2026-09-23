@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using DD.Art.Pipeline.EditorTools;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Feedback;
 using DD.Prototype.Feedback.Vfx;
 using NUnit.Framework;
@@ -250,6 +251,28 @@ namespace DD.Art.Tests.EditMode
             finally
             {
                 UnityEngine.Object.DestroyImmediate(off);
+            }
+
+            // WP-062H: the runtime master (FeelConfig `enabled`, the F1 "Game Feel (A/B)" toggle) switches the asset off too;
+            // back on, the WP-062 values return unchanged.
+            float onValue = feel.HitStopArmorBreak;
+            Assert.Greater(onValue, 0f, "varsayılan his: zırh kırılma hit-stop'u > 0");
+            try
+            {
+                FeelRuntime.SetEnabled(false);
+                Assert.IsFalse(FeelRuntime.EnabledAfterCommit, "A/B kapalı sıraya girdi");
+                FeelRuntime.BeginFrame(-101);
+                Assert.IsFalse(feel.Enabled);
+                Assert.AreEqual(0f, feel.HitStopArmorBreak); Assert.AreEqual(0f, feel.ShakeExplosionAmplitude); Assert.AreEqual(0f, feel.VignetteFlashAlpha);
+                Assert.AreEqual(1f, feel.DeathSlowScale, "kapalı katmanda ölüm yavaşlaması yok");
+                FeelRuntime.SetEnabled(true);
+                FeelRuntime.BeginFrame(-102);
+                Assert.IsTrue(feel.Enabled);
+                Assert.AreEqual(onValue, feel.HitStopArmorBreak, 1e-6f, "A/B geri açılınca değerler aynen döner");
+            }
+            finally
+            {
+                FeelRuntime.ResetForTests();
             }
         }
 

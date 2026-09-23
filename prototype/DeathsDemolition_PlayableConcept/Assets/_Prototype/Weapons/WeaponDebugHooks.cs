@@ -79,6 +79,12 @@ namespace DD.Prototype.Weapons
                 v => CameraShakeBridge.IntensityScale = v,
                 0f, 2f, false, -68));
 
+            // WP-062H: the whole feel layer on/off (A/B) — FeelConfig's runtime master switch, committed next frame.
+            Add(DebugPanelRegistry.AddToggle(
+                DebugPanelTabs.Weapons, "Game Feel (A/B)",
+                () => FeelRuntime.EnabledAfterCommit,
+                FeelRuntime.SetEnabled, -67));
+
             Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "+1 Piercing",
                 () => AddTier(UpgradeBranch.Piercing), -60));
             Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "+1 Ricochet",
