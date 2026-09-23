@@ -159,6 +159,7 @@ Hedef işletim sistemi, mağaza ve dağıtım ayrıntıları ürünün büyük b
 | DEC-087 | DEC-071 değişikliği: round sonu teklifinde round başına **iki** geliştirme kartı satın alınabilir (`EconomyConfigSection.PurchasesPerRound` = 2; sayaç limitte kilitlenir, yeniden açılış/pause hakkı yenilemez; DEC-050 ücretli reroll ilk satın almada kapanmaya devam eder). Gerekçe: WP-049 simülasyonu — Ö-1 sonrası harcama payı %20'de kalıyor, iki kartla %38–44, R15 ölüm riski 8,8 → 6,1. (kullanıcı, 2026-09-17; WP-049C S-04, UI S-09) |
 | DEC-088 | M3 performans bütçesi: ortalama kare ≤ **8,0 ms** / temiz p99 ≤ 10 ms (M1 Pro 1920×1080, 40 düşman, 60 s pencere; ADR-011-3 v3). 7,0 ms look pass (WP-029/038) öncesi öneriydi; kapanış 4 ölçümü ort 7,5 / p99 8,4 ms. Kullanıcı 2026-09-17 (S-10 WP-044). |
 | DEC-089 | Hedef platformlar macOS ve Windows; DEC-080'in Windows ertelemesi kaldırıldı. Kanal, imza, Windows referans donanımı/perf bütçesi ve IL2CPP ayrı kararlar (WP-066). (kullanıcı, 2026-09-23) |
+| DEC-090 | Release build sıkıştırması LZ4HC (547→323 MB, ölçülebilir yükleme cezası yok; DEC-086 tavanı 550 aynı; kullanıcı 2026-09-24). macOS + Windows; `tools/build.sh release` varsayılanı, dev build sıkıştırmasız (WP-066E). |
 
 ## Kararlaştırılması sonraya bırakılan alanlar
 

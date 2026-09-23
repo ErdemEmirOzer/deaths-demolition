@@ -7,8 +7,9 @@
 #   build.sh release --target win64   WP-066W (DEC-089): Windows x64 Mono player → <out>/DeathsDemolition-win64/
 #                                 DeathsDemolition.exe (+ DeathsDemolition_Data); no smoke (cannot run on macOS).
 #                                 The macOS path (default --target mac) is unchanged: same command line and report.
-#   --compression none|lz4|lz4hc   WP-066C: player data compression (BuildOptions.CompressWithLz4/Lz4HC); absent = no
-#                                 flag passed, today's uncompressed build (command line and report unchanged).
+#   --compression none|lz4|lz4hc   WP-066C/066E: player data compression (BuildOptions.CompressWithLz4/Lz4HC).
+#                                 DEC-090: release defaults to lz4hc (macOS + Windows); dev stays uncompressed;
+#                                 `--compression none` gives the pre-DEC-090 uncompressed release.
 #
 # Output: <out>/DeathsDemolition.app, <out>/build.log, <out>/build-report.json (from the
 # Editor), <out>/report.json (script summary incl. smoke) and <out>/timeline.txt.
@@ -36,6 +37,8 @@ while [ $# -gt 0 ]; do
   shift
 done
 [ "$TARGET" = "mac" ] || [ "$TARGET" = "win64" ] || { echo "--target must be mac or win64" >&2; exit 64; }
+# DEC-090 (user 2026-09-24): release default LZ4HC; dev unchanged (no flag → uncompressed).
+[ -z "$COMP" ] && [ "$MODE" = "release" ] && COMP="lz4hc"
 [ -z "$COMP" ] || [ "$COMP" = "none" ] || [ "$COMP" = "lz4" ] || [ "$COMP" = "lz4hc" ] || { echo "--compression must be none, lz4 or lz4hc" >&2; exit 64; }
 [ "$TARGET" = "win64" ] && [ "$SMOKE" -eq 1 ] && { echo "--smoke is macOS-only (a Windows player cannot run here)" >&2; exit 64; }
 [ -n "$OUT" ] || { [ "$TARGET" = "mac" ] && OUT="$DD_BUILD_ROOT/$MODE-$(dd_utc)" || OUT="$DD_BUILD_ROOT/$MODE-$TARGET-$(dd_utc)"; }

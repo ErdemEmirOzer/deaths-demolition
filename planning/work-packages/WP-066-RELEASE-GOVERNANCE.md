@@ -119,11 +119,11 @@ Beyanın doğru kalması için açık uçlar: (a) varsayılan açık/kapalı (�
 10. 🔴 **Release ayak izi tavanı:** DEC-086 (550 MB) dağıtım kararıyla yeniden belirlenir — kanal/indirme boyutu hedefi.
 11. 🔴 **Sürüm politikası onayı:** §2 `v1.0-rc.N` → `v1.0` şeması, RC ölçütleri ve `bundleVersion`/`buildNumber` eşlemesi; ardından S-01 küçük kod paketi (`--match 'v*'`, sürüm alanlarının etiketten yazılması, telemetri budama).
 12. 🔴 **Yasal metinler:** EULA/kullanım koşulları, kredi ekranı (OFL metni + AI araç atıfları + ekip), gizlilik beyanının yayın yeri.
-13. 🔴 **Release sıkıştırması:** varsayılan sıkıştırmasız mı kalsın, LZ4HC mi olsun (§7: −225 MB, sıcak önbellekte açılış cezası yok; soğuk açılış ve indirme boyutu ölçülmedi). Karar C-00/kullanıcı.
+13. ✅ **Release sıkıştırması: KAPANDI** — LZ4HC, macOS + Windows (kullanıcı 2026-09-24, DEC-090; WP-066E): `tools/build.sh release` varsayılanı `--compression lz4hc`, dev sıkıştırmasız, `--compression none` eski davranış. Tavan 550 aynı (DEC-086).
 
 ## 7. Release sıkıştırma ölçümü (WP-066C, 2026-09-24)
 
-Soru (WP-068 UI v3 konseyi): release 547,3/550 MB; `BuildOptions.CompressWithLz4/Lz4HC` ne kadar küçültür, açılış ne kadar uzar? Araç: `DdBuild -ddCompression none|lz4|lz4hc` / `tools/build.sh --compression …` — **bayrak verilmezse bugünkü davranış** (sıkıştırmasız; varsayılan komut satırı ve rapor birebir aynı, sahte-Unity karşılaştırması). Varsayılan değiştirilmedi — karar C-00/kullanıcı.
+Soru (WP-068 UI v3 konseyi): release 547,3/550 MB; `BuildOptions.CompressWithLz4/Lz4HC` ne kadar küçültür, açılış ne kadar uzar? Araç: `DdBuild -ddCompression none|lz4|lz4hc` / `tools/build.sh --compression …` — **bayrak verilmezse bugünkü davranış** (sıkıştırmasız; varsayılan komut satırı ve rapor birebir aynı, sahte-Unity karşılaştırması). Varsayılan değiştirilmedi — karar C-00/kullanıcı. **Durum: kullanıcı 2026-09-24 LZ4HC'yi seçti (DEC-090, WP-066E) — `build.sh release` varsayılanı lz4hc.**
 
 Ölçüm: main `75ce517`, macOS release, aynı Library, S-10 soak'ları arasındaki sessiz pencerede (22:30–22:54Z); her varyanta 2 release smoke. Yükleme süresi = Player log dosyasının oluşumundan (≈ süreç başlangıcı) işaret satırına: e1 ana menü `[Audio] ready`, e4 doğrudan Run `[AP005] World ready.` (10 ms yoklama). Dosyalar build'den hemen sonra okunduğu için **sıcak disk önbelleği**; soğuk açılış (ilk indirme sonrası) ölçülmedi.
 

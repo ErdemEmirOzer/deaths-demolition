@@ -564,10 +564,10 @@ namespace DD.Prototype.Tests.EditMode
             for (int i = 0; i < decIds.Count; i++) Assert.AreEqual(i + 1, decIds[i], "DEC numaraları ardışık/tekil değil: " + decIds[i]);
             // REQ ids are unique; the table has authored gaps (91–99, 116–119 were never issued).
             for (int i = 1; i < reqIds.Count; i++) Assert.Greater(reqIds[i], reqIds[i - 1], "REQ numarası tekrar ediyor: " + reqIds[i]);
-            Assert.GreaterOrEqual(decIds.Count, 89, "DEC-076..080 (WP-015), DEC-081..084 (WP-042), DEC-085 (WP-049), DEC-086 (WP-038H), DEC-087 (WP-049C iki kart), DEC-088 (WP-044 M3 perf bütçesi 8,0 ms; kullanıcı kararları 2026-09-17) ve DEC-089 (WP-066W hedef platformlar macOS + Windows; kullanıcı 2026-09-23) kayıtlı olmalı.");
+            Assert.GreaterOrEqual(decIds.Count, 90, "DEC-076..080 (WP-015), DEC-081..084 (WP-042), DEC-085 (WP-049), DEC-086 (WP-038H), DEC-087 (WP-049C iki kart), DEC-088 (WP-044 M3 perf bütçesi 8,0 ms; kullanıcı kararları 2026-09-17) DEC-089 (WP-066W hedef platformlar macOS + Windows; kullanıcı 2026-09-23) ve DEC-090 (WP-066E release LZ4HC; kullanıcı 2026-09-24) kayıtlı olmalı.");
             Assert.AreEqual(158, reqIds[reqIds.Count - 1], "son REQ numarası (REQ-156: WP-037B roster seçimi; REQ-157: WP-040 / DEC-081 kalkış; REQ-158: WP-042 / DEC-082 pickup kilidi yok)");
 
-            foreach (string id in new[] { "DEC-076", "DEC-077", "DEC-078", "DEC-079", "DEC-080", "DEC-089" })
+            foreach (string id in new[] { "DEC-076", "DEC-077", "DEC-078", "DEC-079", "DEC-080", "DEC-089", "DEC-090" })
             {
                 StringAssert.Contains("| " + id + " |", dec, id + " planning/00'da yok.");
             }
