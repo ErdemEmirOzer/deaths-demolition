@@ -13,6 +13,7 @@ Bu dosya hazır kontrolü değildir. Projede `04-READY-CHECK.md` oluşturulmaz.
 - Model politikası: tasarım, derin düşünme, üretkenlik ve inovasyon = `gpt-6-astra`; teknik uygulama, hata düzeltme, entegrasyon ve test = `gpt-5.6-sol`.
 - HIZLI HAT uygulanır; bu güncel kurallar çelişen önceki dağıtım/model ifadelerinin yerine geçer. İzole branch/worktree ve tek atomik commit; entegrasyon C-00, push/remote yok.
 - `WP-065 — Final Audio Implementation & Mix Closure` teknik uygulama ve otomatik kabulü 2026-09-22'de tamamlandı: AP-011 v012 (181 kimlik / 419 dosya) ve mixer/gain/EQ/duck/priority değerleri değişmedi; Audio EditMode 18/18, son Audio PlayMode 21/21; gerçek Player yoğun-40 kaydı 48 kHz stereo PCM16, capture drop 0, telemetri taşması 0, `Fighting` 34,67 s ve sonlu −15,76 LUFS-I / −1,47 dBTP; release build+smoke PASS, 545,7 MB ≤ 550 MB. Teknik sonuç `PASS`; kulaklık/hoparlör/mono ve yorgunluk dinlemesi `PENDING`; ayrıntı `planning/work-packages/WP-065-FINAL-AUDIO-IMPLEMENTATION.md`.
+- `WP-066T` release governance teknik taslağı (S-01, 2026-09-23): macOS release zinciri envanteri, `v1.0-rc.N` → `v1.0` etiket taslağı, dağıtım seçenekleri (imzasız zip / Developer ID + notarizasyon / itch / Steam), Windows önkoşulları, gizlilik beyanı taslağı; 12 🔴 kullanıcı kararı açık, hiçbiri varsayılmadı. Kod/ayar değişikliği yok; ayrıntı `planning/work-packages/WP-066-RELEASE-GOVERNANCE.md`.
 
 ## Değişmez çalışma modeli
 
