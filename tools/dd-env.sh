@@ -9,6 +9,7 @@ DD_PROJECT="$DD_REPO/prototype/DeathsDemolition_PlayableConcept"
 : "${DD_MAX_UNITY:=2}"          # MAKİNE KURALI: at most two Unity batch processes on this machine
 : "${DD_WAIT_SECONDS:=3600}"    # how long a script waits for a free slot before giving up (exit 75)
 DD_APP_NAME="DeathsDemolition.app"
+DD_WIN_DIR="DeathsDemolition-win64"; DD_WIN_EXE="DeathsDemolition.exe"   # WP-066W (DEC-089) Windows x64 output
 DD_BUNDLE_ID="com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"
 DD_PRODUCT="Deaths Demolition - Playable Concept"
 

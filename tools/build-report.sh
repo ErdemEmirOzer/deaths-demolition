@@ -20,8 +20,11 @@ if [ -d "$IN" ]; then DIR="$IN"; LOG="$IN/build.log"; else LOG="$IN"; DIR="$(dir
 [ -f "$LOG" ] || { echo "no log: $LOG" >&2; exit 64; }
 [ -n "$JSON" ] || JSON="$DIR/footprint.json"; [ -n "$MD" ] || MD="$DIR/footprint.md"
 MODE=""; [ -f "$DIR/build-report.json" ] && MODE=$(grep -o '"mode": "[a-z]*"' "$DIR/build-report.json" | head -1 | cut -d'"' -f4)
+# WP-066W: a Windows build's report carries "target": "win64" (macOS reports have no target field) → label only.
+TGT=""; [ -f "$DIR/build-report.json" ] && TGT=$(grep -o '"target": "[a-z0-9]*"' "$DIR/build-report.json" | head -1 | cut -d'"' -f4)
+[ -n "$TGT" ] && MODE="$MODE-$TGT"
 STAMP=""; [ -f "$DIR/build-report.json" ] && STAMP=$(grep -o '"describe": "[^"]*"' "$DIR/build-report.json" | head -1 | cut -d'"' -f4)
-APPKB=0; for a in "$DIR"/*.app; do [ -d "$a" ] && APPKB=$(du -sk "$a" | cut -f1); break; done
+APPKB=0; for a in "$DIR"/*.app "$DIR"/DeathsDemolition-win64; do [ -d "$a" ] && APPKB=$(du -sk "$a" | cut -f1); break; done
 python3 - "$LOG" "$JSON" "$MD" "$TOP" "$CAP" "$MODE" "$STAMP" "$APPKB" "$DIR" <<'PY'
 import sys, re, json, datetime
 log, jpath, mpath, top, cap, mode, stamp, appkb, d = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), float(sys.argv[5]), sys.argv[6], sys.argv[7], int(sys.argv[8]), sys.argv[9]

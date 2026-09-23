@@ -1,6 +1,6 @@
 # WP-066 — Release Governance & Distribution (teknik taslak, WP-066T)
 
-**Durum:** Taslak (S-01, 2026-09-23, taban `main @ 1df0bf0`). Kod/ayar değişikliği yok; dış eylem yok (push, mağaza, ücretli hesap, imzalama, yükleme yapılmadı). Bu belge karar vermez: kararlaştırılmamış her başlık §6'da 🔴 olarak durur ve varsayım sayılmaz (planning/00 "Kararlaştırılması sonraya bırakılan alanlar": hedef işletim sistemi, mağaza ve dağıtım modeli; DEC-080 Windows ertelendi; DEC-086 tavanı dağıtım kararıyla yeniden belirlenir).
+**Durum:** Taslak (S-01, 2026-09-23, taban `main @ 1df0bf0`). Kod/ayar değişikliği yok; dış eylem yok (push, mağaza, ücretli hesap, imzalama, yükleme yapılmadı). Bu belge karar vermez: kararlaştırılmamış her başlık §6'da 🔴 olarak durur ve varsayım sayılmaz (planning/00 "Kararlaştırılması sonraya bırakılan alanlar": hedef işletim sistemi, mağaza ve dağıtım modeli; DEC-080 Windows ertelendi — DEC-089 ile kaldırıldı, 2026-09-23; DEC-086 tavanı dağıtım kararıyla yeniden belirlenir).
 
 ## 1. Mevcut macOS release zinciri envanteri
 
@@ -8,7 +8,7 @@
 
 | Adım | Araç | Bugünkü davranış |
 |---|---|---|
-| Build | `tools/build.sh {dev\|release} [--smoke]` | slot alır → `DdBuild.Build` (`-ddMode`, `BuildOptions.None` release / `Development` dev) → `footprint.json\|md` (tavan 550 MB, yalnız uyarı) → `report.json`; çıkış 0/10/20/30/64/75 |
+| Build | `tools/build.sh {dev\|release} [--smoke] [--target mac\|win64]` | slot alır → `DdBuild.Build` (`-ddMode`, `BuildOptions.None` release / `Development` dev) → `footprint.json\|md` (tavan 550 MB, yalnız uyarı) → `report.json`; çıkış 0/10/20/30/64/75 |
 | Smoke | `tools/smoke.sh <app> <out> --mode …` | e1 ana menü + e4 `-ddDirectToRun` kareleri, istisna taraması; gerçek kullanıcı verisi yedek→geri yükle→SHA doğrula (`userdata.verified`) |
 | Ayak izi | `tools/build-report.sh` | Unity Build Report kategorileri/top-N/klasör; son release **545,7 MB** (WP-065, ≤ 550) |
 | Entegrasyon | `tools/integrate.sh` + `post-integrate.sh` | C-00 kapısı, açıklamalı etiket, yedek (bundle + LFS), temizlik dry-run |
@@ -86,13 +86,18 @@ Tüm yollar `companyName`/`productName`/bundle id'den türer: **bunlardan birini
 
 Notlar: (i) A–D birbirini dışlamaz (ör. B + C). (ii) Mac App Store bu tabloda yok: sandbox, profil yolu değişimi ve inceleme ayrı bir kapsam — istenirse ayrı karar. (iii) Her seçenekte ürün adı/bundle id (🔴 1) önce gelir; mağazaya giren kimlik sonradan değişmez.
 
-## 4. Windows hattı önkoşulları (DEC-080: süresiz ertelendi)
+## 4. Windows hattı (DEC-089: hedef macOS + Windows; WP-066W)
 
-- **Unity modülü:** 2022.3.22f1 kurulumunda `PlaybackEngines/WindowsStandaloneSupport` **zaten var** (yalnız Mono: win32/win64 dev + non-dev varyantları; ayrıca WebGLSupport). Yani macOS'tan Mono Windows player'ı yeni kurulum olmadan üretilebilir; IL2CPP Windows, Windows ana makine + ek modül ister (kurulum = kullanıcı kararı). Unity sürümü değişmez. Kurulu olması Windows hedefini açmaz — DEC-080 kararı gerekir.
-- **Test donanımı:** projede Windows makine yok; DEC-088 perf bütçesi yalnız M1 Pro'da tanımlı → Windows referans donanımı ve bütçesi ayrı karar.
-- **Araçlar:** `build.sh`/`smoke.sh` macOS'a özgü (`.app`, `defaults`, plist, `~/Library`); Windows için `DdBuild` hedef parametresi + ayrı smoke (kullanıcı verisi `%USERPROFILE%\AppData\LocalLow\<company>\<product>\`, PlayerPrefs `HKCU\Software\<company>\<product>`) gerekir.
-- **Grafik/girdi:** URP D3D11/12 shader varyantları ve ayak izi ayrı ölçülür; gamepad paritesi (WP-024/059, `InputSourceRegistry`) XInput'ta doğrulanmalı.
-- **İmza:** Authenticode sertifikası yoksa SmartScreen uyarısı; sertifika ücretli (OV/EV) → kullanıcı kararı. Steam/itch Windows depotları §3'e eklenir.
+- **Karar:** kullanıcı 2026-09-23 — hedef platformlar macOS ve Windows (DEC-089; DEC-080 ertelemesi kaldırıldı). Kanal, imza, Windows referans donanımı/perf bütçesi ve IL2CPP ayrı kararlar (§6).
+- **Unity modülü:** 2022.3.22f1 kurulumunda `PlaybackEngines/WindowsStandaloneSupport` zaten var (yalnız Mono: win32/win64 dev + non-dev). Yeni modül/paket kurulmadı, Unity sürümü değişmedi. IL2CPP Windows, Windows ana makine + ek modül ister (🔴).
+- **Build (WP-066W):** `tools/build.sh {dev|release} --target win64` → `<out>/DeathsDemolition-win64/DeathsDemolition.exe` + `DeathsDemolition_Data/` + `build.log` / `build-report.json` (`"target": "win64"`) / `report.json` / `footprint.json|md` (etiket `release-win64`). Editor tarafı `DdBuild -ddTarget mac|win64` (varsayılan mac; kurulu olmayan hedefte açık hata). `--smoke` Windows'ta 64 ile reddedilir. **macOS hattı değişmedi:** varsayılan komut satırı ve `report.json` şeması birebir aynı (sahte Unity ile argv/rapor karşılaştırması, `wp-066w/evidence/`).
+- **İlk Windows release build:** 2026-09-23, taban main `6e13689` (+ bu paketin commit'lenmemiş değişiklikleri → damga `…-dirty`), temiz Library: `build.sh release --target win64` exit 0, 562 s, `error CS` 0; `DeathsDemolition.exe` (PE32+ x86-64 GUI) + `DeathsDemolition_Data/` (482 MB) + `UnityPlayer.dll` 30 MB + `MonoBleedingEdge` 8,8 MB + `UnityCrashHandler64.exe`; shader'lar d3d11. Ayak izi **522,1 MB** (log 521,8; Textures 284,7 / Meshes 71,4 / Sounds 9,3 MB) ≤ 550 — aynı içerikte macOS release 545,7 MB. `DeathsDemolition_BurstDebugInformation_DoNotShip/` (28 KB) dağıtım paketine girmemeli (paketleme adımı dışlar). Kanıt `wp-066w/build-win64/` (build.log, footprint.json|md, report.json).
+- **Çalıştırma/smoke: koşturulmadı.** Bu makinede Windows yok; exe hiç açılmadı, e1/e4 kareleri, kullanıcı verisi koruması, perf ve girdi doğrulanmadı. "Hazır" sayılmaz.
+- **Windows'a özgü ayar farkları (mevcut ProjectSettings, değiştirilmedi):** grafik API listesi boş (`m_BuildTargetGraphicsAPIs: []`) → Unity 2022.3 otomatik = **Direct3D 11**; `useFlipModelSwapchain: 1`, `forceSingleInstance: 0`, `visibleInBackground: 1` (yalnız Windows), `fullscreenMode: 3` (pencereli), `runInBackground: 1`. Mimari x86_64, betik arka ucu Mono. Platforma özgü kod (`UNITY_STANDALONE_*`, `RuntimePlatform`) yok.
+- **Kullanıcı verisi yolları (Windows):** `%USERPROFILE%\AppData\LocalLow\Deaths Demolition\Deaths Demolition - Playable Concept\` altında `prototype-profile.json` (+ yan dosyalar), `ui-settings.json`, `input-settings.json`, `input-overrides.json`, `telemetry\run-<utc>.json`, `Logs\dd-crash-<utc>.txt`; PlayerPrefs `HKCU\Software\Deaths Demolition\Deaths Demolition - Playable Concept`. Profil kilidi (`.lock`, fcntl lease, WP-009H) ve atomik replace Windows dosya sisteminde doğrulanmadı. Crash log maskesi ev dizinini `\` biçimiyle de değiştirir (Windows'ta koşturulmadı).
+- **Araç açıkları:** `smoke.sh` macOS'a özgü (`defaults`, plist, `~/Library`); Windows smoke ancak Windows makinede/CI'da, ayrı betikle. `tools/qa/rc.sh` yalnız macOS.
+- **Grafik/girdi:** URP D3D11 shader varyantları ve ayak izi ayrı ölçüldü (yukarıda); gamepad paritesi (WP-024/059, `InputSourceRegistry`) XInput'ta doğrulanmadı.
+- **İmza:** Authenticode sertifikası yoksa SmartScreen uyarısı; sertifika ücretli (OV/EV) → 🔴. Steam/itch Windows depotları §3 kanal kararına bağlı.
 
 ## 5. Gizlilik / telemetri beyan taslağı
 
@@ -103,7 +108,7 @@ Beyanın doğru kalması için açık uçlar: (a) varsayılan açık/kapalı (�
 ## 6. 🔴 Kullanıcı kararları (hiçbiri varsayılmadı)
 
 1. 🔴 **Ürün adı ve kimlik:** nihai `productName`, `companyName` (yasal/yayıncı adı), bundle id (ör. ters DNS alan adı) — değişim profil yolunu değiştirir; göç adımı onayı ile birlikte.
-2. 🔴 **Hedef platform(lar):** yalnız macOS mu; Windows (DEC-080 ertelemesini kaldırmak; Mono modülü kurulu, IL2CPP/Windows test makinesi yok) ve zamanlaması.
+2. ✅ **Hedef platform(lar): KAPANDI** — macOS + Windows (kullanıcı 2026-09-23, DEC-089). Açık kalan Windows alt kararları: Windows referans donanımı ve perf bütçesi (DEC-088 yalnız M1 Pro), Authenticode imza, IL2CPP (Windows ana makine + modül), Windows çalıştırma/smoke için makine/CI.
 3. 🔴 **Dağıtım kanalı:** §3 A / B / C / D ya da birleşimi; ilk kanal hangi kitle (kapalı test grubu mu, halka açık mı).
 4. 🔴 **Ücretli hesaplar ve sertifikalar:** Apple Developer Program, Steamworks, itch; hesap sahibi, yasal ad, vergi/banka bilgileri — hepsi kullanıcının kendisi tarafından.
 5. 🔴 **Fiyat/iş modeli:** ücretsiz, ücretli, PWYW; itch gelir payı oranı.

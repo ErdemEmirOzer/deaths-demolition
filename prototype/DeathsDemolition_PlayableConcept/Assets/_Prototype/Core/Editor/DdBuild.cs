@@ -14,9 +14,11 @@ namespace DD.Prototype.Core.EditorTools
     ///
     ///   Unity -batchmode -nographics -quit -projectPath … -executeMethod DD.Prototype.Core.EditorTools.DdBuild.Build
     ///         -ddMode dev|release -ddOut /abs/DeathsDemolition.app [-ddReport /abs/report.json]
+    ///         [-ddTarget mac|win64]   (WP-066W / DEC-089; win64 → -ddOut /abs/DeathsDemolition-win64/DeathsDemolition.exe)
     ///
     /// Stamps <c>build-info.json</c>, builds every enabled scene in Build Settings for
-    /// macOS, writes a JSON report (result, seconds, bytes, stamp) and restores the placeholder
+    /// macOS (default) or Windows x64 (Mono, the installed WindowsStandaloneSupport module),
+    /// writes a JSON report (result, seconds, bytes, stamp) and restores the placeholder
     /// stamp. Throws on failure so the Unity process exits non-zero (exit-code contract for
     /// the scripts). Player settings are not modified here; whatever ProjectSettings says ships.
     /// </summary>
@@ -25,12 +27,14 @@ namespace DD.Prototype.Core.EditorTools
         private const string ModeFlag = "-ddMode";
         private const string OutFlag = "-ddOut";
         private const string ReportFlag = "-ddReport";
+        private const string TargetFlag = "-ddTarget";
 
         public static void Build()
         {
             string mode = Arg(ModeFlag) ?? "release";
             string output = Arg(OutFlag);
             string report = Arg(ReportFlag);
+            string targetName = Arg(TargetFlag) ?? "mac";
             if (string.IsNullOrEmpty(output))
             {
                 throw new Exception("[DdBuild] " + OutFlag + " <path.app> is required.");
@@ -39,6 +43,19 @@ namespace DD.Prototype.Core.EditorTools
             if (mode != "dev" && mode != "release")
             {
                 throw new Exception("[DdBuild] " + ModeFlag + " must be dev or release (was '" + mode + "').");
+            }
+
+            BuildTarget target;
+            switch (targetName)
+            {
+                case "mac": target = BuildTarget.StandaloneOSX; break;
+                case "win64": target = BuildTarget.StandaloneWindows64; break;
+                default: throw new Exception("[DdBuild] " + TargetFlag + " must be mac or win64 (was '" + targetName + "').");
+            }
+
+            if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, target))
+            {
+                throw new Exception("[DdBuild] build support for " + target + " is not installed in this Unity (module install is a user decision).");
             }
 
             string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
@@ -57,7 +74,7 @@ namespace DD.Prototype.Core.EditorTools
                 {
                     scenes = scenes,
                     locationPathName = output,
-                    target = BuildTarget.StandaloneOSX,
+                    target = target,
                     options = mode == "dev" ? BuildOptions.Development : BuildOptions.None,
                 };
                 summary = BuildPipeline.BuildPlayer(options).summary;
@@ -68,12 +85,13 @@ namespace DD.Prototype.Core.EditorTools
             }
 
             double seconds = (DateTime.UtcNow - t0).TotalSeconds;
-            Debug.Log(string.Format("[DdBuild] result={0} mode={1} scenes={2} size={3:0.0} MB seconds={4:0} path={5}",
-                summary.result, mode, scenes.Length, summary.totalSize / (1024f * 1024f), seconds, output));
+            Debug.Log(string.Format("[DdBuild] result={0} mode={1} scenes={2} size={3:0.0} MB seconds={4:0} path={5}{6}",
+                summary.result, mode, scenes.Length, summary.totalSize / (1024f * 1024f), seconds, output,
+                target == BuildTarget.StandaloneOSX ? "" : " target=" + targetName));
 
             if (!string.IsNullOrEmpty(report))
             {
-                WriteReport(report, mode, output, scenes.Length, summary, seconds, stamp);
+                WriteReport(report, mode, target == BuildTarget.StandaloneOSX ? null : targetName, output, scenes.Length, summary, seconds, stamp);
             }
 
             if (summary.result != BuildResult.Succeeded)
@@ -82,12 +100,14 @@ namespace DD.Prototype.Core.EditorTools
             }
         }
 
-        private static void WriteReport(string path, string mode, string output, int scenes, BuildSummary s, double seconds, BuildInfo stamp)
+        // target is null for macOS so its report stays byte-for-byte the pre-WP-066W format.
+        private static void WriteReport(string path, string mode, string target, string output, int scenes, BuildSummary s, double seconds, BuildInfo stamp)
         {
             var sb = new StringBuilder();
             sb.Append("{\n");
             sb.Append("  \"result\": \"").Append(s.result).Append("\",\n");
             sb.Append("  \"mode\": \"").Append(mode).Append("\",\n");
+            if (target != null) sb.Append("  \"target\": \"").Append(target).Append("\",\n");
             sb.Append("  \"output\": \"").Append(Escape(output)).Append("\",\n");
             sb.Append("  \"scenes\": ").Append(scenes).Append(",\n");
             sb.Append("  \"totalSize\": ").Append(s.totalSize).Append(",\n");
