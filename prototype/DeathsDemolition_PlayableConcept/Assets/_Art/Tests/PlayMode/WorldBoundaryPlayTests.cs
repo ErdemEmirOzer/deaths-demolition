@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Characters;
 using DD.Prototype.Core.Boot;
+using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.PlayerSystem;
@@ -24,7 +25,8 @@ namespace DD.Art.Tests.PlayMode
     /// WP-038M · On the real Run over World_AP005 (soak seed-61 fall, 611–622 s: out through the south gate, off the band at
     /// z ≈ −80): the player walked at every edge — the south gate the bot used included — stops on the ±45 m line and never
     /// drops, nor does one walked into a koi pond (the ground has a hole there); a player below the world is put back on the
-    /// NavMesh by the fall guard, unharmed.
+    /// NavMesh by the fall guard, unharmed. WP-038N: every NavMesh path between the regions (and over the south bridge, and the
+    /// soak seed-61 centre → east-gate stall) is physically walkable by a body with the player's capsule and 0.35 m step.
     /// </summary>
     public sealed class WorldBoundaryPlayTests
     {
@@ -179,6 +181,126 @@ namespace DD.Art.Tests.PlayMode
             }
 
             Assert.AreEqual(health0, _rig.Health.Current, 0.001f, "güvenlik ağı hasar vermez");
+        }
+
+        // WP-038N · Region anchors (on the NavMesh within 3 m): centre (run start), north, east, the soak seed-61 last zombie
+        // (east-north), south-east, the south bank, west, north-west.
+        private static readonly (string name, Vector3 p)[] Anchors =
+        {
+            ("merkez", new Vector3(0f, 0f, -3f)), ("kuzey", new Vector3(0f, 0f, 30f)), ("dogu", new Vector3(30f, 0f, 0f)),
+            ("dogu-kuzey", new Vector3(24.5f, 0f, 16.2f)), ("guney-dogu", new Vector3(30f, 0f, -30f)), ("guney-kiyi", new Vector3(4f, 0f, -40f)),
+            ("bati", new Vector3(-30f, 0f, 0f)), ("bati-kuzey", new Vector3(-30f, 0f, 30f)),
+        };
+
+        private sealed class Walker
+        {
+            public string Name;
+            public CharacterController Body;
+            public Vector3 Goal;
+            public NavMeshPath Path = new NavMeshPath();
+            public int Corner;
+            public float VerticalSpeed, NextRepath, Best = float.MaxValue, LastImprove, Limit;
+            public bool Done;
+            public string Fail;
+        }
+
+        private static float Remaining(Vector3 from, NavMeshPath path, int corner)
+        {
+            if (path.corners.Length == 0) return float.MaxValue;
+            float sum = 0f;
+            Vector3 prev = from;
+            for (int i = Mathf.Max(1, corner); i < path.corners.Length; i++) { sum += Vector3.Distance(Flat(prev), Flat(path.corners[i])); prev = path.corners[i]; }
+            return sum;
+        }
+
+        private static Vector3 Flat(Vector3 v) => new Vector3(v.x, 0f, v.z);
+
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator NavMeshYollari_BolgelerArasiVeKopru_BedenKapsuluyleFizikselGecilir()
+        {
+            yield return RunAp005();
+            _rig.Motor.SetInputSource(null);
+            var pairs = new List<(string name, Vector3 a, Vector3 b)>();
+            for (int i = 0; i < Anchors.Length; i++)
+            for (int j = 0; j < Anchors.Length; j++)
+                if (i != j) pairs.Add((Anchors[i].name + "→" + Anchors[j].name, Anchors[i].p, Anchors[j].p));
+            pairs.Add(("soak61 (9.6,4.7)→dogu-kuzey", new Vector3(9.6f, 0f, 4.7f), new Vector3(24.5f, 0f, 16.2f)));
+            pairs.Add(("soak61 (12.2,2.9)→dogu-kuzey", new Vector3(12.2f, 0f, 2.9f), new Vector3(24.5f, 0f, 16.2f)));
+            pairs.Add(("kopru K→G", new Vector3(4f, 0f, -22.5f), new Vector3(4f, 0f, -36f)));
+            pairs.Add(("kopru G→K", new Vector3(4f, 0f, -36f), new Vector3(4f, 0f, -22.5f)));
+
+            var walkers = new List<Walker>();
+            var partial = new List<string>();
+            CharacterController player = _rig.GetComponent<CharacterController>();
+            foreach (var pr in pairs)
+            {
+                Assert.IsTrue(NavMesh.SamplePosition(pr.a, out NavMeshHit ha, 3f, NavMesh.AllAreas), pr.name + ": başlangıç NavMesh dışı");
+                Assert.IsTrue(NavMesh.SamplePosition(pr.b, out NavMeshHit hb, 3f, NavMesh.AllAreas), pr.name + ": hedef NavMesh dışı");
+                var w = new Walker { Name = pr.name, Goal = hb.position };
+                NavMesh.CalculatePath(ha.position, hb.position, NavMesh.AllAreas, w.Path);
+                if (w.Path.status != NavMeshPathStatus.PathComplete) { partial.Add(pr.name + " " + w.Path.status); continue; }
+                var go = new GameObject("WP-038N walker " + pr.name) { layer = PrototypeLayers.Player };
+                go.transform.position = ha.position + Vector3.up * 0.05f;
+                CharacterController cc = go.AddComponent<CharacterController>();
+                cc.radius = 0.45f; cc.height = 1.8f; cc.center = new Vector3(0f, 0.9f, 0f);
+                cc.stepOffset = 0.35f; cc.slopeLimit = 45f; cc.skinWidth = 0.03f; cc.minMoveDistance = 0f;
+                if (player != null) Physics.IgnoreCollision(cc, player);
+                foreach (Walker other in walkers) Physics.IgnoreCollision(cc, other.Body);
+                w.Body = cc;
+                w.Limit = Remaining(ha.position, w.Path, 1) / 6.2f * 1.6f + 6f;
+                walkers.Add(w);
+            }
+
+            Assert.IsEmpty(partial, "NavMesh bölgeler arası tam yol vermiyor: " + string.Join(", ", partial));
+            float t = 0f;
+            int active = walkers.Count;
+            while (active > 0 && t < 60f)
+            {
+                if (EnemySpawnDirector.Instance != null && EnemySpawnDirector.Instance.ActiveCount > 0) EnemySpawnDirector.Instance.ClearAllEnemies();
+                yield return null;
+                float dt = Time.deltaTime;
+                t += dt;
+                active = 0;
+                foreach (Walker w in walkers)
+                {
+                    if (w.Done || w.Fail != null) continue;
+                    active++;
+                    Vector3 pos = w.Body.transform.position;
+                    if (Vector3.Distance(Flat(pos), Flat(w.Goal)) < 0.7f) { w.Done = true; continue; }
+                    if (pos.y < -2f) { w.Fail = "düştü @" + pos.ToString("F1"); continue; }
+                    if (t >= w.NextRepath)
+                    {
+                        w.NextRepath = t + 0.5f;
+                        if (NavMesh.SamplePosition(pos, out NavMeshHit here, 1.5f, NavMesh.AllAreas)) NavMesh.CalculatePath(here.position, w.Goal, NavMesh.AllAreas, w.Path);
+                        w.Corner = 1;
+                        float rem = Remaining(pos, w.Path, 1);
+                        if (rem < w.Best - 0.5f) { w.Best = rem; w.LastImprove = t; }
+                        else if (t - w.LastImprove > 3f) { w.Fail = "takıldı @" + pos.ToString("F2") + " kalan " + rem.ToString("F1") + " m"; continue; }
+                    }
+
+                    if (t > w.Limit) { w.Fail = "süre aşımı @" + pos.ToString("F2"); continue; }
+                    Vector3[] corners = w.Path.corners;
+                    while (w.Corner < corners.Length - 1 && Vector3.Distance(Flat(pos), Flat(corners[w.Corner])) < 0.3f) w.Corner++;
+                    Vector3 target = corners.Length > 0 ? corners[Mathf.Min(w.Corner, corners.Length - 1)] : w.Goal;
+                    Vector3 dir = Flat(target - pos);
+                    dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.zero;
+                    w.VerticalSpeed = w.Body.isGrounded ? -2f : w.VerticalSpeed - 24f * dt;
+                    w.Body.Move(dir * 6.2f * dt + Vector3.up * (w.VerticalSpeed * dt));
+                }
+            }
+
+            var fails = new List<string>();
+            int done = 0;
+            foreach (Walker w in walkers)
+            {
+                if (w.Done) done++;
+                else fails.Add(w.Name + ": " + (w.Fail ?? "bitmedi @" + w.Body.transform.position.ToString("F1")));
+                UnityEngine.Object.Destroy(w.Body.gameObject);
+            }
+
+            Debug.Log("[DD-TEST] wp038n.walk pairs=" + walkers.Count + " done=" + done + " simSeconds=" + t.ToString("F1") + (fails.Count > 0 ? " FAIL: " + string.Join(" | ", fails) : ""));
+            Assert.IsEmpty(fails, "NavMesh yolu fiziksel olarak geçilemiyor (" + fails.Count + "):\n" + string.Join("\n", fails));
         }
     }
 }

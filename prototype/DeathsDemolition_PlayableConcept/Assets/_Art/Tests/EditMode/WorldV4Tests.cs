@@ -197,8 +197,15 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsTrue(!isthmus || strip.position.y > 0.2f, "havuz 02/03 arası zemin şeridi yürünemez (kıyı modülü üstü hariç): " + (isthmus ? strip.position.ToString("F2") : "yok"));
                 Assert.IsTrue(NavMesh.CalculatePath(new Vector3(0f, 0f, -10f), new Vector3(4f, 0f, -43f), NavMesh.AllAreas, path));
                 Assert.AreEqual(NavMeshPathStatus.PathComplete, path.status, "merkez → güney kıyı tam yol");
+                // WP-038N: the crest is sampled along the path (0.25 m), not read off the corners — a head-on deck entry leaves no
+                // corner on the deck (the old one sat there only because the path cut in sideways through the rails).
                 float crest = float.MinValue;
-                foreach (Vector3 c in path.corners) crest = Mathf.Max(crest, c.y);
+                for (int c = 1; c < path.corners.Length; c++)
+                for (float u = 0f; u <= 1f; u += 0.25f / Mathf.Max(0.25f, Vector3.Distance(path.corners[c - 1], path.corners[c])))
+                {
+                    Vector3 q = Vector3.Lerp(path.corners[c - 1], path.corners[c], u);
+                    if (NavMesh.SamplePosition(q, out NavMeshHit onPath, 0.4f, NavMesh.AllAreas)) crest = Mathf.Max(crest, onPath.position.y);
+                }
                 Assert.Greater(crest, 0.25f, "güney geçişi köprü üstünden (WP-030 boğazı), zemin şeridinden değil: tepe " + crest.ToString("F2"));
                 // The deck itself is the crossing: north approach → south bank straight over the five segments (rail posts
                 // out of the bake), not a 30 m detour around pond 01.

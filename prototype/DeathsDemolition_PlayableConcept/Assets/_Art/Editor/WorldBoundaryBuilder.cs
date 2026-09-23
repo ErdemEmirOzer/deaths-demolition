@@ -20,8 +20,9 @@ namespace DD.Art.Pipeline.EditorTools
     /// passes through; the NavMesh bake (Environment | CameraOccluder) never collects it. The same object carries WorldFallGuard.
     /// Pond rims: the koi basins are holes in the ground plates (no collider under the water) behind rim stones lower than the
     /// player's 0.35 m step — a player stepped in and fell forever. Each basin ellipse (the NavMesh pond footprint,
-    /// PlacementImporter.BasinHoles) gets a closed fence of 0.5 m invisible segments on the same layer, except where a raised
-    /// walkable crossing (bridge deck / shore module: NavMesh above <see cref="PondCrossingY"/>) passes over the rim. Where the
+    /// PlacementImporter.BasinHoles) gets a closed fence of 0.5 m invisible segments on the same layer, except where walkable
+    /// NavMesh passes through the fence (bridge deck, shore module — WP-038N rule: an invisible fence never cuts the NavMesh, see
+    /// <see cref="CutsNavMesh"/>). Where the
     /// plates' real basin cut reaches past the ellipse (and any other hole cell of the 0.25 m grid outside the ponds) an invisible
     /// floor plug at the neighbouring ground height closes it.
     /// Idempotent: everything is rebuilt in place. Called by PlacementImporter.BuildScene (after the bake) and by <see cref="ApplyCli"/>.
@@ -36,8 +37,8 @@ namespace DD.Art.Pipeline.EditorTools
         public const int Layer = 2;   // Ignore Raycast (built-in)
         public const string PondRimsName = "Pond Rims";
         public const float PondRimBottom = -1f, PondRimTop = 1.2f, PondRimThickness = 0.3f, PondSegment = 0.5f;
-        /// <summary>NavMesh this high over a rim segment is a crossing (bridge deck ≥ 0.25 m, shore module): no fence there.</summary>
-        public const float PondCrossingY = 0.2f;
+        /// <summary>WP-038N: NavMesh this close to a fence segment's centre line (half the thickness + 0.15 m) is walked through — no fence.</summary>
+        public const float NavMeshClearance = PondRimThickness * 0.5f + 0.15f;
         public const string PlugsName = "Ground Plugs";
         public const float PlugCell = 0.25f, PlugDepth = 0.5f;
 
@@ -85,13 +86,33 @@ namespace DD.Art.Pipeline.EditorTools
             return Mathf.Max(12, Mathf.CeilToInt(perimeter / PondSegment));
         }
 
-        /// <summary>True when a raised walkable crossing (NavMesh above <see cref="PondCrossingY"/>) passes over this rim point.</summary>
-        public static bool IsCrossing(Vector2 p)
+        /// <summary>
+        /// WP-038N (C-00 rule: an invisible fence never cuts walkable NavMesh — the fences are not in the bake, so the AI would path
+        /// straight into them). True when NavMesh lies within <see cref="NavMeshClearance"/> of the segment p0–p1 at any height the
+        /// fence spans (probed at five points × four heights). Ground NavMesh ends ≈ one agent radius (0.5 m) outside the pond
+        /// ellipse, so only what crosses the rim — the bridge deck, the shore module — is caught.
+        /// </summary>
+        public static bool CutsNavMesh(Vector2 p0, Vector2 p1)
         {
-            int ground = (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
-            if (!Physics.Raycast(new Vector3(p.x, 3f, p.y), Vector3.down, out RaycastHit hit, 4f, ground, QueryTriggerInteraction.Ignore)) return false;
-            if (hit.point.y <= PondCrossingY) return false;
-            return NavMesh.SamplePosition(hit.point, out NavMeshHit nav, 0.35f, NavMesh.AllAreas) && nav.position.y > PondCrossingY;
+            for (int k = 0; k <= 4; k++)
+            {
+                Vector2 q = Vector2.Lerp(p0, p1, k * 0.25f);
+                for (float y = PondRimBottom + 0.5f; y <= PondRimTop; y += 0.5f)
+                {
+                    if (!NavMesh.SamplePosition(new Vector3(q.x, y, q.y), out NavMeshHit hit, 0.6f, NavMesh.AllAreas)) continue;
+                    if (hit.position.y < PondRimBottom || hit.position.y > PondRimTop) continue;
+                    if (DistanceToSegment(new Vector2(hit.position.x, hit.position.z), p0, p1) <= NavMeshClearance) return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static float DistanceToSegment(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float t = ab.sqrMagnitude > 1e-8f ? Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude) : 0f;
+            return Vector2.Distance(p, a + ab * t);
         }
 
         /// <summary>True inside any basin ellipse (the pond footprint behind the rim fence).</summary>
@@ -184,7 +205,7 @@ namespace DD.Art.Pipeline.EditorTools
                 {
                     Vector2 p0 = PondPoint(basins[b], 2f * Mathf.PI * i / n), p1 = PondPoint(basins[b], 2f * Mathf.PI * (i + 1) / n);
                     Vector2 m = (p0 + p1) * 0.5f;
-                    if (IsCrossing(m)) { crossings++; continue; }
+                    if (CutsNavMesh(p0, p1)) { crossings++; continue; }
                     Vector2 d = p1 - p0;
                     var seg = new GameObject("Pond" + b + "_" + i);
                     seg.transform.SetParent(rims.transform, false);

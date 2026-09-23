@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using DD.Prototype.Core;
@@ -101,6 +102,8 @@ namespace DD.Art.Pipeline.EditorTools
             public int HeavyUnbatched;
             /// <summary>WP-020 · NavMeshModifierVolumes written for the named areas (Bridge / Corridor / Gate).</summary>
             public int AreaVolumes;
+            /// <summary>WP-038N · Not-walkable volumes along the bridge rails / posts (outer side + ends).</summary>
+            public int BridgeRailNavVolumes;
             /// <summary>WP-038 · AP-015P plates (ground / route / paving) and water meshes placed; 0 = stand-in ground.</summary>
             public int SurfacePlates;
             public int WaterMeshes;
@@ -713,6 +716,7 @@ namespace DD.Art.Pipeline.EditorTools
             // modules and the gate openings carry their own area so RegionNavProfile.ApplyAreaCosts can
             // price them on the NavMesh itself (Bridge ×1.6, Corridor ×1.3, Gate ×1 / ×1.15).
             report.AreaVolumes = BuildAreaVolumes(root.transform, areaInstances);
+            report.BridgeRailNavVolumes = BuildBridgeRailNavVolumes(root.transform, instances.transform, placement);
 
             // NavMesh: the WorldNavigation settings (agent 0, physics colliders in
             // Environment|CameraOccluder, ±48 m volume), baked HERE and saved as an asset so
@@ -1137,6 +1141,91 @@ namespace DD.Art.Pipeline.EditorTools
             return count;
         }
 
+        public const string BridgeRailNavRootName = "Bridge Rail NavMesh (WP-038N)";
+        /// <summary>WP-038N · Body radius (player / zombie CharacterController): how far the rail volumes reach outward and past the ends.</summary>
+        public const float BodyRadius = 0.45f;
+        public const float BridgeRailNavBottom = -0.6f, BridgeRailNavTop = 0.45f;
+
+        /// <summary>
+        /// WP-038N · The rails / posts are out of the bake (the deck keeps its corridor), so the NavMesh joined the ground beside a
+        /// segment to the 0.30 m deck sideways, through the rails: paths entered the deck diagonally at its ends and the bodies slid
+        /// down the outside of a rail (centre → south bank stalled at the bridge's north end). One Not-Walkable volume per rail /
+        /// post (a volume does not erode): its box in the segment's frame, grown by <see cref="BodyRadius"/> outward (away from the
+        /// deck's centre line) and past both ends along the deck, never inward — the deck corridor stays, the side link is gone,
+        /// the path meets the deck head-on. Environment layer (the surface's mask). Rebuilt in place.
+        /// </summary>
+        public static int BuildBridgeRailNavVolumes(Transform root, Transform instances, WorldPlacementAsset placement)
+        {
+            Transform old = root.Find(BridgeRailNavRootName);
+            if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            var parent = new GameObject(BridgeRailNavRootName);
+            parent.transform.SetParent(root, false);
+            int count = 0;
+            foreach (WorldPlacementAsset.Instance inst in placement.instances)
+            {
+                if (inst.family != BridgeFamily) continue;
+                Transform bridge = instances.Find(inst.id);
+                if (bridge == null) throw new InvalidOperationException(LogPrefix + "bridge instance missing in scene: " + inst.id);
+                // Deck axis = the segment's longer horizontal extent (bridge-local), lateral = the other.
+                var all = new Bounds();
+                bool any = false;
+                foreach (BoxCollider box in bridge.GetComponentsInChildren<BoxCollider>(true))
+                {
+                    Bounds b = LocalBounds(bridge, box);
+                    if (!any) { all = b; any = true; } else all.Encapsulate(b);
+                }
+
+                if (!any) continue;
+                bool deckAlongX = all.size.x >= all.size.z;
+                float deckCentreLateral = deckAlongX ? all.center.z : all.center.x;
+                foreach (BoxCollider box in bridge.GetComponentsInChildren<BoxCollider>(true))
+                {
+                    NavMeshModifier m = box.GetComponent<NavMeshModifier>();
+                    if (m == null || !m.ignoreFromBuild) continue;
+                    Bounds b = LocalBounds(bridge, box);
+                    Vector3 min = b.min, max = b.max;
+                    if (deckAlongX)
+                    {
+                        min.x -= BodyRadius; max.x += BodyRadius;
+                        if (b.center.z >= deckCentreLateral) max.z += BodyRadius; else min.z -= BodyRadius;
+                    }
+                    else
+                    {
+                        min.z -= BodyRadius; max.z += BodyRadius;
+                        if (b.center.x >= deckCentreLateral) max.x += BodyRadius; else min.x -= BodyRadius;
+                    }
+
+                    min.y = BridgeRailNavBottom - bridge.position.y;
+                    max.y = BridgeRailNavTop - bridge.position.y;
+                    var vol = new GameObject("RailNav_" + inst.id + "_" + count.ToString("00"));
+                    vol.transform.SetParent(parent.transform, false);
+                    vol.layer = PrototypeLayers.Environment;
+                    vol.transform.SetPositionAndRotation(bridge.TransformPoint((min + max) * 0.5f), bridge.rotation);
+                    var v = vol.AddComponent<NavMeshModifierVolume>();
+                    v.center = Vector3.zero;
+                    v.size = max - min;
+                    v.area = ArtSurfaceImporter.NavAreaNotWalkable;
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>A box collider's bounds in <paramref name="frame"/>'s local space (unscaled frame: placement scale 1).</summary>
+        private static Bounds LocalBounds(Transform frame, BoxCollider box)
+        {
+            var b = new Bounds();
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = new Vector3((i & 1) == 0 ? -0.5f : 0.5f, (i & 2) == 0 ? -0.5f : 0.5f, (i & 4) == 0 ? -0.5f : 0.5f);
+                Vector3 local = frame.InverseTransformPoint(box.transform.TransformPoint(box.center + Vector3.Scale(corner, box.size)));
+                if (i == 0) b = new Bounds(local, Vector3.zero); else b.Encapsulate(local);
+            }
+
+            return b;
+        }
+
         public static readonly Dictionary<string, string> AreaFamilies = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             { "bridge_segment", AreaBridge },
@@ -1211,8 +1300,67 @@ namespace DD.Art.Pipeline.EditorTools
             surface.ignoreNavMeshObstacle = true;
 
             Physics.SyncTransforms();
-            surface.BuildNavMesh();
+            BuildAtBodyClimb(surface);
+            return SaveNavMeshAsset(surface);
+        }
 
+        /// <summary>
+        /// WP-038N · Step height the authored world is baked at. Agent type 0 climbs 0.75 m (project setting, shared with the
+        /// procedural world's runtime bake), but every body that walks here is a CharacterController with a 0.35 m step (player
+        /// PlayerMotor, zombies EnemyFactory / ZombieEnemy). Baked at 0.75 the NavMesh put walkable tops on props 0.35–0.75 m tall
+        /// and linked them to the ground: the path from the centre to the east gate ran over an AP-017 stone pile (0.35 m) and the
+        /// 0.50 m pile beside it — PathComplete, but the S-10 bot stood on the first pile for 300 s and the last zombie never came
+        /// (soak seed 61, before and after WP-038M). 0.30 keeps a margin under the 0.35 step.
+        /// </summary>
+        public const float NavMeshBodyClimb = 0.3f;
+
+        /// <summary>
+        /// NavMeshSurface.BuildNavMesh with the climb lowered to <see cref="NavMeshBodyClimb"/>: the same sources (the surface's own
+        /// collection — modifiers, modifier volumes, layer mask, volume bounds) and settings otherwise.
+        /// </summary>
+        public static void BuildAtBodyClimb(NavMeshSurface surface)
+        {
+            MethodInfo collect = typeof(NavMeshSurface).GetMethod("CollectSources", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (collect == null) throw new InvalidOperationException(LogPrefix + "NavMeshSurface.CollectSources not found (AI Navigation package changed?)");
+            var sources = (List<NavMeshBuildSource>)collect.Invoke(surface, null);
+            NavMeshBuildSettings settings = surface.GetBuildSettings();
+            settings.agentClimb = NavMeshBodyClimb;
+            var bounds = new Bounds(surface.center, new Vector3(Mathf.Abs(surface.size.x), Mathf.Abs(surface.size.y), Mathf.Abs(surface.size.z)));
+            NavMeshData built = NavMeshBuilder.BuildNavMeshData(settings, sources, bounds, surface.transform.position, surface.transform.rotation);
+            if (built == null) throw new InvalidOperationException(LogPrefix + "NavMesh bake produced no data.");
+            built.name = surface.gameObject.name;
+            surface.RemoveData();
+            surface.navMeshData = built;
+            if (surface.isActiveAndEnabled) surface.AddData();
+        }
+
+        /// <summary>
+        /// WP-038N batch entry: re-bake World_AP005's NavMesh at <see cref="NavMeshBodyClimb"/> without a re-import (same surface,
+        /// same sources), save the asset, then rebuild the WP-038M boundary — its pond-rim crossings are read off the NavMesh.
+        /// </summary>
+        public static void RebakeNavMeshCli()
+        {
+            Scene scene = EditorSceneManager.OpenScene(ArtLibraryPaths.Ap005WorldScene, OpenSceneMode.Single);
+            GameObject root = GameObject.Find(Ap005WorldBootstrap.RootName);
+            if (root == null) throw new InvalidOperationException(LogPrefix + "world root missing");
+            NavMeshSurface[] surfaces = root.GetComponentsInChildren<NavMeshSurface>(true);
+            if (surfaces.Length != 1) throw new InvalidOperationException(LogPrefix + "expected one NavMeshSurface, found " + surfaces.Length);
+            var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(ArtLibraryPaths.Ap005PlacementAsset);
+            if (placement == null) throw new InvalidOperationException(LogPrefix + "placement asset missing");
+            Transform instances = root.transform.Find(Ap005WorldBootstrap.InstancesName);
+            if (instances == null) throw new InvalidOperationException(LogPrefix + "instances container missing");
+            int railVolumes = BuildBridgeRailNavVolumes(root.transform, instances, placement);
+            Physics.SyncTransforms();
+            BuildAtBodyClimb(surfaces[0]);
+            int triangles = SaveNavMeshAsset(surfaces[0]);
+            WorldBoundaryBuilder.Build(root.transform, BasinHoles(placement));
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log(LogPrefix + "NavMesh re-baked at climb " + NavMeshBodyClimb + " m (+ " + railVolumes + " bridge rail volumes): " + triangles + " triangles; boundary rebuilt");
+        }
+
+        private static int SaveNavMeshAsset(NavMeshSurface surface)
+        {
             NavMeshData data = surface.navMeshData;
             if (data == null)
             {

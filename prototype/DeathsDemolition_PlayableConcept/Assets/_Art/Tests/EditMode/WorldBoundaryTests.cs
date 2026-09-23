@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace DD.Art.Tests.EditMode
 {
@@ -147,11 +148,12 @@ namespace DD.Art.Tests.EditMode
                 int n = WorldBoundaryBuilder.PondSegments(basins[bi]);
                 for (int i = 0; i < n; i++)
                 {
-                    Vector2 m = (WorldBoundaryBuilder.PondPoint(basins[bi], 2f * Mathf.PI * i / n) + WorldBoundaryBuilder.PondPoint(basins[bi], 2f * Mathf.PI * (i + 1) / n)) * 0.5f;
+                    Vector2 p0 = WorldBoundaryBuilder.PondPoint(basins[bi], 2f * Mathf.PI * i / n), p1 = WorldBoundaryBuilder.PondPoint(basins[bi], 2f * Mathf.PI * (i + 1) / n);
+                    Vector2 m = (p0 + p1) * 0.5f;
                     Vector2 outward2 = (m - basins[bi].centre).normalized;
                     var outward = new Vector3(outward2.x, 0f, outward2.y);
                     Vector3 basePoint = new Vector3(m.x, 0f, m.y) + outward * start;
-                    if (WorldBoundaryBuilder.IsCrossing(m)) crossings++;
+                    if (WorldBoundaryBuilder.CutsNavMesh(p0, p1)) crossings++;
                     sweeps++;
                     bool blocked = Physics.CapsuleCast(basePoint + Vector3.up * 0.4f, basePoint + Vector3.up * 1.4f, radius, -outward, out RaycastHit hit, start + 1f, mask, QueryTriggerInteraction.Ignore)
                                    && hit.distance <= start + 0.1f;
@@ -161,6 +163,31 @@ namespace DD.Art.Tests.EditMode
 
             Debug.Log("[DD-TEST] wp038m.ponds basins=" + basins.Count + " sweeps=" + sweeps + " crossings=" + crossings + " gaps=" + gaps.Count);
             Assert.IsEmpty(gaps, "Havuz kenarında oyuncu kapsülünün geçtiği boşluk (" + gaps.Count + "):\n" + string.Join("\n", gaps.GetRange(0, Mathf.Min(40, gaps.Count))));
+        }
+
+        [Test]
+        public void HavuzCitleri_YurunebilirNavMeshiKesmez_BedenAdimiUstuPropUstundeNavMeshYok()
+        {
+            // WP-038N: a fence is never walked through by the NavMesh (the AI paths straight into what the bake does not see)…
+            Transform ring = OpenRing();
+            var cuts = new List<string>();
+            int segments = 0;
+            foreach (BoxCollider seg in ring.Find(WorldBoundaryBuilder.PondRimsName).GetComponentsInChildren<BoxCollider>(true))
+            {
+                Vector3 c = seg.transform.position, f = seg.transform.forward * (seg.size.z * 0.5f - 0.05f);
+                segments++;
+                if (WorldBoundaryBuilder.CutsNavMesh(new Vector2(c.x - f.x, c.z - f.z), new Vector2(c.x + f.x, c.z + f.z))) cuts.Add(seg.name + " @" + c.ToString("F1"));
+            }
+
+            Assert.Greater(segments, 100, "havuz çiti parçaları");
+            Assert.IsEmpty(cuts, "NavMesh'in içinden geçtiği çit parçası (" + cuts.Count + "): " + string.Join(", ", cuts));
+            // …and the NavMesh climbs no more than a body steps (0.35 m): no walkable top on the east-gate AP-017 stone pile
+            // (AP005_i3074, 0.35 m) the soak seed-61 bot stood on for 300 s, nor on the 0.50 m pile beside it.
+            foreach (Vector3 top in new[] { new Vector3(14.43f, 0.35f, 7.35f), new Vector3(16.9f, 0.5f, 7.9f) })
+            {
+                bool on = NavMesh.SamplePosition(top, out NavMeshHit hit, 0.12f, NavMesh.AllAreas);
+                Assert.IsFalse(on && hit.position.y > 0.2f, "prop üstünde yürünebilir NavMesh: " + top + " → " + (on ? hit.position.ToString("F2") : "-"));
+            }
         }
     }
 }

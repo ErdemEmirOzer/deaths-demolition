@@ -150,7 +150,7 @@ namespace DD.Art.Tests.PlayMode
             yield return DunyayiTekBasinaYukle();
             Ap005WorldBootstrap.Result r = Ap005WorldBootstrap.Last;
             Assert.IsTrue(r.Ok, "Bootstrap raporu FAIL:\n" + r.Report);
-            Assert.AreEqual(3143, r.Instances);   // WP-038B: AP-017 v004 +456 -> 3120; WP-038I: AP-017 Faz 2 v005 +23 -> 3143
+            Assert.AreEqual(3168, r.Instances);   // WP-038B: AP-017 v004 +456 -> 3120; WP-038I: AP-017 Faz 2 v005 +23 -> 3143; WP-038L: Faz 2b v006 +25 -> 3168 (name kept)
             Assert.Greater(r.NavMeshTriangles, 0, "NavMesh boş");
             Assert.AreEqual(0, r.Unreachable, "erişilemeyen marker:\n" + r.Report);
             Assert.AreEqual(12, UnityEngine.Object.FindObjectsOfType<SpawnPointMarker>().Length, "12 spawn marker");
