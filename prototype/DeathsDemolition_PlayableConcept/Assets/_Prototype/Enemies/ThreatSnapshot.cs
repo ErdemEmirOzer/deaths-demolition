@@ -30,8 +30,10 @@ namespace DD.Prototype.Enemies
     public readonly struct ThreatSnapshot
     {
         public ThreatSnapshot(float intensity, float raw, int layer, float proximity, float encirclement, float tier, float round, float danger, float attackPrep,
-                              int nearCount, int occupiedSectors, int windingUp, EnemyTier strongestTier, bool encircled, bool rearAttack, bool lowHealth, bool strongVersion, bool inFight, int enemyCount)
+                              int nearCount, int occupiedSectors, int windingUp, EnemyTier strongestTier, bool encircled, bool rearAttack, bool lowHealth, bool strongVersion, bool inFight, int enemyCount,
+                              Vector3 rearDirection = default, float rearIntensity = 0f, float rearBearingDegrees = 0f, int rearCount = 0)
         {
+            RearDirection = rearDirection; RearIntensity = rearIntensity; RearBearingDegrees = rearBearingDegrees; RearCount = rearCount;
             Intensity = intensity; Raw = raw; Layer = layer;
             Proximity = proximity; Encirclement = encirclement; TierPresence = tier; RoundProgress = round; PlayerDanger = danger; AttackPrep = attackPrep;
             NearCount = nearCount; OccupiedSectors = occupiedSectors; WindingUp = windingUp; StrongestTier = strongestTier;
@@ -67,6 +69,20 @@ namespace DD.Prototype.Enemies
         public bool InFight { get; }
         public int EnemyCount { get; }
 
+        /// <summary>
+        /// WP-068 U12b · the rear-arc reading (data only, S-09 HUD arc): the danger-weighted direction of the near
+        /// enemies OUTSIDE the view cone (same <c>RearAngleDegrees</c> as <see cref="RearAttack"/>), world XZ unit
+        /// vector from the player; zero when nothing presses from behind. Weight per body = closeness (1 at the
+        /// player → 0 at NearRadius) × tier (1 / 1.3 / 1.6 / 2) × 2 while winding up.
+        /// </summary>
+        public Vector3 RearDirection { get; }
+        /// <summary>0..1: summed rear weight / <see cref="ThreatModel.RearFullWeight"/> (one close winding-up Standard ≈ 0.5).</summary>
+        public float RearIntensity { get; }
+        /// <summary>Signed angle from the view forward to <see cref="RearDirection"/>, degrees (−180..180, + = clockwise from above / to the right).</summary>
+        public float RearBearingDegrees { get; }
+        /// <summary>Near bodies behind the view this frame.</summary>
+        public int RearCount { get; }
+
         public override string ToString() =>
             "threat " + Intensity.ToString("0.00") + " (raw " + Raw.ToString("0.00") + ") layer " + Layer + " near " + NearCount + " sectors " + OccupiedSectors + "/8" +
             " tier " + StrongestTier + " windup " + WindingUp + (Encircled ? " ENCIRCLED" : "") + (RearAttack ? " REAR" : "") + (LowHealth ? " LOWHP" : "") + (InFight ? "" : " (between rounds)");
@@ -88,12 +104,17 @@ namespace DD.Prototype.Enemies
     /// </summary>
     public static class ThreatModel
     {
+        /// <summary>WP-068 U12b: summed rear weight that reads as full intensity (PROTOTYPE-ONLY; HUD read only, no rule uses it).</summary>
+        public const float RearFullWeight = 4f;
+        private static float RearTierWeight(EnemyTier t) => t == EnemyTier.Ultra ? 2f : t == EnemyTier.Elite ? 1.6f : t == EnemyTier.Special ? 1.3f : 1f;
+
         public static ThreatSnapshot Evaluate(ThreatSettings s, in ThreatContext ctx, ThreatEnemyInput[] enemies, int count, ref ThreatState state, float dt)
         {
             if (s == null) throw new ArgumentNullException(nameof(s));
             Span<bool> sectors = stackalloc bool[ThreatSettings.SectorCount];
             int near = 0, occupied = 0, windingUp = 0;
             bool rear = false;
+            float rearX = 0f, rearZ = 0f, rearWeight = 0f; int rearCount = 0;   // WP-068 U12b
             EnemyTier strongest = EnemyTier.Standard;
             float nearR2 = s.NearRadius * s.NearRadius, prepR2 = s.AttackPrepRadius * s.AttackPrepRadius;
             Vector2 fwd = new Vector2(ctx.ViewForward.x, ctx.ViewForward.z);
@@ -109,6 +130,13 @@ namespace DD.Prototype.Enemies
                 if (d2 <= nearR2)
                 {
                     near++;
+                    // WP-068 U12b: outside the view cone → contributes to the rear-arc direction (data only)
+                    float dist = Mathf.Sqrt(d2);
+                    if (dist > 1e-4f && (dx * fwd.x + dz * fwd.y) / dist < rearCos)
+                    {
+                        float w = (1f - Mathf.Clamp01(dist / Mathf.Max(0.01f, s.NearRadius))) * RearTierWeight(e.Tier) * (e.WindingUp ? 2f : 1f);
+                        rearX += dx / dist * w; rearZ += dz / dist * w; rearWeight += w; rearCount++;
+                    }
                     int sector = (int)((Mathf.Atan2(dz, dx) + Mathf.PI) / (2f * Mathf.PI) * ThreatSettings.SectorCount) % ThreatSettings.SectorCount;
                     if (sector < 0) sector += ThreatSettings.SectorCount;
                     if (!sectors[sector]) { sectors[sector] = true; occupied++; }
@@ -164,7 +192,17 @@ namespace DD.Prototype.Enemies
             bool lowHealth = ctx.Health01 <= s.LowHealthThreshold;
             bool strong = strongest == EnemyTier.Elite || strongest == EnemyTier.Ultra;
 
-            return new ThreatSnapshot(smoothed, raw, layer, proximity, encirclement, tier, round, danger, prep, near, occupied, windingUp, strongest, encircled, rearAttack, lowHealth, strong, ctx.InFight, count);
+            Vector3 rearDir = Vector3.zero; float bearing = 0f;
+            float rl = Mathf.Sqrt(rearX * rearX + rearZ * rearZ);
+            if (rl > 1e-4f)
+            {
+                rearDir = new Vector3(rearX / rl, 0f, rearZ / rl);
+                bearing = Vector2.SignedAngle(new Vector2(rearDir.x, rearDir.z), fwd);   // + = to the right of the view (clockwise from above)
+            }
+            float rearIntensity = Mathf.Clamp01(rearWeight / RearFullWeight);
+
+            return new ThreatSnapshot(smoothed, raw, layer, proximity, encirclement, tier, round, danger, prep, near, occupied, windingUp, strongest, encircled, rearAttack, lowHealth, strong, ctx.InFight, count,
+                rearDir, rearIntensity, bearing, rearCount);
         }
 
         private static float ThresholdUp(ThreatSettings s, int layer) => Threshold(s, layer) + s.LayerHysteresis;

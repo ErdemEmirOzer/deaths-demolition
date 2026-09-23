@@ -169,5 +169,10 @@ namespace DD.Prototype.Enemies
         public static bool LowHealth => ThreatDirector.Current.LowHealth;
         public static bool StrongVersionPresent => ThreatDirector.Current.StrongVersionPresent;
         public static int WindingUpNearby => ThreatDirector.Current.WindingUp;
+        /// <summary>WP-068 U12b · rear arc (S-09 HUD dilim 8): world XZ direction of the pressure behind the view, 0..1 intensity, signed bearing from the view forward (deg), body count.</summary>
+        public static Vector3 RearDirection => ThreatDirector.Current.RearDirection;
+        public static float RearIntensity => ThreatDirector.Current.RearIntensity;
+        public static float RearBearingDegrees => ThreatDirector.Current.RearBearingDegrees;
+        public static int RearCount => ThreatDirector.Current.RearCount;
     }
 }

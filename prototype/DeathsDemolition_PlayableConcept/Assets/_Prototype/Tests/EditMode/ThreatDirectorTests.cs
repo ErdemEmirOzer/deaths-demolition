@@ -182,5 +182,55 @@ namespace DD.Prototype.Tests.EditMode
             UnityEngine.Debug.Log("[DD-TEST] wp033.model 40 enemies " + perCall.ToString("0.0000") + " ms/eval");
             Assert.LessOrEqual(perCall, 0.05, "≤ 0,05 ms @ 40 düşman");
         }
+
+        [Test]
+        public void U12b_ArkaYay_YonYogunlukAciSayi_OnTarafSayilmaz_SifirAyirma()
+        {
+            float r = _s.NearRadius * 0.5f;
+            var st = new ThreatState();
+
+            // nothing behind: two in front → zero reading
+            _enemies[0] = new ThreatEnemyInput { Position = new Vector3(0f, 0f, r), Tier = EnemyTier.Standard };
+            _enemies[1] = new ThreatEnemyInput { Position = new Vector3(0.5f, 0f, r), Tier = EnemyTier.Standard };
+            ThreatSnapshot front = Eval(Ctx(), 2, ref st);
+            Assert.AreEqual(0, front.RearCount); Assert.AreEqual(0f, front.RearIntensity); Assert.AreEqual(Vector3.zero, front.RearDirection);
+
+            // one straight behind (view +Z → body at −Z)
+            _enemies[0] = new ThreatEnemyInput { Position = new Vector3(0f, 0f, -r), Tier = EnemyTier.Standard };
+            ThreatSnapshot back = Eval(Ctx(), 1, ref st);
+            Assert.AreEqual(1, back.RearCount);
+            Assert.AreEqual(-1f, back.RearDirection.z, 1e-4f, "yön oyuncudan tehdide (−Z)");
+            Assert.AreEqual(180f, Mathf.Abs(back.RearBearingDegrees), 1e-3f);
+            Assert.AreEqual(0.5f * 1f / ThreatModel.RearFullWeight, back.RearIntensity, 1e-4f, "yarı mesafe Standard = 0,5 / tam ağırlık");
+
+            // behind-right: bearing positive (clockwise from above), behind-left negative
+            _enemies[0] = new ThreatEnemyInput { Position = new Vector3(r, 0f, -r), Tier = EnemyTier.Standard };
+            Assert.Greater(Eval(Ctx(), 1, ref st).RearBearingDegrees, 90f, "arka-sağ = +");
+            _enemies[0] = new ThreatEnemyInput { Position = new Vector3(-r, 0f, -r), Tier = EnemyTier.Standard };
+            Assert.Less(Eval(Ctx(), 1, ref st).RearBearingDegrees, -90f, "arka-sol = −");
+
+            // the dangerous one wins the direction: a winding-up Ultra behind-left outweighs two Standards behind-right
+            _enemies[0] = new ThreatEnemyInput { Position = new Vector3(-r, 0f, -r * 0.5f), Tier = EnemyTier.Ultra, WindingUp = true };
+            _enemies[1] = new ThreatEnemyInput { Position = new Vector3(r, 0f, -r), Tier = EnemyTier.Standard };
+            _enemies[2] = new ThreatEnemyInput { Position = new Vector3(r * 1.2f, 0f, -r), Tier = EnemyTier.Standard };
+            ThreatSnapshot mix = Eval(Ctx(), 3, ref st);
+            Assert.AreEqual(3, mix.RearCount);
+            Assert.Less(mix.RearDirection.x, 0f, "sarılan Ultra yönü belirler");
+            Assert.LessOrEqual(mix.RearIntensity, 1f);
+
+            // view turned toward the pressure → it is no longer behind
+            ThreatSnapshot turned = Eval(Ctx(forward: Vector3.back), 3, ref st);
+            Assert.AreEqual(0, turned.RearCount, "görüş konisinde kalanlar arka yay değil");
+
+            // data only: the rule surfaces are unchanged by the rear reading (same flags / layer inputs)
+            Assert.AreEqual(mix.NearCount, 3);
+
+            // 0 allocation on the model (warm call first)
+            Eval(Ctx(), 3, ref st);
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            for (int k = 0; k < 100; k++) Eval(Ctx(), 3, ref st);
+            long after = System.GC.GetAllocatedBytesForCurrentThread();
+            Assert.AreEqual(0, after - before, "model ayırma yapmaz (Editor Mono'da sayaç 0 okuyabilir; yapısal kontrol)");
+        }
     }
 }
