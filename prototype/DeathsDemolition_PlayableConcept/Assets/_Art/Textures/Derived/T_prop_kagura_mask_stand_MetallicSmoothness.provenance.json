@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_kagura_mask_stand_Packed.png",
+    "sourceSha256": "95ea10abc5563cea02e15b33d50e0bbd7f641e250bfe67f0677ce8a503948fc9",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-23T18:49:49.1314440Z",
+    "outputSha256": "0297751be48fede229e7ee01157d16ded7f4a8de1f8374b5f0f9e343a0fd28a5"
+}

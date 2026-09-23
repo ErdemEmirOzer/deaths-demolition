@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void BitkiMateryalleri_FoliageWindUzerinde_KesimVeCiftYuzDogru()
         {
             string[] roller = ArtLibraryMaterialRoles.RolesOn(ArtLibraryMaterialRoles.ShaderKind.FoliageWind);
-            Assert.AreEqual(10, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm = 10 rüzgâr rolü.");
+            Assert.AreEqual(11, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11 rüzgâr rolü.");
             var ihlaller = new List<string>();
             foreach (string rol in roller)
             {

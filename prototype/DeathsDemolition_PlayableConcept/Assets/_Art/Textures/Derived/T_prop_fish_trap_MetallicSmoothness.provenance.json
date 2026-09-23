@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_fish_trap_Packed.png",
+    "sourceSha256": "e0c74186fea01421b0ec0817590182fb8387a976885df561abf70e3867a93b4e",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-23T18:49:49.4960490Z",
+    "outputSha256": "5e90ab6c384fd0ee12b5fa791fd6fe65fec3cf548eb78e89f28cd364476ed5a5"
+}

@@ -349,6 +349,14 @@ namespace DD.Art.Pipeline.EditorTools
             { "prop_drying_rack_cloth", TextureClass.Prop },
             { "prop_well_head_tsurube", TextureClass.Prop },
             { "prop_breakable_sake_jar", TextureClass.Prop },
+            // WP-038L · AP-017 Phase 2b props (1K sets → Prop 512; the fish trap's LOD albedo and the koi RGBA card sheet are BaseColor-only roles).
+            { "prop_kagura_mask_stand", TextureClass.Prop },
+            { "prop_breakable_tea_set", TextureClass.Prop },
+            { "prop_fish_trap", TextureClass.Prop },
+            { "prop_fish_trap_lod", TextureClass.Prop },
+            { "prop_furin_wind_chime", TextureClass.Prop },
+            { "prop_hishaku_ladle_rack", TextureClass.Prop },
+            { "prop_koi_shoal", TextureClass.Prop },
             { "roof_courses", TextureClass.Structure }
         };
 
@@ -406,9 +414,17 @@ namespace DD.Art.Pipeline.EditorTools
             return c == TextureClass.Prop || c == TextureClass.Breakable ? PropMaskMaxSize : DerivedMaskMaxSize;
         }
 
+        /// <summary>
+        /// WP-038L · Prop / Breakable-class normal maps ship at 256² (the AP-017 Phase 2b import took the world line to 127.3 / 125 MB
+        /// and the release to 550.9 / 550 MB). A ≤ 2 m prop spans ~80 px at the gameplay rig, so the GPU samples the 128² mip of a
+        /// 512² normal there — mip 0 was never on screen; albedo keeps the class size (512²).
+        /// </summary>
+        public const int PropNormalMaxSize = 256;
+
         public static int MaxSizeOf(TextureClass c, TextureRole role)
         {
             int size = MaxSizeOf(c);
+            if (role == TextureRole.Normal && (c == TextureClass.Prop || c == TextureClass.Breakable)) return Mathf.Min(size, PropNormalMaxSize);
             return IsCappedMaskRole(role) ? Mathf.Min(size, MaskMaxSizeOf(c)) : size;
         }
 

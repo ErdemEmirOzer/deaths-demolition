@@ -64,6 +64,18 @@ namespace DD.Art
             public string breakEventId;
             /// <summary>WP-038B · AP-017 breakables: residue decal cell of the AP-010B 2×2 sheet (TL_ceramic / TR_wood / BL_straw / BR_cloth).</summary>
             public string residueCell;
+            /// <summary>WP-038L · AP-017 koi shoal (FBX custom props AP017_swim = loop): circle radius range, speed, depth range. Absent = static prop.</summary>
+            public Swim swim;
+
+            public bool HasSwim => swim != null && swim.speedMps > 0f && swim.radiusM != null && swim.radiusM.Length == 2 && swim.radiusM[0] > 0f;
+        }
+
+        [Serializable]
+        public sealed class Swim
+        {
+            public float[] radiusM;
+            public float speedMps;
+            public float[] depthM;
         }
 
         /// <summary>

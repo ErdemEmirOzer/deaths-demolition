@@ -88,8 +88,8 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(12, Manifest("AP-005").families.Count, "AP-005 12 aile (WP-014 modüller)");
             Assert.AreEqual(12, Manifest("AP-005").VariationCount, "AP-005 12 varyasyon");
             Assert.AreEqual(53, Manifest("AP-003B").VariationCount, "AP-003B 53 varyasyon");
-            Assert.AreEqual(21, Manifest("AP-017").families.Count, "AP-017 21 aile (9 türev + 8 kırılabilir, WP-038B; + 3 prop + 1 kırılabilir, Faz 2 WP-038I)");
-            Assert.AreEqual(44, Manifest("AP-017").VariationCount, "AP-017 44 varyasyon (38 + 6 Faz 2)");
+            Assert.AreEqual(27, Manifest("AP-017").families.Count, "AP-017 27 aile (9 türev + 8 kırılabilir, WP-038B; + 3 prop + 1 kırılabilir, Faz 2 WP-038I; + 5 prop + 1 kırılabilir, Faz 2b WP-038L)");
+            Assert.AreEqual(50, Manifest("AP-017").VariationCount, "AP-017 50 varyasyon (38 + 6 Faz 2 + 6 Faz 2b)");
 
             var hatalar = new List<string>();
             foreach ((string ap, ArtLibraryManifest.Family f, ArtLibraryManifest.Variation v) in Varyasyonlar())
@@ -147,7 +147,7 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(205, fbx, "143 + 12 (AP-005) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) = 205 kütüphane FBX");
+            Assert.AreEqual(211, fbx, "143 + 12 (AP-005) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 kütüphane FBX");
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.fbx contract=ok fbx=" + fbx + " meshRefs=" + mesh);
         }
@@ -262,13 +262,13 @@ namespace DD.Art.Tests.EditMode
                             if (mats[i].shader == null || mats[i].shader.name != BeklenenShaderAdi(beklenen[i])) hatalar.Add(on + ": " + ad + " shader " + (mats[i].shader != null ? mats[i].shader.name : "null") + " ≠ " + BeklenenShaderAdi(beklenen[i]));
                         }
 
-                        ShadowCastingMode golge = lod == 2 || f.IsDerivative ? ShadowCastingMode.Off : ShadowCastingMode.On;   // WP-038G: AP-017 litter never casts
+                        ShadowCastingMode golge = lod == 2 || f.IsDerivative || v.HasSwim ? ShadowCastingMode.Off : ShadowCastingMode.On;   // WP-038G: AP-017 litter never casts; WP-038L: the underwater koi neither
                         if (mr.shadowCastingMode != golge) hatalar.Add(on + ": " + ad + " gölge " + mr.shadowCastingMode + " (ADR-012-1: " + golge + ")");
                     }
                 }
             }
 
-            Assert.AreEqual(169, prefabSayisi, "12 + 42 + 53 + 12 (AP-005) + 6 (AP-005B) + 44 (AP-017, Faz 1+2) = 169 varyasyon prefabı");
+            Assert.AreEqual(175, prefabSayisi, "12 + 42 + 53 + 12 (AP-005) + 6 (AP-005B) + 50 (AP-017, Faz 1+2+2b) = 175 varyasyon prefabı");
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.prefab count=" + prefabSayisi + " renderers=" + renderer);
         }
@@ -349,7 +349,7 @@ namespace DD.Art.Tests.EditMode
                 if (sapma > SinirToleransMetre) hatalar.Add(ap + " " + v.prefab + ": sapma " + (sapma * 1000f).ToString("0.0") + " mm (ölçüm " + olcum.min + ".." + olcum.max + ", manifest " + beklenen.min + ".." + beklenen.max + ")");
             }
 
-            Assert.AreEqual(169, sayi);   // WP-038I: + 6 AP-017 Phase 2 variations
+            Assert.AreEqual(175, sayi);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b
             Assert.IsEmpty(hatalar, "Eksen sözleşmesi ihlali (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.aabb variations=" + sayi + " maxDeviationMm=" + (enBuyuk * 1000f).ToString("0.00"));
         }
@@ -416,7 +416,7 @@ namespace DD.Art.Tests.EditMode
                 if (mat == null) { hatalar.Add(yol + ": yok"); continue; }
                 if (mat.shader == null || mat.shader.name != BeklenenShaderAdi(spec.Role)) hatalar.Add(yol + ": shader " + (mat.shader != null ? mat.shader.name : "null") + " ≠ " + BeklenenShaderAdi(spec.Role));
                 if (spec.Shader == ArtLibraryMaterialRoles.ShaderKind.Water) continue;   // WP-013: su v1 kapısı ArtVfxGateTests'te (saydam, ayrı sözleşme)
-                bool cutout = spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout;
+                bool cutout = spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout || spec.AlphaCutout;   // WP-038L: the koi card sheet (BaseColor-only cutout)
                 if (mat.IsKeywordEnabled("_ALPHATEST_ON") != cutout) hatalar.Add(yol + ": _ALPHATEST_ON " + !cutout);
                 if (cutout && mat.GetFloat("_Cull") != 0f) hatalar.Add(yol + ": cutout çift taraflı olmalı (_Cull 0)");
                 if (!cutout && mat.GetFloat("_Cull") != 2f) hatalar.Add(yol + ": _Cull " + mat.GetFloat("_Cull"));
@@ -504,7 +504,49 @@ namespace DD.Art.Tests.EditMode
                 toplam++;
             }
 
-            Assert.AreEqual(169, toplam);   // WP-038I: + 6 AP-017 Phase 2 variations
+            Assert.AreEqual(175, toplam);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b
+        }
+
+        [Test]
+        public void Faz2b_Koi_Furin_BalikTuzagi_CaySeti_OzelKurallar()
+        {
+            // WP-038L · AP-017 Phase 2b: the koi shoal swims (ArtSwimLoop from the FBX custom props), is a cutout card sheet with no
+            // shadow and no collider; the furin hangs on the wind shader with no collider; the fish trap LOD1/2 bind their own albedo;
+            // the tea set is a breakable on the existing BreakCeramic binder.
+            string Prefab(string family) => ArtLibraryPaths.Prefab("AP-017", family, "SM_" + family + "_V01");
+            var koi = AssetDatabase.LoadAssetAtPath<GameObject>(Prefab("koi_shoal"));
+            Assert.IsNotNull(koi, "koi prefab");
+            ArtSwimLoop swim = koi.GetComponent<ArtSwimLoop>();
+            Assert.IsNotNull(swim, "koi ArtSwimLoop");
+            Assert.AreEqual(0.8f, swim.RadiusMin, 1e-4f); Assert.AreEqual(1.6f, swim.RadiusMax, 1e-4f); Assert.AreEqual(0.15f, swim.Speed, 1e-4f);
+            foreach (Renderer r in koi.GetComponentsInChildren<Renderer>(true))
+            {
+                Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, r.shadowCastingMode, r.name + ": koi gölge düşürmez");
+                Assert.IsTrue(r.sharedMaterial != null && r.sharedMaterial.IsKeywordEnabled("_ALPHATEST_ON"), r.name + ": koi cutout");
+            }
+            Assert.AreEqual(0, koi.GetComponentsInChildren<Collider>(true).Length, "koi collider yok");
+            var koiAlbedo = AssetImporter.GetAtPath(ArtPipelinePaths.SourceTexture("prop_koi_shoal", "BaseColor")) as TextureImporter;
+            Assert.IsNotNull(koiAlbedo);
+            Assert.AreEqual(TextureImporterAlphaSource.FromInput, koiAlbedo.alphaSource, "koi BaseColor alfası korunur (cutout)");
+
+            var furin = AssetDatabase.LoadAssetAtPath<GameObject>(Prefab("furin_wind_chime"));
+            Assert.IsNotNull(furin, "furin prefab");
+            Assert.AreEqual(0, furin.GetComponentsInChildren<Collider>(true).Length, "furin collider yok");
+            foreach (Renderer r in furin.GetComponentsInChildren<Renderer>(true))
+                Assert.AreEqual("DD/Foliage Wind", r.sharedMaterial.shader.name, r.name + ": furin rüzgâr yolu");
+
+            var trap = AssetDatabase.LoadAssetAtPath<GameObject>(Prefab("fish_trap"));
+            Assert.IsNotNull(trap, "fish trap prefab");
+            LOD[] lods = trap.GetComponentInChildren<LODGroup>(true).GetLODs();
+            Assert.AreEqual("M_prop_fish_trap", lods[0].renderers[0].sharedMaterial.name);
+            Assert.AreEqual("M_prop_fish_trap_lod", lods[1].renderers[0].sharedMaterial.name);
+            Assert.AreEqual("M_prop_fish_trap_lod", lods[2].renderers[0].sharedMaterial.name);
+
+            var tea = AssetDatabase.LoadAssetAtPath<GameObject>(Prefab("breakable_tea_set"));
+            Assert.IsNotNull(tea, "tea set prefab");
+            var breakable = tea.GetComponent<DD.Prototype.Props.BreakableProp>();
+            Assert.IsNotNull(breakable, "çay seti kırılabilir binder");
+            Assert.AreEqual("BreakCeramic", breakable.EventId);
         }
     }
 }

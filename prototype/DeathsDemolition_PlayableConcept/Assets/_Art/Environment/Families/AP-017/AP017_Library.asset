@@ -146,3 +146,21 @@ MonoBehaviour:
   - family: breakable_sake_jar
     variation: V03
     prefab: {fileID: 3327995149216299129, guid: b64c9e13c801e4d47b581fc8c2309690, type: 3}
+  - family: kagura_mask_stand
+    variation: V01
+    prefab: {fileID: 8126583842702492859, guid: 18e908a46210c4fe6bc471ff085c038e, type: 3}
+  - family: breakable_tea_set
+    variation: V01
+    prefab: {fileID: 8083207187589983380, guid: ddfcd8beaa6cc44e4952e06aa8ddcdd9, type: 3}
+  - family: fish_trap
+    variation: V01
+    prefab: {fileID: 394508138275326927, guid: e307d8e52d9524e19b08e7de14730108, type: 3}
+  - family: furin_wind_chime
+    variation: V01
+    prefab: {fileID: 57309611417491684, guid: 6cb7badda91a8429f941d21b39e42e4b, type: 3}
+  - family: hishaku_ladle_rack
+    variation: V01
+    prefab: {fileID: 8555132900938754106, guid: b054246e123274899ae21defd530e6db, type: 3}
+  - family: koi_shoal
+    variation: V01
+    prefab: {fileID: 4814346680724209743, guid: cdeffed12b7ec46f19a917b439e2589f, type: 3}

@@ -1,0 +1,876 @@
+{
+ "schema": "dd-placement-delta-v1",
+ "package": "AP-017",
+ "base": "AP-017/exports/placement-v005.json version 5 (3143 instances)",
+ "target": "placement version 6",
+ "created": "2026-09-23T20:24:30",
+ "coordinate_space": "Blender / AP-001 metres, +Z up; NO axis conversion (Unity applies bakeAxisConversion); Unity (X,Z) -> (x,y), Unity Y -> z; rotation_euler_deg about +z CCW from +x; scale baked",
+ "brief": "AP-017/AP017-brief.md",
+ "plan": "asset-production/AP-017/02-plan/AP017-phase2b-plan-v001.json",
+ "counts": {
+  "added": 25,
+  "changed": 0,
+  "removed": 0,
+  "instances_v006": 3168
+ },
+ "added": [
+  {
+   "id": "AP005_i3355",
+   "family": "AP017_kagura_mask_stand",
+   "variation": "V01",
+   "lod_group": "AP017_kagura_mask_stand_V01",
+   "assembly": [],
+   "position": [
+    29.994,
+    33.89,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    276.8
+   ],
+   "scale": [
+    0.989,
+    0.989,
+    0.989
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-north-00",
+   "plan_note": "AD 2b MUST 2: south (arena-facing) apron of the NE pavilion (roof i2506), visible from the north-facing rig",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3356",
+   "family": "AP017_breakable_tea_set",
+   "variation": "V01",
+   "lod_group": "AP017_breakable_tea_set_V01",
+   "assembly": [],
+   "position": [
+    30.677,
+    37.305,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.979,
+    0.979,
+    0.979
+   ],
+   "region": "north",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-north-01",
+   "plan_note": "AD 2b MUST 2: east gable slot (kept from the previous pass) + south-apron slot (free-slot scan), both on the arena-facing side of roof i2506",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3357",
+   "family": "AP017_breakable_tea_set",
+   "variation": "V01",
+   "lod_group": "AP017_breakable_tea_set_V01",
+   "assembly": [],
+   "position": [
+    30.25,
+    32.9,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.996,
+    0.996,
+    0.996
+   ],
+   "region": "north",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-north-01",
+   "plan_note": "AD 2b MUST 2: east gable slot (kept from the previous pass) + south-apron slot (free-slot scan), both on the arena-facing side of roof i2506",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3358",
+   "family": "AP017_hishaku_ladle_rack",
+   "variation": "V01",
+   "lod_group": "AP017_hishaku_ladle_rack_V01",
+   "assembly": [],
+   "position": [
+    -38.675,
+    34.403,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    8.14
+   ],
+   "scale": [
+    0.976,
+    0.976,
+    0.976
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-north-02",
+   "plan_note": "ladle rest touching the NW tsukubai (AD 2b SHOULD 4: gap 0.05-0.3 m)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3359",
+   "family": "AP017_kagura_mask_stand",
+   "variation": "V01",
+   "lod_group": "AP017_kagura_mask_stand_V01",
+   "assembly": [],
+   "position": [
+    35.75,
+    25.0,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.033,
+    1.033,
+    1.033
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-east-00",
+   "plan_note": "AD 2b MUST 2 (east check): west (camera-facing) apron of the east pavilion; slots under the colonnade roof or a sakura crown excluded (roof/crown scan)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3360",
+   "family": "AP017_breakable_tea_set",
+   "variation": "V01",
+   "lod_group": "AP017_breakable_tea_set_V01",
+   "assembly": [],
+   "position": [
+    36.996,
+    26.598,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    291.12
+   ],
+   "scale": [
+    0.966,
+    0.966,
+    0.966
+   ],
+   "region": "east",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-east-01",
+   "plan_note": "tea tray on the pavilion apron (band 0.3-3.0 m: the 1.5 m apron is taken by Phase-1 stacks)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3361",
+   "family": "AP017_breakable_tea_set",
+   "variation": "V01",
+   "lod_group": "AP017_breakable_tea_set_V01",
+   "assembly": [],
+   "position": [
+    40.612,
+    -18.929,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    94.49
+   ],
+   "scale": [
+    0.989,
+    0.989,
+    0.989
+   ],
+   "region": "east",
+   "role": "breakable",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-east-01",
+   "plan_note": "tea tray on the pavilion apron (band 0.3-3.0 m: the 1.5 m apron is taken by Phase-1 stacks)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3362",
+   "family": "AP017_hishaku_ladle_rack",
+   "variation": "V01",
+   "lod_group": "AP017_hishaku_ladle_rack_V01",
+   "assembly": [],
+   "position": [
+    39.185,
+    21.875,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    8.75
+   ],
+   "scale": [
+    0.975,
+    0.975,
+    0.975
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-east-02",
+   "plan_note": "ladle rest at the east tsukubai (AD 2b SHOULD 4: gap 0.05-0.3 m)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3363",
+   "family": "AP017_fish_trap",
+   "variation": "V01",
+   "lod_group": "AP017_fish_trap_V01",
+   "assembly": [],
+   "position": [
+    1.625,
+    -33.375,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.01,
+    1.01,
+    1.01
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-south-00",
+   "plan_note": "shore band 0.5-0.75 m from the water, one slot per pond edge (free-slot scan, >= 5 m apart)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3364",
+   "family": "AP017_fish_trap",
+   "variation": "V01",
+   "lod_group": "AP017_fish_trap_V01",
+   "assembly": [],
+   "position": [
+    -11.875,
+    -33.125,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    90.0
+   ],
+   "scale": [
+    1.02,
+    1.02,
+    1.02
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-south-00",
+   "plan_note": "shore band 0.5-0.75 m from the water, one slot per pond edge (free-slot scan, >= 5 m apart)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3365",
+   "family": "AP017_fish_trap",
+   "variation": "V01",
+   "lod_group": "AP017_fish_trap_V01",
+   "assembly": [],
+   "position": [
+    6.875,
+    -26.625,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.046,
+    1.046,
+    1.046
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-south-00",
+   "plan_note": "shore band 0.5-0.75 m from the water, one slot per pond edge (free-slot scan, >= 5 m apart)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3366",
+   "family": "AP017_fish_trap",
+   "variation": "V01",
+   "lod_group": "AP017_fish_trap_V01",
+   "assembly": [],
+   "position": [
+    12.625,
+    -37.875,
+    0.0
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.007,
+    1.007,
+    1.007
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "obstacle",
+   "added_in": "v006",
+   "plan_id": "AP017-south-00",
+   "plan_note": "shore band 0.5-0.75 m from the water, one slot per pond edge (free-slot scan, >= 5 m apart)",
+   "source_package": "AP-017"
+  },
+  {
+   "id": "AP005_i3367",
+   "family": "AP017_koi_shoal",
+   "variation": "V01",
+   "lod_group": "AP017_koi_shoal_V01",
+   "assembly": [],
+   "position": [
+    10.125,
+    -36.375,
+    -0.4
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    357.7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-koi",
+   "plan_note": "koi shoal cards 0.25 m under the pond surface (swim loop in the binder)",
+   "source_package": "AP-017",
+   "water_surface_z": -0.15,
+   "bed_depth_m": 0.45,
+   "pond": 1
+  },
+  {
+   "id": "AP005_i3368",
+   "family": "AP017_koi_shoal",
+   "variation": "V01",
+   "lod_group": "AP017_koi_shoal_V01",
+   "assembly": [],
+   "position": [
+    -8.875,
+    -25.375,
+    -0.4
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    298.58
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-koi",
+   "plan_note": "koi shoal cards 0.25 m under the pond surface (swim loop in the binder)",
+   "source_package": "AP-017",
+   "water_surface_z": -0.15,
+   "bed_depth_m": 0.45,
+   "pond": 2
+  },
+  {
+   "id": "AP005_i3369",
+   "family": "AP017_koi_shoal",
+   "variation": "V01",
+   "lod_group": "AP017_koi_shoal_V01",
+   "assembly": [],
+   "position": [
+    -9.375,
+    -31.375,
+    -0.4
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    82.84
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-koi",
+   "plan_note": "koi shoal cards 0.25 m under the pond surface (swim loop in the binder)",
+   "source_package": "AP-017",
+   "water_surface_z": -0.15,
+   "bed_depth_m": 0.45,
+   "pond": 2
+  },
+  {
+   "id": "AP005_i3370",
+   "family": "AP017_koi_shoal",
+   "variation": "V01",
+   "lod_group": "AP017_koi_shoal_V01",
+   "assembly": [],
+   "position": [
+    -1.625,
+    -29.875,
+    -0.4
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    324.2
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-koi",
+   "plan_note": "koi shoal cards 0.25 m under the pond surface (swim loop in the binder)",
+   "source_package": "AP-017",
+   "water_surface_z": -0.15,
+   "bed_depth_m": 0.45,
+   "pond": 3
+  },
+  {
+   "id": "AP005_i3371",
+   "family": "AP017_koi_shoal",
+   "variation": "V01",
+   "lod_group": "AP017_koi_shoal_V01",
+   "assembly": [],
+   "position": [
+    5.375,
+    -29.875,
+    -0.4
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    267.3
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "south",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-koi",
+   "plan_note": "koi shoal cards 0.25 m under the pond surface (swim loop in the binder)",
+   "source_package": "AP-017",
+   "water_surface_z": -0.15,
+   "bed_depth_m": 0.45,
+   "pond": 3
+  },
+  {
+   "id": "AP005_i3372",
+   "family": "AP017_furin_wind_chime",
+   "variation": "V01",
+   "lod_group": "AP017_furin_wind_chime_V01",
+   "assembly": [],
+   "position": [
+    28.5,
+    38.6,
+    3.86
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-furin",
+   "plan_note": "hung 0.10 m inside the eave of AP005_i2506 (pivot = hang point, 0.65 m drop)",
+   "source_package": "AP-017",
+   "hang": true,
+   "attach_to": "AP005_i2506"
+  },
+  {
+   "id": "AP005_i3373",
+   "family": "AP017_furin_wind_chime",
+   "variation": "V01",
+   "lod_group": "AP017_furin_wind_chime_V01",
+   "assembly": [],
+   "position": [
+    26.9,
+    34.2,
+    3.86
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-furin",
+   "plan_note": "hung 0.10 m inside the eave of AP005_i2506 (pivot = hang point, 0.65 m drop)",
+   "source_package": "AP-017",
+   "hang": true,
+   "attach_to": "AP005_i2506"
+  },
+  {
+   "id": "AP005_i3374",
+   "family": "AP017_furin_wind_chime",
+   "variation": "V01",
+   "lod_group": "AP017_furin_wind_chime_V01",
+   "assembly": [],
+   "position": [
+    -35.2,
+    38.7,
+    3.86
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-furin",
+   "plan_note": "hung 0.10 m inside the eave of AP005_i2518 (pivot = hang point, 0.65 m drop)",
+   "source_package": "AP-017",
+   "hang": true,
+   "attach_to": "AP005_i2518"
+  },
+  {
+   "id": "AP005_i3375",
+   "family": "AP017_furin_wind_chime",
+   "variation": "V01",
+   "lod_group": "AP017_furin_wind_chime_V01",
+   "assembly": [],
+   "position": [
+    -36.8,
+    34.3,
+    3.86
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "north",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-furin",
+   "plan_note": "hung 0.10 m inside the eave of AP005_i2518 (pivot = hang point, 0.65 m drop)",
+   "source_package": "AP-017",
+   "hang": true,
+   "attach_to": "AP005_i2518"
+  },
+  {
+   "id": "AP005_i3376",
+   "family": "AP017_furin_wind_chime",
+   "variation": "V01",
+   "lod_group": "AP017_furin_wind_chime_V01",
+   "assembly": [],
+   "position": [
+    38.8,
+    26.2,
+    3.86
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-furin",
+   "plan_note": "hung 0.10 m inside the eave of AP005_i2530 (pivot = hang point, 0.65 m drop)",
+   "source_package": "AP-017",
+   "hang": true,
+   "attach_to": "AP005_i2530"
+  },
+  {
+   "id": "AP005_i3377",
+   "family": "AP017_furin_wind_chime",
+   "variation": "V01",
+   "lod_group": "AP017_furin_wind_chime_V01",
+   "assembly": [],
+   "position": [
+    37.2,
+    21.8,
+    3.86
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-furin",
+   "plan_note": "hung 0.10 m inside the eave of AP005_i2530 (pivot = hang point, 0.65 m drop)",
+   "source_package": "AP-017",
+   "hang": true,
+   "attach_to": "AP005_i2530"
+  },
+  {
+   "id": "AP005_i3378",
+   "family": "AP017_furin_wind_chime",
+   "variation": "V01",
+   "lod_group": "AP017_furin_wind_chime_V01",
+   "assembly": [],
+   "position": [
+    39.869,
+    16.989,
+    4.06
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    119.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-furin",
+   "plan_note": "hung 0.10 m inside the eave of AP005_i2553 (pivot = hang point, 0.65 m drop)",
+   "source_package": "AP-017",
+   "hang": true,
+   "attach_to": "AP005_i2553"
+  },
+  {
+   "id": "AP005_i3379",
+   "family": "AP017_furin_wind_chime",
+   "variation": "V01",
+   "lod_group": "AP017_furin_wind_chime_V01",
+   "assembly": [],
+   "position": [
+    42.348,
+    7.861,
+    4.06
+   ],
+   "rotation_euler_deg": [
+    0.0,
+    0.0,
+    110.6
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "region": "east",
+   "role": "dressing",
+   "occluder_candidate": false,
+   "navmesh": "ignore",
+   "added_in": "v006",
+   "plan_id": "AP017-special-furin",
+   "plan_note": "hung 0.10 m inside the eave of AP005_i2556 (pivot = hang point, 0.65 m drop)",
+   "source_package": "AP-017",
+   "hang": true,
+   "attach_to": "AP005_i2556"
+  }
+ ],
+ "changed": [],
+ "removed_ids": [],
+ "removed": [],
+ "new_families": [
+  {
+   "family": "AP017_breakable_tea_set",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  },
+  {
+   "family": "AP017_fish_trap",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  },
+  {
+   "family": "AP017_furin_wind_chime",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  },
+  {
+   "family": "AP017_hishaku_ladle_rack",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  },
+  {
+   "family": "AP017_kagura_mask_stand",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  },
+  {
+   "family": "AP017_koi_shoal",
+   "fbx_dir": "AP-017/exports/families/",
+   "variations": [
+    "V01"
+   ]
+  }
+ ],
+ "summary": {
+  "per_region": {
+   "north": 8,
+   "east": 8,
+   "south": 9,
+   "west": 0
+  },
+  "per_family": {
+   "AP017_breakable_tea_set": 4,
+   "AP017_fish_trap": 4,
+   "AP017_furin_wind_chime": 8,
+   "AP017_hishaku_ladle_rack": 2,
+   "AP017_kagura_mask_stand": 2,
+   "AP017_koi_shoal": 5
+  }
+ },
+ "special_placer": [
+  "koi pond 1: 1 shoals",
+  "koi pond 2: 2 shoals",
+  "koi pond 3: 2 shoals",
+  "koi pond 4: 0 shoals",
+  "koi pond 5: 0 shoals",
+  "furin AP005_i2553 +2.2 skipped: over a route corridor",
+  "furin AP005_i2554 +2.2 skipped: over a route corridor",
+  "furin AP005_i2555 +2.2 skipped: over a route corridor",
+  "furin AP005_i2556 +2.2 skipped: over a route corridor",
+  "furin AP005_i2557 +2.2 skipped: over a route corridor",
+  "furin AP005_i2558 +2.2 skipped: over a route corridor",
+  "furin: 8 hung (2 on the colonnade)"
+ ]
+}

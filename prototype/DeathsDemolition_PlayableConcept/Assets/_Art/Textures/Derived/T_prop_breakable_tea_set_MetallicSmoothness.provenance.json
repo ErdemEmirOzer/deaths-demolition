@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_breakable_tea_set_Packed.png",
+    "sourceSha256": "c6b2ffe4c86d2e41483bf8e4d02873092cc87a7396102c727aae1f1f22cb97e8",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-23T18:49:49.3198730Z",
+    "outputSha256": "d8ea8bbf972d07dbf45f355ec42ee730d4802669399ae275ddbb9d02645ffbb2"
+}

@@ -164,12 +164,19 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void PropMateryalleri_OrmV002_OcclusionBagli_TuretilmisMaskeGKanaliAO()
         {
-            int bound = 0;
+            int bound = 0, windRoles = 0;
             foreach (string role in ArtLibraryMaterialRoles.PackedTextureRoles())
             {
                 if (!ArtTextureRepack.CarriesOcclusion(role)) continue;
                 var m = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material(role));
                 Assert.IsNotNull(m, role);
+                if (ArtLibraryMaterialRoles.Get(role).Shader == ArtLibraryMaterialRoles.ShaderKind.FoliageWind)
+                {
+                    // WP-038L: the AP-017 furin hangs on DD/Foliage Wind (no occlusion slot) — the derived mask still binds as MetallicSmoothness.
+                    Assert.IsNotNull(m.GetTexture("_MetallicGlossMap"), role + ": _MetallicGlossMap");
+                    windRoles++;
+                    continue;
+                }
                 Assert.IsNotNull(m.GetTexture("_OcclusionMap"), role + ": _OcclusionMap");
                 Assert.AreEqual(m.GetTexture("_MetallicGlossMap"), m.GetTexture("_OcclusionMap"), role + ": AO aynı maskenin G kanalı");
                 Assert.IsTrue(m.IsKeywordEnabled("_OCCLUSIONMAP"), role);
@@ -178,7 +185,8 @@ namespace DD.Art.Tests.EditMode
                 bound++;
             }
 
-            Assert.AreEqual(10, bound, "6 AP-005B prop rolü + 4 AP-017 Faz 2 prop rolü (WP-038I)");
+            Assert.AreEqual(14, bound, "6 AP-005B prop rolü + 4 AP-017 Faz 2 prop rolü (WP-038I) + 4 Faz 2b Lit prop rolü (WP-038L)");
+            Assert.AreEqual(1, windRoles, "WP-038L: furin rüzgâr gölgelendiricisinde");
         }
     }
 }

@@ -78,7 +78,7 @@ namespace DD.Art.Tests.EditMode
         // ================================================================== şema ve sayılar
 
         [Test]
-        public void Placement_SemaGecerli_Sayilar_3143_49_24_12_12_5_KaynakShaAyni()
+        public void Placement_SemaGecerli_Sayilar_3168_49_24_12_12_5_KaynakShaAyni()
         {
             Dictionary<string, object> doc = SourceJson();
             Assert.DoesNotThrow(() => PlacementImporter.Validate(doc), "dd-placement-v1 şema doğrulaması");
@@ -87,7 +87,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(WorldPlacementAsset.Schema, p.schema);
             Assert.AreEqual("AP-005", p.package);
             // WP-017: v001 source (2354) + AP-005B delta (+202 / ~9 / −169) = 2387; WP-020: + AP-005C delta (+312 / ~23 / −35) = 2664.
-            Assert.AreEqual(3143, p.instances.Count, "instances");   // WP-038B: + AP-017 delta v004 (+456); WP-038I: + v005 (+23)
+            Assert.AreEqual(3168, p.instances.Count, "instances");   // WP-038B: + AP-017 delta v004 (+456); WP-038I: + v005 (+23); WP-038L: + v006 (+25)
             Assert.AreEqual(49, p.routes.Count, "routes");
             Assert.AreEqual(24, p.markers.Count, "markers");
             Assert.AreEqual(12, p.spawnPoints.Count, "spawn_points");
@@ -351,7 +351,7 @@ namespace DD.Art.Tests.EditMode
         // ================================================================== sahne atamaları
 
         [Test]
-        public void Sahne_3143Ornek_RegionNavmeshKatmanStatik_NavMeshVerisi()
+        public void Sahne_3168Ornek_RegionNavmeshKatmanStatik_NavMeshVerisi()
         {
             WorldPlacementAsset p = Placement();
             Scene scene = OpenWorld();
@@ -386,7 +386,10 @@ namespace DD.Art.Tests.EditMode
                 StaticEditorFlags flags = GameObjectUtility.GetStaticEditorFlags(t.gameObject);
                 bool isStatic = (flags & StaticEditorFlags.OccludeeStatic) != 0;
                 bool isBatched = (flags & StaticEditorFlags.BatchingStatic) != 0;
-                bool expectStatic = inst.role == "structure" || inst.role == "ground" || inst.role == "dressing";
+                // WP-038L: a swimming prop (AP-017 koi, ArtSwimLoop) moves at runtime and is never static.
+                GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(t.gameObject);
+                bool swims = source != null && source.GetComponent<ArtSwimLoop>() != null;
+                bool expectStatic = !swims && (inst.role == "structure" || inst.role == "ground" || inst.role == "dressing");
                 // WP-017: heavy meshes (roof bays / slabs) are static but not batched (scene-file size).
                 bool expectBatched = expectStatic && !PlacementImporter.IsHeavyForStaticBatching(PrefabUtility.GetCorrespondingObjectFromSource(t.gameObject));
                 if (isStatic != expectStatic) hatalar.Add(inst.id + ": static " + isStatic + " (rol " + inst.role + ")");
@@ -406,8 +409,9 @@ namespace DD.Art.Tests.EditMode
             // WP-020 (AP-005C v003): center 20, north 473, east 696, south 589, west 886; occluder 186 ∪ fade 29 = 190.
             // WP-038B (AP-017 v004, +456): center +4, north +75, east +126, south +67, west +120, outer +64; no new occluders.
             // WP-038I (AP-017 Faz 2 v005, +23): north +6, east +5, south +7, west +5; no new occluders.
-            Assert.AreEqual(24, regionCounts["center"]); Assert.AreEqual(554, regionCounts["north"]); Assert.AreEqual(827, regionCounts["east"]);
-            Assert.AreEqual(663, regionCounts["south"]); Assert.AreEqual(1011, regionCounts["west"]);
+            // WP-038L (AP-017 Faz 2b v006, +25): north +8, east +8, south +9; no new occluders.
+            Assert.AreEqual(24, regionCounts["center"]); Assert.AreEqual(562, regionCounts["north"]); Assert.AreEqual(835, regionCounts["east"]);
+            Assert.AreEqual(672, regionCounts["south"]); Assert.AreEqual(1011, regionCounts["west"]);
             Assert.AreEqual(190, occluders, "occluder_candidate 186 ∪ fade_mesh 29 = 190 (AP-005C v003)");
 
             NavMeshSurface surface = null;
@@ -442,7 +446,7 @@ namespace DD.Art.Tests.EditMode
             try
             {
                 PlacementImporter.ImportReport report = PlacementImporter.BuildScene(p);
-                Assert.AreEqual(3143, report.Instances);
+                Assert.AreEqual(3168, report.Instances);
                 Assert.IsEmpty(report.Unmatched, "eşleşmeyen kayıt");
                 Assert.AreEqual(once, report.Digest, "İkinci koşu farklı bir örnek kümesi üretti (idempotency kırık).");
                 Scene again = OpenWorld();

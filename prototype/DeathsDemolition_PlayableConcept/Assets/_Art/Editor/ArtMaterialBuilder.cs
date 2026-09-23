@@ -288,6 +288,7 @@ namespace DD.Art.Pipeline.EditorTools
                 case ArtLibraryMaterialRoles.Kind.BaseColorOnly:
                     ApplyBaseColorOnly(material, spec.TextureRole, spec.Smoothness);
                     material.SetColor(BaseColorId, EncodeForColorProperty(spec.Tint));
+                    if (spec.AlphaCutout) ApplyCutout(material, spec.Cutoff);   // WP-038L: the koi card sheet
                     break;
 
                 default:
@@ -389,6 +390,10 @@ namespace DD.Art.Pipeline.EditorTools
         {
             SetFloat(m, "_AlphaClip", 1f);
             SetFloat(m, "_Cutoff", cutoff);
+            // WP-038L: URP 14's material import validation (BaseShaderGUI.SetupMaterialBlendModeInternal) sets alpha-to-mask on every
+            // opaque alpha-clipped Lit material; writing it here keeps the builder idempotent across a re-import (the koi card sheet is
+            // the first URP/Lit cutout — the foliage cutouts on DD/Foliage Wind set it in ApplyFoliageWind).
+            SetFloat(m, "_AlphaToMask", 1f);
             m.SetFloat(CullId, 0f);
             m.EnableKeyword("_ALPHATEST_ON");
             m.SetOverrideTag("RenderType", "TransparentCutout");

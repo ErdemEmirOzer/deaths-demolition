@@ -1,10 +1,10 @@
 {
  "ap": "AP-017",
- "version": "Phase 1+2 v002 (manifest AP017.manifest.v1, phase 1+2)",
+ "version": "Phase 1+2+2b v003 (manifest AP017.manifest.v1, phase 1+2+2b)",
  "sources": [
   {
-   "path": "asset-production/AP-017/exports/AP017-manifest-v002.json",
-   "sha256": "62108e7a3d17801896838b235904b61ed87f40d74706a04c21c43e3489463daa"
+   "path": "asset-production/AP-017/exports/AP017-manifest-v003.json",
+   "sha256": "4907c255d37e5c2a40a9baf7b2830d57e8d380353223cc625bc3348f0e93f0aa"
   }
  ],
  "derived": "source FBX used directly (embed_textures False, path_mode STRIP); breakables carry breakEventId / residueCell (AP-017 custom props); Phase 2 props bind prop_<family> (1K set \u2192 Prop 512, AP-005B path)",
@@ -3892,7 +3892,7 @@
       {
        "name": "",
        "role": "broken",
-       "wind": false,
+       "wind": true,
        "lods": [
         {
          "fbx": "AP017_breakable_planter_V01.fbx",
@@ -3911,7 +3911,7 @@
          "colourLayers": [
           "AP003_Wind"
          ],
-         "windExpected": false
+         "windExpected": true
         },
         {
          "fbx": "AP017_breakable_planter_V01.fbx",
@@ -3930,7 +3930,7 @@
          "colourLayers": [
           "AP003_Wind"
          ],
-         "windExpected": false
+         "windExpected": true
         },
         {
          "fbx": "AP017_breakable_planter_V01.fbx",
@@ -3949,14 +3949,14 @@
          "colourLayers": [
           "AP003_Wind"
          ],
-         "windExpected": false
+         "windExpected": true
         }
        ]
       },
       {
        "name": "",
        "role": "lod",
-       "wind": false,
+       "wind": true,
        "lods": [
         {
          "fbx": "AP017_breakable_planter_V01.fbx",
@@ -3975,7 +3975,7 @@
          "colourLayers": [
           "AP003_Wind"
          ],
-         "windExpected": false
+         "windExpected": true
         },
         {
          "fbx": "AP017_breakable_planter_V01.fbx",
@@ -3994,7 +3994,7 @@
          "colourLayers": [
           "AP003_Wind"
          ],
-         "windExpected": false
+         "windExpected": true
         },
         {
          "fbx": "AP017_breakable_planter_V01.fbx",
@@ -4013,7 +4013,7 @@
          "colourLayers": [
           "AP003_Wind"
          ],
-         "windExpected": false
+         "windExpected": true
         }
        ]
       }
@@ -5499,6 +5499,681 @@
      ],
      "breakEventId": "BreakCeramic",
      "residueCell": "TL_ceramic"
+    }
+   ]
+  },
+  {
+   "family": "kagura_mask_stand",
+   "occluder": false,
+   "kind": "prop",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_kagura_mask_stand_V01",
+     "boundsMin": [
+      -0.2627,
+      -0.2617,
+      0.0
+     ],
+     "boundsMax": [
+      0.2627,
+      0.2617,
+      1.3
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_kagura_mask_stand_V01.fbx",
+         "object": "AP017_kagura_mask_stand_V01_LOD0",
+         "materials": [
+          "prop_kagura_mask_stand"
+         ],
+         "facesPerSlot": [
+          2424
+         ],
+         "triangles": 2424,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_kagura_mask_stand_V01.fbx",
+         "object": "AP017_kagura_mask_stand_V01_LOD1",
+         "materials": [
+          "prop_kagura_mask_stand"
+         ],
+         "facesPerSlot": [
+          938
+         ],
+         "triangles": 938,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_kagura_mask_stand_V01.fbx",
+         "object": "AP017_kagura_mask_stand_V01_LOD2",
+         "materials": [
+          "prop_kagura_mask_stand"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_kagura_mask_stand_V01.fbx",
+       "object": "AP017_kagura_mask_stand_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.262665,
+          -0.261726,
+          0.0
+         ],
+         "max": [
+          0.262665,
+          0.261726,
+          1.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "breakable_tea_set",
+   "occluder": false,
+   "kind": "breakable",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_breakable_tea_set_V01",
+     "boundsMin": [
+      -0.3,
+      -0.2611,
+      0.0
+     ],
+     "boundsMax": [
+      0.3,
+      0.2611,
+      0.3799
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "broken",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_tea_set_V01.fbx",
+         "object": "AP017_breakable_tea_set_V01_BROKEN_LOD0",
+         "materials": [
+          "prop_breakable_tea_set"
+         ],
+         "facesPerSlot": [
+          2285
+         ],
+         "triangles": 2285,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_tea_set_V01.fbx",
+         "object": "AP017_breakable_tea_set_V01_BROKEN_LOD1",
+         "materials": [
+          "prop_breakable_tea_set"
+         ],
+         "facesPerSlot": [
+          884
+         ],
+         "triangles": 884,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_tea_set_V01.fbx",
+         "object": "AP017_breakable_tea_set_V01_BROKEN_LOD2",
+         "materials": [
+          "prop_breakable_tea_set"
+         ],
+         "facesPerSlot": [
+          265
+         ],
+         "triangles": 265,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_breakable_tea_set_V01.fbx",
+         "object": "AP017_breakable_tea_set_V01_LOD0",
+         "materials": [
+          "prop_breakable_tea_set"
+         ],
+         "facesPerSlot": [
+          2424
+         ],
+         "triangles": 2424,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_tea_set_V01.fbx",
+         "object": "AP017_breakable_tea_set_V01_LOD1",
+         "materials": [
+          "prop_breakable_tea_set"
+         ],
+         "facesPerSlot": [
+          938
+         ],
+         "triangles": 938,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_breakable_tea_set_V01.fbx",
+         "object": "AP017_breakable_tea_set_V01_LOD2",
+         "materials": [
+          "prop_breakable_tea_set"
+         ],
+         "facesPerSlot": [
+          280
+         ],
+         "triangles": 280,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_breakable_tea_set_V01.fbx",
+       "object": "AP017_breakable_tea_set_V01_BROKEN_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.3,
+          -0.261146,
+          0.0
+         ],
+         "max": [
+          0.3,
+          0.261146,
+          0.379902
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": true
+      },
+      {
+       "fbx": "AP017_breakable_tea_set_V01.fbx",
+       "object": "AP017_breakable_tea_set_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.3,
+          -0.261146,
+          0.0
+         ],
+         "max": [
+          0.3,
+          0.261146,
+          0.379902
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      },
+      {
+       "fbx": "AP017_breakable_tea_set_V01.fbx",
+       "object": "AP017_breakable_tea_set_V01_trig_PROXY",
+       "class": "trigger/breakable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.35,
+          -0.311146,
+          0.0
+         ],
+         "max": [
+          0.35,
+          0.311146,
+          0.429902
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "trig",
+       "broken": false
+      }
+     ],
+     "breakEventId": "BreakCeramic",
+     "residueCell": "TL_ceramic"
+    }
+   ]
+  },
+  {
+   "family": "fish_trap",
+   "occluder": false,
+   "kind": "prop",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_fish_trap_V01",
+     "boundsMin": [
+      -0.5,
+      -0.2209,
+      0.0
+     ],
+     "boundsMax": [
+      0.5,
+      0.2209,
+      0.4133
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_fish_trap_V01.fbx",
+         "object": "AP017_fish_trap_V01_LOD0",
+         "materials": [
+          "prop_fish_trap"
+         ],
+         "facesPerSlot": [
+          3042
+         ],
+         "triangles": 3042,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fish_trap_V01.fbx",
+         "object": "AP017_fish_trap_V01_LOD1",
+         "materials": [
+          "prop_fish_trap_lod"
+         ],
+         "facesPerSlot": [
+          1200
+         ],
+         "triangles": 1200,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_fish_trap_V01.fbx",
+         "object": "AP017_fish_trap_V01_LOD2",
+         "materials": [
+          "prop_fish_trap_lod"
+         ],
+         "facesPerSlot": [
+          220
+         ],
+         "triangles": 220,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_fish_trap_V01.fbx",
+       "object": "AP017_fish_trap_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.5,
+          -0.220926,
+          0.0
+         ],
+         "max": [
+          0.5,
+          0.220926,
+          0.413311
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "furin_wind_chime",
+   "occluder": false,
+   "kind": "prop",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_furin_wind_chime_V01",
+     "boundsMin": [
+      -0.0542,
+      -0.0545,
+      -0.65
+     ],
+     "boundsMax": [
+      0.0542,
+      0.0545,
+      0.0
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP017_furin_wind_chime_V01.fbx",
+         "object": "AP017_furin_wind_chime_V01_LOD0",
+         "materials": [
+          "prop_furin_wind_chime"
+         ],
+         "facesPerSlot": [
+          1164
+         ],
+         "triangles": 1164,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP017_furin_wind_chime_V01.fbx",
+         "object": "AP017_furin_wind_chime_V01_LOD1",
+         "materials": [
+          "prop_furin_wind_chime"
+         ],
+         "facesPerSlot": [
+          450
+         ],
+         "triangles": 450,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP017_furin_wind_chime_V01.fbx",
+         "object": "AP017_furin_wind_chime_V01_LOD2",
+         "materials": [
+          "prop_furin_wind_chime"
+         ],
+         "facesPerSlot": [
+          133
+         ],
+         "triangles": 133,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_furin_wind_chime_V01.fbx",
+       "object": "AP017_furin_wind_chime_V01_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.054228,
+          -0.054483,
+          -0.65
+         ],
+         "max": [
+          0.054228,
+          0.054483,
+          0.0
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "hishaku_ladle_rack",
+   "occluder": false,
+   "kind": "prop",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_hishaku_ladle_rack_V01",
+     "boundsMin": [
+      -0.25,
+      -0.1568,
+      0.0
+     ],
+     "boundsMax": [
+      0.25,
+      0.1568,
+      0.3285
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_hishaku_ladle_rack_V01.fbx",
+         "object": "AP017_hishaku_ladle_rack_V01_LOD0",
+         "materials": [
+          "prop_hishaku_ladle_rack"
+         ],
+         "facesPerSlot": [
+          1454
+         ],
+         "triangles": 1454,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_hishaku_ladle_rack_V01.fbx",
+         "object": "AP017_hishaku_ladle_rack_V01_LOD1",
+         "materials": [
+          "prop_hishaku_ladle_rack"
+         ],
+         "facesPerSlot": [
+          562
+         ],
+         "triangles": 562,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_hishaku_ladle_rack_V01.fbx",
+         "object": "AP017_hishaku_ladle_rack_V01_LOD2",
+         "materials": [
+          "prop_hishaku_ladle_rack"
+         ],
+         "facesPerSlot": [
+          168
+         ],
+         "triangles": 168,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_hishaku_ladle_rack_V01.fbx",
+       "object": "AP017_hishaku_ladle_rack_V01_PROXY",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.25,
+          -0.156787,
+          0.0
+         ],
+         "max": [
+          0.25,
+          0.156787,
+          0.328542
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "koi_shoal",
+   "occluder": false,
+   "kind": "prop",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_koi_shoal_V01",
+     "boundsMin": [
+      -0.3772,
+      -0.1042,
+      -0.02
+     ],
+     "boundsMax": [
+      0.511,
+      0.401,
+      -0.0
+     ],
+     "parts": [
+      {
+       "name": "",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP017_koi_shoal_V01.fbx",
+         "object": "AP017_koi_shoal_V01_LOD0",
+         "materials": [
+          "prop_koi_shoal"
+         ],
+         "facesPerSlot": [
+          6
+         ],
+         "triangles": 6,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_koi_shoal_V01.fbx",
+         "object": "AP017_koi_shoal_V01_LOD1",
+         "materials": [
+          "prop_koi_shoal"
+         ],
+         "facesPerSlot": [
+          6
+         ],
+         "triangles": 6,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP017_koi_shoal_V01.fbx",
+         "object": "AP017_koi_shoal_V01_LOD2",
+         "materials": [
+          "prop_koi_shoal"
+         ],
+         "facesPerSlot": [
+          4
+         ],
+         "triangles": 4,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP017_koi_shoal_V01.fbx",
+       "object": "AP017_koi_shoal_V01_PROXY",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.377208,
+          -0.104247,
+          -0.04
+         ],
+         "max": [
+          0.510975,
+          0.401003,
+          0.02
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false
+      }
+     ],
+     "swim": {
+      "radiusM": [
+       0.8,
+       1.6
+      ],
+      "speedMps": 0.15,
+      "depthM": [
+       0.2,
+       0.45
+      ]
+     }
     }
    ]
   }

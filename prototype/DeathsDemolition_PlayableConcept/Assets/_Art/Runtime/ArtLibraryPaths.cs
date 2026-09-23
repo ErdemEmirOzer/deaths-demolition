@@ -38,7 +38,9 @@ namespace DD.Art
         public const string Ap005PlacementDeltaV4Json = WorldRoot + "/AP005_placement-delta-v004.json";
         /// <summary>WP-038I · AP-017 Phase 2 delta (+23 → 3143).</summary>
         public const string Ap005PlacementDeltaV5Json = WorldRoot + "/AP005_placement-delta-v005.json";
-        public static readonly string[] Ap005PlacementDeltaJsons = { Ap005PlacementDeltaJson, Ap005PlacementDeltaV3Json, Ap005PlacementDeltaV4Json, Ap005PlacementDeltaV5Json };
+        /// <summary>WP-038L · AP-017 Phase 2b delta (+25 → 3168).</summary>
+        public const string Ap005PlacementDeltaV6Json = WorldRoot + "/AP005_placement-delta-v006.json";
+        public static readonly string[] Ap005PlacementDeltaJsons = { Ap005PlacementDeltaJson, Ap005PlacementDeltaV3Json, Ap005PlacementDeltaV4Json, Ap005PlacementDeltaV5Json, Ap005PlacementDeltaV6Json };
         /// <summary>The imported placement (Unity space) the importer and the world bootstrap read.</summary>
         public const string Ap005PlacementAsset = WorldRoot + "/AP005_Placement.asset";
         /// <summary>The stand-in soil ground under the whole 90 m map (AP-005 ships only the NE golden-slice ground plate); holes at the koi basins.</summary>

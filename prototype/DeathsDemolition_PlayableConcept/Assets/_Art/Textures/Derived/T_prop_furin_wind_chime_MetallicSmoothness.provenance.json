@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_furin_wind_chime_Packed.png",
+    "sourceSha256": "43794f24a496299788a0783285ab7ae6f6887e852a07c350cda2870fcc444965",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-23T18:49:49.8377970Z",
+    "outputSha256": "43c8339f4728ddfa339fe6bf9f1f029c81438a269eee5e39a0c4a7181643e15d"
+}

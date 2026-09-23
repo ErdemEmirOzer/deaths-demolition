@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_prop_hishaku_ladle_rack_Packed.png",
+    "sourceSha256": "fea005366959e4731525c2ce77bf05bdc00fcc4d1db2a0c4ba303b74b7b8a69f",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-23T18:49:49.6678990Z",
+    "outputSha256": "346c1e845c5837c7aca40b075226c520dcbcb74053cb0f876e7726f7aaef5bee"
+}

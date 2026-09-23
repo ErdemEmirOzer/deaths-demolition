@@ -63,6 +63,8 @@ namespace DD.Art
             public float Smoothness = 1f;
             public Color FlatLinearAlbedo = Color.black;
             public float Cutoff = 0.5f;
+            /// <summary>WP-038L · BaseColorOnly with an alpha cutout from the BaseColor alpha (the AP-017 koi card sheet: RGBA only, no normal / ORM).</summary>
+            public bool AlphaCutout;
             /// <summary>WP-017 · Texture role of a tangent-space detail normal overlay (<c>T_&lt;role&gt;_Normal</c>, URP <c>_DetailNormalMap</c>); null = none.</summary>
             public string DetailNormalTextureRole;
             public float DetailNormalScale = 1f;
@@ -103,7 +105,7 @@ namespace DD.Art
         {
             for (int i = 0; i < Rows.Count; i++)
             {
-                if (Rows[i].Kind == Kind.Cutout && string.Equals(Rows[i].TextureRole, textureRole, StringComparison.Ordinal))
+                if ((Rows[i].Kind == Kind.Cutout || Rows[i].AlphaCutout) && string.Equals(Rows[i].TextureRole, textureRole, StringComparison.Ordinal))
                 {
                     return true;
                 }
@@ -205,6 +207,18 @@ namespace DD.Art
             {
                 rows.Add(new Spec { Role = "prop_" + prop, Kind = Kind.Textured, TextureRole = "prop_" + prop });
             }
+
+            // WP-038L · AP-017 Phase 2b. The furin hangs on the AP-003 wind path (vertex colour R sway / B flutter, AP017_wind = 1),
+            // the fish trap's lathe LOD1/2 bind their own albedo at the production ×0.85 (roughness mean 0.71), the koi shoal is an
+            // RGBA cutout card sheet (alpha 0.5, roughness 0.45 constant, no normal / ORM).
+            foreach (string prop in new[] { "kagura_mask_stand", "breakable_tea_set", "fish_trap", "hishaku_ladle_rack" })
+            {
+                rows.Add(new Spec { Role = "prop_" + prop, Kind = Kind.Textured, TextureRole = "prop_" + prop });
+            }
+
+            rows.Add(new Spec { Role = "prop_furin_wind_chime", Kind = Kind.Textured, TextureRole = "prop_furin_wind_chime", Shader = ShaderKind.FoliageWind });
+            rows.Add(new Spec { Role = "prop_fish_trap_lod", Kind = Kind.BaseColorOnly, TextureRole = "prop_fish_trap_lod", Smoothness = 0.29f, Tint = new Color(0.85f, 0.85f, 0.85f, 1f) });
+            rows.Add(new Spec { Role = "prop_koi_shoal", Kind = Kind.BaseColorOnly, TextureRole = "prop_koi_shoal", Smoothness = 0.55f, AlphaCutout = true, Cutoff = 0.5f });
 
             // WP-017 · AP-005B world-master material copies (ADR-017-2, `material_override`):
             //   plaster copies = the same maps with the linear albedo × 0.82 (mean sRGB #CDCBC1, art verdict F1);

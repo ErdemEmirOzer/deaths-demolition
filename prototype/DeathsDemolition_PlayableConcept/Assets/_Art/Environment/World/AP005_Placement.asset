@@ -20,9 +20,9 @@ MonoBehaviour:
   sourceSha256: 9e47c9ad7c8c6d2522b01072eb92722f640079c40d57fbe94131c9c7f2df39de
   overridesSha256: 4e4799a4df6e5987437aafb2ea1ec2193efe92cd4e12715971a719ba82855e6b
   overriddenIds: []
-  deltaSha256: d5129ca6a3b672fb4f52245a71e368996769d56e900a82a62558b6370f82f34b
-  deltaTarget: placement version 5
-  deltaAdded: 993
+  deltaSha256: 2cfbe9fd01f105f061b8901132eabfbe710afa62d873a4c38365f65cf0c0e00d
+  deltaTarget: placement version 6
+  deltaAdded: 1018
   deltaChanged: 32
   deltaRemoved: 204
   deltaRemovedIds:
@@ -464,6 +464,14 @@ MonoBehaviour:
     sha256: d5129ca6a3b672fb4f52245a71e368996769d56e900a82a62558b6370f82f34b
     target: placement version 5
     added: 23
+    changed: 0
+    removed: 0
+    removedIds: []
+  - file: AP005_placement-delta-v006.json
+    version: v006
+    sha256: 2cfbe9fd01f105f061b8901132eabfbe710afa62d873a4c38365f65cf0c0e00d
+    target: placement version 6
+    added: 25
     changed: 0
     removed: 0
     removedIds: []
@@ -57556,6 +57564,456 @@ MonoBehaviour:
     fade: 0
     materialOverride: 
     deltaVersion: v005
+    materialOverrideParts: []
+  - id: AP005_i3355
+    ap: AP-017
+    family: kagura_mask_stand
+    variation: V01
+    lodGroup: AP017_kagura_mask_stand_V01
+    assembly: []
+    position: {x: 29.994, y: 0, z: 33.89}
+    yawDegrees: 276.8
+    rotationEuler: {x: 0, y: 0, z: 276.8}
+    scale: {x: 0.989, y: 0.989, z: 0.989}
+    region: north
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3356
+    ap: AP-017
+    family: breakable_tea_set
+    variation: V01
+    lodGroup: AP017_breakable_tea_set_V01
+    assembly: []
+    position: {x: 30.677, y: 0, z: 37.305}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 0.979, y: 0.979, z: 0.979}
+    region: north
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3357
+    ap: AP-017
+    family: breakable_tea_set
+    variation: V01
+    lodGroup: AP017_breakable_tea_set_V01
+    assembly: []
+    position: {x: 30.25, y: 0, z: 32.9}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 0.996, y: 0.996, z: 0.996}
+    region: north
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3358
+    ap: AP-017
+    family: hishaku_ladle_rack
+    variation: V01
+    lodGroup: AP017_hishaku_ladle_rack_V01
+    assembly: []
+    position: {x: -38.675, y: 0, z: 34.403}
+    yawDegrees: 8.14
+    rotationEuler: {x: 0, y: 0, z: 8.14}
+    scale: {x: 0.976, y: 0.976, z: 0.976}
+    region: north
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3359
+    ap: AP-017
+    family: kagura_mask_stand
+    variation: V01
+    lodGroup: AP017_kagura_mask_stand_V01
+    assembly: []
+    position: {x: 35.75, y: 0, z: 25}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1.033, y: 1.033, z: 1.033}
+    region: east
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3360
+    ap: AP-017
+    family: breakable_tea_set
+    variation: V01
+    lodGroup: AP017_breakable_tea_set_V01
+    assembly: []
+    position: {x: 36.996, y: 0, z: 26.598}
+    yawDegrees: 291.12
+    rotationEuler: {x: 0, y: 0, z: 291.12}
+    scale: {x: 0.966, y: 0.966, z: 0.966}
+    region: east
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3361
+    ap: AP-017
+    family: breakable_tea_set
+    variation: V01
+    lodGroup: AP017_breakable_tea_set_V01
+    assembly: []
+    position: {x: 40.612, y: 0, z: -18.929}
+    yawDegrees: 94.49
+    rotationEuler: {x: 0, y: 0, z: 94.49}
+    scale: {x: 0.989, y: 0.989, z: 0.989}
+    region: east
+    role: breakable
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3362
+    ap: AP-017
+    family: hishaku_ladle_rack
+    variation: V01
+    lodGroup: AP017_hishaku_ladle_rack_V01
+    assembly: []
+    position: {x: 39.185, y: 0, z: 21.875}
+    yawDegrees: 8.75
+    rotationEuler: {x: 0, y: 0, z: 8.75}
+    scale: {x: 0.975, y: 0.975, z: 0.975}
+    region: east
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3363
+    ap: AP-017
+    family: fish_trap
+    variation: V01
+    lodGroup: AP017_fish_trap_V01
+    assembly: []
+    position: {x: 1.625, y: 0, z: -33.375}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1.01, y: 1.01, z: 1.01}
+    region: south
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3364
+    ap: AP-017
+    family: fish_trap
+    variation: V01
+    lodGroup: AP017_fish_trap_V01
+    assembly: []
+    position: {x: -11.875, y: 0, z: -33.125}
+    yawDegrees: 90
+    rotationEuler: {x: 0, y: 0, z: 90}
+    scale: {x: 1.02, y: 1.02, z: 1.02}
+    region: south
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3365
+    ap: AP-017
+    family: fish_trap
+    variation: V01
+    lodGroup: AP017_fish_trap_V01
+    assembly: []
+    position: {x: 6.875, y: 0, z: -26.625}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1.046, y: 1.046, z: 1.046}
+    region: south
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3366
+    ap: AP-017
+    family: fish_trap
+    variation: V01
+    lodGroup: AP017_fish_trap_V01
+    assembly: []
+    position: {x: 12.625, y: 0, z: -37.875}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1.007, y: 1.007, z: 1.007}
+    region: south
+    role: dressing
+    navMesh: obstacle
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3367
+    ap: AP-017
+    family: koi_shoal
+    variation: V01
+    lodGroup: AP017_koi_shoal_V01
+    assembly: []
+    position: {x: 10.125, y: -0.4, z: -36.375}
+    yawDegrees: 357.7
+    rotationEuler: {x: 0, y: 0, z: 357.7}
+    scale: {x: 1, y: 1, z: 1}
+    region: south
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3368
+    ap: AP-017
+    family: koi_shoal
+    variation: V01
+    lodGroup: AP017_koi_shoal_V01
+    assembly: []
+    position: {x: -8.875, y: -0.4, z: -25.375}
+    yawDegrees: 298.58
+    rotationEuler: {x: 0, y: 0, z: 298.58}
+    scale: {x: 1, y: 1, z: 1}
+    region: south
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3369
+    ap: AP-017
+    family: koi_shoal
+    variation: V01
+    lodGroup: AP017_koi_shoal_V01
+    assembly: []
+    position: {x: -9.375, y: -0.4, z: -31.375}
+    yawDegrees: 82.84
+    rotationEuler: {x: 0, y: 0, z: 82.84}
+    scale: {x: 1, y: 1, z: 1}
+    region: south
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3370
+    ap: AP-017
+    family: koi_shoal
+    variation: V01
+    lodGroup: AP017_koi_shoal_V01
+    assembly: []
+    position: {x: -1.625, y: -0.4, z: -29.875}
+    yawDegrees: 324.2
+    rotationEuler: {x: 0, y: 0, z: 324.2}
+    scale: {x: 1, y: 1, z: 1}
+    region: south
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3371
+    ap: AP-017
+    family: koi_shoal
+    variation: V01
+    lodGroup: AP017_koi_shoal_V01
+    assembly: []
+    position: {x: 5.375, y: -0.4, z: -29.875}
+    yawDegrees: 267.3
+    rotationEuler: {x: 0, y: 0, z: 267.3}
+    scale: {x: 1, y: 1, z: 1}
+    region: south
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3372
+    ap: AP-017
+    family: furin_wind_chime
+    variation: V01
+    lodGroup: AP017_furin_wind_chime_V01
+    assembly: []
+    position: {x: 28.5, y: 3.86, z: 38.6}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1, y: 1, z: 1}
+    region: north
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3373
+    ap: AP-017
+    family: furin_wind_chime
+    variation: V01
+    lodGroup: AP017_furin_wind_chime_V01
+    assembly: []
+    position: {x: 26.9, y: 3.86, z: 34.2}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1, y: 1, z: 1}
+    region: north
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3374
+    ap: AP-017
+    family: furin_wind_chime
+    variation: V01
+    lodGroup: AP017_furin_wind_chime_V01
+    assembly: []
+    position: {x: -35.2, y: 3.86, z: 38.7}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1, y: 1, z: 1}
+    region: north
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3375
+    ap: AP-017
+    family: furin_wind_chime
+    variation: V01
+    lodGroup: AP017_furin_wind_chime_V01
+    assembly: []
+    position: {x: -36.8, y: 3.86, z: 34.3}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1, y: 1, z: 1}
+    region: north
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3376
+    ap: AP-017
+    family: furin_wind_chime
+    variation: V01
+    lodGroup: AP017_furin_wind_chime_V01
+    assembly: []
+    position: {x: 38.8, y: 3.86, z: 26.2}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1, y: 1, z: 1}
+    region: east
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3377
+    ap: AP-017
+    family: furin_wind_chime
+    variation: V01
+    lodGroup: AP017_furin_wind_chime_V01
+    assembly: []
+    position: {x: 37.2, y: 3.86, z: 21.8}
+    yawDegrees: 0
+    rotationEuler: {x: 0, y: 0, z: 0}
+    scale: {x: 1, y: 1, z: 1}
+    region: east
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3378
+    ap: AP-017
+    family: furin_wind_chime
+    variation: V01
+    lodGroup: AP017_furin_wind_chime_V01
+    assembly: []
+    position: {x: 39.869, y: 4.06, z: 16.989}
+    yawDegrees: 119
+    rotationEuler: {x: 0, y: 0, z: 119}
+    scale: {x: 1, y: 1, z: 1}
+    region: east
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
+    materialOverrideParts: []
+  - id: AP005_i3379
+    ap: AP-017
+    family: furin_wind_chime
+    variation: V01
+    lodGroup: AP017_furin_wind_chime_V01
+    assembly: []
+    position: {x: 42.348, y: 4.06, z: 7.861}
+    yawDegrees: 110.6
+    rotationEuler: {x: 0, y: 0, z: 110.6}
+    scale: {x: 1, y: 1, z: 1}
+    region: east
+    role: dressing
+    navMesh: ignore
+    occluder: 0
+    fade: 0
+    materialOverride: 
+    deltaVersion: v006
     materialOverrideParts: []
   routes:
   - index: 0

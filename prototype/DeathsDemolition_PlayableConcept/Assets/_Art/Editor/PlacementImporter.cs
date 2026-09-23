@@ -628,7 +628,9 @@ namespace DD.Art.Pipeline.EditorTools
                 // 12 palace roof bays (21 k / 17 k / 12 k tris) and 9 roof slabs alone made
                 // World_AP005 142 MB in the build (release 373 → 507 MB). Heavy meshes stay
                 // individual renderers (SRP-batched); the flag is kept for everything else.
-                if (inst.role == "structure" || inst.role == "ground" || inst.role == "dressing")
+                // WP-038L: a swimming prop (AP-017 koi) moves at runtime — never static (no batching, no occludee / probe static).
+                bool moves = prefabs[i] != null && prefabs[i].GetComponent<ArtSwimLoop>() != null;
+                if (!moves && (inst.role == "structure" || inst.role == "ground" || inst.role == "dressing"))
                 {
                     bool heavy = IsHeavyForStaticBatching(prefabs[i]);
                     // WP-029 (ADR-029-2): structures and ground contribute to the lightmap bake (lightmap UVs from

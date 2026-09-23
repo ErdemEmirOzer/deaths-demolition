@@ -68,6 +68,7 @@ Shadow casters are the draw-call mass under URP (every caster re-draws per casca
 ## AP-017 Phase 2 props (WP-038I)
 
 Four Higgsfield → Tripo H3.1 props with their own 1K PBR sets follow the AP-005B path: `Textures/Source/T_prop_<family>_{BaseColor,Normal,Packed}.png` → Prop class 512, `ArtTextureRepack` MetallicSmoothnessAO, `M_prop_<family>` (`ArtLibraryMaterialRoles`); `AP017_Library.json` v002 (21 families / 44 variations, `wp-038i/tools/build-ap017-library.py`) and `AP005_placement-delta-v005.json` (+23 → 3143). The sake jar is a `breakable` on the existing `BreakCeramic` / `TL_ceramic` binder.
+Phase 2b (WP-038L, library v003, delta v006 → 3168): the furin binds `prop_furin_wind_chime` on DD/Foliage Wind (AP003_Wind vertex colour, no collider); the fish trap's LOD1/2 bind `prop_fish_trap_lod` (own albedo ×0.85); the koi shoal is a BaseColor-only cutout card sheet (`Spec.AlphaCutout`) with `Runtime/ArtSwimLoop` on the prefab root (FBX custom props `AP017_swim*` → library `swim`; deterministic circle per placement point, Play only, never static, no shadow). Prop/Breakable normals ship at 256² (`ArtImportContract.PropNormalMaxSize`).
 
 ## setPass attribution (WP-038J)
 

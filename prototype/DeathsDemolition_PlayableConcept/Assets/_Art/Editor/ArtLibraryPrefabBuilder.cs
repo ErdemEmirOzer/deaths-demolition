@@ -237,6 +237,14 @@ namespace DD.Art.Pipeline.EditorTools
                     ArtVfxBuilder.Bind(root, variation.breakEventId, variation.residueCell);
                 }
 
+                if (variation.HasSwim)
+                {
+                    // WP-038L · AP-017 koi shoal: the swim loop on the root; the cards sit under the pond surface and cast nothing.
+                    ArtSwimLoop swim = root.AddComponent<ArtSwimLoop>();
+                    swim.Configure(variation.swim.radiusM[0], variation.swim.radiusM[1], variation.swim.speedMps);
+                    foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.Off;
+                }
+
                 string path = ArtLibraryPaths.Prefab(ap, family.family, variation.prefab);
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, path, out bool success);
                 if (!success || saved == null)
