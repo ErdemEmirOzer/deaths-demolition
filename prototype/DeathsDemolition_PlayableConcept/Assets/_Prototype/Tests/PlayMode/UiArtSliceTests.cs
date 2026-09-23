@@ -29,6 +29,41 @@ namespace DD.Prototype.Tests.PlayMode
     {
         private readonly List<string> _hatalar = new List<string>();
 
+#if UNITY_EDITOR
+        /// <summary>
+        /// WP-022M: text drawn in a play session must not write glyphs into TMP's persistent
+        /// dynamic fallback (a dirty tree and a "-dirty" release stamp). The glyphs below are
+        /// not in the static LiberationSans atlas, so they reach the fallback chain.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TmpDinamikYedek_OyunOturumundaKaliciAssetYazilmaz()
+        {
+            const string path = "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset";
+            var persistent = UnityEditor.AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(path);
+            Assert.IsNotNull(persistent, "fallback asset bulunamadı");
+            int before = persistent.characterTable.Count;
+
+            TMPro.TMP_FontAsset primary = TMPro.TMP_Settings.defaultFontAsset;
+            Assert.IsNotNull(primary);
+            Assert.IsFalse(primary.fallbackFontAssetTable.Contains(persistent), "oyun oturumunda kalıcı dinamik yedek zincirde olmamalı");
+
+            var go = new GameObject("FallbackProbe", typeof(Canvas));
+            var text = new GameObject("Text", typeof(RectTransform)).AddComponent<TMPro.TextMeshProUGUI>();
+            text.transform.SetParent(go.transform, false);
+            text.font = primary;
+            text.text = "\u2192 \u2713 \u00e9\u015f\u011f \u2605";
+            text.ForceMeshUpdate();
+            yield return null;
+
+            TMPro.TMP_FontAsset twin = primary.fallbackFontAssetTable[0];
+            Assert.IsFalse(UnityEditor.EditorUtility.IsPersistent(twin), "yedek oturum ikizi olmalı");
+            Assert.Greater(twin.characterTable.Count, 0, "ikiz gerekli glifleri üretir (kapsam aynı)");
+            Assert.AreEqual(before, persistent.characterTable.Count, "kalıcı yedek asset'e glif eklenmedi");
+            Assert.IsFalse(UnityEditor.EditorUtility.IsDirty(persistent), "kalıcı yedek kirli işaretlenmedi");
+            Object.Destroy(go);
+        }
+#endif
+
         [SetUp]
         public void SetUp()
         {
