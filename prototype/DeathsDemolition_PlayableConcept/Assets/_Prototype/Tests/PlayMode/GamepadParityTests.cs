@@ -32,10 +32,27 @@ namespace DD.Prototype.Tests.PlayMode
         private SpecialWeaponSahne _s;
         private VirtualGamepadDriver _pad;
         private IInputSource _kitInput;
+        private ZombieEnemy _frozen;   // WP-062J: the aim-assist fixture disables one body's Update; it must go back to the pool enabled
 
         [UnityTearDown]
         public IEnumerator Bitir()
         {
+            // WP-062J: the zombie pool (EnemyFactory, DDOL) outlives the test — a body returned with ZombieEnemy.enabled = false
+            // is handed to a later fixture with no Update: rise never ends, no telegraph / notice, a static body in the crowd
+            // (TierAbilities, TierExperience, RegionNav failed only after this fixture in the full PlayMode run).
+            if (_frozen != null) _frozen.enabled = true;
+            _frozen = null;
+
+            // WP-062J: the process-long PrototypeInputSource keeps the last actuated family — without this the rest of
+            // the PlayMode run inherits scheme Gamepad / aim Stick (proved: TierAbilities telegraph, RegionNav rise,
+            // TierExperience notice, VfxWave3… fail only after this fixture). A pointer actuation hands aim back.
+            if (_pad != null && InputSourceRegistry.Current != null && InputSourceRegistry.Current.AimKind != AimSourceKind.Pointer)
+            {
+                _pad.MouseMove(new Vector2(120f, 120f)); yield return null;
+                _pad.MouseMove(new Vector2(480f, 320f)); yield return null;
+                yield return null;
+            }
+
             _pad?.Dispose();
             _pad = null;
             InputPreferencesStore.SetPathOverride(null);
@@ -208,6 +225,7 @@ namespace DD.Prototype.Tests.PlayMode
             // hitboxes cannot leave the ray between the assist sample and the one test shot.
             z.CompleteRise();
             z.enabled = false;
+            _frozen = z;
             yield return Kareler(3);
             Physics.SyncTransforms();
 

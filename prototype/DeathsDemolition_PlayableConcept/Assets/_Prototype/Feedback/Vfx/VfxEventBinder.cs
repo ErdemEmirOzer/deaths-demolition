@@ -5,6 +5,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Enemies;
 using DD.Prototype.Weapons;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace DD.Prototype.Feedback.Vfx
 {
@@ -60,20 +61,17 @@ namespace DD.Prototype.Feedback.Vfx
 
         public void Subscribe()
         {
-            if (_subscribed)
+            if (!_subscribed)
             {
-                return;
+                _subscribed = true;
+                // AP005 walkable surfaces are split between Environment and CameraOccluder.
+                // Keep Default for prototype/test stand-ins while matching the authoritative
+                // surface mask used by the audio footstep router.
+                _mask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
+                SceneManager.activeSceneChanged += OnSceneChanged;
             }
 
-            _subscribed = true;
-            // AP005 walkable surfaces are split between Environment and CameraOccluder.
-            // Keep Default for prototype/test stand-ins while matching the authoritative
-            // surface mask used by the audio footstep router.
-            _mask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
-            EnemyCombatEvents.Raised += OnCombatBeat;
-            CharacterAnimationEvents.Any += OnAnimationEvent;
-            WeaponEvents.ReloadStarted += OnReloadStarted;
-            SpecialWeaponUsageEvents.Usage += OnSpecialUsage;
+            Arm();
         }
 
         public void Unsubscribe()
@@ -84,6 +82,26 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             _subscribed = false;
+            SceneManager.activeSceneChanged -= OnSceneChanged;
+            Disarm();
+        }
+
+        // WP-062J: the owner is process-long (DDOL) but the buses are static events a caller may clear
+        // (CharacterAnimationEvents.ResetStatics sets Any = null) — re-arm on every scene change so a
+        // cleared bus costs at most one scene, and arming twice never doubles a handler.
+        private void OnSceneChanged(Scene from, Scene to) => Arm();
+
+        private void Arm()
+        {
+            Disarm();
+            EnemyCombatEvents.Raised += OnCombatBeat;
+            CharacterAnimationEvents.Any += OnAnimationEvent;
+            WeaponEvents.ReloadStarted += OnReloadStarted;
+            SpecialWeaponUsageEvents.Usage += OnSpecialUsage;
+        }
+
+        private void Disarm()
+        {
             EnemyCombatEvents.Raised -= OnCombatBeat;
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             WeaponEvents.ReloadStarted -= OnReloadStarted;

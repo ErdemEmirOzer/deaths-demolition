@@ -253,11 +253,15 @@ namespace DD.Art.Tests.PlayMode
             var rootGo = new GameObject("wp019-target"); rootGo.transform.position = PlayerRegistry.Primary.transform.position + Vector3.forward * 3f; _gecici.Add(rootGo);
             int stops = HitStopService.Count;
             fx.ReportEnemyHit(Info(rootGo.transform.position + Vector3.up, rootGo.transform, true, true, false, 0f));
+            // WP-062: the director enqueues on FeelEventRouter; the stop is granted at the late-frame flush, not inside the call.
+            for (int i = 0; i < 3 && HitStopService.Count == stops; i++) yield return null;
             Assert.AreEqual(stops + 1, HitStopService.Count, "Zırh kırılmada hit-stop yok.");
             Assert.LessOrEqual(GameFeelSettings.Active.HitStopArmorBreak, GameFeelSettings.MaxHitStopSeconds);
             yield return CharacterTests.Bekle(() => !HitStopService.IsActive, 2f, "hit-stop bitmedi");
+            float t1 = Time.unscaledTime; while (Time.unscaledTime - t1 < 0.2f) yield return null;   // past the min interval, so a refusal cannot mask a request
             stops = HitStopService.Count;
             fx.ReportExplosion(rootGo.transform.position, 2f);
+            for (int i = 0; i < 3; i++) yield return null;
             Assert.AreEqual(stops, HitStopService.Count, "Patlama hit-stop istememeli (ADR-019-2).");
         }
 
