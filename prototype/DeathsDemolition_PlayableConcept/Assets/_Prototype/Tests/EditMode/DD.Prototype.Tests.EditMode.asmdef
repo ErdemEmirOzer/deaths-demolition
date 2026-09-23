@@ -5,6 +5,7 @@
         "DD.Prototype.Core",
         "DD.Prototype.Runtime",
         "DD.Prototype.Diagnostics.Editor",
+        "DD.Prototype.UI.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

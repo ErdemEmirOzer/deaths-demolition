@@ -156,11 +156,13 @@ namespace DD.Prototype.UI
             // frame; every layout below keeps its reference-pixel numbers.
             scaler.referenceResolution = UiTokens.ReferenceResolution / UiSettings.UiScale;
 
-            // Match on height. These layouts are height-critical - the results screen is
-            // required to fit without scrolling - and width-tolerant, because a wider
-            // screen only gives the columns more air.
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 1f;
+            // WP-068 token v3 (direction §2.7): Expand. Identical to the old height match at
+            // 16:9 and 21:9 (1920×1080, 2560×1080); on a screen narrower than 16:9 the
+            // canvas grows in height instead of shrinking in width - the Mac 3024×1964
+            // panel was a 1663×1080 canvas under height match, it is 1920×1247 now. The
+            // binding page width every layout must fit is UiGrid.BindingPageWidth (1408:
+            // UI scale 1.2 → 1600-wide canvas minus two page margins).
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             scaler.referencePixelsPerUnit = 100f;
 
             return canvas;

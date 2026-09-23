@@ -373,7 +373,7 @@ namespace DD.Prototype.UI
             model.Kills.Add(new UiStatLine("Standard", profile.StandardKills.ToString()));
             AddTier(model, "Special", profile.SpecialKills, UiColor.AccentSakura);
             AddTier(model, "Elite", profile.EliteKills, UiColor.AccentWisteria);
-            AddTier(model, "Ultra", profile.UltraKills, UiColor.StateGold);
+            AddTier(model, "Ultra", profile.UltraKills, UiColor.SilverLeaf); // WP-068: gold is currency/Special only; ceremony is ginpaku
             if (profile.UnattributedKills > 0)
             {
                 // Only a legacy file can carry these (WP-009 kill invariant); shown, never hidden.

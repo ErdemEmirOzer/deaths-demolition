@@ -184,7 +184,13 @@ namespace DD.Prototype.UI
         BarHealthLow,
         BarXp,
         BarReload,
-        BarSpecial
+        BarSpecial,
+        // --------------------------------------------- WP-068 token v3 (append-only)
+        ShadowKey,
+        SheenRim,
+        InkStroke,
+        GoldLeaf,
+        SilverLeaf
     }
 
     /// <summary>
@@ -239,13 +245,15 @@ namespace DD.Prototype.UI
         private static readonly Color Jade400 = Hex(0x8F, 0xC0, 0x79);
 
         // WP-022G colour-blind safe palette: the green family (Moss / Jade: health, earned,
-        // UNLOCKED) moves to a sky blue that deuteranopes and protanopes separate from the
+        // UNLOCKED) moves to a blue that deuteranopes and protanopes separate from the
         // vermilion / coral danger family; low health keeps coral but the healthy bar is
         // blue, so the two ends of the bar differ in hue AND luminance. Blood (VFX) is
         // untouched by directive. Every pair is in the UiContrast table under both palettes.
-        private static readonly Color Sky400 = Hex(0x7A, 0xB8, 0xF0);
-        private static readonly Color Sky500 = Hex(0x5C, 0x9F, 0xE0);
-        private static readonly Color Amber400 = Hex(0xF2, 0xB4, 0x4C);
+        // WP-068 token v3 (direction §2.1): indigo-leaning blues replace the generic sky
+        // pair (AD v006 SHOULD-3), and warning moves off the currency hex (C5).
+        private static readonly Color Indigo400 = Hex(0x7F, 0xA6, 0xD9);
+        private static readonly Color Indigo500 = Hex(0x5F, 0x8C, 0xC4);
+        private static readonly Color Amber300 = Hex(0xF7, 0xC7, 0x66);
         private static readonly Color Focus400 = Hex(0xF2, 0xD9, 0x8C);
 
         private static Color Hex(int r, int g, int b)
@@ -271,15 +279,23 @@ namespace DD.Prototype.UI
         /// <summary>WP-022G: 1, or UiSettings.ReducedFlashScale when "reduce flashes" is on; the HUD's damage-edge and final-seconds peaks multiply by it.</summary>
         public static float FlashScale = 1f;
 
+        /// <summary>
+        /// WP-068 user decision U4 as ONE line. true (council recommendation): warning is
+        /// Amber300 #F7C766 in both palettes, ΔL* 10.8 from the currency gold it used to
+        /// share (#D9A93C). false (AD MUST 2, the "no" path): warning keeps no hue at all -
+        /// LOW / EMPTY / listening / SUSPENDED read as cream text with their word and shape -
+        /// so warning text never stands on a panel in the currency hex either way.
+        /// </summary>
+        public static bool DistinctWarningHue = true;
+
         public static Color Get(UiColor token)
         {
             if (Palette == UiPalette.ColorBlindSafe)
             {
                 switch (token)
                 {
-                    case UiColor.StateSuccess: return Sky400;
-                    case UiColor.BarHealth: return Sky500;
-                    case UiColor.StateWarning: return Amber400;
+                    case UiColor.StateSuccess: return Indigo400;
+                    case UiColor.BarHealth: return Indigo500;
                 }
             }
 
@@ -314,7 +330,7 @@ namespace DD.Prototype.UI
                 case UiColor.DamageEdge: return Vermilion600;
 
                 case UiColor.StateDanger: return Coral400;
-                case UiColor.StateWarning: return Gold400;
+                case UiColor.StateWarning: return DistinctWarningHue ? Amber300 : Cream100;
                 case UiColor.StateSuccess: return Jade400;
                 case UiColor.StateGold: return Gold400;
 
@@ -324,6 +340,13 @@ namespace DD.Prototype.UI
                 case UiColor.BarXp: return Sakura400;
                 case UiColor.BarReload: return Focus400;
                 case UiColor.BarSpecial: return Gold400;
+
+                // WP-068 token v3 (direction §2.1): depth and material colours.
+                case UiColor.ShadowKey: return Sumi900; // alpha comes from UiElevationSpec
+                case UiColor.SheenRim: return WithAlpha(Cream100, UiMaterialSpec.SheenRimAlpha);
+                case UiColor.InkStroke: return WithAlpha(Sumi900, 0.90f);
+                case UiColor.GoldLeaf: return Gold400;   // reserve: currency / price / Special only
+                case UiColor.SilverLeaf: return Cream100; // ceremony: medals, NEW BEST, level
 
                 default: return Cream100;
             }
@@ -590,9 +613,9 @@ namespace DD.Prototype.UI
 
         // ============================================================ canvas layers
 
-        public const int SortingHud = 100;
-        public const int SortingScreen = 200;
-        public const int SortingPause = 300;
-        public const int SortingDialog = 320;
+        public const int SortingHud = UiLayer.Hud;
+        public const int SortingScreen = UiLayer.Screen;
+        public const int SortingPause = UiLayer.Pause;
+        public const int SortingDialog = UiLayer.Modal;
     }
 }

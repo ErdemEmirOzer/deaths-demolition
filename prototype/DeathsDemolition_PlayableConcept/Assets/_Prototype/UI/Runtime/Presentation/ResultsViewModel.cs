@@ -264,7 +264,7 @@ namespace DD.Prototype.UI
             model.Combat.Add(new UiStatLine("Standard", summary.StandardKills.ToString()));
             AddTierIfAny(model.Combat, "Special", summary.SpecialKills, UiColor.AccentSakura);
             AddTierIfAny(model.Combat, "Elite", summary.EliteKills, UiColor.AccentWisteria);
-            AddTierIfAny(model.Combat, "Ultra", summary.UltraKills, UiColor.StateGold);
+            AddTierIfAny(model.Combat, "Ultra", summary.UltraKills, UiColor.SilverLeaf); // WP-068: gold is currency/Special only; ceremony is ginpaku
 
             if (summary.ArmorPiecesBroken > 0)
             {
