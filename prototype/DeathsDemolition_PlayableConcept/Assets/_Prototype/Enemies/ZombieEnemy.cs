@@ -581,6 +581,7 @@ namespace DD.Prototype.Enemies
             _verticalVelocity = 0f;
             _currentSpeed = 0f;
             ResetSpecialReactions();   // WP-055: no net / transaction memory crosses a life
+            ResetOutOfWorld();         // WP-061K
             ResetWaiting();   // WP-050
             _noticed = false;   // WP-052
             _alive = false;   // Initialise flips this on
@@ -877,6 +878,11 @@ namespace DD.Prototype.Enemies
             if (!_alive)
             {
                 return;
+            }
+
+            if (TickOutOfWorld())
+            {
+                return;   // WP-061K: left the world → despawned, no reward
             }
 
             TickCombat(dt);

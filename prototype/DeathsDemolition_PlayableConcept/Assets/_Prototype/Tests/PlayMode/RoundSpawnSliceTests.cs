@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
 using DD.Prototype.Navigation;
 using DD.Prototype.PlayerSystem;
@@ -163,6 +164,60 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.LessOrEqual(p.SpawnedTotal, TikBasinaSpawn, "İlk karede birden fazla refill tiki.");
             Assert.AreEqual(p.SpawnedTotal, ZombieEnemy.Live.Count, "Sahnede bu round'a ait olmayan gövde var.");
             Assert.AreEqual(p.Alive, p.Occupied);
+        }
+
+        // ============================================================== WP-061K
+
+        /// <summary>
+        /// WP-061K (S-10 soak 61-3): the round's last living zombie falls out of the world. The net despawns it —
+        /// the round completes as for a kill, but the body pays NOTHING (no gold packet, no round kill) and the
+        /// removal is counted once.
+        /// </summary>
+        [UnityTest]
+        [Category("WP061K")]
+        [Timeout(300000)]
+        public IEnumerator P8_DunyaDisinaDusenSonZombi_RoundBiter_OdulYok()
+        {
+            yield return RunSahnesiniHazirla();
+            yield return YeniRound();
+            ZombieEnemy.ResetOutOfWorldStatics();
+            GoldService gold = GoldService.Instance;
+            Assert.IsNotNull(gold, "GoldService yok");
+
+            int temizlendi = 0;
+            Action<int> t = r => temizlendi++;
+            _director.RoundCleared += t;
+            try
+            {
+                // drain the pool, keeping exactly one living body
+                float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < 60f && !(_director.Population.Unspawned == 0 && DirectorYasayanZombi() == 1))
+                {
+                    IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                    int alive = DirectorYasayanZombi();
+                    for (int i = live.Count - 1; i >= 0 && alive > 1; i--)
+                        if (live[i] != null && live[i].IsAlive && live[i].SpawnTicket > 0) { live[i].Kill(); alive--; }
+                    yield return null;
+                }
+                Assert.AreEqual(0, _director.Population.Unspawned, "havuz tükenmedi");
+                ZombieEnemy son = BirYasayanDirectorZombisi();
+                Assert.IsNotNull(son, "son gövde yok");
+                for (int i = 0; i < 20; i++) yield return null;   // let the survivor stand on the mesh (last on-mesh height)
+
+                int paket0 = gold.PacketsSpawned, kill0 = _run.RoundKills, temiz0 = temizlendi;
+                var cc = son.GetComponent<CharacterController>();
+                if (cc != null) cc.enabled = false;
+                son.transform.position += Vector3.down * 20f;   // off the edge: 20 m under its last on-mesh point
+                if (cc != null) cc.enabled = true;
+
+                yield return Bekle(() => !son.IsAlive || son.SpawnTicket <= 0, 3f, "düşen gövde kaldırılmadı");
+                yield return Bekle(() => temizlendi > temiz0, 5f, "round tamamlanmadı (son yaşayan düştü)");
+                Assert.AreEqual(1, ZombieEnemy.OutOfWorldRemovals, "tek kaldırma");
+                Assert.AreEqual(paket0, gold.PacketsSpawned, "düşen gövde altın paketi düşürmedi");
+                Assert.AreEqual(kill0, _run.RoundKills, "düşen gövde öldürme sayılmadı");
+                Debug.Log("[DD-TEST] wp061k.fell removals=" + ZombieEnemy.OutOfWorldRemovals + " packets " + paket0 + "→" + gold.PacketsSpawned + " kills " + kill0 + "→" + _run.RoundKills + " state=" + _director.State);
+            }
+            finally { _director.RoundCleared -= t; }
         }
 
         // ============================================================== P1
