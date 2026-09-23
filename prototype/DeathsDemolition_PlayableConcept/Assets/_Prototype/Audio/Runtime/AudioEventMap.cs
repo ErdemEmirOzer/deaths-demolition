@@ -282,6 +282,7 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ambience, "scatter.thunder", AudioSoundId.AmbThunderDistant, A, true, "Look B: distant thunder every 40-90 s, far and low (v007)"),
             B(AudioEventSource.Ambience, "scatter.drip_slate", AudioSoundId.AmbDripSlate, A, true, "Look B: wet-slate drips in the scatter ring (v007)"),
             B(AudioEventSource.Ambience, "Pond.bed", AudioSoundId.AmbPondBed, A, true, "Look B: koi pond water bed at the pond (3D loop, distance-faded) (v007)"),
+            B(AudioEventSource.Ambience, "WindChime.furin", AudioSoundId.AmbFurin, A, true, "WP-065C: AP-017 fūrin (eaves) ring with WorldWind.Strength, nearest chime ≤ 12 m, AmbienceDirector.TickFurin (v014)"),
 
             // ---- WP-021C · WP-022B UI events (EVENT-COVERAGE-MATRIX §UI) — one row per UiEvent member;
             // reserved = the same frame already plays the sound through another row (single owner, no double).

@@ -371,9 +371,10 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 float hedef = m.targetLufs != 0f ? m.targetLufs : Hedef(e.Sound, manifest.standard);
                 float tavan = m.ceilingDbtp != 0f ? m.ceilingDbtp : manifest.standard.truePeakMax;
                 // WP-021C: the UI palette sits lower by design (hover / tick / pane -26…-23; chips -22…-20).
-                // Ambience scatter one-shots (v006: creak / ring / knock / settle) sit at −24 under the −20 beds.
-                float altSinir = m.bus == "UI" ? -26.1f : m.bus == "Ambience" ? -24.1f : -22.1f;
-                if (hedef < altSinir || hedef > -15.9f) hatalar.Add($"{e.Sound}: hedef {hedef} standart kümede değil ({(m.bus == "UI" ? "-16…-26 UI" : m.bus == "Ambience" ? "-16…-24 ambiyans" : "-16…-22")})");
+                // Ambience scatter one-shots (v006: creak / ring / knock / settle) sit at −24 under the −20 beds;
+                // WP-065C: the fūrin tinkle sits 2 LU lower still (−26, Fable v014 design).
+                float altSinir = m.bus == "UI" ? -26.1f : m.bus == "Ambience" ? -26.1f : -22.1f;
+                if (hedef < altSinir || hedef > -15.9f) hatalar.Add($"{e.Sound}: hedef {hedef} standart kümede değil ({(m.bus == "UI" ? "-16…-26 UI" : m.bus == "Ambience" ? "-16…-26 ambiyans" : "-16…-22")})");
                 if (tavan > manifest.standard.truePeakMax + 0.01f) hatalar.Add($"{e.Sound}: tavan {tavan} dBTP > standart {manifest.standard.truePeakMax}");
                 // Standart: hedef ± tolerans; ya da tavana dayanmış ve hedefin ALTINDA (kısa transientler
                 // tavanda hedefe ulaşamaz - tepe kısıtı seviyeyi belirler, bu doğru davranıştır).

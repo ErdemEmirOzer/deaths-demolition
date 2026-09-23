@@ -1,5 +1,5 @@
 {
- "version": "ap011-v013",
+ "version": "ap011-v014",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -103,6 +103,32 @@
    "bus": "Ambience",
    "spatial": true,
    "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbDrip_01.wav, exports/AmbDrip_02.wav, exports/ImpactWater_01.wav"
+  },
+  {
+   "sound": "AmbFurin",
+   "event": "WindChime.furin",
+   "files": [
+    "AmbFurin_01.wav",
+    "AmbFurin_02.wav",
+    "AmbFurin_03.wav",
+    "AmbFurin_04.wav",
+    "AmbFurin_05.wav"
+   ],
+   "loop": false,
+   "lufs": -26.0,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -93.1,
+   "dcDb": -150.3,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -26.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -174.0,
+   "layers": "single take",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "seed_audio job b92e48a1 (3.5 cr) · amb_furin"
   },
   {
    "sound": "AmbMetalRing",

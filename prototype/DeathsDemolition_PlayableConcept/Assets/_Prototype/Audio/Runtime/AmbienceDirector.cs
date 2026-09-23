@@ -84,6 +84,21 @@ namespace DD.Prototype.Audio
         private float _pondLevel;
         public int ThunderCount { get; private set; }
         public bool PondPlaying => _pond != null && _pond.isPlaying;
+
+        // ---- WP-065C · fūrin wind chimes (AP-017 Phase 2b, eaves): wind-driven, positional, nearest only
+        // Numbers: Fable design (asset-production/AP-011/v014/FURIN-DESIGN.md) — glass edo-fūrin, not iron nanbu.
+        /// <summary>Wind below this is still air: the chimes hang silent.</summary>
+        public const float FurinWindThreshold = 0.15f;
+        /// <summary>Seconds between tinkle clusters just above the threshold / in full wind (× 0.8–1.3 jitter, smoothstep on the wind).</summary>
+        public const float FurinIntervalCalm = 22f, FurinIntervalGale = 3f;
+        /// <summary>A chime is heard only within this range of the player (a small bell: its own space, not the courtyard's).</summary>
+        public const float FurinRange = 12f;
+        /// <summary>A gust (wind up ≥ 0.2 within ~1 s) rings the chime at once, at most every 1.5 s.</summary>
+        public const float FurinGustRise = 0.2f, FurinGustCooldown = 1.5f;
+        private float _furinCountdown = 3f, _furinWindLag, _furinLagClock, _furinGustBlock;
+        /// <summary>Test seam: overrides WorldWind.Strength for the chime clock.</summary>
+        public static float? FurinWindOverride;
+        public int FurinCount { get; private set; }
         public float PondLevel => _pondLevel;
 
         /// <summary>
@@ -322,6 +337,75 @@ namespace DD.Prototype.Audio
 
             TickScatter(unscaledDeltaTime);
             TickWetLook(unscaledDeltaTime, busGain);
+            TickFurin(unscaledDeltaTime);
+        }
+
+        /// <summary>
+        /// WP-065C: the eave fūrin ring with the wind (the same WorldWind the foliage and the chimes'
+        /// own sway read). Stronger wind = shorter gaps; only the chime nearest the player within
+        /// <see cref="FurinRange"/> rings, gain falling off with distance, on the Ambience bus so the
+        /// snapshot / threat-chip ducks apply. Silent after death and in still air.
+        /// </summary>
+        private void TickFurin(float unscaledDeltaTime)
+        {
+            List<Vector3> chimes = AudioSurfaceHints.WindChimes;
+            if (chimes.Count == 0 || _worldPool == null || _phase == RunPhase.Dead)
+            {
+                return;
+            }
+
+            float wind = FurinWindOverride ?? DD.Prototype.World.WorldWind.Strength;
+            bool gust = wind - _furinWindLag >= FurinGustRise && _furinGustBlock <= 0f;
+            _furinLagClock -= unscaledDeltaTime;
+            if (_furinLagClock <= 0f) { _furinLagClock = 1f; _furinWindLag = wind; }
+            _furinGustBlock -= unscaledDeltaTime;
+            if (wind < FurinWindThreshold)
+            {
+                _furinCountdown = Mathf.Max(_furinCountdown, 1f);
+                return;
+            }
+
+            _furinCountdown -= unscaledDeltaTime;
+            if (_furinCountdown > 0f && !gust)
+            {
+                return;
+            }
+
+            float w = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(FurinWindThreshold, 1f, wind));
+            _furinCountdown = Mathf.Lerp(FurinIntervalCalm, FurinIntervalGale, w) * _rng.Range(0.8f, 1.3f);
+            _furinGustBlock = FurinGustCooldown;
+
+            PlayerRig rig = PlayerRegistry.Primary;
+            Vector3 who = rig != null ? rig.transform.position : (_root != null ? _root.position : Vector3.zero);
+            int best = -1; float bestD = FurinRange * FurinRange;
+            for (int i = 0; i < chimes.Count; i++)
+            {
+                float d = (chimes[i] - who).sqrMagnitude;
+                if (d < bestD) { bestD = d; best = i; }
+            }
+
+            if (best < 0)
+            {
+                return;
+            }
+
+            AudioClip clip = _library.Next(AudioSoundId.AmbFurin, out int _);
+            if (clip == null)
+            {
+                return;
+            }
+
+            // Linear 1.5 → 12 m falloff here (the pool's own 8–60 m rolloff is for the courtyard); each chime
+            // keeps its own size (fixed ±1 st by index) under the per-play ±0.5 st jitter.
+            float dist = Mathf.Sqrt(bestD);
+            float near = dist <= 1.5f ? 1f : 1f - (dist - 1.5f) / (FurinRange - 1.5f);
+            float gain = (_phase == RunPhase.Fighting ? 0.30f : 0.55f) * near;
+            float size = ((best * 37) % 21 - 10) * 0.1f;
+            AudioPlacement placement = AudioMixPlan.WindChime(gain, Mathf.Pow(2f, size / 12f));
+            if (_worldPool.Play(placement, clip, chimes[best], 1f, placement.Priority))
+            {
+                FurinCount++;
+            }
         }
 
         /// <summary>Look B clocks: thunder (slow, far, low) and the pond bed level by distance to the nearest pond centre.</summary>

@@ -70,6 +70,9 @@ namespace DD.Prototype.Audio
         /// </summary>
         public static readonly List<Vector3> PondCenters = new List<Vector3>(4);
 
+        /// <summary>WP-065C: AP-017 fūrin wind chimes (eave hang points), registered by the world assembly; the ambience rings the nearest in the wind.</summary>
+        public static readonly List<Vector3> WindChimes = new List<Vector3>(16);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
@@ -77,6 +80,7 @@ namespace DD.Prototype.Audio
             FootstepVariant = null;
             RefinedCount = 0;
             PondCenters.Clear();
+            WindChimes.Clear();
         }
     }
 }

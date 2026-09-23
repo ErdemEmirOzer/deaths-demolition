@@ -261,6 +261,9 @@ namespace DD.Prototype.Audio
         // ---- WP-058C · enemy Special reactions (WP-055 sw_push / sw_web / sw_pull beats; AP-011 v010, derived, 0 cr)
         ZombieReactPush = 330,
         ZombieReactWeb = 331,
-        ZombieReactPull = 332
+        ZombieReactPull = 332,
+
+        // ---- WP-065C · AP-017 Phase 2b fūrin wind chimes (wind-driven positional tinkle, Look B ambience; AP-011 v014)
+        AmbFurin = 340
     }
 }

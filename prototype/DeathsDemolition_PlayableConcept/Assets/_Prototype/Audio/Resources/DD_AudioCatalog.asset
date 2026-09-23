@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v013
-  _sourceHash: 4cbf887b9e3be9f8b54b72045c8c7d5351bff8e9fbc5a2a6d323ea3ca4d305f8
+  _manifestVersion: ap011-v014
+  _sourceHash: 547ac200430bdbe15e68c49efec410244a1c54e03eca9d9eb94552618482df91
   _entries:
   - Sound: 10
     Clips:
@@ -2620,6 +2620,22 @@ MonoBehaviour:
     Provenance: "seed_audio job ec4ac463 (3.3 cr) \xB7 zombie_react_pull"
     NoiseFloorDb: -72.6
     DcDb: -113.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: single take
+  - Sound: 340
+    Clips:
+    - {fileID: 8300000, guid: f6315842c62da49f1b17d18564cd0aca, type: 3}
+    - {fileID: 8300000, guid: 944cb62b2f6bf4cf5a3e8d979ac0e5cd, type: 3}
+    - {fileID: 8300000, guid: 0913521eefddc461b8b22e78499ac974, type: 3}
+    - {fileID: 8300000, guid: 886cfaed372bc4e3ea853801358e7e04, type: 3}
+    - {fileID: 8300000, guid: 37f92fcc37daf4a038f7dbc8b4e351c7, type: 3}
+    Loop: 0
+    Lufs: -26
+    TruePeakDb: -3
+    Provenance: "seed_audio job b92e48a1 (3.5 cr) \xB7 amb_furin"
+    NoiseFloorDb: -93.1
+    DcDb: -150.3
     Clipped: 0
     BitDepth: 24
     Layers: single take

@@ -56,7 +56,10 @@ namespace DD.Art
             { "breakable_sign", SurfaceKind.Wood }, { "breakable_shoji", SurfaceKind.Wood },
             // WP-038I · AP-017 Phase 2: dominant blocking material (cloth/paper props follow their wood frame; ceramic follows stone).
             { "drying_rack_cloth", SurfaceKind.Wood }, { "well_head_tsurube", SurfaceKind.Wood },
-            { "ofuda_post", SurfaceKind.Wood }, { "breakable_sake_jar", SurfaceKind.Stone }
+            { "ofuda_post", SurfaceKind.Wood }, { "breakable_sake_jar", SurfaceKind.Stone },
+            // WP-065C · AP-017 Phase 2b (WP-038L): same rule — ceramic → Stone, bamboo/wood frames → Wood, the koi shoal is pond water, the glass fūrin reads hard (Metal)
+            { "kagura_mask_stand", SurfaceKind.Wood }, { "breakable_tea_set", SurfaceKind.Stone }, { "hishaku_ladle_rack", SurfaceKind.Wood },
+            { "fish_trap", SurfaceKind.Wood }, { "koi_shoal", SurfaceKind.Water }, { "furin_wind_chime", SurfaceKind.Metal }
         };
 
         /// <summary>Fallback when a family is not in the table (counted in <see cref="UnknownFamilies"/>).</summary>
@@ -144,6 +147,7 @@ namespace DD.Art
             s_routes = placement;
             AudioSurfaceHints.Refine = RefineByRoute;
             RegisterPond(placement);
+            RegisterWindChimes(placement);
             AudioSurfaceHints.FootstepVariant = FootstepVariantFor;   // WP-058B: AP-015P plate variants
             return added;
         }
@@ -201,6 +205,22 @@ namespace DD.Art
                 AudioSurfaceHints.PondCenters.Add(sum / n);
             }
         }
+
+        /// <summary>WP-065C: every AP-017 fūrin (hung under the eaves) → the ambience's wind-chime points.</summary>
+        private static void RegisterWindChimes(WorldPlacementAsset placement)
+        {
+            AudioSurfaceHints.WindChimes.Clear();
+            for (int i = 0; i < placement.instances.Count; i++)
+            {
+                WorldPlacementAsset.Instance inst = placement.instances[i];
+                if (Key(inst.family) == FurinFamily)
+                {
+                    AudioSurfaceHints.WindChimes.Add(inst.position);
+                }
+            }
+        }
+
+        public const string FurinFamily = "furin_wind_chime";
 
         /// <summary>Inside a stone route's strip the ground (Dirt) reads as Stone. Only the ground's own answer is refined.</summary>
         public static SurfaceKind RefineByRoute(Vector3 point, SurfaceKind resolved)

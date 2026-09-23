@@ -753,6 +753,18 @@ namespace DD.Prototype.Audio
             };
         }
 
+        /// <summary>WP-065C: fūrin tinkle at the chime (3D, Ambience bus: snapshot and threat-chip ducks apply), light pitch spread, one at a time.</summary>
+        public static AudioPlacement WindChime(float gain, float pitch = 1f)
+        {
+            AudioPlacement p = AmbientOneShot(AudioSoundId.AmbFurin, gain);
+            p.Spatial = 1f;
+            p.Pitch = pitch;           // the chime's own size (±1 st by index)
+            p.PitchJitter = 0.03f;     // ±0.5 st per play
+            p.MinRetrigger = 1.2f;     // global cooldown across the 8 chimes
+            p.MaxInstances = 2;
+            return p;
+        }
+
         // ---- priority arithmetic ----------------------------------------------
 
         /// <summary>

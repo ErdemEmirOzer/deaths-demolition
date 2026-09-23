@@ -86,3 +86,7 @@ Seven Seed Audio renders (ledger 138–144; 3.0–3.6 cr each on the transaction
 ## WP-065B — AP-011 v013 enemy Special reactions produced (credit list P3, 8.7 cr real)
 
 Three Seed Audio renders (ledger 145–147; 2.7 / 2.7 / 3.3 cr on the transaction record) replace the derived `ZombieReactPush` (winded oof + gravel scuff, ≤ 0.8 s), `ZombieReactWeb` (strangled netted growl) and `ZombieReactPull` (dragged moan, trimmed ≤ 0.6 s because sw_pull retriggers every 0.25 s per body). Push and web are separate takes (not the combined v012 prompt). −18 LUFS / −1.5 dBTP; routing, gains, ducks and priorities unchanged. Manifest `ap011-v013` = 181 ids / 419 files; catalog rebuilt.
+
+## WP-065C — fūrin wind chimes (AP-017 Phase 2b; AP-011 v014, 1 render 3.5 cr)
+
+Glass edo-fūrin (Fable: iron nanbu would blur into the metal-ring scatter; `asset-production/AP-011/v014/FURIN-DESIGN.md`): one Seed Audio render → `AmbFurin` ×5 (HP 800 Hz, −26 LUFS / −3 dBTP). `Ap005SurfaceTags.RegisterWindChimes` lists the 8 eave chimes → `AudioSurfaceHints.WindChimes`; `AmbienceDirector.TickFurin` rings the nearest ≤ 12 m with `WorldWind.Strength` (silent < 0.15, gap 22 → 3 s, gust = immediate), gain Fight 0.30 / otherwise 0.55 × distance, ±1 st per chime + ±0.5 st, max 2 at once, Ambience bus (snapshot + threat-chip ducks apply), silent after death. Manifest `ap011-v014` = 182 ids / 424 files.

@@ -285,6 +285,7 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.AmbThunderDistant: return BuildTensionBed(false, ref rng);
                 case AudioSoundId.AmbDripSlate: return BuildImpactWater(ref rng);
                 case AudioSoundId.AmbPondBed: return BuildWaterBed(ref rng);
+                case AudioSoundId.AmbFurin: return BuildMetalRing(ref rng);   // WP-065C fallback; AP-011 v014 owns the clip
 
                 // WP-057 music v2 (AP-011 v008 owns the shipped clips).
                 case AudioSoundId.StingerRoundBreak:

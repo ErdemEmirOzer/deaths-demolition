@@ -725,6 +725,38 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp048b.foley weapon=" + weapon + " " + r.Describe() + " · thunder " + _d.Ambience.ThunderCount + " pond " + _d.Ambience.PondPlaying);
         }
 
+        // ================================================================== WP-065C · fūrin rüzgâr çanı
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Furin_RuzgarliHavada_EnYakinCanCalar_DurgunHavadaSessiz()
+        {
+            var cans = AudioSurfaceHints.WindChimes;
+            var eski = new System.Collections.Generic.List<Vector3>(cans);
+            try
+            {
+                cans.Clear();
+                cans.Add(_s.Rig.transform.position + new Vector3(4f, 2.6f, 3f));    // yakın (≤ 16 m)
+                cans.Add(_s.Rig.transform.position + new Vector3(40f, 2.6f, 0f));   // menzil dışı
+                _d.Ambience.SetPhase(RunPhase.Upgrading);
+
+                AmbienceDirector.FurinWindOverride = 0.05f;   // durgun hava
+                int once = _d.Ambience.FurinCount;
+                yield return new WaitForSecondsRealtime(4f);
+                Assert.AreEqual(once, _d.Ambience.FurinCount, "Durgun havada fūrin çalmamalı.");
+
+                AmbienceDirector.FurinWindOverride = 1f;      // tam rüzgâr: ~2,2 s ± %35 aralık
+                yield return SpecialWeaponSahne.Bekle(() => _d.Ambience.FurinCount >= once + 2, 12f, "Rüzgârda fūrin iki kez çalmadı.");
+                Debug.Log("[DD-TEST] wp065c.furin count=" + (_d.Ambience.FurinCount - once) + " chimes=" + cans.Count);
+            }
+            finally
+            {
+                AmbienceDirector.FurinWindOverride = null;
+                cans.Clear();
+                cans.AddRange(eski);
+            }
+        }
+
         // ================================================================== WP-021C · master limiter ölçümü
 
         [UnityTest]

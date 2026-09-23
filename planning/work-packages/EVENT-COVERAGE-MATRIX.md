@@ -114,6 +114,7 @@
 | Look B — uzak gök gürültüsü | `AmbienceDirector.TickWetLook` (WetLook, 40–90 s, 52 m uzakta, yüksek) | AmbThunderDistant (×3, v007 T) | 3D | Ambience | T | n/a — ses; gök/ışık dili WP-029 look B |
 | Look B — ıslak arduvaz damlası | scatter halkası (WetLook seti) | AmbDripSlate (×3, v007 T) | 3D | Ambience | T | n/a — ses; ıslak yüzey parıltısı S-05 `DD_GroundBlend` mask A ile (WP-038) |
 | Look B — koi havuzu su bed'i | `Ap005SurfaceTags.RegisterPond` → `AudioSurfaceHints.PondCenters` → havuz merkezinde 3D loop (6–30 m) | AmbPondBed (loop, v007 T) | 3D | Ambience | T | `DD/Water v1` + vuruş/adım `water_splash` halkası — WP-013 / WP-047 D |
+| Fūrin rüzgâr çanı (AP-017 Faz 2b, 8 saçak altı) | `WorldWind.Strength` ≥ 0,15 → `AmbienceDirector.TickFurin`: en yakın fūrin ≤ 12 m, aralık 22→3 s (smoothstep, ×0,8–1,3), esinti (+0,2/1 s) anında tetik; Fight 0,30 / ara 0,55; çan başına ±1 st boy + ±0,5 st; kayıt `Ap005SurfaceTags.RegisterWindChimes` (WP-065C) | AmbFurin (×5, v014 T — cam edo-fūrin, −26 LUFS) | 3D | Ambience | Ü | salınım DD/Foliage Wind (WP-038L) |
 | Ortak atmosfer (yağmur sonrası damla, rüzgâr) | `AmbienceDirector` ortak bed | AmbCommon (loop) | 2D | Ambience | Ü | `AtmosphereDrift` polen/sakura + `WindDriver` gust — WP-013 |
 | Merkez avlu (taş, damla, yankı) | bölge `center` | AmbRegionCenter (loop) | 2D | Ambience | Ü | n/a — bölge sesi; görsel ortak atmosfer |
 | Kuzey — koridor/ahşap rüzgârı | bölge `north` | AmbRegionNorth (loop) | 2D | Ambience | Ü | n/a — bölge sesi |
