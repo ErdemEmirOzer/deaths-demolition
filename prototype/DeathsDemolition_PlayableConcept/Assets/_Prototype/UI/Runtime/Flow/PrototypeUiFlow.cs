@@ -178,6 +178,7 @@ namespace DD.Prototype.UI
 
             RunEvents.RunEnded += OnRunEnded;
             RunEvents.RunStarted += OnRunStarted;
+            SceneManager.sceneLoaded += OnSceneLoaded;
 
             // WP-022D (WP-035 contract): the cosmetics source lists skins with the
             // SESSION selection (DEC-039: never persisted), and the UI flow owns it.
@@ -187,6 +188,19 @@ namespace DD.Prototype.UI
             // flushed on quit and where the F1 rows live, and both of those have to
             // exist before anything interesting happens.
             _ = UiFlowRunner.Instance;
+        }
+
+        /// <summary>
+        /// WP-061J: any single-mode scene load is a transition, whoever asked for it. The delayed death →
+        /// Results hand-off was only cancelled by <see cref="Load"/>, so a Run scene entered another way
+        /// (direct-to-run boot, a probe, a test's reload) was yanked to Results by the PREVIOUS run's pending
+        /// trip — the new run lost its spawn director mid-start. A fresh Run scene also re-arms the hand-off.
+        /// </summary>
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (mode != LoadSceneMode.Single) return;   // the additive world scene is part of the same Run
+            s_transition++;
+            if (scene.name == PrototypeScenes.Run) s_resultsScheduled = false;
         }
 
         private static void OnRunStarted(int startRound)
