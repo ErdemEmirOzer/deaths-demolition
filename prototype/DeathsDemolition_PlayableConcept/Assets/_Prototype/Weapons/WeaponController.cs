@@ -747,7 +747,10 @@ namespace DD.Prototype.Weapons
                 ReloadRemaining = _classic.ReloadRemaining,
                 ReloadDuration = _classic.ReloadDuration,
                 TemporarilyDisabled = _special.IsActive,
-                BuildDescription = _modifiers.DescribeBuild()
+                BuildDescription = _modifiers.DescribeBuild(),
+                CurrentSpreadDegrees = _classic.CurrentSpreadDegrees,   // WP-068 U12a honest reticle
+                PelletCount = _classic.PelletCount,
+                PelletRingDegrees = _classic.PelletRingDegrees
             };
 
             WeaponEvents.PublishClassic(state, notify);

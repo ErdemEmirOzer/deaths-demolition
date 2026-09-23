@@ -192,6 +192,72 @@ namespace DD.Prototype.Tests.EditMode
 
         // ------------------------------------------------------------------ rumble per weapon
 
+        // ------------------------------------------------------------------ WP-068 U12a · honest reticle data
+
+        /// <summary>
+        /// WP-068 U12a: the HUD's spread readout is the shot builder's own cone — base SpreadDegrees at rest,
+        /// + BloomPerShot per trigger pull capped at BloomMax, decaying with BloomDecay; the pellet ring is
+        /// RingRadiusShare × the same value, 0 without the ring. No new rule: the values follow the runtime.
+        /// </summary>
+        [Test]
+        [Category("WP068")]
+        public void DurustReticle_Yayilma_TabanArtiBloom_AtistaArtar_TickteSoner_HalkaPayli()
+        {
+            var a = new ClassicWeaponSettings { SpreadDegrees = 1.4f, SpreadBloomPerShot = 0.4f, SpreadBloomMax = 3.5f, SpreadBloomDecay = 7f, MagazineSize = 200 };
+            var runtime = new ClassicWeaponRuntime();
+            runtime.Equip(a, new WeaponModifierState());
+            Assert.AreEqual(1.4f, runtime.CurrentSpreadDegrees, 1e-5f, "dinlenmede taban");
+            Assert.AreEqual(1, runtime.PelletCount);
+            Assert.AreEqual(0f, runtime.PelletRingDegrees, "tek mermi → halka yok");
+
+            for (int i = 0; i < 3; i++) runtime.ConsumeShot();
+            Assert.AreEqual(1.4f + 3 * 0.4f, runtime.CurrentSpreadDegrees, 1e-4f, "üç atış bloom'u");
+            for (int i = 0; i < 20; i++) runtime.ConsumeShot();
+            Assert.AreEqual(1.4f + 3.5f, runtime.CurrentSpreadDegrees, 1e-4f, "bloom tavanı");
+            runtime.Tick(0.1f);
+            Assert.AreEqual(1.4f + 3.5f - 0.7f, runtime.CurrentSpreadDegrees, 1e-4f, "BloomDecay × dt");
+            runtime.Tick(5f);
+            Assert.AreEqual(1.4f, runtime.CurrentSpreadDegrees, 1e-5f, "sönüm tabanda durur");
+
+            var c = new ClassicWeaponSettings { PelletCount = 8, SpreadDegrees = 7.5f, PelletRingRadiusShare = 0.6f, PelletRingJitterShare = 0.1f };
+            runtime.Equip(c, new WeaponModifierState());
+            Assert.AreEqual(8, runtime.PelletCount);
+            Assert.AreEqual(0.6f * 7.5f, runtime.PelletRingDegrees, 1e-4f, "halka = pay × yayılma");
+            c.PelletRingRadiusShare = 0f;
+            Assert.AreEqual(0f, runtime.PelletRingDegrees, "pay 0 → bağımsız saçılma, halka yok");
+
+            var state = new ClassicWeaponHudState { CurrentSpreadDegrees = 1.6f };
+            Assert.AreEqual(20f * Mathf.Tan(1.6f * Mathf.Deg2Rad), state.SpreadRadiusAt(20f), 1e-5f, "1,6° @ 20 m ≈ 0,56 m");
+            Assert.AreEqual(0f, state.SpreadRadiusAt(-3f), "negatif mesafe 0");
+        }
+
+        /// <summary>
+        /// WP-068 U12a honesty in both directions: every rolled shot stays inside the published half-angle,
+        /// and the rolls reach its edge (the readout is neither too tight nor inflated).
+        /// </summary>
+        [Test]
+        [Category("WP068")]
+        public void DurustReticle_AtisKonisi_YayinlananYariAciyiAsmaz_VeKenarinaUlasir()
+        {
+            var a = new ClassicWeaponSettings { SpreadDegrees = 1.4f, SpreadBloomPerShot = 0.4f, SpreadBloomMax = 3.5f, SpreadBloomDecay = 7f, MagazineSize = 200, Range = 45f };
+            var runtime = new ClassicWeaponRuntime();
+            runtime.Equip(a, new WeaponModifierState());
+            for (int i = 0; i < 4; i++) runtime.ConsumeShot();
+            float published = runtime.CurrentSpreadDegrees;
+            Random.InitState(68);
+            float widest = 0f;
+            for (int i = 0; i < 400; i++)
+            {
+                Vector3 d = runtime.BuildShot(Vector3.zero, Vector3.forward).Direction;
+                d.y = 0f;
+                float yaw = Mathf.Abs(Vector3.SignedAngle(Vector3.forward, d, Vector3.up));
+                Assert.LessOrEqual(yaw, published + 1e-3f, "atış yayınlanan koninin dışında");
+                widest = Mathf.Max(widest, yaw);
+            }
+
+            Assert.Greater(widest, published * 0.95f, "atışlar yayınlanan kenara ulaşmıyor (değer şişkin)");
+        }
+
         [Test]
         public void GamepadTitresim_TakiliSilahinProfili_KuşandaOnbellek_AtisteOkur()
         {

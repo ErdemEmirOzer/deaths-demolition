@@ -192,6 +192,10 @@ namespace DD.Prototype.Tests.PlayMode
             _s.Girdi.AtesBasili = true;
             yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo <= ammo0 - 3, 3f, "üç atış");
             _s.Girdi.AtesBasili = false;
+            // WP-068 U12a: the HUD snapshot carries the runtime's own spread (bloom included) — the honest reticle input.
+            Assert.AreEqual(_s.Controller.Classic.CurrentSpreadDegrees, WeaponEvents.Classic.CurrentSpreadDegrees, 1e-5f, "U12a: anlık yayılma snapshot'ta");
+            Assert.AreEqual(1, WeaponEvents.Classic.PelletCount);
+            Assert.AreEqual(0f, WeaponEvents.Classic.PelletRingDegrees, "A: halka yok");
             yield return SpecialWeaponSahne.Kareler(2);
             int shots = ammo0 - _s.Controller.Classic.Ammo;
             Assert.AreEqual(shots, Count(WeaponMechanismKind.CasingEjected), "A: her atışta bir kovan");
@@ -222,6 +226,9 @@ namespace DD.Prototype.Tests.PlayMode
             _s.Girdi.AtesBasti = true;
             _s.Girdi.AtesBasili = true;
             yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo == ammo0 - 1, 2f, "tek atış");
+            Assert.AreEqual(_s.Controller.Classic.PelletCount, WeaponEvents.Classic.PelletCount, "U12a: pellet sayısı snapshot'ta");
+            Assert.AreEqual(_s.Controller.Classic.PelletRingDegrees, WeaponEvents.Classic.PelletRingDegrees, 1e-5f, "U12a: halka yarı açısı snapshot'ta");
+            Assert.Greater(WeaponEvents.Classic.PelletRingDegrees, 0f, "C: ikinci halka");
             _s.Girdi.AtesBasti = false;
             _s.Girdi.AtesBasili = false;
             Assert.AreEqual(0, Count(WeaponMechanismKind.CasingEjected), "C: kovan atış anında değil, pump'ta");

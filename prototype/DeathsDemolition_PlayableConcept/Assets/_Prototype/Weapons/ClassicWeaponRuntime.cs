@@ -266,6 +266,10 @@ namespace DD.Prototype.Weapons
         public float CurrentSpreadDegrees =>
             _settings != null ? Mathf.Max(0f, _settings.SpreadDegrees) + _bloom : 0f;
 
+        /// <summary>WP-068 U12a: horizontal half-angle of the pellet ring (the ApplyRing radius); 0 without the ring pattern.</summary>
+        public float PelletRingDegrees =>
+            UsesPelletRing ? Mathf.Max(0f, _settings.PelletRingRadiusShare) * CurrentSpreadDegrees : 0f;
+
         /// <summary>Guard against a long frame turning into a burst. Never fire more than this per frame.</summary>
         public const int MaxShotsPerFrame = 3;
 

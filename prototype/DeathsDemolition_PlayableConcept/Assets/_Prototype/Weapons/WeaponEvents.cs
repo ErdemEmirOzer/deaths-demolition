@@ -125,8 +125,31 @@ namespace DD.Prototype.Weapons
         /// <summary>Short build identity, e.g. "P2 / FR1". Empty-safe.</summary>
         public string BuildDescription;
 
+        /// <summary>
+        /// WP-068 U12a (honest reticle): the cone half-angle in degrees (horizontal / yaw) the NEXT shot
+        /// rolls against — base SpreadDegrees + fire bloom, the very value the shot builder passes to
+        /// <see cref="SpreadUtility"/>. Movement adds nothing in the rules, so neither does this. Data only.
+        /// </summary>
+        public float CurrentSpreadDegrees;
+
+        /// <summary>WP-068 U12a: pellets per trigger pull (1 for single-shot weapons).</summary>
+        public int PelletCount;
+
+        /// <summary>
+        /// WP-068 U12a: horizontal half-angle of the WP-042 pellet ring (PelletRingRadiusShare ×
+        /// <see cref="CurrentSpreadDegrees"/>) — the reticle's second ring. 0 when the weapon fires a
+        /// single pellet or the independent scatter.
+        /// </summary>
+        public float PelletRingDegrees;
+
         /// <summary>Convenience for the "reload!" prompt.</summary>
         public bool IsEmpty => AmmoInMagazine <= 0;
+
+        /// <summary>WP-068 U12a: lateral radius of the spread cone at <paramref name="meters"/> (the reticle's projection input). No allocation.</summary>
+        public float SpreadRadiusAt(float meters)
+        {
+            return Mathf.Max(0f, meters) * Mathf.Tan(Mathf.Clamp(CurrentSpreadDegrees, 0f, 89f) * Mathf.Deg2Rad);
+        }
     }
 
     /// <summary>Everything the HUD needs about the Special Weapon.</summary>
