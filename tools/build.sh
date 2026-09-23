@@ -1,5 +1,5 @@
 #!/bin/zsh
-# WP-025 · tools/build.sh {dev|release} [--smoke] [--out DIR] [--no-wait] [--target mac|win64]
+# WP-025 · tools/build.sh {dev|release} [--smoke] [--out DIR] [--no-wait] [--target mac|win64] [--compression none|lz4|lz4hc]
 #
 # One command, repeatable, for every session and for S-10's regression automation:
 #   build.sh release --smoke      release player + main-menu/run smoke + user-data guard
@@ -7,6 +7,8 @@
 #   build.sh release --target win64   WP-066W (DEC-089): Windows x64 Mono player → <out>/DeathsDemolition-win64/
 #                                 DeathsDemolition.exe (+ DeathsDemolition_Data); no smoke (cannot run on macOS).
 #                                 The macOS path (default --target mac) is unchanged: same command line and report.
+#   --compression none|lz4|lz4hc   WP-066C: player data compression (BuildOptions.CompressWithLz4/Lz4HC); absent = no
+#                                 flag passed, today's uncompressed build (command line and report unchanged).
 #
 # Output: <out>/DeathsDemolition.app, <out>/build.log, <out>/build-report.json (from the
 # Editor), <out>/report.json (script summary incl. smoke) and <out>/timeline.txt.
@@ -20,19 +22,21 @@ set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
 MODE="${1:-}"; shift 2>/dev/null || true
-[ "$MODE" = "dev" ] || [ "$MODE" = "release" ] || { echo "usage: build.sh {dev|release} [--smoke] [--out DIR] [--no-wait] [--target mac|win64]" >&2; exit 64; }
-SMOKE=0; OUT=""; NOWAIT=0; TARGET="mac"
+[ "$MODE" = "dev" ] || [ "$MODE" = "release" ] || { echo "usage: build.sh {dev|release} [--smoke] [--out DIR] [--no-wait] [--target mac|win64] [--compression none|lz4|lz4hc]" >&2; exit 64; }
+SMOKE=0; OUT=""; NOWAIT=0; TARGET="mac"; COMP=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --smoke) SMOKE=1 ;;
     --out) OUT="$2"; shift ;;
     --no-wait) NOWAIT=1 ;;
     --target) TARGET="$2"; shift ;;
+    --compression) COMP="$2"; shift ;;
     *) echo "unknown option: $1" >&2; exit 64 ;;
   esac
   shift
 done
 [ "$TARGET" = "mac" ] || [ "$TARGET" = "win64" ] || { echo "--target must be mac or win64" >&2; exit 64; }
+[ -z "$COMP" ] || [ "$COMP" = "none" ] || [ "$COMP" = "lz4" ] || [ "$COMP" = "lz4hc" ] || { echo "--compression must be none, lz4 or lz4hc" >&2; exit 64; }
 [ "$TARGET" = "win64" ] && [ "$SMOKE" -eq 1 ] && { echo "--smoke is macOS-only (a Windows player cannot run here)" >&2; exit 64; }
 [ -n "$OUT" ] || { [ "$TARGET" = "mac" ] && OUT="$DD_BUILD_ROOT/$MODE-$(dd_utc)" || OUT="$DD_BUILD_ROOT/$MODE-$TARGET-$(dd_utc)"; }
 mkdir -p "$OUT"; DD_TIMELINE="$OUT/timeline.txt"
@@ -43,6 +47,8 @@ if [ "$TARGET" = "win64" ]; then
   APP="$OUT/$DD_WIN_DIR"; TARGS=(-buildTarget Win64 -ddTarget win64); TJSON=$'\n  "target": "win64",'; TLOG=" target=win64"
 fi
 DDOUT="$APP"; [ "$TARGET" = "win64" ] && DDOUT="$APP/$DD_WIN_EXE"
+# WP-066C: only an explicit --compression reaches the editor/report (default argv unchanged).
+CARGS=(); [ -n "$COMP" ] && { CARGS=(-ddCompression "$COMP"); TJSON="$TJSON"$'\n  "compression": "'"$COMP"'",'; TLOG="$TLOG compression=$COMP"; }
 dd_log "build.sh mode=$MODE$TLOG smoke=$SMOKE out=$OUT repo=$DD_REPO head=$(git -C "$DD_REPO" rev-parse --short=12 HEAD 2>/dev/null)"
 
 # Machine slot: tools/slot.sh (blocks until one of the 2 Unity slots is free; --no-wait refuses instead).
@@ -52,7 +58,7 @@ dd_slot_acquire
 
 T0=$(date +%s)
 "$DD_UNITY" -batchmode -nographics -quit -forgetProjectPath -projectPath "$DD_PROJECT" "${TARGS[@]}" \
-  -executeMethod DD.Prototype.Core.EditorTools.DdBuild.Build -ddMode "$MODE" -ddOut "$DDOUT" -ddReport "$BREPORT" \
+  -executeMethod DD.Prototype.Core.EditorTools.DdBuild.Build -ddMode "$MODE" -ddOut "$DDOUT" -ddReport "$BREPORT" "${CARGS[@]}" \
   -logFile "$LOG"
 X=$?; T1=$(date +%s)
 APPKB=$( [ -d "$APP" ] && du -sk "$APP" | cut -f1 || echo 0 )

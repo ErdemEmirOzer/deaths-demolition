@@ -15,6 +15,7 @@ namespace DD.Prototype.Core.EditorTools
     ///   Unity -batchmode -nographics -quit -projectPath … -executeMethod DD.Prototype.Core.EditorTools.DdBuild.Build
     ///         -ddMode dev|release -ddOut /abs/DeathsDemolition.app [-ddReport /abs/report.json]
     ///         [-ddTarget mac|win64]   (WP-066W / DEC-089; win64 → -ddOut /abs/DeathsDemolition-win64/DeathsDemolition.exe)
+    ///         [-ddCompression none|lz4|lz4hc]   (WP-066C measurement; absent = today's uncompressed player data)
     ///
     /// Stamps <c>build-info.json</c>, builds every enabled scene in Build Settings for
     /// macOS (default) or Windows x64 (Mono, the installed WindowsStandaloneSupport module),
@@ -28,6 +29,7 @@ namespace DD.Prototype.Core.EditorTools
         private const string OutFlag = "-ddOut";
         private const string ReportFlag = "-ddReport";
         private const string TargetFlag = "-ddTarget";
+        private const string CompressionFlag = "-ddCompression";
 
         public static void Build()
         {
@@ -35,6 +37,15 @@ namespace DD.Prototype.Core.EditorTools
             string output = Arg(OutFlag);
             string report = Arg(ReportFlag);
             string targetName = Arg(TargetFlag) ?? "mac";
+            string compression = Arg(CompressionFlag);
+            BuildOptions compressionOption;
+            switch (compression)
+            {
+                case null: case "none": compressionOption = BuildOptions.None; break;
+                case "lz4": compressionOption = BuildOptions.CompressWithLz4; break;
+                case "lz4hc": compressionOption = BuildOptions.CompressWithLz4HC; break;
+                default: throw new Exception("[DdBuild] " + CompressionFlag + " must be none, lz4 or lz4hc (was '" + compression + "').");
+            }
             if (string.IsNullOrEmpty(output))
             {
                 throw new Exception("[DdBuild] " + OutFlag + " <path.app> is required.");
@@ -75,7 +86,7 @@ namespace DD.Prototype.Core.EditorTools
                     scenes = scenes,
                     locationPathName = output,
                     target = target,
-                    options = mode == "dev" ? BuildOptions.Development : BuildOptions.None,
+                    options = (mode == "dev" ? BuildOptions.Development : BuildOptions.None) | compressionOption,
                 };
                 summary = BuildPipeline.BuildPlayer(options).summary;
             }
@@ -87,11 +98,11 @@ namespace DD.Prototype.Core.EditorTools
             double seconds = (DateTime.UtcNow - t0).TotalSeconds;
             Debug.Log(string.Format("[DdBuild] result={0} mode={1} scenes={2} size={3:0.0} MB seconds={4:0} path={5}{6}",
                 summary.result, mode, scenes.Length, summary.totalSize / (1024f * 1024f), seconds, output,
-                target == BuildTarget.StandaloneOSX ? "" : " target=" + targetName));
+                (target == BuildTarget.StandaloneOSX ? "" : " target=" + targetName) + (compression == null ? "" : " compression=" + compression)));
 
             if (!string.IsNullOrEmpty(report))
             {
-                WriteReport(report, mode, target == BuildTarget.StandaloneOSX ? null : targetName, output, scenes.Length, summary, seconds, stamp);
+                WriteReport(report, mode, target == BuildTarget.StandaloneOSX ? null : targetName, compression, output, scenes.Length, summary, seconds, stamp);
             }
 
             if (summary.result != BuildResult.Succeeded)
@@ -100,14 +111,16 @@ namespace DD.Prototype.Core.EditorTools
             }
         }
 
-        // target is null for macOS so its report stays byte-for-byte the pre-WP-066W format.
-        private static void WriteReport(string path, string mode, string target, string output, int scenes, BuildSummary s, double seconds, BuildInfo stamp)
+        // target is null for macOS and compression null when the flag is absent, so the default
+        // report stays byte-for-byte the pre-WP-066W/066C format.
+        private static void WriteReport(string path, string mode, string target, string compression, string output, int scenes, BuildSummary s, double seconds, BuildInfo stamp)
         {
             var sb = new StringBuilder();
             sb.Append("{\n");
             sb.Append("  \"result\": \"").Append(s.result).Append("\",\n");
             sb.Append("  \"mode\": \"").Append(mode).Append("\",\n");
             if (target != null) sb.Append("  \"target\": \"").Append(target).Append("\",\n");
+            if (compression != null) sb.Append("  \"compression\": \"").Append(compression).Append("\",\n");
             sb.Append("  \"output\": \"").Append(Escape(output)).Append("\",\n");
             sb.Append("  \"scenes\": ").Append(scenes).Append(",\n");
             sb.Append("  \"totalSize\": ").Append(s.totalSize).Append(",\n");
