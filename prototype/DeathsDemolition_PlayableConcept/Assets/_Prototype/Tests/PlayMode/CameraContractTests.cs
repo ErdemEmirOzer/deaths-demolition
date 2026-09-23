@@ -3,6 +3,7 @@ using System.Collections;
 using System.Text;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.PlayerSystem;
 using NUnit.Framework;
@@ -365,8 +366,11 @@ namespace DD.Prototype.Tests.PlayMode
         // ================================================================ REQ-036 / REQ-040 (kamera tabanı)
 
         /// <summary>
-        /// Kamera yaw'ı 90°'ye çevrilir (sahne yazarlık değeri; yansıtma ile — üretimde girdi
-        /// yolu YOK). WASD (0,1) girdisi artık dünya +z'ye değil kameranın düzlem ileri
+        /// Kamera yaw'ı 90°'ye çevrilir. WP-062'den beri yaw'ın tek kaynağı FeelConfig
+        /// camera.yawDegrees (N alanı, koşu sınırında uygulanır; oyuncunun girdi yolu YOK) —
+        /// rig her FeelRuntime.Changed'de _yawDegrees'i oradan yazar, bu yüzden test profili
+        /// FeelRuntime üzerinden sahneler (WP-062K: eski yansıtma yazımı bir sonraki
+        /// ApplyFeel'de 0'a dönüyordu). WASD (0,1) girdisi artık dünya +z'ye değil kameranın düzlem ileri
         /// yönüne (+x) götürür; sağ analog (0,1) da aynı tabana göre nişan alır. Yaw 0'da
         /// dünya-göreli ile kamera-göreli aynı sonucu verdiğinden bu ayrım şimdiye kadar hiç
         /// ölçülmemişti. Ayrıca çapraz girdi hız tavanını aşmaz (ölçülen hız ≤ 6.2 m/s).
@@ -375,9 +379,10 @@ namespace DD.Prototype.Tests.PlayMode
         [Timeout(60000)]
         public IEnumerator KameraYawIle_HareketVeAnalogNisan_KameraTabaninaGore()
         {
-            System.Reflection.FieldInfo yawAlani = typeof(PrototypeCameraRig).GetField(
-                "_yawDegrees", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            Assert.IsNotNull(yawAlani, "PrototypeCameraRig._yawDegrees alanı bulunamadı; test kurulumu güncellenmeli.");
+            string oncekiProfil = FeelRuntime.ExportJson("wp062k-onceki", "05e85eb");
+            Assert.IsTrue(FeelProfileCodec.TryImport(oncekiProfil, out FeelProfileDocument belge, out string hata), hata);
+            FeelConfigData yawli = belge.data;
+            yawli.camera.yawDegrees = 90f;
 
             var oyuncu = new GameObject("WP002-Oyuncu");
             oyuncu.transform.position = Kok + new Vector3(0f, 0.05f, 0f);
@@ -391,8 +396,8 @@ namespace DD.Prototype.Tests.PlayMode
 
             try
             {
-                yawAlani.SetValue(_rig, 90f);
-                DD.Prototype.Core.Config.PrototypeConfig.Active.NotifyChanged();   // ApplyConfig → taban yeniden hesaplanır
+                Assert.IsTrue(FeelRuntime.QueueAuthored(yawli, "wp062k-yaw90", "05e85eb", out hata), hata);
+                Assert.IsTrue(FeelRuntime.ApplyPendingNextRun(), "Kamera yaw'ı N alanı; koşu sınırı işlemi sahnelenmiş profili uygulamadı.");   // Changed → rig.ApplyFeel → taban
                 yield return null;
                 yield return null;
 
@@ -439,8 +444,15 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
-                yawAlani.SetValue(_rig, 0f);
-                DD.Prototype.Core.Config.PrototypeConfig.Active.NotifyChanged();
+                if (FeelRuntime.QueueJson(oncekiProfil, out string geriHata))
+                {
+                    FeelRuntime.ApplyPendingNextRun();
+                }
+                else
+                {
+                    Debug.LogError("[WP-062K] feel profili geri yüklenemedi: " + geriHata);
+                }
+
                 _rig.FollowTarget = _hedef.transform;
                 UnityEngine.Object.Destroy(oyuncu);
             }
