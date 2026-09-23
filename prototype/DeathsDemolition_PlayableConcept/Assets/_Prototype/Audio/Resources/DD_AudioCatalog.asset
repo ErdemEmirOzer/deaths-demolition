@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v012
-  _sourceHash: 87c8b073c22f7d4b61a038fe496e175bc473c81263ccfe877df3244be730b943
+  _manifestVersion: ap011-v013
+  _sourceHash: 4cbf887b9e3be9f8b54b72045c8c7d5351bff8e9fbc5a2a6d323ea3ca4d305f8
   _entries:
   - Sound: 10
     Clips:
@@ -2587,33 +2587,28 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7ed1e0cff4a5042c19e910ca1143b1cc, type: 3}
     - {fileID: 8300000, guid: 9cc376ebdfbaf498db649776f7666e7c, type: 3}
     Loop: 0
-    Lufs: -18
-    TruePeakDb: -2.53
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ZombieHitStandard_03.wav,
-      exports/ZombieStagger_01.wav, exports/ZombieStepHeavy_02.wav, noise:pink
-    NoiseFloorDb: -85.8
-    DcDb: -154.5
+    Lufs: -18.28
+    TruePeakDb: -1.5
+    Provenance: "seed_audio job 2ef79adb (2.7 cr) \xB7 zombie_react_push"
+    NoiseFloorDb: -96.4
+    DcDb: -115.1
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v010, no credits): ZombieStagger_01.wav@0ms 0dB + ZombieHitStandard_03.wav@20ms
-      -3dB -1st + ZombieStepHeavy_02.wav@60ms -10dB -2st + noise:pink@0ms -14dB'
+    Layers: single take
   - Sound: 331
     Clips:
     - {fileID: 8300000, guid: 54f979201e3e74b3fab769aaf8c27680, type: 3}
     - {fileID: 8300000, guid: d7c3ed73e84894e4eb3a010f95b94eba, type: 3}
     - {fileID: 8300000, guid: 4ec4404d6ef01491595c859843e5b618, type: 3}
     Loop: 0
-    Lufs: -21.19
-    TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_01.wav,
-      exports/ZombieHitStandard_02.wav, noise:pink, tone:900,1350@1.6
-    NoiseFloorDb: -85.8
-    DcDb: -177.4
+    Lufs: -18
+    TruePeakDb: -2.85
+    Provenance: "seed_audio job 818c6388 (2.7 cr) \xB7 zombie_react_web"
+    NoiseFloorDb: -86.1
+    DcDb: -138.8
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v010, no credits): ZombieHitStandard_02.wav@0ms 0dB -1st +
-      ImpactPaper_01.wav@0ms -6dB +1st + noise:pink@120ms -16dB + tone:900,1350@1.6@150ms
-      -18dB'
+    Layers: single take
   - Sound: 332
     Clips:
     - {fileID: 8300000, guid: 07d45f72e99d7459d8fe8c3795961d3d, type: 3}
@@ -2622,11 +2617,9 @@ MonoBehaviour:
     Loop: 0
     Lufs: -18
     TruePeakDb: -1.5
-    Provenance: derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepDirt_03.wav,
-      exports/ZombieIdle_02.wav, exports/ZombieStepLight_03.wav
-    NoiseFloorDb: -94.8
-    DcDb: -173.8
+    Provenance: "seed_audio job ec4ac463 (3.3 cr) \xB7 zombie_react_pull"
+    NoiseFloorDb: -72.6
+    DcDb: -113.3
     Clipped: 0
     BitDepth: 24
-    Layers: 'derived (v010, no credits): ZombieIdle_02.wav@0ms 0dB +2st + FootstepDirt_03.wav@20ms
-      -6dB -2st + ZombieStepLight_03.wav@60ms -10dB'
+    Layers: single take

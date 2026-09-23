@@ -2221,3 +2221,7 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 | Build boyutu ≤ 550 MB (DEC-086) | WP-038H release 543,8 MB | Karşılandı (S-05 ölçümü) |
 
 Karar bekleyenler (karar yazılmaz): Windows hedefi (DEC-080); Ultra okunabilirliğinin ölçüm yolu. M4 başlangıcı ve paket zinciri onaylandı (M4-PLAN-001 / WP-061P).
+
+## WP-065B — AP-011 v013: ZombieReact{Push,Web,Pull} üretilmiş take'ler (8,7 kr)
+
+**Durum:** Tamamlandı (S-08, 2026-09-23). Branch `wp-065b-react-renders` (taban main `1df0bf0` = WP-065), tek commit. 3 Seed Audio render (her birinden önce bakiye, sonra işlem kaydı: 2,7/2,7/3,3 kr; tavan 20) → WP-055 sw_push/web/pull tepki vokalleri türetme yerine üretilmiş; mix/gain/duck/öncelik değişmedi; manifest v013 (181/419), katalog yeniden. Build yok (C-00: release ayak izi C-00 turunda).

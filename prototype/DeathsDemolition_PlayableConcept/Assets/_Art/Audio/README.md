@@ -82,3 +82,7 @@ Fable listening-round fix #8 applied offline on the shipped files (`asset-produc
 ## WP-060C — AP-011 v012 produced takes (credit list P1 + P2, 23.1 cr real)
 
 Seven Seed Audio renders (ledger 138–144; 3.0–3.6 cr each on the transaction record, cap ≤ 25) replace derived identities with produced takes: `SwFire{Kagura,Ofuda,Tide}` (the Specials' own fire voices), `ZombieWindupSpecial` + `ZombieAttackSpecial` (one pair take), `ZombieDeathSpecial`, `ZombieAggroSpecial`, `ZombieAggroElite`. Windows from the 100 ms envelope grid (`asset-production/AP-011/tools/ap011_run_v012.py`; Seed Audio ran the bell strikes together, so the strikes are cut by hand), −18 LUFS / −1.5 dBTP (bell and talisman throws peak-limited at −21). Routing kept from the replaced entries. Manifest `ap011-v012` = 181 ids / 419 files; catalog rebuilt. Not rendered (cap): P3 ZombieReact* and P4–P7 — prompts ready in `v012/render_prompts.json`.
+
+## WP-065B — AP-011 v013 enemy Special reactions produced (credit list P3, 8.7 cr real)
+
+Three Seed Audio renders (ledger 145–147; 2.7 / 2.7 / 3.3 cr on the transaction record) replace the derived `ZombieReactPush` (winded oof + gravel scuff, ≤ 0.8 s), `ZombieReactWeb` (strangled netted growl) and `ZombieReactPull` (dragged moan, trimmed ≤ 0.6 s because sw_pull retriggers every 0.25 s per body). Push and web are separate takes (not the combined v012 prompt). −18 LUFS / −1.5 dBTP; routing, gains, ducks and priorities unchanged. Manifest `ap011-v013` = 181 ids / 419 files; catalog rebuilt.
