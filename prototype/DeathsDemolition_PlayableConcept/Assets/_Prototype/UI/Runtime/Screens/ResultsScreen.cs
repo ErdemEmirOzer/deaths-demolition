@@ -122,23 +122,54 @@ namespace DD.Prototype.UI
 
             if (_model != null && _model.Celebrate)
             {
-                UiSound.Play(UiSoundKind.Reveal);
-                if (_model.LeveledUp)
-                {
-                    UiEvents.Raise(UiEvent.LevelUp);
-                }
-
-                if (_model.NewUnlocks.Count > 0)
-                {
-                    UiEvents.Raise(UiEvent.UnlockRevealed);
-                }
-
-                if (_model.NewAchievements.Count > 0)
-                {
-                    UiEvents.Raise(UiEvent.AchievementRevealed);
-                }
+                StartCoroutine(CelebrationBeats());
+            }
+            else if (_newBestRound)
+            {
+                UiEvents.Raise(UiEvent.NewBestRound);
             }
         }
+
+        /// <summary>
+        /// Spacing between Results celebration beats. WP-068 slice 0 (D4): Reveal, new
+        /// best, level-up, unlock and achievement used to be raised in the same frame
+        /// (four or five cues stacked into the limiter); each is now its own beat, in
+        /// reading order, only the beats that happened taking a slot. Sound is tied to
+        /// the logical event, so Reduced Motion keeps the same timing.
+        /// </summary>
+        public const float CelebrationBeatSeconds = 0.12f;
+
+        private System.Collections.IEnumerator CelebrationBeats()
+        {
+            var beat = new WaitForSecondsRealtime(CelebrationBeatSeconds);
+            UiSound.Play(UiSoundKind.Reveal);
+
+            if (_newBestRound)
+            {
+                yield return beat;
+                UiEvents.Raise(UiEvent.NewBestRound);
+            }
+
+            if (_model.LeveledUp)
+            {
+                yield return beat;
+                UiEvents.Raise(UiEvent.LevelUp);
+            }
+
+            if (_model.NewUnlocks.Count > 0)
+            {
+                yield return beat;
+                UiEvents.Raise(UiEvent.UnlockRevealed);
+            }
+
+            if (_model.NewAchievements.Count > 0)
+            {
+                yield return beat;
+                UiEvents.Raise(UiEvent.AchievementRevealed);
+            }
+        }
+
+        private bool _newBestRound;
 
         // ============================================================== performance
 
@@ -164,7 +195,7 @@ namespace DD.Prototype.UI
                 bestRect.sizeDelta = new Vector2(200f, 30f);
                 bestRect.gameObject.AddComponent<UiPulse>().Configure(
                     new Graphic[] { bestRect.GetComponent<Graphic>() }, 0.80f, 1f, UiTokens.PulsePeriod);
-                UiEvents.Raise(UiEvent.NewBestRound);
+                _newBestRound = true; // raised as a Results beat (Start), not during the build
                 stack.Gap(UiSpace.XS);
             }
 
@@ -322,7 +353,7 @@ namespace DD.Prototype.UI
             int shown = Mathf.Min(entries.Count, ResultsViewModel.MaxRewardEntries);
             for (int i = 0; i < shown; i++)
             {
-                stack.Add(BuildRewardEntry(host, entries[i], accent), RewardEntryHeight);
+                stack.Add(BuildRewardEntry(host, entries[i], accent), UiFactory.ScaledBand(RewardEntryHeight));
                 stack.Gap(UiSpace.S);
             }
 
@@ -346,7 +377,7 @@ namespace DD.Prototype.UI
 
             // WP-022: an AP-012 medallion carries the entry (unlocks: rare wreath,
             // achievements: ring by WP-023 rarity); the petal mark stays the no-art fallback.
-            float markSize = RewardEntryHeight - (int)UiSpace.M * 2;
+            float markSize = RewardEntryHeight - (int)UiSpace.M * 2; // the mark keeps its 1.0 size; the text bands grow (D6)
             string typeLabel = string.Empty;
             Sprite markSprite = accent == UiColor.StateSuccess
                 ? UiArt.Medal(_model.MedalFor(entry.Title))
@@ -377,7 +408,7 @@ namespace DD.Prototype.UI
                 "Title", content, UiFactory.Clip(titleText, 32), UiType.BodyStrong, accent,
                 TextAnchor.LowerLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
-            titleRect.offsetMin = new Vector2(textLeft, RewardDetailBand); // title sits above the two-line detail band
+            titleRect.offsetMin = new Vector2(textLeft, UiFactory.ScaledBand(RewardDetailBand)); // title sits above the two-line detail band
             titleRect.offsetMax = new Vector2(-64f, 0f);
 
             // WP-022D: the type in front of the detail ("TITLE · shown next to your name"),
@@ -388,7 +419,7 @@ namespace DD.Prototype.UI
                 TextAnchor.UpperLeft); // wraps to the second line (Label truncates at the box, AD v004 MUST-5)
             RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
             detailRect.offsetMin = new Vector2(textLeft, 0f);
-            detailRect.offsetMax = new Vector2(-64f, -RewardTitleBand);
+            detailRect.offsetMax = new Vector2(-64f, -UiFactory.ScaledBand(RewardTitleBand));
 
             // AD v004 MUST-1: NEW is one token everywhere - ink on sakura - whatever the card's accent.
             TMP_Text badge = UiFactory.Chip("New", content, "NEW", UiColor.AccentSakura, UiColor.SurfaceBase, 56f, 24f);

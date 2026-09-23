@@ -196,19 +196,37 @@ namespace DD.Prototype.UI
 
         public override void OnPointerEnter(PointerEventData eventData)
         {
+            // WP-068 slice 0 (D3): a hover is ONE cue - ButtonHover (UiHover). It used to
+            // also play UiSound.Move (UiNavigate) in the same frame, two sounds per hover.
             UiEvents.Raise(UiEvent.ButtonHover, name);
             base.OnPointerEnter(eventData);
 
             if (IsInteractable())
             {
-                UiSound.Play(UiSoundKind.Move);
-
                 // Pointer hover moves focus too, so the keyboard and the mouse never
-                // disagree about which control is current.
+                // disagree about which control is current. This select is programmatic
+                // (not an AxisEventData), so OnSelect below stays silent for it.
                 if (EventSystem.current != null && !EventSystem.current.alreadySelecting)
                 {
                     EventSystem.current.SetSelectedGameObject(gameObject);
                 }
+            }
+        }
+
+        /// <summary>
+        /// WP-068 slice 0 (D3): keyboard / gamepad focus travel is the Navigate cue. A
+        /// navigation move arrives as an <see cref="AxisEventData"/> (Selectable.Navigate
+        /// sets selectedObject with the move event); programmatic focus - screen open,
+        /// focus repair after a purchase, pointer hover - passes plain BaseEventData and
+        /// stays silent. Before this, pad and keyboard travel between buttons made no
+        /// sound at all.
+        /// </summary>
+        public override void OnSelect(BaseEventData eventData)
+        {
+            base.OnSelect(eventData);
+            if (_configured && eventData is AxisEventData && IsInteractable())
+            {
+                UiSound.Play(UiSoundKind.Move);
             }
         }
 

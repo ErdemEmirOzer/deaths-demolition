@@ -193,10 +193,24 @@ namespace DD.Prototype.UI
         /// </summary>
         public static Camera EnsureUiCamera()
         {
-            Camera[] cameras = UnityEngine.Object.FindObjectsOfType<Camera>();
-            if (cameras != null && cameras.Length > 0)
+            // WP-068 slice 0 (D5): the screen camera, never an off-screen one. The array
+            // order of FindObjectsOfType is unspecified, so the first camera could be a
+            // render-texture camera (a Selection turntable, a capture probe) and the menu
+            // canvas would draw into that texture instead of the screen. Prefer the tagged
+            // main camera, then any enabled camera drawing to the screen; else make one.
+            Camera main = Camera.main;
+            if (main != null && main.targetTexture == null)
             {
-                return cameras[0];
+                return main;
+            }
+
+            Camera[] cameras = UnityEngine.Object.FindObjectsOfType<Camera>();
+            for (int i = 0; cameras != null && i < cameras.Length; i++)
+            {
+                if (cameras[i] != null && cameras[i].enabled && cameras[i].targetTexture == null)
+                {
+                    return cameras[i];
+                }
             }
 
             var go = new GameObject("UI Camera", typeof(Camera));
@@ -329,6 +343,30 @@ namespace DD.Prototype.UI
         /// a single line renders NOTHING AT ALL. That failure is silent, looks like a
         /// data bug, and would hit the largest type first.
         /// </summary>
+        /// <summary>
+        /// WP-068 slice 0 (D6): a fixed text band (chip, row, title band) at the current
+        /// reading-text scale. Identical at TextScale 1.0; 25 % taller at 1.25, so a band
+        /// sized for one line of Body/Label/Caption never clips that line when the player
+        /// raises the text scale (Accessibility pane).
+        /// </summary>
+        public static TMP_Text AllowRichText(TMP_Text label)
+        {
+            // WP-068 slice 0 (D7): labels are created with rich text OFF (a user-facing
+            // string can never inject tags); a label that deliberately carries inline
+            // markup - a colour run, an inline glyph - opts in here, one label at a time.
+            if (label != null)
+            {
+                label.richText = true;
+            }
+
+            return label;
+        }
+
+        public static float ScaledBand(float band)
+        {
+            return Mathf.Ceil(band * Mathf.Clamp(UiTokens.TextScale, 1f, 1.25f));
+        }
+
         public static float LineHeight(UiType type)
         {
             float raw = UiTokens.FontSize(type) * UiTokens.LineSpacing(type) * 1.25f;

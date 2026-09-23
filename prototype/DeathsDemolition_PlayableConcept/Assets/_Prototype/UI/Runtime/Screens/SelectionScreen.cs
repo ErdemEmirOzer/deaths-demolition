@@ -404,7 +404,7 @@ namespace DD.Prototype.UI
                     "Detail", button.transform, detailText, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
                 detail.richText = true; // AD v003 MUST-5: values in TextPrimary, labels in TextSecondary (built once per card)
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-                detailRect.offsetMin = new Vector2(textLeft, (int)UiSpace.L + CoreBranchRowHeight);
+                detailRect.offsetMin = new Vector2(textLeft, (int)UiSpace.L + UiFactory.ScaledBand(CoreBranchRowHeight));
                 detailRect.offsetMax = new Vector2(-(int)UiSpace.XL, -(TitleBand + (int)UiSpace.L));
 
                 _coreGlyphs[i] = BuildCoreBranchRow(button, def, textLeft, unlocked);
@@ -439,9 +439,9 @@ namespace DD.Prototype.UI
             row.anchorMin = new Vector2(0f, 0f);
             row.anchorMax = new Vector2(1f, 0f);
             row.pivot = new Vector2(0f, 0f);
-            row.sizeDelta = new Vector2(0f, CoreBranchRowHeight);
+            row.sizeDelta = new Vector2(0f, UiFactory.ScaledBand(CoreBranchRowHeight));
             row.offsetMin = new Vector2(left, (int)UiSpace.M);
-            row.offsetMax = new Vector2(-BadgeWidth, (int)UiSpace.M + CoreBranchRowHeight);
+            row.offsetMax = new Vector2(-BadgeWidth, (int)UiSpace.M + UiFactory.ScaledBand(CoreBranchRowHeight));
 
             TMP_Text label = UiFactory.Label("Label", row, "CORE", UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
             RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);

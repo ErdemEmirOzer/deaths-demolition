@@ -751,6 +751,8 @@ namespace DD.Prototype.UI
         /// countdown so the player can reposition - so it uses the HUD's near-opaque
         /// HudInk backing and the HUD's already-audited text pairs.
         /// </summary>
+        private RectTransform _countdownCard;
+
         private void BuildCountdownStrip()
         {
             _countdownCanvas = UiFactory.CreateCanvas(
@@ -767,6 +769,7 @@ namespace DD.Prototype.UI
             card.pivot = new Vector2(0.5f, 0f);
             card.sizeDelta = new Vector2(CountdownWidth, CountdownHeight);
             card.anchoredPosition = new Vector2(0f, (int)UiSpace.Section);
+            _countdownCard = card;
 
             // L padding: the HudPanel frame's corner notches take ~16 px on each side, and
             // the H2 numeral must not touch the frame (bot-run3 upgrade frame).
@@ -939,6 +942,13 @@ namespace DD.Prototype.UI
             if (!show)
             {
                 return;
+            }
+
+            // WP-068 slice 0 (D8): above the HUD's bottom-centre block when one is shown.
+            float y = Mathf.Max((int)UiSpace.Section, RunHudScreen.BottomCentreTop + (int)UiSpace.S);
+            if (!Mathf.Approximately(_countdownCard.anchoredPosition.y, y))
+            {
+                _countdownCard.anchoredPosition = new Vector2(0f, y);
             }
 
             int seconds = Mathf.Max(0, Mathf.CeilToInt(RunEvents.Current.CountdownRemaining));

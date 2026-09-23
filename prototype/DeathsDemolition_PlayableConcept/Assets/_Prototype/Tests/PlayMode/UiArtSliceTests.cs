@@ -221,6 +221,51 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsFalse(hud.ThreatChipVisible(i), "tehdit yokken çip " + i + " gizli olmalı");
             }
 
+            // WP-068 slice 0 (T11 · D2): every text a threat chip can carry fits its chip
+            // ("SURROUNDED" was clipped to "SURROUNDE" at text scale 1.0 in the baseline).
+            for (int i = 0; i < threatRow.childCount; i++)
+            {
+                GameObject chip = threatRow.GetChild(i).gameObject;
+                TMPro.TMP_Text chipLabel = chip.GetComponentInChildren<TMPro.TMP_Text>(true);
+                string original = chipLabel.text;
+                chip.SetActive(true);
+                foreach (string text in new[] { "SURROUNDED", "BEHIND YOU", "ELITE NEARBY", "ULTRA NEARBY" })
+                {
+                    chipLabel.text = text;
+                    chipLabel.ForceMeshUpdate();
+                    Assert.IsFalse(chipLabel.isTextTruncated, "tehdit çipi " + i + " '" + text + "' metnini kesiyor");
+                }
+
+                chipLabel.text = original;
+                chip.SetActive(false);
+            }
+
+            // WP-068 slice 0 (T11 · D1): no two visible labels in the weapon panel overlap
+            // ("RIFLE · HITSCAN" slid over "P1 / FR1 / RD1" in the baseline HUD frames).
+            {
+                RectTransform classicPanel = null;
+                foreach (RectTransform panel in hud.Panels) if (panel.name == "ClassicWeapon") classicPanel = panel;
+                Assert.IsNotNull(classicPanel, "silah paneli");
+                var labels = new List<RectTransform>();
+                foreach (TMPro.TMP_Text t in classicPanel.GetComponentsInChildren<TMPro.TMP_Text>(false))
+                {
+                    if (!string.IsNullOrEmpty(t.text) && t.transform.parent.name != "Suspended") labels.Add(t.rectTransform);
+                }
+
+                Assert.GreaterOrEqual(labels.Count, 3, "silah paneli ad + tür + mermi yazmalı");
+                for (int a = 0; a < labels.Count; a++)
+                {
+                    for (int b = a + 1; b < labels.Count; b++)
+                    {
+                        // 0.5 px inset: stacked rows share an edge exactly, and that is not an overlap.
+                        Rect ra = PanelRect(labels[a], canvasRect), rb = PanelRect(labels[b], canvasRect);
+                        ra = Rect.MinMaxRect(ra.xMin + 0.5f, ra.yMin + 0.5f, ra.xMax - 0.5f, ra.yMax - 0.5f);
+                        rb = Rect.MinMaxRect(rb.xMin + 0.5f, rb.yMin + 0.5f, rb.xMax - 0.5f, rb.yMax - 0.5f);
+                        Assert.IsFalse(ra.Overlaps(rb), labels[a].name + " ile " + labels[b].name + " çakışıyor: " + ra + " / " + rb);
+                    }
+                }
+            }
+
             // Screen events (WP-022B): the HUD announced itself; the settings file, not
             // PlayerPrefs, holds the UI scale.
             Assert.IsTrue(File.Exists(UiSettings.FilePath) || UiSettings.UiScale == 1f, "ui-settings.json yolu: " + UiSettings.FilePath);

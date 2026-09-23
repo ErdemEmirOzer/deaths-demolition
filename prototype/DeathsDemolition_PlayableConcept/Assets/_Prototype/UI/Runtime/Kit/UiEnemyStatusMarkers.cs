@@ -53,7 +53,7 @@ namespace DD.Prototype.UI
             _shown = new State[PoolSize];
             for (int i = 0; i < PoolSize; i++)
             {
-                TMP_Text label = UiFactory.Chip("Status." + i, transform, "NET", UiColor.SurfaceInset, UiColor.StateWarning, ChipWidth, ChipHeight);
+                TMP_Text label = UiFactory.Chip("Status." + i, transform, "NET", UiColor.SurfaceInset, UiColor.StateWarning, UiFactory.ScaledBand(ChipWidth), UiFactory.ScaledBand(ChipHeight));
                 label.fontStyle = FontStyles.Bold;
                 var chip = (RectTransform)label.transform.parent;
                 chip.anchorMin = new Vector2(0.5f, 0.5f);

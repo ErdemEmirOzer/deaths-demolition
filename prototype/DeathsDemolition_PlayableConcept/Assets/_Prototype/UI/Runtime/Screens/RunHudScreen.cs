@@ -182,7 +182,6 @@ namespace DD.Prototype.UI
         private float _swFieldEndedAt = -1f;
         private int _swFieldEndedCount;
         private int _swShownSeconds = -1, _swShownHits = -1, _swShownShots = -1, _swShownMode = -1;
-        private const float ShotModelWidth = 150f;
         private Image _healthIcon;
         private bool _lowHealthIconShown;
         private Image _reticle;
@@ -282,6 +281,7 @@ namespace DD.Prototype.UI
 
         protected override void OnDestroy()
         {
+            BottomCentreTop = 0f;
             base.OnDestroy();
             Cursor.visible = true;
             RunEvents.RunStarted -= OnRunStarted;
@@ -559,7 +559,7 @@ namespace DD.Prototype.UI
 
             // ---- classic weapon, bottom right ---------------------------------
             RectTransform classic = HudPanel(
-                "ClassicWeapon", new Vector2(1f, 0f), BlockWidth, ClassicBlockHeight);
+                "ClassicWeapon", new Vector2(1f, 0f), BlockWidth, ClassicBlockHeight + UiFactory.LineHeight(UiType.Caption));
             RectTransform host = UiFactory.CardContent(classic, UiSpace.L);
 
             // The CanvasGroup is on the CONTENT, not on the panel: REQ-057 dims the
@@ -589,20 +589,15 @@ namespace DD.Prototype.UI
                 (RectTransform)_classicName.transform, UiFactory.LineHeight(UiType.Label));
 
             _classicBuild = UiFactory.Label("Build", textColumn, string.Empty, UiType.Caption, UiColor.TextSecondary);
-            RectTransform buildRect = stack.Add((RectTransform)_classicBuild.transform, UiFactory.LineHeight(UiType.Caption));
-            buildRect.offsetMax = new Vector2(-ShotModelWidth - (int)UiSpace.S, buildRect.offsetMax.y);
+            stack.Add((RectTransform)_classicBuild.transform, UiFactory.LineHeight(UiType.Caption));
 
-            // WP-022C: roster type / shot model ("SHOTGUN · PELLET x8") on the build row's
-            // right, set once per weapon change - the pellet contract made visible. The
-            // name row keeps its full width: "ASSAULT RIFLE" at Label size already fills
-            // it (the 1080p pause capture showed the two overlapping on one row).
-            _shotModel = UiFactory.Label("ShotModel", textColumn, string.Empty, UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleRight);
-            RectTransform modelRect = (RectTransform)_shotModel.transform;
-            modelRect.anchorMin = new Vector2(1f, 1f);
-            modelRect.anchorMax = new Vector2(1f, 1f);
-            modelRect.pivot = new Vector2(1f, 1f);
-            modelRect.sizeDelta = new Vector2(ShotModelWidth, UiFactory.LineHeight(UiType.Caption));
-            modelRect.anchoredPosition = buildRect.anchoredPosition;
+            // WP-022C: roster type / shot model ("SHOTGUN · PELLET x8"), set once per weapon
+            // change - the pellet contract made visible. WP-068 slice 0 (D1): its own row.
+            // It used to share the build row, right-anchored at the build row's
+            // anchoredPosition - which on a stretched rect is the centre offset (-79 px),
+            // so "RIFLE · HITSCAN" slid left over "P1 / FR1 / RD1" (baseline bot-hud-r4).
+            _shotModel = UiFactory.Label("ShotModel", textColumn, string.Empty, UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)_shotModel.transform, UiFactory.LineHeight(UiType.Caption));
 
             stack.Gap(UiSpace.XS);
 
@@ -847,6 +842,36 @@ namespace DD.Prototype.UI
             _threatSurrounded = ThreatChip(row, 0, "SURROUNDED", "Threat.Surrounded", UiColor.StateDanger, out _);
             _threatRear = ThreatChip(row, 1, "BEHIND YOU", "Threat.Behind", UiColor.StateDanger, out _);
             _threatStrong = ThreatChip(row, 2, "ELITE NEARBY", "Threat.Elite", UiColor.StateWarning, out _threatStrongText);
+
+            // WP-068 slice 0 (D2): the chip width comes from the longest label it can show,
+            // measured once here in the chip's own style (Body bold, +4 tracking, the
+            // current TextScale). The fixed 208 px clipped "SURROUNDED" to "SURROUNDE" at
+            // text scale 1.0 (baseline bot-threat). All three slots share one width so a
+            // chip never shifts when another appears.
+            float width = ThreatChipWidth;
+            for (int i = 0; i < ThreatLabels.Length; i++)
+            {
+                float needed = Mathf.Ceil(_threatStrongText.GetPreferredValues(ThreatLabels[i]).x) + ThreatLabelLeft + ThreatLabelRight + (int)UiSpace.XS;
+                width = Mathf.Max(width, needed);
+            }
+
+            PlaceThreatChip(_threatSurrounded, 0, width);
+            PlaceThreatChip(_threatRear, 1, width);
+            PlaceThreatChip(_threatStrong, 2, width);
+            row.sizeDelta = new Vector2(width * 3f + (int)UiSpace.S * 2, ThreatChipHeight);
+        }
+
+        /// <summary>Every text a threat chip can carry (sizes the shared chip width).</summary>
+        private static readonly string[] ThreatLabels = { "SURROUNDED", "BEHIND YOU", "ELITE NEARBY", "ULTRA NEARBY" };
+
+        private const float ThreatLabelLeft = 20f + ThreatGlyphSize + (int)UiSpace.S;
+        private const float ThreatLabelRight = 20f;
+
+        private static void PlaceThreatChip(GameObject chip, int index, float width)
+        {
+            var rect = (RectTransform)chip.transform;
+            rect.sizeDelta = new Vector2(width, ThreatChipHeight);
+            rect.anchoredPosition = new Vector2(index * (width + (int)UiSpace.S), 0f);
         }
 
         private static GameObject ThreatChip(RectTransform row, int index, string text, string icon, UiColor color, out TMP_Text label)
@@ -881,7 +906,7 @@ namespace DD.Prototype.UI
             // WP-022L: the AP-012 v003 threat glyphs are drawn upright (Threat.Behind already
             // shows the arrow striking from behind), so the old Menu.Back rotation is gone.
             RectTransform labelRect = (RectTransform)label.transform;
-            labelRect.offsetMin = new Vector2(20f + ThreatGlyphSize + (int)UiSpace.S, 0f);
+            labelRect.offsetMin = new Vector2(ThreatLabelLeft, 0f);
             labelRect.offsetMax = new Vector2(-20f, 0f);
             label.alignment = TMPro.TextAlignmentOptions.Left;
 
@@ -1314,6 +1339,16 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// WP-068 slice 0 (D8): the top edge (canvas units, from the bottom) of what the HUD
+        /// currently occupies at bottom centre - the Special block while it is shown, 0
+        /// otherwise. The round-end "NEXT ROUND IN" strip (UpgradeScreen, its own canvas,
+        /// same reference resolution) docks above it instead of drawing over it: a round
+        /// can end with the Special still on the field (baseline bot-special-ground vs
+        /// bot-upgrade put both in the same place).
+        /// </summary>
+        public static float BottomCentreTop { get; private set; }
+
         private void UpdateSpecialWeapon()
         {
             SpecialWeaponHudState state = WeaponEvents.Special;
@@ -1323,6 +1358,8 @@ namespace DD.Prototype.UI
             {
                 _specialBlock.SetActive(visible);
             }
+
+            BottomCentreTop = visible ? ((RectTransform)_specialBlock.transform).offsetMax.y : 0f;
 
             if (!visible)
             {

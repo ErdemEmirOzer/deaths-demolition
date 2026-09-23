@@ -908,11 +908,11 @@ namespace DD.Prototype.UI
         private static Image[] AddPaletteSwatches(ref UiStack stack, RectTransform parent)
         {
             RectTransform row = UiFactory.NewRect("Swatches", parent);
-            stack.Add(row, StateChipHeight);
+            stack.Add(row, UiFactory.ScaledBand(StateChipHeight));
             var images = new Image[SwatchTokens.Length];
             for (int i = 0; i < SwatchTokens.Length; i++)
             {
-                TMP_Text chip = UiFactory.Chip("Swatch." + SwatchNames[i], row, SwatchNames[i], SwatchTokens[i], UiColor.SurfaceBase, 96f, StateChipHeight);
+                TMP_Text chip = UiFactory.Chip("Swatch." + SwatchNames[i], row, SwatchNames[i], SwatchTokens[i], UiColor.SurfaceBase, 96f, UiFactory.ScaledBand(StateChipHeight));
                 chip.fontStyle = TMPro.FontStyles.Bold;
                 RectTransform rect = (RectTransform)chip.transform.parent;
                 rect.anchorMin = new Vector2(0f, 0.5f);
@@ -953,7 +953,7 @@ namespace DD.Prototype.UI
             System.Func<(string text, bool on)> current, System.Func<(string text, bool on)> cycle, string eventDetail)
         {
             UiButton button = UiFactory.Button(name, parent, label, UiButtonVariant.Secondary, null);
-            stack.Add((RectTransform)button.transform, ToggleRowHeight);
+            stack.Add((RectTransform)button.transform, UiFactory.ScaledBand(ToggleRowHeight));
             button.LabelText.alignment = TMPro.TextAlignmentOptions.Left;
             button.LabelText.fontSize = UiTokens.FontSize(UiType.Body);
             button.LabelText.color = UiTokens.Get(UiColor.TextPrimary);
@@ -965,7 +965,7 @@ namespace DD.Prototype.UI
             TMP_Text chip = UiFactory.Chip("State", button.transform, state.text,
                 state.on ? UiColor.StateSuccess : UiColor.SurfaceInset,
                 state.on ? UiColor.SurfaceBase : UiColor.TextSecondary,
-                Mathf.Max(StateChipMinWidth, ChipWidthFor(state.text)), StateChipHeight);
+                Mathf.Max(StateChipMinWidth, ChipWidthFor(state.text)), UiFactory.ScaledBand(StateChipHeight));
             chip.fontStyle = TMPro.FontStyles.Bold;
             RectTransform chipRect = (RectTransform)chip.transform.parent;
             chipRect.anchorMin = new Vector2(1f, 0.5f);
@@ -998,7 +998,7 @@ namespace DD.Prototype.UI
             chip.color = UiTokens.Get(state.on ? UiColor.SurfaceBase : UiColor.TextSecondary);
             chipRect.GetComponent<Image>().color = UiTokens.Get(state.on ? UiColor.StateSuccess : UiColor.SurfaceInset);
             edge.effectColor = state.on ? new Color(0f, 0f, 0f, 0f) : UiTokens.Get(UiColor.BorderHairline);
-            chipRect.sizeDelta = new Vector2(Mathf.Max(StateChipMinWidth, ChipWidthFor(state.text)), StateChipHeight);
+            chipRect.sizeDelta = new Vector2(Mathf.Max(StateChipMinWidth, ChipWidthFor(state.text)), UiFactory.ScaledBand(StateChipHeight));
         }
 
         private static TMP_Text AddCaptionUnder(ref UiStack stack, RectTransform parent, string name, string text, int lines = 2)
@@ -1365,7 +1365,7 @@ namespace DD.Prototype.UI
                     UiSound.Play(UiSoundKind.Denied);
                 }
             });
-            stack.Add((RectTransform)button.transform, OptionHeight);
+            stack.Add((RectTransform)button.transform, UiFactory.ScaledBand(OptionHeight));
             stack.Gap(UiSpace.XS);
             button.LabelText.fontSize = UiTokens.FontSize(UiType.Body); // AD v004 MUST-4: names at Body 18
             button.SetSelectedChoice(selected);
