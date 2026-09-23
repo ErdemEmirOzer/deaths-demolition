@@ -12,7 +12,7 @@
 | Smoke | `tools/smoke.sh <app> <out> --mode …` | e1 ana menü + e4 `-ddDirectToRun` kareleri, istisna taraması; gerçek kullanıcı verisi yedek→geri yükle→SHA doğrula (`userdata.verified`) |
 | Ayak izi | `tools/build-report.sh` | Unity Build Report kategorileri/top-N/klasör; son release **545,7 MB** (WP-065, ≤ 550) |
 | Entegrasyon | `tools/integrate.sh` + `post-integrate.sh` | C-00 kapısı, açıklamalı etiket, yedek (bundle + LFS), temizlik dry-run |
-| RC | **yok** — `rc.sh` depoda bulunmuyor | RC adımı bugün elle: build.sh release --smoke + etiket |
+| RC kabul/regresyon | `tools/qa/rc.sh [out] [--rounds ≥12] [--seed] [--perf-runs] [--window] [--diagnostic-continue]` (WP-061) | tam EditMode + PlayMode (`test.sh`) → `build.sh release --smoke` → m3-regression (build/spawnmix/bot/perf/readability, Ultra kanıtı zorunlu) → soak (tam round) → ekonomi kabulü + pencere modları (dev app) → log taraması → `rc_aggregate.py` hükmü; varsayılan fail-fast, `--diagnostic-continue` bağımsız kanıt aşamalarını sürdürür (hüküm yine FAIL). Eksik olan yalnız etiket/sürüm alanı adımı (§2) |
 
 ### 1.2 Sürüm damgası
 
@@ -71,7 +71,7 @@ Tüm yollar `companyName`/`productName`/bundle id'den türer: **bunlardan birini
 
 - Paket etiketleri (`wp-*`) aynen sürer; release etiketleri ayrı ad alanı: `v1.0-rc.N` (N = 1, 2, …) → onaylı RC aynı commit'e `v1.0` olarak yeniden etiketlenir (yeni build yok; aynı ikili).
 - Etiketler açıklamalı, eğik çizgisiz (integrate.sh kapısıyla uyumlu), yalnız C-00 atar; silinmez/taşınmaz — reddedilen RC'den sonra N artar.
-- RC ölçütleri (öneri): main temiz; EditMode + PlayMode tam koşu yeşil (bilinen FAIL listesi boş ya da kullanıcı onaylı); `build.sh release --smoke` 0 ve `userdata.verified`; ayak izi ≤ o anki tavan; S-10 perf kapısı (DEC-088) geçerli; §1.6 lisans paketi hazır.
+- RC ölçütleri (öneri): main temiz; `tools/qa/rc.sh` hükmü PASS (tam test süitleri, release build+smoke `userdata.verified`, m3-regression/perf DEC-088, soak, Ultra, pencere modları, log taraması — bilinen FAIL listesi boş ya da kullanıcı onaylı); ayak izi ≤ o anki tavan; §1.6 lisans paketi hazır. Etiket, PASS veren `rc.sh` koşusunun commit'ine atanır.
 - Sürüm eşlemesi: `bundleVersion` = `1.0` (etiketin semver çekirdeği), `buildNumber` = RC sayacı ya da build sayısı (tekdüze artan; mağazalar ister). Bunların etiketten otomatik yazılması ve `BuildStamp`'ın `--match 'v*'` kullanması küçük bir S-01 kod paketi (WP-066 uygulaması, onay sonrası).
 - RC artefaktı: `.app` + `build-info.json` + `footprint.json` + `smoke-report.json` + SHA-256 listesi; yeri `~/Desktop/KADRO/context/projects/deaths-demolition/releases/<etiket>/` (öneri; repo dışı, LFS'e girmez).
 
@@ -112,5 +112,5 @@ Beyanın doğru kalması için açık uçlar: (a) varsayılan açık/kapalı (�
 8. 🔴 **Unity lisans katmanı ve splash:** mevcut lisans (Personal/Pro) dağıtım gelir eşiği ile uyumlu mu; splash ekranı kalsın mı (Pro gerektirir).
 9. 🔴 **Minimum macOS sürümü ve mimari:** 10.13 alt sınırı mı yoksa daha yeni (ör. 12+) ve Universal mı / yalnız Apple silicon mı; ilk RC'de ölçülüp onaylanır.
 10. 🔴 **Release ayak izi tavanı:** DEC-086 (550 MB) dağıtım kararıyla yeniden belirlenir — kanal/indirme boyutu hedefi.
-11. 🔴 **Sürüm politikası onayı:** §2 `v1.0-rc.N` → `v1.0` şeması, RC ölçütleri ve `bundleVersion`/`buildNumber` eşlemesi; ardından S-01 küçük kod paketi (`--match 'v*'`, sürüm alanlarının etiketten yazılması, telemetri budama, `rc.sh`).
+11. 🔴 **Sürüm politikası onayı:** §2 `v1.0-rc.N` → `v1.0` şeması, RC ölçütleri ve `bundleVersion`/`buildNumber` eşlemesi; ardından S-01 küçük kod paketi (`--match 'v*'`, sürüm alanlarının etiketten yazılması, telemetri budama).
 12. 🔴 **Yasal metinler:** EULA/kullanım koşulları, kredi ekranı (OFL metni + AI araç atıfları + ekip), gizlilik beyanının yayın yeri.
