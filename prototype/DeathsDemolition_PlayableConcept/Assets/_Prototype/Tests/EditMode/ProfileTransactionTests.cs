@@ -315,7 +315,8 @@ namespace DD.Prototype.Tests.EditMode
             // artık canlı yetki değildir (NotIssued → InvalidIdentity), yeni koşu uygulanır.
             RunSummary eski = Ozet(Kimlik(), 2, 1, 3, 3, 20);
             ProfileStore.SaveStageHook = s => { if (s == ProfileSaveStage.Replace) throw new IOException("injected"); };
-            LogAssert.Expect(LogType.Warning, new Regex("injected"));
+            // WP-063: günlük yalnız aşama + istisna türünü yazar (istisna metni yol/OS ayrıntısı sızdırabilir).
+            LogAssert.Expect(LogType.Warning, new Regex("Save failed at Replace \\(IOException\\)"));
             LogAssert.Expect(LogType.Warning, new Regex("Profile not saved"));
             Assert.AreEqual(ProfileCommitOutcome.SaveFailed, ProfileService.ApplyRun(eski).Outcome);
             ProfileStore.SaveStageHook = null;
@@ -345,7 +346,8 @@ namespace DD.Prototype.Tests.EditMode
         [TestCase(ProfileSaveStage.BackupCopy)]
         [TestCase(ProfileSaveStage.BeforeReplace)]
         [TestCase(ProfileSaveStage.Replace)]
-        [TestCase(ProfileSaveStage.PostReplaceVerify)]
+        // PostReplaceVerify burada YOK: rename tamamlandıktan sonraki hata WP-063 sözleşmesinde commit sayılır
+        // (bkz. ReplaceSonrasiHata_DogrulanmisYeniPrimary_UygulanmisSayilir_RetryDuplicate).
         public void SaveBasarisiz_CanliProfilDiskeEsit_RetryTekUygular(ProfileSaveStage hata)
         {
             // Bir koşu uygulanmış bir profil (RunsPlayed 1); ikinci koşu save'de düşer.
@@ -389,6 +391,46 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(Parmakizi(ProfileService.Current), DiskParmakizi(), "canlı = disk");
             Assert.AreSame(r2, ProfileService.ApplyRun(o), "üçüncü çağrı duplicate");
             Assert.AreEqual(2, ProfileService.Current.RunsPlayed);
+        }
+
+        [Test]
+        public void ReplaceSonrasiHata_DogrulanmisYeniPrimary_UygulanmisSayilir_RetryDuplicate()
+        {
+            // WP-063 sözleşmesi (ProfileStore.RecoverAfterFailedReplace; ProfileStoreFaultTests aynı kuralı depo
+            // düzeyinde sabitler): rename TAMAMLANDIKTAN sonra (PostReplaceVerify) bir hata olursa ve primary
+            // bayt bayt doğrulanmış yeni aday ise transaction commit etmiştir. Başarısızlık bildirmek RAM'i
+            // eski, diski yeni bırakırdı — "canlı profil = disk" garantisi bozulurdu. Exactly-once: bu çağrı
+            // uygulanır ve yetkiyi tüketir; aynı token'ın tekrarı duplicate'tir, ikinci kez ilerleme yok.
+            Assert.IsTrue(ProfileService.ApplyRun(Ozet(Kimlik(), 2, 1, 3, 3, 20)).Applied);
+            int changedOnce = _changed;
+
+            RunSummary o = Ozet(Kimlik(), 4, 3, 9, 9, 90);
+            ProfileStore.SaveStageHook = s =>
+            {
+                if (s == ProfileSaveStage.PostReplaceVerify)
+                {
+                    throw new IOException("injected fault at " + s);
+                }
+            };
+            LogAssert.Expect(LogType.Warning, new Regex("Save failed at PostReplaceVerify \\(IOException\\)"));
+            RunRewardReport r = ProfileService.ApplyRun(o);
+            ProfileStore.SaveStageHook = null;
+
+            Assert.AreEqual(ProfileCommitOutcome.Applied, r.Outcome, "replace sonrası doğrulanmış primary = commit");
+            Assert.IsTrue(r.Applied);
+            Assert.IsFalse(r.SaveFailed);
+            Assert.IsTrue(ProfileStore.LastSaveResult.Success);
+            Assert.AreEqual(2, ProfileService.Current.RunsPlayed);
+            Assert.AreEqual(2, ProfileService.Current.LastAppliedCompletionOrdinal, "stats ve ordinal aynı transaction'da");
+            Assert.AreEqual(Parmakizi(ProfileService.Current), DiskParmakizi(), "canlı = disk (yeni profil)");
+            Assert.AreEqual(changedOnce + 1, _changed, "Changed tam bir kez");
+            Assert.IsFalse(File.Exists(ProfileStore.CandidatePath), "aday temizlendi");
+
+            // Aynı token tekrar: duplicate, ikinci ilerleme yok.
+            Assert.AreSame(r, ProfileService.ApplyRun(o), "tekrar çağrı duplicate");
+            Assert.AreEqual(2, ProfileService.Current.RunsPlayed);
+            Assert.AreEqual(changedOnce + 1, _changed);
+            Assert.AreEqual(Parmakizi(ProfileService.Current), DiskParmakizi());
         }
 
         [Test]

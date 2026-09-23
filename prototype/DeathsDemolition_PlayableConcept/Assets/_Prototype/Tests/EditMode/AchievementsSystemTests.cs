@@ -355,7 +355,8 @@ namespace DD.Prototype.Tests.EditMode
 
             RunSummary o = Ozet(Kimlik(), 2, 1, 3, 3, 20, gold: 10);
             ProfileStore.SaveStageHook = s => { if (s == ProfileSaveStage.Replace) throw new IOException("injected"); };
-            LogAssert.Expect(LogType.Warning, new Regex("injected"));
+            // WP-063: günlük yalnız aşama + istisna türünü yazar (istisna metni yol/OS ayrıntısı sızdırabilir).
+            LogAssert.Expect(LogType.Warning, new Regex("Save failed at Replace \\(IOException\\)"));
             LogAssert.Expect(LogType.Warning, new Regex("Profile not saved"));
             RunRewardReport fail = ProfileService.ApplyRun(o, new RunFeatCounters { SpecialWeaponPickups = 1 });
             ProfileStore.SaveStageHook = null;
