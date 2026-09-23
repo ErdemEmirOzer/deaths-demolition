@@ -11,6 +11,12 @@
 #   * macOS preferences (PlayerPrefs plists) and the release profile cannot be redirected, so the
 #     four real files (+ side files) are copied before the runs and restored + hash-verified
 #     afterwards — the guard fails (exit 30) only if the restore does not reproduce the hashes;
+#   * WP-066D: cfprefsd writes plists to disk lazily, so after the players exit and after the
+#     `defaults import` restore the guard waits (≤ 10 s) until each plist on disk equals the
+#     cfprefsd view (`defaults export`) before hashing; Unity's own launch counter keys
+#     (unity.player_session_count / unity.player_sessionid — every player launch, including other
+#     sessions' players with the same bundle id, bumps them in both plists) are left out of the two
+#     plist digests; every other key is still compared, the profile and its side files stay byte-hashed;
 #   * result in <out>/smoke-report.json ("userdata": before/after/restored/verified).
 # Exit: 0 ok · 20 smoke failed (exit code / exception / missing capture) · 30 user-data guard failed · 64 usage
 # Machine slot: takes the single 'smoke' slot (tools/slot.sh v4) for the whole e1+e4+restore sequence.
@@ -32,8 +38,35 @@ P1="$PR/$DD_BUNDLE_ID.plist"; P2="$PR/unity.Deaths Demolition.$DD_PRODUCT.plist"
 # Side files = .bak / .corrupt.N.json (saved progress). The .lock file is a live process lease
 # (pid/name diagnostics, WP-009H); its bytes change whenever any player holds the profile, so it
 # is neither backed up nor compared — parallel sessions would otherwise trip the guard.
+# WP-066D: digest of a PlayerPrefs plist with only Unity's launch-counter keys removed (canonical JSON of the rest).
+UNITY_VOLATILE="unity.player_session_count unity.player_sessionid"
+plist_digest() { [ -f "$1" ] || { echo MISSING; return; }
+  python3 - "$1" "$UNITY_VOLATILE" <<'PY'
+import hashlib, json, plistlib, sys
+d = plistlib.load(open(sys.argv[1], "rb"))
+for k in sys.argv[2].split(): d.pop(k, None)
+print(hashlib.sha256(json.dumps(d, sort_keys=True, default=repr).encode()).hexdigest())
+PY
+}
+# Wait until the plist on disk mirrors cfprefsd's in-memory domain (lazy write-back), ≤ 10 s.
+PLIST_SAME='import plistlib, sys
+raw = sys.stdin.buffer.read()
+live = plistlib.loads(raw) if raw.strip() else None
+try:
+    disk = plistlib.load(open(sys.argv[1], "rb"))
+except FileNotFoundError:
+    disk = None
+sys.exit(0 if (live or None) == (disk or None) else 1)'
+settle_plist() { local dom="$1" file="$2" i=0
+  while [ $i -lt 50 ]; do
+    defaults export "$dom" - 2>/dev/null | python3 -c "$PLIST_SAME" "$file" && return 0
+    sleep 0.2; i=$((i+1))
+  done
+  dd_log "guard: $dom not settled on disk after 10 s"; return 1
+}
+settle_all() { settle_plist "$DD_BUNDLE_ID" "$P1"; settle_plist "unity.Deaths Demolition.$DD_PRODUCT" "$P2"; }
 sidefiles() { for d in "$D1" "$D2"; do [ -d "$d" ] && find "$d" -maxdepth 1 -name 'prototype-profile.json.*' ! -name '*.lock' 2>/dev/null; done | LC_ALL=C sort; }
-snapshot() { for f in "$F1" "$F2" "$P1" "$P2"; do echo "$(dd_sha "$f")  $f"; done; sidefiles | while IFS= read -r f; do echo "$(dd_sha "$f")  $f"; done; }
+snapshot() { for f in "$F1" "$F2"; do echo "$(dd_sha "$f")  $f"; done; for f in "$P1" "$P2"; do echo "$(plist_digest "$f")  $f (launch-counter keys excluded)"; done; sidefiles | while IFS= read -r f; do echo "$(dd_sha "$f")  $f"; done; }
 
 # 1) guard: copy the real user data (no deletion, our own directory only)
 UD="$OUT/userdata-backup"; mkdir -p "$UD/D1" "$UD/D2" "$UD/PR"
@@ -59,7 +92,8 @@ E4=$?; E4X=$(grep -c 'Exception\|WITH FAILURES' "$OUT/e4-run-player.log" 2>/dev/
 defaults delete "$DD_BUNDLE_ID" "DD.Prototype.DirectToRun" >/dev/null 2>&1 && dd_log "guard: DD.Prototype.DirectToRun key removed after e4"
 dd_log "e4 exit=$E4 exceptions=$E4X capture=$([ -s "$OUT/e4-run-1280x720.png" ] && echo yes || echo no)"
 
-# 4) guard: restore + verify
+# 4) guard: restore + verify (WP-066D: let cfprefsd write the players' last changes first)
+settle_all
 snapshot > "$OUT/userdata-after-run.txt"
 TOUCHED=0; cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-after-run.txt" || TOUCHED=1
 if [ "$TOUCHED" -eq 1 ]; then
@@ -69,6 +103,7 @@ if [ "$TOUCHED" -eq 1 ]; then
   [ -f "$UD/PR/$(basename "$P1")" ] && defaults import "$DD_BUNDLE_ID" "$UD/PR/$(basename "$P1")"
   [ -f "$UD/PR/$(basename "$P2")" ] && defaults import "unity.Deaths Demolition.$DD_PRODUCT" "$UD/PR/$(basename "$P2")"
   sleep 1
+  settle_all
 fi
 snapshot > "$OUT/userdata-after.txt"
 VERIFIED=0; cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-after.txt" && VERIFIED=1
