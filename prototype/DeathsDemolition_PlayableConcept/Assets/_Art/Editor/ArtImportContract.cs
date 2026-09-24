@@ -169,42 +169,49 @@ namespace DD.Art.Pipeline.EditorTools
         /// sampled at mip ≥ 2 of a 2048 map even on the ground; 1024 on walls and foliage and
         /// 512 on props lose nothing the fixed camera can show. Measured before the policy
         /// (WP-014, all 63 shipped maps at 2048): 337 MB in the build, +315 MB resident.
+        ///
+        /// ADR-015-1 v3 (WP-074 B2, DEC-093 5 GB build cap, C-00 24.09): the third-person / first-person cameras (WP-070) frame the
+        /// world at eye height, so the caps double — Ground / Hero / Sky 4096, Structure / Foliage / Weapon / Vfx 2048, Prop /
+        /// Breakable 1024, Character 2048. Size is no longer the limit; resident memory is, per quality tier (QualityTiers.StreamingBudgetMb).
         /// </summary>
         public enum TextureClass
         {
-            /// <summary>Tiling ground and paving: 2048.</summary>
+            /// <summary>Tiling ground and paving: 4096 (v3; FP underfoot slate).</summary>
             Ground = 0,
-            /// <summary>Walls, timber, roofs, module surfaces: 1024.</summary>
+            /// <summary>Walls, timber, roofs, module surfaces: 2048 (v3).</summary>
             Structure = 1,
-            /// <summary>Foliage atlases, bark, moss, culms: 1024.</summary>
+            /// <summary>Foliage atlases, bark, moss, culms: 2048 (v3; impostor atlases too).</summary>
             Foliage = 2,
-            /// <summary>Dressing props (lanterns, benches, crates): ≤ 512. WP-017: the six AP-005B prop roles (prop_*).</summary>
+            /// <summary>Dressing props (lanterns, benches, crates): ≤ 1024 (v3). WP-017: the six AP-005B prop roles (prop_*).</summary>
             Prop = 3,
-            /// <summary>Breakables: ≤ 512. Reserved; no role today.</summary>
+            /// <summary>Breakables: ≤ 1024 (v3). Reserved; no role today.</summary>
             Breakable = 4,
-            /// <summary>WP-037 · VFX sheets (<see cref="TextureRole.Sheet"/>): 1024, never streamed (an effect shows on its first frame; streaming would show the lowest mip first).</summary>
+            /// <summary>WP-037 · VFX sheets (<see cref="TextureRole.Sheet"/>): 2048 (v3), never streamed (an effect shows on its first frame; streaming would show the lowest mip first).</summary>
             Vfx = 7,
-            /// <summary>WP-042B · weapon atlases (AP-013 classic set, AP-014 Special Weapon set): 1024, held at character distance, streamed like everything else.</summary>
+            /// <summary>WP-042B · weapon atlases (AP-013 classic set, AP-014 Special Weapon set): 2048 (v3; AP-021 FP view models), streamed like everything else.</summary>
             Weapon = 8,
-            /// <summary>The 4×256 sky gradient (ArtSkyBuilder): 256, never streamed (a skybox has no renderer for the streaming system to rate).</summary>
+            /// <summary>Sky dome / horizon plates: 4096 (v3; lat-long 4096×2048, plates 4096×1024), never streamed (a skybox has no renderer for the streaming system to rate).</summary>
             Sky = 5,
             /// <summary>WP-016 · Skinned characters (player, zombie atlas): 2048 — the one thing the fixed camera frames at 100 px and the player stares at (ADR-016-1).</summary>
-            Character = 6
+            Character = 6,
+            /// <summary>ADR-015-1 v3 · hero pieces the eye-level cameras dwell on (palace facade, main gate, bridge, lantern set; ≤ 24 texture sets): 4096.</summary>
+            Hero = 9
         }
 
         public static int MaxSizeOf(TextureClass c)
         {
             switch (c)
             {
-                case TextureClass.Ground: return 2048;
-                case TextureClass.Structure: return 1024;
-                case TextureClass.Foliage: return 1024;
-                case TextureClass.Prop: return 512;
-                case TextureClass.Breakable: return 512;
-                case TextureClass.Sky: return 1024;   // WP-038E (2): the AP-019 sky band lat-long (was 256 for the 4×256 gradient)
+                case TextureClass.Ground: return 4096;
+                case TextureClass.Hero: return 4096;
+                case TextureClass.Structure: return 2048;
+                case TextureClass.Foliage: return 2048;
+                case TextureClass.Prop: return 1024;
+                case TextureClass.Breakable: return 1024;
+                case TextureClass.Sky: return 4096;   // v3 (WP-038E (2) had 1024 for the AP-019 band; 256 before for the 4×256 gradient)
                 case TextureClass.Character: return 2048;
-                case TextureClass.Vfx: return 1024;
-                case TextureClass.Weapon: return 1024;
+                case TextureClass.Vfx: return 2048;
+                case TextureClass.Weapon: return 2048;
                 default: throw new ArgumentOutOfRangeException(nameof(c));
             }
         }
@@ -217,8 +224,8 @@ namespace DD.Art.Pipeline.EditorTools
 
         // WP-075 C1 (ADR-015-1 v3): the texture streaming budget is per quality tier — DD.Prototype.Core.QualityTiers.StreamingBudgetMb (512 / 1024 / 2048 MB).
 
-        /// <summary>ADR-015-1 resident ceiling for the art texture set (probe counter delta against the procedural Run), MB.</summary>
-        public const int ArtTextureMemoryBudgetMb = 160;
+        /// <summary>ADR-015-1 resident ceiling for the art texture set (probe counter delta against the procedural Run), MB — v3: the High tier's streaming budget (Performance 512 / Cinematic 2048).</summary>
+        public const int ArtTextureMemoryBudgetMb = 1024;
 
         /// <summary>
         /// WP-017 · ADR-015-1 v2 shipped-bytes budgets (PNG-header estimate at the class sizes,
@@ -230,11 +237,11 @@ namespace DD.Art.Pipeline.EditorTools
         /// If the character set exceeds its line the armour atlas drops to 1024 (technical rule, reported).
         /// </summary>
         /// <summary>v5 (WP-038E): 120 → 125 — the AP-018 wet inputs (2.6 MB at 512²) and the AP-019 sky band; the character line keeps its 35 MB headroom, the 220 total holds.</summary>
-        public const int ShippedWorldBudgetMb = 125;
-        public const int ShippedCharacterBudgetMb = 100;   // v3 (WP-020, C-00 technical decision): the AP-007 second cloth atlas (3 × 2K maps)
+        public const int ShippedWorldBudgetMb = 1600;      // ADR-015-1 v3 (DEC-093): world textures ≤ 1.6 GB (v5 WP-038E: 125)
+        public const int ShippedCharacterBudgetMb = 400;   // v3 ADR (DEC-093): 0.4 GB (WP-020 line: 100 — the AP-007 second cloth atlas, 3 × 2K maps)
         /// <summary>WP-042B (ADR-015-1 v4 line, S-05 handshake): the weapon set — AP-014 Special Weapon atlas + AP-013 classic atlas (1K each, BaseColor + Normal + derived MS) on its own line (moved out of the character set).</summary>
-        public const int ShippedWeaponBudgetMb = 12;
-        public const int ShippedTotalBudgetMb = 220;       // v3 (WP-020); the weapon set fits inside it (measured 201 MB with the weapon line at 8.0)
+        public const int ShippedWeaponBudgetMb = 400;      // ADR-015-1 v3: 0.4 GB (AP-021 FP view models; WP-042B line: 12)
+        public const int ShippedTotalBudgetMb = 2400;      // ADR-015-1 v3: the three texture lines together (WP-020: 220)
 
         /// <summary>
         /// ADR-015-2 release build ceiling, MB (Editor build report "Complete build size").
@@ -243,7 +250,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// 507 with them batched). The texture budgets hold (world 116.8 / 120, character 69.3 / 80);
         /// the growth is content (meshes + character atlases), not policy drift.
         /// </summary>
-        public const int ReleaseBuildBudgetMb = 450;
+        public const int ReleaseBuildBudgetMb = 4600;      // ADR-015-1 v3 (DEC-093 5 GB cap, 0.4 GB margin; tools/build-report.sh --cap 5000)
 
         public static bool IsCharacterClass(TextureClass c)
         {
@@ -402,7 +409,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// the same ratio the 2048² classes keep with <see cref="DerivedMaskMaxSize"/>. A ≤ 2 m prop reads 1.3 cm per mask texel at
         /// 256 — nothing the gameplay rig resolves — and the ten prop roles stay 2.6 MB under the ADR-015-1 v5 world line.
         /// </summary>
-        public const int PropMaskMaxSize = 256;
+        public const int PropMaskMaxSize = 512;   // ADR-015-1 v3: half the Prop class (1024), the same ratio as before (WP-038I: 256 of 512)
 
         public static int MaskMaxSizeOf(TextureClass c)
         {
@@ -410,16 +417,13 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>
-        /// WP-038L · Prop / Breakable-class normal maps ship at 256² (the AP-017 Phase 2b import took the world line to 127.3 / 125 MB
-        /// and the release to 550.9 / 550 MB). A ≤ 2 m prop spans ~80 px at the gameplay rig, so the GPU samples the 128² mip of a
-        /// 512² normal there — mip 0 was never on screen; albedo keeps the class size (512²).
+        /// Class size, masks capped (<see cref="MaskMaxSizeOf"/>). ADR-015-1 v3: the WP-038L Prop / Breakable normal cap (256², taken
+        /// when the AP-017 Phase 2b import hit the 550 MB release line) is gone — at the TP / FP cameras a prop fills the screen and its
+        /// normal ships at the class size like every other normal.
         /// </summary>
-        public const int PropNormalMaxSize = 256;
-
         public static int MaxSizeOf(TextureClass c, TextureRole role)
         {
             int size = MaxSizeOf(c);
-            if (role == TextureRole.Normal && (c == TextureClass.Prop || c == TextureClass.Breakable)) return Mathf.Min(size, PropNormalMaxSize);
             return IsCappedMaskRole(role) ? Mathf.Min(size, MaskMaxSizeOf(c)) : size;
         }
 
@@ -484,8 +488,8 @@ namespace DD.Art.Pipeline.EditorTools
             return bytes;
         }
 
-        /// <summary>WP-011 value; ADR-015-1 keeps it as the largest class size (Ground).</summary>
-        public const int TextureMaxSize = 2048;
+        /// <summary>The largest class size (Ground / Hero / Sky; ADR-015-1 v3 — WP-011: 2048).</summary>
+        public const int TextureMaxSize = 4096;
         public const bool TextureMipmaps = true;
         public const FilterMode TextureFilter = FilterMode.Trilinear;
         public const TextureWrapMode TextureWrap = TextureWrapMode.Repeat;

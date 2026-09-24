@@ -202,20 +202,20 @@ namespace DD.Art.Tests.EditMode
             }
         }
 
-        // ------------------------------------------------------------------ WP-015 · doku sınıf tablosu (ADR-015-1)
+        // ------------------------------------------------------------------ WP-015 · doku sınıf tablosu (ADR-015-1 v3, WP-074 B2)
 
-        [TestCase("earth", ArtImportContract.TextureClass.Ground, 2048)]
-        [TestCase("gravel", ArtImportContract.TextureClass.Ground, 2048)]
-        [TestCase("stone", ArtImportContract.TextureClass.Ground, 2048)]
-        [TestCase("wood", ArtImportContract.TextureClass.Structure, 1024)]
-        [TestCase("plaster_hf003", ArtImportContract.TextureClass.Structure, 1024)]
-        [TestCase("earth_02", ArtImportContract.TextureClass.Structure, 1024)]
-        [TestCase("green_foliage_03", ArtImportContract.TextureClass.Foliage, 1024)]
-        [TestCase("bamboo_culm", ArtImportContract.TextureClass.Foliage, 1024)]
-        [TestCase("bark", ArtImportContract.TextureClass.Foliage, 1024)]
-        [TestCase("sky", ArtImportContract.TextureClass.Sky, 1024)]   // WP-038E (2): AP-019 band lat-long
-        [TestCase("sw_atlas", ArtImportContract.TextureClass.Weapon, 1024)]
-        [TestCase("weapons", ArtImportContract.TextureClass.Weapon, 1024)]
+        [TestCase("earth", ArtImportContract.TextureClass.Ground, 4096)]
+        [TestCase("gravel", ArtImportContract.TextureClass.Ground, 4096)]
+        [TestCase("stone", ArtImportContract.TextureClass.Ground, 4096)]
+        [TestCase("wood", ArtImportContract.TextureClass.Structure, 2048)]
+        [TestCase("plaster_hf003", ArtImportContract.TextureClass.Structure, 2048)]
+        [TestCase("earth_02", ArtImportContract.TextureClass.Structure, 2048)]
+        [TestCase("green_foliage_03", ArtImportContract.TextureClass.Foliage, 2048)]
+        [TestCase("bamboo_culm", ArtImportContract.TextureClass.Foliage, 2048)]
+        [TestCase("bark", ArtImportContract.TextureClass.Foliage, 2048)]
+        [TestCase("sky", ArtImportContract.TextureClass.Sky, 4096)]   // v3 (WP-038E (2): 1024 for the AP-019 band)
+        [TestCase("sw_atlas", ArtImportContract.TextureClass.Weapon, 2048)]
+        [TestCase("weapons", ArtImportContract.TextureClass.Weapon, 2048)]
         public void DokuSinifi_RolTablosu_VeBoyut(string rol, ArtImportContract.TextureClass beklenen, int boyut)
         {
             Assert.AreEqual(beklenen, ArtImportContract.ClassOfRole(rol), "ClassOfRole(" + rol + ")");
@@ -224,24 +224,29 @@ namespace DD.Art.Tests.EditMode
         }
 
         [Test]
-        public void DokuSinifi_TablodaOlmayanRol_NullVeProp512()
+        public void DokuSinifi_TablodaOlmayanRol_NullVeProp1024()
         {
             Assert.IsNull(ArtImportContract.ClassOfRole("lantern_brass"), "tabloda olmayan rol null döner");
             Assert.IsNull(ArtImportContract.ClassOfRole(null));
             Assert.AreEqual(ArtImportContract.TextureClass.Prop, ArtImportContract.ClassOf("Assets/_Art/Textures/Source/T_lantern_brass_BaseColor.png"), "sınıfsız rol Prop boyutunda import edilir");
-            Assert.AreEqual(512, ArtImportContract.MaxTextureSizeOf("Assets/_Art/Textures/Source/T_lantern_brass_BaseColor.png"));
-            Assert.AreEqual(512, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Prop));
-            Assert.AreEqual(512, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Breakable));
+            Assert.AreEqual(1024, ArtImportContract.MaxTextureSizeOf("Assets/_Art/Textures/Source/T_lantern_brass_BaseColor.png"));
+            Assert.AreEqual(1024, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Prop));
+            Assert.AreEqual(1024, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Breakable));
+            // ADR-015-1 v3: Prop normals at the class size (the WP-038L 256 cap is gone), Prop masks at half of it; Hero 4096.
+            Assert.AreEqual(1024, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Prop, ArtImportContract.TextureRole.Normal));
+            Assert.AreEqual(512, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Prop, ArtImportContract.TextureRole.MetallicSmoothness));
+            Assert.AreEqual(4096, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Hero));
+            Assert.AreEqual(1024, ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Hero, ArtImportContract.TextureRole.MetallicSmoothness), "türetilmiş maske 1024");
         }
 
         [Test]
-        public void DokuSinifi_Sheet_VfxSinifi_1024_StreamYok_AlfaKorunur()
+        public void DokuSinifi_Sheet_VfxSinifi_2048_StreamYok_AlfaKorunur()
         {
-            // WP-037 (AP-014): a T_*_Sheet.png is the Vfx class without a table row — 1024, never streamed, colour with alpha.
+            // WP-037 (AP-014): a T_*_Sheet.png is the Vfx class without a table row — 2048 (ADR-015-1 v3), never streamed, colour with alpha.
             const string yol = "Assets/_Art/VFX/Textures/T_vfx_sw_ofuda_card_1x2_Sheet.png";
             Assert.IsNull(ArtImportContract.ClassOfRole(ArtImportContract.RoleSlugOf(yol)), "sheet'in tablo satırı yoktur");
             Assert.AreEqual(ArtImportContract.TextureClass.Vfx, ArtImportContract.ClassifiedClassOf(yol));
-            Assert.AreEqual(1024, ArtImportContract.MaxTextureSizeOf(yol));
+            Assert.AreEqual(2048, ArtImportContract.MaxTextureSizeOf(yol));
             Assert.IsFalse(ArtImportContract.StreamsMipmaps(ArtImportContract.TextureClass.Vfx));
             Assert.IsFalse(ArtImportContract.IsLinearRole(ArtImportContract.TextureRole.Sheet), "sheet renk (sRGB)");
             Assert.IsTrue(ArtImportContract.KeepsAlpha(ArtImportContract.TextureRole.Sheet));
@@ -275,10 +280,11 @@ namespace DD.Art.Tests.EditMode
             long tam = ArtImportContract.EstimatedShippedBytes(2048, 2048, ArtImportContract.TextureClass.Ground, true);
             Assert.AreEqual(5592432L, tam, "2048 mip zinciri: 2048²+…+4² + (2² ve 1² seviyeleri 4×4 bloğa yuvarlanır) = 5 592 432");
             Assert.AreEqual(4194304L, ArtImportContract.EstimatedShippedBytes(2048, 2048, ArtImportContract.TextureClass.Ground, false));
-            // Sınıf 1024: kaynak 2048 → 1024'e iner.
-            long yapi = ArtImportContract.EstimatedShippedBytes(2048, 2048, ArtImportContract.TextureClass.Structure, true);
-            Assert.Less(yapi, tam / 3);
-            Assert.AreEqual(1398128L, yapi);
+            // Sınıf 2048 (v3): kaynak 4096 → 2048'e iner; 2048 kaynak olduğu gibi kalır.
+            long yapi = ArtImportContract.EstimatedShippedBytes(4096, 4096, ArtImportContract.TextureClass.Structure, true);
+            Assert.AreEqual(tam, yapi);
+            Assert.AreEqual(tam, ArtImportContract.EstimatedShippedBytes(2048, 2048, ArtImportContract.TextureClass.Structure, true));
+            Assert.AreEqual(1398128L, ArtImportContract.EstimatedShippedBytes(2048, 2048, ArtImportContract.TextureClass.Prop, true), "Prop 1024: kaynak 2048 → 1024");
             // Kaynak sınıf tavanından küçükse büyütülmez.
             Assert.AreEqual(ArtImportContract.EstimatedShippedBytes(4, 256, ArtImportContract.TextureClass.Sky, false), 4L * 256L);
         }
@@ -286,22 +292,22 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void Doku_BellekteSaptirilanMaxSize_ValidateAdiylaYakalar_ApplyOnarir()
         {
-            string yol = ArtPipelinePaths.SourceTexture("plaster", "BaseColor");   // Structure → 1024
+            string yol = ArtPipelinePaths.SourceTexture("plaster", "BaseColor");   // Structure → 2048 (ADR-015-1 v3)
             TextureImporter importer = TextureImporterAl(yol);
             ArtImportContract.TextureRole rol = ArtImportContract.RoleOf(yol);
             Assume.That(ArtImportContract.ValidateTexture(importer, rol), Is.Empty, "Ön koşul: doku uyumlu değil; bu test anlamsız.");
-            Assert.AreEqual(1024, importer.maxTextureSize, "plaster Structure sınıfı 1024");
+            Assert.AreEqual(2048, importer.maxTextureSize, "plaster Structure sınıfı 2048");
             Assert.IsTrue(importer.streamingMipmaps, "Structure sınıfı streaming açık");
 
             int asil = importer.maxTextureSize;
             try
             {
-                importer.maxTextureSize = 2048;
+                importer.maxTextureSize = 4096;
                 List<string> v = ArtImportContract.ValidateTexture(importer, rol);
                 Assert.AreEqual(1, v.Count, "Tek alan saptırıldı, tek ihlal beklenir: " + string.Join("; ", v));
                 StringAssert.StartsWith("maxTextureSize:", v[0]);
                 Assert.IsTrue(ArtImportContract.Apply(importer, rol), "Apply sapmayı onarmalı.");
-                Assert.AreEqual(1024, importer.maxTextureSize);
+                Assert.AreEqual(2048, importer.maxTextureSize);
                 Assert.IsEmpty(ArtImportContract.ValidateTexture(importer, rol));
             }
             finally

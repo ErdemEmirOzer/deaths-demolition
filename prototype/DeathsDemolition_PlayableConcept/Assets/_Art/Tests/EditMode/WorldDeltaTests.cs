@@ -280,7 +280,7 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsNotNull(m.GetTexture("_MetallicGlossMap"), role + " türetilmiş maske");
                 var importer = AssetImporter.GetAtPath(ArtPipelinePaths.SourceTexture(role, "BaseColor")) as TextureImporter;
                 Assert.IsNotNull(importer);
-                Assert.AreEqual(512, importer.maxTextureSize, role + " 512 (ADR-015-1 Prop)");
+                Assert.AreEqual(ArtImportContract.MaxSizeOf(ArtImportContract.TextureClass.Prop), importer.maxTextureSize, role + " Prop sınıf boyutu (ADR-015-1 v3: 1024)");
             }
 
             Debug.Log("[DD-TEST] wp017.props families=6 instances=" + string.Join(",", byFamily));
