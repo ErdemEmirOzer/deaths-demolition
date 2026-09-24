@@ -21,6 +21,26 @@ namespace DD.Prototype.Rounds
         FreeTree = 1
     }
 
+    /// <summary>
+    /// WP-077 B2b: what the meta PATH's owned passives change in a run (read once at run start from the
+    /// profile; the run never writes the profile). <see cref="None"/> = no meta effect (tests, no profile).
+    /// </summary>
+    public struct MetaRunModifiers
+    {
+        /// <summary>Reroll price override (−1 = config).</summary>
+        public int RerollCostOverride;
+        /// <summary>Hearth price step override (−1 = catalog 30).</summary>
+        public int HearthCostStepOverride;
+        /// <summary>The run starts with the Purse owned.</summary>
+        public bool PurseAtStart;
+        /// <summary>Capstone price discount share (0.10 = −10 %).</summary>
+        public float CapstoneDiscount;
+        /// <summary>K6: the weapon's mastery M3 lets its capstone into the offer (else only the pin brings it).</summary>
+        public bool CapstoneMasteryMet;
+
+        public static MetaRunModifiers None => new MetaRunModifiers { RerollCostOverride = -1, HearthCostStepOverride = -1, CapstoneMasteryMet = true };
+    }
+
     /// <summary>WP-077 node kinds (direction §2.1).</summary>
     public enum RunTreeNodeKind
     {

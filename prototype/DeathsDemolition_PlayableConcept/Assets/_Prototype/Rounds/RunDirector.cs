@@ -238,6 +238,8 @@ namespace DD.Prototype.Rounds
 
             BindBuild();
             _build.BeginRun(_runId, WeaponRegistry.SelectedWeapon);
+            // WP-077 B2b: the meta PATH's passives for this run (read once; the run never writes the profile).
+            _shop.Meta = MetaPathRules.RunModifiers(ProfileService.Current, ProfileProgression.NameOf(WeaponRegistry.SelectedWeapon));
 
             PlayerRig rig = PlayerRegistry.Primary;
             if (rig != null && rig.Health != null)

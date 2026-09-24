@@ -32,15 +32,21 @@ namespace DD.Prototype.Rounds
         public int PinnedIndex { get; private set; } = -1;
         public int PurseBonusPaid { get; private set; }
 
+        /// <summary>WP-077 B2b: the meta PATH's run modifiers this run started with.</summary>
+        public MetaRunModifiers Meta { get; private set; } = MetaRunModifiers.None;
+
         private int _earnedMark;
         private PrototypeConfig _config;
 
         public bool IsBuilt => Graph != null;
 
         /// <summary>Builds the tree for the weapon and clears the run's ownership. Called by the shop on a new run id.</summary>
-        public void Begin(int runId, ClassicWeaponId weapon, PrototypeConfig config)
+        public void Begin(int runId, ClassicWeaponId weapon, PrototypeConfig config) => Begin(runId, weapon, config, MetaRunModifiers.None);
+
+        public void Begin(int runId, ClassicWeaponId weapon, PrototypeConfig config, MetaRunModifiers meta)
         {
             RunId = runId;
+            Meta = meta;
             _config = config;
             Graph = RunTreeGraph.Build(weapon, config);
             _owned = new bool[Graph.Count];
@@ -50,6 +56,10 @@ namespace DD.Prototype.Rounds
             PinnedIndex = -1;
             PurseBonusPaid = 0;
             _earnedMark = 0;
+            if (meta.PurseAtStart && Graph.PurseIndex >= 0 && RunTreeEffects.IsLive(Graph[Graph.PurseIndex].EffectId))
+            {
+                _owned[Graph.PurseIndex] = true;   // meta "Purse at Start"
+            }
         }
 
         // ------------------------------------------------------------------ queries
@@ -95,7 +105,9 @@ namespace DD.Prototype.Rounds
                     return s != null ? RoundUpgradeShop.ResolveCost(s, OwnedTier(i, build), economy) : 0;
                 }
                 case RunTreeNodeKind.Hearth:
-                    return Math.Max(1, n.FlatCost + n.CostStep * HearthStacks);
+                    return Math.Max(1, n.FlatCost + (Meta.HearthCostStepOverride >= 0 ? Meta.HearthCostStepOverride : n.CostStep) * HearthStacks);
+                case RunTreeNodeKind.Capstone:
+                    return Math.Max(1, Mathf.RoundToInt(n.FlatCost * (1f - Mathf.Clamp01(Meta.CapstoneDiscount))));
                 default:
                     return Math.Max(1, n.FlatCost);
             }
@@ -251,6 +263,7 @@ namespace DD.Prototype.Rounds
         public bool IsOfferable(int i, WeaponModifierState build)
         {
             if (Graph[i].Kind == RunTreeNodeKind.Hearth) return false;
+            if (Graph[i].Kind == RunTreeNodeKind.Capstone && !Meta.CapstoneMasteryMet) return false;   // K6: only the pin brings it before M3
             RunTreeNodeStatus s = Status(i, build, int.MaxValue, out _, out _, out _);
             return s == RunTreeNodeStatus.Available;
         }

@@ -46,7 +46,7 @@ namespace DD.Prototype.Profile
     /// one long run. The numbers are PrototypeOnly placeholders; what this code
     /// guarantees is that the EMPTY case is a designed state everywhere it can appear.
     /// </summary>
-    public static class ProfileService
+    public static partial class ProfileService
     {
         // ------------------------------------------------------------ request fallbacks
         // Used ONLY when PrototypeConfig is missing (a menu scene opened directly in the

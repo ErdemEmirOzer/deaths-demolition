@@ -133,7 +133,12 @@ namespace DD.Prototype.Rounds
         public int GoldSpentThisRound { get; private set; }
 
         /// <summary>Price of the reroll, from the config. 0 without a config.</summary>
-        public int RerollCost => _config != null ? Mathf.Max(0, _config.Economy.RerollCost) : 0;
+        public int RerollCost => _config == null ? 0
+            : Meta.RerollCostOverride >= 0 ? Mathf.Min(Mathf.Max(0, _config.Economy.RerollCost), Meta.RerollCostOverride)
+            : Mathf.Max(0, _config.Economy.RerollCost);
+
+        /// <summary>WP-077 B2b: the meta PATH's run modifiers (RunDirector sets it at run start from the profile). None in tests.</summary>
+        public MetaRunModifiers Meta { get; set; } = MetaRunModifiers.None;
 
         /// <summary>Slots the last reroll replaced (indices into <see cref="Cards"/>). Test and probe readout.</summary>
         public IReadOnlyList<int> LastRerollReplacedSlots => _replacedSlots;
@@ -245,7 +250,7 @@ namespace DD.Prototype.Rounds
                 if (!Tree.IsBuilt || Tree.RunId != wantedRun)
                 {
                     ClassicWeaponId weapon = WeaponProvider != null ? WeaponProvider() : WeaponRegistry.SelectedWeapon;
-                    Tree.Begin(wantedRun, weapon, config);
+                    Tree.Begin(wantedRun, weapon, config, Meta);
                 }
 
                 Tree.TierEligibility = TierEligibility;
