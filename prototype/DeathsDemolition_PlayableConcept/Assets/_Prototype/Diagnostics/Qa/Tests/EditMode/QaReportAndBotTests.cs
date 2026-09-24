@@ -187,6 +187,23 @@ namespace DD.Prototype.Qa.Tests.EditMode
         }
 
         [Test]
+        public void Bot_Reload_YokSayilanBasisTekrarlanir()
+        {
+            // WP-078 C1: the WP-069 reserve runs dry, the runtime ignores the press and refills a magazine 4 s later —
+            // a standing request must press again instead of latching until the round times out
+            var brain = new QaBotBrain(1);
+            var o = new QaBotObservation { CameraForward = Vector3.forward, CameraRight = Vector3.right, SecondsSinceDamage = 999f, WeaponEmpty = true, WeaponNeedsReload = true };
+            Assert.IsTrue(brain.Decide(o).Reload, "ilk basış");
+            int presses = 0;
+            for (int i = 0; i < QaBotBrain.ReloadRepressTicks * 3; i++)
+            {
+                if (brain.Decide(o).Reload) presses++;
+            }
+
+            Assert.AreEqual(3, presses, "istek sürdükçe her ReloadRepressTicks kararda bir yeni basış");
+        }
+
+        [Test]
         public void SanalGamepad_DurumEslemesi_ProjeSemasiylaAyni()
         {
             GamepadState s = QaVirtualGamepad.BuildState(new Vector2(0.5f, -0.5f), new Vector2(2f, 0f), true, true, false);

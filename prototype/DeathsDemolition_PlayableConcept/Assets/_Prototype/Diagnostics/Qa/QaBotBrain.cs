@@ -153,7 +153,11 @@ namespace DD.Prototype.Qa
         private float _strafeSign = 1f;
         private float _nextStrafeFlip;
         private bool _reloadLatch;
+        private int _reloadHeldTicks;
         private float _blockedSince = -1f;
+
+        /// <summary>WP-078: decisions (≈ frames) a standing reload request waits before pressing again.</summary>
+        public const int ReloadRepressTicks = 45;
 
         public QaBotBrain(int seed)
         {
@@ -201,6 +205,14 @@ namespace DD.Prototype.Qa
             bool wantReload = o.WeaponEmpty
                               || (o.WeaponNeedsReload && (!o.HasTarget || o.TargetDistance > FireRange))
                               || (o.WeaponNeedsReload && safeWindow && o.WeaponAmmoRatio < 0.5f);
+            // WP-078 C1: a press the runtime ignores (reserve dry until the WP-069 floor refill lands 4 s later) must not
+            // latch forever — while the request stands, press again every ReloadRepressTicks decisions
+            _reloadHeldTicks = wantReload && _reloadLatch ? _reloadHeldTicks + 1 : 0;
+            if (_reloadHeldTicks >= ReloadRepressTicks)
+            {
+                _reloadLatch = false;
+                _reloadHeldTicks = 0;
+            }
             cmd.Reload = wantReload && !_reloadLatch;
             _reloadLatch = wantReload;   // one press per request; PrototypeInputSource reads WasPressedThisFrame
 

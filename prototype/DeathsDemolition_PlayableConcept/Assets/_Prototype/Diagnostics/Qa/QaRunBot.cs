@@ -176,7 +176,8 @@ namespace DD.Prototype.Qa
             public string aimKind;            // PlayerAim.AimKind seen most (Stick expected)
             public string cameraMode;         // WP-070: TopDown / ThirdPerson / FirstPerson (-ddCameraMode)
             public int fireFrames;
-            public string swBeats;            // WP-055: sw_push/sw_web/sw_pull beats seen (kind=count), "" when none
+            public int lookFireGated;         // WP-078: TP/FP frames the trigger was held back until the centre ray was on the chest
+            public string swBeats;           // WP-055: sw_push/sw_web/sw_pull beats seen (kind=count), "" when none
             public int swActivations;         // WP-055: Special Weapons the evidence bot granted itself (0 on a QA run)
             public string fireLineHits;       // what a ray along the rig's aim from the muzzle hits while firing (layer:name = frames), top 6
             // WP-064: structured terminal-death evidence. These fields preserve the
@@ -1267,7 +1268,8 @@ namespace DD.Prototype.Qa
                     _lastTrace = Time.unscaledTime;
                     Log("t pos=" + V(pos) + " mode=" + cmd.Mode + " tgt=" + (target != null ? QaArgs.F(o.TargetDistance, 1) + "@" + V(o.TargetPosition) + (target.IsWaiting ? "/waiting" : "") + (target.IsRising ? "/rising" : "") : "-") + " los=" + (o.TargetLineOfSight ? 1 : 0) +
                         " mz=" + (_lastMuzzleClear ? 1 : 0) + " eye=" + (_lastEyeClear ? 1 : 0) + " blk=" + (_closeBlocker != null ? _closeBlocker.name + "@" + V(_closeBlocker.bounds.center) + "/" + V(_closeBlocker.bounds.size) : "-") +
-                        " fire=" + (cmd.Fire ? 1 : 0) + " hp=" + QaArgs.F(rig.Health != null ? rig.Health.Normalized : -1f, 2) + " near=" + nearby + " kills=" + _summary.totalKills + "+" + (_current != null ? _current.kills : 0));
+                        " fire=" + (cmd.Fire ? 1 : 0) + " hp=" + QaArgs.F(rig.Health != null ? rig.Health.Normalized : -1f, 2) + " near=" + nearby + " kills=" + _summary.totalKills + "+" + (_current != null ? _current.kills : 0) +
+                        (classic != null ? " ammo=" + classic.Ammo + "/" + classic.MagazineSize + "+" + (classic.ReserveInfinite ? "inf" : classic.ReserveAmmo.ToString()) + (classic.IsReloading ? "/reloading" : "") : ""));   // WP-078 C1: TP/FP rounds stalled with the trigger idle
                 }
                 if (_relocating && target != null && cmd.Mode == QaBotMode.Patrol)
                 {
@@ -1294,6 +1296,15 @@ namespace DD.Prototype.Qa
                     }
 
                     if (rig.Aim.AimKind == AimSourceKind.Stick) _aimKindStick++; else _aimKindPointer++;
+                }
+
+                // WP-078 C1: in TP/FP the shot leaves down the screen-centre ray; with the trigger held while the view is
+                // still swinging the bot emptied the WP-069 reserve into walls (TP 390 shots / 11 kills) and the round
+                // timed out. Hold the classic trigger until the centre ray points at the target's chest.
+                if (cmd.Fire && CameraModeService.IsLookMode && o.HasTarget && !(wc != null && wc.Special.IsActive) && !LookRayOnTarget(o))
+                {
+                    cmd.Fire = false;
+                    _summary.lookFireGated++;
                 }
 
                 if (cmd.Fire)
@@ -1665,6 +1676,31 @@ namespace DD.Prototype.Qa
             /// aim direction. Inverse of the rig's stick model: rate = |s|^exp · speed (pitch × share,
             /// invert-Y honoured), with the adapter's radial dead zone / saturation undone.
             /// </summary>
+            /// <summary>
+            /// WP-078: true when the TP/FP screen-centre ray (from the stable camera pose) passes within the target's chest
+            /// radius — the angle to the chest point (1 m up, as <see cref="LookStickToward"/> aims) is under
+            /// max(1.5°, atan(0.35 m / distance)).
+            /// </summary>
+            private static bool LookRayOnTarget(QaBotObservation o)
+            {
+                PrototypeCameraRig cam = PrototypeCameraRig.Active;
+                CameraAimRay ray;
+                if (cam == null || !cam.TryGetAimRay(Vector2.zero, 0f, out ray) || ray.Direction.sqrMagnitude < 1e-6f)
+                {
+                    return true;   // no ray to judge by: do not starve the trigger
+                }
+
+                Vector3 toChest = o.TargetPosition + Vector3.up * 1.0f - ray.Origin;
+                float distance = toChest.magnitude;
+                if (distance < 1e-3f)
+                {
+                    return true;
+                }
+
+                float gate = Mathf.Max(1.5f, Mathf.Atan2(0.35f, distance) * Mathf.Rad2Deg);
+                return Vector3.Angle(ray.Direction, toChest) <= gate;
+            }
+
             private static Vector2 LookStickToward(QaBotObservation o, Vector2 aimStick, Vector3 fwd, Vector3 right)
             {
                 PrototypeCameraRig cam = PrototypeCameraRig.Active;
