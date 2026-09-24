@@ -19,8 +19,78 @@ namespace DD.Prototype.UI
     /// Every text object is created through <see cref="UiFactory"/>, so a face change
     /// is a change to this one lookup, not to twenty screens.
     /// </summary>
+    /// <summary>WP-068 token v3 (direction §2.2): three OFL faces by role.</summary>
+    public enum UiFontRole
+    {
+        /// <summary>Shippori Mincho B1 700 - Display / Banner / H1 / H2 only (≥ 24 px). The slot stays EMPTY until the user picks the face (U1, AD MUST 6); labels then use the Text face.</summary>
+        Display = 0,
+
+        /// <summary>Source Sans 3 400/600 - H3 → Caption.</summary>
+        Text = 1,
+
+        /// <summary>Oswald 500/600 with equalised digit advances - the numeric types.</summary>
+        Numeric = 2
+    }
+
     public static class UiFonts
     {
+        /// <summary>WP-068 slice 3: role font assets (static SDF, Resources/UI/Fonts/). Absent → the chain falls back.</summary>
+        public const string DisplayFontResource = "UI/Fonts/Display SDF";
+        public const string TextFontResource = "UI/Fonts/Text SDF";
+        public const string NumericFontResource = "UI/Fonts/Numeric SDF";
+
+        private static readonly TMP_FontAsset[] s_roles = new TMP_FontAsset[3];
+        private static bool s_rolesResolved;
+
+        public static UiFontRole RoleOf(UiType type)
+        {
+            switch (type)
+            {
+                case UiType.Display:
+                case UiType.Banner:
+                case UiType.H1:
+                case UiType.H2:
+                    return UiFontRole.Display;
+                case UiType.NumericXL:
+                case UiType.NumericL:
+                case UiType.NumericM:
+                case UiType.NumericS:
+                    return UiFontRole.Numeric;
+                default:
+                    return UiFontRole.Text;
+            }
+        }
+
+        /// <summary>The asset placed for a role, or null (not placed yet).</summary>
+        public static TMP_FontAsset Role(UiFontRole role)
+        {
+            if (!s_rolesResolved)
+            {
+                s_rolesResolved = true;
+                s_roles[(int)UiFontRole.Display] = Resources.Load<TMP_FontAsset>(DisplayFontResource);
+                s_roles[(int)UiFontRole.Text] = Resources.Load<TMP_FontAsset>(TextFontResource);
+                s_roles[(int)UiFontRole.Numeric] = Resources.Load<TMP_FontAsset>(NumericFontResource);
+            }
+
+            return s_roles[(int)role];
+        }
+
+        /// <summary>
+        /// The face a label of this type draws with: its role's asset → the Text face →
+        /// <see cref="Primary"/> (today's face). With no v3 assets placed this is exactly
+        /// the WP-022B behaviour.
+        /// </summary>
+        public static TMP_FontAsset For(UiType type)
+        {
+            TMP_FontAsset font = Role(RoleOf(type));
+            if (font == null)
+            {
+                font = Role(UiFontRole.Text);
+            }
+
+            return font != null ? font : Primary;
+        }
+
         /// <summary>Resources path (without extension) of the project face, if any.</summary>
         public const string ProjectFontResource = "UI/Fonts/UiPrimary SDF";
 
@@ -66,6 +136,10 @@ namespace DD.Prototype.UI
         {
             s_font = null;
             s_resolved = false;
+            s_rolesResolved = false;
+            s_roles[0] = null;
+            s_roles[1] = null;
+            s_roles[2] = null;
         }
     }
 }

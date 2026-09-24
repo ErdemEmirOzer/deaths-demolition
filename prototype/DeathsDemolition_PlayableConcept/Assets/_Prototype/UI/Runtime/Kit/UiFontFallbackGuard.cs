@@ -45,6 +45,10 @@ namespace DD.Prototype.UI
             Restore(); // a previous session without domain reload
             Guard(TMP_Settings.defaultFontAsset);
             Guard(Resources.Load<TMP_FontAsset>(UiFonts.ProjectFontResource));
+            // WP-068 slice 3: the three v3 role faces (their fallback chains too).
+            Guard(Resources.Load<TMP_FontAsset>(UiFonts.DisplayFontResource));
+            Guard(Resources.Load<TMP_FontAsset>(UiFonts.TextFontResource));
+            Guard(Resources.Load<TMP_FontAsset>(UiFonts.NumericFontResource));
             if (s_swaps.Count > 0)
             {
                 Application.quitting -= Restore;

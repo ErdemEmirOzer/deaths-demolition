@@ -70,7 +70,13 @@ namespace DD.Prototype.UI
         NumericL,
 
         /// <summary>22 bold. Secondary HUD readouts.</summary>
-        NumericM
+        NumericM,
+
+        /// <summary>WP-068 token v3: 48, Display face. Round / Special banners.</summary>
+        Banner,
+
+        /// <summary>WP-068 token v3: 16, Numeric face. Small numerals (pips, stat strips).</summary>
+        NumericS
     }
 
     /// <summary>
@@ -385,6 +391,8 @@ namespace DD.Prototype.UI
                 case UiType.NumericXL: return 44;
                 case UiType.NumericL: return 32;
                 case UiType.NumericM: return 22;
+                case UiType.Banner: return 48;
+                case UiType.NumericS: return 16;
                 default: return 18;
             }
         }
@@ -416,7 +424,9 @@ namespace DD.Prototype.UI
                 case UiType.NumericXL:
                 case UiType.NumericL:
                 case UiType.NumericM:
+                case UiType.NumericS:
                 case UiType.Display:
+                case UiType.Banner:
                     return 1f;
                 default:
                     return 1.2f;

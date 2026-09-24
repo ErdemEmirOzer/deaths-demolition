@@ -398,7 +398,7 @@ namespace DD.Prototype.UI
             rt.anchoredPosition = Vector2.zero;
 
             var text = go.GetComponent<TextMeshProUGUI>();
-            TMP_FontAsset font = UiFonts.Primary;
+            TMP_FontAsset font = UiFonts.For(type); // WP-068 slice 3: the face of the type's role
             if (font != null)
             {
                 text.font = font;
