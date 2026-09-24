@@ -7,6 +7,7 @@ using DD.Prototype.Core.Boot;
 using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
+using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
@@ -301,6 +302,51 @@ namespace DD.Art.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp038n.walk pairs=" + walkers.Count + " done=" + done + " simSeconds=" + t.ToString("F1") + (fails.Count > 0 ? " FAIL: " + string.Join(" | ", fails) : ""));
             Assert.IsEmpty(fails, "NavMesh yolu fiziksel olarak geçilemiyor (" + fails.Count + "):\n" + string.Join("\n", fails));
+        }
+
+        // WP-038P · Zombies where the soak lost one (beside the south bridge-end post, now skirted) and inside every pocket the
+        // bake's erosion used to cut off (now linked: NavMeshIslandLinker) walk out to the player.
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Zombiler_KopruUcuVeCepAdaciklarindan_OyuncuyaUlasir()
+        {
+            yield return RunAp005();
+            _rig.Motor.SetInputSource(null);
+            var target = new Vector3(-7.5f, 0.05f, 0f);
+            _rig.Teleport(target, Quaternion.identity);
+            var spots = new[]
+            {
+                new Vector3(3.2f, 0.1f, -36.6f), new Vector3(-37.63f, 0.05f, 17.0f), new Vector3(-21.08f, 0.05f, 35.33f), new Vector3(7.93f, 0.15f, -32.23f),
+                new Vector3(-1.53f, 0.05f, -24.36f), new Vector3(-41.85f, 0.05f, -19.83f), new Vector3(-15.73f, 0.05f, 40.92f),
+            };
+            var zombies = new List<(Vector3 spot, ZombieEnemy z)>();
+            foreach (Vector3 spot in spots)
+            {
+                Vector3 p = NavMesh.SamplePosition(spot, out NavMeshHit hit, 0.8f, NavMesh.AllAreas) ? hit.position + Vector3.up * 0.05f : spot;
+                zombies.Add((spot, EnemyFactory.Spawn(EnemyTier.Standard, 5, p, Quaternion.identity)));
+            }
+
+            var reached = new HashSet<int>();
+            float t = 0f;
+            while (reached.Count < zombies.Count && t < 70f)
+            {
+                _rig.Teleport(target, Quaternion.identity);
+                yield return null;
+                t += Time.deltaTime;
+                for (int i = 0; i < zombies.Count; i++)
+                {
+                    ZombieEnemy z = zombies[i].z;
+                    if (z == null || !z.IsAlive || reached.Contains(i)) continue;
+                    Vector3 d = z.transform.position - target; d.y = 0f;
+                    if (d.magnitude < 3f) reached.Add(i);
+                }
+            }
+
+            var stuck = new List<string>();
+            for (int i = 0; i < zombies.Count; i++)
+                if (!reached.Contains(i)) stuck.Add(zombies[i].spot.ToString("F1") + " → " + (zombies[i].z != null ? zombies[i].z.transform.position.ToString("F2") : "yok"));
+            Debug.Log("[DD-TEST] wp038p.zombies reached " + reached.Count + "/" + zombies.Count + " in " + t.ToString("F1") + " s" + (stuck.Count > 0 ? " stuck: " + string.Join(" | ", stuck) : ""));
+            Assert.IsEmpty(stuck, "oyuncuya ulaşamayan zombi (" + stuck.Count + "): " + string.Join(" | ", stuck));
         }
     }
 }

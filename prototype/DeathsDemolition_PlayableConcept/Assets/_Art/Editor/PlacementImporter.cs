@@ -104,6 +104,8 @@ namespace DD.Art.Pipeline.EditorTools
             public int AreaVolumes;
             /// <summary>WP-038N · Not-walkable volumes along the bridge rails / posts (outer side + ends).</summary>
             public int BridgeRailNavVolumes;
+            /// <summary>WP-038P · NavMeshLinks joining body-reachable islands to the main mesh.</summary>
+            public int IslandLinks;
             /// <summary>WP-038 · AP-015P plates (ground / route / paving) and water meshes placed; 0 = stand-in ground.</summary>
             public int SurfacePlates;
             public int WaterMeshes;
@@ -722,6 +724,8 @@ namespace DD.Art.Pipeline.EditorTools
             // Environment|CameraOccluder, ±48 m volume), baked HERE and saved as an asset so
             // the Player never bakes; the bootstrap only verifies.
             report.NavMeshTriangles = BakeNavMesh(root.transform);
+            // WP-038P: NavMesh pieces a body walks into but no path reaches get a link along the body's swept line.
+            report.IslandLinks = NavMeshIslandLinker.LinkIslands(root.transform, SeedFor(placement));
             // WP-038M: the playable-area ring (±45 m, invisible, Ignore Raycast), the pond rims + the fall guard — after the bake, never in it.
             WorldBoundaryBuilder.Build(root.transform, BasinHoles(placement));
 
@@ -1145,6 +1149,9 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-038N · Body radius (player / zombie CharacterController): how far the rail volumes reach outward and past the ends.</summary>
         public const float BodyRadius = 0.45f;
         public const float BridgeRailNavBottom = -0.6f, BridgeRailNavTop = 0.45f;
+        public const string BridgeRailSkirtRootName = "Bridge Rail Skirts (WP-038P)";
+        /// <summary>WP-038P · Skirt top: over any step a body takes (0.35 m) and the 0.30 m deck.</summary>
+        public const float BridgeRailSkirtTop = 1.4f;
 
         /// <summary>
         /// WP-038N · The rails / posts are out of the bake (the deck keeps its corridor), so the NavMesh joined the ground beside a
@@ -1153,13 +1160,22 @@ namespace DD.Art.Pipeline.EditorTools
         /// post (a volume does not erode): its box in the segment's frame, grown by <see cref="BodyRadius"/> outward (away from the
         /// deck's centre line) and past both ends along the deck, never inward — the deck corridor stays, the side link is gone,
         /// the path meets the deck head-on. Environment layer (the surface's mask). Rebuilt in place.
+        /// WP-038P: each volume also gets a skirt — an invisible box on the same footprint (built-in Ignore Raycast layer, out of
+        /// the bake like the WP-038M ring) up to <see cref="BridgeRailSkirtTop"/>: where the NavMesh says "not walkable" beside a
+        /// rail, a body cannot stand either. Without it the crowd pushed a zombie into the pocket beside the south-end post, off the
+        /// NavMesh, where it jittered against the post for the rest of the round (S-10 soak seed 61, run 14).
         /// </summary>
         public static int BuildBridgeRailNavVolumes(Transform root, Transform instances, WorldPlacementAsset placement)
         {
             Transform old = root.Find(BridgeRailNavRootName);
             if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            Transform oldSkirts = root.Find(BridgeRailSkirtRootName);
+            if (oldSkirts != null) UnityEngine.Object.DestroyImmediate(oldSkirts.gameObject);
             var parent = new GameObject(BridgeRailNavRootName);
             parent.transform.SetParent(root, false);
+            var skirts = new GameObject(BridgeRailSkirtRootName) { layer = WorldBoundaryBuilder.Layer };
+            skirts.transform.SetParent(root, false);
+            skirts.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
             int count = 0;
             foreach (WorldPlacementAsset.Instance inst in placement.instances)
             {
@@ -1205,6 +1221,14 @@ namespace DD.Art.Pipeline.EditorTools
                     v.center = Vector3.zero;
                     v.size = max - min;
                     v.area = ArtSurfaceImporter.NavAreaNotWalkable;
+                    Vector3 skirtMax = max;
+                    skirtMax.y = BridgeRailSkirtTop - bridge.position.y;
+                    var skirt = new GameObject("RailSkirt_" + inst.id + "_" + count.ToString("00")) { layer = WorldBoundaryBuilder.Layer };
+                    skirt.transform.SetParent(skirts.transform, false);
+                    skirt.transform.SetPositionAndRotation(bridge.TransformPoint((min + skirtMax) * 0.5f), bridge.rotation);
+                    BoxCollider sc = skirt.AddComponent<BoxCollider>();
+                    sc.center = Vector3.zero;
+                    sc.size = skirtMax - min;
                     count++;
                 }
             }
@@ -1353,10 +1377,17 @@ namespace DD.Art.Pipeline.EditorTools
             Physics.SyncTransforms();
             BuildAtBodyClimb(surfaces[0]);
             int triangles = SaveNavMeshAsset(surfaces[0]);
+            int links = NavMeshIslandLinker.LinkIslands(root.transform, SeedFor(placement));
             WorldBoundaryBuilder.Build(root.transform, BasinHoles(placement));
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log(LogPrefix + "NavMesh re-baked at climb " + NavMeshBodyClimb + " m (+ " + railVolumes + " bridge rail volumes): " + triangles + " triangles; boundary rebuilt");
+            Debug.Log(LogPrefix + "NavMesh re-baked at climb " + NavMeshBodyClimb + " m (+ " + railVolumes + " bridge rail volumes / skirts): " + triangles + " triangles, " + links + " island links; boundary rebuilt");
+        }
+
+        /// <summary>WP-038P · The connectivity seed: the player start on the NavMesh.</summary>
+        public static Vector3 SeedFor(WorldPlacementAsset placement)
+        {
+            return NavMesh.SamplePosition(placement.playerStart, out NavMeshHit hit, 3f, NavMesh.AllAreas) ? hit.position : placement.playerStart;
         }
 
         private static int SaveNavMeshAsset(NavMeshSurface surface)
@@ -1533,3 +1564,4 @@ namespace DD.Art.Pipeline.EditorTools
         }
     }
 }
+
