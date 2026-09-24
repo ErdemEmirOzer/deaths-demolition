@@ -92,6 +92,8 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log("[DD-TEST] wp071.ragdoll handoff=" + v.RagdollHandoffSeconds.ToString("F2", CultureInfo.InvariantCulture) + " s settle=" + (Time.time - t0).ToString("F2", CultureInfo.InvariantCulture)
                       + " s hipsAlongPush=" + along.ToString("F2", CultureInfo.InvariantCulture) + " m hipsY=" + hips1.y.ToString("F2", CultureInfo.InvariantCulture) + " active=" + RagdollProxyPool.ActiveCount);
             Assert.IsTrue(v.DiedByRagdoll);
+            // AP-022 slice 1: fall_back names its hand-off at frame 8 (0.27 s) — the clip event drives it, not the clock
+            Assert.That(v.RagdollHandoffSeconds, Is.InRange(0.2f, 0.42f), "hand-off klip olayında");
             Assert.IsFalse(v.RagdollActive, "yerleşince proxy havuza döner");
             Assert.AreEqual(0, RagdollProxyPool.ActiveCount);
             Assert.Greater(along, 0.35f, "gövde itki yönünde düşmeli (yerinde çökme değil)");

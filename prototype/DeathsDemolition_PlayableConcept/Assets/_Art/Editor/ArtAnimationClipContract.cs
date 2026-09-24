@@ -25,7 +25,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string AnimationsFolderName = "Animations";
         public const string AnimationsFolder = ArtImportContract.CharactersRoot + "/" + AnimationsFolderName;
         public const string ManifestPath = AnimationsFolder + "/AP009-clips-manifest.json";
-        public const string ManifestSchema = "AP009.clips-manifest.v007";   // WP-032G: AP-009G v007 = v006b + player_sw_hold_jewel (TideJewel);   // WP-032E: AP-009F v006 (85 clips; 23 pose re-keys: aim A shoulder / B compact / C hip class poses, stumble, death_ultra — frames/events as v005b)
+        public const string ManifestSchema = "AP009.clips-manifest.v008";   // WP-071: + AP-022 slice 1 (10 zombie deaths / attacks, root_motion);   // WP-032G: AP-009G v007 = v006b + player_sw_hold_jewel (TideJewel);   // WP-032E: AP-009F v006 (85 clips; 23 pose re-keys: aim A shoulder / B compact / C hip class poses, stumble, death_ultra — frames/events as v005b)
         public const int Fps = CharacterAnimatorContract.Fps;
 
         /// <summary>
@@ -57,6 +57,8 @@ namespace DD.Art.Pipeline.EditorTools
             public readonly List<KeyValuePair<string, int>> events = new List<KeyValuePair<string, int>>();
             /// <summary>WP-071: the int payload per event (index / side; 0 = none), parallel to <see cref="events"/>.</summary>
             public readonly List<int> eventValues = new List<int>();
+            /// <summary>WP-071 (AP-022): the clip authors travel on the Hips (XZ) / a heading change (yaw) — extracted as root motion instead of baked.</summary>
+            public bool rootXZ, rootYaw;
 
             /// <summary>"name=frame;…" in manifest order (CharacterAnimationSet.Entry.events).</summary>
             public string EventsText()
@@ -130,6 +132,12 @@ namespace DD.Art.Pipeline.EditorTools
                         int n = ArtJson.AsInt(sf, "stance_frames");
                         spec.stanceFrames = spec.stanceFrames == 0 ? n : Math.Min(spec.stanceFrames, n);
                     }
+                }
+
+                if (ArtJson.Get(c, "root_motion") is Dictionary<string, object> rm)
+                {
+                    spec.rootXZ = ArtJson.Get(rm, "xz") is bool xz && xz;
+                    spec.rootYaw = ArtJson.Get(rm, "yaw") is bool yaw && yaw;
                 }
 
                 object ev = ArtJson.Get(c, "events");
@@ -225,7 +233,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (c.name != spec.name) return "name " + c.name;
             if (c.loopTime != spec.loop) return "loopTime";
             if (c.loopPose) return "loopPose";
-            if (!c.lockRootRotation || !c.lockRootHeightY || !c.lockRootPositionXZ) return "lock";
+            if (c.lockRootRotation == spec.rootYaw || !c.lockRootHeightY || c.lockRootPositionXZ == spec.rootXZ) return "lock";
             if (!c.keepOriginalOrientation || !c.keepOriginalPositionY || !c.keepOriginalPositionXZ) return "keepOriginal";
             if (Math.Abs(c.rotationOffset - RootRotationOffsetDegrees) > 0.01f) return "rotationOffset " + c.rotationOffset;
             if (c.hasAdditiveReferencePose != spec.additive) return "additive";
@@ -240,9 +248,10 @@ namespace DD.Art.Pipeline.EditorTools
             if (c.name != spec.name) { c.name = spec.name; changed = true; }
             if (c.loopTime != spec.loop) { c.loopTime = spec.loop; changed = true; }
             if (c.loopPose) { c.loopPose = false; changed = true; }
-            if (!c.lockRootRotation) { c.lockRootRotation = true; changed = true; }
+            // WP-071: bake (lock) unless the manifest marks the clip's travel / heading as root motion (AP-022 root_motion)
+            if (c.lockRootRotation == spec.rootYaw) { c.lockRootRotation = !spec.rootYaw; changed = true; }
             if (!c.lockRootHeightY) { c.lockRootHeightY = true; changed = true; }
-            if (!c.lockRootPositionXZ) { c.lockRootPositionXZ = true; changed = true; }
+            if (c.lockRootPositionXZ == spec.rootXZ) { c.lockRootPositionXZ = !spec.rootXZ; changed = true; }
             if (!c.keepOriginalOrientation) { c.keepOriginalOrientation = true; changed = true; }
             if (Math.Abs(c.rotationOffset - RootRotationOffsetDegrees) > 0.01f) { c.rotationOffset = RootRotationOffsetDegrees; changed = true; }
             if (!c.keepOriginalPositionY) { c.keepOriginalPositionY = true; changed = true; }
@@ -306,7 +315,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (c.name != spec.name) v.Add("clip.name: " + c.name + " != " + spec.name);
             if (c.loopTime != spec.loop) v.Add("clip.loopTime: " + c.loopTime + " != " + spec.loop);
             if (c.loopPose) v.Add("clip.loopPose: true != false");
-            if (!c.lockRootRotation || !c.lockRootHeightY || !c.lockRootPositionXZ) v.Add("clip: root not locked (no root motion)");
+            if (c.lockRootRotation == spec.rootYaw || !c.lockRootHeightY || c.lockRootPositionXZ == spec.rootXZ) v.Add("clip: root lock != manifest root_motion (xz " + spec.rootXZ + ", yaw " + spec.rootYaw + ")");
             if (Math.Abs(c.rotationOffset - RootRotationOffsetDegrees) > 0.01f) v.Add("clip.rotationOffset: " + c.rotationOffset + " != " + RootRotationOffsetDegrees);
             if (c.hasAdditiveReferencePose != spec.additive) v.Add("clip.hasAdditiveReferencePose: " + c.hasAdditiveReferencePose + " != " + spec.additive);
             if (!SameEvents(c.events, EventsOf(spec, c.firstFrame, c.lastFrame))) v.Add("clip.events: " + Describe(c.events) + " != " + spec.EventsText());

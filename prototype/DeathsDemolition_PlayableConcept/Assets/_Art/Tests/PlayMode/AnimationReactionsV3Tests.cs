@@ -143,12 +143,14 @@ namespace DD.Art.Tests.PlayMode
             var sink = new MirrorSink { SwipeMirror = true };
             v.WindowSink = sink;
             v.PlayAttack(ZombieAttackStyle.Swipe, 0.55f);
-            Assert.IsTrue(v.Animator.GetBool(CharacterAnimatorContract.AttackMirror), "swipe_L aynalı oynamalı");
+            // AP-022 slice 1: swipe_L has its own clip (state 5); the mirror flag stays for sets without it
+            Assert.AreEqual(5, v.Animator.GetInteger(CharacterAnimatorContract.AttackStyle), "swipe_L kendi klibinde");
+            Assert.IsFalse(v.Animator.GetBool(CharacterAnimatorContract.AttackMirror));
             yield return CharacterTests.Bekle(() => !v.Animator.GetCurrentAnimatorStateInfo(0).IsName(CharacterAnimatorContract.LocomotionState), 1f, "saldırı başladı");
             for (int i = 0; i < 60; i++) yield return null;
             sink.SwipeMirror = false;
             v.PlayAttack(ZombieAttackStyle.BiteGrab, 0.7f);
-            Assert.AreEqual(1, v.Animator.GetInteger(CharacterAnimatorContract.AttackStyle), "bite_grab → lunge klibi (AP-022'ye kadar)");
+            Assert.AreEqual(4, v.Animator.GetInteger(CharacterAnimatorContract.AttackStyle), "bite_grab kendi klibinde (AP-022 slice 1)");
             Assert.IsFalse(v.Animator.GetBool(CharacterAnimatorContract.AttackMirror));
             for (int i = 0; i < 90; i++) yield return null;
 

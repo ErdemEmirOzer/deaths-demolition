@@ -531,11 +531,14 @@ namespace DD.Art.Pipeline.EditorTools
 
             // attacks (speed = AttackRate → hit_window_start lands on TelegraphTime); WP-032B: + overhead (Ultra); WP-032C: the v003
             // overhead carries its own 33-frame recovery, OverheadHoldSeconds = 0 → the common exit.
-            string[] attackStates = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState, C.AttackOverheadState };
-            for (int i = 0; i < C.ZombieAttackClips.Length; i++)
+            // WP-071: AP-022 slice 1 attacks where the set carries them (+ Attack_BiteGrab 4, Attack_SwipeL 5), else the AP-009 clips
+            string[] attackStates = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState, C.AttackOverheadState, C.AttackBiteGrabState, C.AttackSwipeLState };
+            for (int i = 0; i < attackStates.Length; i++)
             {
+                string clipName = clips.ContainsKey(C.ZombieAttackClipsV3[i]) ? C.ZombieAttackClipsV3[i] : i < C.ZombieAttackClips.Length ? C.ZombieAttackClips[i] : null;
+                if (clipName == null) continue;
                 bool hold = i == 3 && OverheadHoldSeconds > 0f;
-                AnimatorState a = OneShot(sm, attackStates[i], clips[C.ZombieAttackClips[i]], loco, hold ? 1f : 0.97f, hold ? OverheadHoldSeconds : 0.12f);
+                AnimatorState a = OneShot(sm, attackStates[i], clips[clipName], loco, hold ? 1f : 0.97f, hold ? OverheadHoldSeconds : 0.12f);
                 a.speedParameterActive = true;
                 a.speedParameter = C.AttackRate;
                 a.mirrorParameterActive = true;   // WP-071 B5: swipe_L / any left-handed read = the clip mirrored
@@ -558,7 +561,10 @@ namespace DD.Art.Pipeline.EditorTools
 
             for (int i = 0; i < C.ZombieDeathClips.Length; i++)   // WP-032C: 8 styles (+ side_R, special_A/B, ultra)
             {
-                AnimatorState d = OneShot(sm, C.DeathState + "_" + i, clips[C.ZombieDeathClips[i]], null);
+                // WP-071: the AP-022 death onsets where present (side_R = spin_side mirrored)
+                bool v3 = clips.ContainsKey(C.ZombieDeathClipsV3[i]);
+                AnimatorState d = OneShot(sm, C.DeathState + "_" + i, clips[v3 ? C.ZombieDeathClipsV3[i] : C.ZombieDeathClips[i]], null);
+                if (v3 && i == 4) d.mirror = true;
                 FromAny(sm, d, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, (float)i, C.DeathStyle));
             }
 

@@ -38,7 +38,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.ClipCount, m.Count);
             int player = 0, zombie = 0;
             foreach (var s in m.Values) { if (s.target == "player") player++; else if (s.target == "zombie") zombie++; }
-            Assert.AreEqual(42, player); Assert.AreEqual(44, zombie);   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+            Assert.AreEqual(42, player); Assert.AreEqual(54, zombie);   // WP-071: + AP-022 slice 1 (10)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
             foreach (string name in C.PlayerClips) Assert.IsTrue(m.ContainsKey(name), name);
             foreach (string name in C.ZombieClips) Assert.IsTrue(m.ContainsKey(name), name);
             // Every manifest event name is in the contract table.
@@ -204,12 +204,13 @@ namespace DD.Art.Tests.EditMode
             for (int i = 0; i < 4; i++) Assert.AreEqual(set.Clip(C.ZombieGaitClips[i]), gait.children[i].motion, "gait " + i);
             Assert.IsTrue(loco.speedParameterActive && loco.speedParameter == C.GaitRate);
 
-            string[] attacks = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState, C.AttackOverheadState };   // WP-032B: + overhead (v002, Ultra)
-            for (int i = 0; i < 4; i++)
+            // WP-071: AP-022 slice 1 — six attack states (+ bite_grab, swipe_L), each on its v3 clip
+            string[] attacks = { C.AttackSwipeState, C.AttackLungeState, C.AttackSweepState, C.AttackOverheadState, C.AttackBiteGrabState, C.AttackSwipeLState };
+            for (int i = 0; i < attacks.Length; i++)
             {
                 AnimatorState a = ArtAnimatorBuilder.FindState(c, 0, attacks[i]);
                 Assert.IsNotNull(a, attacks[i]);
-                Assert.AreEqual(set.Clip(C.ZombieAttackClips[i]), a.motion);
+                Assert.AreEqual(set.Clip(C.ZombieAttackClipsV3[i]), a.motion, attacks[i]);
                 Assert.IsTrue(a.speedParameterActive && a.speedParameter == C.AttackRate, attacks[i] + " AttackRate");
                 Assert.AreEqual(1, a.transitions.Length, attacks[i] + " → Locomotion");
             }
@@ -224,10 +225,11 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(1, wait.transitions.Length); Assert.AreEqual(C.LocomotionState, wait.transitions[0].destinationState.name);
             Assert.IsTrue(System.Array.Exists(loco.transitions, t => t.destinationState == wait), "Locomotion → Wait (Waiting)");
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 5; i++)
             {
                 AnimatorState d = ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_" + i);
-                Assert.IsNotNull(d); Assert.AreEqual(set.Clip(C.ZombieDeathClips[i]), d.motion); Assert.AreEqual(0, d.transitions.Length, "ölüm çıkışsız");
+                Assert.IsNotNull(d); Assert.AreEqual(set.Clip(C.ZombieDeathClipsV3[i]), d.motion, "WP-071: AP-022 death " + i); Assert.AreEqual(0, d.transitions.Length, "ölüm çıkışsız");
+                Assert.AreEqual(i == 4, d.mirror, "side_R = spin_side aynası");
             }
 
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.RiseState)); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.StaggerState));
@@ -323,7 +325,7 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(42, player.Clips.Count); Assert.AreEqual(44, zombie.Clips.Count);   // WP-032C v004
+            Assert.AreEqual(42, player.Clips.Count); Assert.AreEqual(54, zombie.Clips.Count);   // WP-071 + AP-022 slice 1   // WP-032C v004
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
             var m = Manifest();
             foreach (var set in new[] { player, zombie })

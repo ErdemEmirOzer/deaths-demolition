@@ -464,6 +464,33 @@ namespace DD.Prototype.Characters
             RagdollProxyPool.Warm();
         }
 
+        private string DeathClipName(int deathStyle)
+        {
+            int i = Mathf.Clamp(deathStyle, 0, CharacterAnimatorContract.ZombieDeathClips.Length - 1);
+            string v3 = CharacterAnimatorContract.ZombieDeathClipsV3[i];
+            return _animation != null && _animation.Find(v3) != null ? v3 : CharacterAnimatorContract.ZombieDeathClips[i];
+        }
+
+        private bool _visualRestCaptured;
+        private Vector3 _visualRestPos;
+        private Quaternion _visualRestRot;
+
+        private void CaptureVisualRest()
+        {
+            if (_visualRestCaptured || _animator == null) return;
+            _visualRestCaptured = true;
+            _visualRestPos = _animator.transform.localPosition;
+            _visualRestRot = _animator.transform.localRotation;
+        }
+
+        /// <summary>WP-071: a pooled body comes back with the Animator's node where the prefab put it (the death's root motion moved it).</summary>
+        private void RestoreVisualRest()
+        {
+            if (_animator == null) return;
+            _animator.applyRootMotion = false;
+            if (_visualRestCaptured) { _animator.transform.localPosition = _visualRestPos; _animator.transform.localRotation = _visualRestRot; }
+        }
+
         private static float HandoffSecondsOf(ZombieDeathFamily f) =>
             f == ZombieDeathFamily.FallBack ? 0.27f : f == ZombieDeathFamily.FallForward ? 0.30f : f == ZombieDeathFamily.SpinSide ? 0.33f
             : f == ZombieDeathFamily.LegsOut ? 0.37f : f == ZombieDeathFamily.UltraTimber ? 1.10f : 0.30f;
@@ -484,6 +511,13 @@ namespace DD.Prototype.Characters
             RagdollHandoffSeconds = -1f;
             _handoffNow = false;
             _handoffAt = HandoffSecondsOf(DeathFamily);
+            // WP-071 AP-022: an onset clip that names its own hand-off drives it (the event); the clock is then only the fallback
+            string deathClip = DeathClipName(deathStyle);
+            CharacterAnimationSet.Entry de = deathClip != null ? _animation.Find(deathClip) : null;
+            int hf = de != null && !string.IsNullOrEmpty(de.events) ? FrameOf(de.events, "ragdoll_handoff") : -1;
+            if (hf >= 0) _handoffAt = hf / (float)CharacterAnimatorContract.Fps + 0.25f;
+            // ... and its authored travel / heading is applied to the visual (the gameplay root no longer moves after death, A3.7)
+            if (de != null && deathClip.StartsWith("AP022_", System.StringComparison.Ordinal)) { CaptureVisualRest(); _animator.applyRootMotion = true; }
             _deathClock = 0f;
             if (_rdBones == null) return;
             for (int i = 0; i < _rdBones.Length; i++) if (_rdBones[i] != null) _rdPrev[i] = _rdBones[i].position;
@@ -773,6 +807,7 @@ namespace DD.Prototype.Characters
         {
             if (!_authored) return;
             EndRagdoll();   // WP-071: a pooled body comes back animated (proxy returned, Animator + LOD running)
+            RestoreVisualRest();
             _hasFullImpulse = false;
             _lastOverrideHit = -10f;
             _kbActive = false; _kbVelocity = Vector3.zero; _tremorClock = 0f;   // WP-071 B5
@@ -874,18 +909,24 @@ namespace DD.Prototype.Characters
             // WP-071 B5: bite_grab plays the lunge (both arms reach, the dive closes) until AP-022's attack_bite_grab
             int index = style == ZombieAttackStyle.Lunge || style == ZombieAttackStyle.BiteGrab ? 1 : style == ZombieAttackStyle.Swipe ? 0
                 : style == ZombieAttackStyle.Overhead && _animation.Find(CharacterAnimatorContract.ZombieAttackOverhead) != null ? 3 : 2;
-            float windowStart = WindowStartSeconds(CharacterAnimatorContract.ZombieAttackClips[index]);
+            bool mirror = style == ZombieAttackStyle.Swipe && WindowSink != null && WindowSink.SwipeMirror;
+            // WP-071 AP-022 slice 1: bite_grab and swipe_L have their own clips (states 4 / 5)
+            bool v3 = _animation.Find(CharacterAnimatorContract.ZombieAttackClipsV3[0]) != null;
+            if (v3 && style == ZombieAttackStyle.BiteGrab) index = 4;
+            if (v3 && mirror) { index = 5; mirror = false; }
+            string clipName = v3 ? CharacterAnimatorContract.ZombieAttackClipsV3[index] : CharacterAnimatorContract.ZombieAttackClips[index];
+            float windowStart = WindowStartSeconds(clipName);
             float rate = telegraphSeconds > 0.01f && windowStart > 0.01f ? windowStart / telegraphSeconds : 1f;
             rate = Mathf.Clamp(rate, 0.25f, 4f);
             _windowOpen = false;
             _animator.SetInteger(AttackStyleId, index);
-            _animator.SetBool(AttackMirrorId, style == ZombieAttackStyle.Swipe && WindowSink != null && WindowSink.SwipeMirror);   // swipe_L
+            _animator.SetBool(AttackMirrorId, mirror);   // swipe_L as a mirror only on a set without the AP-022 clip
             _animator.SetFloat(AttackRateId, rate);
             _animator.SetTrigger(AttackId);
             // WP-032: the additive wind-up emphasis spans the wind-up (1 s clip at 1 / telegraph) and is gone by hit_window_start.
             if (_telegraphLayer >= 0 && _telegraphEmphasis > 0.001f && telegraphSeconds > 0.05f)
             {
-                _animator.SetInteger(TelegraphStyleId, Mathf.Min(index, 2));   // the overhead shares the sweep's wide-arm emphasis
+                _animator.SetInteger(TelegraphStyleId, index == 4 ? 1 : index == 5 ? 0 : Mathf.Min(index, 2));   // the overhead shares the sweep's wide-arm emphasis; bite = lunge's, swipe_L = swipe's
                 _animator.SetFloat(TelegraphRateId, 1f / telegraphSeconds);
                 _animator.SetTrigger(TelegraphId);
             }

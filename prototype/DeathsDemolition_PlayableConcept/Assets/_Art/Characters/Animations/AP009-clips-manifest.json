@@ -1,5 +1,5 @@
 {
- "schema": "AP009.clips-manifest.v007",
+ "schema": "AP009.clips-manifest.v008",
  "package": "AP-009B",
  "fps": 30,
  "skeleton": {
@@ -3881,6 +3881,772 @@
     }
    },
    "speed_mps_design": 1.013
+  },
+  {
+   "clip": "AP022_zombie_attack_bite_grab",
+   "fbx": "AP022_zombie_attack_bite_grab_v008.fbx",
+   "target": "zombie",
+   "frames": 40,
+   "fps": 30,
+   "seconds": 1.3,
+   "loop": false,
+   "events": [
+    {
+     "name": "telegraph_start",
+     "frame": 0
+    },
+    {
+     "name": "attack_step",
+     "frame": 12
+    },
+    {
+     "name": "grab_start",
+     "frame": 13
+    },
+    {
+     "name": "hit_window_start",
+     "frame": 14
+    },
+    {
+     "name": "foot_r",
+     "frame": 15
+    },
+    {
+     "name": "hit_window_end",
+     "frame": 18
+    },
+    {
+     "name": "grab_end",
+     "frame": 20
+    },
+    {
+     "name": "attack_recover",
+     "frame": 32
+    },
+    {
+     "name": "foot_l",
+     "frame": 32
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "ZombieAttackStyle bite_grab / tier-agnostic (default telegraph 0.47 s native = 14 f; rate-scaled to 0.6-0.7 s)",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.0,
+    0.25,
+    -0.0
+   ],
+   "validation": {
+    "A1_events": true,
+    "A3_back_at_origin": true,
+    "A6_strike_snap": true,
+    "G1_no_pops": true,
+    "A2_telegraph_silhouette": true,
+    "A5_feet_on_ground": true,
+    "A4_capsule": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_attack_lunge",
+   "fbx": "AP022_zombie_attack_lunge_v008.fbx",
+   "target": "zombie",
+   "frames": 32,
+   "fps": 30,
+   "seconds": 1.033,
+   "loop": false,
+   "events": [
+    {
+     "name": "telegraph_start",
+     "frame": 0
+    },
+    {
+     "name": "attack_step",
+     "frame": 9
+    },
+    {
+     "name": "hit_window_start",
+     "frame": 12
+    },
+    {
+     "name": "hit_window_end",
+     "frame": 15
+    },
+    {
+     "name": "foot_l",
+     "frame": 16
+    },
+    {
+     "name": "foot_r",
+     "frame": 17
+    },
+    {
+     "name": "attack_recover",
+     "frame": 26
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "ZombieAttackStyle lunge / Runner (telegraph 0.35 s)",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.0,
+    1.6,
+    -0.0
+   ],
+   "validation": {
+    "A1_events": true,
+    "A3_back_at_origin": true,
+    "A6_strike_snap": true,
+    "G1_no_pops": true,
+    "A2_telegraph_silhouette": true,
+    "A5_feet_on_ground": true,
+    "A4_capsule": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_attack_overhead_slam",
+   "fbx": "AP022_zombie_attack_overhead_slam_v008.fbx",
+   "target": "zombie",
+   "frames": 64,
+   "fps": 30,
+   "seconds": 2.1,
+   "loop": false,
+   "events": [
+    {
+     "name": "telegraph_start",
+     "frame": 0
+    },
+    {
+     "name": "attack_step",
+     "frame": 28
+    },
+    {
+     "name": "hit_window_start",
+     "frame": 30
+    },
+    {
+     "name": "foot_l",
+     "frame": 31
+    },
+    {
+     "name": "ground_impact",
+     "frame": 33
+    },
+    {
+     "name": "hit_window_end",
+     "frame": 35
+    },
+    {
+     "name": "foot_r",
+     "frame": 39
+    },
+    {
+     "name": "attack_recover",
+     "frame": 52
+    },
+    {
+     "name": "foot_r",
+     "frame": 56
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "ZombieAttackStyle overhead / Ultra Executioner (telegraph 1.15 s)",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.0,
+    0.5,
+    -0.0
+   ],
+   "validation": {
+    "A1_events": true,
+    "A3_back_at_origin": true,
+    "A6_strike_snap": true,
+    "G1_no_pops": true,
+    "A2_telegraph_silhouette": true,
+    "A5_feet_on_ground": true,
+    "A4_capsule": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_attack_sweep",
+   "fbx": "AP022_zombie_attack_sweep_v008.fbx",
+   "target": "zombie",
+   "frames": 48,
+   "fps": 30,
+   "seconds": 1.567,
+   "loop": false,
+   "events": [
+    {
+     "name": "telegraph_start",
+     "frame": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 11
+    },
+    {
+     "name": "attack_step",
+     "frame": 20
+    },
+    {
+     "name": "foot_l",
+     "frame": 22
+    },
+    {
+     "name": "hit_window_start",
+     "frame": 22
+    },
+    {
+     "name": "hit_window_end",
+     "frame": 27
+    },
+    {
+     "name": "foot_r",
+     "frame": 30
+    },
+    {
+     "name": "attack_recover",
+     "frame": 40
+    },
+    {
+     "name": "foot_l",
+     "frame": 43
+    },
+    {
+     "name": "foot_r",
+     "frame": 46
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "ZombieAttackStyle sweep / Guard (telegraph 0.8 s)",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": true
+   },
+   "root_delta": [
+    -0.0,
+    0.25,
+    -30.0
+   ],
+   "validation": {
+    "A1_events": true,
+    "A3_back_at_origin": true,
+    "A6_strike_snap": true,
+    "G1_no_pops": true,
+    "A2_telegraph_silhouette": true,
+    "A5_feet_on_ground": true,
+    "A4_capsule": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_attack_swipe_L",
+   "fbx": "AP022_zombie_attack_swipe_L_v008.fbx",
+   "target": "zombie",
+   "frames": 36,
+   "fps": 30,
+   "seconds": 1.167,
+   "loop": false,
+   "events": [
+    {
+     "name": "telegraph_start",
+     "frame": 0
+    },
+    {
+     "name": "attack_step",
+     "frame": 13
+    },
+    {
+     "name": "hit_window_start",
+     "frame": 15
+    },
+    {
+     "name": "foot_r",
+     "frame": 16
+    },
+    {
+     "name": "hit_window_end",
+     "frame": 19
+    },
+    {
+     "name": "foot_l",
+     "frame": 21
+    },
+    {
+     "name": "attack_recover",
+     "frame": 30
+    },
+    {
+     "name": "foot_r",
+     "frame": 33
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "Swipe (left) — all tiers",
+   "tier": null,
+   "mirror_of": "AP022_zombie_attack_swipe_R",
+   "root_motion": {
+    "xz": true,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.0,
+    0.35,
+    -0.0
+   ],
+   "validation": {
+    "A1_events": true,
+    "A3_back_at_origin": true,
+    "A6_strike_snap": true,
+    "G1_no_pops": true,
+    "A2_telegraph_silhouette": true,
+    "A5_feet_on_ground": true,
+    "A4_capsule": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_attack_swipe_R",
+   "fbx": "AP022_zombie_attack_swipe_R_v008.fbx",
+   "target": "zombie",
+   "frames": 36,
+   "fps": 30,
+   "seconds": 1.167,
+   "loop": false,
+   "events": [
+    {
+     "name": "telegraph_start",
+     "frame": 0
+    },
+    {
+     "name": "attack_step",
+     "frame": 13
+    },
+    {
+     "name": "hit_window_start",
+     "frame": 15
+    },
+    {
+     "name": "foot_l",
+     "frame": 16
+    },
+    {
+     "name": "hit_window_end",
+     "frame": 19
+    },
+    {
+     "name": "foot_r",
+     "frame": 21
+    },
+    {
+     "name": "attack_recover",
+     "frame": 30
+    },
+    {
+     "name": "foot_r",
+     "frame": 33
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "ZombieAttackStyle swipe / Standard (telegraph 0.55 s)",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.0,
+    0.35,
+    -0.0
+   ],
+   "validation": {
+    "A1_events": true,
+    "A3_back_at_origin": true,
+    "A6_strike_snap": true,
+    "G1_no_pops": true,
+    "A2_telegraph_silhouette": true,
+    "A5_feet_on_ground": true,
+    "A4_capsule": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_death_fall_back",
+   "fbx": "AP022_zombie_death_fall_back_v008.fbx",
+   "target": "zombie",
+   "frames": 42,
+   "fps": 30,
+   "seconds": 1.367,
+   "loop": false,
+   "events": [
+    {
+     "name": "hit",
+     "frame": 0
+    },
+    {
+     "name": "fall_start",
+     "frame": 5
+    },
+    {
+     "name": "foot_r",
+     "frame": 6
+    },
+    {
+     "name": "ragdoll_handoff",
+     "frame": 8
+    },
+    {
+     "name": "ground_impact",
+     "frame": 16
+    },
+    {
+     "name": "death_end",
+     "frame": 41
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "FallBackward",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.052,
+    -0.644,
+    1.3
+   ],
+   "ragdoll": {
+    "handoff": 8,
+    "limits_ok": true,
+    "max_bone_speed_mps": {
+     "hands": 4.16,
+     "head": 2.9,
+     "hips": 1.62
+    },
+    "limits_file": "ragdoll-limits.json"
+   },
+   "rest_contact_by_fit_m": {
+    "A": 0.0197,
+    "B": 0.0,
+    "C": 0.0315
+   },
+   "validation": {
+    "D1_events": true,
+    "D2_travel": true,
+    "D3_fall_time": true,
+    "D4_impact_speed": true,
+    "D7_handoff_ranges": true,
+    "D8_bounce": true,
+    "D9_hands_down": true,
+    "D6_settled": true,
+    "G1_no_pops": true,
+    "D5_ground": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_death_fall_fwd",
+   "fbx": "AP022_zombie_death_fall_fwd_v008.fbx",
+   "target": "zombie",
+   "frames": 40,
+   "fps": 30,
+   "seconds": 1.3,
+   "loop": false,
+   "events": [
+    {
+     "name": "hit",
+     "frame": 0
+    },
+    {
+     "name": "fall_start",
+     "frame": 4
+    },
+    {
+     "name": "foot_r",
+     "frame": 6
+    },
+    {
+     "name": "foot_l",
+     "frame": 9
+    },
+    {
+     "name": "ragdoll_handoff",
+     "frame": 9
+    },
+    {
+     "name": "ground_impact",
+     "frame": 15
+    },
+    {
+     "name": "death_end",
+     "frame": 39
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "FallForward",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.04,
+    0.869,
+    -3.9
+   ],
+   "ragdoll": {
+    "handoff": 9,
+    "limits_ok": true,
+    "max_bone_speed_mps": {
+     "hands": 5.14,
+     "head": 3.43,
+     "hips": 2.52
+    },
+    "limits_file": "ragdoll-limits.json"
+   },
+   "rest_contact_by_fit_m": {
+    "A": 0.084,
+    "B": 0.0,
+    "C": 0.0966
+   },
+   "validation": {
+    "D1_events": true,
+    "D2_travel": true,
+    "D3_fall_time": true,
+    "D4_impact_speed": true,
+    "D7_handoff_ranges": true,
+    "D8_bounce": true,
+    "D9_hands_down": true,
+    "D6_settled": true,
+    "G1_no_pops": true,
+    "D5_ground": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_death_legs_out",
+   "fbx": "AP022_zombie_death_legs_out_v008.fbx",
+   "target": "zombie",
+   "frames": 46,
+   "fps": 30,
+   "seconds": 1.5,
+   "loop": false,
+   "events": [
+    {
+     "name": "hit",
+     "frame": 0
+    },
+    {
+     "name": "fall_start",
+     "frame": 3
+    },
+    {
+     "name": "foot_l",
+     "frame": 9
+    },
+    {
+     "name": "ragdoll_handoff",
+     "frame": 11
+    },
+    {
+     "name": "ground_impact",
+     "frame": 14
+    },
+    {
+     "name": "death_end",
+     "frame": 45
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "Crumple + HeadshotDrop",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": true
+   },
+   "root_delta": [
+    0.131,
+    0.384,
+    -54.0
+   ],
+   "ragdoll": {
+    "handoff": 11,
+    "limits_ok": true,
+    "max_bone_speed_mps": {
+     "hands": 5.27,
+     "head": 3.49,
+     "hips": 1.83
+    },
+    "limits_file": "ragdoll-limits.json"
+   },
+   "rest_contact_by_fit_m": {
+    "A": 0.0048,
+    "B": -0.0,
+    "C": 0.012
+   },
+   "validation": {
+    "D1_events": true,
+    "D2_travel": true,
+    "D3_fall_time": true,
+    "D4_impact_speed": true,
+    "D7_handoff_ranges": true,
+    "D8_bounce": true,
+    "D9_hands_down": true,
+    "D6_settled": true,
+    "G1_no_pops": true,
+    "D5_ground": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_death_spin_side",
+   "fbx": "AP022_zombie_death_spin_side_v008.fbx",
+   "target": "zombie",
+   "frames": 44,
+   "fps": 30,
+   "seconds": 1.433,
+   "loop": false,
+   "events": [
+    {
+     "name": "hit",
+     "frame": 0
+    },
+    {
+     "name": "fall_start",
+     "frame": 6
+    },
+    {
+     "name": "foot_l",
+     "frame": 6
+    },
+    {
+     "name": "ragdoll_handoff",
+     "frame": 10
+    },
+    {
+     "name": "ground_impact",
+     "frame": 17
+    },
+    {
+     "name": "death_end",
+     "frame": 43
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "SpinFall",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": true
+   },
+   "root_delta": [
+    -0.522,
+    0.182,
+    -114.9
+   ],
+   "ragdoll": {
+    "handoff": 10,
+    "limits_ok": true,
+    "max_bone_speed_mps": {
+     "hands": 4.34,
+     "head": 2.15,
+     "hips": 1.2
+    },
+    "limits_file": "ragdoll-limits.json"
+   },
+   "rest_contact_by_fit_m": {
+    "A": 0.0169,
+    "B": 0.0,
+    "C": 0.0361
+   },
+   "validation": {
+    "D1_events": true,
+    "D2_travel": true,
+    "D3_fall_time": true,
+    "D4_impact_speed": true,
+    "D7_handoff_ranges": true,
+    "D8_bounce": true,
+    "D9_hands_down": true,
+    "D6_settled": true,
+    "G1_no_pops": true,
+    "D5_ground": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
   }
  ],
  "v005_changes": {
@@ -3935,5 +4701,23 @@
    "AP009_player_sw_hold_jewel (TideJewel hold, override_upper / upper_body, 61 f loop)"
   ],
   "note": "the v007 export manifest re-emitted the 85 existing entries without their layer/mask/weapon/tier/validation fields — this file keeps the v006b entries and adds the jewel clip"
+ },
+ "v008_changes": {
+  "package": "AP-022 slice 1 (P-06, 24.09)",
+  "added": [
+   "AP022_zombie_attack_bite_grab",
+   "AP022_zombie_attack_lunge",
+   "AP022_zombie_attack_overhead_slam",
+   "AP022_zombie_attack_sweep",
+   "AP022_zombie_attack_swipe_L",
+   "AP022_zombie_attack_swipe_R",
+   "AP022_zombie_death_fall_back",
+   "AP022_zombie_death_fall_fwd",
+   "AP022_zombie_death_legs_out",
+   "AP022_zombie_death_spin_side"
+  ],
+  "events": "list form [{name, frame, value?}]",
+  "root": "root_motion {xz, yaw} + root_delta [x, z, yawDeg]; travel on the Hips, Root unkeyed",
+  "ragdoll_limits": "AP-022/exports/v008/ragdoll-limits.json (mirrored in RagdollProxyPool)"
  }
 }

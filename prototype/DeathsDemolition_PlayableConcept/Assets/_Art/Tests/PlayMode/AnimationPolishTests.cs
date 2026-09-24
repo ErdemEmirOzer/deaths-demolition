@@ -314,15 +314,36 @@ namespace DD.Art.Tests.PlayMode
             Transform lf = an.GetBoneTransform(HumanBodyBones.LeftFoot);
             float bodyDot = Vector3.Dot(an.bodyRotation * Vector3.forward, v.transform.forward);
             float toes = v.transform.InverseTransformPoint(an.GetBoneTransform(HumanBodyBones.LeftToes).position).z - v.transform.InverseTransformPoint(lf.position).z;
-            an.enabled = false; an.Play(C.AttackSwipeState, 0, 0.55f); an.Update(0f); yield return null;
-            Transform lh = an.GetBoneTransform(HumanBodyBones.LeftHand), rh = an.GetBoneTransform(HumanBodyBones.RightHand);
-            float rightHandLocalX = v.transform.InverseTransformPoint(rh.position).x;
-            Debug.Log("[DD-TEST] wp032.orient bodyFwd·rootFwd=" + bodyDot.ToString("F2", CultureInfo.InvariantCulture) + " toesAhead=" + toes.ToString("F3", CultureInfo.InvariantCulture) + " swipe rightHandY=" + rh.position.y.ToString("F2", CultureInfo.InvariantCulture) + " leftHandY=" + lh.position.y.ToString("F2", CultureInfo.InvariantCulture) + " rightHandLocalX=" + rightHandLocalX.ToString("F2", CultureInfo.InvariantCulture));
+            // WP-071 AP-022 s1: the swipe is AP022 swipe_R now — a right-to-left sweep whose right hand ends across the body, so a
+            // single pose no longer proves the arm. Not mirrored = the right hand travels further than the left from wind-up to the
+            // window's end; swipe_L (same authoring, mirror off) is the control and must read the other way.
+            an.enabled = false;
+            float swipeR = HandTravel(v, an, C.AttackSwipeState, out float swipeRLeft);
+            float swipeL = HandTravel(v, an, C.AttackSwipeLState, out float swipeLLeft);
             an.enabled = true;
+            Debug.Log("[DD-TEST] wp032.orient bodyFwd·rootFwd=" + bodyDot.ToString("F2", CultureInfo.InvariantCulture) + " toesAhead=" + toes.ToString("F3", CultureInfo.InvariantCulture) + " swipeR travel R/L=" + swipeR.ToString("F2", CultureInfo.InvariantCulture) + "/" + swipeRLeft.ToString("F2", CultureInfo.InvariantCulture) + " swipeL travel R/L=" + swipeL.ToString("F2", CultureInfo.InvariantCulture) + "/" + swipeLLeft.ToString("F2", CultureInfo.InvariantCulture));
             Assert.Greater(bodyDot, 0.9f, "klip gövdesi modelin ileri yönüne bakmalı (180° kaydırma)");
             Assert.Greater(toes, 0.05f, "ayak parmakları topuğun önünde");
-            Assert.Greater(rh.position.y, lh.position.y + 0.1f, "swipe sağ kolla (ayna yok)");
-            Assert.Greater(rightHandLocalX, 0f, "sağ el modelin sağında (+X)");
+            Assert.Greater(swipeR, swipeRLeft * 1.3f, "swipe sağ kolla (ayna yok)");
+            Assert.Greater(swipeLLeft, swipeL * 1.3f, "swipe_L sol kolla (kontrol)");
+            yield return null;
+        }
+
+        static float HandTravel(ZombieSkinnedVisual v, Animator an, string state, out float leftTravel)
+        {
+            // Model-local hand path over wind-up → hit_window_end (frames 0..19 of 36), 12 samples.
+            Transform lh = an.GetBoneTransform(HumanBodyBones.LeftHand), rh = an.GetBoneTransform(HumanBodyBones.RightHand);
+            float right = 0f; leftTravel = 0f;
+            Vector3 pr = default, pl = default;
+            for (int i = 0; i <= 12; i++)
+            {
+                an.Play(state, 0, i / 12f * (19f / 36f)); an.Update(0f);
+                Vector3 r = v.transform.InverseTransformPoint(rh.position), l = v.transform.InverseTransformPoint(lh.position);
+                if (i > 0) { right += Vector3.Distance(r, pr); leftTravel += Vector3.Distance(l, pl); }
+                pr = r; pl = l;
+            }
+
+            return right;
         }
 
 

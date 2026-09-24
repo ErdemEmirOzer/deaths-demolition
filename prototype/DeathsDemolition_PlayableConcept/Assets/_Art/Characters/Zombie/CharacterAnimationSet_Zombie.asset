@@ -503,5 +503,115 @@ MonoBehaviour:
     frames: 17
     events: foot_l=0;foot_r=7
     stanceFrames: 11
-  _manifestSchema: AP009.clips-manifest.v007
+  - name: AP022_zombie_attack_bite_grab
+    clip: {fileID: -623603649343465320, guid: 3733e2b2764684c4dbb496a106fe4547, type: 3}
+    loop: 0
+    seconds: 1.3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 40
+    events: telegraph_start=0;attack_step=12;grab_start=13;hit_window_start=14;foot_r=15;hit_window_end=18;grab_end=20;attack_recover=32;foot_l=32
+    stanceFrames: 0
+  - name: AP022_zombie_attack_lunge
+    clip: {fileID: -623603649343465320, guid: 1f99b1121b34a4639841ea561e91bb5e, type: 3}
+    loop: 0
+    seconds: 1.033
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 32
+    events: telegraph_start=0;attack_step=9;hit_window_start=12;hit_window_end=15;foot_l=16;foot_r=17;attack_recover=26
+    stanceFrames: 0
+  - name: AP022_zombie_attack_overhead_slam
+    clip: {fileID: -623603649343465320, guid: a244d4f3877074ebfaf66689ba9476ff, type: 3}
+    loop: 0
+    seconds: 2.1
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 64
+    events: telegraph_start=0;attack_step=28;hit_window_start=30;foot_l=31;ground_impact=33;hit_window_end=35;foot_r=39;attack_recover=52;foot_r=56
+    stanceFrames: 0
+  - name: AP022_zombie_attack_sweep
+    clip: {fileID: -623603649343465320, guid: 27c89a3e6e99f448385e2c77efd884f3, type: 3}
+    loop: 0
+    seconds: 1.567
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 48
+    events: telegraph_start=0;foot_r=11;attack_step=20;foot_l=22;hit_window_start=22;hit_window_end=27;foot_r=30;attack_recover=40;foot_l=43;foot_r=46
+    stanceFrames: 0
+  - name: AP022_zombie_attack_swipe_L
+    clip: {fileID: -623603649343465320, guid: bc646ae2399ae49ec9fc0ebe7601734d, type: 3}
+    loop: 0
+    seconds: 1.167
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 36
+    events: telegraph_start=0;attack_step=13;hit_window_start=15;foot_r=16;hit_window_end=19;foot_l=21;attack_recover=30;foot_r=33
+    stanceFrames: 0
+  - name: AP022_zombie_attack_swipe_R
+    clip: {fileID: -623603649343465320, guid: ebc7cbb8ceed34a6eb793baf5f867d76, type: 3}
+    loop: 0
+    seconds: 1.167
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 36
+    events: telegraph_start=0;attack_step=13;hit_window_start=15;foot_l=16;hit_window_end=19;foot_r=21;attack_recover=30;foot_r=33
+    stanceFrames: 0
+  - name: AP022_zombie_death_fall_back
+    clip: {fileID: -623603649343465320, guid: 2ccbc50febe7b4e27b0996d659d0a8f1, type: 3}
+    loop: 0
+    seconds: 1.367
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 42
+    events: hit=0;fall_start=5;foot_r=6;ragdoll_handoff=8;ground_impact=16;death_end=41
+    stanceFrames: 0
+  - name: AP022_zombie_death_fall_fwd
+    clip: {fileID: -623603649343465320, guid: 3f874de098e2046bd951d38c287ef84a, type: 3}
+    loop: 0
+    seconds: 1.3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 40
+    events: hit=0;fall_start=4;foot_r=6;foot_l=9;ragdoll_handoff=9;ground_impact=15;death_end=39
+    stanceFrames: 0
+  - name: AP022_zombie_death_legs_out
+    clip: {fileID: -623603649343465320, guid: 9c78aff4864954ca2950720665aefc47, type: 3}
+    loop: 0
+    seconds: 1.5
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 46
+    events: hit=0;fall_start=3;foot_l=9;ragdoll_handoff=11;ground_impact=14;death_end=45
+    stanceFrames: 0
+  - name: AP022_zombie_death_spin_side
+    clip: {fileID: -623603649343465320, guid: 229a067b6a96648c0a419f32a8636c33, type: 3}
+    loop: 0
+    seconds: 1.433
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 44
+    events: hit=0;fall_start=6;foot_l=6;ragdoll_handoff=10;ground_impact=17;death_end=43
+    stanceFrames: 0
+  _manifestSchema: AP009.clips-manifest.v008
   _locomotionReferenceSpeed: 1.485
