@@ -71,7 +71,9 @@ namespace DD.Prototype.Enemies
         /// <summary>Netted (a rooted body) wins over Dazed; both end on their own timers, a field end or death.</summary>
         private void TickSpecialVisual()
         {
-            ZombieSpecialVisual want = IsRooted ? ZombieSpecialVisual.Netted : IsDazed ? ZombieSpecialVisual.Dazed : ZombieSpecialVisual.None;
+            ZombieSpecialVisual want = IsRooted ? ZombieSpecialVisual.Netted
+                : IsDazed || IsElectrocuted ? ZombieSpecialVisual.Dazed   // WP-076 B4: Electrocuted reads as Dazed until S-06's hit_electro_loop
+                : ZombieSpecialVisual.None;
             if (want != _specialVisual) SetSpecialVisual(want);
         }
         private static readonly System.Collections.Generic.List<ZombieEnemy> s_specialAffected = new System.Collections.Generic.List<ZombieEnemy>(64);

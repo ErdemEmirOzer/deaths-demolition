@@ -144,6 +144,9 @@ namespace DD.Prototype.Enemies
         public ZombiePose Pose { get; private set; } = ZombiePose.Idle;
 
         /// <summary>True once the death reaction has settled and the body can be despawned.</summary>
+        /// <summary>WP-076 B4: the death reaction has begun (a lethal shock holds it for ShockDeathHoldSeconds).</summary>
+        public bool IsDying => _dying;
+
         public bool DeathFinished => _dying && (Driven
             ? Driver.DeathFinished || _deathTime >= DrivenDeathFallbackSeconds
             : _deathTime >= _deathDuration);

@@ -583,6 +583,7 @@ namespace DD.Prototype.Enemies
             ResetSpecialReactions();   // WP-055: no net / transaction memory crosses a life
             _hasTargetSample = false; _targetSpeed = 0f;   // WP-076
             ResetHitResponse();        // WP-076 B3
+            ResetShock();              // WP-076 B4
             ResetOutOfWorld();         // WP-061K
             ResetWaiting();   // WP-050
             _noticed = false;   // WP-052
@@ -622,6 +623,7 @@ namespace DD.Prototype.Enemies
             _attack?.Cancel(GrabEndReason.Killed);   // WP-076: a body leaving without dying (pool clear, WP-061K/L) gives back its slot / grab
             UnregisterCorpse();   // WP-076: off the corpse ceiling list (buried, evicted or cleared)
             _bodyStateOverride = ZombieBodyState.Standing;
+            ResetShock();   // WP-076 B4: a held shock death never resumes on a pooled body
             UnregisterCrowdMembership();
             DamageTargetRegistry.Unregister(transform);
             s_live.Remove(this);
@@ -890,6 +892,7 @@ namespace DD.Prototype.Enemies
                 return;   // WP-061K / WP-061L: left the world or stuck → despawned, no reward
             }
 
+            TickShock();   // WP-076 B4
             TickCombat(dt);
             TickSpecialVisual();   // WP-055 / WP-032E: Netted / Dazed visual follows the reaction timers
             _animator.Tick(dt);
@@ -958,6 +961,9 @@ namespace DD.Prototype.Enemies
             // WP-055: a rooted body (Ofuda net, WP-032E Netted = the clip is frozen) neither walks nor swings; a slowed one does both.
             if (IsRooted && _attack.IsAttacking) _attack.Cancel();
             staggering |= IsRooted;
+            // WP-076 B4: Electrocuted holds the body the same way (no walk, no swing; hitboxes stay on).
+            if (IsElectrocuted && _attack.IsAttacking) _attack.Cancel(GrabEndReason.Staggered);
+            staggering |= IsElectrocuted;
 
             if (!staggering && target != null)
             {
@@ -1137,6 +1143,7 @@ namespace DD.Prototype.Enemies
             // S-03 writes no transform after death, only the despawn countdown and the floor guard below. The block
             // rig keeps its procedural fall and the knockback slide (plain transform move; the controller is off).
             if (TickCorpseFloor()) return;
+            if (TickShockDeathHold(dt)) return;   // WP-076 B4: a lethal shock convulses before the fall
             _knockbackVelocity = Vector3.Lerp(_knockbackVelocity, Vector3.zero, Mathf.Clamp01(KnockbackDamping * dt));
 
             if (_animator.Driven)
@@ -1412,6 +1419,9 @@ namespace DD.Prototype.Enemies
                 LastCorpseLinger = _despawnCountdown;
             }
 
+            bool shockHeld = BeginShockDeathHold(in hit);   // WP-076 B4: State = Electrocuted; a mid-tremble kill holds the fall for the remainder
+            if (shockHeld) SetSpecialVisual(ZombieSpecialVisual.Dazed);   // hit_electro_loop is S-06's; Dazed until it lands
+
             // WP-076 §2 / DEC-096: the killing push for the driver (S-06 picks the family). Read BEFORE the controller goes off.
             // a pellet carries the shell's weight (§3.1: all pellets inside 4 m → Force ≥ 3.0)
             float deathForce = hit.Source == DamageSourceKind.Pellet ? Mathf.Max(hit.ImpactForce, _reaction.ShoveCharge) : hit.ImpactForce;
@@ -1450,8 +1460,11 @@ namespace DD.Prototype.Enemies
             SetHitboxesEnabled(false);
 
             // WP-032C: the driven body picks the tier death (Special A/B, Ultra, side_R) from the tier and the push itself.
-            _animator.SetDeathImpulse(LastDeathImpulse);
-            _animator.BeginDeath(LastDeathImpulse.Direction, LastDeathImpulse.Force, result.Region, heavyTier, transform, ref _random);
+            if (!shockHeld)
+            {
+                _animator.SetDeathImpulse(LastDeathImpulse);
+                _animator.BeginDeath(LastDeathImpulse.Direction, LastDeathImpulse.Force, result.Region, heavyTier, transform, ref _random);
+            }
             RegisterCorpse();   // WP-076: the corpse ceiling (oldest buried first) — after BeginDeath so an evicted body is never this one
 
             PrototypeConfig config = PrototypeConfig.Active;

@@ -31,6 +31,14 @@ namespace DD.Prototype.Enemies
         SpecialWeb = 10,
         /// <summary>sw_pull · WP-055 Tide Jewel well pulled the body one tick toward the core (the Ultra only slows).</summary>
         SpecialPull = 11,
+        /// <summary>sw_shock · WP-076 chain lightning shocked the body (Seconds = the Electrocuted hold; Position = chest).</summary>
+        SpecialShock = 12,
+        /// <summary>sw_slide · WP-076 gel: the body lost traction and slides (B5).</summary>
+        SpecialSlide = 13,
+        /// <summary>sw_fall · WP-076 gel: the sliding body fell (B5).</summary>
+        SpecialFall = 14,
+        /// <summary>rear_threat · WP-076 §6: a threat closing from outside the view (B7).</summary>
+        RearThreat = 15,
     }
 
     /// <summary>
@@ -104,13 +112,14 @@ namespace DD.Prototype.Enemies
     /// </summary>
     public static class EnemyCombatEvents
     {
-        public const int KindCount = 12;
+        public const int KindCount = 16;
 
         /// <summary>The matrix row roots, index = (int)EnemyCombatEventKind.</summary>
         public static readonly string[] RowRoots =
         {
             "telegraph_start", "attack_commit", "attack_hit", "attack_miss", "stagger",
-            "armor_break", "death", "spawn_rise", "spawn_land", "sw_push", "sw_web", "sw_pull"
+            "armor_break", "death", "spawn_rise", "spawn_land", "sw_push", "sw_web", "sw_pull",
+            "sw_shock", "sw_slide", "sw_fall", "rear_threat"   // WP-076 (9–11 leave with S-02's old-Special removal)
         };
 
         public static event Action<EnemyCombatEventInfo> Raised;

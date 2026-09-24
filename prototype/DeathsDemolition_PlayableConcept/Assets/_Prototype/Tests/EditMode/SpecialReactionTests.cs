@@ -58,7 +58,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void OlayYuzeyi_SwSatirlari_SilahKimligi()
         {
-            Assert.AreEqual(12, EnemyCombatEvents.KindCount);
+            Assert.AreEqual(16, EnemyCombatEvents.KindCount);   // WP-076: + sw_shock / sw_slide / sw_fall / rear_threat
             Assert.AreEqual(EnemyCombatEvents.KindCount, EnemyCombatEvents.RowRoots.Length);
             Assert.AreEqual(EnemyCombatEvents.KindCount, System.Enum.GetValues(typeof(EnemyCombatEventKind)).Length);
             Assert.AreEqual("sw_push", EnemyCombatEvents.RowName(EnemyCombatEventKind.SpecialPush, ArmorSlot.None, EnemyTier.Elite));

@@ -214,6 +214,15 @@ Eski `ZombieSpecialReactions` (Kagura/Ofuda/Tide), `SpecialReactionKind.Push/Web
 
 Şok, REQ-124 sendeleme sayacına **yazmaz** (Chain 0,25 zaten eşiğin altında; stun-lock kilidi `StaggerCooldown` şok tarafından tüketilmez).
 
+**§4.1a · S-02 uzlaşısı (WP-069 DIRECTION §7a, 24.09; yukarıdaki tabloların yerine geçer):**
+- İlk hedef orb'un çarptığı bedendir; yere çarpan orb söner (S-02). İlk hedef etrafında 8 m arama yok.
+- Hop yarıçapı veriden gelir (`WeaponArcChainBlock.jumpRadius` = 6 m), hop menzili 5 m kalkar.
+- Hedef sayısı oyun kuralıdır: `maxTargets` 8 = 1 + 7 hop. Kademeden bağımsızdır; kademe yalnız görsel arkları seyreltir (S-07). §7.1'deki hops 6/8/10 satırı görsele taşınır.
+- Ultra zincirin herhangi bir yerinde olabilir ve zincir ondan devam eder (🔴 #2 varsayılanı).
+- Şok süresini S-02 geçirir: `ApplyShock(transactionId, seconds)`, `shockSeconds` 1,2 s, Ultra 2,5 s. Tier tablosu kalkar.
+- S-02 öldürücü hasarı titremenin sonunda indirir. Ölüm, skor ve altın o anda sayılır; düşüş hemen `State = Electrocuted` ile başlar. Titreme ortasında gelen öldürücü zincir vuruşu, düşüşü kalan süre kadar bekletir.
+- API: `ChainTargetResolver.Resolve(first, origin, maxTargets, hopRadius, buffer)`.
+
 ### 4.2 Jel Special'ı (kaydırıcı birikinti; ad/tasarım S-02, DEC-094)
 
 **Kayıt** — `GelPuddleRegistry` (statik, sabit halka tamponu **24** birikinti; S-02 `Register(in GelPuddle)`/`Expire(id)` çağırır):
