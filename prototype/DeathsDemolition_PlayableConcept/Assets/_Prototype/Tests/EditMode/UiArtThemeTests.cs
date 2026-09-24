@@ -70,6 +70,64 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
+        /// WP-068 8c (AD 8c MUST-2): the edge marker never enters an ink cluster. 64 bearings on the HUD's cluster layout at
+        /// 1080, 21:9 and the Mac canvas (1600×1039 at UI 1.2, clusters taller at TextScale 1.25): the marker's extent
+        /// stays clear of every cluster grown by 12 px, and it stays on the inset edge.
+        /// </summary>
+        [Test]
+        public void KenarIsaretcisi_64Yonde_MurekkepKumelerineGirmez()
+        {
+            var canvases = new (string Name, float W, float H, float Tall)[] { ("1080", 1920f, 1080f, 1f), ("21:9", 2560f, 1080f, 1f), ("mac", 1600f, 1039f, 1.25f) };
+            const float inset = 72f;
+            var failures = new List<string>();
+            foreach (var c in canvases)
+            {
+                float hw = c.W * 0.5f, hh = c.H * 0.5f;
+                Rect[] clusters =
+                {
+                    Rect.MinMaxRect(-hw + 32f, hh - 32f - 36f, -hw + 32f + 170f, hh - 32f),                      // gold
+                    Rect.MinMaxRect(-120f, hh - 24f - 56f, 120f, hh - 24f),                                        // seal line
+                    Rect.MinMaxRect(-320f, hh - 110f - 30f, 320f, hh - 110f),                                      // threat row
+                    Rect.MinMaxRect(-hw + 32f, -hh + 32f, -hw + 32f + 380f, -hh + 32f + 110f * c.Tall),           // health
+                    Rect.MinMaxRect(hw - 32f - 400f, -hh + 32f, hw - 32f, -hh + 32f + 140f * c.Tall),             // weapon
+                    Rect.MinMaxRect(-110f, -hh + 24f, 110f, -hh + 24f + 216f)                                     // Special
+                };
+                var grown = new Rect[clusters.Length];
+                Vector2 pad = UiWorldMarker.EdgeExtents + new Vector2(UiWorldMarker.ClusterClearance, UiWorldMarker.ClusterClearance);
+                for (int i = 0; i < clusters.Length; i++)
+                {
+                    grown[i] = Rect.MinMaxRect(clusters[i].xMin - pad.x, clusters[i].yMin - pad.y, clusters[i].xMax + pad.x, clusters[i].yMax + pad.y);
+                }
+
+                var half = new Vector2(hw - inset, hh - inset);
+                for (int b = 0; b < 64; b++)
+                {
+                    float a = b * Mathf.PI * 2f / 64f;
+                    var dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                    Vector2 q = UiWorldMarker.AvoidOnEdge(UiWorldMarker.EdgePoint(dir, half), half, grown, grown.Length);
+                    var marker = Rect.MinMaxRect(q.x - UiWorldMarker.EdgeExtents.x, q.y - UiWorldMarker.EdgeExtents.y, q.x + UiWorldMarker.EdgeExtents.x, q.y + UiWorldMarker.EdgeExtents.y);
+                    for (int i = 0; i < clusters.Length; i++)
+                    {
+                        Rect clear = Rect.MinMaxRect(clusters[i].xMin - UiWorldMarker.ClusterClearance, clusters[i].yMin - UiWorldMarker.ClusterClearance,
+                            clusters[i].xMax + UiWorldMarker.ClusterClearance, clusters[i].yMax + UiWorldMarker.ClusterClearance);
+                        if (marker.Overlaps(clear))
+                        {
+                            failures.Add(c.Name + " bearing " + b + ": marker " + marker + " meets cluster " + i);
+                        }
+                    }
+
+                    bool onEdge = Mathf.Abs(Mathf.Abs(q.x) - half.x) < 0.5f || Mathf.Abs(Mathf.Abs(q.y) - half.y) < 0.5f;
+                    if (!onEdge)
+                    {
+                        failures.Add(c.Name + " bearing " + b + ": marker left the edge " + q);
+                    }
+                }
+            }
+
+            Assert.IsEmpty(failures, string.Join("\n", failures));
+        }
+
+        /// <summary>
         /// WP-068 8c · E14 / E21: the Special's world marker - in view the diamond is 56 px at 10 m and 40 px at 40 m (whole
         /// pixels, clamped outside the range); at the edge it becomes the 44 disc with the 28 px Marker.Edge glyph, and the
         /// caption names the metres.

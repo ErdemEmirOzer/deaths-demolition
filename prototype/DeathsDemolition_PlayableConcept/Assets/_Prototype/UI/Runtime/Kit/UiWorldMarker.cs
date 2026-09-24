@@ -204,6 +204,100 @@ namespace DD.Prototype.UI
             _distanceRect.anchoredPosition = new Vector2(0f, -(formSize * 0.5f + (int)UiSpace.XS));
         }
 
+        /// <summary>The edge form's half extents in canvas px (the 44 disc, the rim chevron, the caption under it).</summary>
+        public static readonly Vector2 EdgeExtents = new Vector2(34f, 46f);
+
+        /// <summary>The ink clusters keep this much clear of the edge marker (AD 8c MUST-2).</summary>
+        public const float ClusterClearance = 12f;
+
+        /// <summary>
+        /// The point where a bearing meets the inset edge rectangle (centre origin, <paramref name="half"/> extents):
+        /// an off-screen marker always rides the edge, whether the drop is beside the view or behind the camera.
+        /// </summary>
+        public static Vector2 EdgePoint(Vector2 direction, Vector2 half)
+        {
+            if (direction.sqrMagnitude < 1e-6f)
+            {
+                direction = Vector2.up;
+            }
+
+            float tx = Mathf.Abs(direction.x) > 1e-5f ? half.x / Mathf.Abs(direction.x) : float.MaxValue;
+            float ty = Mathf.Abs(direction.y) > 1e-5f ? half.y / Mathf.Abs(direction.y) : float.MaxValue;
+            return direction * Mathf.Min(tx, ty);
+        }
+
+        /// <summary>
+        /// AD 8c MUST-2: the edge marker never enters an ink cluster. <paramref name="avoid"/> holds the clusters' rects,
+        /// already grown by <see cref="ClusterClearance"/> plus <see cref="EdgeExtents"/>. From an edge point that lands
+        /// in one, the marker slides along the edge to the nearest free point, in 8 px steps both ways; the chevron keeps
+        /// the true bearing. Allocation-free.
+        /// </summary>
+        public static Vector2 AvoidOnEdge(Vector2 edgePoint, Vector2 half, Rect[] avoid, int count)
+        {
+            if (!Blocked(edgePoint, avoid, count))
+            {
+                return edgePoint;
+            }
+
+            float perimeter = 4f * (half.x + half.y);
+            float at = PerimeterOf(edgePoint, half);
+            const float step = 8f;
+            for (float d = step; d <= perimeter * 0.5f; d += step)
+            {
+                Vector2 forward = PerimeterPoint(at + d, half, perimeter);
+                if (!Blocked(forward, avoid, count))
+                {
+                    return forward;
+                }
+
+                Vector2 back = PerimeterPoint(at - d, half, perimeter);
+                if (!Blocked(back, avoid, count))
+                {
+                    return back;
+                }
+            }
+
+            return edgePoint;
+        }
+
+        private static bool Blocked(Vector2 point, Rect[] avoid, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (avoid[i].Contains(point))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Distance along the edge, clockwise from the top-left corner.</summary>
+        private static float PerimeterOf(Vector2 p, Vector2 half)
+        {
+            float w = half.x * 2f, h = half.y * 2f;
+            float dTop = Mathf.Abs(p.y - half.y), dRight = Mathf.Abs(p.x - half.x), dBottom = Mathf.Abs(p.y + half.y), dLeft = Mathf.Abs(p.x + half.x);
+            float min = Mathf.Min(Mathf.Min(dTop, dRight), Mathf.Min(dBottom, dLeft));
+            if (min == dTop) return p.x + half.x;
+            if (min == dRight) return w + (half.y - p.y);
+            if (min == dBottom) return w + h + (half.x - p.x);
+            return 2f * w + h + (p.y + half.y);
+        }
+
+        private static Vector2 PerimeterPoint(float t, Vector2 half, float perimeter)
+        {
+            float w = half.x * 2f, h = half.y * 2f;
+            t = Mathf.Repeat(t, perimeter);
+            if (t < w) return new Vector2(-half.x + t, half.y);
+            t -= w;
+            if (t < h) return new Vector2(half.x, half.y - t);
+            t -= h;
+            if (t < w) return new Vector2(half.x - t, -half.y);
+            t -= w;
+            return new Vector2(-half.x, -half.y + t);
+        }
+
         private static void Blink(Image image, Color tone, float blink, float weight)
         {
             Color c = tone;

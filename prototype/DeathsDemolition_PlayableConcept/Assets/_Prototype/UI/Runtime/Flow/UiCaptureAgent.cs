@@ -1119,32 +1119,7 @@ namespace DD.Prototype.UI
             /// </summary>
             private static IEnumerator SpecialStates(string folder, PlayerRig rig)
             {
-                SpecialWeaponDirector director = SpecialWeaponDirector.Instance;
-                if (director == null || rig == null || !director.ForceSpawn())
-                {
-                    Debug.Log("[UiCapture] hudstates: no Special drop (director " + (director != null) + ")");
-                    yield break;
-                }
-
-                yield return WaitFor(() => WeaponEvents.Special.Phase == SpecialWeaponPhase.OnGround, 3f);
-                yield return new WaitForSecondsRealtime(0.6f);
-                yield return Frame(folder, "hud-special-ground");
-
-                Vector3 drop = WeaponEvents.Special.WorldPosition;
-                float y = rig.transform.position.y;
-                Vector3 a = new Vector3(3f, y, 28f), b = new Vector3(0f, y, -21f);
-                rig.Teleport((a - drop).sqrMagnitude > (b - drop).sqrMagnitude ? a : b, rig.transform.rotation);
-                yield return new WaitForSecondsRealtime(0.6f);
-                yield return Frame(folder, "hud-marker-edge");
-
-                rig.Teleport(new Vector3(drop.x, y, drop.z), rig.transform.rotation);
-                yield return WaitFor(() => WeaponEvents.Special.Phase == SpecialWeaponPhase.Active, 3f);
-                yield return new WaitForSecondsRealtime(0.08f);
-                yield return Frame(folder, "hud-special-pickup");
-                yield return new WaitForSecondsRealtime(0.6f);
-                yield return Frame(folder, "hud-special-online");
-
-                // E19: two bodies in view take a web and a push - the stamps land, then settle.
+                // AD 8c SHOULD-3: NET and DAZED side by side, while the bodies are still around the ronin (before the drop).
                 int stamped = 0;
                 Camera camera = Camera.main;
                 System.Collections.Generic.IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
@@ -1177,6 +1152,50 @@ namespace DD.Prototype.UI
                     yield return new WaitForSecondsRealtime(0.4f);
                     yield return Frame(folder, "hud-status");
                 }
+
+
+                SpecialWeaponDirector director = SpecialWeaponDirector.Instance;
+                if (director == null || rig == null || !director.ForceSpawn())
+                {
+                    Debug.Log("[UiCapture] hudstates: no Special drop (director " + (director != null) + ")");
+                    yield break;
+                }
+
+                yield return WaitFor(() => WeaponEvents.Special.Phase == SpecialWeaponPhase.OnGround, 3f);
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "hud-special-ground");
+
+                Vector3 drop = WeaponEvents.Special.WorldPosition;
+                float y = rig.transform.position.y;
+
+                // AD 8c SHOULD-5: the drop near and in view - the diamond at its near size, the ground pip.
+                rig.Teleport(new Vector3(drop.x, y, drop.z - 8f), rig.transform.rotation);
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "hud-marker-near");
+
+                // AD 8c MUST-2: the edge marker at four bearings (the drop off each corner) - it must slide clear of the clusters.
+                var corners = new[] { ("ne", -1f, -1f), ("nw", 1f, -1f), ("se", -1f, 1f), ("sw", 1f, 1f) };
+                foreach (var corner in corners)
+                {
+                    rig.Teleport(new Vector3(drop.x + corner.Item2 * 26f, y, drop.z + corner.Item3 * 26f), rig.transform.rotation);
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    yield return Frame(folder, "hud-marker-edge-" + corner.Item1);
+                }
+
+                // AD 8c SHOULD-5: the late-urgency marker - gold toward ember on the pickup's own clock.
+                rig.Teleport(new Vector3(drop.x, y, drop.z - 8f), rig.transform.rotation);
+                yield return WaitFor(() => WeaponEvents.Special.Phase != SpecialWeaponPhase.OnGround || WeaponEvents.Special.GroundProgress01 < 0.2f, 45f);
+                if (WeaponEvents.Special.Phase == SpecialWeaponPhase.OnGround)
+                {
+                    yield return Frame(folder, "hud-marker-ember");
+                }
+
+                rig.Teleport(new Vector3(drop.x, y, drop.z), rig.transform.rotation);
+                yield return WaitFor(() => WeaponEvents.Special.Phase == SpecialWeaponPhase.Active, 3f);
+                yield return new WaitForSecondsRealtime(0.08f);
+                yield return Frame(folder, "hud-special-pickup");
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "hud-special-online");
 
                 yield return WaitFor(() => WeaponEvents.Special.FinalSecondsWarning, 60f);
                 yield return new WaitForSecondsRealtime(0.5f);

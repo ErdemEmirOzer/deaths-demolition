@@ -449,6 +449,71 @@ namespace DD.Prototype.UI
             }
         }
 
+        // ================================================================ the edge marker's clear path (AD 8c MUST-2)
+
+        private readonly Rect[] _markerAvoid = new Rect[8];
+        private static readonly Vector3[] s_corners = new Vector3[4];
+
+        /// <summary>
+        /// Where the edge marker sits for a bearing <paramref name="direction"/> (canvas px, centre origin): on the inset
+        /// edge, slid clear of every ink cluster - the four corners, the seal line with its chips (and the banner while it
+        /// lives), the Special while it shows - each grown by 12 px and the marker's own extents. Public for the sweep test.
+        /// </summary>
+        public Vector2 EdgeMarkerFor(Vector2 direction)
+        {
+            Vector2 canvas = ScreenRect.rect.size;
+            var half = new Vector2(canvas.x * 0.5f - MarkerEdgeInset, canvas.y * 0.5f - MarkerEdgeInset);
+            int count = 0;
+            for (int i = 0; i < _clusters.Count && count < _markerAvoid.Length; i++)
+            {
+                _markerAvoid[count++] = Grown(CanvasRectOf(_clusters[i]));
+            }
+
+            if (_threatRow != null && count < _markerAvoid.Length)
+            {
+                _markerAvoid[count++] = Grown(CanvasRectOf((RectTransform)_threatRow.transform));
+            }
+
+            if (_specialBlock != null && _specialBlock.activeInHierarchy && count < _markerAvoid.Length)
+            {
+                _markerAvoid[count++] = Grown(CanvasRectOf((RectTransform)_specialBlock.transform));
+            }
+
+            if (_banner != null && _bannerRemaining > 0f && count < _markerAvoid.Length)
+            {
+                _markerAvoid[count++] = Grown(CanvasRectOf(_banner.Clip));
+            }
+
+            return UiWorldMarker.AvoidOnEdge(UiWorldMarker.EdgePoint(direction, half), half, _markerAvoid, count);
+        }
+
+        /// <summary>The marker-avoid rects in canvas px (test readout: the sweep checks the marker never meets one).</summary>
+        public int MarkerAvoidRects(Rect[] into)
+        {
+            EdgeMarkerFor(Vector2.up);
+            int n = 0;
+            for (int i = 0; i < _clusters.Count && n < into.Length; i++)
+            {
+                into[n++] = CanvasRectOf(_clusters[i]);
+            }
+
+            return n;
+        }
+
+        private Rect CanvasRectOf(RectTransform rect)
+        {
+            rect.GetWorldCorners(s_corners);
+            Vector3 a = ScreenRect.InverseTransformPoint(s_corners[0]);
+            Vector3 b = ScreenRect.InverseTransformPoint(s_corners[2]);
+            return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+        }
+
+        private static Rect Grown(Rect r)
+        {
+            Vector2 grow = UiWorldMarker.EdgeExtents + new Vector2(UiWorldMarker.ClusterClearance, UiWorldMarker.ClusterClearance);
+            return Rect.MinMaxRect(r.xMin - grow.x, r.yMin - grow.y, r.xMax + grow.x, r.yMax + grow.y);
+        }
+
         // ================================================================ helpers
 
         /// <summary>A corner cluster: a root at the anchor (pivot at the same corner), listed for the tests.</summary>

@@ -381,6 +381,23 @@ namespace DD.Prototype.Tests.PlayMode
             // WP-068 8c · E14 / E21: the world marker is built on the marker canvas, hidden while nothing is on the ground.
             Assert.IsNotNull(hud.WorldMarker, "Special dünya işaretçisi");
             Assert.IsFalse(hud.WorldMarker.Root.gameObject.activeSelf, "yerde Special yokken işaretçi gizli");
+            // AD 8c MUST-2: on the live HUD's own clusters, 64 bearings - the edge marker never meets a cluster (+12 px).
+            {
+                var clusterRects = new Rect[8];
+                int n = hud.MarkerAvoidRects(clusterRects);
+                for (int b = 0; b < 64; b++)
+                {
+                    float a = b * Mathf.PI * 2f / 64f;
+                    Vector2 q = hud.EdgeMarkerFor(new Vector2(Mathf.Cos(a), Mathf.Sin(a)));
+                    var marker = Rect.MinMaxRect(q.x - UiWorldMarker.EdgeExtents.x, q.y - UiWorldMarker.EdgeExtents.y, q.x + UiWorldMarker.EdgeExtents.x, q.y + UiWorldMarker.EdgeExtents.y);
+                    for (int i = 0; i < n; i++)
+                    {
+                        Rect r = clusterRects[i];
+                        Rect clear = Rect.MinMaxRect(r.xMin - UiWorldMarker.ClusterClearance, r.yMin - UiWorldMarker.ClusterClearance, r.xMax + UiWorldMarker.ClusterClearance, r.yMax + UiWorldMarker.ClusterClearance);
+                        Assert.IsFalse(marker.Overlaps(clear), "kenar işaretçisi " + b + ". yönde bir mürekkep kümesine giriyor: " + marker + " / " + clear);
+                    }
+                }
+            }
 
             // WP-068 8c · E22: the death beat - the health block holds α 1 for 0.6 s and names the killing blow, then dims.
             {
@@ -397,7 +414,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsTrue(hud.HealthGroup.ignoreParentGroups, "can bloğu HUD sönümünün dışında");
                 Assert.AreEqual(1f, hud.HealthGroup.alpha, 1e-3f, "can bloğu 0,6 s α 1 tutar");
                 TMPro.TMP_Text state = Bul<TMPro.TMP_Text>(hud.transform, "Health", "State");
-                Assert.AreEqual("DOWN  ·  killed by Standard swipe", state.text, "ölüm satırı öldüren vuruşu adlandırır");
+                Assert.AreEqual("DOWN  ·  killed by a Standard's swipe", state.text, "ölüm satırı öldüren vuruşu adlandırır");
                 while (Time.realtimeSinceStartup - died < RunHudScreen.DeathLineHoldSeconds + 0.6f)
                 {
                     yield return null;

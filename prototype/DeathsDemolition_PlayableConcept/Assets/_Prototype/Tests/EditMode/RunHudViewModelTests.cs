@@ -276,15 +276,17 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void OlumSatiri_KaynakKelimeOlur()
         {
-            Assert.AreEqual("DOWN  ·  killed by Standard swipe", RunHudViewModel.DeathLine("Zombie.Standard.Swipe"));
-            Assert.AreEqual("DOWN  ·  killed by Special lunge", RunHudViewModel.DeathLine("Zombie.Special.Lunge"));
-            Assert.AreEqual("DOWN  ·  killed by Hazard fire", RunHudViewModel.DeathLine("Hazard.Fire"));
-            Assert.AreEqual("DOWN  ·  killed by Zombie", RunHudViewModel.DeathLine("Zombie"));
+            Assert.AreEqual("DOWN  ·  killed by a Standard's swipe", RunHudViewModel.DeathLine("Zombie.Standard.Swipe"));
+            Assert.AreEqual("DOWN  ·  killed by a Special's lunge", RunHudViewModel.DeathLine("Zombie.Special.Lunge"));
+            Assert.AreEqual("DOWN  ·  killed by an Elite's slam", RunHudViewModel.DeathLine("Zombie.Elite.Slam"));
+            Assert.AreEqual("DOWN  ·  killed by an Ultra", RunHudViewModel.DeathLine("Zombie.Ultra"));
+            Assert.AreEqual("DOWN  ·  killed by hazard fire", RunHudViewModel.DeathLine("Hazard.Fire"));
+            Assert.AreEqual("DOWN  ·  killed by a zombie", RunHudViewModel.DeathLine("Zombie"));
             Assert.AreEqual("DOWN", RunHudViewModel.DeathLine(null));
             Assert.AreEqual("DOWN", RunHudViewModel.DeathLine(string.Empty));
             Assert.AreEqual("DOWN", RunHudViewModel.DeathLine("."));
             string longest = RunHudViewModel.DeathLine("Zombie.Ultra.AVeryLongAttackNameThatWouldOverflow");
-            Assert.LessOrEqual(longest.Length, "DOWN  ·  killed by ".Length + RunHudViewModel.KillerMaxCharacters, "satır can bloğunun altyazı satırına sığar");
+            Assert.LessOrEqual(longest.Length, "DOWN  ·  killed by ".Length + RunHudViewModel.KillerMaxCharacters, "satır can kümesinin altyazı satırına sığar");
         }
     }
 }

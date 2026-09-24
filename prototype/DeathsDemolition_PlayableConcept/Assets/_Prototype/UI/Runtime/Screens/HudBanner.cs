@@ -80,8 +80,11 @@ namespace DD.Prototype.UI
             _group = UiFactory.Group(_root.gameObject);
             _group.alpha = 0f;
 
-            // The brush first (under the words): the mark's own shape clips (InkReveal y = 0).
-            _brush = UiFactory.NewImage("Brush", _root, UiColor.InkStroke, UiFxGlobals.InkMask(UiInkChannel.Underline));
+            // The brush first (under the words). AD 8c MUST-1: one stroke behind the whole line - a loaded head 56 px before
+            // the first letter, a HudInk body under every word, the dry tail only past the last one (UiSprites.BrushRibbon,
+            // 9-sliced so the body stretches).
+            _brush = UiFactory.NewImage("Brush", _root, UiColor.HudInk, UiSprites.BrushRibbon);
+            _brush.type = Image.Type.Sliced;
             _brush.preserveAspect = false;
             var brushRect = (RectTransform)_brush.transform;
             brushRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -89,11 +92,8 @@ namespace DD.Prototype.UI
             brushRect.pivot = new Vector2(0.5f, 0.5f);
             brushRect.sizeDelta = new Vector2(Width * 0.5f, BrushHeight);
             _brushFx = _brush.gameObject.AddComponent<UiFx>();
-            _brushFx.Configure(UiFxMode.InkReveal, UiDuration.Emphasis, Vector3.zero, UiInkChannel.Underline);
-            if (_brush.sprite == null)
-            {
-                _brush.enabled = false; // no ink kit: the words carry their own stroke
-            }
+            // Wipe mode: the ribbon's own alpha is the shape, the underline's time map orders the ink left → right.
+            _brushFx.Configure(UiFxMode.InkReveal, UiDuration.Emphasis, new Vector3(0f, 1f, 0f), UiInkChannel.Underline);
 
             // The wipe: a left-pivoted mask that grows; the words inside are pinned to its left edge at full width, so
             // they stay put while more of them is uncovered.
@@ -176,7 +176,10 @@ namespace DD.Prototype.UI
             _width = Mathf.Max(Width, words + 48f);
             _root.sizeDelta = new Vector2(_width, _root.sizeDelta.y);
             _text.rectTransform.sizeDelta = new Vector2(_width, _height);
-            ((RectTransform)_brush.transform).sizeDelta = new Vector2(Mathf.Min(_width, words + BrushPadding * 2f), BrushHeight);
+            // Head from 56 px before the first letter; the tail (UiSprites.BrushRibbonTail) starts at the last letter.
+            var brushRect = (RectTransform)_brush.transform;
+            brushRect.sizeDelta = new Vector2(words + BrushPadding + UiSprites.BrushRibbonTail, BrushHeight);
+            brushRect.anchoredPosition = new Vector2((UiSprites.BrushRibbonTail - BrushPadding) * 0.5f, 0f);
         }
 
         /// <summary>The Display face with the house ink edge outside the letters (built once per process).</summary>

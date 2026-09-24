@@ -162,9 +162,10 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// WP-068 8c · E22: the health block's line at death. The killing blow's SourceId reads as words:
-        /// "Zombie.Standard.Swipe" becomes "DOWN  ·  killed by Standard swipe" (the Zombie prefix dropped, the rest in
-        /// sentence case). An unknown source gives "DOWN". Built once per death, never per frame.
+        /// WP-068 8c · E22: the health block's line at death, the killing blow's SourceId as a phrase (AD 8c SHOULD-4):
+        /// "Zombie.Standard.Swipe" → "DOWN  ·  killed by a Standard's swipe", "Zombie.Elite" → "… by an Elite",
+        /// "Zombie" → "… by a zombie", any other source in lower case words ("Hazard.Fire" → "… by hazard fire").
+        /// An empty source gives "DOWN". Built once per death, never per frame.
         /// </summary>
         public static string DeathLine(string killedBy)
         {
@@ -174,29 +175,42 @@ namespace DD.Prototype.UI
                 return down;
             }
 
-            string[] parts = killedBy.Split('.');
-            var words = new System.Text.StringBuilder(killedBy.Length + 8);
-            for (int i = 0; i < parts.Length; i++)
+            var parts = new System.Collections.Generic.List<string>();
+            foreach (string raw in killedBy.Split('.'))
             {
-                string part = parts[i].Trim();
-                if (part.Length == 0 || (i == 0 && parts.Length > 1 && part == "Zombie"))
+                if (raw.Trim().Length > 0)
                 {
-                    continue;
-                }
-
-                if (words.Length > 0)
-                {
-                    words.Append(' ');
-                    words.Append(part.ToLowerInvariant());
-                }
-                else
-                {
-                    words.Append(char.ToUpperInvariant(part[0]));
-                    words.Append(part, 1, part.Length - 1);
+                    parts.Add(raw.Trim());
                 }
             }
 
-            return words.Length == 0 ? down : down + "  ·  killed by " + ClipTo(words.ToString(), KillerMaxCharacters);
+            if (parts.Count == 0)
+            {
+                return down;
+            }
+
+            string phrase;
+            if (parts[0] == "Zombie")
+            {
+                if (parts.Count == 1)
+                {
+                    phrase = "a zombie";
+                }
+                else
+                {
+                    string tier = char.ToUpperInvariant(parts[1][0]) + parts[1].Substring(1);
+                    string article = "AEIOU".IndexOf(char.ToUpperInvariant(tier[0])) >= 0 ? "an " : "a ";
+                    phrase = parts.Count == 2
+                        ? article + tier
+                        : article + tier + "'s " + string.Join(" ", parts.GetRange(2, parts.Count - 2)).ToLowerInvariant();
+                }
+            }
+            else
+            {
+                phrase = string.Join(" ", parts).ToLowerInvariant();
+            }
+
+            return down + "  ·  killed by " + ClipTo(phrase, KillerMaxCharacters);
         }
 
         /// <summary>E22: the killer's words fit the health block's caption row.</summary>

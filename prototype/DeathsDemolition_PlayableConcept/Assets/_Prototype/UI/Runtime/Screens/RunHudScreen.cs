@@ -201,7 +201,8 @@ namespace DD.Prototype.UI
         public const float SpecialRingGhost = 0.25f;   // 8-R: no panel behind the ring - the ghost carries the track
         public const float SpecialPickupFillSeconds = 0.32f;
         private const float SpecialTickLength = 12f;
-        private const float SpecialTickWidth = 2f;
+        private const float SpecialTickWidth = 1f;          // AD 8c SHOULD-1: 1 px a second, every 5th 2 px (the health strong-tick rule)
+        private const float SpecialTickStrongWidth = 2f;
         private const int SpecialTickCapacity = 30;
         private RectTransform _specialTicks;
         private readonly Image[] _specialTickMarks = new Image[SpecialTickCapacity];
@@ -1124,6 +1125,7 @@ namespace DD.Prototype.UI
             UiMotion.KillTarget(_healthGroup, false);
             _healthGroup.ignoreParentGroups = true;
             _healthGroup.alpha = 1f;
+            _healthLowWord.gameObject.SetActive(false);   // AD 8c SHOULD-4: one word per state - DOWN, not LOW
             _healthState.text = RunHudViewModel.DeathLine(_killedBy);
             _healthState.color = UiTokens.Get(UiColor.StateDanger);
             _healthState.fontStyle = FontStyles.Bold;
@@ -1624,6 +1626,8 @@ namespace DD.Prototype.UI
                     continue;
                 }
 
+                ((RectTransform)tick.transform).sizeDelta = new Vector2(i % 5 == 0 ? SpecialTickStrongWidth : SpecialTickWidth, SpecialTickLength);
+
                 float degrees = 360f * i / count;
                 float radians = degrees * Mathf.Deg2Rad;
                 var rect = (RectTransform)tick.transform;
@@ -1760,12 +1764,17 @@ namespace DD.Prototype.UI
             float angle = 0f;
             if (offScreen)
             {
+                // AD 8c MUST-2: the edge marker rides the inset edge on its true bearing and slides clear of the ink
+                // clusters; the chevron keeps the true bearing.
                 Vector2 direction = local.sqrMagnitude > 0.0001f ? local.normalized : Vector2.up;
                 angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                local = EdgeMarkerFor(direction);
             }
-
-            local.x = Mathf.Clamp(local.x, -halfWidth, halfWidth);
-            local.y = Mathf.Clamp(local.y, -halfHeight, halfHeight);
+            else
+            {
+                local.x = Mathf.Clamp(local.x, -halfWidth, halfWidth);
+                local.y = Mathf.Clamp(local.y, -halfHeight, halfHeight);
+            }
 
             // G-21. The SAME phase the world beacon is pulsing on, taken straight off the
             // snapshot rather than recomputed here. Two clocks at the same rate still

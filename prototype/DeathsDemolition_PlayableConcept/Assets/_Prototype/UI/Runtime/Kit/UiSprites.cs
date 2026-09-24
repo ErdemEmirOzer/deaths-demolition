@@ -197,6 +197,66 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
+        /// WP-068 slice 8c (AD 8c MUST-1) · the banner's brush ribbon, 9-sliced: a loaded head (40 px), a full body that
+        /// stretches under the words (≥ 0.85 with ragged edges and bristle streaks along the stroke), a dry, streaky tail
+        /// (80 px) that only begins past the last letter. Revealed left → right by the InkReveal wipe (its time map orders
+        /// the ink, this sprite gives the shape) - the AP-012 underline mark tapers to a hairline and read as a smear.
+        /// </summary>
+        public static Sprite BrushRibbon
+        {
+            get { return GetOrCreate("brushRibbon", CreateBrushRibbon); }
+        }
+
+        public const int BrushRibbonHead = 40;
+        public const int BrushRibbonTail = 80;
+
+        private static Sprite CreateBrushRibbon()
+        {
+            const int width = 256, height = 96;
+            Texture2D texture = NewTexture(width, height);
+            var pixels = new Color32[width * height];
+            float mid = height * 0.5f;
+            for (int y = 0; y < height; y++)
+            {
+                // Bristle streaks: each row carries its own ink load (hash per row), lighter rows break up in the tail.
+                float row = RibbonHash(y * 12.9898f);
+                float load = 0.86f + 0.14f * row;
+                for (int x = 0; x < width; x++)
+                {
+                    // The ribbon's half-thickness: 36 % of the height, ragged by a slow edge noise; the head swells.
+                    float headT = Mathf.Clamp01(x / (float)BrushRibbonHead);
+                    float swell = 1f + 0.25f * (1f - headT) * (1f - headT);
+                    float ragged = (RibbonHash(Mathf.Floor(x / 6f) * 4.1f + (y > mid ? 7.3f : 0f)) - 0.5f) * 5f;
+                    float half = height * 0.36f * swell + ragged;
+                    float across = Mathf.Clamp01(half - Mathf.Abs(y + 0.5f - mid) + 0.5f);
+                    // The head's rounded start.
+                    float start = Mathf.Clamp01((x + 0.5f) - (1f - Mathf.Sqrt(Mathf.Max(0f, 1f - Mathf.Pow((y + 0.5f - mid) / (half + 1f), 2f)))) * 14f);
+                    float alpha = across * start * load;
+                    int tailStart = width - BrushRibbonTail;
+                    if (x >= tailStart)
+                    {
+                        // Dry tail: the load thins toward the end, and weak rows drop out first (streaks).
+                        float tailT = (x - tailStart) / (float)BrushRibbonTail;
+                        float thin = 1f - tailT;
+                        float gap = RibbonHash(y * 3.7f + Mathf.Floor(x / 3f) * 0.37f);
+                        alpha *= Mathf.Clamp01(thin * 1.4f - (1f - row) * tailT * 1.6f) * (gap > tailT * 0.9f ? 1f : 0.2f);
+                    }
+
+                    pixels[y * width + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(Mathf.Clamp01(alpha) * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, new Vector4(BrushRibbonHead, 0f, BrushRibbonTail, 0f));
+        }
+
+        private static float RibbonHash(float n)
+        {
+            float s = Mathf.Sin(n * 127.1f + 311.7f) * 43758.5453f;
+            return s - Mathf.Floor(s);
+        }
+
+        /// <summary>
         /// WP-068 slice 8b (E17 player arc, AD 8b MUST-2, direction "Arc.Soft") · a brush wedge at 12 o'clock: a soft band
         /// between 0.75 and 1.0 of the radius (48–64 px at r 64), fullest at its middle and tapering to its ends.
         /// </summary>
