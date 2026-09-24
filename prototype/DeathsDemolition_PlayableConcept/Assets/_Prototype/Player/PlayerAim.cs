@@ -174,6 +174,32 @@ namespace DD.Prototype.PlayerSystem
             }
 
             IInputSource input = ActiveInput;
+            if (CameraModeService.IsLookMode)
+            {
+                // WP-070: TP/FP — the aim comes from the camera's screen-centre ray; the body
+                // yaw follows the view (FP instantly, TP at RotationSpeed).
+                if (input != null)
+                {
+                    _aimKind = input.AimKind;
+                }
+
+                if (ControlEnabled)
+                {
+                    UpdateLookAim();
+                }
+
+                if (CameraModeService.Current == CameraMode.FirstPerson && _aimDirection.sqrMagnitude > 1e-6f)
+                {
+                    transform.rotation = Quaternion.LookRotation(_aimDirection, Vector3.up);
+                }
+                else
+                {
+                    RotateTowardsAim();
+                }
+
+                return;
+            }
+
             if (input != null)
             {
                 _aimKind = input.AimKind;
@@ -192,6 +218,37 @@ namespace DD.Prototype.PlayerSystem
             }
 
             RotateTowardsAim();
+        }
+
+        /// <summary>
+        /// WP-070: TP/FP aim. <see cref="AimDirection"/> stays horizontal (the view yaw, D-11);
+        /// <see cref="AimWorldPoint"/> is the centre ray's hit point in 3D (S-02: weapons fire
+        /// from the muzzle towards it; vertical aim is S-02's WP-069 change).
+        /// </summary>
+        private void UpdateLookAim()
+        {
+            PrototypeCameraRig rig = PrototypeCameraRig.Active;
+            if (rig == null)
+            {
+                _hasAimPoint = false;
+                return;
+            }
+
+            Vector3 forward = rig.PlanarForward;
+            if (forward.sqrMagnitude > 1e-6f)
+            {
+                _aimDirection = forward.normalized;
+            }
+
+            CameraAimRay ray;
+            if (!rig.TryGetAimRay(Vector2.zero, AimPlaneY, out ray))
+            {
+                _hasAimPoint = false;
+                return;
+            }
+
+            _aimWorldPoint = ray.HitPoint;
+            _hasAimPoint = true;
         }
 
         private void UpdatePointerAim(IInputSource input)

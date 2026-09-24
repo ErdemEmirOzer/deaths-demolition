@@ -279,7 +279,7 @@ static class CameraModeService {
   CameraCursorIntent CursorIntent; bool CursorIntentHandledExternally;                // D-8: UiCursor tek yazar
 }
 class CameraModeSettings { Mode, LookSensitivity (°/px, 0,02–0,30, vars. 0,08), StickLookDegreesPerSecond (60–360, 180),
-                           InvertY, FirstPersonFov (YATAY °, 80–90, 85), ThirdPersonFov (dikey °, 55–70, 60),
+                           InvertY, FirstPersonFov (YATAY °, 16:9 referans Hor+, 70–110, 90 — C-00 24.09), ThirdPersonFov (dikey °, 55–70, 60),
                            Shoulder, HeadBobScale (0–1), ReducedMotion; Sanitize(); Clone() }
 struct CameraModeProfile { LodBiasFactor, ShadowDistance, ShadowCascades, NearClip, FarClip, OccluderPolicy, ShakeScale }
                            // TopDown 1,0/60/2/0,3/260/FadeAll · TP 1,2/60/3/0,05/450/FadeCameraLine · FP 1,4/70/4/0,03/450/None
@@ -381,4 +381,7 @@ Ham notlar: `~/Desktop/KADRO/context/projects/deaths-demolition/wp-070/evidence/
 | S-09 | (bekleniyor) imleç (D-8 CursorIntent), ui-settings şeması, Pause seçicisi, reticle | `CameraCursorIntent` + `CursorIntentHandledExternally` yayımlandı; UiCursor bağlanana dek rig yalnız `Cursor.lockState` yazar |
 | S-06 | (bekleniyor) baş gizleme yöntemi, FP kol/viewmodel, AimPitch | A-5 |
 | S-03 | (bekleniyor) arka tehdit spawn/telegraph | A-7 |
+| S-06 (A-5) | Tek gövde mesh'i (baş dahil); kemik ölçekleme yok; P-06 AP-022 başı ayrı SkinnedMeshRenderer olarak böler → FP'de o renderer ShadowsOnly; ara çözüm: göz baş kemiğinden ~0,10 m ileri + near 0,05–0,08, gövde tamamı ShadowsOnly. Görüntü modeli = URP kamera yığınında **overlay kamera** (kendi FOV), `FirstPersonView` katmanında ayrı kol örneği (aynı iskelet tipi, AP022_fp_* klipleri, soketler fp_socket_weapon_r / grip_l / fp_camera) — WP-071. `AimPitch` (+yukarı, ±60) + `AimYaw` ister. Duvar yakınlığı: mevcut `PlayerSkinnedVisual.PlayLower()/PlayRaise()`, sonda S-01'de, histerezis 0,6 m indir / 0,8 m kaldır | D-5 güncellendi: dilim 1 = FP'de gövde ShadowsOnly; görüntü modeli overlay kamerası + `ViewmodelAnchor` dilim 3 (S-01 altyapı, kollar S-06 WP-071); overlay kamera MainCamera etiketi ALMAZ (S-03: `Camera.main` dünya kamerası kalmalı). `CameraView.AimPitchUpDegrees` / `AimYawDegrees(body)` eklendi |
+| S-03 (A-7) | Spawn görünürlüğü zaten kamera-bağımsız (`JudgeVisibility`/`IsOnScreen`, `Camera.main` viewport, %12 pay) → FP/TP'de kendiliğinden doğru; şart: `Camera.main` dünya kamerası. WP-076'da FP/TP arka spawn için asgari mesafe (≥ ~8 m). Telegraph süresi (DEC-029) değişmez; `ThreatHudFeed.RearDirection/RearIntensity/RearCount` + `RearAttack` mevcut, tüketiciler `IsInView(info.Position)` sorgular. A-7 ilke olarak kabul (≤ %35 arka pay, `RearThreat` ≥ 0,8 s, Special/Elite sessiz yaklaşmaz), sayılar WP-076 | §7.1 teyitli; `EnemyCombatEvents`'e mod eklenmez |
+| C-00 (24.09) | FP FOV = yatay, 16:9 referanslı (Hor+), varsayılan 90°, aralık 70–110; TP omuz sağ, 2,8 m, omuz değiştirme tuşu olsun | Ayar/rig güncellendi (dilim 1); 🔴 1 ve 3 kapandı; omuz tuşu dilim 4 |
 

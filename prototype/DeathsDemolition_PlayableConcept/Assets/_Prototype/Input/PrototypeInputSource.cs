@@ -37,7 +37,7 @@ namespace DD.Prototype.Inputs
     /// * The asset is instantiated, not used in place, so enabling maps at runtime
     ///   never leaves the imported asset in an enabled state between play sessions.
     /// </summary>
-    public sealed class PrototypeInputSource : IExtendedInputSource, IDisposable
+    public sealed class PrototypeInputSource : IExtendedInputSource, ILookInputSource, IDisposable
     {
         // ------------------------------------------------------------ tuning values
         // PROTOTYPE-ONLY, invented for this adapter. They are behaviour thresholds of
@@ -97,6 +97,7 @@ namespace DD.Prototype.Inputs
         private Vector2 _move01;
         private Vector2 _aimScreen;
         private Vector2 _aimStick01;
+        private Vector2 _lookDelta;   // WP-070: raw mouse delta this frame (pixels); not remappable
         private bool _fireHeld;
         private bool _firePressed;
         private bool _fireReleased;
@@ -220,6 +221,18 @@ namespace DD.Prototype.Inputs
         }
 
         public Vector2 AimStick
+        {
+            get { EnsureFresh(); return _aimStick01; }
+        }
+
+        /// <summary>WP-070 (ILookInputSource): mouse movement this frame in pixels.</summary>
+        public Vector2 LookDelta
+        {
+            get { EnsureFresh(); return _lookDelta; }
+        }
+
+        /// <summary>WP-070 (ILookInputSource): right stick, dead zone applied (same control as AimStick).</summary>
+        public Vector2 LookStick
         {
             get { EnsureFresh(); return _aimStick01; }
         }
@@ -392,6 +405,11 @@ namespace DD.Prototype.Inputs
             }
 
             _aimScreen = pointer;
+
+            // WP-070: look input for the TP/FP camera. Raw mouse delta, no smoothing or
+            // acceleration (sensitivity / invert-Y live in CameraModeSettings). The right stick
+            // is shared with AimStick (same physical control, direction doc §3.1).
+            _lookDelta = Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero;
 
             _fireHeld = _fire != null && _fire.IsPressed();
             _firePressed = _fire != null && _fire.WasPressedThisFrame();
@@ -586,6 +604,7 @@ namespace DD.Prototype.Inputs
         {
             _move01 = Vector2.zero;
             _aimStick01 = Vector2.zero;
+            _lookDelta = Vector2.zero;
             _fireHeld = false;
             _firePressed = false;
             _fireReleased = false;

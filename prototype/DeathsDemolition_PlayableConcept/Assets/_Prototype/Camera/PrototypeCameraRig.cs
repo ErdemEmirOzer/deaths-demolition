@@ -1,8 +1,13 @@
+using System.Collections.Generic;
+using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.DebugTools;
+using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Feedback;
 using DD.Prototype.Feedback.Vfx;
+using DD.Prototype.Rounds;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DD.Prototype.CameraSystem
 {
@@ -30,6 +35,20 @@ namespace DD.Prototype.CameraSystem
     ///
     /// The yaw is authorable so the world designer can frame the courtyard, but it is a
     /// scene-authoring value, never a runtime one.
+    ///
+    /// WP-070 (M4-R1 N2) — CAMERA MODES
+    /// --------------------------------
+    /// Everything above describes <see cref="CameraMode.TopDown"/>, which is unchanged. In
+    /// <see cref="CameraMode.ThirdPerson"/> / <see cref="CameraMode.FirstPerson"/> the rig reads
+    /// look input (mouse delta / right stick) into a yaw/pitch view state; the stable pose is
+    /// an over-the-shoulder boom (sphere-cast pull-in) or the eye point. The same two
+    /// invariants hold in every mode: shake/kick/bob live on the child node only, and every
+    /// aim query rebuilds its ray from the stable pose (<see cref="TryGetAimRay"/>).
+    /// <see cref="PlanarForward"/>/<see cref="PlanarRight"/> follow the view yaw in TP/FP, so
+    /// PlayerMotor and stick aim become camera-relative without any change on their side.
+    /// Mode changes blend the pose over <see cref="CameraModeService.TransitionSeconds"/> of
+    /// UNSCALED time (the blend is visible behind the pause menu). Direction document:
+    /// planning/work-packages/WP-070-CAMERA-MODES-DIRECTION.md.
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(100)]
@@ -73,6 +92,46 @@ namespace DD.Prototype.CameraSystem
             "Below 1 so the frame leads the aim without chasing the cursor.", true)]
         [SerializeField] private float _pointerLookAheadFactor = 0.35f;
 
+        [Header("WP-070 · Third person (defaults; S-07 CameraModesFeel replaces the feel values)")]
+        [PrototypeOnly(PendingDecisions.None, "TP pivot height above the feet (chest).", true)]
+        [SerializeField] private float _tpPivotHeight = 1.45f;
+        [PrototypeOnly(PendingDecisions.None, "TP camera height above the pivot.", true)]
+        [SerializeField] private float _tpHeightAbovePivot = 0.35f;
+        [PrototypeOnly(PendingDecisions.None, "TP shoulder offset (signed by CameraModeSettings.Shoulder).", true)]
+        [SerializeField] private float _tpShoulderOffset = 0.55f;
+        [PrototypeOnly(PendingDecisions.None, "TP boom length behind the pivot.", true)]
+        [SerializeField] private float _tpDistance = 2.8f;
+        [PrototypeOnly(PendingDecisions.None, "TP collision probe radius.", true)]
+        [SerializeField] private float _tpCollisionRadius = 0.25f;
+        [PrototypeOnly(PendingDecisions.None, "TP minimum boom length when pushed in by a wall.", true)]
+        [SerializeField] private float _tpMinDistance = 0.6f;
+        [PrototypeOnly(PendingDecisions.None, "Seconds the boom takes to open again after a wall (pull-in is instant).", true)]
+        [SerializeField] private float _tpReturnSeconds = 0.25f;
+        [PrototypeOnly(PendingDecisions.None, "TP position follow smoothing (rotation is 1:1).", true)]
+        [SerializeField] private float _tpFollowSmoothSeconds = 0.06f;
+        [PrototypeOnly(PendingDecisions.None, "Below this boom length the player is hidden (shadow kept).", true)]
+        [SerializeField] private float _tpHidePlayerDistance = 0.75f;
+        [SerializeField] private float _tpPitchMin = -55f;
+        [SerializeField] private float _tpPitchMax = 70f;
+        [SerializeField] private float _tpStartPitch = 12f;
+
+        [Header("WP-070 · First person")]
+        [PrototypeOnly(PendingDecisions.None, "Eye height above the feet when no head bone is bound (AP-006 ronin, S-06 verifies).", true)]
+        [SerializeField] private float _fpEyeHeight = 1.62f;
+        [PrototypeOnly(PendingDecisions.None, "Eye point forward of the head centre (S-06: ~0.10 m + near 0.05-0.08 hides the head interior until the head submesh split).", true)]
+        [SerializeField] private float _fpEyeForward = 0.12f;
+        [SerializeField] private float _fpPitchMin = -80f;
+        [SerializeField] private float _fpPitchMax = 80f;
+
+        [Header("WP-070 · Look + feel (defaults until S-07 CameraModesFeel)")]
+        [SerializeField] private float _stickPitchShare = 0.7f;
+        [SerializeField] private float _stickResponseExponent = 1.6f;
+        [SerializeField] private float _recoilReturnDegreesPerSecond = 8f;
+        [SerializeField] private float _kickReturnRate = 14f;
+        [SerializeField] private float _bobFrequencyHz = 1.9f;
+        [SerializeField] private float _bobVertical = 0.018f;
+        [SerializeField] private float _bobLateral = 0.010f;
+
         // ------------------------------------------------------------ cached config
 
         private float _height = 15f;
@@ -99,6 +158,32 @@ namespace DD.Prototype.CameraSystem
 
         private ICameraLookAheadProvider _lookAheadProvider;
 
+        // ------------------------------------------------------------ WP-070 mode state
+
+        private float _viewYaw;
+        private float _viewPitch;
+        private Vector2 _recoil;                 // accumulated view recoil (pitch up, yaw right), part of the view
+        private Vector3 _kickOffset;
+        private float _kickRoll;
+        private float _bobPhase;
+        private float _fovPunch;
+        private float _fovPunchDecayPerSecond;
+        private float _shoulderBlend = 1f;       // -1 left .. +1 right
+        private float _tpBoom = -1f;             // current boom length, <0 = uninitialised
+        private float _tpBoomVelocity;
+        private Vector3 _tpPivot;
+        private Vector3 _tpPivotVelocity;
+        private bool _tpPivotWarm;
+        private Vector3 _fromPosition;
+        private Quaternion _fromRotation = Quaternion.identity;
+        private float _fromFov = 42f;
+        private bool _cursorLockedByRig;
+        private Vector3 _lastFeet;
+        [SerializeField] private float _bobReferenceSpeed = 5.5f;
+        private bool _playerHidden;
+        private readonly List<Renderer> _playerRenderers = new List<Renderer>(32);
+        private readonly Dictionary<Renderer, ShadowCastingMode> _playerShadowModes = new Dictionary<Renderer, ShadowCastingMode>(32);
+
         private DebugPanelSlider _shakeSlider;
         private DebugPanelButton _testPunch;
         private DebugPanelButton _testRumble;
@@ -120,6 +205,11 @@ namespace DD.Prototype.CameraSystem
             {
                 _followTarget = value;
                 _warmedUp = false;
+                _lastFeet = value != null ? value.position : Vector3.zero;
+                if (CameraModeService.IsLookMode)
+                {
+                    EnterMode(CameraModeService.Current, instant: true);   // WP-070: look where the new body faces
+                }
             }
         }
 
@@ -129,13 +219,38 @@ namespace DD.Prototype.CameraSystem
         /// </summary>
         public Vector3 PlanarForward
         {
-            get { return _planarForward; }
+            get { return CameraModeService.IsLookMode ? Quaternion.Euler(0f, _viewYaw, 0f) * Vector3.forward : _planarForward; }
         }
 
         /// <summary>Camera right flattened onto the ground plane.</summary>
         public Vector3 PlanarRight
         {
-            get { return _planarRight; }
+            get { return CameraModeService.IsLookMode ? Quaternion.Euler(0f, _viewYaw, 0f) * Vector3.right : _planarRight; }
+        }
+
+        /// <summary>WP-070: TP/FP view yaw in degrees (compass, world Y).</summary>
+        public float ViewYaw
+        {
+            get { return _viewYaw; }
+        }
+
+        /// <summary>WP-070: TP/FP view pitch in degrees (positive looks down), recoil included.</summary>
+        public float ViewPitch
+        {
+            get { return _viewPitch - _recoil.x; }
+        }
+
+        /// <summary>WP-070 test/QA hook: sets the TP/FP view angles directly (bot look target, tests).</summary>
+        public void SetViewAngles(float yawDegrees, float pitchDegrees)
+        {
+            _viewYaw = Mathf.Repeat(yawDegrees, 360f);
+            ClampPitch(pitchDegrees);
+        }
+
+        /// <summary>WP-070: current third-person boom length (distance pivot → camera); -1 outside TP.</summary>
+        public float ThirdPersonBoom
+        {
+            get { return CameraModeService.Current == CameraMode.ThirdPerson ? _tpBoom : -1f; }
         }
 
         /// <summary>Shake-free world position of the camera.</summary>
@@ -210,6 +325,12 @@ namespace DD.Prototype.CameraSystem
             DeathSequence.ReleasePushIn();   // WP-059: a new run's rig starts at the full offset
             CameraShakeService.Register(this);
 
+            // WP-070: a run starts in the saved / command-line mode, snapped.
+            CameraModeService.Changed += OnModeChanged;
+            CameraModeService.SettingsChanged += OnModeSettingsChanged;
+            CameraModeService.Request(CameraModeService.ResolveStartMode(), instant: true);
+            EnterMode(CameraModeService.Current, instant: true);
+
             _shakeSlider = DebugPanelRegistry.AddSlider(
                 DebugPanelTabs.Misc,
                 "Camera Shake Intensity",
@@ -246,6 +367,11 @@ namespace DD.Prototype.CameraSystem
             _readout = null;
 
             CameraShakeService.Unregister(this);
+
+            CameraModeService.Changed -= OnModeChanged;
+            CameraModeService.SettingsChanged -= OnModeSettingsChanged;
+            ReleaseCursor();
+            ShowPlayer();
 
             if (Active == this)
             {
@@ -301,6 +427,11 @@ namespace DD.Prototype.CameraSystem
             _planarForward = forward.sqrMagnitude > 1e-6f ? forward.normalized : Vector3.forward;
             _planarRight = Vector3.Cross(Vector3.up, _planarForward).normalized;
 
+            if (CameraModeService.Current != CameraMode.TopDown)
+            {
+                return;   // WP-070: TP/FP own lens and rotation every LateUpdate
+            }
+
             if (_camera != null)
             {
                 _camera.fieldOfView = _fieldOfView;
@@ -322,7 +453,52 @@ namespace DD.Prototype.CameraSystem
             }
 
             float dt = Time.deltaTime;
+            CameraModeService.SetFrozen(RunFlowClock.IsFrozen);
+            CameraMode mode = CameraModeService.Current;
+            ConsumeReactions(mode, dt);   // before the pose: recoil is part of this frame's view
 
+            Vector3 position;
+            Quaternion rotation;
+            float fov;
+            if (mode == CameraMode.TopDown)
+            {
+                ComputeTopDownPose(dt, out position, out rotation, out fov);
+            }
+            else
+            {
+                UpdateLook(mode, dt);
+                if (mode == CameraMode.ThirdPerson)
+                {
+                    ComputeThirdPersonPose(dt, out position, out rotation, out fov);
+                }
+                else
+                {
+                    ComputeFirstPersonPose(out position, out rotation, out fov);
+                }
+            }
+
+            // WP-070: blend from the pose the rig had when the mode changed (unscaled time,
+            // so the blend plays behind the pause menu).
+            if (CameraModeService.IsTransitioning)
+            {
+                float seconds = CameraModeService.TransitionSeconds(CameraModeService.Previous, mode);
+                CameraModeService.AdvanceTransition(seconds > 0f ? Time.unscaledDeltaTime / seconds : 1f);
+                float t = CameraModeService.Transition01;
+                t = t * t * (3f - 2f * t);
+                position = Vector3.Lerp(_fromPosition, position, t);
+                rotation = Quaternion.Slerp(_fromRotation, rotation, t);
+                fov = Mathf.Lerp(_fromFov, fov, t);
+            }
+
+            transform.SetPositionAndRotation(position, rotation);
+            ApplyLens(mode, fov, dt);
+            ApplyShake(dt, mode);
+            ApplyCursor();
+            ApplyPlayerVisibility(mode);
+        }
+
+        private void ComputeTopDownPose(float dt, out Vector3 position, out Quaternion rotation, out float fov)
+        {
             if (_followTarget != null)
             {
                 Vector3 anchor = _followTarget.position + Vector3.up * _focusHeightOffset;
@@ -351,9 +527,296 @@ namespace DD.Prototype.CameraSystem
             // WP-059: the death beat pulls the camera a little towards the fallen body
             // (GameFeelSettings.DeathCameraPushIn of the offset, eased with the slow-down).
             float pushIn = DeathSequence.PushIn01 * GameFeelSettings.Active.DeathCameraPushIn;
-            transform.SetPositionAndRotation(_focus + _lookAhead + _offsetFromFocus * (1f - pushIn), _fixedRotation);
+            position = _focus + _lookAhead + _offsetFromFocus * (1f - pushIn);
+            rotation = _fixedRotation;
+            fov = _fieldOfView;
+        }
 
-            ApplyShake(dt);
+        // ------------------------------------------------------------ WP-070 modes
+
+        private Vector3 Feet
+        {
+            get { return _followTarget != null ? _followTarget.position : transform.position; }
+        }
+
+        private void OnModeChanged(CameraModeChange change)
+        {
+            EnterMode(change.To, change.Instant);
+        }
+
+        private void OnModeSettingsChanged()
+        {
+            // Nothing cached: FOV / shoulder / sensitivity are read live every frame.
+        }
+
+        /// <summary>Snapshots the blend origin and seeds the view state for the new mode.</summary>
+        private void EnterMode(CameraMode mode, bool instant)
+        {
+            _fromPosition = transform.position;
+            _fromRotation = transform.rotation;
+            _fromFov = _camera != null ? _camera.fieldOfView : _fieldOfView;
+            _recoil = Vector2.zero;
+            _fovPunch = 0f;
+
+            if (mode == CameraMode.TopDown)
+            {
+                _warmedUp = false;   // focus snaps to the player; the blend hides the jump
+                transform.rotation = instant ? _fixedRotation : transform.rotation;
+                return;
+            }
+
+            if (CameraModeService.Previous == CameraMode.TopDown || instant)
+            {
+                // Entering a look mode from top-down: look where the character faces.
+                Transform body = _followTarget != null && _followTarget.parent != null ? _followTarget.parent : _followTarget;
+                Vector3 facing = body != null ? body.forward : transform.forward;
+                facing.y = 0f;
+                if (facing.sqrMagnitude < 1e-6f)
+                {
+                    facing = _planarForward;
+                }
+
+                _viewYaw = Quaternion.LookRotation(facing.normalized, Vector3.up).eulerAngles.y;
+                _viewPitch = mode == CameraMode.ThirdPerson ? _tpStartPitch : 0f;
+            }
+
+            ClampPitch(_viewPitch);
+            _tpBoom = -1f;
+            _tpPivotWarm = false;
+            _shoulderBlend = CameraModeService.Settings.Shoulder == CameraShoulder.Left ? -1f : 1f;
+        }
+
+        private void ClampPitch(float pitch)
+        {
+            CameraMode mode = CameraModeService.Current;
+            float min = mode == CameraMode.FirstPerson ? _fpPitchMin : _tpPitchMin;
+            float max = mode == CameraMode.FirstPerson ? _fpPitchMax : _tpPitchMax;
+            _viewPitch = Mathf.Clamp(pitch, min, max);
+        }
+
+        /// <summary>
+        /// Mouse delta and right stick → yaw/pitch. Frozen clock (pause) and look blocks stop
+        /// look input; the transition itself keeps playing. Stick uses scaled time so a
+        /// hit-stop does not fling the view.
+        /// </summary>
+        private void UpdateLook(CameraMode mode, float dt)
+        {
+            if (RunFlowClock.IsFrozen || CameraModeService.IsLookBlocked)
+            {
+                return;
+            }
+
+            IInputSource input = InputSourceRegistry.Current;
+            if (input == null || !input.IsEnabled)
+            {
+                return;
+            }
+
+            CameraModeSettings settings = CameraModeService.Settings;
+            float invert = settings.InvertY ? -1f : 1f;
+
+            Vector2 mouse = input.ReadLookDelta();
+            float yaw = mouse.x * settings.LookSensitivity;
+            float pitch = -mouse.y * settings.LookSensitivity * invert;
+
+            Vector2 stick = input.ReadLookStick();
+            float magnitude = stick.magnitude;
+            if (magnitude > 1e-4f && dt > 0f)
+            {
+                float response = Mathf.Pow(Mathf.Clamp01(magnitude), _stickResponseExponent) / magnitude;
+                yaw += stick.x * response * settings.StickLookDegreesPerSecond * dt;
+                pitch -= stick.y * response * settings.StickLookDegreesPerSecond * _stickPitchShare * dt * invert;
+            }
+
+            _viewYaw = Mathf.Repeat(_viewYaw + yaw, 360f);
+            ClampPitch(_viewPitch + pitch);
+        }
+
+        private Quaternion ViewRotation()
+        {
+            // Recoil is part of the view (direction doc D-20): the aim ray follows it.
+            return Quaternion.Euler(_viewPitch - _recoil.x, _viewYaw + _recoil.y, 0f);
+        }
+
+        private void ComputeThirdPersonPose(float dt, out Vector3 position, out Quaternion rotation, out float fov)
+        {
+            rotation = ViewRotation();
+            Vector3 pivotTarget = Feet + Vector3.up * _tpPivotHeight;
+            if (!_tpPivotWarm || dt <= 0f)
+            {
+                _tpPivot = pivotTarget;
+                _tpPivotVelocity = Vector3.zero;
+                _tpPivotWarm = true;
+            }
+            else
+            {
+                _tpPivot = Vector3.SmoothDamp(_tpPivot, pivotTarget, ref _tpPivotVelocity, _tpFollowSmoothSeconds, Mathf.Infinity, dt);
+            }
+
+            float shoulderTarget = CameraModeService.Settings.Shoulder == CameraShoulder.Left ? -1f : 1f;
+            _shoulderBlend = Mathf.MoveTowards(_shoulderBlend, shoulderTarget, dt * 4f);
+
+            Vector3 local = new Vector3(_tpShoulderOffset * _shoulderBlend, _tpHeightAbovePivot, -_tpDistance);
+            Vector3 desired = _tpPivot + rotation * local;
+            Vector3 toCamera = desired - _tpPivot;
+            float length = toCamera.magnitude;
+            Vector3 direction = length > 1e-5f ? toCamera / length : -(rotation * Vector3.forward);
+
+            float allowed = length;
+            RaycastHit hit;
+            if (Physics.SphereCast(_tpPivot, _tpCollisionRadius, direction, out hit, length,
+                    PrototypeLayers.AimBlockMask, QueryTriggerInteraction.Ignore))
+            {
+                allowed = Mathf.Max(_tpMinDistance, hit.distance);
+            }
+
+            if (_tpBoom < 0f || allowed < _tpBoom || dt <= 0f)
+            {
+                _tpBoom = allowed;          // pull-in is instant: never a frame inside the wall
+                _tpBoomVelocity = 0f;
+            }
+            else
+            {
+                _tpBoom = Mathf.SmoothDamp(_tpBoom, allowed, ref _tpBoomVelocity, _tpReturnSeconds, Mathf.Infinity, dt);
+            }
+
+            position = _tpPivot + direction * _tpBoom;
+            fov = CameraModeService.Settings.ThirdPersonFov;
+        }
+
+        private void ComputeFirstPersonPose(out Vector3 position, out Quaternion rotation, out float fov)
+        {
+            rotation = ViewRotation();
+            Quaternion yawOnly = Quaternion.Euler(0f, _viewYaw, 0f);
+            position = Feet + Vector3.up * _fpEyeHeight + yawOnly * (Vector3.forward * _fpEyeForward);
+
+            // FirstPersonFov is horizontal degrees at 16:9 (Hor+, C-00 24.09); Unity wants vertical.
+            float horizontal = CameraModeService.Settings.FirstPersonFov;
+            fov = 2f * Mathf.Atan(Mathf.Tan(horizontal * 0.5f * Mathf.Deg2Rad) / CameraModeSettings.FovReferenceAspect) * Mathf.Rad2Deg;
+        }
+
+        private void ApplyLens(CameraMode mode, float fov, float dt)
+        {
+            if (_camera == null)
+            {
+                return;
+            }
+
+            // FOV punch eases back linearly over its authored duration (direction doc §6).
+            if (_fovPunch != 0f && dt > 0f)
+            {
+                _fovPunch = Mathf.MoveTowards(_fovPunch, 0f, _fovPunchDecayPerSecond * dt);
+            }
+
+            bool reduced = CameraModeService.Settings.ReducedMotion;
+            _camera.fieldOfView = fov + (reduced || mode == CameraMode.TopDown ? 0f : _fovPunch);
+            if (mode == CameraMode.TopDown && !CameraModeService.IsTransitioning)
+            {
+                _camera.nearClipPlane = _nearClip;
+                _camera.farClipPlane = _farClip;
+                return;
+            }
+
+            CameraModeProfile profile = CameraModeService.CurrentProfile;
+            _camera.nearClipPlane = profile.NearClip > 0f ? profile.NearClip : _nearClip;
+            _camera.farClipPlane = profile.FarClip > 0f ? profile.FarClip : _farClip;
+        }
+
+        private void ApplyCursor()
+        {
+            if (CameraModeService.CursorIntentHandledExternally)
+            {
+                return;   // UiCursor (S-09) is the single writer once it consumes the intent
+            }
+
+            bool want = CameraModeService.CursorIntent == CameraCursorIntent.Locked && Application.isFocused;
+            if (want == _cursorLockedByRig)
+            {
+                return;
+            }
+
+            _cursorLockedByRig = want;
+            Cursor.lockState = want ? CursorLockMode.Locked : CursorLockMode.None;
+        }
+
+        private void ReleaseCursor()
+        {
+            if (_cursorLockedByRig && !CameraModeService.CursorIntentHandledExternally)
+            {
+                Cursor.lockState = CursorLockMode.None;
+            }
+
+            _cursorLockedByRig = false;
+        }
+
+        /// <summary>
+        /// FP: the body renders shadows only until slice 3 (head-only hiding + viewmodel layer).
+        /// TP: the player hides when the boom is pushed closer than <see cref="_tpHidePlayerDistance"/>.
+        /// Shadows always stay. Renderers are re-collected on every hide so weapon swaps are covered.
+        /// </summary>
+        private void ApplyPlayerVisibility(CameraMode mode)
+        {
+            bool hide = mode == CameraMode.FirstPerson && (!CameraModeService.IsTransitioning || CameraModeService.Transition01 > 0.8f);
+            if (mode == CameraMode.ThirdPerson && _tpBoom >= 0f && _tpBoom < _tpHidePlayerDistance)
+            {
+                hide = true;
+            }
+
+            if (hide)
+            {
+                HidePlayer();
+            }
+            else
+            {
+                ShowPlayer();
+            }
+        }
+
+        private void HidePlayer()
+        {
+            Transform body = _followTarget != null && _followTarget.parent != null ? _followTarget.parent : null;
+            if (body == null)
+            {
+                return;
+            }
+
+            body.GetComponentsInChildren(false, _playerRenderers);
+            for (int i = 0; i < _playerRenderers.Count; i++)
+            {
+                Renderer r = _playerRenderers[i];
+                if (r == null || r.shadowCastingMode == ShadowCastingMode.ShadowsOnly)
+                {
+                    continue;
+                }
+
+                if (!_playerShadowModes.ContainsKey(r))
+                {
+                    _playerShadowModes.Add(r, r.shadowCastingMode);
+                }
+
+                r.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+            }
+
+            _playerHidden = true;
+        }
+
+        private void ShowPlayer()
+        {
+            if (!_playerHidden)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<Renderer, ShadowCastingMode> pair in _playerShadowModes)
+            {
+                if (pair.Key != null)
+                {
+                    pair.Key.shadowCastingMode = pair.Value;
+                }
+            }
+
+            _playerShadowModes.Clear();
+            _playerHidden = false;
         }
 
         private Vector3 ComputeLookAhead(Vector3 anchor)
@@ -374,20 +837,91 @@ namespace DD.Prototype.CameraSystem
             return Vector3.ClampMagnitude(offset, _maxLookAhead);
         }
 
-        private void ApplyShake(float dt)
+        /// <summary>
+        /// WP-070 reactions (S-07 sink), drained before the pose is built: recoil joins the VIEW
+        /// (and therefore the aim ray this very frame) and returns at the recoil return rate;
+        /// kick / FOV punch are cosmetic (child node / lens) and never touch aim.
+        /// </summary>
+        private void ConsumeReactions(CameraMode mode, float dt)
+        {
+            CameraModeSettings settings = CameraModeService.Settings;
+            Vector2 recoil;
+            Vector3 kick;
+            float kickRoll, fovPunch, fovSeconds;
+            CameraReactions.Drain(out recoil, out kick, out kickRoll, out fovPunch, out fovSeconds);
+
+            if (dt > 0f)
+            {
+                _recoil = Vector2.MoveTowards(_recoil, Vector2.zero, _recoilReturnDegreesPerSecond * dt);
+                float k = 1f - Mathf.Exp(-_kickReturnRate * dt);
+                _kickOffset = Vector3.Lerp(_kickOffset, Vector3.zero, k);
+                _kickRoll = Mathf.Lerp(_kickRoll, 0f, k);
+            }
+
+            if (mode != CameraMode.TopDown)
+            {
+                _recoil += recoil;
+                if (fovPunch != 0f && !settings.ReducedMotion)
+                {
+                    _fovPunch = fovPunch;
+                    _fovPunchDecayPerSecond = Mathf.Abs(fovPunch) / Mathf.Max(0.01f, fovSeconds);
+                }
+            }
+
+            float cosmetic = settings.ReducedMotion ? 0f : 1f;
+            float translation = mode == CameraMode.FirstPerson ? 0f : 1f;   // D-15: no FP translation
+            _kickOffset += kick * translation * cosmetic;
+            _kickRoll += kickRoll * cosmetic;
+        }
+
+        private void ApplyShake(float dt, CameraMode mode)
         {
             if (_shakeNode == null)
             {
                 return;
             }
 
+            CameraModeSettings settings = CameraModeService.Settings;
+            float modeScale = Mathf.Max(0f, CameraModeService.CurrentProfile.ShakeScale);
+            if (settings.ReducedMotion)
+            {
+                modeScale *= 0.3f;
+            }
+
             Vector3 localOffset;
             float roll;
             CameraShakeService.Sample(
-                dt, _maxShakeAmplitude, _shakeIntensity, _fixedRotation, out localOffset, out roll);
+                dt, _maxShakeAmplitude * modeScale, _shakeIntensity,
+                mode == CameraMode.TopDown ? _fixedRotation : transform.rotation, out localOffset, out roll);
 
-            _shakeNode.localPosition = localOffset;
-            _shakeNode.localRotation = Quaternion.Euler(0f, 0f, roll);
+            Vector3 bob = Vector3.zero;
+            if (mode == CameraMode.FirstPerson && dt > 0f)
+            {
+                float speed01;
+                bool grounded;
+                if (!CameraReactions.ReadBob(out speed01, out grounded))
+                {
+                    // Nobody fed the bob this frame (S-07 feel layer not bound yet): estimate
+                    // locomotion from the feet's planar speed.
+                    Vector3 step = Feet - _lastFeet;
+                    step.y = 0f;
+                    speed01 = Mathf.Clamp01(step.magnitude / dt / Mathf.Max(0.1f, _bobReferenceSpeed));
+                    grounded = true;
+                }
+                float amount = grounded ? speed01 * settings.HeadBobScale * (settings.ReducedMotion ? 0f : 1f) : 0f;
+                _bobPhase = Mathf.Repeat(_bobPhase + dt * _bobFrequencyHz * Mathf.Max(0.25f, speed01), 1f);
+                float wave = _bobPhase * Mathf.PI * 2f;
+                bob = new Vector3(Mathf.Sin(wave) * _bobLateral, Mathf.Abs(Mathf.Sin(wave)) * _bobVertical, 0f) * amount;
+            }
+
+            if (mode == CameraMode.FirstPerson)
+            {
+                localOffset = Vector3.zero;   // D-15: FP shake is rotation only
+            }
+
+            _lastFeet = Feet;
+            _shakeNode.localPosition = localOffset + _kickOffset + bob;
+            _shakeNode.localRotation = Quaternion.Euler(0f, 0f, roll + _kickRoll);
         }
 
         // ----------------------------------------------------------------- aim query
@@ -463,7 +997,14 @@ namespace DD.Prototype.CameraSystem
         /// </summary>
         public bool TryGetAimRay(Vector2 screenPoint, float aimPlaneY, out CameraAimRay ray)
         {
+            return TryGetAimRay(screenPoint, aimPlaneY, AimRayMaxDistance, out ray);
+        }
+
+        /// <summary>WP-070 (S-02): same as above with the TP/FP ray length set by the caller (weapon max range).</summary>
+        public bool TryGetAimRay(Vector2 screenPoint, float aimPlaneY, float maxDistance, out CameraAimRay ray)
+        {
             ray = default(CameraAimRay);
+            maxDistance = maxDistance > 0f ? maxDistance : AimRayMaxDistance;
             if (_camera == null)
             {
                 return false;
@@ -490,7 +1031,7 @@ namespace DD.Prototype.CameraSystem
             ray.Origin = transform.position;
             ray.Direction = transform.rotation * Vector3.forward;
             RaycastHit hit;
-            if (Physics.Raycast(ray.Origin, ray.Direction, out hit, AimRayMaxDistance, AimRayMask, QueryTriggerInteraction.Collide))
+            if (Physics.Raycast(ray.Origin, ray.Direction, out hit, maxDistance, AimRayMask, QueryTriggerInteraction.Collide))
             {
                 ray.HitPoint = hit.point;
                 ray.Distance = hit.distance;
@@ -498,8 +1039,8 @@ namespace DD.Prototype.CameraSystem
             }
             else
             {
-                ray.HitPoint = ray.Origin + ray.Direction * AimRayMaxDistance;
-                ray.Distance = AimRayMaxDistance;
+                ray.HitPoint = ray.Origin + ray.Direction * maxDistance;
+                ray.Distance = maxDistance;
                 ray.HasHit = false;
             }
 
@@ -510,9 +1051,9 @@ namespace DD.Prototype.CameraSystem
         {
             Vector3 p = transform.position;
             return string.Format(
-                "pos ({0:0.0}, {1:0.0}, {2:0.0})  fov {3:0.0}  lookahead {4:0.00} m  shakes {5}",
+                "{6}  pos ({0:0.0}, {1:0.0}, {2:0.0})  fov {3:0.0}  lookahead {4:0.00} m  shakes {5}  yaw {7:0} pitch {8:0}",
                 p.x, p.y, p.z, _camera != null ? _camera.fieldOfView : 0f, _lookAhead.magnitude,
-                CameraShakeService.ActiveCount);
+                CameraShakeService.ActiveCount, CameraModeService.Current, _viewYaw, ViewPitch);
         }
     }
 

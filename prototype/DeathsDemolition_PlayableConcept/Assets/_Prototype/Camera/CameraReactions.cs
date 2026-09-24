@@ -3,13 +3,14 @@ using UnityEngine;
 namespace DD.Prototype.CameraSystem
 {
     /// <summary>
-    /// WP-070 · Camera reaction hooks for game feel (S-07, M4-R1 N18). Feel code calls
-    /// these; the rig consumes them each LateUpdate on the SHAKE layer (never the stable
-    /// pose), so aim stays exact while the view kicks.
+    /// WP-070 · Camera reaction hooks for game feel (M4-R1 N18). The rig drains them each
+    /// LateUpdate. Channel split (direction doc D-20):
     ///
-    ///   * <see cref="AddRecoil"/>   — view-angle kick that recovers over the per-mode
-    ///                                 recoil return time (FP/TP); TopDown maps it to a punch shake.
-    ///   * <see cref="AddKick"/>     — positional kick + roll on the shake node.
+    ///   * <see cref="AddRecoil"/>   — joins the VIEW (TP/FP): the aim ray follows it and it
+    ///                                 returns at the recoil return rate. Source = S-02 weapon
+    ///                                 pattern data; return values = S-07. Ignored in TopDown.
+    ///   * <see cref="AddKick"/>     — positional kick + roll on the shake node (never aim;
+    ///                                 FP translation dropped, D-15).
     ///   * <see cref="SetLocomotionBob"/> — FP walk/run bob input (speed 0..1, grounded);
     ///                                 scaled by CameraModeSettings.HeadBobScale.
     ///   * <see cref="FovPunch"/>    — short FOV change that eases back.
@@ -24,6 +25,7 @@ namespace DD.Prototype.CameraSystem
         private static float s_kickRoll;
         private static float s_bobSpeed01;
         private static bool s_bobGrounded = true;
+        private static int s_bobFrame = -1;
         private static float s_fovPunchDegrees;
         private static float s_fovPunchSeconds;
 
@@ -46,6 +48,7 @@ namespace DD.Prototype.CameraSystem
         {
             s_bobSpeed01 = Mathf.Clamp01(speed01);
             s_bobGrounded = grounded;
+            s_bobFrame = Time.frameCount;
         }
 
         /// <summary>Temporarily widens (positive) or narrows the world FOV, easing back over <paramref name="seconds"/>.</summary>
@@ -74,11 +77,12 @@ namespace DD.Prototype.CameraSystem
             s_fovPunchSeconds = 0f;
         }
 
-        /// <summary>Rig side: current locomotion bob input.</summary>
-        public static void ReadBob(out float speed01, out bool grounded)
+        /// <summary>Rig side: locomotion bob input; false when nobody fed it this frame or the last one.</summary>
+        public static bool ReadBob(out float speed01, out bool grounded)
         {
             speed01 = s_bobSpeed01;
             grounded = s_bobGrounded;
+            return s_bobFrame >= Time.frameCount - 1 && s_bobFrame >= 0;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -89,6 +93,7 @@ namespace DD.Prototype.CameraSystem
             s_kickRoll = 0f;
             s_bobSpeed01 = 0f;
             s_bobGrounded = true;
+            s_bobFrame = -1;
             s_fovPunchDegrees = 0f;
             s_fovPunchSeconds = 0f;
         }

@@ -39,6 +39,46 @@ namespace DD.Prototype.CameraSystem
         }
 
         /// <summary>
+        /// WP-070 (S-06 animation): view pitch for aim offsets, degrees, POSITIVE = UP, clamped
+        /// to ±60 (the animation range). 0 in top-down (the body never pitches there).
+        /// </summary>
+        public static float AimPitchUpDegrees
+        {
+            get
+            {
+                PrototypeCameraRig rig = PrototypeCameraRig.Active;
+                if (rig == null || !CameraModeService.IsLookMode)
+                {
+                    return 0f;
+                }
+
+                return Mathf.Clamp(-rig.ViewPitch, -60f, 60f);
+            }
+        }
+
+        /// <summary>
+        /// WP-070 (S-06): signed yaw of the camera relative to <paramref name="body"/>'s facing,
+        /// degrees (−180…180, positive = camera turned right of the body). 0 in top-down.
+        /// </summary>
+        public static float AimYawDegrees(Transform body)
+        {
+            PrototypeCameraRig rig = PrototypeCameraRig.Active;
+            if (rig == null || body == null || !CameraModeService.IsLookMode)
+            {
+                return 0f;
+            }
+
+            Vector3 f = body.forward;
+            f.y = 0f;
+            if (f.sqrMagnitude < 1e-6f)
+            {
+                return 0f;
+            }
+
+            return Vector3.SignedAngle(f.normalized, rig.PlanarForward, Vector3.up);
+        }
+
+        /// <summary>
         /// FP viewmodel anchor (weapon/hands root on the <see cref="CameraLayers.FirstPersonView"/>
         /// layer); null outside first person. S-08 places first-person weapon audio here.
         /// </summary>

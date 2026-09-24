@@ -62,8 +62,11 @@ namespace DD.Prototype.CameraSystem
         public const float MaxLookSensitivity = 0.30f;
         public const float MinStickLookDegreesPerSecond = 60f;
         public const float MaxStickLookDegreesPerSecond = 360f;
-        public const float MinFirstPersonFov = 80f;
-        public const float MaxFirstPersonFov = 90f;
+        public const float MinFirstPersonFov = 70f;
+        public const float MaxFirstPersonFov = 110f;
+
+        /// <summary>Aspect the horizontal FP FOV is defined at (Hor+: vertical FOV fixed, wider screens see more).</summary>
+        public const float FovReferenceAspect = 16f / 9f;
         public const float MinThirdPersonFov = 55f;
         public const float MaxThirdPersonFov = 70f;
 
@@ -80,11 +83,12 @@ namespace DD.Prototype.CameraSystem
         public bool InvertY;
 
         /// <summary>
-        /// First-person world FOV in HORIZONTAL degrees at the current aspect (user band 80–90;
-        /// direction doc D: horizontal interpretation, 🔴 user confirms). The rig converts to
-        /// Unity's vertical FOV. The Phase-1 viewmodel shares it (<c>CameraLayers.ViewmodelFov</c>).
+        /// First-person world FOV in HORIZONTAL degrees at the 16:9 reference aspect (Hor+;
+        /// C-00 decision 2026-09-24: default 90, range 70–110). The rig converts it once to
+        /// Unity's vertical FOV with <see cref="FovReferenceAspect"/>, so other aspects keep
+        /// the vertical angle and see more / less at the sides.
         /// </summary>
-        public float FirstPersonFov = 85f;
+        public float FirstPersonFov = 90f;
 
         /// <summary>Third-person world FOV in VERTICAL degrees (≈ 91° horizontal at 16:9 for 60).</summary>
         public float ThirdPersonFov = 60f;
@@ -121,7 +125,7 @@ namespace DD.Prototype.CameraSystem
 
             LookSensitivity = Clamp(LookSensitivity, MinLookSensitivity, MaxLookSensitivity, 0.08f);
             StickLookDegreesPerSecond = Clamp(StickLookDegreesPerSecond, MinStickLookDegreesPerSecond, MaxStickLookDegreesPerSecond, 180f);
-            FirstPersonFov = Clamp(FirstPersonFov, MinFirstPersonFov, MaxFirstPersonFov, 85f);
+            FirstPersonFov = Clamp(FirstPersonFov, MinFirstPersonFov, MaxFirstPersonFov, 90f);
             ThirdPersonFov = Clamp(ThirdPersonFov, MinThirdPersonFov, MaxThirdPersonFov, 60f);
             HeadBobScale = Clamp(HeadBobScale, 0f, 1f, 1f);
         }
