@@ -6,7 +6,7 @@ Kapsam: tüm M4-R1 paketleri (M4-R1 §4.7). Çerçeve: **DEC-092** (60 fps: Yük
 | Kademe | Amaç | Hedef |
 |---|---|---|
 | **Sinematik** | fragman/yakın plan, güçlü makine; görünümün tamamı | DEC-092 üstü serbest, raporlanır; taban 45 fps (ort ≤ 22 ms, p99 ≤ 28 ms) |
-| **Yüksek** (varsayılan) | hedef görünüm, oynanış | **ort ≤ 16,6 ms, p99 ≤ 20 ms** (DEC-092) — üç kamera modunda |
+| **Yüksek** (varsayılan) | hedef görünüm, oynanış | **ort ≤ 16,6 ms, p99 ≤ 20 ms** (DEC-092) — üç kamera modunda; planlama toplamı **≤ 16,0 ms** (0,6 ms marj, C-00 24.09) |
 | **Performans** | yüksek yenileme / zayıf GPU | ort ≤ 8,0 ms, p99 ≤ 10 ms (DEC-088 eşiği; WP-070 D-21 ile uyumlu) |
 
 ## 2 · API (DD.Prototype.Core; S-05 Faz B ilk dilimi, WP-075 B1)
@@ -58,8 +58,9 @@ public static class QualityTiers
 | Yükseklik sisi (TP/FP) | S-05 | kapalı | açık | açık |
 | Bitki yoğunluğu / impostor mesafesi | S-05 WP-074 | ×0,6 / 40 m | ×1,0 / 60 m | ×1,0 / 80 m |
 | Atmosfer parçacıkları (× cookie) | S-07 WP-073 | ×0,4 | ×0,7 | ×1,0 |
-| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi; `-ddRagdoll`) | S-06 WP-071 (uygular) | 2 | 6 | 10 (S-03 önerisi 12 — S-06 değeri geçerli, uzlaşma bekliyor) |
+| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi; `-ddRagdoll`) | S-06 WP-071 (uygular) | 2 | 6 | 10 (S-03 / S-06 uzlaştı, C-00) |
 | Ceset tavanı / ömür (s); ceset–ceset çarpışması | S-06 | 6 / 2,5; ✘ | 10 / 4; ✔ | 16 / 6; ✔ |
+| Animasyon toplamı (40 zombi) | S-06 | — | ≈ 1,9 ms (toplam 16,0'ı aşarsa VFX'ten sonra kısılan: **≤ 1,6 ms**) | yalnız raporlanır |
 | Foot IK gövde/kare (ayak kilidi) | S-06 | 4 (yalnız oyuncu) | 12 (oyuncu + ≤ 8) | 24 (oyuncu + LOD0 zombi) |
 | İkincil zincir gövde/kare (`SecondaryChainDriver`) | S-06 | 16 | 40 | 60 |
 | Look-at gövde/kare | S-06 | 4 | 12 | 20 |
@@ -85,7 +86,7 @@ public static class QualityTiers
 | Raiju yayları (0,25) | S-07 | 6 / 12 | 8 / 24 | 8 / 32 |
 | Namekuji birikintileri (0,25) | S-07 | 12 düz | 12 kabarcık | 12 + erime |
 | Atmosfer parçacıkları, canlı (0,60; × cookie) | S-07 | 600 | 1 800 | 3 000 |
-| **VFX toplamı** | S-07 | ≤ 1,2 ms | ≤ 3,0 ms | ≤ 5,5 ms |
+| **VFX toplamı** | S-07 | ≤ 1,2 ms | ≤ 3,0 ms (Yüksek toplamı 16,0'ı aşarsa ilk kısılan: **≤ 2,2 ms**) | ≤ 5,5 ms (yalnız raporlanır) |
 | Ses | S-08 | kademe satırı yok (ses CPU'su ≈ 0,02 ms/atış, ses bütçesi kademeden bağımsız; Performans ölçümü > 0,3 ms ise World kapasitesi 24 → 16) | | |
 
 **Hiçbir kademede kaybedilmez:** ıslak arduvaz değeri/parlaması; bulut gölgesi cookie; LUT v2 + sis rengi #D0D7DE + mesafe rampası (90 m %24); ufuk plakaları + gök bandı; imza huzmeler (batı bambu ≥ 3, doğu sakura ≥ 2 kart); değer sırası ve DEC-077 okunabilirlik eşikleri.
@@ -94,4 +95,5 @@ public static class QualityTiers
 - A/B: özellik `-dd<Özellik> 0|1` bayrağı veya kademe anahtarı ile; PilotPerfProbe Run, 1080p, 10 s ısınma + 60 s pencere, tam 40, temiz pencere (`tools/qa/wp064_run.py perf`, `-ddCameraMode` ile üç mod); kademe × mod başına ≥ 2 pencere.
 - Rapor satırı (paket kaydı + `quality-tiers-v2.json`): özellik · kademe · mod · Δms ort · Δms p99 · GPU Δms · kanıt yolu.
 - Bütçe paylaşımı (öneri, C-00 hakemliğinde; Yüksek, tepeden, ölçülü taban 7,8 ms): dünya v5 ≤ +3,5 ms · atmosfer v3 ≤ +2,0 ms · VFX/anim/AI/UI/ses ≤ +3,0 ms · pay 0,2 ms. Aşan özellik kendi kademesinde kısar (M4-R1 §4.8); başka paketin bütçesinden alınmaz.
-- Bildirilen tahminler (40 zombi, Yüksek): animasyon (S-06) ≈ 1,9 ms (pay ≤ 2,4), AI (S-03) 0,75 ms, VFX (S-07) ≤ 3,0 ms → toplam ≈ 5,65 ms, onaylı "diğer +3,0 ms" payının ≈ 1,9 katı (UI/ses hariç). **Aşım C-00 hakemliğinde** (seçenekler: paylaşımı ölçümle yeniden dağıtmak — dünya/atmosfer payı ölçülünce kullanılmayan kısım; ya da Yüksek VFX/animasyon değerlerini kısmak). Tahmin; kesin rakam dilim sonu A/B ölçümleriyle.
+- **Rakamların anlamı:** §4.2'deki ms değerleri o sistemin kademedeki **toplam** maliyetidir (ör. AI tick 0,75 ms = 40 beden için tüm AI), delta değildir. Taban kapanış ölçümü (≈ 7,9 ms, WP-064 r3) bugünkü animasyon / AI / VFX maliyetini zaten içerir. Paya sayılan, özelliğin A/B ölçümündeki **Δms**'idir (R1 toplamı eksi tabandaki bugünkü maliyeti). Önceki "≈ 5,65 ms > +3,0 ms" notu toplamı delta payıyla karşılaştırıyordu; kaldırıldı.
+- **C-00 kararı (24.09):** DEC-092 toplamı sabit, pay artışı yok. Yüksek kademe toplamı ≤ 16,0 ms (0,6 ms marj). Aşım olursa kesme sırası: önce VFX (S-07, Yüksek ≤ 2,2 ms), sonra animasyon (S-06, Yüksek ≤ 1,6 ms); AI 0,75 ms kalır. Sinematik yalnız raporlanır. S-05'in dünya (+3,5) ve atmosfer (+2,0) payları tavandır; 16,0'a sığmak için ölçülüp kullanılmayan kısım bırakılır. Kesin rakamlar WP-078 ölçümünde (kademe × mod, ≥ 3 pencere) doğrulanır.
