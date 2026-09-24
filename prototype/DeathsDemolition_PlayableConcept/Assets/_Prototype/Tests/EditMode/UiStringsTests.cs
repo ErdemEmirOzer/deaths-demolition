@@ -54,7 +54,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("Hinawa", UiStrings.Get("weapon.ar_1.name"));
             Assert.AreEqual("BURST ×{count}", UiStrings.Get("weapon.ar_2.firemode"));
             Assert.AreEqual("fallback", UiStrings.Get("no.such.key", "fallback"), "a gap reads as the caller's copy, never the key");
-            Assert.AreEqual("PATH · 120 Kül · L{level}", UiStrings.Format("path.lock.line", "kul", "120"));
+            Assert.AreEqual("PATH · 120 Ash · L{level}", UiStrings.Format("path.lock.line", "kul", "120"), "C-00 25.09: en Ash");
         }
 
         [Test]

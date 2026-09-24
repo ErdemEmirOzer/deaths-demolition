@@ -1200,15 +1200,15 @@
     "tr": "YOL"
   },
   "path.currency": {
-    "en": "Kül",
+    "en": "Ash",
     "tr": "Kül"
   },
   "path.currency.amount": {
-    "en": "{value} Kül",
+    "en": "{value} Ash",
     "tr": "{value} Kül"
   },
   "path.currency.earned": {
-    "en": "+{value} Kül",
+    "en": "+{value} Ash",
     "tr": "+{value} Kül"
   },
   "path.page.weapons": {
@@ -1240,7 +1240,7 @@
     "tr": "KOLAYLIK"
   },
   "path.lock.line": {
-    "en": "PATH · {kul} Kül · L{level}",
+    "en": "PATH · {kul} Ash · L{level}",
     "tr": "YOL · {kul} Kül · L{level}"
   },
   "path.lock.ready": {
@@ -1256,7 +1256,7 @@
     "tr": "SIRADAKİ"
   },
   "path.next.line": {
-    "en": "Next: {node} · {value} Kül away",
+    "en": "Next: {node} · {value} Ash away",
     "tr": "Sıradaki: {node} · {value} Kül kaldı"
   },
   "path.owned": {
@@ -1304,7 +1304,7 @@
     "tr": "Bu silah için kozmetik mühür kazanıldı."
   },
   "path.results.delta": {
-    "en": "PATH +{value} Kül",
+    "en": "PATH +{value} Ash",
     "tr": "YOL +{value} Kül"
   },
   "tree.meta.weapon.ar_1.name": {
@@ -1704,7 +1704,7 @@
     "tr": "Her silahın kendi mührü vardır. Şeritteki bir kilit taşı ona yol açar."
   },
   "tips.024": {
-    "en": "Every run earns Kül for the PATH. Your level decides which gates are open.",
+    "en": "Every run earns Ash for the PATH. Your level decides which gates are open.",
     "tr": "Her koşu YOL için Kül kazandırır. Hangi kapıların açık olduğunu seviyen belirler."
   },
   "tips.025": {

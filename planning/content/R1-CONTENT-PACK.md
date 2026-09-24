@@ -35,7 +35,7 @@ Docs only: nothing here touches a Unity asset or a C# file. All numbers that WP-
 - **A6 · Rocket wording.** rl_1's Explosion branch uses the separate `branch.blast` string ("Blast") per WP-069 §6 / WP-077 §2.3; the Explosion keystone (Ash Cloud) keeps one string for both meanings.
 - **A7 · Seal names in ASCII.** WP-069 writes Kōdō and Sōhatsu with macrons. The Text atlas is Latin-1 and the Display atlas holds ≈ 62 caps glyphs (WP-068 §2.2), so ō would render as a fallback box. The strings use **Kodo** / **Sohatsu**; the macron spelling stays in design docs only. Kabuto-wari keeps its hyphen.
 - **A8 · "Special".** In new copy, "Special" always means a Special weapon (Raiju, Namekuji). Enemies are always named by type (Runner, Guard, Executioner), never by tier word, because the existing tier word "Special" (Runner) would collide.
-- **A9 · Kül.** Stays "Kül" in both languages, as WP-077 §3.1 writes it inside the English line "PATH · 120 Kül · L11". ü is in Latin-1, so the Text atlas renders it; see Q2 for the Display atlas.
+- **A9 · Kül.** *(Superseded 25.09 for `en`: "Ash", see the section 8 note.)* Stays "Kül" in both languages, as WP-077 §3.1 writes it inside the English line "PATH · 120 Kül · L11". ü is in Latin-1, so the Text atlas renders it; see Q2 for the Display atlas.
 - **A10 · Achievements.** WP-069/WP-077 name no weapon/Special achievements (WP-077 §5's ten new ones are tree achievements and are out of scope here). The 12 proposed here follow the catalog's style (Title Case name, one-sentence description ending in a period) and read their threshold from the catalog through `{count}` / `{round}`; the threshold column is a proposal. Every condition is new to `AchievementCondition` (S-04 B4).
 
 **Ambiguities and conflicts found in the direction docs**
@@ -428,9 +428,9 @@ Key: `tree.meta.<id>.name` / `.desc` (the `meta.` prefix of the id is dropped in
 | key | en | tr |
 | --- | --- | --- |
 | `path.title` | PATH | YOL |
-| `path.currency` | Kül | Kül |
-| `path.currency.amount` | {value} Kül | {value} Kül |
-| `path.currency.earned` | +{value} Kül | +{value} Kül |
+| `path.currency` | Ash | Kül |
+| `path.currency.amount` | {value} Ash | {value} Kül |
+| `path.currency.earned` | +{value} Ash | +{value} Kül |
 | `path.page.weapons` | WEAPONS | SİLAHLAR |
 | `path.page.special` | SPECIAL | ÖZEL |
 | `path.page.passives` | PASSIVES | PASİFLER |
@@ -438,11 +438,11 @@ Key: `tree.meta.<id>.name` / `.desc` (the `meta.` prefix of the id is dropped in
 | `path.row.economy` | ECONOMY | EKONOMİ |
 | `path.row.body` | BODY | BEDEN |
 | `path.row.comfort` | COMFORT | KOLAYLIK |
-| `path.lock.line` | PATH · {kul} Kül · L{level} | YOL · {kul} Kül · L{level} |
+| `path.lock.line` | PATH · {kul} Ash · L{level} | YOL · {kul} Kül · L{level} |
 | `path.lock.ready` | PATH › ready | YOL › hazır |
 | `path.gate.level` | Opens at level {level} | {level}. seviyede açılır |
 | `path.next` | NEXT | SIRADAKİ |
-| `path.next.line` | Next: {node} · {value} Kül away | Sıradaki: {node} · {value} Kül kaldı |
+| `path.next.line` | Next: {node} · {value} Ash away | Sıradaki: {node} · {value} Kül kaldı |
 | `path.owned` | OWNED | SAHİPSİN |
 | `path.buy.hold` | HOLD TO TAKE | ALMAK İÇİN BASILI TUT |
 | `path.respec` | RESET PASSIVES | PASİFLERİ SIFIRLA |
@@ -454,7 +454,7 @@ Key: `tree.meta.<id>.name` / `.desc` (the `meta.` prefix of the id is dropped in
 | `path.mastery.m2` | A second fork option appears for this weapon. | Bu silah için ikinci kavşak seçeneği görünür. |
 | `path.mastery.m3` | This weapon's capstone can now appear in offers. | Bu silahın doruğu artık tekliflerde çıkabilir. |
 | `path.mastery.m5` | Cosmetic seal earned for this weapon. | Bu silah için kozmetik mühür kazanıldı. |
-| `path.results.delta` | PATH +{value} Kül | YOL +{value} Kül |
+| `path.results.delta` | PATH +{value} Ash | YOL +{value} Kül |
 
 ## 4 · Loading-screen tips (30)
 
@@ -485,7 +485,7 @@ Key `tips.NNN`. Group / class follow `UiLoadingTips` (FACT = rule, HINT = onboar
 | `tips.021` | Economy | FACT | Forks are either-or. Taking one side closes the other for the rest of the run. | 78 | Kavşaklar ya o ya bu. Bir tarafı almak diğerini koşunun kalanında kapatır. | 74 |
 | `tips.022` | Economy | FACT | A wrong buy can be undone on the same screen, as long as you have not continued. | 80 | Yanlış alım aynı ekranda geri alınabilir, yeter ki devam etmemiş ol. | 68 |
 | `tips.023` | Economy | FACT | Each weapon has its own seal. A keystone on the lane opens the way to it. | 73 | Her silahın kendi mührü vardır. Şeritteki bir kilit taşı ona yol açar. | 70 |
-| `tips.024` | Economy | FACT | Every run earns Kül for the PATH. Your level decides which gates are open. | 74 | Her koşu YOL için Kül kazandırır. Hangi kapıların açık olduğunu seviyen belirler. | 81 |
+| `tips.024` | Economy | FACT | Every run earns Ash for the PATH. Your level decides which gates are open. | 74 | Her koşu YOL için Kül kazandırır. Hangi kapıların açık olduğunu seviyen belirler. | 81 |
 | `tips.025` | Economy | FACT | The PATH never adds damage. It opens weapons, Special leanings and options. | 75 | YOL hasar eklemez. Silahları, Özel eğilimleri ve seçenekleri açar. | 66 |
 | `tips.026` | Survival | FACT | Bohiya will not arm up close. Fired too near, the rocket drops and fizzles. | 75 | Bohiya yakında kurulmaz. Çok yakına atılan roket düşer ve söner. | 64 |
 | `tips.027` | Survival | FACT | Bohiya's blast can reach you too. Give a nearby pack some room before firing. | 77 | Bohiya patlaması sana da ulaşabilir. Yakındaki sürüye ateşten önce mesafe ver. | 78 |
@@ -567,4 +567,6 @@ S-09 (R1-B, 25.09):
 - `selection.stats.caption` explains the StatStrip bars. Each bar compares the value with the classic roster, and for RELOAD, ACCURACY and SELF DAMAGE less is better, so longer always means better. A stat only one weapon has (BLAST RADIUS, SELF DAMAGE) prints its number with no bar.
 - `selection.lock.level` is the Ladder line (GD P14) until S-04 B2b's `ProfileService.WeaponLock` lands. After that, a meta-PATH weapon reads `path.lock.line` / `path.lock.ready`.
 
+
+S-09 (R1-B, 25.09, C-00 decision): the meta currency is **Ash** in `en` and **Kül** in `tr`. The UI shows English only, and the English-text test takes no exception. Every `en` value above that read "Kül" now reads "Ash"; `tr` is unchanged. A9 is superseded for `en`.
 <!-- TABLES:END -->
