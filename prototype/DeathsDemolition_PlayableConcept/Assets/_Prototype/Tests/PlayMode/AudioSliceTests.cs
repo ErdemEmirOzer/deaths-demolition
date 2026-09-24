@@ -781,12 +781,32 @@ namespace DD.Prototype.Tests.PlayMode
 
             var weapon = DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon;
             int once = r.FoleyCount;
-            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Eject);
-            Assert.AreEqual(once + 1, r.FoleyCount, "eject foley üretmedi.");
-            Assert.AreEqual(AudioEventMap.WeaponFoley(weapon, DD.Prototype.Characters.CharacterAnimationEvent.Eject), _d.LastPlayed, "Seçili silahın kendi eject sesi.");
-            yield return new WaitForSecondsRealtime(0.1f);
-            events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Chamber);
-            Assert.AreEqual(AudioEventMap.WeaponFoley(weapon, DD.Prototype.Characters.CharacterAnimationEvent.Chamber), _d.LastPlayed);
+            if (_d.Library.IsProduced(AudioSoundId.FoleyMediumRaised))
+            {
+                // WP-072 B2: the equipped weapon's own v3 set (A → AR1); an auto rifle's per-shot eject is silent (the casing lands instead).
+                string id = WeaponFoleyV3.Equipped();
+                Assert.AreEqual("AR1", id, "A tüfeği WP-069 audioId'si AR1.");
+                events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Eject);
+                Assert.AreEqual(once, r.FoleyCount, "AR1 eject foley'si sessiz olmalı.");
+                events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Chamber);
+                Assert.AreEqual(AudioSoundId.FoleyAr1Chamber, _d.LastPlayed, "AR1 chamber = sürgü bırakma.");
+                yield return new WaitForSecondsRealtime(0.1f);
+                events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Charge);
+                Assert.AreEqual(AudioSoundId.FoleyAr1Charge, _d.LastPlayed, "v3 charge olayı AR1 kurma sesi.");
+                yield return new WaitForSecondsRealtime(0.1f);
+                events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.AdsReady);
+                Assert.AreEqual(AudioSoundId.FoleyMediumAds, _d.LastPlayed, "ADS = Medium ailesi kumaş + kundak.");
+                once = r.FoleyCount - 3;
+            }
+            else
+            {
+                events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Eject);
+                Assert.AreEqual(once + 1, r.FoleyCount, "eject foley üretmedi.");
+                Assert.AreEqual(AudioEventMap.WeaponFoley(weapon, DD.Prototype.Characters.CharacterAnimationEvent.Eject), _d.LastPlayed, "Seçili silahın kendi eject sesi.");
+                yield return new WaitForSecondsRealtime(0.1f);
+                events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.Chamber);
+                Assert.AreEqual(AudioEventMap.WeaponFoley(weapon, DD.Prototype.Characters.CharacterAnimationEvent.Chamber), _d.LastPlayed);
+            }
             yield return new WaitForSecondsRealtime(0.1f);
             events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.PickupDone);
             Assert.AreEqual(AudioSoundId.PickupDone, _d.LastPlayed);
@@ -844,6 +864,30 @@ namespace DD.Prototype.Tests.PlayMode
             AudioEvents.Raise(CombatAudioEvent.ClassicWeaponFire, at, 1f, 50);
             Assert.AreEqual(AudioSoundId.RifleFire, _d.LastPlayed, "Kimliksiz ateş eski RifleFire.");
             Debug.Log("[DD-TEST] wp072b1.fire loopStarts=" + f.LoopStarts + " releases=" + f.Releases + " tail=" + f.LastTail);
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator FoleyV3_KovanYuzeyeDuser_KuruTetikAilesi()
+        {
+            if (!_d.Library.IsProduced(AudioSoundId.CasingRifleStone))
+            {
+                Assert.Fail("v017 kovan kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            Vector3 port = _s.Rig.transform.position + Vector3.up * 1.3f;
+            int once = _d.Casings.Landed;
+            DD.Prototype.Weapons.WeaponEvents.PublishMechanism(new DD.Prototype.Weapons.WeaponMechanismEvent(
+                DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected, DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, port, _s.Rig.transform.right, false));
+            Assert.AreEqual(once, _d.Casings.Landed, "Kovan düşmeden ses yok (düşüş süresi).");
+            yield return new WaitForSeconds(0.8f);
+            Assert.AreEqual(once + 1, _d.Casings.Landed, "Kovan yere düştü.");
+            StringAssert.StartsWith("CasingRifle", _d.Casings.LastSound.ToString(), "AR1 = tüfek kovanı.");
+
+            // Magazin boşken tetik: silahın ağırlık ailesi (A → Medium).
+            AudioEvents.Raise(CombatAudioEvent.ClassicWeaponDryFire, port, 1f, 40);
+            Assert.AreEqual(AudioSoundId.FoleyMediumDryFire, _d.LastPlayed, "AR1 kuru tetik Medium ailesi.");
+            Debug.Log("[DD-TEST] wp072b2.casing landed=" + _d.Casings.Landed + " last=" + _d.Casings.LastSound);
         }
 
         // ================================================================== WP-068 dilim 11 · UI ses v3

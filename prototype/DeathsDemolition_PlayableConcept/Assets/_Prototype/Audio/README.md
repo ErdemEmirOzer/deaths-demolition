@@ -67,3 +67,9 @@ game event ─► AudioEventMap row (sound id, bus, spatial) ─► AudioEventRo
 - **`WeaponFireAudio`:** one-shot weapons = dry shot + space tail every shot. Hybrid AR1/SMG1/LMG1 (Auto ∧ RPM ≥ 600): full first shot, then transient per shot over the RPM-locked body loop (rate bends ±15 % to the real cadence); a 1.6-period gap = release → loop fades in 40 ms and the tail rings once.
 - **Space:** `AcousticSpaces.Resolver` (S-05 WP-074 `acoustic-spaces-v6.json`), default Open; tail files −20 LUFS, placement −12/−8/−6 dB (Open/Corridor/Hall). **Camera:** `CameraModeService.Current` → spatial 0.35/0.25/0, near-field 0/+1/+2 dB, transient +0/+3/+7 dB, tail +0/+1/+2 dB (STANDARDS §4).
 - **Import:** weapon v3 Vorbis q0.9, transients PCM, tails stereo (DEC-093). Only produced ids take the new path; a missing catalog falls back to the legacy sounds.
+
+## 10 · Weapon foley & casings v3 (WP-072 B2)
+
+- **Foley:** clip events on the player rig resolve through `WeaponFoleyV3` for the equipped weapon (`WeaponDefinition.AudioId`, A/B/C → AR1/SMG1/SG1): its own mechanism set (35 ids; S-02 WP-069 §3 under WP-071 names — charge, box_open/belt_seat/box_close, bolt_up/back/fwd/down, shell_in, rocket_in/seat; WP-032C mag/chamber/eject map to the nearest action), else its weight family's handling voice (Light SMG · Medium AR/SG/SR · Heavy LMG/RL) at the weapon's pitch. An action the weapon lacks is silent (an auto rifle's per-shot eject). Without produced v017 clips the WP-048B A/B/C foley plays.
+- **Dry fire:** `Foley{Family}DryFire` at the weapon pitch.
+- **Casings:** `CasingAudio` hears `WeaponEvents.Mechanism` CasingEjected, lands the casing under the port after its fall (0.25–0.6 s) on the surface there (Stone/Wood/Dirt; water/foliage silent; LMG + belt link); top-down −18 / TP −12 / FP −8 dB against the fire voice.

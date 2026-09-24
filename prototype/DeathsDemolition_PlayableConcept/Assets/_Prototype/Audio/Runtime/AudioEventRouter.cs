@@ -99,6 +99,14 @@ namespace DD.Prototype.Audio
         private readonly RaycastHit[] _footHits = new RaycastHit[4];
 
         /// <summary>Where the listener is, for the idle range. Null = origin.</summary>
+        /// <summary>WP-072 B2: which ids have produced clips (the v3 foley takes over only where its files exist).</summary>
+        public void SetProducedCheck(Func<AudioSoundId, bool> produced)
+        {
+            _produced = produced;
+        }
+
+        private Func<AudioSoundId, bool> _produced;
+
         public void SetListener(System.Func<Vector3> position)
         {
             _listenerPosition = position;
@@ -239,7 +247,20 @@ namespace DD.Prototype.Audio
                 case CharacterAnimationEvent.Raised:
                 case CharacterAnimationEvent.PickupGrab:
                 case CharacterAnimationEvent.PickupDone:
-                    OnWeaponHandling(source, e);   // WP-048B (WP-032C)
+                // WP-072 B2: WP-071 v3 mechanism / handling events
+                case CharacterAnimationEvent.Charge:
+                case CharacterAnimationEvent.BoxOpen:
+                case CharacterAnimationEvent.BeltSeat:
+                case CharacterAnimationEvent.BoxClose:
+                case CharacterAnimationEvent.BoltUp:
+                case CharacterAnimationEvent.BoltBack:
+                case CharacterAnimationEvent.BoltFwd:
+                case CharacterAnimationEvent.BoltDown:
+                case CharacterAnimationEvent.ShellIn:
+                case CharacterAnimationEvent.RocketIn:
+                case CharacterAnimationEvent.RocketSeat:
+                case CharacterAnimationEvent.AdsReady:
+                    OnWeaponHandling(source, e);   // WP-048B (WP-032C) · WP-072 B2 (v3 per weapon)
                     break;
 
                 case CharacterAnimationEvent.Breath:
@@ -626,6 +647,13 @@ namespace DD.Prototype.Audio
                 sound = e == CharacterAnimationEvent.PickupGrab ? AudioSoundId.PickupGrab : AudioSoundId.PickupDone;
                 placement = AudioMixPlan.Pickup(sound);
             }
+            else if (TryWeaponFoleyV3(e, out sound, out placement))
+            {
+                if (sound == AudioSoundId.None)
+                {
+                    return;   // the weapon has no such action: silent by design (e.g. an auto rifle's per-shot eject)
+                }
+            }
             else
             {
                 sound = AudioEventMap.WeaponFoley(DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon, e);
@@ -641,6 +669,41 @@ namespace DD.Prototype.Audio
             {
                 FoleyCount++;
             }
+        }
+
+        /// <summary>
+        /// WP-072 B2: the equipped weapon's v3 voice for a clip event - its own mechanism foley, else its weight
+        /// family's handling voice at the weapon's pitch. False = the v3 set is not produced; the WP-048B A/B/C
+        /// foley plays. True with None = the weapon owns the v3 set but has no such action (silent).
+        /// </summary>
+        public bool TryWeaponFoleyV3(CharacterAnimationEvent e, out AudioSoundId sound, out AudioPlacement placement)
+        {
+            placement = default;
+            string audioId = WeaponFoleyV3.Equipped();
+            WeaponHandlingFamily family = WeaponFoleyV3.Family(audioId);
+            if (_produced == null || !_produced(WeaponFoleyV3.Handling(family, CharacterAnimationEvent.Raised)))
+            {
+                sound = AudioSoundId.None;
+                return false;
+            }
+
+            float semitones = 0f;
+            sound = WeaponFoleyV3.Mechanism(audioId, e);
+            if (sound == AudioSoundId.None)
+            {
+                sound = WeaponFoleyV3.Handling(family, e);
+                semitones = WeaponFoleyV3.HandlingSemitones(audioId);
+            }
+
+            if (sound == AudioSoundId.None || !_produced(sound))
+            {
+                sound = AudioSoundId.None;
+                return true;
+            }
+
+            placement = AudioMixPlan.WeaponFoley(sound);
+            placement.Pitch = WeaponFoleyV3.Pitch(semitones);
+            return true;
         }
 
         private SurfaceKind SurfaceUnder(Vector3 root, out Collider under, out Vector3 point)

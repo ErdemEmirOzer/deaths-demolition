@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v016
-  _sourceHash: 18e0d1eda7aa7d981f13ee07e9683749753bf490c975b1ecb8dc26e228a93943
+  _manifestVersion: ap011-v017
+  _sourceHash: 912c7d1d19d926e9f4b869598e6bbba71f1d6c876505aa2bc48c4775eb0552e4
   _entries:
   - Sound: 10
     Clips:
@@ -3498,6 +3498,887 @@ MonoBehaviour:
       LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
     NoiseFloorDb: -120
     DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 440
+    Clips:
+    - {fileID: 8300000, guid: 850660d33ada64ba29855ebd6517effd, type: 3}
+    - {fileID: 8300000, guid: aa7492a1bbf9e4825bdb6f7a157d64d5, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R1 mag release + drop in hand"
+    NoiseFloorDb: -120
+    DcDb: -135.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 441
+    Clips:
+    - {fileID: 8300000, guid: fa260b7f8e7a6442daac8533abd086e5, type: 3}
+    - {fileID: 8300000, guid: 6a195253202ba450b83892a0c3725d10, type: 3}
+    Loop: 0
+    Lufs: -22.02
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R1 mag seat click"
+    NoiseFloorDb: -120
+    DcDb: -125.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 442
+    Clips:
+    - {fileID: 8300000, guid: ddf40f6803f5143ca92ee32171c11348, type: 3}
+    - {fileID: 8300000, guid: 3a8951bf7b0184029965e4d46a4658b4, type: 3}
+    Loop: 0
+    Lufs: -22.07
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R1 bolt-release slap"
+    NoiseFloorDb: -120
+    DcDb: -126.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 443
+    Clips:
+    - {fileID: 8300000, guid: 0a5d0291e092e46f694593aa4d745680, type: 3}
+    - {fileID: 8300000, guid: fa14cc38c4fba4830a222dea618e48b4, type: 3}
+    Loop: 0
+    Lufs: -26.73
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R1 charging handle back + bolt
+      slap (serpentine cock)"
+    NoiseFloorDb: -120
+    DcDb: -141.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 444
+    Clips:
+    - {fileID: 8300000, guid: 229bd745cb0fb4d779e351b77dcf9b9a, type: 3}
+    - {fileID: 8300000, guid: dae62942e1a084ed2a51aadd01233085, type: 3}
+    Loop: 0
+    Lufs: -20.82
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R2 steel mag rocked out + drop
+      on wood"
+    NoiseFloorDb: -120
+    DcDb: -121.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 445
+    Clips:
+    - {fileID: 8300000, guid: 65b6c4925e3bd4878a58b62c4d5622ac, type: 3}
+    - {fileID: 8300000, guid: b7e81586d00f142229af0c2e81b273f9, type: 3}
+    Loop: 0
+    Lufs: -23.22
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R2 steel mag rocked in, hard
+      clunk"
+    NoiseFloorDb: -120
+    DcDb: -148.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 446
+    Clips:
+    - {fileID: 8300000, guid: c282a9080265a41719314881d1303a9f, type: 3}
+    - {fileID: 8300000, guid: f28708aa8fa014dc4b4c5e07dfe898e1, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.87
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R2 lever back + carrier slam
+      + receiver rattle"
+    NoiseFloorDb: -120
+    DcDb: -136.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 447
+    Clips:
+    - {fileID: 8300000, guid: ae08feff34a314f82ac717fbe3c2a959, type: 3}
+    - {fileID: 8300000, guid: a629171b0bc304a248a882461be7f190, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.67
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R1 +2 st"
+    NoiseFloorDb: -120
+    DcDb: -133.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 448
+    Clips:
+    - {fileID: 8300000, guid: 59fe5dda640b34e0393db13f8d6775c0, type: 3}
+    - {fileID: 8300000, guid: 4326fe639029f47f2903ce7af151092a, type: 3}
+    Loop: 0
+    Lufs: -23.03
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R1 +2 st"
+    NoiseFloorDb: -120
+    DcDb: -124.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 449
+    Clips:
+    - {fileID: 8300000, guid: ae43f7e01ab5f48e294cf54092de6f24, type: 3}
+    - {fileID: 8300000, guid: 89cff678394304e6d908e9484a487af1, type: 3}
+    Loop: 0
+    Lufs: -24.66
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 \"HK slap\": R1 handle back
+      + slap +2 st, high shelf +3 dB"
+    NoiseFloorDb: -120
+    DcDb: -129.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 450
+    Clips:
+    - {fileID: 8300000, guid: da3013345223d46cf96fc847dd896085, type: 3}
+    - {fileID: 8300000, guid: 7bfb72209a3da48b986568ed3217534f, type: 3}
+    Loop: 0
+    Lufs: -20.02
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R1 \u22124 st (side mag, oily)"
+    NoiseFloorDb: -120
+    DcDb: -156.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 451
+    Clips:
+    - {fileID: 8300000, guid: acc55ce1b38b641458b17ef4e08f7e66, type: 3}
+    - {fileID: 8300000, guid: 17c020842697e42ada625d8fc27c9814, type: 3}
+    Loop: 0
+    Lufs: -20.96
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R1 \u22124 st + R2 clunk \u221210
+      dB"
+    NoiseFloorDb: -120
+    DcDb: -145.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 452
+    Clips:
+    - {fileID: 8300000, guid: 4a3955b1a42f542eaa3d79098bca1025, type: 3}
+    - {fileID: 8300000, guid: 66bfea6abb9394b249abb22c636fe77a, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.62
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R2 carrier slam +2 st, short"
+    NoiseFloorDb: -120
+    DcDb: -94.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 453
+    Clips:
+    - {fileID: 8300000, guid: 7051b4e94afc84c97a1cbefe15f38cdb, type: 3}
+    - {fileID: 8300000, guid: a9d834b039dcc408d8d0651673fc7fee, type: 3}
+    - {fileID: 8300000, guid: bf1dab98eecfa47178eaf26c18261285, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R3 plastic shell pushed into
+      the gate"
+    NoiseFloorDb: -120
+    DcDb: -131.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 454
+    Clips:
+    - {fileID: 8300000, guid: 55aad6d51b5284a12b0a90c06f99531e, type: 3}
+    - {fileID: 8300000, guid: 4397cdbdb14634b0788530aee8eb7069, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.99
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R3 pump back shuck"
+    NoiseFloorDb: -120
+    DcDb: -135.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 455
+    Clips:
+    - {fileID: 8300000, guid: e30b094bd7b764ca39e3a36299eddbfd, type: 3}
+    - {fileID: 8300000, guid: d513415f3b8774592822a09d2368c5b5, type: 3}
+    Loop: 0
+    Lufs: -20.56
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R3 pump forward clack"
+    NoiseFloorDb: -120
+    DcDb: -131.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 456
+    Clips:
+    - {fileID: 8300000, guid: c2d553ae6c8424b6c9b3c519bdaa97eb, type: 3}
+    - {fileID: 8300000, guid: b93c5f06985d044889d590f86a350625, type: 3}
+    Loop: 0
+    Lufs: -24.78
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 break open: R2 cover clank
+      +2 st + R3 shell drop \u22126 dB"
+    NoiseFloorDb: -120
+    DcDb: -150.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 457
+    Clips:
+    - {fileID: 8300000, guid: 14325d76656064911b613e1e0338d135, type: 3}
+    - {fileID: 8300000, guid: d84c19b9f81f6420eb4d364ee827a97b, type: 3}
+    Loop: 0
+    Lufs: -20.37
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R3 shell +3 st into the chamber"
+    NoiseFloorDb: -120
+    DcDb: -138.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 458
+    Clips:
+    - {fileID: 8300000, guid: 642c56013c166432bb44e2dd1043b9de, type: 3}
+    - {fileID: 8300000, guid: b69fff81633c543a5b3a279ce3d5388f, type: 3}
+    Loop: 0
+    Lufs: -21.67
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 break close: R4 lock clack
+      \u22122 st + R2 strike \u22124 dB (wood tok)"
+    NoiseFloorDb: -120
+    DcDb: -142.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 459
+    Clips:
+    - {fileID: 8300000, guid: 2f2b3421340f249b19642253715548fe, type: 3}
+    - {fileID: 8300000, guid: 45409bc678e3540c18deb8d18c22de00, type: 3}
+    Loop: 0
+    Lufs: -22.09
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 feed cover unlatch + swing
+      open"
+    NoiseFloorDb: -120
+    DcDb: -136
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 460
+    Clips:
+    - {fileID: 8300000, guid: 5dfb9c99532ab4251aa8e6c2ab1208e8, type: 3}
+    - {fileID: 8300000, guid: c241ffde7ef2a45d0ba70ec6e53124e5, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -4.58
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 belt laid on the tray (link
+      jingle)"
+    NoiseFloorDb: -120
+    DcDb: -132.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 461
+    Clips:
+    - {fileID: 8300000, guid: e7a0c71afc006426fbf1383056e95e5b, type: 3}
+    - {fileID: 8300000, guid: 3d1aa265ee46249d7aac7d6179e3a7df, type: 3}
+    Loop: 0
+    Lufs: -22.14
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 cover slammed, double clunk"
+    NoiseFloorDb: -120
+    DcDb: -138.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 462
+    Clips:
+    - {fileID: 8300000, guid: 8979d8c3975c849bdab4343693f3f8e8, type: 3}
+    - {fileID: 8300000, guid: 8218aedb16ca24d3abd93facdf74942a, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.07
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 charging handle racked"
+    NoiseFloorDb: -120
+    DcDb: -110.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 463
+    Clips:
+    - {fileID: 8300000, guid: 9412358d01e774b718ad0a84af987ec9, type: 3}
+    - {fileID: 8300000, guid: cb8b07892099e45938f64674ca091463, type: 3}
+    Loop: 0
+    Lufs: -22.58
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st"
+    NoiseFloorDb: -120
+    DcDb: -129.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 464
+    Clips:
+    - {fileID: 8300000, guid: 752c7b012617047c0bb112b8a0808cca, type: 3}
+    - {fileID: 8300000, guid: 5cbddcc68740f41cfa2d925e38434b0c, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -4.89
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st (thick links)"
+    NoiseFloorDb: -120
+    DcDb: -132.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 465
+    Clips:
+    - {fileID: 8300000, guid: 1775fad835d4e4909addbd7d8e6c66e3, type: 3}
+    - {fileID: 8300000, guid: 792b2e2ab94c54f5da4b992cf40a1bd5, type: 3}
+    Loop: 0
+    Lufs: -22.01
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st"
+    NoiseFloorDb: -120
+    DcDb: -140.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 466
+    Clips:
+    - {fileID: 8300000, guid: 755469690c872401a87bdd743f5a0a4d, type: 3}
+    - {fileID: 8300000, guid: 63c9c4695c63343d694d8ef0d895c471, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.55
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 \u22124 st + R2 carrier
+      slam \u22126 dB (two-hand \xC7ANK)"
+    NoiseFloorDb: -120
+    DcDb: -112
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 467
+    Clips:
+    - {fileID: 8300000, guid: 0e47cf4af24ae4258a6d41099643e3f1, type: 3}
+    - {fileID: 8300000, guid: 393e2a51154ed4931b76c99a216796e6, type: 3}
+    Loop: 0
+    Lufs: -20.23
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R4 box magazine removed"
+    NoiseFloorDb: -120
+    DcDb: -128.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 468
+    Clips:
+    - {fileID: 8300000, guid: 6769d637e8b0647a3b8847aa36799ea6, type: 3}
+    - {fileID: 8300000, guid: 1c852262d2a694befbea84c0406e6cd3, type: 3}
+    Loop: 0
+    Lufs: -26.24
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R4 magazine clicked back in"
+    NoiseFloorDb: -120
+    DcDb: -135.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 469
+    Clips:
+    - {fileID: 8300000, guid: 332ae5a7d81e5419ba40c50640b518de, type: 3}
+    - {fileID: 8300000, guid: d3e714d7a59114d318c15e258f3881b5, type: 3}
+    Loop: 0
+    Lufs: -22.12
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R4 bolt handle lifted, sharp
+      click"
+    NoiseFloorDb: -120
+    DcDb: -138.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 470
+    Clips:
+    - {fileID: 8300000, guid: 8c68c598abbf24308a3db1cee2c107a6, type: 3}
+    - {fileID: 8300000, guid: 237a1cf72a98a4c63a2936165d3805a3, type: 3}
+    Loop: 0
+    Lufs: -21.97
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R4 bolt glide back + case flick
+      ring"
+    NoiseFloorDb: -120
+    DcDb: -137.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 471
+    Clips:
+    - {fileID: 8300000, guid: 6a4762e1bd52a4bb48c5f96d81ba45bb, type: 3}
+    - {fileID: 8300000, guid: 1f4f25837f2e649e48385e8340d1e8fe, type: 3}
+    Loop: 0
+    Lufs: -26.8
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R4 bolt pushed forward"
+    NoiseFloorDb: -120
+    DcDb: -137.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 472
+    Clips:
+    - {fileID: 8300000, guid: 6d877b4a68ba348888d1facd837462c5, type: 3}
+    - {fileID: 8300000, guid: d8d5f45d43b2f4dc4aba54b26d946abd, type: 3}
+    Loop: 0
+    Lufs: -22.42
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R4 handle turned down, locking
+      clack"
+    NoiseFloorDb: -120
+    DcDb: -137.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 473
+    Clips:
+    - {fileID: 8300000, guid: 8295887a8aa5d4b98800711cfa60c109, type: 3}
+    - {fileID: 8300000, guid: 7def9c09ae3b54183acfdb3911b17f0a, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -4.96
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 tube slide (pink sweep 1.8
+      k \u2192 500 Hz, 420 ms) + R1 seat click \u22128 dB at the end"
+    NoiseFloorDb: -120
+    DcDb: -135.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 474
+    Clips:
+    - {fileID: 8300000, guid: 33d2911f91477425e999f92597e25707, type: 3}
+    - {fileID: 8300000, guid: 54a9380b90dac49ff8e61360e1ce7bae, type: 3}
+    Loop: 0
+    Lufs: -21.96
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R4 lock clack + R1 selector
+      click \u22126 dB (fuse tensioned)"
+    NoiseFloorDb: -120
+    DcDb: -115.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 475
+    Clips:
+    - {fileID: 8300000, guid: 7b9c6a771c5694894b543c413004f20a, type: 3}
+    - {fileID: 8300000, guid: 4c30528a411d64482a7c800f49f562ca, type: 3}
+    Loop: 0
+    Lufs: -21.78
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponBSwitch v007 +0 st"
+    NoiseFloorDb: -120
+    DcDb: -160.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 476
+    Clips:
+    - {fileID: 8300000, guid: f1eacac75796b4eb8a07cad82b23ddeb, type: 3}
+    - {fileID: 8300000, guid: c919ba964a5ad464fb59e3b05b138feb, type: 3}
+    Loop: 0
+    Lufs: -24.69
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponBRaised v007 +0 st"
+    NoiseFloorDb: -120
+    DcDb: -185.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 477
+    Clips:
+    - {fileID: 8300000, guid: f7a5754a33bfc40c3b073a9623a846f9, type: 3}
+    - {fileID: 8300000, guid: 1ff0ad5c795ab49a9bd52a345feda142, type: 3}
+    Loop: 0
+    Lufs: -21.77
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponBLowered v007 +0 st"
+    NoiseFloorDb: -120
+    DcDb: -179
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 478
+    Clips:
+    - {fileID: 8300000, guid: d6e262b4b9b0f48f8ab0af9a39e6c248, type: 3}
+    - {fileID: 8300000, guid: 7bc779d4be72e42d6ba3b7bb94ae9172, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP 2400) 90
+      ms + stock-to-shoulder click \u22128 dB"
+    NoiseFloorDb: -120
+    DcDb: -116.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 479
+    Clips:
+    - {fileID: 8300000, guid: d45bb3b931cb14a229d62eff5280da53, type: 3}
+    - {fileID: 8300000, guid: 6fafad02013c7463bac46e521be6da4a, type: 3}
+    Loop: 0
+    Lufs: -22.03
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin strike"
+    NoiseFloorDb: -120
+    DcDb: -132.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 480
+    Clips:
+    - {fileID: 8300000, guid: 262cb3b634b494793ad5c3b3cde08950, type: 3}
+    - {fileID: 8300000, guid: 97ab88a3e66b04654924c16f63d34e68, type: 3}
+    Loop: 0
+    Lufs: -20.27
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponASwitch v007 +0 st"
+    NoiseFloorDb: -120
+    DcDb: -166.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 481
+    Clips:
+    - {fileID: 8300000, guid: aa5d1bdb7edf044eb9bf4f26dd653bc8, type: 3}
+    - {fileID: 8300000, guid: 9046328304c0a414f94a76f8d1565053, type: 3}
+    Loop: 0
+    Lufs: -24.64
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponARaised v007 +0 st"
+    NoiseFloorDb: -120
+    DcDb: -202.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 482
+    Clips:
+    - {fileID: 8300000, guid: a0730b3251d9e4d89aeb8ec6bbb4c5d6, type: 3}
+    - {fileID: 8300000, guid: 6451a44162f50403ebcac01817fb5812, type: 3}
+    Loop: 0
+    Lufs: -24.91
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponALowered v007 +0 st"
+    NoiseFloorDb: -120
+    DcDb: -193.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 483
+    Clips:
+    - {fileID: 8300000, guid: 87e9bfccd599140948751e61a81ac557, type: 3}
+    - {fileID: 8300000, guid: c40ccd60cefce482ea79d1e1e14e7f4b, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP 2000) 90
+      ms + stock-to-shoulder click \u22128 dB"
+    NoiseFloorDb: -120
+    DcDb: -115.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 484
+    Clips:
+    - {fileID: 8300000, guid: 4d6af957fbfc746bd97ae6a003744621, type: 3}
+    - {fileID: 8300000, guid: f751047ab9cbc4620bc31f3d7c90498c, type: 3}
+    Loop: 0
+    Lufs: -23.37
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin strike"
+    NoiseFloorDb: -120
+    DcDb: -110.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 485
+    Clips:
+    - {fileID: 8300000, guid: 961509656ee1040f58ee986e6c03dc83, type: 3}
+    - {fileID: 8300000, guid: 5830a0e0a94b64489991d2117f44d4c6, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.86
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponCSwitch v007 -3 st +
+      R2 cover rattle \u221210 dB"
+    NoiseFloorDb: -120
+    DcDb: -192.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 486
+    Clips:
+    - {fileID: 8300000, guid: f5f7e5f3bf4be406ca20ef2772b54ea2, type: 3}
+    - {fileID: 8300000, guid: f8fa1505769f2416dbe8d1f5df047090, type: 3}
+    Loop: 0
+    Lufs: -24.17
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponCRaised v007 -3 st"
+    NoiseFloorDb: -120
+    DcDb: -196.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 487
+    Clips:
+    - {fileID: 8300000, guid: 749cb8c7fa2d24a26866ddc055f296f5, type: 3}
+    - {fileID: 8300000, guid: 15dfe1fcf7dad4b818e4dbd6f466e791, type: 3}
+    Loop: 0
+    Lufs: -22.05
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 WeaponCLowered v007 -3 st"
+    NoiseFloorDb: -120
+    DcDb: -191.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 488
+    Clips:
+    - {fileID: 8300000, guid: 11f1de91ae9034fd9bfd99f92b0f791f, type: 3}
+    - {fileID: 8300000, guid: 88a2aab9b08c041dea760e0c9c28d120, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 cloth rub (pink HP 1500) 90
+      ms + stock-to-shoulder click \u22128 dB"
+    NoiseFloorDb: -120
+    DcDb: -99.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 489
+    Clips:
+    - {fileID: 8300000, guid: 5ba1d4c3cb0b94b01aae824e2aca9996, type: 3}
+    - {fileID: 8300000, guid: 926b10f78624840e5a188261fa09494d, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 dry hammer / firing-pin strike"
+    NoiseFloorDb: -120
+    DcDb: -114.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 490
+    Clips:
+    - {fileID: 8300000, guid: 2239f21f2281a45f9bc4ee28f8860c0c, type: 3}
+    - {fileID: 8300000, guid: 7d3d623a67110486ab0dde7e9900f493, type: 3}
+    - {fileID: 8300000, guid: 390493d8032884a7ca923da8f796d48c, type: 3}
+    Loop: 0
+    Lufs: -24.26
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto stone (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -141.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 491
+    Clips:
+    - {fileID: 8300000, guid: b94945b398911485289b3255268cb8fe, type: 3}
+    - {fileID: 8300000, guid: 64b6af339f9c64585a7fa8b9dad99d5b, type: 3}
+    - {fileID: 8300000, guid: 76e1450f5f7b145aab2e4bb967e3c972, type: 3}
+    Loop: 0
+    Lufs: -24.26
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto wood (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -157.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 492
+    Clips:
+    - {fileID: 8300000, guid: ff6f6f2da2ae0495cac6b62c5e3fd3ab, type: 3}
+    - {fileID: 8300000, guid: 3c2ce49bdf69e420c83863d19622d6a0, type: 3}
+    - {fileID: 8300000, guid: 006a91aaf748a496185fd83f8e8a3596, type: 3}
+    Loop: 0
+    Lufs: -24.94
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Rifle casing onto dirt (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -185.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 493
+    Clips:
+    - {fileID: 8300000, guid: ed80552e86e474c4eb40a78b792325b8, type: 3}
+    - {fileID: 8300000, guid: d205f75eae6fd4200b3cfc3c5c2cbe4a, type: 3}
+    - {fileID: 8300000, guid: 1f4e88cc40d0c4956bba6f835c15a200, type: 3}
+    Loop: 0
+    Lufs: -25.21
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto stone (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -158.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 494
+    Clips:
+    - {fileID: 8300000, guid: 9a6e5668a31d24863993b79fa4aaf596, type: 3}
+    - {fileID: 8300000, guid: 6b64b25c456a14800a8d39b1fa91508d, type: 3}
+    - {fileID: 8300000, guid: 72e9e7abd071043589f385ffb454bdd3, type: 3}
+    Loop: 0
+    Lufs: -24.22
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto wood (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -162.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 495
+    Clips:
+    - {fileID: 8300000, guid: ac1f308adb1f74135a393981fc50a13f, type: 3}
+    - {fileID: 8300000, guid: 26bdeb87c0a1349abb513d18b277f9ea, type: 3}
+    - {fileID: 8300000, guid: 9dcac7bb837bb4843accb36a79d7b1d0, type: 3}
+    Loop: 0
+    Lufs: -26.25
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Pistol casing onto dirt (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -162.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 496
+    Clips:
+    - {fileID: 8300000, guid: 05b966ddb185f4099b8c642698bbf0b5, type: 3}
+    - {fileID: 8300000, guid: 6529a97b11f4a4daebaa9674b2c0616e, type: 3}
+    - {fileID: 8300000, guid: 0650b09960e4a41c988f8a633052fd45, type: 3}
+    Loop: 0
+    Lufs: -23.34
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Shell casing onto stone (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -144.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 497
+    Clips:
+    - {fileID: 8300000, guid: c397089d00eff446f96ebd2ba19e254a, type: 3}
+    - {fileID: 8300000, guid: 51b90e7d73480437ba789abb65fd31c5, type: 3}
+    - {fileID: 8300000, guid: 96c301757e0524b7e94ff8a2f73b7b2d, type: 3}
+    Loop: 0
+    Lufs: -29.81
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Shell casing onto wood (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -181.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 498
+    Clips:
+    - {fileID: 8300000, guid: 9095a37e9af9d4435bff3f3f951062b7, type: 3}
+    - {fileID: 8300000, guid: b7dd6ab4ade244338a0a17af541db4c6, type: 3}
+    - {fileID: 8300000, guid: 7591f481953664b2898436805a3af847, type: 3}
+    Loop: 0
+    Lufs: -29.33
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 Shell casing onto dirt (stone
+      take, surface filter)"
+    NoiseFloorDb: -120
+    DcDb: -212.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 499
+    Clips:
+    - {fileID: 8300000, guid: aa71dcd64d28d446da0aaab6b9e39730, type: 3}
+    - {fileID: 8300000, guid: 766db3ba9b84b455c9f99f184fa01cfd, type: 3}
+    - {fileID: 8300000, guid: 51e9ae1e10e7546dd92fdb0e21635920, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -1.87
+    Provenance: "derived offline (AP-011 v017, WP-072 B2, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159) + v007 foley \xB7 R5 empty steel links onto stone"
+    NoiseFloorDb: -120
+    DcDb: -130.8
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)

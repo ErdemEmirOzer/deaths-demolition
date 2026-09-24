@@ -86,7 +86,7 @@ namespace DD.Prototype.Audio
         {
             // ---- weapons (Combat) ------------------------------------------------
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.ClassicWeaponFire), AudioSoundId.RifleFire, W, true, "intensity picks SMG/Rifle/Shotgun (AudioMixPlan.ClassicWeaponFor)"),
-            B(AudioEventSource.Combat, nameof(CombatAudioEvent.ClassicWeaponDryFire), AudioSoundId.DryFire, W, false, ""),
+            B(AudioEventSource.Combat, nameof(CombatAudioEvent.ClassicWeaponDryFire), AudioSoundId.DryFire, W, false, "WP-072 B2: Foley{Light,Medium,Heavy}DryFire by the equipped weapon family when produced; DryFire is the fallback"),
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.ReloadStart), AudioSoundId.ReloadStart, W, false, ""),
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.ReloadInsert), AudioSoundId.ReloadInsert, W, false, ""),
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.ReloadEnd), AudioSoundId.ReloadEnd, W, false, ""),
@@ -239,9 +239,13 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Animation, "anim.attack_step / anim.attack_recover / anim.telegraph_start / anim.grab_start / anim.grab_end / anim.roar", AudioSoundId.None, T, false, "covered by EnemyCombatEvents (windup / commit / grab / aggro voice); WP-076 grab foley in WP-072 B3", true),
             B(AudioEventSource.Animation, "anim.ragdoll_handoff / anim.fall_start / anim.ground_impact / anim.knockback_end / anim.hurt_end", AudioSoundId.None, T, false, "body falls: ground_impact → BodySettle by part in WP-072 B3 (ragdoll proxy settle); the others are timing marks", true),
             B(AudioEventSource.Animation, "anim.blood_burst / anim.twitch / anim.spasm", AudioSoundId.None, T, false, "WP-072 B3 flesh layer (Target bus); silent until then", true),
-            B(AudioEventSource.Animation, "anim.mechanism_start/mechanism_end / anim.charge / anim.box_open/belt_seat/box_close / anim.bolt_up/bolt_back/bolt_fwd/bolt_down / anim.shell_in / anim.shell_eject", AudioSoundId.None, W, false, "WP-072 B2 per-weapon mechanism foley (DIRECTION §2, AP-011 v017); the WP-032C mag/chamber rows keep playing", true),
-            B(AudioEventSource.Animation, "anim.rocket_in/rocket_seat / anim.cell_out/cell_in / anim.canister_out/canister_in / anim.cover_open/cover_close / anim.sw_charge_peak / anim.spin_up/spin_down / anim.pump_down/pump_up", AudioSoundId.None, W, false, "WP-072 B2 launcher foley + B4 Special sets (SW_ARC coil / SW_GEL canister + lever pump)", true),
-            B(AudioEventSource.Animation, "anim.lh_release/lh_grab / anim.ads_ready / anim.reload_commit / anim.reload_cancel_point / anim.inspect_peak", AudioSoundId.None, W, false, "hand-contact / timing marks: ads_ready → ADS cloth in WP-072 B2; the rest silent by design", true),
+            B(AudioEventSource.Animation, "anim.charge / anim.box_open/belt_seat/box_close / anim.bolt_up/bolt_back/bolt_fwd/bolt_down / anim.shell_in → equipped weapon", AudioSoundId.FoleyAr1Charge, W, false, "WP-072 B2 per-weapon mechanism foley (WeaponFoleyV3.Mechanism, AP-011 v017, 35 ids); mag_out/mag_in/chamber/eject also route here when v017 is produced (A/B/C rows are the fallback)"),
+            B(AudioEventSource.Animation, "anim.mechanism_start/mechanism_end / anim.shell_eject", AudioSoundId.None, W, false, "timing marks: the action sound rides the named event; the casing lands via WeaponEvents.Mechanism (CasingAudio)", true),
+            B(AudioEventSource.Combat, "WeaponEvents.Mechanism CasingEjected → landing (surface under the port)", AudioSoundId.CasingRifleStone, I, true, "WP-072 B2 CasingAudio: Rifle/Pistol/Shell × Stone/Wood/Dirt (+ CasingLink for LMG), fall 0.25–0.6 s, water/foliage silent; top-down −18 / TP −12 / FP −8 dB"),
+            B(AudioEventSource.Animation, "anim.rocket_in/rocket_seat → RL1", AudioSoundId.FoleyRl1RocketIn, W, false, "WP-072 B2 launcher load (tube slide + seat clack)"),
+            B(AudioEventSource.Animation, "anim.cell_out/cell_in / anim.canister_out/canister_in / anim.cover_open/cover_close / anim.sw_charge_peak / anim.spin_up/spin_down / anim.pump_down/pump_up", AudioSoundId.None, W, false, "WP-072 B2 B4 Special sets (SW_ARC coil / SW_GEL canister + lever pump)", true),
+            B(AudioEventSource.Animation, "anim.ads_ready → equipped weapon family", AudioSoundId.FoleyMediumAds, W, false, "WP-072 B2 cloth rub + stock-to-shoulder click, Light/Medium/Heavy family at the weapon's pitch"),
+            B(AudioEventSource.Animation, "anim.lh_release/lh_grab / anim.reload_commit / anim.reload_cancel_point / anim.inspect_peak", AudioSoundId.None, W, false, "hand-contact / timing marks: silent by design", true),
 
             // ---- WP-048 · Audio Wave 3 — AP-011 v007 identities. Rows marked reserved wait for their producer on main
             // (WP-032C clip events, WP-040 EnemyCombatEvents, AP-017 breakable families, AP-015P plates); Look B ambience is live.

@@ -716,5 +716,55 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.Less(WeaponFireAudio.WetDb(AcousticSpace.Corridor), WeaponFireAudio.WetDb(AcousticSpace.Hall));
             Assert.AreEqual(0f, WeaponPerspectiveMix.For(DD.Prototype.CameraSystem.CameraMode.FirstPerson).Spatial, "FP: oyuncu silahı 2D.");
         }
+
+        [Test]
+        public void FoleyV3_SilahBasinaMekanizmaSeti_AileVeKovanEslemi()
+        {
+            // S-02 WP-069 §3 reload sets under WP-071 names; each weapon speaks with its own ids.
+            var E = typeof(DD.Prototype.Characters.CharacterAnimationEvent);
+            var set = new Dictionary<string, string[]>
+            {
+                { "AR1", new[] { "MagOut", "MagIn", "Chamber", "Charge" } }, { "AR2", new[] { "MagOut", "MagIn", "Charge" } },
+                { "SMG1", new[] { "MagOut", "MagIn", "Chamber" } }, { "SMG2", new[] { "MagOut", "MagIn", "MagIn2", "Chamber" } },
+                { "SG1", new[] { "ShellIn", "Eject", "Chamber" } }, { "SG2", new[] { "Eject", "ShellIn", "Chamber" } },
+                { "LMG1", new[] { "BoxOpen", "BeltSeat", "BoxClose", "Charge" } }, { "LMG2", new[] { "BoxOpen", "BeltSeat", "BoxClose", "Charge" } },
+                { "SR1", new[] { "MagOut", "MagIn", "BoltUp", "BoltBack", "BoltFwd", "BoltDown" } }, { "RL1", new[] { "RocketIn", "RocketSeat" } },
+            };
+            var sahip = new Dictionary<AudioSoundId, string>();
+            foreach (var kv in set)
+            {
+                foreach (string ad in kv.Value)
+                {
+                    var e = (DD.Prototype.Characters.CharacterAnimationEvent)Enum.Parse(E, ad);
+                    AudioSoundId id = WeaponFoleyV3.Mechanism(kv.Key, e);
+                    Assert.AreNotEqual(AudioSoundId.None, id, kv.Key + "/" + ad + " sesi yok");
+                    StringAssert.StartsWith("Foley" + kv.Key.Substring(0, 1) + kv.Key.Substring(1).ToLowerInvariant(), id.ToString(), kv.Key + "/" + ad);
+                    if (sahip.TryGetValue(id, out string o)) Assert.AreEqual(kv.Key, o, id + " iki silahta");
+                    sahip[id] = kv.Key;
+                }
+            }
+
+            Assert.AreEqual(35, sahip.Count, "35 mekanizma kimliği");
+            Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.Mechanism("AR1", DD.Prototype.Characters.CharacterAnimationEvent.Eject), "otomatik tüfekte eject sessiz");
+
+            // Handling: 3 families × 4 events + dry fire, names line up with the layout.
+            foreach (WeaponHandlingFamily f in Enum.GetValues(typeof(WeaponHandlingFamily)))
+            {
+                Assert.AreEqual("Foley" + f + "Switch", WeaponFoleyV3.Handling(f, DD.Prototype.Characters.CharacterAnimationEvent.SwitchAway).ToString());
+                Assert.AreEqual("Foley" + f + "Ads", WeaponFoleyV3.Handling(f, DD.Prototype.Characters.CharacterAnimationEvent.AdsReady).ToString());
+                Assert.AreEqual("Foley" + f + "DryFire", WeaponFoleyV3.DryFire(f).ToString());
+            }
+
+            Assert.AreEqual(WeaponHandlingFamily.Light, WeaponFoleyV3.Family("SMG2"));
+            Assert.AreEqual(WeaponHandlingFamily.Heavy, WeaponFoleyV3.Family("RL1"));
+
+            // Casings: calibre family × surface; water / foliage silent; the launcher has none.
+            Assert.AreEqual(AudioSoundId.CasingRifleWood, WeaponFoleyV3.CasingOn(WeaponFoleyV3.Casing("SR1"), SurfaceKind.Wood));
+            Assert.AreEqual(AudioSoundId.CasingPistolDirt, WeaponFoleyV3.CasingOn(WeaponFoleyV3.Casing("SMG1"), SurfaceKind.Dirt));
+            Assert.AreEqual(AudioSoundId.CasingShellStone, WeaponFoleyV3.CasingOn(WeaponFoleyV3.Casing("SG2"), SurfaceKind.Default));
+            Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.CasingOn(CasingFamily.Rifle, SurfaceKind.Water));
+            Assert.AreEqual(CasingFamily.None, WeaponFoleyV3.Casing("RL1"));
+            Assert.Less(CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.TopDown), CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.FirstPerson));
+        }
     }
 }

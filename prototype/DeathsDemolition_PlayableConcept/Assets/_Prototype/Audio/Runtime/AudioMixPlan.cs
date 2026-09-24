@@ -726,6 +726,15 @@ namespace DD.Prototype.Audio
             return p;
         }
 
+        /// <summary>WP-072 B2: a player casing landing - world, near, cheap, never piles past three.</summary>
+        public static AudioPlacement PlayerCasing(AudioSoundId sound)
+        {
+            AudioPlacement p = Impact(sound, 0.5f, 12f, 3);
+            p.MinRetrigger = 0.05f;
+            p.PitchJitter = 0.05f;
+            return p;
+        }
+
         /// <summary>WP-048B: weapon-handling foley on the player's own weapon (WP-032C clip events) - dry, near, never positional.</summary>
         public static AudioPlacement WeaponFoley(AudioSoundId sound)
         {

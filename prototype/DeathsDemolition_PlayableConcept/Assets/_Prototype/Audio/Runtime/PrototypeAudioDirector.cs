@@ -88,6 +88,7 @@ namespace DD.Prototype.Audio
         private AudioEventRouter _router;
         private AudioListenerAnchor _listener;
         private WeaponFireAudio _weaponFire;
+        private CasingAudio _casings;
         private AudioSnapshot _snapshotBeforePause = AudioSnapshot.Run;
 
         private readonly List<DebugPanelEntry> _debugEntries = new List<DebugPanelEntry>(16);
@@ -146,6 +147,9 @@ namespace DD.Prototype.Audio
         /// <summary>WP-072 B1 test / F1 surface: the player's fire voice.</summary>
         public WeaponFireAudio WeaponFire => _weaponFire;
 
+        /// <summary>WP-072 B2 test / F1 surface: the player's casing landings.</summary>
+        public CasingAudio Casings => _casings;
+
         /// <summary>Total cues refused by the voice budget across both pools. F1 readout, and the O3 measurement.</summary>
         public int DroppedCues => (_world != null ? _world.DroppedCount : 0) + (_signal != null ? _signal.DroppedCount : 0);
 
@@ -189,6 +193,8 @@ namespace DD.Prototype.Audio
             _router.SetUiVoiceHandlers(StartUiVoice, StopUiVoice);          // WP-068 s11
             _listener = new AudioListenerAnchor(transform);
             _weaponFire = new WeaponFireAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);   // WP-072 B1
+            _casings = new CasingAudio(_library, PlayResolved);                                        // WP-072 B2
+            _router.SetProducedCheck(_library.IsProduced);
             BuildFieldLoops();
             BuildUiVoices();
             _signal.SetIgnoreListenerPause(true);   // WP-068 s11: the pause menu is heard
@@ -242,6 +248,7 @@ namespace DD.Prototype.Audio
             base.OnEnable();
 
             AudioEvents.Cue += OnCombatCue;
+            _casings?.Enable();   // WP-072 B2
             AudioEvents.LoopStoppedAt += OnLoopStopped;
             AudioEvents.CueSuppressed += OnCueSuppressed;
 
@@ -268,6 +275,7 @@ namespace DD.Prototype.Audio
         protected override void OnDisable()
         {
             AudioEvents.Cue -= OnCombatCue;
+            _casings?.Disable();   // WP-072 B2
             AudioEvents.LoopStoppedAt -= OnLoopStopped;
             AudioEvents.CueSuppressed -= OnCueSuppressed;
 
@@ -343,6 +351,7 @@ namespace DD.Prototype.Audio
 
             TickLoops(dt);
             if (!_paused) _weaponFire.Tick(dt);   // WP-072 B1: trigger release → body loop fade + tail
+            if (!_paused) _casings.Tick();         // WP-072 B2: casings land after their fall
             TickFieldLoops();
             TickUiVoices(dt);
 
@@ -455,6 +464,20 @@ namespace DD.Prototype.Audio
             if (cue.Event == CombatAudioEvent.ClassicWeaponFire && _weaponFire.TryHandle(cue))
             {
                 return;
+            }
+
+            // WP-072 B2: dry fire speaks with the equipped weapon's weight family (hammer / firing pin).
+            if (cue.Event == CombatAudioEvent.ClassicWeaponDryFire)
+            {
+                string audioId = WeaponFoleyV3.Equipped();
+                AudioSoundId dry = WeaponFoleyV3.DryFire(WeaponFoleyV3.Family(audioId));
+                if (_library.IsProduced(dry))
+                {
+                    AudioPlacement dp = AudioMixPlan.WeaponFoley(dry);
+                    dp.Pitch = WeaponFoleyV3.Pitch(WeaponFoleyV3.HandlingSemitones(audioId));
+                    PlayResolved(dp, cue.Position, 1f, cue.Priority);
+                    return;
+                }
             }
 
             bool failing = false;
@@ -1217,6 +1240,7 @@ namespace DD.Prototype.Audio
         private void StopAllLoops()
         {
             _weaponFire?.StopAll();   // WP-072 B1
+            _casings?.Clear();        // WP-072 B2
             if (_loops.Count == 0)
             {
                 return;
