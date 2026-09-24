@@ -274,6 +274,7 @@ namespace DD.Prototype.Qa
             private NavMeshPath _reachPath;   // created lazily (never in a field initializer)
             private Vector3 _lastVantage = new Vector3(9999f, 0f, 9999f);
             private float _vantageUntil;
+            private float _lastKillTime;
             private int _orbitSign;
             private float _orbitKeepUntil;
             private const float OrbitRadius = 16f;
@@ -833,6 +834,7 @@ namespace DD.Prototype.Qa
 
             private void BeginRoundRecord(int round)
             {
+                _lastKillTime = Time.unscaledTime;   // kill-progress timer starts with the round
                 _current = new RoundRecord { round = round, poolTotal = RunDirector.Instance != null ? RunDirector.Instance.RoundPoolTotal : 0 };
                 _roundStart = Time.unscaledTime;
                 _summary.rounds.Add(_current);
@@ -970,6 +972,7 @@ namespace DD.Prototype.Qa
                 _upgradeSeen = -1f;
                 if (_current != null)
                 {
+                    if (run.RoundKills != _current.kills) _lastKillTime = Time.unscaledTime;
                     _current.kills = run.RoundKills;
                 }
 
@@ -1104,7 +1107,8 @@ namespace DD.Prototype.Qa
                 // hunt: a target beyond the engage radius — or one hidden behind a wall for over 2 s (WP-064B soak 1:
                 // the bot pushed into a wall toward a body 11 m away for 300 s) — becomes the NavMesh goal (the last
                 // body of a round is usually far away); otherwise patrol between waypoints
-                else if (target != null && (o.TargetDistance > QaBotBrain.EngageRadius || (!o.TargetLineOfSight && !threatened && _noLosSince >= 0f && Time.unscaledTime - _noLosSince > 2f)))
+                else if (target != null && (o.TargetDistance > QaBotBrain.EngageRadius || (!o.TargetLineOfSight && !threatened && _noLosSince >= 0f && Time.unscaledTime - _noLosSince > 2f)
+                                            || (!threatened && Time.unscaledTime - _lastKillTime > 15f)))   // stab26: a flickering line held the bot 17 m off the last bodies for 120 s
                 {
                     if (Time.unscaledTime >= _vantageUntil && (!_hunting || (o.TargetPosition - _goal).sqrMagnitude > 4f))
                     {
@@ -1188,7 +1192,7 @@ namespace DD.Prototype.Qa
                         _summary.offMeshRecoveries++;
                     }
                 }
-                if (target != null && _hunting && !o.TargetLineOfSight && Time.unscaledTime - _lastReachCheck > 10f)
+                if (target != null && _hunting && (!o.TargetLineOfSight || Time.unscaledTime - _lastKillTime > 15f) && Time.unscaledTime - _lastReachCheck > 10f)
                 {
                     _lastReachCheck = Time.unscaledTime;
                     if (_reachPath == null) _reachPath = new NavMeshPath();
@@ -1200,7 +1204,7 @@ namespace DD.Prototype.Qa
                         " targetWaiting=" + target.IsWaiting + " targetOnMesh=" + (NavMesh.SamplePosition(o.TargetPosition, out NavMeshHit th, 0.6f, NavMesh.AllAreas) ? "1" : "0"));
                     // WP-064B soak 9–11: a body that stays hidden for 20 s is shot from another angle — sample NavMesh points on
                     // rings around it, keep the ones with a clear line at chest height and a complete path, walk to the nearest
-                    if (_noLosSince >= 0f && Time.unscaledTime - _noLosSince > 20f && FindVantage(pos, o.TargetPosition, out Vector3 vantage))
+                    if (((_noLosSince >= 0f && Time.unscaledTime - _noLosSince > 20f) || Time.unscaledTime - _lastKillTime > 25f) && FindVantage(pos, o.TargetPosition, out Vector3 vantage))
                     {
                         _goal = vantage; _hasGoal = true; _hunting = true; _lastPathTime = -999f; _vantageUntil = Time.unscaledTime + 15f;
                         _summary.vantageMoves++;
