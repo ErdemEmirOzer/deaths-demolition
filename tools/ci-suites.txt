@@ -1,0 +1,31 @@
+# WP-079 · PlayMode core suites for tools/main-ci.sh (one fixture class name per line, # = comment).
+# Budget ≈ 25 min on the M1 Pro; keep capture/diagnostic/perf fixtures out (they belong to their owners' runs).
+# Combat (S-02)
+CoreCombatSliceTests
+ProjectileSliceTests
+WeaponFeelSliceTests
+EnemyDamagesPlayerTests
+RegionalArmorSliceTests
+PlayerExperienceSliceTests
+GamepadParityTests
+PauseFireTests
+# Camera modes (S-01)
+CameraContractTests
+CameraModesPlayTests
+# Animation / ragdoll (S-06)
+AnimationTests
+AnimationV003Tests
+AnimationRagdollTests
+AnimationSpecialTests
+# UI (S-09)
+MetaUiSliceTests
+HudCoverageTests
+LoadingScreenTests
+RoundHudSyncTests
+# Audio (S-08)
+AudioSliceTests
+# Run flow / AI (S-03, S-01)
+RoundSpawnSliceTests
+SceneLoadDoubleTriggerTests
+SpecialWeaponLifecycleSliceTests
+ThreatSliceTests
