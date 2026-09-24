@@ -29,7 +29,7 @@ namespace DD.Prototype.Enemies
         public float ShockDeathHoldRemaining => _deathHeld ? _deathHoldRemaining : 0f;
         public static int ShocksApplied { get; private set; }
 
-        bool IChainTarget.CanChain => _alive && !_dying && !IsRising && _bodyStateOverride != ZombieBodyState.Sliding && _bodyStateOverride != ZombieBodyState.Downed;
+        bool IChainTarget.CanChain => _alive && !_dying && !IsRising && _gel == GelState.None;
 
         /// <summary>S-02's chain calls this for every body in the chain with the weapon's shock seconds.</summary>
         public bool ApplyShock(int transactionId, float seconds)
@@ -39,16 +39,10 @@ namespace DD.Prototype.Enemies
             _lastShockTransaction = transactionId;
             Vector3 direction = -transform.forward;
             _shockUntil = Mathf.Max(_shockUntil, Time.time + seconds);
-            _bodyStateOverride = ZombieBodyState.Electrocuted;
             if (_attack.IsAttacking || _attack.IsGrabbing) _attack.Cancel(GrabEndReason.Staggered);
             ShocksApplied++;
             RaiseBeat(EnemyCombatEventKind.SpecialShock, transform.position + Vector3.up * ChainTargetResolver.ChestHeight, direction, ArmorSlot.None, _animator.Driven, seconds);
             return true;
-        }
-
-        private void TickShock()
-        {
-            if (_bodyStateOverride == ZombieBodyState.Electrocuted && Time.time >= _shockUntil) _bodyStateOverride = ZombieBodyState.Standing;
         }
 
         /// <summary>Die(): a chain kill / a kill while (or just after) shocked dies Electrocuted; returns true when the fall is held for the tremble's remainder.</summary>

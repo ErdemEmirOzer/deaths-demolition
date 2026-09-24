@@ -72,7 +72,7 @@ namespace DD.Prototype.Enemies
         private void TickSpecialVisual()
         {
             ZombieSpecialVisual want = IsRooted ? ZombieSpecialVisual.Netted
-                : IsDazed || IsElectrocuted ? ZombieSpecialVisual.Dazed   // WP-076 B4: Electrocuted reads as Dazed until S-06's hit_electro_loop
+                : IsDazed || IsElectrocuted || Gel != GelState.None ? ZombieSpecialVisual.Dazed   // WP-076 B4/B5: shock / gel read as Dazed until S-06's Electrocuted / Slipping visuals (b773146e)
                 : ZombieSpecialVisual.None;
             if (want != _specialVisual) SetSpecialVisual(want);
         }

@@ -18,11 +18,17 @@ namespace DD.Prototype.Enemies
         /// <summary>The impulse handed to the driver at this life's death (readout / tests).</summary>
         public DeathImpulse LastDeathImpulse { get; private set; }
 
-        /// <summary>WP-076 B4/B5: shock / gel set this (Electrocuted / Sliding / Downed); Standing = no override.</summary>
+        /// <summary>WP-076: a state forced at death (a lethal shock dies Electrocuted); Standing = none.</summary>
         private ZombieBodyState _bodyStateOverride;
 
-        /// <summary>The body's state now (§2.1): a Special override, else Staggered while the stagger runs, else Standing (a held grab is Standing).</summary>
+        /// <summary>
+        /// The body's state now (§2.1): a death-time override, else the shock (Electrocuted), else gel (Sliding; Falling /
+        /// Downed / GettingUp → Downed), else Staggered while the stagger runs, else Standing (a held grab is Standing).
+        /// </summary>
         public ZombieBodyState BodyState => _bodyStateOverride != ZombieBodyState.Standing ? _bodyStateOverride
+            : Time.time < _shockUntil ? ZombieBodyState.Electrocuted
+            : _gel == GelState.Sliding ? ZombieBodyState.Sliding
+            : _gel != GelState.None ? ZombieBodyState.Downed
             : _animator != null && _animator.IsStaggering ? ZombieBodyState.Staggered : ZombieBodyState.Standing;
 
         /// <summary>Tests: corpse ceiling override (≤ 0 = the quality tier's value).</summary>

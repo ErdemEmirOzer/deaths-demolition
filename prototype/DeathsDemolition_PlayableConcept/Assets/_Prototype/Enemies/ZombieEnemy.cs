@@ -584,6 +584,7 @@ namespace DD.Prototype.Enemies
             _hasTargetSample = false; _targetSpeed = 0f;   // WP-076
             ResetHitResponse();        // WP-076 B3
             ResetShock();              // WP-076 B4
+            ResetGel();                // WP-076 B5
             ResetOutOfWorld();         // WP-061K
             ResetWaiting();   // WP-050
             _noticed = false;   // WP-052
@@ -624,6 +625,7 @@ namespace DD.Prototype.Enemies
             UnregisterCorpse();   // WP-076: off the corpse ceiling list (buried, evicted or cleared)
             _bodyStateOverride = ZombieBodyState.Standing;
             ResetShock();   // WP-076 B4: a held shock death never resumes on a pooled body
+            ResetGel();     // WP-076 B5
             UnregisterCrowdMembership();
             DamageTargetRegistry.Unregister(transform);
             s_live.Remove(this);
@@ -892,7 +894,6 @@ namespace DD.Prototype.Enemies
                 return;   // WP-061K / WP-061L: left the world or stuck → despawned, no reward
             }
 
-            TickShock();   // WP-076 B4
             TickCombat(dt);
             TickSpecialVisual();   // WP-055 / WP-032E: Netted / Dazed visual follows the reaction timers
             _animator.Tick(dt);
@@ -964,6 +965,10 @@ namespace DD.Prototype.Enemies
             // WP-076 B4: Electrocuted holds the body the same way (no walk, no swing; hitboxes stay on).
             if (IsElectrocuted && _attack.IsAttacking) _attack.Cancel(GrabEndReason.Staggered);
             staggering |= IsElectrocuted;
+            // WP-076 B5: gel (slide / fall / downed / getting up) holds walking and swinging; the slide moves the body below.
+            Vector3 gelVelocity = TickGel(dt, out bool gelHolds);
+            if (gelHolds && _attack.IsAttacking) _attack.Cancel(GrabEndReason.Staggered);
+            staggering |= gelHolds;
 
             if (!staggering && target != null)
             {
@@ -1025,6 +1030,7 @@ namespace DD.Prototype.Enemies
             velocity += _knockbackVelocity;
             _knockbackVelocity = Vector3.Lerp(_knockbackVelocity, Vector3.zero, Mathf.Clamp01(KnockbackDamping * dt));
             velocity += TickHitResponse(dt);   // WP-076 B3: class knockback (ease-out) + LMG sustained push
+            velocity += gelVelocity;           // WP-076 B5: the gel slide keeps its momentum (no steering)
 
             _verticalVelocity = _controller.isGrounded ? -2f : _verticalVelocity + Gravity * dt;
 
