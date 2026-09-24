@@ -51,14 +51,15 @@ namespace DD.Prototype.Damage
 
         /// <summary>Builds the impulse with the §2.1 guarantees: unit direction (zero → <paramref name="fallbackForward"/>), force ≥ 0, speed ≥ 0.</summary>
         public static DeathImpulse Build(Vector3 direction, Vector3 fallbackForward, float force, DamageSourceKind source,
-            bool debugKill, BodyRegion region, Vector3 point, float bodySpeed, ZombieBodyState state)
+            bool debugKill, BodyRegion region, Vector3 point, float bodySpeed, ZombieBodyState state, float classifyWeight = -1f)
         {
             Vector3 d = direction;
             if (d.sqrMagnitude < 1e-6f) d = fallbackForward;
             if (d.sqrMagnitude < 1e-6f) d = Vector3.forward;
             d.Normalize();
             float f = Mathf.Max(0f, float.IsNaN(force) ? 0f : force);
-            bool known = WeaponClassifier.TryClassify(source, f, debugKill, out WeaponClass weaponClass);
+            // the class is read from the single-hit weight before the governor (a saturated LMG stays an LMG)
+            bool known = WeaponClassifier.TryClassify(source, classifyWeight >= 0f ? classifyWeight : f, debugKill, out WeaponClass weaponClass);
             return new DeathImpulse(d, f, source, weaponClass, known, region, point, Mathf.Max(0f, bodySpeed), state);
         }
     }

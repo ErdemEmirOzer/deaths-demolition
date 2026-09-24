@@ -20,6 +20,9 @@ namespace DD.Prototype.Enemies
         /// <summary>World-space push applied over the stagger. Zero for anything but heavy hits.</summary>
         public Vector3 KnockbackVelocity;
 
+        /// <summary>WP-076: the ≥ KnockbackImpactThreshold gate was earned (susceptibility above the floor); the body applies the class profile.</summary>
+        public bool KnockbackEarned;
+
         /// <summary>Seconds of hit-stop this event suggests. Zero for ordinary bullets.</summary>
         public float SuggestedHitStop;
     }
@@ -179,6 +182,19 @@ namespace DD.Prototype.Enemies
 
         private float _impactAccumulator;
         private float _repeatCounter;
+
+        /// <summary>
+        /// WP-076 B3: the shell's total, NOT spent by the stagger. Pellets are evaluated one by one, so the stagger fires
+        /// on the 3rd (2.55) and the ≥ 4.5 shove gate was never reached by a shotgun; this charge lets the rest of the
+        /// same shell earn it (one shove per shell).
+        /// </summary>
+        private float _shoveCharge;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-076: seconds after a stagger in which the rest of the same volley can still earn the shove.", true)]
+        private const float ShoveWindowSeconds = 0.1f;
+
+        /// <summary>The volley's accumulated impact (decays with the same half-life; the death impulse reads it for a shell).</summary>
+        public float ShoveCharge => _shoveCharge;
         private float _staggerCooldownRemaining;
 
         // ----------------------------------------------------------- cached config values
@@ -218,6 +234,7 @@ namespace DD.Prototype.Enemies
             _impactAccumulator = 0f;
             _repeatCounter = 0f;
             _staggerCooldownRemaining = 0f;
+            _shoveCharge = 0f;
         }
 
         public void Tick(float dt)
@@ -228,6 +245,8 @@ namespace DD.Prototype.Enemies
             }
 
             _impactAccumulator *= Mathf.Pow(0.5f, dt / ImpactHalfLife);
+            _shoveCharge *= Mathf.Pow(0.5f, dt / ImpactHalfLife);
+            if (_shoveCharge < 0.001f) _shoveCharge = 0f;
             _repeatCounter *= Mathf.Pow(0.5f, dt / RepeatHalfLife);
 
             if (_impactAccumulator < 0.001f)
@@ -258,6 +277,7 @@ namespace DD.Prototype.Enemies
 
             float impact = Mathf.Max(0f, hit.ImpactForce);
             _impactAccumulator += impact;
+            _shoveCharge += impact;
             _repeatCounter += 1f;
 
             // ---------------------------------------------------------------- flinch
@@ -337,6 +357,17 @@ namespace DD.Prototype.Enemies
                         }
                     }
                 }
+            }
+
+            // ------------------------------------------------ WP-076 B3 volley shove gate
+            // The shove belongs to the stagger that just started (this hit or ≤ ShoveWindowSeconds ago) and to the
+            // whole volley's weight: 8 × 0.85 = 6.8 ≥ 4.5 for a Standard, 6.8 × 0.45 = 3.06 for an Elite (never).
+            if (!wasKilled && _susceptibility > KnockbackSusceptibilityFloor
+                && _staggerCooldownRemaining > _staggerCooldown - ShoveWindowSeconds
+                && _shoveCharge * _susceptibility >= KnockbackImpactThreshold)
+            {
+                reaction.KnockbackEarned = true;
+                _shoveCharge = 0f;
             }
 
             // -------------------------------------------------------------- hit stop

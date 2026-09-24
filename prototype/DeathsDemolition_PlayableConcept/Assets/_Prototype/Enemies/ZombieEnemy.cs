@@ -582,6 +582,7 @@ namespace DD.Prototype.Enemies
             _currentSpeed = 0f;
             ResetSpecialReactions();   // WP-055: no net / transaction memory crosses a life
             _hasTargetSample = false; _targetSpeed = 0f;   // WP-076
+            ResetHitResponse();        // WP-076 B3
             ResetOutOfWorld();         // WP-061K
             ResetWaiting();   // WP-050
             _noticed = false;   // WP-052
@@ -987,6 +988,7 @@ namespace DD.Prototype.Enemies
                 float speed = _moveSpeed * _navSpeedFactor;   // WP-030: chokepoint queue slows the approach, never stops the threat
                 speed *= WallFrictionFactor();                // WP-054: sliding along world geometry keeps 80 % (hysteresis)
                 speed *= SpecialSlowFactor;                   // WP-055: Ofuda net (root / slow by tier) and the Ultra's Tide drag
+                speed *= SuppressionFactor;                   // WP-076 B3: LMG suppression ×0.70
                 if (_attack.IsGrabbing) speed = 0f;           // WP-076 §1.4: the holding body stands; the crowd flows around it
 
                 // Stop pushing into the player once inside attack range; the swing closes
@@ -1016,6 +1018,7 @@ namespace DD.Prototype.Enemies
             // ----------------------------------------------------------------- physics
             velocity += _knockbackVelocity;
             _knockbackVelocity = Vector3.Lerp(_knockbackVelocity, Vector3.zero, Mathf.Clamp01(KnockbackDamping * dt));
+            velocity += TickHitResponse(dt);   // WP-076 B3: class knockback (ease-out) + LMG sustained push
 
             _verticalVelocity = _controller.isGrounded ? -2f : _verticalVelocity + Gravity * dt;
 
@@ -1339,8 +1342,12 @@ namespace DD.Prototype.Enemies
 
             if (!result.Killed)
             {
+                // WP-076 B3 §3.1: the weapon class picks the knockback profile, LMG suppression and the sniper flinch floor.
+                bool classKnown = WeaponClassifier.TryClassify(hit.Source, hit.HitWeight, _lastMeta.Kind == DamageKind.Debug, out DD.Prototype.Core.Weapons.WeaponClass weaponClass);
+                float flinch = ApplyWeaponResponse(in hit, in reaction, direction, classKnown, weaponClass);
+
                 // WP-032C: the driven body picks Hit_<dir>_<tier> from the local hit itself (AddFlinch passes it).
-                _animator.AddFlinch(direction, reaction.FlinchIntensity, result.Region, transform);
+                _animator.AddFlinch(direction, flinch, result.Region, transform);
 
                 if (reaction.Stagger)
                 {
@@ -1350,11 +1357,6 @@ namespace DD.Prototype.Enemies
                     if (_tier == EnemyTier.Special) _animator.PlayStumble();
                     _attack.Cancel();
                     RaiseBeat(EnemyCombatEventKind.Stagger, point, direction, ArmorSlot.None, _animator.Driven, reaction.StaggerDuration);   // WP-040
-                }
-
-                if (reaction.KnockbackVelocity != Vector3.zero)
-                {
-                    _knockbackVelocity += reaction.KnockbackVelocity;
                 }
             }
 
@@ -1411,8 +1413,10 @@ namespace DD.Prototype.Enemies
             }
 
             // WP-076 §2 / DEC-096: the killing push for the driver (S-06 picks the family). Read BEFORE the controller goes off.
-            LastDeathImpulse = DeathImpulse.Build(direction, transform.forward, hit.ImpactForce, hit.Source, _lastMeta.Kind == DamageKind.Debug,
-                result.Region, hit.Point, _currentSpeed, BodyState);
+            // a pellet carries the shell's weight (§3.1: all pellets inside 4 m → Force ≥ 3.0)
+            float deathForce = hit.Source == DamageSourceKind.Pellet ? Mathf.Max(hit.ImpactForce, _reaction.ShoveCharge) : hit.ImpactForce;
+            LastDeathImpulse = DeathImpulse.Build(direction, transform.forward, deathForce, hit.Source, _lastMeta.Kind == DamageKind.Debug,
+                result.Region, hit.Point, _currentSpeed, BodyState, hit.HitWeight);
 
             // WP-003 lifecycle contract: from here on this body is a corpse. The round
             // ledger stops counting it as alive NOW, not when the corpse despawns (REQ-012).
