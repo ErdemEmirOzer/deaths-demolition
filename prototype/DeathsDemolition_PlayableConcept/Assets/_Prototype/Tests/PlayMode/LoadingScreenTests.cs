@@ -42,6 +42,7 @@ namespace DD.Prototype.Tests.PlayMode
         public void TearDown()
         {
             PrototypeUiFlow.FastTransitions = _fast;
+            PrototypeUiFlow.ArtificialLoadSeconds = 0f;
             RunFlowClock.ClearHolds();
             UiSettings.SetPathOverride(null);
             UiLoadTiming.SetPathOverride(null);
@@ -71,7 +72,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiCurtain curtain = UiCurtain.Instance;
             float lastFill = 0f;
             float groupFrom = -1f, enteringAt = -1f;
-            bool heldWhileGroup = false, sawTip = false, sawPlate = false;
+            bool heldWhileGroup = false, sawTip = false, sawPlate = false, sawWetBand = false, sealAtRest = false;
             float deadline = Time.realtimeSinceStartup + 60f;
             // IsLoading ends at activation; the doors open after it - watch until both are done.
             while ((PrototypeUiFlow.IsLoading || UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
@@ -89,6 +90,11 @@ namespace DD.Prototype.Tests.PlayMode
                     if (groupFrom < 0f) groupFrom = Time.realtimeSinceStartup;
                     Assert.GreaterOrEqual(curtain.RingFill, lastFill - 1e-4f, "halka geri gitmez");
                     lastFill = curtain.RingFill;
+                    if (curtain.EyebrowText == "LOADING" && curtain.WetFill > UiCurtain.WetBand)
+                    {
+                        sawWetBand |= Mathf.Abs(curtain.WetFill - curtain.RingFill - UiCurtain.WetBand) < 1e-3f;
+                        sealAtRest |= Mathf.Abs(curtain.SealColor.a - UiCurtain.SealRestAlpha) < 0.02f;
+                    }
                     if (curtain.EyebrowText == "LOADING")
                     {
                         Assert.LessOrEqual(curtain.RingFill, UiCurtain.LoadShare + 1e-4f, "aktivasyondan önce halka 0,9'u geçmez");
@@ -117,6 +123,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(File.Exists(_settingsPath), "yükleme ui-settings.json yazmaz (yalnız oyuncu ayar değiştirince)");
             Assert.IsTrue(sawTip, "10b: MainMenu → Selection ekranında ipucu şeridi");
             Assert.IsTrue(sawPlate, "10b: SCREEN derinliği Look B plakası üstünde");
+            Assert.IsTrue(sawWetBand, "10b-2: ıslak kenar darbenin 0,04 önünde");
+            Assert.IsTrue(sealAtRest, "10b-2: mühür yüklenirken dinlenme mürekkebinde (α 0,35)");
+            Assert.Greater(curtain.SealColor.a, 0.95f, "10b-2: aktivasyonda mühür damgalanır (TextPrimary)");
         }
 
         [UnityTest]
@@ -154,6 +163,40 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// §15.2 "slower than expected": a scene measured fast gets the doors only (CURTAIN); if
+        /// the load is still running at 0.9 s the full group enters late and holds its minimum
+        /// display from there.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Perde_BeklenendenYavas_Grup09daGecGirer_AsgariGosterimGiristen()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.FastTransitions = false;
+            UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 0.2f);   // measured fast → CURTAIN
+            PrototypeUiFlow.ArtificialLoadSeconds = 2f;                  // … but this load is slow
+
+            float t0 = Time.realtimeSinceStartup;
+            PrototypeUiFlow.GoToSelection();
+            UiCurtain curtain = UiCurtain.Instance;
+            float groupFrom = -1f, enteringAt = -1f;
+            float deadline = t0 + 60f;
+            while ((PrototypeUiFlow.IsLoading || UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
+            {
+                if (curtain.GroupVisible && groupFrom < 0f) groupFrom = Time.realtimeSinceStartup;
+                if (curtain.GroupVisible && curtain.EyebrowText == "ENTERING" && enteringAt < 0f) enteringAt = Time.realtimeSinceStartup;
+                yield return null;
+            }
+
+            Assert.Greater(groupFrom, 0f, "yavaş CURTAIN yüklemesinde grup geç girdi");
+            Assert.GreaterOrEqual(groupFrom - t0, PrototypeUiFlow.CurtainThresholdSeconds - 0.05f, "grup 0,9 s'den önce girmedi");
+            Assert.Greater(enteringAt, 0f, "ENTERING gösterildi");
+            Assert.GreaterOrEqual(enteringAt - groupFrom, PrototypeUiFlow.MinimumDisplaySeconds - 0.05f, "asgari gösterim girişten sayılır");
+            Assert.AreEqual(PrototypeScenes.Selection, SceneManager.GetActiveScene().name);
+        }
+
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator Perde_HizliSahne_GrupGorunmez_KapilarEnAzKapali()
@@ -183,7 +226,17 @@ namespace DD.Prototype.Tests.PlayMode
 
             Assert.Greater(revealedAt, 0f, "perde 60 s içinde açıldı");
 
-            Assert.IsFalse(groupSeen, "CURTAIN derinliğinde grup (halka + etiketler) görünmez");
+            // A real load slower than 0.9 s escalates to the late group (§15.2, the test above);
+            // only a load that really was fast may keep the doors alone.
+            float measured = UiLoadTiming.LastLoadSeconds(PrototypeScenes.Selection);
+            if (measured < PrototypeUiFlow.CurtainThresholdSeconds)
+            {
+                Assert.IsFalse(groupSeen, "hızlı yüklemede CURTAIN derinliğinde grup (halka + etiketler) görünmez");
+            }
+            else
+            {
+                Debug.Log("[DD-TEST] wp068.curtain real load " + measured.ToString("0.00") + " s ≥ 0.9: escalation path (covered by the slow-curtain test)");
+            }
             Assert.AreEqual(PrototypeScenes.Selection, SceneManager.GetActiveScene().name);
             Assert.GreaterOrEqual(revealedAt - t0, PrototypeUiFlow.MinimumClosedSeconds, "kapılar en az 0,3 s kapalı");
         }

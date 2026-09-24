@@ -32,6 +32,17 @@ namespace DD.Prototype.UI
         /// <summary>0.9 of the fill is the load; the last 36° close on activation.</summary>
         public const float LoadShare = 0.9f;
 
+        /// <summary>The seal device inside the ring (V2, AP-012 v004) and its resting ink alpha (direction §15.3).</summary>
+        public const float SealSize = 96f;
+        public const float SealRestAlpha = 0.35f;
+
+        /// <summary>The wet edge at the stroke's tip, as a share of the full circle (§15.3: "0,04 genişlik").</summary>
+        public const float WetBand = 0.04f;
+
+        /// <summary>CURTAIN depth: the ring alone, Ø 160, once a curtain-only load passes 1.2 s (§15.3).</summary>
+        public const float CurtainRingSize = 160f;
+        public const float GhostAlpha = 0.12f;
+
         private static UiCurtain s_instance;
         private static bool s_covering;
 
@@ -41,6 +52,12 @@ namespace DD.Prototype.UI
         private RectTransform _rightDoor;
         private CanvasGroup _group;
         private Image _ring;
+        private Image _ringWet;
+        private Image _seal;
+        private RectTransform _ringGroup;
+        private Image _scrim;
+        private Image _scrimFoot;
+        private bool _ringOnly;
         private TMP_Text _eyebrow;
         private TMP_Text _destination;
         private TMP_Text _subline;
@@ -161,24 +178,34 @@ namespace DD.Prototype.UI
             // bottom (the bottom third is text-safe for the strip, T10 at the darkest end).
             _plateFar = Plate("PlateFar", groupRect);
             _plateMid = Plate("PlateMid", groupRect);
-            Image scrim = UiFactory.NewImage("Scrim", groupRect, UiColor.SurfaceInset, UiSprites.Solid);
-            UiFactory.Fill((RectTransform)scrim.transform);
-            scrim.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), ScrimTop);
-            Image scrimFoot = UiFactory.NewImage("ScrimFoot", groupRect, UiColor.SurfaceInset, UiSprites.FadeUp);
-            UiFactory.Fill((RectTransform)scrimFoot.transform);
-            scrimFoot.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), 1f - (1f - ScrimBottom) / (1f - ScrimTop));
+            _scrim = UiFactory.NewImage("Scrim", groupRect, UiColor.SurfaceInset, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)_scrim.transform);
+            _scrim.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), ScrimTop);
+            _scrimFoot = UiFactory.NewImage("ScrimFoot", groupRect, UiColor.SurfaceInset, UiSprites.FadeUp);
+            UiFactory.Fill((RectTransform)_scrimFoot.transform);
+            _scrimFoot.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), 1f - (1f - ScrimBottom) / (1f - ScrimTop));
 
-            Image ghost = UiFactory.NewImage("RingGhost", groupRect, UiColor.TextPrimary, UiSprites.RingEnso);
-            Place((RectTransform)ghost.transform, RingSize);
-            ghost.color = WithAlpha(UiTokens.Get(UiColor.TextPrimary), 0.12f);
-
-            _ring = UiFactory.NewImage("Ring", groupRect, UiColor.TextPrimary, UiSprites.RingEnso);
-            Place((RectTransform)_ring.transform, RingSize);
-            _ring.type = Image.Type.Filled;
-            _ring.fillMethod = Image.FillMethod.Radial360;
-            _ring.fillOrigin = (int)Image.Origin360.Top;
-            _ring.fillClockwise = true;
-            _ring.fillAmount = 0f;
+            // The ensō device (10b-2, §15.3): the dry ghost circle, the stroke drawn at real
+            // progress with its wet edge (a darker fill running WetBand ahead of the cream one,
+            // so the band is the stroke's own shape), and the V2 seal inside at rest ink.
+            _ringGroup = UiFactory.NewRect("RingGroup", groupRect);
+            Place(_ringGroup, RingSize);
+            Image ghost = UiFactory.NewImage("RingGhost", _ringGroup, UiColor.TextPrimary, UiSprites.EnsoBrush);
+            UiFactory.Fill((RectTransform)ghost.transform);
+            ghost.color = WithAlpha(UiTokens.Get(UiColor.TextPrimary), GhostAlpha);
+            _ringWet = BrushFill("RingWet", UiColor.TextSecondary);
+            _ring = BrushFill("Ring", UiColor.TextPrimary);
+            Sprite seal = Resources.Load<Sprite>("UI/Glyphs/Seal.Mark");
+            _seal = UiFactory.NewImage("Seal", _ringGroup, UiColor.TextSecondary, seal);
+            var sealRect = (RectTransform)_seal.transform;
+            sealRect.anchorMin = new Vector2(0.5f, 0.5f);
+            sealRect.anchorMax = new Vector2(0.5f, 0.5f);
+            sealRect.pivot = new Vector2(0.5f, 0.5f);
+            sealRect.sizeDelta = new Vector2(SealSize, SealSize);
+            sealRect.anchoredPosition = Vector2.zero;
+            _seal.preserveAspect = true;
+            _seal.enabled = seal != null;
+            RestSeal();
 
             _eyebrow = UiFactory.Label("Eyebrow", groupRect, "LOADING", UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
             PlaceText(_eyebrow, RingLift - RingSize * 0.5f - (int)UiSpace.XL, UiFactory.LineHeight(UiType.Label));
@@ -194,6 +221,43 @@ namespace DD.Prototype.UI
             _group.gameObject.SetActive(false);
             SetDoorsOpen(true);
             _canvas.enabled = false;
+        }
+
+        /// <summary>A Radial360 fill of the ensō brush from 12 o'clock, clockwise (the Radial360 order is the brush's direction).</summary>
+        private Image BrushFill(string name, UiColor color)
+        {
+            Image fill = UiFactory.NewImage(name, _ringGroup, color, UiSprites.EnsoBrush);
+            UiFactory.Fill((RectTransform)fill.transform);
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Radial360;
+            fill.fillOrigin = (int)Image.Origin360.Top;
+            fill.fillClockwise = true;
+            fill.fillAmount = 0f;
+            return fill;
+        }
+
+        /// <summary>
+        /// The seal at rest: ink (TextSecondary) at 0.35, scale 1. The colour lives on the
+        /// CanvasRenderer over a white Graphic - the channel UiMotion.Tint drives, so the stamp's
+        /// ink → TextPrimary is an absolute colour, not a product of the two.
+        /// </summary>
+        private void RestSeal()
+        {
+            UiMotion.KillTarget(_seal, false);
+            UiMotion.KillTarget(_seal.rectTransform, false);
+            _seal.color = Color.white;
+            _seal.canvasRenderer.SetColor(WithAlpha(UiTokens.Get(UiColor.TextSecondary), SealRestAlpha));
+            _seal.rectTransform.localScale = Vector3.one;
+        }
+
+        private void ResetRing()
+        {
+            UiMotion.KillTarget(_ring, false);
+            UiMotion.KillTarget(_ringWet, false);
+            _ring.fillAmount = 0f;
+            _ringWet.fillAmount = 0f;
+            _shownFill = 0f;
+            RestSeal();
         }
 
         private static RawImage Plate(string name, RectTransform parent)
@@ -381,9 +445,8 @@ namespace DD.Prototype.UI
             _percent = -1;
             _destination.text = destination ?? string.Empty;
             _subline.text = subline ?? string.Empty;
-            _ring.fillAmount = 0f;
-            _shownFill = 0f;
-            _ring.rectTransform.localScale = Vector3.one;
+            ResetRing();
+            SetRingOnly(false);
             _group.gameObject.SetActive(true);
             Cover(_plateFar, "MenuPlates/plate_far");
             if (midPlate)
@@ -402,6 +465,57 @@ namespace DD.Prototype.UI
             }
 
             UiPresets.PaneIn(_group, null, 0f);
+        }
+
+        /// <summary>
+        /// CURTAIN depth past 1.2 s (§15.3): the same ring, Ø 160, alone over the closed doors -
+        /// no plate, no labels, no tip. The seal and the states are the ring's own.
+        /// </summary>
+        public void ShowRingOnly()
+        {
+            _eyebrowState = "LOADING";
+            ResetRing();
+            SetRingOnly(true);
+            _group.gameObject.SetActive(true);
+            _plateFar.gameObject.SetActive(false);
+            _plateMid.gameObject.SetActive(false);
+            SetTip(null);
+            if (_stall != null)
+            {
+                _stall.gameObject.SetActive(false);
+            }
+
+            UiPresets.PaneIn(_group, null, 0f);
+        }
+
+        /// <summary>True while the CURTAIN-depth ring is shown (tests).</summary>
+        public bool RingOnlyVisible
+        {
+            get { return _ringOnly && GroupVisible; }
+        }
+
+        /// <summary>The seal device's current colour (tests: rest ink 0.35, stamped TextPrimary).</summary>
+        public Color SealColor
+        {
+            get { return _seal != null ? _seal.color * _seal.canvasRenderer.GetColor() : Color.clear; }
+        }
+
+        /// <summary>The wet edge's fill (tests: it runs WetBand ahead of the stroke).</summary>
+        public float WetFill
+        {
+            get { return _ringWet != null ? _ringWet.fillAmount : 0f; }
+        }
+
+        private void SetRingOnly(bool ringOnly)
+        {
+            _ringOnly = ringOnly;
+            _scrim.gameObject.SetActive(!ringOnly);
+            _scrimFoot.gameObject.SetActive(!ringOnly);
+            _eyebrow.gameObject.SetActive(!ringOnly);
+            _destination.gameObject.SetActive(!ringOnly);
+            _subline.gameObject.SetActive(!ringOnly);
+            float scale = ringOnly ? CurtainRingSize / RingSize : 1f;
+            _ringGroup.localScale = new Vector3(scale, scale, 1f);
         }
 
         /// <summary>No progress for 10 s: an Info notice under the tip (direction §15.2).</summary>
@@ -482,7 +596,8 @@ namespace DD.Prototype.UI
             }
 
             _shownFill = fill;
-            _ring.fillAmount = fill;
+            _ringWet.fillAmount = fill;
+            _ring.fillAmount = Mathf.Max(0f, fill - WetBand);
 
             if (UiMotion.ReducedMotion)
             {
@@ -506,9 +621,15 @@ namespace DD.Prototype.UI
 
             _eyebrow.text = UiMotion.ReducedMotion ? "ENTERING · 100%" : "ENTERING";
             _eyebrowState = "ENTERING";
-            // The ring never scales (the 1.12 → 1.00 Stamp belongs to the seal device, 10b-2): ENTERING
-            // is the eyebrow swap and the mouth closing (AD 10b-1 SHOULD-1).
+            // The ring never scales: the seal marks the step (Stamp 1.12 → 1.00, ink → TextPrimary,
+            // §15.3), and the mouth closes as the scene activates; the wet edge dries into the stroke.
             UiMotion.Fill(_ring, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Data);
+            UiMotion.Fill(_ringWet, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Data);
+            if (_seal.enabled)
+            {
+                UiPresets.StampIn(_seal.rectTransform);
+                UiMotion.Tint(_seal, UiTokens.Get(UiColor.TextPrimary), UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);   // ink 0.35 → TextPrimary 1 (renderer colour)
+            }
         }
 
         /// <summary>Group out (Exit 140), then the doors part (Settle 280); <see cref="Revealed"/> fires half way. Returns the seconds it takes.</summary>

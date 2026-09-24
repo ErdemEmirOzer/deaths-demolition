@@ -645,24 +645,37 @@ namespace DD.Prototype.UI
                 yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
                 yield return new WaitForSecondsRealtime(0.5f);
 
-                // SCREEN depth into the run: mid plate, weapon sub-line, tip; then ENTERING.
+                // SCREEN depth into the run: mid plate, weapon sub-line, tip; the ensō at 0 / 0.5 /
+                // 0.9 (an artificial 3 s load, §15.7) and the seal's stamp at ENTERING (10b-2).
                 UiLoadTiming.RecordLoad(PrototypeScenes.Run, 5f);
+                PrototypeUiFlow.ArtificialLoadSeconds = 3f;
                 PrototypeUiFlow.StartRun();
                 yield return WaitFor(() => curtain.GroupVisible && curtain.EyebrowText == "LOADING", 10f);
-                yield return new WaitForSecondsRealtime(0.4f);
+                yield return new WaitForSecondsRealtime(0.25f);
                 yield return Frame(folder, "loading-run");
+                yield return WaitFor(() => curtain.WetFill >= 0.45f, 10f);
+                yield return Frame(folder, "loading-run-05");
                 yield return WaitFor(() => curtain.EyebrowText == "ENTERING", 15f);
+                yield return new WaitForSecondsRealtime(0.1f);
                 yield return Frame(folder, "loading-run-entering");
+                PrototypeUiFlow.ArtificialLoadSeconds = 0f;
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
                 yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
                 yield return new WaitForSecondsRealtime(1f);
 
-                // Pause abort back to the menu: SCREEN, far plate, MAIN MENU, no tip.
+                // Pause abort back to the menu: SCREEN, far plate, MAIN MENU, no tip. A short
+                // artificial load (0.6 s) reaches 0.9 before the minimum display ends: the ensō
+                // holds its mouth open until the stamp (the "fast load" state, §15.3).
                 UiLoadTiming.RecordLoad(PrototypeScenes.MainMenu, 5f);
+                PrototypeUiFlow.ArtificialLoadSeconds = 0.6f;
                 PrototypeUiFlow.AbortRunToMainMenu();
                 yield return WaitFor(() => curtain.GroupVisible && curtain.EyebrowText == "LOADING", 10f);
-                yield return new WaitForSecondsRealtime(0.4f);
+                yield return new WaitForSecondsRealtime(0.1f);
                 yield return Frame(folder, "loading-abort");
+                yield return WaitFor(() => curtain.WetFill >= UiCurtain.LoadShare - 0.005f || curtain.EyebrowText == "ENTERING", 10f);
+                yield return new WaitForSecondsRealtime(0.1f);
+                yield return Frame(folder, "loading-abort-09");
+                PrototypeUiFlow.ArtificialLoadSeconds = 0f;
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.MainMenu, 30f);
                 yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
                 yield return new WaitForSecondsRealtime(0.5f);
@@ -679,6 +692,15 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.6f);
                 yield return Frame(folder, "loading-error");
                 curtain.HideError();
+                curtain.Open(true);
+                yield return null;
+
+                // The ring alone (Ø 160) - the device the ink variant carries (10b-2).
+                curtain.Close(true);
+                curtain.ShowRingOnly();
+                curtain.SetProgress(0.5f);
+                yield return new WaitForSecondsRealtime(0.4f);
+                yield return Frame(folder, "loading-ring-only");
                 curtain.Open(true);
                 yield return null;
                 Debug.Log("[UiCapture] loading done · framebuffer " + Screen.width + "x" + Screen.height);

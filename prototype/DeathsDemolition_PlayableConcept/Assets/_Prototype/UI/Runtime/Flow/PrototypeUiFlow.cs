@@ -165,6 +165,13 @@ namespace DD.Prototype.UI
         /// <summary>A scene whose last measured load was shorter than this gets the CURTAIN depth, otherwise (or unmeasured) the SCREEN depth (direction §15.1).</summary>
         public const float CurtainThresholdSeconds = 0.9f;
 
+        /// <summary>
+        /// Tests and captures (direction §15.7 T15/T16 "yapay yükleme"): &gt; 0 caps the reported
+        /// progress so a load takes at least this long (0.9 reached at this many seconds after
+        /// LoadSceneAsync). 0 = the real progress.
+        /// </summary>
+        public static float ArtificialLoadSeconds;
+
         /// <summary>The loading group stays at least this long (2 × Reveal) once shown - no flicker.</summary>
         public const float MinimumDisplaySeconds = 1.2f;
 
@@ -309,6 +316,11 @@ namespace DD.Prototype.UI
             {
                 float now = Time.unscaledTime;
                 float progress = op.progress;
+                if (ArtificialLoadSeconds > 0f)
+                {
+                    progress = Mathf.Min(progress, LoadedProgress * Mathf.Clamp01((now - loadStart) / ArtificialLoadSeconds));
+                }
+
                 if (progress > lastProgress + 0.001f)
                 {
                     lastProgress = progress;
@@ -324,6 +336,14 @@ namespace DD.Prototype.UI
                 {
                     stallError = true;
                     curtain.ShowError(sceneName, true, null, null); // QUIT only; if the load recovers, the modal goes
+                }
+
+                if (!screen && !fast && groupShownAt < 0f && now - loadStart >= CurtainThresholdSeconds && progress < LoadedProgress)
+                {
+                    // §15.2 "slower than expected": a load measured fast (CURTAIN) that is still
+                    // running 0.9 s into LoadSceneAsync - the span load-timing.json records - gets the
+                    // full group late; the minimum display counts from here.
+                    screen = true;
                 }
 
                 if (screen && groupShownAt < 0f && now - t0 >= GroupEntrySeconds)

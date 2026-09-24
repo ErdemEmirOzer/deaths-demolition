@@ -108,6 +108,18 @@ namespace DD.Prototype.UI
             get { return GetOrCreate("ringEnso", () => CreateRing(256, 16f / 240f)); }
         }
 
+        /// <summary>
+        /// WP-068 slice 10b-2 (direction §15.3): the ensō brush stroke of the loading ring, drawn
+        /// clockwise from 12 o'clock (the Radial360 fill order). It opens with a loaded brush
+        /// (1.15 × the 14 px stroke at Ø 240) and settles to 1.0; from 0.80 it tapers to 0.55
+        /// and the bristles run dry (streaks drop out one by one); the centre line breathes
+        /// ±1.5 px. White + alpha, tinted at runtime (cream stroke, TextSecondary wet edge).
+        /// </summary>
+        public static Sprite EnsoBrush
+        {
+            get { return GetOrCreate("ensoBrush", () => CreateEnsoBrush(512, 14f / 240f)); }
+        }
+
         /// <summary>Thin annulus, for the secondary timer track.</summary>
         public static Sprite RingThin
         {
@@ -364,6 +376,69 @@ namespace DD.Prototype.UI
 
             texture.SetPixels32(pixels);
             return Finish(texture, Vector4.zero);
+        }
+
+        private static Sprite CreateEnsoBrush(int size, float strokeFraction)
+        {
+            Texture2D texture = NewTexture(size, size);
+            var pixels = new Color32[size * size];
+            float half = size * 0.5f;
+            float stroke = size * strokeFraction;
+            float mid = half - 2f - stroke * 0.6f;   // the centre line, room for the loaded start
+            const int bristles = 9;
+            var dropAt = new float[bristles];
+            for (int b = 0; b < bristles; b++)
+            {
+                dropAt[b] = 0.78f + 0.2f * Hash01(b * 7.13f + 1.7f);   // where each bristle runs dry
+            }
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + 0.5f - half;
+                    float dy = y + 0.5f - half;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float t = Mathf.Atan2(dx, dy) / (2f * Mathf.PI);   // 0 at 12 o'clock, clockwise
+                    if (t < 0f)
+                    {
+                        t += 1f;
+                    }
+
+                    float width = stroke * (t < 0.08f ? 1.15f - 0.15f * (t / 0.08f) : 1f);
+                    if (t > 0.8f)
+                    {
+                        width *= 1f - 0.45f * ((t - 0.8f) / 0.2f);
+                    }
+
+                    float centre = mid + 1.5f * Mathf.Sin(2f * Mathf.PI * (2f * t) + 0.7f);
+                    float edge = width * 0.5f - Mathf.Abs(d - centre);
+                    float alpha = Mathf.Clamp01(edge + 0.5f);
+                    if (alpha > 0f && t > 0.6f)
+                    {
+                        // Dry brush: across the stroke nine bristles; past its own point each one
+                        // lets the paper through in streaks along the stroke.
+                        float across = Mathf.Clamp01((d - (centre - width * 0.5f)) / Mathf.Max(1f, width));
+                        int bristle = Mathf.Min(bristles - 1, Mathf.FloorToInt(across * bristles));
+                        if (t > dropAt[bristle])
+                        {
+                            float streak = Hash01(bristle * 13.7f + Mathf.Floor(t * 180f) * 0.37f);
+                            alpha *= Mathf.Lerp(1f, streak < 0.55f ? 0.15f : 0.8f, Mathf.Clamp01((t - dropAt[bristle]) / 0.06f));
+                        }
+                    }
+
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, Vector4.zero);
+        }
+
+        private static float Hash01(float x)
+        {
+            float s = Mathf.Sin(x * 12.9898f) * 43758.5453f;
+            return s - Mathf.Floor(s);
         }
 
         private static Sprite CreateChevron(int size)
