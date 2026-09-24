@@ -1,0 +1,241 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc9fa573ef5648aba99a076559e9639, type: 3}
+  m_Name: WD_sw_gel
+  m_EditorClassIdentifier: 
+  weaponId: sw_gel
+  id: 101
+  slot: 1
+  weaponClass: 6
+  displayName: Namekuji
+  shortName: Namekuji
+  description: "Mor jel yay \xE7izer, yer kayar, zombiler devrilir."
+  sortOrder: 101
+  enabled: 1
+  silhouette: 6
+  legacyNames: []
+  fire:
+    fireMode: 0
+    rpm: 133.33334
+    burstCount: 3
+    burstIntervalSeconds: 0.05
+    burstDelaySeconds: 0.26
+    damage: 0
+    pelletCount: 1
+    pelletPattern: 0
+    rings: []
+    ringJitterShare: 0
+    gaussSigmaShare: 0.45
+    chargeSeconds: 0
+    dryFire: 1
+  ammo:
+    magazine: 8
+    reserve: 16
+    reserveRoundCoef: 0
+    floorRefillDelaySeconds: 0
+    floorRefillMagazines: 0
+    chamberExtra: 0
+    reloadKind: 5
+    reloadTacSeconds: 2.4
+    reloadEmptySeconds: 2.8
+    perShellSeconds: 0.55
+    reloadCancellable: 0
+  projectile:
+    kind: 4
+    speed: 22
+    gravity: 12
+    maxRange: 40
+    maxLifetimeSeconds: 3
+    sweepRadius: 0.25
+    penetration: 0
+    penetrationDamageKeep: 1
+    falloffStart: 40
+    falloffEnd: 40
+    falloffMinShare: 1
+    impulse: 0
+    stagger: 0
+    headMultiplier: 1
+    armorDamageMultiplier: 1
+    caliber: 0
+  accuracy:
+    topDown:
+      hip: 0
+      ads: 0
+    thirdPerson:
+      hip: 0
+      ads: 0
+    firstPerson:
+      hip: 0
+      ads: 0
+    bloomPerShot: 0
+    bloomMax: 0
+    settleFloorShare: 0
+    bloomDecayPerSecond: 0
+    bloomDecayDelaySeconds: 0.1
+    moveSpreadMultiplier: 1
+    adsSeconds: 0.2
+    moveSpeedMultiplier: 1
+    adsMoveSpeedMultiplier: 0.75
+    focusMoveSpeedMultiplier: 0.75
+    recoilPitchPerShot: 3
+    recoilYawPattern: 0
+    recoilYawValues: []
+    recoilStableShots: 1
+    recoilRecoverySeconds: 0.2
+    recoilAccumulationCap: 4
+    topDownYawShare: 0.6
+  explosive:
+    enabled: 0
+    directHitDamage: 0
+    blastDamage: 0
+    innerRadius: 0
+    outerRadius: 0
+    falloffExponent: 1
+    regionShares: []
+    selfDamageShare: 0
+    selfDamageMax: 0
+    armingDistance: 0
+    dudDamage: 0
+    dudFizzleSeconds: 1
+    impulse: 1
+    lingerDps: 0
+    lingerSeconds: 0
+  rocket:
+    launchSpeed: 0
+    acceleration: 0
+    maxSpeed: 0
+    boostSeconds: 0
+    gravityBoost: 0
+    gravityCoast: 0
+    wobbleDegreesPerStep: 0
+    wobbleStepSeconds: 0.1
+    selfDetonateSeconds: 0
+    smokeTrailSeconds: 0
+  arcChain:
+    maxTargets: 0
+    jumpRadius: 0
+    jumpDelaySeconds: 0
+    nearestUnhit: 1
+    shockSeconds: 0
+    tierRules: []
+    selfShockRadius: 0
+    selfShockDamage: 0
+    selfShockFirstRadius: 0
+    selfShockFirstDamage: 0
+    selfSlowSeconds: 0
+    orbFizzleSeconds: 0
+    ignoresArmor: 1
+  gelPuddle:
+    directHitRules:
+    - tier: 0
+      kill: 1
+      killUpToRound: 0
+      maxHpShare: 0
+      stunSeconds: 0
+      immuneSeconds: 0
+    - tier: 1
+      kill: 1
+      killUpToRound: 0
+      maxHpShare: 0
+      stunSeconds: 0
+      immuneSeconds: 0
+    - tier: 2
+      kill: 1
+      killUpToRound: 10
+      maxHpShare: 0.6
+      stunSeconds: 1.5
+      immuneSeconds: 0
+    - tier: 3
+      kill: 0
+      killUpToRound: 0
+      maxHpShare: 0.25
+      stunSeconds: 1.5
+      immuneSeconds: 0
+    puddleRadius: 1.6
+    deathPuddleRadius: 0.9
+    deathPuddleSeconds: 8
+    puddleLifetimeSeconds: 25
+    maxPuddles: 12
+    fadeSeconds: 0.5
+    slipRules:
+    - tier: 0
+      kill: 1
+      killUpToRound: 0
+      maxHpShare: 0
+      stunSeconds: 0
+      immuneSeconds: 0
+    - tier: 1
+      kill: 1
+      killUpToRound: 0
+      maxHpShare: 0
+      stunSeconds: 0
+      immuneSeconds: 0
+    - tier: 2
+      kill: 1
+      killUpToRound: 0
+      maxHpShare: 0
+      stunSeconds: 0
+      immuneSeconds: 0
+    - tier: 3
+      kill: 0
+      killUpToRound: 0
+      maxHpShare: 0.2
+      stunSeconds: 0
+      immuneSeconds: 3
+    slipFallSeconds: 0.9
+    playerSlideSpeedMultiplier: 1.8
+    playerSteerMultiplier: 0.35
+    slideExitSeconds: 0.3
+    autoArcMaxRange: 20
+    ignoresArmor: 1
+  specialLifecycle:
+    limit: 2
+    activeCapSeconds: 45
+    groundSeconds: 22
+    spawnWeight: 1
+  upgrade:
+    coreBranches: 000000000000000000000000
+    keystone:
+      id: 
+      displayName: 
+      effect: 
+    explosionSemantics: 0
+    forbiddenBranches: 
+  unlock:
+    kind: 1
+    unlockOrder: 0
+    profileLevel: 1
+    metaCost: 0
+    shopPriceBand: {x: 0, y: 0}
+  presentation:
+    audioId: 
+    fireLoop: 0
+    casing: 0
+    animSet: 
+    mechanismEvents: []
+    muzzleVfx: 
+    tracerVfx: 
+    impactVfx: 
+    hudIconId: 
+    modelTp: 
+    modelFp: 
+    placeholderVisual: 0
+    sockets:
+      root: socket_weapon_r
+      muzzle: Muzzle
+      ejection: Ejection
+      gripLeft: grip_l
+      sightAds: sight_ads
+      attachments:
+      - attach_barrel
+      - attach_top
+      - attach_stock

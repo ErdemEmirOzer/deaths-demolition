@@ -1,0 +1,217 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc9fa573ef5648aba99a076559e9639, type: 3}
+  m_Name: WD_sw_arc
+  m_EditorClassIdentifier: 
+  weaponId: sw_arc
+  id: 100
+  slot: 1
+  weaponClass: 6
+  displayName: Raiju
+  shortName: Raiju
+  description: "K\xFCre hedefe \xE7arpar, kalabal\u0131k titreyerek \xE7\xF6ker."
+  sortOrder: 100
+  enabled: 1
+  silhouette: 6
+  legacyNames: []
+  fire:
+    fireMode: 0
+    rpm: 66.66667
+    burstCount: 3
+    burstIntervalSeconds: 0.05
+    burstDelaySeconds: 0.26
+    damage: 0
+    pelletCount: 1
+    pelletPattern: 0
+    rings: []
+    ringJitterShare: 0
+    gaussSigmaShare: 0.45
+    chargeSeconds: 0.25
+    dryFire: 1
+  ammo:
+    magazine: 3
+    reserve: 9
+    reserveRoundCoef: 0
+    floorRefillDelaySeconds: 0
+    floorRefillMagazines: 0
+    chamberExtra: 0
+    reloadKind: 4
+    reloadTacSeconds: 3
+    reloadEmptySeconds: 3.6
+    perShellSeconds: 0.55
+    reloadCancellable: 0
+  projectile:
+    kind: 3
+    speed: 14
+    gravity: 0
+    maxRange: 42
+    maxLifetimeSeconds: 3
+    sweepRadius: 0.35
+    penetration: 0
+    penetrationDamageKeep: 1
+    falloffStart: 42
+    falloffEnd: 42
+    falloffMinShare: 1
+    impulse: 0.25
+    stagger: 0
+    headMultiplier: 1
+    armorDamageMultiplier: 1
+    caliber: 3
+  accuracy:
+    topDown:
+      hip: 0
+      ads: 0
+    thirdPerson:
+      hip: 0
+      ads: 0
+    firstPerson:
+      hip: 0
+      ads: 0
+    bloomPerShot: 0
+    bloomMax: 0
+    settleFloorShare: 0
+    bloomDecayPerSecond: 0
+    bloomDecayDelaySeconds: 0.1
+    moveSpreadMultiplier: 1
+    adsSeconds: 0.4
+    moveSpeedMultiplier: 1
+    adsMoveSpeedMultiplier: 0.75
+    focusMoveSpeedMultiplier: 0.75
+    recoilPitchPerShot: 5
+    recoilYawPattern: 0
+    recoilYawValues: []
+    recoilStableShots: 1
+    recoilRecoverySeconds: 0.4
+    recoilAccumulationCap: 4
+    topDownYawShare: 0.6
+  explosive:
+    enabled: 0
+    directHitDamage: 0
+    blastDamage: 0
+    innerRadius: 0
+    outerRadius: 0
+    falloffExponent: 1
+    regionShares: []
+    selfDamageShare: 0
+    selfDamageMax: 0
+    armingDistance: 0
+    dudDamage: 0
+    dudFizzleSeconds: 1
+    impulse: 1
+    lingerDps: 0
+    lingerSeconds: 0
+  rocket:
+    launchSpeed: 0
+    acceleration: 0
+    maxSpeed: 0
+    boostSeconds: 0
+    gravityBoost: 0
+    gravityCoast: 0
+    wobbleDegreesPerStep: 0
+    wobbleStepSeconds: 0.1
+    selfDetonateSeconds: 0
+    smokeTrailSeconds: 0
+  arcChain:
+    maxTargets: 8
+    jumpRadius: 6
+    jumpDelaySeconds: 0.08
+    nearestUnhit: 1
+    shockSeconds: 1.2
+    tierRules:
+    - tier: 0
+      kill: 1
+      killUpToRound: 0
+      maxHpShare: 0
+      stunSeconds: 0
+      immuneSeconds: 0
+    - tier: 1
+      kill: 1
+      killUpToRound: 0
+      maxHpShare: 0
+      stunSeconds: 0
+      immuneSeconds: 0
+    - tier: 2
+      kill: 1
+      killUpToRound: 0
+      maxHpShare: 0
+      stunSeconds: 0
+      immuneSeconds: 0
+    - tier: 3
+      kill: 0
+      killUpToRound: 0
+      maxHpShare: 0.6
+      stunSeconds: 2.5
+      immuneSeconds: 0
+    selfShockRadius: 2.5
+    selfShockDamage: 25
+    selfShockFirstRadius: 1.5
+    selfShockFirstDamage: 40
+    selfSlowSeconds: 0.4
+    orbFizzleSeconds: 0.3
+    ignoresArmor: 1
+  gelPuddle:
+    directHitRules: []
+    puddleRadius: 0
+    deathPuddleRadius: 0
+    deathPuddleSeconds: 0
+    puddleLifetimeSeconds: 0
+    maxPuddles: 0
+    fadeSeconds: 0.5
+    slipRules: []
+    slipFallSeconds: 0
+    playerSlideSpeedMultiplier: 1
+    playerSteerMultiplier: 1
+    slideExitSeconds: 0
+    autoArcMaxRange: 0
+    ignoresArmor: 1
+  specialLifecycle:
+    limit: 2
+    activeCapSeconds: 40
+    groundSeconds: 22
+    spawnWeight: 1
+  upgrade:
+    coreBranches: 000000000000000000000000
+    keystone:
+      id: 
+      displayName: 
+      effect: 
+    explosionSemantics: 0
+    forbiddenBranches: 
+  unlock:
+    kind: 1
+    unlockOrder: 0
+    profileLevel: 1
+    metaCost: 0
+    shopPriceBand: {x: 0, y: 0}
+  presentation:
+    audioId: 
+    fireLoop: 0
+    casing: 0
+    animSet: 
+    mechanismEvents: []
+    muzzleVfx: 
+    tracerVfx: 
+    impactVfx: 
+    hudIconId: 
+    modelTp: 
+    modelFp: 
+    placeholderVisual: 0
+    sockets:
+      root: socket_weapon_r
+      muzzle: Muzzle
+      ejection: Ejection
+      gripLeft: grip_l
+      sightAds: sight_ads
+      attachments:
+      - attach_barrel
+      - attach_top
+      - attach_stock
