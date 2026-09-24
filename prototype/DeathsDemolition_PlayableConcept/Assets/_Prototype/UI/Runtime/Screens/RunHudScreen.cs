@@ -1,3 +1,4 @@
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Enemies;
@@ -291,7 +292,22 @@ namespace DD.Prototype.UI
         private readonly ThreatSlot[] _threatSlots = new ThreatSlot[3];
         private int _threatWindupShown;
         private bool _threatUltra;
-        private HudPlayerArcs _playerArcs;   // WP-068 8b · E13 rear arc, E17 player arc
+        private HudPlayerArcs _playerArcs;   // WP-068 8b · E13 rear arc, E17 player arc (top-down)
+        private HudRearEdge _rearEdge;       // M4-R1 N2: the rear threat at the screen edge (third / first person)
+        private Image _staticDot;            // M4-R1 N2 (WP-070 §3.2): the motion-sickness centre dot
+        private bool _staticDotShown;
+
+        /// <summary>The rear-edge arc (tests, captures).</summary>
+        public HudRearEdge RearEdge
+        {
+            get { return _rearEdge; }
+        }
+
+        /// <summary>The reticle (tests, captures).</summary>
+        public HudReticle Reticle
+        {
+            get { return _reticle; }
+        }
 
         private readonly RunHudViewModel _model = new RunHudViewModel();
 
@@ -730,6 +746,17 @@ namespace DD.Prototype.UI
             _reticle.Root.anchoredPosition = OffScreen;
             _playerArcs = new HudPlayerArcs(layer);
             _playerArcs.Place(OffScreen);
+
+            // M4-R1 N2: third / first person - the rear threat at the edge, the optional static centre dot.
+            _rearEdge = new HudRearEdge(layer);
+            _staticDot = UiFactory.NewImage("CentreDot", layer, UiColor.TextPrimary, UiArt.Icon("Pip.Full") ?? UiSprites.Disc);
+            if (UiArt.IsGlyph(_staticDot.sprite))
+            {
+                UiArt.ApplyGlyph(_staticDot, new Vector3(0.3f, 0f, 0f));
+            }
+
+            _staticDot.rectTransform.sizeDelta = new Vector2(HudReticle.DotSize, HudReticle.DotSize);
+            _staticDot.rectTransform.anchoredPosition = OffScreen;
         }
 
         private void BuildCentreChannel()
@@ -862,7 +889,11 @@ namespace DD.Prototype.UI
             if (_playerArcs != null)
             {
                 bool staged = CaptureRearDirection.HasValue;
-                _playerArcs.SetRear(_threatSlots[1].Shown || staged, staged ? CaptureRearDirection.Value : threat.RearDirection);
+                bool rear = _threatSlots[1].Shown || staged;
+                Vector3 towards = staged ? CaptureRearDirection.Value : threat.RearDirection;
+                bool look = CameraModeService.IsLookMode;
+                _playerArcs.SetRear(rear && !look, towards);
+                _rearEdge.Tick(rear && look, towards, Camera.main, CameraModeService.Current == CameraMode.FirstPerson, ScreenRect.rect.size);
             }
 
             int windup = fighting ? threat.WindingUp : 0;
@@ -977,8 +1008,18 @@ namespace DD.Prototype.UI
             bool show = rig != null && rig.Aim != null && rig.Aim.HasAimPoint && camera != null &&
                         RunEvents.Current.Phase == RunPhase.Fighting && UiNavigation.GameplayInputAllowed;
 
+            // M4-R1 N2 (WP-070 §4.5): third / first person aim down the screen centre (the centre ray); the reticle
+            // hides while the camera blends between modes (fire is swallowed then, D-14).
+            bool look = CameraModeService.IsLookMode;
+            _reticle.SetMode(CameraModeService.Current);
+            bool reticleShown = show && !CameraModeService.IsTransitioning;
+
             Vector2 local = OffScreen;
-            if (show)
+            if (reticleShown && look)
+            {
+                local = Vector2.zero;
+            }
+            else if (reticleShown)
             {
                 Vector3 viewport = camera.WorldToViewportPoint(rig.Aim.AimWorldPoint);
                 if (viewport.z >= 0f)
@@ -1006,9 +1047,10 @@ namespace DD.Prototype.UI
                 _reticle.Root.anchoredPosition = local;
             }
 
-            // E13 / E17: the player-bound arcs follow the figure's screen point while the run is live.
+            // E13 / E17: the player-bound arcs follow the figure's screen point while the run is live (top-down only:
+            // in third / first person the screen-edge hit layer and HudRearEdge carry direction).
             Vector2 playerLocal = OffScreen;
-            if (show)
+            if (show && !look)
             {
                 Vector3 playerViewport = camera.WorldToViewportPoint(rig.transform.position + Vector3.up * 0.9f);
                 if (playerViewport.z >= 0f)
@@ -1020,7 +1062,14 @@ namespace DD.Prototype.UI
 
             _playerArcs.Place(playerLocal);
 
-            if (show)
+            bool dot = show && look && UiSettings.CentreDot;
+            if (dot != _staticDotShown)
+            {
+                _staticDotShown = dot;
+                _staticDot.rectTransform.anchoredPosition = dot ? Vector2.zero : OffScreen;
+            }
+
+            if (reticleShown)
             {
                 // E15: the spread the weapon really has, projected at the aim distance (from the chest, where the shot leaves).
                 _reticle.Tick(camera, rig.Aim.AimWorldPoint, rig.transform.position + Vector3.up * 1.2f,

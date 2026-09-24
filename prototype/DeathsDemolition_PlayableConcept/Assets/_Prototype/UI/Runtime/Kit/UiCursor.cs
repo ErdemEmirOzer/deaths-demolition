@@ -1,3 +1,4 @@
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.InputAbstraction;
 using UnityEngine;
 
@@ -41,6 +42,8 @@ namespace DD.Prototype.UI
         private static bool s_pressed;
         private static bool s_installed;
         private static Texture2D s_shown;
+        private static bool s_locked;
+        private static GameObject s_lockDriver;
 
         /// <summary>What the current screen wants (true in menus, false in a run and under the loading curtain).</summary>
         public static bool ContextVisible
@@ -158,6 +161,42 @@ namespace DD.Prototype.UI
             s_installed = true;
             UiInputScheme.Changed += OnSchemeChanged;
             ApplyTexture();
+
+            // M4-R1 N2 (WP-070 D-8): the pointer's lock is ours too - the camera rig stops writing it.
+            CameraModeService.CursorIntentHandledExternally = true;
+            if (Application.isPlaying && s_lockDriver == null)
+            {
+                s_lockDriver = new GameObject("[UiCursorLock]", typeof(UiCursorLockDriver)) { hideFlags = HideFlags.HideAndDontSave };
+                Object.DontDestroyOnLoad(s_lockDriver);
+            }
+        }
+
+        /// <summary>
+        /// WP-070 D-8: whether the pointer is locked. The camera says what it wants (<see cref="CameraModeService.CursorIntent"/>:
+        /// Locked in TP/FP play, Free under pause, a look block or top-down); the context outranks it - a menu, Pause or the
+        /// shop that wants the pointer frees it - and an unfocused window never holds it.
+        /// </summary>
+        public static bool WantLocked(CameraCursorIntent intent, bool contextVisible, bool focused)
+        {
+            return intent == CameraCursorIntent.Locked && !contextVisible && focused;
+        }
+
+        public static bool Locked
+        {
+            get { return s_locked; }
+        }
+
+        /// <summary>Applies the lock when it changed; called once a frame by the lock driver (a state read, no allocation).</summary>
+        public static void SyncLock()
+        {
+            bool want = WantLocked(CameraModeService.CursorIntent, s_context, Application.isFocused);
+            if (want == s_locked)
+            {
+                return;
+            }
+
+            s_locked = want;
+            Cursor.lockState = want ? CursorLockMode.Locked : CursorLockMode.None;
         }
 
         private static void OnSchemeChanged(InputSchemeKind scheme)
@@ -172,6 +211,8 @@ namespace DD.Prototype.UI
             s_pressed = false;
             s_installed = false;
             s_shown = null;
+            s_locked = false;
+            s_lockDriver = null;
         }
 
         // After UiInputScheme's own reset (SubsystemRegistration clears its Changed): install the art and the scheme hook.

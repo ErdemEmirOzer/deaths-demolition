@@ -419,7 +419,8 @@ namespace DD.Prototype.UI
             if (camera != null)
             {
                 Vector3 at = camera.transform.position;
-                if (dt > 0f && !UiMotion.ReducedMotion)
+                // M4-R1 N2: third / first person turn the camera with the look - the drift would shake the ink; it rests.
+                if (dt > 0f && !UiMotion.ReducedMotion && !DD.Prototype.CameraSystem.CameraModeService.IsLookMode)
                 {
                     Vector3 velocity = (at - _parallaxCameraAt) / dt;
                     Vector3 up = Vector3.ProjectOnPlane(camera.transform.up, Vector3.up).normalized;

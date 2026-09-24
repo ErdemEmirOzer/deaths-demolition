@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using DD.Prototype.Audio;
+using DD.Prototype.CameraSystem;
 using UnityEngine;
 
 namespace DD.Prototype.UI
@@ -42,8 +43,28 @@ namespace DD.Prototype.UI
         /// <summary>WP-068 slice 10b (U9): brief hints during the first three runs (in play and on loading screens). Off leaves the rules.</summary>
         public bool Hints = true;
 
+        // ---- M4-R1 N2 camera (WP-070 §3, §5: the Pause "Camera" selector and the Settings camera rows write these;
+        // UiCameraSettingsBridge feeds CameraModeService). Older files lack the keys: the initialisers stand.
+        /// <summary>CameraMode: 0 top-down, 1 third person, 2 first person.</summary>
+        public int CameraMode;
+        /// <summary>First-person FOV, horizontal degrees at 16:9 (CameraModeSettings range).</summary>
+        public float FirstPersonFov = 90f;
+        /// <summary>Third-person FOV, vertical degrees.</summary>
+        public float ThirdPersonFov = 60f;
+        /// <summary>CameraShoulder: 0 right, 1 left.</summary>
+        public int Shoulder;
+        /// <summary>Head bob amplitude, 0..1 (0 under reduced motion anyway).</summary>
+        public float HeadBobScale = 1f;
+        /// <summary>WP-070 §3.2: a small static dot at the screen centre in TP/FP (motion-sickness aid).</summary>
+        public bool CentreDot;
+
         public UiSettingsData Clamp()
         {
+            CameraMode = Mathf.Clamp(CameraMode, 0, 2);
+            FirstPersonFov = Mathf.Clamp(FirstPersonFov, CameraModeSettings.MinFirstPersonFov, CameraModeSettings.MaxFirstPersonFov);
+            ThirdPersonFov = Mathf.Clamp(ThirdPersonFov, CameraModeSettings.MinThirdPersonFov, CameraModeSettings.MaxThirdPersonFov);
+            Shoulder = Shoulder == 1 ? 1 : 0;
+            HeadBobScale = Mathf.Clamp01(HeadBobScale);
             DisplayMode = Mathf.Clamp(DisplayMode, -1, 1);
             WindowWidth = Mathf.Max(0, WindowWidth);
             WindowHeight = Mathf.Max(0, WindowHeight);
@@ -88,6 +109,9 @@ namespace DD.Prototype.UI
 
         /// <summary>Raised with the new quality level index. S-01 may react beyond QualitySettings.</summary>
         public static event Action<int> QualityChanged;
+
+        /// <summary>M4-R1 N2: a camera row (mode, FOV, shoulder, head bob, centre dot) or reduced motion changed.</summary>
+        public static event Action CameraChanged;
 
         private static readonly UiSettingsData s_data = new UiSettingsData();
         private static bool s_loaded;
@@ -242,6 +266,96 @@ namespace DD.Prototype.UI
                 s_data.ReducedMotion = value;
                 UiMotion.ReducedMotion = value; // WP-068: the motion core applies RM by class
                 Persist();
+                RaiseCamera();   // WP-070 D-10: the one switch also stills the camera
+            }
+        }
+
+        // ---- M4-R1 N2 camera
+
+        /// <summary>The saved camera mode (0 top-down, 1 third person, 2 first person).</summary>
+        public static int CameraMode
+        {
+            get { EnsureLoaded(); return s_data.CameraMode; }
+            set { SetCamera(ref s_data.CameraMode, Mathf.Clamp(value, 0, 2)); }
+        }
+
+        public static float FirstPersonFov
+        {
+            get { EnsureLoaded(); return s_data.FirstPersonFov; }
+            set { SetCamera(ref s_data.FirstPersonFov, Mathf.Clamp(value, CameraModeSettings.MinFirstPersonFov, CameraModeSettings.MaxFirstPersonFov)); }
+        }
+
+        public static float ThirdPersonFov
+        {
+            get { EnsureLoaded(); return s_data.ThirdPersonFov; }
+            set { SetCamera(ref s_data.ThirdPersonFov, Mathf.Clamp(value, CameraModeSettings.MinThirdPersonFov, CameraModeSettings.MaxThirdPersonFov)); }
+        }
+
+        /// <summary>0 right shoulder, 1 left.</summary>
+        public static int Shoulder
+        {
+            get { EnsureLoaded(); return s_data.Shoulder; }
+            set { SetCamera(ref s_data.Shoulder, value == 1 ? 1 : 0); }
+        }
+
+        public static float HeadBobScale
+        {
+            get { EnsureLoaded(); return s_data.HeadBobScale; }
+            set { SetCamera(ref s_data.HeadBobScale, Mathf.Clamp01(value)); }
+        }
+
+        public static bool CentreDot
+        {
+            get { EnsureLoaded(); return s_data.CentreDot; }
+            set
+            {
+                EnsureLoaded();
+                if (value == s_data.CentreDot)
+                {
+                    return;
+                }
+
+                s_data.CentreDot = value;
+                Persist();
+                RaiseCamera();
+            }
+        }
+
+        private static void SetCamera(ref int field, int value)
+        {
+            EnsureLoaded();
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            Persist();
+            RaiseCamera();
+        }
+
+        private static void SetCamera(ref float field, float value)
+        {
+            EnsureLoaded();
+            if (Mathf.Approximately(field, value))
+            {
+                return;
+            }
+
+            field = value;
+            Persist();
+            RaiseCamera();
+        }
+
+        private static void RaiseCamera()
+        {
+            try
+            {
+                CameraChanged?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
             }
         }
 
@@ -362,6 +476,13 @@ namespace DD.Prototype.UI
             s_data.DisplayMode = loaded != null ? loaded.DisplayMode : -1;
             s_data.WindowWidth = loaded != null ? loaded.WindowWidth : 0;
             s_data.WindowHeight = loaded != null ? loaded.WindowHeight : 0;
+            var defaults = new UiSettingsData();
+            s_data.CameraMode = loaded != null ? loaded.CameraMode : defaults.CameraMode;
+            s_data.FirstPersonFov = loaded != null ? loaded.FirstPersonFov : defaults.FirstPersonFov;
+            s_data.ThirdPersonFov = loaded != null ? loaded.ThirdPersonFov : defaults.ThirdPersonFov;
+            s_data.Shoulder = loaded != null ? loaded.Shoulder : defaults.Shoulder;
+            s_data.HeadBobScale = loaded != null ? loaded.HeadBobScale : defaults.HeadBobScale;
+            s_data.CentreDot = loaded != null && loaded.CentreDot;
             int count = Mathf.Max(1, QualitySettings.names.Length);
             int quality = loaded != null && loaded.Quality >= 0 ? loaded.Quality : QualitySettings.GetQualityLevel();
             s_data.Quality = Mathf.Clamp(quality, 0, count - 1);
@@ -505,7 +626,15 @@ namespace DD.Prototype.UI
             s_data.Quality = -1;
             s_data.ReducedMotion = false;
             UiMotion.ReducedMotion = false;
+            var defaults = new UiSettingsData();
+            s_data.CameraMode = defaults.CameraMode;
+            s_data.FirstPersonFov = defaults.FirstPersonFov;
+            s_data.ThirdPersonFov = defaults.ThirdPersonFov;
+            s_data.Shoulder = defaults.Shoulder;
+            s_data.HeadBobScale = defaults.HeadBobScale;
+            s_data.CentreDot = defaults.CentreDot;
             Changed = null;
+            CameraChanged = null;
             MasterVolumeChanged = null;
             UiVolumeChanged = null;
             QualityChanged = null;

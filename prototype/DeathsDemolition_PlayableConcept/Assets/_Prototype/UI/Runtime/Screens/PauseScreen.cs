@@ -42,8 +42,8 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class PauseScreen : UiScreen
     {
-        private const float PanelWidth = 680f;
-        private const float PanelHeight = 520f;
+        private const float PanelWidth = 760f;    // M4-R1 N2: three CAMERA segments hold "THIRD PERSON" at TextScale 1.25
+        private const float PanelHeight = 680f;   // M4-R1 N2: + the CAMERA row
         private const float DialogWidth = 640f;
         private const float DialogHeight = 340f;
         private const float ShakeMax = 2f;
@@ -79,6 +79,19 @@ namespace DD.Prototype.UI
         private Slider _shakeSlider;
         private TMP_Text _shakeValue;
 
+        // M4-R1 N2 (WP-070 §5.1): the segmented CAMERA selector and the chosen mode's one-line description.
+        public static readonly string[] CameraModeNames = { "TOP-DOWN", "THIRD PERSON", "FIRST PERSON" };
+        public static readonly string[] CameraModeCaptions =
+        {
+            "The original view: the whole street, aim with the pointer.",
+            "Over the shoulder: look with the mouse or right stick, aim at the centre.",
+            "Eye level: the closest view. Threats behind you are heard, not seen.",
+        };
+
+        private readonly UiButton[] _cameraButtons = new UiButton[3];
+        private TMP_Text _cameraCaption;
+        private bool _blurReleased;
+
         private bool _paused;
         private bool _confirming;
 
@@ -88,6 +101,17 @@ namespace DD.Prototype.UI
         public bool IsPaused
         {
             get { return _paused; }
+        }
+
+        /// <summary>The CAMERA segments (tests, captures).</summary>
+        public UiButton CameraButton(CameraMode mode)
+        {
+            return _cameraButtons[(int)mode];
+        }
+
+        public string CameraCaption
+        {
+            get { return _cameraCaption != null ? _cameraCaption.text : string.Empty; }
         }
 
         protected override void Build()
@@ -169,6 +193,8 @@ namespace DD.Prototype.UI
                 UiNavigation.EnterLayer(UiContext.Paused);
 
                 RefreshShake();
+                RefreshCamera();
+                _blurReleased = false;
                 UiSound.Play(UiSoundKind.Confirm);
                 Focus(_resumeButton);
             }
@@ -176,7 +202,7 @@ namespace DD.Prototype.UI
             {
                 CloseConfirm();
                 RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
-                UiFrozenFrame.Release(FrozenOwner);
+                UiFrozenFrame.Release(FrozenOwner);   // idempotent: a camera choice may have released it already
                 UiNavigation.ExitOverlay(UiContext.Paused);
                 UiSound.Play(UiSoundKind.Back);
                 RestoreFocus();
@@ -206,6 +232,39 @@ namespace DD.Prototype.UI
         private void Resume()
         {
             SetPaused(false);
+        }
+
+        /// <summary>
+        /// WP-070 §5.1: the choice is saved and requested at once; the blend runs on unscaled time behind the pause, so the
+        /// frozen-frame blur lets go (the scrim stays) and the player watches the view change.
+        /// </summary>
+        public void ChooseCamera(CameraMode mode)
+        {
+            UiCameraSettingsBridge.RequestMode(mode);
+            if (!_blurReleased)
+            {
+                _blurReleased = true;
+                UiFrozenFrame.Release(FrozenOwner);
+            }
+
+            RefreshCamera();
+        }
+
+        private void RefreshCamera()
+        {
+            int current = (int)CameraModeService.Target;
+            for (int i = 0; i < _cameraButtons.Length; i++)
+            {
+                if (_cameraButtons[i] != null)
+                {
+                    _cameraButtons[i].SetSelectedChoice(i == current);
+                }
+            }
+
+            if (_cameraCaption != null)
+            {
+                _cameraCaption.text = CameraModeCaptions[Mathf.Clamp(current, 0, CameraModeCaptions.Length - 1)];
+            }
         }
 
         private void OpenConfirm()
@@ -296,6 +355,9 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)UiFactory.Divider("D1", host).transform, UiTokens.StrokeHairline);
             stack.Gap(UiSpace.XL);
 
+            BuildCameraRow(host, ref stack);
+            stack.Gap(UiSpace.XL);
+
             TMP_Text shakeLabel = UiFactory.Label(
                 "ShakeLabel", host, "CAMERA SHAKE INTENSITY", UiType.Label, UiColor.TextMuted);
             RectTransform shakeLabelRect = stack.Add(
@@ -347,6 +409,37 @@ namespace DD.Prototype.UI
             quitRect.pivot = new Vector2(0.5f, 0f);
             quitRect.offsetMin = new Vector2((int)UiSpace.S, 0f);
             quitRect.offsetMax = new Vector2(0f, UiTokens.TargetPreferred);
+        }
+
+        /// <summary>M4-R1 N2: CAMERA - three segments side by side (Left / Right walk them), the current one Selected, and a caption.</summary>
+        private void BuildCameraRow(RectTransform host, ref UiStack stack)
+        {
+            TMP_Text label = UiFactory.Label("CameraLabel", host, "CAMERA", UiType.Label, UiColor.TextMuted);
+            stack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
+            stack.Gap(UiSpace.S);
+
+            RectTransform row = UiFactory.NewRect("CameraModes", host);
+            RectTransform rowRect = stack.Add(row, UiTokens.TargetPreferred);
+            rowRect.sizeDelta = new Vector2(0f, UiTokens.TargetPreferred);
+            float gap = (int)UiSpace.S;
+            for (int i = 0; i < _cameraButtons.Length; i++)
+            {
+                var mode = (CameraMode)i;
+                // Nav: the kit's "current choice" look - raised fill, cream outline and tick; the other segments read quieter.
+                UiButton button = UiFactory.Button("Camera." + mode, row, CameraModeNames[i], UiButtonVariant.Nav, () => ChooseCamera(mode));
+                button.LabelText.alignment = TextAlignmentOptions.Center;
+                var rect = (RectTransform)button.transform;
+                rect.anchorMin = new Vector2(i / 3f, 0f);
+                rect.anchorMax = new Vector2((i + 1) / 3f, 1f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.offsetMin = new Vector2(i == 0 ? 0f : gap * 0.5f, 0f);
+                rect.offsetMax = new Vector2(i == 2 ? 0f : -gap * 0.5f, 0f);
+                _cameraButtons[i] = button;
+            }
+
+            stack.Gap(UiSpace.S);
+            _cameraCaption = UiFactory.Label("CameraCaption", host, CameraModeCaptions[0], UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)_cameraCaption.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
         }
 
         private void BuildConfirmDialog()

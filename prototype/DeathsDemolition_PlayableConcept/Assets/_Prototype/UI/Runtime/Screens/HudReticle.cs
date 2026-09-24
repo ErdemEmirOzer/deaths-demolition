@@ -1,3 +1,4 @@
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Weapons;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +24,18 @@ namespace DD.Prototype.UI
         public const float ArcWidth = 16f;
         public const float MinTickWidthPx = 2f;
         public const float MinTickLengthPx = 6f;
+
+        // M4-R1 N2 (WP-070 §4.5): third person = a centre dot and the spread ticks, the ring never under 14 px;
+        // first person = the same at 80 %. Top-down keeps MinRadius and no dot.
+        public const float LookMinRadius = 14f;
+        public const float FirstPersonScale = 0.8f;
+        public const float DotSize = 4f;
+
+        /// <summary>
+        /// Look modes put the reticle on eye-level walls (pale plaster), where cream alone disappears: every tick and the dot
+        /// get a solid Sumi twin behind them, this many physical px wider on each side (2 at ≥ 1.5 px per unit).
+        /// </summary>
+        public const float BackingEdgePx = 1f;
         public const float MinRadius = 6f;
         public const float SaturationRadius = 48f;
         public const float EmptySplit = 6f;
@@ -52,6 +65,13 @@ namespace DD.Prototype.UI
         private float _geomScale = -1f;
         private Vector2 _tick = new Vector2(TickWidth, TickLength);
         private Vector2 _arc = new Vector2(ArcWidth, TickLength * 0.8f);
+        private readonly Image _dot;
+        private readonly Image _dotBack;
+        private readonly Image[] _backs = new Image[4];
+        private float _edge;
+        private int _mode = -1;
+        private float _minRadius = MinRadius;
+        private float _styleScale = 1f;
 
         public RectTransform Root
         {
@@ -67,6 +87,46 @@ namespace DD.Prototype.UI
         public Vector2 TickSize
         {
             get { return _tick; }
+        }
+
+        /// <summary>The centre dot (look modes; tests, captures).</summary>
+        public bool DotShown
+        {
+            get { return _dot != null && _dot.enabled; }
+        }
+
+        /// <summary>The Sumi twins behind the ticks (look modes; tests).</summary>
+        public bool BackingShown
+        {
+            get { return _backs[0] != null && _backs[0].enabled; }
+        }
+
+        public float MinimumRadius
+        {
+            get { return _minRadius; }
+        }
+
+        /// <summary>M4-R1 N2: the reticle's style for a camera mode (rare: a mode change rebuilds the ticks once).</summary>
+        public void SetMode(CameraMode mode)
+        {
+            if ((int)mode == _mode)
+            {
+                return;
+            }
+
+            _mode = (int)mode;
+            bool look = mode != CameraMode.TopDown;
+            _styleScale = mode == CameraMode.FirstPerson ? FirstPersonScale : 1f;
+            _minRadius = look ? LookMinRadius * _styleScale : MinRadius;
+            _dot.enabled = look;
+            _dotBack.enabled = look;
+            for (int i = 0; i < _backs.Length; i++)
+            {
+                _backs[i].enabled = look;
+            }
+
+            _geomUi = -1f;   // re-geometry on the next Tick
+            _radius = -1f;
         }
 
         /// <summary>
@@ -103,6 +163,24 @@ namespace DD.Prototype.UI
             _reload.fillAmount = 0f;
             _reload.enabled = false;
 
+            // Look-mode backings first, so they draw behind the ticks and the dot.
+            for (int i = 0; i < _backs.Length; i++)
+            {
+                _backs[i] = Backing("TickBack." + i, -90f * i);
+            }
+
+            _dotBack = Backing("DotBack", 0f);
+
+            _dot = UiFactory.NewImage("Dot", _root, UiColor.TextPrimary, _barSprite != null ? _barSprite : UiSprites.Disc);
+            _dot.preserveAspect = false;
+            if (UiArt.IsGlyph(_dot.sprite))
+            {
+                UiArt.ApplyGlyph(_dot, InkEdge);
+            }
+
+            _dot.rectTransform.sizeDelta = new Vector2(DotSize, DotSize);
+            _dot.enabled = false;
+
             for (int i = 0; i < _ticks.Length; i++)
             {
                 Image tick = UiFactory.NewImage("Tick." + i, _root, UiColor.TextPrimary, _barSprite != null ? _barSprite : UiSprites.Solid);
@@ -117,6 +195,24 @@ namespace DD.Prototype.UI
                 rect.localRotation = Quaternion.Euler(0f, 0f, -90f * i);   // N, E, S, W
                 _ticks[i] = tick;
             }
+        }
+
+        private Image Backing(string name, float rotation)
+        {
+            Image back = UiFactory.NewImage(name, _root, UiColor.HudInk, _barSprite != null ? _barSprite : UiSprites.Solid);
+            back.preserveAspect = false;
+            back.raycastTarget = false;
+            if (UiArt.IsGlyph(back.sprite))
+            {
+                UiArt.ApplyGlyph(back, InkEdge);
+            }
+
+            Color c = back.color;
+            c.a = 1f;   // solid: the edge must not soften, or the cream core reads grey on slate
+            back.color = c;
+            back.rectTransform.localRotation = Quaternion.Euler(0f, 0f, rotation);
+            back.enabled = false;
+            return back;
         }
 
         /// <summary>
@@ -159,12 +255,16 @@ namespace DD.Prototype.UI
             {
                 _geomUi = uiScale;
                 _geomScale = pxPerUnit;
-                TickGeometry(uiScale, pxPerUnit, out _tick, out _arc);
+                TickGeometry(uiScale / _styleScale, pxPerUnit, out _tick, out _arc);
+                float dot = Mathf.Max(DotSize * _styleScale / Mathf.Max(0.01f, uiScale), MinTickWidthPx / Mathf.Max(0.01f, pxPerUnit));
+                _dot.rectTransform.sizeDelta = new Vector2(dot, dot);
+                _edge = (pxPerUnit >= 1.5f ? 2f * BackingEdgePx : BackingEdgePx) / Mathf.Max(0.01f, pxPerUnit);
+                _dotBack.rectTransform.sizeDelta = new Vector2(dot + 2f * _edge, dot + 2f * _edge);
             }
 
             int state = weapon.IsReloading ? 1 : weapon.MagazineSize > 0 && weapon.AmmoInMagazine <= 0 ? 2 : 0;
             bool saturated = _radius > SaturationRadius;
-            float radius = Mathf.Clamp(_radius, MinRadius, SaturationRadius) + (state == 2 ? EmptySplit : 0f);
+            float radius = Mathf.Clamp(_radius, _minRadius, SaturationRadius) + (state == 2 ? EmptySplit : 0f);
             radius = Mathf.Round(radius * 2f) * 0.5f;   // half-pixel steps: no rebuild for sub-pixel drift
 
             if (saturated != _saturated || _state < 0 || regeometry)
@@ -177,9 +277,13 @@ namespace DD.Prototype.UI
                     {
                         UiArt.SetGlyph(_ticks[i], sprite);
                         UiArt.ApplyGlyph(_ticks[i], InkEdge);
+                        UiArt.SetGlyph(_backs[i], sprite);
+                        UiArt.ApplyGlyph(_backs[i], InkEdge);
                     }
 
-                    ((RectTransform)_ticks[i].transform).sizeDelta = saturated ? _arc : _tick;
+                    Vector2 size = saturated ? _arc : _tick;
+                    ((RectTransform)_ticks[i].transform).sizeDelta = size;
+                    _backs[i].rectTransform.sizeDelta = size + new Vector2(2f * _edge, 2f * _edge);
                 }
 
                 _shownRadius = -1f; // re-place
@@ -192,7 +296,9 @@ namespace DD.Prototype.UI
                 for (int i = 0; i < _ticks.Length; i++)
                 {
                     float angle = i * Mathf.PI * 0.5f;   // N, E, S, W
-                    ((RectTransform)_ticks[i].transform).anchoredPosition = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * centre;
+                    Vector2 at = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * centre;
+                    ((RectTransform)_ticks[i].transform).anchoredPosition = at;
+                    _backs[i].rectTransform.anchoredPosition = at;
                 }
 
                 float ring = (radius + _tick.y + ReloadGap) * 2f;
@@ -217,6 +323,17 @@ namespace DD.Prototype.UI
                 {
                     _ticks[i].color = tint;
                 }
+
+                _dot.color = tint;
+                // The backings dim with the ticks (reload), so a faded mark never leaves a dark bar behind.
+                Color back = UiTokens.Get(UiColor.HudInk);
+                back.a = tint.a;
+                for (int i = 0; i < _backs.Length; i++)
+                {
+                    _backs[i].color = back;
+                }
+
+                _dotBack.color = back;
 
                 _reload.enabled = state == 1;
             }
