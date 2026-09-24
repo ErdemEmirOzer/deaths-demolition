@@ -933,7 +933,7 @@ namespace DD.Prototype.Feedback
 
             UiWorldNumbers numbers = UiWorldNumbers.Instance;
             DamageNumberFeel feel = FeelRuntime.Current.DamageNumbers;
-            UiWorldNumberStyle style = NumberStyle(tier, info.Result.WasArmored);
+            UiWorldNumberStyle style = NumberStyle(tier, info.Result.WasArmored, info.Weight);
             Vector3 point = info.Point + Vector3.up * feel.anchorOffsetYMeters;
 
             // Merge into the live number on the same target rather than stacking a new one on top of it (the shotgun case).
@@ -953,9 +953,10 @@ namespace DD.Prototype.Feedback
         /// <summary>
         /// WP-068 E18 · the GD hierarchy (direction §5; tiers are shapes, not colours — no amber): flesh M 22 cream, armour
         /// held S 18 grey, armour broken M 22 cream, crit L 26 cream + outlined starburst, kill bold, Elite / Ultra kill XL 30
-        /// bold. Grey and cream are tokens, so the colour-blind palette follows.
+        /// bold. Grey and cream are tokens, so the colour-blind palette follows. E18b: armour broken carries the plates
+        /// glyph, an Elite / Ultra kill its tier head (outer-only, from the hit's weight).
         /// </summary>
-        public static UiWorldNumberStyle NumberStyle(HitFeedbackTier tier, bool armored)
+        public static UiWorldNumberStyle NumberStyle(HitFeedbackTier tier, bool armored, FeedbackWeight weight = FeedbackWeight.Elite)
         {
             switch (tier)
             {
@@ -966,9 +967,10 @@ namespace DD.Prototype.Feedback
                 case HitFeedbackTier.Death:
                     return new UiWorldNumberStyle(UiWorldNumberSize.M, UiColor.TextPrimary, true);
                 case HitFeedbackTier.HeavyDeath:
-                    return new UiWorldNumberStyle(UiWorldNumberSize.XL, UiColor.TextPrimary, true);
+                    return new UiWorldNumberStyle(UiWorldNumberSize.XL, UiColor.TextPrimary, true, false,
+                        weight >= FeedbackWeight.Ultra ? UiWorldNumberGlyph.Ultra : UiWorldNumberGlyph.Elite);
                 case HitFeedbackTier.ArmorBreak:
-                    return new UiWorldNumberStyle(UiWorldNumberSize.M, UiColor.TextPrimary);
+                    return new UiWorldNumberStyle(UiWorldNumberSize.M, UiColor.TextPrimary, false, false, UiWorldNumberGlyph.ArmorBreak);
                 default:
                     return armored
                         ? new UiWorldNumberStyle(UiWorldNumberSize.S, UiColor.TextSecondary)

@@ -4,7 +4,7 @@
 //   uv1 = (mode, start time on _DD_UiTime, duration s, loop period s | 0)
 //   uv2 = mode parameters (x, y, z) + ink channel / particle seed (w)
 //   uv3 = (rect-normalised x, y — the ink-map coordinate; zw = rect size px, or the rect centre for Stamp — its pivot)
-// Particles: every vertex of a quad sits on its emitter point, uv3.xy is the corner (-1..1); the vertex stage moves it.
+// Particles: every vertex of a quad sits on its emitter point, uv3.xy is the corner (-1..1), uv3.z the burst's start radius; the vertex stage moves it.
 Shader "DD/UI/Fx"
 {
     Properties
@@ -133,7 +133,8 @@ Shader "DD/UI/Fx"
                     float angle = DD_Hash(float2(seed, 0.37)) * 6.2831853;
                     float speed = v.prm.y * (0.55 + 0.45 * DD_Hash(float2(seed, 0.91)));
                     float2 dir = v.fx.w > 0.0 ? float2(sin(age * 1.7 + seed * 6.28) * 0.35, -1.0) : float2(cos(angle), sin(angle));
-                    float2 offset = dir * speed * age + float2(0.0, -0.5 * v.prm.z * age * age);
+                    // map.z: a burst's start radius (0 = the centre) — sparks leave a ring's stroke outward (AD 8c SHOULD-2).
+                    float2 offset = dir * (v.map.z + speed * max(age, 0.0)) + float2(0.0, -0.5 * v.prm.z * age * age);
                     float size = v.prm.x * (0.6 + 0.4 * DD_Hash(float2(seed, 0.13))) * (v.fx.w > 0.0 ? 1.0 : (1.0 - 0.6 * t));
                     // The CPU quad has its base size (half of prm.x) around the emitter so uGUI never drops it as
                     // degenerate; re-centre it and apply the animated size + motion here.

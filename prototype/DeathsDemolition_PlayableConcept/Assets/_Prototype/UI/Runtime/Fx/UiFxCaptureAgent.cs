@@ -170,13 +170,17 @@ namespace DD.Prototype.UI
 
             n.Spawn(1006, 18, DD.Prototype.Feedback.HitFeedbackDirector.NumberStyle(DD.Prototype.Feedback.HitFeedbackTier.FleshHit, false),
                 cam.ViewportToWorldPoint(new Vector3(0.12f + 4 * 0.12f, 0.52f, 12f)));
-            // Row 2 over the brightest corner (bamboo / blossom, top-left): outline contrast (AD E18 MUST 2).
-            int[] bright = { 0, 1, 3, 4, 5 };
-            for (int k = 0; k < bright.Length; k++)
+            // Row 2 (E18b): the glyphs — armour broken (plates), Elite kill, Ultra kill (tier heads, outer-only) — over the stone.
+            var glyphRow = new[]
             {
-                int i = bright[k];
-                Vector3 p = cam.ViewportToWorldPoint(new Vector3(0.03f + k * 0.055f, 0.8f, 12f));
-                n.Spawn(1100 + i, amounts[i], DD.Prototype.Feedback.HitFeedbackDirector.NumberStyle(tiers[i], tiers[i] == DD.Prototype.Feedback.HitFeedbackTier.ArmorHit), p);
+                (DD.Prototype.Feedback.HitFeedbackTier.ArmorBreak, DD.Prototype.Feedback.FeedbackWeight.Standard, 34),
+                (DD.Prototype.Feedback.HitFeedbackTier.HeavyDeath, DD.Prototype.Feedback.FeedbackWeight.Elite, 140),
+                (DD.Prototype.Feedback.HitFeedbackTier.HeavyDeath, DD.Prototype.Feedback.FeedbackWeight.Ultra, 260)
+            };
+            for (int k = 0; k < glyphRow.Length; k++)
+            {
+                Vector3 p = cam.ViewportToWorldPoint(new Vector3(0.2f + k * 0.25f, 0.3f, 12f));
+                n.Spawn(1100 + k, glyphRow[k].Item3, DD.Prototype.Feedback.HitFeedbackDirector.NumberStyle(glyphRow[k].Item1, false, glyphRow[k].Item2), p);
             }
 
             yield return new WaitForSeconds(0.15f);

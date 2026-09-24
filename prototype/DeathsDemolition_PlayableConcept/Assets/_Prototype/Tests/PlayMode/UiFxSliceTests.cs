@@ -141,6 +141,40 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, after, "ömür bitince kıvılcım kalmamalı");
         }
 
+        [UnityTest]
+        public IEnumerator Parcaciklar_BaslangicYaricapi_HalkadanDisari()
+        {
+            // E18b (AD 8c SHOULD-2): a burst with startRadius leaves the ring's stroke, not the centre over the timer.
+            RenderTexture rt = NewTarget(256, 256);
+            Camera cam = NewUiCamera(rt, false);
+            Canvas canvas = NewCanvas(cam);
+            RectTransform area = Rect("Burst", (RectTransform)canvas.transform, Vector2.zero, Vector2.one);
+            UiFxParticles sparks = area.gameObject.AddComponent<UiFxParticles>();
+            sparks.color = Color.white;
+            sparks.Configure(12, 10f, 200f, 0f, 0.3f, 0f, null, 66f);
+            UiFxGlobals.TimeOverride = 300f;
+            sparks.Play();
+
+            UiFxGlobals.TimeOverride = 300.08f;   // early: every spark has left the start circle, none reached the centre
+            yield return Render(cam);
+            Color[] px = Read(rt);
+            int centre = 0, ring = 0;
+            for (int y = 0; y < rt.height; y++)
+            {
+                for (int x = 0; x < rt.width; x++)
+                {
+                    if (px[y * rt.width + x].r <= 0.2f) continue;
+                    float d = new Vector2(x - rt.width * 0.5f, y - rt.height * 0.5f).magnitude;
+                    if (d < 40f) centre++;
+                    else if (d <= 110f) ring++;
+                }
+            }
+
+            Debug.Log("[DD-TEST] e18b.sparks centre=" + centre + " ring=" + ring);
+            Assert.AreEqual(0, centre, "kıvılcım merkezden (sayacın üstünden) çıkmamalı");
+            Assert.Greater(ring, 20, "kıvılcımlar halka çizgisinden dışarı çizilmeli");
+        }
+
         private static float RowRedness(Color[] px, RenderTexture rt, float v0, float v1)
         {
             float sum = 0f; int n = 0;

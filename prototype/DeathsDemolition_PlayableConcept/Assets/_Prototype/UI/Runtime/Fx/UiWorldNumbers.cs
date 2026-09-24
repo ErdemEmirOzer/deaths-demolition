@@ -17,26 +17,38 @@ namespace DD.Prototype.UI
         XL = 3
     }
 
-    /// <summary>How one damage number reads (GD hierarchy, direction §5): size, colour token, kill weight, crit starburst.</summary>
+    /// <summary>E18b · the glyph beside a number (direction §5): the armour-break plates, the Elite / Ultra tier head (outer-only).</summary>
+    public enum UiWorldNumberGlyph
+    {
+        None = 0,
+        ArmorBreak = 1,
+        Elite = 2,
+        Ultra = 3
+    }
+
+    /// <summary>How one damage number reads (GD hierarchy, direction §5): size, colour token, kill weight, crit starburst, glyph.</summary>
     public readonly struct UiWorldNumberStyle
     {
         public readonly UiWorldNumberSize Size;
         public readonly UiColor Color;
         public readonly bool Bold;
         public readonly bool Burst;
+        public readonly UiWorldNumberGlyph Glyph;
 
-        public UiWorldNumberStyle(UiWorldNumberSize size, UiColor color, bool bold = false, bool burst = false)
+        public UiWorldNumberStyle(UiWorldNumberSize size, UiColor color, bool bold = false, bool burst = false, UiWorldNumberGlyph glyph = UiWorldNumberGlyph.None)
         {
             Size = size;
             Color = color;
             Bold = bold;
             Burst = burst;
+            Glyph = glyph;
         }
 
-        /// <summary>A merge keeps the loudest read: the larger size, a kill's weight, a crit's starburst; the latest colour.</summary>
+        /// <summary>A merge keeps the loudest read: the larger size, a kill's weight, a crit's starburst, the heavier glyph; the latest colour.</summary>
         public UiWorldNumberStyle Merge(UiWorldNumberStyle next)
         {
-            return new UiWorldNumberStyle(next.Size > Size ? next.Size : Size, next.Color, Bold || next.Bold, Burst || next.Burst);
+            return new UiWorldNumberStyle(next.Size > Size ? next.Size : Size, next.Color, Bold || next.Bold, Burst || next.Burst,
+                next.Glyph > Glyph ? next.Glyph : Glyph);
         }
     }
 
@@ -66,6 +78,19 @@ namespace DD.Prototype.UI
         public const float FlushSeconds = 0.2f;
         public const float RestSeconds = 0.5f;
         public const float BurstScale = 2.3f;
+        /// <summary>E18b: glyph height as a share of the point size, and the gap to the number (reference px).</summary>
+        public const float GlyphScale = 1.1f;
+        /// <summary>E18b (AD SHOULD 1): S / M glyphs a little larger so the plates resolve at 22 px.</summary>
+        public const float GlyphScaleSmall = 1.25f;
+        /// <summary>SdfGlyph outline width (distance-field units) ≈ 1 px at the glyph sizes in use.</summary>
+        public const float GlyphOutline = 0.2f;
+        public const float GlyphGap = 6f;
+        /// <summary>E18b: clearance above a status stamp's rect (screen px).</summary>
+        public const float AvoidGap = 4f;
+        public const int AvoidCapacity = 64;
+
+        /// <summary>The G1 glyph keys (UiArt.Icon) of <see cref="UiWorldNumberGlyph"/>.</summary>
+        public static readonly string[] GlyphKeys = { null, "Ach.PlateWrecker", "Threat.EliteOuter", "Threat.UltraOuter" };
 
         private static readonly int[] s_pointSizes = { 18, 22, 26, 30 };
 
@@ -87,6 +112,9 @@ namespace DD.Prototype.UI
             public Image Burst;
             public RectTransform BurstRect;
             public CanvasRenderer BurstRenderer;
+            public Image Glyph;
+            public RectTransform GlyphRect;
+            public CanvasRenderer GlyphRenderer;
             public SlotState State;
             public int TargetId;
             public Vector3 Anchor;
@@ -110,6 +138,16 @@ namespace DD.Prototype.UI
         public static Camera CameraOverride;
 
         private readonly Slot[] _slots = new Slot[Capacity];
+
+        private struct AvoidRect
+        {
+            public int TargetId;
+            public Rect Screen;
+            public int Frame;
+        }
+
+        private readonly AvoidRect[] _avoid = new AvoidRect[AvoidCapacity];
+        private readonly Sprite[] _glyphs = new Sprite[4];
         private RectTransform _root;
         private int _sequence;
 
@@ -202,8 +240,14 @@ namespace DD.Prototype.UI
             _root = (RectTransform)Canvas.transform;
             RectTransform bursts = UiFactory.NewRect("Bursts", _root);
             UiFactory.Fill(bursts);
+            RectTransform glyphs = UiFactory.NewRect("Glyphs", _root);
+            UiFactory.Fill(glyphs);
             RectTransform numbers = UiFactory.NewRect("Numbers", _root);
             UiFactory.Fill(numbers);
+            for (int g = 1; g < GlyphKeys.Length; g++)
+            {
+                _glyphs[g] = UiArt.Icon(GlyphKeys[g]);   // G1 SDF atlas: every glyph on one texture → one batch
+            }
 
             TMP_FontAsset font = UiFonts.Role(UiFontRole.Numeric) ?? UiFonts.For(UiType.NumericM);
             Material material = NumberMaterial(font);
@@ -234,6 +278,18 @@ namespace DD.Prototype.UI
                 var brt = (RectTransform)img.transform;
                 brt.anchorMin = brt.anchorMax = brt.pivot = new Vector2(0.5f, 0.5f);
 
+                // The glyph image is built with the first available G1 sprite so UiFactory gives it the atlas's SdfGlyph Fx.
+                Sprite any = _glyphs[1] ?? _glyphs[2] ?? _glyphs[3];
+                Image glyph = UiFactory.NewImage("G" + i, glyphs, UiColor.TextPrimary, any);
+                glyph.raycastTarget = false;
+                glyph.preserveAspect = true;
+                var grt = (RectTransform)glyph.transform;
+                grt.anchorMin = grt.anchorMax = grt.pivot = new Vector2(0.5f, 0.5f);
+                glyph.enabled = false;
+                // The numbers' ink edge on the glyph (AD E18b MUST 1): G1 cells are 64 px with a 6 px spread, drawn at
+                // 24–33 px → 1 screen px ≈ 0.2 of the field; the ring is the Fx ink (Sumi).
+                UiArt.ApplyGlyph(glyph, new Vector3(GlyphOutline, 0f, 0f));
+
                 _slots[i] = new Slot
                 {
                     Text = text,
@@ -242,6 +298,9 @@ namespace DD.Prototype.UI
                     Burst = img,
                     BurstRect = brt,
                     BurstRenderer = img.canvasRenderer,
+                    Glyph = glyph,
+                    GlyphRect = grt,
+                    GlyphRenderer = glyph.canvasRenderer,
                     State = SlotState.Free
                 };
                 Hide(ref _slots[i]);
@@ -451,6 +510,8 @@ namespace DD.Prototype.UI
                 screen = KeepOffPlayer(cam, screen);
             }
 
+            screen = KeepOffStamp(s.TargetId, screen, PointSize(s.Style.Size) * 0.6f * Canvas.scaleFactor);
+
             RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, screen, null, out Vector2 local);
             bool rm = UiMotion.ReducedMotion;
             // A flush stops the clock (Age holds), so the number fades where it stands.
@@ -465,8 +526,100 @@ namespace DD.Prototype.UI
                 s.BurstRect.anchoredPosition = at;   // not scaled by the pop: the 2 px rim stays 2 px (AD E18 SHOULD 2)
             }
 
+            if (s.Glyph.enabled)
+            {
+                s.GlyphRect.anchoredPosition = new Vector2(at.x - GlyphOffset(ref s) * pop, at.y);
+                s.GlyphRect.localScale = s.TextRect.localScale;
+            }
+
             SetAlpha(ref s, s.Alpha);
         }
+
+        /// <summary>
+        /// E18b (8-R·A SHOULD-2): a status stamp reports its screen rect (px, bottom-left origin) for its enemy every frame
+        /// (target = ZombieEnemy.GetInstanceID(), the number's TargetId); a number on that enemy sits above it. A report
+        /// not renewed lapses after one frame; with no number layer yet the call does nothing. No allocation.
+        /// </summary>
+        public static void ReportAvoidRect(int targetId, Rect screenRect)
+        {
+            if (s_instance == null || targetId == 0)
+            {
+                return;
+            }
+
+            AvoidRect[] avoid = s_instance._avoid;
+            int frame = Time.frameCount, pick = -1;
+            for (int i = 0; i < avoid.Length; i++)
+            {
+                if (avoid[i].TargetId == targetId) { pick = i; break; }
+                if (pick < 0 && avoid[i].Frame < frame - 1) pick = i;
+            }
+
+            if (pick < 0)
+            {
+                return;   // 64 live stamps: the rest go unavoided this frame
+            }
+
+            avoid[pick].TargetId = targetId;
+            avoid[pick].Screen = screenRect;
+            avoid[pick].Frame = frame;
+        }
+
+        private Vector3 KeepOffStamp(int targetId, Vector3 screen, float halfHeight)
+        {
+            if (targetId == 0)
+            {
+                return screen;
+            }
+
+            int frame = Time.frameCount;
+            for (int i = 0; i < _avoid.Length; i++)
+            {
+                if (_avoid[i].TargetId != targetId || _avoid[i].Frame < frame - 1)
+                {
+                    continue;
+                }
+
+                Rect r = _avoid[i].Screen;
+                float floor = r.yMax + AvoidGap + halfHeight;
+                if (screen.y < floor && screen.x >= r.xMin - halfHeight * 2f && screen.x <= r.xMax + halfHeight * 2f)
+                {
+                    screen.y = floor;   // upward only, like the rise
+                }
+
+                break;
+            }
+
+            return screen;
+        }
+
+        /// <summary>Tests: the live number's canvas position (as <see cref="TryReadPlacement"/>) and whether its glyph shows, which.</summary>
+        public bool TryReadGlyph(int targetId, out UiWorldNumberGlyph glyph, out bool shown)
+        {
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                if (_slots[i].State == SlotState.Live && _slots[i].TargetId == targetId)
+                {
+                    glyph = _slots[i].Style.Glyph;
+                    shown = _slots[i].Glyph.enabled && _slots[i].Glyph.sprite == _glyphs[(int)glyph];
+                    return true;
+                }
+            }
+
+            glyph = UiWorldNumberGlyph.None;
+            shown = false;
+            return false;
+        }
+
+        // Left of the number: half the digits (Oswald ≈ 0.56 em each, bold ≈ 0.64) + the gap + half the glyph.
+        private static float GlyphOffset(ref Slot s)
+        {
+            float size = PointSize(s.Style.Size);
+            int digits = s.Assigned != null ? s.Assigned.Length : 2;
+            return digits * size * (s.Style.Bold ? 0.32f : 0.28f) + GlyphGap + size * GlyphScaleOf(s.Style.Size) * 0.5f;
+        }
+
+        private static float GlyphScaleOf(UiWorldNumberSize size) => size <= UiWorldNumberSize.M ? GlyphScaleSmall : GlyphScale;
 
         // DEC-077: a number never covers the player. Inside the player's screen box (feet → head, ± half a body) it
         // moves up above the head — upward only, like the rise.
@@ -526,12 +679,24 @@ namespace DD.Prototype.UI
                 float turn = ((s.Sequence * 2654435761u) >> 16 & 0xFFFF) / 65535f * 36f - 18f;
                 s.BurstRect.localRotation = Quaternion.Euler(0f, 0f, turn);
             }
+
+            Sprite glyph = _glyphs[(int)s.Style.Glyph];
+            bool showGlyph = glyph != null;
+            if (s.Glyph.enabled != showGlyph) s.Glyph.enabled = showGlyph;
+            if (showGlyph)
+            {
+                if (s.Glyph.sprite != glyph) s.Glyph.sprite = glyph;
+                if (s.Glyph.color != c) s.Glyph.color = c;
+                float g = size * GlyphScaleOf(s.Style.Size);
+                s.GlyphRect.sizeDelta = new Vector2(g, g);
+            }
         }
 
         private static void SetAlpha(ref Slot s, float a)
         {
             s.TextRenderer.SetAlpha(a);
             if (s.Burst.enabled) s.BurstRenderer.SetAlpha(a);
+            if (s.Glyph.enabled) s.GlyphRenderer.SetAlpha(a);
         }
 
         private static void Release(ref Slot s)
@@ -546,6 +711,7 @@ namespace DD.Prototype.UI
             s.Alpha = 0f;
             s.TextRenderer.SetAlpha(0f);
             s.BurstRenderer.SetAlpha(0f);
+            s.GlyphRenderer.SetAlpha(0f);
         }
 
         private void OnPhaseChanged(RunPhase phase)

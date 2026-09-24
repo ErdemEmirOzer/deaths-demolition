@@ -19,13 +19,21 @@ namespace DD.Prototype.UI
         [SerializeField] private float _life = 0.3f;
         [SerializeField] private float _loopPeriod;
         [SerializeField] private Texture _texture;
+        [SerializeField] private float _startRadius;
         private float _start = -10000f;
 
         public override Texture mainTexture => _texture != null ? _texture : s_WhiteTexture;
         public int Count => _count;
 
-        public UiFxParticles Configure(int count, float size, float speed, float gravity, float life, float loopPeriod = 0f, Texture texture = null)
+        /// <summary>
+        /// <paramref name="startRadius"/> (reference px, bursts only): each spark starts on a circle of that radius at its own
+        /// angle and travels outward from it — the Special ring's sparks leave the stroke (r 66 → 96), not the centre over the
+        /// timer (AD 8c SHOULD-2). 0 = from the centre, as before.
+        /// </summary>
+        public UiFxParticles Configure(int count, float size, float speed, float gravity, float life, float loopPeriod = 0f, Texture texture = null,
+            float startRadius = 0f)
         {
+            _startRadius = Mathf.Max(0f, startRadius);
             _count = Mathf.Clamp(count, 1, 256);
             _size = size;
             _speed = speed;
@@ -67,16 +75,17 @@ namespace DD.Prototype.UI
                 var prm = new Vector4(_size, _speed, _gravity, seed);
                 int b = vh.currentVertCount;
                 float half = _size * 0.5f;   // a real quad on the CPU (uGUI drops zero-area geometry); the shader re-centres it
-                vh.AddVert(Vert(origin + new Vector3(-half, -half), c, new Vector2(0f, 0f), fx, prm, -1f, -1f));
-                vh.AddVert(Vert(origin + new Vector3(-half, half), c, new Vector2(0f, 1f), fx, prm, -1f, 1f));
-                vh.AddVert(Vert(origin + new Vector3(half, half), c, new Vector2(1f, 1f), fx, prm, 1f, 1f));
-                vh.AddVert(Vert(origin + new Vector3(half, -half), c, new Vector2(1f, 0f), fx, prm, 1f, -1f));
+                float radius = _loopPeriod > 0f ? 0f : _startRadius;
+                vh.AddVert(Vert(origin + new Vector3(-half, -half), c, new Vector2(0f, 0f), fx, prm, -1f, -1f, radius));
+                vh.AddVert(Vert(origin + new Vector3(-half, half), c, new Vector2(0f, 1f), fx, prm, -1f, 1f, radius));
+                vh.AddVert(Vert(origin + new Vector3(half, half), c, new Vector2(1f, 1f), fx, prm, 1f, 1f, radius));
+                vh.AddVert(Vert(origin + new Vector3(half, -half), c, new Vector2(1f, 0f), fx, prm, 1f, -1f, radius));
                 vh.AddTriangle(b, b + 1, b + 2);
                 vh.AddTriangle(b + 2, b + 3, b);
             }
         }
 
-        private static UIVertex Vert(Vector3 p, Color32 c, Vector2 uv, Vector4 fx, Vector4 prm, float cx, float cy)
+        private static UIVertex Vert(Vector3 p, Color32 c, Vector2 uv, Vector4 fx, Vector4 prm, float cx, float cy, float radius)
         {
             UIVertex v = UIVertex.simpleVert;
             v.position = p;
@@ -84,7 +93,7 @@ namespace DD.Prototype.UI
             v.uv0 = uv;
             v.uv1 = fx;
             v.uv2 = prm;
-            v.uv3 = new Vector4(cx, cy, 0f, 0f);
+            v.uv3 = new Vector4(cx, cy, radius, 0f);   // z: the burst's start radius
             return v;
         }
 

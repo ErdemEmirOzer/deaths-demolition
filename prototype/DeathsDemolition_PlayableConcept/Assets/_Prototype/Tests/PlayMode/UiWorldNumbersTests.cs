@@ -164,6 +164,66 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(n.TryReadPlacement(2, out _, out _), "RM: 500 + 200 ms'de gitti");
         }
 
+        [Test]
+        public void E18b_Glif_ZirhKirilmaVeTier_BirlesmedeAgirOlanKalir()
+        {
+            foreach (string key in UiWorldNumbers.GlyphKeys)
+            {
+                if (key != null) Assert.IsNotNull(UiArt.Icon(key), "G1 glifi yok: " + key);
+            }
+
+            Assert.AreEqual(UiWorldNumberGlyph.ArmorBreak, HitFeedbackDirector.NumberStyle(HitFeedbackTier.ArmorBreak, false).Glyph);
+            Assert.AreEqual(UiWorldNumberGlyph.Elite, HitFeedbackDirector.NumberStyle(HitFeedbackTier.HeavyDeath, false, FeedbackWeight.Elite).Glyph);
+            Assert.AreEqual(UiWorldNumberGlyph.Ultra, HitFeedbackDirector.NumberStyle(HitFeedbackTier.HeavyDeath, false, FeedbackWeight.Ultra).Glyph);
+            Assert.AreEqual(UiWorldNumberGlyph.None, HitFeedbackDirector.NumberStyle(HitFeedbackTier.FleshHit, false).Glyph);
+
+            UiWorldNumbers n = UiWorldNumbers.Instance;
+            n.Spawn(3, 34f, HitFeedbackDirector.NumberStyle(HitFeedbackTier.ArmorBreak, false), Ahead);
+            Assert.IsTrue(n.TryReadGlyph(3, out UiWorldNumberGlyph g, out bool shown));
+            Assert.AreEqual(UiWorldNumberGlyph.ArmorBreak, g);
+            Assert.IsTrue(shown, "zırh kırılma glifi görünmeli");
+
+            n.TryMerge(3, 90f, HitFeedbackDirector.NumberStyle(HitFeedbackTier.HeavyDeath, false, FeedbackWeight.Ultra), Ahead, 1f);
+            n.TryReadGlyph(3, out g, out shown);
+            Assert.AreEqual(UiWorldNumberGlyph.Ultra, g, "birleşmede ağır glif kalır");
+            Assert.IsTrue(shown);
+
+            n.Spawn(4, 22f, HitFeedbackDirector.NumberStyle(HitFeedbackTier.FleshHit, false), Ahead);
+            n.TryReadGlyph(4, out g, out shown);
+            Assert.IsFalse(shown, "et vuruşunda glif yok");
+        }
+
+        [UnityTest]
+        public IEnumerator E18b_DurumDamgasi_SayiUstuneCikar_RaporDusunceBiter()
+        {
+            UiWorldNumbers n = UiWorldNumbers.Instance;
+            var style = new UiWorldNumberStyle(UiWorldNumberSize.M, UiColor.TextPrimary);
+            UiMotion.ReducedMotion = true;   // at rest: only the clamp moves the number
+            n.Spawn(5, 10f, style, Ahead);
+            n.Spawn(6, 10f, style, Ahead);
+            yield return null;
+            n.TryReadPlacement(5, out Vector2 free, out _);
+
+            Vector3 s = _cam.WorldToScreenPoint(Ahead);
+            var stamp = new Rect(s.x - 40f, s.y - 10f, 80f, 40f);   // a stamp over the number's anchor (top 30 px above it)
+            for (int f = 0; f < 3; f++)
+            {
+                UiWorldNumbers.ReportAvoidRect(5, stamp);
+                yield return null;
+            }
+
+            n.TryReadPlacement(5, out Vector2 lifted, out _);
+            n.TryReadPlacement(6, out Vector2 other, out _);
+            float scale = n.Canvas.scaleFactor;
+            Assert.GreaterOrEqual((lifted.y - free.y) * scale, 30f + UiWorldNumbers.AvoidGap, "sayı damganın üst kenarının üstüne çıkmalı");
+            Assert.AreEqual(free.y, other.y, 0.01f, "başka hedefin sayısı etkilenmez");
+
+            yield return null;   // the stamp stops reporting (fading out)
+            yield return null;
+            n.TryReadPlacement(5, out Vector2 after, out _);
+            Assert.AreEqual(free.y, after.y, 0.01f, "rapor yenilenmeyince 1 kare sonra düşer");
+        }
+
         [UnityTest]
         public IEnumerator VurusBasinaSifirAyirma()
         {
