@@ -333,7 +333,28 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.ZombieReactWeb: return BuildImpactPaper(ref rng);
                 case AudioSoundId.ZombieReactPull: return BuildImpactDirt(ref rng);
 
+                // WP-072 B1 weapon fire v3 (AP-011 v016 owns the shipped clips; WeaponFireAudio only
+                // takes the new path for produced ids, so these are the test/no-catalog fallback).
+                case AudioSoundId.WeaponAr1Fire:
+                case AudioSoundId.WeaponAr1Transient:
+                case AudioSoundId.WeaponAr2Fire:
+                case AudioSoundId.WeaponLmg1Fire:
+                case AudioSoundId.WeaponLmg1Transient:
+                case AudioSoundId.WeaponSr1Fire: return BuildWeaponFire(WeaponVoice.Rifle, ref rng);
+                case AudioSoundId.WeaponSmg1Fire:
+                case AudioSoundId.WeaponSmg1Transient:
+                case AudioSoundId.WeaponSmg2Fire: return BuildWeaponFire(WeaponVoice.Smg, ref rng);
+                case AudioSoundId.WeaponSg1Fire:
+                case AudioSoundId.WeaponSg2Fire: return BuildWeaponFire(WeaponVoice.Shotgun, ref rng);
+                case AudioSoundId.WeaponLmg2Fire: return BuildWeaponFire(WeaponVoice.Heavy, ref rng);
+                case AudioSoundId.WeaponRl1Fire: return BuildExplosion(ref rng);
+                case AudioSoundId.WeaponAr1Loop:
+                case AudioSoundId.WeaponSmg1Loop:
+                case AudioSoundId.WeaponLmg1Loop: return BuildHeavyMotorLoop(ref rng);
+
                 default:
+                    if (id >= AudioSoundId.WeaponTailArOpen && id <= AudioSoundId.WeaponTailRlHall) return BuildWindBed(ref rng);
+
                     return BuildImpactDefault(ref rng);
             }
         }

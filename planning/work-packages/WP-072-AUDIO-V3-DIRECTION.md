@@ -170,3 +170,5 @@ Dinleme kiti (STANDARDS §10 formatı): `asset-production/AP-011/v016/review/ab/
 | Q6 | Kovan fizik olayı (`CasingLanded(surface)`) ve projectile çarpma yüzey etiketi (`Plaster` yeni) | S-07 WP-073 / S-02 | +400 ms sabit; Plaster → Stone |
 | Q7 | `sw_shock / sw_slip / sw_knockdown` beat'leri; `sw_push/web/pull` kaldırılıyor mu | S-03 WP-076 | ZombieReactPush/Web/Pull kalır, yeni ikisi eklenir |
 | Q8 | ~~550 MB / 2 GB kararı~~ **KAPANDI 24.09: DEC-092 60 fps, DEC-093 5 GB** → STANDARDS §9 geniş dalı: q0,9 ateş/darbe/Special, 3 stereo tail varyantı, ses eklentisi ≤ 8 MB | C-00 / kullanıcı | — |
+
+> **Durum (2026-09-24, B1):** yuva adları S-02 WP-069 §0 ile eşlendi: SNP→SR1, LNC→RL1, SW_CHAIN→SW_ARC; döngü sınıfı AR1/SMG1/LMG1 (600/900/720 RPM), SMG2/LMG2 tek-atış. C-00 kararı (a): seed_audio SFX'e kullanılmaz; R6/R9 türetildi, kalan 8,4 kr rezerve döndü. B1 = AP-011 v016 (34 kimlik / 91 dosya, A1 45/45).

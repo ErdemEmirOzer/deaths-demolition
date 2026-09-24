@@ -285,6 +285,46 @@ namespace DD.Prototype.Audio
         UiInkBleed = 365,
         HudNewBestRound = 366,
         HudEliteDown = 367,
-        HudUltraDown = 368
+        HudUltraDown = 368,
+
+        // ---- WP-072 B1 · weapon fire v3 (S-02 WP-069 audioIds; 5-layer dry pre-mix, tail per acoustic space; AP-011 v016)
+        // One-shot = full dry shot. AR1/SMG1/LMG1 (auto ≥ 600 RPM) add a per-shot Transient (mechanism + ring)
+        // over an RPM-locked body Loop; their tail plays once on release (WeaponFireAudio).
+        WeaponAr1Fire = 400,
+        WeaponAr1Transient = 401,
+        WeaponAr1Loop = 402,
+        WeaponAr2Fire = 403,
+        WeaponSmg1Fire = 404,
+        WeaponSmg1Transient = 405,
+        WeaponSmg1Loop = 406,
+        WeaponSmg2Fire = 407,
+        WeaponSg1Fire = 408,
+        WeaponSg2Fire = 409,
+        WeaponLmg1Fire = 410,
+        WeaponLmg1Transient = 411,
+        WeaponLmg1Loop = 412,
+        WeaponLmg2Fire = 413,
+        WeaponSr1Fire = 414,
+        WeaponRl1Fire = 415,
+
+        // ---- WP-072 B1 · wet-only space tails per weapon class × acoustic space (Open / Corridor / Hall)
+        WeaponTailArOpen = 420,
+        WeaponTailArCorridor = 421,
+        WeaponTailArHall = 422,
+        WeaponTailSmgOpen = 423,
+        WeaponTailSmgCorridor = 424,
+        WeaponTailSmgHall = 425,
+        WeaponTailSgOpen = 426,
+        WeaponTailSgCorridor = 427,
+        WeaponTailSgHall = 428,
+        WeaponTailLmgOpen = 429,
+        WeaponTailLmgCorridor = 430,
+        WeaponTailLmgHall = 431,
+        WeaponTailSrOpen = 432,
+        WeaponTailSrCorridor = 433,
+        WeaponTailSrHall = 434,
+        WeaponTailRlOpen = 435,
+        WeaponTailRlCorridor = 436,
+        WeaponTailRlHall = 437
     }
 }

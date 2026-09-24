@@ -87,6 +87,7 @@ namespace DD.Prototype.Audio
         private MusicDirector _music;
         private AudioEventRouter _router;
         private AudioListenerAnchor _listener;
+        private WeaponFireAudio _weaponFire;
         private AudioSnapshot _snapshotBeforePause = AudioSnapshot.Run;
 
         private readonly List<DebugPanelEntry> _debugEntries = new List<DebugPanelEntry>(16);
@@ -142,6 +143,9 @@ namespace DD.Prototype.Audio
         /// <summary>The last sound that got a voice. Test readout.</summary>
         public AudioSoundId LastPlayed { get; private set; }
 
+        /// <summary>WP-072 B1 test / F1 surface: the player's fire voice.</summary>
+        public WeaponFireAudio WeaponFire => _weaponFire;
+
         /// <summary>Total cues refused by the voice budget across both pools. F1 readout, and the O3 measurement.</summary>
         public int DroppedCues => (_world != null ? _world.DroppedCount : 0) + (_signal != null ? _signal.DroppedCount : 0);
 
@@ -184,6 +188,7 @@ namespace DD.Prototype.Audio
             _router.SetFieldLoopHandlers(StartFieldLoop, StopFieldLoop);   // WP-058
             _router.SetUiVoiceHandlers(StartUiVoice, StopUiVoice);          // WP-068 s11
             _listener = new AudioListenerAnchor(transform);
+            _weaponFire = new WeaponFireAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);   // WP-072 B1
             BuildFieldLoops();
             BuildUiVoices();
             _signal.SetIgnoreListenerPause(true);   // WP-068 s11: the pause menu is heard
@@ -337,6 +342,7 @@ namespace DD.Prototype.Audio
             }
 
             TickLoops(dt);
+            if (!_paused) _weaponFire.Tick(dt);   // WP-072 B1: trigger release → body loop fade + tail
             TickFieldLoops();
             TickUiVoices(dt);
 
@@ -442,6 +448,13 @@ namespace DD.Prototype.Audio
             if (cue.Event == CombatAudioEvent.SpecialWeaponPickup)
             {
                 _music.OnSpecialPickup();   // WP-057 stinger over the layers
+            }
+
+            // WP-072 B1: a fire cue that names its weapon speaks with that weapon's v016 voice;
+            // without produced clips it falls through to the legacy intensity-picked sound.
+            if (cue.Event == CombatAudioEvent.ClassicWeaponFire && _weaponFire.TryHandle(cue))
+            {
+                return;
             }
 
             bool failing = false;
@@ -1203,6 +1216,7 @@ namespace DD.Prototype.Audio
 
         private void StopAllLoops()
         {
+            _weaponFire?.StopAll();   // WP-072 B1
             if (_loops.Count == 0)
             {
                 return;

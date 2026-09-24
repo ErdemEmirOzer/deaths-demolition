@@ -96,13 +96,25 @@ namespace DD.Prototype.Feedback
         /// <summary>True when this cue starts a loop that must later be stopped.</summary>
         public readonly bool IsLoop;
 
+        /// <summary>
+        /// WP-072: the firing weapon's audioId (WP-069 A4: "AR1" … "RL1") on a fire cue, else null.
+        /// Lets the audio side speak per weapon instead of reading the identity out of <see cref="Intensity"/>.
+        /// </summary>
+        public readonly string WeaponAudioId;
+
         public CombatAudioCue(CombatAudioEvent evt, Vector3 position, float intensity, int priority, bool isLoop)
+            : this(evt, position, intensity, priority, isLoop, null)
+        {
+        }
+
+        public CombatAudioCue(CombatAudioEvent evt, Vector3 position, float intensity, int priority, bool isLoop, string weaponAudioId)
         {
             Event = evt;
             Position = position;
             Intensity = intensity;
             Priority = priority;
             IsLoop = isLoop;
+            WeaponAudioId = weaponAudioId;
         }
     }
 
@@ -155,6 +167,15 @@ namespace DD.Prototype.Feedback
         public static void Raise(CombatAudioEvent evt, Vector3 position, float intensity = 1f, int priority = 0)
         {
             RaiseInternal(new CombatAudioCue(evt, position, intensity, priority, false), true);
+        }
+
+        /// <summary>
+        /// WP-072: a weapon cue that names its weapon (WP-069 audioId). Same duplicate rule as <see cref="Raise"/>;
+        /// listeners that ignore <see cref="CombatAudioCue.WeaponAudioId"/> see an ordinary cue.
+        /// </summary>
+        public static void RaiseWeapon(CombatAudioEvent evt, string weaponAudioId, Vector3 position, float intensity = 1f, int priority = 0)
+        {
+            RaiseInternal(new CombatAudioCue(evt, position, intensity, priority, false, weaponAudioId), true);
         }
 
         /// <summary>Bypasses duplicate suppression. Use for lifecycle events that must never be lost.</summary>

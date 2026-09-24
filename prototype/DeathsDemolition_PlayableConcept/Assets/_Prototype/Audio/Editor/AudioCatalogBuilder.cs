@@ -34,6 +34,9 @@ namespace DD.Prototype.Audio.EditorTools
         public const float SfxQuality = 0.8f;
         public const float MusicQuality = 0.7f;
 
+        /// <summary>WP-072 (DEC-093, 5 GB cap): player-weapon fire, body loops and space tails at q9.</summary>
+        public const float WeaponQuality = 0.9f;
+
         [Serializable]
         public sealed class ManifestEntry
         {
@@ -159,7 +162,7 @@ namespace DD.Prototype.Audio.EditorTools
                 for (int f = 0; f < m.files.Length; f++)
                 {
                     string path = AudioRoot + m.files[f];
-                    PinImporter(path, m.loop);
+                    PinImporter(path, m.loop, m.sound);
                     var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
                     if (clip == null)
                     {
@@ -202,8 +205,29 @@ namespace DD.Prototype.Audio.EditorTools
             return "catalog built: " + entries.Count + " entries, " + missing + " missing clips, manifest " + hash.Substring(0, 8);
         }
 
+        /// <summary>WP-072: the v016 player-weapon set (fire / transient / body loop / space tail).</summary>
+        public static bool IsWeaponV3(string sound)
+        {
+            return sound != null && sound.StartsWith("Weapon", StringComparison.Ordinal)
+                   && (sound.EndsWith("Fire", StringComparison.Ordinal) || sound.EndsWith("Transient", StringComparison.Ordinal)
+                       || sound.EndsWith("Loop", StringComparison.Ordinal) || sound.StartsWith("WeaponTail", StringComparison.Ordinal));
+        }
+
+        /// <summary>The codec and Vorbis quality an entry's files are pinned to (the quality test reads the same rule).</summary>
+        public static AudioCompressionFormat WantedFormat(string sound, bool loop, bool longClip, out float quality)
+        {
+            if (IsWeaponV3(sound))
+            {
+                quality = WeaponQuality;
+                return sound.EndsWith("Transient", StringComparison.Ordinal) ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis;
+            }
+
+            quality = loop || longClip ? MusicQuality : SfxQuality;
+            return AudioCompressionFormat.Vorbis;
+        }
+
         /// <summary>Importer pin. Only writes when something differs, so a no-op build reimports nothing.</summary>
-        private static void PinImporter(string path, bool loop)
+        private static void PinImporter(string path, bool loop, string sound = "")
         {
             var importer = AssetImporter.GetAtPath(path) as AudioImporter;
             if (importer == null)
@@ -216,10 +240,13 @@ namespace DD.Prototype.Audio.EditorTools
             bool longClip = probe != null && probe.length >= 8f;
 
             // v003 quality standard (user directive 2026-09-16): OGG q8 for SFX, q7 for music/ambience loops.
+            // WP-072 (DEC-093): the weapon v3 set is chosen for quality - q9 Vorbis, the ≤ 70 ms transients
+            // as PCM (no codec pre-echo on the click that carries the weapon), space tails keep their stereo.
+            bool stereo = IsWeaponV3(sound) && sound.StartsWith("WeaponTail", StringComparison.Ordinal);
             var wanted = new AudioImporterSampleSettings
             {
-                compressionFormat = AudioCompressionFormat.Vorbis,
-                quality = loop || longClip ? MusicQuality : SfxQuality,
+                compressionFormat = WantedFormat(sound, loop, longClip, out float quality),
+                quality = quality,
                 loadType = longClip ? AudioClipLoadType.Streaming : AudioClipLoadType.DecompressOnLoad,
                 sampleRateSetting = AudioSampleRateSetting.PreserveSampleRate,
                 preloadAudioData = !longClip
@@ -229,7 +256,7 @@ namespace DD.Prototype.Audio.EditorTools
                         && Mathf.Approximately(s.quality, wanted.quality)
                         && s.loadType == wanted.loadType
                         && s.sampleRateSetting == wanted.sampleRateSetting
-                        && importer.forceToMono
+                        && importer.forceToMono == !stereo
                         && importer.loadInBackground == longClip;
 
             if (same)
@@ -238,7 +265,7 @@ namespace DD.Prototype.Audio.EditorTools
             }
 
             importer.defaultSampleSettings = wanted;
-            importer.forceToMono = true;
+            importer.forceToMono = !stereo;
             importer.loadInBackground = longClip;
             importer.ambisonic = false;
             importer.SaveAndReimport();

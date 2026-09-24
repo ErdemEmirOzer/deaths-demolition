@@ -60,3 +60,10 @@ game event ─► AudioEventMap row (sound id, bus, spatial) ─► AudioEventRo
 - **Controllable UI voices** (director, 2 sources, Interface bus): soroban roll (stops at CounterSettled or 0.6 s), hold rub (Confirm completes, Back cuts in 20 ms), boot seal (skip = 120 ms fade). Card deal +0/+2/+4 % per index; stamp detail rare/epic; hover sweep ×0.8 (floor 0.45); NEW BEST ribbon waits ≤ 3 s behind a threat chip; ±3 % jitter on every interface cue.
 - **Pause:** the Interface pool ignores the listener pause and the software mute (pause menu audible); pause/resume play the fusuma short slide / opening. **Death:** ink texture 0.6 s after the stinger.
 - **UI SOUNDS (U8):** `UiSettings.UiVolume` → `PrototypeAudio.UiVolume` → `AudioBusMixer.SetPlayerVolume(Interface)` (not the mixer's exposed UiVolume, which would override the snapshot UI trims).
+
+## 9 · Weapon fire v3 (WP-072 B1)
+
+- **Contract:** `AudioEvents.RaiseWeapon(ClassicWeaponFire, audioId, …)` names the weapon (WP-069 `AR1…RL1`; A/B/C → AR1/SMG1/SG1 via `WeaponAudioIdentity.ForClassic`). Plain `Raise` still resolves by intensity (legacy RifleFire/SmgFire/ShotgunFire).
+- **`WeaponFireAudio`:** one-shot weapons = dry shot + space tail every shot. Hybrid AR1/SMG1/LMG1 (Auto ∧ RPM ≥ 600): full first shot, then transient per shot over the RPM-locked body loop (rate bends ±15 % to the real cadence); a 1.6-period gap = release → loop fades in 40 ms and the tail rings once.
+- **Space:** `AcousticSpaces.Resolver` (S-05 WP-074 `acoustic-spaces-v6.json`), default Open; tail files −20 LUFS, placement −12/−8/−6 dB (Open/Corridor/Hall). **Camera:** `CameraModeService.Current` → spatial 0.35/0.25/0, near-field 0/+1/+2 dB, transient +0/+3/+7 dB, tail +0/+1/+2 dB (STANDARDS §4).
+- **Import:** weapon v3 Vorbis q0.9, transients PCM, tails stereo (DEC-093). Only produced ids take the new path; a missing catalog falls back to the legacy sounds.

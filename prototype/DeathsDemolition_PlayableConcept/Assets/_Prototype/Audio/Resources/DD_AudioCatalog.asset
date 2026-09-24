@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v015
-  _sourceHash: 6e809e21c799eb4e7ebe4391f23a12795bf41c771128244f2eee982a9587605a
+  _manifestVersion: ap011-v016
+  _sourceHash: 18e0d1eda7aa7d981f13ee07e9683749753bf490c975b1ecb8dc26e228a93943
   _entries:
   - Sound: 10
     Clips:
@@ -2926,3 +2926,578 @@ MonoBehaviour:
     BitDepth: 24
     Layers: 'derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB -1st
       + ui_bell_rin_suzu.wav@40ms -4dB -5st + ui_bell_rin_suzu.wav@120ms -8dB'
+  - Sound: 400
+    Clips:
+    - {fileID: 8300000, guid: 47ef268e186c64d44a2bbeb8de655571, type: 3}
+    - {fileID: 8300000, guid: 8e7233207f3754e17ba7f18a7f9c4519, type: 3}
+    - {fileID: 8300000, guid: 0845a873909cf4ce9a3ffb0e921a4163, type: 3}
+    - {fileID: 8300000, guid: c65676d49fd4d4d3d8b851dcf328d49c, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 AR1 dry
+      pre-mix K1 R1 + K2 rifle +0 st + K3 R5 ring 3300 Hz + carrier 300/1550 Hz +
+      sub 55 Hz; target 1720 Hz / 71 ms"
+    NoiseFloorDb: -62.6
+    DcDb: -174.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 401
+    Clips:
+    - {fileID: 8300000, guid: 990c01f70964f409bb872abd936c933c, type: 3}
+    - {fileID: 8300000, guid: e6ec97f0452574d2ba6efaa290596526, type: 3}
+    - {fileID: 8300000, guid: e0b79e15d26d344768baa5ed8e49d419, type: 3}
+    - {fileID: 8300000, guid: c37209c88d81d465398378dd0ef82abb, type: 3}
+    Loop: 0
+    Lufs: -23.63
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 AR1 per-shot
+      K1+K3 \u2264 70 ms, file boosted +3.6 dB onto the peak ceiling; runtime trim
+      -3.6 dB restores the Fire pre-mix relation (plays on top of WeaponAr1Loop)"
+    NoiseFloorDb: -120
+    DcDb: -153.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 402
+    Clips:
+    - {fileID: 8300000, guid: 0381fb39f7cc74968bcdc96e6532ee95, type: 3}
+    Loop: 1
+    Lufs: -21.08
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 AR1 seamless
+      8-shot K2+K5 body loop at 600 RPM (ap011_autoloop, 4 bodies cycled); measured
+      599.8 RPM, seam ratio 2.82"
+    NoiseFloorDb: -120
+    DcDb: -187.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 403
+    Clips:
+    - {fileID: 8300000, guid: 52dfd9c3477ed4d808ae435e47ec7d23, type: 3}
+    - {fileID: 8300000, guid: ce4a2b193b53c4dd9b53548d2f90bb9d, type: 3}
+    - {fileID: 8300000, guid: d044449acf81a48cebb1a6493ead4a69, type: 3}
+    - {fileID: 8300000, guid: cb3e14cabe0ef441db9bff394f4066ed, type: 3}
+    Loop: 0
+    Lufs: -19.2
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 AR2 dry
+      pre-mix K1 R2 + K2 rifle -3 st + K3 R2 ring 2000 Hz + carrier 270/820 Hz +
+      sub 45 Hz; target 940 Hz / 200 ms"
+    NoiseFloorDb: -62.6
+    DcDb: -171.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 404
+    Clips:
+    - {fileID: 8300000, guid: 74f31a22573b446a5b7fbf02faab7f8b, type: 3}
+    - {fileID: 8300000, guid: ee3ee843a69c742f69f3f0f1e453f6a4, type: 3}
+    - {fileID: 8300000, guid: 6faf193c32c3f404391678837db47366, type: 3}
+    - {fileID: 8300000, guid: 760ea9d12502b4038a0ae4f01d6928ec, type: 3}
+    Loop: 0
+    Lufs: -19.95
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SMG1 dry
+      pre-mix K1 R4 + K2 c2 +0 st + K3 R5 ring 3900 Hz + carrier 380/1800 Hz + sub
+      60 Hz; target 2000 Hz / 55 ms"
+    NoiseFloorDb: -94.3
+    DcDb: -174.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 405
+    Clips:
+    - {fileID: 8300000, guid: 107d49bf19e0c476a8deafdd2680220e, type: 3}
+    - {fileID: 8300000, guid: eb626807b442c4dbe9d8259a1f37b387, type: 3}
+    - {fileID: 8300000, guid: 712e834f418e54590807108e56827034, type: 3}
+    - {fileID: 8300000, guid: 97b07caaf4e6c49b1b6be05df14a45e9, type: 3}
+    Loop: 0
+    Lufs: -24.27
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SMG1 per-shot
+      K1+K3 \u2264 70 ms, file boosted +9.4 dB onto the peak ceiling; runtime trim
+      -9.4 dB restores the Fire pre-mix relation (plays on top of WeaponSmg1Loop)"
+    NoiseFloorDb: -120
+    DcDb: -156
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 406
+    Clips:
+    - {fileID: 8300000, guid: 820e1e6b1a5e849c0bf2863b97810cec, type: 3}
+    Loop: 1
+    Lufs: -18.15
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SMG1 seamless
+      8-shot K2+K5 body loop at 900 RPM (ap011_autoloop, 4 bodies cycled); measured
+      902.0 RPM, seam ratio 3.88"
+    NoiseFloorDb: -120
+    DcDb: -204.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 407
+    Clips:
+    - {fileID: 8300000, guid: 6db57d94dff0441768ecf08e10d39d6e, type: 3}
+    - {fileID: 8300000, guid: 9faff6d23d8644c6db0cef1f3a024db0, type: 3}
+    - {fileID: 8300000, guid: 464f09af41209403b9124055717834fb, type: 3}
+    - {fileID: 8300000, guid: ca61f8e692b924cfba1f95486e014e9b, type: 3}
+    Loop: 0
+    Lufs: -19.96
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SMG2 dry
+      pre-mix K1 R5 + K2 c1 -4 st + K3 R2 ring 1700 Hz + carrier 340/700 Hz + sub
+      48 Hz; target 810 Hz / 154 ms"
+    NoiseFloorDb: -62.4
+    DcDb: -160.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 408
+    Clips:
+    - {fileID: 8300000, guid: 11eb9c397d5d8429f8cb244442429c51, type: 3}
+    - {fileID: 8300000, guid: ae12cd8f0a72d44fdadc91bfd3dbe6da, type: 3}
+    - {fileID: 8300000, guid: 6ec477f8504c0486bab873112891b3f2, type: 3}
+    - {fileID: 8300000, guid: 0f945db0044dd4714a169768cfc16b6c, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SG1 dry
+      pre-mix K1 R3 + K2 shotgun +0 st + K3 R2 ring 1500 Hz + carrier 220/520 Hz
+      + sub 40 Hz; target 600 Hz / 336 ms"
+    NoiseFloorDb: -66.4
+    DcDb: -170
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 409
+    Clips:
+    - {fileID: 8300000, guid: 46860032ee3e2463b95e09bd7cdbd534, type: 3}
+    - {fileID: 8300000, guid: e95be038c35894c1db0879b5360af02f, type: 3}
+    - {fileID: 8300000, guid: 16c57379853ea4cc5ab63d64c3165499, type: 3}
+    - {fileID: 8300000, guid: e6d844bbd9a2841fb80bb414c4fcb117, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -2.02
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SG2 dry
+      pre-mix K1 R3 + K2 shotgun +2 st + K3 R3 ring 2500 Hz + carrier 210/1150 Hz
+      + sub 42 Hz; target 1270 Hz / 119 ms"
+    NoiseFloorDb: -66.4
+    DcDb: -140.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 410
+    Clips:
+    - {fileID: 8300000, guid: 87217f510a13c44f1ae6e559a83d3c9e, type: 3}
+    - {fileID: 8300000, guid: 0ecbc5104d5344249afe78064e630c5d, type: 3}
+    - {fileID: 8300000, guid: e1d3b9bfbbc1c4ee6beb7db3596c9e50, type: 3}
+    - {fileID: 8300000, guid: 4db81cd36284e48daa2bc73323bf961d, type: 3}
+    Loop: 0
+    Lufs: -18.42
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 LMG1 dry
+      pre-mix K1 R5 + K2 heavy +0 st + K3 R5 ring 3000 Hz + carrier 240/1250 Hz +
+      sub 50 Hz; target 1480 Hz / 92 ms"
+    NoiseFloorDb: -50.2
+    DcDb: -167.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 411
+    Clips:
+    - {fileID: 8300000, guid: d01cd3cc0d9b84902a5e44bd11cf889a, type: 3}
+    - {fileID: 8300000, guid: 2d62ace10fdc84595bace90ee6188bd1, type: 3}
+    - {fileID: 8300000, guid: ae33f62b291a348a5a0b121ab10471ba, type: 3}
+    - {fileID: 8300000, guid: 64fc463298d8544f799513dc51e63298, type: 3}
+    Loop: 0
+    Lufs: -23.23
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 LMG1 per-shot
+      K1+K3 \u2264 70 ms, file boosted +4.4 dB onto the peak ceiling; runtime trim
+      -4.4 dB restores the Fire pre-mix relation (plays on top of WeaponLmg1Loop)"
+    NoiseFloorDb: -120
+    DcDb: -139
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 412
+    Clips:
+    - {fileID: 8300000, guid: bd96cae5dc50e4a138f8a9f3a2fa0d44, type: 3}
+    Loop: 1
+    Lufs: -18
+    TruePeakDb: -2.57
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 LMG1 seamless
+      8-shot K2+K5 body loop at 720 RPM (ap011_autoloop, 4 bodies cycled); measured
+      719.8 RPM, seam ratio 4.53"
+    NoiseFloorDb: -120
+    DcDb: -195.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 413
+    Clips:
+    - {fileID: 8300000, guid: 588b383abf76f4dc9a500eba241f5ea5, type: 3}
+    - {fileID: 8300000, guid: 8a41c0d2b0a8d42f195dec86cb6c6a6c, type: 3}
+    - {fileID: 8300000, guid: aec9bb56f1ba548a0a9bb6e7298e1bb4, type: 3}
+    - {fileID: 8300000, guid: bc26fceafadd342909d006792b3a0d8f, type: 3}
+    Loop: 0
+    Lufs: -19.95
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 LMG2 dry
+      pre-mix K1 R2 + K2 heavy -3 st + K3 metal ring 1400 Hz + carrier 210/600 Hz
+      + sub 40 Hz; target 695 Hz / 259 ms"
+    NoiseFloorDb: -50.2
+    DcDb: -165.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 414
+    Clips:
+    - {fileID: 8300000, guid: 2bb0cc757b9bb4efda5b78efcd87b911, type: 3}
+    - {fileID: 8300000, guid: d1c54781b4fa3409b8b78ae8dc35d4c5, type: 3}
+    - {fileID: 8300000, guid: 68f0252d8b9c54e00bbbfca5050354b1, type: 3}
+    - {fileID: 8300000, guid: 05c2966bfd9d64b2ab34ab3c13917859, type: 3}
+    Loop: 0
+    Lufs: -22.1
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SR1 dry
+      pre-mix K1 R4 + K2 rifle -3 st + K3 R4 ring 2800 Hz + carrier 190/1000 Hz +
+      sub 38 Hz; target 1090 Hz / 436 ms"
+    NoiseFloorDb: -62.6
+    DcDb: -155.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 415
+    Clips:
+    - {fileID: 8300000, guid: 491ab35d1e4b442a98cc7e365ba37610, type: 3}
+    - {fileID: 8300000, guid: c8fb4b38a453745ffa1918d54f30a25b, type: 3}
+    - {fileID: 8300000, guid: a0d97ae227c6e459ab469624e793f8b3, type: 3}
+    - {fileID: 8300000, guid: 6ffb4a6161347483eb56e7eb2384c105, type: 3}
+    Loop: 0
+    Lufs: -19.9
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 RL1 dry
+      pre-mix K1 R3 + K2 explosion +0 st + K3 R2 ring 900 Hz + carrier 200/450 Hz
+      + sub 45 Hz; target 515 Hz / 565 ms"
+    NoiseFloorDb: -90.9
+    DcDb: -150.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 420
+    Clips:
+    - {fileID: 8300000, guid: 3cf25152f9bd84aef80d5634758f0eb3, type: 3}
+    - {fileID: 8300000, guid: bb0a1bf8c1ed240fd9b7130e45972dba, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.46
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Open tail (ap011_space IR, RT60 0.8 s) of the Ar class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 421
+    Clips:
+    - {fileID: 8300000, guid: 05a726d462e4b4ddcb0fd58072c6231f, type: 3}
+    - {fileID: 8300000, guid: 3a118ad9c825f485b8ae638bb1521f62, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.86
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Corridor tail (ap011_space IR, RT60 1.25 s) of the Ar class dry pre-mix; file
+      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
+      seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 422
+    Clips:
+    - {fileID: 8300000, guid: ab5aca8e5770742adafc7ea91010c3fc, type: 3}
+    - {fileID: 8300000, guid: f71b17faaaf00468aa6b19b46041e9c7, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.68
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Hall tail (ap011_space IR, RT60 1.75 s) of the Ar class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 423
+    Clips:
+    - {fileID: 8300000, guid: 349f5e61dba754b25839c31892362f9f, type: 3}
+    - {fileID: 8300000, guid: 55286014538da4916ab924744dcc2cf0, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.72
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Open tail (ap011_space IR, RT60 0.8 s) of the Smg class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 424
+    Clips:
+    - {fileID: 8300000, guid: 69dbadbfea4fd4ca691912cafada10d5, type: 3}
+    - {fileID: 8300000, guid: becba9c7851f246c183408d3d8e86e92, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Corridor tail (ap011_space IR, RT60 1.25 s) of the Smg class dry pre-mix; file
+      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
+      seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 425
+    Clips:
+    - {fileID: 8300000, guid: 258b5dfe82b6549ec93cf7fc7b2dd0ad, type: 3}
+    - {fileID: 8300000, guid: 9ab73cc18d494456c8c2ea96eb5c403a, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.59
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Hall tail (ap011_space IR, RT60 1.75 s) of the Smg class dry pre-mix; file
+      \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR
+      seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 426
+    Clips:
+    - {fileID: 8300000, guid: 1927c9387b3eb45c8a8563e30e6ee3bf, type: 3}
+    - {fileID: 8300000, guid: 48f0103be0a7d4c9fbcf3fc29a18b953, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.52
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Open tail (ap011_space IR, RT60 0.8 s) of the Sg class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 427
+    Clips:
+    - {fileID: 8300000, guid: 89ad23cb4c0b84cf98c40101d4fd4970, type: 3}
+    - {fileID: 8300000, guid: 4ada2943fc5254610aa8b8d3aadcb4a4, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.42
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Corridor tail (ap011_space IR, RT60 1.25 s) of the Sg class dry pre-mix; file
+      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
+      seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 428
+    Clips:
+    - {fileID: 8300000, guid: 1ef81d77e56594fb384185a57f0dab93, type: 3}
+    - {fileID: 8300000, guid: b525d4119128a440ebdb46be7e35a430, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.59
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Hall tail (ap011_space IR, RT60 1.75 s) of the Sg class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 429
+    Clips:
+    - {fileID: 8300000, guid: b872d267dbf994d53ab53404614409c5, type: 3}
+    - {fileID: 8300000, guid: 665f4abf2ee1948848e7c0628a3e6d86, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.73
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Open tail (ap011_space IR, RT60 0.8 s) of the Lmg class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 430
+    Clips:
+    - {fileID: 8300000, guid: 754b73eac9e014637a1bbefa7c68d98f, type: 3}
+    - {fileID: 8300000, guid: 9670188c4c7ce4a09986638076f4e535, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.26
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Corridor tail (ap011_space IR, RT60 1.25 s) of the Lmg class dry pre-mix; file
+      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
+      seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 431
+    Clips:
+    - {fileID: 8300000, guid: 127db6e675d4049b499420ac186834e0, type: 3}
+    - {fileID: 8300000, guid: bdc261e70af394ec4b75c38d20d4b922, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.53
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Hall tail (ap011_space IR, RT60 1.75 s) of the Lmg class dry pre-mix; file
+      \u221220 LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR
+      seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 432
+    Clips:
+    - {fileID: 8300000, guid: 7fbe50c2f10f64908a63b1288d65dea6, type: 3}
+    - {fileID: 8300000, guid: 2cf85420e4b624c0e9e51677b4225175, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -3.83
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Open tail (ap011_space IR, RT60 0.8 s) of the Sr class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 433
+    Clips:
+    - {fileID: 8300000, guid: 950a143ec4eca473783fc35362d64575, type: 3}
+    - {fileID: 8300000, guid: e62aec6144dc64fbfb678de260620b0b, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.86
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Corridor tail (ap011_space IR, RT60 1.25 s) of the Sr class dry pre-mix; file
+      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
+      seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 434
+    Clips:
+    - {fileID: 8300000, guid: 31b73a5c1de194360a25359cb5a9a245, type: 3}
+    - {fileID: 8300000, guid: 8b1ff1130ec6d4189bcfd882780f6fd3, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.69
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Hall tail (ap011_space IR, RT60 1.75 s) of the Sr class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 435
+    Clips:
+    - {fileID: 8300000, guid: 6a8c844930f9b4dd2b0cca74bbe60241, type: 3}
+    - {fileID: 8300000, guid: a5675cdab81eb49b3b39dd055f137555, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Open tail (ap011_space IR, RT60 0.8 s) of the Rl class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -12 dB = STANDARDS \xA75 wet -14 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 436
+    Clips:
+    - {fileID: 8300000, guid: 2ae8d2e5cae2a4518bc272cdf81839d2, type: 3}
+    - {fileID: 8300000, guid: db87449be44c842588e8095165355672, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.84
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Corridor tail (ap011_space IR, RT60 1.25 s) of the Rl class dry pre-mix; file
+      \u221220 LUFS-I, runtime placement -8 dB = STANDARDS \xA75 wet -10 dB; 2 IR
+      seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 437
+    Clips:
+    - {fileID: 8300000, guid: 4589fd2320e0747a3b5670f2484ffdb3, type: 3}
+    - {fileID: 8300000, guid: c1b0c73a5165548df86b3d69650f8b07, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.45
+    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
+      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 wet-only
+      Hall tail (ap011_space IR, RT60 1.75 s) of the Rl class dry pre-mix; file \u221220
+      LUFS-I, runtime placement -6 dB = STANDARDS \xA75 wet -8 dB; 2 IR seeds"
+    NoiseFloorDb: -120
+    DcDb: -240
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)

@@ -794,6 +794,58 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp048b.foley weapon=" + weapon + " " + r.Describe() + " · thunder " + _d.Ambience.ThunderCount + " pond " + _d.Ambience.PondPlaying);
         }
 
+        // ================================================================== WP-072 B1 · ateş sesi v3
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator AtesV3_HibritDongu_TekAtis_MekanKuyrugu()
+        {
+            WeaponFireAudio f = _d.WeaponFire;
+            if (!_d.Library.IsProduced(AudioSoundId.WeaponSmg1Fire))
+            {
+                Assert.Fail("v016 ateş kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            Vector3 at = _s.Rig.transform.position + Vector3.up;
+            int starts = f.LoopStarts, releases = f.Releases;
+
+            // SMG1 900 RPM: ilk atış tam ses, sonrakiler transient + gövde döngüsü; bırakınca kuyruk bir kez.
+            for (int i = 0; i < 6; i++)
+            {
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", at, 0.75f, 50);
+                if (i == 0) Assert.AreEqual(AudioSoundId.WeaponSmg1Fire, f.LastVoice, "İlk atış tam SMG1 sesi.");
+                yield return new WaitForSeconds(0.066f);
+            }
+
+            Assert.AreEqual(AudioSoundId.WeaponSmg1Transient, f.LastVoice, "Seri içinde transient.");
+            Assert.AreEqual(starts + 1, f.LoopStarts, "Seri başına tek döngü başlangıcı.");
+            Assert.IsTrue(f.LoopPlaying, "Tetik basılıyken gövde döngüsü çalar.");
+            yield return new WaitForSeconds(0.25f);
+            Assert.IsFalse(f.LoopPlaying, "Tetik bırakılınca döngü söner.");
+            Assert.AreEqual(releases + 1, f.Releases, "Bırakış bir kez.");
+            Assert.AreEqual(AudioSoundId.WeaponTailSmgOpen, f.LastTail, "Varsayılan mekân Open.");
+
+            // Tek atış sınıfı: her atışta kuru ses + mekân kuyruğu; mekân çözücüsü kuyruğu seçer.
+            AcousticSpaces.Resolver = _ => AcousticSpace.Hall;
+            try
+            {
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SG1", at, 1.5f, 50);
+                Assert.AreEqual(AudioSoundId.WeaponSg1Fire, f.LastVoice);
+                Assert.AreEqual(AudioSoundId.WeaponTailSgHall, f.LastTail, "Salon kuyruğu.");
+                Assert.IsFalse(f.LoopPlaying, "Tek atış silahı döngü açmaz.");
+            }
+            finally
+            {
+                AcousticSpaces.Resolver = null;
+            }
+
+            // Kimliksiz ipucu eski yola düşer (A/B/C'nin v016'sız hali ve diğer üreticiler).
+            yield return new WaitForSeconds(0.1f);
+            AudioEvents.Raise(CombatAudioEvent.ClassicWeaponFire, at, 1f, 50);
+            Assert.AreEqual(AudioSoundId.RifleFire, _d.LastPlayed, "Kimliksiz ateş eski RifleFire.");
+            Debug.Log("[DD-TEST] wp072b1.fire loopStarts=" + f.LoopStarts + " releases=" + f.Releases + " tail=" + f.LastTail);
+        }
+
         // ================================================================== WP-068 dilim 11 · UI ses v3
 
         [UnityTest]

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DD.Prototype.Audio;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
@@ -522,7 +523,8 @@ namespace DD.Prototype.Weapons
             ApplyFireShake(feelRow.shakeWeight, _classic.Power, aim);
 
             // Step 12: the fire layer of the layered sound.
-            AudioEvents.Raise(CombatAudioEvent.ClassicWeaponFire, origin, powerScale, 50);
+            // WP-072: the cue names the weapon (WP-069 WeaponDefinition.AudioId; A/B/C → AR1/SMG1/SG1 without a definition).
+            AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, _classic.Definition?.AudioId ?? WeaponAudioIdentity.ForClassic(_classic.Id), origin, powerScale, 50);
 
             _classic.ConsumeShot();
 

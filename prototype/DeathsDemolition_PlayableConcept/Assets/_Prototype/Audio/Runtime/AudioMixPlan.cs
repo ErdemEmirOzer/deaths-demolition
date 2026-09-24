@@ -712,6 +712,20 @@ namespace DD.Prototype.Audio
             return p;
         }
 
+        /// <summary>WP-072 B1: one v016 fire voice (dry shot or hybrid transient) - the legacy classic-fire placement.</summary>
+        public static AudioPlacement PlayerWeapon(AudioSoundId sound)
+        {
+            return Weapon(sound, 0.85f, 50f, 3, 0.03f);
+        }
+
+        /// <summary>WP-072 B1: the wet space tail after a shot / release - lower priority, never piles past two.</summary>
+        public static AudioPlacement PlayerWeaponTail(AudioSoundId sound)
+        {
+            AudioPlacement p = Weapon(sound, 0.85f, 30f, 2, 0.05f);
+            p.PitchJitter = 0f;
+            return p;
+        }
+
         /// <summary>WP-048B: weapon-handling foley on the player's own weapon (WP-032C clip events) - dry, near, never positional.</summary>
         public static AudioPlacement WeaponFoley(AudioSoundId sound)
         {

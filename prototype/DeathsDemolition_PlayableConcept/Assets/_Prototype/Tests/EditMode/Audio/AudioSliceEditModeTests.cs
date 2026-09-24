@@ -512,9 +512,10 @@ namespace DD.Prototype.Tests.EditMode.Audio
                     var importer = AssetImporter.GetAtPath(path) as AudioImporter;
                     if (importer == null) { hatalar.Add($"{m.files[f]}: importer yok"); continue; }
                     AudioImporterSampleSettings ss = importer.defaultSampleSettings;
-                    float beklenen = ss.loadType == AudioClipLoadType.Streaming || m.loop ? AudioCatalogBuilder.MusicQuality : AudioCatalogBuilder.SfxQuality;
-                    if (ss.compressionFormat != AudioCompressionFormat.Vorbis || !Mathf.Approximately(ss.quality, beklenen))
-                        hatalar.Add($"{m.files[f]}: importer {ss.compressionFormat} q{ss.quality:0.00} ≠ Vorbis q{beklenen:0.00}");
+                    // WP-072: weapon v3 q9 / PCM transients (DEC-093); the rest v003 q8 SFX, q7 loops and streams.
+                    AudioCompressionFormat bicim = AudioCatalogBuilder.WantedFormat(m.sound, m.loop, ss.loadType == AudioClipLoadType.Streaming, out float beklenen);
+                    if (ss.compressionFormat != bicim || (bicim == AudioCompressionFormat.Vorbis && !Mathf.Approximately(ss.quality, beklenen)))
+                        hatalar.Add($"{m.files[f]}: importer {ss.compressionFormat} q{ss.quality:0.00} ≠ {bicim} q{beklenen:0.00}");
                 }
             }
 
@@ -669,6 +670,51 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.IsTrue(AudioRegionMap.Contains(kare, 5f, 5f));
             Assert.IsFalse(AudioRegionMap.Contains(kare, 15f, 5f));
             Assert.IsFalse(AudioRegionMap.Contains(new float[] { 0f, 0f, 1f, 1f }, 0.5f, 0.5f), "3 köşeden az = dış");
+        }
+
+        [Test]
+        public void AtesV3_KimlikTablosu_WP069AudioIdleri_HibritUcSilah_KuyrukMatrisi()
+        {
+            // WP-069 A4 audioId'leri (S-02 §0): 10 silah, döngü yalnız Auto ∧ RPM ≥ 600 → AR1/SMG1/LMG1.
+            string[] beklenen = { "AR1", "AR2", "SMG1", "SMG2", "SG1", "SG2", "LMG1", "LMG2", "SR1", "RL1" };
+            Assert.AreEqual(beklenen.Length, WeaponAudioIdentity.All.Length);
+            var sesler = new HashSet<AudioSoundId>();
+            var hibrit = new List<string>();
+            foreach (string id in beklenen)
+            {
+                Assert.IsTrue(WeaponAudioIdentity.TryGet(id, out WeaponVoiceSet set), "audioId yok: " + id);
+                Assert.IsTrue(sesler.Add(set.Fire), "Ateş sesi paylaşılıyor: " + id);
+                if (set.IsHybrid)
+                {
+                    hibrit.Add(id);
+                    Assert.IsTrue(set.LoopRpm >= 600f, id + " döngü RPM'i ≥ 600");
+                    Assert.AreNotEqual(AudioSoundId.None, set.Transient);
+                }
+            }
+
+            CollectionAssert.AreEqual(new[] { "AR1", "SMG1", "LMG1" }, hibrit);
+            Assert.IsFalse(WeaponAudioIdentity.TryGet("SNP", out _), "Eski yuva adı (SNP) kimlik değil.");
+            Assert.AreEqual("AR1", WeaponAudioIdentity.ForClassic(DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle));
+            Assert.AreEqual("SMG1", WeaponAudioIdentity.ForClassic(DD.Prototype.Core.Config.ClassicWeaponId.AutoSmg));
+            Assert.AreEqual("SG1", WeaponAudioIdentity.ForClassic(DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun));
+
+            // 6 sınıf × 3 mekân = 18 ayrı kuyruk, adı sınıf+mekânla eşleşir.
+            var kuyruk = new HashSet<AudioSoundId>();
+            foreach (WeaponTailClass c in Enum.GetValues(typeof(WeaponTailClass)))
+            {
+                foreach (AcousticSpace a in Enum.GetValues(typeof(AcousticSpace)))
+                {
+                    AudioSoundId t = WeaponAudioIdentity.Tail(c, a);
+                    Assert.AreEqual("WeaponTail" + c + a, t.ToString());
+                    Assert.IsTrue(kuyruk.Add(t));
+                }
+            }
+
+            Assert.AreEqual(18, kuyruk.Count);
+            Assert.AreEqual(AcousticSpace.Open, AcousticSpaces.At(Vector3.zero), "Çözücü yokken Open.");
+            Assert.Less(WeaponFireAudio.WetDb(AcousticSpace.Open), WeaponFireAudio.WetDb(AcousticSpace.Corridor));
+            Assert.Less(WeaponFireAudio.WetDb(AcousticSpace.Corridor), WeaponFireAudio.WetDb(AcousticSpace.Hall));
+            Assert.AreEqual(0f, WeaponPerspectiveMix.For(DD.Prototype.CameraSystem.CameraMode.FirstPerson).Spatial, "FP: oyuncu silahı 2D.");
         }
     }
 }
