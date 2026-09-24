@@ -45,7 +45,7 @@ Yükseklik 15 m, geri 13 m, FOV 42°, yaw yazar tarafından, ileri-bakış ≤ 2
 | Çarpışma | SphereCast r = 0,25 m, katmanlar Environment ∪ CameraOccluder | — | S-01 | Pivot→kamera; temas anında anlık, geri açılma 0,25 s |
 | Min. mesafe (itme tabanı) | 0,60 m | 0,45–0,80 | S-01 | Bu mesafenin altında oyuncu tam soldurulur |
 | Oyuncu soldurma | Dither başlangıç 1,20 m → tam 0,60 m | — | S-01/S-05 shader | Alfa değil dither (sıralama/gölge güvenli); gölge korunur |
-| Omuz değiştirme | Girdi eylemi `SwapShoulder`; klavye öneri **Q**, gamepad öneri **sağ çubuk basma** | — | S-02 girdi haritası | Otomatik duvar-omzu değiştirme kapalı (öneri; test sonrası açılabilir) |
+| Omuz değiştirme | `ILookInputSource.ShoulderSwapPressed`: klavye **V** + fare orta tuşu, gamepad **sağ çubuk basma** (Q = Special, çakışır); yeniden atanamaz (Look gibi) — B2 | — | S-01 (S-02 girdi haritası bilgisi) | Otomatik duvar-omzu değiştirme kapalı (öneri; test sonrası açılabilir) |
 | Kamera yakın kırpma | 0,05 m | — | S-01 | Duvar itmesiyle birlikte |
 
 D-3 TP dönüşü doğrudan (yumuşatma yok), konum yumuşatılır. Gerekçe: bakışta yumuşatma = giriş gecikmesi hissi; AAA omuz kameralarının ortak kuralı.
@@ -282,7 +282,8 @@ class CameraModeSettings { Mode, LookSensitivity (°/px, 0,02–0,30, vars. 0,08
                            InvertY, FirstPersonFov (YATAY °, 16:9 referans Hor+, 70–110, 90 — C-00 24.09), ThirdPersonFov (dikey °, 55–70, 60),
                            Shoulder, HeadBobScale (0–1), ReducedMotion; Sanitize(); Clone() }
 struct CameraModeProfile { LodBiasFactor, ShadowDistance, ShadowCascades, NearClip, FarClip, OccluderPolicy, ShakeScale }
-                           // TopDown 1,0/60/2/0,3/260/FadeAll · TP 1,2/60/3/0,05/450/FadeCameraLine · FP 1,4/70/4/0,03/450/None
+                           // LodBiasFactor = S-05 kademe tabanı çarpanı: lodBias = max(1, taban × çarpan)
+                           // TopDown 1,0/60/2/0,3/260/FadeAll · TP 0,6/60/3/0,05/450/FadeCameraLine · FP 0,7/70/4/0,03/450/None
 struct CameraAimRay { Origin, Direction, HitPoint, HasHit, Distance }
 bool PrototypeCameraRig.TryGetAimRay(Vector2 screenPoint, float aimPlaneY, out CameraAimRay ray);
      // TopDown = imleç → nişan düzlemi (ScreenPointToAimPlane ile birebir); TP/FP = ekran merkezi, maske AimBlock ∪ EnemyHitbox, 120 m
@@ -384,4 +385,5 @@ Ham notlar: `~/Desktop/KADRO/context/projects/deaths-demolition/wp-070/evidence/
 | S-06 (A-5) | Tek gövde mesh'i (baş dahil); kemik ölçekleme yok; P-06 AP-022 başı ayrı SkinnedMeshRenderer olarak böler → FP'de o renderer ShadowsOnly; ara çözüm: göz baş kemiğinden ~0,10 m ileri + near 0,05–0,08, gövde tamamı ShadowsOnly. Görüntü modeli = URP kamera yığınında **overlay kamera** (kendi FOV), `FirstPersonView` katmanında ayrı kol örneği (aynı iskelet tipi, AP022_fp_* klipleri, soketler fp_socket_weapon_r / grip_l / fp_camera) — WP-071. `AimPitch` (+yukarı, ±60) + `AimYaw` ister. Duvar yakınlığı: mevcut `PlayerSkinnedVisual.PlayLower()/PlayRaise()`, sonda S-01'de, histerezis 0,6 m indir / 0,8 m kaldır | D-5 güncellendi: dilim 1 = FP'de gövde ShadowsOnly; görüntü modeli overlay kamerası + `ViewmodelAnchor` dilim 3 (S-01 altyapı, kollar S-06 WP-071); overlay kamera MainCamera etiketi ALMAZ (S-03: `Camera.main` dünya kamerası kalmalı). `CameraView.AimPitchUpDegrees` / `AimYawDegrees(body)` eklendi |
 | S-03 (A-7) | Spawn görünürlüğü zaten kamera-bağımsız (`JudgeVisibility`/`IsOnScreen`, `Camera.main` viewport, %12 pay) → FP/TP'de kendiliğinden doğru; şart: `Camera.main` dünya kamerası. WP-076'da FP/TP arka spawn için asgari mesafe (≥ ~8 m). Telegraph süresi (DEC-029) değişmez; `ThreatHudFeed.RearDirection/RearIntensity/RearCount` + `RearAttack` mevcut, tüketiciler `IsInView(info.Position)` sorgular. A-7 ilke olarak kabul (≤ %35 arka pay, `RearThreat` ≥ 0,8 s, Special/Elite sessiz yaklaşmaz), sayılar WP-076 | §7.1 teyitli; `EnemyCombatEvents`'e mod eklenmez |
 | C-00 (24.09) | FP FOV = yatay, 16:9 referanslı (Hor+), varsayılan 90°, aralık 70–110; TP omuz sağ, 2,8 m, omuz değiştirme tuşu olsun | Ayar/rig güncellendi (dilim 1); 🔴 1 ve 3 kapandı; omuz tuşu dilim 4 |
+| S-05 (QUALITY-TIERS-V2 §3, `3812dc2`) | lodBias = max(1, taban × LodBiasFactor), taban 1,0/2,0/2,5 (Performans/Yüksek/Sinematik); gölge = min(kademe tavanı, mod değeri), tavan 45/2 · 60/4 · 80/4; farClip mod değeri (Performans'ta da 450 m). WP-074 yön belgesi `abc0f70`: E-1…E-20 dilimlere eşlendi (B3 occluder Roof/Wall = E-20, B6 göz hizası taraması) | Profil çarpanları TP 0,6 / FP 0,7 / Tepeden 1,0 (Yüksek → 1,2 / 1,4 / 2,0); gölge/far değerleri uyumlu; §11 Performans 350 m notu geçersiz → 450 m |
 

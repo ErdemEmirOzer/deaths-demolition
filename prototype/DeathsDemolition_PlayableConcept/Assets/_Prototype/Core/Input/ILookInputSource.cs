@@ -17,6 +17,12 @@ namespace DD.Prototype.Core.InputAbstraction
 
         /// <summary>Right-stick look vector, magnitude clamped to 1, dead zone already applied.</summary>
         Vector2 LookStick { get; }
+
+        /// <summary>
+        /// Third-person shoulder swap went down this frame (keyboard V, mouse middle button,
+        /// gamepad right-stick press; not remappable, like Look — Q is Special).
+        /// </summary>
+        bool ShoulderSwapPressed { get; }
     }
 
     /// <summary>Null-safe readers for <see cref="ILookInputSource"/>.</summary>
@@ -25,6 +31,11 @@ namespace DD.Prototype.Core.InputAbstraction
         public static Vector2 ReadLookDelta(this IInputSource source)
         {
             return source is ILookInputSource l ? l.LookDelta : Vector2.zero;
+        }
+
+        public static bool ReadShoulderSwapPressed(this IInputSource source)
+        {
+            return source is ILookInputSource l && l.ShoulderSwapPressed;
         }
 
         /// <summary>Falls back to <see cref="IInputSource.AimStick"/> (same physical stick) for a source without look support.</summary>

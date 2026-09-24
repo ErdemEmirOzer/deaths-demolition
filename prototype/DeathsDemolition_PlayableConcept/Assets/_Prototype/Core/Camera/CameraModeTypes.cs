@@ -167,7 +167,10 @@ namespace DD.Prototype.CameraSystem
     [Serializable]
     public struct CameraModeProfile
     {
-        /// <summary>Multiplier on the quality tier's QualitySettings.lodBias.</summary>
+        /// <summary>
+        /// Multiplier on the quality tier's lodBias base (S-05 QUALITY-TIERS-V2 §3:
+        /// lodBias = max(1, tierBase × factor); bases 1.0 / 2.0 / 2.5 → High TP 1.2, FP 1.4).
+        /// </summary>
         public float LodBiasFactor;
 
         /// <summary>Shadow distance in metres (quality module clamps to its tier).</summary>
@@ -191,13 +194,13 @@ namespace DD.Prototype.CameraSystem
                 case CameraMode.ThirdPerson:
                     return new CameraModeProfile
                     {
-                        LodBiasFactor = 1.2f, ShadowDistance = 60f, ShadowCascades = 3, NearClip = 0.05f, FarClip = 450f,
+                        LodBiasFactor = 0.6f, ShadowDistance = 60f, ShadowCascades = 3, NearClip = 0.05f, FarClip = 450f,
                         OccluderPolicy = CameraOccluderPolicy.FadeCameraLine, ShakeScale = 0.55f,
                     };
                 case CameraMode.FirstPerson:
                     return new CameraModeProfile
                     {
-                        LodBiasFactor = 1.4f, ShadowDistance = 70f, ShadowCascades = 4, NearClip = 0.03f, FarClip = 450f,
+                        LodBiasFactor = 0.7f, ShadowDistance = 70f, ShadowCascades = 4, NearClip = 0.03f, FarClip = 450f,
                         OccluderPolicy = CameraOccluderPolicy.None, ShakeScale = 0.3f,
                     };
                 default:

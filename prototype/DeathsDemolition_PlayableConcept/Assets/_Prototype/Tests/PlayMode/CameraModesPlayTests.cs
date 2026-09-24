@@ -29,6 +29,8 @@ namespace DD.Prototype.Tests.PlayMode
         public bool DebugPanelPressed => false;
         public Vector2 LookDelta => Delta;
         public Vector2 LookStick => Cubuk;
+        public bool OmuzBas;
+        public bool ShoulderSwapPressed => OmuzBas;
 #pragma warning disable 67
         public event Action<AimSourceKind> AimKindChanged;
 #pragma warning restore 67
@@ -141,6 +143,23 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Kareler(3);
             Assert.Less(Vector3.Angle(_rig.PlanarForward, Vector3.right), 0.5f, "Yaw 90 → PlanarForward +X.");
             Assert.AreEqual(CameraModeService.Settings.ThirdPersonFov, _rig.Camera.fieldOfView, 0.01f, "TP FOV ayardan.");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator TP_OmuzDegistirme_TusIleSolaGecer()
+        {
+            CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
+            _rig.SetViewAngles(0f, 0f);
+            yield return Kareler(10);
+            Assert.Greater(_rig.StablePosition.x, Kok.x, "Başlangıç sağ omuz.");
+
+            _girdi.OmuzBas = true;
+            yield return null;
+            _girdi.OmuzBas = false;
+            Assert.AreEqual(CameraShoulder.Left, CameraModeService.Settings.Shoulder);
+            yield return Kareler(40);
+            Assert.Less(_rig.StablePosition.x, Kok.x, "Omuz değişince kamera -X tarafına geçmeli.");
         }
 
         [UnityTest]

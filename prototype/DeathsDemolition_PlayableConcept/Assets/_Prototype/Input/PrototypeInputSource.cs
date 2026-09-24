@@ -98,6 +98,7 @@ namespace DD.Prototype.Inputs
         private Vector2 _aimScreen;
         private Vector2 _aimStick01;
         private Vector2 _lookDelta;   // WP-070: raw mouse delta this frame (pixels); not remappable
+        private bool _shoulderSwapPressed;
         private bool _fireHeld;
         private bool _firePressed;
         private bool _fireReleased;
@@ -229,6 +230,12 @@ namespace DD.Prototype.Inputs
         public Vector2 LookDelta
         {
             get { EnsureFresh(); return _lookDelta; }
+        }
+
+        /// <summary>WP-070 (ILookInputSource): V / mouse middle / right-stick press this frame.</summary>
+        public bool ShoulderSwapPressed
+        {
+            get { EnsureFresh(); return _shoulderSwapPressed; }
         }
 
         /// <summary>WP-070 (ILookInputSource): right stick, dead zone applied (same control as AimStick).</summary>
@@ -410,6 +417,9 @@ namespace DD.Prototype.Inputs
             // acceleration (sensitivity / invert-Y live in CameraModeSettings). The right stick
             // is shared with AimStick (same physical control, direction doc §3.1).
             _lookDelta = Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero;
+            _shoulderSwapPressed = (Keyboard.current != null && Keyboard.current.vKey.wasPressedThisFrame)
+                                   || (Mouse.current != null && Mouse.current.middleButton.wasPressedThisFrame)
+                                   || (Gamepad.current != null && Gamepad.current.rightStickButton.wasPressedThisFrame);
 
             _fireHeld = _fire != null && _fire.IsPressed();
             _firePressed = _fire != null && _fire.WasPressedThisFrame();
@@ -605,6 +615,7 @@ namespace DD.Prototype.Inputs
             _move01 = Vector2.zero;
             _aimStick01 = Vector2.zero;
             _lookDelta = Vector2.zero;
+            _shoulderSwapPressed = false;
             _fireHeld = false;
             _firePressed = false;
             _fireReleased = false;

@@ -192,7 +192,7 @@ namespace DD.Prototype.PlayerSystem
                 {
                     transform.rotation = Quaternion.LookRotation(_aimDirection, Vector3.up);
                 }
-                else
+                else if (ThirdPersonBodyShouldTurn(input))
                 {
                     RotateTowardsAim();
                 }
@@ -218,6 +218,21 @@ namespace DD.Prototype.PlayerSystem
             }
 
             RotateTowardsAim();
+        }
+
+        /// <summary>Direction doc §4.1: TP idle dead band (the feet turn animation, S-06, covers it).</summary>
+        public const float ThirdPersonIdleDeadBandDegrees = 35f;
+
+        /// <summary>
+        /// WP-070 B2 (S-02, direction doc §4.1): in third person the body turns to the view yaw
+        /// while firing or moving; standing still it stays free inside ±35°, so looking around
+        /// does not spin the character.
+        /// </summary>
+        private bool ThirdPersonBodyShouldTurn(IInputSource input)
+        {
+            bool firing = input != null && input.FireHeld;
+            bool moving = input != null && input.Move.sqrMagnitude > 0.01f;
+            return firing || moving || FacingErrorDegrees > ThirdPersonIdleDeadBandDegrees;
         }
 
         /// <summary>

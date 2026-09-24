@@ -247,6 +247,7 @@ namespace DD.Prototype.Tests.EditMode
             public Vector2 Look;
             public Vector2 LookDelta => Delta;
             public Vector2 LookStick => Look;
+            public bool ShoulderSwapPressed => false;
         }
     }
 }

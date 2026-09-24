@@ -615,6 +615,16 @@ namespace DD.Prototype.CameraSystem
             CameraModeSettings settings = CameraModeService.Settings;
             float invert = settings.InvertY ? -1f : 1f;
 
+            // WP-070 B2: shoulder swap (TP only). A settings change, so the persistence layer
+            // saves it like any other camera preference.
+            if (mode == CameraMode.ThirdPerson && input.ReadShoulderSwapPressed())
+            {
+                CameraModeSettings next = settings.Clone();
+                next.Shoulder = settings.Shoulder == CameraShoulder.Right ? CameraShoulder.Left : CameraShoulder.Right;
+                CameraModeService.ApplySettings(next, applyMode: false);
+                settings = CameraModeService.Settings;
+            }
+
             Vector2 mouse = input.ReadLookDelta();
             float yaw = mouse.x * settings.LookSensitivity;
             float pitch = -mouse.y * settings.LookSensitivity * invert;
