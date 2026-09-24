@@ -62,10 +62,10 @@ namespace DD.Prototype.Tests.EditMode
         {
             for (int i = 0; i < 8; i++) RearSpawnShare.Record(i < 3);
             Assert.AreEqual(3f / 8f, RearSpawnShare.Share(8), 1e-6f);
-            Assert.AreEqual(1f, RearSpawnShare.Penalty(_s, 2, true), 1e-6f, "FP %37,5 ≥ %35 → arka ×0");
-            Assert.AreEqual(0.75f, RearSpawnShare.Penalty(_s, 2, false), 1e-6f, "başka yol-hazır nokta yok → ×0,25");
-            Assert.AreEqual(0.3f, RearSpawnShare.Penalty(_s, 1, true), 1e-6f, "TP %45 altında → ×0,7");
-            Assert.AreEqual(0f, RearSpawnShare.Penalty(_s, 0, true), "tepeden tavan yok");
+            Assert.AreEqual(1f, RearSpawnShare.Penalty(2, true), 1e-6f, "FP %37,5 ≥ %35 → arka ×0");
+            Assert.AreEqual(0.75f, RearSpawnShare.Penalty(2, false), 1e-6f, "başka yol-hazır nokta yok → ×0,25");
+            Assert.AreEqual(0.3f, RearSpawnShare.Penalty(1, true), 1e-6f, "TP %45 altında → ×0,7");
+            Assert.AreEqual(0f, RearSpawnShare.Penalty(0, true), "tepeden tavan yok");
             for (int i = 0; i < 8; i++) RearSpawnShare.Record(false);
             Assert.AreEqual(0f, RearSpawnShare.Share(8), "kayan pencere");
         }

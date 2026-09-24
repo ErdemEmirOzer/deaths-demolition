@@ -57,10 +57,7 @@ namespace DD.Prototype.Enemies
         [PrototypeOnly(PendingDecisions.None, "WP-076 §6 rear_threat beat: raise distance (m) Standard / Special+Elite+Ultra, re-arm distance (m); attack lead after the beat (s) by mode.", true)]
         public float RearBeatMetres = 6f, RearBeatMetresHeavy = 8f, RearBeatRearmMetres = 9f;
         public float[] RearWarnLeadSeconds = { 0f, 0.5f, 0.8f };
-        [PrototypeOnly(PendingDecisions.None, "WP-076 §5.1 rear-hemisphere spawn share cap by mode (1 = none), sliding window (spawns), factor below the cap, factor at the cap when no other path-ready point exists.", true)]
-        public float[] RearSpawnCap = { 1f, 0.45f, 0.35f };
-        public int RearSpawnWindow = 8;
-        public float RearSpawnBelowCapFactor = 0.7f, RearSpawnNoAlternativeFactor = 0.25f;
+        // WP-076 §5.1 rear spawn share cap: Spawn/RearSpawnShare (Spawn → Enemies direction lock)
 
         public static int ModeIndex(int mode) => Mathf.Clamp(mode, 0, 2);
         public float ByMode(float[] table, int mode, float fallback) => table != null && table.Length > ModeIndex(mode) ? table[ModeIndex(mode)] : fallback;

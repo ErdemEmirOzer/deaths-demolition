@@ -1014,7 +1014,7 @@ namespace DD.Prototype.Spawn
                 bool otherReady = false;
                 for (int i = 0; i < points.Count && !otherReady; i++)
                     otherReady = !points[i].IsBehindCamera && points[i].PathStatus == NavPathStatus.Complete;
-                inputs.RearSpawnPenalty = RearSpawnShare.Penalty(DD.Prototype.Enemies.ThreatSettings.Active, RearSpawnShare.CurrentMode, otherReady);
+                inputs.RearSpawnPenalty = RearSpawnShare.Penalty(RearSpawnShare.CurrentMode, otherReady);
             }
 
             UpdatePointDensity(points);
