@@ -1,0 +1,71 @@
+{
+"font": "Oswald-Medium.ttf",
+"unitsPerEm": 1000,
+"pairs": [
+{
+"first": "0",
+"second": "7",
+"xAdvance": -6
+},
+{
+"first": "1",
+"second": "7",
+"xAdvance": -8
+},
+{
+"first": "2",
+"second": "4",
+"xAdvance": -12
+},
+{
+"first": "4",
+"second": "1",
+"xAdvance": -12
+},
+{
+"first": "4",
+"second": "7",
+"xAdvance": -14
+},
+{
+"first": "5",
+"second": "7",
+"xAdvance": -12
+},
+{
+"first": "6",
+"second": "1",
+"xAdvance": -6
+},
+{
+"first": "6",
+"second": "2",
+"xAdvance": -6
+},
+{
+"first": "6",
+"second": "7",
+"xAdvance": -10
+},
+{
+"first": "6",
+"second": "9",
+"xAdvance": -9
+},
+{
+"first": "7",
+"second": "4",
+"xAdvance": -28
+},
+{
+"first": "8",
+"second": "7",
+"xAdvance": -13
+},
+{
+"first": "9",
+"second": "7",
+"xAdvance": -16
+}
+]
+}

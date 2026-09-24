@@ -377,8 +377,25 @@ namespace DD.Prototype.UI
 
         public static float LineHeight(UiType type)
         {
-            float raw = UiTokens.FontSize(type) * UiTokens.LineSpacing(type) * 1.25f;
+            float raw = UiTokens.FontSize(type) * UiTokens.LineSpacing(type) * FaceLineRatio(type);
             return Mathf.Ceil(raw / 4f) * 4f;
+        }
+
+        /// <summary>
+        /// WP-068 slice 3 (direction §2.2): the line box of the face that draws this type, in em
+        /// (faceInfo.lineHeight / pointSize) - Source Sans 3 1.326, the Display / Numeric atlases
+        /// their own boxes - instead of a fixed 1.25 that clipped the taller faces (TMP's Truncate
+        /// hid the Display 56 title). Without a v3 face the old 1.25 stays.
+        /// </summary>
+        public static float FaceLineRatio(UiType type)
+        {
+            TMP_FontAsset face = UiFonts.Role(UiFonts.RoleOf(type)) ?? UiFonts.Role(UiFontRole.Text);
+            if (face == null || face.faceInfo.pointSize <= 0)
+            {
+                return 1.25f;
+            }
+
+            return face.faceInfo.lineHeight / face.faceInfo.pointSize;
         }
 
         /// <summary>
@@ -471,6 +488,10 @@ namespace DD.Prototype.UI
             text.enableAutoSizing = autoSize;
             text.fontSizeMax = UiTokens.FontSize(type);
             text.fontSizeMin = autoSize ? Mathf.Max(12, UiTokens.FontSize(type) / 2) : UiTokens.FontSize(type);
+            // WP-068 slice 3: a one-line readout never vanishes. Truncate drops the whole line when
+            // the face's line box is taller than the band (the HUD round number, f3); a number
+            // drawing a few px past its band is visible and measurable, a missing one is neither.
+            text.overflowMode = TextOverflowModes.Overflow;
             return text;
         }
 
@@ -548,6 +569,8 @@ namespace DD.Prototype.UI
             rt.sizeDelta = new Vector2(width, height);
 
             TMP_Text text = Label("Text", rt, content, UiType.Label, textColor, TextAnchor.MiddleCenter);
+            text.enableWordWrapping = false;
+            text.overflowMode = TextOverflowModes.Overflow; // WP-068 slice 3: a chip's one word never vanishes under Truncate
 
             // Horizontal inset only. A vertical inset on a 24 px pill would leave 16 px
             // for an 18 px line, and a truncating Text that cannot fit one line draws

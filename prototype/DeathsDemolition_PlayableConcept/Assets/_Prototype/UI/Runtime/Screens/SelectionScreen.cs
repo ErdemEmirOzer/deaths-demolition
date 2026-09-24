@@ -357,7 +357,14 @@ namespace DD.Prototype.UI
                     "Weapon." + def.RosterKey + "." + id, column, title, UiButtonVariant.Card,
                     () => SelectWeapon(id));
 
-                stack.Add((RectTransform)button.transform, WeaponCardHeight);
+                // WP-068 slice 3 (AD MUST-1, D6): bands from the faces at the TextScale, stacked from the
+                // bottom - core row, name, stat line - so the stat line never meets the name at 1.25.
+                float coreBand = UiFactory.ScaledBand(CoreBranchRowHeight);
+                float nameBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3));
+                float statBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+                float nameBottom = (int)UiSpace.M + coreBand + (int)UiSpace.XS;
+                float cardHeight = Mathf.Max(WeaponCardHeight, nameBottom + nameBand + (int)UiSpace.XS + statBand + (int)UiSpace.L);
+                stack.Add((RectTransform)button.transform, cardHeight);
                 stack.Gap(UiSpace.L);
 
                 // AP-012 glyph at the leading edge (roster HudIconId → placeholder contract);
@@ -390,8 +397,8 @@ namespace DD.Prototype.UI
                 }
 
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
-                labelRect.offsetMin = new Vector2(textLeft, TitleBand);
-                labelRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.L);
+                labelRect.offsetMin = new Vector2(textLeft, nameBottom);
+                labelRect.offsetMax = new Vector2(-BadgeWidth, -(cardHeight - nameBottom - nameBand));
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
                 button.LabelText.alignment = TextAlignmentOptions.BottomLeft;
 
@@ -404,8 +411,8 @@ namespace DD.Prototype.UI
                     "Detail", button.transform, detailText, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
                 detail.richText = true; // AD v003 MUST-5: values in TextPrimary, labels in TextSecondary (built once per card)
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-                detailRect.offsetMin = new Vector2(textLeft, (int)UiSpace.L + UiFactory.ScaledBand(CoreBranchRowHeight));
-                detailRect.offsetMax = new Vector2(-(int)UiSpace.XL, -(TitleBand + (int)UiSpace.L));
+                detailRect.offsetMin = new Vector2(textLeft, nameBottom + nameBand + (int)UiSpace.XS);
+                detailRect.offsetMax = new Vector2(-(int)UiSpace.XL, -(int)UiSpace.L);
 
                 _coreGlyphs[i] = BuildCoreBranchRow(button, def, textLeft, unlocked);
 

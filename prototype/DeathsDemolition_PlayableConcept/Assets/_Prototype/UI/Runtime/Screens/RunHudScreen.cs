@@ -419,7 +419,12 @@ namespace DD.Prototype.UI
 
         private void BuildHealthBlock()
         {
-            RectTransform block = HudPanel("Health", new Vector2(0f, 0f), BlockWidth, 104f);
+            // WP-068 slice 3 (AD MUST-1, D6): the panel is as tall as its measured bands at the
+            // TextScale - a fixed 104 put "HEALTH / 100 / 100" under the bar at 1.25.
+            float topBand = Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)), UiFactory.ScaledBand(UiFactory.LineHeight(UiType.NumericM)));
+            float stateBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float blockHeight = Mathf.Max(104f, (int)UiSpace.L * 2f + topBand + (int)UiSpace.XS + 18f + (int)UiSpace.XS + stateBand);
+            RectTransform block = HudPanel("Health", new Vector2(0f, 0f), BlockWidth, blockHeight);
             RectTransform host = UiFactory.CardContent(block, UiSpace.L);
 
             Image heart = UiArt.IconImage("Heart", host, "Hud.Health", UiColor.BarHealth, PanelIconSize);
@@ -437,9 +442,10 @@ namespace DD.Prototype.UI
             RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
             labelRect.anchorMin = new Vector2(0f, 1f);
             labelRect.pivot = new Vector2(0f, 1f);
-            labelRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Label));
+            labelRect.sizeDelta = new Vector2(0f, topBand);
             labelRect.offsetMin = new Vector2(textLeft, labelRect.offsetMin.y);
-            labelRect.anchoredPosition = new Vector2(textLeft, -4f);
+            labelRect.anchoredPosition = new Vector2(textLeft, 0f);
+            label.alignment = TMPro.TextAlignmentOptions.Left;
 
             _healthValue = UiFactory.Numeric(
                 "Value", host, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
@@ -447,7 +453,7 @@ namespace DD.Prototype.UI
             valueRect.anchorMin = new Vector2(1f, 1f);
             valueRect.anchorMax = new Vector2(1f, 1f);
             valueRect.pivot = new Vector2(1f, 1f);
-            valueRect.sizeDelta = new Vector2(160f, 26f);
+            valueRect.sizeDelta = new Vector2(160f, topBand);
             valueRect.anchoredPosition = Vector2.zero;
 
             _healthBar = UiFactory.Bar("Bar", host, UiColor.BarHealth, 18f);
@@ -456,14 +462,14 @@ namespace DD.Prototype.UI
             barRect.anchorMax = new Vector2(1f, 0f);
             barRect.pivot = new Vector2(0f, 0f);
             barRect.sizeDelta = new Vector2(0f, 18f);
-            barRect.anchoredPosition = new Vector2(0f, UiFactory.LineHeight(UiType.Caption) + (int)UiSpace.XS);
+            barRect.anchoredPosition = new Vector2(0f, stateBand + (int)UiSpace.XS);
 
             _healthState = UiFactory.Label("State", host, string.Empty, UiType.Caption, UiColor.AccentMoss);
             RectTransform stateRect = (RectTransform)_healthState.transform;
             stateRect.anchorMin = new Vector2(0f, 0f);
             stateRect.anchorMax = new Vector2(1f, 0f);
             stateRect.pivot = new Vector2(0f, 0f);
-            stateRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Caption));
+            stateRect.sizeDelta = new Vector2(0f, stateBand);
             stateRect.anchoredPosition = Vector2.zero;
         }
 

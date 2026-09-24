@@ -4,7 +4,8 @@
     "references": [
         "DD.Prototype.Core",
         "DD.Prototype.Runtime",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

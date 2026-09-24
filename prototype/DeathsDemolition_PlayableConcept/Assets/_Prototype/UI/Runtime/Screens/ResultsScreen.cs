@@ -89,7 +89,7 @@ namespace DD.Prototype.UI
             // WP-023 data: the ending line names what ended the run when it is known.
             string ending = string.IsNullOrEmpty(_model.KilledBy)
                 ? _model.Eyebrow
-                : _model.Eyebrow + "  ·  " + UiFactory.Clip(_model.KilledBy, 32);
+                : _model.Eyebrow + "  ·  " + UiFactory.Clip(_model.KilledBy, 32).ToUpperInvariant(); // a caps heading (the Display face is caps-only)
             // WP-022E name plate: "RUN RESULTS  ·  BLOODED" when a title is chosen.
             string plate = CosmeticsViewModel.NamePlate(ProfileService.CosmeticsSource);
             string eyebrow = string.IsNullOrEmpty(plate) ? ResultsViewModel.Title : ResultsViewModel.Title + "  ·  " + plate.ToUpperInvariant();

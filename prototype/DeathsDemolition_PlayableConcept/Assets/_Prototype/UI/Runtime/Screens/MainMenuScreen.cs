@@ -1057,9 +1057,11 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)levelLabel.transform, UiFactory.LineHeight(UiType.Label));
             stack.Gap(UiSpace.XS);
 
-            TMP_Text level = UiFactory.Numeric(
-                "Level", _paneHost, model.LevelText, UiType.NumericXL, UiColor.TextPrimary);
-            stack.Add((RectTransform)level.transform, UiFactory.LineHeight(UiType.NumericXL));
+            // WP-068 slice 3 (AD MUST-2): one face - "LEVEL 1" is an H2 Display heading, as on
+            // Results (a Numeric label drew "LEVEL" in the fallback sans beside an Oswald digit).
+            TMP_Text level = UiFactory.Label(
+                "Level", _paneHost, model.LevelText, UiType.H2, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+            stack.Add((RectTransform)level.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H2)));
 
             stack.Gap(UiSpace.M);
 
@@ -1389,7 +1391,7 @@ namespace DD.Prototype.UI
                     isNew ? "NEW" : "LOCKED",
                     isNew ? UiColor.AccentSakura : UiColor.SurfaceInset,
                     isNew ? UiColor.SurfaceBase : UiColor.TextSecondary,
-                    isNew ? 56f : 88f, UiFactory.RowChipHeight);
+                    isNew ? 56f : 88f, UiChips.Height(UiChipSize.Row)); // WP-068 slice 3 (AD MUST-1): the band from the face at the TextScale - a fixed 22 emptied LOCKED at 1.25
                 RectTransform chipRect = (RectTransform)chip.transform.parent;
                 chipRect.anchorMin = new Vector2(1f, 0.5f);
                 chipRect.anchorMax = new Vector2(1f, 0.5f);
@@ -1481,7 +1483,7 @@ namespace DD.Prototype.UI
                 line.Earned ? (line.IsNew ? "NEW" : "EARNED") : "IN PROGRESS",
                 line.Earned ? (line.IsNew ? UiColor.AccentSakura : UiColor.StateSuccess) : UiColor.SurfaceInset,
                 line.Earned ? (line.IsNew ? UiColor.SurfaceBase : UiColor.SurfaceInset) : UiColor.TextSecondary, // NEW = ink on sakura (AD v004 MUST-1)
-                140f, UiFactory.CardChipHeight); // 140: "IN PROGRESS" at Caption tracking needs it (120 clipped the last S)
+                140f, UiChips.Height(UiChipSize.Card)); // 140: "IN PROGRESS" at Caption tracking needs it (120 clipped the last S); height from the face (slice 3)
             if (line.IsNew)
             {
                 chip.transform.parent.gameObject.AddComponent<UiPulse>().Configure(

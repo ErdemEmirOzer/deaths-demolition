@@ -106,7 +106,8 @@ namespace DD.Prototype.UI
             captionRect.sizeDelta = new Vector2(labelWidth, 0f);
             captionRect.anchoredPosition = new Vector2((int)UiSpace.L, 0f);
 
-            _value = UiFactory.Label("Value", root, string.Empty, UiType.BodyStrong, UiColor.TextPrimary, TextAnchor.MiddleRight);
+            // The value in the Numeric face (tabular: "80%" / "1.00×" do not jitter while dragging; AD 5b SHOULD-4 / 3 SHOULD-2).
+            _value = UiFactory.Numeric("Value", root, string.Empty, UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
             RectTransform valueRect = _value.rectTransform;
             valueRect.anchorMin = new Vector2(1f, 0f);
             valueRect.anchorMax = new Vector2(1f, 1f);

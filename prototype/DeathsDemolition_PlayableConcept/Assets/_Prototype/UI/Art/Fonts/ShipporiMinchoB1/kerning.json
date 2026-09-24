@@ -1,0 +1,231 @@
+{
+ "note": "hand-authored (ShipporiMinchoB1-Bold has no pair kerning); tuned in the slice 3 AD round (SHOULD-1, UPM 1000, ±10, ≥ −80)",
+ "unitsPerEm": 1000,
+ "pairs": [
+  {
+   "first": "A",
+   "second": "V",
+   "xAdvance": -70
+  },
+  {
+   "first": "A",
+   "second": "W",
+   "xAdvance": -60
+  },
+  {
+   "first": "A",
+   "second": "Y",
+   "xAdvance": -70
+  },
+  {
+   "first": "A",
+   "second": "T",
+   "xAdvance": -50
+  },
+  {
+   "first": "A",
+   "second": "C",
+   "xAdvance": -20
+  },
+  {
+   "first": "A",
+   "second": "G",
+   "xAdvance": -20
+  },
+  {
+   "first": "A",
+   "second": "O",
+   "xAdvance": -25
+  },
+  {
+   "first": "A",
+   "second": "Q",
+   "xAdvance": -25
+  },
+  {
+   "first": "A",
+   "second": "U",
+   "xAdvance": -30
+  },
+  {
+   "first": "V",
+   "second": "A",
+   "xAdvance": -60
+  },
+  {
+   "first": "W",
+   "second": "A",
+   "xAdvance": -50
+  },
+  {
+   "first": "Y",
+   "second": "A",
+   "xAdvance": -70
+  },
+  {
+   "first": "T",
+   "second": "A",
+   "xAdvance": -60
+  },
+  {
+   "first": "F",
+   "second": "A",
+   "xAdvance": -40
+  },
+  {
+   "first": "P",
+   "second": "A",
+   "xAdvance": -40
+  },
+  {
+   "first": "K",
+   "second": "O",
+   "xAdvance": -20
+  },
+  {
+   "first": "L",
+   "second": "T",
+   "xAdvance": -40
+  },
+  {
+   "first": "L",
+   "second": "V",
+   "xAdvance": -50
+  },
+  {
+   "first": "L",
+   "second": "W",
+   "xAdvance": -60
+  },
+  {
+   "first": "L",
+   "second": "Y",
+   "xAdvance": -55
+  },
+  {
+   "first": "R",
+   "second": "T",
+   "xAdvance": -20
+  },
+  {
+   "first": "R",
+   "second": "V",
+   "xAdvance": -30
+  },
+  {
+   "first": "R",
+   "second": "W",
+   "xAdvance": -20
+  },
+  {
+   "first": "R",
+   "second": "Y",
+   "xAdvance": -20
+  },
+  {
+   "first": "T",
+   "second": "O",
+   "xAdvance": -25
+  },
+  {
+   "first": "V",
+   "second": "O",
+   "xAdvance": -30
+  },
+  {
+   "first": "W",
+   "second": "O",
+   "xAdvance": -20
+  },
+  {
+   "first": "Y",
+   "second": "O",
+   "xAdvance": -30
+  },
+  {
+   "first": "O",
+   "second": "V",
+   "xAdvance": -25
+  },
+  {
+   "first": "O",
+   "second": "W",
+   "xAdvance": -20
+  },
+  {
+   "first": "O",
+   "second": "Y",
+   "xAdvance": -25
+  },
+  {
+   "first": "T",
+   "second": ".",
+   "xAdvance": -60
+  },
+  {
+   "first": "T",
+   "second": ",",
+   "xAdvance": -60
+  },
+  {
+   "first": "V",
+   "second": ".",
+   "xAdvance": -60
+  },
+  {
+   "first": "V",
+   "second": ",",
+   "xAdvance": -60
+  },
+  {
+   "first": "W",
+   "second": ".",
+   "xAdvance": -60
+  },
+  {
+   "first": "W",
+   "second": ",",
+   "xAdvance": -60
+  },
+  {
+   "first": "Y",
+   "second": ".",
+   "xAdvance": -70
+  },
+  {
+   "first": "Y",
+   "second": ",",
+   "xAdvance": -70
+  },
+  {
+   "first": "P",
+   "second": ".",
+   "xAdvance": -40
+  },
+  {
+   "first": "P",
+   "second": ",",
+   "xAdvance": -40
+  },
+  {
+   "first": "F",
+   "second": ".",
+   "xAdvance": -40
+  },
+  {
+   "first": "F",
+   "second": ",",
+   "xAdvance": -40
+  },
+  {
+   "first": "L",
+   "second": "A",
+   "xAdvance": -20
+  },
+  {
+   "first": "L",
+   "second": "O",
+   "xAdvance": -15
+  }
+ ]
+}
