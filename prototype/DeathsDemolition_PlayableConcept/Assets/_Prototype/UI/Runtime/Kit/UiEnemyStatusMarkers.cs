@@ -25,7 +25,8 @@ namespace DD.Prototype.UI
     /// Zero allocation per frame (ADR-037-1): a fixed pool of chips built once, the
     /// live-zombie list is indexed (no enumerator), texts are pre-built literals swapped
     /// only when a marker's state changes, and an unused chip is parked off-screen rather
-    /// than SetActive-toggled (the WP-022 reticle lesson - no canvas rebuild).
+    /// than SetActive-toggled (the WP-022 reticle lesson - no canvas rebuild), at group alpha 0
+    /// so it is not drawn either (HUD budget: a group at alpha 0 costs no draw, PilotPerfProbe 04h).
     /// </summary>
     public sealed class UiEnemyStatusMarkers : MonoBehaviour
     {
@@ -93,6 +94,7 @@ namespace DD.Prototype.UI
                 clear.a = 0f;
                 fill.color = clear;   // the chip's rect stays for layout; nothing of it is drawn
                 _groups[i] = UiFactory.Group(chip.gameObject);
+                _groups[i].alpha = 0f;   // parked and unbound: culled, not drawn off-screen (a bind sets 1)
                 _labels[i] = label;
                 label.text = "NET";
                 if (glyphs)

@@ -231,6 +231,15 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Assert.IsTrue(labels.Contains("NET") || labels.Contains("DAZED"), "görünür işaret metni NET/DAZED: " + string.Join(",", labels));
+            // WP-068 HUD budget: an unbound chip parks at group alpha 0, so it is not drawn off-screen.
+            foreach (CanvasGroup group in hud.EnemyStatus.GetComponentsInChildren<CanvasGroup>(true))
+            {
+                if (((RectTransform)group.transform).anchoredPosition.x < -9000f)
+                {
+                    Assert.AreEqual(0f, group.alpha, 0.001f, "park edilmiş durum çipi çizilmemeli (grup α 0): " + group.name);
+                }
+            }
+
             // WP-068 8c · E19: the stamp carries the 24 px outer-only silhouette (G1 Status.*Outer), never colour alone.
             foreach (UnityEngine.UI.Image icon in hud.EnemyStatus.GetComponentsInChildren<UnityEngine.UI.Image>(true))
             {
