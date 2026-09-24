@@ -464,6 +464,9 @@ namespace DD.Prototype.Tests.PlayMode
             // Down through the three sliders wraps back to the first.
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.MASTER VOLUME");
+            // WP-068 slice 11 (S-08): UI SOUNDS sits between the master volume and the quality.
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("Setting.UI SOUNDS");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.GRAPHICS QUALITY");
             // WP-022M: DISPLAY sits between quality and telemetry (not submitted here: the
