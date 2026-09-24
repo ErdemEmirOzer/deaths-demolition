@@ -37,7 +37,10 @@ namespace DD.Prototype.Core.Weapons
         Default = 0,
 
         /// <summary>Opens at the profile level in <c>ClassicWeaponSettings.UnlockProfileLevel</c> (DEC-008).</summary>
-        ProfileLevel = 1
+        ProfileLevel = 1,
+
+        /// <summary>WP-069 B2b (DEC-095): opens through the WP-077 meta path — a Kül node with a level gate; never by the profile ladder.</summary>
+        MetaPath = 2
     }
 
     /// <summary>

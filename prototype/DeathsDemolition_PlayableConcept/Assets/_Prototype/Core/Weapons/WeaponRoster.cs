@@ -10,13 +10,20 @@ namespace DD.Prototype.Core.Weapons
     /// under Resources/WeaponRoster, sorted by <see cref="ClassicWeaponDefinition.SortOrder"/>.
     /// Lookups by runtime id, the default weapon (DEC-037/039), the per-weapon branch
     /// gate (ADR-034-1) and validation. Pure data; no gameplay state.
+    ///
+    /// WP-069 B2b: the Arsenal v3 classics without a roster asset (ar_2 … rl_1, ids 3..9) are added
+    /// from their <see cref="WeaponDefinition"/> — identity, sort order, the enabled flag (rl_1 stays off
+    /// until B3), the core triple, the unlock kind (meta path, DEC-095) and the sockets; the class
+    /// sibling's roster entry lends the visual identifiers (icon, blockout, SFX) until AP-021 / N19.
+    /// The A / B / C assets keep their own data (their triples equal ar_1 / smg_1 / sg_1's).
     /// </summary>
     public static class WeaponRoster
     {
         public const string ResourceFolder = "WeaponRoster";
 
-        private static readonly List<ClassicWeaponDefinition> s_all = new List<ClassicWeaponDefinition>(4);
-        private static readonly List<ClassicWeaponDefinition> s_enabled = new List<ClassicWeaponDefinition>(4);
+        private static readonly List<ClassicWeaponDefinition> s_all = new List<ClassicWeaponDefinition>(12);
+        private static readonly List<ClassicWeaponDefinition> s_enabled = new List<ClassicWeaponDefinition>(12);
+        private static readonly List<ClassicWeaponDefinition> s_fromArsenal = new List<ClassicWeaponDefinition>(8);
         private static bool s_loaded;
         private static bool s_fromTests;
 
@@ -189,8 +196,94 @@ namespace DD.Prototype.Core.Weapons
                 s_all.AddRange(loaded);
             }
 
+            AppendArsenal();
             Sort();
             s_loaded = true;
+        }
+
+        /// <summary>WP-069 B2b: one roster entry per Arsenal classic whose runtime id has no roster asset.</summary>
+        private static void AppendArsenal()
+        {
+            DropArsenalEntries();
+            IReadOnlyList<WeaponDefinition> arsenal = Arsenal.All;
+            if (arsenal == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < arsenal.Count; i++)
+            {
+                WeaponDefinition def = arsenal[i];
+                if (def == null || def.slot != WeaponSlotKind.Classic || FindLoaded(def.id) != null)
+                {
+                    continue;
+                }
+
+                ClassicWeaponDefinition entry = FromArsenal(def, FindLoaded(def.presentation.placeholderVisual));
+                s_fromArsenal.Add(entry);
+                s_all.Add(entry);
+            }
+        }
+
+        private static ClassicWeaponDefinition FindLoaded(ClassicWeaponId id)
+        {
+            for (int i = 0; i < s_all.Count; i++)
+            {
+                if (s_all[i] != null && s_all[i].HasRuntimeId && s_all[i].Id == id) return s_all[i];
+            }
+
+            return null;
+        }
+
+        /// <summary>The roster view of an Arsenal classic (runtime-only instance, never saved).</summary>
+        public static ClassicWeaponDefinition FromArsenal(WeaponDefinition def, ClassicWeaponDefinition sibling)
+        {
+            var d = ScriptableObject.CreateInstance<ClassicWeaponDefinition>();
+            d.name = "Weapon_" + def.weaponId + " (Arsenal)";
+            d.hideFlags = HideFlags.HideAndDontSave;
+            d.RosterKey = def.weaponId;
+            d.HasRuntimeId = true;
+            d.Id = def.id;
+            d.Enabled = def.enabled;
+            d.SortOrder = def.sortOrder;
+            d.TypeClass = sibling != null ? sibling.TypeClass : WeaponTypeClass.Rifle;
+            d.Silhouette = sibling != null ? sibling.Silhouette : WeaponSilhouetteClass.Medium;
+            d.ShotModel = def.fire.pelletCount > 1 ? WeaponShotModel.Pellet : WeaponShotModel.Hitscan;
+            d.CoreBranches = def.upgrade.coreBranches != null ? (UpgradeBranch[])def.upgrade.coreBranches.Clone() : new UpgradeBranch[WeaponBranchContract.CoreBranchesPerWeapon];
+            d.UnlockKind = def.unlock.kind == WeaponUnlockV3.Default ? WeaponUnlockKind.Default
+                : def.unlock.kind == WeaponUnlockV3.ProfileLevel ? WeaponUnlockKind.ProfileLevel
+                : WeaponUnlockKind.MetaPath;
+            WeaponSockets sockets = def.presentation.sockets;
+            if (sockets != null)
+            {
+                d.SocketRoot = sockets.root;
+                d.MuzzleSocket = sockets.muzzle;
+                d.EjectionSocket = sockets.ejection;
+            }
+
+            d.MuzzleVfxFamily = Either(def.presentation.muzzleVfx, sibling != null ? sibling.MuzzleVfxFamily : d.MuzzleVfxFamily);
+            d.ImpactVfxFamily = Either(def.presentation.impactVfx, sibling != null ? sibling.ImpactVfxFamily : d.ImpactVfxFamily);
+            d.HudIconId = Either(def.presentation.hudIconId, sibling != null ? sibling.HudIconId : d.HudIconId);
+            if (sibling != null)
+            {
+                d.FireSfx = sibling.FireSfx;
+                d.ReloadSfx = sibling.ReloadSfx;
+                d.ModelResource = sibling.ModelResource;
+            }
+
+            return d;
+        }
+
+        private static string Either(string own, string fallback) => string.IsNullOrEmpty(own) ? fallback : own;
+
+        private static void DropArsenalEntries()
+        {
+            for (int i = 0; i < s_fromArsenal.Count; i++)
+            {
+                if (s_fromArsenal[i] != null) UnityEngine.Object.DestroyImmediate(s_fromArsenal[i]);
+            }
+
+            s_fromArsenal.Clear();
         }
 
         private static void Sort()
@@ -215,6 +308,7 @@ namespace DD.Prototype.Core.Weapons
             {
                 s_all.Clear();
                 s_enabled.Clear();
+                DropArsenalEntries();
                 s_loaded = false;
             }
 

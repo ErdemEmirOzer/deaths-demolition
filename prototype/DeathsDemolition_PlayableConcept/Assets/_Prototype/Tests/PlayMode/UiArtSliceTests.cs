@@ -508,7 +508,8 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            Assert.AreEqual(3, glif, "üç silah kartı üç AP-012 silah glifi");
+            // WP-069 B2b: one card per enabled roster weapon; the six Arsenal weapons borrow their class sibling's glyph until N19.
+            Assert.AreEqual(DD.Prototype.Core.Weapons.WeaponRoster.Enabled.Count, glif, "her silah kartı bir AP-012 silah glifi");
 
             PrototypeUiFlow.GoToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);

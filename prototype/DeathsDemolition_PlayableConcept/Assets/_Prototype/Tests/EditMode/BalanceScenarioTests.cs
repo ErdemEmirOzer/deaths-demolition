@@ -166,7 +166,8 @@ namespace DD.Prototype.Tests.EditMode
                 }
 
                 // Tam seviyeye çıkan bir koşu: her roster silahı Results'ta Weapon türünde, roster adıyla, bir kez.
-                int hedef = 1; foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled) if (d.HasRuntimeId) hedef = Math.Max(hedef, d.UnlockLevel(config));
+                // WP-069 B2b: the roster also lists the meta-path weapons (DEC-095, never on the ladder) — the full-level run targets the ladder ones.
+                int hedef = 1; foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled) if (d.HasRuntimeId && d.UnlockKind == WeaponUnlockKind.ProfileLevel) hedef = Math.Max(hedef, d.UnlockLevel(config));
                 int xp = 0; for (int l = 1; l < hedef; l++) xp += ProfileService.LevelRequirement(l);
                 RunRewardReport r = ProfileService.ApplyRun(new RunSummary { CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(), ReachedRound = 2, CompletedRounds = 1, CompletedRoundXp = xp, TotalXpEarned = xp, Weapon = ClassicWeaponId.AssaultRifle, EndReason = RunEndReason.PlayerDeath });
                 Assert.IsTrue(r.Applied); Assert.AreEqual(hedef, r.LevelAfter);

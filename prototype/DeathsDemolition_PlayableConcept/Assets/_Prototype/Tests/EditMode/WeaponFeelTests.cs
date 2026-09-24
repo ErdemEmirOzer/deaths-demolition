@@ -295,7 +295,8 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void DEC083_UcSilah_ABC_D_YalnizVeri_SecimdeYok()
         {
-            Assert.AreEqual(3, WeaponRoster.Enabled.Count, "DEC-083: üç klasik silah.");
+            // WP-069 B2b (DEC-097): the roster lists the Arsenal's nine enabled classics; DEC-083's A/B/C lead it, D stays data.
+            Assert.AreEqual(9, WeaponRoster.Enabled.Count, "dokuz klasik silah (rl_1 B3'e dek kapalı).");
             var ids = new HashSet<ClassicWeaponId>();
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled) ids.Add(d.Id);
             Assert.IsTrue(ids.Contains(ClassicWeaponId.AssaultRifle) && ids.Contains(ClassicWeaponId.AutoSmg) && ids.Contains(ClassicWeaponId.CombatShotgun));
@@ -307,7 +308,7 @@ namespace DD.Prototype.Tests.EditMode
 
             // Selection / shop never see D: no entry, not selectable, no HUD icon exposed.
             IWeaponRosterSource src = WeaponRosterSource.Instance;
-            Assert.AreEqual(3, src.Entries.Count, "seçim listesi 3 (D yok — kilitli kart değil, yok).");
+            Assert.AreEqual(9, src.Entries.Count, "seçim listesi 9 (D yok — kilitli kart değil, yok).");
             foreach (WeaponRosterEntry e in src.Entries)
             {
                 Assert.AreNotEqual(WeaponTypeClass.HeavyPistol, e.TypeClass);

@@ -339,6 +339,14 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.L);
 
+            // WP-069 B2b: the Arsenal's nine classics outgrow the column — the cards scroll (wheel / drag; focus pulls the
+            // selected card into view). S-09 R1-B restyles the list.
+            UiScrollView scroll = UiScrollView.Create("WeaponScroll", column);
+            RectTransform scrollRect = UiFactory.Fill((RectTransform)scroll.transform);
+            scrollRect.offsetMax = new Vector2(0f, -stack.Cursor);
+            RectTransform cardParent = scroll.Content;
+            var cards = new UiStack(cardParent);
+
             List<ClassicWeaponDefinition> roster = RosterForDisplay();
             _weaponIds = new ClassicWeaponId[roster.Count];
             _weaponButtons = new UiButton[roster.Count];
@@ -359,7 +367,7 @@ namespace DD.Prototype.UI
 
                 string title = enabled ? ProfileService.WeaponDisplayName(id) : RosterTitle(def);
                 UiButton button = UiFactory.Button(
-                    "Weapon." + def.RosterKey + "." + id, column, title, UiButtonVariant.Card,
+                    "Weapon." + def.RosterKey + "." + id, cardParent, title, UiButtonVariant.Card,
                     () => SelectWeapon(id));
 
                 // WP-068 slice 3 (AD MUST-1, D6): bands from the faces at the TextScale, stacked from the
@@ -369,8 +377,8 @@ namespace DD.Prototype.UI
                 float statBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
                 float nameBottom = (int)UiSpace.M + coreBand + (int)UiSpace.XS;
                 float cardHeight = Mathf.Max(WeaponCardHeight, nameBottom + nameBand + (int)UiSpace.XS + statBand + (int)UiSpace.L);
-                stack.Add((RectTransform)button.transform, cardHeight);
-                stack.Gap(UiSpace.L);
+                cards.Add((RectTransform)button.transform, cardHeight);
+                cards.Gap(UiSpace.L);
 
                 // AP-012 glyph at the leading edge (roster HudIconId → placeholder contract);
                 // a roster key monogram stands in where the set has no glyph yet (AP-013).
@@ -411,7 +419,7 @@ namespace DD.Prototype.UI
                     ? "Not in this build."
                     : unlocked
                         ? DescribeWeapon(id) + "  ·  " + DescribeModel(def)
-                        : "Reach profile level " + ProfileService.UnlockLevelFor(id) + " to unlock this weapon.  ·  " + DescribeModel(def);
+                        : LockedDetail(id) + "  ·  " + DescribeModel(def);
                 TMP_Text detail = UiFactory.Label(
                     "Detail", button.transform, detailText, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
                 detail.richText = true; // AD v003 MUST-5: values in TextPrimary, labels in TextSecondary (built once per card)
@@ -433,6 +441,9 @@ namespace DD.Prototype.UI
                     _weaponBadges[i].SetActive(true);
                 }
             }
+
+            scroll.SetContentHeight(cards.Cursor);
+            scroll.TrackSelectables();
         }
 
         /// <summary>Row height reserved under the detail line for the three core-branch glyphs.</summary>
@@ -586,6 +597,23 @@ namespace DD.Prototype.UI
             }
 
             return list;
+        }
+
+        /// <summary>
+        /// WP-069 B2b: the lock line of a card. A WP-077 meta-path weapon (DEC-095) shows its node — "PATH · 120 Ash · L11",
+        /// "PATH › ready" once both are met (S-04 MetaPathRules.WeaponLock); a ladder weapon keeps the profile level line.
+        /// English only (MetaUiSliceTests.TumKullaniciMetinleriIngilizce): the currency reads "Ash" until S-09 R1-B settles the
+        /// pack's name. S-09 R1-B restyles it.
+        /// </summary>
+        private static string LockedDetail(ClassicWeaponId id)
+        {
+            MetaPathRules.WeaponLockInfo lockInfo = ProfileService.WeaponLock(id);
+            if (lockInfo.OnPath)
+            {
+                return lockInfo.Ready ? "PATH › ready" : "PATH · " + lockInfo.AshCost + " Ash · L" + lockInfo.LevelGate;
+            }
+
+            return "Reach profile level " + ProfileService.UnlockLevelFor(id) + " to unlock this weapon.";
         }
 
         private void SelectWeapon(ClassicWeaponId id)

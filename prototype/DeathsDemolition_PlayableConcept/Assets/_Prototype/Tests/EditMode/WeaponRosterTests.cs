@@ -34,13 +34,33 @@ namespace DD.Prototype.Tests.EditMode
         public void Roster_Yuklenir_Dogrulanir_ABC_Acik_D_VeriYalniz()
         {
             IReadOnlyList<ClassicWeaponDefinition> all = WeaponRoster.All;
-            Assert.AreEqual(4, all.Count, "Roster 4 tanım (A/B/C + D) taşımalı.");
             CollectionAssert.IsEmpty(WeaponRoster.Validate(), "Roster doğrulaması hata verdi.");
 
-            Assert.AreEqual(3, WeaponRoster.Enabled.Count, "A/B/C etkin.");
+            // WP-069 B2b: A/B/C/D assets + every Arsenal classic without an asset (ar_2 … rl_1); enabled = the Arsenal's enabled classics.
+            int arsenalClassics = 0, arsenalEnabled = 0;
+            foreach (WeaponDefinition def in Arsenal.All)
+            {
+                if (def == null || def.slot != WeaponSlotKind.Classic) continue;
+                arsenalClassics++;
+                if (def.enabled) arsenalEnabled++;
+            }
+
+            Assert.AreEqual(arsenalClassics + 1, all.Count, "Roster: Arsenal klasikleri + veri-yalnız D.");
+            Assert.AreEqual(arsenalEnabled, WeaponRoster.Enabled.Count, "etkin = Arsenal'ın etkin klasikleri (rl_1 B3'e dek kapalı).");
             Assert.AreEqual(ClassicWeaponId.AssaultRifle, WeaponRoster.Enabled[0].Id);
             Assert.AreEqual(ClassicWeaponId.AutoSmg, WeaponRoster.Enabled[1].Id);
             Assert.AreEqual(ClassicWeaponId.CombatShotgun, WeaponRoster.Enabled[2].Id);
+            Assert.IsFalse(WeaponRoster.IsEnabled(ClassicWeaponId.Rl1), "rl_1 seçimde yok (B3)");
+            for (int i = 3; i < WeaponRoster.Enabled.Count; i++)
+            {
+                ClassicWeaponDefinition e = WeaponRoster.Enabled[i];
+                WeaponDefinition def = Arsenal.Get(e.Id);
+                Assert.AreEqual(def.weaponId, e.RosterKey);
+                Assert.AreEqual(def.sortOrder, e.SortOrder);
+                CollectionAssert.AreEqual(def.upgrade.coreBranches, e.CoreBranches, e.RosterKey + ": Arsenal çekirdek üçlüsü");
+                Assert.AreEqual(WeaponUnlockKind.MetaPath, e.UnlockKind, e.RosterKey + ": meta yolu (DEC-095)");
+                Assert.IsFalse(string.IsNullOrEmpty(e.ModelResource), e.RosterKey + ": sınıf kardeşinin blockout'u");
+            }
 
             ClassicWeaponDefinition d = WeaponRoster.FindByKey("D");
             Assert.IsNotNull(d);
@@ -138,7 +158,7 @@ namespace DD.Prototype.Tests.EditMode
             // Selection source: enabled entries in order, default flagged once, D absent.
             IWeaponRosterSource src = WeaponRosterSource.Instance;
             IReadOnlyList<WeaponRosterEntry> entries = src.Entries;
-            Assert.AreEqual(3, entries.Count);
+            Assert.AreEqual(WeaponRoster.Enabled.Count, entries.Count, "WP-069 B2b: seçim = etkin roster");
             int defaults = 0;
             for (int i = 0; i < entries.Count; i++)
             {
