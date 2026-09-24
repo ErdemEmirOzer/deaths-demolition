@@ -163,6 +163,77 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        private static IEnumerator OlumeKadar()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.GoToSelection();
+            yield return SahneyiBekle(PrototypeScenes.Selection);
+            PrototypeUiFlow.StartRun();
+            yield return SahneyiBekle(PrototypeScenes.Run);
+            yield return KosuHazirOlsun();
+            PrototypeUiFlow.FastTransitions = false;
+            DD.Prototype.PlayerSystem.PlayerRig rig = DD.Prototype.PlayerSystem.PlayerRegistry.Primary;
+            rig.Health.DiagnosisInvulnerable = false;
+            rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, "wp068-ink-test");
+        }
+
+        /// <summary>
+        /// 10b-2 · E22 / §15.1 ink variant: a death bleeds ink from t 0.6 of the beat; the
+        /// Results load runs under it - no doors, no plate group - and Results opens as the ink
+        /// recedes.
+        /// </summary>
+        [UnityTest]
+        [Timeout(240000)]
+        public IEnumerator Olum_MurekkepVaryanti_KapiYok_ResultsMurekkeptenAcilir()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return OlumeKadar();
+            UiCurtain curtain = UiCurtain.Instance;
+            bool sawInk = false, sawDoors = false, sawPlateGroup = false;
+            float deadline = Time.realtimeSinceStartup + 60f;
+            while (!(SceneManager.GetActiveScene().name == PrototypeScenes.Results && !UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
+            {
+                sawInk |= curtain.InkCovering;
+                sawDoors |= curtain.DoorsShut && curtain.InkCovering;
+                sawPlateGroup |= curtain.GroupVisible && curtain.PlateVisible;
+                yield return null;
+            }
+
+            yield return Bekle(() => !curtain.InkCovering, 3f, "mürekkep çekilmedi");   // Revealed fires half way through the recede
+            LogAssert.ignoreFailingMessages = false;
+            Assert.AreEqual(PrototypeScenes.Results, SceneManager.GetActiveScene().name, "Results açıldı");
+            Assert.IsTrue(sawInk, "ölüm vuruşunda mürekkep sızdı");
+            Assert.IsFalse(sawDoors, "mürekkep varyantında kapı çizilmez");
+            Assert.IsFalse(sawPlateGroup, "mürekkep varyantında plaka grubu yok");
+            Assert.IsFalse(curtain.InkCovering, "açılışta mürekkep çekildi");
+        }
+
+        /// <summary>10b-2 · WP-061J under the ink: an abort during the death beat still wins - the doors close under the ink, the menu opens, no Results.</summary>
+        [UnityTest]
+        [Timeout(240000)]
+        public IEnumerator Olum_MurekkepAltindaIptal_AnaMenu_ResultsYok()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return OlumeKadar();
+            UiCurtain curtain = UiCurtain.Instance;
+            yield return Bekle(() => curtain.InkCovering, 5f, "mürekkep başlamadı");
+            PrototypeUiFlow.AbortRunToMainMenu();
+            bool sawResults = false;
+            float deadline = Time.realtimeSinceStartup + 60f;
+            while (!(SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && !UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
+            {
+                sawResults |= SceneManager.GetActiveScene().name == PrototypeScenes.Results;
+                yield return null;
+            }
+
+            yield return new WaitForSecondsRealtime(3f);   // the death beat's own Results hand-off must not fire
+            LogAssert.ignoreFailingMessages = false;
+            Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name);
+            Assert.IsFalse(sawResults, "iptal Results'u geçersiz kıldı");
+            Assert.IsFalse(curtain.InkCovering, "mürekkep kalmadı");
+        }
+
         /// <summary>
         /// 10b-2 · E1 / §15.3 (U7): the boot seal is the first loading screen. No doors, the
         /// vermilion seal stamps with one BootLogo bell, the hold lasts 1.6 s, then the stamp is

@@ -52,6 +52,11 @@ namespace DD.Prototype.UI
         public const float WordmarkTracking = 8f;   // +0.08 em (TMP characterSpacing is em/100)
         private const int BootOwner = 0x10B2;
 
+        /// <summary>Ink variant (E22 / §15.1): the bleed from the corners (t 0.6 → 2.0 of the death beat), its recede, the corner blot size.</summary>
+        public const float InkBleedSeconds = 1.4f;
+        public const float InkRecedeSeconds = 0.6f;
+        public const float InkBlotSize = 2600f;
+
         private static UiCurtain s_instance;
         private static bool s_covering;
 
@@ -80,6 +85,10 @@ namespace DD.Prototype.UI
         private float _bootStart;
         private UiTimeline _bootTimeline;
         private static bool s_bootSkip;
+        private RectTransform _inkLayer;
+        private UiFx[] _inkFx;
+        private Image _inkField;
+        private bool _ink;
         private TMP_Text _eyebrow;
         private TMP_Text _destination;
         private TMP_Text _subline;
@@ -191,6 +200,7 @@ namespace DD.Prototype.UI
 
             _leftDoor = Door("DoorLeft", 0f, 0.5f);
             _rightDoor = Door("DoorRight", 0.5f, 1f);
+            BuildInkLayer();
 
             var groupRect = UiFactory.NewRect("Group", _root);
             UiFactory.Fill(groupRect);
@@ -244,6 +254,137 @@ namespace DD.Prototype.UI
 
             _group.gameObject.SetActive(false);
             SetDoorsOpen(true);
+            _canvas.enabled = false;
+        }
+
+        /// <summary>
+        /// The ink variant's layer (E22): four A8 blots centred on the screen's corners seep in
+        /// (InkReveal, Blot channel - "köşelerden mürekkep sızması"), and an ink field closes
+        /// whatever they leave. Above the doors, under the group (the Ø 160 ring stands in the ink).
+        /// </summary>
+        private void BuildInkLayer()
+        {
+            _inkLayer = UiFactory.NewRect("Ink", _root);
+            UiFactory.Fill(_inkLayer);
+            Sprite blot = UiFxGlobals.InkMask(UiInkChannel.Blot);
+            var corners = new[] { new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 1f), new Vector2(1f, 1f) };
+            _inkFx = new UiFx[corners.Length];
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Image image = UiFactory.NewImage("Blot" + i, _inkLayer, UiColor.InkStroke, blot);
+                var rect = (RectTransform)image.transform;
+                rect.anchorMin = corners[i];
+                rect.anchorMax = corners[i];
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(InkBlotSize, InkBlotSize);
+                rect.anchoredPosition = Vector2.zero;
+                rect.localRotation = Quaternion.Euler(0f, 0f, 90f * i);   // four different edges of the same blot
+                image.enabled = blot != null;
+                _inkFx[i] = image.gameObject.AddComponent<UiFx>();
+                _inkFx[i].Configure(UiFxMode.InkReveal, InkBleedSeconds, Vector3.zero, UiInkChannel.Blot);
+                _inkFx[i].Hold();
+            }
+
+            _inkField = UiFactory.NewImage("Field", _inkLayer, UiColor.SurfaceInset, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)_inkField.transform);
+            _inkField.canvasRenderer.SetAlpha(0f);
+            _inkLayer.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// E22 t 0.6 of the death beat: the ink bleeds in from the corners over 1.4 s and the
+        /// field closes it - this IS the curtain closing for the Results load (no doors).
+        /// Reduced Motion: the dim at once, static ink (§15.5).
+        /// </summary>
+        public void BeginInk()
+        {
+            if (!s_covering)
+            {
+                _cursorWasVisible = Cursor.visible;
+            }
+
+            s_covering = true;
+            _ink = true;
+            _canvas.enabled = true;
+            SetDoorsOpen(true);
+            _group.gameObject.SetActive(false);
+            _inkLayer.gameObject.SetActive(true);
+            for (int i = 0; i < _inkFx.Length; i++)
+            {
+                _inkFx[i].Configure(UiFxMode.InkReveal, InkBleedSeconds, Vector3.zero, UiInkChannel.Blot);
+                _inkFx[i].Play();
+            }
+
+            UiMotion.KillTarget(_inkField, false);
+            _inkField.canvasRenderer.SetAlpha(0f);
+            UiMotion.TintAlpha(_inkField, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, InkBleedSeconds - UiMotionTokens.Seconds(UiDuration.Base));
+        }
+
+        /// <summary>True while the doors are shut (tests: the ink variant never closes them).</summary>
+        public bool DoorsShut
+        {
+            get { return Mathf.Abs(_leftDoor.anchoredPosition.x) < 1f; }
+        }
+
+        /// <summary>True while the ink variant covers the screen (the Results load runs under it).</summary>
+        public bool InkCovering
+        {
+            get { return _ink; }
+        }
+
+        /// <summary>A load under the ink (Run → Results): no doors - what Close does besides them.</summary>
+        public void CoverWithInk()
+        {
+            Cursor.visible = false;
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+        }
+
+        /// <summary>
+        /// Any other load while the ink is down (WP-061J: the abort during the death beat): the
+        /// doors cut shut under the ink, then the ink goes - the frozen frame never shows between.
+        /// </summary>
+        private void EndInk()
+        {
+            if (!_ink)
+            {
+                return;
+            }
+
+            _ink = false;
+            UiMotion.KillTarget(_leftDoor, false);
+            UiMotion.KillTarget(_rightDoor, false);
+            SetDoorsOpen(false);
+            UiMotion.KillTarget(_inkField, false);
+            _inkLayer.gameObject.SetActive(false);
+        }
+
+        /// <summary>The Results screen opens from the same ink (E22): the blots recede (erase mode) and the field lifts.</summary>
+        private IEnumerator RecedeInk()
+        {
+            RaiseOpened();
+            for (int i = 0; i < _inkFx.Length; i++)
+            {
+                _inkFx[i].Configure(UiFxMode.InkReveal, InkRecedeSeconds, new Vector3(0f, 1f, 0f), UiInkChannel.Blot);
+                _inkFx[i].Play();
+            }
+
+            UiMotion.TintAlpha(_inkField, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
+            if (!UiMotion.ReducedMotion)
+            {
+                yield return new WaitForSecondsRealtime(InkRecedeSeconds * 0.5f);
+            }
+
+            FinishReveal();
+            if (!UiMotion.ReducedMotion)
+            {
+                yield return new WaitForSecondsRealtime(InkRecedeSeconds * 0.5f);
+            }
+
+            _ink = false;
+            _inkLayer.gameObject.SetActive(false);
             _canvas.enabled = false;
         }
 
@@ -611,6 +752,8 @@ namespace DD.Prototype.UI
 
             s_covering = true;
             EndBootMode();
+            bool inkWasDown = _ink;
+            EndInk();
             _canvas.enabled = true;
             _group.gameObject.SetActive(false);
             Cursor.visible = false;
@@ -619,7 +762,7 @@ namespace DD.Prototype.UI
                 EventSystem.current.SetSelectedGameObject(null);
             }
 
-            if (instant)
+            if (instant || inkWasDown)
             {
                 UiMotion.KillTarget(_leftDoor, false);
                 UiMotion.KillTarget(_rightDoor, false);
@@ -676,12 +819,21 @@ namespace DD.Prototype.UI
         /// CURTAIN depth past 1.2 s (§15.3): the same ring, Ø 160, alone over the closed doors -
         /// no plate, no labels, no tip. The seal and the states are the ring's own.
         /// </summary>
-        public void ShowRingOnly()
+        public void ShowRingOnly(string destination = null)
         {
             _eyebrowState = "LOADING";
             EndBootMode();
             ResetRing();
             SetRingOnly(true);
+            if (destination != null)
+            {
+                // The ink variant keeps its two labels under the small ring (§15.1: LOADING / RUN RESULTS).
+                _eyebrow.text = "LOADING";
+                _eyebrow.gameObject.SetActive(true);
+                _destination.text = destination;
+                _destination.gameObject.SetActive(true);
+            }
+
             _group.gameObject.SetActive(true);
             _plateFar.gameObject.SetActive(false);
             _plateMid.gameObject.SetActive(false);
@@ -848,8 +1000,23 @@ namespace DD.Prototype.UI
         /// <summary>Group out (Exit 140), then the doors part (Settle 280); <see cref="Revealed"/> fires half way. Returns the seconds it takes.</summary>
         public float Open(bool instant)
         {
+            if (_ink && !instant)
+            {
+                float groupOutSeconds = 0f;
+                if (GroupVisible)
+                {
+                    UiPresets.PaneOut(_group);
+                    groupOutSeconds = UiMotionTokens.Seconds(UiDuration.Fast);
+                }
+
+                StartCoroutine(RecedeAfter(groupOutSeconds));
+                return groupOutSeconds + InkRecedeSeconds;
+            }
+
             if (instant)
             {
+                _ink = false;
+                _inkLayer.gameObject.SetActive(false);
                 _group.gameObject.SetActive(false);
                 SetDoorsOpen(true);
                 RaiseOpened();
@@ -867,6 +1034,17 @@ namespace DD.Prototype.UI
 
             StartCoroutine(OpenDoors(groupOut));
             return groupOut + UiMotionTokens.Seconds(UiDuration.Screen);
+        }
+
+        private IEnumerator RecedeAfter(float delay)
+        {
+            if (delay > 0f)
+            {
+                yield return new WaitForSecondsRealtime(delay);
+            }
+
+            _group.gameObject.SetActive(false);
+            yield return RecedeInk();
         }
 
         /// <summary>The S-08 open cue fires on the first frame the doors part.</summary>

@@ -258,10 +258,22 @@ namespace DD.Prototype.UI
             string tip = null;
             bool fast = FastTransitions;
             float lastLoad = UiLoadTiming.LastLoadSeconds(sceneName);
-            bool screen = !fast && (lastLoad < 0f || lastLoad >= CurtainThresholdSeconds);
+            // §15.1 ink variant: Run → Results loads under the death beat's ink - no doors, no
+            // plate group; the Ø 160 ring stands in the ink only past InkRingSeconds.
+            bool ink = !fast && sceneName == PrototypeScenes.Results && curtain.InkCovering;
+            bool screen = !fast && !ink && (lastLoad < 0f || lastLoad >= CurtainThresholdSeconds);
+            float ringShownAt = -1f;
 
             float t0 = Time.unscaledTime;
-            curtain.Close(fast);
+            if (ink)
+            {
+                curtain.CoverWithInk();
+            }
+            else
+            {
+                curtain.Close(fast);
+            }
+
             float groupShownAt = -1f;
             if (screen && UiMotion.ReducedMotion)
             {
@@ -272,7 +284,7 @@ namespace DD.Prototype.UI
                 curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), subline, tip, intoRun);
                 groupShownAt = t0;
             }
-            if (!fast && !UiMotion.ReducedMotion)
+            if (!fast && !ink && !UiMotion.ReducedMotion)
             {
                 yield return new WaitForSecondsRealtime(UiMotionTokens.Seconds(UiDuration.Screen));
             }
@@ -338,7 +350,18 @@ namespace DD.Prototype.UI
                     curtain.ShowError(sceneName, true, null, null); // QUIT only; if the load recovers, the modal goes
                 }
 
-                if (!screen && !fast && groupShownAt < 0f && now - loadStart >= CurtainThresholdSeconds && progress < LoadedProgress)
+                if (ink && ringShownAt < 0f && now - t0 >= InkRingSeconds && progress < LoadedProgress)
+                {
+                    curtain.ShowRingOnly(UiCurtain.DestinationFor(sceneName));
+                    ringShownAt = now;
+                }
+
+                if (ringShownAt >= 0f)
+                {
+                    curtain.SetProgress(progress);
+                }
+
+                if (!screen && !fast && !ink && groupShownAt < 0f && now - loadStart >= CurtainThresholdSeconds && progress < LoadedProgress)
                 {
                     // §15.2 "slower than expected": a load measured fast (CURTAIN) that is still
                     // running 0.9 s into LoadSceneAsync - the span load-timing.json records - gets the
@@ -373,7 +396,9 @@ namespace DD.Prototype.UI
                 bool shownLongEnough = fast
                     || (groupShownAt >= 0f
                         ? now - groupShownAt >= MinimumDisplaySeconds
-                        : !screen && now - t0 >= MinimumClosedSeconds);
+                        : ink
+                            ? ringShownAt < 0f || now - ringShownAt >= BootHandOffMinimumSeconds   // the death beat was the display
+                            : !screen && now - t0 >= MinimumClosedSeconds);
                 if (loaded && shownLongEnough)
                 {
                     break;
@@ -600,6 +625,25 @@ namespace DD.Prototype.UI
                 ? DD.Prototype.Feedback.Vfx.GameFeelSettings.Active.DeathResultsDelaySeconds
                 : ResultsDelaySeconds;
             UiFlowRunner.Instance.Run(GoToResultsAfterDelay(s_transition, delay));
+            if (summary.EndReason == RunEndReason.PlayerDeath && !FastTransitions)
+            {
+                UiFlowRunner.Instance.Run(InkAfter(s_transition, InkBleedStartSeconds));
+            }
+        }
+
+        /// <summary>E22: the ink starts to bleed at t 0.6 of the death beat (the curtain's closing; §15.1 ink variant).</summary>
+        public const float InkBleedStartSeconds = 0.6f;
+
+        /// <summary>The Ø 160 ring appears in the ink only when the Results load runs past this (§15.3).</summary>
+        public const float InkRingSeconds = 1.2f;
+
+        private static IEnumerator InkAfter(int scheduledAt, float delaySeconds)
+        {
+            yield return new WaitForSecondsRealtime(delaySeconds);
+            if (scheduledAt == s_transition && !s_loading)
+            {
+                UiCurtain.Instance.BeginInk();   // an abort (a newer transition) wins; its doors close under any ink
+            }
         }
 
         private static IEnumerator GoToResultsAfterDelay(int scheduledAt, float delaySeconds)

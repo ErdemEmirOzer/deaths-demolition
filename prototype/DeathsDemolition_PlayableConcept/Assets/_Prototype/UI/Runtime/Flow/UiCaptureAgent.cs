@@ -389,6 +389,12 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "ink")
+                {
+                    yield return InkFrames();
+                    yield break;
+                }
+
                 switch (_screen)
                 {
                     case "settings":
@@ -744,6 +750,54 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.5f);
                 yield return Frame(folder, "boot-menu");
                 Debug.Log("[UiCapture] boot done · framebuffer " + Screen.width + "x" + Screen.height);
+                Application.Quit();
+            }
+
+            /// <summary>
+            /// 10b-2 · <c>-ddUiCapture ink</c>: a real run ended by death - the ink bleeding
+            /// (t 1.0 of the beat), covered (t 2.2), the Ø 160 ring in the ink (the Results load
+            /// stretched to 3 s), the recede half way, and Results.
+            /// </summary>
+            private IEnumerator InkFrames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                if (Arg("-ddUiCaptureRm") == "1")
+                {
+                    UiMotion.ReducedMotion = true;
+                }
+
+                PrototypeUiFlow.GoToSelection();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 20f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                PrototypeUiFlow.StartRun();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
+                yield return UiCaptureAgent.WaitRunLive(20f);
+                yield return new WaitForSecondsRealtime(2f);
+
+                PrototypeUiFlow.ArtificialLoadSeconds = 3f;
+                UiCurtain curtain = UiCurtain.Instance;
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (rig != null && rig.Health != null)
+                {
+                    rig.Health.DiagnosisInvulnerable = false;
+                    rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, "ui-capture");
+                }
+
+                float t0 = Time.realtimeSinceStartup;
+                yield return WaitFor(() => Time.realtimeSinceStartup - t0 >= 1.0f, 3f);
+                yield return Frame(folder, "ink-bleed");
+                yield return WaitFor(() => Time.realtimeSinceStartup - t0 >= 2.2f, 3f);
+                yield return Frame(folder, "ink-covered");
+                yield return WaitFor(() => curtain.RingOnlyVisible, 8f);
+                yield return new WaitForSecondsRealtime(0.8f);
+                yield return Frame(folder, "ink-ring");
+                yield return WaitFor(() => SceneManager.GetActiveScene().name == PrototypeScenes.Results && !UiCurtain.IsCovering, 20f);
+                yield return Frame(folder, "ink-recede");
+                PrototypeUiFlow.ArtificialLoadSeconds = 0f;
+                yield return new WaitForSecondsRealtime(1.5f);
+                yield return Frame(folder, "ink-results");
+                Debug.Log("[UiCapture] ink done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
             }
 
