@@ -15,6 +15,21 @@ for line in open(owners_path, encoding="utf-8"):
     rx, owner, area = (line.rstrip("\n").split("\t") + ["", ""])[:3]
     rules.append((re.compile(rx), owner, area))
 
+signatures = []
+sig_path = os.path.join(os.path.dirname(owners_path), "ci-signatures.tsv")
+if os.path.exists(sig_path):
+    for line in open(sig_path, encoding="utf-8"):
+        if not line.strip() or line.startswith("#"):
+            continue
+        rx, owner, cause = (line.rstrip("\n").split("\t") + ["", ""])[:3]
+        signatures.append((re.compile(rx), owner, cause))
+
+def root_cause(message):
+    for rx, owner, cause in signatures:
+        if rx.search(message or ""):
+            return owner, cause
+    return None, None
+
 def owner_of(fixture):
     for rx, owner, area in rules:
         if rx.search(fixture):
@@ -61,7 +76,10 @@ for mode in ("editmode", "playmode"):
                 msg_el = case.find("failure/message")
                 msg = (msg_el.text or "").strip().splitlines()[0][:240] if msg_el is not None and msg_el.text else res
                 o, area = owner_of(fixture)
-                reds.append({"mode": mode, "test": full, "fixture": fixture, "owner": o, "area": area, "message": msg})
+                full_msg = (msg_el.text or "") if msg_el is not None else ""
+                ro, cause = root_cause(full_msg)
+                reds.append({"mode": mode, "test": full, "fixture": fixture, "owner": ro or o, "fixtureOwner": o,
+                             "area": area, "rootCause": cause or "", "message": msg})
     suites[mode] = info
 
 compile_errors = []
@@ -95,9 +113,17 @@ if compile_errors:
     L += ["", "## Derleme hataları", "| Dosya | Kod | Sahip | Mesaj |", "|---|---|---|---|"]
     L += [f"| `{c['file']}` | {c['code']} | {c['owner']} | {c['message']} |" for c in compile_errors]
 if reds:
-    L += ["", "## Kırmızılar (sahip)", "| Mod | Test | Sahip | Yeni? | Mesaj |", "|---|---|---|---|---|"]
+    causes = {}
+    for r in reds:
+        if r["rootCause"]:
+            causes.setdefault((r["owner"], r["rootCause"]), 0)
+            causes[(r["owner"], r["rootCause"])] += 1
+    if causes:
+        L += ["", "## Bilinen kök nedenler (ci-signatures.tsv)", "| Sahip | Kök neden | Kırmızı |", "|---|---|---:|"]
+        L += [f"| {o} | {c} | {n} |" for (o, c), n in sorted(causes.items(), key=lambda kv: -kv[1])]
+    L += ["", "## Kırmızılar (sahip)", "| Mod | Test | Sahip | Fikstür sahibi | Yeni? | Mesaj |", "|---|---|---|---|---|---|"]
     newset = set(summary["newReds"])
-    L += [f"| {r['mode']} | `{r['test']}` | {r['owner']} | {'YENİ' if r['test'] in newset else 'süren'} | {r['message'].replace('|', '/')} |" for r in reds]
+    L += [f"| {r['mode']} | `{r['test']}` | {r['owner']} | {r['fixtureOwner']} | {'YENİ' if r['test'] in newset else 'süren'} | {r['message'].replace('|', '/')} |" for r in reds]
 if fixed:
     L += ["", "## Önceki koşuya göre düzelen", *[f"- `{t}`" for t in fixed]]
 if udwarn:

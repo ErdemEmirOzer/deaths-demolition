@@ -1,0 +1,4 @@
+# WP-079 · known root-cause signatures: when a red's failure message matches, the red is attributed to
+# this owner (the fixture owner stays visible as fixtureOwner). First match wins. Remove a line once fixed.
+# regex	owner	root cause
+Rigidbody' has been destroyed but you are still trying to access it	S-06	R1-A #3 RagdollProxyPool dies with the scene while pooled zombies are DontDestroyOnLoad

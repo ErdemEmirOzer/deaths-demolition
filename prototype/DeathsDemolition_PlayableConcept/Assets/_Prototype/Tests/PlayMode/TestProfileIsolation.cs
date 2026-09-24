@@ -52,5 +52,17 @@ public sealed class TestProfileIsolation
             "Geçici test profili oluşturulamadı: " + TestProfilePath);
 
         Debug.Log("[DD-TEST] profile.isolation path=" + TestProfilePath);
+
+        // WP-079 (main CI, 24.09): Play Mode runs end runs, and RunTelemetry wrote one JSON per run
+        // into the REAL player folder (persistentDataPath/telemetry — 23 files in one CI pass).
+        // Point it at a per-process scratch folder for the whole assembly, like the profile.
+        DD.Prototype.Diagnostics.Telemetry.RunTelemetry.ParseArgs(new[] { "-ddTelemetryDir", TestTelemetryDirectory });
+        Assert.AreEqual(TestTelemetryDirectory, DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Directory,
+            "Telemetri klasörü yönlendirilemedi; testler gerçek Player klasörüne yazabilir.");
     }
+
+    /// <summary>WP-079: per-process scratch folder for run telemetry written by Play Mode tests.</summary>
+    public static string TestTelemetryDirectory =>
+        Path.Combine(Application.temporaryCachePath,
+            "dd-pid-" + System.Diagnostics.Process.GetCurrentProcess().Id, "telemetry");
 }
