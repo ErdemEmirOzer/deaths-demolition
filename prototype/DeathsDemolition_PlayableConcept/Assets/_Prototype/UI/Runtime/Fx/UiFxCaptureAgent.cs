@@ -23,11 +23,15 @@ namespace DD.Prototype.UI
         /// <summary><c>-ddUiFxCaptureBoot &lt;folder&gt;</c>: the boot blot at fixed time-map thresholds (the AP-012 iso-contour
         /// t: 0.2 / 0.3 / 0.4 / 0.6 / 1.0) on a frozen Fx clock — the engine twin of the art package's offline renders.</summary>
         private const string BootFlag = "-ddUiFxCaptureBoot";
+        /// <summary><c>-ddUiFxCaptureNumbers &lt;png&gt;</c> (with <c>-ddDirectToRun</c>): E18 damage numbers of every tier over a
+        /// live run, frozen 150 ms into their life (pop settled, rise under way).</summary>
+        private const string NumbersFlag = "-ddUiFxCaptureNumbers";
         private const float T = 1000f;   // frozen Fx clock
 
         private string _folder;
         private string _shopPng;
         private string _bootFolder;
+        private string _numbersPng;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
@@ -35,7 +39,8 @@ namespace DD.Prototype.UI
             string folder = Arg(Flag);
             string shop = Arg(ShopFlag);
             string boot = Arg(BootFlag);
-            if (string.IsNullOrEmpty(folder) && string.IsNullOrEmpty(shop) && string.IsNullOrEmpty(boot))
+            string numbers = Arg(NumbersFlag);
+            if (string.IsNullOrEmpty(folder) && string.IsNullOrEmpty(shop) && string.IsNullOrEmpty(boot) && string.IsNullOrEmpty(numbers))
             {
                 return;
             }
@@ -46,10 +51,17 @@ namespace DD.Prototype.UI
             agent._folder = folder;
             agent._shopPng = shop;
             agent._bootFolder = boot;
+            agent._numbersPng = numbers;
         }
 
         private IEnumerator Start()
         {
+            if (!string.IsNullOrEmpty(_numbersPng))
+            {
+                yield return NumbersRoutine();
+                yield break;
+            }
+
             if (!string.IsNullOrEmpty(_bootFolder))
             {
                 yield return BootRoutine();
@@ -118,6 +130,64 @@ namespace DD.Prototype.UI
                 Debug.Log("[UiFxCapture] frozen frame " + blurPng + " " + rt.width + "x" + rt.height);
                 Destroy(only);
             }
+            Application.Quit(0);
+        }
+
+        private IEnumerator NumbersRoutine()
+        {
+            string dir = Path.GetDirectoryName(_numbersPng);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            float deadline = Time.realtimeSinceStartup + 60f;
+            while ((DD.Prototype.Rounds.RunDirector.Instance == null || DD.Prototype.Rounds.RunDirector.Instance.Phase != DD.Prototype.Rounds.RunPhase.Fighting)
+                   && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+            }
+
+            yield return new WaitForSecondsRealtime(4f);   // zombies on screen: the numbers read over bodies, ground, sky
+            Camera cam = DD.Prototype.Feedback.FeedbackCameraRef.Current;
+            if (cam == null)
+            {
+                Debug.LogError("[UiFxCapture] numbers: no camera");
+                Application.Quit(1);
+                yield break;
+            }
+
+            UiWorldNumbers n = UiWorldNumbers.Instance;
+            DD.Prototype.Feedback.HitFeedbackTier[] tiers =
+            {
+                DD.Prototype.Feedback.HitFeedbackTier.FleshHit, DD.Prototype.Feedback.HitFeedbackTier.ArmorHit,
+                DD.Prototype.Feedback.HitFeedbackTier.ArmorBreak, DD.Prototype.Feedback.HitFeedbackTier.CriticalHit,
+                DD.Prototype.Feedback.HitFeedbackTier.Death, DD.Prototype.Feedback.HitFeedbackTier.HeavyDeath
+            };
+            int[] amounts = { 22, 9, 34, 56, 18, 140 };
+            // Row 1 over the lit stone: the six tiers + a regular "18" beside the kill's bold "18" (AD E18 MUST 1).
+            for (int i = 0; i < tiers.Length; i++)
+            {
+                Vector3 p = cam.ViewportToWorldPoint(new Vector3(0.12f + i * 0.12f, 0.62f, 12f));
+                n.Spawn(1000 + i, amounts[i], DD.Prototype.Feedback.HitFeedbackDirector.NumberStyle(tiers[i], tiers[i] == DD.Prototype.Feedback.HitFeedbackTier.ArmorHit), p);
+            }
+
+            n.Spawn(1006, 18, DD.Prototype.Feedback.HitFeedbackDirector.NumberStyle(DD.Prototype.Feedback.HitFeedbackTier.FleshHit, false),
+                cam.ViewportToWorldPoint(new Vector3(0.12f + 4 * 0.12f, 0.52f, 12f)));
+            // Row 2 over the brightest corner (bamboo / blossom, top-left): outline contrast (AD E18 MUST 2).
+            int[] bright = { 0, 1, 3, 4, 5 };
+            for (int k = 0; k < bright.Length; k++)
+            {
+                int i = bright[k];
+                Vector3 p = cam.ViewportToWorldPoint(new Vector3(0.03f + k * 0.055f, 0.8f, 12f));
+                n.Spawn(1100 + i, amounts[i], DD.Prototype.Feedback.HitFeedbackDirector.NumberStyle(tiers[i], tiers[i] == DD.Prototype.Feedback.HitFeedbackTier.ArmorHit), p);
+            }
+
+            yield return new WaitForSeconds(0.15f);
+            Time.timeScale = 0f;
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            Texture2D frame = ScreenCapture.CaptureScreenshotAsTexture();
+            File.WriteAllBytes(_numbersPng, frame.EncodeToPNG());
+            Debug.Log("[UiFxCapture] numbers " + _numbersPng + " visible=" + n.VisibleCount + " " + frame.width + "x" + frame.height);
+            Destroy(frame);
+            Time.timeScale = 1f;
             Application.Quit(0);
         }
 

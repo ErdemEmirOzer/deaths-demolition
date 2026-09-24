@@ -180,7 +180,7 @@ namespace DD.Prototype.Tests.PlayMode
                 else
                 {
                     Debug.Log("[DD-OBS] wp037.hotpath damageNumbers allocate " + (fullCount - coreCount) + " objects / " + (fullBytes - coreBytes) +
-                              " B per window — Feedback/DamageNumberEffect.cs TextMesh.text = int.ToString() (S-07, WP-006 M4 kalemi)");
+                              " B per window — UI/Runtime/Fx/UiWorldNumbers.cs (WP-068 E18; eski TextMesh.text = int.ToString(), S-07, WP-006 M4 kalemi)");
                 }
             }
 

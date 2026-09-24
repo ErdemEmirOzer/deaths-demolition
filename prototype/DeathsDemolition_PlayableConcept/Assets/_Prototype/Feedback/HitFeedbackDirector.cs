@@ -182,11 +182,9 @@ namespace DD.Prototype.Feedback
         private PrototypePool<TracerEffect> _tracerPool;
         private PrototypePool<MuzzleFlashEffect> _muzzlePool;
         private PrototypePool<LinkEffect> _linkPool;
-        private PrototypePool<DamageNumberEffect> _damageNumberPool;
         private PrototypePool<ShockRingEffect> _shockRingPool;
         private PrototypePool<SealGlyphEffect> _sealGlyphPool;
 
-        private DamageNumberEffect[] _liveNumbers;
         private HitMarkerLayer _hitMarkers;
 
         private float _hitStopArmorBreak = 0.045f;
@@ -362,18 +360,10 @@ namespace DD.Prototype.Feedback
             _shockRingPool = Pool(FeedbackEffectFactory.ShockRingTemplate, Mathf.Max(4, specials / 4));
             _sealGlyphPool = Pool(FeedbackEffectFactory.SealGlyphTemplate, specials);
 
-            DamageNumberEffect numberTemplate = FeedbackEffectFactory.DamageNumberTemplate;
-            if (numberTemplate != null)
+            // WP-068 E18: the numbers are an overlay layer (UiWorldNumbers, its own pool of 48), not a world pool.
+            if (Application.isPlaying)
             {
-                _damageNumberPool = Pool(numberTemplate, numbers);
-                if (_liveNumbers == null || _liveNumbers.Length != numbers)
-                {
-                    _liveNumbers = new DamageNumberEffect[numbers];
-                }
-            }
-            else
-            {
-                _showDamageNumbers = false;
+                _ = UiWorldNumbers.Instance;
             }
 
             _budget.Configure(FeedbackCategory.Impact, impacts, _effectMergeDistance, _effectMergeWindow);
@@ -930,7 +920,7 @@ namespace DD.Prototype.Feedback
 
         private void ShowDamageNumber(in EnemyHitFeedbackInfo info, HitFeedbackTier tier)
         {
-            if (!_showDamageNumbers || _damageNumberPool == null || _liveNumbers == null)
+            if (!_showDamageNumbers)
             {
                 return;
             }
@@ -941,32 +931,14 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            // WP-047D: critical / armour readouts through S-09's palette tokens (colour-blind safe option); flesh stays white.
-            Color color = info.Result.WasArmored ? (UiTokens.Palette == UiPalette.ColorBlindSafe ? FeedbackPalette.Armor : _armorColor)
-                : tier == HitFeedbackTier.CriticalHit ? FeedbackPalette.Critical
-                : Color.white;
+            UiWorldNumbers numbers = UiWorldNumbers.Instance;
+            DamageNumberFeel feel = FeelRuntime.Current.DamageNumbers;
+            UiWorldNumberStyle style = NumberStyle(tier, info.Result.WasArmored);
+            Vector3 point = info.Point + Vector3.up * feel.anchorOffsetYMeters;
 
-            // Merge into an existing number on the same target rather than stacking a
-            // new one on top of it - the shotgun case again.
-            for (int i = 0; i < _liveNumbers.Length; i++)
+            // Merge into the live number on the same target rather than stacking a new one on top of it (the shotgun case).
+            if (numbers.TryMerge(info.TargetId, amount, style, point, _damageNumberMergeWindow, feel.mergeAnchorBlend))
             {
-                DamageNumberEffect existing = _liveNumbers[i];
-                if (existing == null || !existing.IsSpawned)
-                {
-                    continue;
-                }
-
-                if (existing.TargetId != info.TargetId || existing.SnapshotRevision != FeelRuntime.Current.Revision)
-                {
-                    continue;
-                }
-
-                if (existing.TimeSinceLastAdd > _damageNumberMergeWindow)
-                {
-                    continue;
-                }
-
-                existing.Add(amount, color, info.Point + Vector3.up * FeelRuntime.Current.DamageNumbers.anchorOffsetYMeters);
                 return;
             }
 
@@ -975,25 +947,33 @@ namespace DD.Prototype.Feedback
                 return;
             }
 
-            Vector3 spawnPoint = info.Point + Vector3.up * FeelRuntime.Current.DamageNumbers.anchorOffsetYMeters;
-            DamageNumberEffect number = _damageNumberPool.Get(spawnPoint, Quaternion.identity);
-            if (number == null)
+            numbers.Spawn(info.TargetId, amount, style, point);
+        }
+
+        /// <summary>
+        /// WP-068 E18 · the GD hierarchy (direction §5; tiers are shapes, not colours — no amber): flesh M 22 cream, armour
+        /// held S 18 grey, armour broken M 22 cream, crit L 26 cream + outlined starburst, kill bold, Elite / Ultra kill XL 30
+        /// bold. Grey and cream are tokens, so the colour-blind palette follows.
+        /// </summary>
+        public static UiWorldNumberStyle NumberStyle(HitFeedbackTier tier, bool armored)
+        {
+            switch (tier)
             {
-                return;
+                case HitFeedbackTier.ArmorHit:
+                    return new UiWorldNumberStyle(UiWorldNumberSize.S, UiColor.TextSecondary);
+                case HitFeedbackTier.CriticalHit:
+                    return new UiWorldNumberStyle(UiWorldNumberSize.L, UiColor.TextPrimary, false, true);
+                case HitFeedbackTier.Death:
+                    return new UiWorldNumberStyle(UiWorldNumberSize.M, UiColor.TextPrimary, true);
+                case HitFeedbackTier.HeavyDeath:
+                    return new UiWorldNumberStyle(UiWorldNumberSize.XL, UiColor.TextPrimary, true);
+                case HitFeedbackTier.ArmorBreak:
+                    return new UiWorldNumberStyle(UiWorldNumberSize.M, UiColor.TextPrimary);
+                default:
+                    return armored
+                        ? new UiWorldNumberStyle(UiWorldNumberSize.S, UiColor.TextSecondary)
+                        : new UiWorldNumberStyle(UiWorldNumberSize.M, UiColor.TextPrimary);
             }
-
-            number.Play(info.TargetId, spawnPoint, amount, color, FeelRuntime.Current.DamageNumbers.lifetimeSeconds);
-
-            for (int i = 0; i < _liveNumbers.Length; i++)
-            {
-                if (_liveNumbers[i] == null || !_liveNumbers[i].IsSpawned || _liveNumbers[i] == number)
-                {
-                    _liveNumbers[i] = number;
-                    return;
-                }
-            }
-
-            _liveNumbers[0] = number;
         }
 
         // ------------------------------------------------------------------ resolution

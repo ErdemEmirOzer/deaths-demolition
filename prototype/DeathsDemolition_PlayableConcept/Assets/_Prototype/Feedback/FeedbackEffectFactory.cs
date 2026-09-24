@@ -38,11 +38,7 @@ namespace DD.Prototype.Feedback
         private static ShockRingEffect s_shockRingTemplate;
         private static SealGlyphEffect s_sealGlyphTemplate;
         private static VortexEffect s_vortexTemplate;
-        private static DamageNumberEffect s_damageNumberTemplate;
 
-        private static Font s_font;
-        private static bool s_fontResolved;
-        private static bool s_damageNumberUnavailable;
 
         /// <summary>WP-019: the inactive template root, for the AP-010 pool templates.</summary>
         public static Transform TemplateRoot => Root;
@@ -126,22 +122,6 @@ namespace DD.Prototype.Feedback
         public static VortexEffect VortexTemplate => s_vortexTemplate != null
             ? s_vortexTemplate
             : s_vortexTemplate = BuildVortex();
-
-        /// <summary>Null when no font could be resolved; damage numbers then stay off.</summary>
-        public static DamageNumberEffect DamageNumberTemplate
-        {
-            get
-            {
-                if (s_damageNumberTemplate != null || s_damageNumberUnavailable)
-                {
-                    return s_damageNumberTemplate;
-                }
-
-                s_damageNumberTemplate = BuildDamageNumber();
-                s_damageNumberUnavailable = s_damageNumberTemplate == null;
-                return s_damageNumberTemplate;
-            }
-        }
 
         // ------------------------------------------------------------------- builders
 
@@ -384,37 +364,6 @@ namespace DD.Prototype.Feedback
             return go.AddComponent<VortexEffect>();
         }
 
-        private static DamageNumberEffect BuildDamageNumber()
-        {
-            Font font = ResolveFont();
-            if (font == null)
-            {
-                Debug.Log("[Feedback] No usable font on this machine; floating damage numbers stay off.");
-                return null;
-            }
-
-            GameObject go = NewChild("FX_DamageNumber");
-
-            var textGo = new GameObject("Text");
-            textGo.transform.SetParent(go.transform, false);
-
-            var text = textGo.AddComponent<TextMesh>();
-            text.font = font;
-            text.text = "0";
-            text.fontSize = 64;
-            text.characterSize = 0.045f;
-            text.anchor = TextAnchor.MiddleCenter;
-            text.alignment = TextAlignment.Center;
-            text.color = Color.white;
-
-            var meshRenderer = textGo.GetComponent<MeshRenderer>();
-            meshRenderer.sharedMaterial = font.material;
-            meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            meshRenderer.receiveShadows = false;
-
-            return go.AddComponent<DamageNumberEffect>();
-        }
-
         /// <summary>Primitive without its collider. Effects must never touch physics.</summary>
         private static GameObject BuildPrimitive(PrimitiveType type, string name)
         {
@@ -428,45 +377,6 @@ namespace DD.Prototype.Feedback
             }
 
             return go;
-        }
-
-        private static Font ResolveFont()
-        {
-            if (s_fontResolved)
-            {
-                return s_font;
-            }
-
-            s_fontResolved = true;
-
-            // OS font first: it never logs, whereas a missing builtin resource does.
-            try
-            {
-                s_font = Font.CreateDynamicFontFromOSFont("Arial", 48);
-            }
-            catch
-            {
-                s_font = null;
-            }
-
-            if (s_font == null)
-            {
-                try
-                {
-                    s_font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                }
-                catch
-                {
-                    s_font = null;
-                }
-            }
-
-            if (s_font != null)
-            {
-                s_font.hideFlags = HideFlags.DontUnloadUnusedAsset;
-            }
-
-            return s_font;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -486,10 +396,6 @@ namespace DD.Prototype.Feedback
             s_shockRingTemplate = null;
             s_sealGlyphTemplate = null;
             s_vortexTemplate = null;
-            s_damageNumberTemplate = null;
-            s_font = null;
-            s_fontResolved = false;
-            s_damageNumberUnavailable = false;
         }
     }
 }
