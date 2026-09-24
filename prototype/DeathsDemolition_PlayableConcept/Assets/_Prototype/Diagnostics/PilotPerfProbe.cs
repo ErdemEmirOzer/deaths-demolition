@@ -305,7 +305,7 @@ namespace DD.Prototype.Diagnostics
             public float hudGpuOnMs = -1f;
             public float hudGpuOffMs = -1f;
             public float hudGpuDeltaMs;
-            public float hudGpuDeltaMedianMs;        // median of the three on/off pair deltas
+            public float hudGpuDeltaRobustMs;        // trimmed mean of the five on/off pair deltas
             public float hudGpuUiMs = -1f;           // UGUI.Rendering.RenderOverlays GPU time, Profiler sub-window (HUD on)
             public int hudGpuUiSamples;
             public float hudGpuTermMs;               // the GPU term of hudCostMs
@@ -1380,8 +1380,8 @@ namespace DD.Prototype.Diagnostics
 
             /// <summary>The HUD budget (C-00 24.09, DEC-088 margin 0.10-0.18 ms): UI CPU + GPU per frame at 1080p under 40 bodies.</summary>
             public const float HudBudgetMs = 0.35f;
-            private const int HudBlockCount = 6;          // on, off, on, off, on, off: crowd drift cancels across the pairs
-            private const float HudBlockSeconds = 5f;
+            private const int HudBlockCount = 10;         // on, off × 5: crowd drift cancels across the pairs, and five pair deltas allow a trimmed mean
+            private const float HudBlockSeconds = 3f;
             private const float HudSettleSeconds = 0.75f; // the rebuild after a switch and the FrameTimingManager lag stay out
             private static readonly string[] HudMarkerNames =
             {
@@ -1400,7 +1400,7 @@ namespace DD.Prototype.Diagnostics
             /// frame ms, FrameTimingManager main-thread and GPU ms, the main-thread UI markers (sum per frame,
             /// recorded through ProfilerRecorder handles found by name) and the SetPass / batch / draw counters.
             /// HUD cost = Δscripts + UI markers with the HUD on (all canvases, so it is an upper bound) + the UI pass GPU time
-            /// (UGUI.Rendering.RenderOverlays, a short Profiler sub-window; the median on/off frame-GPU delta when unavailable).
+            /// (UGUI.Rendering.RenderOverlays, a short Profiler sub-window; the trimmed mean on/off frame-GPU delta when unavailable).
             /// </summary>
             private IEnumerator MeasureHud(Stage s, PlayerRig rig)
             {
@@ -1541,7 +1541,7 @@ namespace DD.Prototype.Diagnostics
 
                 // The GPU time of the UI pass itself ("GPU UI pass"): the Profiler on for this sub-window only
                 // (as 04d), HUD on, so every overlay canvas is in it. The whole-frame GPU delta above is kept as a
-                // cross-check; on a shared GPU (WindowServer, other windows) it swings by ±0.1 ms between runs.
+                // fallback; on a shared GPU (WindowServer, other windows) it swings by ±0.1 ms between runs.
                 bool profilerWas = UnityEngine.Profiling.Profiler.enabled;
                 UnityEngine.Profiling.Profiler.enabled = true;
                 UnityEngine.Profiling.Recorder uiGpu = UnityEngine.Profiling.Recorder.Get("UGUI.Rendering.RenderOverlays");
@@ -1609,8 +1609,13 @@ namespace DD.Prototype.Diagnostics
                         }
                     }
 
+                    // Trimmed mean of the pair deltas (the highest and lowest dropped once there are five): one pair that
+                    // caught a WindowServer burst on the shared GPU no longer decides the term.
                     pairs.Sort();
-                    s.hudGpuDeltaMedianMs = pairs.Count > 0 ? pairs[pairs.Count / 2] : s.hudGpuDeltaMs;
+                    int drop = pairs.Count >= 5 ? 1 : 0;
+                    double kept = 0;
+                    for (int i = drop; i < pairs.Count - drop; i++) kept += pairs[i];
+                    s.hudGpuDeltaRobustMs = pairs.Count - 2 * drop > 0 ? (float)(kept / (pairs.Count - 2 * drop)) : s.hudGpuDeltaMs;
                 }
 
                 float MarkerAvg(int k2, int m) => valid[m] ? (float)(markerSum[k2, m] / frames[k2]) : -1f;
@@ -1632,15 +1637,15 @@ namespace DD.Prototype.Diagnostics
                 bool markersOk = valid[0] && valid[1] && valid[2] && valid[3];
                 s.hudCpuMs = Mathf.Max(0f, s.hudScriptsOnMs - s.hudScriptsOffMs) +
                              Mathf.Max(0f, s.hudCanvasUpdateOnMs) + Mathf.Max(0f, s.hudEmitGeometryOnMs) + Mathf.Max(0f, s.hudRenderOverlaysOnMs);
-                // GPU term: the UI pass's own GPU time when the platform reports it, else the median on/off pair delta.
-                s.hudGpuTermMs = s.hudGpuUiMs >= 0f ? s.hudGpuUiMs : Mathf.Max(0f, s.hudGpuDeltaMedianMs);
+                // GPU term: the UI pass's own GPU time when the platform reports it, else the trimmed mean on/off pair delta.
+                s.hudGpuTermMs = s.hudGpuUiMs >= 0f ? s.hudGpuUiMs : Mathf.Max(0f, s.hudGpuDeltaRobustMs);
                 s.hudCostMs = s.hudCpuMs + s.hudGpuTermMs;
                 // PASS = the measurement saw what it had to (markers and GPU samples); the budget verdict is the aggregate's.
                 s.pass = markersOk && (uiGpuN > 0 || gpuN[0] > 0);
                 s.note = "HUD cost " + F3(s.hudCostMs) + " ms (budget " + F3(HudBudgetMs) + ") = cpu " + F3(s.hudCpuMs) +
                          " [scripts Δ" + F3(s.hudScriptsOnMs - s.hudScriptsOffMs) + " canvas " + F3(s.hudCanvasUpdateOnMs) + "/" + F3(s.hudCanvasUpdateOffMs) +
                          " emit " + F3(s.hudEmitGeometryOnMs) + "/" + F3(s.hudEmitGeometryOffMs) + " overlays " + F3(s.hudRenderOverlaysOnMs) + "/" + F3(s.hudRenderOverlaysOffMs) +
-                         "] + gpu " + F3(s.hudGpuTermMs) + " (UI pass " + F3(s.hudGpuUiMs) + " over " + uiGpuN + " frames; frame Δ" + F3(s.hudGpuDeltaMs) + " median Δ" + F3(s.hudGpuDeltaMedianMs) +
+                         "] + gpu " + F3(s.hudGpuTermMs) + " (UI pass " + F3(s.hudGpuUiMs) + " over " + uiGpuN + " frames; frame Δ" + F3(s.hudGpuDeltaMs) + " trimmed Δ" + F3(s.hudGpuDeltaRobustMs) +
                          " " + F3(s.hudGpuOnMs) + "/" + F3(s.hudGpuOffMs) + ") | frame " + F3(s.hudFrameOnMs) + "/" + F3(s.hudFrameOffMs) +
                          " Δ" + F3(s.hudFrameDeltaMs) + " | setpass " + s.hudSetPassOn.ToString("F1", CultureInfo.InvariantCulture) + "/" + s.hudSetPassOff.ToString("F1", CultureInfo.InvariantCulture) +
                          " batches " + s.hudBatchesOn.ToString("F1", CultureInfo.InvariantCulture) + "/" + s.hudBatchesOff.ToString("F1", CultureInfo.InvariantCulture) +
