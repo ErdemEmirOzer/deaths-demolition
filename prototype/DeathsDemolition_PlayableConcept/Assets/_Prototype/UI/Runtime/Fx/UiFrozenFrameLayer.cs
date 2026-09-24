@@ -37,6 +37,7 @@ namespace DD.Prototype.UI
 
         private void LateUpdate()
         {
+            UiFrozenFrame.SafetyTick();
             bool want = UiFrozenFrame.CaptureReady && Time.frameCount > UiFrozenFrame.CapturedFrame;
             if (want != Showing)
             {

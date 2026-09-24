@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using DD.Prototype.UI;
 using NUnit.Framework;
 using Unity.Profiling;
+using DD.Prototype.Rounds;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
@@ -22,6 +24,7 @@ namespace DD.Prototype.Tests.PlayMode
     public sealed class UiFxSliceTests
     {
         private const int UiLayer = 5;
+        private const string TestHold = "wp068-frozen-test";   // Pause / the shop freeze the run clock; the frozen frame is only legitimate then
         private readonly List<Object> _temp = new List<Object>();
         private int _fpsWas;
 
@@ -40,6 +43,8 @@ namespace DD.Prototype.Tests.PlayMode
             UiFxGlobals.MotionOverride = null;
             UiFxGlobals.FlashOverride = null;
             UiFrozenFrame.ReleaseAll();
+            UiFrozenFrame.CameraOverride = null;
+            RunFlowClock.RemoveHold(TestHold);
             foreach (Object o in _temp) if (o != null) Object.Destroy(o);
             _temp.Clear();
             Application.targetFrameRate = _fpsWas;
@@ -259,6 +264,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             yield return null;
 
+            RunFlowClock.AddHold(TestHold);
             int before = UiFrozenFrame.CaptureCount;
             UiFrozenFrame.Hold("test-a");
             for (int i = 0; i < 6 && !UiFrozenFrame.IsShowing; i++) yield return null;
@@ -296,6 +302,48 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(before + 2, UiFrozenFrame.CaptureCount, "yeni tutma yeni yakalama");
         }
 
+        // ------------------------------------------------------------------ 5 · hotfix: a hold never outlives its scene / the frozen clock
+
+        [UnityTest]
+        public IEnumerator DonmusKare_SahneDegisimindeVeSaatAkarkenBirakilir()
+        {
+            Camera world = NewWorldCamera();
+            yield return null;
+
+            // (a) Pause → END RUN: the owner forgets to release, the scene changes → every owner dropped, layer hidden.
+            RunFlowClock.AddHold(TestHold);
+            UiFrozenFrame.Hold("pause");
+            for (int i = 0; i < 6 && !UiFrozenFrame.IsShowing; i++) yield return null;
+            Assert.IsTrue(UiFrozenFrame.IsShowing);
+            int forced = UiFrozenFrame.ForcedReleases;
+            Scene next = SceneManager.CreateScene("wp068-hotfix-next");
+            Scene was = SceneManager.GetActiveScene();
+            SceneManager.SetActiveScene(next);
+            yield return null;
+            Assert.IsFalse(UiFrozenFrame.IsHeld, "sahne değişimi sahibi bırakmalı");
+            Assert.IsFalse(UiFrozenFrame.IsShowing, "katman yeni sahneyi örtmemeli");
+            Assert.AreEqual(forced + 1, UiFrozenFrame.ForcedReleases);
+            SceneManager.SetActiveScene(was);
+            yield return SceneManager.UnloadSceneAsync(next);
+            LogAssert.ignoreFailingMessages = true;   // the release is logged as a warning by design
+
+            // (b) Safety: a hold while the run clock is RUNNING (nothing freezes the world) is released after SafetySeconds.
+            RunFlowClock.RemoveHold(TestHold);
+            UiFrozenFrame.Hold("orphan");
+            for (int i = 0; i < 6 && !UiFrozenFrame.IsShowing; i++) yield return null;
+            float t0 = Time.realtimeSinceStartup;
+            while (UiFrozenFrame.IsHeld && Time.realtimeSinceStartup - t0 < UiFrozenFrame.SafetySeconds + 1f) yield return null;
+            Assert.IsFalse(UiFrozenFrame.IsHeld, "saat akarken sahipsiz tutma güvenlikle bırakılmalı");
+            Assert.IsFalse(UiFrozenFrame.IsShowing);
+
+            // (c) A legitimate hold (clock frozen) stays well past the safety window.
+            RunFlowClock.AddHold(TestHold);
+            UiFrozenFrame.Hold("pause");
+            t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < UiFrozenFrame.SafetySeconds + 0.5f) yield return null;
+            Assert.IsTrue(UiFrozenFrame.IsShowing, "donmuş saatle meşru tutma kalmalı");
+        }
+
         // ------------------------------------------------------------------ helpers
 
         private RenderTexture NewTarget(int w, int h)
@@ -328,6 +376,7 @@ namespace DD.Prototype.Tests.PlayMode
             _temp.Add(go);
             Camera cam = go.AddComponent<Camera>();
             cam.targetTexture = NewTarget(640, 360);   // batchmode: a screen camera does not render
+            UiFrozenFrame.CameraOverride = cam;          // earlier fixtures leave their scenes' MainCamera behind
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.2f, 0.3f, 0.5f);
             go.transform.position = new Vector3(0f, 1f, -6f);

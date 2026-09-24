@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace DD.Prototype.UI
@@ -28,6 +29,9 @@ namespace DD.Prototype.UI
         private static bool s_pending;
         private static int s_capturedFrame = -1;
         private static UiFrozenFrameLayer s_layer;
+
+        /// <summary>Tests: the camera to capture instead of Camera.main (a PlayMode run leaves earlier scenes' cameras around).</summary>
+        public static Camera CameraOverride;
 
         /// <summary>Captures since start-up (tests: one per hold, 0 per frame afterwards).</summary>
         public static int CaptureCount { get; private set; }
@@ -74,10 +78,62 @@ namespace DD.Prototype.UI
         {
             s_owners.Clear();
             s_pending = false;
+            s_capturedFrame = -1;
             Hook(false);
             if (s_layer != null)
             {
                 s_layer.Show(false);
+            }
+        }
+
+        /// <summary>Owner names (diagnostics / the release log).</summary>
+        public static string DescribeOwners() => s_owners.Count == 0 ? "none" : string.Join(",", s_owners);
+
+        // WP-068 hotfix (release f4453aa: Pause → END RUN froze the screen): the layer is a DontDestroyOnLoad OVERLAY canvas,
+        // drawn after the whole pipeline, so a hold that outlives its scene covers every later screen. Two nets, both
+        // independent of the owners' own bookkeeping:
+        //   1. a scene change drops every owner and hides the layer (a frozen frame never belongs to the next scene);
+        //   2. a hold is only legitimate while RunFlowClock is frozen (Pause and the round-end shop both freeze it) —
+        //      if the clock has been running for SafetySeconds (unscaled) while the layer shows, the hold is released.
+        public const float SafetySeconds = 0.5f;
+        private static float s_runningSince = -1f;
+
+        /// <summary>Releases (scene change + safety) since start-up — tests / logs.</summary>
+        public static int ForcedReleases { get; private set; }
+
+        private static void OnActiveSceneChanged(Scene from, Scene to)
+        {
+            if (s_owners.Count == 0 && (s_layer == null || !s_layer.Showing))
+            {
+                return;
+            }
+
+            Debug.LogWarning("[UiFrozenFrame] scene change " + from.name + " → " + to.name + " with owners [" + DescribeOwners() + "]: released");
+            ForcedReleases++;
+            ReleaseAll();
+        }
+
+        /// <summary>Called by the layer every frame it shows (LateUpdate).</summary>
+        internal static void SafetyTick()
+        {
+            if (s_owners.Count == 0 || DD.Prototype.Rounds.RunFlowClock.IsFrozen)
+            {
+                s_runningSince = -1f;
+                return;
+            }
+
+            if (s_runningSince < 0f)
+            {
+                s_runningSince = Time.unscaledTime;
+                return;
+            }
+
+            if (Time.unscaledTime - s_runningSince >= SafetySeconds)
+            {
+                Debug.LogWarning("[UiFrozenFrame] held by [" + DescribeOwners() + "] while the run clock runs for " + SafetySeconds + " s: released");
+                s_runningSince = -1f;
+                ForcedReleases++;
+                ReleaseAll();
             }
         }
 
@@ -104,7 +160,8 @@ namespace DD.Prototype.UI
 
         private static void OnBeginCamera(ScriptableRenderContext context, Camera camera)
         {
-            if (!s_pending || camera.cameraType != CameraType.Game || camera != Camera.main)
+            Camera target = CameraOverride != null ? CameraOverride : Camera.main;
+            if (!s_pending || camera.cameraType != CameraType.Game || camera != target)
             {
                 return;
             }
@@ -196,6 +253,8 @@ namespace DD.Prototype.UI
 
             s_layer = go.AddComponent<UiFrozenFrameLayer>();
             s_layer.Bind(canvas, image);
+            SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+            SceneManager.activeSceneChanged += OnActiveSceneChanged;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -212,6 +271,10 @@ namespace DD.Prototype.UI
             s_hooked = false;
             s_layer = null;
             CaptureCount = 0;
+            ForcedReleases = 0;
+            CameraOverride = null;
+            s_runningSince = -1f;
+            SceneManager.activeSceneChanged -= OnActiveSceneChanged;
         }
     }
 

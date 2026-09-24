@@ -242,6 +242,7 @@ namespace DD.Prototype.UI
         {
             _confirming = false;
             _paused = false;
+            UiFrozenFrame.Release(FrozenOwner);   // WP-068 hotfix: END RUN left the blur's hold (and its overlay) on the next scene
             UiNavigation.ExitOverlay(UiContext.Paused);
 
             // ReleaseSimulation inside the flow drops every hold, so the main menu can
