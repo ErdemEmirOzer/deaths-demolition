@@ -388,3 +388,19 @@ Ham notlar: `~/Desktop/KADRO/context/projects/deaths-demolition/wp-070/evidence/
 | C-00 (24.09) | FP FOV = yatay, 16:9 referanslı (Hor+), varsayılan 90°, aralık 70–110; TP omuz sağ, 2,8 m, omuz değiştirme tuşu olsun | Ayar/rig güncellendi (dilim 1); 🔴 1 ve 3 kapandı; omuz tuşu dilim 4 |
 | S-05 (QUALITY-TIERS-V2 §3, `3812dc2`) | lodBias = max(1, taban × LodBiasFactor), taban 1,0/2,0/2,5 (Performans/Yüksek/Sinematik); gölge = min(kademe tavanı, mod değeri), tavan 45/2 · 60/4 · 80/4; farClip mod değeri (Performans'ta da 450 m). WP-074 yön belgesi `abc0f70`: E-1…E-20 dilimlere eşlendi (B3 occluder Roof/Wall = E-20, B6 göz hizası taraması) | Profil çarpanları TP 0,6 / FP 0,7 / Tepeden 1,0 (Yüksek → 1,2 / 1,4 / 2,0); gölge/far değerleri uyumlu; §11 Performans 350 m notu geçersiz → 450 m |
 
+## 16 · Faz B durumu ve kanıt (S-01, 24.09)
+
+Dilimler (dal `wp-070-camera-modes`): B1 `30fa406d` rig TP/FP + bakış + geçiş + merkez ışını · B2 `2fb7d976` omuz V/orta/R3 + TP ölü bant + S-05 LOD çarpanı · B3 `99f86361` FP overlay görüntü modeli + göz kalibrasyonu + duvar sondası · B4 `e476c7ed` InputPreferences v3 bakış alanları + tek yönlü köprü · B5 → S-09 (ui-settings, Pause seçici, imleç devri) · B6 `1acbed33` occluder politikası + `CameraOccluderClass` · B7 `98faa002` QaRunBot üç modda.
+
+Kanıt (dev build, `PilotPerfProbe -ddPilotScene Run`, 40 düşman zorlanmış, 1920×1080, ısınma 8 s + pencere 30 s, `-ddCameraMode`; `~/Desktop/KADRO/context/projects/deaths-demolition/wp-070/evidence/modes/<topdown|tp|fp>/`, kareler `capture-gameplay-Run.png`, kare süreleri `frame-times-ms.csv`):
+
+| Mod | ort ms (fps) | medyan | p99 / p99 süzülmüş | >33 ms takılma | ekranda / görünür düşman | ekran yüksekliği ort |
+|---|---|---|---|---|---|---|
+| TopDown | 16,55 (60,4) | 13,88 | 59,5 / 30,8 | 85 | 40 / 40 | %7,4 |
+| TP | 14,35 (69,7) | 11,95 | 53,0 / 28,8 | 70 | 27 / 40 | %39,3 |
+| FP | 12,14 (82,3) | 10,90 | 29,5 / 25,5 | 17 | 6 / 40 | %70,5 |
+
+Okuma: bakış modları tepedenden ucuz (daha az görünür renderer); DEC-092 Yüksek hedefi (ort ≤ 16,6 ms) üç modda sağlanıyor, p99 ≤ 20 ms hiçbir modda (TopDown tabanı dahil) sağlanmıyor — kamera regresyonu değil, dev build + takılma tabanı (S-10 WP-078 release ölçümü karar verir). Mod profili global kalite değerleri (lodBias/gölge) henüz uygulanmadı (S-05 WP-075 kalite modülü) — sonda lodBias 2,0 sabitti. FP'de sondanın `08-occluder-fade` aşaması "FAIL (NO FADE)" beklenen sonuçtur (FP politikası None); sonda aşaması mod farkındalığı kazanmalı (sahip S-05/S-10). Kullanıcı verisi: yalnız oyun plist'i (Unity oturum sayacı) değişti, geri yüklendi, bayt eşit; profil/ayar dosyaları dokunulmadı.
+
+Oynanabilirlik: Pause seçici (S-09) gelene kadar mod `-ddCameraMode topdown|tp|fp` ile seçilir (dev ve release; kayıtlı tercihi değiştirmez), ör. `open DeathsDemolition.app --args -ddCameraMode tp`. Açıklar: baş submesh (P-06/S-06 `HeadRenderers`) gelene kadar FP'de gövde ShadowsOnly; FP kolları S-06 WP-071; imleç kilidi UiCursor devralana dek rig; aim assist TP/FP yapışkanlığı, ateş yutma (IsTransitioning) ve dikey nişan S-02 WP-069 B1; `CameraModesFeel` değerleri + `PlayDeathCamera` S-07 WP-073; arka tehdit kancaları S-03/S-08/S-09.
+
