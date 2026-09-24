@@ -87,6 +87,9 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "WP-077 K1 (user, 2026-09-24): Hybrid = the offer draws three cards from the in-run tree frontier + the pin (Nişan); reroll kept. 1 = FreeTree (named alternative, not playable yet; behaves as Hybrid).")]
         public int RunTreeOfferModel = 0;
 
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "WP-077 K10: the round-end offer sells tree NODE cards (frontier draw, fork pair as one card, undo, Reforge). Off until S-09's tree screen (WP-068 R1-C) draws node cards; off = the classic branch cards.")]
+        public bool RunTreeNodeCards = false;
+
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Lower bound of the request's 15-45 starting cost band; used as a sanity clamp.")]
         public int StartingCostMin = 15;
 

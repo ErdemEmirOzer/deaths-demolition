@@ -208,7 +208,7 @@
    "id": "link_arc_1",
    "shortName": "Conductor",
    "displayName": "Conductor",
-   "description": "While the chain-lightning Special is held, your classic weapon's Chain gains +1 jump.",
+   "description": "For the round you pick up Raiju, your classic weapon's Chain gains +1 jump.",
    "effectId": "link.arc.conductor",
    "cost": 80,
    "offerWeight": 1.2,

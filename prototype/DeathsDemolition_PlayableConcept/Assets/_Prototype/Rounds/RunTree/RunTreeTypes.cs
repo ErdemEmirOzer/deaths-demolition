@@ -93,7 +93,15 @@ namespace DD.Prototype.Rounds
         InsufficientGold = 3,
         LimitReached = 4,
         NoRun = 5,
-        WalletRefused = 6
+        WalletRefused = 6,
+        /// <summary>K10: no purchase of this offer to undo (or it was already undone / a Reforge followed it).</summary>
+        NothingToUndo = 7,
+        /// <summary>K10: the screen closed the undo window (the countdown's last 3 s).</summary>
+        UndoClosed = 8,
+        /// <summary>K10: the run's one Reforge is spent.</summary>
+        AlreadyUsed = 9,
+        /// <summary>K10: Reforge opens from round 5.</summary>
+        TooEarly = 10
     }
 
     /// <summary>One node of the catalog JSON (<c>Resources/ProgressionTree/run-tree.json</c>, dd-run-tree-v1).</summary>

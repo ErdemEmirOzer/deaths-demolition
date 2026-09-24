@@ -37,6 +37,16 @@ namespace DD.Prototype.Rounds
         public MetaRunModifiers Meta { get; private set; } = MetaRunModifiers.None;
 
         private int _earnedMark;
+        private int[] _unseen = new int[0];
+
+        /// <summary>§2.5 luck guard: a keystone / seal / capstone left out of this many offers in a row draws at double weight.</summary>
+        public const int PityRounds = 3;
+
+        /// <summary>K10 Reforge ("Yeniden Dövme"): the earliest round and the one use per run.</summary>
+        public const int ReforgeFromRound = 5;
+
+        /// <summary>K10: true once the run's one Reforge is spent.</summary>
+        public bool ReforgeUsed { get; private set; }
         private PrototypeConfig _config;
 
         public bool IsBuilt => Graph != null;
@@ -51,6 +61,8 @@ namespace DD.Prototype.Rounds
             _config = config;
             Graph = RunTreeGraph.Build(weapon, config);
             _owned = new bool[Graph.Count];
+            _unseen = new int[Graph.Count];
+            ReforgeUsed = false;
             HearthStacks = 0;
             HearthThisRound = 0;
             LinkedSpecial = string.Empty;
@@ -341,7 +353,11 @@ namespace DD.Prototype.Rounds
         /// step takes the last slot. Deterministic for a seeded random. The K10 node cards and the B3 simulator
         /// (EconomySimulator.TreeModel) share this draw.
         /// </summary>
-        public int DrawFrontier(IUpgradeOfferRandom random, WeaponModifierState build, int count, List<int> into)
+        public int DrawFrontier(IUpgradeOfferRandom random, WeaponModifierState build, int count, List<int> into) =>
+            DrawFrontier(random, build, count, into, null);
+
+        /// <summary>As above, leaving out <paramref name="exclude"/> (the cards a reroll keeps).</summary>
+        public int DrawFrontier(IUpgradeOfferRandom random, WeaponModifierState build, int count, List<int> into, List<int> exclude)
         {
             into.Clear();
             if (!IsBuilt || count <= 0) return 0;
@@ -349,7 +365,9 @@ namespace DD.Prototype.Rounds
             float total = 0f;
             for (int i = 0; i < Graph.Count; i++)
             {
-                if (!IsOfferable(i, build)) continue;
+                if (!IsOfferable(i, build) || (exclude != null && exclude.Contains(i))) continue;
+                int partner = ForkPartner(i);
+                if (partner >= 0 && partner < i && IsOfferable(partner, build)) continue;   // §2.5: a fork pair is one card (its lower index)
                 _frontier.Add(i);
                 total += OfferWeightOf(i);
             }
@@ -370,16 +388,105 @@ namespace DD.Prototype.Rounds
             }
 
             int pin = PinnedOfferable(build);
-            if (pin >= 0 && !into.Contains(pin))
+            if (pin >= 0 && !ContainsCard(into, pin) && (exclude == null || !ContainsCard(exclude, pin)))
             {
-                if (into.Count < count) into.Add(pin);
-                else into[into.Count - 1] = pin;
+                int card = ForkPartner(pin) >= 0 && ForkPartner(pin) < pin && IsOfferable(ForkPartner(pin), build) ? ForkPartner(pin) : pin;
+                if (into.Count < count) into.Add(card);
+                else into[into.Count - 1] = card;
             }
 
             return into.Count;
         }
 
-        private float OfferWeightOf(int i) => Math.Max(0.01f, Graph[i].OfferWeight);
+        /// <summary>The other fork of a node's pair (same lane, same exclusion group), else -1.</summary>
+        public int ForkPartner(int i)
+        {
+            if (!IsBuilt || i < 0 || i >= Graph.Count) return -1;
+            RunTreeNode n = Graph[i];
+            if (n.Kind != RunTreeNodeKind.Fork || n.ExclusionGroup == 0) return -1;
+            for (int j = 0; j < Graph.Count; j++)
+            {
+                if (j != i && Graph[j].Kind == RunTreeNodeKind.Fork && Graph[j].ExclusionGroup == n.ExclusionGroup) return j;
+            }
+
+            return -1;
+        }
+
+        private bool ContainsCard(List<int> cards, int node)
+        {
+            if (cards.Contains(node)) return true;
+            int partner = ForkPartner(node);
+            return partner >= 0 && cards.Contains(partner);
+        }
+
+        /// <summary>
+        /// §2.5 luck guard bookkeeping, once per built offer (not per reroll): every offerable keystone / seal /
+        /// capstone that the offer left out counts one more round unseen; one that was shown resets.
+        /// </summary>
+        public void RecordOffer(List<int> shown, WeaponModifierState build)
+        {
+            if (!IsBuilt || shown == null) return;
+            for (int i = 0; i < Graph.Count; i++)
+            {
+                RunTreeNodeKind k = Graph[i].Kind;
+                if (k != RunTreeNodeKind.BranchKeystone && k != RunTreeNodeKind.WeaponSeal && k != RunTreeNodeKind.Capstone) continue;
+                if (shown.Contains(i)) _unseen[i] = 0;
+                else if (IsOfferable(i, build)) _unseen[i]++;
+            }
+        }
+
+        /// <summary>Offers in a row a drawable keystone / seal / capstone has been left out of (luck guard).</summary>
+        public int UnseenRounds(int i) => i >= 0 && i < _unseen.Length ? _unseen[i] : 0;
+
+        private float OfferWeightOf(int i)
+        {
+            float w = Math.Max(0.01f, Graph[i].OfferWeight);
+            return _unseen.Length > i && _unseen[i] >= PityRounds ? w * 2f : w;
+        }
+
+        // ------------------------------------------------------------------ K10 undo / Reforge
+
+        /// <summary>K10 undo of a non-tier card purchase (the shop refunds the gold). Tier nodes go through the build.</summary>
+        public bool Unmark(int i)
+        {
+            if (!IsBuilt || i < 0 || i >= Graph.Count) return false;
+            RunTreeNodeKind k = Graph[i].Kind;
+            if (k == RunTreeNodeKind.Tier || k == RunTreeNodeKind.Hearth || !_owned[i]) return false;
+            _owned[i] = false;
+            return true;
+        }
+
+        /// <summary>K10 undo of the last Hearth stoke (the shop refunds the gold).</summary>
+        public bool UnstokeHearth(WeaponModifierState build)
+        {
+            if (!IsBuilt || HearthStacks <= 0 || HearthThisRound <= 0) return false;
+            HearthStacks--;
+            HearthThisRound--;
+            if (build != null && Graph.HearthIndex >= 0) build.SetHearth(HearthStacks, Graph[Graph.HearthIndex].EffectValue);
+            return true;
+        }
+
+        /// <summary>
+        /// K10 Reforge: the owned fork <paramref name="i"/> can be swapped for its partner — once per run, from
+        /// round <see cref="ReforgeFromRound"/>, the partner's effect live. Price: the partner's (no refund).
+        /// </summary>
+        public bool CanReforge(int i, int round)
+        {
+            int partner = ForkPartner(i);
+            return partner >= 0 && !ReforgeUsed && round >= ReforgeFromRound && _owned[i] && !_owned[partner] &&
+                   RunTreeEffects.IsLive(EffectOf(partner));
+        }
+
+        /// <summary>K10 Reforge bookkeeping after the shop took the partner's price: the pair swaps owner.</summary>
+        public bool Reforge(int i, int round)
+        {
+            if (!CanReforge(i, round)) return false;
+            int partner = ForkPartner(i);
+            _owned[i] = false;
+            _owned[partner] = true;
+            ReforgeUsed = true;
+            return true;
+        }
 
         private void AppendPath(int i, WeaponModifierState build, List<int> into, int depth)
         {
@@ -441,8 +548,12 @@ namespace DD.Prototype.Rounds
         /// WP-077 Hearth ("Ocak", K3): a direct buy outside the card limit — prerequisite a keystone in the
         /// weapon lane, ≤ perRound this round, ≤ maxStacks in the run, price 50 + 30·n. Takes the gold once.
         /// </summary>
-        public RunTreeCommandResult TryStokeHearth(GoldWallet wallet, WeaponModifierState build)
+        public RunTreeCommandResult TryStokeHearth(GoldWallet wallet, WeaponModifierState build) => TryStokeHearth(wallet, build, out _);
+
+        /// <summary>As above; <paramref name="transactionId"/> is the wallet spend (K10 undo refunds it).</summary>
+        public RunTreeCommandResult TryStokeHearth(GoldWallet wallet, WeaponModifierState build, out int transactionId)
         {
+            transactionId = 0;
             if (!IsBuilt || Graph.HearthIndex < 0) return RunTreeCommandResult.UnknownNode;
             if (wallet == null || !wallet.IsOpen) return RunTreeCommandResult.NoRun;
             int i = Graph.HearthIndex;
@@ -453,10 +564,13 @@ namespace DD.Prototype.Rounds
             if (s != RunTreeNodeStatus.Available) return RunTreeCommandResult.NotAvailable;
 
             int cost = Cost(i, build);
-            if (wallet.TrySpend(cost, GoldSource.TreeHearth, wallet.NextTransactionId()) != GoldTransactionResult.Applied)
+            int tx = wallet.NextTransactionId();
+            if (wallet.TrySpend(cost, GoldSource.TreeHearth, tx) != GoldTransactionResult.Applied)
             {
                 return RunTreeCommandResult.WalletRefused;
             }
+
+            transactionId = tx;
 
             HearthStacks++;
             HearthThisRound++;

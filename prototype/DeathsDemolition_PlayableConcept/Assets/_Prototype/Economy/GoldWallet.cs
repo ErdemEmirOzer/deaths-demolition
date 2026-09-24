@@ -31,6 +31,15 @@ namespace DD.Prototype.Economy
         /// <summary>Transaction ids already applied this run. Cleared with the run.</summary>
         private readonly HashSet<int> _applied = new HashSet<int>(256);
 
+        // WP-077 K10: spends that can still be refunded (id → cost, source). Cleared at run boundaries.
+        private readonly Dictionary<int, SpendRecord> _spends = new Dictionary<int, SpendRecord>(64);
+
+        private struct SpendRecord
+        {
+            public int Cost;
+            public GoldSource Source;
+        }
+
         private int _nextTransactionId = 1;
         private int _version;
 
@@ -193,6 +202,7 @@ namespace DD.Prototype.Economy
             }
 
             _applied.Add(transactionId);
+            _spends[transactionId] = new SpendRecord { Cost = cost, Source = source };
 
             Balance -= cost;
             TotalSpent += cost;
@@ -204,6 +214,41 @@ namespace DD.Prototype.Economy
                     break;
                 case GoldSource.OfferReroll:
                     SpentOnRerolls += cost;
+                    break;
+            }
+
+            _version++;
+            RaiseChanged();
+            return GoldTransactionResult.Applied;
+        }
+
+        /// <summary>
+        /// WP-077 K10 "undo last purchase": gives a spend back in full. It is the spend un-happening, not
+        /// income: TotalSpent and the per-source spend fall, TotalEarned does not move (so the Purse and the
+        /// run summary never count a refund as earned gold). Once per transaction; the id stays used.
+        /// </summary>
+        public GoldTransactionResult TryRefund(int transactionId)
+        {
+            if (!IsOpen)
+            {
+                return GoldTransactionResult.NoRun;
+            }
+
+            if (!_spends.TryGetValue(transactionId, out SpendRecord spend))
+            {
+                return GoldTransactionResult.UnknownTransaction;
+            }
+
+            _spends.Remove(transactionId);
+            Balance += spend.Cost;
+            TotalSpent = Math.Max(0, TotalSpent - spend.Cost);
+            switch (spend.Source)
+            {
+                case GoldSource.UpgradePurchase:
+                    SpentOnUpgrades = Math.Max(0, SpentOnUpgrades - spend.Cost);
+                    break;
+                case GoldSource.OfferReroll:
+                    SpentOnRerolls = Math.Max(0, SpentOnRerolls - spend.Cost);
                     break;
             }
 
@@ -277,6 +322,7 @@ namespace DD.Prototype.Economy
             _version = 0;
             _nextTransactionId = 1;
             _applied.Clear();
+            _spends.Clear();
         }
 
         private void RaiseChanged()

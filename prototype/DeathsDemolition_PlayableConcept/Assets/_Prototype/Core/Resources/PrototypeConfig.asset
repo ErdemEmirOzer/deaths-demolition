@@ -208,6 +208,7 @@ MonoBehaviour:
     CarryUnspentGold: 1
     PurchasesPerRound: 2
     RunTreeOfferModel: 0
+    RunTreeNodeCards: 0
     StartingCostMin: 15
     StartingCostMax: 45
     ArmorGoldBonusHelmet: 1

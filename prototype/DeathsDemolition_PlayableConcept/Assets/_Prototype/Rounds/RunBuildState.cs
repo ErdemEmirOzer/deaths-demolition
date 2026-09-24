@@ -164,6 +164,19 @@ namespace DD.Prototype.Rounds
             Touch();
         }
 
+        /// <summary>WP-077 K10: the last card purchase was undone; the build readout drops it again.</summary>
+        public void RecordPurchaseUndone(int cost)
+        {
+            if (!IsRunLive || PurchaseCount <= 0)
+            {
+                return;
+            }
+
+            PurchaseCount--;
+            TotalGoldSpent = Mathf.Max(0, TotalGoldSpent - Mathf.Max(0, cost));
+            Touch();
+        }
+
         // ------------------------------------------------------------------ reads
 
         /// <summary>Owned tier of a branch, straight from the authoritative state. 0 when detached.</summary>

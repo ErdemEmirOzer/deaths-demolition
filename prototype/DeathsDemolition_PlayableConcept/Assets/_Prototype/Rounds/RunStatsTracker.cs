@@ -132,6 +132,19 @@ namespace DD.Prototype.Rounds
             UpgradesPurchased++;
         }
 
+        /// <summary>WP-077 K10: the last card purchase was undone (full refund); the spend and the count go back.</summary>
+        public void RecordPurchaseUndone(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            GoldSpent = System.Math.Max(0, GoldSpent - amount);
+            GoldSpentOnUpgrades = System.Math.Max(0, GoldSpentOnUpgrades - amount);
+            UpgradesPurchased = System.Math.Max(0, UpgradesPurchased - 1);
+        }
+
         /// <summary>WP-008: a paid reroll. Counts into <see cref="GoldSpent"/>, not into <see cref="UpgradesPurchased"/>.</summary>
         public void RecordRerollSpent(int amount)
         {

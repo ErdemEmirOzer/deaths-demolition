@@ -45,7 +45,10 @@ namespace DD.Prototype.Economy
         PurseBonus = 6,
 
         /// <summary>WP-077 Hearth ("Ocak"): a direct tree purchase outside the card limit. A spend source reported inside "Gold Spent".</summary>
-        TreeHearth = 7
+        TreeHearth = 7,
+
+        /// <summary>WP-077 K10 Reforge ("Yeniden Dövme"): swapping an owned fork for its partner, at the partner's price, no refund.</summary>
+        TreeReforge = 8
     }
 
     /// <summary>
@@ -65,7 +68,10 @@ namespace DD.Prototype.Economy
         InsufficientBalance = 3,
 
         /// <summary>No run is open on the wallet.</summary>
-        NoRun = 4
+        NoRun = 4,
+
+        /// <summary>WP-077 K10: a refund of a spend this wallet has no record of (never applied, or already refunded).</summary>
+        UnknownTransaction = 5
     }
 
     /// <summary>

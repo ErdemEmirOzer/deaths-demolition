@@ -42,6 +42,14 @@ namespace DD.Prototype.Rounds
         public bool IsPinned;
         /// <summary>On the current offer's cards. False for a drawable node = "not in this offer" overlay (K9).</summary>
         public bool InOffer;
+        /// <summary>K10: icon key — "Upgrade.&lt;Branch&gt;", "Weapon.&lt;slot&gt;" (seal / fork / capstone), "Special.&lt;sw_arc|sw_gel&gt;", "Tree.Hearth", "Tree.Purse", "Tree.Body".</summary>
+        public string IconKey;
+        /// <summary>K10: the node this one closes when bought (its fork partner), else −1 ("closes X").</summary>
+        public int ClosesIndex;
+        /// <summary>K10: gold a Reforge of this owned fork costs now, else −1.</summary>
+        public int ReforgeCost;
+        /// <summary>K10: offers in a row this keystone / seal / capstone was left out of (luck guard ×2 from 3).</summary>
+        public int UnseenRounds;
     }
 
     /// <summary>
@@ -76,8 +84,12 @@ namespace DD.Prototype.Rounds
         public int PinReachableIndex { get; private set; } = -1;
 
         /// <summary>K10 is open (C-00): undo-last and fork reforge are not offered yet.</summary>
-        public bool UndoAvailable => false;
-        public bool ReforgeAvailable => false;
+        /// <summary>K10: the offer's last card / Hearth buy can be undone now; <see cref="UndoRefund"/> gold comes back.</summary>
+        public bool UndoAvailable { get; private set; }
+        public int UndoRefund { get; private set; }
+        /// <summary>K10: some owned fork can be reforged now (once per run, R5+).</summary>
+        public bool ReforgeAvailable { get; private set; }
+        public bool ReforgeUsed { get; private set; }
 
         public int RunId { get; private set; }
 
@@ -127,6 +139,10 @@ namespace DD.Prototype.Rounds
             PinnedIndex = tree.PinnedIndex;
             PurseBonusThisRound = shop.PurseBonusThisRound;
             RunId = tree.RunId;
+            UndoAvailable = shop.UndoAvailable;
+            UndoRefund = shop.UndoRefund;
+            ReforgeUsed = tree.ReforgeUsed;
+            ReforgeAvailable = false;
 
             int count = tree.Graph.Count < Capacity ? tree.Graph.Count : Capacity;
             for (int i = 0; i < count; i++)
@@ -161,7 +177,12 @@ namespace DD.Prototype.Rounds
                 v.NewlyUnlocked = !newRun && drawable &&
                                   (_previous[i] == RunTreeNodeStatus.Locked || _previous[i] == RunTreeNodeStatus.PrereqMissing);
                 v.IsPinned = i == tree.PinnedIndex;
-                v.InOffer = node.Kind == RunTreeNodeKind.Tier && InOffer(shop, node.Branch);
+                v.InOffer = shop.IsNodeOnOffer(i) || (node.Kind == RunTreeNodeKind.Tier && InOffer(shop, node.Branch));
+                v.IconKey = IconKeyOf(tree, i);
+                v.ClosesIndex = tree.ForkPartner(i);
+                v.ReforgeCost = shop.ReforgeCost(i);
+                v.UnseenRounds = tree.UnseenRounds(i);
+                if (v.ReforgeCost >= 0) ReforgeAvailable = true;
                 _previous[i] = status;
             }
 
@@ -184,12 +205,26 @@ namespace DD.Prototype.Rounds
             }
         }
 
+        private static string IconKeyOf(RunTreeState tree, int i)
+        {
+            RunTreeNode n = tree.Graph[i];
+            switch (n.Kind)
+            {
+                case RunTreeNodeKind.Hearth: return "Tree.Hearth";
+                case RunTreeNodeKind.Purse: return "Tree.Purse";
+                case RunTreeNodeKind.SpecialLink: return string.IsNullOrEmpty(tree.LinkedSpecial) ? "Special" : "Special." + tree.LinkedSpecial;
+            }
+
+            if (n.HasBranch && (n.Kind == RunTreeNodeKind.Tier || n.Kind == RunTreeNodeKind.BranchKeystone)) return "Upgrade." + n.Branch;
+            return n.Lane == RunTreeLane.Weapon ? "Weapon." + tree.Graph.WeaponSlot : "Tree.Body";
+        }
+
         private static bool InOffer(RoundUpgradeShop shop, DD.Prototype.Core.Config.UpgradeBranch branch)
         {
             IReadOnlyList<UpgradeCardOffer> cards = shop.Cards;
             for (int c = 0; c < cards.Count; c++)
             {
-                if (cards[c].IsValid && cards[c].Branch == branch) return true;
+                if (cards[c].IsValid && (!cards[c].IsNode || cards[c].NodeKind == RunTreeNodeKind.Tier) && cards[c].Branch == branch) return true;
             }
 
             return false;

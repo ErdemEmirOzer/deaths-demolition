@@ -167,6 +167,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
                     float floor = wallet.Balance * Cushion(o, bot);
 
                     if (tree.DrawFrontier(random, build, o.offerCards, cards) == 0 && run.poolExhaustedRound == 0) run.poolExhaustedRound = r;
+                    tree.RecordOffer(cards, build);
                     int cardsThisRound = o.lateCardLimit > 0 && r >= o.lateCardFromRound ? o.lateCardLimit : limit;
                     for (int pick = 0; pick < cardsThisRound; pick++)
                     {

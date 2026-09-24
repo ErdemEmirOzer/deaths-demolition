@@ -464,6 +464,7 @@ namespace DD.Prototype.Rounds
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
 
             _shop.Purchased += OnCardPurchased;
+            _shop.PurchaseUndone += OnCardPurchaseUndone;
             _shop.Rerolled += OnOfferRerolled;
 
             BindSpawnDirector();
@@ -478,6 +479,7 @@ namespace DD.Prototype.Rounds
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
 
             _shop.Purchased -= OnCardPurchased;
+            _shop.PurchaseUndone -= OnCardPurchaseUndone;
             _shop.Rerolled -= OnOfferRerolled;
 
             UnbindSpawnDirector();
@@ -689,6 +691,13 @@ namespace DD.Prototype.Rounds
         {
             _stats.RecordGoldSpent(card.Cost);
             _build.RecordPurchase(card.Branch, card.Cost, _round);
+        }
+
+        /// <summary>WP-077 K10: the last card purchase was undone and refunded.</summary>
+        private void OnCardPurchaseUndone(UpgradeCardOffer card)
+        {
+            _stats.RecordPurchaseUndone(card.Cost);
+            _build.RecordPurchaseUndone(card.Cost);
         }
 
         /// <summary>WP-008: the paid reroll is run spending too (Results "Gold Spent" = purchases + rerolls).</summary>

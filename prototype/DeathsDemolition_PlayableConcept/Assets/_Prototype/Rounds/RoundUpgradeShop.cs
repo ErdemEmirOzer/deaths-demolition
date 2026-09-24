@@ -54,6 +54,27 @@ namespace DD.Prototype.Rounds
         private readonly List<UpgradeBranchSettings> _current = new List<UpgradeBranchSettings>(UpgradeOfferPolicy.CardsPerOffer);
         private readonly List<int> _replacedSlots = new List<int>(UpgradeOfferPolicy.CardsPerOffer);
 
+        // WP-077 K10: node cards, the last purchase (undo), the reroll's kept nodes.
+        private readonly List<int> _nodePicks = new List<int>(UpgradeOfferPolicy.CardsPerOffer + 1);
+        private readonly List<int> _nodeExclude = new List<int>(UpgradeOfferPolicy.CardsPerOffer * 2);
+        private readonly List<int> _nodeSlots = new List<int>(UpgradeOfferPolicy.CardsPerOffer);
+        private LastPurchase _last;
+        private bool _undoClosed;
+
+        private struct LastPurchase
+        {
+            public bool Valid;
+            public bool Hearth;
+            public bool Tier;
+            public bool WasPinned;
+            public int Session;
+            public int CardIndex;
+            public int Node;
+            public UpgradeBranch Branch;
+            public int TransactionId;
+            public int Cost;
+        }
+
         private PrototypeConfig _config;
         private GoldWallet _wallet;
         private WeaponModifierState _injectedModifiers;
@@ -192,6 +213,33 @@ namespace DD.Prototype.Rounds
         /// <summary>A card was bought. The director records the spend against the run stats.</summary>
         public event Action<UpgradeCardOffer> Purchased;
 
+        /// <summary>WP-077 K10: the last card purchase was undone and refunded (the card as it was bought).</summary>
+        public event Action<UpgradeCardOffer> PurchaseUndone;
+
+        /// <summary>WP-077 K10: forces node cards on/off (tests, the F1 panel); null = the config's RunTreeNodeCards.</summary>
+        public bool? NodeCardsOverride { get; set; }
+
+        /// <summary>WP-077 K10: the offer sells in-run tree node cards instead of the classic branch cards.</summary>
+        public bool NodeCardsActive => NodeCardsOverride ?? (_config != null && _config.Economy != null && _config.Economy.RunTreeNodeCards);
+
+        /// <summary>WP-077 K10 "undo last purchase": this offer's last card / Hearth buy can be taken back in full (same screen, before CONTINUE).</summary>
+        public bool UndoAvailable => IsOpen && Status == UpgradeOfferStatus.Ready && _last.Valid && _last.Session == SessionId && !_undoClosed;
+
+        /// <summary>Gold the undo would give back (0 when none).</summary>
+        public int UndoRefund => UndoAvailable ? _last.Cost : 0;
+
+        /// <summary>The screen closes the undo window in the countdown's last 3 s (direction §2.5).</summary>
+        public void CloseUndo()
+        {
+            if (_undoClosed)
+            {
+                return;
+            }
+
+            _undoClosed = true;
+            OfferChanged?.Invoke();
+        }
+
         /// <summary>Buy was pressed and refused for a reason the player caused. Argument is the card index.</summary>
         public event Action<int> PurchaseRefused;
 
@@ -245,6 +293,8 @@ namespace DD.Prototype.Rounds
                 PurchaseEntitlement = UpgradeEntitlement.Available;
                 RerollEntitlement = UpgradeEntitlement.Available;
                 _replacedSlots.Clear();
+                _last = default;
+                _undoClosed = false;
 
                 // WP-077: a new run builds its tree; every new round-end pays the Purse and opens Hearth.
                 if (!Tree.IsBuilt || Tree.RunId != wantedRun)
@@ -405,7 +455,12 @@ namespace DD.Prototype.Rounds
         ///   7 lock: mark the card, consume the entitlement, close the reroll, raise the
         ///     revision, tell the listeners
         /// </summary>
-        public bool TryPurchase(int index, int sessionId, int revision)
+        public bool TryPurchase(int index, int sessionId, int revision) => TryPurchase(index, sessionId, revision, false);
+
+        /// <summary>
+        /// As above; <paramref name="alternative"/> takes a fork card's partner (the pair is one card, §2.5).
+        /// </summary>
+        public bool TryPurchase(int index, int sessionId, int revision, bool alternative)
         {
             if (_purchasing || _rerolling)
             {
@@ -416,7 +471,7 @@ namespace DD.Prototype.Rounds
             _purchasing = true;
             try
             {
-                return PurchaseCore(index, sessionId, revision);
+                return PurchaseCore(index, sessionId, revision, alternative);
             }
             finally
             {
@@ -424,7 +479,7 @@ namespace DD.Prototype.Rounds
             }
         }
 
-        private bool PurchaseCore(int index, int sessionId, int revision)
+        private bool PurchaseCore(int index, int sessionId, int revision, bool alternative)
         {
             // ---- 1 session ---------------------------------------------------------
             if (!IsOpen)
@@ -465,6 +520,11 @@ namespace DD.Prototype.Rounds
             if (card.Purchased)
             {
                 return Refuse(index, UpgradePurchaseResult.AlreadyPurchased);
+            }
+
+            if (card.IsNode && card.NodeKind != RunTreeNodeKind.Tier)
+            {
+                return PurchaseNode(index, card, alternative);
             }
 
             WeaponModifierState modifiers = ModifierState();
@@ -531,8 +591,70 @@ namespace DD.Prototype.Rounds
             card.Purchased = true;
             card.OwnedTier = appliedTier;
             card.TransactionId = transactionId;
+            if (card.IsNode) card.BoughtNodeIndex = card.NodeIndex;
             _cards[index] = card;
+            _last = new LastPurchase
+            {
+                Valid = true, Tier = true, Session = SessionId, CardIndex = index, Node = card.IsNode ? card.NodeIndex : -1,
+                Branch = card.Branch, TransactionId = transactionId, Cost = card.Cost,
+                WasPinned = card.IsNode && Tree.PinnedIndex == card.NodeIndex
+            };
 
+            return CommitPurchase(card);
+        }
+
+        /// <summary>
+        /// WP-077 K10: a non-tier node card (keystone, fork, seal, capstone, link, Purse). The same session,
+        /// entitlement and card checks ran above; the node must still be offerable (a partner bought this
+        /// round closes a fork), then the gold moves once and the tree records the node.
+        /// </summary>
+        private bool PurchaseNode(int index, UpgradeCardOffer card, bool alternative)
+        {
+            WeaponModifierState modifiers = ModifierState();
+            int target = alternative && card.AltNodeIndex >= 0 ? card.AltNodeIndex : card.NodeIndex;
+            if (!Tree.IsBuilt || !Tree.IsOfferable(target, modifiers))
+            {
+                RefreshCards();
+                Revision++;
+                OfferChanged?.Invoke();
+                return Refuse(index, UpgradePurchaseResult.StaleOffer);
+            }
+
+            int cost = Tree.Cost(target, modifiers);
+            if (_wallet == null || !_wallet.CanAfford(cost))
+            {
+                return Refuse(index, UpgradePurchaseResult.InsufficientGold);
+            }
+
+            int transactionId = _wallet.NextTransactionId();
+            GoldTransactionResult spend = _wallet.TrySpend(cost, GoldSource.UpgradePurchase, transactionId);
+            if (spend != GoldTransactionResult.Applied)
+            {
+                return Refuse(index, spend == GoldTransactionResult.InsufficientBalance
+                    ? UpgradePurchaseResult.InsufficientGold
+                    : UpgradePurchaseResult.WalletRefused);
+            }
+
+            bool wasPinned = Tree.PinnedIndex == target;
+            Tree.MarkOwned(target);
+
+            card.Purchased = true;
+            card.Cost = cost;
+            card.OwnedTier = 1;
+            card.TransactionId = transactionId;
+            card.BoughtNodeIndex = target;
+            _cards[index] = card;
+            _last = new LastPurchase
+            {
+                Valid = true, Session = SessionId, CardIndex = index, Node = target, Branch = card.Branch,
+                TransactionId = transactionId, Cost = cost, WasPinned = wasPinned
+            };
+
+            return CommitPurchase(card);
+        }
+
+        private bool CommitPurchase(UpgradeCardOffer card)
+        {
             PurchasesThisRound++;
             GoldSpentThisRound += card.Cost;
             if (PurchasesThisRound >= PurchaseLimit)
@@ -667,6 +789,11 @@ namespace DD.Prototype.Rounds
                 return RefuseReroll(UpgradeRerollResult.InsufficientGold);
             }
 
+            if (_cards.Count > 0 && _cards[0].IsNode)
+            {
+                return RerollNodes(cost);
+            }
+
             // ---- 4 compute ---------------------------------------------------------
             _current.Clear();
             for (int i = 0; i < _cards.Count; i++)
@@ -725,6 +852,62 @@ namespace DD.Prototype.Rounds
             return true;
         }
 
+        /// <summary>
+        /// WP-077 K10 node-offer reroll: every card except the Nişan's step is redrawn from the frontier left
+        /// once the current cards (and their fork partners) are taken out. Same guarantees as the classic
+        /// reroll: computed before the spend, at least one card changes, nothing charged otherwise.
+        /// </summary>
+        private bool RerollNodes(int cost)
+        {
+            WeaponModifierState modifiers = ModifierState();
+            int pinStep = Tree.PinnedOfferable(modifiers);
+            _nodeExclude.Clear();
+            _nodeSlots.Clear();
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                UpgradeCardOffer c = _cards[i];
+                _nodeExclude.Add(c.NodeIndex);
+                if (c.AltNodeIndex >= 0) _nodeExclude.Add(c.AltNodeIndex);
+                if (c.NodeIndex != pinStep && c.AltNodeIndex != pinStep) _nodeSlots.Add(i);
+            }
+
+            Tree.DrawFrontier(Random, modifiers, _nodeSlots.Count, _nodePicks, _nodeExclude);
+            if (_nodePicks.Count == 0)
+            {
+                Debug.LogWarning("[Run] Upgrade offer: no tree node outside the current offer to reroll in (round " + Round +
+                                 "). The reroll is refused; nothing was charged and the reroll right is kept.");
+                return RefuseReroll(UpgradeRerollResult.NoReplacementAvailable);
+            }
+
+            int transactionId = _wallet.NextTransactionId();
+            GoldTransactionResult spend = _wallet.TrySpend(cost, GoldSource.OfferReroll, transactionId);
+            if (spend != GoldTransactionResult.Applied)
+            {
+                return RefuseReroll(spend == GoldTransactionResult.InsufficientBalance
+                    ? UpgradeRerollResult.InsufficientGold
+                    : UpgradeRerollResult.WalletRefused);
+            }
+
+            EconomyConfigSection economy = _config.Economy;
+            _replacedSlots.Clear();
+            for (int k = 0; k < _nodePicks.Count && k < _nodeSlots.Count; k++)
+            {
+                _cards[_nodeSlots[k]] = BuildNodeCard(_nodePicks[k], modifiers, economy);
+                _replacedSlots.Add(_nodeSlots[k]);
+            }
+
+            RerollsThisRound++;
+            GoldSpentThisRound += cost;
+            RerollEntitlement = UpgradeEntitlement.Used;
+            Revision++;
+            LastRerollResult = UpgradeRerollResult.Rerolled;
+            RefreshCards();
+            Rerolled?.Invoke(cost);
+            RunAudioEvents.Raise(RunAudioEvent.UpgradePurchased);
+            OfferChanged?.Invoke();
+            return true;
+        }
+
         private bool RefuseReroll(UpgradeRerollResult result)
         {
             LastRerollResult = result;
@@ -766,6 +949,12 @@ namespace DD.Prototype.Rounds
             }
 
             WeaponModifierState modifiers = ModifierState();
+            if (NodeCardsActive && Tree.IsBuilt)
+            {
+                BuildNodeOffer(modifiers, economy);
+                return;
+            }
+
             CollectCandidates(modifiers, null);
 
             // A table that COULD offer three cards but whose remaining branches are all at
@@ -789,6 +978,70 @@ namespace DD.Prototype.Rounds
             }
 
             Status = UpgradeOfferStatus.Ready;
+        }
+
+        /// <summary>
+        /// WP-077 K10 node offer (K1 hybrid): up to three frontier nodes by catalog weight with the luck guard
+        /// and the Nişan's step (RunTreeState.DrawFrontier), a fork pair as one card. An empty frontier is
+        /// PoolExhausted only when the Hearth is full too (§2.5); otherwise the screen offers the Hearth alone.
+        /// </summary>
+        private void BuildNodeOffer(WeaponModifierState modifiers, EconomyConfigSection economy)
+        {
+            Tree.TierEligibility = TierEligibility;
+            Tree.DrawFrontier(Random, modifiers, UpgradeOfferPolicy.CardsPerOffer, _nodePicks);
+            Tree.RecordOffer(_nodePicks, modifiers);
+            if (_nodePicks.Count == 0)
+            {
+                int h = Tree.Graph.HearthIndex;
+                if (h < 0 || Tree.HearthStacks >= Tree.Graph[h].MaxTier)
+                {
+                    Fail(UpgradeOfferFault.PoolExhausted);
+                    return;
+                }
+            }
+
+            for (int k = 0; k < _nodePicks.Count; k++)
+            {
+                _cards.Add(BuildNodeCard(_nodePicks[k], modifiers, economy));
+            }
+
+            Status = UpgradeOfferStatus.Ready;
+        }
+
+        private UpgradeCardOffer BuildNodeCard(int i, WeaponModifierState modifiers, EconomyConfigSection economy)
+        {
+            RunTreeNode n = Tree.Graph[i];
+            UpgradeCardOffer card;
+            UpgradeBranchSettings settings = n.Kind == RunTreeNodeKind.Tier && economy != null ? economy.Find(n.Branch) : null;
+            if (settings != null)
+            {
+                card = BuildCard(settings, modifiers, economy);
+            }
+            else
+            {
+                card = new UpgradeCardOffer
+                {
+                    Branch = n.HasBranch ? n.Branch : default,
+                    DisplayName = n.DisplayName,
+                    Description = n.Description,
+                    Kind = n.Lane == RunTreeLane.Weapon ? UpgradeCardKind.WeaponCore : UpgradeCardKind.Utility,
+                    OwnedTier = 0,
+                    NextTier = 1,
+                    MaxTier = 1,
+                    Cost = Tree.Cost(i, modifiers),
+                    IsValid = true
+                };
+            }
+
+            int partner = Tree.ForkPartner(i);
+            card.IsNode = true;
+            card.NodeIndex = i;
+            card.NodeId = n.Id;
+            card.NodeKind = n.Kind;
+            card.StringKey = Tree.StringKeyOf(i);
+            card.AltNodeIndex = partner >= 0 && Tree.IsOfferable(partner, modifiers) ? partner : -1;
+            card.BoughtNodeIndex = -1;
+            return card;
         }
 
         /// <summary>
@@ -884,6 +1137,19 @@ namespace DD.Prototype.Rounds
                 return 0;
             }
 
+            if (_cards.Count > 0 && _cards[0].IsNode)
+            {
+                // K10: frontier nodes not already on the offer (no draw, so the random stream is untouched).
+                WeaponModifierState m = ModifierState();
+                int n = 0;
+                for (int i = 0; Tree.IsBuilt && i < Tree.Graph.Count; i++)
+                {
+                    if (Tree.IsOfferable(i, m) && !IsNodeOnOffer(i)) n++;
+                }
+
+                return n;
+            }
+
             _current.Clear();
             for (int i = 0; i < _cards.Count; i++)
             {
@@ -892,6 +1158,17 @@ namespace DD.Prototype.Rounds
 
             CollectReplacementCandidates();
             return _candidates.Count;
+        }
+
+        /// <summary>WP-077 K10: a node is on the current offer (as a card or as a fork card's partner).</summary>
+        public bool IsNodeOnOffer(int nodeIndex)
+        {
+            for (int c = 0; c < _cards.Count; c++)
+            {
+                if (_cards[c].IsValid && _cards[c].IsNode && (_cards[c].NodeIndex == nodeIndex || _cards[c].AltNodeIndex == nodeIndex)) return true;
+            }
+
+            return false;
         }
 
         /// <summary>WP-077: the live build the tree reads (tier ownership, Hearth). Null without a weapon.</summary>
@@ -909,18 +1186,154 @@ namespace DD.Prototype.Rounds
             }
 
             int before = _wallet != null ? _wallet.Balance : 0;
-            RunTreeCommandResult result = Tree.TryStokeHearth(_wallet, ModifierState());
+            RunTreeCommandResult result = Tree.TryStokeHearth(_wallet, ModifierState(), out int transactionId);
             if (result != RunTreeCommandResult.Done)
             {
                 return result;
             }
 
-            GoldSpentThisRound += before - _wallet.Balance;
+            int cost = before - _wallet.Balance;
+            GoldSpentThisRound += cost;
+            _last = new LastPurchase { Valid = true, Hearth = true, Session = SessionId, CardIndex = -1, Node = Tree.Graph.HearthIndex, TransactionId = transactionId, Cost = cost };
             Revision++;
             RefreshCards();
             RunAudioEvents.Raise(RunAudioEvent.UpgradePurchased);
             OfferChanged?.Invoke();
             return result;
+        }
+
+        /// <summary>
+        /// WP-077 K10 "undo last purchase" (direction §2.5): the offer's LAST card or Hearth buy comes back in
+        /// full — the wallet refund is a spend un-happening, not income — while the screen is open, before
+        /// CONTINUE and outside the countdown's last 3 s (<see cref="CloseUndo"/>). A card's pick right comes
+        /// back; the reroll right closed by the first purchase does not (DEC-050). One step only.
+        /// </summary>
+        public RunTreeCommandResult TryUndoLast(int sessionId, int revision)
+        {
+            if (!IsOpen || sessionId != SessionId || revision != Revision || Status != UpgradeOfferStatus.Ready)
+            {
+                return RunTreeCommandResult.NotAvailable;
+            }
+
+            if (!_last.Valid || _last.Session != SessionId)
+            {
+                return RunTreeCommandResult.NothingToUndo;
+            }
+
+            if (_undoClosed)
+            {
+                return RunTreeCommandResult.UndoClosed;
+            }
+
+            if (_wallet == null || _wallet.TryRefund(_last.TransactionId) != GoldTransactionResult.Applied)
+            {
+                _last = default;
+                return RunTreeCommandResult.WalletRefused;
+            }
+
+            WeaponModifierState modifiers = ModifierState();
+            LastPurchase last = _last;
+            _last = default;
+            UpgradeCardOffer undone = default;
+            if (last.Hearth)
+            {
+                Tree.UnstokeHearth(modifiers);
+            }
+            else
+            {
+                if (last.Tier)
+                {
+                    if (modifiers != null) modifiers.SetTier(last.Branch, Math.Max(0, modifiers.GetTier(last.Branch) - 1), _config);
+                }
+                else
+                {
+                    Tree.Unmark(last.Node);
+                }
+
+                if (last.WasPinned && last.Node >= 0) Tree.SetPin(last.Node);
+
+                undone = _cards[last.CardIndex];
+                undone.Cost = last.Cost;
+                UpgradeCardOffer card = undone;
+                card.Purchased = false;
+                card.TransactionId = 0;
+                card.BoughtNodeIndex = -1;
+                _cards[last.CardIndex] = card;
+                PurchasesThisRound = Math.Max(0, PurchasesThisRound - 1);
+                PurchaseEntitlement = UpgradeEntitlement.Available;
+            }
+
+            GoldSpentThisRound = Math.Max(0, GoldSpentThisRound - last.Cost);
+            Revision++;
+            RefreshCards();
+            if (!last.Hearth) PurchaseUndone?.Invoke(undone);
+            OfferChanged?.Invoke();
+            return RunTreeCommandResult.Done;
+        }
+
+        /// <summary>WP-077 K10: gold a Reforge of this owned fork would cost now, else −1 (used / too early / not a fork).</summary>
+        public int ReforgeCost(int nodeIndex)
+        {
+            if (!IsOpen || !Tree.IsBuilt || !Tree.CanReforge(nodeIndex, Round)) return -1;
+            return Tree.Cost(Tree.ForkPartner(nodeIndex), ModifierState());
+        }
+
+        /// <summary>
+        /// WP-077 K10 Reforge ("Yeniden Dövme", direction §2.5 / §6): swap an owned fork for its partner —
+        /// once per run, from round 5, at the partner's price, no refund. Not undoable; it closes the undo.
+        /// </summary>
+        public RunTreeCommandResult TryReforge(string forkNodeId, int sessionId, int revision)
+        {
+            if (!IsOpen || sessionId != SessionId || revision != Revision || Status != UpgradeOfferStatus.Ready)
+            {
+                return RunTreeCommandResult.NotAvailable;
+            }
+
+            if (!Tree.IsBuilt || _wallet == null || !_wallet.IsOpen)
+            {
+                return RunTreeCommandResult.NoRun;
+            }
+
+            int i = string.IsNullOrEmpty(forkNodeId) ? -1 : Tree.Graph.IndexOf(forkNodeId);
+            if (i < 0)
+            {
+                return RunTreeCommandResult.UnknownNode;
+            }
+
+            if (Tree.ReforgeUsed)
+            {
+                return RunTreeCommandResult.AlreadyUsed;
+            }
+
+            if (Round < RunTreeState.ReforgeFromRound)
+            {
+                return RunTreeCommandResult.TooEarly;
+            }
+
+            if (!Tree.CanReforge(i, Round))
+            {
+                return RunTreeCommandResult.NotAvailable;
+            }
+
+            int cost = Tree.Cost(Tree.ForkPartner(i), ModifierState());
+            if (!_wallet.CanAfford(cost))
+            {
+                return RunTreeCommandResult.InsufficientGold;
+            }
+
+            if (_wallet.TrySpend(cost, GoldSource.TreeReforge, _wallet.NextTransactionId()) != GoldTransactionResult.Applied)
+            {
+                return RunTreeCommandResult.WalletRefused;
+            }
+
+            Tree.Reforge(i, Round);
+            GoldSpentThisRound += cost;
+            _last = default;
+            Revision++;
+            RefreshCards();
+            RunAudioEvents.Raise(RunAudioEvent.UpgradePurchased);
+            OfferChanged?.Invoke();
+            return RunTreeCommandResult.Done;
         }
 
         /// <summary>WP-077 Nişan (pin, K2): pins a node by id (null/empty clears). Guarantees its path on the NEXT offer.</summary>
@@ -1008,7 +1421,10 @@ namespace DD.Prototype.Rounds
                 MaxTier = Mathf.Max(1, settings.MaxTier),
                 Cost = ResolveCost(settings, owned, economy),
                 Purchased = false,
-                IsValid = true
+                IsValid = true,
+                NodeIndex = -1,
+                AltNodeIndex = -1,
+                BoughtNodeIndex = -1
             };
         }
 
@@ -1044,6 +1460,19 @@ namespace DD.Prototype.Rounds
                 UpgradeCardOffer card = _cards[i];
                 if (!card.IsValid)
                 {
+                    continue;
+                }
+
+                if (card.IsNode && card.NodeKind != RunTreeNodeKind.Tier)
+                {
+                    // K10: a node card re-prices from the tree (capstone discount, Hearth-free); its text is fixed.
+                    if (!card.Purchased && Tree.IsBuilt)
+                    {
+                        card.Cost = Tree.Cost(card.NodeIndex, modifiers);
+                        card.AltNodeIndex = Tree.ForkPartner(card.NodeIndex) >= 0 && Tree.IsOfferable(Tree.ForkPartner(card.NodeIndex), modifiers) ? Tree.ForkPartner(card.NodeIndex) : -1;
+                    }
+
+                    _cards[i] = card;
                     continue;
                 }
 

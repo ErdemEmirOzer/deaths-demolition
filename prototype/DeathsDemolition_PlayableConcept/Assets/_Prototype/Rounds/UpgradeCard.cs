@@ -195,6 +195,25 @@ namespace DD.Prototype.Rounds
         /// <summary>Wallet transaction id of the purchase once <see cref="Purchased"/>. 0 before.</summary>
         public int TransactionId;
 
+        /// <summary>WP-077 K10: a node card of the in-run tree (node cards on). False for the classic branch card.</summary>
+        public bool IsNode;
+
+        /// <summary>WP-077 K10: the tree node this card sells (index into RunTreeState.Graph; meaningful when <see cref="IsNode"/>).</summary>
+        public int NodeIndex;
+
+        public string NodeId;
+
+        public RunTreeNodeKind NodeKind;
+
+        /// <summary>WP-077 K10: a fork card carries its pair — the partner node the player may take instead (−1 otherwise).</summary>
+        public int AltNodeIndex;
+
+        /// <summary>WP-077 K10: the node that ended up bought (the fork side chosen); −1 before.</summary>
+        public int BoughtNodeIndex;
+
+        /// <summary>R1 content pack key stem of the node (name / desc × en / tr).</summary>
+        public string StringKey;
+
         public bool IsMaxed => OwnedTier >= MaxTier;
 
         /// <summary>"Piercing II" - the label G-08 puts on the card face.</summary>
