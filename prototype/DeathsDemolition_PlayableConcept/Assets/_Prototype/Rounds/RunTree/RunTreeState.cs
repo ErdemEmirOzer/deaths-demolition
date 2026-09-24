@@ -143,6 +143,7 @@ namespace DD.Prototype.Rounds
 
                 case RunTreeNodeKind.BranchKeystone:
                 {
+                    if (Meta.ArmorBreakKeystoneOpen && n.Branch == UpgradeBranch.ArmorBreak && n.Lane == RunTreeLane.Weapon) return true;
                     int tier = n.Parents.Length > 0 ? n.Parents[0] : -1;
                     if (tier >= 0 && OwnedTier(tier, build) >= 2) return true;
                     missing = tier;
@@ -307,6 +308,31 @@ namespace DD.Prototype.Rounds
             }
 
             return -1;
+        }
+
+        /// <summary>
+        /// WP-077 B4 (full_lane): lanes whose capstone is owned and that hold a tier at its maximum.
+        /// </summary>
+        public int FullLaneCount(WeaponModifierState build)
+        {
+            if (!IsBuilt) return 0;
+            int lanes = 0;
+            for (int lane = 0; lane < 2; lane++)
+            {
+                int cap = lane == 0 ? Graph.WeaponCapstoneIndex : Graph.BodyCapstoneIndex;
+                if (cap < 0 || !_owned[cap]) continue;
+                for (int i = 0; i < Graph.Count; i++)
+                {
+                    RunTreeNode n = Graph[i];
+                    if (n.Kind == RunTreeNodeKind.Tier && (int)n.Lane == lane && OwnedTier(i, build) >= n.MaxTier)
+                    {
+                        lanes++;
+                        break;
+                    }
+                }
+            }
+
+            return lanes;
         }
 
         /// <summary>

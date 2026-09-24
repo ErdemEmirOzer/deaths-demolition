@@ -425,10 +425,47 @@ namespace DD.Prototype.Profile
             return 0;
         }
 
+        /// <summary>WP-077 B4: weapons with at least one capstone run (capstones_5_weapons).</summary>
+        public int CapstoneWeaponCount
+        {
+            get
+            {
+                int n = 0;
+                if (WeaponMastery != null) for (int i = 0; i < WeaponMastery.Count; i++) if (WeaponMastery[i] != null && WeaponMastery[i].Capstones > 0) n++;
+                return n;
+            }
+        }
+
+        /// <summary>WP-077 B4: the most kills any one weapon has (mastery_5_any reads its level).</summary>
+        public int HighestMasteryKills
+        {
+            get
+            {
+                int best = 0;
+                if (WeaponMastery != null) for (int i = 0; i < WeaponMastery.Count; i++) if (WeaponMastery[i] != null && WeaponMastery[i].Kills > best) best = WeaponMastery[i].Kills;
+                return best;
+            }
+        }
+
+        /// <summary>WP-077 B4: records a run that ended owning the weapon's capstone.</summary>
+        public void AddWeaponCapstone(string weaponKey)
+        {
+            if (string.IsNullOrEmpty(weaponKey)) return;
+            AddMasteryKills(weaponKey, 0);
+            for (int i = 0; i < WeaponMastery.Count; i++)
+            {
+                if (WeaponMastery[i] != null && WeaponMastery[i].Weapon == weaponKey)
+                {
+                    WeaponMastery[i].Capstones = ProfileProgression.SaturatingAdd(WeaponMastery[i].Capstones, 1);
+                    return;
+                }
+            }
+        }
+
         /// <summary>WP-077: adds kills to a weapon key's mastery (saturating).</summary>
         public void AddMasteryKills(string weaponKey, int kills)
         {
-            if (string.IsNullOrEmpty(weaponKey) || kills <= 0) return;
+            if (string.IsNullOrEmpty(weaponKey) || kills < 0) return;
             if (WeaponMastery == null) WeaponMastery = new List<WeaponMasteryEntry>();
             for (int i = 0; i < WeaponMastery.Count; i++)
             {
@@ -448,7 +485,7 @@ namespace DD.Prototype.Profile
             if (source == null) return result;
             for (int i = 0; i < source.Count; i++)
             {
-                if (source[i] != null) result.Add(new WeaponMasteryEntry { Weapon = source[i].Weapon, Kills = source[i].Kills });
+                if (source[i] != null) result.Add(new WeaponMasteryEntry { Weapon = source[i].Weapon, Kills = source[i].Kills, Capstones = source[i].Capstones });
             }
 
             return result;
@@ -464,18 +501,20 @@ namespace DD.Prototype.Profile
                 if (e == null || string.IsNullOrEmpty(e.Weapon)) continue;
                 string key = DD.Prototype.Core.Weapons.WeaponIdMigration.FromLegacyName(e.Weapon) ?? e.Weapon;
                 int kills = Math.Max(0, e.Kills);
+                int capstones = Math.Max(0, e.Capstones);
                 bool merged = false;
                 for (int j = 0; j < result.Count; j++)
                 {
                     if (result[j].Weapon == key)
                     {
                         result[j].Kills = ProfileProgression.SaturatingAdd(result[j].Kills, kills);
+                        result[j].Capstones = ProfileProgression.SaturatingAdd(result[j].Capstones, capstones);
                         merged = true;
                         break;
                     }
                 }
 
-                if (!merged) result.Add(new WeaponMasteryEntry { Weapon = key, Kills = kills });
+                if (!merged) result.Add(new WeaponMasteryEntry { Weapon = key, Kills = kills, Capstones = capstones });
             }
 
             return result;
@@ -487,7 +526,7 @@ namespace DD.Prototype.Profile
             var seen = new HashSet<string>();
             for (int i = 0; i < list.Count; i++)
             {
-                if (list[i] == null || string.IsNullOrEmpty(list[i].Weapon) || list[i].Kills < 0 || !seen.Add(list[i].Weapon)) return false;
+                if (list[i] == null || string.IsNullOrEmpty(list[i].Weapon) || list[i].Kills < 0 || list[i].Capstones < 0 || !seen.Add(list[i].Weapon)) return false;
             }
 
             return true;
@@ -577,5 +616,7 @@ namespace DD.Prototype.Profile
     {
         public string Weapon = string.Empty;
         public int Kills;
+        /// <summary>WP-077 B4: runs with this weapon that ended owning its capstone (capstones_5_weapons).</summary>
+        public int Capstones;
     }
 }

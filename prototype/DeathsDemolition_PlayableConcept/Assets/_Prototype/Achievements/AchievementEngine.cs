@@ -32,7 +32,7 @@ namespace DD.Prototype.Achievements
             for (int i = 0; i < definitions.Count; i++)
             {
                 AchievementDefinition definition = definitions[i];
-                if (definition == null || !definition.IsUsable || candidate.Has(candidate.Achievements, definition.Id))
+                if (definition == null || !definition.IsAvailable || candidate.Has(candidate.Achievements, definition.Id))
                 {
                     continue;
                 }
@@ -84,6 +84,8 @@ namespace DD.Prototype.Achievements
                 case AchievementCondition.UpgradesPurchased: return 0;
                 case AchievementCondition.RunsPlayed: return profile.RunsPlayed;
                 case AchievementCondition.ProfileLevel: return profile.ProfileLevel;
+                case AchievementCondition.CapstoneWeapons: return profile.CapstoneWeaponCount;
+                case AchievementCondition.WeaponMastery: return MetaPathRules.MasteryLevel(profile.HighestMasteryKills);
                 default: return 0;
             }
         }
@@ -107,6 +109,11 @@ namespace DD.Prototype.Achievements
                 case AchievementCondition.FlawlessRounds: return Math.Max(0, feats.FlawlessRounds);
                 case AchievementCondition.GoldEarned: return Math.Max(0, feats.GoldEarned);
                 case AchievementCondition.UpgradesPurchased: return Math.Max(0, feats.UpgradesPurchased);
+                case AchievementCondition.TreeCapstones: return input.TreeCapstones;
+                case AchievementCondition.TreeKeystones: return input.TreeKeystones;
+                case AchievementCondition.HearthStacks: return input.TreeHearthStacks;
+                case AchievementCondition.TreeFullLanes: return input.TreeFullLanes;
+                case AchievementCondition.SpecialLinkII: return input.TreeLinkII;
                 default: return 0;
             }
         }

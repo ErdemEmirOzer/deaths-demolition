@@ -37,6 +37,8 @@ namespace DD.Prototype.Rounds
         public float CapstoneDiscount;
         /// <summary>K6: the weapon's mastery M3 lets its capstone into the offer (else only the pin brings it).</summary>
         public bool CapstoneMasteryMet;
+        /// <summary>WP-077 B4 (armor_breaker_100): the ArmorBreak keystone is on the frontier from round 1 (no tier prerequisite).</summary>
+        public bool ArmorBreakKeystoneOpen;
 
         public static MetaRunModifiers None => new MetaRunModifiers { RerollCostOverride = -1, HearthCostStepOverride = -1, CapstoneMasteryMet = true };
     }

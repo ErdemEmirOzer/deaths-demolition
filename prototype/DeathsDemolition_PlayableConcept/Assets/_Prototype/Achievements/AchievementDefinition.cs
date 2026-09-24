@@ -37,7 +37,28 @@ namespace DD.Prototype.Achievements
         RunsPlayed = 9,
 
         /// <summary>Profile level reached (lifetime only).</summary>
-        ProfileLevel = 10
+        ProfileLevel = 10,
+
+        /// <summary>WP-077: tree capstones owned at the end of ONE run (weapon + body lane).</summary>
+        TreeCapstones = 11,
+
+        /// <summary>WP-077: tree keystones owned at the end of ONE run (branch keystones + the weapon seal).</summary>
+        TreeKeystones = 12,
+
+        /// <summary>WP-077: Hearth stacks bought in ONE run.</summary>
+        HearthStacks = 13,
+
+        /// <summary>WP-077: lanes finished in ONE run — capstone owned and a tier at its maximum.</summary>
+        TreeFullLanes = 14,
+
+        /// <summary>WP-077: weapons that ended a run owning their capstone (lifetime only).</summary>
+        CapstoneWeapons = 15,
+
+        /// <summary>WP-077: Special Link II owned at the end of ONE run (both links of the Special).</summary>
+        SpecialLinkII = 16,
+
+        /// <summary>WP-077: the highest mastery level (M1–M5) any one weapon has (lifetime only).</summary>
+        WeaponMastery = 17
     }
 
     /// <summary>Whether the threshold is measured over the whole profile or inside one run.</summary>
@@ -83,7 +104,17 @@ namespace DD.Prototype.Achievements
 
         public AchievementRarity Rarity = AchievementRarity.Common;
 
+        /// <summary>
+        /// WP-077 B4: an in-run tree effect-id prefix ("cap.", "ks.", "link.") the rule depends on. While no
+        /// live system reads such an effect the achievement cannot be earned, so it is not listed or evaluated
+        /// (the tree's "unwired = LOCKED" rule, RunTreeEffects). Empty = always available.
+        /// </summary>
+        public string RequiresEffect = string.Empty;
+
         public bool IsUsable => !string.IsNullOrEmpty(Id) && Enum.IsDefined(typeof(AchievementCondition), Condition);
+
+        /// <summary>Usable and its tree effect (if any) is live.</summary>
+        public bool IsAvailable => IsUsable && (string.IsNullOrEmpty(RequiresEffect) || DD.Prototype.Rounds.RunTreeEffects.AnyLive(RequiresEffect));
 
         /// <summary>
         /// The WP-005 presentation shape the Achievements pane and its tests read

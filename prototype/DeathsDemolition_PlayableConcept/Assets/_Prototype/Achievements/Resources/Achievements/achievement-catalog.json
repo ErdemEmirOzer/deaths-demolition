@@ -247,6 +247,85 @@
       "Threshold": 40,
       "Scope": "SingleRun",
       "Rarity": "Rare"
+    },
+    {
+      "Id": "first_capstone",
+      "DisplayName": "First Capstone",
+      "Description": "Buy a capstone in the run tree.",
+      "Condition": "TreeCapstones",
+      "Threshold": 1,
+      "Scope": "SingleRun",
+      "Rarity": "Common",
+      "RequiresEffect": "cap."
+    },
+    {
+      "Id": "three_keystones_one_run",
+      "DisplayName": "Three Keystones",
+      "Description": "Own three keystones in one run.",
+      "Condition": "TreeKeystones",
+      "Threshold": 3,
+      "Scope": "SingleRun",
+      "Rarity": "Uncommon",
+      "RequiresEffect": "ks."
+    },
+    {
+      "Id": "hearth_10_one_run",
+      "DisplayName": "Stoked",
+      "Description": "Stoke the Hearth 10 times in one run.",
+      "Condition": "HearthStacks",
+      "Threshold": 10,
+      "Scope": "SingleRun",
+      "Rarity": "Uncommon",
+      "RequiresEffect": "ks."
+    },
+    {
+      "Id": "hearth_20",
+      "DisplayName": "Roaring Hearth",
+      "Description": "Stoke the Hearth 20 times in one run.",
+      "Condition": "HearthStacks",
+      "Threshold": 20,
+      "Scope": "SingleRun",
+      "Rarity": "Epic",
+      "RequiresEffect": "ks."
+    },
+    {
+      "Id": "full_lane",
+      "DisplayName": "Full Lane",
+      "Description": "End a run owning a lane's capstone with one of its tiers at maximum.",
+      "Condition": "TreeFullLanes",
+      "Threshold": 1,
+      "Scope": "SingleRun",
+      "Rarity": "Rare",
+      "RequiresEffect": "cap."
+    },
+    {
+      "Id": "capstones_5_weapons",
+      "DisplayName": "Five Summits",
+      "Description": "End runs owning the capstone with five different weapons.",
+      "Condition": "CapstoneWeapons",
+      "Threshold": 5,
+      "Scope": "Lifetime",
+      "Rarity": "Epic",
+      "RequiresEffect": "cap."
+    },
+    {
+      "Id": "both_special_links",
+      "DisplayName": "Twin Link",
+      "Description": "Own both links of a Special in one run.",
+      "Condition": "SpecialLinkII",
+      "Threshold": 1,
+      "Scope": "SingleRun",
+      "Rarity": "Rare",
+      "RequiresEffect": "link."
+    },
+    {
+      "Id": "mastery_5_any",
+      "DisplayName": "Master of One",
+      "Description": "Reach mastery 5 with any weapon.",
+      "Condition": "WeaponMastery",
+      "Threshold": 5,
+      "Scope": "Lifetime",
+      "Rarity": "Epic"
     }
   ]
 }

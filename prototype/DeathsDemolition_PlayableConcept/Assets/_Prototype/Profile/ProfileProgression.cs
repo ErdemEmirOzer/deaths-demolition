@@ -55,6 +55,12 @@ namespace DD.Prototype.Profile
         public readonly int TreeCapstones;
         public readonly int TreeLinkII;
 
+        /// <summary>WP-077 B4: tree counters the achievement rules read (keystones incl. the seal, Hearth stacks, weapon capstone 0/1, full lanes).</summary>
+        public readonly int TreeKeystones;
+        public readonly int TreeHearthStacks;
+        public readonly int TreeWeaponCapstone;
+        public readonly int TreeFullLanes;
+
         /// <summary>Standard + Special + Elite + Ultra + unattributed, saturating.</summary>
         public int TotalKills => ProfileProgression.SaturatingAdd(
             ProfileProgression.SaturatingSum(StandardKills, SpecialKills, EliteKills, UltraKills), UnattributedKills);
@@ -88,6 +94,10 @@ namespace DD.Prototype.Profile
             WeaponKey = ProfileProgression.NameOf(summary.Weapon);
             TreeCapstones = Math.Max(0, summary.TreeCapstones);
             TreeLinkII = Math.Max(0, summary.TreeLinkII);
+            TreeKeystones = Math.Max(0, summary.TreeKeystones);
+            TreeHearthStacks = Math.Max(0, summary.TreeHearthStacks);
+            TreeWeaponCapstone = Math.Min(1, Math.Max(0, summary.TreeWeaponCapstone));
+            TreeFullLanes = Math.Max(0, summary.TreeFullLanes);
         }
 
         public int KillsFor(EnemyTier tier)
@@ -242,7 +252,6 @@ namespace DD.Prototype.Profile
             int gained = (int)Math.Min(ash, int.MaxValue);
             candidate.AshEarnedTotal = SaturatingAdd(candidate.AshEarnedTotal, gained);
             candidate.AshBalance = candidate.AshEarnedTotal - candidate.AshSpentTotal;
-            candidate.AddMasteryKills(input.WeaponKey, input.TotalKills);
             return gained;
         }
 
@@ -264,6 +273,11 @@ namespace DD.Prototype.Profile
         public static void ApplyStatistics(ProfileData candidate, in RunRewardInput input)
         {
             candidate.RunsPlayed = SaturatingAdd(candidate.RunsPlayed, 1);
+
+            // WP-077: mastery and the per-weapon capstone record merge with the statistics, so the
+            // achievement rules that read them (mastery_5_any, capstones_5_weapons) see this run.
+            candidate.AddMasteryKills(input.WeaponKey, input.TotalKills);
+            if (input.TreeWeaponCapstone > 0) candidate.AddWeaponCapstone(input.WeaponKey);
             candidate.RoundsCompleted = SaturatingAdd(candidate.RoundsCompleted, input.CompletedRounds);
             candidate.HighestRound = Math.Max(candidate.HighestRound, input.ReachedRound);
 

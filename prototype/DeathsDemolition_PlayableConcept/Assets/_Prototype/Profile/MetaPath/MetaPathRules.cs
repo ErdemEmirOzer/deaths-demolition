@@ -10,6 +10,11 @@ namespace DD.Prototype.Profile
     /// </summary>
     public static class MetaPathRules
     {
+        /// <summary>WP-077 §5 achievement links (access, never power): the ids whose ownership opens something.</summary>
+        public const string LinkUltraHunter = "ultra_hunter";          // sg_1's capstone needs no mastery
+        public const string LinkArmorBreaker = "armor_breaker_100";    // the ArmorBreak keystone from round 1
+        public const string LinkSpecialPickups = "special_pickup_10";  // SPECIAL column 1 without its level gate
+
         /// <summary>Respecs after the first refund this share of the Ash spent on the refunded nodes (K10/§6).</summary>
         public const float RespecRefundShare = 0.75f;
 
@@ -55,7 +60,8 @@ namespace DD.Prototype.Profile
                 }
             }
 
-            if (p.ProfileLevel < n.LevelGate)
+            bool gateWaived = n.Kind == MetaNodeKind.SpecialLean && n.Column == 0 && p.Has(p.Achievements, LinkSpecialPickups);
+            if (p.ProfileLevel < n.LevelGate && !gateWaived)
             {
                 reason = MetaLockReason.LevelGate;
                 return RunTreeNodeStatus.Locked;
@@ -124,7 +130,8 @@ namespace DD.Prototype.Profile
             if (Owns(p, MetaPathEffects.HearthSlope, out float slope)) m.HearthCostStepOverride = (int)slope;
             if (Owns(p, MetaPathEffects.PurseAtStart, out _)) m.PurseAtStart = true;
             if (Owns(p, MetaPathEffects.CapstoneDiscount, out float discount)) m.CapstoneDiscount = discount;
-            m.CapstoneMasteryMet = p.MasteryKills(weaponKey) >= MasteryThresholds[0];
+            m.CapstoneMasteryMet = p.MasteryKills(weaponKey) >= MasteryThresholds[0] || (weaponKey == "sg_1" && p.Has(p.Achievements, LinkUltraHunter));
+            m.ArmorBreakKeystoneOpen = p.Has(p.Achievements, LinkArmorBreaker);
             return m;
         }
 

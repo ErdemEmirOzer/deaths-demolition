@@ -788,6 +788,8 @@ namespace DD.Prototype.Rounds
                 TreeCapstones = _shop.Tree.OwnedCount(RunTreeNodeKind.Capstone),
                 TreeHearthStacks = _shop.Tree.HearthStacks,
                 TreeLinkII = _shop.Tree.IsBuilt && _shop.Tree.Graph.LinkIIIndex >= 0 && _shop.Tree.IsOwned(_shop.Tree.Graph.LinkIIIndex) ? 1 : 0,
+                TreeWeaponCapstone = _shop.Tree.IsBuilt && _shop.Tree.IsOwned(_shop.Tree.Graph.WeaponCapstoneIndex) ? 1 : 0,
+                TreeFullLanes = _shop.Tree.FullLaneCount(_shop.BuildForTree),
 
                 RunDuration = _stats.RunTime,
                 EndReason = reason,

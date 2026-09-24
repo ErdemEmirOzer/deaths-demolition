@@ -231,6 +231,12 @@ namespace DD.Prototype.Rounds
         /// <summary>WP-077: Special Link II owned at the end of the run (0/1).</summary>
         public int TreeLinkII;
 
+        /// <summary>WP-077 B4: the weapon-lane capstone owned at the end of the run (0/1; per-weapon capstone record).</summary>
+        public int TreeWeaponCapstone;
+
+        /// <summary>WP-077 B4: lanes that end the run with their capstone and a tier at its maximum (0–2; full_lane).</summary>
+        public int TreeFullLanes;
+
         /// <summary>Seconds of run time, paused and frozen time excluded.</summary>
         public float RunDuration;
 

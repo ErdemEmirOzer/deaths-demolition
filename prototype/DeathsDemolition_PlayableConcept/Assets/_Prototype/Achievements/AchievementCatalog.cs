@@ -32,6 +32,7 @@ namespace DD.Prototype.Achievements
             public string TargetTier;
             public string Scope;
             public string Rarity;
+            public string RequiresEffect;
         }
 
         [Serializable]
@@ -41,9 +42,21 @@ namespace DD.Prototype.Achievements
             public List<DefinitionDto> Definitions = new List<DefinitionDto>();
         }
 
+        private static List<AchievementDefinition> s_all;
         private static IReadOnlyList<AchievementDefinition> s_definitions;
         private static IReadOnlyList<AchievementSettings> s_settings;
+        private static int s_revision = -1;
         private static bool s_overridden;
+
+        /// <summary>WP-077 B4: every usable definition, tree-gated ones included (validation, tests).</summary>
+        public static IReadOnlyList<AchievementDefinition> All
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_all;
+            }
+        }
 
         /// <summary>Every usable definition, in file order.</summary>
         public static IReadOnlyList<AchievementDefinition> Definitions
@@ -181,6 +194,22 @@ namespace DD.Prototype.Achievements
                 return null;
             }
 
+            // WP-077 B4: the run-tree counters live only in one run; the weapon records only in the profile.
+            bool runTree = condition == AchievementCondition.TreeCapstones || condition == AchievementCondition.TreeKeystones ||
+                           condition == AchievementCondition.HearthStacks || condition == AchievementCondition.TreeFullLanes ||
+                           condition == AchievementCondition.SpecialLinkII;
+            if (runTree && scope != AchievementScope.SingleRun)
+            {
+                why = "condition " + condition + " is single-run only ('" + d.Id + "')";
+                return null;
+            }
+
+            if ((condition == AchievementCondition.CapstoneWeapons || condition == AchievementCondition.WeaponMastery) && scope != AchievementScope.Lifetime)
+            {
+                why = "condition " + condition + " is lifetime only ('" + d.Id + "')";
+                return null;
+            }
+
             AchievementRarity rarity = AchievementRarity.Common;
             if (!string.IsNullOrEmpty(d.Rarity) && (!Enum.TryParse(d.Rarity, false, out rarity) || !Enum.IsDefined(typeof(AchievementRarity), rarity)))
             {
@@ -197,14 +226,16 @@ namespace DD.Prototype.Achievements
                 Threshold = Math.Max(1, d.Threshold),
                 TargetTier = tier,
                 Scope = scope,
-                Rarity = rarity
+                Rarity = rarity,
+                RequiresEffect = d.RequiresEffect ?? string.Empty
             };
         }
 
         private static void EnsureLoaded()
         {
-            if (s_definitions != null)
+            if (s_all != null)
             {
+                if (s_definitions == null || s_revision != DD.Prototype.Rounds.RunTreeEffects.Revision) Publish(s_all);
                 return;
             }
 
@@ -223,15 +254,21 @@ namespace DD.Prototype.Achievements
             Publish(loaded);
         }
 
+        /// <summary>Keeps the full list and publishes the AVAILABLE view (a tree-gated rule appears once its effect is live).</summary>
         private static void Publish(List<AchievementDefinition> list)
         {
+            s_all = list;
+            s_revision = DD.Prototype.Rounds.RunTreeEffects.Revision;
+            var available = new List<AchievementDefinition>(list.Count);
             var settings = new List<AchievementSettings>(list.Count);
             for (int i = 0; i < list.Count; i++)
             {
+                if (!list[i].IsAvailable) continue;
+                available.Add(list[i]);
                 settings.Add(list[i].ToSettings());
             }
 
-            s_definitions = list.AsReadOnly();
+            s_definitions = available.AsReadOnly();
             s_settings = settings.AsReadOnly();
         }
 
@@ -240,6 +277,7 @@ namespace DD.Prototype.Achievements
         {
             if (!s_overridden)
             {
+                s_all = null;
                 s_definitions = null;
                 s_settings = null;
             }
@@ -254,6 +292,7 @@ namespace DD.Prototype.Achievements
                 if (definitions == null)
                 {
                     s_overridden = false;
+                    s_all = null;
                     s_definitions = null;
                     s_settings = null;
                     return;

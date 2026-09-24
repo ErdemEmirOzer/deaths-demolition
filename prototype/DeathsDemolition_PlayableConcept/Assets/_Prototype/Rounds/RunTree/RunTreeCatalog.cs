@@ -196,12 +196,39 @@ namespace DD.Prototype.Rounds
             // + an effect id per hook as it lands (WP-069 B2/B3 weapon hooks, player systems)
         };
 
+        private static bool s_allLive;
+
         /// <summary>F1 / tests: treat every effect as live (shows the full tree). Never on in a shipped build by default.</summary>
-        public static bool TreatAllAsLive { get; set; }
+        public static bool TreatAllAsLive
+        {
+            get => s_allLive;
+            set
+            {
+                if (s_allLive == value) return;
+                s_allLive = value;
+                Revision++;
+            }
+        }
+
+        /// <summary>Changes whenever what is live changes (readers that cache a filtered view, e.g. the achievement list, rebuild).</summary>
+        public static int Revision { get; private set; }
 
         public static bool IsLive(string effectId)
         {
             return TreatAllAsLive || (!string.IsNullOrEmpty(effectId) && s_live.Contains(effectId));
+        }
+
+        /// <summary>WP-077 B4: any live effect whose id starts with <paramref name="prefix"/> (achievement gates: "cap.", "ks.", "link.").</summary>
+        public static bool AnyLive(string prefix)
+        {
+            if (TreatAllAsLive) return true;
+            if (string.IsNullOrEmpty(prefix)) return false;
+            foreach (string id in s_live)
+            {
+                if (id.StartsWith(prefix, System.StringComparison.Ordinal)) return true;
+            }
+
+            return false;
         }
 
     }
