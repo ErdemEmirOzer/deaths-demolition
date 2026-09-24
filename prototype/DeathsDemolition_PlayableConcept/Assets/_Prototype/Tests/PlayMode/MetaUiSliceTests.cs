@@ -721,13 +721,18 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = true;
             yield return BootTanMainMenuye();
 
-            // İzole profili en az L4'e çıkar (100 + 175 + 250 = 525 XP).
-            ProfileService.ApplyRun(new RunSummary
+            // İzole profili en az L4'e çıkar. Eğri profil yapılandırmasının (WP-077 B2a onu taşıdı; 600 XP artık L3):
+            // L4'e varana dek 600 XP'lik koşular uygulanır - testin sorusu seviyenin koşuya sızmaması, eğri değil.
+            for (int i = 0; i < 10 && ProfileService.Current.ProfileLevel < 4; i++)
             {
-                CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(),
-                ReachedRound = 9, CompletedRounds = 8, CompletedRoundXp = 600, TotalXpEarned = 600,
-                EndReason = RunEndReason.PlayerDeath, BuildDescription = "wp005-level-setup"
-            });
+                ProfileService.ApplyRun(new RunSummary
+                {
+                    CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(),
+                    ReachedRound = 9, CompletedRounds = 8, CompletedRoundXp = 600, TotalXpEarned = 600,
+                    EndReason = RunEndReason.PlayerDeath, BuildDescription = "wp005-level-setup"
+                });
+            }
+
             Assert.GreaterOrEqual(ProfileService.Current.ProfileLevel, 4);
             yield return null;
 
