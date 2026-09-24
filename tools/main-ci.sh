@@ -87,9 +87,16 @@ if ! cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-after.txt"; then
   dd_log "WARNING userdata: $UDWARN"
 fi
 
-"$DD_TOOLS_DIR/userdata-guard.sh" restore "$OUT/userdata-guard" > "$OUT/userdata-guard.out" 2>&1; GX=$?
-if ! cmp -s "$OUT/userdata-guard/before.txt" "$OUT/userdata-guard/after-run.txt" || [ "$GX" -ne 0 ]; then
-  GW="PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && echo verified || echo "RESTORE MISMATCH exit $GX")) — $OUT/userdata-guard"
+# WP-066K: Editor tests can only write the Editor area (player folder + Editor PlayerPrefs domain); a
+# change in the player area (bundle folder profile, player domain) is someone else's — listed, not undone.
+UG="$OUT/userdata-guard"
+"$DD_TOOLS_DIR/userdata-guard.sh" restore "$UG" --scope editor > "$OUT/userdata-guard.out" 2>&1; GX=$?
+if ! cmp -s "$UG/before-editor.txt" "$UG/after-run-editor.txt" || [ "$GX" -ne 0 ]; then
+  GW="Editor PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && echo verified || echo "RESTORE MISMATCH exit $GX")) — $UG"
+  UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
+fi
+if [ -s "$UG/out-of-scope-changed.txt" ]; then
+  GW="player area (bundle profile / player PlayerPrefs) changed during the tests — not by the Editor, NOT restored: $UG/out-of-scope-changed.txt"
   UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
 fi
 
