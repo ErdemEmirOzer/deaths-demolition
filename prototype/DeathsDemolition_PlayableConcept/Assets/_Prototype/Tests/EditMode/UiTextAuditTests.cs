@@ -146,8 +146,11 @@ namespace DD.Prototype.Tests.EditMode
             // WP-022 (M3): the AP-012 atlas supplies every branch icon; the monogram stays the
             // fallback contract for a project without the art import.
             int yuklenen = UpgradeIcons.LoadFromResources();
-            int dalSayisi = System.Enum.GetValues(typeof(UpgradeBranch)).Length;
-            Assert.AreEqual(dalSayisi, yuklenen, "M3: her upgrade dalının AP-012 ikonu yüklenmeli (Upgrade.<Branch>)");
+            // WP-077: ArmorBreak/Impact/Cluster are held out of the draw (no card shows them) until their
+            // WP-069 hooks land; their AP-012 icons come with that slice (S-09). Every drawable branch needs one.
+            int dalSayisi = 0;
+            foreach (UpgradeBranch d in System.Enum.GetValues(typeof(UpgradeBranch))) if (DD.Prototype.Rounds.UpgradeCardCatalog.HasLiveConsumer(d)) dalSayisi++;
+            Assert.GreaterOrEqual(yuklenen, dalSayisi, "M3: her çekilebilir upgrade dalının AP-012 ikonu yüklenmeli (Upgrade.<Branch>)");
 
             var goruldu = new HashSet<string>();
             foreach (UpgradeBranch dal in System.Enum.GetValues(typeof(UpgradeBranch)))
@@ -156,7 +159,7 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.IsTrue(mono.Length >= 1 && mono.Length <= 2, dal + " monogramı 1–2 harf olmalı: " + mono);
                 Assert.AreEqual(mono.ToUpperInvariant(), mono, "büyük harf");
                 Assert.IsTrue(goruldu.Add(mono), dal + " monogramı benzersiz değil: " + mono);
-                Assert.IsTrue(UpgradeIcons.Has(dal), "final ikon eksik: " + dal);
+                if (DD.Prototype.Rounds.UpgradeCardCatalog.HasLiveConsumer(dal)) Assert.IsTrue(UpgradeIcons.Has(dal), "final ikon eksik: " + dal);
             }
 
             // Kayıt sözleşmesi: sprite verildiğinde bulunur, null ile silinir.

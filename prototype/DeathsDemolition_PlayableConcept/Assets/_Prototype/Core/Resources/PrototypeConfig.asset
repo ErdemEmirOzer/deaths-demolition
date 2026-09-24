@@ -274,6 +274,7 @@ MonoBehaviour:
     RerollCost: 10
     CarryUnspentGold: 1
     PurchasesPerRound: 2
+    RunTreeOfferModel: 0
     StartingCostMin: 15
     StartingCostMax: 45
     ArmorGoldBonusHelmet: 1
@@ -359,6 +360,30 @@ MonoBehaviour:
       MaxTier: 4
       EffectPerTier: 3
       OfferWeight: 0.9
+      UnlockProfileLevel: 1
+    - Branch: 10
+      DisplayName: Armor Break
+      BaseCost: 30
+      CostGrowthPerTier: 2
+      MaxTier: 4
+      EffectPerTier: 0.25
+      OfferWeight: 1
+      UnlockProfileLevel: 1
+    - Branch: 11
+      DisplayName: Impact
+      BaseCost: 25
+      CostGrowthPerTier: 2
+      MaxTier: 4
+      EffectPerTier: 0.15
+      OfferWeight: 1
+      UnlockProfileLevel: 1
+    - Branch: 12
+      DisplayName: Cluster
+      BaseCost: 45
+      CostGrowthPerTier: 2
+      MaxTier: 3
+      EffectPerTier: 1
+      OfferWeight: 0.8
       UnlockProfileLevel: 1
   _progression:
     XpPerKill: 1

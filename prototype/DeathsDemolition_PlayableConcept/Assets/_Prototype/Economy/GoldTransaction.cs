@@ -36,7 +36,16 @@ namespace DD.Prototype.Economy
         /// spend source. Results report it INSIDE "Gold Spent" together with purchases
         /// (product decision 19/20); the wallet keeps the split for tests and probes.
         /// </summary>
-        OfferReroll = 5
+        OfferReroll = 5,
+
+        /// <summary>
+        /// WP-077 Purse ("Kese"): +10 % of the gold picked up during a round, paid when the round-end
+        /// offer opens. An income source like a pickup (counts toward TotalEarned), never a refund.
+        /// </summary>
+        PurseBonus = 6,
+
+        /// <summary>WP-077 Hearth ("Ocak"): a direct tree purchase outside the card limit. A spend source reported inside "Gold Spent".</summary>
+        TreeHearth = 7
     }
 
     /// <summary>

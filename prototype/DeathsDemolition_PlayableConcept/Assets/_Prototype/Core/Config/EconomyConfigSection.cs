@@ -84,6 +84,9 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Upgrade cards the player may buy on one round-end offer. DEC-087 (user, 2026-09-17, Ö-6a): 2 — DEC-071's one purchase per round is superseded (WP-049 simulation: spend share 20% → 38–44%, R15 risk 8.8 → 6.1). The reroll still closes on the first purchase (DEC-050); the shop clamps to 1..CardsPerOffer.")]
         public int PurchasesPerRound = 2;
 
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "WP-077 K1 (user, 2026-09-24): Hybrid = the offer draws three cards from the in-run tree frontier + the pin (Nişan); reroll kept. 1 = FreeTree (named alternative, not playable yet; behaves as Hybrid).")]
+        public int RunTreeOfferModel = 0;
+
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Lower bound of the request's 15-45 starting cost band; used as a sanity clamp.")]
         public int StartingCostMin = 15;
 
@@ -175,6 +178,26 @@ namespace DD.Prototype.Core.Config
                 Branch = UpgradeBranch.RegenerationRate, DisplayName = "Regeneration Rate",
                 BaseCost = 18, CostGrowthPerTier = 2f, MaxTier = 4, EffectPerTier = 3f,
                 OfferWeight = 0.9f, UnlockProfileLevel = 1
+            },
+            // WP-077 / WP-069 §6 (council proposal): armour multiplier +25 %/tier, stagger +0.15 s/tier,
+            // +1 bomblet per tier (2/3/4). Opening price inside the DEC-070 band; growth DEC-085.
+            new UpgradeBranchSettings
+            {
+                Branch = UpgradeBranch.ArmorBreak, DisplayName = "Armor Break",
+                BaseCost = 30, CostGrowthPerTier = 2f, MaxTier = 4, EffectPerTier = 0.25f,
+                OfferWeight = 1f, UnlockProfileLevel = 1
+            },
+            new UpgradeBranchSettings
+            {
+                Branch = UpgradeBranch.Impact, DisplayName = "Impact",
+                BaseCost = 25, CostGrowthPerTier = 2f, MaxTier = 4, EffectPerTier = 0.15f,
+                OfferWeight = 1f, UnlockProfileLevel = 1
+            },
+            new UpgradeBranchSettings
+            {
+                Branch = UpgradeBranch.Cluster, DisplayName = "Cluster",
+                BaseCost = 45, CostGrowthPerTier = 2f, MaxTier = 3, EffectPerTier = 1f,
+                OfferWeight = 0.8f, UnlockProfileLevel = 1
             }
         };
 

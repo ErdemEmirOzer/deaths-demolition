@@ -374,7 +374,7 @@ namespace DD.Prototype.Weapons
             {
                 Origin = origin,
                 Direction = direction,
-                Damage = _settings != null ? _settings.Damage : 1f,
+                Damage = (_settings != null ? _settings.Damage : 1f) * (_modifiers != null ? _modifiers.DamageMultiplier : 1f),   // WP-077 Hearth
                 Range = Range,
                 // On the shared DamageForce scale, NOT the raw config knob. See WeaponImpulse.
                 ImpactForce = WeaponImpulse.ForClassic(_settings),

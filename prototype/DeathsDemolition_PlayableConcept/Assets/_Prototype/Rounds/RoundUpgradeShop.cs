@@ -161,6 +161,18 @@ namespace DD.Prototype.Rounds
         /// <see cref="ProfileService.IsBranchUnlocked"/> over UpgradeBranchSettings.UnlockProfileLevel.
         /// A test injects its own so no profile file is read.
         /// </summary>
+        /// <summary>
+        /// WP-077 (DEC-095): the run's in-run tree — built on the first offer of a run for the equipped
+        /// weapon; Hearth, Purse, the pin (Nişan) and the S-09 snapshot read it. Tier ownership stays the build.
+        /// </summary>
+        public RunTreeState Tree { get; } = new RunTreeState();
+
+        /// <summary>WP-077: the equipped weapon the tree is built for. Null = WeaponRegistry.SelectedWeapon.</summary>
+        public Func<ClassicWeaponId> WeaponProvider { get; set; }
+
+        /// <summary>WP-077: Purse bonus paid when THIS offer opened (0 without a Purse). Round-end readout.</summary>
+        public int PurseBonusThisRound { get; private set; }
+
         public Func<UpgradeBranch, bool> UnlockedPredicate
         {
             get { return _unlocked; }
@@ -228,6 +240,16 @@ namespace DD.Prototype.Rounds
                 PurchaseEntitlement = UpgradeEntitlement.Available;
                 RerollEntitlement = UpgradeEntitlement.Available;
                 _replacedSlots.Clear();
+
+                // WP-077: a new run builds its tree; every new round-end pays the Purse and opens Hearth.
+                if (!Tree.IsBuilt || Tree.RunId != wantedRun)
+                {
+                    ClassicWeaponId weapon = WeaponProvider != null ? WeaponProvider() : WeaponRegistry.SelectedWeapon;
+                    Tree.Begin(wantedRun, weapon, config);
+                }
+
+                Tree.TierEligibility = TierEligibility;
+                PurseBonusThisRound = Tree.OnRoundEnd(wallet);
 
                 BuildOffer();
 
@@ -754,6 +776,8 @@ namespace DD.Prototype.Rounds
                 return;
             }
 
+            ApplyPinGuarantee(modifiers, economy);
+
             for (int i = 0; i < _picks.Count; i++)
             {
                 _cards.Add(BuildCard(_picks[i], modifiers, economy));
@@ -865,6 +889,92 @@ namespace DD.Prototype.Rounds
             return _candidates.Count;
         }
 
+        /// <summary>WP-077: the live build the tree reads (tier ownership, Hearth). Null without a weapon.</summary>
+        internal WeaponModifierState BuildForTree => ModifierState();
+
+        /// <summary>
+        /// WP-077 Hearth ("Ocak", K3): buy one stack directly — outside the card limit (DEC-087), ≤ 3 per
+        /// round. Same session/revision checks as a card; raises OfferChanged so the screen redraws.
+        /// </summary>
+        public RunTreeCommandResult TryStokeHearth(int sessionId, int revision)
+        {
+            if (!IsOpen || sessionId != SessionId || revision != Revision || Status != UpgradeOfferStatus.Ready)
+            {
+                return RunTreeCommandResult.NotAvailable;
+            }
+
+            int before = _wallet != null ? _wallet.Balance : 0;
+            RunTreeCommandResult result = Tree.TryStokeHearth(_wallet, ModifierState());
+            if (result != RunTreeCommandResult.Done)
+            {
+                return result;
+            }
+
+            GoldSpentThisRound += before - _wallet.Balance;
+            Revision++;
+            RefreshCards();
+            RunAudioEvents.Raise(RunAudioEvent.UpgradePurchased);
+            OfferChanged?.Invoke();
+            return result;
+        }
+
+        /// <summary>WP-077 Nişan (pin, K2): pins a node by id (null/empty clears). Guarantees its path on the NEXT offer.</summary>
+        public bool SetPin(string nodeId)
+        {
+            if (!Tree.IsBuilt)
+            {
+                return false;
+            }
+
+            int i = string.IsNullOrEmpty(nodeId) ? -1 : Tree.Graph.IndexOf(nodeId);
+            if (!string.IsNullOrEmpty(nodeId) && i < 0)
+            {
+                return false;
+            }
+
+            Tree.SetPin(i);
+            OfferChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>WP-077: the shop's eligibility rule for a tier node of the tree (price excluded, DEC-049).</summary>
+        private UpgradeEligibility TierEligibility(UpgradeBranch branch, int ownedTier)
+        {
+            UpgradeBranchSettings settings = _config != null && _config.Economy != null ? _config.Economy.Find(branch) : null;
+            return UpgradeOfferPolicy.Classify(settings, ownedTier, HasLiveConsumer(branch), IsUnlocked(branch));
+        }
+
+        /// <summary>
+        /// WP-077 Nişan (pin): the first drawable node on the pinned node's path comes with this offer.
+        /// Today the offer carries branch-tier cards only, so the guarantee holds for a tier step (the
+        /// last drawn card gives way); node cards join with the S-09 tree screen (WP-068 R1).
+        /// </summary>
+        private void ApplyPinGuarantee(WeaponModifierState modifiers, EconomyConfigSection economy)
+        {
+            if (!Tree.IsBuilt || Tree.PinnedIndex < 0 || _picks.Count == 0)
+            {
+                return;
+            }
+
+            int step = Tree.PinnedOfferable(modifiers);
+            if (step < 0 || Tree.Graph[step].Kind != RunTreeNodeKind.Tier)
+            {
+                return;
+            }
+
+            UpgradeBranch branch = Tree.Graph[step].Branch;
+            if (UpgradeOfferPolicy.IndexOfBranch(_picks, branch) >= 0)
+            {
+                return;
+            }
+
+            UpgradeBranchSettings settings = economy.Find(branch);
+            if (settings != null)
+            {
+                _picks[_picks.Count - 1] = settings;
+            }
+        }
+
         private bool HasLiveConsumer(UpgradeBranch branch)
         {
             return OfferUnbackedBranches || UpgradeCardCatalog.HasLiveConsumer(branch);
@@ -904,7 +1014,7 @@ namespace DD.Prototype.Rounds
         /// cannot put a 4-gold or a 400-gold card on the opening screen. Later tiers are
         /// deliberately left free to climb past 45 - "rises with tier" is the point.
         /// </summary>
-        private static int ResolveCost(UpgradeBranchSettings settings, int ownedTier, EconomyConfigSection economy)
+        internal static int ResolveCost(UpgradeBranchSettings settings, int ownedTier, EconomyConfigSection economy)
         {
             int cost = settings.CostForTier(ownedTier);
 

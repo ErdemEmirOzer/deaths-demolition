@@ -102,7 +102,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(r2.completed); Assert.AreEqual(1, r2.killsStandard); Assert.AreEqual(1, r2.ttkCountStandard + r2.ttkCountElite + 0 == 0 ? 1 : 1);
             Assert.AreEqual(5, r2.goldStart);
             Assert.AreEqual(3, doc.totalKills); Assert.AreEqual("AssaultRifle", doc.weapon); Assert.AreEqual("PlayerDeath", doc.endReason);
-            Assert.IsNotNull(r1.tiersAtEnd); Assert.AreEqual(10, r1.tiersAtEnd.Length);
+            Assert.IsNotNull(r1.tiersAtEnd); Assert.AreEqual(DD.Prototype.Weapons.WeaponModifierState.BranchCount, r1.tiersAtEnd.Length, "bir dal = bir sütun (WP-077: 13)");
 
             Assert.IsNotNull(RunTelemetry.LastPath); Assert.IsTrue(File.Exists(RunTelemetry.LastPath));
             string json = File.ReadAllText(RunTelemetry.LastPath);

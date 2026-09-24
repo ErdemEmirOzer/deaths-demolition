@@ -114,6 +114,9 @@ namespace DD.Prototype.UI
                 case UpgradeBranch.MaximumHealth: return "HP";
                 case UpgradeBranch.RegenerationDelay: return "RD";
                 case UpgradeBranch.RegenerationRate: return "RR";
+                case UpgradeBranch.ArmorBreak: return "AB";   // WP-077 / WP-069 §6
+                case UpgradeBranch.Impact: return "IM";
+                case UpgradeBranch.Cluster: return "CL";
                 default: return "?";
             }
         }

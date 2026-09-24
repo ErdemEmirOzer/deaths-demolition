@@ -63,7 +63,8 @@ namespace DD.Prototype.Core.Weapons
         public static readonly UpgradeBranch[] WeaponCoreBranches =
         {
             UpgradeBranch.Piercing, UpgradeBranch.Ricochet, UpgradeBranch.Explosion,
-            UpgradeBranch.Chain, UpgradeBranch.FireRate, UpgradeBranch.ReloadSpeed
+            UpgradeBranch.Chain, UpgradeBranch.FireRate, UpgradeBranch.ReloadSpeed,
+            UpgradeBranch.ArmorBreak, UpgradeBranch.Impact, UpgradeBranch.Cluster   // WP-077 / WP-069 §6
         };
 
         /// <summary>Branches on the player, offered with every weapon (proposal principle (a): 3 core + 4 shared).</summary>

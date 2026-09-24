@@ -57,7 +57,15 @@ namespace DD.Prototype.Core.Config
         MovementSpeed = 6,
         MaximumHealth = 7,
         RegenerationDelay = 8,
-        RegenerationRate = 9
+        RegenerationRate = 9,
+
+        // WP-077 (accepted from WP-069 §6, M4 arsenal v3): weapon-core branches for sr_1 / lmg_2
+        // (ArmorBreak), smg_2 / sg_2 (Impact) and rl_1 (Cluster). Values append; 0–9 never move
+        // (profile, scene and asset serialisation are by int). Held out of the draw until their
+        // behaviour hooks land (UpgradeCardCatalog.s_unbacked).
+        ArmorBreak = 10,
+        Impact = 11,
+        Cluster = 12
     }
 
     /// <summary>PROTOTYPE-ONLY skin identifiers. Cosmetic only, zero gameplay effect.</summary>

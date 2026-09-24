@@ -202,8 +202,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
             public int simultaneousAttackers;
             public string[] tierNames = { "Standard", "Special", "Elite", "Ultra" };
             public int[] introductionRound = new int[TierCount];
-            public int[] openingCardCost = new int[10];          // first-tier price per branch after the DEC-070 15..45 clamp
-            public int[] rawOpeningCardCost = new int[10];       // BaseCost before the clamp
+            public int[] openingCardCost = new int[WeaponModifierState.BranchCount];          // first-tier price per branch after the DEC-070 15..45 clamp
+            public int[] rawOpeningCardCost = new int[WeaponModifierState.BranchCount];       // BaseCost before the clamp
             public int[] levelRequirement = new int[10];         // XP to leave level 1..10
             public int[] xpToReachLevel = new int[10];           // cumulative XP to REACH level 2..11 (index = level-1)
             public WeaponTrack[] weapons = Array.Empty<WeaponTrack>();
@@ -685,7 +685,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             sb.AppendLine();
             sb.Append("Opening card prices (after DEC-070 clamp): ");
             var names = Enum.GetNames(typeof(UpgradeBranch));
-            for (int i = 0; i < names.Length && i < 10; i++) sb.Append(names[i]).Append(' ').Append(r.openingCardCost[i]).Append(r.rawOpeningCardCost[i] != r.openingCardCost[i] ? "(" + r.rawOpeningCardCost[i] + ")" : string.Empty).Append(i + 1 < names.Length ? ", " : "\n");
+            for (int i = 0; i < names.Length && i < WeaponModifierState.BranchCount; i++) sb.Append(names[i]).Append(' ').Append(r.openingCardCost[i]).Append(r.rawOpeningCardCost[i] != r.openingCardCost[i] ? "(" + r.rawOpeningCardCost[i] + ")" : string.Empty).Append(i + 1 < names.Length ? ", " : "\n");
             sb.Append("XP to reach level 2..6: ");
             for (int l = 1; l <= 5; l++) sb.Append("L").Append(l + 1).Append(' ').Append(r.xpToReachLevel[l - 1]).Append(l < 5 ? ", " : "\n\n");
             foreach (WeaponTrack w in r.weapons)

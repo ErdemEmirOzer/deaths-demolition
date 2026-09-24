@@ -1,0 +1,156 @@
+using System;
+using DD.Prototype.Core.Config;
+
+namespace DD.Prototype.Rounds
+{
+    /// <summary>WP-077 (DEC-095): the two lanes of the in-run tree. LB/RB on the tree screen (S-09).</summary>
+    public enum RunTreeLane
+    {
+        Weapon = 0,
+        Body = 1
+    }
+
+    /// <summary>
+    /// WP-077 K1 (user, 2026-09-24): how the round-end offer draws from the tree. Hybrid — three cards
+    /// from the frontier + the pin (Nişan), reroll kept (DEC-047/050/087) — is the only playable model;
+    /// FreeTree is kept as a named alternative for a later decision and currently behaves as Hybrid.
+    /// </summary>
+    public enum RunTreeOfferModel
+    {
+        Hybrid = 0,
+        FreeTree = 1
+    }
+
+    /// <summary>WP-077 node kinds (direction §2.1).</summary>
+    public enum RunTreeNodeKind
+    {
+        /// <summary>An <see cref="UpgradeBranch"/> tier; bought again and again up to its MaxTier.</summary>
+        Tier = 0,
+        BranchKeystone = 1,
+        Fork = 2,
+        WeaponSeal = 3,
+        Capstone = 4,
+        SpecialLink = 5,
+        /// <summary>The repeatable sink ("Ocak"): bought directly, never a card.</summary>
+        Hearth = 6,
+        Purse = 7
+    }
+
+    /// <summary>The seven node states of the S-09 tree screen (WP-068 R1; word + glyph, never colour alone).</summary>
+    public enum RunTreeNodeStatus
+    {
+        Locked = 0,
+        PrereqMissing = 1,
+        Available = 2,
+        Unaffordable = 3,
+        Purchased = 4,
+        Excluded = 5,
+        MaxTier = 6
+    }
+
+    /// <summary>Why a node is <see cref="RunTreeNodeStatus.Locked"/>. The detail panel turns it into a sentence.</summary>
+    public enum RunTreeLockReason
+    {
+        None = 0,
+        /// <summary>The profile has not earned the branch yet (level ladder / meta PATH).</summary>
+        ProfileLocked = 1,
+        /// <summary>The equipped weapon does not carry this branch (roster / ADR-034-1).</summary>
+        NotOnThisWeapon = 2,
+        /// <summary>No live system reads the node's effect yet (RunTreeEffects); never offered or sold.</summary>
+        EffectPending = 3,
+        /// <summary>A Special link before any Special was picked up this run.</summary>
+        NoSpecialYet = 4
+    }
+
+    /// <summary>Result of a tree command (UI → S-04). The screen maps each to a notice.</summary>
+    public enum RunTreeCommandResult
+    {
+        Done = 0,
+        UnknownNode = 1,
+        NotAvailable = 2,
+        InsufficientGold = 3,
+        LimitReached = 4,
+        NoRun = 5,
+        WalletRefused = 6
+    }
+
+    /// <summary>One node of the catalog JSON (<c>Resources/ProgressionTree/run-tree.json</c>, dd-run-tree-v1).</summary>
+    [Serializable]
+    public sealed class RunTreeCatalogNode
+    {
+        public string id = string.Empty;
+        /// <summary>≤ 12 characters: the one-line label under the 64 px seal (S-09 T3 truncation test).</summary>
+        public string shortName = string.Empty;
+        public string displayName = string.Empty;
+        public string description = string.Empty;
+        public string effectId = string.Empty;
+        public int cost;
+        public float offerWeight = 1f;
+        public float effectValue;
+
+        // Only on the entries that need them.
+        public string branch = string.Empty;
+        public string special = string.Empty;
+        public int level;
+        public int costStep;
+        public int maxStacks;
+        public int perRound;
+    }
+
+    [Serializable]
+    public sealed class RunTreeCatalogWeapon
+    {
+        public string slot = string.Empty;
+        public RunTreeCatalogNode seal = new RunTreeCatalogNode();
+        public RunTreeCatalogNode forkX = new RunTreeCatalogNode();
+        public RunTreeCatalogNode forkY = new RunTreeCatalogNode();
+        public RunTreeCatalogNode capstone = new RunTreeCatalogNode();
+    }
+
+    [Serializable]
+    public sealed class RunTreeCatalogDocument
+    {
+        public string schema = string.Empty;
+        public RunTreeCatalogNode[] branchKeystones = new RunTreeCatalogNode[0];
+        public RunTreeCatalogNode[] bodyForks = new RunTreeCatalogNode[0];
+        public RunTreeCatalogNode bodyCapstone = new RunTreeCatalogNode();
+        public RunTreeCatalogNode purse = new RunTreeCatalogNode();
+        public RunTreeCatalogNode hearth = new RunTreeCatalogNode();
+        public RunTreeCatalogNode[] specialLinks = new RunTreeCatalogNode[0];
+        public RunTreeCatalogWeapon[] weapons = new RunTreeCatalogWeapon[0];
+    }
+
+    /// <summary>
+    /// A node of one run's tree, built for the equipped weapon (<see cref="RunTreeGraph"/>).
+    /// Immutable after the build; the run's ownership lives in <see cref="RunTreeState"/>.
+    /// </summary>
+    public sealed class RunTreeNode
+    {
+        public string Id;
+        public string ShortName;
+        public string DisplayName;
+        public string Description;
+        public string EffectId;
+        public RunTreeLane Lane;
+        /// <summary>Row on the 4 × 4 lane grid (0 top).</summary>
+        public int Row;
+        /// <summary>Column on the lane grid (0 = root tier … 3 = capstone).</summary>
+        public int Column;
+        public RunTreeNodeKind Kind;
+        /// <summary>Valid for <see cref="RunTreeNodeKind.Tier"/> and <see cref="RunTreeNodeKind.BranchKeystone"/>.</summary>
+        public UpgradeBranch Branch;
+        public bool HasBranch;
+        /// <summary>Indices into the graph's node list.</summary>
+        public int[] Parents = new int[0];
+        /// <summary>0 = none; nodes sharing a group exclude each other (fork pairs).</summary>
+        public int ExclusionGroup;
+        public int FlatCost;
+        public int CostStep;
+        public int MaxTier = 1;
+        public int PerRoundLimit;
+        public float OfferWeight = 1f;
+        public float EffectValue;
+        /// <summary>Special links: level 1 or 2 (the Special is the one picked up first in the run).</summary>
+        public int LinkLevel;
+    }
+}

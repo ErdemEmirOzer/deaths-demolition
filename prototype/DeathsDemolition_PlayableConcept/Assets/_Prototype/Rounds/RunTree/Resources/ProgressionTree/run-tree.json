@@ -1,0 +1,686 @@
+{
+ "schema": "dd-run-tree-v1",
+ "note": "WP-077 B1 (S-04): in-run progression tree catalog. Council proposal numbers (PrototypeOnly; DEC after C-00). Tier nodes are the existing UpgradeBranch settings (EconomyConfigSection) and are not listed here. effectId = behaviour hook; a node whose hook has no live consumer (RunTreeEffects) is shown LOCKED and never offered or sold.",
+ "branchKeystones": [
+  {
+   "branch": "Piercing",
+   "id": "ks_piercing",
+   "shortName": "Line",
+   "displayName": "Line",
+   "description": "Pierced bodies no longer drain the shot: the first two bodies take full damage.",
+   "effectId": "ks.piercing.line",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 0.0
+  },
+  {
+   "branch": "Ricochet",
+   "id": "ks_ricochet",
+   "shortName": "Seeker",
+   "displayName": "Seeker",
+   "description": "Ricochets turn toward the nearest enemy instead of a random one.",
+   "effectId": "ks.ricochet.seeker",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 0.0
+  },
+  {
+   "branch": "Explosion",
+   "id": "ks_explosion",
+   "shortName": "Ash Cloud",
+   "displayName": "Ash Cloud",
+   "description": "Explosions leave ground burning for 2 s (25% of the blast per second).",
+   "effectId": "ks.explosion.ashcloud",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 0.25
+  },
+  {
+   "branch": "Chain",
+   "id": "ks_chain",
+   "shortName": "Web",
+   "displayName": "Web",
+   "description": "The first chain jump forks into two.",
+   "effectId": "ks.chain.web",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 0.0
+  },
+  {
+   "branch": "FireRate",
+   "id": "ks_firerate",
+   "shortName": "Warm-up",
+   "displayName": "Warm-up",
+   "description": "After 1.5 s of held fire, +20% fire rate.",
+   "effectId": "ks.firerate.warmup",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 0.2
+  },
+  {
+   "branch": "ReloadSpeed",
+   "id": "ks_reload",
+   "shortName": "Full Mag",
+   "displayName": "Full Magazine",
+   "description": "Reloading from empty loads +25% rounds into that magazine.",
+   "effectId": "ks.reload.fullmag",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 0.25
+  },
+  {
+   "branch": "ArmorBreak",
+   "id": "ks_armorbreak",
+   "shortName": "Plate Brkr",
+   "displayName": "Plate Breaker",
+   "description": "The first hit on each armour plate deals double damage.",
+   "effectId": "ks.armorbreak.plate",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 2.0
+  },
+  {
+   "branch": "Impact",
+   "id": "ks_impact",
+   "shortName": "Stagger",
+   "displayName": "Stagger",
+   "description": "Staggered enemies take +15% damage.",
+   "effectId": "ks.impact.stagger",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 0.15
+  },
+  {
+   "branch": "Cluster",
+   "id": "ks_cluster",
+   "shortName": "Seedling",
+   "displayName": "Seedling",
+   "description": "+1 bomblet; bomblets inherit your Blast tier.",
+   "effectId": "ks.cluster.seedling",
+   "cost": 110,
+   "offerWeight": 1.4,
+   "effectValue": 0.0
+  },
+  {
+   "branch": "MovementSpeed",
+   "id": "ks_move",
+   "shortName": "Evade",
+   "displayName": "Evade",
+   "description": "A short dash-step when you change direction under attack (6 s cooldown).",
+   "effectId": "ks.body.evade",
+   "cost": 140,
+   "offerWeight": 1.4,
+   "effectValue": 0.0
+  },
+  {
+   "branch": "MaximumHealth",
+   "id": "ks_health",
+   "shortName": "Thick Skin",
+   "displayName": "Thick Skin",
+   "description": "Hits above 20% of max health are reduced by 15%.",
+   "effectId": "ks.body.thickskin",
+   "cost": 140,
+   "offerWeight": 1.4,
+   "effectValue": 0.15
+  },
+  {
+   "branch": "RegenerationDelay",
+   "id": "ks_regdelay",
+   "shortName": "Breath",
+   "displayName": "Breath",
+   "description": "Killing an enemy cuts the remaining regeneration wait by 0.5 s.",
+   "effectId": "ks.body.breath",
+   "cost": 140,
+   "offerWeight": 1.4,
+   "effectValue": 0.5
+  },
+  {
+   "branch": "RegenerationRate",
+   "id": "ks_regrate",
+   "shortName": "Blood Step",
+   "displayName": "Blood Step",
+   "description": "While regenerating, +8% movement speed.",
+   "effectId": "ks.body.bloodstep",
+   "cost": 140,
+   "offerWeight": 1.4,
+   "effectValue": 0.08
+  }
+ ],
+ "bodyForks": [
+  {
+   "id": "fork_body_x",
+   "shortName": "Ash Step",
+   "displayName": "Ash Step",
+   "description": "Moving leaves a short ash trail that slows zombies by 20%.",
+   "effectId": "fork.body.ashstep",
+   "cost": 100,
+   "offerWeight": 1.2,
+   "effectValue": 0.0
+  },
+  {
+   "id": "fork_body_y",
+   "shortName": "Iron Knee",
+   "displayName": "Iron Knee",
+   "description": "You cannot be knocked back; +10 max health.",
+   "effectId": "fork.body.ironknee",
+   "cost": 100,
+   "offerWeight": 1.2,
+   "effectValue": 10
+  }
+ ],
+ "bodyCapstone": {
+  "id": "cap_body",
+  "shortName": "2nd Breath",
+  "displayName": "Second Breath",
+  "description": "Once per run, a lethal hit leaves you at 1 health and 2 s of invulnerability.",
+  "effectId": "cap.body.secondbreath",
+  "cost": 320,
+  "offerWeight": 2.0,
+  "effectValue": 0.0
+ },
+ "purse": {
+  "id": "purse",
+  "shortName": "Purse",
+  "displayName": "Purse",
+  "description": "For the rest of the run, +10% of the gold you pick up each round, paid at round end.",
+  "effectId": "purse.gold",
+  "cost": 60,
+  "offerWeight": 0.8,
+  "effectValue": 0.1
+ },
+ "hearth": {
+  "id": "hearth",
+  "shortName": "Hearth",
+  "displayName": "Hearth",
+  "description": "+2% weapon damage per stoke. Bought directly (not a card), up to 3 per round, 20 in a run.",
+  "effectId": "hearth.damage",
+  "cost": 50,
+  "offerWeight": 0.0,
+  "effectValue": 0.02,
+  "costStep": 30,
+  "maxStacks": 20,
+  "perRound": 3
+ },
+ "specialLinks": [
+  {
+   "special": "sw_arc",
+   "level": 1,
+   "id": "link_arc_1",
+   "shortName": "Conductor",
+   "displayName": "Conductor",
+   "description": "While the chain-lightning Special is held, your classic weapon's Chain gains +1 jump.",
+   "effectId": "link.arc.conductor",
+   "cost": 80,
+   "offerWeight": 1.2,
+   "effectValue": 0.0
+  },
+  {
+   "special": "sw_arc",
+   "level": 2,
+   "id": "link_arc_2",
+   "shortName": "Storm",
+   "displayName": "Storm",
+   "description": "Special kills refill 10% of the classic magazine.",
+   "effectId": "link.arc.storm",
+   "cost": 160,
+   "offerWeight": 1.2,
+   "effectValue": 0.1
+  },
+  {
+   "special": "sw_gel",
+   "level": 1,
+   "id": "link_gel_1",
+   "shortName": "Slick Floor",
+   "displayName": "Slick Floor",
+   "description": "Slowed or sliding enemies take +15% damage.",
+   "effectId": "link.gel.slickfloor",
+   "cost": 80,
+   "offerWeight": 1.2,
+   "effectValue": 0.15
+  },
+  {
+   "special": "sw_gel",
+   "level": 2,
+   "id": "link_gel_2",
+   "shortName": "Freeze",
+   "displayName": "Freeze",
+   "description": "Enemies dying in gel drop +1 gold.",
+   "effectId": "link.gel.freeze",
+   "cost": 160,
+   "offerWeight": 1.2,
+   "effectValue": 1
+  }
+ ],
+ "weapons": [
+  {
+   "slot": "ar_1",
+   "seal": {
+    "id": "seal_ar_1",
+    "shortName": "Kodo",
+    "displayName": "Kōdō",
+    "description": "After 6 shots, bloom −50%.",
+    "effectId": "seal.ar_1",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_ar_1_x",
+    "shortName": "Long Breath",
+    "displayName": "Long Breath",
+    "description": "Bloom −50%.",
+    "effectId": "fork.ar_1.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_ar_1_y",
+    "shortName": "Short Brl",
+    "displayName": "Short Barrel",
+    "description": "+15% fire rate, more bloom.",
+    "effectId": "fork.ar_1.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_ar_1",
+    "shortName": "Ronin Mark",
+    "displayName": "Ronin's Mark",
+    "description": "Every 5th round ignores armour and pierces without limit.",
+    "effectId": "cap.ar_1",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "smg_1",
+   "seal": {
+    "id": "seal_smg_1",
+    "shortName": "Kaze",
+    "displayName": "Kaze",
+    "description": "While firing, movement ×1.10.",
+    "effectId": "seal.smg_1",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_smg_1_x",
+    "shortName": "Twin Grip",
+    "displayName": "Twin Grip",
+    "description": "Magazine ×1.5.",
+    "effectId": "fork.smg_1.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_smg_1_y",
+    "shortName": "Hot Barrel",
+    "displayName": "Hot Barrel",
+    "description": "Warm-up threshold 0.8 s.",
+    "effectId": "fork.smg_1.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_smg_1",
+    "shortName": "Lead Rain",
+    "displayName": "Lead Rain",
+    "description": "Ricochets bounce twice.",
+    "effectId": "cap.smg_1",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "sg_1",
+   "seal": {
+    "id": "seal_sg_1",
+    "shortName": "Manin",
+    "displayName": "Manin",
+    "description": "Pellets 8 → 10.",
+    "effectId": "seal.sg_1",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_sg_1_x",
+    "shortName": "Tight Shot",
+    "displayName": "Tight Shot",
+    "description": "Spread −40%.",
+    "effectId": "fork.sg_1.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_sg_1_y",
+    "shortName": "Wide Shot",
+    "displayName": "Wide Shot",
+    "description": "+2 pellets.",
+    "effectId": "fork.sg_1.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_sg_1",
+    "shortName": "Ash Wall",
+    "displayName": "Ash Wall",
+    "description": "Shots within 3 m push back and break one plate.",
+    "effectId": "cap.sg_1",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "ar_2",
+   "seal": {
+    "id": "seal_ar_2",
+    "shortName": "Kubi",
+    "displayName": "Kubi",
+    "description": "Extra head multiplier ×1.15 → ×1.5.",
+    "effectId": "seal.ar_2",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_ar_2_x",
+    "shortName": "Tight Burst",
+    "displayName": "Tight Burst",
+    "description": "Time between bursts −20%.",
+    "effectId": "fork.ar_2.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_ar_2_y",
+    "shortName": "Long Burst",
+    "displayName": "Long Burst",
+    "description": "Burst 3 → 4.",
+    "effectId": "fork.ar_2.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_ar_2",
+    "shortName": "Third Eye",
+    "displayName": "Third Eye",
+    "description": "If the 3rd round of a burst hits a head, it ricochets in a chain.",
+    "effectId": "cap.ar_2",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "smg_2",
+   "seal": {
+    "id": "seal_smg_2",
+    "shortName": "Tsuchi",
+    "displayName": "Tsuchi",
+    "description": "Stagger 0.45 → 0.7 s; Runners fall.",
+    "effectId": "seal.smg_2",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_smg_2_x",
+    "shortName": "Heavy Core",
+    "displayName": "Heavy Core",
+    "description": "Longer stagger.",
+    "effectId": "fork.smg_2.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_smg_2_y",
+    "shortName": "Quick Mallet",
+    "displayName": "Quick Mallet",
+    "description": "+15% fire rate.",
+    "effectId": "fork.smg_2.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_smg_2",
+    "shortName": "Thunder Fang",
+    "displayName": "Thunder Fang",
+    "description": "Every 3rd hit on a staggered target chains for sure.",
+    "effectId": "cap.smg_2",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "sg_2",
+   "seal": {
+    "id": "seal_sg_2",
+    "shortName": "Sohatsu",
+    "displayName": "Sōhatsu",
+    "description": "Both barrels on one trigger (20 pellets).",
+    "effectId": "seal.sg_2",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_sg_2_x",
+    "shortName": "Fire Mouth",
+    "displayName": "Fire Mouth",
+    "description": "+20% damage up close.",
+    "effectId": "fork.sg_2.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_sg_2_y",
+    "shortName": "Quick Break",
+    "displayName": "Quick Break",
+    "description": "Reload −25%.",
+    "effectId": "fork.sg_2.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_sg_2",
+    "shortName": "Two Blades",
+    "displayName": "Two Blades",
+    "description": "If both barrels hit the same target, the second one explodes.",
+    "effectId": "cap.sg_2",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "lmg_1",
+   "seal": {
+    "id": "seal_lmg_1",
+    "shortName": "Nagaya",
+    "displayName": "Nagaya",
+    "description": "Magazine 100 → 150.",
+    "effectId": "seal.lmg_1",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_lmg_1_x",
+    "shortName": "Bipod",
+    "displayName": "Bipod",
+    "description": "+25% damage while standing still.",
+    "effectId": "fork.lmg_1.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_lmg_1_y",
+    "shortName": "Sling",
+    "displayName": "Sling",
+    "description": "No movement penalty while firing.",
+    "effectId": "fork.lmg_1.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_lmg_1",
+    "shortName": "Unbroken",
+    "displayName": "Unbroken",
+    "description": "After 40 hits, no reload for 6 s.",
+    "effectId": "cap.lmg_1",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "lmg_2",
+   "seal": {
+    "id": "seal_lmg_2",
+    "shortName": "Ishizue",
+    "displayName": "Ishizue",
+    "description": "Settles in 3 shots instead of 6; base spread 1.2° → 0.9°.",
+    "effectId": "seal.lmg_2",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_lmg_2_x",
+    "shortName": "Hot Box",
+    "displayName": "Hot Box",
+    "description": "+15% fire rate.",
+    "effectId": "fork.lmg_2.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_lmg_2_y",
+    "shortName": "Cold Barrel",
+    "displayName": "Cold Barrel",
+    "description": "First 10 rounds after a reload +30% damage.",
+    "effectId": "fork.lmg_2.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_lmg_2",
+    "shortName": "Black Iron",
+    "displayName": "Black Iron",
+    "description": "A round that breaks a plate passes to the body behind at full damage.",
+    "effectId": "cap.lmg_2",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "sr_1",
+   "seal": {
+    "id": "seal_sr_1",
+    "shortName": "Kabuto",
+    "displayName": "Kabuto-wari",
+    "description": "Head hits ignore armour.",
+    "effectId": "seal.sr_1",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_sr_1_x",
+    "shortName": "Hold Breath",
+    "displayName": "Hold Breath",
+    "description": "Wait 1 s → ×2 damage.",
+    "effectId": "fork.sr_1.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_sr_1_y",
+    "shortName": "Fast Bolt",
+    "displayName": "Fast Bolt",
+    "description": "+35% fire rate.",
+    "effectId": "fork.sr_1.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_sr_1",
+    "shortName": "One Bullet",
+    "displayName": "One Bullet",
+    "description": "No armour on the first target; unlimited pierce.",
+    "effectId": "cap.sr_1",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  },
+  {
+   "slot": "rl_1",
+   "seal": {
+    "id": "seal_rl_1",
+    "shortName": "Hibana",
+    "displayName": "Hibana",
+    "description": "Blast area burns for 3 s (4 HP/s).",
+    "effectId": "seal.rl_1",
+    "cost": 150,
+    "offerWeight": 1.4,
+    "effectValue": 0.0
+   },
+   "forkX": {
+    "id": "fork_rl_1_x",
+    "shortName": "Short Fuse",
+    "displayName": "Short Fuse",
+    "description": "Smaller radius, more damage.",
+    "effectId": "fork.rl_1.x",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "forkY": {
+    "id": "fork_rl_1_y",
+    "shortName": "Long Fuse",
+    "displayName": "Long Fuse",
+    "description": "Larger radius.",
+    "effectId": "fork.rl_1.y",
+    "cost": 90,
+    "offerWeight": 1.2,
+    "effectValue": 0.0
+   },
+   "capstone": {
+    "id": "cap_rl_1",
+    "shortName": "Ash Rain",
+    "displayName": "Ash Rain",
+    "description": "The blast splits into 3 smaller blasts.",
+    "effectId": "cap.rl_1",
+    "cost": 380,
+    "offerWeight": 2.0,
+    "effectValue": 0.0
+   }
+  }
+ ]
+}

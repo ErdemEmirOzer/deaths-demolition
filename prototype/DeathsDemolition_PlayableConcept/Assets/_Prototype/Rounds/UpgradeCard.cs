@@ -239,7 +239,13 @@ namespace DD.Prototype.Rounds
         /// Branches no live system reads. EMPTY on purpose - see the class remarks. Adding a
         /// branch here removes it from the draw; that is the entire mechanism.
         /// </summary>
-        private static readonly UpgradeBranch[] s_unbacked = new UpgradeBranch[0];
+        private static readonly UpgradeBranch[] s_unbacked =
+        {
+            // WP-077: the three WP-069 §6 weapon-core branches exist in the data from now on, but their
+            // behaviour (armour multiplier, stagger, bomblets) is WP-069 B2/B3 (S-02). Until those hooks
+            // land they are held out of the draw so no card is sold that does nothing.
+            UpgradeBranch.ArmorBreak, UpgradeBranch.Impact, UpgradeBranch.Cluster
+        };
 
         private static readonly string[] s_roman = { "0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII" };
 
@@ -281,6 +287,9 @@ namespace DD.Prototype.Rounds
                 case UpgradeBranch.Ricochet:
                 case UpgradeBranch.Explosion:
                 case UpgradeBranch.Chain:
+                case UpgradeBranch.ArmorBreak:
+                case UpgradeBranch.Impact:
+                case UpgradeBranch.Cluster:
                     return UpgradeCardKind.WeaponCore;
                 default:
                     return UpgradeCardKind.Utility;

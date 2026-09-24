@@ -24,7 +24,7 @@ namespace DD.Prototype.Weapons
     public sealed class WeaponModifierState
     {
         /// <summary>Number of upgrade branches the state holds a tier for (one per <see cref="UpgradeBranch"/>).</summary>
-        public const int BranchCount = 10;
+        public const int BranchCount = 13;   // WP-077: + ArmorBreak / Impact / Cluster
 
         private readonly int[] _tiers = new int[BranchCount];
 
@@ -79,10 +79,35 @@ namespace DD.Prototype.Weapons
             return GetTier(branch) >= MaxTier(branch, config);
         }
 
+        /// <summary>WP-077 Hearth ("Ocak") stacks bought this run (direction §2.1). Weapon damage ×(1 + stacks × per-stack).</summary>
+        public int HearthStacks { get; private set; }
+
+        private float _hearthDamagePerStack;
+
+        /// <summary>WP-077: flat multiplier on every classic shot's damage (Hearth). 1 with no stacks.</summary>
+        public float DamageMultiplier => 1f + HearthStacks * _hearthDamagePerStack;
+
+        /// <summary>WP-077: set by the run tree when a Hearth stack is bought (or the run resets).</summary>
+        public void SetHearth(int stacks, float damagePerStack)
+        {
+            stacks = Mathf.Max(0, stacks);
+            damagePerStack = Mathf.Max(0f, damagePerStack);
+            if (stacks == HearthStacks && Mathf.Approximately(damagePerStack, _hearthDamagePerStack))
+            {
+                return;
+            }
+
+            HearthStacks = stacks;
+            _hearthDamagePerStack = damagePerStack;
+            Invalidate();
+            Changed?.Invoke(this);
+        }
+
         /// <summary>Wipe the build. Called when a run ends; gold and build do not persist.</summary>
         public void ResetForNewRun()
         {
-            bool any = false;
+            bool any = HearthStacks != 0;
+            HearthStacks = 0;
             for (int i = 0; i < BranchCount; i++)
             {
                 if (_tiers[i] != 0)
