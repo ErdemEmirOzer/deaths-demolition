@@ -73,7 +73,8 @@ public static class QualityTiers
 | Jel birikinti tavanı `-ddGelPuddles` | S-03 | 10 | 16 | 24 |
 | Kalabalık komşu tavanı `-ddCrowdNeighbours` | S-03 | 6 | 10 | 14 |
 | PathQueriesPerTick / spawn LOS linecast `-ddSpawnLos` | S-03 | 4 / 9 | 6 / 18 | 6 / 18 |
-| Mermi izi, darbe VFX, Special görselleri | S-02 / S-07 | paket kendi satırlarını bu sözleşmeye ekler | | |
+| Mermi (projectile) simülasyonu — oyun kuralı, **kademesiz** (tavan 256 mermi, 120 Hz sabit adım, 0 B/kare; isabet/menzil kademeyle değişmez) | S-02 WP-069 | aynı | aynı | aynı — ms: B1 ölçümü (bekleniyor) |
+| Mermi izi / darbe / duman / roket izi + patlama görselleri, Special görselleri | S-07 WP-073 | S-07 kendi satırlarını ekler | | |
 | Ses | S-08 | kademe satırı yok (ses CPU'su ≈ 0,02 ms/atış, ses bütçesi kademeden bağımsız; Performans ölçümü > 0,3 ms ise World kapasitesi 24 → 16) | | |
 
 **Hiçbir kademede kaybedilmez:** ıslak arduvaz değeri/parlaması; bulut gölgesi cookie; LUT v2 + sis rengi #D0D7DE + mesafe rampası (90 m %24); ufuk plakaları + gök bandı; imza huzmeler (batı bambu ≥ 3, doğu sakura ≥ 2 kart); değer sırası ve DEC-077 okunabilirlik eşikleri.
