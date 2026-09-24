@@ -10,7 +10,8 @@ namespace DD.Prototype.UI
     [Serializable]
     public sealed class UiSettingsData
     {
-        public const int CurrentVersion = 1;
+        /// <summary>2 (M4-R1): the quality index counts the three tiers of QUALITY-TIERS-V2 (was six levels).</summary>
+        public const int CurrentVersion = 2;
 
         public int Version = CurrentVersion;
         public float UiScale = 1f;
@@ -443,6 +444,20 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// S-05 QUALITY-TIERS-V2 §2 rule 3: a file written before the three tiers (version 1) holds an index into the old six
+        /// levels - 0–1 → Performance, 2–3 → High, 4–5 → Cinematic. Newer files and other layouts pass through.
+        /// </summary>
+        public static int MigrateQuality(int savedQuality, int savedVersion, int levelCount)
+        {
+            if (savedVersion < 2 && levelCount == 3 && savedQuality >= 0)
+            {
+                return Mathf.Clamp(savedQuality / 2, 0, 2);
+            }
+
+            return savedQuality;
+        }
+
         public static string QualityName(int index)
         {
             string[] names = QualitySettings.names;
@@ -484,7 +499,9 @@ namespace DD.Prototype.UI
             s_data.HeadBobScale = loaded != null ? loaded.HeadBobScale : defaults.HeadBobScale;
             s_data.CentreDot = loaded != null && loaded.CentreDot;
             int count = Mathf.Max(1, QualitySettings.names.Length);
-            int quality = loaded != null && loaded.Quality >= 0 ? loaded.Quality : QualitySettings.GetQualityLevel();
+            int quality = loaded != null && loaded.Quality >= 0
+                ? MigrateQuality(loaded.Quality, loaded.Version, QualitySettings.names.Length)
+                : QualitySettings.GetQualityLevel();
             s_data.Quality = Mathf.Clamp(quality, 0, count - 1);
             s_data.Clamp();
             ApplyVolume();

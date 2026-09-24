@@ -561,6 +561,14 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SeciliBekle("Setting.UI SOUNDS");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.GRAPHICS QUALITY");
+            // M4-R1 N2: the CAMERA rows sit between GRAPHICS and DATA, walked in order on the pad.
+            foreach (string row in new[] { "Setting.LOOK SENSITIVITY", "Setting.STICK LOOK SPEED", "InvertLook", "Setting.FIRST PERSON FOV",
+                         "Setting.THIRD PERSON FOV", "Shoulder", "Setting.HEAD BOB", "CentreDot" })
+            {
+                Hareket(MoveDirection.Down);
+                yield return SeciliBekle(row);
+            }
+
             // WP-022E: the run telemetry switch; Submit flips it and RunTelemetry follows; flip back.
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Telemetry");

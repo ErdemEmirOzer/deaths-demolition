@@ -58,6 +58,23 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void KaliteKademesi_EskiAltiSeviyeUceEslenir_AyarBakisOlcegi()
+        {
+            Assert.AreEqual(0, UiSettings.MigrateQuality(1, 1, 3), "Low → Performance");
+            Assert.AreEqual(1, UiSettings.MigrateQuality(2, 1, 3), "Medium → High");
+            Assert.AreEqual(1, UiSettings.MigrateQuality(3, 1, 3), "High → High");
+            Assert.AreEqual(2, UiSettings.MigrateQuality(5, 1, 3), "Ultra → Cinematic");
+            Assert.AreEqual(2, UiSettings.MigrateQuality(2, 2, 3), "v2 dosya: aynen");
+            Assert.AreEqual(4, UiSettings.MigrateQuality(4, 1, 6), "altı seviye düzeni: aynen");
+
+            // WP-070 §3.1: LOOK SENSITIVITY 1–20 ↔ 0.02–0.30 °/px, round trip on the default 0.08.
+            Assert.AreEqual(0.02f, MainMenuScreen.LookSensitivityOf(1f), 0.0001f);
+            Assert.AreEqual(0.30f, MainMenuScreen.LookSensitivityOf(20f), 0.0001f);
+            float step = MainMenuScreen.LookStepOf(0.08f);
+            Assert.AreEqual(0.08f, MainMenuScreen.LookSensitivityOf(step), 0.01f, "varsayılan 0,08 bir adım içinde");
+        }
+
+        [Test]
         public void Kopru_KendiAlanlariniYazar_BakisAlanlarinaDokunmaz()
         {
             UiSettings.CameraMode = 1;

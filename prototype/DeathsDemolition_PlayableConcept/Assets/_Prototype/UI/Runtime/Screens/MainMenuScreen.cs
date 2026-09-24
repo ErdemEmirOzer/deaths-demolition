@@ -630,6 +630,41 @@ namespace DD.Prototype.UI
                 UiSettings.Quality, false, i => UiSettings.Quality = i);
             AddSettingRow(ref stack, quality.transform);
 
+            // M4-R1 N2 (WP-070 §3): the third / first person rows. The mode itself is chosen in Pause (D-13); the look
+            // fields are input preferences (input-settings.json, S-01's bridge feeds the camera), the rest ui-settings.
+            AddSettingsSection(ref stack, content, "CAMERA", true);
+            InputPreferences look = InputPreferencesStore.Current;
+            UiSlider lookSpeed = UiSlider.Create("Setting.LOOK SENSITIVITY", content, "LOOK SENSITIVITY",
+                1f, LookSteps, LookStepOf(look.LookSensitivity), 1f, v => Mathf.RoundToInt(v).ToString(),
+                v => UpdatePreferences(p => p.LookSensitivity = LookSensitivityOf(v)), SettingsColumnWidth, SettingLabelWidth);
+            AddSettingRow(ref stack, lookSpeed.transform);
+            UiSlider stickSpeed = UiSlider.Create("Setting.STICK LOOK SPEED", content, "STICK LOOK SPEED",
+                InputPreferences.MinStickLookDegreesPerSecond, InputPreferences.MaxStickLookDegreesPerSecond, look.StickLookDegreesPerSecond, 10f,
+                v => Mathf.RoundToInt(v) + "°/s", v => UpdatePreferences(p => p.StickLookDegreesPerSecond = Mathf.Round(v / 10f) * 10f),
+                SettingsColumnWidth, SettingLabelWidth);
+            AddSettingRow(ref stack, stickSpeed.transform);
+            UiSwitch invert = UiSwitch.Create("InvertLook", content, "INVERT LOOK", look.LookInvertY,
+                on => UpdatePreferences(p => p.LookInvertY = on));
+            AddSettingRow(ref stack, invert.transform);
+            UiSlider fpFov = UiSlider.Create("Setting.FIRST PERSON FOV", content, "FIRST PERSON FOV",
+                CameraSystem.CameraModeSettings.MinFirstPersonFov, CameraSystem.CameraModeSettings.MaxFirstPersonFov, UiSettings.FirstPersonFov, 1f,
+                Degrees, v => UiSettings.FirstPersonFov = Mathf.Round(v), SettingsColumnWidth, SettingLabelWidth);
+            AddSettingRow(ref stack, fpFov.transform);
+            UiSlider tpFov = UiSlider.Create("Setting.THIRD PERSON FOV", content, "THIRD PERSON FOV",
+                CameraSystem.CameraModeSettings.MinThirdPersonFov, CameraSystem.CameraModeSettings.MaxThirdPersonFov, UiSettings.ThirdPersonFov, 1f,
+                Degrees, v => UiSettings.ThirdPersonFov = Mathf.Round(v), SettingsColumnWidth, SettingLabelWidth);
+            AddSettingRow(ref stack, tpFov.transform);
+            UiStepper shoulder = UiStepper.Create("Shoulder", content, "SHOULDER", ShoulderNames, UiSettings.Shoulder, true,
+                i => UiSettings.Shoulder = i);
+            AddSettingRow(ref stack, shoulder.transform);
+            UiSlider bob = UiSlider.Create("Setting.HEAD BOB", content, "HEAD BOB", 0f, 1f, UiSettings.HeadBobScale, 0.05f, Percent,
+                v => UiSettings.HeadBobScale = Mathf.Round(v * 20f) / 20f, SettingsColumnWidth, SettingLabelWidth);
+            AddSettingRow(ref stack, bob.transform);
+            UiSwitch dot = UiSwitch.Create("CentreDot", content, "CENTRE DOT", UiSettings.CentreDot, on => UiSettings.CentreDot = on);
+            AddSettingRow(ref stack, dot.transform);
+            AddCaptionUnder(ref stack, content, "CameraNote",
+                "Third and first person only; switch the view in Pause. A wider view, less head bob and the centre dot ease motion sickness.", 2, UiSpace.S);
+
             AddSettingsSection(ref stack, content, "DATA", true);
             UiSwitch telemetry = UiSwitch.Create("Telemetry", content, "RUN TELEMETRY", UiSettings.Telemetry,
                 on => UiSettings.Telemetry = on);   // WP-022E / WP-045: local files only, no identity data
@@ -650,7 +685,9 @@ namespace DD.Prototype.UI
                 BuildScalePreview(body, column);   // the rail's 24 px gutter is the gap (AD 6ab MUST-5: the block fits whole at 1.0)
             }
 
-            UiInput.ChainVertical(display.Button, scale, master, uiSounds, quality.Button, telemetry.Button, hints.Button);
+            UiInput.ChainVertical(display.Button, scale, master, uiSounds, quality.Button,
+                lookSpeed, stickSpeed, invert.Button, fpFov, tpFov, shoulder.Button, bob, dot.Button,
+                telemetry.Button, hints.Button);
             UiInput.Focus(display.Button);
         }
 
@@ -684,6 +721,27 @@ namespace DD.Prototype.UI
             scrollRect.sizeDelta = new Vector2(column, 0f);
             scrollRect.anchoredPosition = Vector2.zero;
             return scroll;
+        }
+
+        // M4-R1 N2: the look sensitivity as 1–20 steps (WP-070 §3.1: 1 = 0.02, 20 = 0.30 °/px).
+        private const float LookSteps = 20f;
+        private static readonly string[] ShoulderNames = { "RIGHT", "LEFT" };
+
+        public static float LookSensitivityOf(float step)
+        {
+            float t = (Mathf.Clamp(step, 1f, LookSteps) - 1f) / (LookSteps - 1f);
+            return InputPreferences.MinLookSensitivity + t * (InputPreferences.MaxLookSensitivity - InputPreferences.MinLookSensitivity);
+        }
+
+        public static float LookStepOf(float sensitivity)
+        {
+            float t = (sensitivity - InputPreferences.MinLookSensitivity) / (InputPreferences.MaxLookSensitivity - InputPreferences.MinLookSensitivity);
+            return Mathf.Clamp(Mathf.Round(1f + t * (LookSteps - 1f)), 1f, LookSteps);
+        }
+
+        private static string Degrees(float value)
+        {
+            return Mathf.RoundToInt(value) + "°";
         }
 
         private static string Percent(float value)
