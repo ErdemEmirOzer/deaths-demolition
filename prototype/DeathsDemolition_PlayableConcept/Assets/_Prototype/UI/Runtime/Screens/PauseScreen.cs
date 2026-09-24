@@ -47,6 +47,7 @@ namespace DD.Prototype.UI
         private const float DialogWidth = 640f;
         private const float DialogHeight = 340f;
         private const float ShakeMax = 2f;
+        private const string FrozenOwner = "pause";
 
         protected override int SortingOrder
         {
@@ -105,6 +106,7 @@ namespace DD.Prototype.UI
             if (_paused)
             {
                 RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+                UiFrozenFrame.Release(FrozenOwner);
                 UiNavigation.ExitOverlay(UiContext.Paused);
             }
         }
@@ -163,6 +165,7 @@ namespace DD.Prototype.UI
                 _focusBefore = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
 
                 RunFlowClock.AddHold(RunFlowClock.PauseHold);
+                UiFrozenFrame.Hold(FrozenOwner);   // WP-068 slice 4: frozen-frame blur under the modal (C8)
                 UiNavigation.EnterLayer(UiContext.Paused);
 
                 RefreshShake();
@@ -173,6 +176,7 @@ namespace DD.Prototype.UI
             {
                 CloseConfirm();
                 RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+                UiFrozenFrame.Release(FrozenOwner);
                 UiNavigation.ExitOverlay(UiContext.Paused);
                 UiSound.Play(UiSoundKind.Back);
                 RestoreFocus();

@@ -82,6 +82,8 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class UpgradeScreen : UiScreen
     {
+        private const string FrozenOwner = "upgrade";
+
         // ---------------------------------------------------------------- geometry
         // PROTOTYPE-ONLY layout constants. Art direction, not product decisions; every
         // one of them is a multiple of the 8pt grid, and every GAP between them is a
@@ -243,6 +245,7 @@ namespace DD.Prototype.UI
             if (_panelVisible)
             {
                 _panelVisible = false;
+                UiFrozenFrame.Release(FrozenOwner);
                 UiNavigation.ExitLayer(UiContext.RoundUpgrade);
             }
         }
@@ -845,10 +848,12 @@ namespace DD.Prototype.UI
 
             if (!visible)
             {
+                UiFrozenFrame.Release(FrozenOwner);
                 UiNavigation.ExitLayer(UiContext.RoundUpgrade);
                 return;
             }
 
+            UiFrozenFrame.Hold(FrozenOwner);   // WP-068 slice 4: frozen-frame blur under the shop (C8, E24)
             UiNavigation.EnterLayer(UiContext.RoundUpgrade);
 
             _notice = null;

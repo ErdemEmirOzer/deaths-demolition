@@ -1,0 +1,97 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DD.Prototype.UI
+{
+    /// <summary>
+    /// WP-068 slice 4 · The Particles mode: N quads built once (base-size quads on their emitter point, corner in uv3), moved
+    /// by the vertex stage from <c>_DD_UiTime</c>. Replaces per-frame CPU drift (UiDrift ≈ 1.2 allocations / frame).
+    /// Burst: one-shot sparks (HUD: Special ready, ≤ 0.3 s; Flash class). Loop: petals / rain drifting down (menu; Decor,
+    /// frozen under reduced motion).
+    /// </summary>
+    [RequireComponent(typeof(CanvasRenderer))]
+    public sealed class UiFxParticles : MaskableGraphic
+    {
+        [SerializeField] private int _count = 12;
+        [SerializeField] private float _size = 6f;
+        [SerializeField] private float _speed = 320f;
+        [SerializeField] private float _gravity = 600f;
+        [SerializeField] private float _life = 0.3f;
+        [SerializeField] private float _loopPeriod;
+        [SerializeField] private Texture _texture;
+        private float _start = -10000f;
+
+        public override Texture mainTexture => _texture != null ? _texture : s_WhiteTexture;
+        public int Count => _count;
+
+        public UiFxParticles Configure(int count, float size, float speed, float gravity, float life, float loopPeriod = 0f, Texture texture = null)
+        {
+            _count = Mathf.Clamp(count, 1, 256);
+            _size = size;
+            _speed = speed;
+            _gravity = gravity;
+            _life = Mathf.Max(0.05f, life);
+            _loopPeriod = Mathf.Max(0f, loopPeriod);
+            _texture = texture;
+            SetVerticesDirty();
+            return this;
+        }
+
+        public void Play()
+        {
+            _start = UiFxGlobals.Now;
+            SetVerticesDirty();
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            UiFxGlobals.EnsureInstalled();
+            UiFx.Attach(this);
+            raycastTarget = false;
+        }
+
+        protected override void OnPopulateMesh(VertexHelper vh)
+        {
+            vh.Clear();
+            Rect r = rectTransform.rect;
+            var fx = new Vector4((float)UiFxMode.Particles, _start, _life, _loopPeriod);
+            Color32 c = color;
+            for (int i = 0; i < _count; i++)
+            {
+                float seed = (i + 0.5f) / _count;
+                // Loop: emitters spread over the rect's width at its top; burst: all at the centre.
+                Vector3 origin = _loopPeriod > 0f
+                    ? new Vector3(Mathf.Lerp(r.xMin, r.xMax, Hash(seed * 17.3f)), r.yMax, 0f)
+                    : new Vector3(r.center.x, r.center.y, 0f);
+                var prm = new Vector4(_size, _speed, _gravity, seed);
+                int b = vh.currentVertCount;
+                float half = _size * 0.5f;   // a real quad on the CPU (uGUI drops zero-area geometry); the shader re-centres it
+                vh.AddVert(Vert(origin + new Vector3(-half, -half), c, new Vector2(0f, 0f), fx, prm, -1f, -1f));
+                vh.AddVert(Vert(origin + new Vector3(-half, half), c, new Vector2(0f, 1f), fx, prm, -1f, 1f));
+                vh.AddVert(Vert(origin + new Vector3(half, half), c, new Vector2(1f, 1f), fx, prm, 1f, 1f));
+                vh.AddVert(Vert(origin + new Vector3(half, -half), c, new Vector2(1f, 0f), fx, prm, 1f, -1f));
+                vh.AddTriangle(b, b + 1, b + 2);
+                vh.AddTriangle(b + 2, b + 3, b);
+            }
+        }
+
+        private static UIVertex Vert(Vector3 p, Color32 c, Vector2 uv, Vector4 fx, Vector4 prm, float cx, float cy)
+        {
+            UIVertex v = UIVertex.simpleVert;
+            v.position = p;
+            v.color = c;
+            v.uv0 = uv;
+            v.uv1 = fx;
+            v.uv2 = prm;
+            v.uv3 = new Vector4(cx, cy, 0f, 0f);
+            return v;
+        }
+
+        private static float Hash(float x)
+        {
+            float s = Mathf.Sin(x * 12.9898f) * 43758.5453f;
+            return s - Mathf.Floor(s);
+        }
+    }
+}
