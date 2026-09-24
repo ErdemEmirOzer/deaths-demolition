@@ -305,6 +305,10 @@ namespace DD.Prototype.Diagnostics
             public float hudGpuOnMs = -1f;
             public float hudGpuOffMs = -1f;
             public float hudGpuDeltaMs;
+            public float hudGpuDeltaMedianMs;        // median of the three on/off pair deltas
+            public float hudGpuUiMs = -1f;           // UGUI.Rendering.RenderOverlays GPU time, Profiler sub-window (HUD on)
+            public int hudGpuUiSamples;
+            public float hudGpuTermMs;               // the GPU term of hudCostMs
             public float hudScriptsOnMs = -1f;       // Update + LateUpdate script runs (every behaviour)
             public float hudScriptsOffMs = -1f;
             public float hudCanvasUpdateOnMs = -1f;  // PlayerUpdateCanvases: WillRenderCanvases, layout + graphic rebuilds, TMP
@@ -320,12 +324,16 @@ namespace DD.Prototype.Diagnostics
             public float hudDrawCallsOn;
             public float hudDrawCallsOff;
             public float hudCpuMs;                   // Δscripts + UI markers with the HUD on (every canvas: conservative)
-            public float hudCostMs;                  // hudCpuMs + max(0, ΔGPU): the budgeted number
+            public float hudCostMs;                  // hudCpuMs + hudGpuTermMs: the budgeted number
             public float hudBudgetMs;
             public int hudCanvases;
             public int hudGraphics;
             public int hudTexts;
             public string hudMarkersFound;
+            public int hudHiddenGraphics;            // active + enabled but alpha 0 (own, renderer or inherited)
+            public float hudAlphaZeroSetPass = -1f;  // HUD root active under a CanvasGroup at alpha 0: are invisible graphics still drawn?
+            public float hudAlphaZeroDrawCalls = -1f;
+            public string hudDrawInventory;          // canvas | material | texture [| hidden] = graphics, in draw-state groups
 
             // ---- WP-013 atmosphere (every stage)
             public bool atmosphereOn;
@@ -1391,7 +1399,8 @@ namespace DD.Prototype.Diagnostics
             /// blocks under the same load (Profiler off, so the numbers are the Player's own). Per block:
             /// frame ms, FrameTimingManager main-thread and GPU ms, the main-thread UI markers (sum per frame,
             /// recorded through ProfilerRecorder handles found by name) and the SetPass / batch / draw counters.
-            /// HUD cost = Δscripts + UI markers with the HUD on (all canvases, so it is an upper bound) + ΔGPU.
+            /// HUD cost = Δscripts + UI markers with the HUD on (all canvases, so it is an upper bound) + the UI pass GPU time
+            /// (UGUI.Rendering.RenderOverlays, a short Profiler sub-window; the median on/off frame-GPU delta when unavailable).
             /// </summary>
             private IEnumerator MeasureHud(Stage s, PlayerRig rig)
             {
@@ -1408,6 +1417,7 @@ namespace DD.Prototype.Diagnostics
                 s.hudCanvases = root.GetComponentsInChildren<Canvas>(false).Length;
                 s.hudGraphics = root.GetComponentsInChildren<UnityEngine.UI.Graphic>(false).Length;
                 s.hudTexts = root.GetComponentsInChildren<TMPro.TMP_Text>(false).Length;
+                s.hudDrawInventory = HudDrawInventory(root, out s.hudHiddenGraphics);
 
                 var available = new List<ProfilerRecorderHandle>();
                 ProfilerRecorderHandle.GetAvailable(available);
@@ -1437,6 +1447,8 @@ namespace DD.Prototype.Diagnostics
                 var frames = new int[2];
                 var frameSum = new double[2];
                 var gpuN = new int[2];
+                var blockGpuSum = new double[HudBlockCount];
+                var blockGpuN = new int[HudBlockCount];
                 var gpuSum = new double[2];
                 var cpuN = new int[2];
                 var cpuSum = new double[2];
@@ -1478,6 +1490,8 @@ namespace DD.Prototype.Diagnostics
                             {
                                 gpuSum[k] += _hudTimings[0].gpuFrameTime;
                                 gpuN[k]++;
+                                blockGpuSum[block] += _hudTimings[0].gpuFrameTime;
+                                blockGpuN[block]++;
                             }
 
                             if (_hudTimings[0].cpuMainThreadFrameTime > 0d)
@@ -1490,6 +1504,67 @@ namespace DD.Prototype.Diagnostics
                 }
 
                 root.SetActive(true);
+
+                // One more block: the HUD active but under a CanvasGroup at alpha 0. If the draw counters stay at the
+                // "on" level, graphics hidden by alpha are still submitted, and hiding by SetActive/enabled is the saving.
+                bool addedGroup = root.GetComponent<CanvasGroup>() == null;
+                CanvasGroup veil = addedGroup ? root.AddComponent<CanvasGroup>() : root.GetComponent<CanvasGroup>();
+                float oldVeil = veil.alpha;
+                veil.alpha = 0f;
+                double zSet = 0, zDraw = 0;
+                int zFrames = 0;
+                float tz = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - tz < HudSettleSeconds + 2f)
+                {
+                    yield return null;
+                    if (Time.realtimeSinceStartup - tz < HudSettleSeconds)
+                    {
+                        continue;
+                    }
+
+                    zFrames++;
+                    zSet += setPass.Valid ? setPass.LastValue : 0;
+                    zDraw += draws.Valid ? draws.LastValue : 0;
+                }
+
+                veil.alpha = oldVeil;
+                if (addedGroup)
+                {
+                    Destroy(veil);
+                }
+
+                if (zFrames > 0)
+                {
+                    s.hudAlphaZeroSetPass = (float)(zSet / zFrames);
+                    s.hudAlphaZeroDrawCalls = (float)(zDraw / zFrames);
+                }
+
+                // The GPU time of the UI pass itself ("GPU UI pass"): the Profiler on for this sub-window only
+                // (as 04d), HUD on, so every overlay canvas is in it. The whole-frame GPU delta above is kept as a
+                // cross-check; on a shared GPU (WindowServer, other windows) it swings by ±0.1 ms between runs.
+                bool profilerWas = UnityEngine.Profiling.Profiler.enabled;
+                UnityEngine.Profiling.Profiler.enabled = true;
+                UnityEngine.Profiling.Recorder uiGpu = UnityEngine.Profiling.Recorder.Get("UGUI.Rendering.RenderOverlays");
+                uiGpu.enabled = true;
+                double uiGpuSum = 0;
+                int uiGpuN = 0;
+                float tu = Time.realtimeSinceStartup;
+                yield return null;
+                while (Time.realtimeSinceStartup - tu < 3f)
+                {
+                    yield return null;
+                    if (uiGpu.gpuSampleBlockCount > 0)
+                    {
+                        uiGpuSum += uiGpu.gpuElapsedNanoseconds / 1e6;
+                        uiGpuN++;
+                    }
+                }
+
+                uiGpu.enabled = false;
+                UnityEngine.Profiling.Profiler.enabled = profilerWas;
+                s.hudGpuUiSamples = uiGpuN;
+                s.hudGpuUiMs = uiGpuN > 0 ? (float)(uiGpuSum / uiGpuN) : -1f;
+
                 var valid = new bool[markers.Length];
                 for (int m = 0; m < markers.Length; m++)
                 {
@@ -1525,6 +1600,17 @@ namespace DD.Prototype.Diagnostics
                     s.hudGpuOnMs = (float)(gpuSum[0] / gpuN[0]);
                     s.hudGpuOffMs = (float)(gpuSum[1] / gpuN[1]);
                     s.hudGpuDeltaMs = s.hudGpuOnMs - s.hudGpuOffMs;
+                    var pairs = new List<float>();
+                    for (int b = 0; b + 1 < HudBlockCount; b += 2)
+                    {
+                        if (blockGpuN[b] > 0 && blockGpuN[b + 1] > 0)
+                        {
+                            pairs.Add((float)(blockGpuSum[b] / blockGpuN[b] - blockGpuSum[b + 1] / blockGpuN[b + 1]));
+                        }
+                    }
+
+                    pairs.Sort();
+                    s.hudGpuDeltaMedianMs = pairs.Count > 0 ? pairs[pairs.Count / 2] : s.hudGpuDeltaMs;
                 }
 
                 float MarkerAvg(int k2, int m) => valid[m] ? (float)(markerSum[k2, m] / frames[k2]) : -1f;
@@ -1546,19 +1632,66 @@ namespace DD.Prototype.Diagnostics
                 bool markersOk = valid[0] && valid[1] && valid[2] && valid[3];
                 s.hudCpuMs = Mathf.Max(0f, s.hudScriptsOnMs - s.hudScriptsOffMs) +
                              Mathf.Max(0f, s.hudCanvasUpdateOnMs) + Mathf.Max(0f, s.hudEmitGeometryOnMs) + Mathf.Max(0f, s.hudRenderOverlaysOnMs);
-                s.hudCostMs = s.hudCpuMs + Mathf.Max(0f, s.hudGpuDeltaMs);
+                // GPU term: the UI pass's own GPU time when the platform reports it, else the median on/off pair delta.
+                s.hudGpuTermMs = s.hudGpuUiMs >= 0f ? s.hudGpuUiMs : Mathf.Max(0f, s.hudGpuDeltaMedianMs);
+                s.hudCostMs = s.hudCpuMs + s.hudGpuTermMs;
                 // PASS = the measurement saw what it had to (markers and GPU samples); the budget verdict is the aggregate's.
-                s.pass = markersOk && gpuN[0] > 0;
+                s.pass = markersOk && (uiGpuN > 0 || gpuN[0] > 0);
                 s.note = "HUD cost " + F3(s.hudCostMs) + " ms (budget " + F3(HudBudgetMs) + ") = cpu " + F3(s.hudCpuMs) +
                          " [scripts Δ" + F3(s.hudScriptsOnMs - s.hudScriptsOffMs) + " canvas " + F3(s.hudCanvasUpdateOnMs) + "/" + F3(s.hudCanvasUpdateOffMs) +
                          " emit " + F3(s.hudEmitGeometryOnMs) + "/" + F3(s.hudEmitGeometryOffMs) + " overlays " + F3(s.hudRenderOverlaysOnMs) + "/" + F3(s.hudRenderOverlaysOffMs) +
-                         "] + gpu Δ" + F3(s.hudGpuDeltaMs) + " (" + F3(s.hudGpuOnMs) + "/" + F3(s.hudGpuOffMs) + ") | frame " + F3(s.hudFrameOnMs) + "/" + F3(s.hudFrameOffMs) +
+                         "] + gpu " + F3(s.hudGpuTermMs) + " (UI pass " + F3(s.hudGpuUiMs) + " over " + uiGpuN + " frames; frame Δ" + F3(s.hudGpuDeltaMs) + " median Δ" + F3(s.hudGpuDeltaMedianMs) +
+                         " " + F3(s.hudGpuOnMs) + "/" + F3(s.hudGpuOffMs) + ") | frame " + F3(s.hudFrameOnMs) + "/" + F3(s.hudFrameOffMs) +
                          " Δ" + F3(s.hudFrameDeltaMs) + " | setpass " + s.hudSetPassOn.ToString("F1", CultureInfo.InvariantCulture) + "/" + s.hudSetPassOff.ToString("F1", CultureInfo.InvariantCulture) +
                          " batches " + s.hudBatchesOn.ToString("F1", CultureInfo.InvariantCulture) + "/" + s.hudBatchesOff.ToString("F1", CultureInfo.InvariantCulture) +
-                         " | canvases " + s.hudCanvases + " graphics " + s.hudGraphics + " texts " + s.hudTexts + " | " + s.hudMarkersFound;
+                         " | canvases " + s.hudCanvases + " graphics " + s.hudGraphics + " (hidden " + s.hudHiddenGraphics + ") texts " + s.hudTexts +
+                         " | alpha-0 setpass " + s.hudAlphaZeroSetPass.ToString("F1", CultureInfo.InvariantCulture) + " draws " + s.hudAlphaZeroDrawCalls.ToString("F1", CultureInfo.InvariantCulture) +
+                         " | " + s.hudMarkersFound;
             }
 
             private static string F3(float v) => v.ToString("F3", CultureInfo.InvariantCulture);
+
+            /// <summary>The HUD's graphics grouped by draw state (canvas, material, texture), hidden ones apart: what each batch is made of.</summary>
+            private static string HudDrawInventory(GameObject root, out int hidden)
+            {
+                hidden = 0;
+                var groups = new SortedDictionary<string, int>(StringComparer.Ordinal);
+                foreach (UnityEngine.UI.Graphic g in root.GetComponentsInChildren<UnityEngine.UI.Graphic>(false))
+                {
+                    if (!g.enabled)
+                    {
+                        continue;
+                    }
+
+                    CanvasRenderer cr = g.canvasRenderer;
+                    bool invisible = g.color.a < 0.001f || cr.GetAlpha() < 0.001f || cr.GetInheritedAlpha() < 0.001f;
+                    if (invisible)
+                    {
+                        hidden++;
+                    }
+
+                    Material m = g.materialForRendering;
+                    Texture t = g.mainTexture;
+                    var image = g as UnityEngine.UI.Image;
+                    string tex = t == null ? "-" : (!string.IsNullOrEmpty(t.name) ? t.name : "tex#" + t.GetInstanceID());
+                    if (image != null && image.sprite != null && string.IsNullOrEmpty(t != null ? t.name : null))
+                    {
+                        tex += "(" + image.sprite.name + ")";
+                    }
+
+                    string key = (g.canvas != null ? g.canvas.name : "?") + "|" + (m != null ? m.name : "?") + "|" + tex + (invisible ? "|hidden" : "");
+                    int n;
+                    groups[key] = groups.TryGetValue(key, out n) ? n + 1 : 1;
+                }
+
+                var sb = new StringBuilder();
+                foreach (KeyValuePair<string, int> kv in groups)
+                {
+                    sb.Append(kv.Key).Append(" = ").Append(kv.Value).Append("; ");
+                }
+
+                return sb.ToString();
+            }
 
             /// <summary>WP-017 · Fit helmet + body + leg on every live zombie that is not fully equipped (see ArmorFlag). Returns pieces fitted.</summary>
             public bool ArmorAll;
