@@ -420,7 +420,7 @@ class Dec091ClosureSoakTests(unittest.TestCase):
     """DEC-091 (user 2026-09-24) in the closure gate: stability = two seeds x 12/12 with the invulnerable-by-design bot on
     their own dev builds of the soak commit; >= 5 real-bot runs are required as a report, their distribution is not gated."""
 
-    def soak_checks(self, soak_dirs="soak-61,soak-26", seeds="61,26", report_dirs=("r1", "r2", "r3", "r4", "r5"), mutate=None):
+    def soak_checks(self, soak_dirs="soak-61,soak-26", seeds="61,26", report_dirs=("r1", "r2", "r3", "r4", "r5"), mutate=None, soak_dirs_arg=None):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "perf"
             soak_root = Path(directory) / "s10"
@@ -435,9 +435,9 @@ class Dec091ClosureSoakTests(unittest.TestCase):
             for name, summary in runs.items():
                 write_external_run(soak_root, name, summary, **kwargs.get(name, {}))
             run_python(WP064_GATE, root, "--commit", "a" * 40, "--repo", root, "--soak-root", soak_root, "--soak-commit", SOAK_COMMIT,
-                       "--soak-dirs", soak_dirs, "--seeds", seeds, "--report-dirs", ",".join(report_dirs))
+                       "--soak-dirs", soak_dirs_arg or soak_dirs, "--seeds", seeds, "--report-dirs", ",".join(report_dirs))
             report = json.loads((root / "wp064-report.json").read_text(encoding="utf-8"))
-        self.assertEqual(SOAK_COMMIT, report["soakCommit"])
+        self.assertEqual(SOAK_COMMIT, report["soakCommits"]["soak-61"])
         return {item["name"]: item for item in report["checks"] if item["name"].startswith(("soak.", "report."))}
 
     def failed(self, checks):
@@ -483,4 +483,37 @@ class Dec091ClosureSoakTests(unittest.TestCase):
             with self.subTest(check=name):
                 failed = self.failed(self.soak_checks(mutate=lambda runs, kwargs, o=override: kwargs.update({"soak-61": o})))
                 self.assertIn(name, failed)
+
+    def test_each_soak_dir_may_name_its_own_commit(self):
+        other = "c" * 40
+        def mutate(runs, kwargs):
+            kwargs["soak-26"] = {"commit": other}
+        # soak-26 ran on another commit's build (a world fix after the first seed): named per dir it passes...
+        self.assertEqual([], self.failed(self.soak_checks(mutate=mutate, soak_dirs_arg="soak-61,soak-26@" + other)))
+        # ...unnamed, its build is checked against the default soak commit and fails
+        self.assertIn("soak.soak-26.build", self.failed(self.soak_checks(mutate=mutate)))
+
+
+class ReleaseModeLabelTests(unittest.TestCase):
+    """build-report.sh labels the mode with target / compression (WP-066W / 066C): the cap follows the base mode (r3 fix)."""
+
+    def test_labelled_release_footprints_are_release_and_dev_never(self):
+        gate = load_wp064_gate()
+        for mode in ("release", "release-lz4hc", "release-win64-lz4hc"):
+            self.assertTrue(gate.valid_release_footprint({"mode": mode, "capApplicable": True, "capExceeded": False, "appMB": 324.8}), mode)
+        for mode in ("dev", "dev-lz4hc", "", None):
+            self.assertFalse(gate.valid_release_footprint({"mode": mode, "capApplicable": True, "capExceeded": False, "appMB": 324.8}), mode)
+
+    def test_build_report_applies_the_cap_to_a_compressed_release_only(self):
+        for mode, applies in (("release", True), ("dev", False)):
+            with tempfile.TemporaryDirectory() as directory:
+                build = Path(directory)
+                (build / "X.app").mkdir()
+                (build / "build.log").write_text("Build Report\nComplete build size 300.0 mb\n", encoding="utf-8")
+                (build / "build-report.json").write_text(json.dumps({"mode": mode, "compression": "lz4hc", "stamp": {"describe": "x"}}), encoding="utf-8")
+                result = subprocess.run([str(ROOT / "build-report.sh"), str(build), "--cap", "550"], capture_output=True, text=True)
+                self.assertEqual(0, result.returncode, result.stderr)
+                footprint = json.loads((build / "footprint.json").read_text(encoding="utf-8"))
+                self.assertEqual(mode + "-lz4hc", footprint["mode"])
+                self.assertIs(applies, footprint["capApplicable"], mode)
 

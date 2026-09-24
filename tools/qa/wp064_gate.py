@@ -74,10 +74,22 @@ def valid_gpu_stage(gpu):
     )
 
 
+def base_mode(footprint):
+    """build-report.sh labels the mode with the target / compression ("release-lz4hc", "release-win64-lz4hc"): the base is the build mode."""
+    mode = footprint.get("mode") if isinstance(footprint, dict) else None
+    return mode.split("-")[0] if isinstance(mode, str) else None
+
+
+def split_dir_commit(item, default):
+    """r3: "<dir>@<sha>" names the commit a soak / report run executed; a bare "<dir>" uses the default."""
+    name, _, commit = item.partition("@")
+    return name, (commit or default)
+
+
 def valid_release_footprint(footprint):
     return (
         isinstance(footprint, dict)
-        and footprint.get("mode") == "release"
+        and base_mode(footprint) == "release"
         and footprint.get("capApplicable") is True
         and footprint.get("capExceeded") is False
         and finite_number(footprint.get("appMB"), 0, RELEASE_CAP_MB)
@@ -394,7 +406,7 @@ def main():
     # r3: the stability / report runs may come from another commit's dev builds (S-10 soak.sh: <soak-root>/build-<dir>) —
     # perf / release stay on --commit; the report names both commits
     parser.add_argument("--soak-root", help="directory holding the soak / report dirs; default <root>")
-    parser.add_argument("--soak-commit", help="commit the soak / report runs executed; default --commit")
+    parser.add_argument("--soak-commit", help="commit the soak / report runs executed (a dir may carry its own: <dir>@<sha>); default --commit")
     parser.add_argument("--seed", type=int, default=61)
     parser.add_argument("--rounds", type=int, default=12)
     parser.add_argument("--window", type=int, default=60)
@@ -424,14 +436,14 @@ def main():
     check("build.devEditor", editor_build_matches(dev_editor_report, "dev", args.commit),
           {"mode": dev_editor_report.get("mode"), "result": dev_editor_report.get("result"), "errors": dev_editor_report.get("totalErrors"), "stamp": dev_editor_report.get("stamp")})
     check("build.devBinary", bool(dev_binary and dev_binary.is_file()), dev_hash)
-    check("build.devCapNotApplicable", dev_footprint.get("mode") == "dev" and dev_footprint.get("capApplicable") is False,
+    check("build.devCapNotApplicable", base_mode(dev_footprint) == "dev" and dev_footprint.get("capApplicable") is False,
           {key: dev_footprint.get(key) for key in ("mode", "appMB", "capApplicable", "capExceeded")})
     check("build.release", release_report.get("mode") == "release" and release_report.get("ok") is True and release_report.get("head") == args.commit,
           {key: release_report.get(key) for key in ("mode", "ok", "head")})
     check("build.releaseEditor", editor_build_matches(release_editor_report, "release", args.commit),
           {"mode": release_editor_report.get("mode"), "result": release_editor_report.get("result"), "errors": release_editor_report.get("totalErrors"), "stamp": release_editor_report.get("stamp")})
     app_mb = release_footprint.get("appMB")
-    check("build.releaseFootprintMode", release_footprint.get("mode") == "release" and release_footprint.get("capApplicable") is True,
+    check("build.releaseFootprintMode", base_mode(release_footprint) == "release" and release_footprint.get("capApplicable") is True,
           {key: release_footprint.get(key) for key in ("mode", "capApplicable")})
     check("build.releaseFootprint", valid_release_footprint(release_footprint),
           f"{app_mb} MB <= {RELEASE_CAP_MB} MB")
@@ -525,9 +537,13 @@ def main():
               {key: gpu.get(key) for key in ("pass", "gpuSampledFrames", "gpuFrameAvgMs", "gpuFrameMaxMs", "gpuMeasurementSource")})
 
     soak_root = Path(args.soak_root).resolve() if args.soak_root else root
-    soak_commit = args.soak_commit or args.commit
-    check("soak.commit", HEX_COMMIT.fullmatch(soak_commit or "") is not None and len(soak_commit) == 40, soak_commit)
-    soak_dirs = [d for d in args.soak_dirs.split(",") if d]
+    default_soak_commit = args.soak_commit or args.commit
+    soak_specs = [split_dir_commit(d, default_soak_commit) for d in args.soak_dirs.split(",") if d]
+    report_specs = [split_dir_commit(d, default_soak_commit) for d in args.report_dirs.split(",") if d]
+    soak_commits = sorted({commit for _, commit in soak_specs + report_specs})
+    check("soak.commit", all(HEX_COMMIT.fullmatch(c or "") is not None and len(c) == 40 for c in soak_commits), soak_commits)
+    soak_dirs = [name for name, _ in soak_specs]
+    soak_dir_commit = dict(soak_specs)
     seeds = [int(x) for x in args.seeds.split(",") if x]
     check("soak.stabilitySeeds", len(soak_dirs) == len(seeds) == 2 and len(set(seeds)) == 2, {"dirs": soak_dirs, "seeds": seeds})
     soak_required = ["command.json", "preflight.json", "host-monitor.json", "player.log", "exit.txt", "bot-summary.json", "qa-report.json", "events.txt"]
@@ -535,6 +551,7 @@ def main():
     for soak_name, seed in zip(soak_dirs, seeds):
         soak = soak_root / soak_name
         prefix = "soak." + soak_name
+        soak_commit = soak_dir_commit[soak_name]
         if (soak / "attempt.json").is_file():
             # wp064_run.py layout (attempt provenance, preflight + host monitor, command.json)
             binary_hash = dev_hash if soak_commit == args.commit else external_build(soak_root, soak_name, soak_commit, check, prefix)[0]
@@ -568,14 +585,13 @@ def main():
               {"runMode": soak_summary.get("runMode"), "pass": soak_summary.get("pass"), "stabilityPass": soak_summary.get("stabilityPass")})
 
     # real-bot runs: presence, provenance and mode are required, the reached-round distribution is not gated (DEC-091)
-    report_dirs = [d for d in args.report_dirs.split(",") if d]
     present = []
-    for report_name in report_dirs:
+    for report_name, report_commit in report_specs:
         run = soak_root / report_name
         prefix = "report." + report_name
         summary = load_json(run / "bot-summary.json", check)
         if not (run / "attempt.json").is_file():
-            external_build(soak_root, report_name, soak_commit, check, prefix)
+            external_build(soak_root, report_name, report_commit, check, prefix)
         real = summary.get("runMode") == "normal" and summary.get("seed") in seeds and summary.get("roundsRequested") == args.rounds
         check(prefix + ".realBot", real, {key: summary.get(key) for key in ("runMode", "seed", "roundsRequested", "roundsCompleted", "deathRound")})
         if real:
@@ -598,7 +614,7 @@ def main():
         "executionCommit": args.commit,
         "devBinarySha256": dev_hash,
         "releaseBinarySha256": release_hash,
-        "soakCommit": soak_commit,
+        "soakCommits": {name: commit for name, commit in soak_specs + report_specs},
         "soakBinarySha256": soak_binaries,
         "seeds": seeds,
         "rounds": args.rounds,
@@ -606,7 +622,7 @@ def main():
         "checks": checks,
     }
     (root / "wp064-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    lines = [f"WP-064 {'PASS' if passed else 'FAIL'} commit={args.commit} soakCommit={soak_commit}"]
+    lines = [f"WP-064 {'PASS' if passed else 'FAIL'} commit={args.commit} soakCommits={','.join(soak_commits)}"]
     lines += [f"{'PASS' if item['pass'] else 'FAIL'} {item['name']} = {item['value']}" for item in checks]
     (root / "wp064-report.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))

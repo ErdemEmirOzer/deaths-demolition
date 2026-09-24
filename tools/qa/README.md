@@ -50,7 +50,7 @@ Kapı değerleri araç içinde değiştirilmez: perf ort. ≤ 8,0 ms ve temiz p9
 ## Soak kapısı (DEC-091, 2026-09-24)
 
 Kararlılık (MUST): `-ddQaBotStability` ile 2 tohum (61, 26) × 12/12 → `tools/qa/soak_gate.py <bot-summary.json> --rounds 12 --seed S --stability --player-log <player.log>`. Gerçek bot: kapı değil, `soak_gate.py --report <≥5 bot-summary.json>` dağılımı.
-Kapanış (`wp064_gate.py`, WP-064 r3): `--soak-dirs soak-61,soak-26 --seeds 61,26 --report-dirs <≥5>`; `rc.sh` bunları koşar. Kararlılık/rapor başka bir commit'in dev build'lerinden geliyorsa (S-10 `soak.sh` düzeni: `<kök>/build-<dizin>`, `<dizin>.wait.log`) `--soak-root <kök> --soak-commit <sha>` — perf/release `--commit` üzerinde kalır, rapor iki commit'i de yazar.
+Kapanış (`wp064_gate.py`, WP-064 r3): `--soak-dirs soak-61,soak-26 --seeds 61,26 --report-dirs <≥5>`; `rc.sh` bunları koşar. Kararlılık/rapor başka bir commit'in dev build'lerinden geliyorsa (S-10 `soak.sh` düzeni: `<kök>/build-<dizin>`, `<dizin>.wait.log`) `--soak-root <kök> --soak-commit <sha>` (dizin başına ayrı commit: `stab26-final@<sha>`) — perf/release `--commit` üzerinde kalır, rapor commit'leri dizin dizin yazar. Tavan release için; mod etiketi `release-lz4hc` / `release-win64-lz4hc` taban moda göre sayılır.
 
 ## Kapanış listesi ekleri (C-00, 2026-09-17)
 

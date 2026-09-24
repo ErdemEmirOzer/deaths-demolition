@@ -72,7 +72,7 @@ for u in used:
     b = bucket(u['path']); r = roll.setdefault(b, {'mb': 0.0, 'files': 0}); r['mb'] += u['mb']; r['files'] += 1
 for r in roll.values(): r['mb'] = round(r['mb'], 2)
 appmb = round(appkb / 1024, 1)
-cap_applicable = mode == 'release'
+cap_applicable = mode.split('-')[0] == 'release'   # the label carries -<target> / -<compression> (WP-066W / 066C)
 warn = cap_applicable and (appmb > cap if appmb else (complete or 0) > cap)
 out = {'utc': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'dir': d, 'log': log, 'mode': mode, 'stamp': stamp,
        'appMB': appmb, 'completeBuildMB': round(complete or 0, 1), 'totalUserAssetsMB': round(total_user or 0, 1), 'capMB': cap,
