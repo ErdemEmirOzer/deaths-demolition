@@ -343,7 +343,7 @@ Kademe sözleşmesi: S-05 `QUALITY-TIERS-V2.md` (3812dc2) — `QualityTiers.Curr
 | Özellik (S-03) | Performans (≤ 8,0 ms) | Yüksek (DEC-092) | Sinematik | A/B bayrağı |
 |---|---|---|---|---|
 | AI tick bütçesi (40 beden; seçici + slot + jel sorgusu + nav/crowd + tehdit, ragdoll hariç) | 0,55 ms | 0,75 ms | 0,85 ms | `-ddAiV3 0|1` (v3 seçici/slot/kapma kapalı → WP-040 davranışı) |
-| Eşzamanlı sıcak ragdoll / aktif fizik cesedi (S-06 tavanıyla aynı; S-03 ölümde `Pick` ile okur, S-06 uygular) | 2 | 6 | 12 | `-ddRagdoll 0|1` (S-06 bayrağı; 0 = tam yazılı klip) |
+| Eşzamanlı sıcak ragdoll / aktif fizik cesedi (S-06 tavanıyla aynı; S-03 ölümde `Pick` ile okur, S-06 uygular; Sinematik 10 = S-05/S-06 uzlaşması, C-00 24.09) | 2 | 6 | 10 | `-ddRagdoll 0|1` (S-06 bayrağı; 0 = tam yazılı klip) |
 | Ceset ömrü çarpanı (`CorpseLinger` × ; tavan 6 / 10 / 16) | ×0,6 | ×1,0 | ×1,25 | `-ddCorpseLinger 0|1` (0 = WP-054 değerleri) |
 | Zincir yıldırım hop sayısı | 6 | 8 | 10 | `-ddChainHops 0|1` (0 = 4 hop, LOS yok) |
 | Jel birikinti tavanı (kayıt halkası) | 10 | 16 | 24 | `-ddGelPuddles 0|1` (0 = 6, domino yok) |
@@ -359,10 +359,10 @@ Kademe sözleşmesi: S-05 `QUALITY-TIERS-V2.md` (3812dc2) — `QualityTiers.Curr
 | Zombi tick (durum makineleri, seçici, slot tahtası, jel sorgusu) 40 beden | 0,45 | 0,40 | 0,30 | `PilotPerfProbe` AI sayacı |
 | Nav + crowd (WP-030/054, `PathQueriesPerTick` 6/4/4) | 0,20 | 0,15 | 0,12 | `RegionNavSliceTests.Stres_40Zombi` |
 | ThreatDirector + `IsInView` ≤ 40 | 0,08 | 0,08 | 0,06 | `ThreatDirectorTests` |
-| Ragdoll fiziği (S-06 A3.6 tahmini 0,09–0,13 ms/aktif, 11 beden) — **S-06 bütçesi**, burada bilgi | 12 × 0,11 ≈ 1,3 | 6 × 0,11 ≈ 0,7 | 2 × 0,11 ≈ 0,2 | S-06 ölçer |
+| Ragdoll fiziği (S-06 A3.6 tahmini 0,09–0,13 ms/aktif, 11 beden) — **S-06 bütçesi**, burada bilgi | 10 × 0,11 ≈ 1,1 | 6 × 0,11 ≈ 0,7 | 2 × 0,11 ≈ 0,2 | S-06 ölçer |
 | Zincir çözümü (bir atış: ≤ 10 linecast + sıralama) | 0,06 tepe | 0,05 | 0,04 | `ChainTargetTests` stopwatch |
 | **S-03 AI toplam tavan (ragdoll hariç)** | **0,85 ms** | **0,75 ms** | **0,55 ms** | kademe raporu, dilim B8 |
-| AI + ragdoll (bilgi) | ≈ 2,2 ms | ≈ 1,5 ms | ≈ 0,8 ms | |
+| AI + ragdoll (bilgi) | ≈ 2,0 ms | ≈ 1,5 ms | ≈ 0,8 ms | |
 
 Tavan aşılırsa sıra: hop ↓ → aktif birikinti ↓ → komşu tavanı ↓ → `PathQueriesPerTick` ↓ → (S-06) aktif ragdoll ↓; tasarım kuralları (DEC-029 pencereleri, slot tahtası, jel kaçınmama) kademeyle **değişmez**.
 
