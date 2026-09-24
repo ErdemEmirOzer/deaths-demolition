@@ -86,6 +86,7 @@ namespace DD.Prototype.UI
             BuildBrushHealth();
             BuildRingWeapon();
             BuildInkSpecial();
+            BuildInkSlick();
         }
 
         // ---- top-left gold: kinpaku disc, coin, numeral, "+N"
@@ -301,6 +302,95 @@ namespace DD.Prototype.UI
             _specialBlock = special.gameObject;
             BuildSpecialContent(special, true);
             _specialBlock.SetActive(false);
+        }
+
+        // ---- bottom-centre: the player's SLICK hint (N19 §2 · E23 prompt slot)
+
+        private RectTransform _slick;
+        private CanvasGroup _slickGroup;
+        private Vector2 _slickHome;
+        private bool _slickShown;
+        private float _slickAt;
+
+        /// <summary>The SLICK hint is up (tests, captures).</summary>
+        public bool SlickShown => _slickShown;
+
+        /// <summary>Capture seam: show the hint without a puddle under the player (-ddUiCapture hudstates).</summary>
+        public static bool CaptureSlick;
+
+        /// <summary>
+        /// While the player stands in Namekuji's gel (PlayerMotor.InGel, WP-069 B4): Status.Sliding at 24 px in the gel's
+        /// identity tint + the pack's hud.slick word in cream with the HUD ink, in the E23 prompt slot at bottom centre
+        /// (above the Special block while it shows). No box, no duration (the puddle has none to show); the player arcs and
+        /// the reticle are untouched.
+        /// </summary>
+        private void BuildInkSlick()
+        {
+            _slick = InkRoot("Slick", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), HudRearEdge.PromptSlot);
+            _slickHome = _slick.anchoredPosition;
+            TMP_Text word = InkText("Text", _slick, UiStrings.Get("hud.slick", "SLICK"), UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleCenter);
+            word.fontStyle = FontStyles.Bold;
+            UiHudInk.Apply(word);
+            UiFactory.Fill(word.rectTransform);
+            float half = Mathf.Ceil(word.GetPreferredValues(word.text).x) * 0.5f;
+            Sprite sprite = UiArt.Icon("Status.SlidingOuter") ?? UiArt.Icon("Status.Sliding");
+            if (sprite != null)
+            {
+                Image glyph = UiFactory.NewImage("Glyph", _slick, UiColor.TextPrimary, sprite);
+                glyph.preserveAspect = true;
+                if (UiArt.IsGlyph(sprite))
+                {
+                    UiArt.ApplyGlyph(glyph, GlyphInk);
+                }
+
+                glyph.color = UiTokens.Get(UiGlyphTints.Gel);
+                Place(glyph.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-(half + (int)UiSpace.S), 0f), new Vector2(24f, 24f));
+            }
+
+            _slickGroup = UiFactory.Group(_slick.gameObject);
+            _slickGroup.alpha = 0f;
+            _slick.gameObject.SetActive(false);
+        }
+
+        private void UpdateSlick()
+        {
+            if (_slick == null)
+            {
+                return;
+            }
+
+            DD.Prototype.PlayerSystem.PlayerRig rig = DD.Prototype.PlayerSystem.PlayerRegistry.Primary;
+            bool inGel = CaptureSlick || (rig != null && rig.Motor != null && rig.Motor.InGel);
+            bool show = inGel && DD.Prototype.Rounds.RunEvents.Current.Phase == DD.Prototype.Rounds.RunPhase.Fighting && UiNavigation.GameplayInputAllowed;
+            Vector2 home = new Vector2(_slickHome.x, BottomCentreTop > 0f ? BottomCentreTop + (int)UiSpace.S : _slickHome.y);
+            if (show == _slickShown)
+            {
+                if (show && !Mathf.Approximately(home.y, _slickAt))
+                {
+                    _slickAt = home.y;   // the Special block came or went under it
+                    UiMotion.Move(_slick, home, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+                }
+
+                return;
+            }
+
+            _slickAt = home.y;
+
+            // E23: rises 4 px into place as it fades in (Fast, Settle); fades out (Fast, Exit).
+            _slickShown = show;
+            UiMotion.KillTarget(_slick, false);
+            UiMotion.KillTarget(_slickGroup, false);
+            if (show)
+            {
+                _slick.gameObject.SetActive(true);
+                _slickGroup.alpha = 0f;
+                _slick.anchoredPosition = home + new Vector2(0f, -PromptRise);
+                UiMotion.Alpha(_slickGroup, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+                UiMotion.Move(_slick, home, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+                return;
+            }
+
+            UiMotion.Alpha(_slickGroup, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
         }
 
         /// <summary>The final-seconds line: the words in coral with their ink over a brush underline - no chip (8-R).</summary>

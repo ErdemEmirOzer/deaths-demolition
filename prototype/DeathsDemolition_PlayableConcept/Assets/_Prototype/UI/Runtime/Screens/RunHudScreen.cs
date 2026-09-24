@@ -192,7 +192,19 @@ namespace DD.Prototype.UI
         // WP-007 (PB-2): the active timer is formatted only when its displayed tenth
         // changes (at most ten times a second), the marker distance only when the displayed
         // metre changes (UiWorldMarker) - never once per frame.
-        private int _specialTimerTenths = int.MinValue;
+        private int _specialMagShown = int.MinValue;
+        private int _specialReserveShown = int.MinValue;
+
+        // WP-069 B4 / DEC-097 · E14 v3: the Special is a magazine weapon with a time cap. The ring is the magazine (one
+        // segment a round; the reload refills it in BarReload), the centre reads the rounds over the reserve, a thin cream
+        // strip under the ring is the time cap (coral in the final seconds), and an inner arc is Raiju's 0.25 s charge.
+        private TMP_Text _specialReserve;
+        private Image _specialCharge;
+        private Image _specialCapFill;
+        private GameObject _specialCap;
+        public const float SpecialCapWidth = 112f;
+        public const float SpecialCapHeight = 4f;
+        public const float SpecialChargeSize = 108f;
         private TMP_Text _specialCaption;
         private Image _specialRing;
         private Image _specialPip;
@@ -533,9 +545,58 @@ namespace DD.Prototype.UI
             _specialPip.color = Color.white;
             _specialPip.gameObject.SetActive(false);
 
+            // E14 v3: the rounds in the magazine (the old timer's numeral and name, so its tests and captures find it) over
+            // the reserve.
             _specialTimer = UiFactory.Numeric(
-                "Timer", ringRoot, "0.0", UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleCenter, false);
-            RectTransform timerRect = UiFactory.Fill((RectTransform)_specialTimer.transform, 20f);
+                "Timer", ringRoot, "0", UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleCenter, false);
+            RectTransform timerRect = (RectTransform)_specialTimer.transform;
+            timerRect.anchorMin = new Vector2(0.5f, 0.5f);
+            timerRect.anchorMax = new Vector2(0.5f, 0.5f);
+            timerRect.pivot = new Vector2(0.5f, 0f);
+            timerRect.sizeDelta = new Vector2(80f, UiFactory.LineHeight(UiType.NumericM));
+            timerRect.anchoredPosition = new Vector2(0f, -6f);
+            _specialReserve = UiFactory.Label("Reserve", ringRoot, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperCenter);
+            RectTransform reserveRect = (RectTransform)_specialReserve.transform;
+            reserveRect.anchorMin = new Vector2(0.5f, 0.5f);
+            reserveRect.anchorMax = new Vector2(0.5f, 0.5f);
+            reserveRect.pivot = new Vector2(0.5f, 1f);
+            reserveRect.sizeDelta = new Vector2(80f, UiFactory.LineHeight(UiType.Caption));
+            reserveRect.anchoredPosition = new Vector2(0f, -6f);
+
+            // Raiju's charge: an inner arc (the same A4 ring at 108 px, inside the magazine stroke) filling over the 0.25 s
+            // the trigger is held; hidden otherwise.
+            _specialCharge = UiFactory.NewImage("Charge", ringRoot, UiColor.TextPrimary, ringArt != null ? ringArt : UiSprites.Ring);
+            RectTransform chargeRect = (RectTransform)_specialCharge.transform;
+            chargeRect.anchorMin = new Vector2(0.5f, 0.5f);
+            chargeRect.anchorMax = new Vector2(0.5f, 0.5f);
+            chargeRect.sizeDelta = new Vector2(SpecialChargeSize, SpecialChargeSize);
+            _specialCharge.type = Image.Type.Filled;
+            _specialCharge.fillMethod = Image.FillMethod.Radial360;
+            _specialCharge.fillOrigin = (int)Image.Origin360.Top;
+            _specialCharge.fillClockwise = true;
+            _specialCharge.fillAmount = 0f;
+            _specialCharge.enabled = false;
+
+            // The time cap (40 s / 45 s): secondary, so a thin strip under the ring - a cream ghost track and a cream fill
+            // that drains; the final seconds turn it coral with the ENDING word (colour never alone).
+            RectTransform cap = UiFactory.NewRect("TimeCap", ringRoot);
+            cap.anchorMin = new Vector2(0.5f, 0f);
+            cap.anchorMax = new Vector2(0.5f, 0f);
+            cap.pivot = new Vector2(0.5f, 1f);
+            cap.sizeDelta = new Vector2(SpecialCapWidth, SpecialCapHeight);
+            cap.anchoredPosition = new Vector2(0f, -(int)UiSpace.S);
+            Image capTrack = UiFactory.NewImage("Track", cap, UiColor.TextPrimary, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)capTrack.transform);
+            Color capGhost = capTrack.color;
+            capGhost.a = SpecialRingGhost;
+            capTrack.color = capGhost;
+            _specialCapFill = UiFactory.NewImage("Fill", cap, UiColor.TextPrimary, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)_specialCapFill.transform);
+            _specialCapFill.type = Image.Type.Filled;
+            _specialCapFill.fillMethod = Image.FillMethod.Horizontal;
+            _specialCapFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            _specialCapFill.fillAmount = 1f;
+            _specialCap = cap.gameObject;
 
             _specialCaption = UiFactory.Label(
                 "Caption", specialHost, string.Empty, UiType.Caption, UiColor.TextPrimary, TextAnchor.LowerCenter);
@@ -570,6 +631,7 @@ namespace DD.Prototype.UI
             {
                 UiHudInk.Apply(_specialPhase);
                 UiHudInk.Apply(_specialTimer);
+                UiHudInk.Apply(_specialReserve);
                 UiHudInk.Apply(_specialCaption);
                 UiHudInk.Apply(_specialUsage);
             }
@@ -976,6 +1038,7 @@ namespace DD.Prototype.UI
             UpdateRun();
             UpdateClassicWeapon();
             UpdateSpecialWeapon();
+            UpdateSlick();
             UpdateBanner();
             UpdateThreat();
             UpdateInkPosture();   // 8-R: calm / danger
@@ -1555,21 +1618,48 @@ namespace DD.Prototype.UI
             RetitleSpecialBanner(state);
 
             bool warning = state.FinalSecondsWarning;
+            bool reloading = state.IsReloading;
 
-            _specialPhase.text = warning ? "ENDING" : "ACTIVE";
+            // E14 v3 words: RELOADING while a cell / canister changes, ENDING in the time cap's final seconds.
+            _specialPhase.text = warning ? "ENDING" : reloading ? "RELOADING" : "ACTIVE";
             _specialPhase.color = UiTokens.Get(warning ? UiColor.StateDanger : UiColor.StateGold);
             _specialCaption.text = name;
             _specialCaption.color = UiTokens.Get(UiColor.TextPrimary);
-            int tenths = Mathf.RoundToInt(Mathf.Max(0f, state.ActiveRemaining) * 10f);
-            if (tenths != _specialTimerTenths)
+
+            // The centre: rounds in the magazine over the reserve; strings only when an integer changes.
+            if (state.AmmoInMagazine != _specialMagShown)
             {
-                _specialTimerTenths = tenths;
-                _specialTimer.text = FormatSeconds(state.ActiveRemaining);
+                _specialMagShown = state.AmmoInMagazine;
+                _specialTimer.text = state.AmmoInMagazine.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
 
-            _specialTimer.color = UiTokens.Get(warning ? UiColor.StateDanger : UiColor.StateGold);
-            _specialRing.color = UiTokens.Get(warning ? UiColor.BarHealthLow : UiColor.BarSpecial);   // E14: final 3 s Coral400
-            _specialRing.fillAmount = SpecialRingFill(state.ActiveProgress01);
+            if (state.ReserveAmmo != _specialReserveShown)
+            {
+                _specialReserveShown = state.ReserveAmmo;
+                _specialReserve.text = "/ " + state.ReserveAmmo.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            _specialTimer.color = UiTokens.Get(state.AmmoInMagazine > 0 ? UiColor.StateGold : UiColor.StateWarning);
+
+            // The ring: one segment a round; the reload refills it in the reload colour (E11's language).
+            LaySpecialTicks(state.MagazineSize);
+            float magazine = state.MagazineSize > 0 ? Mathf.Clamp01((float)state.AmmoInMagazine / state.MagazineSize) : state.ActiveProgress01;
+            _specialRing.color = UiTokens.Get(reloading ? UiColor.BarReload : UiColor.BarSpecial);
+            _specialRing.fillAmount = SpecialRingFill(reloading ? state.ReloadProgress01 : magazine);
+
+            // The time cap strip, and Raiju's charge arc.
+            _specialCapFill.fillAmount = state.ActiveProgress01;
+            _specialCapFill.color = UiTokens.Get(warning ? UiColor.BarHealthLow : UiColor.TextPrimary);   // E14: final 3 s Coral400
+            bool charging = state.Charge01 > 0f;
+            if (_specialCharge.enabled != charging)
+            {
+                _specialCharge.enabled = charging;
+            }
+
+            if (charging)
+            {
+                _specialCharge.fillAmount = state.Charge01;
+            }
 
             RefreshSpecialUsage();
             SetWarning(warning);
@@ -1583,23 +1673,10 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            int mode;
+            // DEC-094 v3: the activation's shots and the bodies they reached (Raiju's hops, Namekuji's direct hits).
             int seconds = 0;
             int hits = _swFieldHits;
-            if (_swFieldEndsAt > 0f && Time.time < _swFieldEndsAt)
-            {
-                mode = 1;
-                seconds = Mathf.CeilToInt(_swFieldEndsAt - Time.time);
-            }
-            else if (_swFieldEndedAt > 0f && Time.time - _swFieldEndedAt < 2f)
-            {
-                mode = 2;
-                hits = _swFieldEndedCount;
-            }
-            else
-            {
-                mode = _swShots > 0 ? 3 : 0;
-            }
+            int mode = _swShots > 0 ? 3 : 0;
 
             if (mode == _swShownMode && seconds == _swShownSeconds && hits == _swShownHits && _swShots == _swShownShots)
             {
@@ -1612,9 +1689,7 @@ namespace DD.Prototype.UI
             _swShownShots = _swShots;
             switch (mode)
             {
-                case 1: _specialUsage.text = "FIELD " + seconds + "s" + (hits > 0 ? "  ·  " + hits + " HIT" : string.Empty); break;
-                case 2: _specialUsage.text = "FIELD ENDED  ·  " + hits + " HIT"; break;
-                case 3: _specialUsage.text = "SHOTS " + _swShots; break;
+                case 3: _specialUsage.text = "SHOTS " + _swShots + (hits > 0 ? "  ·  HITS " + hits : string.Empty); break;
                 default: _specialUsage.text = string.Empty; break;
             }
         }
@@ -1628,11 +1703,15 @@ namespace DD.Prototype.UI
                     _swFieldHits = 0;
                     _swFieldEndsAt = -1f;
                     _swFieldEndedAt = -1f;
+                    _specialMagShown = int.MinValue;
+                    _specialReserveShown = int.MinValue;
                     if (_specialGlyph != null)
                     {
                         Sprite glyph = UiArt.SpecialIcon(e.Id);
                         UiArt.SetGlyph(_specialGlyph, glyph);
                         _specialGlyph.enabled = glyph != null;
+                        // N19: the Special's glyph wears its identity tint (Arc / Gel); the ring stays gold (DEC-097 reserve).
+                        _specialGlyph.color = UiTokens.Get(e.Id == SpecialWeaponId.Raiju ? UiGlyphTints.ChainLightning : UiGlyphTints.Gel);
                         if (glyph != null)
                         {
                             UiPresets.StampIn(_specialGlyph.rectTransform);   // E14: the weapon's glyph stamps with the banner
@@ -1654,6 +1733,13 @@ namespace DD.Prototype.UI
                     {
                         // E14: the HIT count pops 1.06 → 1 over 120 ms (text-bearing, so ≤ 1.06).
                         UiMotion.ScaleSeconds(_specialUsage.rectTransform, SpecialHitPop, 1f, SpecialHitPopSeconds, UiEase.Settle, UiMotionClass.Decor);
+                    }
+
+                    break;
+                case SpecialUsageKind.ReloadEnded:
+                    if (_specialTimer != null)
+                    {
+                        UiPresets.StampIn(_specialTimer.rectTransform);   // E14 v3: the refilled count stamps (E11's reload landing)
                     }
 
                     break;
@@ -1680,7 +1766,7 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>E14: one notch per second of the active duration, evenly round the ring from 12 o'clock.</summary>
+        /// <summary>E14 v3: one notch per round of the magazine (Raiju 3, Namekuji 8), evenly round the ring from 12 o'clock.</summary>
         private void LaySpecialTicks(float activeSeconds)
         {
             int count = Mathf.Clamp(Mathf.RoundToInt(activeSeconds), 0, SpecialTickCapacity);
@@ -1746,6 +1832,17 @@ namespace DD.Prototype.UI
             if (_specialRing != null && _specialRing.gameObject.activeSelf == onGround)
             {
                 _specialRing.gameObject.SetActive(!onGround);
+            }
+
+            if (_specialReserve != null && _specialReserve.gameObject.activeSelf == onGround)
+            {
+                _specialReserve.gameObject.SetActive(!onGround);
+                _specialCap.SetActive(!onGround);
+            }
+
+            if (onGround && _specialCharge != null)
+            {
+                _specialCharge.enabled = false;
             }
         }
 
@@ -1913,10 +2010,6 @@ namespace DD.Prototype.UI
         private void PlaySpecialPickup(float activeDuration)
         {
             _specialPickupAt = Time.unscaledTime;
-            if (activeDuration > 0f)
-            {
-                LaySpecialTicks(activeDuration);
-            }
 
             if (_specialLeaf != null && !UiSettings.ReduceFlashes)
             {
@@ -1996,12 +2089,6 @@ namespace DD.Prototype.UI
         private void UpdateBanner()
         {
             _bannerRemaining = _banner.Tick(Time.unscaledTime);
-        }
-
-        /// <summary>Formats to a tenth. Callers cache by the displayed tenth so this never runs once per frame (WP-007, PB-2).</summary>
-        private static string FormatSeconds(float seconds)
-        {
-            return Mathf.Max(0f, seconds).ToString("0.0");
         }
     }
 }

@@ -433,6 +433,23 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>Capture seam: a fixed weapon roll, every range from the shipped source.</summary>
+        private sealed class ForcedRoll : ISpecialWeaponRandom
+        {
+            private readonly float _value;
+
+            public ForcedRoll(float value)
+            {
+                _value = value;
+            }
+
+            public float Value() => _value;
+
+            public float Range(float min, float max) => UnityRandomSource.Instance.Range(min, max);
+
+            public int Range(int min, int maxExclusive) => UnityRandomSource.Instance.Range(min, maxExclusive);
+        }
+
         private static string Arg(string name)
         {
             string[] args = Environment.GetCommandLineArgs();
@@ -1127,12 +1144,12 @@ namespace DD.Prototype.UI
             /// WP-068 8c · the Special's HUD on a real drop (SpecialWeaponDirector.ForceSpawn):
             /// - the diamond in view; then, from the staging spot farther from the drop, the EdgeMarker;
             /// - the pickup, walked onto (ring filling, sparks, banner mid-wipe), then settled with its ticks;
-            /// - status stamps on two bodies in view (a web and a push);
+            /// - status stamps on two bodies in view (SHOCK and DOWN: Raiju's hold and a gel knockdown, M4-R1 N19);
             /// - the final seconds (coral ring); then the return (the banner wiping again, the classic block un-dimmed).
             /// </summary>
             private static IEnumerator SpecialStates(string folder, PlayerRig rig)
             {
-                // AD 8c SHOULD-3: NET and DAZED side by side, while the bodies are still around the ronin (before the drop).
+                // AD 8c SHOULD-3 (N19 v2): SHOCK and DOWN side by side, while the bodies are still around the ronin (before the drop).
                 int stamped = 0;
                 Camera camera = Camera.main;
                 System.Collections.Generic.IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
@@ -1150,12 +1167,9 @@ namespace DD.Prototype.UI
                         continue;
                     }
 
-                    bool web = stamped == 0;
-                    z.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
-                        web ? DD.Prototype.Damage.SpecialReactionKind.Web : DD.Prototype.Damage.SpecialReactionKind.Push,
-                        web ? DD.Prototype.Core.Config.SpecialWeaponId.Namekuji : DD.Prototype.Core.Config.SpecialWeaponId.Raiju,   // WP-069 B4 interim (S-02)
-                        Vector3.forward, web ? 0f : 1f, web ? 4f : 1.5f, 0));
-                    stamped++;
+                    bool shock = stamped == 0;
+                    bool applied = shock ? z.ApplyShock(990001, 4f) : z.ApplyKnockdown(990002, 4f);
+                    stamped += applied ? 1 : 0;
                 }
 
                 if (stamped > 0)
@@ -1168,6 +1182,15 @@ namespace DD.Prototype.UI
 
 
                 SpecialWeaponDirector director = SpecialWeaponDirector.Instance;
+
+                // -ddUiCaptureSpecial raiju | namekuji: which drop this frame set shows (the weapon roll is the director's only
+                // Value() call, so a fixed value picks it; drop positions still come from the shipped source).
+                string forced = Arg("-ddUiCaptureSpecial");
+                if (director != null && !string.IsNullOrEmpty(forced))
+                {
+                    director.SetRandomSource(new ForcedRoll(forced == "namekuji" ? 0.9999f : 0f));
+                }
+
                 if (director == null || rig == null || !director.ForceSpawn())
                 {
                     Debug.Log("[UiCapture] hudstates: no Special drop (director " + (director != null) + ")");
@@ -1210,6 +1233,17 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.6f);
                 yield return Frame(folder, "hud-special-online");
 
+                // E14 v3 (DEC-097): the reload refilling the ring and Raiju's charge arc, staged on the live snapshot (the
+                // runtime republishes it every frame, so the staged state is re-asserted until the frame is taken).
+                yield return StagedSpecial(folder, "hud-special-reload", s => { s.IsReloading = true; s.ReloadProgress01 = 0.45f; s.AmmoInMagazine = 0; return s; });
+                yield return StagedSpecial(folder, "hud-special-charge", s => { s.Charge01 = 0.6f; return s; });
+
+                // N19 §2: the SLICK hint in the E23 slot, docked above the Special block while it shows.
+                RunHudScreen.CaptureSlick = true;
+                yield return new WaitForSecondsRealtime(0.4f);
+                yield return Frame(folder, "hud-slick-special");
+                RunHudScreen.CaptureSlick = false;
+
                 // AD R1-A MUST-1d: straight behind with the Special ring up - the arc lifts above the ring, x unchanged.
                 if (DD.Prototype.CameraSystem.CameraModeService.IsLookMode && Camera.main != null)
                 {
@@ -1229,6 +1263,29 @@ namespace DD.Prototype.UI
                 yield return Frame(folder, "hud-banner-wipe");
                 yield return new WaitForSecondsRealtime(0.7f);
                 yield return Frame(folder, "hud-special-ended");
+
+                RunHudScreen.CaptureSlick = true;
+                yield return new WaitForSecondsRealtime(0.4f);
+                yield return Frame(folder, "hud-slick");
+                RunHudScreen.CaptureSlick = false;
+            }
+
+            private static IEnumerator StagedSpecial(string folder, string name, Func<SpecialWeaponHudState, SpecialWeaponHudState> stage)
+            {
+                if (WeaponEvents.Special.Phase != SpecialWeaponPhase.Active)
+                {
+                    yield break;
+                }
+
+                float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < 0.35f)
+                {
+                    WeaponEvents.PublishSpecial(stage(WeaponEvents.Special), false);
+                    yield return null;
+                }
+
+                WeaponEvents.PublishSpecial(stage(WeaponEvents.Special), false);
+                yield return Frame(folder, name);
             }
 
             private static IEnumerator StageReticle(string folder, string name, ClassicWeaponHudState live, float spread, float pelletRing, int pellets, int ammo, bool special)

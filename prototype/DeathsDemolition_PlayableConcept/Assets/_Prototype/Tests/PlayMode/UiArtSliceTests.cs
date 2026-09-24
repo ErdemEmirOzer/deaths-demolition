@@ -151,7 +151,6 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ============================================================== 1 · HUD sanatı
 
-        [Ignore("WP-068 R1-B (S-09): the Special HUD v3 / AP-021 Sw.Raiju / Sw.Namekuji glyphs; the Kagura Bell slot left with WP-069 B4")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Hud_IkonlarBagli_GuvenliBolgeBos_ReticleVar()
@@ -294,25 +293,27 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(special);
             Assert.IsNotNull(special.GetComponent<Canvas>(), "Special bloğu kendi canvas'ında olmalı");
 
-            // WP-022H · Special usage v2: a fake Active state plus the WP-056 usage events
-            // drive the usage line ("FIELD 4s · 2 HIT" → "FIELD ENDED · 2 HIT") and the
-            // glyph; the string is rebuilt only on integer change (allocation contract
-            // covered by SpecialWeaponHudAllocationTests).
+            // WP-068 R1-B · Special HUD v3 (WP-069 B4 / DEC-097): a fake Active state plus the usage events drive the
+            // magazine ring (one segment a round), the rounds over the reserve, the time-cap strip, the usage line
+            // ("SHOTS 1 · HITS 2") and the identity-tinted glyph; strings are rebuilt only on integer change (allocation
+            // contract covered by SpecialWeaponHudAllocationTests).
             {
                 var active = new DD.Prototype.Weapons.SpecialWeaponHudState
                 {
                     Phase = DD.Prototype.Weapons.SpecialWeaponPhase.Active,
                     WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.Raiju,
-                    DisplayName = "Kagura Bell",
-                    ActiveRemaining = 20f,
-                    ActiveDuration = 20f
+                    DisplayName = "Raiju",
+                    ActiveRemaining = 40f,
+                    ActiveDuration = 40f,
+                    AmmoInMagazine = 3,
+                    MagazineSize = 3,
+                    ReserveAmmo = 6
                 };
-                // WP-022J r2 (AP-020 §2.4 S-8): a pickup raised while the snapshot still names
-                // the PREVIOUS weapon must not print that name - the banner retitles from
-                // the first Active snapshot that carries the new one.
-                var stale = active; stale.DisplayName = "Ofuda Loom"; stale.WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.Namekuji;
+                // WP-022J r2 (AP-020 §2.4 S-8): a pickup raised while the snapshot still names the PREVIOUS weapon must not
+                // print that name - the banner retitles from the first Active snapshot that carries the new one.
+                var stale = active; stale.DisplayName = "Namekuji"; stale.WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.Namekuji;
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(stale, false);
-                DD.Prototype.Weapons.WeaponEvents.PublishSpecialPickedUp(20f);
+                DD.Prototype.Weapons.WeaponEvents.PublishSpecialPickedUp(40f);
                 TMPro.TMP_Text banner = null;
                 foreach (TMPro.TMP_Text t in hud.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "Banner") banner = t;
                 Assert.IsNotNull(banner, "banner metni");
@@ -325,16 +326,17 @@ namespace DD.Prototype.Tests.PlayMode
                     Assert.LessOrEqual(clip.sizeDelta.x, 1f, "afiş silme maskesi kapalı başlar");
                 }
 
-                // E14: one tick a second of the active duration, on the A4 132 ring.
-                Assert.AreEqual(20, hud.SpecialTickCount, "Special halkası aktif süre kadar saniye tiki taşır");
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, true);
                 yield return null;
-                StringAssert.Contains("KAGURA BELL ONLINE", banner.text, "ilk adlı Active snapshot banner'ı yeniden adlandırır");
+                StringAssert.Contains("RAIJU ONLINE", banner.text, "ilk adlı Active snapshot banner'ı yeniden adlandırır");
+                // E14 v3: one notch a round of the magazine, on the A4 132 ring.
+                Assert.AreEqual(3, hud.SpecialTickCount, "Special halkası şarjördeki mermi kadar bölüm taşır");
                 Image ringFill = null;
                 foreach (Image im in special.GetComponentsInChildren<Image>(true)) if (im.name == "Fill" && im.transform.parent.name == "Ring") ringFill = im;
                 Assert.IsNotNull(ringFill, "Special halka dolumu");
                 Assert.AreEqual("Ring.Progress132", ringFill.sprite != null ? ringFill.sprite.name : "yok", "Special halkası A4 Ring.Progress132");
-                Assert.IsTrue(ringFill.transform.parent.Find("Ticks").gameObject.activeInHierarchy, "aktifken saniye tikleri görünür");
+                Assert.IsTrue(ringFill.transform.parent.Find("Ticks").gameObject.activeInHierarchy, "aktifken mermi bölümleri görünür");
+                Assert.IsTrue(ringFill.transform.parent.Find("TimeCap").gameObject.activeInHierarchy, "süre tavanı şeridi görünür");
                 float wipeStart = Time.realtimeSinceStartup;
                 while (Time.realtimeSinceStartup - wipeStart < 0.4f)
                 {
@@ -344,12 +346,32 @@ namespace DD.Prototype.Tests.PlayMode
 
                 Assert.AreEqual(((RectTransform)banner.transform).sizeDelta.x, clip.sizeDelta.x, 1f, "afiş 220 ms'de kendi genişliğine tam açılır");
                 Assert.GreaterOrEqual(clip.sizeDelta.x, Mathf.Ceil(banner.GetPreferredValues(banner.text).x), "uzun afiş maskede kırpılmaz");
-                Assert.AreEqual(1f, ringFill.fillAmount, 0.02f, "alma dolumu 320 ms sonra gerçek ilerlemeye oturur");
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Activated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 20f, 0);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_kagura_bell_ring", Vector3.zero, Vector3.forward, 0f, 0f, 0);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 4f, 0);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 1);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 1);
+                Assert.AreEqual(1f, ringFill.fillAmount, 0.02f, "alma dolumu 320 ms sonra dolu şarjöre oturur");
+                TMPro.TMP_Text rounds = null, reserve = null;
+                foreach (TMPro.TMP_Text t in special.GetComponentsInChildren<TMPro.TMP_Text>(true))
+                {
+                    if (t.name == "Timer") rounds = t;
+                    if (t.name == "Reserve") reserve = t;
+                }
+
+                Assert.AreEqual("3", rounds.text, "merkezde şarjördeki mermi");
+                Assert.AreEqual("/ 6", reserve.text, "altında yedek");
+
+                // One shot spent: the ring steps to 2/3 and the count follows.
+                active.AmmoInMagazine = 2;
+                for (int i = 0; i < 2; i++)
+                {
+                    DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
+                    yield return null;
+                }
+
+                Assert.AreEqual(2f / 3f, ringFill.fillAmount, 0.02f, "halka şarjörü izler");
+                Assert.AreEqual("2", rounds.text);
+
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Activated, "sw_arc", Vector3.zero, Vector3.forward, 0f, 40f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_arc_orb", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_arc_chain", Vector3.zero, Vector3.forward, 6f, 0f, 1);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_arc_chain", Vector3.zero, Vector3.forward, 6f, 0f, 1);
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
                 yield return null;
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
@@ -357,22 +379,28 @@ namespace DD.Prototype.Tests.PlayMode
                 TMPro.TMP_Text usage = null;
                 foreach (TMPro.TMP_Text t in hud.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "Usage") usage = t;
                 Assert.IsNotNull(usage, "Special usage satırı");
-                StringAssert.Contains("FIELD", usage.text);
-                StringAssert.Contains("2 HIT", usage.text);
+                StringAssert.Contains("SHOTS 1", usage.text);
+                StringAssert.Contains("HITS 2", usage.text);
                 Image glyph = null;
                 // The Special block's own glyph (the threat chips carry kit "Glyph" children too, WP-068 8b).
                 foreach (Image im in hud.GetComponentsInChildren<Image>(true)) if (im.name == "Glyph" && im.GetComponentInParent<Canvas>().name == "SpecialWeapon") glyph = im;
                 Assert.IsNotNull(glyph);
-                Assert.IsTrue(glyph.enabled && glyph.sprite != null && glyph.sprite.name.StartsWith("Sw."), "AP-014 Kagura Bell glifi: " + (glyph.sprite != null ? glyph.sprite.name : "yok"));
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 2);
-                // The weapon runtime republishes its own (None) state every frame in this
-                // scene, so the fake Active state is re-asserted before each observed frame.
+                Assert.IsTrue(glyph.enabled && glyph.sprite != null && glyph.sprite.name == "Special.Raiju", "N19 Raiju glifi: " + (glyph.sprite != null ? glyph.sprite.name : "yok"));
+                Color arc = UiTokens.Get(UiGlyphTints.ChainLightning);
+                Assert.AreEqual(arc.b, glyph.color.b, 0.01f, "Raiju glifi Arc kimlik tonunda (N19)");
+
+                // The final seconds of the time cap: ENDING and a coral strip (colour never alone).
+                active.FinalSecondsWarning = true;
+                active.ActiveRemaining = 2f;
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
                 yield return null;
-                DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
-                yield return null;
-                StringAssert.Contains("FIELD ENDED", usage.text);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Deactivated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                Image capFill = ringFill.transform.parent.Find("TimeCap/Fill").GetComponent<Image>();
+                Assert.AreEqual(2f / 40f, capFill.fillAmount, 0.01f, "süre şeridi kalan tavanı gösterir");
+                TMPro.TMP_Text phase = null;
+                foreach (TMPro.TMP_Text t in special.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "Phase") phase = t;
+                Assert.AreEqual("ENDING", phase.text);
+
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Deactivated, "sw_arc", Vector3.zero, Vector3.forward, 0f, 0f, 0);
                 yield return null;
                 Assert.AreEqual(string.Empty, usage.text);
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.ResetForTests();

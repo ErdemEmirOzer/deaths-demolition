@@ -194,14 +194,13 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// WP-022I · enemy status markers: a netted zombie gets a "NET" chip over its head, a
-        /// dazed one "DAZED"; the marker layer adds no allocation to a steady frame
-        /// (ProfilerRecorder count, HUD on vs off) and the chips park when the state ends.
+        /// WP-022I · enemy status markers (M4-R1 N19 v2): a shocked zombie gets a "SHOCK" stamp over its head, a
+        /// knocked-down one "DOWN"; the marker layer adds no allocation to a steady frame
+        /// (ProfilerRecorder count, HUD on vs off) and the stamps park when the state ends.
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
-        [Ignore("WP-069 B4 (S-02): NET / DAZED left with the Ofuda web and the Kagura push — S-03 bcb5005c keeps IsNetted / IsDazed inert (false), so no chip can show. S-09 re-points UiEnemyStatusMarkers to the shock (IsElectrocuted) / gel (Gel) states and revives this test.")]
-        public IEnumerator DusmanDurumIsaretleri_NetVeDaze_GorunurVeSifirAyirma()
+        public IEnumerator DusmanDurumIsaretleri_ShockVeDown_GorunurVeSifirAyirma()
         {
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
@@ -215,14 +214,12 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             yield return null;
 
-            bool netted = a.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
-                DD.Prototype.Damage.SpecialReactionKind.Web, DD.Prototype.Core.Config.SpecialWeaponId.Namekuji, Vector3.forward, 0f, 4f, 0));
-            bool dazed = b.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
-                DD.Prototype.Damage.SpecialReactionKind.Push, DD.Prototype.Core.Config.SpecialWeaponId.Raiju, Vector3.forward, 1f, 1.5f, 0));
-            Assert.IsTrue(netted && dazed, "tepkiler uygulanmadı (net " + netted + ", daze " + dazed + ")");
+            bool shocked = a.ApplyShock(8101, 3f);
+            bool downed = b.ApplyKnockdown(8102, 2f);
+            Assert.IsTrue(shocked && downed, "durumlar uygulanmadı (şok " + shocked + ", düşürme " + downed + ")");
             yield return null;
             yield return null;
-            Assert.IsTrue(a.IsNetted, "A netted");
+            Assert.IsTrue(a.IsElectrocuted, "A şokta");
             Assert.GreaterOrEqual(hud.EnemyStatus.VisibleCount, 1, "en az bir işaret (kamera görüyorsa iki)");
 
             var labels = new System.Collections.Generic.List<string>();
@@ -231,7 +228,7 @@ namespace DD.Prototype.Tests.PlayMode
                 if (((RectTransform)t.transform.parent).anchoredPosition.x > -9000f) labels.Add(t.text);
             }
 
-            Assert.IsTrue(labels.Contains("NET") || labels.Contains("DAZED"), "görünür işaret metni NET/DAZED: " + string.Join(",", labels));
+            Assert.IsTrue(labels.Contains("SHOCK") || labels.Contains("DOWN"), "görünür damga metni SHOCK/DOWN: " + string.Join(",", labels));
             // WP-068 HUD budget: an unbound chip parks at group alpha 0, so it is not drawn off-screen.
             foreach (CanvasGroup group in hud.EnemyStatus.GetComponentsInChildren<CanvasGroup>(true))
             {
@@ -269,11 +266,15 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            // The daze ends by itself; the net ends with the field.
-            DD.Prototype.Enemies.ZombieEnemy.EndSpecialField(DD.Prototype.Core.Config.SpecialWeaponId.Namekuji);
-            yield return new WaitForSecondsRealtime(2f);
-            yield return null;
-            Assert.IsFalse(a.IsNetted);
+            // Both end by themselves: the shock after its hold, the knockdown after the fall, the lie and the get-up.
+            float t0 = Time.realtimeSinceStartup;
+            while ((a.IsElectrocuted || b.Gel != DD.Prototype.Enemies.GelState.None) && Time.realtimeSinceStartup - t0 < 8f)
+            {
+                yield return null;
+            }
+
+            yield return new WaitForSecondsRealtime(0.4f);   // the stamp's exit fade
+            Assert.IsFalse(a.IsElectrocuted);
             Assert.AreEqual(0, hud.EnemyStatus.VisibleCount, "durum bitince işaretler park eder");
         }
 

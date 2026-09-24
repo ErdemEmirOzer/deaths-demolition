@@ -19,6 +19,7 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator Bitir()
         {
+            RunHudScreen.CaptureSlick = false;
             if (_s != null)
             {
                 yield return _s.Bitir();
@@ -28,7 +29,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator SilahGlifi_SoyTonunda_TamAlfa()
+        public IEnumerator SilahGlifi_SoyTonunda_TamAlfa_JeldeSlick()
         {
             LogAssert.ignoreFailingMessages = true;
             _s = new SpecialWeaponSahne();
@@ -53,6 +54,26 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(want.g, weapon.color.g, 0.01f, "G");
             Assert.AreEqual(want.b, weapon.color.b, 0.01f, "B");
             Assert.AreEqual(1f, weapon.color.a, 0.01f, "dolu şarjörde tam alfa (LOW / EMPTY 0,70)");
+
+            // N19 §2: in gel the SLICK hint takes the E23 slot - Status.Sliding in the gel tint + the pack word, no box.
+            Assert.IsFalse(hud.SlickShown, "jel yokken ipucu yok");
+            RunHudScreen.CaptureSlick = true;
+            yield return null;
+            yield return null;
+            Assert.IsTrue(hud.SlickShown, "jelde SLICK ipucu");
+            RectTransform slick = null;
+            foreach (RectTransform r in hud.GetComponentsInChildren<RectTransform>(true)) if (r.name == "Slick") slick = r;
+            Assert.IsNotNull(slick);
+            TMPro.TMP_Text word = slick.GetComponentInChildren<TMPro.TMP_Text>(true);
+            Assert.AreEqual(UiStrings.Get("hud.slick", "SLICK"), word.text, "paket metni hud.slick");
+            Image glyph = null;
+            foreach (Image im in slick.GetComponentsInChildren<Image>(true)) if (im.name == "Glyph") glyph = im;
+            Assert.IsNotNull(glyph, "Status.Sliding glifi (N19 G1)");
+            Color gel = UiTokens.Get(UiGlyphTints.Gel);
+            Assert.AreEqual(gel.r, glyph.color.r, 0.01f, "jel kimlik tonu");
+            RunHudScreen.CaptureSlick = false;
+            yield return new WaitForSecondsRealtime(0.3f);
+            Assert.IsFalse(hud.SlickShown, "jelden çıkınca ipucu gider");
         }
     }
 }
