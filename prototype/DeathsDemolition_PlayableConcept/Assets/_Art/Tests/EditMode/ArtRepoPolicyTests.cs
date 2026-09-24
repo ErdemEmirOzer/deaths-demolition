@@ -243,7 +243,7 @@ namespace DD.Art.Tests.EditMode
                 yollar.Add((s.enabled ? "" : "[kapalı] ") + s.path);
             }
 
-            Assert.AreEqual(8, sahneler.Length, "Build Settings'te tam 8 giriş olmalı (5 prototip + AP-005 dünyası etkin; pilot + vitrin kapalı); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
+            Assert.AreEqual(9, sahneler.Length, "Build Settings'te tam 9 giriş olmalı (5 prototip + AP-005 dünyası etkin; pilot + vitrin + World v6 greybox kapalı); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
 
             for (int i = 0; i < ilkBes.Length; i++)
             {
@@ -265,6 +265,12 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, sahneler[7].path, "8. giriş vitrin olmalı (dev-only).");
             Assert.IsFalse(sahneler[7].enabled, "Vitrin release listesinde olmamalı (ADR-015-2: yalnız dev build).");
             Assert.IsTrue(File.Exists(sahneler[7].path), "Vitrin sahnesi diskte yok: " + sahneler[7].path);
+
+            // WP-074 B1: the World v6 greybox is dev-only (GreyboxV6Builder registers it disabled; a dev build adds it through
+            // DD_BUILD_EXTRA_SCENES), never in the release list.
+            Assert.AreEqual(ArtLibraryPaths.GreyboxV6Scene, sahneler[8].path, "9. giriş World v6 greybox olmalı (dev-only).");
+            Assert.IsFalse(sahneler[8].enabled, "Greybox release listesinde olmamalı.");
+            Assert.IsTrue(File.Exists(sahneler[8].path), "Greybox sahnesi diskte yok: " + sahneler[8].path);
 
             // Release list contiguous: no enabled entry after a disabled one.
             bool disabledSeen = false;
