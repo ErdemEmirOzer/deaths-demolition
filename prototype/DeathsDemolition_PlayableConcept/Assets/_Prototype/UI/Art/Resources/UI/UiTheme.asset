@@ -227,8 +227,12 @@ MonoBehaviour:
     Sprite: {fileID: 7999156302903063046, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Special.KaguraSuzu
     Sprite: {fileID: -6238732093555145420, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Special.Namekuji
+    Sprite: {fileID: 1307823060159542267, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Special.OfudaLoom
     Sprite: {fileID: -1413035657167185548, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Special.Raiju
+    Sprite: {fileID: -4593745475965947551, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Special.Ready
     Sprite: {fileID: 3260231318279984155, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Special.TideJewel
@@ -241,6 +245,14 @@ MonoBehaviour:
     Sprite: {fileID: -5993203429339079311, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Status.DazedOuter
     Sprite: {fileID: -2436658117841435848, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Status.Downed
+    Sprite: {fileID: -3968506940788237326, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Status.DownedOuter
+    Sprite: {fileID: 8943590925803241407, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Status.Electrocuted
+    Sprite: {fileID: -6708462359646211864, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Status.ElectrocutedOuter
+    Sprite: {fileID: 1134500980991641671, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Status.Netted
     Sprite: {fileID: -5314764791681496320, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Status.NettedOuter
@@ -249,6 +261,10 @@ MonoBehaviour:
     Sprite: {fileID: 8979140712131725963, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Status.PulledOuter
     Sprite: {fileID: 1427919794564060773, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Status.Sliding
+    Sprite: {fileID: -1904356678464521820, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Status.SlidingOuter
+    Sprite: {fileID: -2901611706207339967, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Sw.KaguraBell
     Sprite: {fileID: 7196120457397676169, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Sw.OfudaLoom
@@ -277,12 +293,18 @@ MonoBehaviour:
     Sprite: {fileID: -9050377926746979578, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Unlock.Title
     Sprite: {fileID: -5527281635893821631, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Upgrade.ArmorBreak
+    Sprite: {fileID: 2233472161441762593, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Upgrade.Chain
     Sprite: {fileID: -5890304332254159341, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Upgrade.Cluster
+    Sprite: {fileID: 2724134523866685585, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Upgrade.Explosion
     Sprite: {fileID: -5599430998560845798, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Upgrade.FireRate
     Sprite: {fileID: -3332788987730236652, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Upgrade.Impact
+    Sprite: {fileID: 7256689435860730537, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Upgrade.MaximumHealth
     Sprite: {fileID: 2034370419246375082, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Upgrade.MovementSpeed
@@ -297,12 +319,26 @@ MonoBehaviour:
     Sprite: {fileID: -6812588442315847362, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Upgrade.Ricochet
     Sprite: {fileID: -3237780129553355561, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Weapon.Ar2
+    Sprite: {fileID: -4179618989619602719, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Weapon.AssaultRifle
     Sprite: {fileID: 4846149593698786846, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Weapon.AutoSmg
     Sprite: {fileID: 5844087827914377564, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Weapon.CombatShotgun
     Sprite: {fileID: 8056251770492120768, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Weapon.Lmg1
+    Sprite: {fileID: -266182069051921047, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Weapon.Lmg2
+    Sprite: {fileID: -123516333061483668, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Weapon.Rl1
+    Sprite: {fileID: 8173430843919163796, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Weapon.Sg2
+    Sprite: {fileID: -5415270898548309669, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Weapon.Smg2
+    Sprite: {fileID: 5243306739140452599, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+  - Name: Weapon.Sr1
+    Sprite: {fileID: 2891455849681832441, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Weapon.weapon_carbine
     Sprite: {fileID: -460513182214409413, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Weapon.weapon_rifle

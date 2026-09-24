@@ -125,41 +125,8 @@
      ]
     },
     {
-     "name": "Weapon.AssaultRifle",
-     "x": 646,
-     "y": 966,
-     "w": 52,
-     "h": 52,
-     "pivot": [
-      0.5,
-      0.5
-     ]
-    },
-    {
-     "name": "Weapon.AutoSmg",
-     "x": 710,
-     "y": 966,
-     "w": 52,
-     "h": 52,
-     "pivot": [
-      0.5,
-      0.5
-     ]
-    },
-    {
-     "name": "Weapon.CombatShotgun",
-     "x": 774,
-     "y": 966,
-     "w": 52,
-     "h": 52,
-     "pivot": [
-      0.5,
-      0.5
-     ]
-    },
-    {
      "name": "Special.KaguraBell",
-     "x": 838,
+     "x": 646,
      "y": 966,
      "w": 52,
      "h": 52,
@@ -170,7 +137,7 @@
     },
     {
      "name": "Special.OfudaLoom",
-     "x": 902,
+     "x": 710,
      "y": 966,
      "w": 52,
      "h": 52,
@@ -181,7 +148,7 @@
     },
     {
      "name": "Special.TideJewel",
-     "x": 966,
+     "x": 774,
      "y": 966,
      "w": 52,
      "h": 52,
@@ -192,8 +159,8 @@
     },
     {
      "name": "Hud.Gold",
-     "x": 6,
-     "y": 902,
+     "x": 838,
+     "y": 966,
      "w": 52,
      "h": 52,
      "pivot": [
@@ -203,8 +170,8 @@
     },
     {
      "name": "Hud.Special",
-     "x": 70,
-     "y": 902,
+     "x": 902,
+     "y": 966,
      "w": 52,
      "h": 52,
      "pivot": [
@@ -214,8 +181,8 @@
     },
     {
      "name": "Hud.Round",
-     "x": 134,
-     "y": 902,
+     "x": 966,
+     "y": 966,
      "w": 52,
      "h": 52,
      "pivot": [
@@ -225,7 +192,7 @@
     },
     {
      "name": "Hud.Health",
-     "x": 198,
+     "x": 6,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -236,7 +203,7 @@
     },
     {
      "name": "Hud.Enemies",
-     "x": 262,
+     "x": 70,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -247,7 +214,7 @@
     },
     {
      "name": "Hud.Timer",
-     "x": 326,
+     "x": 134,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -258,7 +225,7 @@
     },
     {
      "name": "Menu.Settings",
-     "x": 390,
+     "x": 198,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -269,7 +236,7 @@
     },
     {
      "name": "Menu.Audio",
-     "x": 454,
+     "x": 262,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -280,7 +247,7 @@
     },
     {
      "name": "Menu.Graphics",
-     "x": 518,
+     "x": 326,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -291,7 +258,7 @@
     },
     {
      "name": "Menu.Gamepad",
-     "x": 582,
+     "x": 390,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -302,7 +269,7 @@
     },
     {
      "name": "Menu.Keyboard",
-     "x": 646,
+     "x": 454,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -313,7 +280,7 @@
     },
     {
      "name": "Menu.Profile",
-     "x": 710,
+     "x": 518,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -324,7 +291,7 @@
     },
     {
      "name": "Menu.Statistics",
-     "x": 774,
+     "x": 582,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -335,7 +302,7 @@
     },
     {
      "name": "Menu.Achievements",
-     "x": 838,
+     "x": 646,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -346,7 +313,7 @@
     },
     {
      "name": "Menu.Back",
-     "x": 902,
+     "x": 710,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -357,7 +324,7 @@
     },
     {
      "name": "Menu.Confirm",
-     "x": 966,
+     "x": 774,
      "y": 902,
      "w": 52,
      "h": 52,
@@ -368,8 +335,8 @@
     },
     {
      "name": "Status.Netted",
-     "x": 16,
-     "y": 842,
+     "x": 848,
+     "y": 906,
      "w": 32,
      "h": 44,
      "pivot": [
@@ -379,8 +346,8 @@
     },
     {
      "name": "Status.Dazed",
-     "x": 75,
-     "y": 842,
+     "x": 907,
+     "y": 906,
      "w": 41,
      "h": 44,
      "pivot": [
@@ -390,8 +357,8 @@
     },
     {
      "name": "Status.Pulled",
-     "x": 138,
-     "y": 847,
+     "x": 970,
+     "y": 911,
      "w": 44,
      "h": 34,
      "pivot": [
@@ -401,7 +368,7 @@
     },
     {
      "name": "Threat.Surrounded",
-     "x": 202,
+     "x": 10,
      "y": 842,
      "w": 44,
      "h": 44,
@@ -412,7 +379,7 @@
     },
     {
      "name": "Threat.Behind",
-     "x": 270,
+     "x": 78,
      "y": 842,
      "w": 36,
      "h": 44,
@@ -423,7 +390,7 @@
     },
     {
      "name": "Threat.Elite",
-     "x": 335,
+     "x": 143,
      "y": 842,
      "w": 34,
      "h": 44,
@@ -434,7 +401,7 @@
     },
     {
      "name": "Threat.Ultra",
-     "x": 397,
+     "x": 205,
      "y": 842,
      "w": 38,
      "h": 44,
@@ -445,7 +412,7 @@
     },
     {
      "name": "Hud.LowHealth",
-     "x": 458,
+     "x": 266,
      "y": 844,
      "w": 44,
      "h": 40,
@@ -456,7 +423,7 @@
     },
     {
      "name": "Menu.Accessibility",
-     "x": 522,
+     "x": 330,
      "y": 842,
      "w": 44,
      "h": 44,
@@ -467,7 +434,7 @@
     },
     {
      "name": "Menu.Controls",
-     "x": 586,
+     "x": 394,
      "y": 849,
      "w": 44,
      "h": 30,
@@ -478,7 +445,7 @@
     },
     {
      "name": "Menu.Palette",
-     "x": 650,
+     "x": 458,
      "y": 843,
      "w": 44,
      "h": 42,
@@ -489,7 +456,7 @@
     },
     {
      "name": "Menu.TextScale",
-     "x": 714,
+     "x": 522,
      "y": 847,
      "w": 44,
      "h": 34,
@@ -500,7 +467,7 @@
     },
     {
      "name": "Special.KaguraSuzu",
-     "x": 786,
+     "x": 594,
      "y": 842,
      "w": 28,
      "h": 44,
@@ -511,7 +478,7 @@
     },
     {
      "name": "Shop.Reroll",
-     "x": 844,
+     "x": 652,
      "y": 842,
      "w": 40,
      "h": 44,
@@ -522,7 +489,7 @@
     },
     {
      "name": "Shop.Picks",
-     "x": 906,
+     "x": 714,
      "y": 842,
      "w": 44,
      "h": 44,
@@ -533,7 +500,7 @@
     },
     {
      "name": "Menu.ReduceFlashes",
-     "x": 974,
+     "x": 782,
      "y": 842,
      "w": 36,
      "h": 44,
@@ -544,6 +511,39 @@
     },
     {
      "name": "Weapon.weapon_rifle",
+     "x": 838,
+     "y": 838,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.weapon_carbine",
+     "x": 902,
+     "y": 838,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.weapon_shotgun",
+     "x": 966,
+     "y": 838,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Sw.KaguraBell",
      "x": 6,
      "y": 774,
      "w": 52,
@@ -554,7 +554,7 @@
      ]
     },
     {
-     "name": "Weapon.weapon_carbine",
+     "name": "Sw.OfudaLoom",
      "x": 70,
      "y": 774,
      "w": 52,
@@ -565,7 +565,7 @@
      ]
     },
     {
-     "name": "Weapon.weapon_shotgun",
+     "name": "Ornament.Divider",
      "x": 134,
      "y": 774,
      "w": 52,
@@ -576,7 +576,7 @@
      ]
     },
     {
-     "name": "Sw.KaguraBell",
+     "name": "Reticle.Ticks",
      "x": 198,
      "y": 774,
      "w": 52,
@@ -587,7 +587,7 @@
      ]
     },
     {
-     "name": "Sw.OfudaLoom",
+     "name": "Reticle.Ring",
      "x": 262,
      "y": 774,
      "w": 52,
@@ -598,41 +598,8 @@
      ]
     },
     {
-     "name": "Ornament.Divider",
-     "x": 326,
-     "y": 774,
-     "w": 52,
-     "h": 52,
-     "pivot": [
-      0.5,
-      0.5
-     ]
-    },
-    {
-     "name": "Reticle.Ticks",
-     "x": 390,
-     "y": 774,
-     "w": 52,
-     "h": 52,
-     "pivot": [
-      0.5,
-      0.5
-     ]
-    },
-    {
-     "name": "Reticle.Ring",
-     "x": 454,
-     "y": 774,
-     "w": 52,
-     "h": 52,
-     "pivot": [
-      0.5,
-      0.5
-     ]
-    },
-    {
      "name": "Ach.ArmorBreaker",
-     "x": 522,
+     "x": 330,
      "y": 780,
      "w": 44,
      "h": 40,
@@ -643,7 +610,7 @@
     },
     {
      "name": "Ach.DefeatUltra",
-     "x": 590,
+     "x": 398,
      "y": 778,
      "w": 36,
      "h": 44,
@@ -654,7 +621,7 @@
     },
     {
      "name": "Ach.ExecutionerHunter",
-     "x": 650,
+     "x": 458,
      "y": 786,
      "w": 44,
      "h": 29,
@@ -665,7 +632,7 @@
     },
     {
      "name": "Ach.FirstBlood",
-     "x": 719,
+     "x": 527,
      "y": 778,
      "w": 34,
      "h": 44,
@@ -676,7 +643,7 @@
     },
     {
      "name": "Ach.Ghost",
-     "x": 788,
+     "x": 596,
      "y": 778,
      "w": 24,
      "h": 44,
@@ -687,7 +654,7 @@
     },
     {
      "name": "Ach.GuardHunter",
-     "x": 842,
+     "x": 650,
      "y": 780,
      "w": 44,
      "h": 40,
@@ -698,7 +665,7 @@
     },
     {
      "name": "Ach.Kills1000",
-     "x": 906,
+     "x": 714,
      "y": 778,
      "w": 44,
      "h": 44,
@@ -709,7 +676,7 @@
     },
     {
      "name": "Ach.Kills250",
-     "x": 971,
+     "x": 779,
      "y": 778,
      "w": 42,
      "h": 44,
@@ -720,8 +687,8 @@
     },
     {
      "name": "Ach.Kills50",
-     "x": 13,
-     "y": 714,
+     "x": 845,
+     "y": 778,
      "w": 38,
      "h": 44,
      "pivot": [
@@ -731,8 +698,8 @@
     },
     {
      "name": "Ach.Level10",
-     "x": 85,
-     "y": 714,
+     "x": 917,
+     "y": 778,
      "w": 22,
      "h": 44,
      "pivot": [
@@ -742,8 +709,8 @@
     },
     {
      "name": "Ach.Level5",
-     "x": 146,
-     "y": 714,
+     "x": 978,
+     "y": 778,
      "w": 28,
      "h": 44,
      "pivot": [
@@ -753,7 +720,7 @@
     },
     {
      "name": "Ach.PlateWrecker",
-     "x": 202,
+     "x": 10,
      "y": 721,
      "w": 44,
      "h": 31,
@@ -764,7 +731,7 @@
     },
     {
      "name": "Ach.PocketChange",
-     "x": 266,
+     "x": 74,
      "y": 716,
      "w": 44,
      "h": 40,
@@ -775,7 +742,7 @@
     },
     {
      "name": "Ach.Rampage",
-     "x": 330,
+     "x": 138,
      "y": 714,
      "w": 44,
      "h": 44,
@@ -786,7 +753,7 @@
     },
     {
      "name": "Ach.Regular",
-     "x": 394,
+     "x": 202,
      "y": 714,
      "w": 44,
      "h": 44,
@@ -797,7 +764,7 @@
     },
     {
      "name": "Ach.RegularCustomer",
-     "x": 458,
+     "x": 266,
      "y": 716,
      "w": 44,
      "h": 40,
@@ -808,7 +775,7 @@
     },
     {
      "name": "Ach.Round10",
-     "x": 525,
+     "x": 333,
      "y": 714,
      "w": 38,
      "h": 44,
@@ -819,7 +786,7 @@
     },
     {
      "name": "Ach.Round15",
-     "x": 589,
+     "x": 397,
      "y": 714,
      "w": 38,
      "h": 44,
@@ -830,7 +797,7 @@
     },
     {
      "name": "Ach.Round20",
-     "x": 653,
+     "x": 461,
      "y": 714,
      "w": 38,
      "h": 44,
@@ -841,7 +808,7 @@
     },
     {
      "name": "Ach.Round5",
-     "x": 718,
+     "x": 526,
      "y": 714,
      "w": 36,
      "h": 44,
@@ -852,7 +819,7 @@
     },
     {
      "name": "Ach.Rounds50",
-     "x": 783,
+     "x": 591,
      "y": 714,
      "w": 34,
      "h": 44,
@@ -863,7 +830,7 @@
     },
     {
      "name": "Ach.RunnerHunter",
-     "x": 842,
+     "x": 650,
      "y": 714,
      "w": 44,
      "h": 44,
@@ -874,7 +841,7 @@
     },
     {
      "name": "Ach.SpecialDelivery",
-     "x": 907,
+     "x": 715,
      "y": 714,
      "w": 42,
      "h": 44,
@@ -885,7 +852,7 @@
     },
     {
      "name": "Ach.TreasureHunter",
-     "x": 970,
+     "x": 778,
      "y": 714,
      "w": 44,
      "h": 44,
@@ -896,8 +863,8 @@
     },
     {
      "name": "Ach.Untouched",
-     "x": 10,
-     "y": 650,
+     "x": 842,
+     "y": 714,
      "w": 44,
      "h": 44,
      "pivot": [
@@ -907,8 +874,8 @@
     },
     {
      "name": "Ach.Veteran",
-     "x": 74,
-     "y": 658,
+     "x": 906,
+     "y": 722,
      "w": 44,
      "h": 29,
      "pivot": [
@@ -918,8 +885,8 @@
     },
     {
      "name": "Ach.WellEquipped",
-     "x": 138,
-     "y": 657,
+     "x": 970,
+     "y": 721,
      "w": 44,
      "h": 30,
      "pivot": [
@@ -929,7 +896,7 @@
     },
     {
      "name": "Empty.Bowl",
-     "x": 202,
+     "x": 10,
      "y": 657,
      "w": 44,
      "h": 30,
@@ -940,7 +907,7 @@
     },
     {
      "name": "Empty.Scroll",
-     "x": 266,
+     "x": 74,
      "y": 658,
      "w": 44,
      "h": 28,
@@ -951,7 +918,7 @@
     },
     {
      "name": "Key.Arrows",
-     "x": 330,
+     "x": 138,
      "y": 657,
      "w": 44,
      "h": 30,
@@ -962,7 +929,7 @@
     },
     {
      "name": "Marker.Edge",
-     "x": 394,
+     "x": 202,
      "y": 650,
      "w": 44,
      "h": 44,
@@ -973,7 +940,7 @@
     },
     {
      "name": "Medal.Common",
-     "x": 456,
+     "x": 264,
      "y": 648,
      "w": 48,
      "h": 48,
@@ -984,7 +951,7 @@
     },
     {
      "name": "Medal.Epic",
-     "x": 520,
+     "x": 328,
      "y": 648,
      "w": 48,
      "h": 48,
@@ -995,7 +962,7 @@
     },
     {
      "name": "Medal.Locked",
-     "x": 584,
+     "x": 392,
      "y": 648,
      "w": 48,
      "h": 48,
@@ -1006,7 +973,7 @@
     },
     {
      "name": "Medal.Rare",
-     "x": 649,
+     "x": 457,
      "y": 648,
      "w": 46,
      "h": 48,
@@ -1017,7 +984,7 @@
     },
     {
      "name": "Menu.EndRun",
-     "x": 714,
+     "x": 522,
      "y": 652,
      "w": 44,
      "h": 40,
@@ -1028,7 +995,7 @@
     },
     {
      "name": "Menu.Play",
-     "x": 778,
+     "x": 586,
      "y": 652,
      "w": 44,
      "h": 40,
@@ -1039,7 +1006,7 @@
     },
     {
      "name": "Menu.Quit",
-     "x": 842,
+     "x": 650,
      "y": 652,
      "w": 44,
      "h": 41,
@@ -1050,7 +1017,7 @@
     },
     {
      "name": "Menu.Resume",
-     "x": 908,
+     "x": 716,
      "y": 650,
      "w": 40,
      "h": 44,
@@ -1061,7 +1028,7 @@
     },
     {
      "name": "Mouse.Left",
-     "x": 973,
+     "x": 781,
      "y": 650,
      "w": 37,
      "h": 44,
@@ -1072,8 +1039,8 @@
     },
     {
      "name": "Mouse.Middle",
-     "x": 17,
-     "y": 584,
+     "x": 849,
+     "y": 648,
      "w": 30,
      "h": 48,
      "pivot": [
@@ -1083,8 +1050,8 @@
     },
     {
      "name": "Mouse.Move",
-     "x": 75,
-     "y": 583,
+     "x": 907,
+     "y": 647,
      "w": 42,
      "h": 50,
      "pivot": [
@@ -1094,8 +1061,8 @@
     },
     {
      "name": "Mouse.Right",
-     "x": 141,
-     "y": 586,
+     "x": 973,
+     "y": 650,
      "w": 37,
      "h": 44,
      "pivot": [
@@ -1105,7 +1072,7 @@
     },
     {
      "name": "Mouse.Wheel",
-     "x": 212,
+     "x": 20,
      "y": 584,
      "w": 24,
      "h": 48,
@@ -1116,7 +1083,7 @@
     },
     {
      "name": "Notice.Error",
-     "x": 266,
+     "x": 74,
      "y": 586,
      "w": 44,
      "h": 44,
@@ -1127,7 +1094,7 @@
     },
     {
      "name": "Notice.Info",
-     "x": 330,
+     "x": 138,
      "y": 586,
      "w": 44,
      "h": 44,
@@ -1138,7 +1105,7 @@
     },
     {
      "name": "Notice.Warning",
-     "x": 394,
+     "x": 202,
      "y": 588,
      "w": 44,
      "h": 40,
@@ -1149,7 +1116,7 @@
     },
     {
      "name": "Pad.DDown",
-     "x": 458,
+     "x": 266,
      "y": 586,
      "w": 44,
      "h": 44,
@@ -1160,7 +1127,7 @@
     },
     {
      "name": "Pad.DLeft",
-     "x": 522,
+     "x": 330,
      "y": 586,
      "w": 44,
      "h": 44,
@@ -1171,7 +1138,7 @@
     },
     {
      "name": "Pad.DRight",
-     "x": 586,
+     "x": 394,
      "y": 586,
      "w": 44,
      "h": 44,
@@ -1182,7 +1149,7 @@
     },
     {
      "name": "Pad.DUp",
-     "x": 650,
+     "x": 458,
      "y": 586,
      "w": 44,
      "h": 44,
@@ -1193,7 +1160,7 @@
     },
     {
      "name": "Pad.Disc",
-     "x": 714,
+     "x": 522,
      "y": 586,
      "w": 44,
      "h": 44,
@@ -1204,7 +1171,7 @@
     },
     {
      "name": "Pad.FaceEast",
-     "x": 778,
+     "x": 586,
      "y": 588,
      "w": 44,
      "h": 40,
@@ -1215,7 +1182,7 @@
     },
     {
      "name": "Pad.FaceNorth",
-     "x": 844,
+     "x": 652,
      "y": 586,
      "w": 40,
      "h": 44,
@@ -1226,7 +1193,7 @@
     },
     {
      "name": "Pad.FaceSouth",
-     "x": 908,
+     "x": 716,
      "y": 586,
      "w": 40,
      "h": 44,
@@ -1237,7 +1204,7 @@
     },
     {
      "name": "Pad.FaceWest",
-     "x": 970,
+     "x": 778,
      "y": 588,
      "w": 44,
      "h": 40,
@@ -1248,8 +1215,8 @@
     },
     {
      "name": "Pad.LB",
-     "x": 10,
-     "y": 532,
+     "x": 842,
+     "y": 596,
      "w": 44,
      "h": 24,
      "pivot": [
@@ -1259,8 +1226,8 @@
     },
     {
      "name": "Pad.LS",
-     "x": 73,
-     "y": 523,
+     "x": 905,
+     "y": 587,
      "w": 46,
      "h": 42,
      "pivot": [
@@ -1270,8 +1237,8 @@
     },
     {
      "name": "Pad.LSClick",
-     "x": 140,
-     "y": 521,
+     "x": 972,
+     "y": 585,
      "w": 40,
      "h": 46,
      "pivot": [
@@ -1281,7 +1248,7 @@
     },
     {
      "name": "Pad.LSMove",
-     "x": 200,
+     "x": 8,
      "y": 520,
      "w": 48,
      "h": 48,
@@ -1292,7 +1259,7 @@
     },
     {
      "name": "Pad.LT",
-     "x": 273,
+     "x": 81,
      "y": 522,
      "w": 29,
      "h": 44,
@@ -1303,7 +1270,7 @@
     },
     {
      "name": "Pad.Menu",
-     "x": 330,
+     "x": 138,
      "y": 523,
      "w": 44,
      "h": 42,
@@ -1314,7 +1281,7 @@
     },
     {
      "name": "Pad.RB",
-     "x": 394,
+     "x": 202,
      "y": 532,
      "w": 44,
      "h": 24,
@@ -1325,7 +1292,7 @@
     },
     {
      "name": "Pad.RS",
-     "x": 457,
+     "x": 265,
      "y": 523,
      "w": 46,
      "h": 42,
@@ -1336,7 +1303,7 @@
     },
     {
      "name": "Pad.RSClick",
-     "x": 524,
+     "x": 332,
      "y": 521,
      "w": 40,
      "h": 46,
@@ -1347,7 +1314,7 @@
     },
     {
      "name": "Pad.RSMove",
-     "x": 584,
+     "x": 392,
      "y": 520,
      "w": 48,
      "h": 48,
@@ -1358,7 +1325,7 @@
     },
     {
      "name": "Pad.RT",
-     "x": 657,
+     "x": 465,
      "y": 522,
      "w": 29,
      "h": 44,
@@ -1369,7 +1336,7 @@
     },
     {
      "name": "Pad.View",
-     "x": 714,
+     "x": 522,
      "y": 524,
      "w": 44,
      "h": 40,
@@ -1380,7 +1347,7 @@
     },
     {
      "name": "Petal.Single",
-     "x": 783,
+     "x": 591,
      "y": 522,
      "w": 34,
      "h": 44,
@@ -1391,7 +1358,7 @@
     },
     {
      "name": "Pip.Empty",
-     "x": 849,
+     "x": 657,
      "y": 523,
      "w": 30,
      "h": 42,
@@ -1402,7 +1369,7 @@
     },
     {
      "name": "Pip.Full",
-     "x": 913,
+     "x": 721,
      "y": 523,
      "w": 30,
      "h": 42,
@@ -1413,7 +1380,7 @@
     },
     {
      "name": "Reticle.Hit",
-     "x": 968,
+     "x": 776,
      "y": 520,
      "w": 48,
      "h": 48,
@@ -1424,8 +1391,8 @@
     },
     {
      "name": "Reticle.SpreadArc",
-     "x": 8,
-     "y": 471,
+     "x": 840,
+     "y": 535,
      "w": 48,
      "h": 18,
      "pivot": [
@@ -1435,8 +1402,8 @@
     },
     {
      "name": "Reticle.SpreadDot",
-     "x": 78,
-     "y": 462,
+     "x": 910,
+     "y": 526,
      "w": 36,
      "h": 36,
      "pivot": [
@@ -1446,8 +1413,8 @@
     },
     {
      "name": "Seal.Mark",
-     "x": 136,
-     "y": 456,
+     "x": 968,
+     "y": 520,
      "w": 48,
      "h": 48,
      "pivot": [
@@ -1457,7 +1424,7 @@
     },
     {
      "name": "Shop.Locked",
-     "x": 202,
+     "x": 10,
      "y": 463,
      "w": 44,
      "h": 34,
@@ -1468,7 +1435,7 @@
     },
     {
      "name": "Shop.MaxTier",
-     "x": 269,
+     "x": 77,
      "y": 458,
      "w": 38,
      "h": 44,
@@ -1479,7 +1446,7 @@
     },
     {
      "name": "Shop.Purchased",
-     "x": 330,
+     "x": 138,
      "y": 458,
      "w": 44,
      "h": 44,
@@ -1490,7 +1457,7 @@
     },
     {
      "name": "Special.Ready",
-     "x": 396,
+     "x": 204,
      "y": 458,
      "w": 40,
      "h": 44,
@@ -1501,7 +1468,7 @@
     },
     {
      "name": "Stat.TrendDown",
-     "x": 458,
+     "x": 266,
      "y": 458,
      "w": 44,
      "h": 44,
@@ -1512,7 +1479,7 @@
     },
     {
      "name": "Stat.TrendUp",
-     "x": 522,
+     "x": 330,
      "y": 459,
      "w": 44,
      "h": 42,
@@ -1523,7 +1490,7 @@
     },
     {
      "name": "Status.DazedOuter",
-     "x": 587,
+     "x": 395,
      "y": 458,
      "w": 42,
      "h": 44,
@@ -1534,7 +1501,7 @@
     },
     {
      "name": "Status.NettedOuter",
-     "x": 656,
+     "x": 464,
      "y": 458,
      "w": 32,
      "h": 44,
@@ -1545,7 +1512,7 @@
     },
     {
      "name": "Status.PulledOuter",
-     "x": 714,
+     "x": 522,
      "y": 463,
      "w": 44,
      "h": 34,
@@ -1556,7 +1523,7 @@
     },
     {
      "name": "Threat.BehindOuter",
-     "x": 782,
+     "x": 590,
      "y": 458,
      "w": 36,
      "h": 44,
@@ -1567,7 +1534,7 @@
     },
     {
      "name": "Threat.EliteOuter",
-     "x": 847,
+     "x": 655,
      "y": 458,
      "w": 34,
      "h": 44,
@@ -1578,7 +1545,7 @@
     },
     {
      "name": "Threat.UltraOuter",
-     "x": 909,
+     "x": 717,
      "y": 458,
      "w": 38,
      "h": 44,
@@ -1589,7 +1556,7 @@
     },
     {
      "name": "Tier.Special",
-     "x": 974,
+     "x": 782,
      "y": 458,
      "w": 36,
      "h": 44,
@@ -1600,8 +1567,8 @@
     },
     {
      "name": "Tip.Hint",
-     "x": 20,
-     "y": 394,
+     "x": 852,
+     "y": 458,
      "w": 24,
      "h": 44,
      "pivot": [
@@ -1611,8 +1578,8 @@
     },
     {
      "name": "Toast.Record",
-     "x": 74,
-     "y": 408,
+     "x": 906,
+     "y": 472,
      "w": 44,
      "h": 16,
      "pivot": [
@@ -1622,8 +1589,8 @@
     },
     {
      "name": "Unlock.Badge",
-     "x": 138,
-     "y": 394,
+     "x": 970,
+     "y": 458,
      "w": 44,
      "h": 44,
      "pivot": [
@@ -1633,10 +1600,241 @@
     },
     {
      "name": "Unlock.Title",
-     "x": 215,
+     "x": 23,
      "y": 394,
      "w": 18,
      "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.Namekuji",
+     "x": 70,
+     "y": 390,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.Raiju",
+     "x": 134,
+     "y": 390,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.Downed",
+     "x": 202,
+     "y": 405,
+     "w": 44,
+     "h": 22,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.DownedOuter",
+     "x": 266,
+     "y": 404,
+     "w": 44,
+     "h": 24,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.Electrocuted",
+     "x": 336,
+     "y": 394,
+     "w": 32,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.ElectrocutedOuter",
+     "x": 400,
+     "y": 394,
+     "w": 32,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.Sliding",
+     "x": 458,
+     "y": 396,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.SlidingOuter",
+     "x": 522,
+     "y": 396,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.ArmorBreak",
+     "x": 586,
+     "y": 394,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.Cluster",
+     "x": 650,
+     "y": 395,
+     "w": 44,
+     "h": 42,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.Impact",
+     "x": 714,
+     "y": 396,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.Ar2",
+     "x": 774,
+     "y": 390,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.AssaultRifle",
+     "x": 838,
+     "y": 390,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.AutoSmg",
+     "x": 902,
+     "y": 390,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.CombatShotgun",
+     "x": 966,
+     "y": 390,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.Lmg1",
+     "x": 6,
+     "y": 326,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.Lmg2",
+     "x": 70,
+     "y": 326,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.Rl1",
+     "x": 134,
+     "y": 326,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.Sg2",
+     "x": 198,
+     "y": 326,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.Smg2",
+     "x": 262,
+     "y": 326,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.Sr1",
+     "x": 326,
+     "y": 326,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -1684,18 +1882,6 @@
   },
   {
    "name": "Upgrade.RegenerationRate",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
-  },
-  {
-   "name": "Weapon.AssaultRifle",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
-  },
-  {
-   "name": "Weapon.AutoSmg",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
-  },
-  {
-   "name": "Weapon.CombatShotgun",
    "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
   },
   {
@@ -2237,6 +2423,90 @@
   {
    "name": "Unlock.Title",
    "source": "asset-production/AP-012/v004/exports/masks/Unlock.Title.png"
+  },
+  {
+   "name": "Special.Namekuji",
+   "source": "wp-068/n19-masks/Special.Namekuji.png"
+  },
+  {
+   "name": "Special.Raiju",
+   "source": "wp-068/n19-masks/Special.Raiju.png"
+  },
+  {
+   "name": "Status.Downed",
+   "source": "wp-068/n19-masks/Status.Downed.png"
+  },
+  {
+   "name": "Status.DownedOuter",
+   "source": "wp-068/n19-masks/Status.DownedOuter.png"
+  },
+  {
+   "name": "Status.Electrocuted",
+   "source": "wp-068/n19-masks/Status.Electrocuted.png"
+  },
+  {
+   "name": "Status.ElectrocutedOuter",
+   "source": "wp-068/n19-masks/Status.ElectrocutedOuter.png"
+  },
+  {
+   "name": "Status.Sliding",
+   "source": "wp-068/n19-masks/Status.Sliding.png"
+  },
+  {
+   "name": "Status.SlidingOuter",
+   "source": "wp-068/n19-masks/Status.SlidingOuter.png"
+  },
+  {
+   "name": "Upgrade.ArmorBreak",
+   "source": "wp-068/n19-masks/Upgrade.ArmorBreak.png"
+  },
+  {
+   "name": "Upgrade.Cluster",
+   "source": "wp-068/n19-masks/Upgrade.Cluster.png"
+  },
+  {
+   "name": "Upgrade.Impact",
+   "source": "wp-068/n19-masks/Upgrade.Impact.png"
+  },
+  {
+   "name": "Weapon.Ar2",
+   "source": "wp-068/n19-masks/Weapon.Ar2.png"
+  },
+  {
+   "name": "Weapon.AssaultRifle",
+   "source": "wp-068/n19-masks/Weapon.AssaultRifle.png"
+  },
+  {
+   "name": "Weapon.AutoSmg",
+   "source": "wp-068/n19-masks/Weapon.AutoSmg.png"
+  },
+  {
+   "name": "Weapon.CombatShotgun",
+   "source": "wp-068/n19-masks/Weapon.CombatShotgun.png"
+  },
+  {
+   "name": "Weapon.Lmg1",
+   "source": "wp-068/n19-masks/Weapon.Lmg1.png"
+  },
+  {
+   "name": "Weapon.Lmg2",
+   "source": "wp-068/n19-masks/Weapon.Lmg2.png"
+  },
+  {
+   "name": "Weapon.Rl1",
+   "source": "wp-068/n19-masks/Weapon.Rl1.png"
+  },
+  {
+   "name": "Weapon.Sg2",
+   "source": "wp-068/n19-masks/Weapon.Sg2.png"
+  },
+  {
+   "name": "Weapon.Smg2",
+   "source": "wp-068/n19-masks/Weapon.Smg2.png"
+  },
+  {
+   "name": "Weapon.Sr1",
+   "source": "wp-068/n19-masks/Weapon.Sr1.png"
   }
  ]
 }

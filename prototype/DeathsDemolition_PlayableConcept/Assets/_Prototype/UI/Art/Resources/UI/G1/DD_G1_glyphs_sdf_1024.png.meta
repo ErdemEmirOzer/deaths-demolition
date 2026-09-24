@@ -320,73 +320,10 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Weapon.AssaultRifle
-      rect:
-        serializedVersion: 2
-        x: 646
-        y: 966
-        width: 52
-        height: 52
-      alignment: 9
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e1ed1d4216bf04340800000000000000
-      internalID: 4846149593698786846
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Weapon.AutoSmg
-      rect:
-        serializedVersion: 2
-        x: 710
-        y: 966
-        width: 52
-        height: 52
-      alignment: 9
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c59450b8aee5a1150800000000000000
-      internalID: 5844087827914377564
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Weapon.CombatShotgun
-      rect:
-        serializedVersion: 2
-        x: 774
-        y: 966
-        width: 52
-        height: 52
-      alignment: 9
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0ce6b492d4e8dcf60800000000000000
-      internalID: 8056251770492120768
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Special.KaguraBell
       rect:
         serializedVersion: 2
-        x: 838
+        x: 646
         y: 966
         width: 52
         height: 52
@@ -407,7 +344,7 @@ TextureImporter:
       name: Special.OfudaLoom
       rect:
         serializedVersion: 2
-        x: 902
+        x: 710
         y: 966
         width: 52
         height: 52
@@ -428,7 +365,7 @@ TextureImporter:
       name: Special.TideJewel
       rect:
         serializedVersion: 2
-        x: 966
+        x: 774
         y: 966
         width: 52
         height: 52
@@ -449,8 +386,8 @@ TextureImporter:
       name: Hud.Gold
       rect:
         serializedVersion: 2
-        x: 6
-        y: 902
+        x: 838
+        y: 966
         width: 52
         height: 52
       alignment: 9
@@ -470,8 +407,8 @@ TextureImporter:
       name: Hud.Special
       rect:
         serializedVersion: 2
-        x: 70
-        y: 902
+        x: 902
+        y: 966
         width: 52
         height: 52
       alignment: 9
@@ -491,8 +428,8 @@ TextureImporter:
       name: Hud.Round
       rect:
         serializedVersion: 2
-        x: 134
-        y: 902
+        x: 966
+        y: 966
         width: 52
         height: 52
       alignment: 9
@@ -512,7 +449,7 @@ TextureImporter:
       name: Hud.Health
       rect:
         serializedVersion: 2
-        x: 198
+        x: 6
         y: 902
         width: 52
         height: 52
@@ -533,7 +470,7 @@ TextureImporter:
       name: Hud.Enemies
       rect:
         serializedVersion: 2
-        x: 262
+        x: 70
         y: 902
         width: 52
         height: 52
@@ -554,7 +491,7 @@ TextureImporter:
       name: Hud.Timer
       rect:
         serializedVersion: 2
-        x: 326
+        x: 134
         y: 902
         width: 52
         height: 52
@@ -575,7 +512,7 @@ TextureImporter:
       name: Menu.Settings
       rect:
         serializedVersion: 2
-        x: 390
+        x: 198
         y: 902
         width: 52
         height: 52
@@ -596,7 +533,7 @@ TextureImporter:
       name: Menu.Audio
       rect:
         serializedVersion: 2
-        x: 454
+        x: 262
         y: 902
         width: 52
         height: 52
@@ -617,7 +554,7 @@ TextureImporter:
       name: Menu.Graphics
       rect:
         serializedVersion: 2
-        x: 518
+        x: 326
         y: 902
         width: 52
         height: 52
@@ -638,7 +575,7 @@ TextureImporter:
       name: Menu.Gamepad
       rect:
         serializedVersion: 2
-        x: 582
+        x: 390
         y: 902
         width: 52
         height: 52
@@ -659,7 +596,7 @@ TextureImporter:
       name: Menu.Keyboard
       rect:
         serializedVersion: 2
-        x: 646
+        x: 454
         y: 902
         width: 52
         height: 52
@@ -680,7 +617,7 @@ TextureImporter:
       name: Menu.Profile
       rect:
         serializedVersion: 2
-        x: 710
+        x: 518
         y: 902
         width: 52
         height: 52
@@ -701,7 +638,7 @@ TextureImporter:
       name: Menu.Statistics
       rect:
         serializedVersion: 2
-        x: 774
+        x: 582
         y: 902
         width: 52
         height: 52
@@ -722,7 +659,7 @@ TextureImporter:
       name: Menu.Achievements
       rect:
         serializedVersion: 2
-        x: 838
+        x: 646
         y: 902
         width: 52
         height: 52
@@ -743,7 +680,7 @@ TextureImporter:
       name: Menu.Back
       rect:
         serializedVersion: 2
-        x: 902
+        x: 710
         y: 902
         width: 52
         height: 52
@@ -764,7 +701,7 @@ TextureImporter:
       name: Menu.Confirm
       rect:
         serializedVersion: 2
-        x: 966
+        x: 774
         y: 902
         width: 52
         height: 52
@@ -785,8 +722,8 @@ TextureImporter:
       name: Status.Netted
       rect:
         serializedVersion: 2
-        x: 16
-        y: 842
+        x: 848
+        y: 906
         width: 32
         height: 44
       alignment: 9
@@ -806,8 +743,8 @@ TextureImporter:
       name: Status.Dazed
       rect:
         serializedVersion: 2
-        x: 75
-        y: 842
+        x: 907
+        y: 906
         width: 41
         height: 44
       alignment: 9
@@ -827,8 +764,8 @@ TextureImporter:
       name: Status.Pulled
       rect:
         serializedVersion: 2
-        x: 138
-        y: 847
+        x: 970
+        y: 911
         width: 44
         height: 34
       alignment: 9
@@ -848,7 +785,7 @@ TextureImporter:
       name: Threat.Surrounded
       rect:
         serializedVersion: 2
-        x: 202
+        x: 10
         y: 842
         width: 44
         height: 44
@@ -869,7 +806,7 @@ TextureImporter:
       name: Threat.Behind
       rect:
         serializedVersion: 2
-        x: 270
+        x: 78
         y: 842
         width: 36
         height: 44
@@ -890,7 +827,7 @@ TextureImporter:
       name: Threat.Elite
       rect:
         serializedVersion: 2
-        x: 335
+        x: 143
         y: 842
         width: 34
         height: 44
@@ -911,7 +848,7 @@ TextureImporter:
       name: Threat.Ultra
       rect:
         serializedVersion: 2
-        x: 397
+        x: 205
         y: 842
         width: 38
         height: 44
@@ -932,7 +869,7 @@ TextureImporter:
       name: Hud.LowHealth
       rect:
         serializedVersion: 2
-        x: 458
+        x: 266
         y: 844
         width: 44
         height: 40
@@ -953,7 +890,7 @@ TextureImporter:
       name: Menu.Accessibility
       rect:
         serializedVersion: 2
-        x: 522
+        x: 330
         y: 842
         width: 44
         height: 44
@@ -974,7 +911,7 @@ TextureImporter:
       name: Menu.Controls
       rect:
         serializedVersion: 2
-        x: 586
+        x: 394
         y: 849
         width: 44
         height: 30
@@ -995,7 +932,7 @@ TextureImporter:
       name: Menu.Palette
       rect:
         serializedVersion: 2
-        x: 650
+        x: 458
         y: 843
         width: 44
         height: 42
@@ -1016,7 +953,7 @@ TextureImporter:
       name: Menu.TextScale
       rect:
         serializedVersion: 2
-        x: 714
+        x: 522
         y: 847
         width: 44
         height: 34
@@ -1037,7 +974,7 @@ TextureImporter:
       name: Special.KaguraSuzu
       rect:
         serializedVersion: 2
-        x: 786
+        x: 594
         y: 842
         width: 28
         height: 44
@@ -1058,7 +995,7 @@ TextureImporter:
       name: Shop.Reroll
       rect:
         serializedVersion: 2
-        x: 844
+        x: 652
         y: 842
         width: 40
         height: 44
@@ -1079,7 +1016,7 @@ TextureImporter:
       name: Shop.Picks
       rect:
         serializedVersion: 2
-        x: 906
+        x: 714
         y: 842
         width: 44
         height: 44
@@ -1100,7 +1037,7 @@ TextureImporter:
       name: Menu.ReduceFlashes
       rect:
         serializedVersion: 2
-        x: 974
+        x: 782
         y: 842
         width: 36
         height: 44
@@ -1121,8 +1058,8 @@ TextureImporter:
       name: Weapon.weapon_rifle
       rect:
         serializedVersion: 2
-        x: 6
-        y: 774
+        x: 838
+        y: 838
         width: 52
         height: 52
       alignment: 9
@@ -1142,8 +1079,8 @@ TextureImporter:
       name: Weapon.weapon_carbine
       rect:
         serializedVersion: 2
-        x: 70
-        y: 774
+        x: 902
+        y: 838
         width: 52
         height: 52
       alignment: 9
@@ -1163,8 +1100,8 @@ TextureImporter:
       name: Weapon.weapon_shotgun
       rect:
         serializedVersion: 2
-        x: 134
-        y: 774
+        x: 966
+        y: 838
         width: 52
         height: 52
       alignment: 9
@@ -1184,7 +1121,7 @@ TextureImporter:
       name: Sw.KaguraBell
       rect:
         serializedVersion: 2
-        x: 198
+        x: 6
         y: 774
         width: 52
         height: 52
@@ -1205,7 +1142,7 @@ TextureImporter:
       name: Sw.OfudaLoom
       rect:
         serializedVersion: 2
-        x: 262
+        x: 70
         y: 774
         width: 52
         height: 52
@@ -1226,7 +1163,7 @@ TextureImporter:
       name: Ornament.Divider
       rect:
         serializedVersion: 2
-        x: 326
+        x: 134
         y: 774
         width: 52
         height: 52
@@ -1247,7 +1184,7 @@ TextureImporter:
       name: Reticle.Ticks
       rect:
         serializedVersion: 2
-        x: 390
+        x: 198
         y: 774
         width: 52
         height: 52
@@ -1268,7 +1205,7 @@ TextureImporter:
       name: Reticle.Ring
       rect:
         serializedVersion: 2
-        x: 454
+        x: 262
         y: 774
         width: 52
         height: 52
@@ -1289,7 +1226,7 @@ TextureImporter:
       name: Ach.ArmorBreaker
       rect:
         serializedVersion: 2
-        x: 522
+        x: 330
         y: 780
         width: 44
         height: 40
@@ -1310,7 +1247,7 @@ TextureImporter:
       name: Ach.DefeatUltra
       rect:
         serializedVersion: 2
-        x: 590
+        x: 398
         y: 778
         width: 36
         height: 44
@@ -1331,7 +1268,7 @@ TextureImporter:
       name: Ach.ExecutionerHunter
       rect:
         serializedVersion: 2
-        x: 650
+        x: 458
         y: 786
         width: 44
         height: 29
@@ -1352,7 +1289,7 @@ TextureImporter:
       name: Ach.FirstBlood
       rect:
         serializedVersion: 2
-        x: 719
+        x: 527
         y: 778
         width: 34
         height: 44
@@ -1373,7 +1310,7 @@ TextureImporter:
       name: Ach.Ghost
       rect:
         serializedVersion: 2
-        x: 788
+        x: 596
         y: 778
         width: 24
         height: 44
@@ -1394,7 +1331,7 @@ TextureImporter:
       name: Ach.GuardHunter
       rect:
         serializedVersion: 2
-        x: 842
+        x: 650
         y: 780
         width: 44
         height: 40
@@ -1415,7 +1352,7 @@ TextureImporter:
       name: Ach.Kills1000
       rect:
         serializedVersion: 2
-        x: 906
+        x: 714
         y: 778
         width: 44
         height: 44
@@ -1436,7 +1373,7 @@ TextureImporter:
       name: Ach.Kills250
       rect:
         serializedVersion: 2
-        x: 971
+        x: 779
         y: 778
         width: 42
         height: 44
@@ -1457,8 +1394,8 @@ TextureImporter:
       name: Ach.Kills50
       rect:
         serializedVersion: 2
-        x: 13
-        y: 714
+        x: 845
+        y: 778
         width: 38
         height: 44
       alignment: 9
@@ -1478,8 +1415,8 @@ TextureImporter:
       name: Ach.Level10
       rect:
         serializedVersion: 2
-        x: 85
-        y: 714
+        x: 917
+        y: 778
         width: 22
         height: 44
       alignment: 9
@@ -1499,8 +1436,8 @@ TextureImporter:
       name: Ach.Level5
       rect:
         serializedVersion: 2
-        x: 146
-        y: 714
+        x: 978
+        y: 778
         width: 28
         height: 44
       alignment: 9
@@ -1520,7 +1457,7 @@ TextureImporter:
       name: Ach.PlateWrecker
       rect:
         serializedVersion: 2
-        x: 202
+        x: 10
         y: 721
         width: 44
         height: 31
@@ -1541,7 +1478,7 @@ TextureImporter:
       name: Ach.PocketChange
       rect:
         serializedVersion: 2
-        x: 266
+        x: 74
         y: 716
         width: 44
         height: 40
@@ -1562,7 +1499,7 @@ TextureImporter:
       name: Ach.Rampage
       rect:
         serializedVersion: 2
-        x: 330
+        x: 138
         y: 714
         width: 44
         height: 44
@@ -1583,7 +1520,7 @@ TextureImporter:
       name: Ach.Regular
       rect:
         serializedVersion: 2
-        x: 394
+        x: 202
         y: 714
         width: 44
         height: 44
@@ -1604,7 +1541,7 @@ TextureImporter:
       name: Ach.RegularCustomer
       rect:
         serializedVersion: 2
-        x: 458
+        x: 266
         y: 716
         width: 44
         height: 40
@@ -1625,7 +1562,7 @@ TextureImporter:
       name: Ach.Round10
       rect:
         serializedVersion: 2
-        x: 525
+        x: 333
         y: 714
         width: 38
         height: 44
@@ -1646,7 +1583,7 @@ TextureImporter:
       name: Ach.Round15
       rect:
         serializedVersion: 2
-        x: 589
+        x: 397
         y: 714
         width: 38
         height: 44
@@ -1667,7 +1604,7 @@ TextureImporter:
       name: Ach.Round20
       rect:
         serializedVersion: 2
-        x: 653
+        x: 461
         y: 714
         width: 38
         height: 44
@@ -1688,7 +1625,7 @@ TextureImporter:
       name: Ach.Round5
       rect:
         serializedVersion: 2
-        x: 718
+        x: 526
         y: 714
         width: 36
         height: 44
@@ -1709,7 +1646,7 @@ TextureImporter:
       name: Ach.Rounds50
       rect:
         serializedVersion: 2
-        x: 783
+        x: 591
         y: 714
         width: 34
         height: 44
@@ -1730,7 +1667,7 @@ TextureImporter:
       name: Ach.RunnerHunter
       rect:
         serializedVersion: 2
-        x: 842
+        x: 650
         y: 714
         width: 44
         height: 44
@@ -1751,7 +1688,7 @@ TextureImporter:
       name: Ach.SpecialDelivery
       rect:
         serializedVersion: 2
-        x: 907
+        x: 715
         y: 714
         width: 42
         height: 44
@@ -1772,7 +1709,7 @@ TextureImporter:
       name: Ach.TreasureHunter
       rect:
         serializedVersion: 2
-        x: 970
+        x: 778
         y: 714
         width: 44
         height: 44
@@ -1793,8 +1730,8 @@ TextureImporter:
       name: Ach.Untouched
       rect:
         serializedVersion: 2
-        x: 10
-        y: 650
+        x: 842
+        y: 714
         width: 44
         height: 44
       alignment: 9
@@ -1814,8 +1751,8 @@ TextureImporter:
       name: Ach.Veteran
       rect:
         serializedVersion: 2
-        x: 74
-        y: 658
+        x: 906
+        y: 722
         width: 44
         height: 29
       alignment: 9
@@ -1835,8 +1772,8 @@ TextureImporter:
       name: Ach.WellEquipped
       rect:
         serializedVersion: 2
-        x: 138
-        y: 657
+        x: 970
+        y: 721
         width: 44
         height: 30
       alignment: 9
@@ -1856,7 +1793,7 @@ TextureImporter:
       name: Empty.Bowl
       rect:
         serializedVersion: 2
-        x: 202
+        x: 10
         y: 657
         width: 44
         height: 30
@@ -1877,7 +1814,7 @@ TextureImporter:
       name: Empty.Scroll
       rect:
         serializedVersion: 2
-        x: 266
+        x: 74
         y: 658
         width: 44
         height: 28
@@ -1898,7 +1835,7 @@ TextureImporter:
       name: Key.Arrows
       rect:
         serializedVersion: 2
-        x: 330
+        x: 138
         y: 657
         width: 44
         height: 30
@@ -1919,7 +1856,7 @@ TextureImporter:
       name: Marker.Edge
       rect:
         serializedVersion: 2
-        x: 394
+        x: 202
         y: 650
         width: 44
         height: 44
@@ -1940,7 +1877,7 @@ TextureImporter:
       name: Medal.Common
       rect:
         serializedVersion: 2
-        x: 456
+        x: 264
         y: 648
         width: 48
         height: 48
@@ -1961,7 +1898,7 @@ TextureImporter:
       name: Medal.Epic
       rect:
         serializedVersion: 2
-        x: 520
+        x: 328
         y: 648
         width: 48
         height: 48
@@ -1982,7 +1919,7 @@ TextureImporter:
       name: Medal.Locked
       rect:
         serializedVersion: 2
-        x: 584
+        x: 392
         y: 648
         width: 48
         height: 48
@@ -2003,7 +1940,7 @@ TextureImporter:
       name: Medal.Rare
       rect:
         serializedVersion: 2
-        x: 649
+        x: 457
         y: 648
         width: 46
         height: 48
@@ -2024,7 +1961,7 @@ TextureImporter:
       name: Menu.EndRun
       rect:
         serializedVersion: 2
-        x: 714
+        x: 522
         y: 652
         width: 44
         height: 40
@@ -2045,7 +1982,7 @@ TextureImporter:
       name: Menu.Play
       rect:
         serializedVersion: 2
-        x: 778
+        x: 586
         y: 652
         width: 44
         height: 40
@@ -2066,7 +2003,7 @@ TextureImporter:
       name: Menu.Quit
       rect:
         serializedVersion: 2
-        x: 842
+        x: 650
         y: 652
         width: 44
         height: 41
@@ -2087,7 +2024,7 @@ TextureImporter:
       name: Menu.Resume
       rect:
         serializedVersion: 2
-        x: 908
+        x: 716
         y: 650
         width: 40
         height: 44
@@ -2108,7 +2045,7 @@ TextureImporter:
       name: Mouse.Left
       rect:
         serializedVersion: 2
-        x: 973
+        x: 781
         y: 650
         width: 37
         height: 44
@@ -2129,8 +2066,8 @@ TextureImporter:
       name: Mouse.Middle
       rect:
         serializedVersion: 2
-        x: 17
-        y: 584
+        x: 849
+        y: 648
         width: 30
         height: 48
       alignment: 9
@@ -2150,8 +2087,8 @@ TextureImporter:
       name: Mouse.Move
       rect:
         serializedVersion: 2
-        x: 75
-        y: 583
+        x: 907
+        y: 647
         width: 42
         height: 50
       alignment: 9
@@ -2171,8 +2108,8 @@ TextureImporter:
       name: Mouse.Right
       rect:
         serializedVersion: 2
-        x: 141
-        y: 586
+        x: 973
+        y: 650
         width: 37
         height: 44
       alignment: 9
@@ -2192,7 +2129,7 @@ TextureImporter:
       name: Mouse.Wheel
       rect:
         serializedVersion: 2
-        x: 212
+        x: 20
         y: 584
         width: 24
         height: 48
@@ -2213,7 +2150,7 @@ TextureImporter:
       name: Notice.Error
       rect:
         serializedVersion: 2
-        x: 266
+        x: 74
         y: 586
         width: 44
         height: 44
@@ -2234,7 +2171,7 @@ TextureImporter:
       name: Notice.Info
       rect:
         serializedVersion: 2
-        x: 330
+        x: 138
         y: 586
         width: 44
         height: 44
@@ -2255,7 +2192,7 @@ TextureImporter:
       name: Notice.Warning
       rect:
         serializedVersion: 2
-        x: 394
+        x: 202
         y: 588
         width: 44
         height: 40
@@ -2276,7 +2213,7 @@ TextureImporter:
       name: Pad.DDown
       rect:
         serializedVersion: 2
-        x: 458
+        x: 266
         y: 586
         width: 44
         height: 44
@@ -2297,7 +2234,7 @@ TextureImporter:
       name: Pad.DLeft
       rect:
         serializedVersion: 2
-        x: 522
+        x: 330
         y: 586
         width: 44
         height: 44
@@ -2318,7 +2255,7 @@ TextureImporter:
       name: Pad.DRight
       rect:
         serializedVersion: 2
-        x: 586
+        x: 394
         y: 586
         width: 44
         height: 44
@@ -2339,7 +2276,7 @@ TextureImporter:
       name: Pad.DUp
       rect:
         serializedVersion: 2
-        x: 650
+        x: 458
         y: 586
         width: 44
         height: 44
@@ -2360,7 +2297,7 @@ TextureImporter:
       name: Pad.Disc
       rect:
         serializedVersion: 2
-        x: 714
+        x: 522
         y: 586
         width: 44
         height: 44
@@ -2381,7 +2318,7 @@ TextureImporter:
       name: Pad.FaceEast
       rect:
         serializedVersion: 2
-        x: 778
+        x: 586
         y: 588
         width: 44
         height: 40
@@ -2402,7 +2339,7 @@ TextureImporter:
       name: Pad.FaceNorth
       rect:
         serializedVersion: 2
-        x: 844
+        x: 652
         y: 586
         width: 40
         height: 44
@@ -2423,7 +2360,7 @@ TextureImporter:
       name: Pad.FaceSouth
       rect:
         serializedVersion: 2
-        x: 908
+        x: 716
         y: 586
         width: 40
         height: 44
@@ -2444,7 +2381,7 @@ TextureImporter:
       name: Pad.FaceWest
       rect:
         serializedVersion: 2
-        x: 970
+        x: 778
         y: 588
         width: 44
         height: 40
@@ -2465,8 +2402,8 @@ TextureImporter:
       name: Pad.LB
       rect:
         serializedVersion: 2
-        x: 10
-        y: 532
+        x: 842
+        y: 596
         width: 44
         height: 24
       alignment: 9
@@ -2486,8 +2423,8 @@ TextureImporter:
       name: Pad.LS
       rect:
         serializedVersion: 2
-        x: 73
-        y: 523
+        x: 905
+        y: 587
         width: 46
         height: 42
       alignment: 9
@@ -2507,8 +2444,8 @@ TextureImporter:
       name: Pad.LSClick
       rect:
         serializedVersion: 2
-        x: 140
-        y: 521
+        x: 972
+        y: 585
         width: 40
         height: 46
       alignment: 9
@@ -2528,7 +2465,7 @@ TextureImporter:
       name: Pad.LSMove
       rect:
         serializedVersion: 2
-        x: 200
+        x: 8
         y: 520
         width: 48
         height: 48
@@ -2549,7 +2486,7 @@ TextureImporter:
       name: Pad.LT
       rect:
         serializedVersion: 2
-        x: 273
+        x: 81
         y: 522
         width: 29
         height: 44
@@ -2570,7 +2507,7 @@ TextureImporter:
       name: Pad.Menu
       rect:
         serializedVersion: 2
-        x: 330
+        x: 138
         y: 523
         width: 44
         height: 42
@@ -2591,7 +2528,7 @@ TextureImporter:
       name: Pad.RB
       rect:
         serializedVersion: 2
-        x: 394
+        x: 202
         y: 532
         width: 44
         height: 24
@@ -2612,7 +2549,7 @@ TextureImporter:
       name: Pad.RS
       rect:
         serializedVersion: 2
-        x: 457
+        x: 265
         y: 523
         width: 46
         height: 42
@@ -2633,7 +2570,7 @@ TextureImporter:
       name: Pad.RSClick
       rect:
         serializedVersion: 2
-        x: 524
+        x: 332
         y: 521
         width: 40
         height: 46
@@ -2654,7 +2591,7 @@ TextureImporter:
       name: Pad.RSMove
       rect:
         serializedVersion: 2
-        x: 584
+        x: 392
         y: 520
         width: 48
         height: 48
@@ -2675,7 +2612,7 @@ TextureImporter:
       name: Pad.RT
       rect:
         serializedVersion: 2
-        x: 657
+        x: 465
         y: 522
         width: 29
         height: 44
@@ -2696,7 +2633,7 @@ TextureImporter:
       name: Pad.View
       rect:
         serializedVersion: 2
-        x: 714
+        x: 522
         y: 524
         width: 44
         height: 40
@@ -2717,7 +2654,7 @@ TextureImporter:
       name: Petal.Single
       rect:
         serializedVersion: 2
-        x: 783
+        x: 591
         y: 522
         width: 34
         height: 44
@@ -2738,7 +2675,7 @@ TextureImporter:
       name: Pip.Empty
       rect:
         serializedVersion: 2
-        x: 849
+        x: 657
         y: 523
         width: 30
         height: 42
@@ -2759,7 +2696,7 @@ TextureImporter:
       name: Pip.Full
       rect:
         serializedVersion: 2
-        x: 913
+        x: 721
         y: 523
         width: 30
         height: 42
@@ -2780,7 +2717,7 @@ TextureImporter:
       name: Reticle.Hit
       rect:
         serializedVersion: 2
-        x: 968
+        x: 776
         y: 520
         width: 48
         height: 48
@@ -2801,8 +2738,8 @@ TextureImporter:
       name: Reticle.SpreadArc
       rect:
         serializedVersion: 2
-        x: 8
-        y: 471
+        x: 840
+        y: 535
         width: 48
         height: 18
       alignment: 9
@@ -2822,8 +2759,8 @@ TextureImporter:
       name: Reticle.SpreadDot
       rect:
         serializedVersion: 2
-        x: 78
-        y: 462
+        x: 910
+        y: 526
         width: 36
         height: 36
       alignment: 9
@@ -2843,8 +2780,8 @@ TextureImporter:
       name: Seal.Mark
       rect:
         serializedVersion: 2
-        x: 136
-        y: 456
+        x: 968
+        y: 520
         width: 48
         height: 48
       alignment: 9
@@ -2864,7 +2801,7 @@ TextureImporter:
       name: Shop.Locked
       rect:
         serializedVersion: 2
-        x: 202
+        x: 10
         y: 463
         width: 44
         height: 34
@@ -2885,7 +2822,7 @@ TextureImporter:
       name: Shop.MaxTier
       rect:
         serializedVersion: 2
-        x: 269
+        x: 77
         y: 458
         width: 38
         height: 44
@@ -2906,7 +2843,7 @@ TextureImporter:
       name: Shop.Purchased
       rect:
         serializedVersion: 2
-        x: 330
+        x: 138
         y: 458
         width: 44
         height: 44
@@ -2927,7 +2864,7 @@ TextureImporter:
       name: Special.Ready
       rect:
         serializedVersion: 2
-        x: 396
+        x: 204
         y: 458
         width: 40
         height: 44
@@ -2948,7 +2885,7 @@ TextureImporter:
       name: Stat.TrendDown
       rect:
         serializedVersion: 2
-        x: 458
+        x: 266
         y: 458
         width: 44
         height: 44
@@ -2969,7 +2906,7 @@ TextureImporter:
       name: Stat.TrendUp
       rect:
         serializedVersion: 2
-        x: 522
+        x: 330
         y: 459
         width: 44
         height: 42
@@ -2990,7 +2927,7 @@ TextureImporter:
       name: Status.DazedOuter
       rect:
         serializedVersion: 2
-        x: 587
+        x: 395
         y: 458
         width: 42
         height: 44
@@ -3011,7 +2948,7 @@ TextureImporter:
       name: Status.NettedOuter
       rect:
         serializedVersion: 2
-        x: 656
+        x: 464
         y: 458
         width: 32
         height: 44
@@ -3032,7 +2969,7 @@ TextureImporter:
       name: Status.PulledOuter
       rect:
         serializedVersion: 2
-        x: 714
+        x: 522
         y: 463
         width: 44
         height: 34
@@ -3053,7 +2990,7 @@ TextureImporter:
       name: Threat.BehindOuter
       rect:
         serializedVersion: 2
-        x: 782
+        x: 590
         y: 458
         width: 36
         height: 44
@@ -3074,7 +3011,7 @@ TextureImporter:
       name: Threat.EliteOuter
       rect:
         serializedVersion: 2
-        x: 847
+        x: 655
         y: 458
         width: 34
         height: 44
@@ -3095,7 +3032,7 @@ TextureImporter:
       name: Threat.UltraOuter
       rect:
         serializedVersion: 2
-        x: 909
+        x: 717
         y: 458
         width: 38
         height: 44
@@ -3116,7 +3053,7 @@ TextureImporter:
       name: Tier.Special
       rect:
         serializedVersion: 2
-        x: 974
+        x: 782
         y: 458
         width: 36
         height: 44
@@ -3137,8 +3074,8 @@ TextureImporter:
       name: Tip.Hint
       rect:
         serializedVersion: 2
-        x: 20
-        y: 394
+        x: 852
+        y: 458
         width: 24
         height: 44
       alignment: 9
@@ -3158,8 +3095,8 @@ TextureImporter:
       name: Toast.Record
       rect:
         serializedVersion: 2
-        x: 74
-        y: 408
+        x: 906
+        y: 472
         width: 44
         height: 16
       alignment: 9
@@ -3179,8 +3116,8 @@ TextureImporter:
       name: Unlock.Badge
       rect:
         serializedVersion: 2
-        x: 138
-        y: 394
+        x: 970
+        y: 458
         width: 44
         height: 44
       alignment: 9
@@ -3200,7 +3137,7 @@ TextureImporter:
       name: Unlock.Title
       rect:
         serializedVersion: 2
-        x: 215
+        x: 23
         y: 394
         width: 18
         height: 44
@@ -3213,6 +3150,447 @@ TextureImporter:
       bones: []
       spriteID: 14f320f03a62b43b0800000000000000
       internalID: -5527281635893821631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Special.Namekuji
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 390
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf3bfd1e422562210800000000000000
+      internalID: 1307823060159542267
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Special.Raiju
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 390
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 161fd7c04dcbf30c0800000000000000
+      internalID: -4593745475965947551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.Downed
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 405
+        width: 44
+        height: 22
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fb15a1a6f70de8c0800000000000000
+      internalID: -3968506940788237326
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.DownedOuter
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 404
+        width: 44
+        height: 24
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbfb8e4df840e1c70800000000000000
+      internalID: 8943590925803241407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.Electrocuted
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 394
+        width: 32
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e07530e601c6e2a0800000000000000
+      internalID: -6708462359646211864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.ElectrocutedOuter
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 394
+        width: 32
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 748c651a1ae8ebf00800000000000000
+      internalID: 1134500980991641671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.Sliding
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 396
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a9ba7ec0bd5295e0800000000000000
+      internalID: -1904356678464521820
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.SlidingOuter
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 396
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14a756fc6876bb7d0800000000000000
+      internalID: -2901611706207339967
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.ArmorBreak
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 394
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12dc57ee813eefe10800000000000000
+      internalID: 2233472161441762593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.Cluster
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 395
+        width: 44
+        height: 42
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 190a3779ae11ec520800000000000000
+      internalID: 2724134523866685585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.Impact
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 396
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a20fc52890f4b460800000000000000
+      internalID: 7256689435860730537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.Ar2
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 390
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ea1f3b6ca20ff5c0800000000000000
+      internalID: -4179618989619602719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.AssaultRifle
+      rect:
+        serializedVersion: 2
+        x: 838
+        y: 390
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1ed1d4216bf04340800000000000000
+      internalID: 4846149593698786846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.AutoSmg
+      rect:
+        serializedVersion: 2
+        x: 902
+        y: 390
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c59450b8aee5a1150800000000000000
+      internalID: 5844087827914377564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.CombatShotgun
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 390
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ce6b492d4e8dcf60800000000000000
+      internalID: 8056251770492120768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.Lmg1
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96de49881d45e4cf0800000000000000
+      internalID: -266182069051921047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.Lmg2
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6359ebac8e294ef0800000000000000
+      internalID: -123516333061483668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.Rl1
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 491e5004c0cdd6170800000000000000
+      internalID: 8173430843919163796
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.Sg2
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5184812fc719d4b0800000000000000
+      internalID: -5415270898548309669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.Smg2
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f0e0e2f2b7f3c840800000000000000
+      internalID: 5243306739140452599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.Sr1
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f9c20496c3802820800000000000000
+      internalID: 2891455849681832441
       vertices: []
       indices: 
       edges: []
@@ -3335,17 +3713,25 @@ TextureImporter:
       Shop.Reroll: 2238186751384665839
       Special.KaguraBell: 7999156302903063046
       Special.KaguraSuzu: -6238732093555145420
+      Special.Namekuji: 1307823060159542267
       Special.OfudaLoom: -1413035657167185548
+      Special.Raiju: -4593745475965947551
       Special.Ready: 3260231318279984155
       Special.TideJewel: -3679124154955928802
       Stat.TrendDown: 5769668595060684798
       Stat.TrendUp: 2288249448413264776
       Status.Dazed: -5993203429339079311
       Status.DazedOuter: -2436658117841435848
+      Status.Downed: -3968506940788237326
+      Status.DownedOuter: 8943590925803241407
+      Status.Electrocuted: -6708462359646211864
+      Status.ElectrocutedOuter: 1134500980991641671
       Status.Netted: -5314764791681496320
       Status.NettedOuter: 7073450051268930937
       Status.Pulled: 8979140712131725963
       Status.PulledOuter: 1427919794564060773
+      Status.Sliding: -1904356678464521820
+      Status.SlidingOuter: -2901611706207339967
       Sw.KaguraBell: 7196120457397676169
       Sw.OfudaLoom: 5442189960441275019
       Threat.Behind: -6479162511968892724
@@ -3360,9 +3746,12 @@ TextureImporter:
       Toast.Record: -2652939510379227393
       Unlock.Badge: -9050377926746979578
       Unlock.Title: -5527281635893821631
+      Upgrade.ArmorBreak: 2233472161441762593
       Upgrade.Chain: -5890304332254159341
+      Upgrade.Cluster: 2724134523866685585
       Upgrade.Explosion: -5599430998560845798
       Upgrade.FireRate: -3332788987730236652
+      Upgrade.Impact: 7256689435860730537
       Upgrade.MaximumHealth: 2034370419246375082
       Upgrade.MovementSpeed: 6842129945428876180
       Upgrade.Piercing: 5229749321178577944
@@ -3370,9 +3759,16 @@ TextureImporter:
       Upgrade.RegenerationRate: 7732162901061201993
       Upgrade.ReloadSpeed: -6812588442315847362
       Upgrade.Ricochet: -3237780129553355561
+      Weapon.Ar2: -4179618989619602719
       Weapon.AssaultRifle: 4846149593698786846
       Weapon.AutoSmg: 5844087827914377564
       Weapon.CombatShotgun: 8056251770492120768
+      Weapon.Lmg1: -266182069051921047
+      Weapon.Lmg2: -123516333061483668
+      Weapon.Rl1: 8173430843919163796
+      Weapon.Sg2: -5415270898548309669
+      Weapon.Smg2: 5243306739140452599
+      Weapon.Sr1: 2891455849681832441
       Weapon.weapon_carbine: -460513182214409413
       Weapon.weapon_rifle: -3565161546827349900
       Weapon.weapon_shotgun: 8103654521030751796
