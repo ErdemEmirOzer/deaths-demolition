@@ -151,6 +151,11 @@ namespace DD.Prototype.Audio
         /// <summary>WP-072 B1 test / F1 surface: the player's fire voice.</summary>
         public WeaponFireAudio WeaponFire => _weaponFire;
 
+        private void OnActiveSceneChanged(UnityEngine.SceneManagement.Scene from, UnityEngine.SceneManagement.Scene to)
+        {
+            _router?.Rearm();
+        }
+
         /// <summary>WP-072 B2 test / F1 surface: the player's casing landings.</summary>
         public CasingAudio Casings => _casings;
 
@@ -273,6 +278,7 @@ namespace DD.Prototype.Audio
             base.OnEnable();
 
             AudioEvents.Cue += OnCombatCue;
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnActiveSceneChanged;   // re-arm cleared static buses
             _casings?.Enable();   // WP-072 B2
             _impacts?.Enable();   // WP-072 B3
             _flight?.Enable();    // WP-072 B5
@@ -302,6 +308,7 @@ namespace DD.Prototype.Audio
         protected override void OnDisable()
         {
             AudioEvents.Cue -= OnCombatCue;
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnActiveSceneChanged;
             _casings?.Disable();   // WP-072 B2
             _impacts?.Disable();   // WP-072 B3
             _flight?.Disable();    // WP-072 B5

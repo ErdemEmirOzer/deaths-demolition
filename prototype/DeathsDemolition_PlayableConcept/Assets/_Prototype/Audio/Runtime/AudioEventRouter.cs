@@ -170,6 +170,32 @@ namespace DD.Prototype.Audio
             Subscribed = true;
         }
 
+        /// <summary>
+        /// The router lives as long as the director, but the static buses can be cleared under it
+        /// (<c>CharacterAnimationEvents.ResetStatics</c> sets Any = null — AnimationV003Tests / AnimationSpecialTests
+        /// SetUp): after that no footstep, foley or breath reached audio until the process ended (CI 0555653 /
+        /// 01e3ef5 AyakSesi red, only in the full sequential run). The director calls this on every scene change;
+        /// remove-then-add never doubles a handler (the WP-062J VfxEventBinder pattern).
+        /// </summary>
+        public void Rearm()
+        {
+            if (!Subscribed)
+            {
+                return;
+            }
+
+            CharacterAnimationEvents.Any -= OnAnimationEvent;
+            CharacterAnimationEvents.Any += OnAnimationEvent;
+            EnemyCombatEvents.Raised -= OnCombatBeat;
+            EnemyCombatEvents.Raised += OnCombatBeat;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Usage += OnSpecialUsage;
+            RearmCount++;
+        }
+
+        /// <summary>Scene-change re-arms since boot (tests).</summary>
+        public int RearmCount { get; private set; }
+
         public void Unsubscribe()
         {
             if (!Subscribed)

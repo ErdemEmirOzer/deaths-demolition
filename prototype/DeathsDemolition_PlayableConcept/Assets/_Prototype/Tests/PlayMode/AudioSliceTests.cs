@@ -362,17 +362,35 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.Ignore("Oyuncu rig'inde CharacterAnimationEvents yok (prosedürel karakter modu).");
             }
 
+            // CI kökü (01e3ef5 / 0555653): önceki sınıfların SetUp'ı CharacterAnimationEvents.ResetStatics ile Any'i siliyordu;
+            // yönlendirici sahne değişiminde yeniden bağlanır (AudioEventRouter.Rearm); tanı satırı rearm sayısını gösterir.
             events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootLeft);
-            Assert.AreEqual(once + 1, r.FootstepCount, "foot_l ayak sesi üretmedi.");
+            Assert.AreEqual(once + 1, r.FootstepCount, "foot_l ayak sesi üretmedi. " + AyakTani(events));
             // WP-021C: the surface under the rig is whatever the world's tags + routes say (Default still reads as stone).
             AudioSoundId beklenen = AyakBeklenen(_s.Rig.transform.position, out SurfaceKind altta);
             Assert.AreEqual(beklenen, _d.LastPlayed, "Ayak sesi altındaki yüzeye/plakaya göre çalmalı (" + altta + ").");
             yield return new WaitForSecondsRealtime(0.2f);   // PlayerFootstep MinRetrigger 0.08 s
+            int ikinci = r.FootstepCount;
             events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootRight);
-            Assert.AreEqual(once + 2, r.FootstepCount, "foot_r ayak sesi üretmedi.");
+            Assert.AreEqual(ikinci + 1, r.FootstepCount, "foot_r ayak sesi üretmedi. " + AyakTani(events));
             Assert.AreEqual(AudioSoundId.FootstepWood, AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Wood));
             Assert.AreEqual(AudioSoundId.FootstepWater, AudioEventRouter.FootstepFor(DD.Prototype.Feedback.SurfaceKind.Water));
             Debug.Log("[DD-TEST] wp021b.footstep " + r.Describe());
+        }
+
+        /// <summary>CI kanıtı: ayak sesi susarsa neden (oyuncu kaydı, kaynak, havuz).</summary>
+        private string AyakTani(DD.Prototype.Characters.CharacterAnimationEvents events)
+        {
+            var sb = new System.Text.StringBuilder("[tanı] kayıt=");
+            foreach (var rig in DD.Prototype.PlayerSystem.PlayerRegistry.All)
+            {
+                sb.Append(ReferenceEquals(rig, null) ? "ref-null" : rig == null ? "YOK-EDİLMİŞ" : rig.name + (rig == _s.Rig ? "(bu)" : "(başka)")).Append(',');
+            }
+
+            sb.Append(" primary=").Append(DD.Prototype.PlayerSystem.PlayerRegistry.Primary == null ? "null" : DD.Prototype.PlayerSystem.PlayerRegistry.Primary.name);
+            sb.Append(" kaynakAltında=").Append(events.transform.IsChildOf(_s.Rig.transform));
+            sb.Append(" havuz=").Append(_d.WorldPool.Describe()).Append(" düşen=").Append(_d.DroppedCues).Append(" rearm=").Append(_d.Router.RearmCount);
+            return sb.ToString();
         }
 
         /// <summary>WP-058B: the expected footstep = plate variant (AudioSurfaceHints.FootstepVariant) or the kind's default.</summary>
