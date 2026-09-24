@@ -40,6 +40,7 @@ namespace DD.Prototype.UI
         private static readonly Vector3 GlyphInk = new Vector3(0.25f, 0f, 0f);
 
         private TMP_Text _healthMaxText;
+        private CanvasGroup _reloadCaptionGroup;
         private int _healthMaxShown = int.MinValue;
         private readonly List<CanvasGroup> _conceptT2 = new List<CanvasGroup>(4);
         private readonly List<RectTransform> _conceptT1 = new List<RectTransform>(4);
@@ -202,7 +203,6 @@ namespace DD.Prototype.UI
 
             BuildInkAmmo(host, new Vector2(1f, 0f), -(ring + 16f), true, -StrokeLean);
             BuildInkWeaponCalm(root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-(ring + 16f), 116f), TextAnchor.MiddleRight);
-            BuildInkSuspended(root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(0f, ring + 18f), TextAnchor.MiddleRight);
         }
 
         /// <summary>
@@ -244,6 +244,15 @@ namespace DD.Prototype.UI
             Place((RectTransform)_reloadPrompt.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
                 new Vector2(Mathf.Ceil(_reloadCaption.GetPreferredValues("EMPTY").x) + (int)UiSpace.S, 0f), ((RectTransform)_reloadPrompt.transform).sizeDelta);
             _reloadPrompt.gameObject.SetActive(false);
+            _reloadCaptionGroup = UiFactory.Group(captionRow.gameObject);
+
+            // AD 8-R MUST-1: one slot, one word - SUSPENDED takes the LOW / EMPTY slot and the row (word + prompt) steps
+            // aside while the classic weapon is suspended; its EMPTY is not actionable until the Special ends.
+            TMP_Text suspended = InkText("Suspended", host.parent, "SUSPENDED", UiType.Label, UiColor.StateWarning, TextAnchor.MiddleLeft);
+            suspended.fontStyle = FontStyles.Bold;
+            Place(suspended.rectTransform, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), new Vector2(220f, ReloadPromptSize + 6f));
+            _suspendedChip = suspended.gameObject;
+            _suspendedChip.SetActive(false);
 
             // The ring (or the reticle arc in B) carries the reload; the linear bar stays for the presenter, unseen.
             _reloadBar = UiFactory.Bar("ReloadBar", host, UiColor.BarReload, 8f);
@@ -259,15 +268,6 @@ namespace DD.Prototype.UI
             _classicBuild = InkText("Build", calm, string.Empty, UiType.Caption, UiColor.TextMuted, align);
             Place(_classicBuild.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), Vector2.zero, new Vector2(320f, 16f));
             _conceptT2.Add(UiFactory.Group(calm.gameObject));
-        }
-
-        private void BuildInkSuspended(RectTransform root, Vector2 anchor, Vector2 pivot, Vector2 position, TextAnchor align)
-        {
-            TMP_Text suspended = InkText("Suspended", root, "SUSPENDED", UiType.Label, UiColor.StateWarning, align);
-            suspended.fontStyle = FontStyles.Bold;
-            Place(suspended.rectTransform, anchor, pivot, position, new Vector2(170f, 22f));
-            _suspendedChip = suspended.gameObject;
-            _suspendedChip.SetActive(false);
         }
 
         // ---- B · the ledger line, top-centre
@@ -351,7 +351,6 @@ namespace DD.Prototype.UI
 
             BuildInkAmmo(host, Vector2.zero, ring + 14f, false, -StrokeLean);
             BuildInkWeaponCalm(root, Vector2.zero, Vector2.zero, new Vector2(ring + 14f, 116f), TextAnchor.MiddleLeft);
-            BuildInkSuspended(root, Vector2.zero, Vector2.zero, new Vector2(0f, ring + 22f), TextAnchor.MiddleLeft);
         }
 
         // ---- both · the Special, boxless at bottom centre

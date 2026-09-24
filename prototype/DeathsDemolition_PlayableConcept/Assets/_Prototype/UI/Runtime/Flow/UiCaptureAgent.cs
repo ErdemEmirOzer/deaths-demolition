@@ -169,6 +169,7 @@ namespace DD.Prototype.UI
                 // Alpha, not SetActive: the HUD re-activates its warning layers every frame.
                 var hidden = new System.Collections.Generic.List<CanvasGroup>();
                 var alphas = new System.Collections.Generic.List<float>();
+                var reactivate = new System.Collections.Generic.List<GameObject>();
                 if (pass == 1)
                 {
                     RunHudScreen hud = UnityEngine.Object.FindObjectOfType<RunHudScreen>();
@@ -179,10 +180,16 @@ namespace DD.Prototype.UI
                         Transform t = root.Find(transient[i]);
                         if (t != null)
                         {
+                            // Both: the HUD rewrites the banner's alpha and the warning's active state every frame.
                             CanvasGroup group = UiFactory.Group(t.gameObject);
                             alphas.Add(group.alpha);
                             group.alpha = 0f;
                             hidden.Add(group);
+                            if (t.gameObject.activeSelf)
+                            {
+                                t.gameObject.SetActive(false);
+                                reactivate.Add(t.gameObject);
+                            }
                         }
                     }
                 }
@@ -198,6 +205,11 @@ namespace DD.Prototype.UI
                 for (int i = 0; i < hidden.Count; i++)
                 {
                     hidden[i].alpha = alphas[i];
+                }
+
+                for (int i = 0; i < reactivate.Count; i++)
+                {
+                    reactivate[i].SetActive(true);
                 }
 
                 result[pass] = CoveredPercent(a, b);
@@ -959,6 +971,14 @@ namespace DD.Prototype.UI
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
                 yield return UiCaptureAgent.WaitRunLive(20f);
 
+                // 8-R: staged states, not a fight - the ronin takes damage only where a stage deals it (the plaster run
+                // lost the player to zombies before its low-health frame).
+                PlayerRig guard = PlayerRegistry.Primary;
+                if (guard != null && guard.Health != null)
+                {
+                    guard.Health.DiagnosisInvulnerable = true;
+                }
+
                 // AD 8b MUST-1: -ddUiStage plaster | pond puts the player where the pale plates sit behind the HUD panels
                 // (AP-005 placement: the palace's plaster screens at z ≈ 33, the koi pond at z −26 … −37).
                 PlayerRig rig = PlayerRegistry.Primary;
@@ -1001,6 +1021,15 @@ namespace DD.Prototype.UI
                     yield return Frame(folder, "hud-arcs-other-hit");
                     RunHudScreen.CaptureRearDirection = null;
                     yield return new WaitForSecondsRealtime(0.3f);
+
+                    // 8-R (AD pre-evaluation, user set): two threat chips side by side with the rear arc, staged.
+                    RunHudScreen.CaptureThreats = true;
+                    RunHudScreen.CaptureRearDirection = Vector3.back;
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    yield return Frame(folder, "hud-threat");
+                    RunHudScreen.CaptureThreats = false;
+                    RunHudScreen.CaptureRearDirection = null;
+                    yield return new WaitForSecondsRealtime(1.2f);   // the chips' 800 / 300 ms hysteresis
                 }
 
                 if (GoldService.Instance != null && rig != null)

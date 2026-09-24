@@ -972,6 +972,9 @@ namespace DD.Prototype.UI
         /// <summary>Capture seam: the reticle draws a live Special (Gold400) regardless of the Special's phase.</summary>
         public static bool CaptureSpecialActive;
 
+        /// <summary>Capture seam (8-R): the SURROUNDED and BEHIND YOU chips shown as if the director raised them.</summary>
+        public static bool CaptureThreats;
+
         /// <summary>Capture seam: a hit from <paramref name="towardsAttackerWorld"/> as the damage arc shows it.</summary>
         public void CaptureHit(Vector3 towardsAttackerWorld)
         {
@@ -987,6 +990,7 @@ namespace DD.Prototype.UI
             CaptureRearDirection = null;
             CaptureWeapon = null;
             CaptureSpecialActive = false;
+            CaptureThreats = false;
         }
 
         /// <summary>E17: the player-bound arc faces the attacker (HitDirection runs from the attacker towards the player).</summary>
@@ -1095,7 +1099,7 @@ namespace DD.Prototype.UI
             RectTransform statusHost = UiFactory.NewRect("EnemyStatus", layer);
             UiFactory.Fill(statusHost);
             _enemyStatus = statusHost.gameObject.AddComponent<UiEnemyStatusMarkers>();
-            _enemyStatus.Configure(ScreenRect);
+            _enemyStatus.Configure(ScreenRect, Concept != HudConcept.Panels);   // 8-R: boxless stamps in the concepts
 
             _marker = UiFactory.NewRect("SpecialWeaponMarker", layer);
             _marker.sizeDelta = new Vector2(56f, 56f);
@@ -1294,8 +1298,8 @@ namespace DD.Prototype.UI
             ThreatSnapshot threat = ThreatDirector.Current;
             float now = Time.unscaledTime;
 
-            DriveThreat(_threatSlots[0], fighting && threat.Encircled, now, UiEvent.HudThreatEncircled);
-            DriveThreat(_threatSlots[1], fighting && threat.RearAttack, now, UiEvent.HudThreatRearAttack);
+            DriveThreat(_threatSlots[0], fighting && (threat.Encircled || CaptureThreats), now, UiEvent.HudThreatEncircled);
+            DriveThreat(_threatSlots[1], fighting && (threat.RearAttack || CaptureThreats), now, UiEvent.HudThreatRearAttack);
 
             bool strong = fighting && threat.StrongVersionPresent;
             bool ultra = strong && threat.StrongestTier == EnemyTier.Ultra;
@@ -1861,6 +1865,11 @@ namespace DD.Prototype.UI
                 if (_suspendedChip.activeSelf != suspended)
                 {
                     _suspendedChip.SetActive(suspended);
+                }
+
+                if (_reloadCaptionGroup != null)
+                {
+                    _reloadCaptionGroup.alpha = suspended ? 0f : 1f;   // 8-R: SUSPENDED owns the caption slot
                 }
             }
         }

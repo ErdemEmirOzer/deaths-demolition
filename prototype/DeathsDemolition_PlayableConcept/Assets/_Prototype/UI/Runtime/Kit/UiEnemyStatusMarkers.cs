@@ -36,18 +36,27 @@ namespace DD.Prototype.UI
         private TMP_Text[] _labels;
         private State[] _shown;
         private RectTransform _canvas;
+        private bool _ink;
 
         /// <summary>Markers drawn in the last update (test readout).</summary>
         public int VisibleCount { get; private set; }
 
-        public void Configure(RectTransform canvasRect)
+        /// <param name="ink">
+        /// WP-068 8-R (AD MUST-3): the boxless stamp of the concepts. It follows the threat-chip recipe:
+        /// - the outer-only glyph (Status.*Outer, SDF ink edge) and the word, in cream with the HUD ink;
+        /// - a brush underline;
+        /// - no box.
+        /// A status is not a threat, so there is no state colour; shape and word tell NET from DAZED.
+        /// </param>
+        public void Configure(RectTransform canvasRect, bool ink = false)
         {
             _canvas = canvasRect;
+            _ink = ink;
             _chips = new RectTransform[PoolSize];
             _fills = new Image[PoolSize];
             _glyphs = new Image[PoolSize];
-            _nettedSprite = UiArt.Icon("Status.Netted");
-            _dazedSprite = UiArt.Icon("Status.Dazed");
+            _nettedSprite = (ink ? UiArt.Icon("Status.NettedOuter") : null) ?? UiArt.Icon("Status.Netted");
+            _dazedSprite = (ink ? UiArt.Icon("Status.DazedOuter") : null) ?? UiArt.Icon("Status.Dazed");
             bool glyphs = _nettedSprite != null && _dazedSprite != null;
             _labels = new TMP_Text[PoolSize];
             _shown = new State[PoolSize];
@@ -76,6 +85,31 @@ namespace DD.Prototype.UI
                     var labelRect = (RectTransform)label.transform;
                     labelRect.offsetMin = new Vector2((int)UiSpace.XS + GlyphSize + (int)UiSpace.XS, 0f);
                     _glyphs[i] = glyph;
+                }
+
+                if (ink)
+                {
+                    Color clear = _fills[i].color;
+                    clear.a = 0f;
+                    _fills[i].color = clear;
+                    UiHudInk.Apply(label);
+                    if (_glyphs[i] != null && UiArt.IsGlyph(_glyphs[i].sprite))
+                    {
+                        UiArt.ApplyGlyph(_glyphs[i], new Vector3(0.25f, 0f, 0f));
+                    }
+
+                    Sprite brush = UiFxGlobals.InkMask(UiInkChannel.Underline);
+                    Image underline = UiFactory.NewImage("Underline", chip, UiColor.TextPrimary, brush != null ? brush : UiSprites.Solid);
+                    var underlineRect = underline.rectTransform;
+                    underlineRect.anchorMin = new Vector2(0f, 0f);
+                    underlineRect.anchorMax = new Vector2(1f, 0f);
+                    underlineRect.pivot = new Vector2(0.5f, 0.5f);
+                    underlineRect.offsetMin = new Vector2((int)UiSpace.XS + GlyphSize + (int)UiSpace.XS, 0f);
+                    underlineRect.offsetMax = new Vector2(-(int)UiSpace.S, 4f);
+                    Color line = underline.color;
+                    line.a = 0.8f;
+                    underline.color = line;
+                    underline.transform.SetSiblingIndex(0);
                 }
                 _shown[i] = State.None;
             }
@@ -121,7 +155,7 @@ namespace DD.Prototype.UI
                         _shown[used] = state;
                         // Literals: no formatting. NET = warning gold (held), DAZED = danger coral (stunned).
                         _labels[used].text = state == State.Netted ? "NET" : "DAZED";
-                        _labels[used].color = UiTokens.Get(state == State.Netted ? UiColor.StateWarning : UiColor.StateDanger);
+                        _labels[used].color = UiTokens.Get(_ink ? UiColor.TextPrimary : state == State.Netted ? UiColor.StateWarning : UiColor.StateDanger);
                         if (_glyphs[used] != null)
                         {
                             _glyphs[used].sprite = state == State.Netted ? _nettedSprite : _dazedSprite;
