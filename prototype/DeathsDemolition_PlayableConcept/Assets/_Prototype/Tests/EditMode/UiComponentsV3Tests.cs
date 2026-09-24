@@ -518,5 +518,26 @@ namespace DD.Prototype.Tests.EditMode
             view.SetContentHeight(200f);
             Assert.IsFalse(view.Scrolls, "kısa içerik kaymaz");
         }
+
+        [Test]
+        public void Kaydirici_EsitsizDuraklar_EnYakinaOturur_OkDuraktanDuraga_IcDuraklaraTik()
+        {
+            float reported = -1f;
+            UiSlider slider = UiSlider.Create("TextScale", _root, "TEXT SCALE", 1f, 1.25f, 1.02f, 0f, null, v => reported = v);
+            slider.SetStops(1f, 1.1f, 1.25f);
+            Assert.AreEqual(1f, slider.Value, 1e-4f, "değer en yakın durağa oturur");
+            Assert.IsNotNull(slider.transform.Find("Rail/Tick1"), "iç durak 1,10'a tik");
+            Assert.IsNull(slider.transform.Find("Rail/Tick0"), "uç duraklara tik yok");
+
+            slider.Step(+1);
+            Assert.AreEqual(1.1f, slider.Value, 1e-4f, "→ bir sonraki durak");
+            Assert.AreEqual(1.1f, reported, 1e-4f, "bildirildi");
+            slider.Step(+1);
+            Assert.AreEqual(1.25f, slider.Value, 1e-4f);
+            slider.Step(+1);
+            Assert.AreEqual(1.25f, slider.Value, 1e-4f, "uçta durur");
+            slider.DragToNormalisedForTests(0.3f);   // 1.075 → the nearest stop is 1.10
+            Assert.AreEqual(1.1f, slider.Value, 1e-4f, "sürükleme de durağa oturur");
+        }
     }
 }

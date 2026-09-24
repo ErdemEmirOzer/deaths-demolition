@@ -75,7 +75,8 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// WP-068 slice 6 · the capture matrix (§12): <c>-ddUiTextScale 1.25</c>,
-        /// <c>-ddUiScale 1.2</c>, <c>-ddUiPalette cb</c>, set through <see cref="UiSettings"/>
+        /// <c>-ddUiScale 1.2</c>, <c>-ddUiPalette cb</c>, <c>-ddUiReduceFlashes 1</c>,
+        /// <c>-ddUiReducedMotion 1</c>, set through <see cref="UiSettings"/>
         /// like a player would, into this process's own folder, before the first screen builds.
         /// </summary>
         private static void ApplyCaptureSettings()
@@ -96,6 +97,16 @@ namespace DD.Prototype.UI
             if (Arg("-ddUiPalette") == "cb")
             {
                 UiSettings.ColorPalette = 1;
+            }
+
+            if (Arg("-ddUiReduceFlashes") == "1")
+            {
+                UiSettings.ReduceFlashes = true;
+            }
+
+            if (Arg("-ddUiReducedMotion") == "1")
+            {
+                UiSettings.ReducedMotion = true;
             }
         }
 

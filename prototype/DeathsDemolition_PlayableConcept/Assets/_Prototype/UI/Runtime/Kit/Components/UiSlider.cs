@@ -42,6 +42,7 @@ namespace DD.Prototype.UI
         private float _min;
         private float _max = 1f;
         private float _step;
+        private float[] _stops;
         private float _current;
         private Func<float, string> _format;
         private Action<float> _changed;
@@ -144,12 +145,7 @@ namespace DD.Prototype.UI
             {
                 for (int i = 1; i < stops; i++)
                 {
-                    Image tick = UiFactory.NewImage("Tick" + i, _rail, UiColor.BorderStrong, UiSprites.Solid);
-                    var tickRect = (RectTransform)tick.transform;
-                    tickRect.anchorMin = new Vector2((float)i / stops, 0.5f);
-                    tickRect.anchorMax = tickRect.anchorMin;
-                    tickRect.pivot = new Vector2(0.5f, 0.5f);
-                    tickRect.sizeDelta = new Vector2(2f, RailHeight + 6f); // 2 px BorderStrong above the rim (AD 5b MUST-3)
+                    AddTick(i, (float)i / stops);
                 }
             }
 
@@ -174,6 +170,58 @@ namespace DD.Prototype.UI
 
             _built = true;
             SetValue(value, false, false);
+        }
+
+        /// <summary>2 px BorderStrong tick above the rail's rim at rail position <paramref name="t"/> (AD 5b MUST-3).</summary>
+        private void AddTick(int index, float t)
+        {
+            Image tick = UiFactory.NewImage("Tick" + index, _rail, UiColor.BorderStrong, UiSprites.Solid);
+            var tickRect = (RectTransform)tick.transform;
+            tickRect.anchorMin = new Vector2(t, 0.5f);
+            tickRect.anchorMax = tickRect.anchorMin;
+            tickRect.pivot = new Vector2(0.5f, 0.5f);
+            tickRect.sizeDelta = new Vector2(2f, RailHeight + 6f);
+            if (_bead != null)
+            {
+                tick.transform.SetSiblingIndex(_bead.GetSiblingIndex()); // under the bead
+            }
+        }
+
+        /// <summary>
+        /// Uneven detents (TEXT SCALE 100 / 110 / 125 %, direction E8): the value snaps to the
+        /// nearest stop, ← / → go stop to stop, and each inside stop gets a tick. Replaces the
+        /// even step.
+        /// </summary>
+        public void SetStops(params float[] stops)
+        {
+            if (stops == null || stops.Length < 2)
+            {
+                return;
+            }
+
+            _stops = (float[])stops.Clone();
+            Array.Sort(_stops);
+            for (int i = _rail.childCount - 1; i >= 0; i--)
+            {
+                Transform child = _rail.GetChild(i);
+                if (child.name.StartsWith("Tick", StringComparison.Ordinal))
+                {
+                    child.SetParent(null, false);
+                    if (Application.isPlaying) Destroy(child.gameObject);
+                    else DestroyImmediate(child.gameObject);
+                }
+            }
+
+            for (int i = 0; i < _stops.Length; i++)
+            {
+                float t = Normalised(_stops[i]);
+                if (t > 0.001f && t < 0.999f)
+                {
+                    AddTick(i, t);
+                }
+            }
+
+            SetValue(_current, false, false);
         }
 
         /// <summary>Set without notifying (a screen reflecting a stored value).</summary>
@@ -223,8 +271,18 @@ namespace DD.Prototype.UI
         /// <summary>One keyboard / pad step (the step size, or 1/20 of the range when continuous).</summary>
         public void Step(int direction)
         {
-            float size = _step > 0f ? _step : (_max - _min) / 20f;
-            float next = Mathf.Clamp(_current + direction * size, _min, _max);
+            float next;
+            if (_stops != null)
+            {
+                int index = NearestStop(_current);
+                next = _stops[Mathf.Clamp(index + direction, 0, _stops.Length - 1)];
+            }
+            else
+            {
+                float size = _step > 0f ? _step : (_max - _min) / 20f;
+                next = Mathf.Clamp(_current + direction * size, _min, _max);
+            }
+
             if (Mathf.Approximately(next, _current))
             {
                 UiSound.Play(UiSoundKind.Denied);
@@ -344,8 +402,27 @@ namespace DD.Prototype.UI
             return Mathf.Clamp01((v - _min) / (_max - _min));
         }
 
+        private int NearestStop(float v)
+        {
+            int best = 0;
+            for (int i = 1; i < _stops.Length; i++)
+            {
+                if (Mathf.Abs(_stops[i] - v) < Mathf.Abs(_stops[best] - v))
+                {
+                    best = i;
+                }
+            }
+
+            return best;
+        }
+
         private float Quantise(float v)
         {
+            if (_stops != null)
+            {
+                return _stops[NearestStop(v)];
+            }
+
             if (_step <= 0f)
             {
                 return v;

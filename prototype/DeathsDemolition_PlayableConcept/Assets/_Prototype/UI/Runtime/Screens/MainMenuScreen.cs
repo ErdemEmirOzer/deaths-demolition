@@ -470,24 +470,10 @@ namespace DD.Prototype.UI
             AddCaptionUnder(ref head, _paneHost, "Caption",
                 "Device preferences. They are saved on this machine and never touch your profile.", 1, UiSpace.M);
 
-            RectTransform body = UiFactory.NewRect("Body", _paneHost);
-            UiFactory.Fill(body);
-            body.offsetMax = new Vector2(0f, -head.Cursor);
-
-            float width = _paneHost.rect.width;
-            float column = SettingsColumnWidth + UiScrollView.Gutter;
-            if (width > 1f)
-            {
-                column = Mathf.Min(column, width);
-            }
-
-            UiScrollView scroll = UiScrollView.Create("Scroll", body);
-            var scrollRect = (RectTransform)scroll.transform;
-            scrollRect.anchorMin = new Vector2(0f, 0f);
-            scrollRect.anchorMax = new Vector2(0f, 1f);
-            scrollRect.pivot = new Vector2(0f, 1f);
-            scrollRect.sizeDelta = new Vector2(column, 0f);
-            scrollRect.anchoredPosition = Vector2.zero;
+            RectTransform body;
+            float column;
+            bool well;
+            UiScrollView scroll = BuildControlColumn(head.Cursor, out body, out column, out well);
             RectTransform content = scroll.Content;
             var stack = new UiStack(content);
 
@@ -536,13 +522,41 @@ namespace DD.Prototype.UI
             scroll.SetContentHeight(stack.Cursor);
             scroll.TrackSelectables();
 
-            if (width < 1f || width - column - (int)UiSpace.XL >= PreviewMinWidth)
+            if (well)
             {
                 BuildScalePreview(body, column + (int)UiSpace.XL);
             }
 
             UiInput.ChainVertical(display.Button, scale, master, uiSounds, quality.Button, telemetry.Button, hints.Button);
             UiInput.Focus(display.Button);
+        }
+
+        /// <summary>
+        /// E6 / E8 pane body under a head <paramref name="top"/> px tall: the scrolled control
+        /// column (≤ 720 + the rail's gutter) on the left, and whether the right well fits.
+        /// </summary>
+        private UiScrollView BuildControlColumn(float top, out RectTransform body, out float column, out bool well)
+        {
+            body = UiFactory.NewRect("Body", _paneHost);
+            UiFactory.Fill(body);
+            body.offsetMax = new Vector2(0f, -top);
+
+            float width = _paneHost.rect.width;
+            column = SettingsColumnWidth + UiScrollView.Gutter;
+            if (width > 1f)
+            {
+                column = Mathf.Min(column, width);
+            }
+
+            well = width < 1f || width - column - (int)UiSpace.XL >= PreviewMinWidth;
+            UiScrollView scroll = UiScrollView.Create("Scroll", body);
+            var scrollRect = (RectTransform)scroll.transform;
+            scrollRect.anchorMin = new Vector2(0f, 0f);
+            scrollRect.anchorMax = new Vector2(0f, 1f);
+            scrollRect.pivot = new Vector2(0f, 1f);
+            scrollRect.sizeDelta = new Vector2(column, 0f);
+            scrollRect.anchoredPosition = Vector2.zero;
+            return scroll;
         }
 
         private static string Percent(float value)
@@ -1022,110 +1036,215 @@ namespace DD.Prototype.UI
 
         // ------------------------------------------------------- accessibility pane
 
+        private static readonly string[] PaletteModes = { "DEFAULT", "COLOUR-BLIND SAFE" };
+        private static readonly float[] TextScaleStops = { 1f, 1.1f, 1.25f };   // E8: stops 100 / 110 / 125
+        private static readonly UiColor[] SwatchTokens = { UiColor.BarHealth, UiColor.StateSuccess, UiColor.StateWarning, UiColor.StateDanger };
+        private static readonly string[] SwatchNames = { "HEALTH", "EARNED", "WARNING", "DANGER" };
+        private const float SampleBarHeight = 12f;
+        private const float SampleHealth = 0.25f;           // the low-health state the sample shows
+        private const float SampleHitFrom = 0.45f;
+        private const float SampleEdgeWidth = 0.22f;        // damage edge ramp, fraction of the mini screen
+        private const float SampleBandHeight = 0.18f;       // final-seconds bands (the HUD's 0.82 / 0.18 ramps)
+        private const float SampleBandAlpha = 0.30f;        // the HUD's final-seconds pulse peak
+
+        private Image[] _sampleChips;
+        private TMP_Text _sampleCaption;
+        private UiBar _sampleBar;
+        private Image _sampleEdge;
+        private Image[] _sampleBands;
+
         /// <summary>
-        /// WP-022G · accessibility: colour-blind safe palette, reading-text scale, flash
-        /// reduction, reduced motion (moved here from Settings, which keeps device
-        /// preferences). Every value lives in ui-settings.json.
+        /// WP-022G · accessibility (WP-068 slice 6, direction E8). COLOUR (PALETTE stepper),
+        /// TEXT (TEXT SCALE slider, stops 100 / 110 / 125) and MOTION (REDUCE FLASHES,
+        /// REDUCED MOTION switches), each with its sentence, on the Settings column and
+        /// scroller. The right well is a live sample: the four state chips in the current
+        /// palette, a caption at the chosen text scale, the low health bar, and a mini screen
+        /// with the damage edge and the final-seconds bands at the current flash scale. A
+        /// flash or motion switch replays the hit, so the difference shows at once.
         /// </summary>
         private void BuildAccessibilityPane()
         {
-            var stack = new UiStack(_paneHost);
-            stack.Add(UiFactory.Heading("ACCESSIBILITY", _paneHost), UiFactory.LineHeight(UiType.H2));
-            stack.Gap(UiSpace.XS);
-            TMP_Text intro = UiFactory.Label(
-                "Intro", _paneHost, "These change how the game is presented, never how it plays. Text scale applies to the next screen you open; the palette to the next screen and the next run.",
-                UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)intro.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
-            stack.Gap(UiSpace.L);
+            var head = new UiStack(_paneHost);
+            head.Add(UiFactory.Heading("ACCESSIBILITY", _paneHost), UiFactory.LineHeight(UiType.H2));
+            AddCaptionUnder(ref head, _paneHost, "Intro",
+                "These change how the game is presented, never how it plays.", 1, UiSpace.M);
 
-            // AD v006 MUST-1/3/4: toggle rows (label + state chip), 40 / 8 / caption / 24
-            // rhythm, and an in-place preview under PALETTE and TEXT SCALE.
-            Image[] swatches = null;
-            UiButton palette = AddToggleRow(ref stack, _paneHost, "Palette", "PALETTE",
-                () => PaletteState(), () => { UiSettings.ColorPalette = UiSettings.ColorPalette == 1 ? 0 : 1; TintSwatches(swatches); return PaletteState(); }, "Palette");
-            stack.Gap(UiSpace.S);
-            swatches = AddPaletteSwatches(ref stack, _paneHost);
-            AddCaptionUnder(ref stack, _paneHost, "PaletteNote",
-                "Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays vermilion; every state also has a shape and a word.");
+            RectTransform body;
+            float column;
+            bool well;
+            UiScrollView scroll = BuildControlColumn(head.Cursor, out body, out column, out well);
+            RectTransform content = scroll.Content;
+            var stack = new UiStack(content);
 
-            TMP_Text sample = null;
-            Slider text = AddSettingSlider(ref stack, "TEXT SCALE", null, UiSettings.TextScaleMin, UiSettings.TextScaleMax, UiSettings.TextScale,
-                v => Mathf.RoundToInt(v * 100f) + "%", v =>
+            AddSettingsSection(ref stack, content, "COLOUR", false);
+            UiStepper palette = UiStepper.Create("Palette", content, "PALETTE", PaletteModes, UiSettings.ColorPalette, true,
+                i =>
+                {
+                    UiSettings.ColorPalette = i;
+                    RefreshAccessibilitySample();
+                });
+            AddSettingRow(ref stack, palette.transform);
+            AddCaptionUnder(ref stack, content, "PaletteNote",
+                "Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays vermilion; every state also has a shape and a word.", 2, UiSpace.XS);
+
+            AddSettingsSection(ref stack, content, "TEXT", true);
+            UiSlider text = UiSlider.Create("Setting.TEXT SCALE", content, "TEXT SCALE",
+                UiSettings.TextScaleMin, UiSettings.TextScaleMax, UiSettings.TextScale, 0f, Percent,
+                v =>
                 {
                     UiSettings.TextScale = v;
-                    if (sample != null)
-                    {
-                        sample.fontSize = Mathf.RoundToInt(14f * v);
-                        sample.text = "Caption sample · 14 px → " + Mathf.RoundToInt(14f * v) + " px at " + Mathf.RoundToInt(v * 100f) + " %";
-                    }
+                    RefreshAccessibilitySample();
+                }, SettingsColumnWidth, SettingLabelWidth);
+            text.SetStops(TextScaleStops);
+            AddSettingRow(ref stack, text.transform);
+            AddCaptionUnder(ref stack, content, "TextNote",
+                "Body, label and caption text. It applies to the next screen you open.", 1, UiSpace.XS);
+
+            AddSettingsSection(ref stack, content, "MOTION", true);
+            UiSwitch flashes = UiSwitch.Create("ReduceFlashes", content, "REDUCE FLASHES", UiSettings.ReduceFlashes,
+                on =>
+                {
+                    UiSettings.ReduceFlashes = on;
+                    RefreshAccessibilitySample();
+                    PlayAccessibilitySample();
                 });
-            sample = UiFactory.Label("TextSample", _paneHost, "Caption sample · 14 px → " + Mathf.RoundToInt(14f * UiSettings.TextScale) + " px at " + Mathf.RoundToInt(UiSettings.TextScale * 100f) + " %", UiType.Caption, UiColor.TextSecondary);
-            sample.fontSize = Mathf.RoundToInt(14f * UiSettings.TextScale);
-            stack.Add((RectTransform)sample.transform, UiFactory.LineHeight(UiType.Caption) * 1.5f);
-            stack.Gap(UiSpace.XL);
+            AddSettingRow(ref stack, flashes.transform);
+            AddCaptionUnder(ref stack, content, "FlashNote",
+                "Damage and final-seconds flashes at 40%. Blood and the world are not changed. Camera shake has its own slider on the pause screen.", 2, UiSpace.S);
+            UiSwitch reduced = UiSwitch.Create("ReducedMotion", content, "REDUCED MOTION", UiSettings.ReducedMotion,
+                on =>
+                {
+                    UiSettings.ReducedMotion = on;
+                    PlayAccessibilitySample();
+                });
+            AddSettingRow(ref stack, reduced.transform);
+            AddCaptionUnder(ref stack, content, "MotionNote",
+                "Pulses hold still, screen fades are instant and the menu petals stop drifting.", 1, UiSpace.None);
 
-            UiButton flashes = AddToggleRow(ref stack, _paneHost, "ReduceFlashes", "REDUCE FLASHES",
-                () => (UiSettings.ReduceFlashes ? "ON" : "OFF", UiSettings.ReduceFlashes),
-                () => { UiSettings.ReduceFlashes = !UiSettings.ReduceFlashes; return (UiSettings.ReduceFlashes ? "ON" : "OFF", UiSettings.ReduceFlashes); }, "ReduceFlashes");
-            AddCaptionUnder(ref stack, _paneHost, "FlashNote",
-                "Damage and final-seconds flashes at 40%. Blood and the world are not changed. Camera shake has its own slider on the pause screen.");
+            scroll.SetContentHeight(stack.Cursor);
+            scroll.TrackSelectables();
+            if (well)
+            {
+                BuildAccessibilitySample(body, column + (int)UiSpace.XL);
+            }
 
-            UiButton reduced = AddToggleRow(ref stack, _paneHost, "ReducedMotion", "REDUCED MOTION",
-                () => (UiSettings.ReducedMotion ? "ON" : "OFF", UiSettings.ReducedMotion),
-                () => { UiSettings.ReducedMotion = !UiSettings.ReducedMotion; return (UiSettings.ReducedMotion ? "ON" : "OFF", UiSettings.ReducedMotion); }, "ReducedMotion");
-            AddCaptionUnder(ref stack, _paneHost, "MotionNote",
-                "Pulses hold still, screen fades are instant and the menu petals stop drifting.", 1);
-
-            UiInput.ChainVertical(false, palette, text, flashes, reduced);
-            UiInput.LinkHorizontal(_accessibilityTab, null, palette);
-            UiInput.LinkHorizontal(palette, _accessibilityTab, null);
+            UiInput.ChainVertical(false, palette.Button, text, flashes.Button, reduced.Button);
+            UiInput.LinkHorizontal(_accessibilityTab, null, palette.Button);
+            UiInput.LinkHorizontal(palette.Button, _accessibilityTab, null);
             UiInput.LinkHorizontal(text, _accessibilityTab, null);
-            UiInput.LinkHorizontal(flashes, _accessibilityTab, null);
-            UiInput.LinkHorizontal(reduced, _accessibilityTab, null);
+            UiInput.LinkHorizontal(flashes.Button, _accessibilityTab, null);
+            UiInput.LinkHorizontal(reduced.Button, _accessibilityTab, null);
             if (_focusPaneOnOpen)
             {
-                UiInput.Focus(palette); // AD v006 MUST-8: focus lands on the first control
+                UiInput.Focus(palette.Button); // AD v006 MUST-8: focus lands on the first control
             }
         }
 
-        private static (string, bool) PaletteState()
+        /// <summary>E8 live sample well (the right five columns).</summary>
+        private void BuildAccessibilitySample(RectTransform body, float left)
         {
-            return UiSettings.ColorPalette == 1 ? ("COLOUR-BLIND SAFE", true) : ("DEFAULT", false);
-        }
+            RectTransform well = UiFactory.NewRect("Sample", body);
+            UiFactory.Fill(well);
+            well.offsetMin = new Vector2(left, well.offsetMin.y);
+            var stack = new UiStack(well);
+            float width = well.rect.width > 1f ? well.rect.width : PreviewMinWidth;
 
-        private static readonly UiColor[] SwatchTokens = { UiColor.BarHealth, UiColor.StateSuccess, UiColor.StateWarning, UiColor.StateDanger };
-        private static readonly string[] SwatchNames = { "HEALTH", "EARNED", "WARNING", "DANGER" };
+            TMP_Text label = UiFactory.Label("Label", well, "SAMPLE", UiType.Label, UiColor.TextMuted);
+            stack.Add((RectTransform)label.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            stack.Gap(UiSpace.S);
 
-        /// <summary>AD v006 MUST-4: four 24 px chips filled from the CURRENT palette tokens, the word inside each; retinted the frame the palette flips.</summary>
-        private static Image[] AddPaletteSwatches(ref UiStack stack, RectTransform parent)
-        {
-            RectTransform row = UiFactory.NewRect("Swatches", parent);
-            stack.Add(row, UiFactory.ScaledBand(StateChipHeight));
-            var images = new Image[SwatchTokens.Length];
+            // The four state chips, two by two, filled from the current palette.
+            float chipHeight = UiFactory.ScaledBand(StateChipHeight);
+            float chipWidth = Mathf.Floor((width - (int)UiSpace.S) * 0.5f);
+            RectTransform chips = UiFactory.NewRect("Swatches", well);
+            stack.Add(chips, chipHeight * 2f + (int)UiSpace.S);
+            _sampleChips = new Image[SwatchTokens.Length];
             for (int i = 0; i < SwatchTokens.Length; i++)
             {
-                TMP_Text chip = UiFactory.Chip("Swatch." + SwatchNames[i], row, SwatchNames[i], SwatchTokens[i], UiColor.SurfaceBase, 96f, UiFactory.ScaledBand(StateChipHeight));
-                chip.fontStyle = TMPro.FontStyles.Bold;
-                RectTransform rect = (RectTransform)chip.transform.parent;
-                rect.anchorMin = new Vector2(0f, 0.5f);
-                rect.anchorMax = new Vector2(0f, 0.5f);
-                rect.pivot = new Vector2(0f, 0.5f);
-                rect.anchoredPosition = new Vector2(20f + i * (96f + (int)UiSpace.S), 0f);
-                images[i] = rect.GetComponent<Image>();
+                TMP_Text chip = UiFactory.Chip("Swatch." + SwatchNames[i], chips, SwatchNames[i], SwatchTokens[i], UiColor.SurfaceBase, chipWidth, chipHeight);
+                chip.fontStyle = FontStyles.Bold;
+                var rect = (RectTransform)chip.transform.parent;
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(0f, 1f);
+                rect.pivot = new Vector2(0f, 1f);
+                rect.anchoredPosition = new Vector2((i % 2) * (chipWidth + (int)UiSpace.S), -(i / 2) * (chipHeight + (int)UiSpace.S));
+                _sampleChips[i] = rect.GetComponent<Image>();
             }
 
-            return images;
+            stack.Gap(UiSpace.M);
+            _sampleCaption = UiFactory.Label("CaptionSample", well, string.Empty, UiType.Caption, UiColor.TextSecondary);
+            stack.Add((RectTransform)_sampleCaption.transform, Mathf.Ceil(UiTokens.FontSize(UiType.Caption) * 1.4f * UiSettings.TextScaleMax));
+            stack.Gap(UiSpace.M);
+
+            // The low health bar (ghost trail on a hit - the motion sample).
+            TMP_Text healthLabel = UiFactory.Label("HealthLabel", well, "HEALTH 25 / 100", UiType.Label, UiColor.TextMuted);
+            stack.Add((RectTransform)healthLabel.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            stack.Gap(UiSpace.XS);
+            _sampleBar = UiFactory.Bar("HealthBar", well, UiColor.BarHealth, SampleBarHeight);
+            stack.Add((RectTransform)_sampleBar.transform, SampleBarHeight);
+            _sampleBar.SetValue(SampleHealth, true);
+            stack.Gap(UiSpace.L);
+
+            // A mini screen: the far plate, the damage edge on the left, the final-seconds bands.
+            RectTransform frame = UiFactory.FramedCard("Screen", well, UiColor.BorderHairline, UiColor.SurfaceInset, UiFrame.Card);
+            stack.Add(frame, Mathf.Round(width * 9f / 16f));
+            RectTransform screen = UiFactory.ClipContent(UiFactory.CardContent(frame, UiSpace.XS));
+            var plate = new GameObject("Plate", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+            plate.transform.SetParent(screen, false);
+            UiFactory.Fill(plate.rectTransform);
+            plate.raycastTarget = false;
+            plate.texture = Resources.Load<Texture2D>("MenuPlates/plate_far");
+            plate.gameObject.SetActive(plate.texture != null);
+
+            _sampleEdge = UiFactory.NewImage("DamageEdge", screen, UiColor.DamageEdge, UiSprites.FadeLeft);
+            RectTransform edgeRect = UiFactory.Fill((RectTransform)_sampleEdge.transform);
+            edgeRect.anchorMax = new Vector2(SampleEdgeWidth, 1f);
+            Image top = UiFactory.NewImage("FinalTop", screen, UiColor.StateDanger, UiSprites.FadeDown);
+            RectTransform topRect = UiFactory.Fill((RectTransform)top.transform);
+            topRect.anchorMin = new Vector2(0f, 1f - SampleBandHeight);
+            Image bottom = UiFactory.NewImage("FinalBottom", screen, UiColor.StateDanger, UiSprites.FadeUp);
+            RectTransform bottomRect = UiFactory.Fill((RectTransform)bottom.transform);
+            bottomRect.anchorMax = new Vector2(1f, SampleBandHeight);
+            _sampleBands = new[] { top, bottom };
+
+            stack.Gap(UiSpace.S);
+            TMP_Text note = UiFactory.Label("ScreenNote", well, "Damage edge and final-seconds bands at their peak.", UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)note.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
+            RefreshAccessibilitySample();
         }
 
-        private static void TintSwatches(Image[] swatches)
+        /// <summary>Re-reads palette, text scale and flash scale into the sample (no motion).</summary>
+        private void RefreshAccessibilitySample()
         {
-            for (int i = 0; swatches != null && i < swatches.Length; i++)
+            if (_sampleCaption == null)
             {
-                if (swatches[i] != null)
-                {
-                    swatches[i].color = UiTokens.Get(SwatchTokens[i]);
-                }
+                return;
             }
+
+            for (int i = 0; i < _sampleChips.Length; i++)
+            {
+                _sampleChips[i].color = UiTokens.Get(SwatchTokens[i]);
+            }
+
+            _sampleCaption.fontSize = UiTokens.FontSize(UiType.Caption);
+            _sampleCaption.text = "Caption text at " + Percent(UiSettings.TextScale) + ".";
+            SetAlpha(_sampleEdge, UiTokens.DamageEdgePeakAlpha * UiTokens.FlashScale);
+            foreach (Image band in _sampleBands)
+            {
+                SetAlpha(band, SampleBandAlpha * UiTokens.FlashScale);
+            }
+        }
+
+        /// <summary>The motion sample: a hit on the bar (ghost trail; Reduced Motion lands it) under the current settings.</summary>
+        private void PlayAccessibilitySample()
+        {
+            if (_sampleBar == null)
+            {
+                return;
+            }
+
+            _sampleBar.SetValue(SampleHitFrom, true);
+            _sampleBar.SetValue(SampleHealth, false);
         }
 
         // --------------------------------------------------------- toggle rows (AD v006)
