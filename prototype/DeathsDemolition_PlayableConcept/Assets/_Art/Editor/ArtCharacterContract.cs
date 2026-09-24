@@ -44,6 +44,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-032F (AP-006C): secondary-motion chain bones `sec_&lt;chain&gt;_&lt;i&gt;` — extra transforms outside the human map, never keyed by the clips. Player 7 (sash ×3, pouch, gourd, band ×2), zombie 17 (mino ×9, hair ×2, queue ×2, hachimaki ×2, bandage ×2).</summary>
         public const int PlayerSecondaryBones = 7;
         public const int ZombieSecondaryBones = 17;
+        /// <summary>WP-071 · AP-022 zombie rig v002 (K10: jaw only): `jaw` Head child, lower-face weights on bodies A/B/C + A2/H2/H4/H6/H7.</summary>
+        public const int ZombieJawBones = 1;
         /// <summary>WP-071 · AP-022 rig v002 (player): extra transforms outside the human map — twist ×8 (upperarm, lowerarm_01/02, thigh ×2 sides; TwistCorrector), jaw, fp_camera (Head child, Y = look, Z = up), ik_hand/ik_foot ×2 (Root children).</summary>
         public const int PlayerRigV002Bones = 14;
         public static readonly string[] PlayerTwistBones = { "upperarm_twist_l", "upperarm_twist_r", "lowerarm_twist_01_l", "lowerarm_twist_01_r", "lowerarm_twist_02_l", "lowerarm_twist_02_r", "thigh_twist_l", "thigh_twist_r" };

@@ -109,7 +109,8 @@ namespace DD.Art.Tests.EditMode
                 Dictionary<string, Transform> bones = ArtCharacterContract.Bones(model, ArtCharacterPrefabBuilder.ZombieArmature);
                 int secondary = 0; foreach (string b in bones.Keys) if (b.StartsWith(ArtCharacterContract.SecondaryBonePrefix)) secondary++;
                 Assert.AreEqual(ArtCharacterContract.ZombieSecondaryBones, secondary, fit + ": WP-032F AP-007 v003 sec_* zincir kemikleri (7 zincir / 17)");
-                Assert.AreEqual(ArtCharacterContract.BoneCount + 3 + ArtCharacterContract.ZombieSecondaryBones, bones.Count, fit + ": ZombieRig altında 56 + 3 ankraj + 17 sec_*");
+                Assert.AreEqual(ArtCharacterContract.BoneCount + 3 + ArtCharacterContract.ZombieSecondaryBones + ArtCharacterContract.ZombieJawBones, bones.Count, fit + ": ZombieRig altında 56 + 3 ankraj + 17 sec_* + jaw (rig v002)");
+                Assert.AreEqual("Head", bones["jaw"].parent.name, fit + ": jaw Head çocuğu");
                 for (int lod = 0; lod < 4; lod++) Assert.IsNotNull(model.transform.Find("zombie_body_" + fit + "_LOD" + lod), fit + " LOD" + lod);
                 // Anchor origins (AP007-anchors.json, Blender z → Unity y): helmet 1.60, torso 1.17, legs 0.93; parents Head / Chest / Hips.
                 AssertAnchor(bones, ZombieSkinnedVisual.AnchorHelmet, "Head", 1.60f);

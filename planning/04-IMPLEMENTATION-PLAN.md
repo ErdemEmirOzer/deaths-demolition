@@ -1851,6 +1851,16 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 
 **Ek (P-06 v002 güncellemesi):** baş artık her LOD'da ayrı: `Player_Body_LOD0/1/2` + `Player_Head_LOD0/1/2` (üçgen 22 180+1 798 / 8 857+733 / 3 124+266). Her LOD'da iki renderer, görsel renderer listesi 6, `HeadRenderers` = 3. Builder v001 adlarına (`Player_LOD<n>`) geri düşebiliyor. Testler aynı: 20/20, 12/12.
 
+## WP-071 — AP-022 zombi rig v002 (yalnız çene)
+
+**Durum:** tamam (S-06, 2026-09-24; taban 2e0bfd1c). P-06'nın AP-007 v003 setini yeniden dışa aktarması: 3 gövde + 24 modül + 2 rig testi, hepsi yerinde değişti (GUID aynı). Tek yeni kemik `jaw` (Head çocuğu); alt yüz ağırlıkları A/B/C gövdeleri + A2/H2/H4/H6/H7 modüllerinde; dinlenmede deformasyon v003 ile aynı. `AP007-modules.json` depodaki haliyle kaldı (P-06 kopyası şema v002'ydi, looks_24 / secondary_chains yoktu). Klipler çeneyi henüz anahtarlamıyor, bu yüzden `ZombieSkinnedVisual` çeneyi prosedürel sürüyor:
+- boşta 3° ± 2° nefes (spawn başına faz);
+- saldırıda 12°, bite_grab'da 24° (wind-up'tan hit_window_start + 0,3 s'ye kadar);
+- ölümde 14° gevşek; elektrik çarpmasında 4–8° titreme;
+- açılma 120°/s, kapanma 60°/s; uzak LOD'da güncellenmez;
+- dinlenme pozu Awake'te bind pozundan alınıyor; eksen karakterin kendi sağı (sol → sağ üst kol; model düğümünün yönüne güvenilmez).
+İleride P-06 kliplerine `jaw_open` eğrisi eklerse bu sürücünün yerine geçer. Testler: ArtCharacter + ArtAnimation 20/20; PlayMode Polish/ReactionsV3/Ragdoll/Animation/Character 28/28 (çene boşta 3,6°, ısırmada 24°, çene baş uzayında 3,4 cm aşağı; ilk koşuda eksen işareti ters çıktı ve düzeltildi).
+
 ## WP-032G — AP-009G v007: Tide Jewel tutuşu (küçük commit)
 
 **Durum:** Tamamlandı (S-06, 2026-09-17, HIZLI HAT §7; taban main `0430fcf`). `AP009_player_sw_hold_jewel_v007.fbx` (61 f döngü, override_upper / upper_body) → `SwHold_3`; `PlayerSkinnedVisual.HoldIndexOf(TideJewel) = 3` (WP-056 usage bus üzerinden), tüm üst-katman tek-atışlar SwHold_3'e de döner; swing klibi yok (Tide çekimi VFX beat'i). Manifest şeması v007 = v006b girdileri + jewel — P-06'nın v007 manifest dışa aktarımı 85 mevcut girdinin layer/mask/weapon/tier/validation alanlarını düşürmüştü (AP-009 export betiği, P-06 notu); FBX'ler v006b'de kaldı. `ClipCount` 86 (oyuncu 42 / zombi 44), karakter FBX envanteri 135. Tek koşu: RunCharacters + EditMode `ArtAnimationTests;ArtCharacterTests` **20/20** + PlayMode `AnimationSpecialTests` **2/2**; build S-02 WP-059C (AP-014D) entegrasyonuyla.

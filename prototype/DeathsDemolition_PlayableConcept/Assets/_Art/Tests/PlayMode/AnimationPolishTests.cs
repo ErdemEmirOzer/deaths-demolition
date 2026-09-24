@@ -350,6 +350,38 @@ namespace DD.Art.Tests.PlayMode
 
 
 
+        // ============================================================ jaw (AP-022 zombie rig v002)
+
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Cene_RigV002_BosktaAz_IsirmadaAcilir_CeneAsagiIner()
+        {
+            // WP-071 K10: the zombie's only rig v002 bone. Idle a few degrees, bite_grab wide, the chin goes DOWN in head space.
+            yield return MainMenu();
+            CharacterAnimatorLod.ForceFar = 0;
+            ZombieSkinnedVisual v = ZombieOnStage(Vector3.zero, Quaternion.identity, 7u);
+            Assert.IsNotNull(v.Jaw, "rig v002 jaw kemiği yok");
+            for (int i = 0; i < 40; i++) yield return null;
+            float idle = v.JawDegrees;
+            Transform head = v.Animator.GetBoneTransform(HumanBodyBones.Head), jaw = v.Jaw;
+            Vector3 chinJaw = jaw.InverseTransformPoint(jaw.position + v.transform.forward * 0.1f);
+            Vector3 chinIdle = head.InverseTransformPoint(jaw.TransformPoint(chinJaw));
+            Vector3 downHead = head.InverseTransformDirection(Vector3.down).normalized;
+            v.PlayAttack(ZombieAttackStyle.BiteGrab, 0.55f);
+            float peak = 0f; Vector3 chinPeak = chinIdle;
+            for (float t = 0f; t < 0.8f; t += Time.deltaTime)
+            {
+                yield return null;
+                if (v.JawDegrees > peak) { peak = v.JawDegrees; chinPeak = head.InverseTransformPoint(jaw.TransformPoint(chinJaw)); }
+            }
+
+            float drop = Vector3.Dot(chinPeak - chinIdle, downHead) * head.lossyScale.y;
+            Debug.Log("[DD-TEST] wp071.jaw idle=" + idle.ToString("F1", CultureInfo.InvariantCulture) + "° bitePeak=" + peak.ToString("F1", CultureInfo.InvariantCulture) + "° chinDrop=" + (drop * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm");
+            Assert.That(idle, Is.InRange(0.5f, ZombieSkinnedVisual.JawIdle + ZombieSkinnedVisual.JawBreath + 0.1f), "boşta az açık");
+            Assert.Greater(peak, ZombieSkinnedVisual.JawBite - 2f, "ısırmada geniş açık");
+            Assert.Greater(drop, 0.01f, "çene baş uzayında aşağı iner (eksen işareti)");
+        }
+
         // ============================================================ telegraph bridge (DEC-029 untouched)
 
         [UnityTest]

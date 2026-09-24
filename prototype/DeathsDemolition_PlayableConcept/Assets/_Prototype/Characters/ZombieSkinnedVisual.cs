@@ -354,6 +354,21 @@ namespace DD.Prototype.Characters
                     () => _speed01 > 0.2f && _lastRate <= CadenceBand.LockMaxRate);   // WP-071: foot lock only where the cadence is honest
             }
 
+            // WP-071 AP-022 zombie rig v002: the jaw (Head child, not in the human map, never keyed) — rest captured once
+            if (_jaw == null)
+            {
+                Transform head = HumanoidBones.Bone(_animator, HumanBodyBones.Head);
+                _jaw = head != null ? head.Find("jaw") : null;
+                if (_jaw != null)
+                {
+                    _jawRest = _jaw.localRotation;
+                    // bind pose: the character's own right (left → right upper arm; the model node's transform may face either way)
+                    Transform l = HumanoidBones.Bone(_animator, HumanBodyBones.LeftUpperArm), r = HumanoidBones.Bone(_animator, HumanBodyBones.RightUpperArm);
+                    Vector3 right = l != null && r != null ? (r.position - l.position).normalized : transform.right;
+                    _jawAxis = Quaternion.Inverse(head.rotation) * right;
+                }
+            }
+
             // WP-071 B2: procedural lean (accel / turn) on the spine, near bodies only
             if (_lean == null) _lean = _animator.GetComponent<LocomotionLean>() ?? _animator.gameObject.AddComponent<LocomotionLean>();
             _lean.Configure(HumanoidBones.Bone(_animator, HumanBodyBones.Spine), transform, () => _authored && !_dying && !_rising && (_lod == null || !_lod.Far));
@@ -543,9 +558,32 @@ namespace DD.Prototype.Characters
             if (_rdBones[5] != null) _rdBones[5].rotation = Quaternion.AngleAxis(-a * 1.5f, transform.forward) * _rdBones[5].rotation;
         }
 
+        [PrototypeOnly(PendingDecisions.None, "WP-071 zombie jaw (rig v002): open degrees — idle base + breath, attack, bite, dying slack, electro; open / close rate deg/s; the attack hold past hit_window_start (s). Invented / K10.", true)]
+        public const float JawIdle = 3f, JawBreath = 2f, JawAttack = 12f, JawBite = 24f, JawDying = 14f, JawElectro = 8f, JawOpenRate = 120f, JawCloseRate = 60f, JawAttackHold = 0.3f;
+        private Transform _jaw;
+        private Quaternion _jawRest;
+        private Vector3 _jawAxis;
+        private float _jawDegrees, _jawAttackUntil, _jawAttackDegrees, _jawPhase;
+        /// <summary>WP-071: current jaw opening (degrees; 0 = rest). Transform of the rig's jaw, null on a v003 rig.</summary>
+        public float JawDegrees => _jawDegrees;
+        public Transform Jaw => _jaw;
+
+        private void JawUpdate()
+        {
+            if (_jaw == null || !_authored || (_lod != null && _lod.Far)) return;
+            float t = Time.time, dt = Time.deltaTime;
+            float target = _dying ? JawDying
+                : _special == ZombieSpecialVisual.Electrocuted ? JawElectro * (0.5f + 0.5f * Mathf.Abs(Mathf.Sin(_spasmClock * SpasmHz * 5.236f)))
+                : t < _jawAttackUntil ? _jawAttackDegrees
+                : JawIdle + JawBreath * Mathf.Sin(t * 1.7f + _jawPhase);
+            _jawDegrees = Mathf.MoveTowards(_jawDegrees, target, (target > _jawDegrees ? JawOpenRate : JawCloseRate) * dt);
+            _jaw.localRotation = Quaternion.AngleAxis(_jawDegrees, _jawAxis) * _jawRest;
+        }
+
         private void LateUpdate()
         {
             Spasm();
+            JawUpdate();
             if (_deathClock < 0f) return;
             float dt = Time.deltaTime;
             if (_ragdoll != null)
@@ -861,6 +899,10 @@ namespace DD.Prototype.Characters
             // write the pose NOW, so the bone-mounted gameplay nodes are valid on the spawn frame.
             // WP-071 III A2.5 gait profile: a deterministic per-spawn cadence spread and cycle phase (the crowd is out of step)
             int g = s_gaitOrdinal++;
+            _jawPhase = g * 2.39996f;
+            _jawAttackUntil = 0f;
+            _jawDegrees = 0f;
+            if (_jaw != null) _jaw.localRotation = _jawRest;
             _gaitMul = 1f + GaitVariety * GaitSpread * (Mathf.Repeat(g * 0.381966f, 1f) * 2f - 1f);
             _lastRate = 1f;
             if (_lean != null) _lean.ResetLean();
@@ -918,6 +960,8 @@ namespace DD.Prototype.Characters
             float windowStart = WindowStartSeconds(clipName);
             float rate = telegraphSeconds > 0.01f && windowStart > 0.01f ? windowStart / telegraphSeconds : 1f;
             rate = Mathf.Clamp(rate, 0.25f, 4f);
+            _jawAttackDegrees = style == ZombieAttackStyle.BiteGrab ? JawBite : JawAttack;
+            _jawAttackUntil = Time.time + (windowStart > 0.01f ? windowStart / rate : telegraphSeconds) + JawAttackHold;
             _windowOpen = false;
             _animator.SetInteger(AttackStyleId, index);
             _animator.SetBool(AttackMirrorId, mirror);   // swipe_L as a mirror only on a set without the AP-022 clip
