@@ -1,0 +1,1890 @@
+{
+  "weapon.class.ar": {
+    "en": "ASSAULT RIFLE",
+    "tr": "SALDIRI TÜFEĞİ"
+  },
+  "weapon.class.smg": {
+    "en": "SUBMACHINE GUN",
+    "tr": "MAKİNELİ TABANCA"
+  },
+  "weapon.class.sg": {
+    "en": "SHOTGUN",
+    "tr": "POMPALI"
+  },
+  "weapon.class.lmg": {
+    "en": "LIGHT MACHINE GUN",
+    "tr": "HAFİF MAKİNELİ TÜFEK"
+  },
+  "weapon.class.sr": {
+    "en": "SNIPER RIFLE",
+    "tr": "KESKİN NİŞANCI TÜFEĞİ"
+  },
+  "weapon.class.rl": {
+    "en": "LAUNCHER",
+    "tr": "ROKETATAR"
+  },
+  "weapon.class.sw": {
+    "en": "SPECIAL WEAPON",
+    "tr": "ÖZEL SİLAH"
+  },
+  "weapon.firemode.auto": {
+    "en": "AUTO",
+    "tr": "OTOMATİK"
+  },
+  "weapon.firemode.burst": {
+    "en": "BURST ×{count}",
+    "tr": "SALVO ×{count}"
+  },
+  "weapon.firemode.pump": {
+    "en": "PUMP",
+    "tr": "POMPA"
+  },
+  "weapon.firemode.double": {
+    "en": "DOUBLE BARREL",
+    "tr": "ÇİFTE NAMLU"
+  },
+  "weapon.firemode.bolt": {
+    "en": "BOLT",
+    "tr": "SÜRGÜ"
+  },
+  "weapon.firemode.single": {
+    "en": "SINGLE",
+    "tr": "TEK ATIŞ"
+  },
+  "weapon.firemode.charge": {
+    "en": "CHARGE",
+    "tr": "ŞARJ"
+  },
+  "weapon.firemode.lob": {
+    "en": "LOB",
+    "tr": "YAY ATIŞ"
+  },
+  "stat.damage": {
+    "en": "DAMAGE",
+    "tr": "HASAR"
+  },
+  "stat.pellets": {
+    "en": "PELLETS",
+    "tr": "SAÇMA"
+  },
+  "stat.fire_rate": {
+    "en": "FIRE RATE",
+    "tr": "ATIŞ HIZI"
+  },
+  "stat.magazine": {
+    "en": "MAGAZINE",
+    "tr": "ŞARJÖR"
+  },
+  "stat.reserve": {
+    "en": "RESERVE",
+    "tr": "YEDEK"
+  },
+  "stat.reload": {
+    "en": "RELOAD",
+    "tr": "DOLUM"
+  },
+  "stat.range": {
+    "en": "RANGE",
+    "tr": "MENZİL"
+  },
+  "stat.accuracy": {
+    "en": "ACCURACY",
+    "tr": "İSABET"
+  },
+  "stat.handling": {
+    "en": "HANDLING",
+    "tr": "KULLANIM"
+  },
+  "stat.stagger": {
+    "en": "STAGGER",
+    "tr": "SENDELETME"
+  },
+  "stat.penetration": {
+    "en": "PENETRATION",
+    "tr": "DELME"
+  },
+  "stat.armour": {
+    "en": "VS ARMOUR",
+    "tr": "ZIRHA KARŞI"
+  },
+  "stat.headshot": {
+    "en": "HEADSHOT",
+    "tr": "KAFA ATIŞI"
+  },
+  "stat.velocity": {
+    "en": "SHOT SPEED",
+    "tr": "MERMİ HIZI"
+  },
+  "stat.blast_radius": {
+    "en": "BLAST RADIUS",
+    "tr": "PATLAMA ÇAPI"
+  },
+  "stat.self_damage": {
+    "en": "SELF DAMAGE",
+    "tr": "KENDİNE HASAR"
+  },
+  "stat.chain": {
+    "en": "CHAIN TARGETS",
+    "tr": "ZİNCİR HEDEF"
+  },
+  "stat.puddle": {
+    "en": "PUDDLE TIME",
+    "tr": "BİRİKİNTİ SÜRESİ"
+  },
+  "stat.charge": {
+    "en": "CHARGE",
+    "tr": "ŞARJ"
+  },
+  "stat.time_cap": {
+    "en": "TIME LIMIT",
+    "tr": "SÜRE SINIRI"
+  },
+  "stat.fmt.rpm": {
+    "en": "{value} RPM",
+    "tr": "{value} RPM"
+  },
+  "stat.fmt.seconds": {
+    "en": "{value} s",
+    "tr": "{value} sn"
+  },
+  "stat.fmt.metres": {
+    "en": "{value} m",
+    "tr": "{value} m"
+  },
+  "stat.fmt.mag_reserve": {
+    "en": "{value} / {reserve}",
+    "tr": "{value} / {reserve}"
+  },
+  "stat.fmt.pellets": {
+    "en": "{value} × {pellets}",
+    "tr": "{value} × {pellets}"
+  },
+  "stat.fmt.bodies": {
+    "en": "{value} BODIES",
+    "tr": "{value} GÖVDE"
+  },
+  "stat.fmt.multiplier": {
+    "en": "×{value}",
+    "tr": "×{value}"
+  },
+  "stat.fmt.before_after": {
+    "en": "{label} {before} → {after}",
+    "tr": "{label} {before} → {after}"
+  },
+  "weapon.ar_1.name": {
+    "en": "Hinawa",
+    "tr": "Hinawa"
+  },
+  "weapon.ar_1.class": {
+    "en": "ASSAULT RIFLE",
+    "tr": "SALDIRI TÜFEĞİ"
+  },
+  "weapon.ar_1.firemode": {
+    "en": "AUTO",
+    "tr": "OTOMATİK"
+  },
+  "weapon.ar_1.role": {
+    "en": "Steady pressure at any range",
+    "tr": "Her menzilde sürekli baskı"
+  },
+  "weapon.ar_1.desc": {
+    "en": "A matchlock rifle that keeps firing while the trigger is held. It is never the best answer and never a wrong one.",
+    "tr": "Tetik basılı kaldıkça ateş eden fitilli bir tüfek. Hiçbir zaman en iyi cevap değildir, hiçbir zaman yanlış da."
+  },
+  "weapon.ar_1.flavor": {
+    "en": "The cord burns down. The rhythm stays.",
+    "tr": "Fitil kısalır. Ritim kalır."
+  },
+  "weapon.ar_2.name": {
+    "en": "Sanren",
+    "tr": "Sanren"
+  },
+  "weapon.ar_2.class": {
+    "en": "ASSAULT RIFLE",
+    "tr": "SALDIRI TÜFEĞİ"
+  },
+  "weapon.ar_2.firemode": {
+    "en": "BURST ×{count}",
+    "tr": "SALVO ×{count}"
+  },
+  "weapon.ar_2.role": {
+    "en": "Three-round burst for the head",
+    "tr": "Kafaya üç mermilik salvo"
+  },
+  "weapon.ar_2.desc": {
+    "en": "Each pull fires a tight burst of three. It pays more for a headshot than any other rifle and bites into armour.",
+    "tr": "Her tetik üç mermilik sıkı bir salvo atar. Kafa isabetini her tüfekten fazla ödüllendirir ve zırhı ısırır."
+  },
+  "weapon.ar_2.flavor": {
+    "en": "One breath, three answers.",
+    "tr": "Tek nefes, üç cevap."
+  },
+  "weapon.smg_1.name": {
+    "en": "Shippu",
+    "tr": "Shippu"
+  },
+  "weapon.smg_1.class": {
+    "en": "SUBMACHINE GUN",
+    "tr": "MAKİNELİ TABANCA"
+  },
+  "weapon.smg_1.firemode": {
+    "en": "AUTO",
+    "tr": "OTOMATİK"
+  },
+  "weapon.smg_1.role": {
+    "en": "Close-range volume on the move",
+    "tr": "Hareket hâlinde yakın hacim"
+  },
+  "weapon.smg_1.desc": {
+    "en": "A light repeater that pours out shots and barely slows your feet. Plates shrug its rounds off, so pick the bare targets.",
+    "tr": "Mermi yağdıran, adımını neredeyse hiç yavaşlatmayan hafif bir tekrarlı. Plakalar mermisini siler; zırhsız hedefleri seç."
+  },
+  "weapon.smg_1.flavor": {
+    "en": "Keep moving. The rain does.",
+    "tr": "Durma. Yağmur da durmuyor."
+  },
+  "weapon.smg_2.name": {
+    "en": "Tetsui",
+    "tr": "Tetsui"
+  },
+  "weapon.smg_2.class": {
+    "en": "SUBMACHINE GUN",
+    "tr": "MAKİNELİ TABANCA"
+  },
+  "weapon.smg_2.firemode": {
+    "en": "AUTO",
+    "tr": "OTOMATİK"
+  },
+  "weapon.smg_2.role": {
+    "en": "Stops a Runner in its tracks",
+    "tr": "Runner'ı yerinde durdurur"
+  },
+  "weapon.smg_2.desc": {
+    "en": "Heavy pistol rounds at a measured pace. Every hit shoves the target back, and a Runner hit in quick succession stops running.",
+    "tr": "Ölçülü hızda ağır tabanca mermisi. Her isabet hedefi geri iter; art arda vurulan Runner koşmayı bırakır."
+  },
+  "weapon.smg_2.flavor": {
+    "en": "Each hit a nail. Each nail driven home.",
+    "tr": "Her vuruş bir çivi. Her çivi yerine."
+  },
+  "weapon.sg_1.name": {
+    "en": "Rappa",
+    "tr": "Rappa"
+  },
+  "weapon.sg_1.class": {
+    "en": "SHOTGUN",
+    "tr": "POMPALI"
+  },
+  "weapon.sg_1.firemode": {
+    "en": "PUMP",
+    "tr": "POMPA"
+  },
+  "weapon.sg_1.role": {
+    "en": "Clears the cone in front of you",
+    "tr": "Önündeki koniyi temizler"
+  },
+  "weapon.sg_1.desc": {
+    "en": "A bell-mouthed pump gun that throws a wide handful of shot. It loads shell by shell, and firing stops the reload with the loaded shells kept.",
+    "tr": "Geniş bir avuç saçma savuran, çan ağızlı bir pompalı. Fişekleri tek tek doldurur; ateş etmek dolumu keser, giren fişekler kalır."
+  },
+  "weapon.sg_1.flavor": {
+    "en": "Close enough to hear them breathe.",
+    "tr": "Nefeslerini duyacak kadar yakın."
+  },
+  "weapon.sg_2.name": {
+    "en": "Nito",
+    "tr": "Nito"
+  },
+  "weapon.sg_2.class": {
+    "en": "SHOTGUN",
+    "tr": "POMPALI"
+  },
+  "weapon.sg_2.firemode": {
+    "en": "DOUBLE BARREL",
+    "tr": "ÇİFTE NAMLU"
+  },
+  "weapon.sg_2.role": {
+    "en": "Two barrels, then you are open",
+    "tr": "İki namlu, sonra açıktasın"
+  },
+  "weapon.sg_2.desc": {
+    "en": "A break-action double that empties both barrels in a heartbeat, the hardest single blow in the arsenal. Then it must be broken open and reloaded while the crowd closes in.",
+    "tr": "İki namluyu bir anda boşaltan kırma çifte; cephaneliğin en sert tek darbesi. Sonra kalabalık yaklaşırken kırılıp doldurulmalıdır."
+  },
+  "weapon.sg_2.flavor": {
+    "en": "Both blades drawn. There is no third.",
+    "tr": "İki kılıç çekildi. Üçüncüsü yok."
+  },
+  "weapon.lmg_1.name": {
+    "en": "Mukade",
+    "tr": "Mukade"
+  },
+  "weapon.lmg_1.class": {
+    "en": "LIGHT MACHINE GUN",
+    "tr": "HAFİF MAKİNELİ TÜFEK"
+  },
+  "weapon.lmg_1.firemode": {
+    "en": "AUTO",
+    "tr": "OTOMATİK"
+  },
+  "weapon.lmg_1.role": {
+    "en": "Holds a corridor on one box",
+    "tr": "Tek kutuyla koridor tutar"
+  },
+  "weapon.lmg_1.desc": {
+    "en": "A belt-fed gun with a deep ammunition box that keeps a lane shut for a long time. It is heavy to move and slow to reload.",
+    "tr": "Derin cephane kutulu, şeritli bir silah; bir hattı uzun süre kapalı tutar. Taşıması ağır, doldurması yavaştır."
+  },
+  "weapon.lmg_1.flavor": {
+    "en": "A hundred legs, all marching one way.",
+    "tr": "Yüz bacak, hepsi tek yöne."
+  },
+  "weapon.lmg_2.name": {
+    "en": "Kurogane",
+    "tr": "Kurogane"
+  },
+  "weapon.lmg_2.class": {
+    "en": "LIGHT MACHINE GUN",
+    "tr": "HAFİF MAKİNELİ TÜFEK"
+  },
+  "weapon.lmg_2.firemode": {
+    "en": "AUTO",
+    "tr": "OTOMATİK"
+  },
+  "weapon.lmg_2.role": {
+    "en": "Breaks armour, settles in",
+    "tr": "Zırh kırar, ateşte oturur"
+  },
+  "weapon.lmg_2.desc": {
+    "en": "Its first shots scatter, then the barrel settles and every round flies true. Each round punches through armour and into the body behind.",
+    "tr": "İlk atışları dağılır; sonra namlu oturur ve her mermi dosdoğru gider. Her mermi zırhı deler, arkadaki gövdeye geçer."
+  },
+  "weapon.lmg_2.flavor": {
+    "en": "Iron does not hurry. Iron arrives.",
+    "tr": "Demir acele etmez. Demir varır."
+  },
+  "weapon.sr_1.name": {
+    "en": "Tomi",
+    "tr": "Tomi"
+  },
+  "weapon.sr_1.class": {
+    "en": "SNIPER RIFLE",
+    "tr": "KESKİN NİŞANCI TÜFEĞİ"
+  },
+  "weapon.sr_1.firemode": {
+    "en": "BOLT",
+    "tr": "SÜRGÜ"
+  },
+  "weapon.sr_1.role": {
+    "en": "One shot through the whole line",
+    "tr": "Tek atış, bütün sıra"
+  },
+  "weapon.sr_1.desc": {
+    "en": "A long bolt-action rifle that drives each shot through several bodies in a row. From the hip it is almost useless; aimed, it rarely misses.",
+    "tr": "Her atışı art arda birkaç gövdeden geçiren uzun, sürgülü bir tüfek. Kalçadan neredeyse işe yaramaz; nişanlıyken nadiren ıskalar."
+  },
+  "weapon.sr_1.flavor": {
+    "en": "Silence first. Then the slap.",
+    "tr": "Önce sessizlik. Sonra tokat."
+  },
+  "weapon.rl_1.name": {
+    "en": "Bohiya",
+    "tr": "Bohiya"
+  },
+  "weapon.rl_1.class": {
+    "en": "LAUNCHER",
+    "tr": "ROKETATAR"
+  },
+  "weapon.rl_1.firemode": {
+    "en": "SINGLE",
+    "tr": "TEK ATIŞ"
+  },
+  "weapon.rl_1.role": {
+    "en": "Area blast for packed crowds",
+    "tr": "Kalabalığa alan patlaması"
+  },
+  "weapon.rl_1.desc": {
+    "en": "A shoulder tube that launches a fire arrow, which speeds up in flight and bursts on contact. Too close and it will not arm; a little further and the blast reaches you too.",
+    "tr": "Uçarken hızlanan ve temasta patlayan bir ateş oku fırlatan omuz borusu. Çok yakında kurulmaz; biraz uzakta ise patlama sana da ulaşır."
+  },
+  "weapon.rl_1.flavor": {
+    "en": "Light the fuse. Step back.",
+    "tr": "Fitili yak. Geri çekil."
+  },
+  "weapon.sw_arc.name": {
+    "en": "Raiju",
+    "tr": "Raiju"
+  },
+  "weapon.sw_arc.class": {
+    "en": "SPECIAL WEAPON",
+    "tr": "ÖZEL SİLAH"
+  },
+  "weapon.sw_arc.firemode": {
+    "en": "CHARGE",
+    "tr": "ŞARJ"
+  },
+  "weapon.sw_arc.role": {
+    "en": "Chain lightning through a crowd",
+    "tr": "Kalabalıkta zincir yıldırım"
+  },
+  "weapon.sw_arc.desc": {
+    "en": "A charged orb that kills what it strikes, then leaps to the nearest untouched enemy, again and again. Stand too near the chain and it bites you as well.",
+    "tr": "Çarptığını öldüren, sonra en yakın dokunulmamış düşmana tekrar tekrar sıçrayan şarjlı bir küre. Zincire fazla yakın durursan seni de çarpar."
+  },
+  "weapon.sw_arc.flavor": {
+    "en": "The thunder beast does not choose. It spreads.",
+    "tr": "Yıldırım canavarı seçmez. Yayılır."
+  },
+  "weapon.sw_gel.name": {
+    "en": "Namekuji",
+    "tr": "Namekuji"
+  },
+  "weapon.sw_gel.class": {
+    "en": "SPECIAL WEAPON",
+    "tr": "ÖZEL SİLAH"
+  },
+  "weapon.sw_gel.firemode": {
+    "en": "LOB",
+    "tr": "YAY ATIŞ"
+  },
+  "weapon.sw_gel.role": {
+    "en": "Slick gel that topples the crowd",
+    "tr": "Kalabalığı deviren kaygan jel"
+  },
+  "weapon.sw_gel.desc": {
+    "en": "Lobs a violet gel that spreads into a slick puddle where it lands. Enemies that step in slip and do not get up, and every fall leaves more gel.",
+    "tr": "Düştüğü yerde kaygan bir birikintiye yayılan mor bir jel fırlatır. İçine basan düşmanlar kayar ve kalkmaz; her düşüş yeni jel bırakır."
+  },
+  "weapon.sw_gel.flavor": {
+    "en": "The slug leaves a trail. The trail does the rest.",
+    "tr": "Sümüklü iz bırakır. Gerisini iz yapar."
+  },
+  "tree.kind.Tier": {
+    "en": "TIER",
+    "tr": "KADEME"
+  },
+  "tree.kind.BranchKeystone": {
+    "en": "KEYSTONE",
+    "tr": "KİLİT TAŞI"
+  },
+  "tree.kind.Fork": {
+    "en": "FORK",
+    "tr": "KAVŞAK"
+  },
+  "tree.kind.WeaponSeal": {
+    "en": "SEAL",
+    "tr": "MÜHÜR"
+  },
+  "tree.kind.Capstone": {
+    "en": "CAPSTONE",
+    "tr": "DORUK"
+  },
+  "tree.kind.SpecialLink": {
+    "en": "SPECIAL LINK",
+    "tr": "ÖZEL BAĞ"
+  },
+  "tree.kind.Hearth": {
+    "en": "HEARTH",
+    "tr": "OCAK"
+  },
+  "tree.kind.Purse": {
+    "en": "PURSE",
+    "tr": "KESE"
+  },
+  "tree.lane.weapon": {
+    "en": "WEAPON",
+    "tr": "SİLAH"
+  },
+  "tree.lane.body": {
+    "en": "BODY",
+    "tr": "BEDEN"
+  },
+  "tree.state.locked": {
+    "en": "LOCKED",
+    "tr": "KİLİTLİ"
+  },
+  "tree.state.prereq_missing": {
+    "en": "NEEDS {node}",
+    "tr": "ÖNCE {node}"
+  },
+  "tree.state.available": {
+    "en": "AVAILABLE",
+    "tr": "ALINABİLİR"
+  },
+  "tree.state.unaffordable": {
+    "en": "{value} GOLD SHORT",
+    "tr": "{value} ALTIN EKSİK"
+  },
+  "tree.state.purchased": {
+    "en": "OWNED",
+    "tr": "ALINDI"
+  },
+  "tree.state.excluded": {
+    "en": "CLOSED BY {node}",
+    "tr": "{node} KAPATTI"
+  },
+  "tree.state.max_tier": {
+    "en": "MAX",
+    "tr": "AZAMİ"
+  },
+  "tree.flag.new": {
+    "en": "NEW",
+    "tr": "YENİ"
+  },
+  "tree.flag.pinned": {
+    "en": "PINNED",
+    "tr": "İŞARETLİ"
+  },
+  "tree.flag.not_offered": {
+    "en": "NOT IN THIS OFFER",
+    "tr": "BU TEKLİFTE YOK"
+  },
+  "tree.action.pin": {
+    "en": "PIN",
+    "tr": "İŞARETLE"
+  },
+  "tree.action.unpin": {
+    "en": "UNPIN",
+    "tr": "İŞARETİ KALDIR"
+  },
+  "tree.action.stoke": {
+    "en": "STOKE THE HEARTH",
+    "tr": "OCAĞI YAK"
+  },
+  "tree.action.undo": {
+    "en": "UNDO LAST",
+    "tr": "SONUNCUYU GERİ AL"
+  },
+  "tree.action.reforge": {
+    "en": "REFORGE",
+    "tr": "YENİDEN DÖV"
+  },
+  "tree.hearth.count": {
+    "en": "HEARTH {value} / {max}",
+    "tr": "OCAK {value} / {max}"
+  },
+  "tree.hearth.round": {
+    "en": "{value} of {max} stokes this round",
+    "tr": "Bu round {max} yakıştan {value}"
+  },
+  "tree.pin.caption": {
+    "en": "A pinned node comes in the next offer once it is reachable.",
+    "tr": "İşaretli düğüm erişilebilir olunca sonraki teklifte gelir."
+  },
+  "tree.undo.caption": {
+    "en": "Full refund. Available until you continue.",
+    "tr": "Tam iade. Devam edene kadar geçerli."
+  },
+  "tree.reforge.caption": {
+    "en": "Swap this fork's side once per run. The new side is paid in full.",
+    "tr": "Bu kavşağın tarafını koşuda bir kez değiştir. Yeni taraf tam ödenir."
+  },
+  "tree.fork.closed": {
+    "en": "Taking one side closes the other for this run.",
+    "tr": "Bir tarafı almak diğerini bu koşu için kapatır."
+  },
+  "tree.path_total": {
+    "en": "Path total {value} gold",
+    "tr": "Yol toplamı {value} altın"
+  },
+  "tree.run.branch.piercing.name": {
+    "en": "Piercing",
+    "tr": "Delme"
+  },
+  "tree.run.branch.piercing.desc": {
+    "en": "Pierce count +{value}.",
+    "tr": "Delme sayısı +{value}."
+  },
+  "tree.run.branch.ricochet.name": {
+    "en": "Ricochet",
+    "tr": "Sekme"
+  },
+  "tree.run.branch.ricochet.desc": {
+    "en": "Ricochet count +{value}.",
+    "tr": "Sekme sayısı +{value}."
+  },
+  "tree.run.branch.explosion.name": {
+    "en": "Explosion",
+    "tr": "Patlama"
+  },
+  "tree.run.branch.explosion.desc": {
+    "en": "{value}% chance that a hit detonates.",
+    "tr": "İsabetin patlama şansı %{value}."
+  },
+  "tree.run.branch.blast.name": {
+    "en": "Blast",
+    "tr": "Patlama Gücü"
+  },
+  "tree.run.branch.blast.desc": {
+    "en": "Blast radius +{radius} m, blast damage +{value}%.",
+    "tr": "Patlama çapı +{radius} m, patlama hasarı +%{value}."
+  },
+  "tree.run.branch.chain.name": {
+    "en": "Chain",
+    "tr": "Zincir"
+  },
+  "tree.run.branch.chain.desc": {
+    "en": "Chain jumps +{value}.",
+    "tr": "Zincir sıçraması +{value}."
+  },
+  "tree.run.branch.fire_rate.name": {
+    "en": "Fire Rate",
+    "tr": "Atış Hızı"
+  },
+  "tree.run.branch.fire_rate.desc": {
+    "en": "Fire rate +{value}%.",
+    "tr": "Atış hızı +%{value}."
+  },
+  "tree.run.branch.reload_speed.name": {
+    "en": "Reload Speed",
+    "tr": "Dolum Hızı"
+  },
+  "tree.run.branch.reload_speed.desc": {
+    "en": "Reload time −{value}%.",
+    "tr": "Dolum süresi −%{value}."
+  },
+  "tree.run.branch.armor_break.name": {
+    "en": "Armour Break",
+    "tr": "Zırh Kırma"
+  },
+  "tree.run.branch.armor_break.desc": {
+    "en": "Damage against armour +{value}%.",
+    "tr": "Zırha karşı hasar +%{value}."
+  },
+  "tree.run.branch.impact.name": {
+    "en": "Impact",
+    "tr": "Darbe"
+  },
+  "tree.run.branch.impact.desc": {
+    "en": "Stagger +{value} per hit.",
+    "tr": "İsabet başına sendeletme +{value}."
+  },
+  "tree.run.branch.cluster.name": {
+    "en": "Cluster",
+    "tr": "Salkım"
+  },
+  "tree.run.branch.cluster.desc": {
+    "en": "The rocket scatters {count} bomblets, {value} damage each.",
+    "tr": "Roket her biri {value} hasarlı {count} bombacık saçar."
+  },
+  "tree.run.key.piercing.name": {
+    "en": "Clean Line",
+    "tr": "Hat"
+  },
+  "tree.run.key.piercing.desc": {
+    "en": "Piercing loses no damage through the first {count} bodies.",
+    "tr": "Delme, ilk {count} gövdede hasar kaybetmez."
+  },
+  "tree.run.key.ricochet.name": {
+    "en": "Ricochet Master",
+    "tr": "Sekme Ustası"
+  },
+  "tree.run.key.ricochet.desc": {
+    "en": "Ricochets turn to the nearest enemy instead of a random one.",
+    "tr": "Sekmeler rastgele değil, en yakın düşmana yönelir."
+  },
+  "tree.run.key.explosion.name": {
+    "en": "Ash Cloud",
+    "tr": "Kül Bulutu"
+  },
+  "tree.run.key.explosion.desc": {
+    "en": "Explosions leave ground that burns for {seconds} s at {value}% of the blast per second.",
+    "tr": "Patlamalar {seconds} sn yanan bir alan bırakır; saniyede patlamanın %{value}'i."
+  },
+  "tree.run.key.chain.name": {
+    "en": "Web",
+    "tr": "Ağ"
+  },
+  "tree.run.key.chain.desc": {
+    "en": "The chain's first jump splits in {count}.",
+    "tr": "Zincirin ilk sıçraması {count}'ye çatallanır."
+  },
+  "tree.run.key.fire_rate.name": {
+    "en": "Warm-Up",
+    "tr": "Isınma"
+  },
+  "tree.run.key.fire_rate.desc": {
+    "en": "Hold the trigger for {seconds} s and fire rate rises by {value}%.",
+    "tr": "Tetiği {seconds} sn basılı tut; atış hızı %{value} artar."
+  },
+  "tree.run.key.reload_speed.name": {
+    "en": "Brimming Magazine",
+    "tr": "Dolu Şarjör"
+  },
+  "tree.run.key.reload_speed.desc": {
+    "en": "A reload from empty fills that magazine {value}% past full.",
+    "tr": "Boş şarjörden dolum, o şarjörü %{value} fazla doldurur."
+  },
+  "tree.run.key.armor_break.name": {
+    "en": "Plate Splitter",
+    "tr": "Zırh Sökücü"
+  },
+  "tree.run.key.armor_break.desc": {
+    "en": "The first hit on each armour plate deals ×{value} damage.",
+    "tr": "Her zırh plakasına ilk isabet ×{value} hasar verir."
+  },
+  "tree.run.key.impact.name": {
+    "en": "Off Balance",
+    "tr": "Sendele"
+  },
+  "tree.run.key.impact.desc": {
+    "en": "Staggered targets take {value}% more damage.",
+    "tr": "Sendeleyen hedefler %{value} fazla hasar alır."
+  },
+  "tree.run.key.cluster.name": {
+    "en": "Seeds",
+    "tr": "Tohum"
+  },
+  "tree.run.key.cluster.desc": {
+    "en": "+{count} bomblet. Each one carries your Blast tier.",
+    "tr": "+{count} bombacık. Her biri Patlama Gücü kademeni taşır."
+  },
+  "tree.run.hearth.name": {
+    "en": "Hearth",
+    "tr": "Ocak"
+  },
+  "tree.run.hearth.desc": {
+    "en": "Weapon damage +{value}% per stoke, up to {max} stokes. Bought outside the cards.",
+    "tr": "Her yakışta silah hasarı +%{value}, en çok {max} yakış. Kart dışında alınır."
+  },
+  "tree.run.link.raiju.1.name": {
+    "en": "Conductor",
+    "tr": "İletken"
+  },
+  "tree.run.link.raiju.1.desc": {
+    "en": "While you carry Raiju, your classic weapon's Chain gains +{count} jump.",
+    "tr": "Raiju sendeyken klasik silahının Zinciri +{count} sıçrama kazanır."
+  },
+  "tree.run.link.raiju.2.name": {
+    "en": "Storm",
+    "tr": "Fırtına"
+  },
+  "tree.run.link.raiju.2.desc": {
+    "en": "Each Raiju kill refills {value}% of your classic magazine.",
+    "tr": "Her Raiju öldürmesi klasik şarjörünün %{value}'ini doldurur."
+  },
+  "tree.run.link.namekuji.1.name": {
+    "en": "Slick Ground",
+    "tr": "Kaygan Zemin"
+  },
+  "tree.run.link.namekuji.1.desc": {
+    "en": "Slowed or sliding enemies take {value}% more damage.",
+    "tr": "Yavaşlamış ya da kayan düşmanlar %{value} fazla hasar alır."
+  },
+  "tree.run.link.namekuji.2.name": {
+    "en": "Gel Harvest",
+    "tr": "Donma"
+  },
+  "tree.run.link.namekuji.2.desc": {
+    "en": "An enemy that dies in gel drops +{value} gold.",
+    "tr": "Jelde ölen düşman +{value} altın bırakır."
+  },
+  "tree.run.fork.ar_1.x.name": {
+    "en": "Long Breath",
+    "tr": "Uzun Nefes"
+  },
+  "tree.run.fork.ar_1.x.desc": {
+    "en": "Bloom −{value}%.",
+    "tr": "Yayılma artışı −%{value}."
+  },
+  "tree.run.fork.ar_1.y.name": {
+    "en": "Short Barrel",
+    "tr": "Kısa Namlu"
+  },
+  "tree.run.fork.ar_1.y.desc": {
+    "en": "Fire rate +{value}%, bloom grows faster.",
+    "tr": "Atış hızı +%{value}, yayılma daha hızlı artar."
+  },
+  "tree.run.cap.ar_1.name": {
+    "en": "Ronin's Mark",
+    "tr": "Ronin Nişanı"
+  },
+  "tree.run.cap.ar_1.desc": {
+    "en": "One round in every {count} ignores armour and pierces without limit.",
+    "tr": "Her {count}. mermi zırhı yok sayar ve sınırsız deler."
+  },
+  "tree.run.seal.ar_1.name": {
+    "en": "Kodo",
+    "tr": "Kodo"
+  },
+  "tree.run.seal.ar_1.desc": {
+    "en": "After {count} shots in a row, bloom −{value}%.",
+    "tr": "Art arda {count} atıştan sonra yayılma artışı −%{value}."
+  },
+  "tree.run.fork.ar_2.x.name": {
+    "en": "Tight Burst",
+    "tr": "Sıkı Salvo"
+  },
+  "tree.run.fork.ar_2.x.desc": {
+    "en": "Delay between bursts −{value}%.",
+    "tr": "Salvolar arası bekleme −%{value}."
+  },
+  "tree.run.fork.ar_2.y.name": {
+    "en": "Long Burst",
+    "tr": "Uzun Salvo"
+  },
+  "tree.run.fork.ar_2.y.desc": {
+    "en": "Each burst fires {value} rounds instead of {base}.",
+    "tr": "Her salvo {base} yerine {value} mermi atar."
+  },
+  "tree.run.cap.ar_2.name": {
+    "en": "Third Eye",
+    "tr": "Üçüncü Göz"
+  },
+  "tree.run.cap.ar_2.desc": {
+    "en": "When a burst's third round hits the head, it ricochets on down the line.",
+    "tr": "Salvonun üçüncü mermisi kafaya isabet ederse zincirleme seker."
+  },
+  "tree.run.seal.ar_2.name": {
+    "en": "Kubi",
+    "tr": "Kubi"
+  },
+  "tree.run.seal.ar_2.desc": {
+    "en": "Headshot bonus ×{base} → ×{value}.",
+    "tr": "Kafa isabeti ek çarpanı ×{base} → ×{value}."
+  },
+  "tree.run.fork.smg_1.x.name": {
+    "en": "Twin Grip",
+    "tr": "Çift Kabza"
+  },
+  "tree.run.fork.smg_1.x.desc": {
+    "en": "Magazine ×{value}.",
+    "tr": "Şarjör ×{value}."
+  },
+  "tree.run.fork.smg_1.y.name": {
+    "en": "Hot Barrel",
+    "tr": "Kızgın Namlu"
+  },
+  "tree.run.fork.smg_1.y.desc": {
+    "en": "Warm-Up starts after {seconds} s of fire.",
+    "tr": "Isınma {seconds} sn ateşten sonra başlar."
+  },
+  "tree.run.cap.smg_1.name": {
+    "en": "Lead Rain",
+    "tr": "Kurşun Yağmuru"
+  },
+  "tree.run.cap.smg_1.desc": {
+    "en": "Ricochets bounce {count} times.",
+    "tr": "Sekmeler {count} kez seker."
+  },
+  "tree.run.seal.smg_1.name": {
+    "en": "Kaze",
+    "tr": "Kaze"
+  },
+  "tree.run.seal.smg_1.desc": {
+    "en": "Move speed while firing ×{value}.",
+    "tr": "Ateş ederken hareket hızı ×{value}."
+  },
+  "tree.run.fork.smg_2.x.name": {
+    "en": "Heavy Core",
+    "tr": "Ağır Çekirdek"
+  },
+  "tree.run.fork.smg_2.x.desc": {
+    "en": "Stagger lasts {value}% longer.",
+    "tr": "Sendeleme %{value} uzun sürer."
+  },
+  "tree.run.fork.smg_2.y.name": {
+    "en": "Quick Hammer",
+    "tr": "Hızlı Çekiç"
+  },
+  "tree.run.fork.smg_2.y.desc": {
+    "en": "Fire rate +{value}%.",
+    "tr": "Atış hızı +%{value}."
+  },
+  "tree.run.cap.smg_2.name": {
+    "en": "Lightning Fang",
+    "tr": "Yıldırım Dişi"
+  },
+  "tree.run.cap.smg_2.desc": {
+    "en": "One hit in every {count} on a staggered target is a sure Chain.",
+    "tr": "Sendeleyen hedefe her {count}. isabet kesin Zincir olur."
+  },
+  "tree.run.seal.smg_2.name": {
+    "en": "Tsuchi",
+    "tr": "Tsuchi"
+  },
+  "tree.run.seal.smg_2.desc": {
+    "en": "Stagger {base} → {value}. A Runner hit hard goes down.",
+    "tr": "Sendeletme {base} → {value}. Sert vurulan Runner yere düşer."
+  },
+  "tree.run.fork.sg_1.x.name": {
+    "en": "Tight Choke",
+    "tr": "Sıkı Saçma"
+  },
+  "tree.run.fork.sg_1.x.desc": {
+    "en": "Spread −{value}%.",
+    "tr": "Yayılma −%{value}."
+  },
+  "tree.run.fork.sg_1.y.name": {
+    "en": "Heavy Load",
+    "tr": "Geniş Saçma"
+  },
+  "tree.run.fork.sg_1.y.desc": {
+    "en": "+{count} pellets per shell.",
+    "tr": "Fişek başına +{count} saçma."
+  },
+  "tree.run.cap.sg_1.name": {
+    "en": "Ash Wall",
+    "tr": "Kül Duvarı"
+  },
+  "tree.run.cap.sg_1.desc": {
+    "en": "Shots within {range} m knock enemies back and break {count} plate.",
+    "tr": "{range} m içindeki atış düşmanı geri iter ve {count} plaka kırar."
+  },
+  "tree.run.seal.sg_1.name": {
+    "en": "Manin",
+    "tr": "Manin"
+  },
+  "tree.run.seal.sg_1.desc": {
+    "en": "Pellets {base} → {value}.",
+    "tr": "Saçma {base} → {value}."
+  },
+  "tree.run.fork.sg_2.x.name": {
+    "en": "Fire Mouth",
+    "tr": "Ateş Ağzı"
+  },
+  "tree.run.fork.sg_2.x.desc": {
+    "en": "Close-range damage +{value}%.",
+    "tr": "Yakın mesafe hasarı +%{value}."
+  },
+  "tree.run.fork.sg_2.y.name": {
+    "en": "Quick Break",
+    "tr": "Hızlı Kırma"
+  },
+  "tree.run.fork.sg_2.y.desc": {
+    "en": "Reload time −{value}%.",
+    "tr": "Dolum süresi −%{value}."
+  },
+  "tree.run.cap.sg_2.name": {
+    "en": "Two Swords",
+    "tr": "İki Kılıç"
+  },
+  "tree.run.cap.sg_2.desc": {
+    "en": "When both barrels hit one target, the second shell explodes.",
+    "tr": "İki namlu aynı hedefe isabet ederse ikinci fişek patlar."
+  },
+  "tree.run.seal.sg_2.name": {
+    "en": "Sohatsu",
+    "tr": "Sohatsu"
+  },
+  "tree.run.seal.sg_2.desc": {
+    "en": "Both barrels fire on one pull, {count} pellets at once.",
+    "tr": "Tek tetikte iki namlu birden, aynı anda {count} saçma."
+  },
+  "tree.run.fork.lmg_1.x.name": {
+    "en": "Bipod",
+    "tr": "Sehpa"
+  },
+  "tree.run.fork.lmg_1.x.desc": {
+    "en": "Damage +{value}% while standing still.",
+    "tr": "Dururken hasar +%{value}."
+  },
+  "tree.run.fork.lmg_1.y.name": {
+    "en": "Sling",
+    "tr": "Kayış"
+  },
+  "tree.run.fork.lmg_1.y.desc": {
+    "en": "No move speed penalty while firing.",
+    "tr": "Ateş ederken hareket cezası yok."
+  },
+  "tree.run.cap.lmg_1.name": {
+    "en": "Unbroken",
+    "tr": "Kesintisiz"
+  },
+  "tree.run.cap.lmg_1.desc": {
+    "en": "After {count} hits, no reload is needed for {seconds} s.",
+    "tr": "{count} isabetten sonra {seconds} sn dolum gerekmez."
+  },
+  "tree.run.seal.lmg_1.name": {
+    "en": "Nagaya",
+    "tr": "Nagaya"
+  },
+  "tree.run.seal.lmg_1.desc": {
+    "en": "Magazine {base} → {value}.",
+    "tr": "Şarjör {base} → {value}."
+  },
+  "tree.run.fork.lmg_2.x.name": {
+    "en": "Hot Box",
+    "tr": "Kızgın Kutu"
+  },
+  "tree.run.fork.lmg_2.x.desc": {
+    "en": "Fire rate +{value}%.",
+    "tr": "Atış hızı +%{value}."
+  },
+  "tree.run.fork.lmg_2.y.name": {
+    "en": "Cold Barrel",
+    "tr": "Soğuk Namlu"
+  },
+  "tree.run.fork.lmg_2.y.desc": {
+    "en": "The first {count} rounds after a reload deal +{value}%.",
+    "tr": "Dolumdan sonraki ilk {count} mermi +%{value} hasar verir."
+  },
+  "tree.run.cap.lmg_2.name": {
+    "en": "Black Iron",
+    "tr": "Kara Demir"
+  },
+  "tree.run.cap.lmg_2.desc": {
+    "en": "A round that breaks a plate carries full damage into the body behind.",
+    "tr": "Plaka kıran mermi arkadaki gövdeye tam hasarla geçer."
+  },
+  "tree.run.seal.lmg_2.name": {
+    "en": "Ishizue",
+    "tr": "Ishizue"
+  },
+  "tree.run.seal.lmg_2.desc": {
+    "en": "Settles in {value} shots instead of {base}, and tighter.",
+    "tr": "{base} yerine {value} atışta ve daha sıkı oturur."
+  },
+  "tree.run.fork.sr_1.x.name": {
+    "en": "Hold Breath",
+    "tr": "Nefes Tut"
+  },
+  "tree.run.fork.sr_1.x.desc": {
+    "en": "Wait {seconds} s before the shot for ×{value} damage.",
+    "tr": "Atıştan önce {seconds} sn bekle, ×{value} hasar."
+  },
+  "tree.run.fork.sr_1.y.name": {
+    "en": "Quick Bolt",
+    "tr": "Hızlı Sürgü"
+  },
+  "tree.run.fork.sr_1.y.desc": {
+    "en": "Fire rate +{value}%.",
+    "tr": "Atış hızı +%{value}."
+  },
+  "tree.run.cap.sr_1.name": {
+    "en": "One Bullet",
+    "tr": "Tek Kurşun"
+  },
+  "tree.run.cap.sr_1.desc": {
+    "en": "The first target's armour is ignored and the shot pierces without limit.",
+    "tr": "İlk hedefin zırhı yok sayılır, atış sınırsız deler."
+  },
+  "tree.run.seal.sr_1.name": {
+    "en": "Kabuto-wari",
+    "tr": "Kabuto-wari"
+  },
+  "tree.run.seal.sr_1.desc": {
+    "en": "Headshots ignore armour.",
+    "tr": "Kafa isabetleri zırhı yok sayar."
+  },
+  "tree.run.fork.rl_1.x.name": {
+    "en": "Short Fuse",
+    "tr": "Yakın Fitil"
+  },
+  "tree.run.fork.rl_1.x.desc": {
+    "en": "Smaller blast, damage +{value}%.",
+    "tr": "Daha küçük patlama, hasar +%{value}."
+  },
+  "tree.run.fork.rl_1.y.name": {
+    "en": "Long Fuse",
+    "tr": "Uzun Fitil"
+  },
+  "tree.run.fork.rl_1.y.desc": {
+    "en": "Blast radius +{value}%.",
+    "tr": "Patlama çapı +%{value}."
+  },
+  "tree.run.cap.rl_1.name": {
+    "en": "Ash Rain",
+    "tr": "Kül Yağmuru"
+  },
+  "tree.run.cap.rl_1.desc": {
+    "en": "The blast splits into {count} smaller blasts.",
+    "tr": "Patlama {count} küçük patlamaya bölünür."
+  },
+  "tree.run.seal.rl_1.name": {
+    "en": "Hibana",
+    "tr": "Hibana"
+  },
+  "tree.run.seal.rl_1.desc": {
+    "en": "The blast leaves ground burning for {seconds} s, {value} HP per second.",
+    "tr": "Patlama {seconds} sn yanan bir alan bırakır, saniyede {value} HP."
+  },
+  "tree.run.body.move.name": {
+    "en": "Movement",
+    "tr": "Hareket"
+  },
+  "tree.run.body.move.desc": {
+    "en": "Move speed +{value}%.",
+    "tr": "Hareket hızı +%{value}."
+  },
+  "tree.run.body.key.escape.name": {
+    "en": "Escape",
+    "tr": "Kaçış"
+  },
+  "tree.run.body.key.escape.desc": {
+    "en": "After a hit, move speed +{value}% for {seconds} s.",
+    "tr": "Darbe aldıktan sonra {seconds} sn hareket hızı +%{value}."
+  },
+  "tree.run.body.fork.ash_step.name": {
+    "en": "Ash Step",
+    "tr": "Kül Adımı"
+  },
+  "tree.run.body.fork.ash_step.desc": {
+    "en": "Take {value}% less damage while moving.",
+    "tr": "Hareket ederken %{value} az hasar al."
+  },
+  "tree.run.body.max_health.name": {
+    "en": "Max Health",
+    "tr": "Azami Can"
+  },
+  "tree.run.body.max_health.desc": {
+    "en": "Maximum health +{value}.",
+    "tr": "Azami can +{value}."
+  },
+  "tree.run.body.key.thick_skin.name": {
+    "en": "Thick Skin",
+    "tr": "Kalın Deri"
+  },
+  "tree.run.body.key.thick_skin.desc": {
+    "en": "At full health, the next hit deals {value}% less.",
+    "tr": "Can tamken sonraki darbe %{value} az hasar verir."
+  },
+  "tree.run.body.fork.iron_knee.name": {
+    "en": "Iron Knee",
+    "tr": "Demir Diz"
+  },
+  "tree.run.body.fork.iron_knee.desc": {
+    "en": "Take {value}% less damage while standing still.",
+    "tr": "Dururken %{value} az hasar al."
+  },
+  "tree.run.body.cap.second_wind.name": {
+    "en": "Second Wind",
+    "tr": "İkinci Nefes"
+  },
+  "tree.run.body.cap.second_wind.desc": {
+    "en": "Once per run, a killing blow leaves you at {value} health instead.",
+    "tr": "Koşuda bir kez, öldürücü darbe seni {value} canla bırakır."
+  },
+  "tree.run.body.regen_delay.name": {
+    "en": "Regen Delay",
+    "tr": "Yenilenme Gecikmesi"
+  },
+  "tree.run.body.regen_delay.desc": {
+    "en": "Health starts to regenerate {value} s sooner.",
+    "tr": "Can {value} sn daha erken yenilenmeye başlar."
+  },
+  "tree.run.body.key.breath.name": {
+    "en": "Breath",
+    "tr": "Nefes"
+  },
+  "tree.run.body.key.breath.desc": {
+    "en": "Each kill cuts the regeneration wait by {value} s.",
+    "tr": "Her öldürme yenilenme beklemesini {value} sn kısaltır."
+  },
+  "tree.run.body.purse.name": {
+    "en": "Purse",
+    "tr": "Kese"
+  },
+  "tree.run.body.purse.desc": {
+    "en": "Gold +{value}% for the rest of the run.",
+    "tr": "Koşunun kalanında altın +%{value}."
+  },
+  "tree.run.body.regen_rate.name": {
+    "en": "Regen Rate",
+    "tr": "Yenilenme Hızı"
+  },
+  "tree.run.body.regen_rate.desc": {
+    "en": "Health regenerates {value}% faster.",
+    "tr": "Can %{value} daha hızlı yenilenir."
+  },
+  "tree.run.body.key.blood_step.name": {
+    "en": "Blood Step",
+    "tr": "Kanlı Adım"
+  },
+  "tree.run.body.key.blood_step.desc": {
+    "en": "Each kill restores {value} health.",
+    "tr": "Her öldürme {value} can yeniler."
+  },
+  "path.title": {
+    "en": "PATH",
+    "tr": "YOL"
+  },
+  "path.currency": {
+    "en": "Kül",
+    "tr": "Kül"
+  },
+  "path.currency.amount": {
+    "en": "{value} Kül",
+    "tr": "{value} Kül"
+  },
+  "path.currency.earned": {
+    "en": "+{value} Kül",
+    "tr": "+{value} Kül"
+  },
+  "path.page.weapons": {
+    "en": "WEAPONS",
+    "tr": "SİLAHLAR"
+  },
+  "path.page.special": {
+    "en": "SPECIAL",
+    "tr": "ÖZEL"
+  },
+  "path.page.passives": {
+    "en": "PASSIVES",
+    "tr": "PASİFLER"
+  },
+  "path.page.cosmetic": {
+    "en": "COSMETIC",
+    "tr": "KOZMETİK"
+  },
+  "path.row.economy": {
+    "en": "ECONOMY",
+    "tr": "EKONOMİ"
+  },
+  "path.row.body": {
+    "en": "BODY",
+    "tr": "BEDEN"
+  },
+  "path.row.comfort": {
+    "en": "COMFORT",
+    "tr": "KOLAYLIK"
+  },
+  "path.lock.line": {
+    "en": "PATH · {kul} Kül · L{level}",
+    "tr": "YOL · {kul} Kül · L{level}"
+  },
+  "path.lock.ready": {
+    "en": "PATH › ready",
+    "tr": "YOL › hazır"
+  },
+  "path.gate.level": {
+    "en": "Opens at level {level}",
+    "tr": "{level}. seviyede açılır"
+  },
+  "path.next": {
+    "en": "NEXT",
+    "tr": "SIRADAKİ"
+  },
+  "path.next.line": {
+    "en": "Next: {node} · {value} Kül away",
+    "tr": "Sıradaki: {node} · {value} Kül kaldı"
+  },
+  "path.owned": {
+    "en": "OWNED",
+    "tr": "SAHİPSİN"
+  },
+  "path.buy.hold": {
+    "en": "HOLD TO TAKE",
+    "tr": "ALMAK İÇİN BASILI TUT"
+  },
+  "path.respec": {
+    "en": "RESET PASSIVES",
+    "tr": "PASİFLERİ SIFIRLA"
+  },
+  "path.respec.body": {
+    "en": "Passives and the Special leaning are refunded at {value}%. Weapons stay unlocked.",
+    "tr": "Pasifler ve Özel eğilim %{value} iade edilir. Silahlar açık kalır."
+  },
+  "path.respec.first_free": {
+    "en": "The first reset is free.",
+    "tr": "İlk sıfırlama ücretsizdir."
+  },
+  "path.rule": {
+    "en": "The PATH never adds damage. It opens weapons, Special leanings and options.",
+    "tr": "YOL hasar eklemez. Silahları, Özel eğilimleri ve seçenekleri açar."
+  },
+  "path.apex.choose": {
+    "en": "Choose one apex for this run.",
+    "tr": "Bu koşu için bir doruk seç."
+  },
+  "path.mastery": {
+    "en": "MASTERY {value}",
+    "tr": "USTALIK {value}"
+  },
+  "path.mastery.m2": {
+    "en": "A second fork option appears for this weapon.",
+    "tr": "Bu silah için ikinci kavşak seçeneği görünür."
+  },
+  "path.mastery.m3": {
+    "en": "This weapon's capstone can now appear in offers.",
+    "tr": "Bu silahın doruğu artık tekliflerde çıkabilir."
+  },
+  "path.mastery.m5": {
+    "en": "Cosmetic seal earned for this weapon.",
+    "tr": "Bu silah için kozmetik mühür kazanıldı."
+  },
+  "path.results.delta": {
+    "en": "PATH +{value} Kül",
+    "tr": "YOL +{value} Kül"
+  },
+  "tree.meta.weapon.ar_1.name": {
+    "en": "Hinawa",
+    "tr": "Hinawa"
+  },
+  "tree.meta.weapon.ar_1.desc": {
+    "en": "Your first rifle. Open from the start.",
+    "tr": "İlk tüfeğin. Baştan açıktır."
+  },
+  "tree.meta.weapon.smg_1.name": {
+    "en": "Shippu",
+    "tr": "Shippu"
+  },
+  "tree.meta.weapon.smg_1.desc": {
+    "en": "Unlocks Shippu for selection before a run.",
+    "tr": "Shippu koşu öncesi seçime açılır."
+  },
+  "tree.meta.weapon.sg_1.name": {
+    "en": "Rappa",
+    "tr": "Rappa"
+  },
+  "tree.meta.weapon.sg_1.desc": {
+    "en": "Unlocks Rappa for selection before a run.",
+    "tr": "Rappa koşu öncesi seçime açılır."
+  },
+  "tree.meta.weapon.ar_2.name": {
+    "en": "Sanren",
+    "tr": "Sanren"
+  },
+  "tree.meta.weapon.ar_2.desc": {
+    "en": "Unlocks Sanren for selection before a run.",
+    "tr": "Sanren koşu öncesi seçime açılır."
+  },
+  "tree.meta.weapon.lmg_1.name": {
+    "en": "Mukade",
+    "tr": "Mukade"
+  },
+  "tree.meta.weapon.lmg_1.desc": {
+    "en": "Unlocks Mukade for selection before a run.",
+    "tr": "Mukade koşu öncesi seçime açılır."
+  },
+  "tree.meta.weapon.sr_1.name": {
+    "en": "Tomi",
+    "tr": "Tomi"
+  },
+  "tree.meta.weapon.sr_1.desc": {
+    "en": "Unlocks Tomi for selection before a run.",
+    "tr": "Tomi koşu öncesi seçime açılır."
+  },
+  "tree.meta.weapon.smg_2.name": {
+    "en": "Tetsui",
+    "tr": "Tetsui"
+  },
+  "tree.meta.weapon.smg_2.desc": {
+    "en": "Unlocks Tetsui for selection before a run.",
+    "tr": "Tetsui koşu öncesi seçime açılır."
+  },
+  "tree.meta.weapon.sg_2.name": {
+    "en": "Nito",
+    "tr": "Nito"
+  },
+  "tree.meta.weapon.sg_2.desc": {
+    "en": "Unlocks Nito for selection before a run.",
+    "tr": "Nito koşu öncesi seçime açılır."
+  },
+  "tree.meta.weapon.lmg_2.name": {
+    "en": "Kurogane",
+    "tr": "Kurogane"
+  },
+  "tree.meta.weapon.lmg_2.desc": {
+    "en": "Unlocks Kurogane for selection before a run.",
+    "tr": "Kurogane koşu öncesi seçime açılır."
+  },
+  "tree.meta.weapon.rl_1.name": {
+    "en": "Bohiya",
+    "tr": "Bohiya"
+  },
+  "tree.meta.weapon.rl_1.desc": {
+    "en": "Unlocks Bohiya for selection before a run.",
+    "tr": "Bohiya koşu öncesi seçime açılır."
+  },
+  "tree.meta.special.raiju.lure.name": {
+    "en": "Raiju Lure",
+    "tr": "Çekim I · Raiju"
+  },
+  "tree.meta.special.raiju.lure.desc": {
+    "en": "Raiju drops {value}% more often.",
+    "tr": "Raiju %{value} daha sık düşer."
+  },
+  "tree.meta.special.namekuji.lure.name": {
+    "en": "Namekuji Lure",
+    "tr": "Çekim I · Namekuji"
+  },
+  "tree.meta.special.namekuji.lure.desc": {
+    "en": "Namekuji drops {value}% more often.",
+    "tr": "Namekuji %{value} daha sık düşer."
+  },
+  "tree.meta.special.raiju.foresight.name": {
+    "en": "Raiju Foresight",
+    "tr": "Önsezi · Raiju"
+  },
+  "tree.meta.special.raiju.foresight.desc": {
+    "en": "Raiju's first link can be offered before you pick Raiju up.",
+    "tr": "Raiju'nun ilk bağı Raiju'yu almadan önce teklif edilebilir."
+  },
+  "tree.meta.special.namekuji.foresight.name": {
+    "en": "Namekuji Foresight",
+    "tr": "Önsezi · Namekuji"
+  },
+  "tree.meta.special.namekuji.foresight.desc": {
+    "en": "Namekuji's first link can be offered before you pick Namekuji up.",
+    "tr": "Namekuji'nin ilk bağı Namekuji'yi almadan önce teklif edilebilir."
+  },
+  "tree.meta.special.early_bell.name": {
+    "en": "Early Bell",
+    "tr": "Erken Çan"
+  },
+  "tree.meta.special.early_bell.desc": {
+    "en": "The first Special of a run drops by round {value}.",
+    "tr": "Koşunun ilk Özel silahı en geç {value}. roundda düşer."
+  },
+  "tree.meta.special.raiju.link2.name": {
+    "en": "Raiju: Second Link",
+    "tr": "Bağ II · Raiju"
+  },
+  "tree.meta.special.raiju.link2.desc": {
+    "en": "Raiju's second link can appear in the run tree.",
+    "tr": "Raiju'nun ikinci bağı koşu ağacında çıkabilir."
+  },
+  "tree.meta.special.namekuji.link2.name": {
+    "en": "Namekuji: Second Link",
+    "tr": "Bağ II · Namekuji"
+  },
+  "tree.meta.special.namekuji.link2.desc": {
+    "en": "Namekuji's second link can appear in the run tree.",
+    "tr": "Namekuji'nin ikinci bağı koşu ağacında çıkabilir."
+  },
+  "tree.meta.special.raiju.apex.name": {
+    "en": "Raiju Apex",
+    "tr": "Raiju Doruğu"
+  },
+  "tree.meta.special.raiju.apex.desc": {
+    "en": "Raiju stays in hand {value}% longer. One apex is active per run.",
+    "tr": "Raiju %{value} daha uzun elde kalır. Koşuda tek doruk etkindir."
+  },
+  "tree.meta.special.namekuji.apex.name": {
+    "en": "Namekuji Apex",
+    "tr": "Namekuji Doruğu"
+  },
+  "tree.meta.special.namekuji.apex.desc": {
+    "en": "Namekuji puddles cover {value}% more ground. One apex is active per run.",
+    "tr": "Namekuji birikintileri %{value} daha geniş alan kaplar. Koşuda tek doruk etkindir."
+  },
+  "tree.meta.special.twin_bell.name": {
+    "en": "Twin Bell",
+    "tr": "Çift Çan"
+  },
+  "tree.meta.special.twin_bell.desc": {
+    "en": "The other Special can also drop in the same run.",
+    "tr": "Aynı koşuda diğer Özel silah da düşebilir."
+  },
+  "tree.meta.passive.econ.second_pin.name": {
+    "en": "Second Pin",
+    "tr": "Nişan II"
+  },
+  "tree.meta.passive.econ.second_pin.desc": {
+    "en": "Pin {value} nodes at once in the run tree.",
+    "tr": "Koşu ağacında aynı anda {value} düğüm işaretle."
+  },
+  "tree.meta.passive.econ.cheap_reroll.name": {
+    "en": "Cheaper Reroll",
+    "tr": "Ucuz Reroll"
+  },
+  "tree.meta.passive.econ.cheap_reroll.desc": {
+    "en": "Reroll costs {value} gold instead of {base}.",
+    "tr": "Reroll {base} yerine {value} altın."
+  },
+  "tree.meta.passive.econ.hearth_slope.name": {
+    "en": "Banked Hearth",
+    "tr": "Ocak Eğimi"
+  },
+  "tree.meta.passive.econ.hearth_slope.desc": {
+    "en": "Each Hearth stoke costs {value} more than the last, instead of {base}.",
+    "tr": "Her Ocak yakışı öncekinden {base} yerine {value} fazla tutar."
+  },
+  "tree.meta.passive.econ.early_purse.name": {
+    "en": "Purse from the Start",
+    "tr": "Açılışta Kese"
+  },
+  "tree.meta.passive.econ.early_purse.desc": {
+    "en": "The Purse can be offered from round 1.",
+    "tr": "Kese 1. rounddan itibaren teklif edilebilir."
+  },
+  "tree.meta.passive.econ.wide_offer.name": {
+    "en": "Wider First Offer",
+    "tr": "Geniş İlk Teklif"
+  },
+  "tree.meta.passive.econ.wide_offer.desc": {
+    "en": "The round 1 offer shows {value} cards.",
+    "tr": "1. round teklifi {value} kart gösterir."
+  },
+  "tree.meta.passive.econ.capstone_discount.name": {
+    "en": "Capstone Discount",
+    "tr": "Doruk İndirimi"
+  },
+  "tree.meta.passive.econ.capstone_discount.desc": {
+    "en": "Capstones cost {value}% less.",
+    "tr": "Doruklar %{value} daha ucuz."
+  },
+  "tree.meta.passive.body.1.name": {
+    "en": "Light Feet I",
+    "tr": "Hafif Adım I"
+  },
+  "tree.meta.passive.body.1.desc": {
+    "en": "Move speed +{value}%.",
+    "tr": "Hareket hızı +%{value}."
+  },
+  "tree.meta.passive.body.2.name": {
+    "en": "Hardy I",
+    "tr": "Dayanıklı I"
+  },
+  "tree.meta.passive.body.2.desc": {
+    "en": "Maximum health +{value}.",
+    "tr": "Azami can +{value}."
+  },
+  "tree.meta.passive.body.3.name": {
+    "en": "Quick Recovery I",
+    "tr": "Çabuk Toparlanma I"
+  },
+  "tree.meta.passive.body.3.desc": {
+    "en": "Health starts to regenerate {value} s sooner.",
+    "tr": "Can {value} sn daha erken yenilenmeye başlar."
+  },
+  "tree.meta.passive.body.4.name": {
+    "en": "Light Feet II",
+    "tr": "Hafif Adım II"
+  },
+  "tree.meta.passive.body.4.desc": {
+    "en": "Move speed +{value}%.",
+    "tr": "Hareket hızı +%{value}."
+  },
+  "tree.meta.passive.body.5.name": {
+    "en": "Hardy II",
+    "tr": "Dayanıklı II"
+  },
+  "tree.meta.passive.body.5.desc": {
+    "en": "Maximum health +{value}.",
+    "tr": "Azami can +{value}."
+  },
+  "tree.meta.passive.body.6.name": {
+    "en": "Quick Recovery II",
+    "tr": "Çabuk Toparlanma II"
+  },
+  "tree.meta.passive.body.6.desc": {
+    "en": "Health starts to regenerate {value} s sooner.",
+    "tr": "Can {value} sn daha erken yenilenmeye başlar."
+  },
+  "tree.meta.passive.qol.tree_preview.name": {
+    "en": "Tree Preview",
+    "tr": "Ağaç Önizleme"
+  },
+  "tree.meta.passive.qol.tree_preview.desc": {
+    "en": "Browse any weapon's run tree from the main menu.",
+    "tr": "Her silahın koşu ağacına ana menüden göz at."
+  },
+  "tree.meta.passive.qol.offer_history.name": {
+    "en": "Offer History",
+    "tr": "Teklif Geçmişi"
+  },
+  "tree.meta.passive.qol.offer_history.desc": {
+    "en": "See every card offered so far in this run.",
+    "tr": "Bu koşuda şimdiye dek teklif edilen her kartı gör."
+  },
+  "tree.meta.passive.qol.run_stats.name": {
+    "en": "Run Ledger",
+    "tr": "Koşu İstatistikleri"
+  },
+  "tree.meta.passive.qol.run_stats.desc": {
+    "en": "A run statistics panel on the round-end screen.",
+    "tr": "Round sonu ekranında koşu istatistik paneli."
+  },
+  "tree.meta.passive.qol.before_after.name": {
+    "en": "Before and After",
+    "tr": "Önce ve Sonra"
+  },
+  "tree.meta.passive.qol.before_after.desc": {
+    "en": "Cards show the full before → after line for every value.",
+    "tr": "Kartlar her değer için tam önce → sonra satırını gösterir."
+  },
+  "tree.meta.passive.qol.path_tracker.name": {
+    "en": "Path Tracker",
+    "tr": "Yol Göstergesi"
+  },
+  "tree.meta.passive.qol.path_tracker.desc": {
+    "en": "The HUD marks your pinned node and what it still needs.",
+    "tr": "HUD işaretli düğümünü ve eksiğini gösterir."
+  },
+  "tree.meta.passive.qol.magnet.name": {
+    "en": "Wider Magnet",
+    "tr": "Geniş Mıknatıs"
+  },
+  "tree.meta.passive.qol.magnet.desc": {
+    "en": "Gold pickup reach +{value} m.",
+    "tr": "Altın toplama menzili +{value} m."
+  },
+  "tips.001": {
+    "en": "Change the camera from the Pause menu: top-down, third-person or first-person.",
+    "tr": "Kamerayı Pause menüsünden değiştir: tepeden, üçüncü şahıs ya da birinci şahıs."
+  },
+  "tips.002": {
+    "en": "Top-down reads the crowd best. First-person aims best but sees nothing behind you.",
+    "tr": "Tepeden kalabalığı en iyi okur. Birinci şahıs en iyi nişan alır ama arkanı görmez."
+  },
+  "tips.003": {
+    "en": "In top-down, hold focus to tighten your spread. You move slower while focused.",
+    "tr": "Tepeden modda odak tuşunu basılı tut, yayılma daralır. Odaktayken yavaşlarsın."
+  },
+  "tips.004": {
+    "en": "In third- and first-person, recoil really lifts your aim. Pull down to hold it.",
+    "tr": "Üçüncü ve birinci şahısta geri tepme nişanı gerçekten kaldırır. Aşağı çekerek tut."
+  },
+  "tips.005": {
+    "en": "Rounds, enemies and rewards are the same in every camera mode.",
+    "tr": "Roundlar, düşmanlar ve ödüller her kamera modunda aynıdır."
+  },
+  "tips.006": {
+    "en": "Every shot is a travelling round. Slower guns need a lead on a distant Runner.",
+    "tr": "Her atış yol alan bir mermidir. Yavaş silahlar uzaktaki Runner'ın önüne nişan ister."
+  },
+  "tips.007": {
+    "en": "Armour covers the head, the upper body and the legs. Each plate breaks on its own.",
+    "tr": "Zırh kafayı, üst gövdeyi ve bacakları örter. Her plaka ayrı kırılır."
+  },
+  "tips.008": {
+    "en": "Shoot where the armour is not. A bare region takes the hit in full.",
+    "tr": "Zırhın olmadığı yere ateş et. Açık bölge darbenin tamamını alır."
+  },
+  "tips.009": {
+    "en": "A piercing round melts the armour it passes, but each body still counts.",
+    "tr": "Delen mermi geçtiği zırhı eritir, ama her gövde yine sayılır."
+  },
+  "tips.010": {
+    "en": "A blast is split across head, body and legs. Armoured regions soak their share.",
+    "tr": "Patlama kafa, gövde ve bacaklara bölünür. Zırhlı bölgeler kendi payını yutar."
+  },
+  "tips.011": {
+    "en": "A Special carries its own ammunition. When it runs dry, your classic weapon returns.",
+    "tr": "Özel silah kendi cephanesini taşır. Bitince klasik silahın geri döner."
+  },
+  "tips.012": {
+    "en": "A Special also has a time limit. Spend its ammunition before the limit does.",
+    "tr": "Özel silahın bir süre sınırı da vardır. Cephanesini süre bitmeden harca."
+  },
+  "tips.013": {
+    "en": "One Special at a time. Picking up another drops the first and its ammunition.",
+    "tr": "Aynı anda tek Özel silah. Diğerini almak ilkini cephanesiyle birlikte düşürür."
+  },
+  "tips.014": {
+    "en": "Raiju's chain leaps to the nearest untouched enemy. Keep the chain off yourself.",
+    "tr": "Raiju zinciri en yakın dokunulmamış düşmana sıçrar. Zinciri kendinden uzak tut."
+  },
+  "tips.015": {
+    "en": "Release fire while Raiju is charging and the shot is cancelled. No ammo is spent.",
+    "tr": "Raiju şarj olurken tetiği bırakırsan atış iptal olur. Cephane harcanmaz."
+  },
+  "tips.016": {
+    "en": "Namekuji gel topples whatever steps in, and every fall leaves more gel behind.",
+    "tr": "Namekuji jeli içine basanı devirir; her düşüş arkasında yeni jel bırakır."
+  },
+  "tips.017": {
+    "en": "You slide fast on Namekuji gel and steer poorly. Use it to escape, not to aim.",
+    "tr": "Namekuji jelinde hızlı kayar, zor dönersin. Kaçmak için kullan, nişan için değil."
+  },
+  "tips.018": {
+    "en": "The whole run tree is visible from round 1. Plan a path, then pin its next node.",
+    "tr": "Koşu ağacının tamamı 1. rounddan görünür. Bir yol planla, sonraki düğümünü işaretle."
+  },
+  "tips.019": {
+    "en": "A pinned node comes in the next offer once it is reachable. Rerolls keep it.",
+    "tr": "İşaretli düğüm erişilebilir olunca sonraki teklifte gelir. Reroll onu değiştirmez."
+  },
+  "tips.020": {
+    "en": "The Hearth sits outside the cards and never runs out. Stoke it when gold piles up.",
+    "tr": "Ocak kartların dışındadır ve tükenmez. Altın birikince yak."
+  },
+  "tips.021": {
+    "en": "Forks are either-or. Taking one side closes the other for the rest of the run.",
+    "tr": "Kavşaklar ya o ya bu. Bir tarafı almak diğerini koşunun kalanında kapatır."
+  },
+  "tips.022": {
+    "en": "A wrong buy can be undone on the same screen, as long as you have not continued.",
+    "tr": "Yanlış alım aynı ekranda geri alınabilir, yeter ki devam etmemiş ol."
+  },
+  "tips.023": {
+    "en": "Each weapon has its own seal. A keystone on the lane opens the way to it.",
+    "tr": "Her silahın kendi mührü vardır. Şeritteki bir kilit taşı ona yol açar."
+  },
+  "tips.024": {
+    "en": "Every run earns Kül for the PATH. Your level decides which gates are open.",
+    "tr": "Her koşu YOL için Kül kazandırır. Hangi kapıların açık olduğunu seviyen belirler."
+  },
+  "tips.025": {
+    "en": "The PATH never adds damage. It opens weapons, Special leanings and options.",
+    "tr": "YOL hasar eklemez. Silahları, Özel eğilimleri ve seçenekleri açar."
+  },
+  "tips.026": {
+    "en": "Bohiya will not arm up close. Fired too near, the rocket drops and fizzles.",
+    "tr": "Bohiya yakında kurulmaz. Çok yakına atılan roket düşer ve söner."
+  },
+  "tips.027": {
+    "en": "Bohiya's blast can reach you too. Give a nearby pack some room before firing.",
+    "tr": "Bohiya patlaması sana da ulaşabilir. Yakındaki sürüye ateşten önce mesafe ver."
+  },
+  "tips.028": {
+    "en": "Rappa reloads shell by shell. Fire at any moment and the loaded shells stay.",
+    "tr": "Rappa fişek fişek dolar. İstediğin an ateş et; giren fişekler kalır."
+  },
+  "tips.029": {
+    "en": "Kurogane starts wide and settles as you hold fire. Short bursts waste the settle.",
+    "tr": "Kurogane geniş başlar, ateş sürdükçe oturur. Kısa atışlar oturmayı boşa harcar."
+  },
+  "tips.030": {
+    "en": "Tomi drives each shot through a line of bodies. Let them queue up, then fire.",
+    "tr": "Tomi her atışı bir sıra gövdeden geçirir. Sıraya girmelerini bekle, sonra ateş et."
+  },
+  "camera.title": {
+    "en": "CAMERA",
+    "tr": "KAMERA"
+  },
+  "camera.mode.top_down": {
+    "en": "TOP-DOWN",
+    "tr": "TEPEDEN"
+  },
+  "camera.mode.third_person": {
+    "en": "THIRD-PERSON",
+    "tr": "ÜÇÜNCÜ ŞAHIS"
+  },
+  "camera.mode.first_person": {
+    "en": "FIRST-PERSON",
+    "tr": "BİRİNCİ ŞAHIS"
+  },
+  "camera.mode.top_down.desc": {
+    "en": "The whole courtyard in view. Aim with the cursor.",
+    "tr": "Bütün avlu görünür. İmleçle nişan al."
+  },
+  "camera.mode.third_person.desc": {
+    "en": "Over the shoulder. Aim from the centre of the screen.",
+    "tr": "Omuz üstünden. Ekranın ortasından nişan al."
+  },
+  "camera.mode.first_person.desc": {
+    "en": "Eye level. The sharpest aim, and nothing behind you.",
+    "tr": "Göz hizası. En keskin nişan; arkan görünmez."
+  },
+  "camera.caption": {
+    "en": "The view changes as soon as you choose. Rounds and rules stay the same.",
+    "tr": "Görünüm seçer seçmez değişir. Roundlar ve kurallar aynı kalır."
+  },
+  "camera.fov.third_person": {
+    "en": "THIRD-PERSON FIELD OF VIEW",
+    "tr": "ÜÇÜNCÜ ŞAHIS GÖRÜŞ ALANI"
+  },
+  "camera.fov.first_person": {
+    "en": "FIRST-PERSON FIELD OF VIEW",
+    "tr": "BİRİNCİ ŞAHIS GÖRÜŞ ALANI"
+  },
+  "camera.shoulder": {
+    "en": "SHOULDER",
+    "tr": "OMUZ"
+  },
+  "camera.shoulder.left": {
+    "en": "LEFT",
+    "tr": "SOL"
+  },
+  "camera.shoulder.right": {
+    "en": "RIGHT",
+    "tr": "SAĞ"
+  },
+  "camera.head_bob": {
+    "en": "HEAD BOB",
+    "tr": "KAFA SALLANTISI"
+  },
+  "camera.focus": {
+    "en": "FOCUS",
+    "tr": "ODAK"
+  },
+  "achievement.raiju_full_chain.name": {
+    "en": "Thunder Beast",
+    "tr": "Yıldırım Canavarı"
+  },
+  "achievement.raiju_full_chain.desc": {
+    "en": "Hit {count} enemies with one Raiju shot.",
+    "tr": "Tek Raiju atışıyla {count} düşman vur."
+  },
+  "achievement.raiju_kills_100.name": {
+    "en": "Storm Keeper",
+    "tr": "Fırtına Bekçisi"
+  },
+  "achievement.raiju_kills_100.desc": {
+    "en": "Defeat {count} enemies with Raiju in total.",
+    "tr": "Raiju ile toplam {count} düşman yen."
+  },
+  "achievement.raiju_grounded.name": {
+    "en": "Grounded",
+    "tr": "Topraklı"
+  },
+  "achievement.raiju_grounded.desc": {
+    "en": "Empty a full Raiju without shocking yourself.",
+    "tr": "Kendini çarpmadan bir Raiju'yu baştan sona boşalt."
+  },
+  "achievement.namekuji_puddles.name": {
+    "en": "Slick Courtyard",
+    "tr": "Kaygan Avlu"
+  },
+  "achievement.namekuji_puddles.desc": {
+    "en": "Have {count} gel puddles on the ground at once.",
+    "tr": "Yerde aynı anda {count} jel birikintisi olsun."
+  },
+  "achievement.namekuji_executioner.name": {
+    "en": "Down Goes the Axe",
+    "tr": "Balta Yere"
+  },
+  "achievement.namekuji_executioner.desc": {
+    "en": "Knock down an Executioner with Namekuji gel.",
+    "tr": "Bir Executioner'ı Namekuji jeliyle devir."
+  },
+  "achievement.namekuji_skater.name": {
+    "en": "Rain Skater",
+    "tr": "Yağmur Patencisi"
+  },
+  "achievement.namekuji_skater.desc": {
+    "en": "Defeat {count} enemies while sliding on gel in one run.",
+    "tr": "Bir koşuda jelde kayarken {count} düşman yen."
+  },
+  "achievement.tomi_line.name": {
+    "en": "String of Pearls",
+    "tr": "İnci Dizisi"
+  },
+  "achievement.tomi_line.desc": {
+    "en": "Defeat {count} enemies with one Tomi shot.",
+    "tr": "Tek Tomi atışıyla {count} düşman yen."
+  },
+  "achievement.bohiya_one_rocket.name": {
+    "en": "Fire Arrow",
+    "tr": "Ateş Oku"
+  },
+  "achievement.bohiya_one_rocket.desc": {
+    "en": "Defeat {count} enemies with one Bohiya rocket.",
+    "tr": "Tek Bohiya roketiyle {count} düşman yen."
+  },
+  "achievement.nito_double.name": {
+    "en": "Both Blades",
+    "tr": "İki Kılıç"
+  },
+  "achievement.nito_double.desc": {
+    "en": "Defeat a Guard with both of Nito's barrels in one breath.",
+    "tr": "Nito'nun iki namlusuyla bir nefeste bir Guard yen."
+  },
+  "achievement.kurogane_plates.name": {
+    "en": "Settled Iron",
+    "tr": "Oturmuş Demir"
+  },
+  "achievement.kurogane_plates.desc": {
+    "en": "Break {count} armour pieces with one Kurogane magazine.",
+    "tr": "Tek Kurogane şarjörüyle {count} zırh parçası kır."
+  },
+  "achievement.tetsui_runners.name": {
+    "en": "Hammer Down",
+    "tr": "Çekiç İndi"
+  },
+  "achievement.tetsui_runners.desc": {
+    "en": "Stop {count} Runners with Tetsui in one run.",
+    "tr": "Bir koşuda Tetsui ile {count} Runner durdur."
+  },
+  "achievement.full_arsenal.name": {
+    "en": "Ten Answers",
+    "tr": "On Cevap"
+  },
+  "achievement.full_arsenal.desc": {
+    "en": "Reach round {round} with each of the ten classic weapons.",
+    "tr": "On klasik silahın her biriyle {round}. rounda ulaş."
+  }
+}
