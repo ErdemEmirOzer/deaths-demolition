@@ -318,6 +318,7 @@ namespace DD.Prototype.Weapons
                         break;
                     }
 
+                    bool rocket = p.Kind == DD.Prototype.Core.Weapons.ProjectileKind.Rocket;
                     if (!DamageTargetResolver.TryResolve(collider, out DamageTarget target))
                     {
                         // World geometry stops the projectile (M3 rule).
@@ -326,6 +327,7 @@ namespace DD.Prototype.Weapons
                         HitFeedbackDirector.Instance.ReportSurfaceImpact(point, normal, surface, ImpactScaleFor(p.Shot.Power));
                         ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.Generation, p.Slot, p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
                             surface, speed, false, false, false, true, p.TransactionId));
+                        if (rocket) RocketImpacts.MarkContact(ref p, point, normal, 0, at);   // WP-069 B3: blast (armed) or dud here
                         travelled = at;
                         end = point;
                         stopped = true;
@@ -343,6 +345,13 @@ namespace DD.Prototype.Weapons
                     BodyRegion region = DamageTargetResolver.ResolveRegion(collider, target, point);
                     float share = FalloffShareOf(in p, p.Travelled + at);
                     float damage = p.Shot.Damage * p.DamageScale * share;
+                    if (rocket)
+                    {
+                        // WP-069 B3: the direct hit (110) lands here in the rocket's own transaction; the blast follows in a
+                        // new one (RocketImpacts), so the struck body takes both. Inside the arming distance: the dud's 30 only.
+                        RocketImpacts.MarkContact(ref p, point, normal, target.Id, at);
+                        if (!p.ContactArmed) damage = RocketImpacts.DudDamageOf(p.WeaponId);
+                    }
                     // WP-069 (ADR-069-1 §9): the weapon's head / armour multipliers and the hit identity ride beside the frozen DamageHit.
                     DamageHitContext.Set(p.HeadMultiplier, p.ArmorMultiplier, true, p.WeaponId, collider);
                     DamageResult r;
@@ -356,7 +365,7 @@ namespace DD.Prototype.Weapons
                         DamageHitContext.Clear();
                     }
 
-                    if (!p.BranchesResolved && !branchesNow)
+                    if (!p.BranchesResolved && !branchesNow && !rocket)   // a rocket's branches are its blast (Blast / Cluster)
                     {
                         branchesNow = true;
                         branchPoint = point;

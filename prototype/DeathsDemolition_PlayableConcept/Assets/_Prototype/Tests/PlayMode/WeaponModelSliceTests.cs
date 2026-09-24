@@ -160,6 +160,18 @@ namespace DD.Prototype.Tests.PlayMode
                 // where the port IS at that moment, sampled inside the handler.
                 Transform ejection = WeaponSocketContract.Find(mount, WeaponSocketContract.Ejection);
                 Assert.IsNotNull(ejection, d.RosterKey + ": Ejection soketi rig'de yok.");
+                // WP-069 B3: rl_1 carries one rocket — the kick shot above emptied it; reload (an empty tube reloads on the
+                // trigger or the reload key, never by itself) and wait for it.
+                if (_s.Controller.Classic.Ammo == 0 && !_s.Controller.Classic.IsReloading)
+                {
+                    _s.Girdi.DoldurBasti = true;
+                    yield return null;
+                    _s.Girdi.DoldurBasti = false;
+                }
+
+                yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo > 0 && !_s.Controller.Classic.IsReloading, 4f, "dolum");
+                // A casing-less weapon (rl_1: WeaponCasing.None) has no ejection slot to measure.
+                bool casing = Arsenal.Get(d.Id) == null || Arsenal.Get(d.Id).presentation.casing != WeaponCasing.None;
                 var events = new List<WeaponMechanismEvent>();
                 var portAtEvent = new List<Vector3>();
                 System.Action<WeaponMechanismEvent> onMech = e => { events.Add(e); portAtEvent.Add(ejection.position); };
@@ -168,10 +180,14 @@ namespace DD.Prototype.Tests.PlayMode
                 _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
                 yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo < ammo0, 2f, "atış");
                 _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
-                yield return SpecialWeaponSahne.Bekle(() => events.Count > 0, 1.5f, "kovan slotu");
+                if (casing)
+                {
+                    yield return SpecialWeaponSahne.Bekle(() => events.Count > 0, 1.5f, "kovan slotu");
+                    Assert.Less(Vector3.Distance(events[0].Position, portAtEvent[0]), 0.01f, d.RosterKey + ": kovan slotu port konumunda değil (" + Vector3.Distance(events[0].Position, portAtEvent[0]).ToString("0.000") + " m).");
+                    Assert.Greater(Vector3.Dot(mount.InverseTransformDirection(events[0].Direction), Vector3.right), 0.7f, d.RosterKey + ": kovan +X'e uçar.");
+                }
+
                 WeaponEvents.Mechanism -= onMech;
-                Assert.Less(Vector3.Distance(events[0].Position, portAtEvent[0]), 0.01f, d.RosterKey + ": kovan slotu port konumunda değil (" + Vector3.Distance(events[0].Position, portAtEvent[0]).ToString("0.000") + " m).");
-                Assert.Greater(Vector3.Dot(mount.InverseTransformDirection(events[0].Direction), Vector3.right), 0.7f, d.RosterKey + ": kovan +X'e uçar.");
                 yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, 4f, "reload biter");
 
             }

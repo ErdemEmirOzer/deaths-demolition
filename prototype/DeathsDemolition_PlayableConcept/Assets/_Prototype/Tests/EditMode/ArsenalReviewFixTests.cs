@@ -233,7 +233,7 @@ namespace DD.Prototype.Tests.EditMode
             ClassicWeaponId before = WeaponRegistry.SelectedWeapon;
             try
             {
-                Assert.IsFalse(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.Rl1), "rl_1 B3'e dek kapalı");
+                Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.Rl1), "WP-069 B3: rl_1 etkin");
                 Assert.IsFalse(WeaponQaHooks.TrySetClassicWeapon((ClassicWeaponId)42));
                 Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.Sr1));
                 Assert.AreEqual(ClassicWeaponId.Sr1, WeaponRegistry.SelectedWeapon);

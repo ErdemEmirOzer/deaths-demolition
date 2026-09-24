@@ -28,6 +28,18 @@ namespace DD.Prototype.Weapons
         public float HeadMultiplier;
         public float ArmorMultiplier;
 
+        // WP-069 B3 · rocket flight (DIRECTION §5): boost to the top speed, gravity per phase, a small yaw / pitch walk.
+        public float RocketAcceleration;
+        public float RocketMaxSpeed;
+        public float RocketBoostSeconds;
+        public float GravityCoast;
+        public float WobbleDegrees;
+        public float WobbleStepSeconds;
+
+        /// <summary>WP-069 B3: Cluster bomblets at the blast (0 = none; 2 / 3 / 4 by tier) and the Explosion "Blast" tier (rl_1).</summary>
+        public int ClusterBomblets;
+        public int BlastTier;
+
         /// <summary>The v3 projectile block of <paramref name="d"/>, or a hitscan-like fast bullet when null.</summary>
         public static ProjectileLaunch From(WeaponDefinition d, ClassicWeaponId id, float fallbackRange)
         {
@@ -60,7 +72,29 @@ namespace DD.Prototype.Weapons
                 FalloffMinShare = p.falloffMinShare,
                 HeadMultiplier = p.headMultiplier > 0f ? p.headMultiplier : 1f,
                 ArmorMultiplier = p.armorDamageMultiplier > 0f ? p.armorDamageMultiplier : 1f
-            };
+            }.WithRocket(d);
+        }
+
+        /// <summary>WP-069 B3: a Rocket kind takes its flight from the rocket block (launch speed, boost gravity first).</summary>
+        private ProjectileLaunch WithRocket(WeaponDefinition d)
+        {
+            if (Kind != ProjectileKind.Rocket || d.rocket == null)
+            {
+                return this;
+            }
+
+            WeaponRocketBlock r = d.rocket;
+            ProjectileLaunch l = this;
+            l.Speed = Mathf.Max(1f, r.launchSpeed);
+            l.Gravity = Mathf.Max(0f, r.gravityBoost);
+            l.RocketAcceleration = Mathf.Max(0f, r.acceleration);
+            l.RocketMaxSpeed = Mathf.Max(l.Speed, r.maxSpeed);
+            l.RocketBoostSeconds = Mathf.Max(0f, r.boostSeconds);
+            l.GravityCoast = Mathf.Max(0f, r.gravityCoast);
+            l.WobbleDegrees = Mathf.Max(0f, r.wobbleDegreesPerStep);
+            l.WobbleStepSeconds = Mathf.Max(0.01f, r.wobbleStepSeconds);
+            if (r.selfDetonateSeconds > 0f) l.MaxLifetime = r.selfDetonateSeconds;
+            return l;
         }
     }
 
@@ -104,6 +138,22 @@ namespace DD.Prototype.Weapons
         public float HeadMultiplier;
         public float ArmorMultiplier;
         public bool BranchesResolved;
+
+        // WP-069 B3 · rocket flight and contact (RocketImpacts reads them when the rocket stops or expires).
+        public float RocketAcceleration;
+        public float RocketMaxSpeed;
+        public float RocketBoostSeconds;
+        public float GravityBoost;
+        public float GravityCoast;
+        public float WobbleDegrees;
+        public float WobbleStepSeconds;
+        public float WobbleTimer;
+        public int ClusterBomblets;
+        public int BlastTier;
+        public bool ContactArmed;
+        public int ContactTargetId;
+        public Vector3 ContactPoint;
+        public Vector3 ContactNormal;
 
         // "Already damaged" set (ADR-034-1), rows of ProjectileSystem's side table.
         public int TouchedCount;
@@ -288,6 +338,15 @@ namespace DD.Prototype.Weapons
             p.FalloffMinShare = launch.FalloffMinShare;
             p.HeadMultiplier = launch.HeadMultiplier > 0f ? launch.HeadMultiplier : 1f;
             p.ArmorMultiplier = launch.ArmorMultiplier > 0f ? launch.ArmorMultiplier : 1f;
+            p.RocketAcceleration = launch.RocketAcceleration;
+            p.RocketMaxSpeed = launch.RocketMaxSpeed;
+            p.RocketBoostSeconds = launch.RocketBoostSeconds;
+            p.GravityBoost = launch.Gravity;
+            p.GravityCoast = launch.GravityCoast;
+            p.WobbleDegrees = launch.WobbleDegrees;
+            p.WobbleStepSeconds = launch.WobbleStepSeconds;
+            p.ClusterBomblets = launch.ClusterBomblets;
+            p.BlastTier = launch.BlastTier;
 
             s_order[s_liveCount++] = index;
             s_spawnedTotal++;
@@ -430,7 +489,14 @@ namespace DD.Prototype.Weapons
             Vector3 from = p.Position;
             Vector3 v0 = p.Velocity;
             Vector3 v1 = v0;
-            v1.y -= p.Gravity * dt;
+            if (p.Kind == ProjectileKind.Rocket)
+            {
+                v1 = RocketImpacts.Advance(ref p, v0, dt);
+            }
+            else
+            {
+                v1.y -= p.Gravity * dt;
+            }
             Vector3 delta = (v0 + v1) * (0.5f * dt);
             float length = delta.magnitude;
             float remaining = p.MaxRange - p.Travelled;
@@ -452,6 +518,7 @@ namespace DD.Prototype.Weapons
                 if (stopped)
                 {
                     p.Alive = false;
+                    if (p.Kind == ProjectileKind.Rocket) RocketImpacts.OnContact(ref p);   // after the hit's transaction closed
                     return false;
                 }
             }
@@ -459,6 +526,7 @@ namespace DD.Prototype.Weapons
             if (rangeEnds || p.Age >= p.MaxLifetime)
             {
                 p.Alive = false;
+                if (p.Kind == ProjectileKind.Rocket) RocketImpacts.OnSelfDetonate(ref p);   // DIRECTION §5: 70 m / 2.2 s → air burst
                 ProjectileEvents.RaiseExpired(new ProjectileExpireInfo(p.Generation, index, p.WeaponId, p.Position,
                     rangeEnds ? ProjectileEndReason.Range : ProjectileEndReason.Lifetime));
                 return false;

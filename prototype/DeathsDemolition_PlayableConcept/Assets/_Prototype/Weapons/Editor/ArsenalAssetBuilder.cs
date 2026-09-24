@@ -221,7 +221,7 @@ namespace DD.Prototype.Weapons.EditorTools
         {
             WeaponDefinition d = New("rl_1", ClassicWeaponId.Rl1, WeaponClass.Launcher, "Bohiya", WeaponSilhouetteV3.Tube, 9,
                 "Tüpten ateş oku fırlar, hızlanır, duman bırakır; patlama yeri sarsar.", null);
-            d.enabled = false;   // B3 brings the rocket flight and the blast
+            d.enabled = true;    // WP-069 B3: the rocket flight and the blast are in (RocketImpacts)
             Fire(d, WeaponFireMode.Single, 20f, 110f);
             Ammo(d, 1, 8, 2.8f, 2.8f, WeaponReloadKind.Single);
             d.ammo.reserveRoundCoef = 0.06f;

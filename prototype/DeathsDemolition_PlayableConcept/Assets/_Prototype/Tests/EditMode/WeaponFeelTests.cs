@@ -37,7 +37,7 @@ namespace DD.Prototype.Tests.EditMode
             PrototypeConfig config = Config;
             Assert.IsNotNull(config, "PrototypeConfig Resources'ta yok.");
             var defaults = new WeaponConfigSection();
-            Assert.AreEqual(9, config.Weapons.ClassicWeapons.Count, "WP-069 B2: 9 etkin klasik (rl_1 B3'e dek kapalı).");
+            Assert.AreEqual(10, config.Weapons.ClassicWeapons.Count, "WP-069 B3: 10 etkin klasik (rl_1 dahil).");
             for (int i = 0; i < config.Weapons.ClassicWeapons.Count; i++)
             {
                 ClassicWeaponSettings a = config.Weapons.ClassicWeapons[i];
@@ -296,7 +296,7 @@ namespace DD.Prototype.Tests.EditMode
         public void DEC083_UcSilah_ABC_D_YalnizVeri_SecimdeYok()
         {
             // WP-069 B2b (DEC-097): the roster lists the Arsenal's nine enabled classics; DEC-083's A/B/C lead it, D stays data.
-            Assert.AreEqual(9, WeaponRoster.Enabled.Count, "dokuz klasik silah (rl_1 B3'e dek kapalı).");
+            Assert.AreEqual(10, WeaponRoster.Enabled.Count, "on klasik silah (WP-069 B3: rl_1 dahil).");
             var ids = new HashSet<ClassicWeaponId>();
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled) ids.Add(d.Id);
             Assert.IsTrue(ids.Contains(ClassicWeaponId.AssaultRifle) && ids.Contains(ClassicWeaponId.AutoSmg) && ids.Contains(ClassicWeaponId.CombatShotgun));
@@ -308,7 +308,7 @@ namespace DD.Prototype.Tests.EditMode
 
             // Selection / shop never see D: no entry, not selectable, no HUD icon exposed.
             IWeaponRosterSource src = WeaponRosterSource.Instance;
-            Assert.AreEqual(9, src.Entries.Count, "seçim listesi 9 (D yok — kilitli kart değil, yok).");
+            Assert.AreEqual(10, src.Entries.Count, "seçim listesi 10 (D yok — kilitli kart değil, yok).");
             foreach (WeaponRosterEntry e in src.Entries)
             {
                 Assert.AreNotEqual(WeaponTypeClass.HeavyPistol, e.TypeClass);
@@ -316,7 +316,7 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             // The config carries the Arsenal's enabled classic weapons (WP-069 B2: 9) and never a ClassicWeaponSettings for D.
-            Assert.AreEqual(9, Config.Weapons.ClassicWeapons.Count);
+            Assert.AreEqual(10, Config.Weapons.ClassicWeapons.Count);   // WP-069 B3: rl_1 in
             Assert.AreEqual(ClassicWeaponId.AssaultRifle, WeaponRoster.DefaultWeapon, "A açık / varsayılan; B, C profil seviyesiyle (DEC-008).");
         }
 

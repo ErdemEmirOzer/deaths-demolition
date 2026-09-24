@@ -668,6 +668,9 @@ namespace DD.Prototype.Weapons
         /// WP-069 ADR-069-1: how this weapon's projectiles fly (v3 projectile block; a fast straight
         /// bullet at the M3 range for a hand-built settings object). Pellet weapons fly Pellet kind.
         /// </summary>
+        /// <summary>WP-069 §6: the Explosion branch reads "Blast" on this weapon (rl_1) — no chance roll, a bigger rocket blast.</summary>
+        public bool UsesBlastSemantics => Definition != null && Definition.upgrade != null && Definition.upgrade.explosionSemantics == ExplosionSemantics.Blast;
+
         public ProjectileLaunch Launch(int pelletIndex)
         {
             ProjectileLaunch launch = ProjectileLaunch.From(Definition, Id, Range);
@@ -675,6 +678,13 @@ namespace DD.Prototype.Weapons
             if (_modifiers != null)
             {
                 launch.ArmorMultiplier *= _modifiers.ArmorBreakMultiplier;   // WP-069 §6 ArmorBreak
+                if (launch.Kind == ProjectileKind.Rocket)
+                {
+                    // WP-069 B3 (§6): on a launcher the Explosion branch is the blast's size / damage, Cluster the bomblets (2 / 3 / 4).
+                    if (UsesBlastSemantics) launch.BlastTier = _modifiers.GetTier(UpgradeBranch.Explosion);
+                    int cluster = _modifiers.GetTier(UpgradeBranch.Cluster);
+                    launch.ClusterBomblets = cluster > 0 ? cluster + 1 : 0;
+                }
             }
 
             if (PelletCount > 1 && launch.Kind == ProjectileKind.Bullet)
@@ -810,7 +820,8 @@ namespace DD.Prototype.Weapons
 
                 // A shotgun with the Explosion branch must not roll the blast once per
                 // pellet at full odds - that would be eight rolls for one trigger pull.
-                request.ExplosionChance = multiPellet ? m.ExplosionChance / PelletCount : m.ExplosionChance;
+                // WP-069 B3: a launcher never rolls it — its Explosion tiers grow the rocket's own blast (Launch).
+                request.ExplosionChance = UsesBlastSemantics ? 0f : multiPellet ? m.ExplosionChance / PelletCount : m.ExplosionChance;
                 request.ExplosionRadius = m.ExplosionRadius;
                 request.ExplosionDamageScale = m.ExplosionDamageScale;
             }

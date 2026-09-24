@@ -54,7 +54,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(Arsenal.Get("lmg_1").presentation.fireLoop, "720 RPM auto");
             Assert.IsFalse(Arsenal.Get("smg_2").presentation.fireLoop, "540 RPM → tek tek");
             Assert.IsFalse(Arsenal.Get("sg_1").presentation.fireLoop, "single");
-            Assert.IsFalse(Arsenal.Get("rl_1").enabled, "rl_1 B3'e dek kapalı");
+            Assert.IsTrue(Arsenal.Get("rl_1").enabled, "WP-069 B3: rl_1 etkin (roket uçuşu + patlama)");
 
             var triples = new HashSet<string>();
             foreach (WeaponDefinition d in catalog.weapons)
@@ -73,8 +73,8 @@ namespace DD.Prototype.Tests.EditMode
             PrototypeConfig config = Config;
             Assert.IsNotNull(config);
             config.Weapons.RebuildClassicView();
-            Assert.AreEqual(9, config.Weapons.ClassicWeapons.Count, "9 etkin klasik (rl_1 B3)");
-            Assert.IsNull(config.Weapons.FindExact(ClassicWeaponId.Rl1), "kapalı tanım kopyaya girmez");
+            Assert.AreEqual(10, config.Weapons.ClassicWeapons.Count, "10 etkin klasik (WP-069 B3: rl_1 dahil)");
+            Assert.IsNotNull(config.Weapons.FindExact(ClassicWeaponId.Rl1), "rl_1 kopyada");
             foreach (WeaponDefinition d in Arsenal.All)
             {
                 if (!d.enabled || d.slot != WeaponSlotKind.Classic) continue;

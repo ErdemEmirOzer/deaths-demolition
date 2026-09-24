@@ -46,11 +46,11 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             Assert.AreEqual(arsenalClassics + 1, all.Count, "Roster: Arsenal klasikleri + veri-yalnız D.");
-            Assert.AreEqual(arsenalEnabled, WeaponRoster.Enabled.Count, "etkin = Arsenal'ın etkin klasikleri (rl_1 B3'e dek kapalı).");
+            Assert.AreEqual(arsenalEnabled, WeaponRoster.Enabled.Count, "etkin = Arsenal'ın etkin klasikleri (WP-069 B3: rl_1 dahil).");
             Assert.AreEqual(ClassicWeaponId.AssaultRifle, WeaponRoster.Enabled[0].Id);
             Assert.AreEqual(ClassicWeaponId.AutoSmg, WeaponRoster.Enabled[1].Id);
             Assert.AreEqual(ClassicWeaponId.CombatShotgun, WeaponRoster.Enabled[2].Id);
-            Assert.IsFalse(WeaponRoster.IsEnabled(ClassicWeaponId.Rl1), "rl_1 seçimde yok (B3)");
+            Assert.IsTrue(WeaponRoster.IsEnabled(ClassicWeaponId.Rl1), "WP-069 B3: rl_1 seçimde (meta yolu)");
             for (int i = 3; i < WeaponRoster.Enabled.Count; i++)
             {
                 ClassicWeaponDefinition e = WeaponRoster.Enabled[i];
