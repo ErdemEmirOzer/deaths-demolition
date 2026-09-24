@@ -118,34 +118,60 @@ namespace DD.Prototype.Tests.PlayMode
             UiSettings.TextScale = 1.25f;
             var failures = new List<string>();
 
-            // Selection: the weapon card name and its stat line.
+            // Selection v3 (WP-068 slice 7): the stage's lines never meet, a stat's label never meets its value, and a
+            // weapon row's name never meets its chip.
             PrototypeUiFlow.GoToSelection();
             yield return SahneyiBekle(PrototypeScenes.Selection);
             yield return Bekle(() => !UiCurtain.IsCovering, 10f, "perde açılmadı");
             yield return null;
+            yield return null;
             failures.AddRange(Truncated("selection"));
-            Transform card = null;
-            foreach (UiButton button in Object.FindObjectsOfType<UiButton>())
+            SelectionScreen selection = Object.FindObjectOfType<SelectionScreen>();
+            if (selection == null)
             {
-                if (button.name.StartsWith("Weapon.", System.StringComparison.Ordinal) && button.IsInteractable())
-                {
-                    card = button.transform;
-                    break;
-                }
-            }
-
-            if (card != null)
-            {
-                TMP_Text name = card.GetComponent<UiButton>().LabelText;
-                TMP_Text detail = card.Find("Detail").GetComponent<TMP_Text>();
-                if (GlyphRect(name).Overlaps(GlyphRect(detail)))
-                {
-                    failures.Add("selection · weapon name overlaps its stat line (T11)");
-                }
+                failures.Add("selection · screen not found");
             }
             else
             {
-                failures.Add("selection · weapon card not found");
+                TMP_Text[] stage = selection.StageTexts;
+                for (int i = 0; i + 1 < stage.Length; i++)
+                {
+                    if (!string.IsNullOrEmpty(stage[i].text) && !string.IsNullOrEmpty(stage[i + 1].text) && GlyphRect(stage[i]).Overlaps(GlyphRect(stage[i + 1])))
+                    {
+                        failures.Add("selection · stage " + stage[i].name + " overlaps " + stage[i + 1].name + " (T11)");
+                    }
+                }
+
+                foreach (Transform t in selection.GetComponentsInChildren<Transform>())
+                {
+                    if (!t.name.StartsWith("Stat", System.StringComparison.Ordinal) || t.Find("Label") == null)
+                    {
+                        continue;
+                    }
+
+                    TMP_Text label = t.Find("Label").GetComponent<TMP_Text>();
+                    TMP_Text value = t.Find("Value").GetComponent<TMP_Text>();
+                    if (GlyphRect(label).Overlaps(GlyphRect(value)))
+                    {
+                        failures.Add("selection · " + t.name + " label overlaps its value (T11)");
+                    }
+                }
+
+                foreach (UiButton button in selection.GetComponentsInChildren<UiButton>())
+                {
+                    if (!button.name.StartsWith("Weapon.", System.StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    foreach (TMP_Text chip in button.GetComponentsInChildren<TMP_Text>())
+                    {
+                        if (chip != button.LabelText && chip.transform.parent.name == "Chip" && GlyphRect(chip).Overlaps(GlyphRect(button.LabelText)))
+                        {
+                            failures.Add("selection · " + button.name + " name overlaps its chip (T11)");
+                        }
+                    }
+                }
             }
 
             // Run HUD: the health label / value against the bar.

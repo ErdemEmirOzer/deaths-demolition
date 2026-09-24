@@ -25,6 +25,54 @@ namespace DD.Prototype.Tests.PlayMode
         {
             LogAssert.ignoreFailingMessages = false;
             PrototypeUiFlow.SelectedSkin = PlayerSkins.Default;
+            UiSettings.TextScale = 1f;
+            UiSettings.UiScale = 1f;
+        }
+
+        /// <summary>
+        /// The Mac case (the r1b-caps frame that failed): UI scale 1.2 × TextScale 1.25 leaves the stage ~560 px. The
+        /// measured layout keeps every block inside the card, and a focused PATH weapon still fits.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Kompakt_UiOlcek12_Metin125_SahneKartaSigar()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return LifecycleTestKit.BootTanMainMenuye();
+            UiSettings.UiScale = 1.2f;
+            UiSettings.TextScale = 1.25f;
+            PrototypeUiFlow.GoToSelection();
+            yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.Selection);
+            yield return null;
+            yield return null;
+            yield return null;
+            SelectionScreen screen = Object.FindObjectOfType<SelectionScreen>();
+            Assert.IsNotNull(screen);
+
+            foreach (string weapon in new[] { null, "Weapon.sr_1.Sr1", "Weapon.lmg_2.Lmg2" })
+            {
+                if (weapon != null)
+                {
+                    RectTransform row = Named(screen, weapon);
+                    Assert.IsNotNull(row, weapon);
+                    EventSystem.current.SetSelectedGameObject(row.gameObject);
+                    yield return null;
+                    yield return null;
+                }
+
+                Canvas.ForceUpdateCanvases();
+                RectTransform card = Named(screen, "StageCard");
+                float floor = Bottom(card) - 0.5f;
+                foreach (string block in new[] { "State", "CoreBranches", "Stat2", "Stat3" })
+                {
+                    Assert.GreaterOrEqual(Bottom(Named(screen, block)), floor, (weapon ?? "seçili") + ": " + block + " kartın altına taşıyor");
+                }
+            }
+
+            RectTransform column = Named(screen, "Weapons");
+            Assert.GreaterOrEqual(Bottom(Named(screen, "Specials")), Bottom(column) - 0.5f, "Special şeridi kolona sığar (kompakt)");
+            PrototypeUiFlow.GoToMainMenu();
+            yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.MainMenu);
         }
 
         private static float Bottom(RectTransform rect)

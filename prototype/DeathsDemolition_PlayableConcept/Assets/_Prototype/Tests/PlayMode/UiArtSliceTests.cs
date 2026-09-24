@@ -434,7 +434,8 @@ namespace DD.Prototype.Tests.PlayMode
                 rig.Health.DiagnosisInvulnerable = false;
                 rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, "Zombie.Standard.Swipe");
                 float died = Time.realtimeSinceStartup;
-                while (hud.HealthGroup == null && Time.realtimeSinceStartup - died < 2f)
+                // The group can exist before the death beat (a previous posture step), so wait for the beat itself.
+                while ((hud.HealthGroup == null || !hud.HealthGroup.ignoreParentGroups) && Time.realtimeSinceStartup - died < 2f)
                 {
                     yield return null;
                 }

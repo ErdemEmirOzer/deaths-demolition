@@ -89,6 +89,25 @@ namespace DD.Prototype.UI
         private UiBar _xpBar;
         private int _stageIndex = -1;
         private GameObject _lastFocus;
+        private RectTransform _stageContent;
+        private RectTransform _stageTop;
+        private RectTransform _coreRow;
+        private RectTransform _stateRow;
+        private TMP_Text _compareCaption;
+        private readonly RectTransform[] _statCells = new RectTransform[4];
+        private bool _stageLayoutPending;
+        private Vector2 _stageSize;
+        private RectTransform _weaponsColumn;
+        private RectTransform _specialsHead;
+        private RectTransform _specialsRow;
+        private TMP_Text _specialsNote;
+        private float _weaponsTop;
+        private float _rowHeight;
+        private float _tileHeight;
+        private float _specialsTitleBand;
+        private float _specialsNoteBand;
+        private bool _weaponsLayoutPending;
+        private Vector2 _weaponsSize;
 
         /// <summary>The preview images the skin cards show, index = PlayerSkin (tests read the sprite).</summary>
         public Image[] SkinPreviews
@@ -168,6 +187,16 @@ namespace DD.Prototype.UI
 
             // The stage follows focus (a pointer hover moves focus too). A change of the selected object is the only
             // trigger: the stage is rebuilt on a change, never per frame.
+            if (_stageContent != null && (_stageLayoutPending || _stageContent.rect.size != _stageSize))
+            {
+                LayoutStage();
+            }
+
+            if (_weaponsColumn != null && (_weaponsLayoutPending || _weaponsColumn.rect.size != _weaponsSize))
+            {
+                LayoutWeapons();
+            }
+
             GameObject focus = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
             if (focus != _lastFocus)
             {
@@ -254,8 +283,10 @@ namespace DD.Prototype.UI
                 float textLeft = PreviewSlotWidth + SwatchWidthNow + (int)UiSpace.XL + (int)UiSpace.L;
                 float captionBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
+                // The name band sits under the caption row, below the SELECTED badge (30 px), so it takes the card's full
+                // width: at Mac UI 1.2 × TextScale 1.25 the badge reserve clipped "Ivory / Crimson".
                 labelRect.offsetMin = new Vector2(textLeft, (int)UiSpace.M);
-                labelRect.offsetMax = new Vector2(-BadgeWidth, -((int)UiSpace.M + captionBand + (int)UiSpace.XS));
+                labelRect.offsetMax = new Vector2(-(int)UiSpace.L, -((int)UiSpace.M + Mathf.Max(captionBand, 30f) + (int)UiSpace.XS));
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
                 button.LabelText.alignment = TextAlignmentOptions.TopLeft;
 
@@ -389,6 +420,8 @@ namespace DD.Prototype.UI
             var stack = new UiStack(column);
             stack.Add(UiFactory.Heading("CLASSIC WEAPON", column), UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.S);
+            _weaponsColumn = column;
+            _weaponsTop = stack.Cursor;
 
             List<WeaponDefinition> roster = RosterForDisplay();
             int count = roster.Count;
@@ -401,6 +434,7 @@ namespace DD.Prototype.UI
             _weaponEnabled = new bool[count];
 
             float rowHeight = Mathf.Max(WeaponRowHeight, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + (int)UiSpace.M);
+            _rowHeight = rowHeight;
 
             for (int i = 0; i < count; i++)
             {
@@ -469,6 +503,7 @@ namespace DD.Prototype.UI
             }
 
             BuildSpecialTiles(column, ref stack);
+            LayoutWeapons();
         }
 
         private static RectTransform RowChip(UiButton button, UiChipKind kind, string word)
@@ -486,20 +521,29 @@ namespace DD.Prototype.UI
         /// The two Specials (DEC-094): found on the field, never chosen here - information tiles, not controls. The glyph
         /// wears its Special's identity tint (Arc / Gel); the name and fire mode come from the pack.
         /// </summary>
-        private static void BuildSpecialTiles(RectTransform column, ref UiStack stack)
+        private void BuildSpecialTiles(RectTransform column, ref UiStack stack)
         {
-            stack.Gap(UiSpace.L);
+            stack.Gap(UiSpace.M);
             float band = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            float captionBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
             RectTransform head = UiFactory.NewRect("SpecialsHead", column);
-            stack.Add(head, band);
+            _specialsHead = head;
+            _specialsTitleBand = band;
+            _specialsNoteBand = captionBand;
+            stack.Add(head, band + captionBand);
             TMP_Text title = UiFactory.Label("Title", head, UiStrings.Get("selection.specials.title", "SPECIAL WEAPONS"), UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
-            UiFactory.Fill((RectTransform)title.transform);
-            TMP_Text note = UiFactory.Label("Note", head, UiStrings.Get("selection.specials.caption", "Found on the field, never chosen here."), UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleRight);
-            UiFactory.Fill((RectTransform)note.transform);
-            stack.Gap(UiSpace.S);
+            SetTop(title, 0f, 0f, band);
+            // The note on its own line: side by side they met on the Mac canvas.
+            TMP_Text note = UiFactory.Label("Note", head, UiStrings.Get("selection.specials.caption", "Found on the field, never chosen here."), UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
+            SetTop(note, 0f, band, captionBand);
+            note.overflowMode = TextOverflowModes.Ellipsis;
+            _specialsNote = note;
+            stack.Gap(UiSpace.XS);
 
             RectTransform row = UiFactory.NewRect("Specials", column);
-            stack.Add(row, Mathf.Max(SpecialTileHeight, band + (int)UiSpace.M));
+            _tileHeight = Mathf.Max(SpecialTileHeight, band + (int)UiSpace.M);
+            stack.Add(row, _tileHeight);
+            _specialsRow = row;
             string[] ids = { "sw_arc", "sw_gel" };
             string[] glyphKeys = { "Special.Raiju", "Special.Namekuji" };   // N19 G1 cells (the SpecialWeaponId names, DEC-094)
             for (int i = 0; i < ids.Length; i++)
@@ -543,108 +587,74 @@ namespace DD.Prototype.UI
             UiCard card = UiCard.Create("StageCard", column, Vector2.zero, UiElevation.Elev1, UiColor.SurfacePanel, UiSpace.XL);
             UiFactory.Fill((RectTransform)card.transform);
             RectTransform content = card.Content;
+            _stageContent = content;
             _stageText = UiFactory.Group(content.gameObject);
 
-            var stack = new UiStack(content);
-
-            // The glyph + identity block.
-            RectTransform top = UiFactory.NewRect("Identity", content);
-            float nameBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H1));
-            float labelBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
-            float roleBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)) * 2f;
-            float topHeight = Mathf.Max(StageGlyph, nameBand + labelBand + roleBand + (int)UiSpace.S);
-            stack.Add(top, topHeight);
-
-            _stageGlyph = UiFactory.NewImage("StageGlyph", top, UiColor.TextPrimary, UiArt.WeaponIcon(ClassicWeaponId.AssaultRifle));
+            // Every block is built here and placed by LayoutStage from the texts it holds (the stage is measured, not
+            // stacked on fixed bands: TextScale 1.25 on the Mac canvas at UI scale 1.2 leaves ~560 px for it).
+            _stageTop = UiFactory.NewRect("Identity", content);
+            _stageGlyph = UiFactory.NewImage("StageGlyph", _stageTop, UiColor.TextPrimary, UiArt.WeaponIcon(ClassicWeaponId.AssaultRifle));
             _stageGlyph.preserveAspect = true;
             if (UiArt.IsGlyph(_stageGlyph.sprite))
             {
                 UiArt.ApplyGlyph(_stageGlyph, GlyphEdge);
             }
 
-            RectTransform glyphRect = (RectTransform)_stageGlyph.transform;
-            glyphRect.anchorMin = new Vector2(0f, 1f);
-            glyphRect.anchorMax = new Vector2(0f, 1f);
-            glyphRect.pivot = new Vector2(0f, 1f);
-            glyphRect.sizeDelta = new Vector2(StageGlyph, StageGlyph);
-            glyphRect.anchoredPosition = Vector2.zero;
-
-            float textLeft = StageGlyph + (int)UiSpace.L;
-            _stageName = TopLabel("Name", top, UiType.H1, UiColor.TextPrimary, textLeft, 0f, nameBand);
-            _stageClass = TopLabel("Class", top, UiType.Label, UiColor.TextSecondary, textLeft, nameBand, labelBand);
-            _stageRole = TopLabel("Role", top, UiType.Body, UiColor.TextPrimary, textLeft, nameBand + labelBand + (int)UiSpace.S, roleBand);
+            _stageName = TopLabel("Name", _stageTop, UiType.H1, UiColor.TextPrimary, 0f, 0f, 1f);
+            _stageClass = TopLabel("Class", _stageTop, UiType.Label, UiColor.TextSecondary, 0f, 0f, 1f);
+            _stageRole = TopLabel("Role", _stageTop, UiType.Body, UiColor.TextPrimary, 0f, 0f, 1f);
             _stageName.enableWordWrapping = false;
             _stageClass.enableWordWrapping = false;
             _stageName.overflowMode = TextOverflowModes.Ellipsis;
             _stageClass.overflowMode = TextOverflowModes.Ellipsis;   // "LIGHT MACHINE GUN · AUTO" on the 1408 canvas
             _stageRole.overflowMode = TextOverflowModes.Ellipsis;
 
-            stack.Gap(UiSpace.L);
             _stageDescription = UiFactory.Label("Description", content, string.Empty, UiType.Body, UiColor.TextSecondary);
-            // Five lines: the pack's longest description (171 characters) on the Mac 1663 canvas at TextScale 1.25.
             _stageDescription.overflowMode = TextOverflowModes.Ellipsis;
-            stack.Add((RectTransform)_stageDescription.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)) * 5f);
             _stageFlavour = UiFactory.Label("Flavour", content, string.Empty, UiType.Caption, UiColor.TextMuted);
             _stageFlavour.fontStyle = FontStyles.Italic;
-            stack.Add((RectTransform)_stageFlavour.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+            _stageFlavour.overflowMode = TextOverflowModes.Ellipsis;
 
             // The StatStrip: two rows of two, each a label, a number and a roster bar.
-            stack.Gap(UiSpace.L);
-            float cellLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
-            float cellHeight = cellLine + (int)UiSpace.XS + StatBarHeight;
-            for (int row = 0; row < 2; row++)
+            for (int s = 0; s < 4; s++)
             {
-                RectTransform line = UiFactory.NewRect("StatRow" + row, content);
-                stack.Add(line, cellHeight);
-                stack.Gap(UiSpace.M);
-                for (int col = 0; col < 2; col++)
-                {
-                    int s = row * 2 + col;
-                    RectTransform cell = UiFactory.NewRect("Stat" + s, line);
-                    cell.anchorMin = new Vector2(col * 0.5f, 0f);
-                    cell.anchorMax = new Vector2(col * 0.5f + 0.5f, 1f);
-                    cell.offsetMin = new Vector2(col == 0 ? 0f : (int)UiSpace.M, 0f);
-                    cell.offsetMax = new Vector2(col == 0 ? -(int)UiSpace.M : 0f, 0f);
+                RectTransform cell = UiFactory.NewRect("Stat" + s, content);
+                _statCells[s] = cell;
+                _statLabels[s] = TopLabel("Label", cell, UiType.Caption, UiColor.TextSecondary, 0f, 0f, 1f);
+                _statValues[s] = TopLabel("Value", cell, UiType.Label, UiColor.TextPrimary, 0f, 0f, 1f);
+                _statLabels[s].enableWordWrapping = false;
+                _statValues[s].enableWordWrapping = false;
+                _statLabels[s].overflowMode = TextOverflowModes.Ellipsis;
 
-                    _statLabels[s] = TopLabel("Label", cell, UiType.Caption, UiColor.TextSecondary, 0f, 0f, cellLine);
-                    _statValues[s] = TopLabel("Value", cell, UiType.Label, UiColor.TextPrimary, 0f, 0f, cellLine);
-                    _statLabels[s].alignment = TextAlignmentOptions.MidlineLeft;
-                    _statValues[s].alignment = TextAlignmentOptions.MidlineRight;
-
-                    UiBar bar = UiFactory.Bar("Bar", cell, UiColor.TextPrimary, StatBarHeight);
-                    RectTransform barRect = (RectTransform)bar.transform;
-                    barRect.anchorMin = new Vector2(0f, 0f);
-                    barRect.anchorMax = new Vector2(1f, 0f);
-                    barRect.pivot = new Vector2(0.5f, 0f);
-                    barRect.sizeDelta = new Vector2(0f, StatBarHeight);
-                    barRect.anchoredPosition = Vector2.zero;
-                    _statBars[s] = bar;
-                }
+                UiBar bar = UiFactory.Bar("Bar", cell, UiColor.TextPrimary, StatBarHeight);
+                RectTransform barRect = (RectTransform)bar.transform;
+                barRect.anchorMin = new Vector2(0f, 0f);
+                barRect.anchorMax = new Vector2(1f, 0f);
+                barRect.pivot = new Vector2(0.5f, 0f);
+                barRect.sizeDelta = new Vector2(0f, StatBarHeight);
+                barRect.anchoredPosition = Vector2.zero;
+                _statBars[s] = bar;
             }
 
-            TMP_Text compare = UiFactory.Label("CompareCaption", content,
+            _compareCaption = UiFactory.Label("CompareCaption", content,
                 UiStrings.Get("selection.stats.caption", "Bars compare with the other classic weapons. Longer is better."),
                 UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)compare.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
 
             // CORE: the weapon's three round-end branches (WP-034 shop gate).
-            stack.Gap(UiSpace.L);
-            float coreBand = Mathf.Max(CoreGlyphSize + 4f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
-            RectTransform core = UiFactory.NewRect("CoreBranches", content);
-            stack.Add(core, coreBand);
-            TMP_Text coreLabel = UiFactory.Label("Label", core, UiStrings.Get("selection.core", "CORE"), UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
-            RectTransform coreLabelRect = UiFactory.Fill((RectTransform)coreLabel.transform);
+            _coreRow = UiFactory.NewRect("CoreBranches", content);
+            TMP_Text coreLabel = UiFactory.Label("Label", _coreRow, UiStrings.Get("selection.core", "CORE"), UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
+            RectTransform coreLabelRect = (RectTransform)coreLabel.transform;
+            coreLabelRect.anchorMin = new Vector2(0f, 0f);
             coreLabelRect.anchorMax = new Vector2(0f, 1f);
-            coreLabelRect.sizeDelta = new Vector2(52f, 0f);
+            coreLabelRect.pivot = new Vector2(0f, 0.5f);
+            coreLabelRect.sizeDelta = new Vector2(CoreLabelWidth, 0f);
+            coreLabelRect.anchoredPosition = Vector2.zero;
             for (int i = 0; i < 3; i++)
             {
-                const float width = 148f;
-                RectTransform slot = UiFactory.NewRect("Core" + i, core);
+                RectTransform slot = UiFactory.NewRect("Core" + i, _coreRow);
                 slot.anchorMin = new Vector2(0f, 0f);
                 slot.anchorMax = new Vector2(0f, 1f);
                 slot.pivot = new Vector2(0f, 0.5f);
-                slot.sizeDelta = new Vector2(width, 0f);
-                slot.anchoredPosition = new Vector2(52f + i * (width + (int)UiSpace.S), 0f);
                 Image glyph = UiFactory.NewImage("Glyph", slot, UiColor.TextSecondary, UiSprites.Disc);
                 glyph.preserveAspect = true;
                 Place((RectTransform)glyph.transform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(CoreGlyphSize, CoreGlyphSize));
@@ -653,20 +663,276 @@ namespace DD.Prototype.UI
                 RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
                 nameRect.offsetMin = new Vector2(CoreGlyphSize + (int)UiSpace.XS, 0f);
                 name.enableWordWrapping = false;
+                name.overflowMode = TextOverflowModes.Ellipsis;
                 _coreNames[i] = name;
             }
 
             // The state line: what carrying it means, or what unlocks it (+ the XP mini-bar).
-            stack.Gap(UiSpace.L);
-            float stateBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
-            RectTransform state = UiFactory.NewRect("State", content);
-            stack.Add(state, stateBand);
-            _stateLine = UiFactory.Label("Line", state, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            _stateRow = UiFactory.NewRect("State", content);
+            _stateLine = UiFactory.Label("Line", _stateRow, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             _stateLine.richText = true;   // the PATH line marks each met part in cream (built on a focus change)
+            _stateLine.overflowMode = TextOverflowModes.Ellipsis;
             RectTransform stateRect = UiFactory.Fill((RectTransform)_stateLine.transform);
             stateRect.offsetMax = new Vector2(-(XpBarWidth + (int)UiSpace.M), 0f);
-            _xpBar = UiFactory.Bar("Xp", state, UiColor.BarXp, StatBarHeight);
+            _xpBar = UiFactory.Bar("Xp", _stateRow, UiColor.BarXp, StatBarHeight);
             Place((RectTransform)_xpBar.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(XpBarWidth, StatBarHeight));
+        }
+
+        private const float CoreLabelWidth = 52f;
+        private const float StageGlyphCompact = 96f;
+
+        /// <summary>
+        /// Places the stage's blocks from what they hold at the card's real size. Heights come from the texts (the
+        /// description's measured lines, up to five). A stat whose label and value do not fit on one line puts the value
+        /// under its label. When the card is short (Mac canvas at UI scale 1.2 × TextScale 1.25), the gaps close first,
+        /// then the flavour line and the bar caption drop, then the glyph steps down to 96 and the description is clipped
+        /// last. Run on a focus change and when the card's size changes, never per frame otherwise.
+        /// </summary>
+        private void LayoutStage()
+        {
+            if (_stageContent == null)
+            {
+                return;
+            }
+
+            Rect area = _stageContent.rect;
+            _stageSize = area.size;
+            if (area.height < 1f || area.width < 1f)
+            {
+                _stageLayoutPending = true;   // the canvas has not laid out yet: next Update
+                return;
+            }
+
+            _stageLayoutPending = false;
+            float w = area.width;
+            float bodyLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body));
+            float captionLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float labelLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            float nameBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H1));
+
+            // Stat cells: one line when label + value fit, else the value moves under the label.
+            float cellW = Mathf.Floor((w - (int)UiSpace.XL) * 0.5f);
+            var stacked = new bool[4];
+            float[] rowH = new float[2];
+            for (int s = 0; s < 4; s++)
+            {
+                float lw = _statLabels[s].GetPreferredValues(_statLabels[s].text).x;
+                float vw = _statValues[s].GetPreferredValues(_statValues[s].text).x;
+                stacked[s] = lw + vw + (int)UiSpace.S > cellW;
+                float h = (stacked[s] ? captionLine + labelLine : Mathf.Max(captionLine, labelLine)) + (int)UiSpace.XS + StatBarHeight;
+                rowH[s / 2] = Mathf.Max(rowH[s / 2], h);
+            }
+
+            float statsH = rowH[0] + (int)UiSpace.M + rowH[1];
+            float coreH = Mathf.Max(CoreGlyphSize + 4f, captionLine);
+            float stateH = captionLine;
+            float compareH = string.IsNullOrEmpty(_compareCaption.text) ? 0f : Mathf.Ceil(_compareCaption.GetPreferredValues(_compareCaption.text, w, 0f).y);
+            float flavourH = string.IsNullOrEmpty(_stageFlavour.text) ? 0f : captionLine;
+            float descMax = bodyLine * 5f;
+            float descH = string.IsNullOrEmpty(_stageDescription.text) ? 0f
+                : Mathf.Min(descMax, Mathf.Ceil(_stageDescription.GetPreferredValues(_stageDescription.text, w, 0f).y));
+
+            float glyph = StageGlyph;
+            float gap = (int)UiSpace.L;
+            bool showFlavour = flavourH > 0f;
+            bool showCompare = compareH > 0f;
+            float topH = TopHeight(glyph, w, nameBand, labelLine, bodyLine);
+            float Total()
+            {
+                return topH + gap + descH + (showFlavour ? (int)UiSpace.XS + flavourH : 0f) + gap + statsH
+                       + (showCompare ? (int)UiSpace.S + compareH : 0f) + gap + coreH + gap + stateH;
+            }
+
+            if (Total() > area.height) { gap = (int)UiSpace.S; }
+            if (Total() > area.height) { showFlavour = false; }
+            if (Total() > area.height) { showCompare = false; }
+            if (Total() > area.height) { glyph = StageGlyphCompact; topH = TopHeight(glyph, w, nameBand, labelLine, bodyLine); }
+            if (Total() > area.height) { descH = Mathf.Max(bodyLine * 2f, descH - (Total() - area.height)); }
+
+            // Place, top to bottom.
+            float y = 0f;
+            Dock(_stageTop, y, topH);
+            RectTransform glyphRect = (RectTransform)_stageGlyph.transform;
+            glyphRect.anchorMin = new Vector2(0f, 1f);
+            glyphRect.anchorMax = new Vector2(0f, 1f);
+            glyphRect.pivot = new Vector2(0f, 1f);
+            glyphRect.sizeDelta = new Vector2(glyph, glyph);
+            glyphRect.anchoredPosition = Vector2.zero;
+            float textLeft = glyph + (int)UiSpace.L;
+            float roleH = RoleHeight(w - textLeft, bodyLine);
+            SetTop(_stageName, textLeft, 0f, nameBand);
+            SetTop(_stageClass, textLeft, nameBand, labelLine);
+            SetTop(_stageRole, textLeft, nameBand + labelLine + (int)UiSpace.S, roleH);
+            y += topH + gap;
+
+            Dock((RectTransform)_stageDescription.transform, y, descH);
+            y += descH;
+            _stageFlavour.gameObject.SetActive(showFlavour);
+            if (showFlavour)
+            {
+                y += (int)UiSpace.XS;
+                Dock((RectTransform)_stageFlavour.transform, y, flavourH);
+                y += flavourH;
+            }
+
+            y += gap;
+            for (int s = 0; s < 4; s++)
+            {
+                int row = s / 2;
+                int col = s % 2;
+                float cellTop = y + (row == 1 ? rowH[0] + (int)UiSpace.M : 0f);
+                RectTransform cell = _statCells[s];
+                cell.anchorMin = new Vector2(0f, 1f);
+                cell.anchorMax = new Vector2(0f, 1f);
+                cell.pivot = new Vector2(0f, 1f);
+                cell.sizeDelta = new Vector2(cellW, rowH[row]);
+                cell.anchoredPosition = new Vector2(col * (cellW + (int)UiSpace.XL), -cellTop);
+                float line = stacked[s] ? captionLine : Mathf.Max(captionLine, labelLine);
+                SetTop(_statLabels[s], 0f, 0f, line);
+                _statLabels[s].alignment = TextAlignmentOptions.MidlineLeft;
+                if (stacked[s])
+                {
+                    SetTop(_statValues[s], 0f, captionLine, labelLine);
+                    _statValues[s].alignment = TextAlignmentOptions.MidlineLeft;
+                }
+                else
+                {
+                    SetTop(_statValues[s], 0f, 0f, line);
+                    _statValues[s].alignment = TextAlignmentOptions.MidlineRight;
+                }
+            }
+
+            y += statsH;
+            _compareCaption.gameObject.SetActive(showCompare);
+            if (showCompare)
+            {
+                y += (int)UiSpace.S;
+                Dock((RectTransform)_compareCaption.transform, y, compareH);
+                y += compareH;
+            }
+
+            y += gap;
+            Dock(_coreRow, y, coreH);
+
+            // The CORE word gives its width up before any branch name would be cut (T3: nothing truncates).
+            float namesW = 0f;
+            for (int i = 0; i < 3; i++)
+            {
+                if (_coreGlyphs[i].transform.parent.gameObject.activeSelf)
+                {
+                    namesW += CoreGlyphSize + (int)UiSpace.XS + Mathf.Ceil(_coreNames[i].GetPreferredValues(_coreNames[i].text).x);
+                }
+            }
+
+            bool coreWord = namesW + (int)UiSpace.S * 2f + CoreLabelWidth <= w;
+            _coreRow.Find("Label").gameObject.SetActive(coreWord);
+            float left = coreWord ? CoreLabelWidth : 0f;
+            float slotW = Mathf.Floor((w - left - (int)UiSpace.S * 2f) / 3f);
+            float x = left;
+            for (int i = 0; i < 3; i++)
+            {
+                RectTransform slot = (RectTransform)_coreGlyphs[i].transform.parent;
+                float want = CoreGlyphSize + (int)UiSpace.XS + Mathf.Ceil(_coreNames[i].GetPreferredValues(_coreNames[i].text).x);
+                bool natural = namesW + (int)UiSpace.S * 2f + left <= w;
+                float width = natural ? want : slotW;   // each takes what it needs while all three fit, else equal thirds
+                slot.sizeDelta = new Vector2(width, 0f);
+                slot.anchoredPosition = new Vector2(x, 0f);
+                x += width + (int)UiSpace.S;
+            }
+
+            y += coreH + gap;
+            Dock(_stateRow, y, stateH);
+        }
+
+        private float TopHeight(float glyph, float width, float nameBand, float labelLine, float bodyLine)
+        {
+            return Mathf.Max(glyph, nameBand + labelLine + (int)UiSpace.S + RoleHeight(width - glyph - (int)UiSpace.L, bodyLine));
+        }
+
+        private float RoleHeight(float width, float bodyLine)
+        {
+            if (string.IsNullOrEmpty(_stageRole.text) || width < 1f)
+            {
+                return bodyLine;
+            }
+
+            return Mathf.Min(bodyLine * 2f, Mathf.Ceil(_stageRole.GetPreferredValues(_stageRole.text, width, 0f).y));
+        }
+
+        /// <summary>
+        /// Fits the weapon rows and the Specials strip to the column's real height. On the short Mac canvas (UI scale 1.2 ×
+        /// TextScale 1.25), first the Specials note line goes, then the rows give up height down to their text line + 8 px.
+        /// </summary>
+        private void LayoutWeapons()
+        {
+            if (_weaponsColumn == null || _weaponButtons == null || _specialsRow == null)
+            {
+                return;
+            }
+
+            _weaponsSize = _weaponsColumn.rect.size;
+            float avail = _weaponsSize.y;
+            if (avail < 1f)
+            {
+                _weaponsLayoutPending = true;
+                return;
+            }
+
+            _weaponsLayoutPending = false;
+            int n = _weaponButtons.Length;
+            float rowH = _rowHeight;
+            bool note = true;
+            float Need()
+            {
+                return _weaponsTop + n * rowH + Mathf.Max(0, n - 1) * WeaponRowGap + (int)UiSpace.M
+                       + _specialsTitleBand + (note ? _specialsNoteBand : 0f) + (int)UiSpace.XS + _tileHeight;
+            }
+
+            if (Need() > avail)
+            {
+                note = false;
+            }
+
+            if (Need() > avail && n > 0)
+            {
+                float floor = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + (int)UiSpace.S;
+                rowH = Mathf.Max(floor, Mathf.Floor(rowH - (Need() - avail) / n));
+            }
+
+            float y = _weaponsTop;
+            for (int i = 0; i < n; i++)
+            {
+                var rect = (RectTransform)_weaponButtons[i].transform;
+                rect.sizeDelta = new Vector2(rect.sizeDelta.x, rowH);
+                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, -y);
+                y += rowH + (i < n - 1 ? WeaponRowGap : 0f);
+            }
+
+            y += (int)UiSpace.M;
+            float headH = _specialsTitleBand + (note ? _specialsNoteBand : 0f);
+            Dock(_specialsHead, y, headH);
+            _specialsNote.gameObject.SetActive(note);
+            y += headH + (int)UiSpace.XS;
+            Dock(_specialsRow, y, _tileHeight);
+        }
+
+        private static void Dock(RectTransform rect, float top, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(0f, -(top + height));
+            rect.offsetMax = new Vector2(0f, -top);
+        }
+
+        private static void SetTop(TMP_Text label, float left, float top, float height)
+        {
+            RectTransform rect = (RectTransform)label.transform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(left, -(top + height));
+            rect.offsetMax = new Vector2(0f, -top);
         }
 
         private static TMP_Text TopLabel(string name, RectTransform parent, UiType type, UiColor colour, float left, float top, float height)
@@ -766,6 +1032,8 @@ namespace DD.Prototype.UI
                 _xpBar.gameObject.SetActive(lockInfo.Ladder || !lockInfo.LevelMet);   // the level is what is missing
                 _xpBar.SetValue(ProfileService.LevelProgress01, true);
             }
+
+            LayoutStage();
 
             if (!first)
             {
