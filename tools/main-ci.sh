@@ -63,7 +63,7 @@ inventory() { [ -d "$PD" ] && find "$PD" -type f ! -name '*.lock' ! -name '.DS_S
 inventory > "$OUT/userdata-before.txt"
 # WP-066J: the shared guard also covers the player bundle folder and both PlayerPrefs plists (exact
 # restore to this snapshot: run-added keys removed — `defaults import` alone merges).
-"$DD_TOOLS_DIR/userdata-guard.sh" snapshot "$OUT/userdata-guard" > /dev/null
+"$DD_TOOLS_DIR/userdata-guard.sh" snapshot "$OUT/userdata-guard" > "$OUT/userdata-guard-snapshot.out" 2>&1 || dd_log "WARNING userdata: guard snapshot failed (exit $?, a live Player holds the profile?) — $OUT/userdata-guard-snapshot.out"
 
 # 4) tests (the CI worktree's own tools: they belong to the commit under test)
 "$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1; EX=$?

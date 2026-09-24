@@ -23,7 +23,12 @@
 #            (com.<bundle id>).  all (default) = both — use it for player runs (smoke, captures).
 #   A change outside the scope was made by someone else (a concurrent smoke, the user playing): it is
 #   NOT restored, only listed in <dir>/out-of-scope-changed.txt and logged as a warning (exit stays 0).
-# Exit: 0 ok · 30 restore did not reproduce the snapshot or a PlayerPrefs key not in it remains
+# WP-066L (S-05 race find): a live process that holds a profile lock (prototype-profile.json.lock:
+#   pid + name) can save while the guard copies. snapshot waits (≤ DD_GUARD_WAIT s, default 300) until no
+#   live foreign process holds either lock, copies, then hashes the COPIES (before*.txt describe what
+#   restore will put back) and re-checks the live files — a difference means a save landed mid-copy:
+#   retake (3 tries). restore waits the same way before touching an area whose lock is held.
+# Exit: 0 ok · 75 busy (a live foreign lock holder / live data kept changing) — nothing restored in that area · 30 restore did not reproduce the snapshot or a PlayerPrefs key not in it remains
 # (<dir>/extra-keys.txt) · 64 usage
 set -u
 source "${0:A:h}/dd-env.sh"
@@ -42,6 +47,23 @@ FILES1=(prototype-profile.json ui-settings.json load-timing.json input-settings.
 UNITY_VOLATILE="unity.player_session_count unity.player_sessionid"
 SNAP="$DIR/snap"
 
+# pid of a LIVE process (not this one) holding <dir>/prototype-profile.json.lock, else nothing.
+lock_holder() { local f="$1/prototype-profile.json.lock" pid name
+  [ -f "$f" ] || return 0
+  pid=$(sed -n 's/^pid=//p' "$f" | head -1); name=$(sed -n 's/^name=//p' "$f" | head -1)
+  [[ "$pid" == <-> ]] && [ "$pid" != "$$" ] && kill -0 "$pid" 2>/dev/null || return 0
+  # pid reuse: only a process whose command still carries the recorded name counts
+  ps -o command= -p "$pid" 2>/dev/null | grep -qF -- "${name:-Deaths Demolition}" && echo "$pid"
+}
+# Waits until no live foreign process holds the locks of the given folders; 1 on timeout.
+wait_unlocked() { local waited=0 h d
+  while :; do h=""; for d in "$@"; do h+=$(lock_holder "$d"); done
+    [ -z "$h" ] && return 0
+    [ "$waited" -ge "${DD_GUARD_WAIT:-300}" ] && { dd_log "userdata-guard: profile lock still held by live pid $h after ${waited}s"; return 1; }
+    [ "$waited" -eq 0 ] && dd_log "userdata-guard: profile lock held by live pid $h — waiting"
+    sleep 5; waited=$((waited+5))
+  done
+}
 # Guarded files of one folder: the fixed names plus the profile's side files (.lock excluded).
 guarded() { local d="$1"; shift; local n
   for n in "$@"; do [ -f "$d/$n" ] && echo "$d/$n"; done
@@ -85,14 +107,31 @@ state() { state_of editor; state_of player; }
 AREAS=(editor player); [ "$SCOPE" != all ] && AREAS=("$SCOPE")
 in_scope() { [[ " ${AREAS[*]} " == *" $1 "* ]]; }
 
+# WP-066L: the state of the snapshot COPIES, labelled with the live paths (what restore puts back).
+snap_state_of() { local f
+  if [ "$1" = editor ]; then guarded "$D1" "${FILES1[@]}" | while IFS= read -r f; do echo "$(dd_sha "$SNAP/D1/${f:t}")  $f"; done
+    echo "$(plist_digest "$SNAP/PR/p2.plist")  $P2 (launch-counter keys excluded)"
+  else guarded "$D2" prototype-profile.json | while IFS= read -r f; do echo "$(dd_sha "$SNAP/D2/${f:t}")  $f"; done
+    echo "$(plist_digest "$SNAP/PR/p1.plist")  $P1 (launch-counter keys excluded)"; fi
+}
+
 if [ "$CMD" = snapshot ]; then
   [ -e "$SNAP" ] && { echo "userdata-guard: $SNAP exists — one snapshot per directory" >&2; exit 64; }
-  mkdir -p "$SNAP/D1" "$SNAP/D2" "$SNAP/PR"
-  settle "$DOM1" "$P1"; settle "$DOM2" "$P2"
-  guarded "$D1" "${FILES1[@]}" | while IFS= read -r f; do cp -p "$f" "$SNAP/D1/"; done
-  guarded "$D2" prototype-profile.json | while IFS= read -r f; do cp -p "$f" "$SNAP/D2/"; done
-  [ -f "$P1" ] && cp -p "$P1" "$SNAP/PR/p1.plist"; [ -f "$P2" ] && cp -p "$P2" "$SNAP/PR/p2.plist"
-  state > "$DIR/before.txt"; state_of editor > "$DIR/before-editor.txt"; state_of player > "$DIR/before-player.txt"
+  wait_unlocked "$D1" "$D2" || exit 75
+  try=1
+  while :; do
+    rm -rf "$SNAP"; mkdir -p "$SNAP/D1" "$SNAP/D2" "$SNAP/PR"   # our own fresh copy only
+    settle "$DOM1" "$P1"; settle "$DOM2" "$P2"
+    guarded "$D1" "${FILES1[@]}" | while IFS= read -r f; do cp -p "$f" "$SNAP/D1/"; done
+    guarded "$D2" prototype-profile.json | while IFS= read -r f; do cp -p "$f" "$SNAP/D2/"; done
+    [ -f "$P1" ] && cp -p "$P1" "$SNAP/PR/p1.plist"; [ -f "$P2" ] && cp -p "$P2" "$SNAP/PR/p2.plist"
+    snap_state_of editor > "$DIR/before-editor.txt"; snap_state_of player > "$DIR/before-player.txt"
+    cat "$DIR/before-editor.txt" "$DIR/before-player.txt" > "$DIR/before.txt"
+    state > "$DIR/live-at-snapshot.txt"
+    cmp -s "$DIR/before.txt" "$DIR/live-at-snapshot.txt" && break
+    [ "$try" -ge 3 ] && { dd_log "userdata-guard: live data changed during the snapshot 3 times — $DIR/live-at-snapshot.txt"; exit 75; }
+    dd_log "userdata-guard: a save landed during the snapshot (try $try) — retaking"; try=$((try+1)); sleep 2
+  done
   dd_log "userdata-guard snapshot → $SNAP"
   exit 0
 fi
@@ -104,6 +143,8 @@ if [ ! -f "$DIR/before-editor.txt" ]; then
   grep -F -v -e "  $D1/" -e "  $P2 " "$DIR/before.txt" > "$DIR/before-player.txt"
 fi
 settle "$DOM1" "$P1"; settle "$DOM2" "$P2"
+LOCKDIRS=(); in_scope editor && LOCKDIRS+=("$D1"); in_scope player && LOCKDIRS+=("$D2")
+wait_unlocked "${LOCKDIRS[@]}" || { dd_log "userdata-guard: NOT restored — a live process holds the profile (retry when it exits)"; exit 75; }
 state > "$DIR/after-run.txt"
 : > "$DIR/out-of-scope-changed.txt"
 for a in editor player; do
