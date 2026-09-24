@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DD.Prototype.Weapons;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,7 +42,9 @@ namespace DD.Prototype.UI
         private const float HitDangerSeconds = 3f;
         private const float WeaponRing = 60f;          // AD 8-R SHOULD-A1: 72 → 60, glyph 32
         private const float WeaponGlyph = 32f;
-        private const float GoldDiscAlpha = 0.16f;
+        /// <summary>E12 / 8-R: the kinpaku disc under the coin (UiArtThemeTests.HudKontrasti measures the coin over it).</summary>
+        public const float GoldDiscAlpha = 0.16f;
+        private const float SealDrift = 2f / 3f;      // AD 8-R · A MUST-1: a stamped object drifts as one, ≤ 2 px
         private const float ParallaxReach = 3f;       // px, the back plane's furthest drift
         private const float ParallaxPerMetre = 0.5f;  // px per m/s of camera motion
         private const float ParallaxHalfLife = 0.12f;
@@ -59,6 +62,7 @@ namespace DD.Prototype.UI
         private readonly List<CanvasGroup> _calmOnly = new List<CanvasGroup>(4);
         private readonly List<RectTransform> _postureClusters = new List<RectTransform>(2);
         private readonly List<RectTransform> _backPlanes = new List<RectTransform>(4);
+        private readonly List<float> _backPlaneDepth = new List<float>(4);
         private int _posture = -1;           // 0 calm, 1 danger
         private float _dangerSeenAt = -10f;
         private float _lastHitAt = -10f;
@@ -107,11 +111,11 @@ namespace DD.Prototype.UI
             _goldValue = _goldCounter.ValueText;
             InkAll(_goldCounter.gameObject);
 
-            _goldDelta = InkText("Delta", root, string.Empty, UiType.Caption, UiColor.StateGold, TextAnchor.MiddleLeft);
+            _goldDelta = InkText("Delta", root, string.Empty, UiType.Label, UiColor.StateGold, TextAnchor.MiddleLeft);   // AD 8-R · A SHOULD-1: the 14 px floor
             _goldDelta.fontStyle = FontStyles.Bold;
             UiHudInk.Apply(_goldDelta);
             _goldDeltaHome = new Vector2(112f, 0f);
-            Place(_goldDelta.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), _goldDeltaHome, new Vector2(72f, UiFactory.LineHeight(UiType.Caption)));
+            Place(_goldDelta.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), _goldDeltaHome, new Vector2(72f, UiFactory.LineHeight(UiType.Label)));
             _goldDelta.canvasRenderer.SetAlpha(0f);
         }
 
@@ -121,13 +125,14 @@ namespace DD.Prototype.UI
         {
             const float seal = 56f;
             RectTransform root = Cluster("Round", new Vector2(0.5f, 1f), new Vector2(0f, -24f), new Vector2(240f, seal), false);
-            RectTransform back = BackPlane(root);
+            RectTransform back = BackPlane(root, SealDrift);
             Sprite hanko = UiFxGlobals.InkMask(UiInkChannel.Hanko);
             Image stamp = UiFactory.NewImage("Seal", back, UiColor.HudInk, hanko != null ? hanko : UiSprites.Disc);
             Place(stamp.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-36f, 0f), new Vector2(seal, seal));
             Depth(stamp);
 
-            _roundValue = InkText("RoundValue", root, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleCenter);
+            // The digit is part of the impression: it rides the seal's plane (AD 8-R · A MUST-1), unlike the count beside it.
+            _roundValue = InkText("RoundValue", back, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleCenter);
             Place(_roundValue.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-36f, 0f), new Vector2(seal, seal));
 
             Image enemies = InkGlyph("Enemies", root, "Hud.Enemies", UiColor.TextSecondary, 20f);
@@ -371,7 +376,8 @@ namespace DD.Prototype.UI
         {
             float now = Time.unscaledTime;
             bool danger = ThreatChipVisible(0) || ThreatChipVisible(1) || ThreatChipVisible(2) || _model.HealthLow || _model.AmmoLow ||
-                          _model.ReloadState == RunHudReloadState.MagazineEmpty || now - _lastHitAt < HitDangerSeconds;
+                          _model.ReloadState == RunHudReloadState.MagazineEmpty || now - _lastHitAt < HitDangerSeconds ||
+                          WeaponEvents.Special.FinalSecondsWarning;   // AD 8-R · A SHOULD-3
             if (danger)
             {
                 _dangerSeenAt = now;
@@ -436,7 +442,7 @@ namespace DD.Prototype.UI
                 _parallaxShown = _parallax;
                 for (int i = 0; i < _backPlanes.Count; i++)
                 {
-                    _backPlanes[i].anchoredPosition = _parallax;
+                    _backPlanes[i].anchoredPosition = _parallax * _backPlaneDepth[i];
                 }
             }
         }
@@ -457,13 +463,15 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>The cluster's back plane (forms and their shadows): its own nested canvas, so the parallax drift re-batches only it.</summary>
-        private RectTransform BackPlane(RectTransform cluster)
+        /// <param name="depth">The share of the parallax this plane takes (1 = the full reach; a stamped object less).</param>
+        private RectTransform BackPlane(RectTransform cluster, float depth = 1f)
         {
             RectTransform back = UiFactory.NewRect("Back", cluster);
             UiFactory.Fill(back);
             back.gameObject.AddComponent<Canvas>();
             back.SetAsFirstSibling();
             _backPlanes.Add(back);
+            _backPlaneDepth.Add(depth);
             return back;
         }
 

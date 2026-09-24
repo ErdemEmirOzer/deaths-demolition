@@ -27,7 +27,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator KaliciHud_1080pEkraninYuzde1BucugunuGecmez()
+        public IEnumerator KaliciHud_1080p_Ui1_Metin1_EkraninYuzde1BucugunuGecmez()
         {
             LogAssert.ignoreFailingMessages = true;
             yield return BootTanMainMenuye();
@@ -49,7 +49,8 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp068.8r.coverage=" + result[0].ToString("0.00") + "%");
             Assert.Greater(result[0], 0.2f, "ölçüm HUD'ı görmedi (pozitif kontrol: dört küme en az %0,2)");
             Assert.LessOrEqual(result[0], PersistentCapPercent,
-                "kalıcı HUD 1080p ekranın %" + PersistentCapPercent + "'ini geçmemeli (kullanıcı kararı 24.09; paneller %10,48 idi)");
+                "kalıcı HUD 1080p ekranın %" + PersistentCapPercent + "'ini geçmemeli (UI ölçeği 1,0, metin ölçeği 1,0; kullanıcı kararı 24.09;" +
+                " paneller %10,48 idi). Mac 1,2 × 1,25 değeri yalnız bilgi - yakalama ölçeri raporlar.");
 
             PrototypeUiFlow.AbortRunToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);

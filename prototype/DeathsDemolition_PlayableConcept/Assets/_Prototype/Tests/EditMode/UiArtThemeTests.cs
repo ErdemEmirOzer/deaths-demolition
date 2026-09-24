@@ -420,16 +420,16 @@ namespace DD.Prototype.Tests.EditMode
                 }
             }
 
-            // WP-068 E12: the gold numeral over its kinpaku underlay (StateGold α GoldLeafAlpha on the panel).
+            // WP-068 8-R (AD 8-R · A SHOULD-7): the coin over its kinpaku disc - no panel; the coin's own ink edge over the disc
+            // over the world is its ground (non-text, 3:1).
             foreach (var w in world)
             {
-                Color panel = UiContrast.Composite(UiTokens.Get(UiColor.HudInk), w.Colour);
-                Color leaf = UiTokens.Get(UiColor.StateGold);
-                leaf.a = RunHudScreen.GoldLeafAlpha;
-                Color under = UiContrast.Composite(leaf, panel); // the glint runs on the frame hairline, never the text zone (AD 8a SHOULD-9)
-                float ratio = UiContrast.Ratio(UiContrast.Composite(UiTokens.Get(UiColor.StateGold), under), under);
-                report.AppendLine("StateGold on the gold leaf over " + w.Name + ": " + ratio.ToString("0.00") + ":1 (floor 4.5)");
-                if (ratio < 4.5f)
+                Color disc = UiTokens.Get(UiColor.StateGold);
+                disc.a = RunHudScreen.GoldDiscAlpha;
+                Color edge = UiContrast.Composite(UiTokens.Get(UiColor.HudInk), UiContrast.Composite(disc, w.Colour));
+                float ratio = UiContrast.Ratio(UiContrast.Composite(UiTokens.Get(UiColor.StateGold), edge), edge);
+                report.AppendLine("StateGold coin on its ink edge over the kinpaku disc over " + w.Name + ": " + ratio.ToString("0.00") + ":1 (floor 3)");
+                if (ratio < 3f)
                 {
                     failures++;
                 }

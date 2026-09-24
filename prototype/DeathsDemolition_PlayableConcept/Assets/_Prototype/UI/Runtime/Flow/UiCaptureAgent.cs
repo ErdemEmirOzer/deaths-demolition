@@ -983,9 +983,11 @@ namespace DD.Prototype.UI
                 // (AP-005 placement: the palace's plaster screens at z ≈ 33, the koi pond at z −26 … −37).
                 PlayerRig rig = PlayerRegistry.Primary;
                 string stage = Arg("-ddUiStage");
-                if (rig != null && (stage == "plaster" || stage == "pond"))
+                if (rig != null && (stage == "plaster" || stage == "plaster-south" || stage == "pond"))
                 {
-                    Vector3 at = stage == "plaster" ? new Vector3(3f, rig.transform.position.y, 28f) : new Vector3(0f, rig.transform.position.y, -21f);
+                    // plaster-south (AD 8-R · A SHOULD-5): north of the screens, so they sit under the bottom clusters.
+                    float y = rig.transform.position.y;
+                    Vector3 at = stage == "plaster" ? new Vector3(3f, y, 28f) : stage == "plaster-south" ? new Vector3(3f, y, 41f) : new Vector3(0f, y, -21f);
                     rig.Teleport(at, rig.transform.rotation);
                 }
 

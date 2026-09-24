@@ -170,8 +170,6 @@ namespace DD.Prototype.UI
         /// flat fill (the panel rests on HudInk like its siblings); the S-07 Leaf glint lays the same alpha only while it
         /// sweeps. UiArtThemeTests.HudKontrasti measures the numeral over it.
         /// </summary>
-        public const float GoldLeafAlpha = 0.03f;   // AD 8a MUST-1's "≤ 0.10" is a perceptual (sRGB) figure; UI blends in linear light, where 0.03 looks like it
-        private const float GoldLeafTilePixels = 96f;
         private const float GoldGlintMinInterval = 1f;
         private const float GoldGlintSeconds = 0.6f;
         private const float HealthBarHeight = 20f;
