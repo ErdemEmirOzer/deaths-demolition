@@ -216,6 +216,21 @@ namespace DD.Prototype.Rounds
             return string.Empty;
         }
 
+        /// <summary>
+        /// WP-077: true when the run owns a node whose effect is <paramref name="effectId"/> (Special links resolve
+        /// through the linked Special). The gameplay hooks' question ("is Conductor on?"); no allocation.
+        /// </summary>
+        public bool OwnsEffect(string effectId)
+        {
+            if (!IsBuilt || string.IsNullOrEmpty(effectId)) return false;
+            for (int i = 0; i < Graph.Count; i++)
+            {
+                if (_owned[i] && string.Equals(EffectOf(i), effectId, StringComparison.Ordinal)) return true;
+            }
+
+            return false;
+        }
+
         /// <summary>The node's effect id; Special links resolve through the linked Special (catalog), else empty.</summary>
         public string EffectOf(int i)
         {

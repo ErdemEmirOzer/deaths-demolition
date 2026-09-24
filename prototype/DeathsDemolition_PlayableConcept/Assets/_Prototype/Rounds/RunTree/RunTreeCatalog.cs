@@ -218,6 +218,21 @@ namespace DD.Prototype.Rounds
             return TreatAllAsLive || (!string.IsNullOrEmpty(effectId) && s_live.Contains(effectId));
         }
 
+        /// <summary>
+        /// WP-077: the current run owns a node with this effect (live run only; false in menus / tests without a
+        /// director). The one call a gameplay hook makes: <c>RunTreeEffects.Owned(RunTreeEffects.LinkArcConductor)</c>.
+        /// </summary>
+        public static bool Owned(string effectId)
+        {
+            RunDirector director = RunDirector.Instance;
+            return director != null && director.Shop != null && director.Shop.Tree.OwnsEffect(effectId);
+        }
+
+        public const string LinkArcConductor = "link.arc.conductor";
+        public const string LinkArcStorm = "link.arc.storm";
+        public const string LinkGelSlickFloor = "link.gel.slickfloor";
+        public const string LinkGelFreeze = "link.gel.freeze";
+
         /// <summary>WP-077 B4: any live effect whose id starts with <paramref name="prefix"/> (achievement gates: "cap.", "ks.", "link.").</summary>
         public static bool AnyLive(string prefix)
         {

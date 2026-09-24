@@ -238,6 +238,19 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void EtkiSahipligi_BaglarSpecialUzerindenCozulur()
+        {
+            var t = new RunTreeState();
+            t.Begin(1, ClassicWeaponId.AssaultRifle, _config, MetaRunModifiers.None);
+            Assert.IsFalse(t.OwnsEffect(RunTreeEffects.LinkArcConductor));
+            t.OnSpecialPickedUp("sw_arc");
+            Assert.IsTrue(t.MarkOwned(t.Graph.LinkIIndex));
+            Assert.IsTrue(t.OwnsEffect(RunTreeEffects.LinkArcConductor), "Raiju ile Bağ I = İletken");
+            Assert.IsFalse(t.OwnsEffect(RunTreeEffects.LinkGelSlickFloor));
+            Assert.IsFalse(RunTreeEffects.Owned(RunTreeEffects.LinkArcConductor), "yönetmen yokken false");
+        }
+
+        [Test]
         public void SansKorumasi_GorulmeyenKeystoneSayaci()
         {
             var t = new RunTreeState();
