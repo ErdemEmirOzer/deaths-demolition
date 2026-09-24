@@ -17,9 +17,13 @@
 #     (unity.player_session_count / unity.player_sessionid — every player launch, including other
 #     sessions' players with the same bundle id, bumps them in both plists) are left out of the two
 #     plist digests; every other key is still compared, the profile and its side files stay byte-hashed;
-#   * WP-066F: the UI settings files in the player folder (ui-settings.json, load-timing.json — the
-#     Editor shares this path) are backed up, restored and byte-compared as well; a file that did not
-#     exist before and was created by the run is moved into <out> (never deleted);
+#   * WP-066F/066G: the settings files in the player folder (ui-settings.json, load-timing.json,
+#     input-settings.json, input-overrides.json — the Editor shares this path) are backed up, restored
+#     and byte-compared as well; a file that did not exist before and was created by the run is moved
+#     into <out> (never deleted);
+#   * WP-066G: every other file under the player folders (persistentDataPath, recursive; .lock excluded)
+#     is inventoried before and after the run — a new/changed/removed file the guard does not know is
+#     listed in <out>/userdata-unknown.txt and reported as a WARNING (not restored, not a failure);
 #   * result in <out>/smoke-report.json ("userdata": before/after/restored/verified).
 # Exit: 0 ok · 20 smoke failed (exit code / exception / missing capture) · 30 user-data guard failed · 64 usage
 # Machine slot: takes the single 'smoke' slot (tools/slot.sh v4) for the whole e1+e4+restore sequence.
@@ -38,7 +42,9 @@ AS="$HOME/Library/Application Support"; PR="$HOME/Library/Preferences"
 D1="$AS/Deaths Demolition/$DD_PRODUCT"; D2="$AS/$DD_BUNDLE_ID"
 F1="$D1/prototype-profile.json"; F2="$D2/prototype-profile.json"
 P1="$PR/$DD_BUNDLE_ID.plist"; P2="$PR/unity.Deaths Demolition.$DD_PRODUCT.plist"
-UIFILES=("$D1/ui-settings.json" "$D1/load-timing.json")   # WP-066F
+UIFILES=("$D1/ui-settings.json" "$D1/load-timing.json" "$D1/input-settings.json" "$D1/input-overrides.json")   # WP-066F/066G
+# WP-066G: inventory of everything else in the player folders (recursive, .lock leases excluded).
+inventory() { for d in "$D1" "$D2"; do [ -d "$d" ] && find "$d" -type f ! -name '*.lock' ! -name '.DS_Store' 2>/dev/null; done | LC_ALL=C sort | while IFS= read -r f; do echo "$(dd_sha "$f")  $f"; done; }
 # Side files = .bak / .corrupt.N.json (saved progress). The .lock file is a live process lease
 # (pid/name diagnostics, WP-009H); its bytes change whenever any player holds the profile, so it
 # is neither backed up nor compared — parallel sessions would otherwise trip the guard.
@@ -78,6 +84,7 @@ UD="$OUT/userdata-backup"; mkdir -p "$UD/D1" "$UD/D2" "$UD/PR"
 [ -f "$P1" ] && cp -p "$P1" "$UD/PR/"; [ -f "$P2" ] && cp -p "$P2" "$UD/PR/"
 for f in "${UIFILES[@]}"; do [ -f "$f" ] && cp -p "$f" "$UD/D1/"; done
 snapshot > "$OUT/userdata-before.txt"
+inventory > "$OUT/userdata-inventory-before.txt"
 SBX="$OUT/profile-sandbox"; mkdir -p "$SBX"
 DEVFLAGS=(); [ "$MODE" = "dev" ] && DEVFLAGS=(-ddProfilePath "$SBX/prototype-profile.json")
 dd_log "smoke mode=$MODE profileSandbox=$([ "$MODE" = "dev" ] && echo yes || echo no)"
@@ -100,6 +107,30 @@ dd_log "e4 exit=$E4 exceptions=$E4X capture=$([ -s "$OUT/e4-run-1280x720.png" ] 
 # 4) guard: restore + verify (WP-066D: let cfprefsd write the players' last changes first)
 settle_all
 snapshot > "$OUT/userdata-after-run.txt"
+inventory > "$OUT/userdata-inventory-after-run.txt"
+# WP-066G: files the guard does not cover that the run created/changed/removed → warning only.
+python3 - "$OUT" <<'PY'
+import sys
+out = sys.argv[1]
+def inv(name):
+    d = {}
+    for line in open(f"{out}/{name}", encoding="utf-8"):
+        sha, _, path = line.rstrip("\n").partition("  ")
+        d[path] = sha
+    return d
+guarded = set()
+for name in ("userdata-before.txt", "userdata-after-run.txt"):
+    for path in inv(name):
+        guarded.add(path.removesuffix(" (launch-counter keys excluded)"))
+a, b = inv("userdata-inventory-before.txt"), inv("userdata-inventory-after-run.txt")
+with open(f"{out}/userdata-unknown.txt", "w", encoding="utf-8") as f:
+    for path in sorted(set(a) | set(b)):
+        if path in guarded or a.get(path) == b.get(path):
+            continue
+        f.write(("new     " if path not in a else "removed " if path not in b else "changed ") + path + "\n")
+PY
+UNKNOWN=$(grep -c . "$OUT/userdata-unknown.txt"); UNKNOWN=${UNKNOWN:-0}
+[ "$UNKNOWN" -gt 0 ] && dd_log "WARNING userdata: $UNKNOWN unguarded file(s) created/changed/removed by the run — $OUT/userdata-unknown.txt (not restored)"
 TOUCHED=0; cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-after-run.txt" || TOUCHED=1
 if [ "$TOUCHED" -eq 1 ]; then
   [ -f "$UD/D1/prototype-profile.json" ] && cp -p "$UD/D1/prototype-profile.json" "$F1"
@@ -130,6 +161,7 @@ cat > "$OUT/smoke-report.json" <<JSON
   "mode": "$MODE",
   "e1": { "exit": $E1, "exceptions": $E1X, "capture": "$OUT/e1-mainmenu-1280x720.png", "log": "$OUT/e1-player.log" },
   "e4": { "exit": $E4, "exceptions": $E4X, "capture": "$OUT/e4-run-1280x720.png", "log": "$OUT/e4-run-player.log" },
+  "userdataUnknown": { "count": $UNKNOWN, "list": "$OUT/userdata-unknown.txt" },
   "userdata": { "touched": $([ "$TOUCHED" -eq 1 ] && echo true || echo false), "restored": $([ "$TOUCHED" -eq 1 ] && echo true || echo false), "verified": $([ "$VERIFIED" -eq 1 ] && echo true || echo false), "sandboxProfile": $([ -n "$SBXPROFILE" ] && echo true || echo false), "before": "$OUT/userdata-before.txt", "after": "$OUT/userdata-after.txt" },
   "utc": "$(date -u +%FT%TZ)"
 }
