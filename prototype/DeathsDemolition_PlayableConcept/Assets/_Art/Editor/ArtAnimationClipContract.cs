@@ -55,6 +55,8 @@ namespace DD.Art.Pipeline.EditorTools
             /// <summary>WP-032B: manifest validation.foot_contact_A stance frames (min over both feet); 0 = not given (whole-window calibration).</summary>
             public int stanceFrames;
             public readonly List<KeyValuePair<string, int>> events = new List<KeyValuePair<string, int>>();
+            /// <summary>WP-071: the int payload per event (index / side; 0 = none), parallel to <see cref="events"/>.</summary>
+            public readonly List<int> eventValues = new List<int>();
 
             /// <summary>"name=frame;…" in manifest order (CharacterAnimationSet.Entry.events).</summary>
             public string EventsText()
@@ -131,11 +133,23 @@ namespace DD.Art.Pipeline.EditorTools
                 }
 
                 object ev = ArtJson.Get(c, "events");
-                if (ev != null)
+                if (ev is List<object> evList)
+                {
+                    // WP-071 v3 form: [{ "name", "frame", "value"? }] — repeats allowed (shell_in 1..n)
+                    foreach (object eo in evList)
+                    {
+                        var e = ArtJson.AsObject(eo, "event");
+                        spec.events.Add(new KeyValuePair<string, int>(ArtJson.AsString(ArtJson.Require(e, "name"), "name"), ArtJson.AsInt(ArtJson.Require(e, "frame"), "frame")));
+                        object val = ArtJson.Get(e, "value");
+                        spec.eventValues.Add(val == null ? 0 : ArtJson.AsInt(val, "value"));
+                    }
+                }
+                else if (ev != null)
                 {
                     foreach (KeyValuePair<string, object> kv in ArtJson.AsObject(ev, "events"))
                     {
                         spec.events.Add(new KeyValuePair<string, int>(kv.Key, ArtJson.AsInt(kv.Value, kv.Key)));
+                        spec.eventValues.Add(0);
                     }
                 }
 
@@ -248,9 +262,10 @@ namespace DD.Art.Pipeline.EditorTools
         {
             float span = Mathf.Max(1f, lastFrame - firstFrame);
             var list = new List<AnimationEvent>(spec.events.Count);
-            foreach (KeyValuePair<string, int> e in spec.events)
+            for (int i = 0; i < spec.events.Count; i++)
             {
-                list.Add(new AnimationEvent { functionName = e.Key, time = Mathf.Clamp01((e.Value - firstFrame) / span), messageOptions = SendMessageOptions.DontRequireReceiver });
+                KeyValuePair<string, int> e = spec.events[i];
+                list.Add(new AnimationEvent { functionName = e.Key, intParameter = i < spec.eventValues.Count ? spec.eventValues[i] : 0, time = Mathf.Clamp01((e.Value - firstFrame) / span), messageOptions = SendMessageOptions.DontRequireReceiver });
             }
 
             list.Sort((a, b) => a.time != b.time ? a.time.CompareTo(b.time) : string.CompareOrdinal(a.functionName, b.functionName));
@@ -263,7 +278,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (a.Length != b.Length) return false;
             for (int i = 0; i < a.Length; i++)
             {
-                if (a[i].functionName != b[i].functionName || Math.Abs(a[i].time - b[i].time) > 1e-3f) return false;
+                if (a[i].functionName != b[i].functionName || a[i].intParameter != b[i].intParameter || Math.Abs(a[i].time - b[i].time) > 1e-3f) return false;
             }
 
             return true;

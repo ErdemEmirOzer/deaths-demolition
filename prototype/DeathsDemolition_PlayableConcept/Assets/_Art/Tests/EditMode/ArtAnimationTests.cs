@@ -307,7 +307,9 @@ namespace DD.Art.Tests.EditMode
                 string name = CharacterAnimationEvents.Names[i];
                 MethodInfo method = typeof(CharacterAnimationEvents).GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
                 Assert.IsNotNull(method, "AnimationEvent hedefi yok: " + name);
-                Assert.AreEqual(0, method.GetParameters().Length, name + " parametresiz olmalı");
+                // WP-071: the v3 names (index ≥ 29) take the AnimationEvent int payload (index / side); the 28 older ones stay parameterless
+                if (i < 29) Assert.AreEqual(0, method.GetParameters().Length, name + " parametresiz olmalı");
+                else Assert.IsTrue(method.GetParameters().Length == 1 && method.GetParameters()[0].ParameterType == typeof(int), name + " (int) almalı");
                 Assert.AreEqual((CharacterAnimationEvent)i, CharacterAnimationEvents.Parse(name));
             }
 

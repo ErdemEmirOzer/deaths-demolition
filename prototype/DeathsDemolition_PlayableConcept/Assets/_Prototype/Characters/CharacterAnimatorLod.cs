@@ -55,12 +55,26 @@ namespace DD.Prototype.Characters
         {
             if (_far) s_farCount--;
             _far = false;
+            Suspended = false;
             if (_animator != null && !_animator.enabled) _animator.enabled = true;
         }
 
+        /// <summary>WP-071: a ragdoll owns the bones — the LOD neither toggles nor steps the Animator until <see cref="Resume"/>.</summary>
+        public bool Suspended { get; private set; }
+
+        public void Suspend()
+        {
+            if (_far) s_farCount--;
+            _far = false;
+            _accumulated = 0f;
+            Suspended = true;
+        }
+
+        public void Resume() => Suspended = false;
+
         private void Update()
         {
-            if (_animator == null) return;
+            if (_animator == null || Suspended) return;
             bool far = ForceFar >= 0 ? ForceFar == 1 : IsFar();
             if (far != _far)
             {

@@ -372,6 +372,136 @@ namespace DD.Prototype.Characters
         {
             if (_events != null && _subscribed) _events.Raised -= OnAnimationEvent;
             _subscribed = false;
+            EndRagdoll();
+        }
+
+        private void OnDisable() => EndRagdoll();
+
+        // ---------------------------------------------------- WP-071 death → ragdoll (K4 / K5)
+
+        private Transform[] _rdBones, _rdTips;
+        private Vector3[] _rdPrev, _rdVel;
+        private RagdollProxyPool.Proxy _ragdoll;
+        private bool _ragdollAnimatorOff;
+        private bool _handoffNow;
+        private float _deathClock = -1f, _handoffAt;
+        private Vector3 _deathPush;
+        private float _deathIntensity = 1f;
+
+        /// <summary>WP-071: the death family of the current death (tests / probes; S-03 WP-076 reads it).</summary>
+        public ZombieDeathFamily DeathFamily { get; private set; }
+        /// <summary>WP-071: a ragdoll proxy is falling for this body right now.</summary>
+        public bool RagdollActive => _ragdoll != null;
+        /// <summary>WP-071: this life's death went to physics (false = the authored fall, e.g. pool full).</summary>
+        public bool DiedByRagdoll { get; private set; }
+        /// <summary>WP-071: seconds after PlayDeath at which the ragdoll took over (−1 = none).</summary>
+        public float RagdollHandoffSeconds { get; private set; } = -1f;
+
+        /// <summary>WP-071: the killing push (flat world direction the body is shoved) and its intensity (M1 death intensity, ≈ 1 … 3); call before PlayDeath.</summary>
+        public void SetDeathImpulse(Vector3 worldPush, float intensity)
+        {
+            worldPush.y = 0f;
+            _deathPush = worldPush.sqrMagnitude > 1e-4f ? worldPush.normalized : Vector3.zero;
+            _deathIntensity = Mathf.Max(0f, intensity);
+        }
+
+        private void EnsureRagdollBones()
+        {
+            if (_rdBones != null || _animator == null) return;
+            int n = RagdollProxyPool.BodyCount;
+            _rdBones = new Transform[n];
+            _rdTips = new Transform[n];
+            _rdPrev = new Vector3[n];
+            _rdVel = new Vector3[n];
+            HumanBodyBones[] tips =
+            {
+                HumanBodyBones.Chest, HumanBodyBones.Neck, HumanBodyBones.Head, HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand,
+                HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot,
+                HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot
+            };
+            for (int i = 0; i < n; i++)
+            {
+                _rdBones[i] = HumanoidBones.Bone(_animator, RagdollProxyPool.Bones[i]);
+                _rdTips[i] = HumanoidBones.Bone(_animator, tips[i]);
+            }
+
+            if (_rdBones[1] == null) _rdBones[1] = HumanoidBones.Bone(_animator, HumanBodyBones.Spine);
+            RagdollProxyPool.Warm();
+        }
+
+        private static float HandoffSecondsOf(ZombieDeathFamily f) =>
+            f == ZombieDeathFamily.FallBack ? 0.27f : f == ZombieDeathFamily.FallForward ? 0.30f : f == ZombieDeathFamily.SpinSide ? 0.33f
+            : f == ZombieDeathFamily.LegsOut ? 0.37f : f == ZombieDeathFamily.UltraTimber ? 1.10f : 0.30f;
+
+        private void BeginDeathClock(int deathStyle)
+        {
+            DeathFamily = ZombieDeathFamilies.OfDeathIndex(deathStyle);
+            DiedByRagdoll = false;
+            RagdollHandoffSeconds = -1f;
+            _handoffNow = false;
+            _handoffAt = HandoffSecondsOf(DeathFamily);
+            _deathClock = 0f;
+            if (_rdBones == null) return;
+            for (int i = 0; i < _rdBones.Length; i++) if (_rdBones[i] != null) _rdPrev[i] = _rdBones[i].position;
+        }
+
+        private void LateUpdate()
+        {
+            if (_deathClock < 0f) return;
+            float dt = Time.deltaTime;
+            if (_ragdoll != null)
+            {
+                if (RagdollProxyPool.Settled(_ragdoll))
+                {
+                    RagdollProxyPool.Release(_ragdoll);   // the fallen pose stays on the bones
+                    _ragdoll = null;
+                    _deathClock = -1f;
+                    _deathEnded = true;
+                }
+
+                return;
+            }
+
+            if (!_dying || _rdBones == null || _rdBones[0] == null) return;
+            _deathClock += dt;
+            // the bones' own motion under the onset clip carries into the ragdoll (no zero-velocity hand-off)
+            float inv = dt > 1e-5f ? 1f / dt : 0f;
+            for (int i = 0; i < _rdBones.Length; i++)
+            {
+                if (_rdBones[i] == null) continue;
+                Vector3 now = _rdBones[i].position;
+                _rdVel[i] = (now - _rdPrev[i]) * inv;
+                _rdPrev[i] = now;
+            }
+
+            if (!_handoffNow && _deathClock < _handoffAt) return;
+            _handoffNow = false;
+            Vector3 push = _deathPush.sqrMagnitude > 0f ? _deathPush : -transform.forward;
+            float speed = Mathf.Clamp(1.0f + 0.9f * _deathIntensity, 1.4f, 4.5f) * (DeathFamily == ZombieDeathFamily.UltraTimber ? 0.5f : 1f);
+            float spin = DeathFamily == ZombieDeathFamily.SpinSide ? 3.5f * (Vector3.Cross(transform.forward, push).y >= 0f ? 1f : -1f) : 0f;
+            _ragdoll = RagdollProxyPool.Acquire(GetInstanceID(), _rdBones, _rdTips, _rdVel, push * speed, spin);
+            if (_ragdoll == null)
+            {
+                _deathClock = -1f;   // pool full: the authored fall finishes the death (death_end)
+                return;
+            }
+
+            DiedByRagdoll = true;
+            RagdollHandoffSeconds = _deathClock;
+            if (_lod != null) _lod.Suspend();
+            _ragdollAnimatorOff = _animator.enabled;
+            _animator.enabled = false;
+        }
+
+        private void EndRagdoll()
+        {
+            if (_ragdoll != null) RagdollProxyPool.Release(_ragdoll);
+            _ragdoll = null;
+            _deathClock = -1f;
+            _handoffNow = false;
+            if (_ragdollAnimatorOff && _animator != null) _animator.enabled = true;
+            _ragdollAnimatorOff = false;
+            if (_lod != null && _lod.Suspended) _lod.Resume();
         }
 
         /// <summary>Drive the locomotion blend from the enemy's ground speed (called by ZombieEnemy each tick).</summary>
@@ -514,7 +644,10 @@ namespace DD.Prototype.Characters
                     WindowSink?.OnHitWindowEnd();
                     break;
                 case CharacterAnimationEvent.DeathEnd:
-                    if (_dying) _deathEnded = true;
+                    if (_dying && _ragdoll == null) _deathEnded = true;
+                    break;
+                case CharacterAnimationEvent.RagdollHandoff:
+                    if (_dying) _handoffNow = true;   // WP-071: an AP-022 onset clip names its own hand-off frame
                     break;
                 case CharacterAnimationEvent.RiseEnd:
                     _rising = false;
@@ -531,6 +664,8 @@ namespace DD.Prototype.Characters
         public void ResetForSpawn(EnemyTier tier, float topSpeedMetersPerSecond, string fit, int idleVariant, bool rise)
         {
             if (!_authored) return;
+            EndRagdoll();   // WP-071: a pooled body comes back animated (proxy returned, Animator + LOD running)
+            EnsureRagdollBones();
             _topSpeed = Mathf.Max(0.1f, topSpeedMetersPerSecond);
             _gait = tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
             _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
@@ -822,6 +957,7 @@ namespace DD.Prototype.Characters
             _animator.SetBool(AliveId, false);
             _animator.SetInteger(DeathStyleId, Mathf.Clamp(deathStyle, 0, CharacterAnimatorContract.ZombieDeathClips.Length - 1));
             _animator.SetTrigger(DieId);
+            BeginDeathClock(deathStyle);   // WP-071: onset clip → ragdoll hand-off
         }
 
         /// <summary>Armour binder hook (ArmorVisualBinder): a broken plate plays the region's armorbreak clip (WP-032C; the WP-018 heavy stagger stays the REQ-124 gameplay stagger's full-body read).</summary>

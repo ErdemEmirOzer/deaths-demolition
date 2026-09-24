@@ -164,8 +164,8 @@ namespace DD.Prototype.Enemies
         [PrototypeOnly(PendingDecisions.None,
             "Seconds after BeginDeath at which a driven body is declared finished even if the clip's " +
             "death_end never arrived (clip missing, Animator disabled). Longer than the longest AP-009 " +
-            "death (1.433 s). Safety net, invented.", true)]
-        private const float DrivenDeathFallbackSeconds = 2.0f;
+            "death (1.433 s); WP-071: and than the ragdoll path (Ultra hand-off 1.1 s + settle cap 3.0 s). Safety net, invented.", true)]
+        private const float DrivenDeathFallbackSeconds = 4.5f;
 
         [PrototypeOnly(PendingDecisions.None,
             "Flinch intensity (DamageForce units) from which the driven body also plays the " +
@@ -468,6 +468,7 @@ namespace DD.Prototype.Enemies
                 if (_tier == EnemyTier.Ultra) style = 7;
                 else if (_tier == EnemyTier.Special) style = local.z > 0.35f ? 5 : 6;
                 LastDeathStyleIndex = style;   // WP-052 readout
+                Driver.SetDeathImpulse(worldDirection, intensity);   // WP-071: the ragdoll falls along the killing push
                 Driver.PlayDeath(style);
             }
         }

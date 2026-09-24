@@ -282,7 +282,7 @@ namespace DD.Art.Tests.PlayMode
             yield return null; yield return null;
             Assert.IsTrue(In(sp.Animator, 0, C.DeathState + "_5"), "death_special_A");
             Assert.IsTrue(In(ul.Animator, 0, C.DeathState + "_7"), "death_ultra");
-            yield return CharacterTests.Bekle(() => sp.DeathFinished && ul.DeathFinished, 4f, "death_end (tier ölümleri)");
+            yield return CharacterTests.Bekle(() => sp.DeathFinished && ul.DeathFinished, 6f, "death_end (tier ölümleri)");   // WP-071: ragdoll settle (Ultra hand-off 1.1 s + ≤ 3 s)
         }
     }
 }

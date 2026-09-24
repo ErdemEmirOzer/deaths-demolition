@@ -36,7 +36,57 @@ namespace DD.Prototype.Characters
         PickupDone = 25,
         ArmorBreak = 26,
         SpawnRise = 27,
-        SpawnLand = 28
+        SpawnLand = 28,
+        // WP-071 · event contract v3 (WP-071-ANIMATION-V3-DIRECTION Bölüm I K2 / III A8.2); int payload = index / side
+        FootLOff = 29,
+        FootROff = 30,
+        PivotPlant = 31,
+        StopPlant = 32,
+        WeightShift = 33,
+        AttackRecover = 34,
+        GrabStart = 35,
+        GrabEnd = 36,
+        AttackStep = 37,
+        Roar = 38,
+        RagdollHandoff = 39,
+        KnockbackEnd = 40,
+        HurtEnd = 41,
+        GroundImpact = 42,
+        BloodBurst = 43,
+        Twitch = 44,
+        Spasm = 45,
+        LeftHandRelease = 46,
+        LeftHandGrab = 47,
+        AdsReady = 48,
+        ReloadCommit = 49,
+        ReloadCancelPoint = 50,
+        MechanismStart = 51,
+        MechanismEnd = 52,
+        SpinUp = 53,
+        SpinDown = 54,
+        SwChargePeak = 55,
+        ShellEject = 56,
+        InspectPeak = 57,
+        Charge = 58,
+        BoxOpen = 59,
+        BeltSeat = 60,
+        BoxClose = 61,
+        BoltUp = 62,
+        BoltBack = 63,
+        BoltFwd = 64,
+        BoltDown = 65,
+        ShellIn = 66,
+        RocketIn = 67,
+        RocketSeat = 68,
+        CellOut = 69,
+        CellIn = 70,
+        CanisterOut = 71,
+        CanisterIn = 72,
+        CoverOpen = 73,
+        CoverClose = 74,
+        // P-06 AP-022 (24.09): balance lost (≤ ragdoll_handoff) / attack wind-up begins
+        FallStart = 75,
+        TelegraphStart = 76
     }
 
     /// <summary>
@@ -60,7 +110,16 @@ namespace DD.Prototype.Characters
             "", "fire", "hit_window_start", "hit_window_end", "foot_l", "foot_r",
             "death_end", "rise_end", "pickup", "breath", "hit", "stagger_end", "shift_l", "shift_r",
             "eject", "chamber", "mag_out", "mag_in", "mag_in_2", "mag_in_3", "switch_ready", "switch_away", "lowered", "raised",
-            "pickup_grab", "pickup_done", "armor_break", "spawn_rise", "spawn_land"
+            "pickup_grab", "pickup_done", "armor_break", "spawn_rise", "spawn_land",
+            // WP-071 v3
+            "foot_l_off", "foot_r_off", "pivot_plant", "stop_plant", "weight_shift", "attack_recover", "grab_start", "grab_end", "attack_step", "roar", "ragdoll_handoff", "knockback_end", "hurt_end", "ground_impact", "blood_burst", "twitch", "spasm", "lh_release", "lh_grab", "ads_ready", "reload_commit", "reload_cancel_point", "mechanism_start", "mechanism_end", "spin_up", "spin_down", "sw_charge_peak", "shell_eject", "inspect_peak", "charge", "box_open", "belt_seat", "box_close", "bolt_up", "bolt_back", "bolt_fwd", "bolt_down", "shell_in", "rocket_in", "rocket_seat", "cell_out", "cell_in", "canister_out", "canister_in", "cover_open", "cover_close", "fall_start", "telegraph_start"
+        };
+
+        /// <summary>WP-071: v3 names that were proposed under another spelling (the validator rejects the alias and names the canonical one).</summary>
+        public static readonly string[,] Aliases =
+        {
+            { "knock_end", "knockback_end" }, { "ads_in_done", "ads_ready" }, { "interrupt_ok", "reload_cancel_point" },
+            { "reload_interrupt_ok", "reload_cancel_point" }, { "recover", "hurt_end" }, { "ragdoll_on", "ragdoll_handoff" }, { "impact_land", "ground_impact" }
         };
 
         public static CharacterAnimationEvent Parse(string name)
@@ -81,6 +140,9 @@ namespace DD.Prototype.Characters
 
         /// <summary>Total events raised since the last reset (tests / probes).</summary>
         public static int RaisedCount { get; private set; }
+
+        /// <summary>WP-071: the int payload of the last event (index / side; 0 = none).</summary>
+        public int LastInt { get; private set; }
 
         /// <summary>Last event raised on this component (tests).</summary>
         public CharacterAnimationEvent Last { get; private set; }
@@ -123,12 +185,64 @@ namespace DD.Prototype.Characters
         public void armor_break() => Raise(CharacterAnimationEvent.ArmorBreak);
         public void spawn_rise() => Raise(CharacterAnimationEvent.SpawnRise);
         public void spawn_land() => Raise(CharacterAnimationEvent.SpawnLand);
+        // WP-071 v3 (Unity passes AnimationEvent.intParameter to an int overload; 0 when the clip sets none)
+        public void foot_l_off(int value) => Raise(CharacterAnimationEvent.FootLOff, value);
+        public void foot_r_off(int value) => Raise(CharacterAnimationEvent.FootROff, value);
+        public void pivot_plant(int value) => Raise(CharacterAnimationEvent.PivotPlant, value);
+        public void stop_plant(int value) => Raise(CharacterAnimationEvent.StopPlant, value);
+        public void weight_shift(int value) => Raise(CharacterAnimationEvent.WeightShift, value);
+        public void attack_recover(int value) => Raise(CharacterAnimationEvent.AttackRecover, value);
+        public void grab_start(int value) => Raise(CharacterAnimationEvent.GrabStart, value);
+        public void grab_end(int value) => Raise(CharacterAnimationEvent.GrabEnd, value);
+        public void attack_step(int value) => Raise(CharacterAnimationEvent.AttackStep, value);
+        public void roar(int value) => Raise(CharacterAnimationEvent.Roar, value);
+        public void ragdoll_handoff(int value) => Raise(CharacterAnimationEvent.RagdollHandoff, value);
+        public void knockback_end(int value) => Raise(CharacterAnimationEvent.KnockbackEnd, value);
+        public void hurt_end(int value) => Raise(CharacterAnimationEvent.HurtEnd, value);
+        public void ground_impact(int value) => Raise(CharacterAnimationEvent.GroundImpact, value);
+        public void blood_burst(int value) => Raise(CharacterAnimationEvent.BloodBurst, value);
+        public void twitch(int value) => Raise(CharacterAnimationEvent.Twitch, value);
+        public void spasm(int value) => Raise(CharacterAnimationEvent.Spasm, value);
+        public void lh_release(int value) => Raise(CharacterAnimationEvent.LeftHandRelease, value);
+        public void lh_grab(int value) => Raise(CharacterAnimationEvent.LeftHandGrab, value);
+        public void ads_ready(int value) => Raise(CharacterAnimationEvent.AdsReady, value);
+        public void reload_commit(int value) => Raise(CharacterAnimationEvent.ReloadCommit, value);
+        public void reload_cancel_point(int value) => Raise(CharacterAnimationEvent.ReloadCancelPoint, value);
+        public void mechanism_start(int value) => Raise(CharacterAnimationEvent.MechanismStart, value);
+        public void mechanism_end(int value) => Raise(CharacterAnimationEvent.MechanismEnd, value);
+        public void spin_up(int value) => Raise(CharacterAnimationEvent.SpinUp, value);
+        public void spin_down(int value) => Raise(CharacterAnimationEvent.SpinDown, value);
+        public void sw_charge_peak(int value) => Raise(CharacterAnimationEvent.SwChargePeak, value);
+        public void shell_eject(int value) => Raise(CharacterAnimationEvent.ShellEject, value);
+        public void inspect_peak(int value) => Raise(CharacterAnimationEvent.InspectPeak, value);
+        public void charge(int value) => Raise(CharacterAnimationEvent.Charge, value);
+        public void box_open(int value) => Raise(CharacterAnimationEvent.BoxOpen, value);
+        public void belt_seat(int value) => Raise(CharacterAnimationEvent.BeltSeat, value);
+        public void box_close(int value) => Raise(CharacterAnimationEvent.BoxClose, value);
+        public void bolt_up(int value) => Raise(CharacterAnimationEvent.BoltUp, value);
+        public void bolt_back(int value) => Raise(CharacterAnimationEvent.BoltBack, value);
+        public void bolt_fwd(int value) => Raise(CharacterAnimationEvent.BoltFwd, value);
+        public void bolt_down(int value) => Raise(CharacterAnimationEvent.BoltDown, value);
+        public void shell_in(int value) => Raise(CharacterAnimationEvent.ShellIn, value);
+        public void rocket_in(int value) => Raise(CharacterAnimationEvent.RocketIn, value);
+        public void rocket_seat(int value) => Raise(CharacterAnimationEvent.RocketSeat, value);
+        public void cell_out(int value) => Raise(CharacterAnimationEvent.CellOut, value);
+        public void cell_in(int value) => Raise(CharacterAnimationEvent.CellIn, value);
+        public void canister_out(int value) => Raise(CharacterAnimationEvent.CanisterOut, value);
+        public void canister_in(int value) => Raise(CharacterAnimationEvent.CanisterIn, value);
+        public void cover_open(int value) => Raise(CharacterAnimationEvent.CoverOpen, value);
+        public void cover_close(int value) => Raise(CharacterAnimationEvent.CoverClose, value);
+        public void fall_start(int value) => Raise(CharacterAnimationEvent.FallStart, value);
+        public void telegraph_start(int value) => Raise(CharacterAnimationEvent.TelegraphStart, value);
 
         /// <summary>Tests / probes: raise an event as if the clip had fired it.</summary>
         public void RaiseForTest(CharacterAnimationEvent e) => Raise(e);
 
-        private void Raise(CharacterAnimationEvent e)
+        private void Raise(CharacterAnimationEvent e) => Raise(e, 0);
+
+        private void Raise(CharacterAnimationEvent e, int value)
         {
+            LastInt = value;
             Last = e;
             LastTime = Time.time;
             RaisedCount++;

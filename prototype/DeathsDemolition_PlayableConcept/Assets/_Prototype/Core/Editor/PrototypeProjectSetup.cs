@@ -46,7 +46,8 @@ namespace DD.Prototype.Core.EditorTools
             PrototypeLayers.ProjectileName,
             PrototypeLayers.PickupName,
             PrototypeLayers.EnvironmentName,
-            PrototypeLayers.CameraOccluderName
+            PrototypeLayers.CameraOccluderName,
+            PrototypeLayers.RagdollName
         };
 
         [MenuItem("Tools/Deaths Demolition/Setup Prototype Project", priority = 0)]

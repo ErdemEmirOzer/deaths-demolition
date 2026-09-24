@@ -37,6 +37,8 @@ namespace DD.Prototype.Characters
         void PlayStumble();
         /// <summary>DeathStyle: 0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra.</summary>
         void PlayDeath(int deathStyle);
+        /// <summary>WP-071: the killing push (flat world direction the body is shoved, intensity ≈ 1 … 3) — set before PlayDeath; the ragdoll falls along it.</summary>
+        void SetDeathImpulse(Vector3 worldPush, float intensity);
         IAttackWindowSink WindowSink { get; set; }
         /// <summary>WP-032: additive wind-up emphasis weight (0..1).</summary>
         void SetTelegraphEmphasis(float emphasis01);
