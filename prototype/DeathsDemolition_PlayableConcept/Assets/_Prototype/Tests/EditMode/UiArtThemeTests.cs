@@ -208,6 +208,66 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(TextureWrapMode.Repeat, kumiko.wrapMode, "kumiko karosu tekrarlar");
         }
 
+        /// <summary>
+        /// AD G1 MUST-1 (T9): every glyph / kit name the UI code asks for - string literals in UI/Runtime and the enum-built
+        /// frame and medal keys - resolves to its own atlas cell, never to a fallback, and no two names share a cell (a
+        /// sample drawn with the wrong glyph must fail here, not in a capture).
+        /// </summary>
+        [Test]
+        public void GlifTuketicileri_HerAdKendiHucresineCozulur()
+        {
+            UiTheme theme = UiTheme.Active;
+            string root = Path.Combine(Application.dataPath, "_Prototype", "UI", "Runtime");
+            var pattern = new System.Text.RegularExpressions.Regex(
+                "\"((?:Hud|Menu|Status|Threat|Upgrade|Weapon|Special|Sw|Shop|Medal|Reticle|Pad|Mouse|Key|Notice|Empty|Ach|Unlock|Tier|Stat|Tip|Toast|Pip|Petal|Marker|Seal|Ornament|Frame|Ring|Slider|Shadow|Bar|Focus)\\.[A-Za-z0-9]+)\"");
+            var keys = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (string file in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
+            {
+                string code = System.Text.RegularExpressions.Regex.Replace(File.ReadAllText(file), @"//[^\n]*|/\*.*?\*/", " ", System.Text.RegularExpressions.RegexOptions.Singleline);
+                foreach (System.Text.RegularExpressions.Match m in pattern.Matches(code))
+                {
+                    keys.Add(m.Groups[1].Value);
+                }
+            }
+
+            foreach (UiFrame frame in Enum.GetValues(typeof(UiFrame)))
+            {
+                if (frame != UiFrame.Button) // v3 buttons are drawn by the kit (A4 has no button frame)
+                {
+                    keys.Add("Frame." + frame);
+                }
+            }
+
+            foreach (UiMedal medal in Enum.GetValues(typeof(UiMedal)))
+            {
+                keys.Add("Medal." + medal);
+            }
+
+            Assert.Greater(keys.Count, 40, "tarama bir şey bulmalı");
+            var missing = new List<string>();
+            var cells = new Dictionary<Rect, string>();
+            foreach (string key in keys)
+            {
+                Sprite sprite = theme.Icon(key) ?? theme.Frame(key);
+                if (sprite == null)
+                {
+                    missing.Add(key);
+                    continue;
+                }
+
+                string other;
+                if (cells.TryGetValue(sprite.rect, out other) && sprite.texture == (theme.Icon(other) ?? theme.Frame(other)).texture)
+                {
+                    missing.Add(key + " shares a cell with " + other);
+                    continue;
+                }
+
+                cells[sprite.rect] = key;
+            }
+
+            Assert.IsEmpty(missing, "atlasta karşılığı olmayan / hücre paylaşan glif adları:\n" + string.Join("\n", missing));
+        }
+
         [Test]
         public void Tema_KaynaklardanCozulur_YedekKitAsilaKopmaz()
         {

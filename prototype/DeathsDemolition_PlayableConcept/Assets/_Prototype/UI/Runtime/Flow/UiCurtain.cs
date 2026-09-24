@@ -67,8 +67,8 @@ namespace DD.Prototype.UI
         public const float InkBlotSize = 2600f;
 
         /// <summary>The doors' kumiko lattice (A6): one 256² tile per KumikoTilePixels on screen, cream at KumikoAlpha (≤ 0.08).</summary>
-        public const float KumikoTilePixels = 192f;
-        public const float KumikoAlpha = 0.06f;
+        public const float KumikoTilePixels = 256f;   // AD G1 SHOULD-2: 192 → 256, α 0.06 → 0.045 (slightly busy)
+        public const float KumikoAlpha = 0.045f;
 
         private static UiCurtain s_instance;
         private static bool s_covering;

@@ -105,6 +105,9 @@ namespace DD.Prototype.UI
     /// </summary>
     public static class UiFactory
     {
+        /// <summary>The Secondary / Nav sheen line stops this far from each side, clear of the control's rounded corners.</summary>
+        private const float ButtonSheenCornerClear = 8f;
+
         // =============================================================== screen roots
 
         /// <summary>
@@ -668,6 +671,20 @@ namespace DD.Prototype.UI
 
             Image fill = NewImage("Fill", rt, UiColor.SurfaceBase, shape);
             Fill((RectTransform)fill.transform, UiTokens.StrokeControl);
+
+            // AD G1 SHOULD-1: a Secondary / Nav control at rest reads lacquer - a 1 px SheenRim just inside the top edge
+            // (clear of the rounded corners). No A4 button frame: containers are ornamented, controls stay plain.
+            if (variant == UiButtonVariant.Secondary || variant == UiButtonVariant.Nav)
+            {
+                Image sheen = NewImage("Sheen", rt, UiColor.SheenRim, UiSprites.Solid);
+                var sheenRect = (RectTransform)sheen.transform;
+                sheenRect.anchorMin = new Vector2(0f, 1f);
+                sheenRect.anchorMax = new Vector2(1f, 1f);
+                sheenRect.pivot = new Vector2(0.5f, 1f);
+                float inset = UiTokens.StrokeControl;
+                sheenRect.offsetMin = new Vector2(inset + ButtonSheenCornerClear, -(inset + 1f));
+                sheenRect.offsetMax = new Vector2(-(inset + ButtonSheenCornerClear), -inset);
+            }
 
             // WP-022: with the AP-012 atlas present the border becomes the ink frame
             // (line only, drawn over the fill); the colour logic in UiButton is untouched,

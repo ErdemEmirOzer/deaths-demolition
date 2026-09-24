@@ -165,6 +165,7 @@ namespace DD.Prototype.UI
                     Over("Hold label over the HoldFill sweep", UiColor.TextPrimary, UiColor.HoldFill, UiColor.SurfaceBase, Text),
                     C("Disabled reason caption", UiColor.TextSecondary, UiColor.SurfaceRaised, Text),
                     C("Icon glyph", UiColor.TextPrimary, UiColor.SurfaceBase, Boundary),
+                    C("Secondary / Nav rest sheen (1 px lacquer cue; the border carries the edge)", UiColor.SheenRim, UiColor.SurfaceBase, Decorative),
                 }
             },
             { typeof(UiButtons), new UiContrastCase[0] }, // factory for UiButton (declared above)

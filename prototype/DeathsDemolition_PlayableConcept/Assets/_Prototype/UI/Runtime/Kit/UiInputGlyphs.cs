@@ -128,9 +128,21 @@ namespace DD.Prototype.UI
             return Mathf.Max(reserve, MinCapWidth);
         }
 
+        /// <summary>Text inset on each side of a key cap (AD G1 MUST-2).</summary>
+        public const float CapPadding = 12f;
+
+        /// <summary>
+        /// A disc / shape is square; a key cap grows with its label at the TextScale (AD G1 MUST-2: at Mac 1.2 × 1.25
+        /// ENTER / ESC overflowed a cap sized for 1.0). The prompt also measures its live text (<see cref="UiPrompt"/>).
+        /// </summary>
         public static float WidthOf(Glyph glyph, float size)
         {
-            return glyph.Round || HasShape(glyph) ? size : Mathf.Max(MinCapWidth, Mathf.Round(size * glyph.Width));
+            if (glyph.Round || HasShape(glyph))
+            {
+                return size;
+            }
+
+            return Mathf.Max(MinCapWidth, Mathf.Round(size * glyph.Width * Mathf.Clamp(UiTokens.TextScale, 1f, 1.25f)));
         }
 
         /// <summary>True when the glyph draws its V1 shape (the G1 atlas has it) instead of a cap with text.</summary>
@@ -384,6 +396,7 @@ namespace DD.Prototype.UI
         private Image _back;
         private Image _shape;
         private Image _rim;
+        private float _widestCap; // the widest cap this prompt has drawn: the label never shifts back on a scheme flip
         private TMP_Text _text;
         private float _size;
 
@@ -411,7 +424,8 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            float reserve = UiInputGlyphs.ReservedWidth(_action, _size) + (int)UiSpace.M;
+            // The widest the glyph can be on either device, or its measured cap now (AD G1 MUST-2) - whichever is wider.
+            float reserve = Mathf.Max(UiInputGlyphs.ReservedWidth(_action, _size), _widestCap) + (int)UiSpace.M;
             Vector2 max = _label.offsetMax;
             float target = _labelBaseOffsetMax - reserve;
             if (!Mathf.Approximately(max.x, target))
@@ -500,11 +514,8 @@ namespace DD.Prototype.UI
 
         private void Apply(InputSchemeKind scheme)
         {
-            ApplyLabelReserve();
             UiInputGlyphs.Glyph glyph = UiInputGlyphs.For(_action, scheme);
             var rect = (RectTransform)transform;
-            float width = UiInputGlyphs.WidthOf(glyph, _size);
-            rect.sizeDelta = new Vector2(width, _size);
             if (_text.text != glyph.Text)
             {
                 _text.text = glyph.Text;   // kept as the control's name (tests, screen reader) even when the shape draws
@@ -513,6 +524,16 @@ namespace DD.Prototype.UI
             // V1 shape: the pad / mouse button itself, no cap behind it.
             Sprite shape = glyph.Shape != null ? UiArt.Icon(glyph.Shape) : null;
             bool drawShape = shape != null && _shape != null;
+            float width = UiInputGlyphs.WidthOf(glyph, _size);
+            if (!drawShape && !glyph.Round)
+            {
+                // AD G1 MUST-2: the cap encloses its live text at the TextScale (measured on a scheme flip, never per frame).
+                width = Mathf.Max(width, Mathf.Ceil(_text.GetPreferredValues(glyph.Text).x) + 2f * UiInputGlyphs.CapPadding);
+            }
+
+            rect.sizeDelta = new Vector2(width, _size);
+            _widestCap = Mathf.Max(_widestCap, width);
+            ApplyLabelReserve();
             if (_shape != null)
             {
                 if (drawShape && _shape.sprite != shape)

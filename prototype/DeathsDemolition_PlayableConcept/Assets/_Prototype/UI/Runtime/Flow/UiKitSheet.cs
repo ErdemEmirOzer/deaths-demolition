@@ -142,6 +142,13 @@ namespace DD.Prototype.UI
             a.Control(UiSwitch.Create("SwitchOn", root, "RUN TELEMETRY", true, null).Button);
             handles.Stepper = a.Control(UiStepper.Create("StepperEnd", root, "QUALITY", new[] { "LOW", "MEDIUM", "HIGH" }, 0, false, null).Button);
             a.Control(UiStepper.Create("StepperWrap", root, "PALETTE", new[] { "DEFAULT", "COLOUR-BLIND SAFE" }, 1, true, null).Button);
+            // AD G1 SHOULD-5: the prompts in both schemes (-ddUiScheme pad): key caps / the V1 pad shapes.
+            a.Section("PROMPTS");
+            a.Prompts(UiInputGlyphs.Build("PromptSubmit", root, UiPromptAction.Submit, UiColor.TextPrimary, UiColor.SurfaceInset),
+                UiInputGlyphs.Build("PromptCancel", root, UiPromptAction.Cancel, UiColor.TextPrimary, UiColor.SurfaceInset),
+                UiInputGlyphs.Build("PromptPause", root, UiPromptAction.Pause, UiColor.TextPrimary, UiColor.SurfaceInset),
+                UiInputGlyphs.Build("PromptSkip", root, UiPromptAction.Skip, UiColor.TextPrimary, UiColor.SurfaceInset),
+                UiInputGlyphs.Build("PromptReroll", root, UiPromptAction.Reroll, UiColor.TextPrimary, UiColor.SurfaceInset));
 
             // B · chips and notices
             float bx = Margin + ControlsWidth + Gutter;
@@ -153,8 +160,8 @@ namespace DD.Prototype.UI
             b.Chips(UiChips.Create("Status", root, UiChipKind.State, "NET", UiChipSize.Card, UiChipState.Status, "Status.Netted"),
                 UiChips.Create("Selected", root, UiChipKind.Selected, "SELECTED"),
                 UiChips.Create("Row", root, UiChipKind.Value, "x8", UiChipSize.Row));
-            b.Chips(UiChips.Create("Warning", root, UiChipKind.State, "ELITE NEAR", UiChipSize.Hud, UiChipState.Warning, "Status.Dazed"),
-                UiChips.Create("Danger", root, UiChipKind.State, "SURROUNDED", UiChipSize.Hud, UiChipState.Danger, "Status.Dazed"));
+            b.Chips(UiChips.Create("Warning", root, UiChipKind.State, "ELITE NEAR", UiChipSize.Hud, UiChipState.Warning, "Threat.Elite"),
+                UiChips.Create("Danger", root, UiChipKind.State, "SURROUNDED", UiChipSize.Hud, UiChipState.Danger, "Threat.Surrounded"));
             b.Section("NOTICES");
             b.Block(UiNotices.Notice("Info", root, UiNoticeKind.Info, "Bindings are saved when you leave this page.", NoticesWidth));
             b.Block(UiNotices.Notice("Warning", root, UiNoticeKind.Warning,
@@ -250,6 +257,20 @@ namespace DD.Prototype.UI
                 Place((RectTransform)control.transform, _x, _width, height);
                 Y += height + (int)UiSpace.S;
                 return control;
+            }
+
+            /// <summary>AD G1 SHOULD-5: a row of prompts (sized by the prompt itself - disc, shape or cap).</summary>
+            public void Prompts(params UiPrompt[] prompts)
+            {
+                float x = _x;
+                for (int i = 0; i < prompts.Length; i++)
+                {
+                    var rect = (RectTransform)prompts[i].transform;
+                    Place(rect, x, rect.sizeDelta.x, rect.sizeDelta.y);
+                    x += rect.sizeDelta.x + (int)UiSpace.M;
+                }
+
+                Y += UiInputGlyphs.DefaultSize + (int)UiSpace.S;
             }
 
             public void Icons(params UiButton[] icons)

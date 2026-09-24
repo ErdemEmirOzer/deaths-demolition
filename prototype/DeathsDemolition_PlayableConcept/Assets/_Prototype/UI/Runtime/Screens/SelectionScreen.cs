@@ -47,7 +47,6 @@ namespace DD.Prototype.UI
         private const float WeaponIconSize = 56f;
         private const float BadgeWidth = 160f;
         private const float FooterHeight = 88f;
-        private const float TitleBand = 40f;
 
         private UiButton[] _skinButtons;
         private GameObject[] _skinBadges;
@@ -191,19 +190,25 @@ namespace DD.Prototype.UI
                 _skinPreviews[i] = BuildPreview(button, i);
                 BuildSwatch(button, palette);
 
-                // Title moves right of the preview + swatch and up into its own band.
+                // AD G1 MUST-3: "Cosmetic only" on top in its own line box, the name in the band below it, top-aligned and
+                // growing downward - the two-line name at Mac UI 1.2 × TextScale 1.25 ("Ivory / Crimson") never climbs
+                // into the caption (it used to sit bottom-aligned and wrap upward over it).
+                float textLeft = PreviewSlotWidth + SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L;
+                float captionBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
-                labelRect.offsetMin = new Vector2(PreviewSlotWidth + SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L, TitleBand);
-                labelRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.L);
+                labelRect.offsetMin = new Vector2(textLeft, (int)UiSpace.L);
+                labelRect.offsetMax = new Vector2(-BadgeWidth, -((int)UiSpace.L + captionBand + (int)UiSpace.XS));
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
-                button.LabelText.alignment = TextAlignmentOptions.BottomLeft;
+                button.LabelText.alignment = TextAlignmentOptions.TopLeft;
 
                 TMP_Text detail = UiFactory.Label(
                     "Detail", button.transform, "Cosmetic only", UiType.Caption, UiColor.TextSecondary,
                     TextAnchor.UpperLeft);
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-                detailRect.offsetMin = new Vector2(PreviewSlotWidth + SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L, (int)UiSpace.L);
-                detailRect.offsetMax = new Vector2(-BadgeWidth, -(TitleBand + (int)UiSpace.L));
+                detailRect.anchorMin = new Vector2(0f, 1f);
+                detailRect.pivot = new Vector2(0f, 1f);
+                detailRect.offsetMin = new Vector2(textLeft, -((int)UiSpace.L + captionBand));
+                detailRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.L);
 
                 _skinButtons[i] = button;
                 _skinBadges[i] = BuildBadge(button, "SELECTED");
