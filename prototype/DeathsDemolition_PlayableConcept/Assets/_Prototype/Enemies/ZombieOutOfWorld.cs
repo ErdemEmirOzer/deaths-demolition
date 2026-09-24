@@ -25,7 +25,22 @@ namespace DD.Prototype.Enemies
         [PrototypeOnly(PendingDecisions.None, "Out-of-world net: metres below the last on-mesh point that count as a fall; absolute floor; off-mesh seconds; check cadence; NavMesh sample radius.", true)]
         public const float FallDepth = 6f, AbsoluteFloorY = -50f, StrandedSeconds = 3f, CheckInterval = 0.25f, SampleRadius = 2f;
 
-        public enum OutOfWorldReason { Fell = 0, Stranded = 1 }
+        public enum OutOfWorldReason { Fell = 0, Stranded = 1, Stuck = 2 }
+
+        [PrototypeOnly(PendingDecisions.None, "WP-061L stuck watchdog: seconds without closing on the player, metres of closing that count as progress, metres of own movement below which the body is 'not moving', check cadence, recovery side-step speed.", true)]
+        public const float StuckWindowSeconds = 9f, StuckProgressMetres = 1f, StuckMoveMetres = 0.75f, StuckCheckInterval = 0.5f, StuckSideStepSpeed = 2.5f;
+
+        /// <summary>Tests: shorten the stuck window (≤ 0 = the shipped <see cref="StuckWindowSeconds"/>).</summary>
+        public static float StuckWindowOverride { get; set; }
+
+        /// <summary>WP-061L: bodies removed by the stuck watchdog (subset of <see cref="OutOfWorldRemovals"/>).</summary>
+        public static int StuckRemovals { get; private set; }
+        /// <summary>WP-061L: recoveries tried (repath + side step) — a recovered body never reaches removal.</summary>
+        public static int StuckRecoveries { get; private set; }
+
+        private float _stuckWindowStart = -1f, _stuckBest, _nextStuckCheck;
+        private Vector3 _stuckAnchor;
+        private bool _stuckRecoveryTried;
 
         /// <summary>WP-061K: a body was removed for leaving the world (tier, where, why). Telemetry / QA; no gameplay listener.</summary>
         public static event Action<EnemyTier, Vector3, OutOfWorldReason> OutOfWorldRemoved;
@@ -39,6 +54,8 @@ namespace DD.Prototype.Enemies
         private void ResetOutOfWorld()
         {
             _hasOnMeshY = false; _offMeshSince = -1f;
+            _stuckWindowStart = -1f; _stuckRecoveryTried = false;
+            _nextStuckCheck = Time.time + StuckCheckInterval * ((Mathf.Abs(GetInstanceID()) % 5) / 5f);
             _nextWorldCheck = Time.time + CheckInterval * ((Mathf.Abs(GetInstanceID()) % 4) / 4f);   // phase spread
         }
 
@@ -64,6 +81,69 @@ namespace DD.Prototype.Enemies
             return false;
         }
 
+        /// <summary>
+        /// WP-061L · the body stands ON the NavMesh but makes no progress toward the player (S-10 stability seed 26:
+        /// the last bodies of round 12 sat on a NavMesh island at the west ring for 120 s). Over one window
+        /// (<see cref="StuckWindowSeconds"/>) the body must close by <see cref="StuckProgressMetres"/>; if it did not
+        /// AND it either has no complete path or has hardly moved, the first time it is re-routed with a side step,
+        /// the second time it is removed like an out-of-world body (despawn, no reward). A body that is fighting
+        /// (inside 1.6 × attack range), queued at a chokepoint, waiting in the crowd, netted, staggering or rising
+        /// never counts — a real crowd chasing the player keeps closing or keeps moving.
+        /// </summary>
+        private bool TickStuck()
+        {
+            float now = Time.time;
+            if (now < _nextStuckCheck) return false;
+            _nextStuckCheck = now + StuckCheckInterval;
+            Transform target = ResolveTarget();
+
+            Vector3 p = transform.position;
+            float distance = target != null ? FlatDistance(p, target.position) : -1f;
+            bool exempt = target == null || IsRising || _waiting || IsNetted || _animator.IsStaggering || _attack.IsAttacking
+                          || (_pathFollower != null && _pathFollower.IsQueued)
+                          || distance <= _attack.Range * 1.6f;
+            if (exempt || _stuckWindowStart < 0f || distance < _stuckBest - StuckProgressMetres)
+            {
+                if (!exempt && _stuckWindowStart >= 0f) _stuckRecoveryTried = false;   // real progress after a recovery
+                StartStuckWindow(now, p, distance);
+                return false;
+            }
+
+            float window = StuckWindowOverride > 0f ? StuckWindowOverride : StuckWindowSeconds;
+            if (now - _stuckWindowStart < window) return false;
+
+            bool noPath = _pathFollower == null || !_pathFollower.HasCompletePath;
+            bool notMoving = FlatDistance(p, _stuckAnchor) < StuckMoveMetres;
+            if (!noPath && !notMoving)
+            {
+                StartStuckWindow(now, p, distance);   // moving on a complete path (a kited chase) — not stuck
+                return false;
+            }
+
+            if (!_stuckRecoveryTried)
+            {
+                _stuckRecoveryTried = true;
+                StuckRecoveries++;
+                _pathFollower?.Invalidate();
+                Vector3 to = target.position - p; to.y = 0f;
+                Vector3 side = to.sqrMagnitude > 1e-4f ? Vector3.Cross(Vector3.up, to.normalized) : transform.right;
+                if (((GetInstanceID() + (int)(now * 10f)) & 1) == 0) side = -side;
+                _knockbackVelocity += side * StuckSideStepSpeed;
+                StartStuckWindow(now, p, distance);
+                return false;
+            }
+
+            StuckRemovals++;
+            return RemoveOutOfWorld(OutOfWorldReason.Stuck, p);
+        }
+
+        private void StartStuckWindow(float now, Vector3 p, float distance)
+        {
+            _stuckWindowStart = now; _stuckAnchor = p; _stuckBest = distance;
+        }
+
+        private static float FlatDistance(Vector3 a, Vector3 b) { float dx = a.x - b.x, dz = a.z - b.z; return Mathf.Sqrt(dx * dx + dz * dz); }
+
         private bool RemoveOutOfWorld(OutOfWorldReason reason, Vector3 where)
         {
             if (!_alive || _dying) return false;
@@ -75,9 +155,9 @@ namespace DD.Prototype.Enemies
         }
 
         /// <summary>Tests: zero the removal counter.</summary>
-        public static void ResetOutOfWorldStatics() => OutOfWorldRemovals = 0;
+        public static void ResetOutOfWorldStatics() { OutOfWorldRemovals = 0; StuckRemovals = 0; StuckRecoveries = 0; StuckWindowOverride = 0f; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetOutOfWorldDomain() { OutOfWorldRemovals = 0; OutOfWorldRemoved = null; }
+        private static void ResetOutOfWorldDomain() { OutOfWorldRemovals = 0; StuckRemovals = 0; StuckRecoveries = 0; StuckWindowOverride = 0f; OutOfWorldRemoved = null; }
     }
 }

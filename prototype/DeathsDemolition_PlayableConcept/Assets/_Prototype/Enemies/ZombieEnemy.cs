@@ -880,9 +880,9 @@ namespace DD.Prototype.Enemies
                 return;
             }
 
-            if (TickOutOfWorld())
+            if (TickOutOfWorld() || TickStuck())
             {
-                return;   // WP-061K: left the world → despawned, no reward
+                return;   // WP-061K / WP-061L: left the world or stuck → despawned, no reward
             }
 
             TickCombat(dt);

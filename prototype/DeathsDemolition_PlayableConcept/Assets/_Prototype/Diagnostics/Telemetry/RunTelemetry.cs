@@ -34,6 +34,7 @@ namespace DD.Prototype.Diagnostics.Telemetry
         public float ttkSumStandard, ttkSumSpecial, ttkSumElite, ttkSumUltra;   // first player hit → death, seconds
         public int ttkCountStandard, ttkCountSpecial, ttkCountElite, ttkCountUltra;
         public int outOfWorldRemovals;         // WP-061K: bodies despawned for leaving the world (fell / stranded) — no reward
+        public int stuckRemovals;              // WP-061L: bodies despawned by the no-progress watchdog — no reward
     }
 
     /// <summary>One time-to-kill sample (first player hit → death).</summary>
@@ -403,7 +404,8 @@ namespace DD.Prototype.Diagnostics.Telemetry
         {
             Debug.Log("[DD-TELEMETRY] enemy.outOfWorld tier=" + tier + " reason=" + reason + " pos=" + where.ToString("F1") + " round=" + (s_roundIndex >= 0 && s_roundIndex < RoundCapacity ? s_rounds[s_roundIndex].round : 0));
             if (!s_inRun || s_roundIndex < 0 || s_roundIndex >= RoundCapacity) return;
-            s_rounds[s_roundIndex].outOfWorldRemovals++;
+            if (reason == ZombieEnemy.OutOfWorldReason.Stuck) s_rounds[s_roundIndex].stuckRemovals++;
+            else s_rounds[s_roundIndex].outOfWorldRemovals++;
         }
 
         public static void OnEnemyDied(EnemyDeathInfo info)

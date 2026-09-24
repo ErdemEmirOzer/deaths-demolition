@@ -220,6 +220,86 @@ namespace DD.Prototype.Tests.PlayMode
             finally { _director.RoundCleared -= t; }
         }
 
+        /// <summary>
+        /// WP-061L (S-10 stability seed 26): the round's last living zombie is held against the ring (on the NavMesh,
+        /// moving nowhere). The stuck watchdog tries one repath + side step, then removes it — the round completes,
+        /// no gold packet, no kill; a body that keeps closing on the player is never touched.
+        /// </summary>
+        [UnityTest]
+        [Category("WP061L")]
+        [Timeout(300000)]
+        public IEnumerator P9_HalkayaYapisanSonZombi_KurtarmaSonraKaldirma_RoundBiter_OdulYok()
+        {
+            yield return RunSahnesiniHazirla();
+            yield return YeniRound();
+            ZombieEnemy.ResetOutOfWorldStatics();
+            ZombieEnemy.StuckWindowOverride = 1.5f;
+            GoldService gold = GoldService.Instance;
+            int temizlendi = 0;
+            Action<int> t = r => temizlendi++;
+            _director.RoundCleared += t;
+            try
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < 60f && !(_director.Population.Unspawned == 0 && DirectorYasayanZombi() == 1))
+                {
+                    IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                    int alive = DirectorYasayanZombi();
+                    for (int i = live.Count - 1; i >= 0 && alive > 1; i--)
+                        if (live[i] != null && live[i].IsAlive && live[i].SpawnTicket > 0) { live[i].Kill(); alive--; }
+                    yield return null;
+                }
+                Assert.AreEqual(0, _director.Population.Unspawned, "havuz tükenmedi");
+                ZombieEnemy son = BirYasayanDirectorZombisi();
+                Assert.IsNotNull(son);
+
+                // hold it far from the player (≥ 12 m), pinned in place each frame — on the mesh, making no progress
+                Vector3 pin = son.transform.position;
+                Vector3 away = pin - _rig.transform.position; away.y = 0f;
+                if (away.magnitude < 12f) { pin = _rig.transform.position + (away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.right) * 14f; pin.y = son.transform.position.y; }
+                var cc = son.GetComponent<CharacterController>();
+                int paket0 = gold.PacketsSpawned, kill0 = _run.RoundKills, temiz0 = temizlendi;
+                float tPin = Time.realtimeSinceStartup;
+                while (son.IsAlive && son.SpawnTicket > 0 && Time.realtimeSinceStartup - tPin < 10f)
+                {
+                    if (cc != null) cc.enabled = false;
+                    son.transform.position = pin;
+                    if (cc != null) cc.enabled = true;
+                    yield return null;
+                }
+                Assert.IsFalse(son.IsAlive && son.SpawnTicket > 0, "takılı gövde kaldırılmadı");
+                Assert.AreEqual(1, ZombieEnemy.StuckRecoveries, "önce bir kurtarma denendi");
+                Assert.AreEqual(1, ZombieEnemy.StuckRemovals);
+                yield return Bekle(() => temizlendi > temiz0, 5f, "round tamamlanmadı (takılı son gövde)");
+                Assert.AreEqual(paket0, gold.PacketsSpawned, "ödül yok (altın)");
+                Assert.AreEqual(kill0, _run.RoundKills, "ödül yok (öldürme)");
+                Debug.Log("[DD-TEST] wp061l.stuck recoveries=" + ZombieEnemy.StuckRecoveries + " removals=" + ZombieEnemy.StuckRemovals + " packets " + paket0 + "→" + gold.PacketsSpawned + " state=" + _director.State);
+            }
+            finally { _director.RoundCleared -= t; ZombieEnemy.StuckWindowOverride = 0f; }
+        }
+
+        /// <summary>WP-061L guard: a crowd that keeps chasing the player (real round, short window) is never removed by the watchdog.</summary>
+        [UnityTest]
+        [Category("WP061L")]
+        [Timeout(300000)]
+        public IEnumerator P10_OyuncuyuKovalayanKalabalik_TakilmaSayilmaz()
+        {
+            yield return RunSahnesiniHazirla();
+            yield return YeniRound();
+            ZombieEnemy.ResetOutOfWorldStatics();
+            ZombieEnemy.StuckWindowOverride = 1.5f;
+            _rig.Health.DiagnosisInvulnerable = true;   // the fixture's TearDown clears it
+            try
+            {
+                yield return Bekle(() => _director.ActiveCount >= 6, DolusZamanAsimi, "kalabalık doğmadı");
+                float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < 8f) yield return null;   // the crowd closes in and fights (invulnerable player)
+                Assert.AreEqual(0, ZombieEnemy.StuckRemovals, "kovalayan/savaşan gövde kaldırıldı");
+                Debug.Log("[DD-TEST] wp061l.chase alive=" + _director.ActiveCount + " recoveries=" + ZombieEnemy.StuckRecoveries + " removals=" + ZombieEnemy.StuckRemovals);
+            }
+            finally { ZombieEnemy.StuckWindowOverride = 0f; }
+        }
+
         // ============================================================== P1
 
         [UnityTest]
