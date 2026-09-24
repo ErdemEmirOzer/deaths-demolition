@@ -17,7 +17,11 @@ namespace DD.Prototype.Characters
         /// <summary>Ofuda Loom bind: the body is held mid-pose (Animator speed 0), look-at off.</summary>
         Netted = 1,
         /// <summary>Kagura Bell ring: hit_special_stumble once, then the queue sway for the daze.</summary>
-        Dazed = 2
+        Dazed = 2,
+        /// <summary>WP-071 B3 (N1 chain lightning): the body seizes — slowed pose + a 6 Hz procedural spasm on spine / head / arms; death → arc_electro family.</summary>
+        Electrocuted = 3,
+        /// <summary>WP-071 B3 (N1 gel): the feet go — the stumble clip once, then the sway; death → gel_slip family.</summary>
+        Slipping = 4
     }
 
     public interface IZombieAnimationDriver
@@ -39,6 +43,8 @@ namespace DD.Prototype.Characters
         void PlayDeath(int deathStyle);
         /// <summary>WP-071: the killing push (flat world direction the body is shoved, intensity ≈ 1 … 3) — set before PlayDeath; the ragdoll falls along it.</summary>
         void SetDeathImpulse(Vector3 worldPush, float intensity);
+        /// <summary>WP-071 B3: S-03's full killing impulse (DEC-096) — weapon class, body state, body speed shape the fall.</summary>
+        void SetDeathImpulse(in DD.Prototype.Damage.DeathImpulse impulse);
         IAttackWindowSink WindowSink { get; set; }
         /// <summary>WP-032: additive wind-up emphasis weight (0..1).</summary>
         void SetTelegraphEmphasis(float emphasis01);

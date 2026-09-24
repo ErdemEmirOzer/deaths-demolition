@@ -50,6 +50,7 @@ namespace DD.Art.Tests.PlayMode
         public IEnumerator UnityTearDown()
         {
             Time.captureDeltaTime = 0f;
+            AttackSelector.Enabled = true;
             ZombieEnemy.RiseOnSpawn = false;
             CharacterAnimatorLod.ForceFar = -1;
             FootIkAdapter.Force = -1;
@@ -334,6 +335,7 @@ namespace DD.Art.Tests.PlayMode
         [Timeout(300000)]
         public IEnumerator Telegraf_AdditiveVurgu_WindupIcinde_PencereOlaylariAynen()
         {
+            AttackSelector.Enabled = false;   // WP-076 B1: the selector's new styles get their emphasis in WP-071 B5; this test reads the signature swipe
             yield return RunAP005();
             Transform player = PlayerRegistry.Primary.transform;
             Vector3 p = player.position;
@@ -471,6 +473,25 @@ namespace DD.Art.Tests.PlayMode
             // WP-071 B2: the interleaved windows read ±1.2 a frame between runs (scene noise); a real per-body allocation in the
             // served path adds ≥ 12 a frame (12 bodies served) — the gate sits between the two.
             Assert.LessOrEqual((phaseCount[0] - phaseCount[1]) / 60f, 3f, "ayak IK yolu kare başına ayırıyor (IK açık − kapalı): " + ((phaseCount[0] - phaseCount[1]) / 60f));
+
+            // WP-071 B3 (C-00): positive control — the same interleaved windows with ONE deliberate allocation per served body must read
+            // ≥ 12 a frame over the IK-off baseline, i.e. the ≤ 3 gate above catches a per-body leak.
+            Application.targetFrameRate = -1;
+            long probeOn = 0, probeOff = 0;
+            for (int f = 0; f < 121; f++)
+            {
+                if (f > 0) { if (FootIkAdapter.ProbeAllocPerServe) probeOn += recCount.LastValue; else probeOff += recCount.LastValue; }
+                FootIkAdapter.ProbeAllocPerServe = f < 120 && (f / 10) % 2 == 0;
+                for (int i = 0; i < visuals.Count; i++) visuals[i].SetSpeed(2.7f * ((f / 30 + i) % 2), Time.deltaTime);
+                yield return null;
+            }
+
+            FootIkAdapter.ProbeAllocPerServe = false;
+            Application.targetFrameRate = savedRate;
+            float probeDelta = (probeOn - probeOff) / 60f;
+            Debug.Log("[DD-TEST] wp071.ikgate.positive perFrame=" + probeDelta.ToString("F2", CultureInfo.InvariantCulture) + " (served " + FootIkAdapter.MaxBodiesPerFrame + ")");
+            Assert.GreaterOrEqual(probeDelta, FootIkAdapter.MaxBodiesPerFrame - 1f, "pozitif kontrol: gövde başı ayırma görülmedi");
+            Assert.Greater(probeDelta, 3f, "kapı (≤ 3) gövde başı ayırmayı yakalamalı");
             EnemyTargeting.Clear();
         }
     }

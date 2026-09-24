@@ -55,13 +55,14 @@ namespace DD.Prototype.Characters
         };
         private static readonly float[] Mass = { 12f, 16f, 5f, 2.5f, 2f, 2.5f, 2f, 8f, 5f, 8f, 5f };
         private static readonly float[] Radius = { 0.13f, 0.14f, 0.11f, 0.06f, 0.05f, 0.06f, 0.05f, 0.08f, 0.06f, 0.08f, 0.06f };
-        // twist ±, swing Y, swing Z (degrees; relative to the pose at the hand-off)
-        private static readonly Vector3[] Limit =
-        {
-            Vector3.zero, new Vector3(30f, 25f, 25f), new Vector3(40f, 40f, 40f),
-            new Vector3(70f, 80f, 80f), new Vector3(70f, 10f, 10f), new Vector3(70f, 80f, 80f), new Vector3(70f, 10f, 10f),
-            new Vector3(60f, 40f, 30f), new Vector3(70f, 10f, 10f), new Vector3(60f, 40f, 30f), new Vector3(70f, 10f, 10f)
-        };
+        // WP-071 B3 · P-06 AP-022 ragdoll-limits.json (24.09, measured on the four death onsets' hand-off poses), degrees relative to the
+        // pose at the hand-off. Hinge = 0: X = twist about the bone (±LowX/HighX), Y / Z = swings. Hinge = ±1: X = flex about the body's
+        // lateral axis (+1 right: + bends the chest forward; −1 left: + swings the thigh forward), Y = twist about the bone, Z = side swing.
+        private static readonly int[] Hinge = { 0, 1, 0, 0, 0, 0, 0, -1, 0, -1, 0 };
+        private static readonly float[] LowX = { 0f, -20f, -40f, -60f, -70f, -60f, -70f, -25f, -70f, -25f, -70f };
+        private static readonly float[] HighX = { 0f, 45f, 40f, 60f, 70f, 60f, 70f, 110f, 70f, 110f, 70f };
+        private static readonly float[] LimY = { 0f, 20f, 40f, 100f, 10f, 100f, 10f, 25f, 10f, 25f, 10f };
+        private static readonly float[] LimZ = { 0f, 25f, 40f, 90f, 10f, 90f, 10f, 40f, 10f, 40f, 10f };
 
         public sealed class Proxy
         {
@@ -106,7 +107,11 @@ namespace DD.Prototype.Characters
         /// bodies start at the bones' pose with <paramref name="velocity"/> (per body, world m/s) plus the push. Null when
         /// disabled or the pool is full.
         /// </summary>
-        public static Proxy Acquire(int owner, Transform[] bones, Transform[] tips, Vector3[] velocity, Vector3 push, float spinRadPerSec)
+        public static Proxy Acquire(int owner, Transform[] bones, Transform[] tips, Vector3[] velocity, Vector3 push, float spinRadPerSec) =>
+            Acquire(owner, bones, tips, velocity, push, spinRadPerSec, Vector3.zero);
+
+        /// <summary>WP-071 B3: + <paramref name="uniform"/> — velocity every body gets in full (a launcher's lift, a running body's momentum).</summary>
+        public static Proxy Acquire(int owner, Transform[] bones, Transform[] tips, Vector3[] velocity, Vector3 push, float spinRadPerSec, Vector3 uniform)
         {
             if (!Enabled || bones == null || bones[0] == null) return null;
             Warm();
@@ -125,6 +130,7 @@ namespace DD.Prototype.Characters
                 Fit(p.colliders[b], bone, tips[b], b);
             }
 
+            Vector3 bodyRight = bones[0].parent != null ? bones[0].parent.right : bones[0].right;   // the character's lateral axis (root frame)
             for (int b = 0; b < BodyCount; b++)
             {
                 ConfigurableJoint j = p.joints[b];
@@ -133,8 +139,21 @@ namespace DD.Prototype.Characters
                 Vector3 twist = tips[b] != null ? bone.InverseTransformDirection(tips[b].position - bone.position) : Vector3.up;
                 if (twist.sqrMagnitude < 1e-6f) twist = Vector3.up;
                 twist.Normalize();
-                j.axis = twist;
-                j.secondaryAxis = Mathf.Abs(Vector3.Dot(twist, Vector3.forward)) < 0.9f ? Vector3.Cross(twist, Vector3.forward).normalized : Vector3.Cross(twist, Vector3.right).normalized;
+                if (Hinge[b] != 0)
+                {
+                    // flex about the lateral axis (made perpendicular to the bone), twist about the bone
+                    Vector3 lateral = bone.InverseTransformDirection(bodyRight * Hinge[b]);
+                    lateral = Vector3.ProjectOnPlane(lateral, twist);
+                    if (lateral.sqrMagnitude < 1e-6f) lateral = Vector3.Cross(twist, Vector3.forward);
+                    j.axis = lateral.normalized;
+                    j.secondaryAxis = twist;
+                }
+                else
+                {
+                    j.axis = twist;
+                    j.secondaryAxis = Mathf.Abs(Vector3.Dot(twist, Vector3.forward)) < 0.9f ? Vector3.Cross(twist, Vector3.forward).normalized : Vector3.Cross(twist, Vector3.right).normalized;
+                }
+
                 j.connectedBody = p.bodies[Parent[b]];
             }
 
@@ -145,7 +164,7 @@ namespace DD.Prototype.Characters
                 rb.isKinematic = false;
                 rb.interpolation = RigidbodyInterpolation.Interpolate;
                 float share = b == 1 ? 1f : b == 0 ? 0.6f : b == 2 ? 0.9f : 0.4f;   // the push lands high: the chest carries it, the legs trail
-                rb.velocity = (velocity != null ? velocity[b] : Vector3.zero) + push * share;
+                rb.velocity = (velocity != null ? velocity[b] : Vector3.zero) + push * share + uniform;
                 rb.angularVelocity = b <= 1 ? new Vector3(0f, spinRadPerSec, 0f) : Vector3.zero;
                 rb.WakeUp();
             }
@@ -253,10 +272,10 @@ namespace DD.Prototype.Characters
                 ConfigurableJoint j = go.AddComponent<ConfigurableJoint>();
                 j.xMotion = j.yMotion = j.zMotion = ConfigurableJointMotion.Locked;
                 j.angularXMotion = j.angularYMotion = j.angularZMotion = ConfigurableJointMotion.Limited;
-                j.lowAngularXLimit = new SoftJointLimit { limit = -Limit[b].x };
-                j.highAngularXLimit = new SoftJointLimit { limit = Limit[b].x };
-                j.angularYLimit = new SoftJointLimit { limit = Limit[b].y };
-                j.angularZLimit = new SoftJointLimit { limit = Limit[b].z };
+                j.lowAngularXLimit = new SoftJointLimit { limit = LowX[b] };
+                j.highAngularXLimit = new SoftJointLimit { limit = HighX[b] };
+                j.angularYLimit = new SoftJointLimit { limit = LimY[b] };
+                j.angularZLimit = new SoftJointLimit { limit = LimZ[b] };
                 j.enableCollision = false;
                 j.enablePreprocessing = false;
                 j.autoConfigureConnectedAnchor = true;

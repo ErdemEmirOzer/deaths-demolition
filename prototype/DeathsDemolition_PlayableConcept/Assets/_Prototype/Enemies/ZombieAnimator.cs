@@ -487,6 +487,7 @@ namespace DD.Prototype.Enemies
                 else if (_tier == EnemyTier.Special) style = local.z > 0.35f ? 5 : 6;
                 LastDeathStyleIndex = style;   // WP-052 readout
                 Driver.SetDeathImpulse(worldDirection, intensity);   // WP-071: the ragdoll falls along the killing push
+                if (DeathImpulse.Force > 0f || DeathImpulse.Direction.sqrMagnitude > 0f) Driver.SetDeathImpulse(DeathImpulse);   // WP-071 B3: + class / state / speed (S-03 DEC-096)
                 Driver.PlayDeath(style);
             }
         }

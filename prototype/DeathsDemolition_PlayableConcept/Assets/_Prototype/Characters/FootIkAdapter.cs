@@ -78,6 +78,9 @@ namespace DD.Prototype.Characters
         public bool Served => _servedThisFrame;
         /// <summary>Tests: force the adapter on/off regardless of the near gate (-1 = automatic).</summary>
         public static int Force = -1;
+        /// <summary>Tests only: every served body allocates once (proves the crowd allocation gate catches a per-body allocation).</summary>
+        public static bool ProbeAllocPerServe;
+        private static byte[] s_probeSink;
 
         public void Configure(Animator animator)
         {
@@ -105,6 +108,7 @@ namespace DD.Prototype.Characters
             s_raycasts = 0;
             s_locked = 0;
             Force = -1;
+            ProbeAllocPerServe = false;
             MaxLockBodiesPerFrame = 9;
         }
 
@@ -161,6 +165,7 @@ namespace DD.Prototype.Characters
             }
 
             s_served++;
+            if (ProbeAllocPerServe) s_probeSink = new byte[16];   // tests: the positive control for the crowd allocation gate
             _lockThisFrame = _lockGate != null && _lockGate() && s_locked < MaxLockBodiesPerFrame;
             if (_lockThisFrame) s_locked++;
             if (_legLength <= 0f)

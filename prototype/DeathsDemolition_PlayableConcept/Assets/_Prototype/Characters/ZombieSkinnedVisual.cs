@@ -408,6 +408,36 @@ namespace DD.Prototype.Characters
             worldPush.y = 0f;
             _deathPush = worldPush.sqrMagnitude > 1e-4f ? worldPush.normalized : Vector3.zero;
             _deathIntensity = Mathf.Max(0f, intensity);
+            _hasFullImpulse = false;
+        }
+
+        private bool _hasFullImpulse;
+        private DD.Prototype.Damage.DeathImpulse _impulse;
+
+        /// <summary>
+        /// WP-071 B3: S-03's killing impulse (DEC-096). The clip family stays ZombieAnimator's pick (direction / region / intensity);
+        /// the impulse adds what it knows: the body state (electrocuted → arc_electro, sliding → gel_slip), the weapon class
+        /// (shotgun throws, sniper snaps, launcher lifts and takes the legs, LMG drops), and the body's run speed carried into the fall.
+        /// </summary>
+        public void SetDeathImpulse(in DD.Prototype.Damage.DeathImpulse impulse)
+        {
+            SetDeathImpulse(impulse.Direction, Mathf.Max(_deathIntensity, impulse.Force));
+            _impulse = impulse;
+            _hasFullImpulse = true;
+        }
+
+        /// <summary>WP-071 B3: push multiplier and lift (m/s) per weapon class (III A3.2; the class tells how a body goes down).</summary>
+        public static void PushOf(DD.Prototype.Core.Weapons.WeaponClass c, out float scale, out float lift)
+        {
+            switch (c)
+            {
+                case DD.Prototype.Core.Weapons.WeaponClass.Shotgun: scale = 1.35f; lift = 0.6f; break;
+                case DD.Prototype.Core.Weapons.WeaponClass.Sniper: scale = 1.2f; lift = 0.2f; break;
+                case DD.Prototype.Core.Weapons.WeaponClass.Launcher: scale = 1.7f; lift = 3.0f; break;
+                case DD.Prototype.Core.Weapons.WeaponClass.Lmg: scale = 0.85f; lift = 0f; break;
+                case DD.Prototype.Core.Weapons.WeaponClass.Smg: scale = 0.9f; lift = 0f; break;
+                default: scale = 1f; lift = 0f; break;
+            }
         }
 
         private void EnsureRagdollBones()
@@ -441,6 +471,14 @@ namespace DD.Prototype.Characters
         private void BeginDeathClock(int deathStyle)
         {
             DeathFamily = ZombieDeathFamilies.OfDeathIndex(deathStyle);
+            if (_hasFullImpulse)
+            {
+                // WP-071 B3: what the clip index cannot know
+                if (_impulse.State == DD.Prototype.Damage.ZombieBodyState.Electrocuted || _special == ZombieSpecialVisual.Electrocuted) DeathFamily = ZombieDeathFamily.ArcElectro;
+                else if (_impulse.State == DD.Prototype.Damage.ZombieBodyState.Sliding || _special == ZombieSpecialVisual.Slipping) DeathFamily = ZombieDeathFamily.GelSlip;
+                else if (_impulse.WeaponKnown && _impulse.WeaponClass == DD.Prototype.Core.Weapons.WeaponClass.Launcher && DeathFamily != ZombieDeathFamily.UltraTimber) DeathFamily = ZombieDeathFamily.LegsOut;
+            }
+
             ZombieDeathFamilies.Record(DeathFamily);   // WP-078 soak distribution
             DiedByRagdoll = false;
             RagdollHandoffSeconds = -1f;
@@ -451,8 +489,29 @@ namespace DD.Prototype.Characters
             for (int i = 0; i < _rdBones.Length; i++) if (_rdBones[i] != null) _rdPrev[i] = _rdBones[i].position;
         }
 
+        [PrototypeOnly(PendingDecisions.None, "WP-071 B3 electrocution: Animator speed while seized, spasm frequency (Hz) and amplitude (degrees) on spine / head / upper arms. Invented / II A5.3.", true)]
+        public const float ElectroAnimatorSpeed = 0.15f, SpasmHz = 6f, SpasmDegrees = 7f;
+        private float _spasmClock;
+        /// <summary>WP-071 B3: last spasm offset applied (degrees; tests).</summary>
+        public float LastSpasm { get; private set; }
+
+        private void Spasm()
+        {
+            if (_special != ZombieSpecialVisual.Electrocuted || _dying || _rdBones == null) return;
+            _spasmClock += Time.deltaTime;
+            // three incommensurate sines (II A5.3: head 4 Hz, arms 6 Hz, legs 2 Hz irregular) — deterministic, no allocation
+            float t = _spasmClock * SpasmHz;
+            float a = Mathf.Sin(t * 6.2832f) * SpasmDegrees, b = Mathf.Sin(t * 4.1887f + 1.3f) * SpasmDegrees, c = Mathf.Sin(t * 9.4248f + 0.7f) * SpasmDegrees * 0.6f;
+            LastSpasm = a;
+            if (_rdBones[1] != null) _rdBones[1].rotation = Quaternion.AngleAxis(a * 0.5f, transform.right) * Quaternion.AngleAxis(c, transform.forward) * _rdBones[1].rotation;
+            if (_rdBones[2] != null) _rdBones[2].rotation = Quaternion.AngleAxis(b, transform.forward) * _rdBones[2].rotation;
+            if (_rdBones[3] != null) _rdBones[3].rotation = Quaternion.AngleAxis(c * 2f, transform.forward) * _rdBones[3].rotation;
+            if (_rdBones[5] != null) _rdBones[5].rotation = Quaternion.AngleAxis(-a * 1.5f, transform.forward) * _rdBones[5].rotation;
+        }
+
         private void LateUpdate()
         {
+            Spasm();
             if (_deathClock < 0f) return;
             float dt = Time.deltaTime;
             if (_ragdoll != null)
@@ -492,10 +551,19 @@ namespace DD.Prototype.Characters
             _handoffNow = false;
             Vector3 push = _deathPush.sqrMagnitude > 0f ? _deathPush : -transform.forward;
             float speed = Mathf.Clamp(1.0f + 0.9f * _deathIntensity, 1.4f, 4.5f) * (DeathFamily == ZombieDeathFamily.UltraTimber ? 0.5f : 1f);
+            Vector3 extra = Vector3.zero;
+            if (_hasFullImpulse)
+            {
+                float scale = 1f, lift = 0f;
+                if (_impulse.WeaponKnown) PushOf(_impulse.WeaponClass, out scale, out lift);
+                speed *= scale;
+                extra = Vector3.up * lift + transform.forward * (_impulse.BodySpeed * 0.6f);   // a running body carries its momentum into the fall
+                if (DeathFamily == ZombieDeathFamily.GelSlip) extra += transform.forward * 1.5f + Vector3.up * 0.5f;   // the feet shoot forward on the gel
+            }
             float spin = DeathFamily == ZombieDeathFamily.SpinSide ? 3.5f * (Vector3.Cross(transform.forward, push).y >= 0f ? 1f : -1f) : 0f;
             // review R1-A #12: a far-LOD body's bones move only on its 15 Hz steps — the per-frame velocity is 0 or a spike, so it gets the push alone
             bool farBody = _lod != null && _lod.Far;
-            _ragdoll = RagdollProxyPool.Acquire(GetInstanceID(), _rdBones, _rdTips, farBody ? null : _rdVel, push * speed, spin);
+            _ragdoll = RagdollProxyPool.Acquire(GetInstanceID(), _rdBones, _rdTips, farBody ? null : _rdVel, push * speed, spin, extra);
             if (_ragdoll == null)
             {
                 _deathClock = -1f;   // pool full: the authored fall finishes the death (death_end)
@@ -704,6 +772,8 @@ namespace DD.Prototype.Characters
         {
             if (!_authored) return;
             EndRagdoll();   // WP-071: a pooled body comes back animated (proxy returned, Animator + LOD running)
+            _hasFullImpulse = false;
+            _lastOverrideHit = -10f;
             EnsureRagdollBones();
             RagdollProxyPool.ArmRoundLog();   // WP-078 per-round line
             _topSpeed = Mathf.Max(0.1f, topSpeedMetersPerSecond);
@@ -916,23 +986,41 @@ namespace DD.Prototype.Characters
                     _animator.speed = 0f;
                     break;
                 case ZombieSpecialVisual.Dazed:
+                case ZombieSpecialVisual.Slipping:   // WP-071 B3: the gel takes the feet — the stumble, then the sway (AP-022 hit_gel_slip replaces it)
                     _animator.speed = 1f;
                     _windowOpen = false;
                     _animator.ResetTrigger(AttackId);
                     if (!_dying) _animator.SetTrigger(StumbleId);
                     _animator.SetBool(WaitingId, true);
                     break;
+                case ZombieSpecialVisual.Electrocuted:   // WP-071 B3: seized — slowed pose + the procedural spasm (AP-022 hit_electro_loop replaces it)
+                    _windowOpen = false;
+                    _animator.ResetTrigger(AttackId);
+                    _animator.ResetTrigger(TelegraphId);
+                    _animator.speed = ElectroAnimatorSpeed;
+                    _spasmClock = 0f;
+                    break;
                 default:
                     _animator.speed = 1f;
-                    if (previous == ZombieSpecialVisual.Dazed) _animator.SetBool(WaitingId, _waiting);
+                    if (previous == ZombieSpecialVisual.Dazed || previous == ZombieSpecialVisual.Slipping) _animator.SetBool(WaitingId, _waiting);
                     break;
             }
         }
 
         /// <summary>Light directional hit: override_upper L/R by the bullet's lateral side + the regional additive flinch.</summary>
+        [PrototypeOnly(PendingDecisions.None, "WP-071 B3 (III A5.3): the override hit read re-triggers at most this often; faster hits (LMG) feed the additive flinch only — continuous reaction without a stun-lock. Invented.", true)]
+        public const float HitRetriggerSeconds = 0.22f;
+        private float _lastOverrideHit = -10f;
+        /// <summary>WP-071 B3 readouts: override hit reads played / suppressed (window-safe or accumulated).</summary>
+        public int OverrideHits { get; private set; }
+        public int SuppressedHits { get; private set; }
+
         public void PlayFlinch(Vector3 localHit, DD.Prototype.Damage.BodyRegion region, bool upperBody)
         {
             if (!_authored || _dying) return;
+            // WP-071 B3 (K9 / III A5): inside the DEC-029 hit window only the additive flinch plays (an override would cut the
+            // swing while its hitbox stays open); a hit faster than HitRetriggerSeconds after the last read accumulates
+            if (upperBody && (_windowOpen || Time.time - _lastOverrideHit < HitRetriggerSeconds)) { upperBody = false; SuppressedHits++; }
             switch (region)
             {
                 case DD.Prototype.Damage.BodyRegion.Head: _animator.SetTrigger(FlinchHeadId); break;
@@ -946,6 +1034,8 @@ namespace DD.Prototype.Characters
                 // forward, i.e. shot from behind → the "back" read; ±x = shoved sideways); ties go to the lateral read.
                 _animator.SetInteger(HitDirId, HitDirectionIndex(localHit));
                 _animator.SetTrigger(HitId);
+                _lastOverrideHit = Time.time;
+                OverrideHits++;
             }
         }
 
