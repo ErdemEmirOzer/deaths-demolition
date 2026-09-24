@@ -48,7 +48,7 @@ namespace DD.Art.Tests
                 }
             }
 
-            Assert.AreEqual(169, ornek, "12 + 42 + 53 + 12 + 6 + 44 (AP-017 Faz 1+2) varyasyon örneği");
+            Assert.AreEqual(175, ornek, "12 + 42 + 53 + 12 + 6 + 50 (AP-017 Faz 1+2+2b, WP-038L v003) varyasyon örneği");   // name kept (169 → 175)
 
             for (int i = 0; i < 10; i++) yield return null;
 

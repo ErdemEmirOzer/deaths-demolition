@@ -136,7 +136,7 @@ namespace DD.Art.Tests.PlayMode
             Time.captureDeltaTime = 0f;
             File.WriteAllLines(Path.Combine(dir, "world-v3-manifest.csv"), manifest);
             Debug.Log("[DD-TEST] wp020.captures frames=" + Poses.Length + " instances=" + Ap005WorldBootstrap.Last.Instances + " -> " + dir);
-            Assert.AreEqual(3143, Ap005WorldBootstrap.Last.Instances);   // WP-038I: AP-017 Faz 2 delta v005 (+23)
+            Assert.AreEqual(3168, Ap005WorldBootstrap.Last.Instances);   // WP-038I: AP-017 Faz 2 delta v005 (+23); WP-038L: Faz 2b delta v006 (+25)
             foreach (ArtVisualRegression.CameraPose pose in Poses) Assert.IsTrue(File.Exists(Path.Combine(dir, pose.name + ".png")), pose.name);
         }
 
