@@ -43,6 +43,12 @@ namespace DD.Prototype.UI
             get { return GetOrCreate("chip", () => CreateRounded(UiTokens.RadiusChip)); }
         }
 
+        /// <summary>WP-068: the chip's 1 px hollow rim (rounded rect outline, 9-sliced) - the v3 replacement for the uGUI Outline effect, which is banned (direction §3).</summary>
+        public static Sprite ChipRim
+        {
+            get { return GetOrCreate("chipRim", () => CreateRounded(UiTokens.RadiusChip, 1.2f)); }
+        }
+
         /// <summary>Filled circle. Bullet points, coin glyph, status dots.</summary>
         public static Sprite Disc
         {
@@ -171,6 +177,12 @@ namespace DD.Prototype.UI
         /// </summary>
         private static Sprite CreateRounded(int radius)
         {
+            return CreateRounded(radius, 0f);
+        }
+
+        /// <summary>Rounded rect; <paramref name="rim"/> &gt; 0 keeps only an edge band that many pixels wide (hollow).</summary>
+        private static Sprite CreateRounded(int radius, float rim)
+        {
             int r = Mathf.Max(1, radius);
             int size = r * 2 + 4;
             Texture2D texture = NewTexture(size, size);
@@ -189,6 +201,11 @@ namespace DD.Prototype.UI
                     float distance = outside + Mathf.Min(Mathf.Max(dx, dy), 0f) - r;
 
                     float alpha = Mathf.Clamp01(0.5f - distance);
+                    if (rim > 0f)
+                    {
+                        alpha *= Mathf.Clamp01(distance + rim + 0.5f); // fade the inside out beyond the rim band
+                    }
+
                     pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
                 }
             }

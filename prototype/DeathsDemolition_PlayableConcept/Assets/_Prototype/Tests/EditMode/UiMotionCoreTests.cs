@@ -199,9 +199,19 @@ namespace DD.Prototype.Tests.EditMode
             Cycle(groups);
             UiMotion.ResetForTests();
 
-            long before = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
-            for (int n = 0; n < 40; n++) Cycle(groups);
-            long after = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
+            // The Mono heap reading is process-wide: an editor thread can land a large
+            // allocation inside one window (k2: 22 MB in a run where a4 read 0 B). The motion
+            // core's own cost is the MINIMUM over three windows; the positive control below
+            // proves the same reading sees a real allocation.
+            long best = long.MaxValue;
+            for (int window = 0; window < 3; window++)
+            {
+                long windowBefore = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
+                for (int n = 0; n < 40; n++) Cycle(groups);
+                best = System.Math.Min(best, UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - windowBefore);
+            }
+
+            long before = 0, after = best;
 
             // Positive control: the same measurement sees a real allocation of that order.
             long controlBefore = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();

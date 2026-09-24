@@ -6,6 +6,7 @@
         "DD.Prototype.Runtime",
         "DD.Prototype.Diagnostics.Editor",
         "DD.Prototype.UI.Editor",
+        "Unity.TextMeshPro",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

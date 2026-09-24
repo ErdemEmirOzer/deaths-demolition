@@ -316,6 +316,12 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "kit")
+                {
+                    yield return KitSheet();
+                    yield break;
+                }
+
                 switch (_screen)
                 {
                     case "settings":
@@ -473,6 +479,41 @@ namespace DD.Prototype.UI
                 Debug.Log("[UiCapture] display round-trip " + (pass ? "PASS" : "FAIL"));
                 yield return null;
                 Application.Quit(pass ? 0 : 3);
+            }
+
+            /// <summary>
+            /// WP-068 slice 5: <c>-ddUiCapture kit</c> - the component kit sheet (<see cref="UiKitSheet"/>)
+            /// at <c>-ddUiKitPalette default|cb</c> and <c>-ddUiKitScale 1.0|1.25</c> (this process
+            /// only, nothing saved): the sheet with <c>-ddUiKitFocus primary|switch|stepper</c> focused
+            /// (default primary) to <c>-ddUiCaptureOut</c>, then the modal open over it to the same
+            /// name with <c>-modal</c>. <c>-ddUiKitRm 1</c> builds it under Reduced Motion.
+            /// </summary>
+            private IEnumerator KitSheet()
+            {
+                UiTokens.Palette = Arg("-ddUiKitPalette") == "cb" ? UiPalette.ColorBlindSafe : UiPalette.Default;
+                float scale;
+                string scaleArg = Arg("-ddUiKitScale");
+                if (!string.IsNullOrEmpty(scaleArg) && float.TryParse(scaleArg, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out scale))
+                {
+                    UiTokens.TextScale = Mathf.Clamp(scale, UiSettings.TextScaleMin, UiSettings.TextScaleMax);
+                }
+
+                UiMotion.ReducedMotion = Arg("-ddUiKitRm") == "1";
+                UiKitSheet.Handles sheet = UiKitSheet.Build();
+                string focusArg = Arg("-ddUiKitFocus");
+                UiInput.Focus(focusArg == "switch" ? sheet.Switch : focusArg == "stepper" ? sheet.Stepper : sheet.Primary);
+                UiModal modal = sheet.Modal;
+                yield return new WaitForSecondsRealtime(_delay);
+                yield return new WaitForEndOfFrame();
+                WritePng(_out);
+
+                modal.Open();
+                yield return new WaitForSecondsRealtime(1f);
+                yield return new WaitForEndOfFrame();
+                WritePng(Path.Combine(Path.GetDirectoryName(_out) ?? string.Empty, Path.GetFileNameWithoutExtension(_out) + "-modal.png"));
+                yield return null;
+                Debug.Log("[UiCapture] kit done · framebuffer " + Screen.width + "x" + Screen.height);
+                Application.Quit();
             }
 
             private static string Readout(string id)

@@ -152,9 +152,10 @@ namespace DD.Prototype.Tests.EditMode
 
         private static readonly Dictionary<string, string[]> Reserves = new Dictionary<string, string[]>
         {
-            // Gold = currency counter, price, Special HUD (style guide §2.2 UI).
-            { "StateGold", new[] { "RunHudScreen.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs" } },
-            { "BarSpecial", new[] { "RunHudScreen.cs", "UiTokens.cs", "UiContrast.cs" } },
+            // Gold = currency counter, price, Special HUD (style guide §2.2 UI). UiKitSheet: the
+            // capture-only component sheet shows the currency counter and the Special ring.
+            { "StateGold", new[] { "RunHudScreen.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs" } },
+            { "BarSpecial", new[] { "RunHudScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs" } },
             { "GoldLeaf", new[] { "UiTokens.cs" } },
             // Vermilion = one primary CTA per screen/modal, heading tick, BUY pill, seal.
             // PauseScreen: the END RUN dialog frame - reviewed in slice 9 (modal v3).

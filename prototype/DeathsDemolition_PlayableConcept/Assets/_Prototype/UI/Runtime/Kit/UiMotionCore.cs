@@ -554,6 +554,10 @@ namespace DD.Prototype.UI
 
             ref Tween tween = ref s_tweens[slot];
             int lastCount = tween.Active && tween.Channel == UiChannel.Count ? tween.LastCount : int.MinValue;
+            if (lastCount != int.MinValue)
+            {
+                from.x = lastCount; // a counter retargeted mid-roll continues from the digit on screen
+            }
             tween.Generation = ++s_generation;
             tween.Active = true;
             tween.Target = target;
