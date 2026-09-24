@@ -1,0 +1,19 @@
+{
+  "schema": "dd.menu-plates/1",
+  "package": "WP-068 slice 6 (S-05)",
+  "source": "World_AP005, Look B (in-game Global Volume), engine capture, 2x supersampled",
+  "size": [2560, 1440],
+  "pose": {"name": "A_dogu_kosk_saagi_e160", "position": [39.75, 1.6, 24.34], "lookAt": [30.25, 1.005, 9.84], "verticalFov": 44},
+  "bands_m": {"near": 4, "far": 65},
+  "layers": [
+    {"resource": "MenuPlates/plate_far", "band": "far", "alpha": false, "parallax_px": 4},
+    {"resource": "MenuPlates/plate_mid", "band": "mid", "alpha": true, "parallax_px": 8},
+    {"resource": "MenuPlates/plate_near", "band": "near", "alpha": true, "parallax_px": 12}
+  ],
+  "follow_s": 0.2,
+  "lantern_mask": {"resource": "MenuPlates/plate_lantern_mask", "scale": 0.5, "blend": "over", "tint": "Amber300 #F7C766", "peak_alpha": 0.35, "period_s": 2.4, "breath_min": 0.55, "clip_x_px": 853, "shape": "core 1.0 to 0.15H, 0.25 at 0.5H, 0 at 1.5H; occluded by everything in front", "instances": "AP005_i0136:1 AP005_i3052:1 AP005_i0986:1 AP005_i3057:0.8 AP005_i0119:0.5"},
+  "scrim": {"token": "SurfaceBase", "alpha": 0.55},
+  "text_safe": {"x0": 0, "x1": 0.3333, "y0": 0, "y1": 1},
+  "art_safe_px": [2217, 1080],
+  "t10": {"token": "TextSecondary", "threshold": 4.5, "percentile": 1, "measured": "composite at breath peak", "p1": 4.928, "min": 3.233, "below_pct": 0.715}
+}

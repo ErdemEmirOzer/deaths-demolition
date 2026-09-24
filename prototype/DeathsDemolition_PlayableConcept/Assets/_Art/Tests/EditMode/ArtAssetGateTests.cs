@@ -49,6 +49,7 @@ namespace DD.Art.Tests.EditMode
             {
                 string p = yol.Replace('\\', '/');
                 if (ArtImportContract.IsLutTexture(p)) continue;   // WP-029: LUT strips have their own contract (LutTests)
+                if (ArtImportContract.IsMenuPlateTexture(p)) continue;   // WP-068: menu plates have their own contract (MenuPlateTests)
                 sonuc.Add(p);
             }
 

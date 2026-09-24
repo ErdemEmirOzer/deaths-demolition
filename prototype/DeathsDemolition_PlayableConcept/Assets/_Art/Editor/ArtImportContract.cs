@@ -591,7 +591,84 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool IsContractTexture(string assetPath)
         {
-            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath);
+            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath) && !IsMenuPlateTexture(assetPath);
+        }
+
+        // ------------------------------------------------------------------ WP-068 menu plates
+
+        /// <summary>
+        /// WP-068 slice 6: the engine-captured MainMenu / loading backdrop (Look B plate stack, MenuPlateCaptureTests) lives here,
+        /// in a Resources folder so the UI loads it by name (<c>MenuPlates/plate_far</c> …), and follows its own importer rules
+        /// (<see cref="ApplyMenuPlate"/>), not the T_&lt;role&gt;_&lt;Map&gt; contract — the LUT precedent.
+        /// </summary>
+        public const string MenuPlateRoot = ArtRoot + "/Resources/MenuPlates";
+        public const string MenuPlateFar = "plate_far", MenuPlateMid = "plate_mid", MenuPlateNear = "plate_near", MenuPlateLanternMask = "plate_lantern_mask";
+        public const int MenuPlateMaxSize = 4096;
+
+        public static bool IsMenuPlateTexture(string assetPath)
+        {
+            return assetPath != null && assetPath.Replace('\\', '/').StartsWith(MenuPlateRoot + "/", StringComparison.Ordinal) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// A backdrop layer: full size (2560×1440, never downsized), no mips (the menu draws it at 0.5–1× like the AP-012 plate —
+        /// and Unity leaves an NPOT texture with a mip chain uncompressed: the first build shipped 55 MB of RGBA), no mip
+        /// streaming (UI images are not renderers — the streamer would leave them at the lowest mip), clamp, bilinear, crunched
+        /// on Standalone — the far layer DXT1 (opaque), the mid / near layers DXT5 (straight alpha, dilated by Unity); the lantern
+        /// mask is a linear single-channel BC4. §7 P1/P2 of the WP-068 direction.
+        /// </summary>
+        public static bool ApplyMenuPlate(TextureImporter importer, string assetPath)
+        {
+            string name = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+            bool mask = name == MenuPlateLanternMask, opaque = name == MenuPlateFar;
+            bool changed = false;
+            changed |= Set(importer.textureType, mask ? TextureImporterType.SingleChannel : TextureImporterType.Default, v => importer.textureType = v);
+            if (mask)
+            {
+                TextureImporterSettings ts = new TextureImporterSettings();
+                importer.ReadTextureSettings(ts);
+                if (ts.singleChannelComponent != TextureImporterSingleChannelComponent.Red)
+                {
+                    ts.singleChannelComponent = TextureImporterSingleChannelComponent.Red;
+                    importer.SetTextureSettings(ts);
+                    changed = true;
+                }
+            }
+
+            changed |= Set(importer.sRGBTexture, !mask, v => importer.sRGBTexture = v);
+            changed |= Set(importer.alphaSource, opaque || mask ? TextureImporterAlphaSource.None : TextureImporterAlphaSource.FromInput, v => importer.alphaSource = v);
+            changed |= Set(importer.alphaIsTransparency, !opaque && !mask, v => importer.alphaIsTransparency = v);
+            changed |= Set(importer.mipmapEnabled, false, v => importer.mipmapEnabled = v);
+            changed |= Set(importer.streamingMipmaps, false, v => importer.streamingMipmaps = v);
+            changed |= Set(importer.wrapMode, TextureWrapMode.Clamp, v => importer.wrapMode = v);
+            changed |= Set(importer.filterMode, FilterMode.Bilinear, v => importer.filterMode = v);
+            changed |= Set(importer.anisoLevel, 0, v => importer.anisoLevel = v);
+            changed |= Set(importer.npotScale, TextureImporterNPOTScale.None, v => importer.npotScale = v);
+            changed |= Set(importer.maxTextureSize, MenuPlateMaxSize, v => importer.maxTextureSize = v);
+            changed |= Set(importer.textureCompression, TextureImporterCompression.Compressed, v => importer.textureCompression = v);
+            changed |= Set(importer.crunchedCompression, !mask, v => importer.crunchedCompression = v);
+            changed |= Set(importer.compressionQuality, 50, v => importer.compressionQuality = v);
+            TextureImporterFormat format = MenuPlateFormat(name);
+            TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(StandalonePlatform);
+            if (!st.overridden || st.format != format || st.maxTextureSize != MenuPlateMaxSize || st.crunchedCompression != !mask || st.compressionQuality != 50)
+            {
+                st.overridden = true;
+                st.format = format;
+                st.maxTextureSize = MenuPlateMaxSize;
+                st.textureCompression = TextureImporterCompression.Compressed;
+                st.crunchedCompression = !mask;
+                st.compressionQuality = 50;
+                importer.SetPlatformTextureSettings(st);
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        public static TextureImporterFormat MenuPlateFormat(string name)
+        {
+            if (name == MenuPlateLanternMask) return TextureImporterFormat.BC4;
+            return name == MenuPlateFar ? TextureImporterFormat.DXT1Crunched : TextureImporterFormat.DXT5Crunched;
         }
 
         // ------------------------------------------------------------------ WP-029 LUTs

@@ -64,6 +64,7 @@ namespace DD.Art.Tests.EditMode
         [TestCase("Assets/_Art/Textures/Derived/T_stone_MetallicSmoothness.PNG", true)]
         [TestCase("Assets/_Prototype/T_stone_BaseColor.png", false)]
         [TestCase("Assets/_Art/Environment/Families/curb/curb_LOD0.fbx", false)]
+        [TestCase("Assets/_Art/Resources/MenuPlates/plate_far.png", false)]   // WP-068: own contract (ApplyMenuPlate)
         public void IsContractTexture_YalnizArtAltindakiPng(string yol, bool beklenen)
         {
             Assert.AreEqual(beklenen, ArtImportContract.IsContractTexture(yol), "IsContractTexture(" + yol + ")");

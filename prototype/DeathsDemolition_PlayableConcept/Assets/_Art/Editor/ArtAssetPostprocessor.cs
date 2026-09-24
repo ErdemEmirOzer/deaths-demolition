@@ -73,6 +73,17 @@ namespace DD.Art.Pipeline.EditorTools
                 return;
             }
 
+            // WP-068 slice 6: the menu / loading backdrop plates have their own rules (ArtImportContract.ApplyMenuPlate).
+            if (ArtImportContract.IsMenuPlateTexture(assetPath))
+            {
+                if (ArtImportContract.ApplyMenuPlate((TextureImporter)assetImporter, assetPath))
+                {
+                    Debug.Log("[ArtImportContract] menu plate rules applied to " + assetPath);
+                }
+
+                return;
+            }
+
             // WP-019: AP-010 effect textures have their own rules (ArtVfxContract).
             if (ArtVfxContract.IsVfxTexture(assetPath))
             {
