@@ -333,6 +333,8 @@ namespace DD.Prototype.Spawn
 
             SpawnPointRegistry.EnsureBuilt(_layout);
             SpawnPointRegistry.ResetRuntimeState();
+            SpawnWorldProfile.Refresh();   // WP-076 B6: v6 values only while a v6 world scene is loaded (C-00 A)
+            _v6ConfigSource = null;
 
             RoundPlan plan = RoundPlan.Resolve(HasConfig ? Config : null, _round);
             _ledger.BeginRound(plan.Round, plan.PoolTotal, plan.TargetActive, plan.Ceiling);
@@ -818,6 +820,7 @@ namespace DD.Prototype.Spawn
             point.SpawnedThisRound++;
             point.LastUsedTime = Time.time;
             RearSpawnShare.Record(point.IsBehindCamera);   // WP-076 §5.1
+            if (SpawnWorldProfile.IsV6) SpawnWorldProfile.RecordSpawn(point.Definition != null ? point.Definition.Kind : SpawnPointKind.Edge);   // WP-076 B6
             // WP-030 spawn visibility readout (DEC-023 counting is unchanged: the body is active from activation, rise included).
             _spawnsThisRun++;
             if (point.IsOnScreen) _onScreenSpawnsThisRun++;
@@ -952,6 +955,23 @@ namespace DD.Prototype.Spawn
 
         // ------------------------------------------------------------------ selection
 
+        // WP-076 B6 world profile: a per-round copy of the config with the v6 distances (World_AP005 uses _spawnConfig as is)
+        private SpawnConfigSection _v6Config, _v6ConfigSource;
+        private SpawnConfigSection EffectiveSpawnConfig
+        {
+            get
+            {
+                if (!SpawnWorldProfile.IsV6 || _spawnConfig == null) return _spawnConfig;
+                if (_v6Config == null || _v6ConfigSource != _spawnConfig)
+                {
+                    _v6Config = JsonUtility.FromJson<SpawnConfigSection>(JsonUtility.ToJson(_spawnConfig));   // once per round / config change
+                    SpawnWorldProfile.ApplyV6(_v6Config);
+                    _v6ConfigSource = _spawnConfig;
+                }
+                return _v6Config;
+            }
+        }
+
         /// <summary>WP-076 B6 readouts: heavy / Special spawns moved to a nearer point by the tier path gate, and those that found none.</summary>
         public int TierGateReroutes { get; private set; }
         public int TierGateFallbacks { get; private set; }
@@ -985,7 +1005,8 @@ namespace DD.Prototype.Spawn
                 NavDegraded = !CrowdService.IsNavMeshAvailable,
                 ThreatLayer = ThreatLevelFeed.Layer,   // WP-054: threat-aware visibility weight
                 CameraMode = SpawnModeTable.Mode,       // WP-076 B6: TP / FP rows
-                MaxPathDistance = maxPathDistance       // WP-076 B6: tier path gate
+                MaxPathDistance = maxPathDistance,      // WP-076 B6: tier path gate
+                InnerShare = SpawnWorldProfile.IsV6 ? SpawnWorldProfile.InnerShare : -1f
             };
 
             // WP-076 §5.1: rear-hemisphere share cap (FP 35 % / TP 45 % of the last 8 spawns)
@@ -1001,7 +1022,7 @@ namespace DD.Prototype.Spawn
             // Strict first, then drop one gate at a time. Anything past the first pass is
             // rare and is reported, because it means the map or the tuning is squeezing the
             // director into a corner.
-            SpawnPointRuntime chosen = _selector.SelectWithLadder(points, in inputs, _spawnConfig, _weightTuning,
+            SpawnPointRuntime chosen = _selector.SelectWithLadder(points, in inputs, EffectiveSpawnConfig, _weightTuning,
                 _random01, out SpawnRelaxation used);
 
             if (chosen == null)

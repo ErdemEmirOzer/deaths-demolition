@@ -173,7 +173,8 @@ namespace DD.Prototype.Spawn
                     BaseWeight = marker.BaseWeightOverride >= 0f ? marker.BaseWeightOverride : 1f,
                     Enabled = marker.PointEnabled,
                     FaceMapCenter = true,
-                    Notes = "Added at runtime by a scene marker."
+                    Notes = "Added at runtime by a scene marker.",
+                    Kind = marker.Kind   // WP-076 B6: the v6 inner gates arrive as scene markers
                 };
 
                 s_definitions.Add(definition);

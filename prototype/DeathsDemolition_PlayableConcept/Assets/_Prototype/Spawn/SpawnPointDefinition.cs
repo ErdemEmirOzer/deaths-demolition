@@ -44,6 +44,9 @@ namespace DD.Prototype.Spawn
         [Tooltip("Yaw in degrees when FaceMapCenter is off. 0 = +Z (north).")]
         public float FacingYaw;
 
+        /// <summary>WP-076 B6: edge (±55 ring) or inner gate (v6 world profile rules).</summary>
+        public SpawnPointKind Kind = SpawnPointKind.Edge;
+
         [Tooltip("Landmark note for the map task. Not used at runtime.")]
         [TextArea(1, 3)] public string Notes = "";
 
@@ -58,7 +61,8 @@ namespace DD.Prototype.Spawn
                 Enabled = Enabled,
                 FaceMapCenter = FaceMapCenter,
                 FacingYaw = FacingYaw,
-                Notes = Notes
+                Notes = Notes,
+                Kind = Kind
             };
         }
     }

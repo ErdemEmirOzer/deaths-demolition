@@ -54,6 +54,8 @@ namespace DD.Prototype.Spawn
         public int CameraMode;
         /// <summary>WP-076 B6 tier path gate: reject points farther than this walkable path (0 = none).</summary>
         public float MaxPathDistance;
+        /// <summary>WP-076 B6 v6 profile: inner-gate share of the last 24 spawns (−1 = profile off → no inner rules).</summary>
+        public float InnerShare;
     }
 
     /// <summary>
@@ -175,6 +177,8 @@ namespace DD.Prototype.Spawn
 
             // ---------------------------------------------------------- 2. ring region
             breakdown.Region = RegionFactor(point.Region, inputs.PlayerRegion, config, tuning);
+            if (inputs.InnerShare >= 0f && point.Definition != null)   // WP-076 B6: v6 inner gates (≤ 10 m ×0.25, share > 50 % ×0.7)
+                breakdown.Region *= SpawnWorldProfile.InnerFactor(point.Definition.Kind, point.StraightDistance, inputs.InnerShare);
 
             // ---------------------------------------------------------- 3. heading
             breakdown.Heading = HeadingFactor(point.WorldPosition, inputs, config, tuning);

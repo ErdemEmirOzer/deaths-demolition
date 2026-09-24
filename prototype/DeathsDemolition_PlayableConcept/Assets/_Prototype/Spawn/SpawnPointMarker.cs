@@ -41,6 +41,10 @@ namespace DD.Prototype.Spawn
         [Header("Gizmo")]
         [SerializeField] private float _gizmoRadius = 1.2f;
 
+        [Tooltip("WP-076 B6: Edge (the ±55 ring) or Inner (a v6 mid gate behind cover; inner-gate spawn rules).")]
+        [SerializeField] private SpawnPointKind _kind = SpawnPointKind.Edge;
+        public SpawnPointKind Kind => _kind;
+
         public string PointId => _pointId;
         public RingRegion Region => _region;
         public bool OverrideRegion => _overrideRegion;
