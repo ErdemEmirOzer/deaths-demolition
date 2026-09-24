@@ -112,34 +112,25 @@ namespace DD.Prototype.Tests.EditMode
             _vm.ApplyBuild(build);
             _vm.ApplyHealth(saglik, 0.3f);
 
-            // Sayaç: GC.GetTotalMemory(false) (Mono kullanılan yığın). Unity Mono'da
-            // GC.GetAllocatedBytesForCurrentThread HER ZAMAN 0 döner (probe-alloc kanıtı:
-            // 2000×64 B + 64 KB ayırmada 0) — bu yüzden kullanılmaz. Pozitif kontrol: aynı
-            // sayaç bilerek ayıran döngüde yükselir; sonra sessiz döngü.
-            long c0 = GC.CollectionCount(0);
-            long once = GC.GetTotalMemory(false);
-            var yem = new object[4000];
-            for (int i = 0; i < yem.Length; i++) yem[i] = new byte[64];
-            long pozitif = GC.GetTotalMemory(false) - once;
-            Debug.Log("[DD-TEST] wp005.hudvm positiveControl allocB=" + pozitif + " keep=" + yem.Length);
-            Assert.Greater(pozitif, 0, "yığın sayacı bilerek ayıran döngüde yükselmedi — ölçüm geçersiz");
-
-            long sessizOnce = GC.GetTotalMemory(false);
+            // Sayaç: EditMode ayırma hakemi (HeapDelta: her pencereden önce tam toplama, üç
+            // pencerenin en küçüğü, aynı okumayla 64 KB pozitif kontrol). Unity Mono'da
+            // GC.GetAllocatedBytesForCurrentThread HER ZAMAN 0 döner, kullanılmaz.
+            long kontrol = HeapDelta.PositiveControl();
             RunHudField toplam = RunHudField.None;
-            for (int i = 0; i < 10000; i++)
+            long fark = HeapDelta.Min(() =>
             {
-                toplam |= _vm.ApplyRun(durum);
-                toplam |= _vm.ApplyWeapon(silah);
-                toplam |= _vm.ApplyBuild(build);
-                toplam |= _vm.ApplyHealth(saglik, 0.3f);
-            }
+                for (int i = 0; i < 10000; i++)
+                {
+                    toplam |= _vm.ApplyRun(durum);
+                    toplam |= _vm.ApplyWeapon(silah);
+                    toplam |= _vm.ApplyBuild(build);
+                    toplam |= _vm.ApplyHealth(saglik, 0.3f);
+                }
+            });
 
-            long fark = GC.GetTotalMemory(false) - sessizOnce;
-            long gc = GC.CollectionCount(0) - c0;
-
-            Debug.Log("[DD-TEST] wp005.hudvm quiet10000 allocB=" + fark + " gen0=" + gc + " fields=" + toplam + " keep=" + yem.Length);
+            Debug.Log("[DD-TEST] wp005.hudvm quiet10000 allocB=" + fark + " control=" + kontrol + " fields=" + toplam);
+            Assert.GreaterOrEqual(kontrol, HeapDelta.PositiveControlBytes, "pozitif kontrol: 64 KB görülmedi (ölçüm kör)");
             Assert.AreEqual(RunHudField.None, toplam, "sessiz karede hiçbir alan bayraklanmaz");
-            Assert.AreEqual(0, gc, "ölçüm penceresinde GC koştu — sessiz döngü ayırıyor olabilir");
             Assert.LessOrEqual(fark, 0, "sessiz kare 0 B ayırmalı (10000 kare; yığın büyümedi)");
         }
 

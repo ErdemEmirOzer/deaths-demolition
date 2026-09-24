@@ -199,30 +199,17 @@ namespace DD.Prototype.Tests.EditMode
             Cycle(groups);
             UiMotion.ResetForTests();
 
-            // The Mono heap reading is process-wide: an editor thread can land a large
-            // allocation inside one window (k2: 22 MB in a run where a4 read 0 B). The motion
-            // core's own cost is the MINIMUM over three windows; the positive control below
-            // proves the same reading sees a real allocation.
-            long best = long.MaxValue;
-            for (int window = 0; window < 3; window++)
+            // The EditMode allocation referee (HeapDelta: a full collection before each window,
+            // the minimum over three windows, a 64 KB positive control read the same way).
+            long control = HeapDelta.PositiveControl();
+            long delta = HeapDelta.Min(() =>
             {
-                long windowBefore = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
                 for (int n = 0; n < 40; n++) Cycle(groups);
-                best = System.Math.Min(best, UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() - windowBefore);
-            }
+            });
 
-            long before = 0, after = best;
-
-            // Positive control: the same measurement sees a real allocation of that order.
-            long controlBefore = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
-            var sink = new List<byte[]>();
-            for (int n = 0; n < 40; n++) sink.Add(new byte[4096]);
-            long controlAfter = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
-
-            Debug.Log("[DD-TEST] wp068.motionAlloc delta=" + (after - before) + " B (40 × 256 Play + 40 × 20 Tick) control=" + (controlAfter - controlBefore) + " B");
-            Assert.Greater(controlAfter - controlBefore, 100000, "pozitif kontrol ölçümü görmeli");
-            Assert.Less(after - before, 16384, "UiMotion Play/Tick ayırmamalı");
-            System.GC.KeepAlive(sink);
+            Debug.Log("[DD-TEST] wp068.motionAlloc delta=" + delta + " B (40 × 256 Play + 40 × 20 Tick) control=" + control + " B");
+            Assert.GreaterOrEqual(control, HeapDelta.PositiveControlBytes, "pozitif kontrol: 64 KB görülmedi (ölçüm kör)");
+            Assert.Less(delta, 16384, "UiMotion Play/Tick ayırmamalı");
         }
 
         private static void Cycle(CanvasGroup[] groups)
