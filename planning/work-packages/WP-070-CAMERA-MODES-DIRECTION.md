@@ -227,6 +227,7 @@ D-17 N18 gereği FP recoil "dikkatli": recoil desen tabanlı (silah başına sab
 | Post: motion blur / DoF | mevcut | blur düşük | blur kapalı, DoF yok | S-05 |
 | Müzik/mix snapshot | mevcut | aynı | "yakın" snapshot (öneri: düşman sesleri +2 dB) | S-08 |
 
+D-17b (B6 durumu) `CameraOcclusionFader` politikayı `CameraModeService.CurrentProfile.OccluderPolicy`'den okur: TopDown FadeAll (değişmedi), TP FadeCameraLine (aynı kamera→oyuncu sondası, `CameraOccluderClass.Kind == Roof` işaretli olanlar solmaz; işaretsiz = Wall), FP None (sonda yok, solanlar geri döner). E-20 için S-05 çatılara `CameraOccluderClass` (Roof) ekler. TP kamera çarpışması CameraOccluder'ı da kapsar (bina içine girmez), bu yüzden TP'de soldurma nadiren devreye girer.
 D-18 Uyumluluk profili mod geçişinde harmanla birlikte lerp edilir (LOD bias, gölge mesafesi, sis) — ani pop yok.
 D-19 Her profil değeri ScriptableObject'te; sabit kodlanmış değer 0 (O5).
 

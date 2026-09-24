@@ -19,6 +19,12 @@ namespace DD.Prototype.CameraSystem
     ///
     /// Only colliders on the CameraOccluder layer are considered, so the world author
     /// decides what may disappear. Ground, small props and enemies never fade.
+    ///
+    /// WP-070: the camera mode's <see cref="CameraModeProfile.OccluderPolicy"/> gates it —
+    /// TopDown <see cref="CameraOccluderPolicy.FadeAll"/> (unchanged), third person
+    /// <see cref="CameraOccluderPolicy.FadeCameraLine"/> (the same camera→player probe, but
+    /// roofs marked with <see cref="CameraOccluderClass"/> stay solid: TP looks under them),
+    /// first person <see cref="CameraOccluderPolicy.None"/> (no probe; faded objects return).
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PrototypeCameraRig))]
@@ -116,6 +122,13 @@ namespace DD.Prototype.CameraSystem
 
             _nextProbeTime = Time.unscaledTime + Mathf.Max(0f, _probeInterval);
 
+            CameraOccluderPolicy policy = CameraModeService.CurrentProfile.OccluderPolicy;
+            if (policy == CameraOccluderPolicy.None)
+            {
+                _touched.Clear();   // nothing is marked, so every faded occluder returns
+                return;
+            }
+
             Vector3 from = _rig.StablePosition;
             Vector3 to = target.position + Vector3.up * _probeHeight;
             Vector3 delta = to - from;
@@ -136,6 +149,11 @@ namespace DD.Prototype.CameraSystem
             {
                 Collider collider = _hits[i].collider;
                 if (collider == null)
+                {
+                    continue;
+                }
+
+                if (policy == CameraOccluderPolicy.FadeCameraLine && CameraOccluderClass.Of(collider) == CameraOccluderKind.Roof)
                 {
                     continue;
                 }

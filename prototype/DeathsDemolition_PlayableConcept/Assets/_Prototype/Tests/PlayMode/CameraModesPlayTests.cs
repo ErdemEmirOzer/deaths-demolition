@@ -260,6 +260,63 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(60000)]
+        public IEnumerator Okluzyon_ModPolitikasi_FPdeKapaliTPdeCatiSolmaz()
+        {
+            // Tepeden kamera hattının ortasında (odak 1 m üstü → kamera (0, 16, -13)) iki engel.
+            yield return Kareler(5);
+            GameObject duvar = Engel("WP070-OkDuvar", Kok + new Vector3(-0.8f, 9f, -6.8f), null);
+            GameObject cati = Engel("WP070-OkCati", Kok + new Vector3(0.8f, 9f, -6.8f), CameraOccluderKind.Roof);
+            Physics.SyncTransforms();
+            yield return GercekSure(0.5f);
+            Assert.IsNotNull(duvar.GetComponent<OccluderFadeState>(), "Tepeden (FadeAll): duvar solmalı.");
+            Assert.IsNotNull(cati.GetComponent<OccluderFadeState>(), "Tepeden (FadeAll): çatı da solmalı.");
+            Assert.Less(cati.GetComponent<OccluderFadeState>().Alpha, 0.9f);
+
+            // TP politikası (FadeCameraLine) aynı hatta: çatı solmaz, duvar solar.
+            CameraModeProfile p = CameraModeService.Profile(CameraMode.TopDown);
+            p.OccluderPolicy = CameraOccluderPolicy.FadeCameraLine;
+            CameraModeService.SetProfile(CameraMode.TopDown, p);
+            yield return GercekSure(0.6f);
+            Assert.Less(duvar.GetComponent<OccluderFadeState>().Alpha, 0.9f, "FadeCameraLine: duvar solu kalır.");
+            Assert.Greater(cati.GetComponent<OccluderFadeState>().Alpha, 0.95f, "FadeCameraLine: çatı (Roof) geri döner.");
+
+            // FP (None): hiçbir şey solmaz, soldurulan geri döner.
+            p.OccluderPolicy = CameraOccluderPolicy.None;
+            CameraModeService.SetProfile(CameraMode.TopDown, p);
+            yield return GercekSure(0.6f);
+            Assert.Greater(duvar.GetComponent<OccluderFadeState>().Alpha, 0.95f, "None: duvar geri dönmeli.");
+            Assert.AreEqual(CameraOccluderPolicy.None, CameraModeService.Profile(CameraMode.FirstPerson).OccluderPolicy);
+
+            UnityEngine.Object.Destroy(duvar);
+            UnityEngine.Object.Destroy(cati);
+        }
+
+        private GameObject Engel(string ad, Vector3 konum, CameraOccluderKind? tur)
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = ad;
+            go.layer = PrototypeLayers.CameraOccluder;
+            go.transform.position = konum;
+            go.transform.localScale = new Vector3(1.4f, 1.4f, 1.4f);
+            if (tur.HasValue)
+            {
+                go.AddComponent<CameraOccluderClass>().Kind = tur.Value;
+            }
+
+            return go;
+        }
+
+        private static IEnumerator GercekSure(float saniye)
+        {
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < saniye)
+            {
+                yield return null;
+            }
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
         public IEnumerator Bakis_FareDeltasiYawVeInvertY()
         {
             CameraModeService.ApplySettings(new CameraModeSettings { Mode = CameraMode.FirstPerson, LookSensitivity = 0.1f }, instant: true);
