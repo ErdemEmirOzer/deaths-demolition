@@ -142,6 +142,67 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(once, JsonUtility.ToJson(v4), "göç idempotan");
         }
 
+        /// <summary>A v3 document as the 14.09 builds wrote it (WP-009H): no v4 feat / content fields, no v5 PATH fields.</summary>
+        private static string V3Json(string lineage)
+        {
+            return "{\"SaveVersion\":3,\"ProfileLevel\":8,\"XpIntoLevel\":60,\"TotalXpEarned\":2600,\"HighestRound\":11," +
+                   "\"RunsPlayed\":13,\"RoundsCompleted\":71,\"TotalKills\":905,\"StandardKills\":820,\"SpecialKills\":61," +
+                   "\"EliteKills\":22,\"UltraKills\":2,\"UnattributedKills\":0,\"ArmorPiecesBroken\":130,\"BestRunXp\":420," +
+                   "\"Achievements\":[\"first_blood\",\"reach_round_10\",\"defeat_an_ultra\"]," +
+                   "\"UnlockedWeapons\":[\"AssaultRifle\",\"AutoSmg\",\"CombatShotgun\"],\"UnlockedBranches\":[\"Piercing\",\"FireRate\"]," +
+                   "\"ProfileLineageId\":\"" + lineage + "\",\"LastAppliedCompletionOrdinal\":13,\"LastSavedUtc\":\"2026-09-14T20:11:02Z\"}";
+        }
+
+        [Test]
+        public void Gocu_V3ToV4ToV5_K11SeviyeTabani_SilahAnahtari_GeriyeDonukKul()
+        {
+            // C-00 (2026-09-25): the user's real profile is back at its 14.09 v3 state; v5 must read it (v3 → v4 → v5).
+            string soy = ProfileData.NewLineageId();
+            Assert.AreEqual(ProfileLoadStatus.Ok, ProfileMigration.Parse(V3Json(soy), out ProfileData p));
+            Assert.AreEqual(ProfileData.CurrentVersion, p.SaveVersion);
+            Assert.AreEqual(8, p.ProfileLevel, "K11: seviye yeni eğriyle (2 600 XP → L6) düşürülmez");
+            Assert.AreEqual(60, p.XpIntoLevel);
+            Assert.AreEqual(2600, p.TotalXpEarned);
+            Assert.AreEqual(13, p.RunsPlayed);
+            Assert.AreEqual(905, p.TotalKills);
+            Assert.AreEqual(soy, p.ProfileLineageId, "lineage aynen");
+            Assert.AreEqual(13, p.LastAppliedCompletionOrdinal, "ordinal aynen → uygulanmış koşu yeniden uygulanmaz");
+            CollectionAssert.AreEqual(new[] { "ar_1", "smg_1", "sg_1" }, p.UnlockedWeapons, "açık silah kilitlenmez, WP-069 anahtarı");
+            Assert.AreEqual(0, p.SpecialWeaponPickups, "v4 alanları sıfırdan");
+            Assert.IsNotNull(p.UnlockedContent);
+
+            int kul = 2600 / Prog.XpPerAsh;
+            foreach (string id in new[] { "first_blood", "reach_round_10", "defeat_an_ultra" })
+            {
+                AchievementDefinition d = AchievementCatalog.Find(id);
+                if (d != null) kul += Prog.AshForRarity((int)d.Rarity);
+            }
+
+            Assert.AreEqual(kul, p.AshEarnedTotal, "geriye dönük Kül = XP / bölen + başarım nadirliği");
+            Assert.AreEqual(kul, p.AshBalance);
+            Assert.IsTrue(p.IsValid());
+
+            string once = JsonUtility.ToJson(p);
+            ProfileMigration.Migrate(p);
+            Assert.AreEqual(once, JsonUtility.ToJson(p), "göç idempotan");
+        }
+
+        [Test]
+        public void Gocu_V3DosyasindanYukle_SonrakiKosuUygulanir_SeviyeDusmez()
+        {
+            File.WriteAllText(TestPath, V3Json(ProfileData.NewLineageId()));
+            Bosalt();
+            ProfileData p = ProfileService.Current;
+            Assert.AreEqual(8, p.ProfileLevel);
+            Assert.AreEqual(ProfileData.CurrentVersion, p.SaveVersion);
+
+            RunRewardReport r = ProfileService.ApplyRun(Ozet(6, 150, 20));
+            Assert.IsTrue(r.Applied);
+            Assert.GreaterOrEqual(ProfileService.Current.ProfileLevel, 8, "göç sonrası ilk koşu seviyeyi düşürmez");
+            Assert.AreEqual(14, ProfileService.Current.RunsPlayed);
+            StringAssert.Contains("\"SaveVersion\": " + ProfileData.CurrentVersion, File.ReadAllText(TestPath).Replace("\"SaveVersion\":" + ProfileData.CurrentVersion, "\"SaveVersion\": " + ProfileData.CurrentVersion), "diske v5 yazıldı");
+        }
+
         [Test]
         public void Kul_KosuSonunda_AyniTransactionda_TekrarYok_SaveHatasindaYok()
         {
