@@ -1428,7 +1428,7 @@ namespace DD.Prototype.Enemies
             }
 
             bool shockHeld = BeginShockDeathHold(in hit);   // WP-076 B4: State = Electrocuted; a mid-tremble kill holds the fall for the remainder
-            if (shockHeld) SetSpecialVisual(ZombieSpecialVisual.Dazed);   // hit_electro_loop is S-06's; Dazed until it lands
+            if (shockHeld) SetSpecialVisual(ZombieSpecialVisual.Electrocuted);   // S-06 hit_electro_loop holds while the fall waits
 
             // WP-076 §2 / DEC-096: the killing push for the driver (S-06 picks the family). Read BEFORE the controller goes off.
             // a pellet carries the shell's weight (§3.1: all pellets inside 4 m → Force ≥ 3.0)

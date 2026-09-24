@@ -132,7 +132,7 @@ namespace DD.Prototype.Enemies
             _gel = GelState.Sliding; _gelTimer = 0f;
             if (_attack.IsAttacking || _attack.IsGrabbing) _attack.Cancel(GrabEndReason.Staggered);
             SlidesStarted++;
-            SetSpecialVisual(ZombieSpecialVisual.Dazed);   // S-06's Slipping visual replaces this when b773146e lands
+            if (!IsElectrocuted) SetSpecialVisual(ZombieSpecialVisual.Slipping);   // S-06 WP-071 B3
             RaiseBeat(EnemyCombatEventKind.SpecialSlide, transform.position, v.sqrMagnitude > 1e-6f ? v.normalized : FlatForward(transform), ArmorSlot.None, _animator.Driven, GelPuddleRegistry.SlipFallSeconds);
         }
 
@@ -151,7 +151,7 @@ namespace DD.Prototype.Enemies
             _downedSeconds = downedSeconds;
             _slideVelocity = Vector3.zero;
             if (_attack.IsAttacking || _attack.IsGrabbing) _attack.Cancel(GrabEndReason.Staggered);
-            SetSpecialVisual(ZombieSpecialVisual.Dazed);
+            if (!IsElectrocuted) SetSpecialVisual(ZombieSpecialVisual.Slipping);   // falling / downed: Slipping until S-06's Downed visual
             RaiseBeat(EnemyCombatEventKind.SpecialFall, transform.position, FlatForward(transform), ArmorSlot.None, _animator.Driven, KnockdownFallSeconds + downedSeconds);
         }
 

@@ -81,11 +81,15 @@ namespace DD.Prototype.Enemies
             _animator.SetSpecialVisual(state);
         }
 
-        /// <summary>Netted (a rooted body) wins over Dazed; both end on their own timers, a field end or death.</summary>
+        /// <summary>
+        /// WP-076 · the shock shows S-06's Electrocuted visual (hit_electro_loop: window/telegraph closed, animator ×0.15 +
+        /// spasm); every gel state shows Slipping (stumble → sway) until S-06 adds Downed / GettingUp for the fall and the
+        /// get-up (AP-022). The shock wins over gel (a shocked slide stands still).
+        /// </summary>
         private void TickSpecialVisual()
         {
-            ZombieSpecialVisual want = IsRooted ? ZombieSpecialVisual.Netted
-                : IsDazed || IsElectrocuted || Gel != GelState.None ? ZombieSpecialVisual.Dazed   // WP-076 B4/B5: shock / gel read as Dazed until S-06's Electrocuted / Slipping visuals (b773146e)
+            ZombieSpecialVisual want = IsElectrocuted ? ZombieSpecialVisual.Electrocuted
+                : Gel != GelState.None ? ZombieSpecialVisual.Slipping
                 : ZombieSpecialVisual.None;
             if (want != _specialVisual) SetSpecialVisual(want);
         }

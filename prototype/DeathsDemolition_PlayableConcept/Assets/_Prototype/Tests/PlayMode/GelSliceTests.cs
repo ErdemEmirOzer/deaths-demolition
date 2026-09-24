@@ -28,6 +28,7 @@ namespace DD.Prototype.Tests.PlayMode
     {
         private PlayerRig _rig;
         private int _olum;
+        private System.Action<ZombieEnemy, int> _savedOutcome;   // S-02's permanent ApplySlipOutcome — restored, never cleared
         private void OnDied(EnemyDeathInfo _) => _olum++;
 
         private static IEnumerator Bekle(System.Func<bool> kosul, float saniye, string mesaj)
@@ -60,7 +61,7 @@ namespace DD.Prototype.Tests.PlayMode
         public void TearDown()
         {
             DamageEvents.EnemyDied -= OnDied;
-            ZombieEnemy.SlipOutcomeHandler = null;
+            ZombieEnemy.SlipOutcomeHandler = _savedOutcome;
             GelPuddleRegistry.ResetStatics();
             ZombieEnemy.ResetRisePolicy();
             if (PlayerRegistry.Primary != null && PlayerRegistry.Primary.Health != null) PlayerRegistry.Primary.Health.DiagnosisInvulnerable = false;
@@ -87,6 +88,7 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator Jel_KayarDuserOlur_Kaldirma0_UltraKalkar_Devrilme()
         {
             yield return Hazirla();
+            _savedOutcome = ZombieEnemy.SlipOutcomeHandler;
             ZombieEnemy.SlipOutcomeHandler = Olduren;
             Vector3 p = _rig.transform.position;
             Vector3 fwd = Vector3.ProjectOnPlane(_rig.transform.forward, Vector3.up).normalized;
@@ -129,6 +131,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreNotEqual(GelState.None, k.Gel);
             Assert.Less(Vector3.ProjectOnPlane(k.transform.position - k0, Vector3.up).magnitude, 0.3f, "devrilmişken yürümez");
             Assert.AreEqual(ZombieBodyState.Downed, k.BodyState);
+            Assert.AreEqual(DD.Prototype.Characters.ZombieSpecialVisual.Slipping, k.SpecialVisual, "S-06 Slipping görseli (düşüş/yerde)");
             yield return Bekle(() => k.Gel == GelState.None, 3f, "kalkış 1,5 + 0,9 s sonra biter");
         }
     }

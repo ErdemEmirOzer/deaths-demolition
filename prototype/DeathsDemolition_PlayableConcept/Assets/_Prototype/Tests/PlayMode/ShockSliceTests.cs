@@ -84,6 +84,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(z.ApplyShock(101, 1.2f), "aynı işlem bir kez");
             Assert.AreEqual(beats0 + 1, EnemyCombatEvents.Count(EnemyCombatEventKind.SpecialShock), "sw_shock");
             Assert.IsTrue(z.IsElectrocuted); Assert.AreEqual(ZombieBodyState.Electrocuted, z.BodyState);
+            yield return null;
+            Assert.AreEqual(DD.Prototype.Characters.ZombieSpecialVisual.Electrocuted, z.SpecialVisual, "S-06 Electrocuted görseli");
             Vector3 p0 = z.transform.position;
             yield return new WaitForSeconds(0.9f);
             float moved = Vector3.ProjectOnPlane(z.transform.position - p0, Vector3.up).magnitude;
