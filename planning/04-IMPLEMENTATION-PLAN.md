@@ -2287,3 +2287,8 @@ Tam PlayMode sıralı koşuda `MixGecisi` FAIL (dövüş −33,3 / −37,9): tes
 - (B) Kararlılık modu `-ddQaBotStability` (DEC-091): oyuncu ölümsüz, `runMode=stability`, `stabilityPass` ayrı (gerçek bot `pass` false kalır), round sonu bellek örnekleri (Mono used/heap, toplam ayrılan/rezerve, RSS varsa). `soak_gate.py --stability`: sıralı N/N, zaman aşımı 0, Player log hata deseni 0, bellek: round 2 sonu → son round Mono ≤ 48 MB ve eğim ≤ 4 MB/round, toplam ayrılan ≤ 256 MB, RSS ≤ 512 MB (varsa). `soak_gate.py --report` gerçek bot dağılımı (kapı değil).
 - (C) Kanıt `~/Desktop/KADRO/context/projects/deaths-demolition/wp-064b/evidence/` (`LEDGER.md` tüm denemeler). Dünya bulguları bu iş sırasında → S-05: güney kenardan düşme (WP-038M), havuz çiti geçiş kesmesi (WP-038N), NavMesh adacığı (WP-038P), güney köprü kaması (WP-038Q). Gerçek bot (seed 61, temiz makine, dünya düzeltmeleri sonrası 12 koşu): 5, 4, 5, 8, 6, 3, 8, 7, 3, 11, 7, 7 round — ölüm r4–r9 kalabalıkta; sonuç aynı tohumda stokastik (kare zamanı tohumlanmıyor).
 
+
+
+## WP-077 — Gelişim ağacı v2 (S-04, M4-R1 N14 + N12 ekonomi; DEC-095)
+
+**Durum:** Faz A tamam (2026-09-24): yön belgesi `work-packages/WP-077-PROGRESSION-TREE-V2-DIRECTION.md` (Fable konseyi game-designer + product-designer, WP-069 A1/A4 ve S-09 ızgarasıyla uzlaştırıldı). Koşu içi ağaç (25 düğüm, iki şerit, hibrit teklif + Nişan + Ocak) ve meta YOL (10 silah kilidi WP-069 sırasıyla, Special eğilimleri, pasifler; Kül + seviye kapısı, `100L+10L²`). Açık kararlar K1–K11 → C-00 (DEC-097+). Faz B dilimleri: B1 koşu içi veri/mantık + S-09 snapshot · B2 meta + profil v5 göçü · B3 simülatör ağaç modeli · B4 başarım bağları.
