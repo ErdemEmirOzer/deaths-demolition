@@ -306,6 +306,31 @@ namespace DD.Art.Tests.PlayMode
             Assert.AreEqual(0, EnemyAttackState.WindowFallbackCount);
         }
 
+        // ======================================================================== WP-071 B4 grip
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator SolEl_SilahKabzasinda_ReloadtaBirakir_SonraTutar()
+        {
+            yield return RunAP005();
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsNotNull(pv.GripIk, "WeaponGripIk bağlı değil");
+            Assert.AreEqual(0, pv.HeadRenderers.Length, "baş henüz ayrı renderer değil (P-06 rig v002)");
+            yield return CharacterTests.Bekle(() => pv.GripIk.Grip != null && pv.GripIk.Weight >= 0.999f, 3f, "sol el kabzada");
+            for (int i = 0; i < 10; i++) yield return null;
+            float heldError = pv.GripIk.LastError;
+            pv.PlayReload(1.6f);
+            int over = -1; for (int i = 0; i < pv.Animator.layerCount; i++) if (pv.Animator.GetLayerName(i) == C.OverrideUpperLayer) over = i;
+            for (int i = 0; i < 12; i++) yield return null;
+            AnimatorStateInfo st = pv.Animator.GetCurrentAnimatorStateInfo(over);
+            Debug.Log("[DD-TEST] wp071.grip.reload over=" + over + " reloadState=" + st.IsName(C.ReloadState + "_0") + " aim0=" + st.IsName(C.AimState + "_0") + " inTransition=" + pv.Animator.IsInTransition(over)
+                      + " gate=" + pv.GripIk.GateOpen + " atRest=" + pv.UpperAtRestForTest + " visLayer=" + pv.OverrideLayerIndex + " hash=" + st.shortNameHash + " reloadHash=" + Animator.StringToHash(C.ReloadState + "_0") + " visuals=" + UnityEngine.Object.FindObjectsOfType<PlayerSkinnedVisual>().Length + " weight=" + pv.GripIk.Weight.ToString("F2", CultureInfo.InvariantCulture) + " weaponParam=" + pv.Animator.GetInteger(C.Weapon));
+            yield return CharacterTests.Bekle(() => pv.GripIk.Weight <= 0.001f, 1f, "reload'da sol el serbest");
+            yield return CharacterTests.Bekle(() => pv.GripIk.Weight >= 0.999f, 4f, "reload sonrası yeniden kabzada");
+            Debug.Log("[DD-TEST] wp071.grip target=" + pv.GripIk.Grip.name + " heldError=" + (heldError * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm");
+            Assert.LessOrEqual(heldError, 0.03f, "sol el kabzaya ulaşmadı (≤ 3 cm)");
+        }
+
         // ================================================================================ rise
 
         [UnityTest]

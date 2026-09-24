@@ -22,6 +22,9 @@ namespace DD.Prototype.Characters
         [PrototypeOnly(PendingDecisions.None, "Largest torso pitch toward the aim, degrees. Invented.", true)]
         private const float MaxPitchDegrees = 20f;
 
+        [PrototypeOnly(PendingDecisions.None, "WP-071 B4: largest torso pitch in the look modes (TP/FP), degrees — the camera's own pitch range (S-01 CameraView.AimPitchUpDegrees ±60). Invented.", true)]
+        public const float LookMaxPitchDegrees = 60f;
+
         [PrototypeOnly(PendingDecisions.None, "Aim follow response (1/s). Invented.", true)]
         private const float Response = 14f;
 
@@ -50,7 +53,11 @@ namespace DD.Prototype.Characters
 
             Vector3 local = transform.InverseTransformDirection(aim.normalized);
             float targetYaw = Mathf.Clamp(Mathf.Atan2(local.x, Mathf.Max(0.05f, local.z)) * Mathf.Rad2Deg, -MaxYawDegrees, MaxYawDegrees);
-            float targetPitch = Mathf.Clamp(-Mathf.Asin(Mathf.Clamp(local.y, -1f, 1f)) * Mathf.Rad2Deg, -MaxPitchDegrees, MaxPitchDegrees);
+            // WP-071 B4: in TP/FP the torso follows the camera's pitch (S-01, + = up) over ±60°; top-down keeps the aim vector's ±20°
+            bool look = DD.Prototype.CameraSystem.CameraModeService.IsLookMode;
+            float targetPitch = look
+                ? Mathf.Clamp(-DD.Prototype.CameraSystem.CameraView.AimPitchUpDegrees, -LookMaxPitchDegrees, LookMaxPitchDegrees)
+                : Mathf.Clamp(-Mathf.Asin(Mathf.Clamp(local.y, -1f, 1f)) * Mathf.Rad2Deg, -MaxPitchDegrees, MaxPitchDegrees);
             float k = 1f - Mathf.Exp(-Response * Time.deltaTime);
             _yaw = Mathf.Lerp(_yaw, targetYaw, k);
             _pitch = Mathf.Lerp(_pitch, targetPitch, k);

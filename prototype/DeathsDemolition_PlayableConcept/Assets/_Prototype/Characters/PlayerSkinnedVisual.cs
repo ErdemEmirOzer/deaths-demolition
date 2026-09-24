@@ -102,6 +102,61 @@ namespace DD.Prototype.Characters
         public const float MaxRunRate = CadenceBand.Max;   // WP-071 K3: the run cycles stay in the cadence band; faster travel slides
 
         public Animator Animator => _animator;
+        private WeaponGripIk _gripIk;
+        private static readonly int[] s_restHashes =
+        {
+            Animator.StringToHash(CharacterAnimatorContract.AimState + "_0"), Animator.StringToHash(CharacterAnimatorContract.AimState + "_1"),
+            Animator.StringToHash(CharacterAnimatorContract.AimState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_1"),
+            Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_3")
+        };
+        private static readonly SkinnedMeshRenderer[] s_noRenderers = new SkinnedMeshRenderer[0];
+        private SkinnedMeshRenderer[] _headRenderers;
+
+        /// <summary>WP-071 B4: the left-hand grip IK (tests / probes).</summary>
+        public WeaponGripIk GripIk => _gripIk;
+
+        /// <summary>
+        /// WP-071 (S-01 WP-070 FP): the head's own renderers, one per LOD, once P-06's rig v002 splits the head off the body
+        /// (renderer name contains "Head") — FP sets them ShadowsOnly. Empty until then.
+        /// </summary>
+        public SkinnedMeshRenderer[] HeadRenderers
+        {
+            get
+            {
+                if (_headRenderers != null) return _headRenderers;
+                int n = 0;
+                for (int i = 0; i < _renderers.Length; i++) if (_renderers[i] != null && _renderers[i].name.IndexOf("Head", System.StringComparison.OrdinalIgnoreCase) >= 0) n++;
+                if (n == 0) return _headRenderers = s_noRenderers;
+                _headRenderers = new SkinnedMeshRenderer[n];
+                n = 0;
+                for (int i = 0; i < _renderers.Length; i++) if (_renderers[i] != null && _renderers[i].name.IndexOf("Head", System.StringComparison.OrdinalIgnoreCase) >= 0) _headRenderers[n++] = _renderers[i];
+                return _headRenderers;
+            }
+        }
+
+        /// <summary>WP-071 B4: the upper layer holds the weapon (Aim_x / SwHold_x, or blending into one) — the grip IK may hold the left hand.</summary>
+        /// <summary>Tests: the grip gate's inputs.</summary>
+        public bool UpperAtRestForTest => UpperAtRest();
+        public int OverrideLayerIndex => ResolveOverrideLayer();
+
+        /// <summary>
+        /// WP-071 B4: the override_upper index, resolved once the Animator is initialised — Attach can run while the body is
+        /// inactive (layerCount 0), which left it at −1 for the whole run (the grip gate and CancelReload then saw "no layer").
+        /// </summary>
+        private int ResolveOverrideLayer()
+        {
+            if (_overrideLayer >= 0 || _animator == null || !_animator.isInitialized) return _overrideLayer;
+            for (int i = 0; i < _animator.layerCount; i++) if (_animator.GetLayerName(i) == CharacterAnimatorContract.OverrideUpperLayer) { _overrideLayer = i; break; }
+            return _overrideLayer;
+        }
+
+        private bool UpperAtRest()
+        {
+            if (ResolveOverrideLayer() < 0) return true;
+            int h = _animator.IsInTransition(_overrideLayer) ? _animator.GetNextAnimatorStateInfo(_overrideLayer).shortNameHash : _animator.GetCurrentAnimatorStateInfo(_overrideLayer).shortNameHash;
+            for (int i = 0; i < s_restHashes.Length; i++) if (s_restHashes[i] == h) return true;
+            return false;
+        }
         private LocomotionLean _lean;
         /// <summary>WP-071 B2 readouts (tests).</summary>
         public LocomotionLean Lean => _lean;
@@ -180,6 +235,12 @@ namespace DD.Prototype.Characters
             if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
             if (_aimLayer == null && _animator != null) _aimLayer = _animator.GetComponent<PlayerAimLayer>();
             if (_aimLayer != null) _aimLayer.Bind(_animator, aimDirection, _authored);
+            // WP-071 B4: the left hand on the weapon's grip_l after the mount alignment (order 910)
+            if (_gripIk == null && _animator != null) _gripIk = _animator.GetComponent<WeaponGripIk>() ?? _animator.gameObject.AddComponent<WeaponGripIk>();
+            if (_gripIk != null && _animator != null && _animator.isHuman)
+            {
+                _gripIk.Configure(_animator, _weaponSocket, () => _authored && !_dying && UpperAtRest());
+            }
             // WP-032: the head looks along the SAME aim the aim layer turns to (single source, S-02); feet on the real ground.
             if (_lookAt == null && _animator != null) _lookAt = _animator.GetComponent<CharacterLookAt>();
             if (_footIk == null && _animator != null) _footIk = _animator.GetComponent<FootIkAdapter>();
@@ -244,6 +305,8 @@ namespace DD.Prototype.Characters
         private void OnAnimationEvent(CharacterAnimationEvent e)
         {
             if (e == CharacterAnimationEvent.DeathEnd && _dying) _deathEnded = true;
+            else if (e == CharacterAnimationEvent.LeftHandRelease) { if (_gripIk != null) _gripIk.SetReleased(true); }   // WP-071 B4 (AP-022)
+            else if (e == CharacterAnimationEvent.LeftHandGrab) { if (_gripIk != null) _gripIk.SetReleased(false); }
             else if (_footIk != null) FootLockEvent(_footIk, e);   // WP-071 B2
         }
 
@@ -312,7 +375,7 @@ namespace DD.Prototype.Characters
         {
             if (!_authored) return;
             _animator.ResetTrigger(ReloadId);
-            if (_overrideLayer >= 0 && _animator.GetCurrentAnimatorStateInfo(_overrideLayer).IsName(CharacterAnimatorContract.ReloadState + "_" + _weapon))
+            if (ResolveOverrideLayer() >= 0 && _animator.GetCurrentAnimatorStateInfo(_overrideLayer).IsName(CharacterAnimatorContract.ReloadState + "_" + _weapon))
             {
                 _animator.CrossFadeInFixedTime(RestStateName(), 0.1f, _overrideLayer);
             }
