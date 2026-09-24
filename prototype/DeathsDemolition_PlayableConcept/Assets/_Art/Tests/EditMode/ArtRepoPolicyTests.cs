@@ -285,7 +285,7 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp015.buildlist release=6 devOnly=2");
         }
 
-        /// <summary>WP-015 (ADR-015-1): mipmap streaming is on with the art budget on every quality level (Standalone default is Ultra).</summary>
+        /// <summary>WP-015 (ADR-015-1) → WP-075 C1 (ADR-015-1 v3): mipmap streaming is on at every quality level with its tier's budget (512 / 1024 / 2048 MB; Standalone default High).</summary>
         [Test]
         public void QualitySettings_MipmapStreaming_HerSeviyedeAcik_Butce()
         {
@@ -298,7 +298,7 @@ namespace DD.Art.Tests.EditMode
                 {
                     QualitySettings.SetQualityLevel(i, false);
                     Assert.IsTrue(QualitySettings.streamingMipmapsActive, names[i] + ": streamingMipmapsActive kapalı (ADR-015-1).");
-                    Assert.AreEqual(ArtImportContract.StreamingMipmapsBudgetMb, QualitySettings.streamingMipmapsMemoryBudget, 0.01f, names[i] + ": streaming bütçesi");
+                    Assert.AreEqual(DD.Prototype.Core.QualityTiers.StreamingBudgetMb[(int)DD.Prototype.Core.QualityTiers.TierOfLevel(i, names.Length)], QualitySettings.streamingMipmapsMemoryBudget, 0.01f, names[i] + ": streaming bütçesi");
                     Assert.IsTrue(QualitySettings.streamingMipmapsAddAllCameras, names[i] + ": tüm kameralar streaming'e katılmalı");
                 }
             }

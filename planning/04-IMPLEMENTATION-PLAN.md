@@ -2296,3 +2296,10 @@ Tam PlayMode sıralı koşuda `MixGecisi` FAIL (dövüş −33,3 / −37,9): tes
 ## WP-077 — Gelişim ağacı v2 (S-04, M4-R1 N14 + N12 ekonomi; DEC-095)
 
 **Durum:** Faz A tamam (2026-09-24): yön belgesi `work-packages/WP-077-PROGRESSION-TREE-V2-DIRECTION.md` (Fable konseyi game-designer + product-designer, WP-069 A1/A4 ve S-09 ızgarasıyla uzlaştırıldı). Koşu içi ağaç (25 düğüm, iki şerit, hibrit teklif + Nişan + Ocak) ve meta YOL (10 silah kilidi WP-069 sırasıyla, Special eğilimleri, pasifler; Kül + seviye kapısı, `100L+10L²`). Açık kararlar K1–K11 → C-00 (DEC-097+). Faz B dilimleri: B1 koşu içi veri/mantık + S-09 snapshot · B2 meta + profil v5 göçü · B3 simülatör ağaç modeli · B4 başarım bağları.
+
+## WP-075 — Atmosfer ve Görünüm v3 + kalite kademeleri v2 (S-05, M4-R1)
+
+**Durum:** Faz A tamam (3812dc2: `planning/work-packages/WP-075-ATMOSPHERE-LOOK-V3-DIRECTION.md` + `QUALITY-TIERS-V2.md`); Faz B **C1 kademe çekirdeği** tamam (dal `wp-075-look-v3`). DEC-092 (60 fps), DEC-093 (5 GB).
+- C1: `DD.Prototype.Core.QualityTiers` (Current / Changed / Pick, 6 → 3 seviye uyumu, mod × kademe formülleri §3); QualitySettings 6 → 3 seviye **Performance / High / Cinematic** (varsayılan High, tüm platformlar) — High = eski Ultra seviyesi aynen (yalnız akış bütçesi 160 → 1024 MB, ADR-015-1 v3) ve değişmemiş `DD_URP_PipelineAsset`; `DD_URP_Performance` (render scale 0,85, MSAA kapalı, sert gölge 45 m / 2 kaskat, SSAO'suz `DD_URP_Renderer_Performance`, lodBias 1, 512 MB), `DD_URP_Cinematic` (MSAA 4×, 4096 gölge haritası, lodBias 2,5, 2048 MB). Üretici `QualityTierSetup.ApplyCli` (idempotent). `ArtImportContract.StreamingMipmapsBudgetMb` (160, tek değer) kalktı → kademe bütçesi.
+- Mod profili uygulaması (WP-070 `CameraModeService.CurrentProfile` → lodBias / gölge) WP-070 main'e girince bağlanır; formüller şimdiden test altında.
+- Testler: EditMode `QualityTiersTests` 3/3 + `ArtRepoPolicyTests` (kademe akış bütçesi) 10/10; PlayMode UI `UiTextScaleTests` + `UiArtSliceTests` 10/10 (ayar ekranı stepper'ı PERFORMANCE / HIGH / CINEMATIC); Editor profili değişmedi. Release (LZ4HC) 324,9 MB.

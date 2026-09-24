@@ -215,12 +215,7 @@ namespace DD.Art.Pipeline.EditorTools
             return c != TextureClass.Sky && c != TextureClass.Vfx;
         }
 
-        /// <summary>
-        /// Streaming budget written to QualitySettings (every level): the ADR-015-1 resident
-        /// ceiling for the art texture set. The AP-005 set fits under it fully resident
-        /// (116 MB at the class sizes), so the budget is a guard, not a squeeze.
-        /// </summary>
-        public const int StreamingMipmapsBudgetMb = 160;
+        // WP-075 C1 (ADR-015-1 v3): the texture streaming budget is per quality tier — DD.Prototype.Core.QualityTiers.StreamingBudgetMb (512 / 1024 / 2048 MB).
 
         /// <summary>ADR-015-1 resident ceiling for the art texture set (probe counter delta against the procedural Run), MB.</summary>
         public const int ArtTextureMemoryBudgetMb = 160;
