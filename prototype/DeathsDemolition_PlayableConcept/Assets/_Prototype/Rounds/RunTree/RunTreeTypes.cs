@@ -172,5 +172,8 @@ namespace DD.Prototype.Rounds
         public float EffectValue;
         /// <summary>Special links: level 1 or 2 (the Special is the one picked up first in the run).</summary>
         public int LinkLevel;
+
+        /// <summary>R1 content pack key stem (planning/content/r1-strings.json, name / desc × en / tr). Links resolve per Special (RunTreeState.StringKeyOf).</summary>
+        public string StringKey = string.Empty;
     }
 }

@@ -133,6 +133,33 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void IcerikPaketi_HerDugumunAnahtari_Var()
+        {
+            // planning/content/r1-strings.json (R1 içerik paketi): her düğümün "<anahtar>.name|.desc" çifti bulunur.
+            string yol = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "../../../planning/content/r1-strings.json"));
+            string paket = System.IO.File.Exists(yol) ? System.IO.File.ReadAllText(yol) : null;
+            var eksik = new List<string>();
+            void Bak(string sahip, string anahtar)
+            {
+                if (string.IsNullOrEmpty(anahtar)) { eksik.Add(sahip + ": anahtar yok"); return; }
+                if (paket != null && (!paket.Contains("\"" + anahtar + ".name\"") || !paket.Contains("\"" + anahtar + ".desc\""))) eksik.Add(sahip + " → " + anahtar);
+            }
+
+            foreach (ClassicWeaponId silah in System.Enum.GetValues(typeof(ClassicWeaponId)))
+            {
+                foreach (string ozel in new[] { "sw_arc", "sw_gel" })
+                {
+                    RunTreeState t = Agac(silah);
+                    t.OnSpecialPickedUp(ozel);
+                    for (int i = 0; i < t.Graph.Count; i++) Bak(silah + "/" + t.Graph[i].Id, t.StringKeyOf(i));
+                }
+            }
+
+            foreach (DD.Prototype.Profile.MetaPathNode n in DD.Prototype.Profile.MetaPathCatalog.Nodes) Bak(n.Id, n.StringKey);
+            Assert.IsEmpty(eksik, string.Join("\n", eksik));
+        }
+
+        [Test]
         public void EtkisiBaglanmamis_Kilitli_Satilmaz_Teklife_Girmez()
         {
             RunTreeState t = Agac();

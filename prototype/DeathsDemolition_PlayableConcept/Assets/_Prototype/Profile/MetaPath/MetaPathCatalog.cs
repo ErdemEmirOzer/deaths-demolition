@@ -54,6 +54,8 @@ namespace DD.Prototype.Profile
         public string[] parents = new string[0];
         public int exclusionGroup;
         public string weaponKey = string.Empty;
+        /// <summary>R1 content pack key stem (planning/content/r1-strings.json): "&lt;key&gt;.name.en|tr", "&lt;key&gt;.desc.en|tr".</summary>
+        public string stringKey = string.Empty;
     }
 
     [Serializable]
@@ -82,6 +84,8 @@ namespace DD.Prototype.Profile
         public int ExclusionGroup;
         /// <summary>Weapon nodes: the WP-069 key ("ar_2" …).</summary>
         public string WeaponKey;
+        /// <summary>R1 content pack key stem (name / desc in en / tr).</summary>
+        public string StringKey;
     }
 
     /// <summary>
@@ -187,7 +191,7 @@ namespace DD.Prototype.Profile
                     ShortName = c.shortName, DisplayName = c.displayName, Description = c.description,
                     LevelGate = Math.Max(1, c.levelGate), AshCost = Math.Max(0, c.ashCost),
                     EffectId = c.effectId ?? string.Empty, EffectValue = c.effectValue,
-                    ExclusionGroup = c.exclusionGroup, WeaponKey = c.weaponKey ?? string.Empty
+                    ExclusionGroup = c.exclusionGroup, WeaponKey = c.weaponKey ?? string.Empty, StringKey = c.stringKey ?? string.Empty
                 });
             }
 

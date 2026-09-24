@@ -9,6 +9,8 @@ namespace DD.Prototype.Profile
         public string ShortName;
         public string DisplayName;
         public string Description;
+        /// <summary>R1 content pack key stem: the localised name / description ("&lt;key&gt;.name.tr" …) win over the catalog text.</summary>
+        public string StringKey;
         public MetaPage Page;
         public int Row;
         public int Column;
@@ -82,7 +84,7 @@ namespace DD.Prototype.Profile
                 MetaPathNode n = nodes[i];
                 RunTreeNodeStatus s = MetaPathRules.Status(p, i, out MetaLockReason reason, out int missing, out int closedBy);
                 ref MetaPathNodeView v = ref Nodes[i];
-                v.NodeId = n.Id; v.ShortName = n.ShortName; v.DisplayName = n.DisplayName; v.Description = n.Description;
+                v.NodeId = n.Id; v.ShortName = n.ShortName; v.DisplayName = n.DisplayName; v.Description = n.Description; v.StringKey = n.StringKey;
                 v.Page = n.Page; v.Row = n.Row; v.Column = n.Column; v.Kind = n.Kind; v.WeaponKey = n.WeaponKey;
                 v.LevelGate = n.LevelGate; v.AshCost = n.AshCost; v.ParentIndices = n.Parents; v.ExclusionGroup = n.ExclusionGroup;
                 v.Status = s; v.LockReason = reason; v.MissingParentIndex = missing; v.ClosedByIndex = closedBy;

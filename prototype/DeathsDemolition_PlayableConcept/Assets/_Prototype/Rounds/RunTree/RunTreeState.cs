@@ -192,6 +192,16 @@ namespace DD.Prototype.Rounds
             return false;
         }
 
+        /// <summary>R1 content pack key stem of a node; Special links resolve through the linked Special (Raiju / Namekuji), else empty.</summary>
+        public string StringKeyOf(int i)
+        {
+            RunTreeNode n = Graph[i];
+            if (n.Kind != RunTreeNodeKind.SpecialLink) return n.StringKey;
+            if (LinkedSpecial == "sw_arc") return "tree.run.link.raiju." + n.LinkLevel;
+            if (LinkedSpecial == "sw_gel") return "tree.run.link.namekuji." + n.LinkLevel;
+            return string.Empty;
+        }
+
         /// <summary>The node's effect id; Special links resolve through the linked Special (catalog), else empty.</summary>
         public string EffectOf(int i)
         {

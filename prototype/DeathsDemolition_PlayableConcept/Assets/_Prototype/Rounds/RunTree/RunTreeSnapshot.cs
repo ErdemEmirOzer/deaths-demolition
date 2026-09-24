@@ -13,6 +13,8 @@ namespace DD.Prototype.Rounds
         public string DisplayName;
         /// <summary>Detail panel sentence. Empty for tier nodes: those describe themselves from the live tuning (UpgradeCardCatalog.Describe).</summary>
         public string Description;
+        /// <summary>R1 content pack key stem (planning/content/r1-strings.json): localised "&lt;key&gt;.name.tr" / ".desc.tr" win over the catalog text.</summary>
+        public string StringKey;
         public RunTreeLane Lane;
         public int Row;
         public int Column;
@@ -138,6 +140,7 @@ namespace DD.Prototype.Rounds
                 v.ShortName = node.ShortName;
                 v.DisplayName = node.DisplayName;
                 v.Description = node.Description;
+                v.StringKey = tree.StringKeyOf(i);
                 v.Lane = node.Lane;
                 v.Row = node.Row;
                 v.Column = node.Column;

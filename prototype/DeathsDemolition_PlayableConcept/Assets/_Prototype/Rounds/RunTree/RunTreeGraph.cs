@@ -106,7 +106,66 @@ namespace DD.Prototype.Rounds
 
             g.PurseIndex = g.Add(doc.purse, RunTreeLane.Body, 2, 2, RunTreeNodeKind.Purse, 0);
             g.BodyCapstoneIndex = g.Add(doc.bodyCapstone, RunTreeLane.Body, 1, 3, RunTreeNodeKind.Capstone, 0);
+            for (int i = 0; i < g._nodes.Count; i++) g._nodes[i].StringKey = StringKeyFor(g._nodes[i], g.WeaponSlot);
             return g;
+        }
+
+        /// <summary>R1 content pack key stem of a node (planning/content/R1-CONTENT-PACK.md §2).</summary>
+        public static string StringKeyFor(RunTreeNode n, string weaponSlot)
+        {
+            switch (n.Kind)
+            {
+                case RunTreeNodeKind.Tier:
+                    if (n.Lane == RunTreeLane.Body) return "tree.run.body." + BodyKey(n.Branch);
+                    if (n.Branch == UpgradeBranch.Explosion && weaponSlot == "rl_1") return "tree.run.branch.blast";   // WP-069 §6 Blast semantics
+                    return "tree.run.branch." + Snake(n.Branch);
+                case RunTreeNodeKind.BranchKeystone:
+                    if (n.Lane == RunTreeLane.Body) return "tree.run.body.key." + BodyKeystoneKey(n.Branch);
+                    return "tree.run.key." + Snake(n.Branch);
+                case RunTreeNodeKind.Fork:
+                    if (n.Lane == RunTreeLane.Body) return n.Id == "fork_body_x" ? "tree.run.body.fork.ash_step" : "tree.run.body.fork.iron_knee";
+                    return "tree.run.fork." + weaponSlot + (n.Id.EndsWith("_x", StringComparison.Ordinal) ? ".x" : ".y");
+                case RunTreeNodeKind.WeaponSeal: return "tree.run.seal." + weaponSlot;
+                case RunTreeNodeKind.Capstone: return n.Lane == RunTreeLane.Body ? "tree.run.body.cap.second_wind" : "tree.run.cap." + weaponSlot;
+                case RunTreeNodeKind.Hearth: return "tree.run.hearth";
+                case RunTreeNodeKind.Purse: return "tree.run.body.purse";
+                default: return string.Empty;   // links: RunTreeState.StringKeyOf (per Special)
+            }
+        }
+
+        private static string Snake(UpgradeBranch b)
+        {
+            string s = b.ToString();
+            var sb = new System.Text.StringBuilder(s.Length + 4);
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (i > 0 && char.IsUpper(s[i])) sb.Append('_');
+                sb.Append(char.ToLowerInvariant(s[i]));
+            }
+
+            return sb.ToString();
+        }
+
+        private static string BodyKey(UpgradeBranch b)
+        {
+            switch (b)
+            {
+                case UpgradeBranch.MovementSpeed: return "move";
+                case UpgradeBranch.MaximumHealth: return "max_health";
+                case UpgradeBranch.RegenerationDelay: return "regen_delay";
+                default: return "regen_rate";
+            }
+        }
+
+        private static string BodyKeystoneKey(UpgradeBranch b)
+        {
+            switch (b)
+            {
+                case UpgradeBranch.MovementSpeed: return "escape";
+                case UpgradeBranch.MaximumHealth: return "thick_skin";
+                case UpgradeBranch.RegenerationDelay: return "breath";
+                default: return "blood_step";
+            }
         }
 
         /// <summary>The weapon's three core branches: the roster entry (WP-034, WP-069 v3 coreBranches), else the pre-roster trio.</summary>

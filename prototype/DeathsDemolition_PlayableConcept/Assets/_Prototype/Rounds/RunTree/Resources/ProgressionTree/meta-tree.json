@@ -9,7 +9,7 @@
    "column": 0,
    "kind": "Weapon",
    "shortName": "Hinawa",
-   "displayName": "Hinawa (AR)",
+   "displayName": "Hinawa",
    "description": "Your first rifle. Always open.",
    "levelGate": 1,
    "ashCost": 0,
@@ -17,7 +17,8 @@
    "effectValue": 0.0,
    "parents": [],
    "exclusionGroup": 0,
-   "weaponKey": "ar_1"
+   "weaponKey": "ar_1",
+   "stringKey": "tree.meta.weapon.ar_1"
   },
   {
    "id": "w_smg_1",
@@ -26,7 +27,7 @@
    "column": 1,
    "kind": "Weapon",
    "shortName": "Shippu",
-   "displayName": "Shippu (SMG)",
+   "displayName": "Shippu",
    "description": "Opens with profile level 3 (level ladder, no Ash).",
    "levelGate": 3,
    "ashCost": 0,
@@ -36,7 +37,8 @@
     "w_ar_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "smg_1"
+   "weaponKey": "smg_1",
+   "stringKey": "tree.meta.weapon.smg_1"
   },
   {
    "id": "w_sg_1",
@@ -45,7 +47,7 @@
    "column": 1,
    "kind": "Weapon",
    "shortName": "Rappa",
-   "displayName": "Rappa (Shotgun)",
+   "displayName": "Rappa",
    "description": "Opens with profile level 5 (level ladder, no Ash).",
    "levelGate": 5,
    "ashCost": 0,
@@ -55,7 +57,8 @@
     "w_ar_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "sg_1"
+   "weaponKey": "sg_1",
+   "stringKey": "tree.meta.weapon.sg_1"
   },
   {
    "id": "w_ar_2",
@@ -64,7 +67,7 @@
    "column": 2,
    "kind": "Weapon",
    "shortName": "Sanren",
-   "displayName": "Sanren (Burst AR)",
+   "displayName": "Sanren",
    "description": "Three-round burst; rewards head shots.",
    "levelGate": 8,
    "ashCost": 120,
@@ -74,7 +77,8 @@
     "w_smg_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "ar_2"
+   "weaponKey": "ar_2",
+   "stringKey": "tree.meta.weapon.ar_2"
   },
   {
    "id": "w_lmg_1",
@@ -83,7 +87,7 @@
    "column": 2,
    "kind": "Weapon",
    "shortName": "Mukade",
-   "displayName": "Mukade (LMG)",
+   "displayName": "Mukade",
    "description": "Belt-fed suppression for corridors.",
    "levelGate": 11,
    "ashCost": 160,
@@ -93,7 +97,8 @@
     "w_sg_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "lmg_1"
+   "weaponKey": "lmg_1",
+   "stringKey": "tree.meta.weapon.lmg_1"
   },
   {
    "id": "w_sr_1",
@@ -102,7 +107,7 @@
    "column": 3,
    "kind": "Weapon",
    "shortName": "Tomi",
-   "displayName": "Tomi (Sniper)",
+   "displayName": "Tomi",
    "description": "One breath, one bolt, four bodies.",
    "levelGate": 14,
    "ashCost": 200,
@@ -112,7 +117,8 @@
     "w_ar_2"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "sr_1"
+   "weaponKey": "sr_1",
+   "stringKey": "tree.meta.weapon.sr_1"
   },
   {
    "id": "w_smg_2",
@@ -121,7 +127,7 @@
    "column": 3,
    "kind": "Weapon",
    "shortName": "Tetsui",
-   "displayName": "Tetsui (Heavy SMG)",
+   "displayName": "Tetsui",
    "description": "Heavy rounds that knock Runners down.",
    "levelGate": 17,
    "ashCost": 240,
@@ -131,7 +137,8 @@
     "w_ar_2"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "smg_2"
+   "weaponKey": "smg_2",
+   "stringKey": "tree.meta.weapon.smg_2"
   },
   {
    "id": "w_sg_2",
@@ -140,7 +147,7 @@
    "column": 4,
    "kind": "Weapon",
    "shortName": "Nito",
-   "displayName": "Nito (Double barrel)",
+   "displayName": "Nito",
    "description": "Two barrels, two roars.",
    "levelGate": 21,
    "ashCost": 300,
@@ -150,7 +157,8 @@
     "w_sr_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "sg_2"
+   "weaponKey": "sg_2",
+   "stringKey": "tree.meta.weapon.sg_2"
   },
   {
    "id": "w_lmg_2",
@@ -159,7 +167,7 @@
    "column": 4,
    "kind": "Weapon",
    "shortName": "Kurogane",
-   "displayName": "Kurogane (Heavy LMG)",
+   "displayName": "Kurogane",
    "description": "Settles into a steel line; breaks plates.",
    "levelGate": 26,
    "ashCost": 380,
@@ -169,7 +177,8 @@
     "w_lmg_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "lmg_2"
+   "weaponKey": "lmg_2",
+   "stringKey": "tree.meta.weapon.lmg_2"
   },
   {
    "id": "w_rl_1",
@@ -178,7 +187,7 @@
    "column": 5,
    "kind": "Weapon",
    "shortName": "Bohiya",
-   "displayName": "Bohiya (Launcher)",
+   "displayName": "Bohiya",
    "description": "Fire arrow: a rocket that shakes the ground.",
    "levelGate": 30,
    "ashCost": 480,
@@ -188,7 +197,8 @@
     "w_sg_2"
    ],
    "exclusionGroup": 0,
-   "weaponKey": "rl_1"
+   "weaponKey": "rl_1",
+   "stringKey": "tree.meta.weapon.rl_1"
   },
   {
    "id": "sp_arc_draw",
@@ -197,7 +207,7 @@
    "column": 0,
    "kind": "SpecialLean",
    "shortName": "Arc Draw",
-   "displayName": "Draw I · Raiju",
+   "displayName": "Raiju Lure",
    "description": "Chain-lightning Special pickups +25% more likely.",
    "levelGate": 4,
    "ashCost": 50,
@@ -205,7 +215,8 @@
    "effectValue": 0.25,
    "parents": [],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.raiju.lure"
   },
   {
    "id": "sp_gel_draw",
@@ -214,7 +225,7 @@
    "column": 0,
    "kind": "SpecialLean",
    "shortName": "Gel Draw",
-   "displayName": "Draw I · Namekuji",
+   "displayName": "Namekuji Lure",
    "description": "Slick-gel Special pickups +25% more likely.",
    "levelGate": 4,
    "ashCost": 50,
@@ -222,7 +233,8 @@
    "effectValue": 0.25,
    "parents": [],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.namekuji.lure"
   },
   {
    "id": "sp_arc_omen",
@@ -231,7 +243,7 @@
    "column": 1,
    "kind": "SpecialLean",
    "shortName": "Arc Omen",
-   "displayName": "Omen · Raiju",
+   "displayName": "Raiju Foresight",
    "description": "Raiju's Link I is on the run tree before the first pickup.",
    "levelGate": 7,
    "ashCost": 90,
@@ -241,7 +253,8 @@
     "sp_arc_draw"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.raiju.foresight"
   },
   {
    "id": "sp_gel_omen",
@@ -250,7 +263,7 @@
    "column": 1,
    "kind": "SpecialLean",
    "shortName": "Gel Omen",
-   "displayName": "Omen · Namekuji",
+   "displayName": "Namekuji Foresight",
    "description": "Namekuji's Link I is on the run tree before the first pickup.",
    "levelGate": 7,
    "ashCost": 90,
@@ -260,7 +273,8 @@
     "sp_gel_draw"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.namekuji.foresight"
   },
   {
    "id": "sp_early_bell",
@@ -277,7 +291,8 @@
    "effectValue": 4,
    "parents": [],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.early_bell"
   },
   {
    "id": "sp_arc_link2",
@@ -286,7 +301,7 @@
    "column": 2,
    "kind": "SpecialLean",
    "shortName": "Arc Link II",
-   "displayName": "Link II · Raiju",
+   "displayName": "Raiju: Second Link",
    "description": "Raiju's Link II can be taken on the run tree.",
    "levelGate": 12,
    "ashCost": 140,
@@ -296,7 +311,8 @@
     "sp_arc_omen"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.raiju.link2"
   },
   {
    "id": "sp_gel_link2",
@@ -305,7 +321,7 @@
    "column": 2,
    "kind": "SpecialLean",
    "shortName": "Gel Link II",
-   "displayName": "Link II · Namekuji",
+   "displayName": "Namekuji: Second Link",
    "description": "Namekuji's Link II can be taken on the run tree.",
    "levelGate": 12,
    "ashCost": 140,
@@ -315,7 +331,8 @@
     "sp_gel_omen"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.namekuji.link2"
   },
   {
    "id": "sp_arc_peak",
@@ -324,7 +341,7 @@
    "column": 3,
    "kind": "SpecialLean",
    "shortName": "Raiju Peak",
-   "displayName": "Raiju Peak",
+   "displayName": "Raiju Apex",
    "description": "Raiju lasts 20% longer. Excludes Namekuji Peak.",
    "levelGate": 18,
    "ashCost": 220,
@@ -334,7 +351,8 @@
     "sp_arc_link2"
    ],
    "exclusionGroup": 1,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.raiju.apex"
   },
   {
    "id": "sp_gel_peak",
@@ -343,7 +361,7 @@
    "column": 3,
    "kind": "SpecialLean",
    "shortName": "Gel Peak",
-   "displayName": "Namekuji Peak",
+   "displayName": "Namekuji Apex",
    "description": "Namekuji's slick area is 20% larger. Excludes Raiju Peak.",
    "levelGate": 18,
    "ashCost": 220,
@@ -353,7 +371,8 @@
     "sp_gel_link2"
    ],
    "exclusionGroup": 1,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.namekuji.apex"
   },
   {
    "id": "sp_twin_bell",
@@ -372,7 +391,8 @@
     "sp_early_bell"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.special.twin_bell"
   },
   {
    "id": "pa_eco_1",
@@ -381,7 +401,7 @@
    "column": 0,
    "kind": "Passive",
    "shortName": "Reroll -3",
-   "displayName": "Cheap Reroll",
+   "displayName": "Cheaper Reroll",
    "description": "Reroll costs 7 gold instead of 10.",
    "levelGate": 2,
    "ashCost": 60,
@@ -389,7 +409,8 @@
    "effectValue": 7,
    "parents": [],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.econ.cheap_reroll"
   },
   {
    "id": "pa_eco_2",
@@ -398,7 +419,7 @@
    "column": 1,
    "kind": "Passive",
    "shortName": "Hearth -3",
-   "displayName": "Hearth Slope",
+   "displayName": "Banked Hearth",
    "description": "Each Hearth step costs 27 more instead of 30.",
    "levelGate": 6,
    "ashCost": 90,
@@ -408,7 +429,8 @@
     "pa_eco_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.econ.hearth_slope"
   },
   {
    "id": "pa_eco_3",
@@ -417,7 +439,7 @@
    "column": 2,
    "kind": "Passive",
    "shortName": "Purse Start",
-   "displayName": "Purse at Start",
+   "displayName": "Purse from the Start",
    "description": "Every run starts with the Purse.",
    "levelGate": 10,
    "ashCost": 130,
@@ -427,7 +449,8 @@
     "pa_eco_2"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.econ.early_purse"
   },
   {
    "id": "pa_eco_4",
@@ -436,7 +459,7 @@
    "column": 3,
    "kind": "Passive",
    "shortName": "Peak -10%",
-   "displayName": "Peak Discount",
+   "displayName": "Capstone Discount",
    "description": "Capstones cost 10% less.",
    "levelGate": 15,
    "ashCost": 180,
@@ -446,7 +469,8 @@
     "pa_eco_3"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.econ.capstone_discount"
   },
   {
    "id": "pa_eco_5",
@@ -465,7 +489,8 @@
     "pa_eco_4"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.econ.second_pin"
   },
   {
    "id": "pa_eco_6",
@@ -474,7 +499,7 @@
    "column": 5,
    "kind": "Passive",
    "shortName": "4 Cards R1",
-   "displayName": "Wide Opening",
+   "displayName": "Wider First Offer",
    "description": "The first offer of a run has 4 cards.",
    "levelGate": 28,
    "ashCost": 320,
@@ -484,7 +509,8 @@
     "pa_eco_5"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.econ.wide_offer"
   },
   {
    "id": "pa_body_1",
@@ -493,7 +519,7 @@
    "column": 0,
    "kind": "Passive",
    "shortName": "Move +2%",
-   "displayName": "Light Step",
+   "displayName": "Light Feet I",
    "description": "+2% movement speed.",
    "levelGate": 2,
    "ashCost": 60,
@@ -501,7 +527,8 @@
    "effectValue": 0.02,
    "parents": [],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.body.1"
   },
   {
    "id": "pa_body_2",
@@ -510,7 +537,7 @@
    "column": 1,
    "kind": "Passive",
    "shortName": "Health +5",
-   "displayName": "Hardened",
+   "displayName": "Hardy I",
    "description": "+5 max health.",
    "levelGate": 6,
    "ashCost": 90,
@@ -520,7 +547,8 @@
     "pa_body_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.body.2"
   },
   {
    "id": "pa_body_3",
@@ -529,7 +557,7 @@
    "column": 2,
    "kind": "Passive",
    "shortName": "Regen -0.2",
-   "displayName": "Quick Breath",
+   "displayName": "Quick Recovery I",
    "description": "-0.2 s before health regenerates.",
    "levelGate": 10,
    "ashCost": 130,
@@ -539,7 +567,8 @@
     "pa_body_2"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.body.3"
   },
   {
    "id": "pa_body_4",
@@ -548,7 +577,7 @@
    "column": 3,
    "kind": "Passive",
    "shortName": "Move +2% 2",
-   "displayName": "Light Step II",
+   "displayName": "Light Feet II",
    "description": "+2% movement speed.",
    "levelGate": 15,
    "ashCost": 180,
@@ -558,7 +587,8 @@
     "pa_body_3"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.body.4"
   },
   {
    "id": "pa_body_5",
@@ -567,7 +597,7 @@
    "column": 4,
    "kind": "Passive",
    "shortName": "Health +5 2",
-   "displayName": "Hardened II",
+   "displayName": "Hardy II",
    "description": "+5 max health.",
    "levelGate": 22,
    "ashCost": 240,
@@ -577,7 +607,8 @@
     "pa_body_4"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.body.5"
   },
   {
    "id": "pa_body_6",
@@ -586,7 +617,7 @@
    "column": 5,
    "kind": "Passive",
    "shortName": "Regen -.2 2",
-   "displayName": "Quick Breath II",
+   "displayName": "Quick Recovery II",
    "description": "-0.2 s before health regenerates.",
    "levelGate": 28,
    "ashCost": 320,
@@ -596,7 +627,8 @@
     "pa_body_5"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.body.6"
   },
   {
    "id": "pa_qol_1",
@@ -613,7 +645,8 @@
    "effectValue": 0,
    "parents": [],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.qol.tree_preview"
   },
   {
    "id": "pa_qol_2",
@@ -632,7 +665,8 @@
     "pa_qol_1"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.qol.offer_history"
   },
   {
    "id": "pa_qol_3",
@@ -651,7 +685,8 @@
     "pa_qol_2"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.qol.run_stats"
   },
   {
    "id": "pa_qol_4",
@@ -660,7 +695,7 @@
    "column": 3,
    "kind": "Passive",
    "shortName": "Detail Line",
-   "displayName": "Detail Line",
+   "displayName": "Before and After",
    "description": "Before → after lines show the full formula.",
    "levelGate": 15,
    "ashCost": 180,
@@ -670,7 +705,8 @@
     "pa_qol_3"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.qol.before_after"
   },
   {
    "id": "pa_qol_5",
@@ -679,7 +715,7 @@
    "column": 4,
    "kind": "Passive",
    "shortName": "Path HUD",
-   "displayName": "Path Marker",
+   "displayName": "Path Tracker",
    "description": "The HUD shows the pinned node's next step.",
    "levelGate": 22,
    "ashCost": 240,
@@ -689,7 +725,8 @@
     "pa_qol_4"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.qol.path_tracker"
   },
   {
    "id": "pa_qol_6",
@@ -698,7 +735,7 @@
    "column": 5,
    "kind": "Passive",
    "shortName": "Magnet +0.5",
-   "displayName": "Wide Magnet",
+   "displayName": "Wider Magnet",
    "description": "Gold magnet radius +0.5 m.",
    "levelGate": 28,
    "ashCost": 320,
@@ -708,7 +745,8 @@
     "pa_qol_5"
    ],
    "exclusionGroup": 0,
-   "weaponKey": ""
+   "weaponKey": "",
+   "stringKey": "tree.meta.passive.qol.magnet"
   }
  ]
 }
