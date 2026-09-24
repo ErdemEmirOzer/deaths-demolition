@@ -228,6 +228,38 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(60000)]
+        public IEnumerator FP_GoruntuModeliOverlayKamerasi()
+        {
+            int katman = CameraLayers.FirstPersonView;
+            Assert.GreaterOrEqual(katman, 0, "TagManager'da FirstPersonView katmanı yok.");
+            Assert.IsNull(_rig.ViewmodelAnchor, "Tepeden modda görüntü modeli kurulmamalı.");
+
+            CameraModeService.Request(CameraMode.FirstPerson, instant: true);
+            yield return Kareler(3);
+
+            Assert.IsNotNull(_rig.ViewmodelAnchor);
+            Assert.AreSame(_rig.ViewmodelAnchor, CameraView.ViewmodelAnchor);
+            Camera vm = _rig.ViewmodelCamera;
+            Assert.IsNotNull(vm);
+            Assert.AreSame(vm.transform, _rig.ViewmodelAnchor.parent);
+            Assert.IsTrue(vm.enabled);
+            Assert.AreEqual(1 << katman, vm.cullingMask, "Overlay kamera yalnız FirstPersonView çizmeli.");
+            Assert.AreNotEqual("MainCamera", vm.tag, "S-03: Camera.main dünya kamerası kalmalı.");
+            Assert.AreEqual(0, _rig.Camera.cullingMask & (1 << katman), "Dünya kamerası görüntü modeli katmanını çizmemeli.");
+            Assert.IsTrue(_rig.IsViewmodelOverlayStacked, "Overlay kamera URP yığınına eklenmeli.");
+            Assert.AreEqual(_rig.Camera.fieldOfView, vm.fieldOfView, 0.01f, "Faz 1: görüntü modeli FOV'u dünyaya kilitli.");
+
+            Vector3 dunya = _rig.ViewmodelAnchor.position + _rig.Camera.transform.forward * 0.5f;
+            Assert.Less(Vector3.Distance(dunya, CameraView.ViewmodelToWorld(dunya)), 0.001f, "FOV kilidinde ViewmodelToWorld özdeşlik.");
+
+            CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
+            yield return Kareler(2);
+            Assert.IsFalse(vm.enabled, "FP dışında overlay kamera kapalı.");
+            Assert.IsNull(CameraView.ViewmodelAnchor);
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
         public IEnumerator Bakis_FareDeltasiYawVeInvertY()
         {
             CameraModeService.ApplySettings(new CameraModeSettings { Mode = CameraMode.FirstPerson, LookSensitivity = 0.1f }, instant: true);

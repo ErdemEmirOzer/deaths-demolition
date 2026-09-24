@@ -67,7 +67,7 @@ D-4 Yakınlık soldurması dither'dır, alfa değildir; `CameraOcclusionFader`'�
 | Kamera yakın kırpma | 0,03 m dünya; görüntü modeli 0,01 m | — | S-01 | |
 | Hareket bulanıklığı | FP'de varsayılan KAPALI | — | S-05 post | Hastalık |
 
-D-5 FP'de gövde gerçek (true first-person body), ayrı kol meshi Faz 2. Gerekçe: kullanıcı "gövde görünür" dedi; kol meshi AP/S-06 üretimi ister, R1'de FOV kilidiyle temiz sonuç alınır.
+D-5 (B3 durumu) Faz 1 = gövde ShadowsOnly (baş bölme P-06 AP-022 gelene kadar) + silah `FirstPersonView` katmanında, dünya kamerasına bağlı URP overlay kamerası çizer (derinlik temizlenir → duvara girmez; FOV dünyaya kilitli; MainCamera etiketi yok); göz yüksekliği girişte Humanoid baş kemiğinden kalibre (+6 cm, 1,40–1,85); duvar sondası 0,6/0,8 m → `PlayerSkinnedVisual.PlayLower/PlayRaise`. Faz 2: S-06 WP-071 kol örneği `ViewmodelAnchor` altına, `ViewmodelFovOverride` ile ayrı FOV. Özgün karar metni: FP'de gövde gerçek (true first-person body), ayrı kol meshi Faz 2. Gerekçe: kullanıcı "gövde görünür" dedi; kol meshi AP/S-06 üretimi ister, R1'de FOV kilidiyle temiz sonuç alınır.
 D-6 Baş gizleme ShadowsOnly ile: gölge bütün kalır, ayna/yansıma yok. Kask/şapka gibi ekler (AP-007C sınıfı) aynı katmana.
 
 ## 3 · Kontroller ve erişilebilirlik

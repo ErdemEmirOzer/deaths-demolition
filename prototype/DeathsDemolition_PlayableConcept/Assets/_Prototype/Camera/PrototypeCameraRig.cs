@@ -6,8 +6,10 @@ using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Feedback;
 using DD.Prototype.Feedback.Vfx;
 using DD.Prototype.Rounds;
+using DD.Prototype.Characters;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace DD.Prototype.CameraSystem
 {
@@ -120,6 +122,11 @@ namespace DD.Prototype.CameraSystem
         [SerializeField] private float _fpEyeHeight = 1.62f;
         [PrototypeOnly(PendingDecisions.None, "Eye point forward of the head centre (S-06: ~0.10 m + near 0.05-0.08 hides the head interior until the head submesh split).", true)]
         [SerializeField] private float _fpEyeForward = 0.12f;
+        [PrototypeOnly(PendingDecisions.None, "FP wall probe: below this the weapon lowers (S-06 PlayLower).", true)]
+        [SerializeField] private float _fpWallLowerDistance = 0.6f;
+        [PrototypeOnly(PendingDecisions.None, "FP wall probe: above this the weapon raises again (hysteresis, S-06 PlayRaise).", true)]
+        [SerializeField] private float _fpWallRaiseDistance = 0.8f;
+        [SerializeField] private float _fpWallProbeRadius = 0.15f;
         [SerializeField] private float _fpPitchMin = -80f;
         [SerializeField] private float _fpPitchMax = 80f;
 
@@ -182,6 +189,12 @@ namespace DD.Prototype.CameraSystem
         [SerializeField] private float _bobReferenceSpeed = 5.5f;
         private bool _playerHidden;
         private readonly List<Renderer> _playerRenderers = new List<Renderer>(32);
+        private readonly Dictionary<GameObject, int> _viewmodelLayers = new Dictionary<GameObject, int>(16);
+        private Camera _viewmodelCamera;
+        private Transform _cachedBody;
+        private PlayerSkinnedVisual _visual;
+        private float _fpEyeHeightLive = -1f;
+        private bool _weaponLowered;
         private readonly Dictionary<Renderer, ShadowCastingMode> _playerShadowModes = new Dictionary<Renderer, ShadowCastingMode>(32);
 
         private DebugPanelSlider _shakeSlider;
@@ -372,6 +385,11 @@ namespace DD.Prototype.CameraSystem
             CameraModeService.SettingsChanged -= OnModeSettingsChanged;
             ReleaseCursor();
             ShowPlayer();
+            RaiseWeaponIfLowered();
+            if (_viewmodelCamera != null)
+            {
+                _viewmodelCamera.enabled = false;
+            }
 
             if (Active == this)
             {
@@ -492,6 +510,7 @@ namespace DD.Prototype.CameraSystem
 
             transform.SetPositionAndRotation(position, rotation);
             ApplyLens(mode, fov, dt);
+            ApplyViewmodelCamera(mode);
             ApplyShake(dt, mode);
             ApplyCursor();
             ApplyPlayerVisibility(mode);
@@ -552,6 +571,15 @@ namespace DD.Prototype.CameraSystem
         /// <summary>Snapshots the blend origin and seeds the view state for the new mode.</summary>
         private void EnterMode(CameraMode mode, bool instant)
         {
+            if (mode != CameraMode.FirstPerson)
+            {
+                RaiseWeaponIfLowered();
+            }
+            else
+            {
+                CalibrateEyeHeight();
+            }
+
             _fromPosition = transform.position;
             _fromRotation = transform.rotation;
             _fromFov = _camera != null ? _camera.fieldOfView : _fieldOfView;
@@ -698,7 +726,9 @@ namespace DD.Prototype.CameraSystem
         {
             rotation = ViewRotation();
             Quaternion yawOnly = Quaternion.Euler(0f, _viewYaw, 0f);
-            position = Feet + Vector3.up * _fpEyeHeight + yawOnly * (Vector3.forward * _fpEyeForward);
+            float eye = _fpEyeHeightLive > 0f ? _fpEyeHeightLive : _fpEyeHeight;
+            position = Feet + Vector3.up * eye + yawOnly * (Vector3.forward * _fpEyeForward);
+            UpdateWallProbe(Feet + Vector3.up * eye, yawOnly * Vector3.forward);
 
             // FirstPersonFov is horizontal degrees at 16:9 (Hor+, C-00 24.09); Unity wants vertical.
             float horizontal = CameraModeService.Settings.FirstPersonFov;
@@ -774,7 +804,7 @@ namespace DD.Prototype.CameraSystem
 
             if (hide)
             {
-                HidePlayer();
+                HidePlayer(mode == CameraMode.FirstPerson);
             }
             else
             {
@@ -782,19 +812,48 @@ namespace DD.Prototype.CameraSystem
             }
         }
 
-        private void HidePlayer()
+        /// <summary>
+        /// Hides the player body (shadows kept). In FP (<paramref name="weaponToViewmodel"/>) the
+        /// weapon under the hand socket moves to the <see cref="CameraLayers.FirstPersonView"/>
+        /// layer instead: the overlay camera draws it after a depth clear, so it never clips into
+        /// walls (Phase 1: world FOV; S-06 WP-071 viewmodel arms replace it under ViewmodelAnchor).
+        /// </summary>
+        private void HidePlayer(bool weaponToViewmodel)
         {
-            Transform body = _followTarget != null && _followTarget.parent != null ? _followTarget.parent : null;
+            Transform body = ResolveBody();
             if (body == null)
             {
                 return;
             }
 
+            Transform weaponRoot = weaponToViewmodel && _visual != null ? _visual.WeaponSocket : null;
+            int vmLayer = CameraLayers.FirstPersonView;
             body.GetComponentsInChildren(false, _playerRenderers);
             for (int i = 0; i < _playerRenderers.Count; i++)
             {
                 Renderer r = _playerRenderers[i];
-                if (r == null || r.shadowCastingMode == ShadowCastingMode.ShadowsOnly)
+                if (r == null)
+                {
+                    continue;
+                }
+
+                if (weaponRoot != null && vmLayer >= 0 && r.transform.IsChildOf(weaponRoot))
+                {
+                    GameObject go = r.gameObject;
+                    if (go.layer != vmLayer)
+                    {
+                        if (!_viewmodelLayers.ContainsKey(go))
+                        {
+                            _viewmodelLayers.Add(go, go.layer);
+                        }
+
+                        go.layer = vmLayer;
+                    }
+
+                    continue;
+                }
+
+                if (r.shadowCastingMode == ShadowCastingMode.ShadowsOnly)
                 {
                     continue;
                 }
@@ -826,7 +885,172 @@ namespace DD.Prototype.CameraSystem
             }
 
             _playerShadowModes.Clear();
+            foreach (KeyValuePair<GameObject, int> pair in _viewmodelLayers)
+            {
+                if (pair.Key != null)
+                {
+                    pair.Key.layer = pair.Value;
+                }
+            }
+
+            _viewmodelLayers.Clear();
             _playerHidden = false;
+        }
+
+        private Transform ResolveBody()
+        {
+            Transform body = _followTarget != null && _followTarget.parent != null ? _followTarget.parent : null;
+            if (body != _cachedBody)
+            {
+                _cachedBody = body;
+                _visual = body != null ? body.GetComponentInChildren<PlayerSkinnedVisual>(true) : null;
+            }
+
+            return body;
+        }
+
+        /// <summary>
+        /// FP eye height from the Humanoid head bone at mode entry (+6 cm to the eyes), clamped to
+        /// a plausible band; a fixed height keeps the view deterministic (no animation jitter,
+        /// direction doc D-16) while matching the character's real size (S-06).
+        /// </summary>
+        private void CalibrateEyeHeight()
+        {
+            _fpEyeHeightLive = -1f;
+            ResolveBody();
+            Animator animator = _visual != null ? _visual.Animator : null;
+            if (animator == null || !animator.isHuman)
+            {
+                return;
+            }
+
+            Transform head = animator.GetBoneTransform(HumanBodyBones.Head);
+            if (head != null)
+            {
+                _fpEyeHeightLive = Mathf.Clamp(head.position.y - Feet.y + 0.06f, 1.4f, 1.85f);
+            }
+        }
+
+        /// <summary>
+        /// FP wall probe (S-06): a short sphere cast from the eye along the view yaw lowers the
+        /// weapon below <see cref="_fpWallLowerDistance"/> and raises it above
+        /// <see cref="_fpWallRaiseDistance"/> (hysteresis). Firing is never blocked here.
+        /// </summary>
+        private void UpdateWallProbe(Vector3 eye, Vector3 forward)
+        {
+            ResolveBody();
+            if (_visual == null)
+            {
+                return;
+            }
+
+            RaycastHit hit;
+            float distance = Physics.SphereCast(eye, _fpWallProbeRadius, forward, out hit, _fpWallRaiseDistance + 0.1f,
+                PrototypeLayers.AimBlockMask, QueryTriggerInteraction.Ignore) ? hit.distance : float.MaxValue;
+
+            if (!_weaponLowered && distance < _fpWallLowerDistance)
+            {
+                _weaponLowered = true;
+                _visual.PlayLower();
+            }
+            else if (_weaponLowered && distance > _fpWallRaiseDistance)
+            {
+                RaiseWeaponIfLowered();
+            }
+        }
+
+        private void RaiseWeaponIfLowered()
+        {
+            if (_weaponLowered && _visual != null)
+            {
+                _visual.PlayRaise();
+            }
+
+            _weaponLowered = false;
+        }
+
+        /// <summary>WP-070 B3: the viewmodel overlay camera (null until first FP entry).</summary>
+        public Camera ViewmodelCamera
+        {
+            get { return _viewmodelCamera; }
+        }
+
+        /// <summary>WP-070 B3: true when the viewmodel camera is a URP Overlay in this rig's camera stack.</summary>
+        public bool IsViewmodelOverlayStacked
+        {
+            get
+            {
+                if (_viewmodelCamera == null || _camera == null)
+                {
+                    return false;
+                }
+
+                UniversalAdditionalCameraData vm = _viewmodelCamera.GetUniversalAdditionalCameraData();
+                UniversalAdditionalCameraData world = _camera.GetUniversalAdditionalCameraData();
+                return vm != null && vm.renderType == CameraRenderType.Overlay
+                       && world != null && world.cameraStack != null && world.cameraStack.Contains(_viewmodelCamera);
+            }
+        }
+
+        /// <summary>WP-070: FP weapon lowered by the wall probe (readout / tests).</summary>
+        public bool IsWeaponLoweredByWall
+        {
+            get { return _weaponLowered; }
+        }
+
+        /// <summary>
+        /// WP-070 B3: the viewmodel overlay camera (URP camera stack). Child of the world camera,
+        /// so it inherits shake/recoil; draws only the FirstPersonView layer after a depth clear;
+        /// never tagged MainCamera (S-03: Camera.main stays the world camera). Enabled in FP only.
+        /// </summary>
+        private void ApplyViewmodelCamera(CameraMode mode)
+        {
+            int vmLayer = CameraLayers.FirstPersonView;
+            if (_camera == null || vmLayer < 0)
+            {
+                return;
+            }
+
+            bool fp = mode == CameraMode.FirstPerson;
+            if (!fp && _viewmodelCamera == null)
+            {
+                return;
+            }
+
+            if (_viewmodelCamera == null)
+            {
+                _camera.cullingMask &= ~(1 << vmLayer);
+                var go = new GameObject("ViewmodelCamera");
+                go.transform.SetParent(_camera.transform, false);
+                _viewmodelCamera = go.AddComponent<Camera>();
+                _viewmodelCamera.cullingMask = 1 << vmLayer;
+                _viewmodelCamera.clearFlags = CameraClearFlags.Depth;
+                _viewmodelCamera.nearClipPlane = 0.01f;
+                _viewmodelCamera.farClipPlane = 20f;
+                UniversalAdditionalCameraData overlay = _viewmodelCamera.GetUniversalAdditionalCameraData();
+                overlay.renderType = CameraRenderType.Overlay;
+                overlay.renderShadows = false;
+                UniversalAdditionalCameraData baseData = _camera.GetUniversalAdditionalCameraData();
+                if (baseData != null && baseData.cameraStack != null && !baseData.cameraStack.Contains(_viewmodelCamera))
+                {
+                    baseData.cameraStack.Add(_viewmodelCamera);
+                }
+
+                var anchor = new GameObject("ViewmodelAnchor");
+                anchor.transform.SetParent(go.transform, false);
+                anchor.layer = vmLayer;
+                ViewmodelAnchor = anchor.transform;
+            }
+
+            if (_viewmodelCamera.enabled != fp)
+            {
+                _viewmodelCamera.enabled = fp;
+            }
+
+            if (fp)
+            {
+                _viewmodelCamera.fieldOfView = CameraLayers.ViewmodelFov;
+            }
         }
 
         private Vector3 ComputeLookAhead(Vector3 anchor)
