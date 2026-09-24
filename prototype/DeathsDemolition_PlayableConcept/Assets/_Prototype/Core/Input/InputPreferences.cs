@@ -16,7 +16,8 @@ namespace DD.Prototype.Core.InputAbstraction
     [Serializable]
     public sealed class InputPreferences
     {
-        public const int CurrentVersion = 2;
+        /// <summary>v3 (WP-070): look sensitivity / invert-Y / stick look speed for the TP/FP camera.</summary>
+        public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
 
@@ -44,6 +45,25 @@ namespace DD.Prototype.Core.InputAbstraction
         /// fields once. Stored as an int so JsonUtility keeps it stable.
         /// </summary>
         public int AimAssistLevel = (int)InputAimAssistLevel.Full;
+
+        /// <summary>
+        /// WP-070 (v3): mouse look in degrees per pixel of raw delta (TP/FP). A v2 file has no
+        /// such field and keeps this default. Mirrors CameraModeSettings.LookSensitivity.
+        /// </summary>
+        [PrototypeOnly(PendingDecisions.None, "Mouse look degrees per pixel (0.02..0.30), direction doc §3.1.")]
+        [Range(0.02f, 0.30f)] public float LookSensitivity = 0.08f;
+
+        /// <summary>WP-070 (v3): invert vertical look (mouse and stick) in TP/FP.</summary>
+        public bool LookInvertY;
+
+        /// <summary>WP-070 (v3): right-stick look speed at full deflection, degrees per second (60..360).</summary>
+        [PrototypeOnly(PendingDecisions.None, "Stick look speed deg/s (60..360), direction doc §3.1.")]
+        [Range(60f, 360f)] public float StickLookDegreesPerSecond = 180f;
+
+        public const float MinLookSensitivity = 0.02f;
+        public const float MaxLookSensitivity = 0.30f;
+        public const float MinStickLookDegreesPerSecond = 60f;
+        public const float MaxStickLookDegreesPerSecond = 360f;
 
         /// <summary>Marker of a version-1 document: the level is derived from the legacy fields on the first clamp.</summary>
         public const int AimAssistLevelUnset = -1;
@@ -74,6 +94,9 @@ namespace DD.Prototype.Core.InputAbstraction
             AimAssistEnabled = level != InputAimAssistLevel.Off;
             AimAssistAngleDegrees = AimAssistLevels.AngleDegreesOf(level);
             AimAssistDistance = AimAssistLevels.DistanceOf(level);
+            LookSensitivity = float.IsNaN(LookSensitivity) ? 0.08f : Mathf.Clamp(LookSensitivity, MinLookSensitivity, MaxLookSensitivity);
+            StickLookDegreesPerSecond = float.IsNaN(StickLookDegreesPerSecond) ? 180f
+                : Mathf.Clamp(StickLookDegreesPerSecond, MinStickLookDegreesPerSecond, MaxStickLookDegreesPerSecond);
             return this;
         }
 
@@ -111,6 +134,9 @@ namespace DD.Prototype.Core.InputAbstraction
             AimAssistAngleDegrees = other.AimAssistAngleDegrees;
             AimAssistDistance = other.AimAssistDistance;
             AimAssistLevel = other.AimAssistLevel;
+            LookSensitivity = other.LookSensitivity;
+            LookInvertY = other.LookInvertY;
+            StickLookDegreesPerSecond = other.StickLookDegreesPerSecond;
             Version = other.Version;
             Clamp();
         }
@@ -124,7 +150,10 @@ namespace DD.Prototype.Core.InputAbstraction
                    AimAssistEnabled == other.AimAssistEnabled &&
                    Mathf.Approximately(AimAssistAngleDegrees, other.AimAssistAngleDegrees) &&
                    Mathf.Approximately(AimAssistDistance, other.AimAssistDistance) &&
-                   AimAssistLevel == other.AimAssistLevel;
+                   AimAssistLevel == other.AimAssistLevel &&
+                   Mathf.Approximately(LookSensitivity, other.LookSensitivity) &&
+                   LookInvertY == other.LookInvertY &&
+                   Mathf.Approximately(StickLookDegreesPerSecond, other.StickLookDegreesPerSecond);
         }
 
         public string ToJson()

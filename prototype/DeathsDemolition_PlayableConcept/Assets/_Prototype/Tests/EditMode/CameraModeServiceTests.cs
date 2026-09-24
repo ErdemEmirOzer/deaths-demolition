@@ -168,6 +168,34 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void GirdiTercihleri_V3BakisAlanlari_GocVeKopru()
+        {
+            InputPreferences v2 = InputPreferences.FromJson("{\"Version\":2,\"StickDeadzone\":0.2,\"AimAssistLevel\":2}");
+            Assert.AreEqual(InputPreferences.CurrentVersion, v2.Version);
+            Assert.AreEqual(3, InputPreferences.CurrentVersion);
+            Assert.AreEqual(0.08f, v2.LookSensitivity, 1e-6f, "v2 dosyası bakış varsayılanını alır.");
+            Assert.IsFalse(v2.LookInvertY);
+            Assert.AreEqual(180f, v2.StickLookDegreesPerSecond, 1e-4f);
+            Assert.AreEqual(0.2f, v2.StickDeadzone, 1e-6f, "Mevcut alanlar korunur.");
+
+            var p = new InputPreferences { LookSensitivity = 5f, StickLookDegreesPerSecond = 10f, LookInvertY = true }.Clamp();
+            Assert.AreEqual(InputPreferences.MaxLookSensitivity, p.LookSensitivity);
+            Assert.AreEqual(InputPreferences.MinStickLookDegreesPerSecond, p.StickLookDegreesPerSecond);
+
+            var s = new CameraModeSettings();
+            CameraInputPreferencesBridge.CopyLook(p, s);
+            Assert.AreEqual(p.LookSensitivity, s.LookSensitivity);
+            Assert.IsTrue(s.InvertY);
+            Assert.AreEqual(p.StickLookDegreesPerSecond, s.StickLookDegreesPerSecond);
+            Assert.AreEqual(CameraModeSettings.MaxLookSensitivity, InputPreferences.MaxLookSensitivity, "Aralıklar iki tarafta aynı.");
+            Assert.AreEqual(CameraModeSettings.MaxStickLookDegreesPerSecond, InputPreferences.MaxStickLookDegreesPerSecond);
+
+            var copy = new InputPreferences();
+            copy.CopyFrom(p);
+            Assert.IsTrue(copy.SameAs(p), "CopyFrom/SameAs bakış alanlarını taşır.");
+        }
+
+        [Test]
         public void KomutSatiri_ModAdlariAyristirilir()
         {
             CameraMode m;

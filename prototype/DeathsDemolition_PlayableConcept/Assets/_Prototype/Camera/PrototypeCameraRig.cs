@@ -338,7 +338,9 @@ namespace DD.Prototype.CameraSystem
             DeathSequence.ReleasePushIn();   // WP-059: a new run's rig starts at the full offset
             CameraShakeService.Register(this);
 
-            // WP-070: a run starts in the saved / command-line mode, snapped.
+            // WP-070: a run starts in the saved / command-line mode, snapped; the persisted look
+            // preferences (input-settings.json v3) feed the live settings (one-way, B4).
+            CameraInputPreferencesBridge.Ensure();
             CameraModeService.Changed += OnModeChanged;
             CameraModeService.SettingsChanged += OnModeSettingsChanged;
             CameraModeService.Request(CameraModeService.ResolveStartMode(), instant: true);
