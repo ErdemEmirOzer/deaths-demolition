@@ -1,0 +1,33 @@
+{
+ "package": "AP-021",
+ "owner": "P-07",
+ "key": "sg_2",
+ "version": "v002",
+ "frame": "Unity frame at export (validation 05-blender/validation/AP021-sg_2-unity-frame.json pass, 0 mm)",
+ "files": [
+  {
+   "source": "asset-production/AP-021/exports/fbx/AP021_sg_2.fbx",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_2/AP021_sg_2.fbx",
+   "bytes": 1141100,
+   "sha256": "ae84e8faa88cd3ef7c1eaf19fa9ea387f86ecf9122572bb2ac14bfe27628e0be"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/sg_2/T_AP021_sg_2_BaseColor.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_2/Textures/T_AP021_sg_2_BaseColor.png",
+   "bytes": 2684567,
+   "sha256": "201f6ae53069b58e2c09d7e849302eeec17c05e96b4a9d255fae766da48b9693"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/sg_2/T_AP021_sg_2_MRA.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_2/Textures/T_AP021_sg_2_MRA.png",
+   "bytes": 3084163,
+   "sha256": "648ea03bcb81799eeafec979a02d702470481785665834bead0973dd0dce234e"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/sg_2/T_AP021_sg_2_Normal.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_2/Textures/T_AP021_sg_2_Normal.png",
+   "bytes": 1882712,
+   "sha256": "83bc7b2ddd2b8316797f4cc5f47ff30703efa951ceae35863de976b4da51df6c"
+  }
+ ]
+}

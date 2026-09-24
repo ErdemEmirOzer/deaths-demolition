@@ -20,11 +20,29 @@ MonoBehaviour:
     rosterKey: A
     model: {fileID: 919132149155446097, guid: dc5e52764518b4968b70a329a74f16d0, type: 3}
     lodTriangles: 7c0b00009804000087010000
+    ownMaterials: 0
+    modelPackage: 
   - id: 1
     rosterKey: B
     model: {fileID: 919132149155446097, guid: 062d95a914fd94b9e9a247b09f6346f8, type: 3}
     lodTriangles: 7c0b00009804000088010000
+    ownMaterials: 0
+    modelPackage: 
   - id: 2
     rosterKey: C
     model: {fileID: 919132149155446097, guid: 0da70489feb144600b2ac3723723a24d, type: 3}
     lodTriangles: 7c0b00009804000088010000
+    ownMaterials: 0
+    modelPackage: 
+  - id: 3
+    rosterKey: ar_2
+    model: {fileID: 919132149155446097, guid: afb10c9fe9d6948a28b2f91d24d404b0, type: 3}
+    lodTriangles: db4a0000fc1500007b060000
+    ownMaterials: 1
+    modelPackage: AP-021
+  - id: 5
+    rosterKey: sg_2
+    model: {fileID: 919132149155446097, guid: d43ddebbdc3e94c8bb5feaab9e74f1b4, type: 3}
+    lodTriangles: 624b000084160000bd060000
+    ownMaterials: 1
+    modelPackage: AP-021
