@@ -269,7 +269,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(1, Count(SpecialUsageKind.Liquefied, SpecialWeaponId.Namekuji), "sıvılaşma olayı");
             SpecialUsageEvent? puddle = Find(SpecialUsageKind.FieldSpawned, SpecialWeaponId.Namekuji, 1.6f);
             Assert.IsTrue(puddle.HasValue, "isabet noktasında r 1,6 m birikinti");
-            Assert.AreEqual(25f, puddle.Value.Seconds, 0.01f, "25 s");
+            Assert.AreEqual(SpecialWeaponConfigSection.DefinitionOf(SpecialWeaponId.Namekuji).gelPuddle.puddleLifetimeSeconds, puddle.Value.Seconds, 0.01f, "birikinti süresi (DEC-099 12 s)");
             Assert.IsTrue(GelPuddleRegistry.TryGet(puddle.Value.Count, out GelPuddleInfo info), "Count = birikinti kimliği");
             Assert.Less(Mathf.Abs(info.SurfaceY - z.transform.position.y), 0.6f, "birikinti gövdenin ayağında, göğsünde değil");
         }

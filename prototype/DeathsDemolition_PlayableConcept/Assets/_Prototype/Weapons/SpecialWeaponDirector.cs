@@ -365,10 +365,8 @@ namespace DD.Prototype.Weapons
             _round = round;
             _spawnsThisRound = 0;
 
-            // A drop that is still on the ground or in use survives a round boundary
-            // rather than being cancelled: the request never says a round end removes it,
-            // and taking a weapon out of the player's hands at a round boundary would be
-            // worse than letting it run out. (KS-3: characterised, not a product decision.)
+            // A drop still on the ground survives a round boundary (KS-3, characterised). The one in
+            // hand never gets here: it ends with the round (DEC-099 D6, OnRoundEnded).
             if (_state == SpecialWeaponState.OnGround || _state == SpecialWeaponState.InUse)
             {
                 return;
@@ -383,6 +381,14 @@ namespace DD.Prototype.Weapons
 
         private void OnRoundEnded(int round)
         {
+            // DEC-099 (D6, user 24.09): the Special in hand ends with the round — magazine, reserve and cap
+            // do not carry into the next one; the classic weapon comes back as on an early end.
+            if (_state == SpecialWeaponState.InUse)
+            {
+                CancelAll(SpecialWeaponCancelReason.RoundEnded);
+                return;
+            }
+
             if (_state == SpecialWeaponState.Scheduled)
             {
                 // The round finished before the drop was due (or before a valid position

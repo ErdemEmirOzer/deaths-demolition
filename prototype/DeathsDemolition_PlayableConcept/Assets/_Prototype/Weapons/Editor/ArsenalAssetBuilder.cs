@@ -83,7 +83,7 @@ namespace DD.Prototype.Weapons.EditorTools
             d.fire.burstCount = 3;
             d.fire.burstIntervalSeconds = 0.05f;
             d.fire.burstDelaySeconds = 0.26f;
-            Ammo(d, 24, 168, 1.8f, 2.3f, WeaponReloadKind.Magazine);
+            Ammo(d, 18, 144, 1.8f, 2.3f, WeaponReloadKind.Magazine);   // DEC-099: 24 / 168 → 18 / 144 (ar_1 leads sustained DPS and ammo)
             Ballistics(d, 320f, 70f, 40f, 0.75f, 1, 0.65f, 0.20f, 0.30f, 1.15f, 1.2f, WeaponCaliber.Medium);
             Spread(d, 1.0f, 0.45f, 1.3f, 0.3f, 1.15f, 0.2f, 0.30f, 2.8f, 7f, 1.6f, 0.92f, 0.28f);
             Recoil(d, 0.70f, RecoilYawPattern.Pattern, new[] { 0.15f }, 3, 0.30f);
@@ -130,7 +130,8 @@ namespace DD.Prototype.Weapons.EditorTools
             Fire(d, WeaponFireMode.Single, 72f, 9f);
             d.fire.pelletCount = 8;
             d.fire.pelletPattern = WeaponPelletPattern.CenterRings;
-            d.fire.rings = new[] { new PelletRing { count = 3, radiusShare = 0.40f }, new PelletRing { count = 4, radiusShare = 1.00f } };
+            // DEC-099: a tight pattern — sg_1 is the shotgun that reaches (rings 0.40 / 1.00 → 0.25 / 0.55 of the cone).
+            d.fire.rings = new[] { new PelletRing { count = 3, radiusShare = 0.25f }, new PelletRing { count = 4, radiusShare = 0.55f } };
             d.fire.ringJitterShare = 0.10f;
             // PerShell: tac = start 0,40 + end 0,35 around 0,55 s per shell; empty adds the 0,5 s pump.
             Ammo(d, 7, 42, 0.75f, 1.25f, WeaponReloadKind.PerShell);
@@ -153,8 +154,8 @@ namespace DD.Prototype.Weapons.EditorTools
             Fire(d, WeaponFireMode.Single, 200f, 11f);
             d.fire.pelletCount = 10;
             d.fire.pelletPattern = WeaponPelletPattern.Gauss;
-            d.fire.gaussSigmaShare = 0.45f;
-            Ammo(d, 2, 40, 1.7f, 1.7f, WeaponReloadKind.Magazine);
+            d.fire.gaussSigmaShare = 0.70f;   // DEC-099: 0.45 → 0.70, sg_2 is the close-range spray
+            Ammo(d, 2, 24, 3.0f, 3.0f, WeaponReloadKind.Magazine);   // DEC-099: reserve 40 → 24, break-open reload 1.7 → 3.0 s
             Ballistics(d, 130f, 20f, 8f, 0.40f, 0, 1f, 0.90f, 0.70f, 1f, 0.8f, WeaponCaliber.Heavy);
             d.projectile.kind = ProjectileKind.Pellet;
             Spread(d, 5.0f, 3.8f, 6.0f, 2.7f, 5.5f, 2.4f, 1.5f, 8f, 10f, 1.2f, 0.92f, 0.28f);
@@ -186,7 +187,7 @@ namespace DD.Prototype.Weapons.EditorTools
             WeaponDefinition d = New("lmg_2", ClassicWeaponId.Lmg2, WeaponClass.Lmg, "Kurogane", WeaponSilhouetteV3.Heavy, 8,
                 "İlk atışlar dağınık, namlu oturunca çelik gibi; her mermi iki gövde.", null);
             Fire(d, WeaponFireMode.Auto, 420f, 24f);
-            Ammo(d, 60, 180, 5.0f, 5.8f, WeaponReloadKind.Magazine);
+            Ammo(d, 60, 90, 5.0f, 5.8f, WeaponReloadKind.Magazine);   // DEC-099: reserve 180 → 90 (lmg_1 carries more per round)
             d.ammo.floorRefillDelaySeconds = 8f;
             Ballistics(d, 300f, 60f, 32f, 0.70f, 2, 0.70f, 0.50f, 0.55f, 1f, 1.3f, WeaponCaliber.Heavy);
             // "Oturma": the cone starts wide and settles to 35 % of the base under sustained fire; reopens at 4°/s on release.
@@ -205,10 +206,11 @@ namespace DD.Prototype.Weapons.EditorTools
                 "Bir nefes, bir sürgü, dört gövde; sessizlik sonra tokat.", null);
             Fire(d, WeaponFireMode.Single, 48f, 55f);
             Ammo(d, 5, 40, 2.6f, 3.2f, WeaponReloadKind.Magazine);
-            Ballistics(d, 420f, 90f, 60f, 0.85f, 4, 0.80f, 0.80f, 0.80f, 1.25f, 1.6f, WeaponCaliber.Heavy);
+            Ballistics(d, 420f, 90f, 60f, 0.85f, 4, 0.90f, 0.80f, 0.80f, 1.25f, 1.6f, WeaponCaliber.Heavy);   // DEC-099: pierce keep 0.80 → 0.90
             Spread(d, 3.0f, 0.15f, 3.8f, 0.10f, 3.5f, 0.08f, 2.0f, 6f, 8f, 2.5f, 0.85f, 0.40f);
             Recoil(d, 4.5f, RecoilYawPattern.Random, new[] { 0.3f }, 1, 0.90f);
-            Core(d, UpgradeBranch.Piercing, UpgradeBranch.Ricochet, UpgradeBranch.ArmorBreak, "kabuto_wari", "Kabuto-wari", "kafa isabeti zırhı yok sayar");
+            // DEC-099 (S-04 D2): ArmorBreak → ReloadSpeed — ×1.6 armour only mattered from the 3rd body on, the branch from the 5th.
+            Core(d, UpgradeBranch.Piercing, UpgradeBranch.Ricochet, UpgradeBranch.ReloadSpeed, "kabuto_wari", "Kabuto-wari", "kafa isabeti zırhı yok sayar");
             d.upgrade.forbiddenBranches = new[] { UpgradeBranch.Chain };
             d.SetUnlockByMeta(5, 5);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.Large, ClassicWeaponId.AssaultRifle, "");
@@ -336,14 +338,14 @@ namespace DD.Prototype.Weapons.EditorTools
             g.puddleRadius = 1.6f;
             g.deathPuddleRadius = 0.9f;
             g.deathPuddleSeconds = 8f;
-            g.puddleLifetimeSeconds = 25f;
-            g.maxPuddles = 12;
+            g.puddleLifetimeSeconds = 12f;   // DEC-099: 25 → 12 s
+            g.maxPuddles = 8;                // DEC-099: 12 → 8
             g.fadeSeconds = 0.5f;
             g.slipRules = new[]
             {
                 Rule(EnemyTier.Standard, true, 0, 0f, 0f, 0f),
                 Rule(EnemyTier.Special, true, 0, 0f, 0f, 0f),
-                Rule(EnemyTier.Elite, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Elite, true, 10, 0.60f, 1.5f, 0f),   // DEC-099: R ≤ 10 dies; later 60 % (as the direct hit)
                 Rule(EnemyTier.Ultra, false, 0, 0.20f, 0f, 3f)   // falls, 20 %, 3 s immune after getting up
             };
             g.slipFallSeconds = 0.9f;

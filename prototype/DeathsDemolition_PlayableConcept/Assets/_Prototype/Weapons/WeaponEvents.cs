@@ -31,7 +31,10 @@ namespace DD.Prototype.Weapons
         /// <summary>A new run started with a process still alive (same-scene restart).</summary>
         RunStarted = 2,
 
-        /// <summary>The round ended while the drop was still scheduled; it simply never happens.</summary>
+        /// <summary>
+        /// The round ended while the drop was still scheduled (it simply never happens) or while the Special was in
+        /// hand (PhaseAtCancel Active: it ends with the round, DEC-099 D6).
+        /// </summary>
         RoundEnded = 3,
 
         /// <summary>No valid, reachable drop position existed for the whole round: the scheduled drop was abandoned.</summary>

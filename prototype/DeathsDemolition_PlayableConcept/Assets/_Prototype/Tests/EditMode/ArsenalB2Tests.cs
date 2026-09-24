@@ -72,7 +72,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0.05f, times[1] - times[0], dt + 1e-4f, "burst içi 0,05 s");
             Assert.AreEqual(0.05f, times[2] - times[1], dt + 1e-4f);
             Assert.AreEqual(times[2] + 0.26f, nextReady, dt + 1e-4f, "burst arası 0,26 s");
-            Assert.AreEqual(21, rt.Ammo);
+            Assert.AreEqual(rt.MagazineSize - 3, rt.Ammo, "bir burst üç mermi");
         }
 
         [Test]
@@ -228,32 +228,41 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Desenler_MerkezHalkalar_VeGauss_KonideKalir()
         {
+            // DEC-099 (D4): sg_1 is the tight pattern that reaches, sg_2 the wide spray — both read from the definitions.
             Random.InitState(3);
             ClassicWeaponRuntime sg = Equip(ClassicWeaponId.CombatShotgun);
+            PelletRing[] rings = Arsenal.Get(ClassicWeaponId.CombatShotgun).fire.rings;
+            float inner = rings[0].radiusShare, outer = rings[rings.Length - 1].radiusShare;
+            Assert.Less(inner, outer);
             float cone = sg.CurrentSpreadDegrees;
             Assert.AreEqual(7.5f, cone, 1e-4f);
-            Assert.AreEqual(1.0f * cone, sg.PelletRingDegrees, 1e-4f, "dış halka = 1,00 × koni");
+            Assert.AreEqual(outer * cone, sg.PelletRingDegrees, 1e-4f, "PelletRingDegrees = dış halka × koni");
             float jitter = 0.10f * cone;
             Vector3 aim = Vector3.forward;
             Assert.LessOrEqual(HorizontalAngle(sg.BuildShot(Vector3.zero, aim, 0).Direction), jitter + 1e-3f, "merkez pellet");
             for (int i = 1; i <= 3; i++)
             {
-                Assert.LessOrEqual(HorizontalAngle(sg.BuildShot(Vector3.zero, aim, i).Direction), 0.40f * cone + jitter + 1e-3f, "iç halka @ 0,40");
+                Assert.LessOrEqual(HorizontalAngle(sg.BuildShot(Vector3.zero, aim, i).Direction), inner * cone + jitter + 1e-3f, "iç halka");
             }
 
+            // Ten shots: the ±10 %-of-cone jitter is absolute, so one shot of a tight outer ring can sit inside the inner one.
             float outerMax = 0f;
-            for (int i = 4; i <= 7; i++)
+            for (int shot = 0; shot < 10; shot++)
             {
-                float h = HorizontalAngle(sg.BuildShot(Vector3.zero, aim, i).Direction);
-                Assert.LessOrEqual(h, cone + jitter + 1e-3f, "dış halka konide");
-                outerMax = Mathf.Max(outerMax, h);
+                for (int i = 4; i <= 7; i++)
+                {
+                    float h = HorizontalAngle(sg.BuildShot(Vector3.zero, aim, i).Direction);
+                    Assert.LessOrEqual(h, outer * cone + jitter + 1e-3f, "dış halka kendi yarıçapında");
+                    outerMax = Mathf.Max(outerMax, h);
+                }
             }
 
-            Assert.Greater(outerMax, 0.40f * cone, "dış halka koninin kenarına uzanır (eşit yay, her fazda ≥ 0,56 − titreşim)");
+            Assert.Greater(outerMax, inner * cone + 0.5f * jitter, "dış halka iç halkanın dışına uzanır");
 
             ClassicWeaponRuntime sg2 = Equip(ClassicWeaponId.Sg2);
+            float sigma = Arsenal.Get(ClassicWeaponId.Sg2).fire.gaussSigmaShare;
             float cone2 = sg2.CurrentSpreadDegrees;
-            Assert.AreEqual(0.45f * cone2, sg2.PelletRingDegrees, 1e-4f, "Gauss σ halkası");
+            Assert.AreEqual(sigma * cone2, sg2.PelletRingDegrees, 1e-4f, "Gauss σ halkası");
             double sum = 0;
             const int n = 2000;
             for (int i = 0; i < n; i++)
@@ -263,8 +272,32 @@ namespace DD.Prototype.Tests.EditMode
                 sum += h * h;
             }
 
+            // The yaw is N(0, σ) clamped to ±cone: its RMS is below σ once σ is a large share of the cone (0.70 → ≈ 0.61).
             float rms = Mathf.Sqrt((float)(sum / n));
-            Assert.AreEqual(0.45f * cone2, rms, 0.12f * cone2, "yatay RMS ≈ σ");
+            float expected = ClampedNormalRms(sigma) * cone2;
+            Assert.AreEqual(expected, rms, 0.08f * cone2, "yatay RMS ≈ kırpılmış σ");
+            Assert.Greater(rms, 0.5f * cone2, "sg_2 geniş saçar");
+        }
+
+        /// <summary>RMS of N(0, σ) clamped to ±1, in units of the clamp (σ as a share of it); Simpson over the kept band + the tails at the edge.</summary>
+        private static float ClampedNormalRms(float sigmaShare)
+        {
+            double c = 1.0 / sigmaShare;
+            const int steps = 400;
+            double h = 2 * c / steps, inside = 0, mass = 0;
+            for (int i = 0; i <= steps; i++)
+            {
+                double z = -c + i * h;
+                double w = i == 0 || i == steps ? 1 : (i % 2 == 1 ? 4 : 2);
+                double pdf = System.Math.Exp(-0.5 * z * z) / System.Math.Sqrt(2 * System.Math.PI);
+                inside += w * z * z * pdf;
+                mass += w * pdf;
+            }
+
+            inside *= h / 3;
+            mass *= h / 3;
+            double variance = inside + (1 - mass) * c * c;   // in σ² units
+            return (float)(System.Math.Sqrt(variance) * sigmaShare);
         }
 
         private static float HorizontalAngle(Vector3 d)
@@ -279,12 +312,15 @@ namespace DD.Prototype.Tests.EditMode
         {
             PrototypeConfig config = Config;
             config.Weapons.RebuildClassicView();
+            // DEC-099 (S-04 D2): ArmorBreak is lmg_2's core branch now (sr_1 took ReloadSpeed).
+            Assert.Contains(UpgradeBranch.ArmorBreak, Arsenal.Get(ClassicWeaponId.Lmg2).upgrade.coreBranches);
+            Assert.IsFalse(System.Array.IndexOf(Arsenal.Get(ClassicWeaponId.Sr1).upgrade.coreBranches, UpgradeBranch.ArmorBreak) >= 0, "sr_1: ArmorBreak → ReloadSpeed");
             var mods = new WeaponModifierState();
-            var sr = new ClassicWeaponRuntime();
-            sr.Equip(config.Weapons.Find(ClassicWeaponId.Sr1), mods);
-            Assert.AreEqual(1.6f, sr.Launch(0).ArmorMultiplier, 1e-4f, "sr_1 kendi zırh çarpanı");
+            var lmg = new ClassicWeaponRuntime();
+            lmg.Equip(config.Weapons.Find(ClassicWeaponId.Lmg2), mods);
+            Assert.AreEqual(1.3f, lmg.Launch(0).ArmorMultiplier, 1e-4f, "lmg_2 kendi zırh çarpanı");
             mods.AddTier(UpgradeBranch.ArmorBreak, 2);
-            Assert.AreEqual(1.6f * 1.5f, sr.Launch(0).ArmorMultiplier, 1e-4f, "ArmorBreak +%25 / kademe");
+            Assert.AreEqual(1.3f * 1.5f, lmg.Launch(0).ArmorMultiplier, 1e-4f, "ArmorBreak +%25 / kademe");
 
             var sgMods = new WeaponModifierState();
             var sg2 = new ClassicWeaponRuntime();

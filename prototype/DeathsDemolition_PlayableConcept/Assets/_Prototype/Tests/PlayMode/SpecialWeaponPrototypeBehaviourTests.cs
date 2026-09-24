@@ -106,27 +106,38 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, SpecialWeaponSahne.AktifPickupSayisi());
         }
 
-        /// <summary>[KS-3][TM-51] Aktif Special Weapon round sınırını aşar: klasik silah round sınırında geri alınmaz.</summary>
+        /// <summary>
+        /// DEC-099 (D6, kullanıcı 24.09) · elde tutulan Special round sonunda biter: Cancelled(RoundEnded, Active),
+        /// director Idle, klasik silah geri gelir; yeni round normal planlanabilir. (Eski KS-3 karakterizasyonu: elde kalırdı.)
+        /// </summary>
         [UnityTest]
         [Timeout(120000)]
-        public IEnumerator RoundSiniri_AktifSpecial_YeniRoundaGecer_Karakterizasyon()
+        public IEnumerator RoundSiniri_AktifSpecial_RoundSonundaBiter()
         {
             yield return Kur();
             yield return _s.SpawnEt(Pencere);
             _s.PickupaGit(_s.CanliPickup());
             yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "Special aktif olmadı.");
-            float kalanOnce = _s.Controller.Special.Remaining;
 
-            SpecialWeaponRoundBridge.NotifyRoundEnded(_s.Tur);
-            _s.Tur++;
-            _s.Ilerleme = 0f;
-            SpecialWeaponRoundBridge.NotifyRoundStarted(_s.Tur);
-            yield return SpecialWeaponSahne.Kareler(Kare);
+            var iptaller = new System.Collections.Generic.List<SpecialWeaponCancelInfo>();
+            System.Action<SpecialWeaponCancelInfo> onCancel = i => iptaller.Add(i);
+            WeaponEvents.SpecialWeaponCancelled += onCancel;
+            try
+            {
+                SpecialWeaponRoundBridge.NotifyRoundEnded(_s.Tur);
+                yield return SpecialWeaponSahne.Kareler(Kare);
+            }
+            finally
+            {
+                WeaponEvents.SpecialWeaponCancelled -= onCancel;
+            }
 
-            Assert.IsTrue(_s.Controller.SpecialWeaponActive, "Bugünkü prototipte aktif Special round sınırında elde kalır (karakterizasyon).");
-            Assert.AreEqual(SpecialWeaponDirector.SpecialWeaponState.InUse, _s.Director.State);
-            Assert.Less(_s.Controller.Special.Remaining, kalanOnce, "Aktif timer round sınırında durmaz (karakterizasyon).");
-            Assert.IsTrue(WeaponEvents.Classic.TemporarilyDisabled);
+            Assert.IsFalse(_s.Controller.SpecialWeaponActive, "aktif Special round sonunda biter");
+            Assert.AreEqual(SpecialWeaponDirector.SpecialWeaponState.Idle, _s.Director.State);
+            Assert.AreEqual(1, iptaller.Count);
+            Assert.AreEqual(SpecialWeaponCancelReason.RoundEnded, iptaller[0].Reason);
+            Assert.AreEqual(SpecialWeaponPhase.Active, iptaller[0].PhaseAtCancel);
+            Assert.IsFalse(WeaponEvents.Classic.TemporarilyDisabled, "klasik silah geri geldi");
         }
 
         /// <summary>[KS-4] Pickup anında süren reload iptal edilir: ReloadInterrupted 1, reload durumu düşer, ilerleme korunmaz; dönüşte park anındaki magazin.</summary>

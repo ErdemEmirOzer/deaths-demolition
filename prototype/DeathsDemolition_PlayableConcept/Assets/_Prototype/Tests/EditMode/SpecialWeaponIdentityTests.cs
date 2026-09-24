@@ -108,7 +108,25 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0.60f, guard.maxHpShare, 1e-4f);
             Assert.AreEqual(0.25f, SpecialImpacts.RuleFor(g.directHitRules, EnemyTier.Ultra).maxHpShare, 1e-4f);
             Assert.AreEqual(1.6f, g.puddleRadius, 1e-4f);
-            Assert.AreEqual(12, g.maxPuddles, "birikinti tavanı oyun kuralı");
+            Assert.AreEqual(8, g.maxPuddles, "birikinti tavanı oyun kuralı (DEC-099: 12 → 8)");
+            Assert.AreEqual(12f, g.puddleLifetimeSeconds, 1e-4f, "DEC-099: 25 → 12 s");
+        }
+
+        /// <summary>DEC-099 (D5): Namekuji kayması Standard / Runner her round, Guard R ≤ 10 öldürür, sonra %60; Executioner %20 + 3 s.</summary>
+        [Test]
+        public void Namekuji_Kayma_GuardRound10Siniri_Executioner20()
+        {
+            WeaponGelPuddleBlock g = SpecialWeaponConfigSection.DefinitionOf(SpecialWeaponId.Namekuji).gelPuddle;
+            Assert.IsTrue(SpecialImpacts.Kills(SpecialImpacts.RuleFor(g.slipRules, EnemyTier.Standard), 30));
+            Assert.IsTrue(SpecialImpacts.Kills(SpecialImpacts.RuleFor(g.slipRules, EnemyTier.Special), 30));
+            SpecialTierRule guard = SpecialImpacts.RuleFor(g.slipRules, EnemyTier.Elite);
+            Assert.IsTrue(SpecialImpacts.Kills(guard, 10), "Guard R10'da kayınca ölür");
+            Assert.IsFalse(SpecialImpacts.Kills(guard, 11), "Guard R11'de %60");
+            Assert.AreEqual(0.60f, guard.maxHpShare, 1e-4f);
+            SpecialTierRule ultra = SpecialImpacts.RuleFor(g.slipRules, EnemyTier.Ultra);
+            Assert.IsFalse(SpecialImpacts.Kills(ultra, 1));
+            Assert.AreEqual(0.20f, ultra.maxHpShare, 1e-4f);
+            Assert.AreEqual(3f, ultra.immuneSeconds, 1e-4f);
         }
 
         [Test]
