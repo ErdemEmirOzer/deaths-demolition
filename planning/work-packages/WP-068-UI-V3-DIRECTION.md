@@ -15,7 +15,7 @@ Kısaltmalar: AD art-director · UX ui-ux-designer · ID interaction-designer ·
 3. Renk v3: `StateWarning` **#F7C766** her iki palette (altın rezervinden ΔL* 10,8); CB mavileri indigo (#7FA6D9 / #5F8CC4); iki yeşil kalır.
 4. Tek hareket motoru: `UiMotion` (256 struct, 3 saat, cue'lu zaman çizelgesi, MotionClass politikası), preset'ler tek giriş, `DD/UI/Fx` tek uber shader; süreler 80/140/220/280/400/600 ms; RM'nin asla bastırmadığı **Data** sınıfı.
 5. Menü/Selection arka planı: **motor içi Look B plaka yığını** (S-05 yakalar, 3 katman, parallax 4/8/12 px); canlı 3B ve video yok.
-6. Perde dürüst: kapan 280 → tam kapalı kare → senkron yükleme → aç 280; ilerleme çubuğu/spinner yok.
+6. Perde dürüst: kapan 280 → tam kapalı kare → senkron yükleme → aç 280; ilerleme çubuğu/spinner yok. **24.09 kullanıcı kapsamıyla değişti: async yükleme + gerçek yükleme ekranı, §15 bağlayıcıdır** (AD).
 7. Koşu içinde toast yok; kare-doğru şeritler (NEW BEST ROUND, ELITE/ULTRA DOWN) afiş yuvasında.
 8. Blur yalnız donmuş kare (pause/dükkân/ölüm), bir kez yakalanır.
 9. Hold-to-confirm tek token 500 ms: RESET ALL BINDINGS (kesin) + REROLL (kullanıcı); END RUN diyaloğu kalır, QUIT tek dokunuş.
@@ -30,7 +30,7 @@ Kısaltmalar: AD art-director · UX ui-ux-designer · ID interaction-designer ·
 | C1 | Shippori Mincho B1 700 (Display ≥ 24 px) · Oswald 500/600 (Numeric, basamak ilerlemeleri eşitlenir) · Source Sans 3 400/600 (H3→Caption); yedek: Spectral SC yalnız Display | Source Sans 3 Liberation'dan ≈ %12 dar → 1408 px sayfa + TextScale 1,25'te tek yardımcı gövde yüzü; Oswald 22 px'te HudInk üstünde 1/7, 6/9 ayırır | GR P1, AD r2 C1, DSE r2 C1, US U4 |
 | C2 | Motor içi Look B plaka yığını (S-05 yakalar), 3 katman, parallax 4/8/12 px Follow 0,20 s; canlı 3B/video yok; portreler açılışta motor içi render (statik) MUST, turntable SHOULD | Yakalama LUT'tan geçmiş ve 0 kredi; canlı dünya menüde çift yükleme; boyalı plakalar 6 MB | US U7/U8, AD r2 C2, GR r2 §1 |
 | C3 | İki dal: (a) LZ4HC ≥ 5 MB açarsa tam MUST (+2,0 MB); (b) açmazsa tek plaka (+0,4 MB) + kesme sırası + 560 MB seçeneği | 0,7 MB kâğıt marjı tahmin hatasının içinde; S-01 ölçümü marjı gerçek yapar | US r2 C3, AD r2 C3, GR r2 C3 |
-| C4 | Kapan 280 ms → iki `yield return null` ile tam kapalı kare → senkron `LoadScene` → ilk render karesinde aç 280 ms; statik kart (mühür + mevcut bir kural cümlesi); ilerleme/spinner/ipucu yok; RM: kes → ≥ 300 ms tut → kes | `SceneManager.LoadScene(Single)` bloklar; donmuş spinner "asıldı" okunur; Accessibility paneli "screen fades are instant" diyor | US U10, AS r2 C4, ID r2 C4, UX r2 C4 |
+| C4 | ~~Kapan 280 ms → iki `yield return null` ile tam kapalı kare → senkron `LoadScene` → ilk render karesinde aç 280 ms; statik kart (mühür + mevcut bir kural cümlesi); ilerleme/spinner/ipucu yok; RM: kes → ≥ 300 ms tut → kes~~ **§15 ile değişti (24.09): `LoadSceneAsync` + `allowSceneActivation`, dürüst ensō halkası 0–0,9 + aktivasyon adımı, U9 ipucu satırı** (AD) | `SceneManager.LoadScene(Single)` bloklar; donmuş spinner "asıldı" okunur; Accessibility paneli "screen fades are instant" diyor | US U10, AS r2 C4, ID r2 C4, UX r2 C4 |
 | C5 | `StateWarning` #F7C766 (iki palet); CB `StateSuccess` #7FA6D9, CB `BarHealth` #5F8CC4; iki yeşil kalır; ayrım testi ΔL* ≥ 10 | Default'ta Warning == Gold400 birebir; #F7C766 altından ΔL* 10,8, tehlikeden 20,5; tablo 0 FAIL | DSE P2/r2, AD r2 C5, UX r2 C5 |
 | C6 | Koşu içi başarım/unlock toast'ı yok; kare-doğru şeritler afiş yuvasında (NEW BEST ROUND kullanıcı, ELITE/ULTRA DOWN 0,6 s damga SHOULD); toast bileşeni v3 dışı | `AchievementEngine.Evaluate` yalnız koşu sonu çalışır; sıfır üretici için kuyruk ölü ağırlık | GD P11/r2, ID r2, AS r2, SD r2 |
 | C7 | Tek `UiMotion` sürücüsü (AS P1) + DSE preset kaydı + US `DD/UI/Fx`; kanal listesinde GraphicColor yok (Tint = `CanvasRenderer.SetColor`); Data sınıfı RM'de değişmez | Üç runner üç politika noktası; `TMP.color` per-frame tam regen (bugünkü `UiButton` maliyeti) | AS P1/r2, DSE P5/r2, US U2/U3, GD r2 C7 |
@@ -229,7 +229,7 @@ Ortak: her ekran `Expand` tuvalinde 1408 sayfaya tasarlanır, 1728'e sütun kesr
 
 ### E1 · Boot / ilk kare
 - **Yerleşim:** `SurfaceBase` (Unity splash arka planı #1F1F20 → #12100F); merkezde mühür 240 px (reticle halkası + yaprak, Vermilion600 — ekranda CTA yok, bütçe tutar); altında wordmark Display 700 tracking +0,08 "DEATHS DEMOLITION" (canlı TMP, 0 kredi); kicker Label "PLAYABLE CONCEPT · PROTOTYPE".
-- **Koreografi ≤ 1,6 s, her girdi atlar:** t0 mürekkep lekesi InkReveal 500 ms → t 0,55 mühür Stamp (temas t 0,64) → t 0,70 wordmark Clip wipe 280 → tut 600 → perde MainMenu'ye. Parlaklık asla > %20 sıçramaz (ink on ink).
+- **Koreografi ≤ 1,6 s, her girdi atlar:** t0 mürekkep lekesi InkReveal 500 ms → t 0,55 mühür Stamp (temas t 0,64) → t 0,70 wordmark Clip wipe 280 → tut 600 → perde MainMenu'ye. Boot ve ilk yükleme tek nesnedir: MainMenu t0'da async yüklenir, mühür yükleme ekranının merkezi olur — el verme §15.3 (AD). Parlaklık asla > %20 sıçramaz (ink on ink).
 - **Ses:** mürekkep yayılma 0,5 s → mühür `BootLogo` tok (çan kullanıcı §13); atlamada 120 ms fade.
 - **RM:** statik kompozit 1,0 s, kes. **Sıklık:** §13.
 
@@ -369,7 +369,7 @@ Ortak: her ekran `Expand` tuvalinde 1408 sayfaya tasarlanır, 1728'e sütun kesr
 ### E28 · Tooltip (SHOULD)
 - `UiTooltip` yalnız karar ekranlarında (Selection stat/dal, Shop dal/tier, Achievements ölçüt, Profile unlock); içerik = katalog cümlesi + arkasındaki sayılar; kural cümlelerinin yerini asla almaz (kısıt 1). Fare 350 ms / pad odak 500 ms (nav tekrar 100 ms'de açılıp kapanmasın), odak taşınınca 0 ms; ankrajın sağı/üstü, 80 px içinde çevirir; boyut bir kez ölçülür. Sessiz.
 
-### E29 · Yükleme / sahne geçişi — perde (C4)
+### E29 · Yükleme / sahne geçişi — perde (C4) — **§15 bu satırın üstüne yazar (async yükleme ekranı, 24.09 kullanıcı kapsamı); aşağıdaki senkron tarif yalnız tarihçe** (AD)
 - `UiCurtain`: kapan 280 Move → `yield return null` ×2 (batchmode'da `WaitForEndOfFrame` dönmez) → senkron `LoadScene` → yeni sahnenin ilk render karesinde aç 280 Settle. Kapalı kart: washi, mühür 96 + "LOADING" Label + **mevcut bir kural cümlesi** (dükkân girişi / "Skins are cosmetic" / "Profile progress unlocks content only…"), asla strateji ipucu; ilerleme çubuğu/halka/spinner **yok**; ipucu-plaka yok. Eklenen gecikme ≈ 0,56 s (bugünkü karartmanın yerine geçer). WP-061J iptal → kapı açılır. RM: kes → ≥ 300 ms → kes. Ses `UiCurtainClose` `LoadScene`'den ≥ 1 kare önce, `UiCurtainOpen` ilk karede; yükleme döngüsü/tık yok. Async yükleme + gerçek ilerleme = COULD, sahip UI dışı (S-01/S-05).
 
 ### E30 · İmleç
@@ -385,7 +385,7 @@ Ortak: her ekran `Expand` tuvalinde 1408 sayfaya tasarlanır, 1728'e sütun kesr
 
 **6.2 Boot / logo.** §5 E1: ≤ 1,6 s, mühür vektör (0 kr), wordmark canlı TMP, mürekkep lekesi paylaşılan `_DD_Ink`. Sıklık ve çan kullanıcı.
 
-**6.3 Perde — senkron yüklemeye dürüst.** §5 E29. İlerleme vaat etmeyen, kapalı kapı gibi okunan tek geçiş; her sahne değişiminde aynı; ölümde mürekkep sızması perdenin kendisidir.
+**6.3 Perde → yükleme ekranı (24.09).** Kullanıcı kapsamı "oyunda yükleme olacaksa bir yükleme ekranı tasarımı yapmak gerekir" ile senkron perde yerini **async yükleme ekranına** bıraktı: `UiCurtain` iki derinlikli tek bileşen (CURTAIN = yalnız kapılar; SCREEN = kapılar + plaka + dürüst ensō halkası + U9 ipucu), seçim ölçülen son yükleme süresinden; ölümde mürekkep sızması yine perdenin kendisidir (SCREEN · ink variant). Geçiş haritası, akış, görsel, metin, testler ve sahipler **§15** (AD).
 
 **6.4 Donmuş kare blur.** `UiFrozenFrameFeature` (URP renderer feature, AfterRenderingPostProcessing) yalnız istek karesinde pass sıraya koyar: ¼ çözünürlük dual Kawase + mürekkep yıkama → kalıcı RT (0,5–1,5 MB RAM, 0 disk); ≈ 0,3 ms bir kez, sonra 0/kare; `RunFlowClock` tutması dünyayı dondurduğu için geçerli. Sıra 90'da çizilir, HUD 0,5'e söner; ölümde yakalanan kare Results arka planı olur (`UiFlowRunner` tutar). Metin blur üstüne oturmaz; modaller opak; scrim kalır.
 
@@ -539,7 +539,7 @@ Her dilim = bir commit + testleri + yakalama seti + AD turu gerekip gerekmediği
 | 7 | Selection | S-09 (+S-06 SHOULD) | E9: 3 kolon, motor içi portreler, StatStrip/CompareBars, locked/loading; turntable ayrı SHOULD commit (yükleme ≤ 0,5 s ölçümüyle) | T3, T8, EnsureUiCamera | selection × matris | **evet** | 5, 6 |
 | 8 | HUD v3 | S-09 + S-02 + S-07 + S-03 | E10–E23: yuva haritası v2, bar/ring/counter/chip, afiş/şerit; S-02 dürüst reticle (`CurrentSpreadDegrees`) + şekilli işaretler; S-07 TMP hasar sayıları + yay sprite + `Marker.Edge` beacon; S-03 `RearDirection` (arka yay SHOULD) | T4 HUD preset'leri, SpecialWeaponHudAllocationTests, T11 | bot r1/r4/r8/threat/low-health/special/enemy-status/upgrade | **evet** | 5, 4 |
 | 9 | Dükkân + Pause | S-09 (+S-07 blur) | E24, E25: ShopCard, deal/buy/wipe/lock, hold (RESET kesin, REROLL kullanıcı), modal, donmuş kare | T4 deal/wipe/stamp 0 B, T8 | upgrade/pause × matris | **evet** | 5, 4 |
-| 10 | Results + ölüm + perde + boot | S-09 (+S-07 ink) | E26, E22, E29, E1: cue'lu zaman çizelgesi, InkBleed, `UiCurtain`, mühür | T4, cue sıra testi, WP-061J iptal PlayMode | results/boot/curtain kareleri | **evet** | 5, 4 |
+| 10 | Results + ölüm + **yükleme ekranı (§15)** + boot | S-09 (+S-01 async `Load`/eşik tablosu/watchdog, +S-07 ink, +S-08 cue) | E26, E22, E1 + §15: cue'lu zaman çizelgesi, InkBleed, `UiCurtain` iki derinlik, ensō `UiRing`, mühür el verme, U9 ipucu seti (`loading.*`), hata modalı | T4, cue sıra testi, **T15–T19 (§15.7)**, WP-061J iptal PlayMode | results/boot kareleri + §15.7 yükleme kare seti (0 / 0,5 / 0,9 / ENTERING, ink variant, hata, 21:9, Mac, RM, 1,25) | **evet** | 5, 4, 12a (ölçülen süreler) (AD) |
 | 11 | UI ses v3 | S-08 | M1 sözleşme (50 olay), M2 varyasyon/hız, M3 mix + `UiVolume` (kullanıcı), M4 6 render + türev, §5 zamanlama tablosu | `UiEventsTests`, kapsama %100, ardışık 0, `AudioOutputCapture` ≥ 6 LU | `-ddAudioCapture` | hayır (dinleme turu) | 2 (cue'lar), her ekran diliminin olayları |
 | 12b | Kapanış ölçümü | S-01 + S-10 | build boyutu final, `-ddUiPerf` §8 tablosu, matris kareleri | §8 | — | AD nihai | hepsi |
 
@@ -571,6 +571,8 @@ Yakalama seti dilim başına §11; menüler 4 çözünürlük × UI scale {0,9, 
 ---
 
 ## 13 · Kullanıcı kararları (yalnız gerçek olanlar; konsey önerisiyle)
+
+**Kabul (kullanıcı 2026-09-24, C-00 aracılığıyla):** U1–U12 konsey önerileriyle aynen kabul edildi — U1 Shippori Mincho B1 · U2 release varsayılanı LZ4HC (S-01 ölçümü 547 → 323 MB, yükleme cezası yok; tavan 550 kalır → **dal (a) tam MUST**) · U3 kredi 56 (görsel 32 / ses 24; sert 65) · U4 `StateWarning` #F7C766 · U5 REROLL hold 500 ms · U6 NEW BEST ROUND koşu içi · U7 boot mührü her açılış + çan · U8 UI SOUNDS kaydırıcısı · U9 ipuçları ilk 3 koşu açık · U10 iki yeşil · U11 önce→sonra kartta · U12 S-02 `CurrentSpreadDegrees` + S-03 `RearDirection` onay. Ek kapsam (kullanıcı): gerçek yükleme ekranı → §15.
 
 | # | karar | seçenekler | konsey önerisi |
 |---|---|---|---|
@@ -624,3 +626,109 @@ Yakalama seti dilim başına §11; menüler 4 çözünürlük × UI scale {0,9, 
 6. **Display kararı dilim 3'ü bloklamaz:** Body/Numeric donar, Display yuvası boş kalır (bugünkü davranış: `UiFonts.Primary` → LiberationSans); U1 sonrası tek commit.
 
 Bu altı madde dışında belge bağlayıcıdır; ekran dilimlerinin AD turu kararları bu belgeye ve stil kılavuzu §2.2/§2.4'e göre verilir.
+
+---
+
+## 15 · Yükleme ekranı (dilim 10, kullanıcı kapsamı 24.09)
+
+**Kaynak:** `council/LOADING-BRIEF.md` (kullanıcı: "oyunda yükleme olacaksa bir yükleme ekranı tasarımı yapmak gerekir"), `loading-interaction-designer.md` (ID), `loading-art-director.md` (AD), `loading-ux-writer.md` (UXW), `PrototypeUiFlow.cs`, S-01 ölçümleri (release LZ4HC: menü ≈ 3,6 s, dünya ≈ 4,1 s). Bu bölüm §5 E29, §6.3 ve C4'ün senkron tarifinin üstüne yazar; §4 #24 `UiCurtain` bileşeni burada iki derinlik kazanır.
+
+**Tek çatışmanın kararı (AD):** ID'nin eşik kuralı — hedef sahnenin *ölçülen son* yükleme süresi < 0,9 s ise CURTAIN, değilse (ya da ölçülmemişse) SCREEN — **mekanizmadır**; AD'nin geçiş başına sanatı (mühür varyantı, kapı + plaka, mürekkep varyantı) **hedefe göre varyanttır** ve eşikle birlikte yaşar. Bugün altı geçiş de 3,6–4,1 s → altısı da SCREEN; AD'nin MainMenu→Selection perdesi ölçülmemiş bir tahmine dayanıyordu, düşer; Run→Results mürekkebi "SCREEN · ink variant" olarak aynen kalır. CURTAIN derinliği, yüklemelerin hızlandığı gün tasarımın yalan söylememesi için vardır.
+
+### 15.1 Geçiş haritası
+
+| geçiş | ölçülen | yüzey · varyant | arka plan (hepsi yerleşik, 0 MB) | eyebrow / hedef etiketi (UXW §2) | ipucu | asgari gösterim |
+|---|---|---|---|---|---|---|
+| Boot → MainMenu | 3,6 s | SCREEN · **mühür varyantı** (kapı yok; U7 mührü yükleme ekranıdır) | mürekkep `SurfaceBase` | — / wordmark `DEATHS DEMOLITION` + kicker | yok | mühür koreografisi 1,6 s |
+| MainMenu → Selection | 3,6 s | SCREEN · kapı + plaka | uzak plaka P1, cover, scrim 0,55→0,80 | `LOADING` / `BEFORE THE RUN` (Selection kicker'ı) | havuzdan | 1 200 ms |
+| Selection → Run | 4,1 s | SCREEN · kapı + plaka | uzak + orta plaka (fenerler yanık: gidilen yer) | `LOADING` / `ROUND 1` · alt satır silah `DisplayName` | havuzdan (en ağır yükleme, ipucunun yerini kazandığı tek yer) | 1 200 ms |
+| Run → Results | 3,6 s | SCREEN · **mürekkep varyantı** (E22 sızması kapının kapanışıdır; kapı çizilmez) | donmuş ölüm karesi (§6.4) + InkBleed | `LOADING` / `RUN RESULTS` | yok | ölüm vuruşu 2,4 s (`DeathResultsDelaySeconds`) |
+| Results → MainMenu | 3,6 s | SCREEN · kapı + plaka | uzak plaka P1 | `LOADING` / `MAIN MENU` | havuzdan (FACT) | 1 200 ms |
+| Run → MainMenu (Pause'dan iptal) | 3,6 s | SCREEN · kapı + plaka | donmuş pause karesi (blur) altında kapılar, scrim 0,72 | `LOADING` / `MAIN MENU` | **yok** (çıkıştan sonra koçluk yok) | 1 200 ms |
+
+Kural: hiçbir sahne spekülatif yüklenmez (`LoadSceneAsync` iptal edilemez); yükleme yalnız geçiş isteğiyle başlar — ölüm vuruşu sırasında Results ön yüklemesi yok. Aynı anda tek yükleme: bekleyen yükleme varken `Load()` log satırıyla yok sayılır. Eşik tablosu `ui-settings.json`'da (profil değil), her tamamlanan yükleme süresini geri yazar.
+
+### 15.2 Async akış (istek t0'dan; §2.5 tokenları)
+
+1. **t0 istek** — `Load()`: `s_transition++`, `CanStreamedLevelBeLoaded` (yoksa log, hiçbir şey kımıldamaz), `UiCurtainClose` cue, raycast'ler kapalı + `EventSystem.SetSelectedGameObject(null)`, imleç gizli. Çıkan ekran `ExitScreen` Fast 140 kapıların altında. `CompletionAuthority.InvalidateLive()` / `ProfileService.ClearLastReport()` istek anında kalır.
+2. **t0–280 kapan** — kapılar Move 280, merkezde buluşur (mürekkep varyantı: InkBleed Brush; mühür varyantı: kapı yok, mürekkep lekesi). Menü bed'i sürer.
+3. **t280 kapalı kare** — `yield return null` ×2 (batchmode kuralı) → `LoadSceneAsync(scene, Single)`, `allowSceneActivation = false`. Çağrı kapılar kapandıktan sonra: kendi takılması tween ortasında görünmez.
+4. **t300–520 grup girişi** — plaka + halka + etiketler + ipucu şeridi tek `CanvasGroup`, PaneIn Base 220 (yalnız SCREEN). Halka gerçek ilerlemeden başlar.
+5. **yükleme** — halka §15.3; **dünya donuk kalır: `ReleaseSimulation()` istekten 7. adıma taşınır** (bugün bloklayan yüklemenin önünde; async'te kapı arkasında düşmanlar yürür, hasar ve ölüm olayı üretirdi).
+6. **kapı (gate)** — aktivasyon üçünü ister: `op.progress ≥ 0,9` · asgari gösterim doldu (grup girişinden ≥ 1 200 ms = 2 × Reveal; kapıdan kapıya ≥ 1 760 ms) · Boot'ta mühür koreografisi bitti.
+7. **aktivasyon** — mühür `Stamp` (130 ms; temas t 90'da `ReleaseSimulation()` + `allowSceneActivation = true`), eyebrow `ENTERING`. `sceneLoaded` → `OnSceneLoaded` `s_transition++` + Run'da hand-off yeniden kurulur (değişmez). `op.isDone` → `yield return null` ×2: yeni sahne kapalı kapının **arkasında** bir kez render edilir; yeni ekranlar intro'yu `Start()`'ta değil `UiCurtain.Revealed`'da başlatır. Halka son 36°'yi bu iki karede Settle 220 ile kapatır.
+8. **açılış** — grup Exit Fast 140 → kapılar Settle 280; hedef ekranın `EnterScreen`'i kapılar %50 açıkken (t +140) başlar; `UiCurtainOpen` cue ilk açık karede; imleç ve raycast'ler ilk `EnterScreen` karesiyle döner; hedef ekranın odak hafızası `Revealed`'da uygulanır.
+
+**Anti-flicker:** grup asla < 600 ms görünmez; yükleme t < 500'de ≥ 0,9 bildirirse grup hiç gösterilmez, geçiş CURTAIN'e düşer (kapalı ≥ 300 ms tut, aç). **Beklenenden hızlı (SCREEN seçili):** halka 0,9'da açık kalır, asgari gösterim dolunca damga — dürüst, aktivasyon gerçekten ertelenmiştir. **Beklenenden yavaş (CURTAIN seçili, > 900 ms):** grup t 900'de geç girer, asgari gösterim girişten sayılır, süre geri yazılır. **Takılma:** ilerleme 10 s değişmezse ipucu altında `UiNotice Info` `loading.state.stalled`; ≥ 60 s hata modalı (§15.4). Ham yüklemeye eklenen gecikme ≈ 0,7 s (280 + 2 kare + 140 + 280).
+
+**WP-061J:** `Load()` tek giriş kalır; `s_transition` istekte ve aktivasyonda artar → bekleyen `GoToResultsAfterDelay(scheduledAt)` uyuşmazlıkta vazgeçer, taze Run `s_resultsScheduled = false` ile yeniden kurar; additive dünya yüklemesi geçiş değildir. Results ön yüklenmediği için ölüm vuruşunda iptal bugünkü gibi davranır.
+
+### 15.3 Görsel spesifikasyon (AD)
+
+**Yerleşim (1920×1080 referans; `Expand`, 1408 sayfa kuralı).** Kart yok: halka plakanın üstünde yüzer (Elev0), kapılar ve plaka yüzeyi zaten verir; 560×240 kart 96 mühür + halka + üç satırı sıkıştırırdı. Plaka `cover`, statik (parallax/yağmur yok — yükleme ekranı menü değildir); üstünde `ScrimOverlay` gradyanı Sumi900 α 0,55 (üst) → 0,80 (alt): alt üçte bir metin-güvenli (T10 en koyu uçla ölçülür). **Ensō halkası Ø 240, merkez (960, 500)** (gerçek merkezin 40 px üstü); içinde mühür cihazı 96 (reticle halkası + yaprak, mürekkep). Eyebrow `LOADING`/`ENTERING` Label 15 caps `TextSecondary` +0,08 em, halkanın 24 px altı (üst y 644); hedef etiketi Display H2 24 caps `TextPrimary` 8 px altında; alt satır (silah adı) Label `TextSecondary`. **İpucu şeridi:** sol alt, x 96, alt kenar 1080 − 96, genişlik ≤ 720 (`MaxMeasure`), yükseklik 56 (1,25'te iki satır → 80, yukarı büyür); `SurfaceBase` α 0,72, 1 px `BorderHairline` üst kenar, Elev0 (gölge/bevel yok — washi şerit); `Tooltip.Info` glifi 20 px `TextSecondary` + Body 18 Source Sans 3 `TextPrimary`. Prompt yok. **21:9:** plaka yükseklik kırpar, halka (1280, 500), şerit 1728 kutusuna hizalı (x 416). **Mac 1920×1247:** halka (960, 583), şerit altı 1247 − 96, fazla yükseklik plakaya. **Kapılar:** iki lake panel, kumiko karosu A6 α ≤ 0,08, `UiLayer.Curtain` 400, `UiFlowRunner` canvas'ı (menüde ScreenSpaceCamera, Run'da Overlay, `sceneLoaded`'da yeniden bağlanır — T13). Grup ≤ 12 grafik, raycaster yok.
+
+**Ensō halkası — dürüst ilerleme.** Tek `UiRing` (`Image.Filled Radial360`, 12'den saat yönü), `DD/UI/Fx` InkReveal ile ensō fırça darbesi boyunca çizilir (A8 mürekkep kiti üçüncü darbe, G kanalında zaman haritası). **Data sınıfı:** `fillAmount` = `op.progress` 0→0,9 → 0→324°, Linear, asla ease yok, mevcut değerden yeniden hedefler; gösterim gerçeğin önüne geçmez, gerisinde Reveal 600'den fazla kalmaz; yazım yalnız Δ ≥ 1/256'da.
+
+| durum | görünen |
+|---|---|
+| 0 | hayalet halka Cream100 α 0,12 (tam ensō, kuru); mühür cihazı içeride mürekkep α 0,35; `LOADING` |
+| 0,5 | darbe 162°'ye çizilmiş; uçta 0,04 genişlik ıslak-kenar bandı koyulaşır (InkReveal); darbe `TextPrimary` krem, 14 px (fırça gibi 10–18 arası); ileride hayalet halka görünür |
+| 0,9 | darbe 324°'de; ensō'nun ağzı (36°) **açık** — iş bitmediği için daire kapanmaz |
+| aktivasyon | mühür Stamp (1,12→1,00, 130 ms, mürekkep → `TextPrimary`) adımı işaretler, eyebrow `ENTERING`; `sceneLoaded` sonrası son 36° Settle 220 ile kapanır, yeni sahnenin ilk karesi kapalı kapı arkasındayken → grup Exit 140 → kapılar açılır. Aktivasyon takılması damganın altına düşer, boş bekleyişe değil |
+
+Glint yok, altın yok, flaş yok: halka krem, mühür mürekkep, ıslak kenar Sumi. CURTAIN derinliğinde ve mürekkep varyantında aynı halka Ø 160, yalnız 1,2 s'den sonra belirir (kapalı kapıların üstünde / mürekkebin içinde), aynı durumlar.
+
+**Boot mührü → ilk yükleme (U7: her açılış + çan).** Boot ve ilk yükleme tek nesnedir: Boot sahnesi t0'da `LoadSceneAsync(MainMenu)`'yü aktivasyon tutarak başlatır, E1 koreografisi yükleme canvas'ında oynar: t0 mürekkep lekesi InkReveal 500 → t 0,55 mühür Stamp, temas t 0,64 = `BootLogo` çan (tek rin vuruşu) → t 0,70 wordmark Display 700 Clip wipe 280, kicker üstte → t 1,6'ya tut. **El verme t 1,6'da (ya da atlamada):** mühür Tint Vermilion600 → mürekkep `TextSecondary` 220 ms (vermilion logonundur, yükleme mührü mürekkeptir), wordmark Exit 140, `LOADING` aynı taban çizgisinde girer, ensō hayalet halkası mührün çevresinde **o anki** ilerlemede belirir (çoğu kez 0,9 — anında çizilir, damgalar). Menü t 1,6'dan önce hazırsa fazladan hiçbir şey görünmez: mühür tutması yüklemeyi yutar, t 1,6 damgası aktivasyondur. Atlama: boot tween'leri t = 1, çan 120 ms fade, halka gerçek ilerlemede — atlamak hazırlığı asla taklit etmez. Parlaklık > %20 sıçramaz, beyaz kare yok.
+
+### 15.4 Metin (UXW; anahtarlar `loading.*`)
+
+- **İpucu havuzu:** UXW §1'in 24 ipucu (FACT/HINT; her biri ≤ 90 karakter, kod/karar satırıyla doğrulanmış) + ID'nin üç bağlama ipucu (`Reload`, `Special Weapon`, `Interact` — `UiPrompt` ile canlı bağlama metni + şema glifi, yapı gereği doğru) HINT sınıfında. **Seçim kuralları (UXW §1.1):** ipuçları açıkken (profil koşusu < 3 ve HINTS ON) önce HINT, her HINT profil başına bir kez (9+3 bitlik maske), sonra FACT; ipuçları kapalıyken yalnız FACT; beş grup arası round-robin, oturumda tekrar yok, oturumun ilk yükleme ekranı survival ipucu göstermez; ipucu yükleme ortasında değişmez. Boot, Results ve iptal geçişlerinde ipucu yok. Settings anahtarı `HINTS` ON/OFF, caption UXW'de. R1–R4 kural cümleleri kullanılmaz (CURTAIN derinliği metinsizdir; < 0,9 s'de okunacak vakit yok).
+- **Durum satırları:** `LOADING` (0–0,9) · `ENTERING` (aktivasyon → ilk render; asla `READY`) · RM'de `LOADING · {0}%` (0–90 op'tan, 90–100 aktivasyonda, 10'ar adım, Count kanalı `SetText`, 0 ayırma) · `loading.rm.static` satırı ("Loading. The screen changes on its own; no input is needed.") ipucu şeridinde. "Your run is already recorded." alt satırı ve hata ekindeki türevi **düşer** (yükleme sırasında `LastVerdict` okunmaz; Results zaten söyler).
+- **Hata modalı (UXW §2.2):** `UiModal M` 640×340 opak, scrim yok; başlık `THE NEXT SCREEN DID NOT LOAD` Display H2; gövde `loading.error.body.missing` / `.stalled` ({destination} cümle düzeninde); birincil `RETURN TO MAIN MENU` (hedef MainMenu değilse; odak burada) veya `TRY AGAIN` (MainMenu'nün kendisi çöktüyse); ikincil `QUIT` (mevcut etiket), Cancel'a bağlı değil; Esc/B hiçbir şey yapmaz. Tetik: `CanStreamedLevelBeLoaded` false → log (kapılar kımıldamaz, modal yok); `LoadSceneAsync` null → kapılar asgari gösterimden sonra eski sahnenin üstüne açılır, modal onun üstünde; Run→Results çökerse eski sahne ölü koşudur (donmuş kare + modal), profil `ProfileRunCommitter` ile zaten yazılmıştır; ≥ 60 s takılma → `.stalled` modalı yalnız `QUIT` ile (async yükleme iptal edilemez; üst üste ikinci `Load()`'un güvenliği S-01 testinde kanıtlanırsa `RETURN TO MAIN MENU` eklenir). Hiçbir yol profile yazmaz.
+
+### 15.5 Erişilebilirlik ve girdi
+
+- **RM:** kapılar t0'da kapalıya kesilir (0 ms — panel vaadi), grup t0'da dinlenmede, **halka Linear kalır (Data)**, ıslak-kenar titremesi yok, damga anında, asgari gösterim tutulur, kesilerek açılır, hedef `EnterScreen` dinlenmede; Boot: statik kompozit 1,0 s + halka; mürekkep varyantı: dim anında, statik mürekkep, 2,4 s'de kes; RM metin satırı §15.4.
+- **Reduce Flashes:** her yüzey mürekkep/lake (#12100F), asla beyaz; kapı kapan/aç parlaklığı 280 ms'de kademeli; RM'deki iki kesme (koyu, ≥ 1,76 s sonra açık) 3 Hz'in çok altında; mühür Stamp Decor'dur, Flash değil; burada hiçbir şey `FlashScale` ile çarpılmaz çünkü hiçbir şey flaşlamaz.
+- **TextScale 1,25:** şerit iki satıra akar ve yukarı büyür (117 karakter rezerv, 1408 sayfada iki satır); halka ve etiketler dokunulmaz; hata modalı gövdesi otomatik yükseklik.
+- **CB paleti:** durum = kelime (`LOADING`/`ENTERING`) + şekil (açık/kapalı ensō); renk taşımaz.
+- **Girdi:** yükleme sırasında yok (atlanacak şey yok; Esc/B yok sayılır, OS çıkış yolu kalır; tekrar zamanlayıcıları ve odak hafızası donuk). Boot koreografisi Submit/Cancel/tık ile sessizce atlanır, görünür prompt yok (1,6 s vuruşta gürültü). Hata modalı standart `UiButton` + pad odağı; altbilgi eklenirse `{Submit} RETURN TO MAIN MENU` glifi `UiInputGlyphs`'tan, `{Cancel}` girdisi yok. UI modülü InputSystem okumaz (T14).
+
+### 15.6 Varlıklar
+
+| kalem | kaynak | MB | kr |
+|---|---|---|---|
+| uzak / orta plakalar | P1/P2 dilim 6 yakalaması (§7.1) | 0 yeni | 0 |
+| ensō darbesi + zaman haritası | A8 mürekkep kiti (üçüncü darbe, aynı 1024² BC4 sheet) | 0 yeni | 0 (A8'in 3'ü içinde) |
+| mühür cihazı | V2 vektör (G1 SDF hücresi) | 0 | 0 |
+| `Tooltip.Info` glifi | A3 | 0 | 0 |
+| kapılar | kumiko A6 + `Frame.Modal` | 0 | 0 |
+| ipucu dizeleri `loading.*` (27) + durum/hata (≈ 12) | UXW, kod | ≈ 0,01 | 0 |
+| **toplam** | | **+0,01 MB** | **+0 kr** (görsel 19 MUST / 32 tavan değişmez; U3 içinde) |
+
+Sumi-e yükleme plakası COULD kalır (Look B yakalaması anahtar sanattır; boyalı plaka ikinci bir hava olurdu).
+
+### 15.7 Testler (T15–T19; dilim 10 kapısı)
+
+| # | kapı | eşik |
+|---|---|---|
+| T15 | Async akış PlayMode: 2 s yapay yükleme → halka monoton artan, kapılar `op.isDone` öncesi asla açılmaz, `sceneLoaded` Single `s_transition`'ı artırır, hedef `EnterScreen` yalnız `Revealed` sonrası; `ReleaseSimulation()` aktivasyondan önce çağrılmaz (dünya kapı arkasında 0 kare ilerler) | geçer |
+| T16 | Asgari gösterim / anti-flicker: 0,2 s yükleme → grup hiç görünmez, CURTAIN (kapalı ≥ 300 ms); 0,7 s → grup ≥ 1 200 ms; SCREEN seçili + erken biten yükleme → halka 0,9'da bekler, damga kapıda | geçer |
+| T17 | WP-061J: ölüm t 1,0'da iptal → MainMenu, Results yok; doğrudan Run boot'u hand-off'u yeniden kurar; bekleyen yükleme varken `Load()` yok sayılır + log; Run→Results 2 s yapay yükleme → Results açılır, ölüm karesi arka plan | geçer |
+| T18 | 0 ayırma yükleme boyunca: yığın-delta + pozitif kontrol, 300 kare SCREEN (halka + ipucu + plaka), `fillAmount` yalnız Δ ≥ 1/256'da yazılır, ipucu bir kez set; konsola hata/uyarı yok (kriter 27) | 0 B, 0 log |
+| T19 | Metin: 27 ipucu ≤ 90 karakter; 1408 sayfada 1,25'te ≤ 2 satır (`GetPreferredValues`); oturumda tekrar yok; HINT maskesi profil başına bir kez; ilk ekranda survival yok; hata başlığı +%30'da tek satır; `isTextTruncated` = 0 | geçer |
+
+Ek: T13 (perde `sceneLoaded` yeniden bağlanma) ve T14 (InputSystem paritesi) dilim 10'da tekrar koşar. AD turu kare seti: boot t 0,64 ve t 1,6; Run'a yükleme 0 / 0,5 / 0,9 / ENTERING; Results mürekkep varyantı; iptal (pause karesi altında kapılar); hata modalı; 21:9; Mac 1247; RM; TextScale 1,25.
+
+### 15.8 Dilim 10 sahip bölüşümü
+
+| sahip | iş |
+|---|---|
+| S-01 | `PrototypeUiFlow.Load` → `UiFlowRunner` üstünde async coroutine (aktivasyon tutma, `ReleaseSimulation` aktivasyona, tek yükleme kuralı), sahne başına son-yükleme eşik tablosu (`ui-settings.json`) + geri yazma, watchdog (10 s / 60 s), T15–T17'nin akış yarısı, ölçülen sürelerin kaydı (12a) |
+| S-09 | `UiCurtain` iki derinlik + varyantlar (mühür / kapı+plaka / mürekkep), ensō `UiRing` + InkReveal bağlaması, etiketler ve eyebrow durumları, ipucu seçimi + HINT maskesi + `HINTS` ayarı, hata modalı, RM/CB/1,25 yolları, T16/T18/T19, kare seti |
+| S-07 | A8 ensō darbesi + zaman haritası, InkReveal/InkBleed modları, donmuş kare (ölüm/pause) yeniden kullanımı |
+| S-08 | `UiCurtainClose`/`Open` cue'ları (kapanış `LoadSceneAsync`'ten ≥ 1 kare önce), `BootLogo` çanı + atlamada 120 ms fade, yükleme sırasında döngü/tık yok, menü bed'i sürer |
+| UXW | `loading.*` dize dosyası (27 ipucu + durum + hata), pseudo-localization geçişi |
+| AD | kadraj/plaka seçimi (dilim 6 ile ortak), dilim 10 AD turu (kare seti §15.7) |
+
+Sıra: S-01 async `Load` + T15/T17 → S-09 `UiCurtain` v2 + T16/T18/T19 → S-07 mürekkep → S-08 cue'lar → AD turu → ff.
