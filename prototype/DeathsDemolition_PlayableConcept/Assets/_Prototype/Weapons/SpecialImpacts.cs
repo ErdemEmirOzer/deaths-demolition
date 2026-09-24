@@ -237,6 +237,7 @@ namespace DD.Prototype.Weapons
             Apply(SpecialWeaponId.Raiju, c.Transaction, c.Targets[i], amount, c.Def.arcChain.ignoresArmor, c.Def.projectile.impulse, DamageSourceKind.Chain,
                 HitscanEngine.CentreOf(c.Targets[i]), Vector3.up);
             if (lethal) LethalApplied++;
+            if (!body.IsAlive) SpecialLinks.OnRaijuKill();   // WP-077 link.arc.storm
         }
 
         private static void SelfShock(Chain c)

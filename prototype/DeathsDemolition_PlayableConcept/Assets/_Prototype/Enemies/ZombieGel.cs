@@ -37,6 +37,12 @@ namespace DD.Prototype.Enemies
         /// <summary>S-02 sets this to its SpecialGelEffects.ApplySlipOutcome (body, puddle id); null = the body survives and lies Downed.</summary>
         public static Action<ZombieEnemy, int> SlipOutcomeHandler;
 
+        /// <summary>
+        /// S-02 (WP-069 × WP-077 link.gel.slickfloor): the scale on every damage this body takes right now — ApplyHit and
+        /// ApplyExplosion multiply by it (null = 1). S-02's SpecialLinks.SlickScale answers 1.15 for a body in gel.
+        /// </summary>
+        public static Func<ZombieEnemy, float> IncomingDamageScale;
+
         public static int SlidesStarted { get; private set; }
         public static int SlipFalls { get; private set; }
         public static int Knockdowns { get; private set; }

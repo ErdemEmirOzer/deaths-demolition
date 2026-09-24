@@ -478,6 +478,12 @@ namespace DD.Prototype.Economy
         /// value contract), then exactly one packet. Every refusal is counted on the
         /// ledger and produces nothing.
         /// </summary>
+        /// <summary>
+        /// S-02 (WP-069 × WP-077 link.gel.freeze): extra gold for one death, added to the normal kill reward before the
+        /// ledger claims it (null = none). S-02's SpecialLinks.HarvestBonus answers +1 for a body that died in gel.
+        /// </summary>
+        public static Func<EnemyDeathInfo, int> KillBonus;
+
         private void OnEnemyDied(EnemyDeathInfo info)
         {
             // WP-008: the value is the enemy's SPAWN snapshot (base + version + spawn
@@ -485,19 +491,24 @@ namespace DD.Prototype.Economy
             GoldRewardValue value = GoldRewardValue.Resolve(in info.Reward, info.GoldReward, info.Tier, Config);
             _lastRewardValue = value;
 
-            GoldRewardVerdict verdict = _ledger.TryClaim(info.LifeId, value.Total);
+            // WP-069 × WP-077 (S-02 link.gel.freeze "Gel Harvest"): a run-tree bonus rides on the same packet — income.
+            int total = value.Total;
+            Func<EnemyDeathInfo, int> bonus = KillBonus;
+            if (bonus != null) total += Mathf.Max(0, bonus(info));
+
+            GoldRewardVerdict verdict = _ledger.TryClaim(info.LifeId, total);
             if (verdict != GoldRewardVerdict.Granted)
             {
                 return;
             }
 
-            if (!TrySpawnPacket(value.Total, info.Position))
+            if (!TrySpawnPacket(total, info.Position))
             {
                 // Counted safety net. The pool is sized per round, so this reads 0; if it
                 // ever does not, the kill still pays rather than vanishing, and the count
                 // says so.
                 _fallbackCredits++;
-                CreditPickup(value.Total, info.Position, _wallet.NextTransactionId());
+                CreditPickup(total, info.Position, _wallet.NextTransactionId());
             }
         }
 

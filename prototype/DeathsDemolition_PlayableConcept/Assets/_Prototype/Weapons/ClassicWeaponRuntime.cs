@@ -86,6 +86,19 @@ namespace DD.Prototype.Weapons
 
         public int MagazineSize => _settings != null ? Mathf.Max(1, _settings.MagazineSize) : 1;
 
+        /// <summary>
+        /// WP-069 × WP-077 (link.arc.storm): put up to <paramref name="rounds"/> into the magazine — parked or in hand —,
+        /// never above <see cref="MagazineSize"/>, the reserve untouched. Returns the rounds that went in.
+        /// </summary>
+        public int AddRounds(int rounds)
+        {
+            if (rounds <= 0 || _settings == null) return 0;
+            int added = Mathf.Min(rounds, MagazineSize - Ammo);
+            if (added <= 0) return 0;
+            Ammo += added;
+            return added;
+        }
+
         /// <summary>Debug-panel infinite ammo. Never reloads, never runs dry.</summary>
         public bool InfiniteAmmo { get; set; }
 
@@ -813,7 +826,8 @@ namespace DD.Prototype.Weapons
                 request.RicochetRadius = m.RicochetRadius;
                 request.RicochetDamageScale = m.RicochetDamageScale;
 
-                request.ChainTargets = perShotCarrier ? m.ChainTargets : 0;
+                // WP-077 link.arc.conductor: +1 jump while Raiju's link window is open (the Chain branch must be owned).
+                request.ChainTargets = perShotCarrier ? m.ChainTargets + (m.HasChain ? SpecialLinks.ConductorBonusJumps() : 0) : 0;
                 request.ChainRadius = m.ChainRadius;
                 request.ChainDamageScale = m.ChainDamageScale;
                 request.ChainDamageFalloff = m.ChainDamageFalloff;

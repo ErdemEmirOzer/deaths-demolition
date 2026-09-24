@@ -192,8 +192,10 @@ namespace DD.Prototype.Rounds
 
         private static readonly HashSet<string> s_live = new HashSet<string>
         {
-            HearthDamage, PurseGold
-            // + an effect id per hook as it lands (WP-069 B2/B3 weapon hooks, player systems)
+            HearthDamage, PurseGold,
+            // WP-069 × WP-077 (S-02 SpecialLinks): the four Special links, live with their hooks
+            LinkArcConductor, LinkArcStorm, LinkGelSlickFloor, LinkGelFreeze
+            // + an effect id per hook as it lands (player systems, keystones)
         };
 
         private static bool s_allLive;

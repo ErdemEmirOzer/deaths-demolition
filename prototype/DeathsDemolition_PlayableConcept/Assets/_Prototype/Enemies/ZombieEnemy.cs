@@ -1209,11 +1209,16 @@ namespace DD.Prototype.Enemies
             PrototypeConfig config = PrototypeConfig.Active;
             SnapshotBefore(out float healthBefore, out float helmetBefore, out float bodyBefore, out float legBefore);
 
-            DamageResult result = _body.ApplyDirectHit(in hit, config != null ? config.Enemies.Armor : null);
+            // WP-069 × WP-077 (S-02 link.gel.slickfloor): a body lying / sliding in gel takes more from every source.
+            DamageHit scaled = hit;
+            Func<ZombieEnemy, float> incoming = IncomingDamageScale;
+            if (incoming != null) scaled.Amount *= incoming(this);
 
-            BuildMeta(DamageKind.Direct, DamageRegions.SlotFor(hit.Region),
+            DamageResult result = _body.ApplyDirectHit(in scaled, config != null ? config.Enemies.Armor : null);
+
+            BuildMeta(DamageKind.Direct, DamageRegions.SlotFor(scaled.Region),
                 healthBefore, helmetBefore, bodyBefore, legBefore);
-            ProcessResult(in hit, in result, hit.Point, hit.Direction);
+            ProcessResult(in scaled, in result, scaled.Point, scaled.Direction);
             return result;
         }
 
@@ -1286,6 +1291,9 @@ namespace DD.Prototype.Enemies
 
             PrototypeConfig config = PrototypeConfig.Active;
             SnapshotBefore(out float healthBefore, out float helmetBefore, out float bodyBefore, out float legBefore);
+
+            Func<ZombieEnemy, float> incoming = IncomingDamageScale;
+            if (incoming != null) totalDamage *= incoming(this);   // WP-069 × WP-077 link.gel.slickfloor
 
             DamageResult result = _body.ApplyExplosion(
                 totalDamage,
