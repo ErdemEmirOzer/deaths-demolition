@@ -48,7 +48,6 @@ namespace DD.Prototype.UI
         private const float PlayButtonHeight = 72f;
         private const float RowHeight = 40f;
         private const float AchievementRowHeight = 96f;
-        private const float AchievementTitleBand = 40f;
         private const float ChipColumnWidth = 160f;
         private const float ValueColumnWidth = 200f;
 
@@ -1681,15 +1680,23 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.L);
 
-            // WP-022D: pages of MaxAchievementRows in catalog order (27 entries, WP-023);
+            // WP-022D: pages of up to MaxAchievementRows in catalog order (27 entries, WP-023);
             // PREVIOUS / NEXT are ordinary buttons, so pad and keyboard page the same way.
-            int pages = Mathf.Max(1, (model.Lines.Count + MaxAchievementRows - 1) / MaxAchievementRows);
+            // Rows per page follow the room the pane has at this UI scale × TextScale (≤ MaxAchievementRows): the rows
+            // grow with the line boxes, and the pager and the note never leave the pane (Mac 1.2 × 1.25 holds four).
+            float fixedBands = UiFactory.LineHeight(UiType.H2) + (int)UiSpace.M + UiFactory.LineHeight(UiType.Body) + (int)UiSpace.L
+                               + (int)UiSpace.XS + PagerHeight + (int)UiSpace.S + UiFactory.LineHeight(UiType.Caption);
+            float rowPitch = AchievementRowHeightFor(false) + (int)UiSpace.S;
+            int perPage = _paneHost.rect.height > 0f
+                ? Mathf.Clamp(Mathf.FloorToInt((_paneHost.rect.height - fixedBands) / rowPitch), 2, MaxAchievementRows)
+                : MaxAchievementRows;
+            int pages = Mathf.Max(1, (model.Lines.Count + perPage - 1) / perPage);
             _achievementPage = Mathf.Clamp(_achievementPage, 0, pages - 1);
-            int first = _achievementPage * MaxAchievementRows;
-            int last = Mathf.Min(model.Lines.Count, first + MaxAchievementRows);
+            int first = _achievementPage * perPage;
+            int last = Mathf.Min(model.Lines.Count, first + perPage);
             for (int i = first; i < last; i++)
             {
-                stack.Add(BuildAchievementRow(model.Lines[i]), AchievementRowHeight);
+                stack.Add(BuildAchievementRow(model.Lines[i]), AchievementRowHeightFor(model.Lines[i].Earned));
                 stack.Gap(UiSpace.S);
             }
 
@@ -1892,12 +1899,17 @@ namespace DD.Prototype.UI
             medalRect.anchoredPosition = Vector2.zero;
             float textLeft = medalSize + (int)UiSpace.M;
 
+            // The text bands come from the faces' line boxes at the TextScale (slice 3 made them taller: a fixed
+            // 24 px title band and an 8 px in-progress description band truncated both lines to nothing).
+            float titleBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3));
             TMP_Text title = UiFactory.Label(
                 "Title", content, line.Title, UiType.H3,
                 line.Earned ? UiColor.TextPrimary : UiColor.TextSecondary, TextAnchor.UpperLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.pivot = new Vector2(0f, 1f);
+            titleRect.offsetMin = new Vector2(textLeft, -titleBand);
             titleRect.offsetMax = new Vector2(-ChipColumnWidth, 0f);
-            titleRect.offsetMin = new Vector2(textLeft, AchievementTitleBand);
 
             // TextSecondary, not TextMuted: muted measures 4.27:1 on SurfaceRaised,
             // which is below the 4.5 floor, and an earned achievement's card IS raised.
@@ -1907,7 +1919,7 @@ namespace DD.Prototype.UI
                 UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
             RectTransform descriptionRect = UiFactory.Fill((RectTransform)description.transform);
             descriptionRect.offsetMin = new Vector2(textLeft, line.Earned ? 0f : ProgressBand);
-            descriptionRect.offsetMax = new Vector2(-ChipColumnWidth, -AchievementTitleBand);
+            descriptionRect.offsetMax = new Vector2(-ChipColumnWidth, -titleBand);
 
             if (!line.Earned)
             {
@@ -1958,6 +1970,16 @@ namespace DD.Prototype.UI
 
         /// <summary>Lower band of an in-progress achievement card reserved for the progress bar.</summary>
         private const float ProgressBand = 16f;
+
+        /// <summary>
+        /// A row holds its padding, the H3 title and one Caption line (+ the progress band while in progress) at the
+        /// TextScale; never shorter than the 96 px medallion row. At TextScale 1.0 every row is still 96.
+        /// </summary>
+        private static float AchievementRowHeightFor(bool earned)
+        {
+            float text = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            return Mathf.Max(AchievementRowHeight, (int)UiSpace.L * 2 + text + (earned ? 0f : ProgressBand));
+        }
 
         private static UiMedal MedalForRarity(AchievementRarity rarity)
         {

@@ -7,6 +7,7 @@ using DD.Prototype.UI;
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.TestTools;
 using static DD.Prototype.Tests.PlayMode.LifecycleTestKit;
 
@@ -178,14 +179,38 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             failures.AddRange(Truncated("mainmenu"));
 
-            // Settings / Accessibility panes (measured captions, the HINTS row).
+            // Settings / Accessibility panes (measured captions, the HINTS row); Achievements (the row's title and
+            // description bands follow the line boxes - a fixed 24 px band truncated every title after slice 3).
             MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
-            foreach (UiContext pane in new[] { UiContext.Settings, UiContext.Accessibility })
+            foreach (UiContext pane in new[] { UiContext.Settings, UiContext.Accessibility, UiContext.Achievements })
             {
                 menu.ShowPane(pane);
                 yield return null;
                 yield return null;
                 failures.AddRange(Truncated("mainmenu." + pane));
+                if (pane == UiContext.Achievements)
+                {
+                    // The pager stays inside the pane at 1.25: rows per page follow the pane's room.
+                    Transform next = Find("Pager.Next");
+                    Transform note = Find("Note");
+                    RectTransform clip = next != null ? next.GetComponentInParent<RectMask2D>()?.rectTransform : null;
+                    if (next == null || clip == null)
+                    {
+                        failures.Add("mainmenu.Achievements · pager or pane clip not found");
+                    }
+                    else
+                    {
+                        Rect paneRect = WorldRect(clip);
+                        foreach (Transform t in new[] { next, note })
+                        {
+                            Rect r = t != null ? WorldRect((RectTransform)t) : Rect.zero;
+                            if (t == null || r.yMin < paneRect.yMin - 0.5f)
+                            {
+                                failures.Add("mainmenu.Achievements · " + (t != null ? t.name : "?") + " below the pane: " + r + " vs " + paneRect);
+                            }
+                        }
+                    }
+                }
             }
 
             Assert.IsEmpty(failures, "TextScale 1,25 (T3 / T11):\n" + string.Join("\n", failures));
