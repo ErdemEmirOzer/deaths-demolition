@@ -89,6 +89,8 @@ namespace DD.Prototype.Audio
         private AudioListenerAnchor _listener;
         private WeaponFireAudio _weaponFire;
         private CasingAudio _casings;
+        private ImpactAudio _impacts;
+        private readonly CombatAudioCue[] _heldImpacts = new CombatAudioCue[16];
         private AudioSnapshot _snapshotBeforePause = AudioSnapshot.Run;
 
         private readonly List<DebugPanelEntry> _debugEntries = new List<DebugPanelEntry>(16);
@@ -150,6 +152,9 @@ namespace DD.Prototype.Audio
         /// <summary>WP-072 B2 test / F1 surface: the player's casing landings.</summary>
         public CasingAudio Casings => _casings;
 
+        /// <summary>WP-072 B3 test / F1 surface: the projectile impact voice.</summary>
+        public ImpactAudio Impacts => _impacts;
+
         /// <summary>Total cues refused by the voice budget across both pools. F1 readout, and the O3 measurement.</summary>
         public int DroppedCues => (_world != null ? _world.DroppedCount : 0) + (_signal != null ? _signal.DroppedCount : 0);
 
@@ -194,6 +199,7 @@ namespace DD.Prototype.Audio
             _listener = new AudioListenerAnchor(transform);
             _weaponFire = new WeaponFireAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);   // WP-072 B1
             _casings = new CasingAudio(_library, PlayResolved);                                        // WP-072 B2
+            _impacts = new ImpactAudio(_library, PlayResolved);                                        // WP-072 B3
             _router.SetProducedCheck(_library.IsProduced);
             BuildFieldLoops();
             BuildUiVoices();
@@ -249,6 +255,7 @@ namespace DD.Prototype.Audio
 
             AudioEvents.Cue += OnCombatCue;
             _casings?.Enable();   // WP-072 B2
+            _impacts?.Enable();   // WP-072 B3
             AudioEvents.LoopStoppedAt += OnLoopStopped;
             AudioEvents.CueSuppressed += OnCueSuppressed;
 
@@ -276,6 +283,7 @@ namespace DD.Prototype.Audio
         {
             AudioEvents.Cue -= OnCombatCue;
             _casings?.Disable();   // WP-072 B2
+            _impacts?.Disable();   // WP-072 B3
             AudioEvents.LoopStoppedAt -= OnLoopStopped;
             AudioEvents.CueSuppressed -= OnCueSuppressed;
 
@@ -366,6 +374,13 @@ namespace DD.Prototype.Audio
         {
             // After the player moved and the camera followed (ADR-021-2).
             _listener.LateTick();
+
+            // WP-072 B3: legacy surface cues no projectile impact replaced this frame play now (one frame late).
+            int n = _impacts.DrainUnreplaced(_heldImpacts);
+            for (int i = 0; i < n; i++)
+            {
+                PlayCombatCue(_heldImpacts[i]);
+            }
         }
 
         /// <summary>WP-021C: ramp the exposed master parameter towards the requested value (linear domain, then dB).</summary>
@@ -438,10 +453,26 @@ namespace DD.Prototype.Audio
 
         // ================================================================== combat
 
+        /// <summary>WP-072 B3: a held legacy impact cue, played through the normal path once (no second hold, no second telemetry row).</summary>
+        private void PlayCombatCue(in CombatAudioCue cue)
+        {
+            _releasingHeld = true;
+            try
+            {
+                OnCombatCue(cue);
+            }
+            finally
+            {
+                _releasingHeld = false;
+            }
+        }
+
+        private bool _releasingHeld;
+
         private void OnCombatCue(CombatAudioCue cue)
         {
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
-            AudioPlaybackTelemetry.RecordCombatCue(cue.Event, false);
+            if (!_releasingHeld) AudioPlaybackTelemetry.RecordCombatCue(cue.Event, false);
 #endif
             if (_paused)
             {
@@ -462,6 +493,12 @@ namespace DD.Prototype.Audio
             // WP-072 B1: a fire cue that names its weapon speaks with that weapon's v016 voice;
             // without produced clips it falls through to the legacy intensity-picked sound.
             if (cue.Event == CombatAudioEvent.ClassicWeaponFire && _weaponFire.TryHandle(cue))
+            {
+                return;
+            }
+
+            // WP-072 B3: a world impact waits for the projectile's own calibre voice (same call chain, one line later).
+            if (cue.Event >= CombatAudioEvent.SurfaceImpactDefault && cue.Event <= CombatAudioEvent.SurfaceImpactPaper && !_releasingHeld && _impacts.TryHold(cue))
             {
                 return;
             }

@@ -890,6 +890,40 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072b2.casing landed=" + _d.Casings.Landed + " last=" + _d.Casings.LastSound);
         }
 
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator DarbeV3_MermiZemine_KalibreSesi_EskiIpucuYerineGecer()
+        {
+            if (!_d.Impacts.Active)
+            {
+                Assert.Fail("v018 darbe kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            Vector3 yer = _s.Rig.transform.position + new Vector3(4f, 0f, 3f);
+            Vector3 from = yer + Vector3.up * 3f;
+            int once = _d.Impacts.Played, yerine = _d.Impacts.Replaced;
+            var shot = new DD.Prototype.Weapons.ShotRequest
+            {
+                Origin = from, Direction = Vector3.down, Damage = 1f, Range = 10f,
+                ImpactForce = DD.Prototype.Damage.DamageForce.RifleBullet, Source = DD.Prototype.Damage.DamageSourceKind.Bullet,
+                Power = DD.Prototype.Feedback.WeaponPower.Heavy, PierceDamageFalloff = 1f
+            };
+            var launch = new DD.Prototype.Weapons.ProjectileLaunch
+            {
+                WeaponId = DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, Kind = DD.Prototype.Core.Weapons.ProjectileKind.Bullet,
+                Caliber = DD.Prototype.Core.Weapons.WeaponCaliber.Heavy, Speed = 60f, Gravity = 0f, MaxRange = 10f, MaxLifetime = 2f,
+                FalloffStart = 10f, FalloffEnd = 10f, FalloffMinShare = 1f, PenetrationDamageKeep = 1f
+            };
+            DD.Prototype.Weapons.ProjectileSystem.Spawn(shot, launch);
+            yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Weapons.ProjectileSystem.LiveCount == 0, 3f, "mermi zemine ulaşmadı");
+            yield return null;   // LateUpdate: tutulan eski ipuçları boşaltılır
+
+            Assert.AreEqual(once + 1, _d.Impacts.Played, "Zemine çarpan mermi v3 darbe sesi üretmedi.");
+            StringAssert.EndsWith("Heavy", _d.Impacts.LastSound.ToString(), "Ağır kalibre → Heavy darbe.");
+            Assert.AreEqual(yerine + 1, _d.Impacts.Replaced, "Aynı isabetin eski SurfaceImpact ipucu v3 ile değiştirilmeli (çift ses yok).");
+            Debug.Log("[DD-TEST] wp072b3.impact played=" + _d.Impacts.Played + " replaced=" + _d.Impacts.Replaced + " last=" + _d.Impacts.LastSound);
+        }
+
         // ================================================================== WP-068 dilim 11 · UI ses v3
 
         [UnityTest]

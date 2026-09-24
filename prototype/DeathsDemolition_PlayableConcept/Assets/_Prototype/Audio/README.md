@@ -73,3 +73,8 @@ game event ─► AudioEventMap row (sound id, bus, spatial) ─► AudioEventRo
 - **Foley:** clip events on the player rig resolve through `WeaponFoleyV3` for the equipped weapon (`WeaponDefinition.AudioId`, A/B/C → AR1/SMG1/SG1): its own mechanism set (35 ids; S-02 WP-069 §3 under WP-071 names — charge, box_open/belt_seat/box_close, bolt_up/back/fwd/down, shell_in, rocket_in/seat; WP-032C mag/chamber/eject map to the nearest action), else its weight family's handling voice (Light SMG · Medium AR/SG/SR · Heavy LMG/RL) at the weapon's pitch. An action the weapon lacks is silent (an auto rifle's per-shot eject). Without produced v017 clips the WP-048B A/B/C foley plays.
 - **Dry fire:** `Foley{Family}DryFire` at the weapon pitch.
 - **Casings:** `CasingAudio` hears `WeaponEvents.Mechanism` CasingEjected, lands the casing under the port after its fall (0.25–0.6 s) on the surface there (Stone/Wood/Dirt; water/foliage silent; LMG + belt link); top-down −18 / TP −12 / FP −8 dB against the fire voice.
+
+## 11 · Projectile impacts v3 (WP-072 B3)
+
+- `ImpactAudio` hears `ProjectileEvents.Impact` for world hits (bullet / pellet; flesh & armour stay on the damage path, rocket / orb / gel on theirs) and plays `ImpactV3{Surface}{Light|Medium|Heavy}` (500 + surface·3 + calibre). Gain: calibre L −3 / M 0 / H +2 dB + STANDARDS §6 surface mix.
+- HitscanEngine raises the legacy SurfaceImpact cue one call before the projectile Impact: while a projectile is live the director holds those cues for the frame, the Impact marks its own as replaced, the rest play at LateUpdate (one frame, inaudible). Pellets of one transaction within 1.6 m / 60 ms are one impact; grazing (cos < 0.35) light/medium hits on stone/metal add Ricochet −8 dB.

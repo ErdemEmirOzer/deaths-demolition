@@ -391,6 +391,32 @@ namespace DD.Prototype.Audio
         CasingShellStone = 496,
         CasingShellWood = 497,
         CasingShellDirt = 498,
-        CasingLink = 499
+        CasingLink = 499,
+
+        // ---- WP-072 B3 · projectile impact = SurfaceKind (0–7) × WeaponCaliber (Light/Medium/Heavy): 500 + surface·3 + calibre (AP-011 v018)
+        ImpactV3DefaultLight = 500,
+        ImpactV3DefaultMedium = 501,
+        ImpactV3DefaultHeavy = 502,
+        ImpactV3StoneLight = 503,
+        ImpactV3StoneMedium = 504,
+        ImpactV3StoneHeavy = 505,
+        ImpactV3WoodLight = 506,
+        ImpactV3WoodMedium = 507,
+        ImpactV3WoodHeavy = 508,
+        ImpactV3FoliageLight = 509,
+        ImpactV3FoliageMedium = 510,
+        ImpactV3FoliageHeavy = 511,
+        ImpactV3WaterLight = 512,
+        ImpactV3WaterMedium = 513,
+        ImpactV3WaterHeavy = 514,
+        ImpactV3MetalLight = 515,
+        ImpactV3MetalMedium = 516,
+        ImpactV3MetalHeavy = 517,
+        ImpactV3DirtLight = 518,
+        ImpactV3DirtMedium = 519,
+        ImpactV3DirtHeavy = 520,
+        ImpactV3PaperLight = 521,
+        ImpactV3PaperMedium = 522,
+        ImpactV3PaperHeavy = 523
     }
 }

@@ -766,5 +766,26 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(CasingFamily.None, WeaponFoleyV3.Casing("RL1"));
             Assert.Less(CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.TopDown), CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.FirstPerson));
         }
+
+        [Test]
+        public void DarbeV3_YuzeyKalibreMatrisi_AdlarVeKazanc()
+        {
+            var ids = new HashSet<AudioSoundId>();
+            for (int sf = 0; sf <= (int)SurfaceKind.Paper; sf++)
+            {
+                foreach (DD.Prototype.Core.Weapons.WeaponCaliber c in new[] { DD.Prototype.Core.Weapons.WeaponCaliber.Light, DD.Prototype.Core.Weapons.WeaponCaliber.Medium, DD.Prototype.Core.Weapons.WeaponCaliber.Heavy })
+                {
+                    AudioSoundId id = ImpactAudio.For((SurfaceKind)sf, c);
+                    Assert.AreEqual("ImpactV3" + (SurfaceKind)sf + c, id.ToString());
+                    Assert.IsTrue(ids.Add(id));
+                }
+
+                Assert.Less(ImpactAudio.GainDb((SurfaceKind)sf, DD.Prototype.Core.Weapons.WeaponCaliber.Light), ImpactAudio.GainDb((SurfaceKind)sf, DD.Prototype.Core.Weapons.WeaponCaliber.Heavy), "ağır kalibre daha yüksek");
+            }
+
+            Assert.AreEqual(24, ids.Count);
+            Assert.AreEqual(AudioSoundId.None, ImpactAudio.For(SurfaceKind.Flesh, DD.Prototype.Core.Weapons.WeaponCaliber.Medium), "et hasar yolunda");
+            Assert.AreEqual(AudioSoundId.None, ImpactAudio.For(SurfaceKind.Stone, DD.Prototype.Core.Weapons.WeaponCaliber.Explosive), "patlama kendi yolunda");
+        }
     }
 }

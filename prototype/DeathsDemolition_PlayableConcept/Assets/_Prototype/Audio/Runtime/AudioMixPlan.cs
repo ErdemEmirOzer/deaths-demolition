@@ -726,6 +726,12 @@ namespace DD.Prototype.Audio
             return p;
         }
 
+        /// <summary>WP-072 B3: a projectile hitting the world - the legacy impact placement, one more instance for auto fire.</summary>
+        public static AudioPlacement ProjectileImpact(AudioSoundId sound)
+        {
+            return Impact(sound, 0.62f, 20f, 4);
+        }
+
         /// <summary>WP-072 B2: a player casing landing - world, near, cheap, never piles past three.</summary>
         public static AudioPlacement PlayerCasing(AudioSoundId sound)
         {

@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v017
-  _sourceHash: 912c7d1d19d926e9f4b869598e6bbba71f1d6c876505aa2bc48c4775eb0552e4
+  _manifestVersion: ap011-v018
+  _sourceHash: 5e936a5b3eab830abdbc2c6fbf934f7c7f1e13bf89009c1ef22c37c2f1addcd5
   _entries:
   - Sound: 10
     Clips:
@@ -4379,6 +4379,390 @@ MonoBehaviour:
       renders (ledger 155\u2013159) + v007 foley \xB7 R5 empty steel links onto stone"
     NoiseFloorDb: -120
     DcDb: -130.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 500
+    Clips:
+    - {fileID: 8300000, guid: 7d2ad744740674051899f035f75a3f7a, type: 3}
+    - {fileID: 8300000, guid: 9f1cad2d3ebb04f49a699293db2890f4, type: 3}
+    - {fileID: 8300000, guid: 63b7b7b991a164e3fa1fa336eb587d65, type: 3}
+    Loop: 0
+    Lufs: -21.6
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Default \xD7 light
+      calibre: v005 ImpactDefault takes"
+    NoiseFloorDb: -120
+    DcDb: -150.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 501
+    Clips:
+    - {fileID: 8300000, guid: 8508164d983744a2c86a0e7cf54bc03b, type: 3}
+    - {fileID: 8300000, guid: 45a031270e4cb4ec68bf80fc92f0fb67, type: 3}
+    - {fileID: 8300000, guid: 2242419a015af46a58b3eb90046c2ea2, type: 3}
+    Loop: 0
+    Lufs: -19.92
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Default \xD7 medium
+      calibre: v005 ImpactDefault takes"
+    NoiseFloorDb: -120
+    DcDb: -176
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 502
+    Clips:
+    - {fileID: 8300000, guid: 4d276cd35a94241198385e3cc0c1f599, type: 3}
+    - {fileID: 8300000, guid: 7d876274da14e4a348d055b375c93439, type: 3}
+    - {fileID: 8300000, guid: cae6ffd32280d48d990ebd89dedda7b6, type: 3}
+    Loop: 0
+    Lufs: -18.41
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Default \xD7 heavy
+      calibre: v005 ImpactDefault takes"
+    NoiseFloorDb: -120
+    DcDb: -183.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 503
+    Clips:
+    - {fileID: 8300000, guid: 9ad3aae015bca4797a5d7312ff2cc290, type: 3}
+    - {fileID: 8300000, guid: 3492c4c5dc8f94f8ba765d0d4428672f, type: 3}
+    - {fileID: 8300000, guid: a387b6c98b52a42328017eb00fdd9c0b, type: 3}
+    Loop: 0
+    Lufs: -20.54
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Stone \xD7 light calibre:
+      impact_stone + footstep_stone front / ceramic chips"
+    NoiseFloorDb: -120
+    DcDb: -124.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 504
+    Clips:
+    - {fileID: 8300000, guid: 93577548bb2a54753a14be499402aa5c, type: 3}
+    - {fileID: 8300000, guid: 0286fcd1bccf345cfb103501b709b1a0, type: 3}
+    - {fileID: 8300000, guid: 6ec32b035f52a4afbbef63e64bd9eca8, type: 3}
+    Loop: 0
+    Lufs: -18.75
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Stone \xD7 medium calibre:
+      impact_stone + footstep_stone front / ceramic chips"
+    NoiseFloorDb: -120
+    DcDb: -114.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 505
+    Clips:
+    - {fileID: 8300000, guid: b043dc0be7a2d4670bf66fc28c24f93f, type: 3}
+    - {fileID: 8300000, guid: e376d4681699540e3bf536cd25e378f3, type: 3}
+    - {fileID: 8300000, guid: 5f40a938494af419d8e63bffe78bb9f1, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Stone \xD7 heavy calibre:
+      impact_stone + footstep_stone front / ceramic chips"
+    NoiseFloorDb: -120
+    DcDb: -112.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 506
+    Clips:
+    - {fileID: 8300000, guid: 7602796fa38a74a5a9cc93ede91869fb, type: 3}
+    - {fileID: 8300000, guid: 0c5ba38a53b50469faee0dab2be46a40, type: 3}
+    - {fileID: 8300000, guid: 5cc40c0c380bf49e7ac828365f618d1c, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -2.17
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Wood \xD7 light calibre:
+      impact_wood + footstep_wood front; splinter tick"
+    NoiseFloorDb: -120
+    DcDb: -109.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 507
+    Clips:
+    - {fileID: 8300000, guid: 74526710b232240bd8a6906f0aa50455, type: 3}
+    - {fileID: 8300000, guid: aad3f230c02fa4e6dbf8f74cb1ddd031, type: 3}
+    - {fileID: 8300000, guid: d4b71575e25e34f2687ab568d921cb99, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -3.56
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Wood \xD7 medium calibre:
+      impact_wood + footstep_wood front; splinter tick"
+    NoiseFloorDb: -120
+    DcDb: -91.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 508
+    Clips:
+    - {fileID: 8300000, guid: 39ee70df05b2f4506966799648fcb875, type: 3}
+    - {fileID: 8300000, guid: 312e3a51562054018a1a48dc668e1ed0, type: 3}
+    - {fileID: 8300000, guid: ccf814dd6714447af9cd224097493766, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Wood \xD7 heavy calibre:
+      impact_wood + footstep_wood front; splinter tick"
+    NoiseFloorDb: -120
+    DcDb: -94.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 509
+    Clips:
+    - {fileID: 8300000, guid: f8c3d2f303937402c8e9f181ec6c55bd, type: 3}
+    - {fileID: 8300000, guid: ffe5348500ae24490b341be45ca2791d, type: 3}
+    - {fileID: 8300000, guid: 1438c3dbe30b04d66a0bf959472fe841, type: 3}
+    Loop: 0
+    Lufs: -21.79
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Foliage \xD7 light
+      calibre: three foliage brushes"
+    NoiseFloorDb: -120
+    DcDb: -130.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 510
+    Clips:
+    - {fileID: 8300000, guid: 66a95d8b03f00452c905773e0003028d, type: 3}
+    - {fileID: 8300000, guid: 3c5e837b347ee4632a032bf25956774c, type: 3}
+    - {fileID: 8300000, guid: 6491be0832b91484b95d115e20967c2c, type: 3}
+    Loop: 0
+    Lufs: -20.51
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Foliage \xD7 medium
+      calibre: three foliage brushes"
+    NoiseFloorDb: -120
+    DcDb: -120.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 511
+    Clips:
+    - {fileID: 8300000, guid: 85646e32cad4a497da44dfa32c4d70aa, type: 3}
+    - {fileID: 8300000, guid: 3b71fc35ac8de42938277d1f3114d1d1, type: 3}
+    - {fileID: 8300000, guid: 1ee4d68be58424b57aab149e17944ed1, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -2.24
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Foliage \xD7 heavy
+      calibre: three foliage brushes"
+    NoiseFloorDb: -120
+    DcDb: -114.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 512
+    Clips:
+    - {fileID: 8300000, guid: 6810fa17290bd4c2fb2e0e5def3376a1, type: 3}
+    - {fileID: 8300000, guid: 9e04eaf8aef9e47b8ab97fe69f4cfa72, type: 3}
+    - {fileID: 8300000, guid: de2a893594ebd455daedc7e7a658f944, type: 3}
+    Loop: 0
+    Lufs: -21.55
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Water \xD7 light calibre:
+      impact_water + footstep_water splash"
+    NoiseFloorDb: -120
+    DcDb: -150.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 513
+    Clips:
+    - {fileID: 8300000, guid: 9dc75dbc20bd34f93a3c23cef8846ee9, type: 3}
+    - {fileID: 8300000, guid: e8322e650fef2416589cab69debe8a77, type: 3}
+    - {fileID: 8300000, guid: ccdd9c2478bbb430e97d7f385d4e149f, type: 3}
+    Loop: 0
+    Lufs: -22.85
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Water \xD7 medium calibre:
+      impact_water + footstep_water splash"
+    NoiseFloorDb: -120
+    DcDb: -132.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 514
+    Clips:
+    - {fileID: 8300000, guid: 866e9713702444c9ea779d30dea77184, type: 3}
+    - {fileID: 8300000, guid: 922ed02fa1d964999bced266b6d46058, type: 3}
+    - {fileID: 8300000, guid: a68831f83d965418db4730db0bd0ea24, type: 3}
+    Loop: 0
+    Lufs: -22.05
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Water \xD7 heavy calibre:
+      impact_water + footstep_water splash"
+    NoiseFloorDb: -120
+    DcDb: -129.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 515
+    Clips:
+    - {fileID: 8300000, guid: 505cce8b2f46f45568260889e6b146c5, type: 3}
+    - {fileID: 8300000, guid: 66832f353edfc46ca9d40616809e2f1d, type: 3}
+    - {fileID: 8300000, guid: 595cc8a19087b4b7e824d8df9a58f2ff, type: 3}
+    Loop: 0
+    Lufs: -19.64
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Metal \xD7 light calibre:
+      impact_metal + armour tink front"
+    NoiseFloorDb: -120
+    DcDb: -159.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 516
+    Clips:
+    - {fileID: 8300000, guid: 5840f97ffdf1b4e7896d9a461edec515, type: 3}
+    - {fileID: 8300000, guid: 3280180ebd6dd45f6a25263b85278187, type: 3}
+    - {fileID: 8300000, guid: c80ffd11e86a6480794acf85843c1091, type: 3}
+    Loop: 0
+    Lufs: -21.83
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Metal \xD7 medium calibre:
+      impact_metal + armour tink front"
+    NoiseFloorDb: -120
+    DcDb: -172.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 517
+    Clips:
+    - {fileID: 8300000, guid: 9e333f3f0c37049ad96ad766ea25b97a, type: 3}
+    - {fileID: 8300000, guid: 55c4abfd9603741f4999bd72908040de, type: 3}
+    - {fileID: 8300000, guid: 1a9bbce7f89da4a59b2c4039b32df439, type: 3}
+    Loop: 0
+    Lufs: -24.86
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Metal \xD7 heavy calibre:
+      impact_metal + armour tink front"
+    NoiseFloorDb: -120
+    DcDb: -165.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 518
+    Clips:
+    - {fileID: 8300000, guid: 56f2d8e5a0f0042af9cfcd8551464be2, type: 3}
+    - {fileID: 8300000, guid: 9dcd3766301d8446483c4712c65dc39c, type: 3}
+    - {fileID: 8300000, guid: 6ddad79bfa1134814966c841d0807fb7, type: 3}
+    Loop: 0
+    Lufs: -24.17
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Dirt \xD7 light calibre:
+      impact_dirt + footstep_dirt front; gravel"
+    NoiseFloorDb: -120
+    DcDb: -113.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 519
+    Clips:
+    - {fileID: 8300000, guid: abe18a77db85a435a8315d62f9461a5d, type: 3}
+    - {fileID: 8300000, guid: 85ae58eb3711a4be98443c951d692031, type: 3}
+    - {fileID: 8300000, guid: c8d1fce51e7ba416b98b6c1e2bdad29f, type: 3}
+    Loop: 0
+    Lufs: -19.79
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Dirt \xD7 medium calibre:
+      impact_dirt + footstep_dirt front; gravel"
+    NoiseFloorDb: -120
+    DcDb: -90.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 520
+    Clips:
+    - {fileID: 8300000, guid: 0599e3de6679842818aad545f745b50e, type: 3}
+    - {fileID: 8300000, guid: acf060a55a61a4923bc48ce5cc685221, type: 3}
+    - {fileID: 8300000, guid: d59b4ea6027004412bb52a1683a3ee1e, type: 3}
+    Loop: 0
+    Lufs: -19.62
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Dirt \xD7 heavy calibre:
+      impact_dirt + footstep_dirt front; gravel"
+    NoiseFloorDb: -120
+    DcDb: -97.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 521
+    Clips:
+    - {fileID: 8300000, guid: 7018e2b020bee4855aa3adb81be7de02, type: 3}
+    - {fileID: 8300000, guid: 40cba0b1e1a214f9a8679860fc14729e, type: 3}
+    - {fileID: 8300000, guid: fdd3aba0983c44f2fba60b1486fbb933, type: 3}
+    Loop: 0
+    Lufs: -23.41
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Paper \xD7 light calibre:
+      shoji paper: four hits of the take"
+    NoiseFloorDb: -120
+    DcDb: -132.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 522
+    Clips:
+    - {fileID: 8300000, guid: f39886b9b2b7648a9997b005961bf399, type: 3}
+    - {fileID: 8300000, guid: 559b4a20286a5454a9844156b85ef004, type: 3}
+    - {fileID: 8300000, guid: 7336736e665e74ffe96e6774d2d9aa81, type: 3}
+    Loop: 0
+    Lufs: -23.15
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Paper \xD7 medium calibre:
+      shoji paper: four hits of the take"
+    NoiseFloorDb: -120
+    DcDb: -114.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 523
+    Clips:
+    - {fileID: 8300000, guid: c1ef3456242d94126b29acee47ab460a, type: 3}
+    - {fileID: 8300000, guid: ee40c19363bb9438baadb40899b0dff4, type: 3}
+    - {fileID: 8300000, guid: 5fc4ec49476db49e6afcc95b331ccab0, type: 3}
+    Loop: 0
+    Lufs: -23.03
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v018, WP-072 B3, 0 cr) from v001\u2013v006
+      impact / footstep / armour takes + synthetic thump \xB7 Paper \xD7 heavy calibre:
+      shoji paper: four hits of the take"
+    NoiseFloorDb: -120
+    DcDb: -134.9
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)
