@@ -287,6 +287,27 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.AmbPondBed: return BuildWaterBed(ref rng);
                 case AudioSoundId.AmbFurin: return BuildMetalRing(ref rng);   // WP-065C fallback; AP-011 v014 owns the clip
 
+                // WP-068 slice 11 fallbacks (AP-011 v015 owns the clips)
+                case AudioSoundId.UiPressDown:
+                case AudioSoundId.UiCounterSettled: return BuildUiNavigate(ref rng);
+                case AudioSoundId.UiTransitionOut:
+                case AudioSoundId.UiCurtainClose:
+                case AudioSoundId.UiPauseOpen: return BuildUiTone(false, ref rng);
+                case AudioSoundId.UiCurtainOpen:
+                case AudioSoundId.UiPauseClose: return BuildUiTone(true, ref rng);
+                case AudioSoundId.UiCardDealt:
+                case AudioSoundId.UiCardFlipped:
+                case AudioSoundId.UiHoldRub:
+                case AudioSoundId.UiCounterRoll: return BuildImpactPaper(ref rng);
+                case AudioSoundId.UiStampLanded:
+                case AudioSoundId.UiStampRare:
+                case AudioSoundId.UiStampEpic:
+                case AudioSoundId.HudEliteDown: return BuildImpactWood(ref rng);
+                case AudioSoundId.UiBootSeal:
+                case AudioSoundId.HudNewBestRound:
+                case AudioSoundId.HudUltraDown: return BuildMetalRing(ref rng);
+                case AudioSoundId.UiInkBleed: return BuildWaterBed(ref rng);
+
                 // WP-057 music v2 (AP-011 v008 owns the shipped clips).
                 case AudioSoundId.StingerRoundBreak:
                 case AudioSoundId.StingerRunEnd: return BuildRoundComplete(ref rng);

@@ -182,8 +182,12 @@ namespace DD.Prototype.Audio
             _music = new MusicDirector(transform, _library, _mixer, _bridge);
             _router = new AudioEventRouter(PlayResolved);
             _router.SetFieldLoopHandlers(StartFieldLoop, StopFieldLoop);   // WP-058
+            _router.SetUiVoiceHandlers(StartUiVoice, StopUiVoice);          // WP-068 s11
             _listener = new AudioListenerAnchor(transform);
             BuildFieldLoops();
+            BuildUiVoices();
+            _signal.SetIgnoreListenerPause(true);   // WP-068 s11: the pause menu is heard
+            _mixer.SetPlayerVolume(AudioBus.Interface, PrototypeAudio.UiVolume);   // WP-068 U8 (settings may load before the director)
 
             // v003 (ADR-021-2): distance darkening and the idle range are measured from the
             // player-anchored listener, not the camera.
@@ -321,7 +325,7 @@ namespace DD.Prototype.Audio
 
             _mixer.Tick(dt);
             _world.Tick(dt, _paused);
-            _signal.Tick(dt, _paused);
+            _signal.Tick(dt, false);   // WP-068 s11: interface voices ignore the listener pause, so they age through it
             _ambience.Tick(dt, _paused);
             _music.Tick(dt, _paused);
 
@@ -332,6 +336,13 @@ namespace DD.Prototype.Audio
 
             TickLoops(dt);
             TickFieldLoops();
+            TickUiVoices(dt);
+
+            if (_deathInkAt > 0f && Time.unscaledTime >= _deathInkAt)
+            {
+                _deathInkAt = -1f;
+                PlayResolved(AudioMixPlan.UiEvent(AudioSoundId.UiInkBleed), Vector3.zero, 1f, 40);   // WP-068: ink under the death stinger
+            }
         }
 
         private void LateUpdate()
@@ -374,6 +385,9 @@ namespace DD.Prototype.Audio
             _paused = paused;
             AudioListener.pause = paused;
             _mixer.Muted = paused;
+
+            // WP-068 s11: pause = the short fusuma slide + stop, resume = the opening slide (Interface pool, heard through the listener pause).
+            PlayResolved(AudioMixPlan.UiEvent(paused ? AudioSoundId.UiPauseOpen : AudioSoundId.UiPauseClose), Vector3.zero, 1f, 60);
 
             // WP-021: the Pause snapshot on top of the listener pause, so a UI cue raised
             // from the pause menu (which the listener pause does not stop) sits in a quiet
@@ -558,6 +572,7 @@ namespace DD.Prototype.Audio
 
         private void OnRunStarted(int runId)
         {
+            _deathInkAt = -1f;
             StopAllFieldLoops();
             // v003: entering the run is a screen transition (matrix §8).
             PlayResolved(AudioMixPlan.UiTransition(), Vector3.zero, 1f, 80);
@@ -600,6 +615,7 @@ namespace DD.Prototype.Audio
 
         private void OnPlayerDied(PlayerDeathInfo info)
         {
+            _deathInkAt = Time.unscaledTime + DeathInkDelay;   // WP-068: the ink texture follows the stinger by 0.6 s
             StopAllLoops();
             StopAllFieldLoops();
             PlayResolved(AudioMixPlan.PlayerDeath(), Vector3.zero, 1f, 100);
@@ -798,6 +814,119 @@ namespace DD.Prototype.Audio
                 AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopEnded, AudioPlaybackPool.Field, _fieldLoopSound[i],
                     active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
 #endif
+            }
+        }
+
+        // ================================================================== WP-068 s11 · controllable UI voices
+
+        /// <summary>Delay of the death ink texture after the death stinger (E22: ink 0.6 → 2.0 s).</summary>
+        public const float DeathInkDelay = 0.6f;
+        private float _deathInkAt = -1f;
+
+        private const int UiVoiceCount = 2;
+        private readonly AudioSource[] _uiVoices = new AudioSource[UiVoiceCount];
+        private readonly AudioSoundId[] _uiVoiceSound = new AudioSoundId[UiVoiceCount];
+        private readonly float[] _uiVoiceLevel = new float[UiVoiceCount];
+        private readonly float[] _uiVoiceBase = new float[UiVoiceCount];
+        private readonly float[] _uiVoiceStopAt = new float[UiVoiceCount];
+        private readonly float[] _uiVoiceFade = new float[UiVoiceCount];   // > 0: fading out at this rate (level / s)
+
+        /// <summary>UI voices sounding (roll / hold / boot seal). Test readout.</summary>
+        public int UiVoicesPlaying { get { int n = 0; for (int i = 0; i < UiVoiceCount; i++) if (_uiVoices[i] != null && _uiVoices[i].isPlaying) n++; return n; } }
+        public bool UiVoicePlaying(AudioSoundId sound) { for (int i = 0; i < UiVoiceCount; i++) if (_uiVoiceSound[i] == sound && _uiVoices[i] != null && _uiVoices[i].isPlaying) return true; return false; }
+
+        private void BuildUiVoices()
+        {
+            for (int i = 0; i < UiVoiceCount; i++)
+            {
+                var go = new GameObject("UI Voice " + i);
+                go.transform.SetParent(transform, false);
+                AudioSource src = go.AddComponent<AudioSource>();
+                src.playOnAwake = false; src.spatialBlend = 0f; src.dopplerLevel = 0f; src.priority = 16; src.volume = 0f;
+                src.ignoreListenerPause = true; src.bypassReverbZones = true;
+                _bridge.Route(src, AudioBus.Interface);
+                _uiVoices[i] = src;
+            }
+        }
+
+        /// <summary>Starts (or restarts) a controllable UI voice; the same sound reuses its voice, otherwise a free one.</summary>
+        private bool StartUiVoice(AudioSoundId sound, bool loop, float maxSeconds)
+        {
+            AudioClip clip = _library.Next(sound, out int _);
+            if (clip == null)
+            {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.MissingClip, AudioPlaybackPool.Signal, sound, active: UiVoicesPlaying, capacity: UiVoiceCount);
+#endif
+                return false;
+            }
+
+            int slot = -1;
+            for (int i = 0; i < UiVoiceCount && slot < 0; i++) if (_uiVoiceSound[i] == sound) slot = i;
+            for (int i = 0; i < UiVoiceCount && slot < 0; i++) if (!_uiVoices[i].isPlaying) slot = i;
+            if (slot < 0) slot = 0;   // both busy with other sounds: the older voice gives way
+
+            AudioPlacement placement = AudioMixPlan.UiEvent(sound);
+            AudioSource src = _uiVoices[slot];
+            src.Stop();
+            src.clip = clip;
+            src.loop = loop;
+            src.pitch = 1f;
+            _uiVoiceSound[slot] = sound;
+            _uiVoiceBase[slot] = placement.Gain;
+            _uiVoiceLevel[slot] = 1f;
+            _uiVoiceFade[slot] = 0f;
+            _uiVoiceStopAt[slot] = Time.unscaledTime + (loop ? maxSeconds : Mathf.Min(maxSeconds, clip.length + 0.05f));
+            src.volume = placement.Gain * _mixer.Gain(AudioBus.Interface);
+            src.Play();
+            PlayedCount++;
+            LastPlayed = sound;
+            return true;
+        }
+
+        /// <summary>Fades a UI voice out (None = all). A voice already silent is left alone.</summary>
+        private void StopUiVoice(AudioSoundId sound, float fadeSeconds)
+        {
+            for (int i = 0; i < UiVoiceCount; i++)
+            {
+                if ((sound == AudioSoundId.None || _uiVoiceSound[i] == sound) && _uiVoices[i] != null && _uiVoices[i].isPlaying)
+                {
+                    _uiVoiceFade[i] = 1f / Mathf.Max(0.005f, fadeSeconds);
+                }
+            }
+        }
+
+        private void TickUiVoices(float dt)
+        {
+            float g = _mixer.Gain(AudioBus.Interface);
+            float now = Time.unscaledTime;
+            for (int i = 0; i < UiVoiceCount; i++)
+            {
+                AudioSource src = _uiVoices[i];
+                if (src == null || !src.isPlaying)
+                {
+                    continue;
+                }
+
+                if (_uiVoiceFade[i] <= 0f && now >= _uiVoiceStopAt[i])
+                {
+                    _uiVoiceFade[i] = 1f / 0.03f;   // the roll / hold ends in 30 ms at its cap
+                }
+
+                if (_uiVoiceFade[i] > 0f)
+                {
+                    _uiVoiceLevel[i] -= _uiVoiceFade[i] * dt;
+                    if (_uiVoiceLevel[i] <= 0f)
+                    {
+                        src.Stop();
+                        src.clip = null;
+                        _uiVoiceSound[i] = AudioSoundId.None;
+                        _uiVoiceFade[i] = 0f;
+                        continue;
+                    }
+                }
+
+                src.volume = _uiVoiceBase[i] * _uiVoiceLevel[i] * g;
             }
         }
 

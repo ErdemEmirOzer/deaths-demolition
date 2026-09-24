@@ -57,6 +57,7 @@ namespace DD.Prototype.Audio
         private const float ReleaseSeconds = 0.35f;
 
         private readonly float[] _userVolume = new float[BusCount];
+        private readonly float[] _playerVolume = { 1f, 1f, 1f, 1f, 1f, 1f };
         private readonly float[] _duckFloor = new float[BusCount];
         private readonly float[] _duckUntil = new float[BusCount];
         private readonly float[] _current = new float[BusCount];
@@ -92,6 +93,14 @@ namespace DD.Prototype.Audio
             return _userVolume[(int)bus];
         }
 
+        /// <summary>WP-068 U8: the player's own multiplier per bus (Settings; today the Interface bus), on top of the design balance above.</summary>
+        public void SetPlayerVolume(AudioBus bus, float value)
+        {
+            _playerVolume[(int)bus] = Mathf.Clamp01(value);
+        }
+
+        public float GetPlayerVolume(AudioBus bus) => _playerVolume[(int)bus];
+
         public void SetUserVolume(AudioBus bus, float value)
         {
             _userVolume[(int)bus] = Mathf.Clamp01(value);
@@ -100,12 +109,14 @@ namespace DD.Prototype.Audio
         /// <summary>The number a voice on this bus should be multiplied by right now.</summary>
         public float Gain(AudioBus bus)
         {
-            if (Muted)
+            // WP-068 s11: the pause mutes the world, never the interface - the pause menu's own
+            // cues (and the pause open / close curtain) must be heard.
+            if (Muted && bus != AudioBus.Interface)
             {
                 return 0f;
             }
 
-            return _userVolume[(int)bus] * _current[(int)bus] * MasterVolume;
+            return _userVolume[(int)bus] * _playerVolume[(int)bus] * _current[(int)bus] * MasterVolume;
         }
 
         /// <summary>Current duck depth of a bus, 1 = untouched. F1 readout.</summary>

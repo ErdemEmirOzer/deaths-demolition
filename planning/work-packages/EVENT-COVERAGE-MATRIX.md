@@ -115,6 +115,8 @@
 | Look B — ıslak arduvaz damlası | scatter halkası (WetLook seti) | AmbDripSlate (×3, v007 T) | 3D | Ambience | T | n/a — ses; ıslak yüzey parıltısı S-05 `DD_GroundBlend` mask A ile (WP-038) |
 | Look B — koi havuzu su bed'i | `Ap005SurfaceTags.RegisterPond` → `AudioSurfaceHints.PondCenters` → havuz merkezinde 3D loop (6–30 m) | AmbPondBed (loop, v007 T) | 3D | Ambience | T | `DD/Water v1` + vuruş/adım `water_splash` halkası — WP-013 / WP-047 D |
 | Fūrin rüzgâr çanı (AP-017 Faz 2b, 8 saçak altı) | `WorldWind.Strength` ≥ 0,15 → `AmbienceDirector.TickFurin`: en yakın fūrin ≤ 12 m, aralık 22→3 s (smoothstep, ×0,8–1,3), esinti (+0,2/1 s) anında tetik; Fight 0,30 / ara 0,55; çan başına ±1 st boy + ±0,5 st; kayıt `Ap005SurfaceTags.RegisterWindChimes` (WP-065C) | AmbFurin (×5, v014 T — cam edo-fūrin, −26 LUFS) | 3D | Ambience | Ü | salınım DD/Foliage Wind (WP-038L) |
+| Pause aç / RESUME (WP-068) | `PrototypeAudioDirector.UpdatePause` (RunFlowClock pause hold) — Interface havuzu listener pause'u yok sayar, pause menüsü duyulur | UiPauseOpen / UiPauseClose (fusuma kısa kayma + durak / açılış; v015 T) | 2D | UI | T | perde kısa varyantı |
+| Ölüm → Results mürekkep dokusu (WP-068) | `OnPlayerDied` + 0,6 s | UiInkBleed (AmbPondBed LPF + washi sürtme, −26 LUFS; v015 T) | 2D | UI | T | InkBleed |
 | Ortak atmosfer (yağmur sonrası damla, rüzgâr) | `AmbienceDirector` ortak bed | AmbCommon (loop) | 2D | Ambience | Ü | `AtmosphereDrift` polen/sakura + `WindDriver` gust — WP-013 |
 | Merkez avlu (taş, damla, yankı) | bölge `center` | AmbRegionCenter (loop) | 2D | Ambience | Ü | n/a — bölge sesi; görsel ortak atmosfer |
 | Kuzey — koridor/ahşap rüzgârı | bölge `north` | AmbRegionNorth (loop) | 2D | Ambience | Ü | n/a — bölge sesi |
@@ -181,6 +183,12 @@ Yayın: `UiEvents.Raise(UiEvent, detail)`; S-08 `AudioEventRouter.OnUiEvent` yal
 | ToggleChanged | Reduced motion ON/OFF | **UiToggle** (×2, T) | 2D | UI | T | Etiket ON/OFF |
 | DialogOpened | Koşuyu bırak onayı | **UiDialogOpen** (×2, T) | 2D | UI | T | Scrim + odak |
 | DialogClosed | Onay kapandı | UiBack — sahibi `UiSound.Back` | 2D | UI | Ü | Odak iadesi |
+| ScreenExiting | Ekran çıkışı başladı (Exit 140) | **UiTransitionOut** (fusuma kayma, girişin tersi; v015 T — WP-068 s11) | 2D | UI | T | ExitScreen preset |
+| CurtainClosed | Perde kapandı — `LoadScene`'den ≥ 1 kare önce; kuyruk donma boyunca çalar | **UiCurtainClose** (fusuma kapanış + durak; v015 T — WP-068 s11) | 2D | UI | T | UiCurtain kapan 280 |
+| CurtainOpened | Yeni sahnenin ilk render karesi | **UiCurtainOpen** (fusuma açılış; v015 T — WP-068 s11) | 2D | UI | T | UiCurtain aç 280 Settle |
+| PressDown | Primary/Secondary pointer-down | **UiPressDown** (lake hafif tok ≤ 40 ms; v015 T — WP-068 s11) | 2D | UI | T | PressDepth Instant |
+| BootLogo | Boot mührü teması (U7, her açılış) | **UiBootSeal** (mürekkep → hanko → tek rin; kontrol edilebilir UI sesi, atlamada 120 ms fade; v015 T — WP-068 s11) | 2D | UI | T | InkBleed + StampIn |
+| TimelineSkipped | Kahraman çizelgesi atlandı (`Complete()`) | n/a — kontrol olayı: UI döngüleri (rulo/hold) 30 ms, boot mührü 120 ms fade | 2D | UI | n/a | cue'lar son cue'ya çöker |
 | HudRoundStarted | Round başladı | RoundStart — sahibi `RunAudioEvent.RoundStart` | 2D | UI | Ü | ROUND N banner |
 | HudRoundCompleted | Round temizlendi | RoundComplete — sahibi `RunAudioEvent.RoundComplete` | 2D | UI | Ü | Banner |
 | HudPoolExhausted | Havuz bitti | RoundComplete (soft) — sahibi `RunAudioEvent.RoundPoolExhausted` | 2D | UI | Ü | Banner |
@@ -197,6 +205,9 @@ Yayın: `UiEvents.Raise(UiEvent, detail)`; S-08 `AudioEventRouter.OnUiEvent` yal
 | HudThreatStrongVersion | ELITE/ULTRA NEARBY | **HudThreatStrong** (×2, T: kasvetli kısa çan −9 st, gong'dan ayrık) | 2D | UI | T | `StateWarning` çipi |
 | HudThreatWindup | Hazırlık sayısı arttı | n/a — 3D windup vokali (DEC-067) sahibi; 2D ikileme yönü bulanıklaştırır | — | — | n/a | — |
 | HudDamageEdge | Kenar yandı | PlayerDamage — sahibi `PlayerHealth.AnyDamaged` | 2D | UI | Ü | Yönlü kenar flaşı |
+| HudNewBestRound | NEW BEST ROUND şeridi koşu içinde (U6) | **HudNewBestRound** (UiNewBest ailesi −6 dB kısa; öncelik 55, duck yok, tehdit çipinden sonra ≤ 3 s bekler; v015 T — WP-068 s11) | 2D | UI | T | RibbonIn |
+| HudEliteDown | ELITE DOWN damgası | **HudEliteDown** (lake tok + kısa koyu çan; stinger değil, müzik duck yok, öncelik 60; v015 T — WP-068 s11) | 2D | UI | T | 0,6 s damga |
+| HudUltraDown | ULTRA DOWN damgası | **HudUltraDown** (elite sesi + varak parıltısı; v015 T — WP-068 s11) | 2D | UI | T | damga + mürekkep |
 | UpgradePurchased | Satın alındı | UpgradePurchase — sahibi `RunAudioEvent.UpgradePurchased` | 2D | UI | Ü | PURCHASED çipi |
 | UpgradeRerolled | Teklif yenilendi | **UiReroll** (×2, T: 3 kart hışırtısı) | 2D | UI | T | Kartlar yeniden |
 | UpgradeOfferLocked | Teklif kilitlendi | **UiLock** (×2, T: metal kilit) | 2D | UI | T | OFFER LOCKED |
@@ -206,6 +217,12 @@ Yayın: `UiEvents.Raise(UiEvent, detail)`; S-08 `AudioEventRouter.OnUiEvent` yal
 | AchievementRevealed | Başarım | **UiAchievement** (×2, T) | 2D | UI | T | Nadirlik madalyonu |
 | NewBestRound | Rekor | **UiNewBest** (×2, T) | 2D | UI | T | NEW BEST ROUND pulse |
 | SettingsChanged | Ayar kaydedildi | n/a — Slider/Toggle olayı taşır | — | — | n/a | — |
+| CardDealt | Kart dağıtıldı (detay = sıra "0/1/2"; "last" → yerleşme toku) | **UiCardDealt** (washi kayma, pitch +0/+2/+4 %, MaxInstances 3; v015 T — WP-068 s11) | 2D | UI | T | CardDeal stagger 60 |
+| CardFlipped | Değişen kart döndü (reroll, scaleX = 0) | **UiCardFlipped** (washi hışırtı; v015 T — WP-068 s11) | 2D | UI | T | CardWipe |
+| StampLanded | Hanko temas karesi (satın alma, madalya, profil, seviye; detay rare/epic) | **UiStampLanded** / UiStampRare / UiStampEpic (v015 T — WP-068 s11) | 2D | UI | T | StampIn |
+| CounterRolling | Sayaç rulosu başladı (grup başına tek, ≤ 0,6 s) | **UiCounterRoll** (soroban döngü, kontrol edilebilir UI sesi; v015 T — WP-068 s11) | 2D | UI | T | CounterRoll |
+| CounterSettled | Sayaç yerleşti (ruloyu durdurur) | **UiCounterSettled** (go taşı / lake tok; v015 T — WP-068 s11) | 2D | UI | T | Stamp Base |
+| RerollHoldStarted | Hold-to-confirm başladı (U5 REROLL; RESET ALL BINDINGS) | **UiHoldRub** (washi sürtme 600 ms; Confirm tamamlar, Back 20 ms fade; v015 T — WP-068 s11) | 2D | UI | T | HoldFill Linear |
 | (mixer) Ana ses | `UiSettings.MasterVolume` → `PrototypeAudio.MasterVolume` + `MasterVolumeChanged` → mixer "MasterVolume" (60 ms rampa) | n/a — ses değil, kontrol satırı (mixer parametresi; UiSliderTick ayrı satırda) | — | Master | Ü | n/a — görsel yok |
 | Pause aç / kapat | `RunFlowClock` pause hold → snapshot Pause (+ `PrototypeAudio.Back`) | UiBack + snapshot | 2D | UI | Ü | |
 

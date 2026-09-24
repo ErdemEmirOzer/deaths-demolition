@@ -300,6 +300,13 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ui, "UiEvent.ToggleChanged", AudioSoundId.UiToggle, U, false, "two-tone mechanical (AP-011 v005)"),
             B(AudioEventSource.Ui, "UiEvent.DialogOpened", AudioSoundId.UiDialogOpen, U, false, "quit-run confirm: short low accent (AP-011 v005)"),
             B(AudioEventSource.Ui, "UiEvent.DialogClosed", AudioSoundId.UiBack, U, false, "owner: UiSound.Back (PauseScreen.CloseConfirm)", true),
+            // ---- WP-068 slice 11 · UI v3 contract (AP-011 v015 material set)
+            B(AudioEventSource.Ui, "UiEvent.ScreenExiting", AudioSoundId.UiTransitionOut, U, false, "screen exit (Exit 140): short paper draw, the entry's reverse (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.CurtainClosed", AudioSoundId.UiCurtainClose, U, false, "fusuma slide + stop, ≥ 1 frame before LoadScene; the tail rides the freeze (director is DontDestroyOnLoad) (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.CurtainOpened", AudioSoundId.UiCurtainOpen, U, false, "fusuma opening slide on the new scene's first frame (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.PressDown", AudioSoundId.UiPressDown, U, false, "lacquer tick on pointer-down (Primary/Secondary); Confirm follows on release (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.BootLogo", AudioSoundId.UiBootSeal, U, false, "U7: ink spread → seal tok → one rin strike, every launch; on the controllable UI voice (skip = 120 ms fade) (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.TimelineSkipped", AudioSoundId.None, U, false, "control, not a sound: fades the UI loops (roll / hold) in 30 ms and the boot seal in 120 ms", true),
             B(AudioEventSource.Ui, "UiEvent.HudRoundStarted", AudioSoundId.RoundStart, U, false, "owner: RunAudioEvent.RoundStart (same frame)", true),
             B(AudioEventSource.Ui, "UiEvent.HudRoundCompleted", AudioSoundId.RoundComplete, U, false, "owner: RunAudioEvent.RoundComplete", true),
             B(AudioEventSource.Ui, "UiEvent.HudPoolExhausted", AudioSoundId.RoundComplete, U, false, "owner: RunAudioEvent.RoundPoolExhausted (soft variant)", true),
@@ -316,6 +323,9 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ui, "UiEvent.HudThreatStrongVersion", AudioSoundId.HudThreatStrong, U, false, "ELITE/ULTRA NEARBY chip: dark short bell, distinct from the reserved gong (AP-011 v005)"),
             B(AudioEventSource.Ui, "UiEvent.HudThreatWindup", AudioSoundId.None, U, false, "covered by the positional windup vocal (DEC-067); a 2D double would blur direction", true),
             B(AudioEventSource.Ui, "UiEvent.HudDamageEdge", AudioSoundId.PlayerDamage, U, false, "owner: PlayerHealth.AnyDamaged", true),
+            B(AudioEventSource.Ui, "UiEvent.HudNewBestRound", AudioSoundId.HudNewBestRound, U, false, "U6 ribbon: short −6 dB rin (UiNewBest family), priority 55, no duck, held ≤ 3 s while a threat chip is up (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.HudEliteDown", AudioSoundId.HudEliteDown, U, false, "ELITE DOWN: lacquer tok + short dark bell - not a stinger (music never ducks for it), priority 60 (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.HudUltraDown", AudioSoundId.HudUltraDown, U, false, "ULTRA DOWN: the elite voice + gold-leaf shimmer, priority 60, no duck (v015)"),
             B(AudioEventSource.Ui, "UiEvent.UpgradePurchased", AudioSoundId.UpgradePurchase, U, false, "owner: RunAudioEvent.UpgradePurchased", true),
             B(AudioEventSource.Ui, "UiEvent.UpgradeRerolled", AudioSoundId.UiReroll, U, false, "three quick card rustles (AP-011 v005)"),
             B(AudioEventSource.Ui, "UiEvent.UpgradeOfferLocked", AudioSoundId.UiLock, U, false, "metal latch (AP-011 v005)"),
@@ -324,7 +334,16 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Ui, "UiEvent.UnlockRevealed", AudioSoundId.UiUnlock, U, false, "pickup + magnet sparkle (AP-011 v005)"),
             B(AudioEventSource.Ui, "UiEvent.AchievementRevealed", AudioSoundId.UiAchievement, U, false, "short round-complete + bell (AP-011 v005)"),
             B(AudioEventSource.Ui, "UiEvent.NewBestRound", AudioSoundId.UiNewBest, U, false, "the brightest one (AP-011 v005)"),
-            B(AudioEventSource.Ui, "UiEvent.SettingsChanged", AudioSoundId.None, U, false, "silent by design: SliderChanged / ToggleChanged carry it", true)
+            B(AudioEventSource.Ui, "UiEvent.SettingsChanged", AudioSoundId.None, U, false, "silent by design: SliderChanged / ToggleChanged carry it", true),
+            B(AudioEventSource.Ui, "UiEvent.CardDealt", AudioSoundId.UiCardDealt, U, false, "washi slide per card, pitch +0/+2/+4 % by deal index; 'last' adds the settle tok (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.CardFlipped", AudioSoundId.UiCardFlipped, U, false, "one rustle per changed card at scaleX = 0 (reroll) (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.StampLanded", AudioSoundId.UiStampLanded, U, false, "hanko on the contact frame; detail rare / epic → UiStampRare / UiStampEpic (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.CounterRolling", AudioSoundId.UiCounterRoll, U, false, "soroban roll, controllable UI voice, stops at CounterSettled or 0.6 s (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.CounterSettled", AudioSoundId.UiCounterSettled, U, false, "go-stone tok as the counter lands; ends the roll (v015)"),
+            B(AudioEventSource.Ui, "UiEvent.RerollHoldStarted", AudioSoundId.UiHoldRub, U, false, "U5 hold: brush rub for 600 ms on the UI voice; Confirm completes, Back (early release) fades it in 20 ms (v015)"),
+            B(AudioEventSource.Run, "Director.PauseOpened", AudioSoundId.UiPauseOpen, U, false, "WP-068: pause = the curtain-close short variant on the Pause snapshot (director, RunFlowClock pause hold)"),
+            B(AudioEventSource.Run, "Director.PauseClosed", AudioSoundId.UiPauseClose, U, false, "WP-068: resume = the curtain-open short variant"),
+            B(AudioEventSource.Run, "Director.DeathInk", AudioSoundId.UiInkBleed, U, false, "WP-068: ink texture 0.6 s after death under StingerDeath, until the Results curtain (−26 LUFS)")
         };
 
         private static AudioEventBinding B(AudioEventSource s, string e, AudioSoundId id, AudioBus bus, bool spatial, string note, bool reserved = false)

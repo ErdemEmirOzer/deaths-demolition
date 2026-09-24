@@ -533,10 +533,16 @@ namespace DD.Prototype.Audio
             switch (sound)
             {
                 case AudioSoundId.UiHover: return Interface(sound, 0.30f, 35f, 0f, 2, 0.05f);
-                case AudioSoundId.UiSliderTick: return Interface(sound, 0.32f, 35f, 0f, 2, 0.03f);
+                case AudioSoundId.UiSliderTick:
+                {
+                    // WP-068 M2: ≤ 12 ticks/s while dragging; the router sets the pitch from the value (no jitter on a map).
+                    AudioPlacement p = Interface(sound, 0.32f, 35f, 0f, 2, 1f / 12f);
+                    p.PitchJitter = 0f;
+                    return p;
+                }
                 case AudioSoundId.UiToggle: return Interface(sound, 0.45f, 45f, 0f, 1, 0.05f);
-                case AudioSoundId.UiPaneOpen: return Interface(sound, 0.45f, 50f, 0f, 1, 0.12f);
-                case AudioSoundId.UiSelect: return Interface(sound, 0.55f, 55f, 0f, 2, 0.05f);
+                case AudioSoundId.UiPaneOpen: return Interface(sound, 0.85f, 50f, 0f, 1, 0.12f);   // WP-068 s11: v015 washi slide sits lower than the v005 leaf rustle
+                case AudioSoundId.UiSelect: return Interface(sound, 1.00f, 55f, 0f, 2, 0.05f);   // WP-068 s11: +4.7 dB (menu bed measure 3.7 → ≥ 6 dB)
                 case AudioSoundId.UiDialogOpen: return Interface(sound, 0.55f, 60f, 0f, 1, 0.2f);
                 // Threat / danger chips (v005 gate M10): −20 LUFS under a full stack is 6–8 LU
                 // down, so they duck the world buses ≈ −4 dB and the beds ≈ −3 dB for 0.3 s -
@@ -585,6 +591,27 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.UiAchievement: return Interface(sound, 0.65f, 66f, 0f, 2, 0.25f);
                 case AudioSoundId.UiNewBest: return Interface(sound, 0.75f, 72f, 0f, 1, 0.5f);
                 case AudioSoundId.UiReveal: return Interface(sound, 0.55f, 58f, 0f, 2, 0.08f);
+
+                // ---- WP-068 slice 11 · UI v3 (menus: priority by weight; run cues ≤ 60 and never duck - M3)
+                case AudioSoundId.UiPressDown: return Interface(sound, 0.62f, 40f, 0f, 2, 0.04f);   // light by design, but ≥ 6 dB over the menu bed (measured 5.9 at 0.35)
+                case AudioSoundId.UiTransitionOut: return Interface(sound, 1.00f, 50f, 0f, 1, 0.25f);
+                case AudioSoundId.UiCurtainClose: return Interface(sound, 1.00f, 62f, 0f, 1, 0.3f);
+                case AudioSoundId.UiCurtainOpen: return Interface(sound, 0.95f, 60f, 0f, 1, 0.3f);
+                case AudioSoundId.UiPauseOpen: return Interface(sound, 0.50f, 62f, 0f, 1, 0.2f);
+                case AudioSoundId.UiPauseClose: return Interface(sound, 0.45f, 60f, 0f, 1, 0.2f);
+                case AudioSoundId.UiBootSeal: return Interface(sound, 0.70f, 70f, 0f, 1, 1.0f);
+                case AudioSoundId.UiCardDealt: return Interface(sound, 0.85f, 52f, 0f, 3, 0.04f);     // 3 cards, 60 ms stagger (≥ 6 LU over the bed: 2.6 LU at 0.45)
+                case AudioSoundId.UiCardFlipped: return Interface(sound, 0.80f, 52f, 0f, 3, 0.04f);
+                case AudioSoundId.UiStampLanded: return Interface(sound, 1.00f, 64f, 0f, 2, 0.11f);   // at its −3 dBTP file ceiling: the gain carries the ≥ 6 LU   // stamps never stack (≤ 110 ms)
+                case AudioSoundId.UiStampRare: return Interface(sound, 0.65f, 66f, 0f, 2, 0.11f);
+                case AudioSoundId.UiStampEpic: return Interface(sound, 0.70f, 68f, 0f, 2, 0.11f);
+                case AudioSoundId.UiCounterRoll: return Interface(sound, 0.35f, 45f, 0f, 1, 0.1f);
+                case AudioSoundId.UiCounterSettled: return Interface(sound, 0.45f, 50f, 0f, 2, 0.08f);
+                case AudioSoundId.UiHoldRub: return Interface(sound, 0.30f, 45f, 0f, 1, 0.1f);
+                case AudioSoundId.UiInkBleed: return Interface(sound, 0.40f, 40f, 0f, 1, 1.0f);
+                case AudioSoundId.HudNewBestRound: return Interface(sound, 0.60f, 55f, 0f, 1, 2.0f);  // ribbon: no duck, 2 s retrigger
+                case AudioSoundId.HudEliteDown: return Interface(sound, 0.60f, 60f, 0f, 1, 0.6f);     // not a stinger: no duck
+                case AudioSoundId.HudUltraDown: return Interface(sound, 0.70f, 60f, 0f, 1, 0.6f);
                 default: return Interface(sound, 0.5f, 50f, 0f, 2, 0.05f);
             }
         }
@@ -859,7 +886,7 @@ namespace DD.Prototype.Audio
                 Spatial = spatial,
                 MaxInstances = maxInstances,
                 MinRetrigger = minRetrigger,
-                PitchJitter = 0f,
+                PitchJitter = 0.03f,   // WP-068 M2: ±3 % on every interface cue (a repeated click never sounds sampled)
                 Pitch = 1f,
                 DuckAmbience = 1f,
                 DuckCombat = 1f,

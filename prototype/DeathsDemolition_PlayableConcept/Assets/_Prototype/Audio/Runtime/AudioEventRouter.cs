@@ -119,6 +119,29 @@ namespace DD.Prototype.Audio
             _fieldStop = stop;
         }
 
+        // ---- WP-068 slice 11 · controllable UI voices (roll, hold, boot seal) + UI v3 state
+        private Func<AudioSoundId, bool, float, bool> _uiVoiceStart;   // (sound, loop, maxSeconds) → started
+        private Action<AudioSoundId, float> _uiVoiceStop;              // (sound or None = all, fadeSeconds)
+
+        /// <summary>WP-068 s11: the director's controllable UI voices (a soroban roll that stops on the settle, a hold rub cut on release, a boot seal faded on skip).</summary>
+        public void SetUiVoiceHandlers(Func<AudioSoundId, bool, float, bool> start, Action<AudioSoundId, float> stop)
+        {
+            _uiVoiceStart = start;
+            _uiVoiceStop = stop;
+        }
+
+        /// <summary>WP-068 M2 sweep decay: a hover over a row of controls ducks each next hover (× 0.8, floor 0.45) until 0.3 s of quiet.</summary>
+        public const float HoverSweepWindow = 0.15f, HoverSweepReset = 0.3f, HoverSweepStep = 0.8f, HoverSweepFloor = 0.45f;
+        /// <summary>WP-068 C6: the NEW BEST ROUND ribbon waits (≤ 3 s) while a threat chip has just sounded.</summary>
+        public const float NewBestChipHold = 0.8f, NewBestMaxWait = 3f;
+        private float _hoverLast = -10f, _hoverGain = 1f, _threatChipLast = -10f, _newBestPendingSince = -1f;
+        /// <summary>Last UI cue's gain scale (sweep decay) and pitch (slider map, card stagger). Test readouts.</summary>
+        public float LastUiGain { get; private set; } = 1f;
+        public float LastUiPitch { get; private set; } = 1f;
+        /// <summary>UI v3 voice starts (roll / hold / boot seal) and ribbons held for a chip. Test readouts.</summary>
+        public int UiVoiceCount { get; private set; }
+        public int NewBestDeferred { get; private set; }
+
         public AudioEventRouter(AudioPlayFunc play)
         {
             _play = play;
@@ -160,6 +183,7 @@ namespace DD.Prototype.Audio
 
         public void Clear()
         {
+            _newBestPendingSince = -1f;
             _tracked.Clear();
             _drops.Clear();
             _animOwner.Clear();
@@ -369,16 +393,118 @@ namespace DD.Prototype.Audio
         /// </summary>
         private void OnUiEvent(DD.Prototype.UI.UiEvent e, string detail)
         {
+            float now = Time.unscaledTime;
+
+            // WP-068 s11 control edges that are not sounds of their own.
+            switch (e)
+            {
+                case DD.Prototype.UI.UiEvent.TimelineSkipped:
+                    _uiVoiceStop?.Invoke(AudioSoundId.UiBootSeal, 0.12f);   // U7: skip = 120 ms fade
+                    _uiVoiceStop?.Invoke(AudioSoundId.UiCounterRoll, 0.03f);
+                    _uiVoiceStop?.Invoke(AudioSoundId.UiHoldRub, 0.03f);
+                    return;
+                case DD.Prototype.UI.UiEvent.Confirm:
+                case DD.Prototype.UI.UiEvent.Back:
+                    _uiVoiceStop?.Invoke(AudioSoundId.UiHoldRub, 0.02f);    // hold completed / released early
+                    break;
+                case DD.Prototype.UI.UiEvent.HudThreatEncircled:
+                case DD.Prototype.UI.UiEvent.HudThreatRearAttack:
+                case DD.Prototype.UI.UiEvent.HudThreatStrongVersion:
+                    _threatChipLast = now;
+                    break;
+            }
+
             AudioSoundId sound = UiSoundFor(e);
             if (sound == AudioSoundId.None)
             {
                 return;
             }
 
-            if (_play(AudioMixPlan.UiEvent(sound), Vector3.zero, 1f, 45))
+            AudioPlacement placement = AudioMixPlan.UiEvent(sound);
+            float gain = 1f;
+            switch (e)
+            {
+                case DD.Prototype.UI.UiEvent.ButtonHover:
+                    // Sweep decay: a pointer running down a list is one gesture, not ten clicks.
+                    _hoverGain = now - _hoverLast <= HoverSweepWindow ? Mathf.Max(HoverSweepFloor, _hoverGain * HoverSweepStep)
+                        : now - _hoverLast >= HoverSweepReset ? 1f : _hoverGain;
+                    _hoverLast = now;
+                    gain = _hoverGain;
+                    break;
+                case DD.Prototype.UI.UiEvent.SliderChanged:
+                    float v = DD.Prototype.UI.UiEvents.LastValue01;
+                    if (v >= 0f) placement.Pitch = 0.9f + 0.2f * v;       // the value is audible: 0.90 → 1.10
+                    break;
+                case DD.Prototype.UI.UiEvent.CardDealt:
+                    int index = DealIndex(detail);
+                    placement.Pitch = 1f + 0.02f * index;                  // +0 / +2 / +4 %
+                    placement.PitchJitter = 0f;
+                    if (IsLast(detail))
+                    {
+                        _play(AudioMixPlan.UiEvent(AudioSoundId.UiCounterSettled), Vector3.zero, 0.8f, 45);   // the settle tok
+                    }
+                    break;
+                case DD.Prototype.UI.UiEvent.StampLanded:
+                    if (string.Equals(detail, "epic", StringComparison.OrdinalIgnoreCase)) placement = AudioMixPlan.UiEvent(sound = AudioSoundId.UiStampEpic);
+                    else if (string.Equals(detail, "rare", StringComparison.OrdinalIgnoreCase)) placement = AudioMixPlan.UiEvent(sound = AudioSoundId.UiStampRare);
+                    break;
+                case DD.Prototype.UI.UiEvent.CounterSettled:
+                    _uiVoiceStop?.Invoke(AudioSoundId.UiCounterRoll, 0.03f);
+                    break;
+                case DD.Prototype.UI.UiEvent.BootLogo:
+                    if (_uiVoiceStart != null && _uiVoiceStart(AudioSoundId.UiBootSeal, false, 2f)) { UiVoiceCount++; UiCount++; LastUiGain = 1f; LastUiPitch = 1f; }
+                    return;
+                case DD.Prototype.UI.UiEvent.CounterRolling:
+                    if (_uiVoiceStart != null && _uiVoiceStart(AudioSoundId.UiCounterRoll, true, 0.6f)) { UiVoiceCount++; UiCount++; }
+                    return;
+                case DD.Prototype.UI.UiEvent.RerollHoldStarted:
+                    if (_uiVoiceStart != null && _uiVoiceStart(AudioSoundId.UiHoldRub, false, 0.6f)) { UiVoiceCount++; UiCount++; }
+                    return;
+                case DD.Prototype.UI.UiEvent.HudNewBestRound:
+                    if (now - _threatChipLast < NewBestChipHold)
+                    {
+                        if (_newBestPendingSince < 0f) { _newBestPendingSince = now; NewBestDeferred++; }
+                        return;
+                    }
+                    break;
+            }
+
+            LastUiGain = gain;
+            LastUiPitch = placement.Pitch;
+            if (_play(placement, Vector3.zero, gain, 45))
             {
                 UiCount++;
             }
+        }
+
+        /// <summary>A held NEW BEST ROUND ribbon plays as soon as the chip is quiet, or after 3 s regardless.</summary>
+        private void TickNewBest(float now)
+        {
+            if (_newBestPendingSince < 0f)
+            {
+                return;
+            }
+
+            if (now - _threatChipLast >= NewBestChipHold || now - _newBestPendingSince >= NewBestMaxWait)
+            {
+                _newBestPendingSince = -1f;
+                if (_play(AudioMixPlan.UiEvent(AudioSoundId.HudNewBestRound), Vector3.zero, 1f, 45))
+                {
+                    UiCount++;
+                }
+            }
+        }
+
+        private static int DealIndex(string detail)
+        {
+            if (string.IsNullOrEmpty(detail)) return 0;
+            char c = detail[0];
+            return c >= '0' && c <= '9' ? Mathf.Min(c - '0', 4) : 0;
+        }
+
+        private static bool IsLast(string detail)
+        {
+            return !string.IsNullOrEmpty(detail) && detail.EndsWith("last", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>UiEvent → sound for the bound rows; None for the reserved ones. Mirrors the map (the EditMode test keeps the two equal).</summary>
@@ -404,6 +530,21 @@ namespace DD.Prototype.Audio
                 case DD.Prototype.UI.UiEvent.UnlockRevealed: return AudioSoundId.UiUnlock;
                 case DD.Prototype.UI.UiEvent.AchievementRevealed: return AudioSoundId.UiAchievement;
                 case DD.Prototype.UI.UiEvent.NewBestRound: return AudioSoundId.UiNewBest;
+                // ---- WP-068 slice 11
+                case DD.Prototype.UI.UiEvent.ScreenExiting: return AudioSoundId.UiTransitionOut;
+                case DD.Prototype.UI.UiEvent.CurtainClosed: return AudioSoundId.UiCurtainClose;
+                case DD.Prototype.UI.UiEvent.CurtainOpened: return AudioSoundId.UiCurtainOpen;
+                case DD.Prototype.UI.UiEvent.PressDown: return AudioSoundId.UiPressDown;
+                case DD.Prototype.UI.UiEvent.BootLogo: return AudioSoundId.UiBootSeal;
+                case DD.Prototype.UI.UiEvent.HudNewBestRound: return AudioSoundId.HudNewBestRound;
+                case DD.Prototype.UI.UiEvent.HudEliteDown: return AudioSoundId.HudEliteDown;
+                case DD.Prototype.UI.UiEvent.HudUltraDown: return AudioSoundId.HudUltraDown;
+                case DD.Prototype.UI.UiEvent.CardDealt: return AudioSoundId.UiCardDealt;
+                case DD.Prototype.UI.UiEvent.CardFlipped: return AudioSoundId.UiCardFlipped;
+                case DD.Prototype.UI.UiEvent.StampLanded: return AudioSoundId.UiStampLanded;
+                case DD.Prototype.UI.UiEvent.CounterRolling: return AudioSoundId.UiCounterRoll;
+                case DD.Prototype.UI.UiEvent.CounterSettled: return AudioSoundId.UiCounterSettled;
+                case DD.Prototype.UI.UiEvent.RerollHoldStarted: return AudioSoundId.UiHoldRub;
                 default: return AudioSoundId.None;
             }
         }
@@ -649,6 +790,7 @@ namespace DD.Prototype.Audio
         public void Tick()
         {
             float now = Time.unscaledTime;
+            TickNewBest(now);   // WP-068 C6
             Vector3 listener = _listenerPosition != null ? _listenerPosition() : Vector3.zero;
 
             // Plates landing after their break.

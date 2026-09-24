@@ -352,6 +352,15 @@ namespace DD.Prototype.Audio
             }
         }
 
+        /// <summary>WP-068 s11: the interface pool keeps sounding through the pause (AudioListener.pause stops every other source) - the pause menu's own cues.</summary>
+        public void SetIgnoreListenerPause(bool ignore)
+        {
+            for (int i = 0; i < _voices.Length; i++)
+            {
+                _voices[i].Source.ignoreListenerPause = ignore;
+            }
+        }
+
         public void StopAll()
         {
             for (int i = 0; i < _voices.Length; i++)

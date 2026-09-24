@@ -106,5 +106,26 @@ namespace DD.Prototype.Audio
                 }
             }
         }
+
+        /// <summary>
+        /// WP-068 U8: the UI SOUNDS slider, 0-1. <c>UiSettings.UiVolume</c> writes here; the director applies it as the
+        /// player multiplier of the software Interface bus (not the mixer's exposed "UiVolume", which would override the
+        /// snapshot UI trims). Every Interface voice follows on its next tick.
+        /// </summary>
+        public static float UiVolume
+        {
+            get => s_uiVolume;
+            set
+            {
+                s_uiVolume = Mathf.Clamp01(value);
+                PrototypeAudioDirector director = PrototypeAudioDirector.Instance;
+                if (director != null)
+                {
+                    director.Mixer.SetPlayerVolume(AudioBus.Interface, s_uiVolume);
+                }
+            }
+        }
+
+        private static float s_uiVolume = 1f;
     }
 }

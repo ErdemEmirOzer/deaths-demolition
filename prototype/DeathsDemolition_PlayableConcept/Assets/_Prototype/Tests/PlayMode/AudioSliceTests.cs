@@ -725,6 +725,225 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp048b.foley weapon=" + weapon + " " + r.Describe() + " · thunder " + _d.Ambience.ThunderCount + " pond " + _d.Ambience.PondPlaying);
         }
 
+        // ================================================================== WP-068 dilim 11 · UI ses v3
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator UiV3_RuloYerlesinceDurur_HoldBirakilincaSoner_BootAtlamadaSoner()
+        {
+            AudioEventRouter r = _d.Router;
+            int once = r.UiVoiceCount;
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.CounterRolling);
+            yield return null;
+            Assert.IsTrue(_d.UiVoicePlaying(AudioSoundId.UiCounterRoll), "Rulo başlamadı.");
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.CounterSettled);
+            yield return new WaitForSecondsRealtime(0.12f);
+            Assert.IsFalse(_d.UiVoicePlaying(AudioSoundId.UiCounterRoll), "Rulo CounterSettled'da 30 ms içinde durmalı.");
+
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.CounterRolling);
+            yield return new WaitForSecondsRealtime(0.8f);
+            Assert.IsFalse(_d.UiVoicePlaying(AudioSoundId.UiCounterRoll), "Rulo 0,6 s tavanında kendiliğinden bitmeli.");
+
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.RerollHoldStarted);
+            yield return null;
+            Assert.IsTrue(_d.UiVoicePlaying(AudioSoundId.UiHoldRub), "Hold sürtmesi başlamadı.");
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.Back);   // erken bırakma
+            yield return new WaitForSecondsRealtime(0.1f);
+            Assert.IsFalse(_d.UiVoicePlaying(AudioSoundId.UiHoldRub), "Erken bırakma sürtmeyi 20 ms'de kesmeli.");
+
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.BootLogo);
+            yield return null;
+            Assert.IsTrue(_d.UiVoicePlaying(AudioSoundId.UiBootSeal), "Boot mührü (U7) çalmadı.");
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.TimelineSkipped);
+            yield return new WaitForSecondsRealtime(0.25f);
+            Assert.IsFalse(_d.UiVoicePlaying(AudioSoundId.UiBootSeal), "Atlama boot mührünü 120 ms'de söndürmeli.");
+            Assert.AreEqual(once + 4, r.UiVoiceCount);
+            Debug.Log("[DD-TEST] wp068.voices " + r.UiVoiceCount + " · " + r.Describe());
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator UiV3_PauseArayuzuDuyulur_PauseSesleri_UiVolumeAyriKaydirici()
+        {
+            try
+            {
+                RunFlowClock.AddHold(RunFlowClock.PauseHold);
+                yield return null;
+                yield return null;
+                Assert.AreEqual(AudioSoundId.UiPauseOpen, _d.LastPlayed, "Pause açılışı perde kısa varyantını çalmalı.");
+                Assert.Greater(_d.Mixer.Gain(AudioBus.Interface), 0f, "Pause arayüzü susturmamalı.");
+                Assert.AreEqual(0f, _d.Mixer.Gain(AudioBus.Impact), 1e-4f, "Pause dünyayı susturmalı.");
+                int once = _d.PlayedCount;
+                DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.DialogOpened);
+                Assert.AreEqual(once + 1, _d.PlayedCount, "Pause menüsünde UI olayı çalmalı.");
+                RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+                yield return null;
+                yield return null;
+                Assert.AreEqual(AudioSoundId.UiPauseClose, _d.LastPlayed, "RESUME açılış kaydırmasını çalmalı.");
+
+                DD.Prototype.UI.UiSettings.UiVolume = 0.5f;   // U8
+                Assert.AreEqual(0.5f, PrototypeAudio.UiVolume, 1e-4f);
+                Assert.AreEqual(0.5f, _d.Mixer.GetPlayerVolume(AudioBus.Interface), 1e-4f, "UI SOUNDS Interface bus'a uygulanmalı.");
+                Assert.AreEqual(1f, _d.Mixer.GetPlayerVolume(AudioBus.Weapon), 1e-4f, "Diğer bus'lar etkilenmemeli.");
+            }
+            finally
+            {
+                RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+                DD.Prototype.UI.UiSettings.UiVolume = 1f;
+            }
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator UiV3_KartBasamagi_DamgaKatmani_HoverSonumu_SliderPerdesi_SeritErteleme()
+        {
+            AudioEventRouter r = _d.Router;
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.CardDealt, "0");
+            Assert.AreEqual(1.00f, r.LastUiPitch, 1e-4f);
+            yield return new WaitForSecondsRealtime(0.07f);
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.CardDealt, "1");
+            Assert.AreEqual(1.02f, r.LastUiPitch, 1e-4f);
+            yield return new WaitForSecondsRealtime(0.07f);
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.CardDealt, "2 last");
+            Assert.AreEqual(1.04f, r.LastUiPitch, 1e-4f, "Dağıtma +0/+2/+4 %.");
+
+            yield return new WaitForSecondsRealtime(0.2f);
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.StampLanded, "epic");
+            Assert.AreEqual(AudioSoundId.UiStampEpic, _d.LastPlayed, "Epic madalya kendi katmanı.");
+
+            yield return new WaitForSecondsRealtime(0.4f);
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.ButtonHover);
+            Assert.AreEqual(1f, r.LastUiGain, 1e-4f);
+            yield return null;
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.ButtonHover);
+            yield return null;
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.ButtonHover);
+            Assert.Less(r.LastUiGain, 0.7f, "Hover süpürmesi sönümlenmeli (× 0,8 adım).");
+
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.SliderChanged, "UI SOUNDS", 1f);
+            Assert.AreEqual(1.10f, r.LastUiPitch, 1e-3f, "Slider perdesi değeri izler.");
+
+            int ertelenen = r.NewBestDeferred;
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.HudThreatEncircled);
+            DD.Prototype.UI.UiEvents.Raise(DD.Prototype.UI.UiEvent.HudNewBestRound);
+            Assert.AreEqual(ertelenen + 1, r.NewBestDeferred, "Tehdit çipi varken şerit bekler.");
+            yield return SpecialWeaponSahne.Bekle(() => _d.LastPlayed == AudioSoundId.HudNewBestRound, 4f, "Şerit çip sustuktan sonra çalmadı.");
+            Debug.Log("[DD-TEST] wp068.ui gain " + r.LastUiGain.ToString("0.00") + " deferred " + r.NewBestDeferred);
+        }
+
+        /// <summary>
+        /// WP-068 slice 11 acceptance "≥ 6 LU": every v3 menu cue stands at least 6 LU above the menu bed.
+        /// Both are measured on the recorded output (<see cref="AudioOutputCapture"/>, post mixer / limiter):
+        /// the bed (menu loop + beds on the Menu snapshot) as gated integrated loudness over 3 s; each cue on the
+        /// same chain with the Music / Ambience groups pulled to −80 dB, as its loudest K-weighted 100 ms window.
+        /// Separation = cue − bed. (A cue measured on top of the bed would read the bed's loop position, ±3 LU.)
+        /// PressDown (a ≤ 40 ms tick under the Confirm that follows on release) is reported, not gated: a 100 ms
+        /// short-term window cannot rate a 40 ms transient.
+        /// </summary>
+        [UnityTest]
+        [Timeout(90000)]
+        public IEnumerator UiV3_MenuCuelari_YatakUstunde_6LU()
+        {
+            MusicDirector m = _d.Music;
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            string bedPath = System.IO.Path.Combine(Application.temporaryCachePath, "wp068-bed.wav");
+            string cuePath = System.IO.Path.Combine(Application.temporaryCachePath, "wp068-cues.wav");
+            AudioOutputCapture cap = null;
+
+            float[] ReadMono(string path, out int rate)
+            {
+                byte[] raw = System.IO.File.ReadAllBytes(path);
+                int ch = raw[22] | (raw[23] << 8);
+                rate = raw[24] | (raw[25] << 8) | (raw[26] << 16) | (raw[27] << 24);
+                int n = (raw.Length - 44) / (2 * ch);
+                var mono = new float[n];
+                for (int i = 0; i < n; i++)
+                {
+                    float sum = 0f;
+                    for (int c = 0; c < ch; c++) { int o = 44 + 2 * (i * ch + c); sum += (short)(raw[o] | (raw[o + 1] << 8)) / 32768f; }
+                    mono[i] = sum / ch;
+                }
+
+                return mono;
+            }
+
+            void StopCapture()
+            {
+                if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
+                cap = null;
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+            }
+
+            try
+            {
+                m.SetPhase(RunPhase.None);
+                _d.Bridge.Transition(AudioSnapshot.Menu, 0.1f);
+                yield return SpecialWeaponSahne.Bekle(() => m.PhaseLoop == AudioSoundId.MusicMenu && m.PhaseLoopLevel > 0.5f, 12f, "Menü döngüsü yükselmedi.");
+
+                cap = AudioOutputCapture.Arm(_d.gameObject, bedPath);
+                yield return new WaitForSecondsRealtime(3.2f);
+                long bedFrames = cap.FramesWritten;
+                StopCapture();
+                if (bedFrames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+                float[] bedMono = ReadMono(bedPath, out int rate);
+                float bedLufs = LoudnessMeter.Measure(bedMono, rate).IntegratedLufs;
+
+                // The cues alone, same chain: music and beds out of the way.
+                mixer.SetFloat(AudioMixerBridge.VolumeParams[1], -80f);
+                mixer.SetFloat(AudioMixerBridge.VolumeParams[2], -80f);
+                yield return new WaitForSecondsRealtime(0.3f);
+                var cues = new (DD.Prototype.UI.UiEvent e, string d)[]
+                {
+                    (DD.Prototype.UI.UiEvent.PressDown, null), (DD.Prototype.UI.UiEvent.PaneOpened, null), (DD.Prototype.UI.UiEvent.CardDealt, "0"),
+                    (DD.Prototype.UI.UiEvent.StampLanded, null), (DD.Prototype.UI.UiEvent.CurtainClosed, null), (DD.Prototype.UI.UiEvent.CurtainOpened, null),
+                    (DD.Prototype.UI.UiEvent.ChoiceSelected, null), (DD.Prototype.UI.UiEvent.ScreenExiting, null)
+                };
+                cap = AudioOutputCapture.Arm(_d.gameObject, cuePath);
+                var at = new long[cues.Length];
+                for (int i = 0; i < cues.Length; i++)
+                {
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    at[i] = cap.FramesWritten;
+                    DD.Prototype.UI.UiEvents.Raise(cues[i].e, cues[i].d);
+                }
+
+                yield return new WaitForSecondsRealtime(0.6f);
+                StopCapture();
+                float[] cue = ReadMono(cuePath, out rate);
+
+                int win = rate / 10, hop = rate / 100, n = cue.Length;
+                var w = new float[win];
+                var zayif = new System.Collections.Generic.List<string>();
+                var rapor = new System.Text.StringBuilder();
+                for (int i = 0; i < cues.Length; i++)
+                {
+                    float peak = -120f;
+                    for (long s0 = at[i] - rate / 20; s0 < at[i] + (long)(0.4f * rate); s0 += hop)
+                    {
+                        long p0 = Math.Max(0, Math.Min(s0, n - win));
+                        Array.Copy(cue, p0, w, 0, win);
+                        peak = Mathf.Max(peak, LoudnessMeter.WindowLoudness(w, rate));
+                    }
+
+                    float fark = peak - bedLufs;
+                    rapor.Append(cues[i].e).Append(' ').Append(fark.ToString("0.0")).Append(" LU · ");
+                    if (fark < 6f && cues[i].e != DD.Prototype.UI.UiEvent.PressDown) zayif.Add(cues[i].e + " " + fark.ToString("0.0") + " LU");
+                }
+
+                Debug.Log("[DD-TEST] wp068.lu bed " + bedLufs.ToString("0.0") + " LUFS-I (3 s) · " + rapor);
+                Assert.IsEmpty(zayif, "Menü yatağı üstünde < 6 LU kalan UI cue'ları");
+            }
+            finally
+            {
+                StopCapture();
+                mixer.ClearFloat(AudioMixerBridge.VolumeParams[1]);
+                mixer.ClearFloat(AudioMixerBridge.VolumeParams[2]);
+                m.OnRunStarted();
+                m.SetPhase(RunPhase.Fighting);
+                _d.Bridge.Transition(AudioSnapshot.Run, 0.1f);
+            }
+        }
+
         // ================================================================== WP-065C · fūrin rüzgâr çanı
 
         [UnityTest]

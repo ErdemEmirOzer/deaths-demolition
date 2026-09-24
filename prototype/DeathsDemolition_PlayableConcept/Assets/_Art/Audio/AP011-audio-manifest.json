@@ -1,5 +1,5 @@
 {
- "version": "ap011-v014",
+ "version": "ap011-v015",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -102,7 +102,7 @@
    "layers": "derived (v007, no credits): AmbDrip_01.wav@0ms 0dB +4st + ImpactWater_01.wav@230ms -8dB +9st + AmbDrip_02.wav@470ms -4dB +6st",
    "bus": "Ambience",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbDrip_01.wav, exports/AmbDrip_02.wav, exports/ImpactWater_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/AmbDrip_01.wav, exports/AmbDrip_02.wav, exports/ImpactWater_01.wav"
   },
   {
    "sound": "AmbFurin",
@@ -174,7 +174,7 @@
    "layers": "derived (v007, no credits): AmbRegionSouth.wav@0ms 0dB -2st + noise:pink@0ms -9dB + impact_water.wav@0ms -26dB -6st",
    "bus": "Ambience",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbRegionSouth.wav, noise:pink, raw/impact_water.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/AmbRegionSouth.wav, noise:pink, raw/impact_water.wav"
   },
   {
    "sound": "AmbRegionCenter",
@@ -332,7 +332,7 @@
    "layers": "derived (v007, no credits): explosion_tail.wav@0ms -4dB -8st + noise:pink@0ms -18dB + explosion_tail.wav@600ms -6dB -4st",
    "bus": "Ambience",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/explosion_tail.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from noise:pink, raw/explosion_tail.wav"
   },
   {
    "sound": "AmbWoodCreak",
@@ -404,7 +404,7 @@
    "layers": "derived (v007, no credits): ArmorBreak_01.wav@0ms 0dB -1st + AttackImpactBody_02.wav@0ms -9dB -3st + ArmorCrack_01.wav@40ms -8dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorBreak_01.wav, exports/ArmorCrack_01.wav, exports/AttackImpactBody_02.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorBreak_01.wav, exports/ArmorCrack_01.wav, exports/AttackImpactBody_02.wav"
   },
   {
    "sound": "ArmorBreakHelmet",
@@ -428,7 +428,7 @@
    "layers": "derived (v007, no credits): ArmorBreak_01.wav@0ms 0dB +5st + ArmorImpact_01.wav@0ms -8dB +4st + tone:3100,4700@0.8@0ms -20dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorBreak_01.wav, exports/ArmorImpact_01.wav, tone:3100,4700@0.8"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorBreak_01.wav, exports/ArmorImpact_01.wav, tone:3100,4700@0.8"
   },
   {
    "sound": "ArmorBreakLeg",
@@ -452,7 +452,7 @@
    "layers": "derived (v007, no credits): ArmorBreak_02.wav@0ms -1dB +2st + ArmorPieceDrop_01.wav@90ms -5dB +3st + noise:white@30ms -11dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorBreak_02.wav, exports/ArmorPieceDrop_01.wav, noise:white"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorBreak_02.wav, exports/ArmorPieceDrop_01.wav, noise:white"
   },
   {
    "sound": "ArmorCrack",
@@ -571,7 +571,7 @@
    "layers": "derived (v007, no credits): FootstepFoliage_02.wav@0ms 0dB -3st + FootstepFoliage_04.wav@60ms -3dB -1st + ImpactDirt_01.wav@0ms -8dB -4st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepFoliage_02.wav, exports/FootstepFoliage_04.wav, exports/ImpactDirt_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/FootstepFoliage_02.wav, exports/FootstepFoliage_04.wav, exports/ImpactDirt_01.wav"
   },
   {
    "sound": "BreakBench",
@@ -595,7 +595,7 @@
    "layers": "derived (v007, no credits): ImpactWood_01.wav@0ms 0dB -6st + ArmorPieceDrop_02.wav@180ms -8dB -6st + ImpactWood_01.wav@320ms -9dB -2st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav, exports/ImpactWood_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorPieceDrop_02.wav, exports/ImpactWood_01.wav"
   },
   {
    "sound": "BreakCeramic",
@@ -642,7 +642,7 @@
    "layers": "derived (v007, no credits): AmbBambooKnock_01.wav@0ms 0dB -2st + ImpactWood_01.wav@70ms -3dB -3st + AmbBambooKnock_02.wav@160ms -4dB -5st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbBambooKnock_01.wav, exports/AmbBambooKnock_02.wav, exports/ImpactWood_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/AmbBambooKnock_01.wav, exports/AmbBambooKnock_02.wav, exports/ImpactWood_01.wav"
   },
   {
    "sound": "BreakLanternPaper",
@@ -666,7 +666,7 @@
    "layers": "derived (v007, no credits): ImpactPaper_02.wav@0ms 0dB +1st + ImpactWood_01.wav@60ms -9dB +6st + noise:pink@20ms -13dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_02.wav, exports/ImpactWood_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ImpactPaper_02.wav, exports/ImpactWood_01.wav, noise:pink"
   },
   {
    "sound": "BreakLanternStone",
@@ -690,7 +690,7 @@
    "layers": "derived (v007, no credits): ImpactStone_01.wav@0ms 0dB -4st + AmbStoneSettle_01.wav@120ms -6dB -2st + BreakCeramic_02.wav@220ms -10dB -2st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbStoneSettle_01.wav, exports/BreakCeramic_02.wav, exports/ImpactStone_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/AmbStoneSettle_01.wav, exports/BreakCeramic_02.wav, exports/ImpactStone_01.wav"
   },
   {
    "sound": "BreakPlanter",
@@ -714,7 +714,7 @@
    "layers": "derived (v007, no credits): BreakCeramic_01.wav@0ms 0dB + ImpactDirt_01.wav@90ms -7dB -2st + FootstepDirt_03.wav@200ms -12dB -1st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/BreakCeramic_01.wav, exports/FootstepDirt_03.wav, exports/ImpactDirt_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/BreakCeramic_01.wav, exports/FootstepDirt_03.wav, exports/ImpactDirt_01.wav"
   },
   {
    "sound": "BreakShoji",
@@ -738,7 +738,7 @@
    "layers": "derived (v007, no credits): ImpactPaper_01.wav@0ms 0dB + ImpactPaper_03.wav@90ms -3dB -2st + ImpactWood_01.wav@160ms -8dB -3st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactPaper_01.wav, exports/ImpactPaper_03.wav, exports/ImpactWood_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ImpactPaper_01.wav, exports/ImpactPaper_03.wav, exports/ImpactWood_01.wav"
   },
   {
    "sound": "BreakSign",
@@ -762,7 +762,7 @@
    "layers": "derived (v007, no credits): ImpactWood_01.wav@0ms 0dB -1st + AmbBambooKnock_03.wav@110ms -8dB +2st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbBambooKnock_03.wav, exports/ImpactWood_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/AmbBambooKnock_03.wav, exports/ImpactWood_01.wav"
   },
   {
    "sound": "ChainArc",
@@ -980,7 +980,7 @@
    "layers": "derived (v007, no credits): FootstepDirt_01.wav@0ms 0dB + ImpactStone_01.wav@0ms -5dB +7st + noise:white@0ms -12dB + ImpactStone_01.wav@45ms -8dB +9st",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepDirt_01.wav, exports/ImpactStone_01.wav, noise:white"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/FootstepDirt_01.wav, exports/ImpactStone_01.wav, noise:white"
   },
   {
    "sound": "FootstepPavement",
@@ -1004,7 +1004,7 @@
    "layers": "derived (v007, no credits): FootstepStone_01.wav@0ms 0dB +2st + ImpactStone_01.wav@0ms -6dB +6st + tone:1900,2850@0.5@0ms -22dB",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepStone_01.wav, exports/ImpactStone_01.wav, tone:1900,2850@0.5"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/FootstepStone_01.wav, exports/ImpactStone_01.wav, tone:1900,2850@0.5"
   },
   {
    "sound": "FootstepStone",
@@ -1078,7 +1078,7 @@
    "layers": "derived (v007, no credits): FootstepWater_02.wav@0ms 0dB -4st + ImpactWater_01.wav@40ms -6dB -6st + AmbDrip_01.wav@300ms -14dB",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbDrip_01.wav, exports/FootstepWater_02.wav, exports/ImpactWater_01.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/AmbDrip_01.wav, exports/FootstepWater_02.wav, exports/ImpactWater_01.wav"
   },
   {
    "sound": "FootstepWaterShallow",
@@ -1102,7 +1102,7 @@
    "layers": "derived (v007, no credits): FootstepWater_01.wav@0ms 0dB +3st + noise:white@0ms -18dB",
    "bus": "SFX-Player",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepWater_01.wav, noise:white"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/FootstepWater_01.wav, noise:white"
   },
   {
    "sound": "FootstepWood",
@@ -1317,6 +1317,29 @@
    "provenance": "seed_audio job e06977b2 (2.0 cr) · hit_marker"
   },
   {
+   "sound": "HudEliteDown",
+   "event": "UiEvent.HudEliteDown",
+   "files": [
+    "HudEliteDown_01.wav",
+    "HudEliteDown_02.wav"
+   ],
+   "loop": false,
+   "lufs": -27.27,
+   "truePeakDb": -6.0,
+   "noiseFloorDb": -89.6,
+   "dcDb": -215.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -25.0,
+   "ceilingDbtp": -6.0,
+   "continuous": false,
+   "endSilenceDb": -198.7,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB + ui_bell_rin_suzu.wav@40ms -4dB -5st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
    "sound": "HudLowHealth",
    "event": "UiEvent.HudLowHealthEntered",
    "files": [
@@ -1361,6 +1384,28 @@
    "bus": "UI",
    "spatial": false,
    "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadStart_01.wav, exports/UiDenied_02.wav, tone:110,220,335@1.2"
+  },
+  {
+   "sound": "HudNewBestRound",
+   "event": "UiEvent.HudNewBestRound",
+   "files": [
+    "HudNewBestRound_01.wav"
+   ],
+   "loop": false,
+   "lufs": -26.0,
+   "truePeakDb": -9.07,
+   "noiseFloorDb": -84.4,
+   "dcDb": -153.7,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -26.0,
+   "ceilingDbtp": -6.0,
+   "continuous": false,
+   "endSilenceDb": -196.8,
+   "layers": "derived (v015, no credits): UiNewBest_01.wav@0ms 0dB + ui_bell_rin_suzu.wav@30ms -6dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav, raw/ui_bell_rin_suzu.wav"
   },
   {
    "sound": "HudThreatEncircled",
@@ -1430,6 +1475,29 @@
    "bus": "UI",
    "spatial": false,
    "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWood_01.wav, exports/SwSpawnGong_01.wav, tone:98,147,233@0.9"
+  },
+  {
+   "sound": "HudUltraDown",
+   "event": "UiEvent.HudUltraDown",
+   "files": [
+    "HudUltraDown_01.wav",
+    "HudUltraDown_02.wav"
+   ],
+   "loop": false,
+   "lufs": -26.44,
+   "truePeakDb": -6.0,
+   "noiseFloorDb": -89.6,
+   "dcDb": -200.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -25.0,
+   "ceilingDbtp": -6.0,
+   "continuous": false,
+   "endSilenceDb": -228.7,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB -1st + ui_bell_rin_suzu.wav@40ms -4dB -5st + ui_bell_rin_suzu.wav@120ms -8dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "ImpactDefault",
@@ -1701,7 +1769,7 @@
    "layers": "derived (v008, no credits): MusicBase.wav@0ms 0dB + AmbRegionCenter.wav@0ms -14dB",
    "bus": "Music",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbRegionCenter.wav, exports/MusicBase.wav"
+   "provenance": "derived offline (AP-011 v008, WP-057, 0 cr) from exports/AmbRegionCenter.wav, exports/MusicBase.wav"
   },
   {
    "sound": "MusicPercussion",
@@ -1745,7 +1813,7 @@
    "layers": "derived (v008, no credits): MusicBase.wav@0ms 0dB + MusicPercussion.wav@0ms -10dB + MusicAccent.wav@0ms -12dB",
    "bus": "Music",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav, exports/MusicBase.wav, exports/MusicPercussion.wav · EQ v011 (WP-060B, 0 cr): high-shelf +3 dB @ 3 kHz, +2 dB @ 8 kHz"
+   "provenance": "derived offline (AP-011 v008, WP-057, 0 cr) from exports/MusicAccent.wav, exports/MusicBase.wav, exports/MusicPercussion.wav · EQ v011 (WP-060B, 0 cr): high-shelf +3 dB @ 3 kHz, +2 dB @ 8 kHz"
   },
   {
    "sound": "MusicTension",
@@ -1790,7 +1858,7 @@
    "layers": "derived (v007, no credits): ReloadInsert_01.wav@0ms -2dB -2st + noise:pink@90ms -16dB",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadInsert_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ReloadInsert_01.wav, noise:pink"
   },
   {
    "sound": "PickupGrab",
@@ -1813,7 +1881,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -9dB + ArmorPieceDrop_02.wav@60ms -12dB -3st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorPieceDrop_02.wav, noise:pink"
   },
   {
    "sound": "PlayerDamage",
@@ -2113,7 +2181,7 @@
    "layers": "derived (v008, no credits): PlayerDeath_01.wav@0ms -6dB + MusicBase.wav@150ms -2dB + HudThreatStrong_01.wav@950ms -7dB -4st",
    "bus": "Music",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav, exports/MusicBase.wav, exports/PlayerDeath_01.wav"
+   "provenance": "derived offline (AP-011 v008, WP-057, 0 cr) from exports/HudThreatStrong_01.wav, exports/MusicBase.wav, exports/PlayerDeath_01.wav"
   },
   {
    "sound": "StingerRoundBreak",
@@ -2136,7 +2204,7 @@
    "layers": "derived (v008, no credits): MusicPercussion.wav@0ms 0dB + HudThreatStrong_01.wav@70ms -5dB +1st + MusicAccent.wav@120ms -9dB",
    "bus": "Music",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav, exports/MusicAccent.wav, exports/MusicPercussion.wav"
+   "provenance": "derived offline (AP-011 v008, WP-057, 0 cr) from exports/HudThreatStrong_01.wav, exports/MusicAccent.wav, exports/MusicPercussion.wav"
   },
   {
    "sound": "StingerRunEnd",
@@ -2158,7 +2226,7 @@
    "layers": "derived (v008, no credits): UiTransition_01.wav@0ms -10dB + RoundComplete_01.wav@250ms 0dB -2st + MusicAccent.wav@300ms -9dB",
    "bus": "Music",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicAccent.wav, exports/RoundComplete_01.wav, exports/UiTransition_01.wav"
+   "provenance": "derived offline (AP-011 v008, WP-057, 0 cr) from exports/MusicAccent.wav, exports/RoundComplete_01.wav, exports/UiTransition_01.wav"
   },
   {
    "sound": "StingerSpecialPickup",
@@ -2181,7 +2249,7 @@
    "layers": "derived (v008, no credits): MusicTension.wav@0ms -4dB +3st + SwPickup_01.wav@520ms -9dB + MusicPercussion.wav@720ms -3dB -1st",
    "bus": "Music",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/MusicPercussion.wav, exports/MusicTension.wav, exports/SwPickup_01.wav"
+   "provenance": "derived offline (AP-011 v008, WP-057, 0 cr) from exports/MusicPercussion.wav, exports/MusicTension.wav, exports/SwPickup_01.wav"
   },
   {
    "sound": "SwBeaconLoop",
@@ -2249,7 +2317,7 @@
    "layers": "derived (v009, no credits): HudThreatStrong_01.wav@0ms 0dB + noise:pink@550ms -8dB + HudThreatStrong_01.wav@600ms -9dB +12st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/HudThreatStrong_01.wav, noise:pink"
   },
   {
    "sound": "SwFieldEndOfuda",
@@ -2271,7 +2339,7 @@
    "layers": "derived (v009, no credits): BreakShoji_01.wav@0ms 0dB + ImpactPaper_02.wav@90ms -2dB -2st + ImpactPaper_03.wav@180ms -3dB +3st + ArmorPieceDrop_01.wav@230ms -6dB +6st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_01.wav, exports/BreakShoji_01.wav, exports/ImpactPaper_02.wav, exports/ImpactPaper_03.wav"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/ArmorPieceDrop_01.wav, exports/BreakShoji_01.wav, exports/ImpactPaper_02.wav, exports/ImpactPaper_03.wav"
   },
   {
    "sound": "SwFieldEndTide",
@@ -2293,7 +2361,7 @@
    "layers": "derived (v009, no credits): ImpactWater_01.wav@0ms -2dB + Explosion_01.wav@380ms -8dB -6st + FootstepWaterDeep_01.wav@420ms -4dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/Explosion_01.wav, exports/FootstepWaterDeep_01.wav, exports/ImpactWater_01.wav"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/Explosion_01.wav, exports/FootstepWaterDeep_01.wav, exports/ImpactWater_01.wav"
   },
   {
    "sound": "SwFieldKagura",
@@ -2316,7 +2384,7 @@
    "layers": "derived (v009, no credits): noise:pink@0ms -2dB + noise:pink@350ms -6dB + HudThreatStrong_01.wav@150ms -10dB + explosion_tail.wav@0ms -12dB -8st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/HudThreatStrong_01.wav, noise:pink, raw/explosion_tail.wav"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/HudThreatStrong_01.wav, noise:pink, raw/explosion_tail.wav"
   },
   {
    "sound": "SwFieldOfuda",
@@ -2338,7 +2406,7 @@
    "layers": "derived (v009, no credits): SwBeaconLoop.wav@0ms 0dB -5st + noise:white@0ms -20dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/SwBeaconLoop.wav, noise:white"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/SwBeaconLoop.wav, noise:white"
   },
   {
    "sound": "SwFieldTide",
@@ -2360,7 +2428,7 @@
    "layers": "derived (v009, no credits): AmbPondBed.wav@0ms 0dB -4st + explosion_tail.wav@0ms -8dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AmbPondBed.wav, raw/explosion_tail.wav"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/AmbPondBed.wav, raw/explosion_tail.wav"
   },
   {
    "sound": "SwFinalSeconds",
@@ -2499,7 +2567,7 @@
    "layers": "derived (v009, no credits): AttackImpactBody_01.wav@0ms 0dB -3st + noise:pink@0ms -6dB + HudThreatStrong_01.wav@10ms -14dB +12st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/AttackImpactBody_01.wav, exports/HudThreatStrong_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/AttackImpactBody_01.wav, exports/HudThreatStrong_01.wav, noise:pink"
   },
   {
    "sound": "SwHitOfuda",
@@ -2522,7 +2590,7 @@
    "layers": "derived (v009, no credits): ImpactPaper_01.wav@0ms 0dB +3st + tone:2600,3900@2@10ms -10dB + ChainArc_01.wav@20ms -14dB -8st",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ChainArc_01.wav, exports/ImpactPaper_01.wav, tone:2600,3900@2"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/ChainArc_01.wav, exports/ImpactPaper_01.wav, tone:2600,3900@2"
   },
   {
    "sound": "SwHitTide",
@@ -2545,7 +2613,7 @@
    "layers": "derived (v009, no credits): ImpactWater_01.wav@0ms 0dB -6st + ZombieStagger_01.wav@15ms -12dB + noise:pink@0ms -10dB",
    "bus": "SFX-World",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWater_01.wav, exports/ZombieStagger_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v009, WP-058, 0 cr) from exports/ImpactWater_01.wav, exports/ZombieStagger_01.wav, noise:pink"
   },
   {
    "sound": "SwPickup",
@@ -2616,48 +2684,208 @@
   },
   {
    "sound": "UiBack",
-   "event": "PrototypeAudio.Back",
+   "event": "UiEvent.Back",
    "files": [
     "UiBack_01.wav",
     "UiBack_02.wav"
    ],
    "loop": false,
-   "lufs": -22.35,
-   "truePeakDb": -1.5,
-   "noiseFloorDb": -95.2,
-   "dcDb": -103.2,
+   "lufs": -23.42,
+   "truePeakDb": -5.0,
+   "noiseFloorDb": -95.9,
+   "dcDb": -116.2,
    "clipped": 0,
    "bitDepth": 24,
-   "targetLufs": -18.0,
-   "ceilingDbtp": -1.5,
+   "targetLufs": -23.0,
+   "ceilingDbtp": -5.0,
    "continuous": false,
-   "endSilenceDb": -158.4,
-   "layers": "single take",
+   "endSilenceDb": -168.8,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB -2st",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job ef9d9d26 (1.1 cr) · ui_back"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
+   "sound": "UiBootSeal",
+   "event": "UiEvent.BootLogo",
+   "files": [
+    "UiBootSeal_01.wav"
+   ],
+   "loop": false,
+   "lufs": -23.26,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -71.9,
+   "dcDb": -205.7,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -3.0,
+   "continuous": true,
+   "endSilenceDb": -188.7,
+   "layers": "derived (v015, no credits): AmbPondBed.wav@0ms -10dB + ui_paper_washi.wav@40ms -16dB + ui_stamp_hanko.wav@640ms 0dB + ui_bell_rin_suzu.wav@655ms -3dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_bell_rin_suzu.wav, raw/ui_paper_washi.wav, raw/ui_stamp_hanko.wav"
+  },
+  {
+   "sound": "UiCardDealt",
+   "event": "UiEvent.CardDealt",
+   "files": [
+    "UiCardDealt_01.wav",
+    "UiCardDealt_02.wav",
+    "UiCardDealt_03.wav"
+   ],
+   "loop": false,
+   "lufs": -21.0,
+   "truePeakDb": -6.83,
+   "noiseFloorDb": -71.9,
+   "dcDb": -149.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -21.0,
+   "ceilingDbtp": -5.0,
+   "continuous": false,
+   "endSilenceDb": -197.8,
+   "layers": "derived (v015, no credits): ui_paper_washi.wav@0ms 0dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
+  },
+  {
+   "sound": "UiCardFlipped",
+   "event": "UiEvent.CardFlipped",
+   "files": [
+    "UiCardFlipped_01.wav",
+    "UiCardFlipped_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -7.38,
+   "noiseFloorDb": -71.9,
+   "dcDb": -140.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -6.0,
+   "continuous": false,
+   "endSilenceDb": -176.8,
+   "layers": "derived (v015, no credits): ui_paper_washi.wav@0ms 0dB +3st",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiConfirm",
-   "event": "PrototypeAudio.Confirm",
+   "event": "UiEvent.Confirm",
    "files": [
     "UiConfirm_01.wav"
    ],
    "loop": false,
-   "lufs": -23.04,
-   "truePeakDb": -1.5,
-   "noiseFloorDb": -87.4,
-   "dcDb": -124.9,
+   "lufs": -24.23,
+   "truePeakDb": -4.0,
+   "noiseFloorDb": -95.9,
+   "dcDb": -125.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -4.0,
+   "continuous": false,
+   "endSilenceDb": -160.5,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@5ms -5dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
+   "sound": "UiCounterRoll",
+   "event": "UiEvent.CounterRolling",
+   "files": [
+    "UiCounterRoll.wav"
+   ],
+   "loop": true,
+   "lufs": -30.62,
+   "truePeakDb": -8.0,
+   "noiseFloorDb": -96.0,
+   "dcDb": -217.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -28.0,
+   "ceilingDbtp": -8.0,
+   "continuous": true,
+   "endSilenceDb": -56.6,
+   "layers": "derived (v015, no credits): ui_counter_soroban.wav@0ms 0dB + ui_counter_soroban.wav@0ms -2dB +1st + ui_counter_soroban.wav@1700ms 0dB -1st + ui_counter_soroban.wav@2000ms -2dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_counter_soroban.wav"
+  },
+  {
+   "sound": "UiCounterSettled",
+   "event": "UiEvent.CounterSettled",
+   "files": [
+    "UiCounterSettled_01.wav",
+    "UiCounterSettled_02.wav"
+   ],
+   "loop": false,
+   "lufs": -27.15,
+   "truePeakDb": -5.0,
+   "noiseFloorDb": -95.9,
+   "dcDb": -140.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -23.0,
+   "ceilingDbtp": -5.0,
+   "continuous": false,
+   "endSilenceDb": -179.7,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB + ui_counter_soroban.wav@5ms -6dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_counter_soroban.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
+   "sound": "UiCurtainClose",
+   "event": "UiEvent.CurtainClosed",
+   "files": [
+    "UiCurtainClose_01.wav",
+    "UiCurtainClose_02.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -6.62,
+   "noiseFloorDb": -91.8,
+   "dcDb": -152.2,
    "clipped": 0,
    "bitDepth": 24,
    "targetLufs": -18.0,
-   "ceilingDbtp": -1.5,
+   "ceilingDbtp": -3.0,
    "continuous": false,
-   "endSilenceDb": -155.5,
-   "layers": "single take",
+   "endSilenceDb": -205.8,
+   "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@330ms -2dB -1st + ui_curtain_fusuma.wav@330ms -8dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 328dd1e5 (1.1 cr) · ui_confirm"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
+   "sound": "UiCurtainOpen",
+   "event": "UiEvent.CurtainOpened",
+   "files": [
+    "UiCurtainOpen_01.wav",
+    "UiCurtainOpen_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.08,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -91.8,
+   "dcDb": -163.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -21.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -186.6,
+   "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms -8dB + ui_curtain_fusuma.wav@10ms 0dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
   },
   {
    "sound": "UiDenied",
@@ -2706,6 +2934,28 @@
    "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepStone_04.wav, exports/UiBack_01.wav, tone:196,392@0.1"
   },
   {
+   "sound": "UiHoldRub",
+   "event": "UiEvent.RerollHoldStarted",
+   "files": [
+    "UiHoldRub_01.wav"
+   ],
+   "loop": false,
+   "lufs": -30.0,
+   "truePeakDb": -18.06,
+   "noiseFloorDb": -71.9,
+   "dcDb": -176.9,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -30.0,
+   "ceilingDbtp": -8.0,
+   "continuous": false,
+   "endSilenceDb": -221.9,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms -6dB + ui_paper_washi.wav@0ms 0dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
    "sound": "UiHover",
    "event": "UiEvent.ButtonHover",
    "files": [
@@ -2714,20 +2964,42 @@
     "UiHover_03.wav"
    ],
    "loop": false,
-   "lufs": -27.73,
-   "truePeakDb": -1.5,
-   "noiseFloorDb": -71.1,
-   "dcDb": -163.4,
+   "lufs": -26.0,
+   "truePeakDb": -6.71,
+   "noiseFloorDb": -71.9,
+   "dcDb": -147.5,
    "clipped": 0,
    "bitDepth": 24,
    "targetLufs": -26.0,
-   "ceilingDbtp": -1.5,
+   "ceilingDbtp": -6.0,
    "continuous": false,
    "endSilenceDb": -240.0,
-   "layers": "derived (v005, no credits): UiNavigate_01.wav@0ms -6dB +4st + noise:pink@0ms -18dB",
+   "layers": "derived (v015, no credits): ui_paper_washi.wav@0ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/UiNavigate_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav"
+  },
+  {
+   "sound": "UiInkBleed",
+   "event": "UiEvent.ResultsInkBleed",
+   "files": [
+    "UiInkBleed_01.wav"
+   ],
+   "loop": false,
+   "lufs": -26.0,
+   "truePeakDb": -11.62,
+   "noiseFloorDb": -71.9,
+   "dcDb": -159.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -26.0,
+   "ceilingDbtp": -8.0,
+   "continuous": true,
+   "endSilenceDb": -190.7,
+   "layers": "derived (v015, no credits): AmbPondBed.wav@0ms 0dB + ui_paper_washi.wav@100ms -12dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from exports/AmbPondBed.wav, raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiLevelUp",
@@ -2777,25 +3049,25 @@
   },
   {
    "sound": "UiNavigate",
-   "event": "PrototypeAudio.Navigate",
+   "event": "UiEvent.FocusMoved",
    "files": [
     "UiNavigate_01.wav"
    ],
    "loop": false,
-   "lufs": -25.66,
-   "truePeakDb": -1.5,
-   "noiseFloorDb": -71.1,
-   "dcDb": -102.2,
+   "lufs": -29.85,
+   "truePeakDb": -6.0,
+   "noiseFloorDb": -95.9,
+   "dcDb": -139.1,
    "clipped": 0,
    "bitDepth": 24,
-   "targetLufs": -18.0,
-   "ceilingDbtp": -1.5,
+   "targetLufs": -25.0,
+   "ceilingDbtp": -6.0,
    "continuous": false,
-   "endSilenceDb": -130.1,
-   "layers": "single take",
+   "endSilenceDb": -240.0,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 62653442 (1.1 cr) · ui_navigate"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiNewBest",
@@ -2805,20 +3077,20 @@
     "UiNewBest_02.wav"
    ],
    "loop": false,
-   "lufs": -22.0,
-   "truePeakDb": -7.71,
+   "lufs": -20.0,
+   "truePeakDb": -6.31,
    "noiseFloorDb": -84.4,
-   "dcDb": -181.8,
+   "dcDb": -205.5,
    "clipped": 0,
    "bitDepth": 24,
-   "targetLufs": -22.0,
-   "ceilingDbtp": -1.5,
+   "targetLufs": -20.0,
+   "ceilingDbtp": -3.0,
    "continuous": false,
-   "endSilenceDb": -209.7,
-   "layers": "derived (v005, no credits): RoundComplete_01.wav@0ms -10dB +2st + GoldMagnet_01.wav@100ms -4dB +9st + GoldPickup_03.wav@250ms -5dB +11st + tone:2637,3951,5274@1.4@150ms -9dB",
+   "endSilenceDb": -189.3,
+   "layers": "derived (v015, no credits): UiNewBest_01.wav@0ms 0dB + ui_bell_rin_suzu.wav@40ms -4dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/GoldMagnet_01.wav, exports/GoldPickup_03.wav, exports/RoundComplete_01.wav, tone:2637,3951,5274@1.4"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from exports/_legacy/UiNewBest_01.wav, raw/ui_bell_rin_suzu.wav"
   },
   {
    "sound": "UiPaneOpen",
@@ -2828,20 +3100,89 @@
     "UiPaneOpen_02.wav"
    ],
    "loop": false,
-   "lufs": -24.0,
-   "truePeakDb": -7.97,
-   "noiseFloorDb": -77.6,
-   "dcDb": -134.5,
+   "lufs": -21.0,
+   "truePeakDb": -6.92,
+   "noiseFloorDb": -71.9,
+   "dcDb": -119.5,
    "clipped": 0,
    "bitDepth": 24,
-   "targetLufs": -24.0,
-   "ceilingDbtp": -1.5,
+   "targetLufs": -21.0,
+   "ceilingDbtp": -5.0,
    "continuous": false,
-   "endSilenceDb": -199.6,
-   "layers": "derived (v005, no credits): FootstepFoliage_02.wav@0ms -4dB + UiTransition_01.wav@40ms -9dB +2st + FootstepWood_02.wav@220ms -10dB -2st",
+   "endSilenceDb": -170.9,
+   "layers": "derived (v015, no credits): ui_paper_washi.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@150ms -4dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/FootstepFoliage_02.wav, exports/FootstepWood_02.wav, exports/UiTransition_01.wav"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_paper_washi.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
+   "sound": "UiPauseClose",
+   "event": "UiEvent.PauseClosed",
+   "files": [
+    "UiPauseClose_01.wav",
+    "UiPauseClose_02.wav"
+   ],
+   "loop": false,
+   "lufs": -24.94,
+   "truePeakDb": -4.0,
+   "noiseFloorDb": -91.8,
+   "dcDb": -138.7,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -23.0,
+   "ceilingDbtp": -4.0,
+   "continuous": false,
+   "endSilenceDb": -183.8,
+   "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms -10dB + ui_curtain_fusuma.wav@10ms 0dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav"
+  },
+  {
+   "sound": "UiPauseOpen",
+   "event": "UiEvent.PauseOpened",
+   "files": [
+    "UiPauseOpen_01.wav",
+    "UiPauseOpen_02.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -7.61,
+   "noiseFloorDb": -91.8,
+   "dcDb": -147.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -4.0,
+   "continuous": false,
+   "endSilenceDb": -195.1,
+   "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@140ms -3dB + ui_curtain_fusuma.wav@140ms -10dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
+   "sound": "UiPressDown",
+   "event": "UiEvent.PressDown",
+   "files": [
+    "UiPressDown_01.wav",
+    "UiPressDown_02.wav"
+   ],
+   "loop": false,
+   "lufs": -26.74,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -95.9,
+   "dcDb": -113.9,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav"
   },
   {
    "sound": "UiReroll",
@@ -2898,20 +3239,20 @@
     "UiSelect_03.wav"
    ],
    "loop": false,
-   "lufs": -23.58,
-   "truePeakDb": -1.5,
-   "noiseFloorDb": -69.0,
-   "dcDb": -181.4,
+   "lufs": -23.16,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -95.9,
+   "dcDb": -117.4,
    "clipped": 0,
    "bitDepth": 24,
-   "targetLufs": -23.0,
-   "ceilingDbtp": -1.5,
+   "targetLufs": -21.0,
+   "ceilingDbtp": -3.0,
    "continuous": false,
-   "endSilenceDb": -191.3,
-   "layers": "derived (v005, no credits): ImpactWood_01.wav@0ms -6dB +5st + UiConfirm_01.wav@5ms -8dB -2st + tone:660,990@0.4@0ms -16dB",
+   "endSilenceDb": -165.3,
+   "layers": "derived (v015, no credits): ui_tok_lacquer_go_hyoshigi.wav@0ms 0dB +2st + ui_tok_lacquer_go_hyoshigi.wav@5ms -6dB +2st + tone:1180,1870,2660@2.2@8ms -15dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWood_01.wav, exports/UiConfirm_01.wav, tone:660,990@0.4"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_tok_lacquer_go_hyoshigi.wav, tone:1180,1870,2660@2.2"
   },
   {
    "sound": "UiSliderTick",
@@ -2938,6 +3279,74 @@
    "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/RoundCountdownTick_01.wav, noise:white"
   },
   {
+   "sound": "UiStampEpic",
+   "event": "UiEvent.MedalRevealed(Epic)",
+   "files": [
+    "UiStampEpic_01.wav"
+   ],
+   "loop": false,
+   "lufs": -21.41,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -82.2,
+   "dcDb": -173.3,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -21.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -211.4,
+   "layers": "derived (v015, no credits): ui_stamp_hanko.wav@0ms 0dB + ui_bell_rin_suzu.wav@30ms -4dB + ui_bell_rin_suzu.wav@110ms -9dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
+  },
+  {
+   "sound": "UiStampLanded",
+   "event": "UiEvent.StampLanded",
+   "files": [
+    "UiStampLanded_01.wav",
+    "UiStampLanded_02.wav",
+    "UiStampLanded_03.wav"
+   ],
+   "loop": false,
+   "lufs": -23.02,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -82.2,
+   "dcDb": -111.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -21.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -165.1,
+   "layers": "derived (v015, no credits): ui_stamp_hanko.wav@0ms 0dB + ui_tok_lacquer_go_hyoshigi.wav@2ms -10dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_stamp_hanko.wav, raw/ui_tok_lacquer_go_hyoshigi.wav"
+  },
+  {
+   "sound": "UiStampRare",
+   "event": "UiEvent.MedalRevealed(Rare)",
+   "files": [
+    "UiStampRare_01.wav"
+   ],
+   "loop": false,
+   "lufs": -22.52,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -82.2,
+   "dcDb": -194.5,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -21.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -196.3,
+   "layers": "derived (v015, no credits): ui_stamp_hanko.wav@0ms 0dB + ui_bell_rin_suzu.wav@30ms -4dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_bell_rin_suzu.wav, raw/ui_stamp_hanko.wav"
+  },
+  {
    "sound": "UiToggle",
    "event": "UiEvent.ToggleChanged",
    "files": [
@@ -2962,26 +3371,49 @@
   },
   {
    "sound": "UiTransition",
-   "event": "RunEvents.RunStarted / Phase→None",
+   "event": "UiEvent.ScreenEntered",
    "files": [
     "UiTransition_01.wav",
     "UiTransition_02.wav"
    ],
    "loop": false,
-   "lufs": -20.0,
-   "truePeakDb": -1.5,
-   "noiseFloorDb": -77.6,
-   "dcDb": -121.0,
+   "lufs": -22.0,
+   "truePeakDb": -5.95,
+   "noiseFloorDb": -71.9,
+   "dcDb": -149.7,
    "clipped": 0,
    "bitDepth": 24,
-   "targetLufs": -20.0,
-   "ceilingDbtp": -1.5,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -4.0,
    "continuous": false,
-   "endSilenceDb": -159.9,
-   "layers": "single take",
+   "endSilenceDb": -180.0,
+   "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms 0dB + ui_curtain_fusuma.wav@0ms -6dB + ui_paper_washi.wav@50ms -5dB",
    "bus": "UI",
    "spatial": false,
-   "provenance": "seed_audio job 64db0f36 (1.1 cr) · ui_transition"
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
+  },
+  {
+   "sound": "UiTransitionOut",
+   "event": "UiEvent.ScreenExiting",
+   "files": [
+    "UiTransitionOut_01.wav",
+    "UiTransitionOut_02.wav"
+   ],
+   "loop": false,
+   "lufs": -21.63,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -71.9,
+   "dcDb": -116.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -21.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -160.7,
+   "layers": "derived (v015, no credits): ui_curtain_fusuma.wav@0ms 0dB + ui_paper_washi.wav@10ms -6dB",
+   "bus": "UI",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v015, WP-068 s11, 0 cr) from Seed Audio renders (ledger 149–154, 24.0 cr) from raw/ui_curtain_fusuma.wav, raw/ui_paper_washi.wav"
   },
   {
    "sound": "UiUnlock",
@@ -3049,7 +3481,7 @@
    "layers": "derived (v007, no credits): rifle_mech.wav@0ms 0dB + rifle_mech.wav@110ms -3dB -1st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponAEject",
@@ -3072,7 +3504,7 @@
    "layers": "derived (v007, no credits): rifle_mech.wav@0ms -3dB +2st + tone:2900,4300@0.6@0ms -16dB + ArmorPieceDrop_01.wav@140ms -10dB +5st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_01.wav, raw/rifle_mech.wav, tone:2900,4300@0.6"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorPieceDrop_01.wav, raw/rifle_mech.wav, tone:2900,4300@0.6"
   },
   {
    "sound": "WeaponALowered",
@@ -3095,7 +3527,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -12dB + rifle_mech.wav@170ms -9dB -2st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from noise:pink, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponAMagIn",
@@ -3118,7 +3550,7 @@
    "layers": "derived (v007, no credits): ReloadInsert_01.wav@0ms 0dB + rifle_mech.wav@150ms -8dB +1st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadInsert_01.wav, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ReloadInsert_01.wav, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponAMagOut",
@@ -3141,7 +3573,7 @@
    "layers": "derived (v007, no credits): ReloadStart_01.wav@0ms 0dB + noise:pink@40ms -20dB",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadStart_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ReloadStart_01.wav, noise:pink"
   },
   {
    "sound": "WeaponARaised",
@@ -3164,7 +3596,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -11dB + rifle_mech.wav@110ms -8dB -2st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from noise:pink, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponASwitch",
@@ -3187,7 +3619,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -12dB + ArmorPieceDrop_02.wav@120ms -9dB + rifle_mech.wav@260ms -6dB",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav, noise:pink, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorPieceDrop_02.wav, noise:pink, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponBChamber",
@@ -3210,7 +3642,7 @@
    "layers": "derived (v007, no credits): rifle_mech.wav@0ms -1dB +3st + rifle_mech.wav@110ms -4dB +2st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponBEject",
@@ -3233,7 +3665,7 @@
    "layers": "derived (v007, no credits): rifle_mech.wav@0ms -3dB +5st + tone:2900,4300@0.6@0ms -17dB + ArmorPieceDrop_01.wav@140ms -11dB +8st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_01.wav, raw/rifle_mech.wav, tone:2900,4300@0.6"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorPieceDrop_01.wav, raw/rifle_mech.wav, tone:2900,4300@0.6"
   },
   {
    "sound": "WeaponBLowered",
@@ -3256,7 +3688,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -12dB + rifle_mech.wav@170ms -9dB +1st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from noise:pink, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponBMagIn",
@@ -3279,7 +3711,7 @@
    "layers": "derived (v007, no credits): ReloadInsert_01.wav@0ms -1dB +3st + rifle_mech.wav@150ms -8dB +4st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadInsert_01.wav, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ReloadInsert_01.wav, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponBMagOut",
@@ -3302,7 +3734,7 @@
    "layers": "derived (v007, no credits): ReloadStart_01.wav@0ms -1dB +3st + noise:pink@40ms -20dB",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadStart_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ReloadStart_01.wav, noise:pink"
   },
   {
    "sound": "WeaponBRaised",
@@ -3325,7 +3757,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -11dB + rifle_mech.wav@110ms -8dB +1st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from noise:pink, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponBSwitch",
@@ -3348,7 +3780,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -10dB + ArmorPieceDrop_02.wav@120ms -10dB +6st + rifle_mech.wav@260ms -9dB +3st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav, noise:pink, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorPieceDrop_02.wav, noise:pink, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponCChamber",
@@ -3371,7 +3803,7 @@
    "layers": "derived (v007, no credits): rifle_mech.wav@0ms 1dB -4st + rifle_mech.wav@190ms -2dB -5st + shotgun_tail.wav@0ms -6dB -2st + shotgun_tail.wav@175ms -6dB -2st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from raw/rifle_mech.wav, raw/shotgun_tail.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from raw/rifle_mech.wav, raw/shotgun_tail.wav"
   },
   {
    "sound": "WeaponCEject",
@@ -3394,7 +3826,7 @@
    "layers": "derived (v007, no credits): rifle_mech.wav@0ms -3dB -2st + tone:2900,4300@0.6@0ms -17dB + ImpactWood_01.wav@140ms -14dB +4st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ImpactWood_01.wav, raw/rifle_mech.wav, tone:2900,4300@0.6"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ImpactWood_01.wav, raw/rifle_mech.wav, tone:2900,4300@0.6"
   },
   {
    "sound": "WeaponCLowered",
@@ -3417,7 +3849,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -12dB + rifle_mech.wav@170ms -9dB -6st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from noise:pink, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponCMagIn",
@@ -3440,7 +3872,7 @@
    "layers": "derived (v007, no credits): ReloadInsert_01.wav@0ms 1dB -4st + rifle_mech.wav@150ms -8dB -3st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadInsert_01.wav, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ReloadInsert_01.wav, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponCMagOut",
@@ -3463,7 +3895,7 @@
    "layers": "derived (v007, no credits): ReloadStart_01.wav@0ms 1dB -4st + noise:pink@40ms -20dB",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ReloadStart_01.wav, noise:pink"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ReloadStart_01.wav, noise:pink"
   },
   {
    "sound": "WeaponCRaised",
@@ -3486,7 +3918,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -11dB + rifle_mech.wav@110ms -8dB -6st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from noise:pink, raw/rifle_mech.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from noise:pink, raw/rifle_mech.wav"
   },
   {
    "sound": "WeaponCSwitch",
@@ -3509,7 +3941,7 @@
    "layers": "derived (v007, no credits): noise:pink@0ms -10dB + ArmorPieceDrop_02.wav@120ms -10dB -1st + shotgun_tail.wav@260ms -10dB -4st",
    "bus": "SFX-Player",
    "spatial": false,
-   "provenance": "derived offline (AP-011 v005, WP-021C, 0 cr) from exports/ArmorPieceDrop_02.wav, noise:pink, raw/shotgun_tail.wav"
+   "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/ArmorPieceDrop_02.wav, noise:pink, raw/shotgun_tail.wav"
   },
   {
    "sound": "ZombieAggroElite",

@@ -27,6 +27,20 @@ namespace DD.Prototype.UI
         DialogOpened = 12,
         DialogClosed = 13,
 
+        // ---- WP-068 UI v3 (slice 11, S-08 contract; raised by the v3 kit, UiCurtain and the cue timelines)
+        /// <summary>A screen starts its exit (Exit 140 ms), before the next ScreenEntered.</summary>
+        ScreenExiting = 14,
+        /// <summary>The curtain doors have shut - raised at least one frame BEFORE the synchronous LoadScene, so the tail sounds through the freeze.</summary>
+        CurtainClosed = 15,
+        /// <summary>The curtain opens on the new scene's first rendered frame.</summary>
+        CurtainOpened = 16,
+        /// <summary>Pointer-down on a Primary / Secondary button (the lacquer tick; Confirm follows on release).</summary>
+        PressDown = 17,
+        /// <summary>Boot seal contact (ink spread → seal → one rin strike, U7). Every launch; skippable.</summary>
+        BootLogo = 18,
+        /// <summary>A hero timeline was skipped (Complete()): UI loops fade in 30 ms, the boot seal in 120 ms (U7).</summary>
+        TimelineSkipped = 19,
+
         // ---- HUD
         HudRoundStarted = 20,
         HudRoundCompleted = 21,
@@ -44,6 +58,12 @@ namespace DD.Prototype.UI
         HudThreatStrongVersion = 33,
         HudThreatWindup = 34,
         HudDamageEdge = 35,
+        /// <summary>WP-068 U6: the NEW BEST ROUND ribbon in the banner slot during the run.</summary>
+        HudNewBestRound = 36,
+        /// <summary>"ELITE DOWN" stamp (detail-free); lacquer tok + short dark bell, no duck.</summary>
+        HudEliteDown = 37,
+        /// <summary>"ULTRA DOWN" stamp; the elite voice + gold-leaf shimmer.</summary>
+        HudUltraDown = 38,
 
         // ---- shop & results
         UpgradePurchased = 40,
@@ -54,7 +74,21 @@ namespace DD.Prototype.UI
         UnlockRevealed = 45,
         AchievementRevealed = 46,
         NewBestRound = 47,
-        SettingsChanged = 48
+        SettingsChanged = 48,
+
+        // ---- WP-068 UI v3 · cards, stamps, counters, hold (slice 11)
+        /// <summary>One card dealt (detail = deal index "0"/"1"/"2"; "last" adds the settle tok). 60 ms stagger.</summary>
+        CardDealt = 49,
+        /// <summary>A changed card turns on reroll (at scaleX = 0), one rustle per card.</summary>
+        CardFlipped = 50,
+        /// <summary>Hanko contact frame (purchase, medal, profile seal, level). Detail "rare" / "epic" adds the tier layer.</summary>
+        StampLanded = 51,
+        /// <summary>A counter starts rolling (≤ 0.6 s; one per group).</summary>
+        CounterRolling = 52,
+        /// <summary>The counter settles (stops the roll, one tok).</summary>
+        CounterSettled = 53,
+        /// <summary>Hold-to-confirm started (REROLL U5; also RESET ALL BINDINGS). Completion raises Confirm, early release Back.</summary>
+        RerollHoldStarted = 54
     }
 
     /// <summary>
@@ -74,7 +108,23 @@ namespace DD.Prototype.UI
         public static UiEvent Last { get; private set; }
         public static string LastDetail { get; private set; } = string.Empty;
 
+        /// <summary>WP-068 slice 11: the normalised value of the last SliderChanged (0..1), −1 when the raise carried none. The audio maps it to the tick's pitch.</summary>
+        public static float LastValue01 { get; private set; } = -1f;
+
+        /// <summary>WP-068 slice 11: a raise that also carries a normalised value (sliders: the tick's pitch follows the value).</summary>
+        public static void Raise(UiEvent uiEvent, string detail, float value01)
+        {
+            LastValue01 = Mathf.Clamp01(value01);
+            RaiseCore(uiEvent, detail);
+        }
+
         public static void Raise(UiEvent uiEvent, string detail = null)
+        {
+            LastValue01 = -1f;
+            RaiseCore(uiEvent, detail);
+        }
+
+        private static void RaiseCore(UiEvent uiEvent, string detail)
         {
             RaisedCount++;
             Last = uiEvent;
@@ -100,6 +150,7 @@ namespace DD.Prototype.UI
         public static void ResetCounters()
         {
             RaisedCount = 0;
+            LastValue01 = -1f;
             Last = UiEvent.FocusMoved;
             LastDetail = string.Empty;
         }

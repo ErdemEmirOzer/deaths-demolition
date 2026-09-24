@@ -14,6 +14,8 @@ namespace DD.Prototype.UI
         public int Version = CurrentVersion;
         public float UiScale = 1f;
         public float MasterVolume = 1f;
+        /// <summary>WP-068 U8: UI sounds (Interface bus) on their own slider, 0..1.</summary>
+        public float UiVolume = 1f;
         public int Quality = -1;
         public bool ReducedMotion;
 
@@ -47,6 +49,7 @@ namespace DD.Prototype.UI
             Version = CurrentVersion;
             UiScale = Mathf.Clamp(UiScale, UiTheme.UiScaleMin, UiTheme.UiScaleMax);
             MasterVolume = Mathf.Clamp01(MasterVolume);
+            UiVolume = Mathf.Clamp01(UiVolume);
             return this;
         }
     }
@@ -74,6 +77,9 @@ namespace DD.Prototype.UI
 
         /// <summary>Raised with the new master volume (0..1). S-08 mirrors it onto the mixer's "MasterVolume".</summary>
         public static event Action<float> MasterVolumeChanged;
+
+        /// <summary>WP-068 U8: raised with the new UI-sounds volume (0..1); the audio module applies it to the Interface bus.</summary>
+        public static event Action<float> UiVolumeChanged;
 
         /// <summary>Raised with the new quality level index. S-01 may react beyond QualitySettings.</summary>
         public static event Action<int> QualityChanged;
@@ -135,6 +141,30 @@ namespace DD.Prototype.UI
                 s_data.MasterVolume = clamped;
                 ApplyVolume();
                 MasterVolumeChanged?.Invoke(clamped);
+                Persist();
+            }
+        }
+
+        /// <summary>WP-068 U8: the UI SOUNDS slider (Interface bus), persisted with the device preferences.</summary>
+        public static float UiVolume
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_data.UiVolume;
+            }
+            set
+            {
+                EnsureLoaded();
+                float clamped = Mathf.Clamp01(value);
+                if (Mathf.Approximately(clamped, s_data.UiVolume))
+                {
+                    return;
+                }
+
+                s_data.UiVolume = clamped;
+                PrototypeAudio.UiVolume = clamped;
+                UiVolumeChanged?.Invoke(clamped);
                 Persist();
             }
         }
@@ -305,6 +335,7 @@ namespace DD.Prototype.UI
             float defaultScale = UiTheme.Active != null ? UiTheme.Active.DefaultUiScale : 1f;
             s_data.UiScale = loaded != null ? loaded.UiScale : defaultScale;
             s_data.MasterVolume = loaded != null ? loaded.MasterVolume : 1f;
+            s_data.UiVolume = loaded != null ? Mathf.Clamp01(loaded.UiVolume) : 1f;   // older files: the field initialiser (1) stands
             s_data.ReducedMotion = loaded != null && loaded.ReducedMotion;
             UiMotion.ReducedMotion = s_data.ReducedMotion;
             s_data.Telemetry = loaded == null || loaded.Telemetry;
@@ -421,6 +452,7 @@ namespace DD.Prototype.UI
         {
             // Single owner of AudioListener.volume is the audio module (S-08).
             PrototypeAudio.MasterVolume = s_data.MasterVolume;
+            PrototypeAudio.UiVolume = s_data.UiVolume;
         }
 
         private static void ApplyQuality()
@@ -467,11 +499,13 @@ namespace DD.Prototype.UI
             s_pathOverride = null;
             s_data.UiScale = 1f;
             s_data.MasterVolume = 1f;
+            s_data.UiVolume = 1f;
             s_data.Quality = -1;
             s_data.ReducedMotion = false;
             UiMotion.ReducedMotion = false;
             Changed = null;
             MasterVolumeChanged = null;
+            UiVolumeChanged = null;
             QualityChanged = null;
         }
     }

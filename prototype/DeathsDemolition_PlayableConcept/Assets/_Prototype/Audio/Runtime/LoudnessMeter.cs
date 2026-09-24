@@ -57,6 +57,19 @@ namespace DD.Prototype.Audio
             return result;
         }
 
+        /// <summary>
+        /// WP-068 s11: ungated K-weighted loudness of one short window (LUFS-style, −0.691 + 10·log10 mean-square) -
+        /// for comparing a UI cue against the bed in LU on output snapshots too short for the 400 ms gating blocks.
+        /// </summary>
+        public static float WindowLoudness(float[] mono, int sampleRate)
+        {
+            float[] x = sampleRate == ReferenceRate ? mono : ResampleNearest(mono, sampleRate, ReferenceRate);
+            float[] y = KWeight(x);
+            double s = 0;
+            for (int i = 0; i < y.Length; i++) s += (double)y[i] * y[i];
+            return (float)(-0.691 + 10.0 * Math.Log10(s / Math.Max(1, y.Length) + 1e-20));
+        }
+
         public static float[] ToMono(float[] interleaved, int channels)
         {
             if (channels <= 1)

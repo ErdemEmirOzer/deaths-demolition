@@ -24,6 +24,12 @@ Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, 
 | ToggleChanged | Reduced motion / run telemetry (WP-022E) açık/kapalı | `UiEvent.ToggleChanged` (detail ReducedMotion/Telemetry) → tık | Düğme etiketi ON/OFF | `MainMenuScreen` Settings |
 | DialogOpened | Pause → "koşuyu bırak" onayı açıldı | `UiEvent.DialogOpened` → kısa vurgu | Alt katman `OpacityScrimUnderDialog`, odak diyaloğa | `PauseScreen.OpenConfirm` |
 | DialogClosed | Onay kapandı | `UiBack` (mevcut) | Odak iadesi | `PauseScreen.CloseConfirm` |
+| ScreenExiting | Ekran çıkışı başladı (Exit 140) | `UiTransitionOut` (v015) | ExitScreen | WP-068 v3 kit (S-09 dilim 1+) |
+| CurtainClosed | Perde kapandı, `LoadScene`'den ≥ 1 kare önce | `UiCurtainClose` (v015) | UiCurtain kapan 280 | `UiCurtain` (S-09 dilim 10) |
+| CurtainOpened | Yeni sahnenin ilk render karesi | `UiCurtainOpen` (v015) | UiCurtain aç 280 | `UiCurtain` (S-09 dilim 10) |
+| PressDown | Primary/Secondary pointer-down | `UiPressDown` (v015) | PressDepth | `UiButton` v3 (S-09) |
+| BootLogo | Boot mührü teması (U7, her açılış) | `UiBootSeal` (v015; atlamada 120 ms fade) | InkBleed + StampIn | Boot (S-09 dilim 10) |
+| TimelineSkipped | Kahraman çizelgesi atlandı (`Complete()`) | n/a — kontrol: UI döngüleri 30 ms, boot 120 ms fade | cue'lar son cue'ya çöker | `UiMotion` zaman çizelgesi (S-09) |
 | HudRoundStarted | Round başladı | `UiEvent.HudRoundStarted` (Run.RoundStarted ile aynı olay; S-08 tek kaynak seçer) | "ROUND N" banner 2,4 s | `RunHudScreen.OnRoundStarted` |
 | HudRoundCompleted | Round temizlendi | `UiEvent.HudRoundCompleted` | "ROUND COMPLETE" banner | `RunHudScreen.OnRoundCompleted` |
 | HudPoolExhausted | Havuz bitti, harita temizleniyor | `UiEvent.HudPoolExhausted` | Banner | `RunHudScreen.OnPoolExhausted` |
@@ -40,6 +46,9 @@ Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, 
 | HudThreatStrongVersion | Elite/Ultra yakında | `UiEvent.HudThreatStrongVersion` | "ELITE/ULTRA NEARBY" çipi (`StateWarning`) | `RunHudScreen.UpdateThreat` |
 | HudThreatWindup | Yakında saldırı hazırlığı sayısı arttı | `UiEvent.HudThreatWindup` (S-08: zombi windup sesi zaten var → n/a olabilir) | — (dünya tarafı telegraf) | `RunHudScreen.UpdateThreat` |
 | HudDamageEdge | Oyuncu hasar aldı, kenar yandı | n/a (PlayerDamage sesi Damage kaynağında) | Yönlü kenar flaşı 0,92 α, 0,06 s tut + 0,42 s sön | `UiHitDirectionLayer.OnDamaged` |
+| HudNewBestRound | NEW BEST ROUND şeridi koşu içinde (U6) | `HudNewBestRound` (v015; çip varken ≤ 3 s bekler) | RibbonIn | `RunHudScreen` (S-09) |
+| HudEliteDown | ELITE DOWN damgası | `HudEliteDown` (v015; duck yok) | 0,6 s damga | `RunHudScreen` (S-09) |
+| HudUltraDown | ULTRA DOWN damgası | `HudUltraDown` (v015) | damga + mürekkep | `RunHudScreen` (S-09) |
 | UpgradePurchased | Upgrade satın alındı | `UiEvent.UpgradePurchased` → satın alma sesi | Kart PURCHASED çipi, gold şeridi güncellenir | `UpgradeScreen` (TryPurchase) |
 | UpgradeRerolled | Teklif yenilendi | `UiEvent.UpgradeRerolled` → kart karıştırma | Üç kart yeniden çizilir | `UpgradeScreen` (TryReroll) |
 | UpgradeOfferLocked | Round başına tek satın alma → teklif kilitlendi | `UiEvent.UpgradeOfferLocked` → kilit tık | OFFER LOCKED çipleri, REROLL · LOCKED | `UpgradeScreen` |
@@ -49,3 +58,9 @@ Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, 
 | AchievementRevealed | Başarım kazanıldı | `UiEvent.AchievementRevealed` | Nadirlik madalyonu (Common/Rare/Epic) + NEW pulse | `ResultsScreen.Start` |
 | NewBestRound | Profil en yüksek roundu aşıldı (WP-023) | `UiEvent.NewBestRound` → rekor vuruşu | "NEW BEST ROUND" çipi pulse | `ResultsScreen.BuildPerformanceColumn` |
 | SettingsChanged | Herhangi bir ayar kaydedildi | n/a (Slider/Toggle olayı taşır) | — | `UiSettings.Persist` |
+| CardDealt | Kart dağıtıldı (detay "0/1/2", "last") | `UiCardDealt` (v015; +0/+2/+4 %) | CardDeal stagger 60 | `UpgradeScreen` (S-09) |
+| CardFlipped | Değişen kart döndü (reroll) | `UiCardFlipped` (v015) | CardWipe | `UpgradeScreen` (S-09) |
+| StampLanded | Hanko temas karesi (detay rare/epic) | `UiStampLanded` / Rare / Epic (v015) | StampIn | Shop / Results / Profile / Achievements (S-09) |
+| CounterRolling | Sayaç rulosu başladı | `UiCounterRoll` (v015; ≤ 0,6 s) | CounterRoll | `UiCounter` (S-09) |
+| CounterSettled | Sayaç yerleşti | `UiCounterSettled` (v015) | Stamp Base | `UiCounter` (S-09) |
+| RerollHoldStarted | Hold-to-confirm başladı (U5) | `UiHoldRub` (v015; Confirm/Back biter) | HoldFill | `UpgradeScreen` / Controls (S-09) |

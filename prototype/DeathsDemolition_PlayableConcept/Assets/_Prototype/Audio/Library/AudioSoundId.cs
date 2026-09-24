@@ -264,6 +264,27 @@ namespace DD.Prototype.Audio
         ZombieReactPull = 332,
 
         // ---- WP-065C · AP-017 Phase 2b fūrin wind chimes (wind-driven positional tinkle, Look B ambience; AP-011 v014)
-        AmbFurin = 340
+        AmbFurin = 340,
+
+        // ---- WP-068 slice 11 · UI v3 material set (rin / washi / lacquer-go-hyōshigi / hanko / fusuma / soroban; AP-011 v015)
+        UiPressDown = 350,
+        UiTransitionOut = 351,
+        UiCurtainClose = 352,
+        UiCurtainOpen = 353,
+        UiPauseOpen = 354,
+        UiPauseClose = 355,
+        UiBootSeal = 356,
+        UiCardDealt = 357,
+        UiCardFlipped = 358,
+        UiStampLanded = 359,
+        UiStampRare = 360,
+        UiStampEpic = 361,
+        UiCounterRoll = 362,
+        UiCounterSettled = 363,
+        UiHoldRub = 364,
+        UiInkBleed = 365,
+        HudNewBestRound = 366,
+        HudEliteDown = 367,
+        HudUltraDown = 368
     }
 }

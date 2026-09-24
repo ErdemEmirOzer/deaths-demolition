@@ -82,6 +82,38 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(1, gong, "SwSpawnGong yalnız SpecialWeaponSpawn olayına bağlı olmalı (REQ-053).");
         }
 
+        /// <summary>WP-068 slice 11: the UI v3 contract - fifteen new members bound (TimelineSkipped is the one control row), run cues ≤ 60 and never duck, sliders ≤ 12/s, ±3 % jitter.</summary>
+        [Test]
+        public void UiV3_Sozlesme_YeniOlaylarBagli_RunCuelariDuckYok_SliderHizi()
+        {
+            var yeni = new[]
+            {
+                DD.Prototype.UI.UiEvent.ScreenExiting, DD.Prototype.UI.UiEvent.CurtainClosed, DD.Prototype.UI.UiEvent.CurtainOpened,
+                DD.Prototype.UI.UiEvent.PressDown, DD.Prototype.UI.UiEvent.BootLogo, DD.Prototype.UI.UiEvent.HudNewBestRound,
+                DD.Prototype.UI.UiEvent.HudEliteDown, DD.Prototype.UI.UiEvent.HudUltraDown, DD.Prototype.UI.UiEvent.CardDealt,
+                DD.Prototype.UI.UiEvent.CardFlipped, DD.Prototype.UI.UiEvent.StampLanded, DD.Prototype.UI.UiEvent.CounterRolling,
+                DD.Prototype.UI.UiEvent.CounterSettled, DD.Prototype.UI.UiEvent.RerollHoldStarted
+            };
+            foreach (var e in yeni)
+            {
+                Assert.AreNotEqual(AudioSoundId.None, AudioEventRouter.UiSoundFor(e), e + " bağlı olmalı");
+            }
+
+            Assert.AreEqual(AudioSoundId.None, AudioEventRouter.UiSoundFor(DD.Prototype.UI.UiEvent.TimelineSkipped), "TimelineSkipped kontrol satırıdır");
+            Assert.GreaterOrEqual(Enum.GetValues(typeof(DD.Prototype.UI.UiEvent)).Length, 50, "UI v3 sözleşmesi ≥ 50 olay");
+
+            foreach (var s in new[] { AudioSoundId.HudNewBestRound, AudioSoundId.HudEliteDown, AudioSoundId.HudUltraDown })
+            {
+                AudioPlacement p = AudioMixPlan.UiEvent(s);
+                Assert.LessOrEqual(p.Priority, 60f, s + ": koşu içi yeni cue öncelik ≤ 60 (M3)");
+                Assert.AreEqual(0f, p.DuckSeconds, s + ": duck yok (stinger değil)");
+            }
+
+            Assert.GreaterOrEqual(AudioMixPlan.UiEvent(AudioSoundId.UiSliderTick).MinRetrigger, 1f / 12f - 1e-4f, "slider ≤ 12 tık/s");
+            Assert.AreEqual(0.03f, AudioMixPlan.UiEvent(AudioSoundId.UiConfirm).PitchJitter, 1e-4f, "Interface ±3 % jitter (M2)");
+            Assert.AreEqual(3, AudioMixPlan.UiEvent(AudioSoundId.UiCardDealt).MaxInstances, "3 kart üst üste çalabilir");
+        }
+
         /// <summary>WP-021C · §12: every WP-022B UiEvent member has exactly one map row; the router's table equals the map (bound ↔ reserved).</summary>
         [Test]
         public void UiOlaylari_HerUiEventUyesininSatiriVar_RouterHaritayaEsit()
@@ -373,8 +405,9 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 // WP-021C: the UI palette sits lower by design (hover / tick / pane -26…-23; chips -22…-20).
                 // Ambience scatter one-shots (v006: creak / ring / knock / settle) sit at −24 under the −20 beds;
                 // WP-065C: the fūrin tinkle sits 2 LU lower still (−26, Fable v014 design).
-                float altSinir = m.bus == "UI" ? -26.1f : m.bus == "Ambience" ? -26.1f : -22.1f;
-                if (hedef < altSinir || hedef > -15.9f) hatalar.Add($"{e.Sound}: hedef {hedef} standart kümede değil ({(m.bus == "UI" ? "-16…-26 UI" : m.bus == "Ambience" ? "-16…-26 ambiyans" : "-16…-22")})");
+                // WP-068 s11: UI v3 textures under the cues - the soroban roll (−28) and the hold rub (−30).
+                float altSinir = m.bus == "UI" ? -30.1f : m.bus == "Ambience" ? -26.1f : -22.1f;
+                if (hedef < altSinir || hedef > -15.9f) hatalar.Add($"{e.Sound}: hedef {hedef} standart kümede değil ({(m.bus == "UI" ? "-16…-30 UI" : m.bus == "Ambience" ? "-16…-26 ambiyans" : "-16…-22")})");
                 if (tavan > manifest.standard.truePeakMax + 0.01f) hatalar.Add($"{e.Sound}: tavan {tavan} dBTP > standart {manifest.standard.truePeakMax}");
                 // Standart: hedef ± tolerans; ya da tavana dayanmış ve hedefin ALTINDA (kısa transientler
                 // tavanda hedefe ulaşamaz - tepe kısıtı seviyeyi belirler, bu doğru davranıştır).

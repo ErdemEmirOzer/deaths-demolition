@@ -458,6 +458,13 @@ namespace DD.Prototype.UI
                 v => Mathf.RoundToInt(v * 100f) + "%",
                 v => UiSettings.MasterVolume = Mathf.Round(v * 20f) / 20f);
 
+            // WP-068 U8: UI sounds on their own slider (the Interface bus; persisted with the other device preferences).
+            Slider uiSounds = AddSettingSlider(
+                ref stack, "UI SOUNDS", "Menu.Audio",
+                0f, 1f, UiSettings.UiVolume,
+                v => Mathf.RoundToInt(v * 100f) + "%",
+                v => UiSettings.UiVolume = Mathf.Round(v * 20f) / 20f);
+
             int qualityCount = Mathf.Max(1, QualitySettings.names.Length);
             Slider quality = AddSettingSlider(
                 ref stack, "GRAPHICS QUALITY", "Menu.Settings",
@@ -491,7 +498,7 @@ namespace DD.Prototype.UI
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
-            UiInput.ChainVertical(scale, volume, quality, display, telemetry);
+            UiInput.ChainVertical(scale, volume, uiSounds, quality, display, telemetry);
             UiInput.Focus(scale);
         }
 
@@ -553,7 +560,7 @@ namespace DD.Prototype.UI
             {
                 onChanged(v);
                 valueText.text = readout(v);
-                UiEvents.Raise(UiEvent.SliderChanged, label);
+                UiEvents.Raise(UiEvent.SliderChanged, label, Mathf.InverseLerp(min, max, v));   // WP-068 s11: the tick's pitch follows the value
             });
             return slider;
         }

@@ -36,9 +36,9 @@ namespace DD.Prototype.Audio.EditorTools
             // ambience comes up 3 dB so results/menu are not a 10 dB hole under the fight.
             //           Master  Music  Ambience  SFX-World  SFX-Player  UI
             new[] { 0f,   -6f,   -5f,      -2f,       -2f,      -4f },   // Run (WP-060: −5/−4/0/−1/−3 → −6/−5/−2/−2/−4)
-            new[] { 0f,   -3f,   -3f,      -6f,       -3f,       0f },   // RoundBreak: stinger + shop UI forward, world back (WP-058B: UI −2 → 0)
+            new[] { 0f,   -3f,   -3f,      -6f,       -3f,       3f },   // RoundBreak: stinger + shop UI forward, world back (WP-058B: UI −2 → 0; WP-068 s11: UI +3, the v3 shop cards / stamps ≥ 6 LU over the break bed)
             new[] { 0f,  -14f,  -12f,     -18f,      -18f,      -2f },   // Pause: world far back, UI audible (listener is paused anyway)
-            new[] { 0f,   -4f,   -7f,     -80f,      -80f,      -1f }    // Menu: menu loop + UI, no world (WP-058B: UI −3 → −1; WP-060: Amb −10 → −7)
+            new[] { 0f,   -4f,   -7f,     -80f,      -80f,       4f }    // Menu: menu loop + UI, no world (WP-058B: UI −3 → −1; WP-060: Amb −10 → −7; WP-068 s11: UI −1 → +4 - the menu bed reads −27.8 LUFS-I, v3 cues ≥ 6 LU over it)
         };
 
         [MenuItem("DD/Audio/Build Mixer")]

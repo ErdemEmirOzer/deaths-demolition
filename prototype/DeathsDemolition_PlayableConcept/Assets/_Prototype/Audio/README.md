@@ -53,3 +53,10 @@ game event ─► AudioEventMap row (sound id, bus, spatial) ─► AudioEventRo
 2. No gain outside `AudioMixPlan`; no snapshot value outside `AudioMixerBuilder.SnapshotVolumesDb`.
 3. Every new `AudioSoundId` gets a recipe fallback, a manifest entry (or a documented reservation), a matrix row and a test that the row exists.
 4. Credits: AP-011 renders only with the real unit cost verified first (Seed Audio 1.9–2.8 cr/render on the record); everything since v005 is derived offline at 0 cr — see `asset-production/AP-011/README.md` §credit request list for what a top-up should buy first.
+
+## 8 · UI v3 (WP-068 slice 11)
+
+- **Contract:** `UiEvent` +15 (ScreenExiting, CurtainClosed/Opened, PressDown, BootLogo, TimelineSkipped, HudNewBestRound, HudEliteDown/UltraDown, CardDealt, CardFlipped, StampLanded, CounterRolling/Settled, RerollHoldStarted) = 54; one map row each (TimelineSkipped is the control row). Sliders raise `UiEvents.Raise(e, label, value01)` → the tick's pitch 0.90–1.10.
+- **Controllable UI voices** (director, 2 sources, Interface bus): soroban roll (stops at CounterSettled or 0.6 s), hold rub (Confirm completes, Back cuts in 20 ms), boot seal (skip = 120 ms fade). Card deal +0/+2/+4 % per index; stamp detail rare/epic; hover sweep ×0.8 (floor 0.45); NEW BEST ribbon waits ≤ 3 s behind a threat chip; ±3 % jitter on every interface cue.
+- **Pause:** the Interface pool ignores the listener pause and the software mute (pause menu audible); pause/resume play the fusuma short slide / opening. **Death:** ink texture 0.6 s after the stinger.
+- **UI SOUNDS (U8):** `UiSettings.UiVolume` → `PrototypeAudio.UiVolume` → `AudioBusMixer.SetPlayerVolume(Interface)` (not the mixer's exposed UiVolume, which would override the snapshot UI trims).
