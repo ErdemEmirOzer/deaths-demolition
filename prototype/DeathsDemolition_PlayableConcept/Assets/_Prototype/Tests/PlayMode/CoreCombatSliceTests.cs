@@ -69,6 +69,12 @@ namespace DD.Prototype.Tests.PlayMode
     [TestFixture]
     public sealed class CoreCombatSliceTests
     {
+        // WP-076: this suite checks the WP-002/003 damage hand-off against the DEC-021 per-tier formula (every swing = the
+        // tier's own attack). The five-style variety has its own suites (AttackSelectorTests / AttackVarietySliceTests), so
+        // the selector is pinned to the signature style here — the same switch as `-ddAiV3 0`.
+        [SetUp] public void Wp076ImzaStil() => AttackSelector.Enabled = false;
+        [TearDown] public void Wp076ImzaStilBitir() => AttackSelector.Enabled = true;
+
         private const float Telegraf = 0.55f;
         private const float AktifPencere = 0.12f;
         private const float Toparlanma = 0.45f;

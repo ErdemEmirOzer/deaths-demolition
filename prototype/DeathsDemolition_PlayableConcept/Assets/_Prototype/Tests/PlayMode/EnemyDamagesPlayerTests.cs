@@ -74,6 +74,12 @@ namespace DD.Prototype.Tests.PlayMode
     [TestFixture]
     public sealed class EnemyDamagesPlayerTests
     {
+        // WP-076: this suite checks the WP-002/003 damage hand-off against the DEC-021 per-tier formula (every swing = the
+        // tier's own attack). The five-style variety has its own suites (AttackSelectorTests / AttackVarietySliceTests), so
+        // the selector is pinned to the signature style here — the same switch as `-ddAiV3 0`.
+        [SetUp] public void Wp076ImzaStil() => AttackSelector.Enabled = false;
+        [TearDown] public void Wp076ImzaStilBitir() => AttackSelector.Enabled = true;
+
         // ---------------------------------------------------- EnemyConfigSection · Standard
         /// <summary>AttackDamage 10 × EnemyDamageMultiplier(R1) = 1 + 0.08·(1−1) = 1.00.</summary>
         private const float TekVurusHasari = 10f;

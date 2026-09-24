@@ -14,20 +14,27 @@ namespace DD.Prototype.Enemies
         Limp = 3
     }
 
-    /// <summary>Per-tier attack shape. Every one has a readable windup / active / recovery.</summary>
+    /// <summary>
+    /// Attack shape. Every one has a readable windup / active / recovery. WP-076 (AI v3): five styles on S-06's
+    /// WP-071 clips (swipe_R/L = Swipe with a mirror flag, lunge, sweep, overhead_slam, bite_grab); any tier may use
+    /// several, chosen per swing by <see cref="AttackSelector"/> (the values stay stable — beats and tests key on them).
+    /// </summary>
     public enum ZombieAttackStyle
     {
-        /// <summary>Standard: one-armed overhand swipe.</summary>
+        /// <summary>One-armed swipe (swipe_R / swipe_L): the base attack, most frequent.</summary>
         Swipe = 0,
 
-        /// <summary>Runner: crouch, then a committed forward lunge.</summary>
+        /// <summary>Crouch, then a committed forward lunge (closes 1.8–2.6 m).</summary>
         Lunge = 1,
 
-        /// <summary>Guard: two-armed horizontal sweep with a long wind-up.</summary>
+        /// <summary>Two-armed horizontal sweep with a long wind-up (wide arc).</summary>
         Sweep = 2,
 
-        /// <summary>Executioner: both arms overhead, then a heavy smash.</summary>
-        Overhead = 3
+        /// <summary>Both arms overhead, then a heavy smash (the heaviest).</summary>
+        Overhead = 3,
+
+        /// <summary>WP-076: close grab + bite (bite_grab) on a player turned away or standing still.</summary>
+        BiteGrab = 4
     }
 
     public enum ZombieAttackPhase
@@ -277,6 +284,12 @@ namespace DD.Prototype.Enemies
 
         public void SetAttack(ZombieAttackStyle style, ZombieAttackPhase phase, float normalisedTime)
         {
+            SetAttack(style, phase, normalisedTime, _telegraphSeconds);
+        }
+
+        /// <summary>WP-076: the same with this swing's own telegraph (a style's wind-up differs from the tier's signature one; the clip rate follows it so DEC-029's window still opens on the clip event).</summary>
+        public void SetAttack(ZombieAttackStyle style, ZombieAttackPhase phase, float normalisedTime, float telegraphSeconds)
+        {
             _attackStyle = style;
             _attackPhase = phase;
             _attackT = Mathf.Clamp01(normalisedTime);
@@ -285,7 +298,7 @@ namespace DD.Prototype.Enemies
             {
                 if (phase == ZombieAttackPhase.Windup)
                 {
-                    Driver.PlayAttack(style, _telegraphSeconds);
+                    Driver.PlayAttack(style, telegraphSeconds > 0.01f ? telegraphSeconds : _telegraphSeconds);
                 }
 
                 _drivenPhase = phase;

@@ -581,6 +581,7 @@ namespace DD.Prototype.Enemies
             _verticalVelocity = 0f;
             _currentSpeed = 0f;
             ResetSpecialReactions();   // WP-055: no net / transaction memory crosses a life
+            _hasTargetSample = false; _targetSpeed = 0f;   // WP-076
             ResetOutOfWorld();         // WP-061K
             ResetWaiting();   // WP-050
             _noticed = false;   // WP-052
@@ -617,6 +618,7 @@ namespace DD.Prototype.Enemies
 
         protected override void OnDespawned()
         {
+            _attack?.Cancel(GrabEndReason.Killed);   // WP-076: a body leaving without dying (pool clear, WP-061K/L) gives back its slot / grab
             UnregisterCrowdMembership();
             DamageTargetRegistry.Unregister(transform);
             s_live.Remove(this);
@@ -890,6 +892,17 @@ namespace DD.Prototype.Enemies
             _animator.Tick(dt);
         }
 
+        // WP-076: player speed estimate for the attack selector
+        private Vector3 _lastTargetSample;
+        private bool _hasTargetSample;
+        private float _targetSpeed;
+
+        private static Vector3 FlatForward(Transform t)
+        {
+            Vector3 f = t.forward; f.y = 0f;
+            return f.sqrMagnitude > 1e-6f ? f.normalized : Vector3.forward;
+        }
+
         private void TickCombat(float dt)
         {
             Transform target = ResolveTarget();
@@ -903,6 +916,11 @@ namespace DD.Prototype.Enemies
                 toTarget = target.position - selfPosition;
                 toTarget.y = 0f;
                 distance = toTarget.magnitude;
+
+                // WP-076: the player's ground speed (smoothed), read by the bite_grab gate (standing still)
+                Vector3 tp = target.position; tp.y = 0f;
+                if (_hasTargetSample && dt > 1e-4f) _targetSpeed = Mathf.Lerp(_targetSpeed, (tp - _lastTargetSample).magnitude / dt, Mathf.Clamp01(8f * dt));
+                _lastTargetSample = tp; _hasTargetSample = true;
             }
 
             // ------------------------------------------------------------------ rise (WP-030)
@@ -938,9 +956,18 @@ namespace DD.Prototype.Enemies
             if (IsRooted && _attack.IsAttacking) _attack.Cancel();
             staggering |= IsRooted;
 
-            if (!staggering && target != null && _attack.CanStartAttack(distance))
+            if (!staggering && target != null)
             {
-                _attack.Begin();
+                // WP-076 §1.3: the selector picks this swing (tier / distance / angle / variety / crowd slots)
+                var ctx = new AttackContext
+                {
+                    Distance = distance,
+                    AngleToPlayer = Vector3.SignedAngle(FlatForward(transform), toTarget, Vector3.up),
+                    PlayerFacingAway = Vector3.Angle(FlatForward(target), -toTarget),
+                    PlayerSpeed = _targetSpeed,
+                    Now = Time.time,
+                };
+                _attack.TrySelectAndBegin(ref ctx, ref _random);
             }
 
             bool connected = _attack.Tick(dt, this, _tier, _animator);
@@ -958,6 +985,7 @@ namespace DD.Prototype.Enemies
                 float speed = _moveSpeed * _navSpeedFactor;   // WP-030: chokepoint queue slows the approach, never stops the threat
                 speed *= WallFrictionFactor();                // WP-054: sliding along world geometry keeps 80 % (hysteresis)
                 speed *= SpecialSlowFactor;                   // WP-055: Ofuda net (root / slow by tier) and the Ultra's Tide drag
+                if (_attack.IsGrabbing) speed = 0f;           // WP-076 §1.4: the holding body stands; the crowd flows around it
 
                 // Stop pushing into the player once inside attack range; the swing closes
                 // the last gap. Without this the swarm compresses into a solid wall.
@@ -1268,6 +1296,10 @@ namespace DD.Prototype.Enemies
         {
             bool heavyTier = _tier == EnemyTier.Elite || _tier == EnemyTier.Ultra;
 
+            // WP-076 §1.4: one strong hit (≥ 0.85, e.g. a single pellet) on the holding body frees the player; the
+            // REQ-124 stagger gate is independent (the escape does not spend it)
+            if (!result.Killed && _attack.IsGrabbing) _attack.TryEscapeGrab(hit.ImpactForce);
+
             // -------------------------------------------------------- armour readability
             RefreshArmorVisual(ArmorSlot.Helmet);
             RefreshArmorVisual(ArmorSlot.Body);
@@ -1379,7 +1411,7 @@ namespace DD.Prototype.Enemies
             // ricochet or a share of the next explosion.
             DamageTargetRegistry.Unregister(transform);
             UnregisterCrowdMembership();
-            _attack.Cancel();
+            _attack.Cancel(GrabEndReason.Killed);   // WP-076: a held grab ends as Killed (no second bite share)
             ResetWaiting();   // WP-050: a corpse never holds the queue idle
 
             if (_controller != null)
