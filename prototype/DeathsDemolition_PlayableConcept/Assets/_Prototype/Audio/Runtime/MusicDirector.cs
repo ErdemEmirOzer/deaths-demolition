@@ -107,6 +107,21 @@ namespace DD.Prototype.Audio
         /// <summary>Test seam: pin the intensity instead of reading the run.</summary>
         public float? IntensityOverride { get; set; }
 
+        /// <summary>
+        /// WP-065D test seam: puts the lock-step run layers and the phase loop at the same score position, so a
+        /// loudness measurement reads the same bars every run (the score's own dynamics were the test's variance).
+        /// </summary>
+        public void SeekForTest(float seconds)
+        {
+            for (int i = 0; i < _sources.Length; i++)
+            {
+                AudioSource s = _sources[i];
+                if (s != null && s.clip != null) s.time = Mathf.Repeat(seconds, s.clip.length);
+            }
+
+            if (_phaseLoop != null && _phaseLoop.clip != null) _phaseLoop.time = Mathf.Repeat(seconds, _phaseLoop.clip.length);
+        }
+
         /// <summary>Test seam: pin the accent driver.</summary>
         public bool? AccentOverride { get; set; }
 

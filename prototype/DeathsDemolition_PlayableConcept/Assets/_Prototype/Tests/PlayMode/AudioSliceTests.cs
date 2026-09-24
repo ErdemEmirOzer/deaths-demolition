@@ -545,23 +545,35 @@ namespace DD.Prototype.Tests.PlayMode
         [Timeout(90000)]
         public IEnumerator MixGecisi_FazOlcumu_LowHealthMuzikDuck()
         {
-            // WP-057 mix pass: output RMS per phase (report) + the HudLowHealth ↔ taiko rule (Music bus ducks).
-            var buffer = new float[2048];
+            // WP-057 mix pass: loudness per phase (report) + the HudLowHealth ↔ taiko rule (Music bus ducks).
+            // WP-065D: measured on the CONTINUOUS output (AudioOutputCapture, 3 s, gated BS.1770 LUFS-I) with the
+            // score seeked to the same bars. The old 45 × GetOutputData(2048) read ONE 43 ms buffer 45 times in
+            // batch (45 frames ≈ 0.05 s), so the phase read whichever instant of the score it landed on (−22…−39).
             float fightDb = 0f, breakDb = 0f, menuDb = 0f;
-            // WP-058B: K-weighted, gated loudness (BS.1770 via LoudnessMeter) of the captured output, not raw dBFS RMS.
-            var captured = new System.Collections.Generic.List<float>(45 * 2048);
+            const float ScorePosition = 20f;
             IEnumerator Measure(System.Action<float> sink)
             {
-                captured.Clear();
-                for (int f = 0; f < 45; f++)
+                _d.Music.SeekForTest(ScorePosition);
+                string path = System.IO.Path.Combine(Application.temporaryCachePath, "wp057-phase.wav");
+                AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, path);
+                yield return new WaitForSecondsRealtime(3f);
+                long frames = cap.FramesWritten;
+                UnityEngine.Object.DestroyImmediate(cap);
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                if (frames == 0) { sink(float.NaN); yield break; }
+                byte[] raw = System.IO.File.ReadAllBytes(path);
+                int ch = raw[22] | (raw[23] << 8);
+                int rate = raw[24] | (raw[25] << 8) | (raw[26] << 16) | (raw[27] << 24);
+                int n = (raw.Length - 44) / (2 * ch);
+                var mono = new float[n];
+                for (int i = 0; i < n; i++)
                 {
-                    yield return null;
-                    AudioListener.GetOutputData(buffer, 0);
-                    captured.AddRange(buffer);
+                    float sum = 0f;
+                    for (int c = 0; c < ch; c++) { int o = 44 + 2 * (i * ch + c); sum += (short)(raw[o] | (raw[o + 1] << 8)) / 32768f; }
+                    mono[i] = sum / ch;
                 }
 
-                LoudnessMeter.Result r = LoudnessMeter.Measure(captured.ToArray(), AudioSettings.outputSampleRate);
-                sink(r.IntegratedLufs);
+                sink(LoudnessMeter.Measure(mono, rate).IntegratedLufs);
             }
 
             MusicDirector m = _d.Music;
@@ -570,6 +582,7 @@ namespace DD.Prototype.Tests.PlayMode
                 m.IntensityOverride = 0.9f; m.AccentOverride = true;
                 yield return new WaitForSecondsRealtime(1.5f);
                 yield return Measure(v => fightDb = v);
+                if (float.IsNaN(fightDb)) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
                 m.SetPhase(RunPhase.Upgrading); _d.Bridge.Transition(AudioSnapshot.RoundBreak, 0.2f);
                 yield return new WaitForSecondsRealtime(2.5f);
                 yield return Measure(v => breakDb = v);
