@@ -40,7 +40,7 @@ MonoBehaviour:
     dryFire: 1
   ammo:
     magazine: 60
-    reserve: 180
+    reserve: 90
     reserveRoundCoef: 0.12
     floorRefillDelaySeconds: 8
     floorRefillMagazines: 1

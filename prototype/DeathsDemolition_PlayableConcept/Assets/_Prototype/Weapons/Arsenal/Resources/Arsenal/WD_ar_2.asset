@@ -38,8 +38,8 @@ MonoBehaviour:
     chargeSeconds: 0
     dryFire: 1
   ammo:
-    magazine: 24
-    reserve: 168
+    magazine: 18
+    reserve: 144
     reserveRoundCoef: 0.12
     floorRefillDelaySeconds: 4
     floorRefillMagazines: 1

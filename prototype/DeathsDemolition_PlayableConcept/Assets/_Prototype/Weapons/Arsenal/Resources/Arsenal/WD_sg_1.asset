@@ -36,9 +36,9 @@ MonoBehaviour:
     pelletPattern: 1
     rings:
     - count: 3
-      radiusShare: 0.4
+      radiusShare: 0.25
     - count: 4
-      radiusShare: 1
+      radiusShare: 0.55
     ringJitterShare: 0.1
     gaussSigmaShare: 0.45
     chargeSeconds: 0

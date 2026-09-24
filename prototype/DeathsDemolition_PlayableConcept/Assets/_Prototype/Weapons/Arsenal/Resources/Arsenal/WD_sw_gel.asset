@@ -163,8 +163,8 @@ MonoBehaviour:
     puddleRadius: 1.6
     deathPuddleRadius: 0.9
     deathPuddleSeconds: 8
-    puddleLifetimeSeconds: 25
-    maxPuddles: 12
+    puddleLifetimeSeconds: 12
+    maxPuddles: 8
     fadeSeconds: 0.5
     slipRules:
     - tier: 0
@@ -181,9 +181,9 @@ MonoBehaviour:
       immuneSeconds: 0
     - tier: 2
       kill: 1
-      killUpToRound: 0
-      maxHpShare: 0
-      stunSeconds: 0
+      killUpToRound: 10
+      maxHpShare: 0.6
+      stunSeconds: 1.5
       immuneSeconds: 0
     - tier: 3
       kill: 0

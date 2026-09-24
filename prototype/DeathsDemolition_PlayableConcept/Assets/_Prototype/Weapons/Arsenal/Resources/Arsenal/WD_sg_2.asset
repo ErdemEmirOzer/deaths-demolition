@@ -35,19 +35,19 @@ MonoBehaviour:
     pelletPattern: 2
     rings: []
     ringJitterShare: 0
-    gaussSigmaShare: 0.45
+    gaussSigmaShare: 0.7
     chargeSeconds: 0
     dryFire: 1
   ammo:
     magazine: 2
-    reserve: 40
+    reserve: 24
     reserveRoundCoef: 0.12
     floorRefillDelaySeconds: 4
     floorRefillMagazines: 1
     chamberExtra: 0
     reloadKind: 0
-    reloadTacSeconds: 1.7
-    reloadEmptySeconds: 1.7
+    reloadTacSeconds: 3
+    reloadEmptySeconds: 3
     perShellSeconds: 0.55
     reloadCancellable: 0
   projectile:

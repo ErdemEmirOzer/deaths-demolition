@@ -57,7 +57,7 @@ MonoBehaviour:
     maxLifetimeSeconds: 0.71428573
     sweepRadius: 0
     penetration: 4
-    penetrationDamageKeep: 0.8
+    penetrationDamageKeep: 0.9
     falloffStart: 60
     falloffEnd: 90
     falloffMinShare: 0.85
@@ -156,7 +156,7 @@ MonoBehaviour:
     groundSeconds: 22
     spawnWeight: 1
   upgrade:
-    coreBranches: 00000000010000000a000000
+    coreBranches: 000000000100000005000000
     keystone:
       id: kabuto_wari
       displayName: Kabuto-wari
