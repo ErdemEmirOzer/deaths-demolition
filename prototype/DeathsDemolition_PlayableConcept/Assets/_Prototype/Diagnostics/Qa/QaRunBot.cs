@@ -174,6 +174,7 @@ namespace DD.Prototype.Qa
             public float meanFrameMs;
             public float meanAimErrorDeg;     // angle between the rig's aim direction and the bot's target direction while a target was aimed
             public string aimKind;            // PlayerAim.AimKind seen most (Stick expected)
+            public string cameraMode;         // WP-070: TopDown / ThirdPerson / FirstPerson (-ddCameraMode)
             public int fireFrames;
             public string swBeats;            // WP-055: sw_push/sw_web/sw_pull beats seen (kind=count), "" when none
             public int swActivations;         // WP-055: Special Weapons the evidence bot granted itself (0 on a QA run)
@@ -1330,6 +1331,15 @@ namespace DD.Prototype.Qa
                     _fellLogged = true;
                     Log("fell-out-of-world pos=" + V(pos) + " (world boundary missing — game defect, not a bot pass)");
                 }
+                if (CameraModeService.IsLookMode)
+                {
+                    // WP-070 (S-10 WP-078): in TP/FP the right stick turns the view and the shot goes
+                    // down the screen-centre ray, so the bot points the camera itself (turn-rate
+                    // limited like a player) and sends no aim stick.
+                    DriveLookCamera(o, cmd.Aim, fwd, right);
+                    cmd.Aim = Vector2.zero;
+                }
+
                 _pad.Set(cmd.Move, cmd.Aim, cmd.Fire, reload, false);
                 _pad.Flush();
 
@@ -1644,6 +1654,47 @@ namespace DD.Prototype.Qa
                 int n;
                 _fireHits.TryGetValue(key, out n);
                 _fireHits[key] = n + 1;
+            }
+
+            /// <summary>WP-070: max view turn speed of the bot in TP/FP (a fast but human stick/mouse).</summary>
+            private const float LookTurnDegreesPerSecond = 540f;
+
+            /// <summary>
+            /// WP-070: TP/FP look for the bot — yaw/pitch toward the target's chest from the camera
+            /// (the centre ray's origin), else along the brain's aim stick direction; rate limited.
+            /// </summary>
+            private static void DriveLookCamera(QaBotObservation o, Vector2 aimStick, Vector3 fwd, Vector3 right)
+            {
+                PrototypeCameraRig cam = PrototypeCameraRig.Active;
+                if (cam == null)
+                {
+                    return;
+                }
+
+                Vector3 dir;
+                if (o.HasTarget)
+                {
+                    dir = o.TargetPosition + Vector3.up * 1.0f - cam.StablePosition;
+                }
+                else if (aimStick.sqrMagnitude > 0.01f)
+                {
+                    dir = QaBotBrain.StickToWorld(aimStick, fwd, right);
+                }
+                else
+                {
+                    return;
+                }
+
+                Vector3 flat = new Vector3(dir.x, 0f, dir.z);
+                if (flat.sqrMagnitude < 1e-6f)
+                {
+                    return;
+                }
+
+                float yaw = Mathf.Atan2(flat.x, flat.z) * Mathf.Rad2Deg;
+                float pitch = o.HasTarget ? -Mathf.Atan2(dir.y, flat.magnitude) * Mathf.Rad2Deg : 0f;
+                float step = LookTurnDegreesPerSecond * Time.unscaledDeltaTime;
+                cam.SetViewAngles(Mathf.MoveTowardsAngle(cam.ViewYaw, yaw, step), Mathf.MoveTowards(cam.ViewPitch, pitch, step));
             }
 
             private static void CameraBasis(out Vector3 forward, out Vector3 right)
@@ -2210,6 +2261,7 @@ namespace DD.Prototype.Qa
                 if (string.IsNullOrEmpty(_summary.allocMethod)) _summary.allocMethod = "no reading (recorder unavailable or run too short)";
                 _summary.meanAimErrorDeg = _aimErrorSamples > 0 ? (float)(_aimErrorSum / _aimErrorSamples) : -1f;
                 _summary.aimKind = "stick " + _aimKindStick + " / pointer " + _aimKindPointer;
+                _summary.cameraMode = CameraModeService.Current.ToString();
                 var top = new List<KeyValuePair<string, int>>(_fireHits);
                 top.Sort((a, b) => b.Value.CompareTo(a.Value));
                 var sb = new StringBuilder();
