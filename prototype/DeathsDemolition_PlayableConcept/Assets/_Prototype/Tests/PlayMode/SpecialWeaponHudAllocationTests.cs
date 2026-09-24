@@ -231,6 +231,13 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Assert.IsTrue(labels.Contains("NET") || labels.Contains("DAZED"), "görünür işaret metni NET/DAZED: " + string.Join(",", labels));
+            // WP-068 8c · E19: the stamp carries the 24 px outer-only silhouette (G1 Status.*Outer), never colour alone.
+            foreach (UnityEngine.UI.Image icon in hud.EnemyStatus.GetComponentsInChildren<UnityEngine.UI.Image>(true))
+            {
+                if (icon.name != "Icon" || ((RectTransform)icon.transform.parent).anchoredPosition.x < -9000f) continue;
+                Assert.IsTrue(icon.sprite != null && icon.sprite.name.EndsWith("Outer"), "durum damgası dış hat glifi: " + (icon.sprite != null ? icon.sprite.name : "yok"));
+                Assert.AreEqual(DD.Prototype.UI.UiEnemyStatusMarkers.GlyphSize, ((RectTransform)icon.transform).sizeDelta.x, 0.01f);
+            }
 
             _frameRateBefore = Application.targetFrameRate;
             Application.targetFrameRate = -1; // WP-052 note

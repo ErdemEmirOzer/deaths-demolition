@@ -316,9 +316,34 @@ namespace DD.Prototype.Tests.PlayMode
                 foreach (TMPro.TMP_Text t in hud.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "Banner") banner = t;
                 Assert.IsNotNull(banner, "banner metni");
                 Assert.AreEqual("SPECIAL WEAPON ONLINE", banner.text, "alma anında eski ad basılmaz");
+                // WP-068 8c · E13: the words wipe in - the mask starts closed and opens to the full banner width.
+                var clip = (RectTransform)banner.transform.parent;
+                Assert.IsNotNull(clip.GetComponent<RectMask2D>(), "afiş metni bir RectMask2D içinde silinerek girer");
+                if (!UiMotion.ReducedMotion)
+                {
+                    Assert.LessOrEqual(clip.sizeDelta.x, 1f, "afiş silme maskesi kapalı başlar");
+                }
+
+                // E14: one tick a second of the active duration, on the A4 132 ring.
+                Assert.AreEqual(20, hud.SpecialTickCount, "Special halkası aktif süre kadar saniye tiki taşır");
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, true);
                 yield return null;
                 StringAssert.Contains("KAGURA BELL ONLINE", banner.text, "ilk adlı Active snapshot banner'ı yeniden adlandırır");
+                Image ringFill = null;
+                foreach (Image im in special.GetComponentsInChildren<Image>(true)) if (im.name == "Fill" && im.transform.parent.name == "Ring") ringFill = im;
+                Assert.IsNotNull(ringFill, "Special halka dolumu");
+                Assert.AreEqual("Ring.Progress132", ringFill.sprite != null ? ringFill.sprite.name : "yok", "Special halkası A4 Ring.Progress132");
+                Assert.IsTrue(ringFill.transform.parent.Find("Ticks").gameObject.activeInHierarchy, "aktifken saniye tikleri görünür");
+                float wipeStart = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - wipeStart < 0.4f)
+                {
+                    DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
+                    yield return null;
+                }
+
+                Assert.AreEqual(((RectTransform)banner.transform).sizeDelta.x, clip.sizeDelta.x, 1f, "afiş 220 ms'de kendi genişliğine tam açılır");
+                Assert.GreaterOrEqual(clip.sizeDelta.x, Mathf.Ceil(banner.GetPreferredValues(banner.text).x), "uzun afiş maskede kırpılmaz");
+                Assert.AreEqual(1f, ringFill.fillAmount, 0.02f, "alma dolumu 320 ms sonra gerçek ilerlemeye oturur");
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Activated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 20f, 0);
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_kagura_bell_ring", Vector3.zero, Vector3.forward, 0f, 0f, 0);
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 4f, 0);
@@ -353,7 +378,36 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsFalse(glyph.enabled);
             }
 
-            PrototypeUiFlow.AbortRunToMainMenu();
+            // WP-068 8c · E14 / E21: the world marker is built on the marker canvas, hidden while nothing is on the ground.
+            Assert.IsNotNull(hud.WorldMarker, "Special dünya işaretçisi");
+            Assert.IsFalse(hud.WorldMarker.Root.gameObject.activeSelf, "yerde Special yokken işaretçi gizli");
+
+            // WP-068 8c · E22: the death beat - the health block holds α 1 for 0.6 s and names the killing blow, then dims.
+            {
+                PlayerRig rig = PlayerRegistry.Primary;
+                rig.Health.DiagnosisInvulnerable = false;
+                rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, "Zombie.Standard.Swipe");
+                float died = Time.realtimeSinceStartup;
+                while (hud.HealthGroup == null && Time.realtimeSinceStartup - died < 2f)
+                {
+                    yield return null;
+                }
+
+                Assert.IsNotNull(hud.HealthGroup, "ölümde can bloğu kendi grubunu alır");
+                Assert.IsTrue(hud.HealthGroup.ignoreParentGroups, "can bloğu HUD sönümünün dışında");
+                Assert.AreEqual(1f, hud.HealthGroup.alpha, 1e-3f, "can bloğu 0,6 s α 1 tutar");
+                TMPro.TMP_Text state = Bul<TMPro.TMP_Text>(hud.transform, "Health", "State");
+                Assert.AreEqual("DOWN  ·  killed by Standard swipe", state.text, "ölüm satırı öldüren vuruşu adlandırır");
+                while (Time.realtimeSinceStartup - died < RunHudScreen.DeathLineHoldSeconds + 0.6f)
+                {
+                    yield return null;
+                }
+
+                Assert.LessOrEqual(hud.HealthGroup.alpha, 0.36f, "0,6 s sonra can bloğu da söner");
+            }
+
+            yield return SahneyiBekle(PrototypeScenes.Results);
+            PrototypeUiFlow.GoToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
             Debug.Log("[DD-TEST] wp022.hud=OK");
 

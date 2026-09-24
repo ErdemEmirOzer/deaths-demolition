@@ -70,6 +70,48 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
+        /// WP-068 8c · E14 / E21: the Special's world marker - in view the diamond is 56 px at 10 m and 40 px at 40 m (whole
+        /// pixels, clamped outside the range); at the edge it becomes the 44 disc with the 28 px Marker.Edge glyph, and the
+        /// caption names the metres.
+        /// </summary>
+        [Test]
+        public void DunyaIsaretcisi_MesafeyleKuculur_KenardaDiskGlif()
+        {
+            var canvasGo = new GameObject("MarkerCanvas", typeof(RectTransform), typeof(Canvas));
+            try
+            {
+                var marker = new UiWorldMarker((RectTransform)canvasGo.transform);
+                marker.Place(Vector2.zero, false, 0f, 10f, 1f, 0f);
+                Assert.AreEqual(UiWorldMarker.NearSize, marker.InViewSize, 0.01f, "10 m: 56 px");
+                marker.Place(Vector2.zero, false, 0f, 40f, 1f, 0f);
+                Assert.AreEqual(UiWorldMarker.FarSize, marker.InViewSize, 0.01f, "40 m: 40 px");
+                marker.Place(Vector2.zero, false, 0f, 25f, 1f, 0f);
+                Assert.AreEqual(48f, marker.InViewSize, 0.01f, "25 m: arada, tam piksel");
+                marker.Place(Vector2.zero, false, 0f, 3f, 1f, 0f);
+                Assert.AreEqual(UiWorldMarker.NearSize, marker.InViewSize, 0.01f, "yakında 56'da kalır");
+                Assert.IsFalse(marker.AtEdge);
+
+                marker.Place(new Vector2(880f, 0f), true, 0f, 57f, 1f, 1f);
+                Assert.IsTrue(marker.AtEdge, "kenar biçimi");
+                Transform edge = marker.Root.Find("Edge");
+                Assert.IsTrue(edge.gameObject.activeSelf && !marker.Root.Find("InView").gameObject.activeSelf, "tek biçim görünür");
+                Assert.AreEqual(UiWorldMarker.EdgeDisc, ((RectTransform)edge).sizeDelta.x, 0.01f, "44 disk");
+                var glyph = edge.Find("Glyph").GetComponent<UnityEngine.UI.Image>();
+                Assert.AreEqual(UiWorldMarker.EdgeGlyph, glyph.rectTransform.sizeDelta.x, 0.01f, "28 glif");
+                if (UiArt.HasIcon("Marker.Edge"))
+                {
+                    Assert.AreEqual("Marker.Edge", glyph.sprite.name, "beacon ile aynı Marker.Edge silüeti");
+                }
+
+                Assert.AreEqual("57 m", marker.Distance.text, "mesafe altyazısı");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(canvasGo);
+            }
+        }
+
+        /// <summary>
         /// WP-068 §7.1 G1 / A4: one SDF glyph atlas holds every single-colour glyph (the former AP-012 icon + status,
         /// AP-013, AP-014 atlases, the reticle pair and divider, and the v004 A1–A3 / V1 / M1 sets), one frames v3 atlas
         /// the frames and key caps; every key a screen asks for exists once.

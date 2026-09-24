@@ -157,9 +157,10 @@ namespace DD.Prototype.Tests.EditMode
             // Gold = currency counter, price, Special HUD (style guide §2.2 UI). UiKitSheet: the
             // capture-only component sheet shows the currency counter and the Special ring.
             // UiFxGlobals (slice 4): the Fx shader's gold-leaf global is StateGold; UiFxCaptureAgent:
-            // capture-only Fx sample page (gold-leaf chips, sparks). WP-068 8b / 8-R: the HUD's own parts - HudReticle
-            // (E15: Gold400 while a Special is live) and RunHudScreen.Ink.cs (the gold readout of the 8-R ink HUD).
-            { "StateGold", new[] { "RunHudScreen.cs", "RunHudScreen.Ink.cs", "HudReticle.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs" } },
+            // capture-only Fx sample page (gold-leaf chips, sparks). WP-068 8b / 8-R / 8c: the HUD's own parts - HudReticle
+            // (E15: Gold400 while a Special is live), RunHudScreen.Ink.cs (the ink HUD's gold readout) and UiWorldMarker
+            // (E14 / E21: the drop's marker).
+            { "StateGold", new[] { "RunHudScreen.cs", "RunHudScreen.Ink.cs", "HudReticle.cs", "UiWorldMarker.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs" } },
             { "BarSpecial", new[] { "RunHudScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs" } },
             { "GoldLeaf", new[] { "UiTokens.cs" } },
             // Vermilion = one primary CTA per screen/modal, heading tick, BUY pill, seal.

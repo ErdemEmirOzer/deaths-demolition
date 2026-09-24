@@ -1093,8 +1093,99 @@ namespace DD.Prototype.UI
                     yield return UiCaptureAgent.Coverage(folder, "hud-low-health");
                 }
 
+                yield return SpecialStates(folder, rig);
+
+                // WP-068 8c · E22: a real death - the health block held at α 1 with the line, then dimmed with the rest.
+                if (rig != null && rig.Health != null)
+                {
+                    rig.Health.DiagnosisInvulnerable = false;
+                    rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, "Zombie.Standard.Swipe");
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return Frame(folder, "hud-death");
+                    yield return new WaitForSecondsRealtime(0.9f);
+                    yield return Frame(folder, "hud-death-dim");
+                }
+
                 Debug.Log("[UiCapture] hudstates done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
+            }
+
+            /// <summary>
+            /// WP-068 8c · the Special's HUD on a real drop (SpecialWeaponDirector.ForceSpawn):
+            /// - the diamond in view; then, from the staging spot farther from the drop, the EdgeMarker;
+            /// - the pickup, walked onto (ring filling, sparks, banner mid-wipe), then settled with its ticks;
+            /// - status stamps on two bodies in view (a web and a push);
+            /// - the final seconds (coral ring); then the return (the banner wiping again, the classic block un-dimmed).
+            /// </summary>
+            private static IEnumerator SpecialStates(string folder, PlayerRig rig)
+            {
+                SpecialWeaponDirector director = SpecialWeaponDirector.Instance;
+                if (director == null || rig == null || !director.ForceSpawn())
+                {
+                    Debug.Log("[UiCapture] hudstates: no Special drop (director " + (director != null) + ")");
+                    yield break;
+                }
+
+                yield return WaitFor(() => WeaponEvents.Special.Phase == SpecialWeaponPhase.OnGround, 3f);
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "hud-special-ground");
+
+                Vector3 drop = WeaponEvents.Special.WorldPosition;
+                float y = rig.transform.position.y;
+                Vector3 a = new Vector3(3f, y, 28f), b = new Vector3(0f, y, -21f);
+                rig.Teleport((a - drop).sqrMagnitude > (b - drop).sqrMagnitude ? a : b, rig.transform.rotation);
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "hud-marker-edge");
+
+                rig.Teleport(new Vector3(drop.x, y, drop.z), rig.transform.rotation);
+                yield return WaitFor(() => WeaponEvents.Special.Phase == SpecialWeaponPhase.Active, 3f);
+                yield return new WaitForSecondsRealtime(0.08f);
+                yield return Frame(folder, "hud-special-pickup");
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "hud-special-online");
+
+                // E19: two bodies in view take a web and a push - the stamps land, then settle.
+                int stamped = 0;
+                Camera camera = Camera.main;
+                System.Collections.Generic.IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; camera != null && live != null && i < live.Count && stamped < 2; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z == null || !z.IsAlive)
+                    {
+                        continue;
+                    }
+
+                    Vector3 v = camera.WorldToViewportPoint(z.transform.position);
+                    if (v.z < 0f || v.x < 0.15f || v.x > 0.85f || v.y < 0.2f || v.y > 0.8f)
+                    {
+                        continue;
+                    }
+
+                    bool web = stamped == 0;
+                    z.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
+                        web ? DD.Prototype.Damage.SpecialReactionKind.Web : DD.Prototype.Damage.SpecialReactionKind.Push,
+                        web ? DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom : DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell,
+                        Vector3.forward, web ? 0f : 1f, web ? 4f : 1.5f, 0));
+                    stamped++;
+                }
+
+                if (stamped > 0)
+                {
+                    yield return new WaitForSecondsRealtime(0.04f);
+                    yield return Frame(folder, "hud-status-stamp");
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    yield return Frame(folder, "hud-status");
+                }
+
+                yield return WaitFor(() => WeaponEvents.Special.FinalSecondsWarning, 60f);
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Frame(folder, "hud-special-final");
+                yield return WaitFor(() => WeaponEvents.Special.Phase == SpecialWeaponPhase.None, 10f);
+                yield return new WaitForSecondsRealtime(0.1f);
+                yield return Frame(folder, "hud-banner-wipe");
+                yield return new WaitForSecondsRealtime(0.7f);
+                yield return Frame(folder, "hud-special-ended");
             }
 
             private static IEnumerator StageReticle(string folder, string name, ClassicWeaponHudState live, float spread, float pelletRing, int pellets, int ammo, bool special)

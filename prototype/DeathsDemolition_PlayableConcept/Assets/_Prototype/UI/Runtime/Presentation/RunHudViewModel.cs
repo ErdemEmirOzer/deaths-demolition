@@ -161,6 +161,52 @@ namespace DD.Prototype.UI
             get { return _magazine > 0 && _ammo > 0 && _ammo <= Mathf.FloorToInt(_magazine * LowAmmoFraction); }
         }
 
+        /// <summary>
+        /// WP-068 8c · E22: the health block's line at death. The killing blow's SourceId reads as words:
+        /// "Zombie.Standard.Swipe" becomes "DOWN  ·  killed by Standard swipe" (the Zombie prefix dropped, the rest in
+        /// sentence case). An unknown source gives "DOWN". Built once per death, never per frame.
+        /// </summary>
+        public static string DeathLine(string killedBy)
+        {
+            const string down = "DOWN";
+            if (string.IsNullOrEmpty(killedBy))
+            {
+                return down;
+            }
+
+            string[] parts = killedBy.Split('.');
+            var words = new System.Text.StringBuilder(killedBy.Length + 8);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string part = parts[i].Trim();
+                if (part.Length == 0 || (i == 0 && parts.Length > 1 && part == "Zombie"))
+                {
+                    continue;
+                }
+
+                if (words.Length > 0)
+                {
+                    words.Append(' ');
+                    words.Append(part.ToLowerInvariant());
+                }
+                else
+                {
+                    words.Append(char.ToUpperInvariant(part[0]));
+                    words.Append(part, 1, part.Length - 1);
+                }
+            }
+
+            return words.Length == 0 ? down : down + "  ·  killed by " + ClipTo(words.ToString(), KillerMaxCharacters);
+        }
+
+        /// <summary>E22: the killer's words fit the health block's caption row.</summary>
+        public const int KillerMaxCharacters = 28;
+
+        private static string ClipTo(string value, int max)
+        {
+            return value.Length <= max ? value : value.Substring(0, max - 1) + "…";
+        }
+
         /// <summary>Longest weapon name the block can hold before it is clipped.</summary>
         public const int WeaponNameMaxCharacters = 26;
 

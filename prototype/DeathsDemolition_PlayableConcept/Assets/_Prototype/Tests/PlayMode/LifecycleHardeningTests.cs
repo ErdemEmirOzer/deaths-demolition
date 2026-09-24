@@ -195,7 +195,8 @@ namespace DD.Prototype.Tests.PlayMode
                 { "RunEvents.RoundPoolExhausted", 1 }, { "RunEvents.GoldChanged", 1 }, { "RunEvents.PhaseChanged", 0 },
                 { "RunEvents.CountdownTick", 0 }, { "RunEvents.RunEnded", 0 }, { "RunFlowClock.FrozenChanged", 0 },
                 { "ProfileService.Changed", -1 }, { "InputSourceRegistry.CurrentChanged", 0 },
-                { "WeaponRegistry.ActiveChanged", 2 }, { "PlayerHealth.AnyPlayerDied", 1 },
+                { "WeaponRegistry.ActiveChanged", 2 },
+                { "PlayerHealth.AnyPlayerDied", 2 },   // WP-068 8c: RunHudScreen names the killing blow (E22 death line)
                 // WP-068 8b: RunHudScreen also takes AnyDamaged (the player-bound damage arc, E17).
                 { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 2 },
                 // WP-006: hasar olay busu izlenir. Run-yerel aboneler: EnemyDied ← RunDirector (kill/gold

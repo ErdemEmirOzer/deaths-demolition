@@ -240,7 +240,7 @@ namespace DD.Prototype.Tests.EditMode
             { "MainMenuScreen.cs", new[] { 0, 0, 0, 1, 1 } },
             { "PauseScreen.cs", new[] { 0, 0, 0, 0, 1 } },
             { "ResultsScreen.cs", new[] { 0, 0, 0, 0, 1 } },
-            { "RunHudScreen.cs", new[] { 7, 3, 2, 0, 2 } },
+            { "RunHudScreen.cs", new[] { 3, 0, 0, 0, 2 } },   // WP-068 8c: the banner runs on presets, the marker lives in Kit/UiWorldMarker
             { "SelectionScreen.cs", new[] { 0, 0, 0, 0, 1 } },
             { "UpgradeScreen.cs", new[] { 0, 1, 1, 0, 1 } }
         };

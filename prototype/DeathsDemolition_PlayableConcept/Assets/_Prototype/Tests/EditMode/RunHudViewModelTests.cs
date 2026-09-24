@@ -271,5 +271,20 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("1", _vm.RoundText);
             Assert.AreEqual("0", _vm.GoldText);
         }
+
+        /// <summary>WP-068 8c · E22: the death line names the killing blow in words; an unknown source is "DOWN".</summary>
+        [Test]
+        public void OlumSatiri_KaynakKelimeOlur()
+        {
+            Assert.AreEqual("DOWN  ·  killed by Standard swipe", RunHudViewModel.DeathLine("Zombie.Standard.Swipe"));
+            Assert.AreEqual("DOWN  ·  killed by Special lunge", RunHudViewModel.DeathLine("Zombie.Special.Lunge"));
+            Assert.AreEqual("DOWN  ·  killed by Hazard fire", RunHudViewModel.DeathLine("Hazard.Fire"));
+            Assert.AreEqual("DOWN  ·  killed by Zombie", RunHudViewModel.DeathLine("Zombie"));
+            Assert.AreEqual("DOWN", RunHudViewModel.DeathLine(null));
+            Assert.AreEqual("DOWN", RunHudViewModel.DeathLine(string.Empty));
+            Assert.AreEqual("DOWN", RunHudViewModel.DeathLine("."));
+            string longest = RunHudViewModel.DeathLine("Zombie.Ultra.AVeryLongAttackNameThatWouldOverflow");
+            Assert.LessOrEqual(longest.Length, "DOWN  ·  killed by ".Length + RunHudViewModel.KillerMaxCharacters, "satır can bloğunun altyazı satırına sığar");
+        }
     }
 }

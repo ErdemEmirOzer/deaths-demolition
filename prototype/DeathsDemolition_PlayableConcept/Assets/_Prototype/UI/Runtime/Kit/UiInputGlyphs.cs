@@ -520,7 +520,44 @@ namespace DD.Prototype.UI
             OnBindingsChanged();
         }
 
+        private bool _applied;
+
+        /// <summary>
+        /// WP-068 8c · E23: a device flip or a rebind swaps the glyph - the new one fades in over Fast (Decor: at once
+        /// under reduced motion), so the swap reads as one control changing its face rather than a flicker.
+        /// </summary>
         private void Apply(InputSchemeKind scheme)
+        {
+            string before = _applied ? Signature() : null;
+            ApplyGlyph(scheme);
+            if (_applied && isActiveAndEnabled && before != Signature())
+            {
+                FadeIn(_shape);
+                FadeIn(_text);
+                FadeIn(_back);
+                FadeIn(_rim);
+            }
+
+            _applied = true;
+        }
+
+        private string Signature()
+        {
+            return _shape != null && _shape.enabled && _shape.sprite != null ? _shape.sprite.name : _text.text;
+        }
+
+        private static void FadeIn(Graphic graphic)
+        {
+            if (graphic == null || !graphic.enabled)
+            {
+                return;
+            }
+
+            graphic.canvasRenderer.SetAlpha(0f);
+            UiMotion.TintAlpha(graphic, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+        }
+
+        private void ApplyGlyph(InputSchemeKind scheme)
         {
             UiInputGlyphs.Glyph glyph = UiInputGlyphs.For(_action, scheme);
             var rect = (RectTransform)transform;

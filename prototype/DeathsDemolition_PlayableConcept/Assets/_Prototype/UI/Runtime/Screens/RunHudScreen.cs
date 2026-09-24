@@ -95,7 +95,7 @@ namespace DD.Prototype.UI
         private const float WarningTop = 150f;
         private const float BannerTop = 196f;
 
-        private const float BannerSeconds = 2.4f;
+        private const float BannerSeconds = HudBanner.Seconds;
         private const float MarkerEdgeInset = 72f;
         private const float LowRingAlpha = 0.6f;
 
@@ -161,6 +161,9 @@ namespace DD.Prototype.UI
         private int _ladderShown = -1;
         private UiRing _reloadRing;
         private UiPrompt _reloadPrompt;
+        private CanvasGroup _reloadPromptGroup;   // WP-068 8c · E23: α + 4 px Fast in, Exit Fast out
+        private Vector2 _reloadPromptHome;
+        private bool _reloadPromptShown;
         private RunHudReloadState _shownReload = RunHudReloadState.Ready;
         private bool _ammoLowShown;
         private int _roundShown = int.MinValue;
@@ -187,12 +190,30 @@ namespace DD.Prototype.UI
 
         // WP-007 (PB-2): the active timer is formatted only when its displayed tenth
         // changes (at most ten times a second), the marker distance only when the displayed
-        // metre changes - never once per frame.
+        // metre changes (UiWorldMarker) - never once per frame.
         private int _specialTimerTenths = int.MinValue;
-        private int _markerMetres = int.MinValue;
         private TMP_Text _specialCaption;
         private Image _specialRing;
         private Image _specialPip;
+
+        // WP-068 slice 8c · E14 the Special ring: A4 Ring.Progress132, a tick a second while active, the pickup fill,
+        // one kinpaku glint on the fill's own shape, the ready sparks.
+        public const float SpecialRingGhost = 0.25f;   // 8-R: no panel behind the ring - the ghost carries the track
+        public const float SpecialPickupFillSeconds = 0.32f;
+        private const float SpecialTickLength = 12f;
+        private const float SpecialTickWidth = 2f;
+        private const int SpecialTickCapacity = 30;
+        private RectTransform _specialTicks;
+        private readonly Image[] _specialTickMarks = new Image[SpecialTickCapacity];
+        private int _specialTickCount = -1;
+        private const float SpecialHitPop = 1.06f;
+        private const float SpecialHitPopSeconds = 0.12f;
+        private UiFx _specialLeaf;
+        private UiFxParticles _specialSparks;
+        private float _specialPickupAt = -10f;
+
+        /// <summary>E14: how many one-second ticks the ring carries (the active duration, rounded); test readout.</summary>
+        public int SpecialTickCount => _specialTickCount;
         private Image _weaponIcon;
 
         // WP-022H · Special usage v2 (WP-056 SpecialWeaponUsageEvents): a field / shots line
@@ -205,6 +226,20 @@ namespace DD.Prototype.UI
         private CanvasGroup _deathDim;
         private DD.Prototype.Feedback.Vfx.DamageVignetteLayer _deathLayer;
         private const float DeathDimFloor = 0.35f;
+
+        /// <summary>
+        /// WP-068 8c · E22: the learning moment. For the first 0.6 s of the dim, the health block stays at α 1 and says
+        /// "DOWN · killed by …", then it follows the rest down.
+        /// </summary>
+        public const float DeathLineHoldSeconds = 0.6f;
+        private RectTransform _healthPanel;
+        private CanvasGroup _healthGroup;
+        private string _killedBy;
+        private float _deathAt = -1f;
+        private bool _deathLineDimmed;
+
+        /// <summary>The health block's own group during the death beat (test readout; null before the first death).</summary>
+        public CanvasGroup HealthGroup => _healthGroup;
 
         /// <summary>WP-022I enemy status markers (test readout).</summary>
         public UiEnemyStatusMarkers EnemyStatus => _enemyStatus;
@@ -238,17 +273,12 @@ namespace DD.Prototype.UI
         // ---- warnings and banners
         private GameObject _warningVignette;
         private GameObject _warningBanner;
-        private TMP_Text _bannerText;
-        private CanvasGroup _bannerGroup;
+        private HudBanner _banner;            // WP-068 8c · E13 banner v3
+        private TMP_Text _bannerText;         // the banner's words (SpecialWeaponTestKit.HudBanner reads both by name)
         private float _bannerRemaining;
 
-        // ---- world marker
-        private RectTransform _marker;
-        private RectTransform _markerArrow;
-        private TMP_Text _markerLabel;
-        private Image _markerCore;
-        private Image _markerRing;
-        private Image _markerHalo;
+        // ---- world marker (WP-068 8c · E14 / E21)
+        private UiWorldMarker _worldMarker;
 
         private bool _healthBound;
         private bool _lowHealthShown;
@@ -302,6 +332,7 @@ namespace DD.Prototype.UI
 
             PlayerHealth.AnyHealthChanged += ApplyHealth;
             PlayerHealth.AnyDamaged += OnPlayerDamaged;
+            PlayerHealth.AnyPlayerDied += OnPlayerDied;
         }
 
         protected override void Start()
@@ -331,6 +362,7 @@ namespace DD.Prototype.UI
 
             PlayerHealth.AnyHealthChanged -= ApplyHealth;
             PlayerHealth.AnyDamaged -= OnPlayerDamaged;
+            PlayerHealth.AnyPlayerDied -= OnPlayerDied;
         }
 
         /// <summary>
@@ -424,15 +456,13 @@ namespace DD.Prototype.UI
             ringRoot.sizeDelta = new Vector2(SpecialRingSize, SpecialRingSize);
             ringRoot.anchoredPosition = new Vector2(0f, -(UiFactory.LineHeight(UiType.Label) + (int)UiSpace.XS));
 
-            Sprite ringArt = ink ? UiArt.Kit("Ring.Progress132") : null;
-            Image track = UiFactory.NewImage("Track", ringRoot, ink ? UiColor.TextPrimary : UiColor.SurfaceInset, ringArt != null ? ringArt : UiSprites.Ring);
+            // E14: the A4 Ring.Progress132 (8 px stroke on r 58–66) - a cream ghost track and the gold fill (Data, Linear).
+            Sprite ringArt = UiArt.Kit("Ring.Progress132");
+            Image track = UiFactory.NewImage("Track", ringRoot, UiColor.TextPrimary, ringArt != null ? ringArt : UiSprites.Ring);
             UiFactory.Fill((RectTransform)track.transform);
-            if (ink)
-            {
-                Color ghost = track.color;
-                ghost.a = 0.25f;
-                track.color = ghost;
-            }
+            Color ghost = track.color;
+            ghost.a = SpecialRingGhost;
+            track.color = ghost;
 
             _specialRing = UiFactory.NewImage("Fill", ringRoot, UiColor.BarSpecial, ringArt != null ? ringArt : UiSprites.Ring);
             UiFactory.Fill((RectTransform)_specialRing.transform);
@@ -441,6 +471,31 @@ namespace DD.Prototype.UI
             _specialRing.fillOrigin = (int)Image.Origin360.Top;
             _specialRing.fillClockwise = false;
             _specialRing.fillAmount = 1f;
+            // The pickup's one kinpaku glint runs over the fill's own shape (S-07 Leaf; Flash class, never under Reduce Flashes).
+            _specialLeaf = _specialRing.gameObject.AddComponent<UiFx>();
+            _specialLeaf.Configure(UiFxMode.Leaf, GoldGlintSeconds, new Vector3(1f, 0f, 0f));
+
+            // A tick a second while active: ink notches across the stroke, so "one more fight?" reads as the number of
+            // segments left. Laid on pickup from the active duration (≤ 30).
+            _specialTicks = UiFactory.NewRect("Ticks", ringRoot);
+            _specialTicks.sizeDelta = Vector2.zero;
+            for (int i = 0; i < SpecialTickCapacity; i++)
+            {
+                Image tick = UiFactory.NewImage("Tick." + i, _specialTicks, UiColor.HudInk, UiSprites.Solid);
+                ((RectTransform)tick.transform).sizeDelta = new Vector2(SpecialTickWidth, SpecialTickLength);
+                tick.enabled = false;
+                _specialTickMarks[i] = tick;
+            }
+
+            LaySpecialTicks(11f);
+            _specialTicks.gameObject.SetActive(false);
+
+            // The ready sparks: 12 gold quads from the ring's centre, ≤ 0.3 s (Flash × FlashScale; none under reduced motion).
+            RectTransform sparkRect = UiFactory.NewRect("Sparks", ringRoot);
+            UiFactory.Fill(sparkRect);
+            _specialSparks = sparkRect.gameObject.AddComponent<UiFxParticles>();
+            _specialSparks.color = UiTokens.Get(UiColor.BarSpecial);
+            _specialSparks.Configure(12, 5f, 260f, 420f, 0.3f);
 
             // The pip lives in the ring's centre while the weapon is on the ground: the
             // eye that learned to look there for the timer still finds the answer - an
@@ -544,6 +599,35 @@ namespace DD.Prototype.UI
             _ladderBack.color = back;
             ((RectTransform)_ladderBack.transform).sizeDelta = new Vector2(pitch * magazine, 0f);
         }
+
+        /// <summary>E23: the reload prompt rises 4 px into place as it fades in (Fast, Settle) and fades out (Fast, Exit).</summary>
+        private void ShowReloadPrompt(bool show)
+        {
+            if (show == _reloadPromptShown)
+            {
+                return;
+            }
+
+            _reloadPromptShown = show;
+            var rect = (RectTransform)_reloadPrompt.transform;
+            UiMotion.KillTarget(rect, false);
+            UiMotion.KillTarget(_reloadPromptGroup, false);
+            if (show)
+            {
+                _reloadPrompt.gameObject.SetActive(true);
+                _reloadPromptGroup.alpha = 0f;
+                rect.anchoredPosition = _reloadPromptHome + new Vector2(0f, -PromptRise);
+                UiMotion.Alpha(_reloadPromptGroup, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+                UiMotion.Move(rect, _reloadPromptHome, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+                return;
+            }
+
+            rect.anchoredPosition = _reloadPromptHome;
+            UiMotion.Alpha(_reloadPromptGroup, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
+        }
+
+        /// <summary>E23: how far a prompt rises as it enters.</summary>
+        public const float PromptRise = 4f;
 
         /// <summary>E11: the trigger on an empty magazine - the ladder kicks 4 px and settles (Decor: none under reduced motion).</summary>
         private void OnDryFire()
@@ -676,19 +760,9 @@ namespace DD.Prototype.UI
             _warningBanner = BuildInkWarning(ScreenRect, WarningTop);
             _warningBanner.SetActive(false);
 
-            // Round / phase banner, just below the warning slot so the two never collide.
-            _bannerText = UiFactory.Label(
-                "Banner", ScreenRect, string.Empty, UiType.H1, UiColor.TextPrimary, TextAnchor.UpperCenter);
-            RectTransform bannerRect = (RectTransform)_bannerText.transform;
-            bannerRect.anchorMin = new Vector2(0.5f, 1f);
-            bannerRect.anchorMax = new Vector2(0.5f, 1f);
-            bannerRect.pivot = new Vector2(0.5f, 1f);
-            bannerRect.sizeDelta = new Vector2(900f, 120f);
-            bannerRect.anchoredPosition = new Vector2(0f, -BannerTop);
-            UiHudInk.Apply(_bannerText);   // 8-R: no panel under the words - they carry their own ink
-
-            _bannerGroup = UiFactory.Group(_bannerText.gameObject);
-            _bannerGroup.alpha = 0f;
+            // Round / phase banner, just below the warning slot so the two never collide (E13 v3: wipe, brush, exit).
+            _banner = new HudBanner(ScreenRect, BannerTop);
+            _bannerText = _banner.Text;
         }
 
         private void BuildMarker()
@@ -706,46 +780,12 @@ namespace DD.Prototype.UI
             _enemyStatus = statusHost.gameObject.AddComponent<UiEnemyStatusMarkers>();
             _enemyStatus.Configure(ScreenRect);
 
-            _marker = UiFactory.NewRect("SpecialWeaponMarker", layer);
-            _marker.sizeDelta = new Vector2(56f, 56f);
-
-            _markerHalo = UiFactory.NewImage("Halo", _marker, UiColor.SurfaceInset, UiSprites.Disc);
-            UiFactory.Fill((RectTransform)_markerHalo.transform);
-            _markerHalo.color = Color.white;
-
-            // AP-010 beacon marker (greyscale diamond, DEC-053): tinted with the beacon
-            // reserve colour at runtime. The procedural ring/disc pair is the fallback.
-            bool artMarker = UiTheme.Active != null && UiTheme.Active.HudMarker != null;
-            _markerRing = UiFactory.NewImage("Ring", _marker, UiColor.StateGold, artMarker ? UiArt.HudMarker() : UiSprites.Ring);
-            UiFactory.Fill((RectTransform)_markerRing.transform);
-            _markerRing.preserveAspect = true;
-            _markerRing.color = Color.white;
-
-            _markerCore = UiFactory.NewImage("Core", _marker, UiColor.StateGold, UiSprites.Disc);
-            UiFactory.Fill((RectTransform)_markerCore.transform, artMarker ? 22f : 18f);
-            _markerCore.color = Color.white;
-
-            _markerArrow = (RectTransform)UiFactory.NewImage(
-                "Arrow", _marker, UiColor.StateGold, UiSprites.Chevron).transform;
-            _markerArrow.anchorMin = new Vector2(0.5f, 0.5f);
-            _markerArrow.anchorMax = new Vector2(0.5f, 0.5f);
-            _markerArrow.pivot = new Vector2(-0.4f, 0.5f);
-            _markerArrow.sizeDelta = new Vector2(22f, 22f);
-            _markerArrow.anchoredPosition = Vector2.zero;
-            _markerArrow.gameObject.SetActive(false);
-
-            _markerLabel = UiFactory.Label(
-                "Distance", _marker, string.Empty, UiType.Label, UiColor.StateGold, TextAnchor.UpperCenter);
-            _markerLabel.color = Color.white;
-            RectTransform labelRect = (RectTransform)_markerLabel.transform;
-            labelRect.anchorMin = new Vector2(0.5f, 0f);
-            labelRect.anchorMax = new Vector2(0.5f, 0f);
-            labelRect.pivot = new Vector2(0.5f, 1f);
-            labelRect.sizeDelta = new Vector2(160f, 24f);
-            labelRect.anchoredPosition = new Vector2(0f, -(int)UiSpace.XS);
-
-            _marker.gameObject.SetActive(false);
+            // E14 / E21: the AP-010 diamond in view (56 → 40 px with distance), the EdgeMarker at the edge.
+            _worldMarker = new UiWorldMarker(layer);
         }
+
+        /// <summary>The Special's world marker (test readout).</summary>
+        public UiWorldMarker WorldMarker => _worldMarker;
 
         /// <summary>
         /// The play area no HUD panel may cover (REQ-104/105, DEC-077): the centre 62%
@@ -1053,6 +1093,60 @@ namespace DD.Prototype.UI
             {
                 _deathDim.alpha = alpha;
             }
+
+            if (_deathAt < 0f)
+            {
+                BeginDeathLine();
+            }
+            else if (!_deathLineDimmed && Time.unscaledTime - _deathAt >= DeathLineHoldSeconds)
+            {
+                // Held long enough to read; now it follows the rest (Decor: a cut to the floor under reduced motion).
+                _deathLineDimmed = true;
+                UiMotion.Alpha(_healthGroup, DeathDimFloor, UiDuration.Emphasis, UiEase.Exit, UiMotionClass.Decor);
+            }
+        }
+
+        /// <summary>E22 t0: the health block leaves the dim for 0.6 s and names what ended the run.</summary>
+        private void BeginDeathLine()
+        {
+            _deathAt = Time.unscaledTime;
+            _deathLineDimmed = false;
+            if (_healthPanel == null)
+            {
+                return;
+            }
+
+            if (_healthGroup == null)
+            {
+                _healthGroup = UiFactory.Group(_healthPanel.gameObject);
+            }
+
+            UiMotion.KillTarget(_healthGroup, false);
+            _healthGroup.ignoreParentGroups = true;
+            _healthGroup.alpha = 1f;
+            _healthState.text = RunHudViewModel.DeathLine(_killedBy);
+            _healthState.color = UiTokens.Get(UiColor.StateDanger);
+            _healthState.fontStyle = FontStyles.Bold;
+        }
+
+        private void OnPlayerDied(PlayerDeathInfo info)
+        {
+            _killedBy = info.KilledBy;
+        }
+
+        /// <summary>A new run after a death on the same HUD: the health block rejoins the canvas.</summary>
+        private void ResetDeathLine()
+        {
+            _deathAt = -1f;
+            _deathLineDimmed = false;
+            _killedBy = null;
+            if (_healthGroup != null)
+            {
+                UiMotion.KillTarget(_healthGroup, false);
+                _healthGroup.ignoreParentGroups = false;
+                _healthGroup.alpha = 1f;
+                _healthState.fontStyle = FontStyles.Normal;
+            }
         }
 
         /// <summary>
@@ -1078,6 +1172,7 @@ namespace DD.Prototype.UI
         {
             _model.Reset();
             _healthMaxShown = int.MinValue;
+            ResetDeathLine();
             _goldSeen = int.MinValue;
             _roundShown = int.MinValue;
             _healthBound = false;
@@ -1192,7 +1287,7 @@ namespace DD.Prototype.UI
                 }
             }
 
-            if ((changed & RunHudField.HealthState) != 0)
+            if ((changed & RunHudField.HealthState) != 0 && _deathAt < 0f)   // E22: the death line keeps the row
             {
                 _healthState.text = _model.HealthStateText;
                 _healthState.color = UiTokens.Get(ToneColor(_model.HealthStateTone));
@@ -1272,7 +1367,7 @@ namespace DD.Prototype.UI
                 {
                     _reloadRing.Set(0f); // the ghost stays, the fill is the reload
                 }
-                _reloadPrompt.gameObject.SetActive(reload == RunHudReloadState.MagazineEmpty);
+                ShowReloadPrompt(reload == RunHudReloadState.MagazineEmpty);
                 switch (reload)
                 {
                     case RunHudReloadState.Reloading:
@@ -1314,7 +1409,8 @@ namespace DD.Prototype.UI
             {
                 // REQ-057. Dimmed, labelled, and still showing every number.
                 bool suspended = _model.Suspended;
-                _classicGroup.alpha = suspended ? UiTokens.OpacitySuspended : 1f;
+                // E14: dims and returns at Base (Decor: at once under reduced motion); the numbers stay the whole time.
+                UiMotion.Alpha(_classicGroup, suspended ? UiTokens.OpacitySuspended : 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
 
                 if (_suspendedChip.activeSelf != suspended)
                 {
@@ -1396,8 +1492,8 @@ namespace DD.Prototype.UI
             }
 
             _specialTimer.color = UiTokens.Get(warning ? UiColor.StateDanger : UiColor.StateGold);
-            _specialRing.color = UiTokens.Get(warning ? UiColor.BarHealthLow : UiColor.BarSpecial);
-            _specialRing.fillAmount = state.ActiveProgress01;
+            _specialRing.color = UiTokens.Get(warning ? UiColor.BarHealthLow : UiColor.BarSpecial);   // E14: final 3 s Coral400
+            _specialRing.fillAmount = SpecialRingFill(state.ActiveProgress01);
 
             RefreshSpecialUsage();
             SetWarning(warning);
@@ -1461,6 +1557,10 @@ namespace DD.Prototype.UI
                         Sprite glyph = UiArt.SpecialIcon(e.Id);
                         UiArt.SetGlyph(_specialGlyph, glyph);
                         _specialGlyph.enabled = glyph != null;
+                        if (glyph != null)
+                        {
+                            UiPresets.StampIn(_specialGlyph.rectTransform);   // E14: the weapon's glyph stamps with the banner
+                        }
                     }
 
                     break;
@@ -1474,6 +1574,12 @@ namespace DD.Prototype.UI
                     break;
                 case SpecialUsageKind.Hit:
                     _swFieldHits++;
+                    if (_specialUsage != null)
+                    {
+                        // E14: the HIT count pops 1.06 → 1 over 120 ms (text-bearing, so ≤ 1.06).
+                        UiMotion.ScaleSeconds(_specialUsage.rectTransform, SpecialHitPop, 1f, SpecialHitPopSeconds, UiEase.Settle, UiMotionClass.Decor);
+                    }
+
                     break;
                 case SpecialUsageKind.FieldEnded:
                     _swFieldEndedCount = Mathf.Max(_swFieldHits, e.Count);
@@ -1498,12 +1604,57 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>E14: one notch per second of the active duration, evenly round the ring from 12 o'clock.</summary>
+        private void LaySpecialTicks(float activeSeconds)
+        {
+            int count = Mathf.Clamp(Mathf.RoundToInt(activeSeconds), 0, SpecialTickCapacity);
+            if (count == _specialTickCount)
+            {
+                return;
+            }
+
+            _specialTickCount = count;
+            const float radius = 62f;   // the stroke's centre line (r 58–66)
+            for (int i = 0; i < SpecialTickCapacity; i++)
+            {
+                Image tick = _specialTickMarks[i];
+                tick.enabled = i < count && count > 1;
+                if (!tick.enabled)
+                {
+                    continue;
+                }
+
+                float degrees = 360f * i / count;
+                float radians = degrees * Mathf.Deg2Rad;
+                var rect = (RectTransform)tick.transform;
+                rect.anchoredPosition = new Vector2(Mathf.Sin(radians), Mathf.Cos(radians)) * radius;
+                rect.localRotation = Quaternion.Euler(0f, 0f, -degrees);
+            }
+        }
+
+        /// <summary>E14: the fill shown this frame - the real progress, grown from 0 over the first 320 ms after a pickup.</summary>
+        private float SpecialRingFill(float progress01)
+        {
+            float t = (Time.unscaledTime - _specialPickupAt) / SpecialPickupFillSeconds;
+            if (t >= 1f || t < 0f || UiMotion.ReducedMotion)
+            {
+                return progress01;
+            }
+
+            return progress01 * UiEaseCurve.Evaluate(UiEase.Settle, t);
+        }
+
         /// <summary>
         /// Swap the Special Weapon block between its two readouts: a blinking pip while
         /// the weapon is on the ground, digits and a bar while it is in hand.
         /// </summary>
         private void SetGroundReadout(bool onGround)
         {
+            if (_specialTicks != null && _specialTicks.gameObject.activeSelf == onGround)
+            {
+                _specialTicks.gameObject.SetActive(!onGround);
+            }
+
             if (_specialPip != null && _specialPip.gameObject.activeSelf != onGround)
             {
                 _specialPip.gameObject.SetActive(onGround);
@@ -1582,19 +1733,11 @@ namespace DD.Prototype.UI
             Camera camera = Camera.main;
             if (!show || camera == null)
             {
-                if (_marker.gameObject.activeSelf)
-                {
-                    _marker.gameObject.SetActive(false);
-                }
-
+                _worldMarker.SetVisible(false);
                 return;
             }
 
-            if (!_marker.gameObject.activeSelf)
-            {
-                _marker.gameObject.SetActive(true);
-            }
-
+            _worldMarker.SetVisible(true);
             Vector3 viewport = camera.WorldToViewportPoint(state.WorldPosition);
             bool behind = viewport.z < 0f;
 
@@ -1614,32 +1757,15 @@ namespace DD.Prototype.UI
             float halfWidth = canvasSize.x * 0.5f - MarkerEdgeInset;
             float halfHeight = canvasSize.y * 0.5f - MarkerEdgeInset;
 
+            float angle = 0f;
             if (offScreen)
             {
                 Vector2 direction = local.sqrMagnitude > 0.0001f ? local.normalized : Vector2.up;
-                local.x = Mathf.Clamp(local.x, -halfWidth, halfWidth);
-                local.y = Mathf.Clamp(local.y, -halfHeight, halfHeight);
-
-                float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-                _markerArrow.localRotation = Quaternion.Euler(0f, 0f, angle);
-
-                if (!_markerArrow.gameObject.activeSelf)
-                {
-                    _markerArrow.gameObject.SetActive(true);
-                }
-            }
-            else
-            {
-                local.x = Mathf.Clamp(local.x, -halfWidth, halfWidth);
-                local.y = Mathf.Clamp(local.y, -halfHeight, halfHeight);
-
-                if (_markerArrow.gameObject.activeSelf)
-                {
-                    _markerArrow.gameObject.SetActive(false);
-                }
+                angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             }
 
-            _marker.anchoredPosition = local;
+            local.x = Mathf.Clamp(local.x, -halfWidth, halfWidth);
+            local.y = Mathf.Clamp(local.y, -halfHeight, halfHeight);
 
             // G-21. The SAME phase the world beacon is pulsing on, taken straight off the
             // snapshot rather than recomputed here. Two clocks at the same rate still
@@ -1650,48 +1776,12 @@ namespace DD.Prototype.UI
                 ? 1f - state.GroundProgress01 / GroundUrgencyStart
                 : 0f;
 
-            Color markerColour = Color.Lerp(
-                UiTokens.Get(UiColor.StateGold), UiTokens.Get(UiColor.StateDanger), Mathf.Clamp01(urgency));
-
-            ApplyMarkerBlink(_markerCore, markerColour, blink, 1f);
-            ApplyMarkerBlink(_markerRing, markerColour, blink, 0.85f);
-
-            if (_markerHalo != null)
-            {
-                // The halo is the marker's backing, not part of the blink: it is what
-                // keeps the pip legible against a bright frame at the dark end of the
-                // cycle. It breathes a little so the whole marker still feels alive.
-                Color haloColour = UiTokens.Get(UiColor.SurfaceInset);
-                haloColour.a = Mathf.Lerp(0.45f, 0.75f, blink);
-                _markerHalo.canvasRenderer.SetColor(haloColour);
-            }
-
-            float markerScale = Mathf.Lerp(0.86f, 1.14f, blink);
-            _marker.localScale = new Vector3(markerScale, markerScale, 1f);
-
-            // The distance label stays. It is the answer to a DIFFERENT question - "how
-            // far", not "how long" - and the request only removed the duration.
-            float distance = Vector3.Distance(camera.transform.position, state.WorldPosition);
-            int metres = Mathf.RoundToInt(distance);
-            if (metres != _markerMetres)
-            {
-                _markerMetres = metres;
-                _markerLabel.text = metres + " m";
-            }
-
-            _markerLabel.canvasRenderer.SetColor(markerColour);
-        }
-
-        private static void ApplyMarkerBlink(Image image, Color colour, float blink, float weight)
-        {
-            if (image == null)
-            {
-                return;
-            }
-
-            Color c = colour;
-            c.a = Mathf.Lerp(1f - weight, 1f, blink);
-            image.canvasRenderer.SetColor(c);
+            // "How far" - a different question from "how long", so the distance stays (G-21). E14: measured from the
+            // player, whose walk it is; the camera stands in when there is no player.
+            PlayerRig rig = PlayerRegistry.Primary;
+            Vector3 from = rig != null ? rig.transform.position : camera.transform.position;
+            float metres = Vector3.Distance(from, state.WorldPosition);
+            _worldMarker.Place(local, offScreen, angle, metres, blink, urgency);
         }
 
         // ================================================================== banners
@@ -1730,6 +1820,36 @@ namespace DD.Prototype.UI
             // the first Active snapshot with a name retitle the banner (same banner timer).
             ShowBanner("SPECIAL WEAPON ONLINE");
             _bannerAwaitsSpecialName = true;
+            PlaySpecialPickup(activeDuration);
+        }
+
+        /// <summary>
+        /// E14 · the pickup: the ring grows 0 → 1 over 320 ms (Settle, then the real progress), one kinpaku glint sweeps
+        /// the fill (never under Reduce Flashes) and 12 sparks burst from the centre (≤ 0.3 s; none under reduced motion).
+        /// </summary>
+        private void PlaySpecialPickup(float activeDuration)
+        {
+            _specialPickupAt = Time.unscaledTime;
+            if (activeDuration > 0f)
+            {
+                LaySpecialTicks(activeDuration);
+            }
+
+            if (_specialLeaf != null && !UiSettings.ReduceFlashes)
+            {
+                _specialLeaf.Play();
+            }
+
+            if (_specialSparks != null && !UiMotion.ReducedMotion)
+            {
+                _specialSparks.Play();
+            }
+        }
+
+        /// <summary>Capture seam (-ddUiCapture hudstates): the pickup moment as a live pickup plays it.</summary>
+        public void CaptureSpecialPickup(float activeDuration)
+        {
+            PlaySpecialPickup(activeDuration);
         }
 
         /// <summary>True between a Special pickup and the first Active snapshot that names the weapon.</summary>
@@ -1750,7 +1870,7 @@ namespace DD.Prototype.UI
             _bannerAwaitsSpecialName = false;
             if (!string.IsNullOrEmpty(state.DisplayName) && _bannerRemaining > 0f)
             {
-                _bannerText.text = UiFactory.Clip(state.DisplayName.ToUpperInvariant(), 30) + " ONLINE";
+                _banner.Retitle(UiFactory.Clip(state.DisplayName.ToUpperInvariant(), 30) + " ONLINE");
             }
         }
 
@@ -1785,24 +1905,14 @@ namespace DD.Prototype.UI
 
         private void ShowBanner(string message)
         {
-            _bannerText.text = message;
+            _banner.Show(message, Time.unscaledTime);
             _bannerRemaining = BannerSeconds;
         }
 
+        /// <summary>E13: the envelope runs on presets; this only starts the exit at its time and reports what is left.</summary>
         private void UpdateBanner()
         {
-            if (_bannerRemaining <= 0f)
-            {
-                if (_bannerGroup.alpha > 0f)
-                {
-                    _bannerGroup.alpha = Mathf.MoveTowards(_bannerGroup.alpha, 0f, Time.unscaledDeltaTime * 3f);
-                }
-
-                return;
-            }
-
-            _bannerRemaining -= Time.unscaledDeltaTime;
-            _bannerGroup.alpha = Mathf.MoveTowards(_bannerGroup.alpha, 1f, Time.unscaledDeltaTime * 6f);
+            _bannerRemaining = _banner.Tick(Time.unscaledTime);
         }
 
         /// <summary>Formats to a tenth. Callers cache by the displayed tenth so this never runs once per frame (WP-007, PB-2).</summary>

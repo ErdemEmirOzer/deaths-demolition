@@ -156,6 +156,7 @@ namespace DD.Prototype.UI
             float band = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.NumericL));
             float row = strokeTop + 2f + band * 0.5f;
             RectTransform root = Cluster("Health", Vector2.zero, new Vector2(InkMargin, InkMargin), new Vector2(380f, row + band * 0.5f + 4f), true);
+            _healthPanel = root;   // 8c · E22: the cluster that holds α 1 through the death dim
             RectTransform back = BackPlane(root);
 
             _healthIcon = InkGlyph("Heart", root, "Hud.Health", UiColor.BarHealth, 28f);
@@ -272,8 +273,9 @@ namespace DD.Prototype.UI
             RectTransform captionRow = _reloadCaption.rectTransform;
             Place(captionRow, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), new Vector2(220f, ReloadPromptSize + 6f));
             _reloadPrompt = UiInputGlyphs.Build("ReloadPrompt", captionRow, UiPromptAction.Reload, UiColor.TextPrimary, UiColor.SurfaceInset, ReloadPromptSize);
-            Place((RectTransform)_reloadPrompt.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                new Vector2(Mathf.Ceil(_reloadCaption.GetPreferredValues("EMPTY").x) + (int)UiSpace.S, 0f), ((RectTransform)_reloadPrompt.transform).sizeDelta);
+            _reloadPromptHome = new Vector2(Mathf.Ceil(_reloadCaption.GetPreferredValues("EMPTY").x) + (int)UiSpace.S, 0f);
+            Place((RectTransform)_reloadPrompt.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), _reloadPromptHome, ((RectTransform)_reloadPrompt.transform).sizeDelta);
+            _reloadPromptGroup = UiFactory.Group(_reloadPrompt.gameObject);   // 8c · E23: α + 4 px Fast in, Exit Fast out
             _reloadPrompt.gameObject.SetActive(false);
             _reloadCaptionGroup = UiFactory.Group(captionRow.gameObject);
 
