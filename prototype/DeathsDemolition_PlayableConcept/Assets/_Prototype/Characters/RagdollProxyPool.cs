@@ -86,6 +86,12 @@ namespace DD.Prototype.Characters
         /// <summary>Acquisitions refused because the pool was at capacity (tests / probes; reset by <see cref="ResetStatics"/>).</summary>
         public static int RefusedCount { get; private set; }
         public static int AcquiredCount { get; private set; }
+        /// <summary>WP-078 (S-10 soak): proxies returned (a cycle = acquire → release; leak = acquired − released − active ≠ 0) and the active peak since reset.</summary>
+        public static int ReleasedCount { get; private set; }
+        public static int PeakActive { get; private set; }
+        private static int s_roundPeak, s_roundBaseAcquired, s_roundBaseReleased, s_roundBaseRefused;
+        private static readonly int[] s_roundBaseFamilies = new int[7];
+        private static readonly System.Action<int> s_roundLog = OnRoundCompletedLog;
 
         /// <summary>Build the proxies up to <see cref="Capacity"/> now (first spawn), so the first death allocates nothing.</summary>
         public static void Warm()
@@ -150,6 +156,8 @@ namespace DD.Prototype.Characters
             p.owner = owner;
             s_active++;
             AcquiredCount++;
+            if (s_active > PeakActive) PeakActive = s_active;
+            if (s_active > s_roundPeak) s_roundPeak = s_active;
             return p;
         }
 
@@ -176,6 +184,7 @@ namespace DD.Prototype.Characters
             p.active = false;
             p.owner = 0;
             s_active--;
+            ReleasedCount++;
         }
 
         /// <summary>True once the proxy has come to rest (or hit <see cref="MaxActive"/>); the owner then releases it.</summary>
@@ -274,6 +283,32 @@ namespace DD.Prototype.Characters
 
         private static void OnTierChanged(QualityTier tier) => s_tierCap = CapOf(tier);
 
+        /// <summary>
+        /// Re-arm the round log (RunEvents drops its subscribers per run). Called at spawn, never on the death path: removing /
+        /// adding on a shared multicast event allocates its invocation list.
+        /// </summary>
+        public static void ArmRoundLog()
+        {
+            DD.Prototype.Rounds.RunEvents.RoundCompleted -= s_roundLog;
+            DD.Prototype.Rounds.RunEvents.RoundCompleted += s_roundLog;
+        }
+
+        /// <summary>WP-078 §3/§8 (S-10): one Player-log line per completed round — active now, the round's peak, overflow to the authored fall, cycles, and the death families.</summary>
+        private static void OnRoundCompletedLog(int round)
+        {
+            int[] fam = ZombieDeathFamilies.Counts;
+            Debug.Log("[Ragdoll] round=" + round + " tierCap=" + Capacity + " active=" + s_active + " peak=" + s_roundPeak + " overflow=" + (RefusedCount - s_roundBaseRefused)
+                      + " cycles=" + (ReleasedCount - s_roundBaseReleased) + " acquired=" + (AcquiredCount - s_roundBaseAcquired)
+                      + " families=back:" + (fam[0] - s_roundBaseFamilies[0]) + ",fwd:" + (fam[1] - s_roundBaseFamilies[1]) + ",spin:" + (fam[2] - s_roundBaseFamilies[2])
+                      + ",legs:" + (fam[3] - s_roundBaseFamilies[3]) + ",ultra:" + (fam[4] - s_roundBaseFamilies[4]) + ",arc:" + (fam[5] - s_roundBaseFamilies[5]) + ",gel:" + (fam[6] - s_roundBaseFamilies[6])
+                      + " totalAcquired=" + AcquiredCount + " totalReleased=" + ReleasedCount + " peakAll=" + PeakActive);
+            s_roundPeak = s_active;
+            s_roundBaseAcquired = AcquiredCount;
+            s_roundBaseReleased = ReleasedCount;
+            s_roundBaseRefused = RefusedCount;
+            for (int i = 0; i < fam.Length && i < s_roundBaseFamilies.Length; i++) s_roundBaseFamilies[i] = fam[i];
+        }
+
         /// <summary>Ragdoll ↔ everything that is not world: off (runtime matrix; the DynamicsManager asset is untouched).</summary>
         private static void SetLayers()
         {
@@ -309,6 +344,11 @@ namespace DD.Prototype.Characters
             Enabled = true;
             RefusedCount = 0;
             AcquiredCount = 0;
+            ReleasedCount = 0;
+            PeakActive = 0;
+            s_roundPeak = s_roundBaseAcquired = s_roundBaseReleased = s_roundBaseRefused = 0;
+            System.Array.Clear(s_roundBaseFamilies, 0, s_roundBaseFamilies.Length);
+            ZombieDeathFamilies.ResetCounts();
             s_layersSet = false;
         }
     }

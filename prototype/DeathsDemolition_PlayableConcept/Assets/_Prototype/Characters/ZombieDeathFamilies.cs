@@ -19,6 +19,11 @@ namespace DD.Prototype.Characters
     {
         public const int Count = 4;
 
+        /// <summary>WP-078 (S-10): deaths per family since reset (index = <see cref="ZombieDeathFamily"/>), for the round log.</summary>
+        public static readonly int[] Counts = new int[7];
+        public static void Record(ZombieDeathFamily f) { int i = (int)f; if (i >= 0 && i < Counts.Length) Counts[i]++; }
+        public static void ResetCounts() => System.Array.Clear(Counts, 0, Counts.Length);
+
         /// <summary>
         /// The AP-009 death index (ZombieAnimator's pick: 0 fwd, 1 back, 2 side, 3 kneel, 4 side_R, 5 special_A, 6 special_B,
         /// 7 ultra) as a family, until AP-022 ships one onset clip per family.

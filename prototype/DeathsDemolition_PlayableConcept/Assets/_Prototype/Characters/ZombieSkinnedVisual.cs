@@ -441,6 +441,7 @@ namespace DD.Prototype.Characters
         private void BeginDeathClock(int deathStyle)
         {
             DeathFamily = ZombieDeathFamilies.OfDeathIndex(deathStyle);
+            ZombieDeathFamilies.Record(DeathFamily);   // WP-078 soak distribution
             DiedByRagdoll = false;
             RagdollHandoffSeconds = -1f;
             _handoffNow = false;
@@ -704,6 +705,7 @@ namespace DD.Prototype.Characters
             if (!_authored) return;
             EndRagdoll();   // WP-071: a pooled body comes back animated (proxy returned, Animator + LOD running)
             EnsureRagdollBones();
+            RagdollProxyPool.ArmRoundLog();   // WP-078 per-round line
             _topSpeed = Mathf.Max(0.1f, topSpeedMetersPerSecond);
             _gait = tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
             _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));

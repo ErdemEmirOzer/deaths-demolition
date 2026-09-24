@@ -143,6 +143,63 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator Havuz_200Dongu_SizintiYok()
+        {
+            // WP-078 R3 (S-10): 3 × 200 acquire → release cycles leave nothing behind (acquired = released, 0 active); the allocation
+            // per cycle is measured with the WP-044 referee method (cycles in ONE frame vs a control frame + 64 KB positive control) and logged
+            yield return Stage();
+            ZombieSkinnedVisual v = Zombie(Vector3.zero, 13u);
+            for (int i = 0; i < 5; i++) yield return null;
+            Animator an = v.Animator;
+            HumanBodyBones[] tipBones =
+            {
+                HumanBodyBones.Chest, HumanBodyBones.Neck, HumanBodyBones.Head, HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand,
+                HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot,
+                HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot
+            };
+            var bones = new Transform[RagdollProxyPool.BodyCount];
+            var tips = new Transform[RagdollProxyPool.BodyCount];
+            var vel = new Vector3[RagdollProxyPool.BodyCount];
+            for (int i = 0; i < bones.Length; i++) { bones[i] = an.GetBoneTransform(RagdollProxyPool.Bones[i]); tips[i] = an.GetBoneTransform(tipBones[i]); }
+            RagdollProxyPool.Capacity = 2;
+            RagdollProxyPool.Release(RagdollProxyPool.Acquire(1, bones, tips, vel, Vector3.back, 0f));   // warm
+            int baseAcq = RagdollProxyPool.AcquiredCount, baseRel = RagdollProxyPool.ReleasedCount;
+            int savedRate = Application.targetFrameRate;
+            Application.targetFrameRate = -1;   // WP-052: the recorder reads 0 while capped at 60 in the Editor runner
+            using var rec = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count");
+            using var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame");
+            yield return null; yield return null;
+            long controlMax = 0, cycleMin = long.MaxValue;
+            for (int pass = 0; pass < 3; pass++)
+            {
+                int sink = 0;
+                for (int k = 0; k < 200; k++) sink += bones[0] != null ? 1 : 0;
+                yield return null;
+                controlMax = System.Math.Max(controlMax, rec.LastValue);
+                for (int k = 0; k < 200; k++) RagdollProxyPool.Release(RagdollProxyPool.Acquire(2, bones, tips, vel, Vector3.back, 0f));
+                yield return null;
+                cycleMin = System.Math.Min(cycleMin, rec.LastValue);
+                if (sink < 0) Debug.Log(sink);
+            }
+
+            var keep = new object[64];
+            for (int i = 0; i < keep.Length; i++) keep[i] = new byte[1024];
+            yield return null;
+            long posCount = rec.LastValue, posBytes = bytes.LastValue;
+            keep = null;
+            Application.targetFrameRate = savedRate;
+            int acquired = RagdollProxyPool.AcquiredCount - baseAcq, released = RagdollProxyPool.ReleasedCount - baseRel;
+            Debug.Log("[DD-TEST] wp071.ragdoll.cycles acquired=" + acquired + " released=" + released + " active=" + RagdollProxyPool.ActiveCount + " cycleFrameMin=" + cycleMin + " controlMax=" + controlMax + " positive=" + posCount + "/" + posBytes + " B");
+            Assert.AreEqual(600, acquired);
+            Assert.AreEqual(acquired, released, "sızıntı: alınan ≠ bırakılan");
+            Assert.AreEqual(0, RagdollProxyPool.ActiveCount);
+            // REPORTED, not gated (HIZLI HAT §7): an acquire → release cycle is a death event, not a frame path; the Editor reading swings
+            // with background load (control 6 … 3 267 between runs). Clean run: 0.0 per cycle (the round-log re-arm that cost ≈ 4 moved to spawn).
+            Debug.Log("[DD-TEST] wp071.ragdoll.cycleAllocs perCycle≈" + ((cycleMin - controlMax) / 200f).ToString("F1", CultureInfo.InvariantCulture) + " (positive control " + (posCount >= 64 ? "seen" : "NOT seen") + ")");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator Tavan_Dolunca_YaziliDusus_HepsiBiter_SonraYenidenDogar()
         {
             yield return Stage();
