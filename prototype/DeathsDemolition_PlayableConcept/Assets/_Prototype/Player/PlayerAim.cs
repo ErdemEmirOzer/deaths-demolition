@@ -90,6 +90,18 @@ namespace DD.Prototype.PlayerSystem
             get { return _hasAimPoint; }
         }
 
+        /// <summary>
+        /// WP-069 (review R1-A #1): TP/FP only — the camera centre ray's unit direction behind
+        /// <see cref="AimWorldPoint"/> (zero in top-down). Weapons fall back to it when the muzzle →
+        /// aim-point line is parallax-broken (WP-070 §4.4).
+        /// </summary>
+        public Vector3 AimRayDirection
+        {
+            get { return _aimRayDirection; }
+        }
+
+        private Vector3 _aimRayDirection;
+
         /// <summary>Which device is currently driving aim.</summary>
         public AimSourceKind AimKind
         {
@@ -259,10 +271,12 @@ namespace DD.Prototype.PlayerSystem
             if (!rig.TryGetAimRay(Vector2.zero, AimPlaneY, out ray))
             {
                 _hasAimPoint = false;
+                _aimRayDirection = Vector3.zero;
                 return;
             }
 
             _aimWorldPoint = ray.HitPoint;
+            _aimRayDirection = ray.Direction;
             _hasAimPoint = true;
         }
 

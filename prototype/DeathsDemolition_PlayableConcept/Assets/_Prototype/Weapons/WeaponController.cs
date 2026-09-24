@@ -559,11 +559,24 @@ namespace DD.Prototype.Weapons
 
             // Step 4 and everything downstream, once per pellet — WP-069 ADR-069-1: as projectiles that
             // fly at the weapon's speed and resolve their hits (and branches) where they land.
+            // Review R1-A #2: a ray never reports the collider it starts in, so a muzzle already inside a wall or
+            // a point-blank body would pass through it. Check the stretch from inside the player to the muzzle
+            // first; when something is there, every pellet starts inside the player and resolves it on its
+            // first step (the wall stops it, the body takes the hit — the WP-076 grab escape included).
+            Vector3 interior = transform.root.position + Vector3.up * _shotRayHeight;
+            bool blocked = MuzzlePathBlocked(interior, origin, out Vector3 blockedDirection);
+
             int pellets = _classic.PelletCount;
             int presentationGroupId = FeelEventRouter.NextGroupId();
             for (int i = 0; i < pellets; i++)
             {
                 ShotRequest request = _classic.BuildShot(origin, aim, i);
+                if (blocked)
+                {
+                    request.Origin = interior;
+                    request.Direction = blockedDirection;
+                }
+
                 request.HasTracerOrigin = true;
                 request.TracerOrigin = muzzle;
                 request.PresentationGroupId = presentationGroupId;
@@ -678,6 +691,34 @@ namespace DD.Prototype.Weapons
             }
 
             _special.ClampCooldown();
+        }
+
+        /// <summary>
+        /// Review R1-A #2: true when world geometry or a body hitbox lies between a point inside the player
+        /// (<paramref name="interior"/>) and the shot origin; <paramref name="direction"/> then points at it.
+        /// </summary>
+        public static bool MuzzlePathBlocked(Vector3 interior, Vector3 shotOrigin, out Vector3 direction)
+        {
+            Vector3 delta = shotOrigin - interior;
+            float distance = delta.magnitude;
+            direction = distance > 1e-4f ? delta / distance : Vector3.forward;
+            if (distance <= 1e-3f)
+            {
+                return false;
+            }
+
+            if (!Physics.Raycast(interior, direction, out RaycastHit hit, distance, DD.Prototype.Core.PrototypeLayers.BulletHitMask, QueryTriggerInteraction.Collide))
+            {
+                return false;
+            }
+
+            Vector3 toHit = hit.point - interior;
+            if (toHit.sqrMagnitude > 1e-6f)
+            {
+                direction = toHit.normalized;
+            }
+
+            return true;
         }
 
         private void FireSpecialOnce()

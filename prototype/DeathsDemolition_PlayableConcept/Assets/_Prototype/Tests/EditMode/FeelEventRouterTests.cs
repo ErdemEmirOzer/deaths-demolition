@@ -83,6 +83,33 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(.04f, HitStopService.RemainingRealSeconds, 1e-6f);
         }
 
+        /// <summary>
+        /// WP-069 review R1-A #8: pellets of one trigger pull land over several frames; the group shakes once,
+        /// a later frame only dispatches again when stronger (a kill), never the same strength twice.
+        /// </summary>
+        [Test]
+        public void AyniTetikGrubu_SonrakiKaredeTekrarSarsmaz_GucluOlayYukseltir()
+        {
+            int group = FeelEventRouter.NextGroupId();
+            FeelEventRouter.Enqueue(ImpactFeelId.ArmorBreak, group, Vector3.zero, Vector3.forward);
+            FeelEventRouter.Flush();
+            int shakes = FeelEventRouter.CameraRequests;
+            Assert.AreEqual(1, shakes, "ilk kare sarsar");
+
+            FeelEventRouter.Enqueue(ImpactFeelId.ArmorBreak, group, Vector3.zero, Vector3.forward);
+            FeelEventRouter.Flush();
+            Assert.AreEqual(shakes, FeelEventRouter.CameraRequests, "aynı grup aynı güçte ikinci karede sarsmaz");
+            Assert.AreEqual(1, FeelEventRouter.SuppressedRepeats);
+
+            FeelEventRouter.Enqueue(ImpactFeelId.HeavyDeath, group, Vector3.zero, Vector3.forward);
+            FeelEventRouter.Flush();
+            Assert.AreEqual(shakes + 1, FeelEventRouter.CameraRequests, "daha güçlü olay (öldüren pellet) yükseltir");
+
+            FeelEventRouter.Enqueue(ImpactFeelId.ArmorBreak, FeelEventRouter.NextGroupId(), Vector3.zero, Vector3.forward);
+            FeelEventRouter.Flush();
+            Assert.AreEqual(shakes + 2, FeelEventRouter.CameraRequests, "yeni tetik yeni grup");
+        }
+
         [Test]
         public void LateFrame_AgesExistingTokenBeforeStartingNewToken()
         {

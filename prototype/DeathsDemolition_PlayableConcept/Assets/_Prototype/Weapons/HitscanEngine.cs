@@ -309,7 +309,7 @@ namespace DD.Prototype.Weapons
                         DD.Prototype.Props.PropImpacts.Report(collider, point, direction);
                         SurfaceKind surface = SurfaceResolver.Resolve(collider);
                         HitFeedbackDirector.Instance.ReportSurfaceImpact(point, normal, surface, ImpactScaleFor(p.Shot.Power));
-                        ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
+                        ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.Generation, p.Slot, p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
                             surface, speed, false, false, false, true, p.TransactionId));
                         travelled = at;
                         end = point;
@@ -350,7 +350,7 @@ namespace DD.Prototype.Weapons
 
                     p.TargetsLeft--;
                     bool stop = p.TargetsLeft <= 0;
-                    ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
+                    ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.Generation, p.Slot, p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
                         r.WasArmored ? SurfaceKind.Armor : SurfaceKind.Flesh, speed, true, r.WasArmored, r.Killed, stop, p.TransactionId));
 
                     if (stop)

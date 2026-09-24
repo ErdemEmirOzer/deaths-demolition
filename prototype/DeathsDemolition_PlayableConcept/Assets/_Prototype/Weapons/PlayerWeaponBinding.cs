@@ -138,10 +138,11 @@ namespace DD.Prototype.Weapons
                 {
                     Vector3 toPoint = aim.AimWorldPoint - MuzzlePosition;
 
-                    // WP-069 (ADR-069-1 §7, WP-070): third / first person aim at the camera's 3D aim point.
+                    // WP-069 (ADR-069-1 §7, WP-070): third / first person aim at the camera's 3D aim point,
+                    // guarded against parallax (review R1-A #1, WP-070 §4.4).
                     if (DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.TopDown)
                     {
-                        return toPoint.sqrMagnitude > 1e-6f ? toPoint : direction;
+                        return ResolveLookAim(toPoint, aim.AimRayDirection, direction);
                     }
 
                     toPoint.y = 0f;
@@ -162,6 +163,40 @@ namespace DD.Prototype.Weapons
 
                 return direction;
             }
+        }
+
+        /// <summary>
+        /// WP-070 §4.4 (review R1-A #1): past this angle between the muzzle → aim-point line and the camera
+        /// ray, the shot flies along the camera ray from the muzzle instead (a point hugging the camera —
+        /// a wall at the player's shoulder, a faded pole — would otherwise send it sideways or backwards).
+        /// </summary>
+        [DD.Prototype.Core.Config.PrototypeOnly(DD.Prototype.Core.Config.PendingDecisions.None, "WP-070 §4.4 parallax fallback angle (degrees).", true)]
+        public const float LookParallaxMaxDegrees = 12f;
+
+        /// <summary>
+        /// Look-mode aim: muzzle → aim point when that line agrees with the camera ray (ahead of the muzzle and
+        /// within <see cref="LookParallaxMaxDegrees"/>), otherwise the camera ray's direction; the facing when
+        /// neither exists. Never zero, never behind the camera ray.
+        /// </summary>
+        public static Vector3 ResolveLookAim(Vector3 muzzleToPoint, Vector3 cameraRayDirection, Vector3 fallback)
+        {
+            bool hasRay = cameraRayDirection.sqrMagnitude > 1e-6f;
+            if (muzzleToPoint.sqrMagnitude <= 1e-6f)
+            {
+                return hasRay ? cameraRayDirection : fallback;
+            }
+
+            if (!hasRay)
+            {
+                return muzzleToPoint;
+            }
+
+            if (Vector3.Dot(muzzleToPoint, cameraRayDirection) <= 0f || Vector3.Angle(muzzleToPoint, cameraRayDirection) > LookParallaxMaxDegrees)
+            {
+                return cameraRayDirection;
+            }
+
+            return muzzleToPoint;
         }
 
         /// <summary>

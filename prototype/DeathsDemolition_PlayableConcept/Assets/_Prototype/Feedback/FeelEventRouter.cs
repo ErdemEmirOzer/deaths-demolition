@@ -40,6 +40,22 @@ namespace DD.Prototype.Feedback
         private static int s_count;
         private static int s_nextGroup;
         private static ulong s_sequence;
+        private static readonly bool[] s_repeat = new bool[Capacity];
+
+        // WP-069 (review R1-A #8): a trigger pull's pellets now land over several frames (projectiles), and each
+        // frame's flush would resolve the same group again. Groups already dispatched in the last
+        // GroupWindowSeconds (unscaled) only dispatch again when STRONGER than before (e.g. a later pellet kills):
+        // one shake / hit-stop per trigger pull, escalation allowed, repetition not.
+        public const float GroupWindowSeconds = 0.6f;
+        private const int RecentGroupCapacity = 32;
+        private static readonly int[] s_recentGroup = new int[RecentGroupCapacity];
+        private static readonly float[] s_recentTime = new float[RecentGroupCapacity];
+        private static readonly int[] s_recentPriority = new int[RecentGroupCapacity];
+        private static readonly float[] s_recentAmplitude = new float[RecentGroupCapacity];
+        private static int s_recentNext;
+
+        /// <summary>Group winners not dispatched because the same trigger pull already shook / stopped (review R1-A #8).</summary>
+        public static int SuppressedRepeats { get; private set; }
 
         public static int QueueOverflow { get; private set; }
         public static int AcceptedLocalStops { get; private set; }
@@ -78,13 +94,19 @@ namespace DD.Prototype.Feedback
                 else if (Stronger(candidate, s_queue[s_winnerIndices[slot]], snapshot)) s_winnerIndices[slot] = i;
             }
 
+            float now = Time.unscaledTime;
+            for (int g = 0; g < groups; g++)
+            {
+                s_repeat[g] = IsRepeat(s_queue[s_winnerIndices[g]], now);
+            }
+
             int globalStopWinner = -1;
             if (snapshot.Enabled && snapshot.HitStop.enabled)
             {
                 for (int g = 0; g < groups; g++)
                 {
                     int index = s_winnerIndices[g];
-                    if (s_queue[index].HitStopSeconds <= 0f) continue;
+                    if (s_repeat[g] || s_queue[index].HitStopSeconds <= 0f) continue;
                     if (globalStopWinner < 0 || Stronger(s_queue[index], s_queue[globalStopWinner], snapshot))
                         globalStopWinner = index;
                 }
@@ -94,6 +116,18 @@ namespace DD.Prototype.Feedback
             {
                 int index = s_winnerIndices[g];
                 FeelEvent e = s_queue[index];
+                if (s_repeat[g])
+                {
+                    SuppressedRepeats++;
+                    FeelTelemetry.RecordResolved(e, false, snapshot.Revision);
+                    continue;
+                }
+
+                if (e.ShakeAmplitudeMeters > 0f || e.HitStopSeconds > 0f)
+                {
+                    Remember(e, now);
+                }
+
                 if (snapshot.Enabled && e.ShakeAmplitudeMeters > 0f && e.ShakeSeconds > 0f)
                 {
                     CameraShakeBridge.Shake(e.ShakeAmplitudeMeters, e.ShakeSeconds, Profile(e.Kind), e.Direction);
@@ -140,6 +174,40 @@ namespace DD.Prototype.Feedback
 
         private static bool Weaker(in FeelEvent a, in FeelEvent b, FeelSnapshot snapshot) => Stronger(b, a, snapshot);
 
+        /// <summary>Review R1-A #8: this group already shook / stopped within the window at least as strongly.</summary>
+        private static bool IsRepeat(in FeelEvent e, float now)
+        {
+            for (int i = 0; i < RecentGroupCapacity; i++)
+            {
+                if (s_recentGroup[i] != e.GroupId || e.GroupId == 0 || now - s_recentTime[i] > GroupWindowSeconds) continue;
+                if (e.CameraPriority > s_recentPriority[i]) return false;
+                if (e.CameraPriority == s_recentPriority[i] && e.ShakeAmplitudeMeters > s_recentAmplitude[i]) return false;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static void Remember(in FeelEvent e, float now)
+        {
+            for (int i = 0; i < RecentGroupCapacity; i++)
+            {
+                if (s_recentGroup[i] == e.GroupId)
+                {
+                    s_recentTime[i] = now;
+                    s_recentPriority[i] = e.CameraPriority;
+                    s_recentAmplitude[i] = e.ShakeAmplitudeMeters;
+                    return;
+                }
+            }
+
+            s_recentGroup[s_recentNext] = e.GroupId;
+            s_recentTime[s_recentNext] = now;
+            s_recentPriority[s_recentNext] = e.CameraPriority;
+            s_recentAmplitude[s_recentNext] = e.ShakeAmplitudeMeters;
+            s_recentNext = (s_recentNext + 1) % RecentGroupCapacity;
+        }
+
         private static ShakeProfile Profile(ImpactFeelId id)
         {
             switch (id)
@@ -155,7 +223,9 @@ namespace DD.Prototype.Feedback
         private static void Reset()
         {
             s_count = 0; s_nextGroup = 0; s_sequence = 0; QueueOverflow = 0;
-            AcceptedLocalStops = 0; CameraRequests = 0;
+            AcceptedLocalStops = 0; CameraRequests = 0; SuppressedRepeats = 0;
+            for (int i = 0; i < RecentGroupCapacity; i++) { s_recentGroup[i] = 0; s_recentTime[i] = 0f; s_recentPriority[i] = 0; s_recentAmplitude[i] = 0f; }
+            s_recentNext = 0;
         }
     }
 }

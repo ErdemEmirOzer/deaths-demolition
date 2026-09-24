@@ -12,6 +12,9 @@ namespace DD.Prototype.Core.Config
     [Serializable]
     public sealed class ClassicWeaponSettings
     {
+        /// <summary>WP-069 (review R1-A #19): a field-for-field copy (the definition reference is shared, it is data).</summary>
+        public ClassicWeaponSettings Clone() => (ClassicWeaponSettings)MemberwiseClone();
+
         [PrototypeOnly(PendingDecisions.None, "Identifier of a placeholder weapon, not a tunable value.")]
         public ClassicWeaponId Id = ClassicWeaponId.AssaultRifle;
 
@@ -440,6 +443,24 @@ namespace DD.Prototype.Core.Config
         public void RebuildClassicView()
         {
             _classicView = null;
+        }
+
+        /// <summary>
+        /// Review R1-A #19: <c>Object.Instantiate(config)</c> copies serialized data only, so a clone rebuilds this
+        /// view from the Arsenal and loses live edits made on the source (F1, a test's tweak). This carries them
+        /// over — <see cref="PrototypeConfig.Clone"/> calls it.
+        /// </summary>
+        public void CopyClassicViewFrom(WeaponConfigSection source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            List<ClassicWeaponSettings> from = source.ClassicWeapons;
+            var copy = new List<ClassicWeaponSettings>(from.Count);
+            for (int i = 0; i < from.Count; i++) copy.Add(from[i] != null ? from[i].Clone() : null);
+            _classicView = copy;
         }
 
         private static List<ClassicWeaponSettings> BuildClassicView()

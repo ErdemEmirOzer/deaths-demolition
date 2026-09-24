@@ -183,6 +183,22 @@ namespace DD.Prototype.Core.Config
             }
         }
 
+        /// <summary>
+        /// WP-069 (review R1-A #19): a runtime copy of <paramref name="source"/> that keeps its live classic weapon
+        /// numbers. <c>Object.Instantiate</c> alone rebuilds them from the Arsenal (they are not serialized).
+        /// </summary>
+        public static PrototypeConfig Clone(PrototypeConfig source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            PrototypeConfig copy = Instantiate(source);
+            copy.Weapons.CopyClassicViewFrom(source.Weapons);
+            return copy;
+        }
+
         public static void SetActive(PrototypeConfig config)
         {
             if (s_active == config)

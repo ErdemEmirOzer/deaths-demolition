@@ -752,26 +752,27 @@ namespace DD.Prototype.Weapons
             // (sg_1: centre + 3 @ 40 % + 4 @ 100 %) or a Gauss cone (sg_2). Single-pellet weapons
             // keep the WP-002 independent scatter.
             Vector3 direction;
+            bool lookFrame = CameraModeService.Current != CameraMode.TopDown;   // review R1-A #16
             if (multiPellet && def != null && def.fire.pelletPattern == WeaponPelletPattern.Gauss)
             {
-                direction = SpreadUtility.ApplyGauss(aimDirection, CurrentSpreadDegrees, def.fire.gaussSigmaShare);
+                direction = SpreadUtility.ApplyGauss(aimDirection, CurrentSpreadDegrees, def.fire.gaussSigmaShare, lookFrame);
             }
             else if (UsesPelletRing)
             {
                 if (pelletIndex == 0) _ringPhase = Random.value;
                 if (def != null)
                 {
-                    direction = RingDirection(def, aimDirection, pelletIndex);
+                    direction = RingDirection(def, aimDirection, pelletIndex, lookFrame);
                 }
                 else
                 {
                     direction = SpreadUtility.ApplyRing(aimDirection, CurrentSpreadDegrees, pelletIndex, PelletCount,
-                        _settings.PelletRingRadiusShare, _settings.PelletRingJitterShare, _ringPhase);
+                        _settings.PelletRingRadiusShare, _settings.PelletRingJitterShare, _ringPhase, lookFrame);
                 }
             }
             else
             {
-                direction = SpreadUtility.Apply(aimDirection, CurrentSpreadDegrees);
+                direction = SpreadUtility.Apply(aimDirection, CurrentSpreadDegrees, lookFrame);
             }
 
             var request = new ShotRequest
@@ -822,13 +823,13 @@ namespace DD.Prototype.Weapons
         }
 
         /// <summary>WP-069: pellet 0 is the centre; the rest fill the definition's rings in order, each ring at equal arc length.</summary>
-        private Vector3 RingDirection(WeaponDefinition def, Vector3 aim, int pelletIndex)
+        private Vector3 RingDirection(WeaponDefinition def, Vector3 aim, int pelletIndex, bool lookFrame)
         {
             float degrees = CurrentSpreadDegrees;
             float jitter = def.fire.ringJitterShare;
             if (pelletIndex <= 0)
             {
-                return SpreadUtility.ApplyRing(aim, degrees, 0, 2, 0f, jitter, _ringPhase);
+                return SpreadUtility.ApplyRing(aim, degrees, 0, 2, 0f, jitter, _ringPhase, lookFrame);
             }
 
             int k = pelletIndex - 1;
@@ -841,13 +842,13 @@ namespace DD.Prototype.Weapons
                 {
                     // A per-ring phase offset so stacked rings do not line their pellets up.
                     float phase = _ringPhase + r * 0.5f / count;
-                    return SpreadUtility.ApplyRing(aim, degrees, k + 1, count + 1, ring != null ? ring.radiusShare : 1f, jitter, phase);
+                    return SpreadUtility.ApplyRing(aim, degrees, k + 1, count + 1, ring != null ? ring.radiusShare : 1f, jitter, phase, lookFrame);
                 }
 
                 k -= count;
             }
 
-            return SpreadUtility.Apply(aim, degrees);   // more pellets than the rings hold (a keystone): scatter
+            return SpreadUtility.Apply(aim, degrees, lookFrame);   // more pellets than the rings hold (a keystone): scatter
         }
     }
 
@@ -862,7 +863,7 @@ namespace DD.Prototype.Weapons
         /// </summary>
         public const float VerticalSpreadFactor = 0.35f;
 
-        public static Vector3 Apply(Vector3 direction, float degrees)
+        public static Vector3 Apply(Vector3 direction, float degrees, bool lookFrame = false)
         {
             if (degrees <= 0.0001f)
             {
@@ -870,18 +871,45 @@ namespace DD.Prototype.Weapons
             }
 
             Vector3 forward = direction.normalized;
+            Vector3 right = RightOf(forward);
+
+            float yaw, pitch;
+            if (lookFrame)
+            {
+                // Review R1-A #16: TP/FP — a round cone in the aim's own frame (uniform over the disc of the half-angle).
+                float r = degrees * Mathf.Sqrt(Random.value);
+                float a = Random.value * 2f * Mathf.PI;
+                yaw = r * Mathf.Cos(a);
+                pitch = r * Mathf.Sin(a);
+            }
+            else
+            {
+                yaw = Random.Range(-degrees, degrees);
+                pitch = Random.Range(-degrees, degrees) * VerticalSpreadFactor;
+            }
+
+            return Rotate(forward, right, yaw, pitch, lookFrame);
+        }
+
+        private static Vector3 RightOf(Vector3 forward)
+        {
             Vector3 right = Vector3.Cross(Vector3.up, forward);
             if (right.sqrMagnitude < 0.0001f)
             {
                 right = Vector3.right;
             }
 
-            right.Normalize();
+            return right.normalized;
+        }
 
-            float yaw = Random.Range(-degrees, degrees);
-            float pitch = Random.Range(-degrees, degrees) * VerticalSpreadFactor;
-
-            Quaternion rotation = Quaternion.AngleAxis(yaw, Vector3.up) * Quaternion.AngleAxis(pitch, right);
+        /// <summary>
+        /// Yaw / pitch offsets onto the aim. Top-down: yaw about world up (the planar aim's own up). Look modes
+        /// (review R1-A #16): yaw about the aim's own up, so a pitched aim keeps its full horizontal scatter.
+        /// </summary>
+        private static Vector3 Rotate(Vector3 forward, Vector3 right, float yaw, float pitch, bool lookFrame)
+        {
+            Vector3 yawAxis = lookFrame ? Vector3.Cross(forward, right) : Vector3.up;
+            Quaternion rotation = Quaternion.AngleAxis(yaw, yawAxis) * Quaternion.AngleAxis(pitch, right);
             return rotation * forward;
         }
 
@@ -894,50 +922,44 @@ namespace DD.Prototype.Weapons
         /// <paramref name="degrees"/>. No allocation.
         /// </summary>
         public static Vector3 ApplyRing(Vector3 direction, float degrees, int pelletIndex, int pelletCount,
-            float ringShare, float jitterShare, float phase01)
+            float ringShare, float jitterShare, float phase01, bool lookFrame = false)
         {
+            float vFactor = lookFrame ? 1f : VerticalSpreadFactor;   // review R1-A #16: a round ring in TP/FP
             Vector3 forward = direction.normalized;
             if (degrees <= 0.0001f || pelletCount <= 1)
             {
                 return forward;
             }
 
-            Vector3 right = Vector3.Cross(Vector3.up, forward);
-            if (right.sqrMagnitude < 0.0001f)
-            {
-                right = Vector3.right;
-            }
-
-            right.Normalize();
+            Vector3 right = RightOf(forward);
 
             float jitter = Mathf.Max(0f, jitterShare) * degrees;
             float yaw, pitch;
             if (pelletIndex <= 0)
             {
                 yaw = Random.Range(-jitter, jitter);
-                pitch = Random.Range(-jitter, jitter) * VerticalSpreadFactor;
+                pitch = Random.Range(-jitter, jitter) * vFactor;
             }
             else
             {
                 float a = Mathf.Max(0f, ringShare) * degrees;          // horizontal radius, degrees
-                float b = a * VerticalSpreadFactor;                     // vertical radius
+                float b = a * vFactor;                                  // vertical radius
                 int ringCount = pelletCount - 1;
                 // Equal-arc-length parameter for this pellet: walk the ellipse in RingSegments steps.
                 float target = ((pelletIndex - 1) + Mathf.Repeat(phase01, 1f)) / ringCount;
                 float t = RingParameterAtArcFraction(a, b, target);
                 yaw = a * Mathf.Cos(t) + Random.Range(-jitter, jitter);
-                pitch = b * Mathf.Sin(t) + Random.Range(-jitter, jitter) * VerticalSpreadFactor;
+                pitch = b * Mathf.Sin(t) + Random.Range(-jitter, jitter) * vFactor;
             }
 
-            Quaternion rotation = Quaternion.AngleAxis(yaw, Vector3.up) * Quaternion.AngleAxis(pitch, right);
-            return rotation * forward;
+            return Rotate(forward, right, yaw, pitch, lookFrame);
         }
 
         /// <summary>
         /// WP-069 (sg_2): Gauss cone — yaw ~ N(0, σ·degrees), pitch ~ N(0, σ·degrees) × <see cref="VerticalSpreadFactor"/>,
         /// both clamped to the cone. Box–Muller over Random.value; no allocation.
         /// </summary>
-        public static Vector3 ApplyGauss(Vector3 direction, float degrees, float sigmaShare)
+        public static Vector3 ApplyGauss(Vector3 direction, float degrees, float sigmaShare, bool lookFrame = false)
         {
             Vector3 forward = direction.normalized;
             if (degrees <= 0.0001f)
@@ -945,21 +967,14 @@ namespace DD.Prototype.Weapons
                 return forward;
             }
 
-            Vector3 right = Vector3.Cross(Vector3.up, forward);
-            if (right.sqrMagnitude < 0.0001f)
-            {
-                right = Vector3.right;
-            }
-
-            right.Normalize();
+            Vector3 right = RightOf(forward);
             float sigma = Mathf.Max(0.01f, sigmaShare) * degrees;
             float u1 = Mathf.Max(1e-6f, Random.value);
             float u2 = Random.value;
             float mag = Mathf.Sqrt(-2f * Mathf.Log(u1));
             float yaw = Mathf.Clamp(mag * Mathf.Cos(2f * Mathf.PI * u2) * sigma, -degrees, degrees);
-            float pitch = Mathf.Clamp(mag * Mathf.Sin(2f * Mathf.PI * u2) * sigma, -degrees, degrees) * VerticalSpreadFactor;
-            Quaternion rotation = Quaternion.AngleAxis(yaw, Vector3.up) * Quaternion.AngleAxis(pitch, right);
-            return rotation * forward;
+            float pitch = Mathf.Clamp(mag * Mathf.Sin(2f * Mathf.PI * u2) * sigma, -degrees, degrees) * (lookFrame ? 1f : VerticalSpreadFactor);
+            return Rotate(forward, right, yaw, pitch, lookFrame);
         }
 
         private const int RingSegments = 64;

@@ -306,7 +306,9 @@ namespace DD.Prototype.Weapons.EditorTools
             WeaponProjectileBlock p = d.projectile;
             p.kind = ProjectileKind.Bullet;
             p.speed = speed;
-            p.gravity = 9.81f;
+            // Review R1-A #15: no drop on the damage sweep for bullets / pellets (WP-042 hit-region parity at every
+            // range; §A1 called the drop cosmetic). A trail may still draw one. Rockets bring their own gravity (B3).
+            p.gravity = 0f;
             p.maxRange = maxRange;
             p.maxLifetimeSeconds = maxRange / Mathf.Max(1f, speed) + 0.5f;
             p.falloffStart = fullDamageTo;

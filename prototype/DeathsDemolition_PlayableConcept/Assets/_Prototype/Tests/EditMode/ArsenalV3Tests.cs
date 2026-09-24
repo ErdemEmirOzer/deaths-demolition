@@ -173,7 +173,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             ProjectileSystem.Clear();
             int expired = 0;
-            System.Action<int, Vector3> on = (i, pos) => expired++;
+            System.Action<ProjectileExpireInfo> on = info => { if (info.Reason == ProjectileEndReason.Range) expired++; };
             ProjectileEvents.Expired += on;
             try
             {

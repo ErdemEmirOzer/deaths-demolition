@@ -1,6 +1,8 @@
+using System.Text;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Damage;
+using DD.Prototype.Rounds;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -65,10 +67,19 @@ namespace DD.Prototype.Weapons
     /// <summary>One live projectile. Pooled in a flat array; no GameObject, no component, no coroutine.</summary>
     public struct ProjectileState
     {
-        public const int TouchedCapacity = 8;
+        /// <summary>
+        /// ADR-034-1 "one projectile damages one body once": bodies remembered per projectile. Review R1-A #6 — as
+        /// large as one blast can touch (HitscanEngine's overlap buffer), so a branch explosion over a big crowd
+        /// can never push a body out of the set and let a penetrating round hit it twice. Kept in a flat side
+        /// table (<see cref="ProjectileSystem"/>), not inline.
+        /// </summary>
+        public const int TouchedCapacity = 192;
 
         public bool Alive;
+        /// <summary>The projectile's key in every ProjectileEvents payload (unique per spawn in a session).</summary>
         public int Generation;
+        /// <summary>Pool slot of this state (its row in the touched side table).</summary>
+        public int Slot;
         public ShotRequest Shot;
         public ClassicWeaponId WeaponId;
         public ProjectileKind Kind;
@@ -94,28 +105,18 @@ namespace DD.Prototype.Weapons
         public float ArmorMultiplier;
         public bool BranchesResolved;
 
-        // Inline "already damaged" set (ADR-034-1: one projectile damages one body once).
+        // "Already damaged" set (ADR-034-1), rows of ProjectileSystem's side table.
         public int TouchedCount;
-        public int T0, T1, T2, T3, T4, T5, T6, T7;
 
         public int GetTouched(int i)
         {
-            switch (i)
-            {
-                case 0: return T0; case 1: return T1; case 2: return T2; case 3: return T3;
-                case 4: return T4; case 5: return T5; case 6: return T6; default: return T7;
-            }
+            return i >= 0 && i < TouchedCount ? ProjectileSystem.TouchedAt(Slot, i) : 0;
         }
 
         public void AddTouched(int id)
         {
-            if (TouchedCount >= TouchedCapacity) return;
-            switch (TouchedCount)
-            {
-                case 0: T0 = id; break; case 1: T1 = id; break; case 2: T2 = id; break; case 3: T3 = id; break;
-                case 4: T4 = id; break; case 5: T5 = id; break; case 6: T6 = id; break; default: T7 = id; break;
-            }
-
+            if (TouchedCount >= TouchedCapacity || HasTouched(id)) return;
+            ProjectileSystem.SetTouched(Slot, TouchedCount, id);
             TouchedCount++;
         }
 
@@ -156,21 +157,60 @@ namespace DD.Prototype.Weapons
 
         private static readonly ProjectileState[] s_live = new ProjectileState[Capacity];
         private static readonly int[] s_order = new int[Capacity];   // live indices in spawn order
+        private static readonly int[] s_touched = new int[Capacity * ProjectileState.TouchedCapacity];   // review R1-A #6
         private static int s_liveCount;
         private static float s_accumulator;
         private static int s_generation;
         private static int s_overflowCount;
         private static int s_spawnedTotal;
         private static bool s_sceneHooked;
+        private static bool s_runHooked;
+
+        // Review R1-A #13: a Spawn / Clear raised from inside a step (an impact / death listener) is applied after the step.
+        private const int PendingCapacity = 64;
+        private static readonly ShotRequest[] s_pendingShots = new ShotRequest[PendingCapacity];
+        private static readonly ProjectileLaunch[] s_pendingLaunches = new ProjectileLaunch[PendingCapacity];
+        private static int s_pendingCount;
+        private static bool s_pendingClear;
+        private static bool s_stepping;
+
+        // WP-078 (S-10) run counters.
+        private static int s_peakLive;
+        private static int s_runOverflow;
+        private static int s_runSpawned;
+        private static readonly float[] s_lastLaunchSpeed = new float[16];
 
         /// <summary>Projectiles alive right now.</summary>
         public static int LiveCount => s_liveCount;
 
-        /// <summary>Projectiles retired early because the pool was full. Should stay 0.</summary>
-        public static int OverflowCount => s_overflowCount;
+        /// <summary>Projectiles retired early because the pool was full, this run (reset at RunStarted). Should stay 0.</summary>
+        public static int OverflowCount => s_runOverflow;
+
+        /// <summary>Pool-full retirements since load (never reset by a run).</summary>
+        public static int OverflowCountTotal => s_overflowCount;
+
+        /// <summary>WP-078: the most projectiles alive at once this run (reset at RunStarted).</summary>
+        public static int PeakLiveCount => s_peakLive;
 
         /// <summary>Projectiles spawned since load (tests / telemetry).</summary>
         public static int SpawnedTotal => s_spawnedTotal;
+
+        /// <summary>WP-078: projectiles spawned this run.</summary>
+        public static int SpawnedThisRun => s_runSpawned;
+
+        /// <summary>WP-078: launch speed (m/s) of the last projectile this weapon fired this run; 0 when it has not fired.</summary>
+        public static float LastLaunchSpeed(ClassicWeaponId id)
+        {
+            int i = (int)id;
+            return i >= 0 && i < s_lastLaunchSpeed.Length ? s_lastLaunchSpeed[i] : 0f;
+        }
+
+        /// <summary>Projectiles waiting to spawn after the current step (re-entrant Spawn from a listener).</summary>
+        public static int PendingSpawnCount => s_pendingCount;
+
+        internal static int TouchedAt(int slot, int i) => s_touched[slot * ProjectileState.TouchedCapacity + i];
+
+        internal static void SetTouched(int slot, int i, int id) => s_touched[slot * ProjectileState.TouchedCapacity + i] = id;
 
         /// <summary>The i-th live projectile in spawn order (0 ≤ i &lt; <see cref="LiveCount"/>). Read-only view for renderers.</summary>
         public static ref readonly ProjectileState Get(int i) => ref s_live[s_order[i]];
@@ -183,16 +223,35 @@ namespace DD.Prototype.Weapons
         {
             EnsureHooks();
 
+            if (s_stepping)
+            {
+                // Review R1-A #13: a listener spawning mid-step must not evict / shift the order list under the step.
+                if (s_pendingCount < PendingCapacity)
+                {
+                    s_pendingShots[s_pendingCount] = shot;
+                    s_pendingLaunches[s_pendingCount] = launch;
+                    s_pendingCount++;
+                }
+                else
+                {
+                    s_overflowCount++;
+                    s_runOverflow++;
+                }
+
+                return -1;
+            }
+
             int index;
             if (s_liveCount >= Capacity)
             {
                 // Retire the oldest (spawn order): it is the one nearest the end of its flight.
                 index = s_order[0];
-                Vector3 last = s_live[index].Position;
-                s_live[index].Alive = false;
+                ref ProjectileState old = ref s_live[index];
+                old.Alive = false;
                 RemoveOrderAt(0);
                 s_overflowCount++;
-                ProjectileEvents.RaiseExpired(index, last);
+                s_runOverflow++;
+                ProjectileEvents.RaiseExpired(new ProjectileExpireInfo(old.Generation, index, old.WeaponId, old.Position, ProjectileEndReason.Evicted));
             }
             else
             {
@@ -206,6 +265,8 @@ namespace DD.Prototype.Weapons
             p = default;
             p.Alive = true;
             p.Generation = ++s_generation;
+            if (p.Generation <= 0) p.Generation = s_generation = 1;
+            p.Slot = index;
             p.Shot = shot;
             p.WeaponId = launch.WeaponId;
             p.Kind = launch.Kind;
@@ -230,8 +291,12 @@ namespace DD.Prototype.Weapons
 
             s_order[s_liveCount++] = index;
             s_spawnedTotal++;
+            s_runSpawned++;
+            if (s_liveCount > s_peakLive) s_peakLive = s_liveCount;
+            int w = (int)launch.WeaponId;
+            if (w >= 0 && w < s_lastLaunchSpeed.Length) s_lastLaunchSpeed[w] = p.Velocity.magnitude;
 
-            ProjectileEvents.RaiseSpawned(new ProjectileSpawnInfo(index, launch.WeaponId, launch.Kind, launch.Caliber,
+            ProjectileEvents.RaiseSpawned(new ProjectileSpawnInfo(p.Generation, index, launch.WeaponId, launch.Kind, launch.Caliber,
                 shot.Origin, direction, launch.Speed, launch.PelletIndex));
             return index;
         }
@@ -270,18 +335,45 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            int i = 0;
-            while (i < s_liveCount)
+            s_stepping = true;
+            try
             {
-                int index = s_order[i];
-                if (StepOne(index, dt))
+                int i = 0;
+                while (i < s_liveCount)
                 {
-                    i++;
-                    continue;
-                }
+                    int index = s_order[i];
+                    if (StepOne(index, dt))
+                    {
+                        i++;
+                        continue;
+                    }
 
-                // Died this step: remove from the order list (keep spawn order), do not advance i.
-                RemoveOrderAt(i);
+                    // Died this step: remove from the order list (keep spawn order), do not advance i.
+                    RemoveOrderAt(i);
+                }
+            }
+            finally
+            {
+                s_stepping = false;
+            }
+
+            ApplyPending();
+        }
+
+        /// <summary>Review R1-A #13: the clears and spawns listeners asked for during the step, in order.</summary>
+        private static void ApplyPending()
+        {
+            if (s_pendingClear)
+            {
+                s_pendingClear = false;
+                Clear();
+            }
+
+            int n = s_pendingCount;
+            s_pendingCount = 0;
+            for (int k = 0; k < n; k++)
+            {
+                Spawn(s_pendingShots[k], s_pendingLaunches[k]);
             }
         }
 
@@ -297,12 +389,32 @@ namespace DD.Prototype.Weapons
             }
         }
 
-        /// <summary>Retire every projectile silently (scene change, run end, tests).</summary>
+        /// <summary>
+        /// Retire every projectile (scene change, run end, tests). Review R1-A #5: each raises Expired with
+        /// <see cref="ProjectileEndReason.Cleared"/> so per-projectile consumers close their state. Called from
+        /// inside a step it is deferred to the end of that step.
+        /// </summary>
         public static void Clear()
         {
-            for (int i = 0; i < s_liveCount; i++) s_live[s_order[i]].Alive = false;
+            if (s_stepping)
+            {
+                s_pendingClear = true;
+                s_pendingCount = 0;
+                return;
+            }
+
+            int n = s_liveCount;
             s_liveCount = 0;
             s_accumulator = 0f;
+            s_pendingCount = 0;
+            for (int i = 0; i < n; i++)
+            {
+                int index = s_order[i];
+                ref ProjectileState p = ref s_live[index];
+                if (!p.Alive) continue;
+                p.Alive = false;
+                ProjectileEvents.RaiseExpired(new ProjectileExpireInfo(p.Generation, index, p.WeaponId, p.Position, ProjectileEndReason.Cleared));
+            }
         }
 
         // ------------------------------------------------------------------ one step
@@ -344,7 +456,8 @@ namespace DD.Prototype.Weapons
             if (rangeEnds || p.Age >= p.MaxLifetime)
             {
                 p.Alive = false;
-                ProjectileEvents.RaiseExpired(index, p.Position);
+                ProjectileEvents.RaiseExpired(new ProjectileExpireInfo(p.Generation, index, p.WeaponId, p.Position,
+                    rangeEnds ? ProjectileEndReason.Range : ProjectileEndReason.Lifetime));
                 return false;
             }
 
@@ -371,6 +484,9 @@ namespace DD.Prototype.Weapons
 
         private static void EnsureHooks()
         {
+            // Review R1-A #14: every spawn makes sure the driver is alive (cheap early-out), not only the first one.
+            ProjectileDriver.EnsureExists();
+            EnsureRunHooks();
             if (s_sceneHooked)
             {
                 return;
@@ -378,12 +494,68 @@ namespace DD.Prototype.Weapons
 
             s_sceneHooked = true;
             SceneManager.sceneUnloaded += OnSceneUnloaded;
-            ProjectileDriver.EnsureExists();
+        }
+
+        /// <summary>WP-078: run-scoped counters and the round-end line. Installed at load, so round 1 reports too.</summary>
+        private static void EnsureRunHooks()
+        {
+            if (s_runHooked)
+            {
+                return;
+            }
+
+            s_runHooked = true;
+            RunEvents.RunStarted += OnRunStarted;
+            RunEvents.RoundCompleted += OnRoundCompleted;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void InstallRunHooks()
+        {
+            EnsureRunHooks();
         }
 
         private static void OnSceneUnloaded(Scene scene)
         {
             Clear();
+        }
+
+        private static void OnRunStarted(int startingRound)
+        {
+            s_peakLive = s_liveCount;
+            s_runOverflow = 0;
+            s_runSpawned = 0;
+            for (int i = 0; i < s_lastLaunchSpeed.Length; i++) s_lastLaunchSpeed[i] = 0f;
+        }
+
+        private static void OnRoundCompleted(int round)
+        {
+            Debug.Log(RoundReport(round));
+        }
+
+        /// <summary>
+        /// WP-078 (S-10): <c>[Projectile] round=N active=A peak=P overflow=O spawned=S speed ar_1=260.0/260.0 …</c> —
+        /// every weapon fired this run: its measured launch speed / the Arsenal catalog value. Built once per round.
+        /// </summary>
+        public static string RoundReport(int round)
+        {
+            var sb = new StringBuilder(160);
+            sb.Append("[Projectile] round=").Append(round)
+              .Append(" active=").Append(s_liveCount)
+              .Append(" peak=").Append(s_peakLive)
+              .Append(" overflow=").Append(s_runOverflow)
+              .Append(" spawned=").Append(s_runSpawned)
+              .Append(" speed");
+            for (int i = 0; i < s_lastLaunchSpeed.Length; i++)
+            {
+                if (s_lastLaunchSpeed[i] <= 0f) continue;
+                WeaponDefinition d = Arsenal.Get((ClassicWeaponId)i);
+                sb.Append(' ').Append(d != null ? d.weaponId : i.ToString()).Append('=')
+                  .Append(s_lastLaunchSpeed[i].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)).Append('/')
+                  .Append(d != null ? d.projectile.speed.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) : "-");
+            }
+
+            return sb.ToString();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -395,8 +567,16 @@ namespace DD.Prototype.Weapons
             s_generation = 0;
             s_overflowCount = 0;
             s_spawnedTotal = 0;
+            s_runOverflow = 0;
+            s_runSpawned = 0;
+            s_peakLive = 0;
+            s_pendingCount = 0;
+            s_pendingClear = false;
+            s_stepping = false;
+            for (int i = 0; i < s_lastLaunchSpeed.Length; i++) s_lastLaunchSpeed[i] = 0f;
             if (s_sceneHooked) SceneManager.sceneUnloaded -= OnSceneUnloaded;
             s_sceneHooked = false;
+            s_runHooked = false;   // RunEvents clears its own handlers on this reset
         }
     }
 }
