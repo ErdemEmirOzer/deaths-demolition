@@ -57,6 +57,7 @@ namespace DD.Art.Tests.PlayMode
         {
             Time.captureDeltaTime = 0f;
             ZombieEnemy.RiseOnSpawn = false;
+            AttackSelector.Enabled = true;
             CharacterAnimatorLod.ForceFar = -1;
             foreach (GameObject go in _temp) if (go != null) UnityEngine.Object.Destroy(go);
             _temp.Clear();
@@ -125,6 +126,7 @@ namespace DD.Art.Tests.PlayMode
         [Timeout(300000)]
         public IEnumerator SaldiriPenceresi_DEC029_YalnizKlipOlaylariArasinda_ZamanlayiciYedegi0()
         {
+            AttackSelector.Enabled = false;   // WP-076 B1: the selector varies the style (telegraph ×0.85…2.1); this test times the signature swipe
             yield return RunAP005();
             Transform player = PlayerRegistry.Primary.transform;
             Vector3 p = player.position;
@@ -284,7 +286,8 @@ namespace DD.Art.Tests.PlayMode
             float t0 = Time.realtimeSinceStartup;
             var ended = new bool[cases.Length];
             var endedAt = new float[cases.Length];
-            while (Time.realtimeSinceStartup - t0 < 6f)
+            // WP-076 B2 (DEC-096): corpse linger v2 is 4–6 s × quality after DeathFinished — the window covers death + linger
+            while (Time.realtimeSinceStartup - t0 < 14f && !zombies.TrueForAll(z => !z.gameObject.activeInHierarchy || !z.IsDying))
             {
                 for (int i = 0; i < cases.Length; i++) if (zombies[i].gameObject.activeInHierarchy && zombies[i].Skinned.DeathFinished && !ended[i]) { ended[i] = true; endedAt[i] = Time.realtimeSinceStartup - t0; }
                 yield return null;

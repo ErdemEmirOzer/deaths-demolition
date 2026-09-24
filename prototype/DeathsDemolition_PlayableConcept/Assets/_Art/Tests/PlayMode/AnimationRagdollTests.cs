@@ -123,9 +123,20 @@ namespace DD.Art.Tests.PlayMode
             v.transform.parent.gameObject.SetActive(false);   // pool return → OnDisable → EndRagdoll
             v.ResetForSpawn(EnemyTier.Standard, 2.7f, "A", 0, false);
             yield return null;
-            Application.logMessageReceived -= count;
-            Assert.AreEqual(0, exceptions, "sahne değişiminde ragdoll bırakma istisnası");
             Assert.IsFalse(v.RagdollActive);
+            Assert.AreEqual(0, RagdollProxyPool.ActiveCount);
+            // review R1-A #3: the next run draws the same pooled body — it spawns clean and dies into a ragdoll again
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "MainMenu");
+            v.transform.parent.gameObject.SetActive(true);
+            v.ResetForSpawn(EnemyTier.Standard, 2.7f, "A", 0, false);
+            for (int i = 0; i < 10; i++) yield return null;
+            Assert.IsTrue(v.Animator.enabled, "yeniden doğan gövde animasyonlu");
+            v.SetDeathImpulse(Vector3.forward, 1.5f);
+            v.PlayDeath(0);
+            yield return CharacterTests.Bekle(() => v.RagdollActive, 1f, "ikinci koşuda ragdoll");
+            yield return CharacterTests.Bekle(() => v.DeathFinished, 5f, "ikinci ölüm biter");
+            Application.logMessageReceived -= count;
+            Assert.AreEqual(0, exceptions, "sahne değişiminde / sonraki koşuda ragdoll istisnası");
             Assert.AreEqual(0, RagdollProxyPool.ActiveCount);
             Object.Destroy(v.transform.parent.gameObject);
         }
@@ -135,6 +146,8 @@ namespace DD.Art.Tests.PlayMode
         public IEnumerator Tavan_Dolunca_YaziliDusus_HepsiBiter_SonraYenidenDogar()
         {
             yield return Stage();
+            Assert.AreEqual(RagdollProxyPool.CapOf(QualityTiers.Current), RagdollProxyPool.Capacity, "tavan kademeden (2/6/10)");
+            Assert.AreEqual(2, RagdollProxyPool.CapOf(QualityTier.Performans)); Assert.AreEqual(6, RagdollProxyPool.CapOf(QualityTier.Yuksek)); Assert.AreEqual(10, RagdollProxyPool.CapOf(QualityTier.Sinematik));
             RagdollProxyPool.Capacity = 2;
             var zs = new List<ZombieSkinnedVisual>();
             for (int i = 0; i < 4; i++) zs.Add(Zombie(new Vector3(i * 2.5f, 0f, 0f), (uint)(30 + i)));

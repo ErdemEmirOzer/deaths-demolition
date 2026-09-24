@@ -492,7 +492,9 @@ namespace DD.Prototype.Characters
             Vector3 push = _deathPush.sqrMagnitude > 0f ? _deathPush : -transform.forward;
             float speed = Mathf.Clamp(1.0f + 0.9f * _deathIntensity, 1.4f, 4.5f) * (DeathFamily == ZombieDeathFamily.UltraTimber ? 0.5f : 1f);
             float spin = DeathFamily == ZombieDeathFamily.SpinSide ? 3.5f * (Vector3.Cross(transform.forward, push).y >= 0f ? 1f : -1f) : 0f;
-            _ragdoll = RagdollProxyPool.Acquire(GetInstanceID(), _rdBones, _rdTips, _rdVel, push * speed, spin);
+            // review R1-A #12: a far-LOD body's bones move only on its 15 Hz steps — the per-frame velocity is 0 or a spike, so it gets the push alone
+            bool farBody = _lod != null && _lod.Far;
+            _ragdoll = RagdollProxyPool.Acquire(GetInstanceID(), _rdBones, _rdTips, farBody ? null : _rdVel, push * speed, spin);
             if (_ragdoll == null)
             {
                 _deathClock = -1f;   // pool full: the authored fall finishes the death (death_end)

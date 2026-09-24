@@ -16,8 +16,21 @@ namespace DD.Prototype.Characters
     [DefaultExecutionOrder(-50)]   // before SecondaryChainDriver (0): the tails swing off the fallen pose
     public sealed class RagdollProxyPool : MonoBehaviour
     {
-        /// <summary>Concurrent ragdolls (quality tier: Sinematik 10 / Yüksek 6 / Performans 2 — K4). Changing it takes effect for new deaths.</summary>
-        public static int Capacity = 6;
+        /// <summary>
+        /// Concurrent ragdolls: the quality tier's cap (Performans 2 / Yüksek 6 / Sinematik 10 — K4, QUALITY-TIERS-V2 §4.2), followed
+        /// on <see cref="QualityTiers.Changed"/> (review R1-A #12); a set value overrides it (tests) until <see cref="ResetStatics"/>.
+        /// Falling ragdolls finish under the old cap.
+        /// </summary>
+        public static int Capacity
+        {
+            get { if (s_tierCap < 0) s_tierCap = CapOf(QualityTiers.Current); return s_capOverride >= 0 ? s_capOverride : s_tierCap; }
+            set => s_capOverride = value;
+        }
+
+        public static int CapOf(QualityTier tier) => QualityTiers.Pick(tier, 2, 6, 10);
+        private static int s_capOverride = -1;
+        private static int s_tierCap = -1;
+        private static bool s_tierSubscribed;
         /// <summary>Global switch (tests / A-B): false = every death keeps its authored clip.</summary>
         public static bool Enabled = true;
 
@@ -249,11 +262,17 @@ namespace DD.Prototype.Characters
 
         private static void EnsureInstance()
         {
+            if (!s_tierSubscribed) { s_tierSubscribed = true; QualityTiers.Changed += OnTierChanged; }
             if (s_instance != null) return;
+            // review R1-A #3: the pooled zombies are DontDestroyOnLoad — the proxies share their lifetime, so a run that ends
+            // mid-fall releases its proxies through the owners instead of losing them with the scene
             var go = new GameObject("RagdollProxyPool");
+            if (Application.isPlaying) DontDestroyOnLoad(go);
             s_instance = go.AddComponent<RagdollProxyPool>();
             SetLayers();
         }
+
+        private static void OnTierChanged(QualityTier tier) => s_tierCap = CapOf(tier);
 
         /// <summary>Ragdoll ↔ everything that is not world: off (runtime matrix; the DynamicsManager asset is untouched).</summary>
         private static void SetLayers()
@@ -284,7 +303,9 @@ namespace DD.Prototype.Characters
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         public static void ResetStatics()
         {
-            Capacity = 6;
+            s_capOverride = -1;
+            s_tierCap = -1;
+            if (s_tierSubscribed) { QualityTiers.Changed -= OnTierChanged; s_tierSubscribed = false; }
             Enabled = true;
             RefusedCount = 0;
             AcquiredCount = 0;
