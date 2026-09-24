@@ -145,7 +145,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             // WP-015 (ADR-015-2): enabled entries = the release scene list (five prototype scenes
             // + the AP-005 world scene Run loads additively); disabled entries = dev-only scenes
-            // (WP-011 pilot, library showcase) that only the development build carries.
+            // (WP-011 pilot, library showcase, WP-074 B1 World v5 greybox) that only the development build carries.
             string[] beklenenRelease =
             {
                 PrototypeScenes.Boot,
@@ -155,11 +155,11 @@ namespace DD.Prototype.Tests.EditMode
                 PrototypeScenes.Results,
                 "World_AP005"
             };
-            string[] beklenenDev = { "AP001_GoldenSlice", "AP_LibraryShowcase" };
+            string[] beklenenDev = { "AP001_GoldenSlice", "AP_LibraryShowcase", "World_V6_Greybox" };
 
             EditorBuildSettingsScene[] sahneler = EditorBuildSettings.scenes;
             Assert.AreEqual(beklenenRelease.Length + beklenenDev.Length, sahneler.Length,
-                "Build Settings'te tam olarak sekiz giriş olmalı (altı release sahnesi + iki dev-only sahne), " + sahneler.Length + " var.");
+                "Build Settings'te tam olarak dokuz giriş olmalı (altı release sahnesi + üç dev-only sahne), " + sahneler.Length + " var.");
             Assert.AreEqual("Assets/_Art/Scenes/World_AP005.unity", sahneler[5].path,
                 "Altıncı sahne WP-014 AP-005 dünya sahnesi olmalı (Run'a additive yüklenir).");
             Assert.AreEqual("Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity", sahneler[6].path,
