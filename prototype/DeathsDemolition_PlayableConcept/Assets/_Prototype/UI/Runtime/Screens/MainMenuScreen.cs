@@ -673,6 +673,10 @@ namespace DD.Prototype.UI
             }
 
             well = width < 1f || width - column >= PreviewMinWidth;
+            if (!well)
+            {
+                column = width;   // AD 6ab SHOULD-10: no well, no blank strip wider than a gutter - the column takes the pane
+            }
             UiScrollView scroll = UiScrollView.Create("Scroll", body);
             var scrollRect = (RectTransform)scroll.transform;
             scrollRect.anchorMin = new Vector2(0f, 0f);
