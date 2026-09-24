@@ -12,7 +12,7 @@ namespace DD.Art.Tests.EditMode
 {
     /// <summary>
     /// WP-038P · The World_AP005 NavMesh is one piece where bodies go (NavMeshIslandLinker): no island a body can walk to
-    /// stays unlinked — a zombie pushed there would stand on a NavMesh piece no path leaves (S-10 soak seed 61, run 14) —
+    /// stays unlinked (WP-038R: every island of the triangulation, each against every main vertex within 2 m) — a zombie pushed there would stand on a NavMesh piece no path leaves (S-10 soak seed 61, run 14) —
     /// no NavMesh under the bridge rail skirts, and the player start, the twelve spawns, the twelve weapon points, the five
     /// region centres, both bridge ends and the soak's stuck-zombie spot reach the start with a complete path.
     /// </summary>
@@ -72,6 +72,7 @@ namespace DD.Art.Tests.EditMode
             points.Add(("south", new Vector3(20f, 0f, -30f))); points.Add(("west", new Vector3(-30f, 0f, 0f)));
             points.Add(("bridge N", new Vector3(4f, 0f, -22.5f))); points.Add(("bridge S", new Vector3(4f, 0f, -37f))); points.Add(("south bank", new Vector3(4f, 0f, -40f)));
             points.Add(("soak61-14 zombie", new Vector3(3.2f, 0.2f, -36.1f)));
+            points.Add(("stab26 bot (west pocket)", new Vector3(-39.3f, 0f, -16.5f))); points.Add(("stab26 zombies (west ring)", new Vector3(-43.9f, 0f, 0f)));
             var unreachable = new List<string>();
             var path = new NavMeshPath();
             foreach ((string name, Vector3 p) in points)
@@ -103,6 +104,13 @@ namespace DD.Art.Tests.EditMode
 
             Assert.GreaterOrEqual(skirtCount, 2, "köprü korkuluk etekleri");
             Assert.IsEmpty(navUnderSkirt, "etek altında yürünebilir NavMesh: " + string.Join(", ", navUnderSkirt));
+            // WP-038R: the ±45 m ring is physics only — no walkable NavMesh within a body radius of its inner face or beyond it,
+            // or an agent plans through the wall and presses against it (S-10 stability soak seed 26: the last bodies at x −44).
+            float ringLimit = WorldBoundaryBuilder.HalfExtent - NavMeshIslandLinker.BodyRadius;
+            var nearRing = new List<string>();
+            foreach (Vector3 v in NavMesh.CalculateTriangulation().vertices)
+                if (Mathf.Abs(v.x) > ringLimit || Mathf.Abs(v.z) > ringLimit) { nearRing.Add(v.ToString("F2")); if (nearRing.Count >= 20) break; }
+            Assert.IsEmpty(nearRing, "halkaya beden yarıçapından yakın ya da dışında NavMesh: " + string.Join(", ", nearRing));
             Assert.Greater(points.Count, 30);
             Assert.IsEmpty(unreachable, "Başlangıca tam yolu olmayan işaretli nokta (" + unreachable.Count + "):\n" + string.Join("\n", unreachable));
             Assert.IsEmpty(traps, "Bedenin ana NavMesh'ten yürüyerek geçebildiği (kapsül r " + (NavMeshIslandLinker.BodyRadius + NavMeshIslandLinker.BodySkin) + ", " + NavMeshIslandLinker.StepHeight + " m basamak) kopuk adacık (" + traps.Count + "):\n" + string.Join("\n", traps));

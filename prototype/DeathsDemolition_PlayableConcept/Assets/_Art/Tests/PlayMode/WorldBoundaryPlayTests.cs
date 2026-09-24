@@ -305,7 +305,8 @@ namespace DD.Art.Tests.PlayMode
         }
 
         // WP-038P · Zombies where the soak lost one (beside the south bridge-end post, now skirted) and inside every pocket the
-        // bake's erosion used to cut off (now linked: NavMeshIslandLinker) walk out to the player.
+        // bake's erosion used to cut off (now linked: NavMeshIslandLinker) walk out to the player. WP-038R: + the body-walk pockets
+        // and the west ring spot of the S-10 stability soak seed 26.
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Zombiler_KopruUcuVeCepAdaciklarindan_OyuncuyaUlasir()
@@ -318,6 +319,8 @@ namespace DD.Art.Tests.PlayMode
             {
                 new Vector3(3.2f, 0.1f, -36.6f), new Vector3(-37.63f, 0.05f, 17.0f), new Vector3(-21.08f, 0.05f, 35.33f), new Vector3(7.93f, 0.15f, -32.23f),
                 new Vector3(-1.53f, 0.05f, -24.36f), new Vector3(-41.85f, 0.05f, -19.83f), new Vector3(-15.73f, 0.05f, 40.92f),
+                // WP-038R: the pockets a body walks into (linked since the body-walk criterion) and the west ring where stab26 lost the last bodies
+                new Vector3(-40.5f, 0.05f, -15.8f), new Vector3(-16.75f, 0.1f, 36.2f), new Vector3(-43.9f, 0.05f, 0.1f),
             };
             var zombies = new List<(Vector3 spot, ZombieEnemy z)>();
             foreach (Vector3 spot in spots)
@@ -328,7 +331,7 @@ namespace DD.Art.Tests.PlayMode
 
             var reached = new HashSet<int>();
             float t = 0f;
-            while (reached.Count < zombies.Count && t < 70f)
+            while (reached.Count < zombies.Count && t < 90f)
             {
                 _rig.Teleport(target, Quaternion.identity);
                 yield return null;
@@ -349,30 +352,13 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsEmpty(stuck, "oyuncuya ulaşamayan zombi (" + stuck.Count + "): " + string.Join(" | ", stuck));
         }
 
-        // WP-038Q · The raised south crossing (the bridge) with the real player body (PlayerMotor: acceleration, braking, the
-        // 0.35 m step) driven like the soak bot along a NavMesh path re-planned every 0.25 s: the soak seed-61 run-25 route and
-        // stuck point (4.0, 0.3, −31.3), and both ends entered from eight directions to the far bank. No route may stall 3 s.
-        [UnityTest]
-        [Timeout(600000)]
-        public IEnumerator Oyuncu_GuneyGecidi_SekizYondenGirisCikis_VeSoakNoktasi_Takilmaz()
+        /// <summary>
+        /// WP-038Q/R · Drives the real player body (PlayerMotor, 0.35 m step) along each route like the soak bot — a NavMesh path
+        /// re-planned every 0.25 s, steering at the next corner — and adds "name: reason" to <paramref name="fails"/> when it
+        /// finds no path, makes no 0.5 m progress in 3 s, runs past 60 s or falls.
+        /// </summary>
+        private IEnumerator WalkRoutes(List<(string name, Vector3 from, Vector3 to)> routes, List<string> fails)
         {
-            yield return RunAp005();
-            var routes = new List<(string name, Vector3 from, Vector3 to)>
-            {
-                ("soak61-25", new Vector3(7.2f, 0f, -38.8f), new Vector3(-18f, 0f, -11.6f)),
-                ("stuck→N", new Vector3(4f, 0.3f, -31.3f), new Vector3(-18f, 0f, -11.6f)),
-                ("stuck→S", new Vector3(4f, 0.3f, -31.3f), new Vector3(7.2f, 0f, -38.8f)),
-            };
-            foreach ((string end, Vector3 centre, Vector3 far) in new[] { ("S", new Vector3(4f, 0f, -38.6f), new Vector3(4f, 0f, -20.4f)), ("N", new Vector3(4f, 0f, -20.9f), new Vector3(4f, 0f, -40f)) })
-            for (int k = 0; k < 8; k++)
-            {
-                float a = k * Mathf.PI / 4f;
-                Vector3 p = centre + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * 3.5f;
-                if (!NavMesh.SamplePosition(p, out NavMeshHit hit, 1.5f, NavMesh.AllAreas)) continue;   // a point in the pond
-                routes.Add((end + (k * 45) + "°", hit.position, far));
-            }
-
-            var fails = new List<string>();
             var path = new NavMeshPath();
             foreach ((string name, Vector3 from, Vector3 to) in routes)
             {
@@ -414,6 +400,33 @@ namespace DD.Art.Tests.PlayMode
                 if (fail != null) fails.Add(name + ": " + fail);
             }
 
+        }
+
+        // WP-038Q · The raised south crossing (the bridge) with the real player body (PlayerMotor: acceleration, braking, the
+        // 0.35 m step) driven like the soak bot along a NavMesh path re-planned every 0.25 s: the soak seed-61 run-25 route and
+        // stuck point (4.0, 0.3, −31.3), and both ends entered from eight directions to the far bank. No route may stall 3 s.
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator Oyuncu_GuneyGecidi_SekizYondenGirisCikis_VeSoakNoktasi_Takilmaz()
+        {
+            yield return RunAp005();
+            var routes = new List<(string name, Vector3 from, Vector3 to)>
+            {
+                ("soak61-25", new Vector3(7.2f, 0f, -38.8f), new Vector3(-18f, 0f, -11.6f)),
+                ("stuck→N", new Vector3(4f, 0.3f, -31.3f), new Vector3(-18f, 0f, -11.6f)),
+                ("stuck→S", new Vector3(4f, 0.3f, -31.3f), new Vector3(7.2f, 0f, -38.8f)),
+            };
+            foreach ((string end, Vector3 centre, Vector3 far) in new[] { ("S", new Vector3(4f, 0f, -38.6f), new Vector3(4f, 0f, -20.4f)), ("N", new Vector3(4f, 0f, -20.9f), new Vector3(4f, 0f, -40f)) })
+            for (int k = 0; k < 8; k++)
+            {
+                float a = k * Mathf.PI / 4f;
+                Vector3 p = centre + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * 3.5f;
+                if (!NavMesh.SamplePosition(p, out NavMeshHit hit, 1.5f, NavMesh.AllAreas)) continue;   // a point in the pond
+                routes.Add((end + (k * 45) + "°", hit.position, far));
+            }
+
+            var fails = new List<string>();
+            yield return WalkRoutes(routes, fails);
             Debug.Log("[DD-TEST] wp038q.crossing routes=" + routes.Count + " stalls=" + fails.Count + (fails.Count > 0 ? " " + string.Join(" | ", fails) : ""));
             Assert.Greater(routes.Count, 12, "rota sayısı (8 yön × 2 uç + soak)");
             Assert.IsEmpty(fails, "Güney geçidinde oyuncu gövdesi takıldı (" + fails.Count + "):\n" + string.Join("\n", fails));
@@ -453,6 +466,80 @@ namespace DD.Art.Tests.PlayMode
             _girdi.Deger = Vector2.zero;
             Debug.Log("[DD-TEST] wp038q.deck cases=" + cases + " stuck=" + stuck.Count + (stuck.Count > 0 ? " " + string.Join(" | ", stuck) : ""));
             Assert.IsEmpty(stuck, "güvertede eğik girdiyle duran oyuncu (" + stuck.Count + "):\n" + string.Join("\n", stuck));
+        }
+
+        // WP-038R · The S-10 stability soak seed 26 round 12: the player in the bamboo pocket west of the corridor (−39.3, −16.5)
+        // — a body walks in and out, the NavMesh did not join it — and the last zombies could not reach it for 300 s. A zombie from
+        // the north reaches the player standing there through the new link.
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Zombiler_BatiBambuCebindekiOyuncuya_Ulasir()
+        {
+            yield return RunAp005();
+            _rig.Motor.SetInputSource(null);
+            var target = new Vector3(-39.3f, 0.05f, -16.5f);
+            var stuck = new List<string>();
+            var corners = new NavMeshPath();
+            var times = new List<string>();
+            // (Zombies from the south / south-east / north-east run the grove's east edge and stop at (−30.4, −23.9) with a complete
+            // path — the player body walks that leg (Oyuncu_BatiBambuCebine_DortYandanGirerCikar_Takilmaz): the follower's 0.65 m
+            // corner arrival cuts into culm AP005_i1641. Zombie steering, S-03 WP-061L; the pocket's own link is the north one.)
+            foreach (Vector3 spot in new[] { new Vector3(-38.5f, 0.05f, -8f) })
+            {
+                _rig.Teleport(target, Quaternion.identity);
+                Vector3 p = NavMesh.SamplePosition(spot, out NavMeshHit hit, 1f, NavMesh.AllAreas) ? hit.position + Vector3.up * 0.05f : spot;
+                ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 5, p, Quaternion.identity);
+                float t = 0f;
+                bool reached = false;
+                while (!reached && t < 40f)
+                {
+                    _rig.Teleport(target, Quaternion.identity);
+                    yield return null;
+                    t += Time.deltaTime;
+                    if (z == null || !z.IsAlive) break;
+                    Vector3 d = z.transform.position - target; d.y = 0f;
+                    reached = d.magnitude < 2.5f;
+                }
+
+                times.Add(spot.ToString("F0") + " " + (reached ? t.ToString("F1") + " s" : "—"));
+                if (!reached)
+                {
+                    string row = spot.ToString("F1") + " → " + (z != null ? z.transform.position.ToString("F2") : "yok");
+                    if (z != null && NavMesh.SamplePosition(z.transform.position, out NavMeshHit zh, 1f, NavMesh.AllAreas) &&
+                        NavMesh.SamplePosition(target, out NavMeshHit th, 1f, NavMesh.AllAreas) && NavMesh.CalculatePath(zh.position, th.position, NavMesh.AllAreas, corners))
+                    {
+                        row += " path " + corners.status;
+                        foreach (Vector3 c in corners.corners) row += " " + c.ToString("F1");
+                    }
+
+                    stuck.Add(row);
+                }
+
+                if (z != null) UnityEngine.Object.Destroy(z.gameObject);
+                yield return null;
+            }
+
+            Debug.Log("[DD-TEST] wp038r.pocket " + string.Join(" | ", times) + (stuck.Count > 0 ? " stuck: " + string.Join(" | ", stuck) : ""));
+            Assert.IsEmpty(stuck, "batı cebindeki oyuncuya ulaşamayan zombi (" + stuck.Count + "): " + string.Join(" | ", stuck));
+        }
+
+        // WP-038R · The same pocket with the real player body: in from the four sides of the grove (the zombie spawn spots of the
+        // test above and the SW bamboo edge a zombie stopped at) and back out to the centre. No route may stall 3 s.
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator Oyuncu_BatiBambuCebine_DortYandanGirerCikar_Takilmaz()
+        {
+            yield return RunAp005();
+            var pocket = new Vector3(-39.3f, 0f, -16.5f);
+            var routes = new List<(string name, Vector3 from, Vector3 to)>();
+            foreach ((string name, Vector3 p) in new[] { ("NE", new Vector3(-30f, 0f, -10f)), ("SE", new Vector3(-33f, 0f, -24f)), ("N", new Vector3(-38.5f, 0f, -8f)),
+                                                         ("S", new Vector3(-36.5f, 0f, -22.5f)), ("SW-edge", new Vector3(-30.3f, 0f, -24.2f)) })
+                routes.Add((name + "→cep", p, pocket));
+            routes.Add(("cep→merkez", pocket, new Vector3(-7.5f, 0f, 0f)));
+            var fails = new List<string>();
+            yield return WalkRoutes(routes, fails);
+            Debug.Log("[DD-TEST] wp038r.routes routes=" + routes.Count + " stalls=" + fails.Count + (fails.Count > 0 ? " " + string.Join(" | ", fails) : ""));
+            Assert.IsEmpty(fails, "batı cebine / cepten oyuncu yürüyüşünde takılma (" + fails.Count + "):\n" + string.Join("\n", fails));
         }
     }
 }

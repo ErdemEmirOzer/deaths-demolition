@@ -70,6 +70,51 @@ namespace DD.Art.Pipeline.EditorTools
             return go;
         }
 
+        public const string RingNavRootName = "Ring NavMesh (WP-038R)";
+        /// <summary>WP-038R: the walkable NavMesh stops this far inside the ring's inner face (body radius + skin + 2 cm).</summary>
+        public const float RingNavInset = 0.5f, RingNavDepth = 100f;
+        /// <summary>
+        /// WP-038R: the volumes span only the ground band (the bridge rail volumes' bottom up to 3 m). Taller ones (±20 m) moved the
+        /// bake's vertical voxel origin and the 0.35 m east-gate stone pile (WP-038N) rounded under the 0.30 m climb again.
+        /// </summary>
+        public const float RingNavBottom = -0.6f, RingNavTop = 3f;
+
+        /// <summary>
+        /// WP-038R · The ring is physics only (not in the bake), so the NavMesh ran on through it to the plates' edge (±48 m): an
+        /// agent planned through the wall and pressed against its inner face (S-10 stability soak seed 26: the last bodies held
+        /// at x −44 for 120 s). Four NotWalkable volumes from <see cref="RingNavInset"/> inside the inner face outward — a
+        /// NotWalkable volume does not erode, so the walkable edge is exactly there and a body on it clears the wall. Build
+        /// before the bake (PlacementImporter); idempotent.
+        /// </summary>
+        public static int BuildRingNavVolumes(Transform root)
+        {
+            Transform old = root.Find(RingNavRootName);
+            if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            var parent = new GameObject(RingNavRootName) { layer = PrototypeLayers.Environment };
+            parent.transform.SetParent(root, false);
+            float inner = HalfExtent - RingNavInset, span = 2f * (HalfExtent + RingNavDepth), mid = inner + RingNavDepth * 0.5f;
+            float y = (RingNavBottom + RingNavTop) * 0.5f, h = RingNavTop - RingNavBottom;
+            (string name, Vector3 centre, Vector3 size)[] sides =
+            {
+                ("North", new Vector3(0f, y, mid), new Vector3(span, h, RingNavDepth)),
+                ("South", new Vector3(0f, y, -mid), new Vector3(span, h, RingNavDepth)),
+                ("East", new Vector3(mid, y, 0f), new Vector3(RingNavDepth, h, span)),
+                ("West", new Vector3(-mid, y, 0f), new Vector3(RingNavDepth, h, span)),
+            };
+            foreach ((string name, Vector3 centre, Vector3 size) in sides)
+            {
+                var go = new GameObject("RingNav_" + name) { layer = PrototypeLayers.Environment };   // the surface's mask collects volumes by layer
+                go.transform.SetParent(parent.transform, false);
+                go.transform.position = centre;
+                NavMeshModifierVolume v = go.AddComponent<NavMeshModifierVolume>();
+                v.center = Vector3.zero;
+                v.size = size;
+                v.area = ArtSurfaceImporter.NavAreaNotWalkable;
+            }
+
+            return sides.Length;
+        }
+
         /// <summary>Ellipse point of a basin in world XZ (inverse of PlacementImporter.InsideHole's frame change).</summary>
         public static Vector2 PondPoint((Vector2 centre, Vector2 semi, float yaw) b, float t)
         {

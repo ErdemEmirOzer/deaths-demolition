@@ -719,15 +719,18 @@ namespace DD.Art.Pipeline.EditorTools
             // price them on the NavMesh itself (Bridge ×1.6, Corridor ×1.3, Gate ×1 / ×1.15).
             report.AreaVolumes = BuildAreaVolumes(root.transform, areaInstances);
             report.BridgeRailNavVolumes = BuildBridgeRailNavVolumes(root.transform, instances.transform, placement);
+            WorldBoundaryBuilder.BuildRingNavVolumes(root.transform);   // WP-038R: no walkable NavMesh at or beyond the ring
 
             // NavMesh: the WorldNavigation settings (agent 0, physics colliders in
             // Environment|CameraOccluder, ±48 m volume), baked HERE and saved as an asset so
             // the Player never bakes; the bootstrap only verifies.
             report.NavMeshTriangles = BakeNavMesh(root.transform);
-            // WP-038P: NavMesh pieces a body walks into but no path reaches get a link along the body's swept line.
-            report.IslandLinks = NavMeshIslandLinker.LinkIslands(root.transform, SeedFor(placement));
             // WP-038M: the playable-area ring (±45 m, invisible, Ignore Raycast), the pond rims + the fall guard — after the bake, never in it.
             WorldBoundaryBuilder.Build(root.transform, BasinHoles(placement));
+            Physics.SyncTransforms();
+            // WP-038P: NavMesh pieces a body walks into but no path reaches get a link along the body's swept line.
+            // WP-038R: after the boundary — the body walks meet the ring / rims / plugs.
+            report.IslandLinks = NavMeshIslandLinker.LinkIslands(root.transform, SeedFor(placement));
 
             PilotSceneBuilder.Save(scene, ArtLibraryPaths.Ap005WorldScene);
             report.Digest = Digest(instances.transform);
@@ -1448,11 +1451,13 @@ namespace DD.Art.Pipeline.EditorTools
             Transform instances = root.transform.Find(Ap005WorldBootstrap.InstancesName);
             if (instances == null) throw new InvalidOperationException(LogPrefix + "instances container missing");
             int railVolumes = BuildBridgeRailNavVolumes(root.transform, instances, placement);
+            WorldBoundaryBuilder.BuildRingNavVolumes(root.transform);   // WP-038R
             Physics.SyncTransforms();
             BuildAtBodyClimb(surfaces[0]);
             int triangles = SaveNavMeshAsset(surfaces[0]);
-            int links = NavMeshIslandLinker.LinkIslands(root.transform, SeedFor(placement));
             WorldBoundaryBuilder.Build(root.transform, BasinHoles(placement));
+            Physics.SyncTransforms();
+            int links = NavMeshIslandLinker.LinkIslands(root.transform, SeedFor(placement));   // WP-038R: after the boundary
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log(LogPrefix + "NavMesh re-baked at climb " + NavMeshBodyClimb + " m (+ " + railVolumes + " bridge rail volumes / skirts): " + triangles + " triangles, " + links + " island links; boundary rebuilt");
