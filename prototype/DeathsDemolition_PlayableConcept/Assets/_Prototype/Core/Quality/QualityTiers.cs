@@ -37,6 +37,36 @@ namespace DD.Prototype.Core
 
         public static QualityTier Current => TierOfLevel(QualitySettings.GetQualityLevel(), QualitySettings.names.Length);
 
+        /// <summary>
+        /// WP-078 (S-10 perf matrix): <c>-ddQualityTier performans|yuksek|sinematik</c> (also performance|high|cinematic or 0|1|2;
+        /// env <c>DD_QUALITY_TIER</c>) runs this process at that tier and never writes ui-settings.json — the player's saved choice
+        /// stays on disk; UiSettings applies <see cref="LevelOverride"/> over it for this process only.
+        /// </summary>
+        public const string CommandLineFlag = "-ddQualityTier", EnvironmentVariable = "DD_QUALITY_TIER";
+
+        /// <summary>The QualitySettings level forced by <see cref="CommandLineFlag"/> for this process, or null.</summary>
+        public static int? LevelOverride { get; private set; }
+
+        public static bool TryParseTier(string value, out QualityTier tier)
+        {
+            tier = QualityTier.Yuksek;
+            switch ((value ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "0": case "performans": case "performance": tier = QualityTier.Performans; return true;
+                case "1": case "yuksek": case "yüksek": case "high": tier = QualityTier.Yuksek; return true;
+                case "2": case "sinematik": case "cinematic": tier = QualityTier.Sinematik; return true;
+                default: return false;
+            }
+        }
+
+        /// <summary>The QualitySettings level of a tier in a layout of <paramref name="levelCount"/> levels (3 = direct; otherwise the first level of its third).</summary>
+        public static int LevelOfTier(QualityTier tier, int levelCount)
+        {
+            if (levelCount <= 0) return 0;
+            if (levelCount == LevelCount) return (int)tier;
+            return Mathf.Clamp(((int)tier * levelCount + LevelCount - 1) / LevelCount, 0, levelCount - 1);
+        }
+
         /// <summary>Tier of a QualitySettings level in a layout of <paramref name="levelCount"/> levels (3 = direct; otherwise thirds).</summary>
         public static QualityTier TierOfLevel(int level, int levelCount)
         {
@@ -78,8 +108,41 @@ namespace DD.Prototype.Core
         private static void ResetStatics()
         {
             Changed = null;
+            LevelOverride = null;
             QualitySettings.activeQualityLevelChanged -= OnLevelChanged;
             QualitySettings.activeQualityLevelChanged += OnLevelChanged;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void ApplyCommandLine()
+        {
+            string value = Environment.GetEnvironmentVariable(EnvironmentVariable);
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++)
+                if (string.Equals(args[i], CommandLineFlag, StringComparison.OrdinalIgnoreCase)) value = args[i + 1];
+            if (!string.IsNullOrEmpty(value)) ApplyOverride(value);
+        }
+
+        /// <summary>Forces the tier named by <paramref name="value"/> for this process (<see cref="CommandLineFlag"/>); false and a warning when it names none.</summary>
+        public static bool ApplyOverride(string value)
+        {
+            if (!TryParseTier(value, out QualityTier tier))
+            {
+                Debug.LogWarning("[QualityTiers] " + CommandLineFlag + " '" + value + "' is not performans|yuksek|sinematik; the saved level stands.");
+                return false;
+            }
+
+            int level = LevelOfTier(tier, QualitySettings.names.Length);
+            LevelOverride = level;
+            if (QualitySettings.GetQualityLevel() != level) QualitySettings.SetQualityLevel(level, true);
+            Debug.Log("[QualityTiers] command-line tier " + tier + " (level " + level + " " + QualitySettings.names[level] + "), this process only — ui-settings.json untouched");
+            return true;
+        }
+
+        /// <summary>Drops the process override (tests); the level stays where it is until the settings apply again.</summary>
+        public static void ClearOverride()
+        {
+            LevelOverride = null;
         }
 
         private static void OnLevelChanged(int previous, int current)

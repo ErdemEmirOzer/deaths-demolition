@@ -400,6 +400,7 @@ namespace DD.Prototype.Diagnostics
             // ---- 04 window: frame times
             public float windowSeconds;
             public string cameraMode;            // WP-078: CameraModeService.Current during the window
+            public string qualityTier;           // WP-078: QualityTiers.Current during the window (-ddQualityTier for the matrix)
             public bool cameraSweep;             // WP-078: -ddPilotCameraSweep 1 active (TP/FP only)
             public float cameraSweepMeanOnScreen; // WP-078: mean living bodies inside the view during the sweep
             public int frameCount;
@@ -983,6 +984,7 @@ namespace DD.Prototype.Diagnostics
                 s4.windowSeconds = windowSeconds;
                 s4.frameCount = frames;
                 s4.cameraMode = CameraModeService.Current.ToString();
+                s4.qualityTier = QualityTiers.Current.ToString();
                 s4.cameraSweep = sweep;
                 s4.cameraSweepMeanOnScreen = sweepSamples > 0 ? (float)sweepOnScreenSum / sweepSamples : -1f;
                 s4.frameCountRequired = Mathf.CeilToInt(_windowSeconds * 20f);
@@ -1034,6 +1036,7 @@ namespace DD.Prototype.Diagnostics
                           " | spikes " + spikeFrames + " withGen0 " + spikeFramesWithGen0 + (profilerLog ? " profilerLog yes" : "") +
                           (string.IsNullOrEmpty(s4.unavailableCounters) ? "" : " | unavailable: " + s4.unavailableCounters);
                 s4.note += " | camera " + s4.cameraMode + (sweep ? " sweep 360° onScreen mean " + s4.cameraSweepMeanOnScreen.ToString("F1", CultureInfo.InvariantCulture) : "");
+                s4.note += " | tier " + s4.qualityTier;
 
                 if (VfxStress)
                 {

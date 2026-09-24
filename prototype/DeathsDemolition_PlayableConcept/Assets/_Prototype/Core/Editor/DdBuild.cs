@@ -88,7 +88,12 @@ namespace DD.Prototype.Core.EditorTools
             string extra = Environment.GetEnvironmentVariable("DD_BUILD_EXTRA_SCENES");
             if (mode == "dev" && !string.IsNullOrEmpty(extra))
             {
-                string[] added = extra.Split(';').Select(p => p.Trim()).Where(p => p.Length > 0 && File.Exists(p) && !scenes.Contains(p)).ToArray();
+                string[] listed = extra.Split(';').Select(p => p.Trim()).Where(p => p.Length > 0).ToArray();
+                foreach (string missing in listed.Where(p => !File.Exists(p))) Debug.LogWarning("[DdBuild] extra dev scene not found: " + missing);
+                string[] added = listed.Where(p => File.Exists(p) && !scenes.Contains(p)).ToArray();
+                // S-01 review: an evidence build must not come out without the scene it was asked for and pass by accident.
+                if (listed.Length > 0 && added.Length == 0 && !listed.Any(p => scenes.Contains(p)))
+                    throw new Exception("[DdBuild] DD_BUILD_EXTRA_SCENES names no existing scene: " + extra);
                 scenes = scenes.Concat(added).ToArray();
                 Debug.Log("[DdBuild] extra dev scenes: " + string.Join(", ", added));
             }

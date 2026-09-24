@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using DD.Prototype.Audio;
 using DD.Prototype.CameraSystem;
+using DD.Prototype.Core;
 using UnityEngine;
 
 namespace DD.Prototype.UI
@@ -612,9 +613,11 @@ namespace DD.Prototype.UI
 
         private static void ApplyQuality()
         {
-            if (QualitySettings.GetQualityLevel() != s_data.Quality)
+            // WP-078: a -ddQualityTier run keeps its tier for the process; the saved choice stays in s_data / on disk.
+            int level = QualityTiers.LevelOverride ?? s_data.Quality;
+            if (QualitySettings.GetQualityLevel() != level)
             {
-                QualitySettings.SetQualityLevel(s_data.Quality, false);
+                QualitySettings.SetQualityLevel(level, false);
             }
         }
 

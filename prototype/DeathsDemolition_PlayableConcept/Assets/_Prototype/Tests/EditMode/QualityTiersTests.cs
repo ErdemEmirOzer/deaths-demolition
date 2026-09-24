@@ -1,7 +1,9 @@
 using DD.Prototype.Core;
+using DD.Prototype.UI;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -31,6 +33,46 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("y", QualityTiers.Pick(QualityTier.Yuksek, "p", "y", "s"));
             Assert.AreEqual("p", QualityTiers.Pick(QualityTier.Performans, "p", "y", "s"));
             Assert.AreEqual("s", QualityTiers.Pick(QualityTier.Sinematik, "p", "y", "s"));
+        }
+
+        /// <summary>WP-078 (S-10 perf matrix): -ddQualityTier forces the tier for this process only; the saved UiSettings choice stays and cannot pull the level back.</summary>
+        [Test]
+        public void KomutSatiriKademe_SurecYerel_KayitliAyarSeviyeyiGeriCekmez()
+        {
+            foreach ((string v, QualityTier t) in new[] { ("performans", QualityTier.Performans), ("Performance", QualityTier.Performans), ("0", QualityTier.Performans),
+                         ("yuksek", QualityTier.Yuksek), ("YÜKSEK", QualityTier.Yuksek), ("high", QualityTier.Yuksek), ("sinematik", QualityTier.Sinematik), ("cinematic", QualityTier.Sinematik), ("2", QualityTier.Sinematik) })
+            {
+                Assert.IsTrue(QualityTiers.TryParseTier(v, out QualityTier parsed), v);
+                Assert.AreEqual(t, parsed, v);
+            }
+
+            Assert.IsFalse(QualityTiers.TryParseTier("ultra", out _));
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.AreEqual((QualityTier)i, QualityTiers.TierOfLevel(QualityTiers.LevelOfTier((QualityTier)i, 3), 3));
+                Assert.AreEqual((QualityTier)i, QualityTiers.TierOfLevel(QualityTiers.LevelOfTier((QualityTier)i, 6), 6), "altı seviye");
+            }
+
+            int levelBefore = QualitySettings.GetQualityLevel(), savedBefore = UiSettings.Quality;
+            try
+            {
+                LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex("command-line tier Sinematik"));
+                Assert.IsTrue(QualityTiers.ApplyOverride("sinematik"));
+                Assert.AreEqual(2, QualityTiers.LevelOverride);
+                Assert.AreEqual(QualityTier.Sinematik, QualityTiers.Current);
+                UiSettings.Quality = savedBefore == 0 ? 1 : 0;   // the settings screen / a saved file apply their own level…
+                Assert.AreEqual(QualityTier.Sinematik, QualityTiers.Current, "kayıtlı ayar komut satırı kademesini geri çekmemeli");
+                Assert.AreNotEqual(2, UiSettings.Quality, "oyuncunun seçimi kayıtta kalır");
+                LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("is not performans"));
+                Assert.IsFalse(QualityTiers.ApplyOverride("ultra"));
+                Assert.AreEqual(2, QualityTiers.LevelOverride, "geçersiz değer mevcut zorlamayı bozmaz");
+            }
+            finally
+            {
+                QualityTiers.ClearOverride();
+                UiSettings.Quality = savedBefore;
+                QualitySettings.SetQualityLevel(levelBefore, false);
+            }
         }
 
         [Test]
