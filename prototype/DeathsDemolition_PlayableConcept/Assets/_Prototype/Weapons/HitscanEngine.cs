@@ -768,6 +768,7 @@ namespace DD.Prototype.Weapons
                 Point = point,
                 Direction = direction,
                 ImpactForce = governed,
+                UngovernedImpactForce = impactForce,   // WP-076 review #10: the grab escape reads the weight before the governor
                 Source = source
             };
 

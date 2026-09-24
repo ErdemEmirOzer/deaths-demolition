@@ -1,5 +1,6 @@
 using System;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Damage;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -43,7 +44,7 @@ namespace DD.Prototype.Enemies
         private bool _stuckRecoveryTried;
 
         /// <summary>WP-061K: a body was removed for leaving the world (tier, where, why). Telemetry / QA; no gameplay listener.</summary>
-        public static event Action<EnemyTier, Vector3, OutOfWorldReason> OutOfWorldRemoved;
+        public static event Action<EnemyTier, Vector3, OutOfWorldReason, ZombieBodyState> OutOfWorldRemoved;   // WP-076: + body state (target: 0 while sliding / downed / shocked)
 
         /// <summary>Removals since the last reset (tests / probes).</summary>
         public static int OutOfWorldRemovals { get; private set; }
@@ -100,6 +101,7 @@ namespace DD.Prototype.Enemies
             Vector3 p = transform.position;
             float distance = target != null ? FlatDistance(p, target.position) : -1f;
             bool exempt = target == null || IsRising || _waiting || IsNetted || _animator.IsStaggering || _attack.IsAttacking
+                          || _attack.IsGrabbing || _bodyStateOverride != ZombieBodyState.Standing   // WP-076 §2.4-4: held grab, slide / downed / shock
                           || (_pathFollower != null && _pathFollower.IsQueued)
                           || distance <= _attack.Range * 1.6f;
             if (exempt || _stuckWindowStart < 0f || distance < _stuckBest - StuckProgressMetres)
@@ -148,7 +150,7 @@ namespace DD.Prototype.Enemies
         {
             if (!_alive || _dying) return false;
             OutOfWorldRemovals++;
-            try { OutOfWorldRemoved?.Invoke(_tier, where, reason); }
+            try { OutOfWorldRemoved?.Invoke(_tier, where, reason, BodyState); }
             catch (Exception e) { Debug.LogException(e); }
             Despawn();   // ledger: NotifyDespawned → RegisterDespawn (alive − 1); no EnemyDied, no reward
             return true;
@@ -158,6 +160,24 @@ namespace DD.Prototype.Enemies
         public static void ResetOutOfWorldStatics() { OutOfWorldRemovals = 0; StuckRemovals = 0; StuckRecoveries = 0; StuckWindowOverride = 0f; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetOutOfWorldDomain() { OutOfWorldRemovals = 0; StuckRemovals = 0; StuckRecoveries = 0; StuckWindowOverride = 0f; OutOfWorldRemoved = null; }
+        private static void ResetOutOfWorldDomain() { OutOfWorldRemovals = 0; StuckRemovals = 0; StuckRecoveries = 0; StuckWindowOverride = 0f; OutOfWorldRemoved = null; s_roundBase = default; }
+
+        // WP-078 §5.6 (S-10): the net's counters as one Player-log line per completed round, telemetry on or off (soak reads it).
+        private static (int recover, int stuck, int oow, int fell) s_roundBase;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void BindRoundLog()
+        {
+            DD.Prototype.Rounds.RunEvents.RoundStarted -= OnRoundStartedLog; DD.Prototype.Rounds.RunEvents.RoundStarted += OnRoundStartedLog;
+            DD.Prototype.Rounds.RunEvents.RoundCompleted -= OnRoundCompletedLog; DD.Prototype.Rounds.RunEvents.RoundCompleted += OnRoundCompletedLog;
+        }
+
+        private static void OnRoundStartedLog(int round) => s_roundBase = (StuckRecoveries, StuckRemovals, OutOfWorldRemovals, CorpsesFellOffWorld);
+
+        private static void OnRoundCompletedLog(int round)
+        {
+            Debug.Log("[OutOfWorld] round=" + round + " stuckRecover=" + (StuckRecoveries - s_roundBase.recover) + " stuckRemove=" + (StuckRemovals - s_roundBase.stuck)
+                      + " oow=" + (OutOfWorldRemovals - s_roundBase.oow) + " corpseFell=" + (CorpsesFellOffWorld - s_roundBase.fell) + " totalOow=" + OutOfWorldRemovals);
+        }
     }
 }

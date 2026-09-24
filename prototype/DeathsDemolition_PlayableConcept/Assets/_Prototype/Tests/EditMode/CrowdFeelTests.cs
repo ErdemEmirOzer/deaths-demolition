@@ -1,3 +1,4 @@
+using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Navigation;
 using DD.Prototype.Spawn;
@@ -30,7 +31,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(1.5f, _feel.GateMassHeavy, 1e-6f); Assert.AreEqual(0.6f, _feel.GateMassLight, 1e-6f);
             Assert.AreEqual(0.45f, _feel.StallSecondsMin, 1e-6f); Assert.AreEqual(0.85f, _feel.StallSecondsMax, 1e-6f);
             Assert.AreEqual(0.08f, _feel.ShuffleSpeed, 1e-6f); Assert.AreEqual(0.12f, _feel.ShuffleAmplitude, 1e-6f);
-            CollectionAssert.AreEqual(new[] { 0.55f, 0.8f, 1.5f, 3.0f }, _feel.CorpseLinger);
+            CollectionAssert.AreEqual(new[] { 4.0f, 4.0f, 5.0f, 6.0f }, _feel.CorpseLinger);   // WP-076 v2 (DEC-096)
             CollectionAssert.AreEqual(new[] { 0.35f, 0.35f, 0.20f, 0.10f }, _feel.OnScreenFactorByThreatLayer);
             Assert.AreEqual(0.35f, _feel.FlankShareOf(EnemyTier.Standard), 1e-6f); Assert.AreEqual(0f, _feel.FlankShareOf(EnemyTier.Ultra), 1e-6f);
             Assert.IsTrue(_feel.IsHeavy(EnemyTier.Elite) && _feel.IsHeavy(EnemyTier.Ultra) && !_feel.IsHeavy(EnemyTier.Special));
@@ -54,12 +55,16 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void CesetSuresi_Tier_Jitter_TavanKurali_UltraTabani()
         {
-            Assert.AreEqual(0.55f, _feel.CorpseLingerFor(EnemyTier.Standard, 0.5f, false), 1e-5f, "jitter 0,5 = taban");
-            Assert.AreEqual(3.0f, _feel.CorpseLingerFor(EnemyTier.Ultra, 0.5f, false), 1e-5f);
-            Assert.AreEqual(1.5f * 1.15f, _feel.CorpseLingerFor(EnemyTier.Elite, 1f, false), 1e-5f, "jitter +%15");
-            Assert.AreEqual(0.8f * 0.85f, _feel.CorpseLingerFor(EnemyTier.Special, 0f, false), 1e-5f, "jitter −%15");
-            Assert.AreEqual(0.55f * 0.4f, _feel.CorpseLingerFor(EnemyTier.Standard, 0.5f, true), 1e-5f, "tavana yakın ×0,4");
-            Assert.AreEqual(1.2f, _feel.CorpseLingerFor(EnemyTier.Ultra, 0.5f, true), 1e-5f, "Ultra tabanı 1,2 (3,0 × 0,4 = 1,2)");
+            Assert.AreEqual(4.0f, _feel.CorpseLingerFor(EnemyTier.Standard, 0.5f, false), 1e-5f, "jitter 0,5 = taban (Yüksek)");
+            Assert.AreEqual(6.0f, _feel.CorpseLingerFor(EnemyTier.Ultra, 0.5f, false), 1e-5f);
+            Assert.AreEqual(5.0f * 1.15f, _feel.CorpseLingerFor(EnemyTier.Elite, 1f, false), 1e-5f, "jitter +%15");
+            Assert.AreEqual(4.0f * 0.85f, _feel.CorpseLingerFor(EnemyTier.Special, 0f, false), 1e-5f, "jitter −%15");
+            Assert.AreEqual(4.0f * 0.4f, _feel.CorpseLingerFor(EnemyTier.Standard, 0.5f, true), 1e-5f, "tavana yakın ×0,4");
+            Assert.AreEqual(4.0f * 0.6f, _feel.CorpseLingerFor(EnemyTier.Standard, 0.5f, false, QualityTier.Performans), 1e-5f, "Performans ×0,6");
+            Assert.AreEqual(4.0f * 1.25f, _feel.CorpseLingerFor(EnemyTier.Standard, 0.5f, false, QualityTier.Sinematik), 1e-5f, "Sinematik ×1,25");
+            Assert.AreEqual(6, _feel.CorpseCeilingFor(QualityTier.Performans)); Assert.AreEqual(10, _feel.CorpseCeilingFor(QualityTier.Yuksek)); Assert.AreEqual(16, _feel.CorpseCeilingFor(QualityTier.Sinematik));
+            _feel.CorpseLinger[3] = 2.0f;
+            Assert.AreEqual(1.2f, _feel.CorpseLingerFor(EnemyTier.Ultra, 0.5f, true), 1e-5f, "Ultra tabanı 1,2 (2,0 × 0,4 = 0,8 → 1,2)");
             Assert.AreEqual(1.5f, _feel.GateMassFor(EnemyTier.Ultra), 1e-6f); Assert.AreEqual(0.6f, _feel.GateMassFor(EnemyTier.Standard), 1e-6f);
         }
 

@@ -400,9 +400,9 @@ namespace DD.Prototype.Diagnostics.Telemetry
         }
 
         /// <summary>WP-061K: one per removed body — a per-round counter and one log line (rare event; the string is not a hot path).</summary>
-        public static void OnOutOfWorldRemoved(EnemyTier tier, Vector3 where, ZombieEnemy.OutOfWorldReason reason)
+        public static void OnOutOfWorldRemoved(EnemyTier tier, Vector3 where, ZombieEnemy.OutOfWorldReason reason, DD.Prototype.Damage.ZombieBodyState state)
         {
-            Debug.Log("[DD-TELEMETRY] enemy.outOfWorld tier=" + tier + " reason=" + reason + " pos=" + where.ToString("F1") + " round=" + (s_roundIndex >= 0 && s_roundIndex < RoundCapacity ? s_rounds[s_roundIndex].round : 0));
+            Debug.Log("[DD-TELEMETRY] enemy.outOfWorld tier=" + tier + " reason=" + reason + " state=" + state + " pos=" + where.ToString("F1") + " round=" + (s_roundIndex >= 0 && s_roundIndex < RoundCapacity ? s_rounds[s_roundIndex].round : 0));
             if (!s_inRun || s_roundIndex < 0 || s_roundIndex >= RoundCapacity) return;
             if (reason == ZombieEnemy.OutOfWorldReason.Stuck) s_rounds[s_roundIndex].stuckRemovals++;
             else s_rounds[s_roundIndex].outOfWorldRemovals++;

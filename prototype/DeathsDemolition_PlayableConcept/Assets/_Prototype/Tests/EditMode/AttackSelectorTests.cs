@@ -125,5 +125,34 @@ namespace DD.Prototype.Tests.EditMode
             int[] h = Histogram(Ctx(EnemyTier.Standard, 1.0f, facingAway: 180f, speed: 0f), 100);
             Assert.AreEqual(100, h[(int)ZombieAttackStyle.Swipe], "-ddAiV3 0 → the WP-040 signature style");
         }
+            [Test]
+        public void Inceleme_R1A_SertMenzil_AboneKorunur_AgirlikYonetimOncesi()
+        {
+            // #9: no style reaches 1.75 m for a Standard (Swipe ≤ 1.7, Lunge ≥ 1.8) → no commit; the edge still commits
+            var r = new EnemyRandom(3u);
+            Assert.IsFalse(AttackSelector.Select(Ctx(EnemyTier.Standard, 1.75f), ref r, out _, out _), "sert kapı: erişim dışında vuruş yok");
+            Assert.AreEqual(0f, AttackSelector.RangeFit(Ctx(EnemyTier.Standard, 1.75f), ZombieAttackStyle.Swipe));
+            Assert.AreEqual(AttackSelector.EdgeFit, AttackSelector.RangeFit(Ctx(EnemyTier.Standard, 1.7f), ZombieAttackStyle.Swipe), 1e-5f, "kenarda karışım ağırlığı");
+            Assert.AreEqual(1f, AttackSelector.RangeFit(Ctx(EnemyTier.Standard, 1.0f), ZombieAttackStyle.Swipe));
+            Assert.IsTrue(AttackSelector.Select(Ctx(EnemyTier.Standard, 1.7f, facingAway: 0f, speed: 3f), ref r, out _, out _), "kenarda Swipe geçerli");
+
+            // #11: resetting state keeps the static subscribers
+            int started = 0;
+            System.Action<Transform, EnemyTier, float> onStart = (b, t, sec) => started++;
+            GrabState.Started += onStart;
+            try
+            {
+                GrabState.ResetStatics();
+                Assert.IsTrue(GrabState.TryBegin(9, null, EnemyTier.Standard, 0.27f));
+                Assert.AreEqual(1, started, "abone düşmedi");
+                GrabState.End(9, GrabEndReason.Killed);
+            }
+            finally { GrabState.Started -= onStart; }
+
+            // #10: the single-hit weight is the ungoverned impulse when set
+            var governed = new DD.Prototype.Damage.DamageHit { ImpactForce = 0.85f * 0.15f, UngovernedImpactForce = 0.85f };
+            Assert.AreEqual(0.85f, governed.HitWeight, 1e-6f);
+            Assert.AreEqual(1.2f, new DD.Prototype.Damage.DamageHit { ImpactForce = 1.2f }.HitWeight, 1e-6f, "üretici ayarlamadıysa ImpactForce");
+        }
     }
 }

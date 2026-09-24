@@ -51,8 +51,11 @@ namespace DD.Prototype.Navigation
         public float ShuffleSpeed = 0.08f, ShufflePeriodMin = 1.4f, ShufflePeriodMax = 2.2f, ShuffleAmplitude = 0.12f;
 
         [Header("Corpse linger")]
-        [PrototypeOnly(PendingDecisions.None, "Seconds a corpse stays after its death reaction, per tier (Standard, Special, Elite, Ultra).", true)]
-        public float[] CorpseLinger = { 0.55f, 0.8f, 1.5f, 3.0f };
+        [PrototypeOnly(PendingDecisions.None, "WP-076 corpse lifetime v2 (DEC-096, aligned with S-06 A3.1/A3.6): seconds a corpse stays after its death reaction at Yüksek, per tier (Standard, Special, Elite, Ultra).", true)]
+        public float[] CorpseLinger = { 4.0f, 4.0f, 5.0f, 6.0f };
+        [PrototypeOnly(PendingDecisions.None, "WP-076: corpse linger scale by quality tier (Performans, Yüksek, Sinematik) and the corpse ceiling (S-06 6 / 10 / 16; the oldest is buried first).", true)]
+        public float[] CorpseQualityScale = { 0.6f, 1.0f, 1.25f };
+        public int[] CorpseCeiling = { 6, 10, 16 };
         [PrototypeOnly(PendingDecisions.None, "Per-corpse jitter (fraction) so a burst of kills does not vanish in one frame.", true)]
         [Range(0f, 0.5f)] public float CorpseJitter = 0.15f;
         [PrototypeOnly(PendingDecisions.None, "Near the body ceiling (spawned ≥ capacity − CorpseCapMargin) the linger is scaled by this; the Ultra keeps at least UltraCorpseFloor.", true)]
@@ -91,11 +94,21 @@ namespace DD.Prototype.Navigation
         /// <summary>The corpse linger for a kill: tier base × jitter, scaled near the ceiling (Ultra floor kept).</summary>
         public float CorpseLingerFor(EnemyTier tier, float jitter01, bool nearCeiling)
         {
-            float baseSeconds = CorpseLinger != null && (int)tier < CorpseLinger.Length ? CorpseLinger[(int)tier] : 0.55f;
+            return CorpseLingerFor(tier, jitter01, nearCeiling, QualityTier.Yuksek);
+        }
+
+        /// <summary>WP-076: × the quality tier's scale before the ceiling rule (the Ultra floor is not scaled).</summary>
+        public float CorpseLingerFor(EnemyTier tier, float jitter01, bool nearCeiling, QualityTier quality)
+        {
+            float baseSeconds = CorpseLinger != null && (int)tier < CorpseLinger.Length ? CorpseLinger[(int)tier] : 4.0f;
+            baseSeconds *= CorpseQualityScaleFor(quality);
             float seconds = baseSeconds * (1f + (Mathf.Clamp01(jitter01) * 2f - 1f) * CorpseJitter);
             if (nearCeiling) seconds = Mathf.Max(seconds * CorpseCapScale, tier == EnemyTier.Ultra ? UltraCorpseFloor : 0f);
             return Mathf.Max(0.05f, seconds);
         }
+
+        public float CorpseQualityScaleFor(QualityTier quality) => CorpseQualityScale != null && (int)quality < CorpseQualityScale.Length ? Mathf.Max(0.05f, CorpseQualityScale[(int)quality]) : 1f;
+        public int CorpseCeilingFor(QualityTier quality) => CorpseCeiling != null && (int)quality < CorpseCeiling.Length ? Mathf.Max(1, CorpseCeiling[(int)quality]) : 10;
 
         public float OnScreenFactorFor(int threatLayer, float fallback)
         {

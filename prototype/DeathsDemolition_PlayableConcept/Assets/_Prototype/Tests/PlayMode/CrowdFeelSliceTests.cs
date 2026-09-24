@@ -106,8 +106,9 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             s1.Kill(); u1.Kill(); yield return null;
             float s1Linger = s1.LastCorpseLinger, u1Linger = u1.LastCorpseLinger;   // read now: the pooled bodies are reused below
-            Assert.That(s1Linger, Is.InRange(0.55f * 0.85f - 1e-3f, 0.55f * 1.15f + 1e-3f), "Standard ceset 0,55 ± %15");
-            Assert.That(u1Linger, Is.InRange(3.0f * 0.85f - 1e-3f, 3.0f * 1.15f + 1e-3f), "Ultra ceset 3,0 ± %15");
+            float q = feel.CorpseQualityScaleFor(QualityTiers.Current);   // WP-076 v2: × quality tier
+            Assert.That(s1Linger, Is.InRange(4.0f * q * 0.85f - 1e-3f, 4.0f * q * 1.15f + 1e-3f), "Standard ceset 4,0 × kademe ± %15");
+            Assert.That(u1Linger, Is.InRange(6.0f * q * 0.85f - 1e-3f, 6.0f * q * 1.15f + 1e-3f), "Ultra ceset 6,0 × kademe ± %15");
             EnemyFactory.ClearAll(); yield return null;
             // near the ceiling: fill to capacity, kill one → ×0.4
             int cap = EnemyFactory.Capacity;
@@ -117,7 +118,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.GreaterOrEqual(many.Count, cap - 1);
             many[0].Kill(); yield return null;
-            Assert.That(many[0].LastCorpseLinger, Is.InRange(0.55f * 0.4f * 0.85f - 1e-3f, 0.55f * 0.4f * 1.15f + 1e-3f), "tavana yakın ceset ×0,4");
+            Assert.That(many[0].LastCorpseLinger, Is.InRange(4.0f * q * 0.4f * 0.85f - 1e-3f, 4.0f * q * 0.4f * 1.15f + 1e-3f), "tavana yakın ceset ×0,4");
             Debug.Log("[DD-OBS] wp054.corpse standard=" + s1Linger.ToString("0.00") + " ultra=" + u1Linger.ToString("0.00") + " nearCap=" + many[0].LastCorpseLinger.ToString("0.00") + " cap=" + cap);
             EnemyFactory.ClearAll(); yield return null;
 

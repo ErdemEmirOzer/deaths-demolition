@@ -619,6 +619,8 @@ namespace DD.Prototype.Enemies
         protected override void OnDespawned()
         {
             _attack?.Cancel(GrabEndReason.Killed);   // WP-076: a body leaving without dying (pool clear, WP-061K/L) gives back its slot / grab
+            UnregisterCorpse();   // WP-076: off the corpse ceiling list (buried, evicted or cleared)
+            _bodyStateOverride = ZombieBodyState.Standing;
             UnregisterCrowdMembership();
             DamageTargetRegistry.Unregister(transform);
             s_live.Remove(this);
@@ -1128,12 +1130,17 @@ namespace DD.Prototype.Enemies
 
         private void TickDying(float dt)
         {
-            // Corpses still slide under knockback, but they no longer steer, attack,
-            // register as damage targets or block anything: the controller is off (see
-            // Die), so the slide is a plain transform move on the ground plane.
+            // WP-076 §2.3 (S-06 A3.7): the driven body's corpse belongs to the animation driver (clip root / ragdoll) —
+            // S-03 writes no transform after death, only the despawn countdown and the floor guard below. The block
+            // rig keeps its procedural fall and the knockback slide (plain transform move; the controller is off).
+            if (TickCorpseFloor()) return;
             _knockbackVelocity = Vector3.Lerp(_knockbackVelocity, Vector3.zero, Mathf.Clamp01(KnockbackDamping * dt));
 
-            if (_controller != null && _controller.enabled)
+            if (_animator.Driven)
+            {
+                // driven: no slide
+            }
+            else if (_controller != null && _controller.enabled)
             {
                 _verticalVelocity = _controller.isGrounded ? -2f : _verticalVelocity + Gravity * dt;
                 Vector3 motion = _knockbackVelocity;
@@ -1298,7 +1305,7 @@ namespace DD.Prototype.Enemies
 
             // WP-076 §1.4: one strong hit (≥ 0.85, e.g. a single pellet) on the holding body frees the player; the
             // REQ-124 stagger gate is independent (the escape does not spend it)
-            if (!result.Killed && _attack.IsGrabbing) _attack.TryEscapeGrab(hit.ImpactForce);
+            if (!result.Killed && _attack.IsGrabbing) _attack.TryEscapeGrab(hit.HitWeight);   // review R1-A #10: ungoverned
 
             // -------------------------------------------------------- armour readability
             RefreshArmorVisual(ArmorSlot.Helmet);
@@ -1399,9 +1406,13 @@ namespace DD.Prototype.Enemies
             {
                 CrowdFeelSettings feel = CrowdFeelSettings.Active;
                 bool nearCeiling = EnemyFactory.Capacity > 0 && EnemyFactory.SpawnedCount >= EnemyFactory.Capacity - feel.CorpseCapMargin;
-                _despawnCountdown = feel.CorpseLingerFor(_tier, _random.Range(0f, 1f), nearCeiling);
+                _despawnCountdown = feel.CorpseLingerFor(_tier, _random.Range(0f, 1f), nearCeiling, QualityTiers.Current);   // WP-076: v2, × quality tier
                 LastCorpseLinger = _despawnCountdown;
             }
+
+            // WP-076 §2 / DEC-096: the killing push for the driver (S-06 picks the family). Read BEFORE the controller goes off.
+            LastDeathImpulse = DeathImpulse.Build(direction, transform.forward, hit.ImpactForce, hit.Source, _lastMeta.Kind == DamageKind.Debug,
+                result.Region, hit.Point, _currentSpeed, BodyState);
 
             // WP-003 lifecycle contract: from here on this body is a corpse. The round
             // ledger stops counting it as alive NOW, not when the corpse despawns (REQ-012).
@@ -1435,7 +1446,9 @@ namespace DD.Prototype.Enemies
             SetHitboxesEnabled(false);
 
             // WP-032C: the driven body picks the tier death (Special A/B, Ultra, side_R) from the tier and the push itself.
-            _animator.BeginDeath(direction, hit.ImpactForce, result.Region, heavyTier, transform, ref _random);
+            _animator.SetDeathImpulse(LastDeathImpulse);
+            _animator.BeginDeath(LastDeathImpulse.Direction, LastDeathImpulse.Force, result.Region, heavyTier, transform, ref _random);
+            RegisterCorpse();   // WP-076: the corpse ceiling (oldest buried first) — after BeginDeath so an evicted body is never this one
 
             PrototypeConfig config = PrototypeConfig.Active;
 

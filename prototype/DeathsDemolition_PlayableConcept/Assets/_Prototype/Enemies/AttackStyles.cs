@@ -132,16 +132,23 @@ namespace DD.Prototype.Enemies
             return true;
         }
 
-        /// <summary>1 inside the band, linear to 0 over <see cref="AttackStyleProfile.RangeFalloffShare"/> of the band outside it.</summary>
+        /// <summary>
+        /// Hard gate: 0 outside [min, MaxReach] — a body never commits a swing it cannot land (review R1-A #9; the Standard
+        /// swings at ≤ 1.7 m as before). Inside, the last <see cref="AttackStyleProfile.RangeFalloffShare"/> of the reach
+        /// tapers the weight to <see cref="EdgeFit"/> so the mix favours the style whose reach fits best.
+        /// </summary>
         public static float RangeFit(in AttackContext c, ZombieAttackStyle s)
         {
             float max = AttackStyleProfile.MaxReach(c.Tier, s, c.AttackRange);
             float min = s == ZombieAttackStyle.Lunge ? AttackStyleProfile.LungeMinMetres : 0f;
+            if (c.Distance > max || c.Distance < min) return 0f;
             float soft = Mathf.Max(0.05f, max * AttackStyleProfile.RangeFalloffShare);
-            if (c.Distance > max) return c.Distance > max + soft ? 0f : 1f - (c.Distance - max) / soft;
-            if (c.Distance < min) return c.Distance < min - soft ? 0f : 1f - (min - c.Distance) / soft;
-            return 1f;
+            float edge = Mathf.Min(max - c.Distance, s == ZombieAttackStyle.Lunge ? c.Distance - min : soft);
+            return edge >= soft ? 1f : Mathf.Lerp(EdgeFit, 1f, edge / soft);
         }
+
+        /// <summary>Weight at the very edge of a style's band (the mix still allows it; it never zeroes a valid swing).</summary>
+        public const float EdgeFit = 0.35f;
 
         public static float AngleFit(in AttackContext c, ZombieAttackStyle s)
         {
@@ -277,10 +284,26 @@ namespace DD.Prototype.Enemies
 
         public static float SecondsFor(EnemyTier tier) => tier == EnemyTier.Elite ? GrabSecondsElite : GrabSecondsStandard;
 
-        public static void ResetStatics() { ActiveLifeId = 0; ActiveBody = null; StartedCount = 0; EscapedCount = 0; Started = null; Ended = null; }
+        /// <summary>State and counters only — subscribers (S-02 slow, S-09 prompt) are kept (review R1-A #11).</summary>
+        public static void ResetStatics() { ActiveLifeId = 0; ActiveBody = null; StartedCount = 0; EscapedCount = 0; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetDomain() { ResetStatics(); AttackSlotBoard.ResetStatics(); AttackSelector.Enabled = ReadFlag(); }
+        private static void ResetDomain() { ResetStatics(); Started = null; Ended = null; AttackSlotBoard.ResetStatics(); AttackSelector.Enabled = ReadFlag(); }
+
+        /// <summary>Review R1-A #11: every run starts with an empty slot board and no grab, whatever the pool did.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void BindRunReset()
+        {
+            DD.Prototype.Rounds.RunEvents.RunStarted -= OnRunStarted;
+            DD.Prototype.Rounds.RunEvents.RunStarted += OnRunStarted;
+        }
+
+        private static void OnRunStarted(int startRound)
+        {
+            if (Active) End(ActiveLifeId, GrabEndReason.Killed);
+            ActiveLifeId = 0; ActiveBody = null;
+            AttackSlotBoard.ResetStatics();
+        }
 
         /// <summary>`-ddAiV3 0` turns the v3 selector off (A/B, S-05 §5).</summary>
         private static bool ReadFlag()

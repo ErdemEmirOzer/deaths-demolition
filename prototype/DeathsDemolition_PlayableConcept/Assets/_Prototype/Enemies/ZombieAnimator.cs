@@ -2,6 +2,7 @@ using UnityEngine;
 using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
+using DeathImpulse = DD.Prototype.Damage.DeathImpulse;
 
 namespace DD.Prototype.Enemies
 {
@@ -414,6 +415,10 @@ namespace DD.Prototype.Enemies
         public bool IsStaggering => _staggerTime < _staggerDuration && _staggerDuration > 0f;
 
         /// <summary>Pick and start a death reaction. The enemy despawns when DeathFinished.</summary>
+        /// <summary>WP-076 §2 / DEC-096: the killing push S-03 built in Die(), set before <see cref="BeginDeath"/>; S-06's driver reads it (SetDeathImpulse(in DeathImpulse)).</summary>
+        public DeathImpulse DeathImpulse { get; private set; }
+        public void SetDeathImpulse(in DeathImpulse impulse) => DeathImpulse = impulse;
+
         public void BeginDeath(Vector3 worldDirection, float intensity, BodyRegion region, bool heavy,
             Transform reference, ref EnemyRandom random)
         {

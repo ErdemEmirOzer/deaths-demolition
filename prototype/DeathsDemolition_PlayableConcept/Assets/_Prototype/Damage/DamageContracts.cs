@@ -66,6 +66,15 @@ namespace DD.Prototype.Damage
 
         /// <summary>Which system produced the hit.</summary>
         public DamageSourceKind Source;
+
+        /// <summary>
+        /// WP-076 (review R1-A #10): the impulse BEFORE the stagger governor (0 = not set → read <see cref="ImpactForce"/>).
+        /// Rules keyed to a single hit's weight (the grab escape ≥ 0.85) read this, so saturating fire cannot lock them out.
+        /// </summary>
+        public float UngovernedImpactForce;
+
+        /// <summary>The single-hit weight: the ungoverned impulse when the producer set it, else <see cref="ImpactForce"/>.</summary>
+        public float HitWeight => UngovernedImpactForce > 0f ? UngovernedImpactForce : ImpactForce;
     }
 
     /// <summary>Outcome of one hit or one explosion on one receiver.</summary>
