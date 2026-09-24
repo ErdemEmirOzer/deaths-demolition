@@ -67,7 +67,7 @@ def main():
     parser.add_argument("--failed-stage", default="")
     args = parser.parse_args()
 
-    stages = ["full-editmode", "full-playmode", "release-smoke", "m3-regression", "soak-exact", "economy-acceptance", "window-modes", "log-scan"]
+    stages = ["full-editmode", "full-playmode", "release-smoke", "m3-regression", "soak-exact", "wp064-closure", "economy-acceptance", "window-modes", "log-scan"]
     stage_results = {name: exit_code(args.out, name) for name in stages}
     edit = xml_counts(os.path.join(args.out, "full-editmode", "editmode.xml"))
     play = xml_counts(os.path.join(args.out, "full-playmode", "playmode.xml"))

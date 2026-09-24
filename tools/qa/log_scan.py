@@ -18,6 +18,9 @@ PATTERNS = [
         r"\bCrash!!!\b",
         r"\bSegmentation fault\b",
         r"\berror CS\d+\b",
+        r"\bShader error in\b",
+        r"\bBuildFailedException\b",
+        r"\[QaRunBot\] write failed",
         r"\bWITH FAILURES\b",
         r"\bAssertion failed\b",
     )

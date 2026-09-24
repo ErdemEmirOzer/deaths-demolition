@@ -112,6 +112,8 @@ trap 'finalize >/dev/null 2>&1 || true; cleanup' EXIT INT TERM
 stage full-editmode "$REPO/tools/test.sh" editmode --out "$OUT/full-editmode" --timeout-min 30 || exit "$FAILED"
 stage full-playmode "$REPO/tools/test.sh" playmode --out "$OUT/full-playmode" --timeout-min 60 || exit "$FAILED"
 stage release-smoke "$REPO/tools/build.sh" release --smoke --out "$OUT/release" || exit "$FAILED"
+# WP-064 v2 (S-10 finding 2): the Library state the release build ran on
+stage release-library python3 "$HERE/library_provenance.py" "$REPO" "$OUT/release/library-provenance.json" || exit "$FAILED"
 
 # Full suites above already include the QA EditMode and Armor PlayMode tests. Hand those XML files to
 # the M3 aggregate so regression.sh can avoid repeating the same tests while still enforcing them.
@@ -123,9 +125,23 @@ export DD_READABILITY_ROUNDS="1,4,8,10,12"
 export DD_BOT_EXTRA="-ddQaBotFrames $OUT/m3/bot/tier-frames -ddUiCapture hud -ddUiCaptureOut $OUT/m3/bot/ui -ddUiCaptureRounds 1,2,4,8,12"
 export DD_PLAYER_TIMEOUT="${DD_PLAYER_TIMEOUT:-7200}"
 stage m3-regression "$REPO/tools/qa/regression.sh" "$OUT/m3" --rounds "$ROUNDS" --seed "$SEED" --perf-runs "$PERF_RUNS" --window "$WINDOW" --skip-tests --steps build,spawnmix,bot,perf,readability || exit "$FAILED"
-stage soak-exact python3 "$HERE/soak_gate.py" "$OUT/m3/bot/bot-summary.json" --rounds "$ROUNDS" || exit "$FAILED"
-
+# DEC-091 (user 2026-09-24): the soak MUST is stability — seeds 61 and 26, ROUNDS each, the invulnerable-by-design bot
+# (-ddQaBotStability; rounds, log and memory checked by soak_gate.py --stability inside the closure gate). The real-bot run
+# of m3-regression and four more are a report (>= 5 runs, reached-round distribution not gated): a real-bot death does not stop the RC.
 DEV_APP="$OUT/m3/build-dev/DeathsDemolition.app"
+DEV_BIN="$DEV_APP/Contents/MacOS/Deaths Demolition - Playable Concept"
+EXECUTION_COMMIT="$(git -C "$REPO" rev-parse HEAD)"
+soak_run() { python3 "$HERE/wp064_run.py" soak --bin "$DEV_BIN" --out "$OUT/m3/$1" --rounds "$ROUNDS" --seed "$2" --commit "$EXECUTION_COMMIT" \
+  --timeout "$DD_PLAYER_TIMEOUT" --preflight-attempts "${DD_PREFLIGHT_WINDOWS:-30}" --preflight-wait 60 "${@:3}"; }
+stage soak-stability-61 soak_run soak-61 61 --stability || exit "$FAILED"
+stage soak-stability-26 soak_run soak-26 26 --stability || exit "$FAILED"
+for i in 2 3 4 5; do
+  seed=61; [ $((i % 2)) -eq 1 ] && seed=26
+  soak_run "real-$i" "$seed" > "$OUT/m3/real-$i.out" 2>&1; log "real-bot report run real-$i seed=$seed exit=$? (report only, DEC-091)"
+done
+stage wp064-closure python3 "$HERE/wp064_gate.py" "$OUT/m3" --release "$OUT/release" --commit "$EXECUTION_COMMIT" \
+  --soak-dirs soak-61,soak-26 --seeds 61,26 --report-dirs bot,real-2,real-3,real-4,real-5 --rounds "$ROUNDS" --window "$WINDOW" --repo "$REPO" || exit "$FAILED"
+
 if [ -d "$DEV_APP" ]; then
   stage economy-acceptance "$REPO/tools/qa/economy-acceptance.sh" "$DEV_APP" "$OUT/economy-acceptance" || exit "$FAILED"
   stage window-modes "$REPO/tools/qa/window-modes.sh" "$DEV_APP" "$OUT/window-modes" || exit "$FAILED"

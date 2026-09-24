@@ -72,14 +72,17 @@ for u in used:
     b = bucket(u['path']); r = roll.setdefault(b, {'mb': 0.0, 'files': 0}); r['mb'] += u['mb']; r['files'] += 1
 for r in roll.values(): r['mb'] = round(r['mb'], 2)
 appmb = round(appkb / 1024, 1)
-warn = appmb > cap if appmb else (complete or 0) > cap
+cap_applicable = mode == 'release'
+warn = cap_applicable and (appmb > cap if appmb else (complete or 0) > cap)
 out = {'utc': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'dir': d, 'log': log, 'mode': mode, 'stamp': stamp,
-       'appMB': appmb, 'completeBuildMB': round(complete or 0, 1), 'totalUserAssetsMB': round(total_user or 0, 1), 'capMB': cap, 'capExceeded': warn,
+       'appMB': appmb, 'completeBuildMB': round(complete or 0, 1), 'totalUserAssetsMB': round(total_user or 0, 1), 'capMB': cap,
+       'capApplicable': cap_applicable, 'capExceeded': warn,
        'categories': cat, 'rollup': dict(sorted(roll.items(), key=lambda kv: -kv[1]['mb'])), 'usedAssets': len(used), 'top': used[:top]}
 json.dump(out, open(jpath, 'w'), indent=1)
 md = []
 md.append(f"# Build footprint — {mode or '?'} {stamp or ''}  ({out['utc']})")
-md.append(f"app (du) **{appmb} MB** · complete build size (log) **{out['completeBuildMB']} MB** · user assets {out['totalUserAssetsMB']} MB · cap {cap:.0f} MB → {'**WARN: cap exceeded**' if warn else 'ok'} (dev builds carry debug symbols; the cap is for release)")
+cap_status = '**WARN: cap exceeded**' if warn else ('ok' if cap_applicable else 'N/A (release-only)')
+md.append(f"app (du) **{appmb} MB** · complete build size (log) **{out['completeBuildMB']} MB** · user assets {out['totalUserAssetsMB']} MB · cap {cap:.0f} MB → {cap_status}")
 md.append("\n| Category | MB | % |\n|---|---:|---:|")
 for k, v in sorted(cat.items(), key=lambda kv: -kv[1]['mb']): md.append(f"| {k} | {v['mb']:.1f} | {v['pct']:.1f} |")
 md.append("\n| Folder | MB | files |\n|---|---:|---:|")
@@ -87,7 +90,7 @@ for k, v in out['rollup'].items(): md.append(f"| {k} | {v['mb']:.1f} | {v['files
 md.append(f"\n| Top {top} used assets | MB | % |\n|---|---:|---:|")
 for u in used[:top]: md.append(f"| {u['path']} | {u['mb']:.2f} | {u['pct']:.1f} |")
 open(mpath, 'w').write('\n'.join(md) + '\n')
-print(f"footprint mode={mode or '?'} app={appmb}MB complete={out['completeBuildMB']}MB user={out['totalUserAssetsMB']}MB cap={cap:.0f} {'WARN cap exceeded' if warn else 'ok'} json={jpath}")
+print(f"footprint mode={mode or '?'} app={appmb}MB complete={out['completeBuildMB']}MB user={out['totalUserAssetsMB']}MB cap={cap:.0f} {'WARN cap exceeded' if warn else ('ok' if cap_applicable else 'N/A release-only')} json={jpath}")
 for k, v in sorted(cat.items(), key=lambda kv: -kv[1]['mb'])[:4]: print(f"  {k:<14}{v['mb']:>8.1f} MB {v['pct']:>6.1f}%")
 for k, v in list(out['rollup'].items())[:5]: print(f"  {k:<18}{v['mb']:>8.1f} MB  {v['files']} files")
 PY

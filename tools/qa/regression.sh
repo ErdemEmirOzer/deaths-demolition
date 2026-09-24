@@ -19,7 +19,10 @@ while [ $# -gt 0 ]; do case "$1" in
   *) echo "bilinmeyen arg: $1"; exit 2;; esac; done
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="${DD_REPO:-$(cd "$HERE/../.." && pwd)}"   # DD_REPO: betik anlık kopyadan koşarken (queue-start.sh)
 AGG="${DD_AGGREGATE:-$HERE/aggregate.py}"
+WP064_RUN="$HERE/wp064_run.py"
+EXECUTION_COMMIT=$(git -C "$REPO" rev-parse HEAD)
 BOT_EXTRA=(); if [ -n "${DD_BOT_EXTRA:-}" ]; then if [ -n "${ZSH_VERSION:-}" ]; then BOT_EXTRA=(${=DD_BOT_EXTRA}); else read -ra BOT_EXTRA <<< "$DD_BOT_EXTRA"; fi; fi   # zsh kelime bölmez
+RUN_EXTRA=(); for arg in "${BOT_EXTRA[@]}"; do RUN_EXTRA+=("--extra-arg=$arg"); done
 STEPS="${STEPS:-build,editmode,spawnmix,bot,perf,readability,playmode}"; has_step(){ case ",$STEPS," in *",$1,"*) return 0;; esac; return 1; }
 UNITY="${DD_UNITY:-/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity}"
 PROJECT="${DD_PROJECT:-$REPO/prototype/DeathsDemolition_PlayableConcept}"
@@ -63,6 +66,11 @@ if [ $SKIP_BUILD -eq 0 ] && has_step build; then
   log "build-dev exit=$X errorsCS=$(grep -c 'error CS' "$OUT/build-dev.log" 2>/dev/null) via=$([ -x "$BUILD_SH" ] && echo build.sh || echo LifecycleProbeBuild)"; [ $X -eq 0 ] || exit 1
 fi
 find_app; [ -x "$BIN" ] || { log "dev build yok: $OUT/build-dev"; exit 1; }
+# WP-064 v2 (S-10 finding 2): the Library state this dev build ran on (the gate compares it with the commit)
+if [ -d "$OUT/build-dev" ] && [ ! -f "$OUT/build-dev/library-provenance.json" ]; then
+  python3 "$HERE/library_provenance.py" "$REPO" "$OUT/build-dev/library-provenance.json" >> "$OUT/build-dev.log" 2>&1
+  log "library-provenance dev exit=$?"
+fi
 
 # 2 · EditMode QA: rapor şeması + bot eşlemesi + spawn-mix dilimi testi
 if [ $SKIP_TESTS -eq 0 ] && has_step editmode; then
@@ -80,15 +88,29 @@ fi
 
 # 3 · bot koşusu (N round, tohumlu)
 if has_step bot; then
-slot_acquire || exit 2; run_player bot -ddQaBot "$OUT/bot" -ddQaBotRounds "$ROUNDS" -ddQaBotSeed "$SEED" -ddTelemetryDir "$OUT/bot/telemetry" "${BOT_EXTRA[@]}"; slot_release   # DD_BOT_EXTRA: ör. "-ddQaAllocScan 4" (WP-044 K1 tip taraması; ölçüm koşusu, kapı geçişi sayılmaz)   # WP-045 run telemetry (dd-run-telemetry-v1) yanına düşer
+slot_acquire || exit 2
+python3 "$WP064_RUN" soak --bin "$BIN" --out "$OUT/bot" --rounds "$ROUNDS" --seed "$SEED" --commit "$EXECUTION_COMMIT" --timeout "$PLAYER_TIMEOUT" --preflight-attempts "${DD_PREFLIGHT_WINDOWS:-30}" --preflight-wait 60 "${RUN_EXTRA[@]}"; X=$?
+slot_release
+log "bot exit=$X $(head -1 "$OUT/bot/summary.txt" 2>/dev/null)"
+# DEC-091: a real-bot run that ends without passing (Player exit 3: death / round timeout) is a report, not a stop;
+# a crash, an artifact write failure (4), a runner timeout or a host discard (75 / 76) still stops the run
+[ $X -eq 0 ] || [ "$(cat "$OUT/bot/exit.txt" 2>/dev/null)" = "exit=3" ] || exit 1
 [ -f "$OUT/bot/bot-summary.json" ] || log "bot: bot-summary.json yok — Player dışarıdan sonlandırıldı (SIGTERM → Unity exit 0) ya da sürücü kurulmadı; player.log'a bak"
 fi
 
 # 4 · perf: PilotPerfProbe Run sahnesi, temiz pencere, N × WINDOW s
 if has_step perf; then
-for i in $(seq 1 $PERF_RUNS); do clean_window || log "perf-$i: temiz pencere yok, koşu yine de alınıyor (raporda işaretlenir)"   # slot alınmadan beklenir: kuyruktaki oturumları tutmaz
+# WP-064 v2 (S-10 finding 6): attempts are numbered on; a host-discarded attempt (75 preflight / 76 contaminated)
+# stays on disk and in attempts-ledger.jsonl and the next number runs; any other failure stops the chain.
+i=0; complete=0
+while [ $complete -lt $PERF_RUNS ]; do
+  i=$((i+1)); [ $i -le $((PERF_RUNS * 3)) ] || { log "perf: $PERF_RUNS temiz deneme $((PERF_RUNS * 3)) denemede toplanamadı"; exit 1; }
   slot_acquire || exit 2
-  run_player "perf-$i" -ddPilotPerfProbe "$OUT/perf-$i" -ddPilotScene Run -ddPilotWindowSeconds "$WINDOW" -ddPilotHudAB; slot_release; done
+  python3 "$WP064_RUN" perf --bin "$BIN" --out "$OUT/perf-$i" --window "$WINDOW" --commit "$EXECUTION_COMMIT" --timeout "$PLAYER_TIMEOUT" --preflight-attempts "${DD_PREFLIGHT_WINDOWS:-30}" --preflight-wait 60 --extra-arg=-ddPilotHudAB; X=$?
+  slot_release
+  log "perf-$i exit=$X $(head -1 "$OUT/perf-$i/summary.txt" 2>/dev/null)"
+  if [ $X -eq 0 ]; then complete=$((complete+1)); elif [ $X -eq 75 ] || [ $X -eq 76 ]; then continue; else exit 1; fi
+done
 fi
 
 # 5 · okunabilirlik: gerçek spawner karışımı, round 1/4/8, 3 skin

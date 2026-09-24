@@ -267,6 +267,8 @@ namespace DD.Prototype.Diagnostics
             public float playerZ;
             public int targetFrameRate;
             public int vSyncCount;
+            public string graphicsDeviceType;
+            public string graphicsDeviceName;
 
             // ---- WP-019 VFX stress (04-window)
             public bool vfxStress;
@@ -297,6 +299,9 @@ namespace DD.Prototype.Diagnostics
             public float gpuTransparentsMaxMs = -1f;
             public float gpuOpaquesAvgMs = -1f;
             public float gpuCameraAvgMs = -1f;
+            public float gpuFrameAvgMs = -1f;
+            public float gpuFrameMaxMs = -1f;
+            public string gpuMeasurementSource;
             public int gpuSampledFrames;
             public float gpuSubWindowSeconds;
             public float gpuSubWindowFrameMeanMs;
@@ -382,6 +387,7 @@ namespace DD.Prototype.Diagnostics
 
             // ---- 02 force-40
             public int forcedTarget;
+            public int configuredSafetyCeiling;
             public int achievedCount;
             public float forceSeconds;
             public bool forceTimedOut;
@@ -459,6 +465,10 @@ namespace DD.Prototype.Diagnostics
             public double gcAllocatedInFrameAvg;
             public long gcAllocatedInFrameMax;
             public long gcAllocatedInWindowTotal;
+            public double mainThreadCpuAvgMs;
+            public double mainThreadCpuMaxMs;
+            public double renderThreadCpuAvgMs;
+            public double renderThreadCpuMaxMs;
             public string unavailableCounters;
             public int gen0CollectionsInWindow;
             /// <summary>WP-014: p99 over the frames at or under 33.33 ms (host presentation stalls excluded) and how many frames that excluded.</summary>
@@ -630,8 +640,10 @@ namespace DD.Prototype.Diagnostics
             private const float FrameBudget30Ms = 1000f / 30f;
             private const int SampleCapacity = 20000;
             private const int ControlBytes = 1024 * 1024;
-            private const int LoadIntegrityTolerance = 2;
-            private const float LoadIntegrityRequired = 0.95f;
+            // WP-064 / DEC-088 is binding at exactly 40 living enemies for the full
+            // measurement window. A lower load is an invalid attempt, never a softer pass.
+            private const int LoadIntegrityTolerance = 0;
+            private const float LoadIntegrityRequired = 1f;
             private const int ReadabilityPointsPerEnemy = 5;
             private const int ReadabilityMostlyVisible = 3;
 
@@ -761,6 +773,7 @@ namespace DD.Prototype.Diagnostics
                 }
 
                 // ---------------------------------------------------------------- 02 force-40
+                int configuredCeiling = PrototypeConfig.Active.AbsoluteSafetyCeiling;
                 int ceiling = dir.SafetyCeiling;
                 dir.ForceActiveTarget(ceiling, true);
                 float t0 = Time.realtimeSinceStartup;
@@ -779,11 +792,12 @@ namespace DD.Prototype.Diagnostics
                 int armorFitted = ArmorAll ? FitArmorOnCrowd() : 0;
                 Stage s2 = Capture("02-force-40");
                 s2.forcedTarget = ceiling;
+                s2.configuredSafetyCeiling = configuredCeiling;
                 s2.achievedCount = dir.ActiveCount;
                 s2.forceSeconds = Time.realtimeSinceStartup - t0;
                 s2.forceTimedOut = forceTimedOut;
-                s2.pass = !forceTimedOut && s2.achievedCount >= ceiling;
-                s2.note = "forced target " + ceiling + " (pool ignored): reached " + s2.achievedCount + " in " + s2.forceSeconds.ToString("F2", CultureInfo.InvariantCulture) + " s" + (forceTimedOut ? " TIMEOUT" : "") + (ArmorAll ? " | armor all: " + armorFitted + " pieces fitted" : "");
+                s2.pass = !forceTimedOut && configuredCeiling == 40 && ceiling == configuredCeiling && s2.achievedCount == configuredCeiling;
+                s2.note = "configured/ledger/forced " + configuredCeiling + "/" + ceiling + "/" + s2.achievedCount + " (pool ignored) in " + s2.forceSeconds.ToString("F2", CultureInfo.InvariantCulture) + " s" + (forceTimedOut ? " TIMEOUT" : "") + (ArmorAll ? " | armor all: " + armorFitted + " pieces fitted" : "");
                 Write(s2);
 
                 // ---------------------------------------------------------------- 03 warmup
@@ -820,7 +834,9 @@ namespace DD.Prototype.Diagnostics
                     new Counter(ProfilerCategory.Memory, "System Used Memory"),
                     new Counter(ProfilerCategory.Memory, "Total Used Memory"),
                     new Counter(ProfilerCategory.Memory, "Total Reserved Memory"),
-                    new Counter(ProfilerCategory.Memory, "GC Allocated In Frame")
+                    new Counter(ProfilerCategory.Memory, "GC Allocated In Frame"),
+                    new Counter(ProfilerCategory.Internal, "Main Thread"),
+                    new Counter(ProfilerCategory.Internal, "Render Thread")
                 };
                 for (int i = 0; i < counters.Length; i++) counters[i].Start();
                 CrowdSolver solver = CrowdService.Solver;
@@ -1009,6 +1025,8 @@ namespace DD.Prototype.Diagnostics
                           " | >16.67ms " + s4.framesOver16_667Ms + " (" + (s4.fractionOver16_667Ms * 100f).ToString("F1", CultureInfo.InvariantCulture) + "%) >33.33ms " + s4.framesOver33_333Ms +
                           " | draw " + s4.drawCallsAvg.ToString("F0", CultureInfo.InvariantCulture) + " setPass " + s4.setPassCallsAvg.ToString("F0", CultureInfo.InvariantCulture) +
                           " tris " + s4.trianglesAvg.ToString("F0", CultureInfo.InvariantCulture) + " verts " + s4.verticesAvg.ToString("F0", CultureInfo.InvariantCulture) + " batches " + s4.batchesAvg.ToString("F0", CultureInfo.InvariantCulture) +
+                          " | cpu main " + s4.mainThreadCpuAvgMs.ToString("F3", CultureInfo.InvariantCulture) + "/" + s4.mainThreadCpuMaxMs.ToString("F3", CultureInfo.InvariantCulture) +
+                          " render " + s4.renderThreadCpuAvgMs.ToString("F3", CultureInfo.InvariantCulture) + "/" + s4.renderThreadCpuMaxMs.ToString("F3", CultureInfo.InvariantCulture) + " ms" +
                           " | tex " + Mb(s4.textureMemoryAvg) + " mesh " + Mb(s4.meshMemoryAvg) + " gcRes " + Mb(s4.gcReservedMemoryAvg) + " sys " + Mb(s4.systemUsedMemoryAvg) +
                           " | crowd " + s4.crowdSolveAvgMs.ToString("F3", CultureInfo.InvariantCulture) + "/" + s4.crowdSolveMaxMs.ToString("F3", CultureInfo.InvariantCulture) + " ms" +
                           " | alive min/avg/max " + s4.activeMin + "/" + s4.activeAvg.ToString("F1", CultureInfo.InvariantCulture) + "/" + s4.activeMax + " load>=" + loadFloor + " for " + (s4.loadIntegrityFraction * 100f).ToString("F1", CultureInfo.InvariantCulture) + "%" +
@@ -1055,10 +1073,11 @@ namespace DD.Prototype.Diagnostics
                 Stage s4d = Capture("04d-gpu");
                 yield return MeasureGpu(s4d, rig, 8f);
                 FillVfxStage(s4d);
-                s4d.pass = true;   // informational: the effect-GPU ceiling (≤ 1.5 ms) is judged on the A/B delta, not here
+                s4d.pass = s4d.gpuSampledFrames > 0 && s4d.gpuFrameAvgMs > 0f && !float.IsNaN(s4d.gpuFrameAvgMs) && !float.IsInfinity(s4d.gpuFrameAvgMs);
                 s4d.note = "gpu transparents avg " + s4d.gpuTransparentsAvgMs.ToString("F3", CultureInfo.InvariantCulture) + " max " + s4d.gpuTransparentsMaxMs.ToString("F3", CultureInfo.InvariantCulture) +
                            " opaques " + s4d.gpuOpaquesAvgMs.ToString("F3", CultureInfo.InvariantCulture) + " camera " + s4d.gpuCameraAvgMs.ToString("F3", CultureInfo.InvariantCulture) +
-                           " ms over " + s4d.gpuSampledFrames + " sampled frames / " + s4d.gpuSubWindowSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s (frame mean " + s4d.gpuSubWindowFrameMeanMs.ToString("F2", CultureInfo.InvariantCulture) + " ms, profiler on)" +
+                           " | frame " + s4d.gpuFrameAvgMs.ToString("F3", CultureInfo.InvariantCulture) + "/" + s4d.gpuFrameMaxMs.ToString("F3", CultureInfo.InvariantCulture) + " ms via " + s4d.gpuMeasurementSource +
+                           " over " + s4d.gpuSampledFrames + " sampled frames / " + s4d.gpuSubWindowSeconds.ToString("F1", CultureInfo.InvariantCulture) + " s (frame mean " + s4d.gpuSubWindowFrameMeanMs.ToString("F2", CultureInfo.InvariantCulture) + " ms, profiler on)" +
                            (s4d.gpuSampledFrames == 0 ? " GPU SAMPLES UNAVAILABLE" : "") +
                            " | blood ready=" + s4d.bloodReady + " splashes=" + s4d.bloodSplashes + " droplets=" + s4d.bloodDropletBursts + " marks=" + s4d.bloodMarks + " pools=" + s4d.bloodPools +
                            " live=" + s4d.bloodLive + " merged=" + s4d.bloodMerged + "(" + s4d.bloodMergedQuads + " quads) evicted=" + s4d.bloodEvicted + " skippedGold=" + s4d.bloodSkippedGold +
@@ -1394,15 +1413,30 @@ namespace DD.Prototype.Diagnostics
                 UnityEngine.Profiling.Recorder camera = UnityEngine.Profiling.Recorder.Get("Camera.Render");
                 transparents.enabled = true; opaques.enabled = true; camera.enabled = true;
                 double tSum = 0, tMax = 0, oSum = 0, cSum = 0, frameSum = 0;
-                int n = 0, frames = 0;
+                double gpuFrameSum = 0, gpuFrameMax = 0;
+                int n = 0, frameTimingSamples = 0, frames = 0;
+                var timings = new FrameTiming[4];
                 float t0 = Time.realtimeSinceStartup;
+                FrameTimingManager.CaptureFrameTimings();
                 yield return null;
                 while (Time.realtimeSinceStartup - t0 < seconds)
                 {
                     if (VfxStress) StepVfxStress(Time.realtimeSinceStartup, rig);
+                    FrameTimingManager.CaptureFrameTimings();
                     yield return null;
                     frames++;
                     frameSum += Time.unscaledDeltaTime * 1000.0;
+                    uint timingCount = FrameTimingManager.GetLatestTimings((uint)timings.Length, timings);
+                    if (timingCount > 0)
+                    {
+                        double gpuMs = timings[(int)timingCount - 1].gpuFrameTime;
+                        if (gpuMs > 0.0 && !double.IsNaN(gpuMs) && !double.IsInfinity(gpuMs))
+                        {
+                            gpuFrameSum += gpuMs;
+                            if (gpuMs > gpuFrameMax) gpuFrameMax = gpuMs;
+                            frameTimingSamples++;
+                        }
+                    }
                     if (transparents.gpuSampleBlockCount > 0)
                     {
                         double t = transparents.gpuElapsedNanoseconds / 1e6;
@@ -1415,8 +1449,14 @@ namespace DD.Prototype.Diagnostics
 
                 UnityEngine.Profiling.Profiler.enabled = wasEnabled;
                 s.gpuSubWindowSeconds = Time.realtimeSinceStartup - t0;
-                s.gpuSampledFrames = n;
+                s.gpuSampledFrames = frameTimingSamples;
+                s.gpuMeasurementSource = frameTimingSamples > 0 ? "FrameTimingManager" : "unavailable";
                 s.gpuSubWindowFrameMeanMs = frames > 0 ? (float)(frameSum / frames) : -1f;
+                if (frameTimingSamples > 0)
+                {
+                    s.gpuFrameAvgMs = (float)(gpuFrameSum / frameTimingSamples);
+                    s.gpuFrameMaxMs = (float)gpuFrameMax;
+                }
                 if (n > 0)
                 {
                     s.gpuTransparentsAvgMs = (float)(tSum / n);
@@ -1928,6 +1968,10 @@ namespace DD.Prototype.Diagnostics
                 s.totalReservedMemoryAvg = c[11].Avg; s.totalReservedMemoryMax = c[11].MaxOrMinusOne;
                 s.gcAllocatedInFrameAvg = c[12].Avg; s.gcAllocatedInFrameMax = c[12].MaxOrMinusOne;
                 s.gcAllocatedInWindowTotal = c[12].Valid ? (long)c[12].Sum : -1L;
+                s.mainThreadCpuAvgMs = c[13].Valid ? c[13].Avg / 1000000d : -1d;
+                s.mainThreadCpuMaxMs = c[13].Valid ? c[13].MaxOrMinusOne / 1000000d : -1d;
+                s.renderThreadCpuAvgMs = c[14].Valid ? c[14].Avg / 1000000d : -1d;
+                s.renderThreadCpuMaxMs = c[14].Valid ? c[14].MaxOrMinusOne / 1000000d : -1d;
 
                 var unavailable = new StringBuilder();
                 for (int i = 0; i < c.Length; i++)
@@ -2222,6 +2266,8 @@ namespace DD.Prototype.Diagnostics
                     driftParticlesAlive = driftAlive,
                     targetFrameRate = Application.targetFrameRate,
                     vSyncCount = QualitySettings.vSyncCount,
+                    graphicsDeviceType = SystemInfo.graphicsDeviceType.ToString(),
+                    graphicsDeviceName = SystemInfo.graphicsDeviceName,
                     flow = hasDirector ? d.DescribeFlow() : "no director"
                 };
             }

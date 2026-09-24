@@ -8,6 +8,7 @@ QA tests green, armour form test = DD.Art ArmorTests.Okunabilirlik green.
 """
 import glob
 import json
+import math
 import os
 import re
 import sys
@@ -29,6 +30,14 @@ def read_json(path):
             return json.load(f)
     except Exception:
         return None
+
+
+def finite_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def positive_metric(value):
+    return finite_number(value) and value > 0
 
 
 def xml_counts(path):
@@ -127,18 +136,36 @@ def main():
         if not w:
             gates.append(gate(f"perf.run{i}", False, "missing", "", "04-window.json absent", f"perf-{i}/"))
             continue
-        means.append(w.get("frameMeanMs", 0.0)); p99s.append(w.get("frameP99Ms", 0.0)); p99f.append(w.get("frameP99FilteredMs", w.get("frameP99Ms", 0.0)))
+        mean = w.get("frameMeanMs")
+        raw_p99 = w.get("frameP99Ms")
+        clean_p99 = w.get("frameP99FilteredMs")
+        metrics_valid = positive_metric(mean) and positive_metric(raw_p99) and positive_metric(clean_p99)
+        means.append(mean if positive_metric(mean) else 1e9)
+        p99s.append(raw_p99 if positive_metric(raw_p99) else 1e9)
+        p99f.append(clean_p99 if positive_metric(clean_p99) else 1e9)
         stalls.append(w.get("framesExcludedAsStalls", 0)); maxes.append(w.get("frameMaxMs", 0.0)); frames.append(w.get("frameCount", w.get("warmupFrames", 0)))
         draws.append(w.get("drawCallsAvg", 0.0)); tris.append(w.get("trianglesAvg", 0.0)); texmb.append(w.get("textureMemoryMax", 0) / 1048576.0)
         meshmb.append(w.get("meshMemoryMax", 0) / 1048576.0); rtmb.append(w.get("renderTextureMemoryMax", 0) / 1048576.0)
         gcalloc.append(w.get("gcAllocatedInFrameAvg", 0.0)); gen0.append(w.get("gen0CollectionsInWindow", 0))
         loads.append((load1(os.path.join(d, "load-before.txt")), load1(os.path.join(d, "load-after.txt"))))
         gates.append(gate(f"perf.run{i}.integrity", bool(w.get("pass")), w.get("note", "")[:60], "probe stage 04 pass", "", f"perf-{i}/04-window.json"))
+        gates.append(gate(f"perf.run{i}.metrics", metrics_valid, "present" if metrics_valid else "missing/non-finite",
+                          "frameMeanMs, frameP99Ms, frameP99FilteredMs finite", "", f"perf-{i}/04-window.json"))
+        gates.append(gate(f"perf.run{i}.meanMs", metrics_valid and mean <= PERF_MEAN_MAX_MS,
+                          f"{mean:.2f}" if positive_metric(mean) else "missing/non-positive", f"<= {PERF_MEAN_MAX_MS:.1f} ms", "independent DEC-088 window", f"perf-{i}/04-window.json"))
+        gates.append(gate(f"perf.run{i}.cleanP99Ms", metrics_valid and clean_p99 <= PERF_P99_MAX_MS,
+                          f"{clean_p99:.2f}" if positive_metric(clean_p99) else "missing/non-positive", f"<= {PERF_P99_MAX_MS:.1f} ms", "independent DEC-088 window", f"perf-{i}/04-window.json"))
     if means:
         mean_avg = sum(means) / len(means)
         p99f_avg = sum(p99f) / len(p99f)
-        gates.append(gate("perf.meanMs", mean_avg <= PERF_MEAN_MAX_MS, f"{mean_avg:.2f} (runs {', '.join(f'{m:.2f}' for m in means)})", f"<= {PERF_MEAN_MAX_MS:.1f} ms (ADR-011-3 v3 / DEC-088)", "", "perf-*/04-window.json"))
-        gates.append(gate("perf.cleanP99Ms", p99f_avg <= PERF_P99_MAX_MS, f"{p99f_avg:.2f} (runs {', '.join(f'{m:.2f}' for m in p99f)}; raw p99 {', '.join(f'{m:.2f}' for m in p99s)})", f"<= {PERF_P99_MAX_MS:.1f} ms stall-filtered (ADR-011-3 v3 / DEC-088)", "", "perf-*/04-window.json"))
+        # WP-064: every counted window passes independently. Averages remain
+        # descriptive and may never hide an over-budget run.
+        gates.append(gate("perf.meanMs", len(means) == perf_runs and max(means) <= PERF_MEAN_MAX_MS,
+                          f"avg {mean_avg:.2f}; runs {', '.join(f'{m:.2f}' for m in means)}",
+                          f"each of {perf_runs} runs <= {PERF_MEAN_MAX_MS:.1f} ms (DEC-088)", "", "perf-*/04-window.json"))
+        gates.append(gate("perf.cleanP99Ms", len(p99f) == perf_runs and max(p99f) <= PERF_P99_MAX_MS,
+                          f"avg {p99f_avg:.2f}; runs {', '.join(f'{m:.2f}' for m in p99f)}; raw p99 {', '.join(f'{m:.2f}' for m in p99s)}",
+                          f"each of {perf_runs} runs <= {PERF_P99_MAX_MS:.1f} ms stall-filtered (DEC-088)", "", "perf-*/04-window.json"))
         gates.append(gate("perf.externalPresentContention", True, f"stalls>33.3ms {sum(stalls)} / max {max(maxes):.1f} ms",
                           "report only", "host presentation stalls (WindowServer/other windows); Gfx.WaitForPresent counter not in PilotPerfProbe — proxy = frames > 33.3 ms", "perf-*/04-window.json"))
         huds = [read_json(os.path.join(out, f"perf-{i}", "04h-hud.json")) for i in range(1, perf_runs + 1)]
