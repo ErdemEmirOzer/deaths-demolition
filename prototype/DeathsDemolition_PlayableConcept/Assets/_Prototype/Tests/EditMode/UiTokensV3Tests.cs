@@ -155,12 +155,15 @@ namespace DD.Prototype.Tests.EditMode
         {
             // Gold = currency counter, price, Special HUD (style guide §2.2 UI). UiKitSheet: the
             // capture-only component sheet shows the currency counter and the Special ring.
-            { "StateGold", new[] { "RunHudScreen.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs" } },
+            // UiFxGlobals (slice 4): the Fx shader's gold-leaf global is StateGold; UiFxCaptureAgent:
+            // capture-only Fx sample page (gold-leaf chips, sparks).
+            { "StateGold", new[] { "RunHudScreen.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs" } },
             { "BarSpecial", new[] { "RunHudScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs" } },
             { "GoldLeaf", new[] { "UiTokens.cs" } },
             // Vermilion = one primary CTA per screen/modal, heading tick, BUY pill, seal.
             // PauseScreen: the END RUN dialog frame - reviewed in slice 9 (modal v3).
-            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs" } }
+            // UiFxCaptureAgent (slice 4): capture-only ink bleed / hanko stamp samples.
+            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs" } }
         };
 
         [Test]
