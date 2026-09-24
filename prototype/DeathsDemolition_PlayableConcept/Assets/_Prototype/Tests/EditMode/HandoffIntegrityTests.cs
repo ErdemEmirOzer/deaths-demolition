@@ -95,7 +95,7 @@ namespace DD.Prototype.Tests.EditMode
             return v;
         }
 
-        /// <summary>Yorumlar VE metin sabitleri silinmis kod. Cagri taramasi bunu kullanir.</summary>
+        /// <summary>Yorumlar, metin VE karakter sabitleri silinmis kod. Cagri taramasi bunu kullanir.</summary>
         private static string CagriKodu(string path)
         {
             if (s_cachedCode == null)
@@ -107,6 +107,9 @@ namespace DD.Prototype.Tests.EditMode
             if (!s_cachedCode.TryGetValue(path, out v))
             {
                 v = Regex.Replace(YorumsuzKod(path), "\"(?:[^\"\\\\\n]|\\\\.)*\"", "\"\"");
+                // WP-031C: char literals too — '{' / '}' in a hand-written parser (AudioCatalogBuilder, 8896e10e)
+                // broke the brace stack SaranTip counts, so seven methods after them lost their enclosing type.
+                v = Regex.Replace(v, @"'(?:[^'\\\n]|\\.)'", "' '");
                 s_cachedCode[path] = v;
             }
 
