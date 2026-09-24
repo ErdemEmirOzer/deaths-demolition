@@ -18,7 +18,7 @@
 #     sessions' players with the same bundle id, bumps them in both plists) are left out of the two
 #     plist digests; every other key is still compared, the profile and its side files stay byte-hashed;
 #   * WP-066F/066G: the settings files in the player folder (ui-settings.json, load-timing.json,
-#     input-settings.json, input-overrides.json — the Editor shares this path) are backed up, restored
+#     input-settings.json, input-overrides.json, ui-hints.json (WP-068, S-10 soak find) — the Editor shares this path) are backed up, restored
 #     and byte-compared as well; a file that did not exist before and was created by the run is moved
 #     into <out> (never deleted);
 #   * WP-066G: every other file under the player folders (persistentDataPath, recursive; .lock excluded)
@@ -42,7 +42,7 @@ AS="$HOME/Library/Application Support"; PR="$HOME/Library/Preferences"
 D1="$AS/Deaths Demolition/$DD_PRODUCT"; D2="$AS/$DD_BUNDLE_ID"
 F1="$D1/prototype-profile.json"; F2="$D2/prototype-profile.json"
 P1="$PR/$DD_BUNDLE_ID.plist"; P2="$PR/unity.Deaths Demolition.$DD_PRODUCT.plist"
-UIFILES=("$D1/ui-settings.json" "$D1/load-timing.json" "$D1/input-settings.json" "$D1/input-overrides.json")   # WP-066F/066G
+UIFILES=("$D1/ui-settings.json" "$D1/load-timing.json" "$D1/input-settings.json" "$D1/input-overrides.json" "$D1/ui-hints.json")   # WP-066F/066G/066H
 # WP-066G: inventory of everything else in the player folders (recursive, .lock leases excluded).
 inventory() { for d in "$D1" "$D2"; do [ -d "$d" ] && find "$d" -type f ! -name '*.lock' ! -name '.DS_Store' 2>/dev/null; done | LC_ALL=C sort | while IFS= read -r f; do echo "$(dd_sha "$f")  $f"; done; }
 # Side files = .bak / .corrupt.N.json (saved progress). The .lock file is a live process lease
