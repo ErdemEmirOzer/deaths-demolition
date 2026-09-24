@@ -50,6 +50,10 @@ namespace DD.Prototype.Spawn
         public int ThreatLayer;
         /// <summary>WP-076 §5.1: weight penalty on points behind the camera (0 = none; RearSpawnShare.Penalty).</summary>
         public float RearSpawnPenalty;
+        /// <summary>WP-076 B6: CameraMode (0 TopDown = the WP-030/054 values; 1 TP / 2 FP = SpawnModeTable's stricter row).</summary>
+        public int CameraMode;
+        /// <summary>WP-076 B6 tier path gate: reject points farther than this walkable path (0 = none).</summary>
+        public float MaxPathDistance;
     }
 
     /// <summary>
@@ -127,9 +131,16 @@ namespace DD.Prototype.Spawn
             // ---------------------------------------------------------- 4. path distance
             float distance = point.PathDistance;
 
-            if (distance < config.MinSpawnDistance)
+            int mode = SpawnModeTable.Clamp(inputs.CameraMode);
+            float minDistance = mode == 0 ? config.MinSpawnDistance : Mathf.Max(config.MinSpawnDistance, SpawnModeTable.MinSpawnDistance[mode]);   // WP-076 B6
+            if (distance < minDistance)
             {
                 return Reject(point, ref breakdown, "too close");
+            }
+
+            if (inputs.MaxPathDistance > 0f && distance > inputs.MaxPathDistance)
+            {
+                return Reject(point, ref breakdown, "tier path gate");   // WP-076 B6: Elite / Ultra ≤ 55 m, Special ≤ 75 m
             }
 
             if (distance > config.MaxUsefulDistance)
@@ -147,7 +158,8 @@ namespace DD.Prototype.Spawn
                     return Reject(point, ref breakdown, "on screen");
                 }
 
-                if (point.IsBehindCamera && point.StraightDistance < tuning.BehindCameraRejectDistance)
+                float behindReject = mode == 0 ? tuning.BehindCameraRejectDistance : Mathf.Max(tuning.BehindCameraRejectDistance, SpawnModeTable.BehindCameraReject[mode]);   // WP-076 B6
+                if (point.IsBehindCamera && point.StraightDistance < behindReject)
                 {
                     return Reject(point, ref breakdown, "behind camera");
                 }
@@ -182,6 +194,7 @@ namespace DD.Prototype.Spawn
 
             // ---------------------------------------------------------- 9. visibility (WP-030)
             float onScreenFactor = inputs.ThreatLayer >= 0 ? DD.Prototype.Navigation.CrowdFeelSettings.Active.OnScreenFactorFor(inputs.ThreatLayer, tuning.OnScreenFactor) : tuning.OnScreenFactor;   // WP-054
+            if (mode != 0) onScreenFactor = Mathf.Min(onScreenFactor, SpawnModeTable.OnScreenFactor[mode]);   // WP-076 B6: TP 0.30 / FP 0.25 (the threat-layer row still wins when lower)
             breakdown.Visibility = point.IsOnScreen && (relaxation & SpawnRelaxation.Screen) == 0 ? onScreenFactor : 1f;
             if (point.IsBehindCamera && inputs.RearSpawnPenalty > 0f) breakdown.Visibility *= UnityEngine.Mathf.Clamp01(1f - inputs.RearSpawnPenalty);   // WP-076 §5.1 rear share cap
 

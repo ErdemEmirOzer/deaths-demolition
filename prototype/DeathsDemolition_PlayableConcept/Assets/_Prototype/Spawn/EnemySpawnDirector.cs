@@ -754,6 +754,28 @@ namespace DD.Prototype.Spawn
             EnemyTier tier = pick.Tier;
             bool guaranteed = pick.Guaranteed;
 
+            // WP-076 B6 §5.1 tier path gate: an Elite / Ultra only from ≤ 55 m of path, a Special ≤ 75 m. The point was drawn
+            // before the tier (the ledger order stays as it was), so a heavy pick on a far point moves the body to the best
+            // point that passes the gate; none → the drawn point (a guaranteed debut is never lost to the gate).
+            float gate = SpawnModeTable.TierPathMax(tier);
+            if (gate > 0f && point.PathDistance > gate)
+            {
+                SpawnPointRuntime nearer = SelectPoint(gate);
+                if (nearer != null && nearer != point)
+                {
+                    point = nearer;
+                    position = ScatterAround(point);
+                    rotation = point.SpawnRotation();
+                    CharacterController cc = instance.GetComponent<CharacterController>();
+                    bool ccOn = cc != null && cc.enabled;
+                    if (ccOn) cc.enabled = false;
+                    instance.transform.SetPositionAndRotation(position, rotation);
+                    if (ccOn) cc.enabled = true;
+                    TierGateReroutes++;
+                }
+                else TierGateFallbacks++;
+            }
+
             EnemySpawnContext context = BuildContext(tier, point, position, rotation, guaranteed, ticket);
 
             var spawned = instance as ISpawnedEnemy;
@@ -930,7 +952,11 @@ namespace DD.Prototype.Spawn
 
         // ------------------------------------------------------------------ selection
 
-        private SpawnPointRuntime SelectPoint()
+        /// <summary>WP-076 B6 readouts: heavy / Special spawns moved to a nearer point by the tier path gate, and those that found none.</summary>
+        public int TierGateReroutes { get; private set; }
+        public int TierGateFallbacks { get; private set; }
+
+        private SpawnPointRuntime SelectPoint(float maxPathDistance = 0f)
         {
             IReadOnlyList<SpawnPointRuntime> points = SpawnPointRegistry.Points;
 
@@ -957,7 +983,9 @@ namespace DD.Prototype.Spawn
                 PlayerVelocity = player.Velocity,
                 Now = Time.time,
                 NavDegraded = !CrowdService.IsNavMeshAvailable,
-                ThreatLayer = ThreatLevelFeed.Layer   // WP-054: threat-aware visibility weight
+                ThreatLayer = ThreatLevelFeed.Layer,   // WP-054: threat-aware visibility weight
+                CameraMode = SpawnModeTable.Mode,       // WP-076 B6: TP / FP rows
+                MaxPathDistance = maxPathDistance       // WP-076 B6: tier path gate
             };
 
             // WP-076 §5.1: rear-hemisphere share cap (FP 35 % / TP 45 % of the last 8 spawns)
@@ -1120,6 +1148,15 @@ namespace DD.Prototype.Spawn
             bool behind = viewport.z <= 0f;
 
             point.IsBehindCamera = behind;
+            if (SpawnModeTable.Mode != 0 && DD.Prototype.CameraSystem.PrototypeCameraRig.Active != null)
+            {
+                // WP-076 B6 §5.1 TP / FP: on screen = inside the view frustum AND not behind a wall (one Linecast per point
+                // per path refresh — the PathCacheInterval cadence). A mid gate behind a wall 20 m away is off screen.
+                Vector3 chest = point.NavPosition + Vector3.up * SpawnModeTable.ChestHeight;
+                point.IsOnScreen = !behind && DD.Prototype.CameraSystem.CameraView.IsInView(chest, 0f)
+                                   && !Physics.Linecast(DD.Prototype.CameraSystem.CameraView.Position, chest, 1 << PrototypeLayers.Environment, QueryTriggerInteraction.Ignore);
+                return;
+            }
             point.IsOnScreen = !behind &&
                                viewport.x >= -0.05f && viewport.x <= 1.05f &&
                                viewport.y >= -0.05f && viewport.y <= 1.05f;
