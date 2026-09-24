@@ -541,5 +541,51 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log("[DD-TEST] wp038r.routes routes=" + routes.Count + " stalls=" + fails.Count + (fails.Count > 0 ? " " + string.Join(" | ", fails) : ""));
             Assert.IsEmpty(fails, "batı cebine / cepten oyuncu yürüyüşünde takılma (" + fails.Count + "):\n" + string.Join("\n", fails));
         }
+
+        // WP-074 B1 · The World v5 greybox (dev-only scene, GreyboxV6Builder) with the real player body: from every spawn gate
+        // to the start and from the start into every room (R1 on its 1.2 m plinth through the 0.20 m stairs). WorldBounds reads
+        // ±55 at runtime (S-10 bot). No route may stall 3 s.
+        [UnityTest]
+        [Timeout(900000)]
+        public IEnumerator Greybox_V6_SpawnKapilarindanBaslangica_VeHerOdaya_Yurunur()
+        {
+            CharacterAssetSet.ResetCache();
+            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+            yield return null;
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "MainMenu");
+#if UNITY_EDITOR
+            UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(ArtLibraryPaths.GreyboxV6Scene, new LoadSceneParameters(LoadSceneMode.Single));
+#endif
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == ArtLibraryPaths.GreyboxV6SceneName && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "greybox");
+            yield return CharacterTests.Bekle(() => PlayerRegistry.Primary != null && PrototypeCameraRig.Active != null, KurulumZamanAsimi, "oyuncu/kamera");
+            yield return CharacterTests.Bekle(() => EnemySpawnDirector.Instance != null && RunDirector.Instance != null, KurulumZamanAsimi, "run sistemleri");
+            EnemySpawnDirector.Instance.StopRound();
+            EnemySpawnDirector.Instance.ClearAllEnemies();
+            _rig = PlayerRegistry.Primary;
+            _rig.Health.DiagnosisInvulnerable = true;
+            Assert.IsNotNull(WorldBounds.Active, "WorldBounds yok");
+            Assert.AreEqual(55f, WorldBounds.Active.HalfExtent, 1e-3f);
+            yield return null;
+            Time.captureDeltaTime = 1f / 60f;
+            _girdi = new Girdi();
+            _rig.Motor.SetInputSource(_girdi);
+
+            WorldPlacementAsset placement = null;
+#if UNITY_EDITOR
+            placement = UnityEditor.AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(ArtLibraryPaths.GreyboxV6Placement);
+#endif
+            Assert.IsNotNull(placement, "greybox placement");
+            Vector3 start = placement.playerStart;
+            var routes = new List<(string name, Vector3 from, Vector3 to)>();
+            foreach (WorldPlacementAsset.Point p in placement.spawnPoints) routes.Add((p.id + "→başlangıç", p.position, start));
+            // Room interiors (GreyboxV6Builder.Rooms centre + (1.5, −1.5)); R1 on the 1.2 m plinth.
+            foreach ((string id, Vector3 at) in new[] { ("R1_MainHall", new Vector3(1.5f, 1.2f, 42f)), ("R2_EastPavilion", new Vector3(36.5f, 0f, 26.5f)), ("R3_Kura", new Vector3(-37.5f, 0f, 38.5f)),
+                                                        ("R4_TeaHouse", new Vector3(-30.5f, 0f, -37.5f)), ("R5_Azumaya", new Vector3(34.5f, 0f, -34.5f)), ("R6_Chumon", new Vector3(1.5f, 0f, 19f)) })
+                routes.Add(("başlangıç→" + id, start, at));
+            var fails = new List<string>();
+            yield return WalkRoutes(routes, fails);
+            Debug.Log("[DD-TEST] wp074.b1.walk routes=" + routes.Count + " stalls=" + fails.Count + (fails.Count > 0 ? " " + string.Join(" | ", fails) : ""));
+            Assert.IsEmpty(fails, "greybox yürüyüşünde takılma (" + fails.Count + "):\n" + string.Join("\n", fails));
+        }
     }
 }

@@ -48,6 +48,11 @@ namespace DD.Art
         public const string Ap005WorldScene = ArtPipelinePaths.ArtRoot + "/Scenes/World_AP005.unity";
         public const string Ap005WorldSceneName = "World_AP005";
         public const string Ap005NavMeshData = ArtPipelinePaths.ArtRoot + "/Scenes/World_AP005/NavMesh-World_AP005.asset";
+
+        /// <summary>WP-074 B1: the World v5 greybox — a dev-only scene (disabled build-settings entry) and its placement asset.</summary>
+        public const string GreyboxV6SceneName = "World_V6_Greybox";
+        public const string GreyboxV6Scene = ArtPipelinePaths.ArtRoot + "/Scenes/" + GreyboxV6SceneName + ".unity";
+        public const string GreyboxV6Placement = WorldRoot + "/V6/V6_Greybox_Placement.asset";
         public const string WorldSourceAsset = ArtPipelinePaths.ArtRoot + "/Resources/DD_WorldSource.asset";
 
         public const string ShowcaseScene = ArtPipelinePaths.ArtRoot + "/Scenes/AP_LibraryShowcase.unity";

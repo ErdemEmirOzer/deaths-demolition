@@ -44,6 +44,12 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static GameObject Build(Transform root, List<(Vector2 centre, Vector2 semi, float yaw)> basins)
         {
+            return Build(root, basins, HalfExtent);
+        }
+
+        /// <summary>WP-074 B1: the same boundary for a square of ±<paramref name="halfExtent"/> m (World v5 greybox ±55).</summary>
+        public static GameObject Build(Transform root, List<(Vector2 centre, Vector2 semi, float yaw)> basins, float halfExtent)
+        {
             if (root == null) throw new ArgumentNullException(nameof(root));
             Transform old = root.Find(ObjectName);
             if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
@@ -51,22 +57,23 @@ namespace DD.Art.Pipeline.EditorTools
             var go = new GameObject(ObjectName);
             go.transform.SetParent(root, false);
             go.layer = Layer;
-            float span = 2f * (HalfExtent + WallThickness);
+            float span = 2f * (halfExtent + WallThickness);
             float height = WallTop - WallBottom;
             float mid = (WallTop + WallBottom) * 0.5f;
-            float off = HalfExtent + WallThickness * 0.5f;
+            float off = halfExtent + WallThickness * 0.5f;
             AddWall(go, "North", new Vector3(0f, mid, off), new Vector3(span, height, WallThickness));
             AddWall(go, "South", new Vector3(0f, mid, -off), new Vector3(span, height, WallThickness));
             AddWall(go, "East", new Vector3(off, mid, 0f), new Vector3(WallThickness, height, span));
             AddWall(go, "West", new Vector3(-off, mid, 0f), new Vector3(WallThickness, height, span));
             BuildPondRims(go, basins, out int segments, out int crossings);
-            int plugs = BuildGroundPlugs(go, basins, out int plugCells);
+            int plugs = BuildGroundPlugs(go, basins, halfExtent, out int plugCells);
 
             NavMeshModifier modifier = go.AddComponent<NavMeshModifier>();
             modifier.ignoreFromBuild = true;   // never part of the bake, whatever the surface's layer mask becomes
             WorldFallGuard guard = go.AddComponent<WorldFallGuard>();
-            guard.Configure(HalfExtent - 1f, 12f, new Vector3(0f, 0.1f, -3f));
-            Debug.Log("[WorldBoundary] ring ±" + HalfExtent + " m + " + basins.Count + " pond rims (" + segments + " segments, " + crossings + " crossing gaps) + " + plugs + " ground plugs (" + plugCells + " cells)");
+            guard.Configure(halfExtent - 1f, 12f, new Vector3(0f, 0.1f, -3f));
+            go.AddComponent<WorldBounds>().Configure(halfExtent, RingNavInset);   // WP-074 B1: readable at runtime (S-10 bot)
+            Debug.Log("[WorldBoundary] ring ±" + halfExtent + " m + " + basins.Count + " pond rims (" + segments + " segments, " + crossings + " crossing gaps) + " + plugs + " ground plugs (" + plugCells + " cells)");
             return go;
         }
 
@@ -88,11 +95,16 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static int BuildRingNavVolumes(Transform root)
         {
+            return BuildRingNavVolumes(root, HalfExtent);
+        }
+
+        public static int BuildRingNavVolumes(Transform root, float halfExtent)
+        {
             Transform old = root.Find(RingNavRootName);
             if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
             var parent = new GameObject(RingNavRootName) { layer = PrototypeLayers.Environment };
             parent.transform.SetParent(root, false);
-            float inner = HalfExtent - RingNavInset, span = 2f * (HalfExtent + RingNavDepth), mid = inner + RingNavDepth * 0.5f;
+            float inner = halfExtent - RingNavInset, span = 2f * (halfExtent + RingNavDepth), mid = inner + RingNavDepth * 0.5f;
             float y = (RingNavBottom + RingNavTop) * 0.5f, h = RingNavTop - RingNavBottom;
             (string name, Vector3 centre, Vector3 size)[] sides =
             {
@@ -178,28 +190,28 @@ namespace DD.Art.Pipeline.EditorTools
         /// merged into z-runs of equal height and plugged with an invisible floor whose top is the highest ground among the cell's
         /// neighbours 0.5 m away (0 when none) — the surface simply continues. Returns the plug count.
         /// </summary>
-        private static int BuildGroundPlugs(GameObject parent, List<(Vector2 centre, Vector2 semi, float yaw)> basins, out int cells)
+        private static int BuildGroundPlugs(GameObject parent, List<(Vector2 centre, Vector2 semi, float yaw)> basins, float halfExtent, out int cells)
         {
             cells = 0;
             var root = new GameObject(PlugsName);
             root.transform.SetParent(parent.transform, false);
             root.layer = Layer;
             int ground = (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
-            int n = Mathf.RoundToInt(2f * HalfExtent / PlugCell);
+            int n = Mathf.RoundToInt(2f * halfExtent / PlugCell);
             int plugs = 0;
             for (int ix = 0; ix < n; ix++)
             {
-                float x = -HalfExtent + (ix + 0.5f) * PlugCell;
+                float x = -halfExtent + (ix + 0.5f) * PlugCell;
                 int runStart = -1;
                 float runTop = 0f;
                 for (int iz = 0; iz <= n; iz++)
                 {
-                    float z = -HalfExtent + (iz + 0.5f) * PlugCell;
+                    float z = -halfExtent + (iz + 0.5f) * PlugCell;
                     bool hole = iz < n && !InsidePond(basins, x, z) && !Physics.Raycast(new Vector3(x, 3f, z), Vector3.down, 8f, ground, QueryTriggerInteraction.Ignore);
                     float top = hole ? NeighbourGround(x, z, ground) : 0f;
                     if (runStart >= 0 && (!hole || Mathf.Abs(top - runTop) > 0.01f))
                     {
-                        float z0 = -HalfExtent + runStart * PlugCell, z1 = -HalfExtent + iz * PlugCell;
+                        float z0 = -halfExtent + runStart * PlugCell, z1 = -halfExtent + iz * PlugCell;
                         var plug = new GameObject("Plug_" + ix + "_" + runStart);
                         plug.transform.SetParent(root.transform, false);
                         plug.layer = Layer;

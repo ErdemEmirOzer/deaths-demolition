@@ -29,6 +29,10 @@ namespace DD.Prototype.World
 
         public const string CommandLineFlag = "-ddWorldSource";
         public const string EnvironmentVariable = "DD_WORLD_SOURCE";
+        /// <summary>WP-074 B1: <c>-ddWorldScene &lt;name&gt;</c> / <c>DD_WORLD_SCENE</c> loads another authored world scene in the AP005
+        /// slot (the World v5 greybox <c>World_V6_Greybox</c>, dev builds only) — spawn simulation and bot soak, not a player setting.</summary>
+        public const string SceneFlag = "-ddWorldScene";
+        public const string SceneEnvironmentVariable = "DD_WORLD_SCENE";
 
         [Tooltip("The world the Run scene loads. Procedural = M0 blockout (fallback); AP005 = the authored world scene.")]
         [SerializeField] private WorldSource _source = WorldSource.Procedural;
@@ -64,6 +68,14 @@ namespace DD.Prototype.World
             {
                 source = parsed;
                 origin = "override '" + forced + "'";
+            }
+
+            string sceneOverride = Arg(SceneFlag);
+            if (string.IsNullOrEmpty(sceneOverride)) sceneOverride = Environment.GetEnvironmentVariable(SceneEnvironmentVariable);
+            if (!string.IsNullOrEmpty(sceneOverride))
+            {
+                sceneName = sceneOverride;
+                origin += ", scene override '" + sceneOverride + "'";
             }
 
             if (!s_logged)

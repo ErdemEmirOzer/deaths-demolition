@@ -83,6 +83,16 @@ namespace DD.Prototype.Core.EditorTools
                 throw new Exception("[DdBuild] No enabled scenes in Build Settings (the entry scene must be enabled).");
             }
 
+            // WP-074 B1: a dev build may carry extra dev-only scenes (DD_BUILD_EXTRA_SCENES, ';'-separated asset paths — e.g. the
+            // World v5 greybox for the S-03 spawn simulation / S-10 bot soak); release builds never do.
+            string extra = Environment.GetEnvironmentVariable("DD_BUILD_EXTRA_SCENES");
+            if (mode == "dev" && !string.IsNullOrEmpty(extra))
+            {
+                string[] added = extra.Split(';').Select(p => p.Trim()).Where(p => p.Length > 0 && File.Exists(p) && !scenes.Contains(p)).ToArray();
+                scenes = scenes.Concat(added).ToArray();
+                Debug.Log("[DdBuild] extra dev scenes: " + string.Join(", ", added));
+            }
+
             Directory.CreateDirectory(Path.GetDirectoryName(output));
             BuildInfo stamp = BuildStamp.Write(mode);
             DateTime t0 = DateTime.UtcNow;

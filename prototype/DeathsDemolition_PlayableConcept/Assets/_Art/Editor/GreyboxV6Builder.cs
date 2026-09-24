@@ -1,0 +1,805 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text;
+using DD.Prototype.CameraSystem;
+using DD.Prototype.Core;
+using Unity.AI.Navigation;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+
+namespace DD.Art.Pipeline.EditorTools
+{
+    /// <summary>
+    /// WP-074 B1 · World v5 greybox (planning/work-packages/WP-074-WORLD-V5-DIRECTION.md §0 K1–K5 + Ek B §2): the ±55 m layout v6
+    /// as collider boxes in its own dev-only scene <see cref="SceneName"/> — the player-facing World_AP005 is untouched. The same
+    /// runtime path as the authored world (Ap005WorldBootstrap: markers from the greybox placement asset, atmosphere, NavMesh
+    /// verification, run systems), loaded into Run with <c>-ddWorldSource AP005 -ddWorldScene World_V6_Greybox</c>.
+    /// NavMesh v5 keeps the WP-038 rules: climb 0.30, the ring (±55, NavMesh 0.5 m inside), pond rims, fall guard, island linker.
+    /// Writes the data the stakeholders read: spawn-gates-v6.json (S-03), regions-v6.json (S-03), acoustic-spaces-v6.json (S-08).
+    /// Batch: <c>-executeMethod DD.Art.Pipeline.EditorTools.GreyboxV6Builder.BuildCli</c>. Deterministic; rebuilt in place.
+    /// </summary>
+    public static class GreyboxV6Builder
+    {
+        public const string SceneName = ArtLibraryPaths.GreyboxV6SceneName;
+        public const string ScenePath = ArtLibraryPaths.GreyboxV6Scene;
+        public const string DataFolder = "Assets/_Art/Environment/World/V6";
+        public const string PlacementPath = ArtLibraryPaths.GreyboxV6Placement;
+        public const string NavMeshPath = DataFolder + "/NavMesh-" + SceneName + ".asset";
+        public const string SpawnGatesJson = DataFolder + "/spawn-gates-v6.json";
+        public const string RegionsJson = DataFolder + "/regions-v6.json";
+        public const string AcousticJson = DataFolder + "/acoustic-spaces-v6.json";
+        public const string GreyboxRootName = "Greybox v6";
+        public const float HalfExtent = 55f, VistaOuter = 85f, WallHeight = 2.4f, WallThickness = 0.6f, KairoFloor = 0.25f, PlinthHeight = 1.2f;
+
+        // ---------------------------------------------------------------- layout v6 data (Ek B §2, §0 decisions)
+
+        public struct Door
+        {
+            public char Side;       // N/S/E/W wall of a room (axis-aligned)
+            public float At;        // centre along that wall (x for N/S, z for E/W)
+            public float Width;
+            public Door(char side, float at, float width) { Side = side; At = at; Width = width; }
+        }
+
+        public sealed class Room
+        {
+            public string Id, Acoustic;
+            public float X0, X1, Z0, Z1, Floor, Height;
+            public Door[] Doors;
+            public bool Walls = true, RoofOnly;
+        }
+
+        public sealed class Corridor
+        {
+            public string Id;
+            public Vector2[] Path;
+            public float Width, Height;
+            public bool Closed;
+        }
+
+        public struct Gate
+        {
+            public string Id, OldId, Kind;
+            public Vector2 Position;
+            public Gate(string id, string oldId, string kind, float x, float z) { Id = id; OldId = oldId; Kind = kind; Position = new Vector2(x, z); }
+        }
+
+        public static readonly Room[] Rooms =
+        {
+            // R1 main hall on the 1.2 m plinth (§0 K2): 3 front doors + E + W (the rear door gave way to K6, see B1 note).
+            new Room { Id = "R1_MainHall", Acoustic = "Hall", X0 = -18f, X1 = 18f, Z0 = 38f, Z1 = 49f, Floor = PlinthHeight, Height = 6.5f,
+                Doors = new[] { new Door('S', -10f, 3f), new Door('S', 0f, 3f), new Door('S', 10f, 3f), new Door('E', 44f, 2.4f), new Door('W', 44f, 2.4f) } },
+            new Room { Id = "R2_EastPavilion", Acoustic = "Hall", X0 = 30f, X1 = 40f, Z0 = 24f, Z1 = 32f, Height = 3.8f,
+                Doors = new[] { new Door('W', 28f, 2.4f), new Door('S', 35f, 2.4f), new Door('E', 28f, 2.4f) } },
+            new Room { Id = "R3_Kura", Acoustic = "Hall", X0 = -44f, X1 = -34f, Z0 = 36f, Z1 = 44f, Height = 4f,
+                Doors = new[] { new Door('E', 40f, 2.2f), new Door('S', -39f, 2.2f) } },
+            new Room { Id = "R4_TeaHouse", Acoustic = "Hall", X0 = -36f, X1 = -28f, Z0 = -40f, Z1 = -32f, Height = 3.6f,
+                Doors = new[] { new Door('N', -32f, 2.2f), new Door('E', -36f, 2.2f) } },
+            new Room { Id = "R5_Azumaya", Acoustic = "Corridor", X0 = 30f, X1 = 36f, Z0 = -36f, Z1 = -30f, Height = 3.2f, Walls = false, RoofOnly = true },
+            new Room { Id = "R6_Chumon", Acoustic = "Corridor", X0 = -4f, X1 = 4f, Z0 = 18f, Z1 = 23f, Height = 5f,
+                Doors = new[] { new Door('S', 0f, 5f), new Door('N', 0f, 5f), new Door('E', 20.5f, 2f), new Door('W', 20.5f, 2f) } },
+        };
+
+        public static readonly Corridor[] Corridors =
+        {
+            new Corridor { Id = "K1_WestKairo", Path = new[] { new Vector2(-33f, -16f), new Vector2(-33f, 20f) }, Width = 5.2f, Height = 3.4f, Closed = true },
+            new Corridor { Id = "K2_NorthWestLink", Path = new[] { new Vector2(-33f, 20f), new Vector2(-28f, 27f), new Vector2(-26f, 30f) }, Width = 4f, Height = 3.4f },
+            new Corridor { Id = "K3_CloisterWest", Path = new[] { new Vector2(-22f, 22f), new Vector2(-22f, 36f) }, Width = 4f, Height = 3.4f },
+            new Corridor { Id = "K3_CloisterEast", Path = new[] { new Vector2(22f, 22f), new Vector2(22f, 36f) }, Width = 4f, Height = 3.4f },
+            new Corridor { Id = "K4_EastKairo", Path = new[] { new Vector2(26f, 30f), new Vector2(30f, 22f), new Vector2(44f, 22f), new Vector2(50f, 14f) }, Width = 4f, Height = 3.4f },
+            new Corridor { Id = "K5_SouthShore", Path = new[] { new Vector2(-22f, -46f), new Vector2(0f, -46f) }, Width = 3.5f, Height = 3.2f },
+            new Corridor { Id = "K6_RearKairo", Path = new[] { new Vector2(-22f, 52.5f), new Vector2(22f, 52.5f) }, Width = 4f, Height = 3.2f },
+        };
+
+        /// <summary>K1 wall openings (Ek B §2.3): east doors z −7 / 7 (4 m), west door z 0 (3 m); the two ends are open mouths.</summary>
+        public static readonly (char side, float z, float width)[] K1Doors = { ('E', -7f, 4f), ('E', 7f, 4f), ('W', 0f, 3f) };
+
+        /// <summary>Spawn gates (Ek B §3.4): the 12 edge gates keep the prototype ids (placement), the 6 inner gates are data for S-03.</summary>
+        public static readonly Gate[] Gates =
+        {
+            new Gate("N_RearWest", "N_PalaceGateWest", "edge", -20f, 53f), new Gate("N_RearEast", "N_PalaceGateEast", "edge", 20f, 53f),
+            new Gate("NE_Corner", "NE_StonePathCorner", "edge", 44f, 44f), new Gate("E_GardenNorth", "E_SakuraGroveNorth", "edge", 52f, 16f),
+            new Gate("E_GardenSouth", "E_SakuraGroveSouth", "edge", 52f, -14f), new Gate("SE_Shore", "SE_PondApproach", "edge", 42f, -42f),
+            new Gate("S_BridgeSouth", "S_BridgeSouthEnd", "edge", 4f, -52f), new Gate("S_ShoreWest", "S_ShorePathWest", "edge", -16f, -52f),
+            new Gate("SW_TeaHouse", "SW_BambooEntry", "edge", -44f, -44f), new Gate("W_BambooSouth", "W_BambooCorridorSouth", "edge", -52f, -18f),
+            new Gate("W_BambooNorth", "W_BambooCorridorNorth", "edge", -52f, 18f), new Gate("NW_ServiceGate", "NW_ServiceGate", "edge", -46f, 46f),
+            new Gate("I_WestKairoSouth", null, "inner", -33f, -18.5f), new Gate("I_CloisterWest", null, "inner", -22f, 24f),
+            new Gate("I_ShoreEast", null, "inner", 18f, -30f), new Gate("I_GreatSakuraSouth", null, "inner", 36f, -10.5f),
+            new Gate("I_ServiceYardSouth", null, "inner", -36f, 31.5f), new Gate("I_HallRear", null, "inner", 0f, 52.5f),
+        };
+
+        /// <summary>Weapon points (Ek B §3.6, first 12 of 14 in the prototype id order; the last two are listed in the json).</summary>
+        public static readonly Vector2[] WeaponPositions =
+        {
+            new Vector2(0f, 30f), new Vector2(0f, 47f), new Vector2(35f, 28f), new Vector2(36f, 1f), new Vector2(20f, -22f), new Vector2(4f, -16.5f),
+            new Vector2(-32f, -36f), new Vector2(-33f, 2f), new Vector2(-38f, 32f), new Vector2(-45f, 0f), new Vector2(-10f, -44f), new Vector2(33f, -33f),
+        };
+
+        public static readonly Vector2[] ExtraWeaponPositions = { new Vector2(10f, -8f), new Vector2(30f, 20f) };
+
+        /// <summary>Bamboo lanes (Ek B §2.3): polylines, 3 m wide; the grove is solid everywhere else in its band.</summary>
+        public static readonly Vector2[][] BambooLanes =
+        {
+            new[] { new Vector2(-45f, -26f), new Vector2(-45f, 26f) },
+            new[] { new Vector2(-36f, 0f), new Vector2(-45f, 0f) },
+            new[] { new Vector2(-33f, -16f), new Vector2(-45f, -26f) },
+            new[] { new Vector2(-33f, 20f), new Vector2(-45f, 26f) },
+            new[] { new Vector2(-54f, -18f), new Vector2(-45f, -14f) },
+            new[] { new Vector2(-54f, 18f), new Vector2(-45f, 14f) },
+        };
+
+        /// <summary>Garden paths kept clear of trees (Ek B §2.4 / §3.8), half-width 2.5 m.</summary>
+        public static readonly Vector2[][] GardenPaths =
+        {
+            new[] { new Vector2(13f, 1f), new Vector2(27f, 1f) },
+            new[] { new Vector2(36f, -8f), new Vector2(30f, -18f), new Vector2(28f, -30f) },
+            new[] { new Vector2(45f, -8f), new Vector2(48f, -20f), new Vector2(40f, -34f), new Vector2(28f, -41f) },
+            new[] { new Vector2(45f, 1f), new Vector2(54f, 1f) },
+            new[] { new Vector2(36f, 10f), new Vector2(36f, 20f) },
+            new[] { new Vector2(44f, 44f), new Vector2(40f, 40f), new Vector2(36f, 34f) },
+            new[] { new Vector2(52f, 16f), new Vector2(44f, 20f) },
+            new[] { new Vector2(52f, -14f), new Vector2(45f, -8f) },
+            new[] { new Vector2(42f, -42f), new Vector2(34f, -38f) },
+        };
+
+        private static readonly string[] RegionIds = { "center", "north", "east", "south", "west" };
+
+        /// <summary>regions-v6 (Ek B §5): x/z polygons.</summary>
+        public static readonly float[][] RegionPolygons =
+        {
+            Circle(0f, 0f, 14f, 16),
+            new[] { -28f, 18f, 28f, 18f, 28f, 55f, -28f, 55f },
+            new[] { 26f, -40f, 55f, -40f, 55f, 55f, 28f, 55f, 28f, 20f, 26f, 20f },
+            new[] { -30f, -55f, 30f, -55f, 30f, -14f, -30f, -14f },
+            new[] { -55f, -46f, -26f, -46f, -26f, 30f, -28f, 30f, -28f, 55f, -55f, 55f },
+        };
+
+        // ---------------------------------------------------------------- build
+
+        private static readonly Dictionary<string, Material> s_materials = new Dictionary<string, Material>();
+
+        public static void BuildCli()
+        {
+            string report = Build();
+            Debug.Log("[GreyboxV6] " + report);
+        }
+
+        public static string Build()
+        {
+            EnsureFolder(DataFolder);
+            EnsureFolder(DataFolder + "/Materials");
+            s_materials.Clear();
+
+            // The authored world's bootstrap settings and ponds are the reference (copied, not moved).
+            var apPlacement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(ArtLibraryPaths.Ap005PlacementAsset);
+            if (apPlacement == null) throw new InvalidOperationException("AP005 placement missing");
+            List<(Vector2 centre, Vector2 semi, float yaw)> basins = PlacementImporter.BasinHoles(apPlacement);
+            VolumeProfile volume = AssetDatabase.LoadAssetAtPath<VolumeProfile>(AssetDatabase.GUIDToAssetPath("e99c26b47c9984ab8adfa33bbddead21"));
+
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var root = new GameObject(Ap005WorldBootstrap.RootName);
+            new GameObject(Ap005WorldBootstrap.InstancesName).transform.SetParent(root.transform, false);
+            var greybox = new GameObject(GreyboxRootName);
+            greybox.transform.SetParent(root.transform, false);
+            Transform g = greybox.transform;
+
+            int boxes = 0;
+            // Ground (to the vista edge) — the NavMesh stops at the ring.
+            boxes += Box(g, "Ground", new Vector3(0f, -0.1f, 0f), new Vector3(2f * VistaOuter, 0.2f, 2f * VistaOuter), "ground");
+            boxes += BuildRingWall(g);
+            boxes += BuildVista(g);
+            boxes += BuildArena(g);
+            boxes += BuildPalace(g);
+            foreach (Room r in Rooms) if (r.Id != "R1_MainHall") boxes += BuildRoom(g, r);
+            foreach (Corridor c in Corridors) boxes += BuildCorridor(g, c);
+            boxes += BuildServiceYard(g);
+            boxes += BuildEast(g);
+            boxes += BuildSouth(g, basins);
+            boxes += BuildBamboo(g);
+
+            WorldPlacementAsset placement = WritePlacement(apPlacement);
+            var bootstrap = root.AddComponent<Ap005WorldBootstrap>();
+            var so = new SerializedObject(bootstrap);
+            so.FindProperty("_placement").objectReferenceValue = placement;
+            so.FindProperty("_volumeProfile").objectReferenceValue = volume;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // NavMesh v5: ring volumes, bake at body climb, ring + rims + fall guard, island links (WP-038M/N/P/R rules).
+            WorldBoundaryBuilder.BuildRingNavVolumes(root.transform, HalfExtent);
+            Physics.SyncTransforms();
+            int triangles = Bake(root.transform);
+            WorldBoundaryBuilder.Build(root.transform, basins, HalfExtent);
+            Physics.SyncTransforms();
+            Vector3 seed = NavMesh.SamplePosition(placement.playerStart, out NavMeshHit sh, 3f, NavMesh.AllAreas) ? sh.position : placement.playerStart;
+            int links = NavMeshIslandLinker.LinkIslands(root.transform, seed);
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            RegisterDevScene();
+            WriteJson();
+            AssetDatabase.SaveAssets();
+            return boxes + " boxes, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath;
+        }
+
+        // ---------------------------------------------------------------- pieces
+
+        private static int BuildRingWall(Transform g)
+        {
+            // The ring made visible (E-5): a 2.4 m tsuiji just outside the invisible ring's inner face.
+            int n = 0;
+            float span = 2f * (HalfExtent + WallThickness), off = HalfExtent + WallThickness * 0.5f;
+            n += Box(g, "RingWall_N", new Vector3(0f, WallHeight * 0.5f, off), new Vector3(span, WallHeight, WallThickness), "wall");
+            n += Box(g, "RingWall_S", new Vector3(0f, WallHeight * 0.5f, -off), new Vector3(span, WallHeight, WallThickness), "wall");
+            n += Box(g, "RingWall_E", new Vector3(off, WallHeight * 0.5f, 0f), new Vector3(WallThickness, WallHeight, span), "wall");
+            n += Box(g, "RingWall_W", new Vector3(-off, WallHeight * 0.5f, 0f), new Vector3(WallThickness, WallHeight, span), "wall");
+            return n;
+        }
+
+        private static int BuildVista(Transform g)
+        {
+            // 55–85 m: walk-free depth (roof blocks, tree masses, one pagoda) behind the ring wall.
+            int n = 0;
+            var rng = new System.Random(740);
+            for (int i = 0; i < 40; i++)
+            {
+                float a = (float)(i / 40.0 * Math.PI * 2.0 + rng.NextDouble() * 0.1);
+                float r = 62f + (float)rng.NextDouble() * 18f;
+                float x = Mathf.Clamp(Mathf.Cos(a) * r * 1.2f, -VistaOuter + 3f, VistaOuter - 3f), z = Mathf.Clamp(Mathf.Sin(a) * r * 1.2f, -VistaOuter + 3f, VistaOuter - 3f);
+                if (Mathf.Abs(x) < HalfExtent + 4f && Mathf.Abs(z) < HalfExtent + 4f) continue;
+                bool tree = i % 3 != 0;
+                float h = tree ? 10f + (float)rng.NextDouble() * 10f : 6f + (float)rng.NextDouble() * 4f;
+                float w = tree ? 5f : 10f + (float)rng.NextDouble() * 6f;
+                n += Box(g, (tree ? "VistaTree_" : "VistaRoof_") + i, new Vector3(x, h * 0.5f, z), new Vector3(w, h, tree ? w : 8f), tree ? "tree" : "roof");
+            }
+
+            n += Box(g, "VistaPagoda_NE", new Vector3(70f, 14f, 70f), new Vector3(8f, 28f, 8f), "roof");
+            return n;
+        }
+
+        private static int BuildArena(Transform g)
+        {
+            // Centre r 14 keeps its identity (nothing over 0.45 m but the four planter corners) + the axis lanterns.
+            int n = 0;
+            foreach (float sx in new[] { -9f, 9f })
+            foreach (float sz in new[] { -9f, 9f })
+                n += Box(g, "Planter_" + sx + "_" + sz, new Vector3(sx, 0.225f, sz), new Vector3(3f, 0.45f, 3f), "floor");
+            foreach (float z in new[] { 14f, 8f, -14.5f })
+            foreach (float x in new[] { -3f, 3f })
+                n += Box(g, "Lantern_" + x + "_" + z, new Vector3(x, 1.05f, z), new Vector3(0.6f, 2.1f, 0.6f), "prop");
+            // Karamon on the south axis (§0 K5): 6 m opening, four posts and a roof.
+            foreach (float x in new[] { -3.2f, 3.2f })
+            foreach (float z in new[] { -16.8f, -15.2f })
+                n += Box(g, "Karamon_Post_" + x + "_" + z, new Vector3(x, 3f, z), new Vector3(0.45f, 6f, 0.45f), "wall");
+            n += Roof(g, "Karamon_Roof", new Vector3(0f, 6.25f, -16f), new Vector3(8f, 0.5f, 3.2f));
+            return n;
+        }
+
+        private static int BuildPalace(Transform g)
+        {
+            int n = 0;
+            Room hall = Rooms[0];
+            // Plinth (kidan) 1.2 m with the engawa ring; stairs 6 × 0.20 m (NavMesh climb 0.30 → a ramp).
+            n += Box(g, "Hall_Plinth", new Vector3(0f, PlinthHeight * 0.5f, 43.25f), new Vector3(39f, PlinthHeight, 13.5f), "floor");
+            foreach ((float x, float w) in new[] { (-10f, 3f), (0f, 6f), (10f, 3f) })
+                n += Stairs(g, "Hall_StairS_" + x, new Vector2(x, 36.5f), new Vector2(0f, -1f), w);
+            n += Stairs(g, "Hall_StairE", new Vector2(19.5f, 44f), new Vector2(1f, 0f), 2.4f);
+            n += Stairs(g, "Hall_StairW", new Vector2(-19.5f, 44f), new Vector2(-1f, 0f), 2.4f);
+            n += BuildRoom(g, hall);
+            // Interior shoji partitions (x ±6, z 42…46, open ends) and the dais (+0.30).
+            n += Box(g, "Hall_Screen_W", new Vector3(-6f, PlinthHeight + 1.5f, 44f), new Vector3(0.2f, 3f, 4f), "wall");
+            n += Box(g, "Hall_Screen_E", new Vector3(6f, PlinthHeight + 1.5f, 44f), new Vector3(0.2f, 3f, 4f), "wall");
+            n += Box(g, "Hall_Dais", new Vector3(0f, PlinthHeight + 0.15f, 47.5f), new Vector3(12f, 0.3f, 3f), "floor");
+            // Forecourt walls x ±26, z 20…36 (doors z 28…32) and the south wall at z 20 around the chūmon.
+            n += Wall(g, "Court_W", new Vector2(-26f, 20f), new Vector2(-26f, 36f), WallHeight, WallThickness, new[] { (30f - 20f, 4f) });
+            n += Wall(g, "Court_E", new Vector2(26f, 20f), new Vector2(26f, 36f), WallHeight, WallThickness, new[] { (30f - 20f, 4f) });
+            n += Wall(g, "Court_S_W", new Vector2(-26f, 20f), new Vector2(-4f, 20f), WallHeight, WallThickness, null);
+            n += Wall(g, "Court_S_E", new Vector2(4f, 20f), new Vector2(26f, 20f), WallHeight, WallThickness, null);
+            return n;
+        }
+
+        private static int BuildServiceYard(Transform g)
+        {
+            // Fenced (1.8 m) yard x −48…−28, z 30…48: S gate (x −36), E gate to K2 (z 32), W gate (z 46).
+            int n = 0;
+            n += Wall(g, "Yard_S", new Vector2(-48f, 30f), new Vector2(-28f, 30f), 1.8f, 0.3f, new[] { (12f, 4f) });
+            n += Wall(g, "Yard_E", new Vector2(-28f, 30f), new Vector2(-28f, 48f), 1.8f, 0.3f, new[] { (2f, 4f) });
+            n += Wall(g, "Yard_N", new Vector2(-48f, 48f), new Vector2(-28f, 48f), 1.8f, 0.3f, null);
+            n += Wall(g, "Yard_W", new Vector2(-48f, 30f), new Vector2(-48f, 48f), 1.8f, 0.3f, new[] { (16f, 3f) });
+            return n;
+        }
+
+        private static int BuildEast(Transform g)
+        {
+            int n = 0;
+            // R7 great sakura courtyard: 1.8 m walls, 4 gates; the tree island inside.
+            n += Wall(g, "R7_W", new Vector2(27f, -8f), new Vector2(27f, 10f), 1.8f, WallThickness, new[] { (9f, 4f) });
+            n += Wall(g, "R7_E", new Vector2(45f, -8f), new Vector2(45f, 10f), 1.8f, WallThickness, new[] { (9f, 3.5f) });
+            n += Wall(g, "R7_N", new Vector2(27f, 10f), new Vector2(45f, 10f), 1.8f, WallThickness, new[] { (9f, 4f) });
+            n += Wall(g, "R7_S", new Vector2(27f, -8f), new Vector2(45f, -8f), 1.8f, WallThickness, new[] { (9f, 4f) });
+            for (int i = 0; i < 6; i++)
+            {
+                float a = i * Mathf.PI / 3f;
+                n += Tree(g, "R7_Sakura_" + i, new Vector2(36f + Mathf.Cos(a) * 2.2f, 1f + Mathf.Sin(a) * 2.2f), 0.4f);
+            }
+
+            // Sakura / maple garden and the NE pine corner: jittered 5 m grid, clear of paths, rooms, corridors and gates.
+            var rng = new System.Random(741);
+            for (float x = 28f; x <= 53f; x += 5f)
+            for (float z = -40f; z <= 44f; z += 5f)
+            {
+                var p = new Vector2(x + (float)(rng.NextDouble() - 0.5) * 2.5f, z + (float)(rng.NextDouble() - 0.5) * 2.5f);
+                if (!TreeSpotClear(p)) continue;
+                n += Tree(g, "Tree_" + x + "_" + z, p, z > 34f ? 0.5f : 0.35f);
+            }
+
+            return n;
+        }
+
+        private static int BuildSouth(Transform g, List<(Vector2 centre, Vector2 semi, float yaw)> basins)
+        {
+            int n = 0;
+            // Ponds: water surface (visual) + NotWalkable strips 0.5 m past the ellipse (the rims are built by WorldBoundaryBuilder).
+            for (int b = 0; b < basins.Count; b++) n += PondStrips(g, b, basins[b]);
+            // Bridge x 4, z −18…−39.5 (deck 0.25, rails), the stepping causeway x −8 with its island, karesansui, K5 is a corridor.
+            n += Box(g, "Bridge_Deck", new Vector3(4f, 0.125f, -28.75f), new Vector3(3f, 0.25f, 21.5f), "floor");
+            n += Box(g, "Bridge_Rail_W", new Vector3(2.55f, 0.75f, -28.75f), new Vector3(0.1f, 1f, 19.5f), "wall");
+            n += Box(g, "Bridge_Rail_E", new Vector3(5.45f, 0.75f, -28.75f), new Vector3(0.1f, 1f, 19.5f), "wall");
+            n += Box(g, "Causeway", new Vector3(-8f, 0.1f, -26.5f), new Vector3(2f, 0.2f, 13f), "floor");
+            n += Box(g, "Causeway_Island", new Vector3(-8f, 0.1f, -27f), new Vector3(3f, 0.2f, 3f), "floor");
+            n += Wall(g, "Karesansui_N", new Vector2(12f, -16f), new Vector2(28f, -16f), 0.9f, 0.4f, new[] { (6f, 3f) });
+            n += Wall(g, "Karesansui_E", new Vector2(28f, -30f), new Vector2(28f, -16f), 0.9f, 0.4f, new[] { (8f, 3f) });
+            foreach (Vector2 rock in new[] { new Vector2(16f, -20f), new Vector2(22f, -19f), new Vector2(25f, -25f), new Vector2(15f, -27f), new Vector2(20f, -25.5f) })
+                n += Box(g, "Karesansui_Rock_" + rock.x + "_" + rock.y, new Vector3(rock.x, 0.6f, rock.y), new Vector3(1.6f, 1.2f, 1.2f), "prop");
+            return n;
+        }
+
+        private static int BuildBamboo(Transform g)
+        {
+            // Grove band x −54…−37.5, z −30…30: solid (6 m) except the 3 m lanes, 3 m round the spawn gates and the K1 doors.
+            int n = 0;
+            for (float x = -54f; x < -37.5f; x += 1f)
+            {
+                float runStart = float.NaN;
+                for (float z = -30f; z <= 30.001f; z += 1f)
+                {
+                    var c = new Vector2(x + 0.5f, z + 0.5f);
+                    bool solid = z < 30f && GroveCellSolid(c);
+                    if (solid && float.IsNaN(runStart)) runStart = z;
+                    if (!solid && !float.IsNaN(runStart))
+                    {
+                        n += Box(g, "Bamboo_" + x + "_" + runStart, new Vector3(x + 0.5f, 3f, (runStart + z) * 0.5f), new Vector3(1f, 6f, z - runStart), "tree");
+                        runStart = float.NaN;
+                    }
+                }
+            }
+
+            return n;
+        }
+
+        private static bool GroveCellSolid(Vector2 c)
+        {
+            foreach (Vector2[] lane in BambooLanes)
+                if (DistanceToPolyline(c, lane) < 1.5f + 0.71f) return false;
+            foreach (Gate gate in Gates)
+                if (Vector2.Distance(c, gate.Position) < 3.5f) return false;
+            return true;
+        }
+
+        private static bool TreeSpotClear(Vector2 p)
+        {
+            if (Mathf.Abs(p.x) > HalfExtent - 2f || Mathf.Abs(p.y) > HalfExtent - 2f) return false;
+            foreach (Vector2[] path in GardenPaths) if (DistanceToPolyline(p, path) < 2.5f) return false;
+            foreach (Corridor c in Corridors) if (DistanceToPolyline(p, c.Path) < c.Width * 0.5f + 1.5f) return false;
+            foreach (Room r in Rooms) if (p.x > r.X0 - 2f && p.x < r.X1 + 2f && p.y > r.Z0 - 2f && p.y < r.Z1 + 2f) return false;
+            if (p.x > 25f && p.x < 47f && p.y > -10f && p.y < 12f) return false;   // R7 walls + island
+            if (p.x > 10f && p.x < 30f && p.y > -32f && p.y < -14f) return false;   // karesansui
+            foreach (Gate gate in Gates) if (Vector2.Distance(p, gate.Position) < 4f) return false;
+            foreach (Vector2 w in WeaponPositions) if (Vector2.Distance(p, w) < 3f) return false;
+            return true;
+        }
+
+        private static int BuildRoom(Transform g, Room r)
+        {
+            int n = 0;
+            float t = 0.3f, y = r.Floor;
+            if (r.Walls)
+            {
+                n += Wall(g, r.Id + "_S", new Vector2(r.X0, r.Z0), new Vector2(r.X1, r.Z0), r.Height, t, Gaps(r, 'S', r.X0), y);
+                n += Wall(g, r.Id + "_N", new Vector2(r.X0, r.Z1), new Vector2(r.X1, r.Z1), r.Height, t, Gaps(r, 'N', r.X0), y);
+                n += Wall(g, r.Id + "_W", new Vector2(r.X0, r.Z0), new Vector2(r.X0, r.Z1), r.Height, t, Gaps(r, 'W', r.Z0), y);
+                n += Wall(g, r.Id + "_E", new Vector2(r.X1, r.Z0), new Vector2(r.X1, r.Z1), r.Height, t, Gaps(r, 'E', r.Z0), y);
+            }
+            else
+            {
+                foreach (float x in new[] { r.X0, r.X1 })
+                foreach (float z in new[] { r.Z0, r.Z1 })
+                    n += Box(g, r.Id + "_Post_" + x + "_" + z, new Vector3(x, y + r.Height * 0.5f, z), new Vector3(0.3f, r.Height, 0.3f), "wall");
+            }
+
+            n += Roof(g, r.Id + "_Roof", new Vector3((r.X0 + r.X1) * 0.5f, y + r.Height + 0.25f, (r.Z0 + r.Z1) * 0.5f), new Vector3(r.X1 - r.X0 + 1.2f, 0.5f, r.Z1 - r.Z0 + 1.2f));
+            return n;
+        }
+
+        private static (float at, float width)[] Gaps(Room r, char side, float origin)
+        {
+            var list = new List<(float, float)>();
+            if (r.Doors != null)
+                foreach (Door d in r.Doors)
+                    if (d.Side == side) list.Add((d.At - origin, d.Width));
+            return list.ToArray();
+        }
+
+        private static int BuildCorridor(Transform g, Corridor c)
+        {
+            int n = 0;
+            for (int i = 0; i + 1 < c.Path.Length; i++)
+            {
+                Vector2 a = c.Path[i], b = c.Path[i + 1], d = (b - a).normalized, side = new Vector2(-d.y, d.x);
+                float len = Vector2.Distance(a, b), yaw = Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg;
+                Vector2 m = (a + b) * 0.5f;
+                // Floor +0.25 (§0 K3: under the 0.30 climb with margin), roof above.
+                n += Box(g, c.Id + "_Floor_" + i, new Vector3(m.x, KairoFloor * 0.5f, m.y), new Vector3(c.Width, KairoFloor, len + (i + 2 < c.Path.Length ? c.Width : 0f)), "floor", yaw);
+                n += Roof(g, c.Id + "_Roof_" + i, new Vector3(m.x, KairoFloor + c.Height + 0.15f, m.y), new Vector3(c.Width + 1f, 0.3f, len + 0.6f), yaw);
+                if (c.Closed)
+                {
+                    foreach (float s in new[] { -1f, 1f })
+                    {
+                        Vector2 off = side * s * (c.Width * 0.5f);
+                        char wallSide = s < 0 ? 'E' : 'W';
+                        var gaps = new List<(float, float)>();
+                        foreach ((char ds, float dz, float dw) in K1Doors) if (ds == wallSide) gaps.Add((dz - a.y, dw));
+                        n += Wall(g, c.Id + "_Wall" + wallSide, a + off, b + off, c.Height, 0.3f, gaps.ToArray(), KairoFloor);
+                    }
+                }
+                else
+                {
+                    // Open sides: posts on both outer lines every 2.4 m (never inside the clear width).
+                    for (float u = 0f; u <= len + 0.01f; u += 2.4f)
+                    foreach (float s in new[] { -1f, 1f })
+                    {
+                        Vector2 p = a + d * u + side * s * (c.Width * 0.5f + 0.14f);
+                        n += Box(g, c.Id + "_Post_" + i + "_" + u.ToString("F1", CultureInfo.InvariantCulture) + "_" + s, new Vector3(p.x, KairoFloor + c.Height * 0.5f, p.y), new Vector3(0.27f, c.Height, 0.27f), "wall");
+                    }
+                }
+            }
+
+            return n;
+        }
+
+        private static int PondStrips(Transform g, int index, (Vector2 centre, Vector2 semi, float yaw) b)
+        {
+            int n = 0;
+            float grow = 0.5f, a = b.semi.x + grow, c = b.semi.y + grow;
+            var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            water.name = "Pond" + index + "_Water";
+            water.transform.SetParent(g, false);
+            water.transform.position = new Vector3(b.centre.x, 0.02f, b.centre.y);
+            water.transform.rotation = Quaternion.Euler(0f, -b.yaw, 0f);
+            water.transform.localScale = new Vector3(b.semi.x * 2f, 0.01f, b.semi.y * 2f);
+            UnityEngine.Object.DestroyImmediate(water.GetComponent<Collider>());
+            water.GetComponent<MeshRenderer>().sharedMaterial = Mat("water");
+            n++;
+            // NotWalkable strips along the ellipse's local x (1 m), local height −1…0.1 m so bridge/causeway tops stay walkable.
+            for (float lx = -a; lx < a; lx += 1f)
+            {
+                float mid = lx + 0.5f, half = c * Mathf.Sqrt(Mathf.Max(0f, 1f - (mid * mid) / (a * a)));
+                if (half < 0.05f) continue;
+                var go = new GameObject("Pond" + index + "_NotWalkable_" + lx.ToString("F0", CultureInfo.InvariantCulture)) { layer = PrototypeLayers.Environment };
+                go.transform.SetParent(g, false);
+                float ang = b.yaw * Mathf.Deg2Rad;
+                Vector2 local = new Vector2(mid, 0f);
+                Vector2 world = b.centre + new Vector2(local.x * Mathf.Cos(ang) - local.y * Mathf.Sin(ang), local.x * Mathf.Sin(ang) + local.y * Mathf.Cos(ang));
+                go.transform.position = new Vector3(world.x, -0.45f, world.y);
+                go.transform.rotation = Quaternion.Euler(0f, -b.yaw, 0f);
+                NavMeshModifierVolume v = go.AddComponent<NavMeshModifierVolume>();
+                v.center = Vector3.zero;
+                v.size = new Vector3(1.02f, 1.1f, 2f * half);
+                v.area = ArtSurfaceImporter.NavAreaNotWalkable;
+            }
+
+            return n;
+        }
+
+        private static int Stairs(Transform g, string name, Vector2 top, Vector2 outward, float width)
+        {
+            int n = 0;
+            float yaw = Mathf.Atan2(outward.x, outward.y) * Mathf.Rad2Deg;
+            for (int s = 0; s < 6; s++)
+            {
+                float h = PlinthHeight - (s + 1) * 0.2f + 0.2f;   // 1.2, 1.0 … 0.2 (top tread flush with the plinth edge)
+                Vector2 c = top + outward * (0.2f + s * 0.4f);
+                if (h <= 0.01f) continue;
+                n += Box(g, name + "_" + s, new Vector3(c.x, (h - 0.2f) * 0.5f + 0.0f, c.y), new Vector3(width, Mathf.Max(0.2f, h - 0.2f), 0.4f), "floor", yaw);
+            }
+
+            return n;
+        }
+
+        private static int Wall(Transform g, string name, Vector2 a, Vector2 b, float height, float thickness, (float at, float width)[] gaps, float baseY = 0f)
+        {
+            // Solid spans between the gaps (gap centres measured from a along a→b).
+            float len = Vector2.Distance(a, b);
+            Vector2 d = (b - a) / Mathf.Max(1e-4f, len);
+            float yaw = Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg;
+            var cuts = new List<(float s, float e)>();
+            if (gaps != null) foreach ((float at, float w) in gaps) cuts.Add((at - w * 0.5f, at + w * 0.5f));
+            cuts.Sort((x, y) => x.s.CompareTo(y.s));
+            int n = 0;
+            float cursor = 0f;
+            foreach ((float s, float e) in cuts)
+            {
+                if (s > cursor + 0.05f) n += Span(cursor, s);
+                cursor = Mathf.Max(cursor, e);
+            }
+
+            if (len > cursor + 0.05f) n += Span(cursor, len);
+            return n;
+
+            int Span(float s0, float s1)
+            {
+                Vector2 m = a + d * ((s0 + s1) * 0.5f);
+                return Box(g, name + "_" + s0.ToString("F1", CultureInfo.InvariantCulture), new Vector3(m.x, baseY + height * 0.5f, m.y), new Vector3(thickness, height, s1 - s0), "wall", yaw);
+            }
+        }
+
+        private static int Tree(Transform g, string name, Vector2 p, float radius)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            go.name = name;
+            go.layer = PrototypeLayers.Environment;
+            go.transform.SetParent(g, false);
+            go.transform.position = new Vector3(p.x, 2.5f, p.y);
+            go.transform.localScale = new Vector3(radius * 2f, 2.5f, radius * 2f);
+            go.GetComponent<MeshRenderer>().sharedMaterial = Mat("tree");
+            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.NavigationStatic);
+            return 1;
+        }
+
+        private static int Roof(Transform g, string name, Vector3 centre, Vector3 size, float yaw = 0f)
+        {
+            // Roofs: CameraOccluder layer (top-down fade), CameraOccluderClass Roof (TP does not fade them — WP-070 E-20), out of the bake.
+            Box(g, name, centre, size, "roof", yaw, PrototypeLayers.CameraOccluder);
+            Transform t = g.Find(name);
+            t.gameObject.AddComponent<CameraOccluderClass>().Kind = CameraOccluderKind.Roof;
+            t.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+            return 1;
+        }
+
+        private static int Box(Transform g, string name, Vector3 centre, Vector3 size, string material, float yaw = 0f, int layer = -1)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.layer = layer >= 0 ? layer : PrototypeLayers.Environment;
+            go.transform.SetParent(g, false);
+            go.transform.position = centre;
+            go.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            go.transform.localScale = size;
+            go.GetComponent<MeshRenderer>().sharedMaterial = Mat(material);
+            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.NavigationStatic);
+            return 1;
+        }
+
+        private static Material Mat(string key)
+        {
+            if (s_materials.TryGetValue(key, out Material m)) return m;
+            string path = DataFolder + "/Materials/Greybox_" + key + ".mat";
+            m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                AssetDatabase.CreateAsset(m, path);
+            }
+
+            Color c = key switch
+            {
+                "ground" => new Color(0.42f, 0.44f, 0.45f),
+                "wall" => new Color(0.78f, 0.76f, 0.70f),
+                "roof" => new Color(0.30f, 0.32f, 0.35f),
+                "floor" => new Color(0.55f, 0.50f, 0.44f),
+                "water" => new Color(0.30f, 0.42f, 0.46f),
+                "tree" => new Color(0.36f, 0.48f, 0.30f),
+                _ => new Color(0.62f, 0.60f, 0.56f),
+            };
+            m.SetColor("_BaseColor", c);
+            EditorUtility.SetDirty(m);
+            s_materials[key] = m;
+            return m;
+        }
+
+        // ---------------------------------------------------------------- NavMesh, placement, data
+
+        private static int Bake(Transform root)
+        {
+            var go = new GameObject("NavMesh Surface");
+            go.transform.SetParent(root, false);
+            var surface = go.AddComponent<NavMeshSurface>();
+            surface.agentTypeID = 0;
+            surface.collectObjects = CollectObjects.Volume;
+            surface.center = new Vector3(0f, 26f * 0.5f - 4f, 0f);
+            surface.size = new Vector3(2f * HalfExtent + 6f, 26f, 2f * HalfExtent + 6f);
+            surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
+            surface.layerMask = (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
+            surface.defaultArea = 0;
+            surface.overrideVoxelSize = true;
+            surface.voxelSize = PlacementImporter.NavMeshVoxelSize;
+            surface.minRegionArea = PlacementImporter.NavMeshMinRegionArea;
+            surface.buildHeightMesh = false;
+            surface.ignoreNavMeshAgent = true;
+            surface.ignoreNavMeshObstacle = true;
+            Physics.SyncTransforms();
+            PlacementImporter.BuildAtBodyClimb(surface);
+            NavMeshData data = surface.navMeshData;
+            var existing = AssetDatabase.LoadAssetAtPath<NavMeshData>(NavMeshPath);
+            if (existing != null)
+            {
+                EditorUtility.CopySerialized(data, existing);
+                existing.name = Path.GetFileNameWithoutExtension(NavMeshPath);
+                surface.navMeshData = existing;
+                EditorUtility.SetDirty(existing);
+            }
+            else
+            {
+                data.name = Path.GetFileNameWithoutExtension(NavMeshPath);
+                AssetDatabase.CreateAsset(data, NavMeshPath);
+            }
+
+            surface.RemoveData();
+            surface.AddData();
+            return NavMesh.CalculateTriangulation().indices.Length / 3;
+        }
+
+        private static WorldPlacementAsset WritePlacement(WorldPlacementAsset ap)
+        {
+            var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(PlacementPath);
+            if (placement == null)
+            {
+                placement = ScriptableObject.CreateInstance<WorldPlacementAsset>();
+                AssetDatabase.CreateAsset(placement, PlacementPath);
+            }
+
+            placement.schema = "dd.world-placement/greybox-v6";
+            placement.space = ap.space;
+            placement.package = "WP-074 B1";
+            placement.version = "v6-greybox";
+            placement.playerStart = ap.playerStart;
+            placement.instances = new List<WorldPlacementAsset.Instance>();
+            placement.spawnPoints = new List<WorldPlacementAsset.Point>();
+            foreach (WorldPlacementAsset.Point old in ap.spawnPoints)
+                foreach (Gate gate in Gates)
+                    if (gate.OldId == old.id)
+                        placement.spawnPoints.Add(new WorldPlacementAsset.Point { id = old.id, position = new Vector3(gate.Position.x, 0f, gate.Position.y), weight = old.weight });
+            placement.weaponPoints = new List<WorldPlacementAsset.Point>();
+            for (int i = 0; i < ap.weaponPoints.Count && i < WeaponPositions.Length; i++)
+                placement.weaponPoints.Add(new WorldPlacementAsset.Point { id = ap.weaponPoints[i].id, position = new Vector3(WeaponPositions[i].x, 0f, WeaponPositions[i].y), weight = ap.weaponPoints[i].weight });
+            placement.regions = new List<WorldPlacementAsset.Region>();
+            for (int r = 0; r < RegionIds.Length; r++)
+            {
+                WorldPlacementAsset.Region old = ap.regions.Find(x => x.id == RegionIds[r]);
+                placement.regions.Add(new WorldPlacementAsset.Region { id = RegionIds[r], label = old != null ? old.label : RegionIds[r], identity = old != null ? old.identity : "", sightlineClass = old != null ? old.sightlineClass : "", polygonXZ = RegionPolygons[r] });
+            }
+
+            EditorUtility.SetDirty(placement);
+            return placement;
+        }
+
+        private static void RegisterDevScene()
+        {
+            // Dev-only entry (disabled): dev builds include it (LifecycleProbeBuild.DevelopmentScenes), release builds never.
+            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            if (scenes.Exists(s => s.path == ScenePath)) return;
+            scenes.Add(new EditorBuildSettingsScene(ScenePath, false));
+            EditorBuildSettings.scenes = scenes.ToArray();
+        }
+
+        private static void WriteJson()
+        {
+            var sb = new StringBuilder();
+            sb.Append("{\n  \"schema\": \"dd.spawn-gates/v6\",\n  \"source\": \"WP-074 B1 greybox (Ek B §3.4); proposal to S-03 WP-076\",\n  \"halfExtent\": 55,\n  \"playerStart\": [0, -3],\n  \"gates\": [\n");
+            for (int i = 0; i < Gates.Length; i++)
+            {
+                Gate gate = Gates[i];
+                sb.Append("    { \"id\": \"").Append(gate.Id).Append("\", \"prototypeId\": ").Append(gate.OldId != null ? "\"" + gate.OldId + "\"" : "null")
+                  .Append(", \"kind\": \"").Append(gate.Kind).Append("\", \"x\": ").Append(F(gate.Position.x)).Append(", \"z\": ").Append(F(gate.Position.y)).Append(" }").Append(i + 1 < Gates.Length ? ",\n" : "\n");
+            }
+
+            sb.Append("  ],\n  \"weapons\": [");
+            var weapons = new List<Vector2>(WeaponPositions);
+            weapons.AddRange(ExtraWeaponPositions);
+            for (int i = 0; i < weapons.Count; i++) sb.Append(i == 0 ? "" : ", ").Append("[").Append(F(weapons[i].x)).Append(", ").Append(F(weapons[i].y)).Append("]");
+            sb.Append("]\n}\n");
+            File.WriteAllText(SpawnGatesJson, sb.ToString());
+
+            sb.Clear();
+            sb.Append("{\n  \"schema\": \"dd.regions/v6\",\n  \"halfExtent\": 55,\n  \"regions\": [\n");
+            for (int r = 0; r < RegionIds.Length; r++)
+                sb.Append("    { \"id\": \"").Append(RegionIds[r]).Append("\", \"polygonXZ\": [").Append(string.Join(", ", Array.ConvertAll(RegionPolygons[r], F))).Append("] }").Append(r + 1 < RegionIds.Length ? ",\n" : "\n");
+            sb.Append("  ],\n  \"rooms\": [\n");
+            for (int i = 0; i < Rooms.Length; i++)
+            {
+                Room room = Rooms[i];
+                sb.Append("    { \"id\": \"").Append(room.Id).Append("\", \"box\": [").Append(F(room.X0)).Append(", ").Append(F(room.Z0)).Append(", ").Append(F(room.X1)).Append(", ").Append(F(room.Z1))
+                  .Append("], \"floor\": ").Append(F(room.Floor)).Append(", \"exits\": ").Append(room.Doors != null ? room.Doors.Length : 4).Append(" }").Append(i + 1 < Rooms.Length ? ",\n" : "\n");
+            }
+
+            sb.Append("  ]\n}\n");
+            File.WriteAllText(RegionsJson, sb.ToString());
+
+            sb.Clear();
+            sb.Append("{\n  \"schema\": \"dd.acoustic-spaces/v6\",\n  \"note\": \"WP-074 §3 / Ek B §4; Enclosure Open | Corridor | Hall; outside every space = Open\",\n  \"spaces\": [\n");
+            var spaces = new List<string>();
+            foreach (Room room in Rooms)
+            {
+                var thresholds = new List<string>();
+                if (room.Doors != null)
+                    foreach (Door d in room.Doors)
+                    {
+                        Vector2 p = d.Side == 'N' ? new Vector2(d.At, room.Z1) : d.Side == 'S' ? new Vector2(d.At, room.Z0) : d.Side == 'E' ? new Vector2(room.X1, d.At) : new Vector2(room.X0, d.At);
+                        thresholds.Add("[" + F(p.x) + ", " + F(p.y) + ", " + F(d.Width) + "]");
+                    }
+                spaces.Add("    { \"id\": \"" + room.Id + "\", \"enclosure\": \"" + room.Acoustic + "\", \"polygonXZ\": [" + F(room.X0) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z1) + ", " + F(room.X0) + ", " + F(room.Z1)
+                           + "], \"floor\": " + F(room.Floor) + ", \"ceiling\": " + F(room.Floor + room.Height) + ", \"areaM2\": " + F((room.X1 - room.X0) * (room.Z1 - room.Z0)) + ", \"thresholds\": [" + string.Join(", ", thresholds) + "] }");
+            }
+
+            foreach (Corridor c in Corridors)
+            {
+                var poly = new List<string>();
+                for (int i = 0; i + 1 < c.Path.Length; i++)
+                {
+                    Vector2 a = c.Path[i], b = c.Path[i + 1], d = (b - a).normalized, side = new Vector2(-d.y, d.x) * (c.Width * 0.5f);
+                    poly.Add("[" + string.Join(", ", F((a - side).x), F((a - side).y), F((b - side).x), F((b - side).y), F((b + side).x), F((b + side).y), F((a + side).x), F((a + side).y)) + "]");
+                }
+
+                spaces.Add("    { \"id\": \"" + c.Id + "\", \"enclosure\": \"Corridor\", \"closed\": " + (c.Closed ? "true" : "false") + ", \"segmentsXZ\": [" + string.Join(", ", poly) + "], \"ceiling\": " + F(KairoFloor + c.Height) + " }");
+            }
+
+            sb.Append(string.Join(",\n", spaces)).Append("\n  ]\n}\n");
+            File.WriteAllText(AcousticJson, sb.ToString());
+            AssetDatabase.ImportAsset(SpawnGatesJson);
+            AssetDatabase.ImportAsset(RegionsJson);
+            AssetDatabase.ImportAsset(AcousticJson);
+        }
+
+        // ---------------------------------------------------------------- helpers
+
+        private static string F(float v) => v.ToString("0.###", CultureInfo.InvariantCulture);
+
+        private static float[] Circle(float cx, float cz, float r, int n)
+        {
+            var p = new float[n * 2];
+            for (int i = 0; i < n; i++)
+            {
+                float a = i * Mathf.PI * 2f / n;
+                p[2 * i] = cx + Mathf.Cos(a) * r;
+                p[2 * i + 1] = cz + Mathf.Sin(a) * r;
+            }
+
+            return p;
+        }
+
+        public static float DistanceToPolyline(Vector2 p, Vector2[] line)
+        {
+            float best = float.MaxValue;
+            for (int i = 0; i + 1 < line.Length; i++)
+            {
+                Vector2 a = line[i], ab = line[i + 1] - a;
+                float t = ab.sqrMagnitude > 1e-8f ? Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude) : 0f;
+                best = Mathf.Min(best, Vector2.Distance(p, a + ab * t));
+            }
+
+            return best;
+        }
+
+        private static void EnsureFolder(string path)
+        {
+            if (AssetDatabase.IsValidFolder(path)) return;
+            string parent = Path.GetDirectoryName(path).Replace('\\', '/');
+            EnsureFolder(parent);
+            AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
+        }
+    }
+}

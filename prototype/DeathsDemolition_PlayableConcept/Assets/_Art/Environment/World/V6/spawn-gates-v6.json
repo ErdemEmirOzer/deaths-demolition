@@ -1,0 +1,27 @@
+{
+  "schema": "dd.spawn-gates/v6",
+  "source": "WP-074 B1 greybox (Ek B §3.4); proposal to S-03 WP-076",
+  "halfExtent": 55,
+  "playerStart": [0, -3],
+  "gates": [
+    { "id": "N_RearWest", "prototypeId": "N_PalaceGateWest", "kind": "edge", "x": -20, "z": 53 },
+    { "id": "N_RearEast", "prototypeId": "N_PalaceGateEast", "kind": "edge", "x": 20, "z": 53 },
+    { "id": "NE_Corner", "prototypeId": "NE_StonePathCorner", "kind": "edge", "x": 44, "z": 44 },
+    { "id": "E_GardenNorth", "prototypeId": "E_SakuraGroveNorth", "kind": "edge", "x": 52, "z": 16 },
+    { "id": "E_GardenSouth", "prototypeId": "E_SakuraGroveSouth", "kind": "edge", "x": 52, "z": -14 },
+    { "id": "SE_Shore", "prototypeId": "SE_PondApproach", "kind": "edge", "x": 42, "z": -42 },
+    { "id": "S_BridgeSouth", "prototypeId": "S_BridgeSouthEnd", "kind": "edge", "x": 4, "z": -52 },
+    { "id": "S_ShoreWest", "prototypeId": "S_ShorePathWest", "kind": "edge", "x": -16, "z": -52 },
+    { "id": "SW_TeaHouse", "prototypeId": "SW_BambooEntry", "kind": "edge", "x": -44, "z": -44 },
+    { "id": "W_BambooSouth", "prototypeId": "W_BambooCorridorSouth", "kind": "edge", "x": -52, "z": -18 },
+    { "id": "W_BambooNorth", "prototypeId": "W_BambooCorridorNorth", "kind": "edge", "x": -52, "z": 18 },
+    { "id": "NW_ServiceGate", "prototypeId": "NW_ServiceGate", "kind": "edge", "x": -46, "z": 46 },
+    { "id": "I_WestKairoSouth", "prototypeId": null, "kind": "inner", "x": -33, "z": -18.5 },
+    { "id": "I_CloisterWest", "prototypeId": null, "kind": "inner", "x": -22, "z": 24 },
+    { "id": "I_ShoreEast", "prototypeId": null, "kind": "inner", "x": 18, "z": -30 },
+    { "id": "I_GreatSakuraSouth", "prototypeId": null, "kind": "inner", "x": 36, "z": -10.5 },
+    { "id": "I_ServiceYardSouth", "prototypeId": null, "kind": "inner", "x": -36, "z": 31.5 },
+    { "id": "I_HallRear", "prototypeId": null, "kind": "inner", "x": 0, "z": 52.5 }
+  ],
+  "weapons": [[0, 30], [0, 47], [35, 28], [36, 1], [20, -22], [4, -16.5], [-32, -36], [-33, 2], [-38, 32], [-45, 0], [-10, -44], [33, -33], [10, -8], [30, 20]]
+}

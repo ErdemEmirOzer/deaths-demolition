@@ -1,0 +1,215 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 671743f6226f94c979f148cbdb2f83f1, type: 3}
+  m_Name: V6_Greybox_Placement
+  m_EditorClassIdentifier: 
+  schema: dd.world-placement/greybox-v6
+  space: AP001-contract-metres
+  package: WP-074 B1
+  version: v6-greybox
+  created: 
+  sourceSha256: 
+  overridesSha256: 
+  overriddenIds: []
+  deltaSha256: 
+  deltaTarget: 
+  deltaAdded: 0
+  deltaChanged: 0
+  deltaRemoved: 0
+  deltaRemovedIds: []
+  deltas: []
+  instances: []
+  routes: []
+  markers: []
+  spawnPoints:
+  - id: N_PalaceGateWest
+    position: {x: -20, y: 0, z: 53}
+    weight: 1
+  - id: N_PalaceGateEast
+    position: {x: 20, y: 0, z: 53}
+    weight: 1
+  - id: NE_StonePathCorner
+    position: {x: 44, y: 0, z: 44}
+    weight: 1
+  - id: E_SakuraGroveNorth
+    position: {x: 52, y: 0, z: 16}
+    weight: 1
+  - id: E_SakuraGroveSouth
+    position: {x: 52, y: 0, z: -14}
+    weight: 1
+  - id: SE_PondApproach
+    position: {x: 42, y: 0, z: -42}
+    weight: 1
+  - id: S_BridgeSouthEnd
+    position: {x: 4, y: 0, z: -52}
+    weight: 1
+  - id: S_ShorePathWest
+    position: {x: -16, y: 0, z: -52}
+    weight: 1
+  - id: SW_BambooEntry
+    position: {x: -44, y: 0, z: -44}
+    weight: 1
+  - id: W_BambooCorridorSouth
+    position: {x: -52, y: 0, z: -18}
+    weight: 1
+  - id: W_BambooCorridorNorth
+    position: {x: -52, y: 0, z: 18}
+    weight: 1
+  - id: NW_ServiceGate
+    position: {x: -46, y: 0, z: 46}
+    weight: 1
+  weaponPoints:
+  - id: SW_CourtyardNorth
+    position: {x: 0, y: 0, z: 30}
+    weight: 0.9
+  - id: SW_PalaceVeranda
+    position: {x: 0, y: 0, z: 47}
+    weight: 1
+  - id: SW_ForecourtEast
+    position: {x: 35, y: 0, z: 28}
+    weight: 1
+  - id: SW_GreatSakuraFork
+    position: {x: 36, y: 0, z: 1}
+    weight: 1
+  - id: SW_SakuraDeepEast
+    position: {x: 20, y: 0, z: -22}
+    weight: 1.2
+  - id: SW_PondEastShore
+    position: {x: 4, y: 0, z: -16.5}
+    weight: 1.2
+  - id: SW_BridgeCrown
+    position: {x: -32, y: 0, z: -36}
+    weight: 0.8
+  - id: SW_PagodaBase
+    position: {x: -33, y: 0, z: 2}
+    weight: 1
+  - id: SW_BambooDeepWest
+    position: {x: -38, y: 0, z: 32}
+    weight: 1.2
+  - id: SW_CorridorDoor
+    position: {x: -45, y: 0, z: 0}
+    weight: 1
+  - id: SW_BellTowerBack
+    position: {x: -10, y: 0, z: -44}
+    weight: 1.2
+  - id: SW_ShoreWestBend
+    position: {x: 33, y: 0, z: -33}
+    weight: 1
+  playerStart: {x: 0, y: 0.1, z: -3}
+  regions:
+  - id: center
+    label: Palace courtyard (Round-1 start)
+    identity: Open blue-grey paving plane, nothing taller than 0.45 m inside the
+      square; four planter corners are the only accents - the reference silhouette
+      against which every other region reads
+    sightlineClass: long
+    polygonXZ:
+    - 14
+    - 0
+    - 12.934313
+    - 5.3575683
+    - 9.899495
+    - 9.899495
+    - 5.357568
+    - 12.934313
+    - -0.0000006119594
+    - 14
+    - -5.357569
+    - 12.934313
+    - -9.899495
+    - 9.899495
+    - -12.934315
+    - 5.357566
+    - -14
+    - -0.0000012239188
+    - -12.934313
+    - -5.357568
+    - -9.899493
+    - -9.899496
+    - -5.357564
+    - -12.934316
+    - 0.00000016694833
+    - -14
+    - 5.3575706
+    - -12.934312
+    - 9.899498
+    - -9.899491
+    - 12.934314
+    - -5.357568
+  - id: north
+    label: Palace front + broad stone way
+    identity: 'Longest horizontal: plaster + grey roof band of the palace over a
+      14 m wide stone way; dark timber posts at 3.4 m rhythm frame the way, planters
+      keep the green as thin strips, two mauve sakura flank the facade'
+    sightlineClass: long
+    polygonXZ:
+    - -28
+    - 18
+    - 28
+    - 18
+    - 28
+    - 55
+    - -28
+    - 55
+  - id: east
+    label: Sakura garden
+    identity: 'Mauve crowns over stone: 12 sakura pairs, stone lanterns and planter+cap
+      low walls (<= 0.55 m) edge the curved medium paths; the fork diamond holds
+      the hero tree'
+    sightlineClass: medium
+    polygonXZ:
+    - 26
+    - -40
+    - 55
+    - -40
+    - 55
+    - 55
+    - 28
+    - 55
+    - 28
+    - 20
+    - 26
+    - 20
+  - id: south
+    label: Koi pond + bridge line
+    identity: 'Horizontal grey / blue-green: three dark water planes ringed by pale
+      rim stone, the 1.45 m bridge as a thin dark band at x=4, light gravel shore
+      paths on routes 21/22, rocks and low greens - the only wet region'
+    sightlineClass: medium
+    polygonXZ:
+    - -30
+    - -55
+    - 30
+    - -55
+    - 30
+    - -14
+    - -30
+    - -14
+  - id: west
+    label: Bamboo garden + closed corridor
+    identity: 'Vertical green rhythm: culm verticals over a dark-wood / grey-roof
+      corridor band; sparse ground, open-lattice fences on the boundaries, the shortest
+      sightlines on the map'
+    sightlineClass: short
+    polygonXZ:
+    - -55
+    - -46
+    - -26
+    - -46
+    - -26
+    - 30
+    - -28
+    - 30
+    - -28
+    - 55
+    - -55
+    - 55

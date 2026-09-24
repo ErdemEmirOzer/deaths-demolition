@@ -29,4 +29,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/_Art/Scenes/AP_LibraryShowcase.unity
     guid: e891086ccc63d42e8b31b148e79afaf8
+  - enabled: 0
+    path: Assets/_Art/Scenes/World_V6_Greybox.unity
+    guid: 2afaebde573d0428c96966afda288bb6
   m_configObjects: {}

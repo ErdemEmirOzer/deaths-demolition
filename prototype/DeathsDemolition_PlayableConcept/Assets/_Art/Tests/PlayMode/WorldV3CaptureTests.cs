@@ -122,10 +122,17 @@ namespace DD.Art.Tests.PlayMode
             yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "MainMenu");
             yield return null;
             Assert.AreEqual(ArtTestProfileIsolation.TestProfilePath, ProfileStore.Path, "Profil yolu izole değil.");
-            SceneManager.LoadScene(ArtLibraryPaths.Ap005WorldSceneName, LoadSceneMode.Single);
+            // WP-074 B1: DD_ART_CAPTURE_SCENE (asset path) captures another world scene, e.g. the dev-only World v5 greybox.
+            string scenePath = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_SCENE");
+            string sceneName = string.IsNullOrEmpty(scenePath) ? ArtLibraryPaths.Ap005WorldSceneName : Path.GetFileNameWithoutExtension(scenePath);
+#if UNITY_EDITOR
+            if (!string.IsNullOrEmpty(scenePath)) UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            else
+#endif
+                SceneManager.LoadScene(ArtLibraryPaths.Ap005WorldSceneName, LoadSceneMode.Single);
             yield return null;
-            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == ArtLibraryPaths.Ap005WorldSceneName && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "World_AP005");
-            yield return CharacterTests.Bekle(() => Ap005WorldBootstrap.Last.Instances > 0, KurulumZamanAsimi, "bootstrap");
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == sceneName && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, sceneName);
+            yield return CharacterTests.Bekle(() => !string.IsNullOrEmpty(Ap005WorldBootstrap.Last.Report), KurulumZamanAsimi, "bootstrap");   // WP-074 B1: the greybox has 0 instances
             yield return CharacterTests.Bekle(() => PlayerRegistry.Primary != null, OyuncuZamanAsimi, "oyuncu");
             yield return CharacterTests.Bekle(() => EnemySpawnDirector.Instance != null && RunDirector.Instance != null, KurulumZamanAsimi, "run sistemleri");
             EnemySpawnDirector.Instance.ForceActiveTarget(0, false);
