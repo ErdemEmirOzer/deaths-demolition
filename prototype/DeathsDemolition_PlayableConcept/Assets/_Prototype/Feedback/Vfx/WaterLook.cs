@@ -5,8 +5,10 @@ namespace DD.Prototype.Feedback.Vfx
     /// <summary>
     /// WP-047D · the koi pond's look (S-05 WP-038 `DD/Water v2`) read once per scene so the water VFX match it:
     /// the splash / ring tint comes from the material's shallow colour, the Tide arc from the deep colour. No pond
-    /// in the scene = the neutral defaults. Scanned lazily on first use (FindObjectsOfType allocates — never per hit
-    /// after the first, and the first happens in the warm-up).
+    /// in the scene = the neutral defaults. The scan allocates (FindObjectsOfType, material wrappers), so it runs from
+    /// <see cref="PrimeAtRoundStart"/> (the dressing's RoundStarted hook — the world is built by then), never inside a hit
+    /// (WP-073: the first water hit of a round paid it, ≈ 10 900 allocations for the shader-name reads of every renderer).
+    /// A read before any round start still scans lazily.
     /// </summary>
     public static class WaterLook
     {
@@ -21,8 +23,21 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static bool Found { get; private set; }
 
+        private static readonly System.Collections.Generic.HashSet<int> s_otherShaders = new System.Collections.Generic.HashSet<int>();
+
         public static Color SplashTint { get { Refresh(); return s_splash; } }
         public static Color ArcTint { get { Refresh(); return s_arc; } }
+
+        /// <summary>Round start: scan the active scene unless it was already scanned with the pond found.</summary>
+        public static void PrimeAtRoundStart()
+        {
+            if (!Found)
+            {
+                s_sceneStamp = -1;
+            }
+
+            Refresh();
+        }
 
         private static void Refresh()
         {
@@ -36,12 +51,21 @@ namespace DD.Prototype.Feedback.Vfx
             s_splash = DefaultSplash;
             s_arc = DefaultArc;
             Found = false;
+            s_otherShaders.Clear();
             Renderer[] renderers = Object.FindObjectsOfType<Renderer>();
             for (int i = 0; i < renderers.Length; i++)
             {
                 Material m = renderers[i].sharedMaterial;
-                if (m == null || m.shader == null || m.shader.name != "DD/Water v2")
+                Shader shader = m != null ? m.shader : null;
+                // Shader.name allocates a string per read: each distinct shader is named once.
+                if (shader == null || s_otherShaders.Contains(shader.GetInstanceID()))
                 {
+                    continue;
+                }
+
+                if (shader.name != "DD/Water v2")
+                {
+                    s_otherShaders.Add(shader.GetInstanceID());
                     continue;
                 }
 

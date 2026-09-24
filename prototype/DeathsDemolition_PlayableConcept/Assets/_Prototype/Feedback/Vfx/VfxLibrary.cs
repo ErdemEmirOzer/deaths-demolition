@@ -44,6 +44,37 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static bool IsReady => Catalog != null && Catalog.Entries.Count > 0;
 
+        /// <summary>
+        /// WP-073: bind every row's material (and read its texture) once at configure time, the way a card does (renderer
+        /// assignment + property reads). The first binding of a material runs its setup — in the Editor its property drawers too, ≈ 50 allocations
+        /// per sheet — which otherwise landed inside the first hit / blood card / explosion that played the row.
+        /// </summary>
+        public static void WarmMaterials(Transform parent)
+        {
+            VfxCatalog c = Catalog;
+            if (c == null) return;
+            var go = new GameObject("VfxMaterialWarm");
+            go.SetActive(false);
+            go.transform.SetParent(parent, false);
+            go.AddComponent<MeshFilter>().sharedMesh = Quad;
+            MeshRenderer renderer = go.AddComponent<MeshRenderer>();
+            var block = new MaterialPropertyBlock();
+            for (int i = 0; i < c.Entries.Count; i++)
+            {
+                Texture t = c.Entries[i].Texture;
+                if (t != null && t.width <= 0) Debug.LogWarning("[VfxLibrary] " + c.Entries[i].Id + ": empty texture");
+                Material m = c.Entries[i].Material;
+                if (m == null) continue;
+                renderer.sharedMaterial = m;
+                if (m.HasProperty(EmissiveStrengthId)) m.GetFloat(EmissiveStrengthId);
+                renderer.SetPropertyBlock(block);
+            }
+
+            Object.Destroy(go);
+        }
+
+        private static readonly int EmissiveStrengthId = Shader.PropertyToID("_EmissiveStrength");
+
         /// <summary>The row, or null when the catalog or the row is absent.</summary>
         public static VfxCatalogEntry Get(string id)
         {

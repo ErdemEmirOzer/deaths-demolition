@@ -109,6 +109,7 @@ namespace DD.Prototype.Feedback.Vfx
 
             if (_flipbooks == null)
             {
+                VfxLibrary.WarmMaterials(templateRoot);
                 // WP-047 (S-02 WP-053 finding): every pool is prewarmed to capacity at configure time — growing on demand
                 // cost ≈ 12 allocations per Instantiate inside the hot path (the scorch decals of the first explosions
                 // were the "+100 per window"), and decals live long enough that the growth spanned a whole round.
@@ -187,6 +188,8 @@ namespace DD.Prototype.Feedback.Vfx
                 DD.Prototype.Weapons.WeaponEvents.SpecialWeaponPickedUp += OnSpecialWeaponPickedUp;
                 DD.Prototype.Weapons.WeaponEvents.SpecialWeaponGroundExpired += OnSpecialWeaponGroundExpired;
                 DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded += OnSpecialWeaponEnded;
+                DD.Prototype.Weapons.WeaponEvents.WeaponEquipped += OnWeaponEquipped;
+                DD.Prototype.Rounds.RunEvents.RoundStarted += OnRoundStarted;
                 DD.Prototype.Props.BreakableProp.Broke += OnBreakableBroke;
             }
 
@@ -391,6 +394,9 @@ namespace DD.Prototype.Feedback.Vfx
         private float _heatTickAt = -1f;
         private FlipbookEffect _heatCard;
         private Transform _heatMuzzle;
+        private readonly FlipbookEffect[] _muzzleCards = new FlipbookEffect[8];
+        private readonly Transform[] _muzzleParents = new Transform[8];
+        private int _muzzleCardNext;
         private Transform _heatBody;
         private DD.Prototype.Weapons.WeaponVisualRig _heatRig;
         private float _heatLength = 0.45f;
@@ -705,6 +711,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         private void OnSpecialWeaponPickedUp(float seconds)
         {
+            ReleaseMuzzleCards();
             PlayGroundCard(VfxIds.WeaponPickupFlash, PlayerFeet(_lastBeaconPoint));
         }
 
@@ -713,8 +720,40 @@ namespace DD.Prototype.Feedback.Vfx
             PlayGroundCard(VfxIds.WeaponExpire, _lastBeaconPoint);
         }
 
+        private void OnRoundStarted(int round)
+        {
+            WaterLook.PrimeAtRoundStart();
+        }
+
+        private void OnWeaponEquipped(DD.Prototype.Core.Config.ClassicWeaponId id)
+        {
+            ReleaseMuzzleCards();
+        }
+
+        /// <summary>
+        /// WP-073: a muzzle card rides as a child of the muzzle socket, and an equip rebuilds the weapon model (Destroy). A card
+        /// still live then died with the model and the pool re-instantiated it inside a later hit (≈ 18 allocations each, the
+        /// wave-3 spawn dust after a swap). Destroy is deferred to the end of the frame and the equip event comes in the same
+        /// call, so the live cards go back to the pool here and survive.
+        /// </summary>
+        private void ReleaseMuzzleCards()
+        {
+            for (int i = 0; i < _muzzleCards.Length; i++)
+            {
+                FlipbookEffect fx = _muzzleCards[i];
+                if (fx != null && fx.IsSpawned && _muzzleParents[i] != null && fx.transform.parent == _muzzleParents[i])
+                {
+                    fx.Despawn();
+                }
+
+                _muzzleCards[i] = null;
+                _muzzleParents[i] = null;
+            }
+        }
+
         private void OnSpecialWeaponEnded()
         {
+            ReleaseMuzzleCards();
             PlayGroundCard(VfxIds.WeaponExpire, PlayerFeet(_lastBeaconPoint) + Vector3.up * 1.0f);
         }
 
@@ -822,6 +861,10 @@ namespace DD.Prototype.Feedback.Vfx
             {
                 return false;
             }
+
+            _muzzleCards[_muzzleCardNext] = fx;
+            _muzzleParents[_muzzleCardNext] = muzzle;
+            _muzzleCardNext = (_muzzleCardNext + 1) % _muzzleCards.Length;
 
             // WP-047 B: A / B / C variant per classic weapon (DEC-083); a Special in hand keeps A.
             MuzzleVariant variant = MuzzleVariant.A;

@@ -21,6 +21,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Art.Tests.PlayMode
 {
@@ -196,6 +197,11 @@ namespace DD.Art.Tests.PlayMode
             fx.ReportShockRing(p, 4f, 0.34f);
             yield return null;
             int kagura = vfx.KaguraRings - rings0;
+            // WP-073: the three swaps above came right after a flash — a muzzle card parented to the rebuilt model must have gone
+            // back to the pool, not down with the model (a lost card was re-instantiated inside a later hit, ≈ 18 allocations).
+            int lostCards = 0;
+            foreach (FlipbookEffect card in vfx.FlipbookPool.Spawned) if (card == null) lostCards++;
+            Assert.AreEqual(0, lostCards, "silah değişimi namlu kartını modelle birlikte yok etti (havuz sonra sıcak yolda büyür)");
             fx.ReportSealLink(p, p + Vector3.right * 2f);
             fx.ReportSealLink(p + Vector3.right * 2f, p);   // the closing link of a 2-body net: same bodies, no second burst
             yield return null;
@@ -218,14 +224,11 @@ namespace DD.Art.Tests.PlayMode
             // GC · 30 beats + 8 foot events + 4 links: nothing after warm-up.
             for (int i = 0; i < 10; i++) EnemyCombatEvents.Raise(Beat(EnemyCombatEventKind.AttackCommit, body, EnemyTier.Standard, p + Vector3.right * (i % 5), Vector3.back));
             yield return null; yield return null;
-            // The bus has other subscribers (audio, HUD); the VFX handlers are measured directly with the used-heap delta
-            // (WP-005 pattern: GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono, the frame recorder misses
-            // script allocations in the batchmode Editor). 100 × 40 calls synchronous: a per-call leak cannot hide in one 4 KB block.
-            long control = GC.GetTotalMemory(false);
-            { var keep = new object[4000]; for (int i = 0; i < keep.Length; i++) keep[i] = new byte[64]; control = GC.GetTotalMemory(false) - control; GC.KeepAlive(keep); }
-            Assert.Greater(control, 0, "yığın sayacı 256 KB yemi görmedi — ölçüm geçersiz");
-            long gcBytes = GC.GetTotalMemory(false);
-            for (int rep = 0; rep < 100; rep++)
+            // The bus has other subscribers (audio, HUD); the VFX handlers are measured directly (GC.GetAllocatedBytesForCurrentThread
+            // is always 0 in Unity Mono, the frame recorder misses script allocations in the batchmode Editor). 100 × 40 calls synchronous.
+            // WP-051C: the process-wide used heap (GC.GetTotalMemory) also sees other Editor threads' allocations; the test
+            // framework's GC.Alloc recorder is filtered to the calling thread only, and a positive control proves it is not blind.
+            void Wave3Rep()
             {
                 for (int i = 0; i < 30; i++)
                 {
@@ -237,13 +240,22 @@ namespace DD.Art.Tests.PlayMode
                 vfx.PlayOfudaCollapse(p, p + Vector3.right * 2f);
                 vfx.PlayKaguraRing(p, 4f, 0.34f);
             }
-            gcBytes = GC.GetTotalMemory(false) - gcBytes;
+
+            // WP-073: three warm reps first (the flipbook pool wraps on the second) — see VfxBloodTests.
+            for (int rep = 0; rep < 3; rep++) Wave3Rep();
+            object[] keep = null;
+            Assert.That(() => { keep = new object[4000]; for (int i = 0; i < keep.Length; i++) keep[i] = new byte[64]; },
+                UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "kayıtçı 256 KB yemi görmedi — ölçüm geçersiz");
+            GC.KeepAlive(keep);
+            Assert.That(() =>
+            {
+                for (int rep = 0; rep < 100; rep++) Wave3Rep();
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "Wave-3 olay yolu yönetilen bellek ayırdı (bu iş parçacığında GC.Alloc örneği / 4000 çağrı).");
             yield return null;
 
             Debug.Log("[DD-TEST] wp047.wave3 claws=" + binder.ClawSwipes + " spawnDust=" + binder.SpawnDusts + " steps=" + binder.FootSteps + "/" + binder.FootStepsThrottled +
                       " mags=" + binder.MagDrops + " pump=" + binder.PumpSmokes + " lifeA=" + lifeA.ToString("F2") + " lifeB=" + lifeB.ToString("F2") + " kagura=" + kagura + " ofuda=" + ofuda +
-                      " lanterns=" + lanterns + " swMaterials=" + vfx.SwSheets.MaterialsCreated + " wave3=" + vfx.Wave3Played + " gcBytes=" + gcBytes);
-            Assert.LessOrEqual(gcBytes, 4096, "Wave-3 olay yolu yönetilen bellek ayırdı: " + gcBytes + " B / 4000 çağrı (yığın deltası, kontrol " + control + " B).");
+                      " lanterns=" + lanterns + " swMaterials=" + vfx.SwSheets.MaterialsCreated + " wave3=" + vfx.Wave3Played + " threadAlloc=none");
 
             // Evidence for the AD round (post-fx on): swipe, spawn dust, muzzle C, kagura, lantern.
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
@@ -294,7 +306,7 @@ namespace DD.Art.Tests.PlayMode
 
             UnityEngine.Object.Destroy(body.gameObject);
             File.WriteAllText(Path.Combine(dir, "wave3-readout.txt"), "claws=" + binder.ClawSwipes + " spawnDust=" + binder.SpawnDusts + " steps=" + binder.FootSteps + " mags=" + binder.MagDrops + " pump=" + binder.PumpSmokes +
-                " kagura=" + kagura + " ofuda=" + ofuda + " lanterns=" + lanterns + " gcBytes=" + gcBytes + "\n");
+                " kagura=" + kagura + " ofuda=" + ofuda + " lanterns=" + lanterns + " threadAlloc=none\n");
         }
 
         private static float LastMuzzleLife(VfxDressing vfx)

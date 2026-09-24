@@ -17,6 +17,13 @@ namespace DD.Prototype.Feedback.Vfx
 
         public bool IsConfigured => _configured;
 
+        // WP-073: a pooled clone does not carry the template's cached modules; the first GetComponent of a clone
+        // allocates its managed wrapper, so it happens here (FeedbackPoolWarmer activates every instance at configure).
+        private void Awake()
+        {
+            CacheModules();
+        }
+
         /// <summary>Builds the system for <paramref name="row"/>. Called once on the pool template.</summary>
         public void Configure(VfxCatalogEntry row, bool gravity, float startSpeedMin, float startSpeedMax, float coneAngle)
         {

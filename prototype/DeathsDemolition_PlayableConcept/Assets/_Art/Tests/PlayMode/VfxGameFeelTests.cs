@@ -26,6 +26,8 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
+using Is = NUnit.Framework.Is;             // WP-051C: keep NUnit's Is for the existing Is.EqualTo asserts
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
 namespace DD.Art.Tests.PlayMode
@@ -115,6 +117,12 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================== 1 · sekiz aile + havuz + GC
 
+        private static readonly SurfaceKind[] AllSurfaces =
+        {
+            SurfaceKind.Stone, SurfaceKind.Wood, SurfaceKind.Dirt, SurfaceKind.Metal, SurfaceKind.Flesh,
+            SurfaceKind.Foliage, SurfaceKind.Water, SurfaceKind.Paper, SurfaceKind.Default
+        };
+
         [UnityTest]
         [Timeout(600000)]
         public IEnumerator Run_SekizAile_OlaydanTetiklenir_Havuzlu_GcSifir()
@@ -176,16 +184,24 @@ namespace DD.Art.Tests.PlayMode
             // Warm-up then measure the effect path's managed allocation over 60 events.
             for (int i = 0; i < 60; i++) fx.ReportSurfaceImpact(p + Vector3.right * (i % 7) * 0.2f, Vector3.up, SurfaceKind.Stone, 1f);
             yield return null; yield return null;
-            // Used-heap delta over 2000 direct layer calls (WP-047: GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono —
+            // 2000 direct layer calls (WP-047: GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono —
             // the earlier 62-event figure measured nothing). The director path (budget, hit stop) is measured in VfxAllocationAuditTests.
-            long gc0 = GC.GetTotalMemory(false);
-            for (int i = 0; i < 2000; i++) fx.Vfx.PlaySurfaceImpact(SurfaceKind.Stone, p + Vector3.right * (i % 7) * 0.2f, Vector3.up, 1f);
-            for (int i = 0; i < 100; i++) fx.Vfx.PlayExplosion(p + Vector3.forward * 4f, 2.5f);
-            long gc1 = GC.GetTotalMemory(false);
-            long perEvent = (gc1 - gc0) / 2100;
+            // WP-051C: the process-wide used heap (GC.GetTotalMemory) also sees other Editor threads' allocations; the test
+            // framework's GC.Alloc recorder is filtered to the calling thread only, and a positive control proves it is not blind.
+            // WP-073: one warm pass of the measured mix (first pool wrap, first explosion sheets) — see VfxBloodTests.
+            for (int i = 0; i < 100; i++) fx.Vfx.PlaySurfaceImpact(AllSurfaces[i % AllSurfaces.Length], p + Vector3.right * (i % 7) * 0.2f, Vector3.up, 1f);
+            for (int i = 0; i < 10; i++) fx.Vfx.PlayExplosion(p + Vector3.forward * 4f, 2.5f);
+            byte[] yem = null;
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+            Assert.That(() =>
+            {
+                // WP-073: every surface row, not only stone — the water splash (pond tint scan), leaf and paper bursts had first-use costs.
+                for (int i = 0; i < 2000; i++) fx.Vfx.PlaySurfaceImpact(AllSurfaces[i % AllSurfaces.Length], p + Vector3.right * (i % 7) * 0.2f, Vector3.up, 1f);
+                for (int i = 0; i < 100; i++) fx.Vfx.PlayExplosion(p + Vector3.forward * 4f, 2.5f);
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "Efekt yolu yönetilen bellek ayırdı (bu iş parçacığında GC.Alloc örneği / 2100 olay; yem " + (yem != null ? yem.Length : 0) + " B).");
             Debug.Log("[DD-TEST] wp019.events played=" + played + " decals=" + decals + " flipbookPool=" + fx.Vfx.FlipbookPool.CountSpawned + "/" + fx.Vfx.FlipbookPool.CountTotal +
-                      " decalPool=" + fx.Vfx.DecalPool.CountSpawned + "/" + fx.Vfx.DecalPool.CountTotal + " gcBytes62events=" + (gc1 - gc0) + " perEvent=" + perEvent);
-            Assert.LessOrEqual(gc1 - gc0, 4096, "Efekt yolu yönetilen bellek ayırdı: " + (gc1 - gc0) + " B / 2100 olay (yığın deltası).");
+                      " decalPool=" + fx.Vfx.DecalPool.CountSpawned + "/" + fx.Vfx.DecalPool.CountTotal + " threadAlloc2100events=none");
         }
 
         // ============================================================== 2 · beacon + altın + hasar vinyeti + game feel

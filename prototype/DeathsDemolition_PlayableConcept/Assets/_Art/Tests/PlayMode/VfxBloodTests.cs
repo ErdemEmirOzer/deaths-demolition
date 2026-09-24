@@ -25,6 +25,8 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
+using Is = NUnit.Framework.Is;             // WP-051C: keep NUnit's Is for the existing Is.EqualTo asserts
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
 namespace DD.Art.Tests.PlayMode
@@ -230,11 +232,18 @@ namespace DD.Art.Tests.PlayMode
             }
 
             yield return null; yield return null;
-            // Used-heap delta over 2000 direct blood hits (WP-047: GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono —
+            // 2000 direct blood hits (WP-047: GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono —
             // the earlier 40-hit figure measured nothing). Synchronous, pools recycling, marks evicting.
-            long gc0 = GC.GetTotalMemory(false);
-            for (int i = 0; i < 2000; i++) blood.PlayHit(p + Vector3.right * (i % 7) * 0.6f, Vector3.back, Vector3.forward, i % 8 == 7 ? BloodSystem.HitClass.Critical : BloodSystem.HitClass.Normal);
-            long gc1 = GC.GetTotalMemory(false);
+            // WP-051C: the process-wide used heap (GC.GetTotalMemory) also sees other Editor threads' allocations; the test
+            // framework's GC.Alloc recorder is filtered to the calling thread only, and a positive control proves it is not blind.
+            // WP-073: one warm pass of the same mix first — the first binding of each sheet and the first wrap of every pool
+            // are configure-time costs (warmed there; the Editor's runtime still pays a handful once), not the hit path's.
+            for (int i = 0; i < 200; i++) blood.PlayHit(p + Vector3.right * (i % 7) * 0.6f, Vector3.back, Vector3.forward, i % 8 == 7 ? BloodSystem.HitClass.Critical : BloodSystem.HitClass.Normal);
+            byte[] yem = null;
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+            Assert.That(() => { for (int i = 0; i < 2000; i++) blood.PlayHit(p + Vector3.right * (i % 7) * 0.6f, Vector3.back, Vector3.forward, i % 8 == 7 ? BloodSystem.HitClass.Critical : BloodSystem.HitClass.Normal); },
+                UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "Kan olay yolu yönetilen bellek ayırdı (bu iş parçacığında GC.Alloc örneği / 2000 vuruş; yem " + (yem != null ? yem.Length : 0) + " B).");
             yield return null;
 
             // Far LOD: walk the camera 30 m away; settled marks (> 2 s) beyond 18 m merge into the chunk mesh and free their slots.
@@ -255,9 +264,8 @@ namespace DD.Art.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp019b.blood splashes=" + blood.Splashes + " droplets=" + blood.DropletBursts + " marks=" + blood.Marks + " pools=" + blood.Pools +
                       " evicted=" + blood.Evicted + " skippedGold=" + blood.SkippedForGold + " liveImpact=" + liveImpact + " live=" + live + " poolTotal=" + blood.DecalPool.CountTotal +
-                      " gcBytes2000hits=" + (gc1 - gc0) + " far: live " + liveBefore + "→" + liveAfter + " merged=" + merged + " quads=" + mergedQuads +
+                      " threadAlloc2000hits=none far: live " + liveBefore + "→" + liveAfter + " merged=" + merged + " quads=" + mergedQuads +
                       " reset: live=" + liveReset + " quads=" + quadsReset + " cardTint=" + cardTint + " gpuInstanced=" + drops.GpuInstanced);
-            Assert.LessOrEqual(gc1 - gc0, 4096, "Kan olay yolu yönetilen bellek ayırdı: " + (gc1 - gc0) + " B / 2000 vuruş (yığın deltası).");
             Assert.Greater(merged, 0, "Uzak izler birleşik mesh'e alınmadı.");
             Assert.Greater(mergedQuads, 0);
             Assert.Less(liveAfter, liveBefore, "Birleştirme havuz slotu boşaltmadı.");
