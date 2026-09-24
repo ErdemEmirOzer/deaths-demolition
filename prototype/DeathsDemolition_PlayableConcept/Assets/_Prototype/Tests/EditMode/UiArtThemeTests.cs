@@ -90,7 +90,7 @@ namespace DD.Prototype.Tests.EditMode
                     Rect.MinMaxRect(-320f, hh - 110f - 30f, 320f, hh - 110f),                                      // threat row
                     Rect.MinMaxRect(-hw + 32f, -hh + 32f, -hw + 32f + 380f, -hh + 32f + 110f * c.Tall),           // health
                     Rect.MinMaxRect(hw - 32f - 400f, -hh + 32f, hw - 32f, -hh + 32f + 140f * c.Tall),             // weapon
-                    Rect.MinMaxRect(-110f, -hh + 24f, 110f, -hh + 24f + 216f)                                     // Special
+                    Rect.MinMaxRect(-110f, -hh + 24f, 110f, -hh + 24f + 260f)                                     // Special (R1-B: 260)
                 };
                 var grown = new Rect[clusters.Length];
                 Vector2 pad = UiWorldMarker.EdgeExtents + new Vector2(UiWorldMarker.ClusterClearance, UiWorldMarker.ClusterClearance);

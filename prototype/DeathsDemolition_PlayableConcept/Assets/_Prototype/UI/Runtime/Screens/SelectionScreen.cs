@@ -47,7 +47,6 @@ namespace DD.Prototype.UI
         private const float StageGlyph = 128f;
         private const float StatBarHeight = 8f;
         private const float CoreGlyphSize = 26f;            // AD v003 MUST-4: ≥ 24 px at 1080p
-        private const float XpBarWidth = 120f;
 
         // The three columns of the 12-column grid (560 / 24 / 560 / 24 / 560 at 1728).
         private const float ColumnShare = 560f / 1728f;
@@ -86,7 +85,6 @@ namespace DD.Prototype.UI
         private readonly Image[] _coreGlyphs = new Image[3];
         private readonly TMP_Text[] _coreNames = new TMP_Text[3];
         private TMP_Text _stateLine;
-        private UiBar _xpBar;
         private int _stageIndex = -1;
         private GameObject _lastFocus;
         private RectTransform _stageContent;
@@ -602,7 +600,7 @@ namespace DD.Prototype.UI
 
             _stageName = TopLabel("Name", _stageTop, UiType.H1, UiColor.TextPrimary, 0f, 0f, 1f);
             _stageClass = TopLabel("Class", _stageTop, UiType.Label, UiColor.TextSecondary, 0f, 0f, 1f);
-            _stageRole = TopLabel("Role", _stageTop, UiType.Body, UiColor.TextPrimary, 0f, 0f, 1f);
+            _stageRole = TopLabel("Role", content, UiType.Body, UiColor.TextPrimary, 0f, 0f, 1f);
             _stageName.enableWordWrapping = false;
             _stageClass.enableWordWrapping = false;
             _stageName.overflowMode = TextOverflowModes.Ellipsis;
@@ -672,10 +670,7 @@ namespace DD.Prototype.UI
             _stateLine = UiFactory.Label("Line", _stateRow, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             _stateLine.richText = true;   // the PATH line marks each met part in cream (built on a focus change)
             _stateLine.overflowMode = TextOverflowModes.Ellipsis;
-            RectTransform stateRect = UiFactory.Fill((RectTransform)_stateLine.transform);
-            stateRect.offsetMax = new Vector2(-(XpBarWidth + (int)UiSpace.M), 0f);
-            _xpBar = UiFactory.Bar("Xp", _stateRow, UiColor.BarXp, StatBarHeight);
-            Place((RectTransform)_xpBar.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(XpBarWidth, StatBarHeight));
+            UiFactory.Fill((RectTransform)_stateLine.transform);   // the full width: AD R1-B SHOULD-3 retired the unlabeled XP track
         }
 
         private const float CoreLabelWidth = 52f;
@@ -705,51 +700,66 @@ namespace DD.Prototype.UI
 
             _stageLayoutPending = false;
             float w = area.width;
+            float h = area.height;
             float bodyLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body));
             float captionLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
             float labelLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
             float nameBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H1));
+            float statLine = Mathf.Max(captionLine, labelLine);
 
-            // Stat cells: one line when label + value fit, else the value moves under the label.
+            // The StatStrip: two by two while every label and value share a line; one column when any cannot (AD R1-B
+            // MUST-2a: a value never wraps under its label).
             float cellW = Mathf.Floor((w - (int)UiSpace.XL) * 0.5f);
-            var stacked = new bool[4];
-            float[] rowH = new float[2];
+            bool oneColumn = false;
             for (int s = 0; s < 4; s++)
             {
                 float lw = _statLabels[s].GetPreferredValues(_statLabels[s].text).x;
                 float vw = _statValues[s].GetPreferredValues(_statValues[s].text).x;
-                stacked[s] = lw + vw + (int)UiSpace.S > cellW;
-                float h = (stacked[s] ? captionLine + labelLine : Mathf.Max(captionLine, labelLine)) + (int)UiSpace.XS + StatBarHeight;
-                rowH[s / 2] = Mathf.Max(rowH[s / 2], h);
+                oneColumn |= lw + vw + (int)UiSpace.S > cellW;
             }
 
-            float statsH = rowH[0] + (int)UiSpace.M + rowH[1];
+            float cellH = statLine + (int)UiSpace.XS + StatBarHeight;
+            float statsH = oneColumn ? cellH * 4f + (int)UiSpace.S * 3f : cellH * 2f + (int)UiSpace.M;
             float coreH = Mathf.Max(CoreGlyphSize + 4f, captionLine);
+            bool stateShown = !string.IsNullOrEmpty(_stateLine.text);
             float stateH = captionLine;
             float compareH = string.IsNullOrEmpty(_compareCaption.text) ? 0f : Mathf.Ceil(_compareCaption.GetPreferredValues(_compareCaption.text, w, 0f).y);
             float flavourH = string.IsNullOrEmpty(_stageFlavour.text) ? 0f : captionLine;
-            float descMax = bodyLine * 5f;
             float descH = string.IsNullOrEmpty(_stageDescription.text) ? 0f
-                : Mathf.Min(descMax, Mathf.Ceil(_stageDescription.GetPreferredValues(_stageDescription.text, w, 0f).y));
+                : Mathf.Min(bodyLine * 5f, Mathf.Ceil(_stageDescription.GetPreferredValues(_stageDescription.text, w, 0f).y));
 
             float glyph = StageGlyph;
             float gap = (int)UiSpace.L;
             bool showFlavour = flavourH > 0f;
             bool showCompare = compareH > 0f;
-            float topH = TopHeight(glyph, w, nameBand, labelLine, bodyLine);
-            float Total()
+            bool roleBeside = true;
+            float roleBelowH = 0f;
+            float topH = glyph;
+            void Identity()
             {
-                return topH + gap + descH + (showFlavour ? (int)UiSpace.XS + flavourH : 0f) + gap + statsH
-                       + (showCompare ? (int)UiSpace.S + compareH : 0f) + gap + coreH + gap + stateH;
+                // The role sits beside the glyph when it holds one line there; otherwise it takes the card's width under
+                // the identity block (AD R1-B MUST-2a: no wrap beside the glyph).
+                float textW = w - glyph - (int)UiSpace.L;
+                float roleW = string.IsNullOrEmpty(_stageRole.text) ? 0f : _stageRole.GetPreferredValues(_stageRole.text).x;
+                roleBeside = roleW <= textW;
+                roleBelowH = roleBeside || roleW <= 0f ? 0f : Mathf.Min(bodyLine * 2f, Mathf.Ceil(_stageRole.GetPreferredValues(_stageRole.text, w, 0f).y));
+                topH = Mathf.Max(glyph, nameBand + labelLine + (roleBeside && roleW > 0f ? (int)UiSpace.S + bodyLine : 0f));
             }
 
-            if (Total() > area.height) { gap = (int)UiSpace.S; }
-            if (Total() > area.height) { showFlavour = false; }
-            if (Total() > area.height) { showCompare = false; }
-            if (Total() > area.height) { glyph = StageGlyphCompact; topH = TopHeight(glyph, w, nameBand, labelLine, bodyLine); }
-            if (Total() > area.height) { descH = Mathf.Max(bodyLine * 2f, descH - (Total() - area.height)); }
+            float Total()
+            {
+                return topH + (roleBelowH > 0f ? (int)UiSpace.S + roleBelowH : 0f) + gap + descH + (showFlavour ? (int)UiSpace.XS + flavourH : 0f)
+                       + gap + statsH + (showCompare ? (int)UiSpace.S + compareH : 0f) + gap + coreH + (stateShown ? gap + stateH : 0f);
+            }
 
-            // Place, top to bottom.
+            Identity();
+            if (Total() > h) { gap = (int)UiSpace.S; }
+            if (Total() > h) { showFlavour = false; }
+            if (Total() > h) { showCompare = false; }
+            if (Total() > h) { glyph = StageGlyphCompact; Identity(); }
+            if (Total() > h) { descH = Mathf.Max(bodyLine * 2f, descH - (Total() - h)); }
+
+            // Top group, from the top.
             float y = 0f;
             Dock(_stageTop, y, topH);
             RectTransform glyphRect = (RectTransform)_stageGlyph.transform;
@@ -759,12 +769,23 @@ namespace DD.Prototype.UI
             glyphRect.sizeDelta = new Vector2(glyph, glyph);
             glyphRect.anchoredPosition = Vector2.zero;
             float textLeft = glyph + (int)UiSpace.L;
-            float roleH = RoleHeight(w - textLeft, bodyLine);
             SetTop(_stageName, textLeft, 0f, nameBand);
             SetTop(_stageClass, textLeft, nameBand, labelLine);
-            SetTop(_stageRole, textLeft, nameBand + labelLine + (int)UiSpace.S, roleH);
-            y += topH + gap;
+            if (roleBeside)
+            {
+                SetTop(_stageRole, textLeft, nameBand + labelLine + (int)UiSpace.S, bodyLine);
+                _stageRole.enableWordWrapping = false;
+                y += topH;
+            }
+            else
+            {
+                y += topH + (int)UiSpace.S;
+                SetTop(_stageRole, 0f, y, roleBelowH);
+                _stageRole.enableWordWrapping = true;
+                y += roleBelowH;
+            }
 
+            y += gap;
             Dock((RectTransform)_stageDescription.transform, y, descH);
             y += descH;
             _stageFlavour.gameObject.SetActive(showFlavour);
@@ -778,28 +799,25 @@ namespace DD.Prototype.UI
             y += gap;
             for (int s = 0; s < 4; s++)
             {
-                int row = s / 2;
-                int col = s % 2;
-                float cellTop = y + (row == 1 ? rowH[0] + (int)UiSpace.M : 0f);
                 RectTransform cell = _statCells[s];
                 cell.anchorMin = new Vector2(0f, 1f);
                 cell.anchorMax = new Vector2(0f, 1f);
                 cell.pivot = new Vector2(0f, 1f);
-                cell.sizeDelta = new Vector2(cellW, rowH[row]);
-                cell.anchoredPosition = new Vector2(col * (cellW + (int)UiSpace.XL), -cellTop);
-                float line = stacked[s] ? captionLine : Mathf.Max(captionLine, labelLine);
-                SetTop(_statLabels[s], 0f, 0f, line);
-                _statLabels[s].alignment = TextAlignmentOptions.MidlineLeft;
-                if (stacked[s])
+                if (oneColumn)
                 {
-                    SetTop(_statValues[s], 0f, captionLine, labelLine);
-                    _statValues[s].alignment = TextAlignmentOptions.MidlineLeft;
+                    cell.sizeDelta = new Vector2(w, cellH);
+                    cell.anchoredPosition = new Vector2(0f, -(y + s * (cellH + (int)UiSpace.S)));
                 }
                 else
                 {
-                    SetTop(_statValues[s], 0f, 0f, line);
-                    _statValues[s].alignment = TextAlignmentOptions.MidlineRight;
+                    cell.sizeDelta = new Vector2(cellW, cellH);
+                    cell.anchoredPosition = new Vector2((s % 2) * (cellW + (int)UiSpace.XL), -(y + (s / 2) * (cellH + (int)UiSpace.M)));
                 }
+
+                SetTop(_statLabels[s], 0f, 0f, statLine);
+                SetTop(_statValues[s], 0f, 0f, statLine);
+                _statLabels[s].alignment = TextAlignmentOptions.MidlineLeft;
+                _statValues[s].alignment = TextAlignmentOptions.MidlineRight;
             }
 
             y += statsH;
@@ -808,11 +826,21 @@ namespace DD.Prototype.UI
             {
                 y += (int)UiSpace.S;
                 Dock((RectTransform)_compareCaption.transform, y, compareH);
-                y += compareH;
             }
 
-            y += gap;
-            Dock(_coreRow, y, coreH);
+            // Bottom group, anchored to the card's foot: CORE, then the state line. The slack collects above it in one band
+            // (AD R1-B MUST-2a), not as a hole under the last line.
+            _stateRow.gameObject.SetActive(stateShown);
+            float bottom = h;
+            if (stateShown)
+            {
+                bottom -= stateH;
+                Dock(_stateRow, bottom, stateH);
+                bottom -= gap;
+            }
+
+            bottom -= coreH;
+            Dock(_coreRow, bottom, coreH);
 
             // The CORE word gives its width up before any branch name would be cut (T3: nothing truncates).
             float namesW = 0f;
@@ -839,24 +867,6 @@ namespace DD.Prototype.UI
                 slot.anchoredPosition = new Vector2(x, 0f);
                 x += width + (int)UiSpace.S;
             }
-
-            y += coreH + gap;
-            Dock(_stateRow, y, stateH);
-        }
-
-        private float TopHeight(float glyph, float width, float nameBand, float labelLine, float bodyLine)
-        {
-            return Mathf.Max(glyph, nameBand + labelLine + (int)UiSpace.S + RoleHeight(width - glyph - (int)UiSpace.L, bodyLine));
-        }
-
-        private float RoleHeight(float width, float bodyLine)
-        {
-            if (string.IsNullOrEmpty(_stageRole.text) || width < 1f)
-            {
-                return bodyLine;
-            }
-
-            return Mathf.Min(bodyLine * 2f, Mathf.Ceil(_stageRole.GetPreferredValues(_stageRole.text, width, 0f).y));
         }
 
         /// <summary>
@@ -1015,22 +1025,19 @@ namespace DD.Prototype.UI
                 _coreNames[i].text = BranchName(branches[i], key);
             }
 
+            // The state line names only what stands between the player and the weapon (AD R1-B MUST-2a: "carried for the
+            // whole run" is the header's sentence, so a weapon the player owns shows no line).
             if (!enabled)
             {
                 _stateLine.text = UiStrings.Get("selection.not_in_build", "Not in this build.");
-                _xpBar.gameObject.SetActive(false);
             }
             else if (unlocked)
             {
-                _stateLine.text = UiStrings.Get("selection.carried", "Carried for the whole run. It cannot be swapped.");
-                _xpBar.gameObject.SetActive(false);
+                _stateLine.text = string.Empty;
             }
             else
             {
-                MetaPathRules.WeaponLockInfo lockInfo = ProfileService.WeaponLock(id);
-                _stateLine.text = LockLine(lockInfo);
-                _xpBar.gameObject.SetActive(lockInfo.Ladder || !lockInfo.LevelMet);   // the level is what is missing
-                _xpBar.SetValue(ProfileService.LevelProgress01, true);
+                _stateLine.text = LockLine(ProfileService.WeaponLock(id));
             }
 
             LayoutStage();

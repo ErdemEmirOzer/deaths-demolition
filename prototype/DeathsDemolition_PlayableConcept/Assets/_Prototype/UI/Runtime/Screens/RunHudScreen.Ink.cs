@@ -666,6 +666,13 @@ namespace DD.Prototype.UI
                 into[n++] = new Rect(-slot.x * 0.5f, bottom + 24f, slot.x, slot.y);
             }
 
+            // AD R1-B MUST-3: the prompt row where it sits now - SLICK closes onto the Special block when both show, so the
+            // arc lifted above the block must also clear it (Place re-checks every rect after a lift).
+            if (_slick != null && _slickShown && n < into.Length)
+            {
+                into[n++] = CanvasRectOf(_slick);
+            }
+
             return n;
         }
 

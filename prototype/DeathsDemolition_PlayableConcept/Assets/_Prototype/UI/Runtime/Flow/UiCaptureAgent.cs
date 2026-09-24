@@ -1231,6 +1231,17 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.08f);
                 yield return Frame(folder, "hud-special-pickup");
                 yield return new WaitForSecondsRealtime(0.6f);
+
+                // AD R1-B MUST-2b: the usage row staged at every size ("SHOTS 2 · HITS 3") - two shots, three bodies reached.
+                DD.Prototype.Core.Config.SpecialWeaponId inHand = WeaponEvents.Special.WeaponId;
+                SpecialWeaponUsageEvents.Publish(inHand, SpecialUsageKind.Fired, "capture", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                SpecialWeaponUsageEvents.Publish(inHand, SpecialUsageKind.Fired, "capture", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                for (int hit = 0; hit < 3; hit++)
+                {
+                    SpecialWeaponUsageEvents.Publish(inHand, SpecialUsageKind.Hit, "capture", Vector3.zero, Vector3.forward, 0f, 0f, 1);
+                }
+
+                yield return new WaitForSecondsRealtime(0.2f);
                 yield return Frame(folder, "hud-special-online");
 
                 // E14 v3 (DEC-097): the reload refilling the ring and Raiju's charge arc, staged on the live snapshot (the
@@ -1242,6 +1253,18 @@ namespace DD.Prototype.UI
                 RunHudScreen.CaptureSlick = true;
                 yield return new WaitForSecondsRealtime(0.4f);
                 yield return Frame(folder, "hud-slick-special");
+
+                // AD R1-B MUST-3: in a look mode, straight behind with the Special and SLICK stacked - the arc clears both.
+                if (DD.Prototype.CameraSystem.CameraModeService.IsLookMode && Camera.main != null)
+                {
+                    RunHudScreen.CaptureRearDirection = RearFromCamera(180);
+                    RunHudScreen.CaptureThreats = true;
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    yield return Frame(folder, "hud-rear-180-slick");
+                    RunHudScreen.CaptureRearDirection = null;
+                    RunHudScreen.CaptureThreats = false;
+                }
+
                 RunHudScreen.CaptureSlick = false;
 
                 // AD R1-A MUST-1d: straight behind with the Special ring up - the arc lifts above the ring, x unchanged.

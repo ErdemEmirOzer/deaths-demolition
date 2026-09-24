@@ -86,7 +86,7 @@ namespace DD.Prototype.UI
     public sealed partial class RunHudScreen : UiScreen
     {
         private const float SpecialBlockWidth = 220f;
-        private const float SpecialBlockHeight = 216f;
+        private const float SpecialBlockHeight = 260f;   // AD R1-B MUST-2b: the usage row has its own line under the time strip
 
         /// <summary>
         /// WP-068 8-R: the top-centre stack, from the screen top - the seal line (24 + 56), the calm breakdown (to 106),
@@ -202,9 +202,12 @@ namespace DD.Prototype.UI
         private Image _specialCharge;
         private Image _specialCapFill;
         private GameObject _specialCap;
-        public const float SpecialCapWidth = 112f;
+        public const float SpecialCapWidth = 132f;   // AD R1-B SHOULD-1: the ring's baseline (= the ring's width)
         public const float SpecialCapHeight = 4f;
         public const float SpecialChargeSize = 108f;
+        public const float SpecialGlyphSize = 64f;       // N19 §1.5: the E14 ring glyph
+        public const float SpecialGlyphY = 22f;          // its centre above the ring's centre (spans -10 .. +54 inside r 58)
+        public const float SpecialRoundsY = -30f;        // the rounds / reserve row's centre below it
         private TMP_Text _specialCaption;
         private Image _specialRing;
         private Image _specialPip;
@@ -547,21 +550,24 @@ namespace DD.Prototype.UI
 
             // E14 v3: the rounds in the magazine (the old timer's numeral and name, so its tests and captures find it) over
             // the reserve.
+            // AD R1-B MUST-1: the ring's interior carries the Special's glyph at 64 px in its upper half (N19 §1.5) and the
+            // rounds over the reserve in its lower half, side by side on one baseline: "3" NumericL then "/ 9".
             _specialTimer = UiFactory.Numeric(
-                "Timer", ringRoot, "0", UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleCenter, false);
+                "Timer", ringRoot, "0", UiType.NumericL, UiColor.StateGold, TextAnchor.MiddleRight, false);
             RectTransform timerRect = (RectTransform)_specialTimer.transform;
             timerRect.anchorMin = new Vector2(0.5f, 0.5f);
             timerRect.anchorMax = new Vector2(0.5f, 0.5f);
-            timerRect.pivot = new Vector2(0.5f, 0f);
-            timerRect.sizeDelta = new Vector2(80f, UiFactory.LineHeight(UiType.NumericM));
-            timerRect.anchoredPosition = new Vector2(0f, -6f);
-            _specialReserve = UiFactory.Label("Reserve", ringRoot, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperCenter);
+            timerRect.pivot = new Vector2(1f, 0.5f);
+            timerRect.sizeDelta = new Vector2(48f, UiFactory.LineHeight(UiType.NumericL));
+            timerRect.anchoredPosition = new Vector2(2f, SpecialRoundsY);
+            _specialReserve = UiFactory.Label("Reserve", ringRoot, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             RectTransform reserveRect = (RectTransform)_specialReserve.transform;
             reserveRect.anchorMin = new Vector2(0.5f, 0.5f);
             reserveRect.anchorMax = new Vector2(0.5f, 0.5f);
-            reserveRect.pivot = new Vector2(0.5f, 1f);
-            reserveRect.sizeDelta = new Vector2(80f, UiFactory.LineHeight(UiType.Caption));
-            reserveRect.anchoredPosition = new Vector2(0f, -6f);
+            reserveRect.pivot = new Vector2(0f, 0.5f);
+            reserveRect.sizeDelta = new Vector2(44f, UiFactory.LineHeight(UiType.NumericL));
+            reserveRect.anchoredPosition = new Vector2(6f, SpecialRoundsY - 3f);
+            _specialReserve.enableWordWrapping = false;
 
             // Raiju's charge: an inner arc (the same A4 ring at 108 px, inside the magazine stroke) filling over the 0.25 s
             // the trigger is held; hidden otherwise.
@@ -598,34 +604,31 @@ namespace DD.Prototype.UI
             _specialCapFill.fillAmount = 1f;
             _specialCap = cap.gameObject;
 
-            _specialCaption = UiFactory.Label(
-                "Caption", specialHost, string.Empty, UiType.Caption, UiColor.TextPrimary, TextAnchor.LowerCenter);
-            RectTransform captionRect = UiFactory.Fill((RectTransform)_specialCaption.transform);
-            captionRect.anchorMax = new Vector2(1f, 0f);
-            captionRect.pivot = new Vector2(0.5f, 0f);
-            captionRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Caption));
-            captionRect.anchoredPosition = Vector2.zero;
-
-            // WP-022H: usage line between the ring and the name - "FIELD 4s · 3 HIT" while a
-            // field lives, "SHOTS 2" between fields, "FIELD ENDED · 5 HIT" for two seconds.
+            // AD R1-B MUST-2b: under the ring, top-down - the time strip (ring bottom + 8), the usage row ("SHOTS 2 · HITS 5",
+            // gold, strip + 8) and the name (usage + 4). Placed from the top, so a larger TextScale grows the block downward
+            // into its own 260 px and never back over the strip.
+            float captionBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float usageTop = UiFactory.LineHeight(UiType.Label) + (int)UiSpace.XS + SpecialRingSize + (int)UiSpace.S + SpecialCapHeight + (int)UiSpace.S;
             _specialUsage = UiFactory.Label(
-                "Usage", specialHost, string.Empty, UiType.Caption, UiColor.StateGold, TextAnchor.LowerCenter);
-            RectTransform usageRect = UiFactory.Fill((RectTransform)_specialUsage.transform);
-            usageRect.anchorMax = new Vector2(1f, 0f);
-            usageRect.pivot = new Vector2(0.5f, 0f);
-            usageRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Caption));
-            usageRect.anchoredPosition = new Vector2(0f, UiFactory.LineHeight(UiType.Caption));
+                "Usage", specialHost, string.Empty, UiType.Caption, UiColor.StateGold, TextAnchor.MiddleCenter);
+            TopBand((RectTransform)_specialUsage.transform, usageTop, captionBand);
             _specialUsage.fontStyle = TMPro.FontStyles.Bold;
+            _specialUsage.enableWordWrapping = false;
 
-            // AP-014 glyph (Sw.<id>, AP-012 Special.<id> as the fallback) at the block's top-left.
-            _specialGlyph = UiFactory.NewImage("Glyph", specialHost, UiColor.StateGold, UiSprites.Disc);
+            _specialCaption = UiFactory.Label(
+                "Caption", specialHost, string.Empty, UiType.Caption, UiColor.TextPrimary, TextAnchor.MiddleCenter);
+            TopBand((RectTransform)_specialCaption.transform, usageTop + captionBand + (int)UiSpace.XS, captionBand);
+            _specialCaption.enableWordWrapping = false;
+
+            // N19 §1.5 / AD R1-B MUST-1: the Special's glyph, 64 px, in the ring's upper half, in its identity tint.
+            _specialGlyph = UiFactory.NewImage("Glyph", ringRoot, UiColor.StateGold, UiSprites.Disc);
             _specialGlyph.preserveAspect = true;
             RectTransform glyphRect = (RectTransform)_specialGlyph.transform;
-            glyphRect.anchorMin = new Vector2(0f, 1f);
-            glyphRect.anchorMax = new Vector2(0f, 1f);
-            glyphRect.pivot = new Vector2(0f, 1f);
-            glyphRect.sizeDelta = new Vector2(28f, 28f);
-            glyphRect.anchoredPosition = Vector2.zero;
+            glyphRect.anchorMin = new Vector2(0.5f, 0.5f);
+            glyphRect.anchorMax = new Vector2(0.5f, 0.5f);
+            glyphRect.pivot = new Vector2(0.5f, 0.5f);
+            glyphRect.sizeDelta = new Vector2(SpecialGlyphSize, SpecialGlyphSize);
+            glyphRect.anchoredPosition = new Vector2(0f, SpecialGlyphY);
             _specialGlyph.enabled = false;
             if (ink)
             {
@@ -1573,6 +1576,15 @@ namespace DD.Prototype.UI
         /// </summary>
         public static float BottomCentreTop { get; private set; }
 
+        private static void TopBand(RectTransform rect, float top, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(0f, -(top + height));
+            rect.offsetMax = new Vector2(0f, -top);
+        }
+
         private void UpdateSpecialWeapon()
         {
             SpecialWeaponHudState state = WeaponEvents.Special;
@@ -1709,6 +1721,11 @@ namespace DD.Prototype.UI
                     {
                         Sprite glyph = UiArt.SpecialIcon(e.Id);
                         UiArt.SetGlyph(_specialGlyph, glyph);
+                        if (UiArt.IsGlyph(glyph))
+                        {
+                            UiArt.ApplyGlyph(_specialGlyph, GlyphInk);
+                        }
+
                         _specialGlyph.enabled = glyph != null;
                         // N19: the Special's glyph wears its identity tint (Arc / Gel); the ring stays gold (DEC-097 reserve).
                         _specialGlyph.color = UiTokens.Get(e.Id == SpecialWeaponId.Raiju ? UiGlyphTints.ChainLightning : UiGlyphTints.Gel);

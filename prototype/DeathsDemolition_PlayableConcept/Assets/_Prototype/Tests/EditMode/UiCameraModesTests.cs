@@ -127,7 +127,7 @@ namespace DD.Prototype.Tests.EditMode
             {
                 float hw = c.W * 0.5f, hh = c.H * 0.5f;
                 float fpLift = RunHudScreen.WeaponClusterPosition(new Vector2(-32f, 32f), true, c.H).y;
-                foreach (string variant in new[] { "base", "special", "fp" })
+                foreach (string variant in new[] { "base", "special", "fp", "special-prompt" })
                 {
                     var rects = new System.Collections.Generic.List<Rect>
                     {
@@ -140,9 +140,16 @@ namespace DD.Prototype.Tests.EditMode
                             : Rect.MinMaxRect(hw - 32f - 400f, -hh + 32f, hw - 32f, -hh + 32f + 140f * c.Tall),         // weapon
                         new Rect(-HudRearEdge.PromptSlot.x * 0.5f, -hh + 24f, HudRearEdge.PromptSlot.x, HudRearEdge.PromptSlot.y),   // prompt slot
                     };
-                    if (variant == "special")
+                    if (variant == "special" || variant == "special-prompt")
                     {
-                        rects.Add(Rect.MinMaxRect(-110f, -hh + 24f, 110f, -hh + 24f + 216f));                           // Special ring block
+                        rects.Add(Rect.MinMaxRect(-110f, -hh + 24f, 110f, -hh + 24f + 260f));                           // Special ring block (R1-B: 260)
+                    }
+
+                    if (variant == "special-prompt")
+                    {
+                        // AD R1-B MUST-3: the prompt / SLICK row closed onto the Special block at gap 8.
+                        float row = -hh + 24f + 260f + 8f;
+                        rects.Add(new Rect(-HudRearEdge.PromptSlot.x * 0.5f, row, HudRearEdge.PromptSlot.x, HudRearEdge.PromptSlot.y));
                     }
 
                     Rect[] avoid = rects.ToArray();
