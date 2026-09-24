@@ -43,6 +43,28 @@ namespace DD.Prototype.Enemies
         [PrototypeOnly(PendingDecisions.None, "Hysteresis band around each layer threshold.", true)] [Range(0f, 0.2f)] public float LayerHysteresis = 0.05f;
         [PrototypeOnly(PendingDecisions.None, "Seconds a flag (encircled / rear attack) stays raised after its cause ends (readable warning).", true)] public float FlagHoldSeconds = 0.6f;
 
+        [Header("WP-076 §6 · rear awareness by camera mode (TopDown, ThirdPerson, FirstPerson)")]
+        [PrototypeOnly(PendingDecisions.None, "WP-076 §6: fallback rear angle (deg) when no camera rig answers IsInView; IsInView margin (deg).", true)]
+        public float[] RearAngleByMode = { 100f, 110f, 75f };
+        public float[] RearViewMarginByMode = { 0f, 10f, 0f };
+        [PrototypeOnly(PendingDecisions.None, "WP-076 §6 RearLevel: Aware distance (m; 0 = none), Warn intensity, Warn distance (FP; 0 = none), Warn pair distance (TP: ≥ 2 bodies within; 0 = none), Alert distance (FP bite band; 0 = none), level hold (s).", true)]
+        public float[] RearAwareMetres = { 0f, 6f, 7f };
+        public float[] RearWarnIntensity = { 0.40f, 0.25f, 0.15f };
+        public float[] RearWarnMetres = { 0f, 0f, 4f };
+        public float[] RearWarnPairMetres = { 0f, 5f, 0f };
+        public float[] RearAlertMetres = { 0f, 0f, 2.2f };
+        public float[] RearHoldSeconds = { 0.6f, 0.6f, 0.45f };
+        [PrototypeOnly(PendingDecisions.None, "WP-076 §6 rear_threat beat: raise distance (m) Standard / Special+Elite+Ultra, re-arm distance (m); attack lead after the beat (s) by mode.", true)]
+        public float RearBeatMetres = 6f, RearBeatMetresHeavy = 8f, RearBeatRearmMetres = 9f;
+        public float[] RearWarnLeadSeconds = { 0f, 0.5f, 0.8f };
+        [PrototypeOnly(PendingDecisions.None, "WP-076 §5.1 rear-hemisphere spawn share cap by mode (1 = none), sliding window (spawns), factor below the cap, factor at the cap when no other path-ready point exists.", true)]
+        public float[] RearSpawnCap = { 1f, 0.45f, 0.35f };
+        public int RearSpawnWindow = 8;
+        public float RearSpawnBelowCapFactor = 0.7f, RearSpawnNoAlternativeFactor = 0.25f;
+
+        public static int ModeIndex(int mode) => Mathf.Clamp(mode, 0, 2);
+        public float ByMode(float[] table, int mode, float fallback) => table != null && table.Length > ModeIndex(mode) ? table[ModeIndex(mode)] : fallback;
+
         private static ThreatSettings s_active;
 
         public static ThreatSettings Active

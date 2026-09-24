@@ -795,6 +795,7 @@ namespace DD.Prototype.Spawn
             point.AliveFromHere++;
             point.SpawnedThisRound++;
             point.LastUsedTime = Time.time;
+            RearSpawnShare.Record(point.IsBehindCamera);   // WP-076 §5.1
             // WP-030 spawn visibility readout (DEC-023 counting is unchanged: the body is active from activation, rise included).
             _spawnsThisRun++;
             if (point.IsOnScreen) _onScreenSpawnsThisRun++;
@@ -958,6 +959,14 @@ namespace DD.Prototype.Spawn
                 NavDegraded = !CrowdService.IsNavMeshAvailable,
                 ThreatLayer = ThreatLevelFeed.Layer   // WP-054: threat-aware visibility weight
             };
+
+            // WP-076 §5.1: rear-hemisphere share cap (FP 35 % / TP 45 % of the last 8 spawns)
+            {
+                bool otherReady = false;
+                for (int i = 0; i < points.Count && !otherReady; i++)
+                    otherReady = !points[i].IsBehindCamera && points[i].PathStatus == NavPathStatus.Complete;
+                inputs.RearSpawnPenalty = RearSpawnShare.Penalty(DD.Prototype.Enemies.ThreatSettings.Active, RearSpawnShare.CurrentMode, otherReady);
+            }
 
             UpdatePointDensity(points);
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using DD.Prototype.CameraSystem;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using UnityEngine;
@@ -47,6 +48,9 @@ namespace DD.Prototype.Enemies
         /// <summary>Raised when the layer or a warning flag changes.</summary>
         public static event Action<ThreatSnapshot> Changed;
 
+        /// <summary>WP-076 §6: raised only when <see cref="ThreatSnapshot.RearLevel"/> changes (S-08 / S-09; not every frame).</summary>
+        public static event Action<ThreatSnapshot> RearChanged;
+
         /// <summary>This frame's snapshot; evaluated on the first read of the frame.</summary>
         public static ThreatSnapshot Current
         {
@@ -67,7 +71,7 @@ namespace DD.Prototype.Enemies
             s_frame = Time.frameCount;
 
             ThreatContext ctx = ContextOverride ?? GatherContext();
-            int count = GatherEnemies();
+            int count = GatherEnemies(in ctx);
             ThreatSnapshot previous = s_current;
             s_current = ThreatModel.Evaluate(ThreatSettings.Active, in ctx, s_enemies, count, ref s_state, dt);
             DD.Prototype.Navigation.ThreatLevelFeed.Publish(s_current.Layer);   // WP-054: the spawn director weighs on-screen points by the layer
@@ -80,6 +84,11 @@ namespace DD.Prototype.Enemies
             {
                 Changed?.Invoke(s_current);
                 s_source.Raise(s_current);
+            }
+
+            if (previous.RearLevel != s_current.RearLevel)
+            {
+                try { RearChanged?.Invoke(s_current); } catch (Exception e) { UnityEngine.Debug.LogException(e); }
             }
 
             return s_current;
@@ -96,11 +105,13 @@ namespace DD.Prototype.Enemies
             ContextOverride = null;
             LastSampleMilliseconds = 0; AverageSampleMilliseconds = 0; SampleCount = 0;
             Changed = null;
+            RearChanged = null;
         }
 
         private static ThreatContext GatherContext()
         {
-            var ctx = new ThreatContext { InFight = false, Health01 = 1f, ViewForward = Vector3.forward };
+            var ctx = new ThreatContext { InFight = false, Health01 = 1f, ViewForward = Vector3.forward,
+                Mode = (int)CameraModeService.Current, UseViewFlags = PrototypeCameraRig.Active != null };   // WP-076 §6
             PlayerRig rig = PlayerRegistry.Primary;
             if (rig != null)
             {
@@ -122,8 +133,11 @@ namespace DD.Prototype.Enemies
             return ctx;
         }
 
-        private static int GatherEnemies()
+        private static int GatherEnemies(in ThreatContext ctx)
         {
+            ThreatSettings settings = ThreatSettings.Active;
+            float margin = settings.ByMode(settings.RearViewMarginByMode, ctx.Mode, 0f);
+            float scan2 = settings.RearBeatRearmMetres * settings.RearBeatRearmMetres;
             IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
             if (live.Count > s_enemies.Length) Array.Resize(ref s_enemies, Mathf.NextPowerOfTwo(live.Count));   // grows once to the ceiling (DEC-023: 40)
             int n = 0;
@@ -134,6 +148,10 @@ namespace DD.Prototype.Enemies
                 s_enemies[n].Position = z.transform.position;
                 s_enemies[n].Tier = z.Tier;
                 s_enemies[n].WindingUp = z.AttackPhase == ZombieAttackPhase.Windup;
+                s_enemies[n].LifeId = z.LifeId;
+                // WP-076 §6: one IsInView per body inside the re-arm range (≤ 40), only when a rig answers and the view can be blind (TP / FP)
+                Vector3 d = z.transform.position - ctx.PlayerPosition; d.y = 0f;
+                s_enemies[n].OutOfView = ctx.UseViewFlags && ctx.Mode != 0 && d.sqrMagnitude <= scan2 && !CameraView.IsInView(z.transform.position + Vector3.up * ZombieEnemy.RearChestHeight, margin);
                 n++;
             }
 
@@ -174,5 +192,9 @@ namespace DD.Prototype.Enemies
         public static float RearIntensity => ThreatDirector.Current.RearIntensity;
         public static float RearBearingDegrees => ThreatDirector.Current.RearBearingDegrees;
         public static int RearCount => ThreatDirector.Current.RearCount;
+        /// <summary>WP-076 §6: None / Aware / Warn / Alert (per camera mode; TopDown never Aware).</summary>
+        public static ThreatRearLevel RearLevel => ThreatDirector.Current.RearLevel;
+        /// <summary>WP-076 §6: metres to the nearest body behind the view (−1 = none).</summary>
+        public static float RearNearestDistance => ThreatDirector.Current.RearNearestDistance;
     }
 }

@@ -585,6 +585,7 @@ namespace DD.Prototype.Enemies
             ResetHitResponse();        // WP-076 B3
             ResetShock();              // WP-076 B4
             ResetGel();                // WP-076 B5
+            ResetRear();               // WP-076 B7
             ResetOutOfWorld();         // WP-061K
             ResetWaiting();   // WP-050
             _noticed = false;   // WP-052
@@ -970,7 +971,8 @@ namespace DD.Prototype.Enemies
             if (gelHolds && _attack.IsAttacking) _attack.Cancel(GrabEndReason.Staggered);
             staggering |= gelHolds;
 
-            if (!staggering && target != null)
+            bool rearLeadOk = TickRear(target, distance);   // WP-076 B7 §6: rear_threat beat + the fairness lead before a swing from behind
+            if (!staggering && target != null && rearLeadOk)
             {
                 // WP-076 §1.3: the selector picks this swing (tier / distance / angle / variety / crowd slots)
                 var ctx = new AttackContext
