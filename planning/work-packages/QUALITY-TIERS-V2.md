@@ -58,7 +58,7 @@ public static class QualityTiers
 | Yükseklik sisi (TP/FP) | S-05 | kapalı | açık | açık |
 | Bitki yoğunluğu / impostor mesafesi | S-05 WP-074 | ×0,6 / 40 m | ×1,0 / 60 m | ×1,0 / 80 m |
 | Atmosfer parçacıkları (× cookie) | S-07 WP-073 | ×0,4 | ×0,7 | ×1,0 |
-| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi) | S-06 WP-071 | 2 | 6 | 10 |
+| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi; `-ddRagdoll`) | S-06 WP-071 (uygular) | 2 | 6 | 10 (S-03 önerisi 12 — S-06 değeri geçerli, uzlaşma bekliyor) |
 | Ceset tavanı / ömür (s); ceset–ceset çarpışması | S-06 | 6 / 2,5; ✘ | 10 / 4; ✔ | 16 / 6; ✔ |
 | Foot IK gövde/kare (ayak kilidi) | S-06 | 4 (yalnız oyuncu) | 12 (oyuncu + ≤ 8) | 24 (oyuncu + LOD0 zombi) |
 | İkincil zincir gövde/kare (`SecondaryChainDriver`) | S-06 | 16 | 40 | 60 |
@@ -67,7 +67,13 @@ public static class QualityTiers
 | Animator tam kare mesafesi TP/FP (ötesi 15 Hz Far); tepeden Far LOD | S-06 | ≤ 14 m; ≥ 1 | ≤ 22 m; ≥ 2 | ≤ 30 m; ≥ 3 |
 | Yerinde dönüş/pivot klipleri | S-06 | ✘ (slerp) | ✔ | ✔ |
 | FP kol viewmodel Animator (≈ 0,15 ms) | S-06 | açık | açık | açık |
-| Mermi izi, darbe VFX, AI tick, Special etkileşimleri | S-02 / S-07 / S-03 | paket kendi satırlarını bu sözleşmeye ekler | | |
+| AI tick bütçesi (ragdoll hariç, 40 beden) `-ddAiV3` | S-03 WP-076 | 0,55 ms | 0,75 ms | 0,85 ms |
+| Ceset ömrü çarpanı (tavan S-06 satırı) `-ddCorpseLinger` | S-03 | ×0,6 | ×1,0 | ×1,25 |
+| Zincir yıldırım sekme `-ddChainHops` | S-03 | 6 | 8 | 10 |
+| Jel birikinti tavanı `-ddGelPuddles` | S-03 | 10 | 16 | 24 |
+| Kalabalık komşu tavanı `-ddCrowdNeighbours` | S-03 | 6 | 10 | 14 |
+| PathQueriesPerTick / spawn LOS linecast `-ddSpawnLos` | S-03 | 4 / 9 | 6 / 18 | 6 / 18 |
+| Mermi izi, darbe VFX, Special görselleri | S-02 / S-07 | paket kendi satırlarını bu sözleşmeye ekler | | |
 | Ses | S-08 | kademe satırı yok (ses CPU'su ≈ 0,02 ms/atış, ses bütçesi kademeden bağımsız; Performans ölçümü > 0,3 ms ise World kapasitesi 24 → 16) | | |
 
 **Hiçbir kademede kaybedilmez:** ıslak arduvaz değeri/parlaması; bulut gölgesi cookie; LUT v2 + sis rengi #D0D7DE + mesafe rampası (90 m %24); ufuk plakaları + gök bandı; imza huzmeler (batı bambu ≥ 3, doğu sakura ≥ 2 kart); değer sırası ve DEC-077 okunabilirlik eşikleri.
