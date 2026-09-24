@@ -34,7 +34,14 @@ namespace DD.Prototype.UI
 
         public static Sprite WeaponIcon(ClassicWeaponId id)
         {
-            return Icon("Weapon." + id);
+            Sprite own = Icon("Weapon." + id);
+            if (own != null || (int)id <= (int)ClassicWeaponId.CombatShotgun)
+            {
+                return own;
+            }
+
+            // WP-069 B2: a v3 weapon without its own glyph shows its class sibling's until the AP-021 icons.
+            return Icon("Weapon." + (ClassicWeaponId)DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(id));
         }
 
         public static Sprite SpecialIcon(SpecialWeaponId id)

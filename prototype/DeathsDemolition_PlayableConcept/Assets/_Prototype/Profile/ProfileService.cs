@@ -408,6 +408,12 @@ namespace DD.Prototype.Profile
 
         // ==================================================================== unlocks
 
+        /// <summary>
+        /// WP-069 B2: the unlock level of a weapon this build does not carry (a disabled Arsenal entry —
+        /// rl_1 until B3). No profile level reaches it, so the weapon is never granted; lists skip it.
+        /// </summary>
+        public const int NotInBuildUnlockLevel = int.MaxValue;
+
         public static int UnlockLevelFor(ClassicWeaponId id)
         {
             PrototypeConfig config = PrototypeConfig.Active;
@@ -416,14 +422,15 @@ namespace DD.Prototype.Profile
                 // Request ladder, mirrored so a missing config cannot unlock everything.
                 switch (id)
                 {
+                    case ClassicWeaponId.AssaultRifle: return DefaultUnlockLevel;
                     case ClassicWeaponId.AutoSmg: return FallbackAutoSmgUnlockLevel;
                     case ClassicWeaponId.CombatShotgun: return FallbackCombatShotgunUnlockLevel;
-                    default: return DefaultUnlockLevel;
+                    default: return NotInBuildUnlockLevel;   // WP-069 v3 ids need the Arsenal
                 }
             }
 
             ClassicWeaponSettings settings = config.Weapons.Find(id);
-            return settings != null ? Mathf.Max(1, settings.UnlockProfileLevel) : 1;
+            return settings != null ? Mathf.Max(1, settings.UnlockProfileLevel) : NotInBuildUnlockLevel;
         }
 
         public static int UnlockLevelFor(UpgradeBranch branch)

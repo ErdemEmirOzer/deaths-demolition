@@ -260,7 +260,8 @@ namespace DD.Prototype.Characters
             PlayPickup();
         }
 
-        private void OnWeaponEquipped(ClassicWeaponId id) => SetWeapon((int)id);
+        // WP-069 B2 (S-02, interim): weapons 3–9 borrow their class's M3 pose until the WP-071 override controllers land.
+        private void OnWeaponEquipped(ClassicWeaponId id) => SetWeapon(DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(id));
         private void OnReloadStarted(float duration) => PlayReload(duration);
         private void OnReloadInterrupted() => CancelReload();
         private void OnSpecialEnded() => SetSpecialHold(0);

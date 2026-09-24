@@ -87,8 +87,8 @@ namespace DD.Prototype.Tests.PlayMode
         private const float OyuncuHizi = 6.2f;
         private const float OyuncuIvmesi = 45f;
         private const float BaslangicCani = 100f;
-        private const float TufekHasari = 11f;
-        private const float TufekAtisHizi = 8.5f;
+        private const float TufekHasari = 12f;   // WP-069 B2 Hinawa (ar_1)
+        private const float TufekAtisHizi = 10f;   // 600 RPM
         private const float NisanDuzlemi = 1.15f;
         private const float Adim = 1f / 60f;
         private const float KurulumZamanAsimi = 40f;
@@ -374,7 +374,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] savas.holdtofire basili 1s atis=" + basiliAtis + " tek kare basis atis=" + tapAtis);
 
-            int beklenen = Mathf.FloorToInt(TufekAtisHizi) + 1;   // 9: t=0 dahil
+            int beklenen = Mathf.FloorToInt(TufekAtisHizi) + 1;   // 11: t=0 dahil
             Assert.GreaterOrEqual(basiliAtis, 6, "REQ-039: basılı tutma sürekli ateş üretmedi (" + basiliAtis + ").");
             Assert.LessOrEqual(basiliAtis, beklenen + 1, "Basılı ateş formülden hızlı: " + basiliAtis + " > " + (beklenen + 1));
             Assert.AreEqual(1, tapAtis, "Tek kare basış " + tapAtis + " atış üretti; bir basış bir atış olmalı.");
@@ -930,7 +930,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Debug.Log(rapor.ToString());
                 for (int i = 0; i < hasar.Count; i++) Debug.Log("[DD-TEST] gamefeel.hit " + i + " region=" + hasar[i].Result.Region + " hp=" + hasar[i].Result.HealthDamage + " killed=" + hasar[i].Result.Killed + " armored=" + hasar[i].Result.WasArmored + " tier=" + (i < tierler.Count ? tierler[i].ToString() : "-"));
 
-                int beklenenMinIsabet = Mathf.CeilToInt(ZombiCani / TufekHasari);   // 4
+                int beklenenMinIsabet = Mathf.CeilToInt(ZombiCani / TufekHasari);   // 3
                 Assert.GreaterOrEqual(hasar.Count, beklenenMinIsabet, "İsabet sayısı formülün altında.\n" + rapor);
                 Assert.AreEqual(1, olum.Count, "EnemyDied " + olum.Count + " kez (tam 1).\n" + rapor);
                 Assert.AreEqual(1, olumTier, "Death tier'ı " + olumTier + " kez dressed (tam 1).\n" + rapor);

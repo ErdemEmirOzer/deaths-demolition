@@ -86,7 +86,7 @@ namespace DD.Prototype.Inputs.Testing
         /// </summary>
         public void Set(Vector2 leftStick, Vector2 rightStick, bool fire = false, bool special = false,
             bool start = false, bool south = false, bool west = false, bool east = false, bool select = false,
-            Vector2 dpad = default, bool processNow = false)
+            Vector2 dpad = default, bool processNow = false, bool focus = false)
         {
             if (_disposed || _pad == null)
             {
@@ -98,8 +98,10 @@ namespace DD.Prototype.Inputs.Testing
                 leftStick = leftStick,
                 rightStick = rightStick,
                 rightTrigger = fire ? 1f : 0f,
-                leftTrigger = special ? 1f : 0f,
+                leftTrigger = focus ? 1f : 0f,   // WP-069 B2: LT = Focus / ADS; the Special moved to LB
             };
+
+            if (special) _state = _state.WithButton(GamepadButton.LeftShoulder);
 
             if (start) _state = _state.WithButton(GamepadButton.Start);
             if (south) _state = _state.WithButton(GamepadButton.South);

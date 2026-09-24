@@ -105,7 +105,10 @@ namespace DD.Prototype.Core.Weapons
         {
             switch (branch)
             {
-                case UpgradeBranch.Piercing: return PelletBranchResolution.PerPellet;
+                case UpgradeBranch.Piercing:
+                case UpgradeBranch.ArmorBreak:   // WP-069 §6: per-hit multipliers ride on every pellet
+                case UpgradeBranch.Impact:
+                    return PelletBranchResolution.PerPellet;
                 case UpgradeBranch.Explosion: return PelletBranchResolution.PelletNormalized;
                 case UpgradeBranch.Chain:
                 case UpgradeBranch.Ricochet:

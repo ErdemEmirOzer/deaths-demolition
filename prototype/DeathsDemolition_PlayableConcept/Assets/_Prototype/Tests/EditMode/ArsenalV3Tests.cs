@@ -9,9 +9,9 @@ using UnityEngine;
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-069 B1 · WeaponDefinition v3 (A4) and the projectile core (ADR-069-1) without a scene:
-    /// the catalog is valid, the A/B/C migration is behaviour-preserving (the per-config copy
-    /// carries exactly the M3 numbers), clones stay clone-scoped, the saved-profile table maps
+    /// WP-069 B1/B2 · WeaponDefinition v3 (A4) and the projectile core (ADR-069-1) without a scene:
+    /// the ten-weapon catalog is valid, the per-config copy carries each definition's numbers
+    /// (B2: the council's, no longer M3's), clones stay clone-scoped, the saved-profile table maps
     /// the M3 names, and projectile motion (range, gravity, determinism, capacity) is exact.
     /// World / body impacts are PlayMode (ProjectileSliceTests).
     /// </summary>
@@ -30,56 +30,76 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ A4 catalog
 
         [Test]
-        public void Katalog_UcTanim_Gecerli_KimliklerBenzersiz()
+        public void Katalog_OnTanim_Gecerli_KimliklerBenzersiz()
         {
             ArsenalCatalog catalog = Arsenal.Catalog;
-            Assert.IsNotNull(catalog, "Resources/Arsenal/ArsenalCatalog yok (ArsenalAssetBuilder.BuildB1).");
+            Assert.IsNotNull(catalog, "Resources/Arsenal/ArsenalCatalog yok (ArsenalAssetBuilder.Build).");
             var faults = new List<string>();
             Assert.IsTrue(catalog.Validate(faults), string.Join("\n", faults));
+            Assert.AreEqual(10, catalog.weapons.Count, "WP-069 B2: on klasik tanım (Special'lar B4)");
             Assert.AreSame(Arsenal.Get("ar_1"), Arsenal.Get(ClassicWeaponId.AssaultRifle));
             Assert.AreSame(Arsenal.Get("smg_1"), Arsenal.Get(ClassicWeaponId.AutoSmg));
             Assert.AreSame(Arsenal.Get("sg_1"), Arsenal.Get(ClassicWeaponId.CombatShotgun));
+            Assert.AreSame(Arsenal.Get("sr_1"), Arsenal.Get(ClassicWeaponId.Sr1));
             Assert.AreSame(Arsenal.Get("sg_1"), Arsenal.Get("CombatShotgun"), "eski ad (legacyNames) aynı tanıma çıkar");
             Assert.AreEqual("AR1", Arsenal.Get("ar_1").AudioId, "audioId = weaponId büyük harf, rakamdan önceki _ düşer (§0 uzlaştırma)");
             Assert.AreEqual("RL1", WeaponDefinition.DeriveAudioId("rl_1"));
             Assert.AreEqual("SW_ARC", WeaponDefinition.DeriveAudioId("sw_arc"));
             Assert.AreSame(Arsenal.Get("ar_1").AudioId, Arsenal.Get("ar_1").AudioId, "önbellekli (ateş yolunda ayırma yok)");
             Assert.AreEqual("sg_1", Arsenal.Get("sg_1").AnimSet);
-            Assert.IsTrue(Arsenal.Get("smg_1").presentation.fireLoop, "780 RPM auto → döngülü ateş");
-            Assert.IsFalse(Arsenal.Get("ar_1").presentation.fireLoop, "510 RPM → tek tek");
+            Assert.IsTrue(Arsenal.Get("ar_1").presentation.fireLoop, "600 RPM auto → döngülü ateş (A4: Auto ∧ rpm ≥ 600)");
+            Assert.IsTrue(Arsenal.Get("lmg_1").presentation.fireLoop, "720 RPM auto");
+            Assert.IsFalse(Arsenal.Get("smg_2").presentation.fireLoop, "540 RPM → tek tek");
+            Assert.IsFalse(Arsenal.Get("sg_1").presentation.fireLoop, "single");
+            Assert.IsFalse(Arsenal.Get("rl_1").enabled, "rl_1 B3'e dek kapalı");
+
+            var triples = new HashSet<string>();
+            foreach (WeaponDefinition d in catalog.weapons)
+            {
+                var core = new List<UpgradeBranch>(d.upgrade.coreBranches);
+                core.Sort();
+                Assert.IsTrue(triples.Add(string.Join("+", core)), d.weaponId + ": çekirdek üçlüsü başka silahla aynı (WP-034)");
+                Assert.That(Arsenal.LegacyPoseIndex(d.id), Is.InRange(0, 2), d.weaponId + ": M3 anim poz indeksi (WP-071'e dek sınıf kardeşi)");
+            }
         }
 
         [Test]
-        public void Gocu_DavranisKorur_KonfigKopyasi_M3SayilariylaBirebir()
+        public void KonfigKopyasi_TanimSayilariniTasir_KonseySayilari()
         {
             PrototypeConfig config = Config;
             Assert.IsNotNull(config);
             config.Weapons.RebuildClassicView();
-            List<ClassicWeaponSettings> m3 = WeaponConfigSection.CodeDefaults();
-            Assert.AreEqual(3, config.Weapons.ClassicWeapons.Count, "A/B/C");
-            foreach (ClassicWeaponSettings d in m3)
+            Assert.AreEqual(9, config.Weapons.ClassicWeapons.Count, "9 etkin klasik (rl_1 B3)");
+            Assert.IsNull(config.Weapons.Find(ClassicWeaponId.Rl1), "kapalı tanım kopyaya girmez");
+            foreach (WeaponDefinition d in Arsenal.All)
             {
-                ClassicWeaponSettings a = config.Weapons.Find(d.Id);
-                string tag = d.Id + ": ";
-                Assert.IsNotNull(a.Definition, tag + "kopya v3 tanımına bağlı değil");
-                Assert.AreEqual(d.DisplayName, a.DisplayName, tag + "ad");
-                Assert.AreEqual(d.Damage, a.Damage, 1e-5f, tag + "hasar");
-                Assert.AreEqual(d.FireRate, a.FireRate, 1e-4f, tag + "atış hızı");
-                Assert.AreEqual(d.MagazineSize, a.MagazineSize, tag + "şarjör");
-                Assert.AreEqual(d.ReloadTime, a.ReloadTime, 1e-5f, tag + "reload");
-                Assert.AreEqual(d.PelletCount, a.PelletCount, tag + "pellet");
-                Assert.AreEqual(d.SpreadDegrees, a.SpreadDegrees, 1e-5f, tag + "yayılma");
-                Assert.AreEqual(d.SpreadBloomPerShot, a.SpreadBloomPerShot, 1e-5f, tag + "bloom");
-                Assert.AreEqual(d.SpreadBloomMax, a.SpreadBloomMax, 1e-5f, tag + "bloom tavanı");
-                Assert.AreEqual(d.SpreadBloomDecay, a.SpreadBloomDecay, 1e-5f, tag + "bloom sönümü");
-                Assert.AreEqual(d.StaggerImpulse, a.StaggerImpulse, 1e-5f, tag + "itki");
-                Assert.AreEqual(d.Range, a.Range, 1e-5f, tag + "menzil");
-                Assert.AreEqual(d.PelletRingRadiusShare, a.PelletRingRadiusShare, 1e-5f, tag + "halka payı");
-                Assert.AreEqual(d.PelletRingJitterShare, a.PelletRingJitterShare, 1e-5f, tag + "halka titreşimi");
-                Assert.AreEqual(d.UnlockProfileLevel, a.UnlockProfileLevel, tag + "kilit seviyesi");
-                Assert.AreEqual(d.RecoilKick, a.RecoilKick, 1e-4f, tag + "his (FeelConfig satırı)");
-                Assert.AreEqual(d.RumbleMilliseconds, a.RumbleMilliseconds, tag + "rumble (FeelConfig satırı)");
+                if (!d.enabled || d.slot != WeaponSlotKind.Classic) continue;
+                ClassicWeaponSettings a = config.Weapons.Find(d.id);
+                string tag = d.weaponId + ": ";
+                Assert.IsNotNull(a, tag + "kopya yok");
+                Assert.AreSame(d, a.Definition, tag + "kopya tanımına bağlı değil");
+                Assert.AreEqual(d.displayName, a.DisplayName, tag + "ad");
+                Assert.AreEqual(d.fire.damage, a.Damage, 1e-5f, tag + "hasar");
+                Assert.AreEqual(d.ShotsPerSecond, a.FireRate, 1e-4f, tag + "atış hızı");
+                Assert.AreEqual(d.ammo.magazine, a.MagazineSize, tag + "şarjör");
+                Assert.AreEqual(Mathf.Max(1, d.fire.pelletCount), a.PelletCount, tag + "pellet");
+                Assert.AreEqual(d.accuracy.topDown.hip, a.SpreadDegrees, 1e-5f, tag + "tepeden hip = F1 kopyası");
+                Assert.AreEqual(d.projectile.impulse, a.StaggerImpulse, 1e-5f, tag + "itki");
+                Assert.AreEqual(d.projectile.maxRange, a.Range, 1e-5f, tag + "menzil");
+                Assert.AreEqual(d.unlock.kind == WeaponUnlockV3.Default ? 1 : d.unlock.profileLevel, a.UnlockProfileLevel, tag + "kilit seviyesi");
+                Assert.Greater(a.RecoilRecoverySeconds, 0f, tag + "his satırı (sınıf kardeşi) bağlı");
             }
+
+            // Council anchors (DIRECTION §0/§1) — the three M3 slots now carry v3 numbers.
+            ClassicWeaponSettings ar1 = config.Weapons.Find(ClassicWeaponId.AssaultRifle);
+            Assert.AreEqual(12f, ar1.Damage, 1e-5f); Assert.AreEqual(10f, ar1.FireRate, 1e-4f); Assert.AreEqual(30, ar1.MagazineSize);
+            ClassicWeaponSettings smg1 = config.Weapons.Find(ClassicWeaponId.AutoSmg);
+            Assert.AreEqual(8f, smg1.Damage, 1e-5f); Assert.AreEqual(15f, smg1.FireRate, 1e-4f); Assert.AreEqual(42, smg1.MagazineSize);
+            ClassicWeaponSettings sg1 = config.Weapons.Find(ClassicWeaponId.CombatShotgun);
+            Assert.AreEqual(9f, sg1.Damage, 1e-5f); Assert.AreEqual(1.2f, sg1.FireRate, 1e-4f); Assert.AreEqual(8, sg1.PelletCount);
+            Assert.AreEqual(0.75f + 0.55f * 7, sg1.ReloadTime, 1e-4f, "tek-fişek: M3 alanı = boştan tam şarjör");
+            Assert.AreEqual(55f, config.Weapons.Find(ClassicWeaponId.Sr1).Damage, 1e-5f);
+            Assert.AreEqual(100, config.Weapons.Find(ClassicWeaponId.Lmg1).MagazineSize);
         }
 
         [Test]

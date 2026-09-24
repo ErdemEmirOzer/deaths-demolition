@@ -6,6 +6,8 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Feedback;
+using DD.Prototype.PlayerSystem;
+using DD.Prototype.Rounds;
 using UnityEngine;
 
 namespace DD.Prototype.Weapons
@@ -108,6 +110,9 @@ namespace DD.Prototype.Weapons
         // WP-069: the trigger is producing shots (FireStarted / FireStopped edges for S-08 / S-07).
         private bool _firing;
 
+        // WP-069 B2: the character's motor — movement widens the cone, firing / focus slow the step.
+        private PlayerMotor _motor;
+
         // AP-009C clip events resolved by NAME against the S-06 enum (None until WP-032C adds them).
         private static readonly CharacterAnimationEvent s_eject = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.Eject]);
         private static readonly CharacterAnimationEvent s_magOut = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.MagOut]);
@@ -207,6 +212,7 @@ namespace DD.Prototype.Weapons
 
             ReparentRigs();
             _skinned = transform.root.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            _motor = transform.root.GetComponentInChildren<PlayerMotor>(true);
         }
 
         protected override void OnEnable()
@@ -221,6 +227,13 @@ namespace DD.Prototype.Weapons
 
             WeaponDebugHooks.EnsureExists();
             CharacterAnimationEvents.Any += OnClipEvent;
+            RunEvents.RoundStarted += OnRoundStarted;
+        }
+
+        /// <summary>WP-069 B2: every round start tops the reserve up to that round's allowance.</summary>
+        private void OnRoundStarted(int round)
+        {
+            _classic.RefillReserveForRound(round);
         }
 
         protected override void OnDisable()
@@ -228,6 +241,8 @@ namespace DD.Prototype.Weapons
             SetFiring(false);
             WeaponRegistry.Unregister(this);
             CharacterAnimationEvents.Any -= OnClipEvent;
+            RunEvents.RoundStarted -= OnRoundStarted;
+            if (_motor != null) _motor.WeaponSpeedMultiplier = 1f;
 
             if (_special.IsActive)
             {
@@ -384,6 +399,10 @@ namespace DD.Prototype.Weapons
             bool firePressed = input.IsEnabled && input.FirePressed;
             bool reloadPressed = input.IsEnabled && input.ReloadPressed;
 
+            // WP-069 B2: focus / ADS and movement feed the cone before the clocks advance.
+            _classic.SetFocus(input.IsEnabled && !_special.IsActive && input.FocusHeld());
+            _classic.SetMovement01(_motor != null ? _motor.Speed01 : 0f);
+
             if (_special.IsActive)
             {
                 SetFiring(false);   // the classic weapon is parked
@@ -404,6 +423,11 @@ namespace DD.Prototype.Weapons
 
             TickReloadPresentation();
             TickMechanismFallback();
+
+            if (_motor != null)
+            {
+                _motor.WeaponSpeedMultiplier = _special.IsActive ? 1f : _classic.MoveSpeedMultiplier(_firing);
+            }
 
             PublishClassicState(false);
             PublishSpecialState(false);
@@ -428,6 +452,12 @@ namespace DD.Prototype.Weapons
                 _classic.TryBeginReload();
             }
 
+            // WP-069 B2: the trigger cuts a per-shell reload short — the shells already in stay.
+            if (firePressed && _classic.IsReloading)
+            {
+                _classic.TryInterruptShellReload();
+            }
+
             if (!_classic.HasAmmo && !_classic.IsReloading)
             {
                 if (firePressed)
@@ -445,7 +475,25 @@ namespace DD.Prototype.Weapons
                 }
             }
 
-            if (!fireHeld)
+            // WP-069 B2 · fire modes. Auto: while held. Single: one shot per cycle — a press during the
+            // cycle is buffered, a held trigger refires at the cycle ceiling (A4: Single's rpm is the
+            // ceiling; the M3 hold-to-fire kept for the gamepad). Burst: a press (or a hold, after the
+            // burst delay) starts the burst, whose remaining shots fire whatever the trigger does.
+            WeaponFireMode mode = _classic.FireMode;
+            if (mode == WeaponFireMode.Single && firePressed)
+            {
+                _classic.BufferPress();
+            }
+            else if (mode == WeaponFireMode.Burst && (fireHeld || firePressed) && !_classic.BurstActive && _classic.CanFire)
+            {
+                _classic.BeginBurst();
+            }
+
+            bool wantsShot = mode == WeaponFireMode.Single ? fireHeld || _classic.PressBuffered
+                : mode == WeaponFireMode.Burst ? _classic.BurstActive || fireHeld
+                : fireHeld;
+
+            if (!wantsShot)
             {
                 SetFiring(false);
                 _classic.ClampCooldown();
@@ -457,6 +505,10 @@ namespace DD.Prototype.Weapons
             {
                 FireClassicOnce();
                 shots++;
+                if (mode == WeaponFireMode.Single || (mode == WeaponFireMode.Burst && !_classic.BurstActive))
+                {
+                    break;   // one shot per cycle; a finished burst waits for its delay
+                }
             }
 
             // Held but not able to shoot (empty, reloading) ends the burst of sound; a cooldown gap does not.
@@ -528,6 +580,13 @@ namespace DD.Prototype.Weapons
 
             _classic.ConsumeShot();
 
+            // WP-069 B2: game recoil. Look modes kick the camera (the rig drains and recovers it);
+            // top-down keeps it on the shot as horizontal drift (ClassicWeaponRuntime.RecoilYawDegrees).
+            if (lookMode && (_classic.LastRecoilPitch != 0f || _classic.LastRecoilYaw != 0f))
+            {
+                CameraReactions.AddRecoil(_classic.LastRecoilPitch, _classic.LastRecoilYaw);
+            }
+
             // WP-042 / WP-042C: the casing slot. A/B eject at the SHOT — always from here, never from the
             // clip: the 6/5-frame additive fire clip is retriggered per shot and drops its frame-1 event
             // under auto fire (measured on WP-032C: 3 shots → 2 events). C ejects at the pump-back —
@@ -565,10 +624,9 @@ namespace DD.Prototype.Weapons
             }
             else if (!reloading && _wasReloading)
             {
-                // Ammo is only refilled by a reload that ran to term, so a full magazine
-                // is exactly the "completed" signal - no extra flag can drift out of sync
-                // with it.
-                bool completed = _classic.Ammo >= _classic.MagazineSize;
+                // WP-069 B2: a reserve-limited or per-shell reload can run to term without a full
+                // magazine, so the runtime's own flag is the "completed" signal.
+                bool completed = _classic.LastReloadCompleted;
 
                 if (_classicRig != null)
                 {
@@ -789,7 +847,10 @@ namespace DD.Prototype.Weapons
                 PelletCount = _classic.PelletCount,
                 PelletRingDegrees = _classic.PelletRingDegrees,
                 ReserveAmmo = _classic.ReserveAmmo,
-                ReserveInfinite = _classic.ReserveInfinite
+                ReserveInfinite = _classic.ReserveInfinite,
+                FireMode = _classic.FireMode,
+                AdsWeight01 = _classic.Ads01,
+                FloorRefill01 = _classic.FloorRefill01
             };
 
             WeaponEvents.PublishClassic(state, notify);
@@ -976,6 +1037,13 @@ namespace DD.Prototype.Weapons
             // ModelResource) for a weapon the library does not carry.
             ClassicWeaponVisualLibrary library = ClassicWeaponVisualLibrary.Current;
             ClassicWeaponVisualLibrary.Entry entry = library != null ? library.Find(_equippedId) : null;
+
+            // WP-069 B2: a v3 weapon without its own AP-013 model borrows its class sibling's until the AP-021 import.
+            if (entry == null && library != null && _classic.Definition != null)
+            {
+                entry = library.Find(_classic.Definition.presentation.placeholderVisual);
+            }
+
             GameObject model = null;
             if (entry != null && entry.HasModel)
             {

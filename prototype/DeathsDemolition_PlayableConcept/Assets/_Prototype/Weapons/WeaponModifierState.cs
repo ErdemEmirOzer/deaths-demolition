@@ -298,6 +298,12 @@ namespace DD.Prototype.Weapons
 
         public float ChainDamageFalloff => WeaponUpgradeTuning.Active.ChainDamageFalloff;
 
+        /// <summary>WP-069 §6 ArmorBreak: multiplier on the damage a hit deals to armour. 1 with no tiers.</summary>
+        public float ArmorBreakMultiplier => 1f + WeaponUpgradeTuning.Active.ArmorBreakBonusPerTier * GetTier(UpgradeBranch.ArmorBreak);
+
+        /// <summary>WP-069 §6 Impact: stagger impulse added to every hit, on the weapon's raw impulse scale. 0 with no tiers.</summary>
+        public float ImpactStaggerBonus => WeaponUpgradeTuning.Active.ImpactStaggerPerTier * GetTier(UpgradeBranch.Impact);
+
         /// <summary>Multiplier on the weapon's base fire rate. 1 with no Fire Rate tiers.</summary>
         public float FireRateMultiplier
         {

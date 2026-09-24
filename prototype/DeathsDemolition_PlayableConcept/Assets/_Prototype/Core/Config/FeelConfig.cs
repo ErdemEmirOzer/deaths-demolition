@@ -394,7 +394,15 @@ namespace DD.Prototype.Core.Config
             {
                 case ClassicWeaponId.AutoSmg: return WeaponFeelId.AutoSmg;
                 case ClassicWeaponId.CombatShotgun: return WeaponFeelId.CombatShotgun;
-                default: return WeaponFeelId.AssaultRifle;
+                case ClassicWeaponId.AssaultRifle: return WeaponFeelId.AssaultRifle;
+                // WP-069 B2 (interim until S-07's FeelConfig v2 rows per weaponId): the class sibling's row.
+                default:
+                    switch (DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(id))
+                    {
+                        case 1: return WeaponFeelId.AutoSmg;
+                        case 2: return WeaponFeelId.CombatShotgun;
+                        default: return WeaponFeelId.AssaultRifle;
+                    }
             }
         }
 

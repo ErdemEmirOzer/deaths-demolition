@@ -37,7 +37,7 @@ namespace DD.Prototype.Inputs
     /// * The asset is instantiated, not used in place, so enabling maps at runtime
     ///   never leaves the imported asset in an enabled state between play sessions.
     /// </summary>
-    public sealed class PrototypeInputSource : IExtendedInputSource, ILookInputSource, IDisposable
+    public sealed class PrototypeInputSource : IExtendedInputSource, ILookInputSource, IFocusInputSource, IDisposable
     {
         // ------------------------------------------------------------ tuning values
         // PROTOTYPE-ONLY, invented for this adapter. They are behaviour thresholds of
@@ -86,6 +86,7 @@ namespace DD.Prototype.Inputs
         private readonly InputAction _debugPanel;
         private readonly InputAction _special;
         private readonly InputAction _interact;
+        private readonly InputAction _focus;   // WP-069 B2
 
         private bool _enabled;
         private bool _disposed;
@@ -108,6 +109,7 @@ namespace DD.Prototype.Inputs
         private bool _specialHeld;
         private bool _specialPressed;
         private bool _interactPressed;
+        private bool _focusHeld;
         private float _deadzone = 0.15f;
 
         private AimSourceKind _aimKind = AimSourceKind.Pointer;
@@ -166,6 +168,7 @@ namespace DD.Prototype.Inputs
             _debugPanel = Find(PrototypeInputNames.ActionDebugPanel);
             _special = Find(PrototypeInputNames.ActionSpecial);
             _interact = Find(PrototypeInputNames.ActionInteract);
+            _focus = Find(PrototypeInputNames.ActionFocus);
         }
 
         /// <summary>The runtime (cloned) asset. The remap service works on this instance so overrides apply live.</summary>
@@ -287,6 +290,12 @@ namespace DD.Prototype.Inputs
         public bool InteractPressed
         {
             get { EnsureFresh(); return _interactPressed; }
+        }
+
+        /// <summary>WP-069 B2: Focus / ADS held (RMB, gamepad LT).</summary>
+        public bool FocusHeld
+        {
+            get { EnsureFresh(); return _focusHeld; }
         }
 
         public InputSchemeKind ActiveScheme
@@ -430,6 +439,7 @@ namespace DD.Prototype.Inputs
             _specialHeld = _special != null && _special.IsPressed();
             _specialPressed = _special != null && _special.WasPressedThisFrame();
             _interactPressed = _interact != null && _interact.WasPressedThisFrame();
+            _focusHeld = _focus != null && _focus.IsPressed();
 
             ResolveAimKind(now);
             ResolveScheme();
@@ -538,6 +548,7 @@ namespace DD.Prototype.Inputs
             NoteActionIntent(_pause, now);
             NoteActionIntent(_special, now);
             NoteActionIntent(_interact, now);
+            NoteActionIntent(_focus, now);
 
             AimSourceKind resolved = _aimKind;
             if (_lastStickIntentTime > _lastPointerIntentTime)
@@ -625,6 +636,7 @@ namespace DD.Prototype.Inputs
             _specialHeld = false;
             _specialPressed = false;
             _interactPressed = false;
+            _focusHeld = false;
         }
     }
 }

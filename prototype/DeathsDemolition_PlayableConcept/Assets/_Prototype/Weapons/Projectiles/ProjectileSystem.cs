@@ -23,6 +23,8 @@ namespace DD.Prototype.Weapons
         public float FalloffEnd;
         public float FalloffMinShare;
         public int PelletIndex;
+        public float HeadMultiplier;
+        public float ArmorMultiplier;
 
         /// <summary>The v3 projectile block of <paramref name="d"/>, or a hitscan-like fast bullet when null.</summary>
         public static ProjectileLaunch From(WeaponDefinition d, ClassicWeaponId id, float fallbackRange)
@@ -33,7 +35,8 @@ namespace DD.Prototype.Weapons
                 {
                     WeaponId = id, Kind = ProjectileKind.Bullet, Caliber = WeaponCaliber.Medium,
                     Speed = 260f, Gravity = 0f, MaxRange = fallbackRange, MaxLifetime = 2f,
-                    FalloffStart = fallbackRange, FalloffEnd = fallbackRange, FalloffMinShare = 1f, PenetrationDamageKeep = 1f
+                    FalloffStart = fallbackRange, FalloffEnd = fallbackRange, FalloffMinShare = 1f, PenetrationDamageKeep = 1f,
+                    HeadMultiplier = 1f, ArmorMultiplier = 1f
                 };
             }
 
@@ -52,7 +55,9 @@ namespace DD.Prototype.Weapons
                 PenetrationDamageKeep = Mathf.Clamp01(p.penetrationDamageKeep),
                 FalloffStart = p.falloffStart,
                 FalloffEnd = p.falloffEnd,
-                FalloffMinShare = p.falloffMinShare
+                FalloffMinShare = p.falloffMinShare,
+                HeadMultiplier = p.headMultiplier > 0f ? p.headMultiplier : 1f,
+                ArmorMultiplier = p.armorDamageMultiplier > 0f ? p.armorDamageMultiplier : 1f
             };
         }
     }
@@ -85,6 +90,8 @@ namespace DD.Prototype.Weapons
         public float FalloffStart;
         public float FalloffEnd;
         public float FalloffMinShare;
+        public float HeadMultiplier;
+        public float ArmorMultiplier;
         public bool BranchesResolved;
 
         // Inline "already damaged" set (ADR-034-1: one projectile damages one body once).
@@ -218,6 +225,8 @@ namespace DD.Prototype.Weapons
             p.FalloffStart = launch.FalloffStart;
             p.FalloffEnd = launch.FalloffEnd;
             p.FalloffMinShare = launch.FalloffMinShare;
+            p.HeadMultiplier = launch.HeadMultiplier > 0f ? launch.HeadMultiplier : 1f;
+            p.ArmorMultiplier = launch.ArmorMultiplier > 0f ? launch.ArmorMultiplier : 1f;
 
             s_order[s_liveCount++] = index;
             s_spawnedTotal++;

@@ -27,6 +27,9 @@ namespace DD.Prototype.Core.InputAbstraction
         public const string ActionSpecial = "Special";
         public const string ActionInteract = "Interact";
 
+        // WP-069 B2: Focus / ADS (RMB, gamepad LT — the Special slot moved to LB, it is not consumed yet).
+        public const string ActionFocus = "Focus";
+
         // WP-024: UI map actions consumed by the Input System UI module (S-09 screens).
         public const string UiNavigate = "Navigate";
         public const string UiSubmit = "Submit";

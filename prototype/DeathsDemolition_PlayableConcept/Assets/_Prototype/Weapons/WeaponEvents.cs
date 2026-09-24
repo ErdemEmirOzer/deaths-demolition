@@ -1,5 +1,6 @@
 using System;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using UnityEngine;
 
 namespace DD.Prototype.Weapons
@@ -128,7 +129,7 @@ namespace DD.Prototype.Weapons
         /// <summary>
         /// WP-068 U12a (honest reticle): the cone half-angle in degrees (horizontal / yaw) the NEXT shot
         /// rolls against — base SpreadDegrees + fire bloom, the very value the shot builder passes to
-        /// <see cref="SpreadUtility"/>. Movement adds nothing in the rules, so neither does this. Data only.
+        /// <see cref="SpreadUtility"/>. WP-069 B2: movement, focus / ADS and the settle curve are already in it. Data only.
         /// </summary>
         public float CurrentSpreadDegrees;
 
@@ -140,6 +141,15 @@ namespace DD.Prototype.Weapons
 
         /// <summary>WP-069: the weapon has no reserve limit (the M3 behaviour; HUD shows ∞).</summary>
         public bool ReserveInfinite;
+
+        /// <summary>WP-069 B2: Auto / Burst / Single (HUD fire-mode pip).</summary>
+        public WeaponFireMode FireMode;
+
+        /// <summary>WP-069 B2: 0 = hip, 1 = fully focused (top-down) / aimed down the sights (look modes).</summary>
+        public float AdsWeight01;
+
+        /// <summary>WP-069 B2: magazine and reserve both empty — progress 0..1 to the floor's free magazine; 0 otherwise.</summary>
+        public float FloorRefill01;
 
         /// <summary>
         /// WP-068 U12a: horizontal half-angle of the WP-042 pellet ring (PelletRingRadiusShare ×

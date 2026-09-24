@@ -459,7 +459,8 @@ namespace DD.Prototype.Audio
         /// </summary>
         public static AudioSoundId WeaponFoley(DD.Prototype.Core.Config.ClassicWeaponId weapon, DD.Prototype.Characters.CharacterAnimationEvent e)
         {
-            int w = weapon == DD.Prototype.Core.Config.ClassicWeaponId.AutoSmg ? 1 : weapon == DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun ? 2 : 0;
+            // WP-069 B2: v3 weapons use their class sibling's foley row (0 rifle / 1 smg / 2 shotgun) until S-08's set.
+            int w = DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(weapon);
             int slot;
             switch (e)
             {

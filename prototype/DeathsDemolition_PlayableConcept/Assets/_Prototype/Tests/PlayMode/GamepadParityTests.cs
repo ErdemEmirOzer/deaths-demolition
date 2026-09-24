@@ -161,7 +161,15 @@ namespace DD.Prototype.Tests.PlayMode
             // ---- special / interact edges reach the extended surface
             _pad.Set(Vector2.zero, Vector2.zero, special: true);
             yield return null;
-            Assert.IsTrue(src.SpecialHeld, "Sol tetik SpecialHeld vermedi.");
+            Assert.IsTrue(src.SpecialHeld, "Sol omuz (WP-069 B2) SpecialHeld vermedi.");
+            _pad.Release();
+            yield return Kareler(2);
+
+            // ---- WP-069 B2: the left trigger is Focus / ADS
+            _pad.Set(Vector2.zero, Vector2.zero, focus: true);
+            yield return null;
+            Assert.IsTrue(src.FocusHeld(), "Sol tetik FocusHeld vermedi.");
+            Assert.IsFalse(src.SpecialHeld, "Sol tetik artık Special değil.");
             _pad.Release();
             yield return Kareler(2);
 

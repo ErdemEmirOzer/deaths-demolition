@@ -113,6 +113,12 @@ namespace DD.Prototype.PlayerSystem
         /// <summary>False stops movement without touching aim or firing. Used on death.</summary>
         public bool ControlEnabled { get; set; } = true;
 
+        /// <summary>
+        /// WP-069 B2: the weapon's slowdown on the target speed (firing a heavy weapon, focus / ADS),
+        /// 0.1..1, written each frame by the WeaponController. Never raises the top speed.
+        /// </summary>
+        public float WeaponSpeedMultiplier { get; set; } = 1f;
+
         /// <summary>Current horizontal velocity in world space.</summary>
         public Vector3 PlanarVelocity
         {
@@ -279,7 +285,7 @@ namespace DD.Prototype.PlayerSystem
                 desired.Normalize();
             }
 
-            Vector3 targetVelocity = desired * _moveSpeed;
+            Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f));
 
             // Advances _planarVelocity AND returns the exact ground distance covered while
             // it was advancing, which is not the same thing as velocity * dt.

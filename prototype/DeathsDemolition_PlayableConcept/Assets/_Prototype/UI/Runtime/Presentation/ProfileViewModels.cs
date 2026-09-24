@@ -256,6 +256,11 @@ namespace DD.Prototype.UI
             for (int i = 0; i < weapons.Length; i++)
             {
                 int required = lookup.UnlockLevelFor(weapons[i]);
+                if (required >= ProfileService.NotInBuildUnlockLevel)
+                {
+                    continue;   // WP-069 B2: a weapon this build does not carry (rl_1 until B3)
+                }
+
                 model.Unlocks.Add(new UiUnlockLine(
                     lookup.WeaponDisplayName(weapons[i]),
                     ProfileProgression.IsWeaponEntitled(profile, weapons[i]),

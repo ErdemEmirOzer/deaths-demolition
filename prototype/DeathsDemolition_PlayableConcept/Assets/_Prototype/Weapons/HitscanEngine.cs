@@ -328,8 +328,18 @@ namespace DD.Prototype.Weapons
                     BodyRegion region = DamageTargetResolver.ResolveRegion(collider, target, point);
                     float share = FalloffShareOf(in p, p.Travelled + at);
                     float damage = p.Shot.Damage * p.DamageScale * share;
-                    DamageResult r = ApplyHit(target, damage, region, point, direction,
-                        p.Shot.ImpactForce, p.Shot.Source, p.Shot.Power, normal, p.Shot.PresentationGroupId);
+                    // WP-069 (ADR-069-1 §9): the weapon's head / armour multipliers and the hit identity ride beside the frozen DamageHit.
+                    DamageHitContext.Set(p.HeadMultiplier, p.ArmorMultiplier, true, p.WeaponId, collider);
+                    DamageResult r;
+                    try
+                    {
+                        r = ApplyHit(target, damage, region, point, direction,
+                            p.Shot.ImpactForce, p.Shot.Source, p.Shot.Power, normal, p.Shot.PresentationGroupId);
+                    }
+                    finally
+                    {
+                        DamageHitContext.Clear();
+                    }
 
                     if (!p.BranchesResolved && !branchesNow)
                     {

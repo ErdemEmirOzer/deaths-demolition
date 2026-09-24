@@ -142,7 +142,9 @@ namespace DD.Prototype.Damage
             if (Armor.Protects(slot))
             {
                 // ---- protected: nothing reaches health, no matter how big the hit is.
-                Armor.Absorb(slot, hit.Amount, out float absorbed, out bool broke);
+                // WP-069: the weapon's armour multiplier scales what the plate takes (sr_1 ×1.6 cracks, smg_1 ×0.7 scratches).
+                float armorAmount = hit.Amount * DamageHitContext.ArmorMultiplier;
+                Armor.Absorb(slot, armorAmount, out float absorbed, out bool broke);
 
                 result.WasArmored = true;
                 result.ArmorDamage = absorbed;
@@ -161,6 +163,12 @@ namespace DD.Prototype.Damage
             float multiplier = armorConfig != null
                 ? armorConfig.ExposedMultiplierFor(DamageRegions.ToCore(hit.Region))
                 : 1f;
+
+            // WP-069: a weapon's extra head multiplier rides on top of the regional ×2.0 (ar_2 ×1.15, sr_1 ×1.25).
+            if (hit.Region == BodyRegion.Head)
+            {
+                multiplier *= DamageHitContext.HeadMultiplier;
+            }
 
             float healthDamage = hit.Amount * multiplier;
             ApplyHealthDamage(healthDamage, hit.Region, ref result);

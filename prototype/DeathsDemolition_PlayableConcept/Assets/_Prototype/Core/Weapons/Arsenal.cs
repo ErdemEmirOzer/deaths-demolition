@@ -50,6 +50,31 @@ namespace DD.Prototype.Core.Weapons
             return s_byKey.TryGetValue(weaponIdOrLegacyName, out WeaponDefinition d) ? d : null;
         }
 
+        /// <summary>
+        /// WP-069 B2 · interim until S-06's WP-071 per-weapon override controllers: the M3 animator pose
+        /// index (0 rifle, 1 SMG, 2 shotgun) a weapon borrows by class. The three M3 weapons keep their own.
+        /// </summary>
+        public static int LegacyPoseIndex(ClassicWeaponId id)
+        {
+            if ((int)id >= 0 && (int)id <= 2)
+            {
+                return (int)id;
+            }
+
+            WeaponDefinition d = Get(id);
+            if (d == null)
+            {
+                return 0;
+            }
+
+            switch (d.weaponClass)
+            {
+                case WeaponClass.Smg: return 1;
+                case WeaponClass.Shotgun: return 2;
+                default: return 0;
+            }
+        }
+
         /// <summary>Tests: use this catalog instead of the Resources one (null = back to Resources).</summary>
         public static void SetForTests(ArsenalCatalog catalog)
         {

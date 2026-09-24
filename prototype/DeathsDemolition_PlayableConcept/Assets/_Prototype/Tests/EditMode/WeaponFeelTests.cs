@@ -37,7 +37,7 @@ namespace DD.Prototype.Tests.EditMode
             PrototypeConfig config = Config;
             Assert.IsNotNull(config, "PrototypeConfig Resources'ta yok.");
             var defaults = new WeaponConfigSection();
-            Assert.AreEqual(3, config.Weapons.ClassicWeapons.Count, "A/B/C.");
+            Assert.AreEqual(9, config.Weapons.ClassicWeapons.Count, "WP-069 B2: 9 etkin klasik (rl_1 B3'e dek kapalı).");
             for (int i = 0; i < config.Weapons.ClassicWeapons.Count; i++)
             {
                 ClassicWeaponSettings a = config.Weapons.ClassicWeapons[i];
@@ -52,7 +52,8 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.That(a.PelletRingRadiusShare, Is.InRange(0f, 1f), tag + "PelletRingRadiusShare 0..1");
                 Assert.That(a.PelletRingJitterShare, Is.InRange(0f, 0.5f), tag + "PelletRingJitterShare");
                 if (a.PelletCount <= 1) Assert.AreEqual(0f, a.PelletRingRadiusShare, tag + "tek mermili silahta halka yok");
-                else Assert.Greater(a.PelletRingRadiusShare, 0f, tag + "pompalı halka deseni");
+                else if (a.Definition == null || a.Definition.fire.pelletPattern == WeaponPelletPattern.CenterRings) Assert.Greater(a.PelletRingRadiusShare, 0f, tag + "pompalı halka deseni");
+                else Assert.AreEqual(0f, a.PelletRingRadiusShare, tag + "Gauss deseninde halka yok (sg_2)");
 
                 // Damage / unlock untouched by the feel pass (product numbers stay).
                 Assert.AreEqual(d.Damage, a.Damage, tag + "Damage değişmez");
@@ -313,8 +314,8 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreNotEqual(heavyPistol.HudIconId, e.HudIconId);
             }
 
-            // The config carries exactly the three runtime weapons (no fourth ClassicWeaponSettings for D).
-            Assert.AreEqual(3, Config.Weapons.ClassicWeapons.Count);
+            // The config carries the Arsenal's enabled classic weapons (WP-069 B2: 9) and never a ClassicWeaponSettings for D.
+            Assert.AreEqual(9, Config.Weapons.ClassicWeapons.Count);
             Assert.AreEqual(ClassicWeaponId.AssaultRifle, WeaponRoster.DefaultWeapon, "A açık / varsayılan; B, C profil seviyesiyle (DEC-008).");
         }
 

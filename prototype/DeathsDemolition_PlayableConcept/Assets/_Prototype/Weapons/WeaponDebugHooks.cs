@@ -58,12 +58,27 @@ namespace DD.Prototype.Weapons
                 },
                 -90));
 
-            Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "Equip: Assault Rifle",
-                () => Equip(ClassicWeaponId.AssaultRifle), -80));
-            Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "Equip: Auto SMG",
-                () => Equip(ClassicWeaponId.AutoSmg), -79));
-            Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "Equip: Combat Shotgun",
-                () => Equip(ClassicWeaponId.CombatShotgun), -78));
+            // WP-069 B2: one button per enabled Arsenal weapon (the selection screen still lists the v1 roster until S-09 R1-A).
+            System.Collections.Generic.IReadOnlyList<DD.Prototype.Core.Weapons.WeaponDefinition> arsenal = DD.Prototype.Core.Weapons.Arsenal.All;
+            int order = -89;
+            for (int i = 0; i < arsenal.Count; i++)
+            {
+                DD.Prototype.Core.Weapons.WeaponDefinition d = arsenal[i];
+                if (d == null || !d.enabled || d.slot != DD.Prototype.Core.Weapons.WeaponSlotKind.Classic) continue;
+                ClassicWeaponId id = d.id;
+                Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "Equip: " + d.displayName + " (" + d.weaponId + ")",
+                    () => Equip(id), order++));
+            }
+
+            if (arsenal.Count == 0)
+            {
+                Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "Equip: Assault Rifle",
+                    () => Equip(ClassicWeaponId.AssaultRifle), -80));
+                Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "Equip: Auto SMG",
+                    () => Equip(ClassicWeaponId.AutoSmg), -79));
+                Add(DebugPanelRegistry.AddButton(DebugPanelTabs.Weapons, "Equip: Combat Shotgun",
+                    () => Equip(ClassicWeaponId.CombatShotgun), -78));
+            }
 
             Add(DebugPanelRegistry.AddSlider(
                 DebugPanelTabs.Weapons, "Fire Rate (shots/s)",

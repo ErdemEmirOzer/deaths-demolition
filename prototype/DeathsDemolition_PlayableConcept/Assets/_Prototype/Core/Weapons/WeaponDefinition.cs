@@ -75,10 +75,18 @@ namespace DD.Prototype.Core.Weapons
     {
         public int magazine = 30;
         [Tooltip("Rounds carried for the run beyond the magazine; −1 = infinite (the M3 behaviour).")] public int reserve = -1;
+        [Tooltip("Reserve refill at each round start: reserve × (1 + coef × (round − 1)) (council B2: 0.12; rl_1 0.06).")]
+        public float reserveRoundCoef = 0.12f;
+        [Tooltip("Magazine and reserve both empty: this long later one magazine drips into the reserve (the 'kese' floor — the player is never weaponless).")]
+        public float floorRefillDelaySeconds = 4f;
+        public int floorRefillMagazines = 1;
         public int chamberExtra;
         public WeaponReloadKind reloadKind = WeaponReloadKind.Magazine;
+        [Tooltip("Magazine / Box / Cell / Canister: the whole tactical reload. PerShell: the start + end overhead around the shells.")]
         public float reloadTacSeconds = 1.5f;
+        [Tooltip("As reloadTacSeconds with the chamber / pump / bolt step (empty magazine).")]
         public float reloadEmptySeconds = 1.5f;
+        [Tooltip("PerShell: seconds per shell inserted.")]
         public float perShellSeconds = 0.55f;
         public bool reloadCancellable;
     }
@@ -112,7 +120,8 @@ namespace DD.Prototype.Core.Weapons
         public SpreadPair firstPerson = new SpreadPair(1.6f, 0.35f);
         [Tooltip("Negative = the settle ('oturma') curve.")] public float bloomPerShot = 0.4f;
         public float bloomMax = 3.5f;
-        public float settleFloorDegrees;
+        [Tooltip("Settle curve floor as a share of the base cone (lmg_2: 3.5° → 1.2° = 0.35); 0 = no settle.")]
+        [Range(0f, 1f)] public float settleFloorShare;
         public float bloomDecayPerSecond = 6f;
         public float bloomDecayDelaySeconds = 0.1f;
         public float moveSpreadMultiplier = 1f;
@@ -275,6 +284,8 @@ namespace DD.Prototype.Core.Weapons
         public string hudIconId = "";
         public string modelTp = "";
         public string modelFp = "";
+        [Tooltip("Until the AP-021 model lands: show the in-hand model / pose of this M3 weapon (class sibling).")]
+        public ClassicWeaponId placeholderVisual = ClassicWeaponId.AssaultRifle;
         public WeaponSockets sockets = new WeaponSockets();
     }
 
@@ -419,7 +430,10 @@ namespace DD.Prototype.Core.Weapons
                 Damage = fire.damage,
                 FireRate = ShotsPerSecond,
                 MagazineSize = Mathf.Max(1, ammo.magazine),
-                ReloadTime = ammo.reloadTacSeconds,
+                // Per-shell: the M3 figure is a full magazine from empty — overhead + one interval per shell.
+                ReloadTime = ammo.reloadKind == WeaponReloadKind.PerShell
+                    ? ammo.reloadTacSeconds + Mathf.Max(0f, ammo.perShellSeconds) * Mathf.Max(1, ammo.magazine)
+                    : ammo.reloadTacSeconds,
                 PelletCount = Mathf.Max(1, fire.pelletCount),
                 SpreadDegrees = accuracy.topDown.hip,
                 SpreadBloomPerShot = accuracy.bloomPerShot,
@@ -434,7 +448,8 @@ namespace DD.Prototype.Core.Weapons
             };
 
             // Feel is not game data: the M3 feel fields mirror this weapon's FeelConfig row (WP-062).
-            if (slot == WeaponSlotKind.Classic && (int)id >= 0 && (int)id <= (int)ClassicWeaponId.CombatShotgun)
+            // WP-069 B2: every classic weapon has a row (the v3 ones borrow their class sibling's until S-07's pass).
+            if (slot == WeaponSlotKind.Classic && (int)id >= 0)
             {
                 WeaponFeel row = FeelRuntime.Current.Weapon(WeaponFeelIds.From(id));
                 settings.RecoilKick = row.recoilKickMeters;
@@ -496,6 +511,25 @@ namespace DD.Prototype.Core.Weapons
                     }
                 }
             }
+
+            if (upgrade.forbiddenBranches != null && upgrade.coreBranches != null)
+            {
+                for (int i = 0; i < upgrade.coreBranches.Length; i++)
+                {
+                    if (Array.IndexOf(upgrade.forbiddenBranches, upgrade.coreBranches[i]) >= 0) faults.Add(tag + upgrade.coreBranches[i] + " is forbidden for this weapon");
+                }
+            }
+
+            if (fire.pelletCount > 1 && upgrade.coreBranches != null)
+            {
+                for (int i = 0; i < upgrade.coreBranches.Length; i++)
+                {
+                    UpgradeBranch b = upgrade.coreBranches[i];
+                    if (b == UpgradeBranch.Chain || b == UpgradeBranch.Ricochet) faults.Add(tag + b + " cannot be a pellet weapon's core branch (ADR-034-1)");
+                }
+            }
+
+            if (ammo.reserve >= 0 && ammo.floorRefillDelaySeconds <= 0f) faults.Add(tag + "finite reserve needs a floor refill delay");
 
             if (weaponClass == WeaponClass.Launcher && (!explosive.enabled || rocket.maxSpeed <= 0f))
             {

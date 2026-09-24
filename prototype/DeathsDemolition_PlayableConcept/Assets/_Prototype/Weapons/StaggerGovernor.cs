@@ -33,22 +33,39 @@ namespace DD.Prototype.Weapons
         /// <summary>Reaction force for one bullet or one pellet of a classic weapon.</summary>
         public static float ForClassic(ClassicWeaponSettings settings)
         {
+            return ForClassic(settings, 0f);
+        }
+
+        /// <summary>
+        /// WP-069 B2: the same, with a raw-scale bonus (the Impact branch). A v3 weapon converts on its CLASS
+        /// sibling's scale (SMGs on the SMG bullet, shotguns per pellet on the pellet, the rest on the rifle
+        /// bullet), and one bullet never pushes harder than a blast core.
+        /// </summary>
+        public static float ForClassic(ClassicWeaponSettings settings, float extraRaw)
+        {
             if (settings == null)
             {
                 return DamageForce.RifleBullet;
             }
 
-            switch (settings.Id)
+            float raw = settings.StaggerImpulse + Mathf.Max(0f, extraRaw);
+            float force;
+            switch (DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(settings.Id))
             {
-                case ClassicWeaponId.AutoSmg:
-                    return DamageForce.SmgBullet * Trim(settings.StaggerImpulse, AutoSmgShippedTrim);
+                case 1:
+                    force = DamageForce.SmgBullet * Trim(raw, AutoSmgShippedTrim);
+                    break;
 
-                case ClassicWeaponId.CombatShotgun:
-                    return DamageForce.ShotgunPellet * Trim(settings.StaggerImpulse, ShotgunShippedTrim);
+                case 2:
+                    force = DamageForce.ShotgunPellet * Trim(raw, ShotgunShippedTrim);
+                    break;
 
                 default:
-                    return DamageForce.RifleBullet * Trim(settings.StaggerImpulse, AssaultRifleShippedTrim);
+                    force = DamageForce.RifleBullet * Trim(raw, AssaultRifleShippedTrim);
+                    break;
             }
+
+            return Mathf.Min(force, DamageForce.ExplosionCore);
         }
 
         private static float Trim(float configured, float shippedDefault)

@@ -288,7 +288,8 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Muzzle variant per classic weapon (DEC-083 A/B/C): A = rifle long cone, B = SMG short flash, C = shotgun wide bloom.</summary>
         public static MuzzleVariant VariantFor(ClassicWeaponId id)
         {
-            switch (id)
+            // WP-069 B2: v3 weapons take their class sibling's variant until S-07's per-weapon pass.
+            switch ((ClassicWeaponId)DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(id))
             {
                 case ClassicWeaponId.AutoSmg: return MuzzleVariant.B;
                 case ClassicWeaponId.CombatShotgun: return MuzzleVariant.C;

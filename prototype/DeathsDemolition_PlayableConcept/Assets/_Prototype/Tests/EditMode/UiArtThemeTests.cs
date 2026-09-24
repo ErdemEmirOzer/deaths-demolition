@@ -193,7 +193,9 @@ namespace DD.Prototype.Tests.EditMode
 
             foreach (ClassicWeaponId id in Enum.GetValues(typeof(ClassicWeaponId)))
             {
-                Assert.IsTrue(names.Contains("Weapon." + id), "eksik silah glifi: " + id);
+                // WP-069 B2: v3 ids fall back to the class sibling's glyph (UiArt.WeaponIcon) until the AP-021 icons.
+                string sibling = "Weapon." + (ClassicWeaponId)DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(id);
+                Assert.IsTrue(names.Contains("Weapon." + id) || names.Contains(sibling), "eksik silah glifi: " + id);
             }
 
             foreach (SpecialWeaponId id in Enum.GetValues(typeof(SpecialWeaponId)))

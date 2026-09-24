@@ -140,6 +140,15 @@ namespace DD.Prototype.Weapons
             "Ceiling on total fire-rate multiplier. Stops a build outrunning the pool budget.", true)]
         public float MaximumFireRateMultiplier = 2.2f;
 
+        [Header("WP-069 §6 weapon-core branches (sr_1 / lmg_2 ArmorBreak, smg_2 / sg_2 Impact)")]
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "ArmorBreak: armour-damage multiplier added per tier (council §6: +25 %).", true)]
+        [Range(0f, 1f)]
+        public float ArmorBreakBonusPerTier = 0.25f;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Impact: stagger impulse added per tier on the weapon's own scale (council §6: +0.15).", true)]
+        [Range(0f, 0.5f)]
+        public float ImpactStaggerPerTier = 0.15f;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {

@@ -5,7 +5,18 @@ namespace DD.Prototype.Core.Config
     {
         AssaultRifle = 0,
         AutoSmg = 1,
-        CombatShotgun = 2
+        CombatShotgun = 2,
+
+        // WP-069 Arsenal v3 (M4-R1 N12): runtime indices of the seven new weapons. The M3 names above keep
+        // their values (serialised ints, saved profile names — S-04 ProfileMigration v5 maps them to ar_1 …);
+        // the v3 key of every weapon is WeaponDefinition.weaponId (WeaponIdMigration.TryGetRuntimeId).
+        Ar2 = 3,
+        Smg2 = 4,
+        Sg2 = 5,
+        Lmg1 = 6,
+        Lmg2 = 7,
+        Sr1 = 8,
+        Rl1 = 9
     }
 
     /// <summary>PROTOTYPE-ONLY enemy family versions.</summary>
