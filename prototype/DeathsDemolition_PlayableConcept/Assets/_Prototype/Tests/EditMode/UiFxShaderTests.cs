@@ -79,6 +79,33 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        [Test]
+        public void Token_v3_Baglama_UiTokensHlsl_UiLayer_UiMotion()
+        {
+            string hlsl = System.IO.File.ReadAllText("Assets/_Prototype/UI/Resources/Shaders/DD_UiFx.hlsl");
+            string shader = System.IO.File.ReadAllText("Assets/_Prototype/UI/Resources/Shaders/DD_UiFx.shader");
+            StringAssert.Contains("#include \"../../Art/Shaders/UiTokens.hlsl\"", hlsl, "S-09 dilim 1 token include'u");
+            foreach (string token in new[] { "DD_UI_EASE_BRUSH", "DD_UI_EASE_SETTLE", "DD_UI_EASE_EXIT" }) StringAssert.Contains(token, hlsl);
+            foreach (string token in new[] { "DD_UI_STAMP_PEAK", "DD_UI_STAMP_IN", "DD_UI_GLINT_MAX_BRIGHTNESS", "DD_UI_SHEEN_FIELD_ALPHA_MAX" }) StringAssert.Contains(token, shader);
+            StringAssert.DoesNotContain("0.25, 0.10, 0.25", hlsl, "eğri sayıları elle yazılmamalı (token)");
+            StringAssert.DoesNotContain("lerp(1.12", shader, "damga tepe değeri token'dan");
+            Assert.AreEqual(UiLayer.FrozenFrame, UiFrozenFrame.Layer, "donmuş kare katmanı UiLayer'dan");
+            Assert.AreEqual(UiMotionClass.Flash, UiFx.ClassOf(UiFxMode.Leaf));
+            Assert.AreEqual(UiMotionClass.Data, UiFx.ClassOf(UiFxMode.SegmentBar));
+            Assert.AreEqual(UiMotionClass.Decor, UiFx.ClassOf(UiFxMode.InkReveal));
+
+            float? was = UiMotion.TestNow;
+            try
+            {
+                UiMotion.TestNow = 123.5f;
+                Assert.AreEqual(123.5f, UiFxGlobals.Now, 1e-5f, "Fx saati çekirdeğin test saatini izler");
+            }
+            finally
+            {
+                UiMotion.TestNow = was;
+            }
+        }
+
         private static string[] UserKeywords(Shader shader)
         {
             return shader.keywordSpace.keywords.Where(k => k.type == ShaderKeywordType.UserDefined).Select(k => k.name).ToArray();

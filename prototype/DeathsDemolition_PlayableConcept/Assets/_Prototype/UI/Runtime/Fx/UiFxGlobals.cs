@@ -28,8 +28,9 @@ namespace DD.Prototype.UI
         private static Texture s_inkMap;
         private static bool s_installed;
 
-        /// <summary>The unscaled clock the shader reads (a UiFx start time is stamped on the same clock).</summary>
-        public static float Now => TimeOverride ?? Time.unscaledTime;
+        /// <summary>The unscaled clock the shader reads (a UiFx start time is stamped on the same clock); the motion core's
+        /// test clock (<see cref="UiMotion.TestNow"/>) drives it too, so tween and shader timelines stay on one clock.</summary>
+        public static float Now => TimeOverride ?? UiMotion.TestNow ?? Time.unscaledTime;
 
         /// <summary>Captures / tests: freeze the Fx clock at a value (null = live).</summary>
         public static float? TimeOverride;
@@ -88,7 +89,7 @@ namespace DD.Prototype.UI
         {
             Shader.SetGlobalFloat(UiTimeId, Now);
             Shader.SetGlobalFloat(WorldTimeId, Time.time);
-            bool reduced = MotionOverride.HasValue ? !MotionOverride.Value : UiSettings.ReducedMotion;
+            bool reduced = MotionOverride.HasValue ? !MotionOverride.Value : UiMotion.ReducedMotion;   // the core's single RM source (mirrors UiSettings)
             Shader.SetGlobalFloat(MotionId, reduced ? 0f : 1f);
             Shader.SetGlobalFloat(FlashId, FlashOverride ?? UiTokens.FlashScale);
             Shader.SetGlobalColor(InkId, UiTokens.Get(UiColor.SurfaceInset));

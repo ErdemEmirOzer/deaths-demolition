@@ -17,7 +17,7 @@ namespace DD.Prototype.UI
     /// </summary>
     public static class UiFrozenFrame
     {
-        public const int Layer = 90;                  // UiLayer.FrozenFrame (§2.6)
+        public const int Layer = UiLayer.FrozenFrame;   // 90 (§2.6)
         public const int Downscale = 4;               // ¼ resolution
 
         private static readonly HashSet<string> s_owners = new HashSet<string>();

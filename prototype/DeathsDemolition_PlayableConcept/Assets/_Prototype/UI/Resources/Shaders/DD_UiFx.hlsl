@@ -1,8 +1,9 @@
 #ifndef DD_UIFX_INCLUDED
 #define DD_UIFX_INCLUDED
 
-// WP-068 slice 4 · DD/UI/Fx shared include. Until S-09's slice-1 exporter ships UiTokens.hlsl this file carries the
-// globals and the §2.5 easing curves itself; the swap is one #include (the names below are the exporter's names).
+// WP-068 slice 4 · DD/UI/Fx shared include. Token constants (eases, stamp envelope, glint / sheen ceilings) come from
+// S-09's generated UiTokens.hlsl (slice 1, `DD/UI/Export Tokens`); this file adds the runtime globals and the Fx helpers.
+#include "../../Art/Shaders/UiTokens.hlsl"
 
 // Globals, written every frame by UiFxGlobals (unscaled clock, reduced motion, flash scale, palette).
 float  _DD_UiTime;      // Time.unscaledTime: menus, HUD, pause (timeScale 0 freeze)
@@ -29,7 +30,7 @@ sampler2D _DD_InkMap;
 
 inline bool DD_IsMode(float mode, float id) { return abs(mode - id) < 0.5; }
 
-// §2.5 UiEase: cubic-bezier (x1, y1, x2, y2) solved for x with four Newton steps (UiEase.cs uses the same closed form).
+// §2.5 UiEase: cubic-bezier (x1, y1, x2, y2) solved for x with four Newton steps (UiEaseCurve.Evaluate is the C# twin).
 inline float DD_Bezier1(float a, float b, float t) { float u = 1.0 - t; return 3.0 * u * u * t * a + 3.0 * u * t * t * b + t * t * t; }
 inline float DD_Bezier1D(float a, float b, float t) { float u = 1.0 - t; return 3.0 * u * u * a + 6.0 * u * t * (b - a) + 3.0 * t * t * (1.0 - b); }
 inline float DD_CubicBezier(float x, float x1, float y1, float x2, float y2)
@@ -43,9 +44,10 @@ inline float DD_CubicBezier(float x, float x1, float y1, float x2, float y2)
     }
     return DD_Bezier1(y1, y2, t);
 }
-inline float DD_EaseSettle(float t) { return DD_CubicBezier(saturate(t), 0.33, 1.00, 0.68, 1.00); }
-inline float DD_EaseBrush(float t)  { return DD_CubicBezier(saturate(t), 0.25, 0.10, 0.25, 1.00); }
-inline float DD_EaseExit(float t)   { return DD_CubicBezier(saturate(t), 0.32, 0.00, 0.67, 0.00); }
+inline float DD_Ease(float4 bezier, float t) { return DD_CubicBezier(saturate(t), bezier.x, bezier.y, bezier.z, bezier.w); }
+inline float DD_EaseSettle(float t) { return DD_Ease(DD_UI_EASE_SETTLE, t); }
+inline float DD_EaseBrush(float t)  { return DD_Ease(DD_UI_EASE_BRUSH, t); }
+inline float DD_EaseExit(float t)   { return DD_Ease(DD_UI_EASE_EXIT, t); }
 
 // Progress of a one-shot (start, duration) on the unscaled clock. Reduced motion: the end state at once.
 inline float DD_Progress(float start, float duration)

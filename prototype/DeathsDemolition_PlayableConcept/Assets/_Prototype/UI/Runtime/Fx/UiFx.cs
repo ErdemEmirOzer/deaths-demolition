@@ -96,6 +96,27 @@ namespace DD.Prototype.UI
             return this;
         }
 
+        /// <summary>Token-duration form (§2.5 <see cref="UiDuration"/>): banners Screen/Reveal, stamps Instant, glints Reveal.</summary>
+        public UiFx Configure(UiFxMode mode, UiDuration duration, Vector3 parameters, UiInkChannel channel = UiInkChannel.Brush, float loopPeriod = 0f)
+        {
+            return Configure(mode, UiMotionTokens.Seconds(duration), parameters, channel, loopPeriod);
+        }
+
+        /// <summary>The §2.5 motion class each mode obeys (the shader applies it: Decor → end state under RM, Flash × FlashScale, Data untouched).</summary>
+        public static UiMotionClass ClassOf(UiFxMode mode)
+        {
+            switch (mode)
+            {
+                case UiFxMode.Leaf:
+                case UiFxMode.Particles:   // one-shot sparks; the looping drift is Decor (frozen under RM)
+                    return UiMotionClass.Flash;
+                case UiFxMode.SegmentBar:
+                    return UiMotionClass.Data;
+                default:
+                    return UiMotionClass.Decor;
+            }
+        }
+
         /// <summary>Start the one-shot now (unscaled clock). Reduced motion: the shader shows the end state at once.</summary>
         public void Play()
         {

@@ -111,8 +111,8 @@ Shader "DD/UI/Fx"
                 if (DD_IsMode(mode, DD_FX_STAMP))
                 {
                     // §2.5 Stamp: 1.12 → 1.00 InCubic over 90 ms, then held (the 40 ms hold is the rest of the 130 ms envelope).
-                    float k = _DD_Motion < 0.5 ? 1.0 : saturate((_DD_UiTime - v.fx.y) / 0.09);
-                    float s = lerp(1.12, 1.0, k * k * k);
+                    float k = _DD_Motion < 0.5 ? 1.0 : saturate((_DD_UiTime - v.fx.y) / DD_UI_STAMP_IN);
+                    float s = lerp(DD_UI_STAMP_PEAK, 1.0, k * k * k);
                     position.xy = v.map.zw + (position.xy - v.map.zw) * s;
                 }
                 else if (DD_IsMode(mode, DD_FX_PARTICLES))
@@ -192,7 +192,7 @@ Shader "DD/UI/Fx"
                 float crack = tex2D(_DD_InkMap, IN.map.xy * max(IN.map.zw, 1.0) / tilePx).a;
                 float metal = saturate(IN.prm.x);
                 float3 leaf = lerp(_DD_SilverLeaf.rgb, _DD_GoldLeaf.rgb, metal);
-                float peak = lerp(0.10, 0.25, metal);
+                float peak = lerp(0.10, DD_UI_GLINT_MAX_BRIGHTNESS, metal);   // ginpaku 0.10 (AD MUST 2), kinpaku the token ceiling
                 float boost = min(peak, peak * g * (0.55 + 0.45 * crack)) * _DD_Flash;
                 color.rgb += leaf * boost * color.a;
                 return color;
@@ -201,7 +201,7 @@ Shader "DD/UI/Fx"
             // Stamp: the hanko inks in with the scale (B channel roughness at the rim).
             half4 Stamp(half4 color, v2f IN)
             {
-                float k = _DD_Motion < 0.5 ? 1.0 : saturate((_DD_UiTime - IN.fx.z) / 0.09);
+                float k = _DD_Motion < 0.5 ? 1.0 : saturate((_DD_UiTime - IN.fx.z) / DD_UI_STAMP_IN);
                 float m = tex2D(_DD_InkMap, DD_MapUv(IN.map.xy)).b;
                 color.a *= saturate(k * 1.35 - m * 0.35) * (1.0 - 0.12 * m);   // AD SHOULD: the landed hanko keeps its rim
                 return color;
@@ -214,7 +214,7 @@ Shader "DD/UI/Fx"
                 float phase = frac(_DD_UiTime / period);
                 float d = (IN.map.x + (1.0 - IN.map.y) * 0.5) / 1.5;
                 float g = exp(-((d - lerp(-0.4, 1.4, phase)) * (d - lerp(-0.4, 1.4, phase))) / 0.012);
-                color.rgb += _DD_Paper.rgb * 0.05 * g * _DD_Motion * color.a;
+                color.rgb += _DD_Paper.rgb * DD_UI_SHEEN_FIELD_ALPHA_MAX * g * _DD_Motion * color.a;
                 return color;
             }
 
