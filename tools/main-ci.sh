@@ -61,6 +61,9 @@ UD="$OUT/userdata-backup"; mkdir -p "$UD"
 inventory() { [ -d "$PD" ] && find "$PD" -type f ! -name '*.lock' ! -name '.DS_Store' | LC_ALL=C sort | while IFS= read -r f; do echo "$(dd_sha "$f")  ${f#$PD/}"; done; }
 [ -d "$PD" ] && rsync -a --exclude '*.lock' "$PD/" "$UD/"
 inventory > "$OUT/userdata-before.txt"
+# WP-066J: the shared guard also covers the player bundle folder and both PlayerPrefs plists (exact
+# restore to this snapshot: run-added keys removed — `defaults import` alone merges).
+"$DD_TOOLS_DIR/userdata-guard.sh" snapshot "$OUT/userdata-guard" > /dev/null
 
 # 4) tests (the CI worktree's own tools: they belong to the commit under test)
 "$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1; EX=$?
@@ -82,6 +85,12 @@ if ! cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-after.txt"; then
   inventory > "$OUT/userdata-restored.txt"
   cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-restored.txt" && UDWARN="$UDWARN (verified)" || UDWARN="$UDWARN (RESTORE MISMATCH)"
   dd_log "WARNING userdata: $UDWARN"
+fi
+
+"$DD_TOOLS_DIR/userdata-guard.sh" restore "$OUT/userdata-guard" > "$OUT/userdata-guard.out" 2>&1; GX=$?
+if ! cmp -s "$OUT/userdata-guard/before.txt" "$OUT/userdata-guard/after-run.txt" || [ "$GX" -ne 0 ]; then
+  GW="PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && echo verified || echo "RESTORE MISMATCH exit $GX")) — $OUT/userdata-guard"
+  UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
 fi
 
 # 6) summary
