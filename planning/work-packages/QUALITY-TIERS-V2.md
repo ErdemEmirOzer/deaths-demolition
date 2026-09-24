@@ -58,7 +58,17 @@ public static class QualityTiers
 | Yükseklik sisi (TP/FP) | S-05 | kapalı | açık | açık |
 | Bitki yoğunluğu / impostor mesafesi | S-05 WP-074 | ×0,6 / 40 m | ×1,0 / 60 m | ×1,0 / 80 m |
 | Atmosfer parçacıkları (× cookie) | S-07 WP-073 | ×0,4 | ×0,7 | ×1,0 |
-| Ragdoll tavanı, mermi izi, darbe VFX | S-06 / S-02 / S-07 | paket kendi tablosunu bu sözleşmeye ekler | | |
+| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi) | S-06 WP-071 | 2 | 6 | 10 |
+| Ceset tavanı / ömür (s); ceset–ceset çarpışması | S-06 | 6 / 2,5; ✘ | 10 / 4; ✔ | 16 / 6; ✔ |
+| Foot IK gövde/kare (ayak kilidi) | S-06 | 4 (yalnız oyuncu) | 12 (oyuncu + ≤ 8) | 24 (oyuncu + LOD0 zombi) |
+| İkincil zincir gövde/kare (`SecondaryChainDriver`) | S-06 | 16 | 40 | 60 |
+| Look-at gövde/kare | S-06 | 4 | 12 | 20 |
+| Twist çözümü | S-06 | yalnız oyuncu | oyuncu + LOD0 | oyuncu + LOD0 + LOD1 |
+| Animator tam kare mesafesi TP/FP (ötesi 15 Hz Far); tepeden Far LOD | S-06 | ≤ 14 m; ≥ 1 | ≤ 22 m; ≥ 2 | ≤ 30 m; ≥ 3 |
+| Yerinde dönüş/pivot klipleri | S-06 | ✘ (slerp) | ✔ | ✔ |
+| FP kol viewmodel Animator (≈ 0,15 ms) | S-06 | açık | açık | açık |
+| Mermi izi, darbe VFX, AI tick, Special etkileşimleri | S-02 / S-07 / S-03 | paket kendi satırlarını bu sözleşmeye ekler | | |
+| Ses | S-08 | kademe satırı yok (ses CPU'su ≈ 0,02 ms/atış, ses bütçesi kademeden bağımsız; Performans ölçümü > 0,3 ms ise World kapasitesi 24 → 16) | | |
 
 **Hiçbir kademede kaybedilmez:** ıslak arduvaz değeri/parlaması; bulut gölgesi cookie; LUT v2 + sis rengi #D0D7DE + mesafe rampası (90 m %24); ufuk plakaları + gök bandı; imza huzmeler (batı bambu ≥ 3, doğu sakura ≥ 2 kart); değer sırası ve DEC-077 okunabilirlik eşikleri.
 
@@ -66,3 +76,4 @@ public static class QualityTiers
 - A/B: özellik `-dd<Özellik> 0|1` bayrağı veya kademe anahtarı ile; PilotPerfProbe Run, 1080p, 10 s ısınma + 60 s pencere, tam 40, temiz pencere (`tools/qa/wp064_run.py perf`, `-ddCameraMode` ile üç mod); kademe × mod başına ≥ 2 pencere.
 - Rapor satırı (paket kaydı + `quality-tiers-v2.json`): özellik · kademe · mod · Δms ort · Δms p99 · GPU Δms · kanıt yolu.
 - Bütçe paylaşımı (öneri, C-00 hakemliğinde; Yüksek, tepeden, ölçülü taban 7,8 ms): dünya v5 ≤ +3,5 ms · atmosfer v3 ≤ +2,0 ms · VFX/anim/AI/UI/ses ≤ +3,0 ms · pay 0,2 ms. Aşan özellik kendi kademesinde kısar (M4-R1 §4.8); başka paketin bütçesinden alınmaz.
+- Bildirilen tahminler (40 zombi, Yüksek): animasyon (S-06) ≈ 1,9 ms (pay ≤ 2,4; Sinematik ≈ 3,4 / Performans ≈ 0,7) — "VFX/anim/AI/UI/ses +3,0 ms" payının çoğu; C-00 hakemliğinde yeniden paylaştırma gerekebilir (ölçüm dilim sonlarında).
