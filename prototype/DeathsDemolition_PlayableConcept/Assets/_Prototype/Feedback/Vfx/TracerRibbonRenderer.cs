@@ -26,6 +26,9 @@ namespace DD.Prototype.Feedback.Vfx
         public const int Capacity = 256;
         public const string ShaderName = "DD/VFX Ribbon";
         public const float PelletBarLength = 0.5f;
+        /// <summary>WP-073 B2 (AD B1 SHOULD): in first person the bars are shorter and softer — 0.30 m at α 0.6 (they crossed the whole lower frame).</summary>
+        public const float PelletBarLengthFirstPerson = 0.30f;
+        public const float PelletBarAlphaFirstPerson = 0.6f;
         public const float PelletBarStart = 0.6f;
         public const float PelletFadeDistance = 6f;
         private const float MaxLife = 1.5f;
@@ -348,7 +351,7 @@ namespace DD.Prototype.Feedback.Vfx
                 {
                     if (layer != 0) continue;
                     width = profile.CoreWidth;
-                    length = PelletBarLength;
+                    length = _firstPerson ? PelletBarLengthFirstPerson : PelletBarLength;
                     fadeDistance = PelletFadeDistance;
                     fadeIn = PelletBarStart;
                     bead = 0f;
@@ -433,7 +436,7 @@ namespace DD.Prototype.Feedback.Vfx
                 tc = tailColor * hdr;
                 alpha = layer == 1 ? 0.35f : 1f;
                 if (layer == 1) { hc *= 0.35f; tc *= 0.35f; beadShare *= 0.5f; }
-                if (bar) { alpha = 0.8f; beadShare = 0f; }
+                if (bar) { alpha = _firstPerson ? PelletBarAlphaFirstPerson : 0.8f; beadShare = 0f; }
             }
 
             _head[n] = new Vector4(h.x, h.y, h.z, width);

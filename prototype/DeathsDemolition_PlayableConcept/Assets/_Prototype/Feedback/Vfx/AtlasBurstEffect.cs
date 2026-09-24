@@ -81,7 +81,9 @@ namespace DD.Prototype.Feedback.Vfx
                 sheet.numTilesX = row.Columns;
                 sheet.numTilesY = row.Rows;
                 sheet.animation = ParticleSystemAnimationType.WholeSheet;
-                sheet.startFrame = new ParticleSystem.MinMaxCurve(0f, row.Columns * row.Rows);
+                // WP-073 B2: the start frame is normalised over the sheet (0 … 1) — the frame count here clamped every particle to
+                // the last cell (Wp073ImpactTests atlas render check proves the normalisation).
+                sheet.startFrame = new ParticleSystem.MinMaxCurve(0f, 0.999f);
                 sheet.frameOverTime = new ParticleSystem.MinMaxCurve(0f);
                 sheet.cycleCount = 1;
             }

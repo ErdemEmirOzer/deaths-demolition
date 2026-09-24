@@ -21,13 +21,16 @@ namespace DD.Prototype.Feedback.Vfx
     public sealed class VfxDressing
     {
         public const int FlipbookCapacity = 48;
-        public const int DecalCapacity = 64;
+        /// <summary>WP-073 B2 (direction §5): impact marks 64 / 128 / 256 by tier (read at configure).</summary>
+        public static int DecalCapacity => VfxTier.Pick(64, 128, 256);
         public const int FragmentBurstCapacity = 8;
         public const int SmokeBurstCapacity = 8;
 
         // PROTOTYPE-ONLY placement numbers (manifest usage notes where they exist).
         private const float ImpactSurfaceLift = 0.03f;
         private const float DecalSecondsEnvironment = 12f;
+        /// <summary>WP-073 B2: environment marks 8 s on Performance, 12 s above (direction §5).</summary>
+        private static float ImpactDecalSeconds => VfxTier.Current == VfxTierLevel.Performance ? 8f : DecalSecondsEnvironment;
         private const float DecalSecondsSplat = 30f;
         private const float DecalSecondsScorch = 12f;
         private const float DecalSecondsSplinter = 8f;
@@ -172,6 +175,11 @@ namespace DD.Prototype.Feedback.Vfx
                 }
 
                 _lanterns.Configure(templateRoot, _flipbooks);
+                // WP-073 B2: the barrel heat strip and haze live for seconds; on the shared pool a busy fight's RecycleOldest took
+                // them over (the strip then moved someone else's card). Their own two-card pool.
+                _barrelCards = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(Template<FlipbookEffect>(templateRoot, "FX_WP073_BarrelCard"),
+                    2, 2, PoolExhaustedPolicy.RecycleOldest));
+                ImpactSystem.Ensure(this);
             }
 
             if (_binder == null)
@@ -394,6 +402,7 @@ namespace DD.Prototype.Feedback.Vfx
         private float _heatTickAt = -1f;
         private FlipbookEffect _heatCard;
         private Transform _heatMuzzle;
+        private PrototypePool<FlipbookEffect> _barrelCards;
         private readonly FlipbookEffect[] _muzzleCards = new FlipbookEffect[8];
         private readonly Transform[] _muzzleParents = new Transform[8];
         private int _muzzleCardNext;
@@ -507,7 +516,7 @@ namespace DD.Prototype.Feedback.Vfx
                 && DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson;
             if (_heatCard == null || !hazeAllowed)
             {
-                if (_hazeCard != null) { if (_hazeCard.IsSpawned) _flipbooks.Release(_hazeCard); _hazeCard = null; }
+                if (_hazeCard != null) { if (_hazeCard.IsSpawned) _barrelCards.Release(_hazeCard); _hazeCard = null; }
                 return;
             }
 
@@ -518,7 +527,7 @@ namespace DD.Prototype.Feedback.Vfx
             Vector3 at = _heatMuzzle.position - barrel * (_heatLength * 0.5f) + Vector3.up * (row.WorldHeightMetres * 0.25f);
             if (_hazeCard == null || !_hazeCard.IsSpawned)
             {
-                _hazeCard = _flipbooks.Get(at, Quaternion.identity);
+                _hazeCard = _barrelCards.Get(at, Quaternion.identity);
                 if (_hazeCard == null) return;
                 _hazeCard.Play(row, FlipbookEffect.Facing.CameraYaw, row.WorldSizeMetres * 1.25f, Color.white, _heat, 0f, 3600f);
                 return;
@@ -537,7 +546,7 @@ namespace DD.Prototype.Feedback.Vfx
 
             if (_heatCard != null && (!_heatCard.IsSpawned || _heatMuzzle == null || _heat < HeatHideBelow))
             {
-                if (_heatCard.IsSpawned) _flipbooks.Release(_heatCard);
+                if (_heatCard.IsSpawned) _barrelCards.Release(_heatCard);
                 _heatCard = null;
                 TickBarrelHaze(Vector3.forward);
                 return;
@@ -553,7 +562,7 @@ namespace DD.Prototype.Feedback.Vfx
                 // Manifest: 0.08 × 0.45 m strip, muzzle end at v = 0 → the card sits half its length behind the muzzle.
                 float length = row.WorldHeightMetres > 0f ? row.WorldHeightMetres : 0.45f;
                 // Not parented: a weapon swap rebuilds the rig and would take the pooled card down with the muzzle.
-                _heatCard = _flipbooks.Get(_heatMuzzle.position - BarrelAxis() * (length * 0.5f), Quaternion.identity);
+                _heatCard = _barrelCards.Get(_heatMuzzle.position - BarrelAxis() * (length * 0.5f), Quaternion.identity);
                 if (_heatCard == null)
                 {
                     return;
@@ -606,12 +615,19 @@ namespace DD.Prototype.Feedback.Vfx
 
             string fb, decal;
             ImpactIdsFor(surface, out fb, out decal);
+            _lastFlipbook = null;
+            _lastDecal = null;
             bool played = PlayFlipbook(fb, point + normal * ImpactSurfaceLift, FlipbookEffect.Facing.Camera, Quaternion.identity, scale, Color.white, 1f, 0f);
             if (decal != null)
             {
-                PlayDecal(decal, point, normal, 0f, DecalSecondsEnvironment, DecalAlphaCap, Color.white);
+                PlayDecal(decal, point, normal, 0f, ImpactDecalSeconds, DecalAlphaCap, Color.white);
             }
 
+            // WP-073 B2: the projectile's Impact event follows this call in the same stack (HitscanEngine) and refines it by calibre.
+            _lastSurfaceFrame = Time.frameCount;
+            _lastSurfacePoint = point;
+            _lastSurfaceCard = _lastFlipbook;
+            _lastSurfaceDecal = _lastDecal;
             return played;
         }
 
@@ -1372,7 +1388,43 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             fx.Play(row, facing, row.WorldSizeMetres * Mathf.Max(0.25f, scale), tint, alphaCap, fadeOut);
+            _lastFlipbook = fx;
             Played++;
+            return true;
+        }
+
+        // ------------------------------------------------------------------ WP-073 B2 · calibre refinement of a surface impact
+
+        private FlipbookEffect _lastFlipbook, _lastSurfaceCard;
+        private DecalEffect _lastDecal, _lastSurfaceDecal;
+        private int _lastSurfaceFrame = -1;
+        private Vector3 _lastSurfacePoint;
+
+        /// <summary>
+        /// WP-073 B2 (direction §1.4): the projectile's Impact refines the surface impact this frame's
+        /// <see cref="PlaySurfaceImpact"/> just dressed at <paramref name="point"/> — the hole takes the calibre's size
+        /// (light 0.06 / medium 0.09 / heavy 0.14 m) and the wet world has no dust (K3): on stone the dust card plays
+        /// only for heavy rounds (the spray and chips of <see cref="ImpactSystem"/> carry the rest). False when this frame
+        /// dressed nothing there (budget, hitscan path).
+        /// </summary>
+        public bool RefineSurfaceImpact(Vector3 point, SurfaceKind surface, DD.Prototype.Core.Weapons.WeaponCaliber calibre)
+        {
+            if (_lastSurfaceFrame != Time.frameCount || (_lastSurfacePoint - point).sqrMagnitude > 1e-4f)
+            {
+                return false;
+            }
+
+            if (_lastSurfaceDecal != null && _lastSurfaceDecal.IsSpawned)
+            {
+                _lastSurfaceDecal.SetSize(ImpactSystem.HoleSize(calibre));
+            }
+
+            if (surface == SurfaceKind.Stone && calibre != DD.Prototype.Core.Weapons.WeaponCaliber.Heavy && _lastSurfaceCard != null && _lastSurfaceCard.IsSpawned)
+            {
+                _lastSurfaceCard.Despawn();
+            }
+
+            _lastSurfaceFrame = -1;
             return true;
         }
 
@@ -1393,6 +1445,7 @@ namespace DD.Prototype.Feedback.Vfx
 
             float spin = spinDegrees != 0f ? spinDegrees : Random.Range(0f, 360f);
             decal.Play(row, row.WorldSizeMetres, seconds, alphaCap, tint, spin);
+            _lastDecal = decal;
             DecalsPlayed++;
         }
     }

@@ -31,6 +31,8 @@ namespace DD.Prototype.Feedback.Vfx
             public float LastShot;
             public Transform Muzzle;
             public bool FirstPerson;
+            /// <summary>WP-073 B2: a light at a fixed world point (impact), not following a muzzle.</summary>
+            public bool Fixed;
         }
 
         private static MuzzleSystem s_instance;
@@ -197,6 +199,7 @@ namespace DD.Prototype.Feedback.Vfx
                 if (slot >= 0)
                 {
                     ref MuzzleLight m = ref _lights[slot];
+                    m.Fixed = false;
                     bool fresh = !m.Light.enabled || m.Muzzle != muzzle || !m.Sustained;
                     m.Muzzle = muzzle;
                     m.FirstPerson = firstPerson;
@@ -206,7 +209,7 @@ namespace DD.Prototype.Feedback.Vfx
                     m.Fade = p.LightFadeSeconds;
                     // AD B1 SHOULD 11: top-down pools × 0.8 (the character's silhouette first).
                     bool topDown = CameraModeService.Current == CameraMode.TopDown;
-                    m.Intensity = p.LightIntensity * (reduceFlashes ? 0.8f : 1f) * (topDown ? 0.8f : 1f);
+                    m.Intensity = p.LightIntensity * (reduceFlashes ? 0.8f : 1f) * (topDown ? p.LightTopDownScale : 1f) * (firstPerson ? p.LightFirstPersonScale : 1f);
                     if (fresh)
                     {
                         m.Start = now;
@@ -247,6 +250,51 @@ namespace DD.Prototype.Feedback.Vfx
                 _smoke.Emit(emit, 1);
             }
         }
+
+        /// <summary>
+        /// WP-073 B2: a short light at a world point (direction §1.4 impact light #FFE0B0 / 3 / 2 m / 2 frames) from the same
+        /// pool, so impacts and muzzles share the tier's light cap (8 / 4 / 2). Reduce flashes: ×0.8, never above the muzzle's.
+        /// </summary>
+        public bool FlashAt(Vector3 point, Color colour, float intensity, float range, float holdSeconds, float fadeSeconds)
+        {
+            float now = Time.time;
+            int slot = FreeLight(VfxTier.Current, now);
+            if (slot < 0) return false;
+            ref MuzzleLight m = ref _lights[slot];
+            m.Muzzle = null;
+            m.Fixed = true;
+            m.FirstPerson = false;
+            m.Sustained = false;
+            m.Start = now;
+            m.LastShot = now;
+            m.Hold = holdSeconds;
+            m.Fade = fadeSeconds;
+            m.Intensity = intensity * (GameFeelSettings.FlashScale < 0.99f ? 0.8f : 1f);
+            Light l = m.Light;
+            l.color = colour;
+            l.range = range;
+            l.shadows = LightShadows.None;
+            l.intensity = m.Intensity;
+            l.transform.position = point;
+            l.enabled = true;
+            ImpactLights++;
+            return true;
+        }
+
+        /// <summary>
+        /// WP-073 B2: one soft puff from the shared world smoke emitter (the radial puff grows ×2.1 over its life) — the head-kill
+        /// red mist. The AP-010 card sheet drew a hard-edged square there (as it did at the FP eye in B1, AD MUST 2).
+        /// </summary>
+        public bool PuffAt(Vector3 point, float size, float seconds, Color colour, Vector3 drift)
+        {
+            if (_smoke == null) return false;
+            var emit = new ParticleSystem.EmitParams { position = point, velocity = drift, startSize = size, startLifetime = seconds, startColor = colour };
+            _smoke.Emit(emit, 1);
+            return true;
+        }
+
+        /// <summary>WP-073 B2: impact lights started (tests / probes).</summary>
+        public int ImpactLights { get; private set; }
 
         private static Vector3 MuzzlePoint(Transform muzzle, bool firstPerson)
         {
@@ -289,13 +337,13 @@ namespace DD.Prototype.Feedback.Vfx
                 ref MuzzleLight m = ref _lights[i];
                 Light l = m.Light;
                 if (l == null || !l.enabled) continue;
-                if (m.Muzzle == null)
+                if (m.Muzzle == null && !m.Fixed)
                 {
                     l.enabled = false;
                     continue;
                 }
 
-                l.transform.position = MuzzlePoint(m.Muzzle, m.FirstPerson);
+                if (!m.Fixed) l.transform.position = MuzzlePoint(m.Muzzle, m.FirstPerson);
                 float since = now - m.LastShot;
                 if (m.Sustained && since <= SustainGap)
                 {

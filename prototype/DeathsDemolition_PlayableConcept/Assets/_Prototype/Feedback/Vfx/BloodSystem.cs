@@ -229,6 +229,63 @@ namespace DD.Prototype.Feedback.Vfx
             return any;
         }
 
+        // ------------------------------------------------------------------ WP-073 B2 · gore v3 (direction §1.4 Flesh row)
+
+        /// <summary>Head-kill red mist alive at once by tier (Performance 1, High / Cinematic 2 — readability cap).</summary>
+        public static int MistCap => VfxTier.Pick(1, 2, 2);
+        private readonly float[] _mistUntil = new float[2];
+        public int ExitSprays { get; private set; }
+        public int Mists { get; private set; }
+
+        /// <summary>
+        /// A round that passed through a body: the exit spray — a 0.8 m cone of 12 droplets (16 heavy) along the shot
+        /// from the exit point, and the stain it throws on the surface behind (≤ 0.5 m, the splash-mark ray).
+        /// </summary>
+        public bool PlayExitSpray(Vector3 exitPoint, Vector3 shotDirection, bool heavy)
+        {
+            if (!_ready || shotDirection.sqrMagnitude < 1e-6f)
+            {
+                return false;
+            }
+
+            Vector3 dir = shotDirection.normalized;
+            bool any = PlayDroplets(exitPoint, dir, heavy ? 16 : 12, 0.02f, 0.05f, 3f, 5f, 0.45f);
+            any |= PlaySplashMark(exitPoint, dir, 0.5f);
+            if (any) ExitSprays++;
+            return any;
+        }
+
+        /// <summary>Head kill: a dark red mist puff Ø 0.5 m, α 0.5, 0.4 s at the head (≤ <see cref="MistCap"/> at once).</summary>
+        public bool PlayHeadMist(Vector3 head)
+        {
+            MuzzleSystem puffs = MuzzleSystem.Ensure();
+            if (!_ready || puffs == null)
+            {
+                return false;
+            }
+
+            float now = Time.time;
+            int slot = -1;
+            for (int i = 0; i < MistCap && i < _mistUntil.Length; i++)
+            {
+                if (_mistUntil[i] <= now) { slot = i; break; }
+            }
+
+            if (slot < 0)
+            {
+                return false;
+            }
+
+            // Two overlapping soft puffs (Ø 0.5 m grown from 0.24, α 0.5, 0.4 s) — a cloud, not a disc.
+            puffs.PuffAt(head, 0.24f, 0.4f, HeadMistTint, new Vector3(0.15f, 0.25f, 0f));
+            puffs.PuffAt(head + Vector3.up * 0.06f, 0.2f, 0.36f, HeadMistTint, new Vector3(-0.12f, 0.3f, 0.08f));
+            _mistUntil[slot] = now + 0.4f;
+            Mists++;
+            return true;
+        }
+
+        private static readonly Color HeadMistTint = new Color(0.42f, 0.03f, 0.03f, 0.5f);
+
         /// <summary>The blood of a kill: two cards, 36 droplets and the growing pool at the feet. The death sheet itself stays in <see cref="VfxDressing"/>.</summary>
         public bool PlayDeath(Vector3 feet, Vector3 point, Vector3 normal, Vector3 shotDirection, bool heavy)
         {

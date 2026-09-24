@@ -878,6 +878,12 @@ namespace DD.Prototype.Feedback
             // Flesh layer first, so a kill still shows where it was hit.
             PlayFlesh(info, normal, force, false);
 
+            // WP-073 B2 (direction §1.4): a head kill throws a red mist puff (≤ 2 at once; the gib set follows when P-06 delivers it).
+            if (info.Result.Region == DD.Prototype.Damage.BodyRegion.Head && !info.FromExplosion && _vfx.Blood.IsReady)
+            {
+                _vfx.Blood.PlayHeadMist(info.Point);
+            }
+
             if (_deathPool == null)
             {
                 return;

@@ -95,7 +95,7 @@ namespace DD.Prototype.Feedback.Vfx
                 sheet.numTilesX = row.Columns;
                 sheet.numTilesY = row.Rows;
                 sheet.animation = ParticleSystemAnimationType.WholeSheet;
-                sheet.startFrame = new ParticleSystem.MinMaxCurve(0f, row.Columns * row.Rows);
+                sheet.startFrame = new ParticleSystem.MinMaxCurve(0f, 0.999f);   // WP-073 B2: normalised over the sheet (was clamped to the last cell)
                 sheet.frameOverTime = new ParticleSystem.MinMaxCurve(0f);
                 sheet.cycleCount = 1;
             }

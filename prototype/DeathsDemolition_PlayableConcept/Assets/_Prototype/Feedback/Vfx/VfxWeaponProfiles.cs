@@ -47,6 +47,8 @@ namespace DD.Prototype.Feedback.Vfx
         public float LightHoldSeconds;      // full intensity (frames / 60)
         public float LightFadeSeconds;
         public bool Sustained;              // auto ≥ 600 RPM: the light stays lit and flickers 10 Hz while firing
+        public float LightTopDownScale = 0.8f;      // AD B1 SHOULD 11: top-down pools under the silhouette
+        public float LightFirstPersonScale = 1f;    // WP-073 B2 (AD B1 SHOULD): the sniper's pool at the eye
         public float SmokeStart, SmokeEnd, SmokeSeconds, SmokeAlpha;
 
         // ---- casing (§1.3)
@@ -110,7 +112,7 @@ namespace DD.Prototype.Feedback.Vfx
         {
             Slot = "sg_1", Class = VfxWeaponClass.Shotgun, Speed = 120f, CoreWidth = 0.025f, GlowWidth = 0f,
             HeadColor = Hdr("#FFD9B0", 2f), TailColor = Hdr("#FFD9B0", 2f), TracerEveryN = 0, PelletBars = true,
-            FlashScale = 1.0f, FlashIntensity = 0.6f, FlashStretch = new Vector2(1f, 1.3f),
+            FlashScale = 1.0f, FlashIntensity = 0.5f, FlashStretch = new Vector2(1f, 1.3f),
             LightColor = Hex("#FFB878"), LightIntensity = 7f, LightRange = 5.5f, LightHoldSeconds = 3f / 60f, LightFadeSeconds = 0.12f,
             SmokeStart = 0.40f, SmokeEnd = 0.90f, SmokeSeconds = 1.0f, SmokeAlpha = 0.40f,
             CasingMesh = MuzzleVariant.C, CasingSpeed = 2.0f, CasingSpinHz = 6f, RestSeconds = new Vector3(3f, 6f, 10f)
@@ -120,7 +122,7 @@ namespace DD.Prototype.Feedback.Vfx
         {
             Slot = "sg_2", Class = VfxWeaponClass.Shotgun, Speed = 130f, CoreWidth = 0.025f, GlowWidth = 0.12f,
             HeadColor = Hdr("#FFF4E6", 6f), TailColor = Hdr("#FF8A3A", 2.5f), TracerEveryN = 0, PelletBars = true, CentreTracer = true,
-            FlashScale = 1.0f, FlashIntensity = 0.6f, FlashStretch = new Vector2(1f, 1.3f),
+            FlashScale = 1.0f, FlashIntensity = 0.5f, FlashStretch = new Vector2(1f, 1.3f),
             LightColor = Hex("#FFB878"), LightIntensity = 7f, LightRange = 5.5f, LightHoldSeconds = 3f / 60f, LightFadeSeconds = 0.12f,
             SmokeStart = 0.40f, SmokeEnd = 0.90f, SmokeSeconds = 1.0f, SmokeAlpha = 0.40f,
             CasingMesh = MuzzleVariant.C, CasingSpeed = 1.5f, CasingSpinHz = 6f, RestSeconds = new Vector3(3f, 6f, 10f)
@@ -153,6 +155,7 @@ namespace DD.Prototype.Feedback.Vfx
             HeadColor = Hdr("#F4FAFF", 8f), TailColor = Hdr("#9FC8E8", 2f), TracerEveryN = 1,
             FlashScale = 1.6f, FlashStretch = new Vector2(2.2f, 1f), FlashDurationScale = 1.4f,
             LightColor = Hex("#FFD0A0"), LightIntensity = 18f, LightRange = 10f, LightHoldSeconds = 4f / 60f, LightFadeSeconds = 0.20f,
+            LightTopDownScale = 0.65f, LightFirstPersonScale = 0.7f,   // WP-073 B2 (AD B1 SHOULD): the 18 / 10 m pool washed the frame
             SmokeStart = 0.45f, SmokeEnd = 1.00f, SmokeSeconds = 1.4f, SmokeAlpha = 0.40f,
             CasingMesh = MuzzleVariant.A, CasingSpeed = 3.0f, CasingSpinHz = 10f, RestSeconds = new Vector3(3f, 5f, 8f)
         };
