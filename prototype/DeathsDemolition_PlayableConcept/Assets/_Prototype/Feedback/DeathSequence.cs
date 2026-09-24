@@ -25,7 +25,35 @@ namespace DD.Prototype.Feedback
         private static float _applied = 1f;
         private static float _restoreScale = 1f;
 
-        public static bool IsActive { get; private set; }
+        public static bool IsActive
+        {
+            get { return s_active; }
+            private set
+            {
+                if (s_active == value)
+                {
+                    return;
+                }
+
+                s_active = value;
+
+                // WP-070 §5.2 (R1-A #18): a camera-mode request made during the death beat is
+                // queued and applied when the beat ends, never mid-collapse.
+                if (value)
+                {
+                    DD.Prototype.CameraSystem.CameraModeService.LockModeChanges(CameraLockId);
+                }
+                else
+                {
+                    DD.Prototype.CameraSystem.CameraModeService.UnlockModeChanges(CameraLockId);
+                }
+            }
+        }
+
+        /// <summary>WP-070: id of the camera-mode lock the death beat holds.</summary>
+        public const string CameraLockId = "death-sequence";
+
+        private static bool s_active;
 
         /// <summary>Beats started since the counter was reset (tests / F1).</summary>
         public static int Count { get; private set; }

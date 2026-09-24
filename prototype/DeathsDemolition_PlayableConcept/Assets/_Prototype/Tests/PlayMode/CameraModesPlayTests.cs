@@ -395,6 +395,56 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(60000)]
+        public IEnumerator R1A17_FPdenCikis_GovdeBasTarafinda20YuzdeGizliKalir()
+        {
+            Renderer govde = _govde.GetComponentInChildren<Renderer>();
+            CameraModeService.Request(CameraMode.FirstPerson, instant: true);
+            yield return Kareler(3);
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly, govde.shadowCastingMode, "FP: gövde gölge-yalnız.");
+
+            CameraModeService.Request(CameraMode.ThirdPerson);
+            yield return null;
+            Assert.Less(CameraModeService.Transition01, 0.2f);
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly, govde.shadowCastingMode,
+                "FP→TP ilk %20: kamera hâlâ göz hizasında, gövde gizli kalmalı (R1-A #17).");
+
+            int kare = 0;
+            while (CameraModeService.IsTransitioning && kare++ < 600) yield return null;
+            yield return null;
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.On, govde.shadowCastingMode, "Geçiş bitince gövde görünür.");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator R1A7_RigKapaninca_BekleyenGecisBiter()
+        {
+            CameraModeService.Request(CameraMode.ThirdPerson);
+            yield return null;
+            Assert.IsTrue(CameraModeService.IsTransitioning);
+            _rig.gameObject.SetActive(false);
+            Assert.IsFalse(CameraModeService.IsTransitioning, "Rig kapanınca geçiş askıda kalmamalı (ateş yutulmaya devam eder).");
+            _rig.gameObject.SetActive(true);
+            yield return null;
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator R1A18_OlumVurusu_ModIsteginiKuyruklar()
+        {
+            Assert.IsTrue(DD.Prototype.Feedback.DeathSequence.Begin(0.5f, 0.05f, 0.15f, 0.05f));
+            Assert.IsTrue(CameraModeService.IsModeChangeLocked, "Ölüm vuruşu mod değişimini kilitlemeli (§5.2).");
+            Assert.IsFalse(CameraModeService.Request(CameraMode.ThirdPerson));
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current);
+            Assert.AreEqual(CameraMode.ThirdPerson, CameraModeService.Target);
+
+            float t0 = Time.realtimeSinceStartup;
+            while (DD.Prototype.Feedback.DeathSequence.IsActive && Time.realtimeSinceStartup - t0 < 5f) yield return null;
+            Assert.IsFalse(CameraModeService.IsModeChangeLocked);
+            Assert.AreEqual(CameraMode.ThirdPerson, CameraModeService.Current, "Kuyruktaki istek vuruş bitince uygulanmalı.");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
         public IEnumerator DuvarIciSayaci_PozitifKontrol()
         {
             yield return Kareler(5);

@@ -406,6 +406,10 @@ namespace DD.Prototype.CameraSystem
             ReleaseCursor();
             ShowPlayer();
             RaiseWeaponIfLowered();
+            if (Active == this)
+            {
+                CameraModeService.CompleteTransition();   // R1-A #7: no blend survives its rig
+            }
             if (_viewmodelCamera != null)
             {
                 _viewmodelCamera.enabled = false;
@@ -530,7 +534,7 @@ namespace DD.Prototype.CameraSystem
 
             transform.SetPositionAndRotation(position, rotation);
             ApplyLens(mode, fov, dt);
-            ApplyViewmodelCamera(mode);
+            ApplyViewmodelCamera(FirstPersonPresentation(mode));
             ApplyShake(dt, mode);
             ApplyCursor();
             ApplyPlayerVisibility(mode);
@@ -860,17 +864,35 @@ namespace DD.Prototype.CameraSystem
         /// TP: the player hides when the boom is pushed closer than <see cref="_tpHidePlayerDistance"/>.
         /// Shadows always stay. Renderers are re-collected on every hide so weapon swaps are covered.
         /// </summary>
+        /// <summary>
+        /// R1-A #17: whether the frame is presented as first person — the body hidden and the weapon on
+        /// the viewmodel layer — in the head-side 20 % of a blend in BOTH directions (entering FP from
+        /// t ≥ 0.8, leaving FP until t = 0.2), so the head interior is never seen from the eye.
+        /// </summary>
+        private static bool FirstPersonPresentation(CameraMode mode)
+        {
+            bool blending = CameraModeService.IsTransitioning;
+            float t = CameraModeService.Transition01;
+            if (mode == CameraMode.FirstPerson)
+            {
+                return !blending || t >= 0.8f;
+            }
+
+            return blending && CameraModeService.Previous == CameraMode.FirstPerson && t < 0.2f;
+        }
+
         private void ApplyPlayerVisibility(CameraMode mode)
         {
-            bool hide = mode == CameraMode.FirstPerson && (!CameraModeService.IsTransitioning || CameraModeService.Transition01 > 0.8f);
-            if (mode == CameraMode.ThirdPerson && _tpBoom >= 0f && _tpBoom < _tpHidePlayerDistance)
+            bool firstPerson = FirstPersonPresentation(mode);
+            bool hide = firstPerson;
+            if (!firstPerson && mode == CameraMode.ThirdPerson && _tpBoom >= 0f && _tpBoom < _tpHidePlayerDistance)
             {
                 hide = true;
             }
 
             if (hide)
             {
-                HidePlayer(mode == CameraMode.FirstPerson);
+                HidePlayer(firstPerson);
             }
             else
             {
@@ -914,6 +936,13 @@ namespace DD.Prototype.CameraSystem
                         }
 
                         go.layer = vmLayer;
+                    }
+
+                    ShadowCastingMode original;
+                    if (_playerShadowModes.TryGetValue(r, out original))
+                    {
+                        r.shadowCastingMode = original;   // hidden earlier (TP push-in): the viewmodel weapon must render
+                        _playerShadowModes.Remove(r);
                     }
 
                     continue;
@@ -1069,7 +1098,7 @@ namespace DD.Prototype.CameraSystem
         /// so it inherits shake/recoil; draws only the FirstPersonView layer after a depth clear;
         /// never tagged MainCamera (S-03: Camera.main stays the world camera). Enabled in FP only.
         /// </summary>
-        private void ApplyViewmodelCamera(CameraMode mode)
+        private void ApplyViewmodelCamera(bool fp)
         {
             int vmLayer = CameraLayers.FirstPersonView;
             if (_camera == null || vmLayer < 0)
@@ -1077,7 +1106,6 @@ namespace DD.Prototype.CameraSystem
                 return;
             }
 
-            bool fp = mode == CameraMode.FirstPerson;
             if (!fp && _viewmodelCamera == null)
             {
                 return;

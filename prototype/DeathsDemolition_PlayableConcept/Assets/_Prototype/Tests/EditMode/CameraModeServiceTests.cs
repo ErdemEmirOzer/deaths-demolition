@@ -196,6 +196,52 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void R1A7_AniIstekAyniModda_BekleyenGecisiBitirir()
+        {
+            int events = 0;
+            CameraModeService.Changed += c => events++;
+            CameraModeService.Request(CameraMode.ThirdPerson);
+            Assert.IsTrue(CameraModeService.IsTransitioning);
+            Assert.IsFalse(CameraModeService.Request(CameraMode.ThirdPerson, instant: true), "Mod değişmedi: false.");
+            Assert.IsFalse(CameraModeService.IsTransitioning, "Anlık istek bekleyen geçişi bitirmeli (R1-A #7).");
+            Assert.AreEqual(CameraMode.ThirdPerson, CameraModeService.Previous);
+            Assert.AreEqual(1, events, "Aynı moda anlık istek olay üretmez.");
+
+            CameraModeService.Request(CameraMode.FirstPerson);
+            CameraModeService.CompleteTransition();
+            Assert.IsFalse(CameraModeService.IsTransitioning);
+        }
+
+        [Test]
+        public void R1A17_EtkinProfil_GecisinIlkYarisindaOncekiMod()
+        {
+            CameraModeService.Request(CameraMode.FirstPerson);
+            Assert.AreEqual(CameraOccluderPolicy.FadeAll, CameraModeService.EffectiveProfile.OccluderPolicy, "t<0,5: önceki (tepeden) politika.");
+            CameraModeService.AdvanceTransition(0.6f);
+            Assert.AreEqual(CameraOccluderPolicy.None, CameraModeService.EffectiveProfile.OccluderPolicy, "t≥0,5: yeni mod politikası.");
+        }
+
+        [Test]
+        public void R1A18_ImlecNiyeti_RunFlowClockuDogrudanOkur()
+        {
+            float scale = Time.timeScale;
+            CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
+            Assert.AreEqual(CameraCursorIntent.Locked, CameraModeService.CursorIntent);
+            DD.Prototype.Rounds.RunFlowClock.AddHold("wp070-test");
+            try
+            {
+                Assert.AreEqual(CameraCursorIntent.Free, CameraModeService.CursorIntent, "Saat donukken (rig olmadan da) imleç serbest.");
+            }
+            finally
+            {
+                DD.Prototype.Rounds.RunFlowClock.RemoveHold("wp070-test");
+                Time.timeScale = scale;
+            }
+
+            Assert.AreEqual(CameraCursorIntent.Locked, CameraModeService.CursorIntent);
+        }
+
+        [Test]
         public void KomutSatiri_ModAdlariAyristirilir()
         {
             CameraMode m;

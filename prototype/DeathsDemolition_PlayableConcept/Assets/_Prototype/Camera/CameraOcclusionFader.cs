@@ -122,7 +122,7 @@ namespace DD.Prototype.CameraSystem
 
             _nextProbeTime = Time.unscaledTime + Mathf.Max(0f, _probeInterval);
 
-            CameraOccluderPolicy policy = CameraModeService.CurrentProfile.OccluderPolicy;
+            CameraOccluderPolicy policy = CameraModeService.EffectiveProfile.OccluderPolicy;   // R1-A #17
             if (policy == CameraOccluderPolicy.None)
             {
                 _touched.Clear();   // nothing is marked, so every faded occluder returns

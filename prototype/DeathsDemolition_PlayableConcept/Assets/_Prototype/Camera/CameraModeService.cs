@@ -95,7 +95,9 @@ namespace DD.Prototype.CameraSystem
         {
             get
             {
-                return IsLookMode && !IsLookBlocked && !s_frozen ? CameraCursorIntent.Locked : CameraCursorIntent.Free;
+                // R1-A #18: reads the run clock directly, so the intent is right even without a rig.
+                bool frozen = s_frozen || DD.Prototype.Rounds.RunFlowClock.IsFrozen;
+                return IsLookMode && !IsLookBlocked && !frozen ? CameraCursorIntent.Locked : CameraCursorIntent.Free;
             }
         }
 
@@ -208,6 +210,15 @@ namespace DD.Prototype.CameraSystem
                 return false;
             }
 
+            if (instant && mode == s_current)
+            {
+                // R1-A #7: an instant request of the current mode (run start) must also finish a
+                // blend left pending by a scene change or a rig-less request, or firing stays
+                // swallowed. No event: the mode did not change.
+                CompleteTransition();
+                return false;
+            }
+
             if (IsModeChangeLocked)
             {
                 s_pending = mode == s_current ? (CameraMode?)null : mode;
@@ -255,6 +266,22 @@ namespace DD.Prototype.CameraSystem
         {
             CameraMode? cli = CommandLineMode();
             return cli ?? s_settings.Mode;
+        }
+
+        /// <summary>Ends any pending blend at once (rig disabled, scene change, run start).</summary>
+        public static void CompleteTransition()
+        {
+            s_transition01 = 1f;
+            s_previous = s_current;
+        }
+
+        /// <summary>
+        /// R1-A #17: the profile visual systems should follow during a blend — the PREVIOUS mode's
+        /// until halfway (roofs keep fading while the camera is still overhead), then the current one.
+        /// </summary>
+        public static CameraModeProfile EffectiveProfile
+        {
+            get { return IsTransitioning && s_transition01 < 0.5f ? s_profiles[(int)s_previous] : s_profiles[(int)s_current]; }
         }
 
         /// <summary>Called by the rig while it blends; clamps and ends the transition at 1.</summary>
