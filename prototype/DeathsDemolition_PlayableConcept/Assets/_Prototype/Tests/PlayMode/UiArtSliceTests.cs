@@ -179,27 +179,36 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(weapon.enabled && weapon.sprite != null && weapon.sprite.name.StartsWith("Weapon."),
                 "klasik silah paneli eldeki silahın glifini çizmeli: " + (weapon.sprite != null ? weapon.sprite.name : "yok"));
 
-            // Frames: every panel wears the AP-012 ink frame over its HudInk fill.
-            Assert.GreaterOrEqual(hud.Panels.Count, 5, "beş HUD paneli");
-            foreach (RectTransform panel in hud.Panels)
+            // WP-068 8-R (user decision, concept A): no boxes - four ink clusters, and not one card, frame or panel fill under
+            // them (the user's "her şey dikdörtgen" verdict made a test).
+            Assert.AreEqual(4, hud.Clusters.Count, "dört mürekkep kümesi (altın · round · can · silah)");
+            foreach (RectTransform cluster in hud.Clusters)
             {
-                Transform frame = panel.Find("Frame");
-                Assert.IsNotNull(frame, panel.name + " paneli çerçeve taşımıyor");
-                Assert.AreEqual("Frame.HudPanel", frame.GetComponent<Image>().sprite.name);
+                foreach (Image image in cluster.GetComponentsInChildren<Image>(true))
+                {
+                    if (image.GetComponentInParent<UiPrompt>(true) != null)
+                    {
+                        continue;   // a key cap is a key (AD 8-R), not a panel
+                    }
+
+                    Assert.AreNotEqual("Frame", image.name, cluster.name + " kümesinde çerçeve var");
+                    Assert.IsFalse(image.sprite == UiSprites.Card || image.sprite == UiSprites.PanelBanded || image.sprite == UiSprites.Chip,
+                        cluster.name + "/" + image.name + " bir kutu çiziyor (" + (image.sprite != null ? image.sprite.name : "null") + ")");
+                }
             }
 
-            // Safe zone: no panel rect intersects the play area (REQ-104/105).
-            var canvasRect = (RectTransform)hud.Panels[0].parent;
+            // Safe zone: no cluster rect intersects the play area (REQ-104/105).
+            var canvasRect = (RectTransform)hud.Clusters[0].parent;
             Rect canvas = canvasRect.rect;
             var zone = new Rect(
                 canvas.xMin + canvas.width * RunHudScreen.HudSafeZone.xMin,
                 canvas.yMin + canvas.height * RunHudScreen.HudSafeZone.yMin,
                 canvas.width * RunHudScreen.HudSafeZone.width,
                 canvas.height * RunHudScreen.HudSafeZone.height);
-            foreach (RectTransform panel in hud.Panels)
+            foreach (RectTransform cluster in hud.Clusters)
             {
-                Rect r = PanelRect(panel, canvasRect);
-                Assert.IsFalse(r.Overlaps(zone), panel.name + " paneli oyun alanına giriyor: " + r + " vs " + zone);
+                Rect r = PanelRect(cluster, canvasRect);
+                Assert.IsFalse(r.Overlaps(zone), cluster.name + " kümesi oyun alanına giriyor: " + r + " vs " + zone);
             }
 
 
@@ -252,7 +261,7 @@ namespace DD.Prototype.Tests.PlayMode
             // ("RIFLE · HITSCAN" slid over "P1 / FR1 / RD1" in the baseline HUD frames).
             {
                 RectTransform classicPanel = null;
-                foreach (RectTransform panel in hud.Panels) if (panel.name == "ClassicWeapon") classicPanel = panel;
+                foreach (RectTransform cluster in hud.Clusters) if (cluster.name == "ClassicWeapon") classicPanel = cluster;
                 Assert.IsNotNull(classicPanel, "silah paneli");
                 var labels = new List<RectTransform>();
                 foreach (TMPro.TMP_Text t in classicPanel.GetComponentsInChildren<TMPro.TMP_Text>(false))

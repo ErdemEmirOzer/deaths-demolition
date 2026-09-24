@@ -11,14 +11,6 @@ using UnityEngine.UI;
 
 namespace DD.Prototype.UI
 {
-    /// <summary>WP-068 8-R · the HUD compositions: today's v3 panels and the two concepts put to the user.</summary>
-    public enum HudConcept
-    {
-        Panels = 0,
-        A = 1,
-        B = 2
-    }
-
     /// <summary>
     /// The in-run HUD. All ten readouts the request lists, in four corner blocks plus a
     /// centre channel.
@@ -92,51 +84,20 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed partial class RunHudScreen : UiScreen
     {
-        /// <summary>
-        /// WP-068 8-R · which HUD composition to build: <c>-ddHudConcept a|b</c> for the two concepts put to the user,
-        /// the v3 panels otherwise. Read once per HUD build; the chosen concept replaces the switch when it lands.
-        /// </summary>
-        public static HudConcept Concept
-        {
-            get
-            {
-                string arg = CommandLineValue("-ddHudConcept");
-                if (string.Equals(arg, "a", System.StringComparison.OrdinalIgnoreCase)) return HudConcept.A;
-                if (string.Equals(arg, "b", System.StringComparison.OrdinalIgnoreCase)) return HudConcept.B;
-                return HudConcept.Panels;
-            }
-        }
-
-        /// <summary>The concept's name for the capture logs.</summary>
-        public static string ConceptName => Concept.ToString();
-
-        private static string CommandLineValue(string name)
-        {
-            string[] args = System.Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length - 1; i++)
-            {
-                if (args[i] == name)
-                {
-                    return args[i + 1];
-                }
-            }
-
-            return null;
-        }
-
-        private const float BlockWidth = 420f;
-        private const float SmallBlockWidth = 360f;
-        private const float GoldBlockWidth = 220f;
         private const float SpecialBlockWidth = 220f;
-
-        // Block heights are the sum of their own rows plus the panel padding, computed
-        // by hand and kept here so the arithmetic is reviewable in one place.
-        private const float RoundBlockHeight = 150f;
-        private const float ClassicBlockHeight = 176f; // WP-068 8a: NumericXL fraction + the 12 px ladder (E11)
         private const float SpecialBlockHeight = 216f;
+
+        /// <summary>
+        /// WP-068 8-R: the top-centre stack, from the screen top - the seal line (24 + 56), the calm breakdown (to 106),
+        /// the threat chips (110 + 30); the final-seconds line and the banner sit under it.
+        /// </summary>
+        private const float ThreatRowTop = 110f;
+        private const float WarningTop = 150f;
+        private const float BannerTop = 196f;
 
         private const float BannerSeconds = 2.4f;
         private const float MarkerEdgeInset = 72f;
+        private const float LowRingAlpha = 0.6f;
 
         protected override int SortingOrder
         {
@@ -179,7 +140,6 @@ namespace DD.Prototype.UI
         // ---- classic weapon
         private CanvasGroup _classicGroup;
         private TMP_Text _classicName;
-        private TMP_Text _classicBuild;
         private TMP_Text _ammoValue;
         private UiBar _reloadBar;
         private TMP_Text _reloadCaption;
@@ -192,7 +152,6 @@ namespace DD.Prototype.UI
         private float _goldGlintAt = -10f;
         private int _goldSeen = int.MinValue;
         private TMP_Text _healthLowWord;
-        private Image _healthFrame;
         private UiCounter _ammoCounter;
         private Image _ladderBack;
         private Image _ladderFill;
@@ -237,7 +196,6 @@ namespace DD.Prototype.UI
         private Image _specialRing;
         private Image _specialPip;
         private Image _weaponIcon;
-        private TMP_Text _shotModel;
 
         // WP-022H · Special usage v2 (WP-056 SpecialWeaponUsageEvents): a field / shots line
         // under the ring and the AP-014 glyph next to the phase text. State is integers
@@ -263,7 +221,7 @@ namespace DD.Prototype.UI
         private Image _healthIcon;
         private bool _lowHealthIconShown;
         private HudReticle _reticle;   // WP-068 8b · E15 the honest reticle
-        private readonly System.Collections.Generic.List<RectTransform> _panels =
+        private readonly System.Collections.Generic.List<RectTransform> _clusters =
             new System.Collections.Generic.List<RectTransform>(6);
 
         // ---- player damage direction (REQ-045)
@@ -322,32 +280,13 @@ namespace DD.Prototype.UI
             // rather than by softening the flash until it stops working.
             BuildDamageEdges();
 
-            // WP-068 8-R: the two concepts put to the user replace the panels (RunHudScreen.Concepts.cs).
-            HudConcept concept = Concept;
-            if (concept == HudConcept.Panels)
-            {
-                BuildRoundBlock();
-                BuildGoldBlock();
-                BuildHealthBlock();
-                BuildWeaponBlocks();
-            }
-            else
-            {
-                BuildConcept(concept);
-            }
-
+            // WP-068 8-R (user decision 24.09, concept A "Mühür ve Fırça"): no panels - each readout is one ink object
+            // at its corner (RunHudScreen.Ink.cs).
+            BuildInkClusters();
             BuildCentreChannel();
             BuildMarker();
             BuildReticle();
-            if (concept == HudConcept.Panels)
-            {
-                BuildThreatChips();
-            }
-            else
-            {
-                BuildInkThreatChips();
-                BuildConceptPlayerLayer(concept);
-            }
+            BuildInkThreatChips();
 
             RunEvents.RunStarted += OnRunStarted;
             RunEvents.RoundStarted += OnRoundStarted;
@@ -440,101 +379,6 @@ namespace DD.Prototype.UI
         private const float WeaponIconSize = 64f;
         private const float SpecialRingSize = 132f;
 
-        private void BuildRoundBlock()
-        {
-            RectTransform block = HudPanel("Round", new Vector2(0.5f, 1f), SmallBlockWidth, RoundBlockHeight);
-            RectTransform host = UiFactory.CardContent(block, UiSpace.L);
-
-            var stack = new UiStack(host);
-
-            TMP_Text roundLabel = UiFactory.Label(
-                "RoundLabel", host, "ROUND", UiType.Label, UiColor.TextMuted, TextAnchor.UpperCenter);
-            stack.Add((RectTransform)roundLabel.transform, UiFactory.LineHeight(UiType.Label));
-
-            _roundValue = UiFactory.Numeric(
-                "RoundValue", host, "—", UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleCenter, false);
-            stack.Add((RectTransform)_roundValue.transform, 36f);
-
-            stack.Gap(UiSpace.XS);
-            stack.Add((RectTransform)UiFactory.Divider("D", host).transform, UiTokens.StrokeHairline);
-            stack.Gap(UiSpace.S);
-
-            // Waves glyph + count on one line, centred: "18 REMAINING" is one fact.
-            RectTransform enemiesRow = UiFactory.NewRect("EnemiesRow", host);
-            stack.Add(enemiesRow, 26f);
-            Image waves = UiArt.IconImage("Icon", enemiesRow, "Hud.Round", UiColor.TextSecondary, 22f);
-            RectTransform wavesRect = (RectTransform)waves.transform;
-            wavesRect.anchorMin = new Vector2(0.5f, 0.5f);
-            wavesRect.anchorMax = new Vector2(0.5f, 0.5f);
-            wavesRect.pivot = new Vector2(1f, 0.5f);
-            wavesRect.anchoredPosition = new Vector2(-44f, 0f);
-
-            _enemiesValue = UiFactory.Numeric(
-                "EnemiesValue", enemiesRow, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleLeft, false);
-            RectTransform enemiesValueRect = UiFactory.Fill((RectTransform)_enemiesValue.transform);
-            enemiesValueRect.offsetMin = new Vector2(SmallBlockWidth * 0.5f - (int)UiSpace.L - 36f, 0f);
-
-            TMP_Text enemiesLabel = UiFactory.Label(
-                "EnemiesLabel", enemiesRow, "REMAINING", UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
-            RectTransform enemiesLabelRect = UiFactory.Fill((RectTransform)enemiesLabel.transform);
-            enemiesLabelRect.offsetMin = new Vector2(SmallBlockWidth * 0.5f - (int)UiSpace.L + 24f, 0f);
-
-            _enemiesBreakdown = UiFactory.Label(
-                "EnemiesBreakdown", host, "—", UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperCenter);
-            stack.Add((RectTransform)_enemiesBreakdown.transform, UiFactory.LineHeight(UiType.Caption));
-        }
-
-        private void BuildGoldBlock()
-        {
-            RectTransform block = HudPanel("Gold", new Vector2(0f, 1f), GoldBlockWidth, 72f);
-
-            // E12: the kinpaku underlay, the one leaf the HUD carries (§1: the L0 exception) - flat StateGold at rest, the
-            // leaf grid inside S-07's glint band on a gain (≤ 1 / s; not under Reduce Flashes).
-            // AD 8a MUST-1: no flat gold - the flake tile at GoldLeafAlpha on the ink, and a glint layer that is
-            // transparent at rest and carries the S-07 Leaf band only while it sweeps.
-            UiPatternTile flakes = UiPatternTile.Create("Leaf", block, UiFxGlobals.LeafTileResource, GoldLeafTilePixels, UiColor.StateGold, GoldLeafAlpha);
-            UiFactory.Fill((RectTransform)flakes.transform, UiTokens.StrokeHairline);
-            flakes.transform.SetSiblingIndex(1); // over the card fill, under the frame and the readout
-            // AD 8a SHOULD-9: the gain glints on the chrome - the frame hairline carries S-07's Leaf band - never the text zone.
-            Image frame = FrameOf(block);
-            if (frame != null)
-            {
-                _goldLeaf = frame.gameObject.AddComponent<UiFx>();
-                _goldLeaf.Configure(UiFxMode.Leaf, GoldGlintSeconds, new Vector3(1f, 0f, 0f));
-            }
-
-            RectTransform host = UiFactory.CardContent(block, UiSpace.L);
-
-            // AP-012 old-coin glyph; the disc is the no-art fallback.
-            Image coin = UiArt.HasIcon("Hud.Gold")
-                ? UiArt.IconImage("Coin", host, "Hud.Gold", UiColor.StateGold, PanelIconSize)
-                : UiFactory.NewImage("Coin", host, UiColor.StateGold, UiSprites.Disc);
-            var coinRect = (RectTransform)coin.transform;
-            coinRect.anchorMin = new Vector2(0f, 0.5f);
-            coinRect.anchorMax = new Vector2(0f, 0.5f);
-            coinRect.pivot = new Vector2(0f, 0.5f);
-            coinRect.sizeDelta = new Vector2(PanelIconSize, PanelIconSize);
-            coinRect.anchoredPosition = Vector2.zero;
-
-            // E12: the balance rolls (UiCounter.Currency, a new gain mid-roll retargets from the digit on screen).
-            _goldCounter = UiCounter.Create("Value", host, UiCounterStyle.Currency, 0, UiType.NumericL, UiColor.StateGold);
-            RectTransform valueRect = UiFactory.Fill((RectTransform)_goldCounter.transform);
-            valueRect.offsetMin = new Vector2(PanelIconSize + (int)UiSpace.M, 0f);
-            _goldValue = _goldCounter.ValueText;
-
-            // "+N" rises out of the panel's right end and fades (Gold400 Caption, E12).
-            _goldDelta = UiFactory.Label("Delta", block, string.Empty, UiType.Caption, UiColor.StateGold, TextAnchor.MiddleRight);
-            _goldDelta.fontStyle = FontStyles.Bold;
-            RectTransform deltaRect = _goldDelta.rectTransform;
-            deltaRect.anchorMin = new Vector2(1f, 0.5f);
-            deltaRect.anchorMax = new Vector2(1f, 0.5f);
-            deltaRect.pivot = new Vector2(1f, 0.5f);
-            deltaRect.sizeDelta = new Vector2(72f, UiFactory.LineHeight(UiType.Caption));
-            _goldDeltaHome = new Vector2(-(int)UiSpace.L, 0f);
-            deltaRect.anchoredPosition = _goldDeltaHome;
-            _goldDelta.canvasRenderer.SetAlpha(0f);
-        }
-
         /// <summary>E12: a gain - "+N" rises 16 px and fades; the leaf glints (≤ 1 / s, never under Reduce Flashes).</summary>
         private void ShowGoldGain(int delta)
         {
@@ -557,129 +401,6 @@ namespace DD.Prototype.UI
                     _goldLeaf.Play();
                 }
             }
-        }
-
-        private void BuildHealthBlock()
-        {
-            // WP-068 slice 3 (AD MUST-1, D6): the panel is as tall as its measured bands at the
-            // TextScale - a fixed 104 put "HEALTH / 100 / 100" under the bar at 1.25.
-            float topBand = Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)), UiFactory.ScaledBand(UiFactory.LineHeight(UiType.NumericM)));
-            float stateBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
-            float blockHeight = Mathf.Max(104f, (int)UiSpace.L * 2f + topBand + (int)UiSpace.XS + HealthBarHeight + (int)UiSpace.XS + stateBand);
-            RectTransform block = HudPanel("Health", new Vector2(0f, 0f), BlockWidth, blockHeight);
-            RectTransform host = UiFactory.CardContent(block, UiSpace.L);
-
-            Image heart = UiArt.IconImage("Heart", host, "Hud.Health", UiColor.BarHealth, PanelIconSize);
-            var heartRect = (RectTransform)heart.transform;
-            heartRect.anchorMin = new Vector2(0f, 1f);
-            heartRect.anchorMax = new Vector2(0f, 1f);
-            heartRect.pivot = new Vector2(0f, 1f);
-            heartRect.sizeDelta = new Vector2(PanelIconSize, PanelIconSize);
-            heartRect.anchoredPosition = Vector2.zero;
-            _healthIcon = heart;
-
-            float textLeft = heart.enabled ? PanelIconSize + (int)UiSpace.M : 0f;
-
-            TMP_Text label = UiFactory.Label("Label", host, "HEALTH", UiType.Label, UiColor.TextMuted);
-            RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
-            labelRect.anchorMin = new Vector2(0f, 1f);
-            labelRect.pivot = new Vector2(0f, 1f);
-            labelRect.sizeDelta = new Vector2(0f, topBand);
-            labelRect.offsetMin = new Vector2(textLeft, labelRect.offsetMin.y);
-            labelRect.anchoredPosition = new Vector2(textLeft, 0f);
-            label.alignment = TMPro.TextAlignmentOptions.Left;
-
-            // E10: LOW - the word beside HEALTH while under the 30 % mark (colour is never the only cue).
-            float labelWidth = Mathf.Ceil(label.GetPreferredValues("HEALTH").x);
-            _healthLowWord = UiFactory.Label("Low", host, "LOW", UiType.Label, UiColor.StateDanger);
-            RectTransform lowRect = _healthLowWord.rectTransform;
-            lowRect.anchorMin = new Vector2(0f, 1f);
-            lowRect.anchorMax = new Vector2(0f, 1f);
-            lowRect.pivot = new Vector2(0f, 1f);
-            lowRect.sizeDelta = new Vector2(Mathf.Ceil(_healthLowWord.GetPreferredValues("LOW").x) + 4f, topBand);
-            lowRect.anchoredPosition = new Vector2(textLeft + labelWidth + (int)UiSpace.S, 0f);
-            // AD 8a SHOULD-4: HEALTH's size and baseline (same band, same alignment), bold caps, 8 px after it.
-            _healthLowWord.fontSize = label.fontSize;
-            _healthLowWord.alignment = label.alignment;
-            _healthLowWord.fontStyle = FontStyles.Bold;
-            _healthLowWord.gameObject.SetActive(false);
-
-            _healthValue = UiFactory.Numeric(
-                "Value", host, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
-            RectTransform valueRect = (RectTransform)_healthValue.transform;
-            valueRect.anchorMin = new Vector2(1f, 1f);
-            valueRect.anchorMax = new Vector2(1f, 1f);
-            valueRect.pivot = new Vector2(1f, 1f);
-            valueRect.sizeDelta = new Vector2(160f, topBand);
-            valueRect.anchoredPosition = Vector2.zero;
-
-            _healthBar = UiFactory.Bar("Bar", host, UiColor.BarHealth, HealthBarHeight);
-            RectTransform barRect = (RectTransform)_healthBar.transform;
-            barRect.anchorMin = new Vector2(0f, 0f);
-            barRect.anchorMax = new Vector2(1f, 0f);
-            barRect.pivot = new Vector2(0f, 0f);
-            barRect.sizeDelta = new Vector2(0f, HealthBarHeight);
-            barRect.anchoredPosition = new Vector2(0f, stateBand + (int)UiSpace.XS);
-
-            // E10: ten segments, the low mark heavier - LowHealthFraction reads as a place on the bar, not a surprise.
-            int lowTick = Mathf.RoundToInt(UiTokens.LowHealthFraction * 10f);
-            for (int i = 1; i < 10; i++)
-            {
-                // AD 8a SHOULD-3: the low mark is the 5b strong tick - 2 px TextSecondary at 0.6 - apart from the 1 px ink ticks.
-                bool strong = i == lowTick;
-                Image tick = UiFactory.NewImage("Tick" + i, barRect, strong ? UiColor.TextSecondary : UiColor.SurfaceInset, UiSprites.Solid);
-                if (strong)
-                {
-                    Color c = tick.color;
-                    c.a = 0.6f;
-                    tick.color = c;
-                }
-
-                var tickRect = (RectTransform)tick.transform;
-                tickRect.anchorMin = new Vector2(i / 10f, 0f);
-                tickRect.anchorMax = new Vector2(i / 10f, 1f);
-                tickRect.pivot = new Vector2(0.5f, 0.5f);
-                tickRect.sizeDelta = new Vector2(i == lowTick ? 2f : 1f, 0f);
-                tickRect.anchoredPosition = Vector2.zero;
-            }
-
-            // E10 hierarchy (health > round > gold): the brighter frame; coral while low.
-            _healthFrame = FrameOf(block);
-            if (_healthFrame != null)
-            {
-                _healthFrame.color = UiTokens.Get(UiColor.TextPrimary);
-            }
-
-            _healthState = UiFactory.Label("State", host, string.Empty, UiType.Caption, UiColor.AccentMoss);
-            RectTransform stateRect = (RectTransform)_healthState.transform;
-            stateRect.anchorMin = new Vector2(0f, 0f);
-            stateRect.anchorMax = new Vector2(1f, 0f);
-            stateRect.pivot = new Vector2(0f, 0f);
-            stateRect.sizeDelta = new Vector2(0f, stateBand);
-            stateRect.anchoredPosition = Vector2.zero;
-        }
-
-        /// <summary>The A4 frame overlay FramedCard laid on a panel (null without the atlas).</summary>
-        private static Image FrameOf(RectTransform panel)
-        {
-            Transform frame = panel.Find("Frame");
-            return frame != null ? frame.GetComponent<Image>() : null;
-        }
-
-        private void BuildWeaponBlocks()
-        {
-            // ---- Special Weapon: radial timer, bottom centre -------------------
-            // Its own nested Canvas: the ring fill and the digits change many times a
-            // second while a Special is active, and a nested canvas confines that
-            // rebuild to a handful of vertices instead of the whole HUD (WP-007 hand-off).
-            RectTransform special = HudPanel(
-                "SpecialWeapon", new Vector2(0.5f, 0f), SpecialBlockWidth, SpecialBlockHeight);
-            special.gameObject.AddComponent<Canvas>();
-            _specialBlock = special.gameObject;
-            RectTransform specialHost = UiFactory.CardContent(special, UiSpace.L);
-            BuildSpecialContent(specialHost, false);
-            _specialBlock.SetActive(false);
-            BuildClassicBlock();
         }
 
         /// <summary>
@@ -780,116 +501,6 @@ namespace DD.Prototype.UI
             }
         }
 
-        private void BuildClassicBlock()
-        {
-            // ---- classic weapon, bottom right ---------------------------------
-            RectTransform classic = HudPanel(
-                "ClassicWeapon", new Vector2(1f, 0f), BlockWidth, ClassicBlockHeight + UiFactory.LineHeight(UiType.Caption));
-            RectTransform host = UiFactory.CardContent(classic, UiSpace.L);
-
-            // The CanvasGroup is on the CONTENT, not on the panel: REQ-057 dims the
-            // information, never the surface. Keeping the backing at full opacity is
-            // what makes the 5.55:1 measurement for dimmed text valid, and it keeps the
-            // SUSPENDED pill - which is parented to the panel, outside this group - at
-            // full strength while everything it is explaining fades behind it.
-            _classicGroup = UiFactory.Group(host.gameObject);
-
-            _weaponIcon = UiArt.IconImage("WeaponIcon", host, "Weapon.AssaultRifle", UiColor.TextPrimary, WeaponIconSize);
-            var iconRect = (RectTransform)_weaponIcon.transform;
-            iconRect.anchorMin = new Vector2(0f, 0.5f);
-            iconRect.anchorMax = new Vector2(0f, 0.5f);
-            iconRect.pivot = new Vector2(0.5f, 0.5f);
-            iconRect.sizeDelta = new Vector2(WeaponGlyphInRing, WeaponGlyphInRing);   // AD 8a SHOULD-1: 80 inside the Ø 100 ring
-            iconRect.anchoredPosition = new Vector2(ReloadRingSize * 0.5f, 0f);
-            float textLeft = ReloadRingSize + (int)UiSpace.M;
-
-            RectTransform textColumn = UiFactory.NewRect("Text", host);
-            UiFactory.Fill(textColumn);
-            textColumn.offsetMin = new Vector2(textLeft, 0f);
-
-            var stack = new UiStack(textColumn);
-
-            _classicName = UiFactory.Label("Name", textColumn, "—", UiType.Label, UiColor.TextMuted);
-            RectTransform nameRect = stack.Add(
-                (RectTransform)_classicName.transform, UiFactory.LineHeight(UiType.Label));
-
-            _classicBuild = UiFactory.Label("Build", textColumn, string.Empty, UiType.Caption, UiColor.TextSecondary);
-            stack.Add((RectTransform)_classicBuild.transform, UiFactory.LineHeight(UiType.Caption));
-
-            // WP-022C: roster type / shot model ("SHOTGUN · PELLET x8"), set once per weapon
-            // change - the pellet contract made visible. WP-068 slice 0 (D1): its own row.
-            // It used to share the build row, right-anchored at the build row's
-            // anchoredPosition - which on a stretched rect is the centre offset (-79 px),
-            // so "RIFLE · HITSCAN" slid left over "P1 / FR1 / RD1" (baseline bot-hud-r4).
-            _shotModel = UiFactory.Label("ShotModel", textColumn, string.Empty, UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)_shotModel.transform, UiFactory.LineHeight(UiType.Caption));
-
-            stack.Gap(UiSpace.XS);
-
-            // E11: "24" NumericXL over "/ 30" - the value in a box as wide as the magazine, so digits never shift the slash.
-            _ammoCounter = UiCounter.Create("Ammo", textColumn, UiCounterStyle.Fraction, 0, UiType.NumericXL, UiColor.TextPrimary, 0);
-            stack.Add((RectTransform)_ammoCounter.transform, UiFactory.LineHeight(UiType.NumericXL));
-            _ammoValue = _ammoCounter.ValueText;
-
-            stack.Gap(UiSpace.XS);
-
-            // E11: the ladder - one tick per round (pellet pips for a pellet weapon), bright up to the rounds left; the
-            // number alone above LadderMaxRounds. Two tiled images, resized on a change - no per-frame work.
-            RectTransform ladder = UiFactory.NewRect("Ladder", textColumn);
-            stack.Add(ladder, LadderHeight);
-            _ladderBack = LadderImage("Back", ladder, UiColor.TextMuted);
-            _ladderFill = LadderImage("Fill", ladder, UiColor.TextPrimary);
-            _ladderWidth = BlockWidth - (int)UiSpace.L * 2f - textLeft;
-
-            stack.Gap(UiSpace.XS);
-
-            _reloadBar = UiFactory.Bar("ReloadBar", textColumn, UiColor.BarReload, 8f);
-            stack.Add((RectTransform)_reloadBar.transform, 8f);
-
-            stack.Gap(UiSpace.XS);
-
-            _reloadCaption = UiFactory.Label(
-                "ReloadCaption", textColumn, string.Empty, UiType.Caption, UiColor.BarReload);
-            // AD 8a MUST-2: the caption band holds the word and the cap / diamond at any TextScale (≥ 26 px).
-            float captionBand = Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)), ReloadPromptSize + 4f);
-            RectTransform captionRow = stack.Add((RectTransform)_reloadCaption.transform, captionBand);
-            _reloadCaption.fontStyle = FontStyles.Bold;
-
-            // E11 EMPTY: the reload control named by the live binding (R / pad West, rebind-aware) after the word.
-            _reloadPrompt = UiInputGlyphs.Build("ReloadPrompt", captionRow, UiPromptAction.Reload, UiColor.TextPrimary, UiColor.SurfaceInset, ReloadPromptSize);
-            RectTransform promptRect = (RectTransform)_reloadPrompt.transform;
-            promptRect.anchorMin = new Vector2(0f, 0.5f);
-            promptRect.anchorMax = new Vector2(0f, 0.5f);
-            promptRect.pivot = new Vector2(0f, 0.5f);
-            promptRect.anchoredPosition = new Vector2(Mathf.Ceil(_reloadCaption.GetPreferredValues("EMPTY").x) + (int)UiSpace.S, 0f);
-            _reloadPrompt.gameObject.SetActive(false);
-
-            // E11: the reload ring (A4 Ring.Progress64) behind the weapon glyph, Focus400 (never gold), Data.
-            // AD 8a SHOULD-1: the ring encloses the glyph - a cream ghost at rest, Focus400 while reloading (Data, Linear).
-            _reloadRing = UiRing.Create("ReloadRing", host, ReloadRingSize, UiColor.BarReload, 0.12f, UiSprites.RingHairline);
-            RectTransform ringRect = (RectTransform)_reloadRing.transform;
-            ringRect.anchorMin = new Vector2(0f, 0.5f);
-            ringRect.anchorMax = new Vector2(0f, 0.5f);
-            ringRect.pivot = new Vector2(0.5f, 0.5f);
-            ringRect.anchoredPosition = new Vector2(ReloadRingSize * 0.5f, 0f);
-
-            // AD 8a MUST-2: the panel grows from its content - the stack's bands (name · build · type · fraction · ladder ·
-            // bar · caption) or the ring, whichever is taller, plus the inner padding; the caption row never meets the frame.
-            float content = Mathf.Max(stack.Cursor + (int)UiSpace.M, ReloadRingSize);
-            classic.sizeDelta = new Vector2(BlockWidth, content + (int)UiSpace.L * 2f);
-
-            // REQ-057 pill. Sits over the block, never instead of it.
-            TMP_Text chip = UiFactory.Chip(
-                "Suspended", classic, "SUSPENDED", UiColor.StateWarning, UiColor.SurfaceInset, 148f, 26f);
-            _suspendedChip = chip.transform.parent.gameObject;
-            var chipRect = (RectTransform)_suspendedChip.transform;
-            chipRect.anchorMin = new Vector2(1f, 1f);
-            chipRect.anchorMax = new Vector2(1f, 1f);
-            chipRect.pivot = new Vector2(1f, 1f);
-            chipRect.anchoredPosition = new Vector2(-(int)UiSpace.L, -(int)UiSpace.L);
-            _suspendedChip.SetActive(false);
-        }
-
         /// <summary>
         /// Directional damage edges. Built here and not installed by the player module,
         /// because the HUD owns the canvas and the draw order, and the draw order is the
@@ -975,6 +586,9 @@ namespace DD.Prototype.UI
         /// <summary>Capture seam (8-R): the SURROUNDED and BEHIND YOU chips shown as if the director raised them.</summary>
         public static bool CaptureThreats;
 
+        /// <summary>Capture seam (8-R, AD SHOULD-5): hold the back planes at this parallax drift (canvas px) - the depth pair.</summary>
+        public static Vector2? CaptureParallax;
+
         /// <summary>Capture seam: a hit from <paramref name="towardsAttackerWorld"/> as the damage arc shows it.</summary>
         public void CaptureHit(Vector3 towardsAttackerWorld)
         {
@@ -991,6 +605,7 @@ namespace DD.Prototype.UI
             CaptureWeapon = null;
             CaptureSpecialActive = false;
             CaptureThreats = false;
+            CaptureParallax = null;
         }
 
         /// <summary>E17: the player-bound arc faces the attacker (HitDirection runs from the attacker towards the player).</summary>
@@ -1059,17 +674,8 @@ namespace DD.Prototype.UI
 
             _warningVignette.SetActive(false);
 
-            // Final-seconds banner, directly under the round block.
-            TMP_Text warning = UiFactory.Chip(
-                "FinalSeconds", ScreenRect, "SPECIAL WEAPON ENDING",
-                UiColor.StateDanger, UiColor.SurfaceInset, 420f, 44f);
-
-            _warningBanner = warning.transform.parent.gameObject;
-            var warningRect = (RectTransform)_warningBanner.transform;
-            warningRect.anchorMin = new Vector2(0.5f, 1f);
-            warningRect.anchorMax = new Vector2(0.5f, 1f);
-            warningRect.pivot = new Vector2(0.5f, 1f);
-            warningRect.anchoredPosition = new Vector2(0f, -((int)UiTokens.SafeInset + RoundBlockHeight + (int)UiSpace.M));
+            // Final-seconds line, under the threat row: the words in coral over a brush, no chip (8-R).
+            _warningBanner = BuildInkWarning(ScreenRect, WarningTop);
             _warningBanner.SetActive(false);
 
             // Round / phase banner, just below the warning slot so the two never collide.
@@ -1080,7 +686,8 @@ namespace DD.Prototype.UI
             bannerRect.anchorMax = new Vector2(0.5f, 1f);
             bannerRect.pivot = new Vector2(0.5f, 1f);
             bannerRect.sizeDelta = new Vector2(900f, 120f);
-            bannerRect.anchoredPosition = new Vector2(0f, -((int)UiTokens.SafeInset + RoundBlockHeight + (int)UiSpace.M + 48f));
+            bannerRect.anchoredPosition = new Vector2(0f, -BannerTop);
+            UiHudInk.Apply(_bannerText);   // 8-R: no panel under the words - they carry their own ink
 
             _bannerGroup = UiFactory.Group(_bannerText.gameObject);
             _bannerGroup.alpha = 0f;
@@ -1099,7 +706,7 @@ namespace DD.Prototype.UI
             RectTransform statusHost = UiFactory.NewRect("EnemyStatus", layer);
             UiFactory.Fill(statusHost);
             _enemyStatus = statusHost.gameObject.AddComponent<UiEnemyStatusMarkers>();
-            _enemyStatus.Configure(ScreenRect, Concept != HudConcept.Panels);   // 8-R: boxless stamps in the concepts
+            _enemyStatus.Configure(ScreenRect);
 
             _marker = UiFactory.NewRect("SpecialWeaponMarker", layer);
             _marker.sizeDelta = new Vector2(56f, 56f);
@@ -1143,60 +750,6 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// A HUD panel: near-opaque backing docked to a screen edge or corner, wearing the
-        /// AP-012 ink frame when the atlas is present. The backing is opaque on purpose -
-        /// a translucent HUD cannot guarantee a text contrast ratio, because the ratio
-        /// would depend on what the camera happens to be pointing at.
-        /// </summary>
-        private RectTransform HudPanel(string name, Vector2 anchor, float width, float height, float stackOffset = 0f)
-        {
-            RectTransform panel = UiFactory.FramedCard(
-                name, ScreenRect, UiColor.BorderHairline, UiColor.HudInk, UiFrame.HudPanel, UiColor.TextSecondary);
-            UiFactory.Corner(panel, anchor, width, height);
-            // WP-068 8a: the panel is HudInk over the world, nothing else - the card's border image used to sit opaque under
-            // the translucent fill (the world never showed); the A4 frame draws the edge, the fill covers the whole rect.
-            if (UiArt.HasFrame(UiFrame.HudPanel))
-            {
-                Image under = panel.GetComponent<Image>();
-                if (under != null)
-                {
-                    Color clear = under.color;
-                    clear.a = 0f;
-                    under.color = clear;
-                }
-
-                Transform fill = panel.Find("Fill");
-                if (fill != null)
-                {
-                    UiFactory.Fill((RectTransform)fill);
-                    // AD 8a SHOULD-8: the translucency lives in the rim - a 12 px band at 0.86 over the world, the text zone 0.98.
-                    Image ink = fill.GetComponent<Image>();
-                    ink.sprite = UiSprites.PanelBanded;
-                    ink.type = Image.Type.Sliced;
-                    ink.pixelsPerUnitMultiplier = 1f;
-                }
-            }
-
-            if (stackOffset > 0f)
-            {
-                Vector2 position = panel.anchoredPosition;
-                position.y += Mathf.Approximately(anchor.y, 0f) ? stackOffset : -stackOffset;
-                panel.anchoredPosition = position;
-            }
-
-            _panels.Add(panel);
-            return panel;
-        }
-
-        /// <summary>
-        /// The HUD panels this screen built, for the safe-zone test. Nothing else reads it.
-        /// </summary>
-        public System.Collections.Generic.IReadOnlyList<RectTransform> Panels
-        {
-            get { return _panels; }
-        }
-
-        /// <summary>
         /// The play area no HUD panel may cover (REQ-104/105, DEC-077): the centre 62%
         /// of the width and the band from 25% to 80% of the height - the capsule, the
         /// enemies closing on it and the aim plane at the gameplay camera distance. The
@@ -1207,12 +760,11 @@ namespace DD.Prototype.UI
 
         // ============================================================ threat chips
         //
-        // WP-068 slice 8b · E13 threat chips v3: the kit's State chip (Hud size, its own rim - no uGUI Outline), three fixed
-        // slots sharing one width (SURROUNDED · BEHIND YOU · ELITE / ULTRA NEARBY), shown ≥ 800 ms and gone only after
-        // 300 ms without the threat (no flicker), entering y −6 → 0 with α (Fast, Settle), leaving by α (Fast, Exit).
+        // WP-068 slice 8b · E13 threat chips v3, boxless since 8-R: the outer-only glyph and the word in their own HUD ink
+        // over a brush underline in the state colour (RunHudScreen.Ink.cs). Three fixed slots sharing one width (SURROUNDED ·
+        // BEHIND YOU · ELITE / ULTRA NEARBY), shown ≥ 800 ms and gone only after 300 ms without the threat (no flicker),
+        // entering y −6 → 0 with α (Fast, Settle), leaving by α (Fast, Exit).
 
-        private const float ThreatChipWidth = 208f;
-        private const float ThreatChipHeight = 40f;
         private const float ThreatMinShownSeconds = 0.8f;
         private const float ThreatQuietSeconds = 0.3f;
         private const float ThreatEntryDrop = 6f;
@@ -1231,60 +783,6 @@ namespace DD.Prototype.UI
             public float ShownAt;
             public float WantAt;
             public float HideAt = -1f;
-        }
-
-        private void BuildThreatChips()
-        {
-            RectTransform row = UiFactory.NewRect("ThreatRow", ScreenRect);
-            row.anchorMin = new Vector2(0.5f, 1f);
-            row.anchorMax = new Vector2(0.5f, 1f);
-            row.pivot = new Vector2(0.5f, 1f);
-            row.anchoredPosition = new Vector2(0f, -((int)UiTokens.SafeInset + RoundBlockHeight + (int)UiSpace.XS));
-            _threatRow = row.gameObject;
-
-            _threatSlots[0] = ThreatChip(row, "SURROUNDED", "Threat.Surrounded", UiChipState.Danger);
-            _threatSlots[1] = ThreatChip(row, "BEHIND YOU", "Threat.BehindOuter", UiChipState.Danger);
-            _threatSlots[2] = ThreatChip(row, "ELITE NEARBY", "Threat.EliteOuter", UiChipState.Warning);
-
-            // One width for the three slots - the longest label any of them can show, in the chip's own style - so a chip
-            // never shifts when another appears or the strong chip turns ULTRA.
-            float width = ThreatChipWidth;
-            TMP_Text probe = _threatSlots[2].Label;
-            float left = probe.rectTransform.offsetMin.x;
-            float right = -probe.rectTransform.offsetMax.x;
-            for (int i = 0; i < ThreatLabels.Length; i++)
-            {
-                width = Mathf.Max(width, Mathf.Ceil(probe.GetPreferredValues(ThreatLabels[i]).x) + left + right);
-            }
-
-            float height = _threatSlots[0].Rect.sizeDelta.y;
-            for (int i = 0; i < _threatSlots.Length; i++)
-            {
-                ThreatSlot slot = _threatSlots[i];
-                slot.Rect.sizeDelta = new Vector2(width, height);
-                slot.Home = new Vector2(i * (width + (int)UiSpace.S), 0f);
-                slot.Rect.anchoredPosition = slot.Home;
-                slot.Rect.gameObject.SetActive(false);
-            }
-
-            row.sizeDelta = new Vector2(width * 3f + (int)UiSpace.S * 2, height);
-        }
-
-        private static ThreatSlot ThreatChip(RectTransform row, string text, string glyph, UiChipState state)
-        {
-            TMP_Text label = UiChips.Create("Threat." + text, row, UiChipKind.State, text, UiChipSize.Hud, state, glyph);
-            var chip = (RectTransform)label.transform.parent;
-            chip.anchorMin = new Vector2(0f, 0.5f);
-            chip.anchorMax = new Vector2(0f, 0.5f);
-            chip.pivot = new Vector2(0f, 0.5f);
-            Transform icon = chip.Find("Glyph");
-            return new ThreatSlot
-            {
-                Rect = chip,
-                Group = UiFactory.Group(chip.gameObject),
-                Label = label,
-                Glyph = icon != null ? icon.GetComponent<Image>() : null
-            };
         }
 
         private void UpdateThreat()
@@ -1405,13 +903,14 @@ namespace DD.Prototype.UI
             UpdateSpecialWeapon();
             UpdateBanner();
             UpdateThreat();
-            UpdateConceptPosture();   // 8-R: no-op for the panels
+            UpdateInkPosture();   // 8-R: calm / danger
         }
 
         private void LateUpdate()
         {
             UpdateMarker();
             UpdateReticle();
+            UpdateInkParallax();   // 8-R: the back planes drift against the camera
         }
 
         /// <summary>
@@ -1477,31 +976,13 @@ namespace DD.Prototype.UI
             }
 
             _playerArcs.Place(playerLocal);
-            if (_enso != null)
-            {
-                // 8-R concept B: the ensō is painted on the ground, so it centres on the feet, not the chest.
-                Vector2 feet = OffScreen;
-                if (show)
-                {
-                    Vector3 groundViewport = camera.WorldToViewportPoint(rig.transform.position);
-                    if (groundViewport.z >= 0f)
-                    {
-                        Vector2 size = ScreenRect.rect.size;
-                        feet = new Vector2((groundViewport.x - 0.5f) * size.x, (groundViewport.y - 0.5f) * size.y);
-                    }
-                }
-
-                _enso.Place(feet);
-            }
 
             if (show)
             {
                 // E15: the spread the weapon really has, projected at the aim distance (from the chest, where the shot leaves).
-                ClassicWeaponHudState weapon = CaptureWeapon ?? WeaponEvents.Classic;
                 _reticle.Tick(camera, rig.Aim.AimWorldPoint, rig.transform.position + Vector3.up * 1.2f,
-                    ScreenRect.rect.size, weapon,
+                    ScreenRect.rect.size, CaptureWeapon ?? WeaponEvents.Classic,
                     CaptureSpecialActive || WeaponEvents.Special.Phase == SpecialWeaponPhase.Active);
-                UpdateAmmoArc(weapon);   // 8-R concept B
             }
         }
 
@@ -1532,25 +1013,6 @@ namespace DD.Prototype.UI
 
             UiArt.SetGlyph(_weaponIcon, sprite);   // WP-068 G1: keeps the SDF draw path on a swap
             _weaponIcon.enabled = sprite != null;
-
-            if (_shotModel != null)
-            {
-                string model = string.Empty;
-                if (def != null)
-                {
-                    PrototypeConfig config = PrototypeConfig.Active;
-                    ClassicWeaponSettings settings = config != null ? def.Settings(config) : null;
-                    model = def.ShotModel == WeaponShotModel.Pellet
-                        ? (settings != null && settings.PelletCount > 1 ? "PELLET x" + settings.PelletCount : "PELLET")
-                        : "HITSCAN";
-                    model = def.TypeClass.ToString().ToUpperInvariant() + " · " + model;
-                }
-
-                if (_shotModel.text != model)
-                {
-                    _shotModel.text = model;
-                }
-            }
         }
 
         private void UpdateRun()
@@ -1687,18 +1149,9 @@ namespace DD.Prototype.UI
                     UiEvents.Raise(_lowHealthShown ? UiEvent.HudLowHealthEntered : UiEvent.HudLowHealthLeft);
                     // E10: LOW word + coral frame + the cracked heart stamps once; no pulse.
                     _healthLowWord.gameObject.SetActive(_lowHealthShown);
-                    if (_healthFrame != null)
-                    {
-                        _healthFrame.color = UiTokens.Get(_lowHealthShown ? UiColor.BarHealthLow : UiColor.TextPrimary);
-                    }
                 }
 
                 _healthBar.SetValue(_model.HealthNormalized);
-                if (_enso != null)
-                {
-                    _enso.Set(_model.HealthNormalized, _model.HealthLow);   // 8-R concept B: the fraction at the figure
-                }
-
                 _healthBar.SetColor(_model.HealthLow ? UiColor.BarHealthLow : UiColor.BarHealth);
                 _healthValue.color = UiTokens.Get(_model.HealthLow ? UiColor.StateDanger : UiColor.TextPrimary);
                 if (_healthIcon != null)
@@ -1784,13 +1237,13 @@ namespace DD.Prototype.UI
         {
             if ((changed & RunHudField.WeaponName) != 0)
             {
-                _classicName.text = _model.WeaponName;
                 ApplyWeaponIcon();
             }
 
-            if ((changed & RunHudField.Build) != 0)
+            if ((changed & (RunHudField.WeaponName | RunHudField.Build)) != 0)
             {
-                _classicBuild.text = _model.BuildText;
+                // 8-R (AD SHOULD-A1): the weapon and its build on one calm-only line; built on a change, never per frame.
+                _classicName.text = _model.WeaponName + "  ·  " + _model.BuildText;
             }
 
             if ((changed & RunHudField.Ammo) != 0)
@@ -1814,6 +1267,9 @@ namespace DD.Prototype.UI
                 UiColor mark = low ? UiColor.StateWarning : UiColor.BarReload;
                 _reloadRing.SetColour(mark);
                 _reloadBar.SetColor(mark);
+                // AD 8-R SHOULD-1: at LOW the ring's track and the ladder's rounds say it too (the fill is only the reload).
+                _reloadRing.SetGhost(low ? UiColor.StateWarning : UiColor.TextPrimary, low ? LowRingAlpha : 0.25f);
+                _ladderFill.color = UiTokens.Get(low ? UiColor.StateWarning : UiColor.TextPrimary);
                 if (reload != RunHudReloadState.Reloading)
                 {
                     _reloadRing.Set(0f); // the ghost stays, the fill is the reload
@@ -1824,7 +1280,7 @@ namespace DD.Prototype.UI
                     case RunHudReloadState.Reloading:
                         _reloadBar.SetValue(_model.ReloadProgress01, true);
                         _reloadRing.Set(_model.ReloadProgress01);
-                        _reloadCaption.text = "RELOADING";
+                        _reloadCaption.text = string.Empty;   // AD 8-R SHOULD-2: the Focus400 ring fill says it
                         _reloadCaption.color = UiTokens.Get(mark);
                         break;
 

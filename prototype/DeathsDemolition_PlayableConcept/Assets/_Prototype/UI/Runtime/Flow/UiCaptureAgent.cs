@@ -231,8 +231,8 @@ namespace DD.Prototype.UI
             System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
             File.AppendAllText(Path.Combine(folder, "coverage.jsonl"),
                 "{\"frame\": \"" + name + "\", \"coverage\": " + result[1].ToString("0.00", inv) + ", \"coverageAsSeen\": " + result[0].ToString("0.00", inv) +
-                ", \"screen\": \"" + dark.width + "x" + dark.height + "\", \"concept\": \"" + RunHudScreen.ConceptName + "\"}\n");
-            Debug.Log("[UiCapture] coverage " + name + " " + result[1].ToString("0.00", inv) + " % (as seen " + result[0].ToString("0.00", inv) + " %) · " + RunHudScreen.ConceptName);
+                ", \"screen\": \"" + dark.width + "x" + dark.height + "\"}\n");
+            Debug.Log("[UiCapture] coverage " + name + " " + result[1].ToString("0.00", inv) + " % (as seen " + result[0].ToString("0.00", inv) + " %)");
             UnityEngine.Object.Destroy(dark);
         }
 
@@ -1030,6 +1030,16 @@ namespace DD.Prototype.UI
                     RunHudScreen.CaptureThreats = false;
                     RunHudScreen.CaptureRearDirection = null;
                     yield return new WaitForSecondsRealtime(1.2f);   // the chips' 800 / 300 ms hysteresis
+
+                    // 8-R (AD SHOULD-5): the depth pair - the forms' back planes at the far left / right of their drift,
+                    // the numbers where they are.
+                    RunHudScreen.CaptureParallax = new Vector2(-3f, 1f);
+                    yield return new WaitForSecondsRealtime(0.15f);
+                    yield return Frame(folder, "hud-parallax-left");
+                    RunHudScreen.CaptureParallax = new Vector2(3f, -1f);
+                    yield return new WaitForSecondsRealtime(0.15f);
+                    yield return Frame(folder, "hud-parallax-right");
+                    RunHudScreen.CaptureParallax = null;
                 }
 
                 if (GoldService.Instance != null && rig != null)

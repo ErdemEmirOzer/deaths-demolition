@@ -628,7 +628,9 @@ namespace DD.Prototype.Tests.PlayMode
 
             int max = Mathf.RoundToInt(rig.Health.Max);
             Assert.AreEqual(max + " / " + max, vm.HealthText, "sağlık snapshot'ı");
-            Assert.AreEqual(vm.HealthText, HudMetni(hud, "Health", "Value").text);
+            // WP-068 8-R: the ink HUD sets the value alone (NumericL) and "/ max" beside it (calm only) - the same numbers.
+            Assert.AreEqual(vm.HealthCurrent.ToString(), HudMetni(hud, "Health", "Value").text);
+            Assert.AreEqual("/ " + vm.HealthMax, HudMetni(hud, "Health", "Max").text);
 
             Assert.AreEqual(silah.Classic.Ammo + " / " + silah.Classic.MagazineSize, vm.AmmoText, "şarjör snapshot'ı");
             // WP-068 E11: "30" NumericXL over "/ 30" (Fraction) - the same numbers as the snapshot.
@@ -666,7 +668,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.IsTrue(vm.HealthLow, "%25 can düşük eşiğin altında");
             StringAssert.StartsWith(Mathf.CeilToInt(rig.Health.Current) + " /", vm.HealthText);
-            Assert.AreEqual(vm.HealthText, HudMetni(hud, "Health", "Value").text);
+            Assert.AreEqual(vm.HealthCurrent.ToString(), HudMetni(hud, "Health", "Value").text);
 
             // Sessiz kare allocation ölçümü: yönetilen yığın sayacı (GC.GetAllocatedBytesForCurrentThread)
             // 120 kare HUD açık, 120 kare HUD kapalı (Update durur); fark = HUD'ın kare başı maliyeti.

@@ -48,7 +48,7 @@ namespace DD.Prototype.UI
         /// - no box.
         /// A status is not a threat, so there is no state colour; shape and word tell NET from DAZED.
         /// </param>
-        public void Configure(RectTransform canvasRect, bool ink = false)
+        public void Configure(RectTransform canvasRect, bool ink = true)
         {
             _canvas = canvasRect;
             _ink = ink;

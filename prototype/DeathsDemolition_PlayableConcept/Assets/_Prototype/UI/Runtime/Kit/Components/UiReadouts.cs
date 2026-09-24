@@ -201,6 +201,7 @@ namespace DD.Prototype.UI
     public sealed class UiRing : MonoBehaviour
     {
         private Image _fill;
+        private Image _ghost;
         private float _shown = -1f;
 
         public float Value
@@ -222,6 +223,7 @@ namespace DD.Prototype.UI
             ghost.color = g;
 
             var ring = root.gameObject.AddComponent<UiRing>();
+            ring._ghost = ghost;
             ring._fill = UiFactory.NewImage("Fill", root, colour, art != null ? art : UiSprites.Ring);
             UiFactory.Fill((RectTransform)ring._fill.transform);
             ring._fill.type = Image.Type.Filled;
@@ -230,6 +232,22 @@ namespace DD.Prototype.UI
             ring._fill.fillClockwise = true;
             ring._fill.fillAmount = 0f;
             return ring;
+        }
+
+        /// <summary>WP-068 8-R: recolour the track (the HUD ring's LOW state, AD SHOULD-1).</summary>
+        public void SetGhost(UiColor colour, float alpha)
+        {
+            if (_ghost == null)
+            {
+                return;
+            }
+
+            Color c = UiTokens.Get(colour);
+            c.a = alpha;
+            if (_ghost.color != c)
+            {
+                _ghost.color = c;
+            }
         }
 
         /// <summary>Swap the fill colour (the HUD's LOW reload ring turns StateWarning, E11).</summary>

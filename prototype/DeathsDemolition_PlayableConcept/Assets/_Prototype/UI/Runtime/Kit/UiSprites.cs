@@ -197,26 +197,6 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// WP-068 8-R concept B · the ensō: a 300° arc at 12 o'clock, 6 px at r 100 (drawn at Ø 202), 3° feathered ends.
-        /// Rotated 180° it opens at the top; <see cref="EnsoRim300"/> is its 1 px ink rim (8 px at r 101, drawn at Ø 204).
-        /// </summary>
-        public static Sprite EnsoArc300
-        {
-            get { return GetOrCreate("enso300", () => CreateArc(424, 300f, 6f / 100f, 3f)); }
-        }
-
-        public static Sprite EnsoRim300
-        {
-            get { return GetOrCreate("ensoRim300", () => CreateArc(424, 302f, 8f / 101f, 3f)); }
-        }
-
-        /// <summary>WP-068 8-R concept B · the reticle's ammo arc: 270° at 12 o'clock, 2 px at r 36 (Ø 72); rotated 180° it opens at the top.</summary>
-        public static Sprite ReticleArc270
-        {
-            get { return GetOrCreate("reticleArc270", () => CreateArc(152, 270f, 2f / 36f, 2f)); }
-        }
-
-        /// <summary>
         /// WP-068 slice 8b (E17 player arc, AD 8b MUST-2, direction "Arc.Soft") · a brush wedge at 12 o'clock: a soft band
         /// between 0.75 and 1.0 of the radius (48–64 px at r 64), fullest at its middle and tapering to its ends.
         /// </summary>
