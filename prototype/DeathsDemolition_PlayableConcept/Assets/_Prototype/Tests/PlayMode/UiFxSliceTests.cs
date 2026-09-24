@@ -260,42 +260,55 @@ namespace DD.Prototype.Tests.PlayMode
             for (int i = 0; i < 5; i++) yield return null;   // the one vertex rebuild per Play happens here
 
             UnityEngine.Profiling.Profiler.enabled = true;
-            using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
+            // WP-073 (C-00, deterministic): a per-frame Fx cost would show on EVERY frame, scene noise only on some — so the
+            // quietest Fx frame is compared with the quietest plain frame (min, not median: one run's 3.3 MB spike moved the
+            // medians). Uncapped (under the bootstrapper's 60 fps cap LastValue lags a frame) and a max-sampled control.
+            int frameRateWas = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
+            try
             {
-                // Positive control: the recorder must see a small managed allocation.
-                var bait = new object[300];
-                for (int i = 0; i < bait.Length; i++) bait[i] = new byte[80];
-                yield return null;
-                long control = bytes.LastValue;
-                System.GC.KeepAlive(bait);
+                using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
+                {
+                    yield return null;
+                    yield return null;
+                    var bait = new object[300];
+                    for (int i = 0; i < bait.Length; i++) bait[i] = new byte[80];
+                    long control = 0;
+                    for (int i = 0; i < 3; i++) { yield return null; control = System.Math.Max(control, bytes.LastValue); }
+                    System.GC.KeepAlive(bait);
 
-                // Baseline: the SAME canvas drawn as plain uGUI (Fx effects + sparks off) — whatever the runner, URP and
-                // canvas rendering allocate per frame. Then the Fx frames; the median must not exceed the baseline's.
-                foreach (UiFx f in fx) { f.enabled = false; f.GetComponent<Graphic>().material = null; }
-                sparks.enabled = false;
-                for (int i = 0; i < 5; i++) yield return null;
-                var plain = new List<long>(40);
-                for (int i = 0; i < 40; i++) { yield return null; plain.Add(bytes.LastValue); }
-                long plainMedian = Median(plain, out long plainWorst);
+                    // Baseline: the SAME canvas drawn as plain uGUI (Fx effects + sparks off), then the Fx frames.
+                    foreach (UiFx f in fx) { f.enabled = false; f.GetComponent<Graphic>().material = null; }
+                    sparks.enabled = false;
+                    for (int i = 0; i < 5; i++) yield return null;
+                    var plain = new List<long>(40);
+                    for (int i = 0; i < 40; i++) { yield return null; plain.Add(bytes.LastValue); }
+                    long plainMin = Min(plain, out long plainWorst);
 
-                foreach (UiFx f in fx) f.enabled = true;
-                sparks.enabled = true;
-                for (int i = 0; i < 5; i++) yield return null;   // one re-batch after the switch
-                var fxFrames = new List<long>(60);
-                for (int i = 0; i < 60; i++) { yield return null; fxFrames.Add(bytes.LastValue); }
-                long fxMedian = Median(fxFrames, out long fxWorst);
+                    foreach (UiFx f in fx) f.enabled = true;
+                    sparks.enabled = true;
+                    for (int i = 0; i < 5; i++) yield return null;   // one re-batch after the switch
+                    var fxFrames = new List<long>(40);
+                    for (int i = 0; i < 40; i++) { yield return null; fxFrames.Add(bytes.LastValue); }
+                    long fxMin = Min(fxFrames, out long fxWorst);
 
-                Debug.Log("[DD-TEST] wp068.alloc control=" + control + " plain median/worst=" + plainMedian + "/" + plainWorst + " fx median/worst=" + fxMedian + "/" + fxWorst);
-                Assert.Greater(control, 0, "pozitif kontrol: kayıtçı ayırmayı görmüyor");
-                Assert.LessOrEqual(fxMedian, plainMedian, "animasyon GPU'da: Fx düz uGUI'ye göre kare başına 0 B ek ayırma");
+                    Debug.Log("[DD-TEST] wp068.alloc control=" + control + " plain min/worst=" + plainMin + "/" + plainWorst + " fx min/worst=" + fxMin + "/" + fxWorst);
+                    Assert.Greater(control, 300 * 80, "pozitif kontrol: kayıtçı ayırmayı görmüyor (" + control + ")");
+                    Assert.LessOrEqual(fxMin, plainMin, "animasyon GPU'da: Fx kare başına düz uGUI'den fazla ayırmamalı (en sessiz kareler)");
+                }
+            }
+            finally
+            {
+                Application.targetFrameRate = frameRateWas;
             }
         }
 
-        private static long Median(List<long> samples, out long worst)
+        private static long Min(List<long> values, out long worst)
         {
-            samples.Sort();
-            worst = samples[samples.Count - 1];
-            return samples[samples.Count / 2];
+            long min = long.MaxValue;
+            worst = 0;
+            foreach (long v in values) { if (v < min) min = v; if (v > worst) worst = v; }
+            return values.Count > 0 ? min : 0;
         }
 
         // ------------------------------------------------------------------ 4 · frozen frame
@@ -435,7 +448,7 @@ namespace DD.Prototype.Tests.PlayMode
             _temp.Add(marker);
             marker.transform.position = new Vector3(0f, 2.9f, -2f);
             marker.transform.localScale = new Vector3(8f, 1.2f, 1f);
-            var red = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { color = Color.red };
+            var red = new Material(DD.Prototype.Rendering.PrototypeShaders.Unlit) { color = Color.red };
             red.SetColor("_BaseColor", Color.red);
             marker.GetComponent<Renderer>().sharedMaterial = red;
             _temp.Add(red);

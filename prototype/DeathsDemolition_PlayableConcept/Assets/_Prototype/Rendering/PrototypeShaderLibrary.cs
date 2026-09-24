@@ -64,6 +64,22 @@ namespace DD.Prototype.Rendering
         private Shader _vfxHeatHaze;
 
         [SerializeField]
+        [Tooltip("DD/UI/Fx - the UI effect material (WP-068 slice 4).")]
+        private Shader _uiFx;
+
+        [SerializeField]
+        [Tooltip("Hidden/DD/UI/FrozenFrame - the paused-world blur + ink wash (WP-068 slice 4).")]
+        private Shader _uiFrozenFrame;
+
+        [SerializeField]
+        [Tooltip("DD/UI/MaskTint - the UI backdrop mask tint (WP-068).")]
+        private Shader _uiMaskTint;
+
+        [SerializeField]
+        [Tooltip("DD/VFX Ribbon - tracer / glint ribbons (WP-073).")]
+        private Shader _vfxRibbon;
+
+        [SerializeField]
         [Tooltip("Materials that exist only to keep runtime keyword variants out of the stripper.")]
         private Material[] _variantPins = new Material[0];
 
@@ -88,6 +104,18 @@ namespace DD.Prototype.Rendering
         /// <summary>Barrel heat distortion / shimmer card.</summary>
         public Shader VfxHeatHaze => _vfxHeatHaze;
 
+        /// <summary>DD/UI/Fx: the UI effect material (WP-068 slice 4).</summary>
+        public Shader UiFx => _uiFx;
+
+        /// <summary>Hidden/DD/UI/FrozenFrame: the paused-world blur + ink wash (WP-068 slice 4).</summary>
+        public Shader UiFrozenFrame => _uiFrozenFrame;
+
+        /// <summary>DD/UI/MaskTint: the UI backdrop mask tint (WP-068).</summary>
+        public Shader UiMaskTint => _uiMaskTint;
+
+        /// <summary>DD/VFX Ribbon: tracer / glint ribbons (WP-073).</summary>
+        public Shader VfxRibbon => _vfxRibbon;
+
         /// <summary>Read-only view, for the build check and the tests.</summary>
         public Material[] VariantPins => _variantPins;
 
@@ -106,6 +134,10 @@ namespace DD.Prototype.Rendering
             if (_skybox == null) { eksik.Add("Skybox"); }
             if (_vfxFlipbook == null) { eksik.Add("VfxFlipbook"); }
             if (_vfxHeatHaze == null) { eksik.Add("VfxHeatHaze"); }
+            if (_uiFx == null) { eksik.Add("UiFx"); }
+            if (_uiFrozenFrame == null) { eksik.Add("UiFrozenFrame"); }
+            if (_uiMaskTint == null) { eksik.Add("UiMaskTint"); }
+            if (_vfxRibbon == null) { eksik.Add("VfxRibbon"); }
 
             for (int i = 0; i < _variantPins.Length; i++)
             {

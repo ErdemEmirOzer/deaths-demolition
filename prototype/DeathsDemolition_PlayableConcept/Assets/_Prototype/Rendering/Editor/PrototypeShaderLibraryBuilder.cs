@@ -27,6 +27,10 @@ namespace DD.Prototype.Rendering.EditorTools
         private const string SkyboxAd = "Skybox/Procedural";
         private const string VfxFlipbookAd = "DD/VFX Flipbook";
         private const string VfxHeatHazeAd = "DD/VFX HeatHaze";
+        private const string UiFxAd = "DD/UI/Fx";
+        private const string UiFrozenFrameAd = "Hidden/DD/UI/FrozenFrame";
+        private const string UiMaskTintAd = "DD/UI/MaskTint";
+        private const string VfxRibbonAd = "DD/VFX Ribbon";
 
         [MenuItem("Tools/Deaths Demolition/Rebuild Shader Library")]
         public static void Rebuild()
@@ -69,6 +73,10 @@ namespace DD.Prototype.Rendering.EditorTools
             Shader skybox = Bul(SkyboxAd, ref hata);
             Shader vfxFlipbook = Bul(VfxFlipbookAd, ref hata);
             Shader vfxHeatHaze = Bul(VfxHeatHazeAd, ref hata);
+            Shader uiFx = Bul(UiFxAd, ref hata);
+            Shader uiFrozenFrame = Bul(UiFrozenFrameAd, ref hata);
+            Shader uiMaskTint = Bul(UiMaskTintAd, ref hata);
+            Shader vfxRibbon = Bul(VfxRibbonAd, ref hata);
             if (hata != null)
             {
                 return false;
@@ -96,6 +104,10 @@ namespace DD.Prototype.Rendering.EditorTools
             so.FindProperty("_skybox").objectReferenceValue = skybox;
             so.FindProperty("_vfxFlipbook").objectReferenceValue = vfxFlipbook;
             so.FindProperty("_vfxHeatHaze").objectReferenceValue = vfxHeatHaze;
+            so.FindProperty("_uiFx").objectReferenceValue = uiFx;
+            so.FindProperty("_uiFrozenFrame").objectReferenceValue = uiFrozenFrame;
+            so.FindProperty("_uiMaskTint").objectReferenceValue = uiMaskTint;
+            so.FindProperty("_vfxRibbon").objectReferenceValue = vfxRibbon;
 
             SerializedProperty dizi = so.FindProperty("_variantPins");
             dizi.arraySize = pins.Length;

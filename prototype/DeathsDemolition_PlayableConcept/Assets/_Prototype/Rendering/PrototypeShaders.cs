@@ -43,6 +43,18 @@ namespace DD.Prototype.Rendering
         /// <summary>Barrel heat distortion / shimmer card.</summary>
         public static Shader VfxHeatHaze => Named(Library.VfxHeatHaze, "VfxHeatHaze");
 
+        /// <summary>DD/UI/Fx: the UI effect material (WP-068 slice 4).</summary>
+        public static Shader UiFx => Named(Library.UiFx, "UiFx");
+
+        /// <summary>Hidden/DD/UI/FrozenFrame: the paused-world blur + ink wash (WP-068 slice 4).</summary>
+        public static Shader UiFrozenFrame => Named(Library.UiFrozenFrame, "UiFrozenFrame");
+
+        /// <summary>DD/UI/MaskTint: the UI backdrop mask tint (WP-068).</summary>
+        public static Shader UiMaskTint => Named(Library.UiMaskTint, "UiMaskTint");
+
+        /// <summary>DD/VFX Ribbon: tracer / glint ribbons (WP-073).</summary>
+        public static Shader VfxRibbon => Named(Library.VfxRibbon, "VfxRibbon");
+
         /// <summary>
         /// True when the library is present and every reference is filled. Lets a caller
         /// ask without triggering the throw - used by the tests and by tooling.

@@ -90,12 +90,14 @@ namespace DD.Art.Tests.EditMode
                 DD.Prototype.UI.UiTokens.Palette = DD.Prototype.UI.UiPalette.ColorBlindSafe;
                 Color critSafe = DD.Prototype.Feedback.FeedbackPalette.Critical;
                 Color armorSafe = DD.Prototype.Feedback.FeedbackPalette.Armor;
-                Assert.AreEqual(DD.Prototype.UI.UiTokens.Get(DD.Prototype.UI.UiColor.StateWarning), critSafe, "kritik = uyarı jetonu");
-                Assert.AreNotEqual(critDefault, critSafe, "renk körlüğü paletinde kritik rengi değişmeli (altın → amber)");
+                // WP-068 §5 (GD hierarchy, AD): crit is a shape in cream on both palettes — never the warning amber (U4).
+                Assert.AreEqual(DD.Prototype.UI.UiTokens.Get(DD.Prototype.UI.UiColor.TextPrimary), critDefault, "kritik = krem (şekil taşır)");
+                Assert.AreEqual(critDefault, critSafe, "kritik her iki palette krem");
+                Assert.AreNotEqual(DD.Prototype.UI.UiTokens.Get(DD.Prototype.UI.UiColor.StateWarning), critSafe, "kritik uyarı ambarı olmamalı");
                 Assert.AreEqual(DD.Prototype.UI.UiTokens.Get(DD.Prototype.UI.UiColor.AccentWisteria), armorSafe, "zırh = wisteria (kırmızı–altın ekseninin dışı)");
                 Assert.AreNotEqual(armorDefault, armorSafe);
                 Color kill = DD.Prototype.Feedback.FeedbackPalette.Kill;
-                // Kill (coral) and critical (amber) must stay apart in luminance, not only in hue.
+                // Kill (coral) and critical (cream) must stay apart in luminance, not only in hue.
                 float lumKill = 0.299f * kill.r + 0.587f * kill.g + 0.114f * kill.b;
                 float lumCrit = 0.299f * critSafe.r + 0.587f * critSafe.g + 0.114f * critSafe.b;
                 Assert.Greater(Mathf.Abs(lumKill - lumCrit), 0.08f, "öldürme / kritik parlaklık farkı");

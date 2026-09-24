@@ -63,7 +63,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(1f / 3f, scrim.rectTransform.anchorMax.x, 1e-4f, "sol üçte bir");
             Assert.AreEqual(UiBackdrop.ScrimAlpha, scrim.color.a, 1e-4f, "T10 perdesi 0,55");
 
-            Shader mask = Shader.Find(UiBackdrop.MaskShader);
+            Shader mask = DD.Prototype.Rendering.PrototypeShaders.UiMaskTint;
             Assert.IsNotNull(mask, "DD/UI/MaskTint projede");
             GameObject lanterns = stack.Find("Lanterns").gameObject;
             if (mask.isSupported)

@@ -179,7 +179,7 @@ namespace DD.Prototype.UI
         {
             if (s_material == null)
             {
-                Shader shader = Shader.Find("Hidden/DD/UI/FrozenFrame");
+                Shader shader = DD.Prototype.Rendering.PrototypeShaders.IsReady ? DD.Prototype.Rendering.PrototypeShaders.UiFrozenFrame : null;
                 if (shader == null)
                 {
                     return false;

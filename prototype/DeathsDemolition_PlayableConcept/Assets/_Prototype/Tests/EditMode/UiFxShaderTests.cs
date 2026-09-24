@@ -20,7 +20,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void UiFx_TekPass_DortVaryant_YalnizClipRectVeAlphaClip()
         {
-            Shader shader = Shader.Find(UiFx.ShaderName);
+            Shader shader = DD.Prototype.Rendering.PrototypeShaders.UiFx;
             Assert.IsNotNull(shader, "DD/UI/Fx bulunamadı");
             Assert.IsTrue(shader.isSupported, "DD/UI/Fx bu platformda desteklenmiyor (derleme hatası?)");
             Assert.AreEqual(1, shader.passCount, "tek pass");
@@ -38,7 +38,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void FrozenFrame_UcPass_DownUpWash()
         {
-            Shader shader = Shader.Find("Hidden/DD/UI/FrozenFrame");
+            Shader shader = DD.Prototype.Rendering.PrototypeShaders.UiFrozenFrame;
             Assert.IsNotNull(shader, "Hidden/DD/UI/FrozenFrame bulunamadı");
             Assert.IsTrue(shader.isSupported);
             Assert.AreEqual(3, shader.passCount, "Kawase down / up + mürekkep yıkama");

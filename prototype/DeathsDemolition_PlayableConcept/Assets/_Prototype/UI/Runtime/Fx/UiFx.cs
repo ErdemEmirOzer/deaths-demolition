@@ -77,7 +77,7 @@ namespace DD.Prototype.UI
             {
                 if (s_material == null)
                 {
-                    Shader shader = Shader.Find(ShaderName);
+                    Shader shader = DD.Prototype.Rendering.PrototypeShaders.IsReady ? DD.Prototype.Rendering.PrototypeShaders.UiFx : null;
                     if (shader == null)
                     {
                         return null;

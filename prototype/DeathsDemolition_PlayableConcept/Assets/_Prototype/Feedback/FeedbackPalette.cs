@@ -13,8 +13,12 @@ namespace DD.Prototype.Feedback
     {
         private static readonly Color ArmorDefault = new Color(0.68f, 0.78f, 0.90f, 1f);
 
-        /// <summary>Critical hit readouts: the warning token (gold; amber on the colour-blind palette).</summary>
-        public static Color Critical => UiTokens.Get(UiColor.StateWarning);
+        /// <summary>
+        /// Critical hit readouts: cream (TextPrimary) on both palettes — WP-068 direction §5 GD hierarchy: tiers are
+        /// SHAPES (crit = four long strokes, the number's starburst), never amber: StateWarning tells the player
+        /// "warning" (U4: amber in both palettes) and cannot carry a second, positive meaning.
+        /// </summary>
+        public static Color Critical => UiTokens.Get(UiColor.TextPrimary);
 
         /// <summary>Kill readouts: the danger token (coral on both palettes — luminance-separated from the warning token).</summary>
         public static Color Kill => UiTokens.Get(UiColor.StateDanger);

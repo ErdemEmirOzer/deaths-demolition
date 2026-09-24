@@ -279,7 +279,7 @@ namespace DD.Prototype.UI
         {
             if (s_mask == null)
             {
-                Shader shader = Shader.Find(MaskShader);
+                Shader shader = DD.Prototype.Rendering.PrototypeShaders.IsReady ? DD.Prototype.Rendering.PrototypeShaders.UiMaskTint : null;
                 if (shader != null && shader.isSupported)
                 {
                     s_mask = new Material(shader) { name = "UiLanternMask", hideFlags = HideFlags.DontSave };
