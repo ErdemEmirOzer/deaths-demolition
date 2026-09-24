@@ -185,6 +185,10 @@ namespace DD.Prototype.CameraSystem
         private Quaternion _fromRotation = Quaternion.identity;
         private float _fromFov = 42f;
         private bool _cursorLockedByRig;
+        private int _insideColliderFrames;   // WP-078 A2 / WP-070 K2: frames the camera sat inside world geometry
+        private int _probedFrames;
+        private int _insideColliderFramesTotal;
+        private int _probedFramesTotal;
         private Vector3 _lastFeet;
         [SerializeField] private float _bobReferenceSpeed = 5.5f;
         private bool _playerHidden;
@@ -258,6 +262,18 @@ namespace DD.Prototype.CameraSystem
         {
             _viewYaw = Mathf.Repeat(yawDegrees, 360f);
             ClampPitch(pitchDegrees);
+        }
+
+        /// <summary>WP-078 (bot look): right-stick pitch speed as a share of the yaw speed.</summary>
+        public float StickPitchShare
+        {
+            get { return _stickPitchShare; }
+        }
+
+        /// <summary>WP-078 (bot look): exponent of the right-stick response curve (speed ∝ |stick|^exp).</summary>
+        public float StickResponseExponent
+        {
+            get { return _stickResponseExponent; }
         }
 
         /// <summary>WP-070: current third-person boom length (distance pivot → camera); -1 outside TP.</summary>
@@ -341,6 +357,7 @@ namespace DD.Prototype.CameraSystem
             // WP-070: a run starts in the saved / command-line mode, snapped; the persisted look
             // preferences (input-settings.json v3) feed the live settings (one-way, B4).
             CameraInputPreferencesBridge.Ensure();
+            DD.Prototype.Rounds.RunEvents.RoundCompleted += OnRoundCompleted;
             CameraModeService.Changed += OnModeChanged;
             CameraModeService.SettingsChanged += OnModeSettingsChanged;
             CameraModeService.Request(CameraModeService.ResolveStartMode(), instant: true);
@@ -385,6 +402,7 @@ namespace DD.Prototype.CameraSystem
 
             CameraModeService.Changed -= OnModeChanged;
             CameraModeService.SettingsChanged -= OnModeSettingsChanged;
+            DD.Prototype.Rounds.RunEvents.RoundCompleted -= OnRoundCompleted;
             ReleaseCursor();
             ShowPlayer();
             RaiseWeaponIfLowered();
@@ -516,6 +534,52 @@ namespace DD.Prototype.CameraSystem
             ApplyShake(dt, mode);
             ApplyCursor();
             ApplyPlayerVisibility(mode);
+            ProbeInsideCollider(mode);
+        }
+
+        /// <summary>WP-078 A2 / WP-070 K2: probe radius around the stable camera position (≈ near-plane size).</summary>
+        public const float InsideColliderProbeRadius = 0.08f;
+
+        /// <summary>
+        /// Counts frames in which the stable camera position overlaps world geometry
+        /// (<see cref="PrototypeLayers.AimBlockMask"/>), per round and per run; the rig logs one line
+        /// per completed round ("[Camera] inside-collider …") for the S-10 WP-078 bot runs.
+        /// One CheckSphere per frame (no allocation).
+        /// </summary>
+        private void ProbeInsideCollider(CameraMode mode)
+        {
+            if (CameraModeService.IsTransitioning || Time.deltaTime <= 0f)
+            {
+                return;
+            }
+
+            _probedFrames++;
+            _probedFramesTotal++;
+            if (Physics.CheckSphere(transform.position, InsideColliderProbeRadius, PrototypeLayers.AimBlockMask, QueryTriggerInteraction.Ignore))
+            {
+                _insideColliderFrames++;
+                _insideColliderFramesTotal++;
+            }
+        }
+
+        /// <summary>WP-078: frames inside world geometry since the rig was enabled (readout / tests).</summary>
+        public int InsideColliderFramesTotal
+        {
+            get { return _insideColliderFramesTotal; }
+        }
+
+        /// <summary>WP-078: frames probed since the rig was enabled.</summary>
+        public int ProbedFramesTotal
+        {
+            get { return _probedFramesTotal; }
+        }
+
+        private void OnRoundCompleted(int round)
+        {
+            Debug.Log("[Camera] inside-collider round=" + round + " mode=" + CameraModeService.Current + " frames=" +
+                      _insideColliderFrames + "/" + _probedFrames + " run=" + _insideColliderFramesTotal + "/" + _probedFramesTotal);
+            _insideColliderFrames = 0;
+            _probedFrames = 0;
         }
 
         private void ComputeTopDownPose(float dt, out Vector3 position, out Quaternion rotation, out float fov)

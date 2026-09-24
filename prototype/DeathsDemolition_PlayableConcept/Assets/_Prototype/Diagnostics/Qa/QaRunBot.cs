@@ -1333,11 +1333,11 @@ namespace DD.Prototype.Qa
                 }
                 if (CameraModeService.IsLookMode)
                 {
-                    // WP-070 (S-10 WP-078): in TP/FP the right stick turns the view and the shot goes
-                    // down the screen-centre ray, so the bot points the camera itself (turn-rate
-                    // limited like a player) and sends no aim stick.
-                    DriveLookCamera(o, cmd.Aim, fwd, right);
-                    cmd.Aim = Vector2.zero;
+                    // WP-070 / WP-078 A-9: in TP/FP the right stick turns the view and the shot goes
+                    // down the screen-centre ray, so the bot steers the camera through the SAME input
+                    // path a player uses: the virtual gamepad's right stick, sized from the wanted
+                    // yaw/pitch rate through the rig's stick curve and the adapter's dead zone.
+                    cmd.Aim = LookStickToward(o, cmd.Aim, fwd, right);
                 }
 
                 _pad.Set(cmd.Move, cmd.Aim, cmd.Fire, reload, false);
@@ -1656,19 +1656,22 @@ namespace DD.Prototype.Qa
                 _fireHits[key] = n + 1;
             }
 
-            /// <summary>WP-070: max view turn speed of the bot in TP/FP (a fast but human stick/mouse).</summary>
-            private const float LookTurnDegreesPerSecond = 540f;
+            /// <summary>WP-078: seconds the bot wants to close its view error in (then capped by the stick speed).</summary>
+            private const float LookCloseSeconds = 0.12f;
 
             /// <summary>
-            /// WP-070: TP/FP look for the bot — yaw/pitch toward the target's chest from the camera
-            /// (the centre ray's origin), else along the brain's aim stick direction; rate limited.
+            /// WP-070 / WP-078 A-9: the right-stick deflection that turns the TP/FP view toward the
+            /// target's chest (seen from the camera, the centre ray's origin), else along the brain's
+            /// aim direction. Inverse of the rig's stick model: rate = |s|^exp · speed (pitch × share,
+            /// invert-Y honoured), with the adapter's radial dead zone / saturation undone.
             /// </summary>
-            private static void DriveLookCamera(QaBotObservation o, Vector2 aimStick, Vector3 fwd, Vector3 right)
+            private static Vector2 LookStickToward(QaBotObservation o, Vector2 aimStick, Vector3 fwd, Vector3 right)
             {
                 PrototypeCameraRig cam = PrototypeCameraRig.Active;
-                if (cam == null)
+                float dt = Time.deltaTime;
+                if (cam == null || dt <= 0f)
                 {
-                    return;
+                    return Vector2.zero;
                 }
 
                 Vector3 dir;
@@ -1682,19 +1685,35 @@ namespace DD.Prototype.Qa
                 }
                 else
                 {
-                    return;
+                    return Vector2.zero;
                 }
 
                 Vector3 flat = new Vector3(dir.x, 0f, dir.z);
                 if (flat.sqrMagnitude < 1e-6f)
                 {
-                    return;
+                    return Vector2.zero;
                 }
 
                 float yaw = Mathf.Atan2(flat.x, flat.z) * Mathf.Rad2Deg;
-                float pitch = o.HasTarget ? -Mathf.Atan2(dir.y, flat.magnitude) * Mathf.Rad2Deg : 0f;
-                float step = LookTurnDegreesPerSecond * Time.unscaledDeltaTime;
-                cam.SetViewAngles(Mathf.MoveTowardsAngle(cam.ViewYaw, yaw, step), Mathf.MoveTowards(cam.ViewPitch, pitch, step));
+                float pitch = o.HasTarget ? -Mathf.Atan2(dir.y, flat.magnitude) * Mathf.Rad2Deg : 0f;   // + looks down
+                CameraModeSettings settings = CameraModeService.Settings;
+                float speed = Mathf.Max(1f, settings.StickLookDegreesPerSecond);
+                float share = Mathf.Max(0.05f, cam.StickPitchShare);
+                float wy = Mathf.Clamp(Mathf.DeltaAngle(cam.ViewYaw, yaw) / LookCloseSeconds, -speed, speed);
+                float wp = Mathf.Clamp((pitch - cam.ViewPitch) / LookCloseSeconds, -speed * share, speed * share);
+
+                // stick x → yaw right; stick y up → look up (pitch decreases), flipped by invert-Y
+                Vector2 v = new Vector2(wy / speed, -wp / (speed * share) * (settings.InvertY ? -1f : 1f));
+                float m = v.magnitude;
+                if (m < 1e-3f)
+                {
+                    return Vector2.zero;
+                }
+
+                float effective = Mathf.Pow(Mathf.Min(1f, m), 1f / Mathf.Max(0.1f, cam.StickResponseExponent));
+                float dz = InputPreferencesStore.Current.StickDeadzone;
+                float raw = dz + effective * (DD.Prototype.Inputs.PrototypeInputSource.StickSaturation - dz);
+                return v / m * Mathf.Min(1f, raw);
             }
 
             private static void CameraBasis(out Vector3 forward, out Vector3 right)

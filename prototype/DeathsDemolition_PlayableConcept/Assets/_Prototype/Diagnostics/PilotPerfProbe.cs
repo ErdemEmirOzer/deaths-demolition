@@ -1,4 +1,4 @@
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
+#if DEVELOPMENT_BUILD || UNITY_EDITOR || DD_PERF_PROBE
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -47,6 +47,9 @@ namespace DD.Prototype.Diagnostics
     /// the intended load), never a frame-rate verdict: the 60 fps target is a number the
     /// report reads, not a gate the probe closes (WP-011 contract Y0-8).
     ///
+    /// WP-078 (S-10 plan §4): also compiled into the non-distributed `release-probe` build
+    /// (tools/build.sh release-probe: release settings + the DD_PERF_PROBE define), so the
+    /// gate perf numbers come from release code paths.
     /// Compiled ONLY into development builds and the Editor (file-level #if); a release
     /// Player contains none of it, and without <c>-ddPilotPerfProbe</c> a development
     /// Player allocates nothing either. The profile path is redirected to the isolated

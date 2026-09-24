@@ -13,7 +13,9 @@ namespace DD.Prototype.Core.EditorTools
     /// WP-025: the one batchmode build entry used by <c>tools/build.sh</c>.
     ///
     ///   Unity -batchmode -nographics -quit -projectPath … -executeMethod DD.Prototype.Core.EditorTools.DdBuild.Build
-    ///         -ddMode dev|release -ddOut /abs/DeathsDemolition.app [-ddReport /abs/report.json]
+    ///         -ddMode dev|release|release-probe -ddOut /abs/DeathsDemolition.app [-ddReport /abs/report.json]
+    ///         (release-probe, WP-078: release options + scripting define DD_PERF_PROBE so PilotPerfProbe
+    ///          is compiled in; never distributed, its own gate mode — not the release baseline)
     ///         [-ddTarget mac|win64]   (WP-066W / DEC-089; win64 → -ddOut /abs/DeathsDemolition-win64/DeathsDemolition.exe)
     ///         [-ddCompression none|lz4|lz4hc]   (WP-066C measurement; absent = today's uncompressed player data)
     ///
@@ -30,6 +32,12 @@ namespace DD.Prototype.Core.EditorTools
         private const string ReportFlag = "-ddReport";
         private const string TargetFlag = "-ddTarget";
         private const string CompressionFlag = "-ddCompression";
+
+        /// <summary>WP-078: release settings + <see cref="PerfProbeDefine"/>; not distributed.</summary>
+        public const string ReleaseProbeMode = "release-probe";
+
+        /// <summary>Scripting define that compiles PilotPerfProbe into a non-development player.</summary>
+        public const string PerfProbeDefine = "DD_PERF_PROBE";
 
         public static void Build()
         {
@@ -51,9 +59,9 @@ namespace DD.Prototype.Core.EditorTools
                 throw new Exception("[DdBuild] " + OutFlag + " <path.app> is required.");
             }
 
-            if (mode != "dev" && mode != "release")
+            if (mode != "dev" && mode != "release" && mode != ReleaseProbeMode)
             {
-                throw new Exception("[DdBuild] " + ModeFlag + " must be dev or release (was '" + mode + "').");
+                throw new Exception("[DdBuild] " + ModeFlag + " must be dev, release or " + ReleaseProbeMode + " (was '" + mode + "').");
             }
 
             BuildTarget target;
@@ -87,6 +95,7 @@ namespace DD.Prototype.Core.EditorTools
                     locationPathName = output,
                     target = target,
                     options = (mode == "dev" ? BuildOptions.Development : BuildOptions.None) | compressionOption,
+                    extraScriptingDefines = mode == ReleaseProbeMode ? new[] { PerfProbeDefine } : null,
                 };
                 summary = BuildPipeline.BuildPlayer(options).summary;
             }

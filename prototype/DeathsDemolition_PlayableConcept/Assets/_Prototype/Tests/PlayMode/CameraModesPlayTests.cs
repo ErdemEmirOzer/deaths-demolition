@@ -185,6 +185,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Assert.Less(_rig.ThirdPersonBoom, 1.4f, "Duvar bumu kısaltmalı.");
+            Assert.AreEqual(0, _rig.InsideColliderFramesTotal, "WP-078 A2: kamera hiçbir karede duvar içinde sayılmamalı.");
+            Assert.Greater(_rig.ProbedFramesTotal, 30);
             UnityEngine.Object.Destroy(_engel);
             _engel = null;
             yield return Kareler(90);
@@ -389,6 +391,21 @@ namespace DD.Prototype.Tests.PlayMode
             _rig.TryGetAimRay(Vector2.zero, 0f, out recoilSonra);
             Assert.AreEqual(1f, Vector3.Angle(once.Direction, recoilSonra.Direction), 0.2f, "Recoil nişana dahil (D-20).");
             Assert.Greater(recoilSonra.Direction.y, once.Direction.y, "Recoil yukarı kaldırmalı.");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator DuvarIciSayaci_PozitifKontrol()
+        {
+            yield return Kareler(5);
+            int once = _rig.InsideColliderFramesTotal;
+            _engel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _engel.layer = PrototypeLayers.Environment;
+            _engel.transform.position = _rig.StablePosition;
+            _engel.transform.localScale = Vector3.one * 2f;
+            Physics.SyncTransforms();
+            yield return Kareler(10);
+            Assert.GreaterOrEqual(_rig.InsideColliderFramesTotal - once, 8, "Kamera küpün içindeyken sayaç artmalı (WP-078 A2).");
         }
 
         [UnityTest]

@@ -20,7 +20,7 @@ while [ $# -gt 0 ]; do case "$1" in --json) JSON="$2"; shift ;; --md) MD="$2"; s
 if [ -d "$IN" ]; then DIR="$IN"; LOG="$IN/build.log"; else LOG="$IN"; DIR="$(dirname "$IN")"; fi
 [ -f "$LOG" ] || { echo "no log: $LOG" >&2; exit 64; }
 [ -n "$JSON" ] || JSON="$DIR/footprint.json"; [ -n "$MD" ] || MD="$DIR/footprint.md"
-MODE=""; [ -f "$DIR/build-report.json" ] && MODE=$(grep -o '"mode": "[a-z]*"' "$DIR/build-report.json" | head -1 | cut -d'"' -f4)
+MODE=""; [ -f "$DIR/build-report.json" ] && MODE=$(grep -o '"mode": "[a-z-]*"' "$DIR/build-report.json" | head -1 | cut -d'"' -f4)
 # WP-066W: a Windows build's report carries "target": "win64" (macOS reports have no target field) → label only.
 TGT=""; [ -f "$DIR/build-report.json" ] && TGT=$(grep -o '"target": "[a-z0-9]*"' "$DIR/build-report.json" | head -1 | cut -d'"' -f4)
 [ -n "$TGT" ] && MODE="$MODE-$TGT"
