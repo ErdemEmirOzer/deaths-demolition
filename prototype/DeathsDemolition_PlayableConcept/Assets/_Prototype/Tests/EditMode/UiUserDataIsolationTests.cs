@@ -50,6 +50,23 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void TestKosucusu_VarsayilanKok_SurecYerel_FixtureOlmasaBile()
+        {
+            Assume.That(UiDataPaths.RunsUnderTestRunner, "yalnız -runTests ile başlatılan (batch) koşuda anlamlı");
+            try
+            {
+                UiDataPaths.SetRootOverride(null);   // what an assembly without a fixture sees
+                Assert.AreEqual(UiDataPaths.ProcessLocalRoot, UiDataPaths.Root, "fixture'sız derlemede de kök süreç-yerel");
+                StringAssert.StartsWith(UiDataPaths.ProcessLocalRoot, UiSettings.FilePath);
+                Assert.IsTrue(UiDataPaths.IsProcessLocal);
+            }
+            finally
+            {
+                UiDataPaths.UseProcessLocalRoot();
+            }
+        }
+
+        [Test]
         public void HerYazar_GercekDosyalaraDokunmaz()
         {
             Assert.IsTrue(UiDataPaths.IsProcessLocal, "yalıtım yok: yazmadan önce dur");

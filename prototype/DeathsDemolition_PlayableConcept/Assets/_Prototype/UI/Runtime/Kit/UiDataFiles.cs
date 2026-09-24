@@ -6,10 +6,12 @@ namespace DD.Prototype.UI
 {
     /// <summary>
     /// Where the UI's files live (user-data rule). A Player keeps them in
-    /// <c>Application.persistentDataPath</c>; test assemblies (TestUiDataIsolation) and
-    /// capture runs (<c>-ddUiCapture</c>) move the whole set to a process-local folder
-    /// (the WP-051 dd-pid pattern), so nothing a test or a capture does reaches the
-    /// player's own files. Moving the root makes every UI file re-read from the new place.
+    /// <c>Application.persistentDataPath</c>. A process launched with <c>-runTests</c> (every
+    /// batch test run, in any test assembly), the test assemblies' own fixtures
+    /// (TestUiDataIsolation, for interactive runs too) and capture runs (<c>-ddUiCapture</c>)
+    /// all use a process-local folder instead (the WP-051 dd-pid pattern), so nothing a test
+    /// or a capture does reaches the player's own files. Moving the root makes every UI file
+    /// re-read from the new place.
     /// </summary>
     public static class UiDataPaths
     {
@@ -18,13 +20,34 @@ namespace DD.Prototype.UI
         /// <summary>The folder ui-settings.json, load-timing.json and ui-hints.json live in.</summary>
         public static string Root
         {
-            get { return s_rootOverride ?? Application.persistentDataPath; }
+            get { return s_rootOverride ?? (RunsUnderTestRunner ? ProcessLocalRoot : Application.persistentDataPath); }
+        }
+
+        private static int s_testRunner = -1;
+
+        /// <summary>
+        /// True when this process was started with <c>-runTests</c> (the Unity test runner in
+        /// batch). It is the default for every test assembly, because a namespace-less
+        /// [SetUpFixture] is kept only once per assembly and a new assembly would otherwise
+        /// start on the player's files (u1, 2026-09-24).
+        /// </summary>
+        public static bool RunsUnderTestRunner
+        {
+            get
+            {
+                if (s_testRunner < 0)
+                {
+                    s_testRunner = Array.IndexOf(Environment.GetCommandLineArgs(), "-runTests") >= 0 ? 1 : 0;
+                }
+
+                return s_testRunner == 1;
+            }
         }
 
         /// <summary>True while the files are redirected away from persistentDataPath.</summary>
         public static bool IsProcessLocal
         {
-            get { return s_rootOverride != null; }
+            get { return s_rootOverride != null || RunsUnderTestRunner; }
         }
 
         /// <summary>This process's private folder under temporaryCachePath.</summary>

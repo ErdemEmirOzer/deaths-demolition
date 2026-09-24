@@ -262,6 +262,14 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator Kosu_GercekKullaniciDosyalarinaDokunmaz()
         {
             string before = TestUiDataIsolation.RealFiles();
+            if (UiDataPaths.RunsUnderTestRunner)
+            {
+                // What a test assembly WITHOUT the fixture sees under -runTests: still process-local.
+                UiDataPaths.SetRootOverride(null);
+                StringAssert.StartsWith(UiDataPaths.ProcessLocalRoot, UiSettings.FilePath, "-runTests: varsayılan kök süreç-yerel");
+                UiDataPaths.UseProcessLocalRoot();
+            }
+
             UiSettings.SetPathOverride(null); // the run's own paths: the process-local root
             UiLoadTiming.SetPathOverride(null);
             StringAssert.StartsWith(UiDataPaths.ProcessLocalRoot, UiSettings.FilePath);
