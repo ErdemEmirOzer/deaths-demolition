@@ -451,31 +451,28 @@ namespace DD.Prototype.Tests.PlayMode
 
             MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
             Assert.AreEqual(UiContext.Settings, menu.Pane);
-            // Focus moved into the pane: the first slider. Right nudges the value.
+            // WP-068 slice 6 (E6): four sections - DISPLAY (mode, UI scale), AUDIO (master, UI
+            // sounds), GRAPHICS (quality), DATA (telemetry, hints). Focus lands on DISPLAY MODE
+            // (not submitted here: the Editor has no window to switch).
+            yield return SeciliBekle("Display");
+            Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.UI SCALE");
-            var slider = Secili.GetComponentInChildren<Slider>();
+            var slider = Secili.GetComponent<UiSlider>();
             Assert.IsNotNull(slider);
-            float before = slider.value;
+            float before = slider.Value;
             Hareket(MoveDirection.Right);
-            Assert.Greater(slider.value, before, "sağ hareket UI ölçeğini artırmalı");
+            Assert.Greater(slider.Value, before, "sağ hareket UI ölçeğini artırmalı");
             Hareket(MoveDirection.Left);
-            Assert.AreEqual(before, slider.value, 0.02f, "sol hareket geri almalı");
+            Assert.AreEqual(before, slider.Value, 0.02f, "sol hareket geri almalı");
 
-            // Down through the three sliders wraps back to the first.
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.MASTER VOLUME");
-            // WP-068 slice 11 (S-08): UI SOUNDS sits between the master volume and the quality.
+            // WP-068 slice 11 (S-08): UI SOUNDS sits under the master volume.
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.UI SOUNDS");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.GRAPHICS QUALITY");
-            // WP-022M: DISPLAY sits between quality and telemetry (not submitted here: the
-            // Editor has no window to switch).
-            Hareket(MoveDirection.Down);
-            yield return SeciliBekle("Display");
-            // WP-022E: the run telemetry toggle is the last control (reduced motion moved
-            // to the ACCESSIBILITY pane in WP-022G); Submit flips it and RunTelemetry
-            // follows; flip back. Down wraps to the first slider.
+            // WP-022E: the run telemetry switch; Submit flips it and RunTelemetry follows; flip back.
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Telemetry");
             int raisedBefore = UiEvents.RaisedCount;
@@ -488,11 +485,11 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.AreEqual(telemetryBefore, UiSettings.Telemetry);
             Assert.Greater(UiEvents.RaisedCount, raisedBefore, "toggle bir UiEvent yükseltir");
-            // WP-068 slice 10b: HINTS (U9) is the last control now; Down wraps to the first slider.
+            // WP-068 slice 10b: HINTS (U9) is the last control; Down wraps to DISPLAY MODE.
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Hints");
             Hareket(MoveDirection.Down);
-            yield return SeciliBekle("Setting.UI SCALE");
+            yield return SeciliBekle("Display");
 
             // WP-022G: ACCESSIBILITY pane - palette / text scale / flashes / reduced motion
             // reachable from its tab; the palette toggle swaps UiTokens and back.

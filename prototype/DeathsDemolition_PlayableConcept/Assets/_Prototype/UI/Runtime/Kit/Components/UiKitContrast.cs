@@ -135,6 +135,14 @@ namespace DD.Prototype.UI
                 }
             },
             {
+                typeof(UiScrollView), new[]
+                {
+                    C("Scroll grip on its rail", UiColor.BorderStrong, UiColor.SurfaceInset, Boundary),
+                    C("Scroll grip on the pane (the rail's ends)", UiColor.BorderStrong, UiColor.SurfacePanel, Boundary),
+                    C("Scroll rail on the pane (extent cue; the grip carries the position)", UiColor.SurfaceInset, UiColor.SurfacePanel, Decorative),
+                }
+            },
+            {
                 typeof(UiCard), new[]
                 {
                     C("Card title / text", UiColor.TextPrimary, UiColor.SurfacePanel, Text),

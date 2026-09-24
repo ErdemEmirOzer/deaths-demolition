@@ -190,5 +190,80 @@ namespace DD.Prototype.Tests.PlayMode
 
             Assert.IsEmpty(failures, "TextScale 1,25 (T3 / T11):\n" + string.Join("\n", failures));
         }
+
+        /// <summary>
+        /// WP-068 slice 6 · E6 at TextScale 1.25 (T3 / T8). The pane has four sections, and
+        /// every settings row, once focused, lies inside the pane's viewport: the pane scrolls
+        /// instead of clipping. The rail shows exactly when something is hidden, and the
+        /// preview follows the UI scale.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Ayarlar125_HerSatirOdaktaGorunur_RayYalnizGerekince()
+        {
+            yield return BootTanMainMenuye();
+            UiSettings.TextScale = 1.25f;
+            MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
+            menu.ShowPane(UiContext.Settings);
+            yield return null;
+            yield return null;
+
+            var failures = new List<string>(Truncated("settings.125"));
+            UiScrollView scroll = menu.GetComponentInChildren<UiScrollView>();
+            Assert.IsNotNull(scroll, "Settings pane'i kaydırıcıda");
+            foreach (string section in new[] { "DISPLAY", "AUDIO", "GRAPHICS", "DATA" })
+            {
+                if (Find("Section." + section) == null) failures.Add("bölüm yok: " + section);
+            }
+
+            // Twice: at the pane's own height (the batch Editor's 4:3 canvas is tall, the whole
+            // pane may fit), then in a short 360 px viewport - a Mac window / 1.25 stand-in in
+            // which the pane must scroll, show its rail and bring each focused row into view.
+            string[] rows = { "Display", "Setting.UI SCALE", "Setting.MASTER VOLUME", "Setting.UI SOUNDS", "Setting.GRAPHICS QUALITY", "Telemetry", "Hints" };
+            for (int pass = 0; pass < 2; pass++)
+            {
+                if (pass == 1)
+                {
+                    var root = (RectTransform)scroll.transform;
+                    root.anchorMin = new Vector2(0f, 1f);
+                    root.sizeDelta = new Vector2(root.sizeDelta.x, 360f);
+                    scroll.SetContentHeight(scroll.Content.rect.height);
+                    yield return null;
+                    yield return null;
+                    Assert.IsTrue(scroll.Scrolls, "360 px görünümde pane kayar");
+                }
+
+                Rect viewport = WorldRect(scroll.Viewport);
+                foreach (string name in rows)
+                {
+                    Transform row = Find(name);
+                    if (row == null)
+                    {
+                        failures.Add("satır yok: " + name);
+                        continue;
+                    }
+
+                    UiInput.Focus(row.GetComponent<UnityEngine.UI.Selectable>());
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    Rect r = WorldRect((RectTransform)row);
+                    if (r.yMin < viewport.yMin - 0.01f * viewport.height || r.yMax > viewport.yMax + 0.01f * viewport.height)
+                    {
+                        failures.Add("geçiş " + pass + " · " + name + " odakta görünüm dışında: " + r + " / " + viewport);
+                    }
+                }
+
+                Assert.AreEqual(scroll.Scrolls, scroll.RailVisible, "ray yalnız gizli içerik varken görünür (geçiş " + pass + ")");
+            }
+
+            Transform hud = Find("PreviewHud");
+            UiSlider scale = Find("Setting.UI SCALE").GetComponent<UiSlider>();
+            if (hud != null)
+            {
+                Assert.AreEqual(0.5f * scale.Value, hud.localScale.x, 1e-3f, "önizleme 1:2 × UI ölçeği");
+            }
+
+            Debug.Log("[DD-TEST] wp068.s6.settings125 content=" + scroll.Content.rect.height.ToString("0") + " viewport(short)=" + scroll.Viewport.rect.height.ToString("0") + " offset=" + scroll.Offset.ToString("0") + " preview=" + (hud != null));
+            Assert.IsEmpty(failures, "Settings 1,25 (T3 / T8):\n" + string.Join("\n", failures));
+        }
     }
 }

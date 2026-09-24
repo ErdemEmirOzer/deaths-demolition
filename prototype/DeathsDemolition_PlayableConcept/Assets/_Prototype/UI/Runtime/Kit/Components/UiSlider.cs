@@ -210,7 +210,7 @@ namespace DD.Prototype.UI
                 if (_lastRaise < 0f || now - _lastRaise >= 1f / MaxEventsPerSecond)
                 {
                     _lastRaise = now;
-                    UiEvents.Raise(UiEvent.SliderChanged, name);
+                    UiEvents.Raise(UiEvent.SliderChanged, name, t);   // WP-068 s11: the tick's pitch follows the value
                 }
 
                 if (_changed != null)

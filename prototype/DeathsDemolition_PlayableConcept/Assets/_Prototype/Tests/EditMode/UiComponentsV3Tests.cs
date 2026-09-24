@@ -469,5 +469,48 @@ namespace DD.Prototype.Tests.EditMode
             surface.OnDeselect(new UnityEngine.EventSystems.BaseEventData(null));
             Assert.IsFalse(other.Lifted);
         }
+
+        // ------------------------------------------------------------------ slice 6
+
+        [Test]
+        public void Kaydirma_OdaklananSatirGorunur_UclarKelepceli_AzHareketteAninda()
+        {
+            UiScrollView view = UiScrollView.Create("Scroll", _root);
+            var rect = (RectTransform)view.transform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.sizeDelta = new Vector2(600f, 300f);
+            var stack = new UiStack(view.Content);
+            var rows = new List<RectTransform>();
+            for (int i = 0; i < 10; i++)
+            {
+                rows.Add(stack.Add(UiFactory.NewRect("Row" + i, view.Content), 56f));
+            }
+
+            view.SetContentHeight(stack.Cursor);
+            Assert.IsTrue(view.Scrolls, "560 px içerik 300 px görünümde kayar");
+            Assert.AreEqual(600f - UiScrollView.Gutter, view.Content.rect.width, 0.5f, "ray payı her zaman ayrılır");
+
+            view.Reveal(rows[9], false);
+            Assert.AreEqual(560f - 300f, view.Offset, 0.5f, "son satır: en alta, sınırda durur");
+            view.Reveal(rows[0], false);
+            Assert.AreEqual(0f, view.Offset, 0.5f, "ilk satır: en üste");
+
+            view.Reveal(rows[5], true);   // 280..336 → 336 + 16 − 300
+            Assert.AreEqual(0f, view.Offset, 0.5f, "animasyon t0'da başlar");
+            Step(0.2f);
+            Assert.AreEqual(336f + UiScrollView.RevealMargin - 300f, view.Offset, 0.5f, "en kısa yol + pay");
+            view.Reveal(rows[4], true);   // 224..280 zaten görünür
+            Step(0.2f);
+            Assert.AreEqual(52f, view.Offset, 0.5f, "görünen satır kaydırmaz");
+
+            UiMotion.ReducedMotion = true;
+            view.Reveal(rows[0], true);
+            Assert.AreEqual(0f, view.Offset, 0.5f, "RM: kaydırma anında");
+
+            view.SetContentHeight(200f);
+            Assert.IsFalse(view.Scrolls, "kısa içerik kaymaz");
+        }
     }
 }

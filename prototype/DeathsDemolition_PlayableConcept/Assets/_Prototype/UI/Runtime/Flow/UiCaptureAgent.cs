@@ -61,6 +61,7 @@ namespace DD.Prototype.UI
             // A capture changes settings and records loads for its frames: all of it goes to a
             // process-local folder, never the player's ui-settings.json (user-data rule).
             UiDataPaths.UseProcessLocalRoot();
+            ApplyCaptureSettings();
             var carrier = new GameObject("UiCaptureAgent");
             UnityEngine.Object.DontDestroyOnLoad(carrier);
             if (screen.ToLowerInvariant() == "hud")
@@ -70,6 +71,32 @@ namespace DD.Prototype.UI
             }
 
             carrier.AddComponent<Driver>().Configure(screen.ToLowerInvariant(), Arg(OutFlag), Arg(SizeFlag), Arg(DelayFlag), Arg(PickTitleFlag));
+        }
+
+        /// <summary>
+        /// WP-068 slice 6 · the capture matrix (§12): <c>-ddUiTextScale 1.25</c>,
+        /// <c>-ddUiScale 1.2</c>, <c>-ddUiPalette cb</c>, set through <see cref="UiSettings"/>
+        /// like a player would, into this process's own folder, before the first screen builds.
+        /// </summary>
+        private static void ApplyCaptureSettings()
+        {
+            float value;
+            string text = Arg("-ddUiTextScale");
+            if (!string.IsNullOrEmpty(text) && float.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
+            {
+                UiSettings.TextScale = value;
+            }
+
+            string scale = Arg("-ddUiScale");
+            if (!string.IsNullOrEmpty(scale) && float.TryParse(scale, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
+            {
+                UiSettings.UiScale = value;
+            }
+
+            if (Arg("-ddUiPalette") == "cb")
+            {
+                UiSettings.ColorPalette = 1;
+            }
         }
 
         private static void WritePng(string path)
@@ -392,6 +419,24 @@ namespace DD.Prototype.UI
                 }
 
                 yield return new WaitForSecondsRealtime(_delay);
+
+                // WP-068 slice 6: -ddUiFocus <name> focuses a control first (a scrolled pane, a focus state).
+                string focusName = Arg("-ddUiFocus");
+                if (!string.IsNullOrEmpty(focusName))
+                {
+                    GameObject target = GameObject.Find(focusName);
+                    UnityEngine.UI.Selectable selectable = target != null ? target.GetComponent<UnityEngine.UI.Selectable>() : null;
+                    if (selectable != null)
+                    {
+                        UiInput.Focus(selectable);
+                        yield return new WaitForSecondsRealtime(0.5f);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[UiCapture] -ddUiFocus " + focusName + " not found");
+                    }
+                }
+
                 yield return new WaitForEndOfFrame();
 
                 string folder = Path.GetDirectoryName(_out);

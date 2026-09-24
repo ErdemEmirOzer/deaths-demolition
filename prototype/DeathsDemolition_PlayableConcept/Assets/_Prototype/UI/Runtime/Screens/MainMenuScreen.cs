@@ -424,89 +424,256 @@ namespace DD.Prototype.UI
 
         // ------------------------------------------------------------ settings pane
 
+        private const float SettingRowHeight = 56f;      // E6: one row per setting
+        private const float SettingsColumnWidth = 720f;  // E6: the control column's measure
+        private const float SettingLabelWidth = 240f;
+        private const float PreviewMinWidth = 240f;
+        private const float PreviewHudScale = 0.5f;      // E6: the HUD preview at 1:2
+        private const float PreviewBlockWidth = 420f;    // the HUD health block (RunHudScreen.BlockWidth)
+        private const float PreviewBlockHeight = 104f;
+        private const float PreviewHudMargin = 48f;
+
+        private static readonly string[] DisplayModes = { "WINDOWED", "FULLSCREEN" };
+
+        private RectTransform _previewHud;
+        private TMP_Text _previewCaption;
+
         /// <summary>
-        /// Settings (WP-022): three knobs the UI owns the presentation of and
-        /// <see cref="UiSettings"/> owns the values of. Sliders are the same control the
-        /// pause screen uses for camera shake, so keyboard and gamepad already drive them.
+        /// Settings (WP-022; WP-068 slice 6, direction E6). The device preferences in four
+        /// sections:
+        /// <list type="bullet">
+        /// <item>DISPLAY: mode stepper, UI scale slider with detents;</item>
+        /// <item>AUDIO: master volume, UI sounds;</item>
+        /// <item>GRAPHICS: quality stepper (discrete levels, not a slider);</item>
+        /// <item>DATA: telemetry and hints switches, each with its sentence.</item>
+        /// </list>
+        /// Rows are 56 px on a ≤ 720 px control column inside a <see cref="UiScrollView"/>. At
+        /// TextScale 1.25 or in a short window the pane scrolls and focus pulls the row into
+        /// view, so nothing is clipped. The right well previews the HUD at 1:2 in the chosen UI
+        /// scale. <see cref="UiSettings"/> owns every value, and readouts update in place (a
+        /// rebuild would destroy the control under the pointer mid-drag).
         /// </summary>
         private void BuildSettingsPane()
         {
-            var stack = new UiStack(_paneHost);
+            var head = new UiStack(_paneHost);
+            head.Add(UiFactory.Heading("SETTINGS", _paneHost), UiFactory.LineHeight(UiType.H2));
+            AddCaptionUnder(ref head, _paneHost, "Caption",
+                "Device preferences. They are saved on this machine and never touch your profile.", 1, UiSpace.L);
 
-            stack.Add(UiFactory.Heading("SETTINGS", _paneHost), UiFactory.LineHeight(UiType.H2));
+            RectTransform body = UiFactory.NewRect("Body", _paneHost);
+            UiFactory.Fill(body);
+            body.offsetMax = new Vector2(0f, -head.Cursor);
+
+            float width = _paneHost.rect.width;
+            float column = SettingsColumnWidth + UiScrollView.Gutter;
+            if (width > 1f)
+            {
+                column = Mathf.Min(column, width);
+            }
+
+            UiScrollView scroll = UiScrollView.Create("Scroll", body);
+            var scrollRect = (RectTransform)scroll.transform;
+            scrollRect.anchorMin = new Vector2(0f, 0f);
+            scrollRect.anchorMax = new Vector2(0f, 1f);
+            scrollRect.pivot = new Vector2(0f, 1f);
+            scrollRect.sizeDelta = new Vector2(column, 0f);
+            scrollRect.anchoredPosition = Vector2.zero;
+            RectTransform content = scroll.Content;
+            var stack = new UiStack(content);
+
+            AddSettingsSection(ref stack, content, "DISPLAY", false);
+            UiStepper display = UiStepper.Create("Display", content, "DISPLAY MODE", DisplayModes,
+                UiSettings.Fullscreen ? 1 : 0, true, i => UiSettings.Fullscreen = i == 1);   // WP-022M: asynchronous on macOS (UiDisplayMode)
+            AddSettingRow(ref stack, display.transform);
+            UiSlider scale = UiSlider.Create("Setting.UI SCALE", content, "UI SCALE",
+                UiTheme.UiScaleMin, UiTheme.UiScaleMax, UiSettings.UiScale, 0.05f, Percent,
+                v =>
+                {
+                    UiSettings.UiScale = Mathf.Round(v * 20f) / 20f;
+                    ShowPreviewScale(UiSettings.UiScale);
+                }, SettingsColumnWidth, SettingLabelWidth);
+            AddSettingRow(ref stack, scale.transform);
+
+            AddSettingsSection(ref stack, content, "AUDIO", true);
+            UiSlider master = UiSlider.Create("Setting.MASTER VOLUME", content, "MASTER VOLUME",
+                0f, 1f, UiSettings.MasterVolume, 0.05f, Percent,
+                v => UiSettings.MasterVolume = Mathf.Round(v * 20f) / 20f, SettingsColumnWidth, SettingLabelWidth);
+            AddSettingRow(ref stack, master.transform);
+            // WP-068 U8: UI sounds on their own slider (the Interface bus).
+            UiSlider uiSounds = UiSlider.Create("Setting.UI SOUNDS", content, "UI SOUNDS",
+                0f, 1f, UiSettings.UiVolume, 0.05f, Percent,
+                v => UiSettings.UiVolume = Mathf.Round(v * 20f) / 20f, SettingsColumnWidth, SettingLabelWidth);
+            AddSettingRow(ref stack, uiSounds.transform);
+
+            AddSettingsSection(ref stack, content, "GRAPHICS", true);
+            UiStepper quality = UiStepper.Create("Setting.GRAPHICS QUALITY", content, "QUALITY", QualityNames(),
+                UiSettings.Quality, false, i => UiSettings.Quality = i);
+            AddSettingRow(ref stack, quality.transform);
+
+            AddSettingsSection(ref stack, content, "DATA", true);
+            UiSwitch telemetry = UiSwitch.Create("Telemetry", content, "RUN TELEMETRY", UiSettings.Telemetry,
+                on => UiSettings.Telemetry = on);   // WP-022E / WP-045: local files only, no identity data
+            AddSettingRow(ref stack, telemetry.transform);
+            AddCaptionUnder(ref stack, content, "TelemetryNote",
+                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.", 1, UiSpace.M);
+            UiSwitch hints = UiSwitch.Create("Hints", content, "HINTS", UiSettings.Hints,
+                on => UiSettings.Hints = on);       // WP-068 slice 10b (U9)
+            AddSettingRow(ref stack, hints.transform);
+            AddCaptionUnder(ref stack, content, "HintsNote",
+                "Brief hints during the first three runs, in play and on loading screens. Off leaves the rules.", 1, UiSpace.M);
+
+            scroll.SetContentHeight(stack.Cursor);
+            scroll.TrackSelectables();
+
+            if (width < 1f || width - column - (int)UiSpace.XL >= PreviewMinWidth)
+            {
+                BuildScalePreview(body, column + (int)UiSpace.XL);
+            }
+
+            UiInput.ChainVertical(display.Button, scale, master, uiSounds, quality.Button, telemetry.Button, hints.Button);
+            UiInput.Focus(display.Button);
+        }
+
+        private static string Percent(float value)
+        {
+            return Mathf.RoundToInt(value * 100f) + "%";
+        }
+
+        private static string[] QualityNames()
+        {
+            string[] names = QualitySettings.names;
+            if (names == null || names.Length == 0)
+            {
+                return new[] { "DEFAULT" };
+            }
+
+            var upper = new string[names.Length];
+            for (int i = 0; i < names.Length; i++)
+            {
+                upper[i] = names[i].ToUpperInvariant();
+            }
+
+            return upper;
+        }
+
+        /// <summary>A 56 px row at every TextScale: one line of Body at 1.25 (20 px) sits in it with room, and a taller row only pushes the pane into scrolling sooner.</summary>
+        private static void AddSettingRow(ref UiStack stack, Transform row)
+        {
+            stack.Add((RectTransform)row, SettingRowHeight);
+            stack.Gap(UiSpace.XS);
+        }
+
+        /// <summary>E6 section head: small-caps label over a hairline, with the AP-012 lozenge at the left end (the one ornament per section).</summary>
+        private static void AddSettingsSection(ref UiStack stack, RectTransform parent, string title, bool gapBefore)
+        {
+            if (gapBefore)
+            {
+                stack.Gap(UiSpace.L);
+            }
+
+            TMP_Text label = UiFactory.Label("Section." + title, parent, title, UiType.Label, UiColor.TextMuted);
+            stack.Add((RectTransform)label.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            stack.Gap(UiSpace.XS);
+            Image rule = UiFactory.Divider("Rule." + title, parent);
+            stack.Add((RectTransform)rule.transform, UiTokens.StrokeHairline);
+            Sprite ornament = UiArt.Divider();
+            if (ornament != null)
+            {
+                Image mark = UiFactory.NewImage("Ornament." + title, parent, UiColor.TextSecondary, ornament);
+                mark.preserveAspect = true;
+                var markRect = (RectTransform)mark.transform;
+                markRect.anchorMin = new Vector2(0f, 1f);
+                markRect.anchorMax = new Vector2(0f, 1f);
+                markRect.pivot = new Vector2(0f, 0.5f);
+                markRect.sizeDelta = new Vector2(80f, 12f);
+                markRect.anchoredPosition = new Vector2(0f, -stack.Cursor + UiTokens.StrokeHairline * 0.5f);
+            }
+
+            stack.Gap(UiSpace.S);
+        }
+
+        /// <summary>
+        /// E6 preview well (SHOULD): the HUD health block at 1:2 in a Look B screen corner,
+        /// sized by the UI scale the slider shows, so the change is visible before the next screen.
+        /// </summary>
+        private void BuildScalePreview(RectTransform body, float left)
+        {
+            RectTransform well = UiFactory.NewRect("Preview", body);
+            UiFactory.Fill(well);
+            well.offsetMin = new Vector2(left, well.offsetMin.y);
+            var stack = new UiStack(well);
+
+            TMP_Text label = UiFactory.Label("Label", well, "PREVIEW", UiType.Label, UiColor.TextMuted);
+            stack.Add((RectTransform)label.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
             stack.Gap(UiSpace.S);
 
-            TMP_Text caption = UiFactory.Label(
-                "Caption", _paneHost,
-                "Device preferences. They are saved on this machine and never touch your profile.",
-                UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption));
-            stack.Gap(UiSpace.XL);
+            float wellWidth = well.rect.width > 1f ? well.rect.width : PreviewMinWidth;
+            RectTransform frame = UiFactory.FramedCard("Screen", well, UiColor.BorderHairline, UiColor.SurfaceInset, UiFrame.Card);
+            stack.Add(frame, Mathf.Round(wellWidth * 9f / 16f));
+            RectTransform screen = UiFactory.ClipContent(UiFactory.CardContent(frame, UiSpace.XS));
 
-            // Readouts are updated in place by the change handlers: the pane is NOT
-            // rebuilt on a settings change, or the slider under the cursor would be
-            // destroyed mid-drag.
-            Slider scale = AddSettingSlider(
-                ref stack, "UI SCALE", "Menu.Graphics",
-                UiTheme.UiScaleMin, UiTheme.UiScaleMax, UiSettings.UiScale,
-                v => Mathf.RoundToInt(v * 100f) + "%",
-                v => UiSettings.UiScale = Mathf.Round(v * 20f) / 20f);
+            var plate = new GameObject("Plate", typeof(RectTransform)).AddComponent<RawImage>();
+            plate.transform.SetParent(screen, false);
+            UiFactory.Fill(plate.rectTransform);
+            plate.raycastTarget = false;
+            plate.texture = Resources.Load<Texture2D>("MenuPlates/plate_far");
+            if (plate.texture != null)
+            {
+                float aspect = (float)plate.texture.width / Mathf.Max(1, plate.texture.height);
+                float w = Mathf.Min(1f, (16f / 9f) / aspect);
+                plate.uvRect = new Rect((1f - w) * 0.5f, 0f, w, 1f);
+            }
+            else
+            {
+                plate.gameObject.SetActive(false);
+            }
 
-            Slider volume = AddSettingSlider(
-                ref stack, "MASTER VOLUME", "Menu.Audio",
-                0f, 1f, UiSettings.MasterVolume,
-                v => Mathf.RoundToInt(v * 100f) + "%",
-                v => UiSettings.MasterVolume = Mathf.Round(v * 20f) / 20f);
+            _previewHud = UiFactory.NewRect("PreviewHud", screen);
+            _previewHud.anchorMin = Vector2.zero;
+            _previewHud.anchorMax = Vector2.zero;
+            _previewHud.pivot = Vector2.zero;
+            _previewHud.sizeDelta = new Vector2(PreviewBlockWidth, PreviewBlockHeight);
+            BuildPreviewHealth(_previewHud);
 
-            // WP-068 U8: UI sounds on their own slider (the Interface bus; persisted with the other device preferences).
-            Slider uiSounds = AddSettingSlider(
-                ref stack, "UI SOUNDS", "Menu.Audio",
-                0f, 1f, UiSettings.UiVolume,
-                v => Mathf.RoundToInt(v * 100f) + "%",
-                v => UiSettings.UiVolume = Mathf.Round(v * 20f) / 20f);
-
-            int qualityCount = Mathf.Max(1, QualitySettings.names.Length);
-            Slider quality = AddSettingSlider(
-                ref stack, "GRAPHICS QUALITY", "Menu.Settings",
-                0f, qualityCount - 1, UiSettings.Quality,
-                v => UiSettings.QualityName(Mathf.RoundToInt(v)),
-                v => UiSettings.Quality = Mathf.RoundToInt(v));
-            quality.wholeNumbers = true;
-
-            // Reduced motion moved to the ACCESSIBILITY pane (WP-022G); Settings keeps the
-            // device preferences.
-
-            // WP-022M: fullscreen / windowed. The chip shows the requested mode at once; the
-            // switch itself is asynchronous on macOS (UiDisplayMode) and saved in ui-settings.json.
             stack.Gap(UiSpace.S);
-            UiButton display = AddToggleRow(ref stack, _paneHost, "Display", "DISPLAY",
-                () => (UiSettings.Fullscreen ? "FULLSCREEN" : "WINDOWED", UiSettings.Fullscreen),
-                () => { bool next = !UiSettings.Fullscreen; UiSettings.Fullscreen = next; return (next ? "FULLSCREEN" : "WINDOWED", next); }, "Display");
+            _previewCaption = UiFactory.Label("Caption", well, string.Empty, UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)_previewCaption.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
+            ShowPreviewScale(UiSettings.UiScale);
+        }
 
-            // Run telemetry (WP-022E, WP-045): local files only, no identity data; the
-            // player can still switch it off. Same toggle-button pattern as reduced motion.
-            stack.Gap(UiSpace.S);
-            UiButton telemetry = AddToggleRow(ref stack, _paneHost, "Telemetry", "RUN TELEMETRY",
-                () => (UiSettings.Telemetry ? "ON" : "OFF", UiSettings.Telemetry),
-                () => { UiSettings.Telemetry = !UiSettings.Telemetry; return (UiSettings.Telemetry ? "ON" : "OFF", UiSettings.Telemetry); }, "Telemetry");
-            AddCaptionUnder(ref stack, _paneHost, "TelemetryNote",
-                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.", 1, UiSpace.S);
+        /// <summary>A still of the HUD health block (label, value, bar at 64 %), full size; the parent scales it.</summary>
+        private static void BuildPreviewHealth(RectTransform host)
+        {
+            RectTransform panel = UiFactory.FramedCard("Health", host, UiColor.BorderHairline, UiColor.HudInk, UiFrame.HudPanel, UiColor.TextSecondary);
+            UiFactory.Fill(panel);
+            RectTransform inner = UiFactory.CardContent(panel, UiSpace.L);
 
-            // WP-068 slice 10b (U9): HINTS - onboarding tips during the first three runs (group gap 24, AD 10b-1 SHOULD-3).
-            UiButton hints = AddToggleRow(ref stack, _paneHost, "Hints", "HINTS",
-                () => (UiSettings.Hints ? "ON" : "OFF", UiSettings.Hints),
-                () => { UiSettings.Hints = !UiSettings.Hints; return (UiSettings.Hints ? "ON" : "OFF", UiSettings.Hints); }, "Hints");
-            AddCaptionUnder(ref stack, _paneHost, "HintsNote",
-                "Brief hints during the first three runs, in play and on loading screens. Off leaves the rules.", 1);
+            TMP_Text label = UiFactory.Label("Label", inner, "HEALTH", UiType.Label, UiColor.TextMuted, TextAnchor.UpperLeft);
+            UiFactory.Fill(label.rectTransform);
+            TMP_Text value = UiFactory.Numeric("Value", inner, "64 / 100", UiType.NumericM, UiColor.TextPrimary, TextAnchor.UpperRight, false);
+            UiFactory.Fill(value.rectTransform);
 
-            TMP_Text note = UiFactory.Label(
-                "Note", _paneHost,
-                "UI scale applies to the next screen you open. Use the arrow keys or the left stick on a slider.",
-                UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
+            UiBar bar = UiFactory.Bar("Bar", inner, UiColor.BarHealth, 18f);
+            var barRect = (RectTransform)bar.transform;
+            barRect.anchorMin = new Vector2(0f, 0f);
+            barRect.anchorMax = new Vector2(1f, 0f);
+            barRect.pivot = new Vector2(0f, 0f);
+            barRect.sizeDelta = new Vector2(0f, 18f);
+            barRect.anchoredPosition = Vector2.zero;
+            bar.SetValue(0.64f, true);
+        }
 
-            UiInput.ChainVertical(scale, volume, uiSounds, quality, display, telemetry, hints);
-            UiInput.Focus(scale);
+        private void ShowPreviewScale(float scale)
+        {
+            if (_previewHud == null)
+            {
+                return;
+            }
+
+            float s = PreviewHudScale * scale;
+            _previewHud.localScale = new Vector3(s, s, 1f);
+            _previewHud.anchoredPosition = new Vector2(PreviewHudMargin * s, PreviewHudMargin * s);
+            _previewCaption.text = "UI SCALE " + Percent(scale) + ". It applies to the next screen you open.";
         }
 
         private static string ReducedMotionLabel()
