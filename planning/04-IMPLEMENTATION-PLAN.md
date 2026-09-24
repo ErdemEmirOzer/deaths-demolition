@@ -2283,6 +2283,13 @@ S-07 WP-062J bulgusu (dövüş −22…−39 LUFS): **test kaynaklı**. Eski öl
 
 Tam PlayMode sıralı koşuda `MixGecisi` FAIL (dövüş −33,3 / −37,9): test girişi logu → faz Fighting, katman hedefleri yukarıda ama **4 müzik katmanı kaynağı durmuş** (`stop`, t 0,0; Started = true) — skor oturumun geri kalanında sessiz kalırdı (ürün hatası). Aygıt/yapılandırma sıfırlaması 0; önceki testlerden birinin durdurduğu, tam koşuda skor 2 kez, yataklar 12 kez yeniden başlatıldı (kaynak henüz belirsiz). Düzeltme: `MusicDirector.HealLayers` (0,5 s'de bir; durmuşsa dört katman aynı DSP anında yeniden) + `AmbienceDirector` yatak iyileştirmesi + `AudioConfigurationChanges` sayacı; test fazı/snapshot'ı kendisi kurar, giriş durumunu loglar; yeni regresyon `Muzik_KaynaklarDisaridanDurunca_Kendiliginden_Doner`. Tam sıralı koşu 314: MixGecisi geçti (dövüş −23,6 / break −29,9 / menü −31,5 LUFS), kalan 2 FAIL ses dışı (UiArt gamepad; WP-059 yaralanma ayırması — önceki iki tam koşuda geçti). Mix değerleri değişmedi.
 
+## WP-075 — Atmosfer ve Görünüm v3 + kalite kademeleri v2 (S-05, M4-R1)
+
+**Durum:** Faz A tamam (3812dc2: `planning/work-packages/WP-075-ATMOSPHERE-LOOK-V3-DIRECTION.md` + `QUALITY-TIERS-V2.md`); Faz B **C1 kademe çekirdeği** tamam (dal `wp-075-look-v3`). DEC-092 (60 fps), DEC-093 (5 GB).
+- C1: `DD.Prototype.Core.QualityTiers` (Current / Changed / Pick, 6 → 3 seviye uyumu, mod × kademe formülleri §3); QualitySettings 6 → 3 seviye **Performance / High / Cinematic** (varsayılan High, tüm platformlar) — High = eski Ultra seviyesi aynen (yalnız akış bütçesi 160 → 1024 MB, ADR-015-1 v3) ve değişmemiş `DD_URP_PipelineAsset`; `DD_URP_Performance` (render scale 0,85, MSAA kapalı, sert gölge 45 m / 2 kaskat, SSAO'suz `DD_URP_Renderer_Performance`, lodBias 1, 512 MB), `DD_URP_Cinematic` (MSAA 4×, 4096 gölge haritası, lodBias 2,5, 2048 MB). Üretici `QualityTierSetup.ApplyCli` (idempotent). `ArtImportContract.StreamingMipmapsBudgetMb` (160, tek değer) kalktı → kademe bütçesi.
+- Mod profili uygulaması (WP-070 `CameraModeService.CurrentProfile` → lodBias / gölge) WP-070 main'e girince bağlanır; formüller şimdiden test altında.
+- Testler: EditMode `QualityTiersTests` 3/3 + `ArtRepoPolicyTests` (kademe akış bütçesi) 10/10; PlayMode UI `UiTextScaleTests` + `UiArtSliceTests` 10/10 (ayar ekranı stepper'ı PERFORMANCE / HIGH / CINEMATIC); Editor profili değişmedi. Release (LZ4HC) 324,9 MB.
+
 ## WP-064B — QA bot hayatta kalma v2 + soak kapısı DEC-091 (S-10, 2026-09-24)
 
 **Durum:** Tamamlandı (S-10, HIZLI HAT §7, tek commit; yalnız `Diagnostics/Qa/**`, `tools/qa/soak_gate.py` + testi, planning). WP-064 (S-05) r3 bu commit + `wp-064b/wp064-gate-dec091.patch` (wp064_gate/wp064_run, iki tohum kararlılık + rapor) ile kapanır.
@@ -2303,3 +2310,5 @@ Tam PlayMode sıralı koşuda `MixGecisi` FAIL (dövüş −33,3 / −37,9): tes
 - C1: `DD.Prototype.Core.QualityTiers` (Current / Changed / Pick, 6 → 3 seviye uyumu, mod × kademe formülleri §3); QualitySettings 6 → 3 seviye **Performance / High / Cinematic** (varsayılan High, tüm platformlar) — High = eski Ultra seviyesi aynen (yalnız akış bütçesi 160 → 1024 MB, ADR-015-1 v3) ve değişmemiş `DD_URP_PipelineAsset`; `DD_URP_Performance` (render scale 0,85, MSAA kapalı, sert gölge 45 m / 2 kaskat, SSAO'suz `DD_URP_Renderer_Performance`, lodBias 1, 512 MB), `DD_URP_Cinematic` (MSAA 4×, 4096 gölge haritası, lodBias 2,5, 2048 MB). Üretici `QualityTierSetup.ApplyCli` (idempotent). `ArtImportContract.StreamingMipmapsBudgetMb` (160, tek değer) kalktı → kademe bütçesi.
 - Mod profili uygulaması (WP-070 `CameraModeService.CurrentProfile` → lodBias / gölge) WP-070 main'e girince bağlanır; formüller şimdiden test altında.
 - Testler: EditMode `QualityTiersTests` 3/3 + `ArtRepoPolicyTests` (kademe akış bütçesi) 10/10; PlayMode UI `UiTextScaleTests` + `UiArtSliceTests` 10/10 (ayar ekranı stepper'ı PERFORMANCE / HIGH / CINEMATIC); Editor profili değişmedi. Release (LZ4HC) 324,9 MB.
+
+
