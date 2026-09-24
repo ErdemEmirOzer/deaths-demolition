@@ -354,6 +354,12 @@ namespace DD.Prototype.UI
             shape.preserveAspect = true;
             shape.enabled = false;
 
+            // V1 key cap: the authored cap is an outline (rim + bevel), so it rides over the filled pill in the text's
+            // colour - cream text + cream rim on a dark cap, dark text + dark rim on the cream cap of a primary button.
+            Image rim = UiFactory.NewImage("Rim", rect, ink);
+            UiFactory.Fill((RectTransform)rim.transform);
+            rim.enabled = false;
+
             TMP_Text text = UiFactory.Label("Text", rect, string.Empty, UiType.Caption, ink, TextAnchor.MiddleCenter);
             text.enableWordWrapping = false;
             text.overflowMode = TextOverflowModes.Overflow;
@@ -363,7 +369,7 @@ namespace DD.Prototype.UI
             UiFactory.Fill((RectTransform)text.transform);
 
             UiPrompt prompt = go.AddComponent<UiPrompt>();
-            prompt.Configure(action, back, shape, text, size);
+            prompt.Configure(action, back, shape, rim, text, size);
             return prompt;
         }
     }
@@ -377,6 +383,7 @@ namespace DD.Prototype.UI
         private UiPromptAction _action;
         private Image _back;
         private Image _shape;
+        private Image _rim;
         private TMP_Text _text;
         private float _size;
 
@@ -419,11 +426,12 @@ namespace DD.Prototype.UI
         /// <summary>The V1 shape currently drawn ("Pad.FaceSouth"...), or null when the prompt is a cap with text. Tests read it.</summary>
         public string CurrentShape => _shape != null && _shape.enabled && _shape.sprite != null ? _shape.sprite.name : null;
 
-        internal void Configure(UiPromptAction action, Image back, Image shape, TMP_Text text, float size)
+        internal void Configure(UiPromptAction action, Image back, Image shape, Image rim, TMP_Text text, float size)
         {
             _action = action;
             _back = back;
             _shape = shape;
+            _rim = rim;
             _text = text;
             _size = size;
             UiPromptDriver.Ensure();
@@ -524,22 +532,33 @@ namespace DD.Prototype.UI
                 edgeImage.enabled = !drawShape;
             }
 
+            // A key: the kit's filled pill in the paper colour (the text's contrast is measured on it) with the V1 cap
+            // outline over it (9-sliced, authored 2× at 128 px tall → drawn at the prompt's height). A pad button without
+            // its shape keeps the disc.
+            Sprite cap = drawShape || glyph.Round ? null : UiArt.KeyCap(width / _size > 1.25f);
+            if (_rim != null)
+            {
+                _rim.enabled = cap != null;
+                if (cap != null)
+                {
+                    _rim.sprite = cap;
+                    _rim.type = Image.Type.Sliced;
+                    _rim.fillCenter = false;
+                    _rim.pixelsPerUnitMultiplier = cap.rect.height / Mathf.Max(1f, _size);
+                }
+            }
+
             if (drawShape)
             {
                 return;
             }
 
-            // A key: the V1 cap (9-sliced around the live text, authored 2× at 128 px tall → drawn at the prompt's
-            // height) when the A4 atlas has it; the kit's pill otherwise. A pad button without its shape keeps the disc.
-            Sprite cap = glyph.Round ? null : UiArt.KeyCap(width / _size > 1.25f);
-            _back.sprite = glyph.Round ? UiSprites.Disc : (cap != null ? cap : UiSprites.Chip);
+            _back.sprite = glyph.Round ? UiSprites.Disc : UiSprites.Chip;
             _back.type = glyph.Round ? Image.Type.Simple : Image.Type.Sliced;
-            _back.pixelsPerUnitMultiplier = cap != null ? cap.rect.height / Mathf.Max(1f, _size) : 1f;
             if (edgeImage != null)
             {
                 edgeImage.sprite = _back.sprite;
                 edgeImage.type = _back.type;
-                edgeImage.pixelsPerUnitMultiplier = _back.pixelsPerUnitMultiplier;
             }
         }
     }
