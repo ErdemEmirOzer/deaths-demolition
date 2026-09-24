@@ -752,8 +752,8 @@
     "tr": "İletken"
   },
   "tree.run.link.raiju.1.desc": {
-    "en": "While you carry Raiju, your classic weapon's Chain gains +{count} jump.",
-    "tr": "Raiju sendeyken klasik silahının Zinciri +{count} sıçrama kazanır."
+    "en": "For the round you pick up Raiju, your classic weapon's Chain gains +{count} jump.",
+    "tr": "Raiju'yu aldığın round boyunca klasik silahının Zinciri +{count} sıçrama kazanır."
   },
   "tree.run.link.raiju.2.name": {
     "en": "Storm",
