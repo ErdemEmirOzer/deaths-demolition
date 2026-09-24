@@ -241,7 +241,7 @@ namespace DD.Prototype.Audio
 
             float period = 60f / set.LoopRpm;
             bool continuing = _active && string.Equals(_set.AudioId, set.AudioId, System.StringComparison.Ordinal)
-                && now - _lastShot <= period * ReleasePeriods;
+                && now - _lastShot <= period * ReleasePeriods + Time.deltaTime;
 
             if (!continuing)
             {
@@ -274,7 +274,9 @@ namespace DD.Prototype.Audio
         /// <summary>Per frame, unpaused: release on trigger let-go, fade the body loop out.</summary>
         public void Tick(float unscaledDeltaTime)
         {
-            if (_active && _set.IsHybrid && Time.time - _lastShot > (60f / _set.LoopRpm) * ReleasePeriods)
+            // + this frame's delta: a hitch longer than the release window must not end a burst the weapon is still firing
+            // (the next shot lands on the frame after the hitch; WP-051C flake, LoopStarts 2 in one burst).
+            if (_active && _set.IsHybrid && Time.time - _lastShot > (60f / _set.LoopRpm) * ReleasePeriods + Time.deltaTime)
             {
                 Release();
             }

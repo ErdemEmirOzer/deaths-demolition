@@ -851,17 +851,28 @@ namespace DD.Prototype.Tests.PlayMode
             int starts = f.LoopStarts, releases = f.Releases;
 
             // SMG1 900 RPM: ilk atış tam ses, sonrakiler transient + gövde döngüsü; bırakınca kuyruk bir kez.
-            for (int i = 0; i < 6; i++)
+            // Deterministik (WP-051C kararsızlığı): oyun zamanı kare başına tam 1/60 s — 4 kare = 66,7 ms aralık, duvar
+            // saatindeki takılma seriyi bölemez; her atış 2 m ayrı → AudioEvents yinelenen-ipucu kısması (1,6 m / 40 ms) devreye girmez.
+            Time.captureDeltaTime = 1f / 60f;
+            try
             {
-                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", at, 0.75f, 50);
-                if (i == 0) Assert.AreEqual(AudioSoundId.WeaponSmg1Fire, f.LastVoice, "İlk atış tam SMG1 sesi.");
-                yield return new WaitForSeconds(0.066f);
+                for (int i = 0; i < 6; i++)
+                {
+                    AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", at + Vector3.right * (2f * i), 0.75f, 50);
+                    if (i == 0) Assert.AreEqual(AudioSoundId.WeaponSmg1Fire, f.LastVoice, "İlk atış tam SMG1 sesi.");
+                    for (int k = 0; k < 4; k++) yield return null;
+                }
+
+                Assert.AreEqual(AudioSoundId.WeaponSmg1Transient, f.LastVoice, "Seri içinde transient.");
+                Assert.AreEqual(starts + 1, f.LoopStarts, "Seri başına tek döngü başlangıcı.");
+                Assert.IsTrue(f.LoopPlaying, "Tetik basılıyken gövde döngüsü çalar.");
+                for (int k = 0; k < 15; k++) yield return null;   // 0,25 s oyun zamanı: bırakış (107 ms) + 40 ms sönüş
+            }
+            finally
+            {
+                Time.captureDeltaTime = 0f;
             }
 
-            Assert.AreEqual(AudioSoundId.WeaponSmg1Transient, f.LastVoice, "Seri içinde transient.");
-            Assert.AreEqual(starts + 1, f.LoopStarts, "Seri başına tek döngü başlangıcı.");
-            Assert.IsTrue(f.LoopPlaying, "Tetik basılıyken gövde döngüsü çalar.");
-            yield return new WaitForSeconds(0.25f);
             Assert.IsFalse(f.LoopPlaying, "Tetik bırakılınca döngü söner.");
             Assert.AreEqual(releases + 1, f.Releases, "Bırakış bir kez.");
             Assert.AreEqual(AudioSoundId.WeaponTailSmgOpen, f.LastTail, "Varsayılan mekân Open.");
