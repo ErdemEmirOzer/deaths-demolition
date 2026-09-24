@@ -29,9 +29,8 @@ namespace DD.Prototype.Tests.PlayMode
     [Category("WP059")]
     public sealed class PlayerExperienceSliceTests
     {
+        /// <summary>Frame-noise allowance between a measured frame and its control frame (allocation counts).</summary>
         private const int HarnessAllocationSlack = 12;
-        /// <summary>Frames a per-frame counter sample is looked for after the frame it belongs to (the profiler may hand it over late).</summary>
-        private const int SampleWindowFrames = 6;
         private SpecialWeaponSahne _s;
 
         [UnityTearDown]
@@ -242,17 +241,30 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ------------------------------------------------------------------ hurt path allocation
 
+        /// <summary>
+        /// WP-059 / WP-059D: the hurt path (PlayerHealth.ApplyDamage → Damaged/HealthChanged subscribers: feedback,
+        /// flinch, shake, rumble, HUD edges, audio) allocates nothing per hit.
+        ///
+        /// WP-059D: the old form took the WORST frame of a 6-frame window after each of 10 hits and failed once in a
+        /// full suite run (S-08, main ~eb0ff98: one frame of 3 370 allocations / 200 KB ≈ 59 B each, idle 7; the two
+        /// full runs before it passed). A per-hit allocation would have shown on all ten hits in every run, so that
+        /// frame was scene noise inside the window, not the hurt path. Deterministic form (the WP-044 referee
+        /// method, WP-032H pattern): inside ONE frame, <see cref="HurtAmplify"/> hits go through the real path; a
+        /// control frame runs the same loop without the damage call; min over <see cref="HurtPairs"/> pairs on both
+        /// sides (a stray spike needs to hit every pair to move a min), plus the frame after the burst for
+        /// delayed per-hit work; a 64 × 1 KB positive control proves the counter sees the frame it is read in.
+        /// </summary>
         [UnityTest]
         public IEnumerator YaralanmaYolu_KareBasiAyirma_Sifir()
         {
+            const int HurtAmplify = 25, HurtPairs = 4;
+            const float HurtFraction = 0.002f;   // 25 hits = 5 % per burst; warm-up + 4 bursts leave ~70 % health (no low-health edge, no death)
             yield return Kur();
             _s.Rig.Health.DiagnosisInvulnerable = false;
             bool profilerWas = UnityEngine.Profiling.Profiler.enabled;
             UnityEngine.Profiling.Profiler.enabled = true;
             // WP-059 finding: with Application.targetFrameRate capped (the bootstrapper sets 60 once a fixture has
-            // booted the full flow, e.g. FlowSmokeTest) the recorders' LastValue never updates in the Editor test
-            // runner (CurrentValue still moves) — every frame sample reads 0, the positive control fails. Uncapped
-            // for the measurement, restored after; reads are the max over a short window for good measure.
+            // booted the full flow) the recorders' LastValue never updates in the Editor test runner. Uncapped here.
             int fpsWas = Application.targetFrameRate;
             Application.targetFrameRate = -1;
             yield return null;
@@ -263,44 +275,57 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
                 Assert.IsTrue(bytes.Valid && count.Valid, "Profiler kare sayaçları yok.");
 
-                // Positive control (the counter is read over the next three frames: which frame a coroutine step lands in
-                // relative to the profiler's frame boundary is not ours to fix; the max over three is).
-                var yem = new object[300];
-                for (int i = 0; i < yem.Length; i++) yem[i] = new byte[80];
-                long control = 0;
-                var diag = new System.Text.StringBuilder("[DD-TEST] wp059.hurt-alloc control frames:");
-                for (int f = 0; f < SampleWindowFrames; f++)
-                {
-                    yield return null;
-                    control = Math.Max(control, count.LastValue);
-                    diag.Append(" last=").Append(count.LastValue);
-                }
-                Debug.Log(diag.ToString());
-                Assert.Greater(control, 250, "Pozitif kontrol: sayaç 300 ayırmayı görmedi (" + control + ", profiler " + UnityEngine.Profiling.Profiler.enabled + ").");
-                GC.KeepAlive(yem);
-
-                // Warm-up hits (both clips), then settle.
+                // Warm-up: single hits from both sides (both clips) and one full burst, so one-time sizing (pools,
+                // lookups) happens before the measured frames — the WP-032H "first step sizes the arrays" rule.
                 Vur(Vector3.forward, 0.02f); yield return null;
                 Vur(Vector3.right, 0.02f); yield return null;
+                for (int k = 0; k < HurtAmplify; k++) Vur((k & 1) == 0 ? Vector3.forward : Vector3.right, HurtFraction);
                 yield return new WaitForSeconds(1.5f);
-                long idleSum = 0; int idleN = 5;
-                for (int i = 0; i < idleN; i++) { yield return null; idleSum += count.LastValue; }
-                long idle = idleSum / idleN;
 
-                // Ten hits (alternating direction), health never near zero (0.5 % each); each hit frame read over the window.
-                long worst = 0, worstBytes = 0;
-                for (int i = 0; i < 10; i++)
+                long controlMin = long.MaxValue, controlMax = 0, hitMin = long.MaxValue, afterMin = long.MaxValue, hitBytesAtMin = 0;
+                var pairs = new System.Text.StringBuilder();
+                for (int pair = 0; pair < HurtPairs; pair++)
                 {
-                    Vur((i & 1) == 0 ? Vector3.forward : Vector3.right, 0.005f);
-                    for (int f = 0; f < SampleWindowFrames; f++)
-                    {
-                        yield return null;
-                        if (count.LastValue > worst) { worst = count.LastValue; worstBytes = bytes.LastValue; }
-                    }
+                    yield return new WaitForSeconds(0.6f);   // the previous burst's clip, shake and edges have settled
+
+                    // control frame: the same loop shape, no damage call
+                    Transform t = _s.Rig.transform;
+                    Vector3 sink = Vector3.zero;
+                    for (int k = 0; k < HurtAmplify; k++) sink += t.position + t.TransformDirection((k & 1) == 0 ? Vector3.forward : Vector3.right) * 1.5f;
+                    yield return null;                                  // LastValue = the control frame
+                    long control = count.LastValue;
+
+                    for (int k = 0; k < HurtAmplify; k++) Vur((k & 1) == 0 ? Vector3.forward : Vector3.right, HurtFraction);
+                    yield return null;                                  // LastValue = the burst frame
+                    long hit = count.LastValue, hitBytes = bytes.LastValue;
+                    yield return null;                                  // LastValue = the frame after (delayed per-hit work)
+                    long after = count.LastValue;
+
+                    controlMin = Math.Min(controlMin, control);
+                    controlMax = Math.Max(controlMax, control);
+                    if (hit < hitMin) { hitMin = hit; hitBytesAtMin = hitBytes; }
+                    afterMin = Math.Min(afterMin, after);
+                    pairs.Append(' ').Append(control).Append('/').Append(hit).Append('/').Append(after);
+                    if (sink.x == float.MaxValue) Debug.Log(sink);
                 }
 
-                Debug.Log("[DD-TEST] wp059.hurt-alloc idle=" + idle + " worstHitFrame=" + worst + "/" + worstBytes + "B");
-                Assert.LessOrEqual(worst, idle + HarnessAllocationSlack, "Yaralanma yolu karede ayırma yaptı: " + worst + " (idle " + idle + ").");
+                var keep = new object[64];
+                for (int i = 0; i < keep.Length; i++) keep[i] = new byte[1024];
+                yield return null;
+                long positiveCount = count.LastValue, positiveBytes = bytes.LastValue;
+                GC.KeepAlive(keep);
+
+                Debug.Log("[DD-TEST] wp059d.hurt-alloc hits/frame=" + HurtAmplify + " control/hit/after per pair:" + pairs
+                          + " controlMin=" + controlMin + " controlMax=" + controlMax + " hitMin=" + hitMin + " (" + hitBytesAtMin + " B) afterMin=" + afterMin
+                          + " positive=" + positiveCount + " / " + positiveBytes + " B health=" + _s.Rig.Health.Current);
+                Assert.GreaterOrEqual(positiveCount, 64, "Pozitif kontrol: sayaç 64 × 1 KB ayırmayı görmedi (ölçüm kör).");
+                Assert.GreaterOrEqual(positiveBytes, 64 * 1024, "Pozitif kontrol: 64 KB görülmedi.");
+                Assert.IsFalse(_s.Rig.Health.IsDead, "Ölçüm sırasında oyuncu öldü (ölüm yolu ayrı ölçülür).");
+                // A per-hit allocation adds ≥ HurtAmplify (25) to the burst frame; the gate leaves room only for frame noise.
+                Assert.LessOrEqual(hitMin - controlMin, HarnessAllocationSlack,
+                    "Yaralanma yolu vuruş başına ayırıyor: " + HurtAmplify + " vuruşluk karede +" + (hitMin - controlMin) + " (kontrol " + controlMin + ").");
+                Assert.LessOrEqual(afterMin - controlMin, HarnessAllocationSlack,
+                    "Yaralanma yolu vuruştan sonraki karede ayırıyor: +" + (afterMin - controlMin) + " (kontrol " + controlMin + ").");
             }
 
             UnityEngine.Profiling.Profiler.enabled = profilerWas;

@@ -83,6 +83,16 @@ namespace DD.Prototype.UI
         private int _healthMax = int.MinValue;
         private bool _healthKnown;
         private int _regenTenths = int.MinValue;
+
+        // WP-059D: the hurt path allocated nothing but these two strings — "cur / max" on every whole point a hit
+        // (or regen) moves, and "recovery in X.Xs" every tenth the countdown moves (polled per frame). Built once
+        // per value and reused: the "cur / max" table in full when the max is first seen (run bind / an upgrade,
+        // never mid-fight), the countdown lazily per tenth for the whole session. Same text as before.
+        private const int HealthTextCacheMax = 1000;
+        private const int RegenTextCacheTenths = 600;
+        private string[] _healthTexts;
+        private int _healthTextsMax = int.MinValue;
+        private static readonly string[] s_regenTexts = new string[RegenTextCacheTenths + 1];
         private bool _dead;
         private bool _regenerating;
 
@@ -214,7 +224,7 @@ namespace DD.Prototype.UI
                 _healthKnown = true;
                 _healthCurrent = current;
                 _healthMax = max;
-                HealthText = current + " / " + max;
+                HealthText = HealthTextFor(current, max);
                 changed |= RunHudField.Health;
             }
 
@@ -240,7 +250,7 @@ namespace DD.Prototype.UI
                 }
                 else if (regenTenths > 0)
                 {
-                    HealthStateText = "recovery in " + (regenTenths / 10f).ToString("0.0") + "s";
+                    HealthStateText = RegenTextFor(regenTenths);
                     HealthStateTone = RunHudTone.Neutral;
                 }
                 else
@@ -253,6 +263,46 @@ namespace DD.Prototype.UI
             }
 
             return changed;
+        }
+
+        /// <summary>WP-059D: "cur / max" from the per-max table (built when the max is first seen); outside the table, formatted as before.</summary>
+        private string HealthTextFor(int current, int max)
+        {
+            if (max < 0 || max > HealthTextCacheMax || current < 0 || current > max)
+            {
+                return current + " / " + max;
+            }
+
+            if (_healthTexts == null || _healthTextsMax != max)
+            {
+                _healthTexts = new string[max + 1];
+                for (int i = 0; i <= max; i++)
+                {
+                    _healthTexts[i] = i + " / " + max;
+                }
+
+                _healthTextsMax = max;
+            }
+
+            return _healthTexts[current];
+        }
+
+        /// <summary>WP-059D: "recovery in X.Xs", cached per tenth for the session (first use of a tenth formats it).</summary>
+        private static string RegenTextFor(int regenTenths)
+        {
+            if (regenTenths < 0 || regenTenths > RegenTextCacheTenths)
+            {
+                return "recovery in " + (regenTenths / 10f).ToString("0.0") + "s";
+            }
+
+            string text = s_regenTexts[regenTenths];
+            if (text == null)
+            {
+                text = "recovery in " + (regenTenths / 10f).ToString("0.0") + "s";
+                s_regenTexts[regenTenths] = text;
+            }
+
+            return text;
         }
 
         // ============================================================ classic weapon
