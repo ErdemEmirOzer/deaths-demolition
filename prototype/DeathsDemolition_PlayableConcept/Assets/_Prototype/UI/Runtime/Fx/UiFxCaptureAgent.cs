@@ -20,17 +20,22 @@ namespace DD.Prototype.UI
         private const string Flag = "-ddUiFxCapture";
         /// <summary><c>-ddUiFxCaptureShop &lt;png&gt;</c> (with <c>-ddDirectToRun</c>): open the round-end shop over a live run and capture it with the frozen-frame blur.</summary>
         private const string ShopFlag = "-ddUiFxCaptureShop";
+        /// <summary><c>-ddUiFxCaptureBoot &lt;folder&gt;</c>: the boot blot at fixed time-map thresholds (the AP-012 iso-contour
+        /// t: 0.2 / 0.3 / 0.4 / 0.6 / 1.0) on a frozen Fx clock — the engine twin of the art package's offline renders.</summary>
+        private const string BootFlag = "-ddUiFxCaptureBoot";
         private const float T = 1000f;   // frozen Fx clock
 
         private string _folder;
         private string _shopPng;
+        private string _bootFolder;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
         {
             string folder = Arg(Flag);
             string shop = Arg(ShopFlag);
-            if (string.IsNullOrEmpty(folder) && string.IsNullOrEmpty(shop))
+            string boot = Arg(BootFlag);
+            if (string.IsNullOrEmpty(folder) && string.IsNullOrEmpty(shop) && string.IsNullOrEmpty(boot))
             {
                 return;
             }
@@ -40,10 +45,17 @@ namespace DD.Prototype.UI
             var agent = go.AddComponent<UiFxCaptureAgent>();
             agent._folder = folder;
             agent._shopPng = shop;
+            agent._bootFolder = boot;
         }
 
         private IEnumerator Start()
         {
+            if (!string.IsNullOrEmpty(_bootFolder))
+            {
+                yield return BootRoutine();
+                yield break;
+            }
+
             if (!string.IsNullOrEmpty(_shopPng))
             {
                 yield return ShopRoutine();
@@ -106,6 +118,59 @@ namespace DD.Prototype.UI
                 Debug.Log("[UiFxCapture] frozen frame " + blurPng + " " + rt.width + "x" + rt.height);
                 Destroy(only);
             }
+            Application.Quit(0);
+        }
+
+        private IEnumerator BootRoutine()
+        {
+            Directory.CreateDirectory(_bootFolder);
+            PrototypeUiFlow.ArtificialLoadSeconds = 3f;   // the boot stays up while the frames are taken
+            float deadline = Time.realtimeSinceStartup + 10f;
+            UiFx blot = null;
+            while (blot == null && Time.realtimeSinceStartup < deadline)
+            {
+                if (UiCurtain.Instance != null && UiCurtain.Instance.BootVisible)
+                {
+                    foreach (UiFx fx in UiCurtain.Instance.GetComponentsInChildren<UiFx>(true))
+                    {
+                        if (fx.Mode == UiFxMode.InkReveal && Mathf.Approximately(fx.Duration, UiCurtain.BootBlotSeconds) && fx.StartTime > -1000f && fx.StartTime < 1e6f)
+                        {
+                            blot = fx;
+                        }
+                    }
+                }
+
+                yield return null;
+            }
+
+            if (blot == null)
+            {
+                Debug.LogError("[UiFxCapture] boot blot not found");
+                Application.Quit(1);
+                yield break;
+            }
+
+            // Mark mode reads m / InkTimeMax.w against progress × (1 + band 0.04): progress = t / (1.04 × max) puts the
+            // front on the time map's t iso-contour.
+            float start = blot.StartTime;
+            float max = UiFxGlobals.InkTimeMax.w;
+            foreach (float t in new[] { 0.2f, 0.3f, 0.4f, 0.6f, 1.0f })
+            {
+                float progress = Mathf.Min(1f, t / (1.04f * max));
+                UiFxGlobals.TimeOverride = start + progress * UiCurtain.BootBlotSeconds;
+                UiFxGlobals.Write();
+                yield return null;
+                yield return new WaitForEndOfFrame();
+                Texture2D frame = ScreenCapture.CaptureScreenshotAsTexture();
+                string file = Path.Combine(_bootFolder, "boot-blot-t" + t.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + ".png");
+                File.WriteAllBytes(file, frame.EncodeToPNG());
+                Debug.Log("[UiFxCapture] boot " + file + " progress=" + progress.ToString("0.000") + " " + frame.width + "x" + frame.height);
+                Destroy(frame);
+            }
+
+            UiFxGlobals.TimeOverride = null;
+            PrototypeUiFlow.ArtificialLoadSeconds = 0f;
+            Debug.Log("[UiFxCapture] boot done");
             Application.Quit(0);
         }
 
