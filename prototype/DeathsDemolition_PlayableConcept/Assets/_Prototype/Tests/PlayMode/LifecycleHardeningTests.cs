@@ -191,7 +191,8 @@ namespace DD.Prototype.Tests.PlayMode
             // karede gold sayacı) olaylarına da abone — ikisi de sahne-yerel, OnDestroy'da çıkar.
             var beklenenFark = new Dictionary<string, int>
             {
-                { "RunEvents.RunStarted", 1 }, { "RunEvents.RoundStarted", 1 }, { "RunEvents.RoundCompleted", 1 },
+                { "RunEvents.RunStarted", 1 }, { "RunEvents.RoundStarted", 1 },
+                { "RunEvents.RoundCompleted", 2 },   // WP-078: the camera rig (scene-local, OnDisable removes) logs its inside-collider counter
                 { "RunEvents.RoundPoolExhausted", 1 }, { "RunEvents.GoldChanged", 1 }, { "RunEvents.PhaseChanged", 0 },
                 { "RunEvents.CountdownTick", 0 }, { "RunEvents.RunEnded", 0 }, { "RunFlowClock.FrozenChanged", 0 },
                 { "ProfileService.Changed", -1 }, { "InputSourceRegistry.CurrentChanged", 0 },
