@@ -417,6 +417,29 @@ namespace DD.Prototype.Audio
         ImpactV3DirtHeavy = 520,
         ImpactV3PaperLight = 521,
         ImpactV3PaperMedium = 522,
-        ImpactV3PaperHeavy = 523
+        ImpactV3PaperHeavy = 523,
+
+        // ---- WP-072 B4 · DEC-094 Specials SW_ARC (Raiju chain lightning) / SW_GEL (Namekuji slick gel), S-02 WP-069 §6/§7 events (AP-011 v019)
+        SwArcCharge = 530,
+        SwArcFire = 531,
+        SwArcSphereLoop = 532,
+        SwArcChainJump = 533,
+        SwArcShockLoop = 534,
+        SwArcShockEnd = 535,
+        SwArcCellOut = 536,
+        SwArcCellIn = 537,
+        SwArcReady = 538,
+        SwGelFire = 539,
+        SwGelFlightLoop = 540,
+        SwGelHit = 541,
+        SwGelHitFlesh = 542,
+        SwGelPuddleCreate = 543,
+        SwGelPuddleLoop = 544,
+        SwGelPuddleExpire = 545,
+        SwGelSlideEnemy = 546,
+        SwGelSlidePlayer = 547,
+        SwGelCanisterOut = 548,
+        SwGelCanisterIn = 549,
+        SwGelReady = 550
     }
 }

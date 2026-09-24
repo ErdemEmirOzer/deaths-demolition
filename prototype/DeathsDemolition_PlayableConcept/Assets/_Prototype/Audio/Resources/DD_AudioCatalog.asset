@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v018
-  _sourceHash: 5e936a5b3eab830abdbc2c6fbf934f7c7f1e13bf89009c1ef22c37c2f1addcd5
+  _manifestVersion: ap011-v019
+  _sourceHash: 98bbd2bf432ba5ebc9f90ad8ffb72389592e6e410e66ba9beaf93f9a4be4047c
   _entries:
   - Sound: 10
     Clips:
@@ -4763,6 +4763,331 @@ MonoBehaviour:
       shoji paper: four hits of the take"
     NoiseFloorDb: -120
     DcDb: -134.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 530
+    Clips:
+    - {fileID: 8300000, guid: 1283bf96e7f1b4a0fbffbbc394659edd, type: 3}
+    - {fileID: 8300000, guid: cafbe3c6c764b4f3c89cbf8e7852b2a2, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -7.47
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R7 coil whine just before the discharge (1.95\u20132.45 s) HP
+      90 + 110 Hz hum \u221210 dB + glass 2.4 k \u221216 dB, fade-in 60 ms"
+    NoiseFloorDb: -120
+    DcDb: -83.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 531
+    Clips:
+    - {fileID: 8300000, guid: 447f1a57f89f24c828a24e61c08dfc43, type: 3}
+    - {fileID: 8300000, guid: b4749a2557ae7401d984315bb457bdc7, type: 3}
+    - {fileID: 8300000, guid: b3825c8e840a74ea1aeef1022d3295fe, type: 3}
+    - {fileID: 8300000, guid: 387de52c573b947f1ac020ceec9c4b4b, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R7 discharge crack + glass \"v\u0131nn\" \u221210 dB + air release
+      (pink HP 1 k) \u221214 dB"
+    NoiseFloorDb: -120
+    DcDb: -89.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 532
+    Clips:
+    - {fileID: 8300000, guid: 8c9f057119ede415e84597dcbddc93e4, type: 3}
+    Loop: 1
+    Lufs: -22
+    TruePeakDb: -9.98
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R7 arc buzz 3.0\u20134.1 s HP 90 + 110 Hz hum \u22128 + trembling
+      glass 2.4 k \u221212"
+    NoiseFloorDb: -120
+    DcDb: -198.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 533
+    Clips:
+    - {fileID: 8300000, guid: 35bdd465f3c1d470cb313434dfb5e124, type: 3}
+    - {fileID: 8300000, guid: eecdc98905ef94837a57bbe599ade7e9, type: 3}
+    - {fileID: 8300000, guid: 1260d643bd74a4ec097ee1f6b93149e2, type: 3}
+    - {fileID: 8300000, guid: 2bc08079611444f13b0ea6024a0096f5, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R7 post-discharge sizzle snaps HP 300 (short \"\xE7\u0131t-\xC7ZT\")"
+    NoiseFloorDb: -120
+    DcDb: -96.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 534
+    Clips:
+    - {fileID: 8300000, guid: 45b47164f73534ac1bc6c734e7881429, type: 3}
+    Loop: 1
+    Lufs: -22.51
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R7 crackling arc 4.3\u20135.1 s HP 250 (body crackle)"
+    NoiseFloorDb: -120
+    DcDb: -214.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 535
+    Clips:
+    - {fileID: 8300000, guid: bce7f47ed41a14ca2a8af0fb94ef25bf, type: 3}
+    - {fileID: 8300000, guid: 1cdbebe5c6422496ca7d19c3a8dcc009, type: 3}
+    Loop: 0
+    Lufs: -27.73
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R7 fading sizzle 8.0\u20138.7 \"sss\" + ash tick"
+    NoiseFloorDb: -120
+    DcDb: -121.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 536
+    Clips:
+    - {fileID: 8300000, guid: 5a23b978caf3d418196f09caf0aa125a, type: 3}
+    - {fileID: 8300000, guid: e27320de6f2ee49ed9329fbe1faa28a4, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -5.08
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 glass/brass \"t\u0131n\" (rin bell +7 st, short) + contact spark
+      (R7 snap \u22126 dB)"
+    NoiseFloorDb: -120
+    DcDb: -121.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 537
+    Clips:
+    - {fileID: 8300000, guid: 8cb377281f8a64fbf81998e2ddc6b133, type: 3}
+    - {fileID: 8300000, guid: 7b1239f6d2d934883b981014a42c7e8c, type: 3}
+    Loop: 0
+    Lufs: -23.71
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R4 lock clack + coil re-hum (R7 whine swell) \u22126 dB"
+    NoiseFloorDb: -120
+    DcDb: -72.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 538
+    Clips:
+    - {fileID: 8300000, guid: e2902ada1e36346bf9d038a61930fd71, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -5.68
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 coil fills (R7 1.4\u20132.3 s) + rin bell (brass, Specials only)
+      at the top"
+    NoiseFloorDb: -120
+    DcDb: -155.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 539
+    Clips:
+    - {fileID: 8300000, guid: e875832b407a54d35bda9563d3e68329, type: 3}
+    - {fileID: 8300000, guid: de23b7c2b0ce14205bd3523d2afb49a7, type: 3}
+    - {fileID: 8300000, guid: 45487f208b91b46b09cb50f80394c058, type: 3}
+    - {fileID: 8300000, guid: 0d80bb5b0d1c744518dc796c7e816527, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -2.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 copper chamber \"P\u015E\u015ET\" (pink hiss) + R8 pressurised
+      squirt 0.4\u20131.0 s \"PLOP\""
+    NoiseFloorDb: -120
+    DcDb: -84.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 540
+    Clips:
+    - {fileID: 8300000, guid: 6799cb915bfa1415d850dcc24d92906c, type: 3}
+    Loop: 1
+    Lufs: -27.96
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R8 thick bubbling 1.4\u20132.3 s HP 150 (wet \"v\u0131c\u0131k-flap\")"
+    NoiseFloorDb: -120
+    DcDb: -222
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 541
+    Clips:
+    - {fileID: 8300000, guid: de0fca5e8541143c9b930d37577ee693, type: 3}
+    - {fileID: 8300000, guid: c173620a543c34eada1d83c3a39a26c6, type: 3}
+    - {fileID: 8300000, guid: cfaa7d576bc4a45298520d0bb0a2c96b, type: 3}
+    Loop: 0
+    Lufs: -22.03
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R8 heavy wet splat 0.98\u20131.4 s + pops"
+    NoiseFloorDb: -120
+    DcDb: -81.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 542
+    Clips:
+    - {fileID: 8300000, guid: 59b9008a4e5b34a7c913b3eeb57071c7, type: 3}
+    - {fileID: 8300000, guid: 337b9712458df4b5d9088e0c58294803, type: 3}
+    Loop: 0
+    Lufs: -22.8
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 splat LP 1.5 k (muffled on a body)"
+    NoiseFloorDb: -120
+    DcDb: -82.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 543
+    Clips:
+    - {fileID: 8300000, guid: 1026c8032a00b4d78a276a87a4e70c19, type: 3}
+    - {fileID: 8300000, guid: 59880bb6f973949c3aa21736941a0b76, type: 3}
+    Loop: 0
+    Lufs: -24.32
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 splat + spreading squelch (R8 0.98\u20131.9 s)"
+    NoiseFloorDb: -120
+    DcDb: -108.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 544
+    Clips:
+    - {fileID: 8300000, guid: 6c7b198c96213413db6169e5c0583b89, type: 3}
+    Loop: 1
+    Lufs: -28.19
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 R8 slow bubbling with small pops 2.35\u20134.35 s"
+    NoiseFloorDb: -120
+    DcDb: -236.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 545
+    Clips:
+    - {fileID: 8300000, guid: e533c81b72a294ad08cf3309af10964e, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -1.98
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 drying \"\xE7\u0131t-\xE7\u0131t\" (R8 pops 4.55\u20135.25 s LP
+      3 k) + air hiss \u221214 dB"
+    NoiseFloorDb: -120
+    DcDb: -124.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 546
+    Clips:
+    - {fileID: 8300000, guid: a033a2f66f1ac4d9aaab9a7470f3181e, type: 3}
+    - {fileID: 8300000, guid: dc1a784987a0f480b9f1a1f249a5f6f8, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -6.86
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 slide squelch \"v\u0131jjj\" (R8 5.3\u20136.2 s) + body fall (attack_impact_body
+      \u22124 dB at the end)"
+    NoiseFloorDb: -120
+    DcDb: -78.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 547
+    Clips:
+    - {fileID: 8300000, guid: 9b610a9e41548443e8202abb5fe3b4d3, type: 3}
+    - {fileID: 8300000, guid: 38142de9aea554f779107de5738b6c81, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -7.55
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 slide squelch +2 st, short + cloth rub (pink HP 2 k) \u221210
+      dB"
+    NoiseFloorDb: -120
+    DcDb: -85
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 548
+    Clips:
+    - {fileID: 8300000, guid: 85c83c71d1a8647f2a34a7aeac5a100c, type: 3}
+    - {fileID: 8300000, guid: 707b7313773734d1e8961e486f062e0e, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -1.67
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 pressure \"p\u015F\u015Ft\" + copper click (R1 selector)"
+    NoiseFloorDb: -120
+    DcDb: -118.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 549
+    Clips:
+    - {fileID: 8300000, guid: 2fb61420db3494c13b7d26b86ec0f776, type: 3}
+    - {fileID: 8300000, guid: 0ca04d6877a92496eb6cdbd8cc830935, type: 3}
+    Loop: 0
+    Lufs: -20.2
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 screw clicks (R4 safety \xD72) + gel \"v\u0131c\u0131k\" (R8 5.5
+      s) \u22128 dB"
+    NoiseFloorDb: -120
+    DcDb: -88.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 550
+    Clips:
+    - {fileID: 8300000, guid: 67229be32e27a4fa6b271d2bba3c8bc0, type: 3}
+    Loop: 0
+    Lufs: -20
+    TruePeakDb: -7.08
+    Provenance: "derived offline (AP-011 v019, WP-072 B4, 0 cr more) from Seed Audio
+      renders R7 electric_tesla_spark_gap / R8 gel_viscous_slime_glass (ledger 160\u2013161,
+      5.6 cr) \xB7 chamber pressurises (rising hiss) + rin bell (brass) at the top"
+    NoiseFloorDb: -120
+    DcDb: -150.2
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)
