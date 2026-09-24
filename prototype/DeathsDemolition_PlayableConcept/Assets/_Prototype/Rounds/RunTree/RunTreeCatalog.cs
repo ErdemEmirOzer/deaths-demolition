@@ -183,14 +183,18 @@ namespace DD.Prototype.Rounds
     /// WP-077: which node effects a live system reads. A node whose effect is not live is shown
     /// LOCKED (<see cref="RunTreeLockReason.EffectPending"/>) and is never offered or sold — the same
     /// rule as UpgradeCardCatalog's unbacked branches. The owner of a behaviour (WP-069 S-02 weapon
-    /// hooks, player systems) calls <see cref="Register"/> when its hook is installed.
+    /// hooks, player systems) adds its effect id to the live list below in the commit that installs the hook.
     /// </summary>
     public static class RunTreeEffects
     {
         public const string HearthDamage = "hearth.damage";
         public const string PurseGold = "purse.gold";
 
-        private static readonly HashSet<string> s_live = new HashSet<string> { HearthDamage, PurseGold };
+        private static readonly HashSet<string> s_live = new HashSet<string>
+        {
+            HearthDamage, PurseGold
+            // + an effect id per hook as it lands (WP-069 B2/B3 weapon hooks, player systems)
+        };
 
         /// <summary>F1 / tests: treat every effect as live (shows the full tree). Never on in a shipped build by default.</summary>
         public static bool TreatAllAsLive { get; set; }
@@ -200,20 +204,5 @@ namespace DD.Prototype.Rounds
             return TreatAllAsLive || (!string.IsNullOrEmpty(effectId) && s_live.Contains(effectId));
         }
 
-        public static void Register(string effectId)
-        {
-            if (!string.IsNullOrEmpty(effectId))
-            {
-                s_live.Add(effectId);
-            }
-        }
-
-        public static void Unregister(string effectId)
-        {
-            if (effectId != HearthDamage && effectId != PurseGold)
-            {
-                s_live.Remove(effectId);
-            }
-        }
     }
 }

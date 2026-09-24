@@ -89,6 +89,8 @@ namespace DD.Prototype.Profile
                 "Level-1 requirement used as the empty-report default. " +
                 "Request value: level requirement = 100 + 75 * (Level - 1).")]
             public int LevelRequirementAfter = 100;
+            /// <summary>WP-077: Ash granted by this transaction (0 unless Applied).</summary>
+            public int AshEarned;
 
             public readonly List<ProfileUnlockEntry> NewUnlocks = new List<ProfileUnlockEntry>(4);
             public readonly List<ProfileUnlockEntry> NewAchievements = new List<ProfileUnlockEntry>(4);
@@ -132,6 +134,7 @@ namespace DD.Prototype.Profile
             XpIntoLevelBefore = draft.XpIntoLevelBefore;
             XpIntoLevelAfter = draft.XpIntoLevelAfter;
             LevelRequirementAfter = draft.LevelRequirementAfter;
+            AshEarned = draft.AshEarned;
             _newUnlocks = new List<ProfileUnlockEntry>(draft.NewUnlocks).AsReadOnly();
             _newAchievements = new List<ProfileUnlockEntry>(draft.NewAchievements).AsReadOnly();
             _earnedDefinitions = new List<DD.Prototype.Achievements.AchievementDefinition>(draft.EarnedDefinitions).AsReadOnly();
@@ -178,6 +181,9 @@ namespace DD.Prototype.Profile
 
         /// <summary>XP the level AFTER the run requires to advance again.</summary>
         public int LevelRequirementAfter { get; }
+
+        /// <summary>WP-077: Ash this run added to the meta PATH balance (Results "+N" chip).</summary>
+        public int AshEarned { get; }
 
         public bool LeveledUp => LevelAfter > LevelBefore;
 

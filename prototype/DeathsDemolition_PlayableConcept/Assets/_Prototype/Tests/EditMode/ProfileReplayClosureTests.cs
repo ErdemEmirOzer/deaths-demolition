@@ -350,7 +350,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(2, p.ProfileLevel);
             Assert.AreEqual(140, p.TotalXpEarned);
             Assert.AreEqual(31, p.TotalKills);
-            CollectionAssert.AreEqual(new[] { "AssaultRifle", "AutoSmg" }, p.UnlockedWeapons);
+            CollectionAssert.AreEqual(new[] { "ar_1", "smg_1" }, p.UnlockedWeapons, "WP-077 v5: M3 silah adları WP-069 anahtarlarına göçer");
             CollectionAssert.AreEqual(new[] { "first_blood" }, p.Achievements);
 
             // Diske v3 yaz, halka gitmiş olsun; ikinci yükleme idempotent.

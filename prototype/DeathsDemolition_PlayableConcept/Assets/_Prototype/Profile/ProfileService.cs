@@ -21,7 +21,7 @@ namespace DD.Prototype.Profile
     /// All of them from PrototypeConfig, never from a literal in this file:
     ///   kill XP           config.KillXp(tier)          = 1 + tier bonus (0/1/3/8)
     ///   completed round   config.RoundCompletionXp(r)  = 15 + 5r
-    ///   level requirement config.LevelRequirement(L)   = 100 + 75(L-1)
+    ///   level requirement config.LevelRequirement(L)   = 100·L + 10·L² (WP-077 K4, cap L50)
     /// Gold and playtime appear nowhere in the arithmetic, which is the request's rule.
     /// The arithmetic itself lives in <see cref="ProfileProgression"/>.
     ///
@@ -56,13 +56,16 @@ namespace DD.Prototype.Profile
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
             "Fallback for ProgressionConfigSection.LevelRequirementBase. " +
-            "Request value: level requirement = 100 + 75 * (Level - 1).")]
+            "WP-077 K4: level requirement = 100·L + 10·L².")]
         private const int FallbackLevelRequirementBase = 100;
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
-            "Fallback for ProgressionConfigSection.LevelRequirementPerLevel. " +
-            "Request value: level requirement = 100 + 75 * (Level - 1).")]
-        private const int FallbackLevelRequirementPerLevel = 75;
+            "Fallback for ProgressionConfigSection.LevelRequirementQuadratic. " +
+            "WP-077 K4: level requirement = 100·L + 10·L².")]
+        private const int FallbackLevelRequirementQuadratic = 10;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "Fallback for ProgressionConfigSection.LevelCap (WP-077 K4).")]
+        private const int FallbackLevelCap = 50;
 
         [PrototypeOnly(PendingDecisions.ProfileXp,
             "Fallback unlock level for the Auto SMG. Request value: Profile Level 2; DEC-085 Ö-3 (user, 2026-09-17): 3.")]
@@ -372,10 +375,17 @@ namespace DD.Prototype.Profile
         public static int LevelRequirement(int level)
         {
             PrototypeConfig config = PrototypeConfig.Active;
+            int cap = config != null && config.Progression != null ? config.Progression.LevelCap : FallbackLevelCap;
+            if (cap > 0 && level >= cap)
+            {
+                // WP-077 K4: the cap. XP keeps counting (TotalXpEarned, Ash); the level stops.
+                return int.MaxValue;
+            }
+
+            int l = Mathf.Max(1, level);
             int required = config != null
                 ? config.LevelRequirement(level)
-                : FallbackLevelRequirementBase
-                  + FallbackLevelRequirementPerLevel * (Mathf.Max(1, level) - 1);
+                : FallbackLevelRequirementBase * l + FallbackLevelRequirementQuadratic * l * l;
 
             // A misconfigured curve must not be able to spin the level-up loop forever.
             return Mathf.Max(1, required);
@@ -626,6 +636,10 @@ namespace DD.Prototype.Profile
                 draft.NewAchievements.Add(new ProfileUnlockEntry(d.DisplayName, d.Description));
             }
 
+            // WP-077: Ash + mastery, after the achievements this run earned (their rarity Ash counts).
+            draft.AshEarned = ProfileProgression.ApplyAsh(candidate, input, draft.EarnedDefinitions,
+                PrototypeConfig.Active != null ? PrototypeConfig.Active.Progression : null);
+
             ProfileProgression.GrantUnlocksForLevel(candidate, s_ladder, draft.NewUnlocks);
             UnlockCatalog.Grant(candidate, UnlockCatalog.Entries, draft.OpenedContent);
             for (int i = 0; i < draft.OpenedContent.Count; i++)
@@ -671,6 +685,13 @@ namespace DD.Prototype.Profile
             draft.LevelRequirementAfter = LevelRequirement(candidate.ProfileLevel);
             draft.Outcome = ProfileCommitOutcome.Applied;
 
+            // WP-078 (S-10) hook: one line per applied run for the progression tempo report.
+            Debug.Log("[Progress] xp=" + input.TotalXp + " ash=" + draft.AshEarned + " ashBalance=" + candidate.AshBalance +
+                      " meta=" + candidate.MetaNodes.Count + " level=" + draft.LevelBefore + "->" + candidate.ProfileLevel +
+                      " round=" + input.ReachedRound + " weapon=" + input.WeaponKey +
+                      " keystones=" + summary.TreeKeystones + " capstones=" + summary.TreeCapstones + " hearth=" + summary.TreeHearthStacks +
+                      " upgrades=" + summary.UpgradesPurchased + " spendShare=" + (summary.GoldEarned > 0 ? (summary.GoldSpent / (float)summary.GoldEarned).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "0"));
+
             Publish(draft.Seal());
             RaiseChanged();
             return s_lastReport;
@@ -691,6 +712,7 @@ namespace DD.Prototype.Profile
             draft.NewAchievements.Clear();
             draft.EarnedDefinitions.Clear();
             draft.OpenedContent.Clear();
+            draft.AshEarned = 0;
         }
 
         /// <summary>Stores the receipt and builds its Run Results model from the profile as it now stands.</summary>

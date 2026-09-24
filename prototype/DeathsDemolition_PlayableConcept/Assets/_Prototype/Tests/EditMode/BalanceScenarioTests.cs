@@ -160,7 +160,7 @@ namespace DD.Prototype.Tests.EditMode
                     if (!d.HasRuntimeId || d.UnlockKind != WeaponUnlockKind.ProfileLevel) continue;
                     int level = d.UnlockLevel(config);
                     Assert.AreEqual(level, ProfileService.UnlockLevelFor(d.Id), "merdiven = roster: " + d.Id);
-                    UnlockDefinition u = UnlockCatalog.Find(d.Id.ToString());
+                    UnlockDefinition u = UnlockCatalog.Find(ProfileProgression.NameOf(d.Id) ?? d.Id.ToString());
                     Assert.IsNotNull(u, "katalog girdisi: " + d.Id); Assert.AreEqual(level, u.NumericKey, "katalog = roster: " + d.Id);
                     Assert.IsFalse(ProfileService.IsWeaponUnlocked(d.Id), "taze profilde kapalı: " + d.Id);
                 }
@@ -183,13 +183,13 @@ namespace DD.Prototype.Tests.EditMode
                 foreach (RunResultsUnlock u in d2.NewUnlocks)
                 {
                     if (u.Type == UnlockContentType.Branch) Assert.IsTrue(Enum.IsDefined(typeof(UpgradeBranch), u.Id), "dal girdisi ancak tanımlı dal adıyla: " + u.Id);
-                    if (u.Type == UnlockContentType.Weapon) Assert.IsTrue(Enum.IsDefined(typeof(ClassicWeaponId), u.Id), "silah girdisi enum adıyla: " + u.Id);
+                    if (u.Type == UnlockContentType.Weapon) Assert.IsTrue(DD.Prototype.Core.Weapons.WeaponIdMigration.TryGetRuntimeId(u.Id, out _), "silah girdisi WP-069 anahtarıyla (WP-077 v5): " + u.Id);
                 }
                 // Devre dışı roster silahı (D) hiçbir yerde açılmaz.
                 foreach (ClassicWeaponDefinition d in WeaponRoster.All)
                 {
                     if (d == null || d.Enabled || !d.HasRuntimeId) continue;
-                    Assert.IsNull(UnlockCatalog.Find(d.Id.ToString()), "devre dışı: " + d.RosterKey);
+                    Assert.IsNull(UnlockCatalog.Find(ProfileProgression.NameOf(d.Id) ?? d.Id.ToString()), "devre dışı: " + d.RosterKey);
                 }
             }
             finally

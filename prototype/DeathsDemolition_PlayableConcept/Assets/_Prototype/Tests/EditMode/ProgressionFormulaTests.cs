@@ -25,25 +25,25 @@ namespace DD.Prototype.Tests.EditMode
 
         // L        1    2    3    4    5    6    10
         // eşik   100  175  250  325  400  475   775
-        [TestCase(1, 100)]
-        [TestCase(2, 175)]
-        [TestCase(3, 250)]
-        [TestCase(4, 325)]
-        [TestCase(5, 400)]
-        [TestCase(6, 475)]
-        [TestCase(10, 775)]
-        [TestCase(20, 1525)]
+        [TestCase(1, 110)]
+        [TestCase(2, 240)]
+        [TestCase(3, 390)]
+        [TestCase(4, 560)]
+        [TestCase(5, 750)]
+        [TestCase(6, 960)]
+        [TestCase(10, 2000)]
+        [TestCase(20, 6000)]
         public void LevelRequirement_SabitBeklenenDeger(int level, int beklenen)
         {
             Assert.AreEqual(beklenen, _prog.LevelRequirement(level),
-                "L" + level + " eşiği 100+75(L-1) ile uyuşmuyor.");
+                "L" + level + " eşiği 100·L + 10·L² (WP-077 K4) ile uyuşmuyor.");
         }
 
         [Test]
         public void LevelRequirement_L1AltiniKirpar()
         {
-            Assert.AreEqual(100, _prog.LevelRequirement(0));
-            Assert.AreEqual(100, _prog.LevelRequirement(-4));
+            Assert.AreEqual(110, _prog.LevelRequirement(0));
+            Assert.AreEqual(110, _prog.LevelRequirement(-4));
         }
 
         // R       1   2   3   4   5   8  10  12
@@ -107,16 +107,15 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
-        /// BİLİNEN VE KASITLI SINIRLAMA — ölçülen bulgu, hata değil.
-        /// L4'e ulaşmak 100+175+250 = 525 kümülatif XP ister. R8'e kadar giden bir
-        /// koşu yaklaşık 545-600 XP üretir; yani unlock merdiveni TEK koşuda tükenir.
-        /// Test bu sayıyı kilitler ki iddia sayısal kanıta bağlansın.
+        /// WP-041 bulgusu "unlock merdiveni tek koşuda tükenir" (eski eğri: L4 = 525 XP, en düşük R8
+        /// koşusu 648 XP) WP-077 K4 eğrisiyle (100·L + 10·L²) kapandı: L4 = 110 + 240 + 390 = 740 XP,
+        /// en düşük R8 koşusu artık L4'e ulaşmaz. Test sayıları kilitler ki iddia kanıta bağlı kalsın.
         /// </summary>
         [Test]
-        public void OlculenBulgu_UnlockMerdiveniTekKosudaTukenir()
+        public void OlculenBulgu_K4Egrisi_MerdivenTekKosudaTukenmez()
         {
             int l4Kumulatif = _prog.LevelRequirement(1) + _prog.LevelRequirement(2) + _prog.LevelRequirement(3);
-            Assert.AreEqual(525, l4Kumulatif, "L4 kümülatif eşiği 525 olmalı.");
+            Assert.AreEqual(740, l4Kumulatif, "L4 kümülatif eşiği 740 olmalı (WP-077 K4).");
 
             // R1..R8 tamamlanan tur XP'si: sum(15+5R) for R=1..8
             int turXp = 0;
@@ -139,11 +138,10 @@ namespace DD.Prototype.Tests.EditMode
 
             int enAzToplam = turXp + enAzOldurmeXp;
             Assert.AreEqual(648, enAzToplam);
-            Assert.Greater(enAzToplam, l4Kumulatif,
-                "R8 koşusu L4 eşiğini geçmiyorsa 'merdiven tek koşuda tükeniyor' bulgusu geçersizdir.");
+            Assert.Less(enAzToplam, l4Kumulatif, "WP-077 K4: en düşük XP'li R8 koşusu L4'e ulaşmaz (eski bulgu kapandı).");
 
-            // Merdivenin tepesi: DEC-085 Ö-3 (WP-049) sonrası en yüksek unlock seviyesi 5 (Combat Shotgun);
-            // L5 kümülatif eşiği (850) en düşük R8 toplamını (648) aşar → merdiven artık tek R8 koşusunda tükenmez.
+            // Merdivenin tepesi: DEC-085 Ö-3 sonrası en yüksek unlock seviyesi 5 (Combat Shotgun); L5 kümülatif
+            // eşiği (1 300, K4) en düşük R8 toplamını (648) aşar.
             var weapons = new WeaponConfigSection();
             int enYuksekUnlock = 1;
             for (int i = 0; i < weapons.ClassicWeapons.Count; i++)

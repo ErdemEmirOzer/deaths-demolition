@@ -325,7 +325,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(ProfileLoadStatus.Ok, ProfileStore.ReadFile(TestPath, out disk));
             CollectionAssert.AreEquivalent(new[] { "t_kill", "t_gold" }, disk.Achievements);
             CollectionAssert.AreEquivalent(new[] { "title_x", "ind_y" }, disk.UnlockedContent);
-            Assert.AreEqual(4, disk.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, disk.SaveVersion);
 
             // Aynı koşu ikinci kez: orijinal makbuz ya da Duplicate; hiçbir şey ikinci kez açılmaz.
             string once = JsonUtility.ToJson(disk);
@@ -428,7 +428,7 @@ namespace DD.Prototype.Tests.EditMode
                 if (e.Type == UnlockContentType.Weapon)
                 {
                     Assert.AreEqual(UnlockCondition.Level, e.Condition, "roster silahı seviye koşullu: " + e.Id);
-                    Assert.IsTrue(Enum.IsDefined(typeof(ClassicWeaponId), e.Id), e.Id);
+                    Assert.IsTrue(DD.Prototype.Core.Weapons.WeaponIdMigration.TryGetRuntimeId(e.Id, out _), "WP-077 v5 silah anahtarı: " + e.Id);
                 }
 
                 if (e.Condition == UnlockCondition.Achievement)
@@ -576,13 +576,13 @@ namespace DD.Prototype.Tests.EditMode
             YenidenYukle();
             ProfileData p = ProfileService.Current;
             Assert.AreEqual(ProfileLoadStatus.Ok, ProfileStore.LastLoadStatus);
-            Assert.AreEqual(4, p.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, p.SaveVersion);
             Assert.AreEqual(2, p.ProfileLevel); Assert.AreEqual(40, p.XpIntoLevel); Assert.AreEqual(140, p.TotalXpEarned);
             Assert.AreEqual(3, p.HighestRound); Assert.AreEqual(11, p.RunsPlayed); Assert.AreEqual(5, p.RoundsCompleted);
             Assert.AreEqual(31, p.TotalKills); Assert.AreEqual(29, p.StandardKills); Assert.AreEqual(2, p.EliteKills); Assert.AreEqual(0, p.UnattributedKills);
             Assert.AreEqual(2, p.ArmorPiecesBroken); Assert.AreEqual(80, p.BestRunXp);
             CollectionAssert.AreEqual(new[] { "first_blood", "reach_round_5" }, p.Achievements);
-            CollectionAssert.AreEqual(new[] { "AssaultRifle", "AutoSmg" }, p.UnlockedWeapons);
+            CollectionAssert.AreEqual(new[] { "ar_1", "smg_1" }, p.UnlockedWeapons, "WP-077 v5: M3 silah adları WP-069 anahtarlarına göçer");
             CollectionAssert.IsSubsetOf(new[] { "Piercing" }, p.UnlockedBranches, "seviye merdiveni yükleme sırasında ekleyebilir; dosyadaki kayıp yok");
             ProfileData ham; Assert.AreEqual(ProfileLoadStatus.Ok, ProfileStore.ReadFile(TestPath, out ham));
             CollectionAssert.AreEqual(new[] { "Piercing" }, ham.UnlockedBranches, "diskteki v3 belge dokunulmadı (ilk save'e kadar)");
@@ -606,7 +606,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(ProfileService.Save());
             ProfileData d1; Assert.AreEqual(ProfileLoadStatus.Ok, ProfileStore.ReadFile(TestPath, out d1));
             string once = JsonUtility.ToJson(d1);
-            StringAssert.Contains("\"SaveVersion\":4", File.ReadAllText(TestPath).Replace(" ", string.Empty));
+            StringAssert.Contains("\"SaveVersion\":" + ProfileData.CurrentVersion, File.ReadAllText(TestPath).Replace(" ", string.Empty));
             YenidenYukle();
             Assert.AreEqual(once, JsonUtility.ToJson(ProfileService.Current), "idempotan");
 
@@ -639,7 +639,7 @@ namespace DD.Prototype.Tests.EditMode
             File.WriteAllText(TestPath, json);
             YenidenYukle();
             ProfileData p = ProfileService.Current;
-            Assert.AreEqual(4, p.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, p.SaveVersion);
             foreach (string alan in new[] { "ProfileLevel", "XpIntoLevel", "TotalXpEarned", "HighestRound", "RunsPlayed", "RoundsCompleted", "StandardKills", "SpecialKills", "EliteKills", "UltraKills", "ArmorPiecesBroken", "BestRunXp" })
             {
                 FieldInfo f = typeof(ProfileData).GetField(alan);
@@ -648,7 +648,9 @@ namespace DD.Prototype.Tests.EditMode
 
             Assert.AreEqual(Math.Max(0, ham.TotalKills), p.TotalKills, "toplam kill korunur (fazlası UnattributedKills'e)");
             CollectionAssert.AreEqual(ham.Achievements, p.Achievements);
-            CollectionAssert.IsSubsetOf(ham.UnlockedWeapons, p.UnlockedWeapons);
+            var hamAnahtar = new List<string>();   // WP-077 v5: M3 adları WP-069 anahtarlarına göçer
+            foreach (string w in ham.UnlockedWeapons) hamAnahtar.Add(DD.Prototype.Core.Weapons.WeaponIdMigration.FromLegacyName(w) ?? w);
+            CollectionAssert.IsSubsetOf(hamAnahtar, p.UnlockedWeapons);
             CollectionAssert.IsSubsetOf(ham.UnlockedBranches, p.UnlockedBranches);
             if (hamVersiyon >= 3)
             {

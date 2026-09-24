@@ -265,7 +265,7 @@ namespace DD.Prototype.Profile
             {
                 foreach (ClassicWeaponId w in (ClassicWeaponId[])System.Enum.GetValues(typeof(ClassicWeaponId)))
                 {
-                    if (string.Equals(ladder.WeaponDisplayName(w), title, System.StringComparison.Ordinal)) return w.ToString();
+                    if (string.Equals(ladder.WeaponDisplayName(w), title, System.StringComparison.Ordinal)) return ProfileProgression.NameOf(w) ?? w.ToString();   // WP-077 v5 key
                 }
             }
 

@@ -196,8 +196,8 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void AyniOzet_IkinciKez_UnlockVeAchievementTekrarUretmez()
         {
-            // L1→L2: 100 XP; SMG (L2) ve Explosion (L2) açılır, First Blood kazanılır.
-            RunSummary ozet = Ozet(2, 1, 5, 5, 95);
+            // L1→L2: Req(1) XP (WP-077 K4: 110; 5 öldürme XP'si dahil); L2 merdiveni açılır, First Blood kazanılır.
+            RunSummary ozet = Ozet(2, 1, 5, 5, ProfileService.LevelRequirement(1) - 5);
             RunRewardReport r1 = ProfileService.ApplyRun(ozet);
             Assert.AreEqual(2, r1.LevelAfter);
             Assert.IsTrue(r1.LeveledUp);
@@ -238,7 +238,7 @@ namespace DD.Prototype.Tests.EditMode
             RunRewardReport r = ProfileService.ApplyRun(Ozet(2, 1, 0, 0, gerekliXp));
             Assert.AreEqual(hedef, r.LevelAfter, "AutoSmg'nin roster/config açılış seviyesine ulaşıldı");
             Assert.IsTrue(ProfileService.IsWeaponUnlocked(ClassicWeaponId.AutoSmg), "unlock ApplyRun içinde otomatik uygulanır");
-            Assert.IsTrue(ProfileService.Current.UnlockedWeapons.Contains("AutoSmg"));
+            Assert.IsTrue(ProfileService.Current.UnlockedWeapons.Contains("smg_1"), "WP-077 v5: kayıtlı silah anahtarı");
 
             MethodInfo[] metotlar = typeof(ProfileService).GetMethods(BindingFlags.Public | BindingFlags.Static);
             for (int i = 0; i < metotlar.Length; i++)
@@ -338,9 +338,13 @@ namespace DD.Prototype.Tests.EditMode
                 // + katalog içerik listesi (DEC-038). Gold/harcama dosyaya girmez (REQ-018); koşu geçmişi yok, tunable yok.
                 "SpecialWeaponPickups", "FlawlessRounds", "UnlockedContent",
                 // WP-035 (aynı v4): seçili unvan/rozet (açılmış içerik id'si) + "görüldü" sayaçları; kazanım değil, tercih.
-                "SelectedTitle", "SelectedBadge", "AchievementsSeen", "ContentSeen"
+                "SelectedTitle", "SelectedBadge", "AchievementsSeen", "ContentSeen",
+                // WP-077 (şema v5): meta YOL — Kül (kazanılan/harcanan/bakiye), meta düğümler, respec, pin, "görüldü",
+                // tek seferlik Kül kilometre taşları, silah ustalığı (öldürme). Altın/koşu içi ağaç dosyaya girmez (REQ-018).
+                "AshBalance", "AshEarnedTotal", "AshSpentTotal", "MetaNodes", "MetaRespecCount", "MetaPinnedNode",
+                "MetaSeen", "AshMilestones", "WeaponMastery"
             }, adlar, "ProfileData şeması değişti; kalıcılık sınırı yeniden gözden geçirilmeli");
-            Assert.AreEqual(4, ProfileData.CurrentVersion);
+            Assert.AreEqual(5, ProfileData.CurrentVersion);
             StringAssert.DoesNotContain("AppliedCompletionIds", json, "halka diske yazılmaz (v3)");
         }
 

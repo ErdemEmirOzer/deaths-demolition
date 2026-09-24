@@ -390,7 +390,16 @@ MonoBehaviour:
     RoundXpBase: 15
     RoundXpPerRound: 5
     LevelRequirementBase: 100
-    LevelRequirementPerLevel: 75
+    LevelRequirementQuadratic: 10
+    LevelCap: 50
+    XpPerAsh: 40
+    AshFirstRound10PerWeapon: 30
+    AshFirstCapstone: 25
+    AshFirstLinkII: 15
+    AshAchievementCommon: 5
+    AshAchievementUncommon: 10
+    AshAchievementRare: 20
+    AshAchievementEpic: 40
     GoldGrantsXp: 0
     PlaytimeGrantsXp: 0
     IncompleteRoundGrantsRoundXp: 0

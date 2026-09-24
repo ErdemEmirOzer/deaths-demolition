@@ -61,11 +61,54 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.ProfileXp, "Request value: completed round XP = 15 + 5 * round")]
         public int RoundXpPerRound = 5;
 
-        [PrototypeOnly(PendingDecisions.ProfileXp, "Request value: level requirement = 100 + 75 * (Level - 1)")]
+        // WP-077 K4 (C-00, 2026-09-24): Req(L → L+1) = 100·L + 10·L², cap L50 (was 100 + 75·(L−1)).
+        // K11: a migrated profile keeps its level; the new curve applies from there on.
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 K4: level requirement = 100·L + 10·L² (linear term)")]
         public int LevelRequirementBase = 100;
 
-        [PrototypeOnly(PendingDecisions.ProfileXp, "Request value: level requirement = 100 + 75 * (Level - 1)")]
-        public int LevelRequirementPerLevel = 75;
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 K4: level requirement = 100·L + 10·L² (quadratic term)")]
+        public int LevelRequirementQuadratic = 10;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 K4: level cap (XP keeps counting, the level stops).")]
+        public int LevelCap = 50;
+
+        [Header("Ash (Kül) — WP-077 meta currency")]
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: Ash per run = floor(run XP / this).")]
+        public int XpPerAsh = 40;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: first time reaching round 10 with a weapon.")]
+        public int AshFirstRound10PerWeapon = 30;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: first capstone ever.")]
+        public int AshFirstCapstone = 25;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: first Special Link II ever.")]
+        public int AshFirstLinkII = 15;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: Ash for a Common achievement.")]
+        public int AshAchievementCommon = 5;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: Ash for an Uncommon achievement.")]
+        public int AshAchievementUncommon = 10;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: Ash for a Rare achievement.")]
+        public int AshAchievementRare = 20;
+
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: Ash for an Epic achievement.")]
+        public int AshAchievementEpic = 40;
+
+        /// <summary>WP-077: Ash for an achievement of the given rarity (0 Common … 3 Epic).</summary>
+        public int AshForRarity(int rarity)
+        {
+            switch (rarity)
+            {
+                case 0: return Mathf.Max(0, AshAchievementCommon);
+                case 1: return Mathf.Max(0, AshAchievementUncommon);
+                case 2: return Mathf.Max(0, AshAchievementRare);
+                case 3: return Mathf.Max(0, AshAchievementEpic);
+                default: return 0;
+            }
+        }
 
         [PrototypeOnly(PendingDecisions.ProfileXp, "Request: gold earned or spent gives no XP.")]
         public bool GoldGrantsXp = false;
@@ -138,7 +181,7 @@ namespace DD.Prototype.Core.Config
         public int LevelRequirement(int level)
         {
             int l = Mathf.Max(1, level);
-            return LevelRequirementBase + LevelRequirementPerLevel * (l - 1);
+            return LevelRequirementBase * l + LevelRequirementQuadratic * l * l;
         }
 
         /// <summary>XP awarded for finishing a round.</summary>

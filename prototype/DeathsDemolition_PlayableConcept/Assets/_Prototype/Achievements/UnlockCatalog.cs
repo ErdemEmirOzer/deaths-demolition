@@ -285,10 +285,17 @@ namespace DD.Prototype.Achievements
 
             // Weapon / branch ids must be names this build defines; an unknown name could
             // never open anything and would only pollute the earned list.
-            if (type == UnlockContentType.Weapon && !Enum.IsDefined(typeof(ClassicWeaponId), d.Id))
+            // WP-077 v5: weapon ids are WP-069 keys ("smg_1"); an M3 name ("AutoSmg") is read and normalised.
+            if (type == UnlockContentType.Weapon)
             {
-                why = "'" + d.Id + "' is not a ClassicWeaponId name";
-                return null;
+                string key = DD.Prototype.Core.Weapons.WeaponIdMigration.FromLegacyName(d.Id);
+                if (key == null || !DD.Prototype.Core.Weapons.WeaponIdMigration.TryGetRuntimeId(key, out _))
+                {
+                    why = "'" + d.Id + "' is not a classic weapon key";
+                    return null;
+                }
+
+                d.Id = key;
             }
 
             if (type == UnlockContentType.Branch && !Enum.IsDefined(typeof(UpgradeBranch), d.Id))
@@ -387,7 +394,7 @@ namespace DD.Prototype.Achievements
                     continue;
                 }
 
-                string id = d.Id.ToString();
+                string id = DD.Prototype.Profile.ProfileProgression.NameOf(d.Id) ?? d.Id.ToString();   // WP-077 v5: saved weapon key
                 bool present = false;
                 for (int j = 0; j < into.Count; j++)
                 {

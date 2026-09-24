@@ -243,7 +243,7 @@ namespace DD.Prototype.Tests.EditMode
             foreach (ClassicWeaponDefinition d in roster)
             {
                 if (!d.HasRuntimeId || d.UnlockKind != WeaponUnlockKind.ProfileLevel) continue;
-                UnlockDefinition u = UnlockCatalog.Find(d.Id.ToString());
+                UnlockDefinition u = UnlockCatalog.Find(DD.Prototype.Profile.ProfileProgression.NameOf(d.Id));   // WP-077 v5 anahtar
                 Assert.IsNotNull(u, "roster silahı katalogda: " + d.Id);
                 Assert.AreEqual(UnlockContentType.Weapon, u.Type);
                 Assert.AreEqual(UnlockCondition.Level, u.Condition);

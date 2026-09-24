@@ -59,8 +59,9 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.LessOrEqual(r.openingCardCost[i], config.Economy.StartingCostMax, "DEC-070 üst bant");
             }
 
-            Assert.AreEqual(100, r.levelRequirement[0]); Assert.AreEqual(175, r.levelRequirement[1]);
-            Assert.AreEqual(100, r.xpToReachLevel[0]); Assert.AreEqual(275, r.xpToReachLevel[1]);
+            // WP-077 K4: 100·L + 10·L².
+            Assert.AreEqual(110, r.levelRequirement[0]); Assert.AreEqual(240, r.levelRequirement[1]);
+            Assert.AreEqual(110, r.xpToReachLevel[0]); Assert.AreEqual(350, r.xpToReachLevel[1]);
         }
 
         [Test]

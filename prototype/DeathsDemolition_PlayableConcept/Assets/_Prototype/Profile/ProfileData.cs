@@ -50,7 +50,7 @@ namespace DD.Prototype.Profile
     public sealed class ProfileData
     {
         /// <summary>Bumped when the shape changes. 0 or negative means "not a real save".</summary>
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;   // WP-077: v5 = meta PATH (Ash, meta nodes, mastery) + WP-069 weapon keys
 
         /// <summary>The first version that ever existed on disk (WP-005).</summary>
         public const int OldestReadableVersion = 1;
@@ -115,7 +115,7 @@ namespace DD.Prototype.Profile
         /// <summary>Achievement ids, matching <c>AchievementSettings.Id</c>.</summary>
         public List<string> Achievements = new List<string>();
 
-        /// <summary>Names of <c>ClassicWeaponId</c> values already granted.</summary>
+        /// <summary>WP-069 weapon keys already granted ("ar_1", "smg_1" …; v4 and older stored the ClassicWeaponId names — migrated in v5).</summary>
         public List<string> UnlockedWeapons = new List<string>();
 
         /// <summary>Names of <c>UpgradeBranch</c> values already granted.</summary>
@@ -137,6 +137,35 @@ namespace DD.Prototype.Profile
 
         /// <summary>WP-035: how many opened content ids the player has seen ("new" = opened beyond this).</summary>
         public int ContentSeen;
+
+        // ------------------------------------------------------- meta PATH (v5, WP-077)
+
+        /// <summary>WP-077 Ash ("Kül") available to spend on the meta PATH. Always <see cref="AshEarnedTotal"/> − <see cref="AshSpentTotal"/>.</summary>
+        public int AshBalance;
+
+        /// <summary>WP-077: Ash earned over the profile's life (runs, first-time milestones, achievements, the v5 back-grant).</summary>
+        public int AshEarnedTotal;
+
+        /// <summary>WP-077: Ash spent on meta nodes (net of respec refunds).</summary>
+        public int AshSpentTotal;
+
+        /// <summary>WP-077: meta PATH node ids owned.</summary>
+        public List<string> MetaNodes = new List<string>();
+
+        /// <summary>WP-077: meta respecs used (the first is free).</summary>
+        public int MetaRespecCount;
+
+        /// <summary>WP-077: pinned meta node id (NEXT strip), or empty.</summary>
+        public string MetaPinnedNode = string.Empty;
+
+        /// <summary>WP-077: how many meta nodes the player has seen on the PATH pane ("new" = owned/affordable beyond this).</summary>
+        public int MetaSeen;
+
+        /// <summary>WP-077: one-time Ash milestones already paid ("r10:ar_1", "capstone", "link2").</summary>
+        public List<string> AshMilestones = new List<string>();
+
+        /// <summary>WP-077: kills per weapon key (mastery M1–M5 gates).</summary>
+        public List<WeaponMasteryEntry> WeaponMastery = new List<WeaponMasteryEntry>();
 
         // ---------------------------------------------------- replay authority (v3)
 
@@ -232,6 +261,26 @@ namespace DD.Prototype.Profile
             AchievementsSeen = Math.Min(Math.Max(0, AchievementsSeen), Achievements.Count);
             ContentSeen = Math.Min(Math.Max(0, ContentSeen), UnlockedContent.Count);
 
+            // WP-077 v5: weapon keys are WP-069 slot keys; an M3 name found in memory or in an old
+            // file is mapped (lossless, WeaponIdMigration), an unknown string is kept as data.
+            for (int i = 0; i < UnlockedWeapons.Count; i++)
+            {
+                string key = DD.Prototype.Core.Weapons.WeaponIdMigration.FromLegacyName(UnlockedWeapons[i]);
+                if (key != null) UnlockedWeapons[i] = key;
+            }
+
+            UnlockedWeapons = Clean(UnlockedWeapons);
+
+            AshEarnedTotal = Math.Max(0, AshEarnedTotal);
+            AshSpentTotal = Math.Min(Math.Max(0, AshSpentTotal), AshEarnedTotal);
+            AshBalance = AshEarnedTotal - AshSpentTotal;
+            MetaNodes = Clean(MetaNodes);
+            MetaRespecCount = Math.Max(0, MetaRespecCount);
+            MetaPinnedNode = MetaPinnedNode ?? string.Empty;
+            MetaSeen = Math.Min(Math.Max(0, MetaSeen), MetaNodes.Count);
+            AshMilestones = Clean(AshMilestones);
+            WeaponMastery = CleanMastery(WeaponMastery);
+
             // Replay authority is never "repaired" here: a missing or malformed lineage is
             // an invalid document (ProfileMigration reports it), not something to invent.
             if (ProfileLineageId == null)
@@ -273,6 +322,13 @@ namespace DD.Prototype.Profile
                 (SelectedBadge.Length > 0 && !Has(UnlockedContent, SelectedBadge)) ||
                 AchievementsSeen < 0 || AchievementsSeen > (Achievements != null ? Achievements.Count : 0) ||
                 ContentSeen < 0 || ContentSeen > (UnlockedContent != null ? UnlockedContent.Count : 0))
+            {
+                return false;
+            }
+
+            if (AshEarnedTotal < 0 || AshSpentTotal < 0 || AshSpentTotal > AshEarnedTotal || AshBalance != AshEarnedTotal - AshSpentTotal ||
+                MetaRespecCount < 0 || MetaPinnedNode == null || MetaSeen < 0 || MetaSeen > (MetaNodes != null ? MetaNodes.Count : 0) ||
+                !IsClean(MetaNodes) || !IsClean(AshMilestones) || !IsCleanMastery(WeaponMastery))
             {
                 return false;
             }
@@ -342,10 +398,99 @@ namespace DD.Prototype.Profile
                 SelectedBadge = SelectedBadge ?? string.Empty,
                 AchievementsSeen = AchievementsSeen,
                 ContentSeen = ContentSeen,
+                AshBalance = AshBalance,
+                AshEarnedTotal = AshEarnedTotal,
+                AshSpentTotal = AshSpentTotal,
+                MetaNodes = new List<string>(MetaNodes ?? new List<string>()),
+                MetaRespecCount = MetaRespecCount,
+                MetaPinnedNode = MetaPinnedNode ?? string.Empty,
+                MetaSeen = MetaSeen,
+                AshMilestones = new List<string>(AshMilestones ?? new List<string>()),
+                WeaponMastery = CopyMastery(WeaponMastery),
                 ProfileLineageId = ProfileLineageId ?? string.Empty,
                 LastAppliedCompletionOrdinal = LastAppliedCompletionOrdinal,
                 LastSavedUtc = LastSavedUtc ?? string.Empty
             };
+        }
+
+        /// <summary>WP-077: kills recorded for a weapon key (0 when none).</summary>
+        public int MasteryKills(string weaponKey)
+        {
+            if (WeaponMastery == null || string.IsNullOrEmpty(weaponKey)) return 0;
+            for (int i = 0; i < WeaponMastery.Count; i++)
+            {
+                if (WeaponMastery[i] != null && WeaponMastery[i].Weapon == weaponKey) return WeaponMastery[i].Kills;
+            }
+
+            return 0;
+        }
+
+        /// <summary>WP-077: adds kills to a weapon key's mastery (saturating).</summary>
+        public void AddMasteryKills(string weaponKey, int kills)
+        {
+            if (string.IsNullOrEmpty(weaponKey) || kills <= 0) return;
+            if (WeaponMastery == null) WeaponMastery = new List<WeaponMasteryEntry>();
+            for (int i = 0; i < WeaponMastery.Count; i++)
+            {
+                if (WeaponMastery[i] != null && WeaponMastery[i].Weapon == weaponKey)
+                {
+                    WeaponMastery[i].Kills = ProfileProgression.SaturatingAdd(WeaponMastery[i].Kills, kills);
+                    return;
+                }
+            }
+
+            WeaponMastery.Add(new WeaponMasteryEntry { Weapon = weaponKey, Kills = kills });
+        }
+
+        private static List<WeaponMasteryEntry> CopyMastery(List<WeaponMasteryEntry> source)
+        {
+            var result = new List<WeaponMasteryEntry>(source != null ? source.Count : 0);
+            if (source == null) return result;
+            for (int i = 0; i < source.Count; i++)
+            {
+                if (source[i] != null) result.Add(new WeaponMasteryEntry { Weapon = source[i].Weapon, Kills = source[i].Kills });
+            }
+
+            return result;
+        }
+
+        private static List<WeaponMasteryEntry> CleanMastery(List<WeaponMasteryEntry> source)
+        {
+            var result = new List<WeaponMasteryEntry>(source != null ? source.Count : 0);
+            if (source == null) return result;
+            for (int i = 0; i < source.Count; i++)
+            {
+                WeaponMasteryEntry e = source[i];
+                if (e == null || string.IsNullOrEmpty(e.Weapon)) continue;
+                string key = DD.Prototype.Core.Weapons.WeaponIdMigration.FromLegacyName(e.Weapon) ?? e.Weapon;
+                int kills = Math.Max(0, e.Kills);
+                bool merged = false;
+                for (int j = 0; j < result.Count; j++)
+                {
+                    if (result[j].Weapon == key)
+                    {
+                        result[j].Kills = ProfileProgression.SaturatingAdd(result[j].Kills, kills);
+                        merged = true;
+                        break;
+                    }
+                }
+
+                if (!merged) result.Add(new WeaponMasteryEntry { Weapon = key, Kills = kills });
+            }
+
+            return result;
+        }
+
+        private static bool IsCleanMastery(List<WeaponMasteryEntry> list)
+        {
+            if (list == null) return false;
+            var seen = new HashSet<string>();
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] == null || string.IsNullOrEmpty(list[i].Weapon) || list[i].Kills < 0 || !seen.Add(list[i].Weapon)) return false;
+            }
+
+            return true;
         }
 
         /// <summary>Drops nulls, blanks and duplicates while preserving order.</summary>
@@ -424,5 +569,13 @@ namespace DD.Prototype.Profile
                 default: return 0;
             }
         }
+    }
+
+    /// <summary>WP-077 v5: kills recorded with one weapon (mastery gates on the meta PATH).</summary>
+    [Serializable]
+    public sealed class WeaponMasteryEntry
+    {
+        public string Weapon = string.Empty;
+        public int Kills;
     }
 }

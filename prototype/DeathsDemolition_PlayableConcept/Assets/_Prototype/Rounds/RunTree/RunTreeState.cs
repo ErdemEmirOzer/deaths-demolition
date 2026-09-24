@@ -56,6 +56,20 @@ namespace DD.Prototype.Rounds
 
         public bool IsOwned(int i) => i >= 0 && i < _owned.Length && _owned[i];
 
+        /// <summary>Owned non-tier nodes of a kind across both lanes (run summary, telemetry).</summary>
+        public int OwnedCount(RunTreeNodeKind kind)
+        {
+            if (!IsBuilt) return 0;
+            if (kind == RunTreeNodeKind.Hearth) return HearthStacks;
+            int c = 0;
+            for (int j = 0; j < Graph.Count; j++)
+            {
+                if (_owned[j] && Graph[j].Kind == kind) c++;
+            }
+
+            return c;
+        }
+
         public int OwnedTier(int i, WeaponModifierState build)
         {
             if (!IsBuilt || i < 0 || i >= Graph.Count) return 0;

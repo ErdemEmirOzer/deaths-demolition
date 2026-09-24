@@ -782,6 +782,10 @@ namespace DD.Prototype.Rounds
                 GoldUnspent = wallet != null ? wallet.Balance : 0,
                 UpgradesPurchased = _stats.UpgradesPurchased,
                 RerollsUsed = _stats.RerollsUsed,
+                TreeKeystones = _shop.Tree.OwnedCount(RunTreeNodeKind.BranchKeystone) + _shop.Tree.OwnedCount(RunTreeNodeKind.WeaponSeal),
+                TreeCapstones = _shop.Tree.OwnedCount(RunTreeNodeKind.Capstone),
+                TreeHearthStacks = _shop.Tree.HearthStacks,
+                TreeLinkII = _shop.Tree.IsBuilt && _shop.Tree.Graph.LinkIIIndex >= 0 && _shop.Tree.IsOwned(_shop.Tree.Graph.LinkIIIndex) ? 1 : 0,
 
                 RunDuration = _stats.RunTime,
                 EndReason = reason,

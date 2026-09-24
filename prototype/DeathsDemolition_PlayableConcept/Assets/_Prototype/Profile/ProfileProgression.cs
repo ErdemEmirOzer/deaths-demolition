@@ -48,6 +48,13 @@ namespace DD.Prototype.Profile
         public readonly int KillXp;
         public readonly EnemyTier HighestTierKilled;
 
+        /// <summary>WP-077: the run's weapon as its saved key ("ar_1" …); mastery and the round-10 Ash milestone.</summary>
+        public readonly string WeaponKey;
+
+        /// <summary>WP-077: tree capstones / Special Link II owned at the end (first-time Ash milestones).</summary>
+        public readonly int TreeCapstones;
+        public readonly int TreeLinkII;
+
         /// <summary>Standard + Special + Elite + Ultra + unattributed, saturating.</summary>
         public int TotalKills => ProfileProgression.SaturatingAdd(
             ProfileProgression.SaturatingSum(StandardKills, SpecialKills, EliteKills, UltraKills), UnattributedKills);
@@ -78,6 +85,9 @@ namespace DD.Prototype.Profile
             CompletedRoundXp = Math.Max(0, summary.CompletedRoundXp);
             KillXp = Math.Max(0, summary.KillXp);
             HighestTierKilled = summary.HighestTierKilled;
+            WeaponKey = ProfileProgression.NameOf(summary.Weapon);
+            TreeCapstones = Math.Max(0, summary.TreeCapstones);
+            TreeLinkII = Math.Max(0, summary.TreeLinkII);
         }
 
         public int KillsFor(EnemyTier tier)
@@ -186,6 +196,56 @@ namespace DD.Prototype.Profile
             return new LevelProgress(level, into, levelUps, true);
         }
 
+        // ------------------------------------------------------------- Ash (WP-077)
+
+        /// <summary>
+        /// WP-077 §3.1: the run's Ash — floor(run XP / XpPerAsh) + first-time milestones (a weapon's
+        /// first round 10, the first capstone, the first Special Link II) + each achievement earned by
+        /// this run by rarity — added to the candidate (earned total and balance), plus the run's kills
+        /// to the weapon's mastery. Runs inside the ApplyRun transaction: reaches disk with the rest
+        /// of the rewards or not at all (WP-009H exactly-once).
+        /// </summary>
+        public static int ApplyAsh(ProfileData candidate, in RunRewardInput input,
+            IReadOnlyList<DD.Prototype.Achievements.AchievementDefinition> earnedThisRun, ProgressionConfigSection prog)
+        {
+            if (candidate == null)
+            {
+                return 0;
+            }
+
+            int perAsh = prog != null ? Math.Max(1, prog.XpPerAsh) : 40;
+            long ash = input.TotalXp / perAsh;
+
+            if (input.ReachedRound >= 10 && !string.IsNullOrEmpty(input.WeaponKey) && candidate.Grant(candidate.AshMilestones, "r10:" + input.WeaponKey))
+            {
+                ash += prog != null ? Math.Max(0, prog.AshFirstRound10PerWeapon) : 30;
+            }
+
+            if (input.TreeCapstones > 0 && candidate.Grant(candidate.AshMilestones, "capstone"))
+            {
+                ash += prog != null ? Math.Max(0, prog.AshFirstCapstone) : 25;
+            }
+
+            if (input.TreeLinkII > 0 && candidate.Grant(candidate.AshMilestones, "link2"))
+            {
+                ash += prog != null ? Math.Max(0, prog.AshFirstLinkII) : 15;
+            }
+
+            if (earnedThisRun != null && prog != null)
+            {
+                for (int i = 0; i < earnedThisRun.Count; i++)
+                {
+                    if (earnedThisRun[i] != null) ash += prog.AshForRarity((int)earnedThisRun[i].Rarity);
+                }
+            }
+
+            int gained = (int)Math.Min(ash, int.MaxValue);
+            candidate.AshEarnedTotal = SaturatingAdd(candidate.AshEarnedTotal, gained);
+            candidate.AshBalance = candidate.AshEarnedTotal - candidate.AshSpentTotal;
+            candidate.AddMasteryKills(input.WeaponKey, input.TotalKills);
+            return gained;
+        }
+
         // ------------------------------------------------------------- statistics
 
         /// <summary>WP-023: folds the tracked feats (special pickups, flawless rounds) into the candidate. Saturating.</summary>
@@ -289,7 +349,9 @@ namespace DD.Prototype.Profile
         public static bool IsWeaponEntitled(ProfileData profile, ClassicWeaponId id)
         {
             string name = NameOf(id);
-            return profile != null && name != null && profile.Has(profile.UnlockedWeapons, name);
+            // WP-077 v5: the saved key; an unsanitised in-memory profile may still carry the M3 enum name.
+            return profile != null && name != null &&
+                   (profile.Has(profile.UnlockedWeapons, name) || profile.Has(profile.UnlockedWeapons, id.ToString()));
         }
 
         public static bool IsBranchEntitled(ProfileData profile, UpgradeBranch branch)
@@ -300,24 +362,21 @@ namespace DD.Prototype.Profile
 
         // Enum names, resolved once: the gates are called from selection clicks and offer
         // builds, and a per-call ToString()/IsDefined would allocate for nothing.
-        private static readonly ClassicWeaponId[] s_weaponIds = (ClassicWeaponId[])Enum.GetValues(typeof(ClassicWeaponId));
-        private static readonly string[] s_weaponNames = Enum.GetNames(typeof(ClassicWeaponId));
         private static readonly UpgradeBranch[] s_branchIds = (UpgradeBranch[])Enum.GetValues(typeof(UpgradeBranch));
         private static readonly string[] s_branchNames = Enum.GetNames(typeof(UpgradeBranch));
 
-        /// <summary>The defined name of a weapon id, or null for a value the build does not define.</summary>
+        /// <summary>
+        /// WP-077 v5: the saved key of a weapon — its WP-069 slot key ("ar_1", "smg_1" …), independent of
+        /// the enum member names (S-02 may rename them). Null for a value outside the arsenal.
+        /// </summary>
         public static string NameOf(ClassicWeaponId id)
         {
-            for (int i = 0; i < s_weaponIds.Length; i++)
-            {
-                if (s_weaponIds[i] == id)
-                {
-                    return s_weaponNames[i];
-                }
-            }
-
-            return null;
+            int i = (int)id;
+            return i >= 0 && i < s_weaponKeys.Length ? s_weaponKeys[i] : null;
         }
+
+        // Runtime index → WP-069 key (WeaponIdMigration.TryGetRuntimeId is the inverse; the M3 0/1/2 kept).
+        private static readonly string[] s_weaponKeys = { "ar_1", "smg_1", "sg_1", "ar_2", "smg_2", "sg_2", "lmg_1", "lmg_2", "sr_1", "rl_1" };
 
         /// <summary>The defined name of a branch, or null for a value the build does not define.</summary>
         public static string NameOf(UpgradeBranch branch)

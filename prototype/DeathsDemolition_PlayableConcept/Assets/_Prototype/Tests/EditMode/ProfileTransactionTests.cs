@@ -541,7 +541,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(disk.UnlockedWeapons.Contains("Bazooka"));
             Assert.IsTrue(disk.UnlockedBranches.Contains("Laser"));
             Assert.IsTrue(disk.Achievements.Contains("ghost"));
-            Assert.IsTrue(disk.UnlockedWeapons.Contains("AssaultRifle"));
+            Assert.IsTrue(disk.UnlockedWeapons.Contains("ar_1"), "WP-077 v5: M3 silah adları WP-069 anahtarlarına göçer");
         }
 
         [Test]
@@ -579,7 +579,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             // WP-008 teklif kapısı varsayılan yüklemi ProfileService.IsBranchUnlocked → kazanılmış liste.
             Assert.IsFalse(ProfileService.IsBranchUnlocked(UpgradeBranch.Explosion), "L1: Explosion listede yok");
-            Assert.IsTrue(ProfileService.ApplyRun(Ozet(Kimlik(), 2, 1, 0, 0, 100)).Applied);
+            Assert.IsTrue(ProfileService.ApplyRun(Ozet(Kimlik(), 2, 1, 0, 0, ProfileService.LevelRequirement(1))).Applied);
             Assert.IsTrue(ProfileService.IsBranchUnlocked(UpgradeBranch.Explosion), "L2: Explosion kazanıldı");
 
             PrototypeConfig orijinal = PrototypeConfig.Active;

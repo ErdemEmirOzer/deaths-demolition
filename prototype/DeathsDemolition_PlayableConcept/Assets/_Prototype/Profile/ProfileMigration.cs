@@ -109,6 +109,26 @@ namespace DD.Prototype.Profile
             return ProfileLoadStatus.Ok;
         }
 
+        /// <summary>WP-077 v5 back-grant: Ash for the XP and the achievements a v4 profile already earned.</summary>
+        public static int BackGrantAsh(ProfileData data)
+        {
+            if (data == null) return 0;
+            DD.Prototype.Core.Config.PrototypeConfig config = DD.Prototype.Core.Config.PrototypeConfig.Active;
+            DD.Prototype.Core.Config.ProgressionConfigSection prog = config != null ? config.Progression : null;
+            int perAsh = prog != null ? System.Math.Max(1, prog.XpPerAsh) : 40;
+            long ash = System.Math.Max(0, data.TotalXpEarned) / perAsh;
+            if (data.Achievements != null)
+            {
+                for (int i = 0; i < data.Achievements.Count; i++)
+                {
+                    DD.Prototype.Achievements.AchievementDefinition d = DD.Prototype.Achievements.AchievementCatalog.Find(data.Achievements[i]);
+                    if (d != null && prog != null) ash += prog.AshForRarity((int)d.Rarity);
+                }
+            }
+
+            return (int)System.Math.Min(ash, int.MaxValue);
+        }
+
         /// <summary>True when the text still carries the retired v2 ring (reported at migration, never used).</summary>
         public static bool CarriesLegacyRing(string json)
         {
@@ -155,6 +175,22 @@ namespace DD.Prototype.Profile
                 {
                     data.UnlockedContent = new System.Collections.Generic.List<string>();
                 }
+            }
+
+            if (from < 5)
+            {
+                // v4 → v5 (WP-077): the meta PATH. K11 (C-00, 2026-09-24): the level is NOT recomputed on
+                // the new curve — the player keeps the level earned; 100·L + 10·L² applies from here on.
+                // Weapons stay granted (Sanitize maps the M3 names to WP-069 keys). Ash is granted back for
+                // the life so far: floor(TotalXpEarned / XpPerAsh) + each earned achievement's rarity Ash.
+                int ash = BackGrantAsh(data);
+                data.AshEarnedTotal = ash;
+                data.AshSpentTotal = 0;
+                data.AshBalance = ash;
+                if (data.MetaNodes == null) data.MetaNodes = new System.Collections.Generic.List<string>();
+                if (data.AshMilestones == null) data.AshMilestones = new System.Collections.Generic.List<string>();
+                if (data.WeaponMastery == null) data.WeaponMastery = new System.Collections.Generic.List<WeaponMasteryEntry>();
+                data.MetaPinnedNode = data.MetaPinnedNode ?? string.Empty;
             }
 
             data.SaveVersion = ProfileData.CurrentVersion;

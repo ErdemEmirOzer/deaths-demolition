@@ -77,10 +77,11 @@ namespace DD.Prototype.Tests.EditMode
         {
             PrototypeConfig config = SevkiyatConfig();
 
-            Assert.AreEqual(100, config.LevelRequirement(1));
-            Assert.AreEqual(175, config.LevelRequirement(2));
-            Assert.AreEqual(250, config.LevelRequirement(3));
-            Assert.AreEqual(325, config.LevelRequirement(4));
+            // WP-077 K4: 100·L + 10·L².
+            Assert.AreEqual(110, config.LevelRequirement(1));
+            Assert.AreEqual(240, config.LevelRequirement(2));
+            Assert.AreEqual(390, config.LevelRequirement(3));
+            Assert.AreEqual(560, config.LevelRequirement(4));
 
             Assert.AreEqual(20, config.RoundCompletionXp(1));
             Assert.AreEqual(55, config.RoundCompletionXp(8));

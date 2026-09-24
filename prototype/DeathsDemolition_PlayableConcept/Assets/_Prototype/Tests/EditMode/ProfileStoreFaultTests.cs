@@ -774,10 +774,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(ProfileLoadStatus.InvalidLineage, ProfileStore.ReadFile(Primary, out d));
             File.WriteAllText(Primary, "{\"SaveVersion\": 3, \"ProfileLineageId\": \"" + Soy + "\", \"LastAppliedCompletionOrdinal\": -4}");
             Assert.AreEqual(ProfileLoadStatus.Malformed, ProfileStore.ReadFile(Primary, out d), "negatif ordinal onarılmaz; geçersiz belge");
-            File.WriteAllText(Primary, "{\"SaveVersion\": 5, \"ProfileLineageId\": \"" + Soy + "\"}");
+            File.WriteAllText(Primary, "{\"SaveVersion\": 6, \"ProfileLineageId\": \"" + Soy + "\"}");
             Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d));
-            File.WriteAllText(Primary, "{\"SaveVersion\": 5}");
-            Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d), "v5 lineage'sız da future: dokunulmaz (WP-023: v4 artık güncel)");
+            File.WriteAllText(Primary, "{\"SaveVersion\": 6}");
+            Assert.AreEqual(ProfileLoadStatus.FutureVersion, ProfileStore.ReadFile(Primary, out d), "v6 lineage'sız da future: dokunulmaz (WP-077: v5 artık güncel)");
             File.Delete(Primary);
             Assert.AreEqual(ProfileLoadStatus.Missing, ProfileStore.ReadFile(Primary, out d));
             Assert.IsNull(d);
@@ -841,7 +841,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(16, y.UnattributedKills, "20 − 4: eksik kill'ler uydurulmaz, atanmamış kovaya");
             Assert.AreEqual(20, y.TotalKills);
             CollectionAssert.AreEqual(new[] { "a", "b" }, y.Achievements);
-            CollectionAssert.AreEqual(new[] { "AssaultRifle" }, y.UnlockedWeapons);
+            CollectionAssert.AreEqual(new[] { "ar_1" }, y.UnlockedWeapons, "WP-077 v5: M3 silah adları WP-069 anahtarlarına göçer");
             Assert.IsTrue(ProfileData.IsLineageId(y.ProfileLineageId));
             Assert.AreEqual(0, y.LastAppliedCompletionOrdinal);
             Assert.AreEqual(string.Empty, y.LastSavedUtc);
@@ -880,7 +880,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(5, y.ArmorPiecesBroken);
             Assert.AreEqual(120, y.BestRunXp);
             CollectionAssert.AreEqual(new[] { "first_blood", "armor_breaker" }, y.Achievements);
-            CollectionAssert.AreEqual(new[] { "AssaultRifle", "AutoSmg", "CombatShotgun" }, y.UnlockedWeapons);
+            CollectionAssert.AreEqual(new[] { "ar_1", "smg_1", "sg_1" }, y.UnlockedWeapons, "WP-077 v5: M3 silah adları WP-069 anahtarlarına göçer");
             CollectionAssert.AreEqual(new[] { "Piercing", "Explosion" }, y.UnlockedBranches);
             Assert.IsTrue(ProfileData.IsLineageId(y.ProfileLineageId), "v1 → v3: tek seferlik lineage");
             Assert.AreEqual(0, y.LastAppliedCompletionOrdinal, "v1 koşuları ordinal'e çevrilmez; 0'dan başlar");

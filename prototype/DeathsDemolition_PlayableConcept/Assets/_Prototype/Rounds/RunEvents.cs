@@ -219,6 +219,18 @@ namespace DD.Prototype.Rounds
         /// <summary>WP-008: paid rerolls used across the run.</summary>
         public int RerollsUsed;
 
+        /// <summary>WP-077: in-run tree keystones owned at the end of the run (branch keystones + weapon seal).</summary>
+        public int TreeKeystones;
+
+        /// <summary>WP-077: in-run tree capstones owned at the end of the run.</summary>
+        public int TreeCapstones;
+
+        /// <summary>WP-077: Hearth stacks bought during the run.</summary>
+        public int TreeHearthStacks;
+
+        /// <summary>WP-077: Special Link II owned at the end of the run (0/1).</summary>
+        public int TreeLinkII;
+
         /// <summary>Seconds of run time, paused and frozen time excluded.</summary>
         public float RunDuration;
 
