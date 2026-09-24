@@ -252,7 +252,8 @@ namespace DD.Prototype.Tests.EditMode
 
         private static readonly string[] KitUpdateAllowList =
         {
-            "UiBar.cs", "UiEnemyStatusMarkers.cs", "UiHitDirection.cs", "UiMotion.cs", "UiMotionCore.cs", "UiInputGlyphs.cs"
+            "UiBar.cs", "UiEnemyStatusMarkers.cs", "UiHitDirection.cs", "UiMotion.cs", "UiMotionCore.cs", "UiInputGlyphs.cs",
+            "UiBackdrop.cs"   // slice 6: parallax follow + lantern breath read the pointer / stick every frame
         };
 
         [Test]

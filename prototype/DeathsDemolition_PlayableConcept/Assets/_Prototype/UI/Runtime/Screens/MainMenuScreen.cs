@@ -147,14 +147,24 @@ namespace DD.Prototype.UI
         /// </summary>
         private void BuildMenuPlate()
         {
-            Sprite plate = UiArt.MenuPlate();
-            if (plate == null)
+            Transform backdrop = ScreenRect.Find("Backdrop");
+            if (backdrop == null)
             {
                 return;
             }
 
-            Transform backdrop = ScreenRect.Find("Backdrop");
-            if (backdrop == null)
+            // WP-068 slice 6 (E2 / §6.1): the Look B plate stack (parallax, lantern breath, rain,
+            // text-safe scrim) right above the base fill; the veils and petals stay over it.
+            UiBackdrop plates = UiBackdrop.Create((RectTransform)backdrop);
+            if (plates != null)
+            {
+                plates.transform.SetSiblingIndex(1);
+                return;
+            }
+
+            // Without MenuPlates (an art-less build): the v2 single plate and its wash.
+            Sprite plate = UiArt.MenuPlate();
+            if (plate == null)
             {
                 return;
             }
@@ -458,7 +468,7 @@ namespace DD.Prototype.UI
             var head = new UiStack(_paneHost);
             head.Add(UiFactory.Heading("SETTINGS", _paneHost), UiFactory.LineHeight(UiType.H2));
             AddCaptionUnder(ref head, _paneHost, "Caption",
-                "Device preferences. They are saved on this machine and never touch your profile.", 1, UiSpace.L);
+                "Device preferences. They are saved on this machine and never touch your profile.", 1, UiSpace.M);
 
             RectTransform body = UiFactory.NewRect("Body", _paneHost);
             UiFactory.Fill(body);
@@ -495,13 +505,14 @@ namespace DD.Prototype.UI
             AddSettingRow(ref stack, scale.transform);
 
             AddSettingsSection(ref stack, content, "AUDIO", true);
+            // Volumes are continuous (no detents; ← / → step 5 %), the UI scale has its six stops.
             UiSlider master = UiSlider.Create("Setting.MASTER VOLUME", content, "MASTER VOLUME",
-                0f, 1f, UiSettings.MasterVolume, 0.05f, Percent,
+                0f, 1f, UiSettings.MasterVolume, 0f, Percent,
                 v => UiSettings.MasterVolume = Mathf.Round(v * 20f) / 20f, SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, master.transform);
             // WP-068 U8: UI sounds on their own slider (the Interface bus).
             UiSlider uiSounds = UiSlider.Create("Setting.UI SOUNDS", content, "UI SOUNDS",
-                0f, 1f, UiSettings.UiVolume, 0.05f, Percent,
+                0f, 1f, UiSettings.UiVolume, 0f, Percent,
                 v => UiSettings.UiVolume = Mathf.Round(v * 20f) / 20f, SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, uiSounds.transform);
 
@@ -515,12 +526,12 @@ namespace DD.Prototype.UI
                 on => UiSettings.Telemetry = on);   // WP-022E / WP-045: local files only, no identity data
             AddSettingRow(ref stack, telemetry.transform);
             AddCaptionUnder(ref stack, content, "TelemetryNote",
-                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.", 1, UiSpace.M);
+                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.", 1, UiSpace.S);
             UiSwitch hints = UiSwitch.Create("Hints", content, "HINTS", UiSettings.Hints,
                 on => UiSettings.Hints = on);       // WP-068 slice 10b (U9)
             AddSettingRow(ref stack, hints.transform);
             AddCaptionUnder(ref stack, content, "HintsNote",
-                "Brief hints during the first three runs, in play and on loading screens. Off leaves the rules.", 1, UiSpace.M);
+                "Brief hints during the first three runs, in play and on loading screens. Off leaves the rules.", 1, UiSpace.None);
 
             scroll.SetContentHeight(stack.Cursor);
             scroll.TrackSelectables();
@@ -563,33 +574,33 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.XS);
         }
 
-        /// <summary>E6 section head: small-caps label over a hairline, with the AP-012 lozenge at the left end (the one ornament per section).</summary>
+        /// <summary>
+        /// E6 section head on one line: the small-caps label, then a hairline running to the
+        /// column's edge. The AP-012 lozenge stays on the screen header; at section size it
+        /// read as a stray dot (s6c frames).
+        /// </summary>
         private static void AddSettingsSection(ref UiStack stack, RectTransform parent, string title, bool gapBefore)
         {
             if (gapBefore)
             {
-                stack.Gap(UiSpace.L);
+                stack.Gap(UiSpace.S);   // + the last row's XS: 12 between a section's rows and the next head
             }
 
-            TMP_Text label = UiFactory.Label("Section." + title, parent, title, UiType.Label, UiColor.TextMuted);
-            stack.Add((RectTransform)label.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            RectTransform head = UiFactory.NewRect("Section." + title, parent);
+            stack.Add(head, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            TMP_Text label = UiFactory.Label("Label", head, title, UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
+            UiFactory.Fill(label.rectTransform);
+            float x = Mathf.Ceil(label.GetPreferredValues(title).x) + (int)UiSpace.M;
+
+            Image rule = UiFactory.Divider("Rule", head);
+            var ruleRect = (RectTransform)rule.transform;
+            ruleRect.anchorMin = new Vector2(0f, 0.5f);
+            ruleRect.anchorMax = new Vector2(1f, 0.5f);
+            ruleRect.pivot = new Vector2(0f, 0.5f);
+            ruleRect.offsetMin = new Vector2(x, -UiTokens.StrokeHairline * 0.5f);
+            ruleRect.offsetMax = new Vector2(0f, UiTokens.StrokeHairline * 0.5f);
+
             stack.Gap(UiSpace.XS);
-            Image rule = UiFactory.Divider("Rule." + title, parent);
-            stack.Add((RectTransform)rule.transform, UiTokens.StrokeHairline);
-            Sprite ornament = UiArt.Divider();
-            if (ornament != null)
-            {
-                Image mark = UiFactory.NewImage("Ornament." + title, parent, UiColor.TextSecondary, ornament);
-                mark.preserveAspect = true;
-                var markRect = (RectTransform)mark.transform;
-                markRect.anchorMin = new Vector2(0f, 1f);
-                markRect.anchorMax = new Vector2(0f, 1f);
-                markRect.pivot = new Vector2(0f, 0.5f);
-                markRect.sizeDelta = new Vector2(80f, 12f);
-                markRect.anchoredPosition = new Vector2(0f, -stack.Cursor + UiTokens.StrokeHairline * 0.5f);
-            }
-
-            stack.Gap(UiSpace.S);
         }
 
         /// <summary>

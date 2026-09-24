@@ -505,6 +505,12 @@ namespace DD.Prototype.Tests.EditMode
             Step(0.2f);
             Assert.AreEqual(52f, view.Offset, 0.5f, "görünen satır kaydırmaz");
 
+            view.Reveal(rows[8], false);  // 448..504: only 56 px left below → to the end (a caption must not stay hidden)
+            Assert.AreEqual(560f - 300f, view.Offset, 0.5f, "kuyruk ≤ 96 px: sona kadar");
+            view.Reveal(rows[1], false);  // 56..112: the top is ≤ 96 px away → to the top (its section head too)
+            Assert.AreEqual(0f, view.Offset, 0.5f, "üste ≤ 96 px: en üste");
+
+            view.Reveal(rows[9], false);
             UiMotion.ReducedMotion = true;
             view.Reveal(rows[0], true);
             Assert.AreEqual(0f, view.Offset, 0.5f, "RM: kaydırma anında");

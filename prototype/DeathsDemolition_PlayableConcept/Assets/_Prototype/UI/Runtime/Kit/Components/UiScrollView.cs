@@ -33,6 +33,9 @@ namespace DD.Prototype.UI
         /// <summary>Space kept above / below a row that focus scrolls into view.</summary>
         public const float RevealMargin = 16f;
 
+        /// <summary>When no more than this is left beyond a revealed row (a section head above, a caption below), the scroll goes to that end.</summary>
+        public const float RevealTail = 96f;
+
         public const float WheelStep = 40f;
 
         private ScrollRect _scroll;
@@ -191,17 +194,29 @@ namespace DD.Prototype.UI
             float next = offset;
             if (top - RevealMargin < offset)
             {
-                next = top - RevealMargin;
+                next = top <= RevealTail ? 0f : top - RevealMargin;
             }
             else if (bottom + RevealMargin > offset + height)
             {
-                next = bottom + RevealMargin - height;
+                next = _content.rect.height - bottom <= RevealTail ? MaxOffset : bottom + RevealMargin - height;
             }
 
-            if (!Mathf.Approximately(next, offset))
+            if (Mathf.Approximately(next, offset))
             {
-                ScrollTo(next, animate);
+                return;
             }
+
+            // The focus brackets measured the row where it was (its own OnSelect ran first):
+            // re-aim them at where it is going, so both arrive together.
+            if (UiFocusBrackets.Target == target)
+            {
+                Vector2 now = _content.anchoredPosition;
+                _content.anchoredPosition = new Vector2(now.x, Mathf.Clamp(next, 0f, MaxOffset));
+                UiFocusBrackets.Follow(target);
+                _content.anchoredPosition = now;
+            }
+
+            ScrollTo(next, animate);
         }
 
         /// <summary>Scroll to <paramref name="offset"/> (clamped). Animated scrolls are Decor (Reduced Motion lands them).</summary>
