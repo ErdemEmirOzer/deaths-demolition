@@ -74,7 +74,18 @@ public static class QualityTiers
 | Kalabalık komşu tavanı `-ddCrowdNeighbours` | S-03 | 6 | 10 | 14 |
 | PathQueriesPerTick / spawn LOS linecast `-ddSpawnLos` | S-03 | 4 / 9 | 6 / 18 | 6 / 18 |
 | Mermi (projectile) simülasyonu — oyun kuralı, **kademesiz** (tavan 256 mermi, 120 Hz sabit adım, 0 B/kare; isabet/menzil kademeyle değişmez) | S-02 WP-069 | aynı | aynı | aynı — ms: B1 ölçümü (bekleniyor) |
-| Mermi izi / darbe / duman / roket izi + patlama görselleri, Special görselleri | S-07 WP-073 | S-07 kendi satırlarını ekler | | |
+| Mermi izi şeritleri (Yüksek hedef 0,25 ms) | S-07 WP-073 | 256, parıltısız, HDR ×0,5 | 256 tam | 256 tam |
+| Namlu ateşi + duman + ışık (0,20 + 0,20 ms) | S-07 | ışık her 2. atışta, 2 ışık, duman 0,25 s | her atış, 4 ışık, 0,5 s | 8 ışık yumuşak gölge, 0,8 s + pus |
+| Kovanlar (0,05) | S-07 | 24, 3 s | 48, 5 s | 96, 8 s |
+| Darbe parçacıkları (0,35) | S-07 | ×0,4, 24 eşzamanlı | ×1,0, 40 | ×1,3, 48 |
+| Dekaller (0,05) | S-07 | 64, 8 s | 128, 12 s | 256, 12 s |
+| Kan damlacıkları (0,20) | S-07 | 48 | 96 | 128 |
+| Patlama (0,30, tepe 0,6) | S-07 | 5 katman, 1 tam | 7 katman, 2+1 | 8 katman + gölge |
+| Roket izi (0,05) | S-07 | 1 s | 2 s | 3,5 s |
+| Raiju yayları (0,25) | S-07 | 6 / 12 | 8 / 24 | 8 / 32 |
+| Namekuji birikintileri (0,25) | S-07 | 12 düz | 12 kabarcık | 12 + erime |
+| Atmosfer parçacıkları, canlı (0,60; × cookie) | S-07 | 600 | 1 800 | 3 000 |
+| **VFX toplamı** | S-07 | ≤ 1,2 ms | ≤ 3,0 ms | ≤ 5,5 ms |
 | Ses | S-08 | kademe satırı yok (ses CPU'su ≈ 0,02 ms/atış, ses bütçesi kademeden bağımsız; Performans ölçümü > 0,3 ms ise World kapasitesi 24 → 16) | | |
 
 **Hiçbir kademede kaybedilmez:** ıslak arduvaz değeri/parlaması; bulut gölgesi cookie; LUT v2 + sis rengi #D0D7DE + mesafe rampası (90 m %24); ufuk plakaları + gök bandı; imza huzmeler (batı bambu ≥ 3, doğu sakura ≥ 2 kart); değer sırası ve DEC-077 okunabilirlik eşikleri.
@@ -83,4 +94,4 @@ public static class QualityTiers
 - A/B: özellik `-dd<Özellik> 0|1` bayrağı veya kademe anahtarı ile; PilotPerfProbe Run, 1080p, 10 s ısınma + 60 s pencere, tam 40, temiz pencere (`tools/qa/wp064_run.py perf`, `-ddCameraMode` ile üç mod); kademe × mod başına ≥ 2 pencere.
 - Rapor satırı (paket kaydı + `quality-tiers-v2.json`): özellik · kademe · mod · Δms ort · Δms p99 · GPU Δms · kanıt yolu.
 - Bütçe paylaşımı (öneri, C-00 hakemliğinde; Yüksek, tepeden, ölçülü taban 7,8 ms): dünya v5 ≤ +3,5 ms · atmosfer v3 ≤ +2,0 ms · VFX/anim/AI/UI/ses ≤ +3,0 ms · pay 0,2 ms. Aşan özellik kendi kademesinde kısar (M4-R1 §4.8); başka paketin bütçesinden alınmaz.
-- Bildirilen tahminler (40 zombi, Yüksek): animasyon (S-06) ≈ 1,9 ms (pay ≤ 2,4; Sinematik ≈ 3,4 / Performans ≈ 0,7) — "VFX/anim/AI/UI/ses +3,0 ms" payının çoğu; C-00 hakemliğinde yeniden paylaştırma gerekebilir (ölçüm dilim sonlarında).
+- Bildirilen tahminler (40 zombi, Yüksek): animasyon (S-06) ≈ 1,9 ms (pay ≤ 2,4), AI (S-03) 0,75 ms, VFX (S-07) ≤ 3,0 ms → toplam ≈ 5,65 ms, onaylı "diğer +3,0 ms" payının ≈ 1,9 katı (UI/ses hariç). **Aşım C-00 hakemliğinde** (seçenekler: paylaşımı ölçümle yeniden dağıtmak — dünya/atmosfer payı ölçülünce kullanılmayan kısım; ya da Yüksek VFX/animasyon değerlerini kısmak). Tahmin; kesin rakam dilim sonu A/B ölçümleriyle.
