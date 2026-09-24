@@ -1,6 +1,6 @@
 # WP-072 B4 — Special ses seti (SW_ARC / SW_GEL) · veri tarafı
 
-Durum 2026-09-24: veri hazır (AP-011 v019, 21 kimlik / 42 dosya, 0 kr ek; R7/R8 ledger 160–161 5,6 kr). Kablolama S-02 WP-069 B4 SHA'sı gelince (C-00).
+Durum 2026-09-24: veri main'de (fc30530); kablolama + kaldırma S-02 WP-069 B4 (4654d4a5) üstünde yapıldı — SpecialAudio, eski 15 kimlik / 30 dosya silindi, manifest 329/773.
 
 ## Kimlik → olay (S-02 WP-069 §7)
 | Kimlik | Olay | Bus | Not |

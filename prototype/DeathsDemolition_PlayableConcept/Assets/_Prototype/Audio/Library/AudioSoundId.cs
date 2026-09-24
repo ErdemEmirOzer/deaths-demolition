@@ -244,25 +244,6 @@ namespace DD.Prototype.Audio
         MusicMenu = 305,
         MusicResults = 306,
 
-        // ---- WP-058 · Special Weapon usage (WP-056 SpecialUsageEvent; AP-011 v009, derived, 0 cr) — Kagura / Ofuda / Tide
-        SwFireKagura = 310,
-        SwFireOfuda = 311,
-        SwFireTide = 312,
-        SwFieldKagura = 313,
-        SwFieldOfuda = 314,
-        SwFieldTide = 315,
-        SwFieldEndKagura = 316,
-        SwFieldEndOfuda = 317,
-        SwFieldEndTide = 318,
-        SwHitKagura = 319,
-        SwHitOfuda = 320,
-        SwHitTide = 321,
-
-        // ---- WP-058C · enemy Special reactions (WP-055 sw_push / sw_web / sw_pull beats; AP-011 v010, derived, 0 cr)
-        ZombieReactPush = 330,
-        ZombieReactWeb = 331,
-        ZombieReactPull = 332,
-
         // ---- WP-065C · AP-017 Phase 2b fūrin wind chimes (wind-driven positional tinkle, Look B ambience; AP-011 v014)
         AmbFurin = 340,
 

@@ -678,74 +678,93 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(60000)]
-        public IEnumerator SpecialTepkisi_SwPushBeat_TepkiVokali()
+        public IEnumerator SpecialTepkisi_SwShockSlideBeat_GovdeSesi()
         {
             AudioEventRouter r = _d.Router;
             ZombieEnemy z = _s.Dogur(_s.Zemin(0f, 5f));
             yield return null;
             int once = r.ReactionCount;
-            var info = new DD.Prototype.Enemies.EnemyCombatEventInfo(DD.Prototype.Enemies.EnemyCombatEventKind.SpecialPush, z.transform, z.Tier, z.LifeId,
+            var shock = new DD.Prototype.Enemies.EnemyCombatEventInfo(DD.Prototype.Enemies.EnemyCombatEventKind.SpecialShock, z.transform, z.Tier, z.LifeId,
+                z.transform.position, Vector3.forward, DD.Prototype.Core.Config.ArmorSlot.None, false, 0.4f);
+            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in shock);
+            Assert.AreEqual(once + 1, r.ReactionCount, "sw_shock gövde döngüsü başlamadı.");
+            Assert.AreEqual(1, _d.Special.LoopsPlaying, "gövde başına bir çatırtı döngüsü");
+            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in shock);   // the same body again: extends, no second loop
+            Assert.AreEqual(1, _d.Special.LoopsPlaying);
+            yield return new WaitForSeconds(0.7f);
+            Assert.AreEqual(0, _d.Special.LoopsPlaying, "Electrocuted süresi bitince döngü söner");
+            Assert.AreEqual(AudioSoundId.SwArcShockEnd, _d.Special.LastSound, "sönüş 'sss'");
+            var slide = new DD.Prototype.Enemies.EnemyCombatEventInfo(DD.Prototype.Enemies.EnemyCombatEventKind.SpecialSlide, z.transform, z.Tier, z.LifeId,
                 z.transform.position, Vector3.forward, DD.Prototype.Core.Config.ArmorSlot.None, false, 0f);
-            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in info);
-            Assert.AreEqual(once + 1, r.ReactionCount, "sw_push tepki vokali üretmedi.");
-            Assert.AreEqual(AudioSoundId.ZombieReactPush, _d.LastPlayed);
-            var pull = new DD.Prototype.Enemies.EnemyCombatEventInfo(DD.Prototype.Enemies.EnemyCombatEventKind.SpecialPull, z.transform, z.Tier, z.LifeId,
-                z.transform.position, Vector3.forward, DD.Prototype.Core.Config.ArmorSlot.None, false, 0f);
-            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in pull);
-            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in pull);   // same body, same frame → throttled to one
-            Assert.AreEqual(once + 2, r.ReactionCount, "sw_pull beden başına 0,25 s kısma.");
-            Debug.Log("[DD-TEST] wp058c.react " + r.Describe());
+            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in slide);
+            DD.Prototype.Enemies.EnemyCombatEvents.Raise(in slide);   // a crowd in the same frame slides as one
+            Assert.AreEqual(AudioSoundId.SwGelSlideEnemy, _d.LastPlayed);
+            Assert.AreEqual(once + 2, r.ReactionCount, "sw_slide 60 ms kümeleme");
+            Debug.Log("[DD-TEST] wp072b4.beats " + r.Describe());
         }
 
         // ================================================================== WP-058 · WP-056 Special kullanım sesleri
 
-        [Ignore("WP-072 B4 wiring (S-08): the Kagura / Ofuda / Tide cues left with WP-069 B4; S-08 rewrites for SW_ARC / SW_GEL")]
         [UnityTest]
         [Timeout(60000)]
-        public IEnumerator SpecialKullanim_FiredFieldHit_KendiSesleri_AlanDongusu()
+        public IEnumerator SpecialKullanim_RaijuNamekuji_KendiSesleri_ZincirBirikinti()
         {
             AudioEventRouter r = _d.Router;
-            int once = r.SpecialUsageCount;
+            SpecialAudio sp = _d.Special;
+            Assert.IsTrue(sp.Produced, "v019 Special kimlikleri katalogda değil");
+            Vector3 el = _s.Rig.transform.position + Vector3.up;
             Vector3 at = _s.Zemin(0f, 6f);
-            var id = DD.Prototype.Core.Config.SpecialWeaponId.Namekuji;
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_tide_pull", _s.Rig.transform.position, Vector3.forward, 0f, 0f, 1);
-            Assert.AreEqual(once + 1, r.SpecialUsageCount, "Fired ses üretmedi.");
-            Assert.AreEqual(AudioSoundId.SwFireTide, _d.LastPlayed);
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_tide_well", at, Vector3.forward, 4f, 6f, 0);
             Vector3 at2 = at + Vector3.right * 8f;
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_tide_well", at2, Vector3.forward, 4f, 6f, 0);
-            yield return null;
-            Assert.AreEqual(2, _d.FieldLoopsPlaying, "İki Tide kuyusu iki konumsal döngü tutmalı.");
-            int afterTwoTide = r.SpecialUsageCount;
-            Vector3 at3 = at + Vector3.left * 8f;
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_tide_well", at3, Vector3.forward, 4f, 6f, 0);
-            Assert.AreEqual(2, _d.FieldLoopsPlaying, "Shipped MaxWells=2 üstündeki üçüncü Tide kaynağı başlamamalı.");
-            Assert.AreEqual(afterTwoTide, r.SpecialUsageCount, "Başlamayan üçüncü Tide kullanılmış sayılmamalı.");
-            yield return new WaitForSecondsRealtime(0.1f);
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_tide_well", at2, Vector3.forward, 4f, 0f, 3);
-            yield return null;
-            Assert.AreEqual(1, _d.FieldLoopsPlaying, "Ters sıradaki FieldEnded yalnız eşleşen Tide kuyusunu durdurmalı.");
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_tide_well", at, Vector3.forward, 4f, 0f, 3);
-            yield return null;
-            Assert.AreEqual(0, _d.FieldLoopsPlaying, "İkinci FieldEnded kalan Tide döngüsünü durdurmalı.");
-            Assert.AreEqual(AudioSoundId.SwFieldEndTide, _d.LastPlayed);
-            yield return new WaitForSecondsRealtime(0.1f);
-            var kagura = DD.Prototype.Core.Config.SpecialWeaponId.Raiju;
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(kagura, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_wave", at, Vector3.forward, 6f, 1.2f, 0);
-            Assert.AreEqual(AudioSoundId.SwFieldKagura, _d.LastPlayed, "Kagura cephesi one-shot.");
-            Assert.AreEqual(0, _d.FieldLoopsPlaying, "Kagura döngü değil.");
+            var raiju = DD.Prototype.Core.Config.SpecialWeaponId.Raiju;
+            var gel = DD.Prototype.Core.Config.SpecialWeaponId.Namekuji;
+            void Yayinla(DD.Prototype.Core.Config.SpecialWeaponId id, DD.Prototype.Weapons.SpecialUsageKind k, Vector3 p, int count) =>
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, k, "wp072b4", p, Vector3.forward, 1.6f, 0.25f, count);
 
-            var ofuda = DD.Prototype.Core.Config.SpecialWeaponId.Namekuji;
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(ofuda, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_ofuda_web", at, Vector3.forward, 4f, 6f, 0);
-            Assert.AreEqual(1, _d.FieldLoopsPlaying, "Ofuda alan döngüsü başlamadı.");
-            _d.enabled = false;
-            Assert.AreEqual(0, _d.FieldLoopsPlaying, "Director disable alan döngülerini temizlemeli.");
-            _d.enabled = true;
-            yield return null;
-            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(ofuda, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_ofuda_web", at, Vector3.forward, 4f, 6f, 0);
-            Assert.AreEqual(1, _d.FieldLoopsPlaying, "Director re-enable sonrası alan döngüsü yeniden bağlanmalı.");
+            // Raiju: ready → charge → fire; the legacy heavy fire gives way while it is in hand.
+            Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.Activated, el, 0);
+            Assert.AreEqual(AudioSoundId.SwArcReady, _d.LastPlayed);
+            Assert.IsTrue(sp.InHand);
+            yield return new WaitForSecondsRealtime(0.1f);
+            Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.ChargeStarted, el, 0);
+            Assert.AreEqual(AudioSoundId.SwArcCharge, _d.LastPlayed);
+            Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.Fired, el, 0);
+            Assert.AreEqual(AudioSoundId.SwArcFire, _d.LastPlayed);
+            AudioEvents.Raise(CombatAudioEvent.HeavyWeaponFire, el, 1f, 60);
+            Assert.AreEqual(AudioSoundId.SwArcFire, _d.LastPlayed, "Special eldeyken eski HeavyWeaponFire çalmamalı");
+
+            // Chain: hop 0..2 in one frame → three crackles, 40 ms apart; the orb's end right after = no fizzle.
+            int played = sp.Played;
+            for (int hop = 0; hop < 3; hop++) Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, at + Vector3.right * hop, hop);
+            Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, at, 0);
+            Assert.AreEqual(played, sp.Played, "zincir sıçramaları 40 ms aralıkla gecikmeli");
+            yield return new WaitForSeconds(0.2f);
+            Assert.AreEqual(played + 3, sp.Played, "üç sıçrama, sönüş yok");
+            Assert.AreEqual(AudioSoundId.SwArcChainJump, sp.LastSound);
+            yield return new WaitForSeconds(0.2f);
+            Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, at2, 0);
+            Assert.AreEqual(AudioSoundId.SwArcShockEnd, _d.LastPlayed, "gövdesiz biten küre söner");
+            Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.Deactivated, el, 0);
+            Assert.IsFalse(sp.InHand);
+            AudioEvents.Raise(CombatAudioEvent.HeavyWeaponFire, el, 1f, 60);
+            Assert.AreEqual(AudioSoundId.HeavyFire, _d.LastPlayed, "Special bırakılınca eski ağır ateş geri gelir");
+
+            // Namekuji: puddles loop per id, two at most; FieldEnded by id; the Special's end clears the rest.
+            yield return new WaitForSecondsRealtime(0.1f);
+            Yayinla(gel, DD.Prototype.Weapons.SpecialUsageKind.Fired, el, 0);
+            Assert.AreEqual(AudioSoundId.SwGelFire, _d.LastPlayed);
+            Yayinla(gel, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, at, 7);
+            Yayinla(gel, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, at2, 8);
+            Yayinla(gel, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, at + Vector3.left * 8f, 9);
+            Assert.AreEqual(2, sp.PuddlesPlaying, "birikinti döngüsü tavanı 2");
+            Yayinla(gel, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, at2, 8);
+            Assert.AreEqual(AudioSoundId.SwGelPuddleExpire, _d.LastPlayed);
+            yield return new WaitForSeconds(0.2f);
+            Assert.AreEqual(1, sp.PuddlesPlaying, "id'si eşleşen birikinti söndü");
+            Yayinla(gel, DD.Prototype.Weapons.SpecialUsageKind.Hit, at, 0);
+            Assert.AreEqual(AudioSoundId.SwGelHitFlesh, _d.LastPlayed);
             DD.Prototype.Weapons.WeaponEvents.PublishSpecialEnded();
-            Assert.AreEqual(0, _d.FieldLoopsPlaying, "Special bitişi FieldEnded gelmese de alan döngülerini temizlemeli.");
+            Assert.AreEqual(0, _d.FieldLoopsPlaying, "Special bitişi birikinti döngülerini temizler");
+            Assert.Greater(r.SpecialUsageCount, 0);
 
             AudioEvents.RaiseLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, at, 0.5f, 55);
             AudioEvents.RaiseLoop(CombatAudioEvent.SpecialWeaponBeaconLoop, at2, 0.5f, 55);

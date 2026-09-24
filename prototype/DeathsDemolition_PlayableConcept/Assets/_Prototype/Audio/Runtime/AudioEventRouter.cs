@@ -115,16 +115,14 @@ namespace DD.Prototype.Audio
         public bool Subscribed { get; private set; }
 
         // WP-058: the director's field-loop seam; stop carries the field origin so concurrent Tide wells release the matching source.
-        private Func<AudioSoundId, Vector3, int, bool> _fieldStart;
-        private Action<int, Vector3> _fieldStop;
-        private readonly float[] _swHitLast = new float[3];
+        private SpecialAudio _special;
         /// <summary>Special usage cues played (fire / field / hit). Test readout.</summary>
         public int SpecialUsageCount { get; private set; }
 
-        public void SetFieldLoopHandlers(Func<AudioSoundId, Vector3, int, bool> start, Action<int, Vector3> stop)
+        /// <summary>WP-072 B4: the Special voice (Raiju / Namekuji usage + S-03 shock / slide beats).</summary>
+        public void SetSpecialVoice(SpecialAudio special)
         {
-            _fieldStart = start;
-            _fieldStop = stop;
+            _special = special;
         }
 
         // ---- WP-068 slice 11 · controllable UI voices (roll, hold, boot seal) + UI v3 state
@@ -196,7 +194,6 @@ namespace DD.Prototype.Audio
             _drops.Clear();
             _animOwner.Clear();
             s_breakSounds.Clear();
-            _pullLast.Clear();
         }
 
         // ------------------------------------------------------------------ WP-021B · ADR-018-1 animation events
@@ -339,31 +336,15 @@ namespace DD.Prototype.Audio
                 case EnemyCombatEventKind.SpawnLand:
                     if (_play(AudioMixPlan.ZombieAggro(AudioEventMap.ZombieAggro(info.Tier), w), head, 1f, 55)) AggroCount++;
                     break;
-                // WP-058C · WP-055 Special reactions (the body's side of the Kagura push / Ofuda web / Tide pull)
-                case EnemyCombatEventKind.SpecialPush:
-                    if (_play(AudioMixPlan.SpecialReaction(AudioSoundId.ZombieReactPush, w), head, 1f, 44)) ReactionCount++;
+                // WP-072 B4 · WP-076 Special beats: Raiju shock hold (per-body loop), Namekuji slide / fall
+                case EnemyCombatEventKind.SpecialShock:
+                case EnemyCombatEventKind.SpecialSlide:
+                case EnemyCombatEventKind.SpecialFall:
+                    if (_special != null && _special.OnBeat(in info, w, head)) ReactionCount++;
                     break;
-                case EnemyCombatEventKind.SpecialWeb:
-                    if (_play(AudioMixPlan.SpecialReaction(AudioSoundId.ZombieReactWeb, w), head, 1f, 44)) ReactionCount++;
-                    break;
-                case EnemyCombatEventKind.SpecialPull:
-                {
-                    // Pull ticks repeat every few frames per body: one voice per body per 0.25 s.
-                    float now = Time.unscaledTime;
-                    if (info.Body != null)
-                    {
-                        int id = info.Body.GetInstanceID();
-                        if (_pullLast.TryGetValue(id, out float last) && now - last < 0.25f) break;
-                        _pullLast[id] = now;
-                    }
-
-                    if (_play(AudioMixPlan.SpecialReaction(AudioSoundId.ZombieReactPull, w), head, 0.8f, 30)) ReactionCount++;
-                    break;
-                }
             }
         }
 
-        private readonly Dictionary<int, float> _pullLast = new Dictionary<int, float>(48);
         /// <summary>WP-058C: Special reaction voices (sw_push / sw_web / sw_pull) played.</summary>
         public int ReactionCount { get; private set; }
 
@@ -378,37 +359,8 @@ namespace DD.Prototype.Audio
         /// </summary>
         private void OnSpecialUsage(DD.Prototype.Weapons.SpecialUsageEvent e)
         {
-            int slot = Mathf.Clamp((int)e.Id, 0, 2);
-            AudioSoundId sound = AudioEventMap.SpecialUsage(e.Id, e.Kind);
-            switch (e.Kind)
-            {
-                case DD.Prototype.Weapons.SpecialUsageKind.Fired:
-                    if (_play(AudioMixPlan.SpecialFire(sound), e.Origin, 1f, 55)) SpecialUsageCount++;
-                    break;
-                case DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned:
-                    if (e.Id == DD.Prototype.Core.Config.SpecialWeaponId.Raiju)   // WP-069 B4 interim (S-02): the orb's flight as the old bell one-shot
-                    {
-                        if (_play(AudioMixPlan.SpecialField(sound), e.Origin, 1f, 65)) SpecialUsageCount++;
-                    }
-                    else
-                    {
-                        if (_fieldStart != null && _fieldStart(sound, e.Origin, slot)) SpecialUsageCount++;
-                    }
-                    break;
-                case DD.Prototype.Weapons.SpecialUsageKind.FieldEnded:
-                    _fieldStop?.Invoke(slot, e.Origin);
-                    if (_play(AudioMixPlan.SpecialField(sound), e.Origin, 1f, 60)) SpecialUsageCount++;
-                    break;
-                case DD.Prototype.Weapons.SpecialUsageKind.Hit:
-                {
-                    float now = Time.unscaledTime;
-                    if (now - _swHitLast[slot] < 0.06f) return;
-                    _swHitLast[slot] = now;
-                    Vector3 at = e.Origin + Vector3.up * 0.6f;   // PublishHit: Origin = the hit point on the body
-                    if (_play(AudioMixPlan.SpecialHit(sound), at, Mathf.Clamp(e.Falloff01, 0.35f, 1f), 40)) SpecialUsageCount++;
-                    break;
-                }
-            }
+            // WP-072 B4: SW_ARC / SW_GEL (AP-011 v019) — SpecialAudio owns every Raiju / Namekuji usage voice.
+            if (_special != null && _special.OnUsage(in e)) SpecialUsageCount++;
         }
 
         // ------------------------------------------------------------------ WP-021C · WP-022B UI events

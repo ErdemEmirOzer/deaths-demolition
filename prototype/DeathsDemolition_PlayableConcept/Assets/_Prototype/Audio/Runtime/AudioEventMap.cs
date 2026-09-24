@@ -128,21 +128,18 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Combat, "SpecialWeaponUsage.OfudaLoom.FireCue/ActiveLoop", AudioSoundId.HeavyFire, W, true, "→ HeavyWeaponFire / HeavyWeaponSpinUp rows"),
             B(AudioEventSource.Combat, "SpecialWeaponUsage.TideJewel.FireCue/ActiveLoop", AudioSoundId.HeavyFire, W, true, "→ HeavyWeaponFire / HeavyWeaponSpinUp rows"),
 
-            // ---- WP-058 · WP-056 SpecialUsageEvent (ADR-056-1) — per-Special usage voices (AP-011 v009, 0 cr)
-            B(AudioEventSource.Combat, "SpecialUsage.Activated", AudioSoundId.None, W, false, "covered by HeavyWeaponSpinUp (SpecialWeaponUsage.ActiveLoop) on the same frame", true),
-            B(AudioEventSource.Combat, "SpecialUsage.Fired → KaguraBell", AudioSoundId.SwFireKagura, W, false, "bell-tree strike + air push, layered over HeavyWeaponFire (the shared fire body)"),
-            B(AudioEventSource.Combat, "SpecialUsage.Fired → OfudaLoom", AudioSoundId.SwFireOfuda, W, false, "talisman throw: paper + whoosh + string"),
-            B(AudioEventSource.Combat, "SpecialUsage.Fired → TideJewel", AudioSoundId.SwFireTide, W, false, "jewel throw: whoosh + water drop + sparkle"),
-            B(AudioEventSource.Combat, "SpecialUsage.FieldSpawned → KaguraBell", AudioSoundId.SwFieldKagura, I, true, "pressure-wave front: one-shot sweep at the origin (the front travels; 3D at the ring's centre)"),
-            B(AudioEventSource.Combat, "SpecialUsage.FieldSpawned → OfudaLoom", AudioSoundId.SwFieldOfuda, I, true, "seal-web hum: 3D loop at the field origin until FieldEnded"),
-            B(AudioEventSource.Combat, "SpecialUsage.FieldSpawned → TideJewel", AudioSoundId.SwFieldTide, I, true, "well: 3D water + pull rumble loop at the field origin until FieldEnded"),
-            B(AudioEventSource.Combat, "SpecialUsage.FieldEnded → KaguraBell", AudioSoundId.SwFieldEndKagura, I, true, "wave reached its rim"),
-            B(AudioEventSource.Combat, "SpecialUsage.FieldEnded → OfudaLoom", AudioSoundId.SwFieldEndOfuda, I, true, "web collapse (loop stops)"),
-            B(AudioEventSource.Combat, "SpecialUsage.FieldEnded → TideJewel", AudioSoundId.SwFieldEndTide, I, true, "well implodes (loop stops)"),
-            B(AudioEventSource.Combat, "SpecialUsage.Deactivated", AudioSoundId.None, W, false, "covered by SpecialWeaponExpired / HeavyWeaponSpinDown", true),
-            B(AudioEventSource.Combat, "SpecialUsage.Hit → KaguraBell", AudioSoundId.SwHitKagura, T, true, "the front crossing one body (gain × Falloff01)"),
-            B(AudioEventSource.Combat, "SpecialUsage.Hit → OfudaLoom", AudioSoundId.SwHitOfuda, T, true, "a talisman seals one body"),
-            B(AudioEventSource.Combat, "SpecialUsage.Hit → TideJewel", AudioSoundId.SwHitTide, T, true, "one pull tick on one body (throttled per target)"),
+            // ---- WP-072 B4 · DEC-094 Specials (S-02 WP-069 B4 SpecialUsageEvent → SpecialAudio, AP-011 v019)
+            B(AudioEventSource.Combat, "SpecialUsage.Activated → Raiju / Namekuji", AudioSoundId.SwArcReady, W, false, "ready tone: coil fills / chamber pressurises + rin (brass, Specials only); SwGelReady for Namekuji"),
+            B(AudioEventSource.Combat, "SpecialUsage.ChargeStarted → Raiju", AudioSoundId.SwArcCharge, W, false, "0.25 s charge: rising coil + glass (one-shot, −2 dB); ChargeCancelled lets it end"),
+            B(AudioEventSource.Combat, "SpecialUsage.Fired → Raiju / Namekuji", AudioSoundId.SwArcFire, W, false, "discharge + glass + air / copper hiss + plop (SwGelFire); the legacy HeavyWeaponFire gives way while a Special is in hand"),
+            B(AudioEventSource.Combat, "SpecialUsage.Hit → Raiju (Count = hop)", AudioSoundId.SwArcChainJump, T, true, "one crackle per hop, +1 st per hop, 40 ms apart; hops ≥ 6 cluster"),
+            B(AudioEventSource.Combat, "SpecialUsage.Hit → Namekuji", AudioSoundId.SwGelHitFlesh, T, true, "direct hit on a body (always flesh; the Specials ignore armour)"),
+            B(AudioEventSource.Combat, "SpecialUsage.FieldSpawned → Namekuji (Count = puddle id)", AudioSoundId.SwGelPuddleLoop, I, true, "splat (SwGelHit) + spread (SwGelPuddleCreate) + bubbling loop per puddle, ≤ 2 loops, −4 dB; Raiju's FieldSpawned = the orb flight (ProjectileFlightAudio)"),
+            B(AudioEventSource.Combat, "SpecialUsage.FieldEnded → Raiju / Namekuji", AudioSoundId.SwGelPuddleExpire, I, true, "Namekuji: puddle loop out + drying; Raiju: fizzle (SwArcShockEnd) only when no chain hop spoke in the last 0.15 s"),
+            B(AudioEventSource.Combat, "SpecialUsage.SelfShock → Raiju", AudioSoundId.SwArcChainJump, T, false, "the player's own zap (−3 st, 2D)"),
+            B(AudioEventSource.Combat, "SpecialUsage.ReloadStarted / ReloadEnded → Raiju / Namekuji", AudioSoundId.SwArcCellOut, W, false, "cell out / in (SwArcCellIn), canister out / in (SwGelCanister*)"),
+            B(AudioEventSource.Combat, "SpecialUsage.PlayerSlideStarted → Namekuji", AudioSoundId.SwGelSlidePlayer, W, false, "the player slips: slide squelch + cloth"),
+            B(AudioEventSource.Combat, "SpecialUsage.Deactivated / ChargeCancelled / Liquefied / PlayerSlideEnded", AudioSoundId.None, W, false, "covered: the weapon lowers with its own foley; the hit already spoke", true),
 
             // ---- confirmation (Combat) -------------------------------------------
             B(AudioEventSource.Combat, nameof(CombatAudioEvent.HitMarker), AudioSoundId.HitMarker, U, false, ""),
@@ -224,10 +221,9 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Animation, "anim.hit_window_start", AudioSoundId.ZombieAttackStandard, T, true, "covered by EnemyCombatEvents.attack_commit (same frame); no second cue", true),
             B(AudioEventSource.Animation, "anim.rise_end", AudioSoundId.ZombieAggroStandard, T, true, "covered by EnemyCombatEvents.spawn_land (WP-048): the aggro growl also reaches bodies that spawn without a rise clip", true),
             B(AudioEventSource.Damage, "EnemyCombatEvents.spawn_land", AudioSoundId.ZombieAggroStandard, T, true, "the body is up and has seen you - the aggro growl, ids by tier (ZombieRise is the earth, this is the voice)"),
-            // WP-058C · WP-055 Special reactions (the body's side; the field's touch is SpecialUsage.Hit)
-            B(AudioEventSource.Damage, "EnemyCombatEvents.sw_push", AudioSoundId.ZombieReactPush, T, true, "Kagura wave shoved + dazed the body: stagger + 'uff' + feet sliding (heavy tiers −3 st)"),
-            B(AudioEventSource.Damage, "EnemyCombatEvents.sw_web", AudioSoundId.ZombieReactWeb, T, true, "Ofuda seal netted the body: muffled grunt + talisman tightening + string"),
-            B(AudioEventSource.Damage, "EnemyCombatEvents.sw_pull", AudioSoundId.ZombieReactPull, T, true, "Tide pull tick: short growl + dragging feet (throttled 0.25 s per body)"),
+            // WP-072 B4 · WP-076 Special beats (the body's side)
+            B(AudioEventSource.Damage, "EnemyCombatEvents.sw_shock", AudioSoundId.SwArcShockLoop, T, true, "per-body crackle loop for the Electrocuted hold (≤ 4 bodies, random phase), SwArcShockEnd at its end"),
+            B(AudioEventSource.Damage, "EnemyCombatEvents.sw_slide / sw_fall", AudioSoundId.SwGelSlideEnemy, T, true, "slide squelch + body fall (60 ms crowd clustering); sw_fall = BodySettle by tier"),
             B(AudioEventSource.Animation, "anim.fire / anim.pickup / anim.stagger_end", AudioSoundId.None, T, false, "covered by weapon / Special / stagger cues from their own events", true),
             B(AudioEventSource.Animation, "anim.hit_window_end / anim.hit", AudioSoundId.None, T, false, "silent by design: the window closing has no sound; anim.hit is the enemy's own hit reaction frame (the grunt is DamageEvents.EnemyDamaged)", true),
             B(AudioEventSource.Animation, "anim.shift_l/shift_r", AudioSoundId.FootstepStone, W, true, "WP-032B idle weight shift: a footstep at half gain on the surface under the character (player or zombie step set)"),
@@ -481,21 +477,6 @@ namespace DD.Prototype.Audio
 
             // Ids are laid out Weapon{A,B,C}{Eject,Chamber,MagOut,MagIn,Switch,Lowered,Raised} = 260 + w*7 + slot.
             return (AudioSoundId)((int)AudioSoundId.WeaponAEject + w * 7 + slot);
-        }
-
-        /// <summary>WP-058: per-Special usage voice for a WP-056 usage kind; None when the kind is covered by an existing cue.</summary>
-        public static AudioSoundId SpecialUsage(DD.Prototype.Core.Config.SpecialWeaponId id, DD.Prototype.Weapons.SpecialUsageKind kind)
-        {
-            // WP-069 B4 interim (S-02, until S-08's SW_ARC / SW_GEL wiring): Raiju on the old bell row, Namekuji on the loom row.
-            int w = id == DD.Prototype.Core.Config.SpecialWeaponId.Namekuji ? 1 : 0;
-            switch (kind)
-            {
-                case DD.Prototype.Weapons.SpecialUsageKind.Fired: return (AudioSoundId)((int)AudioSoundId.SwFireKagura + w);
-                case DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned: return (AudioSoundId)((int)AudioSoundId.SwFieldKagura + w);
-                case DD.Prototype.Weapons.SpecialUsageKind.FieldEnded: return (AudioSoundId)((int)AudioSoundId.SwFieldEndKagura + w);
-                case DD.Prototype.Weapons.SpecialUsageKind.Hit: return (AudioSoundId)((int)AudioSoundId.SwHitKagura + w);
-                default: return AudioSoundId.None;
-            }
         }
 
         /// <summary>WP-048: the region voice of an armour break (WP-040 armor_break_&lt;region&gt;). Body is the fallback for None.</summary>

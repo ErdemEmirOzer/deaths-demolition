@@ -89,6 +89,7 @@ namespace DD.Prototype.Audio
         private AudioListenerAnchor _listener;
         private WeaponFireAudio _weaponFire;
         private CasingAudio _casings;
+        private SpecialAudio _special;
         private ImpactAudio _impacts;
         private ProjectileFlightAudio _flight;
         private readonly CombatAudioCue[] _heldImpacts = new CombatAudioCue[16];
@@ -211,14 +212,14 @@ namespace DD.Prototype.Audio
             _ambience = new AmbienceDirector(transform, _library, _mixer, _world, _bridge, AudioRegionMap.Load());
             _music = new MusicDirector(transform, _library, _mixer, _bridge);
             _router = new AudioEventRouter(PlayResolved);
-            _router.SetFieldLoopHandlers(StartFieldLoop, StopFieldLoop);   // WP-058
             _router.SetUiVoiceHandlers(StartUiVoice, StopUiVoice);          // WP-068 s11
             _listener = new AudioListenerAnchor(transform);
             _weaponFire = new WeaponFireAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);   // WP-072 B1
             _casings = new CasingAudio(_library, PlayResolved);                                        // WP-072 B2
+            _special = new SpecialAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);           // WP-072 B4
+            _router.SetSpecialVoice(_special);
             _impacts = new ImpactAudio(_library, PlayResolved);                                        // WP-072 B3
             _router.SetProducedCheck(_library.IsProduced);
-            BuildFieldLoops();
             BuildUiVoices();
             _signal.SetIgnoreListenerPause(true);   // WP-068 s11: the pause menu is heard
             _mixer.SetPlayerVolume(AudioBus.Interface, PrototypeAudio.UiVolume);   // WP-068 U8 (settings may load before the director)
@@ -289,7 +290,7 @@ namespace DD.Prototype.Audio
 
             DD.Prototype.UI.UiSettings.MasterVolumeChanged += RequestMasterVolume;   // WP-021C (S-09 contract)
             AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;   // WP-065E evidence
-            DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded += StopAllFieldLoops;
+            DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded += StopSpecialVoices;
 
             _router?.Subscribe();
             _listener?.Subscribe();
@@ -318,13 +319,13 @@ namespace DD.Prototype.Audio
 
             DD.Prototype.UI.UiSettings.MasterVolumeChanged -= RequestMasterVolume;
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
-            DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded -= StopAllFieldLoops;
+            DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded -= StopSpecialVoices;
 
             _router?.Unsubscribe();
             _listener?.Unsubscribe();
 
             StopAllLoops();
-            StopAllFieldLoops();
+            StopSpecialVoices();
             AudioListener.pause = false;
             _mixer.Muted = false;
             _paused = false;
@@ -381,7 +382,7 @@ namespace DD.Prototype.Audio
             if (!_paused) _weaponFire.Tick(dt);   // WP-072 B1: trigger release → body loop fade + tail
             if (!_paused) _casings.Tick();         // WP-072 B2: casings land after their fall
             if (!_paused) _flight.Tick(dt);        // WP-072 B5: rocket / orb / gel loops follow their projectile
-            TickFieldLoops();
+            if (!_paused) _special.Tick(dt);   // WP-072 B4: chain hops, shock / puddle loops
             TickUiVoices(dt);
 
             if (_deathInkAt > 0f && Time.unscaledTime >= _deathInkAt)
@@ -514,6 +515,12 @@ namespace DD.Prototype.Audio
             // WP-072 B1: a fire cue that names its weapon speaks with that weapon's v016 voice;
             // without produced clips it falls through to the legacy intensity-picked sound.
             if (cue.Event == CombatAudioEvent.ClassicWeaponFire && _weaponFire.TryHandle(cue))
+            {
+                return;
+            }
+
+            // WP-072 B4: a Special in hand speaks with its own fire (SwArcFire / SwGelFire from the Fired usage event).
+            if (cue.Event == CombatAudioEvent.HeavyWeaponFire && _special.InHand && _special.Produced)
             {
                 return;
             }
@@ -663,7 +670,7 @@ namespace DD.Prototype.Audio
             if (phase == RunPhase.Dead || phase == RunPhase.None)
             {
                 StopAllLoops();
-                StopAllFieldLoops();
+                StopSpecialVoices();
                 _armour.Clear();
                 _router.Clear();
             }
@@ -679,7 +686,7 @@ namespace DD.Prototype.Audio
         private void OnRunStarted(int runId)
         {
             _deathInkAt = -1f;
-            StopAllFieldLoops();
+            StopSpecialVoices();
             // v003: entering the run is a screen transition (matrix §8).
             PlayResolved(AudioMixPlan.UiTransition(), Vector3.zero, 1f, 80);
             _music.OnRunStarted();   // WP-057: leave the results state
@@ -731,7 +738,7 @@ namespace DD.Prototype.Audio
         {
             _deathInkAt = Time.unscaledTime + DeathInkDelay;   // WP-068: the ink texture follows the stinger by 0.6 s
             StopAllLoops();
-            StopAllFieldLoops();
+            StopSpecialVoices();
             PlayResolved(AudioMixPlan.PlayerDeath(), Vector3.zero, 1f, 100);
             _music.OnRunEnded(true);   // WP-057: death stinger, then the results loop
         }
@@ -814,121 +821,17 @@ namespace DD.Prototype.Audio
             return PlayResolved(placement, position, gain, 50);
         }
 
-        // ================================================================== WP-058 · Special field loops
+        // ================================================================== WP-072 B4 · Special voices
 
-        /// <summary>One Ofuda source plus two Tide sources (the shipped MaxWells); Kagura's front is a one-shot.</summary>
-        private const int TidePrimarySlot = 2;
-        private const int TideSecondarySlot = 3;
-        private readonly AudioSource[] _fieldLoops = new AudioSource[4];
-        private readonly AudioSoundId[] _fieldLoopSound = new AudioSoundId[4];
-        public int FieldLoopsPlaying { get { int n = 0; for (int i = 0; i < _fieldLoops.Length; i++) if (_fieldLoops[i] != null && _fieldLoops[i].isPlaying) n++; return n; } }
+        /// <summary>Raiju shock + Namekuji puddle loops playing (was the WP-058 field loop count; AudioOutputCapture reads it).</summary>
+        public int FieldLoopsPlaying => _special != null ? _special.LoopsPlaying : 0;
 
-        private void BuildFieldLoops()
+        /// <summary>WP-072 B4 test / F1 surface: the Special voice.</summary>
+        public SpecialAudio Special => _special;
+
+        private void StopSpecialVoices()
         {
-            for (int i = 0; i < _fieldLoops.Length; i++)
-            {
-                var go = new GameObject("Special Field " + i);
-                go.transform.SetParent(transform, false);
-                AudioSource src = go.AddComponent<AudioSource>();
-                src.playOnAwake = false; src.loop = true; src.spatialBlend = 1f; src.rolloffMode = AudioRolloffMode.Linear;
-                src.minDistance = 4f; src.maxDistance = 40f; src.dopplerLevel = 0f; src.priority = 24; src.volume = 0f;
-                _bridge.Route(src, AudioBus.Impact);
-                _fieldLoops[i] = src;
-            }
-        }
-
-        private bool StartFieldLoop(AudioSoundId sound, Vector3 at, int slot)
-        {
-            if (slot < 0 || slot > TidePrimarySlot) return false;
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-            AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.Requested, AudioPlaybackPool.Field, sound,
-                active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
-#endif
-            int sourceSlot = slot;
-            if (slot == TidePrimarySlot && _fieldLoops[TidePrimarySlot].isPlaying)
-            {
-                if (_fieldLoops[TideSecondarySlot].isPlaying)
-                {
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-                    AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.BudgetDropped, AudioPlaybackPool.Field, sound,
-                        active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
-#endif
-                    return false;
-                }
-
-                sourceSlot = TideSecondarySlot;
-            }
-            AudioClip clip = _library.First(sound);
-            if (clip == null)
-            {
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.MissingClip, AudioPlaybackPool.Field, sound,
-                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
-#endif
-                return false;
-            }
-            AudioSource src = _fieldLoops[sourceSlot];
-            src.transform.position = at;
-            if (src.clip != clip) src.clip = clip;
-            _fieldLoopSound[sourceSlot] = sound;
-            src.volume = 0.7f * _mixer.Gain(AudioBus.Impact);
-            if (!src.isPlaying)
-            {
-                src.Play();
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStarted, AudioPlaybackPool.Field, sound,
-                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
-#endif
-            }
-            return true;
-        }
-
-        private void StopFieldLoop(int slot, Vector3 at)
-        {
-            if (slot < 0 || slot > TidePrimarySlot) return;
-            int sourceSlot = slot;
-            if (slot == TidePrimarySlot && _fieldLoops[TideSecondarySlot].isPlaying)
-            {
-                float primaryDistance = _fieldLoops[TidePrimarySlot].isPlaying
-                    ? (_fieldLoops[TidePrimarySlot].transform.position - at).sqrMagnitude
-                    : float.MaxValue;
-                float secondaryDistance = (_fieldLoops[TideSecondarySlot].transform.position - at).sqrMagnitude;
-                sourceSlot = secondaryDistance < primaryDistance ? TideSecondarySlot : TidePrimarySlot;
-            }
-
-            bool wasPlaying = _fieldLoops[sourceSlot].isPlaying;
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-            if (wasPlaying)
-            {
-                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStopRequested, AudioPlaybackPool.Field, _fieldLoopSound[sourceSlot],
-                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
-            }
-#endif
-            _fieldLoops[sourceSlot].Stop();
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-            if (wasPlaying)
-            {
-                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopEnded, AudioPlaybackPool.Field, _fieldLoopSound[sourceSlot],
-                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
-            }
-#endif
-        }
-
-        private void StopAllFieldLoops()
-        {
-            for (int i = 0; i < _fieldLoops.Length; i++)
-            {
-                if (_fieldLoops[i] == null || !_fieldLoops[i].isPlaying) continue;
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopStopRequested, AudioPlaybackPool.Field, _fieldLoopSound[i],
-                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
-#endif
-                _fieldLoops[i].Stop();
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-                AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.LoopEnded, AudioPlaybackPool.Field, _fieldLoopSound[i],
-                    active: FieldLoopsPlaying, capacity: _fieldLoops.Length);
-#endif
-            }
+            _special?.StopAll();
         }
 
         // ================================================================== WP-068 s11 · controllable UI voices
@@ -1041,15 +944,6 @@ namespace DD.Prototype.Audio
                 }
 
                 src.volume = _uiVoiceBase[i] * _uiVoiceLevel[i] * g;
-            }
-        }
-
-        private void TickFieldLoops()
-        {
-            float g = _mixer.Gain(AudioBus.Impact);
-            for (int i = 0; i < _fieldLoops.Length; i++)
-            {
-                if (_fieldLoops[i] != null && _fieldLoops[i].isPlaying) _fieldLoops[i].volume = 0.7f * g;
             }
         }
 

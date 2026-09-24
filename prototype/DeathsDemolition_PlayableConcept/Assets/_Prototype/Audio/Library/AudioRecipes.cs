@@ -316,22 +316,6 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.MusicMenu:
                 case AudioSoundId.MusicResults: return BuildPalaceTone(ref rng);
 
-                // WP-058 Special usage (AP-011 v009 owns the shipped clips).
-                case AudioSoundId.SwFireKagura: return BuildMetalRing(ref rng);
-                case AudioSoundId.SwFireOfuda: return BuildImpactPaper(ref rng);
-                case AudioSoundId.SwFireTide: return BuildImpactWater(ref rng);
-                case AudioSoundId.SwFieldKagura:
-                case AudioSoundId.SwFieldEndKagura: return BuildWindBed(ref rng);
-                case AudioSoundId.SwFieldOfuda: return BuildBeaconLoop(ref rng);
-                case AudioSoundId.SwFieldTide: return BuildWaterBed(ref rng);
-                case AudioSoundId.SwFieldEndOfuda: return BuildImpactPaper(ref rng);
-                case AudioSoundId.SwFieldEndTide: return BuildExplosion(ref rng);
-                case AudioSoundId.SwHitKagura: return BuildFleshHit(false, ref rng);
-                case AudioSoundId.SwHitOfuda: return BuildImpactPaper(ref rng);
-                case AudioSoundId.SwHitTide: return BuildImpactWater(ref rng);
-                case AudioSoundId.ZombieReactPush: return BuildFleshHit(false, ref rng);
-                case AudioSoundId.ZombieReactWeb: return BuildImpactPaper(ref rng);
-                case AudioSoundId.ZombieReactPull: return BuildImpactDirt(ref rng);
 
                 // WP-072 B1 weapon fire v3 (AP-011 v016 owns the shipped clips; WeaponFireAudio only
                 // takes the new path for produced ids, so these are the test/no-catalog fallback).
@@ -375,8 +359,11 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.AmbPondBed:
                 case AudioSoundId.MusicMenu:
                 case AudioSoundId.MusicResults:
-                case AudioSoundId.SwFieldOfuda:
-                case AudioSoundId.SwFieldTide:
+                case AudioSoundId.SwArcSphereLoop:
+                case AudioSoundId.SwArcShockLoop:
+                case AudioSoundId.SwGelFlightLoop:
+                case AudioSoundId.SwGelPuddleLoop:
+                case AudioSoundId.RocketFlightLoop:
                 case AudioSoundId.AmbCommon:
                 case AudioSoundId.AmbRegionCenter:
                 case AudioSoundId.AmbRegionNorth:

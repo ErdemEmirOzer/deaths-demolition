@@ -210,26 +210,30 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.None, DD.Art.Ap005SurfaceTags.FootstepVariantForName("AP005_i0001", SurfaceKind.Wood));
         }
 
-        /// <summary>WP-058 · WP-056 SpecialUsageEvent: every (Special, kind) pair resolves to its own voice; Activated / Deactivated are covered.</summary>
+        /// <summary>WP-072 B4 · DEC-094: the Raiju / Namekuji usage rows replace the WP-058 Kagura / Ofuda / Tide set (ids 310–332 gone).</summary>
         [Test]
-        public void SpecialKullanim_HerSpecialVeKind_KendiSesi()
+        public void SpecialKullanim_RaijuNamekuji_Satirlari_EskiKimliklerYok()
         {
-            var ids = new HashSet<AudioSoundId>();
-            foreach (DD.Prototype.Core.Config.SpecialWeaponId w in Enum.GetValues(typeof(DD.Prototype.Core.Config.SpecialWeaponId)))
+            string[] satirlar =
             {
-                foreach (DD.Prototype.Weapons.SpecialUsageKind k in Enum.GetValues(typeof(DD.Prototype.Weapons.SpecialUsageKind)))
-                {
-                    AudioSoundId id = AudioEventMap.SpecialUsage(w, k);
-                    bool covered = k == DD.Prototype.Weapons.SpecialUsageKind.Activated || k == DD.Prototype.Weapons.SpecialUsageKind.Deactivated;
-                    Assert.AreEqual(covered, id == AudioSoundId.None, w + "/" + k + " → " + id);
-                    if (!covered) Assert.IsTrue(ids.Add(id), "Special kullanım sesi paylaşılıyor: " + id);
-                    string satir = covered ? "SpecialUsage." + k : "SpecialUsage." + k + " → " + w;
-                    Assert.IsTrue(AudioEventMap.TryFind(AudioEventSource.Combat, satir, out AudioEventBinding b), "Matris satırı yok: " + satir);
-                    Assert.AreEqual(covered, b.Reserved, satir);
-                }
+                "SpecialUsage.Activated → Raiju / Namekuji", "SpecialUsage.ChargeStarted → Raiju", "SpecialUsage.Fired → Raiju / Namekuji",
+                "SpecialUsage.Hit → Raiju (Count = hop)", "SpecialUsage.Hit → Namekuji", "SpecialUsage.FieldSpawned → Namekuji (Count = puddle id)",
+                "SpecialUsage.FieldEnded → Raiju / Namekuji", "SpecialUsage.SelfShock → Raiju", "SpecialUsage.ReloadStarted / ReloadEnded → Raiju / Namekuji",
+                "SpecialUsage.PlayerSlideStarted → Namekuji"
+            };
+            foreach (string satir in satirlar)
+            {
+                Assert.IsTrue(AudioEventMap.TryFind(AudioEventSource.Combat, satir, out AudioEventBinding b), "Matris satırı yok: " + satir);
+                Assert.IsFalse(b.Reserved, satir);
+                StringAssert.StartsWith("Sw", b.Sound.ToString(), satir);
             }
 
-            Assert.AreEqual(12, ids.Count, "3 Special × 4 kullanım anı");
+            Assert.IsTrue(AudioEventMap.TryFind(AudioEventSource.Damage, "EnemyCombatEvents.sw_shock", out _), "sw_shock satırı");
+            Assert.IsTrue(AudioEventMap.TryFind(AudioEventSource.Damage, "EnemyCombatEvents.sw_slide / sw_fall", out _), "sw_slide satırı");
+            foreach (string eski in new[] { "SwFireKagura", "SwFieldTide", "SwFieldEndOfuda", "SwHitTide", "ZombieReactPush", "ZombieReactPull" })
+            {
+                Assert.IsFalse(Enum.IsDefined(typeof(AudioSoundId), eski), eski + " kaldırılmalıydı (DEC-094)");
+            }
         }
 
         /// <summary>WP-048 · AP-017 breakable event table (AP017-breakable-event-table-v001): every family root name resolves to its own voice.</summary>
