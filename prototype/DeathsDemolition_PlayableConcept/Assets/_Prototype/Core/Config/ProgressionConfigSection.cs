@@ -73,8 +73,8 @@ namespace DD.Prototype.Core.Config
         public int LevelCap = 50;
 
         [Header("Ash (Kül) — WP-077 meta currency")]
-        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: Ash per run = floor(run XP / this).")]
-        public int XpPerAsh = 40;
+        [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: Ash per run = floor(run XP / this). DEC-098 (B3, audit #5): 40 → 30.")]
+        public int XpPerAsh = 30;
 
         [PrototypeOnly(PendingDecisions.ProfileXp, "WP-077 §3.1: first time reaching round 10 with a weapon.")]
         public int AshFirstRound10PerWeapon = 30;

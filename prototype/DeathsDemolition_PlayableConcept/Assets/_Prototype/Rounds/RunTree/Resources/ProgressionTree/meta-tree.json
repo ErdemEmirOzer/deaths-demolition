@@ -1,6 +1,6 @@
 {
  "schema": "dd-meta-tree-v1",
- "note": "WP-077 B2b (S-04): the meta PATH (DEC-095 layer 2). Council proposal numbers (PrototypeOnly; DEC-098 after the B3 simulation). Weapons: smg_1/sg_1 open on the level ladder (DEC-085, cost 0), the seven WP-069 meta weapons cost Ash behind a level gate; a node whose effect no system reads is LOCKED and cannot be bought (MetaTreeEffects).",
+ "note": "WP-077 B2b (S-04): the meta PATH (DEC-095 layer 2). Prices DEC-098 (B3 simulation, audit #5): ring 1 = 150 Kül (one leaning 30 + passive column 1 3 × 40), ring 1+2 = 2 080, all = 5 830; PrototypeOnly until C-00 records it. Weapons: smg_1/sg_1 open on the level ladder (DEC-085, cost 0), the seven WP-069 meta weapons cost Ash behind a level gate; a node whose effect no system reads is LOCKED and cannot be bought (MetaTreeEffects).",
  "nodes": [
   {
    "id": "w_ar_1",
@@ -210,7 +210,7 @@
    "displayName": "Raiju Lure",
    "description": "Chain-lightning Special pickups +25% more likely.",
    "levelGate": 4,
-   "ashCost": 50,
+   "ashCost": 30,
    "effectId": "meta.special.draw.arc",
    "effectValue": 0.25,
    "parents": [],
@@ -228,7 +228,7 @@
    "displayName": "Namekuji Lure",
    "description": "Slick-gel Special pickups +25% more likely.",
    "levelGate": 4,
-   "ashCost": 50,
+   "ashCost": 30,
    "effectId": "meta.special.draw.gel",
    "effectValue": 0.25,
    "parents": [],
@@ -246,7 +246,7 @@
    "displayName": "Raiju Foresight",
    "description": "Raiju's Link I is on the run tree before the first pickup.",
    "levelGate": 7,
-   "ashCost": 90,
+   "ashCost": 70,
    "effectId": "meta.special.omen.arc",
    "effectValue": 0.0,
    "parents": [
@@ -266,7 +266,7 @@
    "displayName": "Namekuji Foresight",
    "description": "Namekuji's Link I is on the run tree before the first pickup.",
    "levelGate": 7,
-   "ashCost": 90,
+   "ashCost": 70,
    "effectId": "meta.special.omen.gel",
    "effectValue": 0.0,
    "parents": [
@@ -286,7 +286,7 @@
    "displayName": "Early Bell",
    "description": "The first Special of a run drops by round 4.",
    "levelGate": 7,
-   "ashCost": 120,
+   "ashCost": 100,
    "effectId": "meta.special.earlybell",
    "effectValue": 4,
    "parents": [],
@@ -304,7 +304,7 @@
    "displayName": "Raiju: Second Link",
    "description": "Raiju's Link II can be taken on the run tree.",
    "levelGate": 12,
-   "ashCost": 140,
+   "ashCost": 110,
    "effectId": "meta.special.link2.arc",
    "effectValue": 0.0,
    "parents": [
@@ -324,7 +324,7 @@
    "displayName": "Namekuji: Second Link",
    "description": "Namekuji's Link II can be taken on the run tree.",
    "levelGate": 12,
-   "ashCost": 140,
+   "ashCost": 110,
    "effectId": "meta.special.link2.gel",
    "effectValue": 0.0,
    "parents": [
@@ -404,7 +404,7 @@
    "displayName": "Cheaper Reroll",
    "description": "Reroll costs 7 gold instead of 10.",
    "levelGate": 2,
-   "ashCost": 60,
+   "ashCost": 40,
    "effectId": "meta.eco.reroll",
    "effectValue": 7,
    "parents": [],
@@ -422,7 +422,7 @@
    "displayName": "Banked Hearth",
    "description": "Each Hearth step costs 27 more instead of 30.",
    "levelGate": 6,
-   "ashCost": 90,
+   "ashCost": 70,
    "effectId": "meta.eco.hearthslope",
    "effectValue": 27,
    "parents": [
@@ -442,7 +442,7 @@
    "displayName": "Purse from the Start",
    "description": "Every run starts with the Purse.",
    "levelGate": 10,
-   "ashCost": 130,
+   "ashCost": 100,
    "effectId": "meta.eco.pursestart",
    "effectValue": 1,
    "parents": [
@@ -462,7 +462,7 @@
    "displayName": "Capstone Discount",
    "description": "Capstones cost 10% less.",
    "levelGate": 15,
-   "ashCost": 180,
+   "ashCost": 140,
    "effectId": "meta.eco.capdiscount",
    "effectValue": 0.1,
    "parents": [
@@ -522,7 +522,7 @@
    "displayName": "Light Feet I",
    "description": "+2% movement speed.",
    "levelGate": 2,
-   "ashCost": 60,
+   "ashCost": 40,
    "effectId": "meta.body.move",
    "effectValue": 0.02,
    "parents": [],
@@ -540,7 +540,7 @@
    "displayName": "Hardy I",
    "description": "+5 max health.",
    "levelGate": 6,
-   "ashCost": 90,
+   "ashCost": 70,
    "effectId": "meta.body.health",
    "effectValue": 5,
    "parents": [
@@ -560,7 +560,7 @@
    "displayName": "Quick Recovery I",
    "description": "-0.2 s before health regenerates.",
    "levelGate": 10,
-   "ashCost": 130,
+   "ashCost": 100,
    "effectId": "meta.body.regendelay",
    "effectValue": 0.2,
    "parents": [
@@ -580,7 +580,7 @@
    "displayName": "Light Feet II",
    "description": "+2% movement speed.",
    "levelGate": 15,
-   "ashCost": 180,
+   "ashCost": 140,
    "effectId": "meta.body.move",
    "effectValue": 0.02,
    "parents": [
@@ -640,7 +640,7 @@
    "displayName": "Tree Preview",
    "description": "See your weapon's run tree from the menu.",
    "levelGate": 2,
-   "ashCost": 60,
+   "ashCost": 40,
    "effectId": "meta.qol.treepreview",
    "effectValue": 0,
    "parents": [],
@@ -658,7 +658,7 @@
    "displayName": "Offer History",
    "description": "The round-end screen lists the last offers.",
    "levelGate": 6,
-   "ashCost": 90,
+   "ashCost": 70,
    "effectId": "meta.qol.offerlog",
    "effectValue": 0,
    "parents": [
@@ -678,7 +678,7 @@
    "displayName": "Run Ledger",
    "description": "A live run statistics panel in Pause.",
    "levelGate": 10,
-   "ashCost": 130,
+   "ashCost": 100,
    "effectId": "meta.qol.runstats",
    "effectValue": 0,
    "parents": [
@@ -698,7 +698,7 @@
    "displayName": "Before and After",
    "description": "Before → after lines show the full formula.",
    "levelGate": 15,
-   "ashCost": 180,
+   "ashCost": 140,
    "effectId": "meta.qol.detail",
    "effectValue": 0,
    "parents": [

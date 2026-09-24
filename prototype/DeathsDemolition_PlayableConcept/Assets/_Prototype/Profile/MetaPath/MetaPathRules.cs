@@ -114,7 +114,7 @@ namespace DD.Prototype.Profile
 
         /// <summary>
         /// The in-run modifiers the owned passives grant (read once at run start; the run never writes the
-        /// profile). K6: the weapon's mastery M3 (900 kills) lets its capstone into the offer.
+        /// profile). K6 (DEC-098, audit #6): the weapon's mastery M1 (150 kills) lets its capstone into the offer; a pin brings it earlier.
         /// </summary>
         public static MetaRunModifiers RunModifiers(ProfileData p, string weaponKey)
         {
@@ -124,7 +124,7 @@ namespace DD.Prototype.Profile
             if (Owns(p, MetaPathEffects.HearthSlope, out float slope)) m.HearthCostStepOverride = (int)slope;
             if (Owns(p, MetaPathEffects.PurseAtStart, out _)) m.PurseAtStart = true;
             if (Owns(p, MetaPathEffects.CapstoneDiscount, out float discount)) m.CapstoneDiscount = discount;
-            m.CapstoneMasteryMet = p.MasteryKills(weaponKey) >= MasteryThresholds[2];
+            m.CapstoneMasteryMet = p.MasteryKills(weaponKey) >= MasteryThresholds[0];
             return m;
         }
 

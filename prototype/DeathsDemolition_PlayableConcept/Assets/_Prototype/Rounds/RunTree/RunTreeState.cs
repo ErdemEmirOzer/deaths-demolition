@@ -21,6 +21,7 @@ namespace DD.Prototype.Rounds
 
         private bool[] _owned = new bool[0];
         private readonly List<int> _scratch = new List<int>(8);
+        private readonly List<int> _frontier = new List<int>(32);
 
         public RunTreeGraph Graph { get; private set; }
         public int RunId { get; private set; }
@@ -273,7 +274,7 @@ namespace DD.Prototype.Rounds
         public bool IsOfferable(int i, WeaponModifierState build)
         {
             if (Graph[i].Kind == RunTreeNodeKind.Hearth) return false;
-            if (Graph[i].Kind == RunTreeNodeKind.Capstone && !Meta.CapstoneMasteryMet) return false;   // K6: only the pin brings it before M3
+            if (Graph[i].Kind == RunTreeNodeKind.Capstone && !Meta.CapstoneMasteryMet && i != PinnedIndex) return false;   // K6 (DEC-098): before M1 only the pin brings it
             RunTreeNodeStatus s = Status(i, build, int.MaxValue, out _, out _, out _);
             return s == RunTreeNodeStatus.Available;
         }
@@ -307,6 +308,52 @@ namespace DD.Prototype.Rounds
 
             return -1;
         }
+
+        /// <summary>
+        /// K1 hybrid offer on the tree (WP-077 §2.5): up to <paramref name="count"/> distinct offerable nodes,
+        /// drawn without replacement by catalog offer weight; when the draw missed the Nişan's next step, that
+        /// step takes the last slot. Deterministic for a seeded random. The K10 node cards and the B3 simulator
+        /// (EconomySimulator.TreeModel) share this draw.
+        /// </summary>
+        public int DrawFrontier(IUpgradeOfferRandom random, WeaponModifierState build, int count, List<int> into)
+        {
+            into.Clear();
+            if (!IsBuilt || count <= 0) return 0;
+            _frontier.Clear();
+            float total = 0f;
+            for (int i = 0; i < Graph.Count; i++)
+            {
+                if (!IsOfferable(i, build)) continue;
+                _frontier.Add(i);
+                total += OfferWeightOf(i);
+            }
+
+            while (into.Count < count && _frontier.Count > 0)
+            {
+                float r = (random != null ? random.NextValue() : 0f) * total;
+                int k = 0;
+                for (; k < _frontier.Count - 1; k++)
+                {
+                    r -= OfferWeightOf(_frontier[k]);
+                    if (r < 0f) break;
+                }
+
+                into.Add(_frontier[k]);
+                total -= OfferWeightOf(_frontier[k]);
+                _frontier.RemoveAt(k);
+            }
+
+            int pin = PinnedOfferable(build);
+            if (pin >= 0 && !into.Contains(pin))
+            {
+                if (into.Count < count) into.Add(pin);
+                else into[into.Count - 1] = pin;
+            }
+
+            return into.Count;
+        }
+
+        private float OfferWeightOf(int i) => Math.Max(0.01f, Graph[i].OfferWeight);
 
         private void AppendPath(int i, WeaponModifierState build, List<int> into, int depth)
         {

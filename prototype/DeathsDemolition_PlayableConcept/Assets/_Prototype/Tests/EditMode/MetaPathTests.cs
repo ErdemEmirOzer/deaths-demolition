@@ -145,7 +145,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void YetersizKul_KilitliEtki_OnKosul_HicbirSeyYazmaz()
         {
-            Kazan(1500);   // L5 civarı, Kül ≈ 37 + başarımlar
+            Kazan(1500);   // L5 civarı, Kül ≈ 50 + başarımlar (DEC-098 XP/30)
             string disk = Disk();
             Assert.AreEqual(MetaCommandResult.NotAvailable, ProfileService.TryBuyMetaNode("w_ar_2"), "seviye kapısı");
             Assert.AreEqual(MetaCommandResult.NotAvailable, ProfileService.TryBuyMetaNode("pa_body_1"), "bağlanmamış etki satılmaz");
@@ -153,7 +153,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(MetaCommandResult.UnknownNode, ProfileService.TryBuyMetaNode("nope"));
             MetaPathEffects.TreatAllAsLive = true;
             ProfileData p = ProfileService.Current;
-            if (p.AshBalance < 60)
+            if (p.AshBalance < MetaPathCatalog.Find("pa_eco_1").AshCost)
             {
                 Assert.AreEqual(MetaCommandResult.InsufficientAsh, ProfileService.TryBuyMetaNode("pa_eco_1"));
             }
@@ -179,20 +179,20 @@ namespace DD.Prototype.Tests.EditMode
         {
             Kazan(20000);
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("w_ar_2"));
-            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_1"));   // 60
-            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_2"));   // 90
+            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_1"));   // 40 (DEC-098)
+            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_2"));   // 70
             int once = ProfileService.Current.AshBalance;
 
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryMetaRespec(out int iade));
-            Assert.AreEqual(150, iade, "ilk respec %100");
+            Assert.AreEqual(110, iade, "ilk respec %100");
             ProfileData p = ProfileService.Current;
-            Assert.AreEqual(once + 150, p.AshBalance);
+            Assert.AreEqual(once + 110, p.AshBalance);
             Assert.IsTrue(p.UnlockedWeapons.Contains("ar_2") && p.MetaNodes.Contains("w_ar_2"), "silah iade edilmez");
             Assert.IsFalse(p.MetaNodes.Contains("pa_eco_1"));
 
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("pa_eco_1"));
             Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryMetaRespec(out int iade2));
-            Assert.AreEqual(45, iade2, "ikinci respec %75 (60 → 45)");
+            Assert.AreEqual(30, iade2, "ikinci respec %75 (40 → 30)");
             Assert.AreEqual(MetaCommandResult.NothingToRefund, ProfileService.TryMetaRespec(out _));
         }
 
@@ -208,7 +208,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(27, m.HearthCostStepOverride);
             Assert.IsTrue(m.PurseAtStart);
             Assert.AreEqual(0.10f, m.CapstoneDiscount, 1e-5f);
-            Assert.IsFalse(m.CapstoneMasteryMet, "K6: ar_1 ustalığı < 900 öldürme");
+            Assert.IsFalse(m.CapstoneMasteryMet, "K6: ar_1 ustalığı < 150 öldürme (M1)");
 
             var config = ScriptableObject.CreateInstance<PrototypeConfig>();
             try
@@ -221,7 +221,7 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.IsTrue(dukkan.Tree.IsOwned(dukkan.Tree.Graph.PurseIndex), "Kese başlangıçta");
                 Assert.AreEqual(342, dukkan.Tree.Cost(dukkan.Tree.Graph.WeaponCapstoneIndex, null), "doruk 380 × 0,90");
                 RunTreeEffects.TreatAllAsLive = true;
-                Assert.IsFalse(dukkan.Tree.IsOfferable(dukkan.Tree.Graph.WeaponCapstoneIndex, null), "M3 öncesi doruk teklife girmez");
+                Assert.IsFalse(dukkan.Tree.IsOfferable(dukkan.Tree.Graph.WeaponCapstoneIndex, null), "M1 öncesi doruk (pin yoksa) teklife girmez");
             }
             finally
             {

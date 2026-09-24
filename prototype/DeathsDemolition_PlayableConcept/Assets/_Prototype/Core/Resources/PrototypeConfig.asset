@@ -325,7 +325,7 @@ MonoBehaviour:
     LevelRequirementBase: 100
     LevelRequirementQuadratic: 10
     LevelCap: 50
-    XpPerAsh: 40
+    XpPerAsh: 30
     AshFirstRound10PerWeapon: 30
     AshFirstCapstone: 25
     AshFirstLinkII: 15

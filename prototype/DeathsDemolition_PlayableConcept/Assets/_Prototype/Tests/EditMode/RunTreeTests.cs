@@ -133,6 +133,33 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Doruk_M1Oncesi_YalnizPinleTeklife_Girer()
+        {
+            // DEC-098 K6: before mastery M1 an unpinned capstone is never offered; the pin brings it once its prerequisites are owned.
+            RunTreeEffects.TreatAllAsLive = true;
+            MetaRunModifiers meta = MetaRunModifiers.None;
+            meta.CapstoneMasteryMet = false;
+            var t = new RunTreeState();
+            t.Begin(1, ClassicWeaponId.AssaultRifle, _config, meta);
+            int cap = t.Graph.WeaponCapstoneIndex;
+            foreach (UpgradeBranch b in RunTreeGraph.CoreBranchesOf(ClassicWeaponId.AssaultRifle)) _rank.SetTier(b, 2);
+            for (int i = 0; i < t.Graph.Count; i++)
+            {
+                RunTreeNode n = t.Graph[i];
+                if (n.Lane == RunTreeLane.Weapon && (n.Kind == RunTreeNodeKind.BranchKeystone || n.Kind == RunTreeNodeKind.WeaponSeal)) t.MarkOwned(i);
+            }
+
+            t.MarkOwned(I(t, "fork_ar_1_x"));
+            Assert.IsTrue(t.PrereqMet(cap, _rank, out _), "ön koşullar tam");
+            Assert.IsFalse(t.IsOfferable(cap, _rank), "M1 öncesi pinsiz teklif yok");
+            t.SetPin(cap);
+            Assert.IsTrue(t.IsOfferable(cap, _rank), "pin doruğu getirir");
+            var kartlar = new List<int>();
+            t.DrawFrontier(new SeededUpgradeOfferRandom(5), _rank, 3, kartlar);
+            Assert.Contains(cap, kartlar, "Nişan garantisi çekilişte");
+        }
+
+        [Test]
         public void IcerikPaketi_HerDugumunAnahtari_Var()
         {
             // planning/content/r1-strings.json (R1 içerik paketi): her düğümün "<anahtar>.name|.desc" çifti bulunur.

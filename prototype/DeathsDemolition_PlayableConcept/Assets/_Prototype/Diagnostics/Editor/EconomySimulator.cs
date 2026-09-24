@@ -30,7 +30,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
     /// build path, the crowd-damage multipliers of pierce / chain / explosion / ricochet, and
     /// the engaged-time fraction behind the risk proxy. Same seed → byte-identical report.
     /// </summary>
-    public static class EconomySimulator
+    public static partial class EconomySimulator
     {
         public const string Schema = "dd-balance-v1";
         public const int TierCount = 4;
