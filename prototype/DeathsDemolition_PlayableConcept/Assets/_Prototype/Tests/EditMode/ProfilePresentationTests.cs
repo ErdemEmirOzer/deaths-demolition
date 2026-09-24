@@ -25,7 +25,9 @@ namespace DD.Prototype.Tests.EditMode
 
             public int LevelRequirement(int level) => 100 + 75 * (Mathf.Max(1, level) - 1);
             public string WeaponDisplayName(ClassicWeaponId id) => "W-" + id;
-            public int UnlockLevelFor(ClassicWeaponId id) => id == ClassicWeaponId.AutoSmg ? 2 : id == ClassicWeaponId.CombatShotgun ? 3 : 1;
+            // WP-069 B2: the v3 weapons (3..9) are opened by the DEC-095 meta tree, never by the profile ladder.
+            public int UnlockLevelFor(ClassicWeaponId id) => id == ClassicWeaponId.AutoSmg ? 2 : id == ClassicWeaponId.CombatShotgun ? 3
+                : id == ClassicWeaponId.AssaultRifle ? 1 : ClassicWeaponSettings.NotOnProfileLadder;
             public string BranchDisplayName(UpgradeBranch branch) => "B-" + branch;
             public int UnlockLevelFor(UpgradeBranch branch) => branch == UpgradeBranch.Explosion ? 2 : branch == UpgradeBranch.Chain ? 3 : 1;
             public IReadOnlyList<AchievementSettings> Achievements => Tanimlar;

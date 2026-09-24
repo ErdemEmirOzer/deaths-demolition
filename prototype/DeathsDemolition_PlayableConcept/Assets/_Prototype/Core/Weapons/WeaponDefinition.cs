@@ -443,7 +443,10 @@ namespace DD.Prototype.Core.Weapons
                 Range = projectile.maxRange,
                 PelletRingRadiusShare = ringShare,
                 PelletRingJitterShare = fire.ringJitterShare,
-                UnlockProfileLevel = unlock.kind == WeaponUnlockV3.Default ? 1 : Mathf.Max(1, unlock.profileLevel),
+                // DEC-095: a meta-tree weapon is not on the profile ladder (S-04 WP-077 grants it).
+                UnlockProfileLevel = unlock.kind == WeaponUnlockV3.Default ? 1
+                    : unlock.kind == WeaponUnlockV3.Meta ? ClassicWeaponSettings.NotOnProfileLadder
+                    : Mathf.Max(1, unlock.profileLevel),
                 Definition = this
             };
 
@@ -461,6 +464,33 @@ namespace DD.Prototype.Core.Weapons
             }
 
             return settings;
+        }
+
+        /// <summary>WP-069 B2: open from the start.</summary>
+        public void SetUnlockOpen(int order)
+        {
+            unlock.kind = WeaponUnlockV3.Default;
+            unlock.unlockOrder = order;
+            unlock.profileLevel = 1;
+            unlock.metaCost = 0;
+        }
+
+        /// <summary>WP-069 B2: opened by the DEC-008 profile ladder at <paramref name="level"/> (DEC-085 Ö-3 for smg_1 / sg_1); the meta band is kept for WP-077.</summary>
+        public void SetUnlockByLadder(int order, int level, int metaBand)
+        {
+            unlock.kind = WeaponUnlockV3.ProfileLevel;
+            unlock.unlockOrder = order;
+            unlock.profileLevel = Mathf.Max(1, level);
+            unlock.metaCost = metaBand;
+        }
+
+        /// <summary>WP-069 B2 (DEC-095): opened by the meta tree for <paramref name="metaBand"/> points (S-04 WP-077); never by the profile ladder.</summary>
+        public void SetUnlockByMeta(int order, int metaBand)
+        {
+            unlock.kind = WeaponUnlockV3.Meta;
+            unlock.unlockOrder = order;
+            unlock.profileLevel = 1;
+            unlock.metaCost = metaBand;
         }
 
         /// <summary>WP-069 B1 migration: the unlock block from an M3 settings entry (open by default, or its DEC-008 level).</summary>

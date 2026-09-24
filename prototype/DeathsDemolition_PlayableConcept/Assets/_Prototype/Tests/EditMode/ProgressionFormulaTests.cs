@@ -146,7 +146,9 @@ namespace DD.Prototype.Tests.EditMode
             int enYuksekUnlock = 1;
             for (int i = 0; i < weapons.ClassicWeapons.Count; i++)
             {
-                enYuksekUnlock = Mathf.Max(enYuksekUnlock, weapons.ClassicWeapons[i].UnlockProfileLevel);
+                int level = weapons.ClassicWeapons[i].UnlockProfileLevel;
+                if (level >= ClassicWeaponSettings.NotOnProfileLadder) continue;   // WP-069: a DEC-095 meta-tree weapon is not on the ladder
+                enYuksekUnlock = Mathf.Max(enYuksekUnlock, level);
             }
 
             Assert.AreEqual(5, enYuksekUnlock, "En yüksek silah unlock seviyesi 5 olmalı (DEC-085 Ö-3).");

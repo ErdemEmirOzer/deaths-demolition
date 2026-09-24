@@ -44,13 +44,15 @@ namespace DD.Prototype.Tests.EditMode
     public sealed class HitReactionContractTests
     {
         // ---------------------------------------------------------- PrototypeOnly sabitleri
-        private const float TufekMermisi = 1.0f;          // DamageForce.RifleBullet
+        // WP-069 B2: Hinawa (ar_1) 600 RPM with impulse 0.13 on the rifle scale (0.15 = DamageForce.RifleBullet) —
+        // the impulse was lowered so all three REQ-123 properties hold at the council's fire rate.
+        private const float TufekMermisi = 1.0f * 0.13f / 0.15f;   // WeaponImpulse.ForClassic(ar_1)
         private const float PompaSacmasi = 0.85f;         // DamageForce.ShotgunPellet
         private const int SacmaSayisi = 8;                // ClassicWeaponSettings.PelletCount (shotgun)
         private const float StaggerEsigi = 2.4f;          // EnemyHitReactionState.StaggerImpactThreshold
         private const float YariOmur = 0.12f;             // EnemyHitReactionState.ImpactHalfLife
         private const float StaggerBekleme = 1.1f;        // FeedbackConfigSection.StaggerCooldown
-        private const float TufekAtisHizi = 8.5f;         // ClassicWeaponSettings.FireRate (AssaultRifle)
+        private const float TufekAtisHizi = 10f;          // ClassicWeaponSettings.FireRate (ar_1, 600 RPM)
         private const float AgirDarbeEsigi = 2.5f;        // EnemyHitReactionState.HeavyImpactThreshold
         private const float Adim = 1f / 60f;
 
@@ -98,7 +100,8 @@ namespace DD.Prototype.Tests.EditMode
             PrototypeConfig config = PrototypeConfig.Active;
             Assert.IsNotNull(config, "PrototypeConfig Resources'tan yüklenemedi.");
             const string not = " — test sabiti kaynaktan saptı; türetmeyi yenile (PrototypeOnly, ürün kararı değil).";
-            Assert.AreEqual(TufekMermisi, DamageForce.RifleBullet, 0.0001f, "DamageForce.RifleBullet" + not);
+            Assert.AreEqual(1.0f, DamageForce.RifleBullet, 0.0001f, "DamageForce.RifleBullet" + not);
+            Assert.AreEqual(TufekMermisi, DD.Prototype.Weapons.WeaponImpulse.ForClassic(config.Weapons.Find(ClassicWeaponId.AssaultRifle)), 0.0001f, "ar_1 mermi itkisi" + not);
             Assert.AreEqual(PompaSacmasi, DamageForce.ShotgunPellet, 0.0001f, "DamageForce.ShotgunPellet" + not);
             Assert.AreEqual(StaggerEsigi, EnemyHitReactionState.StaggerImpactThreshold, 0.0001f, "StaggerImpactThreshold" + not);
             Assert.AreEqual(StaggerBekleme, config.Feedback.StaggerCooldown, 0.0001f, "Feedback.StaggerCooldown" + not);

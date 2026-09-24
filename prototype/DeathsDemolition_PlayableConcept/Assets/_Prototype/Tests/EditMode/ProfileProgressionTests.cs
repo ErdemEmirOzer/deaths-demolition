@@ -61,7 +61,8 @@ namespace DD.Prototype.Tests.EditMode
 
             public readonly Dictionary<UpgradeBranch, int> Dal = new Dictionary<UpgradeBranch, int>();
 
-            public int UnlockLevelFor(ClassicWeaponId id) => Silah.TryGetValue(id, out int l) ? l : 1;
+            // WP-069 B2: ids outside the M3 ladder (3..9) are meta-tree weapons (DEC-095) — never granted by a level.
+            public int UnlockLevelFor(ClassicWeaponId id) => Silah.TryGetValue(id, out int l) ? l : ClassicWeaponSettings.NotOnProfileLadder;
             public int UnlockLevelFor(UpgradeBranch branch) => Dal.TryGetValue(branch, out int l) ? l : 1;
             public string WeaponDisplayName(ClassicWeaponId id) => "W-" + id;
             public string BranchDisplayName(UpgradeBranch branch) => "B-" + branch;

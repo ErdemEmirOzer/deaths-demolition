@@ -70,7 +70,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNotNull(config);
             config.Weapons.RebuildClassicView();
             Assert.AreEqual(9, config.Weapons.ClassicWeapons.Count, "9 etkin klasik (rl_1 B3)");
-            Assert.IsNull(config.Weapons.Find(ClassicWeaponId.Rl1), "kapalı tanım kopyaya girmez");
+            Assert.IsNull(config.Weapons.FindExact(ClassicWeaponId.Rl1), "kapalı tanım kopyaya girmez");
             foreach (WeaponDefinition d in Arsenal.All)
             {
                 if (!d.enabled || d.slot != WeaponSlotKind.Classic) continue;
@@ -86,7 +86,9 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(d.accuracy.topDown.hip, a.SpreadDegrees, 1e-5f, tag + "tepeden hip = F1 kopyası");
                 Assert.AreEqual(d.projectile.impulse, a.StaggerImpulse, 1e-5f, tag + "itki");
                 Assert.AreEqual(d.projectile.maxRange, a.Range, 1e-5f, tag + "menzil");
-                Assert.AreEqual(d.unlock.kind == WeaponUnlockV3.Default ? 1 : d.unlock.profileLevel, a.UnlockProfileLevel, tag + "kilit seviyesi");
+                int ladder = d.unlock.kind == WeaponUnlockV3.Default ? 1
+                    : d.unlock.kind == WeaponUnlockV3.Meta ? ClassicWeaponSettings.NotOnProfileLadder : d.unlock.profileLevel;
+                Assert.AreEqual(ladder, a.UnlockProfileLevel, tag + "kilit seviyesi (DEC-095: meta ağacı silahı profil merdiveninde değil)");
                 Assert.Greater(a.RecoilRecoverySeconds, 0f, tag + "his satırı (sınıf kardeşi) bağlı");
             }
 
@@ -100,6 +102,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0.75f + 0.55f * 7, sg1.ReloadTime, 1e-4f, "tek-fişek: M3 alanı = boştan tam şarjör");
             Assert.AreEqual(55f, config.Weapons.Find(ClassicWeaponId.Sr1).Damage, 1e-5f);
             Assert.AreEqual(100, config.Weapons.Find(ClassicWeaponId.Lmg1).MagazineSize);
+            Assert.AreEqual(3, smg1.UnlockProfileLevel, "DEC-085 Ö-3: B seviye 3");
+            Assert.AreEqual(5, sg1.UnlockProfileLevel, "DEC-085 Ö-3: C seviye 5");
+            Assert.AreEqual(WeaponUnlockV3.Meta, Arsenal.Get("ar_2").unlock.kind, "yeni silahlar meta ağacıyla (DEC-095)");
+            Assert.AreEqual(10, Arsenal.Get("rl_1").unlock.metaCost, "meta bandı §6 tablosu");
         }
 
         [Test]

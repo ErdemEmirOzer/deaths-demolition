@@ -412,7 +412,7 @@ namespace DD.Prototype.Profile
         /// WP-069 B2: the unlock level of a weapon this build does not carry (a disabled Arsenal entry —
         /// rl_1 until B3). No profile level reaches it, so the weapon is never granted; lists skip it.
         /// </summary>
-        public const int NotInBuildUnlockLevel = int.MaxValue;
+        public const int NotInBuildUnlockLevel = ClassicWeaponSettings.NotOnProfileLadder;
 
         public static int UnlockLevelFor(ClassicWeaponId id)
         {
@@ -429,7 +429,7 @@ namespace DD.Prototype.Profile
                 }
             }
 
-            ClassicWeaponSettings settings = config.Weapons.Find(id);
+            ClassicWeaponSettings settings = config.Weapons.FindExact(id);   // Find falls back to the first weapon
             return settings != null ? Mathf.Max(1, settings.UnlockProfileLevel) : NotInBuildUnlockLevel;
         }
 
@@ -737,7 +737,7 @@ namespace DD.Prototype.Profile
             PrototypeConfig config = PrototypeConfig.Active;
             if (config != null)
             {
-                ClassicWeaponSettings settings = config.Weapons.Find(id);
+                ClassicWeaponSettings settings = config.Weapons.FindExact(id);
                 if (settings != null && !string.IsNullOrEmpty(settings.DisplayName))
                 {
                     return settings.DisplayName;

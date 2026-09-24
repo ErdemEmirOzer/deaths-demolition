@@ -62,11 +62,14 @@ namespace DD.Prototype.Weapons.EditorTools
                 "Güvenilir, ritmik; her tetikte küçük bir sarsıntı.", "AssaultRifle");
             Fire(d, WeaponFireMode.Auto, 600f, 12f);
             Ammo(d, 30, 210, 1.6f, 2.1f, WeaponReloadKind.Magazine);
-            Ballistics(d, 260f, 60f, 30f, 0.70f, 1, 0.60f, 0.15f, 0.25f, 1f, 1f, WeaponCaliber.Medium);
+            // Impulse 0.13 (council 0.15): at 600 RPM the M3 0.15 would stagger a running Standard under sustained fire
+            // (REQ-123: accumulator 1/(1 − 0.5^(0.1/0.12)) × 1.15 = 2.62 > 2.4). 0.13 → 2.27 running, 1.98 walking,
+            // 2.67 while telegraphing (the interrupt stays) — HitReactionContractTests.
+            Ballistics(d, 260f, 60f, 30f, 0.70f, 1, 0.60f, 0.13f, 0.25f, 1f, 1f, WeaponCaliber.Medium);
             Spread(d, 1.4f, 0.7f, 1.8f, 0.5f, 1.6f, 0.35f, 0.40f, 3.5f, 6f, 1.5f, 0.92f, 0.25f);
             Recoil(d, 0.55f, RecoilYawPattern.Pattern, new[] { 0.25f, 0.25f, -0.25f, -0.25f, 0.25f, 0.25f }, 6, 0.35f);
             Core(d, UpgradeBranch.Piercing, UpgradeBranch.FireRate, UpgradeBranch.ReloadSpeed, "kodo", "Kōdō", "6 atış sonrası bloom −%50");
-            Unlock(d, WeaponUnlockV3.Default, 0, 1, 0);
+            d.SetUnlockOpen(0);
             Look(d, WeaponCasing.Rifle, ClassicWeaponId.AssaultRifle, "weapon_rifle");
             return d;
         }
@@ -84,7 +87,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Spread(d, 1.0f, 0.45f, 1.3f, 0.3f, 1.15f, 0.2f, 0.30f, 2.8f, 7f, 1.6f, 0.92f, 0.28f);
             Recoil(d, 0.70f, RecoilYawPattern.Pattern, new[] { 0.15f }, 3, 0.30f);
             Core(d, UpgradeBranch.Piercing, UpgradeBranch.Ricochet, UpgradeBranch.FireRate, "kubi", "Kubi", "kafa ek çarpanı ×1,15 → ×1,5");
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 3, 8, 60);
+            d.SetUnlockByMeta(3, 3);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.Rifle, ClassicWeaponId.AssaultRifle, "");
             return d;
         }
@@ -99,7 +102,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Spread(d, 2.8f, 1.6f, 3.5f, 1.1f, 3.2f, 0.8f, 0.55f, 6.5f, 9f, 1.15f, 1.00f, 0.18f);
             Recoil(d, 0.30f, RecoilYawPattern.Random, new[] { 0.45f }, 0, 0.25f);
             Core(d, UpgradeBranch.Chain, UpgradeBranch.Ricochet, UpgradeBranch.FireRate, "kaze", "Kaze", "ateş ederken hareket ×1,10");
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 1, 3, 40);
+            d.SetUnlockByLadder(1, 3, 1);   // DEC-085 Ö-3 ladder level; meta band 1 for WP-077
             Look(d, WeaponCasing.Pistol, ClassicWeaponId.AutoSmg, "weapon_carbine");
             return d;
         }
@@ -114,7 +117,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Spread(d, 2.2f, 1.2f, 2.8f, 0.85f, 2.5f, 0.6f, 0.65f, 5.5f, 8f, 1.3f, 0.96f, 0.20f);
             Recoil(d, 0.75f, RecoilYawPattern.Pattern, new[] { 0.40f, -0.40f }, 8, 0.30f);
             Core(d, UpgradeBranch.Impact, UpgradeBranch.Chain, UpgradeBranch.FireRate, "tsuchi", "Tsuchi", "stagger 0,45 → 0,7, Runner düşer");
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 6, 17, 200);
+            d.SetUnlockByMeta(6, 6);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.Pistol, ClassicWeaponId.AutoSmg, "");
             return d;
         }
@@ -137,7 +140,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Spread(d, 7.5f, 5.5f, 8.5f, 4.0f, 8.0f, 3.5f, 1.0f, 10f, 10f, 1.2f, 0.90f, 0.30f);
             Recoil(d, 2.4f, RecoilYawPattern.Random, new[] { 0.5f }, 0, 0.55f);
             Core(d, UpgradeBranch.Explosion, UpgradeBranch.Piercing, UpgradeBranch.ReloadSpeed, "manin", "Manin", "pellet 8 → 10");
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 2, 5, 60);
+            d.SetUnlockByLadder(2, 5, 2);   // DEC-085 Ö-3
             Look(d, WeaponCasing.Shell, ClassicWeaponId.CombatShotgun, "weapon_shotgun");
             return d;
         }
@@ -156,7 +159,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Spread(d, 5.0f, 3.8f, 6.0f, 2.7f, 5.5f, 2.4f, 1.5f, 8f, 10f, 1.2f, 0.92f, 0.28f);
             Recoil(d, 3.0f, RecoilYawPattern.Random, new[] { 0.6f }, 2, 0.60f);
             Core(d, UpgradeBranch.Explosion, UpgradeBranch.Impact, UpgradeBranch.ReloadSpeed, "sohatsu", "Sōhatsu", "iki namlu tek tetikte (20 pellet, kick 5°)");
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 7, 21, 240);
+            d.SetUnlockByMeta(7, 7);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.Shell, ClassicWeaponId.CombatShotgun, "");
             return d;
         }
@@ -172,7 +175,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Spread(d, 2.4f, 1.4f, 3.0f, 1.0f, 2.8f, 0.7f, 0.25f, 4.5f, 5f, 1.9f, 0.80f, 0.45f);
             Recoil(d, 0.45f, RecoilYawPattern.Random, new[] { 0.5f }, 0, 0.50f);
             Core(d, UpgradeBranch.Piercing, UpgradeBranch.Chain, UpgradeBranch.ReloadSpeed, "nagaya", "Nagaya", "şarjör 100 → 150");
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 4, 11, 120);
+            d.SetUnlockByMeta(4, 4);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.Link, ClassicWeaponId.AssaultRifle, "");
             return d;
         }
@@ -190,7 +193,7 @@ namespace DD.Prototype.Weapons.EditorTools
             d.accuracy.settleFloorShare = 0.35f;
             Recoil(d, 0.90f, RecoilYawPattern.Pattern, new[] { -0.35f, 0.35f }, 6, 0.60f);
             Core(d, UpgradeBranch.Piercing, UpgradeBranch.ArmorBreak, UpgradeBranch.ReloadSpeed, "ishizue", "Ishizue", "oturma 6 → 3 atış, taban 1,2° → 0,9°");
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 8, 26, 380);
+            d.SetUnlockByMeta(8, 8);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.Rifle, ClassicWeaponId.AssaultRifle, "");
             return d;
         }
@@ -206,7 +209,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Recoil(d, 4.5f, RecoilYawPattern.Random, new[] { 0.3f }, 1, 0.90f);
             Core(d, UpgradeBranch.Piercing, UpgradeBranch.Ricochet, UpgradeBranch.ArmorBreak, "kabuto_wari", "Kabuto-wari", "kafa isabeti zırhı yok sayar");
             d.upgrade.forbiddenBranches = new[] { UpgradeBranch.Chain };
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 5, 14, 160);
+            d.SetUnlockByMeta(5, 5);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.Large, ClassicWeaponId.AssaultRifle, "");
             return d;
         }
@@ -252,7 +255,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Core(d, UpgradeBranch.Explosion, UpgradeBranch.Cluster, UpgradeBranch.ReloadSpeed, "hibana", "Hibana", "patlama alanında 3 s yanan zemin (4 HP/s)");
             d.upgrade.explosionSemantics = ExplosionSemantics.Blast;
             d.upgrade.forbiddenBranches = new[] { UpgradeBranch.Chain, UpgradeBranch.Ricochet };
-            Unlock(d, WeaponUnlockV3.ProfileLevel, 9, 30, 480);
+            d.SetUnlockByMeta(9, 10);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.None, ClassicWeaponId.AssaultRifle, "");
             return d;
         }
@@ -359,14 +362,6 @@ namespace DD.Prototype.Weapons.EditorTools
             d.upgrade.keystone = new WeaponKeystone { id = keystoneId, displayName = keystoneName, effect = keystoneEffect };
             d.upgrade.explosionSemantics = ExplosionSemantics.Chance;
             d.upgrade.forbiddenBranches = new UpgradeBranch[0];
-        }
-
-        private static void Unlock(WeaponDefinition d, WeaponUnlockV3 kind, int order, int profileLevel, int metaCost)
-        {
-            d.unlock.kind = kind;
-            d.unlock.unlockOrder = order;
-            d.unlock.profileLevel = profileLevel;
-            d.unlock.metaCost = metaCost;
         }
 
         private static void Look(WeaponDefinition d, WeaponCasing casing, ClassicWeaponId placeholder, string legacyHudIcon)

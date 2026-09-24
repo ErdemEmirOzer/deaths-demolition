@@ -12,6 +12,12 @@ namespace DD.Prototype.Core.Config
     [Serializable]
     public sealed class ClassicWeaponSettings
     {
+        /// <summary>
+        /// WP-069 B2: <see cref="UnlockProfileLevel"/> of a weapon the DEC-008 profile ladder never opens — it is
+        /// opened by the DEC-095 meta tree (S-04 WP-077) instead. No profile level reaches it.
+        /// </summary>
+        public const int NotOnProfileLadder = int.MaxValue;
+
         /// <summary>WP-069 (review R1-A #19): a field-for-field copy (the definition reference is shared, it is data).</summary>
         public ClassicWeaponSettings Clone() => (ClassicWeaponSettings)MemberwiseClone();
 
@@ -566,6 +572,21 @@ namespace DD.Prototype.Core.Config
 
         public SpecialWeaponConfigSection Special = new SpecialWeaponConfigSection();
 
+        /// <summary>WP-069 B2: the entry of exactly this id, or null (no first-entry fallback — see <see cref="Find"/>).</summary>
+        public ClassicWeaponSettings FindExact(ClassicWeaponId id)
+        {
+            for (int i = 0; i < ClassicWeapons.Count; i++)
+            {
+                if (ClassicWeapons[i] != null && ClassicWeapons[i].Id == id)
+                {
+                    return ClassicWeapons[i];
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The entry of this id; the first entry when the build does not carry it (M3 fallback, never null with a roster).</summary>
         public ClassicWeaponSettings Find(ClassicWeaponId id)
         {
             for (int i = 0; i < ClassicWeapons.Count; i++)
