@@ -11,6 +11,7 @@ namespace DD.Prototype.Navigation
         Bridge = 1,     // narrow single-file crossing (REQ-046/047: the koi pond bridge, shore path as the alternative)
         Corridor = 2,   // roofed bamboo corridor with two exits (REQ-111: ≥ 2 connections)
         Gate = 3,       // palace / service gate throat (AP-005C GATE-N 5.2 m; west service gate)
+        Room = 4,       // WP-076 B6 §5.2: a v6 room R1–R7 (capacity = floor ÷ 2.5 m², cap 8; exits = its Gate volumes, roomId)
     }
 
     /// <summary>
@@ -43,11 +44,26 @@ namespace DD.Prototype.Navigation
         public bool hasAlternative = false;
         public Vector3 alternative = Vector3.zero;
         public string areaName = "";
+        /// <summary>WP-076 B6: for a Gate that is a room's exit, the Room volume's id ("" = not a room exit).</summary>
+        public string roomId = "";
+        /// <summary>WP-076 B6: optional world XZ outline (≥ 3 points; regions-v6 polygons); empty = the box.</summary>
+        public Vector2[] polygonXZ;
 
         public bool Contains(Vector3 p)
         {
+            if (polygonXZ != null && polygonXZ.Length >= 3) return InsidePolygon(polygonXZ, p.x, p.z);
             float hx = size.x * 0.5f, hz = size.z * 0.5f;
             return p.x >= center.x - hx && p.x <= center.x + hx && p.z >= center.z - hz && p.z <= center.z + hz;
+        }
+
+        private static bool InsidePolygon(Vector2[] poly, float x, float z)
+        {
+            bool inside = false;
+            for (int i = 0, j = poly.Length - 1; i < poly.Length; j = i++)
+            {
+                if ((poly[i].y > z) != (poly[j].y > z) && x < (poly[j].x - poly[i].x) * (z - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x) inside = !inside;
+            }
+            return inside;
         }
 
         public bool IsChokepoint => capacity > 0;
@@ -109,9 +125,29 @@ namespace DD.Prototype.Navigation
             }
         }
 
-        /// <summary>The volume containing <paramref name="p"/>, or null. Allocation-free.</summary>
+        // WP-076 B6: volumes placed in the loaded world scene (NavRegionMarker). When any exist they describe that world
+        // and replace the profile's own list (the profile's coordinates are World_AP005's).
+        private static readonly System.Collections.Generic.List<NavRegionVolume> s_scene = new System.Collections.Generic.List<NavRegionVolume>(32);
+        public static int SceneVolumeCount => s_scene.Count;
+        public static void RegisterSceneVolume(NavRegionVolume v) { if (v != null && !s_scene.Contains(v)) s_scene.Add(v); }
+        public static void UnregisterSceneVolume(NavRegionVolume v) { s_scene.Remove(v); }
+
+        /// <summary>The volume containing <paramref name="p"/>, or null. Allocation-free. Rooms lose to the gates/throats inside them.</summary>
         public NavRegionVolume Find(Vector3 p)
         {
+            if (s_scene.Count > 0)
+            {
+                NavRegionVolume room = null;
+                for (int i = 0; i < s_scene.Count; i++)
+                {
+                    NavRegionVolume v = s_scene[i];
+                    if (v == null || !v.Contains(p)) continue;
+                    if (v.kind != NavRegionKind.Room) return v;
+                    if (room == null) room = v;
+                }
+                return room;
+            }
+
             for (int i = 0; i < _volumes.Length; i++)
             {
                 if (_volumes[i] != null && _volumes[i].Contains(p)) return _volumes[i];
