@@ -175,6 +175,27 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void SilahKilidi_Secim_SatiriSorgusu()
+        {
+            MetaPathRules.WeaponLockInfo ar1 = ProfileService.WeaponLock(ClassicWeaponId.AssaultRifle);
+            Assert.IsTrue(ar1.Entitled && ar1.Ladder);
+            MetaPathRules.WeaponLockInfo smg1 = ProfileService.WeaponLock(ClassicWeaponId.AutoSmg);
+            Assert.IsTrue(smg1.Ladder, "smg_1 merdivende, Kül yok");
+            Assert.AreEqual(0, smg1.AshCost);
+            MetaPathRules.WeaponLockInfo ar2 = ProfileService.WeaponLock(ClassicWeaponId.Ar2);
+            Assert.IsTrue(ar2.OnPath && !ar2.Entitled && !ar2.Ready);
+            Assert.AreEqual(MetaPathCatalog.Find("w_ar_2").AshCost, ar2.AshCost);
+            Assert.AreEqual(MetaPathCatalog.Find("w_ar_2").LevelGate, ar2.LevelGate);
+            Assert.IsFalse(ar2.LevelMet);
+
+            Kazan(20000);
+            ar2 = ProfileService.WeaponLock(ClassicWeaponId.Ar2);
+            Assert.IsTrue(ar2.LevelMet && ar2.AshMet && ar2.Ready, "PATH › ready");
+            Assert.AreEqual(MetaCommandResult.Done, ProfileService.TryBuyMetaNode("w_ar_2"));
+            Assert.IsTrue(ProfileService.WeaponLock(ClassicWeaponId.Ar2).Entitled);
+        }
+
+        [Test]
         public void Respec_SilahlarKalir_IlkTam_SonraYuzde75()
         {
             Kazan(20000);

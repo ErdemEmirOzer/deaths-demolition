@@ -458,6 +458,12 @@ namespace DD.Prototype.Profile
             return 1;
         }
 
+        /// <summary>WP-077: the Selection lock line of a weapon ("PATH · 120 Kül · L11" / "Reach level N" / ready).</summary>
+        public static MetaPathRules.WeaponLockInfo WeaponLock(ClassicWeaponId id)
+        {
+            return MetaPathRules.WeaponLock(Current, ProfileProgression.NameOf(id), UnlockLevelFor(id));
+        }
+
         /// <summary>The access gate for weapons: reads the EARNED list, not the level (WP-009).</summary>
         public static bool IsWeaponUnlocked(ClassicWeaponId id)
         {

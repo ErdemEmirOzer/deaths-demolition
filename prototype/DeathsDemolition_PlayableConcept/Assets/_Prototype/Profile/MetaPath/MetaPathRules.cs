@@ -15,6 +15,57 @@ namespace DD.Prototype.Profile
         public const string LinkArmorBreaker = "armor_breaker_100";    // the ArmorBreak keystone from round 1
         public const string LinkSpecialPickups = "special_pickup_10";  // SPECIAL column 1 without its level gate
 
+        /// <summary>
+        /// WP-077 (S-09 Selection lock line, direction §3.1 "PATH · 120 Kül · L11"): how a weapon opens for this
+        /// profile. Entitled = playable now; Ladder = opens on the level ladder (no Kül; LevelGate is the ladder
+        /// level); otherwise a PATH weapon node (Kül + level). Ready = both met and buyable now ("PATH › ready").
+        /// </summary>
+        public struct WeaponLockInfo
+        {
+            public bool Entitled;
+            public bool Ladder;
+            public bool OnPath;
+            public int LevelGate;
+            public int AshCost;
+            public bool LevelMet;
+            public bool AshMet;
+            public bool Ready;
+            public RunTreeNodeStatus Status;
+            public MetaLockReason LockReason;
+        }
+
+        public static WeaponLockInfo WeaponLock(ProfileData p, string weaponKey, int ladderLevel)
+        {
+            var info = new WeaponLockInfo { LevelGate = ladderLevel, Status = RunTreeNodeStatus.Locked };
+            if (p == null || string.IsNullOrEmpty(weaponKey)) return info;
+            info.Entitled = p.Has(p.UnlockedWeapons, weaponKey);
+            int index = -1;
+            var nodes = MetaPathCatalog.Nodes;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                if (nodes[i].Kind == MetaNodeKind.Weapon && nodes[i].WeaponKey == weaponKey) { index = i; break; }
+            }
+
+            if (index < 0 || IsLadderWeapon(nodes[index]))
+            {
+                info.Ladder = true;
+                info.LevelMet = p.ProfileLevel >= ladderLevel;
+                info.Status = info.Entitled ? RunTreeNodeStatus.Purchased : RunTreeNodeStatus.Locked;
+                info.LockReason = info.Entitled ? MetaLockReason.None : MetaLockReason.LadderWeapon;
+                return info;
+            }
+
+            MetaPathNode n = nodes[index];
+            info.OnPath = true;
+            info.LevelGate = n.LevelGate;
+            info.AshCost = n.AshCost;
+            info.LevelMet = p.ProfileLevel >= n.LevelGate;
+            info.AshMet = p.AshBalance >= n.AshCost;
+            info.Status = Status(p, index, out info.LockReason, out _, out _);
+            info.Ready = info.Status == RunTreeNodeStatus.Available;
+            return info;
+        }
+
         /// <summary>Respecs after the first refund this share of the Ash spent on the refunded nodes (K10/§6).</summary>
         public const float RespecRefundShare = 0.75f;
 
