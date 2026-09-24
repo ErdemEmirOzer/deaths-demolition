@@ -17,6 +17,9 @@
 #     (unity.player_session_count / unity.player_sessionid — every player launch, including other
 #     sessions' players with the same bundle id, bumps them in both plists) are left out of the two
 #     plist digests; every other key is still compared, the profile and its side files stay byte-hashed;
+#   * WP-066F: the UI settings files in the player folder (ui-settings.json, load-timing.json — the
+#     Editor shares this path) are backed up, restored and byte-compared as well; a file that did not
+#     exist before and was created by the run is moved into <out> (never deleted);
 #   * result in <out>/smoke-report.json ("userdata": before/after/restored/verified).
 # Exit: 0 ok · 20 smoke failed (exit code / exception / missing capture) · 30 user-data guard failed · 64 usage
 # Machine slot: takes the single 'smoke' slot (tools/slot.sh v4) for the whole e1+e4+restore sequence.
@@ -35,6 +38,7 @@ AS="$HOME/Library/Application Support"; PR="$HOME/Library/Preferences"
 D1="$AS/Deaths Demolition/$DD_PRODUCT"; D2="$AS/$DD_BUNDLE_ID"
 F1="$D1/prototype-profile.json"; F2="$D2/prototype-profile.json"
 P1="$PR/$DD_BUNDLE_ID.plist"; P2="$PR/unity.Deaths Demolition.$DD_PRODUCT.plist"
+UIFILES=("$D1/ui-settings.json" "$D1/load-timing.json")   # WP-066F
 # Side files = .bak / .corrupt.N.json (saved progress). The .lock file is a live process lease
 # (pid/name diagnostics, WP-009H); its bytes change whenever any player holds the profile, so it
 # is neither backed up nor compared — parallel sessions would otherwise trip the guard.
@@ -66,12 +70,13 @@ settle_plist() { local dom="$1" file="$2" i=0
 }
 settle_all() { settle_plist "$DD_BUNDLE_ID" "$P1"; settle_plist "unity.Deaths Demolition.$DD_PRODUCT" "$P2"; }
 sidefiles() { for d in "$D1" "$D2"; do [ -d "$d" ] && find "$d" -maxdepth 1 -name 'prototype-profile.json.*' ! -name '*.lock' 2>/dev/null; done | LC_ALL=C sort; }
-snapshot() { for f in "$F1" "$F2"; do echo "$(dd_sha "$f")  $f"; done; for f in "$P1" "$P2"; do echo "$(plist_digest "$f")  $f (launch-counter keys excluded)"; done; sidefiles | while IFS= read -r f; do echo "$(dd_sha "$f")  $f"; done; }
+snapshot() { for f in "$F1" "$F2" "${UIFILES[@]}"; do echo "$(dd_sha "$f")  $f"; done; for f in "$P1" "$P2"; do echo "$(plist_digest "$f")  $f (launch-counter keys excluded)"; done; sidefiles | while IFS= read -r f; do echo "$(dd_sha "$f")  $f"; done; }
 
 # 1) guard: copy the real user data (no deletion, our own directory only)
 UD="$OUT/userdata-backup"; mkdir -p "$UD/D1" "$UD/D2" "$UD/PR"
 [ -f "$F1" ] && cp -p "$F1" "$UD/D1/"; for f in "$D2"/prototype-profile.json*; do [ -f "$f" ] && [ "${f##*.}" != "lock" ] && cp -p "$f" "$UD/D2/"; done
 [ -f "$P1" ] && cp -p "$P1" "$UD/PR/"; [ -f "$P2" ] && cp -p "$P2" "$UD/PR/"
+for f in "${UIFILES[@]}"; do [ -f "$f" ] && cp -p "$f" "$UD/D1/"; done
 snapshot > "$OUT/userdata-before.txt"
 SBX="$OUT/profile-sandbox"; mkdir -p "$SBX"
 DEVFLAGS=(); [ "$MODE" = "dev" ] && DEVFLAGS=(-ddProfilePath "$SBX/prototype-profile.json")
@@ -98,6 +103,9 @@ snapshot > "$OUT/userdata-after-run.txt"
 TOUCHED=0; cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-after-run.txt" || TOUCHED=1
 if [ "$TOUCHED" -eq 1 ]; then
   [ -f "$UD/D1/prototype-profile.json" ] && cp -p "$UD/D1/prototype-profile.json" "$F1"
+  for f in "${UIFILES[@]}"; do b="$UD/D1/$(basename "$f")"
+    if [ -f "$b" ]; then cp -p "$b" "$f"; elif [ -f "$f" ]; then mv "$f" "$OUT/userdata-extra-$(basename "$f")"; fi
+  done
   for f in "$D2"/prototype-profile.json*; do [ -f "$f" ] && [ "${f##*.}" != "lock" ] && [ ! -f "$UD/D2/$(basename "$f")" ] && mv "$f" "$OUT/userdata-extra-$(basename "$f")"; done
   for f in "$UD/D2"/prototype-profile.json*; do [ -f "$f" ] && cp -p "$f" "$D2/"; done
   [ -f "$UD/PR/$(basename "$P1")" ] && defaults import "$DD_BUNDLE_ID" "$UD/PR/$(basename "$P1")"
