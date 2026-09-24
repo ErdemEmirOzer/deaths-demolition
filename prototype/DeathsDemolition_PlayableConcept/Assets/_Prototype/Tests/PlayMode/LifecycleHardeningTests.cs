@@ -196,7 +196,8 @@ namespace DD.Prototype.Tests.PlayMode
                 { "RunEvents.CountdownTick", 0 }, { "RunEvents.RunEnded", 0 }, { "RunFlowClock.FrozenChanged", 0 },
                 { "ProfileService.Changed", -1 }, { "InputSourceRegistry.CurrentChanged", 0 },
                 { "WeaponRegistry.ActiveChanged", 2 }, { "PlayerHealth.AnyPlayerDied", 1 },
-                { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 1 },
+                // WP-068 8b: RunHudScreen also takes AnyDamaged (the player-bound damage arc, E17).
+                { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 2 },
                 // WP-006: hasar olay busu izlenir. Run-yerel aboneler: EnemyDied ← RunDirector (kill/gold
                 // istatistiği) + GoldService (paket); ArmorBroken ← RunDirector (kırılma sayacı). EnemyDamaged /
                 // PlayerAttacked / EnemyHitDressed'a Run'da kalıcı abone yok (feedback tek sahibi çekmez, iter).
@@ -206,7 +207,8 @@ namespace DD.Prototype.Tests.PlayMode
                 // equipped/reload/special animation beats for one player life; the director owns the four
                 // bridge subscriptions. Every one is scene-local and must disappear again in MainMenu.
                 { "WeaponEvents.WeaponEquipped", 1 }, { "WeaponEvents.AmmoChanged", 0 }, { "WeaponEvents.ReloadStarted", 1 },
-                { "WeaponEvents.ReloadCompleted", 0 }, { "WeaponEvents.ReloadInterrupted", 1 }, { "WeaponEvents.DryFire", 0 },
+                { "WeaponEvents.ReloadCompleted", 0 }, { "WeaponEvents.ReloadInterrupted", 1 },
+                { "WeaponEvents.DryFire", 1 },   // WP-068 8a: RunHudScreen's ladder kick on an empty trigger (E11)
                 { "WeaponEvents.ClassicChanged", 0 },
                 { "WeaponEvents.SpecialWeaponSpawned", 1 }, { "WeaponEvents.SpecialWeaponGroundExpired", 1 },
                 // WP-018/WP-032C: PlayerSkinnedVisual follows the player life and unsubscribes with the rig.

@@ -145,6 +145,104 @@ namespace DD.Prototype.UI
             UnityEngine.Object.Destroy(frame);
         }
 
+        /// <summary>
+        /// WP-068 8-R · the HUD's screen coverage. The next two frames draw the HUD over a black and then a white backdrop,
+        /// on a canvas just under the HUD, so the world is out of the count. A pixel is covered when either frame differs
+        /// from its backdrop by more than 3 % in any channel. That counts translucent ink over white and pale strokes over
+        /// black alike. Unity's own "Development Build" watermark counts too (≈ 0.05 %).
+        /// Two numbers per frame: as seen, and persistent (the transient alarms hidden). Writes the persistent over-black frame
+        /// (<c>name-footprint.png</c>) and one JSON line to <c>coverage.jsonl</c>.
+        /// </summary>
+        internal static IEnumerator Coverage(string folder, string name)
+        {
+            Canvas canvas = UiFactory.CreateCanvas("[HudCoverageBack]", UiTokens.SortingHud - 1);
+            UnityEngine.UI.Image back = UiFactory.NewImage("Back", canvas.transform, UiColor.SurfaceInset);
+            UiFactory.Fill(back.rectTransform);
+            back.raycastTarget = false;
+
+            // As seen, then persistent: the transient alarms (the Special's final-seconds veil and chip, the damage edges,
+            // the banner) hidden for two frames, since the cap is about what stays on screen in combat.
+            float[] result = new float[2];
+            Texture2D dark = null;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                // Alpha, not SetActive: the HUD re-activates its warning layers every frame.
+                var hidden = new System.Collections.Generic.List<CanvasGroup>();
+                var alphas = new System.Collections.Generic.List<float>();
+                if (pass == 1)
+                {
+                    RunHudScreen hud = UnityEngine.Object.FindObjectOfType<RunHudScreen>();
+                    Transform root = hud != null ? hud.transform.Find(hud.GetType().Name + ".Canvas") : null;
+                    string[] transient = { "Warning", "FinalSeconds", "DamageEdges", "Banner", "BannerRoot" };
+                    for (int i = 0; root != null && i < transient.Length; i++)
+                    {
+                        Transform t = root.Find(transient[i]);
+                        if (t != null)
+                        {
+                            CanvasGroup group = UiFactory.Group(t.gameObject);
+                            alphas.Add(group.alpha);
+                            group.alpha = 0f;
+                            hidden.Add(group);
+                        }
+                    }
+                }
+
+                back.color = Color.black;
+                yield return null;
+                yield return new WaitForEndOfFrame();
+                Texture2D a = ScreenCapture.CaptureScreenshotAsTexture();
+                back.color = Color.white;
+                yield return null;
+                yield return new WaitForEndOfFrame();
+                Texture2D b = ScreenCapture.CaptureScreenshotAsTexture();
+                for (int i = 0; i < hidden.Count; i++)
+                {
+                    hidden[i].alpha = alphas[i];
+                }
+
+                result[pass] = CoveredPercent(a, b);
+                if (pass == 1)
+                {
+                    dark = a;
+                }
+                else
+                {
+                    UnityEngine.Object.Destroy(a);
+                }
+
+                UnityEngine.Object.Destroy(b);
+            }
+
+            UnityEngine.Object.Destroy(canvas.gameObject);
+            Directory.CreateDirectory(folder);
+            File.WriteAllBytes(Path.Combine(folder, name + "-footprint.png"), dark.EncodeToPNG());
+            System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
+            File.AppendAllText(Path.Combine(folder, "coverage.jsonl"),
+                "{\"frame\": \"" + name + "\", \"coverage\": " + result[1].ToString("0.00", inv) + ", \"coverageAsSeen\": " + result[0].ToString("0.00", inv) +
+                ", \"screen\": \"" + dark.width + "x" + dark.height + "\", \"concept\": \"" + RunHudScreen.ConceptName + "\"}\n");
+            Debug.Log("[UiCapture] coverage " + name + " " + result[1].ToString("0.00", inv) + " % (as seen " + result[0].ToString("0.00", inv) + " %) · " + RunHudScreen.ConceptName);
+            UnityEngine.Object.Destroy(dark);
+        }
+
+        /// <summary>The share of pixels where the HUD over black or over white differs from its backdrop by more than 3 %.</summary>
+        private static float CoveredPercent(Texture2D overBlack, Texture2D overWhite)
+        {
+            Color32[] a = overBlack.GetPixels32();
+            Color32[] b = overWhite.GetPixels32();
+            const int tolerance = 8;   // 3 % of 255
+            int covered = 0;
+            for (int i = 0; i < a.Length && i < b.Length; i++)
+            {
+                if (a[i].r > tolerance || a[i].g > tolerance || a[i].b > tolerance ||
+                    b[i].r < 255 - tolerance || b[i].g < 255 - tolerance || b[i].b < 255 - tolerance)
+                {
+                    covered++;
+                }
+            }
+
+            return a.Length > 0 ? 100f * covered / a.Length : 0f;
+        }
+
         /// <summary>WP-022F gameplay-frame observer (see <see cref="RoundsFlag"/>).</summary>
         private sealed class HudObserver : MonoBehaviour
         {
@@ -217,6 +315,7 @@ namespace DD.Prototype.UI
                         && state.Phase == RunPhase.Fighting && Time.realtimeSinceStartup - roundEntered >= _settle)
                     {
                         yield return Capture("hud-r" + _rounds[_nextRoundIndex] + ".png");
+                        yield return UiCaptureAgent.Coverage(_folder, "hud-r" + _rounds[_nextRoundIndex]);   // WP-068 8-R
                         _nextRoundIndex++;
                     }
 
@@ -279,6 +378,7 @@ namespace DD.Prototype.UI
                         _lowDone = true;
                         yield return new WaitForSecondsRealtime(0.2f);
                         yield return Capture("low-health.png");
+                        yield return UiCaptureAgent.Coverage(_folder, "low-health");
                     }
 
                     // WP-022L: first frame with a NET / DAZED enemy status chip on screen (WP-055 states).
@@ -871,6 +971,7 @@ namespace DD.Prototype.UI
 
                 yield return new WaitForSecondsRealtime(1.5f);
                 yield return Frame(folder, "hud-idle");
+                yield return UiCaptureAgent.Coverage(folder, "hud-idle");
 
                 // AD 8b SHOULD-1: the reticle's states, staged on the live reticle.
                 ClassicWeaponHudState live = WeaponEvents.Classic;
@@ -948,6 +1049,7 @@ namespace DD.Prototype.UI
                     rig.Health.DiagnosisInvulnerable = true;
                     yield return new WaitForSecondsRealtime(0.4f);
                     yield return Frame(folder, "hud-low-health");
+                    yield return UiCaptureAgent.Coverage(folder, "hud-low-health");
                 }
 
                 Debug.Log("[UiCapture] hudstates done · framebuffer " + Screen.width + "x" + Screen.height);

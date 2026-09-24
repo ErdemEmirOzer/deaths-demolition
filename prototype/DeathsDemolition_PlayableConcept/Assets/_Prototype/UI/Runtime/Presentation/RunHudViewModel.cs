@@ -103,6 +103,18 @@ namespace DD.Prototype.UI
         private bool _regenerating;
 
         public float HealthNormalized { get; private set; }
+
+        /// <summary>WP-068 8-R: health value and max as numbers - the boxless HUD sets them with TMP SetText (no string).</summary>
+        public int HealthCurrent
+        {
+            get { return _healthCurrent == int.MinValue ? 0 : _healthCurrent; }
+        }
+
+        public int HealthMax
+        {
+            get { return _healthMax == int.MinValue ? 0 : _healthMax; }
+        }
+
         public bool HealthLow { get; private set; }
         public bool HealthKnown { get { return _healthKnown; } }
         public string HealthText { get; private set; } = Placeholder;

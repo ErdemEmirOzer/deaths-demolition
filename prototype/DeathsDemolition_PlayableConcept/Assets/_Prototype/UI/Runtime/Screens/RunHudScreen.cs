@@ -11,6 +11,14 @@ using UnityEngine.UI;
 
 namespace DD.Prototype.UI
 {
+    /// <summary>WP-068 8-R · the HUD compositions: today's v3 panels and the two concepts put to the user.</summary>
+    public enum HudConcept
+    {
+        Panels = 0,
+        A = 1,
+        B = 2
+    }
+
     /// <summary>
     /// The in-run HUD. All ten readouts the request lists, in four corner blocks plus a
     /// centre channel.
@@ -82,8 +90,40 @@ namespace DD.Prototype.UI
     /// show the first run's last numbers. The player is found through PlayerRegistry,
     /// never by searching the scene.
     /// </summary>
-    public sealed class RunHudScreen : UiScreen
+    public sealed partial class RunHudScreen : UiScreen
     {
+        /// <summary>
+        /// WP-068 8-R · which HUD composition to build: <c>-ddHudConcept a|b</c> for the two concepts put to the user,
+        /// the v3 panels otherwise. Read once per HUD build; the chosen concept replaces the switch when it lands.
+        /// </summary>
+        public static HudConcept Concept
+        {
+            get
+            {
+                string arg = CommandLineValue("-ddHudConcept");
+                if (string.Equals(arg, "a", System.StringComparison.OrdinalIgnoreCase)) return HudConcept.A;
+                if (string.Equals(arg, "b", System.StringComparison.OrdinalIgnoreCase)) return HudConcept.B;
+                return HudConcept.Panels;
+            }
+        }
+
+        /// <summary>The concept's name for the capture logs.</summary>
+        public static string ConceptName => Concept.ToString();
+
+        private static string CommandLineValue(string name)
+        {
+            string[] args = System.Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] == name)
+                {
+                    return args[i + 1];
+                }
+            }
+
+            return null;
+        }
+
         private const float BlockWidth = 420f;
         private const float SmallBlockWidth = 360f;
         private const float GoldBlockWidth = 220f;
@@ -282,14 +322,32 @@ namespace DD.Prototype.UI
             // rather than by softening the flash until it stops working.
             BuildDamageEdges();
 
-            BuildRoundBlock();
-            BuildGoldBlock();
-            BuildHealthBlock();
-            BuildWeaponBlocks();
+            // WP-068 8-R: the two concepts put to the user replace the panels (RunHudScreen.Concepts.cs).
+            HudConcept concept = Concept;
+            if (concept == HudConcept.Panels)
+            {
+                BuildRoundBlock();
+                BuildGoldBlock();
+                BuildHealthBlock();
+                BuildWeaponBlocks();
+            }
+            else
+            {
+                BuildConcept(concept);
+            }
+
             BuildCentreChannel();
             BuildMarker();
             BuildReticle();
-            BuildThreatChips();
+            if (concept == HudConcept.Panels)
+            {
+                BuildThreatChips();
+            }
+            else
+            {
+                BuildInkThreatChips();
+                BuildConceptPlayerLayer(concept);
+            }
 
             RunEvents.RunStarted += OnRunStarted;
             RunEvents.RoundStarted += OnRoundStarted;
@@ -619,7 +677,18 @@ namespace DD.Prototype.UI
             special.gameObject.AddComponent<Canvas>();
             _specialBlock = special.gameObject;
             RectTransform specialHost = UiFactory.CardContent(special, UiSpace.L);
+            BuildSpecialContent(specialHost, false);
+            _specialBlock.SetActive(false);
+            BuildClassicBlock();
+        }
 
+        /// <summary>
+        /// The Special block's readout inside <paramref name="specialHost"/> - phase line, ring (track + fill), ground pip,
+        /// timer, name, usage line, glyph. <paramref name="ink"/> (8-R concepts): no panel behind it, so the track is the A4
+        /// ring's cream ghost and every word carries the HUD ink.
+        /// </summary>
+        private void BuildSpecialContent(RectTransform specialHost, bool ink)
+        {
             _specialPhase = UiFactory.Label(
                 "Phase", specialHost, "ON THE FIELD", UiType.Label, UiColor.StateGold, TextAnchor.UpperCenter);
             RectTransform phaseRect = UiFactory.Fill((RectTransform)_specialPhase.transform);
@@ -636,10 +705,17 @@ namespace DD.Prototype.UI
             ringRoot.sizeDelta = new Vector2(SpecialRingSize, SpecialRingSize);
             ringRoot.anchoredPosition = new Vector2(0f, -(UiFactory.LineHeight(UiType.Label) + (int)UiSpace.XS));
 
-            Image track = UiFactory.NewImage("Track", ringRoot, UiColor.SurfaceInset, UiSprites.Ring);
+            Sprite ringArt = ink ? UiArt.Kit("Ring.Progress132") : null;
+            Image track = UiFactory.NewImage("Track", ringRoot, ink ? UiColor.TextPrimary : UiColor.SurfaceInset, ringArt != null ? ringArt : UiSprites.Ring);
             UiFactory.Fill((RectTransform)track.transform);
+            if (ink)
+            {
+                Color ghost = track.color;
+                ghost.a = 0.25f;
+                track.color = ghost;
+            }
 
-            _specialRing = UiFactory.NewImage("Fill", ringRoot, UiColor.BarSpecial, UiSprites.Ring);
+            _specialRing = UiFactory.NewImage("Fill", ringRoot, UiColor.BarSpecial, ringArt != null ? ringArt : UiSprites.Ring);
             UiFactory.Fill((RectTransform)_specialRing.transform);
             _specialRing.type = Image.Type.Filled;
             _specialRing.fillMethod = Image.FillMethod.Radial360;
@@ -695,9 +771,17 @@ namespace DD.Prototype.UI
             glyphRect.sizeDelta = new Vector2(28f, 28f);
             glyphRect.anchoredPosition = Vector2.zero;
             _specialGlyph.enabled = false;
+            if (ink)
+            {
+                UiHudInk.Apply(_specialPhase);
+                UiHudInk.Apply(_specialTimer);
+                UiHudInk.Apply(_specialCaption);
+                UiHudInk.Apply(_specialUsage);
+            }
+        }
 
-            _specialBlock.SetActive(false);
-
+        private void BuildClassicBlock()
+        {
             // ---- classic weapon, bottom right ---------------------------------
             RectTransform classic = HudPanel(
                 "ClassicWeapon", new Vector2(1f, 0f), BlockWidth, ClassicBlockHeight + UiFactory.LineHeight(UiType.Caption));
@@ -908,6 +992,7 @@ namespace DD.Prototype.UI
         /// <summary>E17: the player-bound arc faces the attacker (HitDirection runs from the attacker towards the player).</summary>
         private void OnPlayerDamaged(PlayerDamageInfo info)
         {
+            _lastHitAt = Time.unscaledTime;   // 8-R posture: a hit keeps the HUD forward for 3 s
             if (_playerArcs != null)
             {
                 _playerArcs.Flash(-info.HitDirection);
@@ -1316,6 +1401,7 @@ namespace DD.Prototype.UI
             UpdateSpecialWeapon();
             UpdateBanner();
             UpdateThreat();
+            UpdateConceptPosture();   // 8-R: no-op for the panels
         }
 
         private void LateUpdate()
@@ -1387,13 +1473,31 @@ namespace DD.Prototype.UI
             }
 
             _playerArcs.Place(playerLocal);
+            if (_enso != null)
+            {
+                // 8-R concept B: the ensō is painted on the ground, so it centres on the feet, not the chest.
+                Vector2 feet = OffScreen;
+                if (show)
+                {
+                    Vector3 groundViewport = camera.WorldToViewportPoint(rig.transform.position);
+                    if (groundViewport.z >= 0f)
+                    {
+                        Vector2 size = ScreenRect.rect.size;
+                        feet = new Vector2((groundViewport.x - 0.5f) * size.x, (groundViewport.y - 0.5f) * size.y);
+                    }
+                }
+
+                _enso.Place(feet);
+            }
 
             if (show)
             {
                 // E15: the spread the weapon really has, projected at the aim distance (from the chest, where the shot leaves).
+                ClassicWeaponHudState weapon = CaptureWeapon ?? WeaponEvents.Classic;
                 _reticle.Tick(camera, rig.Aim.AimWorldPoint, rig.transform.position + Vector3.up * 1.2f,
-                    ScreenRect.rect.size, CaptureWeapon ?? WeaponEvents.Classic,
+                    ScreenRect.rect.size, weapon,
                     CaptureSpecialActive || WeaponEvents.Special.Phase == SpecialWeaponPhase.Active);
+                UpdateAmmoArc(weapon);   // 8-R concept B
             }
         }
 
@@ -1509,6 +1613,7 @@ namespace DD.Prototype.UI
         private void OnRunStarted(int startRound)
         {
             _model.Reset();
+            _healthMaxShown = int.MinValue;
             _goldSeen = int.MinValue;
             _roundShown = int.MinValue;
             _healthBound = false;
@@ -1585,6 +1690,11 @@ namespace DD.Prototype.UI
                 }
 
                 _healthBar.SetValue(_model.HealthNormalized);
+                if (_enso != null)
+                {
+                    _enso.Set(_model.HealthNormalized, _model.HealthLow);   // 8-R concept B: the fraction at the figure
+                }
+
                 _healthBar.SetColor(_model.HealthLow ? UiColor.BarHealthLow : UiColor.BarHealth);
                 _healthValue.color = UiTokens.Get(_model.HealthLow ? UiColor.StateDanger : UiColor.TextPrimary);
                 if (_healthIcon != null)
@@ -1611,7 +1721,20 @@ namespace DD.Prototype.UI
 
             if ((changed & RunHudField.Health) != 0)
             {
-                _healthValue.text = _model.HealthText;
+                if (_healthMaxText != null)
+                {
+                    // 8-R concepts: the value large, "/ max" small beside it - integers through SetText, no string.
+                    _healthValue.SetText("{0}", _model.HealthCurrent);
+                    if (_model.HealthMax != _healthMaxShown)
+                    {
+                        _healthMaxShown = _model.HealthMax;
+                        _healthMaxText.SetText("/ {0}", _healthMaxShown);
+                    }
+                }
+                else
+                {
+                    _healthValue.text = _model.HealthText;
+                }
             }
 
             if ((changed & RunHudField.HealthState) != 0)
