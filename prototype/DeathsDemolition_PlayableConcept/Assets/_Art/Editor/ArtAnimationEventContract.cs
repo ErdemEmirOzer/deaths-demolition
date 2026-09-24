@@ -21,7 +21,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             "fire", "eject", "chamber", "mag_out", "mag_in", "mag_in_2", "mag_in_3", "reload_commit", "reload_cancel_point",
             "charge", "box_open", "belt_seat", "box_close", "bolt_up", "bolt_back", "bolt_fwd", "bolt_down", "shell_in",
-            "rocket_in", "rocket_seat", "cell_out", "cell_in", "canister_out", "canister_in", "cover_open", "cover_close", "shell_eject"
+            "rocket_in", "rocket_seat", "cell_out", "cell_in", "canister_out", "canister_in", "cover_open", "cover_close", "shell_eject", "pump_down", "pump_up"
         };
 
         /// <summary>Every rule the clip breaks; empty = compliant.</summary>

@@ -341,10 +341,10 @@ namespace DD.Art.Pipeline.EditorTools
                 Ring(clips, m, unitySpeeds, reference, C.PlayerWalkBack, 0f, -1f),
                 Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeLeft, -1f, 0f),
                 Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeRight, 1f, 0f),
-                Child2D(clips[C.PlayerRunFwd], 0f, 1f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunFwd))),
-                Child2D(clips[C.PlayerRunBack], 0f, -1f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunBack))),
-                Child2D(clips[C.PlayerRunStrafeLeft], -1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeLeft))),
-                Child2D(clips[C.PlayerRunStrafeRight], 1f, 0f, PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeRight)))
+                Child2D(clips[C.PlayerRunFwd], 0f, 1f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunFwd))),
+                Child2D(clips[C.PlayerRunBack], 0f, -1f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunBack))),
+                Child2D(clips[C.PlayerRunStrafeLeft], -1f, 0f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeLeft))),
+                Child2D(clips[C.PlayerRunStrafeRight], 1f, 0f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeRight)))
             };
             loco.speedParameterActive = true;
             loco.speedParameter = C.LocoRate;

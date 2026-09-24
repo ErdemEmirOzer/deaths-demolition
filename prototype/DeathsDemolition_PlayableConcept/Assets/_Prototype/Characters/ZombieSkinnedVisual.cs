@@ -350,8 +350,13 @@ namespace DD.Prototype.Characters
 
             if (_footIk != null)
             {
-                _footIk.Bind(() => _authored && !_dying && !_rising, () => _lod == null || !_lod.Far);
+                _footIk.Bind(() => _authored && !_dying && !_rising, () => _lod == null || !_lod.Far,
+                    () => _speed01 > 0.2f && _lastRate <= CadenceBand.LockMaxRate);   // WP-071: foot lock only where the cadence is honest
             }
+
+            // WP-071 B2: procedural lean (accel / turn) on the spine, near bodies only
+            if (_lean == null) _lean = _animator.GetComponent<LocomotionLean>() ?? _animator.gameObject.AddComponent<LocomotionLean>();
+            _lean.Configure(HumanoidBones.Bone(_animator, HumanBodyBones.Spine), transform, () => _authored && !_dying && !_rising && (_lod == null || !_lod.Far));
         }
 
         private void Awake()
@@ -451,6 +456,14 @@ namespace DD.Prototype.Characters
             float dt = Time.deltaTime;
             if (_ragdoll != null)
             {
+                if (!_ragdoll.active)
+                {
+                    _ragdoll = null;   // the pool went away with its scene mid-fall: the body keeps its pose and finishes
+                    _deathClock = -1f;
+                    _deathEnded = true;
+                    return;
+                }
+
                 if (RagdollProxyPool.Settled(_ragdoll))
                 {
                     RagdollProxyPool.Release(_ragdoll);   // the fallen pose stays on the bones
@@ -551,6 +564,9 @@ namespace DD.Prototype.Characters
         private static readonly int HitDirId = Animator.StringToHash(CharacterAnimatorContract.HitDir);
         private static readonly int HitTierId = Animator.StringToHash(CharacterAnimatorContract.HitTier);
         private static readonly int RiseVariantId = Animator.StringToHash(CharacterAnimatorContract.RiseVariant);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetGaitStatics() { s_gaitOrdinal = 0; GaitVariety = 1f; }
         private static int s_riseOrdinal;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -583,12 +599,26 @@ namespace DD.Prototype.Characters
         private const float GaitFullSpeed01 = 0.35f;
 
         [PrototypeOnly(PendingDecisions.None,
-            "Lowest playback rate of the gait clip (a crawl below this rate reads as a freeze frame). Invented.", true)]
-        public const float MinGaitRate = 0.35f;
+            "Lowest playback rate of the gait clip. WP-071 K3: the cadence band (CadenceBand.Min).", true)]
+        public const float MinGaitRate = CadenceBand.Min;
 
         [PrototypeOnly(PendingDecisions.None,
-            "Highest playback rate of a gait clip. The Standard's 2.7 m/s over shamble_A 1.46 m/s is ×1.85 (AP-009 README). Invented cap.", true)]
-        public const float MaxGaitRate = 2.6f;
+            "Highest playback rate of a gait clip. WP-071 K3 (N5): the cadence band (CadenceBand.Max) — faster travel slides (Standard 2.7 m/s over shamble_A is ×1.2 + slide until AP-022 shamble_fast).", true)]
+        public const float MaxGaitRate = CadenceBand.Max;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-071 III A2.5 per-spawn cadence spread (± fraction) so a crowd does not march in step. Invented.", true)]
+        public const float GaitSpread = 0.08f;
+        /// <summary>WP-071: scales the per-spawn gait spread (1 = design, 0 = off — tests that measure exact rates).</summary>
+        public static float GaitVariety = 1f;
+        private static int s_gaitOrdinal;
+        private float _gaitMul = 1f;
+        private float _lastRate = 1f;
+        private float _lastSpeedMps;
+        private LocomotionLean _lean;
+        /// <summary>WP-071: this spawn's cadence multiplier (gait profile) and the gait clip rate last set (tests).</summary>
+        public float GaitMultiplier => _gaitMul;
+        public float GaitRate => _lastRate;
+        public LocomotionLean Lean => _lean;
 
         private ZombieRig _rig;
         private bool _authored;
@@ -645,6 +675,12 @@ namespace DD.Prototype.Characters
                     break;
                 case CharacterAnimationEvent.DeathEnd:
                     if (_dying && _ragdoll == null) _deathEnded = true;
+                    break;
+                case CharacterAnimationEvent.FootLeft:
+                case CharacterAnimationEvent.FootRight:
+                case CharacterAnimationEvent.FootLOff:
+                case CharacterAnimationEvent.FootROff:
+                    if (_footIk != null) PlayerSkinnedVisual.FootLockEvent(_footIk, e);   // WP-071 B2 foot lock
                     break;
                 case CharacterAnimationEvent.RagdollHandoff:
                     if (_dying) _handoffNow = true;   // WP-071: an AP-022 onset clip names its own hand-off frame
@@ -712,7 +748,12 @@ namespace DD.Prototype.Characters
             _animator.SetFloat(GaitRateId, 1f);
             // A pooled body comes back with whatever state it died in: restart the base layer and
             // write the pose NOW, so the bone-mounted gameplay nodes are valid on the spawn frame.
-            _animator.Play(CharacterAnimatorContract.LocomotionState, CharacterAnimatorContract.BaseLayer, 0f);
+            // WP-071 III A2.5 gait profile: a deterministic per-spawn cadence spread and cycle phase (the crowd is out of step)
+            int g = s_gaitOrdinal++;
+            _gaitMul = 1f + GaitVariety * GaitSpread * (Mathf.Repeat(g * 0.381966f, 1f) * 2f - 1f);
+            _lastRate = 1f;
+            if (_lean != null) _lean.ResetLean();
+            _animator.Play(CharacterAnimatorContract.LocomotionState, CharacterAnimatorContract.BaseLayer, GaitVariety > 0f ? Mathf.Repeat(g * 0.618034f, 1f) : 0f);
             _animator.Update(0f);
             if (rise)
             {
@@ -737,8 +778,12 @@ namespace DD.Prototype.Characters
             _animator.SetFloat(Speed01Id, _speed01);
             // The rate multiplies the whole Locomotion tree (idle included): ease it back to 1 as
             // the body stops so the idle sway does not crawl at MinGaitRate.
-            float rate = Mathf.Clamp(metersPerSecond / _gaitClipSpeed, MinGaitRate, MaxGaitRate);
+            // WP-071 K3: the cadence stays in the band (slide covers the rest), spread per spawn (gait profile)
+            float rate = Mathf.Clamp(metersPerSecond / _gaitClipSpeed * _gaitMul, MinGaitRate, MaxGaitRate);
+            _lastRate = rate;
+            _lastSpeedMps = metersPerSecond;
             _animator.SetFloat(GaitRateId, Mathf.Lerp(1f, rate, _speed01));
+            if (_lean != null) _lean.Feed(transform.forward * metersPerSecond);
         }
 
         /// <summary>

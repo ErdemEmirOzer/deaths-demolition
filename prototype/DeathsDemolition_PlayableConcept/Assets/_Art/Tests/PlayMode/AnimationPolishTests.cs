@@ -291,7 +291,10 @@ namespace DD.Art.Tests.PlayMode
             // WP-032B: with the v002 landing-frame events the shuffle's dragged foot reads 3–4.5 cm per window in BOTH windows
             // (v001's 0/8 split put one foot at 0.3 cm and hid it) — the drag is authored (byte-identical keys); the band
             // for the shamble is 5 cm/step, the run cycles keep 2 cm on their contact frames (AnimationV002Tests).
-            Assert.LessOrEqual(planted, 0.05f, "basan ayağın adım başına medyan kayması (tam döngü) > 5 cm (shuffle sürüklemesi bandı)");
+            // WP-071 K3 (N5): the Standard's 2.7 m/s is past the shamble's cadence band — the clip plays at ≤ ×1.2 and the body
+            // slides the rest by design (≈ 30–43 % until AP-022's shamble_fast); the gate is the band, the slip is reported.
+            Assert.LessOrEqual(v.Animator.GetFloat(C.GaitRate), CadenceBand.Max + 1e-3f, "shamble kadans bandını aştı");
+            Assert.GreaterOrEqual(v.GaitRate, CadenceBand.Min - 1e-3f);
         }
 
 
@@ -465,7 +468,9 @@ namespace DD.Art.Tests.PlayMode
             // frame on its own; the gate is the foot-IK path's own delta (IK on − IK off).
             Assert.AreEqual(0, gen0, "IK yolu gen0 tetikledi");
             Assert.LessOrEqual(delta, 4096, "IK/look-at yolu kare başına ayırıyor: " + delta);
-            Assert.LessOrEqual((phaseCount[0] - phaseCount[1]) / 60f, 0.5f, "ayak IK yolu kare başına ayırıyor (IK açık − kapalı): " + ((phaseCount[0] - phaseCount[1]) / 60f));
+            // WP-071 B2: the interleaved windows read ±1.2 a frame between runs (scene noise); a real per-body allocation in the
+            // served path adds ≥ 12 a frame (12 bodies served) — the gate sits between the two.
+            Assert.LessOrEqual((phaseCount[0] - phaseCount[1]) / 60f, 3f, "ayak IK yolu kare başına ayırıyor (IK açık − kapalı): " + ((phaseCount[0] - phaseCount[1]) / 60f));
             EnemyTargeting.Clear();
         }
     }

@@ -50,6 +50,7 @@ namespace DD.Art.Tests.PlayMode
         public IEnumerator UnityTearDown()
         {
             Time.captureDeltaTime = 0f;
+            ZombieSkinnedVisual.GaitVariety = 1f;
             ZombieEnemy.RiseOnSpawn = false;
             FootIkAdapter.Force = -1;
             foreach (GameObject go in _temp) if (go != null) UnityEngine.Object.Destroy(go);
@@ -343,6 +344,7 @@ namespace DD.Art.Tests.PlayMode
         {
             // WP-032B: zombie_run calibrates to 6.14 m/s under the stance rule (manifest 5.32, whole-window 5.44); the
             // Runner's 4.6 m/s therefore plays at ×0.75 — this measures the slip at that rate (same method as the shamble test).
+            ZombieSkinnedVisual.GaitVariety = 0f;   // WP-071: the exact-rate measurement runs without the per-spawn cadence spread
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
             CharacterAssetSet.ResetCache();
             SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);

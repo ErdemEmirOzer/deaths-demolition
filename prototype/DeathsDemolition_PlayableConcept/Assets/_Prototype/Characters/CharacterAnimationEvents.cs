@@ -86,7 +86,10 @@ namespace DD.Prototype.Characters
         CoverClose = 74,
         // P-06 AP-022 (24.09): balance lost (≤ ragdoll_handoff) / attack wind-up begins
         FallStart = 75,
-        TelegraphStart = 76
+        TelegraphStart = 76,
+        // S-02 WP-069 (24.09): the gel Special's side lever pump (part_lever)
+        PumpDown = 77,
+        PumpUp = 78
     }
 
     /// <summary>
@@ -112,7 +115,7 @@ namespace DD.Prototype.Characters
             "eject", "chamber", "mag_out", "mag_in", "mag_in_2", "mag_in_3", "switch_ready", "switch_away", "lowered", "raised",
             "pickup_grab", "pickup_done", "armor_break", "spawn_rise", "spawn_land",
             // WP-071 v3
-            "foot_l_off", "foot_r_off", "pivot_plant", "stop_plant", "weight_shift", "attack_recover", "grab_start", "grab_end", "attack_step", "roar", "ragdoll_handoff", "knockback_end", "hurt_end", "ground_impact", "blood_burst", "twitch", "spasm", "lh_release", "lh_grab", "ads_ready", "reload_commit", "reload_cancel_point", "mechanism_start", "mechanism_end", "spin_up", "spin_down", "sw_charge_peak", "shell_eject", "inspect_peak", "charge", "box_open", "belt_seat", "box_close", "bolt_up", "bolt_back", "bolt_fwd", "bolt_down", "shell_in", "rocket_in", "rocket_seat", "cell_out", "cell_in", "canister_out", "canister_in", "cover_open", "cover_close", "fall_start", "telegraph_start"
+            "foot_l_off", "foot_r_off", "pivot_plant", "stop_plant", "weight_shift", "attack_recover", "grab_start", "grab_end", "attack_step", "roar", "ragdoll_handoff", "knockback_end", "hurt_end", "ground_impact", "blood_burst", "twitch", "spasm", "lh_release", "lh_grab", "ads_ready", "reload_commit", "reload_cancel_point", "mechanism_start", "mechanism_end", "spin_up", "spin_down", "sw_charge_peak", "shell_eject", "inspect_peak", "charge", "box_open", "belt_seat", "box_close", "bolt_up", "bolt_back", "bolt_fwd", "bolt_down", "shell_in", "rocket_in", "rocket_seat", "cell_out", "cell_in", "canister_out", "canister_in", "cover_open", "cover_close", "fall_start", "telegraph_start", "pump_down", "pump_up"
         };
 
         /// <summary>WP-071: v3 names that were proposed under another spelling (the validator rejects the alias and names the canonical one).</summary>
@@ -234,6 +237,8 @@ namespace DD.Prototype.Characters
         public void cover_close(int value) => Raise(CharacterAnimationEvent.CoverClose, value);
         public void fall_start(int value) => Raise(CharacterAnimationEvent.FallStart, value);
         public void telegraph_start(int value) => Raise(CharacterAnimationEvent.TelegraphStart, value);
+        public void pump_down(int value) => Raise(CharacterAnimationEvent.PumpDown, value);
+        public void pump_up(int value) => Raise(CharacterAnimationEvent.PumpUp, value);
 
         /// <summary>Tests / probes: raise an event as if the clip had fired it.</summary>
         public void RaiseForTest(CharacterAnimationEvent e) => Raise(e);

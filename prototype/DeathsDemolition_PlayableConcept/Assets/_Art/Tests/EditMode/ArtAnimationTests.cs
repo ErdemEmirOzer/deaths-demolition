@@ -127,7 +127,9 @@ namespace DD.Art.Tests.EditMode
             foreach (ChildMotion ch in tree.children)
             {
                 float clipSpeed = set.SpeedOf(ch.motion.name);
-                float expected = clipSpeed > 0f ? PlayerSkinnedVisual.ChildTimeScale(reference, clipSpeed) : 1f;
+                // WP-071 K3: the four run cycles are capped at the cadence band (the walk ring keeps its honest scale)
+                bool runChild = ch.motion.name.Contains("_run_");
+                float expected = clipSpeed > 0f ? (runChild ? PlayerSkinnedVisual.RunChildTimeScale(reference, clipSpeed) : PlayerSkinnedVisual.ChildTimeScale(reference, clipSpeed)) : 1f;
                 Assert.AreEqual(expected, ch.timeScale, 1e-4f, ch.motion.name + " timeScale");
                 bool run = ch.motion.name.Contains("_run_");
                 float radius = ch.position.magnitude;

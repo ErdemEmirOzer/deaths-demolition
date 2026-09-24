@@ -29,11 +29,36 @@ namespace DD.Prototype.Characters
         [PrototypeOnly(PendingDecisions.None, "Position / rotation IK weight response (1/s). Invented.", true)]
         public const float Response = 12f;
 
+        [PrototypeOnly(PendingDecisions.None, "WP-071 foot lock (event-driven: the clip's plant events): unused height slack, blend time, release at this fraction of the leg reach. Invented / III A2.4.", true)]
+        public const float LockHeight = 0.025f, LockBlendSeconds = 0.06f, LockMaxStretch = 1.0f;   // B2: 0.96 released every walking stance (the clip's own stance leg is ~97 % extended) — release at full reach
+        [PrototypeOnly(PendingDecisions.None, "WP-071 foot lock bodies per frame (Yüksek: player + ≤ 8 zombies; quality tier sets it). Invented.", true)]
+        public static int MaxLockBodiesPerFrame = 9;
+
         [SerializeField] private Animator _animator;
         [SerializeField, Range(0f, 1f)] private float _rotationWeight = 0.6f;
 
         private Func<bool> _enabled;
         private Func<bool> _near;
+        private Func<bool> _lockGate;
+        // WP-071 foot lock state per foot (0 left, 1 right)
+        private readonly bool[] _locked = new bool[2];
+        private readonly float[] _lockWeight = new float[2];
+        private readonly Vector3[] _lockPos = new Vector3[2];
+        private int _plantPending;
+        private readonly bool[] _releasePending = new bool[2];
+        private readonly float[] _gapThisFrame = new float[2];
+        private readonly Vector3[] _targetThisFrame = new Vector3[2];
+        private float _legLength;
+        private bool _lockThisFrame;
+        private static int s_locked;
+        /// <summary>WP-071: feet currently held by the lock (tests / probes).</summary>
+        public int LockedFeet => (_locked[0] ? 1 : 0) + (_locked[1] ? 1 : 0);
+        public bool IsLocked(int foot) => _locked[foot];
+        /// <summary>WP-071 lock readouts of the last solve (tests): gate open, left-foot height over its ground contact, moving back in body space.</summary>
+        public bool LockGateOpen => _lockThisFrame;
+        public float LastHeightGap { get; private set; }
+
+        public static int LockBodiesThisFrame => s_locked;
         private float _weight;
         private float _pelvisOffset;
         private float _leftLift, _rightLift;
@@ -60,10 +85,15 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>Owner binding: allowed (alive, not dying/rising) and near (LOD0/1).</summary>
-        public void Bind(Func<bool> enabledGate, Func<bool> nearGate)
+        public void Bind(Func<bool> enabledGate, Func<bool> nearGate) => Bind(enabledGate, nearGate, null);
+
+        /// <summary>WP-071: + the foot-lock gate (owner: cadence rate ≤ <see cref="CadenceBand.LockMaxRate"/>, moving, near).</summary>
+        public void Bind(Func<bool> enabledGate, Func<bool> nearGate, Func<bool> lockGate)
         {
             _enabled = enabledGate;
             _near = nearGate;
+            _lockGate = lockGate;
+            ClearLock();
             _weight = 0f;
             _pelvisOffset = 0f;
         }
@@ -73,13 +103,22 @@ namespace DD.Prototype.Characters
             s_frame = -1;
             s_served = 0;
             s_raycasts = 0;
+            s_locked = 0;
             Force = -1;
+            MaxLockBodiesPerFrame = 9;
+        }
+
+        private void ClearLock()
+        {
+            for (int i = 0; i < 2; i++) { _locked[i] = false; _lockWeight[i] = 0f; _releasePending[i] = false; }
+            _plantPending = 0;
         }
 
         private void OnDisable()
         {
             _weight = 0f;
             _pelvisOffset = 0f;
+            ClearLock();
         }
 
         private void OnAnimatorIK(int layerIndex)
@@ -92,6 +131,7 @@ namespace DD.Prototype.Characters
                 s_frame = Time.frameCount;
                 s_served = 0;
                 s_raycasts = 0;
+                s_locked = 0;
             }
 
             bool allowed = Force == 1 || (Force != 0 && (_enabled == null || _enabled()) && (_near == null || _near()));
@@ -121,6 +161,14 @@ namespace DD.Prototype.Characters
             }
 
             s_served++;
+            _lockThisFrame = _lockGate != null && _lockGate() && s_locked < MaxLockBodiesPerFrame;
+            if (_lockThisFrame) s_locked++;
+            if (_legLength <= 0f)
+            {
+                Transform up = _animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg), lo = _animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg), ft = _animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+                if (up != null && lo != null && ft != null) _legLength = Vector3.Distance(up.position, lo.position) + Vector3.Distance(lo.position, ft.position);
+            }
+
             float footHeight = _animator.leftFeetBottomHeight;
             Solve(AvatarIKGoal.LeftFoot, footHeight, out float leftDelta);
             Solve(AvatarIKGoal.RightFoot, footHeight, out float rightDelta);
@@ -139,6 +187,54 @@ namespace DD.Prototype.Characters
             }
         }
 
+        /// <summary>
+        /// WP-071 · III A2.4 foot lock: in stance (the animated foot at the ground and moving back in body space) the foot is
+        /// held at its landing point; it releases on lift-off, when the leg would stretch past <see cref="LockMaxStretch"/>
+        /// (the slide wins), or when the gate closes — blended over <see cref="LockBlendSeconds"/>.
+        /// </summary>
+        private Vector3 Lock(int foot, Vector3 animated, Vector3 target, float groundFootY)
+        {
+            float gap = animated.y - groundFootY;
+            if (foot == 0) LastHeightGap = gap;
+            // event-driven stance: a plant event locks the LOWER foot at its landing point and frees the other (the stance
+            // window "own contact → the other foot's contact", as the AP-009 slip gates define it); foot_*_off frees one foot.
+            if (_plantPending == 1 && foot == 1)
+            {
+                // both feet solved this frame: decide which one landed
+                int lower = _gapThisFrame[0] <= gap ? 0 : 1;
+                if (_lockThisFrame)
+                {
+                    _locked[lower] = true;
+                    _lockPos[lower] = lower == 1 ? target : _targetThisFrame[0];
+                }
+
+                _locked[1 - lower] = false;
+                _plantPending = 0;
+            }
+
+            if (foot == 0) { _gapThisFrame[0] = gap; _targetThisFrame[0] = target; }
+            if (_releasePending[foot]) { _locked[foot] = false; _releasePending[foot] = false; }
+            if (!_lockThisFrame) _locked[foot] = false;
+            if (_locked[foot] && _legLength > 0f)
+            {
+                Transform hip = _animator.GetBoneTransform(foot == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
+                if (hip != null && Vector3.Distance(hip.position, _lockPos[foot]) > _legLength * LockMaxStretch) _locked[foot] = false;   // the slide wins
+            }
+
+            float step = Time.deltaTime / LockBlendSeconds;
+            _lockWeight[foot] = Mathf.MoveTowards(_lockWeight[foot], _locked[foot] ? 1f : 0f, step);
+            if (_lockWeight[foot] <= 0f) return target;
+            Vector3 held = _lockPos[foot];
+            held.y = target.y;
+            return Vector3.Lerp(target, held, _lockWeight[foot]);
+        }
+
+        /// <summary>WP-071: the clip's foot_l / foot_r contact (owner forwards the event; the lower foot is taken, names aside).</summary>
+        public void NotifyPlant() => _plantPending = 1;
+
+        /// <summary>WP-071: foot_l_off / foot_r_off (AP-022) — free that foot now (0 left, 1 right).</summary>
+        public void NotifyLift(int foot) => _releasePending[foot] = true;
+
         private void Solve(AvatarIKGoal goal, float footHeight, out float delta)
         {
             Vector3 animated = _animator.GetIKPosition(goal);
@@ -151,6 +247,7 @@ namespace DD.Prototype.Characters
                 delta = Mathf.Clamp(targetY - animated.y, -MaxCorrection, MaxCorrection);
                 Vector3 target = animated;
                 target.y = animated.y + delta;
+                target = Lock(goal == AvatarIKGoal.LeftFoot ? 0 : 1, animated, target, targetY);
                 _animator.SetIKPositionWeight(goal, _weight);
                 _animator.SetIKPosition(goal, target);
                 Quaternion animatedRot = _animator.GetIKRotation(goal);

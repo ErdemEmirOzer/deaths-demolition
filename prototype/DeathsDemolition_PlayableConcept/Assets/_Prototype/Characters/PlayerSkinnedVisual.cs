@@ -99,9 +99,12 @@ namespace DD.Prototype.Characters
         [PrototypeOnly(PendingDecisions.None,
             "Highest playback rate of the run cycles (P-06 ×1.6: faster reads as a flicker). WP-032B needed 2.0 on the v002 run_fwd (3.75 m/s on the " +
             "Unity rig); WP-032C: the v003 run_fwd stride is 1.05 m (Blender 5.69 m/s no-slide), so 6.2 m/s sits under the cap again. Cap.", true)]
-        public const float MaxRunRate = 1.6f;
+        public const float MaxRunRate = CadenceBand.Max;   // WP-071 K3: the run cycles stay in the cadence band; faster travel slides
 
         public Animator Animator => _animator;
+        private LocomotionLean _lean;
+        /// <summary>WP-071 B2 readouts (tests).</summary>
+        public LocomotionLean Lean => _lean;
         public LODGroup LodGroup => _lodGroup;
         public SkinnedMeshRenderer[] Renderers => _renderers;
         public Transform WeaponSocket => _weaponSocket;
@@ -173,7 +176,7 @@ namespace DD.Prototype.Characters
             _authored = _animation != null && _animation.IsAuthored && _animator != null && _animator.runtimeAnimatorController != null;
             // WP-032B: the run ring's child time scale (reference / run_fwd no-slide speed) — the MaxRunRate clamp divides by it.
             float runSpeed = _animation != null ? _animation.SpeedOf(CharacterAnimatorContract.PlayerRunFwd) : 0f;
-            _runTimeScale = runSpeed > 0.01f && _animation != null ? ChildTimeScale(_animation.LocomotionReferenceSpeed, runSpeed) : 1f;
+            _runTimeScale = runSpeed > 0.01f && _animation != null ? RunChildTimeScale(_animation.LocomotionReferenceSpeed, runSpeed) : 1f;
             if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
             if (_aimLayer == null && _animator != null) _aimLayer = _animator.GetComponent<PlayerAimLayer>();
             if (_aimLayer != null) _aimLayer.Bind(_animator, aimDirection, _authored);
@@ -187,7 +190,11 @@ namespace DD.Prototype.Characters
                     () => _authored && !_dying);
             }
 
-            if (_footIk != null) _footIk.Bind(() => _authored && !_dying, () => true);
+            // WP-071: foot lock where the cadence is honest (walk ring rate ≈ 1; run ring when its clip rate ≤ LockMaxRate)
+            if (_footIk != null) _footIk.Bind(() => _authored && !_dying, () => true, () => _move.sqrMagnitude > 0.004f && _rate * (_move.sqrMagnitude > 0.5f ? _runTimeScale : 1f) <= CadenceBand.LockMaxRate);
+            // WP-071 B2: procedural lean on the spine from the planar acceleration
+            if (_lean == null && _animator != null) _lean = _animator.GetComponent<LocomotionLean>() ?? _animator.gameObject.AddComponent<LocomotionLean>();
+            if (_lean != null) _lean.Configure(HumanoidBones.Bone(_animator, HumanBodyBones.Spine), transform, () => _authored && !_dying);
             // WP-032F: sash / pouch / gourd / hachimaki tails — the player is always LOD0
             if (_chains == null) _chains = _animator.GetComponent<SecondaryChainDriver>();
             if (_chains != null) _chains.Bind(() => _authored);
@@ -237,6 +244,15 @@ namespace DD.Prototype.Characters
         private void OnAnimationEvent(CharacterAnimationEvent e)
         {
             if (e == CharacterAnimationEvent.DeathEnd && _dying) _deathEnded = true;
+            else if (_footIk != null) FootLockEvent(_footIk, e);   // WP-071 B2
+        }
+
+        /// <summary>WP-071 B2: plant / lift events drive the foot lock (shared by the player and zombie visuals).</summary>
+        internal static void FootLockEvent(FootIkAdapter ik, CharacterAnimationEvent e)
+        {
+            if (e == CharacterAnimationEvent.FootLeft || e == CharacterAnimationEvent.FootRight) ik.NotifyPlant();
+            else if (e == CharacterAnimationEvent.FootLOff) ik.NotifyLift(0);
+            else if (e == CharacterAnimationEvent.FootROff) ik.NotifyLift(1);
         }
 
         private void OnSpecialPickedUp(float activeDuration)
@@ -402,6 +418,7 @@ namespace DD.Prototype.Characters
             float dt = Time.deltaTime;
             Vector3 v = _planarVelocity != null ? _planarVelocity() : Vector3.zero;
             float mps = v.magnitude;
+            if (_lean != null) _lean.Feed(v);
 
             if (!_authored)
             {
@@ -447,6 +464,9 @@ namespace DD.Prototype.Characters
         {
             return clipSpeedMps > 0.01f ? Mathf.Min(MaxLocoRate, Mathf.Max(0.1f, referenceSpeed) / clipSpeedMps) : 1f;
         }
+
+        /// <summary>WP-071 K3: a run-ring child's time scale — honest up to the cadence band, beyond it the run slides (run_back / strafes at 6.2 m/s).</summary>
+        public static float RunChildTimeScale(float referenceSpeed, float clipSpeedMps) => Mathf.Min(CadenceBand.Max, ChildTimeScale(referenceSpeed, clipSpeedMps));
 
         /// <summary>Renderers of the M1 primitive body to hide when this visual is attached.</summary>
         public static void HidePrimitiveParts(Transform visual, ICollection<Renderer> hidden)
