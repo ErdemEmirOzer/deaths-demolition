@@ -84,6 +84,26 @@ namespace DD.Art.Tests.PlayMode
             LogAssert.ignoreFailingMessages = false;
         }
 
+        /// <summary>
+        /// WP-074 · <c>DD_ART_CAPTURE_POSES</c> (optional): a CSV "name,px,py,pz,tx,ty,tz,vfov" (Unity space) replaces the fixed poses —
+        /// the gap-analysis frames (target-style overview, gameplay framing, eye-level third / first person) with the same tool.
+        /// </summary>
+        public static ArtVisualRegression.CameraPose[] PosesFor()
+        {
+            string csv = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_POSES");
+            if (string.IsNullOrEmpty(csv) || !File.Exists(csv)) return Poses;
+            var list = new List<ArtVisualRegression.CameraPose>();
+            foreach (string line in File.ReadAllLines(csv))
+            {
+                string[] f = line.Split(',');
+                if (f.Length < 8 || f[0].StartsWith("#") || f[0] == "name") continue;
+                float P(int i) => float.Parse(f[i], CultureInfo.InvariantCulture);
+                list.Add(new ArtVisualRegression.CameraPose(f[0].Trim(), new Vector3(P(1), P(2), P(3)), new Vector3(P(4), P(5), P(6)), P(7)));
+            }
+
+            return list.ToArray();
+        }
+
         public static string OutputDir()
         {
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
@@ -115,7 +135,7 @@ namespace DD.Art.Tests.PlayMode
             string dir = OutputDir();
             var manifest = new List<string> { "name,position,lookAt,vfov,file,warmFrames" };
             Time.captureDeltaTime = 1f / 60f;
-            foreach (ArtVisualRegression.CameraPose pose in Poses)
+            foreach (ArtVisualRegression.CameraPose pose in PosesFor())
             {
                 int warm = 0;
                 yield return ArtVisualRegression.WarmStreaming(pose, W, H, 90, f => warm = f);
@@ -135,9 +155,9 @@ namespace DD.Art.Tests.PlayMode
 
             Time.captureDeltaTime = 0f;
             File.WriteAllLines(Path.Combine(dir, "world-v3-manifest.csv"), manifest);
-            Debug.Log("[DD-TEST] wp020.captures frames=" + Poses.Length + " instances=" + Ap005WorldBootstrap.Last.Instances + " -> " + dir);
+            Debug.Log("[DD-TEST] wp020.captures frames=" + PosesFor().Length + " instances=" + Ap005WorldBootstrap.Last.Instances + " -> " + dir);
             Assert.AreEqual(3168, Ap005WorldBootstrap.Last.Instances);   // WP-038I: AP-017 Faz 2 delta v005 (+23); WP-038L: Faz 2b delta v006 (+25)
-            foreach (ArtVisualRegression.CameraPose pose in Poses) Assert.IsTrue(File.Exists(Path.Combine(dir, pose.name + ".png")), pose.name);
+            foreach (ArtVisualRegression.CameraPose pose in PosesFor()) Assert.IsTrue(File.Exists(Path.Combine(dir, pose.name + ".png")), pose.name);
         }
 
         private static string V(Vector3 v)
