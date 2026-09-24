@@ -490,10 +490,14 @@ namespace DD.Prototype.Tests.EditMode
 
             view.SetContentHeight(stack.Cursor);
             Assert.IsTrue(view.Scrolls, "560 px içerik 300 px görünümde kayar");
+            Assert.IsFalse(view.FadeTopVisible, "en üstte üst rampa yok");
+            Assert.IsTrue(view.FadeBottomVisible, "altta içerik var: alt rampa");
             Assert.AreEqual(600f - UiScrollView.Gutter, view.Content.rect.width, 0.5f, "ray payı her zaman ayrılır");
 
             view.Reveal(rows[9], false);
             Assert.AreEqual(560f - 300f, view.Offset, 0.5f, "son satır: en alta, sınırda durur");
+            Assert.IsTrue(view.FadeTopVisible, "yukarıda içerik var: üst rampa");
+            Assert.IsFalse(view.FadeBottomVisible, "en altta alt rampa yok");
             view.Reveal(rows[0], false);
             Assert.AreEqual(0f, view.Offset, 0.5f, "ilk satır: en üste");
 

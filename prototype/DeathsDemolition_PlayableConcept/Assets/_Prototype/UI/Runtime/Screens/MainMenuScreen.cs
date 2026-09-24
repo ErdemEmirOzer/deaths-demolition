@@ -565,7 +565,7 @@ namespace DD.Prototype.UI
         private const float PreviewHudScale = 1f;        // AD 6ab SHOULD-3: 1:1 × UI scale, clipped by the well (legible, and 90 % / 120 % visibly change)
         private const float PreviewBlockWidth = 420f;    // the HUD health block (RunHudScreen.BlockWidth)
         private const float PreviewBlockHeight = 104f;
-        private const float PreviewHudMargin = 48f;
+        private const float PreviewHudInset = 16f;      // AD 6ab MUST-5: the block's right edge − 16 from the preview's
 
         private static readonly string[] DisplayModes = { "WINDOWED", "FULLSCREEN" };
 
@@ -648,7 +648,7 @@ namespace DD.Prototype.UI
 
             if (well)
             {
-                BuildScalePreview(body, column + (int)UiSpace.XL);
+                BuildScalePreview(body, column);   // the rail's 24 px gutter is the gap (AD 6ab MUST-5: the block fits whole at 1.0)
             }
 
             UiInput.ChainVertical(display.Button, scale, master, uiSounds, quality.Button, telemetry.Button, hints.Button);
@@ -672,7 +672,7 @@ namespace DD.Prototype.UI
                 column = Mathf.Min(column, width);
             }
 
-            well = width < 1f || width - column - (int)UiSpace.XL >= PreviewMinWidth;
+            well = width < 1f || width - column >= PreviewMinWidth;
             UiScrollView scroll = UiScrollView.Create("Scroll", body);
             var scrollRect = (RectTransform)scroll.transform;
             scrollRect.anchorMin = new Vector2(0f, 0f);
@@ -777,10 +777,12 @@ namespace DD.Prototype.UI
                 plate.gameObject.SetActive(false);
             }
 
+            // Anchored bottom-RIGHT (AD 6ab MUST-5): at 110-120 % the clip falls on the heart /
+            // label side, never on "64 / 100" or the bar's end.
             _previewHud = UiFactory.NewRect("PreviewHud", screen);
-            _previewHud.anchorMin = Vector2.zero;
-            _previewHud.anchorMax = Vector2.zero;
-            _previewHud.pivot = Vector2.zero;
+            _previewHud.anchorMin = new Vector2(1f, 0f);
+            _previewHud.anchorMax = new Vector2(1f, 0f);
+            _previewHud.pivot = new Vector2(1f, 0f);
             _previewHud.sizeDelta = new Vector2(PreviewBlockWidth, PreviewBlockHeight);
             BuildPreviewHealth(_previewHud);
 
@@ -821,7 +823,7 @@ namespace DD.Prototype.UI
 
             float s = PreviewHudScale * scale;
             _previewHud.localScale = new Vector3(s, s, 1f);
-            _previewHud.anchoredPosition = new Vector2(PreviewHudMargin * s, PreviewHudMargin * s);
+            _previewHud.anchoredPosition = new Vector2(-PreviewHudInset, PreviewHudInset);
             _previewCaption.text = "UI SCALE " + Percent(scale) + ". It applies to the next screen you open.";
         }
 
@@ -1209,7 +1211,7 @@ namespace DD.Prototype.UI
                 });
             AddSettingRow(ref stack, palette.transform);
             AddCaptionUnder(ref stack, content, "PaletteNote",
-                "Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays vermilion; every state also has a shape and a word.", 2, UiSpace.XS);
+                "Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays red; every state also has a shape and a word.", 2, UiSpace.XS);
 
             AddSettingsSection(ref stack, content, "TEXT", true);
             UiSlider text = UiSlider.Create("Setting.TEXT SCALE", content, "TEXT SCALE",
@@ -1249,7 +1251,7 @@ namespace DD.Prototype.UI
             scroll.TrackSelectables();
             if (well)
             {
-                BuildAccessibilitySample(body, column + (int)UiSpace.XL);
+                BuildAccessibilitySample(body, column);
             }
 
             UiInput.ChainVertical(false, palette.Button, text, flashes.Button, reduced.Button);
@@ -1300,11 +1302,27 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)_sampleCaption.transform, Mathf.Ceil(UiTokens.FontSize(UiType.Caption) * 1.4f * UiSettings.TextScaleMax));
             stack.Gap(UiSpace.M);
 
-            // The low health bar (ghost trail on a hit - the motion sample).
-            TMP_Text healthLabel = UiFactory.Label("HealthLabel", well, "HEALTH 25 / 100", UiType.Label, UiColor.TextMuted);
-            stack.Add((RectTransform)healthLabel.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            // The low health state exactly as the HUD draws it below LowHealthFraction (AD 6ab
+            // MUST-6): cracked heart + BarHealthLow bar + the value in StateDanger, in either
+            // palette. A hit on the bar is the motion sample (ghost trail).
+            bool low = SampleHealth < UiTokens.LowHealthFraction;
+            float labelBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            RectTransform healthRow = UiFactory.NewRect("HealthRow", well);
+            stack.Add(healthRow, labelBand);
+            Image heart = UiArt.IconImage("Heart", healthRow, low ? "Hud.LowHealth" : "Hud.Health", low ? UiColor.BarHealthLow : UiColor.BarHealth, labelBand);
+            var heartRect = (RectTransform)heart.transform;
+            heartRect.anchorMin = new Vector2(0f, 0.5f);
+            heartRect.anchorMax = new Vector2(0f, 0.5f);
+            heartRect.pivot = new Vector2(0f, 0.5f);
+            heartRect.anchoredPosition = Vector2.zero;
+            float textLeft = heart.enabled ? labelBand + (int)UiSpace.S : 0f;
+            TMP_Text healthLabel = UiFactory.Label("HealthLabel", healthRow, "HEALTH", UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
+            RectTransform healthLabelRect = UiFactory.Fill(healthLabel.rectTransform);
+            healthLabelRect.offsetMin = new Vector2(textLeft, 0f);
+            TMP_Text healthValue = UiFactory.Numeric("HealthValue", healthRow, Mathf.RoundToInt(SampleHealth * 100f) + " / 100", UiType.NumericM, low ? UiColor.StateDanger : UiColor.TextPrimary, TextAnchor.MiddleRight, false);
+            UiFactory.Fill(healthValue.rectTransform);
             stack.Gap(UiSpace.XS);
-            _sampleBar = UiFactory.Bar("HealthBar", well, UiColor.BarHealth, SampleBarHeight);
+            _sampleBar = UiFactory.Bar("HealthBar", well, low ? UiColor.BarHealthLow : UiColor.BarHealth, SampleBarHeight);
             stack.Add((RectTransform)_sampleBar.transform, SampleBarHeight);
             _sampleBar.SetValue(SampleHealth, true);
             stack.Gap(UiSpace.L);

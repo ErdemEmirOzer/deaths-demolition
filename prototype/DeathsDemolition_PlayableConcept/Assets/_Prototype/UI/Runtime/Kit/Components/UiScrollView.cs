@@ -39,10 +39,15 @@ namespace DD.Prototype.UI
         public const float WheelStep = 40f;
         public const float ClipSoftness = 16f;
 
+        /// <summary>The ground the scroller sits on (the pane card's fill); the edge ramps fade into it.</summary>
+        public const UiColor EdgeColor = UiColor.SurfacePanel;
+
         private ScrollRect _scroll;
         private RectTransform _viewport;
         private RectTransform _content;
         private Scrollbar _bar;
+        private Image _fadeTop;
+        private Image _fadeBottom;
 
         /// <summary>Lay rows out here (a UiStack on it), then call <see cref="SetContentHeight"/>.</summary>
         public RectTransform Content
@@ -87,8 +92,6 @@ namespace DD.Prototype.UI
             _viewport = UiFactory.NewRect("Viewport", root);
             UiFactory.Fill(_viewport);
             UiFactory.ClipContent(_viewport);
-            // A row cut by the edge reads as scrolling, not as a clipped label (AD 6ab SHOULD-2).
-            _viewport.GetComponent<RectMask2D>().softness = new Vector2Int(0, (int)ClipSoftness);
             // A transparent raycast surface: the wheel over a gap between rows still scrolls.
             Image catcher = _viewport.gameObject.AddComponent<Image>();
             catcher.color = UiTokens.Get(UiColor.Transparent);
@@ -100,6 +103,12 @@ namespace DD.Prototype.UI
             _content.pivot = new Vector2(0.5f, 1f);
             _content.sizeDelta = new Vector2(-Gutter, 0f);
             _content.anchoredPosition = new Vector2(-Gutter * 0.5f, 0f);
+
+            // A row cut by the edge reads as scrolling, not as a clipped label (AD 6ab SHOULD-2,
+            // revised: RectMask2D softness does not reach TMP 3.0.6 text, a ground-coloured ramp
+            // over the content does). Each ramp shows only while there is content beyond its edge.
+            _fadeTop = EdgeFade("FadeTop", root, UiSprites.FadeDown, 1f);
+            _fadeBottom = EdgeFade("FadeBottom", root, UiSprites.FadeUp, 0f);
 
             _bar = BuildRail(root);
 
@@ -113,6 +122,30 @@ namespace DD.Prototype.UI
             _scroll.scrollSensitivity = WheelStep;
             _scroll.verticalScrollbar = _bar;
             _scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+            _scroll.onValueChanged.AddListener(_ => UpdateFades());
+        }
+
+        /// <summary>A <see cref="ClipSoftness"/> px ramp in the pane's ground colour on one edge of the viewport, drawn over the content.</summary>
+        private static Image EdgeFade(string name, RectTransform root, Sprite ramp, float edge)
+        {
+            Image fade = UiFactory.NewImage(name, root, EdgeColor, ramp);
+            var rect = (RectTransform)fade.transform;
+            rect.anchorMin = new Vector2(0f, edge);
+            rect.anchorMax = new Vector2(1f, edge);
+            rect.pivot = new Vector2(0.5f, edge);
+            rect.sizeDelta = new Vector2(-Gutter, ClipSoftness);
+            rect.anchoredPosition = new Vector2(-Gutter * 0.5f, 0f);
+            fade.raycastTarget = false;
+            fade.enabled = false;
+            return fade;
+        }
+
+        /// <summary>Top ramp while scrolled down, bottom ramp while content remains below.</summary>
+        private void UpdateFades()
+        {
+            float offset = Offset;
+            _fadeTop.enabled = offset > 0.5f;
+            _fadeBottom.enabled = offset < MaxOffset - 0.5f;
         }
 
         /// <summary>The 4 px rail + grip; a Scrollbar for pointer drag, kept out of navigation.</summary>
@@ -161,6 +194,18 @@ namespace DD.Prototype.UI
         {
             _content.sizeDelta = new Vector2(_content.sizeDelta.x, Mathf.Ceil(height));
             ScrollTo(Mathf.Min(Offset, MaxOffset), false);
+            UpdateFades();
+        }
+
+        /// <summary>Tests: which edge ramps show.</summary>
+        public bool FadeTopVisible
+        {
+            get { return _fadeTop.enabled; }
+        }
+
+        public bool FadeBottomVisible
+        {
+            get { return _fadeBottom.enabled; }
         }
 
         private float MaxOffset
@@ -235,6 +280,7 @@ namespace DD.Prototype.UI
             {
                 UiMotion.KillTarget(_content, false);
                 _content.anchoredPosition = to;
+                UpdateFades();   // an animated scroll is caught by ScrollRect.onValueChanged (LateUpdate)
             }
         }
 
