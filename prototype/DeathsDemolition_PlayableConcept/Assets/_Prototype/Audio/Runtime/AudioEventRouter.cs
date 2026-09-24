@@ -218,7 +218,13 @@ namespace DD.Prototype.Audio
 
                 case CharacterAnimationEvent.ShiftLeft:
                 case CharacterAnimationEvent.ShiftRight:
-                    OnFootstep(source, 0.5f);   // WP-032B idle weight shift: half a step
+                case CharacterAnimationEvent.WeightShift:
+                    OnFootstep(source, 0.5f);   // WP-032B idle weight shift / WP-071 weight_shift: half a step
+                    break;
+
+                case CharacterAnimationEvent.PivotPlant:
+                case CharacterAnimationEvent.StopPlant:
+                    OnFootstep(source, 0.8f);   // WP-071 turn / stop plant
                     break;
 
                 case CharacterAnimationEvent.Eject:
