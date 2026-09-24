@@ -219,6 +219,34 @@ namespace DD.Prototype.Damage
             s_current = 0;
         }
 
+        /// <summary>WP-069 (ADR-069-1): hand out a new id WITHOUT opening it (a projectile's id, resumed per step).</summary>
+        public static int NextId()
+        {
+            s_last++;
+            if (s_last <= 0)
+            {
+                s_last = 1;
+            }
+
+            return s_last;
+        }
+
+        /// <summary>
+        /// WP-069 (ADR-069-1): continue a transaction handed out earlier by <see cref="Begin"/>.
+        /// A projectile's flight spans frames; each step's hit resolution resumes the id the
+        /// projectile was born with, so its penetration, chain, ricochet and blast stay ONE
+        /// transaction (the enemy refuses a second application inside it). Close with <see cref="End"/>.
+        /// </summary>
+        public static void Resume(int id)
+        {
+            if (s_current != 0)
+            {
+                s_nestedBegins++;
+            }
+
+            s_current = id > 0 ? id : Begin();
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {

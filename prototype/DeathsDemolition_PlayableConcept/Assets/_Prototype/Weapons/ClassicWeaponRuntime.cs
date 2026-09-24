@@ -1,4 +1,6 @@
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.Damage;
 using DD.Prototype.Feedback;
 using UnityEngine;
@@ -38,6 +40,9 @@ namespace DD.Prototype.Weapons
 
         public bool IsConfigured => _settings != null;
 
+        /// <summary>WP-069: the v3 definition behind the equipped numbers (null for a hand-built settings object).</summary>
+        public WeaponDefinition Definition => _settings != null ? _settings.Definition : null;
+
         // ------------------------------------------------------------------ ammo
 
         public int Ammo { get; private set; }
@@ -46,6 +51,12 @@ namespace DD.Prototype.Weapons
 
         /// <summary>Debug-panel infinite ammo. Never reloads, never runs dry.</summary>
         public bool InfiniteAmmo { get; set; }
+
+        /// <summary>WP-069: no reserve limit (v3 ammo.reserve &lt; 0, the M3 behaviour, or no definition). B2 draws finite reserves.</summary>
+        public bool ReserveInfinite => Definition == null || Definition.ammo.reserve < 0;
+
+        /// <summary>WP-069: rounds carried beyond the magazine (0 while <see cref="ReserveInfinite"/>).</summary>
+        public int ReserveAmmo => ReserveInfinite ? 0 : Mathf.Max(0, Definition.ammo.reserve);
 
         public bool IsReloading { get; private set; }
 
@@ -262,9 +273,43 @@ namespace DD.Prototype.Weapons
             }
         }
 
+        /// <summary>
+        /// WP-069: hip-fire cone half-angle for the active camera mode (v3 definition: top-down /
+        /// third person / first person); the M3 SpreadDegrees without a definition.
+        /// </summary>
+        public float BaseSpreadDegrees
+        {
+            get
+            {
+                if (_settings == null) return 0f;
+                WeaponDefinition d = _settings.Definition;
+                if (d == null) return Mathf.Max(0f, _settings.SpreadDegrees);
+                // Top-down keeps the (F1-editable) config copy; the other modes read the definition.
+                return CameraModeService.Current == CameraMode.TopDown
+                    ? Mathf.Max(0f, _settings.SpreadDegrees)
+                    : Mathf.Max(0f, d.SpreadFor((int)CameraModeService.Current).hip);
+            }
+        }
+
         /// <summary>Current cone half-angle including accumulated bloom.</summary>
         public float CurrentSpreadDegrees =>
-            _settings != null ? Mathf.Max(0f, _settings.SpreadDegrees) + _bloom : 0f;
+            _settings != null ? BaseSpreadDegrees + _bloom : 0f;
+
+        /// <summary>
+        /// WP-069 ADR-069-1: how this weapon's projectiles fly (v3 projectile block; a fast straight
+        /// bullet at the M3 range for a hand-built settings object). Pellet weapons fly Pellet kind.
+        /// </summary>
+        public ProjectileLaunch Launch(int pelletIndex)
+        {
+            ProjectileLaunch launch = ProjectileLaunch.From(Definition, Id, Range);
+            launch.PelletIndex = pelletIndex;
+            if (PelletCount > 1 && launch.Kind == ProjectileKind.Bullet)
+            {
+                launch.Kind = ProjectileKind.Pellet;
+            }
+
+            return launch;
+        }
 
         /// <summary>WP-068 U12a: horizontal half-angle of the pellet ring (the ApplyRing radius); 0 without the ring pattern.</summary>
         public float PelletRingDegrees =>

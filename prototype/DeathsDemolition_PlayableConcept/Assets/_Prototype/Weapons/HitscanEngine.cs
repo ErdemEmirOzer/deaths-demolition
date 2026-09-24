@@ -249,6 +249,141 @@ namespace DD.Prototype.Weapons
             return result;
         }
 
+        // ------------------------------------------------------------------ WP-069 · projectile segment (ADR-069-1)
+
+        /// <summary>
+        /// WP-069 ADR-069-1: resolve one projectile step — sweep <paramref name="length"/> metres along
+        /// <paramref name="direction"/> (ray, or sphere when the projectile has a radius) and apply what it
+        /// meets exactly as a hitscan shot would (world stops it; a body takes the hit, region, stagger
+        /// governor and feedback; penetration carries it on with the kept damage share), inside the
+        /// projectile's own resumed transaction. The first body hit resolves the per-shot branches once
+        /// (chain / ricochet / explosion, ADR-034-1). Returns true when the projectile stops here.
+        /// </summary>
+        internal static bool ResolveProjectileSegment(ref ProjectileState p, Vector3 from, Vector3 direction, float length,
+            out float travelled, out Vector3 end)
+        {
+            travelled = length;
+            end = from + direction * length;
+
+            int count = p.SweepRadius > 0f
+                ? Physics.SphereCastNonAlloc(from, p.SweepRadius, direction, s_rayBuffer, length, PrototypeLayers.BulletHitMask, QueryTriggerInteraction.Collide)
+                : Physics.RaycastNonAlloc(from, direction, s_rayBuffer, length, PrototypeLayers.BulletHitMask, QueryTriggerInteraction.Collide);
+
+            if (count <= 0)
+            {
+                return false;
+            }
+
+            SortByDistance(count);
+
+            DamageTransaction.Resume(p.TransactionId);
+            try
+            {
+                s_touched.Clear();
+                for (int t = 0; t < p.TouchedCount; t++) s_touched.Add(p.GetTouched(t));
+
+                var result = new ShotResult();
+                bool stopped = false;
+                bool branchesNow = false;
+                Vector3 branchPoint = Vector3.zero;
+                float branchDamage = 0f;
+                float speed = p.Velocity.magnitude;
+
+                for (int i = 0; i < count; i++)
+                {
+                    RaycastHit hit = s_rayBuffer[i];
+                    Collider collider = hit.collider;
+                    if (collider == null)
+                    {
+                        continue;
+                    }
+
+                    // A sphere sweep that starts inside a collider reports distance 0 and point zero.
+                    Vector3 point = hit.distance <= 0f && hit.point == Vector3.zero ? from : hit.point;
+                    Vector3 normal = hit.normal.sqrMagnitude > 1e-6f ? hit.normal : -direction;
+                    float at = Mathf.Max(0f, hit.distance);
+
+                    if (!DamageTargetResolver.TryResolve(collider, out DamageTarget target))
+                    {
+                        // World geometry stops the projectile (M3 rule).
+                        DD.Prototype.Props.PropImpacts.Report(collider, point, direction);
+                        SurfaceKind surface = SurfaceResolver.Resolve(collider);
+                        HitFeedbackDirector.Instance.ReportSurfaceImpact(point, normal, surface, ImpactScaleFor(p.Shot.Power));
+                        ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
+                            surface, speed, false, false, false, true, p.TransactionId));
+                        travelled = at;
+                        end = point;
+                        stopped = true;
+                        break;
+                    }
+
+                    if (s_touched.Contains(target.Id))
+                    {
+                        continue;   // a second hitbox of a body this projectile already damaged
+                    }
+
+                    s_touched.Add(target.Id);
+                    p.AddTouched(target.Id);
+
+                    BodyRegion region = DamageTargetResolver.ResolveRegion(collider, target, point);
+                    float share = FalloffShareOf(in p, p.Travelled + at);
+                    float damage = p.Shot.Damage * p.DamageScale * share;
+                    DamageResult r = ApplyHit(target, damage, region, point, direction,
+                        p.Shot.ImpactForce, p.Shot.Source, p.Shot.Power, normal, p.Shot.PresentationGroupId);
+
+                    if (!p.BranchesResolved && !branchesNow)
+                    {
+                        branchesNow = true;
+                        branchPoint = point;
+                        branchDamage = p.Shot.Damage * share;
+                    }
+
+                    p.TargetsLeft--;
+                    bool stop = p.TargetsLeft <= 0;
+                    ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
+                        r.WasArmored ? SurfaceKind.Armor : SurfaceKind.Flesh, speed, true, r.WasArmored, r.Killed, stop, p.TransactionId));
+
+                    if (stop)
+                    {
+                        travelled = at;
+                        end = point;
+                        stopped = true;
+                        break;
+                    }
+
+                    // A pierced shot is a weakened shot: piercing buys reach, not free damage.
+                    p.DamageScale *= p.PenetrationKeep;
+                }
+
+                if (branchesNow)
+                {
+                    p.BranchesResolved = true;
+                    ShotRequest branches = p.Shot;
+                    branches.Damage = branchDamage;
+                    int before = s_touched.Count;
+                    ResolveBranches(branches, branchPoint, ref result);
+                    for (int t = before; t < s_touched.Count; t++) p.AddTouched(s_touched[t]);
+                }
+
+                return stopped;
+            }
+            finally
+            {
+                DamageTransaction.End();
+            }
+        }
+
+        private static float FalloffShareOf(in ProjectileState p, float travelled)
+        {
+            if (p.FalloffEnd <= p.FalloffStart + 1e-4f)
+            {
+                return 1f;
+            }
+
+            float t = Mathf.InverseLerp(p.FalloffStart, p.FalloffEnd, travelled);
+            return Mathf.Lerp(1f, Mathf.Clamp01(p.FalloffMinShare), t);
+        }
+
         // ------------------------------------------------------------------ upgrade branches
 
         private static void ResolveBranches(in ShotRequest request, Vector3 originPoint, ref ShotResult result)

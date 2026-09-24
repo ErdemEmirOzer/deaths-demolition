@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Characters;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
@@ -102,6 +103,9 @@ namespace DD.Prototype.Weapons
         private bool _chamberFired;
         private bool _pickupDonePending;
         private float _pickupDoneAt = -1f;
+
+        // WP-069: the trigger is producing shots (FireStarted / FireStopped edges for S-08 / S-07).
+        private bool _firing;
 
         // AP-009C clip events resolved by NAME against the S-06 enum (None until WP-032C adds them).
         private static readonly CharacterAnimationEvent s_eject = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.Eject]);
@@ -220,6 +224,7 @@ namespace DD.Prototype.Weapons
 
         protected override void OnDisable()
         {
+            SetFiring(false);
             WeaponRegistry.Unregister(this);
             CharacterAnimationEvents.Any -= OnClipEvent;
 
@@ -380,6 +385,7 @@ namespace DD.Prototype.Weapons
 
             if (_special.IsActive)
             {
+                SetFiring(false);   // the classic weapon is parked
                 if (_special.Tick(dt))
                 {
                     HandleSpecialEnded();
@@ -411,6 +417,7 @@ namespace DD.Prototype.Weapons
             // reload could start (and its start cue play) while the world stood still.
             if (!CanFireNow())
             {
+                SetFiring(false);
                 _classic.ClampCooldown();
                 return;
             }
@@ -439,6 +446,7 @@ namespace DD.Prototype.Weapons
 
             if (!fireHeld)
             {
+                SetFiring(false);
                 _classic.ClampCooldown();
                 return;
             }
@@ -450,15 +458,34 @@ namespace DD.Prototype.Weapons
                 shots++;
             }
 
+            // Held but not able to shoot (empty, reloading) ends the burst of sound; a cooldown gap does not.
+            if (shots > 0) SetFiring(true);
+            else if (!_classic.HasAmmo || _classic.IsReloading) SetFiring(false);
+
             _classic.ClampCooldown();
+        }
+
+        /// <summary>WP-069: publish the fire start / stop edges once per change.</summary>
+        private void SetFiring(bool firing)
+        {
+            if (_firing == firing)
+            {
+                return;
+            }
+
+            _firing = firing;
+            if (firing) WeaponEvents.PublishFireStarted(_equippedId);
+            else WeaponEvents.PublishFireStopped(_equippedId);
         }
 
         private void FireClassicOnce()
         {
-            // WP-042: the damage ray leaves at a fixed height above the root (hit-region parity across
-            // weapon models / holds); the visual muzzle only feeds the tracer and the flash.
+            // WP-042: top-down, the shot leaves at a fixed height above the root (hit-region parity across
+            // weapon models / holds); the visual muzzle only feeds the flash. WP-069 (ADR-069-1 §7): in the
+            // look modes the projectile leaves the muzzle towards the camera's aim point (parallax corrected).
             Vector3 muzzle = Muzzle.position;
-            Vector3 origin = new Vector3(muzzle.x, transform.root.position.y + _shotRayHeight, muzzle.z);
+            bool lookMode = CameraModeService.Current != CameraMode.TopDown;
+            Vector3 origin = lookMode ? muzzle : new Vector3(muzzle.x, transform.root.position.y + _shotRayHeight, muzzle.z);
             Vector3 aim = ResolveAimDirection();
 
             // Steps 1 and 3: procedural recoil and mechanical movement. Two layers, on
@@ -477,7 +504,8 @@ namespace DD.Prototype.Weapons
             HitFeedbackDirector.Instance.ReportMuzzleFlash(
                 Muzzle, _muzzleFlashSize * powerScale, _muzzleFlashLight * powerScale);
 
-            // Step 4 and everything downstream, once per pellet.
+            // Step 4 and everything downstream, once per pellet — WP-069 ADR-069-1: as projectiles that
+            // fly at the weapon's speed and resolve their hits (and branches) where they land.
             int pellets = _classic.PelletCount;
             int presentationGroupId = FeelEventRouter.NextGroupId();
             for (int i = 0; i < pellets; i++)
@@ -486,7 +514,7 @@ namespace DD.Prototype.Weapons
                 request.HasTracerOrigin = true;
                 request.TracerOrigin = muzzle;
                 request.PresentationGroupId = presentationGroupId;
-                HitscanEngine.Fire(request);
+                ProjectileSystem.Spawn(request, _classic.Launch(i));
             }
 
             // Step 11: controlled camera response, scaled by weapon weight and clamped
@@ -654,6 +682,12 @@ namespace DD.Prototype.Weapons
 
         private bool CanFireNow()
         {
+            // WP-070 §5.1: fire / reload / Special are swallowed while the camera blends between modes.
+            if (CameraModeService.IsTransitioning)
+            {
+                return false;
+            }
+
             return _aimSource == null || _aimSource.CanFire;
         }
 
@@ -661,7 +695,8 @@ namespace DD.Prototype.Weapons
         {
             Vector3 direction = _aimSource != null ? _aimSource.AimDirection : transform.forward;
 
-            if (_flattenAim)
+            // WP-069: only the top-down mode is planar; third / first person aim in 3D (pitch).
+            if (_flattenAim && CameraModeService.Current == CameraMode.TopDown)
             {
                 direction.y = 0f;
             }
@@ -750,7 +785,9 @@ namespace DD.Prototype.Weapons
                 BuildDescription = _modifiers.DescribeBuild(),
                 CurrentSpreadDegrees = _classic.CurrentSpreadDegrees,   // WP-068 U12a honest reticle
                 PelletCount = _classic.PelletCount,
-                PelletRingDegrees = _classic.PelletRingDegrees
+                PelletRingDegrees = _classic.PelletRingDegrees,
+                ReserveAmmo = _classic.ReserveAmmo,
+                ReserveInfinite = _classic.ReserveInfinite
             };
 
             WeaponEvents.PublishClassic(state, notify);

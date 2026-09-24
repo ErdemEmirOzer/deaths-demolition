@@ -135,6 +135,12 @@ namespace DD.Prototype.Weapons
         /// <summary>WP-068 U12a: pellets per trigger pull (1 for single-shot weapons).</summary>
         public int PelletCount;
 
+        /// <summary>WP-069 (S-09 HUD "30 / 120"): rounds carried beyond the magazine; meaningless when <see cref="ReserveInfinite"/>.</summary>
+        public int ReserveAmmo;
+
+        /// <summary>WP-069: the weapon has no reserve limit (the M3 behaviour; HUD shows ∞).</summary>
+        public bool ReserveInfinite;
+
         /// <summary>
         /// WP-068 U12a: horizontal half-angle of the WP-042 pellet ring (PelletRingRadiusShare ×
         /// <see cref="CurrentSpreadDegrees"/>) — the reticle's second ring. 0 when the weapon fires a
@@ -241,6 +247,16 @@ namespace DD.Prototype.Weapons
 
         /// <summary>Any discrete change to the classic weapon snapshot.</summary>
         public static event Action<ClassicWeaponHudState> ClassicChanged;
+
+        /// <summary>WP-069 (S-08 looped fire, S-07 sustained-fire model): the trigger started producing shots.</summary>
+        public static event Action<ClassicWeaponId> FireStarted;
+
+        /// <summary>WP-069: the trigger stopped producing shots (released, empty, reload, Special, death).</summary>
+        public static event Action<ClassicWeaponId> FireStopped;
+
+        public static void PublishFireStarted(ClassicWeaponId id) => FireStarted?.Invoke(id);
+
+        public static void PublishFireStopped(ClassicWeaponId id) => FireStopped?.Invoke(id);
 
         /// <summary>WP-042: a casing / magazine / shell / chamber slot fired (see <see cref="WeaponMechanismEvent"/>). Read-only for effects and audio.</summary>
         public static event Action<WeaponMechanismEvent> Mechanism;
@@ -372,6 +388,8 @@ namespace DD.Prototype.Weapons
             ReloadInterrupted = null;
             DryFire = null;
             ClassicChanged = null;
+            FireStarted = null;
+            FireStopped = null;
 
             SpecialWeaponSpawned = null;
             SpecialWeaponGroundExpired = null;

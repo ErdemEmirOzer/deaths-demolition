@@ -137,6 +137,13 @@ namespace DD.Prototype.Weapons
                 if (aim.HasAimPoint)
                 {
                     Vector3 toPoint = aim.AimWorldPoint - MuzzlePosition;
+
+                    // WP-069 (ADR-069-1 §7, WP-070): third / first person aim at the camera's 3D aim point.
+                    if (DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.TopDown)
+                    {
+                        return toPoint.sqrMagnitude > 1e-6f ? toPoint : direction;
+                    }
+
                     toPoint.y = 0f;
 
                     // WP-002: the point must also lie AHEAD of the muzzle along the facing.

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DD.Prototype.Core.Weapons;
 using UnityEngine;
 
 namespace DD.Prototype.Core.Config
@@ -78,6 +79,13 @@ namespace DD.Prototype.Core.Config
 
         [PrototypeOnly(PendingDecisions.ProfileXp, "Profile level required to unlock. AR=1, SMG=2, Shotgun=3.")]
         public int UnlockProfileLevel = 1;
+
+        /// <summary>
+        /// WP-069 A4: the v3 definition these numbers were copied from (null for a code-default
+        /// entry). The runtime reads the v3-only data (ballistics, per-mode spread, fire mode …)
+        /// through it; the copy itself stays config-scoped so a cloned config keeps its own numbers.
+        /// </summary>
+        [NonSerialized] public WeaponDefinition Definition;
     }
 
     /// <summary>Which of the three Special Weapons a drop is.</summary>
@@ -409,7 +417,54 @@ namespace DD.Prototype.Core.Config
     [Serializable]
     public sealed class WeaponConfigSection
     {
-        public List<ClassicWeaponSettings> ClassicWeapons = new List<ClassicWeaponSettings>
+        // WP-069 A4 (B1): the classic numbers live in the WeaponDefinition v3 assets (Resources/Arsenal).
+        // This list is a per-config COPY built from them on first access (not serialized any more), so the
+        // M3 readers keep `Weapons.Find(id)` and a cloned config (EconomySimulator, profile tests) keeps its
+        // own clone-scoped numbers. Without a catalog (bare EditMode) the M3 code defaults below apply.
+        [NonSerialized] private List<ClassicWeaponSettings> _classicView;
+
+        public List<ClassicWeaponSettings> ClassicWeapons
+        {
+            get
+            {
+                if (_classicView == null)
+                {
+                    _classicView = BuildClassicView();
+                }
+
+                return _classicView;
+            }
+        }
+
+        /// <summary>Drop the copy so the next access rebuilds it from the definitions (tests, F1 reset).</summary>
+        public void RebuildClassicView()
+        {
+            _classicView = null;
+        }
+
+        private static List<ClassicWeaponSettings> BuildClassicView()
+        {
+            var view = new List<ClassicWeaponSettings>();
+            IReadOnlyList<WeaponDefinition> all = Arsenal.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                WeaponDefinition d = all[i];
+                if (d != null && d.enabled && d.slot == WeaponSlotKind.Classic)
+                {
+                    view.Add(d.CreateLegacySettings());
+                }
+            }
+
+            if (view.Count == 0)
+            {
+                view.AddRange(CodeDefaults());
+            }
+
+            return view;
+        }
+
+        /// <summary>The M3 A/B/C numbers (DEC-083 + WP-042 / Ö-4) — the fallback without a catalog and the B1 migration source.</summary>
+        public static List<ClassicWeaponSettings> CodeDefaults() => new List<ClassicWeaponSettings>
         {
             new ClassicWeaponSettings
             {
