@@ -65,6 +65,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Greater(muzzle.z, 0.5f, id + ": namlu +Z (ADR-042-1) — ölçülen " + muzzle.ToString("F3"));
             Assert.Less(Mathf.Abs(muzzle.x), 0.05f, id + ": namlu eksende");
             Assert.That(muzzle.y, Is.InRange(0f, 0.2f), id + ": namlu kabzanın biraz üstünde (+Y yukarı)");
+            Vector3 port = Quaternion.Euler(e.modelFrameEuler) * root.InverseTransformPoint(WeaponSocketContract.Find(root, WeaponSocketContract.Ejection).position);
+            Assert.Greater(port.x, 0f, id + ": atım portu +X'te (atıcının sağı; aynalı dışa aktarım değil) — ölçülen " + port.ToString("F3"));
 
             int[] budget = { 26000, 6000, 1800 };
             for (int lod = 0; lod < SpecialWeaponVisualLibrary.LodCount; lod++)

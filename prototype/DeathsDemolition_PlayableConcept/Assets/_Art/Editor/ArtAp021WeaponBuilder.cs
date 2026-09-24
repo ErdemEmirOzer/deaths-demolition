@@ -36,8 +36,12 @@ namespace DD.Art.Pipeline.EditorTools
         public const string Root = "Assets/_Prototype/Weapons/Arsenal/Models";
         public const string ShaderName = "Universal Render Pipeline/Lit";
 
-        /// <summary>Interim frame fix for the AP-021 v002 exports (see <see cref="SpecialWeaponVisualLibrary.Entry.modelFrameEuler"/>).</summary>
-        public static readonly Vector3 FrameFixEuler = new Vector3(90f, 0f, 0f);
+        /// <summary>
+        /// Frame fix for the AP-021 exports (see <see cref="SpecialWeaponVisualLibrary.Entry.modelFrameEuler"/>). Zero since P-07's
+        /// v002-uf (25.09): the exporter bakes the Unity frame (root = grip, +Z barrel, +Y up, +X port) — the first v002
+        /// landed barrel-up and mirrored.
+        /// </summary>
+        public static readonly Vector3 FrameFixEuler = Vector3.zero;
 
         public static readonly (SpecialWeaponId id, string key)[] Specials =
         {
@@ -91,8 +95,6 @@ namespace DD.Art.Pipeline.EditorTools
             GameObject model = ModelFor(e.id);
             e.model = model;
             e.modelPackage = model != null ? Package : "";
-            // P-07 v002 FBX: the no-bake importer lands the barrel on +Y (Muzzle (0, 0.676, -0.078)); +90° X puts it on +Z.
-            // Handedness is NOT fixed here: the port / lever side lands on -X (mirror of the manifest numbers) — P-07 re-export.
             e.modelFrameEuler = model != null ? FrameFixEuler : Vector3.zero;
             e.modelTriangles = new int[SpecialWeaponVisualLibrary.LodCount];
             if (model == null) return;

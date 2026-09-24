@@ -2,14 +2,14 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "sw_arc",
- "version": "v002",
+ "version": "v002-uf",
  "ad_verdict": "02-concept/AP021-AD-slice1-verdict.md: KABUL_DUZELTMELERLE, MUST-1..5 applied in v002 (butt 11.6 cm + 8 mm plate, glass dome 24 seg, washi + two seals, part_trigger, axial arc mask)",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_sw_arc.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_arc/AP021_sw_arc.fbx",
-   "bytes": 1361548,
-   "sha256": "5a3f78a54c24fd5d514a22ed7106ceed815893685e657b6742c4d1772c39d2b5"
+   "bytes": 1360316,
+   "sha256": "6cfc84804652e482d8201687e7315b8a83a0d8d473dd4db9f2d9e3f5ce9adf9b"
   },
   {
    "source": "asset-production/AP-021/exports/textures/T_AP021_sw_arc_BaseColor.png",
@@ -42,5 +42,6 @@
    "sha256": "09b2ed73680002d48506208b4349d9093308d0c8bff954bdf1c31db7ac1615ea"
   }
  ],
- "blend_source_kept_in_ap_package": true
+ "blend_source_kept_in_ap_package": true,
+ "frame": "Unity frame at export (P-07 25.09): root = grip, +Z barrel, +Y up, +X port; no importer frame fix"
 }

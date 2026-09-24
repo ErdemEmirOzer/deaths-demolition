@@ -43,8 +43,8 @@ namespace DD.Prototype.Weapons
 
             /// <summary>
             /// Rotation (Euler, degrees) that puts the imported content into the ADR-042-1 frame, applied by
-            /// <see cref="InstantiateModel"/>. AP-021 v002 lands barrel-up (+Y) under the no-bake importer → (90, 0, 0)
-            /// until P-07's export carries the frame itself (then zero).
+            /// <see cref="InstantiateModel"/>. Zero for AP-021 v002-uf (the export carries the frame); kept for a package
+            /// that lands in another frame.
             /// </summary>
             public Vector3 modelFrameEuler;
             public int[] modelTriangles = new int[LodCount];

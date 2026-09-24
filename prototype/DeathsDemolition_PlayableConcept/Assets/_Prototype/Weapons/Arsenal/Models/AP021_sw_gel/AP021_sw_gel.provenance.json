@@ -2,14 +2,14 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "sw_gel",
- "version": "v002",
+ "version": "v002-uf",
  "ad_verdict": "02-concept/AP021-AD-slice1-verdict.md: KABUL_DUZELTMELERLE, MUST-1..4 applied in v002",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_sw_gel.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_gel/AP021_sw_gel.fbx",
-   "bytes": 1335868,
-   "sha256": "a35502d75db189458f5a231766b27195307a92809a063a9da5266a5dc6e1376b"
+   "bytes": 1337980,
+   "sha256": "df489d261e61c57c5f048025193d1a1e3655435aab0aaf7ea418d640826ae2d3"
   },
   {
    "source": "asset-production/AP-021/exports/textures/T_AP021_sw_gel_BaseColor.png",
@@ -36,5 +36,6 @@
    "sha256": "8ef86f7aaf3ca378d5bacc5107f33109a2fe3e4b86dc1cc2989d83efb6b44905"
   }
  ],
- "blend_source_kept_in_ap_package": true
+ "blend_source_kept_in_ap_package": true,
+ "frame": "Unity frame at export (P-07 25.09): root = grip, +Z barrel, +Y up, +X port; no importer frame fix"
 }
