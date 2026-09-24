@@ -58,6 +58,9 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            // A capture changes settings and records loads for its frames: all of it goes to a
+            // process-local folder, never the player's ui-settings.json (user-data rule).
+            UiDataPaths.UseProcessLocalRoot();
             var carrier = new GameObject("UiCaptureAgent");
             UnityEngine.Object.DontDestroyOnLoad(carrier);
             if (screen.ToLowerInvariant() == "hud")
@@ -563,7 +566,7 @@ namespace DD.Prototype.UI
                 UiCurtain curtain = UiCurtain.Instance;
 
                 // CURTAIN depth: Selection measured fast → doors only, caught while shut.
-                UiSettings.RecordLoad(PrototypeScenes.Selection, 0.2f);
+                UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 0.2f);
                 PrototypeUiFlow.GoToSelection();
                 yield return WaitFor(() => UiCurtain.IsCovering && !curtain.GroupVisible, 5f);
                 yield return new WaitForSecondsRealtime(0.15f);
@@ -573,7 +576,7 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.5f);
 
                 // SCREEN depth into the run: mid plate, weapon sub-line, tip; then ENTERING.
-                UiSettings.RecordLoad(PrototypeScenes.Run, 5f);
+                UiLoadTiming.RecordLoad(PrototypeScenes.Run, 5f);
                 PrototypeUiFlow.StartRun();
                 yield return WaitFor(() => curtain.GroupVisible && curtain.EyebrowText == "LOADING", 10f);
                 yield return new WaitForSecondsRealtime(0.4f);
@@ -585,7 +588,7 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(1f);
 
                 // Pause abort back to the menu: SCREEN, far plate, MAIN MENU, no tip.
-                UiSettings.RecordLoad(PrototypeScenes.MainMenu, 5f);
+                UiLoadTiming.RecordLoad(PrototypeScenes.MainMenu, 5f);
                 PrototypeUiFlow.AbortRunToMainMenu();
                 yield return WaitFor(() => curtain.GroupVisible && curtain.EyebrowText == "LOADING", 10f);
                 yield return new WaitForSecondsRealtime(0.4f);

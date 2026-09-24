@@ -250,7 +250,7 @@ namespace DD.Prototype.UI
             string subline = intoRun ? ProfileService.WeaponDisplayName(SelectedWeapon).ToUpperInvariant() : string.Empty;
             string tip = null;
             bool fast = FastTransitions;
-            float lastLoad = UiSettings.LastLoadSeconds(sceneName);
+            float lastLoad = UiLoadTiming.LastLoadSeconds(sceneName);
             bool screen = !fast && (lastLoad < 0f || lastLoad >= CurtainThresholdSeconds);
 
             float t0 = Time.unscaledTime;
@@ -380,8 +380,8 @@ namespace DD.Prototype.UI
             if (!fast)
             {
                 // Only real loads are measured: FastTransitions (batch, tests) skips the curtain's
-                // timings, and a batch run must not write the user's ui-settings.json.
-                UiSettings.RecordLoad(sceneName, Time.unscaledTime - loadStart);
+                // timings, and a batch run writes no load-timing.json.
+                UiLoadTiming.RecordLoad(sceneName, Time.unscaledTime - loadStart);
             }
 
             // The new scene renders once behind the closed doors.

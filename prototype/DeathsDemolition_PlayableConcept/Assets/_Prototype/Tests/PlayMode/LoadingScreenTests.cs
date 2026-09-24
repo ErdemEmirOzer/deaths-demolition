@@ -19,12 +19,13 @@ namespace DD.Prototype.Tests.PlayMode
     /// activation, the loading group stays ≥ 1.2 s, the frozen world is released only at
     /// activation, a scene measured as fast gets the CURTAIN depth (no group), a second
     /// Load() while one is in flight is ignored, and the measured time is written back to
-    /// ui-settings.json (a temp copy here).
+    /// load-timing.json (a temp copy here) - never to ui-settings.json.
     /// </summary>
     [Category("WP068")]
     public sealed class LoadingScreenTests
     {
         private string _settingsPath;
+        private string _timingPath;
         private bool _fast;
 
         [SetUp]
@@ -33,6 +34,8 @@ namespace DD.Prototype.Tests.PlayMode
             _fast = PrototypeUiFlow.FastTransitions;
             _settingsPath = Path.Combine(Path.GetTempPath(), "dd-wp068-loading-" + System.Guid.NewGuid().ToString("N") + ".json");
             UiSettings.SetPathOverride(_settingsPath);
+            _timingPath = Path.Combine(Path.GetTempPath(), "dd-wp068-load-timing-" + System.Guid.NewGuid().ToString("N") + ".json");
+            UiLoadTiming.SetPathOverride(_timingPath);
         }
 
         [TearDown]
@@ -41,9 +44,13 @@ namespace DD.Prototype.Tests.PlayMode
             PrototypeUiFlow.FastTransitions = _fast;
             RunFlowClock.ClearHolds();
             UiSettings.SetPathOverride(null);
-            if (File.Exists(_settingsPath))
+            UiLoadTiming.SetPathOverride(null);
+            foreach (string path in new[] { _settingsPath, _timingPath })
             {
-                File.Delete(_settingsPath);
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
             }
         }
 
@@ -54,7 +61,7 @@ namespace DD.Prototype.Tests.PlayMode
             PrototypeUiFlow.FastTransitions = true;
             yield return BootTanMainMenuye();
             PrototypeUiFlow.FastTransitions = false;
-            UiSettings.RecordLoad(PrototypeScenes.Selection, 5f); // measured as slow → SCREEN depth
+            UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 5f); // measured as slow → SCREEN depth
             RunFlowClock.AddHold("wp068-loading-test");
 
             PrototypeUiFlow.GoToSelection();
@@ -104,8 +111,10 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.GreaterOrEqual(enteringAt - groupFrom, PrototypeUiFlow.MinimumDisplaySeconds - 0.05f, "grup asgari gösterim süresi");
             Assert.IsTrue(heldWhileGroup, "dünya yükleme boyunca donuk kaldı (ReleaseSimulation aktivasyonda)");
             Assert.AreEqual(0, RunFlowClock.HoldCount, "aktivasyonda dünya çözüldü");
-            Assert.Greater(UiSettings.LastLoadSeconds(PrototypeScenes.Selection), 0f, "ölçülen süre geri yazıldı");
-            Assert.Less(UiSettings.LastLoadSeconds(PrototypeScenes.Selection), 5f, "ölçüm eski değerin yerine geçti");
+            Assert.Greater(UiLoadTiming.LastLoadSeconds(PrototypeScenes.Selection), 0f, "ölçülen süre geri yazıldı");
+            Assert.Less(UiLoadTiming.LastLoadSeconds(PrototypeScenes.Selection), 5f, "ölçüm eski değerin yerine geçti");
+            Assert.IsTrue(File.Exists(_timingPath), "ölçüm load-timing.json'a yazıldı");
+            Assert.IsFalse(File.Exists(_settingsPath), "yükleme ui-settings.json yazmaz (yalnız oyuncu ayar değiştirince)");
             Assert.IsTrue(sawTip, "10b: MainMenu → Selection ekranında ipucu şeridi");
             Assert.IsTrue(sawPlate, "10b: SCREEN derinliği Look B plakası üstünde");
         }
@@ -121,7 +130,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiMotion.ReducedMotion = true;
             try
             {
-                UiSettings.RecordLoad(PrototypeScenes.Selection, 5f); // SCREEN by the table
+                UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 5f); // SCREEN by the table
                 float t0 = Time.realtimeSinceStartup;
                 PrototypeUiFlow.GoToSelection();
                 UiCurtain curtain = UiCurtain.Instance;
@@ -152,7 +161,7 @@ namespace DD.Prototype.Tests.PlayMode
             PrototypeUiFlow.FastTransitions = true;
             yield return BootTanMainMenuye();
             PrototypeUiFlow.FastTransitions = false;
-            UiSettings.RecordLoad(PrototypeScenes.Selection, 0.2f); // measured as fast → CURTAIN depth
+            UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 0.2f); // measured as fast → CURTAIN depth
 
             float t0 = Time.realtimeSinceStartup;
             PrototypeUiFlow.GoToSelection();
@@ -227,8 +236,8 @@ namespace DD.Prototype.Tests.PlayMode
             PrototypeUiFlow.FastTransitions = true;
             yield return BootTanMainMenuye();
             PrototypeUiFlow.FastTransitions = false; // a real reveal is under way when the next request lands
-            UiSettings.RecordLoad(PrototypeScenes.Selection, 0.2f);
-            UiSettings.RecordLoad(PrototypeScenes.MainMenu, 0.2f);
+            UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 0.2f);
+            UiLoadTiming.RecordLoad(PrototypeScenes.MainMenu, 0.2f);
             bool cursor = Cursor.visible;
 
             PrototypeUiFlow.GoToSelection();
@@ -241,6 +250,38 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
             yield return Bekle(() => !UiCurtain.IsCovering, 10f, "perde açılmadı");
             Assert.AreEqual(cursor, Cursor.visible, "imleç ilk kapanıştaki durumuna döndü");
+        }
+
+        /// <summary>
+        /// User-data rule: a run through the real flow leaves the player's own UI files
+        /// exactly as it found them. The run measures a real load, picks a tip and changes a
+        /// setting, and all of it lands in the process-local folder (TestUiDataIsolation).
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Kosu_GercekKullaniciDosyalarinaDokunmaz()
+        {
+            string before = TestUiDataIsolation.RealFiles();
+            UiSettings.SetPathOverride(null); // the run's own paths: the process-local root
+            UiLoadTiming.SetPathOverride(null);
+            StringAssert.StartsWith(UiDataPaths.ProcessLocalRoot, UiSettings.FilePath);
+            StringAssert.StartsWith(UiDataPaths.ProcessLocalRoot, UiLoadTiming.FilePath);
+            StringAssert.StartsWith(UiDataPaths.ProcessLocalRoot, UiHintState.FilePath);
+
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.FastTransitions = false;
+            UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 5f); // SCREEN depth: the group and a tip
+            bool hints = UiSettings.Hints;
+            UiSettings.Hints = !hints; // a setting the player could change
+            UiSettings.Hints = hints;
+
+            PrototypeUiFlow.GoToSelection();
+            yield return Bekle(() => !PrototypeUiFlow.IsLoading && !UiCurtain.IsCovering, 60f, "yükleme bitmedi");
+            Assert.Less(UiLoadTiming.LastLoadSeconds(PrototypeScenes.Selection), 5f, "gerçek yükleme ölçüldü");
+            Assert.IsTrue(File.Exists(UiSettings.FilePath), "ayar süreç-yerel dosyaya yazıldı");
+            Assert.IsTrue(File.Exists(UiLoadTiming.FilePath), "ölçüm süreç-yerel dosyaya yazıldı");
+            Assert.AreEqual(before, TestUiDataIsolation.RealFiles(), "oyuncunun gerçek UI dosyaları değişti");
         }
     }
 }

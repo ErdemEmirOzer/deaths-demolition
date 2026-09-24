@@ -39,15 +39,8 @@ namespace DD.Prototype.UI
         public int WindowWidth;
         public int WindowHeight;
 
-        /// <summary>WP-068 slice 10 (direction §15.1): last measured load per scene (seconds) - SCREEN vs CURTAIN threshold. Parallel arrays (JsonUtility has no dictionaries).</summary>
-        public string[] LoadScenes = new string[0];
-        public float[] LoadSeconds = new float[0];
-
         /// <summary>WP-068 slice 10b (U9): brief hints during the first three runs (in play and on loading screens). Off leaves the rules.</summary>
         public bool Hints = true;
-
-        /// <summary>HINT tips already shown on this machine's profile (one bit per HINT, UiLoadingTips.HintBit).</summary>
-        public int HintsSeen;
 
         public UiSettingsData Clamp()
         {
@@ -67,11 +60,13 @@ namespace DD.Prototype.UI
     /// <summary>
     /// Player-facing settings the Settings pane edits (WP-022 / WP-022B): UI scale,
     /// master volume, graphics quality, reduced motion. Persisted in
-    /// <c>Application.persistentDataPath/ui-settings.json</c> - the WP-024
+    /// <c>ui-settings.json</c> under <see cref="UiDataPaths.Root"/> - the WP-024
     /// <c>InputPreferencesStore</c> pattern - NEVER in PlayerPrefs (a PlayerPrefs write
     /// lands in the Player's plist and broke every other session's user-data restore
     /// check) and never in the profile file (settings are device preferences, not
-    /// progress; WP-009 transaction boundary).
+    /// progress; WP-009 transaction boundary). The file is written only when the player
+    /// changes a setting: what the game measures or remembers on its own (load times,
+    /// HINTs shown) lives in <see cref="UiLoadTiming"/> and <see cref="UiHintState"/>.
     ///
     /// Values are applied immediately and announced through events so the audio owner
     /// (S-08: <see cref="PrototypeAudio.MasterVolume"/> is set here, the mixer's
@@ -100,10 +95,10 @@ namespace DD.Prototype.UI
 
         public static string FilePath
         {
-            get { return s_pathOverride ?? Path.Combine(Application.persistentDataPath, FileName); }
+            get { return s_pathOverride ?? Path.Combine(UiDataPaths.Root, FileName); }
         }
 
-        /// <summary>Test seam: redirect the file and forget the loaded state.</summary>
+        /// <summary>Test seam: redirect the file and forget the loaded state (null = the UiDataPaths root).</summary>
         public static void SetPathOverride(string path)
         {
             s_pathOverride = path;
@@ -155,7 +150,6 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>WP-068 U8: the UI SOUNDS slider (Interface bus), persisted with the device preferences.</summary>
         /// <summary>WP-068 slice 10b (U9): the HINTS setting (Settings pane).</summary>
         public static bool Hints
         {
@@ -177,27 +171,7 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>The once-per-profile HINT mask (UiLoadingTips).</summary>
-        public static int HintsSeen
-        {
-            get
-            {
-                EnsureLoaded();
-                return s_data.HintsSeen;
-            }
-            set
-            {
-                EnsureLoaded();
-                if (value == s_data.HintsSeen)
-                {
-                    return;
-                }
-
-                s_data.HintsSeen = value;
-                Persist();
-            }
-        }
-
+        /// <summary>WP-068 U8: the UI SOUNDS slider (Interface bus), persisted with the device preferences.</summary>
         public static float UiVolume
         {
             get
@@ -370,19 +344,9 @@ namespace DD.Prototype.UI
             }
 
             s_loaded = true;
-            UiSettingsData loaded = null;
-            try
-            {
-                string path = FilePath;
-                if (File.Exists(path))
-                {
-                    loaded = JsonUtility.FromJson<UiSettingsData>(File.ReadAllText(path));
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning("[UI] " + FileName + " could not be read; using defaults. " + e.Message);
-            }
+            // Keys older files carry (LoadScenes / LoadSeconds / HintsSeen) are not fields any
+            // more: JsonUtility skips them, and they drop out the next time the player saves.
+            UiSettingsData loaded = UiDataPaths.Read<UiSettingsData>(FilePath, FileName);
 
             float defaultScale = UiTheme.Active != null ? UiTheme.Active.DefaultUiScale : 1f;
             s_data.UiScale = loaded != null ? loaded.UiScale : defaultScale;
@@ -391,14 +355,13 @@ namespace DD.Prototype.UI
             s_data.ReducedMotion = loaded != null && loaded.ReducedMotion;
             UiMotion.ReducedMotion = s_data.ReducedMotion;
             s_data.Telemetry = loaded == null || loaded.Telemetry;
+            s_data.Hints = loaded == null || loaded.Hints;
             s_data.ColorPalette = loaded != null ? loaded.ColorPalette : 0;
             s_data.TextScale = loaded != null && loaded.TextScale > 0f ? loaded.TextScale : 1f;
             s_data.ReduceFlashes = loaded != null && loaded.ReduceFlashes;
             s_data.DisplayMode = loaded != null ? loaded.DisplayMode : -1;
             s_data.WindowWidth = loaded != null ? loaded.WindowWidth : 0;
             s_data.WindowHeight = loaded != null ? loaded.WindowHeight : 0;
-            s_data.LoadScenes = loaded != null && loaded.LoadScenes != null ? loaded.LoadScenes : new string[0];
-            s_data.LoadSeconds = loaded != null && loaded.LoadSeconds != null && loaded.LoadSeconds.Length == s_data.LoadScenes.Length ? loaded.LoadSeconds : new float[s_data.LoadScenes.Length];
             int count = Mathf.Max(1, QualitySettings.names.Length);
             int quality = loaded != null && loaded.Quality >= 0 ? loaded.Quality : QualitySettings.GetQualityLevel();
             s_data.Quality = Mathf.Clamp(quality, 0, count - 1);
@@ -410,50 +373,6 @@ namespace DD.Prototype.UI
             UiTokens.TextScale = s_data.TextScale;
             ApplyFlashes();
             ApplyStoredDisplayMode();
-        }
-
-        // ---- WP-068 slice 10: measured load times
-
-        /// <summary>The last measured load of <paramref name="scene"/> in seconds, or -1 when it has never been measured.</summary>
-        public static float LastLoadSeconds(string scene)
-        {
-            EnsureLoaded();
-            for (int i = 0; i < s_data.LoadScenes.Length; i++)
-            {
-                if (s_data.LoadScenes[i] == scene)
-                {
-                    return s_data.LoadSeconds[i];
-                }
-            }
-
-            return -1f;
-        }
-
-        /// <summary>Writes back a completed load's duration (direction §15.1: the threshold table lives in ui-settings.json, never the profile).</summary>
-        public static void RecordLoad(string scene, float seconds)
-        {
-            EnsureLoaded();
-            if (string.IsNullOrEmpty(scene))
-            {
-                return;
-            }
-
-            for (int i = 0; i < s_data.LoadScenes.Length; i++)
-            {
-                if (s_data.LoadScenes[i] == scene)
-                {
-                    s_data.LoadSeconds[i] = seconds;
-                    Persist();
-                    return;
-                }
-            }
-
-            int n = s_data.LoadScenes.Length;
-            System.Array.Resize(ref s_data.LoadScenes, n + 1);
-            System.Array.Resize(ref s_data.LoadSeconds, n + 1);
-            s_data.LoadScenes[n] = scene;
-            s_data.LoadSeconds[n] = seconds;
-            Persist();
         }
 
         // ---- WP-022M display mode
@@ -563,22 +482,7 @@ namespace DD.Prototype.UI
 
         private static void Persist()
         {
-            try
-            {
-                string path = FilePath;
-                string dir = Path.GetDirectoryName(path);
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    Directory.CreateDirectory(dir);
-                }
-
-                File.WriteAllText(path, JsonUtility.ToJson(s_data, true));
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning("[UI] " + FileName + " could not be written: " + e.Message);
-            }
-
+            UiDataPaths.Write(FilePath, FileName, s_data);
             UiEvents.Raise(UiEvent.SettingsChanged);
             try
             {

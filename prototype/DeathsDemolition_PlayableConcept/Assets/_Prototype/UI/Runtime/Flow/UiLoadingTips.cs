@@ -27,7 +27,7 @@ namespace DD.Prototype.UI
         public readonly UiTipClass Class;
         public readonly string Text;
 
-        /// <summary>Bit in the once-per-profile HINT mask (−1 for FACT).</summary>
+        /// <summary>Bit in the once-per-machine HINT mask (−1 for FACT).</summary>
         public readonly int HintBit;
 
         public UiTip(string key, UiTipGroup group, UiTipClass cls, string text, int hintBit = -1)
@@ -43,7 +43,7 @@ namespace DD.Prototype.UI
     /// <summary>
     /// WP-068 slice 10b · the U9 loading tip set and its selection rules (direction §15.4,
     /// UXW §1.1). While hints are on (fewer than three runs played and Settings HINTS = ON)
-    /// an unseen HINT comes first, each HINT once per profile (a 9-bit mask in ui-settings);
+    /// an unseen HINT comes first, each HINT once per machine (a 9-bit mask in ui-hints.json);
     /// then FACT. Hints off: FACT only. Round-robin across the five groups, no repeat within
     /// a session, the first loading screen of a session never shows a survival tip. A tip is
     /// picked once per loading screen and never swapped mid-load. Boot, Results and the
@@ -161,11 +161,11 @@ namespace DD.Prototype.UI
         {
             int runs = DD.Prototype.Profile.ProfileService.Current != null ? DD.Prototype.Profile.ProfileService.Current.RunsPlayed : 0;
             bool hintsOn = UiSettings.Hints && runs < HintRuns;
-            int mask = UiSettings.HintsSeen;
+            int mask = UiHintState.Seen;
             int index = Pick(hintsOn, ref mask);
-            if (mask != UiSettings.HintsSeen)
+            if (mask != UiHintState.Seen)
             {
-                UiSettings.HintsSeen = mask;
+                UiHintState.Seen = mask;
             }
 
             return index >= 0 ? All[index].Text : null;
