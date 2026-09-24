@@ -403,13 +403,32 @@ namespace DD.Prototype.Tests.EditMode
                 }
             }
 
+            // AD 8a SHOULD-7: the health panel sits inside the damage-edge band - its text over HudInk over the edge peak.
+            foreach (var w in world)
+            {
+                Color edge = UiTokens.Get(UiColor.DamageEdge);
+                edge.a = UiTokens.DamageEdgePeakAlpha * 0.49f;
+                Color panel = UiContrast.Composite(UiTokens.Get(UiColor.HudInk), UiContrast.Composite(edge, w.Colour));
+                foreach (UiColor token in new[] { UiColor.StateDanger, UiColor.TextPrimary })
+                {
+                    float ratio = UiContrast.Ratio(UiContrast.Composite(UiTokens.Get(token), panel), panel);
+                    report.AppendLine(token + " on HudInk over the damage edge over " + w.Name + ": " + ratio.ToString("0.00") + ":1 (floor 4.5)");
+                    if (ratio < 4.5f)
+                    {
+                        failures++;
+                    }
+                }
+            }
+
             // WP-068 E12: the gold numeral over its kinpaku underlay (StateGold α GoldLeafAlpha on the panel).
             foreach (var w in world)
             {
                 Color panel = UiContrast.Composite(UiTokens.Get(UiColor.HudInk), w.Colour);
                 Color leaf = UiTokens.Get(UiColor.StateGold);
                 leaf.a = RunHudScreen.GoldLeafAlpha;
-                Color under = UiContrast.Composite(leaf, panel);
+                Color glint = UiTokens.Get(UiColor.StateGold);
+                glint.a = RunHudScreen.GoldGlintAlpha;
+                Color under = UiContrast.Composite(glint, UiContrast.Composite(leaf, panel)); // the worst frame: flakes + the sweep
                 float ratio = UiContrast.Ratio(UiContrast.Composite(UiTokens.Get(UiColor.StateGold), under), under);
                 report.AppendLine("StateGold on the gold leaf over " + w.Name + ": " + ratio.ToString("0.00") + ":1 (floor 4.5)");
                 if (ratio < 4.5f)

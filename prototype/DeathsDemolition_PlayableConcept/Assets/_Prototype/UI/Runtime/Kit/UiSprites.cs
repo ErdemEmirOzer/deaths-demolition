@@ -120,6 +120,12 @@ namespace DD.Prototype.UI
             get { return GetOrCreate("ensoBrush", () => CreateEnsoBrush(512, 14f / 240f)); }
         }
 
+        /// <summary>WP-068 slice 8 (E11, AD 8a SHOULD-1): a hairline annulus - 3 px at Ø 100 - for the reload ring around the weapon glyph.</summary>
+        public static Sprite RingHairline
+        {
+            get { return GetOrCreate("ringHairline", () => CreateRing(256, 0.03f)); }
+        }
+
         /// <summary>Thin annulus, for the secondary timer track.</summary>
         public static Sprite RingThin
         {

@@ -61,15 +61,41 @@ namespace DD.Prototype.UI
             return 0.2126f * Linear(c.r) + 0.7152f * Linear(c.g) + 0.0722f * Linear(c.b);
         }
 
-        /// <summary>Source-over composite in sRGB space, which is what the GPU does for UI.</summary>
+        /// <summary>
+        /// Source-over composite the way the GPU blends UI in this project: in LINEAR light when the project is in the
+        /// Linear colour space (sRGB framebuffer, the blend happens after decode), in sRGB space otherwise. WP-068 slice
+        /// 8a: the sRGB-space version made every translucent pair (panel ink, scrims, dimmed text) read better than it
+        /// renders - the gold leaf at 0.065 measured (67, 52, 30) on screen against a predicted (48, 38, 30).
+        /// </summary>
         public static Color Composite(Color foreground, Color background)
         {
             float a = Mathf.Clamp01(foreground.a);
+            if (BlendsInLinear)
+            {
+                return new Color(
+                    Encode(Linear(foreground.r) * a + Linear(background.r) * (1f - a)),
+                    Encode(Linear(foreground.g) * a + Linear(background.g) * (1f - a)),
+                    Encode(Linear(foreground.b) * a + Linear(background.b) * (1f - a)),
+                    1f);
+            }
+
             return new Color(
                 foreground.r * a + background.r * (1f - a),
                 foreground.g * a + background.g * (1f - a),
                 foreground.b * a + background.b * (1f - a),
                 1f);
+        }
+
+        /// <summary>True when UI blending happens in linear light (the project's Linear colour space).</summary>
+        public static bool BlendsInLinear
+        {
+            get { return QualitySettings.activeColorSpace == ColorSpace.Linear; }
+        }
+
+        /// <summary>Linear light to an sRGB channel.</summary>
+        private static float Encode(float linear)
+        {
+            return linear <= 0.0031308f ? linear * 12.92f : 1.055f * Mathf.Pow(linear, 1f / 2.4f) - 0.055f;
         }
 
         /// <summary>Contrast ratio between two opaque colours. Always &gt;= 1.</summary>

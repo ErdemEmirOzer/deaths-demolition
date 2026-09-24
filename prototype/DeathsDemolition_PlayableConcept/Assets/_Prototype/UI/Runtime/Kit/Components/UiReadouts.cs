@@ -208,12 +208,13 @@ namespace DD.Prototype.UI
             get { return _fill != null ? _fill.fillAmount : 0f; }
         }
 
-        public static UiRing Create(string name, Transform parent, float size, UiColor colour, float ghostAlpha = 0.12f)
+        public static UiRing Create(string name, Transform parent, float size, UiColor colour, float ghostAlpha = 0.12f, Sprite ringSprite = null)
         {
             RectTransform root = UiFactory.NewRect(name, parent);
             root.sizeDelta = new Vector2(size, size);
-            // WP-068 A4: the authored progress rings (reload 64 stroke 5, Special 132 stroke 8) when the atlas has them.
-            Sprite art = UiArt.Kit(size <= 96f ? "Ring.Progress64" : "Ring.Progress132");
+            // WP-068 A4: the authored progress rings (reload 64 stroke 5, Special 132 stroke 8) when the atlas has them;
+            // a caller that needs another stroke (the HUD's Ø 100 hairline, AD 8a SHOULD-1) passes its own ring.
+            Sprite art = ringSprite != null ? ringSprite : UiArt.Kit(size <= 96f ? "Ring.Progress64" : "Ring.Progress132");
             Image ghost = UiFactory.NewImage("Ghost", root, UiColor.TextPrimary, art != null ? art : UiSprites.RingThin);
             UiFactory.Fill((RectTransform)ghost.transform);
             Color g = ghost.color;

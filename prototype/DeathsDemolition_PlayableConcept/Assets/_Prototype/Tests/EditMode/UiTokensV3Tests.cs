@@ -43,7 +43,7 @@ namespace DD.Prototype.Tests.EditMode
         private static readonly object[][] Table =
         {
             new object[] { UiColor.Transparent, "#000000", 0f, null },
-            new object[] { UiColor.ScrimOverlay, "#12100F", 0.86f, null },
+            new object[] { UiColor.ScrimOverlay, "#12100F", 0.88f, null },
             new object[] { UiColor.SurfaceBase, "#1A1816", 1f, null },
             new object[] { UiColor.SurfacePanel, "#232120", 1f, null },
             new object[] { UiColor.SurfaceRaised, "#34322F", 1f, null },
@@ -79,7 +79,7 @@ namespace DD.Prototype.Tests.EditMode
             new object[] { UiColor.InkStroke, "#12100F", 0.90f, null },
             new object[] { UiColor.GoldLeaf, "#D9A93C", 1f, null },
             new object[] { UiColor.SilverLeaf, "#F3EEE3", 1f, null },
-            new object[] { UiColor.HoldFill, "#F3EEE3", 0.25f, null },
+            new object[] { UiColor.HoldFill, "#F3EEE3", 0.15f, null },
             new object[] { UiColor.LanternGlow, "#F7C766", 1f, null }
         };
 

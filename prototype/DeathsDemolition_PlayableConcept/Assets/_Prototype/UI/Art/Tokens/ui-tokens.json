@@ -3,12 +3,12 @@
   "color": {
     "default": {
       "Transparent": { "$type": "color", "$value": "#00000000" },
-      "ScrimOverlay": { "$type": "color", "$value": "#12100FDB" },
+      "ScrimOverlay": { "$type": "color", "$value": "#12100FE0" },
       "SurfaceBase": { "$type": "color", "$value": "#1A1816" },
       "SurfacePanel": { "$type": "color", "$value": "#232120" },
       "SurfaceRaised": { "$type": "color", "$value": "#34322F" },
       "SurfaceInset": { "$type": "color", "$value": "#12100F" },
-      "HudInk": { "$type": "color", "$value": "#12100FDB" },
+      "HudInk": { "$type": "color", "$value": "#12100FFA" },
       "BorderHairline": { "$type": "color", "$value": "#4A4744D9" },
       "BorderStrong": { "$type": "color", "$value": "#F3EEE373" },
       "BorderFocus": { "$type": "color", "$value": "#F2D98C" },
@@ -39,17 +39,17 @@
       "InkStroke": { "$type": "color", "$value": "#12100FE6" },
       "GoldLeaf": { "$type": "color", "$value": "#D9A93C" },
       "SilverLeaf": { "$type": "color", "$value": "#F3EEE3" },
-      "HoldFill": { "$type": "color", "$value": "#F3EEE340" },
+      "HoldFill": { "$type": "color", "$value": "#F3EEE326" },
       "LanternGlow": { "$type": "color", "$value": "#F7C766" }
     },
     "colorBlindSafe": {
       "Transparent": { "$type": "color", "$value": "#00000000" },
-      "ScrimOverlay": { "$type": "color", "$value": "#12100FDB" },
+      "ScrimOverlay": { "$type": "color", "$value": "#12100FE0" },
       "SurfaceBase": { "$type": "color", "$value": "#1A1816" },
       "SurfacePanel": { "$type": "color", "$value": "#232120" },
       "SurfaceRaised": { "$type": "color", "$value": "#34322F" },
       "SurfaceInset": { "$type": "color", "$value": "#12100F" },
-      "HudInk": { "$type": "color", "$value": "#12100FDB" },
+      "HudInk": { "$type": "color", "$value": "#12100FFA" },
       "BorderHairline": { "$type": "color", "$value": "#4A4744D9" },
       "BorderStrong": { "$type": "color", "$value": "#F3EEE373" },
       "BorderFocus": { "$type": "color", "$value": "#F2D98C" },
@@ -80,7 +80,7 @@
       "InkStroke": { "$type": "color", "$value": "#12100FE6" },
       "GoldLeaf": { "$type": "color", "$value": "#D9A93C" },
       "SilverLeaf": { "$type": "color", "$value": "#F3EEE3" },
-      "HoldFill": { "$type": "color", "$value": "#F3EEE340" },
+      "HoldFill": { "$type": "color", "$value": "#F3EEE326" },
       "LanternGlow": { "$type": "color", "$value": "#F7C766" }
     }
   },

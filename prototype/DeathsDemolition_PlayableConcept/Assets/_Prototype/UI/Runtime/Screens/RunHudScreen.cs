@@ -149,6 +149,7 @@ namespace DD.Prototype.UI
         private TMP_Text _goldDelta;
         private Vector2 _goldDeltaHome;
         private UiFx _goldLeaf;
+        private Image _goldGlint;
         private float _goldGlintAt = -10f;
         private int _goldSeen = int.MinValue;
         private TMP_Text _healthLowWord;
@@ -167,16 +168,22 @@ namespace DD.Prototype.UI
         private int _roundShown = int.MinValue;
 
         /// <summary>
-        /// E12: the gold underlay - StateGold at this alpha, drawn by S-07's Leaf (flat at rest, the leaf grid only in the
-        /// glint band). 0.16 keeps the StateGold numeral ≥ 4.5:1 over the brightest world role; the direction's 0.35 would
-        /// read 3.2:1 over sky-mist (UiArtThemeTests.HudKontrasti measures it).
+        /// E12 (AD 8a MUST-1): the gold panel's only leaf - the A6 kinpaku flake tile in StateGold at this alpha, never a
+        /// flat fill (the panel rests on HudInk like its siblings); the S-07 Leaf glint lays the same alpha only while it
+        /// sweeps. UiArtThemeTests.HudKontrasti measures the numeral over it.
         /// </summary>
-        public const float GoldLeafAlpha = 0.16f;
+        public const float GoldLeafAlpha = 0.03f;   // AD 8a MUST-1's "≤ 0.10" is a perceptual (sRGB) figure; UI blends in linear light, where 0.03 looks like it
+
+        /// <summary>The glint layer's alpha while the Leaf band sweeps (0 at rest); with the flakes the numeral keeps 4.5:1.</summary>
+        public const float GoldGlintAlpha = 0.05f;
+        private const float GoldLeafTilePixels = 96f;
         private const float GoldGlintMinInterval = 1f;
+        private const float GoldGlintSeconds = 0.6f;
         private const float HealthBarHeight = 20f;
         private const float LadderHeight = 12f;
         private const float LadderPitchMax = 8f;
-        private const float ReloadRingSize = 64f;
+        private const float ReloadRingSize = 100f;   // AD 8a SHOULD-1: the ring encloses the glyph - Ø 100, 3 px, glyph 80 inside
+        private const float WeaponGlyphInRing = 80f;
         private const float ReloadPromptSize = 22f;
         private GameObject _suspendedChip;
 
@@ -379,12 +386,6 @@ namespace DD.Prototype.UI
         /// <summary>Icon size inside a HUD panel. Reads at 28 px; the atlas glyphs are 128 px.</summary>
         private const float PanelIconSize = 28f;
         private const float WeaponIconSize = 64f;
-        /// <summary>
-        /// AD MUST-1: the weapon glyph anchors the panel. The atlas cell is square (the
-        /// rifle fills ~90 % of its width), so the slot is a 96 px square: the silhouette
-        /// comes out ~86 px wide, about 60 % of the panel height, as in the composite.
-        /// </summary>
-        private const float WeaponIconWidth = 96f;
         private const float SpecialRingSize = 132f;
         private const float ReticleSize = 40f;
 
@@ -438,14 +439,18 @@ namespace DD.Prototype.UI
 
             // E12: the kinpaku underlay, the one leaf the HUD carries (§1: the L0 exception) - flat StateGold at rest, the
             // leaf grid inside S-07's glint band on a gain (≤ 1 / s; not under Reduce Flashes).
-            Image leaf = UiFactory.NewImage("Leaf", block, UiColor.StateGold, UiSprites.Solid);
-            UiFactory.Fill((RectTransform)leaf.transform, UiTokens.StrokeHairline);
-            Color leafColour = UiTokens.Get(UiColor.StateGold);
-            leafColour.a = GoldLeafAlpha;
-            leaf.color = leafColour;
-            leaf.transform.SetSiblingIndex(1); // over the card fill, under the frame and the readout
-            _goldLeaf = leaf.gameObject.AddComponent<UiFx>();
-            _goldLeaf.Configure(UiFxMode.Leaf, 0.6f, new Vector3(1f, 0f, 0f));
+            // AD 8a MUST-1: no flat gold - the flake tile at GoldLeafAlpha on the ink, and a glint layer that is
+            // transparent at rest and carries the S-07 Leaf band only while it sweeps.
+            UiPatternTile flakes = UiPatternTile.Create("Leaf", block, UiFxGlobals.LeafTileResource, GoldLeafTilePixels, UiColor.StateGold, GoldLeafAlpha);
+            UiFactory.Fill((RectTransform)flakes.transform, UiTokens.StrokeHairline);
+            flakes.transform.SetSiblingIndex(1); // over the card fill, under the frame and the readout
+            Image glint = UiFactory.NewImage("Glint", block, UiColor.StateGold, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)glint.transform, UiTokens.StrokeHairline);
+            glint.transform.SetSiblingIndex(2);
+            glint.canvasRenderer.SetAlpha(0f);
+            _goldGlint = glint;
+            _goldLeaf = glint.gameObject.AddComponent<UiFx>();
+            _goldLeaf.Configure(UiFxMode.Leaf, GoldGlintSeconds, new Vector3(1f, 0f, 0f));
 
             RectTransform host = UiFactory.CardContent(block, UiSpace.L);
 
@@ -494,8 +499,12 @@ namespace DD.Prototype.UI
             float now = Time.unscaledTime;
             if (!UiSettings.ReduceFlashes && now - _goldGlintAt >= GoldGlintMinInterval)
             {
+                // The glint layer takes the leaf alpha for the sweep only, then goes back to nothing.
                 _goldGlintAt = now;
+                UiMotion.KillTarget(_goldGlint, false);
+                _goldGlint.canvasRenderer.SetAlpha(GoldGlintAlpha);
                 _goldLeaf.Play();
+                UiMotion.TintAlpha(_goldGlint, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Data, GoldGlintSeconds);
             }
         }
 
@@ -536,8 +545,11 @@ namespace DD.Prototype.UI
             lowRect.anchorMin = new Vector2(0f, 1f);
             lowRect.anchorMax = new Vector2(0f, 1f);
             lowRect.pivot = new Vector2(0f, 1f);
-            lowRect.sizeDelta = new Vector2(64f, topBand);
+            lowRect.sizeDelta = new Vector2(Mathf.Ceil(_healthLowWord.GetPreferredValues("LOW").x) + 4f, topBand);
             lowRect.anchoredPosition = new Vector2(textLeft + labelWidth + (int)UiSpace.S, 0f);
+            // AD 8a SHOULD-4: HEALTH's size and baseline (same band, same alignment), bold caps, 8 px after it.
+            _healthLowWord.fontSize = label.fontSize;
+            _healthLowWord.alignment = label.alignment;
             _healthLowWord.fontStyle = FontStyles.Bold;
             _healthLowWord.gameObject.SetActive(false);
 
@@ -562,7 +574,16 @@ namespace DD.Prototype.UI
             int lowTick = Mathf.RoundToInt(UiTokens.LowHealthFraction * 10f);
             for (int i = 1; i < 10; i++)
             {
-                Image tick = UiFactory.NewImage("Tick" + i, barRect, UiColor.SurfaceInset, UiSprites.Solid);
+                // AD 8a SHOULD-3: the low mark is the 5b strong tick - 2 px TextSecondary at 0.6 - apart from the 1 px ink ticks.
+                bool strong = i == lowTick;
+                Image tick = UiFactory.NewImage("Tick" + i, barRect, strong ? UiColor.TextSecondary : UiColor.SurfaceInset, UiSprites.Solid);
+                if (strong)
+                {
+                    Color c = tick.color;
+                    c.a = 0.6f;
+                    tick.color = c;
+                }
+
                 var tickRect = (RectTransform)tick.transform;
                 tickRect.anchorMin = new Vector2(i / 10f, 0f);
                 tickRect.anchorMax = new Vector2(i / 10f, 1f);
@@ -700,10 +721,10 @@ namespace DD.Prototype.UI
             var iconRect = (RectTransform)_weaponIcon.transform;
             iconRect.anchorMin = new Vector2(0f, 0.5f);
             iconRect.anchorMax = new Vector2(0f, 0.5f);
-            iconRect.pivot = new Vector2(0f, 0.5f);
-            iconRect.sizeDelta = new Vector2(WeaponIconWidth, WeaponIconWidth);
-            iconRect.anchoredPosition = Vector2.zero;
-            float textLeft = WeaponIconWidth + (int)UiSpace.M;
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.sizeDelta = new Vector2(WeaponGlyphInRing, WeaponGlyphInRing);   // AD 8a SHOULD-1: 80 inside the Ø 100 ring
+            iconRect.anchoredPosition = new Vector2(ReloadRingSize * 0.5f, 0f);
+            float textLeft = ReloadRingSize + (int)UiSpace.M;
 
             RectTransform textColumn = UiFactory.NewRect("Text", host);
             UiFactory.Fill(textColumn);
@@ -752,7 +773,9 @@ namespace DD.Prototype.UI
 
             _reloadCaption = UiFactory.Label(
                 "ReloadCaption", textColumn, string.Empty, UiType.Caption, UiColor.BarReload);
-            RectTransform captionRow = stack.Add((RectTransform)_reloadCaption.transform, UiFactory.LineHeight(UiType.Caption));
+            // AD 8a MUST-2: the caption band holds the word and the cap / diamond at any TextScale (≥ 26 px).
+            float captionBand = Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)), ReloadPromptSize + 4f);
+            RectTransform captionRow = stack.Add((RectTransform)_reloadCaption.transform, captionBand);
             _reloadCaption.fontStyle = FontStyles.Bold;
 
             // E11 EMPTY: the reload control named by the live binding (R / pad West, rebind-aware) after the word.
@@ -765,14 +788,18 @@ namespace DD.Prototype.UI
             _reloadPrompt.gameObject.SetActive(false);
 
             // E11: the reload ring (A4 Ring.Progress64) behind the weapon glyph, Focus400 (never gold), Data.
-            _reloadRing = UiRing.Create("ReloadRing", host, ReloadRingSize, UiColor.BarReload);
+            // AD 8a SHOULD-1: the ring encloses the glyph - a cream ghost at rest, Focus400 while reloading (Data, Linear).
+            _reloadRing = UiRing.Create("ReloadRing", host, ReloadRingSize, UiColor.BarReload, 0.12f, UiSprites.RingHairline);
             RectTransform ringRect = (RectTransform)_reloadRing.transform;
             ringRect.anchorMin = new Vector2(0f, 0.5f);
             ringRect.anchorMax = new Vector2(0f, 0.5f);
             ringRect.pivot = new Vector2(0.5f, 0.5f);
-            ringRect.anchoredPosition = new Vector2(WeaponIconWidth * 0.5f, 0f);
-            ringRect.SetSiblingIndex(_weaponIcon.transform.GetSiblingIndex());
-            _reloadRing.gameObject.SetActive(false);
+            ringRect.anchoredPosition = new Vector2(ReloadRingSize * 0.5f, 0f);
+
+            // AD 8a MUST-2: the panel grows from its content - the stack's bands (name · build · type · fraction · ladder ·
+            // bar · caption) or the ring, whichever is taller, plus the inner padding; the caption row never meets the frame.
+            float content = Mathf.Max(stack.Cursor + (int)UiSpace.M, ReloadRingSize);
+            classic.sizeDelta = new Vector2(BlockWidth, content + (int)UiSpace.L * 2f);
 
             // REQ-057 pill. Sits over the block, never instead of it.
             TMP_Text chip = UiFactory.Chip(
@@ -827,7 +854,7 @@ namespace DD.Prototype.UI
             _ladderFill.pixelsPerUnitMultiplier = multiplier;
 
             Color back = UiTokens.Get(UiColor.TextMuted);
-            back.a = 0.5f;
+            back.a = 0.35f; // AD 8a SHOULD-2: the spent rounds recede, the remaining count reads at a glance
             _ladderBack.color = back;
             ((RectTransform)_ladderBack.transform).sizeDelta = new Vector2(pitch * magazine, 0f);
         }
@@ -1011,6 +1038,24 @@ namespace DD.Prototype.UI
             RectTransform panel = UiFactory.FramedCard(
                 name, ScreenRect, UiColor.BorderHairline, UiColor.HudInk, UiFrame.HudPanel, UiColor.TextSecondary);
             UiFactory.Corner(panel, anchor, width, height);
+            // WP-068 8a: the panel is HudInk over the world, nothing else - the card's border image used to sit opaque under
+            // the translucent fill (the world never showed); the A4 frame draws the edge, the fill covers the whole rect.
+            if (UiArt.HasFrame(UiFrame.HudPanel))
+            {
+                Image under = panel.GetComponent<Image>();
+                if (under != null)
+                {
+                    Color clear = under.color;
+                    clear.a = 0f;
+                    under.color = clear;
+                }
+
+                Transform fill = panel.Find("Fill");
+                if (fill != null)
+                {
+                    UiFactory.Fill((RectTransform)fill);
+                }
+            }
 
             if (stackOffset > 0f)
             {
@@ -1577,7 +1622,10 @@ namespace DD.Prototype.UI
                 UiColor mark = low ? UiColor.StateWarning : UiColor.BarReload;
                 _reloadRing.SetColour(mark);
                 _reloadBar.SetColor(mark);
-                _reloadRing.gameObject.SetActive(reload == RunHudReloadState.Reloading);
+                if (reload != RunHudReloadState.Reloading)
+                {
+                    _reloadRing.Set(0f); // the ghost stays, the fill is the reload
+                }
                 _reloadPrompt.gameObject.SetActive(reload == RunHudReloadState.MagazineEmpty);
                 switch (reload)
                 {

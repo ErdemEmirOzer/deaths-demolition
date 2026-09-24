@@ -840,7 +840,7 @@ namespace DD.Prototype.UI
                 if (GoldService.Instance != null && rig != null)
                 {
                     GoldService.Instance.Wallet.Credit(25, rig.transform.position);
-                    yield return new WaitForSecondsRealtime(0.18f);
+                    yield return new WaitForSecondsRealtime(0.3f); // AD 8a SHOULD-5: the glint mid-sweep (t 0.3 of 0.6 s)
                     yield return Frame(folder, "hud-gold-gain");
                 }
 

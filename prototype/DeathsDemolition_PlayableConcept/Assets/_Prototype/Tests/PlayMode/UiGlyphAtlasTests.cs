@@ -17,6 +17,63 @@ namespace DD.Prototype.Tests.PlayMode
     [Category("WP068")]
     public sealed class UiGlyphAtlasTests
     {
+        /// <summary>
+        /// WP-068 slice 8a · the contrast audit composites translucent layers the way this pipeline blends them. Half-alpha
+        /// Sumi over a bright world colour is rendered and read back; the pixel must match UiContrast.Composite (linear-light
+        /// blending in the Linear colour space: ≈ 188 where an sRGB-space blend would predict ≈ 128).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Kontrast_KompozitGpuHarmanlamasiylaAyni()
+        {
+            var rt = new RenderTexture(64, 64, 24, RenderTextureFormat.ARGB32);
+            var camGo = new GameObject("BlendCam");
+            var canvasGo = new GameObject("BlendCanvas", typeof(RectTransform), typeof(Canvas));
+            try
+            {
+                Camera cam = camGo.AddComponent<Camera>();
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.orthographic = true;
+                cam.targetTexture = rt;
+                cam.enabled = false;
+                Color world = new Color(0xD0 / 255f, 0xD7 / 255f, 0xDE / 255f, 1f);   // the sky-mist role
+                cam.backgroundColor = world;   // an sRGB colour; Unity decodes it for the Linear framebuffer
+                var canvas = canvasGo.GetComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = cam;
+                canvas.planeDistance = 1f;
+
+                Color ink = UiTokens.Get(UiColor.SurfaceInset);
+                ink.a = 0.5f;
+                Image layer = UiFactory.NewImage("Layer", canvas.transform, UiColor.SurfaceInset, UiSprites.Solid);
+                layer.color = ink;
+                UiFactory.Fill((RectTransform)layer.transform);
+
+                yield return null;
+                Canvas.ForceUpdateCanvases();
+                cam.Render();
+                var read = new Texture2D(64, 64, TextureFormat.RGBA32, false);
+                RenderTexture previous = RenderTexture.active;
+                RenderTexture.active = rt;
+                read.ReadPixels(new Rect(0, 0, 64, 64), 0, 0);
+                read.Apply();
+                RenderTexture.active = previous;
+                Color rendered = read.GetPixel(32, 32);
+                Object.Destroy(read);
+
+                Color predicted = UiContrast.Composite(ink, world);
+                string report = "rendered " + rendered + " predicted " + predicted + " linear " + UiContrast.BlendsInLinear;
+                Debug.Log("[DD-TEST] wp068.blend " + report);
+                Assert.AreEqual(predicted.g, rendered.g, 0.035f, "UiContrast.Composite = GPU harmanlaması: " + report);
+            }
+            finally
+            {
+                Object.Destroy(canvasGo);
+                Object.Destroy(camGo);
+                rt.Release();
+                Object.Destroy(rt);
+            }
+        }
+
         [UnityTest]
         public IEnumerator G1GlifSdfIleTonundaCizilir_A4CerceveBeyazAlfa()
         {

@@ -44,12 +44,12 @@ AP-001 çevre paleti denetimi `[AD hesabı]`: 10 rolün 10'u geçer; en yakın a
 | token | Default | ColorBlindSafe |
 |---|---|---|
 | `Transparent` | #00000000 | #00000000 |
-| `ScrimOverlay` | #12100FDB | #12100FDB |
+| `ScrimOverlay` | #12100FE0 | #12100FE0 |
 | `SurfaceBase` | #1A1816 | #1A1816 |
 | `SurfacePanel` | #232120 | #232120 |
 | `SurfaceRaised` | #34322F | #34322F |
 | `SurfaceInset` | #12100F | #12100F |
-| `HudInk` | #12100FDB | #12100FDB |
+| `HudInk` | #12100FFA | #12100FFA |
 | `BorderHairline` | #4A4744D9 | #4A4744D9 |
 | `BorderStrong` | #F3EEE373 | #F3EEE373 |
 | `BorderFocus` | #F2D98C | #F2D98C |
@@ -80,7 +80,7 @@ AP-001 çevre paleti denetimi `[AD hesabı]`: 10 rolün 10'u geçer; en yakın a
 | `InkStroke` | #12100FE6 | #12100FE6 |
 | `GoldLeaf` | #D9A93C | #D9A93C |
 | `SilverLeaf` | #F3EEE3 | #F3EEE3 |
-| `HoldFill` | #F3EEE340 | #F3EEE340 |
+| `HoldFill` | #F3EEE326 | #F3EEE326 |
 | `LanternGlow` | #F7C766 | #F7C766 |
 
 UI rezerv kuralları (WP-068 AD MUST 3):
@@ -108,7 +108,7 @@ UI rezerv kuralları (WP-068 AD MUST 3):
 | UI StateDanger / BarHealthLow (Coral400) | #EE7063 | UiTokens.cs:231 (:281, :288) | 6°, 0.58, 0.93 | Beacon |
 | UI AccentPrimary / DamageEdge (Vermilion600) | #C4362B | UiTokens.cs:222 (:273, :279) | 4°, 0.78, 0.77 | Vermilion (UI; çevre bütçesi dışı) |
 | UI AccentPrimaryPressed (Vermilion700) | #9E2A21 | UiTokens.cs:221 | 4°, 0.79, 0.62 | Vermilion (UI) |
-| UI TextPrimary (Cream100) / HudInk (Sumi900 a 0.86, WP-068 slice 8; 0.92 before) | #F3EEE3 / #12100F | UiTokens.cs:219 / :212, :260 | 41°, 0.07, 0.95 / 20°, 0.17, 0.07 | Rezerv dışı; HudInk üstünde 11.12:1 beyaz dünya `[kod :195]` |
+| UI TextPrimary (Cream100) / HudInk (Sumi900 a 0.98, WP-068 slice 8a — AA in the project's linear-light UI blending; 0.92 before) | #F3EEE3 / #12100F | UiTokens.cs:219 / :212, :260 | 41°, 0.07, 0.95 / 20°, 0.17, 0.07 | Rezerv dışı; HudInk üstünde 12.54:1 beyaz dünya (doğrusal harmanlama) `[kod :195]` |
 | Çevre vermilion (prototip blockout) | (0.678, 0.243, 0.161) | World/WorldPalette.cs:72 | 10°, 0.76, 0.68 | Bütçeli: 6 parça |
 
 ### 2.4 Yapılır / yapılmaz (final)
