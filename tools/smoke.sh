@@ -17,6 +17,11 @@
 #     (unity.player_session_count / unity.player_sessionid — every player launch, including other
 #     sessions' players with the same bundle id, bumps them in both plists) are left out of the two
 #     plist digests; every other key is still compared, the profile and its side files stay byte-hashed;
+#   * WP-066J: `defaults import` MERGES — a key the run added (e.g. UnityGraphicsQuality from the
+#     player's quality tier) survived the restore. The restore is now exact per domain: every key that
+#     is not in the backup is `defaults delete`d (launch-counter keys excepted), then the backup is
+#     imported; a domain with no backup plist loses every non-counter key. After the restore any key
+#     not in the backup is a FAIL (exit 30), listed in <out>/userdata-extra-keys.txt;
 #   * WP-066F/066G: the settings files in the player folder (ui-settings.json, load-timing.json,
 #     input-settings.json, input-overrides.json, ui-hints.json (WP-068, S-10 soak find) — the Editor shares this path) are backed up, restored
 #     and byte-compared as well; a file that did not exist before and was created by the run is moved
@@ -73,6 +78,20 @@ settle_plist() { local dom="$1" file="$2" i=0
     sleep 0.2; i=$((i+1))
   done
   dd_log "guard: $dom not settled on disk after 10 s"; return 1
+}
+# WP-066J: keys the live domain has but the backup does not (launch-counter keys excepted), one per line.
+EXTRA_KEYS='import plistlib, sys, os
+raw = sys.stdin.buffer.read()
+live = plistlib.loads(raw) if raw.strip() else {}
+back = plistlib.load(open(sys.argv[1], "rb")) if os.path.isfile(sys.argv[1]) else {}
+for k in sorted(set(live) - set(back) - set(sys.argv[2].split())): print(k)'
+extra_keys() { defaults export "$1" - 2>/dev/null | python3 -c "$EXTRA_KEYS" "$2" "$UNITY_VOLATILE"; }
+# Exact restore of one domain: drop run-added keys, then import the backup (import alone merges).
+restore_domain() { local dom="$1" back="$2" k
+  while IFS= read -r k; do [ -n "$k" ] || continue
+    defaults delete "$dom" "$k" >/dev/null 2>&1 && dd_log "guard: removed run-added key '$k' from $dom"
+  done < <(extra_keys "$dom" "$back")
+  [ -f "$back" ] && defaults import "$dom" "$back"
 }
 settle_all() { settle_plist "$DD_BUNDLE_ID" "$P1"; settle_plist "unity.Deaths Demolition.$DD_PRODUCT" "$P2"; }
 sidefiles() { for d in "$D1" "$D2"; do [ -d "$d" ] && find "$d" -maxdepth 1 -name 'prototype-profile.json.*' ! -name '*.lock' 2>/dev/null; done | LC_ALL=C sort; }
@@ -139,13 +158,18 @@ if [ "$TOUCHED" -eq 1 ]; then
   done
   for f in "$D2"/prototype-profile.json*; do [ -f "$f" ] && [ "${f##*.}" != "lock" ] && [ ! -f "$UD/D2/$(basename "$f")" ] && mv "$f" "$OUT/userdata-extra-$(basename "$f")"; done
   for f in "$UD/D2"/prototype-profile.json*; do [ -f "$f" ] && cp -p "$f" "$D2/"; done
-  [ -f "$UD/PR/$(basename "$P1")" ] && defaults import "$DD_BUNDLE_ID" "$UD/PR/$(basename "$P1")"
-  [ -f "$UD/PR/$(basename "$P2")" ] && defaults import "unity.Deaths Demolition.$DD_PRODUCT" "$UD/PR/$(basename "$P2")"
+  restore_domain "$DD_BUNDLE_ID" "$UD/PR/$(basename "$P1")"
+  restore_domain "unity.Deaths Demolition.$DD_PRODUCT" "$UD/PR/$(basename "$P2")"
   sleep 1
   settle_all
 fi
 snapshot > "$OUT/userdata-after.txt"
 VERIFIED=0; cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-after.txt" && VERIFIED=1
+# WP-066J: a key that is not in the backup is a FAIL even if the digests happened to agree.
+{ extra_keys "$DD_BUNDLE_ID" "$UD/PR/$(basename "$P1")" | sed "s|^|$DD_BUNDLE_ID  |"
+  extra_keys "unity.Deaths Demolition.$DD_PRODUCT" "$UD/PR/$(basename "$P2")" | sed "s|^|unity.Deaths Demolition.$DD_PRODUCT  |"; } > "$OUT/userdata-extra-keys.txt"
+EXTRAKEYS=$(grep -c . "$OUT/userdata-extra-keys.txt"); EXTRAKEYS=${EXTRAKEYS:-0}
+[ "$EXTRAKEYS" -gt 0 ] && { VERIFIED=0; dd_log "FAIL userdata: $EXTRAKEYS PlayerPrefs key(s) not in the backup — $OUT/userdata-extra-keys.txt"; }
 SBXPROFILE=$( [ -f "$SBX/prototype-profile.json" ] && echo "$SBX/prototype-profile.json" || echo "" )
 dd_log "userdata touched=$TOUCHED restored=$TOUCHED verified=$VERIFIED sandboxProfile=$([ -n "$SBXPROFILE" ] && echo yes || echo no)"
 
@@ -162,7 +186,7 @@ cat > "$OUT/smoke-report.json" <<JSON
   "e1": { "exit": $E1, "exceptions": $E1X, "capture": "$OUT/e1-mainmenu-1280x720.png", "log": "$OUT/e1-player.log" },
   "e4": { "exit": $E4, "exceptions": $E4X, "capture": "$OUT/e4-run-1280x720.png", "log": "$OUT/e4-run-player.log" },
   "userdataUnknown": { "count": $UNKNOWN, "list": "$OUT/userdata-unknown.txt" },
-  "userdata": { "touched": $([ "$TOUCHED" -eq 1 ] && echo true || echo false), "restored": $([ "$TOUCHED" -eq 1 ] && echo true || echo false), "verified": $([ "$VERIFIED" -eq 1 ] && echo true || echo false), "sandboxProfile": $([ -n "$SBXPROFILE" ] && echo true || echo false), "before": "$OUT/userdata-before.txt", "after": "$OUT/userdata-after.txt" },
+  "userdata": { "touched": $([ "$TOUCHED" -eq 1 ] && echo true || echo false), "restored": $([ "$TOUCHED" -eq 1 ] && echo true || echo false), "verified": $([ "$VERIFIED" -eq 1 ] && echo true || echo false), "extraKeys": $EXTRAKEYS, "sandboxProfile": $([ -n "$SBXPROFILE" ] && echo true || echo false), "before": "$OUT/userdata-before.txt", "after": "$OUT/userdata-after.txt" },
   "utc": "$(date -u +%FT%TZ)"
 }
 JSON
