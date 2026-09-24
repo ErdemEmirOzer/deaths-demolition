@@ -147,6 +147,7 @@ namespace DD.Art.Pipeline.EditorTools
                 Debug.Log(LogPrefix + key + " tris " + string.Join("/", e.lodTriangles) + (faults.Count == 0 ? " sockets ok" : " sockets FAULT"));
             }
 
+            ArtAp021WeaponBuilder.AppendClassics(entries);   // WP-069 B4d: a rebuild keeps the AP-021 classics
             library.entries = entries.ToArray();
             EditorUtility.SetDirty(library);
             AssetDatabase.SaveAssets();

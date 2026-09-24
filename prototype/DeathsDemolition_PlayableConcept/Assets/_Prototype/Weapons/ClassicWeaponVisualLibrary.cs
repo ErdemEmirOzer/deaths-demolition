@@ -26,6 +26,14 @@ namespace DD.Prototype.Weapons
             /// <summary>The imported FBX root (prefab asset). Instantiate, never mutate.</summary>
             public GameObject model;
             public int[] lodTriangles = new int[LodCount];
+
+            /// <summary>
+            /// WP-069 B4d: an AP-021 (P-07) model with its own materials, part_* pieces and COL_* hulls — instantiated
+            /// through <see cref="AuthoredWeaponModel"/> (no atlas override, one LODGroup, hulls dropped).
+            /// </summary>
+            public bool ownMaterials;
+            public string modelPackage = "";
+
             public bool HasModel => model != null;
         }
 
@@ -77,6 +85,11 @@ namespace DD.Prototype.Weapons
         public static GameObject Instantiate(Entry entry, Material material, float[] screenHeights)
         {
             if (entry == null || entry.model == null) return null;
+            if (entry.ownMaterials)
+            {
+                return AuthoredWeaponModel.Instantiate(entry.model, null, screenHeights, Vector3.zero);
+            }
+
             GameObject go = UnityEngine.Object.Instantiate(entry.model);
             go.name = "Model";
             MeshRenderer[] renderers = go.GetComponentsInChildren<MeshRenderer>(true);

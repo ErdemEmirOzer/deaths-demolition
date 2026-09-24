@@ -28,6 +28,11 @@ namespace DD.Art.Pipeline.EditorTools
     ///   5. <c>DD_SpecialWeapons</c> entries get the model (<see cref="SpecialWeaponVisualLibrary.Entry.model"/>) and
     ///      its per-LOD triangle totals.
     /// Batch: <c>-executeMethod DD.Art.Pipeline.EditorTools.ArtAp021WeaponBuilder.BuildSpecials</c>.
+    ///
+    /// WP-069 B4d · the classics (<see cref="Classics"/>, as P-07 delivers them): the same 1–4 with the body material only
+    /// (textures under exports/textures/&lt;key&gt;/, no emissive); <c>DD_ClassicWeapons</c> gets an own-material entry per
+    /// runtime id (<see cref="ClassicWeaponVisualLibrary.Entry.ownMaterials"/>) beside the AP-013 A/B/C, and the AP-013
+    /// rebuild keeps them. Batch: <c>…ArtAp021WeaponBuilder.BuildClassics</c>.
     /// </summary>
     public static class ArtAp021WeaponBuilder
     {
@@ -49,6 +54,13 @@ namespace DD.Art.Pipeline.EditorTools
             (SpecialWeaponId.Namekuji, SpecialWeaponKeys.Namekuji),
         };
 
+        /// <summary>WP-069 B4d: the AP-021 classics in the project (P-07 v002, Unity frame at export).</summary>
+        public static readonly (ClassicWeaponId id, string key)[] Classics =
+        {
+            (ClassicWeaponId.Ar2, "ar_2"),
+            (ClassicWeaponId.Sg2, "sg_2"),
+        };
+
         public static string Folder(string key) => Root + "/AP021_" + key;
         public static string ModelPath(string key) => Folder(key) + "/AP021_" + key + ".fbx";
         public static string TexturePath(string key, string map) => Folder(key) + "/Textures/T_AP021_" + key + "_" + map + ".png";
@@ -64,6 +76,65 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             return null;
+        }
+
+        /// <summary>The imported model of a classic, or null when it is not in the project.</summary>
+        public static GameObject ModelFor(ClassicWeaponId id)
+        {
+            foreach ((ClassicWeaponId cid, string key) in Classics)
+            {
+                if (cid == id) return AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath(key));
+            }
+
+            return null;
+        }
+
+        [MenuItem("DD/Arsenal/Import AP-021 Classics (WP-069 B4d)", priority = 332)]
+        public static void BuildClassics()
+        {
+            foreach ((ClassicWeaponId _, string key) in Classics)
+            {
+                BuildOne(key);
+            }
+
+            var library = AssetDatabase.LoadAssetAtPath<ClassicWeaponVisualLibrary>(ArtWeaponBuilder.LibraryPath);
+            if (library == null) throw new FileNotFoundException(LogPrefix + "DD_ClassicWeapons is missing — run the AP-013 library first", ArtWeaponBuilder.LibraryPath);
+            var entries = new List<ClassicWeaponVisualLibrary.Entry>();
+            foreach (ClassicWeaponVisualLibrary.Entry e in library.entries)
+            {
+                if (e != null && !e.ownMaterials) entries.Add(e);
+            }
+
+            AppendClassics(entries);
+            library.entries = entries.ToArray();
+            EditorUtility.SetDirty(library);
+            AssetDatabase.SaveAssets();
+            Debug.Log(LogPrefix + "classics done");
+        }
+
+        /// <summary>One own-material entry per imported AP-021 classic. Also called by the AP-013 library rebuild so it never drops them.</summary>
+        public static void AppendClassics(List<ClassicWeaponVisualLibrary.Entry> entries)
+        {
+            foreach ((ClassicWeaponId id, string key) in Classics)
+            {
+                GameObject model = ModelFor(id);
+                if (model == null) continue;
+                var e = new ClassicWeaponVisualLibrary.Entry { id = id, rosterKey = key, model = model, ownMaterials = true, modelPackage = Package };
+                foreach (MeshFilter f in model.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if (f.sharedMesh == null || f.name.StartsWith(AuthoredWeaponModel.ColliderPrefix, StringComparison.Ordinal)) continue;
+                    int lod = AuthoredWeaponModel.LodIndexOf(f.name);
+                    if (lod >= 0 && lod < e.lodTriangles.Length) e.lodTriangles[lod] += Triangles(f.sharedMesh);
+                }
+
+                entries.RemoveAll(x => x != null && x.id == id);
+                entries.Add(e);
+                Transform muzzle = WeaponSocketContract.Find(model.transform, WeaponSocketContract.Muzzle);
+                Transform port = WeaponSocketContract.Find(model.transform, WeaponSocketContract.Ejection);
+                Debug.Log(LogPrefix + key + " tris " + string.Join("/", e.lodTriangles) + " muzzle " +
+                          (muzzle != null ? model.transform.InverseTransformPoint(muzzle.position).ToString("F3") : "MISSING") + " ejection " +
+                          (port != null ? model.transform.InverseTransformPoint(port.position).ToString("F3") : "MISSING"));
+            }
         }
 
         [MenuItem("DD/Arsenal/Import AP-021 Specials (WP-069 B4c)", priority = 331)]
@@ -122,7 +193,7 @@ namespace DD.Art.Pipeline.EditorTools
             ImportTexture(TexturePath(key, "BaseColor"), true, false);
             ImportTexture(TexturePath(key, "Normal"), false, true);
             ImportTexture(TexturePath(key, "MRA"), false, false);
-            ImportTexture(TexturePath(key, "Emissive"), true, false);
+            if (File.Exists(TexturePath(key, "Emissive"))) ImportTexture(TexturePath(key, "Emissive"), true, false);
             if (File.Exists(TexturePath(key, "EmissiveMask"))) ImportTexture(TexturePath(key, "EmissiveMask"), false, false);
 
             string mask = DerivedMaskPath(key);
@@ -169,12 +240,20 @@ namespace DD.Art.Pipeline.EditorTools
             Material body = ArtCharacterPrefabBuilder.LoadOrCreateMaterialPublic(MaterialPath(key, "body"), lit, "M_AP021_" + key + "_body");
             ArtCharacterPrefabBuilder.ApplyCharacterMapsPublic(body, Load<Texture2D>(TexturePath(key, "BaseColor")), Load<Texture2D>(TexturePath(key, "Normal")),
                 Load<Texture2D>(DerivedMaskPath(key)));
-            body.SetTexture("_EmissionMap", Load<Texture2D>(TexturePath(key, "Emissive")));
-            body.SetColor("_EmissionColor", Color.white);
-            body.EnableKeyword("_EMISSION");
+            if (File.Exists(TexturePath(key, "Emissive")))
+            {
+                body.SetTexture("_EmissionMap", Load<Texture2D>(TexturePath(key, "Emissive")));
+                body.SetColor("_EmissionColor", Color.white);
+                body.EnableKeyword("_EMISSION");
+            }
+
             body.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
             body.enableInstancing = true;
             slots["body"] = Save(body);
+            if (key != SpecialWeaponKeys.Raiju && key != SpecialWeaponKeys.Namekuji)
+            {
+                return slots;   // WP-069 B4d: a classic carries the body material only (AP-021 manifest)
+            }
 
             // Manifest: glass #C9DAD3 α 0.25, smoothness 0.95, both faces (the dome / the lantern window).
             Material glass = ArtCharacterPrefabBuilder.LoadOrCreateMaterialPublic(MaterialPath(key, "glass"), lit, "M_AP021_" + key + "_glass");

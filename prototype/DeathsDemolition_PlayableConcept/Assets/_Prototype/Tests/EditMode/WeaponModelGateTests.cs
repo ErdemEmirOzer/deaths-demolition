@@ -111,8 +111,14 @@ namespace DD.Prototype.Tests.EditMode
         {
             ClassicWeaponVisualLibrary lib = Library;
             Assert.IsNotNull(lib);
-            Assert.AreEqual(3, lib.entries.Length, "A/B/C — D için model üretilmez (DEC-083).");
-            foreach (ClassicWeaponVisualLibrary.Entry e in lib.entries) Assert.AreNotEqual("D", e.rosterKey);
+            int ap013 = 0;
+            foreach (ClassicWeaponVisualLibrary.Entry e in lib.entries)
+            {
+                Assert.AreNotEqual("D", e.rosterKey);
+                if (!e.ownMaterials) ap013++;
+            }
+
+            Assert.AreEqual(3, ap013, "AP-013 A/B/C — D için model üretilmez (DEC-083); AP-021 klasikleri ayrı girdiler (WP-069 B4d).");
         }
     }
 }

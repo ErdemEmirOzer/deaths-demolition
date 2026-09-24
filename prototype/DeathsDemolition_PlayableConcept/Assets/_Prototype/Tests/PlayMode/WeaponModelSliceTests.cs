@@ -94,15 +94,21 @@ namespace DD.Prototype.Tests.PlayMode
                 LOD[] lods = lodGroup.GetLODs();
                 Assert.AreEqual(3, lods.Length);
                 Assert.AreEqual(0.12f, lods[0].screenRelativeTransitionHeight, 1e-3f, "LOD0 eşiği yeniden ayarlanmış (import varsayılanı değil).");
+                // WP-069 B4d: an AP-021 model keeps its own materials and its own measures (P-07 manifest), not the AP-009C class blockout's.
+                ClassicWeaponVisualLibrary.Entry own = lib.Find(d.Id);
+                bool ap021 = own != null && own.ownMaterials;
                 foreach (MeshRenderer r in lodGroup.GetComponentsInChildren<MeshRenderer>(true))
                 {
-                    Assert.AreEqual(lib.material, r.sharedMaterial, d.RosterKey + ": atlas materyali.");
+                    if (ap021) Assert.IsTrue(r.sharedMaterial != null && r.sharedMaterial.name.StartsWith("M_AP021_"), d.RosterKey + ": AP-021 malzemesi (" + r.name + ")");
+                    else Assert.AreEqual(lib.material, r.sharedMaterial, d.RosterKey + ": atlas materyali.");
                 }
 
                 // Sockets in the socket frame: the rig's muzzle / ejection are the model's markers.
-                WeaponSocketContract.Measures m = WeaponSocketContract.MeasuresOf(d.TypeClass);
+                Vector3 expectedMuzzle = ap021
+                    ? own.model.transform.InverseTransformPoint(WeaponSocketContract.Find(own.model.transform, WeaponSocketContract.Muzzle).position)
+                    : WeaponSocketContract.MeasuresOf(d.TypeClass).Muzzle;
                 Vector3 muzzleLocal = mount.InverseTransformPoint(_s.Controller.Muzzle.position);
-                Assert.Less(Vector3.Distance(muzzleLocal, m.Muzzle), WeaponSocketContract.MarkerToleranceMetres, d.RosterKey + ": namlu " + muzzleLocal + " ≠ " + m.Muzzle);
+                Assert.Less(Vector3.Distance(muzzleLocal, expectedMuzzle), WeaponSocketContract.MarkerToleranceMetres, d.RosterKey + ": namlu " + muzzleLocal + " ≠ " + expectedMuzzle);
 
                 // WP-059: the weapon frame on the LIVE rig — the mount re-asserts the authored intent after the Animator
                 // (facing, level; WeaponMountAlignment), so the muzzle points where the character faces and the grip
