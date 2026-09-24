@@ -259,7 +259,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiSlider scale = Find("Setting.UI SCALE").GetComponent<UiSlider>();
             if (hud != null)
             {
-                Assert.AreEqual(0.5f * scale.Value, hud.localScale.x, 1e-3f, "önizleme 1:2 × UI ölçeği");
+                Assert.AreEqual(scale.Value, hud.localScale.x, 1e-3f, "önizleme 1:1 × UI ölçeği (AD 6ab SHOULD-3)");
             }
 
             Debug.Log("[DD-TEST] wp068.s6.settings125 content=" + scroll.Content.rect.height.ToString("0") + " viewport(short)=" + scroll.Viewport.rect.height.ToString("0") + " offset=" + scroll.Offset.ToString("0") + " preview=" + (hud != null));

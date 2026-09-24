@@ -81,11 +81,13 @@ AP-001 çevre paleti denetimi `[AD hesabı]`: 10 rolün 10'u geçer; en yakın a
 | `GoldLeaf` | #D9A93C | #D9A93C |
 | `SilverLeaf` | #F3EEE3 | #F3EEE3 |
 | `HoldFill` | #F3EEE340 | #F3EEE340 |
+| `LanternGlow` | #F7C766 | #F7C766 |
 
 UI rezerv kuralları (WP-068 AD MUST 3):
 - **Altın** (`StateGold`, `BarSpecial`, `GoldLeaf` = kinpaku) yalnız para sayacı, fiyat ve Special HUD'dadır; tören **ginpaku**'dur (`SilverLeaf`, krem): madalya, NEW BEST, seviye.
 - **Uyarı** (`StateWarning`) para altınından ayrıdır: Amber300 #F7C766 (ΔL* 10,8); aynı panelde uyarı ile odak altını buluşursa uyarı rengi odak halkasının yerini alır.
 - **Şarjör/reload** (`BarReload`) Focus400'dür ve varak almaz (para değil, Special değil).
+- **Fener parıltısı** (`LanternGlow`, Amber300) dekoratiftir, anlam taşımaz: yalnız menü plakasının fener maskesi, α ≤ 0,35 (nefes tabanı 0,19), altın bandının dışında. Durum tokenları dekorasyona bağlanmaz.
 - **Sakura** (`AccentSakura`, `BarXp`) = NEW ve ilerleme; **vermilion** (`AccentPrimary`) = ekran/modal başına bir birincil CTA + başlık tiki + mühür.
 - **İki yeşil**: Jade (`StateSuccess`, kazanılmış) ve Moss (`BarHealth`, can); renk körlüğü paletinde ikisi de indigo ailesine geçer.
 - Durum hiçbir zaman yalnız renkle taşınmaz: kelime + şekil (renk körlüğü paleti, WCAG 1.4.1).

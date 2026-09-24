@@ -33,6 +33,9 @@ namespace DD.Prototype.UI
         public const float ValueWidth = 88f;
         public const float MaxEventsPerSecond = 12f;
 
+        /// <summary>Label x inside the row: the same as a framed row's (UiSwitch / UiStepper label offset XL − 4).</summary>
+        public const float LabelInset = (int)UiSpace.XL - 4f;
+
         private RectTransform _rail;
         private RectTransform _fill;
         private RectTransform _bead;
@@ -105,7 +108,7 @@ namespace DD.Prototype.UI
             captionRect.anchorMax = new Vector2(0f, 1f);
             captionRect.pivot = new Vector2(0f, 0.5f);
             captionRect.sizeDelta = new Vector2(labelWidth, 0f);
-            captionRect.anchoredPosition = new Vector2((int)UiSpace.L, 0f);
+            captionRect.anchoredPosition = new Vector2(LabelInset, 0f);   // the framed rows' label x (AD 6ab SHOULD-4)
 
             // The value in the Numeric face (tabular: "80%" / "1.00×" do not jitter while dragging; AD 5b SHOULD-4 / 3 SHOULD-2).
             _value = UiFactory.Numeric("Value", root, string.Empty, UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
@@ -117,7 +120,7 @@ namespace DD.Prototype.UI
             valueRect.anchoredPosition = new Vector2(-(int)UiSpace.L, 0f);
 
             // Rail between the label and the value, inset by half a bead so the bead never overhangs.
-            float left = (int)UiSpace.L + labelWidth + (int)UiSpace.M + BeadSize * 0.5f;
+            float left = LabelInset + labelWidth + (int)UiSpace.M + BeadSize * 0.5f;
             float right = (int)UiSpace.L + ValueWidth + (int)UiSpace.M + BeadSize * 0.5f;
             // Rail = SurfaceInset + 1 px BorderHairline rim (the UiBar v3 track recipe): a BarTrack
             // rail on SurfaceBase is ΔL* ≈ 2 and the extent vanished at 0 % (AD 5b MUST-3).

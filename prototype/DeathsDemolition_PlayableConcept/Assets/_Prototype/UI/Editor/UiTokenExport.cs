@@ -191,6 +191,7 @@ namespace DD.Prototype.UI.EditorTools
             sb.Append("- **Uyarı** (`StateWarning`) para altınından ayrıdır: ").Append(UiTokens.DistinctWarningHue ? "Amber300 #F7C766 (ΔL* 10,8)" : "renksiz (krem metin + kelime + şekil)")
               .Append("; aynı panelde uyarı ile odak altını buluşursa uyarı rengi odak halkasının yerini alır.\n");
             sb.Append("- **Şarjör/reload** (`BarReload`) Focus400'dür ve varak almaz (para değil, Special değil).\n");
+            sb.Append("- **Fener parıltısı** (`LanternGlow`, Amber300) dekoratiftir, anlam taşımaz: yalnız menü plakasının fener maskesi, α ≤ 0,35 (nefes tabanı 0,19), altın bandının dışında. Durum tokenları dekorasyona bağlanmaz.\n");
             sb.Append("- **Sakura** (`AccentSakura`, `BarXp`) = NEW ve ilerleme; **vermilion** (`AccentPrimary`) = ekran/modal başına bir birincil CTA + başlık tiki + mühür.\n");
             sb.Append("- **İki yeşil**: Jade (`StateSuccess`, kazanılmış) ve Moss (`BarHealth`, can); renk körlüğü paletinde ikisi de indigo ailesine geçer.\n");
             sb.Append("- Durum hiçbir zaman yalnız renkle taşınmaz: kelime + şekil (renk körlüğü paleti, WCAG 1.4.1).\n");

@@ -77,6 +77,45 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void BaslikBlogu_UcteBirinSaginda_KatlanmadanBirlesir()
+        {
+            UiBackdrop backdrop = UiBackdrop.Create(_root);
+            backdrop.CoverHeader(500f, 200f);   // inside the left third (640): nothing to add
+            Assert.IsNull(backdrop.transform.Find("HeaderScrim"), "üçte bir içinde blok yok");
+
+            backdrop.CoverHeader(952f, 232f);
+            Transform block = backdrop.transform.Find("HeaderScrim");
+            Assert.IsNotNull(block, "başlık bloğu");
+            Assert.AreEqual(952f, backdrop.HeaderRight, 0.5f, "başlığın sağı + 96 + 12");
+            Assert.AreEqual(640f, ((RectTransform)block).anchoredPosition.x, 0.5f, "üçte birin kenarından başlar (üst üste binmez)");
+            Assert.AreEqual(UiBackdrop.ScrimAlpha, block.GetComponent<Image>().color.a, 1e-4f, "0,55");
+            Assert.IsNotNull(backdrop.transform.Find("HeaderFadeRight"));
+            Assert.IsNotNull(backdrop.transform.Find("HeaderFadeDown"));
+            Assert.AreEqual(-232f, ((RectTransform)backdrop.transform.Find("TextSafeFade")).offsetMax.y, 0.5f, "üçte birin geçişi bloğun altında başlar");
+            Assert.AreEqual(UiSprites.FadeLeft, backdrop.transform.Find("TextSafeFade").GetComponent<Image>().sprite, "geçiş perdeye bitişik tarafta opak");
+        }
+
+        [Test]
+        public void MenuOmurgasi_KisaSutundaSikisir_SekmeAsla48AltinaInmez_AraliklarKalir()
+        {
+            const float fixedHeight = 8f + 50f + 25f + 48f + 8f + 25f;   // caption gap + PLAY caption + label + QUIT + gap + build line
+            MainMenuScreen.NavRhythm full = MainMenuScreen.NavRhythmFor(900f, fixedHeight);
+            Assert.AreEqual(72f, full.Play, "yeterli sütunda tam ritim");
+            Assert.AreEqual(56f, full.Tab);
+            Assert.AreEqual(8f, full.Gap);
+
+            MainMenuScreen.NavRhythm compact = MainMenuScreen.NavRhythmFor(625f, fixedHeight);   // UI 1.2 × TextScale 1.25 at 1080p
+            Assert.Less(compact.Need(fixedHeight), full.Need(fixedHeight), "kısa sütunda sıkışır");
+            Assert.LessOrEqual(compact.Need(fixedHeight), 625f, "sekmeler QUIT'e değmez (T11)");
+            Assert.Greater(compact.Gap, 0f, "sekmeler birbirine değmez");
+
+            MainMenuScreen.NavRhythm tight = MainMenuScreen.NavRhythmFor(300f, fixedHeight);
+            Assert.GreaterOrEqual(tight.Tab, UiTokens.TargetPreferred, "sekme 48'in altına inmez");
+            Assert.Greater(tight.Gap, 0f);
+            Assert.AreEqual(full.Tab, MainMenuScreen.NavRhythmFor(0f, fixedHeight).Tab, "yerleşmemiş sütun: tam ritim");
+        }
+
+        [Test]
         public void Paralaks_TakipEder_FenerNefesAlir_AzHareketteSabit()
         {
             UiBackdrop backdrop = UiBackdrop.Create(_root);

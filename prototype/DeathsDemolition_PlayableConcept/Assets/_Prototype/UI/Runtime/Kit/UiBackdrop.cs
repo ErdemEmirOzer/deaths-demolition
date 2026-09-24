@@ -38,6 +38,9 @@ namespace DD.Prototype.UI
         public const string MaskShader = "DD/UI/MaskTint";
 
         private static Texture2D s_streak;
+
+        /// <summary>Capture seam (<c>-ddUiLook x,y</c>): a fixed look target instead of the pointer / stick; null = live.</summary>
+        public static Vector2? LookOverride;
         private static Material s_mask;
 
         private RectTransform _root;
@@ -45,6 +48,7 @@ namespace DD.Prototype.UI
         private RectTransform _mid;
         private RectTransform _near;
         private RawImage _lantern;
+        private RectTransform _thirdFade;
         private Vector2 _look;
         private bool _built;
 
@@ -102,9 +106,9 @@ namespace DD.Prototype.UI
             else if (_lantern != null)
             {
                 _lantern.material = mask;
-                Color amber = UiTokens.Get(UiColor.StateWarning); // Amber300 #F7C766 (U4; menu_plates.json tint)
-                amber.a = LanternPeak;
-                _lantern.color = amber;
+                Color glow = UiTokens.Get(UiColor.LanternGlow); // decorative Amber300 (menu_plates.json tint), never a state token
+                glow.a = LanternPeak;
+                _lantern.color = glow;
             }
 
             RawImage near = Band("Near", Resources.Load<Texture2D>("MenuPlates/plate_near"), NearParallax);
@@ -124,14 +128,70 @@ namespace DD.Prototype.UI
             RectTransform scrimRect = UiFactory.Fill((RectTransform)scrim.transform);
             scrimRect.anchorMax = new Vector2(TextSafeFraction, 1f);
             SetAlpha(scrim, ScrimAlpha);
-            Image fade = UiFactory.NewImage("TextSafeFade", root, UiColor.SurfaceBase, UiSprites.FadeRight);
-            RectTransform fadeRect = UiFactory.Fill((RectTransform)fade.transform);
-            fadeRect.anchorMin = new Vector2(TextSafeFraction, 0f);
-            fadeRect.anchorMax = new Vector2(TextSafeFraction + ScrimFade, 1f);
+            // FadeLeft = opaque at its left edge, i.e. against the scrim (FadeRight ran the
+            // other way and drew a seam at the fade's far edge - s6d frames).
+            Image fade = UiFactory.NewImage("TextSafeFade", root, UiColor.SurfaceBase, UiSprites.FadeLeft);
+            _thirdFade = UiFactory.Fill((RectTransform)fade.transform);
+            _thirdFade.anchorMin = new Vector2(TextSafeFraction, 0f);
+            _thirdFade.anchorMax = new Vector2(TextSafeFraction + ScrimFade, 1f);
             SetAlpha(fade, ScrimAlpha);
 
             _built = true;
             Place(Vector2.zero);
+        }
+
+        /// <summary>
+        /// AD 6ab MUST-2: the header's text-safe block. SurfaceBase 0.55 from the left third's
+        /// edge to <paramref name="right"/> px and from the top down to <paramref name="bottom"/>
+        /// px (root-local, measured from the top-left). It fades out over 8 % of the width to
+        /// the right and 8 % of the height below, so the Display title and subtitle read at
+        /// 21:9 and on a Mac, where the crop puts pale sky behind them. It joins the left-third
+        /// scrim without doubling it: that scrim's own fade starts under the block.
+        /// </summary>
+        public void CoverHeader(float right, float bottom)
+        {
+            Rect r = _root.rect;
+            float third = r.width * TextSafeFraction;
+            if (!_built || right <= third || bottom <= 0f)
+            {
+                return;
+            }
+
+            Image block = UiFactory.NewImage("HeaderScrim", _root, UiColor.SurfaceBase);
+            TopLeft((RectTransform)block.transform, third, 0f, right - third, bottom);
+            SetAlpha(block, ScrimAlpha);
+
+            Image fadeRight = UiFactory.NewImage("HeaderFadeRight", _root, UiColor.SurfaceBase, UiSprites.FadeLeft);
+            TopLeft((RectTransform)fadeRight.transform, right, 0f, r.width * ScrimFade, bottom);
+            SetAlpha(fadeRight, ScrimAlpha);
+
+            Image fadeDown = UiFactory.NewImage("HeaderFadeDown", _root, UiColor.SurfaceBase, UiSprites.FadeDown);
+            TopLeft((RectTransform)fadeDown.transform, third, bottom, right - third, r.height * ScrimFade);
+            SetAlpha(fadeDown, ScrimAlpha);
+
+            if (_thirdFade != null)
+            {
+                _thirdFade.offsetMax = new Vector2(_thirdFade.offsetMax.x, -bottom);
+            }
+        }
+
+        /// <summary>The header block's right edge (root-local px), or 0 when there is none (tests).</summary>
+        public float HeaderRight
+        {
+            get
+            {
+                Transform block = _root != null ? _root.Find("HeaderScrim") : null;
+                return block != null ? ((RectTransform)block).anchoredPosition.x + ((RectTransform)block).sizeDelta.x : 0f;
+            }
+        }
+
+        private static void TopLeft(RectTransform rect, float x, float y, float width, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.sizeDelta = new Vector2(width, height);
+            rect.anchoredPosition = new Vector2(x, -y);
         }
 
         /// <summary>A cover-fit plate band, oversized by its parallax on every side so a drift never shows an edge.</summary>
@@ -185,7 +245,7 @@ namespace DD.Prototype.UI
 
         private void Update()
         {
-            Tick(Time.unscaledDeltaTime, Time.unscaledTime, LookTarget());
+            Tick(Time.unscaledDeltaTime, Time.unscaledTime, LookOverride ?? LookTarget());
         }
 
         /// <summary>One frame: follow <paramref name="look"/> (−1..1) and breathe. Tests drive it directly.</summary>

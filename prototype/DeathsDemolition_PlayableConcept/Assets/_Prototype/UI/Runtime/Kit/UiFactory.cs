@@ -171,6 +171,16 @@ namespace DD.Prototype.UI
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             scaler.referencePixelsPerUnit = 100f;
 
+            // Apply the scaler NOW. It was added with its defaults (its OnEnable ran inside
+            // AddComponent), so until its next Update the canvas still measured screen pixels at
+            // scale 1: every build-time measurement (pane width, caption heights, the menu
+            // spine's rhythm, the header block) was taken on the wrong canvas at any UI scale
+            // ≠ 1 or any screen ≠ 1080p (WP-068 AD 6ab MUST-4: the spine kept its full rhythm at
+            // UI scale 1.2 and QUIT landed on CONTROLS).
+            scaler.enabled = false;
+            scaler.enabled = true;
+            Canvas.ForceUpdateCanvases();
+
             return canvas;
         }
 

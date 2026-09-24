@@ -79,7 +79,8 @@ namespace DD.Prototype.Tests.EditMode
             new object[] { UiColor.InkStroke, "#12100F", 0.90f, null },
             new object[] { UiColor.GoldLeaf, "#D9A93C", 1f, null },
             new object[] { UiColor.SilverLeaf, "#F3EEE3", 1f, null },
-            new object[] { UiColor.HoldFill, "#F3EEE3", 0.25f, null }
+            new object[] { UiColor.HoldFill, "#F3EEE3", 0.25f, null },
+            new object[] { UiColor.LanternGlow, "#F7C766", 1f, null }
         };
 
         [Test]

@@ -37,6 +37,7 @@ namespace DD.Prototype.UI
         public const float RevealTail = 96f;
 
         public const float WheelStep = 40f;
+        public const float ClipSoftness = 16f;
 
         private ScrollRect _scroll;
         private RectTransform _viewport;
@@ -86,6 +87,8 @@ namespace DD.Prototype.UI
             _viewport = UiFactory.NewRect("Viewport", root);
             UiFactory.Fill(_viewport);
             UiFactory.ClipContent(_viewport);
+            // A row cut by the edge reads as scrolling, not as a clipped label (AD 6ab SHOULD-2).
+            _viewport.GetComponent<RectMask2D>().softness = new Vector2Int(0, (int)ClipSoftness);
             // A transparent raycast surface: the wheel over a gap between rows still scrolls.
             Image catcher = _viewport.gameObject.AddComponent<Image>();
             catcher.color = UiTokens.Get(UiColor.Transparent);

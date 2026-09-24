@@ -67,6 +67,8 @@ namespace DD.Prototype.UI
         private bool _focusPaneOnOpen;
 
         private RectTransform _paneHost;
+        private UiBackdrop _plates;
+        private const float HeaderBlockMargin = 96f;   // AD 6ab MUST-2: title right edge + 96
         private UiContext _pane = UiContext.Profile;
 
         private UiButton _profileTab;
@@ -100,6 +102,7 @@ namespace DD.Prototype.UI
                 "DEATHS DEMOLITION",
                 "An old palace, a garden, and a crowd that never stops arriving.",
                 UiType.Display);
+            CoverHeader();
 
             float top = headerHeight + (int)UiSpace.XXL;
 
@@ -159,6 +162,18 @@ namespace DD.Prototype.UI
             if (plates != null)
             {
                 plates.transform.SetSiblingIndex(1);
+                _plates = plates;
+
+                // AD 6ab MUST-1 / MUST-3: the plates are already Look B graded - no v2 wisteria /
+                // ground veil over them, and no v2 petals until the A3 single-leaf glyph.
+                foreach (Transform child in backdrop)
+                {
+                    if (child.name == "SkyVeil" || child.name == "GroundVeil" || child.name == "Petal")
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                }
+
                 return;
             }
 
@@ -185,6 +200,36 @@ namespace DD.Prototype.UI
         }
 
 
+        /// <summary>AD 6ab MUST-2: the header block from the left edge to the title's right edge + 96 (+ 12 parallax), down to the rule + 8 (+ 12).</summary>
+        private void CoverHeader()
+        {
+            if (_plates == null)
+            {
+                return;
+            }
+
+            Transform titleTransform = Content.Find("Title");
+            Transform ruleTransform = Content.Find("HeaderRule");
+            TMP_Text title = titleTransform != null ? titleTransform.GetComponent<TMP_Text>() : null;
+            if (title == null || ruleTransform == null)
+            {
+                return;
+            }
+
+            var plateRect = (RectTransform)_plates.transform;
+            var corners = new Vector3[4];
+            title.rectTransform.GetWorldCorners(corners);
+            Vector3 titleTopLeft = plateRect.InverseTransformPoint(corners[1]);
+            ((RectTransform)ruleTransform).GetWorldCorners(corners);
+            Vector3 ruleBottom = plateRect.InverseTransformPoint(corners[0]);
+
+            Rect r = plateRect.rect;
+            float titleWidth = Mathf.Ceil(title.GetPreferredValues(title.text).x);
+            float right = titleTopLeft.x - r.xMin + titleWidth + HeaderBlockMargin + UiBackdrop.NearParallax;
+            float bottom = r.yMax - ruleBottom.y + (int)UiSpace.S + UiBackdrop.NearParallax;
+            _plates.CoverHeader(right, bottom);
+        }
+
         private void OnProfileChanged()
         {
             if (_paneHost != null)
@@ -195,46 +240,125 @@ namespace DD.Prototype.UI
 
         // ============================================================== navigation
 
+        /// <summary>E2 spine rhythm for one column height (AD 6ab MUST-4): PLAY height, tab height, gap between tabs, gap before the PROGRESS group.</summary>
+        public struct NavRhythm
+        {
+            public float Play;
+            public float Tab;
+            public float Gap;
+            public float GroupGap;
+
+            public NavRhythm(float play, float tab, float gap, float groupGap)
+            {
+                Play = play;
+                Tab = tab;
+                Gap = gap;
+                GroupGap = groupGap;
+            }
+
+            /// <summary>Column height this rhythm needs around <paramref name="fixedHeight"/> (PLAY's caption, the group label, the foot).</summary>
+            public float Need(float fixedHeight)
+            {
+                return fixedHeight + Play + GroupGap + (int)UiSpace.S + Tabs(NavTabCount) + NavFootClearance;
+            }
+
+            /// <summary>Height of the PROGRESS group's tabs (six of them) with their gaps.</summary>
+            public float Tabs(int count)
+            {
+                return count * Tab + (count - 1) * Gap;
+            }
+        }
+
+        public const int NavTabCount = 6;
+        public const float NavFootClearance = 16f;   // least air between the last tab and QUIT
+
+        /// <summary>
+        /// The fullest rhythm that fits <paramref name="available"/> px of column around what
+        /// does not change: PLAY's caption, the group label, the foot (QUIT + the build line).
+        /// Full: PLAY 72, tabs 56 + 8, group gap 32. Then 60 (56 + 4, the AD pitch), then a
+        /// 64 / 56 PLAY with 52 / 48 tabs. Tabs never go under 48 (TargetPreferred) and always
+        /// keep a gap (tabs that touch read as one block).
+        /// </summary>
+        public static NavRhythm NavRhythmFor(float available, float fixedHeight)
+        {
+            var steps = new[]
+            {
+                new NavRhythm(PlayButtonHeight, NavButtonHeight, (int)UiSpace.S, (int)UiSpace.XL),
+                new NavRhythm(PlayButtonHeight, NavButtonHeight, (int)UiSpace.XS, (int)UiSpace.L),
+                new NavRhythm(64f, 52f, (int)UiSpace.XS, (int)UiSpace.L),
+                new NavRhythm(56f, UiTokens.TargetPreferred, (int)UiSpace.XS, (int)UiSpace.M),
+                new NavRhythm(56f, UiTokens.TargetPreferred, 2f, (int)UiSpace.S),
+            };
+
+            if (available <= 1f)
+            {
+                return steps[0];   // not laid out yet: the full rhythm
+            }
+
+            for (int i = 0; i < steps.Length; i++)
+            {
+                if (steps[i].Need(fixedHeight) <= available)
+                {
+                    return steps[i];
+                }
+            }
+
+            return steps[steps.Length - 1];
+        }
+
         private void BuildNavigation(RectTransform column)
         {
             var stack = new UiStack(column);
+            float width = column.rect.width;
+            float captionLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
 
-            UiButton play = UiFactory.Button("Play", column, "PLAY", UiButtonVariant.Primary,
-                PrototypeUiFlow.GoToSelection);
-            stack.Add((RectTransform)play.transform, PlayButtonHeight);
-            SetInitialFocus(play);
-            _playButton = play;
-
-            stack.Gap(UiSpace.S);
-
+            // The PLAY caption at its measured height (≤ 2 lines at the column width; the old
+            // fixed 3-line band pushed the tabs into QUIT at UI scale 1.2 × TextScale 1.25).
             TMP_Text playHint = UiFactory.Label(
                 "PlayHint", column,
                 "Choose a skin and a classic weapon, then fight for the highest round you can reach.",
                 UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)playHint.transform, UiFactory.LineHeight(UiType.Caption) * 3f);
+            float hintHeight = width > 1f
+                ? Mathf.Max(captionLine, Mathf.Ceil(playHint.GetPreferredValues(playHint.text, width, 0f).y))
+                : captionLine * 2f;
 
-            stack.Gap(UiSpace.XL);
+            // The foot: QUIT over the build line.
+            TMP_Text build = UiFactory.Label(
+                "BuildNote", column,
+                // WP-025 version stamp (WP-022B binding): "wp-022-…-g1234567 · release · 2026-09-16".
+                "Prototype build · " + DD.Prototype.Core.Build.BuildInfo.Read().Label,
+                UiType.Caption, UiColor.TextMuted);
+            float buildHeight = width > 1f
+                ? Mathf.Max(captionLine, Mathf.Ceil(build.GetPreferredValues(build.text, width, 0f).y))
+                : captionLine;
+            float foot = UiTokens.TargetPreferred + (int)UiSpace.S + buildHeight;
+            float labelHeight = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            NavRhythm rhythm = NavRhythmFor(column.rect.height, (int)UiSpace.S + hintHeight + labelHeight + foot);
 
+            UiButton play = UiFactory.Button("Play", column, "PLAY", UiButtonVariant.Primary,
+                PrototypeUiFlow.GoToSelection);
+            stack.Add((RectTransform)play.transform, rhythm.Play);
+            SetInitialFocus(play);
+            _playButton = play;
+            stack.Gap(UiSpace.S);
+            stack.Add((RectTransform)playHint.transform, hintHeight);
+
+            stack.Cursor += rhythm.GroupGap;
             TMP_Text sectionLabel = UiFactory.Label(
                 "MenuLabel", column, "PROGRESS", UiType.Label, UiColor.TextMuted);
-            stack.Add((RectTransform)sectionLabel.transform, UiFactory.LineHeight(UiType.Label));
-
+            stack.Add((RectTransform)sectionLabel.transform, labelHeight);
             stack.Gap(UiSpace.S);
 
-            _profileTab = AddTab(ref stack, column, "PROFILE", UiContext.Profile, "Menu.Profile");
-            stack.Gap(UiSpace.S);
-            _statisticsTab = AddTab(ref stack, column, "STATISTICS", UiContext.Statistics, "Menu.Statistics");
-            stack.Gap(UiSpace.S);
-            _achievementsTab = AddTab(ref stack, column, "ACHIEVEMENTS", UiContext.Achievements, "Menu.Achievements");
-            stack.Gap(UiSpace.S);
-            _settingsTab = AddTab(ref stack, column, "SETTINGS", UiContext.Settings, "Menu.Settings");
-            stack.Gap(UiSpace.S);
-            _controlsTab = AddTab(ref stack, column, "CONTROLS", UiContext.Controls, "Menu.Controls");
-            stack.Gap(UiSpace.S);
-            _accessibilityTab = AddTab(ref stack, column, "ACCESSIBILITY", UiContext.Accessibility, "Menu.Accessibility"); // AD v006 MUST-2 → AP-012 v003 person-in-circle glyph (gamepad stays with CONTROLS)
+            _profileTab = AddTab(ref stack, column, "PROFILE", UiContext.Profile, "Menu.Profile", rhythm);
+            _statisticsTab = AddTab(ref stack, column, "STATISTICS", UiContext.Statistics, "Menu.Statistics", rhythm);
+            _achievementsTab = AddTab(ref stack, column, "ACHIEVEMENTS", UiContext.Achievements, "Menu.Achievements", rhythm);
+            _settingsTab = AddTab(ref stack, column, "SETTINGS", UiContext.Settings, "Menu.Settings", rhythm);
+            _controlsTab = AddTab(ref stack, column, "CONTROLS", UiContext.Controls, "Menu.Controls", rhythm);
+            _accessibilityTab = AddTab(ref stack, column, "ACCESSIBILITY", UiContext.Accessibility, "Menu.Accessibility", rhythm); // AD v006 MUST-2 → AP-012 v003 person-in-circle glyph (gamepad stays with CONTROLS)
 
             // Quit is docked to the foot of the column rather than to the cursor: a
-            // destructive action should not sit adjacent to the reading tabs.
+            // destructive action should not sit adjacent to the reading tabs. The build line
+            // sits under it (AD 6ab MUST-4).
             UiButton quit = UiFactory.Button("Quit", column, "QUIT", UiButtonVariant.Secondary,
                 PrototypeUiFlow.Quit);
             RectTransform quitRect = (RectTransform)quit.transform;
@@ -242,31 +366,31 @@ namespace DD.Prototype.UI
             quitRect.anchorMax = new Vector2(1f, 0f);
             quitRect.pivot = new Vector2(0.5f, 0f);
             quitRect.sizeDelta = new Vector2(0f, UiTokens.TargetPreferred);
-            quitRect.anchoredPosition = Vector2.zero;
+            quitRect.anchoredPosition = new Vector2(0f, buildHeight + (int)UiSpace.S);
+
+            RectTransform buildRect = (RectTransform)build.transform;
+            buildRect.anchorMin = new Vector2(0f, 0f);
+            buildRect.anchorMax = new Vector2(1f, 0f);
+            buildRect.pivot = new Vector2(0.5f, 0f);
+            buildRect.sizeDelta = new Vector2(0f, buildHeight);
+            buildRect.anchoredPosition = Vector2.zero;
 
             // Explicit vertical chain (WP-022 gamepad): PLAY -> tabs -> QUIT, no wrap - Up
             // from PLAY must never land on QUIT. Automatic navigation would also reach the
             // pane's sliders from a tab, which is what the horizontal axis is for.
             UiInput.ChainVertical(false, play, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, _controlsTab, _accessibilityTab, quit);
-
-            TMP_Text build = UiFactory.Label(
-                "BuildNote", column,
-                // WP-025 version stamp (WP-022B binding): "wp-022-…-g1234567 · release · 2026-09-16".
-                "Prototype build · " + DD.Prototype.Core.Build.BuildInfo.Read().Label,
-                UiType.Caption, UiColor.TextMuted);
-            RectTransform buildRect = (RectTransform)build.transform;
-            buildRect.anchorMin = new Vector2(0f, 0f);
-            buildRect.anchorMax = new Vector2(1f, 0f);
-            buildRect.pivot = new Vector2(0.5f, 0f);
-            buildRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Caption) * 2f);
-            buildRect.anchoredPosition = new Vector2(0f, UiTokens.TargetPreferred + (int)UiSpace.M);
         }
 
-        private UiButton AddTab(ref UiStack stack, RectTransform column, string label, UiContext pane, string icon)
+        private UiButton AddTab(ref UiStack stack, RectTransform column, string label, UiContext pane, string icon, NavRhythm rhythm)
         {
+            if (pane != UiContext.Profile)
+            {
+                stack.Cursor += rhythm.Gap;
+            }
+
             UiButton button = UiFactory.Button("Tab." + pane, column, label, UiButtonVariant.Nav,
                 () => ShowPane(pane));
-            stack.Add((RectTransform)button.transform, NavButtonHeight);
+            stack.Add((RectTransform)button.transform, rhythm.Tab);
             UiInput.LeadingIcon(button, icon, UiColor.TextSecondary, 24f);
             return button;
         }
@@ -438,7 +562,7 @@ namespace DD.Prototype.UI
         private const float SettingsColumnWidth = 720f;  // E6: the control column's measure
         private const float SettingLabelWidth = 240f;
         private const float PreviewMinWidth = 240f;
-        private const float PreviewHudScale = 0.5f;      // E6: the HUD preview at 1:2
+        private const float PreviewHudScale = 1f;        // AD 6ab SHOULD-3: 1:1 × UI scale, clipped by the well (legible, and 90 % / 120 % visibly change)
         private const float PreviewBlockWidth = 420f;    // the HUD health block (RunHudScreen.BlockWidth)
         private const float PreviewBlockHeight = 104f;
         private const float PreviewHudMargin = 48f;
@@ -459,7 +583,7 @@ namespace DD.Prototype.UI
         /// </list>
         /// Rows are 56 px on a ≤ 720 px control column inside a <see cref="UiScrollView"/>. At
         /// TextScale 1.25 or in a short window the pane scrolls and focus pulls the row into
-        /// view, so nothing is clipped. The right well previews the HUD at 1:2 in the chosen UI
+        /// view, so nothing is clipped. The right well previews the HUD at 1:1 in the chosen UI
         /// scale. <see cref="UiSettings"/> owns every value, and readouts update in place (a
         /// rebuild would destroy the control under the pointer mid-drag).
         /// </summary>
@@ -618,7 +742,7 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// E6 preview well (SHOULD): the HUD health block at 1:2 in a Look B screen corner,
+        /// E6 preview well (SHOULD): the HUD health block at 1:1 × UI scale in a Look B screen corner,
         /// sized by the UI scale the slider shows, so the change is visible before the next screen.
         /// </summary>
         private void BuildScalePreview(RectTransform body, float left)

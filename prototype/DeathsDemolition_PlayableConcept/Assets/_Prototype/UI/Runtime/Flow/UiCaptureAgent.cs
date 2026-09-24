@@ -108,6 +108,20 @@ namespace DD.Prototype.UI
             {
                 UiSettings.ReducedMotion = true;
             }
+
+            // -ddUiLook x,y: hold the menu backdrop's parallax at a corner (−1..1), AD 6ab frames.
+            string look = Arg("-ddUiLook");
+            if (!string.IsNullOrEmpty(look))
+            {
+                string[] parts = look.Split(',');
+                float x, y;
+                if (parts.Length == 2
+                    && float.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+                    && float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y))
+                {
+                    UiBackdrop.LookOverride = new Vector2(x, y);
+                }
+            }
         }
 
         private static void WritePng(string path)

@@ -199,7 +199,14 @@ namespace DD.Prototype.UI
         SilverLeaf,
 
         /// <summary>WP-068 slice 5b (AD MUST-2): a hold control's progress sweep - Cream100 0.25 (the label stays ≥ 4.5:1 over it); never vermilion (registry).</summary>
-        HoldFill
+        HoldFill,
+
+        /// <summary>
+        /// WP-068 slice 6 (AD 6ab SHOULD-1): the menu plate's lantern glow. Decorative, carries
+        /// no meaning - never a state. Amber300 like the world lanterns, at α ≤ 0.35 (breath
+        /// floor 0.19), so a change to the warning hue can never recolour the garden.
+        /// </summary>
+        LanternGlow
     }
 
     /// <summary>
@@ -355,6 +362,7 @@ namespace DD.Prototype.UI
                 case UiColor.SheenRim: return WithAlpha(Cream100, UiMaterialSpec.SheenRimAlpha);
                 case UiColor.InkStroke: return WithAlpha(Sumi900, 0.90f);
                 case UiColor.HoldFill: return WithAlpha(Cream100, 0.25f);
+                case UiColor.LanternGlow: return Amber300;   // decorative: the menu plate's lanterns
                 case UiColor.GoldLeaf: return Gold400;   // reserve: currency / price / Special only
                 case UiColor.SilverLeaf: return Cream100; // ceremony: medals, NEW BEST, level
 
