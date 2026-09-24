@@ -80,12 +80,14 @@ namespace DD.Prototype.UI
         private TMP_Text _shakeValue;
 
         // M4-R1 N2 (WP-070 §5.1): the segmented CAMERA selector and the chosen mode's one-line description.
-        public static readonly string[] CameraModeNames = { "TOP-DOWN", "THIRD PERSON", "FIRST PERSON" };
+        // R1 content pack (planning/content/r1-strings.json): camera.mode.* and camera.mode.*.desc. The first-person line was
+        // rewritten in the pack for the rear-edge arc (AD R1-A SHOULD-2): threats behind are marked, not unseen.
+        public static readonly string[] CameraModeNames = { "TOP-DOWN", "THIRD-PERSON", "FIRST-PERSON" };
         public static readonly string[] CameraModeCaptions =
         {
-            "The original view: the whole street, aim with the pointer.",
-            "Over the shoulder: look with the mouse or right stick, aim at the centre.",
-            "Eye level: the closest view; threats behind you show at the screen edge.",   // AD R1-A SHOULD-2
+            "The whole courtyard in view. Aim with the cursor.",
+            "Over the shoulder. Aim from the centre of the screen.",
+            "Eye level. The sharpest aim; threats behind you show at the edge.",
         };
 
         private readonly UiButton[] _cameraButtons = new UiButton[3];

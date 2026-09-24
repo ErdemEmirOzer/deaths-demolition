@@ -1756,19 +1756,19 @@
     "tr": "Omuz üstünden. Ekranın ortasından nişan al."
   },
   "camera.mode.first_person.desc": {
-    "en": "Eye level. The sharpest aim, and nothing behind you.",
-    "tr": "Göz hizası. En keskin nişan; arkan görünmez."
+    "en": "Eye level. The sharpest aim; threats behind you show at the edge.",
+    "tr": "Göz hizası. En keskin nişan; arkandaki tehdit kenarda görünür."
   },
   "camera.caption": {
     "en": "The view changes as soon as you choose. Rounds and rules stay the same.",
     "tr": "Görünüm seçer seçmez değişir. Roundlar ve kurallar aynı kalır."
   },
   "camera.fov.third_person": {
-    "en": "THIRD-PERSON FIELD OF VIEW",
+    "en": "THIRD-PERSON FOV",
     "tr": "ÜÇÜNCÜ ŞAHIS GÖRÜŞ ALANI"
   },
   "camera.fov.first_person": {
-    "en": "FIRST-PERSON FIELD OF VIEW",
+    "en": "FIRST-PERSON FOV",
     "tr": "BİRİNCİ ŞAHIS GÖRÜŞ ALANI"
   },
   "camera.shoulder": {

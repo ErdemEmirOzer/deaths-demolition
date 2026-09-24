@@ -501,15 +501,19 @@ Key `tips.NNN`. Group / class follow `UiLoadingTips` (FACT = rule, HINT = onboar
 | `camera.mode.first_person` | FIRST-PERSON | BİRİNCİ ŞAHIS |
 | `camera.mode.top_down.desc` | The whole courtyard in view. Aim with the cursor. | Bütün avlu görünür. İmleçle nişan al. |
 | `camera.mode.third_person.desc` | Over the shoulder. Aim from the centre of the screen. | Omuz üstünden. Ekranın ortasından nişan al. |
-| `camera.mode.first_person.desc` | Eye level. The sharpest aim, and nothing behind you. | Göz hizası. En keskin nişan; arkan görünmez. |
+| `camera.mode.first_person.desc` | Eye level. The sharpest aim; threats behind you show at the edge. | Göz hizası. En keskin nişan; arkandaki tehdit kenarda görünür. |
 | `camera.caption` | The view changes as soon as you choose. Rounds and rules stay the same. | Görünüm seçer seçmez değişir. Roundlar ve kurallar aynı kalır. |
-| `camera.fov.third_person` | THIRD-PERSON FIELD OF VIEW | ÜÇÜNCÜ ŞAHIS GÖRÜŞ ALANI |
-| `camera.fov.first_person` | FIRST-PERSON FIELD OF VIEW | BİRİNCİ ŞAHIS GÖRÜŞ ALANI |
+| `camera.fov.third_person` | THIRD-PERSON FOV | ÜÇÜNCÜ ŞAHIS GÖRÜŞ ALANI |
+| `camera.fov.first_person` | FIRST-PERSON FOV | BİRİNCİ ŞAHIS GÖRÜŞ ALANI |
 | `camera.shoulder` | SHOULDER | OMUZ |
 | `camera.shoulder.left` | LEFT | SOL |
 | `camera.shoulder.right` | RIGHT | SAĞ |
 | `camera.head_bob` | HEAD BOB | KAFA SALLANTISI |
 | `camera.focus` | FOCUS | ODAK |
+
+S-09 (R1-A, 24.09):
+- `camera.mode.first_person.desc` now names the rear-edge arc, which marks a threat behind in first person (WP-070 §7.1, AD R1-A SHOULD-2); "nothing behind you" contradicted it.
+- `camera.fov.*` `en` is shortened to "… FOV" so the Settings label column (240 px) holds it at TextScale 1.25. The `tr` column is unchanged.
 
 ## 6 · Achievements for the new weapons and Specials (12)
 

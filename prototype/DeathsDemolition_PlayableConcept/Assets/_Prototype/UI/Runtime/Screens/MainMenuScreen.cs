@@ -646,11 +646,11 @@ namespace DD.Prototype.UI
             UiSwitch invert = UiSwitch.Create("InvertLook", content, "INVERT LOOK", look.LookInvertY,
                 on => UpdatePreferences(p => p.LookInvertY = on));
             AddSettingRow(ref stack, invert.transform);
-            UiSlider fpFov = UiSlider.Create("Setting.FIRST PERSON FOV", content, "FIRST PERSON FOV",
+            UiSlider fpFov = UiSlider.Create("Setting.FIRST PERSON FOV", content, "FIRST-PERSON FOV",
                 CameraSystem.CameraModeSettings.MinFirstPersonFov, CameraSystem.CameraModeSettings.MaxFirstPersonFov, UiSettings.FirstPersonFov, 1f,
                 Degrees, v => UiSettings.FirstPersonFov = Mathf.Round(v), SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, fpFov.transform);
-            UiSlider tpFov = UiSlider.Create("Setting.THIRD PERSON FOV", content, "THIRD PERSON FOV",
+            UiSlider tpFov = UiSlider.Create("Setting.THIRD PERSON FOV", content, "THIRD-PERSON FOV",
                 CameraSystem.CameraModeSettings.MinThirdPersonFov, CameraSystem.CameraModeSettings.MaxThirdPersonFov, UiSettings.ThirdPersonFov, 1f,
                 Degrees, v => UiSettings.ThirdPersonFov = Mathf.Round(v), SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, tpFov.transform);
