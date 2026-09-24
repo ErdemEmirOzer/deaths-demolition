@@ -203,6 +203,8 @@ namespace DD.Prototype.UI
         private const float SpecialTickLength = 12f;
         private const float SpecialTickWidth = 1f;          // AD 8c SHOULD-1: 1 px a second, every 5th 2 px (the health strong-tick rule)
         private const float SpecialTickStrongWidth = 2f;
+        private const float SparkStartRadius = 66f;   // the Special ring's stroke (Ring.Progress132)
+        private const float SparkSpeed = 100f;        // px/s at the fastest spark: 66 → 96 over the 0.3 s life
         private const int SpecialTickCapacity = 30;
         private RectTransform _specialTicks;
         private readonly Image[] _specialTickMarks = new Image[SpecialTickCapacity];
@@ -491,12 +493,14 @@ namespace DD.Prototype.UI
             LaySpecialTicks(11f);
             _specialTicks.gameObject.SetActive(false);
 
-            // The ready sparks: 12 gold quads from the ring's centre, ≤ 0.3 s (Flash × FlashScale; none under reduced motion).
+            // The ready sparks: 12 gold quads leave the ring's stroke outward, r 66 → 96 in 0.3 s (AD 8c SHOULD-2: the timer
+            // numeral stays clean), speed 100 px/s at the fastest (the shader spreads 0.55–1.0), a light fall; Flash × FlashScale,
+            // none under reduced motion.
             RectTransform sparkRect = UiFactory.NewRect("Sparks", ringRoot);
             UiFactory.Fill(sparkRect);
             _specialSparks = sparkRect.gameObject.AddComponent<UiFxParticles>();
             _specialSparks.color = UiTokens.Get(UiColor.BarSpecial);
-            _specialSparks.Configure(12, 5f, 260f, 420f, 0.3f);
+            _specialSparks.Configure(12, 5f, SparkSpeed, 120f, 0.3f, 0f, null, SparkStartRadius);
 
             // The pip lives in the ring's centre while the weapon is on the ground: the
             // eye that learned to look there for the timer still finds the answer - an

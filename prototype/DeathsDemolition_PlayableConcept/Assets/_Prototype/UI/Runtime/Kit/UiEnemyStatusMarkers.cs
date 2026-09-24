@@ -35,6 +35,7 @@ namespace DD.Prototype.UI
         private const float HeadHeight = 2.1f;
         private const float MinChipWidth = 88f;
         private static readonly Vector2 Parked = new Vector2(-10000f, -10000f);
+        private static readonly Vector3[] s_corners = new Vector3[4];
 
         private enum State { None = 0, Netted = 1, Dazed = 2 }
 
@@ -169,6 +170,7 @@ namespace DD.Prototype.UI
                 if (state != State.None && Project(camera, z, canvasSize, out at))
                 {
                     _chips[i].anchoredPosition = at;
+                    ReportAvoid(z, _chips[i]);
                     if (state != _shown[i])
                     {
                         Style(i, state); // NET → DAZED on the same body: a new word stamps
@@ -211,6 +213,7 @@ namespace DD.Prototype.UI
                     _owned[slot] = true;
                     _leftAt[slot] = -1f;
                     _chips[slot].anchoredPosition = at;
+                    ReportAvoid(z, _chips[slot]);
                     Style(slot, state);
                     UiMotion.KillTarget(_groups[slot], false);
                     _groups[slot].alpha = 1f;
@@ -220,6 +223,18 @@ namespace DD.Prototype.UI
             }
 
             VisibleCount = bound;
+        }
+
+        /// <summary>
+        /// 8-R · A SHOULD-2 / AD 8c SHOULD-6 (S-07 E18b contract): a bound stamp tells the damage numbers where it stands, every
+        /// frame, so a number on the same body rises above it. Screen px, bottom-left (the overlay canvas's world corners);
+        /// target = the body's instance id; a report not renewed lapses after one frame. No allocation.
+        /// </summary>
+        private static void ReportAvoid(ZombieEnemy z, RectTransform chip)
+        {
+            chip.GetWorldCorners(s_corners);
+            UiWorldNumbers.ReportAvoidRect(z.GetInstanceID(),
+                Rect.MinMaxRect(s_corners[0].x, s_corners[0].y, s_corners[2].x, s_corners[2].y));
         }
 
         private static State StateOf(ZombieEnemy z)
