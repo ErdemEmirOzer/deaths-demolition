@@ -153,6 +153,7 @@ Shader "DD/Foliage Wind"
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile _ _FORWARD_PLUS
             #pragma multi_compile_fragment _ _LIGHT_LAYERS   // WP-038G: the character fill light stays on the character rendering layer
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES   // WP-075 C2: the cloud shadow (main-light cookie, CloudShadowDriver)
             #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
             #pragma multi_compile_fog
             #pragma multi_compile_instancing

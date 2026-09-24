@@ -84,6 +84,17 @@ namespace DD.Art.Pipeline.EditorTools
                 return;
             }
 
+            // WP-075 C2: the cloud-shadow cookie has its own rules (ArtImportContract.ApplyLightCookie).
+            if (ArtImportContract.IsLightCookieTexture(assetPath))
+            {
+                if (ArtImportContract.ApplyLightCookie((TextureImporter)assetImporter))
+                {
+                    Debug.Log("[ArtImportContract] light cookie rules applied to " + assetPath);
+                }
+
+                return;
+            }
+
             // WP-019: AP-010 effect textures have their own rules (ArtVfxContract).
             if (ArtVfxContract.IsVfxTexture(assetPath))
             {

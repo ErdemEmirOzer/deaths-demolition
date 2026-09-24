@@ -31,6 +31,11 @@ namespace DD.Art.Tests.PlayMode
     /// gameplay camera renders it). The <c>post</c> set is what Lightroom grades and what the LUT
     /// is measured against; the <c>raw</c> set is the A/B floor. Repeatable: same poses, same
     /// seeds, PNGs under <c>DD_ART_CAPTURE_DIR/look-ref/</c> (or the temp cache).
+    ///
+    /// WP-075 C2 (direction §6.2): fifteen frames — the eight, "center" a second time in the cloud shadow
+    /// (<c>center-shadow</c>), three third-person and three first-person frames (<see cref="LookV3Poses"/>, the WP-070 rig's
+    /// shoulder / eye heights) — at fixed cookie phases: the sun patch on the centre for every frame but
+    /// <c>center-shadow</c>, found from the cookie itself (<see cref="CookiePhases"/>), written to the manifest.
     /// </summary>
     [TestFixture]
     [Category("WP029")]
@@ -50,12 +55,27 @@ namespace DD.Art.Tests.PlayMode
             new ArtVisualRegression.CameraPose("presentation", new Vector3(-45f, 30f, -75f), new Vector3(5f, 0f, 0f), 42f)
         };
 
+        /// <summary>WP-075 §6.2 · TP (pivot 1.45 + 0.35 m, 2.8 m boom, 0.55 m shoulder) and FP (eye 1.62 m) frames, 60° like the rig.</summary>
+        public static readonly ArtVisualRegression.CameraPose[] LookV3Poses =
+        {
+            new ArtVisualRegression.CameraPose("tp-north-palace", new Vector3(0.55f, 2.4f, -0.7f), new Vector3(0f, 4f, 34f), 60f),
+            new ArtVisualRegression.CameraPose("tp-west-bamboo", new Vector3(-17.3f, 2.4f, -5.55f), new Vector3(-45f, 3f, -5f), 60f),
+            new ArtVisualRegression.CameraPose("tp-east-sakura", new Vector3(15.3f, 2.4f, 0.55f), new Vector3(32f, 3.5f, 0f), 60f),
+            new ArtVisualRegression.CameraPose("fp-plaza-palace", new Vector3(0f, 1.62f, -6f), new Vector3(0f, 3.5f, 34f), 60f),
+            new ArtVisualRegression.CameraPose("fp-south-pond", new Vector3(4f, 1.62f, -16f), new Vector3(4f, 0.3f, -32f), 60f),
+            new ArtVisualRegression.CameraPose("fp-horizon-north", new Vector3(-30f, 1.62f, 25f), new Vector3(-30f, 10f, 300f), 60f)
+        };
+
+        public const string CenterShadowPose = "center-shadow";
+        private float? _phaseBefore;
+
         [SetUp]
         public void SetUp()
         {
             LogAssert.ignoreFailingMessages = true;
             RunFlowClock.ClearHolds();
             _director = null;
+            _phaseBefore = CloudShadowDriver.ForcedPhase;
         }
 
         [UnityTearDown]
@@ -63,6 +83,7 @@ namespace DD.Art.Tests.PlayMode
         {
             Time.captureDeltaTime = 0f;
             Time.timeScale = 1f;
+            CloudShadowDriver.ForcedPhase = _phaseBefore;
             if (_director != null) _director.ForceActiveTarget(0, false);
             RunFlowClock.ClearHolds();
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
@@ -95,7 +116,7 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(600000)]
-        public IEnumerator ReferansKareleri_8Kadraj_HamVePost_1080p()
+        public IEnumerator ReferansKareleri_15Kadraj_CookieFazli_HamVePost_1080p()
         {
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, "AP005");
             CharacterAssetSet.ResetCache();
@@ -141,9 +162,15 @@ namespace DD.Art.Tests.PlayMode
                 CharacterTests.GameplayPose("crowd40"),
                 new ArtVisualRegression.CameraPose("player-closeup", feet + new Vector3(0f, 4.2f, -4.4f), feet + Vector3.up * 1.0f, 30f)
             };
+            poses.Insert(1, new ArtVisualRegression.CameraPose(CenterShadowPose, WorldPoses[0].position, WorldPoses[0].lookAt, WorldPoses[0].verticalFov));
+            poses.AddRange(LookV3Poses);
+
+            CloudShadowDriver cloud = CloudShadowDriver.Active;
+            Assert.IsNotNull(cloud, "bulut gölgesi (WP-075 C2) güneşte yok");
+            CookiePhases(cloud, Vector3.zero, out float litPhase, out float shadowPhase, out float litValue, out float shadowValue);
 
             string dir = OutputDir();
-            var manifest = new List<string> { "name,pose_position,pose_lookAt,fov,raw,post,warmFrames" };
+            var manifest = new List<string> { "name,pose_position,pose_lookAt,fov,raw,post,warmFrames,cookiePhase" };
             int armored = 0, alive = 0;
             foreach (ZombieEnemy z in ZombieEnemy.Live) { if (z != null && z.IsAlive) { alive++; if (z.Armor != null && z.Armor.EquippedCount > 0) armored++; } }
 
@@ -152,7 +179,10 @@ namespace DD.Art.Tests.PlayMode
             foreach (ArtVisualRegression.CameraPose pose in poses)
             {
                 int warm = 0;
+                float phase = pose.name == CenterShadowPose ? shadowPhase : litPhase;
+                CloudShadowDriver.ForcedPhase = phase;
                 yield return ArtVisualRegression.WarmStreaming(pose, W, H, 90, f => warm = f);
+                cloud.Apply();
                 Time.timeScale = 0f;
                 try
                 {
@@ -162,7 +192,7 @@ namespace DD.Art.Tests.PlayMode
                     try { File.WriteAllBytes(raw, a.EncodeToPNG()); } finally { UnityEngine.Object.DestroyImmediate(a); }
                     Texture2D b = ArtVisualRegression.Capture(pose, W, H, true);
                     try { File.WriteAllBytes(post, b.EncodeToPNG()); } finally { UnityEngine.Object.DestroyImmediate(b); }
-                    manifest.Add(pose.name + "," + V(pose.position) + "," + V(pose.lookAt) + "," + pose.verticalFov.ToString("F0", CultureInfo.InvariantCulture) + "," + Path.GetFileName(raw) + "," + Path.GetFileName(post) + "," + warm);
+                    manifest.Add(pose.name + "," + V(pose.position) + "," + V(pose.lookAt) + "," + pose.verticalFov.ToString("F0", CultureInfo.InvariantCulture) + "," + Path.GetFileName(raw) + "," + Path.GetFileName(post) + "," + warm + "," + phase.ToString("F4", CultureInfo.InvariantCulture));
                 }
                 finally
                 {
@@ -172,8 +202,10 @@ namespace DD.Art.Tests.PlayMode
 
             Time.captureDeltaTime = 0f;
             File.WriteAllLines(Path.Combine(dir, "look-ref-manifest.csv"), manifest);
-            Debug.Log("[DD-TEST] wp029.lookref frames=" + poses.Count + "x2 alive=" + alive + " armored=" + armored + " -> " + dir);
-            Assert.AreEqual(8, poses.Count);
+            Debug.Log("[DD-TEST] wp029.lookref frames=" + poses.Count + "x2 alive=" + alive + " armored=" + armored + " cookie centre lit " + litValue.ToString("F2") + " @" + litPhase.ToString("F3") + " / shadow " + shadowValue.ToString("F2") + " @" + shadowPhase.ToString("F3") + " -> " + dir);
+            Assert.AreEqual(15, poses.Count);
+            Assert.GreaterOrEqual(litValue, 0.8f, "merkez güneş yamasında");
+            Assert.LessOrEqual(shadowValue, 0.5f, "merkez bulut gölgesinde");
             foreach (ArtVisualRegression.CameraPose pose in poses)
             {
                 Assert.IsTrue(File.Exists(Path.Combine(dir, pose.name + "-raw.png")), pose.name + " raw");
@@ -181,6 +213,39 @@ namespace DD.Art.Tests.PlayMode
             }
 
             _director.ForceActiveTarget(0, false);
+        }
+
+        /// <summary>
+        /// The drift phases (1/128 steps) that put <paramref name="point"/> deepest in a sun patch and deepest in the cloud shadow,
+        /// read from the cookie PNG through the driver's own projection (the texture itself is not CPU-readable).
+        /// </summary>
+        public static void CookiePhases(CloudShadowDriver cloud, Vector3 point, out float litPhase, out float shadowPhase, out float litValue, out float shadowValue)
+        {
+            var png = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            try
+            {
+                Assert.IsTrue(png.LoadImage(File.ReadAllBytes("Assets/_Art/Resources/" + WorldAtmosphere.CloudShadow.CookieResourceName + ".png")), "cookie PNG");
+                float? before = CloudShadowDriver.ForcedPhase;
+                litPhase = shadowPhase = 0f;
+                litValue = -1f;
+                shadowValue = 2f;
+                for (int i = 0; i < 128; i++)
+                {
+                    float phase = i / 128f;
+                    CloudShadowDriver.ForcedPhase = phase;
+                    cloud.Apply();
+                    Vector2 uv = cloud.CookieUV(point);
+                    float value = png.GetPixelBilinear(uv.x - Mathf.Floor(uv.x), uv.y - Mathf.Floor(uv.y)).r;
+                    if (value > litValue) { litValue = value; litPhase = phase; }
+                    if (value < shadowValue) { shadowValue = value; shadowPhase = phase; }
+                }
+
+                CloudShadowDriver.ForcedPhase = before;
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(png);
+            }
         }
 
         private static string V(Vector3 v)

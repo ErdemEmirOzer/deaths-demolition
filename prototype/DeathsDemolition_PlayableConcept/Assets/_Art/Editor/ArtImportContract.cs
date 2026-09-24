@@ -586,7 +586,65 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool IsContractTexture(string assetPath)
         {
-            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath) && !IsMenuPlateTexture(assetPath);
+            return IsUnderContract(assetPath) && assetPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && !IsLutTexture(assetPath) && !IsMenuPlateTexture(assetPath) && !IsLightCookieTexture(assetPath);
+        }
+
+        // ------------------------------------------------------------------ WP-075 light cookies
+
+        /// <summary>
+        /// WP-075 C2: the cloud-shadow cookie (AP-023 T_cloud_cookie v002, loaded by name — WorldAtmosphere.CloudShadow) follows its
+        /// own importer rules (<see cref="ApplyLightCookie"/>), not the T_&lt;role&gt;_&lt;Map&gt; contract — the LUT / menu plate precedent.
+        /// </summary>
+        public const string CloudCookiePath = ArtRoot + "/Resources/DD_CloudCookie.png";
+        public const int LightCookieMaxSize = 1024;
+
+        public static bool IsLightCookieTexture(string assetPath)
+        {
+            return assetPath != null && assetPath.Replace('\\', '/') == CloudCookiePath;
+        }
+
+        /// <summary>
+        /// A light cookie: linear single-channel (R) BC4 — 0.40 is a light multiplier, not a colour, and URP reads an R8 / BC4
+        /// cookie as grey (LightCookieShaderFormat.Red) — Repeat (the pattern tiles 240 m), trilinear mips without streaming (a light
+        /// cookie has no renderer for the streaming system to rate; the lowest mip would stay), 1024².
+        /// </summary>
+        public static bool ApplyLightCookie(TextureImporter importer)
+        {
+            bool changed = false;
+            changed |= Set(importer.textureType, TextureImporterType.SingleChannel, v => importer.textureType = v);
+            TextureImporterSettings ts = new TextureImporterSettings();
+            importer.ReadTextureSettings(ts);
+            if (ts.singleChannelComponent != TextureImporterSingleChannelComponent.Red)
+            {
+                ts.singleChannelComponent = TextureImporterSingleChannelComponent.Red;
+                importer.SetTextureSettings(ts);
+                changed = true;
+            }
+
+            changed |= Set(importer.sRGBTexture, false, v => importer.sRGBTexture = v);
+            changed |= Set(importer.alphaSource, TextureImporterAlphaSource.None, v => importer.alphaSource = v);
+            changed |= Set(importer.alphaIsTransparency, false, v => importer.alphaIsTransparency = v);
+            changed |= Set(importer.mipmapEnabled, true, v => importer.mipmapEnabled = v);
+            changed |= Set(importer.streamingMipmaps, false, v => importer.streamingMipmaps = v);
+            changed |= Set(importer.wrapMode, TextureWrapMode.Repeat, v => importer.wrapMode = v);
+            changed |= Set(importer.filterMode, FilterMode.Trilinear, v => importer.filterMode = v);
+            changed |= Set(importer.isReadable, false, v => importer.isReadable = v);
+            changed |= Set(importer.maxTextureSize, LightCookieMaxSize, v => importer.maxTextureSize = v);
+            changed |= Set(importer.textureCompression, TextureImporterCompression.Compressed, v => importer.textureCompression = v);
+            changed |= Set(importer.crunchedCompression, false, v => importer.crunchedCompression = v);
+            TextureImporterPlatformSettings st = importer.GetPlatformTextureSettings(StandalonePlatform);
+            if (!st.overridden || st.format != TextureImporterFormat.BC4 || st.maxTextureSize != LightCookieMaxSize || st.crunchedCompression)
+            {
+                st.overridden = true;
+                st.format = TextureImporterFormat.BC4;
+                st.maxTextureSize = LightCookieMaxSize;
+                st.textureCompression = TextureImporterCompression.Compressed;
+                st.crunchedCompression = false;
+                importer.SetPlatformTextureSettings(st);
+                changed = true;
+            }
+
+            return changed;
         }
 
         // ------------------------------------------------------------------ WP-068 menu plates

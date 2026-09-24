@@ -78,17 +78,46 @@ namespace DD.Prototype.World
         /// </summary>
         public const string SharedSkyResourceName = "DD_Sky_Overcast_v1";
 
-        /// <summary>Overcast key: low contrast, slightly warm, from the south-west.</summary>
-        public static readonly Vector3 SunEuler = new Vector3(42f, 25f, 0f);
+        /// <summary>
+        /// WP-075 v3 key ("Islak Arduvaz — Açılma", direction Ek A §1.1): a low 4900 K sun, 33° up, from the WSW
+        /// (compass 232°), light travelling toward 52° (NE) — a 1.8 m figure casts 2.8 m up-right in the top-down
+        /// frame and the palace (north) shades outside the square. v2 was (42, 25, 0), 1.15, #FFF8EC.
+        /// </summary>
+        public static readonly Vector3 SunEuler = new Vector3(33f, 52f, 0f);
 
-        public const float SunIntensity = 1.15f;
-        public const float SunShadowStrength = 0.5f;
+        /// <summary>2.0 under a cookie averaging 0.62 (<see cref="CloudShadow"/>): ≈ 1.25 effective, the sun patch +0.8 EV over the cloud shadow.</summary>
+        public const float SunIntensity = 2.0f;
+        public const float SunShadowStrength = 0.75f;
 
-        public static readonly Color SunColor = new Color(1.0f, 0.971f, 0.925f);
+        /// <summary>#FFE2C6 (4900 K).</summary>
+        public static readonly Color SunColor = new Color(1.0f, 0.886f, 0.776f);
 
-        public static readonly Color AmbientSky = new Color(0.616f, 0.655f, 0.702f);
-        public static readonly Color AmbientEquator = new Color(0.447f, 0.470f, 0.420f);
-        public static readonly Color AmbientGround = new Color(0.216f, 0.231f, 0.192f);
+        /// <summary>Trilight v3: sky #B3C0CE (7200 K, shadows cool and 15 % lighter), equator #8B9088 (neutral grey, less olive), ground #474C43.</summary>
+        public static readonly Color AmbientSky = new Color(0.702f, 0.753f, 0.808f);
+        public static readonly Color AmbientEquator = new Color(0.545f, 0.565f, 0.533f);
+        public static readonly Color AmbientGround = new Color(0.278f, 0.298f, 0.263f);
+
+        /// <summary>Wet-surface sky reflection (v2 0.55).</summary>
+        public const float ReflectionIntensity = 0.70f;
+
+        /// <summary>
+        /// WP-075 §4 · The cloud shadow: the sun's cookie (<see cref="CloudShadowDriver"/>). Runtime only — the
+        /// lightmapper never sees it (moving clouds must not be baked into the indirect light).
+        /// </summary>
+        public static class CloudShadow
+        {
+            /// <summary>Resources name of AP-023's T_cloud_cookie (1024² R8, tileable; Assets/_Art/Resources/DD_CloudCookie.png).</summary>
+            public const string CookieResourceName = "DD_CloudCookie";
+
+            /// <summary>Ground footprint of one tile, both axes (the 90 m map sees 14 % of the pattern: no repetition read).</summary>
+            public const float TileMeters = 240f;
+
+            /// <summary>Drift speed on the ground: deliberately slower than the cloud planes (a 40 m patch crosses a point in ≈ 30 s).</summary>
+            public const float SpeedMetersPerSecond = 1.3f;
+
+            /// <summary>Drift heading, compass degrees (toward the NE, with the cloud planes and the light).</summary>
+            public const float DriftCompassDegrees = 52f;
+        }
 
         /// <summary>Post-processing. Kept in code so the .asset and the runtime fallback agree.</summary>
         public static class PostFx
@@ -345,6 +374,7 @@ namespace DD.Prototype.World
             {
                 baked.enabled = true;
                 RenderSettings.sun = baked;
+                CloudShadowDriver.Attach(baked);
                 return;
             }
 
@@ -355,6 +385,7 @@ namespace DD.Prototype.World
             Light light = go.AddComponent<Light>();
             ConfigureSun(light);
             RenderSettings.sun = light;
+            CloudShadowDriver.Attach(light);
         }
 
         /// <summary>
@@ -374,7 +405,7 @@ namespace DD.Prototype.World
             RenderSettings.ambientIntensity = 1f;
 
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
-            RenderSettings.reflectionIntensity = 0.55f;
+            RenderSettings.reflectionIntensity = ReflectionIntensity;
 
             // WP-012 (DEC-068, ADR-011-4 closure): the shared overcast sky authored by the art
             // pipeline (a latitude-longitude gradient: no sun disk, no horizon glow) is the
