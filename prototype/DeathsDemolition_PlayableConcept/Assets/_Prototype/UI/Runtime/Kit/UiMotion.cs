@@ -169,6 +169,14 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            // AD 10b-2 MUST-2: under the ink the recede is the reveal - the screen is on screen before it.
+            if (UiCurtain.InkCovers)
+            {
+                group.alpha = 1f;
+                Destroy(this);
+                return;
+            }
+
             group.alpha = 0f;
             // WP-068 slice 10: a screen that opens behind the loading curtain starts its
             // intro when the curtain reveals it, not unseen at Start().
@@ -205,6 +213,13 @@ namespace DD.Prototype.UI
         public void Configure(CanvasGroup[] groups, float step = 0.06f)
         {
             UiSettings.EnsureLoaded(); // the RM mirror the core reads
+            if (UiCurtain.InkCovers)
+            {
+                // AD 10b-2 MUST-2: under the ink the columns are already at rest when the recede uncovers them.
+                Destroy(this);
+                return;
+            }
+
             if (groups != null)
             {
                 for (int i = 0; i < groups.Length; i++)

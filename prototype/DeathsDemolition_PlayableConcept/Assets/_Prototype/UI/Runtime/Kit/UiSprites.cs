@@ -406,6 +406,9 @@ namespace DD.Prototype.UI
                     }
 
                     float width = stroke * (t < 0.08f ? 1.15f - 0.15f * (t / 0.08f) : 1f);
+                    // Body pressure (AD 10b-2 SHOULD-1): ±10 % over two slow periods, so the mid-stroke is a
+                    // brush pass, not an arc; zero at 12 o'clock, so the loaded head keeps its 1.15.
+                    width *= 1f - 0.10f * Mathf.Sin(2f * Mathf.PI * 2f * t);
                     if (t > 0.8f)
                     {
                         width *= 1f - 0.45f * ((t - 0.8f) / 0.2f);

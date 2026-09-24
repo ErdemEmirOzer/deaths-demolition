@@ -72,7 +72,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiCurtain curtain = UiCurtain.Instance;
             float lastFill = 0f;
             float groupFrom = -1f, enteringAt = -1f;
-            bool heldWhileGroup = false, sawTip = false, sawPlate = false, sawWetBand = false, sealAtRest = false;
+            bool heldWhileGroup = false, sawTip = false, sawPlate = false, sawWetBand = false, wetCream = false, sealAtRest = false;
             float deadline = Time.realtimeSinceStartup + 60f;
             // IsLoading ends at activation; the doors open after it - watch until both are done.
             while ((PrototypeUiFlow.IsLoading || UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
@@ -90,9 +90,19 @@ namespace DD.Prototype.Tests.PlayMode
                     if (groupFrom < 0f) groupFrom = Time.realtimeSinceStartup;
                     Assert.GreaterOrEqual(curtain.RingFill, lastFill - 1e-4f, "halka geri gitmez");
                     lastFill = curtain.RingFill;
-                    if (curtain.EyebrowText == "LOADING" && curtain.WetFill > UiCurtain.WetBand)
+                    if (curtain.EyebrowText == "LOADING")
                     {
-                        sawWetBand |= Mathf.Abs(curtain.WetFill - curtain.RingFill - UiCurtain.WetBand) < 1e-3f;
+                        // AD 10b-2 MUST-1 / T15: the ring's extent never passes the progress, on any frame.
+                        Assert.LessOrEqual(curtain.WetFill, curtain.ShownProgress + 1e-4f, "ıslak uç ilerlemenin önüne geçmez");
+                        Assert.LessOrEqual(curtain.RingFill, Mathf.Max(0f, curtain.ShownProgress - UiCurtain.WetBand) + 1e-4f, "kuru darbe ilerlemenin 0,04 gerisinde");
+                    }
+
+                    if (curtain.EyebrowText == "LOADING" && curtain.ShownProgress > UiCurtain.WetBand)
+                    {
+                        sawWetBand |= Mathf.Abs(curtain.ShownProgress - curtain.RingFill - UiCurtain.WetBand) < 1e-3f
+                                      && curtain.WetFill >= curtain.ShownProgress - UiCurtain.WetTremble - 1e-3f;
+                        Color wet = curtain.WetColor;
+                        wetCream |= Mathf.Abs(wet.a - UiCurtain.WetAlpha) < 0.02f && wet.r > 0.8f;
                         sealAtRest |= Mathf.Abs(curtain.SealColor.a - UiCurtain.SealRestAlpha) < 0.02f;
                     }
                     if (curtain.EyebrowText == "LOADING")
@@ -123,7 +133,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(File.Exists(_settingsPath), "yükleme ui-settings.json yazmaz (yalnız oyuncu ayar değiştirince)");
             Assert.IsTrue(sawTip, "10b: MainMenu → Selection ekranında ipucu şeridi");
             Assert.IsTrue(sawPlate, "10b: SCREEN derinliği Look B plakası üstünde");
-            Assert.IsTrue(sawWetBand, "10b-2: ıslak kenar darbenin 0,04 önünde");
+            Assert.IsTrue(sawWetBand, "10b-2: ıslak uç darbenin son 0,04'ü, ilerlemede biter");
+            Assert.IsTrue(wetCream, "AD 10b-2 MUST-1: ıslak uç krem α 0,6");
             Assert.IsTrue(sealAtRest, "10b-2: mühür yüklenirken dinlenme mürekkebinde (α 0,35)");
             Assert.Greater(curtain.SealColor.a, 0.95f, "10b-2: aktivasyonda mühür damgalanır (TextPrimary)");
         }
@@ -191,12 +202,18 @@ namespace DD.Prototype.Tests.PlayMode
             yield return OlumeKadar();
             UiCurtain curtain = UiCurtain.Instance;
             bool sawInk = false, sawDoors = false, sawPlateGroup = false;
+            int resultsDrawnUnderInk = 0;
             float deadline = Time.realtimeSinceStartup + 60f;
             while (!(SceneManager.GetActiveScene().name == PrototypeScenes.Results && !UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
             {
                 sawInk |= curtain.InkCovering;
                 sawDoors |= curtain.DoorsShut && curtain.InkCovering;
                 sawPlateGroup |= curtain.GroupVisible && curtain.PlateVisible;
+                if (curtain.InkCovering && !curtain.InkReceding && ResultsDrawn())
+                {
+                    resultsDrawnUnderInk++;
+                }
+
                 yield return null;
             }
 
@@ -207,6 +224,32 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(sawDoors, "mürekkep varyantında kapı çizilmez");
             Assert.IsFalse(sawPlateGroup, "mürekkep varyantında plaka grubu yok");
             Assert.IsFalse(curtain.InkCovering, "açılışta mürekkep çekildi");
+            Assert.GreaterOrEqual(resultsDrawnUnderInk, 1, "AD 10b-2 MUST-2: Results mürekkep çekilmeden önce en az bir kare çizili (çekilme boş alan açmaz)");
+        }
+
+        /// <summary>The Results screen is on screen at rest: its canvas and its three columns fully opaque.</summary>
+        private static bool ResultsDrawn()
+        {
+            ResultsScreen screen = Object.FindObjectOfType<ResultsScreen>();
+            if (screen == null)
+            {
+                return false;
+            }
+
+            CanvasGroup[] groups = screen.GetComponentsInChildren<CanvasGroup>(true);
+            int columns = 0;
+            foreach (CanvasGroup group in groups)
+            {
+                bool column = group.name == "Performance" || group.name == "Experience" || group.name == "Rewards";
+                if ((column || group.GetComponent<Canvas>() != null) && group.alpha < 0.99f)
+                {
+                    return false;
+                }
+
+                columns += column ? 1 : 0;
+            }
+
+            return columns == 3;
         }
 
         /// <summary>10b-2 · WP-061J under the ink: an abort during the death beat still wins - the doors close under the ink, the menu opens, no Results.</summary>

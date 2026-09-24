@@ -792,6 +792,10 @@ namespace DD.Prototype.UI
                 yield return WaitFor(() => curtain.RingOnlyVisible, 8f);
                 yield return new WaitForSecondsRealtime(0.8f);
                 yield return Frame(folder, "ink-ring");
+                // AD 10b-2 wanted: ENTERING at 360°, the frame before the recede starts.
+                yield return WaitFor(() => curtain.EyebrowText == "ENTERING", 20f);
+                yield return WaitFor(() => curtain.RingFill >= 0.999f || curtain.InkReceding, 2f);
+                yield return Frame(folder, "ink-entering");
                 yield return WaitFor(() => SceneManager.GetActiveScene().name == PrototypeScenes.Results && !UiCurtain.IsCovering, 20f);
                 yield return Frame(folder, "ink-recede");
                 PrototypeUiFlow.ArtificialLoadSeconds = 0f;

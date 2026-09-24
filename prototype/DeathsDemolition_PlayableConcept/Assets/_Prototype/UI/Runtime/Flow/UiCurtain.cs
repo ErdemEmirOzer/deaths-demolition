@@ -39,6 +39,15 @@ namespace DD.Prototype.UI
         /// <summary>The wet edge at the stroke's tip, as a share of the full circle (§15.3: "0,04 genişlik").</summary>
         public const float WetBand = 0.04f;
 
+        /// <summary>
+        /// AD 10b-2 MUST-1: the wet tip is the last WetBand of the drawn stroke, cream at 0.6 (≈ TextSecondary
+        /// luminance) - never the next WetBand. Its front trembles BACK from the truth by up to WetTremble
+        /// (≈ 3 px of arc, stepped at WetTrembleHz); nothing is drawn past the progress. Reduced motion: still.
+        /// </summary>
+        public const float WetAlpha = 0.6f;
+        public const float WetTremble = 0.004f;
+        public const float WetTrembleHz = 12f;
+
         /// <summary>CURTAIN depth: the ring alone, Ø 160, once a curtain-only load passes 1.2 s (§15.3).</summary>
         public const float CurtainRingSize = 160f;
         public const float GhostAlpha = 0.12f;
@@ -89,6 +98,7 @@ namespace DD.Prototype.UI
         private UiFx[] _inkFx;
         private Image _inkField;
         private bool _ink;
+        private bool _inkReceding;
         private TMP_Text _eyebrow;
         private TMP_Text _destination;
         private TMP_Text _subline;
@@ -218,8 +228,8 @@ namespace DD.Prototype.UI
             _scrimFoot.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), 1f - (1f - ScrimBottom) / (1f - ScrimTop));
 
             // The ensō device (10b-2, §15.3): the dry ghost circle, the stroke drawn at real
-            // progress with its wet edge (a darker fill running WetBand ahead of the cream one,
-            // so the band is the stroke's own shape), and the V2 seal inside at rest ink.
+            // progress whose last WetBand is still wet (cream 0.6 under the dry cream, so the band
+            // is the stroke's own shape and ends at the progress), and the V2 seal inside at rest ink.
             BuildBootLayer(groupRect);
 
             _ringGroup = UiFactory.NewRect("RingGroup", groupRect);
@@ -227,7 +237,8 @@ namespace DD.Prototype.UI
             _ringGhost = UiFactory.NewImage("RingGhost", _ringGroup, UiColor.TextPrimary, UiSprites.EnsoBrush);
             UiFactory.Fill((RectTransform)_ringGhost.transform);
             _ringGhost.color = WithAlpha(UiTokens.Get(UiColor.TextPrimary), GhostAlpha);
-            _ringWet = BrushFill("RingWet", UiColor.TextSecondary);
+            _ringWet = BrushFill("RingWet", UiColor.TextPrimary);
+            _ringWet.color = WithAlpha(UiTokens.Get(UiColor.TextPrimary), WetAlpha);
             _ring = BrushFill("Ring", UiColor.TextPrimary);
             Sprite seal = Resources.Load<Sprite>("UI/Glyphs/Seal.Mark");
             _seal = UiFactory.NewImage("Seal", _ringGroup, UiColor.TextSecondary, seal);
@@ -305,6 +316,7 @@ namespace DD.Prototype.UI
 
             s_covering = true;
             _ink = true;
+            _inkReceding = false;
             _canvas.enabled = true;
             SetDoorsOpen(true);
             _group.gameObject.SetActive(false);
@@ -330,6 +342,22 @@ namespace DD.Prototype.UI
         public bool InkCovering
         {
             get { return _ink; }
+        }
+
+        /// <summary>
+        /// AD 10b-2 MUST-2: true while a screen opens under the ink. Its static content must be on screen before the
+        /// recede - the ink's erase IS the reveal - so screen fades and staggers land at rest; only the intro beats
+        /// wait for <see cref="Revealed"/>.
+        /// </summary>
+        public static bool InkCovers
+        {
+            get { return s_instance != null && s_instance._ink; }
+        }
+
+        /// <summary>True once the ink has started to recede (tests: the screen under it was drawn before this).</summary>
+        public bool InkReceding
+        {
+            get { return _inkReceding; }
         }
 
         /// <summary>A load under the ink (Run → Results): no doors - what Close does besides them.</summary>
@@ -364,6 +392,7 @@ namespace DD.Prototype.UI
         /// <summary>The Results screen opens from the same ink (E22): the blots recede (erase mode) and the field lifts.</summary>
         private IEnumerator RecedeInk()
         {
+            _inkReceding = true;
             RaiseOpened();
             for (int i = 0; i < _inkFx.Length; i++)
             {
@@ -534,8 +563,10 @@ namespace DD.Prototype.UI
         public void BootHandOff()
         {
             _bootHandedOff = true;
-            UiMotion.Tint(_seal, WithAlpha(UiTokens.Get(UiColor.TextSecondary), SealRestAlpha), UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
-            UiMotion.Resize(_seal.rectTransform, new Vector2(SealSize, SealSize), UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            // AD 10b-2 SHOULD-6: the shrink is a move (Screen 280, Settle) with the vermilion → ink tint alongside -
+            // no Stamp here, the stamp is the activation's mark.
+            UiMotion.Tint(_seal, WithAlpha(UiTokens.Get(UiColor.TextSecondary), SealRestAlpha), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.Resize(_seal.rectTransform, new Vector2(SealSize, SealSize), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
             UiMotion.TintAlpha(_kicker, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
             UiMotion.TintAlpha(_wordmark, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
             _eyebrow.text = "LOADING";
@@ -858,10 +889,22 @@ namespace DD.Prototype.UI
             get { return _seal != null ? _seal.color * _seal.canvasRenderer.GetColor() : Color.clear; }
         }
 
-        /// <summary>The wet edge's fill (tests: it runs WetBand ahead of the stroke).</summary>
+        /// <summary>The wet tip's fill (tests: it ends at or before <see cref="ShownProgress"/>, WetBand past the dry stroke).</summary>
         public float WetFill
         {
             get { return _ringWet != null ? _ringWet.fillAmount : 0f; }
+        }
+
+        /// <summary>The wet tip's colour (tests: cream at <see cref="WetAlpha"/>).</summary>
+        public Color WetColor
+        {
+            get { return _ringWet != null ? _ringWet.color * _ringWet.canvasRenderer.GetColor() : Color.clear; }
+        }
+
+        /// <summary>The last load progress the device drew (0..LoadShare).</summary>
+        public float ShownProgress
+        {
+            get { return Mathf.Max(0f, _shownFill); }
         }
 
         private void SetRingOnly(bool ringOnly)
@@ -944,20 +987,34 @@ namespace DD.Prototype.UI
             return "the next screen";
         }
 
-        /// <summary>Honest progress: <paramref name="loadProgress"/> is AsyncOperation.progress (0..0.9). Written only on a visible change (Δ ≥ 1/256).</summary>
+        /// <summary>
+        /// Honest progress: <paramref name="loadProgress"/> is AsyncOperation.progress (0..0.9). The dry stroke is
+        /// written only on a visible change (Δ ≥ 1/256); the wet tip ends at the progress and trembles back from it.
+        /// </summary>
         public void SetProgress(float loadProgress)
         {
             float fill = Mathf.Clamp(loadProgress, 0f, LoadShare);
-            if (fill < _shownFill || Mathf.Abs(fill - _shownFill) < 1f / 256f)
+            bool moved = fill > _shownFill && fill - _shownFill >= 1f / 256f;   // never backwards, never a meaningless write
+            if (moved)
             {
-                return; // never backwards, never a meaningless write
+                _shownFill = fill;
+                _ring.fillAmount = Mathf.Max(0f, fill - WetBand);
             }
 
-            _shownFill = fill;
-            _ringWet.fillAmount = fill;
-            _ring.fillAmount = Mathf.Max(0f, fill - WetBand);
+            // AD 10b-2 MUST-1: the wet tip is the stroke's last WetBand - its front is the progress, trembling
+            // back from it a step at a time; no pixel past the truth. Reduced motion: still.
+            float front = Mathf.Max(0f, _shownFill);
+            if (!UiMotion.ReducedMotion && front > WetBand)
+            {
+                front -= WetTremble * Hash01(Mathf.Floor(Time.unscaledTime * WetTrembleHz));
+            }
 
-            if (UiMotion.ReducedMotion)
+            if (Mathf.Abs(front - _ringWet.fillAmount) >= 1f / 1024f)
+            {
+                _ringWet.fillAmount = front;
+            }
+
+            if (moved && UiMotion.ReducedMotion)
             {
                 // RM: the eyebrow carries the number, in steps of 10 (0-90 from the load).
                 int percent = Mathf.FloorToInt(fill / LoadShare * 9f) * 10;
@@ -967,6 +1024,12 @@ namespace DD.Prototype.UI
                     _eyebrow.SetText("LOADING · {0}%", percent);
                 }
             }
+        }
+
+        private static float Hash01(float x)
+        {
+            float s = Mathf.Sin(x * 12.9898f + 3.1f) * 43758.5453f;
+            return s - Mathf.Floor(s);
         }
 
         /// <summary>Activation: ENTERING, the seal step (Stamp), then the last 36° close as the scene activates.</summary>
