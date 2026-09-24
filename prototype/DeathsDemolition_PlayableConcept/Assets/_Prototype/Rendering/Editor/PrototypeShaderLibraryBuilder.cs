@@ -85,7 +85,7 @@ namespace DD.Prototype.Rendering.EditorTools
             KlasorKur(Klasor);
             KlasorKur(PinKlasor);
 
-            Material[] pins = PinleriKur(lit, unlit, particles);
+            Material[] pins = PinleriKur(lit, unlit, particles, vfxRibbon);
 
             var kitaplik = AssetDatabase.LoadAssetAtPath<PrototypeShaderLibrary>(Yol);
             if (kitaplik == null)
@@ -166,7 +166,7 @@ namespace DD.Prototype.Rendering.EditorTools
         /// without these the shaders ship with their opaque variant alone and everything
         /// that should fade draws solid. Each pin below mirrors one runtime configuration.
         /// </summary>
-        private static Material[] PinleriKur(Shader lit, Shader unlit, Shader particles)
+        private static Material[] PinleriKur(Shader lit, Shader unlit, Shader particles, Shader vfxRibbon)
         {
             var pins = new List<Material>(6);
 
@@ -218,6 +218,13 @@ namespace DD.Prototype.Rendering.EditorTools
                 m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
                 m.EnableKeyword("_ALPHAMODULATE_ON");
             }));
+
+            // WP-073: the tracer ribbons are drawn with Graphics.DrawMeshInstanced from a runtime material — without an
+            // instanced material asset the build strips the instancing variant and the ribbons draw nothing in a Player.
+            if (vfxRibbon != null)
+            {
+                pins.Add(Pin("Pin_VfxRibbon_Instanced", vfxRibbon, m => { m.enableInstancing = true; }));
+            }
 
             return pins.ToArray();
         }

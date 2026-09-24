@@ -39,6 +39,7 @@ namespace DD.Prototype.Feedback.Vfx
         private PrototypePool<DecalEffect> _decals;
         private PrototypePool<AtlasBurstEffect> _fragments;
         private PrototypePool<AtlasBurstEffect> _smoke;
+        private MuzzleSystem _muzzleSystem;
         private PrototypePool<AtlasBurstEffect> _sparks;
         private PrototypePool<AtlasBurstEffect> _leaves;
         private PrototypePool<AtlasBurstEffect> _paper;
@@ -46,7 +47,8 @@ namespace DD.Prototype.Feedback.Vfx
         private VfxEventBinder _binder;
         private PrototypePool<AtlasBurstEffect> _straw;
         private PrototypePool<CasingEffect> _casings;
-        public const int CasingCapacity = 12;
+        /// <summary>WP-073 B1: the casing pool (direction §1.3: 24 / 48 / 96 by tier; the pool is sized once, at the tier in effect).</summary>
+        public static int CasingCapacity => VfxTier.Pick(24, 48, 96);
         public int CasingsEjected { get; private set; }
         public PrototypePool<CasingEffect> CasingPool => _casings;
         private readonly LanternFlames _lanterns = new LanternFlames();
@@ -410,8 +412,11 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
-        /// <summary>AP-013C casing from the rig's Ejection socket (+X of the socket, up, a little back), tumbling for 1.6 s.</summary>
-        private void EjectCasing(MuzzleVariant variant, Transform muzzle)
+        /// <summary>
+        /// AP-013C casing from the rig's Ejection socket. WP-073 B1: the class profile's throw (+X 35° up, 10° back, its
+        /// speed) and rest time per tier (3 / 5 / 8 s rifle); without a profile the WP-047E throw and 1.6 s.
+        /// </summary>
+        private void EjectCasing(MuzzleVariant variant, Transform muzzle, VfxWeaponProfile profile)
         {
             if (_casings == null) return;
             CasingLibrary lib = CasingLibrary.Current;
@@ -419,10 +424,24 @@ namespace DD.Prototype.Feedback.Vfx
             DD.Prototype.Weapons.WeaponVisualRig rig = _heatMuzzle == muzzle ? _heatRig : muzzle.GetComponentInParent<DD.Prototype.Weapons.WeaponVisualRig>();
             Transform port = rig != null ? rig.Ejection : muzzle;
             float seed = Random.value;
-            Vector3 velocity = port.right * (1.9f + seed * 0.8f) + Vector3.up * (1.4f + seed * 0.6f) - port.forward * 0.4f;
+            Vector3 velocity;
+            float life = CasingEffect.LifeSeconds;
+            MuzzleVariant mesh = variant;
+            if (profile != null)
+            {
+                float speed = profile.CasingSpeed * (0.85f + 0.3f * seed);
+                velocity = (port.right * 0.819f + Vector3.up * 0.574f - port.forward * 0.174f) * speed;
+                life = VfxTier.Pick(profile.RestSeconds.x, profile.RestSeconds.y, profile.RestSeconds.z);
+                mesh = profile.CasingMesh;
+            }
+            else
+            {
+                velocity = port.right * (1.9f + seed * 0.8f) + Vector3.up * (1.4f + seed * 0.6f) - port.forward * 0.4f;
+            }
+
             CasingEffect c = _casings.Get(port.position, Quaternion.LookRotation(port.forward, port.up));
             if (c == null) return;
-            c.Play(lib.MeshFor(variant), lib.Material, velocity, seed);
+            c.Play(lib.MeshFor(mesh), lib.Material, velocity, seed, life);
             CasingsEjected++;
         }
 
@@ -476,7 +495,11 @@ namespace DD.Prototype.Feedback.Vfx
 
         private void TickBarrelHaze(Vector3 barrel)
         {
-            if (_heatCard == null)
+            // WP-073 B1: the haze card is Cinematic-only (direction §1.1) and never in first person — at the eye it drew as a
+            // translucent rectangle across the frame (AD B1 MUST 2).
+            bool hazeAllowed = VfxTier.Current == VfxTierLevel.Cinematic
+                && DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson;
+            if (_heatCard == null || !hazeAllowed)
             {
                 if (_hazeCard != null) { if (_hazeCard.IsSpawned) _flipbooks.Release(_hazeCard); _hazeCard = null; }
                 return;
@@ -811,21 +834,55 @@ namespace DD.Prototype.Feedback.Vfx
             LastMuzzleVariant = variant;
             MuzzlePlays++;
             AddHeat(variant, muzzle);
-            EjectCasing(variant, muzzle);
+            // WP-073 B1: the class profile drives the flash, the light, the smoke and the casing (a Special keeps A).
+            VfxWeaponProfile profile = VfxWeaponProfiles.Active();
+            bool firstPerson = DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson;
+            EjectCasing(variant, muzzle, profile);
             LastMuzzleNote = active == null ? "no-active" : active.Classic == null ? "no-classic" : active.SpecialWeaponActive ? "special" : active.Classic.Id.ToString();
             float size = row.WorldSizeMetres * Mathf.Max(0.5f, scale);
+            // Reduce flashes: the sheet at × 0.4 (the light holds a steady 0.8 in MuzzleSystem).
+            Color tint = GameFeelSettings.FlashScale < 0.99f ? new Color(1f, 1f, 1f, 0.4f) : Color.white;
+            if (profile != null)
+            {
+                size *= profile.FlashScale * (firstPerson ? 0.85f : 1f);
+                tint = new Color(tint.r * profile.FlashIntensity, tint.g * profile.FlashIntensity, tint.b * profile.FlashIntensity, tint.a);
+                fx.Play(row, FlipbookEffect.Facing.Camera, size, tint, 1f, 0f, Mathf.Max(0.05f, row.DurationSeconds * profile.FlashDurationScale));
+                if (profile.FlashIntensity < 0.999f) fx.SetEmissiveScale(profile.FlashIntensity);
+                fx.SetStretch(profile.FlashStretch.x, profile.FlashStretch.y);
+                if (profile.Class == VfxWeaponClass.Shotgun)
+                {
+                    _binder?.SchedulePumpSmoke(muzzle.position - muzzle.forward * 0.35f + Vector3.up * 0.05f, -muzzle.forward + Vector3.up * 0.6f, Time.time);
+                }
+
+                if (_muzzleSystem == null)
+                {
+                    _muzzleSystem = MuzzleSystem.Ensure();
+                }
+
+                _muzzleSystem?.Play(muzzle, profile, firstPerson);
+                // FP: the barrel points away from the eye, so a quad aligned along it is edge-on (a 4 px sliver — AD B1
+                // MUST 5): in first person the flash is a pure camera-facing bloom at 0.85 scale; elsewhere +u runs
+                // down the barrel (AD M5).
+                if (!firstPerson)
+                {
+                    fx.SetAlign(muzzle.forward, true);
+                }
+                Played++;
+                return true;
+            }
+
             switch (variant)
             {
                 case MuzzleVariant.B:
-                    fx.Play(row, FlipbookEffect.Facing.Camera, size * 0.75f, Color.white, 1f, 0f, Mathf.Max(0.05f, row.DurationSeconds * 0.6f));
+                    fx.Play(row, FlipbookEffect.Facing.Camera, size * 0.75f, tint, 1f, 0f, Mathf.Max(0.05f, row.DurationSeconds * 0.6f));
                     break;
                 case MuzzleVariant.C:
-                    fx.Play(row, FlipbookEffect.Facing.Camera, size * 1.25f, Color.white);
+                    fx.Play(row, FlipbookEffect.Facing.Camera, size * 1.25f, tint);
                     fx.SetStretch(1f, 1.3f);
                     _binder?.SchedulePumpSmoke(muzzle.position - muzzle.forward * 0.35f + Vector3.up * 0.05f, -muzzle.forward + Vector3.up * 0.6f, Time.time);
                     break;
                 default:
-                    fx.Play(row, FlipbookEffect.Facing.Camera, size, Color.white);
+                    fx.Play(row, FlipbookEffect.Facing.Camera, size, tint);
                     fx.SetStretch(1.35f, 1f);
                     break;
             }

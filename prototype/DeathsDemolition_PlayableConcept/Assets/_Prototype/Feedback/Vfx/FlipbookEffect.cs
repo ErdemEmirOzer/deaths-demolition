@@ -29,10 +29,12 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly int AlphaId = Shader.PropertyToID("_Alpha");
         private static readonly int AlphaCapId = Shader.PropertyToID("_AlphaCap");
         private static readonly int TintId = Shader.PropertyToID("_Tint");
+        private static readonly int EmissiveStrengthId = Shader.PropertyToID("_EmissiveStrength");
 
         private Transform _quad;
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _block;
+        private float _baseEmissive = 1f;
         private VfxCatalogEntry _row;
         private Facing _facing;
         private float _fps;
@@ -133,6 +135,9 @@ namespace DD.Prototype.Feedback.Vfx
             if (row.Additive && row.HdrIntensity > 1f) manifest *= row.HdrIntensity;
             manifest.a = 1f;
             _block.SetColor(TintId, tint * manifest);
+            // The emissive layer is the material's; a pooled quad starts from it every play (SetEmissiveScale may have changed it).
+            _baseEmissive = row.Material != null && row.Material.HasProperty(EmissiveStrengthId) ? row.Material.GetFloat(EmissiveStrengthId) : 1f;
+            _block.SetFloat(EmissiveStrengthId, _baseEmissive);
             _renderer.SetPropertyBlock(_block);
 
             float life = seconds > 0f ? seconds : row.DurationSeconds > 0f ? row.DurationSeconds : _frames / _fps;
@@ -185,6 +190,14 @@ namespace DD.Prototype.Feedback.Vfx
         }
 
         /// <summary>Re-cap the alpha of a live card (barrel heat strip: cap = heat 0..1).</summary>
+        /// <summary>WP-073: scale this play's emissive layer (the bloom source) — a shotgun flash stays within ~1.5× its quad.</summary>
+        public void SetEmissiveScale(float scale)
+        {
+            if (_renderer == null) return;
+            _block.SetFloat(EmissiveStrengthId, _baseEmissive * Mathf.Max(0f, scale));
+            _renderer.SetPropertyBlock(_block);
+        }
+
         public void SetAlphaCap(float alphaCap)
         {
             _alphaCap = Mathf.Clamp01(alphaCap);

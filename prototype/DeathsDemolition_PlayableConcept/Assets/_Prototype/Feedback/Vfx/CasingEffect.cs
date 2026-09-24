@@ -42,7 +42,7 @@ namespace DD.Prototype.Feedback.Vfx
             return layer >= 0 ? 1 << layer : 0;
         }
 
-        public void Play(Mesh mesh, Material material, Vector3 velocity, float seed)
+        public void Play(Mesh mesh, Material material, Vector3 velocity, float seed, float life = LifeSeconds)
         {
             if (_filter == null) Awake();
             _filter.sharedMesh = mesh;
@@ -57,7 +57,7 @@ namespace DD.Prototype.Feedback.Vfx
                 _floorY = _hits[0].point.y;
             }
 
-            Lifetime = LifeSeconds;
+            Lifetime = Mathf.Max(0.5f, life);
             RestartLife();
         }
 

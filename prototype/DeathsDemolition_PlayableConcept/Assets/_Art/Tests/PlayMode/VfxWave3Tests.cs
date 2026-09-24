@@ -68,6 +68,7 @@ namespace DD.Art.Tests.PlayMode
         [TearDown]
         public void TearDown()
         {
+            DD.Prototype.Feedback.Vfx.VfxTier.Override = null;
             LogAssert.ignoreFailingMessages = false;
         }
 
@@ -374,6 +375,7 @@ namespace DD.Art.Tests.PlayMode
             yield return new WaitForSeconds(0.08f);
             ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_20m", feet + new Vector3(0f, 14f, -14.2f), feet + Vector3.up * 0.8f, 40f), W, H, Path.Combine(dir, "04-special-reactions-20m.png"), true);
             ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_near", feet + new Vector3(2.2f, 1.5f, -2.4f), feet + Vector3.up * 0.9f, 42f), W, H, Path.Combine(dir, "05-special-reactions-near.png"), true);
+            DD.Prototype.Feedback.Vfx.VfxTier.Override = DD.Prototype.Feedback.Vfx.VfxTierLevel.Cinematic;   // WP-073: the haze card is Cinematic-only
             for (int i = 0; i < 4; i++) vfx.PlayMuzzle(muzzle, 1f);
             yield return null;
             ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_heat", muzzle.position + muzzle.right * 0.9f + Vector3.up * 0.25f - muzzle.forward * 0.3f, muzzle.position - muzzle.forward * 0.2f, 38f), W, H, Path.Combine(dir, "06-barrel-heat-near.png"), true);
@@ -392,6 +394,7 @@ namespace DD.Art.Tests.PlayMode
             yield return new WaitForSeconds(3.2f);
             Assert.IsFalse(vfx.BarrelHeatVisible, "ısı şeridi 3 s sonra sönmedi (heat " + vfx.BarrelHeat.ToString("F2") + ")");
             Assert.IsFalse(vfx.BarrelHazeVisible, "haze kartı şeritle birlikte sönmeli");
+            DD.Prototype.Feedback.Vfx.VfxTier.Override = null;
         }
     }
 }

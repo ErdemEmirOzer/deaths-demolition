@@ -239,34 +239,52 @@ namespace DD.Prototype.Tests.PlayMode
             // vs a control frame, min over 4 pairs, with a positive control — GC.GetAllocatedBytesForCurrentThread is 0 in
             // Unity Mono.
             UnityEngine.Profiling.Profiler.enabled = true;
-            using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
+            // HotPathAllocationContractTests lesson: under the bootstrapper's 60 fps cap LastValue lags a frame (the
+            // positive control read 130 B after the flow suites) — uncap for the measurement, restore after.
+            int frameRateWas = Application.targetFrameRate;
+            Application.targetFrameRate = -1;
+            try
             {
-                var bait = new object[64];
-                for (int i = 0; i < bait.Length; i++) bait[i] = new byte[1024];
-                yield return null;
-                long control = bytes.LastValue;
-                System.GC.KeepAlive(bait);
-                Assert.Greater(control, 60 * 1024, "pozitif kontrol: kayıtçı ayırmayı görmeli");
-
-                long best = long.MaxValue;
-                for (int pair = 0; pair < 4; pair++)
+                using (var bytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame"))
                 {
-                    for (int i = 1; i <= 25; i++)
+                    yield return null;
+                    yield return null;
+                    var bait = new object[64];
+                    for (int i = 0; i < bait.Length; i++) bait[i] = new byte[1024];
+                    long control = 0;
+                    for (int f = 0; f < 3; f++)
                     {
-                        if (!n.TryMerge(i % 6 + 1, 7f, i % 4 == 0 ? crit : flesh, Ahead, 1f))
-                        {
-                            n.Spawn(i % 6 + 1, 7f, flesh, Ahead);
-                        }
+                        yield return null;
+                        control = System.Math.Max(control, bytes.LastValue);
                     }
 
-                    yield return null;
-                    long burstFrame = bytes.LastValue;
-                    yield return null;
-                    long quiet = bytes.LastValue;
-                    best = System.Math.Min(best, burstFrame - quiet);
-                }
+                    System.GC.KeepAlive(bait);
+                    Assert.Greater(control, 60 * 1024, "pozitif kontrol: kayıtçı ayırmayı görmeli");
 
-                Assert.LessOrEqual(best, 0, "25 vuruşluk kare kontrol karesinden fazla ayırdı: +" + best + " B");
+                    long best = long.MaxValue;
+                    for (int pair = 0; pair < 4; pair++)
+                    {
+                        for (int i = 1; i <= 25; i++)
+                        {
+                            if (!n.TryMerge(i % 6 + 1, 7f, i % 4 == 0 ? crit : flesh, Ahead, 1f))
+                            {
+                                n.Spawn(i % 6 + 1, 7f, flesh, Ahead);
+                            }
+                        }
+
+                        yield return null;
+                        long burstFrame = bytes.LastValue;
+                        yield return null;
+                        long quiet = bytes.LastValue;
+                        best = System.Math.Min(best, burstFrame - quiet);
+                    }
+
+                    Assert.LessOrEqual(best, 0, "25 vuruşluk kare kontrol karesinden fazla ayırdı: +" + best + " B");
+                }
+            }
+            finally
+            {
+                Application.targetFrameRate = frameRateWas;
             }
         }
     }
