@@ -149,7 +149,6 @@ namespace DD.Prototype.UI
         private TMP_Text _goldDelta;
         private Vector2 _goldDeltaHome;
         private UiFx _goldLeaf;
-        private Image _goldGlint;
         private float _goldGlintAt = -10f;
         private int _goldSeen = int.MinValue;
         private TMP_Text _healthLowWord;
@@ -173,9 +172,6 @@ namespace DD.Prototype.UI
         /// sweeps. UiArtThemeTests.HudKontrasti measures the numeral over it.
         /// </summary>
         public const float GoldLeafAlpha = 0.03f;   // AD 8a MUST-1's "≤ 0.10" is a perceptual (sRGB) figure; UI blends in linear light, where 0.03 looks like it
-
-        /// <summary>The glint layer's alpha while the Leaf band sweeps (0 at rest); with the flakes the numeral keeps 4.5:1.</summary>
-        public const float GoldGlintAlpha = 0.05f;
         private const float GoldLeafTilePixels = 96f;
         private const float GoldGlintMinInterval = 1f;
         private const float GoldGlintSeconds = 0.6f;
@@ -226,7 +222,7 @@ namespace DD.Prototype.UI
         private int _swShownSeconds = -1, _swShownHits = -1, _swShownShots = -1, _swShownMode = -1;
         private Image _healthIcon;
         private bool _lowHealthIconShown;
-        private Image _reticle;
+        private HudReticle _reticle;   // WP-068 8b · E15 the honest reticle
         private readonly System.Collections.Generic.List<RectTransform> _panels =
             new System.Collections.Generic.List<RectTransform>(6);
 
@@ -263,14 +259,10 @@ namespace DD.Prototype.UI
 
         // ---- threat warnings (WP-022B, ThreatHudFeed / WP-033)
         private GameObject _threatRow;
-        private GameObject _threatSurrounded;
-        private GameObject _threatRear;
-        private GameObject _threatStrong;
-        private TMP_Text _threatStrongText;
-        private bool _threatSurroundedShown;
-        private bool _threatRearShown;
-        private bool _threatStrongShown;
+        private readonly ThreatSlot[] _threatSlots = new ThreatSlot[3];
         private int _threatWindupShown;
+        private bool _threatUltra;
+        private HudPlayerArcs _playerArcs;   // WP-068 8b · E13 rear arc, E17 player arc
 
         private readonly RunHudViewModel _model = new RunHudViewModel();
 
@@ -314,6 +306,7 @@ namespace DD.Prototype.UI
             WeaponEvents.SpecialWeaponGroundExpired += OnSpecialGroundExpired;
 
             PlayerHealth.AnyHealthChanged += ApplyHealth;
+            PlayerHealth.AnyDamaged += OnPlayerDamaged;
         }
 
         protected override void Start()
@@ -342,6 +335,7 @@ namespace DD.Prototype.UI
             WeaponEvents.SpecialWeaponGroundExpired -= OnSpecialGroundExpired;
 
             PlayerHealth.AnyHealthChanged -= ApplyHealth;
+            PlayerHealth.AnyDamaged -= OnPlayerDamaged;
         }
 
         /// <summary>
@@ -387,7 +381,6 @@ namespace DD.Prototype.UI
         private const float PanelIconSize = 28f;
         private const float WeaponIconSize = 64f;
         private const float SpecialRingSize = 132f;
-        private const float ReticleSize = 40f;
 
         private void BuildRoundBlock()
         {
@@ -444,13 +437,13 @@ namespace DD.Prototype.UI
             UiPatternTile flakes = UiPatternTile.Create("Leaf", block, UiFxGlobals.LeafTileResource, GoldLeafTilePixels, UiColor.StateGold, GoldLeafAlpha);
             UiFactory.Fill((RectTransform)flakes.transform, UiTokens.StrokeHairline);
             flakes.transform.SetSiblingIndex(1); // over the card fill, under the frame and the readout
-            Image glint = UiFactory.NewImage("Glint", block, UiColor.StateGold, UiSprites.Solid);
-            UiFactory.Fill((RectTransform)glint.transform, UiTokens.StrokeHairline);
-            glint.transform.SetSiblingIndex(2);
-            glint.canvasRenderer.SetAlpha(0f);
-            _goldGlint = glint;
-            _goldLeaf = glint.gameObject.AddComponent<UiFx>();
-            _goldLeaf.Configure(UiFxMode.Leaf, GoldGlintSeconds, new Vector3(1f, 0f, 0f));
+            // AD 8a SHOULD-9: the gain glints on the chrome - the frame hairline carries S-07's Leaf band - never the text zone.
+            Image frame = FrameOf(block);
+            if (frame != null)
+            {
+                _goldLeaf = frame.gameObject.AddComponent<UiFx>();
+                _goldLeaf.Configure(UiFxMode.Leaf, GoldGlintSeconds, new Vector3(1f, 0f, 0f));
+            }
 
             RectTransform host = UiFactory.CardContent(block, UiSpace.L);
 
@@ -501,10 +494,10 @@ namespace DD.Prototype.UI
             {
                 // The glint layer takes the leaf alpha for the sweep only, then goes back to nothing.
                 _goldGlintAt = now;
-                UiMotion.KillTarget(_goldGlint, false);
-                _goldGlint.canvasRenderer.SetAlpha(GoldGlintAlpha);
-                _goldLeaf.Play();
-                UiMotion.TintAlpha(_goldGlint, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Data, GoldGlintSeconds);
+                if (_goldLeaf != null)
+                {
+                    _goldLeaf.Play();
+                }
             }
         }
 
@@ -886,6 +879,15 @@ namespace DD.Prototype.UI
             ((RectTransform)_ladderFill.transform).sizeDelta = new Vector2(pitch * Mathf.Clamp(rounds, 0, _ladderMagazine), 0f);
         }
 
+        /// <summary>E17: the player-bound arc faces the attacker (HitDirection runs from the attacker towards the player).</summary>
+        private void OnPlayerDamaged(PlayerDamageInfo info)
+        {
+            if (_playerArcs != null)
+            {
+                _playerArcs.Flash(-info.HitDirection);
+            }
+        }
+
         private void BuildDamageEdges()
         {
             RectTransform layer = UiFactory.NewRect("DamageEdges", ScreenRect);
@@ -906,13 +908,11 @@ namespace DD.Prototype.UI
             UiFactory.Fill(layer);
             layer.gameObject.AddComponent<Canvas>();
 
-            _reticle = UiFactory.NewImage("Reticle", layer, UiColor.TextPrimary, UiArt.Reticle(false));
-            var rect = (RectTransform)_reticle.transform;
-            rect.sizeDelta = new Vector2(ReticleSize, ReticleSize);
-            rect.anchoredPosition = Vector2.zero;
-            _reticle.preserveAspect = true;
-            SetAlpha(_reticle, 0.9f);
-            rect.anchoredPosition = OffScreen;
+            // E15: ticks at the real spread (HudReticle); the root moves with the aim, parked off-screen when hidden.
+            _reticle = new HudReticle(layer);
+            _reticle.Root.anchoredPosition = OffScreen;
+            _playerArcs = new HudPlayerArcs(layer);
+            _playerArcs.Place(OffScreen);
         }
 
         private void BuildCentreChannel()
@@ -1054,6 +1054,11 @@ namespace DD.Prototype.UI
                 if (fill != null)
                 {
                     UiFactory.Fill((RectTransform)fill);
+                    // AD 8a SHOULD-8: the translucency lives in the rim - a 12 px band at 0.86 over the world, the text zone 0.98.
+                    Image ink = fill.GetComponent<Image>();
+                    ink.sprite = UiSprites.PanelBanded;
+                    ink.type = Image.Type.Sliced;
+                    ink.pixelsPerUnitMultiplier = 1f;
                 }
             }
 
@@ -1086,104 +1091,85 @@ namespace DD.Prototype.UI
         public static readonly Rect HudSafeZone = new Rect(0.19f, 0.25f, 0.62f, 0.55f);
 
         // ============================================================ threat chips
+        //
+        // WP-068 slice 8b · E13 threat chips v3: the kit's State chip (Hud size, its own rim - no uGUI Outline), three fixed
+        // slots sharing one width (SURROUNDED · BEHIND YOU · ELITE / ULTRA NEARBY), shown ≥ 800 ms and gone only after
+        // 300 ms without the threat (no flicker), entering y −6 → 0 with α (Fast, Settle), leaving by α (Fast, Exit).
 
-        private const float ThreatChipWidth = 208f; // WP-022L (AD v007 MUST-1): +8 for the 24 px glyph
-        private const float ThreatChipHeight = 40f; // AD v005 MUST-1: 20 px Body bold, 20 px glyph inside, 40 px tall
-        private const float ThreatGlyphSize = 24f; // AD v007 MUST-1
+        private const float ThreatChipWidth = 208f;
+        private const float ThreatChipHeight = 40f;
+        private const float ThreatMinShownSeconds = 0.8f;
+        private const float ThreatQuietSeconds = 0.3f;
+        private const float ThreatEntryDrop = 6f;
 
-        /// <summary>
-        /// Combat warnings from the threat director (WP-033 <see cref="ThreatHudFeed"/>):
-        /// three chips under the round block - SURROUNDED, BEHIND YOU, ELITE/ULTRA NEARBY.
-        /// Each carries a glyph AND a word (REQ-105 shape + colour; colour-blind safe),
-        /// sits in the top strip outside <see cref="HudSafeZone"/>, and is toggled only
-        /// on a state change (no per-frame rebuild). Low health already has its own
-        /// readout in the health panel; windup count is an event for the audio owner.
-        /// </summary>
+        /// <summary>Every text a threat chip can carry (sizes the shared slot width).</summary>
+        private static readonly string[] ThreatLabels = { "SURROUNDED", "BEHIND YOU", "ELITE NEARBY", "ULTRA NEARBY" };
+
+        private sealed class ThreatSlot
+        {
+            public RectTransform Rect;
+            public CanvasGroup Group;
+            public TMP_Text Label;
+            public Image Glyph;
+            public Vector2 Home;
+            public bool Shown;
+            public float ShownAt;
+            public float WantAt;
+            public float HideAt = -1f;
+        }
+
         private void BuildThreatChips()
         {
             RectTransform row = UiFactory.NewRect("ThreatRow", ScreenRect);
             row.anchorMin = new Vector2(0.5f, 1f);
             row.anchorMax = new Vector2(0.5f, 1f);
             row.pivot = new Vector2(0.5f, 1f);
-            row.sizeDelta = new Vector2(ThreatChipWidth * 3f + (int)UiSpace.S * 2, ThreatChipHeight);
-            // 4 px under the round block (was 8): the taller chip still ends >= 6 px above
-            // the safe-zone top (32 + 150 + 4 + 40 = 226 < 270 at 1080p).
             row.anchoredPosition = new Vector2(0f, -((int)UiTokens.SafeInset + RoundBlockHeight + (int)UiSpace.XS));
             _threatRow = row.gameObject;
 
-            _threatSurrounded = ThreatChip(row, 0, "SURROUNDED", "Threat.Surrounded", UiColor.StateDanger, out _);
-            _threatRear = ThreatChip(row, 1, "BEHIND YOU", "Threat.Behind", UiColor.StateDanger, out _);
-            _threatStrong = ThreatChip(row, 2, "ELITE NEARBY", "Threat.Elite", UiColor.StateWarning, out _threatStrongText);
+            _threatSlots[0] = ThreatChip(row, "SURROUNDED", "Threat.Surrounded", UiChipState.Danger);
+            _threatSlots[1] = ThreatChip(row, "BEHIND YOU", "Threat.BehindOuter", UiChipState.Danger);
+            _threatSlots[2] = ThreatChip(row, "ELITE NEARBY", "Threat.EliteOuter", UiChipState.Warning);
 
-            // WP-068 slice 0 (D2): the chip width comes from the longest label it can show,
-            // measured once here in the chip's own style (Body bold, +4 tracking, the
-            // current TextScale). The fixed 208 px clipped "SURROUNDED" to "SURROUNDE" at
-            // text scale 1.0 (baseline bot-threat). All three slots share one width so a
-            // chip never shifts when another appears.
+            // One width for the three slots - the longest label any of them can show, in the chip's own style - so a chip
+            // never shifts when another appears or the strong chip turns ULTRA.
             float width = ThreatChipWidth;
+            TMP_Text probe = _threatSlots[2].Label;
+            float left = probe.rectTransform.offsetMin.x;
+            float right = -probe.rectTransform.offsetMax.x;
             for (int i = 0; i < ThreatLabels.Length; i++)
             {
-                float needed = Mathf.Ceil(_threatStrongText.GetPreferredValues(ThreatLabels[i]).x) + ThreatLabelLeft + ThreatLabelRight + (int)UiSpace.XS;
-                width = Mathf.Max(width, needed);
+                width = Mathf.Max(width, Mathf.Ceil(probe.GetPreferredValues(ThreatLabels[i]).x) + left + right);
             }
 
-            PlaceThreatChip(_threatSurrounded, 0, width);
-            PlaceThreatChip(_threatRear, 1, width);
-            PlaceThreatChip(_threatStrong, 2, width);
-            row.sizeDelta = new Vector2(width * 3f + (int)UiSpace.S * 2, ThreatChipHeight);
+            float height = _threatSlots[0].Rect.sizeDelta.y;
+            for (int i = 0; i < _threatSlots.Length; i++)
+            {
+                ThreatSlot slot = _threatSlots[i];
+                slot.Rect.sizeDelta = new Vector2(width, height);
+                slot.Home = new Vector2(i * (width + (int)UiSpace.S), 0f);
+                slot.Rect.anchoredPosition = slot.Home;
+                slot.Rect.gameObject.SetActive(false);
+            }
+
+            row.sizeDelta = new Vector2(width * 3f + (int)UiSpace.S * 2, height);
         }
 
-        /// <summary>Every text a threat chip can carry (sizes the shared chip width).</summary>
-        private static readonly string[] ThreatLabels = { "SURROUNDED", "BEHIND YOU", "ELITE NEARBY", "ULTRA NEARBY" };
-
-        private const float ThreatLabelLeft = 20f + ThreatGlyphSize + (int)UiSpace.S;
-        private const float ThreatLabelRight = 20f;
-
-        private static void PlaceThreatChip(GameObject chip, int index, float width)
+        private static ThreatSlot ThreatChip(RectTransform row, string text, string glyph, UiChipState state)
         {
-            var rect = (RectTransform)chip.transform;
-            rect.sizeDelta = new Vector2(width, ThreatChipHeight);
-            rect.anchoredPosition = new Vector2(index * (width + (int)UiSpace.S), 0f);
-        }
-
-        private static GameObject ThreatChip(RectTransform row, int index, string text, string icon, UiColor color, out TMP_Text label)
-        {
-            label = UiFactory.Chip("Threat." + index, row, text, UiColor.SurfaceInset, color, ThreatChipWidth, ThreatChipHeight);
+            TMP_Text label = UiChips.Create("Threat." + text, row, UiChipKind.State, text, UiChipSize.Hud, state, glyph);
             var chip = (RectTransform)label.transform.parent;
             chip.anchorMin = new Vector2(0f, 0.5f);
             chip.anchorMax = new Vector2(0f, 0.5f);
             chip.pivot = new Vector2(0f, 0.5f);
-            chip.anchoredPosition = new Vector2(index * (ThreatChipWidth + (int)UiSpace.S), 0f);
-
-            // AD v005 MUST-1: Body 20 bold, and a 1 px outline in the state colour (0.6 α)
-            // behind the fill so the chip separates from bright water and dark foliage.
-            label.fontSize = UiTokens.FontSize(UiType.Body);
-            label.fontStyle = TMPro.FontStyles.Bold;
-            label.characterSpacing = 4f;
-            // The chip root IS the fill image, so the outline is a uGUI Outline effect on
-            // it (a child would draw over the fill): 1 px in the state colour at 0.6 α.
-            Color outlineColor = UiTokens.Get(color);
-            outlineColor.a = 0.6f;
-            var outline = chip.gameObject.AddComponent<UnityEngine.UI.Outline>();
-            outline.effectColor = outlineColor;
-            outline.effectDistance = new Vector2(1f, 1f);
-            outline.useGraphicAlpha = true;
-
-            Image glyph = UiArt.IconImage("Icon", chip, icon, color, ThreatGlyphSize);
-            var glyphRect = (RectTransform)glyph.transform;
-            glyphRect.anchorMin = new Vector2(0f, 0.5f);
-            glyphRect.anchorMax = new Vector2(0f, 0.5f);
-            glyphRect.pivot = new Vector2(0f, 0.5f);
-            glyphRect.anchoredPosition = new Vector2(20f, 0f); // 20 px padding, glyph inside the chip
-            // WP-022L: the AP-012 v003 threat glyphs are drawn upright (Threat.Behind already
-            // shows the arrow striking from behind), so the old Menu.Back rotation is gone.
-            RectTransform labelRect = (RectTransform)label.transform;
-            labelRect.offsetMin = new Vector2(ThreatLabelLeft, 0f);
-            labelRect.offsetMax = new Vector2(-20f, 0f);
-            label.alignment = TMPro.TextAlignmentOptions.Left;
-
-            chip.gameObject.SetActive(false);
-            return chip.gameObject;
+            Transform icon = chip.Find("Glyph");
+            return new ThreatSlot
+            {
+                Rect = chip,
+                Group = UiFactory.Group(chip.gameObject),
+                Label = label,
+                Glyph = icon != null ? icon.GetComponent<Image>() : null
+            };
         }
 
         private void UpdateThreat()
@@ -1195,43 +1181,34 @@ namespace DD.Prototype.UI
 
             bool fighting = RunEvents.Current.Phase == RunPhase.Fighting && UiNavigation.GameplayInputAllowed;
             ThreatSnapshot threat = ThreatDirector.Current;
-            bool surrounded = fighting && threat.Encircled;
-            bool rear = fighting && threat.RearAttack;
+            float now = Time.unscaledTime;
+
+            DriveThreat(_threatSlots[0], fighting && threat.Encircled, now, UiEvent.HudThreatEncircled);
+            DriveThreat(_threatSlots[1], fighting && threat.RearAttack, now, UiEvent.HudThreatRearAttack);
+
             bool strong = fighting && threat.StrongVersionPresent;
+            bool ultra = strong && threat.StrongestTier == EnemyTier.Ultra;
+            if (strong && ultra != _threatUltra)
+            {
+                // The strong slot names the worst tier near: its word and its outer-only tier glyph change together.
+                _threatUltra = ultra;
+                _threatSlots[2].Label.text = ultra ? "ULTRA NEARBY" : "ELITE NEARBY";
+                Sprite tier = UiArt.Icon(ultra ? "Threat.UltraOuter" : "Threat.EliteOuter");
+                if (tier != null && _threatSlots[2].Glyph != null)
+                {
+                    UiArt.SetGlyph(_threatSlots[2].Glyph, tier);
+                }
+            }
+
+            DriveThreat(_threatSlots[2], strong, now, UiEvent.HudThreatStrongVersion);
+
+            // E13 rear arc: for the BEHIND YOU chip's lifetime, turned to the attackers (S-03 data).
+            if (_playerArcs != null)
+            {
+                _playerArcs.SetRear(_threatSlots[1].Shown, threat.RearDirection);
+            }
+
             int windup = fighting ? threat.WindingUp : 0;
-
-            if (surrounded != _threatSurroundedShown)
-            {
-                _threatSurroundedShown = surrounded;
-                _threatSurrounded.SetActive(surrounded);
-                if (surrounded)
-                {
-                    UiEvents.Raise(UiEvent.HudThreatEncircled);
-                }
-            }
-
-            if (rear != _threatRearShown)
-            {
-                _threatRearShown = rear;
-                _threatRear.SetActive(rear);
-                if (rear)
-                {
-                    UiEvents.Raise(UiEvent.HudThreatRearAttack);
-                }
-            }
-
-            if (strong != _threatStrongShown)
-            {
-                _threatStrongShown = strong;
-                if (strong)
-                {
-                    _threatStrongText.text = threat.StrongestTier == EnemyTier.Ultra ? "ULTRA NEARBY" : "ELITE NEARBY";
-                    UiEvents.Raise(UiEvent.HudThreatStrongVersion);
-                }
-
-                _threatStrong.SetActive(strong);
-            }
-
             if (windup > _threatWindupShown)
             {
                 UiEvents.Raise(UiEvent.HudThreatWindup);
@@ -1240,11 +1217,50 @@ namespace DD.Prototype.UI
             _threatWindupShown = windup;
         }
 
+        /// <summary>One slot's hysteresis: in at once, out only after ≥ 800 ms shown and 300 ms without the threat.</summary>
+        private static void DriveThreat(ThreatSlot slot, bool want, float now, UiEvent entered)
+        {
+            if (want)
+            {
+                slot.WantAt = now;
+            }
+
+            if (want && !slot.Shown)
+            {
+                slot.Shown = true;
+                slot.ShownAt = now;
+                slot.HideAt = -1f;
+                slot.Rect.gameObject.SetActive(true);
+                UiMotion.KillTarget(slot.Rect, false);
+                UiMotion.KillTarget(slot.Group, false);
+                slot.Rect.anchoredPosition = slot.Home + new Vector2(0f, -ThreatEntryDrop);
+                slot.Group.alpha = 0f;
+                UiMotion.Move(slot.Rect, slot.Home, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+                UiMotion.Alpha(slot.Group, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+                UiEvents.Raise(entered);
+                return;
+            }
+
+            if (!want && slot.Shown && now - slot.ShownAt >= ThreatMinShownSeconds && now - slot.WantAt >= ThreatQuietSeconds)
+            {
+                slot.Shown = false;
+                slot.HideAt = now + UiMotionTokens.Seconds(UiDuration.Fast);
+                UiMotion.Alpha(slot.Group, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
+                return;
+            }
+
+            if (!slot.Shown && slot.HideAt > 0f && now >= slot.HideAt)
+            {
+                slot.HideAt = -1f;
+                slot.Rect.gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>The threat chips, for tests (inactive unless the director says so).</summary>
         public bool ThreatChipVisible(int index)
         {
-            GameObject chip = index == 0 ? _threatSurrounded : index == 1 ? _threatRear : _threatStrong;
-            return chip != null && chip.activeSelf;
+            ThreatSlot slot = index >= 0 && index < _threatSlots.Length ? _threatSlots[index] : null;
+            return slot != null && slot.Rect != null && slot.Rect.gameObject.activeSelf;
         }
 
         // ================================================================== updates
@@ -1328,7 +1344,28 @@ namespace DD.Prototype.UI
             if (local != _reticleLocal)
             {
                 _reticleLocal = local;
-                _reticle.rectTransform.anchoredPosition = local;
+                _reticle.Root.anchoredPosition = local;
+            }
+
+            // E13 / E17: the player-bound arcs follow the figure's screen point while the run is live.
+            Vector2 playerLocal = OffScreen;
+            if (show)
+            {
+                Vector3 playerViewport = camera.WorldToViewportPoint(rig.transform.position + Vector3.up * 0.9f);
+                if (playerViewport.z >= 0f)
+                {
+                    Vector2 size = ScreenRect.rect.size;
+                    playerLocal = new Vector2((playerViewport.x - 0.5f) * size.x, (playerViewport.y - 0.5f) * size.y);
+                }
+            }
+
+            _playerArcs.Place(playerLocal);
+
+            if (show)
+            {
+                // E15: the spread the weapon really has, projected at the aim distance (from the chest, where the shot leaves).
+                _reticle.Tick(camera, rig.Aim.AimWorldPoint, rig.transform.position + Vector3.up * 1.2f,
+                    ScreenRect.rect.size, WeaponEvents.Classic, WeaponEvents.Special.Phase == SpecialWeaponPhase.Active);
             }
         }
 

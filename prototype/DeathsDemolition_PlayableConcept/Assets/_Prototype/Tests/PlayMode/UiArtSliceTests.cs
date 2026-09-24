@@ -210,7 +210,15 @@ namespace DD.Prototype.Tests.PlayMode
             Vector2 reticlePos = ((RectTransform)reticle).anchoredPosition;
             Assert.IsTrue(Mathf.Abs(reticlePos.x) < 2000f && Mathf.Abs(reticlePos.y) < 2000f,
                 "canlı koşuda reticle ekran içinde (park pozisyonunda değil): " + reticlePos);
-            Assert.AreEqual("Reticle.Ticks", reticle.GetComponent<Image>().sprite.name);
+            // WP-068 8b · E15: the honest reticle - four G1 ticks at the real spread, around the aim point.
+            for (int i = 0; i < 4; i++)
+            {
+                Image tick = reticle.Find("Tick." + i)?.GetComponent<Image>();
+                Assert.IsNotNull(tick, "reticle tiki yok: " + i);
+                Assert.IsTrue(tick.sprite != null && (tick.sprite.name == "Pip.Full" || tick.sprite.name == "Reticle.SpreadArc"), "tik G1 glifi: " + (tick.sprite != null ? tick.sprite.name : "null"));
+                float d = ((RectTransform)tick.transform).anchoredPosition.magnitude;
+                Assert.GreaterOrEqual(d, HudReticle.MinRadius, "tik yayılma yarıçapının dışında");
+            }
 
             // Threat chips (WP-022B / WP-033): built, hidden until the director says so.
             Transform threatRow = hud.transform.Find(hud.GetType().Name + ".Canvas/ThreatRow");
@@ -317,7 +325,8 @@ namespace DD.Prototype.Tests.PlayMode
                 StringAssert.Contains("FIELD", usage.text);
                 StringAssert.Contains("2 HIT", usage.text);
                 Image glyph = null;
-                foreach (Image im in hud.GetComponentsInChildren<Image>(true)) if (im.name == "Glyph") glyph = im;
+                // The Special block's own glyph (the threat chips carry kit "Glyph" children too, WP-068 8b).
+                foreach (Image im in hud.GetComponentsInChildren<Image>(true)) if (im.name == "Glyph" && im.GetComponentInParent<Canvas>().name == "SpecialWeapon") glyph = im;
                 Assert.IsNotNull(glyph);
                 Assert.IsTrue(glyph.enabled && glyph.sprite != null && glyph.sprite.name.StartsWith("Sw."), "AP-014 Kagura Bell glifi: " + (glyph.sprite != null ? glyph.sprite.name : "yok"));
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 2);

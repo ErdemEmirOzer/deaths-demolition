@@ -187,6 +187,29 @@ namespace DD.Prototype.UI
             get { return GetOrCreate("ammoTick", () => CreateTick(8, 16, 4)); }
         }
 
+        /// <summary>
+        /// WP-068 slice 8b (E13 rear arc, E17 player arc) · a 60° annulus segment at 12 o'clock of a square, stroke 5.6 % of
+        /// the radius (4 px at r 72), feathered ends. Rotate the image to face a direction; its size is the diameter.
+        /// </summary>
+        public static Sprite Arc60
+        {
+            get { return GetOrCreate("arc60", () => CreateArc(256, 60f, 0.056f)); }
+        }
+
+        /// <summary>
+        /// WP-068 slice 8b (AD 8a SHOULD-8) · the HUD panel fill with a translucent margin: 9-sliced, rounded like the card,
+        /// the outer <see cref="PanelBandWidth"/> px at <see cref="PanelBandAlpha"/> of the fill, a 4 px ramp to full in the
+        /// text zone. Tinted HudInk (0.98) the band renders 0.86: the world ghosts through the rim, never behind a glyph.
+        /// </summary>
+        public static Sprite PanelBanded
+        {
+            get { return GetOrCreate("panelBanded", () => CreateBandedPanel(UiTokens.RadiusCard, PanelBandWidth, PanelBandRamp, PanelBandAlpha)); }
+        }
+
+        public const int PanelBandWidth = 12;
+        public const int PanelBandRamp = 4;
+        public const float PanelBandAlpha = 0.86f / UiTokens.HudInkAlpha;
+
         /// <summary>WP-068 slice 8 (E11) · one pellet pip: an 8 px disc in a 12 px pitch (shotgun shells on the ladder).</summary>
         public static Sprite AmmoPip
         {
@@ -457,6 +480,58 @@ namespace DD.Prototype.UI
 
             texture.SetPixels32(pixels);
             return Finish(texture, Vector4.zero);
+        }
+
+        private static Sprite CreateArc(int size, float spanDegrees, float strokeFraction)
+        {
+            Texture2D texture = NewTexture(size, size);
+            var pixels = new Color32[size * size];
+            float half = size * 0.5f;
+            float radius = half - 2f;
+            float stroke = radius * strokeFraction;
+            float halfSpan = spanDegrees * 0.5f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + 0.5f - half, dy = y + 0.5f - half;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float angle = Mathf.Abs(Mathf.Atan2(dx, dy) * Mathf.Rad2Deg);   // 0 at 12 o'clock
+                    float across = Mathf.Clamp01(stroke * 0.5f - Mathf.Abs(d - (radius - stroke * 0.5f)) + 0.5f);
+                    float along = Mathf.Clamp01((halfSpan - angle) / 6f);            // 6° feathered ends
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(across * along * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, Vector4.zero);
+        }
+
+        private static Sprite CreateBandedPanel(int radius, int band, int ramp, float bandAlpha)
+        {
+            int r = Mathf.Max(1, radius);
+            int border = Mathf.Max(r, band + ramp) + 1;
+            int size = border * 2 + 4;
+            Texture2D texture = NewTexture(size, size);
+            var pixels = new Color32[size * size];
+            float half = size * 0.5f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = Mathf.Abs(x + 0.5f - half) - (half - r);
+                    float dy = Mathf.Abs(y + 0.5f - half) - (half - r);
+                    float outside = Mathf.Sqrt(Mathf.Max(dx, 0f) * Mathf.Max(dx, 0f) + Mathf.Max(dy, 0f) * Mathf.Max(dy, 0f));
+                    float distance = outside + Mathf.Min(Mathf.Max(dx, dy), 0f) - r;   // < 0 inside
+                    float depth = -distance;
+                    float alpha = Mathf.Clamp01(0.5f - distance)
+                                  * (depth < band ? bandAlpha : depth < band + ramp ? Mathf.Lerp(bandAlpha, 1f, (depth - band) / ramp) : 1f);
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, new Vector4(border, border, border, border));
         }
 
         private static Sprite CreateTick(int pitch, int height, int bar)

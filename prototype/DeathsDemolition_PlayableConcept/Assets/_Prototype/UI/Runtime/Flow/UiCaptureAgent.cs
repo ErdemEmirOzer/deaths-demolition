@@ -247,12 +247,14 @@ namespace DD.Prototype.UI
                     if (!_threatDone && state.Phase == RunPhase.Fighting && (ThreatHudFeed.Encircled || ThreatHudFeed.RearAttack || ThreatHudFeed.StrongVersionPresent))
                     {
                         _threatDone = true;
+                        yield return new WaitForSecondsRealtime(0.3f); // WP-068 8b: past the chip's 140 ms entry
                         yield return Capture("threat.png");
                     }
 
                     if (!_lowDone && state.Phase == RunPhase.Fighting && ThreatHudFeed.LowHealth)
                     {
                         _lowDone = true;
+                        yield return new WaitForSecondsRealtime(0.2f);
                         yield return Capture("low-health.png");
                     }
 

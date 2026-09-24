@@ -426,9 +426,7 @@ namespace DD.Prototype.Tests.EditMode
                 Color panel = UiContrast.Composite(UiTokens.Get(UiColor.HudInk), w.Colour);
                 Color leaf = UiTokens.Get(UiColor.StateGold);
                 leaf.a = RunHudScreen.GoldLeafAlpha;
-                Color glint = UiTokens.Get(UiColor.StateGold);
-                glint.a = RunHudScreen.GoldGlintAlpha;
-                Color under = UiContrast.Composite(glint, UiContrast.Composite(leaf, panel)); // the worst frame: flakes + the sweep
+                Color under = UiContrast.Composite(leaf, panel); // the glint runs on the frame hairline, never the text zone (AD 8a SHOULD-9)
                 float ratio = UiContrast.Ratio(UiContrast.Composite(UiTokens.Get(UiColor.StateGold), under), under);
                 report.AppendLine("StateGold on the gold leaf over " + w.Name + ": " + ratio.ToString("0.00") + ":1 (floor 4.5)");
                 if (ratio < 4.5f)
