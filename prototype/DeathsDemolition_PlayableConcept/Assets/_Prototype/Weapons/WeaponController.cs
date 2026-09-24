@@ -1045,12 +1045,15 @@ namespace DD.Prototype.Weapons
 
             SpecialWeaponVisualLibrary library = SpecialWeaponVisualLibrary.Current;
             SpecialWeaponVisualLibrary.Entry entry = library != null ? library.Find(_special.Id) : null;
-            if (entry == null || !entry.HasHand || library.material == null)
+            if (entry == null || !entry.HasHand)
             {
                 return;
             }
 
-            GameObject model = SpecialWeaponVisualLibrary.Instantiate("Model", entry.handLods, library.material, null, s_handLodHeights);
+            // WP-069 B4c: the AP-021 model (ADR-042-1 frame, own sockets — the rig takes its Muzzle) before the AP-014 hand meshes.
+            GameObject model = entry.HasModel
+                ? SpecialWeaponVisualLibrary.InstantiateModel(entry, null, s_handLodHeights)
+                : library.material != null ? SpecialWeaponVisualLibrary.Instantiate("Model", entry.handLods, library.material, null, s_handLodHeights) : null;
             if (model == null)
             {
                 return;
@@ -1064,6 +1067,12 @@ namespace DD.Prototype.Weapons
 
         /// <summary>WP-037 readout: the special rig carries the AP-014 hand model (tests / probe).</summary>
         public bool SpecialRigHasAuthoredModel => _specialRig != null && _specialRig.HasAuthoredModel;
+
+        /// <summary>WP-069 B4c readout: the special rig's muzzle (the AP-021 model's Muzzle socket once installed).</summary>
+        public Transform SpecialRigMuzzle => _specialRig != null ? _specialRig.Muzzle : null;
+
+        /// <summary>WP-069 B4c readout: the special rig's model root (tests).</summary>
+        public Transform SpecialRigBody => _specialRig != null ? _specialRig.Body : null;
 
         /// <summary>WP-037 readout: the special rig body is visible (tests).</summary>
         public bool SpecialRigVisible => _specialRig != null && _specialRig.Body != null && _specialRig.Body.gameObject.activeSelf;

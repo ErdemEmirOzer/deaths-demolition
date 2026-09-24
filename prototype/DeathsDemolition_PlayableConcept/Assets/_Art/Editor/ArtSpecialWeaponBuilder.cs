@@ -134,6 +134,7 @@ namespace DD.Art.Pipeline.EditorTools
                 var e = new SpecialWeaponVisualLibrary.Entry { id = id };
                 FillLods(Folder + "/sw_" + key + "_pickup.fbx", "sw_" + key + "_pickup_LOD", e.pickupLods, e.pickupTriangles);
                 FillLods(Folder + "/sw_" + key + "_hand.fbx", "sw_" + key + "_hand_LOD", e.handLods, e.handTriangles);
+                ArtAp021WeaponBuilder.ApplyModel(e);   // WP-069 B4c: a rebuild keeps the AP-021 model (it wins over these meshes)
                 entries.Add(e);
                 Debug.Log(LogPrefix + key + " pickup tris " + string.Join("/", e.pickupTriangles) + " hand tris " + string.Join("/", e.handTriangles));
             }

@@ -1,6 +1,7 @@
 using System.IO;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Weapons;
+using WeaponSocketContract = DD.Prototype.Core.Weapons.WeaponSocketContract;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -39,7 +40,59 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(1024, baseMap.height);
         }
 
-        // WP-069 B4: Raiju / Namekuji show the library's slot 0 / 1 models (the old bell / loom) until the AP-021 Specials.
+        /// <summary>
+        /// WP-069 B4c · the AP-021 (P-07 v002) models: in the library, the ADR-042-1 frame (root at the grip, +Z barrel,
+        /// +Y up — measured on the Muzzle socket), the contract sockets, three LODs within P-07's budget (LOD0 FP ≤ 26 000,
+        /// LOD1 ≤ 6 000, LOD2 ≤ 1 800), the body material mapped (BaseColor / Normal / derived mask / emissive).
+        /// </summary>
+        [TestCase(SpecialWeaponId.Raiju)]
+        [TestCase(SpecialWeaponId.Namekuji)]
+        public void Ap021Modeli_CerceveSoketLodVeMalzeme(SpecialWeaponId id)
+        {
+            SpecialWeaponVisualLibrary.Entry e = Library.Find(id);
+            Assert.IsNotNull(e, id + " girdisi yok");
+            Assert.IsTrue(e.HasModel, id + ": AP-021 modeli kütüphanede yok (ArtAp021WeaponBuilder.BuildSpecials)");
+            Assert.AreEqual("AP-021", e.modelPackage);
+            Transform root = e.model.transform;
+            foreach (string socket in new[] { WeaponSocketContract.Muzzle, WeaponSocketContract.Ejection, WeaponSocketContract.MarkerGrip,
+                         WeaponSocketContract.AttachBarrel, WeaponSocketContract.AttachTop, WeaponSocketContract.AttachStock })
+            {
+                Assert.IsNotNull(WeaponSocketContract.Find(root, socket), id + ": soket yok " + socket);
+            }
+
+            // Measured through the entry's frame fix (what InstantiateModel applies).
+            Vector3 muzzle = Quaternion.Euler(e.modelFrameEuler) * root.InverseTransformPoint(WeaponSocketContract.Find(root, WeaponSocketContract.Muzzle).position);
+            Assert.Greater(muzzle.z, 0.5f, id + ": namlu +Z (ADR-042-1) — ölçülen " + muzzle.ToString("F3"));
+            Assert.Less(Mathf.Abs(muzzle.x), 0.05f, id + ": namlu eksende");
+            Assert.That(muzzle.y, Is.InRange(0f, 0.2f), id + ": namlu kabzanın biraz üstünde (+Y yukarı)");
+
+            int[] budget = { 26000, 6000, 1800 };
+            for (int lod = 0; lod < SpecialWeaponVisualLibrary.LodCount; lod++)
+            {
+                Assert.Greater(e.modelTriangles[lod], 0, id + " LOD" + lod + " boş");
+                Assert.LessOrEqual(e.modelTriangles[lod], budget[lod], id + " LOD" + lod + " " + e.modelTriangles[lod] + " tri > " + budget[lod]);
+            }
+
+            Assert.Greater(e.modelTriangles[0], e.modelTriangles[1]);
+            Assert.Greater(e.modelTriangles[1], e.modelTriangles[2]);
+
+            Material body = null;
+            foreach (Renderer r in e.model.GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material m in r.sharedMaterials)
+                {
+                    if (m != null && m.name.EndsWith("_body")) body = m;
+                }
+            }
+
+            Assert.IsNotNull(body, id + ": gövde malzemesi eşlenmedi (FBX slotu → M_AP021_<key>_body)");
+            Assert.IsNotNull(body.GetTexture("_BaseMap"));
+            Assert.IsNotNull(body.GetTexture("_BumpMap"));
+            Assert.IsNotNull(body.GetTexture("_MetallicGlossMap"), "MRA'dan türetilmiş maske");
+            Assert.IsNotNull(body.GetTexture("_EmissionMap"));
+        }
+
+        // WP-069 B4: Raiju / Namekuji keep the library's slot 0 / 1 AP-014 meshes (the old bell / loom) as the fallback under the AP-021 model.
         [TestCase(SpecialWeaponId.Raiju)]
         [TestCase(SpecialWeaponId.Namekuji)]
         public void Silah_PickupVeElModeli_LOD0_2_Butce(SpecialWeaponId id)

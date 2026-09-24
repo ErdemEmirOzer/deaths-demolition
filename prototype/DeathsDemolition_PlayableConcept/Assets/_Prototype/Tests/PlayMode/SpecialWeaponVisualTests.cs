@@ -42,7 +42,22 @@ namespace DD.Prototype.Tests.PlayMode
             SpecialWeaponId id = pickup.WeaponId;
             bool authoredExpected = lib.Find(id) != null;
             Assert.AreEqual(authoredExpected, pickup.UsesAuthoredModel, id + ": pickup görseli kütüphaneyle uyumsuz.");
-            if (authoredExpected)
+            SpecialWeaponVisualLibrary.Entry entry = lib.Find(id);
+            if (authoredExpected && entry.HasModel)
+            {
+                // WP-069 B4c: the AP-021 model on its side — its own materials, one LODGroup, no COL_* hull.
+                Transform pose = null;
+                foreach (Transform t in pickup.GetComponentsInChildren<Transform>(true)) if (t.name == "ModelPose") pose = t;
+                Assert.IsNotNull(pose, "AP-021 pickup pozu yok");
+                foreach (MeshRenderer r in pose.GetComponentsInChildren<MeshRenderer>(true))
+                {
+                    Assert.IsFalse(r.name.StartsWith(SpecialWeaponVisualLibrary.ColliderPrefix), "pickup modelinde çarpışma kabuğu: " + r.name);
+                    Assert.IsTrue(r.sharedMaterial != null && r.sharedMaterial.name.StartsWith("M_AP021_"), "AP-021 malzemesi değil: " + r.name);
+                }
+
+                Assert.AreEqual(1, pose.GetComponentsInChildren<LODGroup>(true).Length, "tek LODGroup (parçalar gövdeyle birlikte geçer)");
+            }
+            else if (authoredExpected)
             {
                 MeshRenderer[] renderers = pickup.GetComponentsInChildren<MeshRenderer>(true);
                 bool atlas = false;
@@ -62,6 +77,16 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.IsTrue(_s.Controller.SpecialRigVisible, "Aktifken special rig görünür olmalı (pickup_done / 0,8 s yedek sonrası).");
             Assert.AreEqual(authoredExpected, _s.Controller.SpecialRigHasAuthoredModel, id + ": el modeli kütüphaneyle uyumsuz.");
+            if (entry != null && entry.HasModel)
+            {
+                // WP-069 B4c: the rig took the AP-021 Muzzle socket (the orb / blob leaves from it) and carries no hull.
+                Assert.AreEqual(DD.Prototype.Core.Weapons.WeaponSocketContract.Muzzle, _s.Controller.SpecialRigMuzzle.name);
+                Assert.AreEqual(0, _s.Controller.SpecialRigBody.GetComponentsInChildren<Collider>(true).Length, "el modelinde collider yok");
+                foreach (Transform t in _s.Controller.SpecialRigBody.GetComponentsInChildren<Transform>(true))
+                {
+                    Assert.IsFalse(t.name.StartsWith(SpecialWeaponVisualLibrary.ColliderPrefix), "el modelinde COL_ kabuğu: " + t.name);
+                }
+            }
 
             Time.captureDeltaTime = 0.05f;
             yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi + _s.Special.ActiveDuration, "Special süresi bitmedi.");

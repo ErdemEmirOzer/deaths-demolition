@@ -40,6 +40,9 @@ namespace DD.Prototype.Weapons
         /// <summary>WP-037: LODGroup screen heights for the authored pickup model (LOD0 near, LOD2 far).</summary>
         private static readonly float[] s_pickupLodHeights = { 0.12f, 0.05f, 0.01f };
 
+        /// <summary>WP-069 B4c: gap (m) between the laid AP-021 model and the pickup origin.</summary>
+        private const float PickupRestLift = 0.03f;
+
         /// <summary>WP-037: true when the visual is the AP-014 model rather than the WP-007 primitives (readout for tests/probe).</summary>
         public bool UsesAuthoredModel { get; private set; }
 
@@ -354,6 +357,27 @@ namespace DD.Prototype.Weapons
             // without the library.
             SpecialWeaponVisualLibrary library = SpecialWeaponVisualLibrary.Current;
             SpecialWeaponVisualLibrary.Entry authored = library != null ? library.Find(_weaponId) : null;
+
+            // WP-069 B4c: the AP-021 model laid on its side (barrel horizontal), centred on the spin axis, resting just above the origin.
+            if (authored != null && authored.HasModel)
+            {
+                var pose = new GameObject("ModelPose").transform;
+                pose.SetParent(_visual, false);
+                pose.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                GameObject model = SpecialWeaponVisualLibrary.InstantiateModel(authored, pose, s_pickupLodHeights);
+                if (model != null)
+                {
+                    Bounds b = SpecialWeaponVisualLibrary.LocalLod0Bounds(model.transform);
+                    model.transform.localPosition = -b.center;
+                    // Rz(90°): the model's X extent is the height on the ground.
+                    pose.localPosition = new Vector3(0f, b.extents.x + PickupRestLift, 0f);
+                    UsesAuthoredModel = true;
+                    return;
+                }
+
+                Destroy(pose.gameObject);
+            }
+
             if (authored != null && authored.HasPickup && library.material != null)
             {
                 GameObject model = SpecialWeaponVisualLibrary.Instantiate("Model", authored.pickupLods, library.material, _visual, s_pickupLodHeights);
