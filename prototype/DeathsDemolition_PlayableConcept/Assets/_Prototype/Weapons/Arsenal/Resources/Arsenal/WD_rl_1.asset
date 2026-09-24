@@ -21,7 +21,7 @@ MonoBehaviour:
   description: "T\xFCpten ate\u015F oku f\u0131rlar, h\u0131zlan\u0131r, duman b\u0131rak\u0131r;
     patlama yeri sarsar."
   sortOrder: 9
-  enabled: 0
+  enabled: 1
   silhouette: 5
   legacyNames: []
   fire:
