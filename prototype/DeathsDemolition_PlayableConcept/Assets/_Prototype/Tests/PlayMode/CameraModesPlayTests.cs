@@ -251,8 +251,25 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(_rig.IsViewmodelOverlayStacked, "Overlay kamera URP yığınına eklenmeli.");
             Assert.AreEqual(_rig.Camera.fieldOfView, vm.fieldOfView, 0.01f, "Faz 1: görüntü modeli FOV'u dünyaya kilitli.");
 
-            Vector3 dunya = _rig.ViewmodelAnchor.position + _rig.Camera.transform.forward * 0.5f;
-            Assert.Less(Vector3.Distance(dunya, CameraView.ViewmodelToWorld(dunya)), 0.001f, "FOV kilidinde ViewmodelToWorld özdeşlik.");
+            // WP-070V: the viewmodel pass carries a screen transform; the mapped world point must be drawn at the
+            // same screen position and depth by the world camera (both projections as the cameras use them).
+            Transform ct = _rig.Camera.transform;
+            foreach (Vector3 yerel in new[] { new Vector3(0.18f, -0.22f, 0.5f), new Vector3(-0.1f, 0.05f, 0.9f), new Vector3(0f, 0f, 2f) })
+            {
+                Vector3 dunya = ct.TransformPoint(yerel);
+                Vector3 a = vm.WorldToViewportPoint(dunya);
+                Vector3 b = _rig.Camera.WorldToViewportPoint(CameraView.ViewmodelToWorld(dunya));
+                Assert.Less(Vector2.Distance(a, b), 1e-3f, "ViewmodelToWorld ekran konumu: " + yerel + " vm " + a + " dünya " + b);
+                Assert.AreEqual(a.z, b.z, 1e-3f, "ViewmodelToWorld derinliği korur");
+            }
+
+            CameraLayers.ViewmodelScreenScale = 1f;
+            CameraLayers.ViewmodelScreenShift = Vector2.zero;
+            yield return null;
+            Vector3 d0 = ct.TransformPoint(new Vector3(0.18f, -0.22f, 0.5f));
+            Assert.Less(Vector3.Distance(d0, CameraView.ViewmodelToWorld(d0)), 0.001f, "Özdeş dönüşüm + FOV kilidinde ViewmodelToWorld özdeşlik.");
+            CameraLayers.ViewmodelScreenScale = CameraLayers.DefaultViewmodelScreenScale;
+            CameraLayers.ViewmodelScreenShift = CameraLayers.DefaultViewmodelScreenShift;
 
             CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
             yield return Kareler(2);

@@ -1144,6 +1144,22 @@ namespace DD.Prototype.CameraSystem
             if (fp)
             {
                 _viewmodelCamera.fieldOfView = CameraLayers.ViewmodelFov;
+                // WP-070V: screen-space transform of the viewmodel pass (CameraLayers); identity → Unity's own matrix.
+                CameraLayers.GetViewmodelScreenTransform(out float s, out Vector2 ndc);
+                if (Mathf.Approximately(s, 1f) && ndc.sqrMagnitude < 1e-12f)
+                {
+                    _viewmodelCamera.ResetProjectionMatrix();
+                }
+                else
+                {
+                    Matrix4x4 m = Matrix4x4.identity;
+                    m.m00 = s;
+                    m.m11 = s;
+                    m.m03 = ndc.x;
+                    m.m13 = ndc.y;
+                    _viewmodelCamera.projectionMatrix = m * Matrix4x4.Perspective(_viewmodelCamera.fieldOfView, _viewmodelCamera.aspect,
+                        _viewmodelCamera.nearClipPlane, _viewmodelCamera.farClipPlane);
+                }
             }
         }
 

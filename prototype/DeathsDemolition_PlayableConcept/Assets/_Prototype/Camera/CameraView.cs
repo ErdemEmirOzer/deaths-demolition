@@ -114,8 +114,13 @@ namespace DD.Prototype.CameraSystem
                 return viewmodelWorldPosition;
             }
 
-            float scale = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) / Mathf.Tan(CameraLayers.ViewmodelFov * 0.5f * Mathf.Deg2Rad);
-            return t.TransformPoint(new Vector3(local.x * scale, local.y * scale, local.z));
+            // WP-070V: the viewmodel pass also applies CameraLayers' screen transform (NDC' = s·NDC + t), so the
+            // world point keeps the depth and lands where the viewmodel point is drawn.
+            CameraLayers.GetViewmodelScreenTransform(out float s, out Vector2 ndc);
+            float tanWorld = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float scale = s * tanWorld / Mathf.Tan(CameraLayers.ViewmodelFov * 0.5f * Mathf.Deg2Rad);
+            return t.TransformPoint(new Vector3(local.x * scale + ndc.x * local.z * tanWorld * cam.aspect,
+                                                local.y * scale + ndc.y * local.z * tanWorld, local.z));
         }
 
         /// <summary>
@@ -174,6 +179,31 @@ namespace DD.Prototype.CameraSystem
             }
         }
 
+        /// <summary>
+        /// WP-070V (S-09 AD R1-A MUST-2): the FP viewmodel's resting silhouette covered the HUD weapon cluster
+        /// (bottom-right 420×150 + 24 px at 1080). Until the FP arm rest pose (S-06 B4b) the viewmodel pass is
+        /// drawn with a screen-space transform: scale about <see cref="ViewmodelScreenPivot"/> (screen fraction,
+        /// 0,0 = bottom-left), then shift by <see cref="ViewmodelScreenShift"/> (screen fraction). The world is
+        /// not affected; <see cref="CameraView.ViewmodelToWorld"/> applies the same transform. Defaults from the
+        /// CameraViewmodelHudPlayTests sweep on the AP-013 rifle at rest: 0.75 / pivot bottom-left / −12 % → silhouette
+        /// x 566–1420, y 734–1080 at 1080 (56 px clear of the cluster; 0.75 / −10 % clears it by 2 px only).
+        /// </summary>
+        public const float DefaultViewmodelScreenScale = 0.75f;
+        public static readonly Vector2 DefaultViewmodelScreenPivot = new Vector2(0f, 0f);
+        public static readonly Vector2 DefaultViewmodelScreenShift = new Vector2(-0.12f, 0f);
+
+        public static float ViewmodelScreenScale { get; set; } = DefaultViewmodelScreenScale;
+        public static Vector2 ViewmodelScreenPivot { get; set; } = DefaultViewmodelScreenPivot;
+        public static Vector2 ViewmodelScreenShift { get; set; } = DefaultViewmodelScreenShift;
+
+        /// <summary>The transform in clip space: NDC' = <paramref name="scale"/> · NDC + <paramref name="ndcOffset"/>.</summary>
+        public static void GetViewmodelScreenTransform(out float scale, out Vector2 ndcOffset)
+        {
+            scale = ViewmodelScreenScale > 0f ? ViewmodelScreenScale : 1f;
+            Vector2 pivot = ViewmodelScreenPivot * 2f - Vector2.one;
+            ndcOffset = pivot * (1f - scale) + ViewmodelScreenShift * 2f;
+        }
+
         private static int s_firstPersonView = -2;
 
         /// <summary>Layer index, or -1 when the layer is not defined in TagManager.</summary>
@@ -194,6 +224,9 @@ namespace DD.Prototype.CameraSystem
         private static void ResetStatics()
         {
             ViewmodelFovOverride = 0f;
+            ViewmodelScreenScale = DefaultViewmodelScreenScale;
+            ViewmodelScreenPivot = DefaultViewmodelScreenPivot;
+            ViewmodelScreenShift = DefaultViewmodelScreenShift;
             s_firstPersonView = -2;
         }
     }
