@@ -251,6 +251,18 @@ Bu iz scratch hesabıdır; **WP-041 simülatöründe ağaç modeli B3 diliminde*
 | Meta güç farkı (tam beden satırı vs 0) | R15 risk Δ ≤ 0,5 | > 0,8 |
 | XP tempo | L10 1,2–2,0 s · L20 7–12 s | — |
 
+### 4.4 B3 sonucu (DEC-098, 2026-09-24)
+`EconomySimulator.TreeModel` (WP-041 round modeli + sevk edilen RunTreeState, K1 çekilişi `DrawFrontier`, 2 kart, Ocak, Kese, ilk Special), %90 toplama, seed 1–20 × ar_1/smg_1/sg_1 (sr_1 sim kadrosunda yok). §4.2 iki bot olarak yeniden yazıldı (denetim #6):
+
+| bot | pay R1–15 | pay R10–15 | cüzdan R15 medyan / p90 | ilk keystone | doruk medyan / p90 | Ocak |
+|---|---|---|---|---|---|---|
+| harcama-azami (pinsiz) | %96 | %97 | 233–259 / 918–2 673 | R7 | M1 sonrası R15, %50 koşuda | 20 (R19 dolu) |
+| acele (doruğa pin) | %96 | %106 | 234 / 438 | **R4** | **R9 / R10** | 20 (R18) |
+| insan (%30 yastık, ≤ 2 Ocak) | %86–87 | %90–91 | **819–888** / 2 664–2 890 | R8 | M1 sonrası %23 koşuda | 20 |
+| biriktirici (%50 yastık, ≤ 1 Ocak) | %44–46 | %42–48 | 3 356–3 462 / 4 132–4 208 | R10 | — | 11 |
+
+Ne-olursa: Ocak tavanı 30 R15'e kadar hiçbir şeyi değiştirmez (tavan R18–19'da dolar); R10'dan itibaren 3 kart insan cüzdanını 721'e indirir ama havuz 60 koşunun 34–37'sinde R20 öncesi tükenir → reddedildi. Biriktirici cüzdanı ekonomi dışı bir kararın konusu (açık). Kül temposu (Kül = XP / 30): halka 1 150 Kül = 4 500 XP/s'te 1,0 s; halka 1+2 2 080 Kül ≈ 11,3 s (tek seferlik havuzunun yarısıyla; havuz 775 Kül); tümü 5 830 Kül ≈ 39 s. Round modelinin kendi hızı (WP-045 bot kalibrasyonu, 2 600–3 300 XP/s) bu süreleri ~1,5× uzatır; gerçek oyuncu hızı S-10 telemetrisiyle ölçülecek. Risk vekili ve meta güç farkı satırları ağaç modelinde henüz yok (Ocak hasarı risk modeline girmiyor).
+
 Telemetri olayları (WP-045 `dd-run-telemetry` v2 alanları): `tree_node_bought{id,round,price,kind,lane}`, `tree_pin_set{id,round}`, `offer_drawn{ids,frontier,pity}`, `hearth_stoked{n,round}`, `tree_undo`, `fork_reforged`, `meta_node_bought{id,level,kul}`, `meta_respec{refund}`, `mastery_tick{weapon,m}`.
 
 ---
