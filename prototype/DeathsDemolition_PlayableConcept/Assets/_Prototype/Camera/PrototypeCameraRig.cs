@@ -434,6 +434,78 @@ namespace DD.Prototype.CameraSystem
             return true;
         }
 
+        // ------------------------------------------------------------ WP-070 API
+
+        /// <summary>
+        /// WP-070: first-person viewmodel anchor (hands + weapon root on the
+        /// <see cref="CameraLayers.FirstPersonView"/> layer). Null until the FP rig builds it.
+        /// </summary>
+        public Transform ViewmodelAnchor { get; private set; }
+
+        /// <summary>Colliders the TP/FP centre ray can stop on: world blockers and enemy hitboxes.</summary>
+        public static int AimRayMask
+        {
+            get { return DD.Prototype.Core.PrototypeLayers.AimBlockMask | (1 << DD.Prototype.Core.PrototypeLayers.EnemyHitbox); }
+        }
+
+        /// <summary>Maximum TP/FP aim ray length; beyond it the aim point is placed at this range.</summary>
+        public const float AimRayMaxDistance = 120f;
+
+        /// <summary>
+        /// WP-070: the SHAKE-FREE aim ray for the active mode.
+        ///   TopDown — the cursor ray (<paramref name="screenPoint"/>) onto the horizontal aim
+        ///             plane at <paramref name="aimPlaneY"/>; identical to <see cref="ScreenPointToAimPlane"/>.
+        ///   TP / FP — the screen-centre ray from the stable pose against world blockers and
+        ///             enemy hitboxes (<see cref="AimRayMask"/>); without a hit the point sits at
+        ///             <see cref="AimRayMaxDistance"/>. <paramref name="screenPoint"/> is ignored.
+        /// Weapons fire from the muzzle towards <see cref="CameraAimRay.HitPoint"/> (parallax
+        /// resolution with S-02 WP-069 ADR-069-1).
+        /// </summary>
+        public bool TryGetAimRay(Vector2 screenPoint, float aimPlaneY, out CameraAimRay ray)
+        {
+            ray = default(CameraAimRay);
+            if (_camera == null)
+            {
+                return false;
+            }
+
+            if (CameraModeService.Current == CameraMode.TopDown)
+            {
+                Vector3 point;
+                if (!ScreenPointToAimPlane(screenPoint, aimPlaneY, out point))
+                {
+                    return false;
+                }
+
+                Vector3 origin = transform.position;
+                Vector3 delta = point - origin;
+                ray.Origin = origin;
+                ray.Distance = delta.magnitude;
+                ray.Direction = ray.Distance > 1e-6f ? delta / ray.Distance : transform.forward;
+                ray.HitPoint = point;
+                ray.HasHit = true;
+                return true;
+            }
+
+            ray.Origin = transform.position;
+            ray.Direction = transform.rotation * Vector3.forward;
+            RaycastHit hit;
+            if (Physics.Raycast(ray.Origin, ray.Direction, out hit, AimRayMaxDistance, AimRayMask, QueryTriggerInteraction.Collide))
+            {
+                ray.HitPoint = hit.point;
+                ray.Distance = hit.distance;
+                ray.HasHit = true;
+            }
+            else
+            {
+                ray.HitPoint = ray.Origin + ray.Direction * AimRayMaxDistance;
+                ray.Distance = AimRayMaxDistance;
+                ray.HasHit = false;
+            }
+
+            return true;
+        }
+
         private string Describe()
         {
             Vector3 p = transform.position;
