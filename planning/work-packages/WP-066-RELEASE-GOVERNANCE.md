@@ -62,6 +62,7 @@ Tüm yollar `companyName`/`productName`/bundle id'den türer: **bunlardan birini
 | Kaynak | Dosya / durum |
 |---|---|
 | LiberationSans (TextMesh Pro varsayılan fontu) | `Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt` — SIL OFL 1.1; dağıtımda lisans metni paketle birlikte verilmeli |
+| UI v3 fontları (WP-068 dilim 3): Shippori Mincho B1 700 (Display), Source Sans 3 400 (Text), Oswald 500 (Numeric) | `Assets/_Prototype/UI/Art/Fonts/<aile>/<aile>-OFL.txt`, her TTF'nin yanında — SIL OFL 1.1. TTF'ler build'e girmez (LFS, Resources dışı); build'e yalnız statik SDF atlasları girer (`Resources/UI/Fonts/{Display,Text,Numeric} SDF.asset`). Dağıtımda üç lisans metni paketle birlikte verilmeli (kredi ekranı / okuma notu, 🔴 12). Spectral içe alınmadı |
 | EmojiOne sprite'ları (TMP örnek) | `Assets/TextMesh Pro/Sprites/EmojiOne Attribution.txt` — build'e girip girmediği doğrulanmalı; girmiyorsa atıf gerekmez |
 | Unity paketleri | `Packages/manifest.json` (URP 14.0.10, Input System 1.7.0, AI Navigation 1.1.5, ProBuilder 5.2.2, TMP 3.0.6, Cinemachine 2.9.5, Test Framework 1.1.33) — Unity Companion License; ayrı atıf dosyası yok |
 | AI-üretim varlıklar | Higgsfield (image/Tripo 3B/Seed Audio vb.) ve yerel Blender/prosedürel üretim; kayıtlar `asset-production/AP-*` manifestlerinde (repo dışı, WP-067A yedeği BLOCKED). **Depoda birleşik beyan/atıf dosyası yok**; sağlayıcı lisans koşulları (ticari kullanım, atıf) doğrulanmadı |
