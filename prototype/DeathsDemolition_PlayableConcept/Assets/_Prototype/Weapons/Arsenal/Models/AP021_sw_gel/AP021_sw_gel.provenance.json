@@ -1,0 +1,40 @@
+{
+ "package": "AP-021",
+ "owner": "P-07",
+ "key": "sw_gel",
+ "version": "v002",
+ "ad_verdict": "02-concept/AP021-AD-slice1-verdict.md: KABUL_DUZELTMELERLE, MUST-1..4 applied in v002",
+ "files": [
+  {
+   "source": "asset-production/AP-021/exports/fbx/AP021_sw_gel.fbx",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_gel/AP021_sw_gel.fbx",
+   "bytes": 1335868,
+   "sha256": "a35502d75db189458f5a231766b27195307a92809a063a9da5266a5dc6e1376b"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_gel_BaseColor.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_gel/Textures/T_AP021_sw_gel_BaseColor.png",
+   "bytes": 2431069,
+   "sha256": "50344520c92755c09c2bb7129856f47d6db909871db5cc6d1724b70a35eeab3a"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_gel_Normal.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_gel/Textures/T_AP021_sw_gel_Normal.png",
+   "bytes": 3299362,
+   "sha256": "755d812e038a3d670793285c7f0d4c329ad4164ef937e492af3236efcf49e439"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_gel_MRA.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_gel/Textures/T_AP021_sw_gel_MRA.png",
+   "bytes": 2595579,
+   "sha256": "d6e50c7bf2f9d43262ff66a8f4628f5d0dedb0a0d67857954972bbb86fcf0c5e"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_gel_Emissive.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_gel/Textures/T_AP021_sw_gel_Emissive.png",
+   "bytes": 20679,
+   "sha256": "8ef86f7aaf3ca378d5bacc5107f33109a2fe3e4b86dc1cc2989d83efb6b44905"
+  }
+ ],
+ "blend_source_kept_in_ap_package": true
+}

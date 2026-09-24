@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b3bcf9f1aa84e2e925d66389578a35a, type: 3}
   m_Name: DD_SpecialWeapons
   m_EditorClassIdentifier: 
-  schema: dd-special-weapon-visuals-v1
+  schema: dd-special-weapon-visuals-v2
   package: AP-014
   material: {fileID: 2100000, guid: 395556107bdd74aada8286f81140ec54, type: 2}
   entries:
@@ -27,6 +27,10 @@ MonoBehaviour:
     - {fileID: -7331926105172707340, guid: c7673999339704e148bd8ac641f69c6a, type: 3}
     pickupTriangles: cb0400005a0100006f000000
     handTriangles: e80600006401000071000000
+    model: {fileID: 919132149155446097, guid: e6243abcdcc7b4614bc73a734ef9ca20, type: 3}
+    modelPackage: AP-021
+    modelFrameEuler: {x: 90, y: 0, z: 0}
+    modelTriangles: ad640000f2160000d9060000
   - id: 1
     pickupLods:
     - {fileID: -9195562310179135791, guid: 54aaab822f2284a26b85c6a20a8daf4e, type: 3}
@@ -38,6 +42,10 @@ MonoBehaviour:
     - {fileID: -5039990785528823828, guid: 1cb43e32159f146c195ca0c4c86b7d11, type: 3}
     pickupTriangles: 4201000042010000c8000000
     handTriangles: 42010000420100002c010000
+    model: {fileID: 919132149155446097, guid: 2c6999ca09e68411f89374ce1279feae, type: 3}
+    modelPackage: AP-021
+    modelFrameEuler: {x: 90, y: 0, z: 0}
+    modelTriangles: c76200008b160000b0060000
   - id: 2
     pickupLods:
     - {fileID: 7811119681072667109, guid: c0f3769dfe39b41ebb8a80d30e184d67, type: 3}
@@ -49,6 +57,10 @@ MonoBehaviour:
     - {fileID: -8047504026072077352, guid: 6b2a49ce6d3074b63b5e55b6e035438f, type: 3}
     pickupTriangles: aa050000fe01000093000000
     handTriangles: 0807000058020000c8000000
+    model: {fileID: 0}
+    modelPackage: 
+    modelFrameEuler: {x: 0, y: 0, z: 0}
+    modelTriangles: 000000000000000000000000
   sheets:
   - usage: sw_kagura_wave
     texture: {fileID: 2800000, guid: d9c47e5b383cd4e058050736d213840f, type: 3}

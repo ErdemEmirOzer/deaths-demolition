@@ -1,0 +1,46 @@
+{
+ "package": "AP-021",
+ "owner": "P-07",
+ "key": "sw_arc",
+ "version": "v002",
+ "ad_verdict": "02-concept/AP021-AD-slice1-verdict.md: KABUL_DUZELTMELERLE, MUST-1..5 applied in v002 (butt 11.6 cm + 8 mm plate, glass dome 24 seg, washi + two seals, part_trigger, axial arc mask)",
+ "files": [
+  {
+   "source": "asset-production/AP-021/exports/fbx/AP021_sw_arc.fbx",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_arc/AP021_sw_arc.fbx",
+   "bytes": 1361548,
+   "sha256": "5a3f78a54c24fd5d514a22ed7106ceed815893685e657b6742c4d1772c39d2b5"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_arc_BaseColor.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_arc/Textures/T_AP021_sw_arc_BaseColor.png",
+   "bytes": 3152426,
+   "sha256": "fe53977ff13f2320d824532ed3df98844f360b4fd0bf7e0af6e0460029970512"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_arc_Normal.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_arc/Textures/T_AP021_sw_arc_Normal.png",
+   "bytes": 3167538,
+   "sha256": "481ac10bef22a9e8c5500617971d868c80f24a4ffb9358cad47d9dedd37b357d"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_arc_MRA.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_arc/Textures/T_AP021_sw_arc_MRA.png",
+   "bytes": 3066198,
+   "sha256": "e24be30c04a5e94bde71cbcde0b551aa5b6f818686bf2f79d554b19f9083e1e9"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_arc_Emissive.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_arc/Textures/T_AP021_sw_arc_Emissive.png",
+   "bytes": 20434,
+   "sha256": "d63c531db312246952105f003b973cc1fafcc2ca6b55fe21da04b8f909e9a6a2"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/T_AP021_sw_arc_EmissiveMask.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_sw_arc/Textures/T_AP021_sw_arc_EmissiveMask.png",
+   "bytes": 28641,
+   "sha256": "09b2ed73680002d48506208b4349d9093308d0c8bff954bdf1c31db7ac1615ea"
+  }
+ ],
+ "blend_source_kept_in_ap_package": true
+}
