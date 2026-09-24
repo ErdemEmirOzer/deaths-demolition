@@ -184,6 +184,7 @@ namespace DD.Prototype.UI
                 }
 
                 s_data.ReducedMotion = value;
+                UiMotion.ReducedMotion = value; // WP-068: the motion core applies RM by class
                 Persist();
             }
         }
@@ -305,6 +306,7 @@ namespace DD.Prototype.UI
             s_data.UiScale = loaded != null ? loaded.UiScale : defaultScale;
             s_data.MasterVolume = loaded != null ? loaded.MasterVolume : 1f;
             s_data.ReducedMotion = loaded != null && loaded.ReducedMotion;
+            UiMotion.ReducedMotion = s_data.ReducedMotion;
             s_data.Telemetry = loaded == null || loaded.Telemetry;
             s_data.ColorPalette = loaded != null ? loaded.ColorPalette : 0;
             s_data.TextScale = loaded != null && loaded.TextScale > 0f ? loaded.TextScale : 1f;
@@ -467,6 +469,7 @@ namespace DD.Prototype.UI
             s_data.MasterVolume = 1f;
             s_data.Quality = -1;
             s_data.ReducedMotion = false;
+            UiMotion.ReducedMotion = false;
             Changed = null;
             MasterVolumeChanged = null;
             QualityChanged = null;

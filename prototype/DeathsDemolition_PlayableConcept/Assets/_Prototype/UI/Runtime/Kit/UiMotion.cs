@@ -19,8 +19,14 @@ namespace DD.Prototype.UI
     [DisallowMultipleComponent]
     public sealed class UiPulse : MonoBehaviour
     {
+        // WP-068 slice 2: a thin shim over the UiMotion core (Attention class) - same
+        // alpha range and period as before, now on CanvasRenderer alpha (every pulse target
+        // has base alpha 1, so the composite is identical) and without an Update of its own.
+        // Reduced Motion holds at the top of the swing (the core's Attention policy).
+        // Enabling / disabling the component starts / stops the pulse (the per-component
+        // allocation diagnostics toggle it).
         private Graphic[] _targets;
-        private bool _held;
+        private readonly System.Collections.Generic.List<UiTweenHandle> _handles = new System.Collections.Generic.List<UiTweenHandle>(2);
         private float _minAlpha = 0.55f;
         private float _maxAlpha = 1f;
         private float _period = UiTokens.PulsePeriod;
@@ -31,6 +37,10 @@ namespace DD.Prototype.UI
             _minAlpha = Mathf.Clamp01(minAlpha);
             _maxAlpha = Mathf.Clamp01(maxAlpha);
             _period = Mathf.Max(0.1f, period);
+            if (isActiveAndEnabled)
+            {
+                Restart();
+            }
         }
 
         public void Configure(Graphic target)
@@ -38,26 +48,24 @@ namespace DD.Prototype.UI
             Configure(new[] { target }, 0.55f, 1f, UiTokens.PulsePeriod);
         }
 
-        private void Update()
+        private void OnEnable()
         {
+            Restart();
+        }
+
+        private void OnDisable()
+        {
+            Stop();
+        }
+
+        private void Restart()
+        {
+            UiSettings.EnsureLoaded(); // the RM mirror the core reads
+            Stop();
             if (_targets == null)
             {
                 return;
             }
-
-            // Unscaled: the warning has to keep breathing while the world is frozen.
-            // Reduced motion (WP-022B): the pulse holds at full alpha - the element stays
-            // visible, it just stops breathing.
-            float wave = UiSettings.ReducedMotion
-                ? 1f
-                : 0.5f - 0.5f * Mathf.Cos(Time.unscaledTime * (2f * Mathf.PI / _period));
-            float alpha = Mathf.Lerp(_minAlpha, _maxAlpha, wave);
-            if (UiSettings.ReducedMotion && _held)
-            {
-                return;
-            }
-
-            _held = UiSettings.ReducedMotion;
 
             for (int i = 0; i < _targets.Length; i++)
             {
@@ -67,21 +75,22 @@ namespace DD.Prototype.UI
                     continue;
                 }
 
-                Color c = graphic.color;
-                c.a = alpha;
-                graphic.color = c;
+                graphic.canvasRenderer.SetAlpha(_maxAlpha);
+                _handles.Add(UiMotion.Pulse(graphic, _minAlpha, _maxAlpha, _period, GetInstanceID()));
             }
+        }
+
+        private void Stop()
+        {
+            for (int i = 0; i < _handles.Count; i++)
+            {
+                UiMotion.Kill(_handles[i], false);
+            }
+
+            _handles.Clear();
         }
     }
 
-    /// <summary>
-    /// A single drifting sakura petal on the menu backdrop.
-    ///
-    /// Six of these is the entire "atmosphere" budget of the menu. The request asks for
-    /// controlled theme detail, and the control is the count: petals are large, slow,
-    /// far below text contrast and behind every panel, so they cannot compete with the
-    /// thing the player is trying to read.
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class UiDrift : MonoBehaviour
     {
@@ -149,120 +158,55 @@ namespace DD.Prototype.UI
     [DisallowMultipleComponent]
     public sealed class UiScreenFade : MonoBehaviour
     {
-        private CanvasGroup _group;
-        private float _start;
-
+        // WP-068 slice 2: shim over the UiMotion core - the screen's CanvasGroup fades in
+        // over MotionScreen (280 ms, Settle; Decor class, so Reduced Motion lands it at once).
         public void Configure(CanvasGroup group)
         {
-            _group = group;
-            _start = Time.unscaledTime;
-            if (_group != null)
+            UiSettings.EnsureLoaded(); // the RM mirror the core reads
+            if (group != null)
             {
-                _group.alpha = UiSettings.ReducedMotion ? 1f : 0f;
-            }
-        }
-
-        private void Update()
-        {
-            if (_group == null)
-            {
-                Destroy(this);
-                return;
+                group.alpha = 0f;
+                UiMotion.Alpha(group, 1f, UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
             }
 
-            float t = UiSettings.ReducedMotion
-                ? 1f
-                : Mathf.Clamp01((Time.unscaledTime - _start) / UiTokens.MotionScreen);
-            _group.alpha = UiMotionCurve.EaseOut(t);
-            if (t >= 1f)
-            {
-                Destroy(this);
-            }
+            Destroy(this);
         }
     }
 
-    /// <summary>
-    /// WP-022F · staggered entry for a row of panels (Results columns): each CanvasGroup
-    /// fades in over MotionBase, starting <c>step</c> seconds after the previous one, and
-    /// lifts 12 px into place (anchoredPosition on unscaled time - no layout, no vertex
-    /// rebuild). Reduced motion: every group is at rest on the first frame. Removes itself
-    /// when the last group lands.
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class UiStaggerIn : MonoBehaviour
     {
         private const float Lift = 12f;
 
-        private CanvasGroup[] _groups;
-        private RectTransform[] _rects;
-        private Vector2[] _rest;
-        private float _start;
-        private float _step;
-
+        // WP-068 slice 2: shim over the UiMotion core - each group rises 12 px and fades in
+        // over MotionBase (220 ms, Settle), one step apart (Decor: Reduced Motion lands them).
         public void Configure(CanvasGroup[] groups, float step = 0.06f)
         {
-            _groups = groups ?? new CanvasGroup[0];
-            _step = step;
-            _rects = new RectTransform[_groups.Length];
-            _rest = new Vector2[_groups.Length];
-            _start = Time.unscaledTime;
-            bool instant = UiSettings.ReducedMotion;
-            for (int i = 0; i < _groups.Length; i++)
+            UiSettings.EnsureLoaded(); // the RM mirror the core reads
+            if (groups != null)
             {
-                if (_groups[i] == null)
+                for (int i = 0; i < groups.Length; i++)
                 {
-                    continue;
-                }
+                    CanvasGroup group = groups[i];
+                    if (group == null)
+                    {
+                        continue;
+                    }
 
-                _rects[i] = (RectTransform)_groups[i].transform;
-                _rest[i] = _rects[i].anchoredPosition;
-                _groups[i].alpha = instant ? 1f : 0f;
-                if (!instant)
-                {
-                    _rects[i].anchoredPosition = _rest[i] - new Vector2(0f, Lift);
-                }
-            }
-
-            if (instant)
-            {
-                Destroy(this);
-            }
-        }
-
-        private void Update()
-        {
-            bool done = true;
-            float now = Time.unscaledTime - _start;
-            for (int i = 0; i < _groups.Length; i++)
-            {
-                if (_groups[i] == null)
-                {
-                    continue;
-                }
-
-                float t = UiSettings.ReducedMotion
-                    ? 1f
-                    : Mathf.Clamp01((now - i * _step) / UiTokens.MotionBase);
-                float e = UiMotionCurve.EaseOut(t);
-                _groups[i].alpha = e;
-                _rects[i].anchoredPosition = _rest[i] - new Vector2(0f, Lift * (1f - e));
-                if (t < 1f)
-                {
-                    done = false;
+                    var rect = (RectTransform)group.transform;
+                    Vector2 rest = rect.anchoredPosition;
+                    group.alpha = 0f;
+                    rect.anchoredPosition = rest - new Vector2(0f, Lift);
+                    float delay = i * step;
+                    UiMotion.Alpha(group, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, delay);
+                    UiMotion.Move(rect, rest, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, delay);
                 }
             }
 
-            if (done)
-            {
-                Destroy(this);
-            }
+            Destroy(this);
         }
     }
 
-    /// <summary>
-    /// Keeps a stretched rect no wider than a cap, centred (WP-022C ultrawide rule). Applied
-    /// once per dimension change - no per-frame work.
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class UiMaxWidth : UIBehaviour
     {

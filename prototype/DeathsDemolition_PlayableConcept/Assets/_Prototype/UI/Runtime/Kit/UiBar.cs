@@ -18,7 +18,7 @@ namespace DD.Prototype.UI
         private Image _fill;
         private UiColor _colorToken;
         private float _target = 1f;
-        private bool _instant;
+        private UiTweenHandle _tween;
 
         public void Configure(Image fill, UiColor colorToken)
         {
@@ -30,14 +30,26 @@ namespace DD.Prototype.UI
         /// <summary>Sets the 0..1 value. Eased unless <paramref name="instant"/>.</summary>
         public void SetValue(float value01, bool instant = false)
         {
-            _target = Mathf.Clamp01(value01);
-
-            if (instant && _fill != null)
+            float target = Mathf.Clamp01(value01);
+            bool changed = !Mathf.Approximately(target, _target);
+            _target = target;
+            if (_fill == null)
             {
-                _fill.fillAmount = _target;
+                return;
             }
 
-            _instant = instant;
+            if (instant)
+            {
+                UiMotion.KillTarget(_fill, false);
+                _fill.fillAmount = _target;
+            }
+            else if (changed || (!_tween.IsAlive && !Mathf.Approximately(_fill.fillAmount, _target)))
+            {
+                // WP-068 slice 2: one Fill tween on the UiMotion core instead of a
+                // never-ending per-frame lerp. Same 220 ms (Base, Settle). Data class: the
+                // bar shows a game value, so Reduced Motion never changes how it moves.
+                _tween = UiMotion.Fill(_fill, _target, UiDuration.Base, UiEase.Settle, UiMotionClass.Data);
+            }
         }
 
         /// <summary>Swaps the fill token, e.g. health dropping into the low-health colour.</summary>
@@ -57,17 +69,6 @@ namespace DD.Prototype.UI
             get { return _target; }
         }
 
-        private void Update()
-        {
-            if (_fill == null || _instant)
-            {
-                _instant = false;
-                return;
-            }
-
-            float t = 1f - Mathf.Exp(-Time.unscaledDeltaTime / Mathf.Max(0.0001f, UiTokens.MotionBase));
-            _fill.fillAmount = Mathf.Lerp(_fill.fillAmount, _target, t);
-        }
     }
 
     /// <summary>

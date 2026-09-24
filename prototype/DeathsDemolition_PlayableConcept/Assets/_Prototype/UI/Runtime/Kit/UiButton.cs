@@ -88,7 +88,12 @@ namespace DD.Prototype.UI
             // lightens the surface without touching the text it is measured against.
             _wash = UiFactory.NewImage("Wash", transform, UiColor.TextPrimary, _fill.sprite);
             UiFactory.Fill((RectTransform)_wash.transform, UiTokens.StrokeControl);
-            SetAlpha(_wash, 0f);
+            _wash.canvasRenderer.SetAlpha(0f);
+
+            // The fill and border carry their colour on the CanvasRenderer (Tint channel):
+            // Graphic.color is white so the renderer colour is the absolute colour.
+            _fill.color = Color.white;
+            _border.color = Color.white;
 
             // Left-edge marker for the navigation pane's current entry.
             _marker = UiFactory.NewImage("Marker", transform, UiColor.TextPrimary, UiSprites.Chip); // WP-022B AD MUST-1: cream, not a third vermilion
@@ -223,7 +228,13 @@ namespace DD.Prototype.UI
         /// </summary>
         public override void OnSelect(BaseEventData eventData)
         {
+            _hasFocus = true;
             base.OnSelect(eventData);
+            if (_configured)
+            {
+                Refresh(false);
+            }
+
             if (_configured && eventData is AxisEventData && IsInteractable())
             {
                 UiSound.Play(UiSoundKind.Move);
@@ -242,25 +253,32 @@ namespace DD.Prototype.UI
             Refresh(instant);
         }
 
-        private void Update()
+        // WP-068 slice 2: no Update. State changes arrive through DoStateTransition and
+        // OnSelect / OnDeselect; the fill, border and hover wash move with short Tint
+        // tweens on the UiMotion core (CanvasRenderer colour over a white Graphic.color, so
+        // no mesh is rebuilt while they move), and the label colour changes at once. The
+        // old exponential lerp ran every frame for every button and wrote the TMP label
+        // colour each time, which regenerates its mesh (interaction-designer r2).
+        private bool _hasFocus;
+
+        protected override void OnEnable()
         {
-            if (!_configured)
+            base.OnEnable();
+            if (_configured)
             {
-                return;
+                // A disable clears the renderer; put the resolved colours back.
+                Refresh(true);
             }
+        }
 
-            Refresh(false);
-
-            // Unscaled: the pause screen and the round-end freeze both run at timeScale 0.
-            float t = 1f - Mathf.Exp(-Time.unscaledDeltaTime / Mathf.Max(0.0001f, UiTokens.MotionFast));
-
-            _fill.color = Color.Lerp(_fill.color, _fillTarget, t);
-            _border.color = Color.Lerp(_border.color, _borderTarget, t);
-            _label.color = Color.Lerp(_label.color, _labelTarget, t);
-
-            Color wash = _wash.color;
-            wash.a = Mathf.Lerp(wash.a, _washTarget, t);
-            _wash.color = wash;
+        public override void OnDeselect(BaseEventData eventData)
+        {
+            _hasFocus = false;
+            base.OnDeselect(eventData);
+            if (_configured)
+            {
+                Refresh(false);
+            }
         }
 
         private void Refresh(bool instant)
@@ -269,9 +287,7 @@ namespace DD.Prototype.UI
             bool pressed = enabledControl && currentSelectionState == SelectionState.Pressed;
             bool hovered = enabledControl && currentSelectionState == SelectionState.Highlighted;
 
-            bool focused = enabledControl
-                           && EventSystem.current != null
-                           && EventSystem.current.currentSelectedGameObject == gameObject;
+            bool focused = enabledControl && _hasFocus;
 
             ResolveTargets(enabledControl, pressed, hovered);
 
@@ -294,6 +310,10 @@ namespace DD.Prototype.UI
             if (instant)
             {
                 ApplyImmediate();
+            }
+            else
+            {
+                Animate();
             }
         }
 
@@ -364,17 +384,31 @@ namespace DD.Prototype.UI
 
         private void ApplyImmediate()
         {
-            _fill.color = _fillTarget;
-            _border.color = _borderTarget;
-            _label.color = _labelTarget;
-            SetAlpha(_wash, _washTarget);
+            UiMotion.KillTarget(_fill, false);
+            UiMotion.KillTarget(_border, false);
+            UiMotion.KillTarget(_wash, false);
+            _fill.canvasRenderer.SetColor(_fillTarget);
+            _border.canvasRenderer.SetColor(_borderTarget);
+            _wash.canvasRenderer.SetAlpha(_washTarget);
+            SetLabelColour();
         }
 
-        private static void SetAlpha(Graphic graphic, float alpha)
+        private void Animate()
         {
-            Color c = graphic.color;
-            c.a = alpha;
-            graphic.color = c;
+            // Fast (140 ms) Settle, Decor: Reduced Motion lands the colours at once.
+            UiMotion.Tint(_fill, _fillTarget, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.Tint(_border, _borderTarget, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.TintAlpha(_wash, _washTarget, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+            SetLabelColour();
         }
+
+        private void SetLabelColour()
+        {
+            if (_label.color != _labelTarget)
+            {
+                _label.color = _labelTarget; // one regen per state change, never per frame
+            }
+        }
+
     }
 }

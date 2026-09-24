@@ -123,6 +123,8 @@ namespace DD.Prototype.UI
         /// <summary>Virtual for the same reason as Start: a derived private OnDestroy would hide it.</summary>
         protected virtual void OnDestroy()
         {
+            // WP-068 slice 2: presets a screen starts pass its instance id as owner.
+            UiMotion.KillOwner(GetInstanceID(), false);
             UiEvents.Raise(UiEvent.ScreenLeft, GetType().Name);
         }
 
