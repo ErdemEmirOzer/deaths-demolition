@@ -72,13 +72,11 @@ namespace DD.Prototype.UI
 
         public static void GoToMainMenu()
         {
-            ReleaseSimulation();
             Load(PrototypeScenes.MainMenu);
         }
 
         public static void GoToSelection()
         {
-            ReleaseSimulation();
             Load(PrototypeScenes.Selection);
         }
 
@@ -97,13 +95,11 @@ namespace DD.Prototype.UI
             ProfileService.ClearLastReport();
             s_resultsScheduled = false;
 
-            ReleaseSimulation();
             Load(PrototypeScenes.Run);
         }
 
         public static void GoToResults()
         {
-            ReleaseSimulation();
             Load(PrototypeScenes.Results);
         }
 
@@ -119,7 +115,6 @@ namespace DD.Prototype.UI
             // (ordinal included) is untouched - the B5 behaviour is unchanged.
             CompletionAuthority.InvalidateLive();
 
-            ReleaseSimulation();
             Load(PrototypeScenes.MainMenu);
         }
 
@@ -146,22 +141,188 @@ namespace DD.Prototype.UI
             RunFlowClock.ClearHolds();
         }
 
+        // ====================================================== WP-068 slice 10: async load
+
+        /// <summary>
+        /// A scene load is in flight - from the request to the new scene's activation (one at
+        /// a time; a second Load() is ignored with a log line). The reveal after activation is
+        /// not part of it: the new scene is live, and a load asked for during the reveal takes
+        /// over the still-shut doors.
+        /// </summary>
+        public static bool IsLoading
+        {
+            get { return s_loading; }
+        }
+
+        /// <summary>
+        /// Tests and batch tools: keep the load asynchronous but skip the curtain's timings
+        /// (instant doors, no loading group, no minimum display). Defaults to batch mode, so
+        /// the PlayMode suites are not slowed by ~1.8 s per transition; the loading-screen
+        /// tests switch it off.
+        /// </summary>
+        public static bool FastTransitions = Application.isBatchMode;
+
+        /// <summary>A scene whose last measured load was shorter than this gets the CURTAIN depth, otherwise (or unmeasured) the SCREEN depth (direction §15.1).</summary>
+        public const float CurtainThresholdSeconds = 0.9f;
+
+        /// <summary>The loading group stays at least this long (2 × Reveal) once shown - no flicker.</summary>
+        public const float MinimumDisplaySeconds = 1.2f;
+
+        /// <summary>If the load is done before the group would enter, the doors stay shut at least this long (CURTAIN depth).</summary>
+        public const float MinimumClosedSeconds = 0.3f;
+
+        /// <summary>The group enters this long after the doors start closing; a load already at 0.9 by then never shows it.</summary>
+        public const float GroupEntrySeconds = 0.3f;
+
+        /// <summary>No progress for this long: a log line (the on-screen notice and the 60 s modal are slice 10b).</summary>
+        public const float StallSeconds = 10f;
+
+        /// <summary>AsyncOperation.progress stops at 0.9 while activation is held.</summary>
+        private const float LoadedProgress = 0.9f;
+
+        private static bool s_loading;
+        private static string s_loadingScene;
+        private static int s_loadGeneration;
+
         private static void Load(string sceneName)
         {
-            s_transition++;
+            if (s_loading)
+            {
+                Debug.Log("[UI] Load of '" + sceneName + "' ignored: a scene is still loading.");
+                return;
+            }
 
+            s_transition++;
             if (!Application.CanStreamedLevelBeLoaded(sceneName))
             {
                 // Deliberately a log, not an error: the scenes are created by
                 // Tools > Deaths Demolition > UI > Build Meta Scenes, and acceptance
                 // criterion 27 forbids console errors during normal use.
+                ReleaseSimulation();
                 Debug.Log(
                     "[UI] Scene '" + sceneName + "' is not in the build settings. " +
                     "Run Tools > Deaths Demolition > UI > Build Meta Scenes to create the meta scenes.");
                 return;
             }
 
-            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+            s_loading = true;
+            s_loadingScene = sceneName;
+            UiFlowRunner.Instance.Run(LoadRoutine(sceneName, ++s_loadGeneration));
+        }
+
+        /// <summary>
+        /// Direction §15.2: doors close → two frames → LoadSceneAsync with activation held →
+        /// honest progress 0–0.9 → gate (progress ≥ 0.9 and the minimum display) →
+        /// activation (ReleaseSimulation here, not at the request: the frozen world never
+        /// runs behind the doors) → two frames so the new scene renders once behind the
+        /// doors → group out, doors open, Revealed. One load at a time (IsLoading ends in
+        /// OnSceneLoaded); WP-061J's counter bumps at the request and again in OnSceneLoaded,
+        /// exactly as before. A newer load (<paramref name="generation"/>) owns the doors from
+        /// its request on, so this routine's reveal steps aside.
+        /// </summary>
+        private static IEnumerator LoadRoutine(string sceneName, int generation)
+        {
+            UiCurtain curtain = UiCurtain.Instance;
+            bool fast = FastTransitions;
+            float lastLoad = UiSettings.LastLoadSeconds(sceneName);
+            bool screen = !fast && (lastLoad < 0f || lastLoad >= CurtainThresholdSeconds);
+
+            float t0 = Time.unscaledTime;
+            curtain.Close(fast);
+            if (!fast && !UiMotion.ReducedMotion)
+            {
+                yield return new WaitForSecondsRealtime(UiMotionTokens.Seconds(UiDuration.Screen));
+            }
+
+            // Two frames with the doors fully shut before the load starts (batchmode rule),
+            // so the load's own hitch never lands in the middle of a tween.
+            yield return null;
+            yield return null;
+
+            float loadStart = Time.unscaledTime;
+            AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            if (op == null)
+            {
+                Debug.Log("[UI] Scene '" + sceneName + "' could not start loading; staying where we are.");
+                ReleaseSimulation();
+                curtain.Open(fast);
+                s_loading = false;
+                yield break;
+            }
+
+            op.allowSceneActivation = false;
+
+            float groupShownAt = -1f;
+            float lastProgress = -1f;
+            float lastProgressAt = Time.unscaledTime;
+            bool stallLogged = false;
+            while (true)
+            {
+                float now = Time.unscaledTime;
+                float progress = op.progress;
+                if (progress > lastProgress + 0.001f)
+                {
+                    lastProgress = progress;
+                    lastProgressAt = now;
+                }
+                else if (!stallLogged && now - lastProgressAt > StallSeconds)
+                {
+                    stallLogged = true;
+                    Debug.Log("[UI] Loading '" + sceneName + "' has not progressed for " + StallSeconds + " s.");
+                }
+
+                if (screen && groupShownAt < 0f && now - t0 >= GroupEntrySeconds)
+                {
+                    if (progress >= LoadedProgress)
+                    {
+                        screen = false; // done before the group would enter: CURTAIN, no flicker
+                    }
+                    else
+                    {
+                        curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), string.Empty);
+                        groupShownAt = now;
+                    }
+                }
+
+                if (groupShownAt >= 0f)
+                {
+                    curtain.SetProgress(progress);
+                }
+
+                bool loaded = progress >= LoadedProgress;
+                bool shownLongEnough = fast
+                    || (groupShownAt >= 0f
+                        ? now - groupShownAt >= MinimumDisplaySeconds
+                        : !screen && now - t0 >= MinimumClosedSeconds);
+                if (loaded && shownLongEnough)
+                {
+                    break;
+                }
+
+                yield return null;
+            }
+
+            // Activation: the seal step, the world is released, the scene may activate.
+            curtain.Activate();
+            ReleaseSimulation();
+            op.allowSceneActivation = true;
+            while (!op.isDone)
+            {
+                yield return null;
+            }
+
+            s_loading = false; // normally already cleared by OnSceneLoaded
+            UiSettings.RecordLoad(sceneName, Time.unscaledTime - loadStart);
+
+            // The new scene renders once behind the closed doors.
+            yield return null;
+            yield return null;
+            if (generation != s_loadGeneration)
+            {
+                yield break;
+            }
+
+            curtain.Open(fast);
         }
 
         // =============================================================== run hand-off
@@ -200,6 +361,7 @@ namespace DD.Prototype.UI
         {
             if (mode != LoadSceneMode.Single) return;   // the additive world scene is part of the same Run
             s_transition++;
+            if (s_loading && scene.name == s_loadingScene) s_loading = false;   // WP-068: the load ends at activation, not after the reveal
             if (scene.name == PrototypeScenes.Run) s_resultsScheduled = false;
         }
 
@@ -260,6 +422,10 @@ namespace DD.Prototype.UI
             s_installed = false;
             s_resultsScheduled = false;
             s_transition = 0;
+            s_loading = false;
+            s_loadingScene = null;
+            s_loadGeneration = 0;
+            FastTransitions = Application.isBatchMode;
             SelectedSkin = PlayerSkins.Default;
         }
     }

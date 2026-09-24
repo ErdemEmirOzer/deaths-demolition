@@ -142,6 +142,7 @@ namespace DD.Prototype.UI
         private System.Collections.IEnumerator CelebrationBeats()
         {
             var beat = new WaitForSecondsRealtime(CelebrationBeatSeconds);
+            yield return UiCurtain.WaitRevealed(); // WP-068 slice 10: the beats play on screen, not behind the curtain
             UiSound.Play(UiSoundKind.Reveal);
 
             if (_newBestRound)

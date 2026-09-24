@@ -163,9 +163,31 @@ namespace DD.Prototype.UI
         public void Configure(CanvasGroup group)
         {
             UiSettings.EnsureLoaded(); // the RM mirror the core reads
+            if (group == null)
+            {
+                Destroy(this);
+                return;
+            }
+
+            group.alpha = 0f;
+            // WP-068 slice 10: a screen that opens behind the loading curtain starts its
+            // intro when the curtain reveals it, not unseen at Start().
+            if (isActiveAndEnabled)
+            {
+                StartCoroutine(Play(group));
+            }
+            else
+            {
+                UiMotion.Alpha(group, 1f, UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
+                Destroy(this);
+            }
+        }
+
+        private System.Collections.IEnumerator Play(CanvasGroup group)
+        {
+            yield return UiCurtain.WaitRevealed();
             if (group != null)
             {
-                group.alpha = 0f;
                 UiMotion.Alpha(group, 1f, UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
             }
 
@@ -187,6 +209,38 @@ namespace DD.Prototype.UI
             {
                 for (int i = 0; i < groups.Length; i++)
                 {
+                    if (groups[i] != null)
+                    {
+                        groups[i].alpha = 0f;
+                    }
+                }
+
+                // WP-068 slice 10: start once the loading curtain has revealed the screen.
+                if (isActiveAndEnabled)
+                {
+                    StartCoroutine(Play(groups, step));
+                    return;
+                }
+
+                StartNow(groups, step);
+            }
+
+            Destroy(this);
+        }
+
+        private System.Collections.IEnumerator Play(CanvasGroup[] groups, float step)
+        {
+            yield return UiCurtain.WaitRevealed();
+            StartNow(groups, step);
+            Destroy(this);
+        }
+
+        private static void StartNow(CanvasGroup[] groups, float step)
+        {
+            if (groups != null)
+            {
+                for (int i = 0; i < groups.Length; i++)
+                {
                     CanvasGroup group = groups[i];
                     if (group == null)
                     {
@@ -202,8 +256,6 @@ namespace DD.Prototype.UI
                     UiMotion.Move(rect, rest, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor, delay);
                 }
             }
-
-            Destroy(this);
         }
     }
 

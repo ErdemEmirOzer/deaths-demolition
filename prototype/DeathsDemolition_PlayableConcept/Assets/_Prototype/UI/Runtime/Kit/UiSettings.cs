@@ -39,6 +39,10 @@ namespace DD.Prototype.UI
         public int WindowWidth;
         public int WindowHeight;
 
+        /// <summary>WP-068 slice 10 (direction §15.1): last measured load per scene (seconds) - SCREEN vs CURTAIN threshold. Parallel arrays (JsonUtility has no dictionaries).</summary>
+        public string[] LoadScenes = new string[0];
+        public float[] LoadSeconds = new float[0];
+
         public UiSettingsData Clamp()
         {
             DisplayMode = Mathf.Clamp(DisplayMode, -1, 1);
@@ -345,6 +349,8 @@ namespace DD.Prototype.UI
             s_data.DisplayMode = loaded != null ? loaded.DisplayMode : -1;
             s_data.WindowWidth = loaded != null ? loaded.WindowWidth : 0;
             s_data.WindowHeight = loaded != null ? loaded.WindowHeight : 0;
+            s_data.LoadScenes = loaded != null && loaded.LoadScenes != null ? loaded.LoadScenes : new string[0];
+            s_data.LoadSeconds = loaded != null && loaded.LoadSeconds != null && loaded.LoadSeconds.Length == s_data.LoadScenes.Length ? loaded.LoadSeconds : new float[s_data.LoadScenes.Length];
             int count = Mathf.Max(1, QualitySettings.names.Length);
             int quality = loaded != null && loaded.Quality >= 0 ? loaded.Quality : QualitySettings.GetQualityLevel();
             s_data.Quality = Mathf.Clamp(quality, 0, count - 1);
@@ -356,6 +362,50 @@ namespace DD.Prototype.UI
             UiTokens.TextScale = s_data.TextScale;
             ApplyFlashes();
             ApplyStoredDisplayMode();
+        }
+
+        // ---- WP-068 slice 10: measured load times
+
+        /// <summary>The last measured load of <paramref name="scene"/> in seconds, or -1 when it has never been measured.</summary>
+        public static float LastLoadSeconds(string scene)
+        {
+            EnsureLoaded();
+            for (int i = 0; i < s_data.LoadScenes.Length; i++)
+            {
+                if (s_data.LoadScenes[i] == scene)
+                {
+                    return s_data.LoadSeconds[i];
+                }
+            }
+
+            return -1f;
+        }
+
+        /// <summary>Writes back a completed load's duration (direction §15.1: the threshold table lives in ui-settings.json, never the profile).</summary>
+        public static void RecordLoad(string scene, float seconds)
+        {
+            EnsureLoaded();
+            if (string.IsNullOrEmpty(scene))
+            {
+                return;
+            }
+
+            for (int i = 0; i < s_data.LoadScenes.Length; i++)
+            {
+                if (s_data.LoadScenes[i] == scene)
+                {
+                    s_data.LoadSeconds[i] = seconds;
+                    Persist();
+                    return;
+                }
+            }
+
+            int n = s_data.LoadScenes.Length;
+            System.Array.Resize(ref s_data.LoadScenes, n + 1);
+            System.Array.Resize(ref s_data.LoadSeconds, n + 1);
+            s_data.LoadScenes[n] = scene;
+            s_data.LoadSeconds[n] = seconds;
+            Persist();
         }
 
         // ---- WP-022M display mode
