@@ -773,7 +773,7 @@
   },
   "tree.run.link.namekuji.2.name": {
     "en": "Gel Harvest",
-    "tr": "Donma"
+    "tr": "Jel Hasadı"
   },
   "tree.run.link.namekuji.2.desc": {
     "en": "An enemy that dies in gel drops +{value} gold.",
@@ -1496,8 +1496,8 @@
     "tr": "Açılışta Kese"
   },
   "tree.meta.passive.econ.early_purse.desc": {
-    "en": "The Purse can be offered from round 1.",
-    "tr": "Kese 1. rounddan itibaren teklif edilebilir."
+    "en": "Every run starts with the Purse.",
+    "tr": "Her koşu Kese ile başlar."
   },
   "tree.meta.passive.econ.wide_offer.name": {
     "en": "Wider First Offer",
