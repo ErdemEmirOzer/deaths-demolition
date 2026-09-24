@@ -7,6 +7,9 @@ using UnityEngine;
 namespace DD.Prototype.Enemies
 {
     /// <summary>
+    /// WP-076 (M4-R1 N1, DEC-094): the Kagura / Ofuda / Tide reactions below are RETIRED — the two new Specials (chain
+    /// lightning, gel) live in ZombieShock / ZombieGel. This table stays only because S-10's SpawnMixSimulator still
+    /// reads it; its owner drops it with S-02's WP-069 B4a. Original WP-055 text:
     /// WP-055 · Special Weapon ↔ enemy reactions v1 (PROTOTYPE-ONLY numbers; the Special Weapon design is
     /// revised together at the end of the project). The weapon keeps its WP-007 damage / armour path; what
     /// it adds here is the BODY reaction, resolved per tier:
@@ -48,18 +51,28 @@ namespace DD.Prototype.Enemies
         public static float Efficacy(EnemyTier tier) => 0.5f * PushResistance(tier) + 0.5f * (1f - WebFactor(tier));
     }
 
-    public sealed partial class ZombieEnemy : ISpecialReactionReceiver
+    /// <summary>
+    /// WP-076 · the body's Special visual (S-06 WP-032E / WP-071 B3). The WP-055 reaction behaviour (push / net / pull /
+    /// daze, the <c>ISpecialReactionReceiver</c> routing) is removed with the old Specials; the readouts and the two old
+    /// entry points below stay inert (false / 1 / no-op) so S-09's status markers and capture agent compile until their
+    /// owners drop them.
+    /// </summary>
+    public sealed partial class ZombieEnemy
     {
-        private float _specialSlowFactor = 1f, _specialSlowUntil = -1f;
-        private int _lastSpecialTransaction;
-        private SpecialWeaponId _lastSpecialSource;
-        private float _specialDazeUntil = -1f;
         private ZombieSpecialVisual _specialVisual = ZombieSpecialVisual.None;
 
-        /// <summary>WP-032E visual the body currently shows for its Special reaction (readout).</summary>
+        /// <summary>WP-032E visual the body currently shows for its Special state (readout).</summary>
         public ZombieSpecialVisual SpecialVisual => _specialVisual;
-        public bool IsRooted => IsNetted && _specialSlowFactor <= 0f;
-        public bool IsDazed => _specialDazeUntil > 0f && Time.time < _specialDazeUntil;
+
+        /// <summary>Retired WP-055 readouts — always false / 1 now (kept for S-09 UiEnemyStatusMarkers / UiCaptureAgent).</summary>
+        public bool IsRooted => false;
+        public bool IsDazed => false;
+        public bool IsNetted => false;
+        public float SpecialSlowFactor => 1f;
+
+        /// <summary>Retired WP-055 entry points — inert (no reaction, nothing released); kept only for S-09's UiCaptureAgent and an S-09 test until their owners drop them.</summary>
+        public bool ApplySpecialReaction(in SpecialReaction r) => false;
+        public static int EndSpecialField(SpecialWeaponId source) => 0;
 
         private void SetSpecialVisual(ZombieSpecialVisual state)
         {
@@ -76,125 +89,13 @@ namespace DD.Prototype.Enemies
                 : ZombieSpecialVisual.None;
             if (want != _specialVisual) SetSpecialVisual(want);
         }
-        private static readonly System.Collections.Generic.List<ZombieEnemy> s_specialAffected = new System.Collections.Generic.List<ZombieEnemy>(64);
-
-        /// <summary>
-        /// WP-055: the weapon's field is gone (ADR-056-1 FieldEnded / Deactivated) — every body still netted or
-        /// dragged by THAT weapon walks free at once; a push's daze runs out on its own (stagger timer).
-        /// Returns the bodies released.
-        /// </summary>
-        public static int EndSpecialField(SpecialWeaponId source)
-        {
-            int released = 0;
-            for (int i = s_specialAffected.Count - 1; i >= 0; i--)
-            {
-                ZombieEnemy z = s_specialAffected[i];
-                if (z == null) { s_specialAffected.RemoveAt(i); continue; }
-                if (z._lastSpecialSource != source) continue;
-                if (z._specialSlowUntil > 0f && Time.time < z._specialSlowUntil) released++;
-                z._specialSlowFactor = 1f; z._specialSlowUntil = -1f;
-                if (z._alive && !z._dying) z.TickSpecialVisual();
-                s_specialAffected.RemoveAt(i);
-            }
-            return released;
-        }
-
-        /// <summary>Bodies currently holding a Special effect (tests).</summary>
-        public static int SpecialAffectedCount => s_specialAffected.Count;
-
-        /// <summary>WP-055 readouts.</summary>
-        public float SpecialSlowFactor => _specialSlowUntil > 0f && Time.time < _specialSlowUntil ? _specialSlowFactor : 1f;
-        public bool IsNetted => SpecialSlowFactor < 1f;
-        public int SpecialReactionCount { get; private set; }
-        public SpecialReactionKind LastSpecialReaction { get; private set; }
-        public Vector3 LastSpecialImpulse { get; private set; }
 
         private void ResetSpecialReactions()
         {
-            _specialSlowFactor = 1f; _specialSlowUntil = -1f; _lastSpecialTransaction = 0; SpecialReactionCount = 0; LastSpecialImpulse = Vector3.zero;
-            _specialDazeUntil = -1f; _specialVisual = ZombieSpecialVisual.None;
+            _specialVisual = ZombieSpecialVisual.None;
             // a pooled body keeps its driver: tell it explicitly (found by the WP-007 parity suite — a Dazed sway / Netted
             // freeze leaking into the next life put the head in the torso ray of the first dart)
             if (_animator != null) _animator.SetSpecialVisual(ZombieSpecialVisual.None);
-            s_specialAffected.Remove(this);
-        }
-
-        public bool ApplySpecialReaction(in SpecialReaction r)
-        {
-            if (!_alive || _dying || IsRising) return false;
-            if (r.TransactionId != 0 && r.TransactionId == _lastSpecialTransaction) return false;   // one reaction per attack transaction
-            _lastSpecialTransaction = r.TransactionId;
-            _lastSpecialSource = r.Source;
-
-            Vector3 dir = r.Direction; dir.y = 0f;
-            if (dir.sqrMagnitude > 1e-6f) dir.Normalize();
-            float resist = SpecialReactionProfile.PushResistance(_tier);
-            EnemyCombatEventKind beat;
-            float seconds = 0f;
-
-            switch (r.Kind)
-            {
-                case SpecialReactionKind.Push:
-                {
-                    // the weapon's damage call already passed this force through the REQ-124 governor (HitscanEngine.ApplyHit,
-                    // same transaction) — governing it again here would double-count the window; the daze is a stagger without damage
-                    float speed = Mathf.Min(SpecialReactionProfile.PushSpeedCap, r.Force * resist * SpecialReactionProfile.PushSpeedPerForce);
-                    LastSpecialImpulse = dir * speed;
-                    _knockbackVelocity += LastSpecialImpulse;
-                    seconds = SpecialReactionProfile.PushDazeSeconds * resist;
-                    if (seconds > 0.05f)
-                    {
-                        // gameplay gate = the REQ-124 stagger timer (no walk / no swing) — the wave's own WP-007 damage may
-                        // already have staggered this body in the same frame (impact accumulator), then only the daze timer
-                        // and the WP-032E Dazed visual (stumble + sway) are added on top
-                        if (!_animator.IsStaggering) _animator.BeginStagger(-dir, 0.8f * resist + 0.3f, seconds, transform);
-                        _attack.Cancel();
-                        if (seconds >= SpecialReactionProfile.DazeVisualMinSeconds) { _specialDazeUntil = Mathf.Max(_specialDazeUntil, Time.time + seconds); TickSpecialVisual(); }
-                    }
-                    beat = EnemyCombatEventKind.SpecialPush;
-                    break;
-                }
-                case SpecialReactionKind.Web:
-                {
-                    seconds = SpecialReactionProfile.WebSeconds(_tier, r.Seconds);
-                    float factor = SpecialReactionProfile.WebFactor(_tier);
-                    // a fresh seal never shortens a net already holding longer
-                    float until = Time.time + seconds;
-                    if (until > _specialSlowUntil || _specialSlowUntil <= 0f) { _specialSlowUntil = until; _specialSlowFactor = factor; }
-                    else _specialSlowFactor = Mathf.Min(_specialSlowFactor, factor);
-                    TickSpecialVisual();   // a rooted body holds its pose (WP-032E Netted); a slowed one keeps walking
-                    beat = EnemyCombatEventKind.SpecialWeb;
-                    break;
-                }
-                default:
-                {
-                    if (SpecialReactionProfile.PullMoves(_tier))
-                    {
-                        float speed = Mathf.Min(SpecialReactionProfile.PullSpeedCap, r.Force * SpecialReactionProfile.PullSpeedPerForce);
-                        LastSpecialImpulse = dir * speed;
-                        _knockbackVelocity += LastSpecialImpulse;
-                    }
-                    else
-                    {
-                        // the Executioner holds its ground; the well only drags its feet while it lasts (Seconds = time
-                        // left to the implosion; FieldEnded releases it earlier through EndSpecialField)
-                        seconds = Mathf.Max(0.2f, r.Seconds);
-                        _specialSlowFactor = SpecialReactionProfile.UltraPullSlowFactor;
-                        _specialSlowUntil = Mathf.Max(_specialSlowUntil, Time.time + seconds);
-                        LastSpecialImpulse = Vector3.zero;
-                    }
-                    seconds = seconds > 0f ? seconds : r.Seconds;
-                    beat = EnemyCombatEventKind.SpecialPull;
-                    break;
-                }
-            }
-
-            SpecialReactionCount++;
-            LastSpecialReaction = r.Kind;
-            if (_specialSlowUntil > 0f && !s_specialAffected.Contains(this)) s_specialAffected.Add(this);
-            EnemyCombatEvents.Raise(new EnemyCombatEventInfo(beat, transform, _tier, _lifeId, transform.position + Vector3.up * 1.1f, dir, ArmorSlot.None,
-                _animator.Driven, seconds, _attack != null ? _attack.Style : ZombieAttackStyle.Swipe, r.Source));
-            return true;
         }
     }
 }

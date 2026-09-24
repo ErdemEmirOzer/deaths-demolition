@@ -50,7 +50,7 @@ namespace DD.Prototype.Enemies
     {
         public EnemyCombatEventInfo(EnemyCombatEventKind kind, Transform body, EnemyTier tier, int lifeId,
             Vector3 position, Vector3 direction, ArmorSlot region, bool animationDriven, float seconds,
-            ZombieAttackStyle style = ZombieAttackStyle.Swipe, SpecialWeaponId special = SpecialWeaponId.KaguraBell)
+            ZombieAttackStyle style = ZombieAttackStyle.Swipe, SpecialWeaponId special = default)
         {
             Style = style;
             Special = special;
@@ -103,7 +103,7 @@ namespace DD.Prototype.Enemies
     ///   death_*          Die, once per life (same frame as DamageEvents.EnemyDied)
     ///   spawn_rise       Initialise, when the rise plays (DEC-081 policy)
     ///   spawn_land       rise_end (clip) / the rise timer, or Initialise itself without a rise
-    ///   sw_push/web/pull WP-055 ApplySpecialReaction (Kagura wave / Ofuda seal / Tide well; Special = the weapon)
+    ///   sw_push/web/pull WP-055 (retired with the old Specials, WP-076; kinds 9–11 kept until their consumers drop them)
     ///
     /// The existing WP-002 DamageEvents stay as they are (damage numbers, kill attribution);
     /// this surface is the BEAT layer on top: phase edges that DamageEvents never carried
