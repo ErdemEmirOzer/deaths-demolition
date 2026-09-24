@@ -144,9 +144,18 @@ namespace DD.Prototype.Tests.PlayMode
             ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, RunDirector.Instance.Round, merkez + new Vector3(0f, 0f, 6f), Quaternion.identity);
             Assert.IsNotNull(z, "hedef zombi doğmadı");
             z.FitArmorComposition(false, false, false);
-            yield return null;
+            // WP-063J: sıra bağımlılığı. DEC-081'den beri kameranın görmediği spawn yerden KALKAR (hitbox'lar
+            // yatık), ve kameranın ne gördüğü önceki testlerin bıraktığı duruma bağlı; üstelik
+            // autoSyncTransforms kapalı, havuzdan gelen gövdenin collider'ı ilk karelerde eski yerinde olabilir.
+            // Tam süitte ikinci koşunun atışı böylece hiçbir şeye değmiyordu (hpDelta 0). Kalkışı bitir, poza iki
+            // kare ver, fiziği eşitle ve gövdenin kendi üst-gövde hitbox'ına nişan al — iki koşu aynı hedefi vurur.
+            z.CompleteRise();
+            for (int i = 0; i < 180 && z.IsRising; i++) yield return null;   // zamanlayıcı + AP-009 kalkış klibi
+            Assert.IsFalse(z.IsRising, "hedef kalkışı bitirmedi");
+            for (int i = 0; i < 30; i++) yield return null;                   // kalkış → ayakta poz karışımı (~0,5 s @ 1/60)
+            Physics.SyncTransforms();
             float once = z.Health;
-            Vector3 hedef = z.transform.position + Vector3.up * 1.0f;
+            Vector3 hedef = z.HitboxFor(DD.Prototype.Damage.BodyRegion.UpperBody).bounds.center;
             Vector3 kaynak = hedef + Vector3.back * 2.5f;
             ShotRequest atis = WeaponRegistry.ActiveController.Classic.BuildShot(kaynak, (hedef - kaynak).normalized);
             atis.Direction = (hedef - kaynak).normalized; // spread'siz, deterministik
@@ -192,6 +201,38 @@ namespace DD.Prototype.Tests.PlayMode
             return File.Exists(ProfileStore.Path) ? Sha(File.ReadAllBytes(ProfileStore.Path)) : "MISSING";
         }
 
+        /// <summary>
+        /// WP-063J: diskteki profilin koşu/commit içeriği — WP-035 "görüldü" sayaçları (AchievementsSeen /
+        /// ContentSeen) ve o yazımın LastSavedUtc damgası hariç. Ana menünün Profil/Başarımlar paneli yeni açılan içeriği görüldü sayıp bunu
+        /// diske yazar (meşru kozmetik yazım, commit değil). Taze profilde ilk koşu yeni içerik açtığı için P1
+        /// izole koşuda bu yazımı görür, tam süitte (içerik önceden görülmüş) görmez → sıra bağımlılığı.
+        /// </summary>
+        private static string DiskCommitHash()
+        {
+            return Sha(System.Text.Encoding.UTF8.GetBytes(DiskCommitJson()));
+        }
+
+        private static string DiskCommitJson()
+        {
+            ProfileData d = Disk();
+            d.AchievementsSeen = 0;
+            d.ContentSeen = 0;
+            d.LastSavedUtc = string.Empty;   // o yazımın zaman damgası
+            return JsonUtility.ToJson(d, true);
+        }
+
+        private static string JsonFarki(string once, string sonra)
+        {
+            string[] a = once.Split('\n'), b = sonra.Split('\n');
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < Math.Max(a.Length, b.Length); i++)
+            {
+                string x = i < a.Length ? a[i].Trim() : "∅", y = i < b.Length ? b[i].Trim() : "∅";
+                if (x != y) sb.Append(" [").Append(x).Append(" → ").Append(y).Append(']');
+            }
+            return sb.ToString();
+        }
+
         private static ProfileData Disk()
         {
             ProfileData d;
@@ -234,6 +275,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(ProfileService.Current.LastAppliedCompletionOrdinal, 0, "ordinal ilerledi");
             Assert.AreEqual(runsOnce + 1, Disk().RunsPlayed, "disk +1");
             string diskHash = DiskHash();
+            string diskCommitHash = DiskCommitHash();
+            string diskCommitJson = DiskCommitJson();
 
             // Duplicate RunEnded (aynı özet, aynı kimlik): tek commit.
             RunEvents.PublishRunEnded(RunEvents.LastRunSummary);
@@ -267,7 +310,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(commitsOnce + 1, ProfileRunCommitter.Commits);
             Assert.AreEqual(1, _changed);
             Assert.AreEqual(runsOnce + 1, Disk().RunsPlayed);
-            Assert.AreEqual(diskHash, DiskHash());
+            // Ana menü ziyaretleri "görüldü" sayaçlarını yazabilir (WP-035); koşu/commit içeriği birebir aynı kalmalı.
+            Assert.AreEqual(diskCommitHash, DiskCommitHash(), "geç duplicate diskteki koşu içeriğini değiştirmedi: " + JsonFarki(diskCommitJson, DiskCommitJson()));
             Debug.Log("[DD-TEST] wp009.P1=OK id=" + makbuz.CompletionId + " events=" + (ProfileRunCommitter.EventsSeen - eventsOnce) + " commits=" + (ProfileRunCommitter.Commits - commitsOnce));
         }
 
