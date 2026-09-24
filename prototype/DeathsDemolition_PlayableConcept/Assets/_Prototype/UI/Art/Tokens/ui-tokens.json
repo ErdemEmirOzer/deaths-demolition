@@ -40,7 +40,11 @@
       "GoldLeaf": { "$type": "color", "$value": "#D9A93C" },
       "SilverLeaf": { "$type": "color", "$value": "#F3EEE3" },
       "HoldFill": { "$type": "color", "$value": "#F3EEE326" },
-      "LanternGlow": { "$type": "color", "$value": "#F7C766" }
+      "LanternGlow": { "$type": "color", "$value": "#F7C766" },
+      "GlyphIwa": { "$type": "color", "$value": "#FFBB9E" },
+      "GlyphNami": { "$type": "color", "$value": "#8DDBEB" },
+      "GlyphArc": { "$type": "color", "$value": "#ADC6FF" },
+      "GlyphGel": { "$type": "color", "$value": "#E0A3FF" }
     },
     "colorBlindSafe": {
       "Transparent": { "$type": "color", "$value": "#00000000" },
@@ -81,7 +85,11 @@
       "GoldLeaf": { "$type": "color", "$value": "#D9A93C" },
       "SilverLeaf": { "$type": "color", "$value": "#F3EEE3" },
       "HoldFill": { "$type": "color", "$value": "#F3EEE326" },
-      "LanternGlow": { "$type": "color", "$value": "#F7C766" }
+      "LanternGlow": { "$type": "color", "$value": "#F7C766" },
+      "GlyphIwa": { "$type": "color", "$value": "#FFBB9E" },
+      "GlyphNami": { "$type": "color", "$value": "#8DDBEB" },
+      "GlyphArc": { "$type": "color", "$value": "#ADC6FF" },
+      "GlyphGel": { "$type": "color", "$value": "#E0A3FF" }
     }
   },
   "duration": {

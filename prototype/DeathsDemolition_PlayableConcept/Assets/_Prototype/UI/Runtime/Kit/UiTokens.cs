@@ -206,7 +206,23 @@ namespace DD.Prototype.UI
         /// no meaning - never a state. Amber300 like the world lanterns, at α ≤ 0.35 (breath
         /// floor 0.19), so a change to the warning hue can never recolour the garden.
         /// </summary>
-        LanternGlow
+        LanternGlow,
+
+        // ------------------------------------------- M4-R1 N19 token v4 (append-only): glyph identity tints
+        // AD council/r1b/N19-DIRECTION.md: a glyph's colour is its identity, never a state; one tint per glyph Image with
+        // the HudInk edge; fills in the lit-lacquer band (L* 72–84, s 0.32–0.40). Reserved to UiGlyphTints.
+
+        /// <summary>The Iwa lineage (ar_1, smg_1, sg_1, lmg_1, sr_1): Terracotta200.</summary>
+        GlyphIwa,
+
+        /// <summary>The Nami lineage (ar_2, smg_2, sg_2, lmg_2, rl_1): Celadon200.</summary>
+        GlyphNami,
+
+        /// <summary>Raiju (the chain-lightning Special) and its Electrocuted stamp: Arc200.</summary>
+        GlyphArc,
+
+        /// <summary>Namekuji (the gel Special), its Sliding / Downed stamps and the player's SLICK hint: Wisteria200.</summary>
+        GlyphGel
     }
 
     /// <summary>
@@ -252,6 +268,12 @@ namespace DD.Prototype.UI
         private static readonly Color Vermilion300 = Hex(0xE8, 0x80, 0x6F);
 
         private static readonly Color Sakura400 = Hex(0xE8, 0xA0, 0xB8);
+
+        // M4-R1 N19 v4 glyph tints (both palettes: no decision rests on hue alone).
+        private static readonly Color Terracotta200 = Hex(0xFF, 0xBB, 0x9E);
+        private static readonly Color Celadon200 = Hex(0x8D, 0xDB, 0xEB);
+        private static readonly Color Arc200 = Hex(0xAD, 0xC6, 0xFF);
+        private static readonly Color Wisteria200 = Hex(0xE0, 0xA3, 0xFF);
         private static readonly Color Wisteria400 = Hex(0xA9, 0x9B, 0xD4);
         private static readonly Color Moss500 = Hex(0x59, 0x71, 0x4A);
         private static readonly Color Moss400 = Hex(0x74, 0x8F, 0x60);
@@ -325,6 +347,10 @@ namespace DD.Prototype.UI
                 case UiColor.SurfaceRaised: return Stone600;
                 case UiColor.SurfaceInset: return Sumi900;
                 case UiColor.HudInk: return WithAlpha(Sumi900, HudInkAlpha);
+                case UiColor.GlyphIwa: return Terracotta200;
+                case UiColor.GlyphNami: return Celadon200;
+                case UiColor.GlyphArc: return Arc200;
+                case UiColor.GlyphGel: return Wisteria200;
 
                 case UiColor.BorderHairline: return WithAlpha(Stone500, 0.85f);
                 case UiColor.BorderStrong: return WithAlpha(Cream100, 0.45f);

@@ -80,7 +80,12 @@ namespace DD.Prototype.Tests.EditMode
             new object[] { UiColor.GoldLeaf, "#D9A93C", 1f, null },
             new object[] { UiColor.SilverLeaf, "#F3EEE3", 1f, null },
             new object[] { UiColor.HoldFill, "#F3EEE3", 0.15f, null },
-            new object[] { UiColor.LanternGlow, "#F7C766", 1f, null }
+            new object[] { UiColor.LanternGlow, "#F7C766", 1f, null },
+            // M4-R1 N19 v4: glyph identity tints, the same in both palettes.
+            new object[] { UiColor.GlyphIwa, "#FFBB9E", 1f, null },
+            new object[] { UiColor.GlyphNami, "#8DDBEB", 1f, null },
+            new object[] { UiColor.GlyphArc, "#ADC6FF", 1f, null },
+            new object[] { UiColor.GlyphGel, "#E0A3FF", 1f, null }
         };
 
         [Test]
@@ -150,6 +155,89 @@ namespace DD.Prototype.Tests.EditMode
             Debug.Log("[DD-TEST] wp068.separation\n" + report);
         }
 
+        // ------------------------------------------------------------------ N19 glyph tints: separation and contrast
+
+        /// <summary>
+        /// council/r1b/N19-DIRECTION.md §1.2–§1.3. Against the warm state / reserve hues (Gold, Amber, Coral) and the CB state
+        /// blues a glyph tint is apart by ΔL* ≥ 10, or by Δh ≥ 20° with Δs ≥ 0.15. Between the identity tints themselves and
+        /// against the Sakura accent the AD's table accepts Δh ≥ 20° alone - a word and a shape always ride with them.
+        /// Over the five world roles (the HudKontrasti set): the fill against its HudInk edge (composited over the role, linear
+        /// light) ≥ 4.5:1, and the better of fill:role and edge:role ≥ 3:1.
+        /// </summary>
+        [Test]
+        public void GlifTonlari_Ayrim_VeDunyaRollerindeKontrast()
+        {
+            var reserve = new (UiColor Glyph, string Name, string Hex)[]
+            {
+                (UiColor.GlyphIwa, "Gold400", "#D9A93C"), (UiColor.GlyphIwa, "Amber300", "#F7C766"), (UiColor.GlyphIwa, "Coral400", "#EE7063"),
+                (UiColor.GlyphNami, "Indigo400", "#7FA6D9"), (UiColor.GlyphArc, "Indigo500", "#5F8CC4")
+            };
+            var identity = new (UiColor A, string Name, string Hex)[]
+            {
+                (UiColor.GlyphNami, "GlyphArc", "#ADC6FF"), (UiColor.GlyphArc, "GlyphGel", "#E0A3FF"), (UiColor.GlyphGel, "Sakura400", "#E8A0B8"),
+                (UiColor.GlyphIwa, "GlyphGel", "#E0A3FF"), (UiColor.GlyphIwa, "GlyphNami", "#8DDBEB")
+            };
+
+            var failures = new List<string>();
+            foreach (var r in reserve)
+            {
+                Color a = UiTokens.Get(r.Glyph), b = Parse(r.Hex, 1f);
+                float dL = Mathf.Abs(LStar(a) - LStar(b));
+                HueSat(a, out float h1, out float s1);
+                HueSat(b, out float h2, out float s2);
+                float dh = Mathf.Abs(Mathf.DeltaAngle(h1, h2));
+                if (!(dL >= 10f || (dh >= 20f && Mathf.Abs(s1 - s2) >= 0.15f)))
+                {
+                    failures.Add(r.Glyph + "↔" + r.Name + " ΔL* " + dL.ToString("0.0") + " Δh " + dh.ToString("0") + " Δs " + Mathf.Abs(s1 - s2).ToString("0.00"));
+                }
+            }
+
+            foreach (var p in identity)
+            {
+                HueSat(UiTokens.Get(p.A), out float h1, out _);
+                HueSat(Parse(p.Hex, 1f), out float h2, out _);
+                float dh = Mathf.Abs(Mathf.DeltaAngle(h1, h2));
+                if (dh < 20f)
+                {
+                    failures.Add(p.A + "↔" + p.Name + " Δh " + dh.ToString("0"));
+                }
+            }
+
+            var world = new (string Name, string Hex)[]
+            {
+                ("plaster", "#CDCBC1"), ("sky-mist", "#D0D7DE"), ("stone", "#6E6B66"), ("moss", "#4E5A3E"), ("earth", "#4D4639")
+            };
+            var report = new System.Text.StringBuilder();
+            foreach (UiColor glyph in new[] { UiColor.GlyphIwa, UiColor.GlyphNami, UiColor.GlyphArc, UiColor.GlyphGel })
+            {
+                Color fill = UiTokens.Get(glyph);
+                Assert.That(LStar(fill), Is.InRange(72f, 84f), glyph + ": L* bandı 72–84");
+                foreach (var w in world)
+                {
+                    Color role = Parse(w.Hex, 1f);
+                    Color edge = UiContrast.Composite(UiTokens.Get(UiColor.HudInk), role);
+                    float fillEdge = UiContrast.Ratio(fill, edge);
+                    float best = Mathf.Max(UiContrast.Ratio(fill, role), UiContrast.Ratio(edge, role));
+                    report.Append(glyph).Append(" over ").Append(w.Name).Append(": fill:edge ").Append(fillEdge.ToString("0.0"))
+                        .Append(" best:role ").Append(best.ToString("0.0")).Append('\n');
+                    if (fillEdge < 4.5f || best < 3f)
+                    {
+                        failures.Add(glyph + " over " + w.Name + " fill:edge " + fillEdge.ToString("0.0") + " best " + best.ToString("0.0"));
+                    }
+                }
+            }
+
+            Debug.Log("[DD-TEST] n19.glyphTints\n" + report);
+            Assert.IsEmpty(failures, string.Join("\n", failures));
+        }
+
+        private static void HueSat(Color c, out float hueDegrees, out float saturation)
+        {
+            Color.RGBToHSV(c, out float h, out float s, out _);
+            hueDegrees = h * 360f;
+            saturation = s;
+        }
+
         // ------------------------------------------------------------------ T2 reserve registry (source scan)
 
         private static readonly Dictionary<string, string[]> Reserves = new Dictionary<string, string[]>
@@ -167,7 +255,12 @@ namespace DD.Prototype.Tests.EditMode
             // PauseScreen: the END RUN dialog frame - reviewed in slice 9 (modal v3).
             // UiFxCaptureAgent (slice 4): capture-only ink bleed / hanko stamp samples.
             // UiCurtain (10b-2): the boot logo seal - the one vermilion at boot, ink before loading (§15.3).
-            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs", "UiCurtain.cs" } }
+            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs", "UiCurtain.cs" } },
+            // M4-R1 N19: the glyph identity tints are named in one place; every consumer asks UiGlyphTints.
+            { "GlyphIwa", new[] { "UiTokens.cs", "UiGlyphTints.cs" } },
+            { "GlyphNami", new[] { "UiTokens.cs", "UiGlyphTints.cs" } },
+            { "GlyphArc", new[] { "UiTokens.cs", "UiGlyphTints.cs" } },
+            { "GlyphGel", new[] { "UiTokens.cs", "UiGlyphTints.cs" } }
         };
 
         [Test]

@@ -82,6 +82,10 @@ AP-001 çevre paleti denetimi `[AD hesabı]`: 10 rolün 10'u geçer; en yakın a
 | `SilverLeaf` | #F3EEE3 | #F3EEE3 |
 | `HoldFill` | #F3EEE326 | #F3EEE326 |
 | `LanternGlow` | #F7C766 | #F7C766 |
+| `GlyphIwa` | #FFBB9E | #FFBB9E |
+| `GlyphNami` | #8DDBEB | #8DDBEB |
+| `GlyphArc` | #ADC6FF | #ADC6FF |
+| `GlyphGel` | #E0A3FF | #E0A3FF |
 
 UI rezerv kuralları (WP-068 AD MUST 3):
 - **Altın** (`StateGold`, `BarSpecial`, `GoldLeaf` = kinpaku) yalnız para sayacı, fiyat ve Special HUD'dadır; tören **ginpaku**'dur (`SilverLeaf`, krem): madalya, NEW BEST, seviye.

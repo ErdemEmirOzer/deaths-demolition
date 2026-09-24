@@ -42,6 +42,10 @@
 #define DD_UI_SILVER_LEAF float4(0.9529, 0.9333, 0.8902, 1)
 #define DD_UI_HOLD_FILL float4(0.9529, 0.9333, 0.8902, 0.15)
 #define DD_UI_LANTERN_GLOW float4(0.9686, 0.7804, 0.4, 1)
+#define DD_UI_GLYPH_IWA float4(1, 0.7333, 0.6196, 1)
+#define DD_UI_GLYPH_NAMI float4(0.5529, 0.8588, 0.9216, 1)
+#define DD_UI_GLYPH_ARC float4(0.6784, 0.7765, 1, 1)
+#define DD_UI_GLYPH_GEL float4(0.8784, 0.6392, 1, 1)
 
 #define DD_UI_CB_TRANSPARENT float4(0, 0, 0, 0)
 #define DD_UI_CB_SCRIM_OVERLAY float4(0.0706, 0.0627, 0.0588, 0.88)
@@ -82,6 +86,10 @@
 #define DD_UI_CB_SILVER_LEAF float4(0.9529, 0.9333, 0.8902, 1)
 #define DD_UI_CB_HOLD_FILL float4(0.9529, 0.9333, 0.8902, 0.15)
 #define DD_UI_CB_LANTERN_GLOW float4(0.9686, 0.7804, 0.4, 1)
+#define DD_UI_CB_GLYPH_IWA float4(1, 0.7333, 0.6196, 1)
+#define DD_UI_CB_GLYPH_NAMI float4(0.5529, 0.8588, 0.9216, 1)
+#define DD_UI_CB_GLYPH_ARC float4(0.6784, 0.7765, 1, 1)
+#define DD_UI_CB_GLYPH_GEL float4(0.8784, 0.6392, 1, 1)
 
 #define DD_UI_DURATION_INSTANT 0.08
 #define DD_UI_DURATION_FAST 0.14
