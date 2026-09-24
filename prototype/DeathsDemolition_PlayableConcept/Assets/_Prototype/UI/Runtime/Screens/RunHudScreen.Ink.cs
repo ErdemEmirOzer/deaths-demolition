@@ -492,12 +492,9 @@ namespace DD.Prototype.UI
 
         // ---- M4-R1 N2 per-mode layout and the rear-edge arc's clearances (AD R1-A MUST-1 / MUST-2)
 
-        /// <summary>
-        /// AD R1-A MUST-2 fallback: the first-person viewmodel's hand and grip rest in the lower right (at 1080: x 1500–1920,
-        /// y 740–1080). In FP the weapon cluster rises above it (bottom = that top + 12 px); TD and TP keep the corner.
-        /// </summary>
-        public const float ViewmodelTopFraction = (1080f - 740f) / 1080f;
-        public const float ViewmodelClearance = 12f;
+        // AD R1-A MUST-2 closed by S-01 WP-070V (5825f1c8): the FP viewmodel is drawn at 0.75 screen scale, 12 % left, so its
+        // rest silhouette (x 568–1422, y 744–1080 at 1080) never enters the weapon cluster. The cluster keeps its corner in
+        // every mode (parity); the interim FP lift is gone.
 
         private RectTransform _weaponCluster;
         private Vector2 _weaponHome;
@@ -505,10 +502,10 @@ namespace DD.Prototype.UI
         private float _layoutHeight = -1f;
         private readonly Rect[] _rearAvoid = new Rect[12];
 
-        /// <summary>Where the weapon cluster sits for a camera mode and canvas height (tests).</summary>
+        /// <summary>Where the weapon cluster sits for a camera mode and canvas height: its corner in every mode since WP-070V (tests).</summary>
         public static Vector2 WeaponClusterPosition(Vector2 home, bool firstPerson, float canvasHeight)
         {
-            return firstPerson ? new Vector2(home.x, Mathf.Max(home.y, canvasHeight * ViewmodelTopFraction + ViewmodelClearance)) : home;
+            return home;
         }
 
         public RectTransform WeaponCluster
@@ -545,8 +542,8 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// The rects the rear-edge arc keeps clear of, in canvas px (centre origin): the ink clusters (live - FP's lifted
-        /// weapon cluster included), the chip row, the Special block and the banner while they show, and the prompt /
+        /// The rects the rear-edge arc keeps clear of, in canvas px (centre origin): the ink clusters (live
+        /// rects, the weapon cluster included), the chip row, the Special block and the banner while they show, and the prompt /
         /// countdown slot at the bottom centre (reserved).
         /// </summary>
         public int RearEdgeAvoidRects(Rect[] into)

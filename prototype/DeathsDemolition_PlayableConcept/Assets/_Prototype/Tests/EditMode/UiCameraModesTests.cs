@@ -136,7 +136,7 @@ namespace DD.Prototype.Tests.EditMode
                         Rect.MinMaxRect(-320f, hh - 110f - 30f, 320f, hh - 110f),                                        // chip row
                         Rect.MinMaxRect(-hw + 32f, -hh + 32f, -hw + 32f + 380f, -hh + 32f + 110f * c.Tall),             // health
                         variant == "fp"
-                            ? Rect.MinMaxRect(hw - 32f - 400f, -hh + fpLift, hw - 32f, -hh + fpLift + 140f * c.Tall)     // weapon, FP lifted
+                            ? Rect.MinMaxRect(hw - 32f - 400f, -hh + fpLift, hw - 32f, -hh + fpLift + 140f * c.Tall)     // weapon (FP: the corner since WP-070V)
                             : Rect.MinMaxRect(hw - 32f - 400f, -hh + 32f, hw - 32f, -hh + 32f + 140f * c.Tall),         // weapon
                         new Rect(-HudRearEdge.PromptSlot.x * 0.5f, -hh + 24f, HudRearEdge.PromptSlot.x, HudRearEdge.PromptSlot.y),   // prompt slot
                     };
@@ -180,13 +180,12 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void FpSilahKumesi_GorusModelininUstunde_TepedenVeTpYerinde()
+        public void SilahKumesi_HerModdaKosede_Parite()
         {
+            // WP-070V (S-01) keeps the FP viewmodel out of the cluster, so the R1-A interim lift is gone: parity in every mode.
             var home = new Vector2(-32f, 32f);
-            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, false, 1080f), "TD / TP: köşe (parite)");
-            Vector2 fp = RunHudScreen.WeaponClusterPosition(home, true, 1080f);
-            Assert.AreEqual(home.x, fp.x, 0.001f);
-            Assert.AreEqual(1080f - 728f, fp.y, 1f, "AD R1-A MUST-2: 1080'de küme altı y ≤ 728 (görüş modeli üstü + 12)");
+            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, false, 1080f), "TD / TP: köşe");
+            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, true, 1080f), "FP: köşe (WP-070V)");
         }
 
         [Test]

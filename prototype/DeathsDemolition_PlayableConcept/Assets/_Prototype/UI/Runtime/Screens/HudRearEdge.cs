@@ -150,7 +150,7 @@ namespace DD.Prototype.UI
 
             if (on)
             {
-                // Recomputed while shown: the avoided rects move (the Special block, the banner, FP's lifted weapon cluster).
+                // Recomputed while shown: the avoided rects move (the Special block, the banner).
                 Vector2 at = Place(bearing, canvasSize, avoid, count);
                 RectTransform rect = _arc.rectTransform;
                 if (float.IsNaN(_angle) || Mathf.Abs(Mathf.DeltaAngle(bearing, _angle)) > 0.5f)

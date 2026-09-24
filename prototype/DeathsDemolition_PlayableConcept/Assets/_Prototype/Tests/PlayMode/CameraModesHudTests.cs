@@ -57,7 +57,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(HudReticle.LookMinRadius, hud.Reticle.MinimumRadius, 0.001f);
             Assert.IsFalse(UiCursor.ContextVisible, "oyunda imleç bağlamı gizli");
 
-            // AD R1-A MUST-2: first person lifts the weapon cluster above the viewmodel's hand; top-down puts it back.
+            // WP-070V: the FP viewmodel stays out of the weapon cluster, so the cluster keeps its corner in first person.
             Vector2 home = hud.WeaponCluster.anchoredPosition;
             pause.SetPaused(true);
             yield return null;
@@ -66,8 +66,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Bekle(() => !CameraModeService.IsTransitioning, 5f, "harman biter");
             yield return new WaitForSecondsRealtime(0.5f);   // the cluster's Base move
             float height = ((RectTransform)hud.WeaponCluster.parent).rect.height;
-            Vector2 lifted = RunHudScreen.WeaponClusterPosition(home, true, height);
-            Assert.AreEqual(lifted.y, hud.WeaponCluster.anchoredPosition.y, 2f, "FP: silah kümesi görüş modelinin üstünde");
+            Assert.AreEqual(home.y, hud.WeaponCluster.anchoredPosition.y, 2f, "FP: silah kümesi köşede (WP-070V parite)");
             Assert.IsTrue(hud.Reticle.DotShown);
 
             // AD R1-A MUST-1: BEHIND YOU straight behind the camera shows the edge arc on screen, its stroke above the bottom.
