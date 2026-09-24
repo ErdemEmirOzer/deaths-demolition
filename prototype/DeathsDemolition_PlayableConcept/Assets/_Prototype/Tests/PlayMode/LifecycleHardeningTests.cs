@@ -192,7 +192,7 @@ namespace DD.Prototype.Tests.PlayMode
             var beklenenFark = new Dictionary<string, int>
             {
                 { "RunEvents.RunStarted", 1 }, { "RunEvents.RoundStarted", 1 },
-                { "RunEvents.RoundCompleted", 2 },   // WP-078: the camera rig (scene-local, OnDisable removes) logs its inside-collider counter
+                { "RunEvents.RoundCompleted", 3 },   // WP-078: the camera rig (scene-local, OnDisable removes) logs its inside-collider counter; WP-071: the ragdoll round log (armed at spawn, leaves on scene change)
                 { "RunEvents.RoundPoolExhausted", 1 }, { "RunEvents.GoldChanged", 1 }, { "RunEvents.PhaseChanged", 0 },
                 { "RunEvents.CountdownTick", 0 }, { "RunEvents.RunEnded", 0 }, { "RunFlowClock.FrozenChanged", 0 },
                 { "ProfileService.Changed", -1 }, { "InputSourceRegistry.CurrentChanged", 0 },

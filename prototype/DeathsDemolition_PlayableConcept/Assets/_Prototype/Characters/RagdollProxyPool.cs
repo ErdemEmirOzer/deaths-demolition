@@ -289,9 +289,17 @@ namespace DD.Prototype.Characters
         /// </summary>
         public static void ArmRoundLog()
         {
+            // scene-local subscriber (S-01 LifecycleHardeningTests): leave RoundCompleted when the scene changes, re-arm at the next spawn
+            if (!s_sceneHooked) { s_sceneHooked = true; UnityEngine.SceneManagement.SceneManager.activeSceneChanged += s_sceneChanged; }
             DD.Prototype.Rounds.RunEvents.RoundCompleted -= s_roundLog;
             DD.Prototype.Rounds.RunEvents.RoundCompleted += s_roundLog;
         }
+
+        private static bool s_sceneHooked;
+        private static readonly UnityEngine.Events.UnityAction<UnityEngine.SceneManagement.Scene, UnityEngine.SceneManagement.Scene> s_sceneChanged = OnActiveSceneChanged;
+
+        private static void OnActiveSceneChanged(UnityEngine.SceneManagement.Scene from, UnityEngine.SceneManagement.Scene to) =>
+            DD.Prototype.Rounds.RunEvents.RoundCompleted -= s_roundLog;
 
         /// <summary>WP-078 §3/§8 (S-10): one Player-log line per completed round — active now, the round's peak, overflow to the authored fall, cycles, and the death families.</summary>
         private static void OnRoundCompletedLog(int round)
@@ -347,6 +355,8 @@ namespace DD.Prototype.Characters
             ReleasedCount = 0;
             PeakActive = 0;
             s_roundPeak = s_roundBaseAcquired = s_roundBaseReleased = s_roundBaseRefused = 0;
+            if (s_sceneHooked) { UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= s_sceneChanged; s_sceneHooked = false; }
+            DD.Prototype.Rounds.RunEvents.RoundCompleted -= s_roundLog;
             System.Array.Clear(s_roundBaseFamilies, 0, s_roundBaseFamilies.Length);
             ZombieDeathFamilies.ResetCounts();
             s_layersSet = false;
