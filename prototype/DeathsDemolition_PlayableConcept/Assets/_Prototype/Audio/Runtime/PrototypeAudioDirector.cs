@@ -250,6 +250,7 @@ namespace DD.Prototype.Audio
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
 
             DD.Prototype.UI.UiSettings.MasterVolumeChanged += RequestMasterVolume;   // WP-021C (S-09 contract)
+            AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;   // WP-065E evidence
             DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded += StopAllFieldLoops;
 
             _router?.Subscribe();
@@ -275,6 +276,7 @@ namespace DD.Prototype.Audio
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
 
             DD.Prototype.UI.UiSettings.MasterVolumeChanged -= RequestMasterVolume;
+            AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
             DD.Prototype.Weapons.WeaponEvents.SpecialWeaponEnded -= StopAllFieldLoops;
 
             _router?.Unsubscribe();
@@ -611,6 +613,14 @@ namespace DD.Prototype.Audio
 
             AudioPlacement placement = AudioMixPlan.PlayerDamage();
             PlayResolved(placement, Vector3.zero, Mathf.Clamp(0.55f + 0.45f * severity + 0.25f * lowHealth, 0.4f, 1.3f), 100);
+        }
+
+        /// <summary>WP-065E: audio configuration / device resets seen (every playing source stops on one; the score and beds self-heal).</summary>
+        public static int AudioConfigurationChanges { get; private set; }
+
+        private static void OnAudioConfigurationChanged(bool deviceWasChanged)
+        {
+            AudioConfigurationChanges++;
         }
 
         private void OnPlayerDied(PlayerDeathInfo info)

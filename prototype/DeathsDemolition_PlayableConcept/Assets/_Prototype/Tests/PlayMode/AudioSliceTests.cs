@@ -541,6 +541,21 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>WP-065E: a score whose sources were stopped from outside (audio device / configuration reset) comes back by itself, in lock-step.</summary>
+        [UnityTest]
+        [Timeout(30000)]
+        public IEnumerator Muzik_KaynaklarDisaridanDurunca_Kendiliginden_Doner()
+        {
+            MusicDirector m = _d.Music;
+            yield return SpecialWeaponSahne.Bekle(() => m.Started && m.LayersPlaying, 10f, "Müzik başlamadı.");
+            int once = m.LayerRestarts;
+            m.StopSourcesForTest();
+            Assert.IsFalse(m.LayersPlaying, "öncül: kaynaklar durdu");
+            yield return SpecialWeaponSahne.Bekle(() => m.LayersPlaying, 2f, "Durmuş skor kendiliğinden dönmedi (sessiz kalırdı).");
+            Assert.AreEqual(once + 1, m.LayerRestarts, "Tek bir kilitli yeniden başlatma bekleniyor.");
+            Debug.Log("[DD-TEST] wp065e.heal " + m.DescribeSources());
+        }
+
         [UnityTest]
         [Timeout(90000)]
         public IEnumerator MixGecisi_FazOlcumu_LowHealthMuzikDuck()
@@ -558,8 +573,11 @@ namespace DD.Prototype.Tests.PlayMode
                 AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, path);
                 yield return new WaitForSecondsRealtime(3f);
                 long frames = cap.FramesWritten;
+                long dropped = cap.DroppedSamples;
+                int taps = UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true).Length;
                 UnityEngine.Object.DestroyImmediate(cap);
                 foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                Debug.Log("[DD-TEST] wp065e.capture frames " + frames + " (3 s = " + (3 * AudioSettings.outputSampleRate) + ") dropped " + dropped + " taps " + taps + " · " + _d.Music.DescribeSources());
                 if (frames == 0) { sink(float.NaN); yield break; }
                 byte[] raw = System.IO.File.ReadAllBytes(path);
                 int ch = raw[22] | (raw[23] << 8);
@@ -577,10 +595,48 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             MusicDirector m = _d.Music;
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
             try
             {
+                // WP-065E: the fight measure used to INHERIT the phase / snapshot / mixer state from whatever ran
+                // before it. In the full sequential PlayMode run a preceding suite leaves the score out of Fighting
+                // (layers at 0 → the "fight" reads the beds alone, ≈ −38 LUFS). Log what we found, then set it.
+                var entry = new System.Text.StringBuilder("phase ").Append(m.Phase).Append(" snap ").Append(_d.Bridge.Current)
+                    .Append(" base ").Append(m.Level(MusicDirector.Base).ToString("0.00")).Append(" perc ").Append(m.Level(MusicDirector.Percussion).ToString("0.00"))
+                    .Append(" master ").Append(PrototypeAudio.MasterVolume.ToString("0.00")).Append(" muted ").Append(_d.Mixer.Muted)
+                    .Append(" listener ").Append(AudioListener.pause ? "paused " : "live ").Append(AudioListener.volume.ToString("0.00"))
+                    .Append(" musicDuck ").Append(_d.Mixer.DuckLevel(AudioBus.Music).ToString("0.00")).Append(" musicUser ").Append(_d.Mixer.GetUserVolume(AudioBus.Music).ToString("0.00"))
+                    .Append(" threatOvr ").Append(m.ThreatLayerOverride.HasValue ? m.ThreatLayerOverride.Value.ToString() : "-");
+                for (int i = 1; i < AudioMixerBridge.VolumeParams.Length; i++)
+                {
+                    if (mixer != null && mixer.GetFloat(AudioMixerBridge.VolumeParams[i], out float db)) entry.Append(' ').Append(AudioMixerBridge.VolumeParams[i]).Append('=').Append(db.ToString("0.0"));
+                    mixer?.ClearFloat(AudioMixerBridge.VolumeParams[i]);   // snapshot owns the groups; only Master is the director's parameter
+                }
+
+                int listeners = 0;
+                foreach (var l in UnityEngine.Object.FindObjectsOfType<AudioListener>()) if (l.isActiveAndEnabled) listeners++;
+                int playing = 0, virt = 0;
+                foreach (var src in UnityEngine.Object.FindObjectsOfType<AudioSource>()) { if (src.isPlaying) playing++; if (src.isPlaying && src.isVirtual) virt++; }
+                entry.Append(" listeners ").Append(listeners).Append(" sources ").Append(playing).Append(" virtual ").Append(virt)
+                     .Append(" · ").Append(m.DescribeSources()).Append("layersPlaying ").Append(m.LayersPlaying)
+                     .Append(" · audioConfigResets ").Append(PrototypeAudioDirector.AudioConfigurationChanges)
+                     .Append(" layerRestarts ").Append(m.LayerRestarts).Append(" bedRestarts ").Append(_d.Ambience.BedRestarts);
+                Debug.Log("[DD-TEST] wp065e.entry " + entry);
+
+                RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
+                AudioListener.pause = false;
+                PrototypeAudio.MasterVolume = 1f;
+                _d.Mixer.SetUserVolume(AudioBus.Music, 1f);
+                m.ThreatLayerOverride = 0;
                 m.IntensityOverride = 0.9f; m.AccentOverride = true;
-                yield return new WaitForSecondsRealtime(1.5f);
+                m.OnRunStarted();
+                m.SetPhase(RunPhase.Fighting);
+                _d.Ambience.SetPhase(RunPhase.Fighting);
+                _d.Bridge.Transition(AudioSnapshot.Run, 0.1f);
+                // A score found stopped here heals itself within 0.5 s (MusicDirector.HealLayers) - the product fix.
+                yield return SpecialWeaponSahne.Bekle(() => m.LayersPlaying && m.Level(MusicDirector.Base) >= 0.55f && m.Level(MusicDirector.Percussion) >= 0.5f
+                                                            && _d.Mixer.DuckLevel(AudioBus.Music) > 0.99f, 10f, "Dövüş katmanları kurulmadı / çalmıyor.");
+                yield return new WaitForSecondsRealtime(0.5f);
                 yield return Measure(v => fightDb = v);
                 if (float.IsNaN(fightDb)) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
                 m.SetPhase(RunPhase.Upgrading); _d.Bridge.Transition(AudioSnapshot.RoundBreak, 0.2f);

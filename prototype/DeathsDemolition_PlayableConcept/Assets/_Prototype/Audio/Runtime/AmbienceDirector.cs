@@ -85,6 +85,10 @@ namespace DD.Prototype.Audio
         public int ThunderCount { get; private set; }
         public bool PondPlaying => _pond != null && _pond.isPlaying;
 
+        private float _healClock;
+        /// <summary>WP-065E: beds found stopped under a started ambience and restarted.</summary>
+        public int BedRestarts { get; private set; }
+
         // ---- WP-065C · fūrin wind chimes (AP-017 Phase 2b, eaves): wind-driven, positional, nearest only
         // Numbers: Fable design (asset-production/AP-011/v014/FURIN-DESIGN.md) — glass edo-fūrin, not iron nanbu.
         /// <summary>Wind below this is still air: the chimes hang silent.</summary>
@@ -293,6 +297,17 @@ namespace DD.Prototype.Audio
             if (paused)
             {
                 return;
+            }
+
+            // WP-065E: a bed stopped from outside (audio configuration reset) comes back; Started alone cannot tell.
+            _healClock -= unscaledDeltaTime;
+            if (Started && _healClock <= 0f)
+            {
+                _healClock = 0.5f;
+                for (int i = 0; i < BedCount; i++)
+                {
+                    if (_sources[i] != null && _sources[i].clip != null && !_sources[i].isPlaying) { _sources[i].Play(); BedRestarts++; }
+                }
             }
 
             _regionPoll -= unscaledDeltaTime;

@@ -134,6 +134,89 @@ namespace DD.Prototype.Audio
         /// <summary>WP-058B: the L3 combat trim currently applied to the score (1 = none, 0.79 = −2 dB). Test readout.</summary>
         public float CombatTrim => _combatTrim;
 
+        /// <summary>The run phase the score is following (test / F1 readout).</summary>
+        public RunPhase Phase => _phase;
+
+        /// <summary>WP-065E evidence: each run layer's source state (clip, playing, virtual, volume, time).</summary>
+        public string DescribeSources()
+        {
+            var sb = new System.Text.StringBuilder(160);
+            for (int i = 0; i < LayerCount; i++)
+            {
+                AudioSource s = _sources[i];
+                sb.Append('L').Append(i).Append('=');
+                if (s == null) { sb.Append("null "); continue; }
+                sb.Append(s.clip != null ? s.clip.name : "noclip").Append(s.isPlaying ? " play" : " stop").Append(s.isVirtual ? " virt" : "")
+                  .Append(" v").Append(s.volume.ToString("0.00")).Append(" t").Append(s.time.ToString("0.0")).Append(' ');
+            }
+
+            return sb.ToString();
+        }
+
+        private float _healClock;
+
+        /// <summary>WP-065E test seam: stops the run layer sources from OUTSIDE the score (what an audio configuration reset does), leaving Started set.</summary>
+        public void StopSourcesForTest()
+        {
+            for (int i = 0; i < LayerCount; i++) if (_sources[i] != null) _sources[i].Stop();
+        }
+
+        /// <summary>WP-065E: times the run layers were found stopped under a started score and restarted in lock-step.</summary>
+        public int LayerRestarts { get; private set; }
+
+        /// <summary>
+        /// WP-065E: the four loops are started once (PlayScheduled, lock-step) and never stopped by the score itself
+        /// outside <see cref="StopAll"/>. Something outside the score can still stop them - an audio device /
+        /// configuration reset stops every playing source - and then <see cref="Started"/> stays true over a silent
+        /// score for the rest of the session (the full PlayMode run found all four stopped at t 0.0). Twice a second
+        /// the score checks its sources and, if they went quiet, restarts them together at the same position.
+        /// </summary>
+        private void HealLayers(float dt)
+        {
+            if (!Started)
+            {
+                return;
+            }
+
+            _healClock -= dt;
+            if (_healClock > 0f)
+            {
+                return;
+            }
+
+            _healClock = 0.5f;
+            bool stopped = false;
+            for (int i = 0; i < LayerCount; i++)
+            {
+                if (_sources[i] != null && _sources[i].clip != null && !_sources[i].isPlaying) { stopped = true; break; }
+            }
+
+            if (!stopped)
+            {
+                return;
+            }
+
+            double at = AudioSettings.dspTime + 0.1;
+            for (int i = 0; i < LayerCount; i++)
+            {
+                if (_sources[i] == null || _sources[i].clip == null) continue;
+                _sources[i].Stop();
+                _sources[i].PlayScheduled(at);
+            }
+
+            LayerRestarts++;
+        }
+
+        /// <summary>True when every run layer with a clip is actually sounding (a started score whose sources were stopped reads false).</summary>
+        public bool LayersPlaying
+        {
+            get
+            {
+                for (int i = 0; i < LayerCount; i++) if (_sources[i] == null || _sources[i].clip == null || !_sources[i].isPlaying) return false;
+                return true;
+            }
+        }
+
         public MusicDirector(Transform root, AudioClipLibrary library, AudioBusMixer mixer, AudioMixerBridge bridge)
         {
             _library = library;
@@ -287,6 +370,8 @@ namespace DD.Prototype.Audio
             {
                 return;
             }
+
+            HealLayers(unscaledDeltaTime);
 
             _surge = Mathf.Max(0f, _surge - unscaledDeltaTime / SurgeSeconds);
 
