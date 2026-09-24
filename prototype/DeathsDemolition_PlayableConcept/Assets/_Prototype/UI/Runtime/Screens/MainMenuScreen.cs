@@ -490,7 +490,14 @@ namespace DD.Prototype.UI
                 () => (UiSettings.Telemetry ? "ON" : "OFF", UiSettings.Telemetry),
                 () => { UiSettings.Telemetry = !UiSettings.Telemetry; return (UiSettings.Telemetry ? "ON" : "OFF", UiSettings.Telemetry); }, "Telemetry");
             AddCaptionUnder(ref stack, _paneHost, "TelemetryNote",
-                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.");
+                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.", 1, UiSpace.S);
+
+            // WP-068 slice 10b (U9): HINTS - onboarding tips during the first three runs (group gap 24, AD 10b-1 SHOULD-3).
+            UiButton hints = AddToggleRow(ref stack, _paneHost, "Hints", "HINTS",
+                () => (UiSettings.Hints ? "ON" : "OFF", UiSettings.Hints),
+                () => { UiSettings.Hints = !UiSettings.Hints; return (UiSettings.Hints ? "ON" : "OFF", UiSettings.Hints); }, "Hints");
+            AddCaptionUnder(ref stack, _paneHost, "HintsNote",
+                "Brief hints during the first three runs, in play and on loading screens. Off leaves the rules.", 1);
 
             TMP_Text note = UiFactory.Label(
                 "Note", _paneHost,
@@ -498,7 +505,7 @@ namespace DD.Prototype.UI
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
-            UiInput.ChainVertical(scale, volume, uiSounds, quality, display, telemetry);
+            UiInput.ChainVertical(scale, volume, uiSounds, quality, display, telemetry, hints);
             UiInput.Focus(scale);
         }
 
@@ -1008,12 +1015,19 @@ namespace DD.Prototype.UI
             chipRect.sizeDelta = new Vector2(Mathf.Max(StateChipMinWidth, ChipWidthFor(state.text)), UiFactory.ScaledBand(StateChipHeight));
         }
 
-        private static TMP_Text AddCaptionUnder(ref UiStack stack, RectTransform parent, string name, string text, int lines = 2)
+        private static TMP_Text AddCaptionUnder(ref UiStack stack, RectTransform parent, string name, string text, int lines = 2, UiSpace after = UiSpace.XL)
         {
             stack.Gap(UiSpace.S);
             TMP_Text caption = UiFactory.Label(name, parent, text, UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption) * lines);
-            stack.Gap(UiSpace.XL);
+            // WP-068 (D6): the caption is as tall as its text at the pane width and the TextScale;
+            // a fixed two-line band wasted a line under one-line captions (the Settings note fell
+            // off the pane when HINTS arrived) and clipped at 1.25. Unlaid-out parents keep the old band.
+            float width = parent.rect.width;
+            float height = width > 1f
+                ? Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)), Mathf.Ceil(caption.GetPreferredValues(text, width, 0f).y))
+                : UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * lines;
+            stack.Add((RectTransform)caption.transform, height);
+            stack.Gap(after);
             return caption;
         }
 

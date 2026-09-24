@@ -102,6 +102,12 @@ namespace DD.Prototype.UI
             get { return GetOrCreate("ring", () => CreateRing(128, 0.16f)); }
         }
 
+        /// <summary>WP-068 slice 10b: the loading ring's interim stroke - 16 px at Ø 240 (AD 10b-1 SHOULD-1) until the ensō brush (10b-2).</summary>
+        public static Sprite RingEnso
+        {
+            get { return GetOrCreate("ringEnso", () => CreateRing(256, 16f / 240f)); }
+        }
+
         /// <summary>Thin annulus, for the secondary timer track.</summary>
         public static Sprite RingThin
         {

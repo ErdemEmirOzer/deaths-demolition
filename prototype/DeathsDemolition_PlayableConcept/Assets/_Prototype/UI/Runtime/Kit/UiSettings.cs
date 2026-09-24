@@ -43,6 +43,12 @@ namespace DD.Prototype.UI
         public string[] LoadScenes = new string[0];
         public float[] LoadSeconds = new float[0];
 
+        /// <summary>WP-068 slice 10b (U9): brief hints during the first three runs (in play and on loading screens). Off leaves the rules.</summary>
+        public bool Hints = true;
+
+        /// <summary>HINT tips already shown on this machine's profile (one bit per HINT, UiLoadingTips.HintBit).</summary>
+        public int HintsSeen;
+
         public UiSettingsData Clamp()
         {
             DisplayMode = Mathf.Clamp(DisplayMode, -1, 1);
@@ -150,6 +156,48 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>WP-068 U8: the UI SOUNDS slider (Interface bus), persisted with the device preferences.</summary>
+        /// <summary>WP-068 slice 10b (U9): the HINTS setting (Settings pane).</summary>
+        public static bool Hints
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_data.Hints;
+            }
+            set
+            {
+                EnsureLoaded();
+                if (value == s_data.Hints)
+                {
+                    return;
+                }
+
+                s_data.Hints = value;
+                Persist();
+            }
+        }
+
+        /// <summary>The once-per-profile HINT mask (UiLoadingTips).</summary>
+        public static int HintsSeen
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_data.HintsSeen;
+            }
+            set
+            {
+                EnsureLoaded();
+                if (value == s_data.HintsSeen)
+                {
+                    return;
+                }
+
+                s_data.HintsSeen = value;
+                Persist();
+            }
+        }
+
         public static float UiVolume
         {
             get

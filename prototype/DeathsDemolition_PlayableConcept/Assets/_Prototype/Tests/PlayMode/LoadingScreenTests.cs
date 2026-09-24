@@ -64,7 +64,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiCurtain curtain = UiCurtain.Instance;
             float lastFill = 0f;
             float groupFrom = -1f, enteringAt = -1f;
-            bool heldWhileGroup = false;
+            bool heldWhileGroup = false, sawTip = false, sawPlate = false;
             float deadline = Time.realtimeSinceStartup + 60f;
             // IsLoading ends at activation; the doors open after it - watch until both are done.
             while ((PrototypeUiFlow.IsLoading || UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
@@ -77,6 +77,8 @@ namespace DD.Prototype.Tests.PlayMode
 
                 if (curtain.GroupVisible)
                 {
+                    sawTip |= !string.IsNullOrEmpty(curtain.TipText);
+                    sawPlate |= curtain.PlateVisible;
                     if (groupFrom < 0f) groupFrom = Time.realtimeSinceStartup;
                     Assert.GreaterOrEqual(curtain.RingFill, lastFill - 1e-4f, "halka geri gitmez");
                     lastFill = curtain.RingFill;
@@ -104,6 +106,43 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, RunFlowClock.HoldCount, "aktivasyonda dünya çözüldü");
             Assert.Greater(UiSettings.LastLoadSeconds(PrototypeScenes.Selection), 0f, "ölçülen süre geri yazıldı");
             Assert.Less(UiSettings.LastLoadSeconds(PrototypeScenes.Selection), 5f, "ölçüm eski değerin yerine geçti");
+            Assert.IsTrue(sawTip, "10b: MainMenu → Selection ekranında ipucu şeridi");
+            Assert.IsTrue(sawPlate, "10b: SCREEN derinliği Look B plakası üstünde");
+        }
+
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator AzHareket_GrupT0daGorunur_AsgariGosterimTutulur()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.FastTransitions = false;
+            bool reduced = UiMotion.ReducedMotion;
+            UiMotion.ReducedMotion = true;
+            try
+            {
+                UiSettings.RecordLoad(PrototypeScenes.Selection, 5f); // SCREEN by the table
+                float t0 = Time.realtimeSinceStartup;
+                PrototypeUiFlow.GoToSelection();
+                UiCurtain curtain = UiCurtain.Instance;
+                Assert.IsTrue(curtain.GroupVisible, "RM: grup t0'da dinlenmede (kapılar kesildi)");
+                Assert.IsNotEmpty(curtain.TipText, "RM: ipucu şeridi RM satırını taşır");
+                float enteringAt = -1f;
+                float deadline = Time.realtimeSinceStartup + 60f;
+                while ((PrototypeUiFlow.IsLoading || UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
+                {
+                    if (enteringAt < 0f && curtain.EyebrowText == "ENTERING") enteringAt = Time.realtimeSinceStartup;
+                    yield return null;
+                }
+
+                Assert.Greater(enteringAt, 0f, "RM: ENTERING gösterildi");
+                Assert.GreaterOrEqual(enteringAt - t0, PrototypeUiFlow.MinimumDisplaySeconds - 0.05f, "RM: asgari gösterim tutulur");
+                Assert.AreEqual(PrototypeScenes.Selection, SceneManager.GetActiveScene().name);
+            }
+            finally
+            {
+                UiMotion.ReducedMotion = reduced;
+            }
         }
 
         [UnityTest]
@@ -154,6 +193,31 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Bekle(() => !PrototypeUiFlow.IsLoading, 10f, "yükleme bitmedi");
             for (int i = 0; i < 30; i++) yield return null;
             Assert.AreEqual(PrototypeScenes.Selection, SceneManager.GetActiveScene().name, "ikinci istek Results'a gitmedi");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Takilma_Bildirim_VeHataModali_BirincilEtiket_IptalYok()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            UiCurtain curtain = UiCurtain.Instance;
+            curtain.Close(true);
+            curtain.ShowGroup("ROUND 1", "ASSAULT RIFLE", "Unspent gold carries into the next round.", true);
+            yield return null;
+            Assert.AreEqual("ASSAULT RIFLE", curtain.SublineText, "koşuya giden alt satır silah adı");
+            Assert.IsTrue(curtain.MidPlateVisible, "koşuya giderken orta plaka (fenerler)");
+            curtain.ShowStalled();
+            Assert.IsTrue(curtain.StallVisible, "10 s takılma bildirimi");
+
+            bool primary = false;
+            curtain.ShowError(PrototypeScenes.Run, false, "RETURN TO MAIN MENU", () => primary = true);
+            Assert.IsTrue(curtain.ErrorOpen, "hata modalı açık");
+            Assert.AreEqual("the run", UiCurtain.SentenceFor(PrototypeScenes.Run));
+            curtain.HideError();
+            Assert.IsFalse(curtain.ErrorOpen);
+            Assert.IsFalse(primary, "birincil eylem yalnız basınca");
+            curtain.Open(true);
         }
 
         [UnityTest]

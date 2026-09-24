@@ -16,8 +16,12 @@ namespace DD.Prototype.UI
     ///             Data class, never eased), LOADING / ENTERING and the destination label.
     /// <see cref="PrototypeUiFlow"/> drives it around SceneManager.LoadSceneAsync; screens
     /// that open behind it start their intro on <see cref="Revealed"/> instead of Start().
-    /// Slice 10a is the flow core with plain doors and ring; the Look B plate, InkReveal
-    /// ring stroke (DD/UI/Fx, S-07), seal, tip strip and error modal follow in 10b.
+    /// Slice 10a: the flow core with plain doors and ring. Slice 10b-1: the SCREEN group
+    /// stands on the Look B plates (far; far + mid on the way into the run) under a
+    /// Sumi900 scrim 0.55 → 0.80, a tip strip bottom-left (U9, <see cref="UiLoadingTips"/>),
+    /// the 10 s stall notice, the Reduced Motion percent line, the load error modal and the
+    /// S-08 cues (CurtainClosed from the flow, CurtainOpened here). The InkReveal ring stroke,
+    /// the seal device, the ink variant and the boot hand-off are 10b-2.
     /// </summary>
     public sealed class UiCurtain : MonoBehaviour
     {
@@ -42,6 +46,19 @@ namespace DD.Prototype.UI
         private TMP_Text _subline;
         private float _shownFill = -1f;
         private bool _cursorWasVisible = true;
+        private RawImage _plateFar;
+        private RawImage _plateMid;
+        private RectTransform _tipStrip;
+        private TMP_Text _tip;
+        private RectTransform _stall;
+        private UiModal _error;
+        private int _percent = -1;
+        private string _eyebrowState = "LOADING"; // TMP's .text is not updated by SetText (the RM percent line)
+
+        public const float TipMargin = 96f;
+        public const float TipMaxWidth = UiTokens.MaxMeasure;
+        public const float ScrimTop = 0.55f;
+        public const float ScrimBottom = 0.80f;
 
         /// <summary>Raised when the doors are half open over the new scene (screens start their intro here).</summary>
         public static event Action Revealed;
@@ -89,9 +106,41 @@ namespace DD.Prototype.UI
             get { return _ring != null ? _ring.fillAmount : 0f; }
         }
 
+        /// <summary>The loading state word: LOADING or ENTERING (also under Reduced Motion, where the label shows the percent).</summary>
         public string EyebrowText
         {
-            get { return _eyebrow != null ? _eyebrow.text : string.Empty; }
+            get { return _eyebrow != null ? _eyebrowState : string.Empty; }
+        }
+
+        /// <summary>The tip on the strip (empty when none is shown).</summary>
+        public string TipText
+        {
+            get { return _tipStrip != null && _tipStrip.gameObject.activeSelf ? _tip.text : string.Empty; }
+        }
+
+        public bool PlateVisible
+        {
+            get { return _plateFar != null && _plateFar.gameObject.activeSelf && _plateFar.texture != null; }
+        }
+
+        public bool MidPlateVisible
+        {
+            get { return _plateMid != null && _plateMid.gameObject.activeSelf && _plateMid.texture != null; }
+        }
+
+        public bool StallVisible
+        {
+            get { return _stall != null && _stall.gameObject.activeSelf; }
+        }
+
+        public bool ErrorOpen
+        {
+            get { return _error != null && _error.IsOpen; }
+        }
+
+        public string SublineText
+        {
+            get { return _subline != null ? _subline.text : string.Empty; }
         }
 
         // ================================================================== build
@@ -108,11 +157,22 @@ namespace DD.Prototype.UI
             UiFactory.Fill(groupRect);
             _group = UiFactory.Group(groupRect.gameObject);
 
-            Image ghost = UiFactory.NewImage("RingGhost", groupRect, UiColor.TextPrimary, UiSprites.RingThin);
+            // Look B plates (slice 6 captures) under a Sumi900 scrim: 0.55 at the top, 0.80 at the
+            // bottom (the bottom third is text-safe for the strip, T10 at the darkest end).
+            _plateFar = Plate("PlateFar", groupRect);
+            _plateMid = Plate("PlateMid", groupRect);
+            Image scrim = UiFactory.NewImage("Scrim", groupRect, UiColor.SurfaceInset, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)scrim.transform);
+            scrim.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), ScrimTop);
+            Image scrimFoot = UiFactory.NewImage("ScrimFoot", groupRect, UiColor.SurfaceInset, UiSprites.FadeUp);
+            UiFactory.Fill((RectTransform)scrimFoot.transform);
+            scrimFoot.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), 1f - (1f - ScrimBottom) / (1f - ScrimTop));
+
+            Image ghost = UiFactory.NewImage("RingGhost", groupRect, UiColor.TextPrimary, UiSprites.RingEnso);
             Place((RectTransform)ghost.transform, RingSize);
             ghost.color = WithAlpha(UiTokens.Get(UiColor.TextPrimary), 0.12f);
 
-            _ring = UiFactory.NewImage("Ring", groupRect, UiColor.TextPrimary, UiSprites.Ring);
+            _ring = UiFactory.NewImage("Ring", groupRect, UiColor.TextPrimary, UiSprites.RingEnso);
             Place((RectTransform)_ring.transform, RingSize);
             _ring.type = Image.Type.Filled;
             _ring.fillMethod = Image.FillMethod.Radial360;
@@ -129,9 +189,96 @@ namespace DD.Prototype.UI
             _subline = UiFactory.Label("Subline", groupRect, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
             PlaceText(_subline, RingLift - RingSize * 0.5f - (int)UiSpace.XL - UiFactory.LineHeight(UiType.Label) - (int)UiSpace.S - UiFactory.LineHeight(UiType.H2), UiFactory.LineHeight(UiType.Label));
 
+            BuildTipStrip(groupRect);
+
             _group.gameObject.SetActive(false);
             SetDoorsOpen(true);
             _canvas.enabled = false;
+        }
+
+        private static RawImage Plate(string name, RectTransform parent)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(RawImage));
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            UiFactory.Fill(rect);
+            var image = go.GetComponent<RawImage>();
+            image.raycastTarget = false;
+            go.SetActive(false);
+            return image;
+        }
+
+        /// <summary>Tip strip (direction §15.3): bottom-left, 96 px in, ≤ 720 wide, SurfaceBase 0.72 with a hairline top edge; height from the text.</summary>
+        private void BuildTipStrip(RectTransform parent)
+        {
+            Image strip = UiFactory.NewImage("TipStrip", parent, UiColor.SurfaceBase, UiSprites.Solid);
+            strip.color = WithAlpha(UiTokens.Get(UiColor.SurfaceBase), 0.72f);
+            _tipStrip = (RectTransform)strip.transform;
+            _tipStrip.anchorMin = new Vector2(0f, 0f);
+            _tipStrip.anchorMax = new Vector2(0f, 0f);
+            _tipStrip.pivot = new Vector2(0f, 0f);
+            _tipStrip.anchoredPosition = new Vector2(TipMargin, TipMargin);
+
+            Image edge = UiFactory.NewImage("Edge", _tipStrip, UiColor.BorderHairline, UiSprites.Solid);
+            var edgeRect = (RectTransform)edge.transform;
+            edgeRect.anchorMin = new Vector2(0f, 1f);
+            edgeRect.anchorMax = new Vector2(1f, 1f);
+            edgeRect.pivot = new Vector2(0.5f, 1f);
+            edgeRect.sizeDelta = new Vector2(0f, 1f);
+
+            _tip = UiFactory.Label("Tip", _tipStrip, string.Empty, UiType.Body, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+            RectTransform tipRect = UiFactory.Fill(_tip.rectTransform);
+            tipRect.offsetMin = new Vector2((int)UiSpace.L, (int)UiSpace.M);
+            tipRect.offsetMax = new Vector2(-(int)UiSpace.L, -(int)UiSpace.M);
+            _tipStrip.gameObject.SetActive(false);
+        }
+
+        /// <summary>Show a tip on the strip (null / empty hides it); its height follows the text (1.25 → two lines, grows upward).</summary>
+        private void SetTip(string tip)
+        {
+            bool show = !string.IsNullOrEmpty(tip);
+            _tipStrip.gameObject.SetActive(show);
+            if (!show)
+            {
+                return;
+            }
+
+            float width = Mathf.Min(TipMaxWidth, _root.rect.width - TipMargin * 2f);
+            _tip.text = tip;
+            float textHeight = Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)),
+                Mathf.Ceil(_tip.GetPreferredValues(tip, width - (int)UiSpace.L * 2f, 0f).y));
+            _tipStrip.sizeDelta = new Vector2(width, textHeight + (int)UiSpace.M * 2f);
+        }
+
+        /// <summary>Cover-fit a plate to the canvas (crop, never letterbox).</summary>
+        private void Cover(RawImage image, string resource)
+        {
+            if (image.texture == null)
+            {
+                image.texture = Resources.Load<Texture2D>(resource);
+            }
+
+            Texture texture = image.texture;
+            if (texture == null)
+            {
+                image.gameObject.SetActive(false);
+                return;
+            }
+
+            float screenAspect = _root.rect.width / Mathf.Max(1f, _root.rect.height);
+            float textureAspect = (float)texture.width / Mathf.Max(1, texture.height);
+            if (screenAspect >= textureAspect)
+            {
+                float h = textureAspect / screenAspect;
+                image.uvRect = new Rect(0f, (1f - h) * 0.5f, 1f, h);
+            }
+            else
+            {
+                float w = screenAspect / textureAspect;
+                image.uvRect = new Rect((1f - w) * 0.5f, 0f, w, 1f);
+            }
+
+            image.gameObject.SetActive(true);
         }
 
         private RectTransform Door(string name, float anchorMinX, float anchorMaxX)
@@ -219,14 +366,110 @@ namespace DD.Prototype.UI
         /// <summary>SCREEN depth: the loading group enters (PaneIn, Base 220) with the destination labels.</summary>
         public void ShowGroup(string destination, string subline)
         {
+            ShowGroup(destination, subline, null, false);
+        }
+
+        /// <summary>
+        /// SCREEN depth with its plate and tip: far plate always, the mid plate too on the way into
+        /// the run (the lanterns lit: where you are going); <paramref name="tip"/> null = no strip
+        /// (Boot, Results, the Pause abort). Reduced Motion shows the static RM line instead.
+        /// </summary>
+        public void ShowGroup(string destination, string subline, string tip, bool midPlate)
+        {
             _eyebrow.text = "LOADING";
+            _eyebrowState = "LOADING";
+            _percent = -1;
             _destination.text = destination ?? string.Empty;
             _subline.text = subline ?? string.Empty;
             _ring.fillAmount = 0f;
             _shownFill = 0f;
             _ring.rectTransform.localScale = Vector3.one;
             _group.gameObject.SetActive(true);
+            Cover(_plateFar, "MenuPlates/plate_far");
+            if (midPlate)
+            {
+                Cover(_plateMid, "MenuPlates/plate_mid");
+            }
+            else
+            {
+                _plateMid.gameObject.SetActive(false);
+            }
+
+            SetTip(UiMotion.ReducedMotion ? UiLoadingTips.ReducedMotionLine : tip);
+            if (_stall != null)
+            {
+                _stall.gameObject.SetActive(false);
+            }
+
             UiPresets.PaneIn(_group, null, 0f);
+        }
+
+        /// <summary>No progress for 10 s: an Info notice under the tip (direction §15.2).</summary>
+        public void ShowStalled()
+        {
+            if (!GroupVisible)
+            {
+                return;
+            }
+
+            if (_stall == null)
+            {
+                float width = Mathf.Min(TipMaxWidth, _root.rect.width - TipMargin * 2f);
+                _stall = UiNotices.Notice("Stalled", _group.transform, UiNoticeKind.Info, UiLoadingTips.StalledLine, width);
+                _stall.anchorMin = new Vector2(0f, 0f);
+                _stall.anchorMax = new Vector2(0f, 0f);
+                _stall.pivot = new Vector2(0f, 1f);
+                _stall.anchoredPosition = new Vector2(TipMargin, TipMargin - (int)UiSpace.S);
+            }
+
+            _stall.gameObject.SetActive(true);
+        }
+
+        /// <summary>
+        /// The load error (UXW §2.2): an opaque M modal on the curtain - THE NEXT SCREEN DID NOT
+        /// LOAD, why, and what now. <paramref name="onPrimary"/> null = QUIT only (a stalled load
+        /// cannot be cancelled). Cancel does nothing: there is no safe "back". Nothing writes the profile.
+        /// </summary>
+        public void ShowError(string scene, bool stalled, string primaryLabel, Action onPrimary)
+        {
+            HideError();
+            _canvas.enabled = true;
+            string body = "Deaths Demolition could not open " + SentenceFor(scene) + ". "
+                + (stalled ? "Loading stopped making progress." : "The scene is missing from this build.")
+                + " Your profile was not changed.";
+            Action quit = Application.Quit;
+            // M width, height from the content (no void under a two-line body).
+            // The strip and the stall notice would repeat what the modal says (AD 10b-1 SHOULD-2).
+            _tipStrip.gameObject.SetActive(false);
+            if (_stall != null)
+            {
+                _stall.gameObject.SetActive(false);
+            }
+
+            _error = onPrimary != null
+                ? UiModal.Create("LoadError", _root, UiModalSize.M, "THE NEXT SCREEN DID NOT LOAD", body, primaryLabel, UiButtonVariant.Primary, onPrimary, "QUIT", quit, false, true)
+                : UiModal.Create("LoadError", _root, UiModalSize.M, "THE NEXT SCREEN DID NOT LOAD", body, "QUIT", UiButtonVariant.Secondary, quit, null, null, false, true);
+            _error.Open();
+            Cursor.visible = true;
+        }
+
+        public void HideError()
+        {
+            if (_error != null)
+            {
+                Destroy(_error.gameObject);
+                _error = null;
+            }
+        }
+
+        /// <summary>The destination in sentence case for the error body.</summary>
+        public static string SentenceFor(string scene)
+        {
+            if (scene == PrototypeScenes.MainMenu) return "the main menu";
+            if (scene == PrototypeScenes.Selection) return "the selection screen";
+            if (scene == PrototypeScenes.Run) return "the run";
+            if (scene == PrototypeScenes.Results) return "the results screen";
+            return "the next screen";
         }
 
         /// <summary>Honest progress: <paramref name="loadProgress"/> is AsyncOperation.progress (0..0.9). Written only on a visible change (Δ ≥ 1/256).</summary>
@@ -240,6 +483,17 @@ namespace DD.Prototype.UI
 
             _shownFill = fill;
             _ring.fillAmount = fill;
+
+            if (UiMotion.ReducedMotion)
+            {
+                // RM: the eyebrow carries the number, in steps of 10 (0-90 from the load).
+                int percent = Mathf.FloorToInt(fill / LoadShare * 9f) * 10;
+                if (percent != _percent)
+                {
+                    _percent = percent;
+                    _eyebrow.SetText("LOADING · {0}%", percent);
+                }
+            }
         }
 
         /// <summary>Activation: ENTERING, the seal step (Stamp), then the last 36° close as the scene activates.</summary>
@@ -250,8 +504,10 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            _eyebrow.text = "ENTERING";
-            UiPresets.StampIn(_ring.rectTransform);
+            _eyebrow.text = UiMotion.ReducedMotion ? "ENTERING · 100%" : "ENTERING";
+            _eyebrowState = "ENTERING";
+            // The ring never scales (the 1.12 → 1.00 Stamp belongs to the seal device, 10b-2): ENTERING
+            // is the eyebrow swap and the mouth closing (AD 10b-1 SHOULD-1).
             UiMotion.Fill(_ring, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Data);
         }
 
@@ -262,6 +518,7 @@ namespace DD.Prototype.UI
             {
                 _group.gameObject.SetActive(false);
                 SetDoorsOpen(true);
+                RaiseOpened();
                 FinishReveal();
                 _canvas.enabled = false;
                 return 0f;
@@ -278,6 +535,12 @@ namespace DD.Prototype.UI
             return groupOut + UiMotionTokens.Seconds(UiDuration.Screen);
         }
 
+        /// <summary>The S-08 open cue fires on the first frame the doors part.</summary>
+        private static void RaiseOpened()
+        {
+            UiEvents.Raise(UiEvent.CurtainOpened);
+        }
+
         private IEnumerator OpenDoors(float delay)
         {
             if (delay > 0f)
@@ -286,6 +549,7 @@ namespace DD.Prototype.UI
             }
 
             _group.gameObject.SetActive(false);
+            RaiseOpened();
             float away = HalfWidth + (int)UiSpace.S;
             UiMotion.Move(_leftDoor, new Vector2(-away, 0f), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
             UiMotion.Move(_rightDoor, new Vector2(away, 0f), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);

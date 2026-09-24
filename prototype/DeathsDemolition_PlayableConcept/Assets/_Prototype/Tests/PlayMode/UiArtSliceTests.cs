@@ -488,6 +488,9 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.AreEqual(telemetryBefore, UiSettings.Telemetry);
             Assert.Greater(UiEvents.RaisedCount, raisedBefore, "toggle bir UiEvent yükseltir");
+            // WP-068 slice 10b: HINTS (U9) is the last control now; Down wraps to the first slider.
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("Hints");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.UI SCALE");
 

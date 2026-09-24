@@ -174,13 +174,31 @@ namespace DD.Prototype.UI
         /// <summary>The group enters this long after the doors start closing; a load already at 0.9 by then never shows it.</summary>
         public const float GroupEntrySeconds = 0.3f;
 
-        /// <summary>No progress for this long: a log line (the on-screen notice and the 60 s modal are slice 10b).</summary>
+        /// <summary>No progress for this long: a log line and the on-screen notice under the tip.</summary>
         public const float StallSeconds = 10f;
+
+        /// <summary>No progress for this long: the load error modal (QUIT only - an async load cannot be cancelled).</summary>
+        public const float StallErrorSeconds = 60f;
 
         /// <summary>AsyncOperation.progress stops at 0.9 while activation is held.</summary>
         private const float LoadedProgress = 0.9f;
 
         private static bool s_loading;
+
+        /// <summary>
+        /// U9 / direction §15.1: a loading screen carries a tip on the way to Selection, into the run
+        /// and back to the menu from Results - never at Boot, into Results, or after a Pause abort
+        /// (no coaching after quitting).
+        /// </summary>
+        public static bool ShowsTip(string from, string to)
+        {
+            if (to == PrototypeScenes.Results || from == PrototypeScenes.Boot)
+            {
+                return false;
+            }
+
+            return !(from == PrototypeScenes.Run && to == PrototypeScenes.MainMenu);
+        }
         private static string s_loadingScene;
         private static int s_loadGeneration;
 
@@ -207,7 +225,8 @@ namespace DD.Prototype.UI
 
             s_loading = true;
             s_loadingScene = sceneName;
-            UiFlowRunner.Instance.Run(LoadRoutine(sceneName, ++s_loadGeneration));
+            string from = SceneManager.GetActiveScene().name;
+            UiFlowRunner.Instance.Run(LoadRoutine(sceneName, from, ++s_loadGeneration));
         }
 
         /// <summary>
@@ -220,22 +239,41 @@ namespace DD.Prototype.UI
         /// exactly as before. A newer load (<paramref name="generation"/>) owns the doors from
         /// its request on, so this routine's reveal steps aside.
         /// </summary>
-        private static IEnumerator LoadRoutine(string sceneName, int generation)
+        private static IEnumerator LoadRoutine(string sceneName, string from, int generation)
         {
             UiCurtain curtain = UiCurtain.Instance;
+            // Direction §15.1 / UXW §1.1: tips on the way to Selection, into the run and back to the
+            // menu from Results; none at Boot, into Results, or after a Pause abort (no coaching
+            // after quitting). The mid plate (lanterns lit) and the weapon sub-line go into the run.
+            bool intoRun = sceneName == PrototypeScenes.Run;
+            bool tipped = ShowsTip(from, sceneName);
+            string subline = intoRun ? ProfileService.WeaponDisplayName(SelectedWeapon).ToUpperInvariant() : string.Empty;
+            string tip = null;
             bool fast = FastTransitions;
             float lastLoad = UiSettings.LastLoadSeconds(sceneName);
             bool screen = !fast && (lastLoad < 0f || lastLoad >= CurtainThresholdSeconds);
 
             float t0 = Time.unscaledTime;
             curtain.Close(fast);
+            float groupShownAt = -1f;
+            if (screen && UiMotion.ReducedMotion)
+            {
+                // Reduced Motion (AD 10b-1 MUST-1, §15.5): the doors cut shut at t0 and the group is
+                // at rest at t0 - the SCREEN decision comes from the table only, never from the
+                // anti-flicker race (removing motion must not remove the destination or the tip).
+                tip = tipped ? UiLoadingTips.PickForLoadingScreen() : null;
+                curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), subline, tip, intoRun);
+                groupShownAt = t0;
+            }
             if (!fast && !UiMotion.ReducedMotion)
             {
                 yield return new WaitForSecondsRealtime(UiMotionTokens.Seconds(UiDuration.Screen));
             }
 
             // Two frames with the doors fully shut before the load starts (batchmode rule),
-            // so the load's own hitch never lands in the middle of a tween.
+            // so the load's own hitch never lands in the middle of a tween. The S-08 close cue
+            // lands at least one frame before LoadSceneAsync.
+            UiEvents.Raise(UiEvent.CurtainClosed, sceneName);
             yield return null;
             yield return null;
 
@@ -243,19 +281,30 @@ namespace DD.Prototype.UI
             AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
             if (op == null)
             {
+                // Direction §15.4: the doors open over the old scene after the minimum display and
+                // the error modal stands on it. Nothing writes the profile.
                 Debug.Log("[UI] Scene '" + sceneName + "' could not start loading; staying where we are.");
+                if (!fast)
+                {
+                    yield return new WaitForSecondsRealtime(MinimumDisplaySeconds);
+                }
+
                 ReleaseSimulation();
-                curtain.Open(fast);
                 s_loading = false;
+                curtain.Open(fast);
+                bool menuFailed = sceneName == PrototypeScenes.MainMenu;
+                string failed = sceneName;
+                curtain.ShowError(sceneName, false, menuFailed ? "TRY AGAIN" : "RETURN TO MAIN MENU",
+                    () => Load(menuFailed ? failed : PrototypeScenes.MainMenu));
                 yield break;
             }
 
             op.allowSceneActivation = false;
 
-            float groupShownAt = -1f;
             float lastProgress = -1f;
             float lastProgressAt = Time.unscaledTime;
             bool stallLogged = false;
+            bool stallError = false;
             while (true)
             {
                 float now = Time.unscaledTime;
@@ -269,6 +318,12 @@ namespace DD.Prototype.UI
                 {
                     stallLogged = true;
                     Debug.Log("[UI] Loading '" + sceneName + "' has not progressed for " + StallSeconds + " s.");
+                    curtain.ShowStalled();
+                }
+                else if (!stallError && now - lastProgressAt > StallErrorSeconds)
+                {
+                    stallError = true;
+                    curtain.ShowError(sceneName, true, null, null); // QUIT only; if the load recovers, the modal goes
                 }
 
                 if (screen && groupShownAt < 0f && now - t0 >= GroupEntrySeconds)
@@ -279,7 +334,12 @@ namespace DD.Prototype.UI
                     }
                     else
                     {
-                        curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), string.Empty);
+                        if (tipped && tip == null)
+                        {
+                            tip = UiLoadingTips.PickForLoadingScreen(); // one tip per screen, never swapped mid-load
+                        }
+
+                        curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), subline, tipped ? tip : null, intoRun);
                         groupShownAt = now;
                     }
                 }
@@ -302,6 +362,11 @@ namespace DD.Prototype.UI
                 yield return null;
             }
 
+            if (stallError)
+            {
+                curtain.HideError();
+            }
+
             // Activation: the seal step, the world is released, the scene may activate.
             curtain.Activate();
             ReleaseSimulation();
@@ -312,7 +377,12 @@ namespace DD.Prototype.UI
             }
 
             s_loading = false; // normally already cleared by OnSceneLoaded
-            UiSettings.RecordLoad(sceneName, Time.unscaledTime - loadStart);
+            if (!fast)
+            {
+                // Only real loads are measured: FastTransitions (batch, tests) skips the curtain's
+                // timings, and a batch run must not write the user's ui-settings.json.
+                UiSettings.RecordLoad(sceneName, Time.unscaledTime - loadStart);
+            }
 
             // The new scene renders once behind the closed doors.
             yield return null;

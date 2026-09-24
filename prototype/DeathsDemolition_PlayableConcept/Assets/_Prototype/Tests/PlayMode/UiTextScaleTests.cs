@@ -178,6 +178,16 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             failures.AddRange(Truncated("mainmenu"));
 
+            // Settings / Accessibility panes (measured captions, the HINTS row).
+            MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
+            foreach (UiContext pane in new[] { UiContext.Settings, UiContext.Accessibility })
+            {
+                menu.ShowPane(pane);
+                yield return null;
+                yield return null;
+                failures.AddRange(Truncated("mainmenu." + pane));
+            }
+
             Assert.IsEmpty(failures, "TextScale 1,25 (T3 / T11):\n" + string.Join("\n", failures));
         }
     }

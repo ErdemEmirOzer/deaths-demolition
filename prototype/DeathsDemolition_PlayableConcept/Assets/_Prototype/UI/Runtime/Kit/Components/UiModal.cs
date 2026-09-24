@@ -87,7 +87,8 @@ namespace DD.Prototype.UI
                 onConfirm, cancelLabel, onCancel, true, true);
         }
 
-        private static UiModal Create(string name, RectTransform parent, UiModalSize size, string title, string body,
+        /// <summary>As above; <paramref name="fitHeight"/> sizes the card from its content (never below the size's own height).</summary>
+        public static UiModal Create(string name, RectTransform parent, UiModalSize size, string title, string body,
             string primaryLabel, UiButtonVariant primaryVariant, Action onPrimary,
             string secondaryLabel, Action onSecondary, bool safeIsDefault, bool fitHeight)
         {
@@ -104,12 +105,12 @@ namespace DD.Prototype.UI
             return modal;
         }
 
-        /// <summary>Card height from the content (XL + heading + M + body + L + actions + XL), not below the size's own height.</summary>
+        /// <summary>Card height from the content (XL + heading + M + body + L + actions + XL), never below 264 (the S height) - the width stays the size's.</summary>
         private void FitHeight()
         {
             float content = (int)UiSpace.XL * 2f + UiFactory.LineHeight(UiType.H2) + (int)UiSpace.M + _bodyHeight + (int)UiSpace.L + UiSize.Target;
             Vector2 size = _cardRect.sizeDelta;
-            _cardRect.sizeDelta = new Vector2(size.x, Mathf.Max(size.y, Mathf.Ceil(content)));
+            _cardRect.sizeDelta = new Vector2(size.x, Mathf.Max(SizeOf(UiModalSize.S).y, Mathf.Ceil(content)));
         }
 
         /// <summary>Current card size (tests).</summary>

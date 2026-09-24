@@ -322,6 +322,12 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "loading")
+                {
+                    yield return LoadingFrames();
+                    yield break;
+                }
+
                 switch (_screen)
                 {
                     case "settings":
@@ -535,6 +541,90 @@ namespace DD.Prototype.UI
                 yield return null;
                 Debug.Log("[UiCapture] kit done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
+            }
+
+            /// <summary>
+            /// WP-068 slice 10b: <c>-ddUiCapture loading</c> - the loading screen in the Player
+            /// (folder in -ddUiCaptureOut; <c>-ddUiCaptureRm 1</c> = Reduced Motion): MainMenu →
+            /// Selection mid-load and at ENTERING, Selection → Run mid-load (mid plate + weapon
+            /// sub-line), then on the run the stall notice and the load error modal shown directly
+            /// (they need a stuck load to happen for real). The previous loads are recorded as slow so
+            /// both transitions take the SCREEN depth.
+            /// </summary>
+            private IEnumerator LoadingFrames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                if (Arg("-ddUiCaptureRm") == "1")
+                {
+                    UiMotion.ReducedMotion = true;
+                }
+
+                UiCurtain curtain = UiCurtain.Instance;
+
+                // CURTAIN depth: Selection measured fast → doors only, caught while shut.
+                UiSettings.RecordLoad(PrototypeScenes.Selection, 0.2f);
+                PrototypeUiFlow.GoToSelection();
+                yield return WaitFor(() => UiCurtain.IsCovering && !curtain.GroupVisible, 5f);
+                yield return new WaitForSecondsRealtime(0.15f);
+                yield return Frame(folder, "loading-curtain");
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 20f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                yield return new WaitForSecondsRealtime(0.5f);
+
+                // SCREEN depth into the run: mid plate, weapon sub-line, tip; then ENTERING.
+                UiSettings.RecordLoad(PrototypeScenes.Run, 5f);
+                PrototypeUiFlow.StartRun();
+                yield return WaitFor(() => curtain.GroupVisible && curtain.EyebrowText == "LOADING", 10f);
+                yield return new WaitForSecondsRealtime(0.4f);
+                yield return Frame(folder, "loading-run");
+                yield return WaitFor(() => curtain.EyebrowText == "ENTERING", 15f);
+                yield return Frame(folder, "loading-run-entering");
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                yield return new WaitForSecondsRealtime(1f);
+
+                // Pause abort back to the menu: SCREEN, far plate, MAIN MENU, no tip.
+                UiSettings.RecordLoad(PrototypeScenes.MainMenu, 5f);
+                PrototypeUiFlow.AbortRunToMainMenu();
+                yield return WaitFor(() => curtain.GroupVisible && curtain.EyebrowText == "LOADING", 10f);
+                yield return new WaitForSecondsRealtime(0.4f);
+                yield return Frame(folder, "loading-abort");
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.MainMenu, 30f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                yield return new WaitForSecondsRealtime(0.5f);
+
+                // A Results-bound load that stalls (shown directly: a real stall needs a stuck load):
+                // no tip (§15.1), the 10 s notice, then the ≥ 60 s error modal.
+                curtain.Close(true);
+                curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Results), string.Empty, null, false);
+                curtain.SetProgress(0.45f);
+                curtain.ShowStalled();
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "loading-stalled");
+                curtain.ShowError(PrototypeScenes.Results, true, null, null);
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "loading-error");
+                curtain.HideError();
+                curtain.Open(true);
+                yield return null;
+                Debug.Log("[UiCapture] loading done · framebuffer " + Screen.width + "x" + Screen.height);
+                Application.Quit();
+            }
+
+            private static IEnumerator WaitFor(Func<bool> condition, float timeout)
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while (!condition() && Time.realtimeSinceStartup - t0 < timeout)
+                {
+                    yield return null;
+                }
+            }
+
+            private static IEnumerator Frame(string folder, string name)
+            {
+                yield return new WaitForEndOfFrame();
+                WritePng(Path.Combine(folder, name + ".png"));
             }
 
             private static string Readout(string id)
