@@ -481,6 +481,7 @@ namespace DD.Prototype.Characters
 
         private string DeathClipName(int deathStyle)
         {
+            if (deathStyle >= CharacterAnimatorContract.DeathStyleArcElectro) return CharacterAnimatorContract.ZombieSpecialDeathClipsV3[Mathf.Min(deathStyle - CharacterAnimatorContract.DeathStyleArcElectro, 1)];
             int i = Mathf.Clamp(deathStyle, 0, CharacterAnimatorContract.ZombieDeathClips.Length - 1);
             string v3 = CharacterAnimatorContract.ZombieDeathClipsV3[i];
             return _animation != null && _animation.Find(v3) != null ? v3 : CharacterAnimatorContract.ZombieDeathClips[i];
@@ -510,14 +511,32 @@ namespace DD.Prototype.Characters
             f == ZombieDeathFamily.FallBack ? 0.27f : f == ZombieDeathFamily.FallForward ? 0.30f : f == ZombieDeathFamily.SpinSide ? 0.33f
             : f == ZombieDeathFamily.LegsOut ? 0.37f : f == ZombieDeathFamily.UltraTimber ? 1.10f : 0.30f;
 
-        private void BeginDeathClock(int deathStyle)
+        /// <summary>
+        /// WP-071 AP-022 s2a: the Special deaths come from the body's state, not the gameplay index — seized by the arc → Death_8
+        /// (arc_electro, continues the loop), on the gel → Death_9 (gel_slip). <paramref name="was"/> = the special visual before
+        /// PlayDeath cleared it. A set without the clip keeps the index.
+        /// </summary>
+        private int SpecialDeathStyle(int deathStyle, ZombieSpecialVisual was)
         {
-            DeathFamily = ZombieDeathFamilies.OfDeathIndex(deathStyle);
+            bool electro = was == ZombieSpecialVisual.Electrocuted || (_hasFullImpulse && _impulse.State == DD.Prototype.Damage.ZombieBodyState.Electrocuted);
+            bool gel = !electro && (was == ZombieSpecialVisual.Slipping || (_hasFullImpulse && _impulse.State == DD.Prototype.Damage.ZombieBodyState.Sliding));
+            if (electro && _animation.Find(CharacterAnimatorContract.ZombieDeathArcElectroV3) != null) return CharacterAnimatorContract.DeathStyleArcElectro;
+            if (gel && _animation.Find(CharacterAnimatorContract.ZombieHitGelSlipV3) != null) return CharacterAnimatorContract.DeathStyleGelSlip;
+            return Mathf.Clamp(deathStyle, 0, CharacterAnimatorContract.ZombieDeathClips.Length - 1);
+        }
+
+        private void BeginDeathClock(int deathStyle, ZombieSpecialVisual was)
+        {
+            DeathFamily = deathStyle == CharacterAnimatorContract.DeathStyleArcElectro ? ZombieDeathFamily.ArcElectro
+                : deathStyle == CharacterAnimatorContract.DeathStyleGelSlip ? ZombieDeathFamily.GelSlip
+                : ZombieDeathFamilies.OfDeathIndex(deathStyle);
+            if (was == ZombieSpecialVisual.Electrocuted) DeathFamily = ZombieDeathFamily.ArcElectro;   // the fix: PlayDeath clears _special first
+            else if (was == ZombieSpecialVisual.Slipping) DeathFamily = ZombieDeathFamily.GelSlip;
             if (_hasFullImpulse)
             {
                 // WP-071 B3: what the clip index cannot know
-                if (_impulse.State == DD.Prototype.Damage.ZombieBodyState.Electrocuted || _special == ZombieSpecialVisual.Electrocuted) DeathFamily = ZombieDeathFamily.ArcElectro;
-                else if (_impulse.State == DD.Prototype.Damage.ZombieBodyState.Sliding || _special == ZombieSpecialVisual.Slipping) DeathFamily = ZombieDeathFamily.GelSlip;
+                if (_impulse.State == DD.Prototype.Damage.ZombieBodyState.Electrocuted) DeathFamily = ZombieDeathFamily.ArcElectro;
+                else if (_impulse.State == DD.Prototype.Damage.ZombieBodyState.Sliding) DeathFamily = ZombieDeathFamily.GelSlip;
                 else if (_impulse.WeaponKnown && _impulse.WeaponClass == DD.Prototype.Core.Weapons.WeaponClass.Launcher && DeathFamily != ZombieDeathFamily.UltraTimber) DeathFamily = ZombieDeathFamily.LegsOut;
             }
 
@@ -546,7 +565,7 @@ namespace DD.Prototype.Characters
 
         private void Spasm()
         {
-            if (_special != ZombieSpecialVisual.Electrocuted || _dying || _rdBones == null) return;
+            if (_special != ZombieSpecialVisual.Electrocuted || _dying || _rdBones == null || _electroLoop) return;   // AP-022's loop carries its own spasm
             _spasmClock += Time.deltaTime;
             // three incommensurate sines (II A5.3: head 4 Hz, arms 6 Hz, legs 2 Hz irregular) — deterministic, no allocation
             float t = _spasmClock * SpasmHz;
@@ -689,6 +708,10 @@ namespace DD.Prototype.Characters
         private static readonly int AttackStyleId = Animator.StringToHash(CharacterAnimatorContract.AttackStyle);
         private static readonly int AttackRateId = Animator.StringToHash(CharacterAnimatorContract.AttackRate);
         private static readonly int AttackMirrorId = Animator.StringToHash(CharacterAnimatorContract.AttackMirror);
+        private static readonly int ElectroId = Animator.StringToHash(CharacterAnimatorContract.Electro);
+        /// <summary>WP-071 AP-022 s2a: the set carries hit_electro_loop (the seized state plays it; else the slowed pose + procedural spasm).</summary>
+        private bool _electroLoop;
+        public bool ElectroLoopActive => _electroLoop && _special == ZombieSpecialVisual.Electrocuted;
         private static readonly int StaggerId = Animator.StringToHash(CharacterAnimatorContract.Stagger);
         private static readonly int HitLeftId = Animator.StringToHash(CharacterAnimatorContract.HitLeft);
         private static readonly int HitRightId = Animator.StringToHash(CharacterAnimatorContract.HitRight);
@@ -884,6 +907,8 @@ namespace DD.Prototype.Characters
             _waiting = false;
             _special = ZombieSpecialVisual.None;   // WP-032E: a pooled body comes back free and at speed 1
             _animator.speed = 1f;
+            _electroLoop = _animation != null && _animation.Find(CharacterAnimatorContract.ZombieHitElectroLoopV3) != null;
+            _animator.SetBool(ElectroId, false);
             if (_chains != null) _chains.Reset();   // WP-032F: tails restart from the rest pose at the new spawn point
             _animator.SetBool(WaitingId, false);
             // WP-032B: the queue idle's cycle offset — deterministic per spawn (the idle variant coin's neighbour), so a throat queue is out of step.
@@ -1066,6 +1091,7 @@ namespace DD.Prototype.Characters
             if (_special == state) return;
             ZombieSpecialVisual previous = _special;
             _special = state;
+            if (state != ZombieSpecialVisual.Electrocuted) _animator.SetBool(ElectroId, false);   // any other state releases the seize loop
             switch (state)
             {
                 case ZombieSpecialVisual.Netted:
@@ -1082,11 +1108,12 @@ namespace DD.Prototype.Characters
                     if (!_dying) _animator.SetTrigger(StumbleId);
                     _animator.SetBool(WaitingId, true);
                     break;
-                case ZombieSpecialVisual.Electrocuted:   // WP-071 B3: seized — slowed pose + the procedural spasm (AP-022 hit_electro_loop replaces it)
+                case ZombieSpecialVisual.Electrocuted:   // WP-071 B3: seized — AP-022 hit_electro_loop, or the slowed pose + the procedural spasm
                     _windowOpen = false;
                     _animator.ResetTrigger(AttackId);
                     _animator.ResetTrigger(TelegraphId);
-                    _animator.speed = ElectroAnimatorSpeed;
+                    _animator.speed = _electroLoop ? 1f : ElectroAnimatorSpeed;
+                    if (_electroLoop) _animator.SetBool(ElectroId, true);
                     _spasmClock = 0f;
                     break;
                 default:
@@ -1213,8 +1240,10 @@ namespace DD.Prototype.Characters
         public void PlayDeath(int deathStyle)
         {
             if (!_authored) return;
+            ZombieSpecialVisual was = _special;   // WP-071: the Special deaths read it (arc / gel)
             _special = ZombieSpecialVisual.None;   // WP-032E: a netted / dazed body still dies at full speed
             _animator.speed = 1f;
+            _animator.SetBool(ElectroId, false);
             _dying = true;
             _deathEnded = false;
             _windowOpen = false;
@@ -1224,9 +1253,10 @@ namespace DD.Prototype.Characters
             _animator.ResetTrigger(HitLeftId);
             _animator.ResetTrigger(HitRightId);
             _animator.SetBool(AliveId, false);
-            _animator.SetInteger(DeathStyleId, Mathf.Clamp(deathStyle, 0, CharacterAnimatorContract.ZombieDeathClips.Length - 1));
+            int style = SpecialDeathStyle(deathStyle, was);
+            _animator.SetInteger(DeathStyleId, style);
             _animator.SetTrigger(DieId);
-            BeginDeathClock(deathStyle);   // WP-071: onset clip → ragdoll hand-off
+            BeginDeathClock(style, was);   // WP-071: onset clip → ragdoll hand-off
         }
 
         /// <summary>Armour binder hook (ArmorVisualBinder): a broken plate plays the region's armorbreak clip (WP-032C; the WP-018 heavy stagger stays the REQ-124 gameplay stagger's full-body read).</summary>

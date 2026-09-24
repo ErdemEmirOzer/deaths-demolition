@@ -15,6 +15,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
+using C = DD.Prototype.Characters.CharacterAnimatorContract;
 
 namespace DD.Art.Tests.PlayMode
 {
@@ -180,19 +181,51 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Elektrik_PozYavaslar_SpazmCanli_BitinceNormal()
+        public IEnumerator Elektrik_AP022Dongusu_TamHizda_BitinceNormal()
         {
+            // WP-071 AP-022 s2a: seized = hit_electro_loop at speed 1 (the clip carries the spasm; the procedural one is the v003 fallback)
             yield return Stage();
             ZombieSkinnedVisual v = Zombie(Vector3.zero, 63u);
             for (int i = 0; i < 10; i++) yield return null;
             v.SetSpecialVisual(ZombieSpecialVisual.Electrocuted);
-            Assert.AreEqual(ZombieSkinnedVisual.ElectroAnimatorSpeed, v.Animator.speed, 1e-4f);
-            float min = float.MaxValue, max = float.MinValue;
-            for (int i = 0; i < 30; i++) { yield return null; min = Mathf.Min(min, v.LastSpasm); max = Mathf.Max(max, v.LastSpasm); }
-            Debug.Log("[DD-TEST] wp071.electro spasmRange=" + (max - min).ToString("F1", CultureInfo.InvariantCulture) + "°");
-            Assert.Greater(max - min, 5f, "spazm yok");
+            Assert.IsTrue(v.ElectroLoopActive, "set AP-022 electro loop taşımalı");
+            Assert.AreEqual(1f, v.Animator.speed, 1e-4f);
+            yield return CharacterTests.Bekle(() => v.Animator.GetCurrentAnimatorStateInfo(0).IsName(C.ElectroState), 1f, "Electro_Loop durumu");
+            Transform head = v.Animator.GetBoneTransform(HumanBodyBones.Head);
+            Vector3 p0 = head.localEulerAngles; float moved = 0f;
+            for (int i = 0; i < 40; i++) { yield return null; moved = Mathf.Max(moved, Quaternion.Angle(Quaternion.Euler(p0), head.localRotation)); }
+            Debug.Log("[DD-TEST] wp071.electro loop headSwing=" + moved.ToString("F1", CultureInfo.InvariantCulture) + "° spasmProcedural=" + v.LastSpasm.ToString("F1", CultureInfo.InvariantCulture));
+            Assert.Greater(moved, 3f, "döngü baş sarsmalı");
+            Assert.IsTrue(v.Animator.GetCurrentAnimatorStateInfo(0).loop, "döngü");
             v.SetSpecialVisual(ZombieSpecialVisual.None);
             Assert.AreEqual(1f, v.Animator.speed, 1e-4f);
+            yield return CharacterTests.Bekle(() => v.Animator.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState), 1f, "bırakınca Locomotion");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Olum_SpecialDurumu_ArcElectroVeGelSlip_KendiKlibi()
+        {
+            // WP-071 AP-022 s2a: a body seized by Raiju / slipping on Namekuji gel dies on its own clip (Death_8 / Death_9) even
+            // with no DeathImpulse (the fix: PlayDeath used to clear the special state before the family read it).
+            yield return Stage();
+            ZombieSkinnedVisual e = Zombie(new Vector3(-3f, 0f, 0f), 64u);
+            ZombieSkinnedVisual g = Zombie(new Vector3(3f, 0f, 0f), 65u);
+            for (int i = 0; i < 10; i++) yield return null;
+            e.SetSpecialVisual(ZombieSpecialVisual.Electrocuted);
+            g.SetSpecialVisual(ZombieSpecialVisual.Slipping);
+            for (int i = 0; i < 10; i++) yield return null;
+            e.PlayDeath(0);
+            g.PlayDeath(0);
+            Assert.AreEqual(ZombieDeathFamily.ArcElectro, e.DeathFamily);
+            Assert.AreEqual(ZombieDeathFamily.GelSlip, g.DeathFamily);
+            yield return CharacterTests.Bekle(() => e.Animator.GetCurrentAnimatorStateInfo(0).IsName(C.DeathState + "_" + C.DeathStyleArcElectro)
+                && g.Animator.GetCurrentAnimatorStateInfo(0).IsName(C.DeathState + "_" + C.DeathStyleGelSlip), 1f, "Death_8 / Death_9");
+            yield return CharacterTests.Bekle(() => e.RagdollActive && g.RagdollActive, 1.5f, "olay hand-off");
+            Debug.Log("[DD-TEST] wp071.specialDeath handoffE=" + e.RagdollHandoffSeconds.ToString("F2", CultureInfo.InvariantCulture) + " handoffG=" + g.RagdollHandoffSeconds.ToString("F2", CultureInfo.InvariantCulture));
+            Assert.AreEqual(8f / 30f, e.RagdollHandoffSeconds, 0.08f, "arc_electro ragdoll_handoff@8 (olay; saat yalnız yedek)");
+            Assert.AreEqual(9f / 30f, g.RagdollHandoffSeconds, 0.08f, "gel_slip ragdoll_handoff@9 (olay)");
+            yield return CharacterTests.Bekle(() => e.DeathFinished && g.DeathFinished, 6f, "iki ölüm biter");
         }
     }
 }

@@ -1861,6 +1861,15 @@ Okuma: Ö-1 harcama payını %12 → %19–22'ye çıkardı ama tek kart/round (
 - dinlenme pozu Awake'te bind pozundan alınıyor; eksen karakterin kendi sağı (sol → sağ üst kol; model düğümünün yönüne güvenilmez).
 İleride P-06 kliplerine `jaw_open` eğrisi eklerse bu sürücünün yerine geçer. Testler: ArtCharacter + ArtAnimation 20/20; PlayMode Polish/ReactionsV3/Ragdoll/Animation/Character 28/28 (çene boşta 3,6°, ısırmada 24°, çene baş uzayında 3,4 cm aşağı; ilk koşuda eksen işareti ters çıktı ve düzeltildi).
 
+## WP-071 — AP-022 dilim 2a: Special tepkileri (Raiju döngüsü + ölümü, Namekuji kayma ölümü)
+
+**Durum:** tamam (S-06, 2026-09-25; taban aee9dc15). P-06 v008'den 3 yeni klip (hit_electro_loop 24 f döngü, death_arc_electro 36 f, hit_gel_slip 30 f; ikisi de ölümcül) ve dilim 1 ölümlerinin 5 karelik durgun sonla yeniden dışa aktarılmış hali. Manifest 99 klip (girdiler kaynaktan birebir), SHA256SUMS doğrulandı.
+- Builder: `Electro` bool ile `Electro_Loop` durumu (Any State'ten girilir, !Electro ile Locomotion'a döner); `Death_8` = arc_electro, `Death_9` = gel_slip.
+- Görsel: Electrocuted durumunda döngü tam hızda oynar; prosedürel spazm yalnız v003 yedeği olarak kalır. Ölüm, gövde elektrikteyse Death_8'i, jeldeyse Death_9'u seçer (oyun indeksi yerine gövde durumu).
+- **Hata düzeltmesi:** PlayDeath özel durumu aile okunmadan siliyordu; DeathImpulse gelmeyen elektrik/jel ölümleri ArcElectro/GelSlip ailesini hiç almıyordu. Artık ölümden önceki durum okunuyor.
+- AD SHOULD S4 için v002 gerekmiyor: gel_slip'in ragdoll'a devri kare 9'da, yani yere çarpmadan önce oluyor; kayma ragdoll hızıyla sürüyor. Klibin kare 12 sonrasındaki yolu yalnız havuz tavanı doluysa oynuyor.
+- Testler: ArtAnimation + EventContract + TierExperience 20/20; Reactions/Ragdoll/Animation/Polish 25/25. Özel ölümler olayla devrediyor (0,28 ve 0,32 s), döngüde baş 10,8° sallanıyor. İlk koşudaki tek kırmızı, testin +0,25 s yedek saati beklemesinden kaynaklandı; beklenti düzeltildi.
+
 ## WP-032G — AP-009G v007: Tide Jewel tutuşu (küçük commit)
 
 **Durum:** Tamamlandı (S-06, 2026-09-17, HIZLI HAT §7; taban main `0430fcf`). `AP009_player_sw_hold_jewel_v007.fbx` (61 f döngü, override_upper / upper_body) → `SwHold_3`; `PlayerSkinnedVisual.HoldIndexOf(TideJewel) = 3` (WP-056 usage bus üzerinden), tüm üst-katman tek-atışlar SwHold_3'e de döner; swing klibi yok (Tide çekimi VFX beat'i). Manifest şeması v007 = v006b girdileri + jewel — P-06'nın v007 manifest dışa aktarımı 85 mevcut girdinin layer/mask/weapon/tier/validation alanlarını düşürmüştü (AP-009 export betiği, P-06 notu); FBX'ler v006b'de kaldı. `ClipCount` 86 (oyuncu 42 / zombi 44), karakter FBX envanteri 135. Tek koşu: RunCharacters + EditMode `ArtAnimationTests;ArtCharacterTests` **20/20** + PlayMode `AnimationSpecialTests` **2/2**; build S-02 WP-059C (AP-014D) entegrasyonuyla.

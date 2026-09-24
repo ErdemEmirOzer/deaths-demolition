@@ -569,6 +569,17 @@ MonoBehaviour:
     frames: 36
     events: telegraph_start=0;attack_step=13;hit_window_start=15;foot_l=16;hit_window_end=19;foot_r=21;attack_recover=30;foot_r=33
     stanceFrames: 0
+  - name: AP022_zombie_death_arc_electro
+    clip: {fileID: -623603649343465320, guid: 55e15b06f9d124ad4b7855143f627b4a, type: 3}
+    loop: 0
+    seconds: 1.167
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 36
+    events: hit=0;fall_start=7;ragdoll_handoff=8;ground_impact=19;spasm=20;spasm=29;death_end=35
+    stanceFrames: 0
   - name: AP022_zombie_death_fall_back
     clip: {fileID: -623603649343465320, guid: 2ccbc50febe7b4e27b0996d659d0a8f1, type: 3}
     loop: 0
@@ -612,6 +623,28 @@ MonoBehaviour:
     additive: 0
     frames: 44
     events: hit=0;fall_start=6;foot_l=6;ragdoll_handoff=10;ground_impact=17;death_end=43
+    stanceFrames: 0
+  - name: AP022_zombie_hit_electro_loop
+    clip: {fileID: -623603649343465320, guid: a44611006cdc24c3bbe5491232c823f5, type: 3}
+    loop: 1
+    seconds: 0.8
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 25
+    events: spasm=5;spasm=16
+    stanceFrames: 0
+  - name: AP022_zombie_hit_gel_slip
+    clip: {fileID: -623603649343465320, guid: 80ca75bf7b94a4140af59ff09302b0d5, type: 3}
+    loop: 0
+    seconds: 0.967
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 30
+    events: hit=0;fall_start=1;ragdoll_handoff=9;ground_impact=12;death_end=29
     stanceFrames: 0
   _manifestSchema: AP009.clips-manifest.v008
   _locomotionReferenceSpeed: 1.485

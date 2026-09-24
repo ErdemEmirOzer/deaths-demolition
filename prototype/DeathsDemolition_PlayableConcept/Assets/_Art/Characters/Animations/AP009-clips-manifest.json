@@ -4547,7 +4547,7 @@
    },
    "rest_contact_by_fit_m": {
     "A": 0.0048,
-    "B": -0.0,
+    "B": 0.0,
     "C": 0.012
    },
    "validation": {
@@ -4647,6 +4647,195 @@
     "G3_fingers": true,
     "result": "PASS"
    }
+  },
+  {
+   "clip": "AP022_zombie_hit_electro_loop",
+   "fbx": "AP022_zombie_hit_electro_loop_v008.fbx",
+   "target": "zombie",
+   "frames": 25,
+   "fps": 30,
+   "seconds": 0.8,
+   "loop": true,
+   "events": [
+    {
+     "name": "spasm",
+     "frame": 5
+    },
+    {
+     "name": "spasm",
+     "frame": 16
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "Special lightning (Raiju) hit loop — S-06 WP-071 #73",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.0,
+    0.0,
+    -0.0
+   ],
+   "validation": {
+    "G1_no_pops": true,
+    "A5_feet_on_ground": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_death_arc_electro",
+   "fbx": "AP022_zombie_death_arc_electro_v008.fbx",
+   "target": "zombie",
+   "frames": 36,
+   "fps": 30,
+   "seconds": 1.167,
+   "loop": false,
+   "events": [
+    {
+     "name": "hit",
+     "frame": 0
+    },
+    {
+     "name": "fall_start",
+     "frame": 7
+    },
+    {
+     "name": "ragdoll_handoff",
+     "frame": 8
+    },
+    {
+     "name": "ground_impact",
+     "frame": 19
+    },
+    {
+     "name": "spasm",
+     "frame": 20
+    },
+    {
+     "name": "spasm",
+     "frame": 29
+    },
+    {
+     "name": "death_end",
+     "frame": 35
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "Special lightning (Raiju) death — S-06 WP-071 #81 (continues hit_electro_loop)",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": true
+   },
+   "root_delta": [
+    -0.203,
+    0.275,
+    56.7
+   ],
+   "ragdoll": {
+    "handoff": 8,
+    "limits_ok": true,
+    "max_bone_speed_mps": {
+     "hands": 5.33,
+     "head": 3.44,
+     "hips": 0.99
+    },
+    "limits_file": "ragdoll-limits.json"
+   },
+   "rest_contact_by_fit_m": {
+    "A": 0.0147,
+    "B": 0.0,
+    "C": 0.0218
+   },
+   "validation": {
+    "D1_events": true,
+    "D2_travel": true,
+    "D3_fall_time": true,
+    "D4_impact_speed": true,
+    "D7_handoff_ranges": true,
+    "D8_bounce": true,
+    "D9_hands_down": true,
+    "D6_settled": true,
+    "G1_no_pops": true,
+    "D5_ground": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
+  },
+  {
+   "clip": "AP022_zombie_hit_gel_slip",
+   "fbx": "AP022_zombie_hit_gel_slip_v008.fbx",
+   "target": "zombie",
+   "frames": 30,
+   "fps": 30,
+   "seconds": 0.967,
+   "loop": false,
+   "events": [
+    {
+     "name": "hit",
+     "frame": 0
+    },
+    {
+     "name": "fall_start",
+     "frame": 1
+    },
+    {
+     "name": "ragdoll_handoff",
+     "frame": 9
+    },
+    {
+     "name": "ground_impact",
+     "frame": 12
+    },
+    {
+     "name": "death_end",
+     "frame": 29
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "maps_to": "Special gel (Namekuji) slip — S-06 WP-071 #74 (lethal: same clip ends at death_end)",
+   "tier": null,
+   "mirror_of": null,
+   "root_motion": {
+    "xz": true,
+    "yaw": false
+   },
+   "root_delta": [
+    -0.007,
+    0.673,
+    1.3
+   ],
+   "validation": {
+    "D1_events": true,
+    "D2_travel": true,
+    "D3_fall_time": true,
+    "D4_impact_speed": true,
+    "D7_handoff_ranges": true,
+    "D8_bounce": true,
+    "D9_hands_down": true,
+    "D6_settled": true,
+    "G1_no_pops": true,
+    "D5_ground": true,
+    "G4_pokes": true,
+    "G2_root_bones": true,
+    "G3_fingers": true,
+    "result": "PASS"
+   }
   }
  ],
  "v005_changes": {
@@ -4718,6 +4907,21 @@
   ],
   "events": "list form [{name, frame, value?}]",
   "root": "root_motion {xz, yaw} + root_delta [x, z, yawDeg]; travel on the Hips, Root unkeyed",
-  "ragdoll_limits": "AP-022/exports/v008/ragdoll-limits.json (mirrored in RagdollProxyPool)"
+  "ragdoll_limits": "AP-022/exports/v008/ragdoll-limits.json (mirrored in RagdollProxyPool)",
+  "slice_2a": {
+   "package": "AP-022 slice 2a (P-06, 24.09, AD ACCEPT)",
+   "added": [
+    "AP022_zombie_hit_electro_loop",
+    "AP022_zombie_death_arc_electro",
+    "AP022_zombie_hit_gel_slip"
+   ],
+   "reexported": [
+    "AP022_zombie_death_fall_back",
+    "AP022_zombie_death_fall_fwd",
+    "AP022_zombie_death_legs_out",
+    "AP022_zombie_death_spin_side"
+   ],
+   "note": "deaths end in a 5-frame still hold; names/frames/events/root_delta unchanged"
+  }
  }
 }

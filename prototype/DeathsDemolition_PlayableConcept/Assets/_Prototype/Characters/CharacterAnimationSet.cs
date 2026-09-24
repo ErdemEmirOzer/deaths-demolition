@@ -25,6 +25,7 @@ namespace DD.Prototype.Characters
         public const string IdleVariant = "IdleVariant";
         public const string Attack = "Attack";           // trigger
         public const string AttackStyle = "AttackStyle"; // int: 0 swipe, 1 lunge, 2 sweep, 3 overhead (WP-032B, Ultra)
+        public const string Electro = "Electro";           // bool: WP-071 AP-022 s2a — seized by the Raiju arc (hit_electro_loop)
         public const string AttackMirror = "AttackMirror"; // bool: WP-071 B5 — the attack plays mirrored (swipe_L = swipe_R mirrored, S-03 AttackSelector)
         public const string AttackRate = "AttackRate";   // float: clip speed so hit_window_start lands on the tier telegraph
         public const string Stagger = "Stagger";         // trigger (heavy, full body)
@@ -81,6 +82,7 @@ namespace DD.Prototype.Characters
         public const string AttackOverheadState = "Attack_Overhead";   // WP-032B (AP-009B v002, Ultra)
         public const string AttackBiteGrabState = "Attack_BiteGrab";   // WP-071 (AP-022 slice 1)
         public const string AttackSwipeLState = "Attack_SwipeL";       // WP-071 (AP-022 slice 1)
+        public const string ElectroState = "Electro_Loop";             // WP-071 (AP-022 slice 2a)
         public const string WaitState = "Wait";                        // WP-032B (idle_queue)
         // WP-032C states
         public const string AimState = "Aim";                 // Aim_<weapon> (override_upper loop, the rest state while armed)
@@ -190,6 +192,13 @@ namespace DD.Prototype.Characters
         public const string ZombieAttackBiteGrabV3 = "AP022_zombie_attack_bite_grab";
         /// <summary>WP-071: AP-022 clips in DeathStyle order where they exist (0 fwd, 1 back, 2 side, 3 kneel → legs_out, 4 side_R = spin_side mirrored); 5–7 stay AP-009 until later slices.</summary>
         public static readonly string[] ZombieDeathClipsV3 = { ZombieDeathFallFwdV3, ZombieDeathFallBackV3, ZombieDeathSpinSideV3, ZombieDeathLegsOutV3, ZombieDeathSpinSideV3, "AP009_zombie_death_special_A", "AP009_zombie_death_special_B", "AP009_zombie_death_ultra" };
+        // WP-071 · AP-022 slice 2a (v008): the Special reactions — Raiju seize loop + its death, Namekuji's lethal slip
+        public const string ZombieHitElectroLoopV3 = "AP022_zombie_hit_electro_loop";
+        public const string ZombieDeathArcElectroV3 = "AP022_zombie_death_arc_electro";
+        public const string ZombieHitGelSlipV3 = "AP022_zombie_hit_gel_slip";
+        /// <summary>WP-071: DeathStyle 8 / 9 — the Special deaths (Death_8 arc_electro, Death_9 gel_slip), chosen by the visual from the body state, never by the gameplay index.</summary>
+        public const int DeathStyleArcElectro = 8, DeathStyleGelSlip = 9;
+        public static readonly string[] ZombieSpecialDeathClipsV3 = { ZombieDeathArcElectroV3, ZombieHitGelSlipV3 };
         /// <summary>WP-071: AP-022 attacks by state index (0 swipe_R, 1 lunge, 2 sweep, 3 overhead_slam, 4 bite_grab, 5 swipe_L).</summary>
         public static readonly string[] ZombieAttackClipsV3 = { ZombieAttackSwipeRV3, ZombieAttackLungeV3, ZombieAttackSweepV3, ZombieAttackOverheadSlamV3, ZombieAttackBiteGrabV3, ZombieAttackSwipeLV3 };
         public static readonly string[] HitDirections = { "front", "back", "left", "right" };
@@ -224,10 +233,12 @@ namespace DD.Prototype.Characters
             "AP009_zombie_hit_front_ultra", "AP009_zombie_hit_back_ultra", "AP009_zombie_hit_left_ultra", "AP009_zombie_hit_right_ultra",
             // WP-071 AP-022 slice 1
             ZombieDeathFallFwdV3, ZombieDeathFallBackV3, ZombieDeathSpinSideV3, ZombieDeathLegsOutV3,
-            ZombieAttackSwipeRV3, ZombieAttackSwipeLV3, ZombieAttackLungeV3, ZombieAttackSweepV3, ZombieAttackOverheadSlamV3, ZombieAttackBiteGrabV3
+            ZombieAttackSwipeRV3, ZombieAttackSwipeLV3, ZombieAttackLungeV3, ZombieAttackSweepV3, ZombieAttackOverheadSlamV3, ZombieAttackBiteGrabV3,
+            // WP-071 AP-022 slice 2a
+            ZombieHitElectroLoopV3, ZombieDeathArcElectroV3, ZombieHitGelSlipV3
         };
 
-        public const int ClipCount = 96;   // WP-071: + AP-022 slice 1 (4 deaths + 6 attacks).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+        public const int ClipCount = 99;   // WP-071: + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>

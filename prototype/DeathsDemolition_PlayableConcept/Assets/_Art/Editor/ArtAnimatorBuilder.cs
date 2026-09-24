@@ -473,7 +473,7 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.Gait, AnimatorControllerParameterType.Float), (C.IdleVariant, AnimatorControllerParameterType.Float),
                 (C.Waiting, AnimatorControllerParameterType.Bool), (C.WaitPhase, AnimatorControllerParameterType.Float),
                 (C.Attack, AnimatorControllerParameterType.Trigger), (C.AttackStyle, AnimatorControllerParameterType.Int), (C.AttackRate, AnimatorControllerParameterType.Float),
-                (C.AttackMirror, AnimatorControllerParameterType.Bool),
+                (C.AttackMirror, AnimatorControllerParameterType.Bool), (C.Electro, AnimatorControllerParameterType.Bool),
                 (C.Stagger, AnimatorControllerParameterType.Trigger),
                 (C.HitLeft, AnimatorControllerParameterType.Trigger), (C.HitRight, AnimatorControllerParameterType.Trigger),
                 (C.FlinchHead, AnimatorControllerParameterType.Trigger), (C.FlinchTorso, AnimatorControllerParameterType.Trigger), (C.FlinchLeg, AnimatorControllerParameterType.Trigger),
@@ -566,6 +566,27 @@ namespace DD.Art.Pipeline.EditorTools
                 AnimatorState d = OneShot(sm, C.DeathState + "_" + i, clips[v3 ? C.ZombieDeathClipsV3[i] : C.ZombieDeathClips[i]], null);
                 if (v3 && i == 4) d.mirror = true;
                 FromAny(sm, d, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, (float)i, C.DeathStyle));
+            }
+
+            // WP-071 AP-022 slice 2a: Death_8 arc_electro / Death_9 gel_slip (the visual picks them from the body state) and the
+            // Raiju seize loop, held while Electro and left on its release (the death leaves it through Any State)
+            for (int k = 0; k < C.ZombieSpecialDeathClipsV3.Length; k++)
+            {
+                if (!clips.ContainsKey(C.ZombieSpecialDeathClipsV3[k])) continue;
+                int style = C.DeathStyleArcElectro + k;
+                AnimatorState d = OneShot(sm, C.DeathState + "_" + style, clips[C.ZombieSpecialDeathClipsV3[k]], null);
+                FromAny(sm, d, 0.05f, (AnimatorConditionMode.If, 0f, C.Die), (AnimatorConditionMode.Equals, (float)style, C.DeathStyle));
+            }
+
+            if (clips.ContainsKey(C.ZombieHitElectroLoopV3))
+            {
+                AnimatorState electro = sm.AddState(C.ElectroState);
+                electro.motion = clips[C.ZombieHitElectroLoopV3];
+                electro.writeDefaultValues = false;
+                FromAny(sm, electro, 0.08f, (AnimatorConditionMode.If, 0f, C.Electro), (AnimatorConditionMode.If, 0f, C.Alive));
+                AnimatorStateTransition off = electro.AddTransition(loco);
+                off.hasExitTime = false; off.hasFixedDuration = true; off.duration = 0.2f;
+                off.AddCondition(AnimatorConditionMode.IfNot, 0f, C.Electro);
             }
 
             for (int i = 0; i < C.ZombieRiseClips.Length; i++)   // WP-032C: Rise_0 (A 48 f), Rise_1 (B 36 f), Rise_2 (C 28 f) by RiseVariant; B/C carry spawn_rise / spawn_land

@@ -38,7 +38,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.ClipCount, m.Count);
             int player = 0, zombie = 0;
             foreach (var s in m.Values) { if (s.target == "player") player++; else if (s.target == "zombie") zombie++; }
-            Assert.AreEqual(42, player); Assert.AreEqual(54, zombie);   // WP-071: + AP-022 slice 1 (10)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+            Assert.AreEqual(42, player); Assert.AreEqual(57, zombie);   // WP-071: + AP-022 slice 1 (10) + slice 2a (3)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
             foreach (string name in C.PlayerClips) Assert.IsTrue(m.ContainsKey(name), name);
             foreach (string name in C.ZombieClips) Assert.IsTrue(m.ContainsKey(name), name);
             // Every manifest event name is in the contract table.
@@ -232,6 +232,19 @@ namespace DD.Art.Tests.EditMode
                 Assert.AreEqual(i == 4, d.mirror, "side_R = spin_side aynası");
             }
 
+            // WP-071 AP-022 slice 2a: Special deaths 8 / 9 + the Raiju seize loop (Electro bool in, !Electro out)
+            for (int k = 0; k < 2; k++)
+            {
+                AnimatorState d = ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_" + (C.DeathStyleArcElectro + k));
+                Assert.IsNotNull(d, "Death_" + (8 + k)); Assert.AreEqual(set.Clip(C.ZombieSpecialDeathClipsV3[k]), d.motion); Assert.AreEqual(0, d.transitions.Length, "ölüm çıkışsız");
+            }
+
+            AnimatorState electro = ArtAnimatorBuilder.FindState(c, 0, C.ElectroState);
+            Assert.IsNotNull(electro, "Electro_Loop");
+            Assert.AreEqual(set.Clip(C.ZombieHitElectroLoopV3), electro.motion);
+            Assert.IsTrue(((AnimationClip)electro.motion).isLooping, "electro loop döngü");
+            Assert.AreEqual(1, electro.transitions.Length); Assert.AreEqual(C.LocomotionState, electro.transitions[0].destinationState.name);
+
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.RiseState)); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.StaggerState));
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.HitState + "_L")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.HitState + "_R"));
             // WP-032C: directional × tier hits, armour breaks by region, stumble, rise variants, 8 deaths
@@ -325,7 +338,7 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(42, player.Clips.Count); Assert.AreEqual(54, zombie.Clips.Count);   // WP-071 + AP-022 slice 1   // WP-032C v004
+            Assert.AreEqual(42, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // WP-071 + AP-022 slice 1 + 2a   // WP-032C v004
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
             var m = Manifest();
             foreach (var set in new[] { player, zombie })
