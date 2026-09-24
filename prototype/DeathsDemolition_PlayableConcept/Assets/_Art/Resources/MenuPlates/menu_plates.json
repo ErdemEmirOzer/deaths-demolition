@@ -15,5 +15,5 @@
   "scrim": {"token": "SurfaceBase", "alpha": 0.55},
   "text_safe": {"x0": 0, "x1": 0.3333, "y0": 0, "y1": 1},
   "art_safe_px": [2217, 1080],
-  "t10": {"token": "TextSecondary", "threshold": 4.5, "percentile": 1, "measured": "composite at breath peak", "p1": 4.928, "min": 3.233, "below_pct": 0.715}
+  "t10": {"token": "TextSecondary", "threshold": 4.5, "percentile": 1, "measured": "composite at breath peak, linear UiContrast", "clamp": 4.6, "p1": 4.618, "min": 4.6, "below_pct": 0}
 }

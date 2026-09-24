@@ -340,6 +340,8 @@ namespace DD.Art.Tests.PlayMode
 
                 Texture2D mid = Matte(midColour, midB, midW), near = Matte(full, nearB, nearW);
                 Paint(far, file.paint, log);
+                // WP-068 T10 after the linear audit: every layer's text-safe third is clamped to 4.6:1 (MenuPlateMetrics.ClampTextSafe).
+                log.Append("text-safe clamp px: far " + MenuPlateMetrics.ClampTextSafe(far) + ", mid " + MenuPlateMetrics.ClampTextSafe(mid) + ", near " + MenuPlateMetrics.ClampTextSafe(near) + "\n");
                 File.WriteAllBytes(Path.Combine(outDir, "plate_far.png"), far.EncodeToPNG());
                 File.WriteAllBytes(Path.Combine(outDir, "plate_mid.png"), mid.EncodeToPNG());
                 File.WriteAllBytes(Path.Combine(outDir, "plate_near.png"), near.EncodeToPNG());

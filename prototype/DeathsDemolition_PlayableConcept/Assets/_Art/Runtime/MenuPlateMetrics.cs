@@ -7,7 +7,8 @@ namespace DD.Art
     /// <summary>
     /// WP-068 slice 6 · The menu / loading backdrop plates (Assets/_Art/Resources/MenuPlates): their composite and the T10
     /// text-safe measure (AD MUST 5) — TextSecondary over the left third under the SurfaceBase scrim at α 0.55, composited the
-    /// way the UI draws it (sRGB source-over, UiContrast). Shared by the capture (MenuPlateCaptureTests) and the gate (MenuPlateTests).
+    /// way the UI draws it (UiContrast.Composite: linear light in this Linear project since WP-068 slice 8a). Shared by the capture
+    /// (MenuPlateCaptureTests) and the gate (MenuPlateTests).
     /// </summary>
     public static class MenuPlateMetrics
     {
@@ -16,6 +17,15 @@ namespace DD.Art
         public const float Threshold = 4.5f;
         /// <summary>T10 reads the 1st percentile: 99 % of the text-safe rectangle; the rest are sub-stroke specks (a fog line seen through a bay, a roof edge).</summary>
         public const float Percentile = 0.01f;
+
+        /// <summary>
+        /// T10 after the linear audit (WP-068 slice 8a, 5af6703f): a scrim composited in linear light darkens less than the old
+        /// sRGB estimate, and the plates' brightest specks in the left third fell to 3.87:1 (p1). <see cref="ClampTextSafe"/> darkens
+        /// exactly those pixels to <see cref="TextSafeTarget"/> — the plate is fixed, the threshold stays 4.5.
+        /// </summary>
+        public const float TextSafeTarget = 4.6f;
+        /// <summary>The clamp covers the third plus the largest parallax offset (12 px) and a margin, then fades back over the feather.</summary>
+        public const int TextSafeMarginPx = 16, TextSafeFeatherPx = 160;
 
         /// <summary>Lantern breath (AD, post-capture round): Amber300 #F7C766 (WP-068 §2.1), normal "over" blend, peak α 0.35 × mask, 2.4 s between 0.55 and 1.0 of peak; the glow never enters the text-safe third.</summary>
         public static readonly Color GlowTint = new Color(0xF7 / 255f, 0xC7 / 255f, 0x66 / 255f, 1f);
@@ -88,6 +98,52 @@ namespace DD.Art
 
             ratios.Sort();
             return (ratios[Mathf.FloorToInt(ratios.Count * Percentile)], ratios[0], 100f * below / ratios.Count);
+        }
+
+        /// <summary>
+        /// Darkens, in place, every pixel of a plate layer in the text-safe third (+ <see cref="TextSafeMarginPx"/>) whose
+        /// TextSecondary contrast under the scrim is below <see cref="TextSafeTarget"/>: the largest linear-light scale (hue kept)
+        /// that reaches the target, fading back to the original over <see cref="TextSafeFeatherPx"/>. The scrim composite is linear
+        /// in the pixel's luminance, so capping each layer caps any parallax composite of the three (a straight-alpha "over" of two
+        /// capped colours stays under the cap). Alpha is untouched. Returns the number of pixels changed.
+        /// </summary>
+        public static int ClampTextSafe(Texture2D layer)
+        {
+            Color scrim = UiTokens.Get(UiColor.SurfaceBase);
+            scrim.a = ScrimAlpha;
+            Color text = UiTokens.Get(UiColor.TextSecondary);
+            int w = layer.width, h = layer.height, hard = Mathf.RoundToInt(w * TextSafeRight) + TextSafeMarginPx, soft = hard + TextSafeFeatherPx, changed = 0;
+            Color32[] px = layer.GetPixels32();
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < Mathf.Min(soft, w); x++)
+            {
+                Color32 c = px[y * w + x];
+                if (UiContrast.Ratio(text, UiContrast.Composite(scrim, c)) >= TextSafeTarget) continue;
+                float lo = 0f, hi = 1f;
+                for (int i = 0; i < 16; i++)
+                {
+                    float mid = (lo + hi) * 0.5f;
+                    if (UiContrast.Ratio(text, UiContrast.Composite(scrim, ScaleLinear(c, mid))) >= TextSafeTarget) lo = mid;
+                    else hi = mid;
+                }
+
+                float k = x < hard ? lo : Mathf.Lerp(lo, 1f, (x - hard) / (float)TextSafeFeatherPx);
+                Color32 o = ScaleLinear(c, k);
+                if (o.r == c.r && o.g == c.g && o.b == c.b) continue;
+                px[y * w + x] = o;
+                changed++;
+            }
+
+            layer.SetPixels32(px);
+            layer.Apply(false, false);
+            return changed;
+        }
+
+        /// <summary>The colour scaled by <paramref name="k"/> in linear light, rounded down (never brighter), alpha kept.</summary>
+        private static Color32 ScaleLinear(Color32 c, float k)
+        {
+            byte S(byte v) => (byte)Mathf.FloorToInt(255f * Mathf.LinearToGammaSpace(Mathf.GammaToLinearSpace(v / 255f) * k) + 1e-4f);
+            return new Color32(S(c.r), S(c.g), S(c.b), c.a);
         }
 
         /// <summary>The frame with the left-third scrim drawn and the 2217×1080 art-safe centre outlined (review aid).</summary>
