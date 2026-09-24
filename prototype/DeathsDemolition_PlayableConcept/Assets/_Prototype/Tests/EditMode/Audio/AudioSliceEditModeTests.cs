@@ -805,5 +805,42 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.ExplosionMid, PrototypeAudioDirector.ExplosionLayer(12.1f));
             Assert.AreEqual(AudioSoundId.ExplosionFar, PrototypeAudioDirector.ExplosionLayer(35.1f));
         }
+
+        [Test]
+        public void AkustikAlanlar_V6Haritasi_SalonKoridor_Histerezis_SahneYoksaOpen()
+        {
+            Debug.Log("[DD-TEST] wp072b6 " + AudioCatalogBuilder.BuildAcousticSpaces());
+            var map = AssetDatabase.LoadAssetAtPath<AcousticSpaceMap>(AudioCatalogBuilder.AcousticMapPath);
+            Assert.IsNotNull(map, "DD_AcousticSpaces.asset pişirilmedi");
+            Assert.GreaterOrEqual(map.Spaces.Count, 13, "S-05 v6: 6 oda + 6 koridor + R7");
+            Assert.AreSame(map, AcousticSpaceMap.Load(), "Resources yükü");
+
+            AcousticSpaceMap.Space hall = null, corridor = null;
+            foreach (AcousticSpaceMap.Space sp in map.Spaces)
+            {
+                if (sp.id == "R1_MainHall") hall = sp;
+                if (corridor == null && sp.enclosure == AcousticSpace.Corridor) corridor = sp;
+            }
+
+            Assert.IsNotNull(hall, "R1_MainHall yok");
+            Assert.IsNotNull(corridor, "koridor yok");
+            Vector3 Merkez(AcousticSpaceMap.Space sp)
+            {
+                float x = 0f, z = 0f; int n = sp.polygonXZ.Length / 2;
+                for (int i = 0; i < n; i++) { x += sp.polygonXZ[i * 2]; z += sp.polygonXZ[i * 2 + 1]; }
+                return new Vector3(x / n, sp.floor + 1.6f, z / n);
+            }
+
+            map.ResetHysteresis();
+            Assert.AreEqual(AcousticSpace.Hall, map.ResolveInMap(Merkez(hall)), "salon içi Hall");
+            // R1: z 38…49 — güney kenarı z = 38. 0,5 m dışarıda hâlâ Hall (1 m histerezis), 1,5 m'de Open.
+            Assert.AreEqual(AcousticSpace.Hall, map.ResolveInMap(new Vector3(0f, hall.floor + 1.6f, 37.5f)), "eşikte 0,5 m dışarı: histerezis");
+            Assert.AreEqual(AcousticSpace.Open, map.ResolveInMap(new Vector3(0f, hall.floor + 1.6f, 36.5f)), "1,5 m dışarı: Open");
+            map.ResetHysteresis();
+            Assert.AreEqual(AcousticSpace.Corridor, map.ResolveInMap(Merkez(corridor)), corridor.id + " Corridor");
+            Assert.AreEqual(AcousticSpace.Open, map.ResolveInMap(new Vector3(0f, 2f, -200f)), "harita dışı Open");
+            map.ResetHysteresis();
+            Assert.AreEqual(AcousticSpace.Open, map.Resolve(Merkez(hall)), "V6 sahnesi yüklü değilken (AP005) her yer Open");
+        }
     }
 }

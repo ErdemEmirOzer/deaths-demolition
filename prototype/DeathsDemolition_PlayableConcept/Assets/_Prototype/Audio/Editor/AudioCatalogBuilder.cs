@@ -30,6 +30,10 @@ namespace DD.Prototype.Audio.EditorTools
         public const string RegionMapPath = "Assets/_Prototype/Audio/Resources/DD_AudioRegionMap.asset";
         public const string PlacementPath = "Assets/_Art/Environment/World/AP005_Placement.asset";
 
+        /// <summary>WP-072 · WP-074: S-05's acoustic spaces (source) and the baked runtime map.</summary>
+        public const string AcousticSourcePath = "Assets/_Art/Environment/World/V6/acoustic-spaces-v6.json";
+        public const string AcousticMapPath = "Assets/_Prototype/Audio/Resources/DD_AcousticSpaces.asset";
+
         /// <summary>Vorbis quality (Unity 0–1 ≈ ogg q0–q10 / 10): v003 standard q8 SFX, q7 loops.</summary>
         public const float SfxQuality = 0.8f;
         public const float MusicQuality = 0.7f;
@@ -103,8 +107,141 @@ namespace DD.Prototype.Audio.EditorTools
 
             Debug.Log("[AudioCatalogBuilder] " + BuildCatalog());
             Debug.Log("[AudioCatalogBuilder] " + BuildRegionMap());
+            Debug.Log("[AudioCatalogBuilder] " + BuildAcousticSpaces());
             AssetDatabase.SaveAssets();
             Debug.Log("[AudioCatalogBuilder] BUILD-ALL OK");
+        }
+
+        /// <summary>
+        /// Minimal JSON reader for the acoustic source (JsonUtility cannot read S-05's nested <c>segmentsXZ</c> arrays):
+        /// objects → Dictionary, arrays → List, numbers → double, strings, bools, null. Editor-only.
+        /// </summary>
+        private sealed class MiniJson
+        {
+            private readonly string _s;
+            private int _i;
+
+            private MiniJson(string s) { _s = s; }
+
+            public static object Parse(string s) => new MiniJson(s).Value();
+
+            private void Ws() { while (_i < _s.Length && char.IsWhiteSpace(_s[_i])) _i++; }
+
+            private object Value()
+            {
+                Ws();
+                char c = _s[_i];
+                if (c == '{')
+                {
+                    var o = new Dictionary<string, object>(); _i++; Ws();
+                    if (_s[_i] == '}') { _i++; return o; }
+                    while (true)
+                    {
+                        Ws(); string k = (string)Value(); Ws(); _i++;   // ':'
+                        o[k] = Value(); Ws();
+                        if (_s[_i++] == '}') return o;
+                    }
+                }
+
+                if (c == '[')
+                {
+                    var a = new List<object>(); _i++; Ws();
+                    if (_s[_i] == ']') { _i++; return a; }
+                    while (true)
+                    {
+                        a.Add(Value()); Ws();
+                        if (_s[_i++] == ']') return a;
+                    }
+                }
+
+                if (c == '"')
+                {
+                    var sb = new StringBuilder(); _i++;
+                    while (_s[_i] != '"')
+                    {
+                        if (_s[_i] == '\\') { _i++; char e = _s[_i]; sb.Append(e == 'n' ? '\n' : e == 't' ? '\t' : e == 'u' ? (char)Convert.ToInt32(_s.Substring(_i + 1, 4), 16) : e); if (e == 'u') _i += 4; }
+                        else sb.Append(_s[_i]);
+                        _i++;
+                    }
+
+                    _i++;
+                    return sb.ToString();
+                }
+
+                if (_s.Substring(_i).StartsWith("true", StringComparison.Ordinal)) { _i += 4; return true; }
+                if (_s.Substring(_i).StartsWith("false", StringComparison.Ordinal)) { _i += 5; return false; }
+                if (_s.Substring(_i).StartsWith("null", StringComparison.Ordinal)) { _i += 4; return null; }
+                int st = _i;
+                while (_i < _s.Length && "+-0123456789.eE".IndexOf(_s[_i]) >= 0) _i++;
+                return double.Parse(_s.Substring(st, _i - st), System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+
+        private static float[] Floats(object list)
+        {
+            var l = (List<object>)list; var f = new float[l.Count];
+            for (int i = 0; i < l.Count; i++) f[i] = (float)(double)l[i];
+            return f;
+        }
+
+        /// <summary>WP-072: bake acoustic-spaces-v6.json into Resources/DD_AcousticSpaces.asset (no-op when the source hash matches).</summary>
+        public static string BuildAcousticSpaces()
+        {
+            if (!File.Exists(AcousticSourcePath))
+            {
+                return "acoustic spaces: no source (" + AcousticSourcePath + ") - every point stays Open";
+            }
+
+            string text = File.ReadAllText(AcousticSourcePath);
+            string hash;
+            using (var sha = SHA256.Create())
+            {
+                hash = BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(text))).Replace("-", "").Substring(0, 16).ToLowerInvariant();
+            }
+
+            var existing = AssetDatabase.LoadAssetAtPath<AcousticSpaceMap>(AcousticMapPath);
+            if (existing != null && existing.SourceHash == hash)
+            {
+                return "acoustic spaces up to date (" + existing.Spaces.Count + " spaces, " + hash + ")";
+            }
+
+            var root = (Dictionary<string, object>)MiniJson.Parse(text);
+            string schema = root.TryGetValue("schema", out object sc) ? sc as string : "?";
+            var spaces = new List<AcousticSpaceMap.Space>();
+            foreach (object o in (List<object>)root["spaces"])
+            {
+                var s = (Dictionary<string, object>)o;
+                string id = (string)s["id"];
+                if (!Enum.TryParse((string)s["enclosure"], out AcousticSpace enclosure))
+                {
+                    throw new InvalidOperationException("acoustic space '" + id + "': enclosure '" + s["enclosure"] + "' invalid");
+                }
+
+                float floor = s.TryGetValue("floor", out object fl) ? (float)(double)fl : 0f;
+                float ceiling = s.TryGetValue("ceiling", out object ce) ? (float)(double)ce : 4f;
+                // Rooms carry one polygonXZ; corridors a segmentsXZ list of quads (one space per segment, same id + #n).
+                var polygons = new List<float[]>();
+                if (s.TryGetValue("polygonXZ", out object poly)) polygons.Add(Floats(poly));
+                if (s.TryGetValue("segmentsXZ", out object segs)) foreach (object seg in (List<object>)segs) polygons.Add(Floats(seg));
+                if (polygons.Count == 0) throw new InvalidOperationException("acoustic space '" + id + "': no polygonXZ / segmentsXZ");
+                for (int k = 0; k < polygons.Count; k++)
+                {
+                    if (polygons[k].Length < 6) throw new InvalidOperationException("acoustic space '" + id + "': polygon " + k + " has < 3 corners");
+                    spaces.Add(new AcousticSpaceMap.Space { id = polygons.Count > 1 ? id + "#" + k : id, enclosure = enclosure, polygonXZ = polygons[k], floor = floor, ceiling = ceiling });
+                }
+            }
+
+            AcousticSpaceMap map = existing;
+            if (map == null)
+            {
+                map = ScriptableObject.CreateInstance<AcousticSpaceMap>();
+                Directory.CreateDirectory(Path.GetDirectoryName(AcousticMapPath));
+                AssetDatabase.CreateAsset(map, AcousticMapPath);
+            }
+
+            map.Set(hash, "World_V6_Greybox", spaces);
+            EditorUtility.SetDirty(map);
+            return "acoustic spaces baked: " + spaces.Count + " polygons (" + schema + ", " + hash + ")";
         }
 
         public static Manifest LoadManifest()

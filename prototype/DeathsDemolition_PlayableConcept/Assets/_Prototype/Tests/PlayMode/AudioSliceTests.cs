@@ -846,6 +846,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(AudioSoundId.WeaponTailSmgOpen, f.LastTail, "Varsayılan mekân Open.");
 
             // Tek atış sınıfı: her atışta kuru ses + mekân kuyruğu; mekân çözücüsü kuyruğu seçer.
+            System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
             AcousticSpaces.Resolver = _ => AcousticSpace.Hall;
             try
             {
@@ -856,7 +857,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
-                AcousticSpaces.Resolver = null;
+                AcousticSpaces.Resolver = onceki;
             }
 
             // Kimliksiz ipucu eski yola düşer (A/B/C'nin v016'sız hali ve diğer üreticiler).

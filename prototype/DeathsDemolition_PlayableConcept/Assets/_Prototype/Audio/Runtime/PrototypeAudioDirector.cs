@@ -197,6 +197,13 @@ namespace DD.Prototype.Audio
             _loopRoot.SetParent(transform, false);
 
             _library = new AudioClipLibrary(AudioCatalog.Load());
+
+            // WP-072 · WP-074: S-05's acoustic spaces choose the recorded tail (answers only while the V6 world is loaded).
+            AcousticSpaceMap acoustic = AcousticSpaceMap.Load();
+            if (acoustic != null && AcousticSpaces.Resolver == null)
+            {
+                AcousticSpaces.Resolver = acoustic.Resolve;
+            }
             _bridge = new AudioMixerBridge();
 
             _world = new AudioVoicePool("World", transform, WorldHardCapacity, _mixer, _bridge);

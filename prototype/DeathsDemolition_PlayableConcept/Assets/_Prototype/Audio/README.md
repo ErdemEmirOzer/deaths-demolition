@@ -84,3 +84,8 @@ game event ─► AudioEventMap row (sound id, bus, spatial) ─► AudioEventRo
 - `ProjectileFlightAudio` keys a 3D loop by ProjectileId (S-02 R1-A #5): Rocket → RocketFlightLoop, Orb → SwArcSphereLoop, Gel → SwGelFlightLoop; it follows the projectile's pool slot each frame and fades out (60 ms) on the one end event (Impact.Stopped or Expired). ≤ 4 voices, ≤ 2 rockets; rocket pitch −2 st over 0→45 m from the listener in FP/TP (baked Doppler, STANDARDS §7), none top-down.
 - `Explosion` picks one layer at the blast by listener distance: ExplosionNear ≤ 12 m (crack + body + sub), Mid ≤ 35 m (LPF 6 k + tail), Far (LPF 2 k rumble); files −18 LUFS under −3 dBTP; the Explosion duck is unchanged.
 - Flyby is not built: only the player fires and the listener rides the player, so no round ever passes the listener after leaving the muzzle (revisit if enemies get ranged attacks).
+
+## 13 · Acoustic spaces (WP-072 · WP-074)
+
+- `AudioCatalogBuilder.BuildAcousticSpaces` bakes S-05's `_Art/Environment/World/V6/acoustic-spaces-v6.json` (rooms `polygonXZ`, corridors `segmentsXZ` quads) into `Resources/DD_AcousticSpaces.asset` (16 polygons: Hall / Corridor; outside = Open); rebuilt when the JSON hash changes.
+- The director installs `AcousticSpaceMap.Resolve` as `AcousticSpaces.Resolver`: it answers only while `World_V6_Greybox` is loaded (AP005 stays Open), inside a floor…ceiling band ± 0.5 m, sticky to the current space until 1 m outside it (threshold hysteresis). The weapon tails (B1) follow it.

@@ -1,0 +1,225 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba64e44008fd433583b197b4018e544, type: 3}
+  m_Name: DD_AcousticSpaces
+  m_EditorClassIdentifier: 
+  _sourceHash: 2e80696c484e0e72
+  _worldScene: World_V6_Greybox
+  _spaces:
+  - id: R1_MainHall
+    enclosure: 2
+    polygonXZ:
+    - -18
+    - 38
+    - 18
+    - 38
+    - 18
+    - 49
+    - -18
+    - 49
+    floor: 1.2
+    ceiling: 7.7
+  - id: R2_EastPavilion
+    enclosure: 2
+    polygonXZ:
+    - 30
+    - 24
+    - 40
+    - 24
+    - 40
+    - 32
+    - 30
+    - 32
+    floor: 0
+    ceiling: 3.8
+  - id: R3_Kura
+    enclosure: 2
+    polygonXZ:
+    - -44
+    - 36
+    - -34
+    - 36
+    - -34
+    - 44
+    - -44
+    - 44
+    floor: 0
+    ceiling: 4
+  - id: R4_TeaHouse
+    enclosure: 2
+    polygonXZ:
+    - -36
+    - -40
+    - -28
+    - -40
+    - -28
+    - -32
+    - -36
+    - -32
+    floor: 0
+    ceiling: 3.6
+  - id: R5_Azumaya
+    enclosure: 1
+    polygonXZ:
+    - 30
+    - -36
+    - 36
+    - -36
+    - 36
+    - -30
+    - 30
+    - -30
+    floor: 0
+    ceiling: 3.2
+  - id: R6_Chumon
+    enclosure: 1
+    polygonXZ:
+    - -4
+    - 18
+    - 4
+    - 18
+    - 4
+    - 23
+    - -4
+    - 23
+    floor: 0
+    ceiling: 5
+  - id: K1_WestKairo
+    enclosure: 1
+    polygonXZ:
+    - -30.4
+    - -16
+    - -30.4
+    - 20
+    - -35.6
+    - 20
+    - -35.6
+    - -16
+    floor: 0
+    ceiling: 3.65
+  - id: K2_NorthWestLink#0
+    enclosure: 1
+    polygonXZ:
+    - -31.373
+    - 18.838
+    - -26.373
+    - 25.838
+    - -29.627
+    - 28.162
+    - -34.627
+    - 21.162
+    floor: 0
+    ceiling: 3.65
+  - id: K2_NorthWestLink#1
+    enclosure: 1
+    polygonXZ:
+    - -26.336
+    - 25.891
+    - -24.336
+    - 28.891
+    - -27.664
+    - 31.109
+    - -29.664
+    - 28.109
+    floor: 0
+    ceiling: 3.65
+  - id: K3_CloisterWest
+    enclosure: 1
+    polygonXZ:
+    - -20
+    - 22
+    - -20
+    - 36
+    - -24
+    - 36
+    - -24
+    - 22
+    floor: 0
+    ceiling: 3.65
+  - id: K3_CloisterEast
+    enclosure: 1
+    polygonXZ:
+    - 24
+    - 22
+    - 24
+    - 36
+    - 20
+    - 36
+    - 20
+    - 22
+    floor: 0
+    ceiling: 3.65
+  - id: K4_EastKairo#0
+    enclosure: 1
+    polygonXZ:
+    - 24.211
+    - 29.106
+    - 28.211
+    - 21.106
+    - 31.789
+    - 22.894
+    - 27.789
+    - 30.894
+    floor: 0
+    ceiling: 3.65
+  - id: K4_EastKairo#1
+    enclosure: 1
+    polygonXZ:
+    - 30
+    - 20
+    - 44
+    - 20
+    - 44
+    - 24
+    - 30
+    - 24
+    floor: 0
+    ceiling: 3.65
+  - id: K4_EastKairo#2
+    enclosure: 1
+    polygonXZ:
+    - 42.4
+    - 20.8
+    - 48.4
+    - 12.8
+    - 51.6
+    - 15.2
+    - 45.6
+    - 23.2
+    floor: 0
+    ceiling: 3.65
+  - id: K5_SouthShore
+    enclosure: 1
+    polygonXZ:
+    - -22
+    - -47.75
+    - 0
+    - -47.75
+    - 0
+    - -44.25
+    - -22
+    - -44.25
+    floor: 0
+    ceiling: 3.45
+  - id: K6_RearKairo
+    enclosure: 1
+    polygonXZ:
+    - -22
+    - 50.5
+    - 22
+    - 50.5
+    - 22
+    - 54.5
+    - -22
+    - 54.5
+    floor: 0
+    ceiling: 3.45
