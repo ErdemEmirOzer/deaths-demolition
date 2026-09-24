@@ -49,6 +49,44 @@ namespace DD.Prototype.UI
             get { return GetOrCreate("chipRim", () => CreateRounded(UiTokens.RadiusChip, 1.2f)); }
         }
 
+        /// <summary>WP-068 slice 5 (§4 #2): four 2 px corner arms, 10 px long, 9-sliced so the arms keep their length on any rect - the travelling focus brackets.</summary>
+        public static Sprite FocusBrackets
+        {
+            get { return GetOrCreate("focusBrackets", () => CreateBrackets(10, 2f)); }
+        }
+
+        /// <summary>
+        /// WP-068 slice 5: the one soft shadow (direction §2: a 9-slice Gaussian - uGUI Shadow is
+        /// banned). The falloff is <see cref="SoftShadowReach"/> px at pixelsPerUnitMultiplier 1;
+        /// Elev1 (8 px) draws it at multiplier 3.
+        /// </summary>
+        public static Sprite SoftShadow
+        {
+            get { return GetOrCreate("softShadow", () => CreateSoftShadow(SoftShadowReach, UiTokens.RadiusCard)); }
+        }
+
+        public const int SoftShadowReach = 24;
+
+        /// <summary>
+        /// WP-068 slice 5: hollow focus ring / halo for controls with no fill of their own (Ghost,
+        /// a card surface): the v2 ring and halo are filled shapes hidden behind the control's
+        /// fill, which a Ghost does not have (kit b2: the focused card turned solid yellow).
+        /// Corner radius = the control's radius + the outset, so the bands stay concentric.
+        /// </summary>
+        public static Sprite FocusRingHollow
+        {
+            get { return GetOrCreate("focusRingHollow", () => CreateRounded(UiTokens.RadiusControl + UiTokens.StrokeFocusRing, UiTokens.StrokeFocusRing)); }
+        }
+
+        public static Sprite FocusHaloHollow
+        {
+            get
+            {
+                const int outset = UiTokens.StrokeFocusRing + UiTokens.StrokeFocusHalo;
+                return GetOrCreate("focusHaloHollow", () => CreateRounded(UiTokens.RadiusControl + outset, outset));
+            }
+        }
+
         /// <summary>Filled circle. Bullet points, coin glyph, status dots.</summary>
         public static Sprite Disc
         {
@@ -212,6 +250,65 @@ namespace DD.Prototype.UI
 
             texture.SetPixels32(pixels);
             float border = r + 1;
+            return Finish(texture, new Vector4(border, border, border, border));
+        }
+
+        /// <summary>
+        /// Corner brackets: an arm of <paramref name="arm"/> px along each edge from every
+        /// corner, <paramref name="stroke"/> px wide, anti-aliased. The 9-slice border is the
+        /// arm length plus a pixel, so the stretched edge and centre cells are empty.
+        /// </summary>
+        private static Sprite CreateBrackets(int arm, float stroke)
+        {
+            int border = arm + 1;
+            int size = border * 2 + 2;
+            Texture2D texture = NewTexture(size, size);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    // Distance into the nearest corner cell, measured from the outer edges.
+                    float fx = x + 0.5f, fy = y + 0.5f;
+                    float ex = Mathf.Min(fx, size - fx);   // distance from the nearest vertical edge
+                    float ey = Mathf.Min(fy, size - fy);   // distance from the nearest horizontal edge
+                    float along = Mathf.Max(ex, ey);       // how far along an arm from the corner
+                    float across = Mathf.Min(ex, ey);      // how far into the stroke
+                    float coverStroke = Mathf.Clamp01(stroke + 0.5f - across);
+                    float coverArm = Mathf.Clamp01(arm + 0.5f - along);
+                    float alpha = coverStroke * coverArm;
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, new Vector4(border, border, border, border));
+        }
+
+        /// <summary>A rounded-rect core (<paramref name="radius"/>) with a Gaussian falloff <paramref name="reach"/> px wide; border = reach + radius.</summary>
+        private static Sprite CreateSoftShadow(int reach, int radius)
+        {
+            int border = reach + radius + 1;
+            int size = border * 2 + 2;
+            Texture2D texture = NewTexture(size, size);
+            var pixels = new Color32[size * size];
+            float half = size * 0.5f;
+            float core = half - reach; // half-extent of the rounded core
+            float sigma = reach / 2.6f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = Mathf.Abs(x + 0.5f - half) - (core - radius);
+                    float dy = Mathf.Abs(y + 0.5f - half) - (core - radius);
+                    float outside = Mathf.Sqrt(Mathf.Max(dx, 0f) * Mathf.Max(dx, 0f) + Mathf.Max(dy, 0f) * Mathf.Max(dy, 0f));
+                    float distance = Mathf.Max(0f, outside + Mathf.Min(Mathf.Max(dx, dy), 0f) - radius);
+                    float alpha = Mathf.Exp(-(distance * distance) / (2f * sigma * sigma));
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
             return Finish(texture, new Vector4(border, border, border, border));
         }
 

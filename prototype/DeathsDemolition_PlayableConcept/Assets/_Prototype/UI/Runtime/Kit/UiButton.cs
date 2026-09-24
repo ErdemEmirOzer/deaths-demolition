@@ -29,7 +29,7 @@ namespace DD.Prototype.UI
     /// (nav pane, skin card, weapon row), not "this has keyboard focus".
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class UiButton : Selectable, IPointerClickHandler, ISubmitHandler
+    public sealed partial class UiButton : Selectable, IPointerClickHandler, ISubmitHandler
     {
         private UiButtonVariant _variant;
 
@@ -86,8 +86,9 @@ namespace DD.Prototype.UI
 
             // Cream wash for hover. Sits above the fill and below the label, so it
             // lightens the surface without touching the text it is measured against.
-            _wash = UiFactory.NewImage("Wash", transform, UiColor.TextPrimary, _fill.sprite);
-            UiFactory.Fill((RectTransform)_wash.transform, UiTokens.StrokeControl);
+            // WP-068 5b (AD MUST-1): a Ghost's wash is a pill 8 px in (its only surface).
+            _wash = UiFactory.NewImage("Wash", transform, UiColor.TextPrimary, variant == UiButtonVariant.Ghost ? UiSprites.Chip : _fill.sprite);
+            UiFactory.Fill((RectTransform)_wash.transform, variant == UiButtonVariant.Ghost ? 8f : UiTokens.StrokeControl);
             _wash.canvasRenderer.SetAlpha(0f);
 
             // The fill and border carry their colour on the CanvasRenderer (Tint channel):
@@ -155,12 +156,45 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            if (IsHoldButton)
+            {
+                return; // a hold control acts on a completed hold, never on a click
+            }
+
             Activate();
         }
 
         public void OnSubmit(BaseEventData eventData)
         {
+            if (IsHoldButton)
+            {
+                BeginHold(true);
+                return;
+            }
+
             Activate();
+        }
+
+        public override void OnPointerDown(PointerEventData eventData)
+        {
+            base.OnPointerDown(eventData);
+            if (IsHoldButton && eventData != null && eventData.button == PointerEventData.InputButton.Left)
+            {
+                _pointerHeld = true;
+                BeginHold(false);
+            }
+        }
+
+        public override void OnPointerUp(PointerEventData eventData)
+        {
+            _pointerHeld = false;
+            base.OnPointerUp(eventData);
+        }
+
+        public override void OnPointerExit(PointerEventData eventData)
+        {
+            _pointerHeld = false;
+            base.OnPointerExit(eventData);
         }
 
         private void Activate()
@@ -239,6 +273,11 @@ namespace DD.Prototype.UI
             {
                 UiSound.Play(UiSoundKind.Move);
             }
+
+            if (_configured)
+            {
+                UiFocusBrackets.Follow((RectTransform)transform); // WP-068 slice 5 (§4 #2)
+            }
         }
 
         // ------------------------------------------------------------------ visuals
@@ -274,11 +313,21 @@ namespace DD.Prototype.UI
         public override void OnDeselect(BaseEventData eventData)
         {
             _hasFocus = false;
+            _pointerHeld = false;
             base.OnDeselect(eventData);
             if (_configured)
             {
                 Refresh(false);
             }
+
+            UiFocusBrackets.Release((RectTransform)transform);
+        }
+
+        protected override void OnDisable()
+        {
+            _pointerHeld = false;
+            base.OnDisable();
+            UiFocusBrackets.Release((RectTransform)transform);
         }
 
         private void Refresh(bool instant)
@@ -315,6 +364,8 @@ namespace DD.Prototype.UI
             {
                 Animate();
             }
+
+            RefreshV3(enabledControl, pressed, hovered || focused);
         }
 
         private void ResolveTargets(bool enabledControl, bool pressed, bool hovered)
@@ -326,9 +377,10 @@ namespace DD.Prototype.UI
             if (!enabledControl)
             {
                 // The one audited disabled pair. Locked content still has to be legible.
+                // A disabled Ghost stays surfaceless, its word in TextMuted (AD 5b MUST-1).
                 fill = UiColor.SurfaceRaised;
                 border = UiColor.BorderHairline;
-                label = UiColor.TextSecondary;
+                label = _variant == UiButtonVariant.Ghost ? UiColor.TextMuted : UiColor.TextSecondary;
             }
             else
             {
@@ -361,6 +413,15 @@ namespace DD.Prototype.UI
                         label = UiColor.TextPrimary;
                         break;
 
+                    case UiButtonVariant.Ghost:
+                        // WP-068 slice 5: no fill and no border - the word in TextPrimary
+                        // (TextSecondary is the disabled label of filled buttons: AD 5b MUST-1);
+                        // hover / focus / press show the wash pill.
+                        fill = UiColor.SurfacePanel;
+                        border = UiColor.BorderHairline;
+                        label = UiColor.TextPrimary;
+                        break;
+
                     default:
                         fill = pressed ? UiColor.SurfacePanel : UiColor.SurfaceBase;
                         border = UiColor.BorderStrong;
@@ -380,6 +441,18 @@ namespace DD.Prototype.UI
                     : hovered
                         ? UiTokens.OpacityHoverWash
                         : 0f;
+
+            if (_variant == UiButtonVariant.Ghost)
+            {
+                // Never an opaque surface (a Ghost may lie over a card's content): the press is
+                // the wash + the bevel; focus shows the wash too (the word has no box of its own).
+                _fillTarget.a = 0f;
+                _borderTarget.a = 0f;
+                if (enabledControl && _hasFocus && _washTarget <= 0f)
+                {
+                    _washTarget = UiTokens.OpacityHoverWash;
+                }
+            }
         }
 
         private void ApplyImmediate()

@@ -57,6 +57,39 @@ namespace DD.Prototype.UI
         /// <summary>0 = not probed, 1 = the "Cancel" button exists, -1 = missing (Escape only).</summary>
         private static int s_cancelButtonState;
 
+        private const string SubmitButton = "Submit";
+
+        /// <summary>0 = not probed, 1 = the "Submit" button exists, -1 = missing (Return / Space only).</summary>
+        private static int s_submitButtonState;
+
+        /// <summary>
+        /// WP-068 slice 5: true while Submit is held (Return / Space / gamepad south) - the
+        /// keyboard and pad half of a hold control (<see cref="UiButton.ConfigureHold"/>).
+        /// Same probe-once rule as <see cref="CancelPressed"/>.
+        /// </summary>
+        public static bool SubmitHeld()
+        {
+            if (s_submitButtonState == 0)
+            {
+                try
+                {
+                    Input.GetButton(SubmitButton);
+                    s_submitButtonState = 1;
+                }
+                catch (System.ArgumentException)
+                {
+                    s_submitButtonState = -1;
+                }
+            }
+
+            if (s_submitButtonState > 0)
+            {
+                return Input.GetButton(SubmitButton);
+            }
+
+            return Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.Space);
+        }
+
         /// <summary>Puts EventSystem focus on a control, if both exist and the control accepts it.</summary>
         public static void Focus(Selectable selectable)
         {

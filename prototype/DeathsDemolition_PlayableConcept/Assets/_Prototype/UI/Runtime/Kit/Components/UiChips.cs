@@ -11,7 +11,7 @@ namespace DD.Prototype.UI
         /// <summary>Informational: inset fill, secondary text.</summary>
         Neutral = 0,
 
-        /// <summary>A state: 0.6 α outline + glyph + word, coloured by <see cref="UiChipState"/>.</summary>
+        /// <summary>A state: a 0.7 α outline (<see cref="UiChips.RimAlpha"/>) + glyph + word, coloured by <see cref="UiChipState"/>.</summary>
         State = 1,
 
         /// <summary>NEW: ink on sakura (AD v004 MUST-1).</summary>
@@ -52,13 +52,16 @@ namespace DD.Prototype.UI
     /// USAGE: a short state or value next to what it describes.
     /// DON'T: build a State chip without a word - the constructor rejects it (colour alone
     /// never carries state); don't put two chips' worth of words in one.
-    /// ACCESSIBILITY: word (+ glyph for State) always; the outline is 0.6 α of the state colour
+    /// ACCESSIBILITY: word (+ glyph for State) always; the outline is 0.7 α of the state colour (≥ 3:1 on a card)
     /// so the chip separates from bright ground without relying on hue; the three State kinds
     /// differ by word and glyph first, colour second.
     /// </summary>
     public static class UiChips
     {
         public const float MinWidth = 56f;
+
+        /// <summary>State rim alpha. The v005/v007 recipe said 0.6; T1 measured the Danger rim at 2.81:1 on a card at 0.6, 3.35:1 at 0.7.</summary>
+        public const float RimAlpha = 0.7f;
         public const float Padding = 12f;
         public const float GlyphGap = 6f;
 
@@ -156,11 +159,11 @@ namespace DD.Prototype.UI
 
             if (kind == UiChipKind.State)
             {
-                // 1 px rim at 0.6 α in the state colour, drawn inside the chip (uGUI Outline is banned in v3).
+                // 1 px rim at RimAlpha in the state colour, drawn inside the chip (uGUI Outline is banned in v3).
                 Image rim = UiFactory.NewImage("Rim", chip, stateColour, UiSprites.ChipRim);
                 UiFactory.Fill((RectTransform)rim.transform);
                 Color c = rim.color;
-                c.a = 0.6f;
+                c.a = RimAlpha;
                 rim.color = c;
                 rim.transform.SetSiblingIndex(0);
             }

@@ -29,23 +29,105 @@ namespace DD.Prototype.UI
             public UiButton Primary;
             public UiButton Switch;
             public UiButton Stepper;
+
+            // Page 2 (slice 5b).
+            public UiSlider Slider;
+            public UiBar Health;
+            public UiButton CardSurface;
+            public UiButton Ghost;
         }
 
-        /// <summary>Build the sheet; the capture focuses one control and opens the modal for the second frame.</summary>
-        public static Handles Build()
+        /// <summary>Page 1 (5a) or page 2 (5b: button v3, sliders, bar v3, cards, focus brackets).</summary>
+        public static Handles Build(int page)
         {
-            var handles = new Handles();
+            return page == 2 ? BuildPage2() : Build();
+        }
+
+        private static RectTransform NewPage(string subtitle, out float top)
+        {
             Canvas canvas = UiFactory.CreateCanvas("KitSheet", UiLayer.Modal, null, UiFactory.EnsureUiCamera());
             var root = (RectTransform)canvas.transform;
-            Image page = UiFactory.NewImage("Page", root, UiColor.SurfaceBase, UiSprites.Solid);
-            UiFactory.Fill((RectTransform)page.transform);
-
+            Image background = UiFactory.NewImage("Page", root, UiColor.SurfaceBase, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)background.transform);
             var title = new Column(root, Margin, Margin, 1400f);
-            title.Text("COMPONENT KIT", UiType.H1, UiColor.TextPrimary, 1400f);
+            title.Text("COMPONENT KIT" + subtitle, UiType.H1, UiColor.TextPrimary, 1400f);
             title.Text(string.Format("PALETTE {0} · TEXT SCALE {1:0.00} · REDUCED MOTION {2}",
                 UiTokens.Palette == UiPalette.ColorBlindSafe ? "COLOUR-BLIND SAFE" : "DEFAULT", UiTokens.TextScale,
                 UiMotion.ReducedMotion ? "ON" : "OFF"), UiType.Label, UiColor.TextSecondary, 1400f);
-            float top = title.Y + (int)UiSpace.XL;
+            top = title.Y + (int)UiSpace.XL;
+            return root;
+        }
+
+        /// <summary>
+        /// Page 2: UiButton v3 (L primary, secondary, Ghost, Icon ×3, a pressed sample with its
+        /// bevel, disabled with its reason, Hold at 60 %), UiSlider v3 (continuous, stepped with
+        /// detents), UiBar v3 (segments + ghost; regen track), UiCard at rest / lifted / locked.
+        /// The focus brackets follow whatever the capture focuses.
+        /// </summary>
+        private static Handles BuildPage2()
+        {
+            var handles = new Handles();
+            float top;
+            RectTransform root = NewPage(" · 2", out top);
+
+            var a = new Column(root, Margin, top, ControlsWidth);
+            a.Section("BUTTONS V3");
+            UiButton primary = UiFactory.Button("PrimaryL", root, "START RUN", UiButtonVariant.Primary, null);
+            a.Control(primary, UiButtons.Height(UiButtonSize.L));
+            a.Control(UiFactory.Button("Secondary", root, "SETTINGS", UiButtonVariant.Secondary, null));
+            handles.Ghost = a.Control(UiFactory.Button("Ghost", root, "BACK", UiButtonVariant.Ghost, null));
+            a.Control(UiFactory.Button("GhostDisabled", root, "SKIP", UiButtonVariant.Ghost, null)).SetInteractable(false);
+            UiButton pressed = a.Control(UiFactory.Button("Pressed", root, "PRESSED", UiButtonVariant.Secondary, null));
+            // uGUI's Pressed = pointer inside AND down; the capture later moves focus elsewhere, the press stays.
+            var press = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
+            {
+                button = UnityEngine.EventSystems.PointerEventData.InputButton.Left
+            };
+            pressed.OnPointerEnter(press);
+            pressed.OnPointerDown(press);
+            UiButton buy = a.Control(UiFactory.Button("Buy", root, "BUY", UiButtonVariant.Secondary, null));
+            buy.SetDisabledReason("NOT ENOUGH GOLD");
+            buy.SetInteractable(false);
+            UiButton reroll = a.Control(UiFactory.Button("Reroll", root, "HOLD TO REROLL", UiButtonVariant.Secondary, null));
+            reroll.ConfigureHold(UiMotionTokens.HoldConfirm);
+            reroll.SetHoldPreview(0.6f);
+            a.Icons(UiButtons.Icon("Gold", root, "Hud.Gold", null), UiButtons.Icon("Special", root, "Hud.Special", null),
+                UiButtons.Icon("Netted", root, "Status.Netted", null));
+
+            var b = new Column(root, Margin + ControlsWidth + Gutter, top, NoticesWidth + Gutter + ReadoutsWidth);
+            b.Section("SLIDERS");
+            handles.Slider = b.Slider(UiSlider.Create("Master", root, "MASTER VOLUME", 0f, 1f, 0.8f, 0f, null, null));
+            b.Slider(UiSlider.Create("UiScale", root, "UI SCALE", 0.9f, 1.2f, 1f, 0.05f, v => v.ToString("0.00") + "×", null));
+            b.Slider(UiSlider.Create("Music", root, "MUSIC VOLUME", 0f, 1f, 0f, 0f, null, null));
+            b.Section("BARS");
+            UiBar health = UiFactory.Bar("Health", root, UiColor.BarHealth, 18f);
+            health.EnableGhost();
+            health.EnableSegments();
+            health.SetValue(0.85f, true);
+            b.Bar(health);
+            handles.Health = health;
+            UiBar regen = UiFactory.Bar("Regen", root, UiColor.BarHealth, 18f);
+            regen.EnableSegments();
+            regen.SetValue(0.4f, true);
+            regen.SetRegen(0.7f);
+            b.Bar(regen);
+
+            var c = new Column(root, Margin + ControlsWidth + Gutter + NoticesWidth + Gutter + ReadoutsWidth + Gutter, top, TilesWidth);
+            c.Section("CARDS");
+            handles.CardSurface = c.Card("Rest", "AT REST", "Elev1: 8 px shadow on the page.", false, false);
+            c.Card("Lifted", "LIFTED", "Hover / focus: Elev2, +4 px.", true, false);
+            c.Card("Locked", "LOCKED", "A locked card never lifts.", true, true);
+
+            handles.Primary = primary;
+            return handles;
+        }
+
+        /// <summary>Build page 1; the capture focuses one control and opens the modal for the second frame.</summary>
+        public static Handles Build()
+        {
+            var handles = new Handles();
+            float top;
+            RectTransform root = NewPage(string.Empty, out top);
 
             // A · buttons and controls
             var a = new Column(root, Margin, top, ControlsWidth);
@@ -160,9 +242,74 @@ namespace DD.Prototype.UI
 
             public T Control<T>(T control) where T : Component
             {
-                Place((RectTransform)control.transform, _x, _width, UiSize.Target);
-                Y += UiSize.Target + (int)UiSpace.S;
+                return Control(control, UiSize.Target);
+            }
+
+            public T Control<T>(T control, float height) where T : Component
+            {
+                Place((RectTransform)control.transform, _x, _width, height);
+                Y += height + (int)UiSpace.S;
                 return control;
+            }
+
+            public void Icons(params UiButton[] icons)
+            {
+                float x = _x;
+                for (int i = 0; i < icons.Length; i++)
+                {
+                    Place((RectTransform)icons[i].transform, x, UiButtons.IconSize, UiButtons.IconSize);
+                    x += UiButtons.IconSize + (int)UiSpace.S;
+                }
+
+                Y += UiButtons.IconSize + (int)UiSpace.S;
+            }
+
+            public UiSlider Slider(UiSlider slider)
+            {
+                Place((RectTransform)slider.transform, _x, _width, UiSlider.RowHeight);
+                Y += UiSlider.RowHeight + (int)UiSpace.S;
+                return slider;
+            }
+
+            public void Bar(UiBar bar)
+            {
+                var rect = (RectTransform)bar.transform;
+                float height = rect.sizeDelta.y;
+                Place(rect, _x, _width, height);
+                Y += height + (int)UiSpace.L;
+            }
+
+            /// <summary>A card with a title and a line; lifted / locked as asked. Returns its selectable surface.</summary>
+            public UiButton Card(string name, string heading, string line, bool lift, bool locked)
+            {
+                UiCard card = UiCard.Create(name, _root, new Vector2(_width, 150f));
+                Place((RectTransform)card.transform, _x, _width, 150f);
+                TMP_Text title = UiFactory.Label("Title", card.Content, heading, UiType.H3, UiColor.TextPrimary, TextAnchor.UpperLeft);
+                RectTransform titleRect = title.rectTransform;
+                titleRect.anchorMin = new Vector2(0f, 1f);
+                titleRect.anchorMax = new Vector2(1f, 1f);
+                titleRect.pivot = new Vector2(0.5f, 1f);
+                titleRect.sizeDelta = new Vector2(0f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)));
+                TMP_Text body = UiFactory.Label("Body", card.Content, line, UiType.Body, UiColor.TextSecondary, TextAnchor.LowerLeft);
+                RectTransform bodyRect = body.rectTransform;
+                bodyRect.anchorMin = new Vector2(0f, 0f);
+                bodyRect.anchorMax = new Vector2(1f, 0f);
+                bodyRect.pivot = new Vector2(0.5f, 0f);
+                bodyRect.sizeDelta = new Vector2(0f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)) * 2f);
+                if (locked)
+                {
+                    card.SetLocked(true);
+                }
+
+                card.SetLifted(lift);
+                // The selectable surface over the card: a Ghost button (no fill or frame of its
+                // own), so the card keeps one frame and the button adds focus ring + hover wash.
+                UiButton surface = UiFactory.Button(name + "Surface", card.Body, string.Empty, UiButtonVariant.Ghost, null);
+                UiFactory.Fill((RectTransform)surface.transform);
+                surface.transform.SetAsLastSibling();
+                card.Bind(surface);
+                Y += 150f + (int)UiSpace.XL;
+                return surface;
             }
 
             public void Chips(params TMP_Text[] labels)

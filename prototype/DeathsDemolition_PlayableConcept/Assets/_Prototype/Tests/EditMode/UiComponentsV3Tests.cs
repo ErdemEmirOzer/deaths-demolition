@@ -254,5 +254,220 @@ namespace DD.Prototype.Tests.EditMode
 
             Assert.IsEmpty(missing, "T7 / §3 kit kuralları:\n" + string.Join("\n", missing));
         }
+
+        // ------------------------------------------------------------------ slice 5b
+
+        [Test]
+        public void T1_HerBilesenCiftleriniBeyanEder_IkiPalette()
+        {
+            string root = Path.Combine(Application.dataPath, "_Prototype", "UI", "Runtime", "Kit", "Components");
+            var failures = new List<string>();
+            var declaredNames = new HashSet<string>();
+            foreach (Type t in UiKitContrast.Declared.Keys) declaredNames.Add(t.Name);
+            foreach (string file in Directory.GetFiles(root, "*.cs"))
+            {
+                foreach (Match m in Regex.Matches(File.ReadAllText(file), @"\b(?:public|internal)\s+(?:(?:sealed|static|partial|abstract)\s+)*class\s+(\w+)"))
+                {
+                    if (!declaredNames.Contains(m.Groups[1].Value)) failures.Add("beyansız bileşen: " + m.Groups[1].Value);
+                }
+            }
+
+            UiPalette palette = UiTokens.Palette;
+            try
+            {
+                foreach (UiPalette p in new[] { UiPalette.Default, UiPalette.ColorBlindSafe })
+                {
+                    UiTokens.Palette = p;
+                    foreach (KeyValuePair<Type, UiContrastCase[]> entry in UiKitContrast.Declared)
+                    {
+                        foreach (UiContrastCase c in entry.Value)
+                        {
+                            float ratio = UiContrast.Measure(c);
+                            if (ratio < c.Required) failures.Add(p + " " + entry.Key.Name + " · " + c.Description + " " + ratio.ToString("0.00") + " < " + c.Required);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                UiTokens.Palette = palette;
+            }
+
+            Assert.IsEmpty(failures, "T1:\n" + string.Join("\n", failures));
+        }
+
+        private RectTransform NewCanvas()
+        {
+            var go = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
+            _created.Add(go);
+            var rect = (RectTransform)go.transform;
+            rect.sizeDelta = new Vector2(1920f, 1080f);
+            return rect;
+        }
+
+        private static UiButton Place(UiButton button, Vector2 at, Vector2 size)
+        {
+            var rect = (RectTransform)button.transform;
+            rect.sizeDelta = size;
+            rect.anchoredPosition = at;
+            return button;
+        }
+
+        [Test]
+        public void OdakParantezleri_KontrolArasiUcar_AzHareketteAtlar()
+        {
+            RectTransform canvas = NewCanvas();
+            UiButton a = Place(UiFactory.Button("A", canvas, "A", UiButtonVariant.Secondary, null), new Vector2(0f, 100f), new Vector2(400f, 48f));
+            UiButton b = Place(UiFactory.Button("B", canvas, "B", UiButtonVariant.Secondary, null), new Vector2(0f, -100f), new Vector2(300f, 48f));
+            UiFocusBrackets.HideNow();
+
+            UiFocusBrackets.Follow((RectTransform)a.transform);
+            RectTransform brackets = UiFocusBrackets.Rect;
+            Assert.AreSame(a.transform, UiFocusBrackets.Target);
+            Assert.AreEqual(100f, brackets.anchoredPosition.y, 0.5f, "ilk görünüş kesme (uçuş yok)");
+            Assert.AreEqual(400f + UiFocusBrackets.Outset * 2f, brackets.sizeDelta.x, 0.5f);
+
+            UiFocusBrackets.Follow((RectTransform)b.transform);
+            Step(0.07f);
+            Assert.Less(brackets.anchoredPosition.y, 100f);
+            Assert.Greater(brackets.anchoredPosition.y, -100f, "yolda");
+            Step(0.2f);
+            Assert.AreEqual(-100f, brackets.anchoredPosition.y, 0.5f, "vardı");
+            Assert.AreEqual(300f + UiFocusBrackets.Outset * 2f, brackets.sizeDelta.x, 0.5f, "boyut da taşındı");
+
+            UiMotion.ReducedMotion = true;
+            UiFocusBrackets.Follow((RectTransform)a.transform);
+            Assert.AreEqual(100f, brackets.anchoredPosition.y, 0.5f, "RM: anında");
+            UiFocusBrackets.HideNow();
+            Assert.IsNull(UiFocusBrackets.Target);
+        }
+
+        [Test]
+        public void Tutma_ErkenBirakmaIptal_TamTutmaEylem_TiklamaHicbirSeyYapmaz()
+        {
+            int fired = 0;
+            UiButton reroll = UiFactory.Button("Reroll", _root, "REROLL", UiButtonVariant.Secondary, () => fired++);
+            reroll.ConfigureHold(0.5f);
+            Assert.IsTrue(reroll.IsHoldButton);
+            Assert.AreEqual(UiTokens.Get(UiColor.HoldFill), reroll.HoldFill.color, "tutma dolgusu HoldFill (krem 0,25; asla vermilyon)");
+
+            reroll.OnPointerClick(null);
+            Assert.AreEqual(0, fired, "tutma düğmesi tıklamayla çalışmaz");
+
+            reroll.BeginHoldForTests(10f);
+            Assert.AreEqual(UiHoldState.Running, reroll.TickHoldForTests(10.2f, true));
+            Assert.AreEqual(UiHoldState.Cancelled, reroll.TickHoldForTests(10.3f, false), "erken bırakma");
+            Assert.AreEqual(0, fired);
+
+            reroll.BeginHoldForTests(20f);
+            Assert.AreEqual(UiHoldState.Running, reroll.TickHoldForTests(20.49f, true));
+            Assert.AreEqual(UiHoldState.Completed, reroll.TickHoldForTests(20.5f, true));
+            Assert.AreEqual(1, fired, "tam tutma bir kez çalışır");
+        }
+
+        [Test]
+        public void Hayalet_DinlenmedeYuzeySiz_DevreDisiNedenYazar()
+        {
+            UiButton ghost = UiFactory.Button("Back", _root, "BACK", UiButtonVariant.Ghost, null);
+            Image fill = ghost.transform.Find("Fill").GetComponent<Image>();
+            Image border = ghost.transform.Find("Border").GetComponent<Image>();
+            Assert.AreEqual(0f, fill.canvasRenderer.GetColor().a, 1e-3f, "hayalet: dolgu yok");
+            Assert.AreEqual(0f, border.canvasRenderer.GetColor().a, 1e-3f, "hayalet: kontur yok");
+            Assert.AreSame(UiSprites.FocusRingHollow, ghost.transform.Find("FocusRing").GetComponent<Image>().sprite, "hayalet: odak halkası içi boş (dolgu merkezi örtmez)");
+            Assert.AreSame(UiSprites.FocusHaloHollow, ghost.transform.Find("FocusHalo").GetComponent<Image>().sprite);
+            Assert.AreEqual(UiTokens.Get(UiColor.TextPrimary), ghost.LabelText.color, "hayalet kelimesi TextPrimary (TextSecondary devre dışı rengi)");
+            ghost.SetInteractable(false);
+            Assert.AreEqual(UiTokens.Get(UiColor.TextMuted), ghost.LabelText.color, "devre dışı hayalet TextMuted");
+
+            UiButton buy = UiFactory.Button("Buy", _root, "BUY", UiButtonVariant.Secondary, null);
+            buy.SetDisabledReason("NOT ENOUGH GOLD");
+            Assert.AreEqual(string.Empty, buy.DisabledReasonShown, "etkinken neden gösterilmez");
+            buy.SetInteractable(false);
+            Assert.AreEqual("NOT ENOUGH GOLD", buy.DisabledReasonShown);
+            buy.SetInteractable(true);
+            Assert.AreEqual(string.Empty, buy.DisabledReasonShown);
+        }
+
+        [Test]
+        public void Kaydirici_AdimEtiketiAnindaBoncukTasinir_Surukleme1e1_UctaDurur()
+        {
+            float reported = -1f;
+            UiSlider slider = UiSlider.Create("Master", _root, "MASTER VOLUME", 0f, 1f, 0.5f, 0.1f, null, v => reported = v);
+            Assert.AreEqual("50%", slider.ValueText);
+            float width = slider.RailWidth;
+            Assert.Greater(width, 100f);
+            Assert.AreEqual(0.5f * width, slider.BeadX, 0.5f);
+
+            slider.Step(+1);
+            Assert.AreEqual(0.6f, slider.Value, 1e-4f);
+            Assert.AreEqual("60%", slider.ValueText, "etiket anında");
+            Assert.AreEqual(0.6f, reported, 1e-4f);
+            Assert.Less(slider.BeadX, 0.6f * width - 0.5f, "boncuk henüz yolda");
+            Step(0.2f);
+            Assert.AreEqual(0.6f * width, slider.BeadX, 0.5f);
+
+            slider.DragToNormalisedForTests(0.23f);
+            Assert.AreEqual(0.2f, slider.Value, 1e-4f, "adıma yuvarlanır");
+            Assert.AreEqual(0.2f * width, slider.BeadX, 0.5f, "sürükleme 1:1, yumuşatma yok");
+
+            slider.SetValue(1f, false);
+            slider.Step(+1);
+            Assert.AreEqual(1f, slider.Value, 1e-4f, "uçta durur");
+        }
+
+        [Test]
+        public void Cubuk_Hayalet_Tutar_SonraDuser_KazancHayaletBirakmaz()
+        {
+            UiBar bar = UiFactory.Bar("Health", _root, UiColor.BarHealth, 18f);
+            bar.EnableGhost();
+            bar.EnableSegments();
+            bar.SetValue(1f, true);
+            Assert.AreEqual(1f, bar.GhostValue, 1e-4f);
+
+            bar.SetValue(0.4f);
+            Step(0.2f);
+            Assert.AreEqual(1f, bar.GhostValue, 1e-3f, "350 ms tutar");
+            Step(0.8f);
+            Assert.AreEqual(0.4f, bar.GhostValue, 1e-3f, "sonra değere düşer");
+
+            bar.SetValue(0.9f);
+            Assert.AreEqual(0.9f, bar.GhostValue, 1e-4f, "kazanç hayalet bırakmaz");
+
+            UiMotion.ReducedMotion = true;
+            bar.SetValue(0.5f);
+            Step(0.2f);
+            Assert.AreEqual(0.9f, bar.GhostValue, 1e-3f, "RM: tutma sırasında durağan görünür");
+            Step(0.3f);
+            Assert.AreEqual(0.5f, bar.GhostValue, 1e-3f, "RM: tutmadan sonra kalkar");
+        }
+
+        [Test]
+        public void Kart_OdaktaKalkar_KilitliKalkmaz()
+        {
+            UiCard card = UiCard.Create("Weapon", _root, new Vector2(420f, 160f));
+            Assert.AreEqual(UiTokens.Get(UiColor.SurfacePanel), card.FillColour, "dinlenme dolgusu");
+            card.SetLifted(true);
+            Step(0.2f);
+            Assert.IsTrue(card.Lifted);
+            Assert.AreEqual(UiCard.LiftPx, card.Body.anchoredPosition.y, 0.1f);
+            Assert.AreEqual(UiTokens.Get(UiColor.SurfaceRaised), card.FillColour, "kalkınca dolgu SurfaceRaised (AD 5b MUST-5)");
+            Assert.IsNotNull(card.Body.Find("Sheen"), "Elev1 kabartması: üst parlaklık çizgisi");
+            Assert.IsNotNull(card.Body.Find("Base"), "Elev1 kabartması: alt mürekkep çizgisi");
+
+            card.SetLocked(true);
+            Assert.IsFalse(card.Lifted, "kilitli kart iner");
+            Step(0.2f);
+            Assert.AreEqual(0f, card.Body.anchoredPosition.y, 0.1f);
+            card.SetLifted(true);
+            Assert.IsFalse(card.Lifted, "kilitli kart kalkmaz");
+
+            UiButton surface = UiFactory.Button("Surface", card.Content, "SMG", UiButtonVariant.Card, null);
+            UiCard other = UiCard.Create("Other", _root, new Vector2(420f, 160f));
+            other.Bind(surface);
+            surface.OnSelect(new UnityEngine.EventSystems.BaseEventData(null));
+            Assert.IsTrue(other.Lifted, "bağlı düğme odakta: kart kalkar");
+            surface.OnDeselect(new UnityEngine.EventSystems.BaseEventData(null));
+            Assert.IsFalse(other.Lifted);
+        }
     }
 }

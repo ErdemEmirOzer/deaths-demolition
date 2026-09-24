@@ -87,8 +87,12 @@ namespace DD.Prototype.UI
             Image rim = UiFactory.NewImage("Rim", trackRect, UiColor.BorderStrong, UiSprites.ChipRim);
             UiFactory.Fill((RectTransform)rim.transform);
 
-            Image knob = UiFactory.NewImage("Knob", trackRect, UiColor.TextPrimary, UiSprites.Disc);
+            // Knob = 2 px ink edge + cream core: a cream disc alone on the ON track is 1.82:1
+            // (Jade) / 2.17:1 (CB Indigo) - T1; the ink edge is 7.6 / 6.4:1 against either.
+            Image knob = UiFactory.NewImage("Knob", trackRect, UiColor.SurfacePanel, UiSprites.Disc);
             _knob = (RectTransform)knob.transform;
+            Image core = UiFactory.NewImage("Core", _knob, UiColor.TextPrimary, UiSprites.Disc);
+            UiFactory.Fill((RectTransform)core.transform, 2f);
             _knob.anchorMin = new Vector2(0.5f, 0.5f);
             _knob.anchorMax = new Vector2(0.5f, 0.5f);
             _knob.pivot = new Vector2(0.5f, 0.5f);

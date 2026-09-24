@@ -15,7 +15,8 @@ namespace DD.Prototype.UI
         RotationZ = 5, // localEulerAngles.z
         Fill = 6,      // Image.fillAmount
         Count = 7,     // integer counter into a TMP_Text via SetText("{0}", v) - 0 allocations
-        ShakeX = 8     // horizontal sine around a rest position, ends exactly at rest (DeniedNudge)
+        ShakeX = 8,    // horizontal sine around a rest position, ends exactly at rest (DeniedNudge)
+        Size = 9       // RectTransform.sizeDelta (WP-068 slice 5: the travelling focus brackets)
     }
 
     /// <summary>Which clock a tween runs on. Unscaled: menus, HUD, pause, the round-end freeze. Scaled: world-bound things that must stop with the world.</summary>
@@ -175,6 +176,14 @@ namespace DD.Prototype.UI
             if (rect == null) return default(UiTweenHandle);
             Vector2 from = rect.anchoredPosition;
             return Play(rect, UiChannel.Position, new Vector4(from.x, from.y, 0f, 0f), new Vector4(to.x, to.y, 0f, 0f), Seconds(duration), ease, motionClass, delay, clock, owner, false);
+        }
+
+        /// <summary>WP-068 slice 5: sizeDelta (the focus brackets change size as they travel). A separate channel from Position, so both run together.</summary>
+        public static UiTweenHandle Resize(RectTransform rect, Vector2 to, UiDuration duration, UiEase ease, UiMotionClass motionClass, float delay = 0f, UiClock clock = UiClock.Unscaled, int owner = 0)
+        {
+            if (rect == null) return default(UiTweenHandle);
+            Vector2 from = rect.sizeDelta;
+            return Play(rect, UiChannel.Size, new Vector4(from.x, from.y, 0f, 0f), new Vector4(to.x, to.y, 0f, 0f), Seconds(duration), ease, motionClass, delay, clock, owner, false);
         }
 
         public static UiTweenHandle Scale(RectTransform rect, float to, UiDuration duration, UiEase ease, UiMotionClass motionClass, float delay = 0f, UiClock clock = UiClock.Unscaled, int owner = 0)
@@ -654,6 +663,10 @@ namespace DD.Prototype.UI
                 case UiChannel.Position:
                     var moved = tween.Target as RectTransform;
                     if (moved != null) moved.anchoredPosition = new Vector2(v.x, v.y);
+                    break;
+                case UiChannel.Size:
+                    var sized = tween.Target as RectTransform;
+                    if (sized != null) sized.sizeDelta = new Vector2(v.x, v.y);
                     break;
                 case UiChannel.Scale:
                     var scaled = tween.Target as RectTransform;

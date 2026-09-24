@@ -22,7 +22,13 @@ namespace DD.Prototype.UI
         Card,
 
         /// <summary>Destructive confirmation. Primary geometry, danger fill.</summary>
-        Danger
+        Danger,
+
+        /// <summary>WP-068 slice 5: a tertiary action - the word only, no fill or border at rest (BACK, SKIP, a list's "more").</summary>
+        Ghost,
+
+        /// <summary>WP-068 slice 5: a 44² glyph button (<see cref="UiButtons.Icon"/>); secondary treatment, the name is its accessible label.</summary>
+        Icon
     }
 
     /// <summary>
@@ -611,6 +617,13 @@ namespace DD.Prototype.UI
 
             Image ring = NewImage("FocusRing", rt, UiColor.BorderFocus, shape);
             Outset((RectTransform)ring.transform, UiTokens.StrokeFocusRing);
+
+            if (variant == UiButtonVariant.Ghost)
+            {
+                // WP-068 slice 5: no fill hides the centre of a Ghost, so its ring and halo are hollow bands.
+                halo.sprite = UiSprites.FocusHaloHollow;
+                ring.sprite = UiSprites.FocusRingHollow;
+            }
 
             Image border = NewImage("Border", rt, UiColor.BorderStrong, shape);
             Fill((RectTransform)border.transform);

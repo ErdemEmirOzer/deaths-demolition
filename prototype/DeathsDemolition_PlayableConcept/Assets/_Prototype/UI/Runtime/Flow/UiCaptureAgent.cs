@@ -499,13 +499,34 @@ namespace DD.Prototype.UI
                 }
 
                 UiMotion.ReducedMotion = Arg("-ddUiKitRm") == "1";
-                UiKitSheet.Handles sheet = UiKitSheet.Build();
+                int page = Arg("-ddUiKitPage") == "2" ? 2 : 1;
+                UiKitSheet.Handles sheet = UiKitSheet.Build(page);
                 string focusArg = Arg("-ddUiKitFocus");
-                UiInput.Focus(focusArg == "switch" ? sheet.Switch : focusArg == "stepper" ? sheet.Stepper : sheet.Primary);
+                UnityEngine.UI.Selectable focus = focusArg == "switch" ? sheet.Switch
+                    : focusArg == "stepper" ? sheet.Stepper
+                    : focusArg == "slider" ? (UnityEngine.UI.Selectable)sheet.Slider
+                    : focusArg == "card" ? sheet.CardSurface
+                    : focusArg == "ghost" ? sheet.Ghost
+                    : sheet.Primary;
+                UiInput.Focus(focus);
                 UiModal modal = sheet.Modal;
                 yield return new WaitForSecondsRealtime(_delay);
+                if (sheet.Health != null)
+                {
+                    // Page 2: a hit on the health bar just before the frame, so the ghost is caught in its 350 ms hold.
+                    sheet.Health.SetValue(0.55f);
+                    yield return new WaitForSecondsRealtime(0.15f);
+                }
+
                 yield return new WaitForEndOfFrame();
                 WritePng(_out);
+                if (modal == null)
+                {
+                    yield return null;
+                    Debug.Log("[UiCapture] kit done · framebuffer " + Screen.width + "x" + Screen.height);
+                    Application.Quit();
+                    yield break;
+                }
 
                 modal.Open();
                 yield return new WaitForSecondsRealtime(1f);

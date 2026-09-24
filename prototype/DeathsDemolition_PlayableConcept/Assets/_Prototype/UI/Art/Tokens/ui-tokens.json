@@ -38,7 +38,8 @@
       "SheenRim": { "$type": "color", "$value": "#F3EEE31A" },
       "InkStroke": { "$type": "color", "$value": "#12100FE6" },
       "GoldLeaf": { "$type": "color", "$value": "#D9A93C" },
-      "SilverLeaf": { "$type": "color", "$value": "#F3EEE3" }
+      "SilverLeaf": { "$type": "color", "$value": "#F3EEE3" },
+      "HoldFill": { "$type": "color", "$value": "#F3EEE340" }
     },
     "colorBlindSafe": {
       "Transparent": { "$type": "color", "$value": "#00000000" },
@@ -77,7 +78,8 @@
       "SheenRim": { "$type": "color", "$value": "#F3EEE31A" },
       "InkStroke": { "$type": "color", "$value": "#12100FE6" },
       "GoldLeaf": { "$type": "color", "$value": "#D9A93C" },
-      "SilverLeaf": { "$type": "color", "$value": "#F3EEE3" }
+      "SilverLeaf": { "$type": "color", "$value": "#F3EEE3" },
+      "HoldFill": { "$type": "color", "$value": "#F3EEE340" }
     }
   },
   "duration": {

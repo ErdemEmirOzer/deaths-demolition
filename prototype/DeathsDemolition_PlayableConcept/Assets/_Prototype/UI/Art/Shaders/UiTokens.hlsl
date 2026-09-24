@@ -40,6 +40,7 @@
 #define DD_UI_INK_STROKE float4(0.0706, 0.0627, 0.0588, 0.9)
 #define DD_UI_GOLD_LEAF float4(0.851, 0.6627, 0.2353, 1)
 #define DD_UI_SILVER_LEAF float4(0.9529, 0.9333, 0.8902, 1)
+#define DD_UI_HOLD_FILL float4(0.9529, 0.9333, 0.8902, 0.25)
 
 #define DD_UI_CB_TRANSPARENT float4(0, 0, 0, 0)
 #define DD_UI_CB_SCRIM_OVERLAY float4(0.0706, 0.0627, 0.0588, 0.86)
@@ -78,6 +79,7 @@
 #define DD_UI_CB_INK_STROKE float4(0.0706, 0.0627, 0.0588, 0.9)
 #define DD_UI_CB_GOLD_LEAF float4(0.851, 0.6627, 0.2353, 1)
 #define DD_UI_CB_SILVER_LEAF float4(0.9529, 0.9333, 0.8902, 1)
+#define DD_UI_CB_HOLD_FILL float4(0.9529, 0.9333, 0.8902, 0.25)
 
 #define DD_UI_DURATION_INSTANT 0.08
 #define DD_UI_DURATION_FAST 0.14

@@ -196,7 +196,10 @@ namespace DD.Prototype.UI
         SheenRim,
         InkStroke,
         GoldLeaf,
-        SilverLeaf
+        SilverLeaf,
+
+        /// <summary>WP-068 slice 5b (AD MUST-2): a hold control's progress sweep - Cream100 0.25 (the label stays ≥ 4.5:1 over it); never vermilion (registry).</summary>
+        HoldFill
     }
 
     /// <summary>
@@ -351,6 +354,7 @@ namespace DD.Prototype.UI
                 case UiColor.ShadowKey: return Sumi900; // alpha comes from UiElevationSpec
                 case UiColor.SheenRim: return WithAlpha(Cream100, UiMaterialSpec.SheenRimAlpha);
                 case UiColor.InkStroke: return WithAlpha(Sumi900, 0.90f);
+                case UiColor.HoldFill: return WithAlpha(Cream100, 0.25f);
                 case UiColor.GoldLeaf: return Gold400;   // reserve: currency / price / Special only
                 case UiColor.SilverLeaf: return Cream100; // ceremony: medals, NEW BEST, level
 
