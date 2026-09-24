@@ -58,7 +58,7 @@ Shader "Hidden/DD/UI/FrozenFrame"
 
     // Ink wash (AD MUST 4): a luminance-keeping sumi / washi duotone — the frame keeps its light, the hue moves toward
     // the palette (dark → Sumi ink, light → Cream paper), so it is never a flat cold grey (§1). Desaturation 0.75,
-    // mottle floor 0.92, soft vignette 0.25; all × wash strength. Alpha 1.
+    // washi mottle ±4.5 %, soft vignette 0.25; all × wash strength. Alpha 1.
     half4 fragWash(v2f i) : SV_Target
     {
         float2 uv = float2(i.uv.x, _DD_FrozenFlip > 0.5 ? 1.0 - i.uv.y : i.uv.y);
@@ -67,8 +67,12 @@ Shader "Hidden/DD/UI/FrozenFrame"
         half3 grey = lerp(c, luma.xxx, 0.75 * _DD_FrozenWash);
         half3 duo = lerp(_DD_Ink.rgb, _DD_Paper.rgb * 0.6, saturate(luma));
         half3 inked = lerp(grey, duo, 0.45 * _DD_FrozenWash);
-        half mottle = tex2D(_DD_InkMap, uv * 1.5).g;
-        inked *= lerp(1.0, 0.92 + 0.08 * mottle, _DD_FrozenWash);
+        // Washi (AP-012 256² tile, ~1:1 at 1080p) + a second tap at 1.37× turned 90° to break the repeat; normalised
+        // (mean 0.52, σ 0.032) to ±σ = 4.5 % × wash (AD 4c SHOULD 3: 2–3 % at the default wash 0.55).
+        float2 tuv = uv * float2(7.5, 4.22);
+        half paper = 0.5 * (tex2D(_DD_PaperTile, tuv).r + tex2D(_DD_PaperTile, float2(-tuv.y, tuv.x) * 1.37).r);
+        half mottle = clamp((paper - 0.52) / 0.032, -3.0, 3.0);
+        inked *= 1.0 + 0.045 * mottle * _DD_FrozenWash;
         float2 d = uv - 0.5;
         half vignette = 1.0 - smoothstep(0.35, 0.85, length(d * float2(1.25, 1.0))) * 0.25 * _DD_FrozenWash;
         return half4(inked * vignette, 1.0);

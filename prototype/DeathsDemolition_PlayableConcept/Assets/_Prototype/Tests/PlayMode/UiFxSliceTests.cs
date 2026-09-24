@@ -104,6 +104,15 @@ namespace DD.Prototype.Tests.PlayMode
             int lit = 0, total = 0;
             for (int x = 2; x < rt.width / 4 - 2; x++) { total++; if (At(mid, rt, (x + 0.5f) / rt.width, 0.5f).r > 0.5f) lit++; }
             Assert.That(lit, Is.InRange(1, total - 1), "yarı yolda kısmi açılma: " + lit + "/" + total);
+
+            // Slice 4c (AP-012 v004 kit): the mark's shape clips — outside the underline stroke (its time map = 1.0) the
+            // finished reveal stays empty; wipe mode (prm.y = 1) inks the whole rect.
+            UiFxGlobals.TimeOverride = 500f + 0.5f + 0.01f;
+            yield return Render(cam);
+            Assert.Less(At(Read(rt), rt, 0.01f, 0.5f).r, 0.02f, "işaret kipinde fırça izinin dışı boş kalmalı");
+            inkLeft.Configure(UiFxMode.InkReveal, 0.5f, new Vector3(0f, 1f, 0f));
+            yield return Render(cam);
+            Assert.Greater(At(Read(rt), rt, 0.01f, 0.5f).r, 0.9f, "silme kipinde tüm dikdörtgen mürekkeplenir");
         }
 
         // ------------------------------------------------------------------ 1b · particles are drawn (quads expand in the vertex stage)
@@ -204,7 +213,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Image img = Img("Anim" + i, root, Color.white);
                 Place(img, i);
                 UiFx f = img.gameObject.AddComponent<UiFx>();
-                f.Configure(i % 2 == 0 ? UiFxMode.InkReveal : UiFxMode.Leaf, 5f, new Vector3(1f, 0f, 0f), UiInkChannel.Brush, i % 2 == 0 ? 0f : 1.2f);
+                f.Configure(i % 2 == 0 ? UiFxMode.InkReveal : UiFxMode.Leaf, 5f, new Vector3(1f, 0f, 0f), UiInkChannel.Underline, i % 2 == 0 ? 0f : 1.2f);
                 fx.Add(f);
             }
 

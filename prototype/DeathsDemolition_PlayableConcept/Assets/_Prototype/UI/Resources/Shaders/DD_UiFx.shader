@@ -161,19 +161,25 @@ Shader "DD/UI/Fx"
                 return OUT;
             }
 
-            // Ink reveal (§3 InkReveal): the time map fills where m <= progress; a 0.04 band at the front darkens and
-            // flickers (wet ink). prm.x = band (0 → 0.04), prm.w = channel.
+            // Ink reveal (§3 InkReveal): the kit's time map fills where m <= progress; a 0.04 band at the front darkens
+            // and flickers (wet ink). prm.x = band (0 → 0.04), prm.y = 0 mark (the mark's shape clips — use the Ink.*
+            // static mask as the sprite for its soft edge) | 1 wipe (the whole rect, empty parts ink last), prm.w = channel.
+            // Mark mode runs on linear progress: the AP-012 v004 time maps carry the brush pacing themselves (head-heavy
+            // stroke, lifted tail), so the Brush ease on top would double it (AD 4c MUST 1: half the timeline showed
+            // 93 % of the stroke); wipe mode keeps the Brush ease.
             half4 InkReveal(half4 color, v2f IN)
             {
-                float t = DD_EaseBrush(IN.fx.y);
+                bool wipe = IN.prm.y > 0.5;
+                float t = wipe ? DD_EaseBrush(IN.fx.y) : IN.fx.y;
                 float band = IN.prm.x > 0.0 ? IN.prm.x : 0.04;
-                float m = DD_InkChannel(tex2D(_DD_InkMap, DD_MapUv(IN.map.xy)), IN.prm.w);
+                float raw = DD_InkSample(IN.map.xy, IN.prm.w);
+                float m = DD_InkTime(raw, IN.prm.w);
                 float jitter = (DD_Hash(floor(IN.map.xy * max(IN.map.zw, 1.0) / 3.0) + floor(_DD_UiTime * 8.0)) - 0.5) * 0.02 * _DD_Motion * (1.0 - t);
                 float edge = t * (1.0 + band) - m + jitter;
                 float visible = smoothstep(0.0, 0.012, edge);
                 float front = (1.0 - smoothstep(0.0, band, edge)) * (t < 0.999 ? 1.0 : 0.0);
                 color.rgb = lerp(color.rgb, color.rgb * 0.55 + _DD_Ink.rgb * 0.2, front * 0.65);
-                color.a *= visible;
+                color.a *= visible * (wipe ? 1.0 : DD_InkCoverage(raw));
                 return color;
             }
 
@@ -189,20 +195,23 @@ Shader "DD/UI/Fx"
                 float d = (IN.map.x + IN.map.y * 0.35) / 1.35;
                 float c = lerp(-0.3, 1.3, phase);
                 float g = exp(-((d - c) * (d - c)) / (width * width));
-                float crack = tex2D(_DD_InkMap, IN.map.xy * max(IN.map.zw, 1.0) / tilePx).a;
+                // AP-012 kinpaku tile: leaf ≈ 0.65, seams ≈ 0.40 → 0..1; the seams catch 40 % less light, so the 4×4 leaf
+                // grid shows only where the band passes (AD 4c MUST 2: 5–8 % in the band, flat at rest).
+                float crack = saturate((tex2D(_DD_LeafTile, IN.map.xy * max(IN.map.zw, 1.0) / tilePx).r - 0.40) / 0.25);
                 float metal = saturate(IN.prm.x);
                 float3 leaf = lerp(_DD_SilverLeaf.rgb, _DD_GoldLeaf.rgb, metal);
                 float peak = lerp(0.10, DD_UI_GLINT_MAX_BRIGHTNESS, metal);   // ginpaku 0.10 (AD MUST 2), kinpaku the token ceiling
-                float boost = min(peak, peak * g * (0.55 + 0.45 * crack)) * _DD_Flash;
+                float boost = min(peak, peak * g * lerp(0.6, 1.0, crack)) * _DD_Flash;
                 color.rgb += leaf * boost * color.a;
                 return color;
             }
 
-            // Stamp: the hanko inks in with the scale (B channel roughness at the rim).
+            // Stamp: the hanko inks in with the scale — centre first, the faint rim last (the kit's B time map; the
+            // Ink.Hanko static mask is the sprite).
             half4 Stamp(half4 color, v2f IN)
             {
                 float k = _DD_Motion < 0.5 ? 1.0 : saturate((_DD_UiTime - IN.fx.z) / DD_UI_STAMP_IN);
-                float m = tex2D(_DD_InkMap, DD_MapUv(IN.map.xy)).b;
+                float m = DD_InkSample(IN.map.xy, 2.0);
                 color.a *= saturate(k * 1.35 - m * 0.35) * (1.0 - 0.12 * m);   // AD SHOULD: the landed hanko keeps its rim
                 return color;
             }

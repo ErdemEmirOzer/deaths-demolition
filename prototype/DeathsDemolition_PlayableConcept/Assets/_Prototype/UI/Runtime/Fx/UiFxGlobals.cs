@@ -5,14 +5,37 @@ namespace DD.Prototype.UI
     /// <summary>
     /// WP-068 slice 4 · The DD/UI/Fx shader globals (§2.5 names): <c>_DD_UiTime</c> (unscaled), <c>_DD_WorldTime</c>,
     /// <c>_DD_Motion</c> (0 under reduced motion), <c>_DD_Flash</c> (<see cref="UiTokens.FlashScale"/>), the palette
-    /// (<c>_DD_Ink</c> / <c>_DD_Paper</c> / leaf tints) and the ink kit <c>_DD_InkMap</c>. One process-long driver writes
-    /// them every frame before the canvases render (no allocation: cached property ids, value types only).
-    /// The ink kit is a procedural placeholder (<see cref="BuildPlaceholderInkMap"/>) until the AP A8 BC4 kit lands;
-    /// <see cref="SetInkMap"/> is the swap.
+    /// (<c>_DD_Ink</c> / <c>_DD_Paper</c> / leaf tints) and the kit textures. One process-long driver writes them every
+    /// frame before the canvases render (no allocation: cached property ids, value types only).
+    /// Slice 4c: the kit is AP-012 v004 (<c>Resources/Fx/</c>) — the A8 RGBA time map (one mark per channel, each in its
+    /// own rect: <see cref="InkRects"/>), the kinpaku leaf tile, the washi paper tile and the four <c>Ink.*</c> static
+    /// masks (<see cref="InkMask"/>). Missing textures degrade (ink shows at once, flat leaf / paper), never throw.
     /// </summary>
     public static class UiFxGlobals
     {
-        public const int InkMapSize = 256;
+        public const string InkKitResource = "Fx/AP012_v004_ink_timemaps_1024";
+        public const string LeafTileResource = "Fx/AP012_tile_kinpaku_128";
+        public const string PaperTileResource = "Fx/AP012_tile_washi_256";
+
+        /// <summary>
+        /// Each channel's mark rect in the kit (x, y, w, h; bottom-left UV) — AP-012 v004 manifest <c>ink_kit.elements</c>
+        /// <c>uv_rect_bottom_left</c>: R Ink.BrushUnderline, G Ink.BrushDivider, B Ink.Hanko, A Ink.Blot.
+        /// </summary>
+        public static readonly Vector4[] InkRects =
+        {
+            new Vector4(0f, 0.75f, 1f, 0.25f),
+            new Vector4(0f, 0.625f, 1f, 0.125f),
+            new Vector4(0f, 0.125f, 0.5f, 0.5f),
+            new Vector4(0.5f, 0.125f, 0.5f, 0.5f)
+        };
+
+        /// <summary>
+        /// Each channel's 99th-percentile time inside its mark (measured on the v004 kit PNG): the shader reads m / max so a
+        /// mark's last ink lands at t = 1 instead of at ~0.8 of the timeline.
+        /// </summary>
+        public static readonly Vector4 InkTimeMax = new Vector4(0.812f, 0.855f, 0.796f, 0.918f);
+
+        private static readonly string[] MaskNames = { "Ink.BrushUnderline", "Ink.BrushDivider", "Ink.Hanko", "Ink.Blot" };
 
         private static readonly int UiTimeId = Shader.PropertyToID("_DD_UiTime");
         private static readonly int WorldTimeId = Shader.PropertyToID("_DD_WorldTime");
@@ -23,9 +46,14 @@ namespace DD.Prototype.UI
         private static readonly int GoldLeafId = Shader.PropertyToID("_DD_GoldLeaf");
         private static readonly int SilverLeafId = Shader.PropertyToID("_DD_SilverLeaf");
         private static readonly int InkMapId = Shader.PropertyToID("_DD_InkMap");
+        private static readonly int InkMapSizeId = Shader.PropertyToID("_DD_InkMapSize");
+        private static readonly int InkRectId = Shader.PropertyToID("_DD_InkRect");
+        private static readonly int InkTimeMaxId = Shader.PropertyToID("_DD_InkTimeMax");
+        private static readonly int LeafTileId = Shader.PropertyToID("_DD_LeafTile");
+        private static readonly int PaperTileId = Shader.PropertyToID("_DD_PaperTile");
 
-        private static Texture2D s_placeholder;
-        private static Texture s_inkMap;
+        private static Texture s_inkMap, s_leafTile, s_paperTile;
+        private static readonly Sprite[] s_masks = new Sprite[4];
         private static bool s_installed;
 
         /// <summary>The unscaled clock the shader reads (a UiFx start time is stamped on the same clock); the motion core's
@@ -40,6 +68,8 @@ namespace DD.Prototype.UI
         public static float? FlashOverride;
 
         public static Texture InkMap => s_inkMap;
+        public static Texture LeafTile => s_leafTile;
+        public static Texture PaperTile => s_paperTile;
 
         public static void EnsureInstalled()
         {
@@ -49,11 +79,7 @@ namespace DD.Prototype.UI
             }
 
             s_installed = true;
-            if (s_inkMap == null)
-            {
-                SetInkMap(PlaceholderInkMap);
-            }
-
+            LoadKit();
             Write();
             if (Application.isPlaying)
             {
@@ -64,24 +90,35 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>The A8 swap: any RGBA texture with the kit's channel layout (R brush, G bleed, B hanko, A leaf crack).</summary>
-        public static void SetInkMap(Texture map)
+        /// <summary>The static mask (white + alpha sprite) of a kit mark — the shape its time map inks in. Null when the kit is missing.</summary>
+        public static Sprite InkMask(UiInkChannel channel)
         {
-            s_inkMap = map != null ? map : PlaceholderInkMap;
-            Shader.SetGlobalTexture(InkMapId, s_inkMap);
+            int i = (int)channel;
+            if (s_masks[i] == null)
+            {
+                s_masks[i] = Resources.Load<Sprite>("Fx/" + MaskNames[i]);
+            }
+
+            return s_masks[i];
         }
 
-        public static Texture2D PlaceholderInkMap
+        private static void LoadKit()
         {
-            get
+            s_inkMap = Resources.Load<Texture2D>(InkKitResource);
+            s_leafTile = Resources.Load<Texture2D>(LeafTileResource);
+            s_paperTile = Resources.Load<Texture2D>(PaperTileResource);
+            if (s_inkMap == null)
             {
-                if (s_placeholder == null)
-                {
-                    s_placeholder = BuildPlaceholderInkMap(InkMapSize);
-                }
-
-                return s_placeholder;
+                Debug.LogWarning("[UiFxGlobals] ink kit missing (" + InkKitResource + "): marks ink at once");
             }
+
+            Shader.SetGlobalTexture(InkMapId, s_inkMap != null ? s_inkMap : Texture2D.blackTexture);
+            Shader.SetGlobalTexture(LeafTileId, s_leafTile != null ? s_leafTile : Texture2D.whiteTexture);
+            Shader.SetGlobalTexture(PaperTileId, s_paperTile != null ? s_paperTile : Texture2D.whiteTexture);
+            float w = s_inkMap != null ? s_inkMap.width : 4f, h = s_inkMap != null ? s_inkMap.height : 4f;
+            Shader.SetGlobalVector(InkMapSizeId, new Vector4(1f / w, 1f / h, w, h));
+            Shader.SetGlobalVectorArray(InkRectId, InkRects);
+            Shader.SetGlobalVector(InkTimeMaxId, InkTimeMax);
         }
 
         /// <summary>Called once per frame by the driver; tests call it directly.</summary>
@@ -100,84 +137,6 @@ namespace DD.Prototype.UI
             {
                 Shader.SetGlobalTexture(InkMapId, s_inkMap);
             }
-        }
-
-        /// <summary>
-        /// Deterministic RGBA32 placeholder for the A8 ink kit (time maps: 0 = first ink, 1 = empty).
-        /// R: a horizontal brush stroke — inks left → right with a ragged, fibrous front and dry-brush streaks.
-        /// G: a bleed / leak — spreads from the centre along noisy fingers.
-        /// B: a hanko rim — mostly early, a rough ring of late (unevenly inked) texels at the edge.
-        /// A: a kinpaku crack tile (repeats): bright leaf with dark cracks.
-        /// </summary>
-        public static Texture2D BuildPlaceholderInkMap(int size)
-        {
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false, true)
-            {
-                name = "DD_UiInkMap (placeholder, A8 pending)",
-                wrapMode = TextureWrapMode.Repeat,
-                filterMode = FilterMode.Bilinear,
-                hideFlags = HideFlags.DontSave
-            };
-
-            var px = new Color32[size * size];
-            for (int y = 0; y < size; y++)
-            {
-                float v = (y + 0.5f) / size;
-                for (int x = 0; x < size; x++)
-                {
-                    float u = (x + 0.5f) / size;
-
-                    // R — brush: position along the stroke + a fibrous front (per-row noise) + dry streaks.
-                    float fibre = Fbm(u * 3f, v * 26f, 3) - 0.5f;
-                    float streak = Fbm(3.1f, v * 40f, 2);
-                    float brush = u * 0.96f + fibre * 0.12f + (streak > 0.62f ? 0.06f : 0f) + 0.02f;   // AD MUST 3: spans the envelope (last ink at eased t ≥ 0.95)
-
-                    // G — bleed: radial distance warped by noise fingers.
-                    float dx = u - 0.5f, dy = v - 0.5f;
-                    float warp = Fbm(u * 5f + 11f, v * 5f + 7f, 4) - 0.5f;
-                    float bleed = Mathf.Sqrt(dx * dx + dy * dy) * 1.35f + warp * 0.35f;
-
-                    // B — hanko: early inside, a rough late rim.
-                    float r = Mathf.Sqrt(dx * dx + dy * dy) * 2f;
-                    float rim = Mathf.Clamp01((r - 0.72f) / 0.28f);
-                    float hanko = Mathf.Clamp01(rim * 0.8f + (Fbm(u * 18f, v * 18f, 3) - 0.35f) * 0.6f * rim);
-
-                    // A — crack tile (tileable: noise sampled on a torus).
-                    float crackNoise = TileFbm(u, v, 6f);
-                    float crack = Mathf.Abs(crackNoise - 0.5f) < 0.035f ? 0.15f : 0.85f + (crackNoise - 0.5f) * 0.3f;
-
-                    px[y * size + x] = new Color32(
-                        (byte)(Mathf.Clamp01(brush) * 255f), (byte)(Mathf.Clamp01(bleed) * 255f),
-                        (byte)(hanko * 255f), (byte)(Mathf.Clamp01(crack) * 255f));
-                }
-            }
-
-            tex.SetPixels32(px);
-            tex.Apply(false, false);
-            return tex;
-        }
-
-        private static float Fbm(float x, float y, int octaves)
-        {
-            float sum = 0f, amp = 0.5f, norm = 0f;
-            for (int i = 0; i < octaves; i++)
-            {
-                sum += Mathf.PerlinNoise(x, y) * amp;
-                norm += amp;
-                x *= 2.03f; y *= 2.03f; amp *= 0.5f;
-            }
-
-            return sum / norm;
-        }
-
-        private static float TileFbm(float u, float v, float scale)
-        {
-            // Four-corner blend makes the tile repeat seamlessly.
-            float a = Fbm(u * scale, v * scale, 3);
-            float b = Fbm((u - 1f) * scale, v * scale, 3);
-            float c = Fbm(u * scale, (v - 1f) * scale, 3);
-            float d = Fbm((u - 1f) * scale, (v - 1f) * scale, 3);
-            return Mathf.Lerp(Mathf.Lerp(a, b, u), Mathf.Lerp(c, d, u), v);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

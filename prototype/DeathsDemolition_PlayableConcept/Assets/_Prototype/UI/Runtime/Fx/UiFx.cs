@@ -23,13 +23,18 @@ namespace DD.Prototype.UI
         Particles = 7
     }
 
-    /// <summary>Which ink-kit mark a mode reads (A8 layout: one mark per channel).</summary>
+    /// <summary>Which ink-kit mark a mode reads (AP-012 v004 A8: one mark per channel, each in its own rect; the static
+    /// mask of the same name is its sprite — <see cref="UiFxGlobals.InkMask"/>).</summary>
     public enum UiInkChannel
     {
-        Brush = 0,
-        Bleed = 1,
+        /// <summary>R · Ink.BrushUnderline — the banner / title brush stroke, left → right.</summary>
+        Underline = 0,
+        /// <summary>G · Ink.BrushDivider — the thin section divider stroke, left → right.</summary>
+        Divider = 1,
+        /// <summary>B · Ink.Hanko — the seal, centre out, the faint rim last.</summary>
         Hanko = 2,
-        LeafCrack = 3
+        /// <summary>A · Ink.Blot — seeps from its deepest point outward (death bleed, curtain).</summary>
+        Blot = 3
     }
 
     /// <summary>
@@ -37,6 +42,7 @@ namespace DD.Prototype.UI
     /// time and the parameters go into the mesh (uv1..uv3) — written once per <see cref="Play"/> / <see cref="Configure"/>
     /// (one vertex rebuild), after which the GPU computes the animation from <c>_DD_UiTime</c>: no per-frame CPU work,
     /// no allocation. Every UiFx shares <see cref="SharedMaterial"/>, so only an atlas change breaks a batch.
+    /// InkReveal parameters.y: 0 draws the mark (its shape clips), 1 wipes the whole rect.
     /// TMP does not take BaseMeshEffect — text reveals use the motion core's Clip channel (slice 2).
     /// </summary>
     [RequireComponent(typeof(Graphic))]
@@ -52,7 +58,7 @@ namespace DD.Prototype.UI
         [SerializeField] private float _duration = 0.28f;
         [SerializeField] private float _loopPeriod;
         [SerializeField] private Vector3 _params;
-        [SerializeField] private UiInkChannel _channel = UiInkChannel.Brush;
+        [SerializeField] private UiInkChannel _channel = UiInkChannel.Underline;
 
         // Before the first Play the element shows its end state (start far in the past), so a static layout never
         // renders half-revealed.
@@ -85,7 +91,7 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>Set the mode and its parameters (§3 per mode; see the shader). Rebuilds the vertices once.</summary>
-        public UiFx Configure(UiFxMode mode, float duration, Vector3 parameters, UiInkChannel channel = UiInkChannel.Brush, float loopPeriod = 0f)
+        public UiFx Configure(UiFxMode mode, float duration, Vector3 parameters, UiInkChannel channel = UiInkChannel.Underline, float loopPeriod = 0f)
         {
             _mode = mode;
             _duration = Mathf.Max(0.01f, duration);
@@ -97,7 +103,7 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>Token-duration form (§2.5 <see cref="UiDuration"/>): banners Screen/Reveal, stamps Instant, glints Reveal.</summary>
-        public UiFx Configure(UiFxMode mode, UiDuration duration, Vector3 parameters, UiInkChannel channel = UiInkChannel.Brush, float loopPeriod = 0f)
+        public UiFx Configure(UiFxMode mode, UiDuration duration, Vector3 parameters, UiInkChannel channel = UiInkChannel.Underline, float loopPeriod = 0f)
         {
             return Configure(mode, UiMotionTokens.Seconds(duration), parameters, channel, loopPeriod);
         }

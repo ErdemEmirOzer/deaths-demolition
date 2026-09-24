@@ -11,7 +11,7 @@ namespace DD.Prototype.Tests.EditMode
     /// <summary>
     /// WP-068 slice 4 · DD/UI/Fx contract: one pass, only the CLIP_RECT + ALPHACLIP local keywords (4 variants — a mode
     /// never becomes a keyword), shipped from a Resources folder (Shader.Find works in a Player), the frozen-frame shader
-    /// with its three passes, and the placeholder ink kit (deterministic, four distinct marks in RGBA).
+    /// with its three passes, and the AP-012 v004 ink kit (BC7 linear, one mark per channel in its rect, tiles, masks).
     /// </summary>
     [TestFixture]
     [Category("WP068")]
@@ -47,35 +47,71 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void MurekkepKiti_Placeholder_Deterministik_DortKanal()
+        public void MurekkepKiti_AP012v004_BC7Linear_KanalDikdortgenleri()
         {
-            Texture2D a = UiFxGlobals.BuildPlaceholderInkMap(64);
-            Texture2D b = UiFxGlobals.BuildPlaceholderInkMap(64);
+            const string root = "Assets/_Prototype/UI/Resources/Fx/";
+            string kitPath = root + "AP012_v004_ink_timemaps_1024.png";
+            var kit = (TextureImporter)AssetImporter.GetAtPath(kitPath);
+            Assert.IsNotNull(kit, "A8 mürekkep kiti içe alınmamış: " + kitPath);
+            Assert.IsFalse(kit.sRGBTexture, "zaman haritası linear olmalı");
+            Assert.AreEqual(TextureImporterFormat.BC7, kit.GetPlatformTextureSettings("Standalone").format, "tek RGBA BC7 (C-00)");
+            Assert.AreEqual(TextureWrapMode.Clamp, kit.wrapMode);
+            Assert.IsNotNull(Resources.Load<Texture2D>(UiFxGlobals.InkKitResource), "kit Resources'tan yüklenmeli (Player)");
+
+            // Each channel: 1.0 (empty) everywhere outside its mark rect, inked (< 1) inside — the rects match the texture.
+            var src = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
             try
             {
-                Color32[] pa = a.GetPixels32(), pb = b.GetPixels32();
-                CollectionAssert.AreEqual(pa, pb, "yer tutucu kit deterministik olmalı");
+                Assert.IsTrue(src.LoadImage(System.IO.File.ReadAllBytes(kitPath)));
+                Assert.AreEqual(1024, src.width);
+                Color32[] px = src.GetPixels32();
+                for (int c = 0; c < 4; c++)
+                {
+                    Vector4 r = UiFxGlobals.InkRects[c];
+                    int x0 = Mathf.RoundToInt(r.x * 1024), y0 = Mathf.RoundToInt(r.y * 1024);
+                    int x1 = x0 + Mathf.RoundToInt(r.z * 1024), y1 = y0 + Mathf.RoundToInt(r.w * 1024);
+                    int inked = 0, strayOutside = 0;
+                    var times = new List<byte>();
+                    for (int y = 0; y < 1024; y++)
+                    {
+                        for (int x = 0; x < 1024; x++)
+                        {
+                            Color32 p = px[y * 1024 + x];
+                            byte v = c == 0 ? p.r : c == 1 ? p.g : c == 2 ? p.b : p.a;
+                            bool inside = x >= x0 && x < x1 && y >= y0 && y < y1;
+                            if (inside && v < 250) inked++;
+                            if (inside && v < 254) times.Add(v);
+                            if (!inside && v < 255) strayOutside++;
+                        }
+                    }
 
-                // R brush: inks left → right (left column mean < right column mean).
-                float left = 0f, right = 0f;
-                for (int y = 0; y < 64; y++) { left += pa[y * 64 + 2].r; right += pa[y * 64 + 61].r; }
-                Assert.Less(left, right * 0.5f, "fırça zaman haritası soldan sağa dolmalı");
+                    Assert.AreEqual(0, strayOutside, "kanal " + c + " dikdörtgeni dışında mürekkep var (rect yanlış?)");
+                    Assert.Greater(inked, (x1 - x0) * (y1 - y0) / 10, "kanal " + c + " dikdörtgeninde işaret yok");
 
-                // G bleed: centre earlier than corners.
-                Assert.Less(pa[32 * 64 + 32].g, pa[0].g, "sızma merkezden yayılmalı");
-
-                // B hanko: centre early (≈ 0), rim late.
-                Assert.Less(pa[32 * 64 + 32].b, 20, "mühür iç kısmı ilk mürekkeplenir");
-
-                // A crack tile: mostly bright leaf, some dark cracks.
-                int dark = pa.Count(p => p.a < 80), bright = pa.Count(p => p.a > 180);
-                Assert.Greater(dark, 0, "varak çatlağı yok");
-                Assert.Greater(bright, pa.Length / 2, "varak karosu çoğunlukla parlak olmalı");
+                    // The shader's per-channel time scale is the mark's 99th-percentile time (AD 4c MUST 1).
+                    times.Sort();
+                    float p99 = times[(int)(times.Count * 0.99f)] / 255f;
+                    Assert.AreEqual(p99, UiFxGlobals.InkTimeMax[c], 0.02f, "kanal " + c + " InkTimeMax kitle uyuşmuyor");
+                }
             }
             finally
             {
-                Object.DestroyImmediate(a);
-                Object.DestroyImmediate(b);
+                Object.DestroyImmediate(src);
+            }
+
+            // Tiles: single channel, linear, repeat. Static masks: sprites, one per channel.
+            foreach (string tile in new[] { "AP012_tile_kinpaku_128.png", "AP012_tile_washi_256.png" })
+            {
+                var t = (TextureImporter)AssetImporter.GetAtPath(root + tile);
+                Assert.IsNotNull(t, tile);
+                Assert.AreEqual(TextureImporterType.SingleChannel, t.textureType, tile);
+                Assert.IsFalse(t.sRGBTexture, tile);
+                Assert.AreEqual(TextureWrapMode.Repeat, t.wrapMode, tile);
+            }
+
+            foreach (UiInkChannel c in System.Enum.GetValues(typeof(UiInkChannel)))
+            {
+                Assert.IsNotNull(UiFxGlobals.InkMask(c), "statik maske yok: " + c);
             }
         }
 

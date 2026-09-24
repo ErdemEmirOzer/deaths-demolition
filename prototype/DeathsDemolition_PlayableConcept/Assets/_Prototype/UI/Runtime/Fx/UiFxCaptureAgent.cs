@@ -130,42 +130,48 @@ namespace DD.Prototype.UI
             Image back = UiFactory.NewImage("Back", root, UiColor.SurfaceBase);
             UiFactory.Fill((RectTransform)back.transform);
 
-            Label(root, "DD/UI/Fx — WP-068 slice 4 (placeholder ink kit, A8 pending)", 64, 28, UiType.H2, UiColor.TextPrimary);
+            Label(root, "DD/UI/Fx — WP-068 slice 4c (AP-012 v004 ink kit)", 64, 28, UiType.H2, UiColor.TextPrimary);
 
-            // Row 1 — banner ink reveal on washi (Brush channel): progress 0.2 / 0.45 / 0.7 / 1.0; bleed map at 0.5 / 1.0.
+            // Row 1 — banner ink reveal on washi (R underline, its static mask as the sprite): progress 0.2 / 0.45 / 0.7 / 1.0.
             float[] points = { 0.2f, 0.45f, 0.7f, 1f };
             for (int i = 0; i < points.Length; i++)
             {
                 float x = 64f + i * 440f;
                 Panel(root, x, 90f, 420f, 150f, UiColor.TextPrimary);
-                Image stroke = Img(root, x + 20f, 125f, 380f, 80f, UiColor.SurfaceInset);
-                Fx(stroke, UiFxMode.InkReveal, 0.6f, Vector3.zero, UiInkChannel.Brush, points[i]);
+                Image stroke = Img(root, x + 20f, 118f, 380f, 95f, UiColor.SurfaceInset, UiFxGlobals.InkMask(UiInkChannel.Underline));
+                Fx(stroke, UiFxMode.InkReveal, 0.6f, Vector3.zero, UiInkChannel.Underline, points[i]);
                 Label(root, "ROUND 4", x + 140f, 145f, UiType.H2, UiColor.TextPrimary);
                 Label(root, "InkReveal t=" + points[i].ToString("0.00"), x, 248f, UiType.Caption, UiColor.TextSecondary);
             }
 
-            // Row 2 — bleed (G), hanko stamp (B, mid-scale / landed), SDF glyph outline + glow.
+            // Row 2 — blot (A), hanko stamp (B, mid-scale / landed), SDF glyph outline + glow, divider (G).
             float y2 = 290f;
-            Image bleedA = Img(root, 64f, y2, 200f, 200f, UiColor.AccentPrimary);
-            Fx(bleedA, UiFxMode.InkReveal, 0.6f, Vector3.zero, UiInkChannel.Bleed, 0.3f);
-            Label(root, "bleed t=0.30", 64f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
-            Image bleedB = Img(root, 284f, y2, 200f, 200f, UiColor.AccentPrimary);
-            Fx(bleedB, UiFxMode.InkReveal, 0.6f, Vector3.zero, UiInkChannel.Bleed, 1f);
-            Label(root, "bleed t=1.00", 284f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
+            Image bleedA = Img(root, 64f, y2, 200f, 200f, UiColor.AccentPrimary, UiFxGlobals.InkMask(UiInkChannel.Blot));
+            Fx(bleedA, UiFxMode.InkReveal, 0.6f, Vector3.zero, UiInkChannel.Blot, 0.3f);
+            Label(root, "blot t=0.30", 64f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
+            Image bleedB = Img(root, 284f, y2, 200f, 200f, UiColor.AccentPrimary, UiFxGlobals.InkMask(UiInkChannel.Blot));
+            Fx(bleedB, UiFxMode.InkReveal, 0.6f, Vector3.zero, UiInkChannel.Blot, 1f);
+            Label(root, "blot t=1.00", 284f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
 
-            Image stampA = Img(root, 564f, y2 + 20f, 160f, 160f, UiColor.AccentPrimary, CircleSprite());
+            Image stampA = Img(root, 564f, y2 + 20f, 160f, 160f, UiColor.AccentPrimary, UiFxGlobals.InkMask(UiInkChannel.Hanko));
             Fx(stampA, UiFxMode.Stamp, 0.13f, Vector3.zero, UiInkChannel.Hanko, 0.35f, 0.13f);
             Label(root, "Stamp 30 ms", 564f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
-            Image stampB = Img(root, 764f, y2 + 20f, 160f, 160f, UiColor.AccentPrimary, CircleSprite());
+            Image stampB = Img(root, 764f, y2 + 20f, 160f, 160f, UiColor.AccentPrimary, UiFxGlobals.InkMask(UiInkChannel.Hanko));
             Fx(stampB, UiFxMode.Stamp, 0.13f, Vector3.zero, UiInkChannel.Hanko, 1f, 0.13f);
             Label(root, "Stamp landed", 764f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
 
             Image sdfA = Img(root, 984f, y2 + 10f, 180f, 180f, UiColor.TextPrimary, SdfSprite());
-            Fx(sdfA, UiFxMode.SdfGlyph, 1f, new Vector3(0.08f, 0f, 0f), UiInkChannel.Brush, 1f);
+            Fx(sdfA, UiFxMode.SdfGlyph, 1f, new Vector3(0.08f, 0f, 0f), UiInkChannel.Underline, 1f);
             Label(root, "SDF outline", 984f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
             Image sdfB = Img(root, 1204f, y2 + 10f, 180f, 180f, UiColor.StateGold, SdfSprite());
-            Fx(sdfB, UiFxMode.SdfGlyph, 1f, new Vector3(0.06f, 0.18f, 0f), UiInkChannel.Brush, 1f);
+            Fx(sdfB, UiFxMode.SdfGlyph, 1f, new Vector3(0.06f, 0.18f, 0f), UiInkChannel.Underline, 1f);
             Label(root, "SDF outline + glow", 1204f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
+
+            Image dividerA = Img(root, 1424f, y2 + 30f, 400f, 50f, UiColor.TextPrimary, UiFxGlobals.InkMask(UiInkChannel.Divider));
+            Fx(dividerA, UiFxMode.InkReveal, 0.6f, Vector3.zero, UiInkChannel.Divider, 0.5f);
+            Image dividerB = Img(root, 1424f, y2 + 120f, 400f, 50f, UiColor.TextPrimary, UiFxGlobals.InkMask(UiInkChannel.Divider));
+            Fx(dividerB, UiFxMode.InkReveal, 0.6f, Vector3.zero, UiInkChannel.Divider, 1f);
+            Label(root, "divider t=0.50 / 1.00", 1424f, y2 + 206f, UiType.Caption, UiColor.TextSecondary);
 
             // Row 3 — leaf glint: kinpaku (gold chip) at three phases, ginpaku (ceremony plate); segment bars.
             float y3 = 560f;
@@ -174,22 +180,22 @@ namespace DD.Prototype.UI
             {
                 float x = 64f + i * 260f;
                 Image chip = Img(root, x, y3, 240f, 72f, UiColor.StateGold);
-                Fx(chip, UiFxMode.Leaf, 0.6f, new Vector3(1f, 0f, 0f), UiInkChannel.LeafCrack, phases[i]);
+                Fx(chip, UiFxMode.Leaf, 0.6f, new Vector3(1f, 0f, 0f), UiInkChannel.Underline, phases[i]);
                 Label(root, "1 240", x + 70f, y3 + 18f, UiType.H2, UiColor.SurfaceInset);
                 Label(root, "kinpaku glint t=" + phases[i].ToString("0.0"), x, y3 + 80f, UiType.Caption, UiColor.TextSecondary);
             }
 
             Image silver = Img(root, 864f, y3, 360f, 72f, UiColor.SurfacePanel);
-            Fx(silver, UiFxMode.Leaf, 0.6f, new Vector3(0f, 0f, 0f), UiInkChannel.LeafCrack, 0.5f);
+            Fx(silver, UiFxMode.Leaf, 0.6f, new Vector3(0f, 0f, 0f), UiInkChannel.Underline, 0.5f);
             Label(root, "ginpaku (ceremony) t=0.5", 864f, y3 + 80f, UiType.Caption, UiColor.TextSecondary);
 
             Image track = Img(root, 1264f, y3 + 8f, 560f, 24f, UiColor.BarTrack);
             Image bar = Img(root, 1264f, y3 + 8f, 560f, 24f, UiColor.BarHealth);
-            Fx(bar, UiFxMode.SegmentBar, 1f, new Vector3(0.62f, 10f, 0.8f), UiInkChannel.Brush, 1f);
+            Fx(bar, UiFxMode.SegmentBar, 1f, new Vector3(0.62f, 10f, 0.8f), UiInkChannel.Underline, 1f);
             Label(root, "SegmentBar fill .62 ghost .80 ×10", 1264f, y3 + 40f, UiType.Caption, UiColor.TextSecondary);
             Img(root, 1264f, y3 + 90f, 560f, 12f, UiColor.BarTrack);
             Image solid = Img(root, 1264f, y3 + 90f, 560f, 12f, UiColor.BarReload);
-            Fx(solid, UiFxMode.SegmentBar, 1f, new Vector3(0.4f, 0f, 0f), UiInkChannel.Brush, 1f);
+            Fx(solid, UiFxMode.SegmentBar, 1f, new Vector3(0.4f, 0f, 0f), UiInkChannel.Underline, 1f);
 
             // Row 4 — particles: spark burst mid-life (0.12 s of 0.3), petal drift (loop 4 s); sheen on a menu plate.
             float y4 = 740f;
@@ -211,7 +217,7 @@ namespace DD.Prototype.UI
             Label(root, "petal drift (loop 4 s, RM: still)", 524f, y4 + 266f, UiType.Caption, UiColor.TextSecondary);
 
             Image plate = Img(root, 984f, y4, 840f, 260f, UiColor.SurfacePanel);
-            Fx(plate, UiFxMode.Sheen, 1f, new Vector3(6f, 0f, 0f), UiInkChannel.Brush, 1f);
+            Fx(plate, UiFxMode.Sheen, 1f, new Vector3(6f, 0f, 0f), UiInkChannel.Underline, 1f);
             Label(root, "Sheen (menu, α ≤ 0.05)", 984f, y4 + 266f, UiType.Caption, UiColor.TextSecondary);
             return root;
         }
@@ -258,23 +264,7 @@ namespace DD.Prototype.UI
             UiFactory.Place(t.rectTransform, x, y, 1400f, 40f);
         }
 
-        private static Sprite s_circle, s_sdf;
-
-        private static Sprite CircleSprite()
-        {
-            if (s_circle == null)
-            {
-                s_circle = MakeSprite(128, (u, v) =>
-                {
-                    float d = Mathf.Sqrt((u - 0.5f) * (u - 0.5f) + (v - 0.5f) * (v - 0.5f));
-                    float ring = d < 0.47f && d > 0.36f ? 1f : 0f;
-                    float mark = Mathf.Abs(u - 0.5f) < 0.06f && Mathf.Abs(v - 0.5f) < 0.22f ? 1f : 0f;
-                    return Mathf.Max(ring, mark);
-                });
-            }
-
-            return s_circle;
-        }
+        private static Sprite s_sdf;
 
         private static Sprite SdfSprite()
         {
