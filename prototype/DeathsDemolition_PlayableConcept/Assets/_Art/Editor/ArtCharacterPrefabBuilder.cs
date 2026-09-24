@@ -441,21 +441,36 @@ namespace DD.Art.Pipeline.EditorTools
                 playerFeet.Configure(animator);
                 ArtSecondaryChains.Build(instance, animator, PlayerFolder + "/AP006C-chains.json");   // WP-032F
 
-                var renderers = new SkinnedMeshRenderer[3];
+                // WP-071 · AP-022 rig v002: LOD0 is Player_Body_LOD0 + Player_Head_LOD0 (the head its own renderer for FP, S-01);
+                // v001 had one Player_LOD0. The visual's renderer list = every LOD renderer (skin swap), body LOD0 first.
+                var perLod = new SkinnedMeshRenderer[3];
+                SkinnedMeshRenderer head = null;
                 for (int lod = 0; lod < 3; lod++)
                 {
-                    Transform t = instance.transform.Find("Player_LOD" + lod);
+                    Transform t = lod == 0 ? instance.transform.Find("Player_Body_LOD0") ?? instance.transform.Find("Player_LOD0") : instance.transform.Find("Player_LOD" + lod);
                     if (t == null) throw new InvalidOperationException(LogPrefix + "player model has no Player_LOD" + lod);
                     var smr = t.GetComponent<SkinnedMeshRenderer>();
                     smr.sharedMaterial = material;
                     ConfigureSkinnedRenderer(smr, lod >= 2);
-                    renderers[lod] = smr;
+                    perLod[lod] = smr;
                 }
 
+                Transform headT = instance.transform.Find("Player_Head_LOD0");
+                if (headT != null)
+                {
+                    head = headT.GetComponent<SkinnedMeshRenderer>();
+                    head.sharedMaterial = material;
+                    ConfigureSkinnedRenderer(head, false);
+                }
+
+                SkinnedMeshRenderer[] renderers = head == null ? perLod : new[] { perLod[0], head, perLod[1], perLod[2] };
                 LODGroup group = instance.GetComponent<LODGroup>() ?? instance.AddComponent<LODGroup>();
-                ApplyLods(group, renderers, PlayerIntendedDistances, r => new[] { r });
+                ApplyLods(group, perLod, PlayerIntendedDistances, r => head != null && r == perLod[0] ? new Renderer[] { r, head } : new Renderer[] { r });
 
                 Dictionary<string, Transform> bones = ArtCharacterContract.Bones(instance, PlayerArmature);
+                // WP-071: rig v002's twist bones, driven after the grip IK (P-06 convention; a v001 rig configures to none)
+                TwistCorrector twist = instance.GetComponent<TwistCorrector>() ?? instance.AddComponent<TwistCorrector>();
+                twist.Configure(n => bones.TryGetValue(n, out Transform b) ? b : null);
                 bones.TryGetValue(PlayerSkinnedVisual.WeaponSocketName, out Transform weaponSocket);
                 bones.TryGetValue(PlayerSkinnedVisual.BackSocketName, out Transform backSocket);
                 if (weaponSocket == null) throw new InvalidOperationException(LogPrefix + "player model has no " + PlayerSkinnedVisual.WeaponSocketName);

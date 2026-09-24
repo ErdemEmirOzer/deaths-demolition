@@ -315,7 +315,7 @@ namespace DD.Art.Tests.PlayMode
             yield return RunAP005();
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(pv.GripIk, "WeaponGripIk bağlı değil");
-            Assert.AreEqual(0, pv.HeadRenderers.Length, "baş henüz ayrı renderer değil (P-06 rig v002)");
+            Assert.AreEqual(1, pv.HeadRenderers.Length, "baş ayrı renderer (P-06 rig v002, S-01 FP)");
             yield return CharacterTests.Bekle(() => pv.GripIk.Grip != null && pv.GripIk.Weight >= 0.999f, 3f, "sol el kabzada");
             for (int i = 0; i < 10; i++) yield return null;
             float heldError = pv.GripIk.LastError;
@@ -332,6 +332,36 @@ namespace DD.Art.Tests.PlayMode
         }
 
         // ================================================================================ rise
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Twist_RigV002_SurucuBurulmasi_AgirlikKadarDagitilir()
+        {
+            // WP-071 · AP-022 rig v002: the eight twist bones follow their driver's twist × P-06's weight (−0.5 / +0.4 / +0.8 / −0.5).
+            yield return RunAP005();
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            TwistCorrector tc = pv.Animator.GetComponent<TwistCorrector>();
+            Assert.IsNotNull(tc, "TwistCorrector");
+            Assert.AreEqual(8, tc.LinkCount);
+            for (int f = 0; f < 30; f++) yield return null;
+            for (int i = 0; i < tc.LinkCount; i++)
+            {
+                float a = tc.AngleOf(i);
+                Assert.IsFalse(float.IsNaN(a) || Mathf.Abs(a) > 90f, tc.BoneOf(i).name + " oyunda makul burulma: " + a);
+            }
+
+            // Same frame, no yield: the grip IK / mount alignment also write these arms in LateUpdate.
+            var sb = new System.Text.StringBuilder("[DD-TEST] wp071.twist");
+            for (int i = 0; i < tc.LinkCount; i++)
+            {
+                tc.PoseDriverForTest(i, 60f);
+                tc.Apply();
+                sb.Append(' ').Append(tc.BoneOf(i).name).Append('=').Append(tc.AngleOf(i).ToString("F1", CultureInfo.InvariantCulture));
+                Assert.AreEqual(tc.WeightOf(i) * 60f, tc.AngleOf(i), 0.5f, tc.BoneOf(i).name + " ağırlık × 60°");
+            }
+
+            Debug.Log(sb.ToString());
+        }
 
         [UnityTest]
         [Timeout(300000)]

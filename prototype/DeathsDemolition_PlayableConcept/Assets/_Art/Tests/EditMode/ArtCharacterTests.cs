@@ -82,11 +82,17 @@ namespace DD.Art.Tests.EditMode
             Dictionary<string, Transform> bones = ArtCharacterContract.Bones(model, ArtCharacterPrefabBuilder.PlayerArmature);
             int secondary = 0; foreach (string b in bones.Keys) if (b.StartsWith(ArtCharacterContract.SecondaryBonePrefix)) secondary++;
             Assert.AreEqual(ArtCharacterContract.PlayerSecondaryBones, secondary, "WP-032F: AP-006C sec_* zincir kemikleri (4 zincir / 7)");
-            Assert.AreEqual(ArtCharacterContract.BoneCount + ArtCharacterContract.PlayerSecondaryBones, bones.Count, "PlayerRig altında 56 transform (Root + 52 + 3 soket) + 7 sec_*");
+            Assert.AreEqual(ArtCharacterContract.BoneCount + ArtCharacterContract.PlayerSecondaryBones + ArtCharacterContract.PlayerRigV002Bones, bones.Count, "PlayerRig altında 56 transform (Root + 52 + 3 soket) + 7 sec_* + 14 rig v002 (twist ×8, jaw, fp_camera, ik ×4)");
             foreach (string s in ArtCharacterContract.Sockets) Assert.IsTrue(bones.ContainsKey(s), "soket yok: " + s);
-            for (int lod = 0; lod < 3; lod++) Assert.IsNotNull(model.transform.Find("Player_LOD" + lod), "Player_LOD" + lod);
-            int tris0 = (int)(model.transform.Find("Player_LOD0").GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0) / 3);
-            Assert.LessOrEqual(tris0, 25000, "AP-006 LOD0 tavanı 25 000");
+            foreach (string t in ArtCharacterContract.PlayerTwistBones) Assert.IsTrue(bones.ContainsKey(t), "twist kemiği yok: " + t);
+            Assert.AreEqual("Head", bones["fp_camera"].parent.name, "fp_camera Head çocuğu (S-01)");
+            // WP-071 · AP-022 rig v002: LOD0 = gövde + ayrı baş (FP ShadowsOnly), LOD1/2 tek parça
+            Transform body0 = model.transform.Find("Player_Body_LOD0"), head0 = model.transform.Find("Player_Head_LOD0");
+            Assert.IsNotNull(body0, "Player_Body_LOD0");
+            Assert.IsNotNull(head0, "Player_Head_LOD0");
+            for (int lod = 1; lod < 3; lod++) Assert.IsNotNull(model.transform.Find("Player_LOD" + lod), "Player_LOD" + lod);
+            int tris0 = (int)((body0.GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0) + head0.GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0)) / 3);
+            Assert.LessOrEqual(tris0, 25000, "AP-006 LOD0 tavanı 25 000 (gövde + baş)");
         }
 
         [Test]
@@ -131,7 +137,12 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(visual.Animator);
             Assert.IsTrue(visual.Animator.avatar != null && visual.Animator.avatar.isHuman, "Humanoid avatar");
             Assert.IsNotNull(visual.Animator.runtimeAnimatorController, "controller");
-            Assert.AreEqual(3, visual.Renderers.Length);
+            Assert.AreEqual(4, visual.Renderers.Length, "gövde LOD0 + baş LOD0 + LOD1 + LOD2 (rig v002)");
+            Assert.AreEqual(1, visual.HeadRenderers.Length, "baş ayrı renderer (S-01 FP)");
+            Assert.AreEqual(2, visual.GetComponentInChildren<LODGroup>().GetLODs()[0].renderers.Length, "LOD0 = gövde + baş");
+            var twist = visual.GetComponentInChildren<TwistCorrector>();
+            Assert.IsNotNull(twist, "WP-071: TwistCorrector");
+            Assert.AreEqual(8, twist.LinkCount, "8 twist kemiği bağlı");
             var material = AssetDatabase.LoadAssetAtPath<Material>(ArtCharacterPrefabBuilder.PlayerMaterial);
             foreach (SkinnedMeshRenderer r in visual.Renderers)
             {
