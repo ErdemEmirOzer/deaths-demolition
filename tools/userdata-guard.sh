@@ -28,6 +28,10 @@
 #   live foreign process holds either lock, copies, then hashes the COPIES (before*.txt describe what
 #   restore will put back) and re-checks the live files — a difference means a save landed mid-copy:
 #   retake (3 tries). restore waits the same way before touching an area whose lock is held.
+# WP-066M: while a snapshot is active a sampler records every running Player process every 5 s
+#   (<dir>/players.log: utc, pid, command line — the .app path and -logFile name the session/run); it stops
+#   on restore (flag file removed; nothing is killed) or after 6 h. restore attributes each changed file
+#   (in or out of scope) to the Players alive at its mtime ± 10 s → <dir>/attribution.txt, one line per file.
 # Exit: 0 ok · 75 busy (a live foreign lock holder / live data kept changing) — nothing restored in that area · 30 restore did not reproduce the snapshot or a PlayerPrefs key not in it remains
 # (<dir>/extra-keys.txt) · 64 usage
 set -u
@@ -132,6 +136,12 @@ if [ "$CMD" = snapshot ]; then
     [ "$try" -ge 3 ] && { dd_log "userdata-guard: live data changed during the snapshot 3 times — $DIR/live-at-snapshot.txt"; exit 75; }
     dd_log "userdata-guard: a save landed during the snapshot (try $try) — retaking"; try=$((try+1)); sleep 2
   done
+  # WP-066M: Player-process sampler for attribution (own background loop; ends when restore removes the flag).
+  : > "$DIR/players.log"; touch "$DIR/.sampling"
+  ( n=0; while [ -f "$DIR/.sampling" ] && [ $n -lt 4320 ]; do
+      ps -axo pid=,command= 2>/dev/null | grep -E "Contents/MacOS/(Deaths Demolition|DeathsDemolition)" | grep -v grep \
+        | while IFS= read -r l; do printf '%s\t%s\n' "$(date -u +%s)" "$l"; done >> "$DIR/players.log"
+      sleep 5; n=$((n+1)); done ) < /dev/null > /dev/null 2>&1 &
   dd_log "userdata-guard snapshot → $SNAP"
   exit 0
 fi
@@ -143,6 +153,7 @@ if [ ! -f "$DIR/before-editor.txt" ]; then
   grep -F -v -e "  $D1/" -e "  $P2 " "$DIR/before.txt" > "$DIR/before-player.txt"
 fi
 settle "$DOM1" "$P1"; settle "$DOM2" "$P2"
+rm -f "$DIR/.sampling"   # WP-066M: stops the sampler
 LOCKDIRS=(); in_scope editor && LOCKDIRS+=("$D1"); in_scope player && LOCKDIRS+=("$D2")
 wait_unlocked "${LOCKDIRS[@]}" || { dd_log "userdata-guard: NOT restored — a live process holds the profile (retry when it exits)"; exit 75; }
 state > "$DIR/after-run.txt"
@@ -151,6 +162,9 @@ for a in editor player; do
   state_of $a > "$DIR/after-run-$a.txt"
   in_scope $a || cmp -s "$DIR/before-$a.txt" "$DIR/after-run-$a.txt" || diff "$DIR/before-$a.txt" "$DIR/after-run-$a.txt" | grep '^>' | sed "s|^> |$a  |" >> "$DIR/out-of-scope-changed.txt"
 done
+# WP-066M: who wrote each changed file — Players alive at its mtime (± 10 s), from the sampler.
+python3 "${0:A:h}/userdata_attrib.py" "$DIR" || true
+[ -s "$DIR/attribution.txt" ] && dd_log "userdata-guard: writers → $DIR/attribution.txt"
 [ -s "$DIR/out-of-scope-changed.txt" ] && dd_log "WARNING userdata-guard: the $( in_scope editor && echo player || echo editor ) area changed during the run and was NOT restored (--scope $SCOPE: someone else's run or the user) — $DIR/out-of-scope-changed.txt"
 TOUCHED=0; for a in "${AREAS[@]}"; do cmp -s "$DIR/before-$a.txt" "$DIR/after-run-$a.txt" || TOUCHED=1; done
 if [ "$TOUCHED" -eq 1 ]; then
