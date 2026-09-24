@@ -893,7 +893,8 @@ namespace DD.Prototype.UI
                 Vector3 towards = staged ? CaptureRearDirection.Value : threat.RearDirection;
                 bool look = CameraModeService.IsLookMode;
                 _playerArcs.SetRear(rear && !look, towards);
-                _rearEdge.Tick(rear && look, towards, Camera.main, CameraModeService.Current == CameraMode.FirstPerson, ScreenRect.rect.size);
+                int avoid = rear && look ? RearEdgeAvoidRects(_rearAvoid) : 0;
+                _rearEdge.Tick(rear && look, towards, Camera.main, CameraModeService.Current == CameraMode.FirstPerson, ScreenRect.rect.size, _rearAvoid, avoid);
             }
 
             int windup = fighting ? threat.WindingUp : 0;
@@ -1012,6 +1013,7 @@ namespace DD.Prototype.UI
             // hides while the camera blends between modes (fire is swallowed then, D-14).
             bool look = CameraModeService.IsLookMode;
             _reticle.SetMode(CameraModeService.Current);
+            ApplyModeLayout();
             bool reticleShown = show && !CameraModeService.IsTransitioning;
 
             Vector2 local = OffScreen;

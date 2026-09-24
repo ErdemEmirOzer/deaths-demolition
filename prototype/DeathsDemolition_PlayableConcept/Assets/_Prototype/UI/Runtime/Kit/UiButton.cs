@@ -44,6 +44,7 @@ namespace DD.Prototype.UI
         private Action _onClick;
 
         private bool _selectedChoice;
+        private bool _segment;
         private bool _configured;
 
         private Color _fillTarget;
@@ -114,6 +115,21 @@ namespace DD.Prototype.UI
             // they are written, or the control spends its first frames fading in from
             // fully transparent - which reads as a rendering fault, not as a transition.
             Refresh(true);
+        }
+
+        /// <summary>
+        /// AD R1-A SHOULD-1 (Nav.Segment): in a horizontal segmented row the choice is carried by the raised fill and the
+        /// cream outline; the Nav tick belongs to vertical lists, where it marks a row in a column.
+        /// </summary>
+        public void SetSegment(bool segment)
+        {
+            if (_segment == segment)
+            {
+                return;
+            }
+
+            _segment = segment;
+            Refresh(false);
         }
 
         /// <summary>Marks this control as the current choice in its group.</summary>
@@ -357,7 +373,7 @@ namespace DD.Prototype.UI
                 _ring.SetActive(focused);
             }
 
-            bool showMarker = _selectedChoice && _variant == UiButtonVariant.Nav;
+            bool showMarker = _selectedChoice && _variant == UiButtonVariant.Nav && !_segment;
             if (_marker != null && _marker.gameObject.activeSelf != showMarker)
             {
                 _marker.gameObject.SetActive(showMarker);

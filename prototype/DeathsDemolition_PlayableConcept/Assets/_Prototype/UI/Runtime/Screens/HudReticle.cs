@@ -67,6 +67,7 @@ namespace DD.Prototype.UI
         private Vector2 _arc = new Vector2(ArcWidth, TickLength * 0.8f);
         private readonly Image _dot;
         private readonly Image _dotBack;
+        private readonly Image _pelletBack;   // AD R1-A SHOULD-4: the pellet ring's Sumi twin (look modes)
         private readonly Image[] _backs = new Image[4];
         private float _edge;
         private int _mode = -1;
@@ -120,6 +121,7 @@ namespace DD.Prototype.UI
             _minRadius = look ? LookMinRadius * _styleScale : MinRadius;
             _dot.enabled = look;
             _dotBack.enabled = look;
+            _shownPellet = -1f;   // re-evaluate the pellet ring's twin
             for (int i = 0; i < _backs.Length; i++)
             {
                 _backs[i].enabled = look;
@@ -148,6 +150,13 @@ namespace DD.Prototype.UI
 
             _barSprite = UiArt.Icon("Pip.Full");
             _arcSprite = UiArt.Icon("Reticle.SpreadArc");
+
+            _pelletBack = UiFactory.NewImage("PelletRingBack", _root, UiColor.HudInk, UiSprites.RingHairline);
+            Color pelletBack = _pelletBack.color;
+            pelletBack.a = 0.98f;
+            _pelletBack.color = pelletBack;
+            _pelletBack.raycastTarget = false;
+            _pelletBack.enabled = false;
 
             _pellet = UiFactory.NewImage("PelletRing", _root, UiColor.TextPrimary, UiSprites.RingHairline);
             Color pellet = _pellet.color;
@@ -311,6 +320,8 @@ namespace DD.Prototype.UI
                 _pellet.enabled = pellet > MinRadius;
                 float d = Mathf.Round(pellet * 2f);
                 ((RectTransform)_pellet.transform).sizeDelta = new Vector2(d, d);
+                _pelletBack.enabled = _pellet.enabled && _mode > 0;   // outside the cream line, look modes only
+                _pelletBack.rectTransform.sizeDelta = new Vector2(d + 4f * _edge, d + 4f * _edge);
             }
 
             if (state != _state || specialActive != _gold)

@@ -663,7 +663,7 @@ namespace DD.Prototype.UI
             UiSwitch dot = UiSwitch.Create("CentreDot", content, "CENTRE DOT", UiSettings.CentreDot, on => UiSettings.CentreDot = on);
             AddSettingRow(ref stack, dot.transform);
             AddCaptionUnder(ref stack, content, "CameraNote",
-                "Third and first person only; switch the view in Pause. A wider view, less head bob and the centre dot ease motion sickness.", 2, UiSpace.S);
+                "Third and first person only; switch the view in Pause. A low field of view causes more motion sickness; Reduced Motion (Accessibility) sets head bob to 0 and cuts the blends.", 3, UiSpace.S);   // AD R1-A SHOULD-8
 
             AddSettingsSection(ref stack, content, "DATA", true);
             UiSwitch telemetry = UiSwitch.Create("Telemetry", content, "RUN TELEMETRY", UiSettings.Telemetry,

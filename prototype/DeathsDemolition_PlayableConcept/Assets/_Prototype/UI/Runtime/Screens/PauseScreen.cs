@@ -85,7 +85,7 @@ namespace DD.Prototype.UI
         {
             "The original view: the whole street, aim with the pointer.",
             "Over the shoulder: look with the mouse or right stick, aim at the centre.",
-            "Eye level: the closest view. Threats behind you are heard, not seen.",
+            "Eye level: the closest view; threats behind you show at the screen edge.",   // AD R1-A SHOULD-2
         };
 
         private readonly UiButton[] _cameraButtons = new UiButton[3];
@@ -428,6 +428,7 @@ namespace DD.Prototype.UI
                 // Nav: the kit's "current choice" look - raised fill, cream outline and tick; the other segments read quieter.
                 UiButton button = UiFactory.Button("Camera." + mode, row, CameraModeNames[i], UiButtonVariant.Nav, () => ChooseCamera(mode));
                 button.LabelText.alignment = TextAlignmentOptions.Center;
+                button.SetSegment(true);   // AD R1-A SHOULD-1: no tick in a segmented row
                 var rect = (RectTransform)button.transform;
                 rect.anchorMin = new Vector2(i / 3f, 0f);
                 rect.anchorMax = new Vector2((i + 1) / 3f, 1f);

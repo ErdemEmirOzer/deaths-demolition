@@ -209,6 +209,8 @@ namespace DD.Prototype.UI
         private void BuildRingWeapon()
         {
             RectTransform root = Cluster("ClassicWeapon", new Vector2(1f, 0f), new Vector2(-InkMargin, InkMargin), new Vector2(400f, 140f), true);
+            _weaponCluster = root;
+            _weaponHome = root.anchoredPosition;
             RectTransform back = BackPlane(root);
             RectTransform host = UiFactory.NewRect("Content", root);
             UiFactory.Fill(host);
@@ -486,6 +488,98 @@ namespace DD.Prototype.UI
             }
 
             return UiWorldMarker.AvoidOnEdge(UiWorldMarker.EdgePoint(direction, half), half, _markerAvoid, count);
+        }
+
+        // ---- M4-R1 N2 per-mode layout and the rear-edge arc's clearances (AD R1-A MUST-1 / MUST-2)
+
+        /// <summary>
+        /// AD R1-A MUST-2 fallback: the first-person viewmodel's hand and grip rest in the lower right (at 1080: x 1500–1920,
+        /// y 740–1080). In FP the weapon cluster rises above it (bottom = that top + 12 px); TD and TP keep the corner.
+        /// </summary>
+        public const float ViewmodelTopFraction = (1080f - 740f) / 1080f;
+        public const float ViewmodelClearance = 12f;
+
+        private RectTransform _weaponCluster;
+        private Vector2 _weaponHome;
+        private int _layoutMode = -1;
+        private float _layoutHeight = -1f;
+        private readonly Rect[] _rearAvoid = new Rect[12];
+
+        /// <summary>Where the weapon cluster sits for a camera mode and canvas height (tests).</summary>
+        public static Vector2 WeaponClusterPosition(Vector2 home, bool firstPerson, float canvasHeight)
+        {
+            return firstPerson ? new Vector2(home.x, Mathf.Max(home.y, canvasHeight * ViewmodelTopFraction + ViewmodelClearance)) : home;
+        }
+
+        public RectTransform WeaponCluster
+        {
+            get { return _weaponCluster; }
+        }
+
+        private void ApplyModeLayout()
+        {
+            if (_weaponCluster == null)
+            {
+                return;
+            }
+
+            int mode = (int)DD.Prototype.CameraSystem.CameraModeService.Current;
+            float height = ScreenRect.rect.height;
+            if (mode == _layoutMode && Mathf.Approximately(height, _layoutHeight))
+            {
+                return;
+            }
+
+            bool first = _layoutMode >= 0;
+            _layoutMode = mode;
+            _layoutHeight = height;
+            Vector2 at = WeaponClusterPosition(_weaponHome, mode == (int)DD.Prototype.CameraSystem.CameraMode.FirstPerson, height);
+            if (first)
+            {
+                UiMotion.Move(_weaponCluster, at, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            }
+            else
+            {
+                _weaponCluster.anchoredPosition = at;
+            }
+        }
+
+        /// <summary>
+        /// The rects the rear-edge arc keeps clear of, in canvas px (centre origin): the ink clusters (live - FP's lifted
+        /// weapon cluster included), the chip row, the Special block and the banner while they show, and the prompt /
+        /// countdown slot at the bottom centre (reserved).
+        /// </summary>
+        public int RearEdgeAvoidRects(Rect[] into)
+        {
+            int n = 0;
+            for (int i = 0; i < _clusters.Count && n < into.Length; i++)
+            {
+                into[n++] = CanvasRectOf(_clusters[i]);
+            }
+
+            if (_threatRow != null && n < into.Length)
+            {
+                into[n++] = CanvasRectOf((RectTransform)_threatRow.transform);
+            }
+
+            if (_specialBlock != null && _specialBlock.activeInHierarchy && n < into.Length)
+            {
+                into[n++] = CanvasRectOf((RectTransform)_specialBlock.transform);
+            }
+
+            if (_banner != null && _bannerRemaining > 0f && n < into.Length)
+            {
+                into[n++] = CanvasRectOf(_banner.Clip);
+            }
+
+            if (n < into.Length)
+            {
+                float bottom = -ScreenRect.rect.height * 0.5f;
+                Vector2 slot = HudRearEdge.PromptSlot;
+                into[n++] = new Rect(-slot.x * 0.5f, bottom + 24f, slot.x, slot.y);
+            }
+
+            return n;
         }
 
         /// <summary>The marker-avoid rects in canvas px (test readout: the sweep checks the marker never meets one).</summary>

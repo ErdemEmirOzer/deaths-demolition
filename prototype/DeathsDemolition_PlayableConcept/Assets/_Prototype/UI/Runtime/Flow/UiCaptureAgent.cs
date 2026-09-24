@@ -1029,6 +1029,19 @@ namespace DD.Prototype.UI
                     RunHudScreen.CaptureRearDirection = Vector3.back;
                     yield return new WaitForSecondsRealtime(0.4f);
                     yield return Frame(folder, "hud-threat");
+
+                    // M4-R1 N2 (AD R1-A MUST-1d): third / first person - the rear-edge arc at 120°, 180° and 240° from the
+                    // camera's heading (all outside the view), the stroke on the inset, clear of the clusters.
+                    if (DD.Prototype.CameraSystem.CameraModeService.IsLookMode && Camera.main != null)
+                    {
+                        foreach (int bearing in RearBearings)
+                        {
+                            RunHudScreen.CaptureRearDirection = RearFromCamera(bearing);
+                            yield return new WaitForSecondsRealtime(0.4f);
+                            yield return Frame(folder, "hud-rear-" + bearing);
+                        }
+                    }
+
                     RunHudScreen.CaptureThreats = false;
                     RunHudScreen.CaptureRearDirection = null;
                     yield return new WaitForSecondsRealtime(1.2f);   // the chips' 800 / 300 ms hysteresis
@@ -1197,6 +1210,17 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.6f);
                 yield return Frame(folder, "hud-special-online");
 
+                // AD R1-A MUST-1d: straight behind with the Special ring up - the arc lifts above the ring, x unchanged.
+                if (DD.Prototype.CameraSystem.CameraModeService.IsLookMode && Camera.main != null)
+                {
+                    RunHudScreen.CaptureRearDirection = RearFromCamera(180);
+                    RunHudScreen.CaptureThreats = true;
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    yield return Frame(folder, "hud-rear-180-special");
+                    RunHudScreen.CaptureRearDirection = null;
+                    RunHudScreen.CaptureThreats = false;
+                }
+
                 yield return WaitFor(() => WeaponEvents.Special.FinalSecondsWarning, 60f);
                 yield return new WaitForSecondsRealtime(0.5f);
                 yield return Frame(folder, "hud-special-final");
@@ -1240,6 +1264,14 @@ namespace DD.Prototype.UI
                 return "\"id\": \"" + id + "\", \"mode\": \"" + Screen.fullScreenMode + "\", \"screen\": \"" + Screen.width + "x" + Screen.height + "\"";
             }
 
+            private static readonly int[] RearBearings = { 120, 180, 240 };
+
+            /// <summary>A world direction at <paramref name="bearing"/>° clockwise from the main camera's flat heading.</summary>
+            private static Vector3 RearFromCamera(int bearing)
+            {
+                Vector3 forward = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up).normalized;
+                return Quaternion.Euler(0f, bearing, 0f) * forward;
+            }
 
         }
     }

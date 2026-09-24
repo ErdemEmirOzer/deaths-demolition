@@ -119,6 +119,77 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void ArkaYay_64Yonde_KumelereGirmez_CizgiIcKenarda_EkranIcinde()
+        {
+            var canvases = new (string Name, float W, float H, float Tall)[] { ("1080", 1920f, 1080f, 1f), ("21:9", 2560f, 1080f, 1f), ("mac", 1600f, 1039f, 1.25f) };
+            var failures = new System.Collections.Generic.List<string>();
+            foreach (var c in canvases)
+            {
+                float hw = c.W * 0.5f, hh = c.H * 0.5f;
+                float fpLift = RunHudScreen.WeaponClusterPosition(new Vector2(-32f, 32f), true, c.H).y;
+                foreach (string variant in new[] { "base", "special", "fp" })
+                {
+                    var rects = new System.Collections.Generic.List<Rect>
+                    {
+                        Rect.MinMaxRect(-hw + 32f, hh - 32f - 36f, -hw + 32f + 170f, hh - 32f),                        // gold
+                        Rect.MinMaxRect(-120f, hh - 24f - 56f, 120f, hh - 24f),                                          // seal
+                        Rect.MinMaxRect(-320f, hh - 110f - 30f, 320f, hh - 110f),                                        // chip row
+                        Rect.MinMaxRect(-hw + 32f, -hh + 32f, -hw + 32f + 380f, -hh + 32f + 110f * c.Tall),             // health
+                        variant == "fp"
+                            ? Rect.MinMaxRect(hw - 32f - 400f, -hh + fpLift, hw - 32f, -hh + fpLift + 140f * c.Tall)     // weapon, FP lifted
+                            : Rect.MinMaxRect(hw - 32f - 400f, -hh + 32f, hw - 32f, -hh + 32f + 140f * c.Tall),         // weapon
+                        new Rect(-HudRearEdge.PromptSlot.x * 0.5f, -hh + 24f, HudRearEdge.PromptSlot.x, HudRearEdge.PromptSlot.y),   // prompt slot
+                    };
+                    if (variant == "special")
+                    {
+                        rects.Add(Rect.MinMaxRect(-110f, -hh + 24f, 110f, -hh + 24f + 216f));                           // Special ring block
+                    }
+
+                    Rect[] avoid = rects.ToArray();
+                    var canvas = new Vector2(c.W, c.H);
+                    for (int b = 0; b < 64; b++)
+                    {
+                        float bearing = b * 360f / 64f - 180f;
+                        Vector2 centre = HudRearEdge.Place(bearing, canvas, avoid, avoid.Length);
+                        Rect stroke = HudRearEdge.StrokeBox(centre, bearing);
+                        for (int i = 0; i < avoid.Length; i++)
+                        {
+                            Rect clear = Rect.MinMaxRect(avoid[i].xMin - HudRearEdge.Clearance + 0.5f, avoid[i].yMin - HudRearEdge.Clearance + 0.5f,
+                                avoid[i].xMax + HudRearEdge.Clearance - 0.5f, avoid[i].yMax + HudRearEdge.Clearance - 0.5f);
+                            if (stroke.Overlaps(clear))
+                            {
+                                failures.Add(c.Name + "/" + variant + " " + bearing + "°: stroke " + stroke + " meets rect " + i);
+                            }
+                        }
+
+                        float half = HudRearEdge.Size * 0.5f;
+                        if (Mathf.Abs(centre.x) + half > hw - HudRearEdge.Clearance + 0.5f || Mathf.Abs(centre.y) + half > hh - HudRearEdge.Clearance + 0.5f)
+                        {
+                            failures.Add(c.Name + "/" + variant + " " + bearing + "°: sprite leaves the screen - 12 px at " + centre);
+                        }
+                    }
+                }
+
+                // Straight behind with nothing in the way... except the reserved prompt slot: the stroke's apex on the inset.
+                Vector2 behind = HudRearEdge.Place(180f, new Vector2(c.W, c.H), new Rect[0], 0);
+                float apex = behind.y - HudRearEdge.StrokeMidRadius;
+                Assert.AreEqual(-(hh - HudRearEdge.EdgeInset), apex, 2f, c.Name + ": çizginin orta noktası iç kenarda (96 px), fiziksel kenarda değil");
+            }
+
+            Assert.IsEmpty(failures, string.Join("\n", failures));
+        }
+
+        [Test]
+        public void FpSilahKumesi_GorusModelininUstunde_TepedenVeTpYerinde()
+        {
+            var home = new Vector2(-32f, 32f);
+            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, false, 1080f), "TD / TP: köşe (parite)");
+            Vector2 fp = RunHudScreen.WeaponClusterPosition(home, true, 1080f);
+            Assert.AreEqual(home.x, fp.x, 0.001f);
+            Assert.AreEqual(1080f - 728f, fp.y, 1f, "AD R1-A MUST-2: 1080'de küme altı y ≤ 728 (görüş modeli üstü + 12)");
+        }
+
+        [Test]
         public void Nisangah_ModStili_TP14NoktaIle_FP80_TepedenEski()
         {
             var host = new GameObject("ReticleHost", typeof(RectTransform));

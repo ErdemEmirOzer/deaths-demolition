@@ -57,6 +57,30 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(HudReticle.LookMinRadius, hud.Reticle.MinimumRadius, 0.001f);
             Assert.IsFalse(UiCursor.ContextVisible, "oyunda imleç bağlamı gizli");
 
+            // AD R1-A MUST-2: first person lifts the weapon cluster above the viewmodel's hand; top-down puts it back.
+            Vector2 home = hud.WeaponCluster.anchoredPosition;
+            pause.SetPaused(true);
+            yield return null;
+            pause.ChooseCamera(CameraMode.FirstPerson);
+            pause.SetPaused(false);
+            yield return Bekle(() => !CameraModeService.IsTransitioning, 5f, "harman biter");
+            yield return new WaitForSecondsRealtime(0.5f);   // the cluster's Base move
+            float height = ((RectTransform)hud.WeaponCluster.parent).rect.height;
+            Vector2 lifted = RunHudScreen.WeaponClusterPosition(home, true, height);
+            Assert.AreEqual(lifted.y, hud.WeaponCluster.anchoredPosition.y, 2f, "FP: silah kümesi görüş modelinin üstünde");
+            Assert.IsTrue(hud.Reticle.DotShown);
+
+            // AD R1-A MUST-1: BEHIND YOU straight behind the camera shows the edge arc on screen, its stroke above the bottom.
+            Vector3 forward = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up).normalized;
+            RunHudScreen.CaptureRearDirection = -forward;
+            yield return new WaitForSecondsRealtime(0.5f);
+            Assert.IsTrue(hud.RearEdge.Shown, "FP: arkadaki tehdit kenar yayı olarak görünür");
+            Vector2 arc = hud.RearEdge.Position;
+            Assert.Less(Mathf.Abs(arc.x), height, "yay ekranda (park edilmiş değil)");
+            Assert.Less(arc.y, 0f, "tam arka = alt yarı");
+            Assert.Greater(arc.y - HudRearEdge.StrokeMidRadius, -height * 0.5f + HudRearEdge.EdgeInset - 3f, "çizgi iç kenarda, fiziksel kenarda değil");
+            RunHudScreen.CaptureRearDirection = null;
+
             pause.SetPaused(true);
             yield return null;
             pause.ChooseCamera(CameraMode.TopDown);
@@ -66,6 +90,8 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current);
             Assert.IsFalse(hud.Reticle.DotShown, "tepeden: nokta yok");
+            yield return new WaitForSecondsRealtime(0.5f);
+            Assert.AreEqual(home.y, hud.WeaponCluster.anchoredPosition.y, 2f, "tepeden: küme köşesine döner");
             Assert.AreEqual(0, UiSettings.CameraMode);
 
             PrototypeUiFlow.AbortRunToMainMenu();
