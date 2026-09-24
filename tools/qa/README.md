@@ -47,6 +47,10 @@ Kapı değerleri araç içinde değiştirilmez: perf ort. ≤ 8,0 ms ve temiz p9
 
 ≤ 2 Unity batch süreci (C-00 `slot.sh`); perf ölçümü yalnız temiz pencerede (Blender ve diğer Unity < %50 CPU); gece koşusu tercih edilir. Kapanış koşusu C-00 tetikler (tüm M3 paketleri merge olunca).
 
+## Soak kapısı (DEC-091, 2026-09-24)
+
+Kararlılık (MUST): `-ddQaBotStability` ile 2 tohum (61, 26) × 12/12 → `tools/qa/soak_gate.py <bot-summary.json> --rounds 12 --seed S --stability --player-log <player.log>`. Gerçek bot: kapı değil, `soak_gate.py --report <≥5 bot-summary.json>` dağılımı.
+
 ## Kapanış listesi ekleri (C-00, 2026-09-17)
 
 Tam koşuda (`--quick` değil) aggregate'e elle eklenecek/ayrıca bakılacak maddeler: (1) `RegionalArmorSliceTests.VurusYolu_SifirAyirma` — WP-034 r2 / WP-036 üzerinde 12/16 KB aralıklı ayırma; kapanış koşusunda 3 tekrar, sonucu `qa-report.txt` altına not; (2) DEC-077 motor içi ölçüm (WP-036 devri) — `QaReadabilityGate` gerçek karışım değerleri bu ölçümün yerini tutar, WP-036'nın kendi ölçümüyle yan yana raporlanır; (3) release build 453 MB — tavan (450) kullanıcı kararı bekliyor, kapı değil, `build.sh release` boyutu rapora yazılır.

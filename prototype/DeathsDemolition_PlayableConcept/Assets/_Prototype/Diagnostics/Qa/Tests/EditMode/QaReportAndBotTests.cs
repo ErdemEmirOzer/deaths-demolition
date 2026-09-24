@@ -80,6 +80,7 @@ namespace DD.Prototype.Qa.Tests.EditMode
                 CameraForward = Vector3.forward,
                 CameraRight = Vector3.right,
                 SecondsSinceDamage = 999f,
+                HealthRatio = 1f,
                 WeaponCanFire = true,
                 HasWaypoint = true,
                 WaypointDirection = Vector3.right,
@@ -118,6 +119,58 @@ namespace DD.Prototype.Qa.Tests.EditMode
             QaBotCommand retreat = brain.Decide(o);
             Assert.AreEqual(QaBotMode.Retreat, retreat.Mode);
             Assert.Less(retreat.Move.y, -0.9f, "hasar sonrası hedeften uzağa");
+
+            o.SecondsSinceDamage = 999f;
+            o.HealthRatio = 0.5f;
+            Assert.AreEqual(QaBotMode.Retreat, brain.Decide(o).Mode, "düşük can, hasar penceresi bitse de mesafe açmalı");
+            o.HealthRatio = 1f;
+            o.NearbyEnemies = QaBotBrain.CrowdRetreatCount;
+            Assert.AreEqual(QaBotMode.Retreat, brain.Decide(o).Mode, "yoğun yakın baskıda çevrelemek yerine kaçmalı");
+        }
+
+        [Test]
+        public void Bot_KacisPlanlayici_UcTaraftanKusatmada_AcikYonuSecer_DuvariReddeder()
+        {
+            // WP-064B: crowd north, east and west of the player at 2–4 m; south is open ground
+            var threats = new[] { new Vector3(0f, 0f, 2.5f), new Vector3(1.5f, 0f, 3f), new Vector3(3f, 0f, 0.5f), new Vector3(-3f, 0f, 0.2f), new Vector3(-2f, 0f, 2.5f) };
+            var weights = new[] { 1f, 1f, 1f, 1f, 1f };
+            Vector3 best = Vector3.zero; float bestScore = float.NegativeInfinity;
+            for (int k = 0; k < 16; k++)
+            {
+                Vector3 dir = Quaternion.Euler(0f, k * 22.5f, 0f) * Vector3.forward;
+                float s = QaBotBrain.ScoreDirection(Vector3.zero, dir, 6f, 5f, threats, weights, threats.Length, Vector3.zero, Vector3.zero);
+                if (s > bestScore) { bestScore = s; best = dir; }
+            }
+            Assert.Less(best.z, -0.7f, "açık güney seçilmeli: " + best);
+
+            // the same open south behind a wall one stride away is rejected
+            Assert.Less(QaBotBrain.ScoreDirection(Vector3.zero, Vector3.back, 0.8f, 5f, threats, weights, threats.Length, Vector3.zero, Vector3.zero), -1e5f);
+
+            // a telegraphing body weighs more: the direction past it scores lower than past a calm one
+            var one = new[] { new Vector3(2f, 0f, 2f) };
+            float calm = QaBotBrain.ScoreDirection(Vector3.zero, Vector3.right, 6f, 5f, one, new[] { 1f }, 1, Vector3.zero, Vector3.zero);
+            float swing = QaBotBrain.ScoreDirection(Vector3.zero, Vector3.right, 6f, 5f, one, new[] { 3f }, 1, Vector3.zero, Vector3.zero);
+            Assert.Less(swing, calm);
+
+            // near the ±45 m ring with nothing around: heading back toward the centre beats running along / into the ring
+            Vector3 atEdge = new Vector3(40f, 0f, 0f);
+            var none = new Vector3[0];
+            float inward = QaBotBrain.ScoreDirection(atEdge, Vector3.left, 6f, 5f, none, new float[0], 0, Vector3.zero, Vector3.zero, Vector3.zero, 45f);
+            float outward = QaBotBrain.ScoreDirection(atEdge, Vector3.right, 6f, 5f, none, new float[0], 0, Vector3.zero, Vector3.zero, Vector3.zero, 45f);
+            Assert.Greater(inward, outward, "halkaya yakınken merkeze dönüş");
+        }
+
+        [Test]
+        public void Bot_Reload_GuvenliPencerede_YariSarjorAltinda()
+        {
+            var brain = new QaBotBrain(1);
+            var o = new QaBotObservation { CameraForward = Vector3.forward, CameraRight = Vector3.right, SecondsSinceDamage = 999f,
+                HasTarget = true, TargetDistance = 12f, TargetLineOfSight = true, WeaponCanFire = true, WeaponNeedsReload = true,
+                WeaponAmmoRatio = 0.3f, NearestThreatDistance = 12f };
+            Assert.IsTrue(brain.Decide(o).Reload, "yakında kimse yok, şarjör yarının altında → reload");
+            var brain2 = new QaBotBrain(1);
+            o.NearestThreatDistance = 4f; o.TargetDistance = 4f;
+            Assert.IsFalse(brain2.Decide(o).Reload, "4 m'de zombi varken dolu olmayan şarjör reload'u beklemez");
         }
 
         [Test]

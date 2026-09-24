@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Text.RegularExpressions;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Qa;
@@ -82,6 +83,65 @@ namespace DD.Prototype.Qa.Tests.PlayMode
             QaReport report = QaReport.FromJson(File.ReadAllText(Path.Combine(_dir, "qa-report.json")));
             Assert.IsTrue(report.pass, report.Summarize());
             Directory.Delete(_dir, true);
+        }
+
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Bot_OlumKaniti_CallbackSirasiSonrasiTekKayitVeBaglamYazar()
+        {
+            _bot = QaRunBot.Arm(_dir, 12, 61, 300f, false);
+            yield return Bekle(() => _bot != null && _bot.Running, KurulumZamanAsimi, "Bot run-ready olmadı.");
+            PlayerRig rig = PlayerRegistry.Primary;
+            Assert.IsNotNull(rig);
+            Assert.IsNotNull(rig.Health);
+            rig.Health.ApplyDamage(rig.Health.Max * 4f, rig.transform.position - rig.transform.forward, "Zombie.Ultra.Overhead");
+
+            yield return Bekle(() => _bot == null || _bot.Finished, 15f, "Ölüm sonrası bot kanıtı yazılmadı.");
+            Assert.IsNotNull(_bot);
+            string jsonPath = Path.Combine(_dir, "bot-summary.json");
+            string eventsPath = Path.Combine(_dir, "events.txt");
+            Assert.IsTrue(File.Exists(jsonPath));
+            Assert.IsTrue(File.Exists(eventsPath));
+            QaRunBot.Summary persisted = JsonUtility.FromJson<QaRunBot.Summary>(File.ReadAllText(jsonPath));
+            string eventsText = File.ReadAllText(eventsPath);
+
+            Assert.AreEqual(1, persisted.deaths, "RunEnded ve AnyPlayerDied ölümü iki kez saymamalı.");
+            Assert.GreaterOrEqual(persisted.deathRound, 1);
+            Assert.GreaterOrEqual(persisted.deathTimeSeconds, 0f);
+            Assert.AreEqual("Zombie.Ultra.Overhead", persisted.deathKilledBy);
+            Assert.AreEqual("Zombie.Ultra.Overhead", persisted.fatalSource);
+            Assert.Greater(persisted.fatalAppliedAmount, 0f);
+            Assert.Greater(persisted.fatalHealthBefore, persisted.fatalHealthAfter);
+            Assert.LessOrEqual(persisted.fatalHealthAfter, 0f);
+            StringAssert.Contains("damage #", eventsText);
+            StringAssert.Contains("player-died", eventsText);
+            Assert.IsFalse(persisted.pass, "Gerçek ölüm exact soak için PASS olamaz.");
+            Directory.Delete(_dir, true);
+        }
+
+        [Test]
+        public void ExactGate_IstenenRoundSayisiniEksiksizZorunluKilar()
+        {
+            Assert.IsTrue(QaRunBot.ExactRunPassed(12, 12, 0, 0));
+            Assert.IsFalse(QaRunBot.ExactRunPassed(4, 12, 0, 0), "Eski 4/12 kabulü kapanmalı.");
+            Assert.IsFalse(QaRunBot.ExactRunPassed(12, 12, 5, 0));
+            Assert.IsFalse(QaRunBot.ExactRunPassed(12, 12, 0, 9));
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Bot_ArtefaktDiziniYazilamazsa_NonzeroCikisDurumuUretir()
+        {
+            File.WriteAllText(_dir, "directory blocker");
+            LogAssert.Expect(LogType.Error, new Regex(@"^\[QaRunBot\] artifact directory unavailable: IOException:"));
+            LogAssert.Expect(LogType.Error, new Regex(@"^\[QaRunBot\] write failed: System\.IO\.IOException:"));
+            _bot = QaRunBot.Arm(_dir, 1, 26, 300f, false);
+            yield return Bekle(() => _bot != null && _bot.Finished, 10f, "Yazma hatası fail-closed bitmedi.");
+
+            Assert.IsTrue(_bot.ArtifactWriteFailed);
+            Assert.AreEqual(4, _bot.ExitCode);
+            Assert.IsFalse(_bot.Result.pass);
+            File.Delete(_dir);
         }
 
         private static IEnumerator Bekle(Func<bool> kosul, float saniye, string aciklama)

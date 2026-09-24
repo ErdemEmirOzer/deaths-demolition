@@ -39,7 +39,7 @@ namespace DD.Prototype.Qa
     /// Determinism: <c>UnityEngine.Random.InitState(seed)</c> at run start seeds every global draw
     /// (spawn weights, look seeds, spread); the bot's own choices use a seeded System.Random.
     /// Frame timing is not seeded, so two runs agree on the spawn *sequence hash* far more often
-    /// than on the kill timeline; both hashes are reported and the gate is "N rounds completed".
+    /// than on the kill timeline; both hashes are reported and the gate is exactly "N rounds completed".
     /// </summary>
     public static class QaRunBot
     {
@@ -54,6 +54,8 @@ namespace DD.Prototype.Qa
         public const string FramesFlag = "-ddQaBotFrames";
         /// <summary>WP-052: evidence runs only — the player cannot die (PlayerHealth.DiagnosisInvulnerable), so the late rounds are reached; the summary is marked and never a QA pass.</summary>
         public const string InvulnerableFlag = "-ddQaBotInvulnerable";
+        /// <summary>WP-064 / DEC-091: <c>-ddQaBotStability</c> — the player cannot die; the run is the soak STABILITY gate (all rounds, no timeout, logs/memory checked by tools/qa/soak_gate.py --stability), reported as <c>runMode=stability</c> with its own <c>stabilityPass</c>; <c>pass</c> (the real-bot result) stays false.</summary>
+        public const string StabilityFlag = "-ddQaBotStability";
         /// <summary>WP-044 K1: <c>-ddQaAllocScan N</c> — at round N (spawner on, crowd live) disable every Behaviour type in turn and sample 3 frames of GC (AllocationProbeTests pattern); writes alloc-scan.txt. The player is invulnerable during the scan; the run is a measurement, not a QA pass.</summary>
         public const string AllocScanFlag = "-ddQaAllocScan";
         /// <summary>WP-055: evidence only — the bot grants itself the Special Weapons in turn (Kagura → Ofuda → Tide) whenever a body is near, writes one frame per sw_* beat × tier; summary marked, never a QA pass.</summary>
@@ -62,8 +64,12 @@ namespace DD.Prototype.Qa
         public const string DieAfterFlag = "-ddQaBotDieAfter";
         public const int DefaultRounds = 8;
         public const int DefaultSeed = 26;
-        public const int GateRoundsMin = 4;              // C-00 closure decision: bot gate = round >= 4 + no death before it
         public const float DefaultRoundTimeout = 420f;   // WP-044: round 8 (pool ~80, tier bodies) needs > 300 s at bot pace
+
+        public static bool ExactRunPassed(int completed, int requested, int deathRound, int timeoutRound)
+        {
+            return requested > 0 && completed == requested && deathRound <= 0 && timeoutRound <= 0;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void RedirectProfile()
@@ -95,6 +101,7 @@ namespace DD.Prototype.Qa
             d.ConfigureTierEvidence(QaArgs.ArgInt(StartRoundFlag, 1, 1, 50), QaArgs.Arg(FramesFlag), QaArgs.Arg(InvulnerableFlag) != null);   // WP-052
             d.ConfigureSpecialEvidence(QaArgs.Arg(SpecialFlag) != null);   // WP-055
             d.ConfigureDeathEvidence(QaArgs.ArgFloat(DieAfterFlag, -1f, -1f, 3600f));   // WP-059
+            if (QaArgs.Arg(StabilityFlag) != null) d.ConfigureStability();   // WP-064 / DEC-091
         }
 
         /// <summary>Also used by the PlayMode slice test: boot=false means the caller already put the run into Fighting.</summary>
@@ -118,6 +125,8 @@ namespace DD.Prototype.Qa
             public float seconds;
             public bool completed;
             public string outcome;
+            // WP-064 stability gate (DEC-091): memory at the end of the round, MB (-1 = unavailable)
+            public float memMonoUsedMB, memMonoHeapMB, memTotalAllocatedMB, memTotalReservedMB, memRssMB;
         }
 
         [Serializable]
@@ -144,6 +153,21 @@ namespace DD.Prototype.Qa
             public long allocRecorderMaxB, allocHeapDeltaMaxB;
             public int allocFrames, allocFramesOver4K;
             public int edgeBias;               // frames whose move was leaned away from the NavMesh edge
+            public int kiteFrames;             // WP-064B: frames steered by the threat-field escape planner
+            public int edgeGuards;             // WP-064B: moves turned inward because the next metre left the NavMesh
+            public int offMeshRecoveries;      // WP-064B: frames spent walking back onto the NavMesh
+            public int kiteBlocked;            // WP-064B: planner directions closed because the body did not move
+            public int vantageMoves;           // WP-064B: walks to a shooting angle on a hidden, stationary target
+            public int pickupDashes;           // WP-064B: frames spent dashing to a Special Weapon pickup within 8 m
+            public int islandEscapes;          // WP-064B: path refreshes with no NavMesh path (island) → straight walk to the goal
+            public int orbitFrames;            // WP-064B: planner steps that followed the plaza loop around the centre
+            public int loopFrames;             // WP-064B v3: planner steps following the training loop
+            public int unstickSweeps;          // WP-064B: direction sweeps after two stall recoveries at the same spot
+            public int safeSpotFrames;         // WP-064B: planner steps heading for the chosen safe open spot
+            public int loopReversals;          // WP-064B v3: loop sense flips (crowd ahead 2.5× behind, 3 votes)
+            public int telegraphDodges;        // WP-064B: telegraph starts within 5 m that raised a body's weight
+            public int specialPickupsSought;   // WP-064B: Special Weapon pickups the bot walked to
+            public int specialActiveFrames;    // WP-064B: frames with a Special Weapon in hand
             public bool gatePass;              // bot.rounds gate (round >= 4 + no death before), separate from the full-run pass
             public int upgradesBought;      // WP-044: cheapest affordable card per upgrade screen (DEC-048 one per round)
             public int goldSpent;
@@ -154,6 +178,24 @@ namespace DD.Prototype.Qa
             public string swBeats;            // WP-055: sw_push/sw_web/sw_pull beats seen (kind=count), "" when none
             public int swActivations;         // WP-055: Special Weapons the evidence bot granted itself (0 on a QA run)
             public string fireLineHits;       // what a ray along the rig's aim from the muzzle hits while firing (layer:name = frames), top 6
+            // WP-064: structured terminal-death evidence. These fields preserve the
+            // product/balance diagnosis even when RunEnded is dispatched before AnyPlayerDied.
+            public int deathRound;
+            public float deathTimeSeconds;
+            public string deathKilledBy;
+            public float deathPositionX, deathPositionY, deathPositionZ;
+            public float deathOverkill;
+            public string fatalSource;
+            public float fatalAppliedAmount, fatalHealthBefore, fatalHealthAfter;
+            public bool fatalOnNavMesh;
+            public int fatalNearbyEnemies;
+            public bool fatalRelocating, fatalForcedRelocation;
+            public float fatalStuckSeconds;
+            public int fatalRoundPool, fatalRoundKills, fatalSpawnCount;
+            public int fatalStandard, fatalSpecial, fatalElite, fatalUltra;
+            public bool artifactWriteFailed;
+            public string runMode = "normal";   // normal | stability (DEC-091) | evidence (WP-052/055/059 frames)
+            public bool stabilityPass;          // stability mode only: all requested rounds, no timeout, invulnerable by design
             public bool pass;
             public string note;
             public List<RoundRecord> rounds = new List<RoundRecord>();
@@ -199,6 +241,43 @@ namespace DD.Prototype.Qa
             private Collider _closeBlocker;
             private bool _lastMuzzleClear, _lastEyeClear;
             private float _lastTrace = -999f;
+            // WP-064B escape planner state
+            private const int PlannerDirections = 16;
+            private const float RingMargin = 45f;   // WP-038M playable ring inner face (±45 m)
+            // Environment + CameraOccluder + Ignore Raycast (ring, pond rims). A property: PrototypeLayers calls NameToLayer,
+            // which Unity forbids in a MonoBehaviour's (static) field initializer — soak 8 died on that before round 1.
+            private static int BodyBlockMask => PrototypeLayers.AimBlockMask | (1 << 2);
+            private const int MaxThreats = 64;
+            private readonly Vector3[] _threatPos = new Vector3[MaxThreats];
+            private readonly float[] _threatWeight = new float[MaxThreats];
+            private readonly Transform[] _telegraphBody = new Transform[16];
+            private readonly float[] _telegraphTime = new float[16];
+            private int _telegraphNext;
+            private Vector3 _planDir;
+            private int _planIndex = -1;
+            private readonly float[] _dirClosedUntil = new float[PlannerDirections];
+            private readonly float[] _dirScore = new float[PlannerDirections];
+            private float _planSwitchTime;
+            private float _kiteStillSince = -1f;
+            private Vector3 _kiteAnchor;
+            private float _nextPlanTime;
+            private float _nextPickupScan;
+            private SpecialWeaponPickup _pickup;
+            private float _noLosSince = -1f;
+            private bool _fellLogged;
+            private Vector3 _lastStallPos, _unstickAnchor;
+            private int _sameSpotStalls;
+            private float _unstickUntil, _unstickStart, _unstickPhase;
+            private Vector3 _lastOnMesh;
+            private bool _hasLastOnMesh;
+            private float _lastReachCheck = -999f;
+            private NavMeshPath _reachPath;   // created lazily (never in a field initializer)
+            private Vector3 _lastVantage = new Vector3(9999f, 0f, 9999f);
+            private float _vantageUntil;
+            private int _orbitSign;
+            private float _orbitKeepUntil;
+            private const float OrbitRadius = 16f;
+            private int _islandFails;
             private float _blockedSince = -1f;
             private Vector3 _arenaCentre;
             private Vector3 _stuckAnchor;
@@ -209,6 +288,8 @@ namespace DD.Prototype.Qa
             private int _deathRound, _timeoutRound;   // round of the death / timeout (0 = none)
             private bool _externalQuit;
             private bool _died;
+            private bool _finishQueued;
+            private bool _artifactWriteFailed;
             private string _fail;
             private float _reloadCooldown;
             private double _aimErrorSum;
@@ -230,6 +311,9 @@ namespace DD.Prototype.Qa
             private long _baitRecorder = -1, _baitHeap = -1, _heapBeforeBait;
 
             public bool Finished => _finished;
+            public bool Running => _running;
+            public bool ArtifactWriteFailed => _artifactWriteFailed;
+            public int ExitCode => _artifactWriteFailed ? 4 : ((_stability ? _summary.stabilityPass : _summary.pass) ? 0 : 3);
             public Summary Result => _summary;
 
             public void Configure(string outDir, int rounds, int seed, float roundTimeout, bool bootFlow)
@@ -339,6 +423,9 @@ namespace DD.Prototype.Qa
             /// <summary>WP-055: evidence-only Special Weapon cycling (summary marked, never a QA pass).</summary>
             public void ConfigureSpecialEvidence(bool enabled) => _specialEvidence = enabled;
 
+            public void ConfigureStability() { _stability = true; _invulnerable = true; }
+            private bool _stability;
+
             private void TickSpecialEvidence(PlayerRig rig)
             {
                 if (!_specialEvidence || WeaponRegistry.ActiveController == null || Time.unscaledTime < _nextSpecialAt) return;
@@ -360,7 +447,18 @@ namespace DD.Prototype.Qa
             private IEnumerator Start()
             {
                 _path = new NavMeshPath();
-                Directory.CreateDirectory(_outDir);
+                try
+                {
+                    Directory.CreateDirectory(_outDir);
+                }
+                catch (Exception e)
+                {
+                    _artifactWriteFailed = true;
+                    _fail = "artifact directory unavailable: " + e.GetType().Name;
+                    Debug.LogError("[QaRunBot] " + _fail + ": " + e.Message);
+                    Finish();
+                    yield break;
+                }
                 UnityEngine.Random.InitState(_seed);
                 _random = new System.Random(_seed);
                 _brain = new QaBotBrain(_seed);
@@ -403,6 +501,8 @@ namespace DD.Prototype.Qa
                 _pad = new QaVirtualGamepad();
                 _pad.Neutral();
                 BuildWaypoints();
+                BuildLoop();
+                BuildSafeSpots();
                 _runStart = Time.unscaledTime;
                 BeginRoundRecord(RunDirector.Instance.Round);
                 Log("run-ready round=" + RunDirector.Instance.Round + " waypoints=" + _waypoints.Count + " pad=" + _pad.IsAlive);
@@ -413,6 +513,7 @@ namespace DD.Prototype.Qa
             {
                 Application.quitting += OnApplicationQuitting;
                 RunEvents.RoundStarted += OnRoundStarted;
+                EnemyCombatEvents.Raised += OnEnemyCombatEvent;
                 RunEvents.RoundCompleted += OnRoundCompleted;
                 RunEvents.RunEnded += OnRunEnded;
                 PlayerHealth.AnyDamaged += OnDamaged;
@@ -429,6 +530,7 @@ namespace DD.Prototype.Qa
                 EnemyCombatEvents.Raised -= OnCombatBeat;   // WP-052
                 Application.quitting -= OnApplicationQuitting;
                 RunEvents.RoundStarted -= OnRoundStarted;
+                EnemyCombatEvents.Raised -= OnEnemyCombatEvent;
                 RunEvents.RoundCompleted -= OnRoundCompleted;
                 RunEvents.RunEnded -= OnRunEnded;
                 PlayerHealth.AnyDamaged -= OnDamaged;
@@ -614,37 +716,101 @@ namespace DD.Prototype.Qa
                     }
 
                     _running = false;
-                    Finish();
+                    if (s.EndReason == RunEndReason.PlayerDeath)
+                    {
+                        // RunDirector observes PlayerHealth before this QA listener on some
+                        // builds. Defer persistence one frame so OnDied can record killer,
+                        // position and overkill instead of writing a truncated death.
+                        if (!_finishQueued)
+                        {
+                            _finishQueued = true;
+                            StartCoroutine(FinishAfterDeathDispatch());
+                        }
+                    }
+                    else
+                    {
+                        Finish();
+                    }
                 }
+            }
+
+            private IEnumerator FinishAfterDeathDispatch()
+            {
+                yield return null;
+                if (!_finished) Finish();
             }
 
             private void OnDamaged(PlayerDamageInfo info)
             {
                 _lastDamageTime = Time.unscaledTime;
+                PlayerRig rig = PlayerRegistry.Primary;
                 if (_current != null) _current.damageEvents++;
                 _summary.totalDamageEvents++;
                 if (_summary.totalDamageEvents <= 5 || info.HealthAfter <= 0f)
                 {
                     // WP-044 / WP-047E finding (instant PlayerDeath at run start): where, how much, from which direction
-                    PlayerRig rig = PlayerRegistry.Primary;
                     Log("damage #" + _summary.totalDamageEvents + " t+" + QaArgs.F(_runStart >= 0f ? Time.unscaledTime - _runStart : -1f, 2) + "s source=" + (info.SourceId ?? "<null>") + " amount=" + QaArgs.F(info.AppliedAmount, 1) +
                         " hp " + QaArgs.F(info.HealthBefore, 1) + "→" + QaArgs.F(info.HealthAfter, 1) + "/" + QaArgs.F(info.MaxHealth, 0) + " at=" + V(info.WorldPoint) + " dir=" + V(info.HitDirection) +
                         " player=" + (rig != null ? V(rig.transform.position) : "n/a") + " onNavMesh=" + (rig != null && NavMesh.SamplePosition(rig.transform.position, out NavMeshHit nh, 0.5f, NavMesh.AllAreas) ? "1" : "0"));
+                }
+                if (info.HealthAfter <= 0f)
+                {
+                    CaptureFatalContext(info, rig);
                 }
             }
 
             private void OnDied(PlayerDeathInfo info)
             {
+                if (!_died) _summary.deaths++;
                 _died = true;
-                _summary.deaths++;
                 int round = _current != null ? _current.round : 0;
                 if (_deathRound <= 0) _deathRound = round;
+                _summary.deathRound = round;
+                _summary.deathTimeSeconds = _runStart >= 0f ? Time.unscaledTime - _runStart : -1f;
+                _summary.deathKilledBy = info.KilledBy;
+                _summary.deathPositionX = info.Position.x;
+                _summary.deathPositionY = info.Position.y;
+                _summary.deathPositionZ = info.Position.z;
+                _summary.deathOverkill = info.Overkill;
                 Log("player-died round=" + round + " t+" + QaArgs.F(_runStart >= 0f ? Time.unscaledTime - _runStart : -1f, 2) + "s killedBy=" + info.KilledBy + " pos=" + V(info.Position) + " overkill=" + QaArgs.F(info.Overkill, 1) + " kills=" + (_current != null ? _current.kills : 0));
                 // WP-059: the death beat on three frames — the hit, the slowed collapse, the overlay before Results
                 // (unscaled delays; Standard tier = no proximity wait). Flushed after Finish, QuitSoon waits for them.
                 QueueFrame("deathframe-r" + round + "-impact", DeathFrameImpactSeconds);
                 QueueFrame("deathframe-r" + round + "-collapse", DeathFrameCollapseSeconds);
                 QueueFrame("deathframe-r" + round + "-overlay", DeathFrameOverlaySeconds);
+            }
+
+            private void CaptureFatalContext(PlayerDamageInfo info, PlayerRig rig)
+            {
+                _summary.fatalSource = info.SourceId;
+                _summary.fatalAppliedAmount = info.AppliedAmount;
+                _summary.fatalHealthBefore = info.HealthBefore;
+                _summary.fatalHealthAfter = info.HealthAfter;
+                _summary.fatalRelocating = _relocating;
+                _summary.fatalForcedRelocation = _forcedRelocation;
+                _summary.fatalStuckSeconds = _stuckTimer;
+                _summary.fatalRoundPool = RunDirector.Instance != null ? RunDirector.Instance.RoundPoolTotal : 0;
+                _summary.fatalRoundKills = RunDirector.Instance != null ? RunDirector.Instance.RoundKills : 0;
+                _summary.fatalSpawnCount = _summary.spawnCount;
+                _summary.fatalOnNavMesh = rig != null && NavMesh.SamplePosition(rig.transform.position, out NavMeshHit _, 0.5f, NavMesh.AllAreas);
+
+                Vector3 player = rig != null ? rig.transform.position : info.WorldPoint;
+                int nearby = 0;
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; i < live.Count; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z == null || !z.IsAlive) continue;
+                    if ((z.transform.position - player).sqrMagnitude <= 25f) nearby++;
+                    switch (z.Tier)
+                    {
+                        case EnemyTier.Standard: _summary.fatalStandard++; break;
+                        case EnemyTier.Special: _summary.fatalSpecial++; break;
+                        case EnemyTier.Elite: _summary.fatalElite++; break;
+                        case EnemyTier.Ultra: _summary.fatalUltra++; break;
+                    }
+                }
+                _summary.fatalNearbyEnemies = nearby;
             }
 
             /// <summary>WP-059 evidence: a lethal hit from the nearest zombie's side (or from behind when none is near) — the real damage path, so the hurt / death chain is what the player would see.</summary>
@@ -681,6 +847,19 @@ namespace DD.Prototype.Qa
                 _current.seconds = Time.unscaledTime - _roundStart;
                 _current.kills = RunDirector.Instance != null ? RunDirector.Instance.RoundKills : _current.kills;
                 _summary.totalKills += _current.kills;
+                SampleMemory(_current);
+            }
+
+            private static void SampleMemory(RoundRecord r)
+            {
+                const float MB = 1f / (1024f * 1024f);
+                r.memMonoUsedMB = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() * MB;
+                r.memMonoHeapMB = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong() * MB;
+                r.memTotalAllocatedMB = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() * MB;
+                r.memTotalReservedMB = UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong() * MB;
+                long rss = 0;
+                try { rss = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64; } catch (Exception) { rss = 0; }
+                r.memRssMB = rss > 0 ? rss * MB : -1f;
             }
 
             private void Update()
@@ -738,24 +917,32 @@ namespace DD.Prototype.Qa
                             RoundUpgradeShop shop = run.Shop;
                             if (shop != null && shop.Status == UpgradeOfferStatus.Ready && !shop.IsLocked)
                             {
-                                // the dearest affordable card (cost is the shop's own value ladder; run3 left 230 gold unspent with the cheapest rule)
-                                int pick = -1, pickCost = -1;
-                                for (int c = 0; c < shop.Cards.Count; c++)
+                                // WP-064B: a simple player policy — damage and survival first, speed only up to two tiers —
+                                // and as many cards as the round allows (DEC-087: PurchaseLimit, shipped 2)
+                                int bought = 0;
+                                for (int guard = 0; guard < 4 && !shop.IsLocked && shop.PurchasesThisRound < shop.PurchaseLimit; guard++)
                                 {
-                                    if (!shop.CanAfford(c)) continue;
-                                    int cost = shop.Cards[c].Cost;
-                                    if (cost > pickCost) { pickCost = cost; pick = c; }
-                                }
+                                    int pick = -1, pickRank = int.MaxValue, pickCost = 0;
+                                    for (int c = 0; c < shop.Cards.Count; c++)
+                                    {
+                                        if (!shop.CanAfford(c)) continue;
+                                        UpgradeCardOffer card = shop.Cards[c];
+                                        int rank = UpgradeRank(card.Branch, card.OwnedTier);
+                                        if (rank < pickRank || (rank == pickRank && card.Cost > pickCost)) { pickRank = rank; pick = c; pickCost = card.Cost; }
+                                    }
 
-                                if (pick >= 0 && shop.TryPurchase(pick))
-                                {
+                                    if (pick < 0) break;
+                                    string name = shop.Cards[pick].DisplayName;
+                                    if (!shop.TryPurchase(pick)) break;
+                                    bought++;
                                     _summary.upgradesBought++;
                                     _summary.goldSpent += pickCost;
-                                    Log("upgrade-bought round=" + run.Round + " card=" + shop.Cards[pick].DisplayName + " cost=" + pickCost + " goldLeft=" + shop.Gold);
+                                    Log("upgrade-bought round=" + run.Round + " card=" + name + " cost=" + pickCost + " goldLeft=" + shop.Gold + " (" + shop.PurchasesThisRound + "/" + shop.PurchaseLimit + ")");
                                 }
-                                else
+
+                                if (bought == 0)
                                 {
-                                    Log("upgrade-none round=" + run.Round + " gold=" + shop.Gold + " affordable=" + (pick >= 0));
+                                    Log("upgrade-none round=" + run.Round + " gold=" + shop.Gold);
                                 }
                             }
                             else if (shop != null && shop.Status != UpgradeOfferStatus.Ready)
@@ -797,6 +984,13 @@ namespace DD.Prototype.Qa
 
                 Vector3 crowdDir;
                 ZombieEnemy target = Nearest(pos, out int nearby, out crowdDir);
+                // WP-064B soak 2: the nearest body was often still RISING under the ground plate (DEC-081) — the fire line hit
+                // the ground collider, the bot held fire and chased it for minutes. Target = the nearest non-rising body with
+                // a clear muzzle line inside fire range, else the nearest non-rising body.
+                ZombieEnemy nearestAny = target;
+                target = SelectTarget(pos, rig, target);
+                float nearestAnyDist = 999f;
+                if (nearestAny != null) { Vector3 nd = nearestAny.transform.position - pos; nd.y = 0f; nearestAnyDist = nd.magnitude; }
                 var o = new QaBotObservation
                 {
                     PlayerPosition = pos,
@@ -824,6 +1018,7 @@ namespace DD.Prototype.Qa
                     _closeBlocker = CloseBlocker(muzzle.position, o.TargetPosition + Vector3.up * 1.0f, 2.0f);
                     o.TargetLineOfSight = muzzleClear || (eyeClear && _closeBlocker == null);   // a wall at the muzzle eats every shot; farther out the runtime's hitscan is the judge
                     _lastMuzzleClear = muzzleClear; _lastEyeClear = eyeClear;
+                    if (o.TargetLineOfSight) { _noLosSince = -1f; _vantageUntil = 0f; } else if (_noLosSince < 0f) _noLosSince = Time.unscaledTime;
                     if (!muzzleClear && o.TargetDistance <= QaBotBrain.FireRange)
                     {
                         if (_blockedSince < 0f) _blockedSince = Time.unscaledTime;
@@ -870,15 +1065,48 @@ namespace DD.Prototype.Qa
                 {
                     o.WeaponCanFire = true;
                 }
-                // WP-055 evidence mode: a Special in hand has no magazine — the trigger must not wait for a classic reload
-                // (the classic cannot reload while suspended; back-to-back grants would otherwise starve every shot)
-                if (_specialEvidence && wc != null && wc.Special.IsActive) o.WeaponCanFire = true;
-
-                // hunt: a target beyond the engage radius becomes the navigation goal (the last body of a round is
-                // usually far away); otherwise patrol between waypoints
-                if (target != null && o.TargetDistance > QaBotBrain.EngageRadius)
+                o.WeaponAmmoRatio = classic != null && classic.MagazineSize > 0 ? (float)classic.Ammo / classic.MagazineSize : 1f;
+                // WP-055 evidence mode / WP-064B: a Special in hand has no magazine — the trigger must not wait for a classic
+                // reload (the classic cannot reload while suspended; back-to-back grants would otherwise starve every shot)
+                if (wc != null && wc.Special.IsActive)
                 {
-                    if (!_hunting || (o.TargetPosition - _goal).sqrMagnitude > 4f)
+                    o.WeaponCanFire = true;
+                    o.WeaponEmpty = false;
+                    o.WeaponNeedsReload = false;
+                    o.WeaponAmmoRatio = 1f;
+                    _summary.specialActiveFrames++;
+                }
+                o.NearestThreatDistance = nearestAnyDist;   // rising bodies count: they will swing soon
+
+                // WP-064B: a Special Weapon pickup on the ground is worth a detour when nothing is close
+                if (Time.unscaledTime >= _nextPickupScan)
+                {
+                    _nextPickupScan = Time.unscaledTime + 0.5f;
+                    _pickup = NearestPickup(pos, 35f);
+                }
+                if (_pickup != null && !_pickup.isActiveAndEnabled) _pickup = null;
+
+                bool lowHealth = o.HealthRatio < 0.5f;
+                bool threatened = nearestAnyDist < (lowHealth ? QaBotBrain.ThreatRadiusLowHealth : QaBotBrain.ThreatRadius) || nearby >= 3;
+                if (_pickup != null && !threatened && !_relocating)
+                {
+                    Vector3 pg = _pickup.transform.position;
+                    if (!_hunting || (pg - _goal).sqrMagnitude > 1f)
+                    {
+                        _goal = pg;
+                        _hasGoal = true;
+                        _hunting = true;
+                        _lastPathTime = -999f;
+                        _summary.specialPickupsSought++;
+                        Log("special-pickup goal=" + V(pg) + " weapon=" + _pickup.WeaponId);
+                    }
+                }
+                // hunt: a target beyond the engage radius — or one hidden behind a wall for over 2 s (WP-064B soak 1:
+                // the bot pushed into a wall toward a body 11 m away for 300 s) — becomes the NavMesh goal (the last
+                // body of a round is usually far away); otherwise patrol between waypoints
+                else if (target != null && (o.TargetDistance > QaBotBrain.EngageRadius || (!o.TargetLineOfSight && !threatened && _noLosSince >= 0f && Time.unscaledTime - _noLosSince > 2f)))
+                {
+                    if (Time.unscaledTime >= _vantageUntil && (!_hunting || (o.TargetPosition - _goal).sqrMagnitude > 4f))
                     {
                         _goal = o.TargetPosition;
                         _hasGoal = true;
@@ -901,10 +1129,89 @@ namespace DD.Prototype.Qa
                 }
 
                 QaBotCommand cmd = _brain.Decide(o);
+                // WP-064B: under threat the escape planner owns movement (aim / fire / reload stay with the brain). A forced
+                // stall recovery keeps its first 1.25 s side-step; after that the planner decides even while relocating.
+                bool plannerOwns = threatened && !(_forcedRelocation && Time.unscaledTime - _relocateSince < 1.25f);
+                if (plannerOwns)
+                {
+                    Vector3 esc = PlanEscape(pos, lowHealth, _pickup != null ? _pickup.transform.position - pos : Vector3.zero);
+                    if (esc.sqrMagnitude < 1e-4f) { esc = _arenaCentre - pos; esc.y = 0f; esc = esc.sqrMagnitude > 1e-4f ? esc.normalized : Vector3.zero; }
+                    // the chosen direction does not move the body (an invisible fence / pinned by bodies): close it
+                    // net progress, not instantaneous speed: soak 22 dithered ±1 m between two directions for 8 s
+                    if ((pos - _kiteAnchor).sqrMagnitude > 1.0f) { _kiteAnchor = pos; _kiteStillSince = Time.unscaledTime; }
+                    else if (_kiteStillSince >= 0f && Time.unscaledTime - _kiteStillSince > 1.2f && _planIndex >= 0)
+                    {
+                        // soak 22: the body stood still 8 s at a low obstacle the capsule test misses (a curb above the 0.35 m
+                        // step); close the chosen direction and its two neighbours for 3 s, and remember several at once
+                        for (int n = -1; n <= 1; n++) _dirClosedUntil[(_planIndex + n + PlannerDirections) % PlannerDirections] = Time.unscaledTime + 3f;
+                        _nextPlanTime = 0f; _kiteStillSince = Time.unscaledTime;
+                        _summary.kiteBlocked++;
+                    }
+                    if (esc.sqrMagnitude > 1e-4f)
+                    {
+                        cmd.Move = QaBotBrain.WorldToStick(esc, fwd, right);
+                        cmd.Mode = QaBotMode.Kite;
+                        _summary.kiteFrames++;
+                    }
+                }
                 // A stall recovery must actually follow the centre path. A close target keeps the
                 // brain in Retreat/Engage, whose movement ignored the relocation waypoint and
                 // left the bot pinned; preserve its aim/fire decision but replace that move.
-                if (_relocating)
+                // WP-064B: a Special Weapon pickup within 8 m is grabbed unless a body is at arm's length — soak 3 turned back
+                // from a Tide Jewel 5 m away four times because the crowd kept handing movement to the planner
+                if (_pickup != null && nearestAnyDist > 2.5f)
+                {
+                    Vector3 toPick = _pickup.transform.position - pos; toPick.y = 0f;
+                    if (toPick.sqrMagnitude < 64f && toPick.sqrMagnitude > 0.04f)
+                    {
+                        cmd.Move = QaBotBrain.WorldToStick(toPick.normalized, fwd, right);
+                        plannerOwns = true;   // direct: the last metres, no steering rotations
+                        _summary.pickupDashes++;
+                    }
+                }
+                // WP-064B soak 1/5: the player body slipped off the NavMesh behind the north wall line (z ≈ 43–44); every
+                // NavMesh query then failed and the bot stood still for minutes. Off the mesh → walk straight back onto it.
+                NavMeshHit onMeshHit;
+                bool offMesh = true;
+                // the NavMesh is eroded by the agent radius: a body hugging a wall is routinely 0.3–0.6 m off it — soak 18 walked
+                // "back onto the mesh" straight into the crowd. Off-mesh = more than 1.2 m from any mesh point.
+                if (NavMesh.SamplePosition(pos, out onMeshHit, 2.5f, NavMesh.AllAreas)) { Vector3 dv = onMeshHit.position - pos; dv.y = 0f; offMesh = dv.sqrMagnitude > 1.44f; }
+                if (!offMesh) { Vector3 dv2 = onMeshHit.position - pos; dv2.y = 0f; if (dv2.sqrMagnitude < 0.09f) { _lastOnMesh = onMeshHit.position; _hasLastOnMesh = true; } }
+                if (offMesh && (_hasLastOnMesh || NavMesh.SamplePosition(pos, out onMeshHit, 8f, NavMesh.AllAreas)))
+                {
+                    // the way back is the way in: the last on-mesh point (the nearest mesh point can sit across a wall)
+                    Vector3 back = (_hasLastOnMesh ? _lastOnMesh : onMeshHit.position) - pos; back.y = 0f;
+                    if (back.sqrMagnitude > 1e-4f)
+                    {
+                        cmd.Move = QaBotBrain.WorldToStick(back.normalized, fwd, right);
+                        plannerOwns = true;   // bypass steering / guards: they all assume a position on the mesh
+                        _summary.offMeshRecoveries++;
+                    }
+                }
+                if (target != null && _hunting && !o.TargetLineOfSight && Time.unscaledTime - _lastReachCheck > 10f)
+                {
+                    _lastReachCheck = Time.unscaledTime;
+                    if (_reachPath == null) _reachPath = new NavMeshPath();
+                    NavMeshHit rs, rt;
+                    Vector3 rFrom = NavMesh.SamplePosition(pos, out rs, 2f, NavMesh.AllAreas) ? rs.position : pos;
+                    Vector3 rTo = NavMesh.SamplePosition(o.TargetPosition, out rt, 2f, NavMesh.AllAreas) ? rt.position : o.TargetPosition;
+                    bool ok = NavMesh.CalculatePath(rFrom, rTo, NavMesh.AllAreas, _reachPath);
+                    Log("reach target=" + V(o.TargetPosition) + " status=" + (ok ? _reachPath.status.ToString() : "failed") + " corners=" + _reachPath.corners.Length +
+                        " targetWaiting=" + target.IsWaiting + " targetOnMesh=" + (NavMesh.SamplePosition(o.TargetPosition, out NavMeshHit th, 0.6f, NavMesh.AllAreas) ? "1" : "0"));
+                    // WP-064B soak 9–11: a body that stays hidden for 20 s is shot from another angle — sample NavMesh points on
+                    // rings around it, keep the ones with a clear line at chest height and a complete path, walk to the nearest
+                    if (_noLosSince >= 0f && Time.unscaledTime - _noLosSince > 20f && FindVantage(pos, o.TargetPosition, out Vector3 vantage))
+                    {
+                        _goal = vantage; _hasGoal = true; _hunting = true; _lastPathTime = -999f; _vantageUntil = Time.unscaledTime + 15f;
+                        _summary.vantageMoves++;
+                        Log("vantage goal=" + V(vantage) + " for target=" + V(o.TargetPosition));
+                    }
+                }
+                if (_hunting && !plannerOwns && !_relocating && o.HasWaypoint && cmd.Mode != QaBotMode.Patrol)
+                {
+                    cmd.Move = QaBotBrain.WorldToStick(o.WaypointDirection, fwd, right);   // path to the hidden / far target
+                }
+                if (_relocating && !plannerOwns)
                 {
                     Vector3 recoveryDirection = o.HasWaypoint ? o.WaypointDirection : _goal - pos;
                     recoveryDirection.y = 0f;
@@ -921,15 +1228,23 @@ namespace DD.Prototype.Qa
                         cmd.Move = QaBotBrain.WorldToStick(recoveryDirection.normalized, fwd, right);
                     }
                 }
-                if (cmd.Move.sqrMagnitude > 0.01f)
+                if (cmd.Move.sqrMagnitude > 0.01f && !plannerOwns)
                 {
                     Vector3 wantMove = QaBotBrain.StickToWorld(cmd.Move, fwd, right);
                     Vector3 avoid = nearby >= 3 ? crowdDir : Vector3.zero;   // run3: a wall-avoiding rotation walked the bot into a 10-body crowd
                     NavMeshHit edge;
-                    if (NavMesh.FindClosestEdge(pos, out edge, NavMesh.AllAreas) && edge.distance < 2.5f)
+                    if (NavMesh.FindClosestEdge(pos, out edge, NavMesh.AllAreas) && edge.distance < 3.5f)
                     {
                         Vector3 inward = _arenaCentre - pos; inward.y = 0f;
-                        if (inward.sqrMagnitude > 1f) wantMove = (wantMove.normalized + inward.normalized).normalized;   // never kite into the boundary
+                        if (inward.sqrMagnitude > 1f)
+                        {
+                            // At the map rim, crowd avoidance must not veto the only safe exit.
+                            // The seed-61 soak died while repeatedly choosing "away from crowd"
+                            // into the west boundary. Commit normal movement toward the arena,
+                            // keeping a small part of the tactical input for obstacle steering.
+                            wantMove = (inward.normalized * 0.85f + wantMove.normalized * 0.15f).normalized;
+                            avoid = Vector3.zero;
+                        }
                         _summary.edgeBias++;
                     }
                     Vector3 steered = SteerOnNavMesh(pos, wantMove, avoid);
@@ -945,7 +1260,7 @@ namespace DD.Prototype.Qa
                 if (Time.unscaledTime - _lastTrace >= 1f)
                 {
                     _lastTrace = Time.unscaledTime;
-                    Log("t pos=" + V(pos) + " mode=" + cmd.Mode + " tgt=" + (target != null ? QaArgs.F(o.TargetDistance, 1) : "-") + " los=" + (o.TargetLineOfSight ? 1 : 0) +
+                    Log("t pos=" + V(pos) + " mode=" + cmd.Mode + " tgt=" + (target != null ? QaArgs.F(o.TargetDistance, 1) + "@" + V(o.TargetPosition) + (target.IsWaiting ? "/waiting" : "") + (target.IsRising ? "/rising" : "") : "-") + " los=" + (o.TargetLineOfSight ? 1 : 0) +
                         " mz=" + (_lastMuzzleClear ? 1 : 0) + " eye=" + (_lastEyeClear ? 1 : 0) + " blk=" + (_closeBlocker != null ? _closeBlocker.name + "@" + V(_closeBlocker.bounds.center) + "/" + V(_closeBlocker.bounds.size) : "-") +
                         " fire=" + (cmd.Fire ? 1 : 0) + " hp=" + QaArgs.F(rig.Health != null ? rig.Health.Normalized : -1f, 2) + " near=" + nearby + " kills=" + _summary.totalKills + "+" + (_current != null ? _current.kills : 0));
                 }
@@ -981,6 +1296,36 @@ namespace DD.Prototype.Qa
                     _summary.fireFrames++;
                     if (rig.Aim != null && (_summary.fireFrames & 3) == 0) SampleFireLine(rig);
                 }
+                // WP-064B soak 25: round 12 froze 230 s on the raised south crossing (4.0, 0.3, -31.3) — the path is complete
+                // but the body is wedged; repeated recoveries re-chose the same blocked direction. Sweep directions instead.
+                if (_unstickUntil > Time.unscaledTime)
+                {
+                    int slot = (int)((Time.unscaledTime - _unstickStart) / 0.7f) % 8;
+                    Vector3 sweep = Quaternion.Euler(0f, slot * 45f + _unstickPhase, 0f) * Vector3.forward;
+                    cmd.Move = QaBotBrain.WorldToStick(sweep, fwd, right);
+                    plannerOwns = true;
+                    if ((pos - _unstickAnchor).sqrMagnitude > 2.25f) { _unstickUntil = 0f; Log("unstuck pos=" + V(pos) + " dir=" + (slot * 45f + _unstickPhase)); }
+                }
+                if (cmd.Move.sqrMagnitude > 0.01f && !plannerOwns)   // the planner already demanded 1.2 m of NavMesh ahead
+                {
+                    Vector3 step = QaBotBrain.StickToWorld(cmd.Move, fwd, right);
+                    NavMeshHit edgeHit;
+                    Vector3 ahead = pos + step * 1.0f;
+                    bool onMesh = NavMesh.SamplePosition(ahead, out edgeHit, 1.0f, NavMesh.AllAreas);
+                    if (onMesh) { Vector3 off = edgeHit.position - ahead; off.y = 0f; onMesh = off.sqrMagnitude < 0.36f; }   // planar, so steps/ramps don't trip it
+                    if (!onMesh)
+                    {
+                        // off the walkable area one metre ahead: the world has no wall there (south plate edge) — turn inward
+                        Vector3 inward = _arenaCentre - pos; inward.y = 0f;
+                        cmd.Move = inward.sqrMagnitude > 1e-4f ? QaBotBrain.WorldToStick(inward.normalized, fwd, right) : Vector2.zero;
+                        _summary.edgeGuards++;
+                    }
+                }
+                if (pos.y < -5f && !_fellLogged)
+                {
+                    _fellLogged = true;
+                    Log("fell-out-of-world pos=" + V(pos) + " (world boundary missing — game defect, not a bot pass)");
+                }
                 _pad.Set(cmd.Move, cmd.Aim, cmd.Fire, reload, false);
                 _pad.Flush();
 
@@ -1010,8 +1355,212 @@ namespace DD.Prototype.Qa
                 }
             }
 
+            /// <summary>WP-064B upgrade priority (lower = earlier): fire rate, piercing, health pool, regeneration, reload,
+            /// movement (two tiers), then the rest. A simple human-like build, not an optimiser.</summary>
+            private static int UpgradeRank(UpgradeBranch branch, int ownedTier)
+            {
+                switch (branch)
+                {
+                    case UpgradeBranch.MovementSpeed: return ownedTier < 3 ? 0 : 8;   // design review: speed margin is the budget
+                    case UpgradeBranch.Piercing: return 1;                               // lines up the trailing train
+                    case UpgradeBranch.FireRate: return 2;
+                    case UpgradeBranch.MaximumHealth: return 3;
+                    case UpgradeBranch.RegenerationRate: return 4;
+                    case UpgradeBranch.RegenerationDelay: return 5;
+                    case UpgradeBranch.ReloadSpeed: return 6;
+                    case UpgradeBranch.Explosion: return 6;
+                    case UpgradeBranch.Chain: return 7;
+                    default: return 9;
+                }
+            }
+
+            private void OnEnemyCombatEvent(EnemyCombatEventInfo info)
+            {
+                if (info.Kind != EnemyCombatEventKind.TelegraphStart || info.Body == null) return;
+                _telegraphBody[_telegraphNext] = info.Body;
+                _telegraphTime[_telegraphNext] = Time.unscaledTime;
+                _telegraphNext = (_telegraphNext + 1) % _telegraphBody.Length;
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (rig != null && (info.Body.position - rig.transform.position).sqrMagnitude < 25f)
+                {
+                    _summary.telegraphDodges++;
+                    _nextPlanTime = 0f;   // re-plan this frame: a swing is coming
+                }
+            }
+
+            private bool IsTelegraphing(Transform body)
+            {
+                for (int i = 0; i < _telegraphBody.Length; i++)
+                {
+                    if (_telegraphBody[i] == body && Time.unscaledTime - _telegraphTime[i] < 1.2f) return true;
+                }
+                return false;
+            }
+
+            /// <summary>
+            /// WP-064B threat-field escape: 16 planar directions, each scored by <see cref="QaBotBrain.ScoreDirection"/> from
+            /// the live crowd (telegraphing bodies ×3, Elite/Ultra ×1.5) and two NavMesh reads (free length, openness at the
+            /// probe). Re-planned at 10 Hz or on a telegraph; the result is the move of the frame.
+            /// </summary>
+            private Vector3 PlanEscape(Vector3 pos, bool lowHealth, Vector3 attraction)
+            {
+                if (Time.unscaledTime < _nextPlanTime && _planDir.sqrMagnitude > 1e-4f) return _planDir;
+                _nextPlanTime = Time.unscaledTime + 0.1f;
+
+                int count = 0;
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; i < live.Count && count < MaxThreats; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z == null || !z.IsAlive) continue;
+                    Vector3 zp = z.transform.position;
+                    Vector3 d = zp - pos; d.y = 0f;
+                    if (d.sqrMagnitude > 18f * 18f) continue;
+                    float w = z.Tier == EnemyTier.Ultra ? 3f : z.Tier == EnemyTier.Elite ? 1.5f : 1f;   // soak 26: one Ultra overhead = 44 HP; its TTC radius is the swing (weight ≥ 3 → 4.1 m)
+                    if (IsTelegraphing(z.transform)) w *= 3f;
+                    if (lowHealth) w *= 1.5f;
+                    _threatPos[count] = zp;
+                    _threatWeight[count] = w;
+                    count++;
+                }
+
+                if (attraction.sqrMagnitude > 1e-4f) { attraction.y = 0f; attraction = attraction.sqrMagnitude > 1e-4f ? attraction.normalized : Vector3.zero; }
+                // WP-064B soak 16/17: against a big crowd a greedy escape ends in a pocket or at the ring. A human "trains" the
+                // horde around the open plaza: run a loop of radius ~16 m about the centre, tangent chosen away from the crowd.
+                if (count >= 3 && attraction.sqrMagnitude < 1e-4f)
+                {
+                    // WP-064B v3 horde training: follow the loop inside the gate ring so the crowd strings out behind
+                    // soak 24: a 14 m loop (the only closed ring the ponds/walls allow) lets the crowd cut the chord — the loop
+                    // is used only when a ring of >= 22 m exists; otherwise the global safe-spot choice (soak 19/22: 8/12)
+                    Vector3 tangent = _loopRadius >= 22f ? LoopTangent(pos, count) : Vector3.zero;
+                    if (tangent.sqrMagnitude > 1e-4f) { attraction = tangent * 2.5f; _summary.loopFrames++; }
+                    else
+                    {
+                        Vector3 toSafe = SafeSpotDirection(pos, count);
+                        if (toSafe.sqrMagnitude > 1e-4f) { attraction = toSafe * 2.2f; _summary.safeSpotFrames++; }
+                    }
+                }
+                if (count >= 6 && attraction.sqrMagnitude < 1e-4f)
+                {
+                    Vector3 c = _arenaCentre; Vector3 rel = pos - c; rel.y = 0f;
+                    float rad = rel.magnitude;
+                    if (rad > 1f)
+                    {
+                        Vector3 radial = rel / rad;
+                        Vector3 tangent = Vector3.Cross(Vector3.up, radial);          // counter-clockwise
+                        Vector3 crowd = Vector3.zero;
+                        for (int i = 0; i < count; i++) { Vector3 d = _threatPos[i] - pos; d.y = 0f; crowd += d; }
+                        if (Vector3.Dot(tangent, crowd) > 0f) tangent = -tangent;       // run the loop away from the pack
+                        if (_orbitSign != 0 && Vector3.Dot(tangent, Vector3.Cross(Vector3.up, radial)) * _orbitSign < 0f && Time.unscaledTime < _orbitKeepUntil)
+                            tangent = -tangent;                                          // keep the direction ~3 s (no dithering)
+                        else { _orbitSign = Vector3.Dot(tangent, Vector3.Cross(Vector3.up, radial)) > 0f ? 1 : -1; _orbitKeepUntil = Time.unscaledTime + 3f; }
+                        float radialCorrection = Mathf.Clamp((OrbitRadius - rad) / 8f, -1f, 1f);   // drift back onto the loop
+                        attraction = (tangent + radial * radialCorrection).normalized * 1.8f;
+                        _summary.orbitFrames++;
+                    }
+                }
+                // WP-064B soak 19: the round-9 escape ran south into the gate the rest of the round was spawning from. While
+                // bodies are still to come, spawn points within 20 m weigh as half a zombie each (a player avoids live gates).
+                RunDirector rd = RunDirector.Instance;
+                int pending = rd != null ? rd.RoundPoolTotal - rd.RoundKills - count : 0;
+                if (pending > 0)
+                {
+                    IReadOnlyList<SpawnPointRuntime> sp = SpawnPointRegistry.Points;
+                    for (int i = 0; i < sp.Count && count < MaxThreats; i++)
+                    {
+                        Vector3 sPos = sp[i].NavPosition == Vector3.zero ? sp[i].WorldPosition : sp[i].NavPosition;
+                        Vector3 sd = sPos - pos; sd.y = 0f;
+                        if (sd.sqrMagnitude > 20f * 20f) continue;
+                        _threatPos[count] = sPos; _threatWeight[count] = 0.5f; count++;
+                    }
+                }
+                NavMeshHit snap;
+                if (NavMesh.SamplePosition(pos, out snap, 1.0f, NavMesh.AllAreas)) pos = snap.position;   // raycasts start on the mesh
+                float best = -1e5f;
+                Vector3 bestDir = Vector3.zero;
+                int bestIndex = -1;
+                NavMeshHit hit;
+                for (int k = 0; k < PlannerDirections; k++)
+                {
+                    float ang = k * (360f / PlannerDirections);
+                    Vector3 dir = Quaternion.Euler(0f, ang, 0f) * Vector3.forward;
+                    float clear = NavMesh.Raycast(pos, pos + dir * 6f, out hit, NavMesh.AllAreas) ? hit.distance : 6f;
+                    // WP-064B soak 7: the WP-038M ±45 m ring and the pond rims are physics-only walls (Ignore Raycast layer,
+                    // outside the NavMesh bake) — the bot kited into the ring and was pinned. Body-height sphere cast.
+                    RaycastHit phys;
+                    if (Physics.SphereCast(pos + Vector3.up * 0.6f, 0.35f, dir, out phys, clear, BodyBlockMask, QueryTriggerInteraction.Ignore))
+                        clear = Mathf.Min(clear, phys.distance);
+                    // a cast that starts inside a collider (the body already touching a rim fence) reports nothing — soak 10
+                    // froze against one for 8 s; test the first stride as a volume instead
+                    if (Physics.CheckCapsule(pos + dir * 0.6f + Vector3.up * 0.7f, pos + dir * 0.6f + Vector3.up * 1.3f, 0.3f, BodyBlockMask, QueryTriggerInteraction.Ignore))
+                        clear = Mathf.Min(clear, 0.5f);
+                    // a direction that just failed to move the body is closed for 1.5 s
+                    if (Time.unscaledTime < _dirClosedUntil[k]) clear = Mathf.Min(clear, 0.5f);
+                    float openness = 0f;
+                    if (clear >= 1.2f)
+                    {
+                        Vector3 probe = pos + dir * Mathf.Min(clear, 3.5f);
+                        openness = NavMesh.FindClosestEdge(probe, out hit, NavMesh.AllAreas) ? hit.distance : 6f;
+                        openness = Mathf.Min(openness, RingMargin - Mathf.Max(Mathf.Abs(probe.x), Mathf.Abs(probe.z)));
+                        // WP-064B soak 16: a pocket (the strip under the north wall) looks open at 3.5 m but has one way out,
+                        // which the crowd then closes. Count the long exits from the probe; with a crowd around, few exits = trap.
+                        if (count >= 4)
+                        {
+                            int exits = 0;
+                            for (int e = 0; e < 8; e++)
+                            {
+                                Vector3 ed = Quaternion.Euler(0f, e * 45f, 0f) * Vector3.forward;
+                                if (!NavMesh.Raycast(probe, probe + ed * 7f, out hit, NavMesh.AllAreas) && Mathf.Max(Mathf.Abs(probe.x + ed.x * 7f), Mathf.Abs(probe.z + ed.z * 7f)) < RingMargin) exits++;
+                            }
+                            openness = Mathf.Min(openness, 6f) - (exits <= 2 ? 4f : exits <= 4 ? 1.5f : 0f);
+                            // soak 19/20 died twice on the raised south crossing (y ≈ 0.3): bridges and decks are chokepoints
+                            if (NavMesh.SamplePosition(probe, out hit, 1.0f, NavMesh.AllAreas) && hit.position.y > 0.2f) openness -= 3f;
+                        }
+                    }
+                    float score = QaBotBrain.ScoreDirection(pos, dir, clear, openness, _threatPos, _threatWeight, count, _planDir, attraction, Vector3.zero, RingMargin);
+                    _dirScore[k] = score;
+                    if (score > best) { best = score; bestDir = dir; bestIndex = k; }
+                }
+
+                // latch (design review): keep the current direction for 0.6 s unless the new best is clearly better —
+                // soak 22 dithered between two near-equal directions for 8 s
+                if (_planIndex >= 0 && bestIndex >= 0 && bestIndex != _planIndex && Time.unscaledTime - _planSwitchTime < 0.6f
+                    && _dirScore[_planIndex] > best - 1.0f && _dirScore[_planIndex] > -1e4f)
+                {
+                    bestIndex = _planIndex;
+                    bestDir = Quaternion.Euler(0f, _planIndex * (360f / PlannerDirections), 0f) * Vector3.forward;
+                }
+                else if (bestIndex != _planIndex) _planSwitchTime = Time.unscaledTime;
+                _planDir = bestDir;   // zero when every direction is walled: the caller walks back toward the mesh / centre
+                _planIndex = bestIndex;
+                return bestDir;
+            }
+
+            private static SpecialWeaponPickup NearestPickup(Vector3 from, float radius)
+            {
+                SpecialWeaponPickup best = null;
+                float bestSq = radius * radius;
+                SpecialWeaponPickup[] all = UnityEngine.Object.FindObjectsOfType<SpecialWeaponPickup>();
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (all[i] == null || !all[i].isActiveAndEnabled) continue;
+                    Vector3 d = all[i].transform.position - from; d.y = 0f;
+                    if (d.sqrMagnitude < bestSq) { bestSq = d.sqrMagnitude; best = all[i]; }
+                }
+                return best;
+            }
+
             private void BeginStallRecovery(Vector3 pos, int nearby, string mode)
             {
+                if ((pos - _lastStallPos).sqrMagnitude < 1f) _sameSpotStalls++; else _sameSpotStalls = 0;
+                _lastStallPos = pos;
+                if (_sameSpotStalls >= 2 && _unstickUntil <= Time.unscaledTime)
+                {
+                    _unstickStart = Time.unscaledTime; _unstickUntil = Time.unscaledTime + 5.6f; _unstickAnchor = pos;
+                    _unstickPhase = (_unstickPhase + 22.5f) % 45f;
+                    _summary.unstickSweeps++;
+                    Log("unstick-sweep pos=" + V(pos) + " (" + _sameSpotStalls + " recoveries at the same spot)");
+                }
                 _relocating = true;
                 // A measured movement stall needs a committed path; otherwise a clear muzzle
                 // line cancels the recovery on its next frame before any movement is applied.
@@ -1107,6 +1656,278 @@ namespace DD.Prototype.Qa
                 right = Vector3.right;
             }
 
+            private readonly ZombieEnemy[] _candidates = new ZombieEnemy[8];
+            private readonly float[] _candidateSq = new float[8];
+
+            private ZombieEnemy SelectTarget(Vector3 from, PlayerRig rig, ZombieEnemy nearest)
+            {
+                int n = 0;
+                ZombieEnemy fallback = null;
+                float fallbackSq = float.MaxValue;
+                IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                for (int i = 0; i < live.Count; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    if (z == null || !z.IsAlive || z.IsDying || z.IsRising) continue;
+                    Vector3 d = z.transform.position - from; d.y = 0f;
+                    float sq = d.sqrMagnitude;
+                    if (sq < fallbackSq) { fallbackSq = sq; fallback = z; }
+                    if (sq > QaBotBrain.FireRange * QaBotBrain.FireRange) continue;
+                    // keep the 8 nearest (insertion into a fixed array, no allocation)
+                    int at = n < _candidates.Length ? n++ : _candidates.Length;
+                    if (at == _candidates.Length) { if (sq >= _candidateSq[at - 1]) continue; at--; }
+                    while (at > 0 && _candidateSq[at - 1] > sq) { _candidates[at] = _candidates[at - 1]; _candidateSq[at] = _candidateSq[at - 1]; at--; }
+                    _candidates[at] = z; _candidateSq[at] = sq;
+                }
+
+                // design review target priority (lower rank first, nearest within a rank since the list is sorted):
+                // 0 a wind-up at arm's length (< 2.5 m), 1 a telegraphing Special/Elite/Ultra within 6 m ahead,
+                // 2 a blocker within 10 m and ±40° of the escape direction, 3 the rest
+                Transform muzzle = rig.MuzzleAnchor != null ? rig.MuzzleAnchor : rig.transform;
+                ZombieEnemy pickBest = null; int pickRank = int.MaxValue;
+                Vector3 moveDir = _planDir; moveDir.y = 0f;
+                for (int i = 0; i < n; i++)
+                {
+                    ZombieEnemy z = _candidates[i];
+                    Vector3 tp = z.transform.position;
+                    float dist = Mathf.Sqrt(_candidateSq[i]);
+                    bool tele = IsTelegraphing(z.transform);
+                    Vector3 dz = tp - from; dz.y = 0f;
+                    float cos = moveDir.sqrMagnitude > 1e-4f && dist > 1e-3f ? Vector3.Dot(dz / dist, moveDir.normalized) : 0f;
+                    int rank = tele && dist < 2.5f ? 0
+                             : tele && z.Tier != EnemyTier.Standard && dist < 6f && cos > 0f ? 1
+                             : dist < 10f && cos > 0.766f ? 2
+                             : 3;
+                    if (rank >= pickRank) continue;
+                    if (!HasLineOfSight(muzzle.position, tp + Vector3.up * 1.0f, dist)) continue;
+                    pickRank = rank; pickBest = z;
+                    if (rank == 0) break;
+                }
+                if (pickBest != null) { ClearCandidates(n); return pickBest; }
+                ClearCandidates(n);
+                return fallback != null ? fallback : nearest;
+            }
+
+            private void ClearCandidates(int n) { for (int i = 0; i < n; i++) _candidates[i] = null; }
+
+            // ---- WP-064B v3 training loop (design review 24.09, game-test-engineer): a fixed NavMesh ring inside the spawn
+            // gates. Running it keeps the whole horde on one side; fresh spawns ahead are handled by target priority.
+            private readonly List<Vector3> _loop = new List<Vector3>(32);
+            private int _loopSense = 1;              // +1 counter-clockwise, -1 clockwise
+            private int _flipVotes;
+            private float _nextLoopEval, _reverseCostUntil;
+
+            private void BuildLoop()
+            {
+                _loop.Clear();
+                // radius from the real gates: stay >= 8 m inside the nearest one, 14..26 m
+                float gate = float.MaxValue;
+                IReadOnlyList<SpawnPointRuntime> sp = SpawnPointRegistry.Points;
+                for (int i = 0; i < sp.Count; i++)
+                {
+                    Vector3 g = sp[i].NavPosition == Vector3.zero ? sp[i].WorldPosition : sp[i].NavPosition;
+                    Vector3 d = g - _arenaCentre; d.y = 0f;
+                    gate = Mathf.Min(gate, d.magnitude);
+                }
+                float[] radii = { Mathf.Clamp(gate - 8f, 14f, 26f), 20f, 16f, 14f };
+                NavMeshHit h;
+                for (int ri = 0; ri < radii.Length && _loop.Count == 0; ri++)
+                {
+                    var ring = new List<Vector3>(24);
+                    bool broken = false;
+                    for (int k = 0; k < 24 && !broken; k++)
+                    {
+                        float a = k * Mathf.PI * 2f / 24f;
+                        Vector3 c = _arenaCentre + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radii[ri];
+                        // the nearest point with >= 3 m clearance, not raised, within 4 m of the ideal ring
+                        Vector3 bestP = Vector3.zero; bool found = false;
+                        for (int t = 0; t < 9 && !found; t++)
+                        {
+                            float off = (t % 2 == 1 ? 1 : -1) * ((t + 1) / 2) * 1f;
+                            Vector3 q = _arenaCentre + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * (radii[ri] + off);
+                            if (!NavMesh.SamplePosition(q, out h, 2f, NavMesh.AllAreas)) continue;
+                            Vector3 p = h.position;
+                            if (p.y > 0.2f) continue;
+                            if (NavMesh.FindClosestEdge(p, out h, NavMesh.AllAreas) && h.distance < 3f) continue;
+                            bestP = p; found = true;
+                        }
+                        if (!found) { broken = true; break; }
+                        ring.Add(bestP);
+                    }
+                    if (broken) continue;
+                    // consecutive waypoints must connect without detours
+                    if (_safePath == null) _safePath = new NavMeshPath();
+                    for (int k = 0; k < ring.Count && !broken; k++)
+                    {
+                        Vector3 a = ring[k], b = ring[(k + 1) % ring.Count];
+                        if (!NavMesh.CalculatePath(a, b, NavMesh.AllAreas, _safePath) || _safePath.status != NavMeshPathStatus.PathComplete) { broken = true; break; }
+                        float len = 0f; Vector3[] cs = _safePath.corners;
+                        for (int j = 1; j < cs.Length; j++) len += Vector3.Distance(cs[j - 1], cs[j]);
+                        if (len > 2.2f * Vector3.Distance(a, b) + 1f) broken = true;
+                    }
+                    if (!broken) { _loop.AddRange(ring); _loopRadius = radii[ri]; }
+                }
+                Log("training-loop radius=" + QaArgs.F(_loopRadius, 1) + " points=" + _loop.Count + " nearestGate=" + QaArgs.F(gate, 1));
+            }
+
+            private float _loopRadius;
+            private NavMeshPath _safePath;
+
+            // ---- WP-064B safe-spot planner: a global "where is it safe to be in 3 s" choice feeding the local planner
+            private readonly List<Vector3> _spots = new List<Vector3>(256);
+            private Vector3 _safeSpot;
+            private bool _hasSafeSpot;
+            private float _nextSafeSpotTime;
+            private NavMeshPath _safeSpotPath;
+
+            private void BuildSafeSpots()
+            {
+                _spots.Clear();
+                NavMeshHit h;
+                for (float x = -42f; x <= 42f; x += 5f)
+                for (float z = -42f; z <= 42f; z += 5f)
+                {
+                    if (!NavMesh.SamplePosition(new Vector3(x, 0f, z), out h, 2f, NavMesh.AllAreas)) continue;
+                    Vector3 p = h.position;
+                    if (p.y > 0.2f) continue;   // no bridges / decks
+                    int exits = 0;
+                    for (int e = 0; e < 8; e++)
+                    {
+                        Vector3 ed = Quaternion.Euler(0f, e * 45f, 0f) * Vector3.forward;
+                        if (!NavMesh.Raycast(p, p + ed * 7f, out h, NavMesh.AllAreas) && Mathf.Max(Mathf.Abs(p.x + ed.x * 7f), Mathf.Abs(p.z + ed.z * 7f)) < RingMargin) exits++;
+                    }
+                    if (exits >= 6) _spots.Add(p);
+                }
+                Log("safe-spots " + _spots.Count);
+            }
+
+            /// <summary>
+            /// Score every open spot by the arrival-time margin (nearest zombie reach time minus the player's, zombies ≤ 4.6 m/s,
+            /// player ≥ 6.2 m/s), minus bodies near the straight run there and the ring edge; head along the NavMesh path to the
+            /// best one. Re-chosen every 0.5 s.
+            /// </summary>
+            private Vector3 SafeSpotDirection(Vector3 pos, int zombieCount)
+            {
+                if (_spots.Count == 0) return Vector3.zero;
+                if (Time.unscaledTime >= _nextSafeSpotTime)
+                {
+                    _nextSafeSpotTime = Time.unscaledTime + 0.5f;
+                    float best = float.NegativeInfinity; Vector3 bestSpot = Vector3.zero;
+                    for (int k = 0; k < _spots.Count; k++)
+                    {
+                        Vector3 c = _spots[k];
+                        Vector3 dc = c - pos; dc.y = 0f;
+                        float dp = dc.magnitude;
+                        if (dp < 4f || dp > 30f) continue;
+                        float tPlayer = dp / 6.2f;
+                        float tZombie = float.MaxValue, laneRisk = 0f;
+                        Vector3 dirC = dc / dp;
+                        for (int i = 0; i < zombieCount; i++)
+                        {
+                            Vector3 zc = c - _threatPos[i]; zc.y = 0f;
+                            tZombie = Mathf.Min(tZombie, zc.magnitude / 4.6f);
+                            Vector3 zp = _threatPos[i] - pos; zp.y = 0f;
+                            float along = Vector3.Dot(zp, dirC);
+                            if (along > 0f && along < dp)
+                            {
+                                float lat = Mathf.Sqrt(Mathf.Max(0f, zp.sqrMagnitude - along * along));
+                                if (lat < 2.5f) laneRisk += (2.5f - lat);
+                            }
+                        }
+                        float edge = Mathf.Max(Mathf.Abs(c.x), Mathf.Abs(c.z)) / RingMargin;
+                        float score = (tZombie - tPlayer) - 0.6f * laneRisk - 3f * Mathf.Clamp01((edge - 0.7f) / 0.25f) - 0.02f * dp;
+                        if (_hasSafeSpot && (c - _safeSpot).sqrMagnitude < 1f) score += 0.4f;   // hysteresis
+                        if (score > best) { best = score; bestSpot = c; }
+                    }
+                    _hasSafeSpot = best > float.NegativeInfinity;
+                    _safeSpot = bestSpot;
+                    if (_hasSafeSpot)
+                    {
+                        if (_safeSpotPath == null) _safeSpotPath = new NavMeshPath();
+                        NavMeshHit sh;
+                        Vector3 from = NavMesh.SamplePosition(pos, out sh, 1.5f, NavMesh.AllAreas) ? sh.position : pos;
+                        if (!NavMesh.CalculatePath(from, _safeSpot, NavMesh.AllAreas, _safeSpotPath) || _safeSpotPath.status == NavMeshPathStatus.PathInvalid) _hasSafeSpot = false;
+                    }
+                }
+                if (!_hasSafeSpot || _safeSpotPath == null) return Vector3.zero;
+                Vector3[] corners = _safeSpotPath.corners;
+                for (int i = 1; i < corners.Length; i++)
+                {
+                    Vector3 d = corners[i] - pos; d.y = 0f;
+                    if (d.sqrMagnitude > 1.5f * 1.5f) return d.normalized;
+                }
+                Vector3 last = _safeSpot - pos; last.y = 0f;
+                return last.sqrMagnitude > 1e-3f ? last.normalized : Vector3.zero;
+            }
+
+            /// <summary>Direction along the loop in the current sense (joining it first when off it); the sense flips only
+            /// after three 0.5 s evaluations with the crowd ahead 2.5× the crowd behind.</summary>
+            private Vector3 LoopTangent(Vector3 pos, int zombieCount)
+            {
+                if (_loop.Count < 3) return Vector3.zero;
+                int nearest = 0; float bestSq = float.MaxValue;
+                for (int i = 0; i < _loop.Count; i++) { Vector3 d = _loop[i] - pos; d.y = 0f; if (d.sqrMagnitude < bestSq) { bestSq = d.sqrMagnitude; nearest = i; } }
+                if (bestSq > 36f)
+                {
+                    Vector3 join = _loop[nearest] - pos; join.y = 0f;   // off the loop: head for it first
+                    return join.normalized;
+                }
+                int next = (nearest + _loopSense + _loop.Count) % _loop.Count;
+                Vector3 tan = _loop[next] - pos; tan.y = 0f;
+                if (tan.sqrMagnitude < 4f) { next = (next + _loopSense + _loop.Count) % _loop.Count; tan = _loop[next] - pos; tan.y = 0f; }
+                tan = tan.normalized;
+
+                if (Time.unscaledTime >= _nextLoopEval)
+                {
+                    _nextLoopEval = Time.unscaledTime + 0.5f;
+                    float ahead = 0f, behind = 0f;
+                    for (int i = 0; i < zombieCount; i++)
+                    {
+                        Vector3 d = _threatPos[i] - pos; d.y = 0f;
+                        float dist = d.magnitude;
+                        if (dist > 14f || dist < 1e-3f) continue;
+                        float cos = Vector3.Dot(d / dist, tan);
+                        if (cos > 0.5f) ahead += 1f / (dist * dist);
+                        else if (cos < -0.5f) behind += 1f / (dist * dist);
+                    }
+                    _flipVotes = ahead > 2.5f * behind + 0.01f ? _flipVotes + 1 : 0;
+                    if (_flipVotes >= 3)
+                    {
+                        _loopSense = -_loopSense; _flipVotes = 0; _reverseCostUntil = Time.unscaledTime + 2f;
+                        _summary.loopReversals++;
+                        next = (nearest + _loopSense + _loop.Count) % _loop.Count;
+                        tan = _loop[next] - pos; tan.y = 0f; tan = tan.sqrMagnitude > 1e-4f ? tan.normalized : Vector3.zero;
+                    }
+                }
+                return tan;
+            }
+
+            private bool FindVantage(Vector3 from, Vector3 target, out Vector3 vantage)
+            {
+                vantage = Vector3.zero;
+                float bestCost = float.MaxValue;
+                if (_reachPath == null) _reachPath = new NavMeshPath();
+                float[] radii = { 6f, 10f, 14f };
+                for (int r = 0; r < radii.Length; r++)
+                {
+                    for (int k = 0; k < 16; k++)
+                    {
+                        float a = k * Mathf.PI / 8f;
+                        Vector3 c = target + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radii[r];
+                        if (Mathf.Abs(c.x) > RingMargin - 2f || Mathf.Abs(c.z) > RingMargin - 2f) continue;
+                        if (!NavMesh.SamplePosition(c, out NavMeshHit h, 1.5f, NavMesh.AllAreas)) continue;
+                        Vector3 p = h.position;
+                        if (!HasLineOfSight(p + Vector3.up * 1.1f, target + Vector3.up * 1.0f, radii[r])) continue;   // the muzzle line, not the eye
+                        if (!NavMesh.CalculatePath(from, p, NavMesh.AllAreas, _reachPath) || _reachPath.status != NavMeshPathStatus.PathComplete) continue;
+                        Vector3 d = p - from; d.y = 0f;
+                        float cost = d.magnitude + ((p - _lastVantage).sqrMagnitude < 4f ? 50f : 0f);   // don't retry the same failed spot
+                        if (cost < bestCost) { bestCost = cost; vantage = p; }
+                    }
+                }
+                if (bestCost < float.MaxValue) { _lastVantage = vantage; return true; }
+                return false;
+            }
+
             private static ZombieEnemy Nearest(Vector3 from, out int nearby, out Vector3 crowdDirection)
             {
                 nearby = 0;
@@ -1181,7 +2002,9 @@ namespace DD.Prototype.Qa
                     if (avoiding && Vector3.Dot(d, avoidDirection) > 0.5f) { if (fallback == Vector3.zero) fallback = d; continue; }   // open, but into the crowd
                     return d;
                 }
-                return fallback != Vector3.zero ? fallback : want;
+                // WP-064B soak 3: at an edge corner every rotation was blocked and the raw wanted direction walked the player
+                // off the south ground plate (z = -80, no boundary collider) — the fallback is now a stop, never the edge
+                return fallback != Vector3.zero ? fallback : Vector3.zero;
             }
 
             private static string V(Vector3 v) { return QaArgs.F(v.x, 1) + "," + QaArgs.F(v.y, 1) + "," + QaArgs.F(v.z, 1); }
@@ -1213,7 +2036,16 @@ namespace DD.Prototype.Qa
                     NavMeshHit hit;
                     if (NavMesh.SamplePosition(p, out hit, 3f, NavMesh.AllAreas))
                     {
-                        _waypoints.Add(hit.position);
+                        // WP-064B: spawn points may sit beyond the WP-038M ring — patrol stays 3 m inside it
+                        Vector3 w = hit.position;
+                        float lim = RingMargin - 3f;
+                        if (Mathf.Abs(w.x) > lim || Mathf.Abs(w.z) > lim)
+                        {
+                            Vector3 inside = new Vector3(Mathf.Clamp(w.x, -lim, lim), w.y, Mathf.Clamp(w.z, -lim, lim));
+                            if (!NavMesh.SamplePosition(inside, out hit, 4f, NavMesh.AllAreas)) continue;
+                            w = hit.position;
+                        }
+                        _waypoints.Add(w);
                     }
                 }
 
@@ -1232,7 +2064,7 @@ namespace DD.Prototype.Qa
                     float rad = 6f + (float)_random.NextDouble() * 18f;
                     Vector3 c = origin + new Vector3(Mathf.Cos(ang) * rad, 0f, Mathf.Sin(ang) * rad);
                     NavMeshHit hit;
-                    if (NavMesh.SamplePosition(c, out hit, 4f, NavMesh.AllAreas))
+                    if (NavMesh.SamplePosition(c, out hit, 4f, NavMesh.AllAreas) && Mathf.Abs(hit.position.x) < RingMargin - 3f && Mathf.Abs(hit.position.z) < RingMargin - 3f)
                     {
                         _waypoints.Add(hit.position);
                     }
@@ -1297,9 +2129,19 @@ namespace DD.Prototype.Qa
                     Vector3 from = NavMesh.SamplePosition(pos, out start, 2f, NavMesh.AllAreas) ? start.position : pos;
                     if (!NavMesh.CalculatePath(from, _goal, NavMesh.AllAreas, _path) || _path.status == NavMeshPathStatus.PathInvalid)
                     {
+                        // WP-064B soak 14: the body stood on a NavMesh island (a patch the player can step onto but agents
+                        // cannot leave — every path failed, 300 s frozen). No path → walk straight at the goal; the stall
+                        // detector rotates it if a wall is in the way.
+                        _islandFails++;
+                        if (_islandFails >= 2)
+                        {
+                            Vector3 straight = _goal - pos; straight.y = 0f;
+                            if (straight.sqrMagnitude > 1e-4f) { dir = straight.normalized; _summary.islandEscapes++; return true; }
+                        }
                         PickNewGoal();
                         return false;
                     }
+                    _islandFails = 0;
 
                     _pathCorner = 1;
                 }
@@ -1369,15 +2211,18 @@ namespace DD.Prototype.Qa
                 var sb = new StringBuilder();
                 for (int i = 0; i < top.Count && i < 6; i++) sb.Append(i > 0 ? " | " : "").Append(top[i].Key).Append('=').Append(top[i].Value);
                 _summary.fireLineHits = sb.ToString();
-                // C-00 decision 2026-09-17 (M3 closure, user informed): the gate is "round >= 4 completed with no death before it"
-                // — the bot's skill past round 4 is not the product; later rounds still run for perf/readability coverage
-                // and are reported. The full requested count remains the reported target.
-                int gateRounds = Mathf.Min(GateRoundsMin, _rounds);
-                bool gateOk = _summary.roundsCompleted >= gateRounds && (_deathRound <= 0 || _deathRound > gateRounds) && (_timeoutRound <= 0 || _timeoutRound > gateRounds);
+                // WP-064 closure is exact: asking for N rounds means N ordered rounds must
+                // complete without death or timeout. The former four-round legacy minimum
+                // allowed a truncated 12-round soak to exit successfully.
+                bool gateOk = ExactRunPassed(_summary.roundsCompleted, _rounds, _deathRound, _timeoutRound);
                 _summary.gatePass = gateOk;
                 _summary.pass = gateOk && !_invulnerable && !_specialEvidence && !_deathEvidence;   // WP-052/055/059: an evidence run is never a QA pass
+                _summary.runMode = _stability ? "stability" : (_invulnerable || _specialEvidence || _deathEvidence ? "evidence" : "normal");
+                _summary.stabilityPass = _stability && !_specialEvidence && !_deathEvidence && string.IsNullOrEmpty(_fail) && _timeoutRound <= 0
+                                         && ExactRunPassed(_summary.roundsCompleted, _rounds, _deathRound, _timeoutRound);
                 _summary.note = string.IsNullOrEmpty(_fail) ? (_died ? "player died" : "ok") : _fail;
-                if (_invulnerable) _summary.note += " [invulnerable evidence run: WP-052 tier frames; not a QA pass]";   // (WP-055: the marks used to be overwritten by the line above)
+                if (_stability) _summary.note += " [stability run (DEC-091): invulnerable by design; stabilityPass=" + _summary.stabilityPass + "]";
+                else if (_invulnerable) _summary.note += " [invulnerable evidence run: WP-052 tier frames; not a QA pass]";   // (WP-055: the marks used to be overwritten by the line above)
                 if (_specialEvidence) _summary.note += " [special evidence run: WP-055 sw_* frames; not a QA pass]";
                 if (_deathEvidence) _summary.note += " [death evidence run: WP-059 deathframe-*; not a QA pass]";
                 _summary.swBeats = (_swBeats[0] + _swBeats[1] + _swBeats[2]) > 0 ? "sw_push=" + _swBeats[0] + " sw_web=" + _swBeats[1] + " sw_pull=" + _swBeats[2] : "";
@@ -1393,9 +2238,9 @@ namespace DD.Prototype.Qa
                         "single arbiter for the closure: dev Player (not batchmode), targetFrameRate -1 during the reading (WP-052), ProfilerRecorder 'GC Allocated In Frame' + managed heap delta (GC.GetTotalMemory rising steps), positive control first (C-00 / WP-047)", "bot-summary.json");
                     report.Add("bot.alloc.perFrame", true, "recorder avg " + QaArgs.F(_summary.allocRecorderAvgB, 0) + " B / max " + _summary.allocRecorderMaxB + " B; heap-delta avg " + QaArgs.F(_summary.allocHeapDeltaAvgB, 0) + " B / max " + _summary.allocHeapDeltaMaxB + " B; frames > 4 KB " + _summary.allocFramesOver4K + "/" + _summary.allocFrames,
                         "report only (0-allocation rule is the hit-path test; whole-run figure here)", "bot run, all phases incl. upgrade screens", "bot-summary.json");
-                    report.Add("bot.rounds", _summary.gatePass, _summary.roundsCompleted + "/" + _rounds + (_deathRound > 0 ? " (died r" + _deathRound + ")" : "") + (_timeoutRound > 0 ? " (timeout r" + _timeoutRound + ")" : ""), ">= " + GateRoundsMin + " rounds, no death/timeout before (C-00 2026-09-17); " + _rounds + " requested",
+                    report.Add("bot.rounds", _summary.gatePass, _summary.roundsCompleted + "/" + _rounds + (_deathRound > 0 ? " (died r" + _deathRound + ")" : "") + (_timeoutRound > 0 ? " (timeout r" + _timeoutRound + ")" : ""), "exactly " + _rounds + " requested rounds, no death/timeout",
                         _summary.note + "; kills " + _summary.totalKills + ", deaths " + _summary.deaths + ", damage " + _summary.totalDamageEvents +
-                        ", stuck " + _summary.stuckRecoveries + ", relocations " + _summary.relocations + ", wallEscapes " + _summary.wallEscapes + ", upgrades " + _summary.upgradesBought + " (" + _summary.goldSpent + " gold), reloads " + _summary.reloads, "bot-summary.json");
+                        ", stuck " + _summary.stuckRecoveries + ", relocations " + _summary.relocations + ", wallEscapes " + _summary.wallEscapes + ", upgrades " + _summary.upgradesBought + " (" + _summary.goldSpent + " gold), kite " + _summary.kiteFrames + ", telegraphs " + _summary.telegraphDodges + ", specialPickups " + _summary.specialPickupsSought + ", reloads " + _summary.reloads, "bot-summary.json");
                     report.Add("bot.determinism", true, "spawn " + _summary.spawnSequenceHash + " outcome " + _summary.outcomeHash, "report only",
                         "compare across runs with the same seed; frame timing is not seeded", "bot-summary.json");
                     report.summary = "bot mean frame " + QaArgs.F(_summary.meanFrameMs) + " ms over " + _frameMs.Count + " frames";
@@ -1403,10 +2248,14 @@ namespace DD.Prototype.Qa
                 }
                 catch (Exception e)
                 {
+                    _artifactWriteFailed = true;
+                    _summary.artifactWriteFailed = true;
+                    _summary.pass = false;
+                    _summary.note = (_summary.note ?? "") + " [artifact write failed: " + e.GetType().Name + "]";
                     Debug.LogError("[QaRunBot] write failed: " + e);
                 }
 
-                Debug.Log("[QaRunBot] " + (_summary.pass ? "PASS" : "FAIL") + " rounds=" + _summary.roundsCompleted + "/" + _rounds +
+                Debug.Log("[QaRunBot] " + (_stability ? (_summary.stabilityPass ? "STABILITY PASS" : "STABILITY FAIL") : (_summary.pass ? "PASS" : "FAIL")) + " rounds=" + _summary.roundsCompleted + "/" + _rounds +
                           " kills=" + _summary.totalKills + " deaths=" + _summary.deaths + " spawnHash=" + _summary.spawnSequenceHash + " aimErr=" + QaArgs.F(_summary.meanAimErrorDeg, 1) + "° aimKind=" + _summary.aimKind + " fireFrames=" + _summary.fireFrames + " fireLine[" + _summary.fireLineHits + "]" + (_summary.swActivations > 0 ? " special=" + _summary.swActivations + " " + _summary.swBeats : "") + " note=" + _summary.note);
 
                 if (_bootFlow && !_externalQuit)
@@ -1442,7 +2291,7 @@ namespace DD.Prototype.Qa
             private string SummaryLines()
             {
                 var sb = new StringBuilder();
-                sb.Append("QaRunBot ").Append(_summary.pass ? "PASS" : "FAIL").Append(" seed=").Append(_seed)
+                sb.Append("QaRunBot ").Append(_stability ? (_summary.stabilityPass ? "STABILITY PASS" : "STABILITY FAIL") : (_summary.pass ? "PASS" : "FAIL")).Append(" seed=").Append(_seed)
                   .Append(" rounds=").Append(_summary.roundsCompleted).Append('/').Append(_rounds)
                   .Append(" kills=").Append(_summary.totalKills).Append(" deaths=").Append(_summary.deaths)
                   .Append(" spawns=").Append(_summary.spawnCount).Append(" spawnHash=").Append(_summary.spawnSequenceHash)
@@ -1469,7 +2318,7 @@ namespace DD.Prototype.Qa
                 }
 
                 yield return null;
-                Application.Quit(_summary.pass ? 0 : 3);
+                Application.Quit(ExitCode);
             }
 
             private void OnDestroy()

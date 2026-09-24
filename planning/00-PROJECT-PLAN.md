@@ -160,6 +160,7 @@ Hedef işletim sistemi, mağaza ve dağıtım ayrıntıları ürünün büyük b
 | DEC-088 | M3 performans bütçesi: ortalama kare ≤ **8,0 ms** / temiz p99 ≤ 10 ms (M1 Pro 1920×1080, 40 düşman, 60 s pencere; ADR-011-3 v3). 7,0 ms look pass (WP-029/038) öncesi öneriydi; kapanış 4 ölçümü ort 7,5 / p99 8,4 ms. Kullanıcı 2026-09-17 (S-10 WP-044). |
 | DEC-089 | Hedef platformlar macOS ve Windows; DEC-080'in Windows ertelemesi kaldırıldı. Kanal, imza, Windows referans donanımı/perf bütçesi ve IL2CPP ayrı kararlar (WP-066). (kullanıcı, 2026-09-23) |
 | DEC-090 | Release build sıkıştırması LZ4HC (547→323 MB, ölçülebilir yükleme cezası yok; DEC-086 tavanı 550 aynı; kullanıcı 2026-09-24). macOS + Windows; `tools/build.sh release` varsayılanı, dev build sıkıştırmasız (WP-066E). |
+| DEC-091 | WP-064 soak kapısı ikiye ayrılır: **kararlılık (MUST)** = ölümsüz (invulnerable) bot 2 tohum (61 + 26) × 12/12 round, zaman aşımı/takılma 0, Player logunda hata 0, yönetilen yığın/toplam ayırma büyümesi sınırlı (`tools/qa/soak_gate.py --stability`; `runMode=stability`, ayrı `stabilityPass`), kullanıcı verisi korunur, temiz host; **gerçek bot koşuları kapı değil, rapordur** (N ≥ 5 koşu, ulaşılan round dağılımı, ölüm round'u/nedeni — denge/zorluk verisi). Kullanıcı 2026-09-24 (C-00 iletti; S-10 WP-064B). |
 
 ## Kararlaştırılması sonraya bırakılan alanlar
 
