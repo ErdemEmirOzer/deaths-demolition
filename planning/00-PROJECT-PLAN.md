@@ -161,6 +161,7 @@ Hedef işletim sistemi, mağaza ve dağıtım ayrıntıları ürünün büyük b
 | DEC-089 | Hedef platformlar macOS ve Windows; DEC-080'in Windows ertelemesi kaldırıldı. Kanal, imza, Windows referans donanımı/perf bütçesi ve IL2CPP ayrı kararlar (WP-066). (kullanıcı, 2026-09-23) |
 | DEC-090 | Release build sıkıştırması LZ4HC (547→323 MB, ölçülebilir yükleme cezası yok; DEC-086 tavanı 550 aynı; kullanıcı 2026-09-24). macOS + Windows; `tools/build.sh release` varsayılanı, dev build sıkıştırmasız (WP-066E). |
 | DEC-091 | WP-064 soak kapısı ikiye ayrılır: **kararlılık (MUST)** = ölümsüz (invulnerable) bot 2 tohum (61 + 26) × 12/12 round, zaman aşımı/takılma 0, Player logunda hata 0, yönetilen yığın/toplam ayırma büyümesi sınırlı (`tools/qa/soak_gate.py --stability`; `runMode=stability`, ayrı `stabilityPass`), kullanıcı verisi korunur, temiz host; **gerçek bot koşuları kapı değil, rapordur** (N ≥ 5 koşu, ulaşılan round dağılımı, ölüm round'u/nedeni — denge/zorluk verisi). Kullanıcı 2026-09-24 (C-00 iletti; S-10 WP-064B). |
+| DEC-092 | M4 performans hedefi **60 fps**: Yüksek kalite kademesinde ortalama kare ≤ **16,6 ms** / p99 ≤ **20 ms** (1920×1080, referans makine = geliştirme Mac'i); ayrıca daha hafif bir Performans kademesi bulunur. DEC-088 (8,0 ms) M3 kapanış tabanı olarak tarihçede kalır; WP-064 kapanışı 8,0 ms kanıtıyla sürer. Kademe başına ölçüm protokolü WP-078 (S-10). (kullanıcı, 2026-09-24; M4-R1 §6) |
 
 ## Kararlaştırılması sonraya bırakılan alanlar
 
