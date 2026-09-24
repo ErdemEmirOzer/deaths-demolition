@@ -188,7 +188,11 @@ namespace DD.Prototype.Tests.EditMode
 
             foreach (UpgradeBranch branch in Enum.GetValues(typeof(UpgradeBranch)))
             {
-                Assert.IsTrue(names.Contains("Upgrade." + branch), "eksik upgrade glifi: " + branch);
+                // WP-077 B1's weapon-core branches borrow a documented stand-in until N19 draws their own cell.
+                bool own = names.Contains("Upgrade." + branch);
+                string standIn;
+                bool borrowed = !own && UiArt.UpgradeGlyphStandIns.TryGetValue(branch, out standIn) && names.Contains(standIn);
+                Assert.IsTrue(own || borrowed, "eksik upgrade glifi (ne kendi hücresi ne belgeli vekil): " + branch);
             }
 
             foreach (ClassicWeaponId id in Enum.GetValues(typeof(ClassicWeaponId)))

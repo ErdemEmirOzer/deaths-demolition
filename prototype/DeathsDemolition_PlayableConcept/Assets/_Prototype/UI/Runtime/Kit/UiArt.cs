@@ -52,9 +52,24 @@ namespace DD.Prototype.UI
             return sw != null ? sw : Icon("Special." + id);
         }
 
+        /// <summary>
+        /// WP-077 B1 added three weapon-core branches (ArmorBreak, Impact, Cluster) before their G1 glyphs exist: each
+        /// borrows the nearest existing glyph until M4-R1 N19 (R1-B, the living icon set) draws its own "Upgrade.*" cell.
+        /// A branch with neither is a test failure (UiArtThemeTests).
+        /// </summary>
+        public static readonly System.Collections.Generic.Dictionary<UpgradeBranch, string> UpgradeGlyphStandIns =
+            new System.Collections.Generic.Dictionary<UpgradeBranch, string>
+            {
+                { UpgradeBranch.ArmorBreak, "Ach.ArmorBreaker" },
+                { UpgradeBranch.Impact, "Status.Dazed" },
+                { UpgradeBranch.Cluster, "Ach.PlateWrecker" },
+            };
+
         public static Sprite UpgradeIcon(UpgradeBranch branch)
         {
-            return Icon("Upgrade." + branch);
+            Sprite own = Icon("Upgrade." + branch);
+            string standIn;
+            return own != null ? own : UpgradeGlyphStandIns.TryGetValue(branch, out standIn) ? Icon(standIn) : null;
         }
 
         /// <summary>
