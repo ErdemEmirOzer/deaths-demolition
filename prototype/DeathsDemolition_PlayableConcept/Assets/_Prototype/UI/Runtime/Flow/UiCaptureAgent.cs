@@ -417,7 +417,7 @@ namespace DD.Prototype.UI
                 for (int i = 0; i < live.Count; i++)
                 {
                     ZombieEnemy z = live[i];
-                    if (z != null && (z.IsNetted || z.IsDazed))
+                    if (z != null && (z.IsElectrocuted || z.Gel != GelState.None))
                     {
                         return true;
                     }

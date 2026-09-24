@@ -1886,5 +1886,21 @@
   "achievement.full_arsenal.desc": {
     "en": "Reach round {round} with each of the ten classic weapons.",
     "tr": "On klasik silahın her biriyle {round}. rounda ulaş."
+  },
+  "hud.status.shock": {
+    "en": "SHOCK",
+    "tr": "ŞOK"
+  },
+  "hud.status.slide": {
+    "en": "SLIDE",
+    "tr": "KAYMA"
+  },
+  "hud.status.down": {
+    "en": "DOWN",
+    "tr": "YERDE"
+  },
+  "hud.slick": {
+    "en": "SLICK",
+    "tr": "KAYGAN"
   }
 }

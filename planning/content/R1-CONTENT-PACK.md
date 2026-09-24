@@ -2,7 +2,7 @@
 
 Owner: UXW (content session) · Date 2026-09-24 · Base: `main` · Consumers: **S-09** (UI, WP-068 R1 + WP-070 Pause selector) and **S-04** (progression, WP-077 B1/B2/B4).
 Sources: `WP-069-ARSENAL-V3-DIRECTION.md` (§0 table, §1 §2 identity, §1 §6 seals, §1 §7 Specials) · `WP-077-PROGRESSION-TREE-V2-DIRECTION.md` (§2 in-run tree, §3 PATH, §5 achievements) · `WP-068-UI-V3-DIRECTION.md` (§1 tone, §2.2 typography, §5 E9/E24/E25, §15.4 tips) · `WP-070-CAMERA-MODES-DIRECTION.md` §5.1 · voice from `UiLoadingTips.cs`, `PauseScreen.cs`, `RunHudScreen.cs`, `achievement-catalog.json`.
-Machine-readable twin: [`r1-strings.json`](r1-strings.json) — flat `{"key": {"en": "…", "tr": "…"}}`, 472 keys, generated from one data set together with the tables below, so keys and text match.
+Machine-readable twin: [`r1-strings.json`](r1-strings.json) — flat `{"key": {"en": "…", "tr": "…"}}`, 476 keys, generated from one data set together with the tables below, so keys and text match.
 
 Docs only: nothing here touches a Unity asset or a C# file. All numbers that WP-069/WP-077 mark PROTOTYPE-ONLY are left as placeholders; the only literal counts are identity facts the weapon is built on (Sanren's three-round burst, Nito's two barrels, the ten classic weapons).
 
@@ -18,8 +18,9 @@ Docs only: nothing here touches a Unity asset or a C# file. All numbers that WP-
 | PATH labels | 28 | 28 (`path.*`) |
 | Loading-screen tips | **30** | 30 (`tips.001`–`tips.030`) |
 | Camera-mode labels (Pause selector + camera settings) | 15 | 15 (`camera.*`) |
+| HUD status stamps + gel hint (S-09 R1-B) | 4 | 4 (`hud.*`) |
 | New achievements (weapons + Specials) | **12** | 24 (`achievement.*`) |
-| **Total** | | **472** |
+| **Total** | | **476** |
 
 ## 0 · Assumptions and ambiguities (read first)
 
@@ -533,5 +534,19 @@ Key `achievement.<id>.name` / `.desc`. Threshold column is a proposal for S-04 (
 | `kurogane_plates` | Settled Iron | Oturmuş Demir | Break {count} armour pieces with one Kurogane magazine. | Tek Kurogane şarjörüyle {count} zırh parçası kır. | SingleRun | Rare | 10 | new: PlatesPerMagazine(lmg_2) |
 | `tetsui_runners` | Hammer Down | Çekiç İndi | Stop {count} Runners with Tetsui in one run. | Bir koşuda Tetsui ile {count} Runner durdur. | SingleRun | Uncommon | 15 | new: TierKills(Special) per weapon |
 | `full_arsenal` | Ten Answers | On Cevap | Reach round {round} with each of the ten classic weapons. | On klasik silahın her biriyle {round}. rounda ulaş. | Lifetime | Epic | 10 | new: ReachRoundPerWeapon |
+
+## 7 · HUD status stamps and the gel hint (S-09, R1-B)
+
+| key | en | tr |
+| --- | --- | --- |
+| `hud.status.shock` | SHOCK | ŞOK |
+| `hud.status.slide` | SLIDE | KAYMA |
+| `hud.status.down` | DOWN | YERDE |
+| `hud.slick` | SLICK | KAYGAN |
+
+S-09 (R1-B, 25.09):
+- Added for N19 / DEC-094. The stamps replace NET / DAZED, which went with the old Specials. SHOCK marks a body held by Raiju's chain. SLIDE marks a body the gel is carrying. DOWN marks a body that falls, lies or gets up.
+- `hud.slick` is the player's own hint in the bottom-centre prompt slot while they stand in gel (N19-DIRECTION §2). One word, like the stamps. It gives no duration, because the puddle has none to show.
+- The stamp chip is as wide as its longest word; `tr` YERDE and KAYMA fit the same chip at TextScale 1.25.
 
 <!-- TABLES:END -->

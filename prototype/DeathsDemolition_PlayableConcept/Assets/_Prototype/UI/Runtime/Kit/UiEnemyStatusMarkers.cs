@@ -12,10 +12,16 @@ namespace DD.Prototype.UI
     /// stopped or slowed without watching its animation - shape (chip) + word, never a
     /// colour alone (directive §14).
     ///
+    /// M4-R1 N19 / DEC-094 (the two new Specials; NET / DAZED left with the old ones): SHOCK while Raiju's chain holds a body
+    /// (ZombieEnemy.IsElectrocuted), SLIDE while Namekuji's gel carries it, DOWN while it falls, lies or gets up
+    /// (ZombieEnemy.Gel). The glyph (Status.Electrocuted / Sliding / Downed, outer twin first) takes its Special's identity
+    /// tint (UiGlyphTints: Arc / Gel - "who did this", not a threat colour); the word stays cream. Until the G1 cells ship
+    /// the stamps are word-only.
+    ///
     /// WP-068 slice 8c · E19 status stamps, in the 8-R ink language (AD 8-R MUST-3):
-    /// - Each stamp is the 24 px outer-only silhouette (G1 Status.NettedOuter / DazedOuter, SDF ink edge) plus the word in
-    ///   cream with the HUD ink, over a brush underline - no box. A status is not a threat, so there is no state colour:
-    ///   shape and word tell NET from DAZED.
+    /// - Each stamp is the 24 px outer-only silhouette (G1 Status.*Outer, SDF ink edge) plus the word in cream with the HUD
+    ///   ink, over a brush underline - no box. A status is not a threat, so there is no state colour: shape and word tell
+    ///   the states apart; the glyph's tint only names the Special behind it.
     /// - A chip is bound to its body for as long as the status lasts. It stamps in (1.12 → 1) when the status starts and
     ///   fades out (Fast, Exit) where it last stood when the status ends, the body dies or leaves the view.
     /// - Positions follow the projection with no lag.
@@ -37,13 +43,16 @@ namespace DD.Prototype.UI
         private static readonly Vector2 Parked = new Vector2(-10000f, -10000f);
         private static readonly Vector3[] s_corners = new Vector3[4];
 
-        private enum State { None = 0, Netted = 1, Dazed = 2 }
+        private enum State { None = 0, Shock = 1, Slide = 2, Down = 3 }
+
+        // R1 content pack: hud.status.shock / slide / down (S-09 wrote them back, pack §5 note).
+        private static readonly string[] Words = { string.Empty, "SHOCK", "SLIDE", "DOWN" };
+        private static readonly string[] GlyphKeys = { null, "Status.Electrocuted", "Status.Sliding", "Status.Downed" };
 
         private RectTransform[] _chips;
         private CanvasGroup[] _groups;
         private Image[] _glyphs;
-        private Sprite _nettedSprite;
-        private Sprite _dazedSprite;
+        private readonly Sprite[] _sprites = new Sprite[4];
         private TMP_Text[] _labels;
         private State[] _shown;
         private ZombieEnemy[] _owner;
@@ -61,9 +70,12 @@ namespace DD.Prototype.UI
             _chips = new RectTransform[PoolSize];
             _groups = new CanvasGroup[PoolSize];
             _glyphs = new Image[PoolSize];
-            _nettedSprite = UiArt.Icon("Status.NettedOuter") ?? UiArt.Icon("Status.Netted");
-            _dazedSprite = UiArt.Icon("Status.DazedOuter") ?? UiArt.Icon("Status.Dazed");
-            bool glyphs = _nettedSprite != null && _dazedSprite != null;
+            bool glyphs = true;
+            for (int s = 1; s < GlyphKeys.Length; s++)
+            {
+                _sprites[s] = UiArt.Icon(GlyphKeys[s] + "Outer") ?? UiArt.Icon(GlyphKeys[s]);
+                glyphs &= _sprites[s] != null;
+            }
             _labels = new TMP_Text[PoolSize];
             _shown = new State[PoolSize];
             _owner = new ZombieEnemy[PoolSize];
@@ -72,16 +84,21 @@ namespace DD.Prototype.UI
             _exitSeconds = UiMotionTokens.Seconds(UiDuration.Fast);
 
             // E19: the chip is as tall as the glyph plus a 2 px margin, or the word's line at this TextScale if taller;
-            // as wide as glyph + the longer word, never under the old 88.
+            // as wide as glyph + the longest word, never under the old 88.
             float glyph = glyphs ? GlyphSize : 0f;
             float height = Mathf.Max(GlyphSize + 4f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
             Sprite brush = UiFxGlobals.InkMask(UiInkChannel.Underline);
             for (int i = 0; i < PoolSize; i++)
             {
-                TMP_Text label = UiFactory.Chip("Status." + i, transform, "DAZED", UiColor.SurfaceInset, UiColor.TextPrimary, MinChipWidth, height);
+                TMP_Text label = UiFactory.Chip("Status." + i, transform, Words[1], UiColor.SurfaceInset, UiColor.TextPrimary, MinChipWidth, height);
                 label.fontStyle = FontStyles.Bold;
                 UiHudInk.Apply(label);
-                float words = Mathf.Ceil(label.GetPreferredValues("DAZED").x);
+                float words = 0f;
+                for (int w = 1; w < Words.Length; w++)
+                {
+                    words = Mathf.Max(words, Mathf.Ceil(label.GetPreferredValues(Words[w]).x));
+                }
+
                 float width = Mathf.Max(MinChipWidth, (int)UiSpace.XS + glyph + (int)UiSpace.XS + words + (int)UiSpace.S);
                 var chip = (RectTransform)label.transform.parent;
                 chip.sizeDelta = new Vector2(width, height);
@@ -97,12 +114,12 @@ namespace DD.Prototype.UI
                 _groups[i] = UiFactory.Group(chip.gameObject);
                 _groups[i].alpha = 0f;   // parked and unbound: culled, not drawn off-screen (a bind sets 1)
                 _labels[i] = label;
-                label.text = "NET";
+                label.text = Words[1];
                 if (glyphs)
                 {
                     // Word + glyph (never colour alone): the glyph sits in the chip's left inset
                     // and the label's own left inset moves past it.
-                    Image image = UiFactory.NewImage("Icon", chip, UiColor.TextPrimary, _nettedSprite);
+                    Image image = UiFactory.NewImage("Icon", chip, UiColor.TextPrimary, _sprites[1]);
                     image.preserveAspect = true;
                     if (UiArt.IsGlyph(image.sprite))
                     {
@@ -244,7 +261,14 @@ namespace DD.Prototype.UI
                 return State.None;
             }
 
-            return z.IsNetted ? State.Netted : z.IsDazed ? State.Dazed : State.None;
+            // A shock holds a slide still (WP-076 B5), so SHOCK outranks the gel states.
+            if (z.IsElectrocuted)
+            {
+                return State.Shock;
+            }
+
+            GelState gel = z.Gel;
+            return gel == GelState.Sliding ? State.Slide : gel != GelState.None ? State.Down : State.None;
         }
 
         private static bool Project(Camera camera, ZombieEnemy z, Vector2 canvasSize, out Vector2 at)
@@ -314,12 +338,13 @@ namespace DD.Prototype.UI
         private void Style(int i, State state)
         {
             _shown[i] = state;
-            // Literals: no formatting. Cream for both - the silhouette and the word carry the difference (8-R).
-            _labels[i].text = state == State.Netted ? "NET" : "DAZED";
+            // Literals: no formatting. The word is cream; the glyph wears its Special's identity tint (N19 §2).
+            _labels[i].text = Words[(int)state];
             if (_glyphs[i] != null)
             {
-                UiArt.SetGlyph(_glyphs[i], state == State.Netted ? _nettedSprite : _dazedSprite);
+                UiArt.SetGlyph(_glyphs[i], _sprites[(int)state]);
                 UiArt.ApplyGlyph(_glyphs[i], new Vector3(0.25f, 0f, 0f));
+                _glyphs[i].color = UiTokens.Get(state == State.Shock ? UiGlyphTints.ChainLightning : UiGlyphTints.Gel);
             }
         }
     }
