@@ -109,6 +109,12 @@ namespace DD.Prototype.UI
                 UiSettings.ReducedMotion = true;
             }
 
+            // -ddUiScheme pad: the prompts drawn for a gamepad (WP-068 V1 shapes) without a pad attached.
+            if (Arg("-ddUiScheme") == "pad")
+            {
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
+            }
+
             // -ddUiLook x,y: hold the menu backdrop's parallax at a corner (−1..1), AD 6ab frames.
             string look = Arg("-ddUiLook");
             if (!string.IsNullOrEmpty(look))

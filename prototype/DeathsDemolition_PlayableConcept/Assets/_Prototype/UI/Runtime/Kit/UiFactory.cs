@@ -294,6 +294,11 @@ namespace DD.Prototype.UI
                 image.pixelsPerUnitMultiplier = 1f;
             }
 
+            if (UiArt.IsGlyph(sprite))
+            {
+                UiArt.ApplyGlyph(image);   // WP-068 G1: a distance-field glyph draws through DD/UI/Fx SdfGlyph
+            }
+
             return image;
         }
 

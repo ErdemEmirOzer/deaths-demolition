@@ -66,6 +66,10 @@ namespace DD.Prototype.UI
         public const float InkRecedeSeconds = 0.6f;
         public const float InkBlotSize = 2600f;
 
+        /// <summary>The doors' kumiko lattice (A6): one 256² tile per KumikoTilePixels on screen, cream at KumikoAlpha (≤ 0.08).</summary>
+        public const float KumikoTilePixels = 192f;
+        public const float KumikoAlpha = 0.06f;
+
         private static UiCurtain s_instance;
         private static bool s_covering;
 
@@ -311,7 +315,7 @@ namespace DD.Prototype.UI
         {
             if (!s_covering)
             {
-                _cursorWasVisible = Cursor.visible;
+                _cursorWasVisible = UiCursor.ContextVisible;
             }
 
             s_covering = true;
@@ -363,7 +367,7 @@ namespace DD.Prototype.UI
         /// <summary>A load under the ink (Run → Results): no doors - what Close does besides them.</summary>
         public void CoverWithInk()
         {
-            Cursor.visible = false;
+            UiCursor.SetContextVisible(false);
             if (EventSystem.current != null)
             {
                 EventSystem.current.SetSelectedGameObject(null);
@@ -468,11 +472,11 @@ namespace DD.Prototype.UI
         /// </summary>
         public void BeginBoot()
         {
-            _cursorWasVisible = Cursor.visible;
+            _cursorWasVisible = UiCursor.ContextVisible;
             s_covering = true;
             s_bootSkip = false;
             _canvas.enabled = true;
-            Cursor.visible = false;
+            UiCursor.SetContextVisible(false);
             SetDoorsOpen(true);
             _boot = true;
             _bootHandedOff = false;
@@ -730,6 +734,8 @@ namespace DD.Prototype.UI
             rect.anchorMax = new Vector2(anchorMaxX, 1f);
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
+            // A6 kumiko (asanoha) lattice on the lacquer, cream at KumikoAlpha (≤ 0.08; AD 10b-2 SHOULD-5, AD #12).
+            UiPatternTile.Create("Kumiko", rect, UiTheme.KumikoTileResource, KumikoTilePixels, UiColor.TextPrimary, KumikoAlpha);
             return rect;
         }
 
@@ -778,7 +784,7 @@ namespace DD.Prototype.UI
             // A load that supersedes a reveal closes doors that are still shut: keep the cursor state from the first close.
             if (!s_covering)
             {
-                _cursorWasVisible = Cursor.visible;
+                _cursorWasVisible = UiCursor.ContextVisible;
             }
 
             s_covering = true;
@@ -787,7 +793,7 @@ namespace DD.Prototype.UI
             EndInk();
             _canvas.enabled = true;
             _group.gameObject.SetActive(false);
-            Cursor.visible = false;
+            UiCursor.SetContextVisible(false);
             if (EventSystem.current != null)
             {
                 EventSystem.current.SetSelectedGameObject(null);
@@ -965,7 +971,7 @@ namespace DD.Prototype.UI
                 ? UiModal.Create("LoadError", _root, UiModalSize.M, "THE NEXT SCREEN DID NOT LOAD", body, primaryLabel, UiButtonVariant.Primary, onPrimary, "QUIT", quit, false, true)
                 : UiModal.Create("LoadError", _root, UiModalSize.M, "THE NEXT SCREEN DID NOT LOAD", body, "QUIT", UiButtonVariant.Secondary, quit, null, null, false, true);
             _error.Open();
-            Cursor.visible = true;
+            UiCursor.SetContextVisible(true);
         }
 
         public void HideError()
@@ -1145,7 +1151,7 @@ namespace DD.Prototype.UI
         private void FinishReveal()
         {
             s_covering = false;
-            Cursor.visible = _cursorWasVisible;
+            UiCursor.SetContextVisible(_cursorWasVisible);
             Action handlers = Revealed;
             if (handlers != null)
             {

@@ -283,7 +283,7 @@ namespace DD.Prototype.UI
         {
             BottomCentreTop = 0f;
             base.OnDestroy();
-            Cursor.visible = true;
+            UiCursor.SetContextVisible(true);
             RunEvents.RunStarted -= OnRunStarted;
             RunEvents.RoundStarted -= OnRoundStarted;
             RunEvents.RoundCompleted -= OnRoundCompleted;
@@ -1054,10 +1054,7 @@ namespace DD.Prototype.UI
 
             // The OS pointer hides while the reticle is the pointer (WP-022B); it returns
             // for the shop, the pause screen and the results.
-            if (Cursor.visible == show)
-            {
-                Cursor.visible = !show;
-            }
+            UiCursor.SetContextVisible(!show);   // WP-068: UiCursor owns the pointer (a pad hides it anywhere)
 
             // Hidden = parked off-screen, never SetActive: toggling a graphic's active state
             // re-registers it with the canvas and rebuilds the whole HUD mesh each time, which
@@ -1094,7 +1091,7 @@ namespace DD.Prototype.UI
                 sprite = UiArt.WeaponIcon(id);
             }
 
-            _weaponIcon.sprite = sprite;
+            UiArt.SetGlyph(_weaponIcon, sprite);   // WP-068 G1: keeps the SDF draw path on a swap
             _weaponIcon.enabled = sprite != null;
 
             if (_shotModel != null)
@@ -1238,7 +1235,7 @@ namespace DD.Prototype.UI
                         Sprite heartSprite = UiArt.Icon(_model.HealthLow ? "Hud.LowHealth" : "Hud.Health");
                         if (heartSprite != null)
                         {
-                            _healthIcon.sprite = heartSprite;
+                            UiArt.SetGlyph(_healthIcon, heartSprite);
                         }
                     }
                 }
@@ -1476,7 +1473,7 @@ namespace DD.Prototype.UI
                     if (_specialGlyph != null)
                     {
                         Sprite glyph = UiArt.SpecialIcon(e.Id);
-                        _specialGlyph.sprite = glyph;
+                        UiArt.SetGlyph(_specialGlyph, glyph);
                         _specialGlyph.enabled = glyph != null;
                     }
 

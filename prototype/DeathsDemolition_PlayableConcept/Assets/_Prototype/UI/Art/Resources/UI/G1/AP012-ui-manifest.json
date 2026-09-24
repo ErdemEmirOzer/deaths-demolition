@@ -1,0 +1,2242 @@
+{
+ "schema": "AP012-ui-manifest-v1",
+ "package": "WP-068 \u00a77.1 G1 SDF glyph atlas (S-09 build_g1.py)",
+ "sdf": {
+  "cell": 64,
+  "spread_px": 6,
+  "edge": 0.5,
+  "content": 52,
+  "import": "Alpha8 (white + alpha); draw with DD/UI/Fx SdfGlyph"
+ },
+ "atlases": [
+  {
+   "file": "DD_G1_glyphs_sdf_1024.png",
+   "width": 1024,
+   "height": 1024,
+   "sprites": [
+    {
+     "name": "Upgrade.Piercing",
+     "x": 6,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.Ricochet",
+     "x": 70,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.Explosion",
+     "x": 134,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.Chain",
+     "x": 198,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.FireRate",
+     "x": 262,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.ReloadSpeed",
+     "x": 326,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.MovementSpeed",
+     "x": 390,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.MaximumHealth",
+     "x": 454,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.RegenerationDelay",
+     "x": 518,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Upgrade.RegenerationRate",
+     "x": 582,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.AssaultRifle",
+     "x": 646,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.AutoSmg",
+     "x": 710,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.CombatShotgun",
+     "x": 774,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.KaguraBell",
+     "x": 838,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.OfudaLoom",
+     "x": 902,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.TideJewel",
+     "x": 966,
+     "y": 966,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Gold",
+     "x": 6,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Special",
+     "x": 70,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Round",
+     "x": 134,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Health",
+     "x": 198,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Enemies",
+     "x": 262,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.Timer",
+     "x": 326,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Settings",
+     "x": 390,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Audio",
+     "x": 454,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Graphics",
+     "x": 518,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Gamepad",
+     "x": 582,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Keyboard",
+     "x": 646,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Profile",
+     "x": 710,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Statistics",
+     "x": 774,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Achievements",
+     "x": 838,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Back",
+     "x": 902,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Confirm",
+     "x": 966,
+     "y": 902,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.Netted",
+     "x": 16,
+     "y": 842,
+     "w": 32,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.Dazed",
+     "x": 75,
+     "y": 842,
+     "w": 41,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.Pulled",
+     "x": 138,
+     "y": 847,
+     "w": 44,
+     "h": 34,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.Surrounded",
+     "x": 202,
+     "y": 842,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.Behind",
+     "x": 270,
+     "y": 842,
+     "w": 36,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.Elite",
+     "x": 335,
+     "y": 842,
+     "w": 34,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.Ultra",
+     "x": 397,
+     "y": 842,
+     "w": 38,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Hud.LowHealth",
+     "x": 458,
+     "y": 844,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Accessibility",
+     "x": 522,
+     "y": 842,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Controls",
+     "x": 586,
+     "y": 849,
+     "w": 44,
+     "h": 30,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Palette",
+     "x": 650,
+     "y": 843,
+     "w": 44,
+     "h": 42,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.TextScale",
+     "x": 714,
+     "y": 847,
+     "w": 44,
+     "h": 34,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.KaguraSuzu",
+     "x": 786,
+     "y": 842,
+     "w": 28,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Shop.Reroll",
+     "x": 844,
+     "y": 842,
+     "w": 40,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Shop.Picks",
+     "x": 906,
+     "y": 842,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.ReduceFlashes",
+     "x": 974,
+     "y": 842,
+     "w": 36,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.weapon_rifle",
+     "x": 6,
+     "y": 774,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.weapon_carbine",
+     "x": 70,
+     "y": 774,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Weapon.weapon_shotgun",
+     "x": 134,
+     "y": 774,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Sw.KaguraBell",
+     "x": 198,
+     "y": 774,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Sw.OfudaLoom",
+     "x": 262,
+     "y": 774,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ornament.Divider",
+     "x": 326,
+     "y": 774,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Reticle.Ticks",
+     "x": 390,
+     "y": 774,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Reticle.Ring",
+     "x": 454,
+     "y": 774,
+     "w": 52,
+     "h": 52,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.ArmorBreaker",
+     "x": 522,
+     "y": 780,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.DefeatUltra",
+     "x": 590,
+     "y": 778,
+     "w": 36,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.ExecutionerHunter",
+     "x": 650,
+     "y": 786,
+     "w": 44,
+     "h": 29,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.FirstBlood",
+     "x": 719,
+     "y": 778,
+     "w": 34,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Ghost",
+     "x": 788,
+     "y": 778,
+     "w": 24,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.GuardHunter",
+     "x": 842,
+     "y": 780,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Kills1000",
+     "x": 906,
+     "y": 778,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Kills250",
+     "x": 971,
+     "y": 778,
+     "w": 42,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Kills50",
+     "x": 13,
+     "y": 714,
+     "w": 38,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Level10",
+     "x": 85,
+     "y": 714,
+     "w": 22,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Level5",
+     "x": 146,
+     "y": 714,
+     "w": 28,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.PlateWrecker",
+     "x": 202,
+     "y": 721,
+     "w": 44,
+     "h": 31,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.PocketChange",
+     "x": 266,
+     "y": 716,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Rampage",
+     "x": 330,
+     "y": 714,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Regular",
+     "x": 394,
+     "y": 714,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.RegularCustomer",
+     "x": 458,
+     "y": 716,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Round10",
+     "x": 525,
+     "y": 714,
+     "w": 38,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Round15",
+     "x": 589,
+     "y": 714,
+     "w": 38,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Round20",
+     "x": 653,
+     "y": 714,
+     "w": 38,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Round5",
+     "x": 718,
+     "y": 714,
+     "w": 36,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Rounds50",
+     "x": 783,
+     "y": 714,
+     "w": 34,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.RunnerHunter",
+     "x": 842,
+     "y": 714,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.SpecialDelivery",
+     "x": 907,
+     "y": 714,
+     "w": 42,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.TreasureHunter",
+     "x": 970,
+     "y": 714,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Untouched",
+     "x": 10,
+     "y": 650,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.Veteran",
+     "x": 74,
+     "y": 658,
+     "w": 44,
+     "h": 29,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Ach.WellEquipped",
+     "x": 138,
+     "y": 657,
+     "w": 44,
+     "h": 30,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Empty.Bowl",
+     "x": 202,
+     "y": 657,
+     "w": 44,
+     "h": 30,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Empty.Scroll",
+     "x": 266,
+     "y": 658,
+     "w": 44,
+     "h": 28,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Key.Arrows",
+     "x": 330,
+     "y": 657,
+     "w": 44,
+     "h": 30,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Marker.Edge",
+     "x": 394,
+     "y": 650,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Medal.Common",
+     "x": 456,
+     "y": 648,
+     "w": 48,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Medal.Epic",
+     "x": 520,
+     "y": 648,
+     "w": 48,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Medal.Locked",
+     "x": 584,
+     "y": 648,
+     "w": 48,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Medal.Rare",
+     "x": 649,
+     "y": 648,
+     "w": 46,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.EndRun",
+     "x": 714,
+     "y": 652,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Play",
+     "x": 778,
+     "y": 652,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Quit",
+     "x": 842,
+     "y": 652,
+     "w": 44,
+     "h": 41,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Menu.Resume",
+     "x": 908,
+     "y": 650,
+     "w": 40,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Mouse.Left",
+     "x": 973,
+     "y": 650,
+     "w": 37,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Mouse.Middle",
+     "x": 17,
+     "y": 584,
+     "w": 30,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Mouse.Move",
+     "x": 75,
+     "y": 583,
+     "w": 42,
+     "h": 50,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Mouse.Right",
+     "x": 141,
+     "y": 586,
+     "w": 37,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Mouse.Wheel",
+     "x": 212,
+     "y": 584,
+     "w": 24,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Notice.Error",
+     "x": 266,
+     "y": 586,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Notice.Info",
+     "x": 330,
+     "y": 586,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Notice.Warning",
+     "x": 394,
+     "y": 588,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.DDown",
+     "x": 458,
+     "y": 586,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.DLeft",
+     "x": 522,
+     "y": 586,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.DRight",
+     "x": 586,
+     "y": 586,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.DUp",
+     "x": 650,
+     "y": 586,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.Disc",
+     "x": 714,
+     "y": 586,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.FaceEast",
+     "x": 778,
+     "y": 588,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.FaceNorth",
+     "x": 844,
+     "y": 586,
+     "w": 40,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.FaceSouth",
+     "x": 908,
+     "y": 586,
+     "w": 40,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.FaceWest",
+     "x": 970,
+     "y": 588,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.LB",
+     "x": 10,
+     "y": 532,
+     "w": 44,
+     "h": 24,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.LS",
+     "x": 73,
+     "y": 523,
+     "w": 46,
+     "h": 42,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.LSClick",
+     "x": 140,
+     "y": 521,
+     "w": 40,
+     "h": 46,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.LSMove",
+     "x": 200,
+     "y": 520,
+     "w": 48,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.LT",
+     "x": 273,
+     "y": 522,
+     "w": 29,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.Menu",
+     "x": 330,
+     "y": 523,
+     "w": 44,
+     "h": 42,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.RB",
+     "x": 394,
+     "y": 532,
+     "w": 44,
+     "h": 24,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.RS",
+     "x": 457,
+     "y": 523,
+     "w": 46,
+     "h": 42,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.RSClick",
+     "x": 524,
+     "y": 521,
+     "w": 40,
+     "h": 46,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.RSMove",
+     "x": 584,
+     "y": 520,
+     "w": 48,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.RT",
+     "x": 657,
+     "y": 522,
+     "w": 29,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pad.View",
+     "x": 714,
+     "y": 524,
+     "w": 44,
+     "h": 40,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Petal.Single",
+     "x": 783,
+     "y": 522,
+     "w": 34,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pip.Empty",
+     "x": 849,
+     "y": 523,
+     "w": 30,
+     "h": 42,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Pip.Full",
+     "x": 913,
+     "y": 523,
+     "w": 30,
+     "h": 42,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Reticle.Hit",
+     "x": 968,
+     "y": 520,
+     "w": 48,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Reticle.SpreadArc",
+     "x": 8,
+     "y": 471,
+     "w": 48,
+     "h": 18,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Reticle.SpreadDot",
+     "x": 78,
+     "y": 462,
+     "w": 36,
+     "h": 36,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Seal.Mark",
+     "x": 136,
+     "y": 456,
+     "w": 48,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Shop.Locked",
+     "x": 202,
+     "y": 463,
+     "w": 44,
+     "h": 34,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Shop.MaxTier",
+     "x": 269,
+     "y": 458,
+     "w": 38,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Shop.Purchased",
+     "x": 330,
+     "y": 458,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Special.Ready",
+     "x": 396,
+     "y": 458,
+     "w": 40,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Stat.TrendDown",
+     "x": 458,
+     "y": 458,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Stat.TrendUp",
+     "x": 522,
+     "y": 459,
+     "w": 44,
+     "h": 42,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.DazedOuter",
+     "x": 587,
+     "y": 458,
+     "w": 42,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.NettedOuter",
+     "x": 656,
+     "y": 458,
+     "w": 32,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Status.PulledOuter",
+     "x": 714,
+     "y": 463,
+     "w": 44,
+     "h": 34,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.BehindOuter",
+     "x": 782,
+     "y": 458,
+     "w": 36,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.EliteOuter",
+     "x": 847,
+     "y": 458,
+     "w": 34,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Threat.UltraOuter",
+     "x": 909,
+     "y": 458,
+     "w": 38,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Tier.Special",
+     "x": 974,
+     "y": 458,
+     "w": 36,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Tip.Hint",
+     "x": 20,
+     "y": 394,
+     "w": 24,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Toast.Record",
+     "x": 74,
+     "y": 408,
+     "w": 44,
+     "h": 16,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Unlock.Badge",
+     "x": 138,
+     "y": 394,
+     "w": 44,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Unlock.Title",
+     "x": 215,
+     "y": 394,
+     "w": 18,
+     "h": 44,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "name": "Upgrade.Piercing",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.Ricochet",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.Explosion",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.Chain",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.FireRate",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.ReloadSpeed",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.MovementSpeed",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.MaximumHealth",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.RegenerationDelay",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Upgrade.RegenerationRate",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Weapon.AssaultRifle",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Weapon.AutoSmg",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Weapon.CombatShotgun",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Special.KaguraBell",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Special.OfudaLoom",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Special.TideJewel",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Hud.Gold",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Hud.Special",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Hud.Round",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Hud.Health",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Hud.Enemies",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Hud.Timer",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Settings",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Audio",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Graphics",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Gamepad",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Keyboard",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Profile",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Statistics",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Achievements",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Back",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Menu.Confirm",
+   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+  },
+  {
+   "name": "Status.Netted",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Status.Dazed",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Status.Pulled",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Threat.Surrounded",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Threat.Behind",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Threat.Elite",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Threat.Ultra",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Hud.LowHealth",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Menu.Accessibility",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Menu.Controls",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Menu.Palette",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Menu.TextScale",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Special.KaguraSuzu",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Shop.Reroll",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Shop.Picks",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Menu.ReduceFlashes",
+   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+  },
+  {
+   "name": "Weapon.weapon_rifle",
+   "source": "wp-068/g1-src/AP013/AP013_weapon_icons_512x128.png"
+  },
+  {
+   "name": "Weapon.weapon_carbine",
+   "source": "wp-068/g1-src/AP013/AP013_weapon_icons_512x128.png"
+  },
+  {
+   "name": "Weapon.weapon_shotgun",
+   "source": "wp-068/g1-src/AP013/AP013_weapon_icons_512x128.png"
+  },
+  {
+   "name": "Sw.KaguraBell",
+   "source": "wp-068/g1-src/AP014/AP014_sw_icons_256x128.png"
+  },
+  {
+   "name": "Sw.OfudaLoom",
+   "source": "wp-068/g1-src/AP014/AP014_sw_icons_256x128.png"
+  },
+  {
+   "name": "Ornament.Divider",
+   "source": "wp-068/g1-src/AP012/AP012_frames_1024.png"
+  },
+  {
+   "name": "Reticle.Ticks",
+   "source": "wp-068/g1-src/AP012/AP012_frames_1024.png"
+  },
+  {
+   "name": "Reticle.Ring",
+   "source": "wp-068/g1-src/AP012/AP012_frames_1024.png"
+  },
+  {
+   "name": "Ach.ArmorBreaker",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.ArmorBreaker.png"
+  },
+  {
+   "name": "Ach.DefeatUltra",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.DefeatUltra.png"
+  },
+  {
+   "name": "Ach.ExecutionerHunter",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.ExecutionerHunter.png"
+  },
+  {
+   "name": "Ach.FirstBlood",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.FirstBlood.png"
+  },
+  {
+   "name": "Ach.Ghost",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Ghost.png"
+  },
+  {
+   "name": "Ach.GuardHunter",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.GuardHunter.png"
+  },
+  {
+   "name": "Ach.Kills1000",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Kills1000.png"
+  },
+  {
+   "name": "Ach.Kills250",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Kills250.png"
+  },
+  {
+   "name": "Ach.Kills50",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Kills50.png"
+  },
+  {
+   "name": "Ach.Level10",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Level10.png"
+  },
+  {
+   "name": "Ach.Level5",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Level5.png"
+  },
+  {
+   "name": "Ach.PlateWrecker",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.PlateWrecker.png"
+  },
+  {
+   "name": "Ach.PocketChange",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.PocketChange.png"
+  },
+  {
+   "name": "Ach.Rampage",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Rampage.png"
+  },
+  {
+   "name": "Ach.Regular",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Regular.png"
+  },
+  {
+   "name": "Ach.RegularCustomer",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.RegularCustomer.png"
+  },
+  {
+   "name": "Ach.Round10",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Round10.png"
+  },
+  {
+   "name": "Ach.Round15",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Round15.png"
+  },
+  {
+   "name": "Ach.Round20",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Round20.png"
+  },
+  {
+   "name": "Ach.Round5",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Round5.png"
+  },
+  {
+   "name": "Ach.Rounds50",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Rounds50.png"
+  },
+  {
+   "name": "Ach.RunnerHunter",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.RunnerHunter.png"
+  },
+  {
+   "name": "Ach.SpecialDelivery",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.SpecialDelivery.png"
+  },
+  {
+   "name": "Ach.TreasureHunter",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.TreasureHunter.png"
+  },
+  {
+   "name": "Ach.Untouched",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Untouched.png"
+  },
+  {
+   "name": "Ach.Veteran",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.Veteran.png"
+  },
+  {
+   "name": "Ach.WellEquipped",
+   "source": "asset-production/AP-012/v004/exports/masks/Ach.WellEquipped.png"
+  },
+  {
+   "name": "Empty.Bowl",
+   "source": "asset-production/AP-012/v004/exports/masks/Empty.Bowl.png"
+  },
+  {
+   "name": "Empty.Scroll",
+   "source": "asset-production/AP-012/v004/exports/masks/Empty.Scroll.png"
+  },
+  {
+   "name": "Key.Arrows",
+   "source": "asset-production/AP-012/v004/exports/masks/Key.Arrows.png"
+  },
+  {
+   "name": "Marker.Edge",
+   "source": "asset-production/AP-012/v004/exports/masks/Marker.Edge.png"
+  },
+  {
+   "name": "Medal.Common",
+   "source": "asset-production/AP-012/v004/exports/masks/Medal.Common.png"
+  },
+  {
+   "name": "Medal.Epic",
+   "source": "asset-production/AP-012/v004/exports/masks/Medal.Epic.png"
+  },
+  {
+   "name": "Medal.Locked",
+   "source": "asset-production/AP-012/v004/exports/masks/Medal.Locked.png"
+  },
+  {
+   "name": "Medal.Rare",
+   "source": "asset-production/AP-012/v004/exports/masks/Medal.Rare.png"
+  },
+  {
+   "name": "Menu.EndRun",
+   "source": "asset-production/AP-012/v004/exports/masks/Menu.EndRun.png"
+  },
+  {
+   "name": "Menu.Play",
+   "source": "asset-production/AP-012/v004/exports/masks/Menu.Play.png"
+  },
+  {
+   "name": "Menu.Quit",
+   "source": "asset-production/AP-012/v004/exports/masks/Menu.Quit.png"
+  },
+  {
+   "name": "Menu.Resume",
+   "source": "asset-production/AP-012/v004/exports/masks/Menu.Resume.png"
+  },
+  {
+   "name": "Mouse.Left",
+   "source": "asset-production/AP-012/v004/exports/masks/Mouse.Left.png"
+  },
+  {
+   "name": "Mouse.Middle",
+   "source": "asset-production/AP-012/v004/exports/masks/Mouse.Middle.png"
+  },
+  {
+   "name": "Mouse.Move",
+   "source": "asset-production/AP-012/v004/exports/masks/Mouse.Move.png"
+  },
+  {
+   "name": "Mouse.Right",
+   "source": "asset-production/AP-012/v004/exports/masks/Mouse.Right.png"
+  },
+  {
+   "name": "Mouse.Wheel",
+   "source": "asset-production/AP-012/v004/exports/masks/Mouse.Wheel.png"
+  },
+  {
+   "name": "Notice.Error",
+   "source": "asset-production/AP-012/v004/exports/masks/Notice.Error.png"
+  },
+  {
+   "name": "Notice.Info",
+   "source": "asset-production/AP-012/v004/exports/masks/Notice.Info.png"
+  },
+  {
+   "name": "Notice.Warning",
+   "source": "asset-production/AP-012/v004/exports/masks/Notice.Warning.png"
+  },
+  {
+   "name": "Pad.DDown",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.DDown.png"
+  },
+  {
+   "name": "Pad.DLeft",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.DLeft.png"
+  },
+  {
+   "name": "Pad.DRight",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.DRight.png"
+  },
+  {
+   "name": "Pad.DUp",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.DUp.png"
+  },
+  {
+   "name": "Pad.Disc",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.Disc.png"
+  },
+  {
+   "name": "Pad.FaceEast",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.FaceEast.png"
+  },
+  {
+   "name": "Pad.FaceNorth",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.FaceNorth.png"
+  },
+  {
+   "name": "Pad.FaceSouth",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.FaceSouth.png"
+  },
+  {
+   "name": "Pad.FaceWest",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.FaceWest.png"
+  },
+  {
+   "name": "Pad.LB",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.LB.png"
+  },
+  {
+   "name": "Pad.LS",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.LS.png"
+  },
+  {
+   "name": "Pad.LSClick",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.LSClick.png"
+  },
+  {
+   "name": "Pad.LSMove",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.LSMove.png"
+  },
+  {
+   "name": "Pad.LT",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.LT.png"
+  },
+  {
+   "name": "Pad.Menu",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.Menu.png"
+  },
+  {
+   "name": "Pad.RB",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.RB.png"
+  },
+  {
+   "name": "Pad.RS",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.RS.png"
+  },
+  {
+   "name": "Pad.RSClick",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.RSClick.png"
+  },
+  {
+   "name": "Pad.RSMove",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.RSMove.png"
+  },
+  {
+   "name": "Pad.RT",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.RT.png"
+  },
+  {
+   "name": "Pad.View",
+   "source": "asset-production/AP-012/v004/exports/masks/Pad.View.png"
+  },
+  {
+   "name": "Petal.Single",
+   "source": "asset-production/AP-012/v004/exports/masks/Petal.Single.png"
+  },
+  {
+   "name": "Pip.Empty",
+   "source": "asset-production/AP-012/v004/exports/masks/Pip.Empty.png"
+  },
+  {
+   "name": "Pip.Full",
+   "source": "asset-production/AP-012/v004/exports/masks/Pip.Full.png"
+  },
+  {
+   "name": "Reticle.Hit",
+   "source": "asset-production/AP-012/v004/exports/masks/Reticle.Hit.png"
+  },
+  {
+   "name": "Reticle.SpreadArc",
+   "source": "asset-production/AP-012/v004/exports/masks/Reticle.SpreadArc.png"
+  },
+  {
+   "name": "Reticle.SpreadDot",
+   "source": "asset-production/AP-012/v004/exports/masks/Reticle.SpreadDot.png"
+  },
+  {
+   "name": "Seal.Mark",
+   "source": "asset-production/AP-012/v004/exports/masks/Seal.Mark.png"
+  },
+  {
+   "name": "Shop.Locked",
+   "source": "asset-production/AP-012/v004/exports/masks/Shop.Locked.png"
+  },
+  {
+   "name": "Shop.MaxTier",
+   "source": "asset-production/AP-012/v004/exports/masks/Shop.MaxTier.png"
+  },
+  {
+   "name": "Shop.Purchased",
+   "source": "asset-production/AP-012/v004/exports/masks/Shop.Purchased.png"
+  },
+  {
+   "name": "Special.Ready",
+   "source": "asset-production/AP-012/v004/exports/masks/Special.Ready.png"
+  },
+  {
+   "name": "Stat.TrendDown",
+   "source": "asset-production/AP-012/v004/exports/masks/Stat.TrendDown.png"
+  },
+  {
+   "name": "Stat.TrendUp",
+   "source": "asset-production/AP-012/v004/exports/masks/Stat.TrendUp.png"
+  },
+  {
+   "name": "Status.DazedOuter",
+   "source": "asset-production/AP-012/v004/exports/masks/Status.DazedOuter.png"
+  },
+  {
+   "name": "Status.NettedOuter",
+   "source": "asset-production/AP-012/v004/exports/masks/Status.NettedOuter.png"
+  },
+  {
+   "name": "Status.PulledOuter",
+   "source": "asset-production/AP-012/v004/exports/masks/Status.PulledOuter.png"
+  },
+  {
+   "name": "Threat.BehindOuter",
+   "source": "asset-production/AP-012/v004/exports/masks/Threat.BehindOuter.png"
+  },
+  {
+   "name": "Threat.EliteOuter",
+   "source": "asset-production/AP-012/v004/exports/masks/Threat.EliteOuter.png"
+  },
+  {
+   "name": "Threat.UltraOuter",
+   "source": "asset-production/AP-012/v004/exports/masks/Threat.UltraOuter.png"
+  },
+  {
+   "name": "Tier.Special",
+   "source": "asset-production/AP-012/v004/exports/masks/Tier.Special.png"
+  },
+  {
+   "name": "Tip.Hint",
+   "source": "asset-production/AP-012/v004/exports/masks/Tip.Hint.png"
+  },
+  {
+   "name": "Toast.Record",
+   "source": "asset-production/AP-012/v004/exports/masks/Toast.Record.png"
+  },
+  {
+   "name": "Unlock.Badge",
+   "source": "asset-production/AP-012/v004/exports/masks/Unlock.Badge.png"
+  },
+  {
+   "name": "Unlock.Title",
+   "source": "asset-production/AP-012/v004/exports/masks/Unlock.Title.png"
+  }
+ ]
+}

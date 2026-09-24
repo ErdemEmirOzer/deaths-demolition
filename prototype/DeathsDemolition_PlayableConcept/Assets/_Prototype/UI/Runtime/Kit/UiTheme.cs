@@ -4,21 +4,35 @@ using UnityEngine;
 
 namespace DD.Prototype.UI
 {
-    /// <summary>Which 9-sliced frame a surface asks for. Every entry maps to one AP-012 sprite.</summary>
+    /// <summary>
+    /// Which 9-sliced frame a surface asks for ("Frame.&lt;name&gt;" in the A4 frames v3 atlas). Button has no v3
+    /// frame (direction §7.1 A4: v3 buttons are drawn by the kit), so it resolves to the procedural control shape.
+    /// </summary>
     public enum UiFrame
     {
         HudPanel,
         Button,
         Card,
-        Chip
+        Chip,
+        /// <summary>WP-068 A4: Elev2 modal, double line + corner accents.</summary>
+        Modal,
+        /// <summary>WP-068 A4: washi tooltip card (pointer = Frame.TooltipPointer).</summary>
+        Tooltip,
+        /// <summary>WP-068 A4: list row, bottom hairline only.</summary>
+        ListRow,
+        /// <summary>WP-068 A4: Toast → Ribbon band with swallow-tail ends.</summary>
+        Ribbon,
+        /// <summary>WP-068 A4: solid pill (state chips).</summary>
+        ChipFill
     }
 
-    /// <summary>Achievement / unlock medallion rarity (three AP-012 rings).</summary>
+    /// <summary>Achievement / unlock medallion rarity (M1 medals v3, SDF in G1).</summary>
     public enum UiMedal
     {
         Common,
         Rare,
-        Epic
+        Epic,
+        Locked
     }
 
     /// <summary>
@@ -38,23 +52,28 @@ namespace DD.Prototype.UI
         /// <summary>Resources path (without extension) the runtime loads the theme from.</summary>
         public const string ResourcePath = "UI/UiTheme";
 
-        /// <summary>Resources folder holding the AP-012 atlases and plates.</summary>
+        /// <summary>Resources folder holding the AP-012 plates and skin previews.</summary>
         public const string AtlasFolder = "UI/AP012/";
 
-        public const string IconAtlas = AtlasFolder + "AP012_icons_1024x768";
-        public const string FrameAtlas = AtlasFolder + "AP012_frames_1024";
         public const string MenuPlateResource = AtlasFolder + "AP012_menu_plate_1024x576";
         public const string HudMarkerResource = AtlasFolder + "AP012_hud_marker_256";
         public const string SkinResourcePrefix = AtlasFolder + "AP012_skin";
 
-        /// <summary>WP-022F: AP-013 weapon glyphs (silhouettes from the AP-013 side renders), keyed <c>Weapon.&lt;HudIconId&gt;</c>.</summary>
-        public const string WeaponGlyphAtlas = "UI/AP013/AP013_weapon_icons_512x128";
+        /// <summary>
+        /// WP-068 §7.1 G1: every single-colour glyph in one signed-distance atlas (64² cells, spread 6, Alpha8) - the
+        /// AP-012 icons / status, AP-013 weapons, AP-014 Specials, the reticle pair and divider, and the v004 A1–A3 /
+        /// V1 / M1 sets and the seal. Drawn through DD/UI/Fx SdfGlyph (<see cref="UiArt.ApplyGlyph"/>).
+        /// </summary>
+        public const string GlyphAtlas = "UI/G1/DD_G1_glyphs_sdf_1024";
 
-        /// <summary>WP-022H: AP-014 Special Weapon glyphs (hand-model silhouettes), keyed <c>Sw.&lt;SpecialWeaponId&gt;</c>.</summary>
-        public const string SpecialGlyphAtlas = "UI/AP014/AP014_sw_icons_256x128";
+        /// <summary>WP-068 §7.1 A4: Frames v3 (2× authored, pixelsPerUnitMultiplier 2) + the V1 key caps; Alpha8.</summary>
+        public const string FrameAtlas = "UI/A4/DD_A4_frames_v3_1024";
 
-        /// <summary>WP-022L: AP-012 v003 status / threat / menu glyphs (Status.Netted, Threat.Surrounded, Menu.Accessibility ...).</summary>
-        public const string StatusGlyphAtlas = AtlasFolder + "AP012_status_icons_1024x512";
+        /// <summary>WP-068 V1 hardware cursors: <c>UI/Cursor/Cursor.{Arrow,Press}_{32,64}</c> (RGBA32).</summary>
+        public const string CursorFolder = "UI/Cursor/";
+
+        /// <summary>WP-068 A6 kumiko (asanoha) tile, one channel, repeat - the curtain doors only (AD #12).</summary>
+        public const string KumikoTileResource = "UI/Tiles/AP012_tile_kumiko_asanoha_256";
 
         /// <summary>UI scale the player may choose (settings). Clamped to this range.</summary>
         public const float UiScaleMin = 0.9f;
@@ -92,6 +111,7 @@ namespace DD.Prototype.UI
         private static bool s_resolved;
         private Dictionary<string, Sprite> _icons;
         private Dictionary<string, Sprite> _frames;
+        private Texture _glyphTexture;
 
         /// <summary>
         /// The theme in use. Loaded once from Resources; when the asset is absent (a
@@ -139,11 +159,9 @@ namespace DD.Prototype.UI
             _icons = null;
             _frames = null;
 
-            AddAll(Icons, Resources.LoadAll<Sprite>(IconAtlas));
-            AddAll(Icons, Resources.LoadAll<Sprite>(WeaponGlyphAtlas)); // AP-013 roster glyphs (absent → AP-012 stand-ins via UiArt.RosterGlyph)
-            AddAll(Icons, Resources.LoadAll<Sprite>(SpecialGlyphAtlas)); // AP-014 Special glyphs (absent → AP-012 Special.<id>)
-            AddAll(Icons, Resources.LoadAll<Sprite>(StatusGlyphAtlas)); // AP-012 v003 status/threat/menu glyphs (absent → chips stay text-only)
-            AddAll(Frames, Resources.LoadAll<Sprite>(FrameAtlas));
+            _glyphTexture = null;
+            AddAll(Icons, Resources.LoadAll<Sprite>(GlyphAtlas));   // G1: every glyph (absent → the procedural kit / text-only chips)
+            AddAll(Frames, Resources.LoadAll<Sprite>(FrameAtlas));  // A4: frames v3, kit sprites, key caps
             MenuPlate = Resources.Load<Sprite>(MenuPlateResource);
             HudMarker = Resources.Load<Sprite>(HudMarkerResource);
             for (int i = 1; i <= 3; i++)
@@ -177,6 +195,28 @@ namespace DD.Prototype.UI
 
             Sprite sprite;
             return key != null && _icons.TryGetValue(key, out sprite) ? sprite : null;
+        }
+
+        /// <summary>True when the sprite is a G1 distance-field glyph (it must be drawn through DD/UI/Fx SdfGlyph).</summary>
+        public bool IsGlyph(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return false;
+            }
+
+            if (_glyphTexture == null)
+            {
+                for (int i = 0; i < Icons.Count && _glyphTexture == null; i++)
+                {
+                    if (Icons[i].Sprite != null)
+                    {
+                        _glyphTexture = Icons[i].Sprite.texture;
+                    }
+                }
+            }
+
+            return _glyphTexture != null && sprite.texture == _glyphTexture;
         }
 
         public Sprite Frame(string key)

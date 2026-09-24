@@ -130,20 +130,33 @@ namespace DD.Prototype.UI
 
         public static float WidthOf(Glyph glyph, float size)
         {
-            return glyph.Round ? size : Mathf.Max(MinCapWidth, Mathf.Round(size * glyph.Width));
+            return glyph.Round || HasShape(glyph) ? size : Mathf.Max(MinCapWidth, Mathf.Round(size * glyph.Width));
         }
 
+        /// <summary>True when the glyph draws its V1 shape (the G1 atlas has it) instead of a cap with text.</summary>
+        public static bool HasShape(Glyph glyph)
+        {
+            return glyph.Shape != null && UiArt.HasIcon(glyph.Shape);
+        }
+
+        /// <summary>
+        /// Text is the control's name (tests, screen readers, and the cap label when there is no shape); Shape is the
+        /// V1 input shape (G1 key: Pad.FaceSouth, Pad.Menu, Mouse.Left ...) drawn instead of a disc + letter - face
+        /// buttons by their position in the diamond, so Xbox / PlayStation / Nintendo pads read alike (AP-012 v004 V1).
+        /// </summary>
         public readonly struct Glyph
         {
             public readonly string Text;
             public readonly bool Round;
             public readonly float Width;
+            public readonly string Shape;
 
-            public Glyph(string text, bool round, float width)
+            public Glyph(string text, bool round, float width, string shape = null)
             {
                 Text = text;
                 Round = round;
                 Width = width;
+                Shape = shape;
             }
         }
 
@@ -163,11 +176,11 @@ namespace DD.Prototype.UI
 
             switch (action)
             {
-                case UiPromptAction.Submit: return pad ? new Glyph("A", true, 1f) : new Glyph("ENTER", false, 2.4f);
-                case UiPromptAction.Cancel: return pad ? new Glyph("B", true, 1f) : new Glyph("ESC", false, 1.8f);
-                case UiPromptAction.Pause: return pad ? new Glyph("MENU", false, 2.2f) : new Glyph("ESC", false, 1.8f);
-                case UiPromptAction.Skip: return pad ? new Glyph("X", true, 1f) : new Glyph("SPACE", false, 2.6f);
-                case UiPromptAction.Reroll: return pad ? new Glyph("Y", true, 1f) : new Glyph("R", false, 1.2f);
+                case UiPromptAction.Submit: return pad ? new Glyph("A", true, 1f, "Pad.FaceSouth") : new Glyph("ENTER", false, 2.4f);
+                case UiPromptAction.Cancel: return pad ? new Glyph("B", true, 1f, "Pad.FaceEast") : new Glyph("ESC", false, 1.8f);
+                case UiPromptAction.Pause: return pad ? new Glyph("MENU", false, 2.2f, "Pad.Menu") : new Glyph("ESC", false, 1.8f);
+                case UiPromptAction.Skip: return pad ? new Glyph("X", true, 1f, "Pad.FaceWest") : new Glyph("SPACE", false, 2.6f);
+                case UiPromptAction.Reroll: return pad ? new Glyph("Y", true, 1f, "Pad.FaceNorth") : new Glyph("R", false, 1.2f);
                 default: return new Glyph("?", true, 1f);
             }
         }
@@ -218,7 +231,43 @@ namespace DD.Prototype.UI
         public static Glyph FromControlName(string displayName, InputSchemeKind scheme)
         {
             string label = ShortLabel(displayName, scheme, out bool round);
-            return new Glyph(label, round, Mathf.Max(1.2f, 0.6f + 0.4f * label.Length));
+            return new Glyph(label, round, Mathf.Max(1.2f, 0.6f + 0.4f * label.Length), ShapeOf(label, scheme));
+        }
+
+        /// <summary>The V1 shape for a short control label, or null (keys stay text on a cap).</summary>
+        public static string ShapeOf(string label, InputSchemeKind scheme)
+        {
+            if (scheme == InputSchemeKind.Gamepad)
+            {
+                switch (label)
+                {
+                    case "A": return "Pad.FaceSouth";
+                    case "B": return "Pad.FaceEast";
+                    case "X": return "Pad.FaceWest";
+                    case "Y": return "Pad.FaceNorth";
+                    case "MENU": return "Pad.Menu";
+                    case "VIEW": return "Pad.View";
+                    case "LB": return "Pad.LB";
+                    case "RB": return "Pad.RB";
+                    case "LT": return "Pad.LT";
+                    case "RT": return "Pad.RT";
+                    case "LS": return "Pad.LSClick";
+                    case "RS": return "Pad.RSClick";
+                    case "D-UP": return "Pad.DUp";
+                    case "D-DOWN": return "Pad.DDown";
+                    case "D-LEFT": return "Pad.DLeft";
+                    case "D-RIGHT": return "Pad.DRight";
+                    default: return null;
+                }
+            }
+
+            switch (label)
+            {
+                case "LMB": return "Mouse.Left";
+                case "RMB": return "Mouse.Right";
+                case "MMB": return "Mouse.Middle";
+                default: return null;
+            }
         }
 
         private static string ShortLabel(string displayName, InputSchemeKind scheme, out bool round)
@@ -299,6 +348,12 @@ namespace DD.Prototype.UI
                 edge.transform.SetAsFirstSibling();
             }
 
+            // V1: a pad button / mouse button draws its shape (cream on a primary button, the ink colour on a dark cap).
+            Image shape = UiFactory.NewImage("Shape", rect, paper == UiColor.TextPrimary ? paper : ink);
+            UiFactory.Fill((RectTransform)shape.transform);
+            shape.preserveAspect = true;
+            shape.enabled = false;
+
             TMP_Text text = UiFactory.Label("Text", rect, string.Empty, UiType.Caption, ink, TextAnchor.MiddleCenter);
             text.enableWordWrapping = false;
             text.overflowMode = TextOverflowModes.Overflow;
@@ -308,7 +363,7 @@ namespace DD.Prototype.UI
             UiFactory.Fill((RectTransform)text.transform);
 
             UiPrompt prompt = go.AddComponent<UiPrompt>();
-            prompt.Configure(action, back, text, size);
+            prompt.Configure(action, back, shape, text, size);
             return prompt;
         }
     }
@@ -321,6 +376,7 @@ namespace DD.Prototype.UI
     {
         private UiPromptAction _action;
         private Image _back;
+        private Image _shape;
         private TMP_Text _text;
         private float _size;
 
@@ -360,10 +416,14 @@ namespace DD.Prototype.UI
         /// <summary>The text currently drawn ("A", "ENTER"...). Tests read it.</summary>
         public string CurrentText => _text != null ? _text.text : string.Empty;
 
-        internal void Configure(UiPromptAction action, Image back, TMP_Text text, float size)
+        /// <summary>The V1 shape currently drawn ("Pad.FaceSouth"...), or null when the prompt is a cap with text. Tests read it.</summary>
+        public string CurrentShape => _shape != null && _shape.enabled && _shape.sprite != null ? _shape.sprite.name : null;
+
+        internal void Configure(UiPromptAction action, Image back, Image shape, TMP_Text text, float size)
         {
             _action = action;
             _back = back;
+            _shape = shape;
             _text = text;
             _size = size;
             UiPromptDriver.Ensure();
@@ -435,19 +495,51 @@ namespace DD.Prototype.UI
             ApplyLabelReserve();
             UiInputGlyphs.Glyph glyph = UiInputGlyphs.For(_action, scheme);
             var rect = (RectTransform)transform;
-            rect.sizeDelta = new Vector2(UiInputGlyphs.WidthOf(glyph, _size), _size);
-            _back.sprite = glyph.Round ? UiSprites.Disc : UiSprites.Chip;
-            _back.type = glyph.Round ? Image.Type.Simple : Image.Type.Sliced;
-            Transform edge = transform.Find("Edge");
-            if (edge != null)
-            {
-                var edgeImage = edge.GetComponent<Image>();
-                edgeImage.sprite = _back.sprite;
-                edgeImage.type = _back.type;
-            }
+            float width = UiInputGlyphs.WidthOf(glyph, _size);
+            rect.sizeDelta = new Vector2(width, _size);
             if (_text.text != glyph.Text)
             {
-                _text.text = glyph.Text;
+                _text.text = glyph.Text;   // kept as the control's name (tests, screen reader) even when the shape draws
+            }
+
+            // V1 shape: the pad / mouse button itself, no cap behind it.
+            Sprite shape = glyph.Shape != null ? UiArt.Icon(glyph.Shape) : null;
+            bool drawShape = shape != null && _shape != null;
+            if (_shape != null)
+            {
+                if (drawShape && _shape.sprite != shape)
+                {
+                    UiArt.SetGlyph(_shape, shape);
+                }
+
+                _shape.enabled = drawShape;
+            }
+
+            _text.enabled = !drawShape;
+            Transform edge = transform.Find("Edge");
+            Image edgeImage = edge != null ? edge.GetComponent<Image>() : null;
+            _back.enabled = !drawShape;
+            if (edgeImage != null)
+            {
+                edgeImage.enabled = !drawShape;
+            }
+
+            if (drawShape)
+            {
+                return;
+            }
+
+            // A key: the V1 cap (9-sliced around the live text, authored 2× at 128 px tall → drawn at the prompt's
+            // height) when the A4 atlas has it; the kit's pill otherwise. A pad button without its shape keeps the disc.
+            Sprite cap = glyph.Round ? null : UiArt.KeyCap(width / _size > 1.25f);
+            _back.sprite = glyph.Round ? UiSprites.Disc : (cap != null ? cap : UiSprites.Chip);
+            _back.type = glyph.Round ? Image.Type.Simple : Image.Type.Sliced;
+            _back.pixelsPerUnitMultiplier = cap != null ? cap.rect.height / Mathf.Max(1f, _size) : 1f;
+            if (edgeImage != null)
+            {
+                edgeImage.sprite = _back.sprite;
+                edgeImage.type = _back.type;
+                edgeImage.pixelsPerUnitMultiplier = _back.pixelsPerUnitMultiplier;
             }
         }
     }

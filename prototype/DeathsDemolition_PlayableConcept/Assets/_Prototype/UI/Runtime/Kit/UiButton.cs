@@ -178,6 +178,11 @@ namespace DD.Prototype.UI
         public override void OnPointerDown(PointerEventData eventData)
         {
             base.OnPointerDown(eventData);
+            if (eventData != null && eventData.button == PointerEventData.InputButton.Left)
+            {
+                UiCursor.SetPressed(true);   // V1 Press art while the control is held
+            }
+
             if (IsHoldButton && eventData != null && eventData.button == PointerEventData.InputButton.Left)
             {
                 _pointerHeld = true;
@@ -188,6 +193,7 @@ namespace DD.Prototype.UI
         public override void OnPointerUp(PointerEventData eventData)
         {
             _pointerHeld = false;
+            UiCursor.SetPressed(false);
             base.OnPointerUp(eventData);
         }
 
@@ -326,6 +332,7 @@ namespace DD.Prototype.UI
         protected override void OnDisable()
         {
             _pointerHeld = false;
+            UiCursor.SetPressed(false);   // a click that closes its own screen never leaves the Press art up
             base.OnDisable();
             UiFocusBrackets.Release((RectTransform)transform);
         }

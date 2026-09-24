@@ -451,7 +451,7 @@ namespace DD.Prototype.Tests.PlayMode
             PrototypeUiFlow.FastTransitions = false; // a real reveal is under way when the next request lands
             UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 0.2f);
             UiLoadTiming.RecordLoad(PrototypeScenes.MainMenu, 0.2f);
-            bool cursor = Cursor.visible;
+            bool cursor = UiCursor.ContextVisible;
 
             PrototypeUiFlow.GoToSelection();
             yield return Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.Selection, 30f, "Selection etkin olmadı");
@@ -462,7 +462,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(PrototypeUiFlow.IsLoading, "açılış sırasındaki istek kabul edildi");
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
             yield return Bekle(() => !UiCurtain.IsCovering, 10f, "perde açılmadı");
-            Assert.AreEqual(cursor, Cursor.visible, "imleç ilk kapanıştaki durumuna döndü");
+            Assert.AreEqual(cursor, UiCursor.ContextVisible, "imleç ilk kapanıştaki durumuna döndü");
         }
 
         /// <summary>

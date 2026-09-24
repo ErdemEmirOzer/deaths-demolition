@@ -274,7 +274,8 @@ namespace DD.Prototype.UI
             SetLantern(BreathFloor + (1f - BreathFloor) * breath);
         }
 
-        private static Material MaskMaterial()
+        /// <summary>The shared DD/UI/MaskTint material (one-channel masks and tiles: red = coverage of the graphic colour).</summary>
+        internal static Material MaskMaterial()
         {
             if (s_mask == null)
             {

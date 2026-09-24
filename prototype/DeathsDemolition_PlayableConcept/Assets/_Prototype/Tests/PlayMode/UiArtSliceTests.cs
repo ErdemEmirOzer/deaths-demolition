@@ -573,9 +573,12 @@ namespace DD.Prototype.Tests.PlayMode
 
                 Assert.IsNotNull(submit); Assert.IsNotNull(cancel);
                 Assert.AreEqual("A", submit.CurrentText); Assert.AreEqual("B", cancel.CurrentText);
+                Assert.AreEqual("Pad.FaceSouth", submit.CurrentShape, "WP-068 V1: pad düğmesi şekliyle çizilir");
+                Assert.AreEqual("Pad.FaceEast", cancel.CurrentShape);
                 UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse);
                 yield return null;
                 Assert.AreEqual("ENTER", submit.CurrentText); Assert.AreEqual("ESC", cancel.CurrentText);
+                Assert.IsNull(submit.CurrentShape, "tuş: kapak + canlı metin");
                 UiInputScheme.Release();
             }
 

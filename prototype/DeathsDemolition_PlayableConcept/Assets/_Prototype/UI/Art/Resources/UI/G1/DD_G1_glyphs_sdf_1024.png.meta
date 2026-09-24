@@ -1,0 +1,3383 @@
+fileFormatVersion: 2
+guid: 72870aabc72a2495292e9b307d6e8ab9
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 12
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 0
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 1024
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 1024
+    resizeAlgorithm: 0
+    textureFormat: 1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Upgrade.Piercing
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81c70399c4dc39840800000000000000
+      internalID: 5229749321178577944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.Ricochet
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7dc672d60281113d0800000000000000
+      internalID: -3237780129553355561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.Explosion
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1058728c23da42b0800000000000000
+      internalID: -5599430998560845798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.Chain
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31edb010b6f614ea0800000000000000
+      internalID: -5890304332254159341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.FireRate
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41b6103d21e8fb1d0800000000000000
+      internalID: -3332788987730236652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.ReloadSpeed
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3905d608e2d471a0800000000000000
+      internalID: -6812588442315847362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.MovementSpeed
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49bd9582fe024fe50800000000000000
+      internalID: 6842129945428876180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.MaximumHealth
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa02eb42e198b3c10800000000000000
+      internalID: 2034370419246375082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.RegenerationDelay
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 805aaed5590adf840800000000000000
+      internalID: 5259536503224837384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Upgrade.RegenerationRate
+      rect:
+        serializedVersion: 2
+        x: 582
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 940f43711392e4b60800000000000000
+      internalID: 7732162901061201993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.AssaultRifle
+      rect:
+        serializedVersion: 2
+        x: 646
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1ed1d4216bf04340800000000000000
+      internalID: 4846149593698786846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.AutoSmg
+      rect:
+        serializedVersion: 2
+        x: 710
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c59450b8aee5a1150800000000000000
+      internalID: 5844087827914377564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.CombatShotgun
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ce6b492d4e8dcf60800000000000000
+      internalID: 8056251770492120768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Special.KaguraBell
+      rect:
+        serializedVersion: 2
+        x: 838
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6023d51b646b20f60800000000000000
+      internalID: 7999156302903063046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Special.OfudaLoom
+      rect:
+        serializedVersion: 2
+        x: 902
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 479d69f6e83e36ce0800000000000000
+      internalID: -1413035657167185548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Special.TideJewel
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 966
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1bea4be21021fcc0800000000000000
+      internalID: -3679124154955928802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hud.Gold
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45600bbfe75aa6e00800000000000000
+      internalID: 1038824628869400148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hud.Special
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2df196cf0ffa38f0800000000000000
+      internalID: -559854760433156822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hud.Round
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a553d8ad2c23dbf0800000000000000
+      internalID: -300848175486118491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hud.Health
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 467d2ae73f52093b0800000000000000
+      internalID: -5507860616542234780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hud.Enemies
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d201ec59bf0172d0800000000000000
+      internalID: -3282825364574764330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hud.Timer
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73311b6c2fb2f5440800000000000000
+      internalID: 4926704839082185527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Settings
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2be4f4c780d74edc0800000000000000
+      internalID: -3610623525845512526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Audio
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d97f93353bb8cba0800000000000000
+      internalID: -6068394660707993130
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Graphics
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af5d14ec42b26ea90800000000000000
+      internalID: -7285087910145960454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Gamepad
+      rect:
+        serializedVersion: 2
+        x: 582
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b7837b2f4db641b0800000000000000
+      internalID: -5672638532897503310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Keyboard
+      rect:
+        serializedVersion: 2
+        x: 646
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0845372cab94f93a0800000000000000
+      internalID: -6656520657755220864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Profile
+      rect:
+        serializedVersion: 2
+        x: 710
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03d91f85ce3d72e70800000000000000
+      internalID: 9090467384928607536
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Statistics
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27e9f37eb24340b40800000000000000
+      internalID: 5405502815919382130
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Achievements
+      rect:
+        serializedVersion: 2
+        x: 838
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a24963df9d7926f0800000000000000
+      internalID: -708897340933979488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Back
+      rect:
+        serializedVersion: 2
+        x: 902
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44406214372ce80b0800000000000000
+      internalID: -5724424276071283644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Confirm
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 902
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d05625c532b02f010800000000000000
+      internalID: 1221050695471490317
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.Netted
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 842
+        width: 32
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00b421fa4992e36b0800000000000000
+      internalID: -5314764791681496320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.Dazed
+      rect:
+        serializedVersion: 2
+        x: 75
+        y: 842
+        width: 41
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17d579ffb3dd3dca0800000000000000
+      internalID: -5993203429339079311
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.Pulled
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 847
+        width: 44
+        height: 34
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8a0cd677e05c9c70800000000000000
+      internalID: 8979140712131725963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Threat.Surrounded
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 842
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97111a55d30f6e080800000000000000
+      internalID: -9158368645991034503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Threat.Behind
+      rect:
+        serializedVersion: 2
+        x: 270
+        y: 842
+        width: 36
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc8011006046516a0800000000000000
+      internalID: -6479162511968892724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Threat.Elite
+      rect:
+        serializedVersion: 2
+        x: 335
+        y: 842
+        width: 34
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70c5a29e0b6e05040800000000000000
+      internalID: 4634457664064740359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Threat.Ultra
+      rect:
+        serializedVersion: 2
+        x: 397
+        y: 842
+        width: 38
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 401fd7d264922eb60800000000000000
+      internalID: 7773821288182575364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hud.LowHealth
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 844
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b985e258381cd120800000000000000
+      internalID: 2439851728315976112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Accessibility
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 842
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 797720e4eb8321340800000000000000
+      internalID: 4832987740125689751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Controls
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 849
+        width: 44
+        height: 30
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b324bdc76369dd390800000000000000
+      internalID: -7791906619513945541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Palette
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 843
+        width: 44
+        height: 42
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0335993b971d7b000800000000000000
+      internalID: 51740241372468016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.TextScale
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 847
+        width: 44
+        height: 34
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 851c00ec2a7d1db90800000000000000
+      internalID: -7218751633457364648
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Special.KaguraSuzu
+      rect:
+        serializedVersion: 2
+        x: 786
+        y: 842
+        width: 28
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43501d217329b69a0800000000000000
+      internalID: -6238732093555145420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Shop.Reroll
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 842
+        width: 40
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: feeb441fdf2af0f10800000000000000
+      internalID: 2238186751384665839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Shop.Picks
+      rect:
+        serializedVersion: 2
+        x: 906
+        y: 842
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4926cde552ed66f50800000000000000
+      internalID: 6874426133314298516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.ReduceFlashes
+      rect:
+        serializedVersion: 2
+        x: 974
+        y: 842
+        width: 36
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30cdd9b99a49d7870800000000000000
+      internalID: 8682259112821382147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.weapon_rifle
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 774
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47049725670068ec0800000000000000
+      internalID: -3565161546827349900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.weapon_carbine
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 774
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b33b9bf53bdeb99f0800000000000000
+      internalID: -460513182214409413
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Weapon.weapon_shotgun
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 774
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 436b6841ad6f57070800000000000000
+      internalID: 8103654521030751796
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sw.KaguraBell
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 774
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9882c18ed61cdd360800000000000000
+      internalID: 7196120457397676169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Sw.OfudaLoom
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 774
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b82ac406fea868b40800000000000000
+      internalID: 5442189960441275019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ornament.Divider
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 774
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f15f0973b5e6e540800000000000000
+      internalID: 5036965792253432312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Reticle.Ticks
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 774
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f53f9abada62170f0800000000000000
+      internalID: -1121072304887303329
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Reticle.Ring
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 774
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6b6fc425834db8a0800000000000000
+      internalID: -6287795265612059793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.ArmorBreaker
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 780
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 888c3365ccb650a30800000000000000
+      internalID: 4180866354447108232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.DefeatUltra
+      rect:
+        serializedVersion: 2
+        x: 590
+        y: 778
+        width: 36
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7966e2dfd2bb8990800000000000000
+      internalID: -7382610489758029446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.ExecutionerHunter
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 786
+        width: 44
+        height: 29
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f93ad2c47c32f95d0800000000000000
+      internalID: -3053682683450383457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.FirstBlood
+      rect:
+        serializedVersion: 2
+        x: 719
+        y: 778
+        width: 34
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b3fcdaefdfa29250800000000000000
+      internalID: 5950011433962763185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Ghost
+      rect:
+        serializedVersion: 2
+        x: 788
+        y: 778
+        width: 24
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5112fe2f2f0281c00800000000000000
+      internalID: 871482755726123285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.GuardHunter
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 780
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f863dfd069ad3d3b0800000000000000
+      internalID: -5488803182819854705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Kills1000
+      rect:
+        serializedVersion: 2
+        x: 906
+        y: 778
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4b280349ac382d00800000000000000
+      internalID: 948074419233237838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Kills250
+      rect:
+        serializedVersion: 2
+        x: 971
+        y: 778
+        width: 42
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b87ed470cf81faa0800000000000000
+      internalID: -6128959561117304647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Kills50
+      rect:
+        serializedVersion: 2
+        x: 13
+        y: 714
+        width: 38
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17ef0c0d672ac7eb0800000000000000
+      internalID: -4720719678198972815
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Level10
+      rect:
+        serializedVersion: 2
+        x: 85
+        y: 714
+        width: 22
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e53af8f456fe75980800000000000000
+      internalID: -8550102149134048418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Level5
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 714
+        width: 28
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca37280ac59780ad0800000000000000
+      internalID: -2735803334890720340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.PlateWrecker
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 721
+        width: 44
+        height: 31
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a164c9e065260f2a0800000000000000
+      internalID: -6705751723402836454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.PocketChange
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 716
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c6552822b2c2bdc0800000000000000
+      internalID: -3624620679646325047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Rampage
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 714
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4234e5619bac56680800000000000000
+      internalID: -8762374603686395100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Regular
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 714
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af2a4ed1d88f41f00800000000000000
+      internalID: 1086766695078732538
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.RegularCustomer
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 716
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8b6c26d5f3b89320800000000000000
+      internalID: 2564997856229092239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Round10
+      rect:
+        serializedVersion: 2
+        x: 525
+        y: 714
+        width: 38
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac69469818b136180800000000000000
+      internalID: -9123418176952690998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Round15
+      rect:
+        serializedVersion: 2
+        x: 589
+        y: 714
+        width: 38
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f60d9652aa2e6de0800000000000000
+      internalID: -1338085162556258576
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Round20
+      rect:
+        serializedVersion: 2
+        x: 653
+        y: 714
+        width: 38
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57b9329ec2fb99b10800000000000000
+      internalID: 1988830910071675765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Round5
+      rect:
+        serializedVersion: 2
+        x: 718
+        y: 714
+        width: 36
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e0ba69ba1987c7b0800000000000000
+      internalID: -5204040096530386720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Rounds50
+      rect:
+        serializedVersion: 2
+        x: 783
+        y: 714
+        width: 34
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34026c72a0554b4f0800000000000000
+      internalID: -813932130541887421
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.RunnerHunter
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 714
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 966a2e77bdba1b530800000000000000
+      internalID: 3869062513985496681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.SpecialDelivery
+      rect:
+        serializedVersion: 2
+        x: 907
+        y: 714
+        width: 42
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71a0972e5cc3b2440800000000000000
+      internalID: 4912086639183464983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.TreasureHunter
+      rect:
+        serializedVersion: 2
+        x: 970
+        y: 714
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab63622e3d74e7040800000000000000
+      internalID: 4647230840850757306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Untouched
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 650
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38fe40b98e3f13a60800000000000000
+      internalID: 7652165422237937539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.Veteran
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 658
+        width: 44
+        height: 29
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88162d527497b7780800000000000000
+      internalID: -8684214109969686136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ach.WellEquipped
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 657
+        width: 44
+        height: 30
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c2ae3276f4d143710800000000000000
+      internalID: 1671993588531325484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Empty.Bowl
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 657
+        width: 44
+        height: 30
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc80f326adf9932f0800000000000000
+      internalID: -992586482558498609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Empty.Scroll
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 658
+        width: 44
+        height: 28
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63e4a3c29783a6de0800000000000000
+      internalID: -1339195846105084362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Key.Arrows
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 657
+        width: 44
+        height: 30
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 631a5e18c4e056530800000000000000
+      internalID: 3847497178417570102
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Marker.Edge
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 650
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 027ae5edf8f5c3b40800000000000000
+      internalID: 5421313122962941728
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Medal.Common
+      rect:
+        serializedVersion: 2
+        x: 456
+        y: 648
+        width: 48
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91e95f181d20d19c0800000000000000
+      internalID: -3955001798909649383
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Medal.Epic
+      rect:
+        serializedVersion: 2
+        x: 520
+        y: 648
+        width: 48
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 217b954022d927660800000000000000
+      internalID: 7382135508641101586
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Medal.Locked
+      rect:
+        serializedVersion: 2
+        x: 584
+        y: 648
+        width: 48
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1b7c9f304d9c8020800000000000000
+      internalID: 2345422405223873307
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Medal.Rare
+      rect:
+        serializedVersion: 2
+        x: 649
+        y: 648
+        width: 46
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f63e6e603f5f02a80800000000000000
+      internalID: -8493518473079102609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.EndRun
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 652
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18658bb48403c6d00800000000000000
+      internalID: 967201107043964545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Play
+      rect:
+        serializedVersion: 2
+        x: 778
+        y: 652
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49e73be8a97c75920800000000000000
+      internalID: 2979069145161891476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Quit
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 652
+        width: 44
+        height: 41
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4ac210f532903d50800000000000000
+      internalID: 6715027804768094795
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Resume
+      rect:
+        serializedVersion: 2
+        x: 908
+        y: 650
+        width: 40
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 197370a1c1c49b1c0800000000000000
+      internalID: -4487471870118512751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mouse.Left
+      rect:
+        serializedVersion: 2
+        x: 973
+        y: 650
+        width: 37
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62a2cc33debddc2d0800000000000000
+      internalID: -3256705143696250330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mouse.Middle
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 584
+        width: 30
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54b4b1d9b0c90c700800000000000000
+      internalID: 558617927488326469
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mouse.Move
+      rect:
+        serializedVersion: 2
+        x: 75
+        y: 583
+        width: 42
+        height: 50
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 693c809c2af5a5720800000000000000
+      internalID: 2835684068145283990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mouse.Right
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 586
+        width: 37
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14debc4e85ca0e400800000000000000
+      internalID: 351470268730568001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Mouse.Wheel
+      rect:
+        serializedVersion: 2
+        x: 212
+        y: 584
+        width: 24
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 999c27b5a65f02460800000000000000
+      internalID: 7215036440197122457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Notice.Error
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 586
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a059b54ecd753320800000000000000
+      internalID: 2537072289979650211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Notice.Info
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 586
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5fcdbb0d29dfea80800000000000000
+      internalID: -8435284789547905188
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Notice.Warning
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 588
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2542de5b88ecb580800000000000000
+      internalID: -8809911085754596053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.DDown
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 586
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c4d8c577fc7c7ad0800000000000000
+      internalID: -2703148274054277946
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.DLeft
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 586
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4cbb9e09afe2a810800000000000000
+      internalID: 1775244712510995530
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.DRight
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 586
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75fd44eeb1b5cb100800000000000000
+      internalID: 125075065179266903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.DUp
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 586
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f04e25c54164f4f30800000000000000
+      internalID: 4561942000811828239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.Disc
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 586
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81380b9fc22dd3e30800000000000000
+      internalID: 4484971894540370712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.FaceEast
+      rect:
+        serializedVersion: 2
+        x: 778
+        y: 588
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cc09748fd33f8cb0800000000000000
+      internalID: -4859608437816226615
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.FaceNorth
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 586
+        width: 40
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58623377ef4b200e0800000000000000
+      internalID: -2305081054245738875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.FaceSouth
+      rect:
+        serializedVersion: 2
+        x: 908
+        y: 586
+        width: 40
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8169f51729f1fd70800000000000000
+      internalID: 9075308670395965835
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.FaceWest
+      rect:
+        serializedVersion: 2
+        x: 970
+        y: 588
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4970efb781e1e0d50800000000000000
+      internalID: 6705329985709541268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.LB
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 532
+        width: 44
+        height: 24
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67e7d00e3f9a38ad0800000000000000
+      internalID: -2701128486591037834
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.LS
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 523
+        width: 46
+        height: 42
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b785292dd998804b0800000000000000
+      internalID: -5473974036133160837
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.LSClick
+      rect:
+        serializedVersion: 2
+        x: 140
+        y: 521
+        width: 40
+        height: 46
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df14394a8425cdf60800000000000000
+      internalID: 8060407905038582269
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.LSMove
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 520
+        width: 48
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46a0cc234d4bf6320800000000000000
+      internalID: 2553458337220659812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.LT
+      rect:
+        serializedVersion: 2
+        x: 273
+        y: 522
+        width: 29
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92b5b2956bc34c120800000000000000
+      internalID: 2433136452564638505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.Menu
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 523
+        width: 44
+        height: 42
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ccb36c3b2df2de9e0800000000000000
+      internalID: -1590562511386166324
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.RB
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 532
+        width: 44
+        height: 24
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1cc01beb2c29eda70800000000000000
+      internalID: 8853675282577558721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.RS
+      rect:
+        serializedVersion: 2
+        x: 457
+        y: 523
+        width: 46
+        height: 42
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3eb7eef1db1cab300800000000000000
+      internalID: 268740145810668515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.RSClick
+      rect:
+        serializedVersion: 2
+        x: 524
+        y: 521
+        width: 40
+        height: 46
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8356e02f30c461ec0800000000000000
+      internalID: -3596603672579119816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.RSMove
+      rect:
+        serializedVersion: 2
+        x: 584
+        y: 520
+        width: 48
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a00f546f9a53ef8d0800000000000000
+      internalID: -2810750113335087094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.RT
+      rect:
+        serializedVersion: 2
+        x: 657
+        y: 522
+        width: 29
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aea7ca143ef3fd630800000000000000
+      internalID: 3953949243146533610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pad.View
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 524
+        width: 44
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7b37f6396df770c0800000000000000
+      internalID: -4577911867863254148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Petal.Single
+      rect:
+        serializedVersion: 2
+        x: 783
+        y: 522
+        width: 34
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1cdb915fd7326e00800000000000000
+      internalID: 1036452296535039003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pip.Empty
+      rect:
+        serializedVersion: 2
+        x: 849
+        y: 523
+        width: 30
+        height: 42
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd1dcaebc7e9641c0800000000000000
+      internalID: -4519750917407583779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Pip.Full
+      rect:
+        serializedVersion: 2
+        x: 913
+        y: 523
+        width: 30
+        height: 42
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f668153fd5a3e0790800000000000000
+      internalID: -7562042549119908241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Reticle.Hit
+      rect:
+        serializedVersion: 2
+        x: 968
+        y: 520
+        width: 48
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06a65c40952c804e0800000000000000
+      internalID: -2015147145660372384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Reticle.SpreadArc
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 471
+        width: 48
+        height: 18
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b21df010e0c9c68b0800000000000000
+      internalID: -5157575889284771541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Reticle.SpreadDot
+      rect:
+        serializedVersion: 2
+        x: 78
+        y: 462
+        width: 36
+        height: 36
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0751c9e87ff709500800000000000000
+      internalID: 400961068062217584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seal.Mark
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 456
+        width: 48
+        height: 48
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b9781ba06949ab70800000000000000
+      internalID: 8910734017265433012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Shop.Locked
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 463
+        width: 44
+        height: 34
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d3da155a3e46f5430800000000000000
+      internalID: 3773845941653712189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Shop.MaxTier
+      rect:
+        serializedVersion: 2
+        x: 269
+        y: 458
+        width: 38
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56f8bcc1a46cfb8c0800000000000000
+      internalID: -3981245523959247003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Shop.Purchased
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 458
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de3e411f3fd40bf30800000000000000
+      internalID: 4589253730407605229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Special.Ready
+      rect:
+        serializedVersion: 2
+        x: 396
+        y: 458
+        width: 40
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b149eab4c1bae3d20800000000000000
+      internalID: 3260231318279984155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Stat.TrendDown
+      rect:
+        serializedVersion: 2
+        x: 458
+        y: 458
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef7b158a40bf11050800000000000000
+      internalID: 5769668595060684798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Stat.TrendUp
+      rect:
+        serializedVersion: 2
+        x: 522
+        y: 459
+        width: 44
+        height: 42
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88bf72aefbe71cf10800000000000000
+      internalID: 2288249448413264776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.DazedOuter
+      rect:
+        serializedVersion: 2
+        x: 587
+        y: 458
+        width: 42
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8334dfe0a504f2ed0800000000000000
+      internalID: -2436658117841435848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.NettedOuter
+      rect:
+        serializedVersion: 2
+        x: 656
+        y: 458
+        width: 32
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97d6a5a4851f92260800000000000000
+      internalID: 7073450051268930937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Status.PulledOuter
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 463
+        width: 44
+        height: 34
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5665dbadc7df0d310800000000000000
+      internalID: 1427919794564060773
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Threat.BehindOuter
+      rect:
+        serializedVersion: 2
+        x: 782
+        y: 458
+        width: 36
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32d68f3a9656fb030800000000000000
+      internalID: 3512637738769214755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Threat.EliteOuter
+      rect:
+        serializedVersion: 2
+        x: 847
+        y: 458
+        width: 34
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b9c3977a5b978070800000000000000
+      internalID: 8108620466959403444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Threat.UltraOuter
+      rect:
+        serializedVersion: 2
+        x: 909
+        y: 458
+        width: 38
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2569cc6c6f40c3840800000000000000
+      internalID: 5205040727277213266
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tier.Special
+      rect:
+        serializedVersion: 2
+        x: 974
+        y: 458
+        width: 36
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b2eb46d7a20076f0800000000000000
+      internalID: -689047823109594445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tip.Hint
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 394
+        width: 24
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce5cb589b429646a0800000000000000
+      internalID: -6465319361667414548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Toast.Record
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 408
+        width: 44
+        height: 16
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff65f39329dde2bd0800000000000000
+      internalID: -2652939510379227393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Unlock.Badge
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 394
+        width: 44
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 603c5310a39966280800000000000000
+      internalID: -9050377926746979578
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Unlock.Title
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 394
+        width: 18
+        height: 44
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14f320f03a62b43b0800000000000000
+      internalID: -5527281635893821631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Ach.ArmorBreaker: 4180866354447108232
+      Ach.DefeatUltra: -7382610489758029446
+      Ach.ExecutionerHunter: -3053682683450383457
+      Ach.FirstBlood: 5950011433962763185
+      Ach.Ghost: 871482755726123285
+      Ach.GuardHunter: -5488803182819854705
+      Ach.Kills1000: 948074419233237838
+      Ach.Kills250: -6128959561117304647
+      Ach.Kills50: -4720719678198972815
+      Ach.Level10: -8550102149134048418
+      Ach.Level5: -2735803334890720340
+      Ach.PlateWrecker: -6705751723402836454
+      Ach.PocketChange: -3624620679646325047
+      Ach.Rampage: -8762374603686395100
+      Ach.Regular: 1086766695078732538
+      Ach.RegularCustomer: 2564997856229092239
+      Ach.Round10: -9123418176952690998
+      Ach.Round15: -1338085162556258576
+      Ach.Round20: 1988830910071675765
+      Ach.Round5: -5204040096530386720
+      Ach.Rounds50: -813932130541887421
+      Ach.RunnerHunter: 3869062513985496681
+      Ach.SpecialDelivery: 4912086639183464983
+      Ach.TreasureHunter: 4647230840850757306
+      Ach.Untouched: 7652165422237937539
+      Ach.Veteran: -8684214109969686136
+      Ach.WellEquipped: 1671993588531325484
+      Empty.Bowl: -992586482558498609
+      Empty.Scroll: -1339195846105084362
+      Hud.Enemies: -3282825364574764330
+      Hud.Gold: 1038824628869400148
+      Hud.Health: -5507860616542234780
+      Hud.LowHealth: 2439851728315976112
+      Hud.Round: -300848175486118491
+      Hud.Special: -559854760433156822
+      Hud.Timer: 4926704839082185527
+      Key.Arrows: 3847497178417570102
+      Marker.Edge: 5421313122962941728
+      Medal.Common: -3955001798909649383
+      Medal.Epic: 7382135508641101586
+      Medal.Locked: 2345422405223873307
+      Medal.Rare: -8493518473079102609
+      Menu.Accessibility: 4832987740125689751
+      Menu.Achievements: -708897340933979488
+      Menu.Audio: -6068394660707993130
+      Menu.Back: -5724424276071283644
+      Menu.Confirm: 1221050695471490317
+      Menu.Controls: -7791906619513945541
+      Menu.EndRun: 967201107043964545
+      Menu.Gamepad: -5672638532897503310
+      Menu.Graphics: -7285087910145960454
+      Menu.Keyboard: -6656520657755220864
+      Menu.Palette: 51740241372468016
+      Menu.Play: 2979069145161891476
+      Menu.Profile: 9090467384928607536
+      Menu.Quit: 6715027804768094795
+      Menu.ReduceFlashes: 8682259112821382147
+      Menu.Resume: -4487471870118512751
+      Menu.Settings: -3610623525845512526
+      Menu.Statistics: 5405502815919382130
+      Menu.TextScale: -7218751633457364648
+      Mouse.Left: -3256705143696250330
+      Mouse.Middle: 558617927488326469
+      Mouse.Move: 2835684068145283990
+      Mouse.Right: 351470268730568001
+      Mouse.Wheel: 7215036440197122457
+      Notice.Error: 2537072289979650211
+      Notice.Info: -8435284789547905188
+      Notice.Warning: -8809911085754596053
+      Ornament.Divider: 5036965792253432312
+      Pad.DDown: -2703148274054277946
+      Pad.DLeft: 1775244712510995530
+      Pad.DRight: 125075065179266903
+      Pad.DUp: 4561942000811828239
+      Pad.Disc: 4484971894540370712
+      Pad.FaceEast: -4859608437816226615
+      Pad.FaceNorth: -2305081054245738875
+      Pad.FaceSouth: 9075308670395965835
+      Pad.FaceWest: 6705329985709541268
+      Pad.LB: -2701128486591037834
+      Pad.LS: -5473974036133160837
+      Pad.LSClick: 8060407905038582269
+      Pad.LSMove: 2553458337220659812
+      Pad.LT: 2433136452564638505
+      Pad.Menu: -1590562511386166324
+      Pad.RB: 8853675282577558721
+      Pad.RS: 268740145810668515
+      Pad.RSClick: -3596603672579119816
+      Pad.RSMove: -2810750113335087094
+      Pad.RT: 3953949243146533610
+      Pad.View: -4577911867863254148
+      Petal.Single: 1036452296535039003
+      Pip.Empty: -4519750917407583779
+      Pip.Full: -7562042549119908241
+      Reticle.Hit: -2015147145660372384
+      Reticle.Ring: -6287795265612059793
+      Reticle.SpreadArc: -5157575889284771541
+      Reticle.SpreadDot: 400961068062217584
+      Reticle.Ticks: -1121072304887303329
+      Seal.Mark: 8910734017265433012
+      Shop.Locked: 3773845941653712189
+      Shop.MaxTier: -3981245523959247003
+      Shop.Picks: 6874426133314298516
+      Shop.Purchased: 4589253730407605229
+      Shop.Reroll: 2238186751384665839
+      Special.KaguraBell: 7999156302903063046
+      Special.KaguraSuzu: -6238732093555145420
+      Special.OfudaLoom: -1413035657167185548
+      Special.Ready: 3260231318279984155
+      Special.TideJewel: -3679124154955928802
+      Stat.TrendDown: 5769668595060684798
+      Stat.TrendUp: 2288249448413264776
+      Status.Dazed: -5993203429339079311
+      Status.DazedOuter: -2436658117841435848
+      Status.Netted: -5314764791681496320
+      Status.NettedOuter: 7073450051268930937
+      Status.Pulled: 8979140712131725963
+      Status.PulledOuter: 1427919794564060773
+      Sw.KaguraBell: 7196120457397676169
+      Sw.OfudaLoom: 5442189960441275019
+      Threat.Behind: -6479162511968892724
+      Threat.BehindOuter: 3512637738769214755
+      Threat.Elite: 4634457664064740359
+      Threat.EliteOuter: 8108620466959403444
+      Threat.Surrounded: -9158368645991034503
+      Threat.Ultra: 7773821288182575364
+      Threat.UltraOuter: 5205040727277213266
+      Tier.Special: -689047823109594445
+      Tip.Hint: -6465319361667414548
+      Toast.Record: -2652939510379227393
+      Unlock.Badge: -9050377926746979578
+      Unlock.Title: -5527281635893821631
+      Upgrade.Chain: -5890304332254159341
+      Upgrade.Explosion: -5599430998560845798
+      Upgrade.FireRate: -3332788987730236652
+      Upgrade.MaximumHealth: 2034370419246375082
+      Upgrade.MovementSpeed: 6842129945428876180
+      Upgrade.Piercing: 5229749321178577944
+      Upgrade.RegenerationDelay: 5259536503224837384
+      Upgrade.RegenerationRate: 7732162901061201993
+      Upgrade.ReloadSpeed: -6812588442315847362
+      Upgrade.Ricochet: -3237780129553355561
+      Weapon.AssaultRifle: 4846149593698786846
+      Weapon.AutoSmg: 5844087827914377564
+      Weapon.CombatShotgun: 8056251770492120768
+      Weapon.weapon_carbine: -460513182214409413
+      Weapon.weapon_rifle: -3565161546827349900
+      Weapon.weapon_shotgun: 8103654521030751796
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

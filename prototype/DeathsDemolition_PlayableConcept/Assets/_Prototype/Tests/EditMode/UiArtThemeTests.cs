@@ -9,8 +9,8 @@ using UnityEngine;
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-022 · AP-012 UI art contract (ADR-022-1): the atlases in Assets/_Prototype/UI/Art are
-    /// sliced by the manifest, every key the screens ask for exists, frames carry a
+    /// WP-022 · AP-012 UI art contract (ADR-022-1; WP-068 §7.1: the G1 SDF glyph atlas + A4 frames v3 replace the
+    /// RGBA atlases): the atlases in Assets/_Prototype/UI/Art are sliced by the manifest, every key the screens ask for exists, frames carry a
     /// 9-slice border, nothing exceeds the UI texture class, the shipped UI art stays
     /// under its budget, the theme resolves them, and the HUD tokens keep WCAG AA over
     /// the five environment roles the camera can put behind a panel.
@@ -19,25 +19,48 @@ namespace DD.Prototype.Tests.EditMode
     [Category("WP022")]
     public sealed class UiArtThemeTests
     {
-        private const string ArtFolder = "Assets/_Prototype/UI/Art/Resources/UI/AP012";
+        private const string ArtFolder = "Assets/_Prototype/UI/Art/Resources/UI";
         private const long UiArtBudgetBytes = 12L * 1024 * 1024; // ADR-015-1 UI class, package brief
 
         private static readonly string[] HudKeys =
         {
-            "Hud.Gold", "Hud.Special", "Hud.Round", "Hud.Health", "Hud.Enemies", "Hud.Timer"
+            "Hud.Gold", "Hud.Special", "Hud.Round", "Hud.Health", "Hud.Enemies", "Hud.Timer", "Hud.LowHealth"
         };
 
         private static readonly string[] MenuKeys =
         {
             "Menu.Settings", "Menu.Audio", "Menu.Graphics", "Menu.Gamepad", "Menu.Keyboard",
-            "Menu.Profile", "Menu.Statistics", "Menu.Achievements", "Menu.Back", "Menu.Confirm"
+            "Menu.Profile", "Menu.Statistics", "Menu.Achievements", "Menu.Back", "Menu.Confirm",
+            "Menu.Accessibility", "Menu.Controls", "Menu.Play", "Menu.Quit", "Menu.Resume", "Menu.EndRun"
         };
 
+        /// <summary>G1 glyphs the v3 screens ask for besides the icon families (v004 A2/A3 + the moved reticle pair / divider).</summary>
+        private static readonly string[] GlyphKeys =
+        {
+            "Status.Netted", "Status.Dazed", "Status.Pulled", "Threat.Surrounded", "Threat.Behind", "Threat.Elite", "Threat.Ultra",
+            "Status.NettedOuter", "Status.DazedOuter", "Status.PulledOuter", "Threat.EliteOuter", "Threat.UltraOuter", "Threat.BehindOuter",
+            "Medal.Common", "Medal.Rare", "Medal.Epic", "Medal.Locked", "Reticle.Ring", "Reticle.Ticks", "Reticle.Hit",
+            "Reticle.SpreadArc", "Reticle.SpreadDot", "Marker.Edge", "Ornament.Divider", "Seal.Mark", "Petal.Single",
+            "Pip.Full", "Pip.Empty", "Toast.Record", "Special.Ready", "Shop.Locked", "Shop.Purchased", "Shop.MaxTier",
+            "Shop.Reroll", "Shop.Picks", "Tier.Special", "Unlock.Title", "Unlock.Badge", "Notice.Info", "Notice.Warning",
+            "Notice.Error", "Empty.Scroll", "Empty.Bowl", "Stat.TrendUp", "Stat.TrendDown", "Tip.Hint"
+        };
+
+        /// <summary>V1 input shapes (26 + the pad disc).</summary>
+        private static readonly string[] InputShapes =
+        {
+            "Key.Arrows", "Mouse.Left", "Mouse.Right", "Mouse.Middle", "Mouse.Wheel", "Mouse.Move", "Pad.Disc",
+            "Pad.FaceSouth", "Pad.FaceEast", "Pad.FaceWest", "Pad.FaceNorth", "Pad.LB", "Pad.RB", "Pad.LT", "Pad.RT",
+            "Pad.LS", "Pad.RS", "Pad.LSClick", "Pad.RSClick", "Pad.LSMove", "Pad.RSMove", "Pad.DUp", "Pad.DDown",
+            "Pad.DLeft", "Pad.DRight", "Pad.Menu", "Pad.View"
+        };
+
+        /// <summary>A4 frames v3 + kit sprites + the V1 key caps.</summary>
         private static readonly string[] FrameKeys =
         {
-            "Frame.HudPanel", "Frame.Button", "Frame.Card", "Frame.Chip",
-            "Medal.Common", "Medal.Rare", "Medal.Epic", "Ornament.Divider",
-            "Reticle.Ticks", "Reticle.Ring", "Cursor.Arrow", "Focus.Brackets"
+            "Frame.HudPanel", "Frame.Card", "Frame.Chip", "Frame.ChipFill", "Frame.Modal", "Frame.Tooltip", "Frame.TooltipPointer",
+            "Frame.ListRow", "Frame.Ribbon", "Focus.Brackets", "Ring.Progress132", "Ring.Progress64", "Slider.Rail",
+            "Slider.Handle", "Slider.HandleFocus", "Shadow.Soft", "Bar.Segments", "Key.Cap", "Key.Wide"
         };
 
         [TearDown]
@@ -46,83 +69,100 @@ namespace DD.Prototype.Tests.EditMode
             UiTheme.Override(null);
         }
 
+        /// <summary>
+        /// WP-068 §7.1 G1 / A4: one SDF glyph atlas holds every single-colour glyph (the former AP-012 icon + status,
+        /// AP-013, AP-014 atlases, the reticle pair and divider, and the v004 A1–A3 / V1 / M1 sets), one frames v3 atlas
+        /// the frames and key caps; every key a screen asks for exists once.
+        /// </summary>
         [Test]
         public void Atlaslar_ManifestteAdlandirilmisHerSpriteYuklenir()
         {
-            Sprite[] icons = Resources.LoadAll<Sprite>(UiTheme.IconAtlas);
+            Sprite[] glyphs = Resources.LoadAll<Sprite>(UiTheme.GlyphAtlas);
             Sprite[] frames = Resources.LoadAll<Sprite>(UiTheme.FrameAtlas);
-            Assert.IsNotNull(icons);
-            Assert.IsNotNull(frames);
-            Assert.AreEqual(32, icons.Length, "ikon atlası 32 sprite'a dilimlenmeli (16 upgrade/weapon + 16 HUD/menu)");
-            Assert.AreEqual(12, frames.Length, "çerçeve atlası 12 sprite'a dilimlenmeli");
+            Assert.GreaterOrEqual(glyphs.Length, 148, "G1: 148 glif (53 eski + 3 taşınan + 92 v004)");
+            Assert.AreEqual(FrameKeys.Length, frames.Length, "A4: 17 çerçeve/kit + 2 tuş kapağı");
 
             var names = new HashSet<string>(StringComparer.Ordinal);
-            foreach (Sprite s in icons) Assert.IsTrue(names.Add(s.name), "ikon adı tekrarlı: " + s.name);
+            foreach (Sprite s in glyphs) Assert.IsTrue(names.Add(s.name), "glif adı tekrarlı: " + s.name);
             foreach (Sprite s in frames) Assert.IsTrue(names.Add(s.name), "çerçeve adı tekrarlı: " + s.name);
 
             foreach (UpgradeBranch branch in Enum.GetValues(typeof(UpgradeBranch)))
             {
-                Assert.IsTrue(names.Contains("Upgrade." + branch), "eksik upgrade ikonu: " + branch);
+                Assert.IsTrue(names.Contains("Upgrade." + branch), "eksik upgrade glifi: " + branch);
             }
 
             foreach (ClassicWeaponId id in Enum.GetValues(typeof(ClassicWeaponId)))
             {
-                Assert.IsTrue(names.Contains("Weapon." + id), "eksik silah ikonu: " + id);
+                Assert.IsTrue(names.Contains("Weapon." + id), "eksik silah glifi: " + id);
             }
 
             foreach (SpecialWeaponId id in Enum.GetValues(typeof(SpecialWeaponId)))
             {
-                Assert.IsTrue(names.Contains("Special." + id), "eksik special ikonu: " + id);
+                Assert.IsTrue(names.Contains("Special." + id), "eksik special glifi: " + id);
             }
 
-            foreach (string key in HudKeys) Assert.IsTrue(names.Contains(key), "eksik HUD ikonu: " + key);
-            foreach (string key in MenuKeys) Assert.IsTrue(names.Contains(key), "eksik menü ikonu: " + key);
-            foreach (string key in FrameKeys) Assert.IsTrue(names.Contains(key), "eksik çerçeve: " + key);
+            foreach (string key in new[] { "Weapon.weapon_rifle", "Weapon.weapon_carbine", "Weapon.weapon_shotgun", "Sw.KaguraBell", "Sw.OfudaLoom" })
+            {
+                Assert.IsTrue(names.Contains(key), "AP-013/014 glifi G1'e taşınmadı: " + key);
+            }
 
-            // WP-022L: AP-012 v003 status/threat/menu atlas (16 sprites, 128², white glyphs).
-            Sprite[] status = Resources.LoadAll<Sprite>(UiTheme.StatusGlyphAtlas);
-            Assert.AreEqual(16, status.Length, "durum atlası 16 sprite'a dilimlenmeli");
-            var statusNames = new HashSet<string>(StringComparer.Ordinal);
-            foreach (Sprite s in status)
+            foreach (string key in HudKeys) Assert.IsTrue(names.Contains(key), "eksik HUD glifi: " + key);
+            foreach (string key in MenuKeys) Assert.IsTrue(names.Contains(key), "eksik menü glifi: " + key);
+            foreach (string key in GlyphKeys) Assert.IsTrue(names.Contains(key), "eksik glif: " + key);
+            foreach (string key in InputShapes) Assert.IsTrue(names.Contains(key), "eksik V1 giriş şekli: " + key);
+            foreach (string key in FrameKeys) Assert.IsTrue(names.Contains(key), "eksik çerçeve/kit: " + key);
+
+            int achievements = 0;
+            foreach (Sprite s in glyphs)
             {
-                Assert.IsTrue(statusNames.Add(s.name), "durum ikon adı tekrarlı: " + s.name);
-                Assert.LessOrEqual(s.rect.width, 128f, s.name + " 128² hücreye sığmalı (AD v007 MUST-1: sıkı rect)");
+                achievements += s.name.StartsWith("Ach.", StringComparison.Ordinal) ? 1 : 0;
             }
-            foreach (string key in new[] { "Status.Netted", "Status.Dazed", "Threat.Surrounded", "Threat.Behind", "Threat.Elite", "Hud.LowHealth", "Menu.Accessibility", "Menu.Controls" })
-            {
-                Assert.IsTrue(statusNames.Contains(key), "eksik durum ikonu: " + key);
-            }
+
+            Assert.AreEqual(27, achievements, "A1/A2: 27 başarım glifi");
         }
 
+        /// <summary>G1 cells are 64² with a 6 px spread (the sprite sits inside the 52² content box); A4 frames carry their 9-slice borders.</summary>
         [Test]
-        public void Cerceveler_DokuzDilimKenariTasir_IkonlarBeyazGlif()
+        public void Cerceveler_DokuzDilimKenariTasir_GlifHucresi64()
         {
-            Sprite[] frames = Resources.LoadAll<Sprite>(UiTheme.FrameAtlas);
-            foreach (Sprite s in frames)
+            foreach (Sprite s in Resources.LoadAll<Sprite>(UiTheme.FrameAtlas))
             {
-                if (!s.name.StartsWith("Frame.", StringComparison.Ordinal))
+                if (!s.name.StartsWith("Frame.", StringComparison.Ordinal) && !s.name.StartsWith("Key.", StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                Assert.Greater(s.border.x, 0f, s.name + " 9-slice kenarı sıfır");
-                Assert.Greater(s.border.y, 0f, s.name + " 9-slice kenarı sıfır");
-                Assert.Less(s.border.x * 2f, s.rect.width, s.name + " kenar toplamı sprite genişliğini aşıyor");
-                Assert.Less(s.border.y * 2f, s.rect.height, s.name + " kenar toplamı sprite yüksekliğini aşıyor");
+                if (s.name == "Frame.TooltipPointer")
+                {
+                    continue; // a Simple pointer under the tooltip edge
+                }
+
+                Assert.Greater(s.border.x, 0f, s.name + " 9-slice sol kenarı sıfır");
+                Assert.Greater(s.border.z, 0f, s.name + " 9-slice sağ kenarı sıfır");
+                Assert.Less(s.border.x + s.border.z, s.rect.width, s.name + " kenar toplamı sprite genişliğini aşıyor");
+                Assert.Less(s.border.y + s.border.w, s.rect.height + 1f, s.name + " kenar toplamı sprite yüksekliğini aşıyor");
             }
 
-            foreach (Sprite s in Resources.LoadAll<Sprite>(UiTheme.IconAtlas))
+            foreach (Sprite s in Resources.LoadAll<Sprite>(UiTheme.GlyphAtlas))
             {
-                Assert.AreEqual(128f, s.rect.width, 0.5f, s.name + " ikon hücresi 128 px değil");
-                Assert.AreEqual(128f, s.rect.height, 0.5f, s.name + " ikon hücresi 128 px değil");
+                Assert.LessOrEqual(s.rect.width, 52f, s.name + " 52² içerik kutusuna sığmalı (64² hücre, 6 px yayılım)");
+                Assert.LessOrEqual(s.rect.height, 52f, s.name + " 52² içerik kutusuna sığmalı (64² hücre, 6 px yayılım)");
+                Assert.AreEqual(Mathf.FloorToInt(s.rect.xMin / 64f), Mathf.FloorToInt((s.rect.xMax - 1f) / 64f), s.name + " hücre sınırını aşıyor");
+                Assert.AreEqual(Mathf.FloorToInt(s.rect.yMin / 64f), Mathf.FloorToInt((s.rect.yMax - 1f) / 64f), s.name + " hücre sınırını aşıyor");
+                Assert.AreEqual(Vector4.zero, s.border, s.name + " glifte 9-slice olmaz");
             }
         }
 
+        /// <summary>
+        /// Texture class: every UI texture ≤ 1024², no mipmaps; the G1 distance field and the A4 frames are Alpha8
+        /// (white + alpha, the distance / coverage in .a); the V1 cursors are readable RGBA32 32 / 64 px; the kumiko
+        /// tile repeats. The UI art stays under its source budget.
+        /// </summary>
         [Test]
         public void DokuSinifi_1024VeButce()
         {
-            string[] files = Directory.GetFiles(ArtFolder, "*.png", SearchOption.TopDirectoryOnly);
-            Assert.Greater(files.Length, 0, "AP-012 PNG'leri bulunamadı: " + ArtFolder);
+            string[] files = Directory.GetFiles(ArtFolder, "*.png", SearchOption.AllDirectories);
+            Assert.Greater(files.Length, 0, "UI PNG'leri bulunamadı: " + ArtFolder);
 
             long total = 0;
             foreach (string file in files)
@@ -133,13 +173,39 @@ namespace DD.Prototype.Tests.EditMode
             Assert.LessOrEqual(total, UiArtBudgetBytes,
                 "UI sanatı kaynak boyutu bütçeyi aşıyor: " + total + " B (sıkıştırma öncesi üst sınır)");
 
-            var textures = Resources.LoadAll<Texture2D>(UiTheme.AtlasFolder.TrimEnd('/'));
-            Assert.Greater(textures.Length, 0);
-            foreach (Texture2D t in textures)
+            foreach (string folder in new[] { UiTheme.AtlasFolder.TrimEnd('/'), "UI/G1", "UI/A4" })
             {
-                Assert.LessOrEqual(Mathf.Max(t.width, t.height), 1024, t.name + " UI sınıfı 1024² tavanını aşıyor (ADR-015-1)");
-                Assert.AreEqual(1, t.mipmapCount, t.name + " UI dokusunda mipmap olmamalı");
+                Texture2D[] textures = Resources.LoadAll<Texture2D>(folder);
+                Assert.Greater(textures.Length, 0, folder);
+                foreach (Texture2D t in textures)
+                {
+                    Assert.LessOrEqual(Mathf.Max(t.width, t.height), 1024, t.name + " UI sınıfı 1024² tavanını aşıyor (ADR-015-1)");
+                    Assert.AreEqual(1, t.mipmapCount, t.name + " UI dokusunda mipmap olmamalı");
+                }
             }
+
+            Texture2D glyphs = Resources.LoadAll<Sprite>(UiTheme.GlyphAtlas)[0].texture;
+            Texture2D frames = Resources.LoadAll<Sprite>(UiTheme.FrameAtlas)[0].texture;
+            Assert.AreEqual(TextureFormat.Alpha8, glyphs.format, "G1 mesafe alanı Alpha8");
+            Assert.AreEqual(TextureFormat.Alpha8, frames.format, "A4 çerçeveleri Alpha8");
+            Assert.AreEqual(1024, glyphs.width);
+            Assert.AreEqual(1024, frames.width);
+
+            foreach (bool retina in new[] { false, true })
+            {
+                foreach (bool pressed in new[] { false, true })
+                {
+                    Texture2D cursor = UiCursor.Texture(pressed, retina);
+                    Assert.IsNotNull(cursor, "V1 imleci yok: pressed=" + pressed + " retina=" + retina);
+                    Assert.AreEqual(retina ? 64 : 32, cursor.width, cursor.name);
+                    Assert.AreEqual(TextureFormat.RGBA32, cursor.format, cursor.name + " donanım imleci RGBA32");
+                    Assert.IsTrue(cursor.isReadable, cursor.name + " Cursor.SetCursor okunabilir doku ister");
+                }
+            }
+
+            Texture kumiko = Resources.Load<Texture>(UiTheme.KumikoTileResource);
+            Assert.IsNotNull(kumiko, "A6 kumiko karosu yok");
+            Assert.AreEqual(TextureWrapMode.Repeat, kumiko.wrapMode, "kumiko karosu tekrarlar");
         }
 
         [Test]
@@ -147,7 +213,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             UiTheme theme = UiTheme.Active;
             Assert.IsNotNull(theme);
-            Assert.IsNotNull(theme.Icon("Hud.Gold"), "tema ikon vermedi");
+            Assert.IsNotNull(theme.Icon("Hud.Gold"), "tema glif vermedi");
             Assert.IsNotNull(theme.Frame("Frame.HudPanel"), "tema çerçeve vermedi");
             Assert.IsNotNull(theme.MenuPlate, "menü plakası yok");
             Assert.IsNotNull(theme.HudMarker, "AP-010 HUD işareti yok");
@@ -157,8 +223,19 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             Assert.IsTrue(UiArt.HasFrame(UiFrame.Card));
+            Assert.IsTrue(UiArt.HasFrame(UiFrame.Modal), "A4 Elev2 modal çerçevesi");
+            Assert.IsFalse(UiArt.HasFrame(UiFrame.Button), "v3 düğmeleri çerçevesiz (A4'te Frame.Button yok) → prosedürel kontur");
+            Assert.AreSame(UiSprites.Control, UiArt.Frame(UiFrame.Button));
             Assert.AreSame(theme.Icon("Upgrade.Piercing"), UiArt.UpgradeIcon(UpgradeBranch.Piercing));
             Assert.AreSame(theme.Icon("Weapon.AutoSmg"), UiArt.WeaponIcon(ClassicWeaponId.AutoSmg));
+            Assert.AreSame(theme.Icon("Medal.Epic"), UiArt.Medal(UiMedal.Epic), "M1 madalyası G1'den");
+            Assert.AreSame(theme.Icon("Reticle.Ring"), UiArt.Reticle(true), "reticle G1'e taşındı");
+            Assert.IsNotNull(UiArt.KeyCap(true));
+            Assert.IsNotNull(UiArt.KeyCap(false));
+            Assert.IsTrue(UiArt.IsGlyph(theme.Icon("Hud.Gold")), "G1 glifi SDF olarak tanınır");
+            Assert.IsFalse(UiArt.IsGlyph(theme.Frame("Frame.Card")), "A4 çerçevesi glif değildir");
+            Assert.IsFalse(UiArt.IsGlyph(UiSprites.Ring), "prosedürel sprite glif değildir");
+            Assert.AreEqual(2f, UiArt.FramePixelsPerUnitMultiplier, "A4 2× yazıldı");
 
             // Art absent: every lookup falls back to the procedural kit and nothing throws.
             var empty = ScriptableObject.CreateInstance<UiTheme>();
@@ -169,9 +246,55 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreSame(UiSprites.Control, UiArt.Frame(UiFrame.Button));
             Assert.AreSame(UiSprites.Ring, UiArt.Medal(UiMedal.Epic));
             Assert.AreSame(UiSprites.Disc, UiArt.HudMarker());
+            Assert.IsNull(UiArt.KeyCap(true));
+            Assert.IsFalse(UiArt.IsGlyph(UiSprites.Ring));
             Assert.IsNull(UiArt.SkinPreview(0));
             Assert.IsNull(UiArt.MenuPlate());
             UnityEngine.Object.DestroyImmediate(empty);
+        }
+
+        /// <summary>
+        /// WP-068 V1 prompts: pad and mouse buttons draw their V1 shape (face buttons by position in the diamond, the
+        /// letter stays the control's name for tests and screen readers); keys stay text on a cap. UiCursor: the pointer
+        /// shows when the context wants it and the last device is not a pad.
+        /// </summary>
+        [Test]
+        public void V1_GirdiSekilleri_VeImlecGorunurlugu()
+        {
+            UiInputGlyphs.Glyph submit = UiInputGlyphs.For(UiPromptAction.Submit, DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
+            Assert.AreEqual("A", submit.Text);
+            Assert.AreEqual("Pad.FaceSouth", submit.Shape);
+            Assert.IsTrue(UiInputGlyphs.HasShape(submit), "G1'de V1 şekli var");
+            Assert.AreEqual(UiInputGlyphs.DefaultSize, UiInputGlyphs.WidthOf(submit, UiInputGlyphs.DefaultSize), "şekil kare");
+            Assert.AreEqual("Pad.Menu", UiInputGlyphs.For(UiPromptAction.Pause, DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad).Shape);
+            Assert.IsNull(UiInputGlyphs.For(UiPromptAction.Submit, DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse).Shape, "tuş metin + kapak");
+            Assert.AreEqual("Mouse.Left", UiInputGlyphs.FromControlName("Left Button", DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse).Shape);
+            Assert.AreEqual("Pad.RB", UiInputGlyphs.FromControlName("Right Shoulder", DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad).Shape);
+            Assert.AreEqual("Pad.DUp", UiInputGlyphs.FromControlName("D-Pad Up", DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad).Shape);
+            foreach (UiPromptAction action in Enum.GetValues(typeof(UiPromptAction)))
+            {
+                UiInputGlyphs.Glyph pad = UiInputGlyphs.For(action, DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
+                Assert.IsTrue(pad.Shape == null || UiArt.HasIcon(pad.Shape), action + ": şekil anahtarı G1'de olmalı (" + pad.Shape + ")");
+            }
+
+            bool before = UiCursor.ContextVisible;
+            try
+            {
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse);
+                UiCursor.SetContextVisible(true);
+                Assert.IsTrue(UiCursor.WantVisible, "menü + fare → görünür");
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
+                Assert.IsFalse(UiCursor.WantVisible, "pad son konuşan cihazken gizli");
+                UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse);
+                Assert.IsTrue(UiCursor.WantVisible, "fare hareketi (şema dönüşü) geri getirir");
+                UiCursor.SetContextVisible(false);
+                Assert.IsFalse(UiCursor.WantVisible, "koşu / yükleme bağlamı gizler");
+            }
+            finally
+            {
+                UiCursor.SetContextVisible(before);
+                UiInputScheme.Release();
+            }
         }
 
         /// <summary>

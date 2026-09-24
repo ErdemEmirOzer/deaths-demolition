@@ -137,7 +137,7 @@ namespace DD.Prototype.UI
             scrim.raycastTarget = true; // nothing underneath takes a click while open
             _scrim = UiFactory.Group(scrim.gameObject);
 
-            _cardRect = UiFactory.FramedCard("Card", root, UiColor.BorderStrong, UiColor.SurfacePanel, UiFrame.Card);
+            _cardRect = UiFactory.FramedCard("Card", root, UiColor.BorderStrong, UiColor.SurfacePanel, UiFrame.Modal);   // A4 Elev2 double line
             Vector2 cardSize = SizeOf(size);
             _cardRect.anchorMin = new Vector2(0.5f, 0.5f);
             _cardRect.anchorMax = new Vector2(0.5f, 0.5f);

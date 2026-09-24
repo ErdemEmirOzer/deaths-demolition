@@ -648,7 +648,7 @@ namespace DD.Prototype.UI
 
             if (hasSprite)
             {
-                slot.Icon.sprite = sprite;
+                UiArt.SetGlyph(slot.Icon, sprite);   // WP-068 G1: SDF draw path
             }
 
             if (slot.Icon.gameObject.activeSelf != hasSprite)

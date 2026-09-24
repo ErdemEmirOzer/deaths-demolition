@@ -12,6 +12,10 @@ namespace DD.Prototype.UI
     /// Icons are white glyphs: colour is always a <see cref="UiColor"/> token applied at
     /// the call site, which keeps the contrast budget in <see cref="UiTokens"/> the only
     /// place a colour is decided.
+    ///
+    /// WP-068 §7.1: glyphs are G1 distance fields - an image showing one draws through DD/UI/Fx SdfGlyph
+    /// (<see cref="ApplyGlyph"/>; <see cref="UiFactory.NewImage"/> does it for a glyph sprite, <see cref="SetGlyph"/>
+    /// on a swap). Frames are the A4 v3 set, authored 2× (<see cref="FramePixelsPerUnitMultiplier"/>).
     /// </summary>
     public static class UiArt
     {
@@ -95,7 +99,8 @@ namespace DD.Prototype.UI
 
             switch (frame)
             {
-                case UiFrame.Chip: return UiSprites.Chip;
+                case UiFrame.Chip:
+                case UiFrame.ChipFill: return UiSprites.Chip;
                 case UiFrame.Button: return UiSprites.Control;
                 default: return UiSprites.Card;
             }
@@ -108,36 +113,101 @@ namespace DD.Prototype.UI
             return theme != null && theme.Frame("Frame." + frame) != null;
         }
 
+        /// <summary>M1 medal v3 (G1 glyph); the procedural ring when absent.</summary>
         public static Sprite Medal(UiMedal medal)
         {
-            UiTheme theme = UiTheme.Active;
-            Sprite sprite = theme != null ? theme.Frame("Medal." + medal) : null;
+            Sprite sprite = Icon("Medal." + medal);
             return sprite != null ? sprite : UiSprites.Ring;
         }
 
         public static Sprite Reticle(bool ring)
         {
-            UiTheme theme = UiTheme.Active;
-            Sprite sprite = theme != null ? theme.Frame(ring ? "Reticle.Ring" : "Reticle.Ticks") : null;
+            Sprite sprite = Icon(ring ? "Reticle.Ring" : "Reticle.Ticks");
             return sprite != null ? sprite : UiSprites.RingThin;
         }
 
         public static Sprite FocusBrackets()
         {
-            UiTheme theme = UiTheme.Active;
-            return theme != null ? theme.Frame("Focus.Brackets") : null;
+            return Kit("Focus.Brackets");
         }
 
         public static Sprite Divider()
         {
-            UiTheme theme = UiTheme.Active;
-            return theme != null ? theme.Frame("Ornament.Divider") : null;
+            return Icon("Ornament.Divider");
         }
 
-        public static Sprite Cursor()
+        /// <summary>
+        /// An A4 kit sprite by name: Ring.Progress132 / Ring.Progress64 (Radial360), Slider.Rail / Handle /
+        /// HandleFocus, Shadow.Soft, Bar.Segments, Frame.TooltipPointer, Focus.Brackets, Key.Cap / Key.Wide. Null when
+        /// absent - the caller keeps its procedural shape. All are 2× authored (<see cref="FramePixelsPerUnitMultiplier"/>).
+        /// </summary>
+        public static Sprite Kit(string key)
         {
             UiTheme theme = UiTheme.Active;
-            return theme != null ? theme.Frame("Cursor.Arrow") : null;
+            return theme != null ? theme.Frame(key) : null;
+        }
+
+        /// <summary>V1 key cap, 9-sliced around live TMP text (Key.Wide for a word, Key.Cap for a letter); null when absent.</summary>
+        public static Sprite KeyCap(bool wide)
+        {
+            return Kit(wide ? "Key.Wide" : "Key.Cap");
+        }
+
+        // ------------------------------------------------------------- SDF glyphs
+
+        /// <summary>True when the sprite is a G1 distance-field glyph.</summary>
+        public static bool IsGlyph(Sprite sprite)
+        {
+            UiTheme theme = UiTheme.Active;
+            return theme != null && theme.IsGlyph(sprite);
+        }
+
+        /// <summary>
+        /// Draws the image through DD/UI/Fx SdfGlyph (fill only; <paramref name="outlineGlowErosion"/> = the shader's
+        /// outline width, glow, erosion). An image already carrying another Fx mode keeps it.
+        /// </summary>
+        public static void ApplyGlyph(Image image, Vector3 outlineGlowErosion = default)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            UiFx fx = image.GetComponent<UiFx>();
+            if (fx == null)
+            {
+                fx = image.gameObject.AddComponent<UiFx>();
+                fx.Configure(UiFxMode.SdfGlyph, 1f, outlineGlowErosion);
+                return;
+            }
+
+            if (fx.Mode == UiFxMode.SdfGlyph || fx.Mode == UiFxMode.None)
+            {
+                fx.Configure(UiFxMode.SdfGlyph, 1f, outlineGlowErosion);
+                fx.enabled = true;
+            }
+        }
+
+        /// <summary>A sprite swap that keeps the draw path right: SdfGlyph on for a G1 glyph, off for anything else.</summary>
+        public static void SetGlyph(Image image, Sprite sprite)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            image.sprite = sprite;
+            if (IsGlyph(sprite))
+            {
+                ApplyGlyph(image);
+                return;
+            }
+
+            UiFx fx = image.GetComponent<UiFx>();
+            if (fx != null && fx.Mode == UiFxMode.SdfGlyph)
+            {
+                fx.enabled = false;
+            }
         }
 
         // ----------------------------------------------------------------- plates
@@ -205,10 +275,7 @@ namespace DD.Prototype.UI
             return overlay;
         }
 
-        /// <summary>
-        /// Frames are exported at 256 px for a ~180 px on-screen panel edge; the border
-        /// is scaled down so a corner ornament reads at roughly 24-28 px.
-        /// </summary>
-        public const float FramePixelsPerUnitMultiplier = 1.8f;
+        /// <summary>A4 frames v3 are authored at 2× (a Card corner = 34 px in the atlas, 17 on screen).</summary>
+        public const float FramePixelsPerUnitMultiplier = 2f;
     }
 }

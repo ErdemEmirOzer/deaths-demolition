@@ -1,0 +1,305 @@
+{
+ "schema": "AP012-ui-manifest-v1",
+ "package": "WP-068 \u00a77.1 A4 Frames v3 (AP-012 v004, 2\u00d7 authored, pixelsPerUnitMultiplier 2) + V1 key caps",
+ "source": {
+  "frames": "asset-production/AP-012/v004/exports/atlas/AP012_v004_frames_1024.png",
+  "sha256": "6bc49d3fa7881651d6ecf7a9cf5a5cf25efae1b0be948ff3d16837eadf47f74b"
+ },
+ "pixelsPerUnitMultiplier": 2,
+ "atlases": [
+  {
+   "file": "DD_A4_frames_v3_1024.png",
+   "width": 1024,
+   "height": 1024,
+   "sprites": [
+    {
+     "name": "Ring.Progress132",
+     "x": 0,
+     "y": 760,
+     "w": 264,
+     "h": 264,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Frame.Modal",
+     "x": 268,
+     "y": 880,
+     "w": 144,
+     "h": 144,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      40,
+      40,
+      40,
+      40
+     ]
+    },
+    {
+     "name": "Frame.Card",
+     "x": 416,
+     "y": 896,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      34,
+      34,
+      34,
+      34
+     ]
+    },
+    {
+     "name": "Ring.Progress64",
+     "x": 548,
+     "y": 896,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Frame.HudPanel",
+     "x": 680,
+     "y": 928,
+     "w": 96,
+     "h": 96,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      28,
+      28,
+      28,
+      28
+     ]
+    },
+    {
+     "name": "Focus.Brackets",
+     "x": 780,
+     "y": 928,
+     "w": 96,
+     "h": 96,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      36,
+      36,
+      36,
+      36
+     ]
+    },
+    {
+     "name": "Frame.Tooltip",
+     "x": 880,
+     "y": 960,
+     "w": 64,
+     "h": 64,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      16,
+      16,
+      16,
+      16
+     ]
+    },
+    {
+     "name": "Slider.HandleFocus",
+     "x": 948,
+     "y": 960,
+     "w": 64,
+     "h": 64,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Shadow.Soft",
+     "x": 0,
+     "y": 692,
+     "w": 64,
+     "h": 64,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      24,
+      24,
+      24,
+      24
+     ]
+    },
+    {
+     "name": "Frame.Ribbon",
+     "x": 68,
+     "y": 692,
+     "w": 256,
+     "h": 64,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      48,
+      0,
+      48,
+      0
+     ]
+    },
+    {
+     "name": "Frame.Chip",
+     "x": 328,
+     "y": 700,
+     "w": 112,
+     "h": 56,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      28,
+      28,
+      28,
+      28
+     ]
+    },
+    {
+     "name": "Frame.ChipFill",
+     "x": 444,
+     "y": 700,
+     "w": 112,
+     "h": 56,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      28,
+      28,
+      28,
+      28
+     ]
+    },
+    {
+     "name": "Slider.Handle",
+     "x": 560,
+     "y": 700,
+     "w": 56,
+     "h": 56,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Frame.ListRow",
+     "x": 620,
+     "y": 708,
+     "w": 64,
+     "h": 48,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      8,
+      0,
+      8,
+      0
+     ]
+    },
+    {
+     "name": "Bar.Segments",
+     "x": 0,
+     "y": 656,
+     "w": 1024,
+     "h": 32,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Frame.TooltipPointer",
+     "x": 0,
+     "y": 636,
+     "w": 32,
+     "h": 16,
+     "pivot": [
+      0.5,
+      0.5
+     ]
+    },
+    {
+     "name": "Slider.Rail",
+     "x": 36,
+     "y": 640,
+     "w": 64,
+     "h": 12,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      6,
+      0,
+      6,
+      0
+     ]
+    },
+    {
+     "name": "Key.Wide",
+     "x": 0,
+     "y": 8,
+     "w": 256,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      34,
+      34,
+      34,
+      34
+     ]
+    },
+    {
+     "name": "Key.Cap",
+     "x": 264,
+     "y": 8,
+     "w": 128,
+     "h": 128,
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "border": [
+      34,
+      34,
+      34,
+      34
+     ]
+    }
+   ]
+  }
+ ]
+}
