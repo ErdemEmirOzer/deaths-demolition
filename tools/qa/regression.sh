@@ -88,7 +88,7 @@ fi
 if has_step perf; then
 for i in $(seq 1 $PERF_RUNS); do clean_window || log "perf-$i: temiz pencere yok, koşu yine de alınıyor (raporda işaretlenir)"   # slot alınmadan beklenir: kuyruktaki oturumları tutmaz
   slot_acquire || exit 2
-  run_player "perf-$i" -ddPilotPerfProbe "$OUT/perf-$i" -ddPilotScene Run -ddPilotWindowSeconds "$WINDOW"; slot_release; done
+  run_player "perf-$i" -ddPilotPerfProbe "$OUT/perf-$i" -ddPilotScene Run -ddPilotWindowSeconds "$WINDOW" -ddPilotHudAB; slot_release; done
 fi
 
 # 5 · okunabilirlik: gerçek spawner karışımı, round 1/4/8, 3 skin

@@ -20,6 +20,7 @@ using DD.Prototype.UI;
 using DD.Prototype.Weapons;
 using DD.Prototype.World;
 using Unity.Profiling;
+using Unity.Profiling.LowLevel.Unsafe;
 using UnityEngine.Rendering.Universal;
 using UnityEngine;
 using UnityEngine.AI;
@@ -97,6 +98,12 @@ namespace DD.Prototype.Diagnostics
         /// on top of the 40-body crowd. Counts and the pool state go into the 04-window stage.
         /// </summary>
         private const string VfxStressFlag = "-ddPilotVfxStress";
+        /// <summary>
+        /// WP-068 · "-ddPilotHudAB" (optional): after 04d the probe switches the run HUD off and on in
+        /// alternating blocks under the same 40-body load and writes 04h-hud: the frame, GPU and UI-marker
+        /// deltas the HUD costs (the HUD budget, tools/qa/aggregate.py perf.hudCostMs).
+        /// </summary>
+        private const string HudAbFlag = "-ddPilotHudAB";
         /// <summary>WP-017 · <c>-ddArmor all</c>: every forced zombie carries all three AP-008 pieces at full durability (worst-case crowd; the spawn roll is untouched).</summary>
         private const string ArmorFlag = "-ddArmor";
 
@@ -192,6 +199,7 @@ namespace DD.Prototype.Diagnostics
             driver.ProfilerLogPath = Arg(ProfilerLogFlag);
             driver.AtmosphereOff = string.Equals(Arg(AtmosphereFlag), "off", StringComparison.OrdinalIgnoreCase);
             driver.VfxStress = Array.IndexOf(Environment.GetCommandLineArgs(), VfxStressFlag) >= 0;
+            driver.HudAB = Array.IndexOf(Environment.GetCommandLineArgs(), HudAbFlag) >= 0;
             driver.ArmorAll = string.Equals(Arg(ArmorFlag), "all", StringComparison.OrdinalIgnoreCase);
             Debug.Log("[PilotPerfProbe] armed scene=" + scene + " window=" + window.ToString("F0", CultureInfo.InvariantCulture) +
                       "s warmup=" + warmup.ToString("F0", CultureInfo.InvariantCulture) + "s out=" + outDir);
@@ -283,6 +291,41 @@ namespace DD.Prototype.Diagnostics
             public float gpuSubWindowSeconds;
             public float gpuSubWindowFrameMeanMs;
             public bool vfxLayerReady;
+
+            // ---- WP-068 04h HUD A/B (dev build, Profiler off): the run HUD on vs off in alternating blocks.
+            // CPU ms are per-frame sums of the named main-thread markers; GPU ms is FrameTimingManager.gpuFrameTime.
+            public int hudBlocks;
+            public int hudFramesOn;
+            public int hudFramesOff;
+            public float hudFrameOnMs = -1f;
+            public float hudFrameOffMs = -1f;
+            public float hudFrameDeltaMs;
+            public float hudCpuMainOnMs = -1f;
+            public float hudCpuMainOffMs = -1f;
+            public float hudGpuOnMs = -1f;
+            public float hudGpuOffMs = -1f;
+            public float hudGpuDeltaMs;
+            public float hudScriptsOnMs = -1f;       // Update + LateUpdate script runs (every behaviour)
+            public float hudScriptsOffMs = -1f;
+            public float hudCanvasUpdateOnMs = -1f;  // PlayerUpdateCanvases: WillRenderCanvases, layout + graphic rebuilds, TMP
+            public float hudCanvasUpdateOffMs = -1f;
+            public float hudEmitGeometryOnMs = -1f;  // PlayerEmitCanvasGeometry: batch build, geometry upload
+            public float hudEmitGeometryOffMs = -1f;
+            public float hudRenderOverlaysOnMs = -1f; // UGUI.Rendering.RenderOverlays: overlay canvas draw submission
+            public float hudRenderOverlaysOffMs = -1f;
+            public float hudSetPassOn;
+            public float hudSetPassOff;
+            public float hudBatchesOn;
+            public float hudBatchesOff;
+            public float hudDrawCallsOn;
+            public float hudDrawCallsOff;
+            public float hudCpuMs;                   // Δscripts + UI markers with the HUD on (every canvas: conservative)
+            public float hudCostMs;                  // hudCpuMs + max(0, ΔGPU): the budgeted number
+            public float hudBudgetMs;
+            public int hudCanvases;
+            public int hudGraphics;
+            public int hudTexts;
+            public string hudMarkersFound;
 
             // ---- WP-013 atmosphere (every stage)
             public bool atmosphereOn;
@@ -973,6 +1016,14 @@ namespace DD.Prototype.Diagnostics
                            " bloodPool=" + s4d.bloodDecalSpawned + "/" + s4d.bloodDecalTotal;
                 Write(s4d);
 
+                // ---------------------------------------------------------------- 04h hud A/B (WP-068)
+                if (HudAB)
+                {
+                    Stage s4h = Capture("04h-hud");
+                    yield return MeasureHud(s4h, rig);
+                    Write(s4h);
+                }
+
                 // ---------------------------------------------------------------- 05 gc-positive-control
                 // A measurement that cannot see a known 1 MB allocation is blind, and every
                 // heap number above would be meaningless; the bait is kept referenced (its
@@ -1315,6 +1366,199 @@ namespace DD.Prototype.Diagnostics
                     s.gpuCameraAvgMs = (float)(cSum / n);
                 }
             }
+
+            /// <summary>WP-068 HUD A/B switch (see HudAbFlag).</summary>
+            public bool HudAB;
+
+            /// <summary>The HUD budget (C-00 24.09, DEC-088 margin 0.10-0.18 ms): UI CPU + GPU per frame at 1080p under 40 bodies.</summary>
+            public const float HudBudgetMs = 0.35f;
+            private const int HudBlockCount = 6;          // on, off, on, off, on, off: crowd drift cancels across the pairs
+            private const float HudBlockSeconds = 5f;
+            private const float HudSettleSeconds = 0.75f; // the rebuild after a switch and the FrameTimingManager lag stay out
+            private static readonly string[] HudMarkerNames =
+            {
+                "Update.ScriptRunBehaviourUpdate",
+                "PreLateUpdate.ScriptRunBehaviourLateUpdate",
+                "PostLateUpdate.PlayerUpdateCanvases",
+                "PostLateUpdate.PlayerEmitCanvasGeometry",
+                "UGUI.Rendering.RenderOverlays",
+            };
+
+            private readonly FrameTiming[] _hudTimings = new FrameTiming[1];
+
+            /// <summary>
+            /// WP-068 · 04h: the run HUD's frame cost. The HUD root is switched off and on in alternating
+            /// blocks under the same load (Profiler off, so the numbers are the Player's own). Per block:
+            /// frame ms, FrameTimingManager main-thread and GPU ms, the main-thread UI markers (sum per frame,
+            /// recorded through ProfilerRecorder handles found by name) and the SetPass / batch / draw counters.
+            /// HUD cost = Δscripts + UI markers with the HUD on (all canvases, so it is an upper bound) + ΔGPU.
+            /// </summary>
+            private IEnumerator MeasureHud(Stage s, PlayerRig rig)
+            {
+                s.hudBudgetMs = HudBudgetMs;
+                RunHudScreen hud = FindObjectOfType<RunHudScreen>();
+                if (hud == null)
+                {
+                    s.pass = false;
+                    s.note = "no RunHudScreen in the run";
+                    yield break;
+                }
+
+                GameObject root = hud.gameObject;
+                s.hudCanvases = root.GetComponentsInChildren<Canvas>(false).Length;
+                s.hudGraphics = root.GetComponentsInChildren<UnityEngine.UI.Graphic>(false).Length;
+                s.hudTexts = root.GetComponentsInChildren<TMPro.TMP_Text>(false).Length;
+
+                var available = new List<ProfilerRecorderHandle>();
+                ProfilerRecorderHandle.GetAvailable(available);
+                var markers = new ProfilerRecorder[HudMarkerNames.Length];
+                var found = new StringBuilder();
+                for (int m = 0; m < HudMarkerNames.Length; m++)
+                {
+                    for (int h = 0; h < available.Count; h++)
+                    {
+                        if (ProfilerRecorderHandle.GetDescription(available[h]).Name == HudMarkerNames[m])
+                        {
+                            markers[m] = new ProfilerRecorder(available[h], 1, ProfilerRecorderOptions.Default);
+                            markers[m].Start();
+                            break;
+                        }
+                    }
+
+                    found.Append(markers[m].Valid ? "+" : "-").Append(HudMarkerNames[m]).Append(' ');
+                }
+
+                s.hudMarkersFound = found.ToString().Trim();
+                ProfilerRecorder setPass = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count");
+                ProfilerRecorder batches = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Batches Count");
+                ProfilerRecorder draws = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
+
+                // [0] = HUD on, [1] = HUD off
+                var frames = new int[2];
+                var frameSum = new double[2];
+                var gpuN = new int[2];
+                var gpuSum = new double[2];
+                var cpuN = new int[2];
+                var cpuSum = new double[2];
+                var markerSum = new double[2, HudMarkerNames.Length];
+                var counterSum = new double[2, 3];
+
+                for (int block = 0; block < HudBlockCount; block++)
+                {
+                    int k = block % 2;
+                    root.SetActive(k == 0);
+                    float t0 = Time.realtimeSinceStartup;
+                    while (Time.realtimeSinceStartup - t0 < HudSettleSeconds + HudBlockSeconds)
+                    {
+                        if (VfxStress) StepVfxStress(Time.realtimeSinceStartup, rig);
+                        yield return null;
+                        if (Time.realtimeSinceStartup - t0 < HudSettleSeconds)
+                        {
+                            continue;
+                        }
+
+                        frames[k]++;
+                        frameSum[k] += Time.unscaledDeltaTime * 1000.0;
+                        for (int m = 0; m < markers.Length; m++)
+                        {
+                            if (markers[m].Valid)
+                            {
+                                markerSum[k, m] += markers[m].LastValue / 1e6;
+                            }
+                        }
+
+                        counterSum[k, 0] += setPass.Valid ? setPass.LastValue : 0;
+                        counterSum[k, 1] += batches.Valid ? batches.LastValue : 0;
+                        counterSum[k, 2] += draws.Valid ? draws.LastValue : 0;
+
+                        FrameTimingManager.CaptureFrameTimings();
+                        if (FrameTimingManager.GetLatestTimings(1, _hudTimings) > 0)
+                        {
+                            if (_hudTimings[0].gpuFrameTime > 0d)
+                            {
+                                gpuSum[k] += _hudTimings[0].gpuFrameTime;
+                                gpuN[k]++;
+                            }
+
+                            if (_hudTimings[0].cpuMainThreadFrameTime > 0d)
+                            {
+                                cpuSum[k] += _hudTimings[0].cpuMainThreadFrameTime;
+                                cpuN[k]++;
+                            }
+                        }
+                    }
+                }
+
+                root.SetActive(true);
+                var valid = new bool[markers.Length];
+                for (int m = 0; m < markers.Length; m++)
+                {
+                    valid[m] = markers[m].Valid;
+                    if (valid[m]) markers[m].Dispose();
+                }
+
+                if (setPass.Valid) setPass.Dispose();
+                if (batches.Valid) batches.Dispose();
+                if (draws.Valid) draws.Dispose();
+
+                s.hudBlocks = HudBlockCount;
+                s.hudFramesOn = frames[0];
+                s.hudFramesOff = frames[1];
+                if (frames[0] == 0 || frames[1] == 0)
+                {
+                    s.pass = false;
+                    s.note = "HUD A/B: no frames";
+                    yield break;
+                }
+
+                s.hudFrameOnMs = (float)(frameSum[0] / frames[0]);
+                s.hudFrameOffMs = (float)(frameSum[1] / frames[1]);
+                s.hudFrameDeltaMs = s.hudFrameOnMs - s.hudFrameOffMs;
+                if (cpuN[0] > 0 && cpuN[1] > 0)
+                {
+                    s.hudCpuMainOnMs = (float)(cpuSum[0] / cpuN[0]);
+                    s.hudCpuMainOffMs = (float)(cpuSum[1] / cpuN[1]);
+                }
+
+                if (gpuN[0] > 0 && gpuN[1] > 0)
+                {
+                    s.hudGpuOnMs = (float)(gpuSum[0] / gpuN[0]);
+                    s.hudGpuOffMs = (float)(gpuSum[1] / gpuN[1]);
+                    s.hudGpuDeltaMs = s.hudGpuOnMs - s.hudGpuOffMs;
+                }
+
+                float MarkerAvg(int k2, int m) => valid[m] ? (float)(markerSum[k2, m] / frames[k2]) : -1f;
+                s.hudScriptsOnMs = MarkerAvg(0, 0) + MarkerAvg(0, 1);
+                s.hudScriptsOffMs = MarkerAvg(1, 0) + MarkerAvg(1, 1);
+                s.hudCanvasUpdateOnMs = MarkerAvg(0, 2);
+                s.hudCanvasUpdateOffMs = MarkerAvg(1, 2);
+                s.hudEmitGeometryOnMs = MarkerAvg(0, 3);
+                s.hudEmitGeometryOffMs = MarkerAvg(1, 3);
+                s.hudRenderOverlaysOnMs = MarkerAvg(0, 4);
+                s.hudRenderOverlaysOffMs = MarkerAvg(1, 4);
+                s.hudSetPassOn = (float)(counterSum[0, 0] / frames[0]);
+                s.hudSetPassOff = (float)(counterSum[1, 0] / frames[1]);
+                s.hudBatchesOn = (float)(counterSum[0, 1] / frames[0]);
+                s.hudBatchesOff = (float)(counterSum[1, 1] / frames[1]);
+                s.hudDrawCallsOn = (float)(counterSum[0, 2] / frames[0]);
+                s.hudDrawCallsOff = (float)(counterSum[1, 2] / frames[1]);
+
+                bool markersOk = valid[0] && valid[1] && valid[2] && valid[3];
+                s.hudCpuMs = Mathf.Max(0f, s.hudScriptsOnMs - s.hudScriptsOffMs) +
+                             Mathf.Max(0f, s.hudCanvasUpdateOnMs) + Mathf.Max(0f, s.hudEmitGeometryOnMs) + Mathf.Max(0f, s.hudRenderOverlaysOnMs);
+                s.hudCostMs = s.hudCpuMs + Mathf.Max(0f, s.hudGpuDeltaMs);
+                // PASS = the measurement saw what it had to (markers and GPU samples); the budget verdict is the aggregate's.
+                s.pass = markersOk && gpuN[0] > 0;
+                s.note = "HUD cost " + F3(s.hudCostMs) + " ms (budget " + F3(HudBudgetMs) + ") = cpu " + F3(s.hudCpuMs) +
+                         " [scripts Δ" + F3(s.hudScriptsOnMs - s.hudScriptsOffMs) + " canvas " + F3(s.hudCanvasUpdateOnMs) + "/" + F3(s.hudCanvasUpdateOffMs) +
+                         " emit " + F3(s.hudEmitGeometryOnMs) + "/" + F3(s.hudEmitGeometryOffMs) + " overlays " + F3(s.hudRenderOverlaysOnMs) + "/" + F3(s.hudRenderOverlaysOffMs) +
+                         "] + gpu Δ" + F3(s.hudGpuDeltaMs) + " (" + F3(s.hudGpuOnMs) + "/" + F3(s.hudGpuOffMs) + ") | frame " + F3(s.hudFrameOnMs) + "/" + F3(s.hudFrameOffMs) +
+                         " Δ" + F3(s.hudFrameDeltaMs) + " | setpass " + s.hudSetPassOn.ToString("F1", CultureInfo.InvariantCulture) + "/" + s.hudSetPassOff.ToString("F1", CultureInfo.InvariantCulture) +
+                         " batches " + s.hudBatchesOn.ToString("F1", CultureInfo.InvariantCulture) + "/" + s.hudBatchesOff.ToString("F1", CultureInfo.InvariantCulture) +
+                         " | canvases " + s.hudCanvases + " graphics " + s.hudGraphics + " texts " + s.hudTexts + " | " + s.hudMarkersFound;
+            }
+
+            private static string F3(float v) => v.ToString("F3", CultureInfo.InvariantCulture);
 
             /// <summary>WP-017 · Fit helmet + body + leg on every live zombie that is not fully equipped (see ArmorFlag). Returns pieces fitted.</summary>
             public bool ArmorAll;
