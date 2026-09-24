@@ -176,5 +176,53 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(RegionNavRouter.RerouteCount + RegionNavRouter.QueueEvents, 0, "boğaz kuralı çalışır: kıyı alternatifi ya da kuyruk");
             EnemyFactory.ClearAll();
         }
+
+        // ------------------------------------------------------------------ WP-061M · bamboo grove corner arrival
+
+        /// <summary>
+        /// WP-061M (S-05 WP-038R finding): zombies coming to the west bamboo pocket from the south, south-east and
+        /// north-east "stopped" at (−30.4, −23.9) with a complete path — measured: they walked 2.7 m/s back and forth
+        /// between the south edge and the north link, because the WP-054 flank goal (recomputed from the body's position)
+        /// swung from one pocket entrance to the other. With the flank limited to an open NavMesh line each of the three
+        /// reaches the player in the pocket, and the WP-061L watchdog never acts.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator BambuKorusu_UcYondenGelenZombiler_CebeUlasir_Bekciyegerekmez()
+        {
+            yield return RunSahnesiniHazirla();
+            ZombieEnemy.ResetOutOfWorldStatics();
+                        var pocket = new Vector3(-39.3f, 0.05f, -16.5f);
+            var rows = new System.Text.StringBuilder("[DD-TEST] wp061m.pocket ");
+            var failed = new List<string>();
+            foreach ((string name, Vector3 from) in new[] { ("S", new Vector3(-31f, 0f, -34f)), ("SE", new Vector3(-26f, 0f, -30f)), ("NE", new Vector3(-24f, 0f, -12f)) })
+            {
+                _rig.Teleport(pocket, Quaternion.identity);
+                Vector3 p = UnityEngine.AI.NavMesh.SamplePosition(from, out UnityEngine.AI.NavMeshHit hit, 2f, UnityEngine.AI.NavMesh.AllAreas) ? hit.position : Yerde(from);
+                ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 5, p, Quaternion.identity);
+                Assert.IsNotNull(z, name + " doğmadı");
+                float t0 = Time.time; bool reached = false;
+                while (!reached && Time.time - t0 < 30f)
+                {
+                    _rig.Teleport(pocket, Quaternion.identity);
+                    yield return null;
+                    if (!z.IsAlive) break;
+                    Vector3 d = z.transform.position - pocket; d.y = 0f;
+                    reached = d.magnitude < 2.5f;
+                }
+                rows.Append(name + (reached ? " " + (Time.time - t0).ToString("F1") + "s" : " STUCK@" + z.transform.position.ToString("F1")) + " | ");
+                if (!reached)
+                {
+                    failed.Add(name + " @" + z.transform.position.ToString("F1"));
+                    rows.Append("(flank " + z.FlankActive + ") ");
+                }
+                EnemyFactory.ClearAll();
+                yield return null;
+            }
+            rows.Append("stuckRecoveries=" + ZombieEnemy.StuckRecoveries + " stuckRemovals=" + ZombieEnemy.StuckRemovals);
+            Debug.Log(rows.ToString());
+            Assert.IsEmpty(failed, "cebe ulaşamayan zombi: " + string.Join(", ", failed));
+            Assert.AreEqual(0, ZombieEnemy.StuckRemovals, "bekçi son çare kalmalı (kaldırma yok)");
+        }
     }
 }

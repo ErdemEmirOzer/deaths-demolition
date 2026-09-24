@@ -59,6 +59,7 @@ namespace DD.Prototype.Enemies
             _pathFollower.SetRouteSeed(seed);
             _pathFollower.HoldsChokepoints = _versionProfile != null && _versionProfile.HoldsChokepoints;   // WP-040: Elite B corridor closing
             RollCrowdFeel(ref _random);   // WP-054: flank side / angle for this life
+            _flankOpen = true; _nextFlankOpenCheck = 0f;   // WP-061M
             RegionNavRouter.EnsureAreaCosts();
         }
 
@@ -95,7 +96,30 @@ namespace DD.Prototype.Enemies
         /// <summary>WP-054: the navigation goal for this life — the flank goal while far, the target itself inside the straight radius.</summary>
         private Vector3 CrowdFeelGoal(Vector3 target)
         {
-            return _flankSign != 0 ? CrowdFeelSettings.Active.FlankGoal(transform.position, target, _flankSign, _flankAngle) : target;
+            return _flankSign != 0 && FlankInOpen(target) ? CrowdFeelSettings.Active.FlankGoal(transform.position, target, _flankSign, _flankAngle) : target;
+        }
+
+        // WP-061M: the flank goal is an OPEN-GROUND approach. It is recomputed from the body's position, so where the
+        // NavMesh between the body and the player is partitioned (the west bamboo pocket: a north link and a south edge)
+        // it swung from one entrance to the other as the body moved and the body walked the two routes back and forth
+        // for ever (S-05 WP-038R: "stopped" at (−30.4, −23.9) with a complete path). The flank only applies while the
+        // straight NavMesh line to the player is open; checked every FlankOpenCheckSeconds (NavMesh.Raycast, 0 alloc).
+        private const float FlankOpenCheckSeconds = 0.5f;
+        private bool _flankOpen = true;
+        private float _nextFlankOpenCheck;
+
+        /// <summary>WP-061M readout: whether this body currently uses its flank goal (open line to the player).</summary>
+        public bool FlankActive => _flankSign != 0 && _flankOpen;
+
+        private bool FlankInOpen(Vector3 target)
+        {
+            float now = Time.time;
+            if (now >= _nextFlankOpenCheck)
+            {
+                _nextFlankOpenCheck = now + FlankOpenCheckSeconds;
+                _flankOpen = !UnityEngine.AI.NavMesh.Raycast(transform.position, target, out UnityEngine.AI.NavMeshHit _, UnityEngine.AI.NavMesh.AllAreas);
+            }
+            return _flankOpen;
         }
 
         /// <summary>
