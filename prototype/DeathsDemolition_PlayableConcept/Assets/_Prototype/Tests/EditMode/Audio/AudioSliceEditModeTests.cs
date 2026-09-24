@@ -177,14 +177,18 @@ namespace DD.Prototype.Tests.EditMode.Audio
 
             Assert.IsEmpty(eksik, "Haritada satırı olmayan klip olayı: " + string.Join(", ", eksik));
 
+            // The WP-048B table owns A/B/C (unique rows); WP-069 B2's other weapons borrow their class sibling's row
+            // (Arsenal.LegacyPoseIndex) as the fallback under WP-072 B2's per-weapon WeaponFoleyV3 set.
             var ids = new HashSet<AudioSoundId>();
+            var olaylar = new[] { DD.Prototype.Characters.CharacterAnimationEvent.Eject, DD.Prototype.Characters.CharacterAnimationEvent.Chamber, DD.Prototype.Characters.CharacterAnimationEvent.MagOut, DD.Prototype.Characters.CharacterAnimationEvent.MagIn, DD.Prototype.Characters.CharacterAnimationEvent.SwitchReady, DD.Prototype.Characters.CharacterAnimationEvent.Lowered, DD.Prototype.Characters.CharacterAnimationEvent.Raised };
             foreach (DD.Prototype.Core.Config.ClassicWeaponId w in Enum.GetValues(typeof(DD.Prototype.Core.Config.ClassicWeaponId)))
             {
-                foreach (var e in new[] { DD.Prototype.Characters.CharacterAnimationEvent.Eject, DD.Prototype.Characters.CharacterAnimationEvent.Chamber, DD.Prototype.Characters.CharacterAnimationEvent.MagOut, DD.Prototype.Characters.CharacterAnimationEvent.MagIn, DD.Prototype.Characters.CharacterAnimationEvent.SwitchReady, DD.Prototype.Characters.CharacterAnimationEvent.Lowered, DD.Prototype.Characters.CharacterAnimationEvent.Raised })
+                foreach (var e in olaylar)
                 {
                     AudioSoundId id = AudioEventMap.WeaponFoley(w, e);
                     Assert.IsTrue(id.ToString().StartsWith("Weapon"), w + "/" + e + " → " + id);
-                    Assert.IsTrue(ids.Add(id), "Silah foley kimliği paylaşılıyor: " + id);
+                    if ((int)w <= 2) Assert.IsTrue(ids.Add(id), "A/B/C silah foley kimliği paylaşılıyor: " + id);
+                    else Assert.IsTrue(ids.Contains(id), w + " sınıf kardeşinin A/B/C satırını kullanmalı: " + id);
                 }
             }
 
