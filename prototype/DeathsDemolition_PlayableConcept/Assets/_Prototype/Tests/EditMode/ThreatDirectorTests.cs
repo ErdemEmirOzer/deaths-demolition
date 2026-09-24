@@ -4,6 +4,7 @@ using DD.Prototype.Core.DebugTools;
 using DD.Prototype.Enemies;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;   // WP-051B: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -169,12 +170,13 @@ namespace DD.Prototype.Tests.EditMode
             int n = Ring(40, 5f, EnemyTier.Elite, true);
             ThreatContext ctx = Ctx(health: 0.5f, round: 0.5f);
             for (int i = 0; i < 200; i++) Eval(in ctx, n, ref st, 0.016f);   // warm-up
-            HeapWindow.Prepare();
+            // WP-051B: the process-wide heap counters (HeapWindow: GC.GetTotalMemory / mono used size) also see
+            // other Editor threads' allocations, so this test failed on a busy machine (S-03). The test framework's
+            // GC.Alloc recorder is filtered to the calling thread; a positive control proves it is not blind.
             byte[] yem = null;
-            HeapWindow.Result control = HeapWindow.Measure(() => { yem = new byte[64 * 1024]; }, 0);
-            Assert.Greater(control.Delta, 0);
-            HeapWindow.Result window = HeapWindow.Measure(() => { for (int i = 0; i < 2000; i++) Eval(in ctx, n, ref st, 0.016f); }, 1);
-            Assert.AreEqual(0, window.Gen0); Assert.LessOrEqual(window.Delta, 4 * 1024, "model ayırma yapmaz (" + window.Delta + " B, yem " + yem.Length + ")");
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+            Assert.That(() => { for (int i = 0; i < 2000; i++) Eval(in ctx, n, ref st, 0.016f); }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "model ayırma yapmaz (bu iş parçacığında GC.Alloc örneği görüldü; yem " + (yem != null ? yem.Length : 0) + " B)");
             var sw = Stopwatch.StartNew();
             for (int i = 0; i < 5000; i++) Eval(in ctx, n, ref st, 0.016f);
             sw.Stop();
