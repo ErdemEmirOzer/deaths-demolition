@@ -9,6 +9,7 @@ using DD.Prototype.Economy;
 using DD.Prototype.Rounds;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -153,27 +154,25 @@ namespace DD.Prototype.Tests.EditMode
             EnemyDamageInfo v = Vurus(5);
             EnemyDeathInfo o = Olum(6, EnemyTier.Special, helmet: true);
             var hit = new EnemyAttackLandedInfo(null, EnemyTier.Standard, 3f, Vector3.zero, Vector3.forward, true);
-            // Isınma + pozitif kontrol (WP-005 kalıbı: GC.GetTotalMemory).
+            // Isınma + pozitif kontrol. WP-051C: the process-wide used heap (GC.GetTotalMemory) also sees other Editor
+            // threads' allocations; the test framework's GC.Alloc recorder is filtered to the calling thread only.
             for (int i = 0; i < 100; i++) { RunTelemetry.OnEnemyDamaged(v); RunTelemetry.OnEnemyDied(o); RunTelemetry.OnGoldChanged(i); RunTelemetry.OnPlayerAttacked(hit); }
-            long once = GC.GetTotalMemory(false);
-            var yem = new object[2000];
-            for (int i = 0; i < yem.Length; i++) yem[i] = new byte[64];
-            long pozitif = GC.GetTotalMemory(false) - once;
-            Assert.Greater(pozitif, 0, "sayaç geçersiz");
+            object[] yem = null;
+            Assert.That(() => { yem = new object[2000]; for (int i = 0; i < yem.Length; i++) yem[i] = new byte[64]; },
+                UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "sayaç geçersiz (pozitif kontrol: kayıtçı ayırmayı görmeli)");
             GC.KeepAlive(yem);
 
-            long sessizOnce = GC.GetTotalMemory(false);
-            for (int i = 0; i < 20000; i++)
+            Assert.That(() =>
             {
-                RunTelemetry.OnEnemyDamaged(v);       // aynı life: sözlüğe yeniden girmez
-                RunTelemetry.OnEnemyDied(o);          // life 6 kayıtsız → yalnız sayaç
-                RunTelemetry.OnGoldChanged(i);
-                RunTelemetry.OnPlayerAttacked(hit);
-            }
-
-            long fark = GC.GetTotalMemory(false) - sessizOnce;
-            Debug.Log("[DD-TEST] wp045.telemetry hotpath allocB=" + fark + " positive=" + pozitif);
-            Assert.LessOrEqual(fark, 16 * 1024, "sıcak yol handler'ları ayırmamalı (fark " + fark + " B)");
+                for (int i = 0; i < 20000; i++)
+                {
+                    RunTelemetry.OnEnemyDamaged(v);       // aynı life: sözlüğe yeniden girmez
+                    RunTelemetry.OnEnemyDied(o);          // life 6 kayıtsız → yalnız sayaç
+                    RunTelemetry.OnGoldChanged(i);
+                    RunTelemetry.OnPlayerAttacked(hit);
+                }
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "sıcak yol handler'ları ayırmamalı (bu iş parçacığında GC.Alloc örneği görüldü)");
+            Debug.Log("[DD-TEST] wp045.telemetry hotpath threadAlloc=none positive=" + yem.Length);
             RunTelemetry.EndRun(Ozet(1, 0, 0, 0, 0, 0));
         }
 

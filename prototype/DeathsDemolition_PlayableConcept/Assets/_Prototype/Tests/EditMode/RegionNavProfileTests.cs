@@ -4,6 +4,7 @@ using DD.Prototype.Navigation;
 using DD.Prototype.Spawn;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -200,11 +201,12 @@ namespace DD.Prototype.Tests.EditMode
             var solver = new CrowdSolver();
             for (int i = 0; i < 40; i++) solver.Register(Uye(new Vector3(i * 0.5f, 0f, -20f)));
             NavRegionVolume bridge = _profile.Find(new Vector3(4f, 0f, -28f));
-            HeapWindow.Prepare();
+            // WP-051C: the process-wide heap counters (HeapWindow: GC.GetTotalMemory / mono used size) also see other Editor
+            // threads' allocations; the test framework's GC.Alloc recorder is filtered to the calling thread only, and a
+            // positive control proves it is not blind.
             byte[] yem = null;
-            HeapWindow.Result control = HeapWindow.Measure(() => { yem = new byte[64 * 1024]; }, 0);
-            Assert.Greater(control.Delta, 0, "pozitif kontrol");
-            HeapWindow.Result window = HeapWindow.Measure(() =>
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+            Assert.That(() =>
             {
                 for (int i = 0; i < 2000; i++)
                 {
@@ -213,9 +215,8 @@ namespace DD.Prototype.Tests.EditMode
                     solver.CountMembersInBox(bridge.center, bridge.size);
                     RegionNavRouter.ShouldQueue(_profile, corners[0], corners[1], 0f, out _);
                 }
-            }, 1);
-            Assert.AreEqual(0, window.Gen0, "pencerede gen0 (yeniden ölçüm sonrası)");
-            Assert.LessOrEqual(window.Delta, 4 * 1024, "sıcak yollar ayırma yapmaz (delta " + window.Delta + " B; yem " + yem.Length + ")");
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "sıcak yollar ayırma yapmaz (bu iş parçacığında GC.Alloc örneği görüldü; yem " + (yem != null ? yem.Length : 0) + " B)");
         }
 
         [Test]

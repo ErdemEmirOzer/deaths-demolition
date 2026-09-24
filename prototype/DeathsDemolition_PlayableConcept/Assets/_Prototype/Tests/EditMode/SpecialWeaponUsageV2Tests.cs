@@ -7,6 +7,8 @@ using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Weapons;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
+using Is = NUnit.Framework.Is;             // WP-051C: keep NUnit's Is for the existing Is.InRange asserts
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -113,19 +115,19 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             // ADR-037-1: a publish with a subscriber allocates nothing (readonly struct, string reference from the table).
+            // WP-051C: the process-wide heap counters (HeapWindow: GC.GetTotalMemory / mono used size) also see other Editor
+            // threads' allocations; the test framework's GC.Alloc recorder is filtered to the calling thread only, and a
+            // positive control proves it is not blind.
             var yem = new byte[0];
-            HeapWindow.Result control = HeapWindow.Measure(() => { yem = new byte[64 * 1024]; }, 0);
-            Assert.Greater(control.MonoDelta, 32 * 1024, "pozitif kontrol: ölçüm ayırmayı görmedi");
-            HeapWindow.Result window = HeapWindow.Measure(() =>
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: ölçüm ayırmayı görmedi");
+            Assert.That(() =>
             {
                 for (int i = 0; i < 200; i++)
                 {
                     SpecialWeaponUsageEvents.Publish(SpecialWeaponId.Raiju, SpecialUsageKind.Fired, SpecialWeaponUsage.For(SpecialWeaponId.Raiju).FireVfxFamily,
                         Vector3.zero, Vector3.forward, 9.5f, 0.34f, i);
                 }
-            }, 0);
-            Assert.LessOrEqual(window.MonoDelta, 4 * 1024, "200 yayın yığını büyüttü (" + window.MonoDelta + " B)");
-            Assert.AreEqual(0, window.Gen0);
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "200 yayın ayırdı (bu iş parçacığında GC.Alloc örneği görüldü)");
             GC.KeepAlive(yem);
         }
 

@@ -12,6 +12,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Prototype.Tests.PlayMode
 {
@@ -78,9 +79,14 @@ namespace DD.Prototype.Tests.PlayMode
             int changesAtPeak = changes;
 
             // allocation + cost while the crowd is live
-            HeapWindow.Prepare(); yield return null;
-            HeapWindow.Result window = HeapWindow.Measure(() => { for (int i = 0; i < 300; i++) ThreatDirector.Sample(); }, 1);
-            Assert.LessOrEqual(window.Delta, 4 * 1024, "örnekleme ayırma yapmaz (" + window.Delta + " B)");
+            // WP-051C: the process-wide heap counters (HeapWindow: GC.GetTotalMemory / mono used size) also see other Editor
+            // threads' allocations; the test framework's GC.Alloc recorder is filtered to the calling thread only, and a
+            // positive control proves it is not blind.
+            yield return null;
+            byte[] yem = null;
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+            Assert.That(() => { for (int i = 0; i < 300; i++) ThreatDirector.Sample(); }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "örnekleme ayırma yapmaz (bu iş parçacığında GC.Alloc örneği görüldü; yem " + (yem != null ? yem.Length : 0) + " B)");
             Assert.LessOrEqual(ThreatDirector.AverageSampleMilliseconds, 0.05, "ortalama örnekleme ≤ 0,05 ms (" + ThreatDirector.AverageSampleMilliseconds.ToString("0.0000") + ")");
 
             // pull-back: clear the crowd → intensity releases slowly (FallRate) and reaches ≤ 0.15 in a few seconds; between rounds the ceiling clamps at once
@@ -94,7 +100,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.LessOrEqual(ThreatDirector.Sample().Intensity, 0.15f, "round arası tavan (DEC-065)");
             ThreatDirector.ContextOverride = null;
             Assert.Greater(changes, changesAtPeak, "katman düşüşü olay üretir");
-            Debug.Log("[DD-TEST] wp033.slice frames=" + trace.Count + " peak=" + peak.ToString("0.00") + " near=" + near + " encircledFrames=" + encircledFrames + " maxLayer=" + maxLayer + " changes=" + changes + " avgMs=" + ThreatDirector.AverageSampleMilliseconds.ToString("0.0000") + " release=" + release.ToString("0.0") + " s alloc=" + window.Delta);
+            Debug.Log("[DD-TEST] wp033.slice frames=" + trace.Count + " peak=" + peak.ToString("0.00") + " near=" + near + " encircledFrames=" + encircledFrames + " maxLayer=" + maxLayer + " changes=" + changes + " avgMs=" + ThreatDirector.AverageSampleMilliseconds.ToString("0.0000") + " release=" + release.ToString("0.0") + " s threadAlloc=none");
         }
 
         private static Vector3 NavPathFollowerPos(Vector3 p) => NavPathFollower.ClampToNavMesh(p, 6f);

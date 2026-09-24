@@ -5,6 +5,8 @@ using DD.Prototype.Feedback.Vfx;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
+using Is = NUnit.Framework.Is;             // WP-051C: keep NUnit's Is for the existing Is.EqualTo asserts
 
 namespace DD.Art.Tests.EditMode
 {
@@ -155,11 +157,14 @@ namespace DD.Art.Tests.EditMode
         {
             for (int i = 0; i < 1200; i++) DD.Prototype.UI.UiWorldNumbers.NumberText(i);
             DD.Prototype.UI.UiWorldNumbers.NumberText(4242);
-            // Used-heap delta (GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono): 12 000 lookups would be ~300 KB as strings.
-            long before = System.GC.GetTotalMemory(false);
-            for (int r = 0; r < 10; r++) { for (int i = 0; i < 1200; i++) DD.Prototype.UI.UiWorldNumbers.NumberText(i); DD.Prototype.UI.UiWorldNumbers.NumberText(4242); }
-            long after = System.GC.GetTotalMemory(false);
-            Assert.LessOrEqual(after - before, 4096, "NumberText ısınma sonrası ayırdı: " + (after - before) + " B / 12 010 çağrı");
+            // WP-051C: the process-wide used heap (GC.GetTotalMemory) also sees other Editor threads' allocations; the test
+            // framework's GC.Alloc recorder is filtered to the calling thread only, and a positive control proves it is not blind.
+            // (GC.GetAllocatedBytesForCurrentThread is always 0 in Unity Mono.) 12 000 lookups would be ~300 KB as strings.
+            byte[] yem = null;
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+            Assert.That(() => { for (int r = 0; r < 10; r++) { for (int i = 0; i < 1200; i++) DD.Prototype.UI.UiWorldNumbers.NumberText(i); DD.Prototype.UI.UiWorldNumbers.NumberText(4242); } },
+                UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "NumberText ısınma sonrası ayırdı (bu iş parçacığında GC.Alloc örneği görüldü / 12 010 çağrı; yem " + (yem != null ? yem.Length : 0) + " B)");
             Assert.AreSame(DD.Prototype.UI.UiWorldNumbers.NumberText(12), DD.Prototype.UI.UiWorldNumbers.NumberText(12));
         }
 

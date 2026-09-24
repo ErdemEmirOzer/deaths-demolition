@@ -7,6 +7,7 @@ using DD.Prototype.Spawn;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -744,17 +745,18 @@ namespace DD.Prototype.Tests.EditMode
             policy.BeginRound(round, _config, pool, 0.3f);
             for (int i = 0; i < 50; i++) policy.Next(_config, i, pool - i, rng);   // ısınma
 
-            long a0 = System.GC.GetTotalMemory(false);
-            var yem = new byte[64 * 1024];
-            long kontrol = System.GC.GetTotalMemory(false) - a0;
-            Assert.Greater(kontrol, 0, "Pozitif kontrol görünmedi — ölçüm geçersiz (" + yem.Length + ").");
+            // WP-051C: the process-wide used heap (GC.GetTotalMemory) also sees other Editor threads' allocations; the test
+            // framework's GC.Alloc recorder is filtered to the calling thread only, and a positive control proves it is not blind.
+            byte[] yem = null;
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "Pozitif kontrol görünmedi — ölçüm geçersiz.");
 
             policy.BeginRound(round, _config, pool, 0.3f);
-            long once = System.GC.GetTotalMemory(false);
-            for (int i = 0; i < pool; i++) policy.Next(_config, i, pool - i, rng);
-            for (int r = 0; r < 20; r++) { policy.BeginRound(round + r, _config, pool, 0.3f); EnemyStatSnapshot.Resolve(_config, EnemyTier.Elite, round + r); }
-            long fark = System.GC.GetTotalMemory(false) - once;
-            Assert.LessOrEqual(fark, 4 * 1024, "Seçim/snapshot yolu yığını büyüttü: " + fark + " B (200 pick + 20 BeginRound).");
+            Assert.That(() =>
+            {
+                for (int i = 0; i < pool; i++) policy.Next(_config, i, pool - i, rng);
+                for (int r = 0; r < 20; r++) { policy.BeginRound(round + r, _config, pool, 0.3f); EnemyStatSnapshot.Resolve(_config, EnemyTier.Elite, round + r); }
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "Seçim/snapshot yolu ayırdı (bu iş parçacığında GC.Alloc örneği; 200 pick + 20 BeginRound; yem " + (yem != null ? yem.Length : 0) + " B).");
         }
     }
 }

@@ -6,6 +6,7 @@ using DD.Prototype.UI;
 using DD.Prototype.Weapons;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -112,12 +113,13 @@ namespace DD.Prototype.Tests.EditMode
             _vm.ApplyBuild(build);
             _vm.ApplyHealth(saglik, 0.3f);
 
-            // Sayaç: EditMode ayırma hakemi (HeapDelta: her pencereden önce tam toplama, üç
-            // pencerenin en küçüğü, aynı okumayla 64 KB pozitif kontrol). Unity Mono'da
-            // GC.GetAllocatedBytesForCurrentThread HER ZAMAN 0 döner, kullanılmaz.
-            long kontrol = HeapDelta.PositiveControl();
+            // WP-051C: the process-wide Mono heap (HeapDelta) also sees other Editor threads' allocations; the test
+            // framework's GC.Alloc recorder is filtered to the calling thread only, and a positive control proves it is
+            // not blind. (Unity Mono'da GC.GetAllocatedBytesForCurrentThread HER ZAMAN 0 döner, kullanılmaz.)
+            byte[] yem = null;
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
             RunHudField toplam = RunHudField.None;
-            long fark = HeapDelta.Min(() =>
+            Assert.That(() =>
             {
                 for (int i = 0; i < 10000; i++)
                 {
@@ -126,12 +128,11 @@ namespace DD.Prototype.Tests.EditMode
                     toplam |= _vm.ApplyBuild(build);
                     toplam |= _vm.ApplyHealth(saglik, 0.3f);
                 }
-            });
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                "sessiz kare ayırmamalı (10000 kare; bu iş parçacığında GC.Alloc örneği görüldü; yem " + (yem != null ? yem.Length : 0) + " B)");
 
-            Debug.Log("[DD-TEST] wp005.hudvm quiet10000 allocB=" + fark + " control=" + kontrol + " fields=" + toplam);
-            Assert.GreaterOrEqual(kontrol, HeapDelta.PositiveControlBytes, "pozitif kontrol: 64 KB görülmedi (ölçüm kör)");
+            Debug.Log("[DD-TEST] wp005.hudvm quiet10000 threadAlloc=none fields=" + toplam);
             Assert.AreEqual(RunHudField.None, toplam, "sessiz karede hiçbir alan bayraklanmaz");
-            Assert.LessOrEqual(fark, 0, "sessiz kare 0 B ayırmalı (10000 kare; yığın büyümedi)");
         }
 
         [Test]

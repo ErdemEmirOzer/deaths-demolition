@@ -7,6 +7,7 @@ using DD.Prototype.Rounds;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Prototype.Tests.PlayMode
 {
@@ -1378,27 +1379,23 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
 
             // Pozitif kontrol: ölçüm yöntemi ayırmayı görüyor (WP-005 §35).
-            long k0 = GC.GetTotalMemory(false);
-            byte[] kontrol = new byte[64 * 1024];
-            long k1 = GC.GetTotalMemory(false);
-            Assert.Greater(k1 - k0, 32 * 1024, "Pozitif kontrol: GC ölçümü ayırmayı görmedi.");
+            // WP-051C: the process-wide used heap (GC.GetTotalMemory) also sees other Editor threads' allocations; the test
+            // framework's GC.Alloc recorder is filtered to the calling thread only, and the positive control proves it is not blind.
+            byte[] kontrol = null;
+            Assert.That(() => { kontrol = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "Pozitif kontrol: GC ölçümü ayırmayı görmedi.");
             GC.KeepAlive(kontrol);
 
-            int gen0 = GC.CollectionCount(0);
-            long before = GC.GetTotalMemory(false);
-            for (int i = 0; i < 200; i++)
+            Assert.That(() =>
             {
-                AudioEvents.RaiseCritical(CombatAudioEvent.FleshHit, Konum(i % 5), 1f, 30);
-                AudioEvents.RaiseCritical(CombatAudioEvent.SurfaceImpactStone, Konum(i % 7), 1f, 20);
-                RunAudioEvents.Raise(RunAudioEvent.GoldCollected, Konum(1f), 1f, i % 6);
-                _d.Router.Tick();
-            }
-
-            long after = GC.GetTotalMemory(false);
-            long delta = after - before;
-            Assert.AreEqual(gen0, GC.CollectionCount(0), "Ölçüm penceresinde gen0 toplama oldu; pencere geçersiz.");
-            Assert.LessOrEqual(delta, 2048, "Ses yolu 600 cue'da " + delta + " B ayırdı (eşik 2 KB, pencere 0 hedef).");
-            Debug.Log("[DD-TEST] wp021.gc delta=" + delta + "B over 600 cues + 200 router ticks");
+                for (int i = 0; i < 200; i++)
+                {
+                    AudioEvents.RaiseCritical(CombatAudioEvent.FleshHit, Konum(i % 5), 1f, 30);
+                    AudioEvents.RaiseCritical(CombatAudioEvent.SurfaceImpactStone, Konum(i % 7), 1f, 20);
+                    RunAudioEvents.Raise(RunAudioEvent.GoldCollected, Konum(1f), 1f, i % 6);
+                    _d.Router.Tick();
+                }
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "Ses yolu 600 cue'da ayırdı (bu iş parçacığında GC.Alloc örneği; pencere 0 hedef).");
+            Debug.Log("[DD-TEST] wp021.gc threadAlloc=none over 600 cues + 200 router ticks");
         }
     }
 }

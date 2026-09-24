@@ -6,6 +6,7 @@ using DD.Prototype.UI;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -199,17 +200,16 @@ namespace DD.Prototype.Tests.EditMode
             Cycle(groups);
             UiMotion.ResetForTests();
 
-            // The EditMode allocation referee (HeapDelta: a full collection before each window,
-            // the minimum over three windows, a 64 KB positive control read the same way).
-            long control = HeapDelta.PositiveControl();
-            long delta = HeapDelta.Min(() =>
+            // WP-051C: the process-wide Mono heap (HeapDelta) also sees other Editor threads' allocations; the test
+            // framework's GC.Alloc recorder is filtered to the calling thread only, and a positive control proves it is not blind.
+            byte[] yem = null;
+            Assert.That(() => { yem = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+            Assert.That(() =>
             {
                 for (int n = 0; n < 40; n++) Cycle(groups);
-            });
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "UiMotion Play/Tick ayırmamalı (bu iş parçacığında GC.Alloc örneği görüldü)");
 
-            Debug.Log("[DD-TEST] wp068.motionAlloc delta=" + delta + " B (40 × 256 Play + 40 × 20 Tick) control=" + control + " B");
-            Assert.GreaterOrEqual(control, HeapDelta.PositiveControlBytes, "pozitif kontrol: 64 KB görülmedi (ölçüm kör)");
-            Assert.Less(delta, 16384, "UiMotion Play/Tick ayırmamalı");
+            Debug.Log("[DD-TEST] wp068.motionAlloc threadAlloc=none (40 × 256 Play + 40 × 20 Tick) control=" + (yem != null ? yem.Length : 0) + " B");
         }
 
         private static void Cycle(CanvasGroup[] groups)
