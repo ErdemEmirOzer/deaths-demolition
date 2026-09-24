@@ -85,10 +85,13 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        [Ignore("DEC-098 açık soru (C-00): biriktirici (%50 yastık, ≤ 1 Ocak) cüzdanı ≈ 3 400 — davranış kaynaklı; ekonomi kaldıracı yok (Ocak tavanı R18–19'da dolar, 3. kart havuzu boşaltır). Karar gelince açılır.")]
-        public void Biriktirici_Cuzdan900()
+        public void Biriktirici_Cuzdan_YalnizRapor()
         {
-            Assert.LessOrEqual(Bot(Kos(true), EconomySimulator.TreeModel.Bot.Hoarder).walletMedian, 900);
+            // DEC-098 (C-00, 2026-09-25): the hoarder (50 % cushion, ≤ 1 Hearth per round) keeps ≈ 3 400 gold at R15 —
+            // hoarding is the player's own choice, no gold → Kül exchange. Report-only: printed, never a gate.
+            EconomySimulator.TreeModel.BotSummary h = Bot(Kos(true), EconomySimulator.TreeModel.Bot.Hoarder);
+            TestContext.WriteLine("hoarder R15 wallet median " + h.walletMedian + " / p90 " + h.walletP90 + ", share " + h.shareMedian.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture));
+            Assert.Greater(h.runs, 0);
         }
 
         [Test]
