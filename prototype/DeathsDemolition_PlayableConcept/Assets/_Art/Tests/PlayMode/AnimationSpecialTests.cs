@@ -126,9 +126,9 @@ namespace DD.Art.Tests.PlayMode
             pv.SetSpecialHold(0);
             yield return CharacterTests.Bekle(() => In(an, over, C.AimState + "_0") && !an.IsInTransition(over), 2f, "special bitince Aim_0");
             // WP-056 usage bus (ADR-056-1): Activated → hold pose of that Special, Deactivated → the classic Aim
-            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.OfudaLoom, SpecialUsageKind.Activated, "test", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.Namekuji, SpecialUsageKind.Activated, "test", Vector3.zero, Vector3.forward, 0f, 0f, 0);
             yield return CharacterTests.Bekle(() => In(an, over, C.SwHoldState + "_2") && !an.IsInTransition(over), 2f, "Activated(loom) → SwHold_2");
-            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.OfudaLoom, SpecialUsageKind.Deactivated, "test", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.Namekuji, SpecialUsageKind.Deactivated, "test", Vector3.zero, Vector3.forward, 0f, 0f, 0);
             yield return CharacterTests.Bekle(() => In(an, over, C.AimState + "_0") && !an.IsInTransition(over), 2f, "Deactivated → Aim_0");
         }
 

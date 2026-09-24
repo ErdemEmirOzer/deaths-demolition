@@ -410,8 +410,8 @@ namespace DD.Prototype.Core.Config
         {
             switch (id)
             {
-                case SpecialWeaponId.OfudaLoom: return WeaponFeelId.OfudaLoom;
-                case SpecialWeaponId.TideJewel: return WeaponFeelId.TideJewel;
+                // WP-069 B4 (interim until S-07's v2 rows): Raiju → the old bell row, Namekuji → the loom row.
+                case SpecialWeaponId.Namekuji: return WeaponFeelId.OfudaLoom;
                 default: return WeaponFeelId.KaguraBell;
             }
         }

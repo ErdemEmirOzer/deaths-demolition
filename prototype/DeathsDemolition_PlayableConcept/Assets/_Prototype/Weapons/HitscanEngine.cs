@@ -303,6 +303,21 @@ namespace DD.Prototype.Weapons
                     Vector3 normal = hit.normal.sqrMagnitude > 1e-6f ? hit.normal : -direction;
                     float at = Mathf.Max(0f, hit.distance);
 
+                    // WP-069 B4: a Special's orb / gel blob does not apply a bullet hit — its first contact is handed to
+                    // SpecialImpacts (Raiju chain, Namekuji direct hit or splat) and the projectile stops there.
+                    if (p.Kind == DD.Prototype.Core.Weapons.ProjectileKind.Orb || p.Kind == DD.Prototype.Core.Weapons.ProjectileKind.Gel)
+                    {
+                        bool body = DamageTargetResolver.TryResolve(collider, out DamageTarget special);
+                        if (body) SpecialImpacts.OnBody(in p, in special, point);
+                        else SpecialImpacts.OnWorld(in p, point, normal);
+                        ProjectileEvents.RaiseImpact(new ProjectileImpactInfo(p.Generation, p.Slot, p.WeaponId, p.Kind, p.Caliber, point, normal, direction,
+                            body ? SurfaceKind.Flesh : SurfaceResolver.Resolve(collider), speed, body, false, false, true, p.TransactionId));
+                        travelled = at;
+                        end = point;
+                        stopped = true;
+                        break;
+                    }
+
                     if (!DamageTargetResolver.TryResolve(collider, out DamageTarget target))
                     {
                         // World geometry stops the projectile (M3 rule).

@@ -36,7 +36,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNotNull(catalog, "Resources/Arsenal/ArsenalCatalog yok (ArsenalAssetBuilder.Build).");
             var faults = new List<string>();
             Assert.IsTrue(catalog.Validate(faults), string.Join("\n", faults));
-            Assert.AreEqual(10, catalog.weapons.Count, "WP-069 B2: on klasik tanım (Special'lar B4)");
+            Assert.AreEqual(12, catalog.weapons.Count, "on klasik (B2) + iki Special (B4: sw_arc, sw_gel)");
+            Assert.AreEqual(WeaponSlotKind.Special, Arsenal.Get("sw_arc").slot);
+            Assert.AreEqual(WeaponSlotKind.Special, Arsenal.Get("sw_gel").slot);
+            Assert.IsNull(Arsenal.Get((ClassicWeaponId)100), "Special'lar klasik indekste yok");
             Assert.AreSame(Arsenal.Get("ar_1"), Arsenal.Get(ClassicWeaponId.AssaultRifle));
             Assert.AreSame(Arsenal.Get("smg_1"), Arsenal.Get(ClassicWeaponId.AutoSmg));
             Assert.AreSame(Arsenal.Get("sg_1"), Arsenal.Get(ClassicWeaponId.CombatShotgun));
@@ -56,6 +59,7 @@ namespace DD.Prototype.Tests.EditMode
             var triples = new HashSet<string>();
             foreach (WeaponDefinition d in catalog.weapons)
             {
+                if (d.slot != WeaponSlotKind.Classic) continue;   // Specials have no weapon-core triple (REQ-059)
                 var core = new List<UpgradeBranch>(d.upgrade.coreBranches);
                 core.Sort();
                 Assert.IsTrue(triples.Add(string.Join("+", core)), d.weaponId + ": çekirdek üçlüsü başka silahla aynı (WP-034)");

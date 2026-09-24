@@ -559,7 +559,11 @@ namespace DD.Prototype.Core.Weapons
                 }
             }
 
-            if (ammo.reserve >= 0 && ammo.floorRefillDelaySeconds <= 0f) faults.Add(tag + "finite reserve needs a floor refill delay");
+            // A Special has no floor: when its magazine and reserve run dry it leaves the hand (DEC-097).
+            if (slot == WeaponSlotKind.Classic && ammo.reserve >= 0 && ammo.floorRefillDelaySeconds <= 0f) faults.Add(tag + "finite reserve needs a floor refill delay");
+
+            if (slot == WeaponSlotKind.Special && projectile.kind == ProjectileKind.Orb && arcChain.maxTargets < 1) faults.Add(tag + "chain orb needs maxTargets ≥ 1");
+            if (slot == WeaponSlotKind.Special && projectile.kind == ProjectileKind.Gel && gelPuddle.puddleRadius <= 0f) faults.Add(tag + "gel needs a puddle radius");
 
             if (weaponClass == WeaponClass.Launcher && (!explosive.enabled || rocket.maxSpeed <= 0f))
             {

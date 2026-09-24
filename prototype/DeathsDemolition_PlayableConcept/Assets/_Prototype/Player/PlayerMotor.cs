@@ -58,7 +58,10 @@ namespace DD.Prototype.PlayerSystem
     /// NO DASH, NO DODGE (REQ-042). There is deliberately no impulse entry point on
     /// this class; adding one would be a design change, not a code change. The three
     /// rates above only ever move the velocity TOWARDS the input's target velocity, so
-    /// no combination of inputs can produce a speed above MoveSpeed.
+    /// no combination of inputs can produce a speed above MoveSpeed. The one exception is
+    /// a floor rule, not an input: Namekuji's gel puddle (WP-069 §7b) raises the target
+    /// speed ×<see cref="GelSpeedMultiplier"/> and scales every rate ×<see cref="GelSteerMultiplier"/>
+    /// while the player stands in one, ramping back over <see cref="GelExitSeconds"/>.
     ///
     /// THE MOVEMENT SPEED UPGRADE
     /// -------------------------
@@ -118,6 +121,24 @@ namespace DD.Prototype.PlayerSystem
         /// 0.1..1, written each frame by the WeaponController. Never raises the top speed.
         /// </summary>
         public float WeaponSpeedMultiplier { get; set; } = 1f;
+
+        /// <summary>
+        /// WP-069 B4 (DIRECTION §7b): Namekuji's puddle under the player — the target speed ×1.8 and every rate
+        /// ×0.35 (less control, no fall, no damage, firing unaffected), back to normal 0.3 s after stepping out.
+        /// Written from the sw_gel data by SpecialGelEffects.
+        /// </summary>
+        public static float GelSpeedMultiplier = 1.8f;
+        public static float GelSteerMultiplier = 0.35f;
+        public static float GelExitSeconds = 0.3f;
+
+        private float _gel01;
+        private bool _inGel;
+
+        /// <summary>WP-069 B4: standing in a gel puddle this frame.</summary>
+        public bool InGel => _inGel;
+
+        /// <summary>WP-069 B4: 1 in a puddle, ramping to 0 over <see cref="GelExitSeconds"/> after leaving it.</summary>
+        public float Gel01 => _gel01;
 
         /// <summary>Current horizontal velocity in world space.</summary>
         public Vector3 PlanarVelocity
@@ -285,11 +306,14 @@ namespace DD.Prototype.PlayerSystem
                 desired.Normalize();
             }
 
-            Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f));
+            TickGel(dt);
+            float gelSpeed = Mathf.Lerp(1f, GelSpeedMultiplier, _gel01);
+            float gelSteer = Mathf.Lerp(1f, GelSteerMultiplier, _gel01);
+            Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f) * gelSpeed);
 
             // Advances _planarVelocity AND returns the exact ground distance covered while
             // it was advancing, which is not the same thing as velocity * dt.
-            Vector3 planarStep = StepPlanarVelocity(targetVelocity, dt);
+            Vector3 planarStep = StepPlanarVelocity(targetVelocity, dt, gelSteer);
 
             if (_controller.isGrounded && _verticalVelocity <= 0f)
             {
@@ -370,11 +394,14 @@ namespace DD.Prototype.PlayerSystem
         /// REQ-042: every branch moves v towards targetVelocity and stops there. There is
         /// no path through this method that adds speed the input did not ask for.
         /// </summary>
-        private Vector3 StepPlanarVelocity(Vector3 targetVelocity, float dt)
+        private Vector3 StepPlanarVelocity(Vector3 targetVelocity, float dt, float rateScale = 1f)
         {
             // Input released -> stopping brake. Input pointing elsewhere -> counter-strafe
             // brake. Chosen once per frame: the target does not move inside a frame.
-            float brakeRate = targetVelocity.sqrMagnitude > 1e-8f ? _counterBrake : _deceleration;
+            // rateScale < 1 only on gel (WP-069 §7b): every rate slows, so the player slides.
+            rateScale = Mathf.Clamp(rateScale, 0.05f, 1f);
+            float brakeRate = (targetVelocity.sqrMagnitude > 1e-8f ? _counterBrake : _deceleration) * rateScale;
+            float accelerationRate = _acceleration * rateScale;
 
             Vector3 displacement = Vector3.zero;
             float remaining = dt;
@@ -404,7 +431,7 @@ namespace DD.Prototype.PlayerSystem
                 }
                 else
                 {
-                    rate = _acceleration;
+                    rate = accelerationRate;
                     segmentLength = pathLeft;
                 }
 
@@ -430,6 +457,33 @@ namespace DD.Prototype.PlayerSystem
             }
 
             return displacement;
+        }
+
+        /// <summary>
+        /// WP-069 B4: S-03's puddle registry says whether the feet stand in gel; the slide starts at once and
+        /// fades over <see cref="GelExitSeconds"/>. Usage events for S-07 / S-08 (the player's slide cues).
+        /// </summary>
+        private void TickGel(float dt)
+        {
+            bool inGel = DD.Prototype.Enemies.GelPuddleRegistry.TryFind(transform.position, out int puddle);
+            if (inGel)
+            {
+                _gel01 = 1f;
+            }
+            else if (_gel01 > 0f)
+            {
+                _gel01 = GelExitSeconds > 0f ? Mathf.Max(0f, _gel01 - dt / GelExitSeconds) : 0f;
+            }
+
+            if (inGel == _inGel)
+            {
+                return;
+            }
+
+            _inGel = inGel;
+            DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(SpecialWeaponId.Namekuji,
+                inGel ? DD.Prototype.Weapons.SpecialUsageKind.PlayerSlideStarted : DD.Prototype.Weapons.SpecialUsageKind.PlayerSlideEnded,
+                DD.Prototype.Weapons.SpecialWeaponUsage.For(SpecialWeaponId.Namekuji).FieldVfxFamily, transform.position, _planarVelocity, 0f, inGel ? 0f : GelExitSeconds, puddle);
         }
 
         /// <summary>
@@ -471,6 +525,7 @@ namespace DD.Prototype.PlayerSystem
 
             _planarVelocity = Vector3.zero;
             _verticalVelocity = 0f;
+            _gel01 = 0f;
         }
 
         /// <summary>Stops the player dead without disabling control.</summary>

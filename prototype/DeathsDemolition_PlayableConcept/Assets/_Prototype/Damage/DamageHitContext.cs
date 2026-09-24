@@ -29,6 +29,15 @@ namespace DD.Prototype.Damage
         /// <summary>The struck collider (hitbox → bone); null for area hits.</summary>
         public static Collider HitCollider { get; private set; }
 
+        /// <summary>WP-069 B4: the hit ignores regional armour (both Specials: electricity / gel — DIRECTION §7a/§7b).</summary>
+        public static bool IgnoreArmor { get; private set; }
+
+        /// <summary>WP-069 B4: true while a Special Weapon's damage is being applied (attribution: chain / gel).</summary>
+        public static bool FromSpecialWeapon { get; private set; }
+
+        /// <summary>That Special (valid when <see cref="FromSpecialWeapon"/>).</summary>
+        public static SpecialWeaponId Special { get; private set; }
+
         public static void Set(float headMultiplier, float armorMultiplier, bool fromClassicWeapon, ClassicWeaponId weapon, Collider hitCollider)
         {
             HeadMultiplier = headMultiplier > 0f ? headMultiplier : 1f;
@@ -36,6 +45,21 @@ namespace DD.Prototype.Damage
             FromClassicWeapon = fromClassicWeapon;
             Weapon = weapon;
             HitCollider = hitCollider;
+            IgnoreArmor = false;
+            FromSpecialWeapon = false;
+        }
+
+        /// <summary>WP-069 B4: a Special Weapon hit — neutral multipliers, optional armour bypass, the Special's id.</summary>
+        public static void SetSpecial(SpecialWeaponId special, bool ignoreArmor, Collider hitCollider)
+        {
+            HeadMultiplier = 1f;
+            ArmorMultiplier = 1f;
+            FromClassicWeapon = false;
+            Weapon = default;
+            HitCollider = hitCollider;
+            IgnoreArmor = ignoreArmor;
+            FromSpecialWeapon = true;
+            Special = special;
         }
 
         public static void Clear()
@@ -45,6 +69,9 @@ namespace DD.Prototype.Damage
             FromClassicWeapon = false;
             Weapon = default;
             HitCollider = null;
+            IgnoreArmor = false;
+            FromSpecialWeapon = false;
+            Special = default;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

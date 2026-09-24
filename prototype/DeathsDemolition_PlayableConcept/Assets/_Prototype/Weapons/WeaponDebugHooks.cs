@@ -186,11 +186,11 @@ namespace DD.Prototype.Weapons
         /// </summary>
         private static SpecialWeaponId NextDebugWeapon()
         {
-            s_debugWeapon = (SpecialWeaponId)(((int)s_debugWeapon + 1) % 3);
+            s_debugWeapon = (SpecialWeaponId)(((int)s_debugWeapon + 1) % SpecialWeaponConfigSection.All.Length);
             return s_debugWeapon;
         }
 
-        private static SpecialWeaponId s_debugWeapon = SpecialWeaponId.TideJewel;
+        private static SpecialWeaponId s_debugWeapon = SpecialWeaponId.Namekuji;   // the first press gives Raiju
 
         private static void EndSpecial()
         {
@@ -333,23 +333,11 @@ namespace DD.Prototype.Weapons
                 return string.Empty;
             }
 
-            switch (controller.Special.Id)
-            {
-                case SpecialWeaponId.KaguraBell:
-                    return $" | fronts {controller.Special.Waves.ActiveWaves}"
-                           + $" crossings {controller.Special.Waves.TotalCrossings}";
-
-                case SpecialWeaponId.OfudaLoom:
-                    return $" | seals {controller.Special.Web.SealCount}"
-                           + $" (armed {controller.Special.Web.ArmedSealCount})"
-                           + $" collapses {controller.Special.Web.CollapseCount}";
-
-                case SpecialWeaponId.TideJewel:
-                    return $" | wells {TideWell.LiveCount} pulls {TideWell.TotalPullTicks}";
-
-                default:
-                    return string.Empty;
-            }
+            SpecialWeaponRuntime s = controller.Special;
+            string ammo = $" | {s.Ammo}/{s.MagazineSize} +{s.ReserveAmmo}" + (s.IsReloading ? " reloading" : string.Empty);
+            return controller.Special.Id == SpecialWeaponId.Raiju
+                ? ammo + $" | chains {SpecialImpacts.ActiveChains} hops {SpecialImpacts.HopsApplied} kills {SpecialImpacts.LethalApplied} self {SpecialImpacts.SelfShocks}"
+                : ammo + $" | gel hits {SpecialImpacts.GelHits}";
         }
 
         private static string DescribeBudget()

@@ -45,7 +45,7 @@ namespace DD.Prototype.Weapons
 
         private Transform _visual;
         private BeaconEffect _beacon;
-        private SpecialWeaponId _builtId = SpecialWeaponId.KaguraBell;
+        private SpecialWeaponId _builtId = SpecialWeaponId.Raiju;
         private bool _visualBuilt;
 
         private float _remaining;
@@ -53,7 +53,7 @@ namespace DD.Prototype.Weapons
         private float _blinkPhase;
         private bool _collected;
         private bool _beaconLoopRunning;
-        private SpecialWeaponId _weaponId = SpecialWeaponId.KaguraBell;
+        private SpecialWeaponId _weaponId = SpecialWeaponId.Raiju;
         private string _displayName = "Special Weapon";
 
         /// <summary>Raised when this pickup leaves the ground, either way. Argument: was it collected.</summary>
@@ -365,14 +365,11 @@ namespace DD.Prototype.Weapons
             }
 
             UsesAuthoredModel = false;
+            // WP-069 B4: placeholder shapes until the AP-021 Special models — Raiju the coil (bell stack), Namekuji the canister (loom).
             switch (_weaponId)
             {
-                case SpecialWeaponId.OfudaLoom:
+                case SpecialWeaponId.Namekuji:
                     BuildLoom();
-                    break;
-
-                case SpecialWeaponId.TideJewel:
-                    BuildJewel();
                     break;
 
                 default:
@@ -415,22 +412,6 @@ namespace DD.Prototype.Weapons
 
             BuildPart(PrimitiveType.Cube, "Ink", new Vector3(0f, 0.04f, -0.06f),
                 new Vector3(0.06f, 0.34f, 0.02f), ink);
-        }
-
-        /// <summary>Tide Jewel: a pale sphere resting in an open lacquer cradle.</summary>
-        private void BuildJewel()
-        {
-            Color pearl = new Color(0.68f, 0.85f, 0.9f, 1f);
-            Color cradle = new Color(0.2f, 0.14f, 0.12f, 1f);
-
-            BuildPart(PrimitiveType.Sphere, "Jewel", new Vector3(0f, 0.1f, 0f),
-                new Vector3(0.36f, 0.36f, 0.36f), pearl);
-
-            BuildPart(PrimitiveType.Cylinder, "Cradle", new Vector3(0f, -0.16f, 0f),
-                new Vector3(0.4f, 0.05f, 0.4f), cradle);
-
-            BuildPart(PrimitiveType.Cylinder, "Stem", new Vector3(0f, -0.26f, 0f),
-                new Vector3(0.12f, 0.09f, 0.12f), cradle);
         }
 
         private void BuildPart(PrimitiveType type, string name, Vector3 localPosition, Vector3 scale,
@@ -498,16 +479,14 @@ namespace DD.Prototype.Weapons
         /// </summary>
         private static Color CalmBeaconColor(SpecialWeaponId id)
         {
+            // WP-069 B4 (DIRECTION §2 palette): Raiju arc blue-white #7FD3FF, Namekuji gel magenta #FF5FD2.
             switch (id)
             {
-                case SpecialWeaponId.OfudaLoom:
-                    return new Color(0.96f, 0.93f, 0.84f, 0.3f);
-
-                case SpecialWeaponId.TideJewel:
-                    return new Color(0.55f, 0.78f, 0.86f, 0.3f);
+                case SpecialWeaponId.Namekuji:
+                    return new Color(1f, 0.373f, 0.824f, 0.3f);
 
                 default:
-                    return new Color(1f, 0.82f, 0.35f, 0.3f);
+                    return new Color(0.498f, 0.827f, 1f, 0.3f);
             }
         }
 

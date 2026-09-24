@@ -37,17 +37,26 @@ namespace DD.Art.Pipeline.EditorTools
         public const string LibraryPath = ArtPipelinePaths.ArtRoot + "/Resources/" + SpecialWeaponVisualLibrary.ResourcePath + ".asset";
         public const string ShaderName = "Universal Render Pipeline/Lit";
 
+        // WP-069 B4 (S-02): the two DEC-094 Specials wear the old AP-014 bell / loom meshes until AP-021 ships sw_arc / sw_gel.
         private static readonly (SpecialWeaponId id, string key)[] Weapons =
         {
-            (SpecialWeaponId.KaguraBell, "kagura_bell"),
-            (SpecialWeaponId.OfudaLoom, "ofuda_loom"),
-            (SpecialWeaponId.TideJewel, "tide_jewel"),   // WP-059C · AP-014D (hand 1800/600/200, pickup 1450/510/147; SW atlas v002)
+            (SpecialWeaponId.Raiju, "kagura_bell"),
+            (SpecialWeaponId.Namekuji, "ofuda_loom"),
         };
+
+        // WP-069 B4: the Tide Jewel left the game; its FBX pair (WP-059C · AP-014D) stays in the inventory until the art owner removes it.
+        private static readonly string[] RetiredKeys = { "tide_jewel" };
 
         /// <summary>Every FBX this package ships (inventory gate): pickup + hand per authored weapon.</summary>
         public static IEnumerable<string> ModelFiles()
         {
             foreach ((SpecialWeaponId _, string key) in Weapons)
+            {
+                yield return Folder + "/sw_" + key + "_pickup.fbx";
+                yield return Folder + "/sw_" + key + "_hand.fbx";
+            }
+
+            foreach (string key in RetiredKeys)
             {
                 yield return Folder + "/sw_" + key + "_pickup.fbx";
                 yield return Folder + "/sw_" + key + "_hand.fbx";

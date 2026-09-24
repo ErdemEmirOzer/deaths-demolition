@@ -204,6 +204,21 @@ namespace DD.Prototype.Weapons
         /// <summary>True during the last seconds of the ACTIVE timer (REQ-058).</summary>
         public bool FinalSecondsWarning;
 
+        // ---- WP-069 B4 (DEC-097, DIRECTION §7c): the Special is a magazine weapon with a time cap; the HUD shows
+        // magazine / reserve and a secondary cap strip (ActiveRemaining / ActiveDuration are that cap now: 40 s / 45 s).
+
+        public int AmmoInMagazine;
+        public int MagazineSize;
+        public int ReserveAmmo;
+        public bool IsReloading;
+        public float ReloadProgress01;
+
+        /// <summary>Raiju's 0.25 s charge, 0..1 while the trigger is held (0 otherwise).</summary>
+        public float Charge01;
+
+        /// <summary>What ends the activation: ammo, time, or whichever comes first.</summary>
+        public SpecialLimit Limit;
+
         public float GroundProgress01 => GroundDuration > 0f ? Mathf.Clamp01(GroundRemaining / GroundDuration) : 0f;
 
         public float ActiveProgress01 => ActiveDuration > 0f ? Mathf.Clamp01(ActiveRemaining / ActiveDuration) : 0f;

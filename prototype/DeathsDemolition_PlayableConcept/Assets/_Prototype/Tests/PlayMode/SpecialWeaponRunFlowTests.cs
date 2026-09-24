@@ -98,7 +98,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(wc);
             Assert.IsFalse(wc.SpecialWeaponActive, etiket + ": eski aktif runtime taşındı.");
             Assert.AreEqual(0f, wc.Special.Remaining, 0.0001f, etiket + ": eski aktif timer taşındı.");
-            Assert.AreEqual(0, TideWell.LiveCount, etiket + ": eski kuyu taşındı.");
+            Assert.AreEqual(0, SpecialImpacts.ActiveChains, etiket + ": eski kuyu taşındı.");
             Assert.IsFalse(WeaponEvents.Classic.TemporarilyDisabled, etiket + ": klasik silah devre dışı başladı.");
         }
 
@@ -169,7 +169,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(SpecialWeaponPhase.None, WeaponEvents.Special.Phase, "Ölümde HUD Special durumu kapanmadı.");
                 Assert.AreEqual(sayac.LoopBaslatSayisi(CombatAudioEvent.HeavyWeaponSpinUp),
                     sayac.LoopDurdurSayisi(CombatAudioEvent.HeavyWeaponSpinUp), "Ölümde aktif loop durmadı (AP-10 T7).");
-                Assert.AreEqual(0, TideWell.LiveCount);
+                Assert.AreEqual(0, SpecialImpacts.ActiveChains);
                 Assert.IsFalse(WeaponEvents.Classic.TemporarilyDisabled, "Ölümde klasik silah 'devre dışı' kaldı.");
                 // K-7 #1 (S-08 Ö1): iptal yolunda "kaybettin" haberi yok, nesne sesi bir kez, Ended bir kez.
                 Assert.AreEqual(0, sayac.CueSayisi(CombatAudioEvent.SpecialWeaponExpired), "İptal yolunda Expired haber cue'su çaldı.");

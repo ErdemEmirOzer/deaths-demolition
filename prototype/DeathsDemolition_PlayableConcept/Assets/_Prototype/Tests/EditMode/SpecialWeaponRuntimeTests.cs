@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.Feedback;
 using DD.Prototype.Weapons;
 using NUnit.Framework;
@@ -13,8 +14,8 @@ namespace DD.Prototype.Tests.EditMode
     /// olmadan, <c>Begin/Tick/End</c> ile sürülür. REQ-055 / REQ-056 / REQ-058 (AP-6, AP-7,
     /// AP-8, AP-9 · TM-20, TM-27, TM-28, TM-29, TM-34).
     ///
-    /// Süreler ve eşikler config'ten okunur (K4); sayı literal'i yok. Kagura Bell yalnız
-    /// fixture kimliğidir (PrototypeOnly), saldırı biçimi burada sınanmaz.
+    /// Süreler ve eşikler config'ten / tanımdan okunur (K4). WP-069 B4 (DEC-097): Special artık şarjörlü
+    /// (Raiju 3/9, Namekuji 8/16), dolumlu ve süre tavanlı (40 / 45 s); REQ-056 "sınırsız mermi" DEC-097 ile kalktı.
     /// </summary>
     [TestFixture]
     [Category("WP007")]
@@ -42,7 +43,7 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
-        /// <summary>[TM-27] Aktif süre pickup (Begin) anında tam süreden başlar; süre config'tendir.</summary>
+        /// <summary>[TM-27] Aktif süre (tavan) pickup (Begin) anında tam süreden başlar; şarjör ve yedek dolu.</summary>
         [Test]
         public void Begin_AktifSureTamSuredenBaslar()
         {
@@ -52,7 +53,7 @@ namespace DD.Prototype.Tests.EditMode
             WeaponEvents.SpecialWeaponPickedUp += dinle;
             try
             {
-                _rt.Begin(_s, SpecialWeaponId.KaguraBell);
+                _rt.Begin(_s, SpecialWeaponId.Raiju);
             }
             finally
             {
@@ -60,7 +61,9 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             Assert.IsTrue(_rt.IsActive);
-            Assert.AreEqual(_s.ActiveDuration, _rt.Duration, 0.0001f, "Duration config'ten gelmedi.");
+            Assert.AreEqual(_s.CapSeconds(SpecialWeaponId.Raiju), _rt.Duration, 0.0001f, "Duration tavandan gelmedi.");
+            Assert.AreEqual(3, _rt.Ammo, "Raiju şarjörü");
+            Assert.AreEqual(9, _rt.ReserveAmmo, "Raiju yedeği");
             Assert.AreEqual(_rt.Duration, _rt.Remaining, 0.0001f, "Remaining tam süreden başlamadı.");
             Assert.AreEqual(1, alindi, "PickedUp olayı tam bir kez.");
             Assert.AreEqual(_rt.Duration, bildirilenSure, 0.0001f, "PickedUp olayı aktif süreyi taşımalı (REQ-055).");
@@ -73,39 +76,96 @@ namespace DD.Prototype.Tests.EditMode
         {
             Assert.IsFalse(_rt.IsActive);
             float once = _rt.Remaining;
-            bool bitti = _rt.Tick(_s.ActiveDuration);
+            bool bitti = _rt.Tick(_s.CapSeconds(SpecialWeaponId.Raiju));
             Assert.IsFalse(bitti);
             Assert.AreEqual(once, _rt.Remaining, 0.0001f, "Aktif olmayan runtime'ın süresi değişti.");
         }
 
-        /// <summary>[TM-28][TM-29] Runtime'da mermi ya da reload durumu yoktur — yapısal olarak (yansıma).</summary>
+        /// <summary>WP-069 B4 (DEC-097): son mermi otomatik dolum başlatır, dolum yedekten alır; şarjör ve yedek bitince Special düşer.</summary>
         [Test]
-        public void MermiVeReloadDurumu_YapisalOlarakYok()
+        public void Sarjor_OtomatikDolum_CephaneBitinceDuser()
         {
-            const BindingFlags hepsi = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
-            foreach (MemberInfo m in typeof(SpecialWeaponRuntime).GetMembers(hepsi))
+            _rt.Begin(_s, SpecialWeaponId.Raiju);
+            int bitis = 0;
+            Action dinle = () => bitis++;
+            WeaponEvents.SpecialWeaponEnded += dinle;
+            try
             {
-                string ad = m.Name.ToLowerInvariant();
-                Assert.IsFalse(ad.Contains("ammo") || ad.Contains("magazine") || ad.Contains("reload"),
-                    "SpecialWeaponRuntime içinde mermi/reload üyesi var: " + m.Name + " (REQ-056).");
+                for (int i = 0; i < 3; i++) { Assert.IsTrue(_rt.CanFire || i > 0); _rt.ConsumeShot(); _rt.Tick(_rt.ShotInterval); }
+                Assert.AreEqual(0, _rt.Ammo);
+                Assert.IsTrue(_rt.IsReloading, "son mermi hücre değişimini başlatır");
+                Assert.AreEqual(3.6f, _rt.ReloadDuration, 1e-4f, "boştan dolum 3,6 s");
+                Assert.IsFalse(_rt.CanFire, "dolumda ateş yok");
+                _rt.Tick(3.7f);
+                Assert.AreEqual(3, _rt.Ammo);
+                Assert.AreEqual(6, _rt.ReserveAmmo);
+
+                int guard = 0;
+                while (_rt.IsActive && guard++ < 100)
+                {
+                    if (_rt.CanFire) _rt.ConsumeShot();
+                    _rt.Tick(1f);
+                }
+
+                Assert.IsFalse(_rt.IsActive, "12 atış bitince Special düşer (AmmoOrTime)");
+                Assert.Less(guard, 100);
+                Assert.Greater(_rt.Remaining, -1f);
+                Assert.AreEqual(1, bitis, "Ended bir kez");
+            }
+            finally
+            {
+                WeaponEvents.SpecialWeaponEnded -= dinle;
             }
         }
 
-        /// <summary>[TM-28] Atış tüketimi yalnız atış aralığını (cooldown) etkiler; süreyi ve başka bir sayacı değil.</summary>
+        /// <summary>WP-069 B4: Raiju 0,25 s şarj ister — erken bırakmak iptal eder (mermi harcanmaz), basılı tutmak ateşler.</summary>
         [Test]
-        public void ConsumeShot_YalnizAtisAraligi_SureyiDegistirmez()
+        public void Raiju_Sarj_ErkenBirakmaIptal_BasiliTutmakAteşler()
         {
-            _rt.Begin(_s, SpecialWeaponId.KaguraBell);
-            float kalan = _rt.Remaining;
-            Assert.IsTrue(_rt.CanFire);
-            _rt.ConsumeShot();
-            Assert.IsFalse(_rt.CanFire, "Atış sonrası aralık dolmadan tekrar ateş edilebiliyor.");
-            Assert.AreEqual(kalan, _rt.Remaining, 0.0001f, "ConsumeShot aktif süreyi değiştirdi.");
+            _rt.Begin(_s, SpecialWeaponId.Raiju);
+            int iptal = 0, basla = 0;
+            Action<SpecialUsageEvent> dinle = e => { if (e.Kind == SpecialUsageKind.ChargeCancelled) iptal++; if (e.Kind == SpecialUsageKind.ChargeStarted) basla++; };
+            SpecialWeaponUsageEvents.Usage += dinle;
+            try
+            {
+                Assert.IsFalse(_rt.UpdateTrigger(true, true, 0.016f), "ilk kare şarjı başlatır, ateşlemez");
+                Assert.IsTrue(_rt.IsCharging);
+                Assert.IsFalse(_rt.UpdateTrigger(true, false, 0.1f));
+                Assert.Greater(_rt.Charge01, 0.3f);
+                Assert.IsFalse(_rt.UpdateTrigger(false, false, 0.016f), "bırakınca iptal");
+                Assert.AreEqual(1, iptal);
+                Assert.AreEqual(3, _rt.Ammo, "iptal mermi harcamaz");
 
-            // Aralık kadar ilerleyince tekrar ateş edilebilir; aralık config'teki atış hızından türer.
-            _rt.Tick(_rt.ShotInterval);
-            Assert.IsTrue(_rt.CanFire, "Atış aralığı dolduğu hâlde ateş kapalı.");
-            Assert.AreEqual(1f / Mathf.Max(0.05f, _s.Common(SpecialWeaponId.KaguraBell).FireRate), _rt.ShotInterval, 0.0001f);
+                Assert.IsFalse(_rt.UpdateTrigger(true, true, 0.016f));
+                bool atti = false;
+                for (int i = 0; i < 30 && !atti; i++) atti = _rt.UpdateTrigger(true, false, 0.016f);
+                Assert.IsTrue(atti, "0,25 s basılı tutunca ateş");
+                Assert.AreEqual(2, basla);
+            }
+            finally
+            {
+                SpecialWeaponUsageEvents.Usage -= dinle;
+            }
+
+            var gel = new SpecialWeaponRuntime();
+            gel.Begin(_s, SpecialWeaponId.Namekuji);
+            Assert.AreEqual(8, gel.Ammo);
+            Assert.IsTrue(gel.UpdateTrigger(true, false, 0.016f), "Namekuji şarjsız: basılı tetik ateşler");
+            gel.End();
+        }
+
+        /// <summary>WP-069 B4: tepeden jel yayı imleç mesafesine iner (düz zemin düşük açı; ≤ 20 m).</summary>
+        [Test]
+        public void Namekuji_TepedenYay_ImlecMesafesineAci()
+        {
+            WeaponDefinition gel = SpecialWeaponConfigSection.DefinitionOf(SpecialWeaponId.Namekuji);
+            Vector3 d20 = SpecialWeaponRuntime.ArcDirection(Vector3.zero, Vector3.forward, new Vector3(0f, 0f, 30f), true, gel);
+            Vector3 d10 = SpecialWeaponRuntime.ArcDirection(Vector3.zero, Vector3.forward, new Vector3(0f, 0f, 10f), true, gel);
+            float a20 = Mathf.Asin(d20.y) * Mathf.Rad2Deg;
+            float a10 = Mathf.Asin(d10.y) * Mathf.Rad2Deg;
+            Assert.AreEqual(0.5f * Mathf.Asin(12f * 20f / (22f * 22f)) * Mathf.Rad2Deg, a20, 0.05f, "30 m imleç 20 m'ye kırpılır");
+            Assert.Less(a10, a20);
+            Assert.Greater(a10, 0f);
         }
 
         /// <summary>[TM-34] Son-saniye uyarısı eşik geçişinde aynı aktivasyonda YALNIZ bir kez üretilir.</summary>
@@ -118,7 +178,7 @@ namespace DD.Prototype.Tests.EditMode
             WeaponEvents.SpecialWeaponFinalSeconds += dinle;
             try
             {
-                _rt.Begin(_s, SpecialWeaponId.KaguraBell);
+                _rt.Begin(_s, SpecialWeaponId.Raiju);
                 float adim = _rt.Duration / AdimSayisi;
                 int esikSonrasiTick = 0;
                 while (_rt.IsActive)
@@ -151,7 +211,7 @@ namespace DD.Prototype.Tests.EditMode
             WeaponEvents.SpecialWeaponEnded += dinle;
             try
             {
-                _rt.Begin(_s, SpecialWeaponId.KaguraBell);
+                _rt.Begin(_s, SpecialWeaponId.Raiju);
                 float adim = _rt.Duration / AdimSayisi;
                 int bitisKaresi = 0;
                 for (int i = 0; i < AdimSayisi * 2 && _rt.IsActive; i++)

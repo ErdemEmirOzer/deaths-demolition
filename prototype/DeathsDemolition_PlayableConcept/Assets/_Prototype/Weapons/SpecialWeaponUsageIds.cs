@@ -52,12 +52,11 @@ namespace DD.Prototype.Weapons
     {
         private static readonly SpecialWeaponUsageIds[] s_table =
         {
-            new SpecialWeaponUsageIds(SpecialWeaponId.KaguraBell, CombatAudioEvent.HeavyWeaponFire, CombatAudioEvent.HeavyWeaponSpinUp,
-                "sw_kagura_wave", "sw_kagura_field", "impact", "special_kagura"),
-            new SpecialWeaponUsageIds(SpecialWeaponId.OfudaLoom, CombatAudioEvent.HeavyWeaponFire, CombatAudioEvent.HeavyWeaponSpinUp,
-                "sw_ofuda_dart", "sw_ofuda_web", "impact", "special_ofuda"),
-            new SpecialWeaponUsageIds(SpecialWeaponId.TideJewel, CombatAudioEvent.HeavyWeaponFire, CombatAudioEvent.HeavyWeaponSpinUp,
-                "sw_tide_pull", "sw_tide_well", "explosion", "special_tide"),
+            // WP-069 B4 (DEC-094): the two Specials. Families are the DIRECTION §2 VFX rows (S-07 fills the sheets).
+            new SpecialWeaponUsageIds(SpecialWeaponId.Raiju, CombatAudioEvent.HeavyWeaponFire, CombatAudioEvent.HeavyWeaponSpinUp,
+                "sw_arc_orb", "sw_arc_chain", "impact", "special_raiju"),
+            new SpecialWeaponUsageIds(SpecialWeaponId.Namekuji, CombatAudioEvent.HeavyWeaponFire, CombatAudioEvent.HeavyWeaponSpinUp,
+                "sw_gel_blob", "sw_gel_puddle", "impact", "special_namekuji"),
         };
 
         public static int Count => s_table.Length;

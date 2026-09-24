@@ -24,7 +24,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             "Weapons/SpecialWeaponDirector.cs", "Weapons/SpecialWeaponPickup.cs", "Weapons/SpecialWeaponRuntime.cs",
             "Weapons/SpecialWeaponRoundBridge.cs", "Weapons/SpecialWeaponSpawnPoint.cs", "Weapons/SpecialWeaponRandom.cs",
-            "Weapons/SpecialDropValidator.cs", "Weapons/KaguraWaveField.cs", "Weapons/OfudaSealWeb.cs", "Weapons/TideWell.cs",
+            "Weapons/SpecialDropValidator.cs", "Weapons/SpecialImpacts.cs", "Weapons/SpecialGelEffects.cs",   // WP-069 B4: the chain / gel landing replaces the three field objects
         };
 
         private static string Kod(string relative)
@@ -77,16 +77,16 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
-        /// <summary>[DT-1][DT-4] Üç prototip saldırısının çoklu hedef döngüleri saldırı-kapsamlı transaction scope'u içindedir; hedef başına Begin yok.</summary>
+        /// <summary>
+        /// [DT-1][DT-4] WP-069 B4: Raiju's chain is ONE transaction — the orb's own (ProjectileSystem.NextId), resumed per hop;
+        /// no Begin per target, so a body in the chain is damaged once per shot (the receiver's duplicate guard).
+        /// </summary>
         [Test]
         public void CokluHedefSaldirilari_TekTransactionScope()
         {
-            foreach (string dosya in new[] { "Weapons/KaguraWaveField.cs", "Weapons/OfudaSealWeb.cs", "Weapons/TideWell.cs" })
-            {
-                string kod = Kod(dosya);
-                Assert.IsTrue(kod.Contains("BeginExternalAttack"), dosya + " saldırı-kapsamlı transaction scope'u kullanmıyor (DT-1/3).");
-                Assert.IsFalse(Regex.IsMatch(kod, @"DamageTransaction\s*\.\s*Begin\s*\("), dosya + " kendi transaction'ını açıyor (DT-4).");
-            }
+            string kod = Kod("Weapons/SpecialImpacts.cs");
+            Assert.IsTrue(Regex.IsMatch(kod, @"DamageTransaction\s*\.\s*Resume\s*\("), "zincir, merminin işlemini sürdürmüyor (DT-1/3).");
+            Assert.IsFalse(Regex.IsMatch(kod, @"DamageTransaction\s*\.\s*Begin\s*\("), "SpecialImpacts kendi transaction'ını açıyor (DT-4).");
         }
 
         /// <summary>[PB-10] Development-only probe dosya düzeyinde derleme kapısıyla korunur; release'e sembol sızmaz.</summary>

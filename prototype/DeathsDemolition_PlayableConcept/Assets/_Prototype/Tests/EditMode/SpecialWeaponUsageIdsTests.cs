@@ -29,8 +29,8 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             // Fire / loop cues are the WP-007 lifecycle cues the audio map already binds (WP-021 rows).
-            Assert.AreEqual(CombatAudioEvent.HeavyWeaponFire, SpecialWeaponUsage.For(SpecialWeaponId.KaguraBell).FireCue);
-            Assert.AreEqual(CombatAudioEvent.HeavyWeaponSpinUp, SpecialWeaponUsage.For(SpecialWeaponId.TideJewel).ActiveLoop);
+            Assert.AreEqual(CombatAudioEvent.HeavyWeaponFire, SpecialWeaponUsage.For(SpecialWeaponId.Raiju).FireCue);
+            Assert.AreEqual(CombatAudioEvent.HeavyWeaponSpinUp, SpecialWeaponUsage.For(SpecialWeaponId.Namekuji).ActiveLoop);
         }
     }
 }

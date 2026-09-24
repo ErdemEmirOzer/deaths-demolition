@@ -151,6 +151,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ============================================================== 1 · HUD sanatı
 
+        [Ignore("WP-068 R1-B (S-09): the Special HUD v3 / AP-021 Sw.Raiju / Sw.Namekuji glyphs; the Kagura Bell slot left with WP-069 B4")]
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Hud_IkonlarBagli_GuvenliBolgeBos_ReticleVar()
@@ -301,7 +302,7 @@ namespace DD.Prototype.Tests.PlayMode
                 var active = new DD.Prototype.Weapons.SpecialWeaponHudState
                 {
                     Phase = DD.Prototype.Weapons.SpecialWeaponPhase.Active,
-                    WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell,
+                    WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.Raiju,
                     DisplayName = "Kagura Bell",
                     ActiveRemaining = 20f,
                     ActiveDuration = 20f
@@ -309,7 +310,7 @@ namespace DD.Prototype.Tests.PlayMode
                 // WP-022J r2 (AP-020 §2.4 S-8): a pickup raised while the snapshot still names
                 // the PREVIOUS weapon must not print that name - the banner retitles from
                 // the first Active snapshot that carries the new one.
-                var stale = active; stale.DisplayName = "Ofuda Loom"; stale.WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom;
+                var stale = active; stale.DisplayName = "Ofuda Loom"; stale.WeaponId = DD.Prototype.Core.Config.SpecialWeaponId.Namekuji;
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(stale, false);
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecialPickedUp(20f);
                 TMPro.TMP_Text banner = null;
@@ -344,11 +345,11 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(((RectTransform)banner.transform).sizeDelta.x, clip.sizeDelta.x, 1f, "afiş 220 ms'de kendi genişliğine tam açılır");
                 Assert.GreaterOrEqual(clip.sizeDelta.x, Mathf.Ceil(banner.GetPreferredValues(banner.text).x), "uzun afiş maskede kırpılmaz");
                 Assert.AreEqual(1f, ringFill.fillAmount, 0.02f, "alma dolumu 320 ms sonra gerçek ilerlemeye oturur");
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Activated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 20f, 0);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_kagura_bell_ring", Vector3.zero, Vector3.forward, 0f, 0f, 0);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 4f, 0);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 1);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 1);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Activated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 20f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_kagura_bell_ring", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 4f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 1);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 1);
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
                 yield return null;
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
@@ -363,7 +364,7 @@ namespace DD.Prototype.Tests.PlayMode
                 foreach (Image im in hud.GetComponentsInChildren<Image>(true)) if (im.name == "Glyph" && im.GetComponentInParent<Canvas>().name == "SpecialWeapon") glyph = im;
                 Assert.IsNotNull(glyph);
                 Assert.IsTrue(glyph.enabled && glyph.sprite != null && glyph.sprite.name.StartsWith("Sw."), "AP-014 Kagura Bell glifi: " + (glyph.sprite != null ? glyph.sprite.name : "yok"));
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 2);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, "sw_kagura_bell_wave", Vector3.zero, Vector3.forward, 6f, 0f, 2);
                 // The weapon runtime republishes its own (None) state every frame in this
                 // scene, so the fake Active state is re-asserted before each observed frame.
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
@@ -371,7 +372,7 @@ namespace DD.Prototype.Tests.PlayMode
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, false);
                 yield return null;
                 StringAssert.Contains("FIELD ENDED", usage.text);
-                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, DD.Prototype.Weapons.SpecialUsageKind.Deactivated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(DD.Prototype.Core.Config.SpecialWeaponId.Raiju, DD.Prototype.Weapons.SpecialUsageKind.Deactivated, "sw_kagura_bell", Vector3.zero, Vector3.forward, 0f, 0f, 0);
                 yield return null;
                 Assert.AreEqual(string.Empty, usage.text);
                 DD.Prototype.Weapons.SpecialWeaponUsageEvents.ResetForTests();

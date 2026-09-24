@@ -371,7 +371,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ============================================================ TM-28 / TM-29 · REQ-056
 
-        /// <summary>[TM-28][TM-29] Aktif kullanımda mermi tüketilmez ve reload durumuna girilmez (ateş gerçekten olur: pozitif kontrol).</summary>
+        /// <summary>[TM-28][TM-29] Special kullanımı KLASİK magazini tüketmez, klasik reload başlamaz (WP-069 B4: Special kendi şarjörünü kullanır; ateş gerçekten olur: pozitif kontrol).</summary>
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator AktifKullanim_MermiTuketmez_ReloadYok()

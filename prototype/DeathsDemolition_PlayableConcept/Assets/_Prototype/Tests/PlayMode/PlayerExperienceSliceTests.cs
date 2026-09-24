@@ -206,7 +206,7 @@ namespace DD.Prototype.Tests.PlayMode
             SpecialWeaponUsageEvents.Usage += dinle;
             try
             {
-                _s.Controller.ActivateSpecialWeapon(SpecialWeaponId.TideJewel);
+                _s.Controller.ActivateSpecialWeapon(SpecialWeaponId.Namekuji);
                 yield return null;
                 Assert.IsTrue((WeaponEvents.Special.Phase == SpecialWeaponPhase.Active), "Special etkin değil.");
                 Assert.IsTrue(_s.Controller.PickupDonePending, "pickup_done bekleniyor olmalı (WP-042C).");

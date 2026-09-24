@@ -113,6 +113,13 @@ namespace DD.Prototype.Weapons
         // WP-069 B2: the character's motor — movement widens the cone, firing / focus slow the step.
         private PlayerMotor _motor;
 
+        // WP-069 B4: the aim point (Namekuji's top-down arc lands at the cursor) and Raiju's self-shock slow.
+        private PlayerAim _playerAim;
+        private float _selfSlowUntil = -1f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-069 B4: move-speed multiplier while Raiju's self-shock slow lasts (DIRECTION §7a: 0.4 s slow).", true)]
+        private const float SelfShockSlowMultiplier = 0.5f;
+
         // AP-009C clip events resolved by NAME against the S-06 enum (None until WP-032C adds them).
         private static readonly CharacterAnimationEvent s_eject = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.Eject]);
         private static readonly CharacterAnimationEvent s_magOut = CharacterAnimationEvents.Parse(SpecialWeaponUsage.ClipEventNames[(int)WeaponClipEvent.MagOut]);
@@ -213,6 +220,7 @@ namespace DD.Prototype.Weapons
             ReparentRigs();
             _skinned = transform.root.GetComponentInChildren<PlayerSkinnedVisual>(true);
             _motor = transform.root.GetComponentInChildren<PlayerMotor>(true);
+            _playerAim = transform.root.GetComponentInChildren<PlayerAim>(true);
         }
 
         protected override void OnEnable()
@@ -313,7 +321,7 @@ namespace DD.Prototype.Weapons
         /// REQ-055 / REQ-057. The Special Weapon was collected: its clock starts now and
         /// the classic weapon is parked, not discarded.
         /// </summary>
-        public void ActivateSpecialWeapon(SpecialWeaponId id = SpecialWeaponId.KaguraBell)
+        public void ActivateSpecialWeapon(SpecialWeaponId id = SpecialWeaponId.Raiju)
         {
             if (Config == null || _special.IsActive)
             {
@@ -412,7 +420,7 @@ namespace DD.Prototype.Weapons
                 }
                 else
                 {
-                    TickSpecialFiring(fireHeld);
+                    TickSpecialFiring(fireHeld, firePressed, reloadPressed, dt);
                 }
             }
             else
@@ -426,7 +434,9 @@ namespace DD.Prototype.Weapons
 
             if (_motor != null)
             {
-                _motor.WeaponSpeedMultiplier = _special.IsActive ? 1f : _classic.MoveSpeedMultiplier(_firing);
+                float weaponSpeed = _special.IsActive ? 1f : _classic.MoveSpeedMultiplier(_firing);
+                if (Time.time < _selfSlowUntil) weaponSpeed *= SelfShockSlowMultiplier;   // WP-069 B4 Raiju self-shock
+                _motor.WeaponSpeedMultiplier = weaponSpeed;
             }
 
             PublishClassicState(false);
@@ -670,27 +680,40 @@ namespace DD.Prototype.Weapons
 
         // ------------------------------------------------------------------ special firing
 
-        private void TickSpecialFiring(bool fireHeld)
+        private void TickSpecialFiring(bool fireHeld, bool firePressed, bool reloadPressed, float dt)
         {
             if (_specialRig != null)
             {
                 _specialRig.SetSpin(fireHeld ? 1f : 0.15f);
             }
 
-            if (!fireHeld || !CanFireNow())
+            if (!CanFireNow())
             {
                 _special.ClampCooldown();
                 return;
             }
 
-            int shots = 0;
-            while (_special.CanFire && shots < ClassicWeaponRuntime.MaxShotsPerFrame)
+            if (reloadPressed)
+            {
+                _special.TryBeginReload();
+            }
+
+            // WP-069 B4: one shot per cycle at most — Raiju charges first (release cancels), Namekuji is single-fire.
+            if (_special.UpdateTrigger(fireHeld, firePressed, dt))
             {
                 FireSpecialOnce();
-                shots++;
             }
 
             _special.ClampCooldown();
+        }
+
+        /// <summary>WP-069 B4: Raiju's self-shock slows the player for <paramref name="seconds"/> (DIRECTION §7a).</summary>
+        public void ApplySpecialSelfSlow(float seconds)
+        {
+            if (seconds > 0f)
+            {
+                _selfSlowUntil = Mathf.Max(_selfSlowUntil, Time.time + seconds);
+            }
         }
 
         /// <summary>
@@ -723,9 +746,14 @@ namespace DD.Prototype.Weapons
 
         private void FireSpecialOnce()
         {
-            Vector3 origin = Muzzle.position;
+            // Same origin rule as the classic weapon: top-down a fixed height above the root (region parity), the
+            // look modes the muzzle along the camera's aim.
+            Vector3 muzzle = Muzzle.position;
+            bool lookMode = CameraModeService.Current != CameraMode.TopDown;
+            Vector3 origin = lookMode ? muzzle : new Vector3(muzzle.x, transform.root.position.y + _shotRayHeight, muzzle.z);
             Vector3 aim = ResolveAimDirection();
-            WeaponFeel feelRow = FeelRuntime.Current.Weapon(WeaponFeelIds.From(_special.Id));
+            SpecialWeaponId id = _special.Id;
+            WeaponFeel feelRow = FeelRuntime.Current.Weapon(WeaponFeelIds.From(id));
 
             if (_specialRig != null)
             {
@@ -734,35 +762,28 @@ namespace DD.Prototype.Weapons
 
             _host?.OnWeaponFired(SpecialWeaponRuntime.RecoilStrength01, aim);
 
-            // The Kagura Bell has no muzzle: a flash at the barrel would contradict the one
-            // thing that weapon says about itself, which is that the event leaves the whole
-            // character rather than a point on it. The other two are thrown or fired, so
-            // they keep it - and keep it at the Special Weapon's larger scale.
-            if (_special.Id != SpecialWeaponId.KaguraBell)
-            {
-                HitFeedbackDirector.Instance.ReportMuzzleFlash(
-                    Muzzle,
-                    _muzzleFlashSize * _specialFlashMultiplier,
-                    _muzzleFlashLight * _specialFlashMultiplier);
-            }
+            HitFeedbackDirector.Instance.ReportMuzzleFlash(
+                Muzzle,
+                _muzzleFlashSize * _specialFlashMultiplier,
+                _muzzleFlashLight * _specialFlashMultiplier);
 
-            // The bell's pressure front leaves the CHARACTER; the other two leave the
-            // muzzle. This controller lives on the player's aim pivot, so its own
-            // transform IS the character - and passing that rather than the muzzle is
-            // what keeps an aim-free weapon aim-free.
-            Vector3 eventOrigin = _special.Id == SpecialWeaponId.KaguraBell
-                ? transform.position
-                : origin;
-
-            _special.Fire(eventOrigin, aim);
+            bool hasAimPoint = _playerAim != null && _playerAim.HasAimPoint;
+            Vector3 aimPoint = hasAimPoint ? _playerAim.AimWorldPoint : origin + aim * 10f;
+            _special.Fire(origin, aim, aimPoint, hasAimPoint);
 
             ApplyFireShake(feelRow.shakeWeight, WeaponPower.Heavy, aim);
 
             AudioEvents.Raise(CombatAudioEvent.HeavyWeaponFire, origin, 1f, 60);
 
-            // WP-056: Fired — the bell's ring radius / travel, the dart's range, the jewel's throw range.
-            SpecialWeaponUsageEvents.Publish(_special.Id, SpecialUsageKind.Fired, SpecialWeaponUsage.For(_special.Id).FireVfxFamily,
-                eventOrigin, aim, _special.FireRadius, _special.FireSeconds, 0);
+            // WP-056 / WP-069 B4: Fired (radius = the chain hop / puddle radius, seconds = the chain run / puddle life);
+            // Raiju's orb flight is a field that ends at its contact or fizzle (SpecialImpacts).
+            SpecialWeaponUsageEvents.Publish(id, SpecialUsageKind.Fired, SpecialWeaponUsage.For(id).FireVfxFamily,
+                origin, aim, _special.FireRadius, _special.FireSeconds, 0);
+            if (id == SpecialWeaponId.Raiju && _special.Definition != null)
+            {
+                SpecialWeaponUsageEvents.Publish(id, SpecialUsageKind.FieldSpawned, SpecialWeaponUsage.For(id).FieldVfxFamily,
+                    origin, aim, _special.Definition.projectile.sweepRadius, _special.Definition.projectile.maxLifetimeSeconds, 0);
+            }
 
             _special.ConsumeShot();
         }
@@ -909,6 +930,14 @@ namespace DD.Prototype.Weapons
                 state.ActiveRemaining = _special.Remaining;
                 state.ActiveDuration = _special.Duration;
                 state.FinalSecondsWarning = _special.InFinalSeconds;
+                // WP-069 B4 (DEC-097): magazine + reserve counter, charge, reload.
+                state.AmmoInMagazine = _special.Ammo;
+                state.MagazineSize = _special.MagazineSize;
+                state.ReserveAmmo = _special.ReserveAmmo;
+                state.IsReloading = _special.IsReloading;
+                state.ReloadProgress01 = _special.ReloadProgress01;
+                state.Charge01 = _special.Charge01;
+                state.Limit = _special.Definition != null ? _special.Definition.specialLifecycle.limit : SpecialLimit.Time;
 
                 // The ground phase is over; clearing it stops the HUD from drawing a
                 // stale world marker under the player's feet.

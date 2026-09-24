@@ -304,6 +304,9 @@ namespace DD.Prototype.Weapons
         /// <summary>Driver entry: accumulate scaled time and advance in fixed steps.</summary>
         public static void Tick(float deltaTime)
         {
+            // WP-069 B4: the Specials' chains / effects run on the same scaled clock as the projectiles.
+            SpecialImpacts.Tick(deltaTime);
+
             if (deltaTime <= 0f || s_liveCount == 0)
             {
                 if (s_liveCount == 0) s_accumulator = 0f;
@@ -518,6 +521,7 @@ namespace DD.Prototype.Weapons
         private static void OnSceneUnloaded(Scene scene)
         {
             Clear();
+            SpecialImpacts.Clear();
         }
 
         private static void OnRunStarted(int startingRound)

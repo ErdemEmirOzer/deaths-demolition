@@ -1,6 +1,6 @@
-using DD.Prototype.Core;
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Config;
-using DD.Prototype.Core.Pooling;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.Damage;
 using DD.Prototype.Feedback;
 using UnityEngine;
@@ -8,114 +8,77 @@ using UnityEngine;
 namespace DD.Prototype.Weapons
 {
     /// <summary>
-    /// The Special Weapon in the player's hands, whichever of the three it is.
+    /// The Special Weapon in the player's hands — WP-069 B4 (DEC-094: exactly two; DEC-097: ammo + time cap).
     ///
-    /// THE THREE WEAPONS AND WHY THEY ARE THESE THREE
-    /// ----------------------------------------------
-    /// The brief that produced them is blunt: a Special Weapon must not be another gun.
-    /// So none of the three fires a bullet as its point, and no two of them share a verb.
+    ///   Raiju (sw_arc)    CHAIN    A coil gun. Hold the trigger 0.25 s to charge; the orb flies at 14 m/s and the
+    ///                              body it strikes starts a chain of up to 8 (6 m hops, 0.08 s apart) that trembles
+    ///                              and falls. Releasing during the charge cancels without spending the cell.
+    ///                              Resolution: <see cref="SpecialImpacts"/> (orb contact) → S-03's ChainTargetResolver /
+    ///                              ZombieEnemy.ApplyShock.
+    ///   Namekuji (sw_gel) SLIDE    A gel canister. A magenta blob arcs (22 m/s, 12 m/s² — top-down aims the arc at the
+    ///                              cursor, ≤ 20 m); a direct hit liquefies (tier rules) and the ground takes a slippery
+    ///                              puddle (B4b, S-03's GelPuddleRegistry).
     ///
-    ///   Kagura Bell   SWEEP    A shrine bell-tree. The trigger RINGS it and the ring
-    ///                          leaves the player as a pressure front in every direction.
-    ///                          Does not read the cursor at all. The answer to being
-    ///                          surrounded. <see cref="KaguraWaveField"/>.
-    ///
-    ///   Ofuda Loom    BIND     A talisman loom. Shots SEAL bodies for almost no damage;
-    ///                          once enough seals exist, firing into one collapses the
-    ///                          whole net at once. Skill is target selection, not
-    ///                          tracking. <see cref="OfudaSealWeb"/>.
-    ///
-    ///   Tide Jewel    GATHER   Ryujin's tide-jewel. Opens a well that drags the crowd
-    ///                          inward for a couple of seconds and then implodes on the
-    ///                          pile. Rearranges the battlefield rather than clearing it.
-    ///                          <see cref="TideWell"/>.
-    ///
-    /// All three are WEAKER against a single body than the rotary cannon they replace
-    /// (roughly 62 / 45 / 55 damage per second against one target versus the cannon's
-    /// 240) and far stronger against a crowd. That shape is the point: the classic weapon
-    /// stays the single-target tool, and the Special Weapon is what you pick up when
-    /// there are too many of them to shoot one at a time.
-    ///
-    /// WHAT THE REQUEST SEPARATES IS STILL SEPARATED HERE
-    /// -------------------------------------------------
-    ///   REQ-056 unlimited ammo, no reload -> there is no ammo field and no reload path;
-    ///   REQ-055 the active timer starts ON PICKUP -> <see cref="Begin"/> is the only
-    ///           thing that starts <see cref="Remaining"/>, and the ground timer lives in
-    ///           a completely different object (<see cref="SpecialWeaponPickup"/>);
-    ///   REQ-058 final-seconds warning -> <see cref="InFinalSeconds"/> fires once;
-    ///   REQ-059 upgrades do not touch it -> this class has NO reference to
-    ///           <see cref="WeaponModifierState"/>. Not "ignores it" - cannot see it.
-    ///           Adding two more weapons did not add a way in: the three field objects
-    ///           above cannot see it either, and the <see cref="ShotRequest"/> upgrade
-    ///           block is never populated by anything here.
-    ///
-    /// The only tunables it reads are under <c>PrototypeConfig.Weapons.Special</c>,
-    /// re-read every frame's worth of use, so an F1 edit to a duration or a radius
-    /// applies to the weapon already in hand.
+    /// Both are MAGAZINE weapons now (Raiju 3 / 9 cells, Namekuji 8 / 16), reload by cell / canister and leave the hand
+    /// when their ammo is gone OR the time cap runs out (40 s / 45 s), whichever comes first (<see cref="SpecialLimit"/>).
+    /// REQ-055 still holds (the cap clock starts on pickup), REQ-058 the final-seconds warning (time cap), REQ-059 no
+    /// upgrade reaches it (this class cannot see <see cref="WeaponModifierState"/>). Numbers: the WeaponDefinition v3
+    /// assets (Resources/Arsenal sw_arc / sw_gel); the drop rules stay in <c>PrototypeConfig.Weapons.Special</c>.
     /// </summary>
     public sealed class SpecialWeaponRuntime
     {
         private SpecialWeaponConfigSection _settings;
-
-        private readonly KaguraWaveField _waves = new KaguraWaveField();
-        private readonly OfudaSealWeb _web = new OfudaSealWeb();
-
-        private PrototypePool<TideWell> _wellPool;
-
-        // One well template for the whole play session: PoolService keys pools by prefab, so
-        // a template per runtime instance (per Run scene load) would leak a pool under the
-        // DontDestroyOnLoad root on every run (WP-007; same rule as GoldService).
-        private static TideWell s_wellTemplate;
+        private WeaponDefinition _def;
 
         private float _cooldown;
         private bool _finalSecondsFired;
+        private int _reserve;
+        private float _reloadRemaining;
+        private bool _charging;
+        private float _charge;
 
         public bool IsActive { get; private set; }
 
-        /// <summary>Which of the three is in hand. Only meaningful while active.</summary>
-        public SpecialWeaponId Id { get; private set; } = SpecialWeaponId.KaguraBell;
+        /// <summary>Which of the two is in hand. Only meaningful while active.</summary>
+        public SpecialWeaponId Id { get; private set; } = SpecialWeaponId.Raiju;
 
-        /// <summary>Seconds of use left. Only counts down while active.</summary>
+        /// <summary>The weapon's v3 definition (null in a bare test without the Arsenal).</summary>
+        public WeaponDefinition Definition => _def;
+
+        /// <summary>Seconds of the time cap left. Only counts down while active.</summary>
         public float Remaining { get; private set; }
 
-        /// <summary>The duration this activation started with.</summary>
+        /// <summary>The time cap this activation started with (DEC-097: 40 s / 45 s).</summary>
         public float Duration { get; private set; }
 
-        /// <summary>The Kagura Bell's fronts in flight. F1 readout and test hook.</summary>
-        public KaguraWaveField Waves => _waves;
+        // ------------------------------------------------------------------ ammo (DEC-097)
 
-        /// <summary>WP-056: the reach of one primary event — wave radius (bell), dart range (loom), throw range (jewel).</summary>
-        public float FireRadius
-        {
-            get
-            {
-                if (_settings == null) return 0f;
-                switch (Id)
-                {
-                    case SpecialWeaponId.OfudaLoom: return Mathf.Max(1f, _settings.OfudaLoom.Common.Range);
-                    case SpecialWeaponId.TideJewel: return Mathf.Max(1f, _settings.TideJewel.ThrowRange);
-                    default: return Mathf.Max(1f, _settings.KaguraBell.WaveRadius);
-                }
-            }
-        }
+        public int Ammo { get; private set; }
 
-        /// <summary>WP-056: the duration one primary event's field lasts — wave travel (bell), seal seconds (loom), well seconds (jewel).</summary>
-        public float FireSeconds
-        {
-            get
-            {
-                if (_settings == null) return 0f;
-                switch (Id)
-                {
-                    case SpecialWeaponId.OfudaLoom: return Mathf.Max(0.2f, _settings.OfudaLoom.SealSeconds);
-                    case SpecialWeaponId.TideJewel: return Mathf.Max(0.2f, _settings.TideJewel.WellSeconds);
-                    default: return Mathf.Max(0.05f, _settings.KaguraBell.WaveTravelSeconds);
-                }
-            }
-        }
+        public int MagazineSize => _def != null ? Mathf.Max(1, _def.ammo.magazine) : 1;
 
-        /// <summary>The Ofuda Loom's live web. F1 readout and test hook.</summary>
-        public OfudaSealWeb Web => _web;
+        public int ReserveAmmo => _reserve;
+
+        public bool IsReloading => _reloadRemaining > 0f;
+
+        public float ReloadDuration { get; private set; }
+
+        public float ReloadRemaining => Mathf.Max(0f, _reloadRemaining);
+
+        public float ReloadProgress01 => ReloadDuration > 0f && IsReloading ? Mathf.Clamp01(1f - _reloadRemaining / ReloadDuration) : 0f;
+
+        /// <summary>Magazine and reserve both empty (and no reload running): the weapon leaves the hand.</summary>
+        public bool OutOfAmmo => !IsReloading && Ammo <= 0 && _reserve <= 0;
+
+        // ------------------------------------------------------------------ charge (Raiju)
+
+        public float ChargeSeconds => _def != null ? Mathf.Max(0f, _def.fire.chargeSeconds) : 0f;
+
+        public bool IsCharging => _charging;
+
+        public float Charge01 => _charging && ChargeSeconds > 0f ? Mathf.Clamp01(_charge / ChargeSeconds) : 0f;
+
+        // ------------------------------------------------------------------ readouts
 
         private SpecialWeaponCommon Common => _settings != null ? _settings.Common(Id) : null;
 
@@ -124,81 +87,59 @@ namespace DD.Prototype.Weapons
             get
             {
                 SpecialWeaponCommon common = Common;
-                return common != null && !string.IsNullOrEmpty(common.DisplayName)
-                    ? common.DisplayName
-                    : Id.ToString();
+                return common != null && !string.IsNullOrEmpty(common.DisplayName) ? common.DisplayName : Id.ToString();
             }
         }
 
-        public float Damage
-        {
-            get
-            {
-                SpecialWeaponCommon common = Common;
-                return common != null ? common.Damage : 20f;
-            }
-        }
+        public float Damage => Common != null ? Common.Damage : 0f;
 
-        public float FireRate
-        {
-            get
-            {
-                SpecialWeaponCommon common = Common;
-                return common != null ? Mathf.Max(0.05f, common.FireRate) : 3f;
-            }
-        }
+        /// <summary>Cycles per second (Raiju's charge comes on top).</summary>
+        public float FireRate => Common != null ? Mathf.Max(0.05f, Common.FireRate) : 1f;
 
         public float ShotInterval => 1f / FireRate;
 
-        public float RangeMetres
-        {
-            get
-            {
-                SpecialWeaponCommon common = Common;
-                return common != null ? Mathf.Max(1f, common.Range) : 30f;
-            }
-        }
+        public float RangeMetres => Common != null ? Mathf.Max(1f, Common.Range) : 30f;
 
         /// <summary>Reaction force per primary event, in <see cref="DamageForce"/> units.</summary>
-        public float ImpactForce
+        public float ImpactForce => Common != null ? Mathf.Max(0f, Common.ImpactForce) : 0f;
+
+        public float CameraShakeScale => Common != null ? Mathf.Max(0f, Common.CameraShake) : 0.4f;
+
+        public float RecoilKick => Common != null ? Mathf.Max(0f, Common.RecoilKick) : 0.08f;
+
+        /// <summary>WP-056 usage payload: the reach of one primary event — the chain's hop radius (Raiju), the puddle radius (Namekuji).</summary>
+        public float FireRadius
         {
             get
             {
-                SpecialWeaponCommon common = Common;
-                return common != null ? Mathf.Max(0f, common.ImpactForce) : 2.5f;
+                if (_def == null) return 0f;
+                return Id == SpecialWeaponId.Namekuji ? _def.gelPuddle.puddleRadius : _def.arcChain.jumpRadius;
             }
         }
 
-        public float CameraShakeScale
+        /// <summary>WP-056 usage payload: how long one primary event lasts — the chain's run (Raiju), a puddle's life (Namekuji).</summary>
+        public float FireSeconds
         {
             get
             {
-                SpecialWeaponCommon common = Common;
-                return common != null ? Mathf.Max(0f, common.CameraShake) : 0.4f;
-            }
-        }
-
-        public float RecoilKick
-        {
-            get
-            {
-                SpecialWeaponCommon common = Common;
-                return common != null ? Mathf.Max(0f, common.RecoilKick) : 0.08f;
+                if (_def == null) return 0f;
+                return Id == SpecialWeaponId.Namekuji
+                    ? _def.gelPuddle.puddleLifetimeSeconds
+                    : Mathf.Max(0, _def.arcChain.maxTargets - 1) * _def.arcChain.jumpDelaySeconds + _def.arcChain.shockSeconds;
             }
         }
 
         /// <summary>Always Heavy. That is what earns every Special Weapon hit-stop on solid hits.</summary>
         public WeaponPower Power => WeaponPower.Heavy;
 
-        /// <summary>True once the active timer is inside the warning window (REQ-058).</summary>
+        /// <summary>True once the time cap is inside the warning window (REQ-058).</summary>
         public bool InFinalSeconds =>
             IsActive && _settings != null && Remaining <= Mathf.Max(0f, _settings.FinalSecondsWarning);
 
-        /// <summary>
-        /// PROTOTYPE-ONLY per-event character kick. Uniform across the three: the
-        /// character rig reads a 0-1 weight rather than a weapon, and all three are Heavy.
-        /// </summary>
+        /// <summary>PROTOTYPE-ONLY per-event character kick (0-1 weight for the character rig).</summary>
         public const float RecoilStrength01 = 0.3f;
+
+        // ------------------------------------------------------------------ lifecycle
 
         /// <summary>Re-read the config. Safe to call every frame.</summary>
         public void ApplySettings(SpecialWeaponConfigSection settings)
@@ -207,28 +148,30 @@ namespace DD.Prototype.Weapons
         }
 
         /// <summary>
-        /// REQ-055. The clock starts here and nowhere else - specifically NOT when the
-        /// weapon spawned on the map.
+        /// REQ-055. The clock starts here and nowhere else - specifically NOT when the weapon spawned on the map.
+        /// Full magazine and reserve, the definition's time cap.
         /// </summary>
         /// <param name="raisePickedUp">
-        /// WP-059C: false lets the owner raise <c>SpecialWeaponPickedUp</c> itself AFTER it has
-        /// published the Active snapshot (S-09 reads the new weapon's name from the snapshot in
-        /// the PickedUp handler; the old order left the previous weapon's name there).
+        /// WP-059C: false lets the owner raise <c>SpecialWeaponPickedUp</c> itself AFTER it has published the Active
+        /// snapshot (S-09 reads the new weapon's name from the snapshot in the PickedUp handler).
         /// </param>
         public void Begin(SpecialWeaponConfigSection settings, SpecialWeaponId id, bool raisePickedUp = true)
         {
             _settings = settings;
             Id = id;
+            _def = settings != null ? settings.Common(id).Definition : SpecialWeaponConfigSection.DefinitionOf(id);
 
-            Duration = settings != null ? Mathf.Max(0.5f, settings.ActiveDuration) : 11f;
+            Duration = settings != null ? settings.CapSeconds(id) : (_def != null && _def.specialLifecycle.activeCapSeconds > 0f ? _def.specialLifecycle.activeCapSeconds : 11f);
             Remaining = Duration;
             IsActive = true;
             _cooldown = 0f;
             _finalSecondsFired = false;
-
-            _waves.Clear();
-            _web.Clear();
-            TideWell.CloseAll();
+            Ammo = MagazineSize;
+            _reserve = _def != null ? Mathf.Max(0, _def.ammo.reserve) : 0;
+            _reloadRemaining = 0f;
+            ReloadDuration = 0f;
+            _charging = false;
+            _charge = 0f;
 
             AudioEvents.RaiseCritical(CombatAudioEvent.SpecialWeaponPickup, Vector3.zero, 1f, 90);
             AudioEvents.RaiseLoop(CombatAudioEvent.HeavyWeaponSpinUp, Vector3.zero, 1f, 85);
@@ -238,22 +181,16 @@ namespace DD.Prototype.Weapons
             }
         }
 
-        /// <summary>
-        /// The activation ran its course (or the debug panel ended it as if it had): the
-        /// player LOST the weapon, and the expiry news cue says so. Idempotent.
-        /// </summary>
+        /// <summary>The activation ran its course (ammo or cap): the player LOST the weapon. Idempotent.</summary>
         public void End()
         {
             Finish(false);
         }
 
         /// <summary>
-        /// WP-007 (AP-10, OS-2): the activation is stopped by something other than its own
-        /// timer - run end, death, new run, teardown. Same clean-up as <see cref="End"/>
-        /// (fields, loop, Ended event so the classic weapon comes back), but the "you lost
-        /// it" news cue is not played: there is nobody to tell, or the run is over. The
-        /// lifecycle owner (the director / controller) publishes the Cancelled transition.
-        /// Idempotent.
+        /// WP-007 (AP-10, OS-2): stopped by something other than its own limits - run end, death, new run, teardown.
+        /// Same clean-up as <see cref="End"/> without the "you lost it" news cue. Idempotent. Orbs / chains already
+        /// in flight finish on their own (they are projectiles now, not fields of this object).
         /// </summary>
         public void Cancel()
         {
@@ -269,20 +206,11 @@ namespace DD.Prototype.Weapons
 
             IsActive = false;
             Remaining = 0f;
-
-            // Every field object dies with the weapon. A seal that outlived the loom would
-            // be a talisman with no owner, and a well that outlived the jewel would keep
-            // spending the crowd budget for a weapon that is no longer in the run.
-            _waves.Clear();
-            _web.Clear();
-            TideWell.CloseAll();
+            _reloadRemaining = 0f;
+            _charging = false;
+            _charge = 0f;
 
             AudioEvents.StopLoop(CombatAudioEvent.HeavyWeaponSpinUp);
-
-            // Two separate cues on purpose: the spin-down is the OBJECT winding to a halt,
-            // the expiry is the NEWS that the player has lost it. The audio task can voice
-            // them completely differently per weapon. A cancel keeps the object's spin-down
-            // and drops the news.
             AudioEvents.RaiseCritical(CombatAudioEvent.HeavyWeaponSpinDown, Vector3.zero, 1f, 85);
             if (!cancelled)
             {
@@ -293,9 +221,8 @@ namespace DD.Prototype.Weapons
         }
 
         /// <summary>
-        /// Advance the clocks and every live field. Returns true on the frame the
-        /// activation ends, which is the controller's cue to hand the classic weapon back
-        /// (REQ-057).
+        /// Advance the clocks: cooldown, reload, the time cap. Returns true on the frame the activation ends (cap
+        /// reached, or magazine and reserve empty), the controller's cue to hand the classic weapon back (REQ-057).
         /// </summary>
         public bool Tick(float dt)
         {
@@ -309,15 +236,18 @@ namespace DD.Prototype.Weapons
                 _cooldown -= dt;
             }
 
-            switch (Id)
+            if (_reloadRemaining > 0f)
             {
-                case SpecialWeaponId.KaguraBell:
-                    _waves.Tick(dt);
-                    break;
-
-                case SpecialWeaponId.OfudaLoom:
-                    _web.Tick(dt);
-                    break;
+                _reloadRemaining -= dt;
+                if (_reloadRemaining <= 0f)
+                {
+                    _reloadRemaining = 0f;
+                    int take = Mathf.Min(MagazineSize - Ammo, _reserve);
+                    Ammo += take;
+                    _reserve -= take;
+                    SpecialWeaponUsageEvents.Publish(Id, SpecialUsageKind.ReloadEnded, SpecialWeaponUsage.For(Id).FireVfxFamily,
+                        Vector3.zero, Vector3.forward, 0f, ReloadDuration, Ammo);
+                }
             }
 
             Remaining -= dt;
@@ -329,7 +259,10 @@ namespace DD.Prototype.Weapons
                 AudioEvents.RaiseCritical(CombatAudioEvent.SpecialWeaponFinalSeconds, Vector3.zero, 1f, 95);
             }
 
-            if (Remaining > 0f)
+            SpecialLimit limit = _def != null ? _def.specialLifecycle.limit : SpecialLimit.Time;
+            bool timeUp = Remaining <= 0f && limit != SpecialLimit.Ammo;
+            bool ammoOut = OutOfAmmo && limit != SpecialLimit.Time;
+            if (!timeUp && !ammoOut)
             {
                 return false;
             }
@@ -338,11 +271,86 @@ namespace DD.Prototype.Weapons
             return true;
         }
 
-        public bool CanFire => IsActive && _cooldown <= 0f;
+        /// <summary>The weapon can release a shot right now (cycle over, a round in the magazine, not reloading).</summary>
+        public bool CanFire => IsActive && _cooldown <= 0f && Ammo > 0 && !IsReloading;
 
+        /// <summary>
+        /// WP-069 B4 trigger rules, one call per frame after <see cref="Tick"/>. Returns true when a shot leaves now.
+        /// Namekuji: single, a held trigger refires at the cycle ceiling. Raiju: the trigger starts a
+        /// <see cref="ChargeSeconds"/> charge; holding through it fires, releasing cancels (no ammo spent).
+        /// </summary>
+        public bool UpdateTrigger(bool held, bool pressed, float dt)
+        {
+            if (!IsActive)
+            {
+                return false;
+            }
+
+            float charge = ChargeSeconds;
+            if (charge <= 0f)
+            {
+                return (held || pressed) && CanFire;
+            }
+
+            if (_charging)
+            {
+                if (!held && !pressed)
+                {
+                    _charging = false;
+                    _charge = 0f;
+                    SpecialWeaponUsageEvents.Publish(Id, SpecialUsageKind.ChargeCancelled, SpecialWeaponUsage.For(Id).FireVfxFamily,
+                        Vector3.zero, Vector3.forward, 0f, 0f, 0);
+                    return false;
+                }
+
+                _charge += dt;
+                if (_charge + 1e-5f < charge)
+                {
+                    return false;
+                }
+
+                _charging = false;
+                _charge = 0f;
+                return CanFire;
+            }
+
+            if ((held || pressed) && CanFire)
+            {
+                _charging = true;
+                _charge = 0f;
+                SpecialWeaponUsageEvents.Publish(Id, SpecialUsageKind.ChargeStarted, SpecialWeaponUsage.For(Id).FireVfxFamily,
+                    Vector3.zero, Vector3.forward, 0f, charge, 0);
+            }
+
+            return false;
+        }
+
+        /// <summary>Book-keeping for one shot: the round, the cycle, and the automatic reload on the last round.</summary>
         public void ConsumeShot()
         {
             _cooldown += ShotInterval;
+            Ammo = Mathf.Max(0, Ammo - 1);
+            if (Ammo <= 0)
+            {
+                TryBeginReload();
+            }
+        }
+
+        /// <summary>Start a cell / canister change (reload key, or automatically on the last round). False when full, empty-handed or already reloading.</summary>
+        public bool TryBeginReload()
+        {
+            if (!IsActive || IsReloading || Ammo >= MagazineSize || _reserve <= 0 || _def == null)
+            {
+                return false;
+            }
+
+            _charging = false;
+            _charge = 0f;
+            ReloadDuration = Mathf.Max(0.05f, Ammo <= 0 ? _def.ammo.reloadEmptySeconds : _def.ammo.reloadTacSeconds);
+            _reloadRemaining = ReloadDuration;
+            SpecialWeaponUsageEvents.Publish(Id, SpecialUsageKind.ReloadStarted, SpecialWeaponUsage.For(Id).FireVfxFamily,
+                Vector3.zero, Vector3.forward, 0f, ReloadDuration, Ammo);
+            return true;
         }
 
         public void ClampCooldown()
@@ -354,216 +362,76 @@ namespace DD.Prototype.Weapons
             }
         }
 
-        /// <summary>One primary event, whatever that means for the weapon in hand.</summary>
-        public void Fire(Vector3 origin, Vector3 aimDirection)
+        // ------------------------------------------------------------------ firing
+
+        /// <summary>The Arsenal runtime index a Special's projectiles carry (100 Raiju, 101 Namekuji).</summary>
+        public static ClassicWeaponId ProjectileWeaponId(SpecialWeaponId id) => (ClassicWeaponId)(100 + (int)id);
+
+        /// <summary>The Special behind a projectile's weapon index, false for classic projectiles.</summary>
+        public static bool TryGetSpecial(ClassicWeaponId projectileWeapon, out SpecialWeaponId id)
         {
-            if (!IsActive || _settings == null)
+            int v = (int)projectileWeapon - 100;
+            id = v == 1 ? SpecialWeaponId.Namekuji : SpecialWeaponId.Raiju;
+            return v == 0 || v == 1;
+        }
+
+        /// <summary>
+        /// One primary event: the orb / the blob leaves <paramref name="origin"/> as a projectile. Raiju flies along the aim
+        /// (top-down planar, look modes 3D — an orb into the floor fizzles; review R1-A #4). Namekuji arcs: top-down pitches
+        /// the throw so it lands at the cursor (≤ autoArcMaxRange), look modes throw along the 3D aim under gravity.
+        /// </summary>
+        public void Fire(Vector3 origin, Vector3 aimDirection, Vector3 aimPoint, bool hasAimPoint)
+        {
+            if (!IsActive || _def == null)
             {
                 return;
             }
 
-            switch (Id)
+            Vector3 direction = aimDirection.sqrMagnitude > 1e-6f ? aimDirection.normalized : Vector3.forward;
+            if (Id == SpecialWeaponId.Namekuji && CameraModeService.Current == CameraMode.TopDown)
             {
-                case SpecialWeaponId.OfudaLoom:
-                    FireLoom(origin, aimDirection);
-                    break;
-
-                case SpecialWeaponId.TideJewel:
-                    FireJewel(origin, aimDirection);
-                    break;
-
-                default:
-                    FireBell(origin);
-                    break;
+                direction = ArcDirection(origin, direction, aimPoint, hasAimPoint, _def);
             }
-        }
 
-        // ------------------------------------------------------------------ Kagura Bell
-
-        private void FireBell(Vector3 origin)
-        {
-            // The front leaves the PLAYER, not the muzzle. A pressure ring starting half a
-            // metre to one side would reach the two sides of a surrounding crowd at
-            // different times, which is exactly the confusion an aim-free weapon must not
-            // have.
-            _waves.Emit(origin, _settings.KaguraBell);
-        }
-
-        // ------------------------------------------------------------------ Ofuda Loom
-
-        private void FireLoom(Vector3 origin, Vector3 aimDirection)
-        {
-            OfudaLoomSettings loom = _settings.OfudaLoom;
-
-            var request = new ShotRequest
+            var shot = new ShotRequest
             {
                 Origin = origin,
-                Direction = aimDirection,
-                Damage = loom.Common.Damage,
-                Range = Mathf.Max(1f, loom.Common.Range),
-                ImpactForce = loom.Common.ImpactForce,
-                Source = DamageSourceKind.Bullet,
-                Power = WeaponPower.Light,
-
-                PierceTargets = 0,
+                Direction = direction,
+                Damage = _def.fire.damage,
+                Range = RangeMetres,
+                ImpactForce = ImpactForce,
+                Source = Id == SpecialWeaponId.Raiju ? DamageSourceKind.Chain : DamageSourceKind.Bullet,
+                Power = WeaponPower.Heavy,
                 PierceDamageFalloff = 1f,
-
-                DrawTracer = true,
-                TracerWidth = 0.03f,
-                TracerLifetime = 0.07f
+                DrawTracer = false
             };
 
-            ShotResult result = HitscanEngine.Fire(request);
-
-            if (result.EnemiesHit <= 0)
-            {
-                return;
-            }
-
-            // The dart has already done its damage through the shared path. What is left
-            // is the talisman, which needs the TARGET rather than the ray - resolved from
-            // the impact point rather than by casting the same ray twice.
-            if (!TryResolveNearest(result.EndPoint, out DamageTarget target))
-            {
-                return;
-            }
-
-            bool alreadySealed = _web.IsSealed(target.Id);
-
-            if (alreadySealed && _web.ArmedSealCount >= Mathf.Max(1, loom.MinSealsToCollapse))
-            {
-                _web.Collapse(loom);
-                return;
-            }
-
-            _web.ApplySeal(target, loom);
+            ProjectileLaunch launch = ProjectileLaunch.From(_def, ProjectileWeaponId(Id), RangeMetres);
+            ProjectileSystem.Spawn(shot, launch);
         }
 
-        /// <summary>
-        /// PROTOTYPE-ONLY: how far from the impact point the talisman looks for the body it
-        /// belongs on. Comfortably inside one enemy's own radius.
-        /// </summary>
-        private const float SealResolveRadius = 1.1f;
-
-        private static readonly System.Collections.Generic.List<DamageTarget> s_resolveScratch =
-            new System.Collections.Generic.List<DamageTarget>(8);
-
-        private static bool TryResolveNearest(Vector3 point, out DamageTarget target)
+        /// <summary>Top-down gel throw: the low ballistic angle that lands the blob at the cursor distance (clamped to the auto-arc range).</summary>
+        public static Vector3 ArcDirection(Vector3 origin, Vector3 planarAim, Vector3 aimPoint, bool hasAimPoint, WeaponDefinition def)
         {
-            target = default;
+            Vector3 flat = planarAim;
+            flat.y = 0f;
+            if (flat.sqrMagnitude < 1e-6f) flat = Vector3.forward;
+            flat.Normalize();
 
-            int count = HitscanEngine.OverlapEnemies(point, SealResolveRadius, s_resolveScratch);
-            if (count == 0)
+            float maxRange = def != null && def.gelPuddle.autoArcMaxRange > 0f ? def.gelPuddle.autoArcMaxRange : 20f;
+            float distance = maxRange;
+            if (hasAimPoint)
             {
-                return false;
+                Vector3 d = aimPoint - origin;
+                d.y = 0f;
+                distance = Mathf.Clamp(d.magnitude, 1f, maxRange);
             }
 
-            float bestSqr = float.MaxValue;
-            bool found = false;
-
-            for (int i = 0; i < count; i++)
-            {
-                DamageTarget candidate = s_resolveScratch[i];
-                if (!candidate.IsValid)
-                {
-                    continue;
-                }
-
-                float sqr = (HitscanEngine.CentreOf(candidate) - point).sqrMagnitude;
-                if (sqr >= bestSqr)
-                {
-                    continue;
-                }
-
-                bestSqr = sqr;
-                target = candidate;
-                found = true;
-            }
-
-            return found;
-        }
-
-        // ------------------------------------------------------------------ Tide Jewel
-
-        private void FireJewel(Vector3 origin, Vector3 aimDirection)
-        {
-            TideJewelSettings jewel = _settings.TideJewel;
-
-            if (TideWell.LiveCount >= Mathf.Max(1, jewel.MaxWells))
-            {
-                // Refusing the throw rather than recycling the oldest well is deliberate: a
-                // well that vanished before it imploded would take the crowd it had already
-                // gathered with it, and the player would have no way to tell why.
-                return;
-            }
-
-            EnsureWellPool();
-            if (_wellPool == null)
-            {
-                return;
-            }
-
-            Vector3 landing = ResolveLanding(origin, aimDirection, Mathf.Max(1f, jewel.ThrowRange));
-
-            TideWell well = _wellPool.Get(landing, Quaternion.identity);
-            if (well != null)
-            {
-                well.Begin(jewel);
-            }
-        }
-
-        /// <summary>
-        /// PROTOTYPE-ONLY: how far above the landing point the ground is probed from, so a
-        /// well thrown over flat ground still ends up on the floor.
-        /// </summary>
-        private const float JewelGroundProbe = 6f;
-
-        private static Vector3 ResolveLanding(Vector3 origin, Vector3 aimDirection, float range)
-        {
-            Vector3 direction = aimDirection.sqrMagnitude > 0.0001f ? aimDirection.normalized : Vector3.forward;
-
-            Vector3 landing = origin + direction * range;
-
-            // First along the aim ray, so a jewel thrown at a wall lands at its foot rather
-            // than inside it.
-            if (Physics.Raycast(origin, direction, out RaycastHit forward, range,
-                    PrototypeLayers.BulletHitMask, QueryTriggerInteraction.Ignore))
-            {
-                landing = forward.point - direction * 0.5f;
-            }
-
-            // Then straight down, so it always ends up on a surface.
-            if (Physics.Raycast(landing + Vector3.up * JewelGroundProbe, Vector3.down, out RaycastHit down,
-                    JewelGroundProbe * 2f, PrototypeLayers.BulletHitMask, QueryTriggerInteraction.Ignore))
-            {
-                landing = down.point;
-            }
-
-            return landing;
-        }
-
-        private void EnsureWellPool()
-        {
-            if (_wellPool != null)
-            {
-                return;
-            }
-
-            if (s_wellTemplate == null)
-            {
-                s_wellTemplate = TideWell.CreateTemplate();
-            }
-
-            // Capacity is the shipped MaxWells plus headroom: a well is released on the
-            // frame it implodes, and the very next throw must not have to wait for the
-            // free list.
-            _wellPool = PoolService.GetOrCreate(s_wellTemplate, 2, 4, PoolExhaustedPolicy.RecycleOldest);
-        }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStatics()
-        {
-            s_wellTemplate = null;
+            float v = def != null ? Mathf.Max(1f, def.projectile.speed) : 22f;
+            float g = def != null ? Mathf.Max(0.01f, def.projectile.gravity) : 12f;
+            float s = Mathf.Clamp(g * distance / (v * v), -1f, 1f);
+            float theta = 0.5f * Mathf.Asin(s);   // flat-ground low solution; the drop from shot height lands it a touch long
+            return (flat * Mathf.Cos(theta) + Vector3.up * Mathf.Sin(theta)).normalized;
         }
     }
 }

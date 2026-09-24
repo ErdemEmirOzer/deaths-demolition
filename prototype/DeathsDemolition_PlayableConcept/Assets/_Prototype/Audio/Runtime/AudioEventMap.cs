@@ -486,7 +486,8 @@ namespace DD.Prototype.Audio
         /// <summary>WP-058: per-Special usage voice for a WP-056 usage kind; None when the kind is covered by an existing cue.</summary>
         public static AudioSoundId SpecialUsage(DD.Prototype.Core.Config.SpecialWeaponId id, DD.Prototype.Weapons.SpecialUsageKind kind)
         {
-            int w = id == DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom ? 1 : id == DD.Prototype.Core.Config.SpecialWeaponId.TideJewel ? 2 : 0;
+            // WP-069 B4 interim (S-02, until S-08's SW_ARC / SW_GEL wiring): Raiju on the old bell row, Namekuji on the loom row.
+            int w = id == DD.Prototype.Core.Config.SpecialWeaponId.Namekuji ? 1 : 0;
             switch (kind)
             {
                 case DD.Prototype.Weapons.SpecialUsageKind.Fired: return (AudioSoundId)((int)AudioSoundId.SwFireKagura + w);

@@ -30,10 +30,6 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly Dictionary<int, float> _lastStep = new Dictionary<int, float>(ThrottleCapacity);
         // WP-047D: per-body throttle for the Special Hit events (the Tide well ticks every frame) + the well's centre for the arc.
         private readonly Dictionary<int, float> _lastSpecialHit = new Dictionary<int, float>(ThrottleCapacity);
-        private Vector3 _tideWellCentre;
-        private bool _tideWellLive;
-        private Vector3 _ofudaFireOrigin;
-        private float _ofudaFiredAt = -1f;
         private readonly RaycastHit[] _hits = new RaycastHit[1];
         private int _mask;
         private bool _subscribed;
@@ -114,22 +110,11 @@ namespace DD.Prototype.Feedback.Vfx
         {
             switch (e.Kind)
             {
+                // WP-069 B4 interim (S-02): the Ofuda dart / Tide well cases left with the two weapons; S-07's sw_arc /
+                // sw_gel sheets replace the Raiju / Namekuji mapping below (B6).
                 case SpecialUsageKind.Fired:
-                    if (e.Id == SpecialWeaponId.OfudaLoom) { _ofudaFireOrigin = e.Origin; _ofudaFiredAt = Time.time; }
-                    return;
                 case SpecialUsageKind.FieldSpawned:
-                    if (e.Id == SpecialWeaponId.TideJewel)
-                    {
-                        _tideWellCentre = e.Origin; _tideWellLive = true;
-                        _owner.PlayTideWell(e.Origin, e.Radius, e.Seconds);   // WP-047E: AP-014C vortex loop under the well
-                    }
-                    return;
                 case SpecialUsageKind.FieldEnded:
-                    if (e.Id == SpecialWeaponId.TideJewel)
-                    {
-                        _tideWellLive = false;
-                        if (_owner.PlayTideImplode(e.Origin, e.Radius)) TideImplodes++;
-                    }
                     return;
                 case SpecialUsageKind.Hit:
                     break;
@@ -155,23 +140,13 @@ namespace DD.Prototype.Feedback.Vfx
             bool played = false;
             switch (e.Id)
             {
-                case SpecialWeaponId.KaguraBell:
+                case SpecialWeaponId.Raiju:
+                    // WP-069 B4 interim (S-02): the hop's arc from the previous body (e.Origin) to this one + the old hit puff.
+                    if (_owner.PlayChainArc(e.Origin, feet + Vector3.up * 0.9f)) ChainArcs++;
                     played = _owner.PlayKaguraHit(feet, e.Direction);
                     break;
-                case SpecialWeaponId.OfudaLoom:
-                    {
-                        // WP-047E (AD M1 + AP-014C): the net is three thread loops around the torso (thread tile on the link lines),
-                        // the dart frame lands at the seal and its thread trail runs back to the loom for a quarter second.
-                        HitFeedbackDirector director = HitFeedbackDirector.Instance;
-                        played = director != null && director.ReportOfudaNet(body, e.Origin, e.Seconds);
-                        Vector3 flight = _ofudaFiredAt >= 0f && now - _ofudaFiredAt < 1f ? e.Origin - _ofudaFireOrigin : e.Direction;
-                        played |= _owner.PlayOfudaDart(e.Origin, flight);
-                        if (director != null && _ofudaFiredAt >= 0f && now - _ofudaFiredAt < 1f) director.ReportOfudaTrail(_ofudaFireOrigin, e.Origin);
-                    }
-                    break;
-                case SpecialWeaponId.TideJewel:
-                    played = _owner.PlayTidePull(feet, e.Direction);
-                    if (_tideWellLive && _owner.PlayChainArc(_tideWellCentre + Vector3.up * 0.4f, feet + Vector3.up * 0.9f)) ChainArcs++;
+                case SpecialWeaponId.Namekuji:
+                    played = _owner.PlayKaguraHit(feet, e.Direction);
                     break;
             }
 

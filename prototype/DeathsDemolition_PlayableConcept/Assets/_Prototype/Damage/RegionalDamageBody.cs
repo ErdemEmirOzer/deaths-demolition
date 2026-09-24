@@ -139,7 +139,8 @@ namespace DD.Prototype.Damage
 
             ArmorSlot slot = DamageRegions.SlotFor(hit.Region);
 
-            if (Armor.Protects(slot))
+            // WP-069 B4: a Special (electricity / gel) passes regional armour — the plate is neither hit nor broken.
+            if (Armor.Protects(slot) && !DamageHitContext.IgnoreArmor)
             {
                 // ---- protected: nothing reaches health, no matter how big the hit is.
                 // WP-069: the weapon's armour multiplier scales what the plate takes (sr_1 ×1.6 cracks, smg_1 ×0.7 scratches).

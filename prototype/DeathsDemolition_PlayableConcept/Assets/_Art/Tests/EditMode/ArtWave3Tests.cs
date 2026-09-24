@@ -75,7 +75,7 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.AreEqual(19f, library.FindSheet(VfxIds.SwKaguraWave).worldSizeMetres, 0.01f, "Kagura ring 19 m (manifest)");
-            Assert.AreEqual("sw_kagura_wave", SpecialWeaponUsage.For(SpecialWeaponId.KaguraBell).FireVfxFamily);
+            Assert.AreEqual("sw_arc_orb", SpecialWeaponUsage.For(SpecialWeaponId.Raiju).FireVfxFamily);   // WP-069 B4 (DEC-094)
         }
 
         [Test]

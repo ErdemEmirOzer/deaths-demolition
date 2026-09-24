@@ -39,9 +39,9 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(1024, baseMap.height);
         }
 
-        [TestCase(SpecialWeaponId.KaguraBell)]
-        [TestCase(SpecialWeaponId.OfudaLoom)]
-        [TestCase(SpecialWeaponId.TideJewel)]   // WP-059C · AP-014D
+        // WP-069 B4: Raiju / Namekuji show the library's slot 0 / 1 models (the old bell / loom) until the AP-021 Specials.
+        [TestCase(SpecialWeaponId.Raiju)]
+        [TestCase(SpecialWeaponId.Namekuji)]
         public void Silah_PickupVeElModeli_LOD0_2_Butce(SpecialWeaponId id)
         {
             SpecialWeaponVisualLibrary.Entry e = Library.Find(id);
@@ -74,16 +74,18 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(0, e.handLods[0].bindposes.Length, id + " el modeli skinned görünüyor (rijit olmalı).");
         }
 
-        /// <summary>WP-059C · AP-014D: the Tide Jewel joined the library (hand 1800/600/200, pickup 1450/510/147 — under the AP-014B budgets); the WP-007 placeholder is gone for all three.</summary>
+        /// <summary>WP-069 B4: every Special has a library entry (placeholder models until AP-021 re-keys the library by sw_arc / sw_gel).</summary>
         [Test]
-        public void TideJewel_AP014D_ModeliVar_UcSilahTam()
+        public void HerSpecial_KutuphaneGirdisiVar()
         {
-            SpecialWeaponVisualLibrary.Entry e = Library.Find(SpecialWeaponId.TideJewel);
-            Assert.IsNotNull(e, "AP-014D Tide Jewel girdisi yok.");
-            Assert.IsTrue(e.HasPickup && e.HasHand);
-            Assert.LessOrEqual(e.handTriangles[0], 1800, "AP-014D hand LOD0 1800");
-            Assert.LessOrEqual(e.pickupTriangles[0], 1450, "AP-014D pickup LOD0 1450");
-            Assert.AreEqual(3, Library.entries.Length, "üç Special Weapon da kütüphanede");
+            foreach (SpecialWeaponId id in SpecialWeaponConfigSection.All)
+            {
+                SpecialWeaponVisualLibrary.Entry e = Library.Find(id);
+                Assert.IsNotNull(e, id + " girdisi yok.");
+                Assert.IsTrue(e.HasPickup && e.HasHand, id + " el / pickup modeli");
+            }
+
+            Assert.GreaterOrEqual(Library.entries.Length, SpecialWeaponConfigSection.All.Length);
         }
 
         [Test]
@@ -114,9 +116,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(16, ring.columns * ring.rows, "Kagura ring 4×4.");
             Assert.AreEqual(1.0f, ring.durationSeconds, 1e-4f);
 
-            // The usage ids the runtime table names exist as sheets (the VFX layer binds by these).
-            Assert.AreEqual("sw_kagura_wave", SpecialWeaponUsage.For(SpecialWeaponId.KaguraBell).FireVfxFamily);
-            Assert.AreEqual("sw_ofuda_web", SpecialWeaponUsage.For(SpecialWeaponId.OfudaLoom).FieldVfxFamily);
+            // WP-069 B4: the runtime table names the v3 families (S-07's sw_arc / sw_gel sheets bind to these); the AP-014
+            // sheets above stay in the library until S-07 retires them.
+            Assert.AreEqual("sw_arc_orb", SpecialWeaponUsage.For(SpecialWeaponId.Raiju).FireVfxFamily);
+            Assert.AreEqual("sw_gel_puddle", SpecialWeaponUsage.For(SpecialWeaponId.Namekuji).FieldVfxFamily);
         }
 
         [Test]

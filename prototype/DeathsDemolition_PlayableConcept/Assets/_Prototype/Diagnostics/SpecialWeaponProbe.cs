@@ -370,13 +370,13 @@ namespace DD.Prototype.Diagnostics
                 int hpRound = 1;
                 for (int r = 1; r <= 400; r++)
                 {
-                    if (config.EnemyHealth(EnemyTier.Standard, r) > s.KaguraBell.Common.Damage * 4f) { hpRound = r; break; }
+                    if (config.EnemyHealth(EnemyTier.Standard, r) > s.Common(SpecialWeaponId.Raiju).Damage * 4f) { hpRound = r; break; }   // WP-069 B4 interim (S-02)
                 }
 
                 for (int i = 0; i < 3; i++)
                 {
                     float a = (i - 1) * 25f * Mathf.Deg2Rad;
-                    float rr = 0.5f * s.KaguraBell.WaveRadius;
+                    float rr = 3f;   // WP-069 B4 interim (S-02): half the removed bell's wave radius
                     Vector3 p = rig.transform.position + new Vector3(Mathf.Sin(a) * rr, 0f, Mathf.Cos(a) * rr);
                     ZombieEnemy z = Spawn(rig, p, hpRound);
                     if (z != null) { z.FitArmorComposition(i == 0, i == 0, i == 0); targets.Add(z); }
@@ -406,7 +406,7 @@ namespace DD.Prototype.Diagnostics
                 Stage s5 = Capture("05-unlimited-fire-one-transaction-armour", run, sw, wc, "7,8,9");
                 s5.pass = fireCues > 0 && wc.Classic.Ammo == ammoBefore && !wc.Classic.IsReloading && _damaged.Count > 0 && multiTargetTx > 0 &&
                           DamageTransaction.NestedBegins - nestedBefore == 0 && ZombieEnemy.DuplicateApplicationCount - dupBefore == 0 &&
-                          (targets.Count == 0 || armouredArmorHits > 0) && wc.SpecialWeaponActive && sw.LastRolledWeapon == SpecialWeaponId.KaguraBell;
+                          (targets.Count == 0 || armouredArmorHits > 0) && wc.SpecialWeaponActive && sw.LastRolledWeapon == SpecialWeaponId.Raiju;
                 s5.detail = "fireCues=" + fireCues + " classicAmmo=" + ammoBefore + "->" + wc.Classic.Ammo + " reloading=" + wc.Classic.IsReloading + " damaged=" + _damaged.Count +
                             " transactions=" + perTx.Count + " multiTargetTx=" + multiTargetTx + " nestedDelta=" + (DamageTransaction.NestedBegins - nestedBefore) +
                             " dupDelta=" + (ZombieEnemy.DuplicateApplicationCount - dupBefore) + " armouredArmorHits=" + armouredArmorHits + " weapon=" + sw.LastRolledWeapon;
@@ -458,7 +458,7 @@ namespace DD.Prototype.Diagnostics
                 s8.pass = _evEnded == 1 && _evFinalSeconds == 1 && _evCleared == 1 && _evCancelled == 0 && !WeaponEvents.Classic.TemporarilyDisabled &&
                           ReferenceEquals(classic, wc.Classic) && wc.Classic.Ammo == ammoParked && wc.Modifiers.DescribeBuild() == buildParked &&
                           WeaponEvents.Special.Phase == SpecialWeaponPhase.None && Count(_loopStop, CombatAudioEvent.HeavyWeaponSpinUp) == 1 &&
-                          Count(_cue, CombatAudioEvent.SpecialWeaponExpired) == 1 && TideWell.LiveCount == 0;
+                          Count(_cue, CombatAudioEvent.SpecialWeaponExpired) == 1 && SpecialImpacts.ActiveChains == 0;
                 s8.detail = "ended=" + _evEnded + " cleared=" + _evCleared + " cancelled=" + _evCancelled + " classicDisabled=" + WeaponEvents.Classic.TemporarilyDisabled + " ammo=" + wc.Classic.Ammo + "/" + ammoParked +
                             " build=" + wc.Modifiers.DescribeBuild() + " hud=" + WeaponEvents.Special.Phase + " spinStop=" + Count(_loopStop, CombatAudioEvent.HeavyWeaponSpinUp) + " expiredCue=" + Count(_cue, CombatAudioEvent.SpecialWeaponExpired);
                 s8.note = "the active timer runs out: one Ended, one Cleared, the classic weapon comes back automatically with the magazine and build it was parked with, the HUD closes, the active loop stops";
@@ -512,7 +512,7 @@ namespace DD.Prototype.Diagnostics
                 Stage s10 = Capture("10-second-run-clean", run, sw, wc, "16,17");
                 s10.pass = sw.State == SpecialWeaponDirector.SpecialWeaponState.Idle && sw.ScheduledProgress < 0f && sw.SpawnsThisRound == 0 &&
                            WeaponEvents.Special.Phase == SpecialWeaponPhase.None && SpecialWeaponSahne.Pickups() == 0 && !wc.SpecialWeaponActive &&
-                           wc.Special.Remaining == 0f && TideWell.LiveCount == 0 && !WeaponEvents.Classic.TemporarilyDisabled && subsEqual &&
+                           wc.Special.Remaining == 0f && SpecialImpacts.ActiveChains == 0 && !WeaponEvents.Classic.TemporarilyDisabled && subsEqual &&
                            SpecialWeaponDirector.DuplicateInstanceCount == 0;
                 s10.detail = "state=" + sw.State + " mark=" + sw.ScheduledProgress + " spawns=" + sw.SpawnsThisRound + " hud=" + WeaponEvents.Special.Phase + " pickups=" + SpecialWeaponSahne.Pickups() +
                              " active=" + wc.SpecialWeaponActive + " duplicates=" + SpecialWeaponDirector.DuplicateInstanceCount + " subscribers(run1/menu/run2): " + subsDetail;

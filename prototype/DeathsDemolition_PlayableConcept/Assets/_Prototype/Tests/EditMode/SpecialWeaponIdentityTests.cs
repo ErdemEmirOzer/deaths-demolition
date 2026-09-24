@@ -1,4 +1,5 @@
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.Weapons;
 using DD.Prototype.Feedback;
 using DD.Prototype.Weapons;
 using NUnit.Framework;
@@ -26,16 +27,19 @@ namespace DD.Prototype.Tests.EditMode
     [TestFixture]
     public sealed class SpecialWeaponIdentityTests
     {
-        // ============================================================ 1. kimlik
+        // ============================================================ 1. kimlik (WP-069 B4: DEC-094 iki Special, DEC-097 sayılar)
 
         [Test]
-        public void UcSpecialWeaponTanimliVeAdlari_Sabit()
+        public void IkiSpecialWeaponTanimliVeAdlari_Sabit()
         {
             var s = new SpecialWeaponConfigSection();
 
-            Assert.AreEqual("Kagura Bell", s.DisplayName(SpecialWeaponId.KaguraBell));
-            Assert.AreEqual("Ofuda Loom", s.DisplayName(SpecialWeaponId.OfudaLoom));
-            Assert.AreEqual("Tide Jewel", s.DisplayName(SpecialWeaponId.TideJewel));
+            Assert.AreEqual(2, SpecialWeaponConfigSection.All.Length, "DEC-094: yalnız iki Special");
+            Assert.AreEqual(2, System.Enum.GetValues(typeof(SpecialWeaponId)).Length, "Kagura / Ofuda / Tide kalktı");
+            Assert.AreEqual("Raiju", s.DisplayName(SpecialWeaponId.Raiju));
+            Assert.AreEqual("Namekuji", s.DisplayName(SpecialWeaponId.Namekuji));
+            Assert.AreEqual("sw_arc", SpecialWeaponKeys.Of(SpecialWeaponId.Raiju));
+            Assert.AreEqual("sw_gel", SpecialWeaponKeys.Of(SpecialWeaponId.Namekuji));
         }
 
         [Test]
@@ -50,115 +54,86 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
-        /// <summary>
-        /// Ucu de "daha cok mermi" olmamali. Fiil ayrimini olculebilir hale getiren sey
-        /// ates hizi ve etki yaricapinin birbirinden ayri olmasi: ayni sayilarsa ayni
-        /// silahtir.
-        /// </summary>
+        /// <summary>İki silah iki ayrı fiil: tempo, şarjör ve süre tavanı ayrı (DIRECTION §7a/§7b, DEC-097).</summary>
         [Test]
-        public void UcSilahin_AtesHizlariBirbirindenFarkli()
+        public void IkiSilah_TempoSarjorVeTavan_DEC097()
         {
             var s = new SpecialWeaponConfigSection();
+            WeaponDefinition arc = SpecialWeaponConfigSection.DefinitionOf(SpecialWeaponId.Raiju);
+            WeaponDefinition gel = SpecialWeaponConfigSection.DefinitionOf(SpecialWeaponId.Namekuji);
+            Assert.IsNotNull(arc, "Resources/Arsenal/WD_sw_arc yok");
+            Assert.IsNotNull(gel, "Resources/Arsenal/WD_sw_gel yok");
 
-            float bell = s.Common(SpecialWeaponId.KaguraBell).FireRate;
-            float loom = s.Common(SpecialWeaponId.OfudaLoom).FireRate;
-            float jewel = s.Common(SpecialWeaponId.TideJewel).FireRate;
-
-            Assert.Greater(Mathf.Abs(bell - loom), 0.5f, "Zil ile dokuma ayni tempoda olmamali.");
-            Assert.Greater(Mathf.Abs(bell - jewel), 0.5f, "Zil ile mucevher ayni tempoda olmamali.");
-            Assert.Greater(Mathf.Abs(loom - jewel), 0.5f, "Dokuma ile mucevher ayni tempoda olmamali.");
+            Assert.AreEqual(3, arc.ammo.magazine); Assert.AreEqual(9, arc.ammo.reserve);
+            Assert.AreEqual(8, gel.ammo.magazine); Assert.AreEqual(16, gel.ammo.reserve);
+            Assert.AreEqual(40f, s.CapSeconds(SpecialWeaponId.Raiju), 1e-4f);
+            Assert.AreEqual(45f, s.CapSeconds(SpecialWeaponId.Namekuji), 1e-4f);
+            Assert.AreEqual(0.25f, arc.fire.chargeSeconds, 1e-4f, "Raiju şarjı");
+            Assert.AreEqual(0f, gel.fire.chargeSeconds, 1e-4f);
+            Assert.AreEqual(0.9f, 1f / s.Common(SpecialWeaponId.Raiju).FireRate, 1e-3f, "çevrim 0,9 s");
+            Assert.AreEqual(0.45f, 1f / s.Common(SpecialWeaponId.Namekuji).FireRate, 1e-3f, "çevrim 0,45 s");
+            Assert.AreEqual(ProjectileKind.Orb, arc.projectile.kind);
+            Assert.AreEqual(ProjectileKind.Gel, gel.projectile.kind);
+            Assert.AreEqual(14f, arc.projectile.speed, 1e-4f);
+            Assert.AreEqual(22f, gel.projectile.speed, 1e-4f);
+            Assert.AreEqual(12f, gel.projectile.gravity, 1e-4f, "jel yayı");
+            Assert.AreEqual(SpecialLimit.AmmoOrTime, arc.specialLifecycle.limit);
         }
 
-        /// <summary>
-        /// Kagura Bell yasadigi tek sey: KALABALIGI ITMEK. Bu yuzden tepki kuvveti
-        /// dusmanin 4.5 birimlik geri itme esiginin uzerinde olmali - altinda kalirsa
-        /// silah sadece bir alan hasari olur ve fiil kaybolur.
-        /// </summary>
+        /// <summary>Raiju zinciri: 8 hedef, 6 m sıçrama, 0,08 s; Ultra (Executioner) %60 + 2,5 s ve zincir sürer (🔴 #2 varsayılanı).</summary>
         [Test]
-        public void KaguraBell_GeriItmeEsiginiAsar()
+        public void Raiju_ZincirKurallari_ExecutionerDirenci()
         {
-            var s = new SpecialWeaponConfigSection();
-            Assert.Greater(s.KaguraBell.Common.ImpactForce, 4.5f,
-                "Can 4.5 = dusmanin geri itme kapisi. Altinda kalirsa 'supurme' fiili yok olur.");
+            WeaponArcChainBlock c = SpecialWeaponConfigSection.DefinitionOf(SpecialWeaponId.Raiju).arcChain;
+            Assert.AreEqual(8, c.maxTargets);
+            Assert.AreEqual(6f, c.jumpRadius, 1e-4f);
+            Assert.AreEqual(0.08f, c.jumpDelaySeconds, 1e-4f);
+            Assert.IsTrue(c.ignoresArmor, "elektrik zırhı yok sayar");
+            Assert.IsTrue(SpecialImpacts.Kills(SpecialImpacts.RuleFor(c.tierRules, EnemyTier.Standard), 30));
+            Assert.IsTrue(SpecialImpacts.Kills(SpecialImpacts.RuleFor(c.tierRules, EnemyTier.Elite), 30));
+            SpecialTierRule ultra = SpecialImpacts.RuleFor(c.tierRules, EnemyTier.Ultra);
+            Assert.IsFalse(SpecialImpacts.Kills(ultra, 1));
+            Assert.AreEqual(0.60f, ultra.maxHpShare, 1e-4f);
+            Assert.AreEqual(2.5f, ultra.stunSeconds, 1e-4f);
         }
 
-        /// <summary>
-        /// Ofuda Loom'un darti KASITLI olarak zayif: 2.4 sersemletme esiginin altinda
-        /// kalmali, yoksa muhur asamasi zaten odul gibi hissettirir ve "bagla sonra
-        /// harca" dongusu anlamsizlasir.
-        /// </summary>
+        /// <summary>Namekuji doğrudan isabet: Guard R ≤ 10 ölür, sonra %60 + devrilme; Executioner %25 (DIRECTION §7b).</summary>
         [Test]
-        public void OfudaLoom_DartiSersemletmeEsiginin_Altinda()
+        public void Namekuji_DogrudanIsabet_GuardRound10Siniri()
         {
-            var s = new SpecialWeaponConfigSection();
-
-            Assert.Less(s.OfudaLoom.Common.ImpactForce, 2.4f,
-                "Talisman darti sersemletmemeli.");
-            Assert.Greater(s.OfudaLoom.CollapseImpactForce, 2.4f,
-                "Ag cokusu sersemletmeli.");
-            Assert.Less(s.OfudaLoom.CollapseImpactForce, 4.5f,
-                "Ag cokusu dagitmamali - 'bagla' fiili 'savur' fiiline donusmemeli.");
-        }
-
-        /// <summary>
-        /// Cokus, dartin cok uzerinde olmali; aksi halde oyuncunun ag kurmak icin
-        /// harcadigi zamanin karsiligi yok demektir.
-        /// </summary>
-        [Test]
-        public void OfudaLoom_CokusHasari_DartinCokUzerinde()
-        {
-            var s = new SpecialWeaponConfigSection();
-
-            Assert.Greater(s.OfudaLoom.CollapseDamage, s.OfudaLoom.Common.Damage * 3f,
-                "Ag cokusu, tek dartin en az 3 katini vermeli.");
-            Assert.GreaterOrEqual(s.OfudaLoom.MinSealsToCollapse, 2,
-                "Tek muhurluk bir ag kazara harcanabilmemeli.");
-            Assert.Greater(s.OfudaLoom.SealArmSeconds, 0f,
-                "Taze muhur, ayni saniye icinde patlatilamamali.");
-        }
-
-        /// <summary>
-        /// Tide Jewel'in cekim vurusu geri itme esigini asmali, YOKSA 'topla' fiili
-        /// hicbir sey yapmaz. Ayrica nabiz araligi dusmanin 1.1 sn sersemletme
-        /// bekleme suresinden kisa olmali ki her nabiz bosa gitmesin, ama o kadar da
-        /// kisa olmamali ki REQ-124 stun-lock kapisini zorlasin.
-        /// </summary>
-        [Test]
-        public void TideJewel_CekimGercektenCeker()
-        {
-            var s = new SpecialWeaponConfigSection();
-
-            Assert.Greater(s.TideJewel.Common.ImpactForce, 4.5f,
-                "Cekim, geri itme esigini asmali; asmazsa kimse yerinden oynamaz.");
-            Assert.Greater(s.TideJewel.PullInterval, 0.3f,
-                "Cok sik nabiz sadece butce harcar - dusman zaten 1.1 sn sersemletme bekler.");
-            Assert.LessOrEqual(s.TideJewel.MaxWells, 3,
-                "Ayni anda cok kuyu, kalabalik butcesini bu silaha kaptirir.");
+            WeaponGelPuddleBlock g = SpecialWeaponConfigSection.DefinitionOf(SpecialWeaponId.Namekuji).gelPuddle;
+            SpecialTierRule guard = SpecialImpacts.RuleFor(g.directHitRules, EnemyTier.Elite);
+            Assert.IsTrue(SpecialImpacts.Kills(guard, 10), "R10'da ölür");
+            Assert.IsFalse(SpecialImpacts.Kills(guard, 11), "R11'de pay + devrilme");
+            Assert.AreEqual(0.60f, guard.maxHpShare, 1e-4f);
+            Assert.AreEqual(0.25f, SpecialImpacts.RuleFor(g.directHitRules, EnemyTier.Ultra).maxHpShare, 1e-4f);
+            Assert.AreEqual(1.6f, g.puddleRadius, 1e-4f);
+            Assert.AreEqual(12, g.maxPuddles, "birikinti tavanı oyun kuralı");
         }
 
         [Test]
-        public void RollWeapon_UcununDeCikisiMumkun_VeSinirlardaCokmez()
+        public void RollWeapon_IkisininDeCikisiMumkun_VeSinirlardaCokmez()
         {
             var s = new SpecialWeaponConfigSection();
 
-            Assert.AreEqual(SpecialWeaponId.KaguraBell, s.RollWeapon(0f));
-            Assert.AreEqual(SpecialWeaponId.TideJewel, s.RollWeapon(1f));
-            Assert.AreEqual(SpecialWeaponId.OfudaLoom, s.RollWeapon(0.5f));
+            Assert.AreEqual(SpecialWeaponId.Raiju, s.RollWeapon(0f));
+            Assert.AreEqual(SpecialWeaponId.Namekuji, s.RollWeapon(1f));
+            Assert.AreEqual(SpecialWeaponId.Raiju, s.RollWeapon(0.49f));
+            Assert.AreEqual(SpecialWeaponId.Namekuji, s.RollWeapon(0.51f));
 
             // Sinir disi girdiler kirpilmali, istisna atmamali.
-            Assert.AreEqual(SpecialWeaponId.KaguraBell, s.RollWeapon(-5f));
-            Assert.AreEqual(SpecialWeaponId.TideJewel, s.RollWeapon(5f));
+            Assert.AreEqual(SpecialWeaponId.Raiju, s.RollWeapon(-5f));
+            Assert.AreEqual(SpecialWeaponId.Namekuji, s.RollWeapon(5f));
         }
 
         [Test]
         public void RollWeapon_TumAgirliklarSifirsa_CokmezVeBirSilahDoner()
         {
             var s = new SpecialWeaponConfigSection();
-            s.KaguraBell.Common.SpawnWeight = 0f;
-            s.OfudaLoom.Common.SpawnWeight = 0f;
-            s.TideJewel.Common.SpawnWeight = 0f;
+            s.Common(SpecialWeaponId.Raiju).SpawnWeight = 0f;
+            s.Common(SpecialWeaponId.Namekuji).SpawnWeight = 0f;
 
-            Assert.AreEqual(SpecialWeaponId.KaguraBell, s.RollWeapon(0.5f),
+            Assert.AreEqual(SpecialWeaponId.Raiju, s.RollWeapon(0.5f),
                 "Sifir agirlikta bile bir silah donmeli; 'hicbiri' bir durum degil.");
         }
 
@@ -355,19 +330,20 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
-        /// Aktif sure sayaci DEGISMEDI. Kullanici yalnizca YERDE kalma suresinden
-        /// sikayet etti; aktif sure farkli bir soruya cevap veriyor ve REQ-058 son
-        /// saniye alarmiyla zaten dolu. Bu test o karari kilitler.
+        /// WP-069 B4 (DEC-097): aktif süre artık silahın süre TAVANI (Raiju 40 s, Namekuji 45 s; cephane önce biterse
+        /// o bitirir). REQ-058 son saniye uyarısı tavana bağlı kalır; 11 s yalnız tanımı olmayan Special'ın yedeği.
         /// </summary>
         [Test]
-        public void AktifSure_HalaSayisal_SonSaniyeUyarisiDokunulmamis()
+        public void AktifSure_TavanOldu_SonSaniyeUyarisiDokunulmamis()
         {
             var s = new SpecialWeaponConfigSection();
 
-            Assert.AreEqual(11f, s.ActiveDuration, 0.0001f, "Aktif sure degismedi.");
+            Assert.AreEqual(11f, s.ActiveDuration, 0.0001f, "tanımsız yedek");
             Assert.AreEqual(3f, s.FinalSecondsWarning, 0.0001f, "Son saniye penceresi degismedi.");
-            Assert.Less(s.FinalSecondsWarning, s.ActiveDuration,
-                "Uyari penceresi aktif sureden kisa olmali.");
+            foreach (SpecialWeaponId id in SpecialWeaponConfigSection.All)
+            {
+                Assert.Less(s.FinalSecondsWarning, s.CapSeconds(id), "Uyari penceresi tavandan kisa olmali: " + id);
+            }
         }
 
         // ============================================================ 4. yapisal koruma
@@ -393,10 +369,8 @@ namespace DD.Prototype.Tests.EditMode
                     "Special Weapon, tur ici gelistirmeleri GOREMEMELI (REQ-059).");
             }
 
-            // Alan tasiyan yardimci nesneler de ayni kurala tabi.
-            AssertNoModifierField(typeof(KaguraWaveField));
-            AssertNoModifierField(typeof(OfudaSealWeb));
-            AssertNoModifierField(typeof(TideWell));
+            // WP-069 B4: the Specials' landing effects obey the same rule.
+            AssertNoModifierField(typeof(SpecialImpacts));
         }
 
         private static void AssertNoModifierField(System.Type type)
@@ -412,45 +386,6 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreNotEqual(typeof(WeaponModifierState), fields[i].FieldType,
                     type.Name + " gelistirme durumunu goremem" + "eli (REQ-059).");
             }
-        }
-
-        /// <summary>
-        /// Kagura dalgasinin hasar cephesi ile ekrandaki halkanin AYNI egriyi kullandigini
-        /// dogrular. Ikisi ayrisirsa, govdeler halka onlara varmadan once ucar ve oyuncu
-        /// bunu fark eder.
-        /// </summary>
-        [Test]
-        public void KaguraDalgasi_CepheEgrisi_HalkaylaAyni()
-        {
-            const float yaricap = 9.5f;
-            const float sure = 0.34f;
-
-            // ShockRingEffect'in kullandigi ease-out ile birebir ayni ifade.
-            for (int i = 0; i <= 10; i++)
-            {
-                float t = i / 10f;
-                float beklenen = yaricap * (1f - (1f - t) * (1f - t));
-                float gercek = KaguraWaveField.FrontRadius(yaricap, sure, t * sure);
-
-                Assert.AreEqual(beklenen, gercek, 0.001f,
-                    "Hasar cephesi ile gorsel halka ayni egride olmali.");
-            }
-        }
-
-        [Test]
-        public void KaguraDalgasi_CepheHicGerileMez()
-        {
-            float onceki = -1f;
-
-            for (float t = 0f; t <= 0.4f; t += 0.005f)
-            {
-                float r = KaguraWaveField.FrontRadius(9.5f, 0.34f, t);
-                Assert.GreaterOrEqual(r, onceki, "Cephe geriye gitmemeli.");
-                onceki = r;
-            }
-
-            Assert.AreEqual(9.5f, KaguraWaveField.FrontRadius(9.5f, 0.34f, 0.34f), 0.001f,
-                "Cephe tam surede tam yaricapa varmali.");
         }
     }
 }

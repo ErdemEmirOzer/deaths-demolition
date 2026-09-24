@@ -122,6 +122,42 @@ namespace DD.Prototype.Weapons
             return target.Receiver != null;
         }
 
+        /// <summary>
+        /// WP-069 B4: the target behind a receiver reached without a collider (a Raiju chain hop from S-03's
+        /// ChainTargetResolver, a Namekuji slip outcome). Same fields and cache as <see cref="TryResolve"/>, keyed by
+        /// the receiver component, so the id matches what a bullet on the same body reports.
+        /// </summary>
+        public static bool TryFromReceiver(IDamageReceiver receiver, out DamageTarget target)
+        {
+            var component = receiver as Component;
+            if (component == null)
+            {
+                target = default;
+                return false;
+            }
+
+            EnsureHooked();
+            int key = component.GetInstanceID();
+            if (!s_cache.TryGetValue(key, out ColliderInfo info))
+            {
+                Transform root = component.transform;
+                float height = MeasureHeight(root);
+                info.Target = new DamageTarget
+                {
+                    Receiver = receiver,
+                    Explosive = receiver as IExplosionReceiver ?? component.GetComponent<IExplosionReceiver>(),
+                    Root = root,
+                    Id = key,
+                    Height = height,
+                    Weight = ResolveWeight(root, height)
+                };
+                s_cache[key] = info;
+            }
+
+            target = info.Target;
+            return target.Root != null && target.Receiver != null;
+        }
+
         /// <summary>Which body region was struck. See the class remarks for the three paths.</summary>
         public static BodyRegion ResolveRegion(Collider collider, in DamageTarget target, Vector3 point)
         {

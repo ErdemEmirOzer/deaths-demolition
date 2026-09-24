@@ -386,7 +386,7 @@ namespace DD.Prototype.Audio
                     if (_play(AudioMixPlan.SpecialFire(sound), e.Origin, 1f, 55)) SpecialUsageCount++;
                     break;
                 case DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned:
-                    if (e.Id == DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell)
+                    if (e.Id == DD.Prototype.Core.Config.SpecialWeaponId.Raiju)   // WP-069 B4 interim (S-02): the orb's flight as the old bell one-shot
                     {
                         if (_play(AudioMixPlan.SpecialField(sound), e.Origin, 1f, 65)) SpecialUsageCount++;
                     }

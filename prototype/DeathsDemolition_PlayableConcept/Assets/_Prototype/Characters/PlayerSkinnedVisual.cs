@@ -279,7 +279,8 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>SwHold index of a Special: 1 Kagura Bell (sweep), 2 Ofuda Loom (cast); any other Special uses the bell hold until AP-009 ships its clip.</summary>
-        public static int HoldIndexOf(SpecialWeaponId id) => id == SpecialWeaponId.OfudaLoom ? 2 : id == SpecialWeaponId.TideJewel ? 3 : 1;   // WP-032G: AP-009G jewel hold
+        // WP-069 B4 interim (S-02, until the AP-022 sw_arc / sw_gel clips): Raiju on the bell hold, Namekuji on the loom hold.
+        public static int HoldIndexOf(SpecialWeaponId id) => id == SpecialWeaponId.Namekuji ? 2 : 1;
 
         private void OnSpecialChanged(SpecialWeaponHudState state)
         {

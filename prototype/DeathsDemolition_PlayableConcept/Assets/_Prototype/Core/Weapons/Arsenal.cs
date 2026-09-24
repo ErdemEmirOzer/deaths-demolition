@@ -134,6 +134,29 @@ namespace DD.Prototype.Core.Weapons
 
 namespace DD.Prototype.Core.Weapons
 {
+    /// <summary>WP-069 B4: the stable Arsenal key of each Special Weapon id (sw_arc / sw_gel).</summary>
+    public static class SpecialWeaponKeys
+    {
+        public const string Raiju = "sw_arc";
+        public const string Namekuji = "sw_gel";
+
+        public static string Of(SpecialWeaponId id)
+        {
+            return id == SpecialWeaponId.Namekuji ? Namekuji : Raiju;
+        }
+
+        /// <summary>The id of a Special key; false for anything else.</summary>
+        public static bool TryGetId(string weaponId, out SpecialWeaponId id)
+        {
+            switch (weaponId)
+            {
+                case Raiju: id = SpecialWeaponId.Raiju; return true;
+                case Namekuji: id = SpecialWeaponId.Namekuji; return true;
+                default: id = SpecialWeaponId.Raiju; return false;
+            }
+        }
+    }
+
     /// <summary>
     /// WP-069 A4 · saved-profile migration table (S-04 ProfileMigration v5 calls it). Static, asset-free:
     /// the M3 <c>ClassicWeaponId</c> names stored in <c>ProfileData.UnlockedWeapons</c> map to the v3 keys.

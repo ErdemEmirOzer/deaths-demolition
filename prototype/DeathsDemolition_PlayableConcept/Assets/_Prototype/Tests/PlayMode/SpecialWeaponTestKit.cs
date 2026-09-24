@@ -87,6 +87,9 @@ namespace DD.Prototype.Tests.PlayMode
 
             // Config kopyası: test alanları burada değişir, sevkiyat asset'i dokunulmaz kalır.
             Config = UnityEngine.Object.Instantiate(_eskiConfig);
+            // WP-069 B4: the lifecycle suites keep their M3 timing — every Special's cap is the config's ActiveDuration (11 s)
+            // instead of the DEC-097 40 / 45 s; the cap itself is covered by SpecialWeaponRuntimeTests / the v3 slice.
+            Config.Weapons.Special.CapOverrideSeconds = Config.Weapons.Special.ActiveDuration;
             PrototypeConfig.SetActive(Config);
 
             // Köprü: authoritative sağlayıcı yerine test sağlayıcısı (RunDirector'ın :870-874 dikişi,

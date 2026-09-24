@@ -439,7 +439,7 @@ namespace DD.Prototype.Qa
                     if (z.IsAlive && (z.transform.position - rig.transform.position).sqrMagnitude <= SpecialNearMetres * SpecialNearMetres) { near = true; break; }
                 }
                 if (!near) { _nextSpecialAt = Time.unscaledTime + 0.5f; return; }
-                var id = (SpecialWeaponId)(_specialCycle++ % 3);
+                var id = (SpecialWeaponId)(_specialCycle++ % SpecialWeaponConfigSection.All.Length);   // WP-069 B4: two Specials (S-02)
                 weapons.ActivateSpecialWeapon(id);
                 _summary.swActivations++;
                 _nextSpecialAt = Time.unscaledTime + SpecialGapSeconds;

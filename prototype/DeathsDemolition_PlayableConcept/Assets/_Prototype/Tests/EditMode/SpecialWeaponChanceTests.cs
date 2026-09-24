@@ -20,19 +20,20 @@ namespace DD.Prototype.Tests.EditMode
         {
             var w = new WeaponConfigSection();
 
+            // DEC-097 (WP-069 B2): the three legacy slots read the Arsenal v3 definitions (ar_1 / smg_1 / sg_1).
             ClassicWeaponSettings ar = w.Find(ClassicWeaponId.AssaultRifle);
-            Assert.AreEqual(11f, ar.Damage, 0.0001f);
-            Assert.AreEqual(8.5f, ar.FireRate, 0.0001f);
+            Assert.AreEqual(12f, ar.Damage, 0.0001f, "ar_1 12 (DEC-097; M3 11)");
+            Assert.AreEqual(10f, ar.FireRate, 0.0001f, "ar_1 600 RPM (DEC-097; M3 8,5/s)");
             Assert.AreEqual(30, ar.MagazineSize);
             Assert.AreEqual(1, ar.PelletCount);
 
             ClassicWeaponSettings smg = w.Find(ClassicWeaponId.AutoSmg);
-            Assert.AreEqual(8f, smg.Damage, 0.0001f, "B hasarı 8 (DEC-085 Ö-4, WP-042; önce 7)");
-            Assert.AreEqual(13f, smg.FireRate, 0.0001f);
+            Assert.AreEqual(8f, smg.Damage, 0.0001f, "smg_1 8 (DEC-085 Ö-4, DEC-097)");
+            Assert.AreEqual(15f, smg.FireRate, 0.0001f, "smg_1 900 RPM (DEC-097; M3 13/s)");
             Assert.AreEqual(42, smg.MagazineSize);
 
             ClassicWeaponSettings sg = w.Find(ClassicWeaponId.CombatShotgun);
-            Assert.AreEqual(8f, sg.Damage, 0.0001f, "Shotgun hasarı SAÇMA BAŞINA 8'dir (DEC-085 Ö-4, WP-042; önce 7).");
+            Assert.AreEqual(9f, sg.Damage, 0.0001f, "sg_1 SAÇMA BAŞINA 9 (DEC-097; DEC-085 8)");
             Assert.AreEqual(8, sg.PelletCount);
             Assert.AreEqual(7, sg.MagazineSize);
             Assert.AreEqual(1.2f, sg.FireRate, 0.0001f);

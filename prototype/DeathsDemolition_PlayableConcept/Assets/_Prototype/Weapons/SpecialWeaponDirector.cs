@@ -118,7 +118,7 @@ namespace DD.Prototype.Weapons
         private bool _noSpawnPointsLogged;
         private bool _noValidPositionLogged;
         private bool _duplicate;
-        private SpecialWeaponId _lastRolledWeapon = SpecialWeaponId.KaguraBell;
+        private SpecialWeaponId _lastRolledWeapon = SpecialWeaponId.Raiju;
 
         /// <summary>Current phase. F1 readout and test hook.</summary>
         public SpecialWeaponState State => _state;

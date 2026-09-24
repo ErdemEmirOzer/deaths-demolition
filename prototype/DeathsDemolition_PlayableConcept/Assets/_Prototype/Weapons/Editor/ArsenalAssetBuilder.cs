@@ -34,7 +34,8 @@ namespace DD.Prototype.Weapons.EditorTools
             var defs = new List<WeaponDefinition>
             {
                 Write(Ar1()), Write(Smg1()), Write(Sg1()),
-                Write(Ar2()), Write(Lmg1()), Write(Sr1()), Write(Smg2()), Write(Sg2()), Write(Lmg2()), Write(Rl1())
+                Write(Ar2()), Write(Lmg1()), Write(Sr1()), Write(Smg2()), Write(Sg2()), Write(Lmg2()), Write(Rl1()),
+                Write(SwArc()), Write(SwGel())
             };
 
             string catalogPath = Folder + "/ArsenalCatalog.asset";
@@ -258,6 +259,115 @@ namespace DD.Prototype.Weapons.EditorTools
             d.SetUnlockByMeta(9, 10);   // DEC-095 meta tree (S-04 WP-077), band per DIRECTION §6
             Look(d, WeaponCasing.None, ClassicWeaponId.AssaultRifle, "");
             return d;
+        }
+
+        // ================================================================== the two Specials (DIRECTION §7a / §7b, DEC-094 / DEC-097)
+
+        private static WeaponDefinition SwArc()
+        {
+            WeaponDefinition d = New("sw_arc", (ClassicWeaponId)100, WeaponClass.Special, "Raiju", WeaponSilhouetteV3.Special, 100,
+                "Küre hedefe çarpar, kalabalık titreyerek çöker.", null);
+            d.slot = WeaponSlotKind.Special;
+            // single; charge 0.25 s + cycle 0.9 s (≈ 52 RPM ceiling); releasing during the charge cancels without spending ammo.
+            Fire(d, WeaponFireMode.Single, 60f / 0.9f, 0f);
+            d.fire.chargeSeconds = 0.25f;
+            Ammo(d, 3, 9, 3.0f, 3.6f, WeaponReloadKind.Cell);
+            d.ammo.reserveRoundCoef = 0f;
+            d.ammo.floorRefillDelaySeconds = 0f;
+            d.ammo.floorRefillMagazines = 0;
+            d.ammo.reloadCancellable = false;   // the trigger does not cut the cell swap
+            Ballistics(d, 14f, 42f, 42f, 1f, 0, 1f, 0.25f, 0f, 1f, 1f, WeaponCaliber.Explosive);
+            d.projectile.kind = ProjectileKind.Orb;
+            d.projectile.maxLifetimeSeconds = 3f;
+            d.projectile.sweepRadius = 0.35f;
+            Spread(d, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 1f, 1f, 0.40f);
+            Recoil(d, 5f, RecoilYawPattern.None, new float[0], 1, 0.40f);
+            WeaponArcChainBlock c = d.arcChain;
+            c.maxTargets = 8;
+            c.jumpRadius = 6f;
+            c.jumpDelaySeconds = 0.08f;
+            c.nearestUnhit = true;
+            c.shockSeconds = 1.2f;
+            c.tierRules = new[]
+            {
+                Rule(EnemyTier.Standard, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Special, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Elite, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Ultra, false, 0, 0.60f, 2.5f, 0f)   // 🔴 #2 default: 60 % + 2.5 s, the chain continues
+            };
+            c.selfShockRadius = 2.5f;
+            c.selfShockDamage = 25f;
+            c.selfShockFirstRadius = 1.5f;
+            c.selfShockFirstDamage = 40f;
+            c.selfSlowSeconds = 0.4f;
+            c.orbFizzleSeconds = 0.3f;
+            c.ignoresArmor = true;
+            Lifecycle(d, 40f);
+            Look(d, WeaponCasing.None, ClassicWeaponId.AssaultRifle, "");
+            return d;
+        }
+
+        private static WeaponDefinition SwGel()
+        {
+            WeaponDefinition d = New("sw_gel", (ClassicWeaponId)101, WeaponClass.Special, "Namekuji", WeaponSilhouetteV3.Special, 101,
+                "Mor jel yay çizer, yer kayar, zombiler devrilir.", null);
+            d.slot = WeaponSlotKind.Special;
+            Fire(d, WeaponFireMode.Single, 60f / 0.45f, 0f);   // cycle 0.45 s (≈ 133 RPM ceiling)
+            Ammo(d, 8, 16, 2.4f, 2.8f, WeaponReloadKind.Canister);
+            d.ammo.reserveRoundCoef = 0f;
+            d.ammo.floorRefillDelaySeconds = 0f;
+            d.ammo.floorRefillMagazines = 0;
+            d.ammo.reloadCancellable = false;
+            Ballistics(d, 22f, 40f, 40f, 1f, 0, 1f, 0f, 0f, 1f, 1f, WeaponCaliber.Light);
+            d.projectile.kind = ProjectileKind.Gel;
+            d.projectile.gravity = 12f;   // the arc (12° up ≈ 20 m); top-down aims the arc at the cursor (≤ 20 m)
+            d.projectile.maxLifetimeSeconds = 3f;
+            d.projectile.sweepRadius = 0.25f;
+            Spread(d, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 1f, 1f, 0.20f);
+            Recoil(d, 3f, RecoilYawPattern.None, new float[0], 1, 0.20f);
+            WeaponGelPuddleBlock g = d.gelPuddle;
+            g.directHitRules = new[]
+            {
+                Rule(EnemyTier.Standard, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Special, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Elite, true, 10, 0.60f, 1.5f, 0f),   // R ≤ 10 dies; later 60 % + 1.5 s knockdown
+                Rule(EnemyTier.Ultra, false, 0, 0.25f, 1.5f, 0f)
+            };
+            g.puddleRadius = 1.6f;
+            g.deathPuddleRadius = 0.9f;
+            g.deathPuddleSeconds = 8f;
+            g.puddleLifetimeSeconds = 25f;
+            g.maxPuddles = 12;
+            g.fadeSeconds = 0.5f;
+            g.slipRules = new[]
+            {
+                Rule(EnemyTier.Standard, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Special, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Elite, true, 0, 0f, 0f, 0f),
+                Rule(EnemyTier.Ultra, false, 0, 0.20f, 0f, 3f)   // falls, 20 %, 3 s immune after getting up
+            };
+            g.slipFallSeconds = 0.9f;
+            g.playerSlideSpeedMultiplier = 1.8f;
+            g.playerSteerMultiplier = 0.35f;
+            g.slideExitSeconds = 0.3f;
+            g.autoArcMaxRange = 20f;
+            g.ignoresArmor = true;
+            Lifecycle(d, 45f);
+            Look(d, WeaponCasing.None, ClassicWeaponId.AssaultRifle, "");
+            return d;
+        }
+
+        private static SpecialTierRule Rule(EnemyTier tier, bool kill, int killUpToRound, float maxHpShare, float stunSeconds, float immuneSeconds)
+        {
+            return new SpecialTierRule { tier = tier, kill = kill, killUpToRound = killUpToRound, maxHpShare = maxHpShare, stunSeconds = stunSeconds, immuneSeconds = immuneSeconds };
+        }
+
+        private static void Lifecycle(WeaponDefinition d, float capSeconds)
+        {
+            d.specialLifecycle.limit = SpecialLimit.AmmoOrTime;
+            d.specialLifecycle.activeCapSeconds = capSeconds;
+            d.specialLifecycle.groundSeconds = 22f;
+            d.specialLifecycle.spawnWeight = 1f;
         }
 
         // ================================================================== block helpers

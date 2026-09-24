@@ -200,6 +200,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
+        [Ignore("WP-069 B4 (S-02): NET / DAZED left with the Ofuda web and the Kagura push — S-03 bcb5005c keeps IsNetted / IsDazed inert (false), so no chip can show. S-09 re-points UiEnemyStatusMarkers to the shock (IsElectrocuted) / gel (Gel) states and revives this test.")]
         public IEnumerator DusmanDurumIsaretleri_NetVeDaze_GorunurVeSifirAyirma()
         {
             _s = new SpecialWeaponSahne();
@@ -215,9 +216,9 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
 
             bool netted = a.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
-                DD.Prototype.Damage.SpecialReactionKind.Web, DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom, Vector3.forward, 0f, 4f, 0));
+                DD.Prototype.Damage.SpecialReactionKind.Web, DD.Prototype.Core.Config.SpecialWeaponId.Namekuji, Vector3.forward, 0f, 4f, 0));
             bool dazed = b.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
-                DD.Prototype.Damage.SpecialReactionKind.Push, DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell, Vector3.forward, 1f, 1.5f, 0));
+                DD.Prototype.Damage.SpecialReactionKind.Push, DD.Prototype.Core.Config.SpecialWeaponId.Raiju, Vector3.forward, 1f, 1.5f, 0));
             Assert.IsTrue(netted && dazed, "tepkiler uygulanmadı (net " + netted + ", daze " + dazed + ")");
             yield return null;
             yield return null;
@@ -269,7 +270,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             // The daze ends by itself; the net ends with the field.
-            DD.Prototype.Enemies.ZombieEnemy.EndSpecialField(DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom);
+            DD.Prototype.Enemies.ZombieEnemy.EndSpecialField(DD.Prototype.Core.Config.SpecialWeaponId.Namekuji);
             yield return new WaitForSecondsRealtime(2f);
             yield return null;
             Assert.IsFalse(a.IsNetted);

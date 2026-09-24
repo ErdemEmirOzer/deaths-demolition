@@ -163,7 +163,7 @@ namespace DD.Art.Tests.PlayMode
             pv.Events.Raised -= onSwitch;
             yield return CharacterTests.Bekle(() => In(an, over, C.AimState + "_2") && !an.IsInTransition(over), 2f, "C → Aim_2");
             // Special Weapon held: the hold loop replaces the Aim; ended → back to the classic Aim.
-            var state = new SpecialWeaponHudState { Phase = SpecialWeaponPhase.Active, WeaponId = SpecialWeaponId.OfudaLoom };
+            var state = new SpecialWeaponHudState { Phase = SpecialWeaponPhase.Active, WeaponId = SpecialWeaponId.Namekuji };
             WeaponEvents.PublishSpecial(state, true);
             yield return CharacterTests.Bekle(() => In(an, over, C.SwHoldState + "_2") && !an.IsInTransition(over), 2f, "SwHold_2 (loom)");
             Assert.AreEqual(2, pv.SpecialHold);

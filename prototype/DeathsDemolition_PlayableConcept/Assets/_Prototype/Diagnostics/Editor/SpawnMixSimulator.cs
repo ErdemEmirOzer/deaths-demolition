@@ -268,7 +268,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 for (int t = 0; t < TierCount; t++) r.tierShare[t] = r.spawns > 0 ? (float)r.tierCounts[t] / r.spawns : 0f;
 
                 // WP-055: Special usage effect on this crowd — the same tier profile the bodies resolve at runtime.
-                float sealSeconds = config.Weapons.Special.OfudaLoom.SealSeconds;
+                float sealSeconds = 6f;   // WP-069 B4 interim (S-02): the removed Ofuda Loom's seal seconds; the web metric leaves with S-03's reaction clean-up
                 for (int t = 0; t < TierCount; t++)
                 {
                     var tier = (EnemyTier)t;

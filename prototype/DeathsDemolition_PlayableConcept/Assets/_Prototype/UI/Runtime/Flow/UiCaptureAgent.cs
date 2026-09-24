@@ -1153,7 +1153,7 @@ namespace DD.Prototype.UI
                     bool web = stamped == 0;
                     z.ApplySpecialReaction(new DD.Prototype.Damage.SpecialReaction(
                         web ? DD.Prototype.Damage.SpecialReactionKind.Web : DD.Prototype.Damage.SpecialReactionKind.Push,
-                        web ? DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom : DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell,
+                        web ? DD.Prototype.Core.Config.SpecialWeaponId.Namekuji : DD.Prototype.Core.Config.SpecialWeaponId.Raiju,   // WP-069 B4 interim (S-02)
                         Vector3.forward, web ? 0f : 1f, web ? 4f : 1.5f, 0));
                     stamped++;
                 }

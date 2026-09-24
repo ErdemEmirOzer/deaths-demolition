@@ -333,31 +333,20 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsTrue(target.IsValid, "hedef geçersiz");
             Vector3 feet = bodyT.position;
 
-            int hits0 = binder.SpecialHits, arcs0 = binder.ChainArcs, played0 = vfx.SpecialHitsPlayed, nets0 = fx.OfudaNets, wells0 = vfx.TideWells;
+            // WP-069 B4 (S-02): Kagura / Ofuda / Tide left the game (DEC-094). Until S-07's sw_arc / sw_gel rows land, the binder's
+            // interim mapping is: Raiju Hit → the hop's chain arc (previous body → this one) + the ground puff; Namekuji Hit → the puff.
+            int hits0 = binder.SpecialHits, arcs0 = binder.ChainArcs, played0 = vfx.SpecialHitsPlayed;
             int casings0 = vfx.CasingsEjected;
-            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.KaguraBell, VfxIds.SwKaguraWave, target, feet + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
-            Assert.AreEqual(1, binder.SpecialHits - hits0, "Kagura Hit → zemin tozu");
-            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.KaguraBell, VfxIds.SwKaguraWave, target, feet + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
+            Vector3 well = feet + Vector3.right * 2.5f;
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.Raiju, "sw_arc_chain", target, well + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
+            Assert.AreEqual(1, binder.SpecialHits - hits0, "Raiju Hit → zemin tozu");
+            Assert.AreEqual(1, binder.ChainArcs - arcs0, "Raiju Hit → önceki bedenden zincir arkı");
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.Raiju, "sw_arc_chain", target, well + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
             Assert.AreEqual(1, binder.SpecialHits - hits0, "aynı bedene 0,3 s içinde ikinci Hit kısılmalı");
             yield return new WaitForSeconds(VfxDressing.SpecialHitThrottleSeconds + 0.05f);
-            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.OfudaLoom, VfxIds.SwOfudaWeb, target, feet + Vector3.up * 0.9f, Vector3.up, 0f, 1f, 2.5f);
-            Assert.AreEqual(2, binder.SpecialHits - hits0, "Ofuda Hit → ağ (iplik döngüleri) + dart kartı");
-            Assert.AreEqual(1, fx.OfudaNets - nets0, "Ofuda ağı (3 iplik döngüsü) director'da oynamadı");
-            FlipbookEffect dart = null;
-            foreach (FlipbookEffect f in vfx.FlipbookPool.Spawned) { if (f.Row != null && f.Row.Id == VfxIds.SwOfudaDartSheet) { dart = f; break; } }
-            Assert.IsNotNull(dart, "sw_ofuda_dart kartı havuzda yok (AP010C kataloğu)");
-            yield return new WaitForSeconds(VfxDressing.SpecialHitThrottleSeconds + 0.05f);
-            Vector3 well = feet + Vector3.right * 2.5f;
-            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.TideJewel, SpecialUsageKind.FieldSpawned, VfxIds.SwKaguraWave, well, Vector3.up, 3f, 4f, 0);
-            Assert.AreEqual(1, vfx.TideWells - wells0, "Tide kuyusu doğdu → sw_tide_well döngü kartı (AP010C)");
-            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.TideJewel, VfxIds.SwKaguraWave, target, feet + Vector3.up * 0.9f, (well - feet).normalized, 1.5f, 1f, 3f);
-            Assert.AreEqual(3, binder.SpecialHits - hits0, "Tide Hit → çekim izi");
-            Assert.AreEqual(1, binder.ChainArcs - arcs0, "Tide kuyusu → beden zincir arkı");
-            Assert.AreEqual(4, vfx.SpecialHitsPlayed - played0);   // Kagura dust, Ofuda dart, Tide streak, chain arc
-            SpecialWeaponUsageEvents.Publish(SpecialWeaponId.TideJewel, SpecialUsageKind.FieldEnded, VfxIds.SwKaguraWave, well, Vector3.up, 3f, 0f, 1);
-            FlipbookEffect implode = null;
-            foreach (FlipbookEffect f in vfx.FlipbookPool.Spawned) { if (f.Row != null && f.Row.Id == VfxIds.SwTideImplode) { implode = f; break; } }
-            Assert.IsNotNull(implode, "sw_tide_implode kartı oynamadı");
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.Namekuji, "sw_gel_blob", target, feet + Vector3.up * 0.9f, Vector3.forward, 0f, 1f, 0f);
+            Assert.AreEqual(2, binder.SpecialHits - hits0, "Namekuji Hit → zemin tozu");
+            Assert.AreEqual(3, vfx.SpecialHitsPlayed - played0);   // Raiju arc + puff, Namekuji puff
 
             // Barrel heat: five rifle shots at the muzzle → strip visible; ~3 s later it has cooled off.
             Transform muzzle = WeaponRegistry.ActiveController != null ? WeaponRegistry.ActiveController.Muzzle : PlayerRegistry.Primary.transform;

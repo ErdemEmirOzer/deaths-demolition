@@ -27,7 +27,31 @@ namespace DD.Prototype.Weapons
         /// moved it, a talisman sealed it. Carries the target, the force on the DamageForce scale,
         /// the falloff at that distance and the damage transaction the hit belongs to.
         /// </summary>
-        Hit = 5
+        Hit = 5,
+
+        /// <summary>WP-069 B4 · Raiju: the trigger started the 0.25 s charge (Seconds = charge time).</summary>
+        ChargeStarted = 6,
+
+        /// <summary>WP-069 B4 · Raiju: the trigger was released during the charge — no shot, no ammo spent.</summary>
+        ChargeCancelled = 7,
+
+        /// <summary>WP-069 B4: a cell / canister change started (Seconds = its duration, Count = rounds left in the magazine).</summary>
+        ReloadStarted = 8,
+
+        /// <summary>WP-069 B4: the change finished (Count = rounds in the magazine now).</summary>
+        ReloadEnded = 9,
+
+        /// <summary>WP-069 B4 · Raiju: a chain body stood too close — the player took the shock (Count = HP lost, Seconds = the slow).</summary>
+        SelfShock = 10,
+
+        /// <summary>WP-069 B4 · Namekuji: a direct hit liquefied the body (Target = it, Origin = its feet).</summary>
+        Liquefied = 11,
+
+        /// <summary>WP-069 B4 · Namekuji: the player stepped into a puddle (Origin = feet, Direction = velocity, Count = puddle id).</summary>
+        PlayerSlideStarted = 12,
+
+        /// <summary>WP-069 B4 · Namekuji: the player left the last puddle (Seconds = the exit ramp).</summary>
+        PlayerSlideEnded = 13
     }
 
     /// <summary>

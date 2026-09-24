@@ -699,6 +699,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ================================================================== WP-058 · WP-056 Special kullanım sesleri
 
+        [Ignore("WP-072 B4 wiring (S-08): the Kagura / Ofuda / Tide cues left with WP-069 B4; S-08 rewrites for SW_ARC / SW_GEL")]
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator SpecialKullanim_FiredFieldHit_KendiSesleri_AlanDongusu()
@@ -706,7 +707,7 @@ namespace DD.Prototype.Tests.PlayMode
             AudioEventRouter r = _d.Router;
             int once = r.SpecialUsageCount;
             Vector3 at = _s.Zemin(0f, 6f);
-            var id = DD.Prototype.Core.Config.SpecialWeaponId.TideJewel;
+            var id = DD.Prototype.Core.Config.SpecialWeaponId.Namekuji;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(id, DD.Prototype.Weapons.SpecialUsageKind.Fired, "sw_tide_pull", _s.Rig.transform.position, Vector3.forward, 0f, 0f, 1);
             Assert.AreEqual(once + 1, r.SpecialUsageCount, "Fired ses üretmedi.");
             Assert.AreEqual(AudioSoundId.SwFireTide, _d.LastPlayed);
@@ -729,12 +730,12 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, _d.FieldLoopsPlaying, "İkinci FieldEnded kalan Tide döngüsünü durdurmalı.");
             Assert.AreEqual(AudioSoundId.SwFieldEndTide, _d.LastPlayed);
             yield return new WaitForSecondsRealtime(0.1f);
-            var kagura = DD.Prototype.Core.Config.SpecialWeaponId.KaguraBell;
+            var kagura = DD.Prototype.Core.Config.SpecialWeaponId.Raiju;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(kagura, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_kagura_wave", at, Vector3.forward, 6f, 1.2f, 0);
             Assert.AreEqual(AudioSoundId.SwFieldKagura, _d.LastPlayed, "Kagura cephesi one-shot.");
             Assert.AreEqual(0, _d.FieldLoopsPlaying, "Kagura döngü değil.");
 
-            var ofuda = DD.Prototype.Core.Config.SpecialWeaponId.OfudaLoom;
+            var ofuda = DD.Prototype.Core.Config.SpecialWeaponId.Namekuji;
             DD.Prototype.Weapons.SpecialWeaponUsageEvents.Publish(ofuda, DD.Prototype.Weapons.SpecialUsageKind.FieldSpawned, "sw_ofuda_web", at, Vector3.forward, 4f, 6f, 0);
             Assert.AreEqual(1, _d.FieldLoopsPlaying, "Ofuda alan döngüsü başlamadı.");
             _d.enabled = false;

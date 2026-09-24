@@ -195,13 +195,14 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(kod.FinalSecondsWarning, asset.FinalSecondsWarning, 0.0001f, "FinalSecondsWarning" + not);
             Assert.AreEqual(kod.MinDistanceFromPlayer, asset.MinDistanceFromPlayer, 0.0001f, "MinDistanceFromPlayer" + not);
 
-            // Runtime'ın config'siz ikizi (Begin(null)) aynı süreyi kullanır; alt klamp yalnız yön (literal yok).
+            // WP-069 B4 (DEC-097): the runtime's config-less twin (Begin(null)) uses the definition's time cap, the same as a config;
+            // ActiveDuration is only the fallback of a Special without a definition.
             var rt = new SpecialWeaponRuntime();
-            rt.Begin(null, SpecialWeaponId.KaguraBell);
-            Assert.AreEqual(kod.ActiveDuration, rt.Duration, 0.0001f, "Runtime.Begin(null) fallback süresi" + not);
+            rt.Begin(null, SpecialWeaponId.Raiju);
+            Assert.AreEqual(kod.CapSeconds(SpecialWeaponId.Raiju), rt.Duration, 0.0001f, "Runtime.Begin(null) tavanı" + not);
             rt.End();
             var kisa = new SpecialWeaponConfigSection { ActiveDuration = 0f };
-            rt.Begin(kisa, SpecialWeaponId.KaguraBell);
+            rt.Begin(kisa, SpecialWeaponId.Raiju);
             Assert.Greater(rt.Duration, 0f, "Runtime alt klampı pozitif değil.");
             rt.End();
         }
