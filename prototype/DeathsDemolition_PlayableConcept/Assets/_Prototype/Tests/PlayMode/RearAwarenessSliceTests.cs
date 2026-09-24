@@ -106,6 +106,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(_firstHitAt, 0f, "vurdu");
             Assert.GreaterOrEqual(_firstHitAt - _beatAt, 0.8f, "ön uyarı ≥ 0,8 s");
             Assert.IsTrue(alert, "Alert (≤ 2,2 m)");
+            Assert.GreaterOrEqual(ZombieEnemy.RearHitsWarned, 1, "B8 telemetrisi: uyarılı arka isabet sayıldı");
+            Assert.AreEqual(0, ZombieEnemy.RearHitsUnwarned, "uyarısız arka isabet yok");
+            Assert.GreaterOrEqual(ZombieEnemy.RearLeadMsSum / ZombieEnemy.RearHitsWarned, 800.0, "ortalama uyarı → isabet ≥ 800 ms");
             EnemyFactory.ClearAll(); yield return null;
 
             // already close behind: warned at once, no wind-up before the 0.8 s lead

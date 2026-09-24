@@ -24,6 +24,10 @@ namespace DD.Prototype.Enemies
 
         public static int RearBeats { get; private set; }
         public static int RearLeadHolds { get; private set; }
+        /// <summary>WP-076 B8 (§6 telemetry rear_hit_taken / rear_threat_warned): hits landed from behind in TP / FP, warned or not, and the summed beat → hit lead.</summary>
+        public static int RearHitsWarned { get; private set; }
+        public static int RearHitsUnwarned { get; private set; }
+        public static double RearLeadMsSum { get; private set; }
 
         /// <summary>Behind the view this frame (readout).</summary>
         public bool IsRearOfView => _isRear;
@@ -83,6 +87,14 @@ namespace DD.Prototype.Enemies
 
         private void ResetRear() { _rearArmed = true; _isRear = false; _rearWarnedAt = -1f; }
 
-        public static void ResetRearStatics() { RearBeats = 0; RearLeadHolds = 0; }
+        /// <summary>A swing of this body connected with the player: count it when it came from behind (or after this approach's rear beat).</summary>
+        private void NoteRearHit()
+        {
+            if (CameraModeService.Current == CameraMode.TopDown) return;
+            if (_rearWarnedAt >= 0f) { RearHitsWarned++; RearLeadMsSum += (Time.time - _rearWarnedAt) * 1000.0; }
+            else if (_isRear) RearHitsUnwarned++;
+        }
+
+        public static void ResetRearStatics() { RearBeats = 0; RearLeadHolds = 0; RearHitsWarned = 0; RearHitsUnwarned = 0; RearLeadMsSum = 0; }
     }
 }

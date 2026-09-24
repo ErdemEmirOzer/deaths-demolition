@@ -987,6 +987,7 @@ namespace DD.Prototype.Enemies
             }
 
             bool connected = _attack.Tick(dt, this, _tier, _animator);
+            if (connected) NoteRearHit();   // WP-076 B8 telemetry
             RaiseAttackBeats(connected);   // WP-040 (ADR-040-1)
 
             // ---------------------------------------------------------------- steering
