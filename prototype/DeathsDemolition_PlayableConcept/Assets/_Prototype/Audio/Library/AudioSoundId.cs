@@ -440,6 +440,12 @@ namespace DD.Prototype.Audio
         SwGelSlidePlayer = 547,
         SwGelCanisterOut = 548,
         SwGelCanisterIn = 549,
-        SwGelReady = 550
+        SwGelReady = 550,
+
+        // ---- WP-072 B5 · launcher (STANDARDS §7): rocket flight loop + explosion by listener distance (AP-011 v020)
+        RocketFlightLoop = 560,
+        ExplosionNear = 561,
+        ExplosionMid = 562,
+        ExplosionFar = 563
     }
 }

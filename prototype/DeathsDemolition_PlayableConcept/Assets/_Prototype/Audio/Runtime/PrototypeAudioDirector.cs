@@ -90,6 +90,7 @@ namespace DD.Prototype.Audio
         private WeaponFireAudio _weaponFire;
         private CasingAudio _casings;
         private ImpactAudio _impacts;
+        private ProjectileFlightAudio _flight;
         private readonly CombatAudioCue[] _heldImpacts = new CombatAudioCue[16];
         private AudioSnapshot _snapshotBeforePause = AudioSnapshot.Run;
 
@@ -155,6 +156,15 @@ namespace DD.Prototype.Audio
         /// <summary>WP-072 B3 test / F1 surface: the projectile impact voice.</summary>
         public ImpactAudio Impacts => _impacts;
 
+        /// <summary>WP-072 B5 test / F1 surface: projectile flight loops.</summary>
+        public ProjectileFlightAudio Flight => _flight;
+
+        /// <summary>WP-072 B5 (STANDARDS §7): near ≤ 12 m, mid 12–35 m, far &gt; 35 m from the listener.</summary>
+        public static AudioSoundId ExplosionLayer(float meters)
+        {
+            return meters <= 12f ? AudioSoundId.ExplosionNear : meters <= 35f ? AudioSoundId.ExplosionMid : AudioSoundId.ExplosionFar;
+        }
+
         /// <summary>Total cues refused by the voice budget across both pools. F1 readout, and the O3 measurement.</summary>
         public int DroppedCues => (_world != null ? _world.DroppedCount : 0) + (_signal != null ? _signal.DroppedCount : 0);
 
@@ -209,6 +219,7 @@ namespace DD.Prototype.Audio
             // v003 (ADR-021-2): distance darkening and the idle range are measured from the
             // player-anchored listener, not the camera.
             System.Func<Vector3> listenerPosition = () => _listener.Transform.position;
+            _flight = new ProjectileFlightAudio(_library, _mixer, _bridge, _loopRoot, listenerPosition);   // WP-072 B5
             _world.SetListener(listenerPosition);
             _router.SetListener(listenerPosition);
 
@@ -256,6 +267,7 @@ namespace DD.Prototype.Audio
             AudioEvents.Cue += OnCombatCue;
             _casings?.Enable();   // WP-072 B2
             _impacts?.Enable();   // WP-072 B3
+            _flight?.Enable();    // WP-072 B5
             AudioEvents.LoopStoppedAt += OnLoopStopped;
             AudioEvents.CueSuppressed += OnCueSuppressed;
 
@@ -284,6 +296,7 @@ namespace DD.Prototype.Audio
             AudioEvents.Cue -= OnCombatCue;
             _casings?.Disable();   // WP-072 B2
             _impacts?.Disable();   // WP-072 B3
+            _flight?.Disable();    // WP-072 B5
             AudioEvents.LoopStoppedAt -= OnLoopStopped;
             AudioEvents.CueSuppressed -= OnCueSuppressed;
 
@@ -360,6 +373,7 @@ namespace DD.Prototype.Audio
             TickLoops(dt);
             if (!_paused) _weaponFire.Tick(dt);   // WP-072 B1: trigger release → body loop fade + tail
             if (!_paused) _casings.Tick();         // WP-072 B2: casings land after their fall
+            if (!_paused) _flight.Tick(dt);        // WP-072 B5: rocket / orb / gel loops follow their projectile
             TickFieldLoops();
             TickUiVoices(dt);
 
@@ -500,6 +514,16 @@ namespace DD.Prototype.Audio
             // WP-072 B3: a world impact waits for the projectile's own calibre voice (same call chain, one line later).
             if (cue.Event >= CombatAudioEvent.SurfaceImpactDefault && cue.Event <= CombatAudioEvent.SurfaceImpactPaper && !_releasingHeld && _impacts.TryHold(cue))
             {
+                return;
+            }
+
+            // WP-072 B5: an explosion is heard as one of three distance layers (STANDARDS §7, picked once at the blast).
+            if (cue.Event == CombatAudioEvent.Explosion && _library.IsProduced(AudioSoundId.ExplosionNear))
+            {
+                AudioPlacement ep = AudioMixPlan.Resolve(cue, false);
+                ep.Sound = ExplosionLayer(Vector3.Distance(_listener.Transform.position, cue.Position));
+                if (cue.Position == Vector3.zero) ep.Spatial = 0f;
+                PlayResolved(ep, cue.Position, Mathf.Clamp(cue.Intensity <= 0f ? 1f : cue.Intensity, 0.25f, 1.4f), cue.Priority);
                 return;
             }
 
@@ -1278,6 +1302,7 @@ namespace DD.Prototype.Audio
         {
             _weaponFire?.StopAll();   // WP-072 B1
             _casings?.Clear();        // WP-072 B2
+            _flight?.StopAll();       // WP-072 B5
             if (_loops.Count == 0)
             {
                 return;

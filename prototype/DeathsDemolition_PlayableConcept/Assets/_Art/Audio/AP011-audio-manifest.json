@@ -1,5 +1,5 @@
 {
- "version": "ap011-v019",
+ "version": "ap011-v020",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -1121,6 +1121,78 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job ab26434a (1.1 cr) · explosion"
+  },
+  {
+   "sound": "ExplosionFar",
+   "event": "Explosion > 35 m",
+   "files": [
+    "ExplosionFar_01.wav",
+    "ExplosionFar_02.wav",
+    "ExplosionFar_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -120.0,
+   "dcDb": -118.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v020, WP-072 B5, 0 cr) from v001 explosion / explosion_tail / rifle_fire takes + synthetic sub / motor noise · LPF 2 k rumble, 40 ms attack, 2.0 s"
+  },
+  {
+   "sound": "ExplosionMid",
+   "event": "Explosion 12–35 m",
+   "files": [
+    "ExplosionMid_01.wav",
+    "ExplosionMid_02.wav",
+    "ExplosionMid_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -120.0,
+   "dcDb": -116.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v020, WP-072 B5, 0 cr) from v001 explosion / explosion_tail / rifle_fire takes + synthetic sub / motor noise · burst + explosion_tail, LPF 6 k, 1.6 s"
+  },
+  {
+   "sound": "ExplosionNear",
+   "event": "Explosion ≤ 12 m from the listener",
+   "files": [
+    "ExplosionNear_01.wav",
+    "ExplosionNear_02.wav",
+    "ExplosionNear_03.wav"
+   ],
+   "loop": false,
+   "lufs": -18.0,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -120.0,
+   "dcDb": -99.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v020, WP-072 B5, 0 cr) from v001 explosion / explosion_tail / rifle_fire takes + synthetic sub / motor noise · explosion bursts + rifle crack 1–6 k −6 dB + 45 Hz sub −4 dB, 1.2 s"
   },
   {
    "sound": "FleshHit",
@@ -4012,6 +4084,28 @@
    "bus": "SFX-Player",
    "spatial": true,
    "provenance": "seed_audio job 0708ccea (1.1 cr) · rifle_fire · EQ v011 (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
+  },
+  {
+   "sound": "RocketFlightLoop",
+   "event": "ProjectileEvents.Spawned(Rocket)→Impact/Expired (loop, 3D)",
+   "files": [
+    "RocketFlightLoop.wav"
+   ],
+   "loop": true,
+   "lufs": -22.0,
+   "truePeakDb": -10.56,
+   "noiseFloorDb": -120.0,
+   "dcDb": -210.2,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -22.8,
+   "layers": "derived (v005)",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v020, WP-072 B5, 0 cr) from v001 explosion / explosion_tail / rifle_fire takes + synthetic sub / motor noise · rocket motor: pink 150–2.5 k + 6 Hz tremolo 15 % + 700 Hz tone −18 dB, 1.0 s seamless"
   },
   {
    "sound": "RoundComplete",

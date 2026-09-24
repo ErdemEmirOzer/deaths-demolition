@@ -791,5 +791,19 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.None, ImpactAudio.For(SurfaceKind.Flesh, DD.Prototype.Core.Weapons.WeaponCaliber.Medium), "et hasar yolunda");
             Assert.AreEqual(AudioSoundId.None, ImpactAudio.For(SurfaceKind.Stone, DD.Prototype.Core.Weapons.WeaponCaliber.Explosive), "patlama kendi yolunda");
         }
+
+        [Test]
+        public void Firlatici_UcusDongusuEslemi_PitchRampasi_PatlamaKatmani()
+        {
+            Assert.AreEqual(AudioSoundId.RocketFlightLoop, ProjectileFlightAudio.LoopFor(DD.Prototype.Core.Weapons.ProjectileKind.Rocket));
+            Assert.AreEqual(AudioSoundId.SwArcSphereLoop, ProjectileFlightAudio.LoopFor(DD.Prototype.Core.Weapons.ProjectileKind.Orb));
+            Assert.AreEqual(AudioSoundId.SwGelFlightLoop, ProjectileFlightAudio.LoopFor(DD.Prototype.Core.Weapons.ProjectileKind.Gel));
+            Assert.AreEqual(AudioSoundId.None, ProjectileFlightAudio.LoopFor(DD.Prototype.Core.Weapons.ProjectileKind.Bullet), "mermide döngü yok");
+            Assert.AreEqual(1f, ProjectileFlightAudio.PitchFor(40f, DD.Prototype.CameraSystem.CameraMode.TopDown), 1e-5f, "tepeden pitch rampası yok");
+            Assert.AreEqual(Mathf.Pow(2f, -2f / 12f), ProjectileFlightAudio.PitchFor(60f, DD.Prototype.CameraSystem.CameraMode.FirstPerson), 1e-4f, "45 m+ → −2 st");
+            Assert.AreEqual(AudioSoundId.ExplosionNear, PrototypeAudioDirector.ExplosionLayer(12f));
+            Assert.AreEqual(AudioSoundId.ExplosionMid, PrototypeAudioDirector.ExplosionLayer(12.1f));
+            Assert.AreEqual(AudioSoundId.ExplosionFar, PrototypeAudioDirector.ExplosionLayer(35.1f));
+        }
     }
 }

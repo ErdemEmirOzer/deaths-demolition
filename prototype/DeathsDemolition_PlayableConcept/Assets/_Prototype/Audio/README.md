@@ -78,3 +78,9 @@ game event ─► AudioEventMap row (sound id, bus, spatial) ─► AudioEventRo
 
 - `ImpactAudio` hears `ProjectileEvents.Impact` for world hits (bullet / pellet; flesh & armour stay on the damage path, rocket / orb / gel on theirs) and plays `ImpactV3{Surface}{Light|Medium|Heavy}` (500 + surface·3 + calibre). Gain: calibre L −3 / M 0 / H +2 dB + STANDARDS §6 surface mix.
 - HitscanEngine raises the legacy SurfaceImpact cue one call before the projectile Impact: while a projectile is live the director holds those cues for the frame, the Impact marks its own as replaced, the rest play at LateUpdate (one frame, inaudible). Pellets of one transaction within 1.6 m / 60 ms are one impact; grazing (cos < 0.35) light/medium hits on stone/metal add Ricochet −8 dB.
+
+## 12 · Launcher & flight loops (WP-072 B5)
+
+- `ProjectileFlightAudio` keys a 3D loop by ProjectileId (S-02 R1-A #5): Rocket → RocketFlightLoop, Orb → SwArcSphereLoop, Gel → SwGelFlightLoop; it follows the projectile's pool slot each frame and fades out (60 ms) on the one end event (Impact.Stopped or Expired). ≤ 4 voices, ≤ 2 rockets; rocket pitch −2 st over 0→45 m from the listener in FP/TP (baked Doppler, STANDARDS §7), none top-down.
+- `Explosion` picks one layer at the blast by listener distance: ExplosionNear ≤ 12 m (crack + body + sub), Mid ≤ 35 m (LPF 6 k + tail), Far (LPF 2 k rumble); files −18 LUFS under −3 dBTP; the Explosion duck is unchanged.
+- Flyby is not built: only the player fires and the listener rides the player, so no round ever passes the listener after leaving the muzzle (revisit if enemies get ranged attacks).

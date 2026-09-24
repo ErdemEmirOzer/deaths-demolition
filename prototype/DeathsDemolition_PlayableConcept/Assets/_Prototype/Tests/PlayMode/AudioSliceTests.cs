@@ -924,6 +924,46 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072b3.impact played=" + _d.Impacts.Played + " replaced=" + _d.Impacts.Replaced + " last=" + _d.Impacts.LastSound);
         }
 
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator UcusDongusu_RoketMenziliBitince_Kapanir_PatlamaMesafeKatmani()
+        {
+            if (!_d.Library.IsProduced(AudioSoundId.RocketFlightLoop))
+            {
+                Assert.Fail("v020 fırlatıcı kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            Vector3 from = _s.Rig.transform.position + new Vector3(2f, 3f, 0f);
+            int started = _d.Flight.Started, ended = _d.Flight.Ended;
+            var shot = new DD.Prototype.Weapons.ShotRequest
+            {
+                Origin = from, Direction = Vector3.up, Damage = 1f, Range = 6f,
+                ImpactForce = DD.Prototype.Damage.DamageForce.RifleBullet, Source = DD.Prototype.Damage.DamageSourceKind.Bullet,
+                Power = DD.Prototype.Feedback.WeaponPower.Heavy, PierceDamageFalloff = 1f
+            };
+            var launch = new DD.Prototype.Weapons.ProjectileLaunch
+            {
+                WeaponId = DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, Kind = DD.Prototype.Core.Weapons.ProjectileKind.Rocket,
+                Caliber = DD.Prototype.Core.Weapons.WeaponCaliber.Explosive, Speed = 12f, Gravity = 0f, MaxRange = 6f, MaxLifetime = 2f,
+                FalloffStart = 6f, FalloffEnd = 6f, FalloffMinShare = 1f, PenetrationDamageKeep = 1f
+            };
+            DD.Prototype.Weapons.ProjectileSystem.Spawn(shot, launch);
+            yield return SpecialWeaponSahne.Bekle(() => _d.Flight.Started > started, 2f, "roket uçuş döngüsü başlamadı");
+            Assert.AreEqual(1, _d.Flight.Playing, "tek roket, tek döngü");
+            yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Weapons.ProjectileSystem.LiveCount == 0, 3f, "roket menzili bitmedi");
+            Assert.AreEqual(ended + 1, _d.Flight.Ended, "roket bitince döngü tam bir kez kapanmalı");
+            yield return new WaitForSeconds(0.15f);
+            Assert.AreEqual(0, _d.Flight.Playing, "döngü söndü");
+
+            // Patlama: dinleyiciye mesafeyle tek katman seçilir.
+            AudioEvents.RaiseCritical(CombatAudioEvent.Explosion, Konum(3f), 1f, 90);
+            Assert.AreEqual(AudioSoundId.ExplosionNear, _d.LastPlayed, "≤ 12 m yakın katman");
+            yield return new WaitForSeconds(0.2f);
+            AudioEvents.RaiseCritical(CombatAudioEvent.Explosion, _s.Rig.transform.position + new Vector3(40f, 1f, 20f), 1f, 90);
+            Assert.AreEqual(AudioSoundId.ExplosionFar, _d.LastPlayed, "> 35 m uzak katman");
+            Debug.Log("[DD-TEST] wp072b5.flight started=" + _d.Flight.Started + " ended=" + _d.Flight.Ended);
+        }
+
         // ================================================================== WP-068 dilim 11 · UI ses v3
 
         [UnityTest]

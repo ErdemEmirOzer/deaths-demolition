@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v019
-  _sourceHash: 98bbd2bf432ba5ebc9f90ad8ffb72389592e6e410e66ba9beaf93f9a4be4047c
+  _manifestVersion: ap011-v020
+  _sourceHash: f24a24debcbdbff2bd0d8b2e2b2981972b1097783215769db8ff985184b3e3e7
   _entries:
   - Sound: 10
     Clips:
@@ -5088,6 +5088,69 @@ MonoBehaviour:
       5.6 cr) \xB7 chamber pressurises (rising hiss) + rin bell (brass) at the top"
     NoiseFloorDb: -120
     DcDb: -150.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 560
+    Clips:
+    - {fileID: 8300000, guid: a14f596d9889e449791ddf7018e9f7c8, type: 3}
+    Loop: 1
+    Lufs: -22
+    TruePeakDb: -10.56
+    Provenance: "derived offline (AP-011 v020, WP-072 B5, 0 cr) from v001 explosion
+      / explosion_tail / rifle_fire takes + synthetic sub / motor noise \xB7 rocket
+      motor: pink 150\u20132.5 k + 6 Hz tremolo 15 % + 700 Hz tone \u221218 dB, 1.0
+      s seamless"
+    NoiseFloorDb: -120
+    DcDb: -210.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 561
+    Clips:
+    - {fileID: 8300000, guid: 38b776382ca9641b59fa4e129ac684ab, type: 3}
+    - {fileID: 8300000, guid: 29cc4637083b040e09f7137b4acf093b, type: 3}
+    - {fileID: 8300000, guid: e4e4bbaf46bb44c4ca2aaf55b2e690f0, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -3
+    Provenance: "derived offline (AP-011 v020, WP-072 B5, 0 cr) from v001 explosion
+      / explosion_tail / rifle_fire takes + synthetic sub / motor noise \xB7 explosion
+      bursts + rifle crack 1\u20136 k \u22126 dB + 45 Hz sub \u22124 dB, 1.2 s"
+    NoiseFloorDb: -120
+    DcDb: -99.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 562
+    Clips:
+    - {fileID: 8300000, guid: 81a520e601a0d45648950dcd0e2f2dfa, type: 3}
+    - {fileID: 8300000, guid: 2eeb2f22df9eb47fb9f9ad6d1c1fad8c, type: 3}
+    - {fileID: 8300000, guid: 7987d5960aba44354be9f36d18c13179, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -3
+    Provenance: "derived offline (AP-011 v020, WP-072 B5, 0 cr) from v001 explosion
+      / explosion_tail / rifle_fire takes + synthetic sub / motor noise \xB7 burst
+      + explosion_tail, LPF 6 k, 1.6 s"
+    NoiseFloorDb: -120
+    DcDb: -116.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 563
+    Clips:
+    - {fileID: 8300000, guid: f2a5c3934cd004497a4cc93d596e4176, type: 3}
+    - {fileID: 8300000, guid: 008eb8af7e67f4bbc879d6e90462cf31, type: 3}
+    - {fileID: 8300000, guid: 7d0cb882d1fc546a6bb5a7899490f460, type: 3}
+    Loop: 0
+    Lufs: -18
+    TruePeakDb: -3
+    Provenance: "derived offline (AP-011 v020, WP-072 B5, 0 cr) from v001 explosion
+      / explosion_tail / rifle_fire takes + synthetic sub / motor noise \xB7 LPF
+      2 k rumble, 40 ms attack, 2.0 s"
+    NoiseFloorDb: -120
+    DcDb: -118.4
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)
