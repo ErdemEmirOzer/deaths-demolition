@@ -25,6 +25,7 @@ namespace DD.Prototype.Characters
         public const string IdleVariant = "IdleVariant";
         public const string Attack = "Attack";           // trigger
         public const string AttackStyle = "AttackStyle"; // int: 0 swipe, 1 lunge, 2 sweep, 3 overhead (WP-032B, Ultra)
+        public const string AttackMirror = "AttackMirror"; // bool: WP-071 B5 — the attack plays mirrored (swipe_L = swipe_R mirrored, S-03 AttackSelector)
         public const string AttackRate = "AttackRate";   // float: clip speed so hit_window_start lands on the tier telegraph
         public const string Stagger = "Stagger";         // trigger (heavy, full body)
         public const string HitLeft = "HitL";            // trigger, override layer

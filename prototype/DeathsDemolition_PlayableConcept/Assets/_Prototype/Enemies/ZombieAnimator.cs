@@ -147,6 +147,9 @@ namespace DD.Prototype.Enemies
         /// <summary>WP-076 B4: the death reaction has begun (a lethal shock holds it for ShockDeathHoldSeconds).</summary>
         public bool IsDying => _dying;
 
+        private ZombieEnemy _owner;
+        private bool _ownerLooked;
+
         public bool DeathFinished => _dying && (Driven
             ? Driver.DeathFinished || _deathTime >= DrivenDeathFallbackSeconds
             : _deathTime >= _deathDuration);
@@ -577,6 +580,9 @@ namespace DD.Prototype.Enemies
 
                 _flinchVelocity = Vector3.zero;
                 _flinch = Vector3.zero;
+                // WP-071 B5: S-03's shove / suppression → the pose (S-03 moves the body, S-06 answers with the animation)
+                if (!_ownerLooked) { _ownerLooked = true; _owner = _rig != null && _rig.Visual != null ? _rig.Visual.GetComponentInParent<ZombieEnemy>() : null; }
+                if (_owner != null) Driver.SetHitResponse(_owner.Knockback, _owner.IsSuppressed);
                 return;
             }
 

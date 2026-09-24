@@ -45,6 +45,11 @@ namespace DD.Prototype.Characters
         void SetDeathImpulse(Vector3 worldPush, float intensity);
         /// <summary>WP-071 B3: S-03's full killing impulse (DEC-096) — weapon class, body state, body speed shape the fall.</summary>
         void SetDeathImpulse(in DD.Prototype.Damage.DeathImpulse impulse);
+        /// <summary>
+        /// WP-071 B5: S-03's per-frame hit response (§3.4, S-03 owns the displacement): the shove in progress and LMG suppression —
+        /// the driver answers with the pose (knockback read + lean, suppression tremble).
+        /// </summary>
+        void SetHitResponse(in KnockbackState knockback, bool suppressed);
         IAttackWindowSink WindowSink { get; set; }
         /// <summary>WP-032: additive wind-up emphasis weight (0..1).</summary>
         void SetTelegraphEmphasis(float emphasis01);
@@ -60,6 +65,8 @@ namespace DD.Prototype.Characters
     /// </summary>
     public interface IAttackWindowSink
     {
+        /// <summary>WP-071 B5: the current swing is the left-handed read (S-03 WP-076 AttackSelector) — played mirrored.</summary>
+        bool SwipeMirror { get; }
         void OnHitWindowStart();
         void OnHitWindowEnd();
     }

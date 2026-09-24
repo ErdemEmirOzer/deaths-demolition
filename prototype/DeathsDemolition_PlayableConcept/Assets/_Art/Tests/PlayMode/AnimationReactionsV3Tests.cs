@@ -126,6 +126,56 @@ namespace DD.Art.Tests.PlayMode
             yield return CharacterTests.Bekle(() => e.DeathFinished && l.DeathFinished, 6f, "iki ölüm biter");
         }
 
+        private sealed class MirrorSink : IAttackWindowSink
+        {
+            public bool SwipeMirror { get; set; }
+            public void OnHitWindowStart() { }
+            public void OnHitWindowEnd() { }
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Saldiri_SwipeLAynalanir_BiteGrabLunge_ItmeVeBastirmaPozu()
+        {
+            yield return Stage();
+            ZombieSkinnedVisual v = Zombie(Vector3.zero, 64u);
+            for (int i = 0; i < 10; i++) yield return null;
+            var sink = new MirrorSink { SwipeMirror = true };
+            v.WindowSink = sink;
+            v.PlayAttack(ZombieAttackStyle.Swipe, 0.55f);
+            Assert.IsTrue(v.Animator.GetBool(CharacterAnimatorContract.AttackMirror), "swipe_L aynalı oynamalı");
+            yield return CharacterTests.Bekle(() => !v.Animator.GetCurrentAnimatorStateInfo(0).IsName(CharacterAnimatorContract.LocomotionState), 1f, "saldırı başladı");
+            for (int i = 0; i < 60; i++) yield return null;
+            sink.SwipeMirror = false;
+            v.PlayAttack(ZombieAttackStyle.BiteGrab, 0.7f);
+            Assert.AreEqual(1, v.Animator.GetInteger(CharacterAnimatorContract.AttackStyle), "bite_grab → lunge klibi (AP-022'ye kadar)");
+            Assert.IsFalse(v.Animator.GetBool(CharacterAnimatorContract.AttackMirror));
+            for (int i = 0; i < 90; i++) yield return null;
+
+            // knockback: the read + the lean backwards along the shove (S-03 moves the body; here only the pose)
+            int reads0 = v.KnockbackReads;
+            Time.captureDeltaTime = 1f / 60f;
+            float minPitch = 0f;
+            for (int f = 0; f < 20; f++)
+            {
+                float t = f / 60f;
+                var kb = new KnockbackState { Active = t < 0.25f, Direction = -v.transform.forward, Speed = t < 0.25f ? 4.8f * (1f - t / 0.25f) : 0f, Seconds = 0.25f, Progress01 = Mathf.Clamp01(t / 0.25f) };
+                v.SetHitResponse(kb, false);
+                v.SetSpeed(0f, Time.deltaTime);
+                yield return null;
+                minPitch = Mathf.Min(minPitch, v.Lean.Pitch);
+            }
+
+            // suppression: the continuous tremble
+            int tremors0 = v.SuppressionTremors;
+            for (int f = 0; f < 30; f++) { v.SetHitResponse(default, true); yield return null; }
+            Time.captureDeltaTime = 0f;
+            Debug.Log("[DD-TEST] wp071.b5 knockbackReads=" + (v.KnockbackReads - reads0) + " leanPitchMin=" + minPitch.ToString("F1", CultureInfo.InvariantCulture) + "° tremors=" + (v.SuppressionTremors - tremors0));
+            Assert.AreEqual(1, v.KnockbackReads - reads0, "itmede tek okuma");
+            Assert.Less(minPitch, -2f, "itmede gövde geriye eğilmeli");
+            Assert.GreaterOrEqual(v.SuppressionTremors - tremors0, 3, "bastırmada sürekli titreme");
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Elektrik_PozYavaslar_SpazmCanli_BitinceNormal()

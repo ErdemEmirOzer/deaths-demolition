@@ -616,6 +616,7 @@ namespace DD.Prototype.Characters
         private static readonly int AttackId = Animator.StringToHash(CharacterAnimatorContract.Attack);
         private static readonly int AttackStyleId = Animator.StringToHash(CharacterAnimatorContract.AttackStyle);
         private static readonly int AttackRateId = Animator.StringToHash(CharacterAnimatorContract.AttackRate);
+        private static readonly int AttackMirrorId = Animator.StringToHash(CharacterAnimatorContract.AttackMirror);
         private static readonly int StaggerId = Animator.StringToHash(CharacterAnimatorContract.Stagger);
         private static readonly int HitLeftId = Animator.StringToHash(CharacterAnimatorContract.HitLeft);
         private static readonly int HitRightId = Animator.StringToHash(CharacterAnimatorContract.HitRight);
@@ -774,6 +775,7 @@ namespace DD.Prototype.Characters
             EndRagdoll();   // WP-071: a pooled body comes back animated (proxy returned, Animator + LOD running)
             _hasFullImpulse = false;
             _lastOverrideHit = -10f;
+            _kbActive = false; _kbVelocity = Vector3.zero; _tremorClock = 0f;   // WP-071 B5
             EnsureRagdollBones();
             RagdollProxyPool.ArmRoundLog();   // WP-078 per-round line
             _topSpeed = Mathf.Max(0.1f, topSpeedMetersPerSecond);
@@ -857,7 +859,7 @@ namespace DD.Prototype.Characters
             _lastRate = rate;
             _lastSpeedMps = metersPerSecond;
             _animator.SetFloat(GaitRateId, Mathf.Lerp(1f, rate, _speed01));
-            if (_lean != null) _lean.Feed(transform.forward * metersPerSecond);
+            if (_lean != null) _lean.Feed(transform.forward * metersPerSecond + _kbVelocity);   // B5: + the knockback shove
         }
 
         /// <summary>
@@ -869,13 +871,15 @@ namespace DD.Prototype.Characters
         {
             if (!_authored || _dying) return 1f;
             // WP-032B: the Ultra overhead has its own v002 clip (Attack_Overhead); a set without it (v001) falls back to the sweep.
-            int index = style == ZombieAttackStyle.Lunge ? 1 : style == ZombieAttackStyle.Swipe ? 0
+            // WP-071 B5: bite_grab plays the lunge (both arms reach, the dive closes) until AP-022's attack_bite_grab
+            int index = style == ZombieAttackStyle.Lunge || style == ZombieAttackStyle.BiteGrab ? 1 : style == ZombieAttackStyle.Swipe ? 0
                 : style == ZombieAttackStyle.Overhead && _animation.Find(CharacterAnimatorContract.ZombieAttackOverhead) != null ? 3 : 2;
             float windowStart = WindowStartSeconds(CharacterAnimatorContract.ZombieAttackClips[index]);
             float rate = telegraphSeconds > 0.01f && windowStart > 0.01f ? windowStart / telegraphSeconds : 1f;
             rate = Mathf.Clamp(rate, 0.25f, 4f);
             _windowOpen = false;
             _animator.SetInteger(AttackStyleId, index);
+            _animator.SetBool(AttackMirrorId, style == ZombieAttackStyle.Swipe && WindowSink != null && WindowSink.SwipeMirror);   // swipe_L
             _animator.SetFloat(AttackRateId, rate);
             _animator.SetTrigger(AttackId);
             // WP-032: the additive wind-up emphasis spans the wind-up (1 s clip at 1 / telegraph) and is gone by hit_window_start.
@@ -1008,6 +1012,47 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>Light directional hit: override_upper L/R by the bullet's lateral side + the regional additive flinch.</summary>
+        // ---------------------------------------------------- WP-071 B5 hit response (S-03 §3.4 read surface)
+
+        [PrototypeOnly(PendingDecisions.None, "WP-071 B5: LMG suppression tremble — one additive torso flinch this often while suppressed, seconds. Invented / III A5.3.", true)]
+        public const float SuppressionTremorSeconds = 0.15f;
+        private bool _kbActive;
+        private Vector3 _kbVelocity;
+        private float _tremorClock;
+        /// <summary>WP-071 B5 readouts: knockback reads played, suppression tremors.</summary>
+        public int KnockbackReads { get; private set; }
+        public int SuppressionTremors { get; private set; }
+
+        public void SetHitResponse(in KnockbackState knockback, bool suppressed)
+        {
+            if (!_authored || _dying || _rising) { _kbActive = false; _kbVelocity = Vector3.zero; return; }
+            _kbVelocity = knockback.Active ? knockback.Direction * knockback.Speed : Vector3.zero;   // the lean reads the real shove
+            if (knockback.Active && !_kbActive)
+            {
+                // the shove's first frame: the directional hit read at full weight (a knockback is never a suppressed accumulation)
+                _animator.SetInteger(HitDirId, HitDirectionIndex(transform.InverseTransformDirection(knockback.Direction)));
+                _animator.SetTrigger(HitId);
+                _lastOverrideHit = Time.time;
+                KnockbackReads++;
+            }
+
+            _kbActive = knockback.Active;
+            if (suppressed)
+            {
+                _tremorClock -= Time.deltaTime;
+                if (_tremorClock <= 0f)
+                {
+                    _tremorClock = SuppressionTremorSeconds;
+                    _animator.SetTrigger(FlinchTorsoId);
+                    SuppressionTremors++;
+                }
+            }
+            else
+            {
+                _tremorClock = 0f;
+            }
+        }
+
         [PrototypeOnly(PendingDecisions.None, "WP-071 B3 (III A5.3): the override hit read re-triggers at most this often; faster hits (LMG) feed the additive flinch only — continuous reaction without a stun-lock. Invented.", true)]
         public const float HitRetriggerSeconds = 0.22f;
         private float _lastOverrideHit = -10f;

@@ -473,6 +473,7 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.Gait, AnimatorControllerParameterType.Float), (C.IdleVariant, AnimatorControllerParameterType.Float),
                 (C.Waiting, AnimatorControllerParameterType.Bool), (C.WaitPhase, AnimatorControllerParameterType.Float),
                 (C.Attack, AnimatorControllerParameterType.Trigger), (C.AttackStyle, AnimatorControllerParameterType.Int), (C.AttackRate, AnimatorControllerParameterType.Float),
+                (C.AttackMirror, AnimatorControllerParameterType.Bool),
                 (C.Stagger, AnimatorControllerParameterType.Trigger),
                 (C.HitLeft, AnimatorControllerParameterType.Trigger), (C.HitRight, AnimatorControllerParameterType.Trigger),
                 (C.FlinchHead, AnimatorControllerParameterType.Trigger), (C.FlinchTorso, AnimatorControllerParameterType.Trigger), (C.FlinchLeg, AnimatorControllerParameterType.Trigger),
@@ -537,6 +538,8 @@ namespace DD.Art.Pipeline.EditorTools
                 AnimatorState a = OneShot(sm, attackStates[i], clips[C.ZombieAttackClips[i]], loco, hold ? 1f : 0.97f, hold ? OverheadHoldSeconds : 0.12f);
                 a.speedParameterActive = true;
                 a.speedParameter = C.AttackRate;
+                a.mirrorParameterActive = true;   // WP-071 B5: swipe_L / any left-handed read = the clip mirrored
+                a.mirrorParameter = C.AttackMirror;
                 FromAny(sm, a, 0.06f, (AnimatorConditionMode.If, 0f, C.Attack), (AnimatorConditionMode.Equals, (float)i, C.AttackStyle), (AnimatorConditionMode.If, 0f, C.Alive));
             }
 
