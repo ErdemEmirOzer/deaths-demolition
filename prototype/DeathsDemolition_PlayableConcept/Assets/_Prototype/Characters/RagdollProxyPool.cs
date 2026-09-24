@@ -144,6 +144,14 @@ namespace DD.Prototype.Characters
         public static void Release(Proxy p)
         {
             if (p == null || !p.active) return;
+            if (p.root == null)
+            {
+                // the scene took the pool with it (OnDestroy already cleared the books): only drop the owner's handle
+                p.active = false;
+                p.owner = 0;
+                return;
+            }
+
             for (int b = 0; b < BodyCount; b++)
             {
                 p.bodies[b].interpolation = RigidbodyInterpolation.None;
@@ -261,8 +269,13 @@ namespace DD.Prototype.Characters
         private void OnDestroy()
         {
             if (s_instance != this) return;
-            // the scene went away with the proxies: forget them (owners see a destroyed root and drop their handle)
-            for (int i = 0; i < s_built; i++) s_proxies[i] = null;
+            // the scene went away with the proxies: forget them (owners still holding one see it inactive / a destroyed root)
+            for (int i = 0; i < s_built; i++)
+            {
+                if (s_proxies[i] != null) { s_proxies[i].active = false; s_proxies[i].owner = 0; }
+                s_proxies[i] = null;
+            }
+
             s_built = 0;
             s_active = 0;
             s_instance = null;

@@ -103,6 +103,35 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator SahneDegisimi_DusenRagdoll_HatasizBirakilir()
+        {
+            // S-07 (main f52647f): a scene change while a proxy falls destroyed its Rigidbodies before the zombie's OnDisable
+            // released it → MissingReferenceException in every later scene-loading test.
+            yield return Stage();
+            ZombieSkinnedVisual v = Zombie(Vector3.zero, 12u);
+            _temp.Remove(v.transform.parent.gameObject);
+            Object.DontDestroyOnLoad(v.transform.parent.gameObject);   // like a pooled body that outlives the scene
+            for (int i = 0; i < 10; i++) yield return null;
+            v.SetDeathImpulse(Vector3.back, 2f);
+            v.PlayDeath(1);
+            yield return CharacterTests.Bekle(() => v.RagdollActive, 1f, "ragdoll hand-off");
+            int exceptions = 0;
+            Application.LogCallback count = (msg, stack, type) => { if (type == LogType.Exception) exceptions++; };
+            Application.logMessageReceived += count;
+            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+            yield return null; yield return null;
+            v.transform.parent.gameObject.SetActive(false);   // pool return → OnDisable → EndRagdoll
+            v.ResetForSpawn(EnemyTier.Standard, 2.7f, "A", 0, false);
+            yield return null;
+            Application.logMessageReceived -= count;
+            Assert.AreEqual(0, exceptions, "sahne değişiminde ragdoll bırakma istisnası");
+            Assert.IsFalse(v.RagdollActive);
+            Assert.AreEqual(0, RagdollProxyPool.ActiveCount);
+            Object.Destroy(v.transform.parent.gameObject);
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator Tavan_Dolunca_YaziliDusus_HepsiBiter_SonraYenidenDogar()
         {
             yield return Stage();
