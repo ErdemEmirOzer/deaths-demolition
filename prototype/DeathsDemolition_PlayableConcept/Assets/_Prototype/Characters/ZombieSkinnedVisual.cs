@@ -912,7 +912,9 @@ namespace DD.Prototype.Characters
             if (_chains != null) _chains.Reset();   // WP-032F: tails restart from the rest pose at the new spawn point
             _animator.SetBool(WaitingId, false);
             // WP-032B: the queue idle's cycle offset — deterministic per spawn (the idle variant coin's neighbour), so a throat queue is out of step.
-            _animator.SetFloat(WaitPhaseId, Mathf.Repeat((idleVariant * 0.618034f) + (GetInstanceID() & 1023) / 1024f, 1f));
+            // WP-071: the queue phase from the per-spawn ordinal (golden-ratio spread) — the old instance-id bits made two bodies land
+            // ≈ 0.05 apart on some runs (AnimationV002Tests flake); consecutive spawns now differ by ≥ 0.13 whatever the variants
+            _animator.SetFloat(WaitPhaseId, Mathf.Repeat(s_gaitOrdinal * 0.618034f + idleVariant * 0.25f, 1f));
             if (_telegraphLayer >= 0) _animator.SetLayerWeight(_telegraphLayer, _telegraphEmphasis);
             if (_lookAt != null) _lookAt.ResetWeight();
             _animator.SetBool(AliveId, true);
