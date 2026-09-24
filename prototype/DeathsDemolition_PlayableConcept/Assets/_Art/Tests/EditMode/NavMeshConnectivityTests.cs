@@ -90,15 +90,70 @@ namespace DD.Art.Tests.EditMode
             foreach (BoxCollider box in skirtRoot.GetComponentsInChildren<BoxCollider>())
             {
                 skirtCount++;
-                Vector3 c = box.transform.TransformPoint(box.center);
-                if (NavMesh.SamplePosition(new Vector3(c.x, 0.2f, c.z), out NavMeshHit under, 0.12f, NavMesh.AllAreas)) navUnderSkirt.Add(box.name + " " + under.position.ToString("F2"));
+                Bounds b = box.bounds;
+                // Sample the footprint every 0.25 m along its long axis (skirts of a side are merged into one box, WP-038Q).
+                bool alongZ = b.size.z >= b.size.x;
+                for (float u = 0.1f; u <= (alongZ ? b.size.z : b.size.x) - 0.1f; u += 0.25f)
+                {
+                    Vector3 q = alongZ ? new Vector3(b.center.x, 0.2f, b.min.z + u) : new Vector3(b.min.x + u, 0.2f, b.center.z);
+                    if (NavMesh.SamplePosition(q, out NavMeshHit under, 0.1f, NavMesh.AllAreas) && under.position.x >= b.min.x && under.position.x <= b.max.x && under.position.z >= b.min.z && under.position.z <= b.max.z)
+                    { navUnderSkirt.Add(box.name + " " + under.position.ToString("F2")); break; }
+                }
             }
 
-            Assert.AreEqual(38, skirtCount, "38 korkuluk hacmi = 38 etek");
+            Assert.GreaterOrEqual(skirtCount, 2, "köprü korkuluk etekleri");
             Assert.IsEmpty(navUnderSkirt, "etek altında yürünebilir NavMesh: " + string.Join(", ", navUnderSkirt));
             Assert.Greater(points.Count, 30);
             Assert.IsEmpty(unreachable, "Başlangıca tam yolu olmayan işaretli nokta (" + unreachable.Count + "):\n" + string.Join("\n", unreachable));
             Assert.IsEmpty(traps, "Bedenin ana NavMesh'ten yürüyerek geçebildiği (kapsül r " + (NavMeshIslandLinker.BodyRadius + NavMeshIslandLinker.BodySkin) + ", " + NavMeshIslandLinker.StepHeight + " m basamak) kopuk adacık (" + traps.Count + "):\n" + string.Join("\n", traps));
+        }
+
+        /// <summary>
+        /// WP-038Q · The bridge deck is a corridor a body walks, not a slot it must thread: between the two skirts of the bridge a
+        /// body capsule (r 0.48 with skin, standing on the deck) fits across a band of at least 0.18 m at every 5 cm along it, and
+        /// no pond fence segment reaches into it (run 25: Pond0_48 / 51 left 2 cm and held the player 230 s).
+        /// </summary>
+        [Test]
+        public void KopruGuvertesi_BedenKoridoruAcik_CitSokulmez_EtekBirlesik()
+        {
+            OpenWorld();
+            Physics.SyncTransforms();
+            Transform root = GameObject.Find(Ap005WorldBootstrap.RootName).transform;
+            BoxCollider[] skirtBoxes = root.Find(PlacementImporter.BridgeRailSkirtRootName).GetComponentsInChildren<BoxCollider>();
+            var skirts = new List<Bounds>();
+            foreach (BoxCollider box in skirtBoxes) skirts.Add(box.bounds);
+            // The deck's two sides: long skirts along z with overlapping spans, one west of the other.
+            skirts.Sort((a, b) => a.center.x.CompareTo(b.center.x));
+            Assert.AreEqual(2, skirts.Count, "köprünün her yanı tek (birleşik) etek: " + skirts.Count);
+            Bounds west = skirts[0], east = skirts[1];
+            float z0 = Mathf.Max(west.min.z, east.min.z) + 0.5f, z1 = Mathf.Min(west.max.z, east.max.z) - 0.5f;
+            Assert.Greater(z1 - z0, 10f, "güverte boyu");
+            int mask = NavMeshIslandLinker.BodyMask();
+            float r = NavMeshIslandLinker.BodyRadius + NavMeshIslandLinker.BodySkin, narrowest = float.MaxValue, narrowestZ = 0f;
+            for (float z = z0; z <= z1; z += 0.05f)
+            {
+                float top = Physics.Raycast(new Vector3((west.max.x + east.min.x) * 0.5f, 3f, z), Vector3.down, out RaycastHit h, 6f, (1 << 14) | (1 << 15), QueryTriggerInteraction.Ignore) ? h.point.y : 0f;
+                float first = float.NaN, last = float.NaN;
+                for (float x = west.max.x; x <= east.min.x; x += 0.01f)
+                {
+                    bool blocked = Physics.CheckCapsule(new Vector3(x, top + 0.35f + r, z), new Vector3(x, top + 1.8f - 0.45f, z), r, mask, QueryTriggerInteraction.Ignore);
+                    if (blocked) continue;
+                    if (float.IsNaN(first)) first = x;
+                    last = x;
+                }
+
+                float band = float.IsNaN(first) ? 0f : last - first;
+                if (band < narrowest) { narrowest = band; narrowestZ = z; }
+            }
+
+            Debug.Log("[DD-TEST] wp038q.deck corridor " + west.max.x.ToString("F2") + ".." + east.min.x.ToString("F2") + " narrowest body band " + narrowest.ToString("F2") + " m at z " + narrowestZ.ToString("F2"));
+            Assert.GreaterOrEqual(narrowest, 0.18f, "güvertede bedenin sığdığı bant çok dar (z " + narrowestZ.ToString("F2") + ")");
+            var intruders = new List<string>();
+            foreach (BoxCollider seg in root.Find(WorldBoundaryBuilder.ObjectName).Find(WorldBoundaryBuilder.PondRimsName).GetComponentsInChildren<BoxCollider>())
+                foreach (BoxCollider sk in skirtBoxes)
+                    if (Physics.ComputePenetration(seg, seg.transform.position, seg.transform.rotation, sk, sk.transform.position, sk.transform.rotation, out _, out _))
+                        intruders.Add(seg.name + "↔" + sk.name);
+            Assert.IsEmpty(intruders, "havuz çiti köprü eteğine giriyor: " + string.Join(", ", intruders));
         }
     }
 }

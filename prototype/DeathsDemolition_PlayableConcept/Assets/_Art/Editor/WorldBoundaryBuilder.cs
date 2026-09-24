@@ -22,7 +22,7 @@ namespace DD.Art.Pipeline.EditorTools
     /// player's 0.35 m step — a player stepped in and fell forever. Each basin ellipse (the NavMesh pond footprint,
     /// PlacementImporter.BasinHoles) gets a closed fence of 0.5 m invisible segments on the same layer, except where walkable
     /// NavMesh passes through the fence (bridge deck, shore module — WP-038N rule: an invisible fence never cuts the NavMesh, see
-    /// <see cref="CutsNavMesh"/>). Where the
+    /// <see cref="CutsNavMesh"/>) or a bridge rail skirt already closes the pond (WP-038Q). Where the
     /// plates' real basin cut reaches past the ellipse (and any other hole cell of the 0.25 m grid outside the ponds) an invisible
     /// floor plug at the neighbouring ground height closes it.
     /// Idempotent: everything is rebuilt in place. Called by PlacementImporter.BuildScene (after the bake) and by <see cref="ApplyCli"/>.
@@ -189,6 +189,14 @@ namespace DD.Art.Pipeline.EditorTools
             return best == float.MinValue ? 0f : best;
         }
 
+        /// <summary>WP-038Q · True when the box touches a bridge rail skirt (built before the rims, PlacementImporter.BuildBridgeRailNavVolumes).</summary>
+        private static bool OverlapsBridgeSkirt(Vector3 centre, Vector3 halfExtents, Quaternion rotation)
+        {
+            foreach (Collider c in Physics.OverlapBox(centre, halfExtents, rotation, 1 << Layer, QueryTriggerInteraction.Collide))
+                if (c.transform.parent != null && c.transform.parent.name == PlacementImporter.BridgeRailSkirtRootName) return true;
+            return false;
+        }
+
         private static void BuildPondRims(GameObject parent, List<(Vector2 centre, Vector2 semi, float yaw)> basins, out int segments, out int crossings)
         {
             segments = 0;
@@ -207,6 +215,9 @@ namespace DD.Art.Pipeline.EditorTools
                     Vector2 m = (p0 + p1) * 0.5f;
                     if (CutsNavMesh(p0, p1)) { crossings++; continue; }
                     Vector2 d = p1 - p0;
+                    // WP-038Q: where the pond passes under a bridge its rail skirts already close it — a fence segment there only
+                    // narrowed the deck (Pond0_48 / 51 left 0.97 m for a 0.96 m body: the soak seed-61 run-25 wedge).
+                    if (OverlapsBridgeSkirt(new Vector3(m.x, mid, m.y), new Vector3(PondRimThickness, height, d.magnitude + 0.1f) * 0.5f, Quaternion.LookRotation(new Vector3(d.x, 0f, d.y)))) { crossings++; continue; }
                     var seg = new GameObject("Pond" + b + "_" + i);
                     seg.transform.SetParent(rims.transform, false);
                     seg.layer = Layer;

@@ -348,5 +348,111 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log("[DD-TEST] wp038p.zombies reached " + reached.Count + "/" + zombies.Count + " in " + t.ToString("F1") + " s" + (stuck.Count > 0 ? " stuck: " + string.Join(" | ", stuck) : ""));
             Assert.IsEmpty(stuck, "oyuncuya ulaşamayan zombi (" + stuck.Count + "): " + string.Join(" | ", stuck));
         }
+
+        // WP-038Q · The raised south crossing (the bridge) with the real player body (PlayerMotor: acceleration, braking, the
+        // 0.35 m step) driven like the soak bot along a NavMesh path re-planned every 0.25 s: the soak seed-61 run-25 route and
+        // stuck point (4.0, 0.3, −31.3), and both ends entered from eight directions to the far bank. No route may stall 3 s.
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator Oyuncu_GuneyGecidi_SekizYondenGirisCikis_VeSoakNoktasi_Takilmaz()
+        {
+            yield return RunAp005();
+            var routes = new List<(string name, Vector3 from, Vector3 to)>
+            {
+                ("soak61-25", new Vector3(7.2f, 0f, -38.8f), new Vector3(-18f, 0f, -11.6f)),
+                ("stuck→N", new Vector3(4f, 0.3f, -31.3f), new Vector3(-18f, 0f, -11.6f)),
+                ("stuck→S", new Vector3(4f, 0.3f, -31.3f), new Vector3(7.2f, 0f, -38.8f)),
+            };
+            foreach ((string end, Vector3 centre, Vector3 far) in new[] { ("S", new Vector3(4f, 0f, -38.6f), new Vector3(4f, 0f, -20.4f)), ("N", new Vector3(4f, 0f, -20.9f), new Vector3(4f, 0f, -40f)) })
+            for (int k = 0; k < 8; k++)
+            {
+                float a = k * Mathf.PI / 4f;
+                Vector3 p = centre + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * 3.5f;
+                if (!NavMesh.SamplePosition(p, out NavMeshHit hit, 1.5f, NavMesh.AllAreas)) continue;   // a point in the pond
+                routes.Add((end + (k * 45) + "°", hit.position, far));
+            }
+
+            var fails = new List<string>();
+            var path = new NavMeshPath();
+            foreach ((string name, Vector3 from, Vector3 to) in routes)
+            {
+                Assert.IsTrue(NavMesh.SamplePosition(from, out NavMeshHit hs, 1.5f, NavMesh.AllAreas), name + ": başlangıç NavMesh dışı");
+                Assert.IsTrue(NavMesh.SamplePosition(to, out NavMeshHit ht, 1.5f, NavMesh.AllAreas), name + ": hedef NavMesh dışı");
+                _girdi.Deger = Vector2.zero;
+                _rig.Teleport(hs.position + Vector3.up * 0.05f, Quaternion.identity);
+                yield return null;
+                float t = 0f, next = 0f, best = float.MaxValue, lastImprove = 0f;
+                string fail = null;
+                Vector3 corner = ht.position;
+                while (true)
+                {
+                    Vector3 pos = _rig.transform.position;
+                    if (Vector3.Distance(Flat(pos), Flat(ht.position)) < 0.8f) break;
+                    if (t >= next)
+                    {
+                        next = t + 0.25f;
+                        Vector3 start = NavMesh.SamplePosition(pos, out NavMeshHit hp, 1.5f, NavMesh.AllAreas) ? hp.position : pos;
+                        if (!NavMesh.CalculatePath(start, ht.position, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) { fail = "yol yok @" + pos.ToString("F2"); break; }
+                        corner = ht.position;
+                        for (int c = 1; c < path.corners.Length; c++) if (Vector3.Distance(Flat(pos), Flat(path.corners[c])) > 0.35f) { corner = path.corners[c]; break; }
+                        float rem = Remaining(pos, path, 1);
+                        if (rem < best - 0.5f) { best = rem; lastImprove = t; }
+                        else if (t - lastImprove > 3f) { fail = "takıldı @" + pos.ToString("F2") + " kalan " + rem.ToString("F1") + " m"; break; }
+                    }
+
+                    if (t > 60f) { fail = "süre aşımı @" + pos.ToString("F2"); break; }
+                    Vector3 dir = Flat(corner - pos);
+                    dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.zero;
+                    PrototypeCameraRig cam = PrototypeCameraRig.Active;
+                    _girdi.Deger = new Vector2(Vector3.Dot(dir, cam.PlanarRight), Vector3.Dot(dir, cam.PlanarForward));
+                    yield return null;
+                    t += Time.deltaTime;
+                    if (_rig.transform.position.y < -1f) { fail = "düştü"; break; }
+                }
+
+                _girdi.Deger = Vector2.zero;
+                if (fail != null) fails.Add(name + ": " + fail);
+            }
+
+            Debug.Log("[DD-TEST] wp038q.crossing routes=" + routes.Count + " stalls=" + fails.Count + (fails.Count > 0 ? " " + string.Join(" | ", fails) : ""));
+            Assert.Greater(routes.Count, 12, "rota sayısı (8 yön × 2 uç + soak)");
+            Assert.IsEmpty(fails, "Güney geçidinde oyuncu gövdesi takıldı (" + fails.Count + "):\n" + string.Join("\n", fails));
+        }
+
+        // WP-038Q · On the deck the player slides along the skirts whatever the stick says: pushed straight, 45° and 70° off the
+        // deck axis, both ways, from the pinch the pond fence made, the segment joints and the soak's stuck point — never 0 m.
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator Oyuncu_KopruGuvertesinde_EgikGirdiyle_Kayar_Takilmaz()
+        {
+            yield return RunAp005();
+            var stuck = new List<string>();
+            int cases = 0;
+            foreach (float z0 in new[] { -35.0f, -33.6f, -32.6f, -31.3f, -29.0f, -25.9f, -24.2f })
+            foreach (float heading in new[] { 0f, 180f })
+            foreach (float off in new[] { 0f, 45f, -45f, 70f, -70f })
+            {
+                _girdi.Deger = Vector2.zero;
+                _rig.Teleport(new Vector3(4f, 0.35f, z0), Quaternion.identity);
+                for (int i = 0; i < 3; i++) yield return null;
+                Vector3 p0 = _rig.transform.position;
+                float a = (heading + off) * Mathf.Deg2Rad;
+                var dir = new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a));
+                for (int f = 0; f < 120; f++)
+                {
+                    PrototypeCameraRig cam = PrototypeCameraRig.Active;
+                    _girdi.Deger = new Vector2(Vector3.Dot(dir, cam.PlanarRight), Vector3.Dot(dir, cam.PlanarForward));
+                    yield return null;
+                }
+
+                cases++;
+                float dz = Mathf.Abs(_rig.transform.position.z - p0.z);
+                if (dz < 0.8f) stuck.Add("z0 " + z0 + " yön " + (heading + off) + "° → " + dz.ToString("F2") + " m @" + _rig.transform.position.ToString("F2"));
+            }
+
+            _girdi.Deger = Vector2.zero;
+            Debug.Log("[DD-TEST] wp038q.deck cases=" + cases + " stuck=" + stuck.Count + (stuck.Count > 0 ? " " + string.Join(" | ", stuck) : ""));
+            Assert.IsEmpty(stuck, "güvertede eğik girdiyle duran oyuncu (" + stuck.Count + "):\n" + string.Join("\n", stuck));
+        }
     }
 }

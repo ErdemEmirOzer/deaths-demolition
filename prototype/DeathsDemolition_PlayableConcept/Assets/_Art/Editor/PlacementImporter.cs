@@ -1152,6 +1152,12 @@ namespace DD.Art.Pipeline.EditorTools
         public const string BridgeRailSkirtRootName = "Bridge Rail Skirts (WP-038P)";
         /// <summary>WP-038P · Skirt top: over any step a body takes (0.35 m) and the 0.30 m deck.</summary>
         public const float BridgeRailSkirtTop = 1.4f;
+        /// <summary>
+        /// WP-038Q · A skirt comes only from rail parts above the deck (a post foot under the deck never met a body — the WP-038P
+        /// skirts took it and stood 3 cm inside the rails), its inner face 1 cm inside the rail line (the body slides on one
+        /// skirt face, never on the per-segment rail boxes and their joints).
+        /// </summary>
+        public const float BridgeRailSkirtAboveDeck = 0.35f, BridgeRailSkirtInset = 0.01f;
 
         /// <summary>
         /// WP-038N · The rails / posts are out of the bake (the deck keeps its corridor), so the NavMesh joined the ground beside a
@@ -1164,6 +1170,9 @@ namespace DD.Art.Pipeline.EditorTools
         /// the bake like the WP-038M ring) up to <see cref="BridgeRailSkirtTop"/>: where the NavMesh says "not walkable" beside a
         /// rail, a body cannot stand either. Without it the crowd pushed a zombie into the pocket beside the south-end post, off the
         /// NavMesh, where it jittered against the post for the rest of the round (S-10 soak seed 61, run 14).
+        /// WP-038Q: the skirts of one side of a bridge whose segments are axis-aligned merge into one box: 38 boxes meeting at
+        /// every segment joint gave the CharacterController seams to snag on (with the pond fence pinch, run 25 held the player
+        /// on the deck for 230 s).
         /// </summary>
         public static int BuildBridgeRailNavVolumes(Transform root, Transform instances, WorldPlacementAsset placement)
         {
@@ -1176,6 +1185,7 @@ namespace DD.Art.Pipeline.EditorTools
             var skirts = new GameObject(BridgeRailSkirtRootName) { layer = WorldBoundaryBuilder.Layer };
             skirts.transform.SetParent(root, false);
             skirts.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+            var skirtBoxes = new List<(Transform bridge, Vector3 min, Vector3 max)>();
             int count = 0;
             foreach (WorldPlacementAsset.Instance inst in placement.instances)
             {
@@ -1221,19 +1231,83 @@ namespace DD.Art.Pipeline.EditorTools
                     v.center = Vector3.zero;
                     v.size = max - min;
                     v.area = ArtSurfaceImporter.NavAreaNotWalkable;
-                    Vector3 skirtMax = max;
-                    skirtMax.y = BridgeRailSkirtTop - bridge.position.y;
-                    var skirt = new GameObject("RailSkirt_" + inst.id + "_" + count.ToString("00")) { layer = WorldBoundaryBuilder.Layer };
-                    skirt.transform.SetParent(skirts.transform, false);
-                    skirt.transform.SetPositionAndRotation(bridge.TransformPoint((min + skirtMax) * 0.5f), bridge.rotation);
-                    BoxCollider sc = skirt.AddComponent<BoxCollider>();
-                    sc.center = Vector3.zero;
-                    sc.size = skirtMax - min;
+                    // Skirt: rail parts above the deck only, inner face inset past the rail line, outward / past the ends as the volume.
+                    Bounds wb = box.bounds;
+                    if (wb.max.y > bridge.position.y + BridgeRailSkirtAboveDeck)
+                    {
+                        Vector3 smin = min, smax = max;
+                        if (deckAlongX) { if (b.center.z >= deckCentreLateral) smin.z = b.min.z - BridgeRailSkirtInset; else smax.z = b.max.z + BridgeRailSkirtInset; }
+                        else { if (b.center.x >= deckCentreLateral) smin.x = b.min.x - BridgeRailSkirtInset; else smax.x = b.max.x + BridgeRailSkirtInset; }
+                        smax.y = BridgeRailSkirtTop - bridge.position.y;
+                        skirtBoxes.Add((bridge, smin, smax));
+                    }
+
                     count++;
                 }
             }
 
+            BuildRailSkirts(skirts.transform, skirtBoxes);
             return count;
+        }
+
+        /// <summary>
+        /// WP-038Q · Skirt colliders: boxes of axis-aligned segments become world boxes merged along each side (same lateral
+        /// extents within 5 cm, overlapping or touching along the deck), so a side is one face with no joints; a segment at any
+        /// other yaw keeps its own oriented box.
+        /// </summary>
+        private static void BuildRailSkirts(Transform parent, List<(Transform bridge, Vector3 min, Vector3 max)> boxes)
+        {
+            var merged = new List<Bounds>();
+            int n = 0;
+            foreach ((Transform bridge, Vector3 min, Vector3 max) in boxes)
+            {
+                float yaw = bridge.eulerAngles.y;
+                if (Mathf.Abs(Mathf.DeltaAngle(yaw, Mathf.Round(yaw / 90f) * 90f)) > 0.5f)
+                {
+                    var skirt = new GameObject("RailSkirt_" + (n++).ToString("00")) { layer = WorldBoundaryBuilder.Layer };
+                    skirt.transform.SetParent(parent, false);
+                    skirt.transform.SetPositionAndRotation(bridge.TransformPoint((min + max) * 0.5f), bridge.rotation);
+                    BoxCollider sc = skirt.AddComponent<BoxCollider>();
+                    sc.size = max - min;
+                    continue;
+                }
+
+                var wb = new Bounds(bridge.TransformPoint(min), Vector3.zero);
+                for (int i = 1; i < 8; i++) wb.Encapsulate(bridge.TransformPoint(new Vector3((i & 1) == 0 ? min.x : max.x, (i & 2) == 0 ? min.y : max.y, (i & 4) == 0 ? min.z : max.z)));
+                merged.Add(wb);
+            }
+
+            // Merge until stable: two boxes join when they share the lateral extents (one axis within 5 cm on both faces) and
+            // meet along the other (overlap or a gap ≤ 5 cm).
+            bool changed = true;
+            while (changed)
+            {
+                changed = false;
+                for (int i = 0; i < merged.Count && !changed; i++)
+                for (int j = i + 1; j < merged.Count && !changed; j++)
+                {
+                    Bounds a = merged[i], c = merged[j];
+                    bool sameX = Mathf.Abs(a.min.x - c.min.x) < 0.05f && Mathf.Abs(a.max.x - c.max.x) < 0.05f;
+                    bool sameZ = Mathf.Abs(a.min.z - c.min.z) < 0.05f && Mathf.Abs(a.max.z - c.max.z) < 0.05f;
+                    bool meetZ = a.min.z <= c.max.z + 0.05f && c.min.z <= a.max.z + 0.05f;
+                    bool meetX = a.min.x <= c.max.x + 0.05f && c.min.x <= a.max.x + 0.05f;
+                    if (!((sameX && meetZ) || (sameZ && meetX))) continue;
+                    // The merged face keeps the side's innermost-safe line: lateral bounds are the union's (≤ 5 cm apart).
+                    a.Encapsulate(c);
+                    merged[i] = a;
+                    merged.RemoveAt(j);
+                    changed = true;
+                }
+            }
+
+            foreach (Bounds wb in merged)
+            {
+                var skirt = new GameObject("RailSkirt_" + (n++).ToString("00")) { layer = WorldBoundaryBuilder.Layer };
+                skirt.transform.SetParent(parent, false);
+                skirt.transform.position = wb.center;
+                BoxCollider sc = skirt.AddComponent<BoxCollider>();
+                sc.size = wb.size;
+            }
         }
 
         /// <summary>A box collider's bounds in <paramref name="frame"/>'s local space (unscaled frame: placement scale 1).</summary>
