@@ -122,6 +122,13 @@ namespace DD.Prototype.Diagnostics
         private const int DefaultResolutionHeight = 1080;
         private const string ProfileFlag = "-ddProfilePath";
 
+        /// <summary>
+        /// WP-078 (S-10 plan §8): <c>-ddPilotCameraSweep 1</c> — in TP/FP the camera turns a full
+        /// 360° of yaw at pitch 0 across the measurement window (fixed, repeatable camera program),
+        /// and the window stage reports the mean number of living bodies inside the view.
+        /// </summary>
+        private const string CameraSweepFlag = "-ddPilotCameraSweep";
+
         /// <summary>The pilot scene by name: this assembly does not reference DD.Art, so the string is the contract.</summary>
         public const string PilotSceneName = "AP001_GoldenSlice";
 
@@ -386,6 +393,9 @@ namespace DD.Prototype.Diagnostics
 
             // ---- 04 window: frame times
             public float windowSeconds;
+            public string cameraMode;            // WP-078: CameraModeService.Current during the window
+            public bool cameraSweep;             // WP-078: -ddPilotCameraSweep 1 active (TP/FP only)
+            public float cameraSweepMeanOnScreen; // WP-078: mean living bodies inside the view during the sweep
             public int frameCount;
             public int frameCountRequired;
             public float frameSumMs;
@@ -842,12 +852,35 @@ namespace DD.Prototype.Diagnostics
                     Debug.Log("[PilotPerfProbe] profiler binary log -> " + ProfilerLogPath);
                 }
 
+                bool sweep = string.Equals(Arg(CameraSweepFlag), "1", StringComparison.Ordinal) && CameraModeService.IsLookMode;
+                float sweepYaw0 = PrototypeCameraRig.Active != null ? PrototypeCameraRig.Active.ViewYaw : 0f;
+                long sweepOnScreenSum = 0;
+                int sweepSamples = 0;
                 t0 = Time.realtimeSinceStartup;
                 while (true)
                 {
                     float ms = Time.unscaledDeltaTime * 1000f;
                     _frameMs.Add(ms);
                     frames++;
+
+                    if (sweep && PrototypeCameraRig.Active != null)
+                    {
+                        float e = (Time.realtimeSinceStartup - t0) / Mathf.Max(1f, _windowSeconds);
+                        PrototypeCameraRig.Active.SetViewAngles(sweepYaw0 + 360f * e, 0f);
+                        if (frames % 10 == 0)
+                        {
+                            IReadOnlyList<ZombieEnemy> bodies = ZombieEnemy.Live;
+                            int inView = 0;
+                            for (int b = 0; b < bodies.Count; b++)
+                            {
+                                ZombieEnemy z = bodies[b];
+                                if (z != null && z.IsAlive && CameraView.IsInView(z.transform.position + Vector3.up)) inView++;
+                            }
+
+                            sweepOnScreenSum += inView;
+                            sweepSamples++;
+                        }
+                    }
 
                     // Spike ↔ GC correlation: a hitch frame that also saw a gen0 collection is
                     // a GC hitch; one that did not is something else (the profiler log says what).
@@ -933,6 +966,9 @@ namespace DD.Prototype.Diagnostics
                 s4.worldSource = _scene == PrototypeScenes.Run ? WorldBootstrap.ActiveSource.ToString() : _scene;
                 s4.windowSeconds = windowSeconds;
                 s4.frameCount = frames;
+                s4.cameraMode = CameraModeService.Current.ToString();
+                s4.cameraSweep = sweep;
+                s4.cameraSweepMeanOnScreen = sweepSamples > 0 ? (float)sweepOnScreenSum / sweepSamples : -1f;
                 s4.frameCountRequired = Mathf.CeilToInt(_windowSeconds * 20f);
                 ComputeFrameStats(_frameMs, s4);
                 s4.frameTimesCsv = "frame-times-ms.csv";
@@ -979,6 +1015,8 @@ namespace DD.Prototype.Diagnostics
                           " | gen0 " + gen0InWindow + " alloc/frame " + s4.gcAllocatedInFrameAvg.ToString("F0", CultureInfo.InvariantCulture) + " B heap/s " + s4.gcSubWindowBytesPerSecond + " B (gen0 " + subGen0 + ")" +
                           " | spikes " + spikeFrames + " withGen0 " + spikeFramesWithGen0 + (profilerLog ? " profilerLog yes" : "") +
                           (string.IsNullOrEmpty(s4.unavailableCounters) ? "" : " | unavailable: " + s4.unavailableCounters);
+                s4.note += " | camera " + s4.cameraMode + (sweep ? " sweep 360° onScreen mean " + s4.cameraSweepMeanOnScreen.ToString("F1", CultureInfo.InvariantCulture) : "");
+
                 if (VfxStress)
                 {
                     s4.note += " | vfxStress impacts=" + s4.vfxImpacts + " explosions=" + s4.vfxExplosions + " deaths=" + s4.vfxDeaths + " played=" + s4.vfxPlayed + " decals=" + s4.vfxDecals +
@@ -1162,6 +1200,16 @@ namespace DD.Prototype.Diagnostics
                            ", min alpha " + minAlpha.ToString("F3", CultureInfo.InvariantCulture) +
                            (fadeSeconds >= 0f ? " after " + fadeSeconds.ToString("F2", CultureInfo.InvariantCulture) + " s" : " (NO FADE within 3 s)") +
                            (releasedOpaque ? ", released" : ", NOT released within 3 s");
+
+                // WP-078: the stage stages the top-down "behind a wall" case. In TP the camera pulls
+                // in instead (FadeCameraLine), in FP nothing fades (None): not applicable there.
+                CameraOccluderPolicy occluderPolicy = CameraModeService.CurrentProfile.OccluderPolicy;
+                if (occluderPolicy != CameraOccluderPolicy.FadeAll)
+                {
+                    s8f.pass = true;
+                    s8f.note = "N/A in " + CameraModeService.Current + " (occluder policy " + occluderPolicy + ", fade not expected) · " + s8f.note;
+                }
+
                 Write(s8f);
 
                 // ---------------------------------------------------------------- 09 restore
