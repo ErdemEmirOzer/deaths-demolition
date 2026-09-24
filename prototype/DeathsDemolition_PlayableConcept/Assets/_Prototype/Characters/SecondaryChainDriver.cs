@@ -117,6 +117,16 @@ namespace DD.Prototype.Characters
             s_ticks += System.Diagnostics.Stopwatch.GetTimestamp() - t0;
         }
 
+        /// <summary>WP-032H probe: one body step through the same gate and integrator as LateUpdate, outside the frame budget
+        /// (the allocation test calls it thousands of times inside one frame so a per-step allocation cannot hide in frame noise).</summary>
+        public void StepForProbe(float dt)
+        {
+            if (_chains.Length == 0 || dt <= 0f) return;
+            bool allowed = Force == 1 || (Force != 0 && (_near == null || _near()));
+            if (!allowed) return;
+            for (int c = 0; c < _chains.Length; c++) Step(_chains[c], Mathf.Min(dt, MaxStep));
+        }
+
         private static readonly Vector3[] s_rest = new Vector3[MaxSegments];   // this chain's rest directions in world space (one parent.rotation read a step)
         public const int MaxSegments = 8;
 

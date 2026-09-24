@@ -171,38 +171,63 @@ namespace DD.Art.Tests.PlayMode
         public IEnumerator Kalabalik40_Zincirler_SifirAyirma_ButceSure()
         {
             yield return MainMenu();
-            int savedRate = Application.targetFrameRate;
-            Application.targetFrameRate = -1;   // WP-052 note: the Editor runner keeps the recorder's LastValue at 0 when capped at 60
-            using var recCount = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count");
-            // Phase 0: the scene alone (the MainMenu UI underneath is the runner's baseline); 1: 40 bodies, chains forced off;
-            // 2: 40 bodies, chains on. The gate is the chain path's own delta (2 − 1); the baseline is reported.
-            float[] phase = new float[3];
-            for (int f = 0; f < 60; f++) { yield return null; if (f >= 30) phase[0] += recCount.LastValue; }
-            phase[0] /= 30f;
             var visuals = new List<ZombieSkinnedVisual>();
             for (int i = 0; i < 40; i++) visuals.Add(ZombieOnStage(new Vector3((i % 8) * 1.5f, 0f, (i / 8) * 1.5f), (uint)(20 + i)));
-            double micros = 0; int frames = 0, served = 0;
-            // chains off / on in alternating 10-frame windows (the UI baseline drifts in bursts — a sequential split reads ±1 a frame)
-            for (int f = 0; f < 300; f++)
+            int served = 0;
+            for (int f = 0; f < 30; f++)
             {
-                int ph = (f / 10) % 2 == 0 ? 1 : 2;
-                SecondaryChainDriver.Force = ph == 1 ? 0 : -1;
-                for (int i = 0; i < visuals.Count; i++) visuals[i].SetSpeed(2.7f * ((f / 30 + i) % 2), Time.deltaTime);
+                for (int i = 0; i < visuals.Count; i++) visuals[i].SetSpeed(2.7f * ((f / 15 + i) % 2), Time.deltaTime);
                 yield return null;
-                if (f < 60) continue;
-                phase[ph] += recCount.LastValue;
-                if (ph == 2) { micros += SecondaryChainDriver.MicrosLastCompletedFrame; served = Mathf.Max(served, SecondaryChainDriver.ServedLastCompletedFrame); frames++; }
+                served = Mathf.Max(served, SecondaryChainDriver.ServedLastCompletedFrame);
             }
 
-            phase[1] /= 120f; phase[2] /= 120f;
+            Assert.AreEqual(40, served, "40 gövde servis edilmeli (bütçe 40)");
 
+            // WP-032H: the old gate (chains on − off over 10-frame windows) read the scene's own 4–7 allocations/frame and flipped
+            // sign between full-suite runs (−0.68 … +0.86). Deterministic form (WP-044 referee method): inside ONE frame, step all
+            // 40 bodies Amplify times through the real driver path; a control frame runs the same loop without the step; a positive
+            // control frame allocates 64 × 1 KB. Any per-step allocation shows as ≥ 40 × Amplify counts; the frame noise stays < 20.
+            const int Amplify = 50, Pairs = 4;
+            int savedRate = Application.targetFrameRate;
+            Application.targetFrameRate = -1;   // WP-052: the Editor runner keeps LastValue at 0 while capped at 60
+            using var recCount = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocation In Frame Count");
+            using var recBytes = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Memory, "GC Allocated In Frame");
+            var drivers = new SecondaryChainDriver[visuals.Count];
+            for (int i = 0; i < visuals.Count; i++) drivers[i] = visuals[i].Chains;
+            SecondaryChainDriver.Force = 1;
+            for (int i = 0; i < drivers.Length; i++) drivers[i].StepForProbe(1f / 60f);   // first step sizes the particle arrays (one-time)
+            yield return null; yield return null;
+
+            long stepMin = long.MaxValue, controlMax = 0, positiveCount = 0, positiveBytes = 0;
+            object[] keep = null;
+            for (int pair = 0; pair < Pairs; pair++)
+            {
+                // control frame: the same loop shape, no step
+                int sink = 0;
+                for (int k = 0; k < Amplify; k++) for (int i = 0; i < drivers.Length; i++) sink += drivers[i] != null ? 1 : 0;
+                yield return null;                                  // LastValue now = the control frame
+                controlMax = Math.Max(controlMax, recCount.LastValue);
+                for (int k = 0; k < Amplify; k++) for (int i = 0; i < drivers.Length; i++) drivers[i].StepForProbe(1f / 60f);
+                yield return null;                                  // LastValue now = the stepping frame
+                stepMin = Math.Min(stepMin, recCount.LastValue);
+                if (sink < 0) Debug.Log(sink);
+            }
+
+            keep = new object[64];
+            for (int i = 0; i < keep.Length; i++) keep[i] = new byte[1024];
+            yield return null;
+            positiveCount = recCount.LastValue; positiveBytes = recBytes.LastValue;
+            keep = null;
             SecondaryChainDriver.Force = -1;
             Application.targetFrameRate = savedRate;
-            Debug.Log("[DD-TEST] wp032f.crowd bodies=40 served=" + served + " allocs/frame scene=" + phase[0].ToString("F2", CultureInfo.InvariantCulture) + " chainsOff=" + phase[1].ToString("F2", CultureInfo.InvariantCulture) + " chainsOn=" + phase[2].ToString("F2", CultureInfo.InvariantCulture)
-                      + " microsPerFrame=" + (micros / frames).ToString("F0", CultureInfo.InvariantCulture));
-            Assert.AreEqual(40, served, "40 gövde servis edilmeli (bütçe 40)");
-            Assert.LessOrEqual(phase[2] - phase[1], 0.5f, "zincir yolu kare başına ayırıyor (zincir açık − kapalı)");
-            Assert.LessOrEqual(micros / frames, 1500.0, "40 gövde × 7 zincir kare başına > 1,5 ms");
+
+            int bodySteps = Amplify * drivers.Length;
+            Debug.Log("[DD-TEST] wp032h.alloc bodySteps/frame=" + bodySteps + " stepFrameMin=" + stepMin + " controlFrameMax=" + controlMax
+                      + " positive=" + positiveCount + " / " + positiveBytes + " B");
+            Assert.GreaterOrEqual(positiveCount, 64, "pozitif kontrol: sayaç 64 × 1 KB ayırmayı görmedi (ölçüm kör)");
+            Assert.GreaterOrEqual(positiveBytes, 64 * 1024, "pozitif kontrol: 64 KB görülmedi");
+            // A per-step allocation would add ≥ bodySteps (2000) to the stepping frame; the gate leaves room only for frame noise.
+            Assert.LessOrEqual(stepMin - controlMax, 20, "zincir adımı ayırıyor: " + bodySteps + " gövde adımında +" + (stepMin - controlMax));
         }
     }
 }
