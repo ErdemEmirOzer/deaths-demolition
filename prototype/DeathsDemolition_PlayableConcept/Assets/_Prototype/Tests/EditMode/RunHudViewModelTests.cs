@@ -193,13 +193,22 @@ namespace DD.Prototype.Tests.EditMode
             RunHudField f = _vm.ApplyWeapon(Silah("Assault Rifle", 30, 30));
             Assert.AreEqual("ASSAULT RIFLE", _vm.WeaponName);
             Assert.AreEqual("30 / 30", _vm.AmmoText);
+            Assert.AreEqual(30, _vm.Ammo, "WP-068 E11: the numbers behind the fraction and the ladder");
+            Assert.AreEqual(30, _vm.Magazine);
+            Assert.IsFalse(_vm.AmmoLow);
             Assert.AreEqual(RunHudReloadState.Ready, _vm.ReloadState);
             Assert.AreEqual(1f, _vm.ReloadProgress01);
             Assert.IsTrue((f & RunHudField.WeaponName) != 0);
             Assert.IsTrue((f & RunHudField.Ammo) != 0);
 
+            _vm.ApplyWeapon(Silah("Assault Rifle", 6, 30));
+            Assert.IsTrue(_vm.AmmoLow, "E11: ≤ 20 % of the magazine is LOW");
+            _vm.ApplyWeapon(Silah("Assault Rifle", 7, 30));
+            Assert.IsFalse(_vm.AmmoLow);
+
             f = _vm.ApplyWeapon(Silah("Assault Rifle", 0, 30));
             Assert.AreEqual("0 / 30", _vm.AmmoText);
+            Assert.IsFalse(_vm.AmmoLow, "empty is EMPTY, not LOW");
             Assert.AreEqual(RunHudReloadState.MagazineEmpty, _vm.ReloadState);
             Assert.AreEqual(0f, _vm.ReloadProgress01);
             Assert.IsTrue((f & RunHudField.WeaponName) == 0, "ad aynı → yeniden biçimlenmez");

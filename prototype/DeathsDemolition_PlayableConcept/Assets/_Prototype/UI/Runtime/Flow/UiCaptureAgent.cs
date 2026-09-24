@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using DD.Prototype.Core.Boot;
+using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
@@ -398,6 +399,12 @@ namespace DD.Prototype.UI
                 if (_screen == "ink")
                 {
                     yield return InkFrames();
+                    yield break;
+                }
+
+                if (_screen == "hudstates")
+                {
+                    yield return HudStates();
                     yield break;
                 }
 
@@ -808,6 +815,77 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(1.5f);
                 yield return Frame(folder, "ink-results");
                 Debug.Log("[UiCapture] ink done · framebuffer " + Screen.width + "x" + Screen.height);
+                Application.Quit();
+            }
+
+            /// <summary>
+            /// WP-068 slice 8 (<c>-ddUiCapture hudstates</c>): the HUD v3 panels in the states a fight reaches, staged on a
+            /// live run - idle, a gold gain (the "+N" mid-rise, the leaf glint), low ammo, empty (EMPTY + the reload
+            /// prompt), mid-reload (the ring), low health (LOW, coral frame, cracked heart). -ddUiScheme pad for the pad glyph.
+            /// </summary>
+            private IEnumerator HudStates()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                PrototypeUiFlow.GoToSelection();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 20f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                PrototypeUiFlow.StartRun();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
+                yield return UiCaptureAgent.WaitRunLive(20f);
+                yield return new WaitForSecondsRealtime(1.5f);
+                yield return Frame(folder, "hud-idle");
+
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (GoldService.Instance != null && rig != null)
+                {
+                    GoldService.Instance.Wallet.Credit(25, rig.transform.position);
+                    yield return new WaitForSecondsRealtime(0.18f);
+                    yield return Frame(folder, "hud-gold-gain");
+                }
+
+                WeaponController weapon = WeaponRegistry.ActiveController;
+                ClassicWeaponRuntime classic = weapon != null ? weapon.Classic : null;
+                if (classic != null)
+                {
+                    int low = Mathf.Max(1, Mathf.FloorToInt(classic.MagazineSize * RunHudViewModel.LowAmmoFraction));
+                    while (classic.Ammo > low)
+                    {
+                        classic.ConsumeShot();
+                    }
+
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return Frame(folder, "hud-ammo-low");
+
+                    while (classic.Ammo > 0)
+                    {
+                        classic.ConsumeShot();
+                    }
+
+                    // The HUD reads the weapon's published snapshot, a frame behind the runtime.
+                    yield return null;
+                    yield return null;
+                    yield return new WaitForSecondsRealtime(0.2f);
+                    yield return Frame(folder, "hud-empty");
+
+                    classic.TryBeginReload();
+                    yield return WaitFor(() => classic.ReloadProgress01 >= 0.45f, 5f);
+                    yield return Frame(folder, "hud-reload");
+                    yield return WaitFor(() => !classic.IsReloading, 5f);
+                    yield return new WaitForSecondsRealtime(0.05f);
+                    yield return Frame(folder, "hud-reloaded");
+                }
+
+                if (rig != null && rig.Health != null)
+                {
+                    rig.Health.DiagnosisInvulnerable = false;
+                    rig.Health.ApplyDamage(rig.Health.Max * 0.8f, rig.transform.position + Vector3.forward, "ui-capture");
+                    rig.Health.DiagnosisInvulnerable = true;
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    yield return Frame(folder, "hud-low-health");
+                }
+
+                Debug.Log("[UiCapture] hudstates done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
             }
 

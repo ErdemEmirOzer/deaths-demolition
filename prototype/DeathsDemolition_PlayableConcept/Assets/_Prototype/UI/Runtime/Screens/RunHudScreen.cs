@@ -92,7 +92,7 @@ namespace DD.Prototype.UI
         // Block heights are the sum of their own rows plus the panel padding, computed
         // by hand and kept here so the arithmetic is reviewable in one place.
         private const float RoundBlockHeight = 150f;
-        private const float ClassicBlockHeight = 150f;
+        private const float ClassicBlockHeight = 176f; // WP-068 8a: NumericXL fraction + the 12 px ladder (E11)
         private const float SpecialBlockHeight = 216f;
 
         private const float BannerSeconds = 2.4f;
@@ -143,6 +143,41 @@ namespace DD.Prototype.UI
         private TMP_Text _ammoValue;
         private UiBar _reloadBar;
         private TMP_Text _reloadCaption;
+
+        // WP-068 slice 8a · HUD v3 panels (direction §5 E10–E13).
+        private UiCounter _goldCounter;
+        private TMP_Text _goldDelta;
+        private Vector2 _goldDeltaHome;
+        private UiFx _goldLeaf;
+        private float _goldGlintAt = -10f;
+        private int _goldSeen = int.MinValue;
+        private TMP_Text _healthLowWord;
+        private Image _healthFrame;
+        private UiCounter _ammoCounter;
+        private Image _ladderBack;
+        private Image _ladderFill;
+        private float _ladderWidth;
+        private int _ladderMagazine = -1;
+        private int _ladderPellets = -1;
+        private int _ladderShown = -1;
+        private UiRing _reloadRing;
+        private UiPrompt _reloadPrompt;
+        private RunHudReloadState _shownReload = RunHudReloadState.Ready;
+        private bool _ammoLowShown;
+        private int _roundShown = int.MinValue;
+
+        /// <summary>
+        /// E12: the gold underlay - StateGold at this alpha, drawn by S-07's Leaf (flat at rest, the leaf grid only in the
+        /// glint band). 0.16 keeps the StateGold numeral ≥ 4.5:1 over the brightest world role; the direction's 0.35 would
+        /// read 3.2:1 over sky-mist (UiArtThemeTests.HudKontrasti measures it).
+        /// </summary>
+        public const float GoldLeafAlpha = 0.16f;
+        private const float GoldGlintMinInterval = 1f;
+        private const float HealthBarHeight = 20f;
+        private const float LadderHeight = 12f;
+        private const float LadderPitchMax = 8f;
+        private const float ReloadRingSize = 64f;
+        private const float ReloadPromptSize = 22f;
         private GameObject _suspendedChip;
 
         // ---- special weapon
@@ -264,6 +299,7 @@ namespace DD.Prototype.UI
             RunEvents.GoldChanged += OnGoldChanged;
 
             WeaponEvents.SpecialWeaponSpawned += OnSpecialSpawned;
+            WeaponEvents.DryFire += OnDryFire;
             WeaponEvents.SpecialWeaponPickedUp += OnSpecialPickedUp;
             WeaponEvents.SpecialWeaponFinalSeconds += OnSpecialFinalSeconds;
             WeaponEvents.SpecialWeaponEnded += OnSpecialEnded;
@@ -291,6 +327,7 @@ namespace DD.Prototype.UI
             RunEvents.GoldChanged -= OnGoldChanged;
 
             WeaponEvents.SpecialWeaponSpawned -= OnSpecialSpawned;
+            WeaponEvents.DryFire -= OnDryFire;
             WeaponEvents.SpecialWeaponPickedUp -= OnSpecialPickedUp;
             WeaponEvents.SpecialWeaponFinalSeconds -= OnSpecialFinalSeconds;
             WeaponEvents.SpecialWeaponEnded -= OnSpecialEnded;
@@ -398,6 +435,18 @@ namespace DD.Prototype.UI
         private void BuildGoldBlock()
         {
             RectTransform block = HudPanel("Gold", new Vector2(0f, 1f), GoldBlockWidth, 72f);
+
+            // E12: the kinpaku underlay, the one leaf the HUD carries (§1: the L0 exception) - flat StateGold at rest, the
+            // leaf grid inside S-07's glint band on a gain (≤ 1 / s; not under Reduce Flashes).
+            Image leaf = UiFactory.NewImage("Leaf", block, UiColor.StateGold, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)leaf.transform, UiTokens.StrokeHairline);
+            Color leafColour = UiTokens.Get(UiColor.StateGold);
+            leafColour.a = GoldLeafAlpha;
+            leaf.color = leafColour;
+            leaf.transform.SetSiblingIndex(1); // over the card fill, under the frame and the readout
+            _goldLeaf = leaf.gameObject.AddComponent<UiFx>();
+            _goldLeaf.Configure(UiFxMode.Leaf, 0.6f, new Vector3(1f, 0f, 0f));
+
             RectTransform host = UiFactory.CardContent(block, UiSpace.L);
 
             // AP-012 old-coin glyph; the disc is the no-art fallback.
@@ -411,10 +460,43 @@ namespace DD.Prototype.UI
             coinRect.sizeDelta = new Vector2(PanelIconSize, PanelIconSize);
             coinRect.anchoredPosition = Vector2.zero;
 
-            _goldValue = UiFactory.Numeric(
-                "Value", host, "0", UiType.NumericL, UiColor.StateGold, TextAnchor.MiddleLeft, false);
-            RectTransform valueRect = UiFactory.Fill((RectTransform)_goldValue.transform);
+            // E12: the balance rolls (UiCounter.Currency, a new gain mid-roll retargets from the digit on screen).
+            _goldCounter = UiCounter.Create("Value", host, UiCounterStyle.Currency, 0, UiType.NumericL, UiColor.StateGold);
+            RectTransform valueRect = UiFactory.Fill((RectTransform)_goldCounter.transform);
             valueRect.offsetMin = new Vector2(PanelIconSize + (int)UiSpace.M, 0f);
+            _goldValue = _goldCounter.ValueText;
+
+            // "+N" rises out of the panel's right end and fades (Gold400 Caption, E12).
+            _goldDelta = UiFactory.Label("Delta", block, string.Empty, UiType.Caption, UiColor.StateGold, TextAnchor.MiddleRight);
+            _goldDelta.fontStyle = FontStyles.Bold;
+            RectTransform deltaRect = _goldDelta.rectTransform;
+            deltaRect.anchorMin = new Vector2(1f, 0.5f);
+            deltaRect.anchorMax = new Vector2(1f, 0.5f);
+            deltaRect.pivot = new Vector2(1f, 0.5f);
+            deltaRect.sizeDelta = new Vector2(72f, UiFactory.LineHeight(UiType.Caption));
+            _goldDeltaHome = new Vector2(-(int)UiSpace.L, 0f);
+            deltaRect.anchoredPosition = _goldDeltaHome;
+            _goldDelta.canvasRenderer.SetAlpha(0f);
+        }
+
+        /// <summary>E12: a gain - "+N" rises 16 px and fades; the leaf glints (≤ 1 / s, never under Reduce Flashes).</summary>
+        private void ShowGoldGain(int delta)
+        {
+            RectTransform deltaRect = _goldDelta.rectTransform;
+            UiMotion.KillTarget(deltaRect, false);
+            UiMotion.KillTarget(_goldDelta, false);
+            _goldDelta.SetText("+{0}", delta);
+            deltaRect.anchoredPosition = _goldDeltaHome;
+            _goldDelta.canvasRenderer.SetAlpha(1f);
+            UiMotion.Move(deltaRect, _goldDeltaHome + new Vector2(0f, 16f), UiDuration.Emphasis, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.TintAlpha(_goldDelta, 0f, UiDuration.Base, UiEase.Exit, UiMotionClass.Data, UiMotionTokens.Seconds(UiDuration.Screen));
+
+            float now = Time.unscaledTime;
+            if (!UiSettings.ReduceFlashes && now - _goldGlintAt >= GoldGlintMinInterval)
+            {
+                _goldGlintAt = now;
+                _goldLeaf.Play();
+            }
         }
 
         private void BuildHealthBlock()
@@ -423,7 +505,7 @@ namespace DD.Prototype.UI
             // TextScale - a fixed 104 put "HEALTH / 100 / 100" under the bar at 1.25.
             float topBand = Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)), UiFactory.ScaledBand(UiFactory.LineHeight(UiType.NumericM)));
             float stateBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
-            float blockHeight = Mathf.Max(104f, (int)UiSpace.L * 2f + topBand + (int)UiSpace.XS + 18f + (int)UiSpace.XS + stateBand);
+            float blockHeight = Mathf.Max(104f, (int)UiSpace.L * 2f + topBand + (int)UiSpace.XS + HealthBarHeight + (int)UiSpace.XS + stateBand);
             RectTransform block = HudPanel("Health", new Vector2(0f, 0f), BlockWidth, blockHeight);
             RectTransform host = UiFactory.CardContent(block, UiSpace.L);
 
@@ -447,6 +529,18 @@ namespace DD.Prototype.UI
             labelRect.anchoredPosition = new Vector2(textLeft, 0f);
             label.alignment = TMPro.TextAlignmentOptions.Left;
 
+            // E10: LOW - the word beside HEALTH while under the 30 % mark (colour is never the only cue).
+            float labelWidth = Mathf.Ceil(label.GetPreferredValues("HEALTH").x);
+            _healthLowWord = UiFactory.Label("Low", host, "LOW", UiType.Label, UiColor.StateDanger);
+            RectTransform lowRect = _healthLowWord.rectTransform;
+            lowRect.anchorMin = new Vector2(0f, 1f);
+            lowRect.anchorMax = new Vector2(0f, 1f);
+            lowRect.pivot = new Vector2(0f, 1f);
+            lowRect.sizeDelta = new Vector2(64f, topBand);
+            lowRect.anchoredPosition = new Vector2(textLeft + labelWidth + (int)UiSpace.S, 0f);
+            _healthLowWord.fontStyle = FontStyles.Bold;
+            _healthLowWord.gameObject.SetActive(false);
+
             _healthValue = UiFactory.Numeric(
                 "Value", host, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
             RectTransform valueRect = (RectTransform)_healthValue.transform;
@@ -456,13 +550,33 @@ namespace DD.Prototype.UI
             valueRect.sizeDelta = new Vector2(160f, topBand);
             valueRect.anchoredPosition = Vector2.zero;
 
-            _healthBar = UiFactory.Bar("Bar", host, UiColor.BarHealth, 18f);
+            _healthBar = UiFactory.Bar("Bar", host, UiColor.BarHealth, HealthBarHeight);
             RectTransform barRect = (RectTransform)_healthBar.transform;
             barRect.anchorMin = new Vector2(0f, 0f);
             barRect.anchorMax = new Vector2(1f, 0f);
             barRect.pivot = new Vector2(0f, 0f);
-            barRect.sizeDelta = new Vector2(0f, 18f);
+            barRect.sizeDelta = new Vector2(0f, HealthBarHeight);
             barRect.anchoredPosition = new Vector2(0f, stateBand + (int)UiSpace.XS);
+
+            // E10: ten segments, the low mark heavier - LowHealthFraction reads as a place on the bar, not a surprise.
+            int lowTick = Mathf.RoundToInt(UiTokens.LowHealthFraction * 10f);
+            for (int i = 1; i < 10; i++)
+            {
+                Image tick = UiFactory.NewImage("Tick" + i, barRect, UiColor.SurfaceInset, UiSprites.Solid);
+                var tickRect = (RectTransform)tick.transform;
+                tickRect.anchorMin = new Vector2(i / 10f, 0f);
+                tickRect.anchorMax = new Vector2(i / 10f, 1f);
+                tickRect.pivot = new Vector2(0.5f, 0.5f);
+                tickRect.sizeDelta = new Vector2(i == lowTick ? 2f : 1f, 0f);
+                tickRect.anchoredPosition = Vector2.zero;
+            }
+
+            // E10 hierarchy (health > round > gold): the brighter frame; coral while low.
+            _healthFrame = FrameOf(block);
+            if (_healthFrame != null)
+            {
+                _healthFrame.color = UiTokens.Get(UiColor.TextPrimary);
+            }
 
             _healthState = UiFactory.Label("State", host, string.Empty, UiType.Caption, UiColor.AccentMoss);
             RectTransform stateRect = (RectTransform)_healthState.transform;
@@ -471,6 +585,13 @@ namespace DD.Prototype.UI
             stateRect.pivot = new Vector2(0f, 0f);
             stateRect.sizeDelta = new Vector2(0f, stateBand);
             stateRect.anchoredPosition = Vector2.zero;
+        }
+
+        /// <summary>The A4 frame overlay FramedCard laid on a panel (null without the atlas).</summary>
+        private static Image FrameOf(RectTransform panel)
+        {
+            Transform frame = panel.Find("Frame");
+            return frame != null ? frame.GetComponent<Image>() : null;
         }
 
         private void BuildWeaponBlocks()
@@ -607,8 +728,20 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.XS);
 
-            _ammoValue = UiFactory.Numeric("Ammo", textColumn, "—", UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleLeft, false);
-            stack.Add((RectTransform)_ammoValue.transform, 38f);
+            // E11: "24" NumericXL over "/ 30" - the value in a box as wide as the magazine, so digits never shift the slash.
+            _ammoCounter = UiCounter.Create("Ammo", textColumn, UiCounterStyle.Fraction, 0, UiType.NumericXL, UiColor.TextPrimary, 0);
+            stack.Add((RectTransform)_ammoCounter.transform, UiFactory.LineHeight(UiType.NumericXL));
+            _ammoValue = _ammoCounter.ValueText;
+
+            stack.Gap(UiSpace.XS);
+
+            // E11: the ladder - one tick per round (pellet pips for a pellet weapon), bright up to the rounds left; the
+            // number alone above LadderMaxRounds. Two tiled images, resized on a change - no per-frame work.
+            RectTransform ladder = UiFactory.NewRect("Ladder", textColumn);
+            stack.Add(ladder, LadderHeight);
+            _ladderBack = LadderImage("Back", ladder, UiColor.TextMuted);
+            _ladderFill = LadderImage("Fill", ladder, UiColor.TextPrimary);
+            _ladderWidth = BlockWidth - (int)UiSpace.L * 2f - textLeft;
 
             stack.Gap(UiSpace.XS);
 
@@ -619,7 +752,27 @@ namespace DD.Prototype.UI
 
             _reloadCaption = UiFactory.Label(
                 "ReloadCaption", textColumn, string.Empty, UiType.Caption, UiColor.BarReload);
-            stack.Add((RectTransform)_reloadCaption.transform, UiFactory.LineHeight(UiType.Caption));
+            RectTransform captionRow = stack.Add((RectTransform)_reloadCaption.transform, UiFactory.LineHeight(UiType.Caption));
+            _reloadCaption.fontStyle = FontStyles.Bold;
+
+            // E11 EMPTY: the reload control named by the live binding (R / pad West, rebind-aware) after the word.
+            _reloadPrompt = UiInputGlyphs.Build("ReloadPrompt", captionRow, UiPromptAction.Reload, UiColor.TextPrimary, UiColor.SurfaceInset, ReloadPromptSize);
+            RectTransform promptRect = (RectTransform)_reloadPrompt.transform;
+            promptRect.anchorMin = new Vector2(0f, 0.5f);
+            promptRect.anchorMax = new Vector2(0f, 0.5f);
+            promptRect.pivot = new Vector2(0f, 0.5f);
+            promptRect.anchoredPosition = new Vector2(Mathf.Ceil(_reloadCaption.GetPreferredValues("EMPTY").x) + (int)UiSpace.S, 0f);
+            _reloadPrompt.gameObject.SetActive(false);
+
+            // E11: the reload ring (A4 Ring.Progress64) behind the weapon glyph, Focus400 (never gold), Data.
+            _reloadRing = UiRing.Create("ReloadRing", host, ReloadRingSize, UiColor.BarReload);
+            RectTransform ringRect = (RectTransform)_reloadRing.transform;
+            ringRect.anchorMin = new Vector2(0f, 0.5f);
+            ringRect.anchorMax = new Vector2(0f, 0.5f);
+            ringRect.pivot = new Vector2(0.5f, 0.5f);
+            ringRect.anchoredPosition = new Vector2(WeaponIconWidth * 0.5f, 0f);
+            ringRect.SetSiblingIndex(_weaponIcon.transform.GetSiblingIndex());
+            _reloadRing.gameObject.SetActive(false);
 
             // REQ-057 pill. Sits over the block, never instead of it.
             TMP_Text chip = UiFactory.Chip(
@@ -638,6 +791,74 @@ namespace DD.Prototype.UI
         /// because the HUD owns the canvas and the draw order, and the draw order is the
         /// part that has to be right.
         /// </summary>
+        private Image LadderImage(string name, RectTransform ladder, UiColor colour)
+        {
+            Image image = UiFactory.NewImage(name, ladder, colour, UiSprites.AmmoTick);
+            image.type = Image.Type.Tiled;
+            var rect = (RectTransform)image.transform;
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.sizeDelta = Vector2.zero;
+            rect.anchoredPosition = Vector2.zero;
+            return image;
+        }
+
+        /// <summary>E11: lay the ladder for a magazine (a weapon change) - pitch ≤ 8 px so up to LadderMaxRounds fit the column.</summary>
+        private void LayLadder(int magazine, int pellets)
+        {
+            _ladderMagazine = magazine;
+            _ladderPellets = pellets;
+            _ladderShown = -1;
+            bool show = magazine > 0 && magazine <= RunHudViewModel.LadderMaxRounds;
+            _ladderBack.enabled = show;
+            _ladderFill.enabled = show;
+            if (!show)
+            {
+                return;
+            }
+
+            Sprite unit = pellets > 1 ? UiSprites.AmmoPip : UiSprites.AmmoTick;
+            float pitch = Mathf.Min(LadderPitchMax * (pellets > 1 ? 1.5f : 1f), Mathf.Floor(_ladderWidth / magazine));
+            float multiplier = unit.rect.width / Mathf.Max(1f, pitch);   // one tile per round at this pitch
+            _ladderBack.sprite = unit;
+            _ladderBack.pixelsPerUnitMultiplier = multiplier;
+            _ladderFill.sprite = unit;
+            _ladderFill.pixelsPerUnitMultiplier = multiplier;
+
+            Color back = UiTokens.Get(UiColor.TextMuted);
+            back.a = 0.5f;
+            _ladderBack.color = back;
+            ((RectTransform)_ladderBack.transform).sizeDelta = new Vector2(pitch * magazine, 0f);
+        }
+
+        /// <summary>E11: the trigger on an empty magazine - the ladder kicks 4 px and settles (Decor: none under reduced motion).</summary>
+        private void OnDryFire()
+        {
+            RectTransform ladder = _ladderBack != null ? (RectTransform)_ladderBack.transform.parent : null;
+            if (ladder == null || UiMotion.ReducedMotion)
+            {
+                return;
+            }
+
+            UiMotion.KillTarget(ladder, false);
+            Vector2 home = new Vector2(0f, ladder.anchoredPosition.y);
+            ladder.anchoredPosition = home + new Vector2(4f, 0f);
+            UiMotion.Move(ladder, home, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+        }
+
+        private void FillLadder(int rounds)
+        {
+            if (!_ladderFill.enabled || rounds == _ladderShown)
+            {
+                return;
+            }
+
+            _ladderShown = rounds;
+            float pitch = ((RectTransform)_ladderBack.transform).sizeDelta.x / Mathf.Max(1, _ladderMagazine);
+            ((RectTransform)_ladderFill.transform).sizeDelta = new Vector2(pitch * Mathf.Clamp(rounds, 0, _ladderMagazine), 0f);
+        }
+
         private void BuildDamageEdges()
         {
             RectTransform layer = UiFactory.NewRect("DamageEdges", ScreenRect);
@@ -1178,6 +1399,8 @@ namespace DD.Prototype.UI
         private void OnRunStarted(int startRound)
         {
             _model.Reset();
+            _goldSeen = int.MinValue;
+            _roundShown = int.MinValue;
             _healthBound = false;
             ApplyRunFields(_model.ApplyRun(RunEvents.Current));
             ApplyWeaponFields(_model.ApplyWeapon(WeaponEvents.Classic));
@@ -1190,11 +1413,35 @@ namespace DD.Prototype.UI
             if ((changed & RunHudField.Round) != 0)
             {
                 _roundValue.text = _model.RoundText;
+                // E13: the new round's digit stamps (Stamp 1.12 → 1, not on the first round of a run).
+                int round = RunEvents.Current.Round;
+                if (_roundShown != int.MinValue && round > _roundShown)
+                {
+                    UiPresets.StampIn(_roundValue.rectTransform);
+                }
+
+                _roundShown = round;
             }
 
             if ((changed & RunHudField.Gold) != 0)
             {
-                _goldValue.text = _model.GoldText;
+                // E12: roll to the balance; a gain rises "+N" and glints the leaf. The first value of a run lands at once.
+                int gold = _model.Gold;
+                if (_goldSeen == int.MinValue)
+                {
+                    _goldCounter.SetNow(gold);
+                }
+                else
+                {
+                    if (gold > _goldSeen)
+                    {
+                        ShowGoldGain(gold - _goldSeen);
+                    }
+
+                    _goldCounter.RollTo(gold);
+                }
+
+                _goldSeen = gold;
             }
 
             if ((changed & RunHudField.Enemies) != 0)
@@ -1219,6 +1466,12 @@ namespace DD.Prototype.UI
                 {
                     _lowHealthShown = _model.HealthLow;
                     UiEvents.Raise(_lowHealthShown ? UiEvent.HudLowHealthEntered : UiEvent.HudLowHealthLeft);
+                    // E10: LOW word + coral frame + the cracked heart stamps once; no pulse.
+                    _healthLowWord.gameObject.SetActive(_lowHealthShown);
+                    if (_healthFrame != null)
+                    {
+                        _healthFrame.color = UiTokens.Get(_lowHealthShown ? UiColor.BarHealthLow : UiColor.TextPrimary);
+                    }
                 }
 
                 _healthBar.SetValue(_model.HealthNormalized);
@@ -1236,6 +1489,11 @@ namespace DD.Prototype.UI
                         if (heartSprite != null)
                         {
                             UiArt.SetGlyph(_healthIcon, heartSprite);
+                        }
+
+                        if (_model.HealthLow)
+                        {
+                            UiPresets.StampIn(_healthIcon.rectTransform);
                         }
                     }
                 }
@@ -1300,33 +1558,62 @@ namespace DD.Prototype.UI
 
             if ((changed & RunHudField.Ammo) != 0)
             {
-                _ammoValue.text = _model.AmmoText;
+                // E11: set, never rolled (a Data readout read mid-fight).
+                if (_model.Magazine != _ladderMagazine || _model.PelletCount != _ladderPellets)
+                {
+                    _ammoCounter.SetMax(_model.Magazine);
+                    LayLadder(_model.Magazine, _model.PelletCount);
+                }
+
+                _ammoCounter.SetNow(_model.Ammo);
+                FillLadder(_model.Ammo);
             }
 
-            if ((changed & RunHudField.Reload) != 0)
+            bool low = _model.AmmoLow;
+            if ((changed & RunHudField.Reload) != 0 || low != _ammoLowShown)
             {
-                switch (_model.ReloadState)
+                RunHudReloadState reload = _model.ReloadState;
+                // E11: a low magazine turns the reload marks StateWarning, so Focus400 and #F7C766 never mean two things in one panel.
+                UiColor mark = low ? UiColor.StateWarning : UiColor.BarReload;
+                _reloadRing.SetColour(mark);
+                _reloadBar.SetColor(mark);
+                _reloadRing.gameObject.SetActive(reload == RunHudReloadState.Reloading);
+                _reloadPrompt.gameObject.SetActive(reload == RunHudReloadState.MagazineEmpty);
+                switch (reload)
                 {
                     case RunHudReloadState.Reloading:
                         _reloadBar.SetValue(_model.ReloadProgress01, true);
+                        _reloadRing.Set(_model.ReloadProgress01);
                         _reloadCaption.text = "RELOADING";
-                        _reloadCaption.color = UiTokens.Get(UiColor.BarReload);
+                        _reloadCaption.color = UiTokens.Get(mark);
                         break;
 
                     case RunHudReloadState.MagazineEmpty:
-                        UiEvents.Raise(UiEvent.HudMagazineEmpty);
+                        if (_shownReload != RunHudReloadState.MagazineEmpty)
+                        {
+                            UiEvents.Raise(UiEvent.HudMagazineEmpty);
+                        }
+
                         _reloadBar.SetValue(0f, true);
-                        // No key name: the reload binding differs between keyboard and
-                        // gamepad, and the HUD does not know which one is in hand.
-                        _reloadCaption.text = "MAGAZINE EMPTY  ·  RELOAD";
-                        _reloadCaption.color = UiTokens.Get(UiColor.StateDanger);
+                        // E11: EMPTY + the reload control's live glyph (UiPrompt knows the device in hand).
+                        _reloadCaption.text = "EMPTY";
+                        _reloadCaption.color = UiTokens.Get(UiColor.StateWarning);
                         break;
 
                     default:
                         _reloadBar.SetValue(1f, true);
-                        _reloadCaption.text = string.Empty;
+                        _reloadCaption.text = low ? "LOW" : string.Empty;
+                        _reloadCaption.color = UiTokens.Get(UiColor.StateWarning);
+                        if (_shownReload == RunHudReloadState.Reloading)
+                        {
+                            UiPresets.StampIn(_ammoValue.rectTransform); // E11: the reload lands - the number stamps
+                        }
+
                         break;
                 }
+
+                _shownReload = reload;
+                _ammoLowShown = low;
             }
 
             if ((changed & RunHudField.Suspended) != 0)

@@ -631,7 +631,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(vm.HealthText, HudMetni(hud, "Health", "Value").text);
 
             Assert.AreEqual(silah.Classic.Ammo + " / " + silah.Classic.MagazineSize, vm.AmmoText, "şarjör snapshot'ı");
-            Assert.AreEqual(vm.AmmoText, HudMetni(hud, "ClassicWeapon", "Ammo").text);
+            // WP-068 E11: "30" NumericXL over "/ 30" (Fraction) - the same numbers as the snapshot.
+            Assert.AreEqual(vm.Ammo.ToString(), HudMetni(hud, "Ammo", "Value").text);
+            Assert.AreEqual("/ " + vm.Magazine, HudMetni(hud, "Ammo", "Max").text);
             Assert.AreEqual(silah.Classic.DisplayName.ToUpperInvariant(), vm.WeaponName);
             Assert.AreEqual("no upgrades", vm.BuildText);
 
@@ -647,9 +649,17 @@ namespace DD.Prototype.Tests.PlayMode
             RunEvents.GoldChanged -= dinle;
             Assert.AreEqual(1, olay, "GoldChanged bir kez");
             Assert.AreEqual("7", vm.GoldText, "presenter aynı karede güncellendi (olay)");
-            Assert.AreEqual("7", goldMetni.text, "Text aynı karede güncellendi");
-            yield return null;
-            Assert.AreEqual("7", goldMetni.text);
+            // WP-068 E12: the counter takes the new balance on the same frame and rolls to it (Currency, ≤ 600 ms).
+            UiCounter goldSayaci = goldMetni.GetComponentInParent<UiCounter>();
+            Assert.IsNotNull(goldSayaci, "gold bir UiCounter");
+            Assert.AreEqual(7, goldSayaci.Target, "sayaç aynı karede hedefi aldı");
+            float rulo = Time.realtimeSinceStartup + 1.5f;
+            while (goldMetni.text != "7" && Time.realtimeSinceStartup < rulo)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual("7", goldMetni.text, "sayaç 7'ye yuvarlandı");
 
             // Hasar → sağlık metni ve düşük eşik.
             rig.Health.ApplyDamage(rig.Health.Max * 0.75f, rig.transform.position + Vector3.forward, "wp005-hud");

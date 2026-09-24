@@ -172,6 +172,21 @@ namespace DD.Prototype.UI
             get { return GetOrCreate("fadeRight", () => CreateFadeHorizontal(64, false)); }
         }
 
+        /// <summary>
+        /// WP-068 slice 8 (E11) · one magazine tick: a 4 px bar in an 8 px pitch, 16 tall, point-sharp edges. Tiled
+        /// along the HUD ladder (repeat wrap → one quad); the pitch is the Image's pixelsPerUnitMultiplier.
+        /// </summary>
+        public static Sprite AmmoTick
+        {
+            get { return GetOrCreate("ammoTick", () => CreateTick(8, 16, 4)); }
+        }
+
+        /// <summary>WP-068 slice 8 (E11) · one pellet pip: an 8 px disc in a 12 px pitch (shotgun shells on the ladder).</summary>
+        public static Sprite AmmoPip
+        {
+            get { return GetOrCreate("ammoPip", () => CreatePip(12, 8f)); }
+        }
+
         // ------------------------------------------------------------------ plumbing
 
         private static Sprite GetOrCreate(string key, System.Func<Sprite> factory)
@@ -431,6 +446,44 @@ namespace DD.Prototype.UI
                     }
 
                     pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, Vector4.zero);
+        }
+
+        private static Sprite CreateTick(int pitch, int height, int bar)
+        {
+            Texture2D texture = NewTexture(pitch, height);
+            texture.wrapMode = TextureWrapMode.Repeat;
+            var pixels = new Color32[pitch * height];
+            int left = (pitch - bar) / 2;
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < pitch; x++)
+                {
+                    bool on = x >= left && x < left + bar;
+                    pixels[y * pitch + x] = new Color32(255, 255, 255, (byte)(on ? 255 : 0));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, Vector4.zero);
+        }
+
+        private static Sprite CreatePip(int pitch, float diameter)
+        {
+            Texture2D texture = NewTexture(pitch, pitch);
+            texture.wrapMode = TextureWrapMode.Repeat;
+            var pixels = new Color32[pitch * pitch];
+            float c = pitch * 0.5f, r = diameter * 0.5f;
+            for (int y = 0; y < pitch; y++)
+            {
+                for (int x = 0; x < pitch; x++)
+                {
+                    float d = Mathf.Sqrt((x + 0.5f - c) * (x + 0.5f - c) + (y + 0.5f - c) * (y + 0.5f - c));
+                    pixels[y * pitch + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(Mathf.Clamp01(r - d + 0.5f) * 255f));
                 }
             }
 

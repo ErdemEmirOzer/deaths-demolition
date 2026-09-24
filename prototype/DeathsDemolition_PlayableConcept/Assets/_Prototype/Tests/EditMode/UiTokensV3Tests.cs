@@ -48,7 +48,7 @@ namespace DD.Prototype.Tests.EditMode
             new object[] { UiColor.SurfacePanel, "#232120", 1f, null },
             new object[] { UiColor.SurfaceRaised, "#34322F", 1f, null },
             new object[] { UiColor.SurfaceInset, "#12100F", 1f, null },
-            new object[] { UiColor.HudInk, "#12100F", 0.92f, null },
+            new object[] { UiColor.HudInk, "#12100F", UiTokens.HudInkAlpha, null },
             new object[] { UiColor.BorderHairline, "#4A4744", 0.85f, null },
             new object[] { UiColor.BorderStrong, "#F3EEE3", 0.45f, null },
             new object[] { UiColor.BorderFocus, "#F2D98C", 1f, null },

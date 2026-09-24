@@ -212,14 +212,16 @@ namespace DD.Prototype.UI
         {
             RectTransform root = UiFactory.NewRect(name, parent);
             root.sizeDelta = new Vector2(size, size);
-            Image ghost = UiFactory.NewImage("Ghost", root, UiColor.TextPrimary, UiSprites.RingThin);
+            // WP-068 A4: the authored progress rings (reload 64 stroke 5, Special 132 stroke 8) when the atlas has them.
+            Sprite art = UiArt.Kit(size <= 96f ? "Ring.Progress64" : "Ring.Progress132");
+            Image ghost = UiFactory.NewImage("Ghost", root, UiColor.TextPrimary, art != null ? art : UiSprites.RingThin);
             UiFactory.Fill((RectTransform)ghost.transform);
             Color g = ghost.color;
             g.a = ghostAlpha;
             ghost.color = g;
 
             var ring = root.gameObject.AddComponent<UiRing>();
-            ring._fill = UiFactory.NewImage("Fill", root, colour, UiSprites.Ring);
+            ring._fill = UiFactory.NewImage("Fill", root, colour, art != null ? art : UiSprites.Ring);
             UiFactory.Fill((RectTransform)ring._fill.transform);
             ring._fill.type = Image.Type.Filled;
             ring._fill.fillMethod = Image.FillMethod.Radial360;
@@ -227,6 +229,16 @@ namespace DD.Prototype.UI
             ring._fill.fillClockwise = true;
             ring._fill.fillAmount = 0f;
             return ring;
+        }
+
+        /// <summary>Swap the fill colour (the HUD's LOW reload ring turns StateWarning, E11).</summary>
+        public void SetColour(UiColor colour)
+        {
+            Color c = UiTokens.Get(colour);
+            if (_fill != null && _fill.color != c)
+            {
+                _fill.color = c;
+            }
         }
 
         public void Set(float value01)

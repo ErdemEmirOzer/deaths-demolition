@@ -78,6 +78,12 @@ namespace DD.Prototype.UI
         private int _gold = int.MinValue;
         public string GoldText { get; private set; } = "0";
 
+        /// <summary>WP-068 slice 8 (E12): the balance as a number, for the rolling counter (0 before the first value).</summary>
+        public int Gold
+        {
+            get { return _gold == int.MinValue ? 0 : _gold; }
+        }
+
         // ---- health
         private int _healthCurrent = int.MinValue;
         private int _healthMax = int.MinValue;
@@ -117,6 +123,31 @@ namespace DD.Prototype.UI
         public RunHudReloadState ReloadState { get; private set; } = RunHudReloadState.Ready;
         public float ReloadProgress01 { get; private set; } = 1f;
         public bool Suspended { get { return _suspended; } }
+
+        /// <summary>WP-068 slice 8 (E11): the magazine as numbers - "24" NumericXL over "/ 30", the tick ladder. 0 while unknown.</summary>
+        public int Ammo
+        {
+            get { return _ammo < 0 ? 0 : _ammo; }
+        }
+
+        public int Magazine
+        {
+            get { return _magazine < 0 ? 0 : _magazine; }
+        }
+
+        /// <summary>Pellets per shot (&gt; 1 → the ladder draws pellet pips).</summary>
+        public int PelletCount { get; private set; }
+
+        /// <summary>E11: at or under this share of the magazine (and not empty) the panel says LOW.</summary>
+        public const float LowAmmoFraction = 0.2f;
+
+        /// <summary>E11: over this magazine size the ladder is not drawn (the number carries it).</summary>
+        public const int LadderMaxRounds = 40;
+
+        public bool AmmoLow
+        {
+            get { return _magazine > 0 && _ammo > 0 && _ammo <= Mathf.FloorToInt(_magazine * LowAmmoFraction); }
+        }
 
         /// <summary>Longest weapon name the block can hold before it is clipped.</summary>
         public const int WeaponNameMaxCharacters = 26;
@@ -324,10 +355,11 @@ namespace DD.Prototype.UI
                 changed |= RunHudField.WeaponName;
             }
 
-            if (state.AmmoInMagazine != _ammo || state.MagazineSize != _magazine)
+            if (state.AmmoInMagazine != _ammo || state.MagazineSize != _magazine || state.PelletCount != PelletCount)
             {
                 _ammo = state.AmmoInMagazine;
                 _magazine = state.MagazineSize;
+                PelletCount = state.PelletCount;
                 AmmoText = _magazine > 0 ? _ammo + " / " + _magazine : Placeholder;
                 changed |= RunHudField.Ammo;
             }
@@ -423,6 +455,7 @@ namespace DD.Prototype.UI
             WeaponName = Placeholder;
             BuildText = "no upgrades";
             AmmoText = Placeholder;
+            PelletCount = 0;
             ReloadState = RunHudReloadState.Ready;
             ReloadProgress01 = 1f;
         }

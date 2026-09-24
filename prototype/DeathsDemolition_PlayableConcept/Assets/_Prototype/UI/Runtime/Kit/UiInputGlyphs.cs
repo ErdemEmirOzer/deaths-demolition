@@ -18,7 +18,9 @@ namespace DD.Prototype.UI
         Cancel = 1,
         Pause = 2,
         Skip = 3,
-        Reroll = 4
+        Reroll = 4,
+        /// <summary>WP-068 slice 8 (E11): the HUD's EMPTY prompt - the Gameplay Reload action (R / pad West), rebindable.</summary>
+        Reload = 5
     }
 
     /// <summary>
@@ -193,6 +195,7 @@ namespace DD.Prototype.UI
                 case UiPromptAction.Pause: return pad ? new Glyph("MENU", false, 2.2f, "Pad.Menu") : new Glyph("ESC", false, 1.8f);
                 case UiPromptAction.Skip: return pad ? new Glyph("X", true, 1f, "Pad.FaceWest") : new Glyph("SPACE", false, 2.6f);
                 case UiPromptAction.Reroll: return pad ? new Glyph("Y", true, 1f, "Pad.FaceNorth") : new Glyph("R", false, 1.2f);
+                case UiPromptAction.Reload: return pad ? new Glyph("X", true, 1f, "Pad.FaceWest") : new Glyph("R", false, 1.2f);
                 default: return new Glyph("?", true, 1f);
             }
         }
@@ -200,7 +203,12 @@ namespace DD.Prototype.UI
         /// <summary>The Gameplay action a prompt action is bound to, or null when the prompt is a fixed UI key (Submit / Cancel / Skip / Reroll).</summary>
         public static string GameplayActionOf(UiPromptAction action)
         {
-            return action == UiPromptAction.Pause ? PrototypeInputNames.ActionPause : null;
+            switch (action)
+            {
+                case UiPromptAction.Pause: return PrototypeInputNames.ActionPause;
+                case UiPromptAction.Reload: return PrototypeInputNames.ActionReload;
+                default: return null;
+            }
         }
 
         /// <summary>

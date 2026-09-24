@@ -358,7 +358,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
-        /// DEC-077 / REQ-105: the HUD panel is HudInk at alpha 0.92 over whatever the
+        /// DEC-077 / REQ-105: the HUD panel is HudInk (UiTokens.HudInkAlpha, 0.86 since WP-068 slice 8) over whatever the
         /// camera shows. The five roles below are the brightest and darkest opaque
         /// surfaces of the DEC-076 palette (style guide §2) plus the sky/mist colour;
         /// the panel text and bars must clear WCAG AA over every one of them.
@@ -400,6 +400,21 @@ namespace DD.Prototype.Tests.EditMode
                     {
                         failures++;
                     }
+                }
+            }
+
+            // WP-068 E12: the gold numeral over its kinpaku underlay (StateGold α GoldLeafAlpha on the panel).
+            foreach (var w in world)
+            {
+                Color panel = UiContrast.Composite(UiTokens.Get(UiColor.HudInk), w.Colour);
+                Color leaf = UiTokens.Get(UiColor.StateGold);
+                leaf.a = RunHudScreen.GoldLeafAlpha;
+                Color under = UiContrast.Composite(leaf, panel);
+                float ratio = UiContrast.Ratio(UiContrast.Composite(UiTokens.Get(UiColor.StateGold), under), under);
+                report.AppendLine("StateGold on the gold leaf over " + w.Name + ": " + ratio.ToString("0.00") + ":1 (floor 4.5)");
+                if (ratio < 4.5f)
+                {
+                    failures++;
                 }
             }
 

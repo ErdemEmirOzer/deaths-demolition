@@ -221,7 +221,7 @@ namespace DD.Prototype.UI
     ///   TextSecondary on SurfacePanel   7.62:1     TextAccent  on SurfacePanel   5.91:1
     ///   TextMuted     on SurfacePanel   5.33:1     StateGold   on SurfacePanel   7.40:1
     ///   StateDanger   on SurfacePanel   5.44:1     AccentSakura on SurfacePanel  7.75:1
-    ///   TextPrimary   on HudInk over a WHITE world  13.50:1  (worst case composite)
+    ///   TextPrimary   on HudInk over a WHITE world  11.12:1  (worst case composite)
     ///   BorderStrong  on SurfaceBase    4.04:1     AccentPrimary on SurfaceBase  3.30:1
     ///   BarHealth     on BarTrack       3.51:1     BarXp on BarTrack             9.17:1
     ///   BorderFocus   on AccentPrimary  3.86:1     BorderFocus on SurfacePanel  11.51:1
@@ -324,7 +324,7 @@ namespace DD.Prototype.UI
                 case UiColor.SurfacePanel: return Sumi700;
                 case UiColor.SurfaceRaised: return Stone600;
                 case UiColor.SurfaceInset: return Sumi900;
-                case UiColor.HudInk: return WithAlpha(Sumi900, 0.92f);
+                case UiColor.HudInk: return WithAlpha(Sumi900, HudInkAlpha);
 
                 case UiColor.BorderHairline: return WithAlpha(Stone500, 0.85f);
                 case UiColor.BorderStrong: return WithAlpha(Cream100, 0.45f);
@@ -501,6 +501,13 @@ namespace DD.Prototype.UI
         /// measures 5.55:1, i.e. still above the 4.5:1 text floor.
         /// </summary>
         public const float OpacitySuspended = 0.62f;
+
+        /// <summary>
+        /// WP-068 slice 8 (user, via C-00: "HUD … hafif saydam olabilir"): the HUD panel ink is Sumi900 at 0.86 -
+        /// the lowest alpha at which every HUD pair keeps AA over the five world roles (the floor is StateDanger text
+        /// over sky-mist, 4.74:1; UiArtThemeTests.HudKontrasti). 0.92 before; below 0.85 the danger text fails.
+        /// </summary>
+        public const float HudInkAlpha = 0.86f;
 
         public const float OpacityDisabled = 0.55f;
         public const float OpacityScrimUnderDialog = 0.72f;
