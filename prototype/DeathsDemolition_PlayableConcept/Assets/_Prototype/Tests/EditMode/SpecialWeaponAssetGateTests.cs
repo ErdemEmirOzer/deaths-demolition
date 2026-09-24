@@ -154,12 +154,12 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.IsNotNull(s.texture, usage + " dokusu bağlı değil.");
                 Assert.Greater(s.columns * s.rows, 0);
 
-                // Import contract Sheet role (WP-037): T_*_Sheet.png, Vfx class — 1K cap, alpha kept as coverage, never streamed.
+                // Import contract Sheet role (WP-037): T_*_Sheet.png, Vfx class — ADR-015-1 v3 (WP-074 B2) cap 2048 (the 1K sheets stay 1K), alpha kept as coverage, never streamed.
                 string path = UnityEditor.AssetDatabase.GetAssetPath(s.texture);
                 StringAssert.EndsWith("_Sheet.png", path, usage + " sheet adı sözleşme dışı.");
                 var importer = UnityEditor.AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
                 Assert.IsNotNull(importer, path);
-                Assert.AreEqual(1024, importer.maxTextureSize, path + " Vfx sınıfı 1024.");
+                Assert.AreEqual(2048, importer.maxTextureSize, path + " Vfx sınıfı 2048 (ADR-015-1 v3).");
                 Assert.AreEqual(UnityEditor.TextureImporterAlphaSource.FromInput, importer.alphaSource, path + " alfa (kaplama) korunur.");
                 Assert.IsTrue(importer.alphaIsTransparency, path + " alfa saydamlık.");
                 Assert.IsFalse(importer.streamingMipmaps, path + " efekt dokusu stream edilmez.");

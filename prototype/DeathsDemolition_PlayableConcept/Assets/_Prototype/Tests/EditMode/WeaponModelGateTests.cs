@@ -49,14 +49,15 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Atlas_ImportSozlesmesi_WeaponSinifi_1024_RenkUzaylari()
         {
-            foreach ((string file, bool srgb) in new[] {
-                ("Textures/T_weapons_BaseColor.png", true), ("Textures/T_weapons_Normal.png", false),
-                ("Textures/T_weapons_Packed.png", false), ("Derived/T_weapons_MetallicSmoothness.png", false) })
+            // ADR-015-1 v3 (WP-074 B2): Weapon class 2048; the derived mask role keeps the 1024 mask cap (the 1K atlas stays 1K).
+            foreach ((string file, bool srgb, int cap) in new[] {
+                ("Textures/T_weapons_BaseColor.png", true, 2048), ("Textures/T_weapons_Normal.png", false, 2048),
+                ("Textures/T_weapons_Packed.png", false, 2048), ("Derived/T_weapons_MetallicSmoothness.png", false, 1024) })
             {
                 string path = Folder + "/" + file;
                 var importer = AssetImporter.GetAtPath(path) as TextureImporter;
                 Assert.IsNotNull(importer, path + " yok / import edilmemiş.");
-                Assert.AreEqual(1024, importer.maxTextureSize, path + " Weapon sınıfı 1024.");
+                Assert.AreEqual(cap, importer.maxTextureSize, path + " Weapon sınıfı tavanı (ADR-015-1 v3).");
                 Assert.AreEqual(srgb, importer.sRGBTexture, path + " renk uzayı.");
                 if (file.Contains("Normal")) Assert.AreEqual(TextureImporterType.NormalMap, importer.textureType, path);
             }

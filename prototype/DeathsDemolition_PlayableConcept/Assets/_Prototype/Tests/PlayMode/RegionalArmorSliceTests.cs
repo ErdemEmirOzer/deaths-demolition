@@ -374,9 +374,10 @@ namespace DD.Prototype.Tests.PlayMode
 
             Assert.AreEqual(3, PrototypeConfig.Active.RoundDifficultyOverrides.Count, "Harness DEC-021 tablosunu değiştirdi (sevk: WP-050 Ö-5, 3 satır).");
 
-            // [#25] pause: zırh/can/yaşam durumu donar. Pozitif kontrol: aynı anda bir ceset (despawn geri sayımı
-            // 0.55 s) pause altında 1.2 s gerçek zaman boyunca sahnede kalır; pause kalkınca geri sayım koşar ve ceset
-            // havuza döner — donma gerçekten simülasyonu durdurmasaydı ceset pause içinde kaybolurdu.
+            // [#25] pause: zırh/can/yaşam durumu donar. Pozitif kontrol: aynı anda bir ceset pause altında 1.2 s gerçek
+            // zaman boyunca sahnede kalır; pause kalkınca geri sayım koşar ve ceset havuza döner — donma gerçekten
+            // simülasyonu durdurmasaydı ceset pause içinde kaybolurdu. WP-054 / WP-076 v2: geri sayım artık kademe ×
+            // kalite × titreşimle birkaç saniye (LastCorpseLinger) — bekleme onun üstüne ölüm klibi payı.
             z.FitArmorComposition(true, false, true);
             Vur(z, BodyRegion.Head, 5f);
             float kask = z.Armor.Current(ArmorSlot.Helmet);
@@ -406,7 +407,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(donmusKare, 10, "Pause penceresinde yeterli kare gözlenmedi.");
             RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
             yield return null;
-            yield return Bekle(() => !ceset.IsSpawned, 3f, "Pause kalktıktan sonra ceset geri sayımı koşmadı (pozitif kontrol).");
+            yield return Bekle(() => !ceset.IsSpawned, ceset.LastCorpseLinger + 3f, "Pause kalktıktan sonra ceset geri sayımı koşmadı (pozitif kontrol; linger " + ceset.LastCorpseLinger.ToString("0.0") + " s).");
             Debug.Log("[DD-TEST] wp006.pause frozenFrames=" + donmusKare + " corpseDespawnedAfterResume=" + !ceset.IsSpawned);
 
             // [#21] havuza dön → ikinci yaşam: eski zırh/kırık/geçiş durumu yok.
