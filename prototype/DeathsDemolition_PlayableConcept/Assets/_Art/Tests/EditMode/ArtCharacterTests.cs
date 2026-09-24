@@ -86,11 +86,14 @@ namespace DD.Art.Tests.EditMode
             foreach (string s in ArtCharacterContract.Sockets) Assert.IsTrue(bones.ContainsKey(s), "soket yok: " + s);
             foreach (string t in ArtCharacterContract.PlayerTwistBones) Assert.IsTrue(bones.ContainsKey(t), "twist kemiği yok: " + t);
             Assert.AreEqual("Head", bones["fp_camera"].parent.name, "fp_camera Head çocuğu (S-01)");
-            // WP-071 · AP-022 rig v002: LOD0 = gövde + ayrı baş (FP ShadowsOnly), LOD1/2 tek parça
+            // WP-071 · AP-022 rig v002: her LOD = gövde + ayrı baş (FP ShadowsOnly)
+            for (int lod = 0; lod < 3; lod++)
+            {
+                Assert.IsNotNull(model.transform.Find("Player_Body_LOD" + lod), "Player_Body_LOD" + lod);
+                Assert.IsNotNull(model.transform.Find("Player_Head_LOD" + lod), "Player_Head_LOD" + lod);
+            }
+
             Transform body0 = model.transform.Find("Player_Body_LOD0"), head0 = model.transform.Find("Player_Head_LOD0");
-            Assert.IsNotNull(body0, "Player_Body_LOD0");
-            Assert.IsNotNull(head0, "Player_Head_LOD0");
-            for (int lod = 1; lod < 3; lod++) Assert.IsNotNull(model.transform.Find("Player_LOD" + lod), "Player_LOD" + lod);
             int tris0 = (int)((body0.GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0) + head0.GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0)) / 3);
             Assert.LessOrEqual(tris0, 25000, "AP-006 LOD0 tavanı 25 000 (gövde + baş)");
         }
@@ -137,9 +140,9 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(visual.Animator);
             Assert.IsTrue(visual.Animator.avatar != null && visual.Animator.avatar.isHuman, "Humanoid avatar");
             Assert.IsNotNull(visual.Animator.runtimeAnimatorController, "controller");
-            Assert.AreEqual(4, visual.Renderers.Length, "gövde LOD0 + baş LOD0 + LOD1 + LOD2 (rig v002)");
-            Assert.AreEqual(1, visual.HeadRenderers.Length, "baş ayrı renderer (S-01 FP)");
-            Assert.AreEqual(2, visual.GetComponentInChildren<LODGroup>().GetLODs()[0].renderers.Length, "LOD0 = gövde + baş");
+            Assert.AreEqual(6, visual.Renderers.Length, "3 LOD × gövde + baş (rig v002)");
+            Assert.AreEqual(3, visual.HeadRenderers.Length, "baş her LOD'da ayrı renderer (S-01 FP)");
+            foreach (LOD l in visual.GetComponentInChildren<LODGroup>().GetLODs()) Assert.AreEqual(2, l.renderers.Length, "LOD = gövde + baş");
             var twist = visual.GetComponentInChildren<TwistCorrector>();
             Assert.IsNotNull(twist, "WP-071: TwistCorrector");
             Assert.AreEqual(8, twist.LinkCount, "8 twist kemiği bağlı");

@@ -315,7 +315,7 @@ namespace DD.Art.Tests.PlayMode
             yield return RunAP005();
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(pv.GripIk, "WeaponGripIk bağlı değil");
-            Assert.AreEqual(1, pv.HeadRenderers.Length, "baş ayrı renderer (P-06 rig v002, S-01 FP)");
+            Assert.AreEqual(3, pv.HeadRenderers.Length, "baş her LOD'da ayrı renderer (P-06 rig v002, S-01 FP)");
             yield return CharacterTests.Bekle(() => pv.GripIk.Grip != null && pv.GripIk.Weight >= 0.999f, 3f, "sol el kabzada");
             for (int i = 0; i < 10; i++) yield return null;
             float heldError = pv.GripIk.LastError;
