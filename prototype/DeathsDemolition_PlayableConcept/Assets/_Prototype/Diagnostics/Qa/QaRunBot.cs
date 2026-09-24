@@ -74,10 +74,19 @@ namespace DD.Prototype.Qa
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void RedirectProfile()
         {
-            if (string.IsNullOrEmpty(QaArgs.Arg(OutFlag)))
+            string outDir = QaArgs.Arg(OutFlag);
+            if (string.IsNullOrEmpty(outDir))
             {
                 return;
             }
+
+            // WP-078 (C-00 §4.14 a, 25.09): a bot run never touches the player's own UI files — ui-settings / load-timing /
+            // ui-hints go to <out>/ui-data (C1b bot-tp2 had rewritten the real load-timing.json). The override also drops
+            // anything read before it, so every run starts from default settings.
+            string uiRoot = Path.Combine(outDir, "ui-data");
+            Directory.CreateDirectory(uiRoot);
+            UiDataPaths.SetRootOverride(uiRoot);
+            Debug.Log("[QaRunBot] ui data root override -> " + uiRoot);
 
             string profilePath = QaArgs.Arg(ProfileFlag);
             if (!string.IsNullOrEmpty(profilePath))
