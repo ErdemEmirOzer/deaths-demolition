@@ -5,8 +5,14 @@ namespace DD.Prototype.UI
 {
     /// <summary>
     /// WP-068 §4 #26 / V1 · the one owner of the OS pointer. The hardware cursor is the V1 art (Cream100 fill,
-    /// Sumi900 outline; Arrow, Press while a control is held), 32 px or 64 px on a Retina backing (RGBA32,
-    /// <c>Cursor.SetCursor</c> once per change, never per frame, never ForceSoftware).
+    /// Sumi900 outline; Arrow, Press while a control is held) as an RGBA32 texture (<c>Cursor.SetCursor</c> once per
+    /// change, never per frame, never ForceSoftware).
+    ///
+    /// M4-R1 N21 (user 24.09: "the cursor is too big"; ui-ux-designer ruling): the arrow is
+    /// <see cref="ArrowHeightFor"/> tall - 28 pt on macOS (Unity shows a cursor texture's pixels as POINTS there, so the
+    /// old 64 px Retina art was a 63 pt arrow against the system's ≈ 23 pt), 24-31 px elsewhere by the OS scale. The
+    /// texture is 32 px at every size (a larger one risks Unity's software path on Windows), built once per size from
+    /// the 64 px master by <see cref="UiCursorArt"/>; the UI scale setting does not touch the pointer (it is the OS's).
     ///
     /// Visibility = what the context wants AND the last device is not a gamepad: the menus, Pause and the shop want
     /// it, the run hides it (the reticle is the pointer), loading hides it; a pad hides it and the first mouse move
@@ -18,12 +24,18 @@ namespace DD.Prototype.UI
         public const string ArrowName = "Cursor.Arrow";
         public const string PressName = "Cursor.Press";
 
-        /// <summary>Hotspots from the AP-012 v004 manifest: (2, 1) at 32 px, (4, 2) at 64 px.</summary>
-        public static readonly Vector2 Hotspot32 = new Vector2(2f, 1f);
-        public static readonly Vector2 Hotspot64 = new Vector2(4f, 2f);
+        /// <summary>The tip, for every size (the AP-012 v004 manifest's 32 px hotspot).</summary>
+        public static readonly Vector2 Hotspot = new Vector2(2f, 1f);
 
-        /// <summary>Backing scale at which the 64 px art is used (Retina reports ≈ 220 dpi).</summary>
-        public const float RetinaDpi = 144f;
+        /// <summary>N21: the arrow's height on macOS, in points (fixed - points already normalise the backing).</summary>
+        public const int MacArrowPoints = 28;
+        public const int MinArrowPx = 24;
+        /// <summary>A texture over 32 px risks Unity's software-cursor path on Windows (the latency ban).</summary>
+        public const int MaxArrowPx = 31;
+        public const int TextureSize = 32;
+
+        private static readonly System.Collections.Generic.Dictionary<int, Texture2D> s_sized =
+            new System.Collections.Generic.Dictionary<int, Texture2D>();
 
         private static bool s_context = true;
         private static bool s_pressed;
@@ -70,10 +82,43 @@ namespace DD.Prototype.UI
             ApplyTexture();
         }
 
-        /// <summary>The cursor texture for a state and backing (tests; null when the V1 art is absent).</summary>
+        /// <summary>The V1 master art for a state and backing (the 64 px Arrow is the source of every size; tests).</summary>
         public static Texture2D Texture(bool pressed, bool retina)
         {
             return Resources.Load<Texture2D>(UiTheme.CursorFolder + (pressed ? PressName : ArrowName) + (retina ? "_64" : "_32"));
+        }
+
+        /// <summary>
+        /// N21: the arrow's height (outline included). macOS: <see cref="MacArrowPoints"/> pt. Elsewhere
+        /// round(24 × OS scale) clamped to 24-31 px; the OS scale is dpi / 96, or the height over 1080 where the dpi is
+        /// missing or a fixed 96 (Linux).
+        /// </summary>
+        public static int ArrowHeightFor(RuntimePlatform platform, float dpi, int screenHeight)
+        {
+            if (platform == RuntimePlatform.OSXPlayer || platform == RuntimePlatform.OSXEditor)
+            {
+                return MacArrowPoints;
+            }
+
+            bool linux = platform == RuntimePlatform.LinuxPlayer || platform == RuntimePlatform.LinuxEditor;
+            float factor = dpi > 0f && !linux ? dpi / 96f : screenHeight / 1080f;
+            return Mathf.Clamp(Mathf.RoundToInt(MinArrowPx * factor), MinArrowPx, MaxArrowPx);
+        }
+
+        /// <summary>The cursor at an arrow height, built once from the 64 px master (null when the art is absent).</summary>
+        public static Texture2D Sized(bool pressed, int arrowHeight)
+        {
+            int key = arrowHeight * 2 + (pressed ? 1 : 0);
+            Texture2D texture;
+            if (s_sized.TryGetValue(key, out texture) && texture != null)
+            {
+                return texture;
+            }
+
+            Texture2D master = Texture(false, true);
+            texture = master != null ? UiCursorArt.Build(master, arrowHeight, pressed) : null;
+            s_sized[key] = texture;
+            return texture;
         }
 
         private static void Apply()
@@ -93,15 +138,14 @@ namespace DD.Prototype.UI
                 return; // no OS pointer in a batch run
             }
 
-            bool retina = Screen.dpi >= RetinaDpi;
-            Texture2D texture = Texture(s_pressed, retina);
+            Texture2D texture = Sized(s_pressed, ArrowHeightFor(Application.platform, Screen.dpi, Screen.height));
             if (texture == null || texture == s_shown)
             {
                 return;
             }
 
             s_shown = texture;
-            Cursor.SetCursor(texture, retina ? Hotspot64 : Hotspot32, CursorMode.Auto);
+            Cursor.SetCursor(texture, Hotspot, CursorMode.Auto);
         }
 
         private static void EnsureInstalled()

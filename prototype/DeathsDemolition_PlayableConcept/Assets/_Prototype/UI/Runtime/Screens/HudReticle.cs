@@ -15,9 +15,14 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class HudReticle
     {
-        public const float TickWidth = 3f;
-        public const float TickLength = 10f;
-        public const float ArcWidth = 22f;
+        // M4-R1 N21 (user 24.09 "the cursor is too big"; ui-ux-designer ruling): 3 × 10 → 2 × 7, the saturated arc 22 → 16,
+        // in reference px at UI scale 1. The UI scale setting no longer fattens the crosshair (base / uiScale), and a
+        // tick never drops under 2 × 6 physical px. The spread radius is gameplay data (U12) and is not scaled.
+        public const float TickWidth = 2f;
+        public const float TickLength = 7f;
+        public const float ArcWidth = 16f;
+        public const float MinTickWidthPx = 2f;
+        public const float MinTickLengthPx = 6f;
         public const float MinRadius = 6f;
         public const float SaturationRadius = 48f;
         public const float EmptySplit = 6f;
@@ -42,6 +47,11 @@ namespace DD.Prototype.UI
         private bool _gold;
         private float _shownReload = -1f;
         private float _lastTime = -1f;
+        private Canvas _canvas;
+        private float _geomUi = -1f;
+        private float _geomScale = -1f;
+        private Vector2 _tick = new Vector2(TickWidth, TickLength);
+        private Vector2 _arc = new Vector2(ArcWidth, TickLength * 0.8f);
 
         public RectTransform Root
         {
@@ -51,6 +61,24 @@ namespace DD.Prototype.UI
         public float Radius
         {
             get { return _shownRadius; }
+        }
+
+        /// <summary>The tick's size now, in canvas units (tests, captures).</summary>
+        public Vector2 TickSize
+        {
+            get { return _tick; }
+        }
+
+        /// <summary>
+        /// N21: the tick (and the saturated arc) in canvas units for a UI scale and the canvas's physical px per unit:
+        /// the base divided by the UI scale, floored at <see cref="MinTickWidthPx"/> × <see cref="MinTickLengthPx"/> physical px.
+        /// </summary>
+        public static void TickGeometry(float uiScale, float pxPerUnit, out Vector2 tick, out Vector2 arc)
+        {
+            float ui = Mathf.Max(0.01f, uiScale);
+            float px = Mathf.Max(0.01f, pxPerUnit);
+            tick = new Vector2(Mathf.Max(TickWidth / ui, MinTickWidthPx / px), Mathf.Max(TickLength / ui, MinTickLengthPx / px));
+            arc = new Vector2(Mathf.Max(ArcWidth / ui, MinTickWidthPx / px), tick.y * 0.8f);
         }
 
         public HudReticle(RectTransform layer)
@@ -118,12 +146,28 @@ namespace DD.Prototype.UI
                 _radius += (target - _radius) * (1f - Mathf.Pow(2f, -dt / FollowHalfLife));
             }
 
+            // N21: the tick geometry follows the UI scale and the resolution (both change only from the settings / a resize).
+            if (_canvas == null)
+            {
+                _canvas = _root.GetComponentInParent<Canvas>();
+            }
+
+            float pxPerUnit = _canvas != null ? _canvas.rootCanvas.scaleFactor : 1f;
+            float uiScale = UiSettings.UiScale;
+            bool regeometry = !Mathf.Approximately(uiScale, _geomUi) || !Mathf.Approximately(pxPerUnit, _geomScale);
+            if (regeometry)
+            {
+                _geomUi = uiScale;
+                _geomScale = pxPerUnit;
+                TickGeometry(uiScale, pxPerUnit, out _tick, out _arc);
+            }
+
             int state = weapon.IsReloading ? 1 : weapon.MagazineSize > 0 && weapon.AmmoInMagazine <= 0 ? 2 : 0;
             bool saturated = _radius > SaturationRadius;
             float radius = Mathf.Clamp(_radius, MinRadius, SaturationRadius) + (state == 2 ? EmptySplit : 0f);
             radius = Mathf.Round(radius * 2f) * 0.5f;   // half-pixel steps: no rebuild for sub-pixel drift
 
-            if (saturated != _saturated || _state < 0)
+            if (saturated != _saturated || _state < 0 || regeometry)
             {
                 _saturated = saturated;
                 Sprite sprite = saturated && _arcSprite != null ? _arcSprite : _barSprite;
@@ -135,7 +179,7 @@ namespace DD.Prototype.UI
                         UiArt.ApplyGlyph(_ticks[i], InkEdge);
                     }
 
-                    ((RectTransform)_ticks[i].transform).sizeDelta = saturated ? new Vector2(ArcWidth, TickLength * 0.8f) : new Vector2(TickWidth, TickLength);
+                    ((RectTransform)_ticks[i].transform).sizeDelta = saturated ? _arc : _tick;
                 }
 
                 _shownRadius = -1f; // re-place
@@ -144,14 +188,14 @@ namespace DD.Prototype.UI
             if (!Mathf.Approximately(radius, _shownRadius))
             {
                 _shownRadius = radius;
-                float centre = radius + TickLength * 0.5f;
+                float centre = radius + _tick.y * 0.5f;
                 for (int i = 0; i < _ticks.Length; i++)
                 {
                     float angle = i * Mathf.PI * 0.5f;   // N, E, S, W
                     ((RectTransform)_ticks[i].transform).anchoredPosition = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * centre;
                 }
 
-                float ring = (radius + TickLength + ReloadGap) * 2f;
+                float ring = (radius + _tick.y + ReloadGap) * 2f;
                 ((RectTransform)_reload.transform).sizeDelta = new Vector2(ring, ring);
             }
 
