@@ -1107,6 +1107,24 @@ namespace DD.Prototype.UI
 
             UiArt.SetGlyph(_weaponIcon, sprite);   // WP-068 G1: keeps the SDF draw path on a swap
             _weaponIcon.enabled = sprite != null;
+            TintWeaponIcon();
+        }
+
+        /// <summary>
+        /// M4-R1 N19 §2: the glyph wears its lineage's identity tint (Iwa terracotta / Nami celadon, UiGlyphTints). At LOW
+        /// or EMPTY it steps back to alpha 0.70 so the amber word reads first. The tint never becomes a state colour.
+        /// </summary>
+        private void TintWeaponIcon()
+        {
+            if (_weaponIcon == null)
+            {
+                return;
+            }
+
+            Color tint = UiTokens.Get(UiGlyphTints.Weapon(WeaponEvents.Classic.Id));
+            bool low = _model.AmmoLow || _model.ReloadState == RunHudReloadState.MagazineEmpty;
+            tint.a = low ? UiGlyphTints.LowAlpha : 1f;
+            _weaponIcon.color = tint;
         }
 
         private void UpdateRun()
@@ -1460,6 +1478,7 @@ namespace DD.Prototype.UI
 
                 _shownReload = reload;
                 _ammoLowShown = low;
+                TintWeaponIcon();
             }
 
             if ((changed & RunHudField.Suspended) != 0)

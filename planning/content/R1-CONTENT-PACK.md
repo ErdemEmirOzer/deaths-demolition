@@ -2,7 +2,7 @@
 
 Owner: UXW (content session) · Date 2026-09-24 · Base: `main` · Consumers: **S-09** (UI, WP-068 R1 + WP-070 Pause selector) and **S-04** (progression, WP-077 B1/B2/B4).
 Sources: `WP-069-ARSENAL-V3-DIRECTION.md` (§0 table, §1 §2 identity, §1 §6 seals, §1 §7 Specials) · `WP-077-PROGRESSION-TREE-V2-DIRECTION.md` (§2 in-run tree, §3 PATH, §5 achievements) · `WP-068-UI-V3-DIRECTION.md` (§1 tone, §2.2 typography, §5 E9/E24/E25, §15.4 tips) · `WP-070-CAMERA-MODES-DIRECTION.md` §5.1 · voice from `UiLoadingTips.cs`, `PauseScreen.cs`, `RunHudScreen.cs`, `achievement-catalog.json`.
-Machine-readable twin: [`r1-strings.json`](r1-strings.json) — flat `{"key": {"en": "…", "tr": "…"}}`, 476 keys, generated from one data set together with the tables below, so keys and text match.
+Machine-readable twin: [`r1-strings.json`](r1-strings.json) — flat `{"key": {"en": "…", "tr": "…"}}`, 483 keys, generated from one data set together with the tables below, so keys and text match.
 
 Docs only: nothing here touches a Unity asset or a C# file. All numbers that WP-069/WP-077 mark PROTOTYPE-ONLY are left as placeholders; the only literal counts are identity facts the weapon is built on (Sanren's three-round burst, Nito's two barrels, the ten classic weapons).
 
@@ -19,8 +19,9 @@ Docs only: nothing here touches a Unity asset or a C# file. All numbers that WP-
 | Loading-screen tips | **30** | 30 (`tips.001`–`tips.030`) |
 | Camera-mode labels (Pause selector + camera settings) | 15 | 15 (`camera.*`) |
 | HUD status stamps + gel hint (S-09 R1-B) | 4 | 4 (`hud.*`) |
+| Selection stage labels (S-09 R1-B) | 7 | 7 (`selection.*`) |
 | New achievements (weapons + Specials) | **12** | 24 (`achievement.*`) |
-| **Total** | | **476** |
+| **Total** | | **483** |
 
 ## 0 · Assumptions and ambiguities (read first)
 
@@ -548,5 +549,22 @@ S-09 (R1-B, 25.09):
 - Added for N19 / DEC-094. The stamps replace NET / DAZED, which went with the old Specials. SHOCK marks a body held by Raiju's chain. SLIDE marks a body the gel is carrying. DOWN marks a body that falls, lies or gets up.
 - `hud.slick` is the player's own hint in the bottom-centre prompt slot while they stand in gel (N19-DIRECTION §2). One word, like the stamps. It gives no duration, because the puddle has none to show.
 - The stamp chip is as wide as its longest word; `tr` YERDE and KAYMA fit the same chip at TextScale 1.25.
+
+## 8 · Selection (S-09, R1-B)
+
+| key | en | tr |
+| --- | --- | --- |
+| `selection.specials.title` | SPECIAL WEAPONS | ÖZEL SİLAHLAR |
+| `selection.specials.caption` | Found on the field, never chosen here. | Sahada bulunur, burada seçilmez. |
+| `selection.stats.caption` | Bars compare with the other classic weapons. Longer is better. | Çubuklar diğer klasik silahlarla karşılaştırır. Uzun olan daha iyidir. |
+| `selection.core` | CORE | ÇEKİRDEK |
+| `selection.carried` | Carried for the whole run. It cannot be swapped. | Koşu boyunca taşınır. Değiştirilemez. |
+| `selection.lock.level` | Reach profile level {level} · you are level {current} | Profil seviyesi {level} gerekir · şu an {current} |
+| `selection.not_in_build` | Not in this build. | Bu sürümde yok. |
+
+S-09 (R1-B, 25.09):
+- The Selection stage (E9 v3) shows one weapon at a time, the one under focus. These lines are the stage's own labels; the weapon texts are section 1.
+- `selection.stats.caption` explains the StatStrip bars. Each bar compares the value with the classic roster, and for RELOAD, ACCURACY and SELF DAMAGE less is better, so longer always means better. A stat only one weapon has (BLAST RADIUS, SELF DAMAGE) prints its number with no bar.
+- `selection.lock.level` is the Ladder line (GD P14) until S-04 B2b's `ProfileService.WeaponLock` lands. After that, a meta-PATH weapon reads `path.lock.line` / `path.lock.ready`.
 
 <!-- TABLES:END -->

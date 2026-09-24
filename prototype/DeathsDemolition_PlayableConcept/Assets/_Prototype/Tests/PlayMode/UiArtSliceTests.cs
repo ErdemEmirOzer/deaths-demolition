@@ -499,17 +499,30 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreNotSame(screen.SkinPreviews[i].sprite, screen.SkinPreviews[(i + 1) % 3].sprite, "her skin farklı görsel");
             }
 
+            // WP-068 slice 7 (M4-R1): one row per roster weapon, each with its own glyph (a v3 id without its cell borrows
+            // its class sibling's until N19 / AP-021).
+            int satir = 0;
             int glif = 0;
-            foreach (Image img in screen.GetComponentsInChildren<Image>(true))
+            foreach (UiButton b in screen.GetComponentsInChildren<UiButton>(true))
             {
-                if (img.name == "Icon" && img.sprite != null && img.sprite.name.StartsWith("Weapon."))
+                if (!b.name.StartsWith("Weapon."))
                 {
-                    glif++;
+                    continue;
+                }
+
+                satir++;
+                foreach (Image img in b.GetComponentsInChildren<Image>(true))
+                {
+                    if (img.name == "Icon" && img.sprite != null && img.sprite.name.StartsWith("Weapon."))
+                    {
+                        glif++;
+                        break;
+                    }
                 }
             }
 
-            // WP-069 B2b: one card per enabled roster weapon; the six Arsenal weapons borrow their class sibling's glyph until N19.
-            Assert.AreEqual(DD.Prototype.Core.Weapons.WeaponRoster.Enabled.Count, glif, "her silah kartı bir AP-012 silah glifi");
+            Assert.GreaterOrEqual(satir, 9, "on silahlık kadro (rl_1 B3'e kadar kapalı)");
+            Assert.AreEqual(satir, glif, "her silah satırı kendi silah glifini çizer");
 
             PrototypeUiFlow.GoToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);

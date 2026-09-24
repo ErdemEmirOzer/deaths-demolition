@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Profile;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DD.Prototype.UI
@@ -13,58 +15,97 @@ namespace DD.Prototype.UI
     /// <summary>
     /// Skin and Weapon Selection. Shown before every run.
     ///
-    /// TWO COLUMNS, TWO DIFFERENT KINDS OF CHOICE
-    /// ------------------------------------------
-    /// The skin column and the weapon column look deliberately different because the
-    /// decisions are not equivalent, and a screen that made them look the same would be
-    /// lying about the stakes:
-    ///
-    ///   * A skin is a taste choice with no consequence. Its cards are swatch first,
-    ///     name second, and carry no numbers at all - there is nothing to compare.
-    ///   * A weapon is carried for the whole run and cannot be swapped. Its rows lead
-    ///     with the four numbers that differ between them, and a locked row shows the
-    ///     level that would unlock it rather than vanishing, so the ladder is legible
-    ///     from the first run.
+    /// WP-068 slice 7 · E9 v3, reworked for the M4-R1 ten-weapon roster. Three columns on the page grid:
+    ///   * CHARACTER SKIN: three 120 px cards (the AP-006 portrait, the palette strip, the name, "Cosmetic only").
+    ///     A skin is a taste choice with no consequence, so its cards carry no numbers.
+    ///   * The stage, an Elev1 card: the weapon under focus (or the chosen one when focus is elsewhere). It shows the
+    ///     identity-tinted glyph (N19), the pack's name / class / fire mode / role / description / flavour, and the
+    ///     weapon's own four-stat StatStrip, each stat with its number and a bar compared with the classic roster.
+    ///     Below that come the CORE branches and the state line (carried for the run, or what unlocks it). The v2 screen
+    ///     printed all of this on every card; ten cards cannot hold it (GD P14: show the numbers the rule uses, invent none).
+    ///   * CLASSIC WEAPON: one 48 px row per roster weapon (glyph, name, state chip), then the two Specials as
+    ///     information tiles. They are found on the field and never chosen here.
+    /// A locked row can be focused so the stage can say what unlocks it. Pressing it nudges its chip, plays Denied and
+    /// changes nothing.
     ///
     /// SESSION MEMORY (acceptance criteria 23 and 24). The current choice comes from
-    /// <c>PrototypeUiFlow.SelectedSkin</c> and <c>WeaponRegistry.SelectedWeapon</c>, both
-    /// of which are statics reset by RuntimeInitializeOnLoadMethod. A second run in the
-    /// same session therefore opens on the previous choice; a restarted application
-    /// opens on the prototype defaults. Neither is written to the profile save.
-    ///
-    /// KNOWN AND INTENTIONAL: on a brand-new profile this screen shows one unlocked
-    /// weapon and two locked ones. That is correct, not a defect, and it is the reason
-    /// the locked rows are designed rather than hidden - the column has to look
-    /// finished in exactly that state.
+    /// <c>PrototypeUiFlow.SelectedSkin</c> and <c>PrototypeUiFlow.SelectedWeapon</c>, statics reset by
+    /// RuntimeInitializeOnLoadMethod. A second run in the same session opens on the previous choice; a restarted
+    /// application opens on the defaults. Neither is written to the profile save.
     /// </summary>
     public sealed class SelectionScreen : UiScreen
     {
-        // WP-022: the skin card grew to carry the AP-006 character preview (a 3:4 portrait
-        // slot at the leading edge); the palette bands survive as a thin strip beside it.
-        private const float SkinCardHeight = 168f;
-        private const float WeaponCardHeight = 136f;
+        private const float SkinCardHeight = 120f;          // E9: portrait 88 + 2 × 16
         private const float SwatchWidth = 100f;
-        private const float WeaponIconSize = 56f;
         private const float BadgeWidth = 160f;
         private const float FooterHeight = 88f;
 
+        private const float WeaponRowHeight = 48f;
+        private const float WeaponRowGap = 4f;
+        private const float RowGlyph = 40f;
+        private const float SpecialTileHeight = 48f;
+        private const float StageGlyph = 128f;
+        private const float StatBarHeight = 8f;
+        private const float CoreGlyphSize = 26f;            // AD v003 MUST-4: ≥ 24 px at 1080p
+        private const float XpBarWidth = 120f;
+
+        // The three columns of the 12-column grid (560 / 24 / 560 / 24 / 560 at 1728).
+        private const float ColumnShare = 560f / 1728f;
+        private const float GutterShare = 24f / 1728f;
+
+        private static readonly Vector3 GlyphEdge = new Vector3(0.25f, 0f, 0f);   // the HudInk edge the HUD glyphs wear
+
         private UiButton[] _skinButtons;
         private GameObject[] _skinBadges;
+        private Image[] _skinPreviews;
 
         private UiButton[] _weaponButtons;
-        private GameObject[] _weaponBadges;
-        private Graphic[][] _coreGlyphs;
-
+        private GameObject[] _weaponSelected;
+        private RectTransform[] _weaponLockChips;
+        private Image[] _weaponGlyphs;
         private ClassicWeaponId[] _weaponIds;
+        private WeaponDefinition[] _weaponDefs;
         private bool[] _weaponEnabled;
+
         private UiButton _backButton;
         private UiButton _startButton;
-        private Image[] _skinPreviews;
+        private TMP_Text _startCaption;
+
+        // The stage
+        private CanvasGroup _stageText;
+        private Image _stageGlyph;
+        private TMP_Text _stageName;
+        private TMP_Text _stageClass;
+        private TMP_Text _stageRole;
+        private TMP_Text _stageDescription;
+        private TMP_Text _stageFlavour;
+        private readonly TMP_Text[] _statLabels = new TMP_Text[4];
+        private readonly TMP_Text[] _statValues = new TMP_Text[4];
+        private readonly UiBar[] _statBars = new UiBar[4];
+        private readonly WeaponStat[] _stats = new WeaponStat[4];
+        private readonly Image[] _coreGlyphs = new Image[3];
+        private readonly TMP_Text[] _coreNames = new TMP_Text[3];
+        private TMP_Text _stateLine;
+        private UiBar _xpBar;
+        private int _stageIndex = -1;
+        private GameObject _lastFocus;
 
         /// <summary>The preview images the skin cards show, index = PlayerSkin (tests read the sprite).</summary>
         public Image[] SkinPreviews
         {
             get { return _skinPreviews; }
+        }
+
+        /// <summary>The roster row the stage shows (tests, captures).</summary>
+        public int StageIndex
+        {
+            get { return _stageIndex; }
+        }
+
+        /// <summary>The stage's texts, top to bottom (tests: name, class line, role, description, state line).</summary>
+        public TMP_Text[] StageTexts
+        {
+            get { return new[] { _stageName, _stageClass, _stageRole, _stageDescription, _stateLine }; }
         }
 
         protected override UiContext BaseContext
@@ -87,14 +128,30 @@ namespace DD.Prototype.UI
                 "The skin is cosmetic. The classic weapon is carried for the whole run and cannot be swapped.");
 
             float top = headerHeight + (int)UiSpace.XXL;
+            float stageFrom = ColumnShare + GutterShare;
+            float weaponsFrom = stageFrom + ColumnShare + GutterShare;
 
-            BuildSkinColumn(Column("Skins", 0f, 0.40f, top, FooterHeight));
-            BuildWeaponColumn(Column("Weapons", 0.44f, 1f, top, FooterHeight));
+            RectTransform skins = Column("Skins", 0f, ColumnShare, top, FooterHeight);
+            RectTransform stage = Column("Stage", stageFrom, stageFrom + ColumnShare, top, FooterHeight);
+            RectTransform weapons = Column("Weapons", weaponsFrom, 1f, top, FooterHeight);
+            BuildSkinColumn(skins);
+            BuildWeaponColumn(weapons);
+            BuildStage(stage);
             BuildFooter();
 
             RefreshSkins();
             RefreshWeapons();
+            ShowOnStage(SelectedIndex());
             LinkNavigation();
+
+            // E9 choreography: the three columns land left to right, 60 ms apart, once the curtain has revealed the
+            // screen (Decor: Reduced Motion shows them at rest).
+            gameObject.AddComponent<UiStaggerIn>().Configure(new[]
+            {
+                UiFactory.Group(skins.gameObject),
+                UiFactory.Group(stage.gameObject),
+                UiFactory.Group(weapons.gameObject)
+            });
         }
 
         private void Update()
@@ -108,44 +165,46 @@ namespace DD.Prototype.UI
             UiInput.ReclaimFocus(_skinButtons != null && _skinButtons.Length > 0
                 ? _skinButtons[(int)PrototypeUiFlow.SelectedSkin]
                 : _startButton);
+
+            // The stage follows focus (a pointer hover moves focus too). A change of the selected object is the only
+            // trigger: the stage is rebuilt on a change, never per frame.
+            GameObject focus = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+            if (focus != _lastFocus)
+            {
+                _lastFocus = focus;
+                int index = IndexOf(focus);
+                ShowOnStage(index >= 0 ? index : SelectedIndex());
+            }
         }
 
         /// <summary>
-        /// Gamepad / keyboard map (WP-022): skins and weapons are two vertical chains,
-        /// Left/Right hops between the columns at the same row, Down from the last card
-        /// lands on the footer, Up from the footer returns to the last card. Locked
-        /// weapons are not interactable, so the chain skips them by construction.
+        /// Gamepad / keyboard map (E9): skins ↕ and weapons ↕ are two vertical chains; Left / Right hops between the
+        /// columns; Down from the last card lands on the footer. Locked weapon rows are in the chain (the stage explains
+        /// them); pressing one is refused.
         /// </summary>
         private void LinkNavigation()
         {
-            var skins = new System.Collections.Generic.List<Selectable>(_skinButtons);
-            var weapons = new System.Collections.Generic.List<Selectable>();
-            for (int i = 0; i < _weaponButtons.Length; i++)
-            {
-                if (_weaponButtons[i].IsInteractable())
-                {
-                    weapons.Add(_weaponButtons[i]);
-                }
-            }
-
+            var skins = new List<Selectable>(_skinButtons);
+            var weapons = new List<Selectable>(_weaponButtons);
             skins.Add(_backButton);
             weapons.Add(_startButton);
             UiInput.ChainVertical(skins.ToArray());
             UiInput.ChainVertical(weapons.ToArray());
 
-            // Cards pair by row (clamped to the shorter column); the footer pairs with the
-            // footer, so Left from START RUN is always BACK and never a skin card.
             int skinCards = skins.Count - 1;
             int weaponCards = weapons.Count - 1;
+            int selected = Mathf.Max(0, SelectedIndex());
             for (int i = 0; i < skinCards; i++)
             {
-                Selectable right = weaponCards > 0 ? weapons[Mathf.Min(i, weaponCards - 1)] : _startButton;
+                // → from any skin lands on the chosen weapon: the decision the player came back to adjust.
+                Selectable right = weaponCards > 0 ? weapons[Mathf.Min(selected, weaponCards - 1)] : _startButton;
                 UiInput.LinkHorizontal(skins[i], right, right);
             }
 
             for (int i = 0; i < weaponCards; i++)
             {
-                Selectable left = skinCards > 0 ? skins[Mathf.Min(i, skinCards - 1)] : _backButton;
+                // ← from a weapon row lands on the skin card beside it (ten rows over three cards).
+                Selectable left = skinCards > 0 ? skins[Mathf.Min(i * skinCards / Mathf.Max(1, weaponCards), skinCards - 1)] : _backButton;
                 UiInput.LinkHorizontal(weapons[i], left, left);
             }
 
@@ -166,7 +225,7 @@ namespace DD.Prototype.UI
                 "SkinCaption", column,
                 "All three are available from the start and none of them changes a gameplay value.",
                 UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
+            stack.Add((RectTransform)caption.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
 
             stack.Gap(UiSpace.L);
 
@@ -191,13 +250,12 @@ namespace DD.Prototype.UI
                 BuildSwatch(button, palette);
 
                 // AD G1 MUST-3: "Cosmetic only" on top in its own line box, the name in the band below it, top-aligned and
-                // growing downward - the two-line name at Mac UI 1.2 × TextScale 1.25 ("Ivory / Crimson") never climbs
-                // into the caption (it used to sit bottom-aligned and wrap upward over it).
-                float textLeft = PreviewSlotWidth + SwatchWidth + (int)UiSpace.XL + (int)UiSpace.L;
+                // growing downward - the two-line name at Mac UI 1.2 × TextScale 1.25 never climbs into the caption.
+                float textLeft = PreviewSlotWidth + SwatchWidthNow + (int)UiSpace.XL + (int)UiSpace.L;
                 float captionBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
-                labelRect.offsetMin = new Vector2(textLeft, (int)UiSpace.L);
-                labelRect.offsetMax = new Vector2(-BadgeWidth, -((int)UiSpace.L + captionBand + (int)UiSpace.XS));
+                labelRect.offsetMin = new Vector2(textLeft, (int)UiSpace.M);
+                labelRect.offsetMax = new Vector2(-BadgeWidth, -((int)UiSpace.M + captionBand + (int)UiSpace.XS));
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
                 button.LabelText.alignment = TextAlignmentOptions.TopLeft;
 
@@ -207,8 +265,8 @@ namespace DD.Prototype.UI
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
                 detailRect.anchorMin = new Vector2(0f, 1f);
                 detailRect.pivot = new Vector2(0f, 1f);
-                detailRect.offsetMin = new Vector2(textLeft, -((int)UiSpace.L + captionBand));
-                detailRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.L);
+                detailRect.offsetMin = new Vector2(textLeft, -((int)UiSpace.M + captionBand));
+                detailRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.M);
 
                 _skinButtons[i] = button;
                 _skinBadges[i] = BuildBadge(button, "SELECTED");
@@ -226,6 +284,11 @@ namespace DD.Prototype.UI
         private static float PreviewSlotWidth
         {
             get { return UiArt.SkinPreview(0) != null ? SkinCardHeight - (int)UiSpace.L * 2 + (int)UiSpace.L : 0f; }
+        }
+
+        private static float SwatchWidthNow
+        {
+            get { return PreviewSlotWidth > 0f ? 24f : SwatchWidth; }
         }
 
         /// <summary>
@@ -263,8 +326,7 @@ namespace DD.Prototype.UI
             swatch.anchorMin = new Vector2(0f, 0f);
             swatch.anchorMax = new Vector2(0f, 1f);
             swatch.pivot = new Vector2(0f, 0.5f);
-            float width = PreviewSlotWidth > 0f ? 24f : SwatchWidth;
-            swatch.sizeDelta = new Vector2(width, -((int)UiSpace.L * 2));
+            swatch.sizeDelta = new Vector2(SwatchWidthNow, -((int)UiSpace.L * 2));
             swatch.anchoredPosition = new Vector2((int)UiSpace.L + PreviewSlotWidth, 0f);
 
             Image frame = UiFactory.NewImage("Frame", swatch, UiColor.BorderStrong, UiSprites.Chip);
@@ -301,6 +363,7 @@ namespace DD.Prototype.UI
         {
             PrototypeUiFlow.SelectedSkin = skin;
             RefreshSkins();
+            RefreshStartCaption();
             UiEvents.Raise(UiEvent.ChoiceSelected, "Skin");
         }
 
@@ -317,315 +380,570 @@ namespace DD.Prototype.UI
         // ================================================================= weapons
 
         /// <summary>
-        /// One card per roster definition (WP-034 <c>WeaponRoster.All</c>, sorted): enabled
-        /// entries come from <see cref="IWeaponRosterSource"/> with their earned unlock state;
-        /// a disabled definition (roster D in this build) is shown as a dead card so the
-        /// player sees the whole roster and the data value is never touched here. Each card
-        /// carries the glyph (placeholder contract in <see cref="UiArt.RosterGlyph"/>), the
-        /// type / shot model line and the three core upgrade branches the weapon gates.
+        /// One 48 px row per Arsenal classic weapon (WP-069 §1098: Selection reads the Arsenal, enabled only, sortOrder): the glyph in its
+        /// lineage tint (N19; α 0.55 while locked, never a grey swap), the pack name, and a chip - SELECTED on the choice,
+        /// LOCKED · L{n} on a weapon the profile has not earned. Then the two Specials as information tiles.
         /// </summary>
         private void BuildWeaponColumn(RectTransform column)
         {
             var stack = new UiStack(column);
-
             stack.Add(UiFactory.Heading("CLASSIC WEAPON", column), UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.S);
 
-            TMP_Text caption = UiFactory.Label(
-                "WeaponCaption", column,
-                "Round-end upgrades transform the weapon you take in. You never pick up another one.",
-                UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
+            List<WeaponDefinition> roster = RosterForDisplay();
+            int count = roster.Count;
+            _weaponIds = new ClassicWeaponId[count];
+            _weaponDefs = new WeaponDefinition[count];
+            _weaponButtons = new UiButton[count];
+            _weaponSelected = new GameObject[count];
+            _weaponLockChips = new RectTransform[count];
+            _weaponGlyphs = new Image[count];
+            _weaponEnabled = new bool[count];
 
-            stack.Gap(UiSpace.L);
+            float rowHeight = Mathf.Max(WeaponRowHeight, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + (int)UiSpace.M);
 
-            // WP-069 B2b: the Arsenal's nine classics outgrow the column — the cards scroll (wheel / drag; focus pulls the
-            // selected card into view). S-09 R1-B restyles the list.
-            UiScrollView scroll = UiScrollView.Create("WeaponScroll", column);
-            RectTransform scrollRect = UiFactory.Fill((RectTransform)scroll.transform);
-            scrollRect.offsetMax = new Vector2(0f, -stack.Cursor);
-            RectTransform cardParent = scroll.Content;
-            var cards = new UiStack(cardParent);
-
-            List<ClassicWeaponDefinition> roster = RosterForDisplay();
-            _weaponIds = new ClassicWeaponId[roster.Count];
-            _weaponButtons = new UiButton[roster.Count];
-            _weaponBadges = new GameObject[roster.Count];
-            _coreGlyphs = new Graphic[roster.Count][];
-            _weaponEnabled = new bool[roster.Count];
-
-            IWeaponRosterSource source = WeaponRosterSourceRegistry.Current;
-
-            for (int i = 0; i < roster.Count; i++)
+            for (int i = 0; i < count; i++)
             {
-                ClassicWeaponDefinition def = roster[i];
-                ClassicWeaponId id = def.Id;
-                bool enabled = def.Enabled && def.HasRuntimeId && (source == null || IsInSource(source, id));
+                WeaponDefinition def = roster[i];
+                ClassicWeaponId id = def.id;
+                bool enabled = def.enabled;
                 bool unlocked = enabled && ProfileService.IsWeaponUnlocked(id);
                 _weaponIds[i] = id;
+                _weaponDefs[i] = def;
                 _weaponEnabled[i] = enabled;
 
-                string title = enabled ? ProfileService.WeaponDisplayName(id) : RosterTitle(def);
                 UiButton button = UiFactory.Button(
-                    "Weapon." + def.RosterKey + "." + id, cardParent, title, UiButtonVariant.Card,
+                    "Weapon." + def.weaponId + "." + id, column, WeaponName(id), UiButtonVariant.Card,
                     () => SelectWeapon(id));
+                stack.Add((RectTransform)button.transform, rowHeight);
+                if (i < count - 1)
+                {
+                    stack.Cursor += WeaponRowGap;
+                }
 
-                // WP-068 slice 3 (AD MUST-1, D6): bands from the faces at the TextScale, stacked from the
-                // bottom - core row, name, stat line - so the stat line never meets the name at 1.25.
-                float coreBand = UiFactory.ScaledBand(CoreBranchRowHeight);
-                float nameBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3));
-                float statBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
-                float nameBottom = (int)UiSpace.M + coreBand + (int)UiSpace.XS;
-                float cardHeight = Mathf.Max(WeaponCardHeight, nameBottom + nameBand + (int)UiSpace.XS + statBand + (int)UiSpace.L);
-                cards.Add((RectTransform)button.transform, cardHeight);
-                cards.Gap(UiSpace.L);
+                // The G1 cell by runtime id (N19 Weapon.<ClassicWeaponId>; a v3 id without one borrows its class sibling's),
+                // then the definition's own HUD icon key.
+                Sprite glyphSprite = UiArt.WeaponIcon(id);
+                if (glyphSprite == null)
+                {
+                    glyphSprite = UiArt.Icon(def.HudIconId);
+                }
 
-                // AP-012 glyph at the leading edge (roster HudIconId → placeholder contract);
-                // a roster key monogram stands in where the set has no glyph yet (AP-013).
-                Sprite glyphSprite = UiArt.RosterGlyph(def.HudIconId);
-                UiColor glyphColor = unlocked ? UiColor.TextPrimary : UiColor.TextMuted;
-                float textLeft = (int)UiSpace.XL + WeaponIconSize + (int)UiSpace.L;
+                float textLeft = (int)UiSpace.M + RowGlyph + (int)UiSpace.M;
                 if (glyphSprite != null)
                 {
-                    Image glyph = UiFactory.NewImage("Icon", button.transform, glyphColor, glyphSprite);
+                    Image glyph = UiFactory.NewImage("Icon", button.transform, UiColor.TextPrimary, glyphSprite);
                     glyph.preserveAspect = true;
-                    RectTransform glyphRect = (RectTransform)glyph.transform;
-                    glyphRect.anchorMin = new Vector2(0f, 0.5f);
-                    glyphRect.anchorMax = new Vector2(0f, 0.5f);
-                    glyphRect.pivot = new Vector2(0f, 0.5f);
-                    glyphRect.sizeDelta = new Vector2(WeaponIconSize, WeaponIconSize);
-                    glyphRect.anchoredPosition = new Vector2((int)UiSpace.XL, 0f);
+                    if (UiArt.IsGlyph(glyph.sprite))
+                    {
+                        UiArt.ApplyGlyph(glyph, GlyphEdge);
+                    }
+
+                    Place((RectTransform)glyph.transform, new Vector2(0f, 0.5f), new Vector2((int)UiSpace.M, 0f), new Vector2(RowGlyph, RowGlyph));
+                    _weaponGlyphs[i] = glyph;
                 }
                 else
                 {
                     Image well = UiFactory.NewImage("IconWell", button.transform, UiColor.SurfaceInset, UiSprites.Disc);
-                    RectTransform wellRect = (RectTransform)well.transform;
-                    wellRect.anchorMin = new Vector2(0f, 0.5f);
-                    wellRect.anchorMax = new Vector2(0f, 0.5f);
-                    wellRect.pivot = new Vector2(0f, 0.5f);
-                    wellRect.sizeDelta = new Vector2(WeaponIconSize, WeaponIconSize);
-                    wellRect.anchoredPosition = new Vector2((int)UiSpace.XL, 0f);
-                    TMP_Text mono = UiFactory.Label("Monogram", wellRect, def.RosterKey, UiType.H3, glyphColor, TextAnchor.MiddleCenter);
+                    Place((RectTransform)well.transform, new Vector2(0f, 0.5f), new Vector2((int)UiSpace.M, 0f), new Vector2(RowGlyph, RowGlyph));
+                    TMP_Text mono = UiFactory.Label("Monogram", well.transform, def.weaponId, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleCenter);
                     UiFactory.Fill((RectTransform)mono.transform);
                 }
 
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
-                labelRect.offsetMin = new Vector2(textLeft, nameBottom);
-                labelRect.offsetMax = new Vector2(-BadgeWidth, -(cardHeight - nameBottom - nameBand));
+                labelRect.offsetMin = new Vector2(textLeft, 0f);
+                labelRect.offsetMax = new Vector2(-BadgeWidth, 0f);
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
-                button.LabelText.alignment = TextAlignmentOptions.BottomLeft;
+                button.LabelText.alignment = TextAlignmentOptions.MidlineLeft;
+                button.LabelText.enableWordWrapping = false;
+                button.LabelText.overflowMode = TextOverflowModes.Ellipsis;
 
-                string detailText = !enabled
-                    ? "Not in this build."
-                    : unlocked
-                        ? DescribeWeapon(id) + "  ·  " + DescribeModel(def)
-                        : LockedDetail(id) + "  ·  " + DescribeModel(def);
-                TMP_Text detail = UiFactory.Label(
-                    "Detail", button.transform, detailText, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
-                detail.richText = true; // AD v003 MUST-5: values in TextPrimary, labels in TextSecondary (built once per card)
-                RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-                detailRect.offsetMin = new Vector2(textLeft, nameBottom + nameBand + (int)UiSpace.XS);
-                detailRect.offsetMax = new Vector2(-(int)UiSpace.XL, -(int)UiSpace.L);
-
-                _coreGlyphs[i] = BuildCoreBranchRow(button, def, textLeft, unlocked);
-
-                _weaponButtons[i] = button;
-                _weaponBadges[i] = BuildBadge(button, !enabled ? "UNAVAILABLE" : unlocked ? "SELECTED" : "LOCKED", !unlocked);
-
+                _weaponSelected[i] = RowChip(button, UiChipKind.Selected, "SELECTED").gameObject;
+                _weaponSelected[i].SetActive(false);
                 if (!unlocked)
                 {
-                    button.SetInteractable(false);
-
-                    // A locked or unavailable row keeps its badge on permanently: the state
-                    // is not a selection cue.
-                    _weaponBadges[i].SetActive(true);
+                    _weaponLockChips[i] = RowChip(button, UiChipKind.Neutral, enabled ? LockChip(id) : "UNAVAILABLE");
                 }
+
+                _weaponButtons[i] = button;
             }
 
-            scroll.SetContentHeight(cards.Cursor);
-            scroll.TrackSelectables();
+            BuildSpecialTiles(column, ref stack);
         }
 
-        /// <summary>Row height reserved under the detail line for the three core-branch glyphs.</summary>
-        private const float CoreBranchRowHeight = 30f;
-        private const float CoreGlyphSize = 26f; // AD v003 MUST-4: >= 24 px at 1080p
+        private static RectTransform RowChip(UiButton button, UiChipKind kind, string word)
+        {
+            TMP_Text label = UiChips.Create("Chip", button.transform, kind, word, UiChipSize.Row);
+            var chip = (RectTransform)label.transform.parent;
+            chip.anchorMin = new Vector2(1f, 0.5f);
+            chip.anchorMax = new Vector2(1f, 0.5f);
+            chip.pivot = new Vector2(1f, 0.5f);
+            chip.anchoredPosition = new Vector2(-(int)UiSpace.M, 0f);
+            return chip;
+        }
 
         /// <summary>
-        /// The weapon's three core upgrade branches (WP-034 shop gate) as small glyph tiles
-        /// with a "CORE" label: what the round-end shop will offer this weapon beyond the
-        /// shared branches. Muted on a locked card.
+        /// The two Specials (DEC-094): found on the field, never chosen here - information tiles, not controls. The glyph
+        /// wears its Special's identity tint (Arc / Gel); the name and fire mode come from the pack.
         /// </summary>
-        private static Graphic[] BuildCoreBranchRow(UiButton button, ClassicWeaponDefinition def, float left, bool unlocked)
+        private static void BuildSpecialTiles(RectTransform column, ref UiStack stack)
         {
-            var glyphs = new List<Graphic>(3);
-            RectTransform row = UiFactory.NewRect("CoreBranches", button.transform);
-            row.anchorMin = new Vector2(0f, 0f);
-            row.anchorMax = new Vector2(1f, 0f);
-            row.pivot = new Vector2(0f, 0f);
-            row.sizeDelta = new Vector2(0f, UiFactory.ScaledBand(CoreBranchRowHeight));
-            row.offsetMin = new Vector2(left, (int)UiSpace.M);
-            row.offsetMax = new Vector2(-BadgeWidth, (int)UiSpace.M + UiFactory.ScaledBand(CoreBranchRowHeight));
+            stack.Gap(UiSpace.L);
+            float band = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            RectTransform head = UiFactory.NewRect("SpecialsHead", column);
+            stack.Add(head, band);
+            TMP_Text title = UiFactory.Label("Title", head, UiStrings.Get("selection.specials.title", "SPECIAL WEAPONS"), UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            UiFactory.Fill((RectTransform)title.transform);
+            TMP_Text note = UiFactory.Label("Note", head, UiStrings.Get("selection.specials.caption", "Found on the field, never chosen here."), UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleRight);
+            UiFactory.Fill((RectTransform)note.transform);
+            stack.Gap(UiSpace.S);
 
-            TMP_Text label = UiFactory.Label("Label", row, "CORE", UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
-            RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
-            labelRect.anchorMax = new Vector2(0f, 1f);
-            labelRect.sizeDelta = new Vector2(44f, 0f);
-
-            UpgradeBranch[] branches = def.CoreBranches ?? new UpgradeBranch[0];
-            UiColor tint = unlocked ? UiColor.TextSecondary : UiColor.TextMuted;
-            for (int i = 0; i < branches.Length && i < 3; i++)
+            RectTransform row = UiFactory.NewRect("Specials", column);
+            stack.Add(row, Mathf.Max(SpecialTileHeight, band + (int)UiSpace.M));
+            string[] ids = { "sw_arc", "sw_gel" };
+            string[] glyphKeys = { "Special.Raiju", "Special.Namekuji" };   // N19 G1 cells (the SpecialWeaponId names, DEC-094)
+            for (int i = 0; i < ids.Length; i++)
             {
-                float x = 44f + i * (CoreGlyphSize + (int)UiSpace.S);
-                Sprite sprite = UiArt.UpgradeIcon(branches[i]);
+                RectTransform tile = UiFactory.FramedCard("Special." + ids[i], row, UiColor.BorderHairline, UiColor.SurfaceInset, UiFrame.Card);
+                tile.anchorMin = new Vector2(i * 0.5f, 0f);
+                tile.anchorMax = new Vector2(i * 0.5f + 0.5f, 1f);
+                tile.offsetMin = new Vector2(i == 0 ? 0f : (int)UiSpace.XS, 0f);
+                tile.offsetMax = new Vector2(i == 0 ? -(int)UiSpace.XS : 0f, 0f);
+
+                Sprite sprite = UiArt.Icon(glyphKeys[i]);
+                float left = (int)UiSpace.M;
                 if (sprite != null)
                 {
-                    Image glyph = UiFactory.NewImage("Core." + branches[i], row, tint, sprite);
+                    Image glyph = UiFactory.NewImage("Icon", tile, UiColor.TextPrimary, sprite);
                     glyph.preserveAspect = true;
-                    RectTransform glyphRect = (RectTransform)glyph.transform;
-                    glyphRect.anchorMin = new Vector2(0f, 0.5f);
-                    glyphRect.anchorMax = new Vector2(0f, 0.5f);
-                    glyphRect.pivot = new Vector2(0f, 0.5f);
-                    glyphRect.sizeDelta = new Vector2(CoreGlyphSize, CoreGlyphSize);
-                    glyphRect.anchoredPosition = new Vector2(x, 0f);
-                    glyphs.Add(glyph);
-                }
-                else
-                {
-                    TMP_Text mono = UiFactory.Label("Core." + branches[i], row, UpgradeIcons.Monogram(branches[i]), UiType.Caption, tint, TextAnchor.MiddleLeft);
-                    RectTransform monoRect = (RectTransform)mono.transform;
-                    monoRect.anchorMin = new Vector2(0f, 0f);
-                    monoRect.anchorMax = new Vector2(0f, 1f);
-                    monoRect.pivot = new Vector2(0f, 0.5f);
-                    monoRect.sizeDelta = new Vector2(30f, 0f);
-                    monoRect.anchoredPosition = new Vector2(x, 0f);
-                    glyphs.Add(mono);
-                }
-            }
+                    if (UiArt.IsGlyph(sprite))
+                    {
+                        UiArt.ApplyGlyph(glyph, GlyphEdge);
+                    }
 
-            return glyphs.ToArray();
+                    glyph.color = UiTokens.Get(i == 0 ? UiGlyphTints.ChainLightning : UiGlyphTints.Gel);
+                    Place((RectTransform)glyph.transform, new Vector2(0f, 0.5f), new Vector2(left, 0f), new Vector2(RowGlyph, RowGlyph));
+                    left += RowGlyph + (int)UiSpace.S;
+                }
+
+                TMP_Text name = UiFactory.Label("Name", tile, UiStrings.Get("weapon." + ids[i] + ".name", ids[i]).ToUpperInvariant(), UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+                RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
+                nameRect.offsetMin = new Vector2(left, 0f);
+                nameRect.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
+                TMP_Text mode = UiFactory.Label("Mode", tile, UiStrings.Get("weapon." + ids[i] + ".firemode", string.Empty), UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleRight);
+                RectTransform modeRect = UiFactory.Fill((RectTransform)mode.transform);
+                modeRect.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
+            }
         }
 
-        /// <summary>"Rifle · Hitscan" / "Shotgun · Pellet ×8" - the roster's type and shot model, no numbers changed.</summary>
-        private static string DescribeModel(ClassicWeaponDefinition def)
+        // =================================================================== stage
+
+        private void BuildStage(RectTransform column)
         {
-            string model = def.ShotModel == WeaponShotModel.Pellet ? "Pellet" : "Hitscan";
-            PrototypeConfig config = PrototypeConfig.Active;
-            ClassicWeaponSettings settings = config != null ? def.Settings(config) : null;
-            if (def.ShotModel == WeaponShotModel.Pellet && settings != null && settings.PelletCount > 1)
+            UiCard card = UiCard.Create("StageCard", column, Vector2.zero, UiElevation.Elev1, UiColor.SurfacePanel, UiSpace.XL);
+            UiFactory.Fill((RectTransform)card.transform);
+            RectTransform content = card.Content;
+            _stageText = UiFactory.Group(content.gameObject);
+
+            var stack = new UiStack(content);
+
+            // The glyph + identity block.
+            RectTransform top = UiFactory.NewRect("Identity", content);
+            float nameBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H1));
+            float labelBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            float roleBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)) * 2f;
+            float topHeight = Mathf.Max(StageGlyph, nameBand + labelBand + roleBand + (int)UiSpace.S);
+            stack.Add(top, topHeight);
+
+            _stageGlyph = UiFactory.NewImage("StageGlyph", top, UiColor.TextPrimary, UiArt.WeaponIcon(ClassicWeaponId.AssaultRifle));
+            _stageGlyph.preserveAspect = true;
+            if (UiArt.IsGlyph(_stageGlyph.sprite))
             {
-                model += " x" + settings.PelletCount;
+                UiArt.ApplyGlyph(_stageGlyph, GlyphEdge);
             }
 
-            return def.TypeClass + " · " + model;
+            RectTransform glyphRect = (RectTransform)_stageGlyph.transform;
+            glyphRect.anchorMin = new Vector2(0f, 1f);
+            glyphRect.anchorMax = new Vector2(0f, 1f);
+            glyphRect.pivot = new Vector2(0f, 1f);
+            glyphRect.sizeDelta = new Vector2(StageGlyph, StageGlyph);
+            glyphRect.anchoredPosition = Vector2.zero;
+
+            float textLeft = StageGlyph + (int)UiSpace.L;
+            _stageName = TopLabel("Name", top, UiType.H1, UiColor.TextPrimary, textLeft, 0f, nameBand);
+            _stageClass = TopLabel("Class", top, UiType.Label, UiColor.TextSecondary, textLeft, nameBand, labelBand);
+            _stageRole = TopLabel("Role", top, UiType.Body, UiColor.TextPrimary, textLeft, nameBand + labelBand + (int)UiSpace.S, roleBand);
+            _stageName.enableWordWrapping = false;
+            _stageClass.enableWordWrapping = false;
+            _stageName.overflowMode = TextOverflowModes.Ellipsis;
+            _stageClass.overflowMode = TextOverflowModes.Ellipsis;   // "LIGHT MACHINE GUN · AUTO" on the 1408 canvas
+            _stageRole.overflowMode = TextOverflowModes.Ellipsis;
+
+            stack.Gap(UiSpace.L);
+            _stageDescription = UiFactory.Label("Description", content, string.Empty, UiType.Body, UiColor.TextSecondary);
+            // Five lines: the pack's longest description (171 characters) on the Mac 1663 canvas at TextScale 1.25.
+            _stageDescription.overflowMode = TextOverflowModes.Ellipsis;
+            stack.Add((RectTransform)_stageDescription.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)) * 5f);
+            _stageFlavour = UiFactory.Label("Flavour", content, string.Empty, UiType.Caption, UiColor.TextMuted);
+            _stageFlavour.fontStyle = FontStyles.Italic;
+            stack.Add((RectTransform)_stageFlavour.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+
+            // The StatStrip: two rows of two, each a label, a number and a roster bar.
+            stack.Gap(UiSpace.L);
+            float cellLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            float cellHeight = cellLine + (int)UiSpace.XS + StatBarHeight;
+            for (int row = 0; row < 2; row++)
+            {
+                RectTransform line = UiFactory.NewRect("StatRow" + row, content);
+                stack.Add(line, cellHeight);
+                stack.Gap(UiSpace.M);
+                for (int col = 0; col < 2; col++)
+                {
+                    int s = row * 2 + col;
+                    RectTransform cell = UiFactory.NewRect("Stat" + s, line);
+                    cell.anchorMin = new Vector2(col * 0.5f, 0f);
+                    cell.anchorMax = new Vector2(col * 0.5f + 0.5f, 1f);
+                    cell.offsetMin = new Vector2(col == 0 ? 0f : (int)UiSpace.M, 0f);
+                    cell.offsetMax = new Vector2(col == 0 ? -(int)UiSpace.M : 0f, 0f);
+
+                    _statLabels[s] = TopLabel("Label", cell, UiType.Caption, UiColor.TextSecondary, 0f, 0f, cellLine);
+                    _statValues[s] = TopLabel("Value", cell, UiType.Label, UiColor.TextPrimary, 0f, 0f, cellLine);
+                    _statLabels[s].alignment = TextAlignmentOptions.MidlineLeft;
+                    _statValues[s].alignment = TextAlignmentOptions.MidlineRight;
+
+                    UiBar bar = UiFactory.Bar("Bar", cell, UiColor.TextPrimary, StatBarHeight);
+                    RectTransform barRect = (RectTransform)bar.transform;
+                    barRect.anchorMin = new Vector2(0f, 0f);
+                    barRect.anchorMax = new Vector2(1f, 0f);
+                    barRect.pivot = new Vector2(0.5f, 0f);
+                    barRect.sizeDelta = new Vector2(0f, StatBarHeight);
+                    barRect.anchoredPosition = Vector2.zero;
+                    _statBars[s] = bar;
+                }
+            }
+
+            TMP_Text compare = UiFactory.Label("CompareCaption", content,
+                UiStrings.Get("selection.stats.caption", "Bars compare with the other classic weapons. Longer is better."),
+                UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)compare.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+
+            // CORE: the weapon's three round-end branches (WP-034 shop gate).
+            stack.Gap(UiSpace.L);
+            float coreBand = Mathf.Max(CoreGlyphSize + 4f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+            RectTransform core = UiFactory.NewRect("CoreBranches", content);
+            stack.Add(core, coreBand);
+            TMP_Text coreLabel = UiFactory.Label("Label", core, UiStrings.Get("selection.core", "CORE"), UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
+            RectTransform coreLabelRect = UiFactory.Fill((RectTransform)coreLabel.transform);
+            coreLabelRect.anchorMax = new Vector2(0f, 1f);
+            coreLabelRect.sizeDelta = new Vector2(52f, 0f);
+            for (int i = 0; i < 3; i++)
+            {
+                const float width = 148f;
+                RectTransform slot = UiFactory.NewRect("Core" + i, core);
+                slot.anchorMin = new Vector2(0f, 0f);
+                slot.anchorMax = new Vector2(0f, 1f);
+                slot.pivot = new Vector2(0f, 0.5f);
+                slot.sizeDelta = new Vector2(width, 0f);
+                slot.anchoredPosition = new Vector2(52f + i * (width + (int)UiSpace.S), 0f);
+                Image glyph = UiFactory.NewImage("Glyph", slot, UiColor.TextSecondary, UiSprites.Disc);
+                glyph.preserveAspect = true;
+                Place((RectTransform)glyph.transform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(CoreGlyphSize, CoreGlyphSize));
+                _coreGlyphs[i] = glyph;
+                TMP_Text name = UiFactory.Label("Name", slot, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+                RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
+                nameRect.offsetMin = new Vector2(CoreGlyphSize + (int)UiSpace.XS, 0f);
+                name.enableWordWrapping = false;
+                _coreNames[i] = name;
+            }
+
+            // The state line: what carrying it means, or what unlocks it (+ the XP mini-bar).
+            stack.Gap(UiSpace.L);
+            float stateBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            RectTransform state = UiFactory.NewRect("State", content);
+            stack.Add(state, stateBand);
+            _stateLine = UiFactory.Label("Line", state, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            _stateLine.richText = true;   // the PATH line marks each met part in cream (built on a focus change)
+            RectTransform stateRect = UiFactory.Fill((RectTransform)_stateLine.transform);
+            stateRect.offsetMax = new Vector2(-(XpBarWidth + (int)UiSpace.M), 0f);
+            _xpBar = UiFactory.Bar("Xp", state, UiColor.BarXp, StatBarHeight);
+            Place((RectTransform)_xpBar.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(XpBarWidth, StatBarHeight));
         }
 
-        private static string RosterTitle(ClassicWeaponDefinition def)
+        private static TMP_Text TopLabel(string name, RectTransform parent, UiType type, UiColor colour, float left, float top, float height)
         {
-            PrototypeConfig config = PrototypeConfig.Active;
-            ClassicWeaponSettings settings = config != null ? def.Settings(config) : null;
-            string name = settings != null && !string.IsNullOrEmpty(settings.DisplayName) ? settings.DisplayName : SpaceCamelCase(def.TypeClass.ToString());
-            return def.RosterKey + " · " + name;
+            TMP_Text label = UiFactory.Label(name, parent, string.Empty, type, colour, TextAnchor.UpperLeft);
+            RectTransform rect = (RectTransform)label.transform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(left, -(top + height));
+            rect.offsetMax = new Vector2(0f, -top);
+            return label;
         }
 
-        /// <summary>"HeavyPistol" → "Heavy Pistol": the enum name is a stand-in until the
-        /// weapon has a config entry with a display name (build once per card, not per frame).</summary>
-        private static string SpaceCamelCase(string value)
+        private static void Place(RectTransform rect, Vector2 anchor, Vector2 at, Vector2 size)
+        {
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = anchor;
+            rect.sizeDelta = size;
+            rect.anchoredPosition = at;
+        }
+
+        /// <summary>Put roster row <paramref name="index"/> on the stage. Rebuilt on a change only.</summary>
+        private void ShowOnStage(int index)
+        {
+            if (index < 0 || _weaponIds == null || index >= _weaponIds.Length || index == _stageIndex || _stageName == null)
+            {
+                return;
+            }
+
+            bool first = _stageIndex < 0;
+            _stageIndex = index;
+            ClassicWeaponId id = _weaponIds[index];
+            WeaponDefinition def = _weaponDefs[index];
+            string key = def != null ? def.weaponId : null;
+            bool enabled = _weaponEnabled[index];
+            bool unlocked = enabled && ProfileService.IsWeaponUnlocked(id);
+
+            Sprite sprite = _weaponGlyphs[index] != null ? _weaponGlyphs[index].sprite : null;
+            UiArt.SetGlyph(_stageGlyph, sprite);
+            _stageGlyph.enabled = sprite != null;
+            Color tint = UiTokens.Get(UiGlyphTints.Weapon(id));
+            tint.a = unlocked ? 1f : UiGlyphTints.LockedAlpha;
+            _stageGlyph.color = tint;
+
+            _stageName.text = WeaponName(id).ToUpperInvariant();
+            _stageClass.text = ClassLine(key, def);
+            _stageRole.text = UiStrings.Get("weapon." + key + ".role", string.Empty);
+            _stageDescription.text = UiStrings.Get("weapon." + key + ".desc", string.Empty);
+            _stageFlavour.text = UiStrings.Get("weapon." + key + ".flavor", string.Empty);
+
+            WeaponStatReadout.Fill(def, _stats);
+            for (int s = 0; s < 4; s++)
+            {
+                _statLabels[s].text = _stats[s].Label;
+                _statValues[s].text = _stats[s].Value;
+                bool hasBar = _stats[s].Bar01 >= 0f;
+                _statBars[s].gameObject.SetActive(hasBar);
+                if (hasBar)
+                {
+                    // E9: the bars move with the focus (eased by UiBar); the first show lands at once.
+                    _statBars[s].SetValue(_stats[s].Bar01, first);
+                }
+            }
+
+            UpgradeBranch[] branches = def != null && def.upgrade != null && def.upgrade.coreBranches != null ? def.upgrade.coreBranches : new UpgradeBranch[0];
+            for (int i = 0; i < 3; i++)
+            {
+                bool has = i < branches.Length;
+                _coreGlyphs[i].transform.parent.gameObject.SetActive(has);
+                if (!has)
+                {
+                    continue;
+                }
+
+                Sprite branchSprite = UiArt.UpgradeIcon(branches[i]);
+                UiArt.SetGlyph(_coreGlyphs[i], branchSprite != null ? branchSprite : UiSprites.Disc);
+                _coreGlyphs[i].color = UiTokens.Get(unlocked ? UiColor.TextPrimary : UiColor.TextSecondary);
+                _coreNames[i].text = BranchName(branches[i], key);
+            }
+
+            if (!enabled)
+            {
+                _stateLine.text = UiStrings.Get("selection.not_in_build", "Not in this build.");
+                _xpBar.gameObject.SetActive(false);
+            }
+            else if (unlocked)
+            {
+                _stateLine.text = UiStrings.Get("selection.carried", "Carried for the whole run. It cannot be swapped.");
+                _xpBar.gameObject.SetActive(false);
+            }
+            else
+            {
+                MetaPathRules.WeaponLockInfo lockInfo = ProfileService.WeaponLock(id);
+                _stateLine.text = LockLine(lockInfo);
+                _xpBar.gameObject.SetActive(lockInfo.Ladder || !lockInfo.LevelMet);   // the level is what is missing
+                _xpBar.SetValue(ProfileService.LevelProgress01, true);
+            }
+
+            if (!first)
+            {
+                // A focus change re-inks the stage: the text block dips and returns (Fast, Decor - at rest under RM).
+                _stageText.alpha = 0.55f;
+                UiMotion.Alpha(_stageText, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+            }
+        }
+
+        /// <summary>
+        /// WP-077 (S-04 ProfileService.WeaponLock): a ladder weapon reads "LOCKED · L3"; a PATH weapon reads "PATH · L11",
+        /// or "PATH › ready" once the meta PATH can sell it. Built once per row.
+        /// </summary>
+        private static string LockChip(ClassicWeaponId id)
+        {
+            MetaPathRules.WeaponLockInfo info = ProfileService.WeaponLock(id);
+            string level = info.LevelGate.ToString(CultureInfo.InvariantCulture);
+            if (info.OnPath)
+            {
+                return info.Ready ? UiStrings.Get("path.lock.ready", "PATH › ready").ToUpperInvariant() : UiStrings.Get("path.title", "PATH") + " · L" + level;
+            }
+
+            return UiStrings.Get("tree.state.locked", "LOCKED") + " · L" + level;
+        }
+
+        /// <summary>
+        /// The stage's lock line: "Reach profile level 3 · you are level 1" on the ladder. On the PATH it is the pack's
+        /// path.lock.line (cost and level gate, each number in cream once it is met and secondary while it is not), or
+        /// "PATH › ready".
+        /// </summary>
+        private static string LockLine(MetaPathRules.WeaponLockInfo info)
+        {
+            string level = info.LevelGate.ToString(CultureInfo.InvariantCulture);
+            if (!info.OnPath)
+            {
+                return UiStrings.Get("selection.lock.level", "Reach profile level {level} · you are level {current}")
+                    .Replace("{level}", level)
+                    .Replace("{current}", ProfileService.Current.ProfileLevel.ToString(CultureInfo.InvariantCulture));
+            }
+
+            if (info.Ready)
+            {
+                return UiStrings.Get("path.lock.ready", "PATH › ready");
+            }
+
+            // The currency word comes from the pack (A9: "Kül" in both languages); only the numbers are marked.
+            return UiStrings.Get("path.lock.line", "PATH · {kul} · L{level}")
+                .Replace("{kul}", Met(info.AshCost.ToString(CultureInfo.InvariantCulture), info.AshMet))
+                .Replace("L{level}", Met("L" + level, info.LevelMet))
+                .Replace("{level}", Met(level, info.LevelMet));
+        }
+
+        private static string Met(string part, bool met)
+        {
+            return "<color=#" + ColorUtility.ToHtmlStringRGB(UiTokens.Get(met ? UiColor.TextPrimary : UiColor.TextSecondary)) + ">" + part + "</color>";
+        }
+
+        private static string ClassLine(string key, WeaponDefinition def)
+        {
+            string cls = UiStrings.Get("weapon." + key + ".class", string.Empty);
+            string mode = UiStrings.Get("weapon." + key + ".firemode", string.Empty);
+            if (def != null && mode.Contains("{count}"))
+            {
+                mode = mode.Replace("{count}", Mathf.Max(1, def.fire.burstCount).ToString(CultureInfo.InvariantCulture));
+            }
+
+            return string.IsNullOrEmpty(mode) ? cls : cls + "  ·  " + mode;
+        }
+
+        /// <summary>The branch's pack name (tree.run.branch.&lt;snake&gt;.name); rl_1's Explosion reads "Blast" (pack A6).</summary>
+        private static string BranchName(UpgradeBranch branch, string weaponKey)
+        {
+            string snake = branch == UpgradeBranch.Explosion && weaponKey == "rl_1" ? "blast" : Snake(branch.ToString());
+            return UiStrings.Get("tree.run.branch." + snake + ".name", branch.ToString());
+        }
+
+        private static string Snake(string value)
         {
             var sb = new System.Text.StringBuilder(value.Length + 4);
             for (int i = 0; i < value.Length; i++)
             {
-                if (i > 0 && char.IsUpper(value[i]) && !char.IsUpper(value[i - 1]))
+                if (i > 0 && char.IsUpper(value[i]))
                 {
-                    sb.Append(' ');
+                    sb.Append('_');
                 }
 
-                sb.Append(value[i]);
+                sb.Append(char.ToLowerInvariant(value[i]));
             }
 
             return sb.ToString();
         }
 
-        private static bool IsInSource(IWeaponRosterSource source, ClassicWeaponId id)
+        /// <summary>The pack's weapon name (Hinawa …), else the config display name.</summary>
+        private static string WeaponName(ClassicWeaponId id)
         {
-            IReadOnlyList<WeaponRosterEntry> entries = source.Entries;
-            for (int i = 0; i < entries.Count; i++)
+            WeaponDefinition def = Arsenal.Get(id);
+            string name = def != null ? UiStrings.Get("weapon." + def.weaponId + ".name", null) : null;
+            return !string.IsNullOrEmpty(name) ? name : ProfileService.WeaponDisplayName(id);
+        }
+
+        private int IndexOf(GameObject focus)
+        {
+            if (focus == null || _weaponButtons == null)
             {
-                if (entries[i].Id == id)
+                return -1;
+            }
+
+            for (int i = 0; i < _weaponButtons.Length; i++)
+            {
+                if (_weaponButtons[i] != null && _weaponButtons[i].gameObject == focus)
                 {
-                    return true;
+                    return i;
                 }
             }
 
-            return false;
+            return -1;
+        }
+
+        private int SelectedIndex()
+        {
+            if (_weaponIds == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < _weaponIds.Length; i++)
+            {
+                if (_weaponIds[i] == PrototypeUiFlow.SelectedWeapon)
+                {
+                    return i;
+                }
+            }
+
+            return _weaponIds.Length > 0 ? 0 : -1;
         }
 
         /// <summary>
-        /// Every roster definition in roster order (A, B, C, D...). Falls back to the
-        /// three enum ids when the roster is not loaded (a test scene without the assets).
+        /// The Arsenal's classic weapons in sortOrder (WP-069; the ten of DEC-097). A definition that is not shipped
+        /// (enabled = false: rl_1 until B3) is not shown at all - no locked card, no placeholder (user decision, C-00
+        /// 2026-09-17). Specials have their own tiles.
         /// </summary>
-        private static List<ClassicWeaponDefinition> RosterForDisplay()
+        private static List<WeaponDefinition> RosterForDisplay()
         {
-            var list = new List<ClassicWeaponDefinition>();
-            IReadOnlyList<ClassicWeaponDefinition> all = WeaponRoster.All;
-            if (all != null)
+            var list = new List<WeaponDefinition>();
+            IReadOnlyList<WeaponDefinition> all = Arsenal.All;
+            for (int i = 0; i < all.Count; i++)
             {
-                for (int i = 0; i < all.Count; i++)
+                WeaponDefinition d = all[i];
+                if (d != null && d.enabled && d.slot == WeaponSlotKind.Classic)
                 {
-                    // User decision (C-00, 2026-09-17): a roster entry that is not shipped
-                    // (D · Enabled=false / no runtime id) is not shown at all - no locked
-                    // card, no placeholder. Only what the player can eventually carry.
-                    if (all[i] != null && all[i].Enabled && all[i].HasRuntimeId)
-                    {
-                        list.Add(all[i]);
-                    }
+                    list.Add(d);
                 }
             }
 
-            list.Sort((x, y) => x.SortOrder != y.SortOrder ? x.SortOrder.CompareTo(y.SortOrder) : string.CompareOrdinal(x.RosterKey, y.RosterKey));
-            if (list.Count > 0)
-            {
-                return list;
-            }
-
-            foreach (ClassicWeaponId id in Enum.GetValues(typeof(ClassicWeaponId)))
-            {
-                var stub = ScriptableObject.CreateInstance<ClassicWeaponDefinition>();
-                stub.Id = id;
-                stub.RosterKey = id.ToString();
-                stub.Enabled = true;
-                list.Add(stub);
-            }
-
+            list.Sort((x, y) => x.sortOrder != y.sortOrder ? x.sortOrder.CompareTo(y.sortOrder) : string.CompareOrdinal(x.weaponId, y.weaponId));
             return list;
-        }
-
-        /// <summary>
-        /// WP-069 B2b: the lock line of a card. A WP-077 meta-path weapon (DEC-095) shows its node — "PATH · 120 Ash · L11",
-        /// "PATH › ready" once both are met (S-04 MetaPathRules.WeaponLock); a ladder weapon keeps the profile level line.
-        /// English only (MetaUiSliceTests.TumKullaniciMetinleriIngilizce): the currency reads "Ash" until S-09 R1-B settles the
-        /// pack's name. S-09 R1-B restyles it.
-        /// </summary>
-        private static string LockedDetail(ClassicWeaponId id)
-        {
-            MetaPathRules.WeaponLockInfo lockInfo = ProfileService.WeaponLock(id);
-            if (lockInfo.OnPath)
-            {
-                return lockInfo.Ready ? "PATH › ready" : "PATH · " + lockInfo.AshCost + " Ash · L" + lockInfo.LevelGate;
-            }
-
-            return "Reach profile level " + ProfileService.UnlockLevelFor(id) + " to unlock this weapon.";
         }
 
         private void SelectWeapon(ClassicWeaponId id)
         {
             if (!ProfileService.IsWeaponUnlocked(id))
             {
+                // E9: a locked row refuses - its chip nudges (the words stay readable), Denied plays, nothing changes.
+                for (int i = 0; i < _weaponIds.Length; i++)
+                {
+                    if (_weaponIds[i] == id && _weaponLockChips[i] != null)
+                    {
+                        UiPresets.DeniedNudge(_weaponLockChips[i]);
+                    }
+                }
+
                 UiSound.Play(UiSoundKind.Denied);
                 return;
             }
 
             PrototypeUiFlow.SelectedWeapon = id;
             RefreshWeapons();
+            RefreshStartCaption();
             UiEvents.Raise(UiEvent.ChoiceSelected, "Weapon");
         }
 
@@ -638,63 +956,28 @@ namespace DD.Prototype.UI
                 bool selected = unlocked && id == PrototypeUiFlow.SelectedWeapon;
 
                 _weaponButtons[i].SetSelectedChoice(selected);
-                _weaponBadges[i].SetActive(unlocked ? selected : true);
-
-                // AD v003 MUST-4: the selected card's core glyphs read in TextPrimary.
-                Graphic[] glyphs = _coreGlyphs != null && i < _coreGlyphs.Length ? _coreGlyphs[i] : null;
-                if (glyphs != null && unlocked)
+                _weaponSelected[i].SetActive(selected);
+                if (_weaponGlyphs[i] != null)
                 {
-                    Color tint = UiTokens.Get(selected ? UiColor.TextPrimary : UiColor.TextSecondary);
-                    for (int g = 0; g < glyphs.Length; g++)
-                    {
-                        if (glyphs[g] != null && glyphs[g].color != tint)
-                        {
-                            glyphs[g].color = tint;
-                        }
-                    }
+                    // N19: the lineage tint is identity - a locked weapon keeps it at α 0.55, never a grey swap.
+                    Color tint = UiTokens.Get(UiGlyphTints.Weapon(id));
+                    tint.a = unlocked ? 1f : UiGlyphTints.LockedAlpha;
+                    _weaponGlyphs[i].color = tint;
                 }
             }
         }
 
-        /// <summary>PROTOTYPE-ONLY stat line. Every number is read live from PrototypeConfig.</summary>
-        private static string DescribeWeapon(ClassicWeaponId id)
-        {
-            PrototypeConfig config = PrototypeConfig.Active;
-            ClassicWeaponSettings settings = config != null ? config.Weapons.Find(id) : null;
-
-            if (settings == null)
-            {
-                // Loading/absent-data state. Named, not blank.
-                return "Weapon statistics are unavailable because PrototypeConfig is not loaded.";
-            }
-
-            string damage = settings.PelletCount > 1
-                ? "DMG " + Value(settings.Damage.ToString("0.#") + " x" + settings.PelletCount)
-                : "DMG " + Value(settings.Damage.ToString("0.#"));
-
-            return damage
-                   + "  ·  " + Value(settings.FireRate.ToString("0.#")) + " shots/s"
-                   + "  ·  MAG " + Value(settings.MagazineSize.ToString())
-                   + "  ·  RELOAD " + Value(settings.ReloadTime.ToString("0.#") + "s");
-        }
-
-        /// <summary>Stat value in TextPrimary inside a TextSecondary line (TMP rich text; card build only).</summary>
-        private static string Value(string text)
-        {
-            return "<color=#" + ColorUtility.ToHtmlStringRGB(UiTokens.Get(UiColor.TextPrimary)) + ">" + text + "</color>";
-        }
-
         // ================================================================== chrome
 
-        /// <summary>A pill in the top-right of a card. Hidden until the card is chosen.</summary>
-        private static GameObject BuildBadge(UiButton button, string text, bool locked = false)
+        /// <summary>A pill in the top-right of a skin card. Hidden until the card is chosen.</summary>
+        private static GameObject BuildBadge(UiButton button, string text)
         {
             TMP_Text chip = UiFactory.Chip(
                 "Badge",
                 button.transform,
                 text,
-                locked ? UiColor.SurfaceInset : UiColor.TextPrimary, // AD v003 MUST-3: cream, vermilion stays with START RUN
-                locked ? UiColor.TextSecondary : UiColor.SurfaceBase,
+                UiColor.TextPrimary, // AD v003 MUST-3: cream, vermilion stays with START RUN
+                UiColor.SurfaceBase,
                 140f,
                 30f);
 
@@ -739,6 +1022,26 @@ namespace DD.Prototype.UI
             startRect.pivot = new Vector2(1f, 0.5f);
             startRect.sizeDelta = new Vector2(320f, UiTokens.TargetPreferred);
             startRect.anchoredPosition = Vector2.zero;
+
+            // E9 / GD P14: the caption beside START RUN echoes the loadout ("Ivory / Crimson · Hinawa").
+            _startCaption = UiFactory.Label("Loadout", footer, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleRight);
+            RectTransform captionRect = UiFactory.Fill((RectTransform)_startCaption.transform);
+            captionRect.offsetMin = new Vector2(240f + (int)UiSpace.XL, 0f);
+            captionRect.offsetMax = new Vector2(-(320f + (int)UiSpace.XL), 0f);
+            _startCaption.enableWordWrapping = false;
+            RefreshStartCaption();
+        }
+
+        private void RefreshStartCaption()
+        {
+            if (_startCaption == null || _weaponIds == null)
+            {
+                return;
+            }
+
+            int index = SelectedIndex();
+            string weapon = index >= 0 ? WeaponName(_weaponIds[index]) : string.Empty;
+            _startCaption.text = PlayerSkins.Get(PrototypeUiFlow.SelectedSkin).DisplayName + "  ·  " + weapon;
         }
 
         private static void GoBack()

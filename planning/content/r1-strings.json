@@ -1902,5 +1902,33 @@
   "hud.slick": {
     "en": "SLICK",
     "tr": "KAYGAN"
+  },
+  "selection.specials.title": {
+    "en": "SPECIAL WEAPONS",
+    "tr": "ÖZEL SİLAHLAR"
+  },
+  "selection.specials.caption": {
+    "en": "Found on the field, never chosen here.",
+    "tr": "Sahada bulunur, burada seçilmez."
+  },
+  "selection.stats.caption": {
+    "en": "Bars compare with the other classic weapons. Longer is better.",
+    "tr": "Çubuklar diğer klasik silahlarla karşılaştırır. Uzun olan daha iyidir."
+  },
+  "selection.core": {
+    "en": "CORE",
+    "tr": "ÇEKİRDEK"
+  },
+  "selection.carried": {
+    "en": "Carried for the whole run. It cannot be swapped.",
+    "tr": "Koşu boyunca taşınır. Değiştirilemez."
+  },
+  "selection.lock.level": {
+    "en": "Reach profile level {level} · you are level {current}",
+    "tr": "Profil seviyesi {level} gerekir · şu an {current}"
+  },
+  "selection.not_in_build": {
+    "en": "Not in this build.",
+    "tr": "Bu sürümde yok."
   }
 }
