@@ -879,6 +879,32 @@ namespace DD.Prototype.UI
             ((RectTransform)_ladderFill.transform).sizeDelta = new Vector2(pitch * Mathf.Clamp(rounds, 0, _ladderMagazine), 0f);
         }
 
+        /// <summary>Capture seam (-ddUiCapture hudstates): holds the rear arc on towards this world direction (null = live data).</summary>
+        public static Vector3? CaptureRearDirection;
+
+        /// <summary>Capture seam: the reticle draws this weapon state instead of the live one (staged spread / empty / pellets).</summary>
+        public static ClassicWeaponHudState? CaptureWeapon;
+
+        /// <summary>Capture seam: the reticle draws a live Special (Gold400) regardless of the Special's phase.</summary>
+        public static bool CaptureSpecialActive;
+
+        /// <summary>Capture seam: a hit from <paramref name="towardsAttackerWorld"/> as the damage arc shows it.</summary>
+        public void CaptureHit(Vector3 towardsAttackerWorld)
+        {
+            if (_playerArcs != null)
+            {
+                _playerArcs.Flash(towardsAttackerWorld);
+            }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetCaptureSeams()
+        {
+            CaptureRearDirection = null;
+            CaptureWeapon = null;
+            CaptureSpecialActive = false;
+        }
+
         /// <summary>E17: the player-bound arc faces the attacker (HitDirection runs from the attacker towards the player).</summary>
         private void OnPlayerDamaged(PlayerDamageInfo info)
         {
@@ -1205,7 +1231,8 @@ namespace DD.Prototype.UI
             // E13 rear arc: for the BEHIND YOU chip's lifetime, turned to the attackers (S-03 data).
             if (_playerArcs != null)
             {
-                _playerArcs.SetRear(_threatSlots[1].Shown, threat.RearDirection);
+                bool staged = CaptureRearDirection.HasValue;
+                _playerArcs.SetRear(_threatSlots[1].Shown || staged, staged ? CaptureRearDirection.Value : threat.RearDirection);
             }
 
             int windup = fighting ? threat.WindingUp : 0;
@@ -1365,7 +1392,8 @@ namespace DD.Prototype.UI
             {
                 // E15: the spread the weapon really has, projected at the aim distance (from the chest, where the shot leaves).
                 _reticle.Tick(camera, rig.Aim.AimWorldPoint, rig.transform.position + Vector3.up * 1.2f,
-                    ScreenRect.rect.size, WeaponEvents.Classic, WeaponEvents.Special.Phase == SpecialWeaponPhase.Active);
+                    ScreenRect.rect.size, CaptureWeapon ?? WeaponEvents.Classic,
+                    CaptureSpecialActive || WeaponEvents.Special.Phase == SpecialWeaponPhase.Active);
             }
         }
 

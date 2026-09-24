@@ -153,7 +153,8 @@ namespace DD.Prototype.UI
             private float _settle = 3f;
             private bool _bot;
             private int _nextRoundIndex;
-            private bool _upgradeDone, _groundDone, _activeDone, _threatDone, _lowDone, _statusDone;
+            private bool _upgradeDone, _groundDone, _activeDone, _threatDone, _lowDone, _statusDone, _multiThreatDone;
+            private RunHudScreen _hud;
 
             internal void Configure(string folder, string rounds, string delay, bool bot)
             {
@@ -249,6 +250,28 @@ namespace DD.Prototype.UI
                         _threatDone = true;
                         yield return new WaitForSecondsRealtime(0.3f); // WP-068 8b: past the chip's 140 ms entry
                         yield return Capture("threat.png");
+                    }
+
+                    // AD 8b SHOULD-4: the first frame with two or more threat chips live (slot rhythm, shared width).
+                    if (!_multiThreatDone && state.Phase == RunPhase.Fighting && Time.frameCount % 15 == 0)
+                    {
+                        if (_hud == null)
+                        {
+                            _hud = FindObjectOfType<RunHudScreen>();
+                        }
+
+                        int chips = 0;
+                        for (int i = 0; _hud != null && i < 3; i++)
+                        {
+                            chips += _hud.ThreatChipVisible(i) ? 1 : 0;
+                        }
+
+                        if (chips >= 2)
+                        {
+                            _multiThreatDone = true;
+                            yield return new WaitForSecondsRealtime(0.3f);
+                            yield return Capture("threat-multi.png");
+                        }
                     }
 
                     if (!_lowDone && state.Phase == RunPhase.Fighting && ThreatHudFeed.LowHealth)
@@ -835,10 +858,50 @@ namespace DD.Prototype.UI
                 PrototypeUiFlow.StartRun();
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
                 yield return UiCaptureAgent.WaitRunLive(20f);
+
+                // AD 8b MUST-1: -ddUiStage plaster | pond puts the player where the pale plates sit behind the HUD panels
+                // (AP-005 placement: the palace's plaster screens at z ≈ 33, the koi pond at z −26 … −37).
+                PlayerRig rig = PlayerRegistry.Primary;
+                string stage = Arg("-ddUiStage");
+                if (rig != null && (stage == "plaster" || stage == "pond"))
+                {
+                    Vector3 at = stage == "plaster" ? new Vector3(3f, rig.transform.position.y, 28f) : new Vector3(0f, rig.transform.position.y, -21f);
+                    rig.Teleport(at, rig.transform.rotation);
+                }
+
                 yield return new WaitForSecondsRealtime(1.5f);
                 yield return Frame(folder, "hud-idle");
 
-                PlayerRig rig = PlayerRegistry.Primary;
+                // AD 8b SHOULD-1: the reticle's states, staged on the live reticle.
+                ClassicWeaponHudState live = WeaponEvents.Classic;
+                yield return StageReticle(folder, "reticle-saturated", live, 9f, 0f, 0, live.AmmoInMagazine, false);
+                yield return StageReticle(folder, "reticle-empty", live, live.CurrentSpreadDegrees, 0f, 0, 0, false);
+                yield return StageReticle(folder, "reticle-pellet", live, 7.5f, 4.5f, 8, live.AmmoInMagazine, false);
+                yield return StageReticle(folder, "reticle-special", live, live.CurrentSpreadDegrees, 0f, 0, live.AmmoInMagazine, true);
+                bool reduced = UiMotion.ReducedMotion;
+                UiMotion.ReducedMotion = true;
+                yield return StageReticle(folder, "reticle-rm", live, 3.5f, 0f, 0, live.AmmoInMagazine, false);
+                UiMotion.ReducedMotion = reduced;
+                RunHudScreen.CaptureWeapon = null;
+                RunHudScreen.CaptureSpecialActive = false;
+
+                // AD 8b MUST-2: a rear attack landing (the wedge inside the hairline), then a hit from another side (a wedge alone).
+                RunHudScreen hud = FindObjectOfType<RunHudScreen>();
+                if (hud != null)
+                {
+                    RunHudScreen.CaptureRearDirection = Vector3.back;
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    hud.CaptureHit(Vector3.back);
+                    yield return new WaitForSecondsRealtime(0.05f);
+                    yield return Frame(folder, "hud-arcs-rear-hit");
+                    yield return new WaitForSecondsRealtime(0.6f);
+                    hud.CaptureHit(Vector3.right);
+                    yield return new WaitForSecondsRealtime(0.05f);
+                    yield return Frame(folder, "hud-arcs-other-hit");
+                    RunHudScreen.CaptureRearDirection = null;
+                    yield return new WaitForSecondsRealtime(0.3f);
+                }
+
                 if (GoldService.Instance != null && rig != null)
                 {
                     GoldService.Instance.Wallet.Credit(25, rig.transform.position);
@@ -889,6 +952,19 @@ namespace DD.Prototype.UI
 
                 Debug.Log("[UiCapture] hudstates done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
+            }
+
+            private static IEnumerator StageReticle(string folder, string name, ClassicWeaponHudState live, float spread, float pelletRing, int pellets, int ammo, bool special)
+            {
+                ClassicWeaponHudState state = live;
+                state.CurrentSpreadDegrees = spread;
+                state.PelletRingDegrees = pelletRing;
+                state.PelletCount = pellets;
+                state.AmmoInMagazine = ammo;
+                RunHudScreen.CaptureWeapon = state;
+                RunHudScreen.CaptureSpecialActive = special;
+                yield return new WaitForSecondsRealtime(0.4f); // past the spread follow
+                yield return Frame(folder, name);
             }
 
             private static IEnumerator WaitFor(Func<bool> condition, float timeout)

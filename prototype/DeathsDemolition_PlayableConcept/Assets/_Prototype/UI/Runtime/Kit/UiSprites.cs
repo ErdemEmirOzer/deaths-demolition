@@ -188,12 +188,21 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// WP-068 slice 8b (E13 rear arc, E17 player arc) · a 60° annulus segment at 12 o'clock of a square, stroke 5.6 % of
-        /// the radius (4 px at r 72), feathered ends. Rotate the image to face a direction; its size is the diameter.
+        /// WP-068 slice 8b (E13 rear arc, AD 8b MUST-2) · a 60° hairline arc at 12 o'clock of a square, 3 px at r 76
+        /// (stroke 3.9 % of the radius), crisp ends. Rotate the image to face a direction; its size is the diameter.
         /// </summary>
-        public static Sprite Arc60
+        public static Sprite ArcHairline60
         {
-            get { return GetOrCreate("arc60", () => CreateArc(256, 60f, 0.056f)); }
+            get { return GetOrCreate("arcHair60", () => CreateArc(304, 60f, 3f / 76f, 1f)); }
+        }
+
+        /// <summary>
+        /// WP-068 slice 8b (E17 player arc, AD 8b MUST-2, direction "Arc.Soft") · a brush wedge at 12 o'clock: a soft band
+        /// between 0.75 and 1.0 of the radius (48–64 px at r 64), fullest at its middle and tapering to its ends.
+        /// </summary>
+        public static Sprite ArcSoft60
+        {
+            get { return GetOrCreate("arcSoft60", () => CreateSoftArc(256, 60f, 0.75f)); }
         }
 
         /// <summary>
@@ -482,7 +491,35 @@ namespace DD.Prototype.UI
             return Finish(texture, Vector4.zero);
         }
 
-        private static Sprite CreateArc(int size, float spanDegrees, float strokeFraction)
+        private static Sprite CreateSoftArc(int size, float spanDegrees, float innerFraction)
+        {
+            Texture2D texture = NewTexture(size, size);
+            var pixels = new Color32[size * size];
+            float half = size * 0.5f;
+            float outer = half - 2f;
+            float inner = outer * innerFraction;
+            float mid = (inner + outer) * 0.5f;
+            float halfWidth = (outer - inner) * 0.5f;
+            float halfSpan = spanDegrees * 0.5f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + 0.5f - half, dy = y + 0.5f - half;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float angle = Mathf.Abs(Mathf.Atan2(dx, dy) * Mathf.Rad2Deg) / halfSpan;   // 0 centre, 1 ends
+                    float taper = Mathf.Clamp01(1f - angle * angle);                            // the wedge thins to its ends
+                    float across = Mathf.Clamp01(1f - Mathf.Abs(d - mid) / Mathf.Max(1f, halfWidth * Mathf.Lerp(0.35f, 1f, taper)));
+                    float alpha = Mathf.SmoothStep(0f, 1f, across) * taper;                    // soft, brush-like edges
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, Vector4.zero);
+        }
+
+        private static Sprite CreateArc(int size, float spanDegrees, float strokeFraction, float endFeatherDegrees = 6f)
         {
             Texture2D texture = NewTexture(size, size);
             var pixels = new Color32[size * size];
@@ -498,7 +535,7 @@ namespace DD.Prototype.UI
                     float d = Mathf.Sqrt(dx * dx + dy * dy);
                     float angle = Mathf.Abs(Mathf.Atan2(dx, dy) * Mathf.Rad2Deg);   // 0 at 12 o'clock
                     float across = Mathf.Clamp01(stroke * 0.5f - Mathf.Abs(d - (radius - stroke * 0.5f)) + 0.5f);
-                    float along = Mathf.Clamp01((halfSpan - angle) / 6f);            // 6° feathered ends
+                    float along = Mathf.Clamp01((halfSpan - angle) / Mathf.Max(0.5f, endFeatherDegrees));
                     pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(across * along * 255f));
                 }
             }

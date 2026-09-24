@@ -4,17 +4,19 @@ using UnityEngine.UI;
 namespace DD.Prototype.UI
 {
     /// <summary>
-    /// WP-068 slice 8b · the arcs bound to the player's figure (direction §5 E13, E17), on the HUD's reticle canvas. Both are
-    /// 60° arcs (UiSprites.Arc60) around the player's screen point, outside the figure - nothing is ever drawn ON the model.
-    /// - Rear arc (E13): while the BEHIND YOU chip lives, Coral (StateDanger) at ≤ 0.6, radius 72, facing the attackers
-    ///   (ThreatHudFeed.RearDirection, S-03 data); static under reduced motion.
-    /// - Damage arc (E17): on a hit, DamageEdge at the edge band's peak × FlashScale, radius 64, facing the attacker, held
-    ///   60 ms then faded 400 ms - the same beat as the screen edges, where the eye already is.
+    /// WP-068 slice 8b · the arcs bound to the player's figure (direction §5 E13, E17), on the HUD's reticle canvas, around
+    /// the player's screen point and outside the figure - nothing is ever drawn ON the model (an arc may cover an attacker).
+    /// AD 8b MUST-2: the two read apart by radius and weight, not hue.
+    /// - Rear arc (E13): while the BEHIND YOU chip lives, a crisp 3 px hairline (UiSprites.ArcHairline60) at r 76,
+    ///   StateDanger at 0.6, facing the attackers (ThreatHudFeed.RearDirection, S-03 data); static under reduced motion.
+    /// - Damage arc (E17): on a hit, a soft brush wedge (UiSprites.ArcSoft60, "Arc.Soft") on r 48–64, DamageEdge at the edge
+    ///   band's peak × FlashScale, 60 ms hold then a 400 ms fade. 12 px clear of the hairline: a rear attack landing reads
+    ///   as the wedge inside the hairline, a hit from elsewhere as a wedge alone.
     /// </summary>
     public sealed class HudPlayerArcs
     {
-        public const float RearRadius = 72f;
-        public const float DamageRadius = 64f;
+        public const float RearRadius = 76f;
+        public const float DamageRadius = 64f;   // the wedge's outer edge; its band is 48–64
         public const float RearAlpha = 0.6f;
         public const float DamageHoldSeconds = 0.06f;
 
@@ -40,15 +42,15 @@ namespace DD.Prototype.UI
             _root = UiFactory.NewRect("PlayerArcs", layer);
             _root.sizeDelta = Vector2.zero;
 
-            _rear = Arc("RearArc", RearRadius, UiColor.StateDanger);
+            _rear = Arc("RearArc", RearRadius, UiColor.StateDanger, UiSprites.ArcHairline60);
             _rear.canvasRenderer.SetAlpha(0f);
-            _damage = Arc("DamageArc", DamageRadius, UiColor.DamageEdge);
+            _damage = Arc("DamageArc", DamageRadius, UiColor.DamageEdge, UiSprites.ArcSoft60);
             _damage.canvasRenderer.SetAlpha(0f);
         }
 
-        private Image Arc(string name, float radius, UiColor colour)
+        private Image Arc(string name, float radius, UiColor colour, Sprite sprite)
         {
-            Image arc = UiFactory.NewImage(name, _root, colour, UiSprites.Arc60);
+            Image arc = UiFactory.NewImage(name, _root, colour, sprite);
             var rect = (RectTransform)arc.transform;
             rect.sizeDelta = new Vector2(radius * 2f, radius * 2f);
             rect.anchoredPosition = Vector2.zero;
