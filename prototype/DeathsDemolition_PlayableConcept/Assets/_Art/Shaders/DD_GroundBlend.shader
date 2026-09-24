@@ -88,25 +88,30 @@ Shader "DD/GroundBlend"
             half _PuddleSmoothness;
         CBUFFER_END
 
-        TEXTURE2D(_EarthMap);    SAMPLER(sampler_EarthMap);
-        TEXTURE2D(_EarthNormal); SAMPLER(sampler_EarthNormal);
-        TEXTURE2D(_EarthMask);   SAMPLER(sampler_EarthMask);
-        TEXTURE2D(_GravelMap);   SAMPLER(sampler_GravelMap);
-        TEXTURE2D(_StoneMap);    SAMPLER(sampler_StoneMap);
-        TEXTURE2D(_StoneNormal); SAMPLER(sampler_StoneNormal);
-        TEXTURE2D(_StoneMask);   SAMPLER(sampler_StoneMask);
-        TEXTURE2D(_DampMask);      SAMPLER(sampler_DampMask);
-        TEXTURE2D(_PuddleMask);    SAMPLER(sampler_PuddleMask);
-        TEXTURE2D(_ShoreMask);     SAMPLER(sampler_ShoreMask);
-        TEXTURE2D(_WetStoneMap);   SAMPLER(sampler_WetStoneMap);
-        TEXTURE2D(_WetStoneMask);  SAMPLER(sampler_WetStoneMask);
-        TEXTURE2D(_WetEarthMask);  SAMPLER(sampler_WetEarthMask);
-        TEXTURE2D(_WetGravelMask); SAMPLER(sampler_WetGravelMask);
+        // Every tiled AP-015/AP-018 surface texture has the same repeat/filter contract,
+        // so one sampler is sufficient. Keeping one sampler per texture consumed fourteen
+        // registers; URP's lighting/shadow samplers then pushed the Metal variant past the
+        // ps_5_0 register-16 limit. The shore lookup is the only clamped texture and keeps
+        // its own sampler. Texture data and all material bindings remain unchanged.
+        TEXTURE2D(_EarthMap);       SAMPLER(sampler_EarthMap);
+        TEXTURE2D(_EarthNormal);
+        TEXTURE2D(_EarthMask);
+        TEXTURE2D(_GravelMap);
+        TEXTURE2D(_StoneMap);
+        TEXTURE2D(_StoneNormal);
+        TEXTURE2D(_StoneMask);
+        TEXTURE2D(_DampMask);
+        TEXTURE2D(_PuddleMask);
+        TEXTURE2D(_ShoreMask);      SAMPLER(sampler_ShoreMask);
+        TEXTURE2D(_WetStoneMap);
+        TEXTURE2D(_WetStoneMask);
+        TEXTURE2D(_WetEarthMask);
+        TEXTURE2D(_WetGravelMask);
 
         // AP-018 wet amount: the plate's vertex wetness × the damp tile, scaled by the shore map inside the koi-pond bounds.
         half WetAmount(half vertexWet, float2 uv, float3 positionWS)
         {
-            half wet = saturate(vertexWet) * SAMPLE_TEXTURE2D(_DampMask, sampler_DampMask, uv).r;
+            half wet = saturate(vertexWet) * SAMPLE_TEXTURE2D(_DampMask, sampler_EarthMap, uv).r;
             float2 shoreUv = (positionWS.xz - _ShoreBounds.xy) / max(_ShoreBounds.zw - _ShoreBounds.xy, 1e-3);
             if (all(shoreUv >= 0.0) && all(shoreUv <= 1.0))
             {
@@ -208,13 +213,13 @@ Shader "DD/GroundBlend"
                 half wet = WetAmount(input.mask.a, uv, input.positionWS);
                 // The plates' wetness tops out around 0.55 (AP-015P), the damp tile averages 0.82: the puddle score (wet × puddle tile) peaks near 0.45,
                 // so the threshold sits at 0.30 with a 0.12 ramp to a full puddle (the decal seeds use the same threshold).
-                half puddle = saturate((SAMPLE_TEXTURE2D(_PuddleMask, sampler_PuddleMask, uv).r * wet - _PuddleThreshold) / max(_PuddleRamp, 0.02h));
+                half puddle = saturate((SAMPLE_TEXTURE2D(_PuddleMask, sampler_EarthMap, uv).r * wet - _PuddleThreshold) / max(_PuddleRamp, 0.02h));
 
                 half3 earth = SAMPLE_TEXTURE2D(_EarthMap, sampler_EarthMap, uv).rgb;
-                half3 gravel = SAMPLE_TEXTURE2D(_GravelMap, sampler_GravelMap, uv).rgb * _GravelTint;
-                half3 stone = SAMPLE_TEXTURE2D(_StoneMap, sampler_StoneMap, uv).rgb;
+                half3 gravel = SAMPLE_TEXTURE2D(_GravelMap, sampler_EarthMap, uv).rgb * _GravelTint;
+                half3 stone = SAMPLE_TEXTURE2D(_StoneMap, sampler_EarthMap, uv).rgb;
                 // AP-018: earth / gravel go wet through their tints, stone through the shipped wet tile.
-                half3 wetStone = SAMPLE_TEXTURE2D(_WetStoneMap, sampler_WetStoneMap, uv).rgb;
+                half3 wetStone = SAMPLE_TEXTURE2D(_WetStoneMap, sampler_EarthMap, uv).rgb;
                 earth = lerp(earth, earth * _WetTintEarth.rgb, wet);
                 gravel = lerp(gravel, gravel * _WetTintGravel.rgb, wet);
                 stone = lerp(stone, wetStone, wet);
@@ -225,12 +230,12 @@ Shader "DD/GroundBlend"
                 half earthS = _EarthSmoothness, stoneS = _StoneSmoothness, gravelS = _GravelSmoothness;
                 if (_UseMasks > 0.5h)
                 {
-                    earthS = SAMPLE_TEXTURE2D(_EarthMask, sampler_EarthMask, uv).a;
-                    stoneS = SAMPLE_TEXTURE2D(_StoneMask, sampler_StoneMask, uv).a;
+                    earthS = SAMPLE_TEXTURE2D(_EarthMask, sampler_EarthMap, uv).a;
+                    stoneS = SAMPLE_TEXTURE2D(_StoneMask, sampler_EarthMap, uv).a;
                     // Wet packed maps (AP-018, roughness ≥ 0.40 → smoothness ≤ 0.60) replace the dry smoothness by the wet amount.
-                    earthS = lerp(earthS, SAMPLE_TEXTURE2D(_WetEarthMask, sampler_WetEarthMask, uv).a, wet);
-                    stoneS = lerp(stoneS, SAMPLE_TEXTURE2D(_WetStoneMask, sampler_WetStoneMask, uv).a, wet);
-                    gravelS = lerp(gravelS, SAMPLE_TEXTURE2D(_WetGravelMask, sampler_WetGravelMask, uv).a, wet);
+                    earthS = lerp(earthS, SAMPLE_TEXTURE2D(_WetEarthMask, sampler_EarthMap, uv).a, wet);
+                    stoneS = lerp(stoneS, SAMPLE_TEXTURE2D(_WetStoneMask, sampler_EarthMap, uv).a, wet);
+                    gravelS = lerp(gravelS, SAMPLE_TEXTURE2D(_WetGravelMask, sampler_EarthMap, uv).a, wet);
                 }
                 else
                 {
@@ -241,8 +246,8 @@ Shader "DD/GroundBlend"
                 smoothness = min(smoothness, 0.60h);
                 smoothness = lerp(smoothness, _PuddleSmoothness, puddle);   // the water exception (AP-018 puddle core)
 
-                half3 nEarth = UnpackNormalScale(SAMPLE_TEXTURE2D(_EarthNormal, sampler_EarthNormal, uv), _NormalStrength);
-                half3 nStone = UnpackNormalScale(SAMPLE_TEXTURE2D(_StoneNormal, sampler_StoneNormal, uv), _NormalStrength);
+                half3 nEarth = UnpackNormalScale(SAMPLE_TEXTURE2D(_EarthNormal, sampler_EarthMap, uv), _NormalStrength);
+                half3 nStone = UnpackNormalScale(SAMPLE_TEXTURE2D(_StoneNormal, sampler_EarthMap, uv), _NormalStrength);
                 half3 normalTS = normalize(nEarth * w.r + half3(0, 0, 1) * w.g + nStone * w.b);
                 // Wet surfaces read flatter (water fills the grain).
                 normalTS = normalize(lerp(normalTS, half3(0, 0, 1), saturate(wet * 0.5h + puddle)));
