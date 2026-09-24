@@ -415,6 +415,113 @@ namespace DD.Prototype.UI
             curtain.Open(fast);
         }
 
+        // ============================================================ boot seal (10b-2)
+
+        /// <summary>E1 hold: the seal choreography's length, and its Reduced Motion static composite (§15.5).</summary>
+        public const float BootHoldSeconds = 1.6f;
+        public const float BootHoldReducedSeconds = 1.0f;
+
+        /// <summary>After the hand-off, LOADING and the ring never show for less than this (§15.2 anti-flicker).</summary>
+        public const float BootHandOffMinimumSeconds = 0.6f;
+
+        /// <summary>
+        /// Direction §15.3 / E1 (U7): the Boot scene hands its first load to the seal. With
+        /// FastTransitions (batch, tests) the plain synchronous load stays - returns false.
+        /// </summary>
+        private static bool BootToFirstScene(string sceneName)
+        {
+            if (FastTransitions || s_loading || !Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                return false;
+            }
+
+            s_transition++;
+            s_loading = true;
+            s_loadingScene = sceneName;
+            UiFlowRunner.Instance.Run(BootRoutine(sceneName, ++s_loadGeneration));
+            return true;
+        }
+
+        /// <summary>
+        /// t0 LoadSceneAsync with activation held while the seal choreography plays (ink blot,
+        /// stamp + BootLogo bell, wordmark). At t 1.6 (1.0 RM) or on a skip: a scene that is
+        /// ready is activated by the stamp - nothing else shows; one that is not hands off to
+        /// LOADING and the ensō at its real progress (a skip never fakes readiness).
+        /// </summary>
+        private static IEnumerator BootRoutine(string sceneName, int generation)
+        {
+            UiCurtain curtain = UiCurtain.Instance;
+            float t0 = Time.unscaledTime;
+            curtain.BeginBoot();
+            float hold = UiMotion.ReducedMotion ? BootHoldReducedSeconds : BootHoldSeconds;
+
+            float loadStart = Time.unscaledTime;
+            AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            if (op == null)
+            {
+                Debug.Log("[UI] Scene '" + sceneName + "' could not start loading from Boot.");
+                s_loading = false;
+                curtain.Open(true);
+                yield break;
+            }
+
+            op.allowSceneActivation = false;
+            bool handedOff = false;
+            float handOffAt = -1f;
+            while (true)
+            {
+                float now = Time.unscaledTime;
+                float progress = op.progress;
+                if (ArtificialLoadSeconds > 0f)
+                {
+                    progress = Mathf.Min(progress, LoadedProgress * Mathf.Clamp01((now - loadStart) / ArtificialLoadSeconds));
+                }
+
+                bool loaded = progress >= LoadedProgress;
+                if (!handedOff && (curtain.BootSkipRequested || now - t0 >= hold))
+                {
+                    curtain.CompleteBoot();   // the choreography lands (a skip: t = 1, cues collapse)
+                    if (loaded)
+                    {
+                        break;                // ready: the stamp is the activation
+                    }
+
+                    curtain.BootHandOff();
+                    handedOff = true;
+                    handOffAt = now;
+                }
+
+                if (handedOff)
+                {
+                    curtain.SetProgress(progress);
+                    if (loaded && now - handOffAt >= BootHandOffMinimumSeconds)
+                    {
+                        break;
+                    }
+                }
+
+                yield return null;
+            }
+
+            curtain.Activate();
+            ReleaseSimulation();
+            op.allowSceneActivation = true;
+            while (!op.isDone)
+            {
+                yield return null;
+            }
+
+            s_loading = false;   // not recorded: the seal's hold hides the load time the table wants
+            yield return null;
+            yield return null;
+            if (generation != s_loadGeneration)
+            {
+                yield break;
+            }
+
+            curtain.Open(false);
+        }
+
         // =============================================================== run hand-off
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -426,6 +533,9 @@ namespace DD.Prototype.UI
             }
 
             s_installed = true;
+
+            // WP-068 10b-2: the boot seal is the first loading screen (Core calls back into us).
+            PrototypeBootstrapper.FirstSceneLoader = BootToFirstScene;
 
             RunEvents.RunEnded += OnRunEnded;
             RunEvents.RunStarted += OnRunStarted;

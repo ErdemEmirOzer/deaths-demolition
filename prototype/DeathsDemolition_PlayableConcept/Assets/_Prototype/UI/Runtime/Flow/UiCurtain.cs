@@ -43,6 +43,15 @@ namespace DD.Prototype.UI
         public const float CurtainRingSize = 160f;
         public const float GhostAlpha = 0.12f;
 
+        /// <summary>Boot seal variant (E1, §15.3): the logo seal's size, the ink blot behind it, the wordmark's tracking.</summary>
+        public const float BootSealSize = 240f;
+        public const float BootBlotSize = 720f;
+        public const float BootBlotSeconds = 0.5f;
+        public const float BootStampAt = 0.55f;
+        public const float BootWordmarkAt = 0.70f;
+        public const float WordmarkTracking = 8f;   // +0.08 em (TMP characterSpacing is em/100)
+        private const int BootOwner = 0x10B2;
+
         private static UiCurtain s_instance;
         private static bool s_covering;
 
@@ -58,6 +67,19 @@ namespace DD.Prototype.UI
         private Image _scrim;
         private Image _scrimFoot;
         private bool _ringOnly;
+        private Image _ringGhost;
+        private RectTransform _bootLayer;
+        private Image _blot;
+        private UiFx _blotFx;
+        private TMP_Text _kicker;
+        private RectTransform _wordmarkClip;
+        private TMP_Text _wordmark;
+        private float _wordmarkWidth;
+        private bool _boot;
+        private bool _bootHandedOff;
+        private float _bootStart;
+        private UiTimeline _bootTimeline;
+        private static bool s_bootSkip;
         private TMP_Text _eyebrow;
         private TMP_Text _destination;
         private TMP_Text _subline;
@@ -188,11 +210,13 @@ namespace DD.Prototype.UI
             // The ensō device (10b-2, §15.3): the dry ghost circle, the stroke drawn at real
             // progress with its wet edge (a darker fill running WetBand ahead of the cream one,
             // so the band is the stroke's own shape), and the V2 seal inside at rest ink.
+            BuildBootLayer(groupRect);
+
             _ringGroup = UiFactory.NewRect("RingGroup", groupRect);
             Place(_ringGroup, RingSize);
-            Image ghost = UiFactory.NewImage("RingGhost", _ringGroup, UiColor.TextPrimary, UiSprites.EnsoBrush);
-            UiFactory.Fill((RectTransform)ghost.transform);
-            ghost.color = WithAlpha(UiTokens.Get(UiColor.TextPrimary), GhostAlpha);
+            _ringGhost = UiFactory.NewImage("RingGhost", _ringGroup, UiColor.TextPrimary, UiSprites.EnsoBrush);
+            UiFactory.Fill((RectTransform)_ringGhost.transform);
+            _ringGhost.color = WithAlpha(UiTokens.Get(UiColor.TextPrimary), GhostAlpha);
             _ringWet = BrushFill("RingWet", UiColor.TextSecondary);
             _ring = BrushFill("Ring", UiColor.TextPrimary);
             Sprite seal = Resources.Load<Sprite>("UI/Glyphs/Seal.Mark");
@@ -221,6 +245,185 @@ namespace DD.Prototype.UI
             _group.gameObject.SetActive(false);
             SetDoorsOpen(true);
             _canvas.enabled = false;
+        }
+
+        /// <summary>
+        /// The boot seal variant's own layer (E1): an ink field, the A8 blot behind the seal, and
+        /// the kicker + Display wordmark under it (the wordmark behind a clip that wipes open).
+        /// </summary>
+        private void BuildBootLayer(RectTransform groupRect)
+        {
+            _bootLayer = UiFactory.NewRect("Boot", groupRect);
+            UiFactory.Fill(_bootLayer);
+            Image field = UiFactory.NewImage("Field", _bootLayer, UiColor.SurfaceBase, UiSprites.Solid);
+            UiFactory.Fill((RectTransform)field.transform);
+
+            _blot = UiFactory.NewImage("Blot", _bootLayer, UiColor.InkStroke, UiFxGlobals.InkMask(UiInkChannel.Blot));
+            Place((RectTransform)_blot.transform, BootBlotSize);
+            _blot.enabled = _blot.sprite != null;   // the ink kit degrades: no mask, no blot (never a solid square)
+            _blotFx = _blot.gameObject.AddComponent<UiFx>();
+            _blotFx.Configure(UiFxMode.InkReveal, BootBlotSeconds, Vector3.zero, UiInkChannel.Blot);
+            _blotFx.Hold();
+
+            float top = RingLift - BootSealSize * 0.5f - (int)UiSpace.XL;
+            _kicker = UiFactory.Label("Kicker", _bootLayer, "PLAYABLE CONCEPT · PROTOTYPE", UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
+            PlaceText(_kicker, top, UiFactory.LineHeight(UiType.Label));
+            top -= UiFactory.LineHeight(UiType.Label) + (int)UiSpace.S;
+
+            float height = UiFactory.LineHeight(UiType.Display);
+            _wordmarkClip = UiFactory.ClipContent(UiFactory.NewRect("WordmarkClip", _bootLayer));
+            _wordmark = UiFactory.Label("Wordmark", _wordmarkClip, "DEATHS DEMOLITION", UiType.Display, UiColor.TextPrimary, TextAnchor.UpperCenter);
+            _wordmark.characterSpacing = WordmarkTracking;
+            _wordmarkWidth = Mathf.Ceil(_wordmark.GetPreferredValues(_wordmark.text).x) + (int)UiSpace.L;
+            var clip = _wordmarkClip;
+            clip.anchorMin = new Vector2(0.5f, 0.5f);
+            clip.anchorMax = new Vector2(0.5f, 0.5f);
+            clip.pivot = new Vector2(0f, 1f);
+            clip.anchoredPosition = new Vector2(-_wordmarkWidth * 0.5f, top);
+            clip.sizeDelta = new Vector2(_wordmarkWidth, height);
+            var wordRect = _wordmark.rectTransform;
+            wordRect.anchorMin = new Vector2(0f, 1f);
+            wordRect.anchorMax = new Vector2(0f, 1f);
+            wordRect.pivot = new Vector2(0f, 1f);
+            wordRect.sizeDelta = new Vector2(_wordmarkWidth, height);
+            wordRect.anchoredPosition = Vector2.zero;
+            _bootLayer.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// E1 / §15.3 (U7): the boot seal IS the first loading screen - no doors. t0 the ink
+        /// blot (InkReveal 500), t 0.55 the vermilion seal Stamps (contact t 0.64 = the
+        /// BootLogo bell), t 0.70 the wordmark wipes open under the kicker; held to t 1.6 by
+        /// the flow. Reduced Motion: the static composite at once (§15.5).
+        /// </summary>
+        public void BeginBoot()
+        {
+            _cursorWasVisible = Cursor.visible;
+            s_covering = true;
+            s_bootSkip = false;
+            _canvas.enabled = true;
+            Cursor.visible = false;
+            SetDoorsOpen(true);
+            _boot = true;
+            _bootHandedOff = false;
+            _bootStart = UiFxGlobals.Now;
+
+            ResetRing();
+            SetRingOnly(false);
+            _eyebrow.gameObject.SetActive(false);
+            _destination.gameObject.SetActive(false);
+            _subline.gameObject.SetActive(false);
+            _scrim.gameObject.SetActive(false);
+            _scrimFoot.gameObject.SetActive(false);
+            _plateFar.gameObject.SetActive(false);
+            _plateMid.gameObject.SetActive(false);
+            SetTip(null);
+            if (_stall != null)
+            {
+                _stall.gameObject.SetActive(false);
+            }
+
+            UiMotion.KillTarget(_group, false);
+            _group.alpha = 1f;
+            _group.gameObject.SetActive(true);
+            _bootLayer.gameObject.SetActive(true);
+            _ringGhost.canvasRenderer.SetAlpha(0f);
+            _ringWet.canvasRenderer.SetAlpha(0f);
+            _ring.canvasRenderer.SetAlpha(0f);
+
+            _seal.rectTransform.sizeDelta = new Vector2(BootSealSize, BootSealSize);
+            _seal.canvasRenderer.SetColor(WithAlpha(UiTokens.Get(UiColor.AccentPrimary), 0f));   // the logo seal: the only vermilion (§1)
+            _kicker.canvasRenderer.SetAlpha(0f);
+            _wordmark.canvasRenderer.SetAlpha(1f);
+            _wordmarkClip.sizeDelta = new Vector2(0f, _wordmarkClip.sizeDelta.y);
+            _blotFx.Configure(UiFxMode.InkReveal, BootBlotSeconds, Vector3.zero, UiInkChannel.Blot);
+            _blotFx.Play();
+
+            _bootTimeline = UiMotion.Timeline(BootOwner);
+            _bootTimeline.At(BootStampAt);
+            _bootTimeline.Add(UiMotion.TintAlpha(_seal, 1f, UiDuration.Instant, UiEase.Settle, UiMotionClass.Decor, _bootTimeline.Cursor));
+            _bootTimeline.Add(UiPresets.StampIn(_seal.rectTransform, _bootTimeline.Cursor));
+            _bootTimeline.Cue(UiEvent.BootLogo, BootStampAt + UiPresets.StampContactSeconds);
+            _bootTimeline.At(BootWordmarkAt);
+            _bootTimeline.Add(UiMotion.TintAlpha(_kicker, 1f, UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor, _bootTimeline.Cursor));
+            _bootTimeline.Add(UiMotion.Resize(_wordmarkClip, new Vector2(_wordmarkWidth, _wordmarkClip.sizeDelta.y), UiDuration.Screen, UiEase.Brush, UiMotionClass.Decor, _bootTimeline.Cursor));
+            if (UiMotion.ReducedMotion)
+            {
+                CompleteBoot();
+            }
+        }
+
+        /// <summary>A boot skip (Submit / Cancel / click, silent - no prompt, §15.5) or a test's request.</summary>
+        public bool BootSkipRequested
+        {
+            get { return s_bootSkip || UiInput.CancelPressed() || UiInput.SubmitHeld() || Input.GetMouseButtonDown(0); }
+        }
+
+        public void RequestBootSkip()
+        {
+            s_bootSkip = true;
+        }
+
+        /// <summary>True while the boot seal variant is on screen (tests).</summary>
+        public bool BootVisible
+        {
+            get { return _boot && GroupVisible; }
+        }
+
+        /// <summary>The boot choreography lands at t = 1 (the hold's end or a skip): cues collapse, the blot is whole.</summary>
+        public void CompleteBoot()
+        {
+            if (_bootTimeline.IsValid && _bootTimeline.IsAlive)
+            {
+                _bootTimeline.Complete();
+            }
+
+            if (UiFxGlobals.Now - _bootStart < BootBlotSeconds)
+            {
+                _blotFx.Configure(UiFxMode.InkReveal, 0.01f, Vector3.zero, UiInkChannel.Blot);
+                _blotFx.Play();
+            }
+        }
+
+        /// <summary>
+        /// The scene was not ready at t 1.6: the seal turns ink and settles into the ring's
+        /// centre, the wordmark leaves (Exit 140), LOADING enters, and the ensō appears around the
+        /// seal at the real progress (§15.3 el verme).
+        /// </summary>
+        public void BootHandOff()
+        {
+            _bootHandedOff = true;
+            UiMotion.Tint(_seal, WithAlpha(UiTokens.Get(UiColor.TextSecondary), SealRestAlpha), UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.Resize(_seal.rectTransform, new Vector2(SealSize, SealSize), UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.TintAlpha(_kicker, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
+            UiMotion.TintAlpha(_wordmark, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
+            _eyebrow.text = "LOADING";
+            _eyebrowState = "LOADING";
+            _eyebrow.gameObject.SetActive(true);
+            _eyebrow.canvasRenderer.SetAlpha(0f);
+            UiMotion.TintAlpha(_eyebrow, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.TintAlpha(_ringGhost, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.TintAlpha(_ringWet, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.TintAlpha(_ring, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+        }
+
+        /// <summary>Back to the loading device after a boot (the next load builds on the plain layout).</summary>
+        private void EndBootMode()
+        {
+            if (!_boot)
+            {
+                return;
+            }
+
+            _boot = false;
+            _bootHandedOff = false;
+            UiMotion.KillOwner(BootOwner, true);
+            _bootLayer.gameObject.SetActive(false);
+            _seal.rectTransform.sizeDelta = new Vector2(SealSize, SealSize);
+            _ringGhost.canvasRenderer.SetAlpha(1f);
+            _ringWet.canvasRenderer.SetAlpha(1f);
+            _ring.canvasRenderer.SetAlpha(1f);
+            _eyebrow.canvasRenderer.SetAlpha(1f);
         }
 
         /// <summary>A Radial360 fill of the ensō brush from 12 o'clock, clockwise (the Radial360 order is the brush's direction).</summary>
@@ -407,6 +610,7 @@ namespace DD.Prototype.UI
             }
 
             s_covering = true;
+            EndBootMode();
             _canvas.enabled = true;
             _group.gameObject.SetActive(false);
             Cursor.visible = false;
@@ -445,6 +649,7 @@ namespace DD.Prototype.UI
             _percent = -1;
             _destination.text = destination ?? string.Empty;
             _subline.text = subline ?? string.Empty;
+            EndBootMode();
             ResetRing();
             SetRingOnly(false);
             _group.gameObject.SetActive(true);
@@ -474,6 +679,7 @@ namespace DD.Prototype.UI
         public void ShowRingOnly()
         {
             _eyebrowState = "LOADING";
+            EndBootMode();
             ResetRing();
             SetRingOnly(true);
             _group.gameObject.SetActive(true);
@@ -616,6 +822,13 @@ namespace DD.Prototype.UI
         {
             if (!GroupVisible)
             {
+                return;
+            }
+
+            if (_boot && !_bootHandedOff)
+            {
+                // Ready by t 1.6: the stamp at the hold's end IS the activation - nothing extra shows.
+                UiPresets.StampIn(_seal.rectTransform);
                 return;
             }
 

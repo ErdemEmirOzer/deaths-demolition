@@ -164,6 +164,52 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
+        /// 10b-2 · E1 / §15.3 (U7): the boot seal is the first loading screen. No doors, the
+        /// vermilion seal stamps with one BootLogo bell, the hold lasts 1.6 s, then the stamp is
+        /// the activation and the main menu opens.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Boot_MuhurIlkYuklemeEkranidir_TekCan_Tutma16_AnaMenu()
+        {
+            PrototypeUiFlow.FastTransitions = false;
+            int bells = 0;
+            System.Action<UiEvent, string> count = (e, d) => { if (e == UiEvent.BootLogo) bells++; };
+            UiEvents.Raised += count;
+            try
+            {
+                float t0 = Time.realtimeSinceStartup;
+                SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+                yield return Bekle(() => UiCurtain.Instance != null && UiCurtain.Instance.BootVisible, 10f, "mühür görünmedi");
+                Assert.IsFalse(UiCurtain.Instance.GroupVisible && UiCurtain.Instance.PlateVisible, "mühür varyantında plaka yok");
+                yield return Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && !UiCurtain.IsCovering, 30f, "ana menü açılmadı");
+                float revealed = Time.realtimeSinceStartup - t0;
+                Assert.AreEqual(1, bells, "tek BootLogo çanı (mühür teması)");
+                Assert.GreaterOrEqual(revealed, PrototypeUiFlow.BootHoldSeconds - 0.1f, "mühür koreografisi 1,6 s tutar");
+            }
+            finally
+            {
+                UiEvents.Raised -= count;
+            }
+        }
+
+        /// <summary>10b-2 · a skip (Submit / Cancel / click) lands the choreography at once; a ready menu opens early, never faked.</summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Boot_Atlama_KoreografiyiBitirir_HazirMenuErkenAcilir()
+        {
+            PrototypeUiFlow.FastTransitions = false;
+            float t0 = Time.realtimeSinceStartup;
+            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+            yield return Bekle(() => UiCurtain.Instance != null && UiCurtain.Instance.BootVisible, 10f, "mühür görünmedi");
+            UiCurtain.Instance.RequestBootSkip();
+            yield return Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && !UiCurtain.IsCovering, 30f, "ana menü açılmadı");
+            float revealed = Time.realtimeSinceStartup - t0;
+            Assert.Less(revealed, PrototypeUiFlow.BootHoldSeconds + 1f, "atlama tutmayı kısaltır (yükleme hazırsa)");
+            Assert.AreEqual(1f, UiCurtain.Instance.SealColor.a, 0.05f, "atlama: mühür t = 1'de (damgalı)");
+        }
+
+        /// <summary>
         /// §15.2 "slower than expected": a scene measured fast gets the doors only (CURTAIN); if
         /// the load is still running at 0.9 s the full group enters late and holds its minimum
         /// display from there.

@@ -356,6 +356,12 @@ namespace DD.Prototype.UI
                 // command line; the fullscreen back buffer is exactly WxH on the Retina
                 // desktop, while windowed mode is clamped by PrototypeWindowFit (WP-025).
                 // -ddSize is accepted and logged for parity with the WP-011 capture agent.
+                if (_screen == "boot")
+                {
+                    yield return BootFrames();
+                    yield break;
+                }
+
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.MainMenu, 20f);
                 yield return new WaitForSecondsRealtime(1f);
 
@@ -704,6 +710,40 @@ namespace DD.Prototype.UI
                 curtain.Open(true);
                 yield return null;
                 Debug.Log("[UiCapture] loading done · framebuffer " + Screen.width + "x" + Screen.height);
+                Application.Quit();
+            }
+
+            /// <summary>
+            /// 10b-2 · <c>-ddUiCapture boot</c>: the boot seal from the first frame - the ink blot
+            /// (t 0.3), the stamp's contact (t 0.64), the wordmark (t 1.3), then the hand-off to
+            /// LOADING (an artificial 3 s load keeps the menu from being ready at t 1.6).
+            /// <c>-ddUiCaptureRm 1</c>: the static composite.
+            /// </summary>
+            private IEnumerator BootFrames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                PrototypeUiFlow.ArtificialLoadSeconds = 3f;
+                yield return WaitFor(() => UiCurtain.Instance != null && UiCurtain.Instance.BootVisible, 10f);
+                float t0 = Time.realtimeSinceStartup;
+                UiCurtain curtain = UiCurtain.Instance;
+                yield return WaitFor(() => Time.realtimeSinceStartup - t0 >= 0.3f, 2f);
+                yield return Frame(folder, "boot-blot");
+                yield return WaitFor(() => Time.realtimeSinceStartup - t0 >= UiCurtain.BootStampAt + UiPresets.StampContactSeconds, 2f);
+                yield return Frame(folder, "boot-stamp");
+                yield return WaitFor(() => Time.realtimeSinceStartup - t0 >= 1.3f, 2f);
+                yield return Frame(folder, "boot-wordmark");
+                yield return WaitFor(() => curtain.EyebrowText == "LOADING" && Time.realtimeSinceStartup - t0 >= PrototypeUiFlow.BootHoldSeconds + 0.4f, 6f);
+                yield return Frame(folder, "boot-handoff");
+                yield return WaitFor(() => curtain.EyebrowText == "ENTERING", 10f);
+                yield return new WaitForSecondsRealtime(0.1f);
+                yield return Frame(folder, "boot-entering");
+                PrototypeUiFlow.ArtificialLoadSeconds = 0f;
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.MainMenu, 20f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Frame(folder, "boot-menu");
+                Debug.Log("[UiCapture] boot done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
             }
 

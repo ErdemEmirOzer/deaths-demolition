@@ -164,7 +164,8 @@ namespace DD.Prototype.Tests.EditMode
             // Vermilion = one primary CTA per screen/modal, heading tick, BUY pill, seal.
             // PauseScreen: the END RUN dialog frame - reviewed in slice 9 (modal v3).
             // UiFxCaptureAgent (slice 4): capture-only ink bleed / hanko stamp samples.
-            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs" } }
+            // UiCurtain (10b-2): the boot logo seal - the one vermilion at boot, ink before loading (§15.3).
+            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs", "UiCurtain.cs" } }
         };
 
         [Test]

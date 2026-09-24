@@ -97,10 +97,20 @@ namespace DD.Prototype.Core.Boot
             base.OnDisable();
         }
 
+        /// <summary>
+        /// WP-068 slice 10b-2 (direction §15.3, U7): the boot seal IS the first loading screen.
+        /// The UI registers a loader here that loads the first scene itself (async, activation
+        /// held under the seal choreography) and returns true; null or false = the plain
+        /// synchronous load below (batch runs, tests with FastTransitions, a build without the UI).
+        /// Core cannot reference the UI assembly, so the dependency points this way.
+        /// </summary>
+        public static System.Func<string, bool> FirstSceneLoader;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             s_persistent = null;
+            FirstSceneLoader = null;
         }
 
         private IEnumerator Start()
@@ -124,6 +134,11 @@ namespace DD.Prototype.Core.Boot
                 // Deliberately not an error: the acceptance criteria forbid console
                 // errors during normal use.
                 Debug.Log($"[Boot] Scene '{target}' is not in the build settings yet. Staying in Boot.");
+                yield break;
+            }
+
+            if (FirstSceneLoader != null && FirstSceneLoader(target))
+            {
                 yield break;
             }
 
