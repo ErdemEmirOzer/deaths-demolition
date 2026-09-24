@@ -266,6 +266,8 @@ namespace DD.Prototype.Tests.PlayMode
 
                 _pad.Set(Vector2.zero, new Vector2(0f, 1f));
                 yield return Kareler(3);
+                // WP-069: the shot is a projectile — wait for it to land (flight time), not a fixed frame count.
+                yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount == 0, 2f, "mermi inmedi");
                 Debug.Log("[DD-TEST] wp024.assisted shots=" + (ammoOnce - _s.Controller.Classic.Ammo) + " damaged=" + sayac.Damaged.Count + " assist=" + _s.Rig.Aim.LastAssist.Assisted);
                 Assert.GreaterOrEqual(sayac.Damaged.Count, 1, "Yardımlı atış zombiyi vurmadı.");
                 assisted = sayac.Damaged[0].Result.HealthDamage + sayac.Damaged[0].Result.ArmorDamage;
@@ -319,6 +321,7 @@ namespace DD.Prototype.Tests.PlayMode
 
                 _pad.Set(Vector2.zero, stickToZombie());
                 yield return Kareler(3);
+                yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount == 0, 2f, "mermi inmedi");   // WP-069 flight time
                 Debug.Log("[DD-TEST] wp024.direct shots=" + (ammoOnce - _s.Controller.Classic.Ammo) + " damaged=" + sayac.Damaged.Count);
                 Assert.GreaterOrEqual(sayac.Damaged.Count, 1, "Doğrudan atış zombiyi vurmadı.");
                 direct = sayac.Damaged[0].Result.HealthDamage + sayac.Damaged[0].Result.ArmorDamage;

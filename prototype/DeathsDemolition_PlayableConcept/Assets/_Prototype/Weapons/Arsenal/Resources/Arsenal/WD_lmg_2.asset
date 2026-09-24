@@ -1,0 +1,196 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc9fa573ef5648aba99a076559e9639, type: 3}
+  m_Name: WD_lmg_2
+  m_EditorClassIdentifier: 
+  weaponId: lmg_2
+  id: 7
+  slot: 0
+  weaponClass: 3
+  displayName: Kurogane
+  shortName: Kurogane
+  description: "\u0130lk at\u0131\u015Flar da\u011F\u0131n\u0131k, namlu oturunca
+    \xE7elik gibi; her mermi iki g\xF6vde."
+  sortOrder: 8
+  enabled: 1
+  silhouette: 4
+  legacyNames: []
+  fire:
+    fireMode: 2
+    rpm: 420
+    burstCount: 3
+    burstIntervalSeconds: 0.05
+    burstDelaySeconds: 0.26
+    damage: 24
+    pelletCount: 1
+    pelletPattern: 0
+    rings: []
+    ringJitterShare: 0
+    gaussSigmaShare: 0.45
+    chargeSeconds: 0
+    dryFire: 1
+  ammo:
+    magazine: 60
+    reserve: 180
+    reserveRoundCoef: 0.12
+    floorRefillDelaySeconds: 8
+    floorRefillMagazines: 1
+    chamberExtra: 0
+    reloadKind: 0
+    reloadTacSeconds: 5
+    reloadEmptySeconds: 5.8
+    perShellSeconds: 0.55
+    reloadCancellable: 0
+  projectile:
+    kind: 0
+    speed: 300
+    gravity: 0
+    maxRange: 60
+    maxLifetimeSeconds: 0.7
+    sweepRadius: 0
+    penetration: 2
+    penetrationDamageKeep: 0.7
+    falloffStart: 32
+    falloffEnd: 60
+    falloffMinShare: 0.7
+    impulse: 0.5
+    stagger: 0.55
+    headMultiplier: 1
+    armorDamageMultiplier: 1.3
+    caliber: 2
+  accuracy:
+    topDown:
+      hip: 3.5
+      ads: 2.2
+    thirdPerson:
+      hip: 4.4
+      ads: 1.5
+    firstPerson:
+      hip: 4
+      ads: 1.1
+    bloomPerShot: -0.4
+    bloomMax: 0
+    settleFloorShare: 0.35
+    bloomDecayPerSecond: 4
+    bloomDecayDelaySeconds: 0.1
+    moveSpreadMultiplier: 2.2
+    adsSeconds: 0.55
+    moveSpeedMultiplier: 0.7
+    adsMoveSpeedMultiplier: 0.75
+    focusMoveSpeedMultiplier: 0.75
+    recoilPitchPerShot: 0.9
+    recoilYawPattern: 2
+    recoilYawValues:
+    - -0.35
+    - 0.35
+    recoilStableShots: 6
+    recoilRecoverySeconds: 0.6
+    recoilAccumulationCap: 4
+    topDownYawShare: 0.6
+  explosive:
+    enabled: 0
+    directHitDamage: 0
+    blastDamage: 0
+    innerRadius: 0
+    outerRadius: 0
+    falloffExponent: 1
+    regionShares: []
+    selfDamageShare: 0
+    selfDamageMax: 0
+    armingDistance: 0
+    dudDamage: 0
+    dudFizzleSeconds: 1
+    impulse: 1
+    lingerDps: 0
+    lingerSeconds: 0
+  rocket:
+    launchSpeed: 0
+    acceleration: 0
+    maxSpeed: 0
+    boostSeconds: 0
+    gravityBoost: 0
+    gravityCoast: 0
+    wobbleDegreesPerStep: 0
+    wobbleStepSeconds: 0.1
+    selfDetonateSeconds: 0
+    smokeTrailSeconds: 0
+  arcChain:
+    maxTargets: 0
+    jumpRadius: 0
+    jumpDelaySeconds: 0
+    nearestUnhit: 1
+    shockSeconds: 0
+    tierRules: []
+    selfShockRadius: 0
+    selfShockDamage: 0
+    selfShockFirstRadius: 0
+    selfShockFirstDamage: 0
+    selfSlowSeconds: 0
+    orbFizzleSeconds: 0
+    ignoresArmor: 1
+  gelPuddle:
+    directHitRules: []
+    puddleRadius: 0
+    deathPuddleRadius: 0
+    deathPuddleSeconds: 0
+    puddleLifetimeSeconds: 0
+    maxPuddles: 0
+    fadeSeconds: 0.5
+    slipRules: []
+    slipFallSeconds: 0
+    playerSlideSpeedMultiplier: 1
+    playerSteerMultiplier: 1
+    slideExitSeconds: 0
+    autoArcMaxRange: 0
+    ignoresArmor: 1
+  specialLifecycle:
+    limit: 2
+    activeCapSeconds: 0
+    groundSeconds: 22
+    spawnWeight: 1
+  upgrade:
+    coreBranches: 000000000a00000005000000
+    keystone:
+      id: ishizue
+      displayName: Ishizue
+      effect: "oturma 6 \u2192 3 at\u0131\u015F, taban 1,2\xB0 \u2192 0,9\xB0"
+    explosionSemantics: 0
+    forbiddenBranches: 
+  unlock:
+    kind: 2
+    unlockOrder: 8
+    profileLevel: 1
+    metaCost: 8
+    shopPriceBand: {x: 0, y: 0}
+  presentation:
+    audioId: 
+    fireLoop: 0
+    casing: 1
+    animSet: 
+    mechanismEvents: []
+    muzzleVfx: 
+    tracerVfx: 
+    impactVfx: 
+    hudIconId: 
+    modelTp: 
+    modelFp: 
+    placeholderVisual: 0
+    sockets:
+      root: socket_weapon_r
+      muzzle: Muzzle
+      ejection: Ejection
+      gripLeft: grip_l
+      sightAds: sight_ads
+      attachments:
+      - attach_barrel
+      - attach_top
+      - attach_stock

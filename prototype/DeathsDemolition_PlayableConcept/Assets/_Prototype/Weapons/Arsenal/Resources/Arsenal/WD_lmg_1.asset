@@ -1,0 +1,195 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc9fa573ef5648aba99a076559e9639, type: 3}
+  m_Name: WD_lmg_1
+  m_EditorClassIdentifier: 
+  weaponId: lmg_1
+  id: 6
+  slot: 0
+  weaponClass: 3
+  displayName: Mukade
+  shortName: Mukade
+  description: "Bitmeyen kutu-\u015Ferit, a\u011F\u0131r ama s\xFCrekli; yere basan
+    ayak."
+  sortOrder: 4
+  enabled: 1
+  silhouette: 4
+  legacyNames: []
+  fire:
+    fireMode: 2
+    rpm: 720
+    burstCount: 3
+    burstIntervalSeconds: 0.05
+    burstDelaySeconds: 0.26
+    damage: 11
+    pelletCount: 1
+    pelletPattern: 0
+    rings: []
+    ringJitterShare: 0
+    gaussSigmaShare: 0.45
+    chargeSeconds: 0
+    dryFire: 1
+  ammo:
+    magazine: 100
+    reserve: 300
+    reserveRoundCoef: 0.12
+    floorRefillDelaySeconds: 8
+    floorRefillMagazines: 1
+    chamberExtra: 0
+    reloadKind: 2
+    reloadTacSeconds: 4.4
+    reloadEmptySeconds: 5.2
+    perShellSeconds: 0.55
+    reloadCancellable: 0
+  projectile:
+    kind: 0
+    speed: 250
+    gravity: 0
+    maxRange: 55
+    maxLifetimeSeconds: 0.72
+    sweepRadius: 0
+    penetration: 1
+    penetrationDamageKeep: 0.6
+    falloffStart: 28
+    falloffEnd: 55
+    falloffMinShare: 0.65
+    impulse: 0.15
+    stagger: 0.2
+    headMultiplier: 1
+    armorDamageMultiplier: 1
+    caliber: 1
+  accuracy:
+    topDown:
+      hip: 2.4
+      ads: 1.4
+    thirdPerson:
+      hip: 3
+      ads: 1
+    firstPerson:
+      hip: 2.8
+      ads: 0.7
+    bloomPerShot: 0.25
+    bloomMax: 4.5
+    settleFloorShare: 0
+    bloomDecayPerSecond: 5
+    bloomDecayDelaySeconds: 0.1
+    moveSpreadMultiplier: 1.9
+    adsSeconds: 0.45
+    moveSpeedMultiplier: 0.8
+    adsMoveSpeedMultiplier: 0.75
+    focusMoveSpeedMultiplier: 0.75
+    recoilPitchPerShot: 0.45
+    recoilYawPattern: 1
+    recoilYawValues:
+    - 0.5
+    recoilStableShots: 0
+    recoilRecoverySeconds: 0.5
+    recoilAccumulationCap: 4
+    topDownYawShare: 0.6
+  explosive:
+    enabled: 0
+    directHitDamage: 0
+    blastDamage: 0
+    innerRadius: 0
+    outerRadius: 0
+    falloffExponent: 1
+    regionShares: []
+    selfDamageShare: 0
+    selfDamageMax: 0
+    armingDistance: 0
+    dudDamage: 0
+    dudFizzleSeconds: 1
+    impulse: 1
+    lingerDps: 0
+    lingerSeconds: 0
+  rocket:
+    launchSpeed: 0
+    acceleration: 0
+    maxSpeed: 0
+    boostSeconds: 0
+    gravityBoost: 0
+    gravityCoast: 0
+    wobbleDegreesPerStep: 0
+    wobbleStepSeconds: 0.1
+    selfDetonateSeconds: 0
+    smokeTrailSeconds: 0
+  arcChain:
+    maxTargets: 0
+    jumpRadius: 0
+    jumpDelaySeconds: 0
+    nearestUnhit: 1
+    shockSeconds: 0
+    tierRules: []
+    selfShockRadius: 0
+    selfShockDamage: 0
+    selfShockFirstRadius: 0
+    selfShockFirstDamage: 0
+    selfSlowSeconds: 0
+    orbFizzleSeconds: 0
+    ignoresArmor: 1
+  gelPuddle:
+    directHitRules: []
+    puddleRadius: 0
+    deathPuddleRadius: 0
+    deathPuddleSeconds: 0
+    puddleLifetimeSeconds: 0
+    maxPuddles: 0
+    fadeSeconds: 0.5
+    slipRules: []
+    slipFallSeconds: 0
+    playerSlideSpeedMultiplier: 1
+    playerSteerMultiplier: 1
+    slideExitSeconds: 0
+    autoArcMaxRange: 0
+    ignoresArmor: 1
+  specialLifecycle:
+    limit: 2
+    activeCapSeconds: 0
+    groundSeconds: 22
+    spawnWeight: 1
+  upgrade:
+    coreBranches: 000000000300000005000000
+    keystone:
+      id: nagaya
+      displayName: Nagaya
+      effect: "\u015Farj\xF6r 100 \u2192 150"
+    explosionSemantics: 0
+    forbiddenBranches: 
+  unlock:
+    kind: 2
+    unlockOrder: 4
+    profileLevel: 1
+    metaCost: 4
+    shopPriceBand: {x: 0, y: 0}
+  presentation:
+    audioId: 
+    fireLoop: 1
+    casing: 4
+    animSet: 
+    mechanismEvents: []
+    muzzleVfx: 
+    tracerVfx: 
+    impactVfx: 
+    hudIconId: 
+    modelTp: 
+    modelFp: 
+    placeholderVisual: 0
+    sockets:
+      root: socket_weapon_r
+      muzzle: Muzzle
+      ejection: Ejection
+      gripLeft: grip_l
+      sightAds: sight_ads
+      attachments:
+      - attach_barrel
+      - attach_top
+      - attach_stock

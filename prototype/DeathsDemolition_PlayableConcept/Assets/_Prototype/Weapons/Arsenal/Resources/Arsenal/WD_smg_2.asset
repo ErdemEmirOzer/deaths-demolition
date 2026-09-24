@@ -1,0 +1,195 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc9fa573ef5648aba99a076559e9639, type: 3}
+  m_Name: WD_smg_2
+  m_EditorClassIdentifier: 
+  weaponId: smg_2
+  id: 4
+  slot: 0
+  weaponClass: 1
+  displayName: Tetsui
+  shortName: Tetsui
+  description: "A\u011F\u0131r tabanca mermisi; her vuru\u015F zombiyi geri iter."
+  sortOrder: 6
+  enabled: 1
+  silhouette: 2
+  legacyNames: []
+  fire:
+    fireMode: 2
+    rpm: 540
+    burstCount: 3
+    burstIntervalSeconds: 0.05
+    burstDelaySeconds: 0.26
+    damage: 14
+    pelletCount: 1
+    pelletPattern: 0
+    rings: []
+    ringJitterShare: 0
+    gaussSigmaShare: 0.45
+    chargeSeconds: 0
+    dryFire: 1
+  ammo:
+    magazine: 24
+    reserve: 192
+    reserveRoundCoef: 0.12
+    floorRefillDelaySeconds: 4
+    floorRefillMagazines: 1
+    chamberExtra: 0
+    reloadKind: 0
+    reloadTacSeconds: 1.7
+    reloadEmptySeconds: 2.2
+    perShellSeconds: 0.55
+    reloadCancellable: 0
+  projectile:
+    kind: 0
+    speed: 200
+    gravity: 0
+    maxRange: 42
+    maxLifetimeSeconds: 0.71
+    sweepRadius: 0
+    penetration: 1
+    penetrationDamageKeep: 0.5
+    falloffStart: 18
+    falloffEnd: 42
+    falloffMinShare: 0.6
+    impulse: 0.45
+    stagger: 0.45
+    headMultiplier: 1
+    armorDamageMultiplier: 0.9
+    caliber: 1
+  accuracy:
+    topDown:
+      hip: 2.2
+      ads: 1.2
+    thirdPerson:
+      hip: 2.8
+      ads: 0.85
+    firstPerson:
+      hip: 2.5
+      ads: 0.6
+    bloomPerShot: 0.65
+    bloomMax: 5.5
+    settleFloorShare: 0
+    bloomDecayPerSecond: 8
+    bloomDecayDelaySeconds: 0.1
+    moveSpreadMultiplier: 1.3
+    adsSeconds: 0.2
+    moveSpeedMultiplier: 0.96
+    adsMoveSpeedMultiplier: 0.75
+    focusMoveSpeedMultiplier: 0.75
+    recoilPitchPerShot: 0.75
+    recoilYawPattern: 2
+    recoilYawValues:
+    - 0.4
+    - -0.4
+    recoilStableShots: 8
+    recoilRecoverySeconds: 0.3
+    recoilAccumulationCap: 4
+    topDownYawShare: 0.6
+  explosive:
+    enabled: 0
+    directHitDamage: 0
+    blastDamage: 0
+    innerRadius: 0
+    outerRadius: 0
+    falloffExponent: 1
+    regionShares: []
+    selfDamageShare: 0
+    selfDamageMax: 0
+    armingDistance: 0
+    dudDamage: 0
+    dudFizzleSeconds: 1
+    impulse: 1
+    lingerDps: 0
+    lingerSeconds: 0
+  rocket:
+    launchSpeed: 0
+    acceleration: 0
+    maxSpeed: 0
+    boostSeconds: 0
+    gravityBoost: 0
+    gravityCoast: 0
+    wobbleDegreesPerStep: 0
+    wobbleStepSeconds: 0.1
+    selfDetonateSeconds: 0
+    smokeTrailSeconds: 0
+  arcChain:
+    maxTargets: 0
+    jumpRadius: 0
+    jumpDelaySeconds: 0
+    nearestUnhit: 1
+    shockSeconds: 0
+    tierRules: []
+    selfShockRadius: 0
+    selfShockDamage: 0
+    selfShockFirstRadius: 0
+    selfShockFirstDamage: 0
+    selfSlowSeconds: 0
+    orbFizzleSeconds: 0
+    ignoresArmor: 1
+  gelPuddle:
+    directHitRules: []
+    puddleRadius: 0
+    deathPuddleRadius: 0
+    deathPuddleSeconds: 0
+    puddleLifetimeSeconds: 0
+    maxPuddles: 0
+    fadeSeconds: 0.5
+    slipRules: []
+    slipFallSeconds: 0
+    playerSlideSpeedMultiplier: 1
+    playerSteerMultiplier: 1
+    slideExitSeconds: 0
+    autoArcMaxRange: 0
+    ignoresArmor: 1
+  specialLifecycle:
+    limit: 2
+    activeCapSeconds: 0
+    groundSeconds: 22
+    spawnWeight: 1
+  upgrade:
+    coreBranches: 0b0000000300000004000000
+    keystone:
+      id: tsuchi
+      displayName: Tsuchi
+      effect: "stagger 0,45 \u2192 0,7, Runner d\xFC\u015Fer"
+    explosionSemantics: 0
+    forbiddenBranches: 
+  unlock:
+    kind: 2
+    unlockOrder: 6
+    profileLevel: 1
+    metaCost: 6
+    shopPriceBand: {x: 0, y: 0}
+  presentation:
+    audioId: 
+    fireLoop: 0
+    casing: 2
+    animSet: 
+    mechanismEvents: []
+    muzzleVfx: 
+    tracerVfx: 
+    impactVfx: 
+    hudIconId: 
+    modelTp: 
+    modelFp: 
+    placeholderVisual: 1
+    sockets:
+      root: socket_weapon_r
+      muzzle: Muzzle
+      ejection: Ejection
+      gripLeft: grip_l
+      sightAds: sight_ads
+      attachments:
+      - attach_barrel
+      - attach_top
+      - attach_stock

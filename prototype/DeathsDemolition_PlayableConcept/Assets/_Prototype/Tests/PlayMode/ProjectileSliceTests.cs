@@ -95,18 +95,20 @@ namespace DD.Prototype.Tests.PlayMode
             Vector3 target = torso.bounds.center;
             Vector3 from = new Vector3(target.x, target.y, target.z - 16f);
 
-            float hp0 = z.Health;
             int impacts = 0;
             float impactAt = -1f;
             Action<ProjectileImpactInfo> on = info => { if (info.Flesh) { impacts++; if (impactAt < 0f) impactAt = Time.time; } };
             ProjectileEvents.Impact += on;
+            var sayac = new SpecialOlaySayaci();
             try
             {
                 float spawnedAt = Time.time;
                 ProjectileSystem.Spawn(Atis(from, target, 7f, 40f), Firlat(80f, 40f));   // 16 m at 80 m/s = 0.20 s
                 yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount == 0, 3f, "mermi hedefe ulaşmadı");
                 Assert.AreEqual(1, impacts, "tek gövde isabeti");
-                Assert.Less(z.Health, hp0, "isabet hasar vermedi");
+                // Health or armour: the spawn may roll a torso plate, which takes the hit instead of health.
+                Assert.AreEqual(1, sayac.Damaged.Count, "tek hasar olayı");
+                Assert.Greater(sayac.Damaged[0].Result.HealthDamage + sayac.Damaged[0].Result.ArmorDamage, 0f, "isabet hasar vermedi");
                 float flight = impactAt - spawnedAt;
                 Debug.Log("[DD-TEST] wp069.flight 16 m @ 80 m/s = " + flight.ToString("F3") + " s");
                 Assert.That(flight, Is.InRange(0.15f, 0.40f), "uçuş süresi mesafe/hız ile uyumsuz (0,20 s beklenir)");
@@ -114,6 +116,7 @@ namespace DD.Prototype.Tests.PlayMode
             finally
             {
                 ProjectileEvents.Impact -= on;
+                sayac.Dispose();
             }
         }
 

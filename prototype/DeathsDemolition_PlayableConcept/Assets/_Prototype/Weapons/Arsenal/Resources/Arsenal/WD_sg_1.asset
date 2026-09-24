@@ -16,55 +16,61 @@ MonoBehaviour:
   id: 2
   slot: 0
   weaponClass: 2
-  displayName: Combat Shotgun
-  shortName: Combat Sho
-  description: 
+  displayName: Rappa
+  shortName: Rappa
+  description: "\xC7an a\u011F\u0131zdan dolu bir avu\xE7; pompalay\u0131nca d\xFCnya
+    sars\u0131l\u0131r."
   sortOrder: 2
   enabled: 1
   silhouette: 3
   legacyNames:
   - CombatShotgun
   fire:
-    fireMode: 2
+    fireMode: 0
     rpm: 72
     burstCount: 3
     burstIntervalSeconds: 0.05
     burstDelaySeconds: 0.26
-    damage: 8
+    damage: 9
     pelletCount: 8
     pelletPattern: 1
     rings:
-    - count: 7
-      radiusShare: 0.6
+    - count: 3
+      radiusShare: 0.4
+    - count: 4
+      radiusShare: 1
     ringJitterShare: 0.1
     gaussSigmaShare: 0.45
     chargeSeconds: 0
     dryFire: 1
   ammo:
     magazine: 7
-    reserve: -1
+    reserve: 42
+    reserveRoundCoef: 0.12
+    floorRefillDelaySeconds: 4
+    floorRefillMagazines: 1
     chamberExtra: 0
-    reloadKind: 0
-    reloadTacSeconds: 2.2
-    reloadEmptySeconds: 2.2
+    reloadKind: 1
+    reloadTacSeconds: 0.75
+    reloadEmptySeconds: 1.25
     perShellSeconds: 0.55
-    reloadCancellable: 0
+    reloadCancellable: 1
   projectile:
     kind: 1
     speed: 120
-    gravity: 9.81
-    maxRange: 22
-    maxLifetimeSeconds: 0.43333334
+    gravity: 0
+    maxRange: 24
+    maxLifetimeSeconds: 0.7
     sweepRadius: 0
     penetration: 0
-    penetrationDamageKeep: 0.6
-    falloffStart: 22
-    falloffEnd: 22
-    falloffMinShare: 1
+    penetrationDamageKeep: 1
+    falloffStart: 6
+    falloffEnd: 24
+    falloffMinShare: 0.35
     impulse: 0.85
     stagger: 0.6
     headMultiplier: 1
-    armorDamageMultiplier: 1
+    armorDamageMultiplier: 0.8
     caliber: 2
   accuracy:
     topDown:
@@ -76,21 +82,22 @@ MonoBehaviour:
     firstPerson:
       hip: 8
       ads: 3.5
-    bloomPerShot: 0
-    bloomMax: 0
-    settleFloorDegrees: 0
-    bloomDecayPerSecond: 0
+    bloomPerShot: 1
+    bloomMax: 10
+    settleFloorShare: 0
+    bloomDecayPerSecond: 10
     bloomDecayDelaySeconds: 0.1
-    moveSpreadMultiplier: 1
-    adsSeconds: 0.25
-    moveSpeedMultiplier: 1
+    moveSpreadMultiplier: 1.2
+    adsSeconds: 0.3
+    moveSpeedMultiplier: 0.9
     adsMoveSpeedMultiplier: 0.75
     focusMoveSpeedMultiplier: 0.75
-    recoilPitchPerShot: 0
-    recoilYawPattern: 0
-    recoilYawValues: []
+    recoilPitchPerShot: 2.4
+    recoilYawPattern: 1
+    recoilYawValues:
+    - 0.5
     recoilStableShots: 0
-    recoilRecoverySeconds: 0.35
+    recoilRecoverySeconds: 0.55
     recoilAccumulationCap: 4
     topDownYawShare: 0.6
   explosive:
@@ -157,16 +164,16 @@ MonoBehaviour:
   upgrade:
     coreBranches: 020000000000000005000000
     keystone:
-      id: 
-      displayName: 
-      effect: 
+      id: manin
+      displayName: Manin
+      effect: "pellet 8 \u2192 10"
     explosionSemantics: 0
     forbiddenBranches: 
   unlock:
     kind: 1
     unlockOrder: 2
     profileLevel: 5
-    metaCost: 0
+    metaCost: 2
     shopPriceBand: {x: 0, y: 0}
   presentation:
     audioId: 
@@ -180,6 +187,7 @@ MonoBehaviour:
     hudIconId: weapon_shotgun
     modelTp: WeaponBlockout/AP013_C_shotgun_blockout
     modelFp: 
+    placeholderVisual: 2
     sockets:
       root: socket_weapon_r
       muzzle: Muzzle

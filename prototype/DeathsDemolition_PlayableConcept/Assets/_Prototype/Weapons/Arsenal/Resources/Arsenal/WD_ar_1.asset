@@ -16,9 +16,9 @@ MonoBehaviour:
   id: 0
   slot: 0
   weaponClass: 0
-  displayName: Assault Rifle
-  shortName: Assault Ri
-  description: 
+  displayName: Hinawa
+  shortName: Hinawa
+  description: "G\xFCvenilir, ritmik; her tetikte k\xFC\xE7\xFCk bir sars\u0131nt\u0131."
   sortOrder: 0
   enabled: 1
   silhouette: 0
@@ -26,11 +26,11 @@ MonoBehaviour:
   - AssaultRifle
   fire:
     fireMode: 2
-    rpm: 510
+    rpm: 600
     burstCount: 3
     burstIntervalSeconds: 0.05
     burstDelaySeconds: 0.26
-    damage: 11
+    damage: 12
     pelletCount: 1
     pelletPattern: 0
     rings: []
@@ -40,26 +40,29 @@ MonoBehaviour:
     dryFire: 1
   ammo:
     magazine: 30
-    reserve: -1
+    reserve: 210
+    reserveRoundCoef: 0.12
+    floorRefillDelaySeconds: 4
+    floorRefillMagazines: 1
     chamberExtra: 0
     reloadKind: 0
-    reloadTacSeconds: 1.5
-    reloadEmptySeconds: 1.5
+    reloadTacSeconds: 1.6
+    reloadEmptySeconds: 2.1
     perShellSeconds: 0.55
     reloadCancellable: 0
   projectile:
     kind: 0
     speed: 260
-    gravity: 9.81
-    maxRange: 45
-    maxLifetimeSeconds: 0.625
+    gravity: 0
+    maxRange: 60
+    maxLifetimeSeconds: 0.7307692
     sweepRadius: 0
-    penetration: 0
+    penetration: 1
     penetrationDamageKeep: 0.6
-    falloffStart: 45
-    falloffEnd: 45
-    falloffMinShare: 1
-    impulse: 0.15
+    falloffStart: 30
+    falloffEnd: 60
+    falloffMinShare: 0.7
+    impulse: 0.13
     stagger: 0.25
     headMultiplier: 1
     armorDamageMultiplier: 1
@@ -76,18 +79,24 @@ MonoBehaviour:
       ads: 0.35
     bloomPerShot: 0.4
     bloomMax: 3.5
-    settleFloorDegrees: 0
-    bloomDecayPerSecond: 7
+    settleFloorShare: 0
+    bloomDecayPerSecond: 6
     bloomDecayDelaySeconds: 0.1
-    moveSpreadMultiplier: 1
+    moveSpreadMultiplier: 1.5
     adsSeconds: 0.25
-    moveSpeedMultiplier: 1
+    moveSpeedMultiplier: 0.92
     adsMoveSpeedMultiplier: 0.75
     focusMoveSpeedMultiplier: 0.75
-    recoilPitchPerShot: 0
-    recoilYawPattern: 0
-    recoilYawValues: []
-    recoilStableShots: 0
+    recoilPitchPerShot: 0.55
+    recoilYawPattern: 2
+    recoilYawValues:
+    - 0.25
+    - 0.25
+    - -0.25
+    - -0.25
+    - 0.25
+    - 0.25
+    recoilStableShots: 6
     recoilRecoverySeconds: 0.35
     recoilAccumulationCap: 4
     topDownYawShare: 0.6
@@ -155,9 +164,9 @@ MonoBehaviour:
   upgrade:
     coreBranches: 000000000400000005000000
     keystone:
-      id: 
-      displayName: 
-      effect: 
+      id: kodo
+      displayName: "K\u014Dd\u014D"
+      effect: "6 at\u0131\u015F sonras\u0131 bloom \u2212%50"
     explosionSemantics: 0
     forbiddenBranches: 
   unlock:
@@ -168,7 +177,7 @@ MonoBehaviour:
     shopPriceBand: {x: 0, y: 0}
   presentation:
     audioId: 
-    fireLoop: 0
+    fireLoop: 1
     casing: 1
     animSet: 
     mechanismEvents: []
@@ -178,6 +187,7 @@ MonoBehaviour:
     hudIconId: weapon_rifle
     modelTp: WeaponBlockout/AP013_A_rifle_blockout
     modelFp: 
+    placeholderVisual: 0
     sockets:
       root: socket_weapon_r
       muzzle: Muzzle

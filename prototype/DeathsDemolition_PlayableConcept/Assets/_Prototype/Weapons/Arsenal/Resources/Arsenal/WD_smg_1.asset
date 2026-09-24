@@ -16,9 +16,10 @@ MonoBehaviour:
   id: 1
   slot: 0
   weaponClass: 1
-  displayName: Auto SMG
-  shortName: Auto SMG
-  description: 
+  displayName: Shippu
+  shortName: Shippu
+  description: "Kesintisiz v\u0131z\u0131lt\u0131, kal\xE7adan ko\u015Farak; mermi
+    ya\u011Fmuru."
   sortOrder: 1
   enabled: 1
   silhouette: 3
@@ -26,7 +27,7 @@ MonoBehaviour:
   - AutoSmg
   fire:
     fireMode: 2
-    rpm: 780
+    rpm: 900
     burstCount: 3
     burstIntervalSeconds: 0.05
     burstDelaySeconds: 0.26
@@ -40,29 +41,32 @@ MonoBehaviour:
     dryFire: 1
   ammo:
     magazine: 42
-    reserve: -1
+    reserve: 294
+    reserveRoundCoef: 0.12
+    floorRefillDelaySeconds: 4
+    floorRefillMagazines: 1
     chamberExtra: 0
     reloadKind: 0
-    reloadTacSeconds: 1.7
-    reloadEmptySeconds: 1.7
+    reloadTacSeconds: 1.5
+    reloadEmptySeconds: 2
     perShellSeconds: 0.55
     reloadCancellable: 0
   projectile:
     kind: 0
     speed: 170
-    gravity: 9.81
-    maxRange: 38
-    maxLifetimeSeconds: 0.56666666
+    gravity: 0
+    maxRange: 40
+    maxLifetimeSeconds: 0.7352941
     sweepRadius: 0
     penetration: 0
-    penetrationDamageKeep: 0.6
-    falloffStart: 38
-    falloffEnd: 38
-    falloffMinShare: 1
+    penetrationDamageKeep: 1
+    falloffStart: 14
+    falloffEnd: 40
+    falloffMinShare: 0.55
     impulse: 0.08
     stagger: 0.12
     headMultiplier: 1
-    armorDamageMultiplier: 1
+    armorDamageMultiplier: 0.7
     caliber: 0
   accuracy:
     topDown:
@@ -76,19 +80,20 @@ MonoBehaviour:
       ads: 0.8
     bloomPerShot: 0.55
     bloomMax: 6.5
-    settleFloorDegrees: 0
-    bloomDecayPerSecond: 6
+    settleFloorShare: 0
+    bloomDecayPerSecond: 9
     bloomDecayDelaySeconds: 0.1
-    moveSpreadMultiplier: 1
-    adsSeconds: 0.25
+    moveSpreadMultiplier: 1.15
+    adsSeconds: 0.18
     moveSpeedMultiplier: 1
     adsMoveSpeedMultiplier: 0.75
     focusMoveSpeedMultiplier: 0.75
-    recoilPitchPerShot: 0
-    recoilYawPattern: 0
-    recoilYawValues: []
+    recoilPitchPerShot: 0.3
+    recoilYawPattern: 1
+    recoilYawValues:
+    - 0.45
     recoilStableShots: 0
-    recoilRecoverySeconds: 0.35
+    recoilRecoverySeconds: 0.25
     recoilAccumulationCap: 4
     topDownYawShare: 0.6
   explosive:
@@ -155,16 +160,16 @@ MonoBehaviour:
   upgrade:
     coreBranches: 030000000100000004000000
     keystone:
-      id: 
-      displayName: 
-      effect: 
+      id: kaze
+      displayName: Kaze
+      effect: "ate\u015F ederken hareket \xD71,10"
     explosionSemantics: 0
     forbiddenBranches: 
   unlock:
     kind: 1
     unlockOrder: 1
     profileLevel: 3
-    metaCost: 0
+    metaCost: 1
     shopPriceBand: {x: 0, y: 0}
   presentation:
     audioId: 
@@ -178,6 +183,7 @@ MonoBehaviour:
     hudIconId: weapon_carbine
     modelTp: WeaponBlockout/AP013_B_carbine_blockout
     modelFp: 
+    placeholderVisual: 1
     sockets:
       root: socket_weapon_r
       muzzle: Muzzle

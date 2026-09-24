@@ -396,14 +396,17 @@ namespace DD.Prototype.Tests.EditMode
             StaggerGovernor.ResetCounters();
         }
 
-        /// <summary>WeaponImpulse: sevkiyat trim değerleriyle AR tam 1.00, SMG 0.55, pompa sacması 0.85.</summary>
+        /// <summary>
+        /// WeaponImpulse: sevkiyat değerleriyle SMG 0.55, pompa saçması 0.85; AR (WP-069 B2 Hinawa) 0.13/0.15 × 1.00 =
+        /// 0.867 — 600 RPM'de REQ-123'ü korumak için (TufekMermisi).
+        /// </summary>
         [Test]
         public void WeaponImpulse_SevkiyatVarsayilanlari_ReaksiyonOlcegineTamOturur()
         {
             PrototypeConfig config = PrototypeConfig.Active;
             Assert.IsNotNull(config, "PrototypeConfig Resources'tan yüklenemedi.");
 
-            Assert.AreEqual(DamageForce.RifleBullet,
+            Assert.AreEqual(TufekMermisi,
                 WeaponImpulse.ForClassic(config.Weapons.Find(ClassicWeaponId.AssaultRifle)), 0.0001f);
             Assert.AreEqual(DamageForce.SmgBullet,
                 WeaponImpulse.ForClassic(config.Weapons.Find(ClassicWeaponId.AutoSmg)), 0.0001f);

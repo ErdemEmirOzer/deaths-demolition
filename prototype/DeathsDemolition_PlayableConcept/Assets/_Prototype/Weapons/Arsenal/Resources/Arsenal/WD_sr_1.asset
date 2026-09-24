@@ -1,0 +1,194 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc9fa573ef5648aba99a076559e9639, type: 3}
+  m_Name: WD_sr_1
+  m_EditorClassIdentifier: 
+  weaponId: sr_1
+  id: 8
+  slot: 0
+  weaponClass: 4
+  displayName: Tomi
+  shortName: Tomi
+  description: "Bir nefes, bir s\xFCrg\xFC, d\xF6rt g\xF6vde; sessizlik sonra tokat."
+  sortOrder: 5
+  enabled: 1
+  silhouette: 1
+  legacyNames: []
+  fire:
+    fireMode: 0
+    rpm: 48
+    burstCount: 3
+    burstIntervalSeconds: 0.05
+    burstDelaySeconds: 0.26
+    damage: 55
+    pelletCount: 1
+    pelletPattern: 0
+    rings: []
+    ringJitterShare: 0
+    gaussSigmaShare: 0.45
+    chargeSeconds: 0
+    dryFire: 1
+  ammo:
+    magazine: 5
+    reserve: 40
+    reserveRoundCoef: 0.12
+    floorRefillDelaySeconds: 4
+    floorRefillMagazines: 1
+    chamberExtra: 0
+    reloadKind: 0
+    reloadTacSeconds: 2.6
+    reloadEmptySeconds: 3.2
+    perShellSeconds: 0.55
+    reloadCancellable: 0
+  projectile:
+    kind: 0
+    speed: 420
+    gravity: 0
+    maxRange: 90
+    maxLifetimeSeconds: 0.71428573
+    sweepRadius: 0
+    penetration: 4
+    penetrationDamageKeep: 0.8
+    falloffStart: 60
+    falloffEnd: 90
+    falloffMinShare: 0.85
+    impulse: 0.8
+    stagger: 0.8
+    headMultiplier: 1.25
+    armorDamageMultiplier: 1.6
+    caliber: 2
+  accuracy:
+    topDown:
+      hip: 3
+      ads: 0.15
+    thirdPerson:
+      hip: 3.8
+      ads: 0.1
+    firstPerson:
+      hip: 3.5
+      ads: 0.08
+    bloomPerShot: 2
+    bloomMax: 6
+    settleFloorShare: 0
+    bloomDecayPerSecond: 8
+    bloomDecayDelaySeconds: 0.1
+    moveSpreadMultiplier: 2.5
+    adsSeconds: 0.4
+    moveSpeedMultiplier: 0.85
+    adsMoveSpeedMultiplier: 0.75
+    focusMoveSpeedMultiplier: 0.75
+    recoilPitchPerShot: 4.5
+    recoilYawPattern: 1
+    recoilYawValues:
+    - 0.3
+    recoilStableShots: 1
+    recoilRecoverySeconds: 0.9
+    recoilAccumulationCap: 4
+    topDownYawShare: 0.6
+  explosive:
+    enabled: 0
+    directHitDamage: 0
+    blastDamage: 0
+    innerRadius: 0
+    outerRadius: 0
+    falloffExponent: 1
+    regionShares: []
+    selfDamageShare: 0
+    selfDamageMax: 0
+    armingDistance: 0
+    dudDamage: 0
+    dudFizzleSeconds: 1
+    impulse: 1
+    lingerDps: 0
+    lingerSeconds: 0
+  rocket:
+    launchSpeed: 0
+    acceleration: 0
+    maxSpeed: 0
+    boostSeconds: 0
+    gravityBoost: 0
+    gravityCoast: 0
+    wobbleDegreesPerStep: 0
+    wobbleStepSeconds: 0.1
+    selfDetonateSeconds: 0
+    smokeTrailSeconds: 0
+  arcChain:
+    maxTargets: 0
+    jumpRadius: 0
+    jumpDelaySeconds: 0
+    nearestUnhit: 1
+    shockSeconds: 0
+    tierRules: []
+    selfShockRadius: 0
+    selfShockDamage: 0
+    selfShockFirstRadius: 0
+    selfShockFirstDamage: 0
+    selfSlowSeconds: 0
+    orbFizzleSeconds: 0
+    ignoresArmor: 1
+  gelPuddle:
+    directHitRules: []
+    puddleRadius: 0
+    deathPuddleRadius: 0
+    deathPuddleSeconds: 0
+    puddleLifetimeSeconds: 0
+    maxPuddles: 0
+    fadeSeconds: 0.5
+    slipRules: []
+    slipFallSeconds: 0
+    playerSlideSpeedMultiplier: 1
+    playerSteerMultiplier: 1
+    slideExitSeconds: 0
+    autoArcMaxRange: 0
+    ignoresArmor: 1
+  specialLifecycle:
+    limit: 2
+    activeCapSeconds: 0
+    groundSeconds: 22
+    spawnWeight: 1
+  upgrade:
+    coreBranches: 00000000010000000a000000
+    keystone:
+      id: kabuto_wari
+      displayName: Kabuto-wari
+      effect: "kafa isabeti z\u0131rh\u0131 yok sayar"
+    explosionSemantics: 0
+    forbiddenBranches: 03000000
+  unlock:
+    kind: 2
+    unlockOrder: 5
+    profileLevel: 1
+    metaCost: 5
+    shopPriceBand: {x: 0, y: 0}
+  presentation:
+    audioId: 
+    fireLoop: 0
+    casing: 5
+    animSet: 
+    mechanismEvents: []
+    muzzleVfx: 
+    tracerVfx: 
+    impactVfx: 
+    hudIconId: 
+    modelTp: 
+    modelFp: 
+    placeholderVisual: 0
+    sockets:
+      root: socket_weapon_r
+      muzzle: Muzzle
+      ejection: Ejection
+      gripLeft: grip_l
+      sightAds: sight_ads
+      attachments:
+      - attach_barrel
+      - attach_top
+      - attach_stock
