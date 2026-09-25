@@ -91,7 +91,9 @@ namespace DD.Prototype.Feedback.Vfx
         }
 
         public const int SourceCount = 11;
-        public const int MaxVolumeRegions = 8;   // VolumetricLight.MaxRegions (DD.Art, which references us — mirrored here)
+        // VolumetricLight.MaxRegions is 8, 10 with S-05's DEC-102 closure r2 (the court edges) — room for 16; unfilled slots are
+        // skipped (DD.Art references this assembly, so the constant is not shared).
+        public const int MaxVolumeRegions = 16;
 
         private enum Shape : byte
         {
