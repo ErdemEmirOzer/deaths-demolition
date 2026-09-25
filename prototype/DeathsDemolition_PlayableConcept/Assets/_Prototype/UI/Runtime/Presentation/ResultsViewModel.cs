@@ -312,7 +312,8 @@ namespace DD.Prototype.UI
                 : "Every kill counts towards kill XP and statistics.";
 
             // ---- run economy -------------------------------------------------
-            model.Economy.Add(new UiStatLine("Gold Collected", summary.GoldEarned.ToString(), UiColor.StateGold));
+            // AD R1-D SHOULD (one rule for currency on Results): the tally is cream, like the GOLD hero tile.
+            model.Economy.Add(new UiStatLine("Gold Collected", summary.GoldEarned.ToString(), UiColor.TextPrimary));
             model.Economy.Add(new UiStatLine("Gold Spent", summary.GoldSpent.ToString(), UiColor.TextSecondary));
             model.Economy.Add(new UiStatLine("Upgrades Bought", summary.UpgradesPurchased.ToString(), UiColor.TextSecondary));
 

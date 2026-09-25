@@ -617,6 +617,35 @@ namespace DD.Prototype.UI
                         }
                         else
                         {
+                            // AD R1-D MUST-1 evidence: -ddUiCaptureRounds N completes N rounds first (the real round-end
+                            // flow: XP, a level up on a fresh sandbox profile, gold) so Results shows earned values.
+                            int rounds;
+                            if (int.TryParse(Arg("-ddUiCaptureRounds"), out rounds) && rounds > 0 && RunDirector.Instance != null)
+                            {
+                                PlayerRig guard = PlayerRegistry.Primary;
+                                if (guard != null && guard.Health != null)
+                                {
+                                    guard.Health.DiagnosisInvulnerable = true;
+                                }
+
+                                for (int r = 0; r < rounds; r++)
+                                {
+                                    yield return WaitFor(() => RunDirector.Instance.Phase == RunPhase.Fighting, 40f);
+                                    yield return new WaitForSecondsRealtime(0.5f);
+                                    DD.Prototype.Spawn.EnemySpawnDirector spawn = DD.Prototype.Spawn.EnemySpawnDirector.Instance;
+                                    if (spawn == null || !spawn.DebugCompleteRound())
+                                    {
+                                        break;
+                                    }
+
+                                    yield return WaitFor(() => RunDirector.Instance.Phase == RunPhase.Upgrading, 30f);
+                                    RunDirector.Instance.CloseUpgradeScreen();
+                                }
+
+                                yield return WaitFor(() => RunDirector.Instance.Phase == RunPhase.Fighting, 40f);
+                                yield return new WaitForSecondsRealtime(1f);
+                            }
+
                             PlayerRig rig = PlayerRegistry.Primary;
                             if (rig != null && rig.Health != null)
                             {

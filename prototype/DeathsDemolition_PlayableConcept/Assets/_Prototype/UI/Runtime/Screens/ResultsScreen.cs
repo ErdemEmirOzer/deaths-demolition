@@ -189,7 +189,7 @@ namespace DD.Prototype.UI
         {
             RectTransform card = UiFactory.FramedCard("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             UiFactory.Fill(card);
-            RectTransform host = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.XXL));
+            RectTransform host = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.XL));   // AD R1-D SHOULD: one padding, one header baseline with REWARDS
             var stack = new UiStack(host);
 
             stack.Add(UiFactory.Heading(UiStrings.Get("results.report", "RUN REPORT"), host), UiFactory.LineHeight(UiType.H2));
@@ -239,7 +239,7 @@ namespace DD.Prototype.UI
 
             TMP_Text note = UiFactory.Label("Note", host, _model.CombatNote, UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
-            return stack.Cursor + 2f * (int)UiSpace.XXL;
+            return stack.Cursor + 2f * (int)UiSpace.XL;
         }
 
         private static void BuildRowColumn(RectTransform parent, float from, float to, string label, List<UiStatLine> lines, UiType? type)
@@ -277,8 +277,15 @@ namespace DD.Prototype.UI
             stack.Add(xpRow, xpLine);
             TMP_Text xpLabel = UiFactory.Label("Label", xpRow, UiStrings.Get("results.xp", "EXPERIENCE"), UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
             UiFactory.Fill((RectTransform)xpLabel.transform);
-            TMP_Text xpValue = UiFactory.Numeric("Total", xpRow, _model.TotalXp + " XP", UiType.NumericL, UiColor.AccentSakura, TextAnchor.MiddleRight, false);
-            UiFactory.Fill((RectTransform)xpValue.transform);
+            // AD R1-D MUST-1 (§2.1): sakura is NEW / NEW BEST only - the total prints cream, its unit quieter.
+            TMP_Text xpUnit = UiFactory.Label("Unit", xpRow, "XP", UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleRight);
+            RectTransform unitRect = UiFactory.Fill((RectTransform)xpUnit.transform);
+            float unitWidth = Mathf.Ceil(xpUnit.GetPreferredValues("XP").x);
+            unitRect.offsetMin = new Vector2(-unitWidth, 0f);
+            unitRect.anchorMin = new Vector2(1f, 0f);
+            TMP_Text xpValue = UiFactory.Numeric("Total", xpRow, _model.TotalXp, UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
+            RectTransform valueRect = UiFactory.Fill((RectTransform)xpValue.transform);
+            valueRect.offsetMax = new Vector2(-(unitWidth + (int)UiSpace.S), 0f);
             for (int i = 0; i < _model.XpBreakdown.Count; i++)
             {
                 TMP_Text value = UiFactory.StatRow(_model.XpBreakdown[i].Label, _model.XpBreakdown[i].Value, host, _model.XpBreakdown[i].Color, UiType.Body, 120f);
@@ -290,12 +297,12 @@ namespace DD.Prototype.UI
             // The level line, LEVEL UP at its right (stamped in its beat), the bar revealed before → after.
             RectTransform levelRow = UiFactory.NewRect("Level", host);
             stack.Add(levelRow, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)));
-            TMP_Text level = UiFactory.Numeric("Line", levelRow, _model.LevelLine, UiType.H3,
-                _model.LeveledUp ? UiColor.StateSuccess : UiColor.TextPrimary, TextAnchor.MiddleLeft, false);
+            TMP_Text level = UiFactory.Numeric("Line", levelRow, _model.LevelLine, UiType.H3, UiColor.TextPrimary, TextAnchor.MiddleLeft, false);
             UiFactory.Fill((RectTransform)level.transform);
             if (_model.LeveledUp)
             {
-                TMP_Text chip = UiFactory.Chip("LevelUp", levelRow, _model.LevelUpChip, UiColor.StateSuccess, UiColor.SurfaceInset, 180f, 30f);
+                // LEVEL UP stamps in cream / ink, like PURCHASED (AD R1-D MUST-1).
+                TMP_Text chip = UiFactory.Chip("LevelUp", levelRow, _model.LevelUpChip, UiColor.TextPrimary, UiColor.SurfaceBase, 180f, 30f);
                 _levelUp = (RectTransform)chip.transform.parent;
                 _levelUp.anchorMin = new Vector2(1f, 0.5f);
                 _levelUp.anchorMax = new Vector2(1f, 0.5f);
